@@ -216,6 +216,14 @@ For `N = 4`, the optimized ring sends `1.5 * B` per device, while the teaching
 path sends `3.75 * B` per device. That overhead is not a bug. It is the price
 of keeping the phase boundary easy to inspect before optimization.
 
+**Reading GB/s across ops:** the `GB/s` column divides each op's own logical
+byte model by its time. `pallas_ring_all_reduce` is credited the teaching
+whole-token traffic while the built-in `pmap_psum` is credited the optimal
+`2 * (N-1) / N * B`, so the two GB/s columns are **not** a like-for-like
+throughput comparison (the custom path's number is inflated ~2.5x by its byte
+model). Compare the `us` (latency) column when ranking the two ops; use GB/s only
+to watch a single op scale across payload sizes.
+
 ## Correctness Contract
 
 For a full Lab 7 all-reduce:
@@ -254,7 +262,7 @@ Useful questions for the CSV and trace:
 
 ```text
 Does pallas_ring_all_reduce pass for small and medium payloads?
-How much slower is the composed teaching path than pmap_psum?
+Compare its latency (us) to pmap_psum. Which is faster here, and why?
 Does the p50-to-p99 spread grow for larger payloads?
 Can you identify the two phases in the trace?
 Does the trace show separate hop kernels rather than one fused all-reduce?
@@ -266,8 +274,12 @@ Does the trace show separate hop kernels rather than one fused all-reduce?
 to matter more than latency.
 2. Flip `--neighbor-direction left` and verify that the final full all-reduce
 result is unchanged after canonical ordering.
-3. Compare `pmap_psum` and `pallas_ring_all_reduce`. Explain why the built-in
-collective is expected to win.
+3. Compare `pmap_psum` and `pallas_ring_all_reduce` using the `us` (latency)
+column. On this harness the composed Pallas path is usually *faster* at these
+sizes because `pmap_psum` pays a fixed per-call dispatch cost; explain where you
+would expect the built-in to win instead (larger payloads, real wire-byte
+accounting). Note the `GB/s` columns are **not** comparable across these two ops
+— they use different byte models (see below).
 4. Use the spec artifact's byte model to predict the teaching overhead factor.
 Then compare that with measured latency. The ratio will not match perfectly,
 and explaining why is the fun part.

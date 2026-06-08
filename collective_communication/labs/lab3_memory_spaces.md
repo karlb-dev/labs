@@ -69,7 +69,9 @@ to inspect by eye.
 
 The Pallas kernel runs independently on each device. There is no all-reduce, no
 all-gather, no ppermute, no neighbor copy, no entry barrier, and no cross-device
-semaphore. The only movement is local:
+semaphore. (If you do see an `entry_barrier` / `barrier-cores` entry in
+`traces/trace_comm_summary.json`, that is generic XLA SPMD scaffolding emitted by
+`shard_map`, not a barrier authored by this lab.) The only movement is local:
 
 ```text
 local HBM on device i
@@ -320,9 +322,14 @@ Start with:
 For profiles, inspect:
 
 - `traces/`
-- profiler timeline regions containing `lab3_hbm_to_vmem`
-- profiler timeline regions containing `lab3_vmem_compute`
-- profiler timeline regions containing `lab3_vmem_to_hbm`
+- the `lab3_hbm_to_vmem`, `lab3_vmem_compute`, and `lab3_vmem_to_hbm` named
+  scopes (see the note below on where they actually surface)
+
+Note: a Pallas kernel lowers to a single fused custom-call, so these
+`jax.named_scope` labels do **not** appear as separate bars on the device
+timeline. They live in the kernel's HLO metadata and in XProf's source view
+(which maps device ops back to lines in `lab3_memory_spaces.py`), not as distinct
+timeline regions. Treat them as source-level breadcrumbs, not timeline events.
 
 For compile/runtime failures, inspect:
 
@@ -375,8 +382,9 @@ Students should be able to:
 - Read a benchmark row and compute input bytes, output bytes, and total local
   logical bytes.
 - Explain why full-tile correctness is stronger than checking one scalar.
-- Identify `lab3_hbm_to_vmem`, `lab3_vmem_compute`, and `lab3_vmem_to_hbm` in a
-  profiler trace.
+- Locate the `lab3_hbm_to_vmem`, `lab3_vmem_compute`, and `lab3_vmem_to_hbm`
+  scopes in the kernel source / XProf source view, and explain why they do not
+  appear as separate device-timeline bars (the fused custom-call folds them in).
 
 ## Bridge To Lab 4
 

@@ -293,10 +293,21 @@ PALLAS_OPS = {
 # Ops whose behavior depends on the ring hop count, so a --token-hops sweep
 # expands into one case per hop value. Every other op runs once regardless of
 # the hop sweep, since the hop count does not change what they do.
+#
+# The Lab 5/6 ring collectives are built from a neighbor-copy hop loop, so a
+# partial hop count produces a partial all-gather / reduce-scatter whose
+# expected output the lab modules compute exactly. That makes the documented
+# "compare hops=0,1,N-1" experiments runnable straight from the CLI. The
+# built-in reduce-scatter reference (pmap_psum_scatter) is deliberately absent:
+# it lowers to a single atomic lax.psum_scatter with no hop loop to shorten, so
+# it can only ever do the full reduction.
 HOP_SWEEP_OPS = {
     "pmap_token_ring",
     "pallas_token_ring",
     "pallas_chunked_token_ring",
+    "pmap_ring_all_gather",
+    "pallas_ring_all_gather",
+    "pallas_ring_reduce_scatter",
 }
 
 LAB_SPEC_OPS = {
@@ -1267,12 +1278,24 @@ def make_all_to_all_payload(
     return x.astype(dtype)
 
 
-def make_pmap_fn(jax: Any, lax: Any, op: str, axis_name: str, n_devices: int):
+def make_pmap_fn(
+    jax: Any,
+    lax: Any,
+    op: str,
+    axis_name: str,
+    n_devices: int,
+    direction: str = "right",
+):
     """Build the simple pmap/lax reference function for a baseline op.
 
     These references are intentionally compact. They are not trying to outsmart
     XLA or match a specific hardware schedule; they provide a known-correct
     collective semantics against which custom teaching kernels can be compared.
+
+    ``direction`` only affects ``pmap_ppermute`` (the Lab 1 single-hop baseline):
+    ``"right"`` sends source ``i`` to ``i + 1`` and ``"left"`` sends it to
+    ``i - 1``, so the baseline matches ``--neighbor-direction`` instead of being
+    hardwired to a right-moving ring.
     """
     import functools
 
@@ -1301,9 +1324,15 @@ def make_pmap_fn(jax: Any, lax: Any, op: str, axis_name: str, n_devices: int):
         return fn
 
     if op == "pmap_ppermute":
-        # Ring-right send: source i writes to destination i + 1. The receiver
-        # check below therefore expects rank i to observe i - 1.
-        perm = tuple((i, (i + 1) % n_devices) for i in range(n_devices))
+        # Ring send in the requested direction: "right" writes source i to
+        # destination i + 1 (receiver i observes i - 1); "left" writes source i
+        # to destination i - 1 (receiver i observes i + 1). This keeps the
+        # built-in baseline aligned with the custom kernel under
+        # --neighbor-direction instead of being hardwired to a right ring.
+        if direction == "left":
+            perm = tuple((i, (i - 1) % n_devices) for i in range(n_devices))
+        else:
+            perm = tuple((i, (i + 1) % n_devices) for i in range(n_devices))
 
         @functools.partial(jax.pmap, axis_name=axis_name)
         def fn(x):
@@ -1338,6 +1367,7 @@ def check_pmap_result(
     y: Any,
     n_devices: int,
     dtype: Any,
+    direction: str = "right",
 ) -> bool:
     """Small correctness checks for pmap reference collectives.
 
@@ -1354,7 +1384,12 @@ def check_pmap_result(
         got = y_host[:, :, 0]
         return bool(jnp.allclose(got, expected.reshape(1, n_devices)))
     if op == "pmap_ppermute":
-        expected = jnp.array([(i - 1) % n_devices for i in range(n_devices)])
+        # Receiver i observes (i - 1) for a right send and (i + 1) for a left
+        # send, matching the perm chosen in make_pmap_fn.
+        if direction == "left":
+            expected = jnp.array([(i + 1) % n_devices for i in range(n_devices)])
+        else:
+            expected = jnp.array([(i - 1) % n_devices for i in range(n_devices)])
         return bool(jnp.allclose(y_host[:, 0], expected))
     if op == "pmap_all_to_all":
         expected_src = jnp.arange(n_devices, dtype=jnp.float32).reshape(1, n_devices)
@@ -1413,6 +1448,10 @@ def run_pmap_ring_all_gather(
     elems = elems_for_payload(payload_bytes, itemsize)
     actual_payload = elems * itemsize
     x = make_rank_payload(jnp, n_devices, elems, dtype)
+    # A full all-gather is n_devices - 1 hops; --token-hops lets the Lab 5
+    # partial-gather experiment ask for fewer (or more) hops, in which case the
+    # output stacks only hops + 1 arrivals per device.
+    hops = token_ring_hops(args, n_devices)
     if args.neighbor_direction == "right":
         # Source i sends to i + 1. Device r therefore receives ranks
         # r, r - 1, r - 2, ... over successive hops.
@@ -1426,7 +1465,7 @@ def run_pmap_ring_all_gather(
         """Return tokens in the order this device observes them."""
         token = value
         pieces = [token]
-        for _ in range(n_devices - 1):
+        for _ in range(hops):
             token = lax.ppermute(token, args.axis_name, perm=perm)
             pieces.append(token)
         return jnp.stack(pieces, axis=0)
@@ -1439,9 +1478,9 @@ def run_pmap_ring_all_gather(
         expected_rows = []
         for rank in range(n_devices):
             if args.neighbor_direction == "right":
-                expected_rows.append([(rank - hop) % n_devices for hop in range(n_devices)])
+                expected_rows.append([(rank - hop) % n_devices for hop in range(hops + 1)])
             else:
-                expected_rows.append([(rank + hop) % n_devices for hop in range(n_devices)])
+                expected_rows.append([(rank + hop) % n_devices for hop in range(hops + 1)])
         expected = jnp.array(expected_rows, dtype=jnp.float32)
         ok = bool(jnp.allclose(got, expected))
     with maybe_trace(jax, args, run, "pmap_ring_all_gather", payload_bytes) as trace_artifact:
@@ -1459,11 +1498,14 @@ def run_pmap_ring_all_gather(
         op="pmap_ring_all_gather",
         layer="pmap/lax",
         payload_bytes=actual_payload,
-        logical_bytes=actual_payload * max(0, n_devices - 1),
+        logical_bytes=actual_payload * hops,
         ok=ok,
         trace_artifact=trace_artifact,
         memory_profile_artifact=memory_profile,
-        note=f"arrival-order ring all-gather direction={args.neighbor_direction}",
+        note=(
+            f"arrival-order ring all-gather direction={args.neighbor_direction} "
+            f"hops={hops}"
+        ),
         **result_timing_kwargs(timing),
     )
 
@@ -1801,15 +1843,25 @@ def run_pmap_op(
         x = make_rank_payload(jnp, n_devices, elems, dtype)
         actual_payload = elems * itemsize
 
-    fn = make_pmap_fn(jax, lax, op, args.axis_name, n_devices)
+    fn = make_pmap_fn(jax, lax, op, args.axis_name, n_devices, args.neighbor_direction)
     y = block_until_ready(jax, fn(x))
-    ok = True if args.skip_correctness else check_pmap_result(jax, jnp, op, y, n_devices, dtype)
+    ok = (
+        True
+        if args.skip_correctness
+        else check_pmap_result(
+            jax, jnp, op, y, n_devices, dtype, args.neighbor_direction
+        )
+    )
     # ppermute is the Lab 1 reference hop: surface its received-rank map too so it
-    # lines up column-for-column with pallas_neighbor_copy.
+    # lines up column-for-column with pallas_neighbor_copy. The expected map flips
+    # with --neighbor-direction so the baseline and the custom kernel agree.
     observed_ranks = expected_ranks = None
     if op == "pmap_ppermute":
         observed_ranks = rank_vector(jax.device_get(y)[:, 0])
-        expected_ranks = tuple((i - 1) % n_devices for i in range(n_devices))
+        if args.neighbor_direction == "left":
+            expected_ranks = tuple((i + 1) % n_devices for i in range(n_devices))
+        else:
+            expected_ranks = tuple((i - 1) % n_devices for i in range(n_devices))
     with maybe_trace(jax, args, run, op, payload_bytes) as trace_artifact:
         timing = time_jax_call(
             jax,
@@ -2188,10 +2240,12 @@ def run_pallas_ring_all_gather(
             note=f"import failed: {exc}",
         )
 
-    hops = max(0, n_devices - 1)
+    # A full all-gather needs n_devices - 1 neighbor-copy phases; --token-hops
+    # lets the Lab 5 partial-gather experiment run fewer (or more) hops. Lab 5
+    # computes arrival-order expectations for whatever hop count is requested, so
+    # the correctness check stays exact for partial gathers.
+    hops = token_ring_hops(args, n_devices)
     try:
-        # A full all-gather needs n_devices - 1 neighbor-copy phases. Lab 5
-        # returns arrival-order expectations that match the pmap reference.
         case = lab5_ring_all_gather.build_case(
             jax=jax,
             jnp=jnp,
@@ -2296,11 +2350,14 @@ def run_pallas_ring_reduce_scatter(
             note=f"import failed: {exc}",
         )
 
-    hops = max(0, n_devices - 1)
+    # A full reduce-scatter needs n_devices - 1 hops; --token-hops lets the Lab 6
+    # partial-scatter experiment run fewer (or more). Lab 6 computes the expected
+    # partial sums for whatever hop count is requested, so correctness stays
+    # exact. Lab 6's implementation is intentionally whole-token teaching code:
+    # its case object exposes teaching_wire_bytes rather than pretending to be
+    # the optimized one-chunk-per-hop ring.
+    hops = token_ring_hops(args, n_devices)
     try:
-        # Lab 6's implementation is intentionally whole-token teaching code.
-        # Its case object exposes teaching_wire_bytes rather than pretending to
-        # be the optimized one-chunk-per-hop ring.
         case = lab6_reduce_scatter.build_case(
             jax=jax,
             jnp=jnp,

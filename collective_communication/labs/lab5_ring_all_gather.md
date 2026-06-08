@@ -224,6 +224,14 @@ The built-in collective may not use exactly this byte schedule. That is one
 reason it is a reference and a performance baseline, not a line-by-line copy of
 this teaching implementation.
 
+**Reading GB/s across ops:** the `GB/s` column divides each op's *own* logical
+byte model by its time. The custom ring is credited its ring traffic
+(`H * B`) while the built-in `pmap_all_gather` is credited the optimal
+`(N-1) * B`, so the two columns are **not** a like-for-like throughput
+comparison. When comparing the custom path against the built-in, compare the
+`us` (latency) column instead; use GB/s only to watch a single op scale across
+payload sizes.
+
 ## What To Inspect
 
 Start with:
@@ -276,14 +284,30 @@ Important helpers in `lab5_ring_all_gather.py`:
 
 ## Suggested Experiments
 
-1. **Partial gather:** run `hops = 0`, `1`, and `N - 1`. Explain the output
-   shape and ownership after each run.
+1. **Partial gather:** sweep the hop count and explain the output shape and
+   ownership after each value:
+
+   ```bash
+   python collective_bench.py --lab lab5 \
+     --ops pmap_ring_all_gather,pallas_ring_all_gather \
+     --sizes 64KiB --token-hops 0,1,2,3
+   ```
+
+   Each hop value runs as its own case; `hops=k` stacks `k + 1` arrivals per
+   device, and correctness is checked against that partial gather, so `hops=0`
+   (local only) through `hops=N-1` (full gather) all pass. The atomic built-in
+   `pmap_all_gather` ignores the hop count by design (it is a single XLA op),
+   which is itself worth noting.
 2. **Direction flip:** compare `--neighbor-direction right` and
    `--neighbor-direction left`. The rank tables should differ; performance may
    or may not.
 3. **Built-in comparison:** compare `pmap_all_gather` against
-   `pallas_ring_all_gather` and explain why the custom composed version is not
-   expected to win yet.
+   `pallas_ring_all_gather`. Compare the **`us` (latency)** column, not GB/s
+   (the two ops use different byte models — see the byte-model section). On this
+   harness the composed Pallas path usually *wins* on latency at these sizes
+   because the `pmap` baseline pays per-call dispatch overhead; explain where you
+   would expect the built-in to pull ahead instead (larger payloads, real
+   wire-byte accounting).
 4. **Payload sweep:** identify the latency-dominated and bandwidth-dominated
    regimes.
 5. **Canonical reorder:** use `canonicalize_arrival_order(...)` in a notebook or

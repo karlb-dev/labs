@@ -102,6 +102,8 @@ custom Pallas remote DMA result == lax.ppermute result
 
 This is an important course pattern. Before building a custom collective, write down or run the built-in operation that defines the desired ownership transformation.
 
+The `pmap_ppermute` baseline follows `--neighbor-direction`, so the equality above holds for both `right` and `left` runs: the built-in and the custom kernel are checked against the same analytic expected-rank map, not just against each other.
+
 ---
 
 ## Learning Objectives
@@ -270,6 +272,8 @@ Start here:
 | `results.jsonl` | One machine-readable row per case. |
 | `plots/latency_by_payload.png` | Shows latency floor and payload-size regimes. |
 | `plots/bandwidth_by_payload.png` | Shows bandwidth scaling as payload grows. |
+| `plots/speedup_by_payload.png` | Custom-vs-built-in speedup across payloads. |
+| `plots/case_status.png` | Pass/fail status of every case at a glance. |
 | `logs/console.log` | Combined stdout/stderr, including TPU/XLA messages. |
 | `diagnostics/runtime.json` | JAX device report and runtime metadata. |
 | `artifact_index.json` | Map of all generated artifacts. |
@@ -287,8 +291,11 @@ If profiling is enabled, inspect:
 ```text
 traces/
 traces/trace_comm_summary.json
-plots/trace_comm_time.png
+plots/trace_comm_<case>.png
 ```
+
+The per-case trace plot is named after the profiled case, e.g.
+`plots/trace_comm_0002_pallas_neighbor_copy_4194304.png`.
 
 Open the trace in XProf (`tensorboard --logdir <run>/traces`, then Trace Viewer)
 or drag the `traces/.../*.trace.json.gz` into https://ui.perfetto.dev. On each
@@ -306,7 +313,8 @@ Note: the kernel's `jax.named_scope` labels (`lab1_entry_barrier`,
 lowers to one fused custom-call, so those names live in the kernel's HLO
 metadata and XProf's source view (which maps the device ops back to lines in
 `lab1_single_hop.py`), not on the device timeline. The harness also distills the
-trace into `traces/trace_comm_summary.json` and `plots/trace_comm_time.png`,
+trace into `traces/trace_comm_summary.json` and a per-case
+`plots/trace_comm_<case>.png`,
 which show mean per-device DMA vs barrier vs semaphore time — for a tiny payload
 you should see the entry barrier dominate the actual copy.
 
@@ -429,7 +437,15 @@ Does the custom kernel ever win?
 What fixed costs seem visible?
 ```
 
-A perfectly valid result is that the built-in collective wins. The lesson is not "custom is faster." The lesson is "now I can see the machinery."
+On this harness you will most likely find the opposite of the textbook
+expectation: `pallas_neighbor_copy` beats `pmap_ppermute` at every payload size,
+often by 3-4x. That is mostly because the `pmap` baseline pays a fixed
+per-call dispatch cost (a latency floor around 0.5 ms even at 1 KiB), while the
+jitted Pallas kernel does not. So a perfectly valid result is that the custom
+kernel wins here — and it is equally valid for a compiler-managed collective to
+win on real hardware at scale once that dispatch overhead is amortized. The
+lesson is not "custom is always faster" or "built-in is always faster." The
+lesson is "now I can see the machinery and explain the gap."
 
 ### Exercise 4: VMEM Boundary
 
@@ -465,7 +481,7 @@ barrier-cores    the entry barrier
 Acquire/Release semaphore
 ```
 
-Then open `plots/trace_comm_time.png` and `traces/trace_comm_summary.json`.
+Then open the per-case `plots/trace_comm_<case>.png` and `traces/trace_comm_summary.json`.
 
 Answer:
 
@@ -562,7 +578,7 @@ The requested byte count is rounded into a whole local tile. Read the actual pay
 
 ### `pallas_neighbor_copy` is slower than `pmap_ppermute`
 
-That is allowed. Built-in collectives are compiler-managed and often highly optimized. Lab 1 is a visibility lab. Performance work begins in earnest when students add chunking, buffering, bidirectional movement, and topology-aware schedules.
+That is allowed. Built-in collectives are compiler-managed and often highly optimized. (On the current 4-chip v5e harness the reverse is actually the common case — the custom kernel usually wins because `pmap_ppermute` carries a per-call dispatch floor; see Exercise 3.) Either way, Lab 1 is a visibility lab. Performance work begins in earnest when students add chunking, buffering, bidirectional movement, and topology-aware schedules.
 
 ---
 

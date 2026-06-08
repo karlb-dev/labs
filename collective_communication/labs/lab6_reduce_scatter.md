@@ -206,6 +206,14 @@ The teaching implementation therefore sends about `N` times more data than the
 one-chunk-per-hop plan. That is acceptable for this lab because the goal is
 ownership clarity. Lab 8 is where performance gets its fangs.
 
+**Reading GB/s across ops:** the `GB/s` column divides each op's own logical
+byte model by its time. `pallas_ring_reduce_scatter` is credited the inflated
+whole-token traffic (`H * B`) while the built-in `pmap_psum_scatter` is credited
+the optimal `2 * B * (N-1) / N`, so the custom path's GB/s looks several times
+larger even when it is not moving useful data faster. Do **not** read the GB/s
+gap as the teaching kernel beating the built-in — compare the `us` (latency)
+column for that, and use GB/s only to watch one op scale across payload sizes.
+
 ## Correctness Contract
 
 The default full run should satisfy:
@@ -240,9 +248,12 @@ rank table is a useful debugging window, but it is not a correctness proof.
 --pallas-min-cols 128
 ```
 
-Depending on the harness version, `--token-hops` may be reused as the generic
-ring-hop flag. In the lab code, `None`, `-1`, `full`, `all`, and `n-1` all mean
-`device_count - 1` when the device count is known.
+`--token-hops` is the generic ring-hop flag (shared with Lab 2) and it controls
+the custom `pallas_ring_reduce_scatter` op: each value runs as its own case and
+`hops=k` reduces `k + 1` sources per chunk. Omitting it (or `None`, `-1`,
+`full`, `all`, `n-1`) means `device_count - 1`, the full reduce-scatter. The
+built-in `pmap_psum_scatter` reference ignores the flag — it lowers to a single
+atomic `lax.psum_scatter` and can only do the full reduction.
 
 ## Artifacts To Inspect
 
@@ -278,7 +289,15 @@ custom collective status
 
 ### 1. Run partial hops
 
-Run with `hops = 0`, `hops = 1`, and `hops = N - 1`.
+Sweep the hop count against the custom path:
+
+```bash
+python collective_bench.py --lab lab6 \
+  --ops pallas_ring_reduce_scatter --sizes 64KiB --token-hops 0,1,2,3
+```
+
+Each hop value runs as its own case, and correctness is checked against the
+*partial* reduce-scatter for that hop count, so every case passes.
 
 Expected lesson:
 
@@ -328,7 +347,7 @@ single-hop phases. The trace should make the teaching composition visible.
 | Only `[:, 0, 0]` looks right | Partial tile copy or stale data | Full-tile checker, output dump |
 | Full run is wrong but partial source table is right | Wrong owner chunk axis | `owned_chunk(...)` |
 | Hangs or crashes | Semaphore or collective-ID issue | Lab 4 rules, `errors/*.txt` |
-| Pallas much slower than built-in | Expected for composed teaching path | Byte model and profiler trace |
+| Pallas GB/s looks far higher than the built-in | Different byte models, not a real speedup | Byte model note; compare `us`, not GB/s |
 | VMEM allocation failure | Whole-token payload too large for VMEM | Use HBM or reduce size |
 
 ## Pass Condition
