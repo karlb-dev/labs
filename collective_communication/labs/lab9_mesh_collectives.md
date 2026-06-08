@@ -58,11 +58,8 @@ python collective_bench.py \
   --lab9-mesh-shape 2x2 \
   --lab9-axis-order x_then_y \
   --trace-op pallas_2d_staged_all_gather \
-  --collect-profiles
+  --profile
 ```
-
-`--collect-profiles`, `--profile`, and `--xprof` are aliases in this benchmark
-suite.
 
 ---
 

@@ -241,14 +241,6 @@ python collective_bench.py \
   --trace-size 4MiB
 ```
 
-Equivalent profiling flags:
-
-```text
---profile
---collect-profiles
---xprof
-```
-
 Dump HLO/XLA artifacts for a tiny case:
 
 ```bash

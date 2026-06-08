@@ -63,14 +63,11 @@ Profile the composed Pallas path:
 python collective_bench.py \
   --lab lab7 \
   --sizes 4MiB \
-  --xprof \
+  --profile \
   --profile-cases 1 \
   --trace-op pallas_ring_all_reduce \
   --trace-size 4MiB
 ```
-
-`--profile`, `--collect-profiles`, and `--xprof` are equivalent profile flags in
-this benchmark harness.
 
 ## Implemented Happy Path
 

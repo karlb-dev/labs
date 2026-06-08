@@ -291,7 +291,7 @@ python collective_bench.py \
   --lab lab8 \
   --sizes 4MiB \
   --lab8-chunks 8 \
-  --xprof \
+  --profile \
   --profile-cases 1 \
   --trace-op pallas_chunked_token_ring \
   --trace-size 4MiB

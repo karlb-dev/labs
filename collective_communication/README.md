@@ -70,7 +70,6 @@ collective_communication/
   COURSE.md                   # course cover page and lab sequence
   README.md                   # this operation reference
   labs/
-    roadmap.md                # detailed roadmap and invariants
     lab_spec_utils.py         # shared spec/artifact rendering helpers
     lab1_single_hop.py        # Lab 1 Pallas communication code
     lab1_single_hop.md        # Lab 1 teaching notes
@@ -322,13 +321,8 @@ You can override the trace root with `--trace-dir`. Normal timing does not call
 the JAX profiler, so TensorFlow profiler-hook warnings should not appear unless
 profiling is enabled.
 
-Equivalent profile flags:
-
-```bash
---profile
---collect-profiles
---xprof
-```
+The examples use `--profile`; `--collect-profiles` and `--xprof` are accepted as
+aliases for the same flag.
 
 Optional memory profile capture:
 

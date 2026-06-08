@@ -135,7 +135,7 @@ python collective_bench.py \
   --sizes 1MiB,4MiB,16MiB \
   --trace-op pallas_ring_all_gather \
   --trace-size 4MiB \
-  --collect-profiles
+  --profile
 ```
 
 Run only the spec artifact if you want the teaching notes without a TPU-heavy

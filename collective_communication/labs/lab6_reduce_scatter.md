@@ -49,14 +49,11 @@ Profile the custom Pallas path:
 python collective_bench.py \
   --lab lab6 \
   --sizes 1MiB,4MiB,16MiB \
-  --xprof \
+  --profile \
   --profile-cases 1 \
   --trace-op pallas_ring_reduce_scatter \
   --trace-size 4MiB
 ```
-
-`--profile`, `--collect-profiles`, and `--xprof` are equivalent profiler flags
-in this benchmark harness.
 
 ## Implemented Happy Path
 

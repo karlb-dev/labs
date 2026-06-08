@@ -84,19 +84,35 @@ python collective_bench.py --lab lab4
 Short run with only the catalog:
 
 ```bash
-python collective_bench.py   --lab lab4   --ops semaphore_bug_zoo   --no-plots
+python collective_bench.py \
+  --lab lab4 \
+  --ops semaphore_bug_zoo \
+  --no-plots
 ```
 
 Profile the correct semaphore probe:
 
 ```bash
-python collective_bench.py   --lab lab4   --ops pallas_semaphore_correct   --sizes 1KiB   --xprof   --profile-cases 1   --trace-op pallas_semaphore_correct   --trace-size 1KiB
+python collective_bench.py \
+  --lab lab4 \
+  --ops pallas_semaphore_correct \
+  --sizes 1KiB \
+  --profile \
+  --profile-cases 1 \
+  --trace-op pallas_semaphore_correct \
+  --trace-size 1KiB
 ```
 
 Small correctness-only run:
 
 ```bash
-python collective_bench.py   --lab lab4   --ops pallas_semaphore_correct,semaphore_bug_zoo   --sizes 1KiB   --iters 5   --warmup 1   --no-plots
+python collective_bench.py \
+  --lab lab4 \
+  --ops pallas_semaphore_correct,semaphore_bug_zoo \
+  --sizes 1KiB \
+  --iters 5 \
+  --warmup 1 \
+  --no-plots
 ```
 
 ## What This Lab Teaches

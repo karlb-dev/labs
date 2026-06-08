@@ -142,14 +142,11 @@ Profile the custom Pallas token ring:
 python collective_bench.py \
   --lab lab2 \
   --sizes 4MiB \
-  --xprof \
+  --profile \
   --profile-cases 1 \
   --trace-op pallas_token_ring \
   --trace-size 4MiB
 ```
-
-`--profile`, `--collect-profiles`, and `--xprof` are equivalent profiling flags
-in the current runner.
 
 ## Implementations
 

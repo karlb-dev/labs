@@ -350,18 +350,10 @@ runtime messages. Enable them explicitly:
 python collective_bench.py \
   --lab lab2 \
   --sizes 4MiB \
-  --xprof \
+  --profile \
   --profile-cases 1 \
   --trace-op pallas_token_ring \
   --trace-size 4MiB
-```
-
-Equivalent flags:
-
-```text
---profile
---collect-profiles
---xprof
 ```
 
 Profiler traces are written under `traces/` in the run directory and listed in

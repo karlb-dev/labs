@@ -126,7 +126,7 @@ Profile the Pallas VMEM path:
 python collective_bench.py \
   --lab lab3 \
   --sizes 4MiB \
-  --xprof \
+  --profile \
   --profile-cases 1 \
   --trace-op pallas_vmem_arith \
   --trace-size 4MiB
