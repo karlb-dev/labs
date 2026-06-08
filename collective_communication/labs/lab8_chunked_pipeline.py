@@ -1,7 +1,9 @@
 """Lab 8: chunked and pipelined ring movement.
 
-Lab 8 ships three implementations of the same token-ring reduction so students
-can read a schedule, make it move faster, and prove the speedup.
+This is a systems-skills lab about building a real fused collective kernel and
+characterizing it honestly. It ships three implementations of the same token-ring
+reduction so students can read a schedule, build the fused version that overlaps
+communication with local work, and measure where that overlap helps.
 
     pallas_chunked_token_ring
         The clarity-first teaching path.  It calls the Lab 1 one-hop primitive
@@ -10,22 +12,24 @@ can read a schedule, make it move faster, and prove the speedup.
         collective IDs, and source history.
 
     pallas_double_buffered_token_ring
-        The fused performance path.  A single Pallas program carries the ring
-        across ``hops + 1`` steps.  Each device alternates HBM buffer slots,
-        starts an async remote DMA into the neighbor's next slot, accumulates the
-        current slot through an inner HBM<->VMEM pipeline while the remote copy is
-        in flight, and waits only when correctness requires it.  ``buffer_count``
+        The fused ring.  A single Pallas program carries the ring across
+        ``hops + 1`` steps.  Each device alternates HBM buffer slots, starts an
+        async remote DMA into the neighbor's next slot, accumulates the current
+        slot through an inner HBM<->VMEM pipeline while the remote copy is in
+        flight, and waits only when correctness requires it.  ``buffer_count``
         controls real HBM double-buffer slots here, and a capacity semaphore
-        guards slot reuse.
+        guards slot reuse.  This is where the overlap is real.
 
     xla_fast_token_ring
-        The roofline reference.  For a full ring it lowers to ``lax.psum``; for
+        An XLA reference point.  For a full ring it lowers to ``lax.psum``; for
         partial-hop experiments it uses ``lax.ppermute``.
 
-Together they let students compare the serialized teaching path, the custom
-fused Pallas path, and XLA's tuned collective, and explain both the speedup over
-the serialized path and the remaining gap to XLA with profile and byte-model
-evidence.
+Matching XLA is not the goal: this whole-token ring moves about twice the bytes
+of an optimal all-reduce, so a tuned collective wins on large transfers by moving
+fewer bytes, not by overlapping better.  The lesson is to build the fused kernel
+correctly and use the trace and byte model to explain what the overlap buys (it
+hides fixed per-phase overhead, biggest at small/medium payloads) and what it
+does not.  A bandwidth-optimal chunk-per-hop ring is a natural follow-on lab.
 """
 
 from __future__ import annotations
@@ -225,10 +229,11 @@ LAB_SPEC: dict[str, Any] = {
     "lab": "lab8",
     "title": "Lab 8: Chunked And Pipelined Ring",
     "goal": (
-        "Turn a correct ring into a performance experiment that culminates in "
-        "one genuinely fast custom kernel: a fused Pallas double-buffered ring "
-        "with async remote DMA, capacity synchronization, and inner HBM<->VMEM "
-        "accumulation while communication is in flight."
+        "Build a real fused collective kernel and characterize it: a Pallas "
+        "double-buffered ring with async remote DMA, capacity synchronization, "
+        "and inner HBM<->VMEM accumulation overlapped with communication. The "
+        "point is the machinery and an honest read of where overlap helps, not "
+        "beating a tuned XLA collective."
     ),
     "implemented_ops": [
         "`pmap_token_ring`: dependency-chain reference from Lab 2",
@@ -611,7 +616,8 @@ def chunked_ring_byte_model(
         "note": (
             "Serialized mode changes only phase granularity. pallas-db mode "
             "uses async remote DMA plus HBM<->VMEM accumulation so traces can "
-            "show real overlap. xla-psum is the tuned roofline reference."
+            "show real overlap. xla-psum is an XLA reference; it moves fewer "
+            "bytes (optimal all-reduce), so it is not an apples-to-apples target."
         ),
     }
 
@@ -1677,9 +1683,9 @@ def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> di
         buffer_count=buffer_count,
     )
     spec["custom_collective_status"] = (
-        "serialized mode remains available for teaching; pallas-db mode is a "
+        "serialized mode is the clarity-first teaching path; pallas-db mode is a "
         "fused custom Pallas kernel with real async remote-DMA double/N-buffering; "
-        "xla-psum is included as the tuned roofline reference"
+        "xla-psum is an XLA reference that moves fewer bytes, not a target to match"
     )
     spec["student_checkpoint_questions"] = [
         "Does chunking change total bytes or only scheduling granularity?",

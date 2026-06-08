@@ -12,19 +12,25 @@ ring idea and ask a sharper question:
 How does the schedule change when the payload is split into chunks?
 ```
 
-Lab 8 is a **performance lab**. It ships three implementations of the same
-token-ring reduction so students can see the schedule, make it move faster, and
-prove the speedup:
+Lab 8 is about **building a real fused collective kernel** and learning to
+characterize it. It ships three implementations of the same token-ring reduction
+so students can see the schedule, build the fused version that actually overlaps
+communication with work, and measure honestly where that overlap helps:
 
 ```text
-serialized teaching path  ->  fused Pallas double-buffered path  ->  XLA roofline
+serialized teaching path  ->  fused Pallas double-buffered ring  ->  XLA reference
 ```
 
-The serialized path is the clarity-first microscope. The double-buffered path is
-the payoff: one fused Pallas TPU kernel that overlaps an async remote DMA with
-local accumulation, so it actually beats the serialized baseline. The XLA path
-is the honest roofline. The lesson is not "hand-written always wins" — it is
-"now I can see the machinery, make it move, and explain the remaining gap." 🧪
+The serialized path is the clarity-first microscope: chunking without pipelining.
+The double-buffered path is the real thing — one fused Pallas TPU kernel that
+keeps an async remote DMA in flight while it accumulates locally, with HBM buffer
+slots and a capacity semaphore. The XLA path is a reference point.
+
+This is a *systems-skills* lab, not a "beat the compiler" contest. The goal is to
+write a correct fused double-buffered ring with real RDMA overlap and then read
+its trace and byte model to explain exactly what the overlap buys — and what it
+does not. Matching XLA on large transfers is explicitly **not** a goal here (see
+"How fast is it, really?" below). 🧪
 
 ## Implemented Happy Path
 
@@ -42,24 +48,45 @@ Implemented operations:
 - `pallas_db_token_ring`: **fused custom double-buffered** ring. One Pallas TPU
   kernel uses async remote DMA into HBM buffer slots, capacity semaphores to
   prevent run-ahead, and an inner HBM↔VMEM accumulation pipeline that runs while
-  the remote copy is in flight. This is the real overlap.
-- `xla_token_ring`: **XLA tuned-collective roofline** (`lax.psum` for full rings,
+  the remote copy is in flight. This is where the real overlap lives.
+- `xla_token_ring`: an **XLA reference** (`lax.psum` for full rings,
   `lax.ppermute` for partial-hop experiments).
 - `lab8_chunked_pipeline_spec`: source-history, byte-model, collective-ID, and
   buffer-slot artifact.
 
+## How Fast Is It, Really?
+
 Measured on the 4-chip v5e (bf16, 4 chunks, buffer_count=2; median latency, lower
 is better):
 
-| payload | pmap_token_ring | serialized | **pallas_db** | xla (roofline) |
+| payload | pmap_token_ring | serialized | pallas_db | xla |
 |---:|---:|---:|---:|---:|
-| 64 KiB | 547 us | 230 us | **214 us** | 206 us |
-| 1 MiB | 766 us | 300 us | **282 us** | 232 us |
-| 4 MiB | 1375 us | 523 us | **511 us** | 344 us |
+| 64 KiB | 547 us | 230 us | 214 us | 206 us |
+| 1 MiB | 766 us | 300 us | 282 us | 232 us |
+| 4 MiB | 1375 us | 523 us | 511 us | 344 us |
 
-The double-buffered kernel beats the serialized path at every size and closes
-most of the remaining gap to XLA. Your numbers will vary; the point is the
-ordering and that you can back it up with a trace.
+Read these honestly — two trends, and they *are* the lesson:
+
+1. **The fused kernel's edge over the serialized path shrinks as payloads grow**
+   (≈7% at 64 KiB → ≈2% at 4 MiB). The overlap mostly hides *fixed per-phase
+   overhead* — it folds `chunks × hops` separately-dispatched Lab 1 calls into one
+   fused kernel with `hops + 1` steps. That overhead matters at small/medium
+   payloads; at 4 MiB the run is bandwidth-bound and the cheap local accumulation
+   it overlaps is no longer the bottleneck, so the win is small. That is expected,
+   not a disappointment.
+
+2. **XLA pulls further ahead as payloads grow**, and the reason is algorithmic,
+   not overlap quality. This whole-token ring moves `hops · B = 3·B` bytes per
+   device; an optimal all-reduce (what `lax.psum` does) moves only `~1.5·B` by
+   sending one *chunk* per hop. XLA wins large transfers because it moves about
+   **half the bytes** — a property of the algorithm, not the kernel. (Per byte
+   actually moved, the fused kernel is competitive.)
+
+So the takeaway is not "the custom kernel is fast." It is: *double buffering buys
+overhead hiding, biggest where fixed costs dominate; closing the gap to a tuned
+collective on large transfers needs a lower-byte algorithm, not better
+overlap.* Making the ring bandwidth-optimal (chunk-per-hop reduce-scatter +
+all-gather) is a natural follow-on lab, not this one.
 
 ## Chunking Versus Pipelining
 
@@ -377,9 +404,9 @@ artifact_index.json
 Questions for the CSV:
 
 ```text
-At fixed payload size, does pallas_db_token_ring beat the serialized path?
-How close does pallas_db get to the xla_token_ring roofline?
-Does the pallas_db advantage grow with payload size?
+By how much does pallas_db_token_ring edge out the serialized path, and does
+  that edge shrink as payload grows? Why would it?
+Does the gap to xla_token_ring widen as payload grows? Tie it to bytes moved.
 Where is the chunk-count knee for the serialized path?
 With --lab8-inner-cols 128, how badly does the fused kernel regress, and why?
 Does buffer_count = 3 or 4 help pallas_db, or does the capacity handshake dominate?
@@ -536,11 +563,10 @@ Use HBM, reduce payload size, or increase chunk count.
 reference token-ring correctness remains stable across payload sizes
 serialized Pallas chunked ring matches per-chunk full-tile token sums on TPU
 fused pallas_db_token_ring matches the same full-tile sums on TPU
-xla_token_ring matches the same correctness contract and acts as the roofline
-pallas_db beats serialized on latency at medium/large payloads (default auto inner block)
+xla_token_ring matches the same correctness contract and serves as a reference
 the spec artifact records source history, byte model, collective-ID plan, and buffer ownership rules
 a profile trace shows the remote copy overlapped with the local accumulation pipeline
-students can explain both the speedup over serialized and the remaining gap to XLA
+students can explain where the overlap helps, why its edge shrinks with payload, and why XLA moves fewer bytes
 ```
 
 ## What the Fused Kernel Does
