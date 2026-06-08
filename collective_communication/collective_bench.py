@@ -208,10 +208,13 @@ LAB3_OPS = (
     "pallas_vmem_arith",
 )
 
-# Lab 4 has one safe executable probe plus a catalog/spec artifact describing
-# synchronization mistakes that should not all be executed by default.
+# Lab 4 runs the safe correct probe, one safe runnable bug demo (a correctness
+# failure that completes cleanly), and the catalog/spec artifact. Hang/crash/race
+# bugs are catalog-only by default and only run through the guarded subprocess
+# path; see run_pallas_semaphore_bug and run_guarded_subprocess.
 LAB4_OPS = (
     "pallas_semaphore_correct",
+    "pallas_semaphore_bug",
     "semaphore_bug_zoo",
 )
 
@@ -238,9 +241,14 @@ LAB7_OPS = (
     "lab7_all_reduce_spec",
 )
 
+# Lab 8 compares three implementations of the same token-ring reduction plus the
+# pmap baseline: the serialized teaching path, the fused custom double-buffered
+# kernel (the "make it fast" payoff), and the XLA tuned-collective roofline.
 LAB8_OPS = (
     "pmap_token_ring",
     "pallas_chunked_token_ring",
+    "pallas_db_token_ring",
+    "xla_token_ring",
     "lab8_chunked_pipeline_spec",
 )
 
@@ -285,9 +293,11 @@ PALLAS_OPS = {
     "pallas_ring_reduce_scatter",
     "pallas_ring_all_reduce",
     "pallas_chunked_token_ring",
+    "pallas_db_token_ring",
     "pallas_2d_staged_all_gather",
     "pallas_vmem_arith",
     "pallas_semaphore_correct",
+    "pallas_semaphore_bug",
 }
 
 # Ops whose behavior depends on the ring hop count, so a --token-hops sweep
@@ -305,6 +315,8 @@ HOP_SWEEP_OPS = {
     "pmap_token_ring",
     "pallas_token_ring",
     "pallas_chunked_token_ring",
+    "pallas_db_token_ring",
+    "xla_token_ring",
     "pmap_ring_all_gather",
     "pallas_ring_all_gather",
     "pallas_ring_reduce_scatter",
@@ -330,10 +342,13 @@ ALL_OPS = (
     "pallas_ring_reduce_scatter",
     "pallas_ring_all_reduce",
     "pallas_chunked_token_ring",
+    "pallas_db_token_ring",
+    "xla_token_ring",
     "pallas_2d_staged_all_gather",
     "pmap_local_arith",
     "pallas_vmem_arith",
     "pallas_semaphore_correct",
+    "pallas_semaphore_bug",
     "semaphore_bug_zoo",
     "pmap_ring_all_gather",
     "pmap_psum_scatter",
@@ -377,10 +392,27 @@ class BenchResult:
     case-specific runners and the generic reporting pipeline.
 
     ``payload_bytes`` is the actual per-local-device payload after shape and
-    dtype rounding. ``logical_bytes`` is the teaching byte model used to compute
-    logical GB/s; for collectives it often represents per-device send/receive
-    work rather than a hardware counter. Failed setup/run cases keep
-    ``seconds=None`` and explain themselves through ``note`` and artifacts.
+    dtype rounding.
+
+    Two byte models keep the GB/s columns honest:
+
+    * ``logical_bytes`` is the *useful* (comparable) byte model: the bytes an
+      optimal implementation of this collective would have to move to deliver the
+      same result. It is defined the same way for the built-in baseline and the
+      custom kernel of a given collective, so the headline ``gbps`` is an
+      apples-to-apples "effective throughput toward the result" number within a
+      collective family.
+    * ``wire_bytes`` is the *actual* per-device traffic this particular
+      implementation pushes. For efficient paths it equals ``logical_bytes``; for
+      the deliberately wasteful teaching kernels (e.g. Lab 6/7 whole-token
+      reduce-scatter) it is larger, and ``wire_gbps`` together with the
+      ``wire_bytes / logical_bytes`` ratio exposes that overhead.
+
+    ``byte_model`` is a short label for the implementation's wire model
+    ("optimal", "whole-token", "serialized", ...). Cross-op comparisons should
+    use the ``us`` latency column, which needs no byte model at all. Failed
+    setup/run cases keep ``seconds=None`` and explain themselves through ``note``
+    and artifacts.
     """
 
     op: str
@@ -390,6 +422,11 @@ class BenchResult:
     seconds: float | None
     ok: bool
     note: str = ""
+    # Actual per-device wire traffic for this implementation. Defaults to
+    # logical_bytes in __post_init__ when a runner does not set it (i.e. the
+    # implementation is already optimal, so useful == wire).
+    wire_bytes: int | None = None
+    byte_model: str = "optimal"
     trace_artifact: str | None = None
     memory_profile_artifact: str | None = None
     error_artifact: str | None = None
@@ -409,6 +446,12 @@ class BenchResult:
     observed_ranks: tuple[int, ...] | None = None
     expected_ranks: tuple[int, ...] | None = None
 
+    def __post_init__(self) -> None:
+        # Frozen dataclass: default wire_bytes to the useful model when a runner
+        # did not provide a separate wire figure (efficient path: useful==wire).
+        if self.wire_bytes is None:
+            object.__setattr__(self, "wire_bytes", self.logical_bytes)
+
     @property
     def us(self) -> float | None:
         """Median/p50 time in microseconds, matching the terminal table."""
@@ -418,10 +461,17 @@ class BenchResult:
 
     @property
     def gbps(self) -> float | None:
-        """Logical GB/s computed from the teaching byte model and p50 time."""
+        """Useful GB/s: comparable optimal-model bytes over p50 time."""
         if self.seconds is None or self.seconds == 0:
             return None
         return self.logical_bytes / self.seconds / 1e9
+
+    @property
+    def wire_gbps(self) -> float | None:
+        """Wire GB/s: this implementation's actual traffic over p50 time."""
+        if self.seconds is None or self.seconds == 0 or self.wire_bytes is None:
+            return None
+        return self.wire_bytes / self.seconds / 1e9
 
 
 @dataclasses.dataclass(frozen=True)
@@ -2383,6 +2433,11 @@ def run_pallas_ring_reduce_scatter(
             note=f"case setup failed: {exc}",
         )
 
+    # Headline GB/s uses the optimal reduce-scatter byte model (matching the
+    # pmap_psum_scatter baseline) so the two are directly comparable; wire_bytes
+    # carries the inflated whole-token traffic this teaching kernel actually
+    # moves, surfaced as wire GB/s and the overhead ratio.
+    useful_bytes = int(2 * case.actual_payload_bytes * max(0, n_devices - 1) / max(1, n_devices))
     try:
         y = block_until_ready(jax, case.fn(case.x))
         if args.skip_correctness:
@@ -2412,7 +2467,9 @@ def run_pallas_ring_reduce_scatter(
             op="pallas_ring_reduce_scatter",
             layer="pallas/tpu",
             payload_bytes=case.actual_payload_bytes,
-            logical_bytes=case.teaching_wire_bytes,
+            logical_bytes=useful_bytes,
+            wire_bytes=case.teaching_wire_bytes,
+            byte_model="whole-token",
             seconds=None,
             ok=False,
             note=f"failed: {exc}",
@@ -2422,7 +2479,9 @@ def run_pallas_ring_reduce_scatter(
         op="pallas_ring_reduce_scatter",
         layer="pallas/tpu",
         payload_bytes=case.actual_payload_bytes,
-        logical_bytes=case.teaching_wire_bytes,
+        logical_bytes=useful_bytes,
+        wire_bytes=case.teaching_wire_bytes,
+        byte_model="whole-token",
         ok=ok,
         trace_artifact=trace_artifact,
         memory_profile_artifact=memory_profile,
@@ -2494,6 +2553,10 @@ def run_pallas_ring_all_reduce(
             note=f"case setup failed: {exc}",
         )
 
+    # Headline GB/s uses the optimal all-reduce byte model (matching the pmap_psum
+    # baseline) so the two are directly comparable; wire_bytes carries the
+    # inflated composed whole-token traffic this teaching kernel actually moves.
+    useful_bytes = int(2 * case.actual_payload_bytes * max(0, n_devices - 1) / max(1, n_devices))
     try:
         y = block_until_ready(jax, case.fn(case.x))
         if args.skip_correctness:
@@ -2523,7 +2586,9 @@ def run_pallas_ring_all_reduce(
             op="pallas_ring_all_reduce",
             layer="pallas/tpu",
             payload_bytes=case.actual_payload_bytes,
-            logical_bytes=case.teaching_wire_bytes,
+            logical_bytes=useful_bytes,
+            wire_bytes=case.teaching_wire_bytes,
+            byte_model="whole-token",
             seconds=None,
             ok=False,
             note=f"failed: {exc}",
@@ -2533,7 +2598,9 @@ def run_pallas_ring_all_reduce(
         op="pallas_ring_all_reduce",
         layer="pallas/tpu",
         payload_bytes=case.actual_payload_bytes,
-        logical_bytes=case.teaching_wire_bytes,
+        logical_bytes=useful_bytes,
+        wire_bytes=case.teaching_wire_bytes,
+        byte_model="whole-token",
         ok=ok,
         trace_artifact=trace_artifact,
         memory_profile_artifact=memory_profile,
@@ -2542,7 +2609,7 @@ def run_pallas_ring_all_reduce(
     )
 
 
-def run_pallas_chunked_token_ring(
+def _run_lab8_ring(
     jax: Any,
     jnp: Any,
     args: argparse.Namespace,
@@ -2550,29 +2617,31 @@ def run_pallas_chunked_token_ring(
     payload_bytes: int,
     dtype: Any,
     n_devices: int,
+    *,
+    op: str,
+    kernel_mode: str,
+    byte_model: str,
+    layer: str = "pallas/tpu",
 ) -> BenchResult:
-    """Run Lab 8's chunked token-ring teaching implementation."""
-    if jax.default_backend() != "tpu":
+    """Run one Lab 8 token-ring implementation in a given kernel mode.
+
+    ``kernel_mode`` selects the implementation explicitly so each benchmark op is
+    pinned: ``serialized`` (the clarity-first teaching baseline), ``pallas-db``
+    (the fused custom double-buffered ring), or ``xla-psum`` (the XLA tuned
+    collective roofline). A single Lab 8 sweep can then compare all three.
+    """
+    if jax.default_backend() != "tpu" and kernel_mode == "pallas-db":
         return BenchResult(
-            op="pallas_chunked_token_ring",
-            layer="pallas/tpu",
-            payload_bytes=payload_bytes,
-            logical_bytes=0,
-            seconds=None,
-            ok=False,
-            note="requires TPU backend",
+            op=op, layer=layer, payload_bytes=payload_bytes,
+            logical_bytes=0, seconds=None, ok=False,
+            note="pallas-db requires a TPU backend",
         )
     try:
         from labs import lab8_chunked_pipeline
     except Exception as exc:
         return BenchResult(
-            op="pallas_chunked_token_ring",
-            layer="pallas/tpu",
-            payload_bytes=payload_bytes,
-            logical_bytes=0,
-            seconds=None,
-            ok=False,
-            note=f"import failed: {exc}",
+            op=op, layer=layer, payload_bytes=payload_bytes,
+            logical_bytes=0, seconds=None, ok=False, note=f"import failed: {exc}",
         )
 
     hops = token_ring_hops(args, n_devices)
@@ -2594,15 +2663,13 @@ def run_pallas_chunked_token_ring(
             min_cols=args.pallas_min_cols,
             memory_space_name=args.pallas_memory_space,
             collective_id=args.pallas_collective_id,
+            kernel_mode=kernel_mode,
+            inner_pipeline_cols=args.lab8_inner_cols,
         )
     except Exception as exc:
         return BenchResult(
-            op="pallas_chunked_token_ring",
-            layer="pallas/tpu",
-            payload_bytes=payload_bytes,
-            logical_bytes=0,
-            seconds=None,
-            ok=False,
+            op=op, layer=layer, payload_bytes=payload_bytes,
+            logical_bytes=0, seconds=None, ok=False,
             note=f"case setup failed: {exc}",
         )
 
@@ -2611,46 +2678,66 @@ def run_pallas_chunked_token_ring(
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab8_chunked_pipeline.check_result(
-                jax,
-                jnp,
-                y,
-                case.expected_sums,
-            )
-        with maybe_trace(
-            jax, args, run, "pallas_chunked_token_ring", payload_bytes
-        ) as trace_artifact:
+            ok = lab8_chunked_pipeline.check_result(jax, jnp, y, case.expected_sums)
+        with maybe_trace(jax, args, run, op, payload_bytes) as trace_artifact:
             timing = time_jax_call(
-                jax,
-                case.fn,
-                case.x,
-                warmup=args.warmup,
-                iters=args.iters,
+                jax, case.fn, case.x, warmup=args.warmup, iters=args.iters
             )
-        memory_profile = maybe_write_memory_profile(
-            jax, args, run, "pallas_chunked_token_ring", payload_bytes
-        )
+        memory_profile = maybe_write_memory_profile(jax, args, run, op, payload_bytes)
     except Exception as exc:
         return BenchResult(
-            op="pallas_chunked_token_ring",
-            layer="pallas/tpu",
-            payload_bytes=case.actual_payload_bytes,
-            logical_bytes=case.wire_bytes,
-            seconds=None,
-            ok=False,
+            op=op, layer=layer, payload_bytes=case.actual_payload_bytes,
+            logical_bytes=case.wire_bytes, seconds=None, ok=False,
             note=f"failed: {exc}",
         )
 
     return BenchResult(
-        op="pallas_chunked_token_ring",
-        layer="pallas/tpu",
+        op=op,
+        layer=layer,
         payload_bytes=case.actual_payload_bytes,
         logical_bytes=case.wire_bytes,
+        byte_model=byte_model,
         ok=ok,
         trace_artifact=trace_artifact,
         memory_profile_artifact=memory_profile,
         note=case.note,
         **result_timing_kwargs(timing),
+    )
+
+
+def run_pallas_chunked_token_ring(
+    jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
+    payload_bytes: int, dtype: Any, n_devices: int,
+) -> BenchResult:
+    """Lab 8 clarity-first serialized chunked token-ring (teaching baseline)."""
+    return _run_lab8_ring(
+        jax, jnp, args, run, payload_bytes, dtype, n_devices,
+        op="pallas_chunked_token_ring", kernel_mode="serialized",
+        byte_model="serialized",
+    )
+
+
+def run_pallas_db_token_ring(
+    jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
+    payload_bytes: int, dtype: Any, n_devices: int,
+) -> BenchResult:
+    """Lab 8 fused custom double-buffered ring with overlapped remote DMA."""
+    return _run_lab8_ring(
+        jax, jnp, args, run, payload_bytes, dtype, n_devices,
+        op="pallas_db_token_ring", kernel_mode="pallas-db",
+        byte_model="double-buffered",
+    )
+
+
+def run_xla_token_ring(
+    jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
+    payload_bytes: int, dtype: Any, n_devices: int,
+) -> BenchResult:
+    """Lab 8 XLA tuned-collective roofline reference (lax.psum / ppermute)."""
+    return _run_lab8_ring(
+        jax, jnp, args, run, payload_bytes, dtype, n_devices,
+        op="xla_token_ring", kernel_mode="xla-psum",
+        byte_model="optimal", layer="pmap/lax",
     )
 
 
@@ -2968,6 +3055,188 @@ def run_pallas_semaphore_correct(
         trace_artifact=trace_artifact,
         memory_profile_artifact=memory_profile,
         note=f"correct barrier+dma semaphore probe; {case.note}",
+        **result_timing_kwargs(timing),
+    )
+
+
+def run_guarded_subprocess(
+    cmd: Sequence[str], *, timeout: float, label: str = ""
+) -> dict[str, Any]:
+    """Run ``cmd`` in an isolated process group under a hard wall-clock timeout.
+
+    Returns ``{"timed_out", "returncode", "stdout", "stderr"}``. On timeout the
+    entire process group is SIGKILLed, so a hung TPU kernel cannot keep the device
+    wedged after the child is reaped. This is the sanctioned way to execute Lab 4's
+    hang/crash/race bug repros: even if the child deadlocks, the parent recovers.
+
+    The child is launched with ``start_new_session=True`` so signalling its group
+    does not touch the parent benchmark process.
+    """
+    import signal
+
+    proc = subprocess.Popen(
+        list(cmd),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+    try:
+        out, err = proc.communicate(timeout=timeout)
+        return {
+            "timed_out": False,
+            "returncode": proc.returncode,
+            "stdout": out,
+            "stderr": err,
+        }
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            proc.kill()
+        try:
+            out, err = proc.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            out, err = "", ""
+        return {
+            "timed_out": True,
+            "returncode": None,
+            "stdout": out,
+            "stderr": err,
+        }
+
+
+# Hidden entrypoint flag: when present, the process does nothing but hang. It
+# exists only so run_guarded_subprocess can be validated (timeout + teardown)
+# without importing JAX or touching the TPU. main() handles it before any heavy
+# imports.
+SELFTEST_HANG_FLAG = "--__lab4-selftest-hang"
+
+
+def run_pallas_semaphore_bug(
+    jax: Any,
+    jnp: Any,
+    args: argparse.Namespace,
+    run: RunContext,
+    payload_bytes: int,
+    dtype: Any,
+    n_devices: int,
+) -> BenchResult:
+    """Run a SAFE Lab 4 bug demo: reproduce a documented synchronization bug and
+    show the correctness oracle catching it.
+
+    Only correctness-class bugs run here (they complete cleanly and merely fail
+    validation). ``ok`` means "the documented symptom was reproduced", so a
+    healthy Lab 4 run stays all-green even though this row deliberately produces
+    wrong data — the ``observed_ranks`` vs ``expected_ranks`` columns show the
+    mismatch and the note explains it. Hang/crash/race bugs are not runnable here;
+    they only run through the guarded subprocess path (see run_guarded_subprocess
+    and --lab4-allow-dangerous).
+    """
+    op = "pallas_semaphore_bug"
+    bug_id = getattr(args, "lab4_run_bug", None) or "wrong_neighbor_map"
+    if jax.default_backend() != "tpu":
+        return BenchResult(
+            op=op, layer="pallas/tpu", payload_bytes=payload_bytes,
+            logical_bytes=0, seconds=None, ok=False, note="requires TPU backend",
+        )
+    try:
+        from labs import lab4_semaphore_bug_zoo
+    except Exception as exc:
+        return BenchResult(
+            op=op, layer="pallas/tpu", payload_bytes=payload_bytes,
+            logical_bytes=0, seconds=None, ok=False, note=f"import failed: {exc}",
+        )
+
+    if bug_id not in lab4_semaphore_bug_zoo.SAFE_RUNNABLE_BUGS:
+        safe = ", ".join(lab4_semaphore_bug_zoo.SAFE_RUNNABLE_BUGS)
+        return BenchResult(
+            op=op, layer="lab/spec", payload_bytes=payload_bytes,
+            logical_bytes=0, seconds=None, ok=False,
+            note=(
+                f"bug '{bug_id}' has no safe in-process demo (safe ids: {safe}). "
+                "Hang/crash/race bugs run only via the guarded subprocess path; "
+                "see lab4_semaphore_bug_zoo.md and --lab4-allow-dangerous."
+            ),
+        )
+
+    if n_devices < 3:
+        # On 2 devices the left and right neighbor maps coincide, so the wrong-map
+        # mutation cannot change the output. Report honestly instead of pretending.
+        return BenchResult(
+            op=op, layer="pallas/tpu", payload_bytes=payload_bytes,
+            logical_bytes=0, seconds=None, ok=False,
+            note=f"wrong_neighbor_map demo needs >=3 devices to differ; have {n_devices}",
+        )
+
+    try:
+        case, intended_expected, buggy_direction = (
+            lab4_semaphore_bug_zoo.build_wrong_neighbor_map_case(
+                jax=jax,
+                jnp=jnp,
+                devices=jax.devices(),
+                axis_name=args.axis_name,
+                payload_bytes=payload_bytes,
+                dtype=dtype,
+                intended_direction=args.neighbor_direction,
+                tile_rows=args.pallas_tile_rows,
+                min_cols=args.pallas_min_cols,
+                memory_space_name=args.pallas_memory_space,
+                collective_id=args.pallas_collective_id,
+            )
+        )
+    except Exception as exc:
+        return BenchResult(
+            op=op, layer="pallas/tpu", payload_bytes=payload_bytes,
+            logical_bytes=0, seconds=None, ok=False,
+            note=f"case setup failed: {exc}",
+        )
+
+    try:
+        y = block_until_ready(jax, case.fn(case.x))
+        observed = rank_vector(jax.device_get(y)[:, 0, 0])
+        intended = rank_vector(jax.device_get(intended_expected))
+        # The bug is "reproduced" when the buggy kernel's output does not match
+        # the ownership map the caller intended.
+        reproduced = observed != intended
+        ok = True if args.skip_correctness else reproduced
+        with maybe_trace(jax, args, run, op, payload_bytes) as trace_artifact:
+            timing = time_jax_call(
+                jax, case.fn, case.x, warmup=args.warmup, iters=args.iters
+            )
+        memory_profile = maybe_write_memory_profile(jax, args, run, op, payload_bytes)
+    except Exception as exc:
+        return BenchResult(
+            op=op, layer="pallas/tpu", payload_bytes=case.actual_payload_bytes,
+            logical_bytes=case.actual_payload_bytes, seconds=None, ok=False,
+            note=f"failed: {exc}",
+        )
+
+    if reproduced:
+        note = (
+            f"BUG DEMO wrong_neighbor_map: kernel sent '{buggy_direction}' while "
+            f"caller intended '{args.neighbor_direction}', so correctness "
+            f"intentionally FAILED (observed={list(observed)} "
+            f"intended={list(intended)}). Documented symptom reproduced; ok=True "
+            "means the demo behaved as designed."
+        )
+    else:
+        note = (
+            "BUG DEMO wrong_neighbor_map did NOT reproduce (observed==intended); "
+            "unexpected on this topology."
+        )
+    return BenchResult(
+        op=op,
+        layer="pallas/tpu",
+        payload_bytes=case.actual_payload_bytes,
+        logical_bytes=case.actual_payload_bytes,
+        ok=ok,
+        byte_model="bug-demo",
+        trace_artifact=trace_artifact,
+        memory_profile_artifact=memory_profile,
+        observed_ranks=observed,
+        expected_ranks=intended,
+        note=note,
         **result_timing_kwargs(timing),
     )
 
@@ -3357,9 +3626,12 @@ def result_to_row(
         "requested_payload_bytes": requested_payload_bytes,
         "payload_bytes": result.payload_bytes,
         "logical_bytes": result.logical_bytes,
+        "wire_bytes": result.wire_bytes,
+        "byte_model": result.byte_model,
         "seconds": result.seconds,
         "us": result.us,
         "gbps": result.gbps,
+        "wire_gbps": result.wire_gbps,
         "timing_mean_s": result.timing_mean_s,
         "timing_p10_s": result.timing_p10_s,
         "timing_p50_s": result.timing_p50_s,
@@ -3447,9 +3719,17 @@ def record_result(
 
 def print_header() -> None:
     """Print the fixed-width table header for interactive runs."""
+    # GB/s is "useful" throughput (optimal-model bytes / time), comparable within
+    # a collective family. wire GB/s uses the implementation's actual traffic; a
+    # gap between them is wasted bandwidth. For cross-op comparison prefer p50
+    # time, which needs no byte model.
     print(
-        f"{'op':34s} {'layer':12s} {'payload':>12s} {'logical/dev':>12s} "
-        f"{'p50 time':>12s} {'GB/s':>10s} {'ok':>4s}  note"
+        f"{'op':34s} {'layer':12s} {'payload':>12s} {'useful/dev':>12s} "
+        f"{'p50 time':>12s} {'GB/s':>10s} {'wireGB/s':>10s} {'ok':>4s}  note"
+    )
+    print(
+        "  (GB/s = useful optimal-model throughput; wireGB/s = actual traffic; "
+        "compare p50 time across ops)"
     )
 
 
@@ -3457,8 +3737,10 @@ def print_result(row: Mapping[str, Any]) -> None:
     """Print one compact terminal row for a benchmark case."""
     us = row.get("us")
     gbps = row.get("gbps")
+    wire_gbps = row.get("wire_gbps")
     time_text = "n/a" if us is None else f"{float(us):9.2f} us"
     gbps_text = "n/a" if gbps is None else f"{float(gbps):8.2f}"
+    wire_text = "n/a" if wire_gbps is None else f"{float(wire_gbps):8.2f}"
     note = concise_note(str(row.get("note") or ""))
     if row.get("error_artifact") and note:
         note = f"{note} [{row['error_artifact']}]"
@@ -3468,7 +3750,7 @@ def print_result(row: Mapping[str, Any]) -> None:
         f"{str(row['op']):34s} {str(row['layer']):12s} "
         f"{format_bytes(int(row['payload_bytes'])):>12s} "
         f"{format_bytes(int(row['logical_bytes'])):>12s} "
-        f"{time_text:>12s} {gbps_text:>10s} "
+        f"{time_text:>12s} {gbps_text:>10s} {wire_text:>10s} "
         f"{str(row['ok']):>4s}  {note}"
     )
 
@@ -3567,8 +3849,10 @@ def maybe_write_plots(rows: Sequence[Mapping[str, Any]], run: RunContext) -> lis
     ax.legend(fontsize=8)
     save(fig, "latency_by_payload.png")
 
-    # Plot 2: logical bandwidth. Because logical_bytes is a teaching byte model,
-    # this plot should be read alongside operation notes and lab specs.
+    # Plot 2: useful bandwidth (optimal-model bytes / time). This is comparable
+    # within a collective family; the wire_gbps column shows actual traffic, and
+    # the byte_model column flags which implementations move more than the
+    # optimal bytes. Read alongside operation notes and lab specs.
     fig, ax = plt.subplots(figsize=(9.5, 5.6))
     for op in ops:
         group = sorted((row for row in data if row["op"] == op), key=lambda r: r["payload_bytes"])
@@ -3581,7 +3865,7 @@ def maybe_write_plots(rows: Sequence[Mapping[str, Any]], run: RunContext) -> lis
         )
     ax.set_xscale("log", base=2)
     ax.set_xlabel("payload bytes per local device")
-    ax.set_ylabel("logical GB/s per device")
+    ax.set_ylabel("useful GB/s per device (optimal model)")
     ax.set_title("Collective bandwidth by payload")
     ax.grid(True, which="both", alpha=0.25)
     ax.legend(fontsize=8)
@@ -3858,7 +4142,14 @@ def write_markdown_summary(
         # Keep the markdown summary short: one best row per op, with full data in
         # CSV/JSONL for deeper analysis.
         lines.extend(["", "## Best Bandwidth By Op", ""])
-        lines.append("| op | payload | latency us | logical GB/s |")
+        lines.append(
+            "GB/s below is *useful* throughput (optimal-model bytes / time), "
+            "comparable within a collective family. See the `wire_gbps` and "
+            "`byte_model` CSV columns for actual traffic and overhead; use the "
+            "`us` latency column to compare across ops."
+        )
+        lines.append("")
+        lines.append("| op | payload | latency us | useful GB/s |")
         lines.append("| --- | ---: | ---: | ---: |")
         for op, row in sorted(best_by_op.items()):
             lines.append(
@@ -4079,7 +4370,22 @@ def build_parser() -> argparse.ArgumentParser:
         "--lab8-buffer-count",
         type=int,
         default=2,
-        help="Lab 8 modeled buffer-slot count for the future pipelined schedule",
+        help=(
+            "Lab 8 buffer-slot count. Modeled for the serialized path; the fused "
+            "pallas_db_token_ring kernel uses it as real HBM double-buffer slots "
+            "(must be >= 2)."
+        ),
+    )
+    parser.add_argument(
+        "--lab8-inner-cols",
+        type=int,
+        default=0,
+        help=(
+            "Lab 8 inner VMEM pipeline width (columns per block) for the fused "
+            "pallas_db_token_ring kernel. 0 (default) auto-sizes the largest "
+            "VMEM-safe block; a small positive value shows the micro-transfer "
+            "penalty of an undersized block."
+        ),
     )
     parser.add_argument(
         "--lab9-mesh-shape",
@@ -4115,6 +4421,30 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.25,
         help="Lab 3 local arithmetic bias",
+    )
+    parser.add_argument(
+        "--lab4-run-bug",
+        default="wrong_neighbor_map",
+        help=(
+            "Lab 4: which catalog bug the pallas_semaphore_bug op reproduces. "
+            "Safe (correctness-only) bugs run in-process; hang/crash/race bugs "
+            "run only via the guarded subprocess path with --lab4-allow-dangerous."
+        ),
+    )
+    parser.add_argument(
+        "--lab4-allow-dangerous",
+        action="store_true",
+        help=(
+            "Lab 4: permit hang/crash/race bug repros, which run ONLY in an "
+            "isolated subprocess under --lab4-bug-timeout. Use a disposable VM; a "
+            "real over-wait can force a TPU runtime restart."
+        ),
+    )
+    parser.add_argument(
+        "--lab4-bug-timeout",
+        type=float,
+        default=20.0,
+        help="Lab 4: wall-clock seconds before a guarded dangerous bug repro is killed",
     )
     parser.add_argument(
         "--skip-correctness",
@@ -4227,6 +4557,14 @@ def dispatch_case(
             return run_pallas_chunked_token_ring(
                 jax, jnp, args, run, payload_bytes, dtype, n_devices
             )
+        if op == "pallas_db_token_ring":
+            return run_pallas_db_token_ring(
+                jax, jnp, args, run, payload_bytes, dtype, n_devices
+            )
+        if op == "xla_token_ring":
+            return run_xla_token_ring(
+                jax, jnp, args, run, payload_bytes, dtype, n_devices
+            )
         if op == "pallas_2d_staged_all_gather":
             return run_pallas_2d_staged_all_gather(
                 jax, jnp, args, run, payload_bytes, dtype, n_devices
@@ -4237,6 +4575,10 @@ def dispatch_case(
             )
         if op == "pallas_semaphore_correct":
             return run_pallas_semaphore_correct(
+                jax, jnp, args, run, payload_bytes, dtype, n_devices
+            )
+        if op == "pallas_semaphore_bug":
+            return run_pallas_semaphore_bug(
                 jax, jnp, args, run, payload_bytes, dtype, n_devices
             )
         if op == "semaphore_bug_zoo":
@@ -4268,6 +4610,13 @@ def dispatch_case(
 
 def main(argv: list[str] | None = None) -> int:
     """CLI entrypoint: parse, configure, run the sweep, and write artifacts."""
+    # Self-test entrypoint for run_guarded_subprocess: hang forever with no JAX
+    # import and no TPU access, so the guard's timeout + group-kill teardown can be
+    # validated safely. The parent kills this child's process group on timeout.
+    if SELFTEST_HANG_FLAG in (sys.argv[1:] if argv is None else argv):
+        print("selftest-hang: sleeping until killed", flush=True)
+        while True:
+            time.sleep(3600)
     args = build_parser().parse_args(argv)
     apply_lab_defaults(args)
     ops = normalize_ops(parse_csv(args.ops))

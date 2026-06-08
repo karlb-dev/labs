@@ -1,39 +1,37 @@
-"""Lab 8: chunked ring movement and pipeline planning.
+"""Lab 8: chunked and pipelined ring movement.
 
-This file contains the concept code for the Lab 8 teaching module. The benchmark
-harness owns run directories, logging, CSV/JSONL output, plots, and profiler
-capture. Keeping those pieces out of the lab file lets students read one idea at
-a time.
+Lab 8 ships three implementations of the same token-ring reduction so students
+can read a schedule, make it move faster, and prove the speedup.
 
-What this lab implements
-========================
+    pallas_chunked_token_ring
+        The clarity-first teaching path.  It calls the Lab 1 one-hop primitive
+        once per chunk/hop pair, so it is intentionally serialized: chunking
+        without pipelining.  Excellent for explaining chunk boundaries,
+        collective IDs, and source history.
 
-The implemented custom path is **chunked but serialized**:
+    pallas_double_buffered_token_ring
+        The fused performance path.  A single Pallas program carries the ring
+        across ``hops + 1`` steps.  Each device alternates HBM buffer slots,
+        starts an async remote DMA into the neighbor's next slot, accumulates the
+        current slot through an inner HBM<->VMEM pipeline while the remote copy is
+        in flight, and waits only when correctness requires it.  ``buffer_count``
+        controls real HBM double-buffer slots here, and a capacity semaphore
+        guards slot reuse.
 
-    for each chunk:
-        run the Lab 1 one-hop remote-DMA primitive for H hops
-        accumulate the token values seen by this device
+    xla_fast_token_ring
+        The roofline reference.  For a full ring it lowers to ``lax.psum``; for
+        partial-hop experiments it uses ``lax.ppermute``.
 
-That is deliberately not a fully fused, double-buffered Pallas pipeline yet.
-Chunking is the act of splitting a payload. Pipelining is the act of overlapping
-stages so useful work continues while copies are in flight. Lab 8 teaches the
-scheduling vocabulary and records the buffer-slot plan before claiming overlap.
-
-What this lab does not claim
-============================
-
-Changing ``buffer_count`` in this file does not magically create overlap. The
-current Pallas path calls the Lab 1 remote-copy helper repeatedly. The buffer
-count is recorded in the lab spec so the next fused kernel can implement the
-right slot ownership discipline.
-
-This distinction is important enough to repeat: a trace must prove overlap.
-Prose cannot.
+Together they let students compare the serialized teaching path, the custom
+fused Pallas path, and XLA's tuned collective, and explain both the speedup over
+the serialized path and the remaining gap to XLA with profile and byte-model
+evidence.
 """
 
 from __future__ import annotations
 
 import dataclasses
+import functools
 from collections.abc import Callable
 from typing import Any
 
@@ -75,6 +73,13 @@ SUGGESTED_CHUNK_BYTES = (
     1024 * 1024,
 )
 
+SUPPORTED_KERNEL_MODES = frozenset({"auto", "serialized", "pallas-db", "xla-psum"})
+# 0 means "auto": choose_inner_pipeline_cols picks the largest VMEM-safe column
+# block. A positive value pins the inner block (useful for teaching the
+# micro-transfer penalty of a too-small block).
+DEFAULT_INNER_PIPELINE_COLS = 0
+
+
 
 @dataclasses.dataclass(frozen=True)
 class ChunkedTokenRingCase:
@@ -115,18 +120,32 @@ class ChunkedTokenRingCase:
     direction: str
     hops: int
     n_devices: int
+    kernel_mode: str = "serialized"
+    fast_path_reason: str = ""
 
     @property
     def note(self) -> str:
         """Short human-readable note for benchmark tables."""
+        reason = f" reason={self.fast_path_reason}" if self.fast_path_reason else ""
         return (
-            f"chunked-serialized direction={self.direction} "
+            f"lab8-kernel={self.kernel_mode} direction={self.direction} "
             f"chunks={self.n_chunks} buffers={self.buffer_count} "
             f"hops={self.hops} devices={self.n_devices} "
             f"chunk={self.chunk_payload_bytes}B "
             f"tile={self.tile_rows}x{self.tile_cols} "
-            f"phases={self.serialized_remote_copy_phases}"
+            f"serialized_phases={self.serialized_remote_copy_phases}"
+            f"{reason}"
         )
+
+    @property
+    def implemented_overlap(self) -> bool:
+        """Whether the selected custom path contains actual async overlap."""
+        return self.kernel_mode == "pallas-db"
+
+    @property
+    def is_roofline_reference(self) -> bool:
+        """Whether the selected path is XLA's tuned collective reference."""
+        return self.kernel_mode == "xla-psum"
 
     @property
     def num_devices(self) -> int:
@@ -190,6 +209,7 @@ class ChunkedTokenRingCase:
             hops=self.hops,
             direction=self.direction,
             buffer_count=self.buffer_count,
+            kernel_mode=self.kernel_mode,
         )
 
     def buffer_schedule(self, *, max_chunks: int = 16) -> list[dict[str, Any]]:
@@ -205,35 +225,36 @@ LAB_SPEC: dict[str, Any] = {
     "lab": "lab8",
     "title": "Lab 8: Chunked And Pipelined Ring",
     "goal": (
-        "Turn a correct ring into a performance experiment with chunk size, "
-        "serialized remote-copy phases, buffer-slot ownership, and profile-based "
-        "claims about overlap. The implemented custom path is chunked but "
-        "serialized; the spec records the pipeline schedule a fused kernel should "
-        "implement next."
+        "Turn a correct ring into a performance experiment that culminates in "
+        "one genuinely fast custom kernel: a fused Pallas double-buffered ring "
+        "with async remote DMA, capacity synchronization, and inner HBM<->VMEM "
+        "accumulation while communication is in flight."
     ),
     "implemented_ops": [
         "`pmap_token_ring`: dependency-chain reference from Lab 2",
         "`pallas_chunked_token_ring`: serialized chunked ring built from Lab 1 hops",
-        "`lab8_chunked_pipeline_spec`: source-history, byte-model, collective-ID, and buffer-slot artifact",
+        "`pallas_double_buffered_token_ring`: fused custom Pallas ring with real double/N-buffering",
+        "`xla_fast_token_ring`: tuned XLA collective reference (`lax.psum` for full rings)",
+        "`lab8_chunked_pipeline_spec`: source-history, byte-model, collective-ID, buffer-slot, and overlap artifact",
     ],
     "deferred_ops": [
-        "Fuse the chunk schedule into one Pallas kernel",
-        "Use buffer slots for real double buffering rather than spec-only planning",
-        "Record run-ahead hazards as explicit correctness checks",
-        "Measure overlap by separating enqueue, wait, and local-compute profile regions",
-        "Carry the chunked schedule into optimized reduce-scatter and all-reduce",
+        "Add a bidirectional reduce-scatter/all-gather variant to use both ICI directions",
+        "Relax capacity synchronization to allow controlled multi-slot run-ahead",
+        "Teach TPU interpret-mode race checks as a required pre-profile debugging step",
+        "Carry the fused schedule into optimized reduce-scatter and all-reduce",
     ],
     "byte_model": [
-        "Chunking does not reduce total bytes: serialized send bytes are `hops * full_payload_bytes` per device",
-        "Each per-chunk remote-copy phase sends `chunk_payload_bytes` per device",
-        "Serialized chunking increases phase count to `chunks * hops` before true overlap is implemented",
-        "True pipelining should change overlap and latency hiding, not required payload bytes",
+        "Chunking does not reduce total bytes: ring send bytes are `hops * full_payload_bytes` per device",
+        "The serialized path emits `chunks * hops` composed Lab 1 phases",
+        "The fused Pallas path emits one ring program with `hops + 1` steps and HBM buffer slots",
+        "Real double-buffering changes overlap and latency hiding, not required payload bytes",
     ],
     "pass_condition": [
         "reference token-ring correctness remains stable across payload sizes",
         "serialized Pallas chunked ring matches per-chunk token sums on TPU",
         "full output tiles are checked, not only scalar rank markers",
-        "spec artifact defines source history, byte model, collective IDs, and buffer ownership rules",
+        "spec artifact defines source history, byte model, collective IDs, buffer ownership, and overlap evidence rules",
+        "pallas-db path matches full-tile expected sums and profiles with RDMA start/accumulate/wait structure",
     ],
     "artifacts": [
         "results.jsonl",
@@ -417,8 +438,8 @@ def expected_chunk_scalar_values(
 ) -> list[list[float]]:
     """Alias with a more explicit teaching name.
 
-    ``expected_chunk_sum_values`` is kept for compatibility with the compact
-    original lab. This alias reads better in notebooks and worksheets.
+    ``expected_chunk_sum_values`` is the compact name; this alias reads better in
+    notebooks and worksheets.
     """
     return expected_chunk_sum_values(
         n_devices=n_devices,
@@ -472,13 +493,13 @@ def make_chunked_rank_input(
 ) -> Any:
     """Create the teaching input tensor for Lab 8.
 
-    The scalar at ``[row=0, col=0]`` keeps the original hand-checkable pattern:
+    The scalar at ``[row=0, col=0]`` is the hand-checkable pattern:
 
         x[source, chunk, 0, 0] = 10 * source + chunk
 
     The rest of the tile includes tiny row/column patterns. That makes the full
-    correctness check meaningful: a partial-copy or stale-slot bug can no longer
-    hide behind a correct rank marker at ``[0, 0]``.
+    correctness check meaningful: a partial-copy or stale-slot bug cannot hide
+    behind a correct rank marker at ``[0, 0]``.
     """
     src = jnp.arange(n_devices, dtype=jnp.float32).reshape(n_devices, 1, 1, 1)
     chunk = jnp.arange(n_chunks, dtype=jnp.float32).reshape(1, n_chunks, 1, 1)
@@ -536,13 +557,15 @@ def chunked_ring_byte_model(
     hops: int,
     direction: str,
     buffer_count: int,
+    kernel_mode: str = "serialized",
 ) -> dict[str, int | float | bool | str]:
     """Return byte and phase accounting for Lab 8.
 
-    These numbers are algorithmic accounting for the implemented teaching path.
+    These numbers are algorithmic accounting for the selected Lab 8 path.
     They are not a claim about how a built-in XLA collective is implemented.
     """
     direction = normalize_direction(direction)
+    kernel_mode = normalize_kernel_mode(kernel_mode)
     n_devices = int(n_devices)
     full_payload_bytes = int(full_payload_bytes)
     chunk_payload_bytes = int(chunk_payload_bytes)
@@ -580,10 +603,15 @@ def chunked_ring_byte_model(
         "serialized_remote_copy_phases": serialized_phases,
         "remote_copy_phases_per_chunk": phase_count_per_chunk,
         "bytes_do_not_change_with_chunking": True,
-        "implemented_overlap": False,
+        "kernel_mode": kernel_mode,
+        "implemented_overlap": kernel_mode == "pallas-db",
+        "uses_xla_tuned_collective": kernel_mode == "xla-psum",
+        "fused_pallas_ring_steps": hops + 1,
+        "required_buffer_slots_for_overlap": 2,
         "note": (
-            "Chunking changes phase granularity. The implemented path remains "
-            "serialized; overlap must be proven by a later fused kernel trace."
+            "Serialized mode changes only phase granularity. pallas-db mode "
+            "uses async remote DMA plus HBM<->VMEM accumulation so traces can "
+            "show real overlap. xla-psum is the tuned roofline reference."
         ),
     }
 
@@ -793,6 +821,410 @@ def pipeline_planning_notes(*, buffer_count: int) -> list[str]:
     ]
 
 
+
+
+def normalize_kernel_mode(mode: str | None) -> str:
+    """Normalize the Lab 8 implementation selector.
+
+    ``auto`` chooses the fused Pallas double-buffered kernel when the platform
+    and configuration can support it, otherwise it falls back to the XLA fast
+    reference.  ``serialized`` selects the composed teaching path.
+    """
+    cleaned = "auto" if mode is None else str(mode).strip().lower()
+    aliases = {
+        "": "auto",
+        "fast": "auto",
+        "db": "pallas-db",
+        "double-buffered": "pallas-db",
+        "double_buffered": "pallas-db",
+        "pallas_db": "pallas-db",
+        "pallas-db": "pallas-db",
+        "pallas": "pallas-db",
+        "teaching": "serialized",
+        "slow": "serialized",
+        "chunked": "serialized",
+        "serialized": "serialized",
+        "xla": "xla-psum",
+        "psum": "xla-psum",
+        "xla-psum": "xla-psum",
+        "roofline": "xla-psum",
+    }
+    cleaned = aliases.get(cleaned, cleaned)
+    if cleaned not in SUPPORTED_KERNEL_MODES:
+        raise ValueError(
+            f"unknown Lab 8 kernel mode {mode!r}; expected one of "
+            f"{sorted(SUPPORTED_KERNEL_MODES)}"
+        )
+    return cleaned
+
+
+def _device_kind(devices: list[Any]) -> str:
+    """Return a stable-ish device kind string without importing TPU-only code."""
+    if not devices:
+        return "unknown"
+    return str(getattr(devices[0], "device_kind", getattr(devices[0], "platform", "unknown")))
+
+
+def _looks_like_tpu(devices: list[Any]) -> bool:
+    """Best-effort TPU detector used only for auto mode."""
+    return "TPU" in _device_kind(devices).upper()
+
+
+def choose_inner_pipeline_cols(
+    *, cols: int, requested: int, rows: int = 1, budget_elems: int = 262_144
+) -> int:
+    """Choose an inner HBM<->VMEM pipeline column block that divides ``cols``.
+
+    The inner block is what ``emit_pipeline`` streams through VMEM. Picking it too
+    small is a performance trap: a 4 MiB tile with a 128-column block becomes
+    thousands of micro-transfers and the "fast" kernel ends up slower than the
+    serialized baseline. So unless the caller pins a value, this targets the
+    LARGEST column block that (a) divides ``cols`` for full blocks and (b) keeps
+    one VMEM tile (``rows * inner_cols`` elements) within ``budget_elems`` so it
+    stays VMEM-safe as payloads grow.
+
+    ``requested <= 0`` means "auto" (the default). A positive ``requested`` is
+    honored as an upper bound (largest divisor of ``cols`` no larger than it), so
+    students can still force a tiny block to *see* the micro-transfer penalty.
+    """
+    cols = max(1, int(cols))
+    rows = max(1, int(rows))
+    if int(requested) <= 0:
+        target = max(1, int(budget_elems) // rows)
+    else:
+        target = int(requested)
+    target = max(1, min(target, cols))
+    for candidate in range(target, 0, -1):
+        if cols % candidate == 0:
+            return candidate
+    return 1
+
+
+def choose_lab8_kernel_mode(
+    *,
+    requested_mode: str | None,
+    devices: list[Any],
+    buffer_count: int,
+    hops: int,
+    n_devices: int,
+    tile_cols: int,
+    inner_cols: int,
+) -> tuple[str, str]:
+    """Return ``(selected_mode, reason)`` for benchmark notes and artifacts."""
+    mode = normalize_kernel_mode(requested_mode)
+    buffer_count = normalize_positive_int(buffer_count, name="buffer_count", default=2)
+    hops = normalize_hops(hops, n_devices=n_devices)
+    inner_cols = choose_inner_pipeline_cols(cols=tile_cols, requested=inner_cols)
+
+    if mode == "serialized":
+        return "serialized", "requested serialized teaching path"
+    if mode == "xla-psum":
+        return "xla-psum", "requested XLA tuned collective reference"
+    if mode == "pallas-db":
+        if buffer_count < 2:
+            raise ValueError("pallas-db requires lab8_buffer_count >= 2")
+        if not _looks_like_tpu(devices):
+            raise ValueError(
+                "pallas-db requires TPU devices because it uses Pallas TPU RDMA; "
+                f"found {_device_kind(devices)!r}"
+            )
+        if hops < 0:
+            raise ValueError("pallas-db requires non-negative hops")
+        return "pallas-db", f"requested fused Pallas DB kernel inner_cols={inner_cols}"
+
+    # auto mode: use the real custom kernel on TPU when buffering is legal.  On
+    # CPU/GPU smoke tests, use XLA so correctness still runs without TPU RDMA.
+    if _looks_like_tpu(devices) and buffer_count >= 2:
+        return "pallas-db", f"auto selected fused Pallas DB kernel inner_cols={inner_cols}"
+    return "xla-psum", "auto fallback: non-TPU or buffer_count < 2"
+
+
+def xla_fast_token_ring(
+    value: Any,
+    *,
+    mesh: Any,
+    axis_name: str,
+    direction: str,
+    hops: int,
+    n_devices: int,
+) -> Any:
+    """Fast portable reference using XLA collectives.
+
+    For the full-ring all-reduce case this lowers to ``lax.psum``.  For partial
+    hop experiments it uses a compact ``lax.ppermute`` chain so the semantics
+    still match the teaching source-history tables.
+    """
+    import jax
+    import jax.numpy as jnp
+    from jax import lax
+
+    direction = normalize_direction(direction)
+    hops = normalize_hops(hops, n_devices=n_devices)
+    n_devices = int(n_devices)
+    partition = jax.sharding.PartitionSpec(axis_name, None, None, None)
+
+    if direction == "right":
+        perm = [(rank, (rank + 1) % n_devices) for rank in range(n_devices)]
+    else:
+        perm = [(rank, (rank - 1) % n_devices) for rank in range(n_devices)]
+
+    def _local(local_value):
+        if hops == max(0, n_devices - 1):
+            return lax.psum(local_value.astype(jnp.float32), axis_name)
+        token = local_value
+        seen_sum = token.astype(jnp.float32)
+        for _ in range(hops):
+            token = lax.ppermute(token, axis_name, perm)
+            seen_sum = seen_sum + token.astype(jnp.float32)
+        return seen_sum
+
+    return jax.shard_map(
+        _local,
+        mesh=mesh,
+        in_specs=partition,
+        out_specs=partition,
+        check_vma=False,
+    )(value)
+
+
+def _pallas_local_barrier(pl: Any, pltpu: Any, first_neighbor: Any, second_neighbor: Any) -> None:
+    """Synchronize with two ring neighbors at kernel entry.
+
+    The second barrier prevents reuse races when the same collective id is used
+    for repeated benchmark iterations.
+    """
+    barrier_sem = pltpu.get_barrier_semaphore()
+    for neighbor in [first_neighbor, second_neighbor]:
+        pl.semaphore_signal(
+            barrier_sem,
+            inc=1,
+            device_id=(neighbor,),
+            device_id_type=pl.DeviceIdType.MESH,
+        )
+    pl.semaphore_wait(barrier_sem, 2)
+
+    @functools.partial(pl.run_scoped, second_barrier=pltpu.SemaphoreType.REGULAR)
+    def _(second_barrier):
+        for neighbor in [first_neighbor, second_neighbor]:
+            pl.semaphore_signal(
+                second_barrier,
+                inc=1,
+                device_id=(neighbor,),
+                device_id_type=pl.DeviceIdType.MESH,
+            )
+        pl.semaphore_wait(second_barrier, 2)
+
+
+def pallas_double_buffered_token_ring(
+    value: Any,
+    *,
+    mesh: Any,
+    axis_name: str,
+    direction: str,
+    hops: int,
+    collective_id: int,
+    buffer_count: int,
+    n_devices: int,
+    inner_cols: int = DEFAULT_INNER_PIPELINE_COLS,
+) -> Any:
+    """Fused custom Pallas ring with real remote-DMA double buffering.
+
+    Shape convention
+    ----------------
+    ``value`` has global shape ``[device, chunk, row, col]`` and is sharded on
+    the leading device axis.  Inside ``shard_map`` each device sees a local shard
+    of shape ``[1, chunk, row, col]``.  The Pallas kernel operates on the local
+    ``[chunk, row, col]`` tile.
+
+    Pipeline structure
+    ------------------
+    For step ``s``:
+
+    1. ``working_slot = s % buffer_count`` contains the token to accumulate.
+    2. ``receiving_slot = (s + 1) % buffer_count`` is the safe destination for
+       the neighbor's next RDMA write.
+    3. A capacity semaphore tells the incoming neighbor the receiving slot is
+       safe.
+    4. The device starts an async remote HBM->HBM copy to the outgoing neighbor.
+    5. While that copy is in flight, ``emit_pipeline`` streams the working slot
+       through VMEM-sized blocks and accumulates into HBM output.
+    6. The device waits for the remote copy before the slot can be reused.
+
+    The remote copy and the local accumulation overlap, so this hides
+    communication latency behind useful work.
+    """
+    import jax
+    import jax.numpy as jnp
+    from jax import lax
+    from jax.experimental import pallas as pl
+    from jax.experimental.pallas import tpu as pltpu
+
+    direction = normalize_direction(direction)
+    hops = normalize_hops(hops, n_devices=n_devices)
+    buffer_count = normalize_positive_int(buffer_count, name="buffer_count", default=2)
+    if buffer_count < 2:
+        raise ValueError("pallas_double_buffered_token_ring requires buffer_count >= 2")
+    n_devices = int(n_devices)
+    if n_devices < 2:
+        raise ValueError("pallas_double_buffered_token_ring requires at least two devices")
+
+    if len(value.shape) != 4:
+        raise ValueError(f"expected [device, chunk, row, col], got shape {value.shape}")
+    _, n_chunks, rows, cols = map(int, value.shape)
+    inner_cols = choose_inner_pipeline_cols(cols=cols, requested=inner_cols, rows=rows)
+    local_tile_shape = (n_chunks, rows, cols)
+    steps = hops + 1
+    send_delta = 1 if direction == "right" else -1
+    recv_delta = -send_delta
+
+    inner_grid = (n_chunks, cols // inner_cols)
+    # emit_pipeline windows the HBM refs and stages each block through VMEM
+    # itself, so the inner BlockSpec must NOT pin memory_space=VMEM: doing so
+    # tells Pallas the block already lives in VMEM and skips the staging copy,
+    # leaving the body with a raw HBM (ANY) ref that Mosaic refuses to load.
+    inner_block_spec = pl.BlockSpec(
+        index_map=lambda chunk_i, col_i: (chunk_i, 0, col_i),
+        block_shape=(1, rows, inner_cols),
+    )
+
+    def _ring_kernel(
+        x_ref,
+        o_ref,
+        hbm_scratch,
+        remote_recv_sem,
+        remote_send_sem,
+        capacity_sem,
+    ):
+        outer_step = pl.program_id(0)
+        last_iteration = outer_step == pl.num_programs(0) - 1
+        working_slot = lax.rem(outer_step, buffer_count)
+        receiving_slot = lax.rem(outer_step + 1, buffer_count)
+
+        my_id = lax.axis_index(axis_name)
+        send_to_neighbor = lax.rem(my_id + send_delta + n_devices, n_devices)
+        recv_from_neighbor = lax.rem(my_id + recv_delta + n_devices, n_devices)
+
+        def _init_inner(src_ref, accum_ref):
+            # Initialize the float32 accumulator from the first token (with cast).
+            # This has an input spec, so emit_pipeline stages both refs through
+            # VMEM; an output-only "zero" pipeline would try to load the HBM
+            # accumulator directly, which Mosaic forbids.
+            accum_ref[...] = src_ref[...].astype(jnp.float32)
+
+        init_pipeline = pltpu.emit_pipeline(
+            _init_inner,
+            in_specs=[inner_block_spec],
+            out_specs=inner_block_spec,
+            grid=inner_grid,
+        )
+
+        def _copy_inner(src_ref, dst_ref):
+            dst_ref[...] = src_ref[...]
+
+        copy_pipeline = pltpu.emit_pipeline(
+            _copy_inner,
+            in_specs=[inner_block_spec],
+            out_specs=inner_block_spec,
+            grid=inner_grid,
+        )
+
+        def _accum_inner(src_ref, accum_ref):
+            # With should_accumulate_out=True the pipeline performs the
+            # read-modify-write into the HBM accumulator itself (o_ref += body).
+            # The body therefore writes only this step's contribution. Doing the
+            # "+= accum_ref[...]" by hand instead reads a write-only output block
+            # that emit_pipeline never loads from HBM, which silently corrupts the
+            # sum whenever the inner grid has more than one block.
+            accum_ref[...] = src_ref[...].astype(jnp.float32)
+
+        accum_pipeline = pltpu.emit_pipeline(
+            _accum_inner,
+            in_specs=[inner_block_spec],
+            out_specs=inner_block_spec,
+            grid=inner_grid,
+            should_accumulate_out=True,
+        )
+
+        @pl.when(outer_step == 0)
+        def _():
+            _pallas_local_barrier(pl, pltpu, send_to_neighbor, recv_from_neighbor)
+            copy_pipeline(x_ref, hbm_scratch.at[0])
+
+        remote_copy = pltpu.make_async_remote_copy(
+            src_ref=hbm_scratch.at[working_slot],
+            dst_ref=hbm_scratch.at[receiving_slot],
+            send_sem=remote_send_sem,
+            recv_sem=remote_recv_sem,
+            device_id=(send_to_neighbor,),
+            device_id_type=pl.DeviceIdType.MESH,
+        )
+
+        @pl.when(~last_iteration)
+        def _():
+            # Tell the neighbor that sends into this device that our receiving
+            # slot for the next token is free.  Then wait until our outgoing
+            # neighbor says the same thing to us before issuing the RDMA.
+            pl.semaphore_signal(
+                capacity_sem,
+                inc=1,
+                device_id=(recv_from_neighbor,),
+                device_id_type=pl.DeviceIdType.MESH,
+            )
+            pl.semaphore_wait(capacity_sem, 1)
+            remote_copy.start()
+
+        # This is the overlap: local accumulation streams through VMEM while the
+        # HBM->HBM remote copy is in flight. Step 0 initializes the accumulator
+        # from the first token; later steps add each arriving token.
+        @pl.when(outer_step == 0)
+        def _():
+            init_pipeline(hbm_scratch.at[working_slot], o_ref)
+
+        @pl.when(outer_step != 0)
+        def _():
+            accum_pipeline(hbm_scratch.at[working_slot], o_ref)
+
+        @pl.when(~last_iteration)
+        def _():
+            remote_copy.wait()
+
+    out_shape = (
+        jax.ShapeDtypeStruct(local_tile_shape, jnp.float32),
+        jax.ShapeDtypeStruct((buffer_count, *local_tile_shape), value.dtype),
+    )
+    grid_spec = pltpu.PrefetchScalarGridSpec(
+        num_scalar_prefetch=0,
+        in_specs=[pl.BlockSpec(memory_space=pl.ANY)],
+        out_specs=[pl.BlockSpec(memory_space=pl.ANY), pl.BlockSpec(memory_space=pl.ANY)],
+        grid=(steps,),
+        scratch_shapes=(
+            pltpu.SemaphoreType.DMA,      # remote_recv_sem
+            pltpu.SemaphoreType.DMA,      # remote_send_sem
+            pltpu.SemaphoreType.REGULAR,  # capacity_sem
+        ),
+    )
+    kernel = pl.pallas_call(
+        _ring_kernel,
+        out_shape=out_shape,
+        grid_spec=grid_spec,
+        compiler_params=pltpu.CompilerParams(collective_id=int(collective_id)),
+    )
+
+    partition = jax.sharding.PartitionSpec(axis_name, None, None, None)
+
+    def _per_device(local_value):
+        local_tile = local_value[0, :, :, :]
+        output_tile, _scratch = kernel(local_tile)
+        return output_tile[jnp.newaxis, :, :, :]
+
+    return jax.shard_map(
+        _per_device,
+        mesh=mesh,
+        in_specs=partition,
+        out_specs=partition,
+        check_vma=False,
+    )(value)
+
 def chunked_token_ring(
     value: Any,
     *,
@@ -893,6 +1325,8 @@ def build_case(
     min_cols: int,
     memory_space_name: str,
     collective_id: int,
+    kernel_mode: str | None = None,
+    inner_pipeline_cols: int = DEFAULT_INNER_PIPELINE_COLS,
 ) -> ChunkedTokenRingCase:
     """Build input, expected output, and jitted function for Lab 8."""
     import numpy as np
@@ -939,16 +1373,52 @@ def build_case(
     x = jax.device_put(x_host, sharding)
     memory_space = _resolve_memory_space(memory_space_name)
 
+    selected_kernel_mode, fast_path_reason = choose_lab8_kernel_mode(
+        requested_mode=kernel_mode,
+        devices=devices,
+        buffer_count=buffer_count,
+        hops=hops,
+        n_devices=n_devices,
+        tile_cols=cols,
+        inner_cols=inner_pipeline_cols,
+    )
+    selected_inner_cols = choose_inner_pipeline_cols(
+        cols=cols,
+        requested=inner_pipeline_cols,
+        rows=rows,
+    )
+
     def ring_fn(value):
-        return chunked_token_ring(
+        if selected_kernel_mode == "serialized":
+            return chunked_token_ring(
+                value,
+                mesh=mesh,
+                axis_name=axis_name,
+                direction=direction,
+                hops=hops,
+                collective_id=collective_id,
+                memory_space=memory_space,
+                n_chunks=n_chunks,
+            )
+        if selected_kernel_mode == "pallas-db":
+            return pallas_double_buffered_token_ring(
+                value,
+                mesh=mesh,
+                axis_name=axis_name,
+                direction=direction,
+                hops=hops,
+                collective_id=collective_id,
+                buffer_count=buffer_count,
+                n_devices=n_devices,
+                inner_cols=selected_inner_cols,
+            )
+        return xla_fast_token_ring(
             value,
             mesh=mesh,
             axis_name=axis_name,
             direction=direction,
             hops=hops,
-            collective_id=collective_id,
-            memory_space=memory_space,
-            n_chunks=n_chunks,
+            n_devices=n_devices,
         )
 
     return ChunkedTokenRingCase(
@@ -973,6 +1443,8 @@ def build_case(
         direction=direction,
         hops=hops,
         n_devices=n_devices,
+        kernel_mode=selected_kernel_mode,
+        fast_path_reason=fast_path_reason,
     )
 
 
@@ -984,9 +1456,9 @@ def observed_chunk_scalars(jax: Any, y: Any) -> Any:
 def check_result(jax: Any, jnp: Any, y: Any, expected: Any) -> bool:
     """Validate the full chunked token-ring output.
 
-    The compact original check inspected only ``y[:, :, 0, 0]``. That is useful
-    for a quick scalar table, but Lab 8 moves whole chunks. This checker verifies
-    that every element of every output chunk equals the expected per-chunk sum.
+    Inspecting only ``y[:, :, 0, 0]`` gives a quick scalar table, but Lab 8 moves
+    whole chunks, so this checker verifies that every element of every output
+    chunk equals the expected per-chunk sum.
     """
     del jnp  # Host-side NumPy makes this a pure correctness check.
 
@@ -1027,7 +1499,7 @@ def _fallback_build_spec(
     payload_bytes: int,
     n_devices: int,
 ) -> dict[str, Any]:
-    """Small local replacement for ``lab_spec_utils.build_spec``.
+    """Small local fallback for ``lab_spec_utils.build_spec``.
 
     The benchmark repository's real utility should be used during normal runs.
     This fallback only keeps the file convenient to import and smoke-test on its
@@ -1050,7 +1522,7 @@ def _fallback_build_spec(
 
 
 def _fallback_render_markdown(spec: dict[str, Any]) -> str:
-    """Small local replacement for ``lab_spec_utils.render_markdown``."""
+    """Small local fallback for ``lab_spec_utils.render_markdown``."""
     lines = [f"# {spec.get('title', 'Lab 8 Spec')}", ""]
     for key in sorted(spec):
         if key == "title":
@@ -1120,6 +1592,24 @@ def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> di
     requested_chunk_payload = ceil_div(max(1, int(payload_bytes)), n_chunks)
     base_collective_id = int(getattr(args, "pallas_collective_id", 0) or 0)
 
+    requested_kernel_mode = normalize_kernel_mode(
+        getattr(args, "lab8_kernel", None)
+        or getattr(args, "lab8_mode", None)
+        or getattr(args, "lab8_kernel_mode", None)
+        or "auto"
+    )
+    # 0 / None means "auto" (choose_inner_pipeline_cols sizes the block), so this
+    # is a plain int read rather than a positive-only check.
+    _raw_inner_cols = getattr(args, "lab8_inner_cols", None)
+    try:
+        configured_inner_cols = int(_raw_inner_cols)
+    except (TypeError, ValueError):
+        configured_inner_cols = DEFAULT_INNER_PIPELINE_COLS
+    if configured_inner_cols < 0:
+        configured_inner_cols = 0
+
+    spec["configured_kernel_mode"] = requested_kernel_mode
+    spec["configured_inner_pipeline_cols"] = configured_inner_cols
     spec["configured_chunks"] = n_chunks
     spec["configured_buffer_count"] = buffer_count
     spec["requested_chunk_payload_bytes"] = requested_chunk_payload
@@ -1151,6 +1641,7 @@ def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> di
         hops=hops,
         direction=direction,
         buffer_count=buffer_count,
+        kernel_mode=requested_kernel_mode,
     )
     spec["buffer_slot_schedule"] = buffer_slot_schedule(
         n_chunks=n_chunks,
@@ -1186,8 +1677,9 @@ def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> di
         buffer_count=buffer_count,
     )
     spec["custom_collective_status"] = (
-        "implemented as serialized per-chunk Lab 1 hop kernels; true "
-        "double-buffered overlap remains deferred to a fused Pallas kernel"
+        "serialized mode remains available for teaching; pallas-db mode is a "
+        "fused custom Pallas kernel with real async remote-DMA double/N-buffering; "
+        "xla-psum is included as the tuned roofline reference"
     )
     spec["student_checkpoint_questions"] = [
         "Does chunking change total bytes or only scheduling granularity?",
@@ -1195,6 +1687,8 @@ def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> di
         "Which collective IDs are used by chunk 0 and chunk 1?",
         "When is buffer slot 0 safe to reuse?",
         "What evidence in XProf would prove overlap?",
+        "Does pallas-db start the remote DMA before the inner accumulation pipeline?",
+        "How much faster is pallas-db than serialized at the same payload and chunk count?",
     ]
     return spec
 

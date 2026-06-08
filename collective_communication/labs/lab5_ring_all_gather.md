@@ -182,8 +182,8 @@ the built-in all-gather succeeds for the same payload sizes
 ```
 
 The check intentionally validates the whole output tile, not just
-`output[:, :, 0, 0]`. Lab 5 is no longer a single scalar postcard; the entire
-shard must arrive.
+`output[:, :, 0, 0]`. Lab 5 is not a single scalar postcard; the entire shard
+must arrive.
 
 ## Byte Model
 
@@ -224,13 +224,15 @@ The built-in collective may not use exactly this byte schedule. That is one
 reason it is a reference and a performance baseline, not a line-by-line copy of
 this teaching implementation.
 
-**Reading GB/s across ops:** the `GB/s` column divides each op's *own* logical
-byte model by its time. The custom ring is credited its ring traffic
-(`H * B`) while the built-in `pmap_all_gather` is credited the optimal
-`(N-1) * B`, so the two columns are **not** a like-for-like throughput
-comparison. When comparing the custom path against the built-in, compare the
-`us` (latency) column instead; use GB/s only to watch a single op scale across
-payload sizes.
+**Reading the GB/s columns:** the headline `GB/s` is *useful* throughput
+(optimal-model bytes / time). For a full all-gather the ring is already
+bandwidth-optimal — it moves `H * B = (N-1) * B`, exactly the optimal model — so
+the custom ring and `pmap_all_gather` are credited the **same** `useful/dev`
+bytes and their `GB/s` is directly comparable. Because the ring wastes nothing,
+its `wireGB/s` equals its `GB/s` (`byte_model=optimal`); contrast that with Lab 6
+and Lab 7, whose whole-token kernels show a `wireGB/s` well above their useful
+`GB/s`. The `us` (latency) column is always comparable across ops if you want a
+byte-model-free ranking.
 
 ## What To Inspect
 
@@ -302,12 +304,11 @@ Important helpers in `lab5_ring_all_gather.py`:
    `--neighbor-direction left`. The rank tables should differ; performance may
    or may not.
 3. **Built-in comparison:** compare `pmap_all_gather` against
-   `pallas_ring_all_gather`. Compare the **`us` (latency)** column, not GB/s
-   (the two ops use different byte models — see the byte-model section). On this
-   harness the composed Pallas path usually *wins* on latency at these sizes
-   because the `pmap` baseline pays per-call dispatch overhead; explain where you
-   would expect the built-in to pull ahead instead (larger payloads, real
-   wire-byte accounting).
+   `pallas_ring_all_gather`. For a full all-gather both move the optimal bytes,
+   so their `GB/s` (useful throughput) and `us` (latency) are both directly
+   comparable. On this harness the composed Pallas path usually *wins* at these
+   sizes because the `pmap` baseline pays per-call dispatch overhead; explain
+   where you would expect the built-in to pull ahead instead (larger payloads).
 4. **Payload sweep:** identify the latency-dominated and bandwidth-dominated
    regimes.
 5. **Canonical reorder:** use `canonicalize_arrival_order(...)` in a notebook or

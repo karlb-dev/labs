@@ -515,11 +515,11 @@ Why does the local shard have a leading singleton dimension?
 
 ---
 
-## Instructor Review Notes
+## Design Notes
 
-This lab is well-positioned as Lab 1 because it starts with custom communication rather than another all-reduce review. The original lab already had the right core: a single-hop Pallas remote-DMA neighbor copy compared against `lax.ppermute`, plus explicit notes about barriers, DMA semaphores, payload rounding, and HBM versus VMEM defaults.
+Lab 1 is well-positioned as the first lab because it starts with custom communication rather than another all-reduce review. The core is a single-hop Pallas remote-DMA neighbor copy compared against `lax.ppermute`, plus explicit notes about barriers, DMA semaphores, payload rounding, and HBM versus VMEM defaults.
 
-The main teaching improvements are:
+The teaching principles this lab commits to:
 
 1. Make ownership explicit before and after the operation.
 2. Make the global-shape versus local-shard-shape distinction impossible to miss.
@@ -529,7 +529,7 @@ The main teaching improvements are:
 6. Make measurement discipline part of the lab, not an appendix.
 7. State that a built-in collective may be faster and that this is not failure.
 
-The Python file should be heavily commented because this is the first time students see Pallas TPU remote DMA in this course. Later labs can become terser once the spellbook has names.
+The Python file is heavily commented because this is the first time students see Pallas TPU remote DMA in this course. Later labs can become terser once the spellbook has names.
 
 ---
 

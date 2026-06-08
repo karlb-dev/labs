@@ -67,10 +67,10 @@ LAB4_INVARIANTS: tuple[str, ...] = (
 class BugScenario:
     """One synchronization failure mode for the Lab 4 catalog.
 
-    The first seven fields preserve the original Lab 4 public row shape:
-    ``id``, ``invariant``, ``mutation``, ``expected_symptom``,
-    ``safe_to_run_by_default``, ``diagnostic``, and ``recovery``. Later fields
-    add teaching metadata for richer JSON and Markdown artifacts.
+    The core fields are ``id``, ``invariant``, ``mutation``,
+    ``expected_symptom``, ``safe_to_run_by_default``, ``diagnostic``, and
+    ``recovery``. Later fields add teaching metadata for richer JSON and Markdown
+    artifacts.
     """
 
     id: str
@@ -499,7 +499,7 @@ def scenario_rows(
 ) -> list[dict[str, Any]]:
     """Return JSON/CSV rows for the bug zoo artifact.
 
-    The no-argument call preserves the original Lab 4 API.
+    Callable with no arguments to render the full catalog.
     """
 
     return [
@@ -714,6 +714,69 @@ def check_result(jax: Any, jnp: Any, y: Any, expected_ranks: Any) -> bool:
 
 
 # -----------------------------------------------------------------------------
+# Runnable bug demos.
+#
+# The catalog above describes failure modes. These helpers let students actually
+# *run* one and watch the documented symptom appear, instead of only reading
+# about it.
+#
+# Only correctness-class bugs (those that complete cleanly and fail validation)
+# are safe to run in-process and are exposed here. Hang/crash/race-class bugs are
+# NOT shipped as runnable kernels: a real over-wait can deadlock the TPU process
+# and force a runtime restart, so they must run in an isolated, disposable
+# environment behind an external timeout. The benchmark harness provides that
+# guarded subprocess path; see ``run_guarded_subprocess`` in ``collective_bench``
+# and the "Run a real bug" section of ``lab4_semaphore_bug_zoo.md``.
+# -----------------------------------------------------------------------------
+
+# Bug ids that are safe to execute in-process: they complete normally and fail
+# only the correctness check, reproducing the documented symptom without any risk
+# of hanging or corrupting the device.
+SAFE_RUNNABLE_BUGS: tuple[str, ...] = ("wrong_neighbor_map",)
+
+
+def _flip_direction(direction: str) -> str:
+    """Return the opposite ring direction using Lab 1's normalizer."""
+
+    lab1 = _load_lab1_module()
+    return "left" if lab1.normalize_direction(direction) == "right" else "right"
+
+
+def build_wrong_neighbor_map_case(
+    jax: Any,
+    jnp: Any,
+    *,
+    intended_direction: str = "right",
+    **kwargs: Any,
+) -> tuple[Any, Any, str]:
+    """Build a runnable, SAFE reproduction of the ``wrong_neighbor_map`` bug.
+
+    The kernel is the correct Lab 1 single-hop copy, but built with the *opposite*
+    neighbor direction from the one the caller intends. The kernel therefore runs
+    to completion with no hang and no crash, yet the rank markers land on the
+    wrong devices, so validation against the *intended* ownership map fails fast.
+    That is exactly the catalog's documented symptom: "fast correctness failure
+    with otherwise clean completion."
+
+    Returns ``(case, intended_expected_ranks, buggy_direction)`` where ``case`` is
+    a Lab 1 ``NeighborCopyCase`` whose ``expected_ranks`` reflect the *buggy*
+    direction; ``intended_expected_ranks`` is what a correct kernel would have
+    produced and is what the demo validates against to surface the mismatch.
+    """
+
+    lab1 = _load_lab1_module()
+    intended = lab1.normalize_direction(intended_direction)
+    buggy_direction = _flip_direction(intended)
+    case = lab1.build_case(jax=jax, jnp=jnp, direction=buggy_direction, **kwargs)
+    num_devices = len(kwargs["devices"])
+    intended_expected = jnp.array(
+        lab1.expected_neighbor_ranks(num_devices, intended),
+        dtype=jnp.float32,
+    )
+    return case, intended_expected, buggy_direction
+
+
+# -----------------------------------------------------------------------------
 # Markdown rendering used by the run artifact.
 # -----------------------------------------------------------------------------
 
@@ -731,9 +794,9 @@ def _bullet_lines(items: Sequence[str]) -> list[str]:
 def render_markdown(scenarios: Sequence[BugScenario] = BUG_SCENARIOS) -> str:
     """Render the bug zoo as a teaching artifact.
 
-    The no-argument call preserves the original Lab 4 API. The output is richer
-    than the input handout because it includes a safety summary, scenario cards,
-    and a debugging ledger students can reuse in later labs.
+    Callable with no arguments to render the full catalog. The output includes a
+    safety summary, scenario cards, and a debugging ledger students can reuse in
+    later labs.
     """
 
     validate_catalog(scenarios)
@@ -857,8 +920,10 @@ __all__ = [
     "LAB_ID",
     "LAB_TITLE",
     "BugScenario",
+    "SAFE_RUNNABLE_BUGS",
     "build_case",
     "build_correct_probe_case",
+    "build_wrong_neighbor_map_case",
     "catalog_summary",
     "check_correct_probe_result",
     "check_result",

@@ -33,18 +33,27 @@ students a checklist before the ring grows teeth.
 
 ## Operations
 
-Lab 4 has two operations:
+Lab 4 has three operations:
 
 - `pallas_semaphore_correct`: the correct Lab 1 single-hop remote-copy probe.
   It exercises a phase-entry barrier plus DMA send/receive semaphores.
+- `pallas_semaphore_bug`: a **runnable** reproduction of one *safe* catalog bug
+  (`wrong_neighbor_map` by default). It runs the correct kernel with the wrong
+  neighbor direction, so it completes cleanly but the correctness oracle catches
+  the rotated ranks. This is the lab's "see a bug for real" operation. It records
+  `ok=True` when the documented symptom is reproduced, so a healthy Lab 4 run
+  stays green even though this row deliberately produces wrong data — read the
+  `observed_ranks` vs `expected_ranks` columns and the note to see the mismatch.
 - `semaphore_bug_zoo`: a safe catalog of broken-kernel mutations, expected
   symptoms, diagnostics, prevention rules, and recovery rules. It writes JSON
   and Markdown under `lab_artifacts/` in the run directory.
 
-The broken variants are not executed by default. That is intentional. A kernel
-with an over-wait can hang the process. A kernel with nonzero semaphore state can
-crash at completion. A buffer ownership race can produce a plausible-looking but
-wrong tensor. The default lab run should teach these hazards, not summon them.
+Only the *correctness-class* bug runs in-process. Hang/crash/race variants are
+not executed by default, and on purpose. A kernel with an over-wait can hang the
+process. A kernel with nonzero semaphore state can crash at completion. A buffer
+ownership race can produce a plausible-looking but wrong tensor. Those run only
+through a guarded subprocess with a hard timeout (see "Running a dangerous bug"
+below); the default lab run teaches these hazards rather than summoning them.
 
 ## Mental Model
 
@@ -114,6 +123,59 @@ python collective_bench.py \
   --warmup 1 \
   --no-plots
 ```
+
+## Running a Real Bug (Safe)
+
+The default `--lab lab4` run includes `pallas_semaphore_bug`, which actually
+reproduces the `wrong_neighbor_map` failure instead of only describing it. To run
+just the bug demo:
+
+```bash
+python collective_bench.py \
+  --lab lab4 \
+  --ops pallas_semaphore_bug \
+  --sizes 1KiB --iters 5 --warmup 1 --no-plots
+```
+
+What you should see: the row completes (no hang), `ok=True` (the demo behaved as
+designed), and `observed_ranks` does **not** equal `expected_ranks` — for four
+devices, the kernel sent `left` while the intended map was `right`, so it shows
+`observed=[1, 2, 3, 0]` against `expected=[3, 0, 1, 2]`. That is the documented
+symptom: *fast correctness failure with otherwise clean completion*. The lesson
+is that a wrong topology map is caught only because there is a correctness
+oracle; without one, this bug ships silently.
+
+`--lab4-run-bug <id>` selects which catalog bug to reproduce. Only
+correctness-class bugs are runnable in-process (currently `wrong_neighbor_map`);
+asking for a hang/crash/race id here returns a clear "use the guarded path"
+message instead of executing it.
+
+## Running a Dangerous Bug (Guarded, Opt-In)
+
+Hang/crash/race bugs are **not** run by the normal sweep and are **not** shipped
+as ready-to-run kernels, because a real over-wait can deadlock the TPU process
+and force a runtime restart. The harness provides the safe execution mechanism
+for them — `run_guarded_subprocess` — which launches the repro in its own process
+group under a hard wall-clock timeout and SIGKILLs the whole group on expiry, so
+even a true deadlock cannot keep the device wedged:
+
+```bash
+# Disposable VM only. Requires you to add the broken kernel (see below).
+python collective_bench.py \
+  --lab lab4 \
+  --ops pallas_semaphore_bug \
+  --lab4-run-bug overwait_dma \
+  --lab4-allow-dangerous \
+  --lab4-bug-timeout 20 \
+  --sizes 1KiB --no-plots
+```
+
+To author a dangerous repro, add a broken kernel builder to
+`labs/lab4_semaphore_bug_zoo.py` and register its id, then route it through
+`run_guarded_subprocess`. Do this in a disposable environment with a small
+payload and a short timeout — never in a shared session, and never in the default
+op list. The guard's timeout/teardown is unit-checkable without a TPU via the
+hidden `--__lab4-selftest-hang` entrypoint.
 
 ## What This Lab Teaches
 
@@ -185,8 +247,10 @@ write both JSON and Markdown artifacts.
 | `device_id_type_or_axis_mismatch` | isolated repro only | Mesh coordinates, logical IDs, and axis names must match. |
 
 Only `wrong_neighbor_map` is safe to execute as a default broken variant because
-it should complete cleanly and fail correctness. The other scenarios are
-cataloged for study and future isolated repros.
+it completes cleanly and merely fails correctness. It is exactly the bug the
+`pallas_semaphore_bug` operation reproduces in the default run (see "Running a
+Real Bug"). The other scenarios are cataloged for study and run only as guarded,
+isolated repros.
 
 ## Semaphore Ledger
 
@@ -366,14 +430,18 @@ logs to capture:
 cleanup/restart instruction:
 ```
 
-This remains a design exercise until the repo has a hardened repro runner.
+The harness now provides the hardened runner (`run_guarded_subprocess`: isolated
+process group + hard timeout + group SIGKILL on expiry), so the remaining work is
+to author the broken kernel itself and run it in a disposable VM — see "Running a
+Dangerous Bug". Keep dangerous repros out of the default sweep.
 
 ## Pass Condition
 
 ```text
 the correct semaphore probe matches the Lab 1 ppermute ownership model
+the pallas_semaphore_bug demo reproduces wrong_neighbor_map (observed != expected) and completes cleanly
 the bug zoo artifact lists invariant, mutation, symptom, diagnostic, prevention, and recovery
-no hang-prone broken kernel runs by default
+no hang-prone broken kernel runs by default; dangerous repros run only under the guarded subprocess
 students can fill the semaphore ledger for the next ring all-gather lab
 ```
 

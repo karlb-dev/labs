@@ -12,15 +12,23 @@ ring idea and ask a sharper question:
 How does the schedule change when the payload is split into chunks?
 ```
 
-The implemented custom path is **chunked but serialized**. Each chunk runs
-through the Lab 1 remote-DMA hop sequence independently. This is deliberate. A
-fully fused, double-buffered, overlapped ring is a later optimization. Lab 8 is
-the bridge: students learn chunk size, buffer ownership, collective-ID planning,
-and profile evidence before they claim pipeline magic. 🧪
+Lab 8 is a **performance lab**. It ships three implementations of the same
+token-ring reduction so students can see the schedule, make it move faster, and
+prove the speedup:
+
+```text
+serialized teaching path  ->  fused Pallas double-buffered path  ->  XLA roofline
+```
+
+The serialized path is the clarity-first microscope. The double-buffered path is
+the payoff: one fused Pallas TPU kernel that overlaps an async remote DMA with
+local accumulation, so it actually beats the serialized baseline. The XLA path
+is the honest roofline. The lesson is not "hand-written always wins" — it is
+"now I can see the machinery, make it move, and explain the remaining gap." 🧪
 
 ## Implemented Happy Path
 
-Run:
+Run (a single sweep compares all four):
 
 ```bash
 python collective_bench.py --lab lab8
@@ -29,23 +37,29 @@ python collective_bench.py --lab lab8
 Implemented operations:
 
 - `pmap_token_ring`: dependency-chain reference from Lab 2.
-- `pallas_chunked_token_ring`: serialized chunked ring built from Lab 1 hops.
-- `lab8_chunked_pipeline_spec`: source-history, byte-model, collective-ID, and buffer-slot artifact.
+- `pallas_chunked_token_ring`: **serialized** chunked ring built from Lab 1 hops
+  (the clarity-first teaching baseline; one remote-DMA hop per chunk/hop pair).
+- `pallas_db_token_ring`: **fused custom double-buffered** ring. One Pallas TPU
+  kernel uses async remote DMA into HBM buffer slots, capacity semaphores to
+  prevent run-ahead, and an inner HBM↔VMEM accumulation pipeline that runs while
+  the remote copy is in flight. This is the real overlap.
+- `xla_token_ring`: **XLA tuned-collective roofline** (`lax.psum` for full rings,
+  `lax.ppermute` for partial-hop experiments).
+- `lab8_chunked_pipeline_spec`: source-history, byte-model, collective-ID, and
+  buffer-slot artifact.
 
-The custom path does this:
+Measured on the 4-chip v5e (bf16, 4 chunks, buffer_count=2; median latency, lower
+is better):
 
-```text
-for chunk in chunks:
-    token = local_chunk[chunk]
-    seen_sum = token
-    for hop in ring_hops:
-        token = one Lab 1 neighbor_copy(token)
-        seen_sum += token
-    output[chunk] = seen_sum
-```
+| payload | pmap_token_ring | serialized | **pallas_db** | xla (roofline) |
+|---:|---:|---:|---:|---:|
+| 64 KiB | 547 us | 230 us | **214 us** | 206 us |
+| 1 MiB | 766 us | 300 us | **282 us** | 232 us |
+| 4 MiB | 1375 us | 523 us | **511 us** | 344 us |
 
-That is not the final optimized kernel. It is a teaching implementation that
-exposes the performance ingredients one at a time.
+The double-buffered kernel beats the serialized path at every size and closes
+most of the remaining gap to XLA. Your numbers will vary; the point is the
+ordering and that you can back it up with a trace.
 
 ## Chunking Versus Pipelining
 
@@ -53,12 +67,15 @@ Chunking cuts a payload into pieces.
 
 Pipelining keeps multiple pieces in flight.
 
-They are cousins, not twins.
+They are cousins, not twins. The `serialized` path is chunked but each chunk
+completes its whole ring before the next starts — chunking without pipelining.
+The `pallas_db` path is the pipelined version: inside one fused kernel it starts
+the remote DMA, then does useful accumulation **while that copy is in flight**.
 
-The current Pallas path is chunked, but each chunk completes its whole ring
-before the next chunk starts. Therefore `--lab8-buffer-count` does **not** make
-the current path double-buffered. It records the buffer-slot contract a future
-fused kernel must obey.
+`--lab8-buffer-count` reflects this split. For the serialized path it is only a
+planning artifact. For `pallas_db` it allocates real HBM scratch slots
+(`working_slot = step % buffer_count`, `receiving_slot = (step+1) % buffer_count`)
+and a capacity semaphore guards slot reuse, so it must be `>= 2`.
 
 Useful question for students:
 
@@ -66,7 +83,8 @@ Useful question for students:
 Did the benchmark prove overlap, or did the code merely configure a buffer count?
 ```
 
-The only acceptable answer comes from a trace.
+The only acceptable answer comes from a trace — and for `pallas_db` the trace
+shows the remote-copy start before the accumulation pipeline and the wait after.
 
 ## Mental Model
 
@@ -200,23 +218,23 @@ should not casually alias semaphore state through a reused collective ID.
 
 ## Buffer-Slot Ownership
 
-`--lab8-buffer-count` does not create real overlap yet. It records the planned
-slot assignment:
+For the serialized path `--lab8-buffer-count` is only a planning artifact. For
+the fused `pallas_db` path it allocates **real** HBM scratch slots that the ring
+rotates through, one step at a time:
 
 ```text
-buffer_slot = chunk_idx % buffer_count
+working_slot   = step % buffer_count   # the token accumulated this step
+receiving_slot = (step + 1) % buffer_count  # where the neighbor's next token lands
 ```
 
-With two buffers:
+With two buffers the steady-state alternation is:
 
-| chunk | slot | epoch |
-|---:|---:|---:|
-| 0 | 0 | 0 |
-| 1 | 1 | 0 |
-| 2 | 0 | 1 |
-| 3 | 1 | 1 |
-| 4 | 0 | 2 |
-| 5 | 1 | 2 |
+| step | working slot | receiving slot | meaning |
+|---:|---:|---:|---|
+| 0 | 0 | 1 | accumulate local token; RDMA local token into neighbor slot 1 |
+| 1 | 1 | 0 | accumulate token received from neighbor; send it onward to slot 0 |
+| 2 | 0 | 1 | slot 0 reused only after its prior occupant drained |
+| 3 | 1 | 0 | steady-state alternation continues |
 
 The hazard rule:
 
@@ -224,10 +242,16 @@ The hazard rule:
 A slot may be reused only after local reads/writes, send waits, and receive waits for the previous occupant have drained.
 ```
 
-In the current serialized implementation, this rule is trivially safe because
-the next chunk does not start until the current one completes. In a fused
-pipeline, this rule becomes the difference between correct overlap and a stale
-buffer carnival.
+In the serialized path this is trivially safe (the next chunk does not start
+until the current one completes). In `pallas_db` it is enforced for real by a
+**capacity semaphore**: before a device starts the RDMA into its neighbor's
+receiving slot, it signals the upstream neighbor that its own receiving slot is
+free and waits for the same signal from downstream. That handshake is what keeps
+a faster device from overwriting a slot the receiver has not drained — the
+difference between correct overlap and a stale buffer carnival. Setting
+`--lab8-buffer-count 3` or `4` adds run-ahead capacity; the capacity handshake
+still bounds it, so more buffers may not always help — a useful result, not a
+failure.
 
 ## Run Commands
 
@@ -272,19 +296,35 @@ for direction in right left; do
 done
 ```
 
-Buffer-count planning sweep:
+Buffer-count sweep (real double buffering for `pallas_db`):
 
 ```bash
-for buffers in 1 2 3 4; do
+for buffers in 2 3 4; do
   python collective_bench.py \
     --lab lab8 \
+    --ops pallas_db_token_ring \
     --sizes 4MiB \
     --lab8-chunks 8 \
     --lab8-buffer-count "${buffers}"
 done
 ```
 
-Profile the custom path:
+Inner-block sweep — see the micro-transfer penalty of an undersized VMEM block.
+`--lab8-inner-cols 0` (the default) auto-sizes the largest VMEM-safe block; a
+small value forces tiny blocks:
+
+```bash
+for inner in 0 128 1024 8192; do
+  python collective_bench.py \
+    --lab lab8 \
+    --ops pallas_db_token_ring,pallas_chunked_token_ring \
+    --sizes 4MiB \
+    --lab8-inner-cols "${inner}"
+done
+```
+
+Profile the fused double-buffered kernel (look for RDMA start before the
+accumulation pipeline, and the wait after):
 
 ```bash
 python collective_bench.py \
@@ -293,7 +333,7 @@ python collective_bench.py \
   --lab8-chunks 8 \
   --profile \
   --profile-cases 1 \
-  --trace-op pallas_chunked_token_ring \
+  --trace-op pallas_db_token_ring \
   --trace-size 4MiB
 ```
 
@@ -337,11 +377,21 @@ artifact_index.json
 Questions for the CSV:
 
 ```text
-At fixed payload size, does latency increase as chunk count increases?
-At fixed payload size, does bandwidth improve, degrade, or stay flat?
-Where is the chunk-count knee?
-Does the Pallas chunked path beat the Lab 2 unchunked token ring?
-Does it beat anything built-in, or only teach us something?
+At fixed payload size, does pallas_db_token_ring beat the serialized path?
+How close does pallas_db get to the xla_token_ring roofline?
+Does the pallas_db advantage grow with payload size?
+Where is the chunk-count knee for the serialized path?
+With --lab8-inner-cols 128, how badly does the fused kernel regress, and why?
+Does buffer_count = 3 or 4 help pallas_db, or does the capacity handshake dominate?
+```
+
+Questions for the trace (`--trace-op pallas_db_token_ring`):
+
+```text
+Is there one fused custom kernel rather than C * H separate Lab 1 calls?
+Does the remote DMA start before the local accumulation pipeline?
+Does the accumulation run before the remote-copy wait (i.e. real overlap)?
+Are the capacity-semaphore waits visible and bounded?
 ```
 
 Questions for the trace:
@@ -400,24 +450,44 @@ Fix:
 Do not call this a bad result. Plot it. Explain it.
 ```
 
-### Buffer count is mistaken for real double buffering
+### The fused kernel is slower than the serialized path
 
 Symptom:
 
 ```text
-Students expect --lab8-buffer-count 2 to improve runtime by itself.
+pallas_db_token_ring latency is much worse than pallas_chunked_token_ring, especially at large payloads
 ```
 
 Likely explanation:
 
 ```text
-The current code records the schedule but does not overlap chunks inside one fused kernel.
+The inner VMEM block is too small, so emit_pipeline does thousands of micro-transfers and overlap cannot pay for the overhead.
 ```
 
 Fix:
 
 ```text
-Use the spec artifact as a contract for the later fused implementation.
+Use --lab8-inner-cols 0 (auto, the default). A fixed small value like 128 is for *demonstrating* the penalty, not for fast runs.
+```
+
+### Buffer count and double buffering
+
+Symptom:
+
+```text
+--lab8-buffer-count 2 does not change the serialized path's runtime.
+```
+
+Likely explanation:
+
+```text
+Buffer count is a planning artifact for the serialized path. It only becomes real HBM double buffering in pallas_db_token_ring.
+```
+
+Fix:
+
+```text
+Compare buffer counts against the pallas_db op, not the serialized op, and confirm overlap in the trace.
 ```
 
 ### Collective IDs collide
@@ -465,20 +535,45 @@ Use HBM, reduce payload size, or increase chunk count.
 ```text
 reference token-ring correctness remains stable across payload sizes
 serialized Pallas chunked ring matches per-chunk full-tile token sums on TPU
+fused pallas_db_token_ring matches the same full-tile sums on TPU
+xla_token_ring matches the same correctness contract and acts as the roofline
+pallas_db beats serialized on latency at medium/large payloads (default auto inner block)
 the spec artifact records source history, byte model, collective-ID plan, and buffer ownership rules
-students can explain why smaller chunks can be slower before overlap exists
+a profile trace shows the remote copy overlapped with the local accumulation pipeline
+students can explain both the speedup over serialized and the remaining gap to XLA
 ```
+
+## What the Fused Kernel Does
+
+`pallas_db_token_ring` runs one Pallas TPU kernel with an outer grid over ring
+steps. Per device, per step `s`:
+
+```text
+prologue (step 0): local neighbor barrier; stage local token into hbm_scratch[0];
+                   initialize the float32 accumulator from the first token
+each step s in 0..hops:
+  build a remote copy: hbm_scratch[working_slot] -> neighbor.hbm_scratch[receiving_slot]
+  if not last step:
+    signal capacity to the upstream neighbor; wait for downstream capacity
+    start the async remote DMA
+  OVERLAP: accumulate hbm_scratch[working_slot] into the output through an inner
+           HBM<->VMEM emit_pipeline while the DMA is in flight
+  if not last step:
+    wait for the remote copy to complete before the slot is reused
+```
+
+The accumulator is read-modify-written into HBM via `emit_pipeline` with
+`should_accumulate_out=True`, and the inner column block is auto-sized
+(`--lab8-inner-cols 0`) to the largest VMEM-safe window so the pipeline does a
+few large transfers rather than many tiny ones.
 
 ## Deferred Work
 
 ```text
-fuse the chunk schedule into one Pallas kernel
-split start, wait_send, wait_recv, and consume phases
-use buffer slots for real double buffering
-add capacity semaphores or equivalent flow control
-insert local compute between enqueue and wait
-prove overlap in traces rather than assuming it
-carry the optimized chunked schedule into reduce-scatter and all-reduce
+add a bidirectional pallas_db that uses both ICI directions
+carry the fused double-buffered schedule into reduce-scatter and all-reduce
+explore controlled run-ahead for buffer_count > 2
+add interpret-mode race tests for stale-slot hazards
 ```
 
 ## Bridge To Lab 9

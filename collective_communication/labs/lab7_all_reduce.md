@@ -216,13 +216,15 @@ For `N = 4`, the optimized ring sends `1.5 * B` per device, while the teaching
 path sends `3.75 * B` per device. That overhead is not a bug. It is the price
 of keeping the phase boundary easy to inspect before optimization.
 
-**Reading GB/s across ops:** the `GB/s` column divides each op's own logical
-byte model by its time. `pallas_ring_all_reduce` is credited the teaching
-whole-token traffic while the built-in `pmap_psum` is credited the optimal
-`2 * (N-1) / N * B`, so the two GB/s columns are **not** a like-for-like
-throughput comparison (the custom path's number is inflated ~2.5x by its byte
-model). Compare the `us` (latency) column when ranking the two ops; use GB/s only
-to watch a single op scale across payload sizes.
+**Reading the GB/s columns:** the headline `GB/s` is *useful* throughput — the
+optimal byte model `2 * (N-1) / N * B`, applied identically to `pmap_psum` and
+`pallas_ring_all_reduce`, so the two are directly comparable (the table prints
+the same `useful/dev` for both). The separate `wireGB/s` column (and the
+`wire_bytes` / `byte_model` CSV columns) report the traffic each implementation
+actually moves: the composed teaching kernel sends `~2.5x` the optimal bytes, so
+its `wireGB/s` runs about 2.5x its useful `GB/s` — that gap is the overhead, and
+`byte_model=whole-token` flags it. The `us` (latency) column remains the simplest
+apples-to-apples way to rank the two, since it needs no byte model.
 
 ## Correctness Contract
 
@@ -274,12 +276,13 @@ Does the trace show separate hop kernels rather than one fused all-reduce?
 to matter more than latency.
 2. Flip `--neighbor-direction left` and verify that the final full all-reduce
 result is unchanged after canonical ordering.
-3. Compare `pmap_psum` and `pallas_ring_all_reduce` using the `us` (latency)
-column. On this harness the composed Pallas path is usually *faster* at these
-sizes because `pmap_psum` pays a fixed per-call dispatch cost; explain where you
-would expect the built-in to win instead (larger payloads, real wire-byte
-accounting). Note the `GB/s` columns are **not** comparable across these two ops
-— they use different byte models (see below).
+3. Compare `pmap_psum` and `pallas_ring_all_reduce`. Their headline `GB/s`
+(useful throughput) uses the same optimal byte model, so it *is* comparable; the
+`wireGB/s` column shows the teaching kernel's extra traffic. On
+this harness the composed Pallas path is usually *faster* at these sizes (higher
+useful GB/s and lower `us`) because `pmap_psum` pays a fixed per-call dispatch
+cost — explain where you would expect the built-in to win instead (larger
+payloads, where the teaching kernel's `wireGB/s`/`GB/s` overhead starts to bite).
 4. Use the spec artifact's byte model to predict the teaching overhead factor.
 Then compare that with measured latency. The ratio will not match perfectly,
 and explaining why is the fun part.

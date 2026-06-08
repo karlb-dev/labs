@@ -206,13 +206,16 @@ The teaching implementation therefore sends about `N` times more data than the
 one-chunk-per-hop plan. That is acceptable for this lab because the goal is
 ownership clarity. Lab 8 is where performance gets its fangs.
 
-**Reading GB/s across ops:** the `GB/s` column divides each op's own logical
-byte model by its time. `pallas_ring_reduce_scatter` is credited the inflated
-whole-token traffic (`H * B`) while the built-in `pmap_psum_scatter` is credited
-the optimal `2 * B * (N-1) / N`, so the custom path's GB/s looks several times
-larger even when it is not moving useful data faster. Do **not** read the GB/s
-gap as the teaching kernel beating the built-in — compare the `us` (latency)
-column for that, and use GB/s only to watch one op scale across payload sizes.
+**Reading the GB/s columns:** the headline `GB/s` is *useful* throughput — the
+optimal byte model `2 * B * (N-1) / N`, applied identically to
+`pmap_psum_scatter` and `pallas_ring_reduce_scatter` so the two are directly
+comparable (the table prints the same `useful/dev` bytes for both). The separate
+`wireGB/s` column (and the `wire_bytes` / `byte_model` CSV columns) report the
+traffic each implementation actually moves: for the whole-token teaching kernel
+that is `H * B`, so its `wireGB/s` is about `N`x its useful `GB/s` — that gap is
+the wasted bandwidth, and `byte_model=whole-token` flags it. For ranking the two
+implementations head-to-head, the `us` (latency) column is still the simplest
+apples-to-apples metric since it needs no byte model at all.
 
 ## Correctness Contract
 
@@ -347,7 +350,7 @@ single-hop phases. The trace should make the teaching composition visible.
 | Only `[:, 0, 0]` looks right | Partial tile copy or stale data | Full-tile checker, output dump |
 | Full run is wrong but partial source table is right | Wrong owner chunk axis | `owned_chunk(...)` |
 | Hangs or crashes | Semaphore or collective-ID issue | Lab 4 rules, `errors/*.txt` |
-| Pallas GB/s looks far higher than the built-in | Different byte models, not a real speedup | Byte model note; compare `us`, not GB/s |
+| Pallas `wireGB/s` far exceeds its `GB/s` | Whole-token kernel moves ~Nx the optimal bytes | Byte model note; `wire_bytes`/`byte_model` columns |
 | VMEM allocation failure | Whole-token payload too large for VMEM | Use HBM or reduce size |
 
 ## Pass Condition
