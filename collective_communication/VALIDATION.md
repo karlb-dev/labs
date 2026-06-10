@@ -28,15 +28,7 @@ python collective_bench.py --lab lab1 --no-plots
 python collective_bench.py --lab lab11 --no-plots
 ```
 
-The TPU-4 and TPU-8 runs used the current lab order directly. The TPU-16 data
-was produced immediately before the final lab renumbering, so the semantic
-mapping for those artifacts is:
-
-| Old label in TPU-16 artifacts | Current lab |
-| --- | --- |
-| Lab 11 bandwidth-optimal all-reduce | Lab 9 |
-| Lab 9 mesh collectives | Lab 10 |
-| Lab 10 multi-host smoke | Lab 11 |
+The results below are presented in the current Lab 0 through Lab 11 order.
 
 ## Pass Summary
 
