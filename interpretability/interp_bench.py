@@ -141,6 +141,11 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "run_name": "lab01_residual_logit_lens",
         "description": "Residual stream and logit lens: how a prediction emerges over depth.",
     },
+    "lab2": {
+        "module": "labs.lab02_direct_logit_attribution",
+        "run_name": "lab02_direct_logit_attribution",
+        "description": "Direct logit attribution: which components push toward or away from an answer.",
+    },
 }
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
@@ -1312,6 +1317,305 @@ def compute_lens_trajectory(
     return traj
 
 # ---------------------------------------------------------------------------
+# Component capture: per-block attention and MLP contributions (Lab 2+)
+# ---------------------------------------------------------------------------
+#
+# Direct logit attribution needs the exact tensor each sub-block ADDS to the
+# residual stream. Where that tensor lives differs by architecture:
+#
+#   GPT-2 (pre-norm):   x + attn(ln_1(x)); then + mlp(ln_2(.))
+#                       -> the attn/mlp module outputs ARE the contributions.
+#   Olmo-2/3 (post-norm): x + post_attention_layernorm(attn(x));
+#                         then + post_feedforward_layernorm(mlp(.))
+#                       -> the *norm* outputs are the contributions; the raw
+#                          attn/mlp outputs never touch the stream.
+#
+# Name heuristics are a trap here: Llama-style models also have a module
+# called `post_attention_layernorm`, but there it is a PRE-norm for the MLP.
+# So the bench does not guess. It runs one probe forward, captures *both*
+# candidate sources per block, and keeps whichever pair actually reconstructs
+# each block's residual delta (streams[k+1] - streams[k]). The decision and
+# its reconstruction error are written to diagnostics/component_anatomy.json.
+# Same contract as the other self-checks: if nothing reconstructs, abort.
+
+ATTN_MODULE_CANDIDATES = ("self_attn", "attn")
+MLP_MODULE_CANDIDATES = ("mlp",)
+POST_ATTN_NORM_CANDIDATES = ("post_attention_layernorm",)
+POST_MLP_NORM_CANDIDATES = ("post_feedforward_layernorm",)
+
+
+@dataclasses.dataclass
+class ComponentAnatomy:
+    """Verified per-block contribution hook points for this model."""
+
+    attn_module_path: str        # e.g. 'self_attn' (relative to each block)
+    mlp_module_path: str
+    attn_source: str             # 'module' or 'post_norm'
+    mlp_source: str
+    attn_hook_path: str          # the path actually hooked for contributions
+    mlp_hook_path: str
+    max_block_recon_rel_err: float
+    probe_prompt: str
+
+
+@dataclasses.dataclass
+class ComponentCapture:
+    """One prompt's residual streams plus per-block contribution vectors.
+
+    ``attn_contrib`` / ``mlp_contrib`` have shape ``[n_layers, d_model]``,
+    float32 on CPU: the tensor block k added to the residual stream at the
+    FINAL position. Together with ``capture.streams[0]`` (the embedding
+    stream) they decompose the final pre-norm stream exactly:
+
+        streams[L][-1] == streams[0][-1] + sum_k attn_contrib[k] + mlp_contrib[k]
+
+    (up to the accumulation rounding of the model's compute dtype; the
+    decomposition check below measures and enforces this).
+    """
+
+    capture: ForwardCapture
+    attn_contrib: Any   # torch.Tensor [L, d_model] float32 cpu
+    mlp_contrib: Any    # torch.Tensor [L, d_model] float32 cpu
+
+
+def _first_module_path(block: Any, candidates: Sequence[str]) -> str | None:
+    for name in candidates:
+        if getattr(block, name, None) is not None:
+            return name
+    return None
+
+
+def _contrib_hook(store: dict, key: tuple) -> Any:
+    """Forward hook capturing a module's output at the final position."""
+
+    def hook(module: Any, hook_args: tuple, output: Any) -> None:
+        out = output[0] if isinstance(output, tuple) else output
+        store[key] = tensor_cpu_float(out[0, -1])
+
+    return hook
+
+
+def resolve_component_anatomy(
+    ctx: RunContext, bundle: ModelBundle, probe_prompt: str, *, rel_tolerance: float = 0.02
+) -> ComponentAnatomy:
+    """Probe and VERIFY where each block's attn/mlp contributions live.
+
+    Captures both the raw submodule outputs and (when present) the post-norm
+    outputs in a single forward, then selects the (attn, mlp) source pair
+    whose sum reconstructs every block's residual delta at the final
+    position. ``rel_tolerance`` is relative to the delta's norm and must
+    absorb only the model dtype's residual-add rounding (bf16: ~1%).
+    """
+    import torch
+
+    block0 = bundle.blocks[0]
+    attn_path = _first_module_path(block0, ATTN_MODULE_CANDIDATES)
+    mlp_path = _first_module_path(block0, MLP_MODULE_CANDIDATES)
+    if attn_path is None or mlp_path is None:
+        raise RuntimeError(
+            f"Could not find attention ({ATTN_MODULE_CANDIDATES}) or MLP "
+            f"({MLP_MODULE_CANDIDATES}) submodules on the decoder block. Add "
+            "this architecture's paths to interp_bench.py."
+        )
+    post_attn_path = _first_module_path(block0, POST_ATTN_NORM_CANDIDATES)
+    post_mlp_path = _first_module_path(block0, POST_MLP_NORM_CANDIDATES)
+
+    store: dict[tuple, Any] = {}
+    handles = []
+    for i, block in enumerate(bundle.blocks):
+        handles.append(getattr(block, attn_path).register_forward_hook(_contrib_hook(store, ("attn", "module", i))))
+        handles.append(getattr(block, mlp_path).register_forward_hook(_contrib_hook(store, ("mlp", "module", i))))
+        if post_attn_path:
+            handles.append(
+                getattr(block, post_attn_path).register_forward_hook(_contrib_hook(store, ("attn", "post_norm", i)))
+            )
+        if post_mlp_path:
+            handles.append(
+                getattr(block, post_mlp_path).register_forward_hook(_contrib_hook(store, ("mlp", "post_norm", i)))
+            )
+    try:
+        capture = run_with_residual_cache(bundle, probe_prompt)
+    finally:
+        for h in handles:
+            h.remove()
+
+    n_layers = bundle.anatomy.n_layers
+    deltas = [capture.streams[k + 1, -1] - capture.streams[k, -1] for k in range(n_layers)]
+
+    attn_sources = ["module"] + (["post_norm"] if post_attn_path else [])
+    mlp_sources = ["module"] + (["post_norm"] if post_mlp_path else [])
+    results: dict[tuple[str, str], float] = {}
+    for a_src in attn_sources:
+        for m_src in mlp_sources:
+            worst = 0.0
+            for k in range(n_layers):
+                recon = store[("attn", a_src, k)] + store[("mlp", m_src, k)]
+                denom = max(float(deltas[k].norm()), 1e-9)
+                worst = max(worst, float((recon - deltas[k]).norm()) / denom)
+            results[(a_src, m_src)] = worst
+
+    (best_a, best_m), best_err = min(results.items(), key=lambda kv: kv[1])
+    diag = {
+        "probe_prompt": probe_prompt,
+        "candidates_tried": {f"attn={a},mlp={m}": err for (a, m), err in results.items()},
+        "selected": {"attn_source": best_a, "mlp_source": best_m},
+        "max_block_recon_rel_err": best_err,
+        "rel_tolerance": rel_tolerance,
+        "explanation": (
+            "For each candidate hook-point pair, every block's captured "
+            "attn+mlp contribution must reconstruct that block's residual "
+            "delta streams[k+1]-streams[k] at the final position. The "
+            "selected pair is the verified place this model adds its "
+            "components to the residual stream."
+        ),
+    }
+    path = ctx.path("diagnostics", "component_anatomy.json")
+    write_json(path, diag)
+    ctx.register_artifact(path, "diagnostic", "Verified hook points for per-block attn/MLP contributions.")
+
+    if best_err > rel_tolerance:
+        raise RuntimeError(
+            f"No contribution hook-point pair reconstructs the per-block residual "
+            f"deltas (best: attn={best_a}, mlp={best_m}, max rel err {best_err:.4f} > "
+            f"tolerance {rel_tolerance}). This architecture adds components to the "
+            "residual stream somewhere the candidates do not cover; see "
+            "diagnostics/component_anatomy.json."
+        )
+
+    print(
+        f"[bench] component anatomy: attn={best_a}, mlp={best_m} "
+        f"(max block reconstruction rel err = {best_err:.2e})"
+    )
+    return ComponentAnatomy(
+        attn_module_path=attn_path,
+        mlp_module_path=mlp_path,
+        attn_source=best_a,
+        mlp_source=best_m,
+        attn_hook_path=attn_path if best_a == "module" else post_attn_path,
+        mlp_hook_path=mlp_path if best_m == "module" else post_mlp_path,
+        max_block_recon_rel_err=best_err,
+        probe_prompt=probe_prompt,
+    )
+
+
+def run_with_component_cache(
+    bundle: ModelBundle, prompt: str, comp_anatomy: ComponentAnatomy
+) -> ComponentCapture:
+    """Run one prompt capturing residual streams AND per-block contributions."""
+    import torch
+
+    store: dict[tuple, Any] = {}
+    handles = []
+    for i, block in enumerate(bundle.blocks):
+        handles.append(
+            getattr(block, comp_anatomy.attn_hook_path).register_forward_hook(_contrib_hook(store, ("attn", i)))
+        )
+        handles.append(
+            getattr(block, comp_anatomy.mlp_hook_path).register_forward_hook(_contrib_hook(store, ("mlp", i)))
+        )
+    try:
+        capture = run_with_residual_cache(bundle, prompt)
+    finally:
+        for h in handles:
+            h.remove()
+
+    n_layers = bundle.anatomy.n_layers
+    return ComponentCapture(
+        capture=capture,
+        attn_contrib=torch.stack([store[("attn", i)] for i in range(n_layers)]),
+        mlp_contrib=torch.stack([store[("mlp", i)] for i in range(n_layers)]),
+    )
+
+
+def run_decomposition_check(
+    ctx: RunContext, bundle: ModelBundle, comp: ComponentCapture, *, rel_tolerance: float = 0.02
+) -> dict[str, Any]:
+    """Self-check 3: components must sum to the final pre-norm stream.
+
+    embeddings + sum(attn contributions) + sum(mlp contributions) must equal
+    streams[L] at the final position, up to the model compute dtype's
+    residual-accumulation rounding. If this fails, every attribution number
+    downstream is bookkeeping fiction; abort.
+    """
+    final_stream = comp.capture.streams[-1, -1]
+    recon = comp.capture.streams[0, -1] + comp.attn_contrib.sum(dim=0) + comp.mlp_contrib.sum(dim=0)
+    abs_err = float((recon - final_stream).norm())
+    rel_err = abs_err / max(float(final_stream.norm()), 1e-9)
+    result = {
+        "prompt": comp.capture.prompt,
+        "rel_err": rel_err,
+        "abs_err": abs_err,
+        "final_stream_norm": float(final_stream.norm()),
+        "rel_tolerance": rel_tolerance,
+        "ok": rel_err <= rel_tolerance,
+        "explanation": (
+            "The DLA ledger is only meaningful if embeddings + all captured "
+            "attn/MLP contributions reconstruct the final pre-norm residual "
+            "stream. rel_err measures the unexplained remainder; the "
+            "tolerance absorbs the model dtype's residual-add rounding only."
+        ),
+    }
+    path = ctx.path("diagnostics", "dla_decomposition_check.json")
+    write_json(path, result)
+    ctx.register_artifact(path, "diagnostic", "Proof that captured components sum to the final residual stream.")
+    status = "OK" if result["ok"] else "FAILED"
+    print(f"[bench] decomposition check: {status} (rel err = {rel_err:.2e})")
+    if not result["ok"]:
+        raise RuntimeError(
+            "Component decomposition check failed: captured contributions do "
+            "not sum to the final residual stream. See "
+            "diagnostics/dla_decomposition_check.json."
+        )
+    return result
+
+
+def run_with_component_ablation(
+    bundle: ModelBundle,
+    prompt: str,
+    comp_anatomy: ComponentAnatomy,
+    component_type: str,
+    layer: int,
+) -> Any:
+    """Forward pass with one component's FINAL-POSITION output zeroed.
+
+    This is *direct-path* ablation: it removes exactly the contribution DLA
+    scored (the write to the final position's residual stream) and nothing
+    else. Contributions at earlier positions, which can reach the output
+    indirectly through later attention, are deliberately left intact so the
+    causal effect is commensurable with the attribution score.
+    Returns the model's final-position logits, float32 on CPU.
+    """
+    import torch
+
+    hook_path = comp_anatomy.attn_hook_path if component_type == "attn" else comp_anatomy.mlp_hook_path
+    module = getattr(bundle.blocks[layer], hook_path)
+
+    def ablate_hook(mod: Any, hook_args: tuple, output: Any) -> Any:
+        if isinstance(output, tuple):
+            out = output[0].clone()
+            out[0, -1] = 0
+            return (out,) + tuple(output[1:])
+        out = output.clone()
+        out[0, -1] = 0
+        return out
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+
+    handle = module.register_forward_hook(ablate_hook)
+    try:
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        handle.remove()
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+# ---------------------------------------------------------------------------
 # Human-readable state dumps
 # ---------------------------------------------------------------------------
 #
@@ -1650,6 +1954,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="Cap examples; -1 = tier default, 0 = no cap.")
     parser.add_argument("--topk", type=int, default=5, help="Top-k tokens recorded per depth.")
     parser.add_argument("--include-controls", action="store_true", help="Lab 1: include optional weak/scrambled control prompts.")
+    parser.add_argument("--ablate-top", type=int, default=3,
+                        help="Lab 2: per example, ablate this many top-|attribution| components "
+                             "plus matched controls to compare attribution vs causal effect (0 = skip).")
+    parser.add_argument("--dla-tolerance", type=float, default=0.02,
+                        help="Relative tolerance for the component decomposition self-check "
+                             "(absorbs the compute dtype's residual-add rounding; bf16 needs ~0.02).")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)

@@ -34,6 +34,10 @@ python interp_bench.py --lab lab1 --tier a
 
 # Full Lab 1 on a Colab A100/H100:
 python interp_bench.py --lab lab1 --tier b --prompt-set full
+
+# Lab 2 (direct logit attribution), same pattern:
+python interp_bench.py --lab lab2 --tier a
+python interp_bench.py --lab lab2 --tier b --prompt-set full --topk 10
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -49,11 +53,17 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
 
 - `interp_bench.py` — shared bench: run dirs, console tee, diagnostics
   (packages/git/GPU/env), model anatomy resolution, residual-stream capture
-  with verified semantics, logit lens, human-readable state dumps, plots,
-  claim-ledger plumbing. Implemented and smoke-tested.
-- Lab 1: residual stream and logit lens — implemented.
-- Labs 2–11 — designed in COURSE.md, not yet implemented. Lab 2 (direct logit
-  attribution) is next and reuses the bench's capture and trajectory code.
+  with verified semantics, logit lens, verified per-block component capture
+  (attn/MLP contributions, post-norm aware), direct-path component ablation,
+  human-readable state dumps, plots, claim-ledger plumbing. Implemented and
+  validated on gpt2 (fp32) and Olmo-3-7B (bf16, A100).
+- Lab 1: residual stream and logit lens — implemented and validated (Tier A+B).
+- Lab 2: direct logit attribution — implemented and validated (Tier A+B).
+  Adds two instrument self-checks: the component-anatomy probe (hook points
+  are verified against per-block residual deltas, not assumed) and the
+  decomposition check (components must sum to the final pre-norm stream).
+- Labs 3–11 — designed in COURSE.md, not yet implemented. Lab 3 (attention
+  routing) is next and reuses the component capture and ablation machinery.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 
@@ -72,14 +82,20 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
 
 ## The instrument verifies itself
 
-Every run performs two self-checks before any science, and aborts if the
-second fails:
+Every run performs self-checks before any science, and aborts on failure:
 
 - **Hook parity** (`diagnostics/hook_parity.json`): forward hooks on every
   decoder block must reproduce `output_hidden_states` bit-for-bit.
 - **Lens self-check** (`diagnostics/logit_lens_self_check.json`): the logit
   lens applied at the final depth must reproduce the model's actual output
-  logits (top-1 must match).
+  logits (top-1 must match, or be a measured near-tie within numeric noise).
+- **Component anatomy probe** (Lab 2+, `diagnostics/component_anatomy.json`):
+  contribution hook points are selected by verifying which candidate pair
+  reconstructs every block's residual delta — never by module-name heuristics
+  (post-norm architectures like Olmo-3 add *normed* submodule outputs).
+- **Decomposition check** (Lab 2+, `diagnostics/dla_decomposition_check.json`):
+  embeddings + all captured attn/MLP contributions must sum to the final
+  pre-norm residual stream.
 
 If a transformers upgrade ever changes hidden-state semantics, these fail
 loudly and every downstream number is declared suspect — that is their job.
