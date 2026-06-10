@@ -925,14 +925,19 @@ def build_process_collective_smoke(
             "payload_dtype": "int32",
             "sync_name": sync_name,
         }
+        contract_assert_values = jnp.array(
+            [process_count, global_device_count, local_device_count, elems],
+            dtype=jnp.int32,
+        )
 
         start = time.perf_counter()
         contract_assert_equal_reached: bool | None = None
         if hasattr(multihost_utils, "assert_equal"):
             # This preflight catches a mismatched process contract before the
-            # gathered payload has to be interpreted. All processes must call it.
+            # gathered payload has to be interpreted. Keep it numeric because
+            # some JAX versions cannot all-gather NumPy string dtypes here.
             multihost_utils.assert_equal(
-                contract,
+                contract_assert_values,
                 fail_message="Lab 10 process collective contract mismatch",
             )
             contract_assert_equal_reached = True
@@ -983,6 +988,7 @@ def build_process_collective_smoke(
                 "payload_elems_per_process": elems,
                 "payload_dtype": "int32",
                 "contract": contract,
+                "contract_assert_values": np.asarray(contract_assert_values).astype(int).tolist(),
                 "process_allgather_tiled": True,
                 "process_allgather_shape": list(np.asarray(gathered).shape),
                 "process_allgather_flat_size": int(gathered_host.size),

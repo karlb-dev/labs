@@ -1330,30 +1330,177 @@ def rank_vector(values: Any) -> tuple[int, ...]:
     return tuple(int(round(float(v))) for v in flat.tolist())
 
 
-def make_rank_payload(jnp: Any, n_devices: int, elems: int, dtype: Any) -> Any:
+def process_rank_start(jax: Any, local_device_count: int) -> int:
+    """Return the pmap/shard global rank of this process's first local device."""
+    return int(jax.process_index()) * int(local_device_count)
+
+
+def device_get_addressable(jax: Any, value: Any) -> Any:
+    """Fetch only this process's addressable portion of a possibly global array."""
+    try:
+        return jax.device_get(value)
+    except RuntimeError as exc:
+        if "non-addressable" not in str(exc):
+            raise
+
+    shards = getattr(value, "addressable_shards", None)
+    if shards is None:
+        raise
+
+    import numpy as np
+
+    parts = []
+    value_ndim = len(getattr(value, "shape", ()))
+    for shard in sorted(shards, key=shard_leading_start):
+        part = np.asarray(jax.device_get(shard.data))
+        if value_ndim and part.ndim == value_ndim - 1:
+            part = np.expand_dims(part, axis=0)
+        parts.append(part)
+    return np.concatenate(parts, axis=0) if parts else jax.device_get(value)
+
+
+def shard_leading_start(shard: Any) -> int:
+    """Return a stable sort key for an addressable shard's leading slice."""
+    index = getattr(shard, "index", ())
+    first = index[0] if index else slice(0)
+    return int(first.start or 0) if isinstance(first, slice) else int(first)
+
+
+def check_addressable_shards_against_host(
+    jax: Any,
+    value: Any,
+    expected_host: Any,
+    *,
+    rtol: float = 1e-3,
+    atol: float = 1e-3,
+) -> bool:
+    """Compare each addressable shard with the matching slice of a host array."""
+    import numpy as np
+
+    expected_host = np.asarray(expected_host)
+    try:
+        got = np.asarray(jax.device_get(value))
+        return bool(
+            np.allclose(
+                got.astype(np.float32),
+                expected_host.astype(np.float32),
+                rtol=rtol,
+                atol=atol,
+            )
+        )
+    except RuntimeError as exc:
+        if "non-addressable" not in str(exc):
+            raise
+
+    shards = getattr(value, "addressable_shards", None)
+    if shards is None:
+        raise
+
+    for shard in sorted(shards, key=shard_leading_start):
+        got = np.asarray(jax.device_get(shard.data)).astype(np.float32)
+        expected = np.asarray(expected_host[shard.index]).astype(np.float32)
+        if got.shape != expected.shape or not np.allclose(
+            got, expected, rtol=rtol, atol=atol
+        ):
+            return False
+    return True
+
+
+def expected_for_addressable(
+    jax: Any,
+    expected: Any,
+    local_device_count: int,
+) -> Any:
+    """Slice a global expected array down to this process's local rank window."""
+    import numpy as np
+
+    expected_host = np.asarray(jax.device_get(expected))
+    axis_size = int(jax.device_count())
+    if expected_host.ndim and expected_host.shape[0] == axis_size:
+        start = process_rank_start(jax, local_device_count)
+        expected_host = expected_host[start : start + local_device_count]
+    return expected_host
+
+
+def check_addressable_result(
+    jax: Any,
+    jnp: Any,
+    y: Any,
+    expected: Any,
+    local_device_count: int,
+    *,
+    rtol: float = 1e-3,
+    atol: float = 1e-3,
+) -> bool:
+    """Compare this process's addressable shards against a global expected array."""
+    del jnp
+
+    import numpy as np
+
+    got = np.asarray(device_get_addressable(jax, y))
+    expected_host = np.asarray(
+        expected_for_addressable(jax, expected, local_device_count),
+        dtype=np.float32,
+    )
+
+    # Lab 9 pmap returns [receiver, owner_rank, col] while its full Pallas-style
+    # expected payload may include a singleton row dimension.
+    if expected_host.ndim == got.ndim + 1 and expected_host.shape[2] == 1:
+        expected_host = expected_host[:, :, 0, :]
+
+    if expected_host.shape != got.shape and expected_host.ndim < got.ndim:
+        expected_shape = expected_host.shape + (1,) * (got.ndim - expected_host.ndim)
+        expected_host = expected_host.reshape(expected_shape) + np.zeros_like(
+            got, dtype=np.float32
+        )
+
+    if expected_host.shape != got.shape:
+        return False
+    return bool(np.allclose(got.astype(np.float32), expected_host, rtol=rtol, atol=atol))
+
+
+def make_rank_payload(
+    jnp: Any,
+    n_devices: int,
+    elems: int,
+    dtype: Any,
+    *,
+    rank_start: int = 0,
+) -> Any:
     """Create a per-device payload filled with that device's rank.
 
     Rank-filled payloads make communication correctness easy to see. If device
     2 receives a tile whose first element is 1, the data itself identifies the
     sender.
     """
-    ranks = jnp.arange(n_devices, dtype=jnp.float32).reshape(n_devices, 1)
+    ranks = jnp.arange(rank_start, rank_start + n_devices, dtype=jnp.float32).reshape(
+        n_devices, 1
+    )
     x = jnp.broadcast_to(ranks, (n_devices, elems))
     return x.astype(dtype)
 
 
 def make_all_to_all_payload(
-    jnp: Any, n_devices: int, chunk_elems: int, dtype: Any
+    jnp: Any,
+    n_devices: int,
+    chunk_elems: int,
+    dtype: Any,
+    *,
+    axis_size: int | None = None,
+    rank_start: int = 0,
 ) -> Any:
     """Create a payload whose values identify both source and destination.
 
     The value ``src * 10 + dst`` lets the all-to-all correctness check verify
     that each destination received the right chunk from every source.
     """
-    src = jnp.arange(n_devices, dtype=jnp.float32).reshape(n_devices, 1, 1)
-    dst = jnp.arange(n_devices, dtype=jnp.float32).reshape(1, n_devices, 1)
+    axis_size = n_devices if axis_size is None else int(axis_size)
+    src = jnp.arange(rank_start, rank_start + n_devices, dtype=jnp.float32).reshape(
+        n_devices, 1, 1
+    )
+    dst = jnp.arange(axis_size, dtype=jnp.float32).reshape(1, axis_size, 1)
     x = src * 10.0 + dst
-    x = jnp.broadcast_to(x, (n_devices, n_devices, chunk_elems))
+    x = jnp.broadcast_to(x, (n_devices, axis_size, chunk_elems))
     return x.astype(dtype)
 
 
@@ -1447,6 +1594,9 @@ def check_pmap_result(
     n_devices: int,
     dtype: Any,
     direction: str = "right",
+    *,
+    local_device_count: int | None = None,
+    rank_start: int = 0,
 ) -> bool:
     """Small correctness checks for pmap reference collectives.
 
@@ -1455,6 +1605,9 @@ def check_pmap_result(
     """
     del dtype
     y_host = jax.device_get(y)
+    local_device_count = (
+        int(local_device_count) if local_device_count is not None else y_host.shape[0]
+    )
     if op == "pmap_psum":
         expected = n_devices * (n_devices - 1) / 2
         return bool(jnp.allclose(y_host[..., 0], expected))
@@ -1465,14 +1618,19 @@ def check_pmap_result(
     if op == "pmap_ppermute":
         # Receiver i observes (i - 1) for a right send and (i + 1) for a left
         # send, matching the perm chosen in make_pmap_fn.
+        ranks = range(rank_start, rank_start + local_device_count)
         if direction == "left":
-            expected = jnp.array([(i + 1) % n_devices for i in range(n_devices)])
+            expected = jnp.array([(i + 1) % n_devices for i in ranks])
         else:
-            expected = jnp.array([(i - 1) % n_devices for i in range(n_devices)])
+            expected = jnp.array([(i - 1) % n_devices for i in ranks])
         return bool(jnp.allclose(y_host[:, 0], expected))
     if op == "pmap_all_to_all":
         expected_src = jnp.arange(n_devices, dtype=jnp.float32).reshape(1, n_devices)
-        expected_dst = jnp.arange(n_devices, dtype=jnp.float32).reshape(n_devices, 1)
+        expected_dst = jnp.arange(
+            rank_start,
+            rank_start + local_device_count,
+            dtype=jnp.float32,
+        ).reshape(local_device_count, 1)
         expected = expected_src * 10.0 + expected_dst
         return bool(jnp.allclose(y_host[:, :, 0], expected))
     return False
@@ -1526,18 +1684,20 @@ def run_pmap_ring_all_gather(
     itemsize = dtype_itemsize(jnp, dtype)
     elems = elems_for_payload(payload_bytes, itemsize)
     actual_payload = elems * itemsize
-    x = make_rank_payload(jnp, n_devices, elems, dtype)
+    axis_size = int(jax.device_count())
+    rank_start = int(jax.process_index()) * int(n_devices)
+    x = make_rank_payload(jnp, n_devices, elems, dtype, rank_start=rank_start)
     # A full all-gather is n_devices - 1 hops; --token-hops lets the Lab 5
     # partial-gather experiment ask for fewer (or more) hops, in which case the
     # output stacks only hops + 1 arrivals per device.
-    hops = token_ring_hops(args, n_devices)
+    hops = token_ring_hops(args, axis_size)
     if args.neighbor_direction == "right":
         # Source i sends to i + 1. Device r therefore receives ranks
         # r, r - 1, r - 2, ... over successive hops.
-        perm = tuple((i, (i + 1) % n_devices) for i in range(n_devices))
+        perm = tuple((i, (i + 1) % axis_size) for i in range(axis_size))
     else:
         # Source i sends to i - 1. Device r receives r, r + 1, r + 2, ...
-        perm = tuple((i, (i - 1) % n_devices) for i in range(n_devices))
+        perm = tuple((i, (i - 1) % axis_size) for i in range(axis_size))
 
     @functools.partial(jax.pmap, axis_name=args.axis_name)
     def fn(value):
@@ -1555,11 +1715,11 @@ def run_pmap_ring_all_gather(
     else:
         got = jax.device_get(y)[:, :, 0]
         expected_rows = []
-        for rank in range(n_devices):
+        for rank in range(rank_start, rank_start + n_devices):
             if args.neighbor_direction == "right":
-                expected_rows.append([(rank - hop) % n_devices for hop in range(hops + 1)])
+                expected_rows.append([(rank - hop) % axis_size for hop in range(hops + 1)])
             else:
-                expected_rows.append([(rank + hop) % n_devices for hop in range(hops + 1)])
+                expected_rows.append([(rank + hop) % axis_size for hop in range(hops + 1)])
         expected = jnp.array(expected_rows, dtype=jnp.float32)
         ok = bool(jnp.allclose(got, expected))
     with maybe_trace(jax, args, run, "pmap_ring_all_gather", payload_bytes) as trace_artifact:
@@ -1603,13 +1763,17 @@ def run_pmap_psum_scatter(
     import functools
 
     itemsize = dtype_itemsize(jnp, dtype)
-    chunk_elems = elems_for_payload(payload_bytes, itemsize, divisor=n_devices)
-    actual_payload = n_devices * chunk_elems * itemsize
+    axis_size = int(jax.device_count())
+    rank_start = int(jax.process_index()) * int(n_devices)
+    chunk_elems = elems_for_payload(payload_bytes, itemsize, divisor=axis_size)
+    actual_payload = axis_size * chunk_elems * itemsize
     # Encode both source rank and chunk index so the reduced owner chunk has a
     # predictable first element after psum_scatter.
-    src = jnp.arange(n_devices, dtype=jnp.float32).reshape(n_devices, 1, 1)
-    chunk = jnp.arange(n_devices, dtype=jnp.float32).reshape(1, n_devices, 1)
-    x = jnp.broadcast_to(src * 10.0 + chunk, (n_devices, n_devices, chunk_elems))
+    src = jnp.arange(rank_start, rank_start + n_devices, dtype=jnp.float32).reshape(
+        n_devices, 1, 1
+    )
+    chunk = jnp.arange(axis_size, dtype=jnp.float32).reshape(1, axis_size, 1)
+    x = jnp.broadcast_to(src * 10.0 + chunk, (n_devices, axis_size, chunk_elems))
     x = x.astype(dtype)
 
     @functools.partial(jax.pmap, axis_name=args.axis_name)
@@ -1626,8 +1790,13 @@ def run_pmap_psum_scatter(
     if args.skip_correctness:
         ok = True
     else:
-        reduced = 10.0 * n_devices * (n_devices - 1) / 2
-        expected = reduced + n_devices * jnp.arange(n_devices, dtype=jnp.float32)
+        reduced = 10.0 * axis_size * (axis_size - 1) / 2
+        local_ranks = jnp.arange(
+            rank_start,
+            rank_start + n_devices,
+            dtype=jnp.float32,
+        )
+        expected = reduced + axis_size * local_ranks
         ok = bool(jnp.allclose(jax.device_get(y)[:, 0], expected))
     with maybe_trace(jax, args, run, "pmap_psum_scatter", payload_bytes) as trace_artifact:
         timing = time_jax_call(
@@ -1644,11 +1813,11 @@ def run_pmap_psum_scatter(
         op="pmap_psum_scatter",
         layer="pmap/lax",
         payload_bytes=actual_payload,
-        logical_bytes=int(2 * actual_payload * max(0, n_devices - 1) / max(1, n_devices)),
+        logical_bytes=int(2 * actual_payload * max(0, axis_size - 1) / max(1, axis_size)),
         ok=ok,
         trace_artifact=trace_artifact,
         memory_profile_artifact=memory_profile,
-        note=f"reduce-scatter reference chunks={n_devices} chunk_elems={chunk_elems}",
+        note=f"reduce-scatter reference chunks={axis_size} chunk_elems={chunk_elems}",
         **result_timing_kwargs(timing),
     )
 
@@ -1702,23 +1871,20 @@ def run_pmap_2d_staged_all_gather(
         )
 
     try:
-        y = block_until_ready(jax, case.fn(case.x))
+        rank_start = process_rank_start(jax, n_devices)
+        local_x = case.x[rank_start : rank_start + n_devices]
+        y = block_until_ready(jax, case.fn(local_x))
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab9_mesh_collectives.check_result(
-                jax,
-                jnp,
-                y,
-                case.expected_ranks,
-            )
+            ok = check_addressable_result(jax, jnp, y, case.expected_ranks, n_devices)
         with maybe_trace(
             jax, args, run, "pmap_2d_staged_all_gather", payload_bytes
         ) as trace_artifact:
             timing = time_jax_call(
                 jax,
                 case.fn,
-                case.x,
+                local_x,
                 warmup=args.warmup,
                 iters=args.iters,
             )
@@ -1827,14 +1993,16 @@ def run_pmap_token_ring(
     itemsize = dtype_itemsize(jnp, dtype)
     elems = elems_for_payload(payload_bytes, itemsize)
     actual_payload = elems * itemsize
-    x = make_rank_payload(jnp, n_devices, elems, dtype)
-    hops = token_ring_hops(args, n_devices)
+    axis_size = int(jax.device_count())
+    rank_start = int(jax.process_index()) * int(n_devices)
+    x = make_rank_payload(jnp, n_devices, elems, dtype, rank_start=rank_start)
+    hops = token_ring_hops(args, axis_size)
     if args.neighbor_direction == "right":
         # Match Lab 1/Lab 2 convention: direction is from the sender's point of
         # view, not the receiver's point of view.
-        perm = tuple((i, (i + 1) % n_devices) for i in range(n_devices))
+        perm = tuple((i, (i + 1) % axis_size) for i in range(axis_size))
     else:
-        perm = tuple((i, (i - 1) % n_devices) for i in range(n_devices))
+        perm = tuple((i, (i - 1) % axis_size) for i in range(axis_size))
 
     @functools.partial(jax.pmap, axis_name=args.axis_name)
     def fn(value):
@@ -1850,7 +2018,10 @@ def run_pmap_token_ring(
     if args.skip_correctness:
         ok = True
     else:
-        expected = expected_token_ring_sums(jnp, n_devices, hops, args.neighbor_direction)
+        expected_all = expected_token_ring_sums(
+            jnp, axis_size, hops, args.neighbor_direction
+        )
+        expected = expected_all[rank_start : rank_start + n_devices]
         ok = bool(jnp.allclose(jax.device_get(y)[:, 0], expected))
     with maybe_trace(jax, args, run, "pmap_token_ring", payload_bytes) as trace_artifact:
         timing = time_jax_call(
@@ -1909,26 +2080,43 @@ def run_pmap_op(
         return run_pmap_token_ring(jax, jnp, lax, args, run, payload_bytes, dtype, n_devices)
 
     itemsize = dtype_itemsize(jnp, dtype)
+    axis_size = int(jax.device_count())
+    rank_start = int(jax.process_index()) * int(n_devices)
     if op == "pmap_all_to_all":
         # all_to_all splits each device's payload into one chunk per destination,
         # so round by n_devices to keep chunks equal-sized.
-        chunk_elems = elems_for_payload(payload_bytes, itemsize, divisor=n_devices)
-        x = make_all_to_all_payload(jnp, n_devices, chunk_elems, dtype)
-        actual_payload = n_devices * chunk_elems * itemsize
+        chunk_elems = elems_for_payload(payload_bytes, itemsize, divisor=axis_size)
+        x = make_all_to_all_payload(
+            jnp,
+            n_devices,
+            chunk_elems,
+            dtype,
+            axis_size=axis_size,
+            rank_start=rank_start,
+        )
+        actual_payload = axis_size * chunk_elems * itemsize
     else:
         # The rank payload is the common one-dimensional teaching input for
         # psum, all_gather, and ppermute.
         elems = elems_for_payload(payload_bytes, itemsize)
-        x = make_rank_payload(jnp, n_devices, elems, dtype)
+        x = make_rank_payload(jnp, n_devices, elems, dtype, rank_start=rank_start)
         actual_payload = elems * itemsize
 
-    fn = make_pmap_fn(jax, lax, op, args.axis_name, n_devices, args.neighbor_direction)
+    fn = make_pmap_fn(jax, lax, op, args.axis_name, axis_size, args.neighbor_direction)
     y = block_until_ready(jax, fn(x))
     ok = (
         True
         if args.skip_correctness
         else check_pmap_result(
-            jax, jnp, op, y, n_devices, dtype, args.neighbor_direction
+            jax,
+            jnp,
+            op,
+            y,
+            axis_size,
+            dtype,
+            args.neighbor_direction,
+            local_device_count=n_devices,
+            rank_start=rank_start,
         )
     )
     # ppermute is the Lab 1 reference hop: surface its received-rank map too so it
@@ -1938,9 +2126,13 @@ def run_pmap_op(
     if op == "pmap_ppermute":
         observed_ranks = rank_vector(jax.device_get(y)[:, 0])
         if args.neighbor_direction == "left":
-            expected_ranks = tuple((i + 1) % n_devices for i in range(n_devices))
+            expected_ranks = tuple(
+                (i + 1) % axis_size for i in range(rank_start, rank_start + n_devices)
+            )
         else:
-            expected_ranks = tuple((i - 1) % n_devices for i in range(n_devices))
+            expected_ranks = tuple(
+                (i - 1) % axis_size for i in range(rank_start, rank_start + n_devices)
+            )
     with maybe_trace(jax, args, run, op, payload_bytes) as trace_artifact:
         timing = time_jax_call(
             jax,
@@ -1954,7 +2146,7 @@ def run_pmap_op(
         op=op,
         layer="pmap/lax",
         payload_bytes=actual_payload,
-        logical_bytes=pmap_logical_bytes(op, actual_payload, n_devices),
+        logical_bytes=pmap_logical_bytes(op, actual_payload, axis_size),
         ok=ok,
         trace_artifact=trace_artifact,
         memory_profile_artifact=memory_profile,
@@ -2025,12 +2217,10 @@ def run_pallas_all_gather(
     global_rows = len(devices) * rows_per_device
     # Unlike rank-marker payloads, this payload uses unique increasing values so
     # the all-gather check can compare the complete reconstructed host tensor.
-    x_host = (
-        jnp.arange(global_rows * cols, dtype=jnp.float32)
-        .reshape(global_rows, cols)
-        .astype(dtype)
-    )
-    x = jax.device_put(x_host, sharding)
+    x_host = np.arange(global_rows * cols, dtype=np.float32).reshape(global_rows, cols)
+    x_host_jax = jnp.asarray(x_host, dtype=dtype)
+    x_expected_host = np.asarray(jax.device_get(x_host_jax), dtype=np.float32)
+    x = jax.device_put(x_host_jax, sharding)
 
     def fn(value):
         """Invoke the packaged Pallas all_gather over the one-axis mesh."""
@@ -2041,7 +2231,7 @@ def run_pallas_all_gather(
         if args.skip_correctness:
             ok = True
         else:
-            ok = bool(jnp.allclose(jax.device_get(y), x_host))
+            ok = check_addressable_shards_against_host(jax, y, x_expected_host)
         with maybe_trace(jax, args, run, "pallas_all_gather", payload_bytes) as trace_artifact:
             timing = time_jax_call(
                 jax,
@@ -2140,12 +2330,16 @@ def run_pallas_neighbor_copy(
         y = block_until_ready(jax, case.fn(case.x))
         # Surface the rank evidence as explicit row columns so Lab 1 output can
         # be read without opening the full tensor.
-        observed_ranks = rank_vector(jax.device_get(y)[:, 0, 0])
-        expected_ranks = rank_vector(jax.device_get(case.expected_ranks))
+        local_y = device_get_addressable(jax, y)
+        rank_start = process_rank_start(jax, n_devices)
+        expected_all = jax.device_get(case.expected_ranks)
+        expected_local = expected_all[rank_start : rank_start + n_devices]
+        observed_ranks = rank_vector(local_y[:, 0, 0])
+        expected_ranks = rank_vector(expected_local)
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab1_single_hop.check_result(jax, jnp, y, case.expected_ranks)
+            ok = bool(jnp.allclose(local_y[:, 0, 0], expected_local))
         with maybe_trace(jax, args, run, "pallas_neighbor_copy", payload_bytes) as trace_artifact:
             timing = time_jax_call(
                 jax,
@@ -2216,7 +2410,8 @@ def run_pallas_token_ring(
             note=f"import failed: {exc}",
         )
 
-    hops = token_ring_hops(args, n_devices)
+    axis_size = int(jax.device_count())
+    hops = token_ring_hops(args, axis_size)
     try:
         # The scalar hop count has already been selected by the main sweep. Lab
         # 2 resolves tile shapes, remote-DMA memory space, and expected sums.
@@ -2250,7 +2445,7 @@ def run_pallas_token_ring(
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab2_token_ring.check_result(jax, jnp, y, case.expected_sums)
+            ok = check_addressable_result(jax, jnp, y, case.expected_sums, n_devices)
         with maybe_trace(jax, args, run, "pallas_token_ring", payload_bytes) as trace_artifact:
             timing = time_jax_call(
                 jax,
@@ -2323,7 +2518,8 @@ def run_pallas_ring_all_gather(
     # lets the Lab 5 partial-gather experiment run fewer (or more) hops. Lab 5
     # computes arrival-order expectations for whatever hop count is requested, so
     # the correctness check stays exact for partial gathers.
-    hops = token_ring_hops(args, n_devices)
+    axis_size = int(jax.device_count())
+    hops = token_ring_hops(args, axis_size)
     try:
         case = lab5_ring_all_gather.build_case(
             jax=jax,
@@ -2355,11 +2551,8 @@ def run_pallas_ring_all_gather(
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab5_ring_all_gather.check_result(
-                jax,
-                jnp,
-                y,
-                case.expected_arrivals,
+            ok = check_addressable_result(
+                jax, jnp, y, case.expected_arrivals, n_devices
             )
         with maybe_trace(jax, args, run, "pallas_ring_all_gather", payload_bytes) as trace_artifact:
             timing = time_jax_call(
@@ -2435,7 +2628,8 @@ def run_pallas_ring_reduce_scatter(
     # exact. Lab 6's implementation is intentionally whole-token teaching code:
     # its case object exposes teaching_wire_bytes rather than pretending to be
     # the optimized one-chunk-per-hop ring.
-    hops = token_ring_hops(args, n_devices)
+    axis_size = int(jax.device_count())
+    hops = token_ring_hops(args, axis_size)
     try:
         case = lab6_reduce_scatter.build_case(
             jax=jax,
@@ -2466,17 +2660,14 @@ def run_pallas_ring_reduce_scatter(
     # pmap_psum_scatter baseline) so the two are directly comparable; wire_bytes
     # carries the inflated whole-token traffic this teaching kernel actually
     # moves, surfaced as wire GB/s and the overhead ratio.
-    useful_bytes = int(2 * case.actual_payload_bytes * max(0, n_devices - 1) / max(1, n_devices))
+    useful_bytes = int(2 * case.actual_payload_bytes * max(0, axis_size - 1) / max(1, axis_size))
     try:
         y = block_until_ready(jax, case.fn(case.x))
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab6_reduce_scatter.check_result(
-                jax,
-                jnp,
-                y,
-                case.expected_chunks,
+            ok = check_addressable_result(
+                jax, jnp, y, case.expected_chunks, n_devices
             )
         with maybe_trace(
             jax, args, run, "pallas_ring_reduce_scatter", payload_bytes
@@ -2552,7 +2743,8 @@ def run_pallas_ring_all_reduce(
             note=f"import failed: {exc}",
         )
 
-    hops = max(0, n_devices - 1)
+    axis_size = int(jax.device_count())
+    hops = max(0, axis_size - 1)
     try:
         # Lab 7 composes Lab 6 reduce-scatter and Lab 5 all-gather. Passing the
         # same full-ring hop count to both phases makes the composition explicit.
@@ -2585,18 +2777,13 @@ def run_pallas_ring_all_reduce(
     # Headline GB/s uses the optimal all-reduce byte model (matching the pmap_psum
     # baseline) so the two are directly comparable; wire_bytes carries the
     # inflated composed whole-token traffic this teaching kernel actually moves.
-    useful_bytes = int(2 * case.actual_payload_bytes * max(0, n_devices - 1) / max(1, n_devices))
+    useful_bytes = int(2 * case.actual_payload_bytes * max(0, axis_size - 1) / max(1, axis_size))
     try:
         y = block_until_ready(jax, case.fn(case.x))
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab7_all_reduce.check_result(
-                jax,
-                jnp,
-                y,
-                case.expected_full,
-            )
+            ok = check_addressable_result(jax, jnp, y, case.expected_full, n_devices)
         with maybe_trace(
             jax, args, run, "pallas_ring_all_reduce", payload_bytes
         ) as trace_artifact:
@@ -2673,7 +2860,8 @@ def _run_lab8_ring(
             logical_bytes=0, seconds=None, ok=False, note=f"import failed: {exc}",
         )
 
-    hops = token_ring_hops(args, n_devices)
+    axis_size = int(jax.device_count())
+    hops = token_ring_hops(args, axis_size)
     try:
         # Lab 8's case builder owns chunk count, modeled buffer slots, and the
         # expected sums. The harness records the byte model exposed by the case.
@@ -2707,7 +2895,7 @@ def _run_lab8_ring(
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab8_chunked_pipeline.check_result(jax, jnp, y, case.expected_sums)
+            ok = check_addressable_result(jax, jnp, y, case.expected_sums, n_devices)
         with maybe_trace(jax, args, run, op, payload_bytes) as trace_artifact:
             timing = time_jax_call(
                 jax, case.fn, case.x, warmup=args.warmup, iters=args.iters
@@ -2828,8 +3016,14 @@ def _run_lab11_ring(
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab11_optimal_all_reduce.check_result(
-                jax, jnp, y, case.expected_sums, dtype=dtype
+            ok = check_addressable_result(
+                jax,
+                jnp,
+                y,
+                case.expected_sums,
+                n_devices,
+                rtol=case.check_rtol,
+                atol=case.check_atol,
             )
         with maybe_trace(jax, args, run, op, payload_bytes) as trace_artifact:
             timing = time_jax_call(
@@ -2958,12 +3152,7 @@ def run_pallas_2d_staged_all_gather(
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab9_mesh_collectives.check_result(
-                jax,
-                jnp,
-                y,
-                case.expected_ranks,
-            )
+            ok = check_addressable_result(jax, jnp, y, case.expected_ranks, n_devices)
         with maybe_trace(
             jax, args, run, "pallas_2d_staged_all_gather", payload_bytes
         ) as trace_artifact:
@@ -3067,7 +3256,7 @@ def run_pallas_vmem_arith(
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab3_memory_spaces.check_result(jax, jnp, y, case.expected)
+            ok = check_addressable_result(jax, jnp, y, case.expected, n_devices)
         with maybe_trace(jax, args, run, "pallas_vmem_arith", payload_bytes) as trace_artifact:
             timing = time_jax_call(
                 jax,
@@ -3169,8 +3358,8 @@ def run_pallas_semaphore_correct(
         if args.skip_correctness:
             ok = True
         else:
-            ok = lab4_semaphore_bug_zoo.check_correct_probe_result(
-                jax, jnp, y, case.expected_ranks
+            ok = check_addressable_result(
+                jax, jnp, y, case.expected_ranks, n_devices
             )
         with maybe_trace(
             jax, args, run, "pallas_semaphore_correct", payload_bytes
@@ -3344,8 +3533,10 @@ def run_pallas_semaphore_bug(
 
     try:
         y = block_until_ready(jax, case.fn(case.x))
-        observed = rank_vector(jax.device_get(y)[:, 0, 0])
-        intended = rank_vector(jax.device_get(intended_expected))
+        observed = rank_vector(device_get_addressable(jax, y)[:, 0, 0])
+        intended = rank_vector(
+            expected_for_addressable(jax, intended_expected, n_devices)
+        )
         # The bug is "reproduced" when the buggy kernel's output does not match
         # the ownership map the caller intended.
         reproduced = observed != intended
