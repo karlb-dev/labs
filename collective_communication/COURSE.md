@@ -107,7 +107,7 @@ profile proves otherwise.
 
 ## Primary Hardware Target And Naming
 
-The primary target for this 10-lab sequence is a **4-chip TPU v5e slice**, often
+The primary target for this 11-lab sequence is a **4-chip TPU v5e slice**, often
 created on Google Cloud as `v5litepod-4`. In repo prose, `v5e-4` means that
 4-chip v5e target unless a command is showing the exact Cloud TPU accelerator
 type. A 4-chip v5e slice is enough for the main course because it gives
@@ -176,7 +176,7 @@ Students will learn to:
 
 Some ML-shaped integrations, such as distributed matmul, MoE token exchange,
 and bidirectional optimized collectives, are now best treated as capstone or
-post-course extensions. The 10 labs focus on the durable communication grammar.
+post-course extensions. The 11 labs focus on the durable communication grammar.
 
 ## Current Project Layout
 
@@ -186,7 +186,6 @@ collective_communication/
   COURSE.md                   # this course cover page and lab sequence
   README.md                   # quick start and operation reference
   labs/
-    roadmap.md                # detailed roadmap and invariants
     lab_spec_utils.py         # shared spec/artifact helpers
     lab1_single_hop.py        # Lab 1 concept code
     lab1_single_hop.md        # Lab 1 teaching notes
@@ -208,6 +207,8 @@ collective_communication/
     lab9_mesh_collectives.md
     lab10_multihost_smoke.py  # Lab 10 multi-host run-control code
     lab10_multihost_smoke.md
+    lab11_optimal_all_reduce.py # Lab 11 bandwidth-optimal shard-ring all-reduce
+    lab11_optimal_all_reduce.md
   runs/                       # generated artifacts, ignored by git
 ```
 
@@ -380,9 +381,10 @@ Do the measured timing rows and profiler events describe the same phenomenon?
 
 ## Lab Sequence
 
-The course now has 10 concrete labs. The default path is designed to run on a
+The course now has 11 concrete labs. The default path is designed to run on a
 4-chip TPU v5e slice. Lab 10 also runs locally as a smoke test, then becomes a
-multi-host validation lab on a larger slice.
+multi-host validation lab on a larger slice. Lab 11 closes the byte gap left by
+Labs 7 and 8 with a bandwidth-optimal reduce-scatter plus all-gather all-reduce.
 
 ### Pre-Lab: Topology And Baseline Orientation
 
@@ -799,6 +801,47 @@ all processes agree on global device count and mesh shape
 local logs identify local devices and process index
 process all-gather returns one payload per process
 hierarchical prototype separates local and cross-process phases
+```
+
+### Lab 11: Bandwidth-Optimal Ring All-Reduce
+
+Close the byte gap confessed in Labs 7 and 8. Re-implement all-reduce as
+reduce-scatter plus all-gather over `B / N` shards so each of the `2 * (n - 1)`
+ring steps moves only one shard, matching `lax.psum`'s `2 * (n - 1) / n * B`
+bandwidth term instead of the whole-token ring's `(n - 1) * B`. The roofline
+reference is `lax.psum` on the same case in the same wire dtype, so the only
+difference left to explain is scheduling, not byte volume.
+
+Students learn:
+
+- reduce-scatter plus all-gather as the bandwidth-optimal all-reduce
+- the `N / 2` byte penalty of the whole-token ring and why overlap cannot fix it
+- the alpha-beta latency/bandwidth crossover where the naive ring still wins
+- `wire == logical` for the first time, using send-side full-duplex accounting
+- topology-aware ring ordering via a Hamiltonian cycle over device `coords`
+- reading the residual latency gap to the compiler collective from the trace
+
+Run:
+
+```bash
+python collective_bench.py --lab lab11
+```
+
+Core exercise:
+
+```text
+reduce-scatter: n - 1 steps, each device finishes owning one fully reduced shard
+all-gather: n - 1 steps, circulate finished shards so every device holds the sum
+result: every device owns the fully reduced tensor, all replicas bitwise identical
+```
+
+Pass condition:
+
+```text
+rs-ag output matches float32 sums of the dtype-quantized input within tolerance
+all device replicas of the rs-ag output are bitwise identical
+rs-ag and rs-ag-bidir wire bytes equal the optimal model: 2 * (n - 1) * shard_bytes
+the spec artifact records the shard schedule, byte model, and alpha-beta crossover
 ```
 
 ## Invariants For Custom Communication

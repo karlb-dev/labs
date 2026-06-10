@@ -267,6 +267,18 @@ LAB10_OPS = (
     "lab10_multihost_spec",
 )
 
+# Lab 11 closes the byte gap: the same all-reduce as reduce-scatter plus
+# all-gather over B/N shards, matching lax.psum's 2*(N-1)/N*B volume. The
+# whole-token pmap_token_ring rides along as the N/2-penalty foil.
+LAB11_OPS = (
+    "pmap_psum",
+    "pmap_token_ring",
+    "pmap_rs_ag_all_reduce",
+    "pmap_rs_ag_all_reduce_bidir",
+    "xla_all_reduce",
+    "lab11_optimal_all_reduce_spec",
+)
+
 # Fast membership tests for dispatch. The names in these sets are not arbitrary:
 # PMAP_OPS are safe to build through run_pmap_op(), while PALLAS_OPS are TPU-only
 # custom-kernel paths with their own case builders.
@@ -329,6 +341,7 @@ LAB_SPEC_OPS = {
     "lab8_chunked_pipeline_spec": "labs.lab8_chunked_pipeline",
     "lab9_mesh_collectives_spec": "labs.lab9_mesh_collectives",
     "lab10_multihost_spec": "labs.lab10_multihost_smoke",
+    "lab11_optimal_all_reduce_spec": "labs.lab11_optimal_all_reduce",
 }
 
 # ALL_OPS is the validation list for --ops. If a new operation should be
@@ -353,6 +366,9 @@ ALL_OPS = (
     "pmap_ring_all_gather",
     "pmap_psum_scatter",
     "pmap_2d_staged_all_gather",
+    "pmap_rs_ag_all_reduce",
+    "pmap_rs_ag_all_reduce_bidir",
+    "xla_all_reduce",
     *LAB_SPEC_OPS,
     "lab10_topology_smoke",
     "lab10_process_collective_smoke",
@@ -1102,6 +1118,19 @@ def apply_lab_defaults(args: argparse.Namespace) -> None:
             args.sizes = "1KiB"
         if args.run_name is None:
             args.run_name = f"lab10_multihost_smoke-{now_slug()}"
+        return
+
+    if args.lab == "lab11":
+        # Lab 11 is the bandwidth-optimal shard ring; the default sweep spans
+        # the alpha-beta crossover (small sizes, where the naive ring wins on
+        # latency) through the bandwidth regime where matching psum's volume
+        # pays off.
+        if args.ops is None:
+            args.ops = ",".join(LAB11_OPS)
+        if args.sizes is None:
+            args.sizes = "16KiB,256KiB,1MiB,4MiB,16MiB"
+        if args.run_name is None:
+            args.run_name = f"lab11_optimal_all_reduce-{now_slug()}"
         return
 
     raise ValueError(f"unknown lab {args.lab!r}")
@@ -2741,6 +2770,127 @@ def run_xla_token_ring(
     )
 
 
+def _run_lab11_ring(
+    jax: Any,
+    jnp: Any,
+    args: argparse.Namespace,
+    run: RunContext,
+    payload_bytes: int,
+    dtype: Any,
+    n_devices: int,
+    *,
+    op: str,
+    kernel_mode: str,
+) -> BenchResult:
+    """Run one Lab 11 all-reduce implementation in a given kernel mode.
+
+    ``kernel_mode`` pins the implementation per benchmark op: ``rs-ag`` (the
+    bandwidth-optimal shard ring), ``rs-ag-bidir`` (two counter-rotating
+    half-rings), or ``xla-psum`` (lax.psum on the same case in the same wire
+    dtype). All three move the optimal byte volume, so wire == logical and the
+    remaining differences are pure scheduling.
+    """
+    layer = "shard_map/psum" if kernel_mode == "xla-psum" else "shard_map/ppermute"
+
+    try:
+        from labs import lab11_optimal_all_reduce
+    except Exception as exc:
+        return BenchResult(
+            op=op, layer=layer, payload_bytes=payload_bytes,
+            logical_bytes=0, seconds=None, ok=False, note=f"import failed: {exc}",
+        )
+
+    try:
+        # Lab 11's case builder owns shard sizing, ring layout, and expected
+        # sums. The harness records the byte model exposed by the case.
+        case = lab11_optimal_all_reduce.build_case(
+            jax=jax,
+            jnp=jnp,
+            devices=jax.devices(),
+            axis_name=args.axis_name,
+            payload_bytes=payload_bytes,
+            dtype=dtype,
+            direction=args.neighbor_direction,
+            kernel_mode=kernel_mode,
+            tile_rows=args.pallas_tile_rows,
+            min_cols=args.pallas_min_cols,
+            ring_order=args.lab11_ring_order,
+        )
+    except Exception as exc:
+        return BenchResult(
+            op=op, layer=layer, payload_bytes=payload_bytes,
+            logical_bytes=0, seconds=None, ok=False,
+            note=f"case setup failed: {exc}",
+        )
+
+    try:
+        y = block_until_ready(jax, case.fn(case.x))
+        if args.skip_correctness:
+            ok = True
+        else:
+            ok = lab11_optimal_all_reduce.check_result(
+                jax, jnp, y, case.expected_sums, dtype=dtype
+            )
+        with maybe_trace(jax, args, run, op, payload_bytes) as trace_artifact:
+            timing = time_jax_call(
+                jax, case.fn, case.x, warmup=args.warmup, iters=args.iters
+            )
+        memory_profile = maybe_write_memory_profile(jax, args, run, op, payload_bytes)
+    except Exception as exc:
+        return BenchResult(
+            op=op, layer=layer, payload_bytes=case.actual_payload_bytes,
+            logical_bytes=case.optimal_bytes_per_device, seconds=None, ok=False,
+            note=f"failed: {exc}",
+        )
+
+    return BenchResult(
+        op=op,
+        layer=layer,
+        payload_bytes=case.actual_payload_bytes,
+        logical_bytes=case.optimal_bytes_per_device,
+        wire_bytes=case.wire_bytes,
+        byte_model="optimal",
+        ok=ok,
+        trace_artifact=trace_artifact,
+        memory_profile_artifact=memory_profile,
+        note=case.note,
+        **result_timing_kwargs(timing),
+    )
+
+
+def run_pmap_rs_ag_all_reduce(
+    jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
+    payload_bytes: int, dtype: Any, n_devices: int,
+) -> BenchResult:
+    """Lab 11 bandwidth-optimal shard ring (reduce-scatter + all-gather)."""
+    return _run_lab11_ring(
+        jax, jnp, args, run, payload_bytes, dtype, n_devices,
+        op="pmap_rs_ag_all_reduce", kernel_mode="rs-ag",
+    )
+
+
+def run_pmap_rs_ag_all_reduce_bidir(
+    jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
+    payload_bytes: int, dtype: Any, n_devices: int,
+) -> BenchResult:
+    """Lab 11 bidirectional variant: two counter-rotating half-rings."""
+    return _run_lab11_ring(
+        jax, jnp, args, run, payload_bytes, dtype, n_devices,
+        op="pmap_rs_ag_all_reduce_bidir", kernel_mode="rs-ag-bidir",
+    )
+
+
+def run_xla_all_reduce(
+    jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
+    payload_bytes: int, dtype: Any, n_devices: int,
+) -> BenchResult:
+    """Lab 11 roofline: lax.psum on the same case in the same wire dtype."""
+    return _run_lab11_ring(
+        jax, jnp, args, run, payload_bytes, dtype, n_devices,
+        op="xla_all_reduce", kernel_mode="xla-psum",
+    )
+
+
 def run_pallas_2d_staged_all_gather(
     jax: Any,
     jnp: Any,
@@ -4279,13 +4429,15 @@ def build_parser() -> argparse.ArgumentParser:
             "lab8",
             "lab9",
             "lab10",
+            "lab11",
         ),
         default=None,
         help=(
             "lab profile; lab1 is single-hop communication, "
             "lab2 is token ring, lab3 is Pallas memory spaces, "
             "lab4 is semaphore bug zoo, lab5-lab9 are composed custom "
-            "collectives, lab10 is multi-host run-control smoke"
+            "collectives, lab10 is multi-host run-control smoke, "
+            "lab11 is the bandwidth-optimal shard-ring all-reduce"
         ),
     )
     parser.add_argument(
@@ -4397,6 +4549,16 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("x_then_y", "y_then_x"),
         default="x_then_y",
         help="Lab 9 staged all-gather axis order",
+    )
+    parser.add_argument(
+        "--lab11-ring-order",
+        choices=("auto", "ids"),
+        default="auto",
+        help=(
+            "Lab 11 ring layout: auto walks a unit-step Hamiltonian cycle over "
+            "device coords when one exists; ids uses jax.devices() order and "
+            "is the cleanest byte-only comparison with pmap_token_ring"
+        ),
     )
     parser.add_argument(
         "--lab10-expected-process-count",
@@ -4583,6 +4745,18 @@ def dispatch_case(
             )
         if op == "semaphore_bug_zoo":
             return run_semaphore_bug_zoo(args, run, payload_bytes)
+        if op == "pmap_rs_ag_all_reduce":
+            return run_pmap_rs_ag_all_reduce(
+                jax, jnp, args, run, payload_bytes, dtype, n_devices
+            )
+        if op == "pmap_rs_ag_all_reduce_bidir":
+            return run_pmap_rs_ag_all_reduce_bidir(
+                jax, jnp, args, run, payload_bytes, dtype, n_devices
+            )
+        if op == "xla_all_reduce":
+            return run_xla_all_reduce(
+                jax, jnp, args, run, payload_bytes, dtype, n_devices
+            )
         if op in LAB_SPEC_OPS:
             return run_lab_spec_op(jax, args, run, op, payload_bytes, n_devices)
         if op == "lab10_topology_smoke":

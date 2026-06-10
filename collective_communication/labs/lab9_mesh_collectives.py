@@ -260,6 +260,9 @@ LAB_SPEC: dict[str, Any] = {
         "pmap staged all-gather matches canonical rank order",
         "Pallas staged all-gather matches canonical rank order on TPU",
         "full payload tiles are checked, not only rank marker scalars",
+        "expected tiles model the wire-dtype input quantization, so the check is "
+        "exact on 4-, 8-, and 16-device meshes instead of tripping bfloat16 "
+        "rounding once ranks push tile values past a precision boundary",
         "spec artifact records candidate 2D mesh shapes and axis-order experiments",
     ],
     "artifacts": [
@@ -544,23 +547,48 @@ def expected_tile_from_ranks(
     rows: int,
     cols: int,
     use_position_offsets: bool,
+    dtype: Any = None,
 ) -> Any:
     """Expand ``[receiver, source]`` rank markers into a full expected tile.
 
     The new Lab 9 builders set ``use_position_offsets=True`` so the checker
     validates every tile element. The flag is useful for comparing with older
     rank-only inputs during standalone smoke tests.
+
+    Modeling input quantization
+    ---------------------------
+
+    Lab 9 is a pure all-gather: the kernel *moves* shards, it never does
+    arithmetic, so the output equals the input bit for bit. The input itself is
+    ``make_rank_position_tile(...).astype(dtype)`` -- the rank/row/col sum
+    rounded to the wire dtype. When ``dtype`` is given, this function rounds the
+    expected tile the same way, so the comparison is against the values the
+    hardware actually carries. This matters once tile values cross a dtype's
+    precision boundary: with ``N`` devices, ranks reach ``N - 1``, and for
+    ``N >= 8`` a bfloat16 tile value can exceed 8.0, where one ULP (0.0625) is
+    larger than a naive ``atol`` -- so a float32-only reference would flag a
+    perfectly correct gather as wrong on an 8- or 16-device slice while passing
+    on a 4-device one. Leaving ``dtype`` as ``None`` keeps the old float32
+    behaviour for legacy callers.
     """
     import jax.numpy as jnp
 
     base = rank_table.astype(jnp.float32)[:, :, None, None]
     if not use_position_offsets:
-        return jnp.broadcast_to(base, (rank_table.shape[0], rank_table.shape[1], int(rows), int(cols)))
-    row_offsets = ROW_PATTERN_SCALE * jnp.arange(int(rows), dtype=jnp.float32).reshape(1, 1, int(rows), 1)
-    col_offsets = COL_PATTERN_SCALE * jnp.mod(
-        jnp.arange(int(cols), dtype=jnp.float32), 32
-    ).reshape(1, 1, 1, int(cols))
-    return base + row_offsets + col_offsets
+        tile = jnp.broadcast_to(
+            base, (rank_table.shape[0], rank_table.shape[1], int(rows), int(cols))
+        )
+    else:
+        row_offsets = ROW_PATTERN_SCALE * jnp.arange(int(rows), dtype=jnp.float32).reshape(1, 1, int(rows), 1)
+        col_offsets = COL_PATTERN_SCALE * jnp.mod(
+            jnp.arange(int(cols), dtype=jnp.float32), 32
+        ).reshape(1, 1, 1, int(cols))
+        tile = base + row_offsets + col_offsets
+    if dtype is not None:
+        # Round through the wire dtype to model the input quantization, then view
+        # the result back in float32 for a clean, dtype-aware comparison.
+        tile = tile.astype(jnp.dtype(dtype)).astype(jnp.float32)
+    return tile
 
 
 def staged_arrival_rank_grid_for_receiver(
@@ -1167,6 +1195,7 @@ def build_pmap_case(
                 rows=1,
                 cols=elems,
                 use_position_offsets=True,
+                dtype=dtype,
             ),
             dtype=jnp.float32,
         ),
@@ -1252,6 +1281,7 @@ def build_pallas_case(
                 rows=rows,
                 cols=cols,
                 use_position_offsets=True,
+                dtype=dtype,
             ),
             dtype=jnp.float32,
         ),

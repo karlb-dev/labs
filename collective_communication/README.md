@@ -21,7 +21,7 @@ The primary target is a **4-chip TPU v5e slice**, commonly created as
 `v5litepod-4` on Google Cloud. In this repo, `v5e-4` means that 4-chip local
 TPU target unless an exact Cloud TPU accelerator type is shown.
 
-The 10 labs are designed so the main path runs on this 4-chip v5e target:
+The 11 labs are designed so the main path runs on this 4-chip v5e target:
 
 - Labs 1-2: local ring communication over four devices
 - Lab 3: local HBM/VMEM movement
@@ -29,6 +29,7 @@ The 10 labs are designed so the main path runs on this 4-chip v5e target:
 - Labs 5-8: composed collectives and chunking over the local ring
 - Lab 9: logical `2x2` staged mesh all-gather
 - Lab 10: single-process topology and process-collective smoke
+- Lab 11: bandwidth-optimal reduce-scatter plus all-gather all-reduce
 
 Future multi-host work should start with Lab 10 on a larger v5e slice, such as
 `v5litepod-16`, then extend the custom collectives only after topology and
@@ -49,13 +50,15 @@ Implemented or active:
 - Lab 8: chunked ring reference plus serialized Pallas custom path
 - Lab 9: 2D mesh all-gather reference plus staged Pallas custom path
 - Lab 10: multi-host topology and process-collective smoke
+- Lab 11: bandwidth-optimal shard-ring all-reduce (reduce-scatter plus
+  all-gather) with `lax.psum` roofline and topology-aware ring ordering
 - Pallas all-gather bridge using the installed JAX example implementation
 - run directories, diagnostics, CSV/JSONL output, plots, optional profiles, and
   external runner hook
 
 Planned next:
 
-- Validate all 10 updated labs on the primary v5e-4 target
+- Validate all 11 updated labs on the primary v5e-4 target
 - Add estimated wire-byte columns for the remaining custom schedules
 - Replace composed teaching paths with fused custom Pallas kernels one lab at a
   time, only when the teaching path is stable
@@ -91,6 +94,8 @@ collective_communication/
     lab9_mesh_collectives.md
     lab10_multihost_smoke.py  # Lab 10 multi-host run-control code
     lab10_multihost_smoke.md
+    lab11_optimal_all_reduce.py # Lab 11 bandwidth-optimal shard-ring all-reduce
+    lab11_optimal_all_reduce.md # Lab 11 teaching notes
   runs/                       # generated benchmark artifacts, ignored by git
 ```
 
@@ -116,7 +121,7 @@ python collective_bench.py \
   --warmup 2
 ```
 
-Run the whole 10-lab arc one lab at a time:
+Run the whole 11-lab arc one lab at a time:
 
 ```bash
 python collective_bench.py --lab lab1
@@ -129,6 +134,7 @@ python collective_bench.py --lab lab7
 python collective_bench.py --lab lab8
 python collective_bench.py --lab lab9
 python collective_bench.py --lab lab10
+python collective_bench.py --lab lab11
 ```
 
 Useful v5e-4 smoke defaults:
@@ -159,6 +165,7 @@ experiments with `--pallas-memory-space VMEM`.
 | Lab 8 | `--lab lab8` | chunk size, buffer planning, serialized chunking | `pallas_chunked_token_ring` |
 | Lab 9 | `--lab lab9` | logical `2x2` staged mesh collectives | `pallas_2d_staged_all_gather` |
 | Lab 10 | `--lab lab10` | process topology and multi-host launch smoke | `lab10_process_collective_smoke` |
+| Lab 11 | `--lab lab11` | bandwidth-optimal reduce-scatter plus all-gather all-reduce | `pmap_rs_ag_all_reduce` |
 
 The custom paths in Labs 5-8 are teaching implementations. They compose earlier
 correct primitives so the communication schedule is visible. Fused kernels,
@@ -404,6 +411,10 @@ present.
 | `lab10_topology_smoke` | lab/topology | process and device topology artifact |
 | `lab10_process_collective_smoke` | lab/multihost | process sync/all-gather validation |
 | `lab10_multihost_spec` | lab/spec | multi-host hierarchy plan |
+| `pmap_rs_ag_all_reduce` | `shard_map`/`ppermute` | Lab 11 bandwidth-optimal shard-ring all-reduce |
+| `pmap_rs_ag_all_reduce_bidir` | `shard_map`/`ppermute` | Lab 11 bidirectional counter-rotating half-rings |
+| `xla_all_reduce` | `shard_map`/`psum` | Lab 11 `lax.psum` roofline on the same case and wire dtype |
+| `lab11_optimal_all_reduce_spec` | lab/spec | Lab 11 shard schedule, byte model, and alpha-beta crossover |
 | `pallas_all_gather` | Pallas TPU example | Pallas all-gather bridge implementation |
 | `external` | subprocess | hook for standalone or lower-level experiments |
 
@@ -495,7 +506,6 @@ When adding `labN`, update these places together:
 ```text
 labs/labN_name.py
 labs/labN_name.md
-labs/roadmap.md
 COURSE.md
 README.md
 collective_bench.py lab/profile registration
