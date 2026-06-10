@@ -1,129 +1,253 @@
 # Lab 1: Residual Stream and Logit Lens
 
-**Evidence level targeted:** observation — with the explicit lesson that a readout is not a mind-scan.
+**Evidence level targeted:** `OBS` observation. The central lesson is that a readout is an instrument, not a mind scanner.
 
 ## Core question
 
-How does a model's running prediction emerge across layers?
+How does a model's next-token prediction emerge, sharpen, wobble, or flip as information moves through the residual stream?
 
 ## What you will build
 
-A per-layer "prediction biography" for ~10–24 prompts across three families, produced by the shared bench (`interp_bench.py`) plus this lab's experiment module:
+You will build a layer-by-layer prediction biography for a small set of controlled prompts. The shared harness, `interp_bench.py`, owns the microscope: model loading, run directories, hook checks, residual capture, logit-lens math, state dumps, diagnostics, and artifact indexing. This lab module owns the experiment: prompts, validation, metrics, aggregation, plots, interpretation scaffolding, and suggested ledger claims.
 
 ```text
-runs/lab01_residual_logit_lens-<timestamp>/
-  run_summary.md                      # start here: the seven questions, answered
-  results.csv                         # every (example, depth) measurement
-  tables/example_summary.csv          # decision depths per example
-  tables/category_summary.csv        # the headline per-category table
-  state/<example_id>/state_card.md    # per-example narrative dump (read one!)
-  state/<example_id>/*.csv            # tokens, lens top-k, trajectory, residual stats
-  plots/p_target_by_depth.png
-  plots/logit_diff_by_depth.png
-  plots/entropy_by_depth.png
-  plots/cosine_to_final_by_depth.png
-  plots/residual_norm_by_depth.png
-  plots/biography_<example>.png
-  diagnostics/                        # anatomy, hook parity, lens self-check, tokenization report
-  ledger_suggestions.md               # drafted claims — edit before they enter your ledger
+runs/lab01_residual_logit_lens-<timestamp>-<id>/
+  run_config.json                         # exact CLI after tier defaults
+  run_metadata.json                       # packages, host, git, GPU, env
+  artifact_index.json                     # map of every saved artifact
+  run_summary.md                          # start here
+  results.csv                             # one row per example and depth
+  metrics.json                            # machine-readable aggregates
+
+  diagnostics/
+    model_anatomy.md                      # where blocks, final norm, lm_head live
+    tokenizer_info.json                   # special tokens, vocab, padding, chat-template status
+    tokenization_report.csv               # every target and distractor validation decision
+    hook_parity.json                      # self-check summary
+    hook_parity_by_layer.csv              # layer-level hook-vs-hidden-state diffs
+    logit_lens_self_check.json            # lens(L) vs model logits
+    gpu_memory_after_load.json
+    gpu_memory_at_end.json
+
+  tables/
+    prompt_manifest.csv                   # the prompt set that actually ran
+    example_summary.csv                   # per-example event depths and final readouts
+    category_summary.csv                  # headline category comparisons
+    trajectory_events.csv                 # first-crossing and stabilization events
+
+  state/<example_id>/
+    state_card.md                         # readable per-example narrative
+    tokens.csv                            # exactly what the tokenizer fed the model
+    lens_trajectory.csv                   # top-1, entropy, ranks, KL, margins by depth
+    logit_lens_topk.csv                   # top-k decoded readout by depth
+    residual_stats_final_pos.csv          # stream statistics at the readout position
+    residual_norms_by_position.csv        # depth x token-position norm grid
+    residual_streams.pt                   # optional, only with --save-tensors
+
+  plots/
+    p_target_by_depth.png
+    target_rank_by_depth.png
+    logit_diff_by_depth.png
+    entropy_by_depth.png
+    kl_to_final_by_depth.png
+    top1_margin_by_depth.png
+    cosine_to_final_by_depth.png
+    residual_norm_by_depth.png
+    residual_delta_norm_by_depth.png
+    biography_<example>.png
+
+  ledger_suggestions.md                   # draft OBS claims, edit before accepting
 ```
 
 ## Why this matters
 
-Everything later in the course — attribution, patching, steering, attribution graphs — reads or writes the residual stream. This lab makes that object concrete: the stream is the model's shared workspace, the unembedding is a fixed readout of it, and "what the model currently predicts" is something you can measure at every depth, not just at the output. It is also the course's first encounter with its most important habit: before trusting any plot, verify the instrument (this run literally checks its own hooks and its own lens against the model's real logits, every time).
+Almost every later lab reads from or writes to the residual stream. Direct logit attribution decomposes changes in the residual stream. Attention labs ask which token positions route information into it. Patching edits it. Steering injects directions into it. SAE and graph labs re-describe pieces of it. This lab is the first calibration ritual: before drawing conclusions from an activation plot, prove the instrument knows what it captured.
+
+The logit lens is useful because it converts a hidden vector into a distribution over human-readable tokens. It is dangerous for the same reason: the decoded tokens invite a story. This lab teaches you to enjoy the story, then put it in a glass jar labeled **readout artifact until further evidence**.
 
 ## Setup
 
-- **Library:** plain Hugging Face `transformers` with explicit PyTorch hooks. No interpretability framework — every captured tensor's provenance is visible in `interp_bench.py`.
-- **Primary model (Tier B/C):** `allenai/Olmo-3-1025-7B`, bf16.
-- **Smoke model (Tier A):** `gpt2` on CPU. Must work before you touch a GPU.
-- These are base models: no chat template is applied anywhere in this lab. (Template discipline becomes load-bearing in Lab 7+.)
+- **Library path:** plain Hugging Face `transformers` with explicit PyTorch hooks. No interpretability framework is required for Lab 1.
+- **Primary model, Tier B/C:** `allenai/Olmo-3-1025-7B`, base model, bf16 for Tier B and fp32 for Tier C unless overridden.
+- **Smoke model, Tier A:** `gpt2` on CPU or MPS, capped examples. This path tests plumbing, not science.
+- **Templates:** no chat template is applied in this lab. These are base-model next-token completions. Template discipline becomes load-bearing in later instruct and reasoning labs.
 
 ## Runtime and tiers
 
-| Tier | Hardware | Command | Expected wall-clock |
+| Tier | Hardware | Command | Expected role |
 |---|---|---|---|
-| A — smoke | laptop CPU | `--tier a` (gpt2, 4 examples) | ~1–3 min incl. download |
-| B — standard | Colab A100/H100 or any 24 GB+ GPU | `--tier b` | < 10 min incl. model download |
-| C — comfortable | 40–80 GB GPU | `--tier c` (fp32) | < 10 min |
+| A | Laptop CPU or MPS | `python interp_bench.py --lab lab1 --tier a` | smoke test, hook/lens diagnostics, 4 examples |
+| B | A100/H100 or 24 GB+ GPU | `python interp_bench.py --lab lab1 --tier b --prompt-set full` | default scientific run |
+| C | 40 to 80 GB GPU | `python interp_bench.py --lab lab1 --tier c --prompt-set full` | fp32 reference run, larger prompt variants |
 
-Memory notes: a 7B model in bf16 needs ~15 GB of GPU memory; the captured per-prompt state is megabytes (short prompts, one example at a time, no batching). On a small GPU, `--quantization 8bit` works but loosens the lens self-check — the run records it.
+Memory is dominated by model weights, not saved activations. Each prompt is short, unbatched, and cached one at a time. Quantization can help small GPUs, but record it in the interpretation because it changes the numerics of the readout.
 
-## Background (the minimum theory to act)
+## Background: the minimum theory to act
 
-A decoder transformer with L blocks keeps one running vector per token position — the **residual stream** — that every block reads from and writes (adds) into. The final prediction is produced by applying the final norm and the unembedding matrix to the last position's stream. The **logit lens** asks: what would the prediction be if we applied that same readout to the stream at depth k < L?
+A decoder-only transformer keeps one vector per token position. This vector is the **residual stream**. Each block reads the current stream, computes updates through attention and MLP submodules, and adds those updates back. The final next-token logits are produced by applying the final normalization layer and output projection to the residual stream at the last token position.
 
-Two facts make the readout subtle, and the bench handles both explicitly:
+For a model with `L` blocks, this lab defines:
 
-1. **Indexing.** HF `output_hidden_states` returns L+1 tensors whose last entry is *post-final-norm*; the raw output of the last block isn't in the tuple. The bench captures it with a pre-hook on the final norm and defines `streams[k]` = pre-norm stream after k blocks, k = 0..L. Read the docstring in `interp_bench.py` — this is the single most copied-wrong detail in logit-lens code.
-2. **The borrowed basis.** Applying the *final* norm's learned scale to a *middle* layer's stream is a choice, not a neutral act. The lens at depth k shows what the final readout would decode there — not what layer k+1 actually consumes. The tuned-lens extension turns this caveat into data.
+```text
+streams[0] = embedding output, before block 0
+streams[k] = pre-final-norm residual stream after k blocks, for 1 <= k <= L
+lens(k)    = lm_head(final_norm(streams[k]))
+```
 
-## Experiment
+Two details matter enough to be diagnostic tests:
 
-1. **Validate the prompt set.** Every target/distractor must be a single token for this run's tokenizer. Failures are dropped *with a count* and logged to `diagnostics/tokenization_report.csv`. A surprise here: a target you expected to be one token splitting into three.
-2. **Verify the instrument.** The bench cross-checks per-block forward hooks against `output_hidden_states` (must match bit-for-bit) and checks that the lens at depth L reproduces the model's actual output logits (top-1 must match; the run aborts if not). Open both diagnostics once and understand what they prove.
-3. **Capture and decode.** For each prompt: cache `streams[0..L]` at the final position, apply final norm + unembedding at every depth, and record top-k tokens, p(target), p(distractor), entropy (bits), cosine-to-final-stream, and residual norm. Saved per example under `state/`.
-4. **Aggregate.** Decision depth = smallest k such that the final top-1 token is top-1 at every depth ≥ k. Computed for every example; compared across the three families. A surprise: ambiguous prompts with *early* decision depths.
-5. **Read the counterfactuals.** For context-override prompts, target = the in-context answer, distractor = the memorized fact. Watch the logit difference rotate from memory toward context (or fail to) over depth.
+1. **Hidden-state indexing is easy to get wrong.** In common Hugging Face decoder models, `output_hidden_states=True` returns `L+1` tensors, but the last tensor is already post-final-norm. The raw stream after the last block is not directly in the tuple. The bench captures the final norm input with a pre-hook and assembles a consistent `streams[0..L]` array.
+2. **The middle-layer readout borrows the final readout basis.** Applying the final norm and unembedding at depth `k < L` asks what the final readout would decode there. It does not prove that the next block consumes the representation that way.
+
+A good mental model: the logit lens is a stethoscope pressed to the residual stream. It can reveal rhythm, but it is not the heart.
+
+## Experimental design
+
+### Prompt families
+
+The built-in prompt set has three main families:
+
+| Family | Purpose | Example | Target | Distractor |
+|---|---|---|---|---|
+| `fact` | High-certainty completions | `The capital of France is` | ` Paris` | ` London` |
+| `ambiguous` | Negative control for over-reading commitment | `The best way to solve the problem is` | none | none |
+| `counterfactual` | Context overriding a memorized fact | `In this story, the capital of France is London. According to the story, the capital of France is` | ` London` | ` Paris` |
+
+Optional controls can be enabled with `--include-controls`. These are intentionally weak or scrambled continuations. They are not meant to be clever benchmarks, just tripwires for metrics that would look impressive on nonsense.
+
+### What is measured at each depth
+
+For each example and each depth, the lab records:
+
+- top-k decoded tokens and probabilities
+- target probability, distractor probability, and target minus distractor logit difference when labels exist
+- target rank and distractor rank, because a target can improve long before it becomes top-1
+- entropy in bits
+- top-1 margin over top-2, a simple confidence proxy
+- KL divergence from the final depth distribution, a convergence-to-final metric
+- cosine similarity to the final residual stream
+- residual norm and residual update norm from the previous depth
+
+### Event depths
+
+The lab reports several distinct “when did it happen?” metrics because a single decision-depth number is a small net for a slippery fish:
+
+| Metric | Meaning |
+|---|---|
+| `decision_depth` | first depth after which the final top-1 token remains top-1 |
+| `target_first_top1` | first depth where the labeled target is top-1 |
+| `target_stable_top1_depth` | first depth after which the labeled target remains top-1 |
+| `target_first_beats_distractor` | first depth where target logit exceeds distractor logit |
+| `target_stable_beats_distractor` | first depth after which target logit keeps beating distractor |
+| `target_rank_first_le_5` | first depth where target rank is 5 or better |
+| `kl_to_final_first_le_0.5_bits` | first depth where the whole distribution is within 0.5 bits of final |
+
+The differences between these event depths are often more educational than the headline plot.
 
 ## Run
 
 ```bash
-# from labs/interpretability/ — smoke test first, always:
+# 1. Smoke test. Do this before spending GPU minutes.
 python interp_bench.py --lab lab1 --tier a
 
-# full run on Colab A100/H100:
-python interp_bench.py --lab lab1 --tier b --prompt-set full
+# 2. Standard full run.
+python interp_bench.py --lab lab1 --tier b --prompt-set full --topk 10
 
-# your own prompts:
+# 3. Add optional weak/scrambled controls.
+python interp_bench.py --lab lab1 --tier b --prompt-set full --include-controls
+
+# 4. Save raw residual tensors for custom analysis.
+python interp_bench.py --lab lab1 --tier b --prompt-set small --save-tensors
+
+# 5. Custom prompts.
 python interp_bench.py --lab lab1 --prompt-set my_prompts.json
 ```
 
-Custom prompt files are a JSON list of `{example_id, category, prompt, target, distractor}` (targets optional, written with their leading space).
+Custom prompt files are JSON lists. Targets and distractors are optional, but when provided they must tokenize to a single token for the current tokenizer.
 
-## Artifacts to inspect, in order
+```json
+[
+  {
+    "example_id": "my_fact",
+    "category": "fact",
+    "prompt": "The capital of France is",
+    "target": " Paris",
+    "distractor": " London",
+    "note": "leading spaces matter"
+  }
+]
+```
 
-1. `run_summary.md` — the headline table and what it does/doesn't support.
-2. One `state/<example>/state_card.md` for a fact prompt — read the model "making up its mind" depth by depth.
-3. `plots/entropy_by_depth.png` — facts vs ambiguous vs counterfactual.
-4. `plots/biography_<example>.png` — the showcase trajectory.
-5. `diagnostics/model_anatomy.md` and the two self-checks — the instrument's proof of correctness.
-6. `results.csv` if you want to recompute anything yourself (you should, once).
+## Artifact reading path
 
-## Questions
+Read artifacts in this order:
 
-1. At which depth (as a fraction of L) does each category's prediction stabilize? Are facts earlier than ambiguous prompts, and by how much?
-2. Does lower entropy always mean the answer is *correct*? Find a counterexample in your own run.
-3. In the counterfactual family, describe the competition between the in-context answer and the memorized fact. Does the context win from depth 0, or does the trajectory rotate mid-stack?
-4. The cosine-to-final curve rises long before the top-1 token stabilizes (or does it, in your run?). What does the gap between those two depths tell you about what the lens can't see?
-5. *(Control)* If you ran the ambiguous family alone, could you have concluded anything about "when the model knows"? What exactly does that family rule out?
-6. What experiment would you need to test whether an intermediate representation is causally *used* — and which lab in this course performs it?
+1. `run_summary.md`, for the headline numbers and the caveat list.
+2. `diagnostics/logit_lens_self_check.json`, to confirm the lens reproduces the real final prediction.
+3. `diagnostics/hook_parity_by_layer.csv`, to confirm the residual stream capture has the claimed semantics.
+4. One `state/<example_id>/state_card.md` from a fact example, then one from a counterfactual example.
+5. `plots/logit_diff_by_depth.png`, `plots/target_rank_by_depth.png`, and `plots/kl_to_final_by_depth.png` together. These show different notions of convergence.
+6. `tables/trajectory_events.csv`, to find examples where the plot story is too simple.
+7. `results.csv`, to reproduce or challenge any aggregate.
+
+## Questions to answer
+
+1. Which event depth stabilizes earliest for facts: target rank, target logit beating the distractor, target top-1, or KL-to-final? What does the ordering suggest?
+2. Are ambiguous prompts high entropy at the final depth, or do they sometimes become confident anyway? Find one example where confidence is not correctness.
+3. In counterfactual prompts, does the in-context answer beat the memorized distractor early, late, never, or from the start? Use both `logit_diff_by_depth.png` and `trajectory_events.csv`.
+4. Does cosine-to-final rise before the readout distribution becomes close to final? Explain what this says about geometry versus decoded output.
+5. Does `decision_depth` ever look early for an ambiguous or control prompt? Why would that make the phrase “the model knew early” suspect?
+6. What causal experiment would test whether a mid-layer representation is used, rather than merely decodable? Name the activation, token position, source prompt, destination prompt, and behavioral metric you would patch.
 
 ## Ledger
 
-Append 2–3 claims tagged `OBS` to `claim_ledger.md`. The run drafts candidates with your measured numbers in `ledger_suggestions.md`; edit them until you would defend them. At least one claim should be *at risk* from a later lab (the tuned-lens extension and Lab 10 both stress "the model knows early" claims).
+Use `ledger_suggestions.md` as a draft pile, not a truth machine. Move 2 or 3 claims into `claim_ledger.md` only after editing the scope, artifact path, and falsifier.
 
-## Interpretation & ethics
+Every Lab 1 claim should be tagged `OBS`. Do not write a causal claim yet. A good Lab 1 claim has the shape:
 
-**Reading:** Dennett, "Real Patterns" (excerpt). Backup: Lipton, "The Mythos of Model Interpretability."
+```text
+[L01-C1] OBS | On <model>, for <prompt family>, <metric> stabilized at <number> / L under the raw logit lens.
+Artifact: runs/<run>/tables/category_summary.csv
+Falsifier: tuned lens or held-out prompts move the event depth materially later.
+```
 
-**Writing prompt:** Your lens shows the correct answer becoming top-1 at, say, depth 12 of 32. What *pattern* is real there, in Dennett's sense — and what claim of the form "the model knows the answer at layer 12" goes beyond the artifact you produced? Answer using your own `state_card.md`, not in the abstract.
+## Interpretation and ethics
 
-## Common bugs (symptoms first)
+**Reading:** Dennett, “Real Patterns” excerpt. Backup: Lipton, “The Mythos of Model Interpretability.”
 
-- **Your lens disagrees with the model's prediction at depth L** → the run aborts by design; check `diagnostics/logit_lens_self_check.json`. Usually a wrong final-norm path (see anatomy report) or a model with logit post-processing.
-- **A target silently never becomes top-1** → it tokenized to multiple tokens and was dropped; check `diagnostics/tokenization_report.csv` before blaming the model.
-- **All depths look identical** → you are reading post-norm states from `hidden_states` without the re-mapping; use the bench's capture, or read its docstring and fix yours.
-- **Entropy near log2(vocab) everywhere on GPU** → dtype problem; the lens upcasts to float32 before softmax for exactly this reason.
-- **Comparing categories whose prompts differ wildly in length** and attributing the difference to "certainty" — length is a confound; note it in your writeup.
+**Writing prompt:** Your lens shows the correct answer becoming top-1 at depth `k`. What pattern is real in the artifact, and what claim of the form “the model knows the answer at layer k” goes beyond it? Answer using one specific `state_card.md` and one specific plot from your run.
+
+## Common bugs and what they look like
+
+| Symptom | Likely cause | First file to inspect |
+|---|---|---|
+| lens at depth `L` disagrees with the model | wrong final norm path, unexpected logit post-processing, quantization weirdness | `diagnostics/logit_lens_self_check.json` |
+| hook parity mismatch | architecture hidden-state convention changed, block path wrong, device-map capture bug | `diagnostics/hook_parity_by_layer.csv` |
+| many examples dropped | target or distractor is multi-token for this tokenizer | `diagnostics/tokenization_report.csv` |
+| target never appears but a synonym does | labels too brittle, not a model failure by itself | `state/<example>/logit_lens_topk.csv` |
+| all categories show the same decision depth | metric artifact, prompt-length confound, or over-homogeneous prompt set | `tables/prompt_manifest.csv` |
+| p(target) looks tiny even when target rank improves | probability mass is spread across many plausible tokens | `target_rank_by_depth.png` |
 
 ## Extensions
 
-- **Manageable:** run the same prompt set on a base vs. instruct variant of the same model (`--model`) and compare stabilization depths. Artifact: `tables/base_vs_instruct.csv` (assemble from the two runs' `category_summary.csv`).
-- **Ambitious:** implement a tuned lens (a learned affine probe per depth, trained to match final logits) for 4–6 depths and report where it disagrees with the raw lens. The disagreement *is* the lesson: "what layer 9 thinks" was partly an artifact of the readout basis. Artifact: `plots/tuned_vs_raw_lens.png`.
+### Manageable: base versus instruct comparison
+
+Run the same prompt set on a base and instruction-tuned variant of the same model family, then compare `category_summary.csv` and `trajectory_events.csv`. Do not apply a chat template unless the model path and lab configuration explicitly require it.
+
+### Manageable: prompt-length matched controls
+
+Write a custom JSON prompt set where ambiguous and factual prompts are matched for token count. This tests whether category differences are really about certainty or just length and syntax.
+
+### Ambitious: tuned lens comparison
+
+Train or load a tuned lens for a few depths and compare raw versus tuned event depths. The main question is not “which one is true?” but “where does the raw lens borrow the final basis badly enough to change the story?”
+
+### Ambitious: full-position biography
+
+Instead of only reading the final position, decode every token position across depth and produce a depth-by-position grid of target rank, residual norm, and KL-to-final. This is the bridge toward attention and patching labs.
 
 ## Reading
 
-- Elhage et al., "A Mathematical Framework for Transformer Circuits" — the residual-stream picture this lab instantiates.
-- Belrose et al., "Eliciting Latent Predictions from Transformers with the Tuned Lens" — the readout-bias correction, and the extension's blueprint.
-- nostalgebraist, "interpreting GPT: the logit lens" — the original blog post, worth reading for how much it got right with how little machinery.
+- Elhage et al., “A Mathematical Framework for Transformer Circuits”, for the residual-stream picture.
+- nostalgebraist, “interpreting GPT: the logit lens”, for the original exploratory method.
+- Belrose et al., “Eliciting Latent Predictions from Transformers with the Tuned Lens”, for the readout-bias correction.

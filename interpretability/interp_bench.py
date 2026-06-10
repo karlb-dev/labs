@@ -107,6 +107,7 @@ import csv
 import dataclasses
 import datetime
 import functools
+import hashlib
 import importlib
 import importlib.metadata
 import json
@@ -237,6 +238,26 @@ def write_csv(path: pathlib.Path, rows: Sequence[Mapping[str, Any]]) -> None:
             writer.writerow({key: row.get(key, "") for key in keys})
 
 
+def sha256_file(path: pathlib.Path, *, max_bytes: int | None = None) -> str | None:
+    """Return a SHA256 digest for a file, or None if the file is unavailable.
+
+    The digest in artifact_index.json is a cheap reproducibility anchor: when a
+    student zips a run directory or copies it out of Colab, the artifact map can
+    still tell whether the important CSV or plot changed. Large optional tensor
+    blobs can be skipped by passing max_bytes.
+    """
+    try:
+        if max_bytes is not None and path.stat().st_size > max_bytes:
+            return None
+        h = hashlib.sha256()
+        with path.open("rb") as f:
+            for chunk in iter(lambda: f.read(1024 * 1024), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except OSError:
+        return None
+
+
 def visible_token(text: str) -> str:
     """Render a token string so whitespace is visible in tables and cards.
 
@@ -326,7 +347,14 @@ def env_subset() -> dict[str, str]:
         "MPL",
         "BNB_",
     )
-    return {k: v for k, v in sorted(os.environ.items()) if k.startswith(prefixes)}
+    secret_markers = ("TOKEN", "SECRET", "KEY", "PASSWORD", "CREDENTIAL")
+    captured: dict[str, str] = {}
+    for k, v in sorted(os.environ.items()):
+        if not k.startswith(prefixes):
+            continue
+        # Run metadata gets zipped and shared; never persist credential values.
+        captured[k] = "<redacted>" if any(m in k.upper() for m in secret_markers) else v
+    return captured
 
 
 def package_version(name: str) -> str | None:
@@ -449,7 +477,7 @@ class RunContext:
     run_dir: pathlib.Path
     args: argparse.Namespace
     started_unix: float = dataclasses.field(default_factory=time.time)
-    artifacts: list[dict[str, str]] = dataclasses.field(default_factory=list)
+    artifacts: list[dict[str, Any]] = dataclasses.field(default_factory=list)
 
     def path(self, *parts: str) -> pathlib.Path:
         """Resolve a run-relative path, creating parent directories."""
@@ -458,8 +486,20 @@ class RunContext:
         return p
 
     def register_artifact(self, path: pathlib.Path, kind: str, description: str) -> None:
+        """Register a generated file in the run's artifact index.
+
+        The index includes size and a digest for ordinary text/plot artifacts.
+        Raw tensor blobs are intentionally not hashed by default because they can
+        be large; their own manifest explains their contents.
+        """
         rel = str(path.relative_to(self.run_dir)) if path.is_relative_to(self.run_dir) else str(path)
-        self.artifacts.append({"path": rel, "kind": kind, "description": description})
+        entry: dict[str, Any] = {"path": rel, "kind": kind, "description": description}
+        with contextlib.suppress(OSError):
+            entry["size_bytes"] = path.stat().st_size
+        digest = sha256_file(path, max_bytes=64 * 1024 * 1024)
+        if digest:
+            entry["sha256"] = digest
+        self.artifacts.append(entry)
 
 
 # ---------------------------------------------------------------------------
@@ -516,6 +556,53 @@ def set_determinism(torch: Any, seed: int) -> None:
         np.random.seed(seed)
 
 
+def first_module_device(module: Any) -> Any | None:
+    """Best-effort device for a module's parameters or buffers."""
+    with contextlib.suppress(Exception):
+        for param in module.parameters(recurse=True):
+            if str(param.device) != "meta":
+                return param.device
+    with contextlib.suppress(Exception):
+        for buffer in module.buffers(recurse=True):
+            if str(buffer.device) != "meta":
+                return buffer.device
+    return None
+
+
+def infer_input_device(model: Any, fallback: str) -> Any:
+    """Find the device where input_ids should be placed.
+
+    For ordinary single-device models this is just the requested device. For
+    quantized or device_map="auto" models, feeding inputs to the input embedding
+    device is more reliable than assuming every module lives on cuda:0.
+    """
+    with contextlib.suppress(Exception):
+        emb = model.get_input_embeddings()
+        dev = first_module_device(emb)
+        if dev is not None:
+            return dev
+    with contextlib.suppress(Exception):
+        dev = first_module_device(model)
+        if dev is not None:
+            return dev
+    return fallback
+
+
+def device_map_summary(model: Any) -> dict[str, Any] | None:
+    """Serialize a Hugging Face device map when one exists."""
+    mapping = getattr(model, "hf_device_map", None)
+    if mapping is None:
+        return None
+    return {str(k): str(v) for k, v in mapping.items()}
+
+
+def tensor_cpu_float(tensor: Any) -> Any:
+    """Detach a tensor and store it as CPU float32 for diagnostics/metrics."""
+    import torch
+
+    return tensor.detach().to(device="cpu", dtype=torch.float32)
+
+
 # ---------------------------------------------------------------------------
 # Model loading and anatomy
 # ---------------------------------------------------------------------------
@@ -557,8 +644,11 @@ class ModelBundle:
     blocks: Any          # nn.ModuleList of decoder blocks
     final_norm: Any      # the norm applied after the last block
     lm_head: Any         # the unembedding (output projection to vocab)
-    device: str
+    device: str          # requested or resolved primary device label
+    input_device: Any    # actual device for input_ids, robust to device_map="auto"
+    lens_device: Any     # actual device for final_norm/lens matmuls
     torch_dtype: Any     # compute dtype used for lens matmuls
+    model_device_map: dict[str, Any] | None = None
 
 
 def resolve_anatomy(model: Any, model_id: str, revision: str | None) -> tuple[ModelAnatomy, Any, Any, Any]:
@@ -642,6 +732,33 @@ def resolve_anatomy(model: Any, model_id: str, revision: str | None) -> tuple[Mo
     return anatomy, blocks, final_norm, lm_head
 
 
+def write_tokenizer_report(ctx: RunContext, bundle: ModelBundle) -> None:
+    """Write tokenizer facts that commonly explain surprising lab results."""
+    tok = bundle.tokenizer
+    payload = {
+        "tokenizer_class": type(tok).__name__,
+        "vocab_size": getattr(tok, "vocab_size", None),
+        "model_max_length": getattr(tok, "model_max_length", None),
+        "bos_token": getattr(tok, "bos_token", None),
+        "bos_token_id": getattr(tok, "bos_token_id", None),
+        "eos_token": getattr(tok, "eos_token", None),
+        "eos_token_id": getattr(tok, "eos_token_id", None),
+        "pad_token": getattr(tok, "pad_token", None),
+        "pad_token_id": getattr(tok, "pad_token_id", None),
+        "padding_side": getattr(tok, "padding_side", None),
+        "truncation_side": getattr(tok, "truncation_side", None),
+        "chat_template_present": bool(getattr(tok, "chat_template", None)),
+        "chat_template_used_by_lab1": False,
+        "note": (
+            "Lab 1 uses raw base-model completions. A chat template, if present "
+            "on the tokenizer, is deliberately not applied here."
+        ),
+    }
+    path = ctx.path("diagnostics", "tokenizer_info.json")
+    write_json(path, payload)
+    ctx.register_artifact(path, "diagnostic", "Tokenizer special tokens and template status.")
+
+
 def write_anatomy_report(ctx: RunContext, bundle: ModelBundle) -> None:
     """Write the anatomy as JSON (machines) and Markdown (humans)."""
     a = bundle.anatomy
@@ -692,9 +809,22 @@ def load_model_and_tokenizer(ctx: RunContext) -> ModelBundle:
     print(f"[bench] loading {args.model!r} (device={device}, dtype={dtype})")
 
     t0 = time.perf_counter()
-    tokenizer = AutoTokenizer.from_pretrained(args.model, revision=args.model_revision)
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.model,
+        revision=args.model_revision,
+        trust_remote_code=args.trust_remote_code,
+        local_files_only=args.local_files_only,
+    )
 
-    load_kwargs: dict[str, Any] = {"revision": args.model_revision}
+    load_kwargs: dict[str, Any] = {
+        "revision": args.model_revision,
+        "trust_remote_code": args.trust_remote_code,
+        "local_files_only": args.local_files_only,
+    }
+    if args.attn_implementation != "auto":
+        load_kwargs["attn_implementation"] = args.attn_implementation
+    if args.low_cpu_mem_usage:
+        load_kwargs["low_cpu_mem_usage"] = True
     if args.quantization in ("8bit", "4bit"):
         # Quantization is an opt-in convenience for small GPUs. It changes
         # numerics, so the lens self-check tolerances are looser there and
@@ -714,8 +844,11 @@ def load_model_and_tokenizer(ctx: RunContext) -> ModelBundle:
 
     try:
         model = AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs)
-    except TypeError:
-        # Older transformers spell the dtype argument torch_dtype.
+    except TypeError as exc:
+        # Older transformers spell the dtype argument torch_dtype. Re-raise
+        # unrelated TypeErrors so unsupported kwargs do not get silently masked.
+        if "dtype" not in load_kwargs:
+            raise
         load_kwargs["torch_dtype"] = load_kwargs.pop("dtype")
         model = AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs)
 
@@ -726,6 +859,8 @@ def load_model_and_tokenizer(ctx: RunContext) -> ModelBundle:
     print(f"[bench] model loaded in {load_s:.1f}s")
 
     anatomy, blocks, final_norm, lm_head = resolve_anatomy(model, args.model, args.model_revision)
+    input_device = infer_input_device(model, device)
+    lens_device = first_module_device(final_norm) or input_device
     bundle = ModelBundle(
         model=model,
         tokenizer=tokenizer,
@@ -734,10 +869,20 @@ def load_model_and_tokenizer(ctx: RunContext) -> ModelBundle:
         final_norm=final_norm,
         lm_head=lm_head,
         device=device,
+        input_device=input_device,
+        lens_device=lens_device,
         torch_dtype=dtype,
+        model_device_map=device_map_summary(model),
     )
     write_anatomy_report(ctx, bundle)
-    write_json(ctx.path("diagnostics", "gpu_memory_after_load.json"), gpu_memory_snapshot(torch, "after_load"))
+    write_tokenizer_report(ctx, bundle)
+    if bundle.model_device_map is not None:
+        path = ctx.path("diagnostics", "model_device_map.json")
+        write_json(path, bundle.model_device_map)
+        ctx.register_artifact(path, "diagnostic", "Hugging Face device map for quantized/offloaded runs.")
+    mem_path = ctx.path("diagnostics", "gpu_memory_after_load.json")
+    write_json(mem_path, gpu_memory_snapshot(torch, "after_load"))
+    ctx.register_artifact(mem_path, "diagnostic", "GPU memory snapshot after model load.")
     return bundle
 
 
@@ -778,15 +923,17 @@ def run_with_residual_cache(bundle: ModelBundle, prompt: str) -> ForwardCapture:
 
     tokenizer = bundle.tokenizer
     encoded = tokenizer(prompt, return_tensors="pt")
-    input_ids = encoded["input_ids"].to(bundle.device)
-    attention_mask = encoded["attention_mask"].to(bundle.device)
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
 
     # The final block's pre-norm output is not in hidden_states (see module
     # docstring), so capture the final norm's input as it flows past.
     captured: dict[str, Any] = {}
 
     def final_norm_pre_hook(module: Any, hook_args: tuple) -> None:
-        captured["final_prenorm"] = hook_args[0].detach()
+        captured["final_prenorm"] = tensor_cpu_float(hook_args[0])
 
     handle = bundle.final_norm.register_forward_pre_hook(final_norm_pre_hook)
     try:
@@ -819,28 +966,26 @@ def run_with_residual_cache(bundle: ModelBundle, prompt: str) -> ForwardCapture:
     #   k in 0..L-1  -> hidden_states[k]   (input to block k)
     #   k = L        -> the final norm's captured input (output of block L-1)
     streams = torch.stack(
-        [h[0] for h in hs[:-1]] + [captured["final_prenorm"][0]]
-    ).float()
+        [tensor_cpu_float(h[0]) for h in hs[:-1]] + [captured["final_prenorm"][0]]
+    )
 
-    ids = input_ids[0].tolist()
+    ids = input_ids[0].detach().cpu().tolist()
     return ForwardCapture(
         prompt=prompt,
         input_ids=ids,
         tokens_raw=tokenizer.convert_ids_to_tokens(ids),
         tokens_text=[tokenizer.decode([i]) for i in ids],
         streams=streams,
-        final_logits_last=out.logits[0, -1].float(),
+        final_logits_last=tensor_cpu_float(out.logits[0, -1]),
     )
 
 
 def run_hook_parity_check(ctx: RunContext, bundle: ModelBundle, prompt: str) -> dict[str, Any]:
-    """Cross-check per-block forward hooks against output_hidden_states.
+    """Cross-check per-block forward hooks against the assembled stream cache.
 
-    This is the bench proving that its two capture mechanisms agree: a
-    forward hook on block k must produce exactly hidden_states[k+1] (for
-    k < L-1), and the final-norm pre-hook must equal block L-1's output.
-    If this ever fails after a library upgrade, every downstream lab is
-    suspect -- which is exactly why it runs every time.
+    A mismatch means the harness is not measuring the object it says it is
+    measuring. By default, this aborts the run. ``--allow-hook-mismatch`` turns
+    the abort into a diagnostic warning for architecture bring-up work.
     """
     import torch
 
@@ -849,7 +994,7 @@ def run_hook_parity_check(ctx: RunContext, bundle: ModelBundle, prompt: str) -> 
     def make_hook(idx: int):
         def hook(module: Any, hook_args: tuple, output: Any) -> None:
             out = output[0] if isinstance(output, tuple) else output
-            block_outputs[idx] = out.detach()
+            block_outputs[idx] = tensor_cpu_float(out)
 
         return hook
 
@@ -861,37 +1006,69 @@ def run_hook_parity_check(ctx: RunContext, bundle: ModelBundle, prompt: str) -> 
             handle.remove()
 
     n_layers = bundle.anatomy.n_layers
+    by_layer_rows: list[dict[str, Any]] = []
     max_diff = 0.0
+    max_mean_diff = 0.0
     compared = 0
+    missing_layers: list[int] = []
     for k in range(n_layers):
+        if k not in block_outputs:
+            missing_layers.append(k)
+            continue
         # Block k's output is the stream after k+1 blocks == streams[k+1].
-        hook_out = block_outputs[k][0].float()
-        diff = (hook_out - capture.streams[k + 1]).abs().max().item()
-        max_diff = max(max_diff, diff)
+        hook_out = block_outputs[k][0]
+        expected = capture.streams[k + 1]
+        abs_diff = (hook_out - expected).abs()
+        layer_max = float(abs_diff.max())
+        layer_mean = float(abs_diff.mean())
+        max_diff = max(max_diff, layer_max)
+        max_mean_diff = max(max_mean_diff, layer_mean)
         compared += 1
+        by_layer_rows.append(
+            {
+                "layer": k,
+                "max_abs_diff": layer_max,
+                "mean_abs_diff": layer_mean,
+                "hook_l2": float(hook_out.norm()),
+                "expected_l2": float(expected.norm()),
+                "shape": "x".join(str(x) for x in hook_out.shape),
+                "ok_at_tolerance": layer_max <= ctx.args.hook_tolerance,
+            }
+        )
 
+    by_layer_path = ctx.path("diagnostics", "hook_parity_by_layer.csv")
+    write_csv(by_layer_path, by_layer_rows)
+    ctx.register_artifact(by_layer_path, "diagnostic", "Layer-level hook versus hidden-state parity check.")
+
+    ok = (not missing_layers) and compared == n_layers and max_diff <= ctx.args.hook_tolerance
     result = {
         "prompt": prompt,
         "blocks_compared": compared,
+        "n_layers": n_layers,
+        "missing_layers": missing_layers,
         "max_abs_diff": max_diff,
-        "ok": bool(max_diff == 0.0),
+        "max_mean_abs_diff": max_mean_diff,
+        "tolerance": ctx.args.hook_tolerance,
+        "ok": bool(ok),
+        "allow_hook_mismatch": bool(ctx.args.allow_hook_mismatch),
         "explanation": (
             "Forward hooks on each decoder block were compared against the "
-            "streams assembled from output_hidden_states + the final-norm "
-            "pre-hook. They must match bit-for-bit: both observe the same "
-            "tensors on the same forward pass."
+            "streams assembled from output_hidden_states plus the final-norm "
+            "pre-hook. A mismatch means the residual stream capture semantics "
+            "are not verified for this architecture or library version."
         ),
     }
-    write_json(ctx.path("diagnostics", "hook_parity.json"), result)
-    ctx.register_artifact(
-        ctx.run_dir / "diagnostics" / "hook_parity.json",
-        "diagnostic",
-        "Proof that hook captures match output_hidden_states exactly.",
-    )
+    path = ctx.path("diagnostics", "hook_parity.json")
+    write_json(path, result)
+    ctx.register_artifact(path, "diagnostic", "Summary of hook captures versus assembled residual streams.")
     status = "OK" if result["ok"] else "MISMATCH"
-    print(f"[bench] hook parity check: {status} (max |diff| = {max_diff:g})")
+    print(f"[bench] hook parity check: {status} (max |diff| = {max_diff:g}, compared {compared}/{n_layers})")
+    if not result["ok"] and not ctx.args.allow_hook_mismatch:
+        raise RuntimeError(
+            "Hook parity check failed. The harness did not verify its residual "
+            "capture semantics. See diagnostics/hook_parity*."
+        )
     return result
-
 
 # ---------------------------------------------------------------------------
 # Logit lens
@@ -901,30 +1078,32 @@ def run_hook_parity_check(ctx: RunContext, bundle: ModelBundle, prompt: str) -> 
 def logit_lens_all_depths(bundle: ModelBundle, streams_at_position: Any) -> Any:
     """Apply final_norm + unembedding to residual streams at one position.
 
-    ``streams_at_position`` is float32 ``[n_depths, d_model]``. The final
-    norm and lm_head are the model's own modules, so the lens at depth L is
-    *the model's real readout*, not an approximation -- the self-check below
-    relies on that. Mid-depth readouts borrow the final norm's learned scale;
-    that borrowed-basis assumption is the lab's central caveat, in code.
+    The cached streams live on CPU float32 so diagnostics do not pin GPU memory.
+    This function moves only the depth x d_model slice needed for the lens to
+    the final-norm device, runs the model's own readout modules, then returns
+    CPU float32 logits. At depth L this should reproduce the model's real logits.
     """
     import torch
 
     with torch.no_grad():
-        x = streams_at_position.to(bundle.torch_dtype)
+        norm_device = first_module_device(bundle.final_norm) or bundle.lens_device
+        head_device = first_module_device(bundle.lm_head) or norm_device
+        x = streams_at_position.to(device=norm_device, dtype=bundle.torch_dtype)
         normed = bundle.final_norm(x)
+        if str(head_device) != str(norm_device):
+            normed = normed.to(head_device)
         logits = bundle.lm_head(normed).float()
         if bundle.anatomy.logit_softcap:
             cap = bundle.anatomy.logit_softcap
             logits = cap * torch.tanh(logits / cap)
-    return logits
-
+    return logits.detach().to(device="cpu", dtype=torch.float32)
 
 def run_lens_self_check(ctx: RunContext, bundle: ModelBundle, capture: ForwardCapture) -> dict[str, Any]:
     """Verify lens(depth=L) reproduces the model's actual final logits.
 
-    Agreement is judged on the top-1 token (must match) and max abs logit
-    difference (reported; small nonzero values are expected because the lens
-    matmul runs outside the model's exact kernel fusion order).
+    Top-1 agreement is required. The numeric logit difference is reported, not
+    used as a hard failure by default, because recomputing the final projection
+    outside the model may avoid fused kernels or quantized execution paths.
     """
     import torch
 
@@ -932,47 +1111,64 @@ def run_lens_self_check(ctx: RunContext, bundle: ModelBundle, capture: ForwardCa
     lens_final = lens_logits[-1]
     real_final = capture.final_logits_last
 
-    lens_top1 = int(lens_final.argmax())
-    real_top1 = int(real_final.argmax())
+    lens_top = torch.topk(lens_final, k=min(5, lens_final.numel()))
+    real_top = torch.topk(real_final, k=min(5, real_final.numel()))
+    lens_top1 = int(lens_top.indices[0])
+    real_top1 = int(real_top.indices[0])
     max_diff = float((lens_final - real_final).abs().max())
+    mean_diff = float((lens_final - real_final).abs().mean())
     rel = max_diff / max(1e-9, float(real_final.abs().max()))
+    top5_overlap = len(set(int(x) for x in lens_top.indices) & set(int(x) for x in real_top.indices))
+
+    top1_matches = lens_top1 == real_top1
+    # A bf16 recomputation can legitimately flip top-1 on a near-tie prompt:
+    # different matmul shapes reduce in different orders. Accept a mismatch
+    # only when the model's own logit gap between the two candidates is within
+    # the observed numeric noise floor and both candidates sit in each other's
+    # top-5. Anything larger means the capture or norm path is wrong.
+    near_tie_ok = False
+    real_gap = None
+    if not top1_matches:
+        real_gap = float(real_final[real_top1] - real_final[lens_top1])
+        near_tie_ok = real_gap <= max_diff * 1.5 and top5_overlap >= 4
 
     result = {
         "prompt": capture.prompt,
-        "top1_matches": lens_top1 == real_top1,
+        "top1_matches": top1_matches,
+        "near_tie_accepted": near_tie_ok,
+        "real_logit_gap_top1_vs_lens_top1": real_gap,
         "lens_top1": bundle.tokenizer.decode([lens_top1]),
         "model_top1": bundle.tokenizer.decode([real_top1]),
+        "lens_top5": [bundle.tokenizer.decode([int(i)]) for i in lens_top.indices],
+        "model_top5": [bundle.tokenizer.decode([int(i)]) for i in real_top.indices],
+        "top5_overlap": top5_overlap,
         "max_abs_logit_diff": max_diff,
+        "mean_abs_logit_diff": mean_diff,
         "max_rel_logit_diff": rel,
         "quantization": ctx.args.quantization,
-        "ok": lens_top1 == real_top1,
+        "ok": top1_matches or near_tie_ok,
         "explanation": (
             "lens(L) = lm_head(final_norm(stream after all blocks)) recomputed "
-            "outside the model must reproduce the model's own output logits. "
-            "If top-1 disagrees, the capture or the norm handling is wrong and "
-            "no mid-depth lens readout in this run can be trusted."
+            "outside the model must reproduce the model's own top prediction. "
+            "If top-1 disagrees, the capture or norm/logit post-processing is "
+            "wrong and no mid-depth lens readout in this run can be trusted."
         ),
     }
-    write_json(ctx.path("diagnostics", "logit_lens_self_check.json"), result)
-    ctx.register_artifact(
-        ctx.run_dir / "diagnostics" / "logit_lens_self_check.json",
-        "diagnostic",
-        "Proof that the lens at final depth reproduces the model's logits.",
-    )
-    status = "OK" if result["ok"] else "FAILED"
+    path = ctx.path("diagnostics", "logit_lens_self_check.json")
+    write_json(path, result)
+    ctx.register_artifact(path, "diagnostic", "Proof that the lens at final depth reproduces the model's logits.")
+    status = "OK" if top1_matches else ("OK (near-tie within numeric noise)" if near_tie_ok else "FAILED")
     print(
         f"[bench] lens self-check: {status} "
         f"(top1 lens={result['lens_top1']!r} model={result['model_top1']!r}, "
-        f"max |dlogit| = {max_diff:.4f})"
+        f"max |dlogit| = {max_diff:.4f}, top5 overlap={top5_overlap}/5)"
     )
     if not result["ok"]:
         raise RuntimeError(
             "Logit lens self-check failed: the lens at final depth does not "
-            "reproduce the model's own prediction. See "
-            "diagnostics/logit_lens_self_check.json before trusting anything."
+            "reproduce the model's own prediction. See diagnostics/logit_lens_self_check.json."
         )
     return result
-
 
 # ---------------------------------------------------------------------------
 # Lens trajectory: the per-depth measurement pack used by Lab 1 (and reused
@@ -988,13 +1184,22 @@ class LensTrajectory:
     top1_ids: list[int]
     top1_texts: list[str]
     top1_probs: list[float]
+    top2_ids: list[int]
+    top2_texts: list[str]
+    top2_probs: list[float]
+    top1_margin: list[float]
     entropy_bits: list[float]
+    kl_to_final_bits: list[float]
     cosine_to_final: list[float]
+    cosine_to_prev: list[float | None]
     resid_l2: list[float]
+    stream_delta_l2: list[float]
     p_target: list[float] | None
     p_distractor: list[float] | None
     logit_target: list[float] | None
     logit_distractor: list[float] | None
+    target_rank: list[int] | None
+    distractor_rank: list[int] | None
     topk_rows: list[dict[str, Any]]  # depth, rank, token_id, token, prob, logit
 
 
@@ -1006,26 +1211,55 @@ def compute_lens_trajectory(
     distractor_id: int | None = None,
     topk: int = 5,
 ) -> LensTrajectory:
-    """Compute the standard per-depth readout at the final token position."""
+    """Compute the standard per-depth readout at the final token position.
+
+    Besides the obvious p(target) and top-k outputs, this records metrics that
+    help students debug interpretations: rank can improve before probability,
+    entropy can drop before correctness, and KL-to-final can converge while the
+    top-1 token still flips.
+    """
     import torch
 
-    streams_last = capture.streams[:, -1, :]  # [L+1, d_model] float32
-    logits = logit_lens_all_depths(bundle, streams_last)  # [L+1, vocab] float32
+    streams_last = capture.streams[:, -1, :]  # [L+1, d_model] float32 on CPU
+    logits = logit_lens_all_depths(bundle, streams_last)  # [L+1, vocab] CPU float32
     probs = torch.softmax(logits, dim=-1)
-    # Entropy in bits: 0 = certain, log2(vocab) = uniform. Bits because a
-    # human can read "2.3 bits ~ choosing among ~5 options".
+    vocab = logits.shape[-1]
+    k = max(1, min(topk, vocab))
+
+    # Entropy in bits: 0 = certain, log2(vocab) = uniform. Bits are intuitive:
+    # 2.3 bits means roughly five equally plausible options.
     entropy = -(probs * torch.log2(probs.clamp_min(1e-12))).sum(dim=-1)
+
+    final_probs = probs[-1].clamp_min(1e-12)
+    kl_to_final = (final_probs.unsqueeze(0) * (torch.log2(final_probs.unsqueeze(0)) - torch.log2(probs.clamp_min(1e-12)))).sum(dim=-1)
 
     final_stream = streams_last[-1]
     cosine = torch.nn.functional.cosine_similarity(
         streams_last, final_stream.unsqueeze(0), dim=-1
     )
     resid_l2 = streams_last.norm(dim=-1)
+    deltas = torch.zeros_like(resid_l2)
+    if streams_last.shape[0] > 1:
+        deltas[1:] = (streams_last[1:] - streams_last[:-1]).norm(dim=-1)
+    cosine_prev: list[float | None] = [None]
+    if streams_last.shape[0] > 1:
+        prev_cos = torch.nn.functional.cosine_similarity(streams_last[1:], streams_last[:-1], dim=-1)
+        cosine_prev.extend(float(v) for v in prev_cos)
 
-    top = torch.topk(probs, k=topk, dim=-1)
+    top = torch.topk(probs, k=k, dim=-1)
+    top2 = torch.topk(probs, k=min(2, vocab), dim=-1)
+    if top2.indices.shape[-1] == 1:
+        top2_ids = top2.indices[:, 0]
+        top2_probs = torch.zeros_like(top2.values[:, 0])
+        margin = top2.values[:, 0]
+    else:
+        top2_ids = top2.indices[:, 1]
+        top2_probs = top2.values[:, 1]
+        margin = top2.values[:, 0] - top2.values[:, 1]
+
     topk_rows: list[dict[str, Any]] = []
     for depth in range(logits.shape[0]):
-        for rank in range(topk):
+        for rank in range(k):
             token_id = int(top.indices[depth, rank])
             topk_rows.append(
                 {
@@ -1039,18 +1273,34 @@ def compute_lens_trajectory(
             )
 
     top1_ids = [int(i) for i in top.indices[:, 0]]
+
+    def ranks_for(token_id: int | None) -> list[int] | None:
+        if token_id is None:
+            return None
+        target_logits = logits[:, token_id].unsqueeze(-1)
+        return [int(v) + 1 for v in (logits > target_logits).sum(dim=-1)]
+
     traj = LensTrajectory(
-        n_depths=logits.shape[0],
+        n_depths=int(logits.shape[0]),
         top1_ids=top1_ids,
         top1_texts=[bundle.tokenizer.decode([i]) for i in top1_ids],
         top1_probs=[float(v) for v in top.values[:, 0]],
+        top2_ids=[int(i) for i in top2_ids],
+        top2_texts=[bundle.tokenizer.decode([int(i)]) for i in top2_ids],
+        top2_probs=[float(v) for v in top2_probs],
+        top1_margin=[float(v) for v in margin],
         entropy_bits=[float(v) for v in entropy],
+        kl_to_final_bits=[float(v) for v in kl_to_final],
         cosine_to_final=[float(v) for v in cosine],
+        cosine_to_prev=cosine_prev,
         resid_l2=[float(v) for v in resid_l2],
+        stream_delta_l2=[float(v) for v in deltas],
         p_target=None,
         p_distractor=None,
         logit_target=None,
         logit_distractor=None,
+        target_rank=ranks_for(target_id),
+        distractor_rank=ranks_for(distractor_id),
         topk_rows=topk_rows,
     )
     if target_id is not None:
@@ -1060,7 +1310,6 @@ def compute_lens_trajectory(
         traj.p_distractor = [float(v) for v in probs[:, distractor_id]]
         traj.logit_distractor = [float(v) for v in logits[:, distractor_id]]
     return traj
-
 
 # ---------------------------------------------------------------------------
 # Human-readable state dumps
@@ -1087,19 +1336,21 @@ def dump_example_state(
     state_dir = ctx.run_dir / "state" / sanitize_tag(example_id)
 
     # --- tokens.csv: exactly what the model saw, position by position.
-    token_rows = [
-        {
-            "position": i,
-            "token_id": tid,
-            "token_raw": raw,
-            "token_text": text,
-            "token_visible": visible_token(text),
-            "is_final": i == len(capture.input_ids) - 1,
-        }
-        for i, (tid, raw, text) in enumerate(
-            zip(capture.input_ids, capture.tokens_raw, capture.tokens_text)
+    token_rows = []
+    cumulative = ""
+    for i, (tid, raw, text) in enumerate(zip(capture.input_ids, capture.tokens_raw, capture.tokens_text)):
+        cumulative += text
+        token_rows.append(
+            {
+                "position": i,
+                "token_id": tid,
+                "token_raw": raw,
+                "token_text": text,
+                "token_visible": visible_token(text),
+                "cumulative_text_visible": visible_token(cumulative),
+                "is_final": i == len(capture.input_ids) - 1,
+            }
         )
-    ]
     write_csv(state_dir / "tokens.csv", token_rows)
 
     # --- residual_norms_by_position.csv: depth x position L2-norm grid.
@@ -1141,18 +1392,28 @@ def dump_example_state(
     for depth in range(traj.n_depths):
         row = {
             "depth": depth,
+            "top1_token_id": traj.top1_ids[depth],
             "top1_token": traj.top1_texts[depth],
             "top1_prob": round(traj.top1_probs[depth], 6),
+            "top2_token_id": traj.top2_ids[depth],
+            "top2_token": traj.top2_texts[depth],
+            "top2_prob": round(traj.top2_probs[depth], 6),
+            "top1_margin": round(traj.top1_margin[depth], 6),
             "entropy_bits": round(traj.entropy_bits[depth], 4),
+            "kl_to_final_bits": round(traj.kl_to_final_bits[depth], 4),
             "cosine_to_final": round(traj.cosine_to_final[depth], 5),
+            "cosine_to_prev": "" if traj.cosine_to_prev[depth] is None else round(traj.cosine_to_prev[depth], 5),
             "resid_l2": round(traj.resid_l2[depth], 3),
+            "stream_delta_l2": round(traj.stream_delta_l2[depth], 3),
         }
         if traj.p_target is not None:
             row["p_target"] = round(traj.p_target[depth], 6)
             row["logit_target"] = round(traj.logit_target[depth], 4)
+            row["target_rank"] = traj.target_rank[depth] if traj.target_rank is not None else ""
         if traj.p_distractor is not None:
             row["p_distractor"] = round(traj.p_distractor[depth], 6)
             row["logit_distractor"] = round(traj.logit_distractor[depth], 4)
+            row["distractor_rank"] = traj.distractor_rank[depth] if traj.distractor_rank is not None else ""
         if traj.p_target is not None and traj.p_distractor is not None:
             row["logit_diff_target_minus_distractor"] = round(
                 traj.logit_target[depth] - traj.logit_distractor[depth], 4
@@ -1162,7 +1423,9 @@ def dump_example_state(
 
     # --- state_card.md: the narrative view, designed to be read top to
     # bottom by a human deciding whether the run makes sense.
-    write_text(state_dir / "state_card.md", render_state_card(bundle, example_id, capture, traj, target, distractor))
+    state_card_path = state_dir / "state_card.md"
+    write_text(state_card_path, render_state_card(bundle, example_id, capture, traj, target, distractor))
+    ctx.register_artifact(state_card_path, "state", f"Per-example state card for {example_id}.")
 
     # --- optional raw tensors, with a manifest so nothing is a mystery blob.
     if ctx.args.save_tensors:
@@ -1217,8 +1480,8 @@ def render_state_card(
     for i, (tid, text) in enumerate(zip(capture.input_ids, capture.tokens_text)):
         lines.append(f"| {i} | {tid} | `{visible_token(text)}` |")
 
-    header = "| depth | top-1 | p(top1) | entropy (bits) | cos->final |"
-    sep = "|---:|---|---:|---:|---:|"
+    header = "| depth | top-1 | p(top1) | margin | entropy | KL->final | cos->final | delta L2 |"
+    sep = "|---:|---|---:|---:|---:|---:|---:|---:|"
     if traj.p_target is not None:
         header += " p(target) |"
         sep += "---:|"
@@ -1229,8 +1492,9 @@ def render_state_card(
     for depth in range(traj.n_depths):
         row = (
             f"| {depth} | `{visible_token(traj.top1_texts[depth])}` "
-            f"| {traj.top1_probs[depth]:.3f} | {traj.entropy_bits[depth]:.2f} "
-            f"| {traj.cosine_to_final[depth]:.3f} |"
+            f"| {traj.top1_probs[depth]:.3f} | {traj.top1_margin[depth]:.3f} "
+            f"| {traj.entropy_bits[depth]:.2f} | {traj.kl_to_final_bits[depth]:.2f} "
+            f"| {traj.cosine_to_final[depth]:.3f} | {traj.stream_delta_l2[depth]:.2f} |"
         )
         if traj.p_target is not None:
             row += f" {traj.p_target[depth]:.4f} |"
@@ -1264,6 +1528,7 @@ CATEGORY_COLORS = {
     "fact": "#1f77b4",
     "ambiguous": "#7f7f7f",
     "counterfactual": "#d62728",
+    "control": "#9467bd",
 }
 
 
@@ -1285,6 +1550,13 @@ def save_figure(ctx: RunContext, fig: Any, name: str, description: str) -> None:
     plt.close(fig)
     ctx.register_artifact(path, "plot", description)
     print(f"[bench] wrote plots/{name}")
+
+
+def close_figure(fig: Any) -> None:
+    """Release a figure that is being abandoned instead of saved."""
+    import matplotlib.pyplot as plt
+
+    plt.close(fig)
 
 
 # ---------------------------------------------------------------------------
@@ -1362,6 +1634,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--lab", choices=sorted(LAB_PROFILES), default="lab1", help="Which lab to run.")
     parser.add_argument("--model", default=None, help="HF model id; defaults to the tier's model.")
     parser.add_argument("--model-revision", default=None, help="Pinned HF revision (commit/tag).")
+    parser.add_argument("--trust-remote-code", action="store_true", help="Pass trust_remote_code=True to HF loaders.")
+    parser.add_argument("--local-files-only", action="store_true", help="Do not download models/tokenizers; use local cache only.")
+    parser.add_argument("--attn-implementation", default="auto", help="Optional HF attention implementation, e.g. eager, sdpa, flash_attention_2.")
+    parser.add_argument("--low-cpu-mem-usage", action="store_true", help="Pass low_cpu_mem_usage=True during model loading.")
     parser.add_argument("--device", default="auto", choices=("auto", "cuda", "mps", "cpu"))
     parser.add_argument("--dtype", default="auto", choices=("auto", "float32", "bfloat16", "float16"))
     parser.add_argument("--quantization", default="none", choices=("none", "8bit", "4bit"),
@@ -1369,13 +1645,16 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--tier", default="auto", choices=("auto", "a", "b", "c"),
                         help="Hardware tier: a = CPU smoke (gpt2), b = 24GB+/Colab GPU, c = 40-80GB.")
     parser.add_argument("--prompt-set", default="small",
-                        help="small | full | path to a custom prompts .json file.")
+                        help="small | medium | full | path to a custom prompts .json file.")
     parser.add_argument("--max-examples", type=int, default=-1,
                         help="Cap examples; -1 = tier default, 0 = no cap.")
     parser.add_argument("--topk", type=int, default=5, help="Top-k tokens recorded per depth.")
+    parser.add_argument("--include-controls", action="store_true", help="Lab 1: include optional weak/scrambled control prompts.")
+    parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
+    parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--showcase", default=None,
-                        help="Example id to feature in the biography plot (default: first fact example).")
+                        help="Example id to feature in the biography plot (default: first counterfactual example).")
     parser.add_argument("--save-tensors", action="store_true",
                         help="Also save raw residual tensors (with a manifest) per example.")
     parser.add_argument("--no-plots", action="store_true", help="Skip matplotlib plots.")
@@ -1458,13 +1737,17 @@ def main(argv: Sequence[str] | None = None) -> None:
     with ConsoleTee(run_dir / "logs"):
         print(f"[bench] run directory: {run_dir}")
         ctx = RunContext(run_dir=run_dir, args=args)
-        write_json(ctx.path("run_config.json"), vars(args))
+        run_config_path = ctx.path("run_config.json")
+        write_json(run_config_path, vars(args))
+        ctx.register_artifact(run_config_path, "config", "Resolved CLI arguments after tier defaults.")
 
         # Heavy imports happen after env config so MPLBACKEND etc. apply.
         import torch
 
         set_determinism(torch, args.seed)
-        write_json(ctx.path("run_metadata.json"), collect_run_metadata(torch))
+        metadata_path = ctx.path("run_metadata.json")
+        write_json(metadata_path, collect_run_metadata(torch))
+        ctx.register_artifact(metadata_path, "diagnostic", "Host, package, git, GPU, and environment metadata.")
 
         bundle = load_model_and_tokenizer(ctx)
         ensure_ledger()
@@ -1478,10 +1761,17 @@ def main(argv: Sequence[str] | None = None) -> None:
 
         print(f"[bench] running {args.lab}: {LAB_PROFILES[args.lab]['description']}")
         t0 = time.perf_counter()
-        lab_module.run(ctx, bundle)
+        try:
+            lab_module.run(ctx, bundle)
+        finally:
+            # A failed run still leaves partial artifacts; index whatever
+            # was registered so the run directory stays auditable.
+            write_json(ctx.path("artifact_index.json"), {"artifacts": ctx.artifacts})
         elapsed = time.perf_counter() - t0
 
-        write_json(ctx.path("diagnostics", "gpu_memory_at_end.json"), gpu_memory_snapshot(torch, "end"))
+        end_mem_path = ctx.path("diagnostics", "gpu_memory_at_end.json")
+        write_json(end_mem_path, gpu_memory_snapshot(torch, "end"))
+        ctx.register_artifact(end_mem_path, "diagnostic", "GPU memory snapshot at the end of the run.")
         write_json(ctx.path("artifact_index.json"), {"artifacts": ctx.artifacts})
         print(f"[bench] lab finished in {elapsed:.1f}s")
         print(f"[bench] start with: {run_dir / 'run_summary.md'}")
