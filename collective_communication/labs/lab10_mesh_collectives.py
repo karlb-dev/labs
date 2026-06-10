@@ -1,6 +1,6 @@
-"""Lab 9: topology-aware staged all-gather over a logical 2D mesh.
+"""Lab 10: topology-aware staged all-gather over a logical 2D mesh.
 
-This file contains the concept code for the Lab 9 teaching module. The benchmark
+This file contains the concept code for the Lab 10 teaching module. The benchmark
 harness owns run directories, logging, CSV/JSONL output, plots, and profiler
 capture. Keeping those pieces out of the lab file lets students read one idea at
 a time.
@@ -23,7 +23,7 @@ Important design choice
 =======================
 
 The Pallas path keeps the *JAX* mesh flat and computes a logical 2D coordinate
-from the one-dimensional device rank. That keeps Lab 9 compatible with the Lab 1
+from the one-dimensional device rank. That keeps Lab 10 compatible with the Lab 1
 remote-DMA substrate while teaching 2D topology. Later labs can replace this
 logical reshape with physical-coordinate-aware placement and multi-host axes.
 """
@@ -229,8 +229,8 @@ class MeshAllGatherCase:
 
 
 LAB_SPEC: dict[str, Any] = {
-    "lab": "lab9",
-    "title": "Lab 9: 2D Mesh Collectives",
+    "lab": "lab10",
+    "title": "Lab 10: 2D Mesh Collectives",
     "goal": (
         "Stop treating every slice as a flat ring. Compare flat ring movement "
         "with staged all-gather over logical mesh axes, and learn to connect "
@@ -240,14 +240,14 @@ LAB_SPEC: dict[str, Any] = {
         "`pmap_all_gather`: built-in all-gather baseline",
         "`pmap_2d_staged_all_gather`: CPU-runnable x/y staged reference",
         "`pallas_2d_staged_all_gather`: TPU remote-DMA staged all-gather",
-        "`lab9_mesh_collectives_spec`: mesh-shape, byte-model, and schedule artifact",
+        "`lab10_mesh_collectives_spec`: mesh-shape, byte-model, and schedule artifact",
     ],
     "deferred_ops": [
         "Add reduce-scatter and all-reduce variants over the same staged mesh",
         "Compare x-then-y and y-then-x traces against physical topology evidence",
         "Record TPU coordinates alongside every staged schedule",
         "Choose logical mesh layout from physical coordinates instead of local-device order",
-        "Extend staged algorithms across host boundaries in Lab 10",
+        "Extend staged algorithms across host boundaries in Lab 11",
     ],
     "byte_model": [
         "stage 1 sends `(first_axis_size - 1) * shard_bytes` per device",
@@ -260,6 +260,9 @@ LAB_SPEC: dict[str, Any] = {
         "pmap staged all-gather matches canonical rank order",
         "Pallas staged all-gather matches canonical rank order on TPU",
         "full payload tiles are checked, not only rank marker scalars",
+        "expected tiles model the wire-dtype input quantization, so the check is "
+        "exact on 4-, 8-, and 16-device meshes instead of tripping bfloat16 "
+        "rounding once ranks push tile values past a precision boundary",
         "spec artifact records candidate 2D mesh shapes and axis-order experiments",
     ],
     "artifacts": [
@@ -269,10 +272,10 @@ LAB_SPEC: dict[str, Any] = {
         "plots/bandwidth_by_payload.png",
         "run_metadata.json device report",
         "diagnostics/runtime.json",
-        "lab_artifacts/*lab9_mesh_collectives_spec*",
+        "lab_artifacts/*lab10_mesh_collectives_spec*",
     ],
     "next_steps": [
-        "Use Lab 10 process topology before extending staged algorithms multi-host",
+        "Use Lab 11 process topology before extending staged algorithms multi-host",
     ],
 }
 
@@ -289,7 +292,7 @@ def normalize_direction(direction: str | None) -> str:
     normalized = (direction or "right").strip().lower()
     if normalized not in SUPPORTED_DIRECTIONS:
         raise ValueError(
-            f"Lab 9 direction must be one of {sorted(SUPPORTED_DIRECTIONS)}, "
+            f"Lab 10 direction must be one of {sorted(SUPPORTED_DIRECTIONS)}, "
             f"got {direction!r}"
         )
     return normalized
@@ -309,7 +312,7 @@ def normalize_axis_order(axis_order: str | None) -> str:
     normalized = aliases.get(normalized, normalized)
     if normalized not in SUPPORTED_AXIS_ORDERS:
         raise ValueError(
-            f"Lab 9 axis order must be one of {sorted(SUPPORTED_AXIS_ORDERS)}, "
+            f"Lab 10 axis order must be one of {sorted(SUPPORTED_AXIS_ORDERS)}, "
             f"got {axis_order!r}"
         )
     return normalized
@@ -327,7 +330,7 @@ def all_2d_factor_shapes(n_devices: int) -> list[tuple[int, int]]:
     """Return all 2D factorizations of ``n_devices``, near-square first.
 
     Both orientations are included. For eight devices this returns ``2x4`` and
-    ``4x2`` before the flat-ish ``1x8`` and ``8x1`` shapes. Lab 9 is explicitly
+    ``4x2`` before the flat-ish ``1x8`` and ``8x1`` shapes. Lab 10 is explicitly
     a 2D lab, so this function does not return physical 3D shapes such as
     ``2x2x2``.
     """
@@ -355,7 +358,7 @@ def parse_mesh_shape(mesh_shape: str | None, n_devices: int) -> tuple[int, int]:
     parts = normalized.split("x")
     if len(parts) != 2:
         raise ValueError(
-            f"Lab 9 expects a 2D mesh shape like '2x2', '2x4', or 'auto'; "
+            f"Lab 10 expects a 2D mesh shape like '2x2', '2x4', or 'auto'; "
             f"got {mesh_shape!r}"
         )
     try:
@@ -385,7 +388,7 @@ def axis_sequence(axis_order: str) -> tuple[str, str]:
     if normalized == "y_then_x":
         return ("y", "x")
     # ``normalize_axis_order`` should have rejected everything else.
-    raise ValueError(f"unknown Lab 9 axis order {axis_order!r}")
+    raise ValueError(f"unknown Lab 10 axis order {axis_order!r}")
 
 
 def axis_size(mesh_shape: tuple[int, int], mesh_axis: str) -> int:
@@ -544,23 +547,48 @@ def expected_tile_from_ranks(
     rows: int,
     cols: int,
     use_position_offsets: bool,
+    dtype: Any = None,
 ) -> Any:
     """Expand ``[receiver, source]`` rank markers into a full expected tile.
 
-    The new Lab 9 builders set ``use_position_offsets=True`` so the checker
+    The new Lab 10 builders set ``use_position_offsets=True`` so the checker
     validates every tile element. The flag is useful for comparing with older
     rank-only inputs during standalone smoke tests.
+
+    Modeling input quantization
+    ---------------------------
+
+    Lab 10 is a pure all-gather: the kernel *moves* shards, it never does
+    arithmetic, so the output equals the input bit for bit. The input itself is
+    ``make_rank_position_tile(...).astype(dtype)`` -- the rank/row/col sum
+    rounded to the wire dtype. When ``dtype`` is given, this function rounds the
+    expected tile the same way, so the comparison is against the values the
+    hardware actually carries. This matters once tile values cross a dtype's
+    precision boundary: with ``N`` devices, ranks reach ``N - 1``, and for
+    ``N >= 8`` a bfloat16 tile value can exceed 8.0, where one ULP (0.0625) is
+    larger than a naive ``atol`` -- so a float32-only reference would flag a
+    perfectly correct gather as wrong on an 8- or 16-device slice while passing
+    on a 4-device one. Leaving ``dtype`` as ``None`` keeps the old float32
+    behaviour for legacy callers.
     """
     import jax.numpy as jnp
 
     base = rank_table.astype(jnp.float32)[:, :, None, None]
     if not use_position_offsets:
-        return jnp.broadcast_to(base, (rank_table.shape[0], rank_table.shape[1], int(rows), int(cols)))
-    row_offsets = ROW_PATTERN_SCALE * jnp.arange(int(rows), dtype=jnp.float32).reshape(1, 1, int(rows), 1)
-    col_offsets = COL_PATTERN_SCALE * jnp.mod(
-        jnp.arange(int(cols), dtype=jnp.float32), 32
-    ).reshape(1, 1, 1, int(cols))
-    return base + row_offsets + col_offsets
+        tile = jnp.broadcast_to(
+            base, (rank_table.shape[0], rank_table.shape[1], int(rows), int(cols))
+        )
+    else:
+        row_offsets = ROW_PATTERN_SCALE * jnp.arange(int(rows), dtype=jnp.float32).reshape(1, 1, int(rows), 1)
+        col_offsets = COL_PATTERN_SCALE * jnp.mod(
+            jnp.arange(int(cols), dtype=jnp.float32), 32
+        ).reshape(1, 1, 1, int(cols))
+        tile = base + row_offsets + col_offsets
+    if dtype is not None:
+        # Round through the wire dtype to model the input quantization, then view
+        # the result back in float32 for a clean, dtype-aware comparison.
+        tile = tile.astype(jnp.dtype(dtype)).astype(jnp.float32)
+    return tile
 
 
 def staged_arrival_rank_grid_for_receiver(
@@ -846,7 +874,7 @@ def logical_neighbor_copy_kernel(
     # Entry barrier: everyone reaches the phase before anyone writes into a peer
     # output buffer. This is the same synchronization discipline introduced in
     # Lab 1, now repeated once per staged phase.
-    with jax.named_scope("lab9_entry_barrier"):
+    with jax.named_scope("lab10_entry_barrier"):
         barrier_sem = pltpu.get_barrier_semaphore()
         pltpu.semaphore_signal(
             barrier_sem,
@@ -857,9 +885,9 @@ def logical_neighbor_copy_kernel(
         pltpu.semaphore_wait(barrier_sem, dec=1)
 
     # Remote DMA: explicit descriptor lifecycle. Later labs can place work
-    # between ``start`` and the waits. Lab 9 waits immediately so the schedule is
+    # between ``start`` and the waits. Lab 10 waits immediately so the schedule is
     # easy to reason about.
-    with jax.named_scope("lab9_remote_dma"):
+    with jax.named_scope("lab10_remote_dma"):
         dma = pltpu.make_async_remote_copy(
             src_ref=x_ref,
             dst_ref=o_ref,
@@ -898,7 +926,7 @@ def logical_neighbor_copy(
 ) -> Any:
     """Shard-mapped Pallas copy to a logical 2D-mesh neighbor.
 
-    This is the Lab 9 equivalent of the Lab 1 single-hop primitive. The only new
+    This is the Lab 10 equivalent of the Lab 1 single-hop primitive. The only new
     ingredient is that the destination rank is computed from a logical 2D axis.
     """
     import jax
@@ -1167,6 +1195,7 @@ def build_pmap_case(
                 rows=1,
                 cols=elems,
                 use_position_offsets=True,
+                dtype=dtype,
             ),
             dtype=jnp.float32,
         ),
@@ -1252,6 +1281,7 @@ def build_pallas_case(
                 rows=rows,
                 cols=cols,
                 use_position_offsets=True,
+                dtype=dtype,
             ),
             dtype=jnp.float32,
         ),
@@ -1267,7 +1297,7 @@ def build_pallas_case(
 def check_result(jax: Any, jnp: Any, y: Any, expected: Any) -> bool:
     """Validate canonical rank order across the full output tile.
 
-    New Lab 9 cases pass a full expected payload with shape
+    New Lab 10 cases pass a full expected payload with shape
     ``[receiver, owner_rank, row, col]``. The pmap case returns
     ``[receiver, owner_rank, col]`` and is compared against the singleton-row
     slice of that expected payload.
@@ -1289,7 +1319,7 @@ def check_result(jax: Any, jnp: Any, y: Any, expected: Any) -> bool:
         return bool(jnp.allclose(y_host, expected_host, rtol=1e-3, atol=1e-3))
 
     # Legacy compatibility: rank table only. This catches rank-order mistakes but
-    # not partial-tile mistakes, so new Lab 9 cases should not use it.
+    # not partial-tile mistakes, so new Lab 10 cases should not use it.
     if getattr(expected_host, "ndim", 0) == 2:
         if getattr(y_host, "ndim", 0) == 3:
             got = y_host[:, :, 0]
@@ -1422,8 +1452,8 @@ def _fallback_build_spec(
         "payload_bytes": int(payload_bytes),
         "n_devices": int(n_devices),
         "args": {
-            "lab9_mesh_shape": getattr(args, "lab9_mesh_shape", None),
-            "lab9_axis_order": getattr(args, "lab9_axis_order", None),
+            "lab10_mesh_shape": getattr(args, "lab10_mesh_shape", None),
+            "lab10_axis_order": getattr(args, "lab10_axis_order", None),
             "neighbor_direction": getattr(args, "neighbor_direction", None),
             "pallas_collective_id": getattr(args, "pallas_collective_id", None),
             "pallas_memory_space": getattr(args, "pallas_memory_space", None),
@@ -1433,7 +1463,7 @@ def _fallback_build_spec(
 
 def _fallback_render_markdown(spec: dict[str, Any]) -> str:
     """Small local replacement for ``lab_spec_utils.render_markdown``."""
-    lines = [f"# {spec.get('title', 'Lab 9 Spec')}", ""]
+    lines = [f"# {spec.get('title', 'Lab 10 Spec')}", ""]
     for key in sorted(spec):
         if key == "title":
             continue
@@ -1449,7 +1479,7 @@ def _fallback_render_markdown(spec: dict[str, Any]) -> str:
 
 
 def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> dict[str, Any]:
-    """Build the Lab 9 course artifact consumed by the benchmark harness."""
+    """Build the Lab 10 course artifact consumed by the benchmark harness."""
     del jax
     if lab_spec_utils is not None:
         spec = lab_spec_utils.build_spec(
@@ -1466,8 +1496,8 @@ def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> di
             n_devices=n_devices,
         )
 
-    mesh_shape = parse_mesh_shape(getattr(args, "lab9_mesh_shape", "auto"), n_devices)
-    axis_order = normalize_axis_order(getattr(args, "lab9_axis_order", "x_then_y"))
+    mesh_shape = parse_mesh_shape(getattr(args, "lab10_mesh_shape", "auto"), n_devices)
+    axis_order = normalize_axis_order(getattr(args, "lab10_axis_order", "x_then_y"))
     direction = normalize_direction(getattr(args, "neighbor_direction", None) or "right")
     base_collective_id = int(getattr(args, "pallas_collective_id", 0) or 0)
 

@@ -26,7 +26,7 @@ This is the local-memory lantern before the collective tunnel.
 
 ## Course Placement
 
-This lab is the memory-hierarchy checkpoint in the 10-lab sequence.
+This lab is the memory-hierarchy checkpoint in the 11-lab sequence.
 
 ```text
 Lab 1: one remote hop

@@ -270,7 +270,7 @@ LAB_SPEC: dict[str, Any] = {
     ],
     "next_steps": [
         "Use XProf traces to decide whether overlap exists or is only hoped for",
-        "Carry chunked schedules into topology-aware Lab 9",
+        "Carry chunked schedules into topology-aware Lab 10",
     ],
 }
 

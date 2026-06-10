@@ -107,7 +107,7 @@ profile proves otherwise.
 
 ## Primary Hardware Target And Naming
 
-The primary target for this 10-lab sequence is a **4-chip TPU v5e slice**, often
+The primary target for this 11-lab sequence is a **4-chip TPU v5e slice**, often
 created on Google Cloud as `v5litepod-4`. In repo prose, `v5e-4` means that
 4-chip v5e target unless a command is showing the exact Cloud TPU accelerator
 type. A 4-chip v5e slice is enough for the main course because it gives
@@ -128,9 +128,9 @@ Hardware vocabulary for this course:
 
 ```text
 4-chip v5e slice       primary target, usually v5litepod-4
-logical 2x2 mesh       default mesh used by Labs 1-9
+logical 2x2 mesh       default local topology before multi-host work
 single-process run     default local-device execution mode
-v5e-16 / v5litepod-16  future multi-host target for Lab 10 follow-ups
+v5e-16 / v5litepod-16  future multi-host target for Lab 11 follow-ups
 multi-host run         multiple JAX processes that must enter the same program
 ```
 
@@ -146,9 +146,14 @@ single-process local slice
 multi-host slice
 ```
 
-Lab 10 is intentionally useful on a 4-chip v5e slice as a smoke test, even
+Lab 11 is intentionally useful on a 4-chip v5e slice as a smoke test, even
 though its multi-host checks only become interesting on a larger multi-host
 slice such as a 16-chip v5e slice.
+
+The current sequence has a validation report across 4-chip, 8-chip, and
+16-chip v5e slices in [VALIDATION.md](VALIDATION.md). The report is evidence
+that the lab arc runs end to end; its timings are illustrative, not required
+course thresholds.
 
 ## What Students Will Learn
 
@@ -176,7 +181,7 @@ Students will learn to:
 
 Some ML-shaped integrations, such as distributed matmul, MoE token exchange,
 and bidirectional optimized collectives, are now best treated as capstone or
-post-course extensions. The 10 labs focus on the durable communication grammar.
+post-course extensions. The 11 labs focus on the durable communication grammar.
 
 ## Current Project Layout
 
@@ -186,7 +191,6 @@ collective_communication/
   COURSE.md                   # this course cover page and lab sequence
   README.md                   # quick start and operation reference
   labs/
-    roadmap.md                # detailed roadmap and invariants
     lab_spec_utils.py         # shared spec/artifact helpers
     lab1_single_hop.py        # Lab 1 concept code
     lab1_single_hop.md        # Lab 1 teaching notes
@@ -204,10 +208,12 @@ collective_communication/
     lab7_all_reduce.md
     lab8_chunked_pipeline.py  # Lab 8 chunked-ring concept code
     lab8_chunked_pipeline.md
-    lab9_mesh_collectives.py  # Lab 9 staged mesh concept code
-    lab9_mesh_collectives.md
-    lab10_multihost_smoke.py  # Lab 10 multi-host run-control code
-    lab10_multihost_smoke.md
+    lab9_optimal_all_reduce.py # Lab 9 bandwidth-optimal shard-ring all-reduce
+    lab9_optimal_all_reduce.md
+    lab10_mesh_collectives.py  # Lab 10 staged mesh concept code
+    lab10_mesh_collectives.md
+    lab11_multihost_smoke.py  # Lab 11 multi-host run-control code
+    lab11_multihost_smoke.md
   runs/                       # generated artifacts, ignored by git
 ```
 
@@ -380,9 +386,11 @@ Do the measured timing rows and profiler events describe the same phenomenon?
 
 ## Lab Sequence
 
-The course now has 10 concrete labs. The default path is designed to run on a
-4-chip TPU v5e slice. Lab 10 also runs locally as a smoke test, then becomes a
-multi-host validation lab on a larger slice.
+The course now has 11 concrete labs. The default path is designed to run on a
+4-chip TPU v5e slice. Lab 9 closes the byte gap left by Labs 7 and 8 with a
+bandwidth-optimal reduce-scatter plus all-gather all-reduce, Lab 10 then turns
+the local slice into an explicit 2D mesh, and Lab 11 runs locally as a smoke
+test before becoming a multi-host validation lab on a larger slice.
 
 ### Pre-Lab: Topology And Baseline Orientation
 
@@ -709,7 +717,48 @@ students can identify chunk overhead before claiming overlap
 profiles show whether future fused versions have real overlap
 ```
 
-### Lab 9: 2D Mesh Collectives
+### Lab 9: Bandwidth-Optimal Ring All-Reduce
+
+Close the byte gap confessed in Labs 7 and 8. Re-implement all-reduce as
+reduce-scatter plus all-gather over `B / N` shards so each of the `2 * (n - 1)`
+ring steps moves only one shard, matching `lax.psum`'s `2 * (n - 1) / n * B`
+bandwidth term instead of the whole-token ring's `(n - 1) * B`. The roofline
+reference is `lax.psum` on the same case in the same wire dtype, so the only
+difference left to explain is scheduling, not byte volume.
+
+Students learn:
+
+- reduce-scatter plus all-gather as the bandwidth-optimal all-reduce
+- the `N / 2` byte penalty of the whole-token ring and why overlap cannot fix it
+- the alpha-beta latency/bandwidth crossover where the naive ring still wins
+- `wire == logical` for the first time, using send-side full-duplex accounting
+- topology-aware ring ordering via a Hamiltonian cycle over device `coords`
+- reading the residual latency gap to the compiler collective from the trace
+
+Run:
+
+```bash
+python collective_bench.py --lab lab9
+```
+
+Core exercise:
+
+```text
+reduce-scatter: n - 1 steps, each device finishes owning one fully reduced shard
+all-gather: n - 1 steps, circulate finished shards so every device holds the sum
+result: every device owns the fully reduced tensor, all replicas bitwise identical
+```
+
+Pass condition:
+
+```text
+rs-ag output matches float32 sums of the dtype-quantized input within tolerance
+all device replicas of the rs-ag output are bitwise identical
+rs-ag and rs-ag-bidir wire bytes equal the optimal model: 2 * (n - 1) * shard_bytes
+the spec artifact records the shard schedule, byte model, and alpha-beta crossover
+```
+
+### Lab 10: 2D Mesh Collectives
 
 Stop treating every local slice as a flat ring. On the 4-chip v5e target, use a
 logical `2x2` mesh and compare staged all-gather algorithms against flat-ring
@@ -729,9 +778,9 @@ Run:
 
 ```bash
 python collective_bench.py \
-  --lab lab9 \
-  --lab9-mesh-shape 2x2 \
-  --lab9-axis-order x_then_y
+  --lab lab10 \
+  --lab10-mesh-shape 2x2 \
+  --lab10-axis-order x_then_y
 ```
 
 Core exercise:
@@ -750,7 +799,7 @@ pmap and Pallas staged all-gather match canonical rank order
 students can explain axis-order timing using recorded topology evidence
 ```
 
-### Lab 10: Multi-Host Smoke And Hierarchy
+### Lab 11: Multi-Host Smoke And Hierarchy
 
 Move from one process to multi-host run control and hierarchical collectives.
 On the primary 4-chip v5e target, this lab is a single-process topology and
@@ -771,16 +820,16 @@ Students learn:
 Run:
 
 ```bash
-python collective_bench.py --lab lab10
+python collective_bench.py --lab lab11
 ```
 
 Optional launch-shape checks for a future multi-host run:
 
 ```bash
 python collective_bench.py \
-  --lab lab10 \
-  --lab10-expected-process-count 2 \
-  --lab10-expected-global-devices 16
+  --lab lab11 \
+  --lab11-expected-process-count 2 \
+  --lab11-expected-global-devices 16
 ```
 
 Core exercise:

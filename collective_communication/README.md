@@ -21,16 +21,17 @@ The primary target is a **4-chip TPU v5e slice**, commonly created as
 `v5litepod-4` on Google Cloud. In this repo, `v5e-4` means that 4-chip local
 TPU target unless an exact Cloud TPU accelerator type is shown.
 
-The 10 labs are designed so the main path runs on this 4-chip v5e target:
+The 11 labs are designed so the main path runs on this 4-chip v5e target:
 
 - Labs 1-2: local ring communication over four devices
 - Lab 3: local HBM/VMEM movement
 - Lab 4: semaphore correctness and failure-mode catalog
 - Labs 5-8: composed collectives and chunking over the local ring
-- Lab 9: logical `2x2` staged mesh all-gather
-- Lab 10: single-process topology and process-collective smoke
+- Lab 9: bandwidth-optimal reduce-scatter plus all-gather all-reduce
+- Lab 10: logical `2x2` staged mesh all-gather
+- Lab 11: single-process topology and process-collective smoke
 
-Future multi-host work should start with Lab 10 on a larger v5e slice, such as
+Future multi-host work should start with Lab 11 on a larger v5e slice, such as
 `v5litepod-16`, then extend the custom collectives only after topology and
 process launch are trustworthy.
 
@@ -47,20 +48,23 @@ Implemented or active:
 - Lab 6: reduce-scatter reference plus composed Pallas custom path
 - Lab 7: all-reduce reference plus composed Pallas custom path
 - Lab 8: chunked ring reference plus serialized Pallas custom path
-- Lab 9: 2D mesh all-gather reference plus staged Pallas custom path
-- Lab 10: multi-host topology and process-collective smoke
+- Lab 9: bandwidth-optimal shard-ring all-reduce (reduce-scatter plus
+  all-gather) with `lax.psum` roofline and topology-aware ring ordering
+- Lab 10: 2D mesh all-gather reference plus staged Pallas custom path
+- Lab 11: multi-host topology and process-collective smoke
 - Pallas all-gather bridge using the installed JAX example implementation
 - run directories, diagnostics, CSV/JSONL output, plots, optional profiles, and
   external runner hook
+- validation report across `v5litepod-4`, `v5litepod-8`, and `v5litepod-16`;
+  see [VALIDATION.md](VALIDATION.md)
 
 Planned next:
 
-- Validate all 10 updated labs on the primary v5e-4 target
 - Add estimated wire-byte columns for the remaining custom schedules
 - Replace composed teaching paths with fused custom Pallas kernels one lab at a
   time, only when the teaching path is stable
 - Add timeout-controlled repros for dangerous synchronization bugs
-- Use Lab 10 as the gate before any multi-host custom Pallas collective work
+- Use Lab 11 as the gate before any multi-host custom Pallas collective work
 
 ## Source Layout
 
@@ -87,10 +91,12 @@ collective_communication/
     lab7_all_reduce.md
     lab8_chunked_pipeline.py  # Lab 8 chunked-ring concept code
     lab8_chunked_pipeline.md
-    lab9_mesh_collectives.py  # Lab 9 staged mesh concept code
-    lab9_mesh_collectives.md
-    lab10_multihost_smoke.py  # Lab 10 multi-host run-control code
-    lab10_multihost_smoke.md
+    lab9_optimal_all_reduce.py # Lab 9 bandwidth-optimal shard-ring all-reduce
+    lab9_optimal_all_reduce.md # Lab 9 teaching notes
+    lab10_mesh_collectives.py  # Lab 10 staged mesh concept code
+    lab10_mesh_collectives.md
+    lab11_multihost_smoke.py  # Lab 11 multi-host run-control code
+    lab11_multihost_smoke.md
   runs/                       # generated benchmark artifacts, ignored by git
 ```
 
@@ -116,7 +122,7 @@ python collective_bench.py \
   --warmup 2
 ```
 
-Run the whole 10-lab arc one lab at a time:
+Run the whole 11-lab arc one lab at a time:
 
 ```bash
 python collective_bench.py --lab lab1
@@ -129,6 +135,7 @@ python collective_bench.py --lab lab7
 python collective_bench.py --lab lab8
 python collective_bench.py --lab lab9
 python collective_bench.py --lab lab10
+python collective_bench.py --lab lab11
 ```
 
 Useful v5e-4 smoke defaults:
@@ -157,8 +164,9 @@ experiments with `--pallas-memory-space VMEM`.
 | Lab 6 | `--lab lab6` | reduce-scatter ownership | `pallas_ring_reduce_scatter` |
 | Lab 7 | `--lab lab7` | all-reduce as reduce-scatter plus all-gather | `pallas_ring_all_reduce` |
 | Lab 8 | `--lab lab8` | chunk size, buffer planning, serialized chunking | `pallas_chunked_token_ring` |
-| Lab 9 | `--lab lab9` | logical `2x2` staged mesh collectives | `pallas_2d_staged_all_gather` |
-| Lab 10 | `--lab lab10` | process topology and multi-host launch smoke | `lab10_process_collective_smoke` |
+| Lab 9 | `--lab lab9` | bandwidth-optimal reduce-scatter plus all-gather all-reduce | `pmap_rs_ag_all_reduce` |
+| Lab 10 | `--lab lab10` | logical `2x2` staged mesh collectives | `pallas_2d_staged_all_gather` |
+| Lab 11 | `--lab lab11` | process topology and multi-host launch smoke | `lab11_process_collective_smoke` |
 
 The custom paths in Labs 5-8 are teaching implementations. They compose earlier
 correct primitives so the communication schedule is visible. Fused kernels,
@@ -198,22 +206,31 @@ python collective_bench.py \
   --lab8-buffer-count 2
 ```
 
-Run Lab 9 on the default logical `2x2` mesh:
+Run Lab 9 bandwidth-optimal all-reduce:
 
 ```bash
 python collective_bench.py \
   --lab lab9 \
-  --lab9-mesh-shape 2x2 \
-  --lab9-axis-order x_then_y
+  --sizes 16KiB,256KiB,1MiB,4MiB \
+  --lab9-ring-order auto
 ```
 
-Run Lab 10 with explicit future multi-host expectations:
+Run Lab 10 on the default logical `2x2` mesh:
 
 ```bash
 python collective_bench.py \
   --lab lab10 \
-  --lab10-expected-process-count 2 \
-  --lab10-expected-global-devices 16
+  --lab10-mesh-shape 2x2 \
+  --lab10-axis-order x_then_y
+```
+
+Run Lab 11 with explicit future multi-host expectations:
+
+```bash
+python collective_bench.py \
+  --lab lab11 \
+  --lab11-expected-process-count 2 \
+  --lab11-expected-global-devices 16
 ```
 
 Run only a few baseline and bridge operations:
@@ -400,10 +417,14 @@ present.
 | `lab6_reduce_scatter_spec` | lab/spec | optimized reduce-scatter follow-up plan |
 | `lab7_all_reduce_spec` | lab/spec | optimized two-phase all-reduce follow-up plan |
 | `lab8_chunked_pipeline_spec` | lab/spec | fused pipelined ring follow-up plan |
-| `lab9_mesh_collectives_spec` | lab/spec | topology-aware mesh follow-up plan |
-| `lab10_topology_smoke` | lab/topology | process and device topology artifact |
-| `lab10_process_collective_smoke` | lab/multihost | process sync/all-gather validation |
-| `lab10_multihost_spec` | lab/spec | multi-host hierarchy plan |
+| `pmap_rs_ag_all_reduce` | `shard_map`/`ppermute` | Lab 9 bandwidth-optimal shard-ring all-reduce |
+| `pmap_rs_ag_all_reduce_bidir` | `shard_map`/`ppermute` | Lab 9 bidirectional counter-rotating half-rings |
+| `xla_all_reduce` | `shard_map`/`psum` | Lab 9 `lax.psum` roofline on the same case and wire dtype |
+| `lab9_optimal_all_reduce_spec` | lab/spec | Lab 9 shard schedule, byte model, and alpha-beta crossover |
+| `lab10_mesh_collectives_spec` | lab/spec | topology-aware mesh follow-up plan |
+| `lab11_topology_smoke` | lab/topology | process and device topology artifact |
+| `lab11_process_collective_smoke` | lab/multihost | process sync/all-gather validation |
+| `lab11_multihost_spec` | lab/spec | multi-host hierarchy plan |
 | `pallas_all_gather` | Pallas TPU example | Pallas all-gather bridge implementation |
 | `external` | subprocess | hook for standalone or lower-level experiments |
 
@@ -481,9 +502,9 @@ communication with specialized compute. Do not assume custom means faster.
 Use `--profile-cases 1`, select one `--trace-op`, and choose one `--trace-size`.
 Use non-profiled runs for clean timing tables.
 
-### Lab 10 passes on v5e-4 but shows one process
+### Lab 11 passes on v5e-4 but shows one process
 
-That is expected for the primary single-process target. Lab 10 still validates
+That is expected for the primary single-process target. Lab 11 still validates
 topology reporting, artifact writing, and the process-collective code path. The
 multi-host part becomes meaningful on a larger slice where `jax.process_count()`
 is greater than one.
@@ -495,7 +516,6 @@ When adding `labN`, update these places together:
 ```text
 labs/labN_name.py
 labs/labN_name.md
-labs/roadmap.md
 COURSE.md
 README.md
 collective_bench.py lab/profile registration
@@ -517,7 +537,7 @@ communication idea.
 
 ## Multi-Host Notes
 
-Multi-host support is now represented by Lab 10 rather than being assumed for
+Multi-host support is now represented by Lab 11 rather than being assumed for
 every lab. When enabling it, the runner should record:
 
 - `process_index`
@@ -532,7 +552,7 @@ All processes should enter distributed JAX consistently before device discovery
 or device computation. Multi-host experiments should be treated as systems
 experiments: logs and run metadata matter as much as the timing row.
 
-A good first future target is a 16-chip v5e slice. Start by running Lab 10 with
+A good first future target is a 16-chip v5e slice. Start by running Lab 11 with
 explicit expectations, then port one simple reference collective before trying
 a custom Pallas multi-host schedule.
 

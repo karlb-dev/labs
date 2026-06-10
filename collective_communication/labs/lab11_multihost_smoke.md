@@ -1,9 +1,9 @@
-# Lab 10: Multi-Host Smoke And Hierarchy
+# Lab 11: Multi-Host Smoke And Hierarchy
 
 Goal: move from local-device algorithms to process topology, launch validation,
 and hierarchical collective planning.
 
-Lab 10 is the course finale. Labs 1 through 9 taught device-level movement:
+Lab 11 is the course finale. Labs 1 through 10 taught device-level movement:
 single-hop remote DMA, token rings, all-gather, reduce-scatter, all-reduce,
 chunking, and logical 2D mesh staging. This lab steps one level up. Before a
 multi-host collective can be trusted, the run itself must prove that every
@@ -24,14 +24,14 @@ How should a future hierarchical collective split local and cross-process work?
 ## Run
 
 ```bash
-python collective_bench.py --lab lab10
+python collective_bench.py --lab lab11
 ```
 
 Short single-process smoke:
 
 ```bash
 python collective_bench.py \
-  --lab lab10 \
+  --lab lab11 \
   --sizes 1KiB \
   --iters 1 \
   --warmup 0 \
@@ -42,19 +42,19 @@ Validation knobs for a real multi-host launch:
 
 ```bash
 python collective_bench.py \
-  --lab lab10 \
-  --lab10-expected-process-count 2 \
-  --lab10-expected-global-devices 8
+  --lab lab11 \
+  --lab11-expected-process-count 2 \
+  --lab11-expected-global-devices 8
 ```
 
 Payload-size sweep for the process collective smoke:
 
 ```bash
 python collective_bench.py \
-  --lab lab10 \
+  --lab lab11 \
   --sizes 16B,1KiB,64KiB \
-  --lab10-expected-process-count 2 \
-  --lab10-expected-global-devices 8
+  --lab11-expected-process-count 2 \
+  --lab11-expected-global-devices 8
 ```
 
 The `--sizes` value in this lab controls the tiny process-level all-gather
@@ -63,13 +63,13 @@ benchmark.
 
 ## Implemented Happy Path
 
-- `lab10_topology_smoke`: records process count, process index, host identity,
+- `lab11_topology_smoke`: records process count, process index, host identity,
   local devices, global devices, device grouping by process, selected launch
   environment variables, and expected-count checks.
-- `lab10_process_collective_smoke`: calls `multihost_utils.assert_equal` when
+- `lab11_process_collective_smoke`: calls `multihost_utils.assert_equal` when
   available, then `sync_global_devices` and `process_allgather` with a small
   int32 payload.
-- `lab10_multihost_spec`: writes a course artifact for hierarchical collective
+- `lab11_multihost_spec`: writes a course artifact for hierarchical collective
   planning and capstone follow-up work.
 
 Single-process runs still pass and are useful. They verify the artifact
@@ -134,7 +134,7 @@ one process saw fewer devices
 all processes wrote the same global summary file
 ```
 
-Lab 10 gives students a debugging artifact before they run a multi-host Pallas
+Lab 11 gives students a debugging artifact before they run a multi-host Pallas
 kernel. The collective wizard does not chant at semaphores until the launch
 contract is clean.
 
@@ -201,8 +201,8 @@ launch_plan
 Start by reading:
 
 ```text
-lab_artifacts/*lab10_topology_smoke*.json
-lab_artifacts/*lab10_topology_smoke*.md
+lab_artifacts/*lab11_topology_smoke*.json
+lab_artifacts/*lab11_topology_smoke*.md
 ```
 
 Useful questions:
@@ -297,7 +297,7 @@ fanout phase:
   restore the result layout required by the next computation
 ```
 
-These are planning ledgers, not measured bandwidth rows. Lab 10 is about run
+These are planning ledgers, not measured bandwidth rows. Lab 11 is about run
 symmetry and hierarchy design. Actual device-level byte accounting returns in
 the capstone or the next custom kernel.
 
@@ -328,12 +328,12 @@ only process 0 writes the merged global summary
 Artifacts:
 
 ```text
-lab_artifacts/*lab10_topology_smoke*.json
-lab_artifacts/*lab10_topology_smoke*.md
-lab_artifacts/*lab10_process_collective_smoke*.json
-lab_artifacts/*lab10_process_collective_smoke*.md
-lab_artifacts/*lab10_multihost_spec*.json
-lab_artifacts/*lab10_multihost_spec*.md
+lab_artifacts/*lab11_topology_smoke*.json
+lab_artifacts/*lab11_topology_smoke*.md
+lab_artifacts/*lab11_process_collective_smoke*.json
+lab_artifacts/*lab11_process_collective_smoke*.md
+lab_artifacts/*lab11_multihost_spec*.json
+lab_artifacts/*lab11_multihost_spec*.md
 run_metadata.json
 diagnostics/runtime.json
 logs/console.log
@@ -465,9 +465,9 @@ Gate merged writes on process_index == 0. Keep process-local logs for everyone.
 
 ## Student Exercises
 
-1. Run Lab 10 with no expected-count knobs on a single process. Explain why it
+1. Run Lab 11 with no expected-count knobs on a single process. Explain why it
    still passes and which fields prove it is not a multi-host launch.
-2. Run Lab 10 with `--lab10-expected-process-count 2` on one process. Identify
+2. Run Lab 11 with `--lab11-expected-process-count 2` on one process. Identify
    the failed check and explain why it is a good failure.
 3. On a real multi-host slice, compare `local_device_count` and
    `global_device_count` on every process.
@@ -475,7 +475,7 @@ Gate merged writes on process_index == 0. Keep process-local logs for everyone.
 5. For an all-gather with payload `B`, write separate byte ledgers for
    intra-process gather, cross-process exchange, and local fanout.
 6. Decide which process should write the merged run summary and why.
-7. Pick one earlier lab, such as Lab 7 all-reduce or Lab 9 staged all-gather,
+7. Pick one earlier lab, such as Lab 7 all-reduce or Lab 10 staged all-gather,
    and sketch the first hierarchical version.
 
 ## Deferred Work
@@ -485,7 +485,7 @@ This lab intentionally stops before the next kernel. Future work:
 ```text
 call jax.distributed.initialize in a launcher wrapper when auto-init is absent
 write per-process logs and a process-0 merged summary
-run Lab 9 staged all-gather over a process-spanning mesh axis
+run Lab 10 staged all-gather over a process-spanning mesh axis
 run Lab 7 all-reduce with host-local and cross-host phases separated
 measure real cross-process device collective bytes and profile traces
 compare flat multi-host collectives with hierarchical schedules
@@ -493,7 +493,7 @@ compare flat multi-host collectives with hierarchical schedules
 
 ## Bridge To The Capstone
 
-After Lab 10, students have the full spine of the course:
+After Lab 11, students have the full spine of the course:
 
 ```text
 single-hop copy
@@ -504,6 +504,7 @@ ring all-gather
 reduce-scatter
 all-reduce
 chunking and pipeline planning
+bandwidth-optimal shard all-reduce
 2D mesh staging
 multi-host run control
 ```

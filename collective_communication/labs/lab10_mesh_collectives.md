@@ -1,4 +1,4 @@
-# Lab 9: 2D Mesh Collectives
+# Lab 10: 2D Mesh Collectives
 
 Goal: stop treating every TPU slice as a flat ring. Use a logical `x` by `y`
 mesh, stage an all-gather over one axis and then the other, and explain the
@@ -6,7 +6,7 @@ result using topology rather than folklore.
 
 This lab is the topology-awareness pivot in the course. Labs 1-8 taught a
 single logical ring: one-hop copy, token passing, all-gather, reduce-scatter,
-all-reduce, and chunked pipeline planning. Lab 9 asks a new question:
+all-reduce, and chunked pipeline planning. Lab 10 asks a new question:
 
 ```text
 What changes when the devices are not just ranks 0, 1, 2, 3, ...,
@@ -22,14 +22,14 @@ time.
 ## Run
 
 ```bash
-python collective_bench.py --lab lab9
+python collective_bench.py --lab lab10
 ```
 
 Short smoke run:
 
 ```bash
 python collective_bench.py \
-  --lab lab9 \
+  --lab lab10 \
   --sizes 1KiB,64KiB \
   --iters 10 \
   --warmup 2
@@ -39,24 +39,24 @@ Run explicit 2D mesh experiments:
 
 ```bash
 python collective_bench.py \
-  --lab lab9 \
-  --lab9-mesh-shape 2x2 \
-  --lab9-axis-order x_then_y
+  --lab lab10 \
+  --lab10-mesh-shape 2x2 \
+  --lab10-axis-order x_then_y
 
 python collective_bench.py \
-  --lab lab9 \
-  --lab9-mesh-shape 2x2 \
-  --lab9-axis-order y_then_x
+  --lab lab10 \
+  --lab10-mesh-shape 2x2 \
+  --lab10-axis-order y_then_x
 ```
 
 Profile the custom Pallas path:
 
 ```bash
 python collective_bench.py \
-  --lab lab9 \
+  --lab lab10 \
   --sizes 4MiB \
-  --lab9-mesh-shape 2x2 \
-  --lab9-axis-order x_then_y \
+  --lab10-mesh-shape 2x2 \
+  --lab10-axis-order x_then_y \
   --trace-op pallas_2d_staged_all_gather \
   --profile
 ```
@@ -69,18 +69,18 @@ python collective_bench.py \
 - `pmap_2d_staged_all_gather`: CPU-runnable staged-mesh reference using
   repeated `lax.ppermute`.
 - `pallas_2d_staged_all_gather`: TPU logical-neighbor remote-DMA path.
-- `lab9_mesh_collectives_spec`: course artifact that records mesh shape,
+- `lab10_mesh_collectives_spec`: course artifact that records mesh shape,
   axis-order, byte model, and schedule tables.
 
 The custom Pallas path keeps the physical `shard_map` mesh flat, then computes
 logical 2D coordinates inside the kernel. That means the global device list is
-still one-dimensional to JAX, but Lab 9 overlays this coordinate system:
+still one-dimensional to JAX, but Lab 10 overlays this coordinate system:
 
 ```text
 rank = x_coord * y_size + y_coord
 ```
 
-For four local devices with `--lab9-mesh-shape 2x2`:
+For four local devices with `--lab10-mesh-shape 2x2`:
 
 ```text
 rank 0 -> (x=0, y=0)
@@ -192,14 +192,14 @@ source slot 3 -> rank 3
 ```
 
 This final restore is important. Lab 5 intentionally exposed ring arrival order
-because that was the useful debugging view. Lab 9 teaches a production-shaped
+because that was the useful debugging view. Lab 10 teaches a production-shaped
 view: the schedule may be staged, but the API-facing result should be canonical.
 
 ---
 
 ## Direction Convention
 
-Lab 9 reuses the course convention:
+Lab 10 reuses the course convention:
 
 ```text
 right = +1 along the active logical mesh coordinate, with wraparound
@@ -319,7 +319,7 @@ plots/latency_by_payload.png
 plots/bandwidth_by_payload.png
 run_metadata.json
 diagnostics/runtime.json
-lab_artifacts/*lab9_mesh_collectives_spec*
+lab_artifacts/*lab10_mesh_collectives_spec*
 traces/*, when profiling is enabled
 ```
 
@@ -355,16 +355,16 @@ Does the Pallas path lose to built-in because launch overhead dominates?
 
 ```bash
 python collective_bench.py \
-  --lab lab9 \
+  --lab lab10 \
   --sizes 1MiB,4MiB,16MiB \
-  --lab9-mesh-shape 2x2 \
-  --lab9-axis-order x_then_y
+  --lab10-mesh-shape 2x2 \
+  --lab10-axis-order x_then_y
 
 python collective_bench.py \
-  --lab lab9 \
+  --lab lab10 \
   --sizes 1MiB,4MiB,16MiB \
-  --lab9-mesh-shape 2x2 \
-  --lab9-axis-order y_then_x
+  --lab10-mesh-shape 2x2 \
+  --lab10-axis-order y_then_x
 ```
 
 Question:
@@ -377,13 +377,13 @@ Do the two schedules behave the same on your slice? If not, what evidence says w
 
 ```bash
 python collective_bench.py \
-  --lab lab9 \
-  --lab9-mesh-shape 2x2 \
+  --lab lab10 \
+  --lab10-mesh-shape 2x2 \
   --neighbor-direction right
 
 python collective_bench.py \
-  --lab lab9 \
-  --lab9-mesh-shape 2x2 \
+  --lab lab10 \
+  --lab10-mesh-shape 2x2 \
   --neighbor-direction left
 ```
 
@@ -399,12 +399,12 @@ On eight local devices, try:
 
 ```bash
 python collective_bench.py \
-  --lab lab9 \
-  --lab9-mesh-shape 2x4
+  --lab lab10 \
+  --lab10-mesh-shape 2x4
 
 python collective_bench.py \
-  --lab lab9 \
-  --lab9-mesh-shape 4x2
+  --lab lab10 \
+  --lab10-mesh-shape 4x2
 ```
 
 Question:
@@ -415,7 +415,7 @@ Does the larger second-stage partial move along the axis you expected?
 
 ### 4. Compare against Lab 5
 
-Run Lab 5 and Lab 9 with the same payload sizes.
+Run Lab 5 and Lab 10 with the same payload sizes.
 
 Question:
 
@@ -540,9 +540,9 @@ add staged reduce-scatter over the same logical mesh
 add staged all-reduce over the same logical mesh
 compare flat-ring, x-then-y, and y-then-x traces against physical topology evidence
 add true 3D staged collectives for larger v4 slices
-extend staged algorithms across host boundaries in Lab 10
+extend staged algorithms across host boundaries in Lab 11
 ```
 
-Lab 10 will move from local topology to multi-host run control and hierarchy:
+Lab 11 will move from local topology to multi-host run control and hierarchy:
 process-local device groups, global device groups, process-index-aware logs, and
 intra-host versus inter-host phases.

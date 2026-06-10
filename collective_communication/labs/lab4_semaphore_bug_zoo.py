@@ -228,7 +228,7 @@ BUG_SCENARIOS: tuple[BugScenario, ...] = (
         diagnostic="Draw a table of which rank signals which rank, then compare waits.",
         prevention="Use one ledger row per participant, not one row per code branch.",
         recovery="Add the missing signal, reduce the wait count, or remove the phase.",
-        related_labs=("lab4", "lab8", "lab10"),
+        related_labs=("lab4", "lab8", "lab11"),
         likely_student_mistake="All ranks wait, but only a subset of ranks can signal.",
         worksheet_questions=(
             "Which ranks call semaphore_signal?",
@@ -269,7 +269,7 @@ BUG_SCENARIOS: tuple[BugScenario, ...] = (
         diagnostic="List every Pallas call, mesh axis, and phase using the same ID.",
         prevention="Allocate collective_id values from a written phase map.",
         recovery="Assign distinct IDs for distinct concurrent or incompatible phases.",
-        related_labs=("lab2", "lab5", "lab9"),
+        related_labs=("lab2", "lab5", "lab10"),
         likely_student_mistake="Using collective_id=0 everywhere because the first kernel worked.",
         worksheet_questions=(
             "Which communication pattern does this collective_id name?",
@@ -330,7 +330,7 @@ BUG_SCENARIOS: tuple[BugScenario, ...] = (
         diagnostic="Compare the permutation table against expected output ranks.",
         prevention="Derive neighbors and expected ranks from one shared helper.",
         recovery="Derive neighbors from one shared mesh-index helper.",
-        related_labs=("lab1", "lab2", "lab5", "lab9"),
+        related_labs=("lab1", "lab2", "lab5", "lab10"),
         likely_student_mistake="Fixing the kernel direction but forgetting to update the expected ranks.",
         worksheet_questions=(
             "For N=4, what should device 0 receive in a right-moving ring?",
@@ -391,7 +391,7 @@ BUG_SCENARIOS: tuple[BugScenario, ...] = (
         diagnostic="Track producer and consumer epochs for each buffer slot.",
         prevention="Use per-slot capacity semaphores or enough buffering for allowed run-ahead.",
         recovery="Add per-slot semaphores or increase the number of buffers.",
-        related_labs=("lab8", "lab9", "lab10"),
+        related_labs=("lab8", "lab10", "lab11"),
         likely_student_mistake="Assuming double buffering is enough even when devices can get more than one step apart.",
         worksheet_questions=(
             "What is the epoch number of this buffer slot?",
@@ -431,7 +431,7 @@ BUG_SCENARIOS: tuple[BugScenario, ...] = (
         diagnostic="Print the mesh shape, axis name, source-target pairs, and device_id_type.",
         prevention="Keep neighbor computation in one helper and document whether IDs are mesh coordinates or logical IDs.",
         recovery="Use the correct ID type and recompute expected ranks from the same map.",
-        related_labs=("lab1", "lab5", "lab9", "lab10"),
+        related_labs=("lab1", "lab5", "lab10", "lab11"),
         likely_student_mistake="Moving from a 1D ring to a 2D mesh while leaving axis_index logic wired to the old axis.",
         worksheet_questions=(
             "Is dst a scalar logical ID or a tuple of mesh coordinates?",

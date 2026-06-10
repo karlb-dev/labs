@@ -604,11 +604,12 @@ add interpret-mode race tests for stale-slot hazards
 
 ## Bridge To Lab 9
 
-Lab 8 asks, "How should one ring be chunked and pipelined?" Lab 9 asks, "Should
-this have been one flat ring at all?"
+Lab 8 asks, "How should one whole-token ring be chunked and pipelined?" Lab 9
+asks, "Should the ring have moved whole tokens in the first place?"
 
-The next lab moves from chunking on a flat ring to topology-aware collectives on
-a 2D mesh. The same discipline carries forward:
+The next lab keeps the ring but changes the payload unit from a full tensor to a
+`B / N` shard, turning all-reduce into reduce-scatter plus all-gather. The same
+discipline carries forward:
 
 ```text
 state the schedule
