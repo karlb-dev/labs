@@ -128,9 +128,9 @@ Hardware vocabulary for this course:
 
 ```text
 4-chip v5e slice       primary target, usually v5litepod-4
-logical 2x2 mesh       default mesh used by Labs 1-9
+logical 2x2 mesh       default local topology before multi-host work
 single-process run     default local-device execution mode
-v5e-16 / v5litepod-16  future multi-host target for Lab 10 follow-ups
+v5e-16 / v5litepod-16  future multi-host target for Lab 11 follow-ups
 multi-host run         multiple JAX processes that must enter the same program
 ```
 
@@ -146,9 +146,14 @@ single-process local slice
 multi-host slice
 ```
 
-Lab 10 is intentionally useful on a 4-chip v5e slice as a smoke test, even
+Lab 11 is intentionally useful on a 4-chip v5e slice as a smoke test, even
 though its multi-host checks only become interesting on a larger multi-host
 slice such as a 16-chip v5e slice.
+
+The current sequence has a validation report across 4-chip, 8-chip, and
+16-chip v5e slices in [VALIDATION.md](VALIDATION.md). The report is evidence
+that the lab arc runs end to end; its timings are illustrative, not required
+course thresholds.
 
 ## What Students Will Learn
 
@@ -203,12 +208,12 @@ collective_communication/
     lab7_all_reduce.md
     lab8_chunked_pipeline.py  # Lab 8 chunked-ring concept code
     lab8_chunked_pipeline.md
-    lab9_mesh_collectives.py  # Lab 9 staged mesh concept code
-    lab9_mesh_collectives.md
-    lab10_multihost_smoke.py  # Lab 10 multi-host run-control code
-    lab10_multihost_smoke.md
-    lab11_optimal_all_reduce.py # Lab 11 bandwidth-optimal shard-ring all-reduce
-    lab11_optimal_all_reduce.md
+    lab9_optimal_all_reduce.py # Lab 9 bandwidth-optimal shard-ring all-reduce
+    lab9_optimal_all_reduce.md
+    lab10_mesh_collectives.py  # Lab 10 staged mesh concept code
+    lab10_mesh_collectives.md
+    lab11_multihost_smoke.py  # Lab 11 multi-host run-control code
+    lab11_multihost_smoke.md
   runs/                       # generated artifacts, ignored by git
 ```
 
@@ -382,9 +387,10 @@ Do the measured timing rows and profiler events describe the same phenomenon?
 ## Lab Sequence
 
 The course now has 11 concrete labs. The default path is designed to run on a
-4-chip TPU v5e slice. Lab 10 also runs locally as a smoke test, then becomes a
-multi-host validation lab on a larger slice. Lab 11 closes the byte gap left by
-Labs 7 and 8 with a bandwidth-optimal reduce-scatter plus all-gather all-reduce.
+4-chip TPU v5e slice. Lab 9 closes the byte gap left by Labs 7 and 8 with a
+bandwidth-optimal reduce-scatter plus all-gather all-reduce, Lab 10 then turns
+the local slice into an explicit 2D mesh, and Lab 11 runs locally as a smoke
+test before becoming a multi-host validation lab on a larger slice.
 
 ### Pre-Lab: Topology And Baseline Orientation
 
@@ -711,99 +717,7 @@ students can identify chunk overhead before claiming overlap
 profiles show whether future fused versions have real overlap
 ```
 
-### Lab 9: 2D Mesh Collectives
-
-Stop treating every local slice as a flat ring. On the 4-chip v5e target, use a
-logical `2x2` mesh and compare staged all-gather algorithms against flat-ring
-thinking. The custom Pallas path keeps a flat physical mesh and computes
-logical 2D neighbors inside the kernel.
-
-Students learn:
-
-- mesh axis choice
-- x-then-y versus y-then-x staging
-- hop distance and contention hypotheses
-- topology-aware explanations
-- why a 2D algorithm may be clearer even when n is only 4
-- how axis order changes phases without changing logical result bytes
-
-Run:
-
-```bash
-python collective_bench.py \
-  --lab lab9 \
-  --lab9-mesh-shape 2x2 \
-  --lab9-axis-order x_then_y
-```
-
-Core exercise:
-
-```text
-all-gather along x, then y
-compare against flat ring
-repeat y, then x
-record topology evidence and profile traces
-```
-
-Pass condition:
-
-```text
-pmap and Pallas staged all-gather match canonical rank order
-students can explain axis-order timing using recorded topology evidence
-```
-
-### Lab 10: Multi-Host Smoke And Hierarchy
-
-Move from one process to multi-host run control and hierarchical collectives.
-On the primary 4-chip v5e target, this lab is a single-process topology and
-process-collective smoke. On a future 16-chip v5e slice or larger, it becomes a
-real multi-host launch validation.
-
-Students learn:
-
-- `process_index`
-- `process_count`
-- global versus local devices
-- per-process logs
-- process-0 summaries
-- local versus cross-process phases
-- why all processes must enter distributed JAX consistently
-- how to fail early when process count or global device count is wrong
-
-Run:
-
-```bash
-python collective_bench.py --lab lab10
-```
-
-Optional launch-shape checks for a future multi-host run:
-
-```bash
-python collective_bench.py \
-  --lab lab10 \
-  --lab10-expected-process-count 2 \
-  --lab10-expected-global-devices 16
-```
-
-Core exercise:
-
-```text
-inspect process and device topology
-run a tiny process collective across all processes
-write process-local launch facts
-emit a hierarchy plan for future custom collectives
-```
-
-Pass condition:
-
-```text
-all processes agree on global device count and mesh shape
-local logs identify local devices and process index
-process all-gather returns one payload per process
-hierarchical prototype separates local and cross-process phases
-```
-
-### Lab 11: Bandwidth-Optimal Ring All-Reduce
+### Lab 9: Bandwidth-Optimal Ring All-Reduce
 
 Close the byte gap confessed in Labs 7 and 8. Re-implement all-reduce as
 reduce-scatter plus all-gather over `B / N` shards so each of the `2 * (n - 1)`
@@ -824,7 +738,7 @@ Students learn:
 Run:
 
 ```bash
-python collective_bench.py --lab lab11
+python collective_bench.py --lab lab9
 ```
 
 Core exercise:
@@ -842,6 +756,98 @@ rs-ag output matches float32 sums of the dtype-quantized input within tolerance
 all device replicas of the rs-ag output are bitwise identical
 rs-ag and rs-ag-bidir wire bytes equal the optimal model: 2 * (n - 1) * shard_bytes
 the spec artifact records the shard schedule, byte model, and alpha-beta crossover
+```
+
+### Lab 10: 2D Mesh Collectives
+
+Stop treating every local slice as a flat ring. On the 4-chip v5e target, use a
+logical `2x2` mesh and compare staged all-gather algorithms against flat-ring
+thinking. The custom Pallas path keeps a flat physical mesh and computes
+logical 2D neighbors inside the kernel.
+
+Students learn:
+
+- mesh axis choice
+- x-then-y versus y-then-x staging
+- hop distance and contention hypotheses
+- topology-aware explanations
+- why a 2D algorithm may be clearer even when n is only 4
+- how axis order changes phases without changing logical result bytes
+
+Run:
+
+```bash
+python collective_bench.py \
+  --lab lab10 \
+  --lab10-mesh-shape 2x2 \
+  --lab10-axis-order x_then_y
+```
+
+Core exercise:
+
+```text
+all-gather along x, then y
+compare against flat ring
+repeat y, then x
+record topology evidence and profile traces
+```
+
+Pass condition:
+
+```text
+pmap and Pallas staged all-gather match canonical rank order
+students can explain axis-order timing using recorded topology evidence
+```
+
+### Lab 11: Multi-Host Smoke And Hierarchy
+
+Move from one process to multi-host run control and hierarchical collectives.
+On the primary 4-chip v5e target, this lab is a single-process topology and
+process-collective smoke. On a future 16-chip v5e slice or larger, it becomes a
+real multi-host launch validation.
+
+Students learn:
+
+- `process_index`
+- `process_count`
+- global versus local devices
+- per-process logs
+- process-0 summaries
+- local versus cross-process phases
+- why all processes must enter distributed JAX consistently
+- how to fail early when process count or global device count is wrong
+
+Run:
+
+```bash
+python collective_bench.py --lab lab11
+```
+
+Optional launch-shape checks for a future multi-host run:
+
+```bash
+python collective_bench.py \
+  --lab lab11 \
+  --lab11-expected-process-count 2 \
+  --lab11-expected-global-devices 16
+```
+
+Core exercise:
+
+```text
+inspect process and device topology
+run a tiny process collective across all processes
+write process-local launch facts
+emit a hierarchy plan for future custom collectives
+```
+
+Pass condition:
+
+```text
+all processes agree on global device count and mesh shape
+local logs identify local devices and process index
+process all-gather returns one payload per process
+hierarchical prototype separates local and cross-process phases
 ```
 
 ## Invariants For Custom Communication

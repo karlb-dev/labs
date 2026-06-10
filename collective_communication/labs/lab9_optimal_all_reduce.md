@@ -1,4 +1,4 @@
-# Lab 11: Bandwidth-Optimal Ring All-Reduce
+# Lab 9: Bandwidth-Optimal Ring All-Reduce
 
 Goal: stop paying the whole-token tax. Implement all-reduce as reduce-scatter
 plus all-gather over `B/N` shards so the ring finally moves the same bytes as
@@ -16,7 +16,7 @@ finally charged in shards, not whole tokens. 🧾
 ```text
 Lab 7: composed, whole-token   ->  correct, wasteful
 Lab 8: fused, whole-token      ->  overlapped, still wasteful
-Lab 11: composed, sharded      ->  the bytes are finally right
+Lab 9: composed, sharded      ->  the bytes are finally right
 ```
 
 The algorithm is the classic two-phase ring (Patarasuk & Yuan's
@@ -53,7 +53,7 @@ Run (a single sweep compares the foil, the headline, the variant, and the
 roofline):
 
 ```bash
-python collective_bench.py --lab lab11
+python collective_bench.py --lab lab9
 ```
 
 Implemented operations:
@@ -63,7 +63,7 @@ Implemented operations:
 - `pmap_token_ring`: the whole-token dependency-chain ring from Lab 2, riding
   along as the `N/2`-penalty foil. Watch its `useful/dev` column: it reports
   `(N-1) * B` while the optimal all-reduce rows report `2(N-1)/N * B`. It uses
-  the harness's normal device-ID ring; use `--lab11-ring-order ids` when you
+  the harness's normal device-ID ring; use `--lab9-ring-order ids` when you
   want the cleanest byte-only comparison to the new shard ring.
 - `pmap_rs_ag_all_reduce`: **the headline**. Unidirectional shard ring —
   reduce-scatter then all-gather — built from `lax.ppermute` plus dynamic shard
@@ -74,16 +74,16 @@ Implemented operations:
 - `xla_all_reduce`: `lax.psum` on the **same case in the same wire dtype** —
   the roofline. (Different from Lab 8's `xla_token_ring`, which cast to float32
   *before* the psum; see "Correctness Contract" for why that matters.)
-- `lab11_optimal_all_reduce_spec`: course artifact with the shard schedules,
+- `lab9_optimal_all_reduce_spec`: course artifact with the shard schedules,
   byte model, α–β crossover, ring-order preview, and trace evidence rules.
 
-All Lab 11 ops are portable JAX — no Pallas, no TPU gating. The whole lab runs
+All Lab 9 ops are portable JAX — no Pallas, no TPU gating. The whole lab runs
 on CPU with forced host devices, which makes the schedule debuggable at your
 desk before it touches a slice:
 
 ```bash
 XLA_FLAGS="--xla_force_host_platform_device_count=4" \
-  python collective_bench.py --lab lab11 --sizes 16KiB --iters 5 --no-plots
+  python collective_bench.py --lab lab9 --sizes 16KiB --iters 5 --no-plots
 ```
 
 The module also self-tests standalone (schedule simulator at N=2..5, all
@@ -91,12 +91,12 @@ kernel modes × float32/bfloat16 × both directions, wire-byte invariants, and
 the ring-order constructor):
 
 ```bash
-python labs/lab11_optimal_all_reduce.py
+python labs/lab9_optimal_all_reduce.py
 ```
 
 ## The Byte Model, Finally Optimal
 
-Let `B` be the per-device payload and `N` the ring size. Lab 11 pins the shard
+Let `B` be the per-device payload and `N` the ring size. Lab 9 pins the shard
 count to `N` (one shard per ring position) and rounds the *shard* tile up to
 `rows x cols` elements, so `B_actual = N * shard_bytes` exactly — no remainder
 shard, no asterisk on the model.
@@ -165,7 +165,7 @@ that messages may carry partial sums, and what changes if they may not?
 
 ## How Fast Should It Be, Really?
 
-No measured Lab 11 numbers are printed here — this handout was written before
+No measured Lab 9 numbers are printed here — this handout was written before
 your run, and the lab should teach students to keep receipts instead of
 prophecies. Run the sweep and fill in your own table. What the model
 *predicts*, so you know whether to believe your receipts:
@@ -186,10 +186,10 @@ prophecies. Run the sweep and fill in your own table. What the model
    roughly the byte ratio (2x at N=4), minus its extra per-step latencies.
    For calibration, Lab 8's measured table on v5e-4 at 4 MiB bf16 had
    `pmap_token_ring` at ~1375 µs against `xla_token_ring` at ~344 µs — a 4x
-   gap of which 2x was bytes. Lab 11 removes the byte half of that excuse.
+   gap of which 2x was bytes. Lab 9 removes the byte half of that excuse.
 3. **A free prediction about the roofline itself:** Lab 8's `xla_token_ring`
    cast to float32 *before* its `psum`, so at bf16 it moved twice the wire
-   bytes of Lab 11's `xla_all_reduce` on the same nominal payload. If the
+   bytes of Lab 9's `xla_all_reduce` on the same nominal payload. If the
    large-payload regime is truly bandwidth-bound, `xla_all_reduce` should beat
    Lab 8's 344 µs noticeably at the same 4 MiB. If it doesn't, your "bandwidth
    regime" starts later than you thought. Either outcome is a lesson.
@@ -313,7 +313,7 @@ Two index identities students reliably trip on:
   non-negative for a positive modulus — so `(d - 3) % 4` is safe. `lax.rem`
   follows C semantics and is **not** safe. Use `%`.
 
-The spec artifact (`lab11_optimal_all_reduce_spec`) emits both schedules as
+The spec artifact (`lab9_optimal_all_reduce_spec`) emits both schedules as
 explicit per-device tables for your `N` and direction, and
 `simulate_rs_ag(chunks_per_device, direction)` replays the exact index
 schedule in pure NumPy with explicit message passing — when a device run
@@ -338,14 +338,14 @@ two edges of Manhattan distance 2 — two of your four "neighbor" hops actually
 traverse two physical links, paying double latency and sharing segments with
 other steps.
 
-`--lab11-ring-order auto` (the default) instead orders the mesh along a
+`--lab9-ring-order auto` (the default) instead orders the mesh along a
 **unit-step Hamiltonian cycle** over device `.coords` when one exists, so
 every `ppermute` hop crosses exactly one physical ICI link. On 2x2 that is the
 cycle `(0,0)→(0,1)→(1,1)→(1,0)→(0,0)`. The constructor handles any `X×Y` grid
 with an even cell count (comb construction; transposed when needed) and
 **falls back to ID order with a recorded reason** when no such cycle exists —
 odd×odd grids, lines longer than a pair, missing coords (CPU/GPU), or sparse
-slices. `--lab11-ring-order ids` forces the naive order so you can measure
+slices. `--lab9-ring-order ids` forces the naive order so you can measure
 the difference.
 
 This reordering is safe for an all-reduce: the result is the same full sum on
@@ -359,10 +359,10 @@ records the actual ring as `ring=[...]`.
 Coordinate assignments vary across runtimes and slice shapes — trust the
 preview, not folklore.
 
-Fairness note: `--lab11-ring-order auto` is a topology-aware optimization for
+Fairness note: `--lab9-ring-order auto` is a topology-aware optimization for
 the new shard-ring cases. The Lab 2 `pmap_token_ring` foil still uses the
 harness's ordinary device-ID ring, so the purest algorithmic byte comparison is
-`--lab11-ring-order ids`. Then run `auto` separately to ask the topology
+`--lab9-ring-order ids`. Then run `auto` separately to ask the topology
 question: same bytes, better physical neighbors? The two experiments teach
 different things; keep their receipts in separate pockets.
 
@@ -410,7 +410,7 @@ diagnostic value:
 
 One deliberate contrast with Lab 8, worth teaching explicitly: Lab 8's
 `xla_token_ring` cast to float32 *before* its `psum`, which both inflated bf16
-wire bytes 2x and bought it float32 accumulation accuracy. Lab 11's
+wire bytes 2x and bought it float32 accumulation accuracy. Lab 9's
 `xla_all_reduce` reduces in the wire dtype and casts after — same bytes, same
 rounding exposure as the student kernel. Apples to apples, including the
 bruises.
@@ -421,13 +421,13 @@ The default lab sweep (all six ops, sizes spanning the crossover through the
 bandwidth regime, bf16 wire dtype):
 
 ```bash
-python collective_bench.py --lab lab11
+python collective_bench.py --lab lab9
 ```
 
 Find the α–β crossover against the naive ring:
 
 ```bash
-python collective_bench.py --lab lab11 \
+python collective_bench.py --lab lab9 \
   --ops pmap_token_ring,pmap_rs_ag_all_reduce,xla_all_reduce \
   --sizes 4KiB,16KiB,64KiB,256KiB,1MiB
 ```
@@ -436,14 +436,14 @@ Ring order: physical cycle vs ID order (run both, compare p50 at a fixed
 payload — bytes are identical by construction, so any difference is topology):
 
 ```bash
-python collective_bench.py --lab lab11 --sizes 4MiB --lab11-ring-order auto
-python collective_bench.py --lab lab11 --sizes 4MiB --lab11-ring-order ids
+python collective_bench.py --lab lab9 --sizes 4MiB --lab9-ring-order auto
+python collective_bench.py --lab lab9 --sizes 4MiB --lab9-ring-order ids
 ```
 
 The bidirectional bet, against the unidirectional ring and the roofline:
 
 ```bash
-python collective_bench.py --lab lab11 \
+python collective_bench.py --lab lab9 \
   --ops pmap_rs_ag_all_reduce,pmap_rs_ag_all_reduce_bidir,xla_all_reduce \
   --sizes 1MiB,4MiB,16MiB
 ```
@@ -452,14 +452,14 @@ Wire dtype sweep — bf16 halves the bytes of f32 at the same element count;
 does it halve the time?
 
 ```bash
-python collective_bench.py --lab lab11 --sizes 4MiB --dtype bfloat16
-python collective_bench.py --lab lab11 --sizes 4MiB --dtype float32
+python collective_bench.py --lab lab9 --sizes 4MiB --dtype bfloat16
+python collective_bench.py --lab lab9 --sizes 4MiB --dtype float32
 ```
 
 Capture a trace of the headline kernel at a bandwidth-regime payload:
 
 ```bash
-python collective_bench.py --lab lab11 --profile \
+python collective_bench.py --lab lab9 --profile \
   --trace-op pmap_rs_ag_all_reduce --trace-size 4MiB
 ```
 
@@ -467,7 +467,7 @@ Direction flip (owned shards move from `(d+1)%N` to `(d-1)%N`; bytes and
 latency should not care):
 
 ```bash
-python collective_bench.py --lab lab11 --sizes 1MiB --neighbor-direction left
+python collective_bench.py --lab lab9 --sizes 1MiB --neighbor-direction left
 ```
 
 Everything also runs on CPU with forced host devices for schedule debugging —
@@ -479,11 +479,11 @@ schedule you'll ship to the slice.
 
 Run artifacts, same layout as every lab:
 
-- `results.jsonl` / `csvs/results.csv`: per-op rows. For Lab 11 check that
+- `results.jsonl` / `csvs/results.csv`: per-op rows. For Lab 9 check that
   `wire_bytes == logical_bytes == 2(N-1) · shard_bytes` for the three new ops
   under the harness's send-side/full-duplex convention, and that
   `pmap_token_ring`'s model is `N/2` times larger.
-- `lab_artifacts/*lab11_optimal_all_reduce_spec*`: schedules, byte model,
+- `lab_artifacts/*lab9_optimal_all_reduce_spec*`: schedules, byte model,
   crossover formula, ring-order preview, checkpoint questions.
 - `plots/latency_by_payload.png` and `plots/bandwidth_by_payload.png`: the
   crossover is visible as the payload where the rs-ag curve crosses under the
@@ -508,12 +508,12 @@ Reading the trace (XProf or Perfetto on the captured `.json.gz`):
    XLA scheduled your two independent dataflow chains back-to-back and the
    bidirectional bet bought you nothing but smaller messages — that result is
    just as reportable as a win.
-5. **Ring-order forensics.** With `--lab11-ring-order ids` on a 2x2 slice,
+5. **Ring-order forensics.** With `--lab9-ring-order ids` on a 2x2 slice,
    the two 2-hop edges should show as slower permute steps; with `auto` the
    six steps should be near-uniform.
 6. **One caveat about the built-in summary.** The harness's trace summarizer
    (`_classify_comm_event`) was written for Pallas kernels — it recognizes
-   `copy*`, `barrier-cores`, and semaphore events, so Lab 11's XLA
+   `copy*`, `barrier-cores`, and semaphore events, so Lab 9's XLA
    `collective-permute` events won't appear in `trace_summaries/`. Read the
    raw trace in the viewer, or apply the optional two-line classifier
    extension in Appendix B.
@@ -669,7 +669,7 @@ intend to trust.
   below the crossover (`O(log N)` steps); implementing it would complete the
   payload-size story.
 - **General topologies.** The unit-step cycle constructor handles dense 2D
-  grids; Lab 9's meshes want Hamiltonian cycles (or multi-ring decompositions)
+  grids; Lab 10's meshes want Hamiltonian cycles (or multi-ring decompositions)
   on wrapped tori and 3D slices.
 - **Partial hops.** A `--token-hops`-style partial schedule for straggler and
   fault experiments.
@@ -677,255 +677,41 @@ intend to trust.
 ## Bridge
 
 Lab 8 built the engine: a fused kernel with real overlap, bolted to a
-whole-token schedule that wasted `N/2` of its effort. Lab 11 built the
+whole-token schedule that wasted `N/2` of its effort. Lab 9 built the
 gearbox: the optimal schedule, run through legible composed collectives that
 leave a few percent on the table at step boundaries. The course's remaining
-arc is to put them together — and Lab 9's topology work tells you which
+arc is to put them together — and Lab 10's topology work tells you which
 physical links the fused, sharded, correctly-geared ring should ride.
 
-## Appendix A: Wiring Lab 11 Into `collective_bench.py`
+## Appendix A: Harness Integration Checklist
 
-Two options. **Mechanical:** run the bundled patcher from the course
-directory — it validates every anchor appears exactly once before touching
-anything, writes a `.bak`, preserves CRLF/LF, and refuses to double-patch:
+Lab 9 is already wired into `collective_bench.py`. The integration points to
+check after future edits are:
 
-```bash
-python apply_lab11_patch.py            # patches ./collective_bench.py in place
-python apply_lab11_patch.py src.py dst.py   # or explicit paths
-```
-
-**By hand:** eight edits, listed in file order. Drop
-`lab11_optimal_all_reduce.py` into `labs/` first.
-
-**A1. Op table** — after the `LAB10_OPS = (...)` tuple:
-
-```python
-# Lab 11 closes the byte gap: the same all-reduce as reduce-scatter plus
-# all-gather over B/N shards, matching lax.psum's 2*(N-1)/N*B volume. The
-# whole-token pmap_token_ring rides along as the N/2-penalty foil.
-LAB11_OPS = (
-    "pmap_psum",
-    "pmap_token_ring",
-    "pmap_rs_ag_all_reduce",
-    "pmap_rs_ag_all_reduce_bidir",
-    "xla_all_reduce",
-    "lab11_optimal_all_reduce_spec",
-)
-```
-
-**A2. Spec routing** — add to the `LAB_SPEC_OPS` dict, after the lab10 entry:
-
-```python
-    "lab11_optimal_all_reduce_spec": "labs.lab11_optimal_all_reduce",
-```
-
-**A3. Op validation** — in `ALL_OPS`, after `"pmap_2d_staged_all_gather",`
-and before `*LAB_SPEC_OPS,`:
-
-```python
-    "pmap_rs_ag_all_reduce",
-    "pmap_rs_ag_all_reduce_bidir",
-    "xla_all_reduce",
-```
-
-**A4. Lab defaults** — in `apply_lab_defaults`, immediately before the final
-`raise ValueError(f"unknown lab {args.lab!r}")`:
-
-```python
-    if args.lab == "lab11":
-        # Lab 11 is the bandwidth-optimal shard ring; the default sweep spans
-        # the alpha-beta crossover (small sizes, where the naive ring wins on
-        # latency) through the bandwidth regime where matching psum's volume
-        # pays off.
-        if args.ops is None:
-            args.ops = ",".join(LAB11_OPS)
-        if args.sizes is None:
-            args.sizes = "16KiB,256KiB,1MiB,4MiB,16MiB"
-        if args.run_name is None:
-            args.run_name = f"lab11_optimal_all_reduce-{now_slug()}"
-        return
-```
-
-**A5. CLI choices** — in `build_parser`, add `"lab11",` after `"lab10",` in
-the `--lab` choices tuple, and (optional) extend the help string's
-`lab10 is multi-host run-control smoke` to
-`lab10 is multi-host run-control smoke, lab11 is the bandwidth-optimal
-shard-ring all-reduce`.
-
-**A6. Ring-order flag** — after the `--lab9-axis-order` argument:
-
-```python
-    parser.add_argument(
-        "--lab11-ring-order",
-        choices=("auto", "ids"),
-        default="auto",
-        help=(
-            "Lab 11 ring layout: auto walks a unit-step Hamiltonian cycle over "
-            "device coords when one exists; ids uses jax.devices() order and "
-            "is the cleanest byte-only comparison with pmap_token_ring"
-        ),
-    )
-```
-
-**A7. Dispatch** — in `dispatch_case`, after the `semaphore_bug_zoo` branch
-and before `if op in LAB_SPEC_OPS:`:
-
-```python
-        if op == "pmap_rs_ag_all_reduce":
-            return run_pmap_rs_ag_all_reduce(
-                jax, jnp, args, run, payload_bytes, dtype, n_devices
-            )
-        if op == "pmap_rs_ag_all_reduce_bidir":
-            return run_pmap_rs_ag_all_reduce_bidir(
-                jax, jnp, args, run, payload_bytes, dtype, n_devices
-            )
-        if op == "xla_all_reduce":
-            return run_xla_all_reduce(
-                jax, jnp, args, run, payload_bytes, dtype, n_devices
-            )
-```
-
-**A8. Runners** — after `run_xla_token_ring` and before
-`run_pallas_2d_staged_all_gather` (mirrors `_run_lab8_ring`'s structure: lazy
-import, case build, correctness, trace-wrapped timing, BenchResult with the
-case's byte model):
-
-```python
-def _run_lab11_ring(
-    jax: Any,
-    jnp: Any,
-    args: argparse.Namespace,
-    run: RunContext,
-    payload_bytes: int,
-    dtype: Any,
-    n_devices: int,
-    *,
-    op: str,
-    kernel_mode: str,
-) -> BenchResult:
-    """Run one Lab 11 all-reduce implementation in a given kernel mode.
-
-    ``kernel_mode`` pins the implementation per benchmark op: ``rs-ag`` (the
-    bandwidth-optimal shard ring), ``rs-ag-bidir`` (two counter-rotating
-    half-rings), or ``xla-psum`` (lax.psum on the same case in the same wire
-    dtype). All three move the optimal byte volume, so wire == logical and the
-    remaining differences are pure scheduling.
-    """
-    layer = "shard_map/psum" if kernel_mode == "xla-psum" else "shard_map/ppermute"
-
-    try:
-        from labs import lab11_optimal_all_reduce
-    except Exception as exc:
-        return BenchResult(
-            op=op, layer=layer, payload_bytes=payload_bytes,
-            logical_bytes=0, seconds=None, ok=False, note=f"import failed: {exc}",
-        )
-
-    try:
-        # Lab 11's case builder owns shard sizing, ring layout, and expected
-        # sums. The harness records the byte model exposed by the case.
-        case = lab11_optimal_all_reduce.build_case(
-            jax=jax,
-            jnp=jnp,
-            devices=jax.devices(),
-            axis_name=args.axis_name,
-            payload_bytes=payload_bytes,
-            dtype=dtype,
-            direction=args.neighbor_direction,
-            kernel_mode=kernel_mode,
-            tile_rows=args.pallas_tile_rows,
-            min_cols=args.pallas_min_cols,
-            ring_order=args.lab11_ring_order,
-        )
-    except Exception as exc:
-        return BenchResult(
-            op=op, layer=layer, payload_bytes=payload_bytes,
-            logical_bytes=0, seconds=None, ok=False,
-            note=f"case setup failed: {exc}",
-        )
-
-    try:
-        y = block_until_ready(jax, case.fn(case.x))
-        if args.skip_correctness:
-            ok = True
-        else:
-            ok = lab11_optimal_all_reduce.check_result(
-                jax, jnp, y, case.expected_sums, dtype=dtype
-            )
-        with maybe_trace(jax, args, run, op, payload_bytes) as trace_artifact:
-            timing = time_jax_call(
-                jax, case.fn, case.x, warmup=args.warmup, iters=args.iters
-            )
-        memory_profile = maybe_write_memory_profile(jax, args, run, op, payload_bytes)
-    except Exception as exc:
-        return BenchResult(
-            op=op, layer=layer, payload_bytes=case.actual_payload_bytes,
-            logical_bytes=case.optimal_bytes_per_device, seconds=None, ok=False,
-            note=f"failed: {exc}",
-        )
-
-    return BenchResult(
-        op=op,
-        layer=layer,
-        payload_bytes=case.actual_payload_bytes,
-        logical_bytes=case.optimal_bytes_per_device,
-        wire_bytes=case.wire_bytes,
-        byte_model="optimal",
-        ok=ok,
-        trace_artifact=trace_artifact,
-        memory_profile_artifact=memory_profile,
-        note=case.note,
-        **result_timing_kwargs(timing),
-    )
-
-
-def run_pmap_rs_ag_all_reduce(
-    jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
-    payload_bytes: int, dtype: Any, n_devices: int,
-) -> BenchResult:
-    """Lab 11 bandwidth-optimal shard ring (reduce-scatter + all-gather)."""
-    return _run_lab11_ring(
-        jax, jnp, args, run, payload_bytes, dtype, n_devices,
-        op="pmap_rs_ag_all_reduce", kernel_mode="rs-ag",
-    )
-
-
-def run_pmap_rs_ag_all_reduce_bidir(
-    jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
-    payload_bytes: int, dtype: Any, n_devices: int,
-) -> BenchResult:
-    """Lab 11 bidirectional variant: two counter-rotating half-rings."""
-    return _run_lab11_ring(
-        jax, jnp, args, run, payload_bytes, dtype, n_devices,
-        op="pmap_rs_ag_all_reduce_bidir", kernel_mode="rs-ag-bidir",
-    )
-
-
-def run_xla_all_reduce(
-    jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
-    payload_bytes: int, dtype: Any, n_devices: int,
-) -> BenchResult:
-    """Lab 11 roofline: lax.psum on the same case in the same wire dtype."""
-    return _run_lab11_ring(
-        jax, jnp, args, run, payload_bytes, dtype, n_devices,
-        op="xla_all_reduce", kernel_mode="xla-psum",
-    )
-```
+- `LAB9_OPS` includes `pmap_psum`, `pmap_token_ring`,
+  `pmap_rs_ag_all_reduce`, `pmap_rs_ag_all_reduce_bidir`, `xla_all_reduce`,
+  and `lab9_optimal_all_reduce_spec`.
+- `LAB_SPEC_OPS` routes `lab9_optimal_all_reduce_spec` to
+  `labs.lab9_optimal_all_reduce`.
+- `--lab lab9` selects the Lab 9 default sweep and run name.
+- `--lab9-ring-order` controls the ring-order policy. The old
+  `--lab11-ring-order` spelling is accepted as a hidden compatibility alias.
+- `dispatch_case` sends the three Lab 9 timed ops through `_run_lab9_ring`.
 
 Smoke-test the wiring without a TPU:
 
 ```bash
 XLA_FLAGS="--xla_force_host_platform_device_count=4" \
-  python collective_bench.py --lab lab11 --sizes 16KiB --iters 3 --warmup 1 --no-plots
+  python collective_bench.py --lab lab9 --sizes 16KiB --iters 3 --warmup 1 --no-plots
 ```
 
 All six rows should print `ok=True`; the new ops report `useful/dev` of
 1.5x the payload, the token ring 3x, and the spec op writes
-`lab_artifacts/*lab11_optimal_all_reduce_spec.{json,md}`.
+`lab_artifacts/*lab9_optimal_all_reduce_spec.{json,md}`.
 
 ## Appendix B (Optional): Teach the Trace Summarizer About XLA Collectives
 
-The built-in `trace_summaries/` only counts Pallas-style events. To get Lab 11
+The built-in `trace_summaries/` only counts Pallas-style events. To get Lab 9
 permutes into the summary, add two checks at the top of
 `_classify_comm_event`:
 

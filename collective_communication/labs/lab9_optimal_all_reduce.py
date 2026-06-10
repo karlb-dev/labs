@@ -1,4 +1,4 @@
-"""Lab 11: bandwidth-optimal ring all-reduce (reduce-scatter + all-gather).
+"""Lab 9: bandwidth-optimal ring all-reduce (reduce-scatter + all-gather).
 
 Lab 7 composed an all-reduce out of whole-token ring phases and Lab 8 fused the
 whole-token ring into one overlapped Pallas program. Both labs end with the same
@@ -144,7 +144,7 @@ class OptimalAllReduceCase:
                 f"x{self.bytes_per_ppermute_message}B"
             )
         return (
-            f"lab11-kernel={self.kernel_mode} direction={self.direction} "
+            f"lab9-kernel={self.kernel_mode} direction={self.direction} "
             f"shards={self.n_shards} devices={self.n_devices} "
             f"shard={self.shard_payload_bytes}B "
             f"tile={self.tile_rows}x{self.tile_cols} "
@@ -221,7 +221,7 @@ class OptimalAllReduceCase:
     def wire_bytes(self) -> int:
         """Actual per-device send bytes for the implemented path.
 
-        Every Lab 11 mode -- including the ``lax.psum`` reference under the
+        Every Lab 9 mode -- including the ``lax.psum`` reference under the
         standard ring model -- moves the optimal volume, so wire == logical.
         """
         return self.optimal_bytes_per_device
@@ -247,8 +247,8 @@ class OptimalAllReduceCase:
 
 
 LAB_SPEC: dict[str, Any] = {
-    "lab": "lab11",
-    "title": "Lab 11: Bandwidth-Optimal Ring All-Reduce",
+    "lab": "lab9",
+    "title": "Lab 9: Bandwidth-Optimal Ring All-Reduce",
     "goal": (
         "Close the byte gap confessed in Labs 7 and 8: implement all-reduce as "
         "reduce-scatter plus all-gather so each of the 2*(N-1) ring steps moves "
@@ -263,12 +263,12 @@ LAB_SPEC: dict[str, Any] = {
         "`pmap_rs_ag_all_reduce`: bandwidth-optimal shard ring (reduce-scatter + all-gather via lax.ppermute)",
         "`pmap_rs_ag_all_reduce_bidir`: same volume split across two counter-rotating half-rings",
         "`xla_all_reduce`: lax.psum on the same case in the same wire dtype (roofline)",
-        "`lab11_optimal_all_reduce_spec`: shard schedule, byte-model, alpha-beta crossover, and trace-evidence artifact",
+        "`lab9_optimal_all_reduce_spec`: shard schedule, byte-model, alpha-beta crossover, and trace-evidence artifact",
     ],
     "deferred_ops": [
         "Fuse the shard ring into a Lab 8-style Pallas program with k*N sub-shards and overlapped remote DMA",
         "Recursive-halving / tree all-reduce for the latency-dominated small-payload regime",
-        "Topology-general Hamiltonian ring construction carried into Lab 9's 2D meshes",
+        "Topology-general Hamiltonian ring construction carried into Lab 10's 2D meshes",
         "Partial-hop shard rings for fault and stragglers experiments",
     ],
     "byte_model": [
@@ -291,11 +291,11 @@ LAB_SPEC: dict[str, Any] = {
         "csvs/results.csv",
         "plots/latency_by_payload.png",
         "plots/bandwidth_by_payload.png",
-        "lab_artifacts/*lab11_optimal_all_reduce_spec*",
+        "lab_artifacts/*lab9_optimal_all_reduce_spec*",
     ],
     "next_steps": [
         "Use the trace to attribute the residual gap to inter-step dynamic-slice copies and step-boundary stalls",
-        "Carry the shard schedule into a fused Pallas pipeline and into topology-aware Lab 9 meshes",
+        "Carry the shard schedule into a fused Pallas pipeline and into topology-aware Lab 10 meshes",
     ],
 }
 
@@ -374,7 +374,7 @@ def shard_tile_shape_for_payload(
 ) -> tuple[int, int, int, int, str]:
     """Choose a per-shard tile shape for the requested full payload.
 
-    ``payload_bytes`` is the requested full per-device input payload. Lab 11
+    ``payload_bytes`` is the requested full per-device input payload. Lab 9
     splits it across ``n_shards == n_devices`` shards (one ring owner each),
     then rounds the per-shard tile up to ``tile_rows * tile_cols`` elements, so
     the actual payload is always an exact multiple of the shard. That keeps the
@@ -418,7 +418,7 @@ def make_sharded_rank_input(
     cols: int,
     dtype: Any,
 ) -> Any:
-    """Create the teaching input tensor for Lab 11.
+    """Create the teaching input tensor for Lab 9.
 
     Same value pattern as Lab 8, with the chunk axis reinterpreted as the shard
     axis. The scalar at ``[row=0, col=0]`` is the hand-checkable marker:
@@ -578,7 +578,7 @@ def optimal_all_reduce_byte_model(
     shard_payload_bytes: int,
     kernel_mode: str = "rs-ag",
 ) -> dict[str, int | float | str]:
-    """Return the Lab 11 byte accounting in benchmark-friendly form."""
+    """Return the Lab 9 byte accounting in benchmark-friendly form."""
     n = int(n_devices)
     steps = 2 * max(0, n - 1)
     optimal = steps * int(shard_payload_bytes)
@@ -920,12 +920,12 @@ def build_case(
     min_cols: int = 128,
     ring_order: str = "auto",
 ) -> OptimalAllReduceCase:
-    """Build input, expected output, and jitted function for Lab 11."""
+    """Build input, expected output, and jitted function for Lab 9."""
     import numpy as np
 
     n_devices = len(devices)
     if n_devices < 2:
-        raise ValueError("Lab 11 requires at least two devices to form a ring")
+        raise ValueError("Lab 9 requires at least two devices to form a ring")
 
     direction = normalize_direction(direction)
     selected_kernel_mode = normalize_kernel_mode(kernel_mode)
@@ -1054,7 +1054,7 @@ def check_result(
 
     Two checks, in order of diagnostic value:
 
-    1. **Bitwise replica identity.** Every Lab 11 path computes each reduced
+    1. **Bitwise replica identity.** Every Lab 9 path computes each reduced
        shard exactly once and copies it verbatim during all-gather (and psum is
        a single deterministic collective), so all device replicas must be
        bitwise equal. A replica mismatch means a stale shard or a wrong-owner
@@ -1132,7 +1132,7 @@ def _fallback_build_spec(
         "n_devices": int(n_devices),
         "args": {
             "neighbor_direction": getattr(args, "neighbor_direction", None),
-            "lab11_ring_order": getattr(args, "lab11_ring_order", None),
+            "lab9_ring_order": getattr(args, "lab9_ring_order", None),
             "pallas_tile_rows": getattr(args, "pallas_tile_rows", None),
             "pallas_min_cols": getattr(args, "pallas_min_cols", None),
             "dtype": getattr(args, "dtype", None),
@@ -1142,7 +1142,7 @@ def _fallback_build_spec(
 
 def _fallback_render_markdown(spec: dict[str, Any]) -> str:
     """Small local fallback for ``lab_spec_utils.render_markdown``."""
-    lines = [f"# {spec.get('title', 'Lab 11 Spec')}", ""]
+    lines = [f"# {spec.get('title', 'Lab 9 Spec')}", ""]
     for key in sorted(spec):
         if key == "title":
             continue
@@ -1181,7 +1181,7 @@ def _ring_order_preview(jax: Any, policy: str) -> dict[str, Any]:
 
 
 def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> dict[str, Any]:
-    """Build the Lab 11 course artifact consumed by the benchmark harness."""
+    """Build the Lab 9 course artifact consumed by the benchmark harness."""
     if lab_spec_utils is not None:
         spec = lab_spec_utils.build_spec(
             LAB_SPEC,
@@ -1198,7 +1198,7 @@ def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> di
         )
 
     direction = normalize_direction(getattr(args, "neighbor_direction", None) or "right")
-    ring_order = normalize_ring_order(getattr(args, "lab11_ring_order", None) or "auto")
+    ring_order = normalize_ring_order(getattr(args, "lab9_ring_order", None) or "auto")
     tile_rows = int(getattr(args, "pallas_tile_rows", 4) or 4)
     min_cols = int(getattr(args, "pallas_min_cols", 128) or 128)
     dtype_name = str(getattr(args, "dtype", "bfloat16") or "bfloat16")
@@ -1280,8 +1280,8 @@ def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> di
     spec["fair_comparison_notes"] = [
         "xla_all_reduce is the apples-to-apples roofline: same case, same shard tile, same wire dtype",
         "pmap_psum is a continuity baseline from earlier labs, not the same shaped case",
-        "pmap_token_ring is the N/2 byte-penalty foil; use --lab11-ring-order ids when you want a pure byte-model comparison to that ID-order ring",
-        "--lab11-ring-order auto is a topology experiment layered on top of the byte-optimal algorithm",
+        "pmap_token_ring is the N/2 byte-penalty foil; use --lab9-ring-order ids when you want a pure byte-model comparison to that ID-order ring",
+        "--lab9-ring-order auto is a topology experiment layered on top of the byte-optimal algorithm",
     ]
     spec["student_checkpoint_questions"] = [
         "Why is 2*(N-1)/N*B a lower bound and not just a clever schedule?",
@@ -1305,7 +1305,7 @@ def render_markdown(spec: dict[str, Any]) -> str:
 def _selftest() -> int:  # pragma: no cover - exercised manually / in CI.
     """Standalone correctness sweep on forced host devices.
 
-    Run as ``python labs/lab11_optimal_all_reduce.py``; sets
+    Run as ``python labs/lab9_optimal_all_reduce.py``; sets
     ``--xla_force_host_platform_device_count=4`` before importing jax so the
     full 4-device schedule runs on CPU.
     """

@@ -76,7 +76,7 @@ Capture one profiler trace and put XLA dumps inside the run directory:
 Multi-host launch notes
 =======================
 
-The Lab 10 smoke operations record process topology and process collectives, but
+The Lab 11 smoke operations record process topology and process collectives, but
 this script intentionally does not launch other hosts by itself. Use the cluster
 launcher for your environment, then run this same Python file on each process.
 Common environment variables worth checking before launch are:
@@ -218,9 +218,9 @@ LAB4_OPS = (
     "semaphore_bug_zoo",
 )
 
-# Labs 5-9 compare a built-in/reference path, a custom Pallas path, and a spec
-# artifact where useful. The spec artifacts make run directories double as lab
-# handouts.
+# Labs 5-10 compare a built-in/reference path, a custom or explicit schedule
+# path, and a spec artifact where useful. The spec artifacts make run
+# directories double as lab handouts.
 LAB5_OPS = (
     "pmap_ring_all_gather",
     "pmap_all_gather",
@@ -252,31 +252,31 @@ LAB8_OPS = (
     "lab8_chunked_pipeline_spec",
 )
 
-LAB9_OPS = (
-    "pmap_all_gather",
-    "pmap_2d_staged_all_gather",
-    "pallas_2d_staged_all_gather",
-    "lab9_mesh_collectives_spec",
-)
-
-# Lab 10 is about launch topology and process collectives. It is grouped here
-# with the timed ops so the same sweep/report machinery can record it.
-LAB10_OPS = (
-    "lab10_topology_smoke",
-    "lab10_process_collective_smoke",
-    "lab10_multihost_spec",
-)
-
-# Lab 11 closes the byte gap: the same all-reduce as reduce-scatter plus
+# Lab 9 closes the byte gap: the same all-reduce as reduce-scatter plus
 # all-gather over B/N shards, matching lax.psum's 2*(N-1)/N*B volume. The
 # whole-token pmap_token_ring rides along as the N/2-penalty foil.
-LAB11_OPS = (
+LAB9_OPS = (
     "pmap_psum",
     "pmap_token_ring",
     "pmap_rs_ag_all_reduce",
     "pmap_rs_ag_all_reduce_bidir",
     "xla_all_reduce",
-    "lab11_optimal_all_reduce_spec",
+    "lab9_optimal_all_reduce_spec",
+)
+
+LAB10_OPS = (
+    "pmap_all_gather",
+    "pmap_2d_staged_all_gather",
+    "pallas_2d_staged_all_gather",
+    "lab10_mesh_collectives_spec",
+)
+
+# Lab 11 is about launch topology and process collectives. It is grouped here
+# with the timed ops so the same sweep/report machinery can record it.
+LAB11_OPS = (
+    "lab11_topology_smoke",
+    "lab11_process_collective_smoke",
+    "lab11_multihost_spec",
 )
 
 # Fast membership tests for dispatch. The names in these sets are not arbitrary:
@@ -339,9 +339,9 @@ LAB_SPEC_OPS = {
     "lab6_reduce_scatter_spec": "labs.lab6_reduce_scatter",
     "lab7_all_reduce_spec": "labs.lab7_all_reduce",
     "lab8_chunked_pipeline_spec": "labs.lab8_chunked_pipeline",
-    "lab9_mesh_collectives_spec": "labs.lab9_mesh_collectives",
-    "lab10_multihost_spec": "labs.lab10_multihost_smoke",
-    "lab11_optimal_all_reduce_spec": "labs.lab11_optimal_all_reduce",
+    "lab9_optimal_all_reduce_spec": "labs.lab9_optimal_all_reduce",
+    "lab10_mesh_collectives_spec": "labs.lab10_mesh_collectives",
+    "lab11_multihost_spec": "labs.lab11_multihost_smoke",
 }
 
 # ALL_OPS is the validation list for --ops. If a new operation should be
@@ -370,8 +370,8 @@ ALL_OPS = (
     "pmap_rs_ag_all_reduce_bidir",
     "xla_all_reduce",
     *LAB_SPEC_OPS,
-    "lab10_topology_smoke",
-    "lab10_process_collective_smoke",
+    "lab11_topology_smoke",
+    "lab11_process_collective_smoke",
     "external",
 )
 
@@ -1100,37 +1100,37 @@ def apply_lab_defaults(args: argparse.Namespace) -> None:
         return
 
     if args.lab == "lab9":
-        # Lab 9 compares flat all-gather with staged logical-2D mesh movement.
-        if args.ops is None:
-            args.ops = ",".join(LAB9_OPS)
-        if args.sizes is None:
-            args.sizes = "1KiB,64KiB,1MiB"
-        if args.run_name is None:
-            args.run_name = f"lab9_mesh_collectives-{now_slug()}"
-        return
-
-    if args.lab == "lab10":
-        # Lab 10 is topology/control-plane validation; payload size is mostly a
-        # marker carried through the common row schema.
-        if args.ops is None:
-            args.ops = ",".join(LAB10_OPS)
-        if args.sizes is None:
-            args.sizes = "1KiB"
-        if args.run_name is None:
-            args.run_name = f"lab10_multihost_smoke-{now_slug()}"
-        return
-
-    if args.lab == "lab11":
-        # Lab 11 is the bandwidth-optimal shard ring; the default sweep spans
+        # Lab 9 is the bandwidth-optimal shard ring; the default sweep spans
         # the alpha-beta crossover (small sizes, where the naive ring wins on
         # latency) through the bandwidth regime where matching psum's volume
         # pays off.
         if args.ops is None:
-            args.ops = ",".join(LAB11_OPS)
+            args.ops = ",".join(LAB9_OPS)
         if args.sizes is None:
             args.sizes = "16KiB,256KiB,1MiB,4MiB,16MiB"
         if args.run_name is None:
-            args.run_name = f"lab11_optimal_all_reduce-{now_slug()}"
+            args.run_name = f"lab9_optimal_all_reduce-{now_slug()}"
+        return
+
+    if args.lab == "lab10":
+        # Lab 10 compares flat all-gather with staged logical-2D mesh movement.
+        if args.ops is None:
+            args.ops = ",".join(LAB10_OPS)
+        if args.sizes is None:
+            args.sizes = "1KiB,64KiB,1MiB"
+        if args.run_name is None:
+            args.run_name = f"lab10_mesh_collectives-{now_slug()}"
+        return
+
+    if args.lab == "lab11":
+        # Lab 11 is topology/control-plane validation; payload size is mostly a
+        # marker carried through the common row schema.
+        if args.ops is None:
+            args.ops = ",".join(LAB11_OPS)
+        if args.sizes is None:
+            args.sizes = "1KiB"
+        if args.run_name is None:
+            args.run_name = f"lab11_multihost_smoke-{now_slug()}"
         return
 
     raise ValueError(f"unknown lab {args.lab!r}")
@@ -1443,7 +1443,7 @@ def check_addressable_result(
         dtype=np.float32,
     )
 
-    # Lab 9 pmap returns [receiver, owner_rank, col] while its full Pallas-style
+    # Lab 10 pmap returns [receiver, owner_rank, col] while its full Pallas-style
     # expected payload may include a singleton row dimension.
     if expected_host.ndim == got.ndim + 1 and expected_host.shape[2] == 1:
         expected_host = expected_host[:, :, 0, :]
@@ -1831,9 +1831,9 @@ def run_pmap_2d_staged_all_gather(
     dtype: Any,
     n_devices: int,
 ) -> BenchResult:
-    """Run the pmap/lax reference for Lab 9's staged 2D all-gather."""
+    """Run the pmap/lax reference for Lab 10's staged 2D all-gather."""
     try:
-        from labs import lab9_mesh_collectives
+        from labs import lab10_mesh_collectives
     except Exception as exc:
         return BenchResult(
             op="pmap_2d_staged_all_gather",
@@ -1846,17 +1846,17 @@ def run_pmap_2d_staged_all_gather(
         )
 
     try:
-        # The Lab 9 module owns the mesh-shape and axis-order teaching logic so
+        # The Lab 10 module owns the mesh-shape and axis-order teaching logic so
         # the pmap and Pallas variants stay comparable.
-        case = lab9_mesh_collectives.build_pmap_case(
+        case = lab10_mesh_collectives.build_pmap_case(
             jax=jax,
             jnp=jnp,
             devices=jax.devices(),
             axis_name=args.axis_name,
             payload_bytes=payload_bytes,
             dtype=dtype,
-            mesh_shape_name=args.lab9_mesh_shape,
-            axis_order=args.lab9_axis_order,
+            mesh_shape_name=args.lab10_mesh_shape,
+            axis_order=args.lab10_axis_order,
             direction=args.neighbor_direction,
         )
     except Exception as exc:
@@ -2958,7 +2958,7 @@ def run_xla_token_ring(
     )
 
 
-def _run_lab11_ring(
+def _run_lab9_ring(
     jax: Any,
     jnp: Any,
     args: argparse.Namespace,
@@ -2970,7 +2970,7 @@ def _run_lab11_ring(
     op: str,
     kernel_mode: str,
 ) -> BenchResult:
-    """Run one Lab 11 all-reduce implementation in a given kernel mode.
+    """Run one Lab 9 all-reduce implementation in a given kernel mode.
 
     ``kernel_mode`` pins the implementation per benchmark op: ``rs-ag`` (the
     bandwidth-optimal shard ring), ``rs-ag-bidir`` (two counter-rotating
@@ -2981,7 +2981,7 @@ def _run_lab11_ring(
     layer = "shard_map/psum" if kernel_mode == "xla-psum" else "shard_map/ppermute"
 
     try:
-        from labs import lab11_optimal_all_reduce
+        from labs import lab9_optimal_all_reduce
     except Exception as exc:
         return BenchResult(
             op=op, layer=layer, payload_bytes=payload_bytes,
@@ -2989,9 +2989,9 @@ def _run_lab11_ring(
         )
 
     try:
-        # Lab 11's case builder owns shard sizing, ring layout, and expected
+        # Lab 9's case builder owns shard sizing, ring layout, and expected
         # sums. The harness records the byte model exposed by the case.
-        case = lab11_optimal_all_reduce.build_case(
+        case = lab9_optimal_all_reduce.build_case(
             jax=jax,
             jnp=jnp,
             devices=jax.devices(),
@@ -3002,7 +3002,7 @@ def _run_lab11_ring(
             kernel_mode=kernel_mode,
             tile_rows=args.pallas_tile_rows,
             min_cols=args.pallas_min_cols,
-            ring_order=args.lab11_ring_order,
+            ring_order=args.lab9_ring_order,
         )
     except Exception as exc:
         return BenchResult(
@@ -3056,8 +3056,8 @@ def run_pmap_rs_ag_all_reduce(
     jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
     payload_bytes: int, dtype: Any, n_devices: int,
 ) -> BenchResult:
-    """Lab 11 bandwidth-optimal shard ring (reduce-scatter + all-gather)."""
-    return _run_lab11_ring(
+    """Lab 9 bandwidth-optimal shard ring (reduce-scatter + all-gather)."""
+    return _run_lab9_ring(
         jax, jnp, args, run, payload_bytes, dtype, n_devices,
         op="pmap_rs_ag_all_reduce", kernel_mode="rs-ag",
     )
@@ -3067,8 +3067,8 @@ def run_pmap_rs_ag_all_reduce_bidir(
     jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
     payload_bytes: int, dtype: Any, n_devices: int,
 ) -> BenchResult:
-    """Lab 11 bidirectional variant: two counter-rotating half-rings."""
-    return _run_lab11_ring(
+    """Lab 9 bidirectional variant: two counter-rotating half-rings."""
+    return _run_lab9_ring(
         jax, jnp, args, run, payload_bytes, dtype, n_devices,
         op="pmap_rs_ag_all_reduce_bidir", kernel_mode="rs-ag-bidir",
     )
@@ -3078,8 +3078,8 @@ def run_xla_all_reduce(
     jax: Any, jnp: Any, args: argparse.Namespace, run: RunContext,
     payload_bytes: int, dtype: Any, n_devices: int,
 ) -> BenchResult:
-    """Lab 11 roofline: lax.psum on the same case in the same wire dtype."""
-    return _run_lab11_ring(
+    """Lab 9 roofline: lax.psum on the same case in the same wire dtype."""
+    return _run_lab9_ring(
         jax, jnp, args, run, payload_bytes, dtype, n_devices,
         op="xla_all_reduce", kernel_mode="xla-psum",
     )
@@ -3094,7 +3094,7 @@ def run_pallas_2d_staged_all_gather(
     dtype: Any,
     n_devices: int,
 ) -> BenchResult:
-    """Run Lab 9's custom Pallas staged all-gather over a logical 2D mesh."""
+    """Run Lab 10's custom Pallas staged all-gather over a logical 2D mesh."""
     if jax.default_backend() != "tpu":
         return BenchResult(
             op="pallas_2d_staged_all_gather",
@@ -3106,7 +3106,7 @@ def run_pallas_2d_staged_all_gather(
             note="requires TPU backend",
         )
     try:
-        from labs import lab9_mesh_collectives
+        from labs import lab10_mesh_collectives
     except Exception as exc:
         return BenchResult(
             op="pallas_2d_staged_all_gather",
@@ -3119,17 +3119,17 @@ def run_pallas_2d_staged_all_gather(
         )
 
     try:
-        # The JAX device mesh remains flat; Lab 9 maps flat ranks into a logical
+        # The JAX device mesh remains flat; Lab 10 maps flat ranks into a logical
         # 2D coordinate system so students can study staged topology effects.
-        case = lab9_mesh_collectives.build_pallas_case(
+        case = lab10_mesh_collectives.build_pallas_case(
             jax=jax,
             jnp=jnp,
             devices=jax.devices(),
             axis_name=args.axis_name,
             payload_bytes=payload_bytes,
             dtype=dtype,
-            mesh_shape_name=args.lab9_mesh_shape,
-            axis_order=args.lab9_axis_order,
+            mesh_shape_name=args.lab10_mesh_shape,
+            axis_order=args.lab10_axis_order,
             direction=args.neighbor_direction,
             tile_rows=args.pallas_tile_rows,
             min_cols=args.pallas_min_cols,
@@ -3702,19 +3702,19 @@ def run_lab_spec_op(
     )
 
 
-def run_lab10_topology_smoke(
+def run_lab11_topology_smoke(
     jax: Any,
     args: argparse.Namespace,
     run: RunContext,
     payload_bytes: int,
     n_devices: int,
 ) -> BenchResult:
-    """Record Lab 10 process/device topology facts."""
+    """Record Lab 11 process/device topology facts."""
     try:
-        from labs import lab10_multihost_smoke
+        from labs import lab11_multihost_smoke
     except Exception as exc:
         return BenchResult(
-            op="lab10_topology_smoke",
+            op="lab11_topology_smoke",
             layer="lab/topology",
             payload_bytes=payload_bytes,
             logical_bytes=0,
@@ -3724,16 +3724,16 @@ def run_lab10_topology_smoke(
         )
 
     try:
-        spec = lab10_multihost_smoke.build_topology_smoke(
+        spec = lab11_multihost_smoke.build_topology_smoke(
             jax=jax,
             args=args,
             payload_bytes=payload_bytes,
             n_devices=n_devices,
         )
-        markdown = lab10_multihost_smoke.render_markdown(spec)
+        markdown = lab11_multihost_smoke.render_markdown(spec)
     except Exception as exc:
         return BenchResult(
-            op="lab10_topology_smoke",
+            op="lab11_topology_smoke",
             layer="lab/topology",
             payload_bytes=payload_bytes,
             logical_bytes=0,
@@ -3744,14 +3744,14 @@ def run_lab10_topology_smoke(
 
     artifact_dir = run.run_dir / "lab_artifacts"
     artifact_dir.mkdir(parents=True, exist_ok=True)
-    stem = f"{run.case_index:04d}_lab10_topology_smoke"
+    stem = f"{run.case_index:04d}_lab11_topology_smoke"
     json_path = artifact_dir / f"{stem}.json"
     md_path = artifact_dir / f"{stem}.md"
     write_json(json_path, spec)
     md_path.write_text(markdown, encoding="utf-8")
     ok = bool(spec.get("ok", True))
     return BenchResult(
-        op="lab10_topology_smoke",
+        op="lab11_topology_smoke",
         layer="lab/topology",
         payload_bytes=payload_bytes,
         logical_bytes=0,
@@ -3766,19 +3766,19 @@ def run_lab10_topology_smoke(
     )
 
 
-def run_lab10_process_collective_smoke(
+def run_lab11_process_collective_smoke(
     jax: Any,
     args: argparse.Namespace,
     run: RunContext,
     payload_bytes: int,
     n_devices: int,
 ) -> BenchResult:
-    """Run Lab 10's process sync/all-gather smoke check."""
+    """Run Lab 11's process sync/all-gather smoke check."""
     try:
-        from labs import lab10_multihost_smoke
+        from labs import lab11_multihost_smoke
     except Exception as exc:
         return BenchResult(
-            op="lab10_process_collective_smoke",
+            op="lab11_process_collective_smoke",
             layer="lab/multihost",
             payload_bytes=payload_bytes,
             logical_bytes=0,
@@ -3788,16 +3788,16 @@ def run_lab10_process_collective_smoke(
         )
 
     try:
-        spec = lab10_multihost_smoke.build_process_collective_smoke(
+        spec = lab11_multihost_smoke.build_process_collective_smoke(
             jax=jax,
             args=args,
             payload_bytes=payload_bytes,
             n_devices=n_devices,
         )
-        markdown = lab10_multihost_smoke.render_markdown(spec)
+        markdown = lab11_multihost_smoke.render_markdown(spec)
     except Exception as exc:
         return BenchResult(
-            op="lab10_process_collective_smoke",
+            op="lab11_process_collective_smoke",
             layer="lab/multihost",
             payload_bytes=payload_bytes,
             logical_bytes=0,
@@ -3808,7 +3808,7 @@ def run_lab10_process_collective_smoke(
 
     artifact_dir = run.run_dir / "lab_artifacts"
     artifact_dir.mkdir(parents=True, exist_ok=True)
-    stem = f"{run.case_index:04d}_lab10_process_collective_smoke"
+    stem = f"{run.case_index:04d}_lab11_process_collective_smoke"
     json_path = artifact_dir / f"{stem}.json"
     md_path = artifact_dir / f"{stem}.md"
     write_json(json_path, spec)
@@ -3816,7 +3816,7 @@ def run_lab10_process_collective_smoke(
     process_count = int(spec.get("process_count") or 1)
     logical_bytes = payload_bytes * process_count
     return BenchResult(
-        op="lab10_process_collective_smoke",
+        op="lab11_process_collective_smoke",
         layer="lab/multihost",
         payload_bytes=payload_bytes,
         logical_bytes=logical_bytes,
@@ -4626,9 +4626,10 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "lab profile; lab1 is single-hop communication, "
             "lab2 is token ring, lab3 is Pallas memory spaces, "
-            "lab4 is semaphore bug zoo, lab5-lab9 are composed custom "
-            "collectives, lab10 is multi-host run-control smoke, "
-            "lab11 is the bandwidth-optimal shard-ring all-reduce"
+            "lab4 is semaphore bug zoo, lab5-lab8 are composed custom "
+            "collectives, lab9 is the bandwidth-optimal shard-ring "
+            "all-reduce, lab10 is staged mesh all-gather, and lab11 is "
+            "multi-host run-control smoke"
         ),
     )
     parser.add_argument(
@@ -4731,37 +4732,71 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "--lab9-mesh-shape",
+        "--lab10-mesh-shape",
         default="auto",
-        help="Lab 9 logical 2D mesh shape, for example 2x2, 2x4, or auto",
+        help="Lab 10 logical 2D mesh shape, for example 2x2, 2x4, or auto",
+    )
+    parser.add_argument(
+        "--lab9-mesh-shape",
+        dest="lab10_mesh_shape",
+        default=argparse.SUPPRESS,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--lab10-axis-order",
+        choices=("x_then_y", "y_then_x"),
+        default="x_then_y",
+        help="Lab 10 staged all-gather axis order",
     )
     parser.add_argument(
         "--lab9-axis-order",
+        dest="lab10_axis_order",
         choices=("x_then_y", "y_then_x"),
-        default="x_then_y",
-        help="Lab 9 staged all-gather axis order",
+        default=argparse.SUPPRESS,
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
-        "--lab11-ring-order",
+        "--lab9-ring-order",
         choices=("auto", "ids"),
         default="auto",
         help=(
-            "Lab 11 ring layout: auto walks a unit-step Hamiltonian cycle over "
+            "Lab 9 ring layout: auto walks a unit-step Hamiltonian cycle over "
             "device coords when one exists; ids uses jax.devices() order and "
             "is the cleanest byte-only comparison with pmap_token_ring"
         ),
     )
     parser.add_argument(
-        "--lab10-expected-process-count",
+        "--lab11-ring-order",
+        dest="lab9_ring_order",
+        choices=("auto", "ids"),
+        default=argparse.SUPPRESS,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--lab11-expected-process-count",
         type=int,
         default=None,
-        help="Lab 10 validation: expected jax.process_count()",
+        help="Lab 11 validation: expected jax.process_count()",
+    )
+    parser.add_argument(
+        "--lab10-expected-process-count",
+        dest="lab11_expected_process_count",
+        type=int,
+        default=argparse.SUPPRESS,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--lab11-expected-global-devices",
+        type=int,
+        default=None,
+        help="Lab 11 validation: expected len(jax.devices())",
     )
     parser.add_argument(
         "--lab10-expected-global-devices",
+        dest="lab11_expected_global_devices",
         type=int,
-        default=None,
-        help="Lab 10 validation: expected len(jax.devices())",
+        default=argparse.SUPPRESS,
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--lab3-scale",
@@ -4950,10 +4985,10 @@ def dispatch_case(
             )
         if op in LAB_SPEC_OPS:
             return run_lab_spec_op(jax, args, run, op, payload_bytes, n_devices)
-        if op == "lab10_topology_smoke":
-            return run_lab10_topology_smoke(jax, args, run, payload_bytes, n_devices)
-        if op == "lab10_process_collective_smoke":
-            return run_lab10_process_collective_smoke(
+        if op == "lab11_topology_smoke":
+            return run_lab11_topology_smoke(jax, args, run, payload_bytes, n_devices)
+        if op == "lab11_process_collective_smoke":
+            return run_lab11_process_collective_smoke(
                 jax, args, run, payload_bytes, n_devices
             )
         if op == "external":

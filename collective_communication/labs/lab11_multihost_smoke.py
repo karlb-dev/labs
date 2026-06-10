@@ -1,10 +1,10 @@
-"""Lab 10: multi-host smoke, process collectives, and hierarchy planning.
+"""Lab 11: multi-host smoke, process collectives, and hierarchy planning.
 
-This file intentionally contains only the concept code for Lab 10. The benchmark
+This file intentionally contains only the concept code for Lab 11. The benchmark
 harness owns run directories, timing rows, CSV/JSONL output, plotting, and
 profiler capture.
 
-Lab 10 is different from Labs 1-9:
+Lab 11 is different from Labs 1-10:
 
 * It is not a new Pallas remote-DMA kernel.
 * It is a launch-control and topology-truth lab.
@@ -108,17 +108,17 @@ PROCESS_FACT_COLUMNS = (
 
 
 LAB_SPEC: dict[str, Any] = {
-    "lab": "lab10",
-    "title": "Lab 10: Multi-Host Smoke And Hierarchy",
+    "lab": "lab11",
+    "title": "Lab 11: Multi-Host Smoke And Hierarchy",
     "goal": (
         "Move from one-process/local-device thinking to process topology, "
         "global devices, launch discipline, process collectives, and "
         "hierarchical collective plans."
     ),
     "implemented_ops": [
-        "`lab10_topology_smoke`: records local/global/process device facts",
-        "`lab10_process_collective_smoke`: syncs processes and all-gathers small payloads",
-        "`lab10_multihost_spec`: records launch and hierarchy planning artifacts",
+        "`lab11_topology_smoke`: records local/global/process device facts",
+        "`lab11_process_collective_smoke`: syncs processes and all-gathers small payloads",
+        "`lab11_multihost_spec`: records launch and hierarchy planning artifacts",
     ],
     "deferred_ops": [
         "Call `jax.distributed.initialize()` in the outer runner before device access when auto-init is absent",
@@ -141,15 +141,15 @@ LAB_SPEC: dict[str, Any] = {
     "artifacts": [
         "run_metadata.json",
         "diagnostics/runtime.json",
-        "lab_artifacts/*lab10_topology_smoke*",
-        "lab_artifacts/*lab10_process_collective_smoke*",
-        "lab_artifacts/*lab10_multihost_spec*",
+        "lab_artifacts/*lab11_topology_smoke*",
+        "lab_artifacts/*lab11_process_collective_smoke*",
+        "lab_artifacts/*lab11_multihost_spec*",
         "logs/console.log",
     ],
     "next_steps": [
         "Run this smoke under a real multi-host TPU launcher",
         "Use the recorded process groups to design hierarchical reduce-scatter",
-        "Extend Lab 9 staged mesh collectives across process boundaries",
+        "Extend Lab 10 staged mesh collectives across process boundaries",
     ],
 }
 
@@ -423,7 +423,7 @@ def _expectation_checks(
     expected_process_count: int | None,
     expected_global_devices: int | None,
 ) -> dict[str, bool | None]:
-    """Build the core Lab 10 topology check table."""
+    """Build the core Lab 11 topology check table."""
 
     return {
         "local_device_count_matches_runner": local_device_count == n_devices_from_runner,
@@ -620,7 +620,7 @@ def _launch_plan(process_count: int) -> dict[str, Any]:
     """Record launch rules that are easy to verify from artifacts."""
 
     return {
-        "single_process_command": "python collective_comm_bench/collective_bench.py --lab lab10",
+        "single_process_command": "python collective_comm_bench/collective_bench.py --lab lab11",
         "multi_process_rule": (
             "run the same command on every process after JAX distributed "
             "initialization is configured by the TPU launcher or by explicit "
@@ -689,7 +689,7 @@ def build_topology_smoke(
     payload_bytes: int,
     n_devices: int,
 ) -> dict[str, Any]:
-    """Build the topology smoke artifact for Lab 10.
+    """Build the topology smoke artifact for Lab 11.
 
     This function intentionally does not call `jax.distributed.initialize()`.
     In a real multi-host runner, initialization must happen before this function
@@ -705,8 +705,8 @@ def build_topology_smoke(
     process_count = int(jax.process_count())
     local_device_count = len(local_devices)
     global_device_count = len(global_devices)
-    expected_process_count = _expected_value(args, "lab10_expected_process_count")
-    expected_global_devices = _expected_value(args, "lab10_expected_global_devices")
+    expected_process_count = _expected_value(args, "lab11_expected_process_count")
+    expected_global_devices = _expected_value(args, "lab11_expected_global_devices")
     topology_summary = _topology_summary(
         local_devices=local_devices,
         global_devices=global_devices,
@@ -737,7 +737,7 @@ def build_topology_smoke(
     )
     spec.update(
         {
-            "op": "lab10_topology_smoke",
+            "op": "lab11_topology_smoke",
             "ok": _checks_pass(checks),
             "process_index": process_index,
             "process_count": process_count,
@@ -782,8 +782,8 @@ def build_topology_smoke(
 # ---------------------------------------------------------------------------
 
 
-def _lab10_sync_name(*, process_count: int, elems: int) -> str:
-    return f"collective_comm_bench_lab10_p{process_count}_e{elems}"
+def _lab11_sync_name(*, process_count: int, elems: int) -> str:
+    return f"collective_comm_bench_lab11_p{process_count}_e{elems}"
 
 
 def _process_payload(jnp: Any, *, process_index: int, elems: int) -> Any:
@@ -900,14 +900,14 @@ def build_process_collective_smoke(
         payload_bytes=payload_bytes,
         n_devices=n_devices,
     )
-    spec["op"] = "lab10_process_collective_smoke"
+    spec["op"] = "lab11_process_collective_smoke"
 
     process_index = int(spec["process_index"])
     process_count = int(spec["process_count"])
     local_device_count = int(spec["local_device_count"])
     global_device_count = int(spec["global_device_count"])
     elems = max(1, -(-int(payload_bytes) // 4))
-    sync_name = _lab10_sync_name(process_count=process_count, elems=elems)
+    sync_name = _lab11_sync_name(process_count=process_count, elems=elems)
 
     try:
         payload = _process_payload(jnp, process_index=process_index, elems=elems)
@@ -938,7 +938,7 @@ def build_process_collective_smoke(
             # some JAX versions cannot all-gather NumPy string dtypes here.
             multihost_utils.assert_equal(
                 contract_assert_values,
-                fail_message="Lab 10 process collective contract mismatch",
+                fail_message="Lab 11 process collective contract mismatch",
             )
             contract_assert_equal_reached = True
 
@@ -1040,7 +1040,7 @@ def build_process_collective_smoke(
 
 
 def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> dict[str, Any]:
-    """Build the Lab 10 planning artifact without running process collectives."""
+    """Build the Lab 11 planning artifact without running process collectives."""
 
     spec = build_topology_smoke(
         jax=jax,
@@ -1050,7 +1050,7 @@ def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> di
     )
     spec.update(
         {
-            "op": "lab10_multihost_spec",
+            "op": "lab11_multihost_spec",
             "hierarchical_collective_examples": _hierarchical_collective_examples(),
             "launch_invariants": [
                 "distributed initialization happens before device access",
@@ -1061,7 +1061,7 @@ def build_spec(*, jax: Any, args: Any, payload_bytes: int, n_devices: int) -> di
                 "hierarchical byte models separate process-local and cross-process traffic",
             ],
             "future_pallas_plan": [
-                "construct a global mesh after Lab 10 topology is reliable",
+                "construct a global mesh after Lab 11 topology is reliable",
                 "choose process-local and cross-process mesh axes from device records",
                 "reuse Lab 6 reduce-scatter and Lab 5 all-gather ownership models",
                 "add phase-specific collective IDs and profile scopes",
@@ -1101,7 +1101,7 @@ def render_json(spec: dict[str, Any]) -> str:
 
 
 def render_markdown(spec: dict[str, Any]) -> str:
-    """Render a teaching-oriented Markdown artifact for one Lab 10 op."""
+    """Render a teaching-oriented Markdown artifact for one Lab 11 op."""
 
     lines = [lab_spec_utils.render_markdown(spec).rstrip(), ""]
     lines.extend(
@@ -1169,7 +1169,7 @@ def render_markdown(spec: dict[str, Any]) -> str:
         lines.extend(["", "### Process Group Summaries", ""])
         lines.extend(_markdown_table(["process", "device count", "device ids", "device kinds"], rows))
 
-    if spec.get("op") == "lab10_process_collective_smoke":
+    if spec.get("op") == "lab11_process_collective_smoke":
         lines.extend(
             [
                 "",
@@ -1258,7 +1258,7 @@ def render_markdown(spec: dict[str, Any]) -> str:
         )
         lines.extend([f"- {item}" for item in launch.get("all_processes_must_match", [])])
 
-    if spec.get("op") == "lab10_multihost_spec":
+    if spec.get("op") == "lab11_multihost_spec":
         lines.extend(["", "## Future Pallas Plan", ""])
         lines.extend([f"- {item}" for item in spec.get("future_pallas_plan", [])])
         lines.extend(["", "## Capstone Report Checklist", ""])

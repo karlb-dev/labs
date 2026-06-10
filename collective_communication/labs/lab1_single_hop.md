@@ -39,8 +39,9 @@ Lab 1 is the first custom communication brick. It prepares the ground for:
 | Lab 6: reduce-scatter | Add ownership of chunks and local reduction. |
 | Lab 7: all-reduce | Compose reduce-scatter plus all-gather. |
 | Lab 8: pipelined ring | Split whole-tile copies into chunks and overlap transfers. |
-| Lab 9: 2D mesh collectives | Replace a flat ring with topology-aware staged movement. |
-| Lab 10: multi-host hierarchy | Apply the same invariants across process and host boundaries. |
+| Lab 9: bandwidth-optimal all-reduce | Replace whole-token circulation with shard movement. |
+| Lab 10: 2D mesh collectives | Replace a flat ring with topology-aware staged movement. |
+| Lab 11: multi-host hierarchy | Apply the same invariants across process and host boundaries. |
 
 The important habit starts here: every communication lab must state who owns each byte before and after the operation.
 
