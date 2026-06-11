@@ -162,6 +162,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # global tier-a default of 4 would starve the probes.
         "max_examples_tier_a": "20",
     },
+    "lab5": {
+        "module": "labs.lab05_patching_causal_tracing",
+        "run_name": "lab05_patching_causal_tracing",
+        "description": "Activation patching and causal tracing: where is a fact causally recovered?",
+        # The patching grid needs several facts to aggregate; 4 would make
+        # the localization map an anecdote.
+        "max_examples_tier_a": "6",
+    },
 }
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
@@ -1514,20 +1522,36 @@ def resolve_component_anatomy(
     )
 
 
+def _contrib_hook_all_positions(store: dict, key: tuple) -> Any:
+    """Forward hook capturing a module's output at every position."""
+
+    def hook(module: Any, hook_args: tuple, output: Any) -> None:
+        out = output[0] if isinstance(output, tuple) else output
+        store[key] = tensor_cpu_float(out[0])
+
+    return hook
+
+
 def run_with_component_cache(
-    bundle: ModelBundle, prompt: str, comp_anatomy: ComponentAnatomy
+    bundle: ModelBundle, prompt: str, comp_anatomy: ComponentAnatomy, *, all_positions: bool = False
 ) -> ComponentCapture:
-    """Run one prompt capturing residual streams AND per-block contributions."""
+    """Run one prompt capturing residual streams AND per-block contributions.
+
+    With ``all_positions=True`` the contribution tensors are [L, seq, d_model]
+    instead of [L, d_model] (final position only) — used by patching labs that
+    need clean component outputs at arbitrary positions.
+    """
     import torch
 
+    hook_factory = _contrib_hook_all_positions if all_positions else _contrib_hook
     store: dict[tuple, Any] = {}
     handles = []
     for i, block in enumerate(bundle.blocks):
         handles.append(
-            getattr(block, comp_anatomy.attn_hook_path).register_forward_hook(_contrib_hook(store, ("attn", i)))
+            getattr(block, comp_anatomy.attn_hook_path).register_forward_hook(hook_factory(store, ("attn", i)))
         )
         handles.append(
-            getattr(block, comp_anatomy.mlp_hook_path).register_forward_hook(_contrib_hook(store, ("mlp", i)))
+            getattr(block, comp_anatomy.mlp_hook_path).register_forward_hook(hook_factory(store, ("mlp", i)))
         )
     try:
         capture = run_with_residual_cache(bundle, prompt)
@@ -1936,6 +1960,203 @@ def run_with_head_ablation(
 
 
 # ---------------------------------------------------------------------------
+# Activation patching: interchange interventions on the residual stream (Lab 5+)
+# ---------------------------------------------------------------------------
+#
+# The patch convention matches the stream convention exactly: patching
+# "streams[k] at position p" replaces the INPUT to block k (for k < L) or the
+# input to the final norm (k = L) at that position. A run patched with its
+# own vectors is therefore a no-op — and run_patch_noop_check enforces that
+# bit-for-bit before any patching science, because a silent off-by-one in
+# layer or position indexing would produce a beautiful, wrong heatmap.
+
+
+def _forward_logits(bundle: ModelBundle, prompt: str, pre_hooks: Sequence[tuple[Any, Any]]) -> Any:
+    """One forward with the given (module, pre_hook_fn) pairs installed."""
+    import torch
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+    handles = [m.register_forward_pre_hook(fn) for m, fn in pre_hooks]
+    try:
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        for h in handles:
+            h.remove()
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+def run_with_residual_patch(
+    bundle: ModelBundle, prompt: str, layer: int, position: int, vector: Any
+) -> Any:
+    """Forward pass with streams[layer][position] replaced by ``vector``.
+
+    ``vector`` is a [d_model] float32 CPU tensor (the bench's stream storage
+    format); it is cast to the model's device/dtype at the hook site.
+    Returns final-position logits, float32 CPU.
+    """
+    n_layers = bundle.anatomy.n_layers
+    if not 0 <= layer <= n_layers:
+        raise ValueError(f"stream layer must be in [0, {n_layers}], got {layer}")
+    module = bundle.final_norm if layer == n_layers else bundle.blocks[layer]
+
+    def patch_hook(mod: Any, hook_args: tuple) -> Any:
+        hidden = hook_args[0].clone()
+        hidden[0, position] = vector.to(hidden.device, hidden.dtype)
+        return (hidden,) + tuple(hook_args[1:])
+
+    return _forward_logits(bundle, prompt, [(module, patch_hook)])
+
+
+def run_with_component_patch(
+    bundle: ModelBundle,
+    prompt: str,
+    comp_anatomy: ComponentAnatomy,
+    component_type: str,
+    layer: int,
+    position: int,
+    vector: Any,
+) -> Any:
+    """Forward pass with one component's write at one position replaced.
+
+    Replaces the verified contribution tensor (module output, or post-norm
+    output on post-norm architectures) for ``attn`` or ``mlp`` at ``layer``,
+    ``position`` — the same object Lab 2 scored and Lab 3 ablated.
+    """
+    import torch
+
+    hook_path = comp_anatomy.attn_hook_path if component_type == "attn" else comp_anatomy.mlp_hook_path
+    module = getattr(bundle.blocks[layer], hook_path)
+
+    def patch_out_hook(mod: Any, hook_args: tuple, output: Any) -> Any:
+        if isinstance(output, tuple):
+            out = output[0].clone()
+            out[0, position] = vector.to(out.device, out.dtype)
+            return (out,) + tuple(output[1:])
+        out = output.clone()
+        out[0, position] = vector.to(out.device, out.dtype)
+        return out
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+    handle = module.register_forward_hook(patch_out_hook)
+    try:
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        handle.remove()
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+def run_patch_noop_check(
+    ctx: RunContext, bundle: ModelBundle, prompt: str, *, atol: float = 1e-4
+) -> dict[str, Any]:
+    """Self-check: patching a run with its own vectors must change nothing.
+
+    Verifies hook placement and the streams[k] convention end-to-end: one
+    early-block patch, one late-block patch, and the final-norm patch, each
+    at two positions, against the unpatched logits.
+    """
+    capture = run_with_residual_cache(bundle, prompt)
+    n_layers = bundle.anatomy.n_layers
+    seq = len(capture.input_ids)
+    test_points = [(0, 0), (0, seq - 1), (n_layers // 2, seq // 2),
+                   (n_layers - 1, seq - 1), (n_layers, seq - 1)]
+    worst = 0.0
+    for layer, pos in test_points:
+        logits = run_with_residual_patch(bundle, prompt, layer, pos, capture.streams[layer, pos])
+        worst = max(worst, float((logits - capture.final_logits_last).abs().max()))
+    result = {
+        "prompt": prompt,
+        "test_points": [list(p) for p in test_points],
+        "max_abs_logit_diff": worst,
+        "atol": atol,
+        "ok": worst <= atol,
+        "explanation": (
+            "Replacing streams[k][p] with the run's own vector is an identity "
+            "operation; any logit change means the patch hooks do not target "
+            "the tensors the stream convention names, and every patching "
+            "result downstream would be a well-rendered lie."
+        ),
+    }
+    path = ctx.path("diagnostics", "patch_noop_check.json")
+    write_json(path, result)
+    ctx.register_artifact(path, "diagnostic", "Proof that self-patching is a no-op (hook/convention alignment).")
+    status = "OK" if result["ok"] else "FAILED"
+    print(f"[bench] patch no-op check: {status} (max |dlogit| = {worst:.2e})")
+    if not result["ok"]:
+        raise RuntimeError(
+            "Patch no-op check failed: self-patching changed the logits. See "
+            "diagnostics/patch_noop_check.json."
+        )
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Rank-one weight edits (Lab 5 extension): safe apply/restore plumbing
+# ---------------------------------------------------------------------------
+
+MLP_DOWN_PROJ_CANDIDATES = (
+    "mlp.down_proj",   # Llama / Olmo / Gemma / Qwen / Mistral style (Linear [out,in])
+    "mlp.c_proj",      # GPT-2 style (Conv1D [in,out])
+)
+
+
+def resolve_mlp_down_proj(bundle: ModelBundle, layer: int) -> tuple[Any, bool]:
+    """Return (module, weight_is_in_by_out) for the MLP down-projection."""
+    block = bundle.blocks[layer]
+    for candidate in MLP_DOWN_PROJ_CANDIDATES:
+        with contextlib.suppress(AttributeError):
+            return get_by_path(block, candidate), type(get_by_path(block, candidate)).__name__ == "Conv1D"
+    raise RuntimeError(
+        f"Could not find the MLP down-projection. Tried {MLP_DOWN_PROJ_CANDIDATES}; "
+        "add this architecture's path to interp_bench.py."
+    )
+
+
+@contextlib.contextmanager
+def temporary_rank_one_edit(bundle: ModelBundle, layer: int, key: Any, delta_v: Any):
+    """Apply W <- W + delta_v key^T / (key^T key) to the MLP down-projection,
+    restore the original weight on exit no matter what.
+
+    ``key`` [d_ff] and ``delta_v`` [d_model] are float32 CPU tensors. For any
+    input k, the edit shifts the output by delta_v * (key.k)/(key.key): exact
+    for k = key, fading with key-overlap — which is precisely what the
+    spillover evaluation measures.
+    """
+    import torch
+
+    module, in_by_out = resolve_mlp_down_proj(bundle, layer)
+    weight = module.weight
+    original = weight.detach().clone()
+    k = key.to(weight.device, torch.float32)
+    dv = delta_v.to(weight.device, torch.float32)
+    denom = float(k @ k)
+    if denom <= 0:
+        raise ValueError("rank-one edit key has zero norm")
+    if in_by_out:   # Conv1D: out = x @ W, W [d_ff, d_model]
+        delta = torch.outer(k, dv) / denom
+    else:           # Linear: out = x @ W.T, W [d_model, d_ff]
+        delta = torch.outer(dv, k) / denom
+    with torch.no_grad():
+        weight.add_(delta.to(weight.dtype))
+    try:
+        yield
+    finally:
+        with torch.no_grad():
+            weight.copy_(original)
+
+
+# ---------------------------------------------------------------------------
 # Human-readable state dumps
 # ---------------------------------------------------------------------------
 #
@@ -2280,6 +2501,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--dla-tolerance", type=float, default=0.02,
                         help="Relative tolerance for the component decomposition self-check "
                              "(absorbs the compute dtype's residual-add rounding; bf16 needs ~0.02).")
+    parser.add_argument("--run-edit", action="store_true",
+                        help="Lab 5: run the rank-one edit-and-audit extension after patching.")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)

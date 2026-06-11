@@ -46,6 +46,10 @@ python interp_bench.py --lab lab3 --tier b --prompt-set full --topk 10
 # Lab 4 (probing; --max-examples caps statements PER FAMILY here):
 python interp_bench.py --lab lab4 --tier a
 python interp_bench.py --lab lab4 --tier b --prompt-set full
+
+# Lab 5 (patching + causal tracing; --run-edit adds the edit audit):
+python interp_bench.py --lab lab5 --tier a
+python interp_bench.py --lab lab5 --tier b --prompt-set full --run-edit
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -83,8 +87,14 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   causal test. Activation-norm outliers are detected and recorded (one
   frozen statement produces a 7x-norm stream on Olmo-3 — see the lab
   handout's "outlier specimen" section).
-- Labs 5–11 — designed in COURSE.md, not yet implemented. Lab 5 (activation
-  patching) is next.
+- Lab 5: activation patching and causal tracing — implemented and validated
+  (Tier A+B). Adds interchange interventions on the residual stream and on
+  component outputs, a patch no-op self-check (self-patching must be
+  bit-exact identity), alignment-validated clean/corrupt fact pairs,
+  role-aggregated causal tracing with paraphrase confirmation and negative
+  controls, and a rank-one edit-and-audit extension (`--run-edit`).
+- Labs 6–11 — designed in COURSE.md, not yet implemented. Lab 6 (circuit
+  discovery) is next.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 
@@ -117,6 +127,10 @@ Every run performs self-checks before any science, and aborts on failure:
 - **Decomposition check** (Lab 2+, `diagnostics/dla_decomposition_check.json`):
   embeddings + all captured attn/MLP contributions must sum to the final
   pre-norm residual stream.
+- **Patch no-op check** (Lab 5+, `diagnostics/patch_noop_check.json`):
+  patching a run with its own vectors must be bit-exact identity — an
+  off-by-one in patch layer or position indexing would otherwise produce
+  beautiful, wrong heatmaps.
 
 If a transformers upgrade ever changes hidden-state semantics, these fail
 loudly and every downstream number is declared suspect — that is their job.
