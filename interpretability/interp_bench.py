@@ -197,6 +197,25 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # tier B = Olmo-3-1025-7B base + decoderesearch SAE. The tier defaults
         # already pick these, so no per-model override is needed.
     },
+    "lab9": {
+        "module": "labs.lab09_attribution_graphs",
+        "run_name": "lab09_attribution_graphs",
+        "description": "Attribution graphs: a transcoder replacement model, feature-level circuit tracing, and interventions.",
+        # The replacement model recomputes attention with frozen patterns, so
+        # patterns must actually be returned (eager), and the exactness check
+        # is calibrated for float32 (gpt2 is small enough that fp32 is free).
+        "needs_eager": "true",
+        # gpt2 on EVERY tier: it is the only ungated model with a public
+        # full-stack MLP transcoder set (Dunefsky et al., all 12 layers).
+        # Tier raises the node budget, not the model.
+        "model_tier_a": "gpt2",
+        "model_tier_b": "gpt2",
+        "model_tier_c": "gpt2",
+        "dtype_tier_b": "float32",
+        "dtype_tier_c": "float32",
+        # --max-examples caps the paraphrase battery here.
+        "max_examples_tier_a": "3",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
@@ -2853,6 +2872,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                              "(absorbs the compute dtype's residual-add rounding; bf16 needs ~0.02).")
     parser.add_argument("--run-edit", action="store_true",
                         help="Lab 5: run the rank-one edit-and-audit extension after patching.")
+    parser.add_argument("--graph-nodes", type=int, default=0,
+                        help="Lab 9: feature-node budget for the attribution graph "
+                             "(0 = tier default; also the number of backward passes).")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)
@@ -2897,7 +2919,9 @@ def apply_tier_defaults(args: argparse.Namespace) -> None:
         lab_model = LAB_PROFILES[args.lab].get(f"model_tier_{args.tier}")
         args.model = lab_model or spec["model"]
     if args.dtype == "auto":
-        args.dtype = spec["dtype"]
+        # A lab may pin its dtype per tier (Lab 9's replacement-model
+        # exactness check needs float32 even on GPU tiers).
+        args.dtype = LAB_PROFILES[args.lab].get(f"dtype_tier_{args.tier}") or spec["dtype"]
     if args.max_examples < 0:
         lab_override = LAB_PROFILES[args.lab].get(f"max_examples_tier_{args.tier}")
         args.max_examples = int(lab_override) if lab_override else spec["max_examples"]
