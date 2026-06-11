@@ -274,8 +274,13 @@ def split_truth_pairs(pairs: Sequence[tuple[str, str]]) -> tuple[list[tuple[str,
 
 
 def last_token_residual_at_depth(bundle: bench.ModelBundle, templated_prompt: str, depth: int) -> Any:
-    """Return ``streams[depth]`` at the generation position, as fp32 CPU."""
-    cap = bench.run_with_residual_cache(bundle, templated_prompt)
+    """Return ``streams[depth]`` at the generation position, as fp32 CPU.
+
+    The prompt is already chat-templated, so special tokens must not be added
+    again: the capture must see exactly the token sequence that generation
+    sees, or the direction is read from a context that is never steered.
+    """
+    cap = bench.run_with_residual_cache(bundle, templated_prompt, add_special_tokens=False)
     return cap.streams[depth, -1]
 
 
@@ -634,7 +639,11 @@ def aggregate_dose_rows(per_prompt_rows: Sequence[Mapping[str, Any]], drift_rows
                 "target_score": round_float(mean([float(r["target_score"]) for r in subset])),
                 "positive_word_count": round_float(mean([float(r["positive_word_count"]) for r in subset])),
                 "negative_word_count": round_float(mean([float(r["negative_word_count"]) for r in subset])),
-                "fluency_logprob": round_float(mean([float(r["fluency_logprob"]) for r in subset])),
+                # Empty/degenerate generations score NaN fluency; one such row
+                # must not poison the dose mean (mean([]) is NaN, kept as-is).
+                "fluency_logprob": round_float(
+                    mean([v for v in (float(r["fluency_logprob"]) for r in subset) if math.isfinite(v)])
+                ),
                 "kl_to_unsteered": round_float(mean([float(r["kl_to_unsteered"]) for r in subset])),
                 "drift_accuracy": drift["drift_accuracy"],
                 "drift_correct": drift["drift_correct"],
@@ -645,11 +654,28 @@ def aggregate_dose_rows(per_prompt_rows: Sequence[Mapping[str, Any]], drift_rows
     return out
 
 
-def first_response_token_id(bundle: bench.ModelBundle, text: str) -> tuple[int, list[int], str]:
-    ids = bundle.tokenizer.encode(text, add_special_tokens=False)
+def first_response_token_id(
+    bundle: bench.ModelBundle, answer: str, templated_context: str
+) -> tuple[int, list[int], str]:
+    """First token of ``answer`` exactly as the model could emit it after the template.
+
+    Encoding the answer in isolation is the classic readout bug: ``" True"``
+    (leading space) is often a different token than the ``"True"`` the model
+    actually produces right after a chat template's generation prompt. The ids
+    are therefore derived by tokenizing context and context+answer and taking
+    the difference at the boundary.
+    """
+    tok = bundle.tokenizer
+    ctx_ids = tok.encode(templated_context, add_special_tokens=False)
+    full_ids = tok.encode(templated_context + answer, add_special_tokens=False)
+    if full_ids[: len(ctx_ids)] == ctx_ids and len(full_ids) > len(ctx_ids):
+        ids = full_ids[len(ctx_ids):]
+    else:
+        # Retokenization moved the boundary; fall back to standalone encoding.
+        ids = tok.encode(answer, add_special_tokens=False)
     if not ids:
-        raise RuntimeError(f"Tokenizer returned no ids for {text!r}.")
-    return int(ids[0]), [int(i) for i in ids], bundle.tokenizer.decode([ids[0]])
+        raise RuntimeError(f"No continuation ids for {answer!r} after the template.")
+    return int(ids[0]), [int(i) for i in ids], tok.decode([ids[0]])
 
 
 def bridge_aggregate(per_statement_rows: Sequence[Mapping[str, Any]], injection_layer: int) -> list[dict[str, Any]]:
@@ -796,7 +822,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     # prompt because Lab 7's object of study is the chat-rendered prompt.
     probe = templated_eval[0][2]
     bench.run_hook_parity_check(ctx, bundle, probe)
-    bench.run_lens_self_check(ctx, bundle, bench.run_with_residual_cache(bundle, probe))
+    bench.run_lens_self_check(ctx, bundle, bench.run_with_residual_cache(bundle, probe, add_special_tokens=False))
 
     # ----- Layer sweep: choose by actual generation behavior -----------------
     sweep_cap = limit_for(args, "sweep_prompts") or len(eval_prompts)
@@ -1041,9 +1067,19 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     induced_gen_path = ctx.path("tables", "induced_refusal_generations.csv")
     bench.write_csv_with_context(ctx, induced_gen_path, induced_generation_rows)
     ctx.register_artifact(induced_gen_path, "table", "Benign generations used by the induced-refusal classifier.")
-    max_induced = max(float(r["refusal_rate"]) for r in induced_rows if r["condition"] == "refusal")
-    max_random_induced = max(float(r["refusal_rate"]) for r in induced_rows if r["condition"] == "random")
-    print(f"[lab7]   max induced refusal on benign prompts: {max_induced:.0%}; random control: {max_random_induced:.0%}")
+    # The dose-0 rate is the classifier floor (markers like "as an AI" fire on
+    # ordinary assistant disclaimers), not steering. Report the max over
+    # positive doses next to that floor, never folded into it.
+    max_induced = max(float(r["refusal_rate"]) for r in induced_rows
+                      if r["condition"] == "refusal" and float(r["scale"]) > 0)
+    max_random_induced = max(float(r["refusal_rate"]) for r in induced_rows
+                             if r["condition"] == "random" and float(r["scale"]) > 0)
+    baseline_induced = next(float(r["refusal_rate"]) for r in induced_rows
+                            if r["condition"] == "refusal" and float(r["scale"]) == 0.0)
+    print(
+        f"[lab7]   induced refusal on benign prompts: baseline {baseline_induced:.0%}, "
+        f"max steered {max_induced:.0%}; random control max {max_random_induced:.0%}"
+    )
 
     # ----- Bridge: truth direction, answer-bias split -------------------------
     print("[lab7] Bridge: recomputing truth direction on this instruct model")
@@ -1054,15 +1090,32 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         f"{len(heldout_truth_pairs)} held-out pairs"
     )
     truth_dir = diff_in_means_direction(bundle, train_truth_pairs, best_layer)
-    truth_rand_dir = random_direction(d_model, seed=args.seed * 19 + best_layer)
-    true_id, true_ids, true_first_piece = first_response_token_id(bundle, " True")
-    false_id, false_ids, false_first_piece = first_response_token_id(bundle, " False")
+    # +1 keeps this distinct from Track A's random control: at the default
+    # --seed 0, `seed * 13 + best_layer` and `seed * 19 + best_layer` collapse
+    # to the same generator state, and the bridge's "independent" random
+    # control would silently be Track A's vector again.
+    truth_rand_dir = random_direction(d_model, seed=args.seed * 19 + best_layer + 1)
 
     test_pairs = heldout_truth_pairs
     test_statements = []
     for i, (true_stmt, false_stmt) in enumerate(test_pairs):
         test_statements.append((f"true_{i}", true_stmt, 1))
         test_statements.append((f"false_{i}", false_stmt, 0))
+
+    # Readout token ids are derived at the template boundary, on a
+    # representative bridge prompt, so the contrast is on the token the model
+    # can actually emit first — not on a leading-space variant it never uses.
+    readout_context = bench.apply_chat_template(
+        bundle,
+        f"Respond with only 'True' or 'False'. Statement: {test_statements[0][1]}",
+    )
+    true_id, true_ids, true_first_piece = first_response_token_id(bundle, "True", readout_context)
+    false_id, false_ids, false_first_piece = first_response_token_id(bundle, "False", readout_context)
+    if true_id == false_id:
+        raise RuntimeError(
+            "True and False resolve to the same first token at the template boundary; "
+            "the bridge readout cannot distinguish them on this tokenizer."
+        )
 
     bridge_statement_rows: list[dict[str, Any]] = []
     for condition, direction in (("truth", truth_dir), ("random", truth_rand_dir)):
@@ -1115,12 +1168,21 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         plot_bridge(ctx, bridge_rows)
 
     # ----- Metrics, safety audit, card, claims, summary -----------------------
+    # Exact count of sampled completions, all from benign prompts: layer-sweep
+    # rows, cached dose-0 baselines, steered Track A rows (dose-0 rows reuse the
+    # cached baselines), drift probes, and the Track B benign sweep.
     write_safety_audit(
         ctx,
         refusal_pair_count=len(refusal),
         train_refusal_pair_count=len(train_ref),
         heldout_refusal_pair_count=len(held_ref),
-        benign_generation_count=len(per_prompt_rows) + len(induced_generation_rows),
+        benign_generation_count=(
+            len(sweep_by_prompt_rows)
+            + len(base_generations)
+            + sum(1 for r in per_prompt_rows if float(r["scale"]) != 0.0)
+            + len(drift_rows) * len(DRIFT_FACTS)
+            + len(induced_generation_rows)
+        ),
     )
 
     real_at = {float(r["scale"]): r for r in dose_rows if r["condition"] == "real"}
@@ -1155,6 +1217,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "track_a_fluency_delta_at_max_dose": round_float(fluency_drop),
         "track_a_drift_delta_at_max_dose": round_float(drift_delta),
         "refusal_monitor_auc": round_float(auc),
+        "baseline_refusal_rate_benign": round_float(baseline_induced),
         "max_induced_refusal_benign": round_float(max_induced),
         "max_random_induced_refusal_benign": round_float(max_random_induced),
         "bridge_answer_bias_span_logits": round_float(bridge_answer_span),
@@ -1178,6 +1241,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         ref_norm,
         dose_rows,
         auc,
+        baseline_induced,
         max_induced,
         max_random_induced,
         bridge_verdict,
@@ -1201,17 +1265,22 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 f"mean logprob and drift accuracy shifts by {drift_delta:+.2f} at max dose."
             ),
             "artifact": f"runs/{run_name}/plots/dose_response_sentiment.png",
-            "falsifier": "Random and shuffled controls match the real direction's positive curve, or the effect appears only when fluency collapses.",
+            "falsifier": (
+                "Random and shuffled controls match the real direction's positive curve, the effect "
+                "appears only when fluency collapses, or re-selecting the layer on prompts disjoint "
+                "from the eval set moves the effect materially (the sweep and the headline share prompts)."
+            ),
         },
         {
             "id": f"{LAB_ID}-C2",
             "tag": "CAUSAL",
             "text": (
                 f"The refusal direction separates held-out refusal-eliciting from matched benign prompts "
-                f"by forward-pass projection at AUC {auc:.2f}, and steering benign prompts toward it "
-                f"induces refusal in up to {max_induced:.0%} of benign generations versus {max_random_induced:.0%} "
-                "for the random direction. No completion was sampled from any refusal-eliciting prompt, and "
-                "refusal ablation was not implemented."
+                f"by forward-pass projection at AUC {auc:.2f} (DECODE-grade evidence), and steering benign "
+                f"prompts toward it induces refusal in up to {max_induced:.0%} of benign generations, from a "
+                f"{baseline_induced:.0%} unsteered classifier floor, versus {max_random_induced:.0%} "
+                "for the random direction (CAUSAL). No completion was sampled from any refusal-eliciting "
+                "prompt, and refusal ablation was not implemented."
             ),
             "artifact": f"runs/{run_name}/plots/refusal_monitor.png",
             "falsifier": "The random direction induces refusal at the same rate, or hand-auditing shows the refusal classifier is mostly false positives.",
@@ -1238,6 +1307,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         metrics,
         dose_rows,
         auc,
+        baseline_induced,
         max_induced,
         max_random_induced,
         bridge_verdict,
@@ -1260,6 +1330,7 @@ def write_claim_card(
     ref_norm: float,
     dose_rows: Sequence[Mapping[str, Any]],
     auc: float,
+    baseline_induced: float,
     max_induced: float,
     max_random_induced: float,
     bridge_verdict: str,
@@ -1288,8 +1359,8 @@ def write_claim_card(
         "",
         "## Track B: refusal direction",
         "",
-        f"- **Monitor:** held-out projection AUC {auc:.2f}. This is prompt-category prediction by forward pass, not observed harmful completion behavior.",
-        f"- **Cause:** benign prompts reach {max_induced:.0%} induced refusal when steered toward the refusal direction; random control reaches {max_random_induced:.0%}.",
+        f"- **Monitor (DECODE-grade):** held-out projection AUC {auc:.2f}. This is prompt-category prediction by forward pass, not observed harmful completion behavior.",
+        f"- **Cause (CAUSAL):** benign prompts reach {max_induced:.0%} induced refusal when steered toward the refusal direction, from a {baseline_induced:.0%} unsteered classifier floor; random control reaches {max_random_induced:.0%}.",
         "- **Safety wall:** no completion sampled from refusal-eliciting prompts; ablation not implemented; steering direction is toward refusal only.",
         "- **What it does not show:** that refusal is mediated by exactly one non-redundant direction, or that ablation would jailbreak this model. Those are outside this lab's implemented apparatus.",
         "",
@@ -1319,6 +1390,7 @@ def write_summary(
     metrics: Mapping[str, Any],
     dose_rows: Sequence[Mapping[str, Any]],
     auc: float,
+    baseline_induced: float,
     max_induced: float,
     max_random_induced: float,
     bridge_verdict: str,
@@ -1337,13 +1409,14 @@ def write_summary(
         f"- injection site: decoder block {best_layer} output, stream depth {stream_depth_for_injection_layer(best_layer)}",
         f"- reference activation norm for dose scaling: {ref_norm:.3f}",
         "- layer choice: generation-based layer sweep, not a next-token proxy",
-        "- evidence level: `CAUSAL` for generation steering; `FORWARD-PASS MONITOR` for held-out refusal projections",
+        "- evidence level: `CAUSAL` for generation steering; `DECODE` (forward-pass monitor) for held-out refusal projections",
         "- safety: refusal direction extracted and monitored by forward passes only; benign prompts only for generation; no refusal ablation",
         "",
         "## 1-4. Behavior, object, intervention, headline",
         "",
         f"- Track A: sentiment direction at block {best_layer}; score {real[0.0]['target_score']} to {real[max_pos]['target_score']} at dose {max_pos}; fluency {real[0.0]['fluency_logprob']} to {real[max_pos]['fluency_logprob']}; drift {real[0.0]['drift_accuracy']} to {real[max_pos]['drift_accuracy']}.",
-        f"- Track B: refusal monitor AUC {auc:.2f}; benign induced refusal up to {max_induced:.0%}, random control up to {max_random_induced:.0%}.",
+        f"- Track B: refusal monitor AUC {auc:.2f}; benign induced refusal up to {max_induced:.0%} "
+        f"from a {baseline_induced:.0%} unsteered classifier floor, random control up to {max_random_induced:.0%}.",
         f"- Bridge: truth direction verdict `{bridge_verdict}` on {metrics['truth_pairs_heldout']} held-out truth pairs; answer-bias span {bridge_answer_span:.2f} logits; signed truth-margin span {bridge_signed_span:.2f} logits.",
         "",
         "## 5. Claims",

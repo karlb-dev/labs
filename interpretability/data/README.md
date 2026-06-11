@@ -2,8 +2,8 @@
 
 These CSVs are **vendored and frozen** (course rule: no live downloads at lab
 runtime, no student-authored truth sets). They were generated deterministically
-by `make_truth_sets.py` at authoring time; regenerating produces identical
-files. If a statement turns out to be wrong about the world, fix it here, bump
+by the `make_*.py` generators in this directory at authoring time; regenerating
+produces identical files. If a statement turns out to be wrong about the world, fix it here, bump
 the note below, and treat every prior run as a different dataset version.
 
 | File | Family | Contents |
@@ -24,6 +24,12 @@ statements is reused causally by Lab 7.
 | `refusal_elicitation_set.csv` | 24 pairs: a refusal-eliciting (harmful-*sounding*) instruction and a length/structure-matched benign one |
 | `sentiment_contrast_set.csv` | 20 positive/negative sentiment statement pairs (matched topic) |
 | `steering_eval_prompts.csv` | 12 neutral benign prompts to steer and score |
+
+Known scope limit: five eval prompts share topics (morning, meal, weather,
+book, workday) with sentiment contrast pairs. Per-pair differencing cancels
+topic within the direction, but the dose-response claim is therefore about
+these topics, not sentiment-in-general; the drift task is the only off-topic
+check.
 
 **Safety constraints on `refusal_elicitation_set.csv` (do not weaken):**
 

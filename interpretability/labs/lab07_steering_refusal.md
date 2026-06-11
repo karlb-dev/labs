@@ -18,6 +18,18 @@ This lab has three linked experiments:
 
 The unit of evidence is not a single spicy generation. The unit of evidence is a curve, a control, an artifact, and a caveat.
 
+## Why adding a vector can work at all
+
+Labs 1-6 read the residual stream. This lab writes to it. The bet is the
+linear representation hypothesis: if a feature rides the stream as a
+direction, then `activations + scale * direction` moves every downstream
+reader of that feature at once — the way patching moved a fact in Lab 5,
+except you authored the edit instead of borrowing it from a clean run.
+Difference-in-means over matched pairs is the cheapest estimator of such a
+direction: the pairing cancels topic and syntax, leaving the one thing you
+varied. None of this is guaranteed. The dose-response curve tests the bet;
+the two controls test the estimator.
+
 ## Safety wall for Track B
 
 Track B is safety-relevant and intentionally constrained. The constraints are part of the experiment, not classroom decoration:
@@ -65,6 +77,21 @@ It compares the real direction against two controls on the same axes:
 
 The main plot is `plots/dose_response_sentiment.png`. The updated version has four panels: target score, fluency, KL, and drift. Do not claim success from the target panel alone. A vector that moves sentiment only after fluency collapses is not a clean concept intervention. It is a smoke machine wearing a lab coat.
 
+The sentiment score itself is a transparent word-list meter, and the list
+shares adjectives with the contrast pairs. A generation that parrots
+contrast-set vocabulary maxes the meter without expressing sentiment about
+anything. Before claiming a dose, read `tables/steered_examples.csv` at that
+dose: in the reference run the max-dose example is visibly degenerating while
+the target panel still rises — the fluency panel exists because the target
+panel can be gamed.
+
+Expect asymmetry on an RLHF'd assistant. In the reference tier B run the
+positive swing is +0.31 while the negative swing is only -0.12: the model's
+positivity prior resists downward steering. The 135M smoke model shows the
+opposite shape (+0.18 up, -0.40 down). Asymmetry is a measurement of the
+model's prior, not a bug in your direction — and it is invisible in any
+single before/after pair, which is the argument for the sweep.
+
 ### Layer selection
 
 The lab no longer talks about a cheap next-token proxy. It chooses the layer by generation-based sweep and writes:
@@ -74,6 +101,12 @@ The lab no longer talks about a cheap next-token proxy. It chooses the layer by 
 - `tables/layer_sweep_by_prompt.csv`
 
 The chosen block is the one with the largest positive-minus-negative sentiment spread at the probe dose. This is slower than a proxy, but it measures the object students are actually claiming: generated behavior.
+
+One honesty note the claims carry forward: the sweep prompts are a subset of
+the evaluation prompts, so the layer is selected on data that also produces
+the headline number. With 4-12 eval prompts a disjoint split would cost more
+power than the bias is worth, but the C1 falsifier names it — re-selecting
+the layer on fresh prompts should not move the effect materially.
 
 ## Track B: refusal direction, predict versus cause
 
@@ -108,6 +141,14 @@ Artifacts:
 - `tables/induced_refusal_generations.csv`: benign generations and matched refusal markers
 
 Hand-audit the generations whenever this curve supports a claim. The classifier is a transparent meter, not an oracle.
+
+Two reading rules for this curve. First, the dose-0 rate is the classifier
+floor, not steering: markers like "as an AI" fire on benign disclaimers
+(reference tier B floor: 0.17 = 2/12 prompts). Read the curve relative to its
+own floor and quote the random direction at the same dose. Second, with 12
+eval prompts the rate moves in steps of 1/12 — quote counts next to rates:
+100% means 12/12 here, which licenses a claim about these prompts, not a
+population.
 
 ## Bridge: Lab 4's truth direction, split into two claims
 
@@ -157,6 +198,10 @@ python interp_bench.py --lab lab7 --tier b --prompt-set medium --no-plots
 
 `--prompt-set` controls the default dataset cap. `--max-examples` is then applied as a hard cap, so the smoke path remains quick and the full path remains full.
 
+One tier A footgun: the global tier default `--max-examples 4` also caps the
+refusal pairs to 4, so the smoke monitor AUC is computed on 2 held-out pairs.
+It checks plumbing, not the monitor.
+
 ## First artifact-reading path
 
 Read the artifacts in this order:
@@ -197,17 +242,25 @@ A good bridge answer does not say "the truth direction works" until it checks th
 | effect equals controls at every dose | check `tables/layer_sweep.csv` and confirm the real direction is not being read from the wrong stream depth |
 | strong target effect but bad text | check fluency and KL panels before claiming clean steering |
 | random direction induces refusal too | audit `tables/induced_refusal_generations.csv`; the classifier may be catching disruption |
+| induced-refusal rate is nonzero at dose 0 | that is the classifier floor, not steering: markers like "as an AI" fire on benign disclaimers. Read the curve relative to its floor and quote the random direction at the same dose |
 | monitor AUC near 0.5 | inspect pair matching and try a different injection block from `layer_sweep.csv` |
 | truth bridge looks strong but false statements get worse | the vector is steering True-assent, not truthfulness; use the signed-margin panel |
 | smoke run is too slow | use `--prompt-set small --max-examples 4 --no-plots` for plumbing only |
 
 ## What goes in the ledger
 
-Write 2-3 `CAUSAL` claims with dose, control gaps, and side effects in the claim text. Avoid cloud-shaped claims like "the direction controls sentiment." Use measured claims:
+Write 2-3 claims with dose, control gaps, and side effects in the claim text. Avoid cloud-shaped claims like "the direction controls sentiment." Use measured claims:
 
 ```text
 [L07-C1] CAUSAL | Injecting the sentiment direction at decoder block L changes score X to Y at dose D, beating random by R and shuffled by S, with fluency cost F and drift cost G.
 Artifact: runs/.../plots/dose_response_sentiment.png | Falsifier: controls match the real curve or the effect appears only after fluency collapse.
 ```
+
+Tag with care. The monitor result is `DECODE` evidence: a projection
+predicted a held-out category — exactly Lab 4's evidence class with a refusal
+label instead of a truth label. Only the induced-refusal curve is `CAUSAL`.
+Split Track B into two claims, one per tag. AUC 1.00 next to induced refusal
+100% on the same direction is the whole course in one row — but only if the
+tags keep them apart.
 
 The refusal claim must carry the safety scope in its own words. The bridge claim must state whether the direction changed answer bias, signed truth margin, or neither.

@@ -190,6 +190,10 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
     },
 }
 
+# Labs that render every prompt through the tokenizer's chat template
+# (apply_chat_template). Used by the tokenizer diagnostic report.
+CHAT_TEMPLATE_LABS = frozenset({"lab7"})
+
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
 # 24GB+ card); tier C is a comfortable 40-80GB card for full-precision runs.
@@ -842,10 +846,11 @@ def write_tokenizer_report(ctx: RunContext, bundle: ModelBundle) -> None:
         "padding_side": getattr(tok, "padding_side", None),
         "truncation_side": getattr(tok, "truncation_side", None),
         "chat_template_present": bool(getattr(tok, "chat_template", None)),
-        "chat_template_used_by_lab1": False,
+        "chat_template_used_by_lab": ctx.args.lab in CHAT_TEMPLATE_LABS,
         "note": (
-            "Lab 1 uses raw base-model completions. A chat template, if present "
-            "on the tokenizer, is deliberately not applied here."
+            "Labs 1-6 use raw base-model prompts; a chat template, if present, "
+            "is deliberately not applied. Labs 7+ render every prompt through "
+            "the tokenizer's chat template (bench.apply_chat_template)."
         ),
     }
     path = ctx.path("diagnostics", "tokenizer_info.json")
@@ -1006,17 +1011,24 @@ class ForwardCapture:
     final_logits_last: Any   # torch.Tensor [vocab] float32
 
 
-def run_with_residual_cache(bundle: ModelBundle, prompt: str) -> ForwardCapture:
+def run_with_residual_cache(
+    bundle: ModelBundle, prompt: str, *, add_special_tokens: bool = True
+) -> ForwardCapture:
     """Run one prompt and capture the full pre-norm residual stream.
 
     Prompts run one at a time, unbatched. With <100 short prompts per lab the
     cost is irrelevant, and skipping batching removes the entire class of
     padding/attention-mask bugs from the course's foundation.
+
+    Pass ``add_special_tokens=False`` for prompts that are already fully
+    rendered (e.g. chat-templated, Lab 7+): on tokenizers that auto-prepend
+    BOS, the default would otherwise capture a sequence that generation
+    (which tokenizes rendered prompts without special tokens) never sees.
     """
     import torch
 
     tokenizer = bundle.tokenizer
-    encoded = tokenizer(prompt, return_tensors="pt")
+    encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=add_special_tokens)
     input_ids = encoded["input_ids"].to(bundle.input_device)
     attention_mask = encoded.get("attention_mask")
     if attention_mask is not None:
@@ -2804,7 +2816,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--lab", choices=sorted(LAB_PROFILES), default="lab1", help="Which lab to run.")
-    parser.add_argument("--model", default=None, help="HF model id; defaults to the tier's model.")
+    parser.add_argument("--model", default=None,
+                        help="HF model id; defaults to the tier's model "
+                             "(or the lab's per-tier override, e.g. Lab 7's instruct models).")
     parser.add_argument("--model-revision", default=None, help="Pinned HF revision (commit/tag).")
     parser.add_argument("--trust-remote-code", action="store_true", help="Pass trust_remote_code=True to HF loaders.")
     parser.add_argument("--local-files-only", action="store_true", help="Do not download models/tokenizers; use local cache only.")

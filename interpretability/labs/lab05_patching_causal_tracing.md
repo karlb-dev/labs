@@ -1,161 +1,219 @@
 # Lab 5: Activation Patching and Causal Tracing
 
-**Evidence level targeted:** causality (`CAUSAL`), properly scoped. With the
-editing extension: the humbling gap between localizing a fact and changing it.
-**Prerequisites:** Labs 1–4 — each planted a question only intervention can
-answer (attribution ≠ causation; the indirect-path gap; decodable ≠ used).
+**Evidence level targeted:** causality (`CAUSAL`), scoped to a prompt population, metric, and intervention. With the optional editing extension, the lab also shows the gap between *localizing* a fact and *changing* it.
+
+**Prerequisites:** Labs 1-4. Lab 2 showed that attribution is not causation. Lab 3 showed that routing and contribution are different. Lab 4 showed that decodable does not mean used. Lab 5 is where the experiment finally reaches into the forward pass and moves something.
 
 ## The question
 
-Which activations are *causally responsible* for a behavior — concretely,
-where in the forward pass is "The capital of France is → Paris" recovered,
-and what happens if you try to change it?
+Which activations are causally responsible for a behavior? Concretely: where in the forward pass is the fact
+
+```text
+The capital of France is -> Paris
+```
+
+recoverable after the prompt has been corrupted to a different country, and what happens if we try to turn that localization into a weight edit?
 
 ## The method: interchange interventions
 
-Run the corrupt prompt ("The capital of **Germany** is"). Splice in **one**
-activation from the clean run ("The capital of **France** is") at one
-(layer, position). Measure what fraction of the clean behavior returns:
+Run a clean prompt and a corrupt prompt:
 
 ```text
-recovery = (patched_diff − corrupt_diff) / (clean_diff − corrupt_diff)
-diff     = logit(" Paris") − logit(" Berlin")   at the final position
+Clean:     The capital of France is       target:     Paris
+Corrupt:   The capital of Germany is      distractor: Berlin
 ```
 
-1.0 = that single activation carried everything the corrupt run was missing.
-0.0 = the readout could use none of it. Negative = the patch actively hurt.
+Then splice one activation from the clean run into the corrupt run at one stream depth and one token position. Measure how much of the clean behavior returns:
 
-### Alignment is the whole game
+```text
+recovery = (patched_diff - corrupt_diff) / (clean_diff - corrupt_diff)
+diff     = logit(" Paris") - logit(" Berlin") at the final position
+```
 
-Clean/corrupt pairs in this lab differ in **exactly one single-token
-subject**, verified by a validator that *rejects* misaligned pairs rather
-than warning (`diagnostics/tokenization_report.csv` shows its work). The
-field's most common silent patching bug is comparing position 3 of one
-prompt with position 3 of a differently-tokenized other prompt. You don't
-get to meet that bug unarmed here — but you will meet it the day you write
-your own pairs, which is why the validator's checks are worth reading.
+A recovery of 1.0 means the patch restored the whole clean-vs-corrupt logit gap. A recovery of 0.0 means the readout could use none of it. A negative value means the patch made the corrupt run even less clean-like.
 
-### The instrument check is new and non-optional
+This is causal evidence because the internal state was changed while the prompt and model weights were otherwise held fixed.
 
-`diagnostics/patch_noop_check.json`: patching a run with **its own** vectors
-must be bit-exact identity. If the patch hooks were off by one layer or one
-position, every heatmap in this lab would still *render beautifully* — and be
-a lie. This is self-check #5 in the bench's collection, and the one whose
-failure mode is most photogenic.
+## The load-bearing convention: stream depth is not component layer
 
-## What makes it causal *tracing* rather than a demo
+The bench names the residual stream this way:
 
-One pair is an anecdote. The lab aggregates over a **dataset** of validated
-capital facts (baseline-gated: the model must actually prefer the right
-answer cleanly and the wrong one corruptly, by margins — drops are counted,
-never silent), then:
+```text
+streams[0] = embedding output, before block 0
+streams[k] = residual stream after k blocks, also the input to block k
+streams[L] = residual stream after all L blocks, before final norm
+```
 
-- aggregates recovery by **(layer, token role)** — subject, pre-subject,
-  post-subject, last;
-- confirms the top region under **two paraphrase templates**;
-- runs **negative controls**: mismatched-pair patches, wrong-position
-  patches, and a low-recovery region re-tested on held-out facts;
-- refines the top band with **component-level patching** (attn vs MLP
-  outputs — the same verified objects from Labs 2–3).
+So a patch at `streams[k]` contains everything written by blocks `< k`. If the localized stream depth is 13, the nearest component layer that could have *written* that stream is block 12. The revised lab writes this mapping into:
 
-### Read the curves like this
+```text
+diagnostics/localization_decision.json
+```
 
-At layer 0, patching the subject position just substitutes the token
-embedding — recovery 1.0 is a **tautology**, not a discovery. The science is
-the **handoff**: the layer where subject-position recovery collapses because
-the fact has been read out of the subject and is in transit toward the
-readout. Meanwhile last-position recovery is near zero early and rises late.
-Between those two curves lies the recall-then-readout story that made causal
-tracing famous (Meng et al.) — and your localization band, used by the
-component pass and the edit, sits just *before* the handoff.
+Read that file before comparing the residual-stream patch to the component patch or the rank-one edit. Otherwise it is easy to make a one-layer-late claim with a perfectly polished plot, the most elegant wrong turn in the maze.
+
+## Alignment is the whole game
+
+Clean and corrupt pairs must differ in exactly one single-token subject position. The validator rejects a pair if:
+
+- the subject or answer is not a single token;
+- the clean and corrupt prompts have different token lengths;
+- the prompts differ at any position other than the declared subject position.
+
+The report is written to:
+
+```text
+diagnostics/tokenization_report.csv
+```
+
+Do not skim it. The field's classic patching bug is comparing position 3 in one prompt to position 3 in a prompt that tokenized differently.
+
+## Instrument checks before science
+
+The lab runs the bench self-checks before measuring recovery:
+
+| Diagnostic | Why it matters |
+|---|---|
+| `diagnostics/hook_parity.json` | block hooks match the residual-stream convention |
+| `diagnostics/logit_lens_self_check.json` | final-depth lens reproduces the model logits |
+| `diagnostics/patch_noop_check.json` | patching a run with its own vectors is identity |
+| `diagnostics/component_anatomy.json` | attn/MLP contribution hook points are verified, not guessed |
+| `diagnostics/dla_decomposition_check.json` | captured components sum to the final pre-norm residual stream |
+
+If any of these fail, stop. A failed self-check does not make the result noisy; it makes the object undefined.
+
+## What makes it causal tracing rather than a demo
+
+One clean/corrupt pair is a demonstration. Causal tracing is the aggregate:
+
+1. Validate a dataset of capital facts.
+2. Gate out facts the model does not know, using clean and corrupt logit margins.
+3. Patch every stream depth and token position for every kept base-template pair.
+4. Aggregate recovery by token role: pre-subject, subject, post-subject, last.
+5. Confirm the subject curve on two paraphrase templates.
+6. Run negative controls: mismatched-pair patches, wrong-position patches, and a split-heldout low-region check.
+7. Refine the localized stream band with component-level patching: attention output versus MLP output.
+8. Optionally run a rank-one edit audit.
+
+The output is not just a heatmap. The output is a claim card with a scope, a metric, a control battery, and caveats.
+
+## How to read the main curves
+
+At stream depth 0, patching the subject position mostly substitutes the token embedding. For this corruption type, high subject recovery at depth 0 is a tautology, not a localization result.
+
+The science starts after depth 0:
+
+- The **subject-position curve** tells you where the clean subject representation still causally helps the corrupt run recover the target answer.
+- The **handoff** is where subject-position recovery collapses. The fact has been read out of the subject stream or moved into later computation.
+- The **last-position curve** usually rises later. That is where the answer becomes directly available to the final readout.
+- The **localized stream band** is the last non-tautological subject band before the handoff.
+- The **component layers** are mapped from that stream band by subtracting one, because block `k - 1` writes `streams[k]`.
+
+This is the recall-then-readout story in one figure.
 
 ## Running it
 
 ```bash
-python interp_bench.py --lab lab5 --tier a               # smoke, 6 facts
+python interp_bench.py --lab lab5 --tier a
 python interp_bench.py --lab lab5 --tier b --prompt-set full
-python interp_bench.py --lab lab5 --tier b --run-edit    # + the edit audit
+python interp_bench.py --lab lab5 --tier b --prompt-set full --run-edit
 ```
 
-## The extension: the patch made permanent (`--run-edit`)
+Useful knobs:
 
-A rank-one weight edit at one MLP down-projection writes the corrupt fact's
-output for the clean fact's key: after editing, "The capital of France is"
-should say Berlin — *if* the localized MLP actually carries the recoverable
-fact. The lab applies it at your localized layer **and** at an alternative
-layer, then audits like the editing literature audits:
+```bash
+python interp_bench.py --lab lab5 --tier b --prompt-set medium
+python interp_bench.py --lab lab5 --tier b --prompt-set full --max-examples 12
+python interp_bench.py --lab lab5 --tier b --prompt-set full --showcase france
+```
+
+`--prompt-set small|medium|full` now controls the built-in fact count. A custom `.csv` or `.json` file can be passed as `--prompt-set` if it contains `fact_id`, `subject`, and `target` fields.
+
+## Main artifacts
+
+Read them in this order:
+
+1. `causal_trace_card.md` - the deliverable card: scope, localization, controls, component result, edit result if run.
+2. `diagnostics/localization_decision.json` - the handoff rule and stream-depth-to-component-layer mapping.
+3. `plots/localization_across_facts.png` - the subject-vs-last causal tracing story.
+4. `plots/patching_heatmap_<fact>.png` - one pair, layer by position, token-labeled.
+5. `tables/facts.csv` - which pairs passed the baseline gate and why others dropped.
+6. `tables/patching_scores.csv` and `results.csv` - the long-form grid behind every cell.
+7. `tables/per_fact_top_patch.csv` and `plots/per_fact_top_patch.png` - which facts drive the average.
+8. `tables/paraphrase_summary.csv` and `tables/paraphrase_consistency.csv` - whether the localized band survives templates.
+9. `tables/negative_control_scores.csv` and `plots/negative_controls.png` - specificity checks.
+10. `tables/component_patching.csv`, `tables/component_summary.csv`, and `plots/component_patching.png` - attention versus MLP refinement.
+11. `tables/edit_results.csv` - only if `--run-edit` was passed.
+
+## The extension: the patch made permanent
+
+`--run-edit` applies a deliberately minimal rank-one edit to one MLP down-projection. It takes the clean subject's MLP key and shifts the MLP output toward the corrupt subject's output:
+
+```text
+clean key:    France at the localized component layer
+new value:    Germany-like MLP output at that same position
+intended edit: France -> Berlin
+```
+
+The edit audit asks:
 
 | Measure | Question |
 |---|---|
-| direct success | did the edited prompt flip? |
-| paraphrase flips | did the *fact* change, or just the template? |
-| neighbors intact | vs the model's own pre-edit answers, not gold |
-| fluency logprob | did we lobotomize anything nearby? |
+| direct success | did the original prompt flip to the distractor? |
+| logit movement | did the target-vs-distractor gap move even without a flip? |
+| paraphrase flips | did the fact change, or just the base template? |
+| neighbors intact | did nearby capital facts keep the model's own pre-edit top-1 answer? |
+| fluency logprob | did the edit damage unrelated text modeling? |
 
-Then the assignment: read Hase et al., *Does Localization Inform Editing?*,
-and reconcile your localization map with where the edit actually worked.
-**Explaining the tension is success; resolving it is not required** — the
-field hasn't either. (Full ROME solves a least-squares problem over a
-covariance estimate; our rank-one is deliberately the minimal version whose
-every line you can explain. Cite ROME, not this, in anything public.)
+The localized edit layer is chosen from the mapped component layer, not from the stream depth directly. An alternative layer is also tested. That comparison is the point of the extension: causal tracing can identify where a clean activation is sufficient, while editing asks whether a small weight change at one module can reproduce that activation change robustly.
 
-In our validation run the tension arrived on schedule, with its mechanism
-showing: stream patches in the localized band recover ~67% of the answer —
-but a stream patch at layer k carries the **entire accumulated subject
-representation** (everything layers 0..k−1 wrote), while the weight edit
-changes **one MLP's write**. At 4× dose the edit moved an 11-logit gap by
-0.8 logits and had already started breaking neighbors. "The band is causally
-sufficient" and "no single layer in the band is individually decisive" are
-both true, and conflating stream-level localization with layer-level
-editability is precisely the mistake Hase et al. documented. Check
-`direct_logit_diff_before/after` in `edit_results.csv` before concluding an
-edit "did nothing" — movement without a flip is the most informative outcome.
-
-## First artifact-reading path
-
-1. `plots/patching_heatmap_<fact>.png` — one pair, layer × position, token-labeled.
-2. `plots/localization_across_facts.png` — the role curves; find the handoff.
-3. `plots/negative_controls.png` — what the matched patch beats.
-4. `plots/component_patching.png` — attn vs MLP in the localized band.
-5. `tables/facts.csv` — who passed the gate, who didn't, by how much.
-6. `results.csv` / `tables/patching_scores.csv` — the long-form grid behind
-   every aggregate and heatmap cell.
-7. `tables/edit_results.csv` — the localization-meets-editing table.
+A movement without a flip is not a failed artifact. It is often the most informative outcome. It says the edit touched the right direction but did not dominate the distributed computation.
 
 ## Writeup questions
 
-1. Where is the handoff in your run, and how stable is it across paraphrase
-   templates? Quote layers and recoveries.
-2. Why is subject-position recovery at layer 0 uninformative *for this
-   corruption type*? What corruption would make it informative? (Meng et al.
-   used one.)
-3. State your strongest result as a Woodward-style invariance claim: under
-   which interventions, over which prompt population, does the relationship
-   hold? Name one intervention you did NOT perform that could break it.
-4. Component pass: in your localized band, who carries the fact — attention
-   or MLP? At which position? Does that match the ROME story?
-5. (Extension) Localization said layer X; the edit worked best at layer Y.
-   Write the Hase et al. reconciliation paragraph: what exactly does causal
-   tracing measure, that editing success does not?
+1. Where is the handoff in your run? Quote the subject peak, threshold, handoff depth, and localized stream band from `localization_decision.json`.
+2. Why is subject-position recovery at stream depth 0 uninformative for this corruption type? What corruption type would make early subject patches less tautological?
+3. Do the paraphrase templates preserve the localized band? Quote `paraphrase_summary.csv`.
+4. Which component-role cell is strongest in `component_summary.csv`: MLP at subject, attention at subject, MLP at last, or attention at last? Does it support or complicate the ROME-style story?
+5. Do negative controls stay below the matched patch? Identify the strongest control and decide whether your claim needs to be narrowed.
+6. State your strongest result as a Woodward-style invariance claim: under which intervention, over which prompt population, and for which metric does the relationship hold?
+7. Extension: did the localized layer or alternative layer edit better? Explain the result without assuming localization should predict editability.
 
 ## Symptom-first debugging
 
 | Symptom | First place to look |
 |---|---|
-| patch no-op check FAILED | the stream convention broke — do not touch anything else first |
-| everything recovers ~0 | baseline gate margins; is `clean_diff − corrupt_diff` tiny? |
-| recovery > 1 or < −1 | fine in single cells (logits aren't bounded); endemic = wrong denominator |
-| pairs rejected by validator | your subjects tokenize to ≠1 token, or prompts differ at >1 position |
-| only 2–3 facts pass the gate on tier a | gpt2 genuinely doesn't know them; that's the gate working |
-| edit flips nothing anywhere | check the edit layer is before the handoff; after it, the subject MLP no longer matters |
-| a "negative" control beats the matched patch | per-fact rows in `tables/negative_control_scores.csv` — wrong-position patches on small models can carry real signal; scope the claim to the controls that stayed low |
+| `patch_noop_check` failed | stream convention or patch hook is broken; ignore every heatmap until fixed |
+| many rejected pairs | `diagnostics/tokenization_report.csv`; subjects or answers are not single tokens |
+| only a few facts pass the gate | `tables/facts.csv`; the model may not know the facts under this template |
+| recovery is mostly zero | check `clean_diff - corrupt_diff`; the denominator may be too small or the corrupt pair may not oppose the target |
+| recovery is often above 1 or below -1 | single cells can do this; widespread extremes suggest denominator or alignment trouble |
+| paraphrases localize elsewhere | scope the claim to the base template or inspect whether the subject position changed meaningfully |
+| a negative control matches the real patch | do not claim specificity; inspect the per-fact rows and narrow the intervention |
+| edit flips nothing | inspect `movement_toward_distractor` before declaring failure; the stream patch may be distributed across many writes |
+| edit breaks neighbors | the edit is not specific enough; cite spillover as counterevidence |
 
-## What goes in the ledger
+## What goes in the claim ledger
 
-2–3 claims, all `CAUSAL`, all **scoped**: an intervention name and a prompt
-population in every sentence. "Layer 14 stores capitals" is not available at
-this evidence level; "patching the subject-position stream at layers 12–14
-recovers ≥80% of the answer logit difference across 14 five-token capital
-prompts, and mismatched-pair controls recover well under half of that" is
-exactly available — and
-its falsifier is already named in the drafts.
+Write 2-3 `CAUSAL` claims. Each claim needs four pieces:
+
+```text
+Intervention: clean subject-position stream patch at depth k
+Population: validated single-token capital prompts under template T
+Metric: recovery of target-vs-distractor final-position logit difference
+Falsifier: a control, paraphrase, or broader population that would break the claim
+```
+
+Available claim:
+
+```text
+Patching the clean subject-position residual stream at depth k recovers X% of the clean logit gap across N validated capital prompts, while mismatched-pair controls recover Y%.
+```
+
+Not available:
+
+```text
+Layer k stores capitals.
+```
+
+The second sentence is tempting because it is short. It is also wrong-shaped. Lab 5 earns causal claims about interventions, not metaphysical claims about storage jars in the transformer attic.
