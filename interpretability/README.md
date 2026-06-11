@@ -64,6 +64,10 @@ python interp_bench.py --lab lab6 --tier b --prompt-set full
 # Lab 7 (steering + refusal; uses instruct models, generation is slow):
 python interp_bench.py --lab lab7 --tier a   # SmolLM2-135M-Instruct
 python interp_bench.py --lab lab7 --tier b    # Olmo-3-7B-Instruct
+
+# Lab 8 (SAEs + transcoders; pretrained dictionaries download on first run):
+python interp_bench.py --lab lab8 --tier a   # gpt2 + jbloom SAE + Dunefsky transcoder
+python interp_bench.py --lab lab8 --tier b    # Olmo-3-1025-7B + decoderesearch SAE
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -123,8 +127,24 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   ablation), and the bridge that loads Lab 4's truth direction. Steering
   scales are fractions of the activation norm, so a "dose" means the same
   thing across models.
-- Labs 8–11 — designed in COURSE.md, not yet implemented. Lab 8
-  (superposition + SAEs) is next.
+- Lab 8: superposition, SAEs, and transcoders — implemented and validated
+  (Tier A+B). Back to **base models** with **pretrained dictionaries** loaded
+  from the Hub: gpt2 + jbloom resid SAE + Dunefsky MLP transcoder (Tier A),
+  Olmo-3-1025-7B + decoderesearch jumprelu SAE (Tier B). Part 0 is a CPU toy
+  model reproducing the canonical superposition collapse (dense → d_hidden
+  orthogonal features, sparse → more in superposition). Part 1 is a feature
+  atlas whose graded skill is **label validation** — held-out AUC against
+  domain membership, an adversarial confusable-pair test (concept vs token
+  feature), and polysemanticity scoring, with verdicts and a kept record of
+  the labels that died. Part 2 verifies a transcoder by reconstruction FVU and
+  the downstream-logit KL of splicing it in for the real MLP, then de-embeds
+  features (the bridge to Lab 9). Plus a cosine bridge to Lab 4's truth
+  direction and a CAUSAL feature-clamp (induce a concept at ~1× the feature's
+  peak activation, with a random-feature control and a fluency proxy). The SAE
+  loading conventions (TL centering, bare-LN transcoder input, jumprelu
+  threshold) were each validated empirically, not assumed.
+- Labs 9–11 — designed in COURSE.md, not yet implemented. Lab 9
+  (attribution graphs / circuit tracing) is next.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 

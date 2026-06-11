@@ -188,6 +188,15 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "model_tier_b": "allenai/Olmo-3-7B-Instruct",
         "model_tier_c": "allenai/Olmo-3-7B-Instruct",
     },
+    "lab8": {
+        "module": "labs.lab08_sae_transcoders",
+        "run_name": "lab08_sae_transcoders",
+        "description": "Superposition, SAEs, and transcoders: find, label, and validate features.",
+        # Back to BASE models (the pinned SAE/transcoder weights were trained on
+        # base models): tier A = gpt2 + jbloom resid SAE + Dunefsky transcoder;
+        # tier B = Olmo-3-1025-7B base + decoderesearch SAE. The tier defaults
+        # already pick these, so no per-model override is needed.
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template

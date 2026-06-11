@@ -13,5 +13,9 @@ safetensors>=0.4
 numpy>=1.26
 matplotlib>=3.8
 
+# Lab 8 loads pretrained SAEs/transcoders from the Hub (weights as safetensors).
+# huggingface_hub ships with transformers, but the lab imports it directly.
+huggingface_hub>=0.23
+
 # Optional: only needed for --quantization 8bit/4bit on small GPUs.
 # bitsandbytes>=0.44
