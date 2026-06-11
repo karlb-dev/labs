@@ -771,7 +771,7 @@ def draft_claims(
                     f"mean totals: attn {fact['mean_attn_total']}, mlp {fact['mean_mlp_total']}, "
                     f"embeddings {fact['mean_embed_score']}."
                 ),
-                "artifact": f"runs/{run_name}/tables/layer_component_summary.csv",
+                "artifact": f"runs/{run_name}/tables/category_summary.csv",
                 "falsifier": (
                     "Re-scoring with a tuned lens / non-frozen normalization, or a different "
                     "distractor of the same type, moves the dominant component kind or depth materially."

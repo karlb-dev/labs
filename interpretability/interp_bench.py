@@ -186,6 +186,7 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # First lab on instruct models with chat templates (Labs 7+).
         "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
         "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
     },
 }
 
@@ -1653,18 +1654,18 @@ def resolve_component_anatomy(
 
     store: dict[tuple, Any] = {}
     handles = []
-    for i, block in enumerate(bundle.blocks):
-        handles.append(getattr(block, attn_path).register_forward_hook(_contrib_hook(store, ("attn", "module", i))))
-        handles.append(getattr(block, mlp_path).register_forward_hook(_contrib_hook(store, ("mlp", "module", i))))
-        if post_attn_path:
-            handles.append(
-                getattr(block, post_attn_path).register_forward_hook(_contrib_hook(store, ("attn", "post_norm", i)))
-            )
-        if post_mlp_path:
-            handles.append(
-                getattr(block, post_mlp_path).register_forward_hook(_contrib_hook(store, ("mlp", "post_norm", i)))
-            )
     try:
+        for i, block in enumerate(bundle.blocks):
+            handles.append(getattr(block, attn_path).register_forward_hook(_contrib_hook(store, ("attn", "module", i))))
+            handles.append(getattr(block, mlp_path).register_forward_hook(_contrib_hook(store, ("mlp", "module", i))))
+            if post_attn_path:
+                handles.append(
+                    getattr(block, post_attn_path).register_forward_hook(_contrib_hook(store, ("attn", "post_norm", i)))
+                )
+            if post_mlp_path:
+                handles.append(
+                    getattr(block, post_mlp_path).register_forward_hook(_contrib_hook(store, ("mlp", "post_norm", i)))
+                )
         capture = run_with_residual_cache(bundle, probe_prompt)
     finally:
         for h in handles:
@@ -1753,14 +1754,14 @@ def run_with_component_cache(
     hook_factory = _contrib_hook_all_positions if all_positions else _contrib_hook
     store: dict[tuple, Any] = {}
     handles = []
-    for i, block in enumerate(bundle.blocks):
-        handles.append(
-            getattr(block, comp_anatomy.attn_hook_path).register_forward_hook(hook_factory(store, ("attn", i)))
-        )
-        handles.append(
-            getattr(block, comp_anatomy.mlp_hook_path).register_forward_hook(hook_factory(store, ("mlp", i)))
-        )
     try:
+        for i, block in enumerate(bundle.blocks):
+            handles.append(
+                getattr(block, comp_anatomy.attn_hook_path).register_forward_hook(hook_factory(store, ("attn", i)))
+            )
+            handles.append(
+                getattr(block, comp_anatomy.mlp_hook_path).register_forward_hook(hook_factory(store, ("mlp", i)))
+            )
         capture = run_with_residual_cache(bundle, prompt)
     finally:
         for h in handles:
@@ -2024,15 +2025,16 @@ def run_with_attention_cache(
 
         return hook
 
-    handles = [bundle.final_norm.register_forward_pre_hook(final_norm_pre_hook)]
-    for i, block in enumerate(bundle.blocks):
-        attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
-        o_proj = get_by_path(block, f"{attn_module_path}.o_proj") if hasattr(
-            getattr(block, attn_module_path), "o_proj"
-        ) else get_by_path(block, f"{attn_module_path}.c_proj")
-        handles.append(o_proj.register_forward_pre_hook(make_o_pre_hook(i)))
-        handles.append(getattr(block, attn_module_path).register_forward_hook(make_attn_out_hook(i)))
+    handles = []
     try:
+        handles.append(bundle.final_norm.register_forward_pre_hook(final_norm_pre_hook))
+        for i, block in enumerate(bundle.blocks):
+            attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
+            o_proj = get_by_path(block, f"{attn_module_path}.o_proj") if hasattr(
+                getattr(block, attn_module_path), "o_proj"
+            ) else get_by_path(block, f"{attn_module_path}.c_proj")
+            handles.append(o_proj.register_forward_pre_hook(make_o_pre_hook(i)))
+            handles.append(getattr(block, attn_module_path).register_forward_hook(make_attn_out_hook(i)))
         with torch.no_grad():
             out = bundle.model(
                 input_ids=input_ids,
@@ -2250,17 +2252,16 @@ def run_with_node_set_ablation(
 
         return hook
 
-    for layer, head_list in heads_by_layer.items():
-        block = bundle.blocks[layer]
-        attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
-        attn_module = getattr(block, attn_module_path)
-        o_proj = attn_module.o_proj if hasattr(attn_module, "o_proj") else attn_module.c_proj
-        handles.append(o_proj.register_forward_pre_hook(make_head_hook(layer, head_list)))
-    for layer in mlp_set:
-        module = getattr(bundle.blocks[layer], comp_anatomy.mlp_hook_path)
-        handles.append(module.register_forward_hook(make_mlp_hook(layer)))
-
     try:
+        for layer, head_list in heads_by_layer.items():
+            block = bundle.blocks[layer]
+            attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
+            attn_module = getattr(block, attn_module_path)
+            o_proj = attn_module.o_proj if hasattr(attn_module, "o_proj") else attn_module.c_proj
+            handles.append(o_proj.register_forward_pre_hook(make_head_hook(layer, head_list)))
+        for layer in mlp_set:
+            module = getattr(bundle.blocks[layer], comp_anatomy.mlp_hook_path)
+            handles.append(module.register_forward_hook(make_mlp_hook(layer)))
         with torch.no_grad():
             out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
     finally:
@@ -2277,8 +2278,9 @@ def run_with_node_set_ablation(
 # "streams[k] at position p" replaces the INPUT to block k (for k < L) or the
 # input to the final norm (k = L) at that position. A run patched with its
 # own vectors is therefore a no-op — and run_patch_noop_check enforces that
-# bit-for-bit before any patching science, because a silent off-by-one in
-# layer or position indexing would produce a beautiful, wrong heatmap.
+# (max |Δlogit| ≤ 1e-4) before any patching science, because a silent
+# off-by-one in layer or position indexing would produce a beautiful, wrong
+# heatmap.
 
 
 def _forward_logits(bundle: ModelBundle, prompt: str, pre_hooks: Sequence[tuple[Any, Any]]) -> Any:
@@ -2317,6 +2319,11 @@ def run_with_residual_patch(
 
     def patch_hook(mod: Any, hook_args: tuple) -> Any:
         hidden = hook_args[0].clone()
+        if not -hidden.shape[1] <= position < hidden.shape[1]:
+            raise ValueError(
+                f"patch position {position} out of range for sequence length "
+                f"{hidden.shape[1]}; clean and corrupt prompts must be token-aligned."
+            )
         hidden[0, position] = vector.to(hidden.device, hidden.dtype)
         return (hidden,) + tuple(hook_args[1:])
 
@@ -2447,6 +2454,12 @@ def temporary_rank_one_edit(bundle: ModelBundle, layer: int, key: Any, delta_v: 
 
     module, in_by_out = resolve_mlp_down_proj(bundle, layer)
     weight = module.weight
+    if not weight.is_floating_point():
+        raise RuntimeError(
+            f"--run-edit needs float weights, but the MLP down-projection is {weight.dtype} "
+            "(quantized). A rank-one float edit cannot be applied to quantized weights; "
+            "re-run lab5 without --quantization."
+        )
     original = weight.detach().clone()
     k = key.to(weight.device, torch.float32)
     dv = delta_v.to(weight.device, torch.float32)

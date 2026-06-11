@@ -59,6 +59,7 @@ N_SHUFFLES = 2          # shuffled-label refits per (layer, family)
 N_RANDOM_DIRS = 3       # random-direction baselines per layer
 LOGISTIC_L2 = 1e-2
 SURFACE_LETTERS = ("r", "n", "a", "o")  # candidate letters; most balanced wins
+NORMALIZE_ROWS = True   # handout writeup question 4 asks you to flip this and re-run
 
 
 @dataclasses.dataclass(frozen=True)
@@ -143,6 +144,11 @@ def eval_logistic(probe: dict[str, Any], X: Any, y: Any) -> float:
 
 def fit_mass_mean(X: Any, y: Any) -> dict[str, Any]:
     """Difference of class means; threshold at the projected midpoint."""
+    if not bool((y == 1).any()) or not bool((y == 0).any()):
+        raise ValueError(
+            "mass-mean probe needs both classes in train; "
+            "a tiny --max-examples can leave the hash split one-classed"
+        )
     mu_true = X[y == 1].mean(dim=0)
     mu_false = X[y == 0].mean(dim=0)
     direction = mu_true - mu_false
@@ -425,7 +431,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     # projects to the same value regardless of truth. Norms are recorded
     # below so the outliers stay visible instead of silently fixed.
     row_norms = X_layers_raw.norm(dim=-1)             # [n, L+1]
-    X_layers = X_layers_raw / row_norms[..., None].clamp_min(1e-9)
+    X_layers = (
+        X_layers_raw / row_norms[..., None].clamp_min(1e-9) if NORMALIZE_ROWS else X_layers_raw
+    )
     labels = torch.tensor([s.label for s in statements])
     families = [s.family for s in statements]
     surface_labels = torch.tensor(
@@ -570,6 +578,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "direction": final_probe["direction"],
             "threshold": final_probe["threshold"],
             "layer": best_layer,
+            "layer_convention": "depth index into bench streams[k]: 0 = embeddings, "
+                                "k = residual after block k (k = n_layers is the final-norm input)",
             "position": "final token (end-of-statement period)",
             "stream": "pre-norm residual, bench streams[k] convention",
             "normalization": "each activation row unit-normalized before the mean difference; "
@@ -675,8 +685,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     )
     transfer_text = ", ".join(
         f"{family} {direction_transfer[family]:.2f}"
+        + (" (within)" if family == direction_family else "")
         for family in FAMILIES if family in direction_transfer
     )
+    below_chance = [
+        f for f, a in sorted(direction_transfer.items())
+        if f != direction_family and a < 0.5
+    ]
     claims = [
         {
             "id": f"{LAB_ID}-C1",
@@ -699,8 +714,14 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "tag": "DECODE",
             "text": (
                 f"The saved {direction_family}-trained mass-mean direction at layer {best_layer} "
-                f"transfers across the frozen families ({transfer_text}); this is the direction written "
-                "to `truth_direction.pt` for Lab 7's causal test."
+                f"transfers across the frozen families ({transfer_text})"
+                + (
+                    f"; on {', '.join(below_chance)} it is BELOW chance — the direction "
+                    "anti-predicts there (the expected Geometry-of-Truth inversion), which is "
+                    "structure, not absence of transfer"
+                    if below_chance else ""
+                )
+                + "; this is the direction written to `truth_direction.pt` for Lab 7's causal test."
             ),
             "artifact": f"runs/{run_name}/tables/truth_direction.pt",
             "falsifier": "A fourth held-out family (dates, physical facts) drops transfer to chance.",
@@ -753,7 +774,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         f"- surface peak: {surface_peak_acc:.3f} at layer {surface_peak_layer}",
         f"- token-length baseline: {metrics['token_length_baseline_mean']:.3f}",
         f"- best affirmative cross-family layer (mass-mean, worst transfer): {best_layer} ({best_min_cross:.3f})",
-        f"- saved direction: `tables/truth_direction.pt` ({direction_family} mass-mean @ layer {best_layer}, "
+        f"- saved direction: `tables/truth_direction.pt` ({direction_family} mass-mean @ layer "
+        f"{best_layer}/{n_depths - 1}, "
         f"worst cross-family transfer {direction_worst_cross:.3f}) — Lab 7 input",
         "",
         "## 5. What claim is supported, and at what evidence level?",

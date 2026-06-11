@@ -54,6 +54,7 @@ runs/lab01_residual_logit_lens-<timestamp>-<id>/
     cosine_to_final_by_depth.png
     residual_norm_by_depth.png
     residual_delta_norm_by_depth.png
+    event_depths.png
     event_depth_heatmap.png
     final_readout_scatter.png
     biography_<example>.png

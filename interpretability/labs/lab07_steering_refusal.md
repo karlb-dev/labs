@@ -1,162 +1,213 @@
 # Lab 7: Steering Vectors, Representation Engineering, and the Refusal Direction
 
-**Evidence level targeted:** causality (representation-level control), with
-explicit attention to what control does and does not explain.
-**Prerequisites:** Labs 1–6, and Lab 4's saved `truth_direction.pt` (the
-bridge loads it). **This is the first lab on an instruct model** — chat
-templates are now load-bearing.
+**Evidence level targeted:** causal intervention for generation steering, plus a forward-pass monitor for refusal.
+
+**Prerequisites:** Labs 1-6. Lab 4's `truth_direction.pt` is useful provenance when present, but this lab recomputes the truth direction on the current instruct model because directions are model-specific.
+
+**Model family:** instruct models only. Every prompt goes through the tokenizer chat template before any activation is read or changed.
 
 ## The question
 
-Can a direction in activation space, computed from contrast pairs, be used to
-**monitor** or **change** behavior — and what does it mean that one direction
-appears to mediate refusal?
+Can a direction in activation space, computed from contrast pairs, be used to monitor or change behavior? If a refusal direction is predictive and steerable, what does that show, and what does it still fail to explain?
 
-## Read this first: the safety wall
+This lab has three linked experiments:
 
-Track B works with the **refusal direction**, the most consequential
-single-direction result in the literature (Arditi et al.). This lab confronts
-the dual-use question by design, with apparatus, not homilies. The constraints
-are not optional and are enforced in code:
+1. **Track A:** build a sentiment steering direction and measure a dose-response curve with controls.
+2. **Track B:** build a refusal direction with forward passes only, use it as a monitor, then steer benign prompts toward refusal.
+3. **Bridge:** revisit Lab 4's truth probe by injecting a recomputed truth direction and separating answer bias from truthfulness.
 
-> - Direction extraction and the monitor use **forward passes only**.
-> - **No completion is ever sampled from a refusal-eliciting prompt.**
-> - Steering is only ever **toward** refusal, on **benign** prompts.
-> - **Refusal ablation is not implemented.** The published result that
->   ablating this direction jailbreaks models is assigned as *reading* — you
->   discuss it, you do not reproduce it. Reading it teaches the science;
->   reproducing it teaches nothing extra and leaves a jailbroken artifact on
->   disk that nobody needs.
+The unit of evidence is not a single spicy generation. The unit of evidence is a curve, a control, an artifact, and a caveat.
 
-The `data/refusal_elicitation_set.csv` is frozen and instructor-provided; its
-"harmful-sounding" prompts are category-level with no operational content,
-and exist only to elicit the model's internal refusal representation. You
-never author or extend that file.
+## Safety wall for Track B
 
-## The method (Track A): a dose-response curve, not a screenshot
+Track B is safety-relevant and intentionally constrained. The constraints are part of the experiment, not classroom decoration:
 
-The honest unit of evidence for steering is a **dose-response curve with
-controls**, never a cherry-picked before/after. You compute a
-difference-in-means direction from sentiment contrast pairs, inject
-`scale × direction` into the residual stream at one layer during generation,
-and sweep the scale through zero. At each dose you measure:
+- Direction extraction uses **forward passes only**.
+- The refusal monitor uses **held-out projections only**.
+- The lab **never samples a completion from a refusal-eliciting prompt**.
+- Steering is only **toward refusal**, and only on **benign prompts**.
+- Refusal ablation is **not implemented**.
 
-| Metric | What it catches |
+The frozen `data/refusal_elicitation_set.csv` exists only to produce the internal contrast for a forward pass. Students do not author, extend, or generate from that file. The run writes `diagnostics/lab07_safety_audit.json` so the safety wall leaves a footprint in the artifacts.
+
+## The load-bearing implementation detail: where the vector lives
+
+The bench's steering hook adds a vector to a decoder block's **output**. Under the course stream convention, decoder block `k` writes the residual stream called `streams[k + 1]`. The revised lab therefore extracts directions from `streams[injection_layer + 1]` at the final prompt position and injects them into `bundle.blocks[injection_layer]`.
+
+That off-by-one detail is easy to miss and expensive to ignore. Reading from `streams[k]` while injecting into block `k` means you measured one residual stream and changed the next one. The code now names both fields in the tables:
+
+```text
+injection_layer = decoder block whose output receives the vector
+stream_depth    = residual-stream depth where the direction is read
+```
+
+Dose is also normalized. A scale of `1.0` means "one median activation norm at the chosen injection site," not "add a raw unit vector." This makes the sweep more comparable across a 135M smoke model and a 7B course model.
+
+## Track A: dose-response steering, not before/after theater
+
+Track A computes a positive-minus-negative sentiment direction from frozen contrast pairs, chooses an injection layer by actually steering generations, and sweeps through negative, zero, and positive doses.
+
+At every dose it records four measurements:
+
+| Metric | Why it matters |
 |---|---|
-| target sentiment score | does the behavior actually move? |
-| fluency (mean token logprob) | the side effect that breaks first |
-| KL from the unsteered distribution | how far you've pushed the model |
-| drift accuracy (unrelated facts) | collateral damage |
+| sentiment score | target behavior: did the generation move? |
+| mean token logprob | fluency side effect: did the text become unlikely or degenerate? |
+| KL from the unsteered next-token distribution | distribution shift: how hard did the vector push? |
+| unrelated fact accuracy | collateral damage: did steering leak into another task? |
 
-…against two controls on the same axes: a **random** direction of matched
-norm, and a direction from **shuffled** pair labels. If the controls match
-the real direction, your effect was generic perturbation, not the concept.
+It compares the real direction against two controls on the same axes:
 
-### What you will actually see (and a real finding)
+| Control | What it rules out |
+|---|---|
+| random unit direction | generic activation perturbation |
+| shuffled-label direction | contrast-set structure without the concept label |
 
-Steering an **aligned instruct model**'s sentiment is *asymmetric*: positive
-dose reliably raises the sentiment score, but negative dose barely moves it —
-the RLHF "be positive and helpful" floor resists being pushed negative. That
-asymmetry is not a bug in your direction; it is a measurable property of the
-model, and it belongs in your writeup. The controls confirm the positive
-effect is concept-specific (the real direction beats random and balanced-
-shuffled controls on the positive side); the flat negative side is the model
-pushing back. The injection **layer matters enormously** — mid-stack layers
-steer generation; late layers carry the answer but resist redirection, so the
-lab chooses the layer by *actually steering and scoring generations*, not by a
-cheap next-token proxy (which picked a near-useless late layer in testing).
+The main plot is `plots/dose_response_sentiment.png`. The updated version has four panels: target score, fluency, KL, and drift. Do not claim success from the target panel alone. A vector that moves sentiment only after fluency collapses is not a clean concept intervention. It is a smoke machine wearing a lab coat.
 
-### Template discipline (the load-bearing detail)
+### Layer selection
 
-Every prompt goes through the chat template before anything touches it. The
-direction is read at the **generation position** of the *templated* prompt —
-the same place steering later acts. Computing a direction on a raw
-untemplated string and steering templated generation is the silent
-meaning-level mismatch that the design guide warns about: the code runs
-fine, the residual stream at "the same layer" is a different object, and your
-result is quietly wrong. The bench's `apply_chat_template` is the only door.
+The lab no longer talks about a cheap next-token proxy. It chooses the layer by generation-based sweep and writes:
 
-## The result (Track B): predict vs cause
+- `plots/layer_sweep.png`
+- `tables/layer_sweep.csv`
+- `tables/layer_sweep_by_prompt.csv`
 
-Two different properties, measured separately:
+The chosen block is the one with the largest positive-minus-negative sentiment spread at the probe dose. This is slower than a proxy, but it measures the object students are actually claiming: generated behavior.
 
-1. **Monitor (predicts):** project held-out prompts onto the refusal
-   direction; ground truth is the prompt's category. The ROC/AUC says how
-   well the direction *predicts* which prompts trigger refusal — **forward
-   passes only, no generation**.
-2. **Steer toward refusal (causes):** add the direction to **benign** prompts
-   at increasing dose and measure the induced-refusal rate (a refusal-string
-   classifier on the benign generations). This shows the direction is
-   causally *sufficient* in the safe direction.
+## Track B: refusal direction, predict versus cause
 
-"Predicts refusal" and "causes refusal" are not the same claim. A direction
-can do one without the other. Keep them apart in your writeup.
+Track B builds a refusal direction from training contrast pairs:
 
-## The bridge: Lab 4's loop, closed
+```text
+mean(refusal-eliciting forward-pass activations) - mean(matched-benign forward-pass activations)
+```
 
-Lab 4 found truth **decodable**. Does intervening on a truth direction
-**change behavior**? The lab loads your Lab 4 `truth_direction.pt` for
-provenance, then **recomputes** the diff-in-means truth direction on *this*
-instruct model from the same frozen cities data — because directions are
-model-specific, and the saved one was computed on the base model. Steering it
-shifts (or doesn't) the model's True/False assent. **Decodable-and-steerable**
-and **decodable-but-inert** are both publishable sentences, and which one you
-get tells you what a probe is worth as evidence.
+Then it asks two separate questions.
+
+### 1. Does the direction monitor held-out prompt category?
+
+Held-out refusal-eliciting and benign prompts are projected onto the direction. This produces an AUC and a small ROC-style table. No held-out refusal-eliciting prompt is generated.
+
+Artifacts:
+
+- `plots/refusal_monitor.png`: projection histograms plus ROC curve
+- `tables/refusal_monitor_table.csv`: threshold, true positive rate, false positive rate
+- `tables/refusal_monitor_examples.csv`: projection values, with text marked as not generated
+
+This is a forward-pass monitor. It predicts held-out category. It is not evidence about sampled harmful completions.
+
+### 2. Does the direction cause refusal when added to benign prompts?
+
+The lab then steers only benign evaluation prompts toward the refusal direction and measures induced-refusal rate with a simple string classifier. A random direction is plotted as a control.
+
+Artifacts:
+
+- `plots/induced_refusal.png`: induced-refusal rate versus dose
+- `tables/induced_refusal_curve.csv`: refusal counts, rates, and standard errors
+- `tables/induced_refusal_generations.csv`: benign generations and matched refusal markers
+
+Hand-audit the generations whenever this curve supports a claim. The classifier is a transparent meter, not an oracle.
+
+## Bridge: Lab 4's truth direction, split into two claims
+
+Lab 4 showed truth was linearly decodable. Lab 7 asks whether a truth direction steers a True/False readout on the instruct model. The direction is fit on one split of the frozen truth-pair set and evaluated on held-out pairs from that same family.
+
+The old shortcut was tempting: plot `logit('True') - logit('False')` and call the direction steerable. The revised bridge is more careful. It plots two quantities:
+
+| Quantity | Meaning |
+|---|---|
+| answer bias | mean `logit('True') - logit('False')` across all statements |
+| signed truth margin | `True-False` for true statements, `False-True` for false statements |
+
+This distinction matters. A vector can make the model say "True" more often without making it more truthful. The bridge verdict is one of:
+
+- `decodable-but-inert`: steering barely moves the True/False readout.
+- `decodable-and-steers-True-assent`: steering mainly changes answer bias.
+- `decodable-and-improves-truth-margin`: steering improves the signed correctness margin on the held-out truth split.
+
+Artifacts:
+
+- `plots/truth_direction_bridge.png`: answer bias and signed truth margin, real versus random direction
+- `tables/truth_direction_bridge.csv`: aggregate bridge metrics
+- `tables/truth_direction_bridge_by_statement.csv`: held-out per-statement readout values
+
+This is the probe lesson in miniature: decodable, steerable, and explanatory are three different words with three different jobs.
 
 ## Running it
 
+CPU smoke path:
+
 ```bash
-python interp_bench.py --lab lab7 --tier a    # SmolLM2-135M-Instruct (CPU-ok)
-python interp_bench.py --lab lab7 --tier b     # Olmo-3-7B-Instruct
+python interp_bench.py --lab lab7 --tier a --prompt-set small
 ```
 
-The bench picks the instruct model per tier and applies the chat template
-automatically. Generation is greedy (frozen) so the only moving part across a
-sweep is the dose.
+Standard course run:
+
+```bash
+python interp_bench.py --lab lab7 --tier b --prompt-set full
+```
+
+Useful debugging runs:
+
+```bash
+python interp_bench.py --lab lab7 --tier b --prompt-set small --max-examples 4
+python interp_bench.py --lab lab7 --tier b --prompt-set medium --no-plots
+```
+
+`--prompt-set` controls the default dataset cap. `--max-examples` is then applied as a hard cap, so the smoke path remains quick and the full path remains full.
 
 ## First artifact-reading path
 
-1. `steering_claim_card.md` — the deliverable: effect, dose, side effects,
-   and what the intervention does *not* show.
-2. `plots/dose_response_sentiment.png` — real vs both controls; find where
-   fluency breaks before the sentiment effect saturates.
-3. `plots/refusal_monitor.png` — predict (forward-pass AUC).
-4. `plots/induced_refusal.png` — cause (benign prompts only).
-5. `plots/truth_direction_bridge.png` — the Lab 4 loop.
-6. `tables/steered_examples.csv` — actual generations across the dose; read
-   them, don't just trust the score.
+Read the artifacts in this order:
+
+1. `steering_claim_card.md`: the shortest defensible interpretation.
+2. `plots/dose_response_sentiment.png`: Track A effect and side effects in one figure.
+3. `tables/dose_response_by_prompt.csv` and `tables/steered_examples.csv`: the actual generations behind the score.
+4. `plots/refusal_monitor.png`: forward-pass monitoring, not generation.
+5. `plots/induced_refusal.png`: benign prompt steering, with random control.
+6. `diagnostics/lab07_safety_audit.json`: what was and was not generated.
+7. `plots/truth_direction_bridge.png`: answer bias versus signed truth margin.
+8. `ledger_suggestions.md`: drafted claims with measured numbers.
+
+## What a good writeup says
+
+A good writeup keeps three separations alive:
+
+1. **Real direction versus controls:** quote the target effect and the random/shuffled gaps.
+2. **Effect versus side effect:** quote the fluency, KL, and drift costs at the dose you want to claim.
+3. **Predict versus cause:** the refusal AUC and the induced-refusal rate are different evidence.
+
+A good bridge answer does not say "the truth direction works" until it checks the held-out signed truth-margin panel. If only the answer-bias panel moves, write that down. That is not a failed lab. It is a sharper claim.
 
 ## Writeup questions
 
-1. At what dose does the sentiment effect exceed the random-direction
-   control, and what breaks first as the dose rises? Quote the curves.
-2. How well does the refusal direction *predict* refusal (AUC) versus *cause*
-   it (induced rate)? Are those the same property? Argue from your numbers.
-3. The truth direction: decodable-and-steerable, or decodable-but-inert? What
-   does your answer imply about probes as evidence (back to Lab 4)?
-4. **Hacking (entity realism — "if you can spray them, they're real"):** you
-   intervened with this direction and the model moved. Is the direction
-   *real*? What would distinguish your steering success from an *explanation*
-   of refusal? What would change your mind?
-5. **Dual use:** the refusal-ablation result was published with full methods.
-   Argue *both sides* of whether it should have been — using your own Track B
-   artifacts as evidence about how easy or hard the method is.
+1. At what positive dose does the sentiment direction first beat both controls? What happens to fluency, KL, and drift at that dose?
+2. Is the negative side of the sentiment sweep symmetric with the positive side? Give the measured swings rather than a vibe report.
+3. How well does the refusal direction monitor held-out prompt category? How well does it cause refusal on benign prompts? Why are those not the same claim?
+4. Did the random direction induce refusal too? If yes, how much of the curve might be generic disruption rather than a refusal feature?
+5. For the truth bridge, which verdict did you get: inert, True-assent steering, or improved truth margin? What does that imply about Lab 4's probe evidence?
+6. Hacking's entity-realism challenge: you intervened on a direction and behavior moved. Is the direction real? What extra evidence would turn steering success into a mechanistic explanation?
+7. Dual-use prompt: the refusal-ablation result was published with methods. Argue both sides of whether that was justified, using your own Track B safety audit and curves as evidence.
 
 ## Symptom-first debugging
 
 | Symptom | First place to look |
 |---|---|
-| effect == control at all doses | direction computed on untemplated prompts? check `apply_chat_template` is in the path |
-| fluency fine but no effect | steering layer too late/early; check `plots/layer_sweep.png` |
-| induced refusal high for the random control too | you're measuring disruption, not refusal; tighten the classifier and hand-audit |
-| monitor AUC ≈ 0.5 | the refusal/benign pairs aren't matched, or the layer carries no refusal feature |
-| refusal classifier disagrees with your eyes | hand-audit 20 generations and fix the marker list — the design *expects* this |
+| effect equals controls at every dose | check `tables/layer_sweep.csv` and confirm the real direction is not being read from the wrong stream depth |
+| strong target effect but bad text | check fluency and KL panels before claiming clean steering |
+| random direction induces refusal too | audit `tables/induced_refusal_generations.csv`; the classifier may be catching disruption |
+| monitor AUC near 0.5 | inspect pair matching and try a different injection block from `layer_sweep.csv` |
+| truth bridge looks strong but false statements get worse | the vector is steering True-assent, not truthfulness; use the signed-margin panel |
+| smoke run is too slow | use `--prompt-set small --max-examples 4 --no-plots` for plumbing only |
 
 ## What goes in the ledger
 
-2–3 claims, `CAUSAL`, **with dose and side effects in the claim text**. "The
-direction steers sentiment" is not a claim; "injecting the sentiment
-direction at layer L raises the sentiment score from X to Y at dose D, beating
-the random control by Z, at a fluency cost of W" is. The refusal claim must
-carry the safety scope in its own words. The bridge claim must say which of
-decodable-and-steerable / decodable-but-inert you found, and what it implies.
+Write 2-3 `CAUSAL` claims with dose, control gaps, and side effects in the claim text. Avoid cloud-shaped claims like "the direction controls sentiment." Use measured claims:
+
+```text
+[L07-C1] CAUSAL | Injecting the sentiment direction at decoder block L changes score X to Y at dose D, beating random by R and shuffled by S, with fluency cost F and drift cost G.
+Artifact: runs/.../plots/dose_response_sentiment.png | Falsifier: controls match the real curve or the effect appears only after fluency collapse.
+```
+
+The refusal claim must carry the safety scope in its own words. The bridge claim must state whether the direction changed answer bias, signed truth margin, or neither.

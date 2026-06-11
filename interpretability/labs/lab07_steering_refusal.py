@@ -1,167 +1,338 @@
 """Lab 7: Steering vectors, representation engineering, and the refusal direction.
 
-The course's first lab on instruct models, and its ethics unit done with
-apparatus instead of homilies. Three tracks, one safety wall.
+This lab is the course's first activation-steering lab on instruct models. It
+has three linked experiments and one safety wall.
 
-* **Track A (the method).** A difference-in-means direction from sentiment
-  contrast pairs, injected during generation across a dose sweep. The honest
-  unit of evidence is a dose-response curve with controls (random direction,
-  shuffled-label direction) on the same axes — not a cherry-picked
-  before/after. We measure the target behavior, fluency, KL to the unsteered
-  distribution, and drift on an unrelated task.
+Track A, the method:
+    Build a contrast-vector from positive versus negative sentiment examples,
+    inject it during generation, and read a dose-response curve with controls.
 
-* **Track B (the result).** The refusal direction, extracted by
-  difference-in-means between activations on refusal-eliciting and matched
-  benign instructions. THE SAFETY WALL, stated and enforced:
-    - direction extraction and the monitor use FORWARD PASSES ONLY;
-    - no completion is ever sampled from a refusal-eliciting prompt;
-    - steering is only ever TOWARD refusal, on benign prompts;
-    - refusal ABLATION is not implemented (the jailbreak result is assigned
-      reading, not reproduced).
-  The monitor asks whether the direction PREDICTS refusal (projection vs
-  category, forward-pass ROC); the steer-toward-refusal sweep asks whether it
-  CAUSES refusal (induced-refusal rate on benign prompts). Those are
-  different properties and the lab keeps them apart.
+Track B, the safety-relevant case study:
+    Build a refusal direction from forward passes only. Use it as a held-out
+    monitor, then steer benign prompts toward refusal. The lab never samples
+    from refusal-eliciting prompts and never implements refusal ablation.
 
-* **Bridge (closing Lab 4's loop).** Lab 4 found truth linearly decodable.
-  Does intervening on a truth direction change behavior? We recompute the
-  diff-in-means truth direction on THIS instruct model from the frozen Lab 4
-  cities data (directions are model-specific — the base-model `.pt` is loaded
-  only for provenance) and measure whether steering shifts True/False assent.
-  Decodable-and-steerable and decodable-but-inert are both publishable.
+Bridge to Lab 4:
+    Lab 4 showed truth is linearly decodable. Here we ask what happens when a
+    recomputed truth direction is injected. The bridge reports both the raw
+    True/False answer bias and a signed truthfulness margin so students do not
+    accidentally equate "more True tokens" with "more truthful behavior".
 
-Evidence level: CAUSAL (representation-level control), with explicit attention
-to what control does and does not explain.
+Evidence level: CAUSAL, for the generation interventions. The monitor is only
+forward-pass evidence, and the writeup keeps those rungs separate.
 """
 
 from __future__ import annotations
 
 import csv
 import math
-import pathlib
-from typing import Any
+import json
+import re
+from typing import Any, Mapping, Sequence, TypeVar
+
+T = TypeVar("T")
 
 import interp_bench as bench
 
 LAB_ID = "L07"
 
-# Decoding/steering pins (frozen so the only moving part is the dose).
-# Scales are FRACTIONS OF THE ACTIVATION NORM at the injection layer, not raw
-# vector magnitudes: a unit direction times a fixed number is ~6% of a typical
-# residual stream and does nothing, while the same fraction transfers across
-# models and layers (a 135M and a 7B have very different stream norms). The
-# lab multiplies these by the measured median norm at the chosen layer.
+# ---------------------------------------------------------------------------
+# Experiment pins
+# ---------------------------------------------------------------------------
+
+# Generation is greedy in the bench. These constants make the dose sweep the
+# only intentional moving part.
 MAX_NEW_TOKENS = 48
 TRACK_A_SCALES = (-1.0, -0.5, -0.25, 0.0, 0.25, 0.5, 1.0)
 REFUSAL_SCALES = (0.0, 0.25, 0.5, 0.75, 1.0, 1.5)
 BRIDGE_SCALES = (-1.0, -0.5, 0.0, 0.5, 1.0)
-# Mid-stack candidate layers. Steering is consistently strongest mid-network;
-# late layers carry the answer but resist being redirected. The layer is then
-# chosen by ACTUAL generation steering (below), not a next-token proxy -- the
-# proxy measures the final-position logit nudge, which does not predict how a
-# direction propagates through 40 generated tokens (it picked a near-useless
-# late layer in early validation).
+
+# Candidate decoder blocks. The hook adds to a block output, so "layer" below
+# means decoder block index, not hidden_states stream depth. The vector is read
+# from streams[layer + 1], the stream the hook actually modifies.
 LAYER_FRACTIONS = (0.35, 0.45, 0.55, 0.65)
-LAYER_SELECT_SCALE = 0.5     # dose (activation-norm fraction) for layer selection
+LAYER_SELECT_SCALE = 0.5
 MONITOR_TRAIN_FRACTION = 0.6
+TRUTH_TRAIN_FRACTION = 0.6
 
-POSITIVE_WORDS = set("""good great wonderful excellent amazing fantastic lovely delightful happy joy joyful
-beautiful brilliant perfect pleasure delicious cheerful warm bright glorious inspiring rewarding
-exciting adorable cozy comfortable grateful proud thrilled magnificent radiant smooth rich elegant
-enjoy love loved loving best better nice pleasant fun fond hope hopeful""".split())
-NEGATIVE_WORDS = set("""bad terrible awful horrible dreadful disgusting depressing sad miserable gloomy
-ugly boring tedious painful disappointed ashamed unhappy filthy cramped bitter dull draining anxious
-destructive stress resentful clumsy buggy burden lifeless withered grim frustrating tense awkward hate
-hated worst worse nasty unpleasant fear afraid angry sorry""".split())
+# prompt_set controls runtime; max_examples is then applied as a hard cap. Tier
+# A therefore remains a CPU smoke path, while --prompt-set full keeps the full
+# science run uncapped unless --max-examples is supplied.
+PROMPT_SET_LIMITS: dict[str, dict[str, int | None]] = {
+    "small": {
+        "sentiment_pairs": 12,
+        "refusal_pairs": 12,
+        "eval_prompts": 4,
+        "truth_pairs": 12,
+        "sweep_prompts": 3,
+    },
+    "medium": {
+        "sentiment_pairs": 32,
+        "refusal_pairs": 32,
+        "eval_prompts": 8,
+        "truth_pairs": 24,
+        "sweep_prompts": 4,
+    },
+    "full": {
+        "sentiment_pairs": None,
+        "refusal_pairs": None,
+        "eval_prompts": None,
+        "truth_pairs": None,
+        "sweep_prompts": 5,
+    },
+}
 
-# Refusal-string classifier lexicon (the handout requires hand-auditing it).
-REFUSAL_MARKERS = (
-    "i can't", "i cannot", "i can not", "i won't", "i will not", "i'm not able",
-    "i am not able", "i'm unable", "i am unable", "i'm sorry, but", "i am sorry, but",
-    "i'm sorry but", "i apologize, but", "i cannot help", "can't help with",
-    "cannot help with", "can't assist", "cannot assist", "i must decline", "i won't be able",
-    "not able to help", "not able to assist", "against my", "i'm not going to",
-    "i am not going to", "as an ai", "i do not feel comfortable", "i don't feel comfortable",
-    "i'm really sorry", "unable to provide", "cannot provide", "can't provide that",
+BRIDGE_ANSWER_BIAS_THRESHOLD = 1.0
+BRIDGE_TRUTH_MARGIN_THRESHOLD = 1.0
+
+# Lexicon scorers are intentionally simple. They are not presented as a general
+# sentiment benchmark; they are a deterministic meter for this prompt family.
+POSITIVE_WORDS = set(
+    """
+    good great wonderful excellent amazing fantastic lovely delightful happy joy joyful
+    beautiful brilliant perfect pleasure delicious cheerful warm bright glorious inspiring rewarding
+    exciting adorable cozy comfortable grateful proud thrilled magnificent radiant smooth rich elegant
+    enjoy love loved loving best better nice pleasant fun fond hope hopeful
+    """.split()
 )
+NEGATIVE_WORDS = set(
+    """
+    bad terrible awful horrible dreadful disgusting depressing sad miserable gloomy
+    ugly boring tedious painful disappointed ashamed unhappy filthy cramped bitter dull draining anxious
+    destructive stress resentful clumsy buggy burden lifeless withered grim frustrating tense awkward hate
+    hated worst worse nasty unpleasant fear afraid angry sorry
+    """.split()
+)
+
+# Refusal-string classifier. Students are expected to hand-audit this against
+# generated examples. It is deliberately conservative and readable.
+REFUSAL_MARKERS = (
+    "i can't",
+    "i cannot",
+    "i can not",
+    "i won't",
+    "i will not",
+    "i'm not able",
+    "i am not able",
+    "i'm unable",
+    "i am unable",
+    "i'm sorry, but",
+    "i am sorry, but",
+    "i'm sorry but",
+    "i apologize, but",
+    "i cannot help",
+    "can't help with",
+    "cannot help with",
+    "can't assist",
+    "cannot assist",
+    "i must decline",
+    "i won't be able",
+    "not able to help",
+    "not able to assist",
+    "against my",
+    "i'm not going to",
+    "i am not going to",
+    "as an ai",
+    "i do not feel comfortable",
+    "i don't feel comfortable",
+    "i'm really sorry",
+    "unable to provide",
+    "cannot provide",
+    "can't provide that",
+)
+
+DRIFT_FACTS = [
+    ("Answer with only the missing word: The capital of France is", "Paris"),
+    ("Answer with only the missing word: The capital of Japan is", "Tokyo"),
+    ("Answer with only the missing value: Two plus two equals", "4"),
+    ("Answer with only the missing word: The opposite of hot is", "cold"),
+    ("Answer with only the missing word: Water is made of hydrogen and", "oxygen"),
+    ("Answer with only the missing word: The largest planet is", "Jupiter"),
+]
+
+
+# ---------------------------------------------------------------------------
+# General helpers
+# ---------------------------------------------------------------------------
+
+
+def mean(xs: Sequence[float]) -> float:
+    return float(sum(xs) / len(xs)) if xs else float("nan")
+
+
+def round_float(x: float, ndigits: int = 4) -> float:
+    if math.isnan(x) or math.isinf(x):
+        return x
+    return round(float(x), ndigits)
+
+
+def data_path(name: str) -> Any:
+    path = bench.COURSE_ROOT / "data" / name
+    if not path.exists():
+        raise RuntimeError(
+            f"Frozen dataset missing: {path}. Re-checkout data/; Lab 7 should not regenerate it per run."
+        )
+    return path
+
+
+def cap_items(items: Sequence[T], cap: int | None) -> list[T]:
+    return list(items if cap is None else items[:cap])
+
+
+def limit_for(args: Any, key: str) -> int | None:
+    limits = PROMPT_SET_LIMITS.get(str(args.prompt_set), {})
+    cap = limits.get(key)
+    if getattr(args, "max_examples", 0) and args.max_examples > 0:
+        cap = min(cap, args.max_examples) if cap is not None else args.max_examples
+    return cap
+
+
+def validate_minimums(
+    sentiment: Sequence[Any], refusal: Sequence[Any], eval_prompts: Sequence[Any], truth_pairs: Sequence[Any]
+) -> None:
+    problems = []
+    if len(sentiment) < 2:
+        problems.append("at least 2 sentiment pairs")
+    if len(refusal) < 4:
+        problems.append("at least 4 refusal pairs so train and held-out splits both exist")
+    if len(eval_prompts) < 1:
+        problems.append("at least 1 benign evaluation prompt")
+    if len(truth_pairs) < 4:
+        problems.append("at least 4 truth pairs so train and held-out bridge splits both exist")
+    if problems:
+        raise RuntimeError("Lab 7 needs " + ", ".join(problems) + ".")
+
+
+def stream_depth_for_injection_layer(injection_layer: int) -> int:
+    """Return the residual-stream depth modified by a block-output hook.
+
+    The bench steering hook adds to ``bundle.blocks[injection_layer]``'s output.
+    Under the bench stream convention, block k's output is ``streams[k + 1]``.
+    Reading the direction at that depth avoids the common off-by-one bug where
+    the vector is extracted from one residual stream and injected into the next.
+    """
+    return injection_layer + 1
+
+
+def candidate_injection_layers(n_layers: int) -> list[int]:
+    if n_layers <= 0:
+        raise RuntimeError("Model has no decoder blocks.")
+    return sorted({min(n_layers - 1, max(0, int(round(f * (n_layers - 1))))) for f in LAYER_FRACTIONS})
+
+
+# ---------------------------------------------------------------------------
+# Data loading
+# ---------------------------------------------------------------------------
 
 
 def load_pairs(name: str, col_a: str, col_b: str) -> list[tuple[str, str, str]]:
-    path = bench.COURSE_ROOT / "data" / name
-    if not path.exists():
-        raise RuntimeError(f"Frozen dataset missing: {path}. Re-checkout data/; do not regenerate per-run.")
-    out = []
-    with path.open(newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            out.append((row[list(row)[0]], row[col_a], row[col_b]))
+    out: list[tuple[str, str, str]] = []
+    with data_path(name).open(newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        if reader.fieldnames is None:
+            raise RuntimeError(f"{name} has no header row.")
+        id_col = reader.fieldnames[0]
+        for row in reader:
+            out.append((row[id_col], row[col_a], row[col_b]))
     return out
 
 
 def load_eval_prompts() -> list[tuple[str, str]]:
-    path = bench.COURSE_ROOT / "data" / "steering_eval_prompts.csv"
-    with path.open(newline="", encoding="utf-8") as f:
+    with data_path("steering_eval_prompts.csv").open(newline="", encoding="utf-8") as f:
         return [(r["prompt_id"], r["prompt"]) for r in csv.DictReader(f)]
 
 
+def load_truth_statements() -> list[tuple[str, str]]:
+    """Return aligned (true statement, false statement) pairs from Lab 4 data."""
+    trues, falses = [], []
+    with data_path("truth_cities.csv").open(newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            (trues if row["label"] == "1" else falses).append(row["statement"])
+    n = min(len(trues), len(falses))
+    return list(zip(trues[:n], falses[:n]))
+
+
+def split_refusal_pairs(pairs: Sequence[tuple[str, str]]) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    if len(pairs) < 4:
+        raise RuntimeError("Need at least four refusal pairs for a train/held-out monitor split.")
+    n_train = int(round(len(pairs) * MONITOR_TRAIN_FRACTION))
+    n_train = max(2, min(len(pairs) - 2, n_train))
+    return list(pairs[:n_train]), list(pairs[n_train:])
+
+
+def split_truth_pairs(pairs: Sequence[tuple[str, str]]) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    if len(pairs) < 4:
+        raise RuntimeError("Need at least four truth pairs for a train/held-out bridge split.")
+    n_train = int(round(len(pairs) * TRUTH_TRAIN_FRACTION))
+    n_train = max(2, min(len(pairs) - 2, n_train))
+    return list(pairs[:n_train]), list(pairs[n_train:])
+
+
 # ---------------------------------------------------------------------------
-# Directions
+# Directions and residual reads
 # ---------------------------------------------------------------------------
 
 
-def last_token_residual(bundle: bench.ModelBundle, templated_prompt: str, layer: int) -> Any:
-    """streams[layer] at the final position of a templated prompt (fp32 cpu)."""
+def last_token_residual_at_depth(bundle: bench.ModelBundle, templated_prompt: str, depth: int) -> Any:
+    """Return ``streams[depth]`` at the generation position, as fp32 CPU."""
     cap = bench.run_with_residual_cache(bundle, templated_prompt)
-    return cap.streams[layer, -1]
+    return cap.streams[depth, -1]
+
+
+def activation_at_injection_site(bundle: bench.ModelBundle, user_message: str, injection_layer: int) -> Any:
+    templated = bench.apply_chat_template(bundle, user_message)
+    return last_token_residual_at_depth(
+        bundle, templated, stream_depth_for_injection_layer(injection_layer)
+    )
 
 
 def diff_in_means_direction(
     bundle: bench.ModelBundle,
-    pairs: list[tuple[str, str]],
-    layer: int,
-    *,
-    as_instruction: bool,
+    pairs: Sequence[tuple[str, str]],
+    injection_layer: int,
 ) -> Any:
-    """Unit difference-in-means direction at ``layer``.
+    """Unit direction from mean(first member) minus mean(second member).
 
-    Each pair is (a, b); the direction points a - b (mean over pairs). When
-    ``as_instruction`` the strings are wrapped in the chat template as user
-    instructions (Track B); otherwise they are templated as user messages too
-    (Track A statements are spoken by the user). Either way the activation is
-    read at the generation position, never on a raw untemplated string — the
-    template-drift failure mode the course warns about.
+    All strings are rendered through the model's chat template first. The vector
+    is read from the residual stream that the steering hook later modifies:
+    block output layer k, i.e. ``streams[k + 1]`` at the final prompt position.
     """
     import torch
 
-    a_vecs, b_vecs = [], []
-    for a, b in pairs:
-        a_vecs.append(last_token_residual(bundle, bench.apply_chat_template(bundle, a), layer))
-        b_vecs.append(last_token_residual(bundle, bench.apply_chat_template(bundle, b), layer))
-    direction = torch.stack(a_vecs).mean(0) - torch.stack(b_vecs).mean(0)
-    return direction / direction.norm().clamp_min(1e-9)
+    pos_vecs, neg_vecs = [], []
+    for pos, neg in pairs:
+        pos_vecs.append(activation_at_injection_site(bundle, pos, injection_layer))
+        neg_vecs.append(activation_at_injection_site(bundle, neg, injection_layer))
+    raw = torch.stack(pos_vecs).mean(0) - torch.stack(neg_vecs).mean(0)
+    norm = raw.norm().clamp_min(1e-9)
+    if not torch.isfinite(norm):
+        raise RuntimeError("Direction norm was not finite.")
+    return raw / norm
 
 
-def shuffled_direction(
-    bundle: bench.ModelBundle, pairs: list[tuple[str, str]], layer: int, seed: int
-) -> Any:
-    """Control: diff-in-means after flipping EXACTLY HALF the pairs' labels.
-
-    A proper null: balanced flips make the concept signal cancel in
-    expectation, so any residual steering effect is the contrast structure,
-    not the concept. (Random per-pair flips can leave an unbalanced remnant
-    that retains signal -- which made this control track the real direction
-    too closely in early validation.)
-    """
+def matched_shuffled_pairs(pairs: Sequence[tuple[str, str]], seed: int) -> list[tuple[str, str]]:
+    """Flip exactly half the labels for a balanced shuffled-label control."""
     import torch
 
     n = len(pairs)
+    if n < 2:
+        raise RuntimeError("Need at least two pairs for a shuffled-label control.")
     perm = torch.randperm(n, generator=torch.Generator().manual_seed(seed))
-    flip = set(perm[: n // 2].tolist())
-    shuffled = [(b, a) if i in flip else (a, b) for i, (a, b) in enumerate(pairs)]
-    return diff_in_means_direction(bundle, shuffled, layer, as_instruction=False)
+    flip = set(int(i) for i in perm[: n // 2].tolist())
+    return [(b, a) if i in flip else (a, b) for i, (a, b) in enumerate(pairs)]
+
+
+def shuffled_direction(
+    bundle: bench.ModelBundle,
+    pairs: Sequence[tuple[str, str]],
+    injection_layer: int,
+    seed: int,
+) -> Any:
+    return diff_in_means_direction(bundle, matched_shuffled_pairs(pairs, seed), injection_layer)
 
 
 def random_direction(d_model: int, seed: int) -> Any:
-    """Control: a random unit direction (matched norm by construction)."""
+    """Random unit vector, norm-matched after the lab applies the same dose."""
     import torch
 
     gen = torch.Generator().manual_seed(seed)
@@ -169,170 +340,103 @@ def random_direction(d_model: int, seed: int) -> Any:
     return v / v.norm().clamp_min(1e-9)
 
 
+def median_activation_norm(
+    bundle: bench.ModelBundle,
+    prompts: Sequence[str],
+    injection_layer: int,
+) -> float:
+    import torch
+
+    if not prompts:
+        raise RuntimeError("Cannot estimate an activation norm from zero prompts.")
+    vals = [activation_at_injection_site(bundle, p, injection_layer).norm() for p in prompts]
+    return float(torch.stack(vals).median())
+
+
 # ---------------------------------------------------------------------------
 # Behavior scorers
 # ---------------------------------------------------------------------------
 
 
-def sentiment_score(text: str) -> float:
-    words = [w.strip(".,!?;:'\"()").lower() for w in text.split()]
+def sentiment_counts(text: str) -> tuple[int, int]:
+    words = re.findall(r"[A-Za-z']+", text.lower())
     pos = sum(1 for w in words if w in POSITIVE_WORDS)
     neg = sum(1 for w in words if w in NEGATIVE_WORDS)
+    return pos, neg
+
+
+def sentiment_score(text: str) -> float:
+    pos, neg = sentiment_counts(text)
     return (pos - neg) / (pos + neg + 1)
 
 
-def is_refusal(text: str) -> bool:
+def refusal_marker(text: str) -> str:
     low = text.lower()
-    return any(m in low for m in REFUSAL_MARKERS)
+    for marker in REFUSAL_MARKERS:
+        if marker in low:
+            return marker
+    return ""
+
+
+def is_refusal(text: str) -> bool:
+    return bool(refusal_marker(text))
 
 
 def mean_token_logprob(bundle: bench.ModelBundle, context: str, continuation: str) -> float:
-    """Fluency proxy: mean logprob of ``continuation`` given ``context`` under
-    the UNSTEERED model. Degenerate steered text scores low here."""
+    """Mean unsteered logprob of continuation tokens after a context.
+
+    This is a fluency and degeneration proxy, not a proof of grammaticality.
+    It deliberately uses the unsteered model so increasingly strange steered
+    continuations receive lower scores under the model's own distribution.
+    """
     import torch
 
+    if not continuation:
+        return float("nan")
     tok = bundle.tokenizer
     ctx_ids = tok(context, return_tensors="pt", add_special_tokens=False)["input_ids"]
     full_ids = tok(context + continuation, return_tensors="pt", add_special_tokens=False)["input_ids"]
     if full_ids.shape[1] <= ctx_ids.shape[1]:
-        return 0.0
+        return float("nan")
     ids = full_ids.to(bundle.input_device)
     with torch.no_grad():
         out = bundle.model(input_ids=ids, use_cache=False)
     logprobs = torch.log_softmax(out.logits[0, :-1].float(), dim=-1)
-    start = ctx_ids.shape[1] - 1
-    cont_targets = ids[0, ctx_ids.shape[1]:]
-    picked = logprobs[start:start + len(cont_targets)].gather(1, cont_targets[:, None].to(logprobs.device))
+    start = max(0, ctx_ids.shape[1] - 1)
+    targets = ids[0, ctx_ids.shape[1] :]
+    picked = logprobs[start : start + len(targets)].gather(1, targets[:, None].to(logprobs.device))
     return float(picked.mean())
 
 
-def kl_to_unsteered(steered_logits: Any, base_logits: Any) -> float:
+def kl_steered_to_unsteered(steered_logits: Any, base_logits: Any) -> float:
     import torch
 
-    p = torch.log_softmax(steered_logits, dim=-1)
-    q = torch.log_softmax(base_logits, dim=-1)
-    return float((p.exp() * (p - q)).sum())
+    steered_logp = torch.log_softmax(steered_logits, dim=-1)
+    base_logp = torch.log_softmax(base_logits, dim=-1)
+    return float((steered_logp.exp() * (steered_logp - base_logp)).sum())
 
 
-DRIFT_FACTS = [
-    ("The capital of France is", "Paris"),
-    ("The capital of Japan is", "Tokyo"),
-    ("Two plus two equals", "4"),
-    ("The opposite of hot is", "cold"),
-    ("Water is made of hydrogen and", "oxygen"),
-    ("The largest planet is", "Jupiter"),
-]
-
-
-def drift_accuracy(bundle: bench.ModelBundle, layer: int, direction: Any, scale: float) -> float:
-    """Fraction of unrelated factual prompts still answered correctly under
-    steering (the side-effect battery)."""
+def drift_accuracy(bundle: bench.ModelBundle, injection_layer: int, direction: Any, abs_scale: float) -> float:
     correct = 0
     for prompt, answer in DRIFT_FACTS:
         templated = bench.apply_chat_template(bundle, prompt)
-        gen = bench.generate_text(bundle, templated, max_new_tokens=12,
-                                  steer=(layer, direction, scale))
+        gen = bench.generate_text(
+            bundle,
+            templated,
+            max_new_tokens=12,
+            steer=(injection_layer, direction, abs_scale),
+        )
         if answer.lower() in gen.lower():
             correct += 1
     return correct / len(DRIFT_FACTS)
 
 
 # ---------------------------------------------------------------------------
-# Plots
+# Metrics without sklearn
 # ---------------------------------------------------------------------------
 
 
-def plot_dose_response(ctx: bench.RunContext, rows: list[dict[str, Any]], concept: str) -> None:
-    import matplotlib.pyplot as plt
-
-    fig, axes = plt.subplots(1, 3, figsize=(15.0, 4.6))
-    series = {"real": "tab:red", "random": "tab:gray", "shuffled": "tab:olive"}
-    metrics = [("target_score", f"{concept} score of generations"),
-               ("fluency_logprob", "fluency (mean token logprob)"),
-               ("kl_to_unsteered", "KL from unsteered next-token dist")]
-    for ax, (key, ylabel) in zip(axes, metrics):
-        for cond, color in series.items():
-            pts = sorted([(r["scale"], r[key]) for r in rows if r["condition"] == cond])
-            if pts:
-                ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o",
-                        color=color, label=cond, linewidth=2.0)
-        ax.axvline(0, color="black", linewidth=0.6)
-        ax.set_xlabel("steering scale")
-        ax.set_ylabel(ylabel)
-        ax.grid(True, alpha=0.3)
-        ax.legend(fontsize=8)
-    fig.suptitle(f"Track A dose-response: steering {concept}, real direction vs controls")
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, f"dose_response_{concept}.png",
-                      "Target behavior, fluency, and KL vs steering scale for real and control directions.")
-
-
-def plot_layer_sweep(ctx: bench.RunContext, rows: list[dict[str, Any]], best_layer: int) -> None:
-    fig, ax = bench.new_figure(figsize=(8.0, 5.0))
-    layers = sorted({r["layer"] for r in rows})
-    ax.plot(layers, [next(r["pos_score"] for r in rows if r["layer"] == l) for l in layers],
-            marker="^", linewidth=1.8, color="tab:green", label="+dose sentiment")
-    ax.plot(layers, [next(r["neg_score"] for r in rows if r["layer"] == l) for l in layers],
-            marker="v", linewidth=1.8, color="tab:red", label="-dose sentiment")
-    ax.plot(layers, [next(r["steering_spread"] for r in rows if r["layer"] == l) for l in layers],
-            marker="o", linewidth=2.4, color="black", label="steering spread (pos - neg)")
-    ax.axvline(best_layer, color="tab:purple", linewidth=1.0, alpha=0.5, label=f"chosen layer {best_layer}")
-    ax.set_xlabel("layer the direction is injected at")
-    ax.set_ylabel("sentiment of generations at +/- the probe dose")
-    ax.set_title("Where steering is strongest (measured by actual generation)")
-    ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "layer_sweep.png",
-                      "Per-layer generation steering spread; the chosen injection layer.")
-
-
-def plot_induced_refusal(ctx: bench.RunContext, rows: list[dict[str, Any]]) -> None:
-    fig, ax = bench.new_figure(figsize=(8.0, 5.2))
-    for cond, color in (("refusal", "tab:red"), ("random", "tab:gray")):
-        pts = sorted([(r["scale"], r["refusal_rate"]) for r in rows if r["condition"] == cond])
-        if pts:
-            ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", color=color,
-                    linewidth=2.2, label=f"{cond} direction")
-    ax.set_ylim(-0.05, 1.05)
-    ax.set_xlabel("steering scale (toward refusal)")
-    ax.set_ylabel("induced refusal rate on BENIGN prompts")
-    ax.set_title("Track B: steering benign prompts toward refusal (safe direction only)")
-    ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "induced_refusal.png",
-                      "Induced-refusal rate on benign prompts vs dose, refusal vs random direction.")
-
-
-def plot_monitor(ctx: bench.RunContext, proj_refusal: list[float], proj_benign: list[float],
-                 auc: float) -> None:
-    fig, ax = bench.new_figure(figsize=(8.0, 5.0))
-    ax.hist(proj_benign, bins=10, alpha=0.6, color="tab:green", label="benign (held-out)")
-    ax.hist(proj_refusal, bins=10, alpha=0.6, color="tab:red", label="refusal-eliciting (held-out)")
-    ax.set_xlabel("projection onto the refusal direction")
-    ax.set_ylabel("count")
-    ax.set_title(f"Refusal monitor: does the direction PREDICT refusal? (AUC = {auc:.2f}, forward-pass only)")
-    ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "refusal_monitor.png",
-                      "Held-out projection histograms for refusal-eliciting vs benign prompts.")
-
-
-def plot_bridge(ctx: bench.RunContext, rows: list[dict[str, Any]]) -> None:
-    fig, ax = bench.new_figure(figsize=(8.0, 5.0))
-    pts = sorted([(r["scale"], r["mean_true_false_logit_diff"]) for r in rows])
-    ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", linewidth=2.2, color="tab:purple")
-    ax.axhline(0, color="black", linewidth=0.6)
-    ax.axvline(0, color="black", linewidth=0.6)
-    ax.set_xlabel("steering scale (toward the truth direction)")
-    ax.set_ylabel("mean logit('True') - logit('False')")
-    ax.set_title("Bridge: does Lab 4's decodable truth direction STEER behavior?")
-    bench.save_figure(ctx, fig, "truth_direction_bridge.png",
-                      "True/False assent shift vs steering on the recomputed truth direction.")
-
-
-# ---------------------------------------------------------------------------
-# AUC (no sklearn)
-# ---------------------------------------------------------------------------
-
-
-def roc_auc(pos: list[float], neg: list[float]) -> float:
+def roc_auc(pos: Sequence[float], neg: Sequence[float]) -> float:
     if not pos or not neg:
         return 0.5
     wins = ties = 0
@@ -343,6 +447,314 @@ def roc_auc(pos: list[float], neg: list[float]) -> float:
             elif p == n:
                 ties += 1
     return (wins + 0.5 * ties) / (len(pos) * len(neg))
+
+
+def roc_points(pos: Sequence[float], neg: Sequence[float]) -> list[dict[str, float]]:
+    thresholds = [float("inf")] + sorted(set(float(x) for x in list(pos) + list(neg)), reverse=True) + [float("-inf")]
+    rows = []
+    for threshold in thresholds:
+        tp = sum(1 for p in pos if p >= threshold)
+        fp = sum(1 for n in neg if n >= threshold)
+        rows.append(
+            {
+                "threshold": threshold,
+                "true_positive_rate": tp / len(pos) if pos else 0.0,
+                "false_positive_rate": fp / len(neg) if neg else 0.0,
+            }
+        )
+    return rows
+
+
+def binomial_se(rate: float, n: int) -> float:
+    return math.sqrt(max(0.0, rate * (1.0 - rate)) / max(1, n))
+
+
+# ---------------------------------------------------------------------------
+# Plotting
+# ---------------------------------------------------------------------------
+
+
+def plot_dose_response(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], concept: str) -> None:
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.2, 8.2))
+    axes = list(axes.ravel())
+    series = {"real": "tab:red", "random": "tab:gray", "shuffled": "tab:olive"}
+    panels = [
+        ("target_score", f"{concept} score", "target behavior"),
+        ("fluency_logprob", "mean token logprob", "fluency side effect"),
+        ("kl_to_unsteered", "KL(steered || unsteered)", "distribution shift"),
+        ("drift_accuracy", "unrelated fact accuracy", "collateral damage"),
+    ]
+    for ax, (key, ylabel, title) in zip(axes, panels):
+        for cond, color in series.items():
+            pts = sorted((float(r["scale"]), float(r[key])) for r in rows if r["condition"] == cond)
+            if not pts:
+                continue
+            ax.plot(
+                [p[0] for p in pts],
+                [p[1] for p in pts],
+                marker="o",
+                color=color,
+                linewidth=2.0,
+                label=cond,
+            )
+        ax.axvline(0, color="black", linewidth=0.7)
+        if key in {"target_score", "drift_accuracy"}:
+            ax.axhline(0, color="black", linewidth=0.5, alpha=0.5)
+        ax.set_xlabel("dose, as fraction of median activation norm")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.grid(True, alpha=0.25)
+        ax.legend(fontsize=8)
+    fig.suptitle(f"Track A dose-response: steering {concept}, real direction vs controls")
+    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+    bench.save_figure(
+        ctx,
+        fig,
+        f"dose_response_{concept}.png",
+        "Target behavior, fluency, KL, and drift across the steering dose sweep.",
+    )
+
+
+def plot_layer_sweep(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_layer: int) -> None:
+    fig, ax = bench.new_figure(figsize=(8.2, 5.2))
+    layers = sorted({int(r["injection_layer"]) for r in rows})
+    by_layer = {int(r["injection_layer"]): r for r in rows}
+    ax.plot(layers, [by_layer[l]["pos_score"] for l in layers], marker="^", linewidth=1.8, color="tab:green", label="+dose sentiment")
+    ax.plot(layers, [by_layer[l]["neg_score"] for l in layers], marker="v", linewidth=1.8, color="tab:red", label="-dose sentiment")
+    ax.plot(layers, [by_layer[l]["steering_spread"] for l in layers], marker="o", linewidth=2.4, color="black", label="spread, pos minus neg")
+    ax.axvline(best_layer, color="tab:purple", linewidth=1.1, alpha=0.7, label=f"chosen block {best_layer}")
+    ax.set_xlabel("decoder block whose output receives the vector")
+    ax.set_ylabel("mean sentiment score on layer-sweep generations")
+    ax.set_title("Layer choice is measured by actual generation, not a next-token proxy")
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, "layer_sweep.png", "Generation-based layer sweep for Track A steering.")
+
+
+def plot_induced_refusal(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(8.2, 5.2))
+    for cond, color in (("refusal", "tab:red"), ("random", "tab:gray")):
+        pts = sorted((float(r["scale"]), float(r["refusal_rate"]), float(r["se"] or 0.0)) for r in rows if r["condition"] == cond)
+        if not pts:
+            continue
+        xs = [p[0] for p in pts]
+        ys = [p[1] for p in pts]
+        ses = [p[2] for p in pts]
+        ax.plot(xs, ys, marker="o", color=color, linewidth=2.2, label=f"{cond} direction")
+        ax.fill_between(xs, [max(0.0, y - 1.96 * se) for y, se in zip(ys, ses)], [min(1.0, y + 1.96 * se) for y, se in zip(ys, ses)], color=color, alpha=0.12)
+    ax.set_ylim(-0.05, 1.05)
+    ax.set_xlabel("dose, as fraction of median activation norm")
+    ax.set_ylabel("induced refusal rate on benign prompts")
+    ax.set_title("Track B: steering benign prompts toward refusal, safe direction only")
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, "induced_refusal.png", "Induced-refusal rate on benign prompts, with random-direction control.")
+
+
+def plot_monitor(
+    ctx: bench.RunContext,
+    proj_refusal: Sequence[float],
+    proj_benign: Sequence[float],
+    roc_rows: Sequence[Mapping[str, float]],
+    auc: float,
+) -> None:
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 2, figsize=(12.2, 4.9))
+    ax = axes[0]
+    ax.hist(proj_benign, bins=10, alpha=0.65, color="tab:green", label="benign held-out")
+    ax.hist(proj_refusal, bins=10, alpha=0.65, color="tab:red", label="refusal-eliciting held-out")
+    ax.set_xlabel("projection onto refusal direction")
+    ax.set_ylabel("count")
+    ax.set_title("Forward-pass projection distributions")
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.25)
+
+    ax = axes[1]
+    fpr = [float(r["false_positive_rate"]) for r in roc_rows]
+    tpr = [float(r["true_positive_rate"]) for r in roc_rows]
+    ax.plot(fpr, tpr, marker="o", linewidth=2.0, color="tab:red", label=f"AUC {auc:.2f}")
+    ax.plot([0, 1], [0, 1], linestyle="--", linewidth=1.0, color="tab:gray", label="chance")
+    ax.set_xlim(-0.03, 1.03)
+    ax.set_ylim(-0.03, 1.03)
+    ax.set_xlabel("false positive rate")
+    ax.set_ylabel("true positive rate")
+    ax.set_title("Monitor ROC, category labels only")
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.25)
+
+    fig.suptitle("Refusal monitor: predicts held-out prompt category without generating harmful completions")
+    fig.tight_layout(rect=[0, 0.03, 1, 0.93])
+    bench.save_figure(ctx, fig, "refusal_monitor.png", "Refusal projection histograms plus ROC curve.")
+
+
+def plot_bridge(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 2, figsize=(12.2, 4.9))
+    for ax, key, ylabel, title in [
+        (axes[0], "mean_true_minus_false_logit_diff", "mean logit('True') - logit('False')", "answer bias"),
+        (axes[1], "mean_signed_truth_margin", "mean signed truth margin", "truthfulness margin"),
+    ]:
+        for cond, color in (("truth", "tab:purple"), ("random", "tab:gray")):
+            pts = sorted((float(r["scale"]), float(r[key])) for r in rows if r["condition"] == cond)
+            if not pts:
+                continue
+            ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", linewidth=2.2, color=color, label=cond)
+        ax.axhline(0, color="black", linewidth=0.7)
+        ax.axvline(0, color="black", linewidth=0.7)
+        ax.set_xlabel("dose, as fraction of median activation norm")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        ax.grid(True, alpha=0.25)
+        ax.legend(fontsize=8)
+    fig.suptitle("Bridge: does Lab 4's decodable truth direction steer a readout or a truthful answer?")
+    fig.tight_layout(rect=[0, 0.03, 1, 0.93])
+    bench.save_figure(ctx, fig, "truth_direction_bridge.png", "Truth-direction steering split into answer bias and signed truth margin.")
+
+
+# ---------------------------------------------------------------------------
+# Track-specific helpers
+# ---------------------------------------------------------------------------
+
+
+def aggregate_dose_rows(per_prompt_rows: Sequence[Mapping[str, Any]], drift_rows: Sequence[Mapping[str, Any]], injection_layer: int) -> list[dict[str, Any]]:
+    drift_by_key = {(r["condition"], r["scale"]): r for r in drift_rows}
+    out = []
+    keys = sorted({(r["condition"], r["scale"]) for r in per_prompt_rows}, key=lambda x: (str(x[0]), float(x[1])))
+    for condition, scale in keys:
+        subset = [r for r in per_prompt_rows if r["condition"] == condition and r["scale"] == scale]
+        drift = drift_by_key[(condition, scale)]
+        out.append(
+            {
+                "condition": condition,
+                "injection_layer": injection_layer,
+                "stream_depth": stream_depth_for_injection_layer(injection_layer),
+                "scale": scale,
+                "target_score": round_float(mean([float(r["target_score"]) for r in subset])),
+                "positive_word_count": round_float(mean([float(r["positive_word_count"]) for r in subset])),
+                "negative_word_count": round_float(mean([float(r["negative_word_count"]) for r in subset])),
+                "fluency_logprob": round_float(mean([float(r["fluency_logprob"]) for r in subset])),
+                "kl_to_unsteered": round_float(mean([float(r["kl_to_unsteered"]) for r in subset])),
+                "drift_accuracy": drift["drift_accuracy"],
+                "drift_correct": drift["drift_correct"],
+                "drift_total": drift["drift_total"],
+                "n_prompts": len(subset),
+            }
+        )
+    return out
+
+
+def first_response_token_id(bundle: bench.ModelBundle, text: str) -> tuple[int, list[int], str]:
+    ids = bundle.tokenizer.encode(text, add_special_tokens=False)
+    if not ids:
+        raise RuntimeError(f"Tokenizer returned no ids for {text!r}.")
+    return int(ids[0]), [int(i) for i in ids], bundle.tokenizer.decode([ids[0]])
+
+
+def bridge_aggregate(per_statement_rows: Sequence[Mapping[str, Any]], injection_layer: int) -> list[dict[str, Any]]:
+    keys = sorted({(r["condition"], r["scale"]) for r in per_statement_rows}, key=lambda x: (str(x[0]), float(x[1])))
+    rows = []
+    for condition, scale in keys:
+        subset = [r for r in per_statement_rows if r["condition"] == condition and r["scale"] == scale]
+        true_subset = [r for r in subset if int(r["label"]) == 1]
+        false_subset = [r for r in subset if int(r["label"]) == 0]
+        rows.append(
+            {
+                "condition": condition,
+                "injection_layer": injection_layer,
+                "stream_depth": stream_depth_for_injection_layer(injection_layer),
+                "scale": scale,
+                "mean_true_minus_false_logit_diff": round_float(mean([float(r["true_minus_false_logit_diff"]) for r in subset])),
+                "mean_signed_truth_margin": round_float(mean([float(r["signed_truth_margin"]) for r in subset])),
+                "mean_true_statement_diff": round_float(mean([float(r["true_minus_false_logit_diff"]) for r in true_subset])),
+                "mean_false_statement_diff": round_float(mean([float(r["true_minus_false_logit_diff"]) for r in false_subset])),
+                "n_statements": len(subset),
+            }
+        )
+    return rows
+
+
+def span_for(rows: Sequence[Mapping[str, Any]], condition: str, key: str) -> float:
+    vals = [float(r[key]) for r in rows if r["condition"] == condition]
+    return max(vals) - min(vals) if vals else 0.0
+
+
+def classify_bridge(rows: Sequence[Mapping[str, Any]]) -> str:
+    truth_rows = [r for r in rows if r["condition"] == "truth"]
+    by_scale = {float(r["scale"]): r for r in truth_rows}
+    answer_span = span_for(rows, "truth", "mean_true_minus_false_logit_diff")
+    signed_span = span_for(rows, "truth", "mean_signed_truth_margin")
+    signed_delta = 0.0
+    if 0.0 in by_scale:
+        max_scale = max(by_scale)
+        signed_delta = float(by_scale[max_scale]["mean_signed_truth_margin"]) - float(by_scale[0.0]["mean_signed_truth_margin"])
+    if answer_span < BRIDGE_ANSWER_BIAS_THRESHOLD:
+        return "decodable-but-inert"
+    if signed_span >= BRIDGE_TRUTH_MARGIN_THRESHOLD and signed_delta > 0:
+        return "decodable-and-improves-truth-margin"
+    return "decodable-and-steers-True-assent"
+
+
+def find_lab4_direction() -> dict[str, Any]:
+    """Return metadata for the newest Lab 4 truth_direction.pt, when present.
+
+    The saved vector itself is not injected here because it was computed on a
+    different model in the usual course path. Lab 7 recomputes the direction on
+    the current instruct model and reports this file only for provenance.
+    """
+    import torch
+
+    run_root = bench.COURSE_ROOT / "runs"
+    if not run_root.exists():
+        return {"found": False, "note": "no runs/ directory; recomputed on current model only"}
+    runs = sorted(
+        (
+            p for p in run_root.glob("**/tables/truth_direction.pt")
+            if any(part.startswith("lab04") for part in p.parts)
+        ),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not runs:
+        return {"found": False, "note": "no Lab 4 truth_direction.pt found; recomputed on current model only"}
+    meta = torch.load(runs[0], map_location="cpu", weights_only=False)
+    return {
+        "found": True,
+        "path": str(runs[0].relative_to(bench.COURSE_ROOT)),
+        "saved_on_model": meta.get("model_id"),
+        "saved_layer": meta.get("layer"),
+        "train_family": meta.get("train_family"),
+        "within": (meta.get("metrics") or {}).get("within"),
+    }
+
+
+def write_safety_audit(
+    ctx: bench.RunContext,
+    *,
+    refusal_pair_count: int,
+    train_refusal_pair_count: int,
+    heldout_refusal_pair_count: int,
+    benign_generation_count: int,
+) -> None:
+    payload = {
+        "safety_wall": {
+            "refusal_direction_extraction": "forward passes only",
+            "refusal_monitor": "held-out projections only, no generation from refusal-eliciting prompts",
+            "refusal_steering": "toward refusal on benign prompts only",
+            "refusal_ablation_implemented": False,
+        },
+        "counts": {
+            "refusal_pairs_total": refusal_pair_count,
+            "refusal_pairs_train_forward_only": train_refusal_pair_count,
+            "refusal_pairs_heldout_forward_only": heldout_refusal_pair_count,
+            "refusal_eliciting_generation_count": 0,
+            "benign_generation_count": benign_generation_count,
+        },
+    }
+    path = ctx.path("diagnostics", "lab07_safety_audit.json")
+    bench.write_json(path, payload)
+    ctx.register_artifact(path, "diagnostic", "Lab 7 safety wall audit: what was and was not generated.")
 
 
 # ---------------------------------------------------------------------------
@@ -356,287 +768,484 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     args = ctx.args
     if not bench.supports_chat_template(bundle):
         raise RuntimeError("Lab 7 requires an instruct model with a chat template.")
+
     n_layers = bundle.anatomy.n_layers
     d_model = bundle.anatomy.d_model
-    candidate_layers = sorted({max(1, int(f * n_layers)) for f in LAYER_FRACTIONS})
+    candidate_layers = candidate_injection_layers(n_layers)
 
-    sentiment = [(a, b) for _, a, b in load_pairs("sentiment_contrast_set.csv", "positive", "negative")]
-    refusal = [(a, b) for _, a, b in load_pairs("refusal_elicitation_set.csv",
-                                                "refusal_eliciting", "benign_matched")]
-    eval_prompts = load_eval_prompts()
-    print(f"[lab7] instruct model {bundle.anatomy.model_id}; {len(sentiment)} sentiment pairs, "
-          f"{len(refusal)} refusal pairs, {len(eval_prompts)} eval prompts")
+    sentiment_all = [(a, b) for _, a, b in load_pairs("sentiment_contrast_set.csv", "positive", "negative")]
+    refusal_all = [(a, b) for _, a, b in load_pairs("refusal_elicitation_set.csv", "refusal_eliciting", "benign_matched")]
+    eval_all = load_eval_prompts()
+    truth_all = load_truth_statements()
 
-    # Instrument sanity: hook parity + lens still hold on the templated prompt.
-    probe = bench.apply_chat_template(bundle, eval_prompts[0][1])
+    sentiment = cap_items(sentiment_all, limit_for(args, "sentiment_pairs"))
+    refusal = cap_items(refusal_all, limit_for(args, "refusal_pairs"))
+    eval_prompts = cap_items(eval_all, limit_for(args, "eval_prompts"))
+    truth_pairs_for_direction = cap_items(truth_all, limit_for(args, "truth_pairs"))
+    validate_minimums(sentiment, refusal, eval_prompts, truth_pairs_for_direction)
+
+    print(
+        f"[lab7] instruct model {bundle.anatomy.model_id}; "
+        f"prompt_set={args.prompt_set}; {len(sentiment)}/{len(sentiment_all)} sentiment pairs, "
+        f"{len(refusal)}/{len(refusal_all)} refusal pairs, {len(eval_prompts)}/{len(eval_all)} eval prompts"
+    )
+
+    templated_eval = [(pid, prompt, bench.apply_chat_template(bundle, prompt)) for pid, prompt in eval_prompts]
+
+    # Instrument sanity: hook parity and lens checks are run on a templated
+    # prompt because Lab 7's object of study is the chat-rendered prompt.
+    probe = templated_eval[0][2]
     bench.run_hook_parity_check(ctx, bundle, probe)
     bench.run_lens_self_check(ctx, bundle, bench.run_with_residual_cache(bundle, probe))
 
-    # ----- layer sweep (generation-based: steer and score, the real target) ---
-    sweep_prompts = eval_prompts[:3]
-    sweep_rows = []
-    layer_dirs = {}
-    for layer in candidate_layers:
-        d = diff_in_means_direction(bundle, sentiment, layer, as_instruction=False)
-        layer_dirs[layer] = d
-        lnorm = float(torch.stack([
-            last_token_residual(bundle, bench.apply_chat_template(bundle, p), layer)
-            for _, p in sweep_prompts]).norm(dim=-1).median())
-        pos, neg = [], []
-        for _, prompt in sweep_prompts:
-            t = bench.apply_chat_template(bundle, prompt)
-            pos.append(sentiment_score(bench.generate_text(
-                bundle, t, max_new_tokens=MAX_NEW_TOKENS, steer=(layer, d, LAYER_SELECT_SCALE * lnorm))))
-            neg.append(sentiment_score(bench.generate_text(
-                bundle, t, max_new_tokens=MAX_NEW_TOKENS, steer=(layer, d, -LAYER_SELECT_SCALE * lnorm))))
-        spread = sum(pos) / len(pos) - sum(neg) / len(neg)
-        sweep_rows.append({"layer": layer, "ref_norm": round(lnorm, 2),
-                           "pos_score": round(sum(pos) / len(pos), 4),
-                           "neg_score": round(sum(neg) / len(neg), 4),
-                           "steering_spread": round(spread, 4)})
-        print(f"[lab7]   layer {layer}: steering spread {spread:+.3f}")
-    best = max(sweep_rows, key=lambda r: r["steering_spread"])
-    best_layer = best["layer"]
-    ref_norm = best["ref_norm"]
+    # ----- Layer sweep: choose by actual generation behavior -----------------
+    sweep_cap = limit_for(args, "sweep_prompts") or len(eval_prompts)
+    sweep_prompts = eval_prompts[: max(1, min(len(eval_prompts), sweep_cap))]
+    sweep_rows: list[dict[str, Any]] = []
+    sweep_by_prompt_rows: list[dict[str, Any]] = []
+    layer_dirs: dict[int, Any] = {}
+
+    for injection_layer in candidate_layers:
+        direction = diff_in_means_direction(bundle, sentiment, injection_layer)
+        layer_dirs[injection_layer] = direction
+        ref_norm_here = median_activation_norm(bundle, [p for _, p in sweep_prompts], injection_layer)
+        pos_scores, neg_scores = [], []
+        for pid, prompt in sweep_prompts:
+            templated = bench.apply_chat_template(bundle, prompt)
+            for signed_scale, bucket in ((LAYER_SELECT_SCALE, pos_scores), (-LAYER_SELECT_SCALE, neg_scores)):
+                gen = bench.generate_text(
+                    bundle,
+                    templated,
+                    max_new_tokens=MAX_NEW_TOKENS,
+                    steer=(injection_layer, direction, signed_scale * ref_norm_here),
+                )
+                score = sentiment_score(gen)
+                bucket.append(score)
+                sweep_by_prompt_rows.append(
+                    {
+                        "prompt_id": pid,
+                        "injection_layer": injection_layer,
+                        "stream_depth": stream_depth_for_injection_layer(injection_layer),
+                        "scale": signed_scale,
+                        "abs_scale": round_float(signed_scale * ref_norm_here),
+                        "sentiment_score": round_float(score),
+                        "generation": gen,
+                    }
+                )
+        pos_mean = mean(pos_scores)
+        neg_mean = mean(neg_scores)
+        spread = pos_mean - neg_mean
+        sweep_rows.append(
+            {
+                "injection_layer": injection_layer,
+                "stream_depth": stream_depth_for_injection_layer(injection_layer),
+                "ref_norm": round_float(ref_norm_here, 2),
+                "pos_score": round_float(pos_mean),
+                "neg_score": round_float(neg_mean),
+                "steering_spread": round_float(spread),
+                "n_sweep_prompts": len(sweep_prompts),
+            }
+        )
+        print(f"[lab7]   block {injection_layer}: generation steering spread {spread:+.3f}")
+
+    best = max(sweep_rows, key=lambda r: float(r["steering_spread"]))
+    best_layer = int(best["injection_layer"])
+    ref_norm = median_activation_norm(bundle, [p for _, p in eval_prompts], best_layer)
+    print(
+        f"[lab7] layer sweep -> steering at decoder block {best_layer}, stream depth "
+        f"{stream_depth_for_injection_layer(best_layer)}, ref activation norm {ref_norm:.1f}"
+    )
+
     sweep_path = ctx.path("tables", "layer_sweep.csv")
     bench.write_csv_with_context(ctx, sweep_path, sweep_rows)
-    ctx.register_artifact(sweep_path, "table", "Per-layer generation steering spread (pos minus neg sentiment).")
-    print(f"[lab7] layer sweep -> steering at layer {best_layer} (ref activation norm {ref_norm:.1f})")
+    ctx.register_artifact(sweep_path, "table", "Layer sweep summary, measured by generated sentiment.")
+    sweep_prompt_path = ctx.path("tables", "layer_sweep_by_prompt.csv")
+    bench.write_csv_with_context(ctx, sweep_prompt_path, sweep_by_prompt_rows)
+    ctx.register_artifact(sweep_prompt_path, "table", "Layer sweep generations and scores by prompt.")
 
     def eff(scale: float) -> float:
-        """A dose (fraction of activation norm) as an absolute steering coefficient."""
-        return scale * ref_norm
+        return float(scale) * ref_norm
 
     real_dir = layer_dirs[best_layer]
     rand_dir = random_direction(d_model, seed=args.seed * 13 + best_layer)
     shuf_dir = shuffled_direction(bundle, sentiment, best_layer, seed=args.seed * 17 + best_layer)
 
-    # ----- Track A: dose-response with controls --------------------------------
+    # Cache unsteered baseline text and next-token logits. Scale 0 is identical
+    # across directions, so do not spend GPU minutes discovering that three times.
+    base_logits: dict[str, Any] = {}
+    base_generations: dict[str, str] = {}
+    for pid, _, templated in templated_eval:
+        base_logits[pid] = bench.next_token_logits(bundle, templated)
+        base_generations[pid] = bench.generate_text(bundle, templated, max_new_tokens=MAX_NEW_TOKENS)
+
+    # ----- Track A: dose-response with controls ------------------------------
     print(f"[lab7] Track A: dose-response over {len(TRACK_A_SCALES)} scales x 3 conditions")
-    dose_rows = []
-    examples_rows = []
-    for cond, direction in (("real", real_dir), ("random", rand_dir), ("shuffled", shuf_dir)):
+    per_prompt_rows: list[dict[str, Any]] = []
+    drift_rows: list[dict[str, Any]] = []
+    directions = (("real", real_dir), ("random", rand_dir), ("shuffled", shuf_dir))
+
+    for condition, direction in directions:
         for scale in TRACK_A_SCALES:
-            scores, fluencies, kls = [], [], []
-            for pid, prompt in eval_prompts:
-                templated = bench.apply_chat_template(bundle, prompt)
-                gen = bench.generate_text(bundle, templated, max_new_tokens=MAX_NEW_TOKENS,
-                                          steer=(best_layer, direction, eff(scale)))
-                scores.append(sentiment_score(gen))
-                fluencies.append(mean_token_logprob(bundle, templated, gen))
-                steered_logits = bench.next_token_logits(bundle, templated,
-                                                         steer=(best_layer, direction, eff(scale)))
-                kls.append(kl_to_unsteered(steered_logits, bench.next_token_logits(bundle, templated)))
-                if cond == "real" and pid == eval_prompts[0][0]:
-                    examples_rows.append({"scale": scale, "prompt": prompt, "generation": gen[:200]})
-            drift = drift_accuracy(bundle, best_layer, direction, eff(scale)) if cond == "real" else ""
-            dose_rows.append({
-                "condition": cond, "layer": best_layer, "scale": scale,
-                "target_score": round(sum(scores) / len(scores), 4),
-                "fluency_logprob": round(sum(fluencies) / len(fluencies), 4),
-                "kl_to_unsteered": round(sum(kls) / len(kls), 4),
-                "drift_accuracy": round(drift, 4) if drift != "" else "",
-            })
-        print(f"[lab7]   {cond}: done")
+            for pid, prompt, templated in templated_eval:
+                if scale == 0.0:
+                    gen = base_generations[pid]
+                    steered_logits = base_logits[pid]
+                    kl = 0.0
+                else:
+                    gen = bench.generate_text(
+                        bundle,
+                        templated,
+                        max_new_tokens=MAX_NEW_TOKENS,
+                        steer=(best_layer, direction, eff(scale)),
+                    )
+                    steered_logits = bench.next_token_logits(
+                        bundle,
+                        templated,
+                        steer=(best_layer, direction, eff(scale)),
+                    )
+                    kl = kl_steered_to_unsteered(steered_logits, base_logits[pid])
+                pos_count, neg_count = sentiment_counts(gen)
+                per_prompt_rows.append(
+                    {
+                        "condition": condition,
+                        "prompt_id": pid,
+                        "prompt": prompt,
+                        "injection_layer": best_layer,
+                        "stream_depth": stream_depth_for_injection_layer(best_layer),
+                        "scale": scale,
+                        "abs_scale": round_float(eff(scale)),
+                        "target_score": round_float(sentiment_score(gen)),
+                        "positive_word_count": pos_count,
+                        "negative_word_count": neg_count,
+                        "fluency_logprob": round_float(mean_token_logprob(bundle, templated, gen)),
+                        "kl_to_unsteered": round_float(kl),
+                        "refusal_marker": refusal_marker(gen),
+                        "generation": gen,
+                    }
+                )
+            drift = drift_accuracy(bundle, best_layer, direction, eff(scale))
+            drift_rows.append(
+                {
+                    "condition": condition,
+                    "scale": scale,
+                    "drift_accuracy": round_float(drift),
+                    "drift_correct": int(round(drift * len(DRIFT_FACTS))),
+                    "drift_total": len(DRIFT_FACTS),
+                }
+            )
+        print(f"[lab7]   {condition}: done")
+
+    dose_rows = aggregate_dose_rows(per_prompt_rows, drift_rows, best_layer)
     dose_path = ctx.path("tables", "dose_response.csv")
     bench.write_csv_with_context(ctx, dose_path, dose_rows)
-    ctx.register_artifact(dose_path, "table", "Dose-response metrics for real and control directions.")
+    ctx.register_artifact(dose_path, "table", "Aggregated dose-response metrics for real and control directions.")
+    by_prompt_path = ctx.path("tables", "dose_response_by_prompt.csv")
+    bench.write_csv_with_context(ctx, by_prompt_path, per_prompt_rows)
+    ctx.register_artifact(by_prompt_path, "table", "Per-prompt Track A generations and metrics for every condition and dose.")
     bench.write_csv_with_context(ctx, ctx.path("results.csv"), dose_rows)
-    ctx.register_artifact(ctx.path("results.csv"), "results", "Alias of dose_response.csv for the run contract.")
+    ctx.register_artifact(ctx.path("results.csv"), "results", "Run-contract alias of the aggregated Track A dose-response table.")
+
+    # A compact reading table: real direction only, all prompts and doses.
+    real_examples = [r for r in per_prompt_rows if r["condition"] == "real"]
     ex_path = ctx.path("tables", "steered_examples.csv")
-    bench.write_csv(ex_path, examples_rows)
-    ctx.register_artifact(ex_path, "table", "Showcase generations across the dose sweep (one prompt).")
+    bench.write_csv_with_context(ctx, ex_path, real_examples)
+    ctx.register_artifact(ex_path, "table", "Real-direction generations across all Track A doses.")
 
-    # ----- Track B: refusal direction (FORWARD PASSES ONLY) --------------------
-    print("[lab7] Track B: refusal direction (forward-pass extraction; no harmful generation)")
-    n_train = int(len(refusal) * MONITOR_TRAIN_FRACTION)
-    train_ref, held_ref = refusal[:n_train], refusal[n_train:]
-    refusal_dir = diff_in_means_direction(bundle, train_ref, best_layer, as_instruction=True)
-    # Monitor: project held-out prompts; ground truth = category, no generation.
-    proj_refusal = [float(last_token_residual(bundle, bench.apply_chat_template(bundle, a), best_layer) @ refusal_dir)
-                    for a, _ in held_ref]
-    proj_benign = [float(last_token_residual(bundle, bench.apply_chat_template(bundle, b), best_layer) @ refusal_dir)
-                   for _, b in held_ref]
+    # ----- Track B: refusal direction, forward passes for eliciting prompts ---
+    print("[lab7] Track B: refusal direction, forward-pass extraction and monitor")
+    train_ref, held_ref = split_refusal_pairs(refusal)
+    refusal_dir = diff_in_means_direction(bundle, train_ref, best_layer)
+
+    monitor_example_rows: list[dict[str, Any]] = []
+    proj_refusal, proj_benign = [], []
+    for i, (refusal_prompt, benign_prompt) in enumerate(held_ref):
+        refusal_projection = float(activation_at_injection_site(bundle, refusal_prompt, best_layer) @ refusal_dir)
+        benign_projection = float(activation_at_injection_site(bundle, benign_prompt, best_layer) @ refusal_dir)
+        proj_refusal.append(refusal_projection)
+        proj_benign.append(benign_projection)
+        monitor_example_rows += [
+            {
+                "pair_index": i,
+                "category": "refusal_eliciting",
+                "projection": round_float(refusal_projection),
+                "prompt_text_not_generated": refusal_prompt,
+            },
+            {
+                "pair_index": i,
+                "category": "benign_matched",
+                "projection": round_float(benign_projection),
+                "prompt_text_not_generated": benign_prompt,
+            },
+        ]
+
     auc = roc_auc(proj_refusal, proj_benign)
-    monitor_rows = []
-    all_proj = sorted(set(proj_refusal + proj_benign))
-    for thr in all_proj:
-        tp = sum(1 for p in proj_refusal if p >= thr)
-        fp = sum(1 for p in proj_benign if p >= thr)
-        monitor_rows.append({
-            "threshold": round(thr, 4),
-            "true_positive_rate": round(tp / len(proj_refusal), 4),
-            "false_positive_rate": round(fp / len(proj_benign), 4),
-        })
+    roc_rows = [
+        {
+            "threshold": round_float(float(r["threshold"])),
+            "true_positive_rate": round_float(float(r["true_positive_rate"])),
+            "false_positive_rate": round_float(float(r["false_positive_rate"])),
+        }
+        for r in roc_points(proj_refusal, proj_benign)
+    ]
     mon_path = ctx.path("tables", "refusal_monitor_table.csv")
-    bench.write_csv_with_context(ctx, mon_path, monitor_rows)
-    ctx.register_artifact(mon_path, "table", "Forward-pass refusal monitor ROC points (held-out category labels).")
-    print(f"[lab7]   monitor AUC = {auc:.3f} (forward-pass projection vs category)")
+    bench.write_csv_with_context(ctx, mon_path, roc_rows)
+    ctx.register_artifact(mon_path, "table", "Forward-pass refusal monitor ROC points, held-out category labels.")
+    mon_examples_path = ctx.path("tables", "refusal_monitor_examples.csv")
+    bench.write_csv_with_context(ctx, mon_examples_path, monitor_example_rows)
+    ctx.register_artifact(mon_examples_path, "table", "Held-out refusal monitor projections. These prompts were not generated.")
+    print(f"[lab7]   monitor AUC = {auc:.3f}, forward-pass projection vs prompt category")
 
-    # Steer benign prompts TOWARD refusal; measure induced-refusal rate.
-    print(f"[lab7]   steer-toward-refusal sweep over {len(REFUSAL_SCALES)} scales (benign prompts only)")
-    induced_rows = []
-    for cond, direction in (("refusal", refusal_dir), ("random", rand_dir)):
+    # Steer benign prompts toward refusal and classify only those benign generations.
+    print(f"[lab7]   steer-toward-refusal sweep over {len(REFUSAL_SCALES)} scales, benign prompts only")
+    induced_rows: list[dict[str, Any]] = []
+    induced_generation_rows: list[dict[str, Any]] = []
+    for condition, direction in (("refusal", refusal_dir), ("random", rand_dir)):
         for scale in REFUSAL_SCALES:
             refusals = 0
-            for pid, prompt in eval_prompts:
-                templated = bench.apply_chat_template(bundle, prompt)
-                gen = bench.generate_text(bundle, templated, max_new_tokens=MAX_NEW_TOKENS,
-                                          steer=(best_layer, direction, eff(scale)))
-                if is_refusal(gen):
-                    refusals += 1
-            induced_rows.append({"condition": cond, "scale": scale,
-                                 "refusal_rate": round(refusals / len(eval_prompts), 4)})
+            for pid, prompt, templated in templated_eval:
+                gen = bench.generate_text(
+                    bundle,
+                    templated,
+                    max_new_tokens=MAX_NEW_TOKENS,
+                    steer=(best_layer, direction, eff(scale)),
+                )
+                marker = refusal_marker(gen)
+                refusals += int(bool(marker))
+                induced_generation_rows.append(
+                    {
+                        "condition": condition,
+                        "prompt_id": pid,
+                        "prompt": prompt,
+                        "scale": scale,
+                        "abs_scale": round_float(eff(scale)),
+                        "is_refusal": bool(marker),
+                        "matched_marker": marker,
+                        "generation": gen,
+                    }
+                )
+            rate = refusals / len(templated_eval)
+            induced_rows.append(
+                {
+                    "condition": condition,
+                    "injection_layer": best_layer,
+                    "scale": scale,
+                    "refusal_count": refusals,
+                    "n_prompts": len(templated_eval),
+                    "refusal_rate": round_float(rate),
+                    "se": round_float(binomial_se(rate, len(templated_eval))),
+                }
+            )
     induced_path = ctx.path("tables", "induced_refusal_curve.csv")
     bench.write_csv_with_context(ctx, induced_path, induced_rows)
     ctx.register_artifact(induced_path, "table", "Induced-refusal rate on benign prompts vs dose.")
-    max_induced = max(r["refusal_rate"] for r in induced_rows if r["condition"] == "refusal")
-    print(f"[lab7]   max induced refusal on benign prompts: {max_induced:.0%}")
+    induced_gen_path = ctx.path("tables", "induced_refusal_generations.csv")
+    bench.write_csv_with_context(ctx, induced_gen_path, induced_generation_rows)
+    ctx.register_artifact(induced_gen_path, "table", "Benign generations used by the induced-refusal classifier.")
+    max_induced = max(float(r["refusal_rate"]) for r in induced_rows if r["condition"] == "refusal")
+    max_random_induced = max(float(r["refusal_rate"]) for r in induced_rows if r["condition"] == "random")
+    print(f"[lab7]   max induced refusal on benign prompts: {max_induced:.0%}; random control: {max_random_induced:.0%}")
 
-    # ----- Bridge: does Lab 4's truth direction steer? -------------------------
-    print("[lab7] Bridge: recomputing truth direction on this model, testing whether it steers")
+    # ----- Bridge: truth direction, answer-bias split -------------------------
+    print("[lab7] Bridge: recomputing truth direction on this instruct model")
     truth_provenance = find_lab4_direction()
-    cities = load_truth_statements()
-    truth_pairs = [(s, f) for s, f in cities]  # (true statement, false statement)
-    truth_dir = diff_in_means_direction(bundle, truth_pairs, best_layer, as_instruction=True)
-    true_id = bundle.tokenizer.encode(" True", add_special_tokens=False)[0]
-    false_id = bundle.tokenizer.encode(" False", add_special_tokens=False)[0]
-    bridge_rows = []
-    test_statements = [s for s, _ in cities][:8] + [f for _, f in cities][:8]
-    for scale in BRIDGE_SCALES:
-        diffs = []
-        for stmt in test_statements:
-            templated = bench.apply_chat_template(
-                bundle, f"Respond with only 'True' or 'False'. Statement: {stmt}")
-            logits = bench.next_token_logits(bundle, templated, steer=(best_layer, truth_dir, eff(scale)))
-            diffs.append(float(logits[true_id] - logits[false_id]))
-        bridge_rows.append({"scale": scale, "mean_true_false_logit_diff": round(sum(diffs) / len(diffs), 4)})
+    train_truth_pairs, heldout_truth_pairs = split_truth_pairs(truth_pairs_for_direction)
+    print(
+        f"[lab7]   truth bridge split: {len(train_truth_pairs)} train pairs, "
+        f"{len(heldout_truth_pairs)} held-out pairs"
+    )
+    truth_dir = diff_in_means_direction(bundle, train_truth_pairs, best_layer)
+    truth_rand_dir = random_direction(d_model, seed=args.seed * 19 + best_layer)
+    true_id, true_ids, true_first_piece = first_response_token_id(bundle, " True")
+    false_id, false_ids, false_first_piece = first_response_token_id(bundle, " False")
+
+    test_pairs = heldout_truth_pairs
+    test_statements = []
+    for i, (true_stmt, false_stmt) in enumerate(test_pairs):
+        test_statements.append((f"true_{i}", true_stmt, 1))
+        test_statements.append((f"false_{i}", false_stmt, 0))
+
+    bridge_statement_rows: list[dict[str, Any]] = []
+    for condition, direction in (("truth", truth_dir), ("random", truth_rand_dir)):
+        for scale in BRIDGE_SCALES:
+            for statement_id, statement, label in test_statements:
+                templated = bench.apply_chat_template(
+                    bundle,
+                    f"Respond with only 'True' or 'False'. Statement: {statement}",
+                )
+                logits = bench.next_token_logits(bundle, templated, steer=(best_layer, direction, eff(scale)))
+                true_minus_false = float(logits[true_id] - logits[false_id])
+                signed_truth_margin = true_minus_false if label == 1 else -true_minus_false
+                bridge_statement_rows.append(
+                    {
+                        "condition": condition,
+                        "split": "heldout",
+                        "statement_id": statement_id,
+                        "label": label,
+                        "scale": scale,
+                        "abs_scale": round_float(eff(scale)),
+                        "true_minus_false_logit_diff": round_float(true_minus_false),
+                        "signed_truth_margin": round_float(signed_truth_margin),
+                        "statement": statement,
+                    }
+                )
+
+    bridge_rows = bridge_aggregate(bridge_statement_rows, best_layer)
     bridge_path = ctx.path("tables", "truth_direction_bridge.csv")
     bench.write_csv_with_context(ctx, bridge_path, bridge_rows)
-    ctx.register_artifact(bridge_path, "table", "True/False assent shift vs steering on the truth direction.")
-    bridge_span = (max(r["mean_true_false_logit_diff"] for r in bridge_rows)
-                   - min(r["mean_true_false_logit_diff"] for r in bridge_rows))
-    bridge_verdict = "decodable-and-steerable" if bridge_span > 1.0 else "decodable-but-inert"
-    print(f"[lab7]   truth-direction steering span {bridge_span:.2f} logits -> {bridge_verdict}")
+    ctx.register_artifact(bridge_path, "table", "Bridge aggregate: answer bias and signed truth margin vs dose.")
+    bridge_statement_path = ctx.path("tables", "truth_direction_bridge_by_statement.csv")
+    bench.write_csv_with_context(ctx, bridge_statement_path, bridge_statement_rows)
+    ctx.register_artifact(bridge_statement_path, "table", "Bridge per-statement True/False logits under truth and random steering.")
 
-    # ----- plots ----------------------------------------------------------------
+    bridge_answer_span = span_for(bridge_rows, "truth", "mean_true_minus_false_logit_diff")
+    bridge_signed_span = span_for(bridge_rows, "truth", "mean_signed_truth_margin")
+    bridge_random_answer_span = span_for(bridge_rows, "random", "mean_true_minus_false_logit_diff")
+    bridge_verdict = classify_bridge(bridge_rows)
+    print(
+        f"[lab7]   bridge answer-bias span {bridge_answer_span:.2f} logits; "
+        f"signed truth-margin span {bridge_signed_span:.2f} -> {bridge_verdict}"
+    )
+
+    # ----- Plots ---------------------------------------------------------------
     if not args.no_plots:
         plot_layer_sweep(ctx, sweep_rows, best_layer)
         plot_dose_response(ctx, dose_rows, "sentiment")
-        plot_monitor(ctx, proj_refusal, proj_benign, auc)
+        plot_monitor(ctx, proj_refusal, proj_benign, roc_rows, auc)
         plot_induced_refusal(ctx, induced_rows)
         plot_bridge(ctx, bridge_rows)
 
-    # ----- metrics, card, claims, summary --------------------------------------
-    real_at = {r["scale"]: r for r in dose_rows if r["condition"] == "real"}
-    rand_at = {r["scale"]: r for r in dose_rows if r["condition"] == "random"}
-    shuf_at = {r["scale"]: r for r in dose_rows if r["condition"] == "shuffled"}
+    # ----- Metrics, safety audit, card, claims, summary -----------------------
+    write_safety_audit(
+        ctx,
+        refusal_pair_count=len(refusal),
+        train_refusal_pair_count=len(train_ref),
+        heldout_refusal_pair_count=len(held_ref),
+        benign_generation_count=len(per_prompt_rows) + len(induced_generation_rows),
+    )
+
+    real_at = {float(r["scale"]): r for r in dose_rows if r["condition"] == "real"}
+    rand_at = {float(r["scale"]): r for r in dose_rows if r["condition"] == "random"}
+    shuf_at = {float(r["scale"]): r for r in dose_rows if r["condition"] == "shuffled"}
     max_pos = max(TRACK_A_SCALES)
     min_neg = min(TRACK_A_SCALES)
-    effect_over_control = real_at[max_pos]["target_score"] - rand_at[max_pos]["target_score"]
-    pos_swing = real_at[max_pos]["target_score"] - real_at[0.0]["target_score"]
-    neg_swing = real_at[min_neg]["target_score"] - real_at[0.0]["target_score"]
+    effect_over_random = float(real_at[max_pos]["target_score"]) - float(rand_at[max_pos]["target_score"])
+    effect_over_shuffled = float(real_at[max_pos]["target_score"]) - float(shuf_at[max_pos]["target_score"])
+    pos_swing = float(real_at[max_pos]["target_score"]) - float(real_at[0.0]["target_score"])
+    neg_swing = float(real_at[min_neg]["target_score"]) - float(real_at[0.0]["target_score"])
+    fluency_drop = float(real_at[max_pos]["fluency_logprob"]) - float(real_at[0.0]["fluency_logprob"])
+    drift_delta = float(real_at[max_pos]["drift_accuracy"]) - float(real_at[0.0]["drift_accuracy"])
+
     metrics = {
         "model_id": bundle.anatomy.model_id,
-        "best_layer": best_layer,
-        "track_a_effect_over_random_at_max_dose": round(effect_over_control, 4),
-        "track_a_positive_swing": round(pos_swing, 4),
-        "track_a_negative_swing": round(neg_swing, 4),
-        "track_a_fluency_at_max_dose": real_at[max_pos]["fluency_logprob"],
-        "track_a_fluency_at_zero": real_at[0.0]["fluency_logprob"],
-        "refusal_monitor_auc": round(auc, 4),
-        "max_induced_refusal_benign": max_induced,
-        "bridge_span_logits": round(bridge_span, 4),
+        "prompt_set": args.prompt_set,
+        "sentiment_pairs_used": len(sentiment),
+        "refusal_pairs_used": len(refusal),
+        "eval_prompts_used": len(eval_prompts),
+        "truth_pairs_used": len(truth_pairs_for_direction),
+        "truth_pairs_train": len(train_truth_pairs),
+        "truth_pairs_heldout": len(heldout_truth_pairs),
+        "bridge_eval_split": "held-out truth pairs from truth_cities.csv",
+        "best_injection_layer": best_layer,
+        "direction_stream_depth": stream_depth_for_injection_layer(best_layer),
+        "reference_activation_norm": round_float(ref_norm, 4),
+        "track_a_effect_over_random_at_max_dose": round_float(effect_over_random),
+        "track_a_effect_over_shuffled_at_max_dose": round_float(effect_over_shuffled),
+        "track_a_positive_swing": round_float(pos_swing),
+        "track_a_negative_swing": round_float(neg_swing),
+        "track_a_fluency_delta_at_max_dose": round_float(fluency_drop),
+        "track_a_drift_delta_at_max_dose": round_float(drift_delta),
+        "refusal_monitor_auc": round_float(auc),
+        "max_induced_refusal_benign": round_float(max_induced),
+        "max_random_induced_refusal_benign": round_float(max_random_induced),
+        "bridge_answer_bias_span_logits": round_float(bridge_answer_span),
+        "bridge_signed_truth_margin_span_logits": round_float(bridge_signed_span),
+        "bridge_random_answer_bias_span_logits": round_float(bridge_random_answer_span),
         "bridge_verdict": bridge_verdict,
         "truth_direction_provenance": truth_provenance,
+        "true_token_ids_for_readout": true_ids,
+        "false_token_ids_for_readout": false_ids,
+        "true_first_token_piece": true_first_piece,
+        "false_first_token_piece": false_first_piece,
     }
-    bench.write_json(ctx.path("metrics.json"), metrics)
-    ctx.register_artifact(ctx.path("metrics.json"), "metrics", "Aggregate Lab 7 metrics.")
+    metrics_path = ctx.path("metrics.json")
+    bench.write_json(metrics_path, metrics)
+    ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 7 metrics.")
 
-    write_claim_card(ctx, bundle, best_layer, dose_rows, auc, max_induced, bridge_verdict,
-                     bridge_span, truth_provenance)
+    write_claim_card(
+        ctx,
+        bundle,
+        best_layer,
+        ref_norm,
+        dose_rows,
+        auc,
+        max_induced,
+        max_random_induced,
+        bridge_verdict,
+        bridge_answer_span,
+        bridge_signed_span,
+        len(heldout_truth_pairs),
+        truth_provenance,
+    )
 
     run_name = ctx.run_dir.name
     claims = [
         {
-            "id": f"{LAB_ID}-C1", "tag": "CAUSAL",
+            "id": f"{LAB_ID}-C1",
+            "tag": "CAUSAL",
             "text": (
-                f"A difference-in-means sentiment direction injected at layer {best_layer} of "
-                f"{bundle.anatomy.model_id} steers generated sentiment ASYMMETRICALLY: positive dose "
-                f"swings the score by {pos_swing:+.2f} (beating the random control by {effect_over_control:+.2f} "
-                f"at scale {max_pos}), while negative dose moves it only {neg_swing:+.2f} — the RLHF "
-                f"positivity floor resists negative steering. Fluency falls from {real_at[0.0]['fluency_logprob']} "
-                f"to {real_at[max_pos]['fluency_logprob']} at max dose (the side effect that breaks first)."
+                f"A difference-in-means sentiment direction injected at decoder block {best_layer} "
+                f"of {bundle.anatomy.model_id} steers generated sentiment with an asymmetric dose response: "
+                f"positive dose changes the sentiment score by {pos_swing:+.2f}, beating random by "
+                f"{effect_over_random:+.2f} and shuffled by {effect_over_shuffled:+.2f} at dose {max_pos}; "
+                f"negative dose changes it by {neg_swing:+.2f}. Fluency shifts by {fluency_drop:+.2f} "
+                f"mean logprob and drift accuracy shifts by {drift_delta:+.2f} at max dose."
             ),
             "artifact": f"runs/{run_name}/plots/dose_response_sentiment.png",
-            "falsifier": "The random and shuffled controls match the real direction's positive curve — the effect was generic norm, not the concept.",
+            "falsifier": "Random and shuffled controls match the real direction's positive curve, or the effect appears only when fluency collapses.",
         },
         {
-            "id": f"{LAB_ID}-C2", "tag": "CAUSAL",
+            "id": f"{LAB_ID}-C2",
+            "tag": "CAUSAL",
             "text": (
-                f"The refusal direction both PREDICTS and CAUSES refusal, but these are separate "
-                f"properties: forward-pass projection separates held-out refusal-eliciting from benign "
-                f"prompts at AUC {auc:.2f}, and steering benign prompts toward it induces refusal in up "
-                f"to {max_induced:.0%} of them. No completion was sampled from any refusal-eliciting "
-                "prompt; ablation was not implemented."
+                f"The refusal direction separates held-out refusal-eliciting from matched benign prompts "
+                f"by forward-pass projection at AUC {auc:.2f}, and steering benign prompts toward it "
+                f"induces refusal in up to {max_induced:.0%} of benign generations versus {max_random_induced:.0%} "
+                "for the random direction. No completion was sampled from any refusal-eliciting prompt, and "
+                "refusal ablation was not implemented."
             ),
-            "artifact": f"runs/{run_name}/tables/refusal_monitor_table.csv",
-            "falsifier": "The random direction induces refusal at the same rate — the effect was disruption, not the refusal feature.",
+            "artifact": f"runs/{run_name}/plots/refusal_monitor.png",
+            "falsifier": "The random direction induces refusal at the same rate, or hand-auditing shows the refusal classifier is mostly false positives.",
         },
         {
-            "id": f"{LAB_ID}-C3", "tag": "CAUSAL",
+            "id": f"{LAB_ID}-C3",
+            "tag": "CAUSAL",
             "text": (
-                f"Lab 4's decodable truth direction is {bridge_verdict} on this model: steering it across "
-                f"scales moves mean logit('True')-logit('False') by {bridge_span:.2f}. Decodability "
-                f"({truth_provenance.get('within', 'n/a')} probe accuracy in Lab 4) and steerability are "
-                "different evidence about a direction."
+                f"The recomputed Lab 4-style truth direction is {bridge_verdict} on held-out truth pairs: steering spans "
+                f"{bridge_answer_span:.2f} logits on the True-minus-False answer readout and {bridge_signed_span:.2f} "
+                "logits on the signed truthfulness margin. This distinguishes steerable answer bias from "
+                "evidence that the model uses the direction to answer more truthfully."
             ),
             "artifact": f"runs/{run_name}/plots/truth_direction_bridge.png",
-            "falsifier": "Recomputing the direction with a different contrast set flips the verdict — it was an artifact of these statements.",
+            "falsifier": "A random direction produces the same bridge spans, or a held-out truth family reverses the verdict.",
         },
     ]
     bench.write_ledger_suggestions(ctx, LAB_ID, claims)
-    write_summary(ctx, bundle, best_layer, metrics, dose_rows, auc, max_induced,
-                  bridge_verdict, bridge_span, claims)
+    write_summary(
+        ctx,
+        bundle,
+        best_layer,
+        ref_norm,
+        metrics,
+        dose_rows,
+        auc,
+        max_induced,
+        max_random_induced,
+        bridge_verdict,
+        bridge_answer_span,
+        bridge_signed_span,
+        claims,
+    )
     print(f"[lab7] wrote steering_claim_card.md, run_summary.md, and {len(claims)} drafted ledger claims")
-
-
-# ---------------------------------------------------------------------------
-# Lab 4 bridge helpers
-# ---------------------------------------------------------------------------
-
-
-def find_lab4_direction() -> dict[str, Any]:
-    """Locate the most recent Lab 4 truth_direction.pt for provenance display.
-
-    We do NOT steer with it directly (it was computed on the BASE model; a
-    direction is model-specific). We recompute on the current model from the
-    same frozen cities data and report the saved one's metadata so students
-    see the provenance and the model mismatch.
-    """
-    import torch
-
-    runs = sorted((bench.COURSE_ROOT / "runs").glob("lab04*/tables/truth_direction.pt"),
-                  key=lambda p: p.stat().st_mtime, reverse=True)
-    if not runs:
-        return {"found": False, "note": "no Lab 4 run found; recomputed on current model only"}
-    meta = torch.load(runs[0], map_location="cpu", weights_only=False)
-    return {
-        "found": True, "path": str(runs[0].relative_to(bench.COURSE_ROOT)),
-        "saved_on_model": meta.get("model_id"), "saved_layer": meta.get("layer"),
-        "train_family": meta.get("train_family"),
-        "within": (meta.get("metrics") or {}).get("within"),
-    }
-
-
-def load_truth_statements() -> list[tuple[str, str]]:
-    """(true statement, false statement) pairs from the frozen Lab 4 cities CSV."""
-    path = bench.COURSE_ROOT / "data" / "truth_cities.csv"
-    trues, falses = [], []
-    with path.open(newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            (trues if row["label"] == "1" else falses).append(row["statement"])
-    return list(zip(trues, falses))
 
 
 # ---------------------------------------------------------------------------
@@ -644,103 +1253,131 @@ def load_truth_statements() -> list[tuple[str, str]]:
 # ---------------------------------------------------------------------------
 
 
-def write_claim_card(ctx, bundle, best_layer, dose_rows, auc, max_induced, bridge_verdict,
-                     bridge_span, provenance) -> None:
-    real = {r["scale"]: r for r in dose_rows if r["condition"] == "real"}
-    rand = {r["scale"]: r for r in dose_rows if r["condition"] == "random"}
-    max_pos = max(r["scale"] for r in dose_rows)
+def write_claim_card(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    best_layer: int,
+    ref_norm: float,
+    dose_rows: Sequence[Mapping[str, Any]],
+    auc: float,
+    max_induced: float,
+    max_random_induced: float,
+    bridge_verdict: str,
+    bridge_answer_span: float,
+    bridge_signed_span: float,
+    bridge_eval_pairs: int,
+    provenance: Mapping[str, Any],
+) -> None:
+    real = {float(r["scale"]): r for r in dose_rows if r["condition"] == "real"}
+    rand = {float(r["scale"]): r for r in dose_rows if r["condition"] == "random"}
+    shuf = {float(r["scale"]): r for r in dose_rows if r["condition"] == "shuffled"}
+    max_pos = max(float(r["scale"]) for r in dose_rows)
     card = [
         "# Steering claim card",
         "",
         f"- **Model:** `{bundle.anatomy.model_id}` (instruct) | run `{ctx.run_dir.name}`",
-        f"- **Direction:** difference-in-means, sentiment contrast pairs, injected at layer {best_layer}",
+        f"- **Injection site:** decoder block {best_layer} output, which corresponds to stream depth {stream_depth_for_injection_layer(best_layer)}",
+        f"- **Dose unit:** fraction of median activation norm at that site; reference norm `{ref_norm:.3f}`",
         "",
-        "## Track A — sentiment steering",
+        "## Track A: sentiment steering",
         "",
-        f"- **Effect:** sentiment score {real[0.0]['target_score']} (dose 0) -> {real[max_pos]['target_score']} "
-        f"(dose {max_pos}); random control reaches only {rand[max_pos]['target_score']}.",
-        f"- **Dose:** monotone over {sorted(set(r['scale'] for r in dose_rows))}.",
-        f"- **Side effects:** fluency {real[0.0]['fluency_logprob']} -> {real[max_pos]['fluency_logprob']}; "
-        f"drift accuracy {real[0.0]['drift_accuracy']} -> {real[max_pos]['drift_accuracy']}.",
-        "- **What it does NOT show:** that the model 'feels' sentiment, or that this direction is the only "
-        "one that would work. It shows one direction is sufficient to move one behavior.",
+        f"- **Effect:** sentiment score {real[0.0]['target_score']} at dose 0 to {real[max_pos]['target_score']} at dose {max_pos}.",
+        f"- **Controls at max dose:** random {rand[max_pos]['target_score']}; shuffled {shuf[max_pos]['target_score']}.",
+        f"- **Side effects:** fluency {real[0.0]['fluency_logprob']} to {real[max_pos]['fluency_logprob']}; drift accuracy {real[0.0]['drift_accuracy']} to {real[max_pos]['drift_accuracy']}.",
+        "- **What it does not show:** that the model has a human-like sentiment variable, or that this is the unique direction. It shows one computed direction is sufficient to move one measured behavior under these prompts.",
         "",
-        "## Track B — refusal direction (forward-pass only; safe direction only)",
+        "## Track B: refusal direction",
         "",
-        f"- **Predicts:** held-out monitor AUC {auc:.2f} (projection vs category, no generation).",
-        f"- **Causes:** up to {max_induced:.0%} induced refusal on BENIGN prompts under steering.",
-        "- **Wall:** no completion sampled from any refusal-eliciting prompt; ablation not implemented.",
-        "- **What it does NOT show:** that refusal is ONE direction (redundancy untested here), or that "
-        "ablation would jailbreak (assigned as reading, not reproduced).",
+        f"- **Monitor:** held-out projection AUC {auc:.2f}. This is prompt-category prediction by forward pass, not observed harmful completion behavior.",
+        f"- **Cause:** benign prompts reach {max_induced:.0%} induced refusal when steered toward the refusal direction; random control reaches {max_random_induced:.0%}.",
+        "- **Safety wall:** no completion sampled from refusal-eliciting prompts; ablation not implemented; steering direction is toward refusal only.",
+        "- **What it does not show:** that refusal is mediated by exactly one non-redundant direction, or that ablation would jailbreak this model. Those are outside this lab's implemented apparatus.",
         "",
-        "## Bridge — Lab 4's truth direction",
+        "## Bridge: Lab 4 truth direction",
         "",
-        f"- **Verdict:** {bridge_verdict} (steering span {bridge_span:.2f} logits on True/False assent).",
-        f"- **Provenance of the saved direction:** {provenance}",
-        "- **Lesson:** decodability (Lab 4) and steerability (here) are different evidence; a probe finding "
-        "a direction does not entail the model uses it.",
+        f"- **Verdict:** {bridge_verdict} on {bridge_eval_pairs} held-out truth pairs.",
+        f"- **Answer-bias span:** {bridge_answer_span:.2f} logits on logit('True') - logit('False').",
+        f"- **Signed truth-margin span:** {bridge_signed_span:.2f} logits after flipping the sign for false statements.",
+        f"- **Saved Lab 4 provenance:** {dict(provenance)}",
+        "- **Lesson:** decodability and steerability are different evidence. A steerable True/False readout is not automatically a truthfulness mechanism.",
         "",
-        "## Hacking's question (graded prose goes here, not in this file)",
+        "## Interpretation prompt",
         "",
-        "You moved the model with a direction you computed. Is it real? What distinguishes steering",
-        "success from an explanation of the behavior? (See the handout's ethics prompts.)",
+        "You moved the model with a direction you computed. Is the direction real? What distinguishes steering success from an explanation of refusal?",
         "",
     ]
     path = ctx.path("steering_claim_card.md")
     bench.write_text(path, "\n".join(card))
-    ctx.register_artifact(path, "summary", "The steering claim card: effect, dose, side effects, and limits.")
+    ctx.register_artifact(path, "summary", "Steering claim card: effect, dose, side effects, safety wall, and limits.")
 
 
-def write_summary(ctx, bundle, best_layer, metrics, dose_rows, auc, max_induced,
-                  bridge_verdict, bridge_span, claims) -> None:
-    real = {r["scale"]: r for r in dose_rows if r["condition"] == "real"}
-    max_pos = max(r["scale"] for r in dose_rows)
+def write_summary(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    best_layer: int,
+    ref_norm: float,
+    metrics: Mapping[str, Any],
+    dose_rows: Sequence[Mapping[str, Any]],
+    auc: float,
+    max_induced: float,
+    max_random_induced: float,
+    bridge_verdict: str,
+    bridge_answer_span: float,
+    bridge_signed_span: float,
+    claims: Sequence[Mapping[str, str]],
+) -> None:
+    real = {float(r["scale"]): r for r in dose_rows if r["condition"] == "real"}
+    max_pos = max(float(r["scale"]) for r in dose_rows)
     lines = [
         "# Lab 7 run summary: steering and the refusal direction",
         "",
         "## Run identity",
         "",
         f"- model: `{bundle.anatomy.model_id}` (instruct, chat template applied to every prompt)",
-        f"- steering layer: {best_layer} (chosen by the cheap next-token layer sweep)",
-        "- evidence level: `CAUSAL` (representation-level control)",
-        "- SAFETY: refusal direction extracted/monitored by forward passes only; steering toward refusal "
-        "on benign prompts only; ablation not implemented; no harmful completion ever sampled",
+        f"- injection site: decoder block {best_layer} output, stream depth {stream_depth_for_injection_layer(best_layer)}",
+        f"- reference activation norm for dose scaling: {ref_norm:.3f}",
+        "- layer choice: generation-based layer sweep, not a next-token proxy",
+        "- evidence level: `CAUSAL` for generation steering; `FORWARD-PASS MONITOR` for held-out refusal projections",
+        "- safety: refusal direction extracted and monitored by forward passes only; benign prompts only for generation; no refusal ablation",
         "",
         "## 1-4. Behavior, object, intervention, headline",
         "",
-        f"- Track A: sentiment direction at L{best_layer}; score {real[0.0]['target_score']} -> "
-        f"{real[max_pos]['target_score']} at dose {max_pos}, beating the random control by "
-        f"{metrics['track_a_effect_over_random_at_max_dose']:+.2f}; fluency "
-        f"{real[0.0]['fluency_logprob']} -> {real[max_pos]['fluency_logprob']}",
-        f"- Track B: refusal monitor AUC {auc:.2f}; induced refusal on benign prompts up to {max_induced:.0%}",
-        f"- Bridge: Lab 4's truth direction is {bridge_verdict} (span {bridge_span:.2f} logits)",
+        f"- Track A: sentiment direction at block {best_layer}; score {real[0.0]['target_score']} to {real[max_pos]['target_score']} at dose {max_pos}; fluency {real[0.0]['fluency_logprob']} to {real[max_pos]['fluency_logprob']}; drift {real[0.0]['drift_accuracy']} to {real[max_pos]['drift_accuracy']}.",
+        f"- Track B: refusal monitor AUC {auc:.2f}; benign induced refusal up to {max_induced:.0%}, random control up to {max_random_induced:.0%}.",
+        f"- Bridge: truth direction verdict `{bridge_verdict}` on {metrics['truth_pairs_heldout']} held-out truth pairs; answer-bias span {bridge_answer_span:.2f} logits; signed truth-margin span {bridge_signed_span:.2f} logits.",
         "",
         "## 5. Claims",
         "",
     ]
-    for c in claims:
-        lines.append(f"- `{c['id']}` {c['tag']}: {c['text']}")
-        lines.append(f"  - falsifier: {c['falsifier']}")
+    for claim in claims:
+        lines.append(f"- `{claim['id']}` {claim['tag']}: {claim['text']}")
+        lines.append(f"  - falsifier: {claim['falsifier']}")
     lines += [
         "",
-        "## 6. The reading order",
+        "## 6. Reading order",
         "",
-        "1. `steering_claim_card.md` — the deliverable.",
-        "2. `plots/dose_response_sentiment.png` — real vs controls; where fluency breaks.",
-        "3. `plots/refusal_monitor.png` and `plots/induced_refusal.png` — predict vs cause.",
-        "4. `plots/truth_direction_bridge.png` — Lab 4's loop, closed.",
-        "5. `tables/steered_examples.csv` — read actual generations across the dose.",
+        "1. `steering_claim_card.md`: the shortest defensible interpretation.",
+        "2. `plots/dose_response_sentiment.png`: Track A effect and side effects on one page.",
+        "3. `tables/dose_response_by_prompt.csv` and `tables/steered_examples.csv`: actual generations behind the score.",
+        "4. `plots/refusal_monitor.png` and `plots/induced_refusal.png`: predict vs cause, kept separate.",
+        "5. `diagnostics/lab07_safety_audit.json`: the safety wall in machine-checkable form.",
+        "6. `plots/truth_direction_bridge.png`: answer bias versus signed truth margin.",
         "",
-        "## 7. Caveats and the ethics unit",
+        "## 7. Caveats and falsifiers",
         "",
-        "- A dose-response curve with controls is the unit of evidence; one generation is an anecdote.",
-        "- 'Predicts refusal' and 'causes refusal' are different claims; the lab measured both separately.",
-        "- The single-direction framing is a hypothesis the monitor supports, not proves; redundancy is",
-        "  untested here (cf. Lab 6's redundancy finding).",
-        "- Dual use is confronted by apparatus: read Arditi et al., then argue (handout) whether the",
-        "  ablation result should have been published — using your own Track B numbers as evidence about",
-        "  how easy the method is.",
+        "- A dose-response curve with controls is evidence; one generation is an anecdote.",
+        "- The refusal monitor predicts held-out prompt category, not sampled harmful behavior.",
+        "- Refusal ablation, redundancy tests, and jailbreak claims are out of scope for this lab.",
+        "- The truth bridge can show answer bias without showing improved truthfulness. Use the signed truth-margin panel before claiming more.",
+        "- Hand-audit the refusal classifier markers whenever the induced-refusal curve is central to a claim.",
+        "",
+        "## Metric block",
+        "",
+        "```json",
+        json.dumps(metrics, indent=2, sort_keys=True, default=bench.json_default),
+        "```",
         "",
     ]
-    bench.write_text(ctx.path("run_summary.md"), "\n".join(lines))
-    ctx.register_artifact(ctx.path("run_summary.md"), "summary", "The seven standard questions answered.")
+    path = ctx.path("run_summary.md")
+    bench.write_text(path, "\n".join(lines))
+    ctx.register_artifact(path, "summary", "Run summary answering the standard lab artifact questions.")

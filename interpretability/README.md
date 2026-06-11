@@ -37,10 +37,11 @@ pip install -r requirements.txt
 # CPU smoke test (always do this first):
 python interp_bench.py --lab lab1 --tier a
 
-# Full Lab 1 on a Colab A100/H100:
-python interp_bench.py --lab lab1 --tier b --prompt-set full
+# Full Lab 1 on a Colab A100/H100 (--include-controls adds weak/scrambled control prompts):
+python interp_bench.py --lab lab1 --tier b --prompt-set full --include-controls
 
-# Lab 2 (direct logit attribution), same pattern:
+# Lab 2 (direct logit attribution; --ablate-top N sets the attribution-vs-causal
+# ablation count, 0 skips it):
 python interp_bench.py --lab lab2 --tier a
 python interp_bench.py --lab lab2 --tier b --prompt-set full --topk 10
 
@@ -102,8 +103,8 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   handout's "outlier specimen" section).
 - Lab 5: activation patching and causal tracing — implemented and validated
   (Tier A+B). Adds interchange interventions on the residual stream and on
-  component outputs, a patch no-op self-check (self-patching must be
-  bit-exact identity), alignment-validated clean/corrupt fact pairs,
+  component outputs, a patch no-op self-check (self-patching must be a
+  numerical identity), alignment-validated clean/corrupt fact pairs,
   role-aggregated causal tracing with paraphrase confirmation and negative
   controls, and a rank-one edit-and-audit extension (`--run-edit`).
 - Lab 6: circuit discovery, the manual way — implemented and validated
@@ -131,8 +132,9 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
    COURSE.md proposes TransformerLens 3 / TransformerBridge. Labs 1–2 need
    only residual caching and the unembedding, which raw HF does in ~50
    transparent lines — and a course rule is that nobody runs code they can't
-   explain. Revisit when the patching labs (5+) need heavier intervention
-   machinery; the bench's hook layer is the abstraction point.
+   explain. The patching and steering labs (5–7) were ultimately built on the
+   same verified hook layer; it remains the abstraction point if heavier
+   machinery is ever needed.
 2. **GPU instead of TPU.** The collective-comms course ran on Cloud TPU; this
    one targets Colab A100/H100 with plain PyTorch.
 3. **No binary-blob artifacts by default.** Model state is dumped as token
@@ -157,9 +159,9 @@ Every run performs self-checks before any science, and aborts on failure:
   embeddings + all captured attn/MLP contributions must sum to the final
   pre-norm residual stream.
 - **Patch no-op check** (Lab 5+, `diagnostics/patch_noop_check.json`):
-  patching a run with its own vectors must be bit-exact identity — an
-  off-by-one in patch layer or position indexing would otherwise produce
-  beautiful, wrong heatmaps.
+  patching a run with its own vectors must be a numerical identity
+  (max |Δlogit| ≤ 1e-4) — an off-by-one in patch layer or position indexing
+  would otherwise produce beautiful, wrong heatmaps.
 
 If a transformers upgrade ever changes hidden-state semantics, these fail
 loudly and every downstream number is declared suspect — that is their job.
@@ -221,7 +223,7 @@ python interp_bench.py \
   --model-revision <pin>   \
   --device cuda --dtype bfloat16 \
   --tier b \
-  --prompt-set small|full|path.json \
+  --prompt-set small|medium|full|path.json \
   --max-examples 0 \
   --topk 5 \
   --seed 0 \

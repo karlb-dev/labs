@@ -443,6 +443,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     circuit = [(r["layer"], r["head"]) for r in cand_rows
                if r["kind"] == "head" and r["causal_drop"] > 0]
+    if not circuit:
+        raise RuntimeError(
+            "No screened head has a positive causal drop; cannot assemble a circuit. "
+            "See tables/candidate_components.csv."
+        )
     circuit.sort(key=lambda k: -next(r["causal_drop"] for r in cand_rows
                                      if r["kind"] == "head" and (r["layer"], r["head"]) == k))
     trajectory = [{"n_nodes": len(circuit), "faithfulness": round(faithfulness_of(circuit, discovery, base_metric), 4),
@@ -589,7 +594,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             f"{node_name('head', *k)} ({head_labels.get(k, 'other')})" for k in circuit),
         f"- **Supporting MLPs (ranked, not in the routing claim):** " + (", ".join(
             f"MLP{r['layer']} (drop {r['causal_drop']:+.2f})"
-            for r in cand_rows if r["kind"] == "mlp" and r["causal_drop"] > 0) or "none"),
+            for r in sorted((r for r in cand_rows if r["kind"] == "mlp" and r["causal_drop"] > 0),
+                            key=lambda r: -r["causal_drop"])) or "none"),
         "",
         "## Scores",
         "",
@@ -599,6 +605,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     for fam, v in fcm.items():
         if isinstance(v, dict):
             card.append(f"| {fam} | {v['faithfulness']} | {v['completeness_ratio']} |")
+    if any(isinstance(v, dict) and v["faithfulness"] > 1.0 for v in fcm.values()):
+        card.append("")
+        card.append("Note: faithfulness above 1.0 is possible and reported as-is — the "
+                    "mean-ablated complement was mildly suppressing the behavior on that family.")
     card += [
         "",
         f"Minimality: worst marginal value {fcm['minimality_worst_marginal']} "
@@ -676,13 +686,21 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         },
     ]
     if "heldout" in fcm:
+        hf = fcm["heldout"]["faithfulness"]
+        over_note = (
+            " Held-out faithfulness above 1.0 means the mean-ablated complement was mildly "
+            "suppressing the behavior on these prompts (over-recovery on a small n), not "
+            "better-than-perfect transfer."
+            if hf > 1.0 else ""
+        )
         claims.append({
             "id": f"{LAB_ID}-C2",
             "tag": "CAUSAL",
             "text": (
                 f"The circuit transfers to {len(heldout)} held-out vocabulary families: faithfulness "
-                f"{fcm['heldout']['faithfulness']:.2f} vs {fcm['discovery']['faithfulness']:.2f} on "
+                f"{hf:.2f} vs {fcm['discovery']['faithfulness']:.2f} on "
                 "discovery — the subgraph is about the induction computation, not these tokens."
+                + over_note
             ),
             "artifact": f"runs/{run_name}/plots/circuit_scorecard.png",
             "falsifier": "Longer cycles, natural text, or >8-token prompts drop held-out faithfulness to chance.",

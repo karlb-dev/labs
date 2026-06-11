@@ -707,7 +707,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     # ----- metrics, claims, summary --------------------------------------------
     peak_subject = max((r["recovery_subject"] for r in agg_rows if r["recovery_subject"] != ""))
-    peak_last = max((r["recovery_last"] for r in agg_rows if r["recovery_last"] != ""))
+    # Peak of the pre-final layers only: the layer-n_layers last-position patch
+    # replaces the entire final stream, so its recovery 1.0 is a tautology.
+    peak_last = last_by_layer[top_last_layer]
     control_summary = {
         kind: {
             "mean_recovery": round(statistics.fmean(r["recovery"] for r in control_rows if r["control"] == kind), 4),
@@ -740,7 +742,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "text": (
                 f"Patching the clean subject-position residual stream into the corrupt run at layers "
                 f"{min(top_layers)}-{max(top_layers)} recovers a mean {matched_mean:.0%} of the clean "
-                f"logit difference across {len(base_pairs)} capital facts. Population: 5-token "
+                f"logit difference across {len(base_pairs)} capital facts. Population: {base_pairs[0].n_tokens}-token "
                 f"'The capital of X is' prompts with single-token subjects; intervention: single-"
                 f"(layer,position) interchange."
             ),
@@ -788,8 +790,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "tag": "CAUSAL",
             "text": (
                 f"A rank-one edit at the localized layer {loc['edit_layer']} "
-                f"(dose alpha={loc['alpha']}) flipped {loc['intended_flip']} "
-                f"directly={loc['direct_success']}, paraphrases "
+                f"(dose alpha={loc['alpha']}) targeted the flip {loc['intended_flip']}: "
+                f"direct success={loc['direct_success']} (logit diff "
+                f"{loc['direct_logit_diff_before']} -> {loc['direct_logit_diff_after']}), paraphrases "
                 f"{loc['paraphrase_flips']}/{loc['n_paraphrases']}, neighbors intact "
                 f"{loc['neighbors_intact']}/{loc['n_neighbors']}; the alternative layer "
                 f"{alt['edit_layer']} (alpha={alt['alpha']}) gave directly={alt['direct_success']}, "

@@ -968,12 +968,16 @@ def render_summary(
         "| example | category | decision | flips | target first top-1 | target beats distractor (>1, stable lead) | target rank <= 5 | final p(target) | final target rank | final entropy |",
         "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
+    def cell(row: dict[str, Any], key: str) -> Any:
+        value = row.get(key, "")
+        return "" if value is None else value
+
     for r in event_rows:
         lines.append(
-            f"| {r['example_id']} | {r['category']} | {r.get('decision_depth', '')} | "
-            f"{r.get('top1_flip_count', '')} | {r.get('target_first_top1', '')} | "
-            f"{r.get('target_first_beats_distractor', '')} | {r.get('target_rank_first_le_5', '')} | "
-            f"{r.get('final_p_target', '')} | {r.get('final_target_rank', '')} | {r.get('final_entropy_bits', '')} |"
+            f"| {r['example_id']} | {r['category']} | {cell(r, 'decision_depth')} | "
+            f"{cell(r, 'top1_flip_count')} | {cell(r, 'target_first_top1')} | "
+            f"{cell(r, 'target_first_beats_distractor')} | {cell(r, 'target_rank_first_le_5')} | "
+            f"{cell(r, 'final_p_target')} | {cell(r, 'final_target_rank')} | {cell(r, 'final_entropy_bits')} |"
         )
     lines += [
         "",
@@ -1012,6 +1016,16 @@ def draft_claims(
     control = by_cat.get("control")
 
     if fact:
+        if fact["median_target_first_top1"] in (None, ""):
+            target_clause = (
+                f"the labeled target never became top-1 at any depth "
+                f"(0/{fact['n_examples']} examples)."
+            )
+        else:
+            target_clause = (
+                f"the labeled target first became top-1 at median depth {fact['median_target_first_top1']} "
+                f"(median over the {fact['n_target_first_top1']}/{fact['n_examples']} examples where it occurred)."
+            )
         claims.append(
             {
                 "id": f"{LAB_ID}-C1",
@@ -1019,24 +1033,28 @@ def draft_claims(
                 "text": (
                     f"On {fact['n_examples']} factual prompts, {bundle.anatomy.model_id}'s final top-1 token "
                     f"stabilized under the raw logit lens at median depth {fact['median_decision_depth']}/{L}; "
-                    f"the labeled target first became top-1 at median depth {fact['median_target_first_top1']} "
-                    f"(median over the {fact['n_target_first_top1']}/{fact['n_examples']} examples where it occurred)."
+                    + target_clause
                 ),
                 "artifact": f"runs/{run_name}/tables/category_summary.csv",
                 "falsifier": "A tuned lens or held-out fact family places stabilization materially earlier/later or changes which token stabilizes.",
             }
         )
     if fact and ambig:
+        direction = (
+            "higher"
+            if float(ambig["mean_final_entropy_bits"]) > float(fact["mean_final_entropy_bits"])
+            else "lower"
+        )
         claims.append(
             {
                 "id": f"{LAB_ID}-C2",
                 "tag": "OBS",
                 "text": (
-                    f"Ambiguous prompts differed from facts in final raw-lens certainty: mean final entropy "
+                    f"Ambiguous prompts ended with {direction} final raw-lens entropy than facts: mean final entropy "
                     f"{ambig['mean_final_entropy_bits']} bits for ambiguous prompts versus "
                     f"{fact['mean_final_entropy_bits']} bits for facts."
                 ),
-                "artifact": f"runs/{run_name}/plots/entropy_by_depth.png",
+                "artifact": f"runs/{run_name}/tables/category_summary.csv",
                 "falsifier": "Length-matched ambiguous prompts show the same entropy and event-depth trajectory as facts.",
             }
         )

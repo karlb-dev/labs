@@ -535,6 +535,11 @@ def draft_claims(
         )
     if natural_confirmations:
         ok = [r for r in natural_confirmations if r["confirmed"]]
+        verdict = (
+            "the motif is not an artifact of the toy patterns"
+            if 2 * len(ok) >= len(natural_confirmations)
+            else "most candidates did NOT keep the motif on natural text; treat the synthetic labels as prompt-set-specific"
+        )
         claims.append(
             {
                 "id": f"{LAB_ID}-C2",
@@ -542,7 +547,7 @@ def draft_claims(
                 "text": (
                     f"{len(ok)}/{len(natural_confirmations)} synthetic/cycle induction candidates kept an "
                     "induction score >= half their synthetic score on natural repeated-phrase prompts — "
-                    "the motif is not an artifact of the toy patterns."
+                    f"{verdict}."
                 ),
                 "artifact": f"runs/{run_name}/tables/natural_confirmation.csv",
                 "falsifier": "Longer natural documents with distractor repeats break the correspondence.",
@@ -668,8 +673,10 @@ def render_summary(
         "- High attention is not high contribution (compare the motif maps with the attribution zoom).",
         "- The all-position ablation effect bundles every indirect path; Lab 5's patching",
         "  separates them.",
-        "- The sink heads' large attention mass with near-zero attribution is the canonical",
-        "  'heatmap astrology' trap — write it down once and never fall for it again.",
+        "- A sink label describes where attention parks, not what the head contributes.",
+        "  On gpt2 the sinks carry near-zero attribution (the canonical 'heatmap astrology'",
+        "  trap); but sink is a fallback label, so compare it with the top-|attribution|",
+        "  list above before assuming 'sink = contributes nothing'.",
         "",
     ]
     return "\n".join(lines)
@@ -854,8 +861,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         chosen_keys = {(r["layer"], r["head"]) for r in candidates}
         rng = random.Random(args.seed)
         pool = [r for r in head_table if (r["layer"], r["head"]) not in chosen_keys]
-        candidates += rng.sample(pool, k=min(2, len(pool)))  # random controls
-        candidates += sorted(pool, key=lambda r: abs(r["mean_target_attribution"]))[:1]  # low-attr control
+        sampled = rng.sample(pool, k=min(2, len(pool)))  # random controls
+        candidates += sampled
+        sampled_keys = {(r["layer"], r["head"]) for r in sampled}
+        candidates += sorted(
+            (r for r in pool if (r["layer"], r["head"]) not in sampled_keys),
+            key=lambda r: abs(r["mean_target_attribution"]),
+        )[:1]  # low-attr control
 
         kept_index = {ex.example_id: i for i, (ex, _, _) in enumerate(kept)}
         abl_examples = [(ex, t, d) for ex, t, d in kept if ex.category in ("synthetic", "cycle", "natural")]

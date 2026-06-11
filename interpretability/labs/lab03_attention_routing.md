@@ -43,7 +43,10 @@ Three named patterns you should find (Olsson et al.):
   previous occurrence* of the current token ("[A][B] … [A] → attend to [B]").
 - **first-token sink**: dumps attention on position 0 (BOS when one exists).
   This is a known resting pattern, not a discovery. Its large attention mass
-  with near-zero attribution is the canonical heatmap-astrology trap.
+  typically comes with near-zero attribution (gpt2) — the canonical
+  heatmap-astrology trap — but sink is a fallback label: on Olmo-3 the
+  top-|attribution| heads are sink-labeled, so check the head table before
+  equating the label with "contributes nothing".
 
 The labeling rule is deliberately simple and printed in the code: content
 motifs (induction, previous-token) above 0.35 win, larger first; **sink is a
@@ -98,12 +101,14 @@ sink, attribution, random, and low-attribution heads are added automatically).
 3. `plots/head_attribution_by_layer.png` — Lab 2's attention bars, resolved
    into heads. Are the high-attribution heads the induction heads?
 4. `plots/direct_vs_indirect_effect.png` — the composition scatter.
-5. `tables/head_table.csv` — every head, one row: all motif scores, entropy,
+5. `plots/head_attribution_vs_ablation.png` — does attribution predict the
+   direct-path effect? The lab's headline Spearman rho lives here.
+6. `tables/head_table.csv` — every head, one row: all motif scores, entropy,
    label, attribution. This is the lab's "key artifact" for grading.
-6. `tables/example_head_scores.csv` — the same measurements per prompt. Use
+7. `tables/example_head_scores.csv` — the same measurements per prompt. Use
    this to check whether a control prompt accidentally triggers an induction
    label.
-7. `tables/natural_confirmation.csv` — do the synthetic/cycle induction
+8. `tables/natural_confirmation.csv` — do the synthetic/cycle induction
    heads still induct on natural repeated phrases?
 
 ## Writeup questions

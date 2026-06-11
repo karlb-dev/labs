@@ -98,7 +98,8 @@ python interp_bench.py --lab lab4 --tier b --prompt-set full  # all 180 statemen
 cross-family layer. Layer selection excludes negation transfer — an
 affirmative-trained direction failing on negations is an expected
 Geometry-of-Truth result, reported as a known failure mode, not optimized away.
-The saved train family is then chosen by worst transfer across the other
+The saved train family is then chosen between the two affirmative families
+(cities vs comparisons) by best worst-case transfer across the other
 families, negations included. Metadata records the layer, train family,
 normalization convention, and transfer accuracies. Lab 7 will ask whether this
 direction is *usable*, which is a different question from everything measured

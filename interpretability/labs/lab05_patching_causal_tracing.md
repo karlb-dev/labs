@@ -148,6 +148,7 @@ edit "did nothing" — movement without a flip is the most informative outcome.
 | pairs rejected by validator | your subjects tokenize to ≠1 token, or prompts differ at >1 position |
 | only 2–3 facts pass the gate on tier a | gpt2 genuinely doesn't know them; that's the gate working |
 | edit flips nothing anywhere | check the edit layer is before the handoff; after it, the subject MLP no longer matters |
+| a "negative" control beats the matched patch | per-fact rows in `tables/negative_control_scores.csv` — wrong-position patches on small models can carry real signal; scope the claim to the controls that stayed low |
 
 ## What goes in the ledger
 
@@ -155,5 +156,6 @@ edit "did nothing" — movement without a flip is the most informative outcome.
 population in every sentence. "Layer 14 stores capitals" is not available at
 this evidence level; "patching the subject-position stream at layers 12–14
 recovers ≥80% of the answer logit difference across 14 five-token capital
-prompts, and mismatched-pair controls recover ~0" is exactly available — and
+prompts, and mismatched-pair controls recover well under half of that" is
+exactly available — and
 its falsifier is already named in the drafts.
