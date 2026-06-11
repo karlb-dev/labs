@@ -50,6 +50,10 @@ python interp_bench.py --lab lab4 --tier b --prompt-set full
 # Lab 5 (patching + causal tracing; --run-edit adds the edit audit):
 python interp_bench.py --lab lab5 --tier a
 python interp_bench.py --lab lab5 --tier b --prompt-set full --run-edit
+
+# Lab 6 (manual circuit discovery; deliverable is circuit_card.md):
+python interp_bench.py --lab lab6 --tier a
+python interp_bench.py --lab lab6 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -93,8 +97,15 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   bit-exact identity), alignment-validated clean/corrupt fact pairs,
   role-aggregated causal tracing with paraphrase confirmation and negative
   controls, and a rank-one edit-and-audit extension (`--run-edit`).
-- Labs 6–11 — designed in COURSE.md, not yet implemented. Lab 6 (circuit
-  discovery) is next.
+- Lab 6: circuit discovery, the manual way — implemented and validated
+  (Tier A+B). Composes Labs 2/3/5: cheap screening (attribution + motifs) →
+  causal ranking (single-node mean-ablation) → greedy pruning → faithfulness
+  / completeness / minimality on discovery AND held-out vocabulary families,
+  one ablation-interaction edge claim, and a circuit card deliverable.
+  Adds multi-node mean-ablation machinery to the bench
+  (`run_with_node_set_ablation`).
+- Labs 7–11 — designed in COURSE.md, not yet implemented. Lab 7 (steering
+  + the refusal direction) is next and loads Lab 4's `truth_direction.pt`.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 

@@ -170,6 +170,15 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # the localization map an anecdote.
         "max_examples_tier_a": "6",
     },
+    "lab6": {
+        "module": "labs.lab06_circuit_discovery",
+        "run_name": "lab06_circuit_discovery",
+        "description": "Circuit discovery, the manual way: a faithful, complete, minimal subgraph.",
+        # Needs attention patterns for the motif screen.
+        "needs_eager": "true",
+        # Faithfulness/completeness need a few prompts per family.
+        "max_examples_tier_a": "6",
+    },
 }
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
@@ -1824,8 +1833,16 @@ def head_contribution(bundle: ModelBundle, head_anatomy: HeadAnatomy, layer: int
     return out
 
 
-def run_with_attention_cache(bundle: ModelBundle, prompt: str) -> AttentionCapture:
-    """One forward capturing streams, attention patterns, and head pieces."""
+def run_with_attention_cache(
+    bundle: ModelBundle, prompt: str, *, all_positions: bool = False
+) -> AttentionCapture:
+    """One forward capturing streams, attention patterns, and head pieces.
+
+    With ``all_positions=True``, ``o_in_last``/``attn_out_last`` hold
+    full-sequence tensors ([L, seq, n_heads*d_head] / [L, seq, d_model])
+    despite their names — circuit labs need every position's head outputs,
+    e.g. to compute dataset-mean ablation values.
+    """
     import torch
 
     tokenizer = bundle.tokenizer
@@ -1845,14 +1862,14 @@ def run_with_attention_cache(bundle: ModelBundle, prompt: str) -> AttentionCaptu
 
     def make_o_pre_hook(idx: int):
         def hook(module: Any, hook_args: tuple) -> None:
-            o_in[idx] = tensor_cpu_float(hook_args[0][0, -1])
+            o_in[idx] = tensor_cpu_float(hook_args[0][0] if all_positions else hook_args[0][0, -1])
 
         return hook
 
     def make_attn_out_hook(idx: int):
         def hook(module: Any, hook_args: tuple, output: Any) -> None:
             out = output[0] if isinstance(output, tuple) else output
-            attn_out[idx] = tensor_cpu_float(out[0, -1])
+            attn_out[idx] = tensor_cpu_float(out[0] if all_positions else out[0, -1])
 
         return hook
 
@@ -2012,6 +2029,92 @@ def run_with_head_ablation(
             out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
     finally:
         handle.remove()
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+def run_with_node_set_ablation(
+    bundle: ModelBundle,
+    prompt: str,
+    head_anatomy: HeadAnatomy,
+    comp_anatomy: ComponentAnatomy,
+    heads: Sequence[tuple[int, int]] = (),
+    mlps: Sequence[int] = (),
+    head_means: Any = None,   # [L, seq, n_heads*d_head] float32 cpu, or None for zero
+    mlp_means: Any = None,    # [L, seq, d_model] float32 cpu, or None for zero
+) -> Any:
+    """Forward pass with a SET of heads and MLP layers ablated at all positions.
+
+    The circuit lab's workhorse: faithfulness ablates the complement of the
+    circuit (hundreds of heads at once), completeness ablates the circuit
+    itself. ``mode`` is implied by the means: dataset-mean ablation when mean
+    tensors are given (the convention that keeps the model in-distribution),
+    zero-ablation when None. Mean tensors assume the dataset's fixed prompt
+    length; a length mismatch raises rather than truncating silently.
+    Returns final-position logits, float32 cpu.
+    """
+    import torch
+
+    heads_by_layer: dict[int, list[int]] = {}
+    for layer, head in heads:
+        heads_by_layer.setdefault(layer, []).append(head)
+    mlp_set = set(mlps)
+    d_head = head_anatomy.d_head
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    seq = input_ids.shape[1]
+    if head_means is not None and head_means.shape[1] != seq:
+        raise ValueError(f"head_means seq {head_means.shape[1]} != prompt seq {seq}")
+    if mlp_means is not None and mlp_means.shape[1] != seq:
+        raise ValueError(f"mlp_means seq {mlp_means.shape[1]} != prompt seq {seq}")
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+
+    handles = []
+
+    def make_head_hook(layer: int, head_list: list[int]):
+        def hook(module: Any, hook_args: tuple) -> Any:
+            x = hook_args[0].clone()
+            for head in head_list:
+                sl = slice(head * d_head, (head + 1) * d_head)
+                if head_means is None:
+                    x[0, :, sl] = 0
+                else:
+                    x[0, :, sl] = head_means[layer, :, sl].to(x.device, x.dtype)
+            return (x,) + tuple(hook_args[1:])
+
+        return hook
+
+    def make_mlp_hook(layer: int):
+        def hook(module: Any, hook_args: tuple, output: Any) -> Any:
+            out = output[0] if isinstance(output, tuple) else output
+            out = out.clone()
+            if mlp_means is None:
+                out[0, :, :] = 0
+            else:
+                out[0, :, :] = mlp_means[layer].to(out.device, out.dtype)
+            return (out,) + tuple(output[1:]) if isinstance(output, tuple) else out
+
+        return hook
+
+    for layer, head_list in heads_by_layer.items():
+        block = bundle.blocks[layer]
+        attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
+        attn_module = getattr(block, attn_module_path)
+        o_proj = attn_module.o_proj if hasattr(attn_module, "o_proj") else attn_module.c_proj
+        handles.append(o_proj.register_forward_pre_hook(make_head_hook(layer, head_list)))
+    for layer in mlp_set:
+        module = getattr(bundle.blocks[layer], comp_anatomy.mlp_hook_path)
+        handles.append(module.register_forward_hook(make_mlp_hook(layer)))
+
+    try:
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        for h in handles:
+            h.remove()
     return tensor_cpu_float(out.logits[0, -1])
 
 
