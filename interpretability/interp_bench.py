@@ -146,6 +146,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "run_name": "lab02_direct_logit_attribution",
         "description": "Direct logit attribution: which components push toward or away from an answer.",
     },
+    "lab3": {
+        "module": "labs.lab03_attention_routing",
+        "run_name": "lab03_attention_routing",
+        "description": "Attention routing: head motifs, induction, and whether routing matters.",
+        # output_attentions=True under sdpa/flash returns an EMPTY tuple in
+        # transformers 5 -- silently. Attention-pattern labs must run eager.
+        "needs_eager": "true",
+    },
 }
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
@@ -1616,6 +1624,310 @@ def run_with_component_ablation(
 
 
 # ---------------------------------------------------------------------------
+# Head-level capture: attention patterns and per-head output contributions
+# ---------------------------------------------------------------------------
+#
+# An attention block's output is linear in its heads: the out-projection's
+# input is the concatenation of per-head outputs, so head h's write into the
+# block output is  o_in[h*d_head:(h+1)*d_head] @ W_O[h-slice]  (the projection
+# bias is a shared constant belonging to no head). The bench captures the
+# out-projection input with a pre-hook and verifies the per-head decomposition
+# reconstructs the block's attention output before any lab consumes it.
+#
+# Attention PATTERNS come from output_attentions=True, which requires the
+# eager attention implementation -- sdpa/flash return an empty tuple with no
+# warning in transformers 5 (verified). Labs that need patterns are marked
+# needs_eager in LAB_PROFILES and the capture below hard-fails if patterns
+# are missing.
+
+O_PROJ_PATH_CANDIDATES = (
+    "self_attn.o_proj",   # Llama / Olmo / Gemma / Qwen / Mistral style
+    "attn.c_proj",        # GPT-2 style (Conv1D: weight is [in, out])
+)
+
+
+@dataclasses.dataclass
+class HeadAnatomy:
+    """Verified per-head structure of the attention blocks."""
+
+    o_proj_path: str
+    n_heads: int
+    n_kv_heads: int
+    d_head: int
+    weight_is_in_by_out: bool   # True for GPT-2 Conv1D, False for nn.Linear
+    has_bias: bool
+    sliding_window: int | None
+    layer_types: tuple[str, ...]
+    max_head_recon_rel_err: float
+
+
+@dataclasses.dataclass
+class AttentionCapture:
+    """One prompt's streams plus attention patterns and head-output pieces.
+
+    ``attentions``: [n_layers, n_heads, seq, seq] float32 cpu — row q sums
+    to 1 over keys <= q (causal).
+    ``o_in_last``: [n_layers, n_heads * d_head] — the out-projection INPUT at
+    the final position (concatenated per-head outputs before W_O).
+    ``attn_out_last``: [n_layers, d_model] — each block's attention-module
+    output at the final position (the head decomposition's ground truth).
+    """
+
+    capture: ForwardCapture
+    attentions: Any
+    o_in_last: Any
+    attn_out_last: Any
+
+
+def resolve_head_anatomy(ctx: RunContext, bundle: ModelBundle) -> HeadAnatomy:
+    """Resolve out-projection path and head geometry; verification happens in
+    run_head_decomposition_check on real activations."""
+    config = bundle.model.config
+    block0 = bundle.blocks[0]
+    o_proj = None
+    o_proj_path = ""
+    for candidate in O_PROJ_PATH_CANDIDATES:
+        with contextlib.suppress(AttributeError):
+            o_proj = get_by_path(block0, candidate)
+            o_proj_path = candidate
+            break
+    if o_proj is None:
+        raise RuntimeError(
+            f"Could not find the attention out-projection. Tried {O_PROJ_PATH_CANDIDATES} "
+            "relative to the decoder block; add this architecture's path to "
+            "O_PROJ_PATH_CANDIDATES in interp_bench.py."
+        )
+    n_heads = int(getattr(config, "num_attention_heads", getattr(config, "n_head", 0)))
+    n_kv = int(getattr(config, "num_key_value_heads", n_heads) or n_heads)
+    d_model = bundle.anatomy.d_model
+    d_head = int(getattr(config, "head_dim", 0) or d_model // n_heads)
+    # GPT-2's Conv1D stores weight as [in, out]; nn.Linear as [out, in].
+    is_conv1d = type(o_proj).__name__ == "Conv1D"
+    anatomy = HeadAnatomy(
+        o_proj_path=o_proj_path,
+        n_heads=n_heads,
+        n_kv_heads=n_kv,
+        d_head=d_head,
+        weight_is_in_by_out=is_conv1d,
+        has_bias=getattr(o_proj, "bias", None) is not None,
+        sliding_window=getattr(config, "sliding_window", None),
+        layer_types=tuple(sorted(set(getattr(config, "layer_types", []) or []))),
+        max_head_recon_rel_err=-1.0,  # filled by the decomposition check
+    )
+    path = ctx.path("diagnostics", "head_anatomy.json")
+    write_json(path, anatomy)
+    ctx.register_artifact(path, "diagnostic", "Per-head geometry and out-projection orientation.")
+    print(
+        f"[bench] head anatomy: {n_heads} heads x d_head {d_head} "
+        f"(kv heads {n_kv}, o_proj at {o_proj_path}, "
+        f"{'Conv1D [in,out]' if is_conv1d else 'Linear [out,in]'})"
+    )
+    return anatomy
+
+
+def head_contribution(bundle: ModelBundle, head_anatomy: HeadAnatomy, layer: int, head: int, o_in_vec: Any) -> Any:
+    """Head ``head``'s write into block ``layer``'s attention output.
+
+    ``o_in_vec`` is the out-projection input at one position,
+    [n_heads * d_head] float32 cpu. Returns a [d_model] float32 cpu vector.
+    The projection bias is deliberately excluded: it is shared, not a head's.
+    """
+    import torch
+
+    o_proj = get_by_path(bundle.blocks[layer], head_anatomy.o_proj_path)
+    w = o_proj.weight.detach()
+    sl = slice(head * head_anatomy.d_head, (head + 1) * head_anatomy.d_head)
+    piece = o_in_vec[sl]
+    if head_anatomy.weight_is_in_by_out:
+        out = piece @ w[sl, :].to("cpu", torch.float32)
+    else:
+        out = piece @ w[:, sl].to("cpu", torch.float32).T
+    return out
+
+
+def run_with_attention_cache(bundle: ModelBundle, prompt: str) -> AttentionCapture:
+    """One forward capturing streams, attention patterns, and head pieces."""
+    import torch
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+
+    captured: dict[str, Any] = {}
+
+    def final_norm_pre_hook(module: Any, hook_args: tuple) -> None:
+        captured["final_prenorm"] = tensor_cpu_float(hook_args[0])
+
+    o_in: dict[int, Any] = {}
+    attn_out: dict[int, Any] = {}
+
+    def make_o_pre_hook(idx: int):
+        def hook(module: Any, hook_args: tuple) -> None:
+            o_in[idx] = tensor_cpu_float(hook_args[0][0, -1])
+
+        return hook
+
+    def make_attn_out_hook(idx: int):
+        def hook(module: Any, hook_args: tuple, output: Any) -> None:
+            out = output[0] if isinstance(output, tuple) else output
+            attn_out[idx] = tensor_cpu_float(out[0, -1])
+
+        return hook
+
+    handles = [bundle.final_norm.register_forward_pre_hook(final_norm_pre_hook)]
+    for i, block in enumerate(bundle.blocks):
+        attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
+        o_proj = get_by_path(block, f"{attn_module_path}.o_proj") if hasattr(
+            getattr(block, attn_module_path), "o_proj"
+        ) else get_by_path(block, f"{attn_module_path}.c_proj")
+        handles.append(o_proj.register_forward_pre_hook(make_o_pre_hook(i)))
+        handles.append(getattr(block, attn_module_path).register_forward_hook(make_attn_out_hook(i)))
+    try:
+        with torch.no_grad():
+            out = bundle.model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                output_hidden_states=True,
+                output_attentions=True,
+                use_cache=False,
+            )
+    finally:
+        for h in handles:
+            h.remove()
+
+    if not out.attentions:
+        raise RuntimeError(
+            "The model returned no attention patterns. This happens silently "
+            "with sdpa/flash attention in transformers 5 -- rerun with "
+            "--attn-implementation eager (lab3 sets this automatically unless "
+            "you overrode it)."
+        )
+    if "final_prenorm" not in captured:
+        raise RuntimeError("The final-norm pre-hook never fired; check diagnostics/model_anatomy.md.")
+
+    hs = out.hidden_states
+    n_layers = bundle.anatomy.n_layers
+    if len(hs) != n_layers + 1:
+        raise RuntimeError(f"Expected {n_layers + 1} hidden states, got {len(hs)}.")
+    streams = torch.stack([tensor_cpu_float(h[0]) for h in hs[:-1]] + [captured["final_prenorm"][0]])
+
+    ids = input_ids[0].detach().cpu().tolist()
+    capture = ForwardCapture(
+        prompt=prompt,
+        input_ids=ids,
+        tokens_raw=tokenizer.convert_ids_to_tokens(ids),
+        tokens_text=[tokenizer.decode([i]) for i in ids],
+        streams=streams,
+        final_logits_last=tensor_cpu_float(out.logits[0, -1]),
+    )
+    return AttentionCapture(
+        capture=capture,
+        attentions=torch.stack([tensor_cpu_float(a[0]) for a in out.attentions]),
+        o_in_last=torch.stack([o_in[i] for i in range(n_layers)]),
+        attn_out_last=torch.stack([attn_out[i] for i in range(n_layers)]),
+    )
+
+
+def run_head_decomposition_check(
+    ctx: RunContext, bundle: ModelBundle, head_anatomy: HeadAnatomy, att: AttentionCapture, *,
+    rel_tolerance: float = 0.02,
+) -> dict[str, Any]:
+    """Self-check: per-head pieces (+ shared bias) must rebuild each block's
+    attention output at the final position. Aborts on failure."""
+    import torch
+
+    worst = 0.0
+    for layer in range(bundle.anatomy.n_layers):
+        total = torch.zeros(bundle.anatomy.d_model)
+        for head in range(head_anatomy.n_heads):
+            total += head_contribution(bundle, head_anatomy, layer, head, att.o_in_last[layer])
+        o_proj = get_by_path(bundle.blocks[layer], head_anatomy.o_proj_path)
+        bias = getattr(o_proj, "bias", None)
+        if bias is not None:
+            total += bias.detach().to("cpu", torch.float32)
+        denom = max(float(att.attn_out_last[layer].norm()), 1e-9)
+        worst = max(worst, float((total - att.attn_out_last[layer]).norm()) / denom)
+
+    result = {
+        "prompt": att.capture.prompt,
+        "max_layer_rel_err": worst,
+        "rel_tolerance": rel_tolerance,
+        "ok": worst <= rel_tolerance,
+        "explanation": (
+            "Head-level attribution is only meaningful if the per-head slices "
+            "of the out-projection input, mapped through their W_O columns, "
+            "sum (with the shared bias) to the block's actual attention "
+            "output. The worst per-layer relative error is reported."
+        ),
+    }
+    path = ctx.path("diagnostics", "head_decomposition_check.json")
+    write_json(path, result)
+    ctx.register_artifact(path, "diagnostic", "Proof that per-head pieces rebuild each block's attention output.")
+    status = "OK" if result["ok"] else "FAILED"
+    print(f"[bench] head decomposition check: {status} (max layer rel err = {worst:.2e})")
+    if not result["ok"]:
+        raise RuntimeError(
+            "Head decomposition check failed; per-head slicing does not match "
+            "this architecture. See diagnostics/head_decomposition_check.json."
+        )
+    return result
+
+
+def run_with_head_ablation(
+    bundle: ModelBundle,
+    prompt: str,
+    head_anatomy: HeadAnatomy,
+    layer: int,
+    head: int,
+    scope: str = "final_pos",
+) -> Any:
+    """Forward pass with one attention head's output zeroed.
+
+    ``scope='final_pos'`` zeroes the head's write at the final position only —
+    commensurable with the head's direct logit attribution (Lab 2's
+    convention). ``scope='all_pos'`` removes the head everywhere, including
+    its writes at earlier positions that later layers may read: the gap
+    between the two scopes is composition made measurable.
+    Returns final-position logits, float32 cpu.
+    """
+    import torch
+
+    if scope not in ("final_pos", "all_pos"):
+        raise ValueError(f"Unknown ablation scope {scope!r}")
+    block = bundle.blocks[layer]
+    attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
+    attn_module = getattr(block, attn_module_path)
+    o_proj = attn_module.o_proj if hasattr(attn_module, "o_proj") else attn_module.c_proj
+    sl = slice(head * head_anatomy.d_head, (head + 1) * head_anatomy.d_head)
+
+    def ablate_pre_hook(module: Any, hook_args: tuple) -> Any:
+        x = hook_args[0].clone()
+        if scope == "final_pos":
+            x[0, -1, sl] = 0
+        else:
+            x[..., sl] = 0
+        return (x,) + tuple(hook_args[1:])
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+
+    handle = o_proj.register_forward_pre_hook(ablate_pre_hook)
+    try:
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        handle.remove()
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+# ---------------------------------------------------------------------------
 # Human-readable state dumps
 # ---------------------------------------------------------------------------
 #
@@ -2003,6 +2315,12 @@ def apply_tier_defaults(args: argparse.Namespace) -> None:
         args.dtype = spec["dtype"]
     if args.max_examples < 0:
         args.max_examples = spec["max_examples"]
+    if LAB_PROFILES[args.lab].get("needs_eager") and args.attn_implementation == "auto":
+        args.attn_implementation = "eager"
+        print(
+            "[bench] this lab captures attention patterns; attn implementation "
+            "set to 'eager' (sdpa/flash return empty attentions silently)."
+        )
 
 
 def make_run_dir(args: argparse.Namespace) -> pathlib.Path:

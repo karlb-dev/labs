@@ -38,6 +38,10 @@ python interp_bench.py --lab lab1 --tier b --prompt-set full
 # Lab 2 (direct logit attribution), same pattern:
 python interp_bench.py --lab lab2 --tier a
 python interp_bench.py --lab lab2 --tier b --prompt-set full --topk 10
+
+# Lab 3 (attention routing; the bench auto-sets eager attention):
+python interp_bench.py --lab lab3 --tier a
+python interp_bench.py --lab lab3 --tier b --prompt-set full --topk 10
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -62,8 +66,14 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   Adds two instrument self-checks: the component-anatomy probe (hook points
   are verified against per-block residual deltas, not assumed) and the
   decomposition check (components must sum to the final pre-norm stream).
-- Labs 3–11 — designed in COURSE.md, not yet implemented. Lab 3 (attention
-  routing) is next and reuses the component capture and ablation machinery.
+- Lab 3: attention routing, head motifs, induction — implemented and
+  validated (Tier A+B). Adds head-level capture (attention patterns require
+  eager — the bench forces it, since sdpa returns an empty attentions tuple
+  silently in transformers 5), a verified per-head decomposition check, and
+  scoped head ablation (final-position vs all-position — the gap measures
+  composition).
+- Labs 4–11 — designed in COURSE.md, not yet implemented. Lab 4 (probing
+  with controls) is next.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 
