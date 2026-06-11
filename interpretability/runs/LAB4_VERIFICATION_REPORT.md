@@ -41,7 +41,7 @@ Date: 2026-06-11 · Machine: Colab A100-SXM4-80GB · Branch: `lab1_colab`
 |---|---|
 | Truth peak (logistic, within-family held-out) | **0.984** at layer 19/32 |
 | Surface track (final word contains 'a') | 0.88 from layer 0 — flat |
-| Shuffled-label / random-direction controls | ~0.5 throughout |
+| Shuffled-label / random-direction controls | generally near chance, but visibly noisy at this n; the peak logistic layer's shuffled control is 0.64, so quote selectivity rather than saying "near chance" |
 | Token-length baseline | 0.43 |
 | Best cross-family layer (affirmative mass-mean) | 32 (worst transfer 0.85) |
 | Saved direction | **comparisons-trained** mass-mean @ L32, worst transfer **0.917** incl. negations |

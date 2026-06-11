@@ -540,7 +540,7 @@ def draft_claims(
                 "id": f"{LAB_ID}-C2",
                 "tag": "OBS",
                 "text": (
-                    f"{len(ok)}/{len(natural_confirmations)} synthetic-labeled induction heads kept an "
+                    f"{len(ok)}/{len(natural_confirmations)} synthetic/cycle induction candidates kept an "
                     "induction score >= half their synthetic score on natural repeated-phrase prompts — "
                     "the motif is not an artifact of the toy patterns."
                 ),
@@ -585,7 +585,9 @@ def render_summary(
     head_table: list[dict[str, Any]],
     label_counts: dict[str, int],
     ablation_rows: list[dict[str, Any]],
-    rho: float | None,
+    rho_all: float | None,
+    rho_signal: float | None,
+    n_signal: int,
     natural_confirmations: list[dict[str, Any]],
     dropped: int,
     n_examples: int,
@@ -630,8 +632,13 @@ def render_summary(
     lines.append("- top heads by |attribution|: " + ", ".join(
         f"L{r['layer']}H{r['head']} ({r['pattern_label']}, {r['mean_target_attribution']:+.2f})" for r in top_attr
     ))
-    if rho is not None:
-        lines.append(f"- Spearman rho (attribution vs direct-path ablation): {rho:.3f}")
+    if rho_all is not None:
+        lines.append(f"- Spearman rho (attribution vs direct-path ablation, all pairs): {rho_all:.3f}")
+        if rho_signal is not None:
+            lines.append(
+                f"- Spearman rho above |attribution| >= {ATTRIBUTION_NOISE_FLOOR}: "
+                f"{rho_signal:.3f} (n={n_signal})"
+            )
     if natural_confirmations:
         ok = sum(1 for r in natural_confirmations if r["confirmed"])
         lines.append(f"- induction heads confirmed on natural text: {ok}/{len(natural_confirmations)}")
@@ -651,7 +658,9 @@ def render_summary(
         "2. `plots/attention_heads_*.png` — what those patterns look like on real tokens.",
         "3. `plots/head_attribution_by_layer.png` — Lab 2's attention bars resolved into heads.",
         "4. `plots/direct_vs_indirect_effect.png` — composition: the lab's payload.",
-        "5. `tables/head_table.csv` — every head, every score, one row.",
+        "5. `plots/head_attribution_vs_ablation.png` — where attribution does and does not predict direct effect.",
+        "6. `tables/head_table.csv` — every head, averaged over prompts.",
+        "7. `tables/example_head_scores.csv` — the per-prompt version; use this to audit controls.",
         "",
         "## 7. Caveats students must carry forward",
         "",
@@ -720,6 +729,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     # Per-example capture and per-head measurement.
     captures: dict[str, bench.AttentionCapture] = {}
+    example_head_rows: list[dict[str, Any]] = []
     per_head_acc: dict[tuple[int, int], dict[str, list]] = {
         (l, h): {"prev": [], "induct": [], "first": [], "ent": [], "ent_frac": [], "attr": []}
         for l in range(n_layers) for h in range(n_heads)
@@ -750,6 +760,21 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 acc["ent"].append(ent)
                 acc["ent_frac"].append(ent_frac)
                 acc["attr"].append(attr["scores"][l][h])
+                example_head_rows.append(
+                    {
+                        "example_id": ex.example_id,
+                        "category": ex.category,
+                        "layer": l,
+                        "head": h,
+                        "prev_token_score": round(acc["prev"][-1], 4),
+                        "induction_score": round(ind, 4) if ind is not None else "",
+                        "first_token_score": round(acc["first"][-1], 4),
+                        "entropy_bits": round(ent, 4),
+                        "entropy_frac": round(ent_frac, 4),
+                        "target_attribution": round(attr["scores"][l][h], 4),
+                        "pattern_label": label_head(acc["prev"][-1], ind, acc["first"][-1], ent_frac),
+                    }
+                )
         traj = bench.compute_lens_trajectory(bundle, att.capture, target_id=t_id, distractor_id=d_id, topk=args.topk)
         bench.dump_example_state(ctx, bundle, ex.example_id, att.capture, traj, target=ex.target, distractor=ex.distractor)
         print(f"[lab3] [{i + 1}/{len(kept)}] {ex.example_id} logit_diff={model_diff:+.3f}")
@@ -777,8 +802,18 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 }
             )
     head_path = ctx.path("tables", "head_table.csv")
-    bench.write_csv(head_path, head_table)
+    bench.write_csv_with_context(ctx, head_path, head_table)
     ctx.register_artifact(head_path, "table", "Every head: motif scores, entropy, label, attribution.")
+    example_head_path = ctx.path("tables", "example_head_scores.csv")
+    bench.write_csv_with_context(ctx, example_head_path, example_head_rows)
+    ctx.register_artifact(
+        example_head_path,
+        "table",
+        "Per-example head motif scores and attribution, useful for control-prompt audits.",
+    )
+    results_path = ctx.path("results.csv")
+    bench.write_csv_with_context(ctx, results_path, example_head_rows)
+    ctx.register_artifact(results_path, "results", "Alias of example_head_scores.csv for the standard run contract.")
     label_counts: dict[str, int] = {}
     for r in head_table:
         label_counts[r["pattern_label"]] = label_counts.get(r["pattern_label"], 0) + 1
@@ -786,7 +821,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     # Natural-text confirmation of synthetic-labeled induction heads.
     natural_confirmations = []
-    for (l, h), synth_scores in sorted(synth_induct.items(), key=lambda kv: -statistics.fmean(kv[1]))[:8]:
+    for (l, h), synth_scores in sorted(synth_induct.items(), key=lambda kv: -statistics.fmean(kv[1])):
         s_mean = statistics.fmean(synth_scores)
         if s_mean < MOTIF_SCORE_BAR:
             continue
@@ -802,7 +837,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         )
     if natural_confirmations:
         nat_path = ctx.path("tables", "natural_confirmation.csv")
-        bench.write_csv(nat_path, natural_confirmations)
+        bench.write_csv_with_context(ctx, nat_path, natural_confirmations)
         ctx.register_artifact(nat_path, "table", "Do synthetic-labeled induction heads still induct on natural text?")
 
     # Scoped ablations: top heads per motif + by attribution + controls.
@@ -855,7 +890,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                         }
                     )
         abl_path = ctx.path("tables", "head_ablation_results.csv")
-        bench.write_csv(abl_path, ablation_rows)
+        bench.write_csv_with_context(ctx, abl_path, ablation_rows)
         ctx.register_artifact(abl_path, "table", "Scoped head ablations: direct-path vs all-position effects.")
 
     # Plots.
@@ -902,7 +937,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     claims = draft_claims(ctx, bundle, head_table, ablation_rows, natural_confirmations)
     bench.write_ledger_suggestions(ctx, LAB_ID, claims)
     summary = render_summary(
-        ctx, bundle, head_table, label_counts, ablation_rows, rho,
+        ctx, bundle, head_table, label_counts, ablation_rows, rho_all, rho_signal, n_signal,
         natural_confirmations, dropped, len(kept), claims,
     )
     summary_path = ctx.path("run_summary.md")

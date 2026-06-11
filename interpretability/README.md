@@ -168,6 +168,12 @@ artifact_index.json        # map of every artifact with a one-line purpose
 Reading order for any run: `run_summary.md` → one `state_card.md` → plots →
 `results.csv` → `diagnostics/` when anything looks wrong.
 
+Plots include a small footer with `lab`, model, tier/dtype/prompt-set, and run
+name, so screenshots remain identifiable outside the run directory. Main lab
+tables and `results.csv` also prepend context columns (`lab`, `run_name`,
+`model_id`, revision, tier, dtype, prompt set, seed, and model shape). Low-level
+diagnostic CSVs keep their minimal check-specific schemas.
+
 ## The claim ledger
 
 `claim_ledger.md` at this directory's root is the student's running dossier:

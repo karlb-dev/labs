@@ -522,7 +522,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         gate_rows.extend(rows)
         print(f"[lab5] template {tid!r}: {len(k)}/{len(pairs)} pairs pass the baseline gate")
     facts_path = ctx.path("tables", "facts.csv")
-    bench.write_csv(facts_path, gate_rows)
+    bench.write_csv_with_context(ctx, facts_path, gate_rows)
     ctx.register_artifact(facts_path, "table", "Every pair with baseline logit diffs and gate outcome.")
     base_pairs = kept["base"]
     if len(base_pairs) < 2:
@@ -541,12 +541,15 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         grid_rows.extend(run_grid(bundle, pair, cap))
         print(f"[lab5] [{i + 1}/{len(base_pairs)}] {pair.fact.fact_id} grid done")
     grid_path = ctx.path("tables", "patching_scores.csv")
-    bench.write_csv(grid_path, grid_rows)
+    bench.write_csv_with_context(ctx, grid_path, grid_rows)
     ctx.register_artifact(grid_path, "table", "Long-form recovery for every (fact, layer, position).")
+    results_path = ctx.path("results.csv")
+    bench.write_csv_with_context(ctx, results_path, grid_rows)
+    ctx.register_artifact(results_path, "results", "Alias of patching_scores.csv for the standard run contract.")
 
     agg_rows = aggregate_by_role(grid_rows, n_layers)
     agg_path = ctx.path("tables", "localization_summary.csv")
-    bench.write_csv(agg_path, agg_rows)
+    bench.write_csv_with_context(ctx, agg_path, agg_rows)
     ctx.register_artifact(agg_path, "table", "Mean recovery by (layer, token role) across facts.")
 
     # The informative object with substitution corruption is NOT the peak of
@@ -592,7 +595,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         print(f"[lab5] paraphrase {tid!r}: subject-column sweep on {len(kept[tid])} pairs")
     if para_rows:
         para_path = ctx.path("tables", "paraphrase_consistency.csv")
-        bench.write_csv(para_path, para_rows)
+        bench.write_csv_with_context(ctx, para_path, para_rows)
         ctx.register_artifact(para_path, "table", "Subject-position recovery by layer under paraphrase templates.")
 
     # ----- negative controls --------------------------------------------------
@@ -642,7 +645,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "recovery": round(mean_subject_rec(low_layer, held_out), 4),
         })
     ctrl_path = ctx.path("tables", "negative_control_scores.csv")
-    bench.write_csv(ctrl_path, control_rows)
+    bench.write_csv_with_context(ctx, ctrl_path, control_rows)
     ctx.register_artifact(ctrl_path, "table", "Mismatched-pair, wrong-position, and held-out-low-region controls.")
     matched_mean = statistics.fmean(
         r["recovery"] for r in grid_rows if r["layer"] == top_layer and r["role"] == "subject")
@@ -666,7 +669,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                         "recovery": round((logit_diff(logits, pair) - pair.corrupt_diff) / denom, 4),
                     })
     comp_path = ctx.path("tables", "component_patching.csv")
-    bench.write_csv(comp_path, comp_rows)
+    bench.write_csv_with_context(ctx, comp_path, comp_rows)
     ctx.register_artifact(comp_path, "table", "Attn vs MLP output patching in the top layer band.")
 
     # ----- edit extension ------------------------------------------------------
@@ -685,7 +688,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                       f"paraphrases={res['paraphrase_flips']}/{res['n_paraphrases']} "
                       f"neighbors_intact={res['neighbors_intact']}/{res['n_neighbors']}")
         edit_path = ctx.path("tables", "edit_results.csv")
-        bench.write_csv(edit_path, [
+        bench.write_csv_with_context(ctx, edit_path, [
             {k: (str(v) if isinstance(v, (list, tuple)) else v) for k, v in r.items()}
             for r in edit_results
         ])
@@ -705,6 +708,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     # ----- metrics, claims, summary --------------------------------------------
     peak_subject = max((r["recovery_subject"] for r in agg_rows if r["recovery_subject"] != ""))
     peak_last = max((r["recovery_last"] for r in agg_rows if r["recovery_last"] != ""))
+    control_summary = {
+        kind: {
+            "mean_recovery": round(statistics.fmean(r["recovery"] for r in control_rows if r["control"] == kind), 4),
+            "n": sum(1 for r in control_rows if r["control"] == kind),
+        }
+        for kind in sorted({r["control"] for r in control_rows})
+    }
     metrics = {
         "n_facts_kept_base": len(base_pairs),
         "n_pairs_rejected_alignment": rejected,
@@ -714,7 +724,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "top_last_layer": top_last_layer,
         "peak_last_recovery": peak_last,
         "matched_top_patch_mean_recovery": round(matched_mean, 4),
-        "controls": {r["control"]: r["recovery"] for r in control_rows[-3:]},
+        "controls": control_summary,
         "edit_results": edit_results or None,
     }
     metrics_path = ctx.path("metrics.json")
@@ -856,7 +866,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "   tracing; subject vs last curves are the recall-vs-readout story.",
         "3. `plots/negative_controls.png` — what the top patch beats.",
         "4. `plots/component_patching.png` — who carries the fact in the top band.",
-        "5. `tables/edit_results.csv` (if --run-edit) — localization meets editing.",
+        "5. `results.csv` / `tables/patching_scores.csv` — the long-form grid behind every aggregate.",
+        "6. `tables/edit_results.csv` (if --run-edit) — localization meets editing.",
         "",
         "## 7. Caveats students must carry forward",
         "",

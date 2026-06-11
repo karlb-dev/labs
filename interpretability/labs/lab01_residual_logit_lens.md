@@ -165,7 +165,8 @@ The lab reports several distinct “when did it happen?” metrics because a sin
 | `decision_depth` | first depth after which the final top-1 token remains top-1 |
 | `target_first_top1` | first depth where the labeled target is top-1 |
 | `target_stable_top1_depth` | first depth after which the labeled target remains top-1 |
-| `target_first_beats_distractor` | first depth where target logit exceeds distractor logit |
+| `target_first_beats_distractor_raw` | first depth where target logit exceeds distractor logit; diagnostic only, often noisy in junk-readout regimes |
+| `target_first_beats_distractor` | first depth where target logit exceeds distractor by >1.0 and keeps the lead thereafter |
 | `target_stable_beats_distractor` | first depth after which target logit keeps beating distractor |
 | `target_rank_first_le_5` | first depth where target rank is 5 or better |
 | `kl_to_final_first_le_0.5_bits` | first depth where the whole distribution is within 0.5 bits of final |
@@ -238,8 +239,14 @@ Every Lab 1 claim should be tagged `OBS`. Do not write a causal claim yet. A goo
 ```text
 [L01-C1] OBS | On <model>, for <prompt family>, <metric> stabilized at <number> / L under the raw logit lens.
 Artifact: runs/<run>/tables/category_summary.csv
-Falsifier: tuned lens or held-out prompts move the event depth materially later.
+Falsifier: tuned lens or held-out prompts move the event depth materially earlier/later.
 ```
+
+For target-vs-distractor claims, prefer the margin-gated
+`target_first_beats_distractor` or `target_stable_beats_distractor` columns.
+The raw first positive crossing is kept because it is a useful failure mode:
+two irrelevant low-ranked tokens can swap order long before either is
+meaningfully decoded.
 
 ## Interpretation and ethics
 

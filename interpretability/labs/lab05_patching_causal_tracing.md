@@ -118,7 +118,9 @@ edit "did nothing" — movement without a flip is the most informative outcome.
 3. `plots/negative_controls.png` — what the matched patch beats.
 4. `plots/component_patching.png` — attn vs MLP in the localized band.
 5. `tables/facts.csv` — who passed the gate, who didn't, by how much.
-6. `tables/edit_results.csv` — the localization-meets-editing table.
+6. `results.csv` / `tables/patching_scores.csv` — the long-form grid behind
+   every aggregate and heatmap cell.
+7. `tables/edit_results.csv` — the localization-meets-editing table.
 
 ## Writeup questions
 

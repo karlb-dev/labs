@@ -100,7 +100,10 @@ sink, attribution, random, and low-attribution heads are added automatically).
 4. `plots/direct_vs_indirect_effect.png` — the composition scatter.
 5. `tables/head_table.csv` — every head, one row: all motif scores, entropy,
    label, attribution. This is the lab's "key artifact" for grading.
-6. `tables/natural_confirmation.csv` — do the synthetic-labeled induction
+6. `tables/example_head_scores.csv` — the same measurements per prompt. Use
+   this to check whether a control prompt accidentally triggers an induction
+   label.
+7. `tables/natural_confirmation.csv` — do the synthetic/cycle induction
    heads still induct on natural repeated phrases?
 
 ## Writeup questions
@@ -117,7 +120,7 @@ sink, attribution, random, and low-attribution heads are added automatically).
    the gap measure? What would Lab 5 need to show to confirm the composition
    story?
 5. Did any head "induct" on a control prompt? If so, is it the rule or the
-   head that is wrong?
+   head that is wrong? Cite `tables/example_head_scores.csv`.
 
 ## Symptom-first debugging
 

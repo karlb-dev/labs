@@ -267,6 +267,17 @@ def write_csv(path: pathlib.Path, rows: Sequence[Mapping[str, Any]]) -> None:
             writer.writerow({key: row.get(key, "") for key in keys})
 
 
+def write_csv_with_context(ctx: "RunContext", path: pathlib.Path, rows: Sequence[Mapping[str, Any]]) -> None:
+    """Write a lab table with run-identifying columns prepended.
+
+    Run directories already contain ``run_config.json`` and ``run_metadata.json``,
+    but CSVs often get copied into notebooks, reports, and slides without their
+    parent folder. These columns make the exported table self-identifying.
+    """
+    context = ctx.table_context()
+    write_csv(path, [{**context, **dict(row)} for row in rows])
+
+
 def sha256_file(path: pathlib.Path, *, max_bytes: int | None = None) -> str | None:
     """Return a SHA256 digest for a file, or None if the file is unavailable.
 
@@ -507,12 +518,48 @@ class RunContext:
     args: argparse.Namespace
     started_unix: float = dataclasses.field(default_factory=time.time)
     artifacts: list[dict[str, Any]] = dataclasses.field(default_factory=list)
+    model_id: str = ""
+    model_revision: str = ""
+    n_layers: int | None = None
+    d_model: int | None = None
 
     def path(self, *parts: str) -> pathlib.Path:
         """Resolve a run-relative path, creating parent directories."""
         p = self.run_dir.joinpath(*parts)
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
+
+    def bind_model(self, bundle: Any) -> None:
+        """Record model anatomy for plot footers and exported table columns."""
+        self.model_id = bundle.anatomy.model_id
+        self.model_revision = bundle.anatomy.revision or ""
+        self.n_layers = bundle.anatomy.n_layers
+        self.d_model = bundle.anatomy.d_model
+
+    def table_context(self) -> dict[str, Any]:
+        """Small, stable context block prepended to main lab CSV artifacts."""
+        return {
+            "lab": self.args.lab,
+            "run_name": self.run_dir.name,
+            "model_id": self.model_id,
+            "model_revision": self.model_revision,
+            "tier": self.args.tier,
+            "dtype": self.args.dtype,
+            "quantization": self.args.quantization,
+            "prompt_set": self.args.prompt_set,
+            "max_examples": self.args.max_examples,
+            "seed": self.args.seed,
+            "n_layers": "" if self.n_layers is None else self.n_layers,
+            "d_model": "" if self.d_model is None else self.d_model,
+        }
+
+    def plot_footer(self) -> str:
+        """One-line run label for plots that may leave the run directory."""
+        model = self.model_id or self.args.model or "unknown-model"
+        return (
+            f"{self.args.lab} | {model} | tier={self.args.tier} "
+            f"dtype={self.args.dtype} prompt_set={self.args.prompt_set} | {self.run_dir.name}"
+        )
 
     def register_artifact(self, path: pathlib.Path, kind: str, description: str) -> None:
         """Register a generated file in the run's artifact index.
@@ -1883,6 +1930,15 @@ def run_head_decomposition_check(
         denom = max(float(att.attn_out_last[layer].norm()), 1e-9)
         worst = max(worst, float((total - att.attn_out_last[layer]).norm()) / denom)
 
+    head_anatomy.max_head_recon_rel_err = worst
+    anatomy_path = ctx.path("diagnostics", "head_anatomy.json")
+    write_json(anatomy_path, head_anatomy)
+    ctx.artifacts = [
+        entry for entry in ctx.artifacts
+        if entry.get("path") != "diagnostics/head_anatomy.json"
+    ]
+    ctx.register_artifact(anatomy_path, "diagnostic", "Per-head geometry and out-projection orientation.")
+
     result = {
         "prompt": att.capture.prompt,
         "max_layer_rel_err": worst,
@@ -2391,6 +2447,7 @@ def save_figure(ctx: RunContext, fig: Any, name: str, description: str) -> None:
     import matplotlib.pyplot as plt
 
     path = ctx.path("plots", name)
+    fig.text(0.995, 0.005, ctx.plot_footer(), ha="right", va="bottom", fontsize=6.5, color="#555555")
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     ctx.register_artifact(path, "plot", description)
@@ -2610,6 +2667,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         ctx.register_artifact(metadata_path, "diagnostic", "Host, package, git, GPU, and environment metadata.")
 
         bundle = load_model_and_tokenizer(ctx)
+        ctx.bind_model(bundle)
         ensure_ledger()
 
         # Labs import this module by name. When this file runs as a script

@@ -951,7 +951,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         for ex, t_id, d_id in kept
     ]
     manifest_path = ctx.path("tables", "prompt_manifest.csv")
-    bench.write_csv(manifest_path, manifest)
+    bench.write_csv_with_context(ctx, manifest_path, manifest)
     ctx.register_artifact(manifest_path, "table", "Every kept example with ids and token ids.")
 
     # Instrument verification, in dependency order, before any science.
@@ -1012,11 +1012,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     # Tables.
     contrib_path = ctx.path("tables", "component_contributions.csv")
-    bench.write_csv(contrib_path, contributions)
+    bench.write_csv_with_context(ctx, contrib_path, contributions)
     ctx.register_artifact(contrib_path, "table", "Long-form ledger: every component's score for every example.")
 
     results_path = ctx.path("results.csv")
-    bench.write_csv(results_path, contributions)
+    bench.write_csv_with_context(ctx, results_path, contributions)
     ctx.register_artifact(results_path, "results", "Alias of component_contributions.csv for the standard run contract.")
 
     example_rows = []
@@ -1041,7 +1041,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             }
         )
     ex_path = ctx.path("tables", "example_summary.csv")
-    bench.write_csv(ex_path, example_rows)
+    bench.write_csv_with_context(ctx, ex_path, example_rows)
     ctx.register_artifact(ex_path, "table", "Per-example ledger totals, top components, and balance checks.")
 
     n_layers = bundle.anatomy.n_layers
@@ -1061,17 +1061,17 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 }
             )
     layer_path = ctx.path("tables", "layer_component_summary.csv")
-    bench.write_csv(layer_path, layer_rows)
+    bench.write_csv_with_context(ctx, layer_path, layer_rows)
     ctx.register_artifact(layer_path, "table", "Per-category mean attn/MLP contribution by layer.")
 
     if ablation_rows:
         abl_path = ctx.path("tables", "ablation_results.csv")
-        bench.write_csv(abl_path, ablation_rows)
+        bench.write_csv_with_context(ctx, abl_path, ablation_rows)
         ctx.register_artifact(abl_path, "table", "Attribution vs direct-path ablation effect for every ablated component.")
 
     cat_rows = aggregate_by_category(per_example, n_layers)
     cat_path = ctx.path("tables", "category_summary.csv")
-    bench.write_csv(cat_path, cat_rows)
+    bench.write_csv_with_context(ctx, cat_path, cat_rows)
     ctx.register_artifact(cat_path, "table", "Category-level headline numbers.")
 
     # Plots.

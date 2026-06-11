@@ -80,24 +80,29 @@ python interp_bench.py --lab lab4 --tier b --prompt-set full  # all 180 statemen
 ## First artifact-reading path
 
 1. `plots/decodability_by_layer.png` — surface vs truth vs controls, one
-   figure, the whole lesson.
+   figure, the whole lesson. The y-axis starts at 0 because below-chance
+   behavior is still structure, not plot noise.
 2. `plots/generalization_matrix.png` — both probes at the best layer. Find
    the negation row/column and explain every cell below 0.5 (an accuracy
    *below* chance is structure too — what structure?).
 3. `plots/truth_projection_panels.png` — separation emerging over depth.
 4. `plots/selectivity_by_layer.png` — how much accuracy is real structure.
 5. `tables/probe_report.csv` — every number with its controls adjacent.
-6. `tables/statement_manifest.csv` — splits, norms, the outlier flag.
+6. `results.csv` — the same long-form probe table under the standard run
+   filename used across the course.
+7. `tables/statement_manifest.csv` — splits, norms, the outlier flag.
 
 ## What gets saved for Lab 7
 
-`tables/truth_direction.pt`: the mass-mean direction at the best
-cross-family layer (selection excludes negation transfer — an
-affirmative-trained direction failing on negations is the expected
-Geometry-of-Truth result, reported as the known failure mode, not optimized
-away). Metadata records the layer, normalization convention, and the three
-transfer accuracies. Lab 7 will ask whether this direction is *usable*, which
-is a different question from everything measured here.
+`tables/truth_direction.pt`: the mass-mean direction at the best affirmative
+cross-family layer. Layer selection excludes negation transfer — an
+affirmative-trained direction failing on negations is an expected
+Geometry-of-Truth result, reported as a known failure mode, not optimized away.
+The saved train family is then chosen by worst transfer across the other
+families, negations included. Metadata records the layer, train family,
+normalization convention, and transfer accuracies. Lab 7 will ask whether this
+direction is *usable*, which is a different question from everything measured
+here.
 
 ## Writeup questions
 

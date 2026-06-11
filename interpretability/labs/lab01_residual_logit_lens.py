@@ -48,6 +48,7 @@ import interp_bench as bench
 
 LAB_ID = "L01"
 CATEGORIES = ("fact", "ambiguous", "counterfactual", "control")
+LOGIT_DIFF_MEANINGFUL_MARGIN = 1.0
 
 
 # ---------------------------------------------------------------------------
@@ -358,7 +359,7 @@ def validate_examples(
     ctx.register_artifact(tok_path, "diagnostic", "Single-token validation for prompt labels.")
 
     manifest_path = ctx.path("tables", "prompt_manifest.csv")
-    bench.write_csv(manifest_path, manifest_rows)
+    bench.write_csv_with_context(ctx, manifest_path, manifest_rows)
     ctx.register_artifact(manifest_path, "table", "Prompt set that survived tokenization validation.")
 
     if dropped:
@@ -422,10 +423,27 @@ def stable_logit_diff_positive(traj: bench.LensTrajectory) -> int | None:
     return stable_depth([d > 0 for d in diffs])
 
 
-def first_logit_diff_positive(traj: bench.LensTrajectory) -> int | None:
+def first_logit_diff_positive_raw(traj: bench.LensTrajectory) -> int | None:
     if traj.logit_target is None or traj.logit_distractor is None:
         return None
     return first_depth((t - d) > 0 for t, d in zip(traj.logit_target, traj.logit_distractor))
+
+
+def first_meaningful_logit_diff_positive(traj: bench.LensTrajectory) -> int | None:
+    """First target>distractor crossing that is large enough to cite.
+
+    The raw first positive crossing is deliberately too twitchy for claims:
+    two rank-80k tokens can swap order in the junk-readout regime. This metric
+    requires a one-logit margin at the crossing and requires the target to keep
+    the lead through the final depth.
+    """
+    if traj.logit_target is None or traj.logit_distractor is None:
+        return None
+    diffs = [t - d for t, d in zip(traj.logit_target, traj.logit_distractor)]
+    return first_depth(
+        diff > LOGIT_DIFF_MEANINGFUL_MARGIN and all(later > 0 for later in diffs[i:])
+        for i, diff in enumerate(diffs)
+    )
 
 
 def first_rank_le(ranks: list[int] | None, threshold: int) -> int | None:
@@ -506,7 +524,8 @@ def trajectory_event_row(
         final_diff = traj.logit_target[-1] - traj.logit_distractor[-1]
         row.update(
             {
-                "target_first_beats_distractor": first_logit_diff_positive(traj),
+                "target_first_beats_distractor_raw": first_logit_diff_positive_raw(traj),
+                "target_first_beats_distractor": first_meaningful_logit_diff_positive(traj),
                 "target_stable_beats_distractor": stable_logit_diff_positive(traj),
                 "final_logit_diff": round(final_diff, 6),
                 "mean_logit_diff": round(
@@ -578,6 +597,7 @@ def plot_event_depths(
         "decision_depth",
         "target_first_top1",
         "target_first_beats_distractor",
+        "target_first_beats_distractor_raw",
         "target_rank_first_le_5",
         "kl_to_final_first_le_0.5_bits",
     ]
@@ -628,6 +648,7 @@ def plot_event_heatmap(
         "target_first_top1",
         "target_stable_top1_depth",
         "target_first_beats_distractor",
+        "target_first_beats_distractor_raw",
         "target_rank_first_le_5",
         "kl_to_final_first_le_0.5_bits",
     ]
@@ -835,6 +856,10 @@ def category_stats(event_rows: list[dict[str, Any]], n_layers: int) -> list[dict
             "n_target_stable_top1_depth": occurrence_count(rows, "target_stable_top1_depth"),
             "median_target_first_beats_distractor": median_or_blank(rows, "target_first_beats_distractor"),
             "n_target_first_beats_distractor": occurrence_count(rows, "target_first_beats_distractor"),
+            "median_target_first_beats_distractor_raw": median_or_blank(rows, "target_first_beats_distractor_raw"),
+            "n_target_first_beats_distractor_raw": occurrence_count(rows, "target_first_beats_distractor_raw"),
+            "median_target_stable_beats_distractor": median_or_blank(rows, "target_stable_beats_distractor"),
+            "n_target_stable_beats_distractor": occurrence_count(rows, "target_stable_beats_distractor"),
             "median_target_rank_first_le_5": median_or_blank(rows, "target_rank_first_le_5"),
             "n_target_rank_first_le_5": occurrence_count(rows, "target_rank_first_le_5"),
             "mean_final_entropy_bits": mean_or_blank(rows, "final_entropy_bits"),
@@ -850,7 +875,7 @@ def category_stats(event_rows: list[dict[str, Any]], n_layers: int) -> list[dict
 
 def render_category_table(cat_rows: list[dict[str, Any]]) -> list[str]:
     lines = [
-        "| category | n | mean prompt tokens | median decision depth | frac of L | target first top-1 | target beats distractor | final entropy | final p(target) | target final top-1 rate |",
+        "| category | n | mean prompt tokens | median decision depth | frac of L | target first top-1 | target beats distractor (>1, stable lead) | final entropy | final p(target) | target final top-1 rate |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for r in cat_rows:
@@ -906,7 +931,11 @@ def render_summary(
     lines.extend(render_category_table(cat_rows))
     lines += [
         "",
-        "Definitions: `decision_depth` is the first depth after which the final top-1 token remains top-1. `target beats distractor` is the first depth where target logit exceeds distractor logit. Blank cells mean the metric is not defined for that category or never occurred.",
+        f"Definitions: `decision_depth` is the first depth after which the final top-1 token remains top-1. "
+        f"`target beats distractor` is the first depth where target logit exceeds distractor logit by "
+        f">{LOGIT_DIFF_MEANINGFUL_MARGIN:g} and the target keeps the lead thereafter. "
+        "`target_first_beats_distractor_raw` records the ungated first positive crossing as a diagnostic only. "
+        "Blank cells mean the metric is not defined for that category or never occurred.",
         "",
         "## 5. What claim is supported, and at what evidence level?",
         "",
@@ -929,14 +958,14 @@ def render_summary(
         "",
         "## 7. What would falsify or weaken the interpretation?",
         "",
-        "- A tuned lens moves the event depth materially later or changes which examples look early.",
+        "- A tuned lens moves the event depth materially earlier or later, or changes which examples look early.",
         "- Length-matched ambiguous or control prompts produce the same event-depth pattern as facts.",
         "- Activation patching fails to change behavior when patching the supposedly informative stream position.",
         "- A held-out prompt family reverses the category pattern.",
         "",
         "## Per-example event table",
         "",
-        "| example | category | decision | flips | target first top-1 | target beats distractor | target rank <= 5 | final p(target) | final target rank | final entropy |",
+        "| example | category | decision | flips | target first top-1 | target beats distractor (>1, stable lead) | target rank <= 5 | final p(target) | final target rank | final entropy |",
         "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for r in event_rows:
@@ -994,7 +1023,7 @@ def draft_claims(
                     f"(median over the {fact['n_target_first_top1']}/{fact['n_examples']} examples where it occurred)."
                 ),
                 "artifact": f"runs/{run_name}/tables/category_summary.csv",
-                "falsifier": "A tuned lens or held-out fact family places stabilization materially later or changes which token stabilizes.",
+                "falsifier": "A tuned lens or held-out fact family places stabilization materially earlier/later or changes which token stabilizes.",
             }
         )
     if fact and ambig:
@@ -1020,8 +1049,11 @@ def draft_claims(
                 "tag": "OBS",
                 "text": (
                     f"In {wins}/{len(cf_rows)} counterfactual prompts, the in-context target was the final top-1 token. "
-                    f"Median first target-over-distractor depth was {cf['median_target_first_beats_distractor']} "
-                    f"(median over the {cf['n_target_first_beats_distractor']}/{cf['n_examples']} examples where the crossing occurred)."
+                    f"Median first meaningful target-over-distractor depth was "
+                    f"{cf['median_target_first_beats_distractor']} "
+                    f"(median over the {cf['n_target_first_beats_distractor']}/{cf['n_examples']} examples "
+                    f"where the target exceeded the distractor by >{LOGIT_DIFF_MEANINGFUL_MARGIN:g} logit "
+                    "and kept the lead)."
                 ),
                 "artifact": f"runs/{run_name}/tables/trajectory_events.csv",
                 "falsifier": "Counterfactual and factual trajectories become indistinguishable after prompt-length and syntax matching.",
@@ -1155,21 +1187,21 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     # Tables and metrics.
     results_path = ctx.path("results.csv")
-    bench.write_csv(results_path, results_rows)
+    bench.write_csv_with_context(ctx, results_path, results_rows)
     ctx.register_artifact(results_path, "results", "Every example-depth raw logit-lens measurement.")
 
     event_path = ctx.path("tables", "trajectory_events.csv")
-    bench.write_csv(event_path, event_rows)
+    bench.write_csv_with_context(ctx, event_path, event_rows)
     ctx.register_artifact(event_path, "table", "Per-example event depths and final metrics.")
 
     # Backward-compatible alias for the current README and starter docs.
     example_summary_path = ctx.path("tables", "example_summary.csv")
-    bench.write_csv(example_summary_path, event_rows)
+    bench.write_csv_with_context(ctx, example_summary_path, event_rows)
     ctx.register_artifact(example_summary_path, "table", "Alias of trajectory_events.csv for Lab 1 summary use.")
 
     cat_rows = category_stats(event_rows, bundle.anatomy.n_layers)
     cat_path = ctx.path("tables", "category_summary.csv")
-    bench.write_csv(cat_path, cat_rows)
+    bench.write_csv_with_context(ctx, cat_path, cat_rows)
     ctx.register_artifact(cat_path, "table", "Per-category aggregate metrics.")
 
     metrics_path = ctx.path("metrics.json")
@@ -1185,7 +1217,16 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "event_metric_definitions": {
                 "decision_depth": "first depth after which final top-1 remains top-1",
                 "target_first_top1": "first depth where labeled target is top-1",
-                "target_first_beats_distractor": "first depth where target logit exceeds distractor logit",
+                "target_first_beats_distractor": (
+                    "first depth where target logit exceeds distractor by "
+                    f">{LOGIT_DIFF_MEANINGFUL_MARGIN:g} and remains ahead thereafter"
+                ),
+                "target_first_beats_distractor_raw": (
+                    "ungated first depth where target logit exceeds distractor; diagnostic only"
+                ),
+                "target_stable_beats_distractor": (
+                    "first depth after which target logit keeps exceeding distractor"
+                ),
                 "target_rank_first_le_5": "first depth where target rank is 5 or better",
                 "kl_to_final_first_le_0.5_bits": "first depth where KL(final || depth) <= 0.5 bits",
             },

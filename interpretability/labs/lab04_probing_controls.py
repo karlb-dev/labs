@@ -219,6 +219,7 @@ def plot_decodability(
     report: list[dict[str, Any]],
     n_depths: int,
     surface_letter: str,
+    best_layer: int,
 ) -> None:
     """The lab's headline: surface vs truth decodability by layer."""
     fig, ax = bench.new_figure(figsize=(9.5, 6.0))
@@ -249,10 +250,12 @@ def plot_decodability(
     if rand_dir:
         ax.plot(depths, rand_dir, linewidth=1.5, color="tab:brown", linestyle=":",
                 label="random-direction baseline")
+    ax.axvline(best_layer, color="tab:purple", linewidth=0.9, alpha=0.45,
+               label=f"saved direction layer {best_layer}")
     ax.axhline(0.5, color="black", linewidth=0.6, alpha=0.5)
     ax.set_xlabel("depth (0 = embeddings, k = after k blocks)")
     ax.set_ylabel("held-out accuracy")
-    ax.set_ylim(0.3, 1.02)
+    ax.set_ylim(0.0, 1.02)
     ax.set_title("Decodable is cheap; decodable-and-deep emerges with depth")
     ax.legend(fontsize=8, loc="lower right")
     bench.save_figure(ctx, fig, "decodability_by_layer.png",
@@ -265,8 +268,9 @@ def plot_generalization(
     import matplotlib.pyplot as plt
     import numpy as np
 
-    fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.6))
-    for ax, method in zip(axes, ("logistic", "mass_mean")):
+    fig, axes = plt.subplots(1, 2, figsize=(11.8, 4.8), constrained_layout=True)
+    im = None
+    for panel_i, (ax, method) in enumerate(zip(axes, ("logistic", "mass_mean"))):
         grid = np.full((len(FAMILIES), len(FAMILIES)), np.nan)
         for r in report:
             if (r["track"] == "truth" and r["method"] == method and r["layer"] == best_layer
@@ -274,19 +278,20 @@ def plot_generalization(
                 i = FAMILIES.index(r["train_family"])
                 j = FAMILIES.index(r["eval_family"])
                 grid[i, j] = r["accuracy"]
-        im = ax.imshow(grid, cmap="RdYlGn", vmin=0.3, vmax=1.0)
+        im = ax.imshow(grid, cmap="RdYlGn", vmin=0.0, vmax=1.0)
         ax.set_xticks(range(len(FAMILIES)))
         ax.set_xticklabels(FAMILIES)
         ax.set_yticks(range(len(FAMILIES)))
         ax.set_yticklabels(FAMILIES)
         ax.set_xlabel("evaluated on")
-        ax.set_ylabel("trained on")
+        ax.set_ylabel("trained on" if panel_i == 0 else "")
         ax.set_title(f"{method} @ layer {best_layer}")
         for i in range(len(FAMILIES)):
             for j in range(len(FAMILIES)):
                 if not np.isnan(grid[i, j]):
                     ax.annotate(f"{grid[i, j]:.2f}", (j, i), ha="center", va="center", fontsize=10)
-    fig.colorbar(im, ax=axes, fraction=0.03, label="accuracy")
+    if im is not None:
+        fig.colorbar(im, ax=axes, fraction=0.03, label="accuracy")
     fig.suptitle("Generalization across statement families (diagonal = within-family held-out)")
     bench.save_figure(ctx, fig, "generalization_matrix.png",
                       "Train-family x eval-family accuracy for both probe types at the best layer.")
@@ -442,7 +447,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     if outliers:
         print(f"[lab4] activation-norm outliers (>3x median at depth {mid}): {outliers}")
     man_path = ctx.path("tables", "statement_manifest.csv")
-    bench.write_csv(man_path, manifest)
+    bench.write_csv_with_context(ctx, man_path, manifest)
     ctx.register_artifact(man_path, "table", "Every statement with split, labels, and token count.")
 
     fam_idx = {f: [i for i, ff in enumerate(families) if ff == f] for f in FAMILIES}
@@ -485,7 +490,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 # Shuffled-label control: same capacity, no real structure.
                 ctrl_accs = []
                 for shuffle_i in range(N_SHUFFLES):
-                    y_shuf = shuffled_labels(labels[tr], seed=args.seed * 1009 + layer * 31 + shuffle_i)
+                    y_shuf = shuffled_labels(
+                        labels[tr],
+                        seed=args.seed * 1009 + layer * 31 + FAMILIES.index(family) * 131 + shuffle_i,
+                    )
                     ctrl = fit(X[tr], y_shuf)
                     ctrl_accs.append(evaluate(ctrl, X[ev], labels[ev]))
                 add("truth", method, layer, family, family, "shuffled_control",
@@ -494,7 +502,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             # Random-direction baseline (method-independent).
             add("truth", "random_direction", layer, family, family, "random_control",
                 eval_random_directions(X[tr], labels[tr], X[ev], labels[ev],
-                                       seed=args.seed * 7919 + layer),
+                                       seed=args.seed * 7919 + layer * 101 + FAMILIES.index(family)),
                 len(tr), len(ev))
 
             # Surface track (logistic only — the point is the curve's shape).
@@ -512,8 +520,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             eval_logistic(lp, n_tokens[ev][:, None], labels[ev]), len(tr), len(ev))
 
     report_path = ctx.path("tables", "probe_report.csv")
-    bench.write_csv(report_path, report)
+    bench.write_csv_with_context(ctx, report_path, report)
     ctx.register_artifact(report_path, "table", "Every probe evaluation: track, method, layer, families, controls.")
+    results_path = ctx.path("results.csv")
+    bench.write_csv_with_context(ctx, results_path, report)
+    ctx.register_artifact(results_path, "results", "Alias of probe_report.csv for the standard run contract.")
 
     # ----- best layer by cross-family transfer (mass-mean) ------------------
     def cross_and_within(layer: int) -> tuple[float, float]:
@@ -587,7 +598,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     # ----- plots ------------------------------------------------------------
     if not args.no_plots:
-        plot_decodability(ctx, report, n_depths, surface_letter)
+        plot_decodability(ctx, report, n_depths, surface_letter, best_layer)
         plot_generalization(ctx, report, best_layer)
         plot_selectivity(ctx, report, n_depths)
         outlier_mask = row_norms[:, mid] > 3 * median_mid_norm
@@ -605,17 +616,50 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         return k, means[k]
 
     truth_peak_layer, truth_peak_acc = peak("truth", "logistic", "within")
+    mass_peak_layer, mass_peak_acc = peak("truth", "mass_mean", "within")
     surface_peak_layer, surface_peak_acc = peak("surface", "logistic", "within")
+    def mean_acc(track: str, method: str, eval_kind: str, layer: int | None = None) -> float | None:
+        vals = [
+            r["accuracy"] for r in report
+            if r["track"] == track and r["method"] == method and r["eval_kind"] == eval_kind
+            and (layer is None or r["layer"] == layer)
+        ]
+        return statistics.fmean(vals) if vals else None
+
+    truth_peak_ctrl = mean_acc("truth", "logistic", "shuffled_control", truth_peak_layer)
+    mass_peak_ctrl = mean_acc("truth", "mass_mean", "shuffled_control", mass_peak_layer)
     length_accs = [r["accuracy"] for r in report if r["eval_kind"] == "length_control"]
+    direction_rows = [
+        r for r in report
+        if r["method"] == "mass_mean" and r["layer"] == best_layer
+        and r["train_family"] == direction_family and r["eval_kind"] in ("within", "cross")
+    ]
+    direction_transfer = {r["eval_family"]: r["accuracy"] for r in direction_rows}
+    direction_worst_cross = min(
+        (r["accuracy"] for r in direction_rows if r["eval_kind"] == "cross"),
+        default=None,
+    )
     metrics = {
         "n_statements": len(statements),
         "per_family_cap": per_family_cap,
         "surface_letter": surface_letter,
         "activation_norm_outliers": outliers,
         "truth_peak": {"layer": truth_peak_layer, "accuracy": truth_peak_acc},
+        "truth_peak_shuffled_control": truth_peak_ctrl,
+        "truth_peak_selectivity": (
+            truth_peak_acc - truth_peak_ctrl if truth_peak_ctrl is not None else None
+        ),
+        "mass_mean_peak": {"layer": mass_peak_layer, "accuracy": mass_peak_acc},
+        "mass_mean_peak_shuffled_control": mass_peak_ctrl,
         "surface_peak": {"layer": surface_peak_layer, "accuracy": surface_peak_acc},
         "best_cross_family_layer": best_layer,
         "best_min_cross_accuracy": best_min_cross,
+        "saved_direction": {
+            "train_family": direction_family,
+            "layer": best_layer,
+            "worst_cross_accuracy": direction_worst_cross,
+            "transfer_accuracies": direction_transfer,
+        },
         "token_length_baseline_mean": statistics.fmean(length_accs) if length_accs else None,
     }
     metrics_path = ctx.path("metrics.json")
@@ -623,9 +667,16 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 4 metrics.")
 
     run_name = ctx.run_dir.name
-    mm_cross_neg = next((r["accuracy"] for r in report
-                         if r["method"] == "mass_mean" and r["layer"] == best_layer
-                         and r["train_family"] == "cities" and r["eval_family"] == "negations"), None)
+    truth_ctrl_text = (
+        f"{truth_peak_ctrl:.2f}" if truth_peak_ctrl is not None else "n/a"
+    )
+    truth_selectivity_text = (
+        f"{truth_peak_acc - truth_peak_ctrl:+.2f}" if truth_peak_ctrl is not None else "n/a"
+    )
+    transfer_text = ", ".join(
+        f"{family} {direction_transfer[family]:.2f}"
+        for family in FAMILIES if family in direction_transfer
+    )
     claims = [
         {
             "id": f"{LAB_ID}-C1",
@@ -633,8 +684,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "text": (
                 f"Truth is linearly decodable from {bundle.anatomy.model_id}'s residual stream: "
                 f"within-family held-out accuracy peaks at {truth_peak_acc:.2f} (layer {truth_peak_layer}, "
-                f"logistic, mean over {len(FAMILIES)} families), against a shuffled-label control near "
-                f"chance and a token-length baseline of {metrics['token_length_baseline_mean']:.2f}."
+                f"logistic, mean over {len(FAMILIES)} families), versus a same-layer shuffled-label "
+                f"control of {truth_ctrl_text} (selectivity {truth_selectivity_text}) and a token-length "
+                f"baseline of {metrics['token_length_baseline_mean']:.2f}."
             ),
             "artifact": f"runs/{run_name}/tables/probe_report.csv",
             "falsifier": (
@@ -646,12 +698,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "id": f"{LAB_ID}-C2",
             "tag": "DECODE",
             "text": (
-                f"The cities mass-mean direction at layer {best_layer} transfers across families: "
-                f"comparisons {next((r['accuracy'] for r in report if r['method'] == 'mass_mean' and r['layer'] == best_layer and r['train_family'] == 'cities' and r['eval_family'] == 'comparisons'), None)}, "
-                f"negations {mm_cross_neg} — negations being where surface co-occurrence anti-correlates "
-                "with truth."
+                f"The saved {direction_family}-trained mass-mean direction at layer {best_layer} "
+                f"transfers across the frozen families ({transfer_text}); this is the direction written "
+                "to `truth_direction.pt` for Lab 7's causal test."
             ),
-            "artifact": f"runs/{run_name}/tables/generalization (see probe_report.csv + plots)",
+            "artifact": f"runs/{run_name}/tables/truth_direction.pt",
             "falsifier": "A fourth held-out family (dates, physical facts) drops transfer to chance.",
         },
         {
@@ -698,10 +749,12 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "## 4. Headline numbers",
         "",
         f"- truth peak (logistic, within-family): {truth_peak_acc:.3f} at layer {truth_peak_layer}/{n_depths - 1}",
+        f"- same-layer shuffled-label control: {truth_ctrl_text} (selectivity {truth_selectivity_text})",
         f"- surface peak: {surface_peak_acc:.3f} at layer {surface_peak_layer}",
         f"- token-length baseline: {metrics['token_length_baseline_mean']:.3f}",
-        f"- best cross-family layer (mass-mean, worst transfer): {best_layer} ({best_min_cross:.3f})",
-        f"- saved direction: `tables/truth_direction.pt` (cities mass-mean @ layer {best_layer}) — Lab 7 input",
+        f"- best affirmative cross-family layer (mass-mean, worst transfer): {best_layer} ({best_min_cross:.3f})",
+        f"- saved direction: `tables/truth_direction.pt` ({direction_family} mass-mean @ layer {best_layer}, "
+        f"worst cross-family transfer {direction_worst_cross:.3f}) — Lab 7 input",
         "",
         "## 5. What claim is supported, and at what evidence level?",
         "",
@@ -718,6 +771,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "3. `plots/truth_projection_panels.png` — separation emerging over depth, visibly.",
         "4. `plots/selectivity_by_layer.png` — how much accuracy is real structure.",
         "5. `tables/probe_report.csv` — every number, with its controls adjacent.",
+        "6. `results.csv` — the same long-form measurements under the standard run filename.",
         "",
         "## 7. Caveats students must carry forward",
         "",

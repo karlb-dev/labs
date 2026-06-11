@@ -63,7 +63,10 @@ Both runs verified the instrument **before** taking any measurement, per the cou
 The four prompt families separate exactly as the lab intends: facts converge to
 low-entropy answers, ambiguous prompts stay uncertain, weak controls stay near-uniform
 and stabilize only at the last layers, and counterfactual contexts override stored facts
-(7/8 final top-1 = in-context target, median target-over-distractor crossing at depth 1.5).
+(7/8 final top-1 = in-context target). The original raw target-over-distractor
+first-crossing number was deprecated after review because tiny junk-zone logit
+swaps could fire it too early; rerun Lab 1 to populate the margin-gated stable
+crossing metric now used by summaries and drafted claims.
 Four drafted OBS-level claims with falsifiers are in `ledger_suggestions.md` per run.
 
 ## 6. Environment pins (validation-time freeze)
