@@ -613,6 +613,126 @@ def plot_event_depths(
     bench.save_figure(ctx, fig, "event_depths.png", "Per-example event depths by metric and category.")
 
 
+def plot_event_heatmap(
+    ctx: bench.RunContext,
+    event_rows: list[dict[str, Any]],
+    n_layers: int,
+) -> None:
+    """Example x event grid, with missing events visible instead of silent."""
+    if not event_rows:
+        return
+    import matplotlib.pyplot as plt
+
+    events = [
+        "decision_depth",
+        "target_first_top1",
+        "target_stable_top1_depth",
+        "target_first_beats_distractor",
+        "target_rank_first_le_5",
+        "kl_to_final_first_le_0.5_bits",
+    ]
+    rows = sorted(
+        event_rows,
+        key=lambda r: (
+            CATEGORIES.index(r["category"]) if r["category"] in CATEGORIES else len(CATEGORIES),
+            float(r.get("decision_depth") or n_layers + 1),
+            r["example_id"],
+        ),
+    )
+    data = [[float("nan") for _ in events] for _ in rows]
+    for i, row in enumerate(rows):
+        for j, event in enumerate(events):
+            value = row.get(event)
+            if value not in (None, ""):
+                data[i][j] = float(value)
+
+    fig_height = max(6.0, min(12.0, 0.28 * len(rows) + 1.8))
+    fig, ax = bench.new_figure(figsize=(10.0, fig_height))
+    cmap = plt.get_cmap("viridis").copy()
+    cmap.set_bad("#e6e6e6")
+    im = ax.imshow(data, aspect="auto", cmap=cmap, vmin=0, vmax=n_layers)
+    ax.set_xticks(range(len(events)))
+    ax.set_xticklabels(events, rotation=30, ha="right")
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([f"{r['category'][:2]}:{r['example_id']}" for r in rows], fontsize=7)
+    ax.set_title("Event-depth heatmap (gray = event absent or undefined)")
+    ax.set_xlabel("event metric")
+    ax.set_ylabel("example")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
+    cbar.set_label("depth")
+
+    previous = rows[0]["category"]
+    for i, row in enumerate(rows[1:], start=1):
+        if row["category"] != previous:
+            ax.axhline(i - 0.5, color="white", linewidth=1.5)
+            previous = row["category"]
+    fig.tight_layout()
+    bench.save_figure(
+        ctx,
+        fig,
+        "event_depth_heatmap.png",
+        "Example-by-event depth grid; gray cells make non-occurring events explicit.",
+    )
+
+
+def plot_final_readout_scatter(
+    ctx: bench.RunContext,
+    event_rows: list[dict[str, Any]],
+) -> None:
+    """Final confidence vs entropy, separating target success from confidence."""
+    if not event_rows:
+        return
+    fig, ax = bench.new_figure(figsize=(8.0, 5.8))
+    seen: set[str] = set()
+    for row in event_rows:
+        entropy = row.get("final_entropy_bits")
+        prob = row.get("final_top1_prob")
+        if entropy in (None, "") or prob in (None, ""):
+            continue
+        cat = row["category"]
+        target_status = row.get("final_top1_is_target")
+        if target_status in (None, ""):
+            marker = "s"
+            label = f"{cat}: unlabeled"
+        elif bool(target_status):
+            marker = "o"
+            label = f"{cat}: target top-1"
+        else:
+            marker = "X"
+            label = f"{cat}: target not top-1"
+        ax.scatter(
+            float(entropy),
+            float(prob),
+            color=category_color(cat),
+            marker=marker,
+            s=70,
+            alpha=0.82,
+            edgecolors="black" if target_status not in (None, "") else "none",
+            linewidths=0.7,
+            label=label if label not in seen else None,
+        )
+        seen.add(label)
+        if target_status is False and cat in {"fact", "counterfactual"}:
+            ax.annotate(
+                row["example_id"].replace("fact_", "").replace("cf_", ""),
+                (float(entropy), float(prob)),
+                textcoords="offset points",
+                xytext=(5, 4),
+                fontsize=7,
+            )
+    ax.set_xlabel("final entropy (bits)")
+    ax.set_ylabel("final top-1 probability")
+    ax.set_title("Final readout: confidence is not the same as target success")
+    ax.grid(True, alpha=0.3)
+    ax.legend(fontsize=7, ncol=2)
+    bench.save_figure(
+        ctx,
+        fig,
+        "final_readout_scatter.png",
+        "Final entropy vs top-1 probability, with labeled target success marked separately.",
+    )
+
+
 def plot_biography(
     ctx: bench.RunContext,
     bundle: bench.ModelBundle,
@@ -707,10 +827,16 @@ def category_stats(event_rows: list[dict[str, Any]], n_layers: int) -> list[dict
             "mean_prompt_tokens": mean_or_blank(rows, "n_prompt_tokens", 2),
             "median_decision_depth": decision,
             "median_decision_depth_frac": "" if decision == "" else round(float(decision) / n_layers, 3),
+            # Event medians are conditional on the event occurring; the paired
+            # n_* columns say how many of n_examples that actually was.
             "median_target_first_top1": median_or_blank(rows, "target_first_top1"),
+            "n_target_first_top1": occurrence_count(rows, "target_first_top1"),
             "median_target_stable_top1_depth": median_or_blank(rows, "target_stable_top1_depth"),
+            "n_target_stable_top1_depth": occurrence_count(rows, "target_stable_top1_depth"),
             "median_target_first_beats_distractor": median_or_blank(rows, "target_first_beats_distractor"),
+            "n_target_first_beats_distractor": occurrence_count(rows, "target_first_beats_distractor"),
             "median_target_rank_first_le_5": median_or_blank(rows, "target_rank_first_le_5"),
+            "n_target_rank_first_le_5": occurrence_count(rows, "target_rank_first_le_5"),
             "mean_final_entropy_bits": mean_or_blank(rows, "final_entropy_bits"),
             "mean_final_top1_prob": mean_or_blank(rows, "final_top1_prob"),
             "mean_final_top1_margin": mean_or_blank(rows, "final_top1_margin"),
@@ -731,7 +857,8 @@ def render_category_table(cat_rows: list[dict[str, Any]]) -> list[str]:
         lines.append(
             f"| {r['category']} | {r['n_examples']} | {r['mean_prompt_tokens']} | "
             f"{r['median_decision_depth']} | {r['median_decision_depth_frac']} | "
-            f"{r['median_target_first_top1']} | {r['median_target_first_beats_distractor']} | "
+            f"{r['median_target_first_top1']} (n={r['n_target_first_top1']}) | "
+            f"{r['median_target_first_beats_distractor']} (n={r['n_target_first_beats_distractor']}) | "
             f"{r['mean_final_entropy_bits']} | {r['mean_final_p_target']} | "
             f"{r['target_final_top1_rate']} |"
         )
@@ -826,8 +953,9 @@ def render_summary(
         "1. `diagnostics/logit_lens_self_check.json`",
         "2. `diagnostics/hook_parity_by_layer.csv`",
         "3. `state/<example_id>/state_card.md` for one fact and one counterfactual prompt",
-        "4. `plots/target_rank_by_depth.png`, `plots/logit_diff_by_depth.png`, and `plots/kl_to_final_by_depth.png`",
-        "5. `tables/trajectory_events.csv` for outliers and blank cells",
+        "4. `plots/final_readout_scatter.png` and `plots/event_depth_heatmap.png`",
+        "5. `plots/target_rank_by_depth.png`, `plots/logit_diff_by_depth.png`, and `plots/kl_to_final_by_depth.png`",
+        "6. `tables/trajectory_events.csv` for outliers and blank cells",
         "",
         "## Student tooling note",
         "",
@@ -862,7 +990,8 @@ def draft_claims(
                 "text": (
                     f"On {fact['n_examples']} factual prompts, {bundle.anatomy.model_id}'s final top-1 token "
                     f"stabilized under the raw logit lens at median depth {fact['median_decision_depth']}/{L}; "
-                    f"the labeled target first became top-1 at median depth {fact['median_target_first_top1']}."
+                    f"the labeled target first became top-1 at median depth {fact['median_target_first_top1']} "
+                    f"(median over the {fact['n_target_first_top1']}/{fact['n_examples']} examples where it occurred)."
                 ),
                 "artifact": f"runs/{run_name}/tables/category_summary.csv",
                 "falsifier": "A tuned lens or held-out fact family places stabilization materially later or changes which token stabilizes.",
@@ -891,7 +1020,8 @@ def draft_claims(
                 "tag": "OBS",
                 "text": (
                     f"In {wins}/{len(cf_rows)} counterfactual prompts, the in-context target was the final top-1 token. "
-                    f"Median first target-over-distractor depth was {cf['median_target_first_beats_distractor']}."
+                    f"Median first target-over-distractor depth was {cf['median_target_first_beats_distractor']} "
+                    f"(median over the {cf['n_target_first_beats_distractor']}/{cf['n_examples']} examples where the crossing occurred)."
                 ),
                 "artifact": f"runs/{run_name}/tables/trajectory_events.csv",
                 "falsifier": "Counterfactual and factual trajectories become indistinguishable after prompt-length and syntax matching.",
@@ -1146,8 +1276,20 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             logy=True,
         )
         plot_event_depths(ctx, event_rows, bundle.anatomy.n_layers)
+        plot_event_heatmap(ctx, event_rows, bundle.anatomy.n_layers)
+        plot_final_readout_scatter(ctx, event_rows)
         if showcase is not None:
+            if showcase[1].p_target is None:
+                print(
+                    f"[lab1] WARNING: showcase example {showcase[0].example_id!r} has no "
+                    "single-token target, so no biography plot was produced."
+                )
             plot_biography(ctx, bundle, showcase[0], showcase[1])
+        elif ctx.args.showcase is not None:
+            print(
+                f"[lab1] WARNING: --showcase {ctx.args.showcase!r} did not match any kept "
+                "example id; no biography plot was produced. See tables/prompt_manifest.csv."
+            )
 
     # Summary and drafted claims.
     claims = draft_claims(ctx, bundle, cat_rows, event_rows)

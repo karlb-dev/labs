@@ -131,7 +131,7 @@ state/<example_id>/        # per-example human-readable model state:
   logit_lens_topk.csv      #   top-k decoded readout per depth
   residual_stats_final_pos.csv
   residual_norms_by_position.csv
-results.csv                # long-form: every (example, depth) measurement
+results.csv                # lab-specific long-form measurements
 metrics.json               # aggregates
 tables/*.csv               # per-example and per-category summaries
 plots/*.png

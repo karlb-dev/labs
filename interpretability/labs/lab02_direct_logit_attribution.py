@@ -362,6 +362,16 @@ def component_rows(example_id: str, category: str, dla: dict[str, Any]) -> list[
             "frac_of_logit_diff": round(dla["embed_score"] / denom, 4),
         }
     ]
+    rows.append(
+        {
+            "example_id": example_id,
+            "category": category,
+            "component": "constant",
+            "layer": "",
+            "score": round(dla["constant"], 5),
+            "frac_of_logit_diff": round(dla["constant"] / denom, 4),
+        }
+    )
     for kind_key, kind in (("attn_scores", "attn"), ("mlp_scores", "mlp")):
         for layer, score in enumerate(dla[kind_key]):
             rows.append(
@@ -510,6 +520,64 @@ def plot_contribution_by_layer(
                       "Per-category mean attention/MLP contribution per layer.")
 
 
+def plot_signed_component_heatmap(
+    ctx: bench.RunContext,
+    per_example: list[dict[str, Any]],
+    n_layers: int,
+) -> None:
+    """Example x layer heatmap of total direct contribution per block."""
+    if not per_example:
+        return
+    import numpy as np
+
+    import matplotlib.colors as mcolors
+    import matplotlib.pyplot as plt
+
+    rows = sorted(
+        per_example,
+        key=lambda r: (
+            CATEGORIES.index(r["category"]) if r["category"] in CATEGORIES else len(CATEGORIES),
+            r["example_id"],
+        ),
+    )
+    data = np.array(
+        [
+            [
+                float(r["dla"]["attn_scores"][layer] + r["dla"]["mlp_scores"][layer])
+                for layer in range(n_layers)
+            ]
+            for r in rows
+        ],
+        dtype=float,
+    )
+    lim = float(np.nanpercentile(np.abs(data), 95)) if data.size else 1.0
+    lim = lim or 1.0
+    fig_height = max(5.5, min(10.0, 0.35 * len(rows) + 1.8))
+    fig, ax = bench.new_figure(figsize=(10.5, fig_height))
+    norm = mcolors.TwoSlopeNorm(vmin=-lim, vcenter=0.0, vmax=lim)
+    im = ax.imshow(data, aspect="auto", cmap="coolwarm", norm=norm)
+    ax.set_xticks(range(0, n_layers, max(1, n_layers // 8)))
+    ax.set_xlabel("layer")
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([f"{r['category'][:3]}:{r['example_id']}" for r in rows], fontsize=8)
+    ax.set_title("Signed direct contribution by example and layer (attn + MLP)")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
+    cbar.set_label("logit-diff contribution")
+
+    previous = rows[0]["category"]
+    for i, row in enumerate(rows[1:], start=1):
+        if row["category"] != previous:
+            ax.axhline(i - 0.5, color="black", linewidth=0.7)
+            previous = row["category"]
+    fig.tight_layout()
+    bench.save_figure(
+        ctx,
+        fig,
+        "signed_component_heatmap.png",
+        "Per-example heatmap of signed block contribution to the answer direction.",
+    )
+
+
 def plot_cumulative(ctx: bench.RunContext, per_example: list[dict[str, Any]]) -> None:
     fig, ax = bench.new_figure(figsize=(9.0, 5.5))
     plotted = False
@@ -568,6 +636,43 @@ def plot_attribution_vs_ablation(ctx: bench.RunContext, ablation_rows: list[dict
     bench.save_figure(ctx, fig, "attribution_vs_ablation.png",
                       "Does the ledger predict what direct-path ablation does?")
     return rho
+
+
+def plot_ablation_mismatches(ctx: bench.RunContext, ablation_rows: list[dict[str, Any]]) -> None:
+    """Label the largest attribution-vs-ablation disagreements."""
+    if not ablation_rows:
+        return
+    rows = sorted(
+        ablation_rows,
+        key=lambda r: abs(float(r["causal_effect"]) - float(r["attribution_score"])),
+        reverse=True,
+    )[: min(12, len(ablation_rows))]
+    fig_height = max(5.0, 0.45 * len(rows) + 1.5)
+    fig, ax = bench.new_figure(figsize=(9.5, fig_height))
+    y_positions = list(range(len(rows)))
+    for y, row in zip(y_positions, reversed(rows)):
+        attr = float(row["attribution_score"])
+        effect = float(row["causal_effect"])
+        color = category_color(str(row["category"]))
+        ax.plot([attr, effect], [y, y], color=color, alpha=0.55, linewidth=2.0)
+        ax.scatter(attr, y, marker="o", color=color, edgecolor="black", linewidth=0.5, s=52)
+        ax.scatter(effect, y, marker="s", color=color, edgecolor="black", linewidth=0.5, s=52)
+    labels = [
+        f"{r['example_id']} {r['component']}@{r['layer']} ({r['selection']})"
+        for r in reversed(rows)
+    ]
+    ax.set_yticks(y_positions)
+    ax.set_yticklabels(labels, fontsize=8)
+    ax.axvline(0, color="black", linewidth=0.7)
+    ax.set_xlabel("logit-diff units: circle = attribution, square = ablation effect")
+    ax.set_title("Largest attribution-vs-ablation mismatches")
+    ax.grid(True, axis="x", alpha=0.3)
+    bench.save_figure(
+        ctx,
+        fig,
+        "ablation_mismatch_examples.png",
+        "Largest direct-path attribution vs ablation-effect disagreements, labeled by component.",
+    )
 
 
 def plot_dla_vs_lens(
@@ -712,6 +817,7 @@ def draft_claims(
 def render_summary(
     ctx: bench.RunContext,
     bundle: bench.ModelBundle,
+    comp_anatomy: bench.ComponentAnatomy,
     per_example: list[dict[str, Any]],
     cat_rows: list[dict[str, Any]],
     ablation_rows: list[dict[str, Any]],
@@ -745,7 +851,10 @@ def render_summary(
         "adds to the final position's residual stream, scored against the answer direction",
         "`unembed[target] - unembed[distractor]` under the frozen-final-norm linearization.",
         f"Hook points were verified, not assumed: see `diagnostics/component_anatomy.json`",
-        f"(this model: attn={a.architecture} resolved at runtime).",
+        (
+            f"(this model: attn={comp_anatomy.attn_source}, mlp={comp_anatomy.mlp_source}; "
+            f"max block reconstruction rel err={comp_anatomy.max_block_recon_rel_err:.3g})."
+        ),
         "",
         "## 3. What intervention or control was used?",
         "",
@@ -782,7 +891,8 @@ def render_summary(
         lines.append(
             f"{len(ablation_rows)} direct-path ablations. Spearman rho(attribution, causal effect) = "
             f"{'n/a' if rho is None else f'{rho:.3f}'}. See `plots/attribution_vs_ablation.png` and "
-            "`tables/ablation_results.csv` — the off-diagonal points are the lab's payload: "
+            "`plots/ablation_mismatch_examples.png` plus `tables/ablation_results.csv` — "
+            "the off-diagonal points are the lab's payload: "
             "arithmetically correct ledger entries whose causal weight differs."
         )
     else:
@@ -905,6 +1015,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv(contrib_path, contributions)
     ctx.register_artifact(contrib_path, "table", "Long-form ledger: every component's score for every example.")
 
+    results_path = ctx.path("results.csv")
+    bench.write_csv(results_path, contributions)
+    ctx.register_artifact(results_path, "results", "Alias of component_contributions.csv for the standard run contract.")
+
     example_rows = []
     for r in per_example:
         dla = r["dla"]
@@ -964,8 +1078,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     rho: float | None = None
     if not args.no_plots:
         plot_contribution_by_layer(ctx, per_example, n_layers)
+        plot_signed_component_heatmap(ctx, per_example, n_layers)
         plot_cumulative(ctx, per_example)
         rho = plot_attribution_vs_ablation(ctx, ablation_rows)
+        plot_ablation_mismatches(ctx, ablation_rows)
         if showcase is not None:
             plot_dla_vs_lens(ctx, showcase[0], showcase[1], showcase[2])
         elif args.showcase is not None:
@@ -997,7 +1113,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     claims = draft_claims(ctx, bundle, cat_rows, ablation_rows, rho)
     bench.write_ledger_suggestions(ctx, LAB_ID, claims)
-    summary = render_summary(ctx, bundle, per_example, cat_rows, ablation_rows, rho, dropped, claims)
+    summary = render_summary(ctx, bundle, comp_anatomy, per_example, cat_rows, ablation_rows, rho, dropped, claims)
     summary_path = ctx.path("run_summary.md")
     bench.write_text(summary_path, summary)
     ctx.register_artifact(summary_path, "summary", "The seven standard questions answered with this run's numbers.")

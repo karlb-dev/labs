@@ -54,6 +54,8 @@ runs/lab01_residual_logit_lens-<timestamp>-<id>/
     cosine_to_final_by_depth.png
     residual_norm_by_depth.png
     residual_delta_norm_by_depth.png
+    event_depth_heatmap.png
+    final_readout_scatter.png
     biography_<example>.png
 
   ledger_suggestions.md                   # draft OBS claims, edit before accepting
@@ -114,6 +116,32 @@ The built-in prompt set has three main families:
 | `counterfactual` | Context overriding a memorized fact | `In this story, the capital of France is London. According to the story, the capital of France is` | ` London` | ` Paris` |
 
 Optional controls can be enabled with `--include-controls`. These are intentionally weak or scrambled continuations. They are not meant to be clever benchmarks, just tripwires for metrics that would look impressive on nonsense.
+
+One subtlety is intentional: a factual target can beat its matched distractor
+without being the model's final top-1 token. A base model may prefer a
+discourse continuation such as "known" after `The capital of France is`.
+Treat `final_top1_is_target`, `final_target_rank`, and target-vs-distractor
+logit difference as separate facts about the artifact, not interchangeable
+notions of correctness.
+
+### Prompt-set upgrades for stronger contrasts
+
+The built-in set is deliberately mixed: some prompts are answer-shaped, while
+others are ordinary text continuations where the model may prefer a discourse
+token. That awkwardness is useful. For a cleaner second run, make a custom
+JSON prompt set with paired templates:
+
+- `qa_fact`: `Q: What is the capital of France?\nA:` -> ` Paris`
+- `declarative_fact`: `The capital of France is` -> ` Paris`
+- `matched_ambiguous`: same token length and syntax shape, but no single
+  privileged answer
+- `counterfactual_qa`: context override followed by an answer-shaped question
+
+Then compare `final_readout_scatter.png` and `event_depth_heatmap.png` across
+the two runs. If the QA facts become target-top-1 much more often than the
+declarative facts, the lesson is not that one prompt set is "right"; it is that
+the logit lens is reading a next-token task, and template choice is part of the
+task.
 
 ### What is measured at each depth
 
@@ -186,9 +214,11 @@ Read artifacts in this order:
 2. `diagnostics/logit_lens_self_check.json`, to confirm the lens reproduces the real final prediction.
 3. `diagnostics/hook_parity_by_layer.csv`, to confirm the residual stream capture has the claimed semantics.
 4. One `state/<example_id>/state_card.md` from a fact example, then one from a counterfactual example.
-5. `plots/logit_diff_by_depth.png`, `plots/target_rank_by_depth.png`, and `plots/kl_to_final_by_depth.png` together. These show different notions of convergence.
-6. `tables/trajectory_events.csv`, to find examples where the plot story is too simple.
-7. `results.csv`, to reproduce or challenge any aggregate.
+5. `plots/final_readout_scatter.png`, to separate confidence, entropy, and target success.
+6. `plots/event_depth_heatmap.png`, to see which event metrics never occurred.
+7. `plots/logit_diff_by_depth.png`, `plots/target_rank_by_depth.png`, and `plots/kl_to_final_by_depth.png` together. These show different notions of convergence.
+8. `tables/trajectory_events.csv`, to find examples where the plot story is too simple.
+9. `results.csv`, to reproduce or challenge any aggregate.
 
 ## Questions to answer
 

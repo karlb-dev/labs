@@ -86,6 +86,11 @@ Prompt families: `fact`, `relation` (antonyms), `grammar` (morphology), and
 interesting: expect **negative** entries from components still pushing the
 stored answer.
 
+It is also fine if a conflict example has a negative overall logit difference:
+that means the base model still preferred the stored answer over the
+in-context answer. Do not discard it. Use it to ask which components resisted
+the override and whether the direct-path ablation changes that preference.
+
 One example (`plural_mouse`, " mouses") is included *because* it fails the
 single-token gate on both course tokenizers. Find it in
 `diagnostics/answer_tokenization.csv` and confirm the drop reason. Multi-token
@@ -98,13 +103,15 @@ answers are the #1 silent killer of attribution numbers in the wild.
    the reconstruction error they had to beat.
 3. `plots/contribution_by_layer.png` — where attn and MLP write the answer,
    per category.
-4. `plots/cumulative_logit_diff.png` — the ledger assembling over depth.
-5. `plots/dla_vs_lens_<showcase>.png` — the frozen-norm ledger against Lab 1's
+4. `plots/signed_component_heatmap.png` — the per-example signed block ledger;
+   this is the fastest way to find prompts whose category mean hides a fight.
+5. `plots/cumulative_logit_diff.png` — the ledger assembling over depth.
+6. `plots/dla_vs_lens_<showcase>.png` — the frozen-norm ledger against Lab 1's
    moving-basis lens *for the same stream*. They disagree at early depths.
    Explain why before reading on. (Hint: which norm statistics does each use
    at depth k?)
-6. `tables/ablation_results.csv` and `plots/attribution_vs_ablation.png` — the
-   extension's payload.
+7. `tables/ablation_results.csv`, `plots/attribution_vs_ablation.png`, and
+   `plots/ablation_mismatch_examples.png` — the extension's payload.
 
 ## The extension: does the ledger predict ablation?
 
@@ -152,6 +159,22 @@ later attention (its write at *earlier* positions is left intact). Lab 5
 Categories must be from `fact | relation | grammar | conflict`. Both answers
 must be single tokens *with their leading space*; the gate will tell you which
 ones aren't.
+
+For more interesting DLA runs, prefer prompt pairs over one-off examples:
+
+- match each `conflict` prompt to a plain `fact` prompt with the same
+  target/distractor tokens reversed;
+- use hard same-type distractors (` Berlin` vs ` Paris`, not ` Berlin` vs
+  ` table`);
+- include both answer-shaped QA prompts and ordinary continuation prompts when
+  you want to test template sensitivity;
+- keep at least one known multi-token failure in the file so the tokenization
+  gate remains visible.
+
+Good prompt data makes the plots better: `signed_component_heatmap.png` becomes
+more informative when every row has a meaningful counterpart, and
+`ablation_mismatch_examples.png` becomes easier to interpret when distractors
+are genuinely plausible alternatives.
 
 ## What goes in the ledger
 
