@@ -68,6 +68,10 @@ python interp_bench.py --lab lab7 --tier b    # Olmo-3-7B-Instruct
 # Lab 8 (SAEs + transcoders; pretrained dictionaries download on first run):
 python interp_bench.py --lab lab8 --tier a   # gpt2 + jbloom SAE + Dunefsky transcoder
 python interp_bench.py --lab lab8 --tier b    # Olmo-3-1025-7B + decoderesearch SAE
+
+# Lab 9 (attribution graphs; gpt2 on EVERY tier — tiers scale the node budget):
+python interp_bench.py --lab lab9 --tier a   # CPU-ok, ~2 GB transcoder download once
+python interp_bench.py --lab lab9 --tier b    # bigger graph + full paraphrase battery
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -143,8 +147,24 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   peak activation, with a random-feature control and a fluency proxy). The SAE
   loading conventions (TL centering, bare-LN transcoder input, jumprelu
   threshold) were each validated empirically, not assumed.
-- Labs 9–11 — designed in COURSE.md, not yet implemented. Lab 9
-  (attribution graphs / circuit tracing) is next.
+- Lab 9: attribution graphs and circuit tracing — implemented and validated
+  (Tier A+B). The 2025-era successor to Lab 6, built **from scratch** (no
+  circuit-tracer, no TransformerLens) on gpt2 with the **full 12-layer
+  Dunefsky transcoder stack**: a local replacement model (frozen attention
+  patterns + frozen LN denominators + transcoders + error nodes) that is
+  exact to the real logits, direct-attribution edges by one backward pass
+  per node with an enforced accounting identity (bias + Σedges = metric),
+  backward-flow pruning, and graph-guided suppress/substitute interventions
+  **on the real model** with a random matched control (the France→Germany
+  substitution flips the capital). The signed edge ledger quantifies the
+  Lab 6 confrontation: features pay +2.34 of the fact's +3.01 logit diff but
+  almost none of the induction prompt's, where frozen attention routes
+  copied embeddings the graph cannot show. Three new abort-on-failure
+  self-checks (replacement exactness, edge reconstruction, feature-edit
+  no-op). gpt2 on every tier — the only ungated model with a public
+  all-layers transcoder set; tiers scale the node budget, not the model.
+- Labs 10–11 — designed in COURSE.md, not yet implemented. Lab 10
+  (CoT faithfulness) is next.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 
