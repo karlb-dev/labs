@@ -179,6 +179,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # Faithfulness/completeness need a few prompts per family.
         "max_examples_tier_a": "6",
     },
+    "lab7": {
+        "module": "labs.lab07_steering_refusal",
+        "run_name": "lab07_steering_refusal",
+        "description": "Steering vectors and the refusal direction: control, monitoring, and dual use.",
+        # First lab on instruct models with chat templates (Labs 7+).
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+    },
 }
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
@@ -1063,6 +1071,149 @@ def run_with_residual_cache(bundle: ModelBundle, prompt: str) -> ForwardCapture:
         streams=streams,
         final_logits_last=tensor_cpu_float(out.logits[0, -1]),
     )
+
+
+# ---------------------------------------------------------------------------
+# Chat templates, steering, and generation (Lab 7+: instruct models)
+# ---------------------------------------------------------------------------
+#
+# Labs 1-6 use base models and raw prompts. Labs 7+ use instruct models, and
+# the single most common cross-lab bug is template/token drift: computing a
+# direction on an untemplated prompt and then steering templated generation
+# changes meaning silently (the residual stream at "the same layer" is a
+# different object once the chat scaffold is present). So template application
+# lives here, once, and labs are expected to extract and steer through it.
+
+DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant."
+
+
+def supports_chat_template(bundle: ModelBundle) -> bool:
+    return getattr(bundle.tokenizer, "chat_template", None) is not None
+
+
+def apply_chat_template(
+    bundle: ModelBundle,
+    user_message: str,
+    *,
+    system: str | None = DEFAULT_SYSTEM_PROMPT,
+    add_generation_prompt: bool = True,
+) -> str:
+    """Render a single-turn chat prompt as the string the model will see.
+
+    Raises if the tokenizer has no chat template -- Labs 7+ require an
+    instruct model, and a base model silently rendering raw text is exactly
+    the drift the course warns about.
+    """
+    if not supports_chat_template(bundle):
+        raise RuntimeError(
+            f"{bundle.anatomy.model_id!r} has no chat template; Lab 7+ needs an "
+            "instruct model. Use --tier a/b defaults or pass an instruct --model."
+        )
+    messages = []
+    if system is not None:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": user_message})
+    return bundle.tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=add_generation_prompt
+    )
+
+
+@contextlib.contextmanager
+def steering_hooks(bundle: ModelBundle, layer: int, vector: Any, scale: float):
+    """Add ``scale * vector`` to block ``layer``'s output at every position.
+
+    This is activation addition (Turner et al.): the steering vector is added
+    to the residual stream the block writes, on every forward pass -- so it
+    affects prefill and every generated token alike. ``vector`` is a
+    [d_model] float32 CPU tensor; it is cast to the block's device/dtype at
+    the hook site. Hooks are always removed on exit.
+    """
+    import torch
+
+    if scale == 0.0:
+        yield
+        return
+    block = bundle.blocks[layer]
+
+    def add_hook(module: Any, hook_args: tuple, output: Any) -> Any:
+        if isinstance(output, tuple):
+            out = output[0]
+            out = out + (scale * vector).to(out.device, out.dtype)
+            return (out,) + tuple(output[1:])
+        return output + (scale * vector).to(output.device, output.dtype)
+
+    handle = block.register_forward_hook(add_hook)
+    try:
+        yield
+    finally:
+        handle.remove()
+
+
+def generate_text(
+    bundle: ModelBundle,
+    templated_prompt: str,
+    *,
+    max_new_tokens: int = 64,
+    steer: tuple[int, Any, float] | None = None,
+) -> str:
+    """Greedy-decode a continuation for a templated prompt.
+
+    Decoding is frozen (greedy, no sampling) so runs are reproducible and the
+    only thing that moves across a dose sweep is the steering scale.
+    ``steer`` is an optional (layer, vector, scale) activation-addition.
+    Returns only the newly generated text, with special tokens stripped.
+    """
+    import torch
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(templated_prompt, return_tensors="pt", add_special_tokens=False)
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+    pad_id = tokenizer.pad_token_id
+    if pad_id is None:
+        pad_id = tokenizer.eos_token_id
+
+    cm = (
+        steering_hooks(bundle, steer[0], steer[1], steer[2])
+        if steer is not None
+        else contextlib.nullcontext()
+    )
+    with cm, torch.no_grad():
+        out = bundle.model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            max_new_tokens=max_new_tokens,
+            do_sample=False,
+            num_beams=1,
+            pad_token_id=pad_id,
+        )
+    new_ids = out[0, input_ids.shape[1]:].detach().cpu().tolist()
+    return tokenizer.decode(new_ids, skip_special_tokens=True)
+
+
+def next_token_logits(
+    bundle: ModelBundle, templated_prompt: str, *, steer: tuple[int, Any, float] | None = None
+) -> Any:
+    """Final-position logits for a templated prompt, optionally steered.
+
+    Float32 CPU. Used for the KL-to-unsteered side-effect metric without
+    generating any text.
+    """
+    import torch
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(templated_prompt, return_tensors="pt", add_special_tokens=False)
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    cm = (
+        steering_hooks(bundle, steer[0], steer[1], steer[2])
+        if steer is not None
+        else contextlib.nullcontext()
+    )
+    with cm, torch.no_grad():
+        out = bundle.model(input_ids=input_ids, use_cache=False)
+    return tensor_cpu_float(out.logits[0, -1])
 
 
 def run_hook_parity_check(ctx: RunContext, bundle: ModelBundle, prompt: str) -> dict[str, Any]:
@@ -2701,7 +2852,11 @@ def apply_tier_defaults(args: argparse.Namespace) -> None:
         print(f"[bench] tier auto-resolved to '{args.tier}'")
     spec = TIER_DEFAULTS[args.tier]
     if args.model is None:
-        args.model = spec["model"]
+        # Labs 7+ use instruct models; a lab may override the tier's default
+        # model (one place, on purpose) so the registry stays the source of
+        # truth instead of every chat lab re-specifying --model.
+        lab_model = LAB_PROFILES[args.lab].get(f"model_tier_{args.tier}")
+        args.model = lab_model or spec["model"]
     if args.dtype == "auto":
         args.dtype = spec["dtype"]
     if args.max_examples < 0:

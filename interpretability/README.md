@@ -19,9 +19,14 @@ gpt2) that must work on a laptop — debug there, spend GPU minutes on science.
 
 | Tier | Hardware | What runs |
 |---|---|---|
-| A — smoke | laptop CPU (or MPS) | `gpt2`, 4 examples; correctness of plumbing, not science |
-| B — standard | Colab A100/H100, or any 24 GB+ GPU | full labs on `allenai/Olmo-3-1025-7B` in bf16 |
+| A — smoke | laptop CPU (or MPS) | `gpt2` (Labs 1–6) / `SmolLM2-135M-Instruct` (Labs 7+); correctness of plumbing, not science |
+| B — standard | Colab A100/H100, or any 24 GB+ GPU | base labs on `allenai/Olmo-3-1025-7B`; instruct labs (7+) on `allenai/Olmo-3-7B-Instruct`, bf16 |
 | C — comfortable | 40–80 GB GPU | fp32, larger prompt sets |
+
+Labs 7+ use instruct models because steering, refusal, and reasoning need a
+chat template and real assistant behavior. The tier-A smoke model switches to
+a small instruct model automatically (the lab registry owns the per-lab model
+override); generation makes these labs slower than the forward-pass-only labs.
 
 ## Quick start
 
@@ -54,6 +59,10 @@ python interp_bench.py --lab lab5 --tier b --prompt-set full --run-edit
 # Lab 6 (manual circuit discovery; deliverable is circuit_card.md):
 python interp_bench.py --lab lab6 --tier a
 python interp_bench.py --lab lab6 --tier b --prompt-set full
+
+# Lab 7 (steering + refusal; uses instruct models, generation is slow):
+python interp_bench.py --lab lab7 --tier a   # SmolLM2-135M-Instruct
+python interp_bench.py --lab lab7 --tier b    # Olmo-3-7B-Instruct
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -104,8 +113,17 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   one ablation-interaction edge claim, and a circuit card deliverable.
   Adds multi-node mean-ablation machinery to the bench
   (`run_with_node_set_ablation`).
-- Labs 7–11 — designed in COURSE.md, not yet implemented. Lab 7 (steering
-  + the refusal direction) is next and loads Lab 4's `truth_direction.pt`.
+- Lab 7: steering, representation engineering, and the refusal direction —
+  implemented and validated (Tier A+B). First lab on **instruct models**:
+  adds chat-template application, activation-addition steering hooks, and
+  frozen-decoding generation to the bench. Track A (sentiment dose-response
+  with random/shuffled controls), Track B (refusal monitor + steer-toward-
+  refusal, forward-pass-only safety wall — no harmful generation, no
+  ablation), and the bridge that loads Lab 4's truth direction. Steering
+  scales are fractions of the activation norm, so a "dose" means the same
+  thing across models.
+- Labs 8–11 — designed in COURSE.md, not yet implemented. Lab 8
+  (superposition + SAEs) is next.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 
