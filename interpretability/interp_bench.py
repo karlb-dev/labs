@@ -154,6 +154,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # transformers 5 -- silently. Attention-pattern labs must run eager.
         "needs_eager": "true",
     },
+    "lab4": {
+        "module": "labs.lab04_probing_controls",
+        "run_name": "lab04_probing_controls",
+        "description": "Probing with controls: what is linearly decodable, and is it selective?",
+        # Lab 4 interprets --max-examples as a PER-FAMILY statement cap; the
+        # global tier-a default of 4 would starve the probes.
+        "max_examples_tier_a": "20",
+    },
 }
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
@@ -2314,7 +2322,8 @@ def apply_tier_defaults(args: argparse.Namespace) -> None:
     if args.dtype == "auto":
         args.dtype = spec["dtype"]
     if args.max_examples < 0:
-        args.max_examples = spec["max_examples"]
+        lab_override = LAB_PROFILES[args.lab].get(f"max_examples_tier_{args.tier}")
+        args.max_examples = int(lab_override) if lab_override else spec["max_examples"]
     if LAB_PROFILES[args.lab].get("needs_eager") and args.attn_implementation == "auto":
         args.attn_implementation = "eager"
         print(

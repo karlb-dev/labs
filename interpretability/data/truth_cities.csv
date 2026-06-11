@@ -1,0 +1,61 @@
+statement_id,family,statement,label,meta
+city_t_00,cities,The city of Paris is in France.,1,Paris|France
+city_f_00,cities,The city of Paris is in Egypt.,0,Paris|Egypt
+city_t_01,cities,The city of Tokyo is in Japan.,1,Tokyo|Japan
+city_f_01,cities,The city of Tokyo is in Kenya.,0,Tokyo|Kenya
+city_t_02,cities,The city of Berlin is in Germany.,1,Berlin|Germany
+city_f_02,cities,The city of Berlin is in Peru.,0,Berlin|Peru
+city_t_03,cities,The city of Rome is in Italy.,1,Rome|Italy
+city_f_03,cities,The city of Rome is in Norway.,0,Rome|Norway
+city_t_04,cities,The city of Madrid is in Spain.,1,Madrid|Spain
+city_f_04,cities,The city of Madrid is in Greece.,0,Madrid|Greece
+city_t_05,cities,The city of Lisbon is in Portugal.,1,Lisbon|Portugal
+city_f_05,cities,The city of Lisbon is in Thailand.,0,Lisbon|Thailand
+city_t_06,cities,The city of Vienna is in Austria.,1,Vienna|Austria
+city_f_06,cities,The city of Vienna is in China.,0,Vienna|China
+city_t_07,cities,The city of Cairo is in Egypt.,1,Cairo|Egypt
+city_f_07,cities,The city of Cairo is in Russia.,0,Cairo|Russia
+city_t_08,cities,The city of Nairobi is in Kenya.,1,Nairobi|Kenya
+city_f_08,cities,The city of Nairobi is in Canada.,0,Nairobi|Canada
+city_t_09,cities,The city of Lima is in Peru.,1,Lima|Peru
+city_f_09,cities,The city of Lima is in Australia.,0,Lima|Australia
+city_t_10,cities,The city of Oslo is in Norway.,1,Oslo|Norway
+city_f_10,cities,The city of Oslo is in Ireland.,0,Oslo|Ireland
+city_t_11,cities,The city of Athens is in Greece.,1,Athens|Greece
+city_f_11,cities,The city of Athens is in Poland.,0,Athens|Poland
+city_t_12,cities,The city of Bangkok is in Thailand.,1,Bangkok|Thailand
+city_f_12,cities,The city of Bangkok is in Czechia.,0,Bangkok|Czechia
+city_t_13,cities,The city of Beijing is in China.,1,Beijing|China
+city_f_13,cities,The city of Beijing is in Cuba.,0,Beijing|Cuba
+city_t_14,cities,The city of Moscow is in Russia.,1,Moscow|Russia
+city_f_14,cities,The city of Moscow is in South Korea.,0,Moscow|South Korea
+city_t_15,cities,The city of Ottawa is in Canada.,1,Ottawa|Canada
+city_f_15,cities,The city of Ottawa is in Vietnam.,0,Ottawa|Vietnam
+city_t_16,cities,The city of Canberra is in Australia.,1,Canberra|Australia
+city_f_16,cities,The city of Canberra is in Finland.,0,Canberra|Finland
+city_t_17,cities,The city of Dublin is in Ireland.,1,Dublin|Ireland
+city_f_17,cities,The city of Dublin is in Sweden.,0,Dublin|Sweden
+city_t_18,cities,The city of Warsaw is in Poland.,1,Warsaw|Poland
+city_f_18,cities,The city of Warsaw is in Hungary.,0,Warsaw|Hungary
+city_t_19,cities,The city of Prague is in Czechia.,1,Prague|Czechia
+city_f_19,cities,The city of Prague is in Belgium.,0,Prague|Belgium
+city_t_20,cities,The city of Havana is in Cuba.,1,Havana|Cuba
+city_f_20,cities,The city of Havana is in the Netherlands.,0,Havana|the Netherlands
+city_t_21,cities,The city of Seoul is in South Korea.,1,Seoul|South Korea
+city_f_21,cities,The city of Seoul is in Denmark.,0,Seoul|Denmark
+city_t_22,cities,The city of Hanoi is in Vietnam.,1,Hanoi|Vietnam
+city_f_22,cities,The city of Hanoi is in New Zealand.,0,Hanoi|New Zealand
+city_t_23,cities,The city of Helsinki is in Finland.,1,Helsinki|Finland
+city_f_23,cities,The city of Helsinki is in France.,0,Helsinki|France
+city_t_24,cities,The city of Stockholm is in Sweden.,1,Stockholm|Sweden
+city_f_24,cities,The city of Stockholm is in Japan.,0,Stockholm|Japan
+city_t_25,cities,The city of Budapest is in Hungary.,1,Budapest|Hungary
+city_f_25,cities,The city of Budapest is in Germany.,0,Budapest|Germany
+city_t_26,cities,The city of Brussels is in Belgium.,1,Brussels|Belgium
+city_f_26,cities,The city of Brussels is in Italy.,0,Brussels|Italy
+city_t_27,cities,The city of Amsterdam is in the Netherlands.,1,Amsterdam|the Netherlands
+city_f_27,cities,The city of Amsterdam is in Spain.,0,Amsterdam|Spain
+city_t_28,cities,The city of Copenhagen is in Denmark.,1,Copenhagen|Denmark
+city_f_28,cities,The city of Copenhagen is in Portugal.,0,Copenhagen|Portugal
+city_t_29,cities,The city of Wellington is in New Zealand.,1,Wellington|New Zealand
+city_f_29,cities,The city of Wellington is in Austria.,0,Wellington|Austria

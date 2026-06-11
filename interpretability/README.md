@@ -42,6 +42,10 @@ python interp_bench.py --lab lab2 --tier b --prompt-set full --topk 10
 # Lab 3 (attention routing; the bench auto-sets eager attention):
 python interp_bench.py --lab lab3 --tier a
 python interp_bench.py --lab lab3 --tier b --prompt-set full --topk 10
+
+# Lab 4 (probing; --max-examples caps statements PER FAMILY here):
+python interp_bench.py --lab lab4 --tier a
+python interp_bench.py --lab lab4 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -72,8 +76,15 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   silently in transformers 5), a verified per-head decomposition check, and
   scoped head ablation (final-position vs all-position — the gap measures
   composition).
-- Labs 4–11 — designed in COURSE.md, not yet implemented. Lab 4 (probing
-  with controls) is next.
+- Lab 4: probing with controls + the truth direction — implemented and
+  validated (Tier A+B). Frozen statement families vendored in `data/`;
+  dual probes (logistic + mass-mean) with shuffled/random/length controls
+  and family-held-out transfer; saves `truth_direction.pt` for Lab 7's
+  causal test. Activation-norm outliers are detected and recorded (one
+  frozen statement produces a 7x-norm stream on Olmo-3 — see the lab
+  handout's "outlier specimen" section).
+- Labs 5–11 — designed in COURSE.md, not yet implemented. Lab 5 (activation
+  patching) is next.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 
