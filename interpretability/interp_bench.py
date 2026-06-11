@@ -216,11 +216,26 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # --max-examples caps the paraphrase battery here.
         "max_examples_tier_a": "3",
     },
+    "lab10": {
+        "module": "labs.lab10_cot_faithfulness",
+        "run_name": "lab10_cot_faithfulness",
+        "description": "CoT faithfulness: hint injection, the necessity curve, add-mistake, and filler controls.",
+        # Reasoning (think) models on every tier. Olmo-3-7B-Think is the
+        # course model (fully open post-training data); Qwen3-0.6B is the
+        # smallest ungated model that emits real <think> spans for the CPU
+        # smoke path. --max-examples caps MCQ items (x6 conditions each).
+        "model_tier_a": "Qwen/Qwen3-0.6B",
+        "model_tier_b": "allenai/Olmo-3-7B-Think",
+        "model_tier_c": "allenai/Olmo-3-7B-Think",
+        "max_examples_tier_a": "3",
+        "max_examples_tier_b": "36",
+        "max_examples_tier_c": "60",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
