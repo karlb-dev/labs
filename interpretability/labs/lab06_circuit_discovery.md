@@ -1,114 +1,191 @@
 # Lab 6: Circuit Discovery and Validation, the Manual Way
 
-**Evidence level targeted:** causality, composed into a subgraph claim.
-**Prerequisites:** Labs 2, 3, 5 — this lab is their composition, and it reuses
-your Lab 3 motif map directly. **Keep the circuit card you produce: Lab 9
-will hold it next to an automated attribution graph.**
+**Evidence level targeted:** causal evidence at circuit scope.
+
+**Prerequisites:** Labs 2, 3, and 5. Lab 2 gives direct-logit attribution, Lab 3 gives attention motifs, and Lab 5 gives the intervention habit. Keep the `circuit_card.md` from this lab: Lab 9 will compare your hand-built circuit with an automated attribution graph.
 
 ## The question
 
-Can you reduce a behavior to a small computational subgraph — built from
-heads by hand — that is **faithful** (the circuit alone preserves the
-behavior), **complete** (removing the circuit destroys it), and **minimal**
-(every kept node earns its place)? And what does each of those words cost?
+Can you reduce a behavior to a small computational subgraph and say, with measurements attached, that the graph is **faithful**, **complete**, and **minimal**?
+
+Those words are not decorative labels:
+
+| Word | Operational test | Read it as |
+|---|---|---|
+| faithful | mean-ablate every non-circuit head | the circuit alone preserves the behavior |
+| complete | mean-ablate the circuit heads | the circuit is necessary for the behavior |
+| minimal | remove each kept head from the final circuit | every kept node earns its rent |
+
+The lab is a little circuit courtroom. The cheap screens nominate suspects. Mean-ablation cross-examines them. The circuit card is the verdict, including all awkward caveats.
 
 ## The task
 
-Induction completion on fixed-length 8-token repeating patterns
-(`red blue green red blue green red blue` → ` green`, distractor ` red` —
-the cycle restart). Chosen because: you already hold candidate heads from
-Lab 3; the model does it reliably (baseline gate verifies per prompt); and
-**held-out vocabulary families** (metals, compass points, beasts…) let you
-test whether your circuit is about *induction* or about *these tokens*.
+The behavior is induction completion on fixed-length 8-token repeating patterns:
+
+```text
+red blue green red blue green red blue ->  green
+```
+
+The distractor is the cycle restart:
+
+```text
+red blue green red blue green red blue ->  red
+```
+
+The metric is:
+
+```text
+logit(target) - logit(distractor)
+```
+
+Discovery prompts use one set of vocabulary families. Held-out prompts use fresh families such as metals, compass points, and beasts. Held-out evaluation asks whether the circuit is about the induction pattern or merely about these exact tokens.
+
+The baseline gate matters. A prompt is used for discovery only if the unablated model already prefers the target over the distractor. You cannot trace a circuit for a behavior the model is not doing.
+
+## Scope: heads-only routing graph
+
+The course outline describes circuit discovery broadly as heads and MLPs. This executable lab deliberately narrows the claim: the validated circuit nodes are **attention heads only**.
+
+MLP layers are still causally ranked and plotted as supporting infrastructure. They are not part of the faithfulness complement. That means the claim is not "this is the whole mechanism in the transformer." The claim is:
+
+```text
+For this prompt family and metric, these attention heads form a heads-only routing subgraph that preserves and disrupts the behavior under dataset-mean ablation.
+```
+
+That sentence is longer than "we found the circuit," but it has a spine.
+
+## Why mean-ablation is the off switch
+
+Zero-ablating hundreds of heads creates a model that never appears during normal inference. It can prove that your hooks are powerful without proving that the model uses the circuit you named.
+
+This lab uses **dataset-mean ablation**. For each discovery prompt, it captures every head's out-projection input at every position. Because the prompt length is fixed at 8 tokens, it can replace a head's prompt-specific output with the mean output for that same layer, head, and position.
+
+Mean-ablation removes prompt-specific computation while staying closer to the data manifold. The cost is that the circuit is relative to that off distribution. A different off switch can define a different circuit.
+
+The run writes `diagnostics/ablation_manifest.json` so this choice is not trapped in a comment.
 
 ## Method spine
 
-1. **Screen cheaply**: rank heads by final-position attribution (Lab 2's
-   frozen-norm convention, per-head as in Lab 3) and by motif scores.
-   Screening is allowed to lie — that's why step 2 exists.
-2. **Rank causally**: mean-ablate each candidate alone (all positions) and
-   measure the metric drop over the discovery set.
-3. **Prune greedily**: starting from the causally-confirmed set, repeatedly
-   remove the head whose removal costs the least faithfulness, stopping at
-   the floor (0.7). The trajectory plot shows what every node was worth.
-4. **Earn the three numbers**: faithfulness (complement of the circuit
-   mean-ablated), completeness (circuit mean-ablated), minimality (marginal
-   value per kept node) — on discovery AND held-out families.
-5. **Earn one edge**: ablation interaction. If the previous-token head's
-   effect vanishes when the induction head is already ablated, the effect
-   routed through it. (Path patching would localize the edge to keys vs
-   values; that's named future work, not this lab.)
+1. **Validate the task.** Confirm the prompt length and answer tokenization. Drop discovery prompts the model does not solve.
+2. **Screen cheaply.** Rank heads by final-position attribution, induction motif score, and previous-token motif score. Rank MLP layers by direct-logit attribution as support candidates.
+3. **Rank causally.** Mean-ablate each screened candidate alone and measure the drop in the logit-difference metric.
+4. **Prune greedily.** Start from every screened head with positive causal drop. Repeatedly remove the head whose removal gives the highest remaining faithfulness. Stop before crossing the faithfulness floor, or stop if the candidate set never reaches it.
+5. **Earn F/C/M.** Measure faithfulness, completeness, and minimality on discovery and held-out families.
+6. **Try one edge.** Test ordered previous-token -> induction pairs by ablation interaction. The source head must be in an earlier layer than the target head. If no ordered pair passes the checks, the lab says no edge was earned. If the best pair is weak, report it as weak rather than inflating it into a crisp path claim.
+7. **Write the circuit card.** The card is the deliverable. The plots and tables are evidence for it.
 
-### Why mean-ablation
+## The edge claim, carefully
 
-Zero-ablating hundreds of heads tests a model that never exists — activations
-far off-distribution prove nothing about the real computation. Replacing each
-head's output with its **dataset mean** (well-defined because every prompt is
-exactly 8 tokens) removes prompt-specific computation while staying near the
-data manifold. Write this in the card's scope section: *a different "off"
-defines a different circuit*. That sentence is the most transferable thing in
-this lab.
+The edge test asks whether a previous-token head's effect shrinks when an induction head is already ablated.
 
-### Scope decision you must understand
+```text
+interaction = effect(previous head alone) - effect(previous head | induction head already ablated)
+```
 
-The circuit's node set is **attention heads only**. MLP layers are causally
-ranked and reported as supporting infrastructure, but the faithfulness
-complement never ablates them. A subgraph claim should say what it is a
-subgraph *of* — ours is the routing graph. (Lab 5 told you where the MLP
-"recall" work happens; the card links the two.)
+A positive interaction supports the idea that part of the previous-token head's effect routes through the induction head. In the executable lab, a pair is reportable at 2% routed fraction and labeled **weak** until 5%. This keeps the Olmo 7B target honest: redundancy can make the strongest single edge small without making the interaction uninteresting.
+
+It does **not** show whether the route is through keys, values, queries, residual writes, or another subpath. That stronger claim needs path patching.
+
+The revised code also refuses impossible arrows: a later previous-token head cannot route through an earlier induction head in an ordinary forward computation. If the layer order is wrong, the pair is not eligible for the edge claim.
 
 ## Running it
 
 ```bash
-python interp_bench.py --lab lab6 --tier a               # gpt2, 6 discovery prompts
+python interp_bench.py --lab lab6 --tier a
 python interp_bench.py --lab lab6 --tier b --prompt-set full
 ```
 
-The bench auto-sets eager attention (motif screen needs patterns).
+Tier A is a plumbing smoke test on `gpt2`. Tier B is the course run. The bench auto-enables eager attention because motif scores need attention patterns.
 
 ## First artifact-reading path
 
-1. `circuit_card.md` — the deliverable. Everything else is its evidence.
-2. `plots/circuit_graph.png` — the subgraph, motif-labeled, with the one edge.
-3. `plots/prune_trajectory.png` — faithfulness vs circuit size; read it
-   right-to-left and you watch the circuit assemble.
-4. `plots/screen_vs_causal.png` — every point off the trend is a place the
-   cheap ranking lied. This is Syed et al.'s finding at course scale.
-5. `plots/circuit_scorecard.png` — discovery vs held-out: does your circuit
-   survive fresh vocabulary?
-6. `tables/pruned_circuit.csv` — minimality: each node's marginal value.
+1. `circuit_card.md` - the deliverable. Read this first.
+2. `plots/circuit_graph.png` - validated heads, motif labels, supporting MLPs, and any claimed edge.
+3. `plots/prune_trajectory.png` - how the circuit shrinks and where pruning stops.
+4. `plots/screen_vs_causal.png` - where cheap ranking lied.
+5. `plots/circuit_scorecard.png` - faithfulness and completeness on discovery versus held-out prompts.
+6. `tables/pruned_circuit.csv` - minimality: each kept node's marginal value.
+7. `tables/per_prompt_faithfulness.csv` and `plots/per_prompt_faithfulness.png` - the prompts the circuit explains least well.
+8. `plots/edge_interactions.png`, `tables/edge_claim.json`, and `tables/edge_interactions.csv` - the edge claim or the reason no edge was claimed.
+9. `diagnostics/tokenization_and_baseline.csv` and `diagnostics/ablation_manifest.json` - the contract under the experiment.
+
+## How to read the main plots
+
+### `screen_vs_causal.png`
+
+The left panel plots cheap screen rank against causal drop. The right panel plots attribution magnitude against causal drop. Points above zero mattered under mean-ablation. Points below zero were attractive suspects that did not help the behavior.
+
+A good writeup names at least one disagreement. For example: "Head X had a high induction motif score but little causal drop, so the motif was behavior-adjacent but not necessary under this metric."
+
+### `prune_trajectory.png`
+
+Read right to left. The rightmost point is the full positive-causal screened set. Each step removes one head. The red line is the faithfulness floor.
+
+If the first point is below the floor, the screen did not collect enough of the behavior. That is not a crash. It is an experimental result with a caveat attached.
+
+### `circuit_scorecard.png`
+
+Faithfulness is preservation. Higher is better.
+
+Completeness effect is `1 - completeness_ratio`. Higher means circuit ablation destroyed more of the behavior. A circuit can be faithful but not complete if redundant paths exist. It can be complete but not minimal if extra heads hitchhiked into the final set.
+
+### `per_prompt_faithfulness.png`
+
+This is the anti-cherry-pick plot. The lowest bars become the failure cases in the circuit card. Do not hide them. Ask what they share.
+
+## What the revised code improves
+
+The updated lab makes several evidence-quality changes:
+
+- It writes a combined tokenization and baseline report before any circuit claims.
+- It adds the component decomposition self-check, so attention and MLP contribution bookkeeping is verified before screening.
+- It records an ablation manifest that defines the off distribution.
+- It broadens and documents the screen budgets instead of relying on a tiny fixed candidate set.
+- It separates cheap screen rank, attribution score, motif scores, and causal rank in `candidate_components.csv`.
+- It prevents overclaiming when the pruned circuit fails the faithfulness floor.
+- It labels weak versus strong edge interactions instead of treating every positive interaction as equally crisp.
+- It always writes an edge diagnostic, even when no edge is claimed.
+- It requires edge direction to respect layer order.
+- It adds per-prompt faithfulness artifacts so failure cases are visible rather than prose-only.
 
 ## Writeup questions
 
-1. What is necessary? What is sufficient? Cite faithfulness, completeness,
-   and the minimality table — and note where they pull apart.
-2. Your two failure prompts (in the card): what do they share? What would
-   you add to the circuit to cover them, and what would that cost in
-   minimality?
-3. Where did screening and causal ranking disagree most (`screen_vs_causal`)?
-   Was the liar an attribution score or a motif score, and why might that be?
-4. The edge claim: what does an X% routed fraction actually license you to
-   say? If it came out near 0% on a model with several induction heads,
-   what does THAT mean? (Hint: redundancy is not absence.)
-   If no edge is claimed, check whether any previous-token head had a
-   positive single-node causal drop; motif alone is not enough for an edge.
-5. MDC mapping: list your entities and activities. Mark every activity you
-   named but did not show. The card's filler-terms section is graded prose.
+1. What is sufficient? Cite faithfulness and say whether the final circuit passed the floor.
+2. What is necessary? Cite completeness ratio and explain whether circuit ablation destroyed the behavior or merely dented it.
+3. What is minimal? Cite the worst marginal value in `tables/pruned_circuit.csv`. Did every kept node have a positive marginal value?
+4. Where did cheap screening and causal ranking disagree most? Was the misleading signal attribution, induction motif, or previous-token motif?
+5. What do the two weakest per-prompt faithfulness cases share?
+6. Did the held-out families preserve the result? If held-out prompts were filtered because the base model missed them, say how many ratio-defined prompts remain. If faithfulness is above 1.0, explain why that is over-recovery, not magic.
+7. If an edge was claimed, was it weak or strong? What exactly does the interaction fraction license you to say? If no edge was claimed, which requirement failed?
+8. Map your card onto Machamer, Darden, and Craver's entities-and-activities schema. Mark every activity you named but did not directly test.
 
 ## Symptom-first debugging
 
 | Symptom | First place to look |
 |---|---|
-| baseline gate drops most prompts | the model can't do the task; try tier b or simpler 2-cycles |
-| faithfulness > 1.0 | fine — the complement was mildly hurting the behavior; say so, don't hide it |
-| pruning stops immediately | your candidates are redundant; check whether two induction heads carry the same work |
-| completeness ratio stays high | circuit too small, or the behavior has a path your screen never saw (MLPs?) |
-| `head_means seq mismatch` | you added a prompt that isn't 8 tokens; the dataset contract is fixed-length |
+| most discovery prompts dropped | `diagnostics/tokenization_and_baseline.csv`; the model may not do the task |
+| `head_means seq mismatch` | prompt length changed; mean-ablation requires the fixed-length contract |
+| starting faithfulness below 0.70 | the screen missed important heads or MLP support is doing more than expected |
+| pruning stops immediately | the candidate set is fragile, redundant, or already below the floor |
+| completeness ratio stays high | ablating the circuit leaves another path for the behavior |
+| minimality worst marginal is negative | at least one kept head hurts faithfulness under this pruning rule |
+| no edge claimed | check `tables/edge_interactions.csv`; motif alone is not an edge |
 
 ## What goes in the ledger
 
-2–3 claims, `CAUSAL` at circuit scope. The drafted claims name the
-intervention (dataset-mean ablation), the population (8-token patterns,
-listed vocabularies), and the falsifier (a different off-distribution; longer
-prompts; natural text). A circuit card without its scope section is a map
-drawn without a legend — pretty, portable, and wrong somewhere you can't see.
+The ledger should contain two or three `CAUSAL` claims. Each claim must name:
+
+```text
+model, prompt population, metric, intervention, circuit scope, artifact, falsifier
+```
+
+A good claim is scoped enough to survive contact with a skeptical reader:
+
+```text
+For 8-token induction prompts on this model, a heads-only routing circuit of [nodes]
+preserves X of the target-vs-distractor logit gap when every non-circuit head is
+replaced by its discovery-set mean. This does not claim natural-text induction,
+MLP sufficiency, or invariance under zero-ablation.
+```
+
+A circuit card without scope is a treasure map with no scale bar: exciting, foldable, and treacherous in the field.

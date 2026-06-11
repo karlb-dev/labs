@@ -1,40 +1,19 @@
 """Lab 6: Circuit discovery and validation, the manual way.
 
-The composition lab: Lab 2's attribution screens candidates, Lab 3's motif
-scores name them, Lab 5's intervention logic stress-tests them — and the
-deliverable is a CIRCUIT CARD making a subgraph claim with three earned
-numbers attached:
+This lab composes the previous instrumentation labs into a small circuit claim.
+Lab 2 gives a cheap attribution screen, Lab 3 gives attention motifs, and Lab 5
+contributes intervention discipline. The deliverable is a circuit card with
+three earned numbers and an explicitly scoped mechanism sketch:
 
-* **faithfulness** — the circuit alone (every other head mean-ablated)
-  preserves the behavior;
-* **completeness** — ablating the circuit (everything else intact) destroys
-  the behavior;
-* **minimality** — every kept node's removal costs measurable faithfulness.
+* faithfulness: with every non-circuit head mean-ablated, how much of the
+  original behavior remains?
+* completeness: with the circuit heads mean-ablated, how much behavior remains?
+* minimality: how much faithfulness is lost if each kept node is removed?
 
-Task: induction completion (continuity with Lab 3 — students hold their motif
-maps next to this circuit). All prompts are fixed-length 8-token repeating
-patterns so that DATASET-MEAN ablation is well-defined per (layer, head,
-position); held-out vocabulary families test whether the circuit is about
-induction or about these particular tokens.
-
-Method notes that carry the rigor:
-
-* Mean-ablation, not zero-ablation: replacing a head's output with its
-  dataset mean removes its prompt-specific computation while keeping the
-  model in-distribution. Zero-ablation of hundreds of heads tests a model
-  that never exists.
-* The circuit's node set is attention heads. MLP layers are causally ranked
-  and reported as supporting infrastructure, but the faithfulness complement
-  never ablates them — a subgraph claim should say what it is a subgraph OF,
-  and ours is the routing graph.
-* The screen-vs-causal comparison is built in: candidates are screened by
-  attribution + motif scores (cheap), then ranked by mean-ablation effect
-  (causal). The scatter of one against the other IS the lab's version of
-  "attribution patching vs automated discovery" (Syed et al.).
-* One edge claim, earned by an ablation interaction: if the previous-token
-  head's total effect vanishes when the induction head is already ablated,
-  its influence routes THROUGH the induction head. Cheaper than path
-  patching, honest about what it shows.
+The target behavior is induction completion on fixed-length repeating patterns.
+The circuit claim is intentionally heads-only: it is a routing subgraph. MLPs
+are ranked and reported as supporting infrastructure, but they are not part of
+the faithfulness complement. A subgraph claim has to say what graph it lives in.
 
 Evidence level: CAUSAL at circuit scope, on a stated prompt population.
 """
@@ -42,8 +21,9 @@ Evidence level: CAUSAL at circuit scope, on a stated prompt population.
 from __future__ import annotations
 
 import dataclasses
+import math
 import statistics
-from typing import Any
+from typing import Any, Iterable, Sequence
 
 import interp_bench as bench
 from labs.lab02_direct_logit_attribution import compute_direct_logit_attribution
@@ -55,28 +35,41 @@ from labs.lab03_attention_routing import (
 
 LAB_ID = "L06"
 
-FAITHFULNESS_FLOOR = 0.7   # greedy pruning stops before dropping below this
-# Screen breadth scales with model width: 14+6+6 candidates out of 1024 heads
-# was measured to start at 0.43 faithfulness on Olmo-3-7B (too thin to prune),
-# while the same absolute counts are ample for gpt2's 144 heads.
-SCREEN_TOP_ATTRIBUTION = 20
-SCREEN_TOP_INDUCTION = 8
-SCREEN_TOP_PREV = 8
-N_MLP_CANDIDATES = 4
+# Greedy pruning keeps removing heads while the remaining circuit stays above
+# this ratio of the base logit-difference metric.
+FAITHFULNESS_FLOOR = 0.70
+
+# Screening is deliberately broader than a minimal demo. A too-thin screen can
+# make the pruning stage fail before the students learn anything about circuits.
+SCREEN_TOP_ATTRIBUTION_MIN = 20
+SCREEN_TOP_INDUCTION_MIN = 8
+SCREEN_TOP_PREV_MIN = 8
+SCREEN_TOP_ATTRIBUTION_FRAC = 0.035
+SCREEN_TOP_MOTIF_FRAC = 0.012
+N_MLP_CANDIDATES = 6
+
+MOTIF_STRONG_THRESHOLD = 0.35
+FIRST_TOKEN_SINK_THRESHOLD = 0.45
+EDGE_MIN_SOURCE_EFFECT = 1e-6
+# Olmo 7B's strongest ordered interaction in the validation run is small but
+# real enough to teach redundancy. Report it as weak at 2%, strong at 5%.
+EDGE_MIN_ROUTED_FRACTION = 0.02
+EDGE_STRONG_ROUTED_FRACTION = 0.05
 
 
 @dataclasses.dataclass(frozen=True)
 class CircuitPrompt:
     example_id: str
-    family: str          # 'discovery' or 'heldout'
+    family: str          # discovery or heldout
     prompt: str
     target: str
     distractor: str
 
 
-# All prompts are exactly 8 tokens (validated at runtime): 3-cycles repeat
-# the cycle 2.67 times; 2-cycles 4 times. Target = induction continuation,
-# distractor = cycle restart (the strongest wrong-but-plausible token).
+# All prompts are validated at runtime. The strings are chosen so the default
+# course models tokenize the prompt into exactly 8 tokens and both answer
+# strings into one token. Target = induction continuation. Distractor = cycle
+# restart, the most plausible wrong continuation.
 ALL_PROMPTS: tuple[CircuitPrompt, ...] = (
     CircuitPrompt("d_colors", "discovery", "red blue green red blue green red blue", " green", " red"),
     CircuitPrompt("d_animals", "discovery", "dog cat bird dog cat bird dog cat", " bird", " dog"),
@@ -96,11 +89,76 @@ class TaskExample:
     prompt: CircuitPrompt
     target_id: int
     distractor_id: int
+    prompt_len: int
     base_diff: float = 0.0
+
+
+# ---------------------------------------------------------------------------
+# Small utilities
+# ---------------------------------------------------------------------------
 
 
 def node_name(kind: str, layer: int, head: int | None = None) -> str:
     return f"L{layer}H{head}" if kind == "head" else f"MLP{layer}"
+
+
+def round_or_none(value: float | None, digits: int = 4) -> float | None:
+    if value is None or not math.isfinite(float(value)):
+        return None
+    return round(float(value), digits)
+
+
+def safe_ratio(num: float, denom: float) -> float | None:
+    if abs(denom) < 1e-9:
+        return None
+    return float(num) / float(denom)
+
+
+def rank_map(scores: dict[Any, float], *, reverse: bool = True, key_abs: bool = False) -> dict[Any, int]:
+    def sort_key(item: tuple[Any, float]) -> float:
+        return abs(item[1]) if key_abs else item[1]
+
+    return {
+        key: i + 1
+        for i, (key, _score) in enumerate(sorted(scores.items(), key=sort_key, reverse=reverse))
+    }
+
+
+def screen_budgets(n_layers: int, n_heads: int) -> tuple[int, int, int]:
+    total = n_layers * n_heads
+    top_attr = min(total, max(SCREEN_TOP_ATTRIBUTION_MIN, math.ceil(total * SCREEN_TOP_ATTRIBUTION_FRAC)))
+    top_ind = min(total, max(SCREEN_TOP_INDUCTION_MIN, math.ceil(total * SCREEN_TOP_MOTIF_FRAC)))
+    top_prev = min(total, max(SCREEN_TOP_PREV_MIN, math.ceil(total * SCREEN_TOP_MOTIF_FRAC)))
+    return top_attr, top_ind, top_prev
+
+
+def first_token_score(pattern: Any) -> float:
+    """Mean attention mass assigned to token 0, excluding the trivial first row."""
+    if pattern.shape[-1] <= 1:
+        return 0.0
+    return float(pattern[1:, 0].mean())
+
+
+def mean_logit_diff(bundle: bench.ModelBundle, examples: Sequence[TaskExample]) -> float:
+    diffs = []
+    for ex in examples:
+        logits = bench.run_with_residual_cache(bundle, ex.prompt.prompt).final_logits_last
+        diffs.append(float(logits[ex.target_id] - logits[ex.distractor_id]))
+    return statistics.fmean(diffs)
+
+
+def describe_head_list(heads: Sequence[tuple[int, int]]) -> str:
+    return ", ".join(node_name("head", *h) for h in heads) or "none"
+
+
+def edge_strength_label(raw_fraction: float | None) -> str:
+    if raw_fraction is None or raw_fraction <= 0:
+        return "none"
+    if raw_fraction < EDGE_MIN_ROUTED_FRACTION:
+        return "below_threshold"
+    if raw_fraction < EDGE_STRONG_ROUTED_FRACTION:
+        return "weak"
+    return "strong"
 
 
 # ---------------------------------------------------------------------------
@@ -111,110 +169,208 @@ def node_name(kind: str, layer: int, head: int | None = None) -> str:
 def build_dataset(
     ctx: bench.RunContext, bundle: bench.ModelBundle, max_examples: int
 ) -> tuple[list[TaskExample], list[TaskExample], int, int]:
+    """Validate tokenization, compute baseline logit gaps, and gate discovery prompts."""
     tokenizer = bundle.tokenizer
-    rows = []
+    all_prompts = list(ALL_PROMPTS)
+    if max_examples > 0:
+        discovery_subset = [p for p in all_prompts if p.family == "discovery"][:max_examples]
+        all_prompts = discovery_subset + [p for p in all_prompts if p.family == "heldout"]
+
+    rows: list[dict[str, Any]] = []
     discovery: list[TaskExample] = []
     heldout: list[TaskExample] = []
-    lengths = set()
-    prompts = list(ALL_PROMPTS)
-    if max_examples > 0:
-        disc = [p for p in prompts if p.family == "discovery"][:max_examples]
-        prompts = disc + [p for p in prompts if p.family == "heldout"]
-    for cp in prompts:
-        t_ids = tokenizer.encode(cp.target, add_special_tokens=False)
-        d_ids = tokenizer.encode(cp.distractor, add_special_tokens=False)
-        p_ids = tokenizer.encode(cp.prompt, add_special_tokens=False)
-        lengths.add(len(p_ids))
-        problems = []
-        if len(t_ids) != 1 or len(d_ids) != 1:
-            problems.append("multi-token answer")
-        if len(p_ids) != 8:
-            problems.append(f"prompt is {len(p_ids)} tokens, dataset contract is 8")
-        ok = not problems
-        rows.append({"example_id": cp.example_id, "family": cp.family, "prompt": cp.prompt,
-                     "n_tokens": len(p_ids), "kept": ok, "problems": "; ".join(problems)})
-        if ok:
-            ex = TaskExample(cp, t_ids[0], d_ids[0])
-            (discovery if cp.family == "discovery" else heldout).append(ex)
-    path = ctx.path("diagnostics", "tokenization_report.csv")
-    bench.write_csv(path, rows)
-    ctx.register_artifact(path, "diagnostic", "Fixed-length and single-token validation for every prompt.")
+    valid_lengths: set[int] = set()
 
-    # Baseline gate: the model must do induction on each discovery prompt.
-    kept_d, dropped = [], 0
-    for ex in discovery:
-        logits = bench.run_with_residual_cache(bundle, ex.prompt.prompt).final_logits_last
+    for cp in all_prompts:
+        target_ids = tokenizer.encode(cp.target, add_special_tokens=False)
+        distractor_ids = tokenizer.encode(cp.distractor, add_special_tokens=False)
+        prompt_ids = tokenizer.encode(cp.prompt, add_special_tokens=False)
+
+        problems: list[str] = []
+        if len(target_ids) != 1:
+            problems.append(f"target has {len(target_ids)} tokens")
+        if len(distractor_ids) != 1:
+            problems.append(f"distractor has {len(distractor_ids)} tokens")
+        if len(prompt_ids) != 8:
+            problems.append(f"prompt has {len(prompt_ids)} tokens, expected 8")
+
+        row: dict[str, Any] = {
+            "example_id": cp.example_id,
+            "family": cp.family,
+            "prompt": cp.prompt,
+            "prompt_tokens": " ".join(bench.visible_token(tokenizer.decode([i])) for i in prompt_ids),
+            "n_prompt_tokens": len(prompt_ids),
+            "target": bench.visible_token(cp.target),
+            "distractor": bench.visible_token(cp.distractor),
+            "target_id": target_ids[0] if len(target_ids) == 1 else "",
+            "distractor_id": distractor_ids[0] if len(distractor_ids) == 1 else "",
+            "tokenization_ok": not problems,
+            "problems": "; ".join(problems),
+        }
+
+        if problems:
+            rows.append(row)
+            continue
+
+        valid_lengths.add(len(prompt_ids))
+        ex = TaskExample(cp, target_ids[0], distractor_ids[0], len(prompt_ids))
+        logits = bench.run_with_residual_cache(bundle, cp.prompt).final_logits_last
         ex.base_diff = float(logits[ex.target_id] - logits[ex.distractor_id])
-        if ex.base_diff > 0:
-            kept_d.append(ex)
+        row.update({
+            "baseline_logit_diff": round(ex.base_diff, 4),
+            "baseline_pass": ex.base_diff > 0,
+        })
+        rows.append(row)
+
+        if cp.family == "discovery":
+            if ex.base_diff > 0:
+                discovery.append(ex)
+            else:
+                print(f"[lab6] dropping {cp.example_id}: base diff {ex.base_diff:+.2f} <= 0")
         else:
-            dropped += 1
-            print(f"[lab6] dropping {ex.prompt.example_id}: base diff {ex.base_diff:+.2f} <= 0")
-    for ex in heldout:
-        logits = bench.run_with_residual_cache(bundle, ex.prompt.prompt).final_logits_last
-        ex.base_diff = float(logits[ex.target_id] - logits[ex.distractor_id])
-    if len(kept_d) < 3:
-        raise RuntimeError(f"Only {len(kept_d)} discovery prompts pass the baseline gate; "
-                           "the model does not do this task reliably enough to trace a circuit.")
-    return kept_d, heldout, dropped, len(lengths)
+            heldout.append(ex)
+
+    report = ctx.path("diagnostics", "tokenization_and_baseline.csv")
+    bench.write_csv(report, rows)
+    ctx.register_artifact(
+        report,
+        "diagnostic",
+        "Tokenization contract and baseline logit gap for every Lab 6 prompt.",
+    )
+
+    if len(valid_lengths) != 1:
+        raise RuntimeError(
+            "Dataset contract violated: valid prompts have differing token lengths. "
+            "See diagnostics/tokenization_and_baseline.csv."
+        )
+    if len(discovery) < 3:
+        raise RuntimeError(
+            f"Only {len(discovery)} discovery prompts pass the baseline gate. "
+            "The model does not do this task reliably enough to trace a circuit."
+        )
+
+    dropped = sum(
+        1
+        for row in rows
+        if row["family"] == "discovery" and (not row.get("tokenization_ok") or not row.get("baseline_pass"))
+    )
+    return discovery, heldout, dropped, next(iter(valid_lengths))
 
 
 # ---------------------------------------------------------------------------
-# Metric under ablation
+# Metric under intervention
 # ---------------------------------------------------------------------------
 
 
 def metric_under_ablation(
     bundle: bench.ModelBundle,
-    examples: list[TaskExample],
+    examples: Sequence[TaskExample],
     head_anatomy: bench.HeadAnatomy,
     comp_anatomy: bench.ComponentAnatomy,
-    heads: list[tuple[int, int]],
-    mlps: list[int],
+    heads: Sequence[tuple[int, int]],
+    mlps: Sequence[int],
     head_means: Any,
     mlp_means: Any,
 ) -> float:
-    """Mean logit diff over examples with the given node set mean-ablated."""
-    diffs = []
+    """Mean logit(target) minus logit(distractor) with a node set mean-ablated."""
+    diffs: list[float] = []
     for ex in examples:
         logits = bench.run_with_node_set_ablation(
-            bundle, ex.prompt.prompt, head_anatomy, comp_anatomy,
-            heads=heads, mlps=mlps, head_means=head_means, mlp_means=mlp_means,
+            bundle,
+            ex.prompt.prompt,
+            head_anatomy,
+            comp_anatomy,
+            heads=heads,
+            mlps=mlps,
+            head_means=head_means,
+            mlp_means=mlp_means,
         )
         diffs.append(float(logits[ex.target_id] - logits[ex.distractor_id]))
     return statistics.fmean(diffs)
 
 
 # ---------------------------------------------------------------------------
-# Plots
+# Plotting
 # ---------------------------------------------------------------------------
 
 
-def plot_screen_vs_causal(ctx: bench.RunContext, cand_rows: list[dict[str, Any]]) -> None:
-    """The Syed et al. lesson in one scatter: cheap ranking vs causal ranking."""
+def plot_screen_vs_causal(ctx: bench.RunContext, cand_rows: Sequence[dict[str, Any]]) -> None:
+    """Show the central lesson: cheap screens and causal effects disagree."""
+    import matplotlib.pyplot as plt
+
     heads = [r for r in cand_rows if r["kind"] == "head"]
     if not heads:
         return
-    fig, ax = bench.new_figure(figsize=(8.0, 6.0))
-    colors = {"attribution": "tab:purple", "induction": "tab:red", "prev_token": "tab:blue", "multiple": "tab:green"}
+
+    fig, (ax_rank, ax_attr) = plt.subplots(1, 2, figsize=(12.0, 5.0))
+    for ax in (ax_rank, ax_attr):
+        ax.grid(True, alpha=0.3)
+
+    colors = {
+        "induction": "tab:red",
+        "previous_token": "tab:blue",
+        "first_token_sink": "tab:green",
+        "other": "tab:gray",
+    }
+    markers = {
+        "attribution": "o",
+        "induction": "^",
+        "prev_token": "s",
+        "attribution+induction": "P",
+        "attribution+prev_token": "X",
+        "induction+prev_token": "D",
+        "attribution+induction+prev_token": "*",
+    }
+
     for r in heads:
-        ax.scatter(abs(r["screen_score"]), r["causal_drop"], s=46, alpha=0.85,
-                   color=colors.get(r["screen_reason"], "tab:gray"))
-        ax.annotate(r["node"], (abs(r["screen_score"]), r["causal_drop"]),
-                    textcoords="offset points", xytext=(4, 3), fontsize=7)
-    for reason, color in colors.items():
-        if any(r["screen_reason"] == reason for r in heads):
-            ax.scatter([], [], color=color, label=reason)
-    ax.axhline(0, color="black", linewidth=0.6)
-    ax.set_xlabel("screen score (|attribution| or motif score — cheap)")
-    ax.set_ylabel("causal drop (mean-ablation effect on metric — earned)")
-    ax.set_title("Cheap screening vs causal ranking of candidate heads")
-    ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "screen_vs_causal.png",
-                      "Candidate heads: screening score against single-node mean-ablation effect.")
+        color = colors.get(r.get("motif_label", "other"), "tab:gray")
+        marker = markers.get(r.get("screen_reason", "attribution"), "o")
+        ax_rank.scatter(r["cheap_rank"], r["causal_drop"], s=55, color=color, marker=marker, alpha=0.85)
+        ax_attr.scatter(abs(r["mean_attr"]), r["causal_drop"], s=55, color=color, marker=marker, alpha=0.85)
+
+    # Annotate the causal top few and the cheap top few. Labeling every point
+    # turns this plot into alphabet soup on a 7B model.
+    label_nodes: set[str] = set()
+    label_nodes.update(r["node"] for r in sorted(heads, key=lambda x: -x["causal_drop"])[:8])
+    label_nodes.update(r["node"] for r in sorted(heads, key=lambda x: x["cheap_rank"])[:6])
+    for r in heads:
+        if r["node"] in label_nodes:
+            ax_rank.annotate(r["node"], (r["cheap_rank"], r["causal_drop"]),
+                             textcoords="offset points", xytext=(4, 4), fontsize=7)
+            ax_attr.annotate(r["node"], (abs(r["mean_attr"]), r["causal_drop"]),
+                             textcoords="offset points", xytext=(4, 4), fontsize=7)
+
+    ax_rank.axhline(0, color="black", linewidth=0.7)
+    ax_rank.set_xlabel("cheap screen rank, lower is better")
+    ax_rank.set_ylabel("single-head causal drop")
+    ax_rank.set_title("Screen rank vs causal effect")
+    # Lower ranks are better and therefore appear on the left.
+
+    ax_attr.axhline(0, color="black", linewidth=0.7)
+    ax_attr.set_xlabel("absolute direct-logit attribution score")
+    ax_attr.set_ylabel("single-head causal drop")
+    ax_attr.set_title("Attribution score vs causal effect")
+
+    for label, color in colors.items():
+        if any(r.get("motif_label") == label for r in heads):
+            ax_attr.scatter([], [], color=color, label=label)
+    ax_attr.legend(fontsize=8, loc="best")
+
+    fig.suptitle("Cheap screening is a hypothesis generator, not a circuit claim")
+    bench.save_figure(
+        ctx,
+        fig,
+        "screen_vs_causal.png",
+        "Cheap screening rank and attribution score against single-head mean-ablation effect.",
+    )
 
 
-def plot_prune_trajectory(ctx: bench.RunContext, trajectory: list[dict[str, Any]]) -> None:
+def plot_prune_trajectory(
+    ctx: bench.RunContext,
+    trajectory: Sequence[dict[str, Any]],
+    *,
+    floor: float,
+) -> None:
     if not trajectory:
         return
     fig, ax = bench.new_figure(figsize=(8.5, 5.2))
@@ -223,96 +379,177 @@ def plot_prune_trajectory(ctx: bench.RunContext, trajectory: list[dict[str, Any]
     ax.plot(xs, ys, marker="o", linewidth=2.0, color="tab:green")
     for t in trajectory:
         if t.get("removed"):
-            ax.annotate(f"-{t['removed']}", (t["n_nodes"], t["faithfulness"]),
-                        textcoords="offset points", xytext=(2, 8), fontsize=7, rotation=30)
-    ax.axhline(FAITHFULNESS_FLOOR, color="tab:red", linewidth=1.0, linestyle="--",
-               label=f"floor = {FAITHFULNESS_FLOOR}")
-    ax.axhline(1.0, color="black", linewidth=0.6, alpha=0.4)
-    ax.set_xlabel("circuit size (heads kept)")
-    ax.set_ylabel("faithfulness (complement mean-ablated)")
+            ax.annotate(
+                f"-{t['removed']}",
+                (t["n_nodes"], t["faithfulness"]),
+                textcoords="offset points",
+                xytext=(2, 8),
+                fontsize=7,
+                rotation=30,
+            )
+    ax.axhline(floor, color="tab:red", linewidth=1.0, linestyle="--", label=f"floor = {floor:.2f}")
+    ax.axhline(1.0, color="black", linewidth=0.7, alpha=0.45)
+    ax.set_xlabel("circuit size, heads kept")
+    ax.set_ylabel("faithfulness, complement mean-ablated")
     ax.set_title("Greedy pruning: what the behavior costs, node by node")
     ax.invert_xaxis()
     ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "prune_trajectory.png",
-                      "Faithfulness as the circuit is pruned one head at a time.")
+    bench.save_figure(ctx, fig, "prune_trajectory.png", "Faithfulness at each greedy pruning step.")
 
 
 def plot_circuit_graph(
     ctx: bench.RunContext,
-    circuit: list[tuple[int, int]],
+    circuit: Sequence[tuple[int, int]],
     head_labels: dict[tuple[int, int], str],
-    mlp_support: list[dict[str, Any]],
+    mlp_support: Sequence[dict[str, Any]],
     edge: dict[str, Any] | None,
     n_layers: int,
     n_heads: int,
 ) -> None:
-    import matplotlib.pyplot as plt
-
     fig, ax = bench.new_figure(figsize=(10.0, 6.0))
-    colors = {"induction": "tab:red", "previous_token": "tab:blue",
-              "first_token_sink": "tab:green", "other": "tab:gray", "diffuse": "tab:olive"}
-    for (l, h) in circuit:
-        label = head_labels.get((l, h), "other")
-        ax.scatter(l, h, s=170, color=colors.get(label, "tab:gray"), zorder=3, edgecolors="black")
-        ax.annotate(f"L{l}H{h}\n{label}", (l, h), textcoords="offset points", xytext=(6, 6), fontsize=7)
-    for r in mlp_support:
-        ax.scatter(r["layer"], n_heads + 1, s=120, marker="s", color="tab:orange", zorder=3)
-        ax.annotate(f"MLP{r['layer']}\n(drop {r['causal_drop']:+.2f})", (r["layer"], n_heads + 1),
-                    textcoords="offset points", xytext=(4, 6), fontsize=7)
-    if edge is not None:
-        (l1, h1), (l2, h2) = edge["from"], edge["to"]
-        if (l1, h1) not in circuit:
-            # The edge's source can be a screened head the pruner rejected
-            # (e.g. a redundant previous-token head): draw it hollow so the
-            # arrow has a visible, honest origin.
-            ax.scatter(l1, h1, s=170, facecolors="none", edgecolors="tab:blue",
-                       linewidths=1.6, zorder=3)
-            ax.annotate(f"L{l1}H{h1}\n(screened, pruned)", (l1, h1),
-                        textcoords="offset points", xytext=(6, -16), fontsize=7, color="tab:blue")
+    colors = {
+        "induction": "tab:red",
+        "previous_token": "tab:blue",
+        "first_token_sink": "tab:green",
+        "other": "tab:gray",
+    }
+    for layer, head in circuit:
+        label = head_labels.get((layer, head), "other")
+        ax.scatter(layer, head, s=170, color=colors.get(label, "tab:gray"), zorder=3, edgecolors="black")
+        ax.annotate(f"L{layer}H{head}\n{label}", (layer, head), textcoords="offset points", xytext=(6, 6), fontsize=7)
+
+    shown_mlps = list(mlp_support[:4])
+    for i, r in enumerate(shown_mlps):
+        y = n_heads + 1 + 0.65 * (i % 3)
+        ax.scatter(r["layer"], y, s=120, marker="s", color="tab:orange", zorder=3, edgecolors="black")
         ax.annotate(
-            "", xy=(l2, h2), xytext=(l1, h1),
+            f"MLP{r['layer']}\ndrop {r['causal_drop']:+.2f}",
+            (r["layer"], y),
+            textcoords="offset points",
+            xytext=(4, 6 + 4 * (i % 2)),
+            fontsize=7,
+        )
+    if len(mlp_support) > len(shown_mlps):
+        ax.text(
+            0.99,
+            0.98,
+            f"+{len(mlp_support) - len(shown_mlps)} support MLPs listed in circuit_card.md",
+            transform=ax.transAxes,
+            ha="right",
+            va="top",
+            fontsize=8,
+            color="tab:orange",
+        )
+
+    if edge is not None and edge.get("claimed"):
+        l1, h1 = edge["from"]
+        l2, h2 = edge["to"]
+        if (l1, h1) not in circuit:
+            ax.scatter(l1, h1, s=170, facecolors="none", edgecolors="tab:blue", linewidths=1.6, zorder=3)
+            ax.annotate(
+                f"L{l1}H{h1}\nscreened, pruned",
+                (l1, h1),
+                textcoords="offset points",
+                xytext=(6, -16),
+                fontsize=7,
+                color="tab:blue",
+            )
+        ax.annotate(
+            "",
+            xy=(l2, h2),
+            xytext=(l1, h1),
             arrowprops={"arrowstyle": "-|>", "color": "black", "lw": 1.8, "shrinkA": 12, "shrinkB": 12},
         )
         mid_x, mid_y = (l1 + l2) / 2, (h1 + h2) / 2
-        routed = edge.get("routed_fraction")
-        if routed is not None:
-            ax.annotate(f"effect routed: {routed:.0%}", (mid_x, mid_y),
-                        textcoords="offset points", xytext=(0, 10), fontsize=8, color="black")
+        ax.annotate(
+            f"interaction {edge['raw_interaction_fraction']:.0%}",
+            (mid_x, mid_y),
+            textcoords="offset points",
+            xytext=(0, 10),
+            fontsize=8,
+            color="black",
+        )
+
     ax.set_xlim(-1, n_layers)
-    ax.set_ylim(-1.5, n_heads + 3)
+    ax.set_ylim(-1.5, n_heads + 4.5)
     ax.set_xlabel("layer")
-    ax.set_ylabel("head index (squares above = supporting MLPs)")
-    ax.set_title("The validated circuit (arrow = the one edge claim, earned by ablation interaction)")
-    bench.save_figure(ctx, fig, "circuit_graph.png",
-                      "Kept heads by (layer, head) with motif labels, supporting MLPs, and the tested edge.")
+    ax.set_ylabel("head index; squares above are supporting MLPs")
+    ax.set_title("Validated heads-only routing circuit")
+    bench.save_figure(ctx, fig, "circuit_graph.png", "Circuit heads, motif labels, supporting MLPs, and claimed edge if any.")
 
 
-def plot_fcm(ctx: bench.RunContext, fcm: dict[str, Any]) -> None:
-    fig, ax = bench.new_figure(figsize=(7.5, 5.0))
-    xs, heights, colors_, alphas, labels = [], [], [], [], []
-    for i, key in enumerate(("faithfulness", "completeness_inverted")):
-        for j, fam in enumerate(("discovery", "heldout")):
-            val = fcm[fam]["faithfulness"] if key == "faithfulness" else 1.0 - fcm[fam]["completeness_ratio"]
-            xs.append(i * 2.6 + j)
-            heights.append(val)
-            colors_.append("tab:green" if key == "faithfulness" else "tab:blue")
-            alphas.append(1.0 if fam == "discovery" else 0.55)
-            labels.append(f"{key.split('_')[0]}\n{fam}")
-    bars = ax.bar(xs, heights, color=colors_)
-    for bar, a in zip(bars, alphas):
-        bar.set_alpha(a)
+def plot_fcm(ctx: bench.RunContext, fcm: dict[str, Any], *, floor: float) -> None:
+    fig, ax = bench.new_figure(figsize=(8.0, 5.2))
+    xs: list[float] = []
+    heights: list[float] = []
+    labels: list[str] = []
+    colors: list[str] = []
+    alphas: list[float] = []
+    for i, metric in enumerate(("faithfulness", "completeness_effect")):
+        for j, family in enumerate(("discovery", "heldout")):
+            if family not in fcm:
+                continue
+            xs.append(i * 2.7 + j)
+            heights.append(fcm[family][metric])
+            labels.append(f"{metric.replace('_', ' ')}\n{family}")
+            colors.append("tab:green" if metric == "faithfulness" else "tab:blue")
+            alphas.append(1.0 if family == "discovery" else 0.55)
+    bars = ax.bar(xs, heights, color=colors)
+    for bar, alpha in zip(bars, alphas):
+        bar.set_alpha(alpha)
     ax.bar_label(bars, fmt="%.2f", fontsize=9)
+    ax.axhline(floor, color="tab:red", linewidth=1.0, linestyle="--", label="faithfulness floor")
+    ax.axhline(1.0, color="black", linewidth=0.7, alpha=0.35)
     ax.set_xticks(xs)
     ax.set_xticklabels(labels, fontsize=8)
-    ax.axhline(1.0, color="black", linewidth=0.6, alpha=0.4)
     ax.set_ylabel("fraction of base behavior")
-    ax.set_title("Circuit scorecard: faithfulness and (1 − completeness ratio), discovery vs held-out")
-    bench.save_figure(ctx, fig, "circuit_scorecard.png",
-                      "Faithfulness and inverted completeness on discovery and held-out families.")
+    ax.set_title("Circuit scorecard: preservation and destruction of behavior")
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, "circuit_scorecard.png", "Faithfulness and completeness effect on discovery and held-out families.")
+
+
+def plot_prompt_faithfulness(ctx: bench.RunContext, rows: Sequence[dict[str, Any]]) -> None:
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(9.0, 5.0))
+    ordered = sorted(rows, key=lambda r: (r["faithfulness"] if r["faithfulness"] is not None else -999))
+    xs = list(range(len(ordered)))
+    ys = [r["faithfulness"] if r["faithfulness"] is not None else 0.0 for r in ordered]
+    colors = ["tab:green" if r["family"] == "discovery" else "tab:purple" for r in ordered]
+    bars = ax.bar(xs, ys, color=colors, alpha=0.85)
+    ax.axhline(FAITHFULNESS_FLOOR, color="tab:red", linestyle="--", linewidth=1.0, label="floor")
+    ax.axhline(1.0, color="black", linewidth=0.7, alpha=0.35)
+    ax.set_xticks(xs)
+    ax.set_xticklabels([r["example_id"] for r in ordered], rotation=30, ha="right", fontsize=8)
+    ax.set_ylabel("per-prompt faithfulness")
+    ax.set_title("Failure cases: where the circuit least preserves the behavior")
+    for bar, row in zip(bars, ordered):
+        if row["faithfulness"] is not None:
+            ax.annotate(f"{row['faithfulness']:.2f}", (bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                        ha="center", va="bottom", fontsize=7, rotation=90)
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, "per_prompt_faithfulness.png", "Per-prompt faithfulness sorted from weakest to strongest.")
+
+
+def plot_edge_interactions(ctx: bench.RunContext, rows: Sequence[dict[str, Any]]) -> None:
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(8.5, 5.0))
+    top = sorted(rows, key=lambda r: r.get("interaction", -999), reverse=True)[:8]
+    xs = list(range(len(top)))
+    ys = [r["interaction"] for r in top]
+    bars = ax.bar(xs, ys, color="tab:blue", alpha=0.8)
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.set_xticks(xs)
+    ax.set_xticklabels([r["edge"] for r in top], rotation=35, ha="right", fontsize=8)
+    ax.set_ylabel("interaction = effect(prev) - effect(prev | induction ablated)")
+    ax.set_title("Ordered previous-token -> induction interaction checks")
+    ax.bar_label(bars, fmt="%.2f", fontsize=8)
+    bench.save_figure(ctx, fig, "edge_interactions.png", "Ablation-interaction evidence for the one edge claim.")
 
 
 # ---------------------------------------------------------------------------
-# Entry point
+# Main experiment
 # ---------------------------------------------------------------------------
 
 
@@ -322,450 +559,832 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     args = ctx.args
     n_layers = bundle.anatomy.n_layers
 
-    discovery, heldout, dropped, n_lengths = build_dataset(ctx, bundle, args.max_examples)
+    discovery, heldout, dropped, seq_len = build_dataset(ctx, bundle, args.max_examples)
     base_metric = statistics.fmean(ex.base_diff for ex in discovery)
-    print(f"[lab6] discovery: {len(discovery)} prompts (dropped {dropped}), held-out: {len(heldout)}; "
-          f"base metric {base_metric:+.3f}")
-    if n_lengths != 1:
-        raise RuntimeError("Dataset contract violated: prompts have differing token lengths.")
+    print(
+        f"[lab6] discovery: {len(discovery)} prompts, dropped {dropped}; "
+        f"held-out: {len(heldout)}; seq {seq_len}; base metric {base_metric:+.3f}"
+    )
 
-    # Instrument verification.
+    # Instrument verification. Lab 6 stacks several hook systems, so the
+    # microscope checks are not ceremony: they are load-bearing guards.
     probe = discovery[0].prompt.prompt
     bench.run_hook_parity_check(ctx, bundle, probe)
     comp_anatomy = bench.resolve_component_anatomy(ctx, bundle, probe, rel_tolerance=args.dla_tolerance)
     head_anatomy = bench.resolve_head_anatomy(ctx, bundle)
     first_att = bench.run_with_attention_cache(bundle, probe)
     bench.run_lens_self_check(ctx, bundle, first_att.capture)
+    first_comp = bench.run_with_component_cache(bundle, probe, comp_anatomy, all_positions=False)
+    bench.run_decomposition_check(ctx, bundle, first_comp, rel_tolerance=args.dla_tolerance)
     bench.run_head_decomposition_check(ctx, bundle, head_anatomy, first_att, rel_tolerance=args.dla_tolerance)
     n_heads = head_anatomy.n_heads
 
     # ----- captures and dataset means ---------------------------------------
-    att_caps, comp_caps = {}, {}
+    att_caps: dict[str, Any] = {}
+    comp_caps: dict[str, Any] = {}
     for ex in discovery:
-        att_caps[ex.prompt.example_id] = bench.run_with_attention_cache(
-            bundle, ex.prompt.prompt, all_positions=True)
+        att_caps[ex.prompt.example_id] = bench.run_with_attention_cache(bundle, ex.prompt.prompt, all_positions=True)
         comp_caps[ex.prompt.example_id] = bench.run_with_component_cache(
-            bundle, ex.prompt.prompt, comp_anatomy, all_positions=True)
+            bundle, ex.prompt.prompt, comp_anatomy, all_positions=True
+        )
+
     head_means = torch.stack([att_caps[ex.prompt.example_id].o_in_last for ex in discovery]).mean(dim=0)
     mlp_means = torch.stack([comp_caps[ex.prompt.example_id].mlp_contrib for ex in discovery]).mean(dim=0)
-    print(f"[lab6] dataset means computed over {len(discovery)} prompts "
-          f"(heads {tuple(head_means.shape)}, mlps {tuple(mlp_means.shape)})")
+    print(
+        f"[lab6] dataset means from discovery prompts: heads {tuple(head_means.shape)}, "
+        f"MLPs {tuple(mlp_means.shape)}"
+    )
+    manifest_path = ctx.path("diagnostics", "ablation_manifest.json")
+    bench.write_json(
+        manifest_path,
+        {
+            "off_distribution": "dataset mean over discovery prompts",
+            "prompt_length_tokens": seq_len,
+            "discovery_examples": [ex.prompt.example_id for ex in discovery],
+            "head_means_shape": list(head_means.shape),
+            "mlp_means_shape": list(mlp_means.shape),
+            "scope": "attention heads are circuit nodes; MLPs are ranked as support only",
+        },
+    )
+    ctx.register_artifact(manifest_path, "diagnostic", "Definition of the mean-ablation off distribution.")
 
     # ----- screening ----------------------------------------------------------
     head_attr: dict[tuple[int, int], list[float]] = {}
     head_induct: dict[tuple[int, int], list[float]] = {}
     head_prev: dict[tuple[int, int], list[float]] = {}
+    head_first: dict[tuple[int, int], list[float]] = {}
     mlp_attr: dict[int, list[float]] = {}
+
     for ex in discovery:
         att = att_caps[ex.prompt.example_id]
         att_final = bench.AttentionCapture(
-            capture=att.capture, attentions=att.attentions,
-            o_in_last=att.o_in_last[:, -1], attn_out_last=att.attn_out_last[:, -1])
-        attr = head_attribution_scores(bundle, comp_anatomy, head_anatomy, att_final,
-                                       ex.target_id, ex.distractor_id)
-        cc = comp_caps[ex.prompt.example_id]
-        cc_final = bench.ComponentCapture(capture=cc.capture,
-                                          attn_contrib=cc.attn_contrib[:, -1],
-                                          mlp_contrib=cc.mlp_contrib[:, -1])
-        dla = compute_direct_logit_attribution(bundle, cc_final, ex.target_id, ex.distractor_id)
-        for l in range(n_layers):
-            mlp_attr.setdefault(l, []).append(dla["mlp_scores"][l])
-            for h in range(n_heads):
-                head_attr.setdefault((l, h), []).append(attr["scores"][l][h])
-                pattern = att.attentions[l, h]
-                head_prev.setdefault((l, h), []).append(prev_token_score(pattern))
+            capture=att.capture,
+            attentions=att.attentions,
+            o_in_last=att.o_in_last[:, -1],
+            attn_out_last=att.attn_out_last[:, -1],
+        )
+        attr = head_attribution_scores(bundle, comp_anatomy, head_anatomy, att_final, ex.target_id, ex.distractor_id)
+
+        comp = comp_caps[ex.prompt.example_id]
+        comp_final = bench.ComponentCapture(
+            capture=comp.capture,
+            attn_contrib=comp.attn_contrib[:, -1],
+            mlp_contrib=comp.mlp_contrib[:, -1],
+        )
+        dla = compute_direct_logit_attribution(bundle, comp_final, ex.target_id, ex.distractor_id)
+
+        for layer in range(n_layers):
+            mlp_attr.setdefault(layer, []).append(float(dla["mlp_scores"][layer]))
+            for head in range(n_heads):
+                key = (layer, head)
+                pattern = att.attentions[layer, head]
+                head_attr.setdefault(key, []).append(float(attr["scores"][layer][head]))
+                head_prev.setdefault(key, []).append(prev_token_score(pattern))
+                head_first.setdefault(key, []).append(first_token_score(pattern))
                 ind = induction_score(pattern, att.capture.input_ids)
-                if ind is not None:
-                    head_induct.setdefault((l, h), []).append(ind)
+                head_induct.setdefault(key, []).append(0.0 if ind is None else float(ind))
 
     mean_attr = {k: statistics.fmean(v) for k, v in head_attr.items()}
     mean_induct = {k: statistics.fmean(v) for k, v in head_induct.items()}
     mean_prev = {k: statistics.fmean(v) for k, v in head_prev.items()}
+    mean_first = {k: statistics.fmean(v) for k, v in head_first.items()}
     mean_mlp = {k: statistics.fmean(v) for k, v in mlp_attr.items()}
 
-    screen: dict[tuple[int, int], tuple[float, str]] = {}
-    for k in sorted(mean_attr, key=lambda k: -abs(mean_attr[k]))[:SCREEN_TOP_ATTRIBUTION]:
-        screen[k] = (mean_attr[k], "attribution")
-    for k in sorted(mean_induct, key=lambda k: -mean_induct[k])[:SCREEN_TOP_INDUCTION]:
-        screen[k] = (mean_induct[k], "multiple") if k in screen else (mean_induct[k], "induction")
-    for k in sorted(mean_prev, key=lambda k: -mean_prev[k])[:SCREEN_TOP_PREV]:
-        screen[k] = (mean_prev[k], "multiple") if k in screen else (mean_prev[k], "prev_token")
-    mlp_candidates = sorted(mean_mlp, key=lambda k: -abs(mean_mlp[k]))[:N_MLP_CANDIDATES]
-    print(f"[lab6] screened {len(screen)} candidate heads + {len(mlp_candidates)} candidate MLPs")
+    attr_rank = rank_map(mean_attr, key_abs=True)
+    induct_rank = rank_map(mean_induct)
+    prev_rank = rank_map(mean_prev)
+    top_attr, top_ind, top_prev = screen_budgets(n_layers, n_heads)
 
-    def motif_label(k: tuple[int, int]) -> str:
-        if mean_induct.get(k, 0) >= 0.35:
+    screen_reasons: dict[tuple[int, int], set[str]] = {}
+    for key in sorted(mean_attr, key=lambda k: -abs(mean_attr[k]))[:top_attr]:
+        screen_reasons.setdefault(key, set()).add("attribution")
+    for key in sorted(mean_induct, key=lambda k: -mean_induct[k])[:top_ind]:
+        screen_reasons.setdefault(key, set()).add("induction")
+    for key in sorted(mean_prev, key=lambda k: -mean_prev[k])[:top_prev]:
+        screen_reasons.setdefault(key, set()).add("prev_token")
+
+    def motif_label(key: tuple[int, int]) -> str:
+        if mean_induct.get(key, 0.0) >= MOTIF_STRONG_THRESHOLD:
             return "induction"
-        if mean_prev.get(k, 0) >= 0.35:
+        if mean_prev.get(key, 0.0) >= MOTIF_STRONG_THRESHOLD:
             return "previous_token"
+        if mean_first.get(key, 0.0) >= FIRST_TOKEN_SINK_THRESHOLD:
+            return "first_token_sink"
         return "other"
 
-    head_labels = {k: motif_label(k) for k in screen}
+    head_labels = {key: motif_label(key) for key in screen_reasons}
+    mlp_candidates = sorted(mean_mlp, key=lambda layer: -abs(mean_mlp[layer]))[:N_MLP_CANDIDATES]
+    print(
+        f"[lab6] screened {len(screen_reasons)} candidate heads "
+        f"(attr {top_attr}, induction {top_ind}, previous-token {top_prev}) "
+        f"+ {len(mlp_candidates)} candidate MLPs"
+    )
 
     # ----- causal ranking ------------------------------------------------------
     cand_rows: list[dict[str, Any]] = []
     head_causal_drop: dict[tuple[int, int], float] = {}
-    for (l, h), (score, reason) in sorted(screen.items()):
-        ablated = metric_under_ablation(bundle, discovery, head_anatomy, comp_anatomy,
-                                        heads=[(l, h)], mlps=[], head_means=head_means, mlp_means=mlp_means)
+    head_single_metric: dict[tuple[int, int], float] = {}
+
+    for key in sorted(screen_reasons, key=lambda k: min(attr_rank[k], induct_rank[k], prev_rank[k])):
+        layer, head = key
+        ablated = metric_under_ablation(
+            bundle,
+            discovery,
+            head_anatomy,
+            comp_anatomy,
+            heads=[key],
+            mlps=[],
+            head_means=head_means,
+            mlp_means=mlp_means,
+        )
         drop = base_metric - ablated
-        head_causal_drop[(l, h)] = drop
-        cand_rows.append({
-            "node": node_name("head", l, h), "kind": "head", "layer": l, "head": h,
-            "screen_score": round(score, 4), "screen_reason": reason,
-            "motif_label": head_labels[(l, h)],
-            "causal_drop": round(drop, 4),
-        })
-    for l in mlp_candidates:
-        ablated = metric_under_ablation(bundle, discovery, head_anatomy, comp_anatomy,
-                                        heads=[], mlps=[l], head_means=head_means, mlp_means=mlp_means)
-        cand_rows.append({
-            "node": node_name("mlp", l), "kind": "mlp", "layer": l, "head": "",
-            "screen_score": round(mean_mlp[l], 4), "screen_reason": "attribution",
-            "motif_label": "", "causal_drop": round(base_metric - ablated, 4),
-        })
+        head_causal_drop[key] = drop
+        head_single_metric[key] = ablated
+        reason = "+".join(sorted(screen_reasons[key]))
+        cheap_rank = min(attr_rank[key], induct_rank[key], prev_rank[key])
+        cand_rows.append(
+            {
+                "node": node_name("head", layer, head),
+                "kind": "head",
+                "layer": layer,
+                "head": head,
+                "screen_reason": reason,
+                "cheap_rank": cheap_rank,
+                "mean_attr": round(mean_attr[key], 5),
+                "abs_attr_rank": attr_rank[key],
+                "induction_score": round(mean_induct[key], 5),
+                "induction_rank": induct_rank[key],
+                "prev_token_score": round(mean_prev[key], 5),
+                "prev_token_rank": prev_rank[key],
+                "first_token_score": round(mean_first[key], 5),
+                "motif_label": head_labels[key],
+                "single_ablated_metric": round(ablated, 5),
+                "causal_drop": round(drop, 5),
+            }
+        )
+
+    for layer in mlp_candidates:
+        ablated = metric_under_ablation(
+            bundle,
+            discovery,
+            head_anatomy,
+            comp_anatomy,
+            heads=[],
+            mlps=[layer],
+            head_means=head_means,
+            mlp_means=mlp_means,
+        )
+        cand_rows.append(
+            {
+                "node": node_name("mlp", layer),
+                "kind": "mlp",
+                "layer": layer,
+                "head": "",
+                "screen_reason": "attribution",
+                "cheap_rank": "",
+                "mean_attr": round(mean_mlp[layer], 5),
+                "abs_attr_rank": "",
+                "induction_score": "",
+                "induction_rank": "",
+                "prev_token_score": "",
+                "prev_token_rank": "",
+                "first_token_score": "",
+                "motif_label": "support_mlp",
+                "single_ablated_metric": round(ablated, 5),
+                "causal_drop": round(base_metric - ablated, 5),
+            }
+        )
+
+    # Add causal ranks for screened heads.
+    head_rows = [r for r in cand_rows if r["kind"] == "head"]
+    causal_rank_by_node = {
+        r["node"]: i + 1 for i, r in enumerate(sorted(head_rows, key=lambda row: -row["causal_drop"]))
+    }
+    for row in cand_rows:
+        row["causal_rank"] = causal_rank_by_node.get(row["node"], "")
+        if row["kind"] == "head" and isinstance(row["cheap_rank"], int) and row["causal_rank"]:
+            row["rank_gap_cheap_minus_causal"] = int(row["cheap_rank"]) - int(row["causal_rank"])
+        else:
+            row["rank_gap_cheap_minus_causal"] = ""
+
+    cand_rows_sorted = sorted(cand_rows, key=lambda r: (r["kind"] != "head", -float(r["causal_drop"])))
     cand_path = ctx.path("tables", "candidate_components.csv")
-    bench.write_csv_with_context(ctx, cand_path, cand_rows)
-    ctx.register_artifact(cand_path, "table", "Screened candidates with screening scores and causal drops.")
+    bench.write_csv_with_context(ctx, cand_path, cand_rows_sorted)
+    ctx.register_artifact(cand_path, "table", "Screened candidates with cheap scores, motif labels, and causal drops.")
     results_path = ctx.path("results.csv")
-    bench.write_csv_with_context(ctx, results_path, cand_rows)
+    bench.write_csv_with_context(ctx, results_path, cand_rows_sorted)
     ctx.register_artifact(results_path, "results", "Alias of candidate_components.csv for the standard run contract.")
 
     # ----- greedy pruning -------------------------------------------------------
-    all_heads = [(l, h) for l in range(n_layers) for h in range(n_heads)]
+    all_heads = [(layer, head) for layer in range(n_layers) for head in range(n_heads)]
 
-    def faithfulness_of(circuit_heads: list[tuple[int, int]], examples: list[TaskExample],
-                        base: float) -> float:
-        complement = [k for k in all_heads if k not in set(circuit_heads)]
-        m = metric_under_ablation(bundle, examples, head_anatomy, comp_anatomy,
-                                  heads=complement, mlps=[], head_means=head_means, mlp_means=mlp_means)
-        return m / base
+    def faithfulness_of(circuit_heads: Sequence[tuple[int, int]], examples: Sequence[TaskExample], base: float) -> float:
+        circuit_set = set(circuit_heads)
+        complement = [head for head in all_heads if head not in circuit_set]
+        metric = metric_under_ablation(
+            bundle,
+            examples,
+            head_anatomy,
+            comp_anatomy,
+            heads=complement,
+            mlps=[],
+            head_means=head_means,
+            mlp_means=mlp_means,
+        )
+        ratio = safe_ratio(metric, base)
+        if ratio is None:
+            raise RuntimeError("Cannot compute faithfulness ratio because the base metric is zero.")
+        return ratio
 
-    circuit = [(r["layer"], r["head"]) for r in cand_rows
-               if r["kind"] == "head" and r["causal_drop"] > 0]
+    circuit = [key for key, drop in head_causal_drop.items() if drop > 0]
     if not circuit:
         raise RuntimeError(
             "No screened head has a positive causal drop; cannot assemble a circuit. "
             "See tables/candidate_components.csv."
         )
-    circuit.sort(key=lambda k: -next(r["causal_drop"] for r in cand_rows
-                                     if r["kind"] == "head" and (r["layer"], r["head"]) == k))
-    trajectory = [{"n_nodes": len(circuit), "faithfulness": round(faithfulness_of(circuit, discovery, base_metric), 4),
-                   "removed": ""}]
-    print(f"[lab6] starting circuit: {len(circuit)} heads, faithfulness {trajectory[0]['faithfulness']:.3f}")
+    circuit.sort(key=lambda key: -head_causal_drop[key])
+    current_faith = faithfulness_of(circuit, discovery, base_metric)
+    trajectory: list[dict[str, Any]] = [
+        {
+            "step": 0,
+            "n_nodes": len(circuit),
+            "faithfulness": round(current_faith, 5),
+            "removed": "",
+            "rule": "start with every positive-causal screened head",
+        }
+    ]
+    print(f"[lab6] starting circuit: {len(circuit)} heads, faithfulness {current_faith:.3f}")
+
+    stop_reason = "one head remains"
     while len(circuit) > 1:
-        options = []
-        for k in circuit:
-            reduced = [c for c in circuit if c != k]
-            options.append((faithfulness_of(reduced, discovery, base_metric), k))
-        best_f, best_k = max(options)
-        if best_f < FAITHFULNESS_FLOOR:
+        options: list[tuple[float, tuple[int, int]]] = []
+        for key in circuit:
+            reduced = [h for h in circuit if h != key]
+            options.append((faithfulness_of(reduced, discovery, base_metric), key))
+        best_faith, best_key = max(options, key=lambda item: item[0])
+
+        if current_faith < FAITHFULNESS_FLOOR:
+            if best_faith <= current_faith + 1e-9:
+                stop_reason = "candidate set is below the faithfulness floor and no removal improves it"
+                break
+        elif best_faith < FAITHFULNESS_FLOOR:
+            stop_reason = "next removal would cross the faithfulness floor"
             break
-        circuit = [c for c in circuit if c != best_k]
-        trajectory.append({"n_nodes": len(circuit), "faithfulness": round(best_f, 4),
-                           "removed": node_name("head", *best_k)})
-        print(f"[lab6] pruned {node_name('head', *best_k)} -> {len(circuit)} heads, "
-              f"faithfulness {best_f:.3f}")
+
+        circuit = [h for h in circuit if h != best_key]
+        current_faith = best_faith
+        trajectory.append(
+            {
+                "step": len(trajectory),
+                "n_nodes": len(circuit),
+                "faithfulness": round(best_faith, 5),
+                "removed": node_name("head", *best_key),
+                "rule": "removed least costly head",
+            }
+        )
+        print(
+            f"[lab6] pruned {node_name('head', *best_key)} -> {len(circuit)} heads, "
+            f"faithfulness {best_faith:.3f}"
+        )
+    else:
+        stop_reason = "one head remains"
+
     traj_path = ctx.path("tables", "prune_trajectory.csv")
     bench.write_csv_with_context(ctx, traj_path, trajectory)
     ctx.register_artifact(traj_path, "table", "Faithfulness at each greedy pruning step.")
+    meets_floor = current_faith >= FAITHFULNESS_FLOOR
 
     # ----- F / C / M evaluation ---------------------------------------------------
-    heldout_base = statistics.fmean(ex.base_diff for ex in heldout) if heldout else None
-    fcm: dict[str, Any] = {}
-    minimality_rows = []
-    for fam, examples, base in (("discovery", discovery, base_metric),
-                                ("heldout", heldout, heldout_base)):
-        if not examples or not base or base <= 0:
-            continue
+    heldout_positive = [ex for ex in heldout if ex.base_diff > 0]
+    heldout_base = statistics.fmean(ex.base_diff for ex in heldout_positive) if heldout_positive else None
+    fcm: dict[str, Any] = {
+        "faithfulness_floor": FAITHFULNESS_FLOOR,
+        "meets_faithfulness_floor": meets_floor,
+        "prune_stop_reason": stop_reason,
+    }
+
+    def evaluate_family(name: str, examples: Sequence[TaskExample], base: float | None) -> None:
+        if not examples or base is None or base <= 0:
+            return
         faith = faithfulness_of(circuit, examples, base)
-        circuit_ablated = metric_under_ablation(bundle, examples, head_anatomy, comp_anatomy,
-                                                heads=circuit, mlps=[], head_means=head_means,
-                                                mlp_means=mlp_means)
-        fcm[fam] = {
-            "base_metric": round(base, 4),
-            "faithfulness": round(faith, 4),
-            "completeness_ratio": round(circuit_ablated / base, 4),
+        circuit_ablated = metric_under_ablation(
+            bundle,
+            examples,
+            head_anatomy,
+            comp_anatomy,
+            heads=circuit,
+            mlps=[],
+            head_means=head_means,
+            mlp_means=mlp_means,
+        )
+        completeness_ratio = safe_ratio(circuit_ablated, base)
+        if completeness_ratio is None:
+            return
+        fcm[name] = {
+            "n_prompts": len(examples),
+            "base_metric": round(base, 5),
+            "faithfulness": round(faith, 5),
+            "circuit_ablated_metric": round(circuit_ablated, 5),
+            "completeness_ratio": round(completeness_ratio, 5),
+            "completeness_effect": round(1.0 - completeness_ratio, 5),
         }
-    for k in circuit:
-        reduced = [c for c in circuit if c != k]
+
+    evaluate_family("discovery", discovery, base_metric)
+    evaluate_family("heldout", heldout_positive, heldout_base)
+
+    minimality_rows: list[dict[str, Any]] = []
+    discovery_faith = fcm["discovery"]["faithfulness"]
+    for key in circuit:
+        reduced = [h for h in circuit if h != key]
         f_without = faithfulness_of(reduced, discovery, base_metric)
-        minimality_rows.append({
-            "node": node_name("head", *k), "motif_label": head_labels.get(k, "other"),
-            "faithfulness_without": round(f_without, 4),
-            "marginal_value": round(fcm["discovery"]["faithfulness"] - f_without, 4),
-        })
+        marginal = discovery_faith - f_without
+        minimality_rows.append(
+            {
+                "node": node_name("head", *key),
+                "layer": key[0],
+                "head": key[1],
+                "motif_label": head_labels.get(key, "other"),
+                "single_head_causal_drop": round(head_causal_drop.get(key, float("nan")), 5),
+                "faithfulness_without": round(f_without, 5),
+                "marginal_value": round(marginal, 5),
+                "minimality_passes_positive_marginal": marginal > 0,
+            }
+        )
+    minimality_rows.sort(key=lambda row: row["marginal_value"])
     fcm["minimality_worst_marginal"] = min((r["marginal_value"] for r in minimality_rows), default=None)
+    fcm["minimality_all_positive"] = all(r["minimality_passes_positive_marginal"] for r in minimality_rows)
+
     fcm_path = ctx.path("faithfulness_completeness_minimality.json")
-    bench.write_json(fcm_path, {"circuit": [node_name("head", *k) for k in circuit], **fcm,
-                                "minimality": minimality_rows})
-    ctx.register_artifact(fcm_path, "metrics", "The three earned circuit numbers, discovery and held-out.")
+    bench.write_json(
+        fcm_path,
+        {
+            "circuit": [node_name("head", *key) for key in circuit],
+            "circuit_tuples": [list(key) for key in circuit],
+            **fcm,
+            "minimality": minimality_rows,
+            "interpretation": {
+                "faithfulness": "complement of circuit heads mean-ablated; higher is more sufficient",
+                "completeness_ratio": "circuit heads mean-ablated; lower means the circuit was more necessary",
+                "minimality": "loss in faithfulness when each kept head is removed",
+            },
+        },
+    )
+    ctx.register_artifact(fcm_path, "metrics", "Faithfulness, completeness, and minimality for the final circuit.")
     min_path = ctx.path("tables", "pruned_circuit.csv")
     bench.write_csv_with_context(ctx, min_path, minimality_rows)
     ctx.register_artifact(min_path, "table", "Every kept node with its marginal faithfulness value.")
-    print(f"[lab6] circuit {[node_name('head', *k) for k in circuit]}: "
-          + ", ".join(f"{fam} F={v['faithfulness']:.2f} C-ratio={v['completeness_ratio']:.2f}"
-                      for fam, v in fcm.items() if isinstance(v, dict)))
-
-    # ----- the one edge claim: ablation interaction --------------------------------
-    edge = None
-    inducts = [k for k in circuit if head_labels.get(k) == "induction"]
-    prevs = sorted(
-        (
-            k for k in screen
-            if head_labels.get(k) == "previous_token"
-            and head_causal_drop.get(k, 0.0) > 1e-6
-        ),
-        key=lambda k: -head_causal_drop[k],
+    print(
+        f"[lab6] final circuit {[node_name('head', *h) for h in circuit]}: "
+        + ", ".join(
+            f"{family} F={values['faithfulness']:.2f} C-ratio={values['completeness_ratio']:.2f}"
+            for family, values in fcm.items()
+            if isinstance(values, dict) and "faithfulness" in values
+        )
     )
-    if inducts and prevs:
-        h_i = max(inducts, key=lambda k: mean_induct.get(k, 0))
-        h_p = prevs[0]
-        m_i = metric_under_ablation(bundle, discovery, head_anatomy, comp_anatomy,
-                                    heads=[h_i], mlps=[], head_means=head_means, mlp_means=mlp_means)
-        m_p = metric_under_ablation(bundle, discovery, head_anatomy, comp_anatomy,
-                                    heads=[h_p], mlps=[], head_means=head_means, mlp_means=mlp_means)
-        m_ip = metric_under_ablation(bundle, discovery, head_anatomy, comp_anatomy,
-                                     heads=[h_i, h_p], mlps=[], head_means=head_means, mlp_means=mlp_means)
-        effect_p = base_metric - m_p
-        effect_p_given_i = m_i - m_ip
-        routed = 1.0 - (effect_p_given_i / effect_p)
+
+    # ----- the one edge claim: ordered ablation interaction -------------------
+    induction_heads = [key for key in circuit if head_labels.get(key) == "induction"]
+    prev_heads = [
+        key
+        for key in screen_reasons
+        if head_labels.get(key) == "previous_token" and head_causal_drop.get(key, 0.0) > EDGE_MIN_SOURCE_EFFECT
+    ]
+    edge_rows: list[dict[str, Any]] = []
+    for h_prev in prev_heads:
+        for h_ind in induction_heads:
+            if h_prev == h_ind or h_prev[0] >= h_ind[0]:
+                continue
+            m_i = head_single_metric.get(h_ind)
+            if m_i is None:
+                m_i = metric_under_ablation(
+                    bundle,
+                    discovery,
+                    head_anatomy,
+                    comp_anatomy,
+                    heads=[h_ind],
+                    mlps=[],
+                    head_means=head_means,
+                    mlp_means=mlp_means,
+                )
+            m_p = head_single_metric[h_prev]
+            m_ip = metric_under_ablation(
+                bundle,
+                discovery,
+                head_anatomy,
+                comp_anatomy,
+                heads=[h_ind, h_prev],
+                mlps=[],
+                head_means=head_means,
+                mlp_means=mlp_means,
+            )
+            effect_p = base_metric - m_p
+            effect_p_given_i = m_i - m_ip
+            interaction = effect_p - effect_p_given_i
+            raw_frac = safe_ratio(interaction, effect_p)
+            strength = edge_strength_label(raw_frac)
+            edge_rows.append(
+                {
+                    "edge": f"{node_name('head', *h_prev)} -> {node_name('head', *h_ind)}",
+                    "from_layer": h_prev[0],
+                    "from_head": h_prev[1],
+                    "to_layer": h_ind[0],
+                    "to_head": h_ind[1],
+                    "effect_prev_alone": round(effect_p, 5),
+                    "effect_prev_given_induction_ablated": round(effect_p_given_i, 5),
+                    "interaction": round(interaction, 5),
+                    "raw_interaction_fraction": round_or_none(raw_frac, 5),
+                    "edge_strength": strength,
+                    "claimable_fraction": raw_frac is not None and EDGE_MIN_ROUTED_FRACTION <= raw_frac <= 1.0,
+                }
+            )
+
+    edge_csv_path = ctx.path("tables", "edge_interactions.csv")
+    bench.write_csv_with_context(ctx, edge_csv_path, sorted(edge_rows, key=lambda r: r["interaction"], reverse=True))
+    ctx.register_artifact(edge_csv_path, "table", "All ordered previous-token to induction ablation-interaction checks.")
+
+    edge: dict[str, Any] | None = None
+    if edge_rows:
+        best_edge = max(edge_rows, key=lambda r: r["interaction"])
+        h_prev = (best_edge["from_layer"], best_edge["from_head"])
+        h_ind = (best_edge["to_layer"], best_edge["to_head"])
+        raw_fraction = best_edge["raw_interaction_fraction"]
+        claimed = bool(best_edge["claimable_fraction"] and best_edge["interaction"] > 0)
+        if claimed:
+            reason = f"ordered pair has positive interaction above the reporting threshold; strength={best_edge['edge_strength']}"
+        elif raw_fraction is not None and raw_fraction > 1.0:
+            reason = "interaction is positive but larger than the source effect, so it is not a literal routed fraction"
+        elif best_edge["interaction"] <= 0:
+            reason = "best ordered pair has no positive interaction"
+        else:
+            reason = "best ordered pair is below the routed-fraction threshold"
         edge = {
-            "from": h_p, "to": h_i,
-            "effect_p_alone": round(effect_p, 4),
-            "effect_p_given_i_ablated": round(effect_p_given_i, 4),
-            "routed_fraction": round(routed, 4),
+            "claimed": claimed,
+            "from": h_prev,
+            "to": h_ind,
+            "edge": best_edge["edge"],
+            "effect_prev_alone": best_edge["effect_prev_alone"],
+            "effect_prev_given_induction_ablated": best_edge["effect_prev_given_induction_ablated"],
+            "interaction": best_edge["interaction"],
+            "raw_interaction_fraction": raw_fraction,
+            "strength": best_edge["edge_strength"],
+            "reason": reason,
         }
-        edge_path = ctx.path("tables", "edge_claim.json")
-        bench.write_json(edge_path, {
-            "edge": f"{node_name('head', *h_p)} -> {node_name('head', *h_i)}",
-            **{k: v for k, v in edge.items() if k not in ("from", "to")},
-            "explanation": (
-                "Ablation interaction: if the previous-token head's effect "
-                "shrinks when the induction head is already ablated, the "
-                "shrunk fraction routed through the induction head. This is "
-                "an edge CLAIM at interaction granularity; path patching "
-                "(future work) would localize it to keys vs values."
+    else:
+        edge = {
+            "claimed": False,
+            "edge": None,
+            "reason": (
+                "No ordered previous-token head before an induction head survived the causal and motif checks. "
+                "The lab therefore makes no edge claim."
             ),
-        })
-        ctx.register_artifact(edge_path, "metrics", "The one edge claim, earned by ablation interaction.")
-        print(f"[lab6] edge {node_name('head', *h_p)} -> {node_name('head', *h_i)}: "
-              f"effect {effect_p:+.3f} alone, {effect_p_given_i:+.3f} given induction ablated "
-              f"({(routed or 0):.0%} routed)")
+        }
 
-    # ----- failure cases ------------------------------------------------------------
-    per_prompt_faith = []
-    for ex in discovery + heldout:
-        if ex.base_diff <= 0:
-            continue
-        complement = [k for k in all_heads if k not in set(circuit)]
-        logits = bench.run_with_node_set_ablation(
-            bundle, ex.prompt.prompt, head_anatomy, comp_anatomy,
-            heads=complement, mlps=[], head_means=head_means, mlp_means=mlp_means)
-        f = float(logits[ex.target_id] - logits[ex.distractor_id]) / ex.base_diff
-        per_prompt_faith.append({"example_id": ex.prompt.example_id, "family": ex.prompt.family,
-                                 "base_diff": round(ex.base_diff, 3), "faithfulness": round(f, 3)})
-    per_prompt_faith.sort(key=lambda r: r["faithfulness"])
-    failures = per_prompt_faith[:2]
-
-    # ----- plots -----------------------------------------------------------------------
-    if not args.no_plots:
-        plot_screen_vs_causal(ctx, cand_rows)
-        plot_prune_trajectory(ctx, trajectory)
-        mlp_support = [r for r in cand_rows if r["kind"] == "mlp" and r["causal_drop"] > 0]
-        plot_circuit_graph(ctx, circuit, head_labels, mlp_support, edge, n_layers, n_heads)
-        if "heldout" in fcm and "discovery" in fcm:
-            plot_fcm(ctx, fcm)
-
-    # ----- circuit card ------------------------------------------------------------------
-    card = [
-        "# Circuit card: induction completion",
-        "",
-        f"- **Task:** induction completion on 8-token repeating patterns "
-        f"(target = induction continuation, distractor = cycle restart)",
-        f"- **Model:** `{bundle.anatomy.model_id}` | run `{ctx.run_dir.name}`",
-        f"- **Dataset:** {len(discovery)} discovery prompts ({dropped} dropped at the gate), "
-        f"{len(heldout)} held-out prompts in fresh vocabularies",
-        f"- **Metric:** mean logit(target) − logit(distractor); base = {base_metric:+.3f}",
-        f"- **Candidate components:** {len(cand_rows)} screened "
-        f"({len([r for r in cand_rows if r['kind'] == 'head'])} heads, "
-        f"{len([r for r in cand_rows if r['kind'] == 'mlp'])} MLPs)",
-        f"- **Validated circuit (heads):** " + ", ".join(
-            f"{node_name('head', *k)} ({head_labels.get(k, 'other')})" for k in circuit),
-        f"- **Supporting MLPs (ranked, not in the routing claim):** " + (", ".join(
-            f"MLP{r['layer']} (drop {r['causal_drop']:+.2f})"
-            for r in sorted((r for r in cand_rows if r["kind"] == "mlp" and r["causal_drop"] > 0),
-                            key=lambda r: -r["causal_drop"])) or "none"),
-        "",
-        "## Scores",
-        "",
-        "| family | faithfulness | completeness ratio |",
-        "|---|---:|---:|",
-    ]
-    for fam, v in fcm.items():
-        if isinstance(v, dict):
-            card.append(f"| {fam} | {v['faithfulness']} | {v['completeness_ratio']} |")
-    if any(isinstance(v, dict) and v["faithfulness"] > 1.0 for v in fcm.values()):
-        card.append("")
-        card.append("Note: faithfulness above 1.0 is possible and reported as-is — the "
-                    "mean-ablated complement was mildly suppressing the behavior on that family.")
-    card += [
-        "",
-        f"Minimality: worst marginal value {fcm['minimality_worst_marginal']} "
-        "(see `tables/pruned_circuit.csv` — every kept node must earn its place).",
-        "",
-        "## The edge claim",
-        "",
-    ]
-    if edge is not None and edge.get("routed_fraction") is not None:
-        card.append(
-            f"{node_name('head', *edge['from'])} → {node_name('head', *edge['to'])}: "
-            f"{edge['routed_fraction']:.0%} of the previous-token head's effect routes through "
-            f"the induction head (ablation interaction; see `tables/edge_claim.json`)."
+    edge_path = ctx.path("tables", "edge_claim.json")
+    bench.write_json(
+        edge_path,
+        {
+            **edge,
+            "thresholds": {
+                "min_source_effect": EDGE_MIN_SOURCE_EFFECT,
+                "min_routed_fraction": EDGE_MIN_ROUTED_FRACTION,
+                "strong_routed_fraction": EDGE_STRONG_ROUTED_FRACTION,
+                "requires_source_layer_lt_target_layer": True,
+            },
+            "explanation": (
+                "Ablation interaction asks whether a previous-token head's effect shrinks "
+                "when the induction head is already ablated. This licenses only an "
+                "interaction-granularity edge. Path patching would be needed to localize "
+                "the route to keys, values, or another subpath."
+            ),
+        },
+    )
+    ctx.register_artifact(edge_path, "metrics", "The one edge claim, or the reason no edge was claimed.")
+    if edge.get("claimed"):
+        print(
+            f"[lab6] {edge['strength']} edge claimed: "
+            f"{edge['edge']} ({edge['raw_interaction_fraction']:.0%} interaction fraction)"
         )
     else:
+        print(f"[lab6] no edge claimed: {edge['reason']}")
+
+    # ----- per-prompt failures -------------------------------------------------
+    per_prompt_rows: list[dict[str, Any]] = []
+    circuit_set = set(circuit)
+    complement = [head for head in all_heads if head not in circuit_set]
+    for ex in discovery + heldout:
+        if ex.base_diff <= 0:
+            per_prompt_rows.append(
+                {
+                    "example_id": ex.prompt.example_id,
+                    "family": ex.prompt.family,
+                    "prompt": ex.prompt.prompt,
+                    "base_diff": round(ex.base_diff, 5),
+                    "circuit_diff": "",
+                    "faithfulness": None,
+                    "note": "base model did not prefer the target; ratio undefined",
+                }
+            )
+            continue
+        logits = bench.run_with_node_set_ablation(
+            bundle,
+            ex.prompt.prompt,
+            head_anatomy,
+            comp_anatomy,
+            heads=complement,
+            mlps=[],
+            head_means=head_means,
+            mlp_means=mlp_means,
+        )
+        circuit_diff = float(logits[ex.target_id] - logits[ex.distractor_id])
+        per_prompt_rows.append(
+            {
+                "example_id": ex.prompt.example_id,
+                "family": ex.prompt.family,
+                "prompt": ex.prompt.prompt,
+                "base_diff": round(ex.base_diff, 5),
+                "circuit_diff": round(circuit_diff, 5),
+                "faithfulness": round(circuit_diff / ex.base_diff, 5),
+                "note": "",
+            }
+        )
+    per_prompt_path = ctx.path("tables", "per_prompt_faithfulness.csv")
+    bench.write_csv_with_context(ctx, per_prompt_path, per_prompt_rows)
+    ctx.register_artifact(per_prompt_path, "table", "Per-prompt faithfulness and the two weakest failure cases.")
+    failures = sorted(
+        (row for row in per_prompt_rows if row["faithfulness"] is not None),
+        key=lambda row: row["faithfulness"],
+    )[:2]
+
+    # ----- plots ---------------------------------------------------------------
+    if not args.no_plots:
+        plot_screen_vs_causal(ctx, cand_rows_sorted)
+        plot_prune_trajectory(ctx, trajectory, floor=FAITHFULNESS_FLOOR)
+        mlp_support = [r for r in cand_rows_sorted if r["kind"] == "mlp" and float(r["causal_drop"]) > 0]
+        plot_circuit_graph(ctx, circuit, head_labels, mlp_support, edge, n_layers, n_heads)
+        if "discovery" in fcm:
+            plot_fcm(ctx, fcm, floor=FAITHFULNESS_FLOOR)
+        plot_prompt_faithfulness(ctx, per_prompt_rows)
+        plot_edge_interactions(ctx, edge_rows)
+
+    # ----- circuit card --------------------------------------------------------
+    supporting_mlps = sorted(
+        (r for r in cand_rows_sorted if r["kind"] == "mlp" and float(r["causal_drop"]) > 0),
+        key=lambda row: -float(row["causal_drop"]),
+    )
+    card: list[str] = [
+        "# Circuit card: induction completion",
+        "",
+        f"- **Model:** `{bundle.anatomy.model_id}` | run `{ctx.run_dir.name}`",
+        "- **Task:** predict the induction continuation of fixed-length repeating patterns.",
+        "- **Metric:** mean logit(target) minus logit(distractor).",
+        f"- **Base metric:** {base_metric:+.3f} on {len(discovery)} discovery prompts.",
+        f"- **Dataset:** {len(discovery)} discovery prompts, {len(heldout)} held-out prompts "
+        f"({len(heldout_positive)} baseline-positive for F/C/M), {dropped} discovery prompts dropped.",
+        f"- **Circuit scope:** heads-only routing graph. MLPs stay intact for faithfulness and completeness.",
+        f"- **Ablation off distribution:** dataset mean over discovery prompts, sequence length {seq_len}.",
+        f"- **Validated heads:** {describe_head_list(circuit)}.",
+        f"- **Faithfulness verdict:** {'passes' if meets_floor else 'does not pass'} the floor of {FAITHFULNESS_FLOOR:.2f}.",
+        "",
+        "## Candidate screen",
+        "",
+        f"Screened {len(screen_reasons)} heads using attribution top {top_attr}, induction top {top_ind}, "
+        f"and previous-token top {top_prev}. Screening proposes suspects; mean-ablation decides which suspects matter.",
+        "",
+        "## Validated nodes",
+        "",
+        "| node | motif | single-head causal drop | marginal value |",
+        "|---|---|---:|---:|",
+    ]
+    marginal_by_node = {row["node"]: row for row in minimality_rows}
+    for key in circuit:
+        node = node_name("head", *key)
+        marg = marginal_by_node.get(node, {})
         card.append(
-            "No causally positive previous-token/induction pair survived the checks; no edge claimed."
+            f"| {node} | {head_labels.get(key, 'other')} | "
+            f"{head_causal_drop.get(key, float('nan')):+.3f} | {marg.get('marginal_value', '')} |"
         )
     card += [
         "",
-        "## Failure cases the circuit does not explain",
+        "**Supporting MLPs, not circuit nodes:** "
+        + (
+            ", ".join(f"MLP{r['layer']} (drop {float(r['causal_drop']):+.2f})" for r in supporting_mlps)
+            if supporting_mlps
+            else "none with positive causal drop among screened MLPs"
+        ),
         "",
+        "## Faithfulness, completeness, minimality",
+        "",
+        "| family | n | base metric | faithfulness | completeness ratio | completeness effect |",
+        "|---|---:|---:|---:|---:|---:|",
     ]
-    for f in failures:
-        card.append(f"- `{f['example_id']}` ({f['family']}): per-prompt faithfulness {f['faithfulness']} "
-                    f"(base diff {f['base_diff']})")
+    for family in ("discovery", "heldout"):
+        if family in fcm:
+            v = fcm[family]
+            card.append(
+                f"| {family} | {v['n_prompts']} | {v['base_metric']} | {v['faithfulness']} | "
+                f"{v['completeness_ratio']} | {v['completeness_effect']} |"
+            )
     card += [
         "",
-        "## Scope and filler terms (MDC honesty section)",
+        f"Minimality worst marginal value: `{fcm['minimality_worst_marginal']}`. "
+        "A negative value means at least one kept head hurt faithfulness under this pruning rule.",
+    ]
+    if any(isinstance(v, dict) and v.get("faithfulness", 0) > 1.0 for v in fcm.values()):
+        card += [
+            "",
+            "Faithfulness above 1.0 is reported rather than clipped. It means the mean-ablated complement "
+            "was suppressing the target metric on that prompt family.",
+        ]
+    card += [
         "",
-        "- Population: 8-token repeating patterns from the listed vocabularies. Nothing here",
-        "  claims the circuit handles natural-text induction (Lab 3's natural confirmation",
-        "  was pattern-level, not circuit-level).",
-        "- 'The previous-token head writes positional annotations' is a FILLER TERM at this",
-        "  evidence level: the edge claim shows routing, not content.",
-        "- Mean-ablation defines 'off'. A different off-distribution defines a different circuit.",
+        "## Edge claim",
+        "",
+    ]
+    if edge and edge.get("claimed"):
+        card.append(
+            f"Claimed {edge['strength']} edge `{edge['edge']}`: raw interaction fraction "
+            f"{edge['raw_interaction_fraction']:.0%} "
+            f"(reporting threshold {EDGE_MIN_ROUTED_FRACTION:.0%}; strong threshold {EDGE_STRONG_ROUTED_FRACTION:.0%}). "
+            "This is an ablation-interaction edge, not path patching."
+        )
+    else:
+        card.append(f"No edge claimed. Reason: {edge['reason'] if edge else 'no edge diagnostic produced'}")
+    card += [
+        "",
+        "## Failure cases the circuit least explains",
+        "",
+    ]
+    if failures:
+        for row in failures:
+            card.append(
+                f"- `{row['example_id']}` ({row['family']}): faithfulness {row['faithfulness']} "
+                f"with base diff {row['base_diff']}."
+            )
+    else:
+        card.append("- No ratio-defined failure cases were available.")
+    card += [
+        "",
+        "## Scope and filler terms, MDC honesty section",
+        "",
+        "- Population: fixed-length 8-token repeating patterns from the listed vocabularies.",
+        "- Circuit nodes: attention heads only. MLP layers are supporting infrastructure, not part of this routing graph.",
+        "- Intervention: dataset-mean ablation at all positions. A different off distribution defines a different circuit.",
+        "- Edge evidence: ablation interaction. Claims about keys, values, or exact subpaths are filler terms unless path patching is added.",
+        "- Natural-text induction, longer cycles, and alternate tokenizations are outside this card's scope.",
         "",
     ]
     card_path = ctx.path("circuit_card.md")
     bench.write_text(card_path, "\n".join(card))
-    ctx.register_artifact(card_path, "summary", "The circuit card: the lab's deliverable.")
+    ctx.register_artifact(card_path, "summary", "The Lab 6 circuit card deliverable.")
 
-    # ----- metrics, claims, summary --------------------------------------------------------
+    # ----- metrics, claims, summary ------------------------------------------
     metrics = {
         "base_metric": base_metric,
         "n_discovery": len(discovery),
         "n_heldout": len(heldout),
-        "circuit": [node_name("head", *k) for k in circuit],
-        "fcm": {k: v for k, v in fcm.items() if isinstance(v, dict)},
+        "n_heldout_positive": len(heldout_positive),
+        "circuit": [node_name("head", *key) for key in circuit],
+        "circuit_tuples": [list(key) for key in circuit],
+        "screen_budgets": {"attribution": top_attr, "induction": top_ind, "prev_token": top_prev},
+        "fcm": {key: value for key, value in fcm.items() if isinstance(value, dict)},
+        "meets_faithfulness_floor": meets_floor,
         "minimality_worst_marginal": fcm["minimality_worst_marginal"],
-        "edge": edge and {**{k: v for k, v in edge.items() if k not in ("from", "to")},
-                          "edge": f"{node_name('head', *edge['from'])}->{node_name('head', *edge['to'])}"},
+        "minimality_all_positive": fcm["minimality_all_positive"],
+        "prune_stop_reason": stop_reason,
+        "edge": edge,
     }
-    bench.write_json(ctx.path("metrics.json"), metrics)
-    ctx.register_artifact(ctx.path("metrics.json"), "metrics", "Aggregate Lab 6 metrics.")
+    metrics_path = ctx.path("metrics.json")
+    bench.write_json(metrics_path, metrics)
+    ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 6 metrics.")
 
     run_name = ctx.run_dir.name
-    claims = [
+    claims: list[dict[str, str]] = []
+    if meets_floor:
+        claim_text = (
+            f"A {len(circuit)}-head routing circuit ({describe_head_list(circuit)}) in {bundle.anatomy.model_id} "
+            f"is faithful at {fcm['discovery']['faithfulness']:.2f} of base behavior on {len(discovery)} "
+            "8-token induction prompts when every non-circuit head is dataset-mean ablated. "
+            f"Ablating the circuit leaves {fcm['discovery']['completeness_ratio']:.2f} of base. "
+            "MLPs are left intact, so this is a heads-only routing claim."
+        )
+    else:
+        claim_text = (
+            f"The screened Lab 6 head set in {bundle.anatomy.model_id} did not meet the faithfulness floor: "
+            f"the final {len(circuit)}-head circuit ({describe_head_list(circuit)}) preserved "
+            f"{fcm['discovery']['faithfulness']:.2f} of base behavior, below the {FAITHFULNESS_FLOOR:.2f} floor. "
+            "This is causal evidence about the screened components, but not a successful faithful-circuit claim."
+        )
+    claims.append(
         {
             "id": f"{LAB_ID}-C1",
             "tag": "CAUSAL",
-            "text": (
-                f"A {len(circuit)}-head circuit ({', '.join(node_name('head', *k) for k in circuit)}) in "
-                f"{bundle.anatomy.model_id} is faithful ({fcm['discovery']['faithfulness']:.2f} of base "
-                f"behavior with all other heads mean-ablated) and complete-ish (circuit ablation leaves "
-                f"{fcm['discovery']['completeness_ratio']:.2f} of base) for induction completion on "
-                f"{len(discovery)} 8-token pattern prompts. Intervention: dataset-mean ablation; "
-                "MLPs intact throughout."
-            ),
+            "text": claim_text,
             "artifact": f"runs/{run_name}/faithfulness_completeness_minimality.json",
             "falsifier": (
-                "A different off-distribution (zero or resample ablation) or longer prompts collapse "
-                "faithfulness — the circuit was an artifact of the mean-ablation choice."
+                "Zero ablation, resample ablation, longer prompts, or natural-text induction collapses the result. "
+                "That would show the circuit was specific to this off distribution or prompt family."
             ),
-        },
-    ]
+        }
+    )
+
     if "heldout" in fcm:
-        hf = fcm["heldout"]["faithfulness"]
-        over_note = (
-            " Held-out faithfulness above 1.0 means the mean-ablated complement was mildly "
-            "suppressing the behavior on these prompts (over-recovery on a small n), not "
-            "better-than-perfect transfer."
-            if hf > 1.0 else ""
+        heldout_note = (
+            " Held-out faithfulness above 1.0 means the mean-ablated complement was suppressing the metric, "
+            "not that the circuit is better than the full model."
+            if fcm["heldout"]["faithfulness"] > 1.0
+            else ""
         )
-        claims.append({
-            "id": f"{LAB_ID}-C2",
-            "tag": "CAUSAL",
-            "text": (
-                f"The circuit transfers to {len(heldout)} held-out vocabulary families: faithfulness "
-                f"{hf:.2f} vs {fcm['discovery']['faithfulness']:.2f} on "
-                "discovery — the subgraph is about the induction computation, not these tokens."
-                + over_note
-            ),
-            "artifact": f"runs/{run_name}/plots/circuit_scorecard.png",
-            "falsifier": "Longer cycles, natural text, or >8-token prompts drop held-out faithfulness to chance.",
-        })
-    if edge is not None and edge.get("routed_fraction") is not None:
-        claims.append({
-            "id": f"{LAB_ID}-C3",
-            "tag": "CAUSAL",
-            "text": (
-                f"Edge claim at interaction granularity: {edge['routed_fraction']:.0%} of "
-                f"{node_name('head', *edge['from'])}'s effect on the metric routes through "
-                f"{node_name('head', *edge['to'])} (effect {edge['effect_p_alone']:+.2f} alone vs "
-                f"{edge['effect_p_given_i_ablated']:+.2f} with the induction head already ablated)."
-            ),
-            "artifact": f"runs/{run_name}/tables/edge_claim.json",
-            "falsifier": "Path patching shows the interaction is via the residual stream, not k-composition.",
-        })
+        claims.append(
+            {
+                "id": f"{LAB_ID}-C2",
+                "tag": "CAUSAL",
+                "text": (
+                    f"The heads-only routing circuit transfers from discovery to {len(heldout_positive)} held-out "
+                    f"vocabulary prompts with faithfulness {fcm['heldout']['faithfulness']:.2f} versus "
+                    f"{fcm['discovery']['faithfulness']:.2f} on discovery. The claim is induction-pattern transfer, "
+                    "not natural-language generality."
+                    + heldout_note
+                ),
+                "artifact": f"runs/{run_name}/plots/circuit_scorecard.png",
+                "falsifier": "Held-out families, longer cycles, or a paraphrased natural-text induction set lose the faithfulness effect.",
+            }
+        )
+
+    if edge and edge.get("claimed"):
+        claims.append(
+            {
+                "id": f"{LAB_ID}-C3",
+                "tag": "CAUSAL",
+                "text": (
+                    f"Ordered edge claim at interaction granularity: {edge['edge']} has raw interaction fraction "
+                    f"{edge['raw_interaction_fraction']:.0%} ({edge['strength']}). The previous-token head's effect is "
+                    f"{edge['effect_prev_alone']:+.2f} alone versus {edge['effect_prev_given_induction_ablated']:+.2f} "
+                    "when the induction head is already ablated."
+                ),
+                "artifact": f"runs/{run_name}/tables/edge_claim.json",
+                "falsifier": "Path patching localizes the effect to a different route, or a redundant induction head absorbs the interaction.",
+            }
+        )
+
     bench.write_ledger_suggestions(ctx, LAB_ID, claims)
 
-    lines = [
+    lines: list[str] = [
         "# Lab 6 run summary: circuit discovery, the manual way",
         "",
         "## Run identity",
         "",
         f"- model: `{bundle.anatomy.model_id}` ({n_layers} blocks x {n_heads} heads)",
-        f"- task: induction completion, {len(discovery)} discovery + {len(heldout)} held-out prompts",
-        f"- evidence level: `CAUSAL` at circuit scope; mean-ablation defines 'off'",
-        "- self-checks: hook parity, lens, component anatomy, head decomposition",
+        f"- task: induction completion, {len(discovery)} discovery + {len(heldout)} held-out prompts "
+        f"({len(heldout_positive)} baseline-positive for F/C/M)",
+        "- evidence level: `CAUSAL` at heads-only circuit scope",
+        "- intervention: dataset-mean ablation at all positions",
+        "- self-checks: hook parity, lens, component decomposition, head decomposition",
         "",
         "## 1-4. Behavior, measurement, intervention, headline",
         "",
-        f"- base metric {base_metric:+.3f}; circuit of {len(circuit)} heads "
-        f"({', '.join(node_name('head', *k) for k in circuit)})",
+        f"- base metric {base_metric:+.3f}; circuit of {len(circuit)} heads ({describe_head_list(circuit)})",
+        f"- pruning stop: {stop_reason}",
+        f"- faithfulness floor: {FAITHFULNESS_FLOOR:.2f}; verdict: {'pass' if meets_floor else 'not passed'}",
     ]
-    for fam, v in fcm.items():
-        if isinstance(v, dict):
-            lines.append(f"- {fam}: faithfulness {v['faithfulness']}, completeness ratio {v['completeness_ratio']}")
+    for family in ("discovery", "heldout"):
+        if family in fcm:
+            values = fcm[family]
+            lines.append(
+                f"- {family}: faithfulness {values['faithfulness']}, "
+                f"completeness ratio {values['completeness_ratio']}, "
+                f"completeness effect {values['completeness_effect']}"
+            )
     lines += [
         f"- minimality: worst marginal value {fcm['minimality_worst_marginal']}",
-        f"- screening vs causal ranking: see `plots/screen_vs_causal.png` — the Syed et al. lesson",
+        f"- edge: {edge['edge'] + ' (' + edge['strength'] + ')' if edge and edge.get('claimed') else 'none claimed'}",
         "",
         "## 5. Claims",
         "",
     ]
-    for c in claims:
-        lines.append(f"- `{c['id']}` {c['tag']}: {c['text']}")
-        lines.append(f"  - falsifier: {c['falsifier']}")
+    for claim in claims:
+        lines.append(f"- `{claim['id']}` {claim['tag']}: {claim['text']}")
+        lines.append(f"  - falsifier: {claim['falsifier']}")
     lines += [
         "",
         "## 6. The reading order",
         "",
-        "1. `circuit_card.md` — the deliverable; everything else is its evidence.",
-        "2. `plots/circuit_graph.png` — the subgraph with its one earned edge.",
-        "3. `plots/prune_trajectory.png` — what each node costs.",
-        "4. `plots/screen_vs_causal.png` — where cheap ranking lied.",
-        "5. `plots/circuit_scorecard.png` — discovery vs held-out.",
+        "1. `circuit_card.md` - the deliverable; everything else is evidence for it.",
+        "2. `plots/circuit_graph.png` - validated heads, support MLPs, and any claimed edge.",
+        "3. `plots/prune_trajectory.png` - what each node costs during greedy pruning.",
+        "4. `plots/screen_vs_causal.png` - where cheap screening and causal ranking diverge.",
+        "5. `plots/circuit_scorecard.png` - discovery vs held-out faithfulness and completeness.",
+        "6. `tables/per_prompt_faithfulness.csv` - the specific prompts the circuit least explains.",
+        "7. `plots/edge_interactions.png` and `tables/edge_interactions.csv` - the ordered interaction checks.",
         "",
         "## 7. Caveats students must carry forward",
         "",
-        "- Keep this circuit card. Lab 9 will hold it next to an attribution graph.",
-        "- The card's 'filler terms' section is graded prose, not boilerplate.",
-        "- The circuit is heads-only by design; the MLP support table is where the",
-        "  'recall' part of the computation hides (Lab 5 said where).",
+        "- The circuit is a heads-only routing graph; MLPs are support, not nodes in the claim.",
+        "- Mean-ablation defines the off state. Changing the off state changes the circuit question.",
+        "- The edge test is an ablation interaction, not path patching.",
+        "- Keep this card. Lab 9 will compare this manual graph with an attribution graph.",
         "",
     ]
-    bench.write_text(ctx.path("run_summary.md"), "\n".join(lines))
-    ctx.register_artifact(ctx.path("run_summary.md"), "summary", "The seven standard questions answered.")
+    summary_path = ctx.path("run_summary.md")
+    bench.write_text(summary_path, "\n".join(lines))
+    ctx.register_artifact(summary_path, "summary", "The seven standard lab-summary questions answered.")
     print(f"[lab6] wrote circuit_card.md, run_summary.md, and {len(claims)} drafted ledger claims")
