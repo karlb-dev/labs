@@ -106,6 +106,8 @@ answers are the #1 silent killer of attribution numbers in the wild.
 4. `plots/signed_component_heatmap.png` — the per-example signed block ledger;
    this is the fastest way to find prompts whose category mean hides a fight.
 5. `plots/cumulative_logit_diff.png` — the ledger assembling over depth.
+   Distinct category colors matter here: if several families collapse into the
+   same color, you are looking at an old run or an unpatched palette.
 6. `plots/dla_vs_lens_<showcase>.png` — the frozen-norm ledger against Lab 1's
    moving-basis lens *for the same stream*. They disagree at early depths.
    Explain why before reading on. (Hint: which norm statistics does each use
@@ -131,6 +133,10 @@ later attention (its write at *earlier* positions is left intact). Lab 5
 
 1. Which layers add the largest positive contributions, and do attention and
    MLP peak at different depths? Cite `layer_component_summary.csv`.
+   Use `category_summary.csv`'s `mean_top_component_abs_score` and bounded
+   `mean_top_component_mass_share` for concentration. Do not divide the top
+   component by the signed net logit difference; conflict prompts often cancel
+   internally, making that "share" explode.
 2. In the conflict family, which components push the stored fact? Are they the
    same components that push the correct answer in the matching `fact`
    example? Cite specific rows of `component_contributions.csv`.

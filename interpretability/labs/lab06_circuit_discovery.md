@@ -90,6 +90,8 @@ The bench auto-sets eager attention (motif screen needs patterns).
 4. The edge claim: what does an X% routed fraction actually license you to
    say? If it came out near 0% on a model with several induction heads,
    what does THAT mean? (Hint: redundancy is not absence.)
+   If no edge is claimed, check whether any previous-token head had a
+   positive single-node causal drop; motif alone is not enough for an edge.
 5. MDC mapping: list your entities and activities. Mark every activity you
    named but did not show. The card's filler-terms section is graded prose.
 

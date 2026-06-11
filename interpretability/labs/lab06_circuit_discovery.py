@@ -274,8 +274,10 @@ def plot_circuit_graph(
             arrowprops={"arrowstyle": "-|>", "color": "black", "lw": 1.8, "shrinkA": 12, "shrinkB": 12},
         )
         mid_x, mid_y = (l1 + l2) / 2, (h1 + h2) / 2
-        ax.annotate(f"effect routed: {edge['routed_fraction']:.0%}", (mid_x, mid_y),
-                    textcoords="offset points", xytext=(0, 10), fontsize=8, color="black")
+        routed = edge.get("routed_fraction")
+        if routed is not None:
+            ax.annotate(f"effect routed: {routed:.0%}", (mid_x, mid_y),
+                        textcoords="offset points", xytext=(0, 10), fontsize=8, color="black")
     ax.set_xlim(-1, n_layers)
     ax.set_ylim(-1.5, n_heads + 3)
     ax.set_xlabel("layer")
@@ -402,14 +404,17 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     # ----- causal ranking ------------------------------------------------------
     cand_rows: list[dict[str, Any]] = []
+    head_causal_drop: dict[tuple[int, int], float] = {}
     for (l, h), (score, reason) in sorted(screen.items()):
         ablated = metric_under_ablation(bundle, discovery, head_anatomy, comp_anatomy,
                                         heads=[(l, h)], mlps=[], head_means=head_means, mlp_means=mlp_means)
+        drop = base_metric - ablated
+        head_causal_drop[(l, h)] = drop
         cand_rows.append({
             "node": node_name("head", l, h), "kind": "head", "layer": l, "head": h,
             "screen_score": round(score, 4), "screen_reason": reason,
             "motif_label": head_labels[(l, h)],
-            "causal_drop": round(base_metric - ablated, 4),
+            "causal_drop": round(drop, 4),
         })
     for l in mlp_candidates:
         ablated = metric_under_ablation(bundle, discovery, head_anatomy, comp_anatomy,
@@ -500,8 +505,14 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     # ----- the one edge claim: ablation interaction --------------------------------
     edge = None
     inducts = [k for k in circuit if head_labels.get(k) == "induction"]
-    prevs = sorted((k for k in screen if head_labels.get(k) == "previous_token"),
-                   key=lambda k: -mean_prev[k])
+    prevs = sorted(
+        (
+            k for k in screen
+            if head_labels.get(k) == "previous_token"
+            and head_causal_drop.get(k, 0.0) > 1e-6
+        ),
+        key=lambda k: -head_causal_drop[k],
+    )
     if inducts and prevs:
         h_i = max(inducts, key=lambda k: mean_induct.get(k, 0))
         h_p = prevs[0]
@@ -513,12 +524,12 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                                      heads=[h_i, h_p], mlps=[], head_means=head_means, mlp_means=mlp_means)
         effect_p = base_metric - m_p
         effect_p_given_i = m_i - m_ip
-        routed = 1.0 - (effect_p_given_i / effect_p) if abs(effect_p) > 1e-6 else None
+        routed = 1.0 - (effect_p_given_i / effect_p)
         edge = {
             "from": h_p, "to": h_i,
             "effect_p_alone": round(effect_p, 4),
             "effect_p_given_i_ablated": round(effect_p_given_i, 4),
-            "routed_fraction": round(routed, 4) if routed is not None else None,
+            "routed_fraction": round(routed, 4),
         }
         edge_path = ctx.path("tables", "edge_claim.json")
         bench.write_json(edge_path, {
@@ -596,14 +607,16 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "## The edge claim",
         "",
     ]
-    if edge is not None:
+    if edge is not None and edge.get("routed_fraction") is not None:
         card.append(
             f"{node_name('head', *edge['from'])} → {node_name('head', *edge['to'])}: "
             f"{edge['routed_fraction']:.0%} of the previous-token head's effect routes through "
             f"the induction head (ablation interaction; see `tables/edge_claim.json`)."
         )
     else:
-        card.append("No induction/previous-token pair survived into the circuit; no edge claimed.")
+        card.append(
+            "No causally positive previous-token/induction pair survived the checks; no edge claimed."
+        )
     card += [
         "",
         "## Failure cases the circuit does not explain",
@@ -674,7 +687,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "artifact": f"runs/{run_name}/plots/circuit_scorecard.png",
             "falsifier": "Longer cycles, natural text, or >8-token prompts drop held-out faithfulness to chance.",
         })
-    if edge is not None and edge["routed_fraction"] is not None:
+    if edge is not None and edge.get("routed_fraction") is not None:
         claims.append({
             "id": f"{LAB_ID}-C3",
             "tag": "CAUSAL",

@@ -2681,6 +2681,9 @@ def render_state_card(
 
 CATEGORY_COLORS = {
     "fact": "#1f77b4",
+    "relation": "#2ca02c",
+    "grammar": "#ff7f0e",
+    "conflict": "#d62728",
     "ambiguous": "#7f7f7f",
     "counterfactual": "#d62728",
     "control": "#9467bd",

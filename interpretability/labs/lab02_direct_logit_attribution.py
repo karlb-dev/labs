@@ -394,6 +394,11 @@ def top_components(dla: dict[str, Any], n: int) -> list[tuple[str, int, float]]:
     return sorted(scored, key=lambda t: abs(t[2]), reverse=True)[:n]
 
 
+def component_score_mass(dla: dict[str, Any]) -> float:
+    """Total absolute attn/MLP writer mass, used for bounded concentration metrics."""
+    return sum(abs(s) for s in dla["attn_scores"] + dla["mlp_scores"])
+
+
 # ---------------------------------------------------------------------------
 # Extension: attribution vs direct-path ablation
 # ---------------------------------------------------------------------------
@@ -712,6 +717,11 @@ def aggregate_by_category(per_example: list[dict[str, Any]], n_layers: int) -> l
         attn_total = statistics.fmean(sum(r["dla"]["attn_scores"]) for r in rows)
         mlp_total = statistics.fmean(sum(r["dla"]["mlp_scores"]) for r in rows)
         tops = [top_components(r["dla"], 1)[0] for r in rows]
+        top_abs_scores = [abs(t[2]) for t in tops]
+        top_mass_shares = []
+        for top, row in zip(tops, rows):
+            mass = component_score_mass(row["dla"])
+            top_mass_shares.append(abs(top[2]) / mass if mass else 0.0)
         out.append(
             {
                 "category": cat,
@@ -720,13 +730,8 @@ def aggregate_by_category(per_example: list[dict[str, Any]], n_layers: int) -> l
                 "mean_embed_score": round(statistics.fmean(r["dla"]["embed_score"] for r in rows), 4),
                 "mean_attn_total": round(attn_total, 4),
                 "mean_mlp_total": round(mlp_total, 4),
-                "mean_top_component_share": round(
-                    statistics.fmean(
-                        abs(t[2]) / max(abs(r["dla"]["frozen_logit_diff"]), 1e-9)
-                        for t, r in zip(tops, rows)
-                    ),
-                    4,
-                ),
+                "mean_top_component_abs_score": round(statistics.fmean(top_abs_scores), 4),
+                "mean_top_component_mass_share": round(statistics.fmean(top_mass_shares), 4),
                 "top_component_modal_kind": statistics.mode(t[0] for t in tops),
                 "median_top_component_layer": statistics.median(t[1] for t in tops),
                 "mean_min_component_score": round(
@@ -866,14 +871,15 @@ def render_summary(
         "",
     ]
     lines.append(
-        "| category | n | mean logit diff | embed | attn total | mlp total | top kind | top layer (median) | min comp |"
+        "| category | n | mean logit diff | embed | attn total | mlp total | top kind | top layer | top abs score | min comp |"
     )
-    lines.append("|---|---:|---:|---:|---:|---:|---|---:|---:|")
+    lines.append("|---|---:|---:|---:|---:|---:|---|---:|---:|---:|")
     for r in cat_rows:
         lines.append(
             f"| {r['category']} | {r['n_examples']} | {r['mean_model_logit_diff']} | {r['mean_embed_score']} | "
             f"{r['mean_attn_total']} | {r['mean_mlp_total']} | {r['top_component_modal_kind']} | "
-            f"{r['median_top_component_layer']} | {r['mean_min_component_score']} |"
+            f"{r['median_top_component_layer']} | {r['mean_top_component_abs_score']} | "
+            f"{r['mean_min_component_score']} |"
         )
     lines += [
         "",
