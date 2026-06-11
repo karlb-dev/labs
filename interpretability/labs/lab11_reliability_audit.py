@@ -217,6 +217,24 @@ def stabilization_depth(traj: Any) -> int | None:
     return depth
 
 
+def preference_depth(traj: Any) -> int | None:
+    """First depth where the target-vs-distractor logit diff goes positive
+    and STAYS positive. Top-1 stabilization can be None on prompts where the
+    model prefers a different phrasing (' known as Paris…') while still
+    decisively preferring the right answer over the distractor — the audit
+    tracks both, because they are different behavioral claims."""
+    if traj.logit_target is None or traj.logit_distractor is None:
+        return None
+    depth = None
+    for d in range(traj.n_depths):
+        if traj.logit_target[d] > traj.logit_distractor[d]:
+            if depth is None:
+                depth = d
+        else:
+            depth = None
+    return depth
+
+
 def dla_layer_summary(bundle, comp, target_id: int, distractor_id: int) -> dict[str, Any]:
     """Per-layer contribution of attn/MLP writes to the answer direction,
     linearized with the final norm's observed scale (Lab 2's convention,
@@ -305,9 +323,16 @@ def run_factual_audit(ctx, bundle, args) -> dict[str, Any]:
         top1 = int(final.argmax())
         answer = bundle.tokenizer.decode([top1])
         correct = top1 == ex.target_id
+        logit_diff = float(final[ex.target_id] - final[ex.distractor_id])
+        prefers = logit_diff > 0
         # auto failure-mode draft; the student column stays empty on purpose
         if correct:
             failure_auto = ""
+        elif prefers:
+            # the model decisively prefers the right capital but continues
+            # with other phrasing ("… is known as") — a format miss, not a
+            # knowledge miss; the distinction is the audit's first lesson
+            failure_auto = "format_not_knowledge"
         elif top1 == ex.distractor_id:
             failure_auto = "distractor_win"
         elif answer.strip().istitle() and len(answer.strip()) > 2:
@@ -317,12 +342,13 @@ def run_factual_audit(ctx, bundle, args) -> dict[str, Any]:
         rows.append({
             "fact_id": ex.fact_id, "template_id": ex.template_id, "prompt": ex.prompt,
             "target": ex.target, "distractor": ex.distractor,
-            "answer_top1": answer, "correct": correct,
+            "answer_top1": answer, "correct": correct, "prefers_target": prefers,
             "p_target": round(float(probs[ex.target_id]), 5),
-            "logit_diff": round(float(final[ex.target_id] - final[ex.distractor_id]), 4),
+            "logit_diff": round(logit_diff, 4),
             "confidence_margin": round(float(torch.topk(final, 2).values[0]
                                              - torch.topk(final, 2).values[1]), 4),
             "lens_stabilization_depth": stabilization_depth(traj),
+            "lens_preference_depth": preference_depth(traj),
             "dla_top_layer": dla["top_layer"],
             "dla_mlp_total": dla["mlp_total"], "dla_attn_total": dla["attn_total"],
             "failure_mode_auto": failure_auto, "failure_mode_student": "",
@@ -338,21 +364,26 @@ def run_factual_audit(ctx, bundle, args) -> dict[str, Any]:
     fact_rows = [{"fact_id": fid,
                   "n_templates": len(rs),
                   "n_correct": sum(r["correct"] for r in rs),
-                  "consistent": len({r["answer_top1"] for r in rs}) == 1,
+                  "n_prefers_target": sum(r["prefers_target"] for r in rs),
+                  "consistent_top1": len({r["answer_top1"] for r in rs}) == 1,
+                  "consistent_preference": all(r["prefers_target"] for r in rs),
                   "min_logit_diff": min(r["logit_diff"] for r in rs),
-                  "stabilization_spread": (max(r["lens_stabilization_depth"] or 0 for r in rs)
-                                           - min(r["lens_stabilization_depth"] or 0 for r in rs))}
+                  "preference_depth_spread": (max((r["lens_preference_depth"] or 0) for r in rs)
+                                              - min((r["lens_preference_depth"] or 0) for r in rs))}
                  for fid, rs in by_fact.items()]
     bench.write_csv_with_context(ctx, ctx.path("tables", "paraphrase_consistency.csv"), fact_rows)
     ctx.register_artifact(ctx.path("tables", "paraphrase_consistency.csv"), "table",
                           "Per-fact accuracy and answer consistency across templates.")
 
-    # ---- causal subset: patch the stabilization band ------------------------
+    # ---- causal subset: patch where the lens says the preference forms ------
+    # Gated on PREFERENCE (logit_diff > 0), Lab 5's definition: you can patch
+    # a behavior the model performs, and target-vs-distractor preference is
+    # the behavior this audit's metric names — top-1 phrasing is not.
     correct_base = [e for e in examples if e.template_id == "base"
                     and next(r for r in rows if r["fact_id"] == e.fact_id
-                             and r["template_id"] == "base")["correct"]]
-    depths = [r["lens_stabilization_depth"] for r in rows
-              if r["lens_stabilization_depth"] is not None and r["correct"]]
+                             and r["template_id"] == "base")["prefers_target"]]
+    depths = [r["lens_preference_depth"] for r in rows
+              if r["lens_preference_depth"] is not None and r["prefers_target"]]
     band = sorted(depths)[len(depths) // 2] if depths else bundle.anatomy.n_layers // 2
     band = max(1, min(band, bundle.anatomy.n_layers - 1))
     causal_rows = []
@@ -396,9 +427,11 @@ def run_factual_audit(ctx, bundle, args) -> dict[str, Any]:
 
     behavioral = {
         "n_examples": len(rows), "n_dropped": len(dropped),
-        "accuracy": round(sum(r["correct"] for r in rows) / len(rows), 3),
-        "paraphrase_consistent_facts": round(sum(f["consistent"] for f in fact_rows) / len(fact_rows), 3),
-        "median_stabilization_depth": band,
+        "top1_accuracy": round(sum(r["correct"] for r in rows) / len(rows), 3),
+        "preference_accuracy": round(sum(r["prefers_target"] for r in rows) / len(rows), 3),
+        "paraphrase_consistent_facts": round(sum(f["consistent_preference"] for f in fact_rows)
+                                             / len(fact_rows), 3),
+        "median_preference_depth": band,
         **{f"mean_recovery_{site}": round(
             sum(c["recovery"] for c in causal_rows if c["site"] == site and c["recovery"] != "") /
             max(1, len([c for c in causal_rows if c["site"] == site and c["recovery"] != ""])), 3)
@@ -522,12 +555,17 @@ def run_cot_audit(ctx, bundle, args) -> dict[str, Any]:
     layer = int(bundle.anatomy.n_layers * 0.7)
     feats, labels, item_ids = [], [], []
     base_rows = [r for r in rows if r["condition"] == "baseline"]
-    hint_rows = {r["item_id"]: r for r in rows if r["condition"] == "sycophancy_wrong"}
+    by_cond = {cond: {r["item_id"]: r for r in rows if r["condition"] == cond}
+               for cond in ("sycophancy_wrong", "metadata_wrong")}
     for r in base_rows:
-        h = hint_rows.get(r["item_id"])
-        if h is None:
+        jobs = [(r, 0)]
+        for cond_rows in by_cond.values():
+            h = cond_rows.get(r["item_id"])
+            if h is not None:
+                jobs.append((h, 1))
+        if len(jobs) < 3:
             continue
-        for row, label in ((r, 0), (h, 1)):
+        for row, label in jobs:
             prompt = lab10.forced_answer_prompt(row["_rendered"], row["_think"], opens)
             cap = bench.run_with_residual_cache(bundle, prompt, add_special_tokens=False)
             feats.append(cap.streams[layer, -1])
@@ -643,14 +681,14 @@ def build_claims(ctx, bundle, domain, behavioral) -> list[dict[str, str]]:
         claims.append({
             "id": f"{LAB_ID}-C1", "tag": "CAUSAL",
             "text": (
-                f"On {behavioral['n_examples']} capital-fact prompts (accuracy "
-                f"{behavioral['accuracy']}, paraphrase-consistent on "
-                f"{behavioral['paraphrase_consistent_facts']} of facts), patching clean residuals "
-                f"into the corrupt run recovers a mean {behavioral['mean_recovery_subject_early']} "
-                f"of the logit gap at the early subject site and "
-                f"{behavioral['mean_recovery_final_band']} at the final position of the "
-                f"stabilization band (depth {behavioral['median_stabilization_depth']}) — recall "
-                f"and readout localized where Lab 5 said they would be, on this dataset."
+                f"On {behavioral['n_examples']} capital-fact prompts (target preferred over the "
+                f"distractor on {behavioral['preference_accuracy']}, top-1 exact on "
+                f"{behavioral['top1_accuracy']} — the gap is phrasing, not knowledge), patching "
+                f"clean residuals into the corrupt run recovers a mean "
+                f"{behavioral['mean_recovery_subject_early']} of the logit gap at the early subject "
+                f"site and {behavioral['mean_recovery_final_band']} at the final position of the "
+                f"preference band (depth {behavioral['median_preference_depth']}) — recall and "
+                f"readout localized where Lab 5 said they would be, on this dataset."
             ),
             "artifact": f"runs/{run_name}/tables/causal_subset.csv",
             "falsifier": "Recovery collapses at the same depth on held-out facts, or the band shifts across paraphrases.",
@@ -669,6 +707,7 @@ def build_claims(ctx, bundle, domain, behavioral) -> list[dict[str, str]]:
         })
     else:
         p = behavioral["hint_presence_probe"]
+        probe_positive = p["selectivity"] >= 0.15 and p["held_out_auc"] >= 0.7
         claims.append({
             "id": f"{LAB_ID}-C1", "tag": "SELF-REPORT",
             "text": (
@@ -681,17 +720,32 @@ def build_claims(ctx, bundle, domain, behavioral) -> list[dict[str, str]]:
             "artifact": f"runs/{run_name}/tables/faithfulness_by_hint_type.csv",
             "falsifier": "Rates fail to replicate on another fresh slice or under paraphrased hint templates.",
         })
-        claims.append({
-            "id": f"{LAB_ID}-C2", "tag": "DECODE",
-            "text": (
-                f"Hint presence is decodable from activations at the answer-emission position "
-                f"(held-out AUC {p['held_out_auc']} vs shuffled {p['shuffled_control_auc']}, layer "
-                f"{p['layer']}) — the influence the CoT may omit in text is visible internally, "
-                f"connecting Lab 4's decodability machinery to Lab 10's behavioral finding."
-            ),
-            "artifact": f"runs/{run_name}/internal_evidence/hint_presence_probe.json",
-            "falsifier": "AUC drops to the shuffled control on more items, or the direction fails to transfer across hint types.",
-        })
+        if probe_positive:
+            claims.append({
+                "id": f"{LAB_ID}-C2", "tag": "DECODE",
+                "text": (
+                    f"Hint presence is decodable from activations at the answer-emission position "
+                    f"(held-out AUC {p['held_out_auc']} vs shuffled {p['shuffled_control_auc']}, layer "
+                    f"{p['layer']}) — the influence the CoT may omit in text is visible internally, "
+                    f"connecting Lab 4's decodability machinery to Lab 10's behavioral finding."
+                ),
+                "artifact": f"runs/{run_name}/internal_evidence/hint_presence_probe.json",
+                "falsifier": "AUC drops to the shuffled control on more items, or the direction fails to transfer across hint types.",
+            })
+        else:
+            claims.append({
+                "id": f"{LAB_ID}-C2", "tag": "DECODE",
+                "text": (
+                    f"NEGATIVE: a mass-mean 'hint present' direction at layer {p['layer']} of the "
+                    f"answer-emission position does NOT separate hinted from baseline items beyond "
+                    f"its shuffled control (held-out AUC {p['held_out_auc']} vs "
+                    f"{p['shuffled_control_auc']}, {p['n_pairs']} item triples) — behavioral hint "
+                    f"influence with no decodable trace at this site/sample size. Underpowered n is "
+                    f"the first suspect; a distributed or different-layer representation is the second."
+                ),
+                "artifact": f"runs/{run_name}/internal_evidence/hint_presence_probe.json",
+                "falsifier": "A larger item set or a different layer yields selective decodability — retire this negative.",
+            })
     return claims
 
 
@@ -745,8 +799,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         result = run_factual_audit(ctx, bundle, args)
         b = result["behavioral"]
         evidence_lines = [
-            f"- **Logit lens (OBS):** median stabilization depth {b['median_stabilization_depth']} "
-            f"of {bundle.anatomy.n_layers}; per-example depths in results.csv.",
+            f"- **Logit lens (OBS):** median preference-stabilization depth "
+            f"{b['median_preference_depth']} of {bundle.anatomy.n_layers}; per-example top-1 and "
+            f"preference depths in results.csv.",
             f"- **DLA (ATTR):** per-example top layer and attn/MLP split in results.csv.",
             f"- **Residual patching (CAUSAL):** mean recovery {b['mean_recovery_subject_early']} "
             f"(early subject site) / {b['mean_recovery_final_band']} (final position, stabilization "

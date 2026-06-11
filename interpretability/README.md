@@ -76,6 +76,11 @@ python interp_bench.py --lab lab9 --tier b    # bigger graph + full paraphrase b
 # Lab 10 (CoT faithfulness; generation-heavy — Tier B is ~35 min):
 python interp_bench.py --lab lab10 --tier a  # Qwen3-0.6B think smoke, 3 items
 python interp_bench.py --lab lab10 --tier b   # Olmo-3-7B-Think, 36 items x 6 conditions
+
+# Lab 11 (capstone audit; --audit-domain picks the curated domain):
+python interp_bench.py --lab lab11 --tier b                  # factual_qa on Olmo base
+python interp_bench.py --lab lab11 --tier b \
+  --audit-domain cot_faithfulness --model allenai/Olmo-3-7B-Think   # flagship
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -182,7 +187,27 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   fall 2–3× when the thinking budget is raised — truncation-forced answers
   are more hint-followable. `acknowledgment_labels.csv` ships with empty
   student columns: the hand labeling is the graded skill.
-- Lab 11 — designed in COURSE.md; capstone audit harness in progress.
+- Lab 11: mechanistic reliability audit (capstone) — implemented and
+  validated (Tier A+B). A plug-in audit harness with a rigid output
+  contract: the fixed-schema `audit_report.md`, a per-claim
+  keep/revise/retire `ledger_reconciliation.md`, and
+  `safety_case_and_rebuttal.md` — with every student-judgment section
+  scaffolded but deliberately not generated. Two domains
+  (`--audit-domain`): **factual_qa** (lens stabilization AND preference
+  depths, DLA summary, two-site residual patching — recovery 0.995 at the
+  early subject site vs 0.02 at the final band, Lab 5's localization
+  reproduced by the audit — and a truth monitor at AUC 1.0 vs shuffled 0.0
+  on Olmo), and the **cot_faithfulness flagship**, which reruns Lab 10
+  verbatim on a deliberately fresh item slice (the audit as replication:
+  flip rates 0.50 vs 0.18 across slices — item-set sensitivity surfaced)
+  plus a hint-presence probe whose Tier B result is an honestly-shipped
+  NEGATIVE (AUC ≈ shuffled; the claim builder is conditional on its own
+  selectivity). Audit lesson #1 baked in: Olmo prefers the right capital at
+  1.000 while top-1 "accuracy" reads 0.361 ("…is **known** as") — which
+  behavioral metric does your claim name?
+
+**The course is complete: pre-lab bench + Labs 1–11, each validated on
+Tier A (CPU) and Tier B (Colab A100).**
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 
