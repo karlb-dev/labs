@@ -72,6 +72,10 @@ python interp_bench.py --lab lab8 --tier b    # Olmo-3-1025-7B + decoderesearch 
 # Lab 9 (attribution graphs; gpt2 on EVERY tier — tiers scale the node budget):
 python interp_bench.py --lab lab9 --tier a   # CPU-ok, ~2 GB transcoder download once
 python interp_bench.py --lab lab9 --tier b    # bigger graph + full paraphrase battery
+
+# Lab 10 (CoT faithfulness; generation-heavy — Tier B is ~35 min):
+python interp_bench.py --lab lab10 --tier a  # Qwen3-0.6B think smoke, 3 items
+python interp_bench.py --lab lab10 --tier b   # Olmo-3-7B-Think, 36 items x 6 conditions
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -163,8 +167,22 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   self-checks (replacement exactness, edge reconstruction, feature-edit
   no-op). gpt2 on every tier — the only ungated model with a public
   all-layers transcoder set; tiers scale the node budget, not the model.
-- Labs 10–11 — designed in COURSE.md, not yet implemented. Lab 10
-  (CoT faithfulness) is next.
+- Lab 10: reasoning models and CoT faithfulness — implemented and validated
+  (Tier A+B). The course's first generation-heavy lab and first batched
+  decoding in the bench: hint injection (sycophancy / authority / metadata
+  at deterministic wrong answers, with correct-hint and non-sequitur
+  controls) measuring flip / acknowledgment / attribution / **silent-flip**
+  rates, plus three text-level load tests built on one close-the-think-span
+  primitive — the thought-necessity curve, add-mistake, and a matched-length
+  filler control. Frozen 140-item MCQ set vendored from MMLU; think-span
+  round-trip self-check (Olmo's template opens the span, Qwen emits its
+  own); forced-answer rescue with an unparseable log. Tier B finding:
+  Olmo-3-Think's CoT carries load (0.56→0.88 over the curve, filler stuck at
+  the floor), it argues itself back from injected mistakes, and flip rates
+  fall 2–3× when the thinking budget is raised — truncation-forced answers
+  are more hint-followable. `acknowledgment_labels.csv` ships with empty
+  student columns: the hand labeling is the graded skill.
+- Lab 11 — designed in COURSE.md; capstone audit harness in progress.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 

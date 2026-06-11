@@ -231,6 +231,16 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "max_examples_tier_b": "36",
         "max_examples_tier_c": "60",
     },
+    "lab11": {
+        "module": "labs.lab11_reliability_audit",
+        "run_name": "lab11_reliability_audit",
+        "description": "Capstone: a mechanistic reliability audit with a fixed report schema, built on the claim ledger.",
+        # The default factual_qa domain runs on the tier's base model. The
+        # cot_faithfulness flagship needs a think model: pass
+        # --model allenai/Olmo-3-7B-Think (or Qwen/Qwen3-0.6B for smoke).
+        # --max-examples caps facts (factual_qa) or items (cot_faithfulness).
+        "max_examples_tier_a": "6",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
@@ -2890,6 +2900,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--graph-nodes", type=int, default=0,
                         help="Lab 9: feature-node budget for the attribution graph "
                              "(0 = tier default; also the number of backward passes).")
+    parser.add_argument("--audit-domain", default="factual_qa",
+                        choices=("factual_qa", "cot_faithfulness"),
+                        help="Lab 11: which curated audit domain to run.")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)
