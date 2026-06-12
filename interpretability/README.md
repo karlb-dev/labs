@@ -260,6 +260,28 @@ Every run performs self-checks before any science, and aborts on failure:
 If a transformers upgrade ever changes hidden-state semantics, these fail
 loudly and every downstream number is declared suspect — that is their job.
 
+## The generation engine and its benchmark
+
+Generation-heavy labs route through `bench.generate_continuous`, a
+continuous-batching engine in pure HF forwards (one persistent KV cache
+grown in place; rows retire at EOS and pending jobs take their slots, so
+heavy-tailed CoT lengths never make a batch pay for its slowest member).
+`bench_inference.py` is its A/B harness — exact-length heavy-tailed jobs,
+identical-tokens determinism check against lockstep `model.generate`, NVML
+utilization sampling, and per-step ITL traces (p50/p95 plus ms-per-step and
+ms-per-context-token slopes). Measured on A100-80GB, greedy bf16:
+
+| model | engine | rows | tok/s | peak GiB |
+|---|---|---:|---:|---:|
+| Olmo-3-7B-Think | lockstep | 16 | 175 | 22.6 |
+| Olmo-3-7B-Think | continuous | 32 | **433** | 31.6 |
+| Olmo-3-32B-Think | continuous | 8 | 73 | 62.1 |
+| Olmo-3-32B-Think | continuous | 16 | **116** | 64.5 |
+
+At 32B the step time is weight-read-bound (~96 ms flat in context), so
+in-flight rows are nearly free throughput until memory runs out — ~300
+600-token probes complete in ~26 minutes.
+
 ## The course dashboard
 
 ```bash
