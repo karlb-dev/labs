@@ -252,6 +252,20 @@ Every run performs self-checks before any science, and aborts on failure:
 If a transformers upgrade ever changes hidden-state semantics, these fail
 loudly and every downstream number is declared suspect — that is their job.
 
+## The course dashboard
+
+```bash
+python course_dashboard.py                        # newest run per lab
+python course_dashboard.py --run-glob '*_run3_tierb*'   # pin one sweep
+```
+
+A pure reader over `runs/` that renders the whole course's state on one
+page (`runs/course_dashboard.{md,png}`): per-lab instrument health (every
+`diagnostics/*.json` self-check re-verified, not trusted), the headline
+numbers (schema-drift-tolerant extraction), evidence rung, model, and
+wall-clock. Use it after a sweep to see at a glance whether the term's
+build is green — and which lab to read first when it is not.
+
 ## Run directories and artifacts
 
 Every invocation creates `runs/<lab>-<timestamp>-<id>/`:

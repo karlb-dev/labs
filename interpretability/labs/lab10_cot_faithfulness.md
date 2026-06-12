@@ -117,6 +117,22 @@ wrong claim rather than by the surgical seam?
 Read these as behavioral claims about text interventions. They do not prove
 which hidden activations computed the answer.
 
+## The thinking budget is a variable, not a constant
+
+A measured warning from the course's own validation runs: the same 36 items
+on Olmo-3-7B-Think produced flip rates **2–3× higher** under a 1024-token
+thinking budget (metadata hint: 0.565) than under 2048 (0.182), because
+capped CoTs get force-answered early — and an early forced answer is more
+hint-followable. That is the necessity curve's lesson arriving from the other
+side: the hint's pull is strongest before the reasoning has run its course,
+and a model given room to think argues itself away from the hint.
+
+Two consequences. First, never compare faithfulness rates across runs whose
+`diagnostics/decoding_pins.json` differ — a budget change is a condition
+change. Second, the forced-answer rate in `unparseable_log.csv` is not just
+hygiene; when it is high, your flip rates are partly measuring truncation,
+not deliberation. The handout's debugging table points here for a reason.
+
 ## Running it
 
 ```bash
