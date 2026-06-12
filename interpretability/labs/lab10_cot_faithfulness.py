@@ -65,9 +65,12 @@ MAX_NEW_BY_TIER = {"a": 384, "b": 2048, "c": 2560}
 # With the bench's continuous-batching engine, "batch" is the max number of
 # in-flight sequences, not a lockstep batch: finished rows retire immediately
 # and pending jobs take their slot, so heavy-tailed CoT lengths no longer make
-# every batch pay for its slowest member. At batch 12 lockstep, an A100 sat
-# ~90% idle; 32-48 in-flight rows load it properly (KV for 2048 ctx fits with
-# 3-4x headroom at bf16 on 80 GB).
+# every batch pay for its slowest member. Sizing note (measured, A100-80GB,
+# Olmo-3-7B bf16, bench_inference.py): with the persistent-cache engine,
+# 32 in-flight rows peak ~32 GiB and run ~433 tok/s aggregate (~2.5x the
+# 16-row rate and ~2.5x lockstep); 48 rows adds only tail latency. The
+# earlier OOM at 32 rows was the old engine's 2x cache residency, since
+# removed — see generate_continuous.
 BATCH_BY_TIER = {"a": 4, "b": 32, "c": 48}
 # Flip to False to force the legacy lockstep model.generate path (also used
 # automatically if the continuous engine fails for a model/transformers combo).

@@ -1347,9 +1347,18 @@ def generate_continuous(
     job_idx: list[int] = []        # original prompt index per active row
     valid_lens: list[int] = []     # logical (real-token) KV length per row
     gen_ids: list[list[int]] = []  # tokens generated so far per row
-    kv: list[tuple[Any, Any]] = []  # per layer: (key, value), (N, H, L_pad, D)
+    # ONE persistent cache object for the whole schedule. The model's own
+    # attention layers grow it in place each step (cache.update); the engine
+    # only touches its layer tensors at retire/admit events. Holding extracted
+    # (key, value) pair lists across steps — the previous design — kept a
+    # second full copy of the cache alive during every forward (2x residency),
+    # which is what OOM'd 32 in-flight rows on an 80 GB card.
+    cache: Any = None              # transformers DynamicCache or None
     last_tokens: list[int] = []    # next decode-step input per row
     attn_mask: Any = None          # (N, L_pad) long on `device`
+
+    def n_cached_rows() -> int:
+        return 0 if cache is None or not cache.layers else cache.layers[0].keys.shape[0]
 
     results: dict[int, list[int]] = {}
     pending = list(range(n_jobs))
@@ -1359,6 +1368,8 @@ def generate_continuous(
     total_steps = 0
     total_tokens = 0
     active_row_steps = 0
+    step_ms: list[float] = []      # per-decode-step wall latency (ITL trace)
+    step_ctx: list[int] = []       # cache length at each step (for ms/ctx slope)
 
     def prefill(indices: list[int]) -> tuple[list, Any, list[int], list[int], list[int]]:
         """Prefill a chunk of jobs (left-padded); returns its packed state."""
@@ -1382,34 +1393,38 @@ def generate_continuous(
                 use_cache=True,
             )
         first = out.logits[:, -1, :].argmax(dim=-1).tolist()
-        new_kv = _kv_pairs(out.past_key_values)
         lens = mask.sum(dim=1).tolist()
-        return new_kv, mask, lens, first, indices
+        return out.past_key_values, mask, lens, first, indices
 
-    def merge(chunk_kv: list, chunk_mask: Any, chunk_lens: list[int],
+    def merge(chunk_cache: Any, chunk_mask: Any, chunk_lens: list[int],
               chunk_first: list[int], chunk_jobs: list[int]) -> None:
-        """Append a prefilled chunk to the packed active state (left-pad align)."""
-        nonlocal kv, attn_mask
+        """Append a prefilled chunk to the persistent cache (left-pad align).
+
+        Event-rate only (admits), never per step. Layer tensors are padded on
+        the LEFT to a common length and concatenated along the batch dim; the
+        old per-layer tensors are released as each layer is reassigned, so the
+        transient overhead is one layer, not one cache.
+        """
+        nonlocal cache, attn_mask
         if not job_idx:
-            kv = chunk_kv
+            cache = chunk_cache
             attn_mask = chunk_mask
         else:
             old_len = attn_mask.shape[1]
             new_len = chunk_mask.shape[1]
             target = max(old_len, new_len)
-            merged: list[tuple[Any, Any]] = []
-            for (k_old, v_old), (k_new, v_new) in zip(kv, chunk_kv):
+            for layer, chunk_layer in zip(cache.layers, chunk_cache.layers):
+                k_old, v_old = layer.keys, layer.values
+                k_new, v_new = chunk_layer.keys, chunk_layer.values
                 if old_len < target:
                     k_old = F.pad(k_old, (0, 0, target - old_len, 0))
                     v_old = F.pad(v_old, (0, 0, target - old_len, 0))
                 if new_len < target:
-                    k_new = F.pad(k_new.to(k_old.device), (0, 0, target - new_len, 0))
-                    v_new = F.pad(v_new.to(v_old.device), (0, 0, target - new_len, 0))
-                else:
-                    k_new = k_new.to(k_old.device)
-                    v_new = v_new.to(v_old.device)
-                merged.append((torch.cat([k_old, k_new], dim=0), torch.cat([v_old, v_new], dim=0)))
-            kv = merged
+                    k_new = F.pad(k_new, (0, 0, target - new_len, 0))
+                    v_new = F.pad(v_new, (0, 0, target - new_len, 0))
+                layer.keys = torch.cat([k_old, k_new], dim=0)
+                layer.values = torch.cat([v_old, v_new], dim=0)
+                chunk_layer.keys = chunk_layer.values = None  # release as we go
             attn_mask = torch.cat(
                 [
                     F.pad(attn_mask, (target - old_len, 0)),
@@ -1426,28 +1441,29 @@ def generate_continuous(
 
     def retire_and_admit() -> None:
         """Drop finished rows, trim shared left pad, admit pending jobs."""
-        nonlocal kv, attn_mask, finished_rows
+        nonlocal cache, attn_mask, finished_rows
         keep = [r for r in range(len(job_idx)) if r not in finished_rows]
         for r in sorted(finished_rows, reverse=True):
             results[job_idx[r]] = gen_ids[r]
             del job_idx[r], valid_lens[r], gen_ids[r], last_tokens[r]
         finished_rows = []
-        if keep and len(keep) < kv[0][0].shape[0]:
-            keep_cpu = torch.tensor(keep)
-            kv = [
-                (k.index_select(0, keep_cpu.to(k.device)), v.index_select(0, keep_cpu.to(v.device)))
-                for k, v in kv
-            ]
-            attn_mask = attn_mask.index_select(0, keep_cpu.to(attn_mask.device))
+        if keep and len(keep) < n_cached_rows():
+            keep_dev = torch.tensor(keep, device=attn_mask.device)
+            cache.batch_select_indices(keep_dev)
+            attn_mask = attn_mask.index_select(0, keep_dev)
         elif not keep:
-            kv = []
+            cache = None
             attn_mask = None
-        # Trim left padding shared by every remaining row.
+        # Trim left padding shared by every remaining row. .contiguous() is
+        # what actually frees the trimmed storage; a bare slice would keep the
+        # full-width tensor alive underneath.
         if job_idx:
             slack = attn_mask.shape[1] - max(valid_lens)
             if slack > 0:
-                kv = [(k[:, :, slack:, :], v[:, :, slack:, :]) for k, v in kv]
-                attn_mask = attn_mask[:, slack:]
+                for layer in cache.layers:
+                    layer.keys = layer.keys[:, :, slack:, :].contiguous()
+                    layer.values = layer.values[:, :, slack:, :].contiguous()
+                attn_mask = attn_mask[:, slack:].contiguous()
         if pending and len(job_idx) < max_concurrent:
             chunk = [pending.pop(0) for _ in range(min(len(pending), max_concurrent - len(job_idx)))]
             merge(*prefill(chunk))
@@ -1484,9 +1500,10 @@ def generate_continuous(
                 [attn_mask, torch.ones((n, 1), dtype=attn_mask.dtype, device=attn_mask.device)],
                 dim=1,
             )
-            cache = DynamicCache()
-            for li, (k, v) in enumerate(kv):
-                cache.update(k, v, li)
+            # The persistent cache grows in place inside the forward (each
+            # attention layer calls cache.update with the new token's KV).
+            # Nothing is extracted or rebuilt per step.
+            t_step = time.perf_counter()
             with torch.inference_mode():
                 out = model(
                     input_ids=step_ids,
@@ -1496,7 +1513,9 @@ def generate_continuous(
                     use_cache=True,
                 )
             next_tokens = out.logits[:, -1, :].argmax(dim=-1).tolist()
-            kv = _kv_pairs(out.past_key_values)
+            # .tolist() syncs the device, so this wall time covers the real step.
+            step_ms.append((time.perf_counter() - t_step) * 1000.0)
+            step_ctx.append(attn_mask.shape[1])
             for r in range(n):
                 last_tokens[r] = int(next_tokens[r])
                 gen_ids[r].append(last_tokens[r])
@@ -1513,6 +1532,28 @@ def generate_continuous(
         tokenizer.padding_side = old_side
 
     wall = time.perf_counter() - wall_start
+    # Inter-token-latency trace stats (the per-step health of the loop): p50,
+    # p95, and two slopes — ms per STEP (allocator/bookkeeping drift) and ms
+    # per token of CONTEXT (attention+cache-growth cost). Adapted from the
+    # course's external olmo_lora_bench instrumentation.
+    itl: dict[str, Any] = {}
+    if step_ms:
+        s = sorted(step_ms)
+        itl["itl_p50_ms"] = round(s[len(s) // 2], 2)
+        itl["itl_p95_ms"] = round(s[min(len(s) - 1, int(len(s) * 0.95))], 2)
+        mean = sum(step_ms) / len(step_ms)
+        var = sum((x - mean) ** 2 for x in step_ms) / len(step_ms)
+        itl["itl_cov"] = round((var ** 0.5) / max(mean, 1e-6), 3)
+        if len(step_ms) >= 2:
+            n_s = len(step_ms)
+            xbar = (n_s - 1) / 2
+            num = sum((i - xbar) * (y - mean) for i, y in enumerate(step_ms))
+            den = sum((i - xbar) ** 2 for i in range(n_s))
+            itl["itl_slope_ms_per_step"] = round(num / max(den, 1e-9), 6)
+            cbar = sum(step_ctx) / n_s
+            numc = sum((c - cbar) * (y - mean) for c, y in zip(step_ctx, step_ms))
+            denc = sum((c - cbar) ** 2 for c in step_ctx)
+            itl["itl_slope_ms_per_ctx_token"] = round(numc / max(denc, 1e-9), 6)
     LAST_GENERATION_STATS.clear()
     LAST_GENERATION_STATS.update({
         "engine": "continuous",
@@ -1523,6 +1564,7 @@ def generate_continuous(
         "mean_active_rows": round(active_row_steps / total_steps, 2) if total_steps else 0.0,
         "wall_seconds": round(wall, 2),
         "tokens_per_second": round(total_tokens / wall, 1) if wall > 0 else 0.0,
+        **itl,
     })
     return [
         tokenizer.decode(results[i], skip_special_tokens=skip_special_tokens)
@@ -3333,6 +3375,9 @@ def make_run_dir(args: argparse.Namespace) -> pathlib.Path:
 def configure_env(run_dir: pathlib.Path) -> None:
     """Set environment that should exist before torch/transformers import."""
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    # The continuous-batching engine repeatedly resizes its packed KV cache;
+    # expandable segments stop allocator fragmentation from masquerading as OOM.
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
     os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
     os.environ.setdefault("MPLBACKEND", "Agg")  # plots are files, not windows
     mpl_config = run_dir / "matplotlib_config"
