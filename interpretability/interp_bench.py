@@ -1290,14 +1290,247 @@ def generate_text(
 LAST_GENERATION_STATS: dict[str, Any] = {}
 
 
-def _kv_pairs(cache: Any) -> list[tuple[Any, Any]]:
-    """Per-layer (key, value) tensors from a returned cache, across the
-    transformers cache-API change: 5.x exposes ``cache.layers[i].keys/.values``
-    (DynamicCache stopped being subscriptable); 4.x returns tuple-like caches."""
-    layers = getattr(cache, "layers", None)
-    if layers is not None:
-        return [(layer.keys, layer.values) for layer in layers]
-    return [(cache[li][0], cache[li][1]) for li in range(len(cache))]
+# ---------------------------------------------------------------------------
+# Static windowed KV cache: the engine's per-step hot path
+# ---------------------------------------------------------------------------
+
+# torch/transformers are runtime imports everywhere in this file, so the cache
+# classes (which must SUBCLASS transformers' Cache) are built lazily by
+# _static_kv_classes() and memoized here.
+_STATIC_KV_CLASSES: dict[str, Any] = {}
+
+
+def _static_kv_classes() -> dict[str, Any]:
+    """Build (once) the engine's preallocated KV-cache classes.
+
+    Requires transformers >= 5 (the ``Cache.layers`` API); the engine already
+    assumed that, this just keeps the import lazy like the rest of the bench.
+    """
+    if _STATIC_KV_CLASSES:
+        return _STATIC_KV_CLASSES
+    import torch
+    from transformers.cache_utils import Cache, CacheLayerMixin
+
+    class StaticKVLayer(CacheLayerMixin):
+        """One layer of StaticKVCache: a preallocated (max_rows, kv_heads,
+        capacity, head_dim) key/value buffer pair, written in place.
+
+        The owner's column window [start, end) is shared by all layers.
+        ``update`` writes the step's KV at column ``end`` with ``copy_`` (no
+        allocation) and returns window-sliced views. DynamicCache, by
+        contrast, ``torch.cat``s the whole layer every step -- a
+        reallocate-and-copy of the entire cache (~2.4 GB/step at 32B x 16
+        rows) that this class exists to remove. The interface mimics
+        DynamicLayer (``get_max_cache_shape() == -1`` etc.) so the model's
+        mask construction takes exactly the code path the engine already
+        validated against lockstep ``generate``.
+        """
+
+        is_sliding = False
+
+        def __init__(self, owner: Any) -> None:
+            super().__init__()
+            self._owner = owner
+            self.is_initialized = True  # buffers are allocated by the owner
+
+        def lazy_initialization(self, key_states: Any, value_states: Any) -> None:
+            raise RuntimeError("StaticKVLayer buffers are allocated by StaticKVCache")
+
+        def update(self, key_states: Any, value_states: Any, *args: Any, **kwargs: Any) -> tuple[Any, Any]:
+            w = self._owner._win
+            t = key_states.shape[-2]
+            self.keys[: w["rows"], :, w["end"] : w["end"] + t].copy_(key_states)
+            self.values[: w["rows"], :, w["end"] : w["end"] + t].copy_(value_states)
+            return (
+                self.keys[: w["rows"], :, w["start"] : w["end"] + t],
+                self.values[: w["rows"], :, w["start"] : w["end"] + t],
+            )
+
+        def get_seq_length(self) -> int:
+            w = self._owner._win
+            return w["end"] - w["start"]
+
+        def get_mask_sizes(self, query_length: int) -> tuple[int, int]:
+            return self.get_seq_length() + query_length, 0
+
+        def get_max_cache_shape(self) -> int:
+            return -1  # like DynamicLayer: no fixed maximum the mask must pad to
+
+    class StaticKVCache(Cache):
+        """Preallocated, windowed KV cache + attention mask for the engine.
+
+        Geometry: every active row shares one column window [start, end);
+        rows are right-aligned inside it (left-padded), so a decode step
+        writes EVERY row's new KV at the same column, ``end``. The window
+        only ever slides right, which turns the engine's structural ops into
+        cheap ones:
+
+        * trim shared left pad   -> ``start += slack``        (free)
+        * admit a WIDER chunk    -> ``start -= delta``        (free: the newly
+          exposed columns hold stale garbage for old rows, and the mask is
+          zeroed there -- the same contract left-pad-plus-mask always had)
+        * per-step KV write      -> ``copy_`` at column end   (in place)
+        * retire rows            -> compact survivors down    (event-rate)
+
+        ``end`` eventually hits ``capacity``; the live region is then slid
+        back to column 0 (one clone+copy of the active window every
+        ~(capacity - width) steps -- amortized to nothing). If the window
+        itself ever outgrows capacity, buffers are reallocated 1.5x larger.
+
+        The 2D attention mask lives here too (same window arithmetic): the
+        model sees ``mask[:rows, start:end+1]``, exactly aligned with the KV
+        views ``update`` returns. Correctness still rests entirely on the
+        mask, never on buffer contents outside it.
+        """
+
+        def __init__(self, chunk_cache: Any, chunk_mask: Any, *, max_rows: int, headroom: int) -> None:
+            width = chunk_cache.layers[0].keys.shape[2]
+            self.capacity = width + headroom
+            self.max_rows = max_rows
+            self._win = {"rows": 0, "start": 0, "end": 0}
+            layers = []
+            for cl in chunk_cache.layers:
+                layer = StaticKVLayer(self)
+                layer.keys = torch.empty(
+                    (max_rows, cl.keys.shape[1], self.capacity, cl.keys.shape[3]),
+                    dtype=cl.keys.dtype, device=cl.keys.device)
+                layer.values = torch.empty(
+                    (max_rows, cl.values.shape[1], self.capacity, cl.values.shape[3]),
+                    dtype=cl.values.dtype, device=cl.values.device)
+                layers.append(layer)
+            super().__init__(layers=layers)
+            self.mask = torch.zeros(
+                (max_rows, self.capacity), dtype=chunk_mask.dtype, device=chunk_mask.device)
+            self.append_chunk(chunk_cache, chunk_mask)
+
+        # -- window views ----------------------------------------------------
+
+        @property
+        def rows(self) -> int:
+            return self._win["rows"]
+
+        @property
+        def width(self) -> int:
+            return self._win["end"] - self._win["start"]
+
+        def step_mask(self) -> Any:
+            """Mask view for a 1-token decode step (new column set to 1)."""
+            w = self._win
+            self.mask[: w["rows"], w["end"]] = 1
+            return self.mask[: w["rows"], w["start"] : w["end"] + 1]
+
+        def advance(self) -> None:
+            """Commit the step the model just wrote at column ``end``."""
+            self._win["end"] += 1
+
+        # -- structural ops (event-rate, never per step) -----------------------
+
+        def append_chunk(self, chunk_cache: Any, chunk_mask: Any) -> None:
+            """Admit a freshly prefilled chunk into rows [rows, rows+m)."""
+            m, chunk_width = chunk_mask.shape
+            w = self._win
+            if w["rows"] + m > self.max_rows:
+                raise RuntimeError(f"admitting {m} rows into {w['rows']}/{self.max_rows} occupied")
+            if w["rows"] == 0:
+                if chunk_width > self.capacity:
+                    self._grow(chunk_width)
+                w["start"], w["end"] = 0, chunk_width
+            elif chunk_width > self.width:
+                delta = chunk_width - self.width
+                if w["start"] < delta:
+                    self._relocate(delta)
+                w["start"] -= delta
+                # columns newly exposed for the existing rows are stale: mask off
+                self.mask[: w["rows"], w["start"] : w["start"] + delta] = 0
+            lo = w["end"] - chunk_width
+            for layer, cl in zip(self.layers, chunk_cache.layers):
+                layer.keys[w["rows"] : w["rows"] + m, :, lo : w["end"]].copy_(cl.keys)
+                layer.values[w["rows"] : w["rows"] + m, :, lo : w["end"]].copy_(cl.values)
+                cl.keys = cl.values = None  # release the chunk as we go
+            self.mask[w["rows"] : w["rows"] + m, w["start"] : lo] = 0
+            self.mask[w["rows"] : w["rows"] + m, lo : w["end"]].copy_(chunk_mask)
+            w["rows"] += m
+
+        def compact_rows(self, keep: list[int]) -> None:
+            """Drop retired rows by compacting survivors downward, in order."""
+            w = self._win
+            idx = torch.tensor(keep, device=self.mask.device)
+            span = slice(w["start"], w["end"])
+            for layer in self.layers:
+                for buf in (layer.keys, layer.values):
+                    # index_select materializes the survivors first, so the
+                    # downward copy cannot read rows it already overwrote.
+                    buf[: len(keep), :, span].copy_(buf[:, :, span].index_select(0, idx))
+            self.mask[: len(keep), span].copy_(self.mask[:, span].index_select(0, idx))
+            w["rows"] = len(keep)
+
+        def clear_rows(self) -> None:
+            """All rows retired; keep the buffers for the next admit."""
+            self._win.update(rows=0, start=0, end=0)
+
+        def trim_left(self, slack: int) -> None:
+            """Drop left-pad columns shared by every row: the window slides
+            past them. Nothing is copied or freed -- the columns are reused
+            the next time the region relocates."""
+            self._win["start"] += slack
+
+        def ensure_step_room(self) -> None:
+            """Make sure column ``end`` exists before the model writes it."""
+            if self._win["end"] + 1 > self.capacity:
+                self._relocate(0)
+                if self._win["end"] + 1 > self.capacity:  # width+1 > capacity
+                    self._grow(self.width + 1)
+
+        # -- internals ---------------------------------------------------------
+
+        def _relocate(self, new_start: int) -> None:
+            """Slide the live region so it begins at ``new_start``."""
+            w = self._win
+            width = self.width
+            if new_start + width > self.capacity:
+                self._grow(new_start + width, new_start)
+                return
+            src = slice(w["start"], w["end"])
+            dst = slice(new_start, new_start + width)
+            for layer in self.layers:
+                for buf in (layer.keys, layer.values):
+                    # clone: src and dst overlap whenever the slide is short
+                    buf[: w["rows"], :, dst].copy_(buf[: w["rows"], :, src].clone())
+            self.mask[: w["rows"], dst].copy_(self.mask[: w["rows"], src].clone())
+            w["start"], w["end"] = new_start, new_start + width
+
+        def _grow(self, min_capacity: int, new_start: int = 0) -> None:
+            w = self._win
+            width = self.width
+            # Grow in ~512-column increments: one full-cache copy every ~512
+            # steps is noise (DynamicCache paid that copy EVERY step), and it
+            # keeps peak allocation near the actual live width instead of the
+            # worst-case prompt+cap width.
+            new_cap = max(min_capacity + 256, self.capacity + 512)
+            src = slice(w["start"], w["end"])
+            dst = slice(new_start, new_start + width)
+            for layer in self.layers:
+                new_k = torch.empty(
+                    (self.max_rows, layer.keys.shape[1], new_cap, layer.keys.shape[3]),
+                    dtype=layer.keys.dtype, device=layer.keys.device)
+                new_v = torch.empty(
+                    (self.max_rows, layer.values.shape[1], new_cap, layer.values.shape[3]),
+                    dtype=layer.values.dtype, device=layer.values.device)
+                if w["rows"]:
+                    new_k[: w["rows"], :, dst].copy_(layer.keys[: w["rows"], :, src])
+                    new_v[: w["rows"], :, dst].copy_(layer.values[: w["rows"], :, src])
+                layer.keys, layer.values = new_k, new_v
+            new_mask = torch.zeros(
+                (self.max_rows, new_cap), dtype=self.mask.dtype, device=self.mask.device)
+            if w["rows"]:
+                new_mask[: w["rows"], dst].copy_(self.mask[: w["rows"], src])
+            self.mask = new_mask
+            self.capacity = new_cap
+            w["start"], w["end"] = new_start, new_start + width
+
+    _STATIC_KV_CLASSES["StaticKVLayer"] = StaticKVLayer
+    _STATIC_KV_CLASSES["StaticKVCache"] = StaticKVCache
+    return _STATIC_KV_CLASSES
 
 
 def generate_continuous(
@@ -1309,6 +1542,8 @@ def generate_continuous(
     eos_token_id: int | Sequence[int] | None = None,
     skip_special_tokens: bool = False,
     progress_label: str = "",
+    steer: tuple[int, Any, float | Sequence[float]] | None = None,
+    admit_block: int | None = None,
 ) -> list[str]:
     """Greedy-decode many prompts with continuous batching; returns continuations.
 
@@ -1317,10 +1552,21 @@ def generate_continuous(
     jobs instead of waiting for their own batch. Output order matches input
     order. Decoding is greedy (the bench's frozen-decoding rule); EOS defaults
     to the tokenizer's ``eos_token_id``.
+
+    ``steer`` is an optional ``(layer, vector, scale)`` activation addition
+    applied on every forward -- prefill and decode alike, matching
+    ``generate_text``'s semantics exactly (the added term is computed in
+    float32 and then cast, like ``steering_hooks``). ``scale`` may be a single
+    float or one float per job: that is what lets Lab 7 ride a whole dose
+    sweep on one engine schedule, each row at its own dose.
+
+    ``admit_block`` batches admits: each admit's prefill blocks every
+    in-flight row for the whole prefill forward, so instead of admitting on
+    every retirement the engine waits until ``admit_block`` slots are free
+    (or it is out of in-flight rows, or fewer than ``admit_block`` jobs
+    remain). Default ``max_concurrent // 4``; pass 1 to admit eagerly.
     """
     import torch
-    import torch.nn.functional as F
-    from transformers import DynamicCache
 
     n_jobs = len(prompts)
     if n_jobs == 0:
@@ -1341,24 +1587,45 @@ def generate_continuous(
     eos_ids = {int(e) for e in (
         [eos_token_id] if isinstance(eos_token_id, int) else list(eos_token_id or [])
     )}
-    pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else tokenizer.eos_token_id
+    admit_block_eff = max(1, max_concurrent // 4) if admit_block is None else max(1, int(admit_block))
+
+    # Per-job steering scales (None = no steering). The hook multiplies the
+    # CURRENT rows' scales by the fp32 vector and casts the product, so each
+    # row sees exactly what generate_text's steering_hooks would have added.
+    steer_scales: list[float] | None = None
+    steer_cur: dict[str, Any] = {"scales": None}
+    steer_vec32: Any = None
+    if steer is not None:
+        steer_layer, raw_vec, raw_scale = steer
+        steer_scales = (
+            [float(raw_scale)] * n_jobs
+            if isinstance(raw_scale, (int, float))
+            else [float(x) for x in raw_scale]
+        )
+        if len(steer_scales) != n_jobs:
+            raise ValueError(f"steer scales has {len(steer_scales)} entries for {n_jobs} prompts.")
+        steer_vec32 = raw_vec.to(device=device, dtype=torch.float32)
+
+    def set_steer_rows(jobs: list[int]) -> None:
+        if steer_scales is None:
+            return
+        steer_cur["scales"] = torch.tensor(
+            [steer_scales[j] for j in jobs], dtype=torch.float32, device=device
+        ).view(-1, 1, 1)
 
     # Packed state for the active rows (parallel lists, one entry per row).
     job_idx: list[int] = []        # original prompt index per active row
     valid_lens: list[int] = []     # logical (real-token) KV length per row
     gen_ids: list[list[int]] = []  # tokens generated so far per row
-    # ONE persistent cache object for the whole schedule. The model's own
-    # attention layers grow it in place each step (cache.update); the engine
-    # only touches its layer tensors at retire/admit events. Holding extracted
-    # (key, value) pair lists across steps — the previous design — kept a
-    # second full copy of the cache alive during every forward (2x residency),
-    # which is what OOM'd 32 in-flight rows on an 80 GB card.
-    cache: Any = None              # transformers DynamicCache or None
     last_tokens: list[int] = []    # next decode-step input per row
-    attn_mask: Any = None          # (N, L_pad) long on `device`
+    cache: Any = None              # StaticKVCache (allocated at first admit)
+    StaticKVCache = _static_kv_classes()["StaticKVCache"]
 
-    def n_cached_rows() -> int:
-        return 0 if cache is None or not cache.layers else cache.layers[0].keys.shape[0]
+    # Device-resident step inputs, rebuilt only at retire/admit events and
+    # mutated in place per step (ids_buf <- argmax output, pos_buf += 1), so
+    # the steady-state loop does no host->device transfers.
+    ids_buf = torch.empty((max_concurrent, 1), dtype=torch.long, device=device)
+    pos_buf = torch.empty((max_concurrent, 1), dtype=torch.long, device=device)
 
     results: dict[int, list[int]] = {}
     pending = list(range(n_jobs))
@@ -1370,9 +1637,13 @@ def generate_continuous(
     active_row_steps = 0
     step_ms: list[float] = []      # per-decode-step wall latency (ITL trace)
     step_ctx: list[int] = []       # cache length at each step (for ms/ctx slope)
+    ttft_s: dict[int, float] = {}  # job -> seconds from call start to first token
+    admit_events: list[dict[str, Any]] = []
 
-    def prefill(indices: list[int]) -> tuple[list, Any, list[int], list[int], list[int]]:
+    def prefill(indices: list[int]) -> tuple[Any, Any, list[int], list[int]]:
         """Prefill a chunk of jobs (left-padded); returns its packed state."""
+        from transformers import DynamicCache
+
         enc = tokenizer(
             [prompts[i] for i in indices],
             return_tensors="pt",
@@ -1384,6 +1655,7 @@ def generate_continuous(
         # Left padding + raw forward: positions must be derived from the mask,
         # or padded rows get shifted rotary phases.
         position_ids = (mask.cumsum(dim=1) - 1).clamp(min=0)
+        set_steer_rows(indices)
         with torch.inference_mode():
             out = model(
                 input_ids=ids,
@@ -1394,79 +1666,65 @@ def generate_continuous(
             )
         first = out.logits[:, -1, :].argmax(dim=-1).tolist()
         lens = mask.sum(dim=1).tolist()
-        return out.past_key_values, mask, lens, first, indices
+        return out.past_key_values, mask, lens, first
 
-    def merge(chunk_cache: Any, chunk_mask: Any, chunk_lens: list[int],
-              chunk_first: list[int], chunk_jobs: list[int]) -> None:
-        """Append a prefilled chunk to the persistent cache (left-pad align).
-
-        Event-rate only (admits), never per step. Layer tensors are padded on
-        the LEFT to a common length and concatenated along the batch dim; the
-        old per-layer tensors are released as each layer is reassigned, so the
-        transient overhead is one layer, not one cache.
-        """
-        nonlocal cache, attn_mask
+    def admit_ready() -> bool:
+        free = max_concurrent - len(job_idx)
+        if not pending or free <= 0:
+            return False
         if not job_idx:
-            cache = chunk_cache
-            attn_mask = chunk_mask
-        else:
-            old_len = attn_mask.shape[1]
-            new_len = chunk_mask.shape[1]
-            target = max(old_len, new_len)
-            for layer, chunk_layer in zip(cache.layers, chunk_cache.layers):
-                k_old, v_old = layer.keys, layer.values
-                k_new, v_new = chunk_layer.keys, chunk_layer.values
-                if old_len < target:
-                    k_old = F.pad(k_old, (0, 0, target - old_len, 0))
-                    v_old = F.pad(v_old, (0, 0, target - old_len, 0))
-                if new_len < target:
-                    k_new = F.pad(k_new, (0, 0, target - new_len, 0))
-                    v_new = F.pad(v_new, (0, 0, target - new_len, 0))
-                layer.keys = torch.cat([k_old, k_new], dim=0)
-                layer.values = torch.cat([v_old, v_new], dim=0)
-                chunk_layer.keys = chunk_layer.values = None  # release as we go
-            attn_mask = torch.cat(
-                [
-                    F.pad(attn_mask, (target - old_len, 0)),
-                    F.pad(chunk_mask, (target - new_len, 0)),
-                ],
-                dim=0,
-            )
-        job_idx.extend(chunk_jobs)
-        valid_lens.extend(chunk_lens)
-        last_tokens.extend(chunk_first)
-        gen_ids.extend([[t] for t in chunk_first])
-        nonlocal total_tokens
-        total_tokens += len(chunk_jobs)  # prefill emits each row's first token
+            return True
+        return free >= min(admit_block_eff, len(pending))
 
     def retire_and_admit() -> None:
         """Drop finished rows, trim shared left pad, admit pending jobs."""
-        nonlocal cache, attn_mask, finished_rows
+        nonlocal cache, finished_rows, total_tokens
         keep = [r for r in range(len(job_idx)) if r not in finished_rows]
         for r in sorted(finished_rows, reverse=True):
             results[job_idx[r]] = gen_ids[r]
             del job_idx[r], valid_lens[r], gen_ids[r], last_tokens[r]
         finished_rows = []
-        if keep and len(keep) < n_cached_rows():
-            keep_dev = torch.tensor(keep, device=attn_mask.device)
-            cache.batch_select_indices(keep_dev)
-            attn_mask = attn_mask.index_select(0, keep_dev)
-        elif not keep:
-            cache = None
-            attn_mask = None
-        # Trim left padding shared by every remaining row. .contiguous() is
-        # what actually frees the trimmed storage; a bare slice would keep the
-        # full-width tensor alive underneath.
-        if job_idx:
-            slack = attn_mask.shape[1] - max(valid_lens)
-            if slack > 0:
-                for layer in cache.layers:
-                    layer.keys = layer.keys[:, :, slack:, :].contiguous()
-                    layer.values = layer.values[:, :, slack:, :].contiguous()
-                attn_mask = attn_mask[:, slack:].contiguous()
-        if pending and len(job_idx) < max_concurrent:
+        if cache is not None:
+            if keep and len(keep) < cache.rows:
+                cache.compact_rows(keep)
+            elif not keep:
+                cache.clear_rows()
+            if job_idx:
+                slack = cache.width - max(valid_lens)
+                if slack > 0:
+                    cache.trim_left(slack)
+        if admit_ready():
             chunk = [pending.pop(0) for _ in range(min(len(pending), max_concurrent - len(job_idx)))]
-            merge(*prefill(chunk))
+            rows_blocked = len(job_idx)
+            t_admit = time.perf_counter()
+            chunk_cache, chunk_mask, lens, first = prefill(chunk)
+            if cache is None:
+                cache = StaticKVCache(
+                    chunk_cache, chunk_mask,
+                    max_rows=max_concurrent,
+                    # Deliberately small: capacity tracks the live width via
+                    # incremental _grow instead of preallocating the
+                    # worst-case prompt+cap width for every row (which cost
+                    # +20-30 GiB at 32-48 rows for zero benefit).
+                    headroom=512,
+                )
+            else:
+                cache.append_chunk(chunk_cache, chunk_mask)
+            now_s = time.perf_counter() - wall_start
+            prefill_ms = (now_s - (t_admit - wall_start)) * 1000.0
+            for j in chunk:
+                ttft_s[j] = now_s
+            admit_events.append({
+                "t_s": round(now_s, 3),
+                "n_admitted": len(chunk),
+                "prefill_ms": round(prefill_ms, 1),
+                "rows_blocked": rows_blocked,
+            })
+            job_idx.extend(chunk)
+            valid_lens.extend(lens)
+            last_tokens.extend(first)
+            gen_ids.extend([[t] for t in first])
+            total_tokens += len(chunk)  # prefill emits each row's first token
 
     # First-token handling: prefill already produced one token per row, so a
     # row whose cap is 1 (or whose first token is EOS) retires before stepping.
@@ -1478,44 +1736,64 @@ def generate_continuous(
             if tok in eos_ids or len(gen_ids[r]) >= caps[job_idx[r]]:
                 finished_rows.append(r)
 
+    def rebuild_device_state() -> None:
+        n = len(job_idx)
+        if n == 0:
+            return
+        ids_buf[:n, 0] = torch.tensor(last_tokens, dtype=torch.long)
+        pos_buf[:n, 0] = torch.tensor(valid_lens, dtype=torch.long)
+        set_steer_rows(job_idx)
+
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
     old_side = getattr(tokenizer, "padding_side", "right")
     tokenizer.padding_side = "left"
+    steer_handle = None
+    if steer_scales is not None:
+        steer_block = bundle.blocks[int(steer[0])]
+
+        def steer_hook(module: Any, hook_args: tuple, output: Any) -> Any:
+            scales = steer_cur["scales"]
+            if scales is None:
+                return output
+            if isinstance(output, tuple):
+                out = output[0]
+                out = out + (scales * steer_vec32).to(out.device, out.dtype)
+                return (out,) + tuple(output[1:])
+            return output + (scales * steer_vec32).to(output.device, output.dtype)
+
+        steer_handle = steer_block.register_forward_hook(steer_hook)
     try:
-        first_chunk = [pending.pop(0) for _ in range(min(len(pending), max_concurrent))]
-        merge(*prefill(first_chunk))
+        retire_and_admit()  # first admit
         mark_finished()
+        rebuild_device_state()
         while job_idx or pending:
-            if finished_rows or (pending and len(job_idx) < max_concurrent):
+            if finished_rows or admit_ready():
                 retire_and_admit()
                 mark_finished()
+                rebuild_device_state()
                 continue
             if not job_idx:
                 continue
             n = len(job_idx)
-            step_ids = torch.tensor([[t] for t in last_tokens], dtype=torch.long, device=device)
-            position_ids = torch.tensor([[v] for v in valid_lens], dtype=torch.long, device=device)
-            attn_mask = torch.cat(
-                [attn_mask, torch.ones((n, 1), dtype=attn_mask.dtype, device=attn_mask.device)],
-                dim=1,
-            )
-            # The persistent cache grows in place inside the forward (each
-            # attention layer calls cache.update with the new token's KV).
-            # Nothing is extracted or rebuilt per step.
+            cache.ensure_step_room()
             t_step = time.perf_counter()
             with torch.inference_mode():
                 out = model(
-                    input_ids=step_ids,
-                    attention_mask=attn_mask,
-                    position_ids=position_ids,
+                    input_ids=ids_buf[:n],
+                    attention_mask=cache.step_mask(),
+                    position_ids=pos_buf[:n],
                     past_key_values=cache,
                     use_cache=True,
                 )
-            next_tokens = out.logits[:, -1, :].argmax(dim=-1).tolist()
+            next_dev = out.logits[:, -1, :].argmax(dim=-1)
+            ids_buf[:n, 0].copy_(next_dev)  # next step's input, device-side
+            next_tokens = next_dev.tolist()
             # .tolist() syncs the device, so this wall time covers the real step.
             step_ms.append((time.perf_counter() - t_step) * 1000.0)
-            step_ctx.append(attn_mask.shape[1])
+            cache.advance()
+            pos_buf[:n] += 1
+            step_ctx.append(cache.width)
             for r in range(n):
                 last_tokens[r] = int(next_tokens[r])
                 gen_ids[r].append(last_tokens[r])
@@ -1530,6 +1808,8 @@ def generate_continuous(
             mark_finished()
     finally:
         tokenizer.padding_side = old_side
+        if steer_handle is not None:
+            steer_handle.remove()
 
     wall = time.perf_counter() - wall_start
     # Inter-token-latency trace stats (the per-step health of the loop): p50,
@@ -1554,6 +1834,17 @@ def generate_continuous(
             numc = sum((c - cbar) * (y - mean) for c, y in zip(step_ctx, step_ms))
             denc = sum((c - cbar) ** 2 for c in step_ctx)
             itl["itl_slope_ms_per_ctx_token"] = round(numc / max(denc, 1e-9), 6)
+    # TTFT / admit telemetry (the olmo_lora_bench-style numbers that quantify
+    # how much prefill interruption costs the in-flight rows).
+    if ttft_s:
+        tt = sorted(ttft_s.values())
+        itl["ttft_p50_s"] = round(tt[len(tt) // 2], 2)
+        itl["ttft_p95_s"] = round(tt[min(len(tt) - 1, int(len(tt) * 0.95))], 2)
+    stalls = [e["prefill_ms"] for e in admit_events if e["rows_blocked"] > 0]
+    itl["admit_events"] = len(admit_events)
+    itl["admit_block"] = admit_block_eff
+    itl["prefill_stall_ms_total"] = round(sum(stalls), 1)
+    itl["prefill_stall_ms_max"] = round(max(stalls), 1) if stalls else 0.0
     LAST_GENERATION_STATS.clear()
     LAST_GENERATION_STATS.update({
         "engine": "continuous",
@@ -1565,6 +1856,7 @@ def generate_continuous(
         "wall_seconds": round(wall, 2),
         "tokens_per_second": round(total_tokens / wall, 1) if wall > 0 else 0.0,
         **itl,
+        "admit_trace": admit_events,
     })
     return [
         tokenizer.decode(results[i], skip_special_tokens=skip_special_tokens)

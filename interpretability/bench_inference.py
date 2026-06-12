@@ -120,13 +120,13 @@ class GPUSampler:
         return out
 
 
-def run_continuous(bundle, rendered, caps, max_concurrent) -> tuple[list[str], dict[str, Any]]:
+def run_continuous(bundle, rendered, caps, max_concurrent, admit_block=None) -> tuple[list[str], dict[str, Any]]:
     import interp_bench as bench
 
     outs = bench.generate_continuous(
         bundle, rendered, caps, max_concurrent=max_concurrent,
         eos_token_id=-1,  # suppress EOS: exact-length jobs (engine treats <0 as never)
-        progress_label="bench")
+        progress_label="bench", admit_block=admit_block)
     return outs, dict(bench.LAST_GENERATION_STATS)
 
 
@@ -165,6 +165,8 @@ def main() -> None:
     ap.add_argument("--max-new", type=int, default=2048)
     ap.add_argument("--scale", type=float, default=1.0, help="shrink all length caps")
     ap.add_argument("--max-concurrent", type=int, default=16)
+    ap.add_argument("--admit-block", type=int, default=None,
+                    help="admit only when this many slots are free (default: max_concurrent//4)")
     ap.add_argument("--engines", default="continuous,lockstep")
     ap.add_argument("--dtype", default="bfloat16")
     ap.add_argument("--verify-sample", type=int, default=4,
@@ -203,13 +205,18 @@ def main() -> None:
     sample_texts: dict[str, list[str]] = {}
     for engine in args.engines.split(","):
         engine = engine.strip()
+        # A trailing digit repeats an engine under a distinct key, e.g.
+        # "continuous,continuous2" checks the engine's self-determinism
+        # (two identical calls must produce bitwise-identical outputs).
+        kind = engine.rstrip("0123456789")
         torch.cuda.empty_cache()
         torch.cuda.reset_peak_memory_stats()
         t0 = time.perf_counter()
         with GPUSampler() as sampler:
-            if engine == "continuous":
-                outs, stats = run_continuous(bundle, rendered, caps, args.max_concurrent)
-            elif engine == "lockstep":
+            if kind == "continuous":
+                outs, stats = run_continuous(bundle, rendered, caps, args.max_concurrent,
+                                             args.admit_block)
+            elif kind == "lockstep":
                 outs = run_lockstep(bundle, rendered, caps, args.max_concurrent)
                 stats = {}
             else:
@@ -227,14 +234,59 @@ def main() -> None:
         sample_texts[engine] = outs[: args.verify_sample]
         print(f"[bench-inf] {engine:11s} wall {wall:7.1f}s  {row['tok_per_s']:7.1f} tok/s  "
               f"peak {peak:5.1f} GiB")
+        if kind == "continuous":
+            # TTFT includes queue wait (jobs admitted late wait by design);
+            # prefill stall is the part that interrupts in-flight rows.
+            print(f"[bench-inf]   itl p50/p95 {stats.get('itl_p50_ms')}/{stats.get('itl_p95_ms')} ms  "
+                  f"ttft p50/p95 {stats.get('ttft_p50_s')}/{stats.get('ttft_p95_s')} s  "
+                  f"admits {stats.get('admit_events')} (block {stats.get('admit_block')})  "
+                  f"stall total/max {stats.get('prefill_stall_ms_total')}/{stats.get('prefill_stall_ms_max')} ms")
         with pathlib.Path(args.out).open("a", encoding="utf-8") as f:
             f.write(json.dumps(row) + "\n")
 
     if len(sample_texts) == 2:
         a, b = sample_texts.values()
         same = sum(x == y for x, y in zip(a, b))
-        print(f"[bench-inf] determinism cross-check: {same}/{len(a)} sample jobs identical "
-              f"across engines{' — MISMATCH' if same < len(a) else ''}")
+        print(f"[bench-inf] determinism cross-check: {same}/{len(a)} sample jobs identical across engines")
+        if same < len(a):
+            # bf16 greedy decoding is not bitwise stable across attention
+            # kernel paths (batch shape / tensor strides select different
+            # kernels -> ulp-level logit differences -> near-tie argmax
+            # flips). That is benign; a real cache bug diverges at a LARGE
+            # logit gap. So divergences are verified, not just counted: at
+            # each first-divergence point, a clean single-row teacher-forced
+            # forward must show the two engines picked the model's top-2
+            # tokens within a small gap.
+            tok = bundle.tokenizer
+            verified = failed = 0
+            for i in range(len(a)):
+                if a[i] == b[i]:
+                    continue
+                a_ids = tok(a[i], add_special_tokens=False)["input_ids"]
+                b_ids = tok(b[i], add_special_tokens=False)["input_ids"]
+                d = next((k for k in range(min(len(a_ids), len(b_ids))) if a_ids[k] != b_ids[k]),
+                         min(len(a_ids), len(b_ids)))
+                prefix = tok(rendered[i], add_special_tokens=False)["input_ids"] + a_ids[:d]
+                ids = torch.tensor([prefix], device=bundle.input_device)
+                with torch.inference_mode():
+                    logits = bundle.model(input_ids=ids, use_cache=False).logits[0, -1].float()
+                top = torch.topk(logits, 8)
+                top1 = float(top.values[0])
+                by_tok = {int(t): float(v) for v, t in zip(top.values, top.indices)}
+                chose = [x for x in (a_ids[d] if d < len(a_ids) else -1,
+                                     b_ids[d] if d < len(b_ids) else -1)]
+                # benign = BOTH engines picked a token whose clean logit is
+                # within a couple of bf16 ulps of the maximum (n-way near-tie)
+                gap = max(top1 - by_tok.get(c, float("-inf")) for c in chose)
+                ok = gap <= 0.25
+                verified += ok
+                failed += not ok
+                if not ok:
+                    print(f"[bench-inf]   job {i}: REAL divergence at token {d} "
+                          f"(max gap to top-1 {gap:.4f}, engines chose {chose}, "
+                          f"top tokens {sorted(by_tok, key=by_tok.get, reverse=True)[:4]})")
+            print(f"[bench-inf] near-tie verification: {verified} benign bf16 near-tie flips, "
+                  f"{failed} REAL divergences{' — FAIL' if failed else ' — PASS'}")
 
 
 if __name__ == "__main__":

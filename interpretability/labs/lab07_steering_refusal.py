@@ -79,6 +79,51 @@ LAYER_SELECT_SCALE = 0.5
 MONITOR_TRAIN_FRACTION = 0.6
 TRUTH_TRAIN_FRACTION = 0.6
 
+# All generation goes through the bench's continuous-batching engine: the
+# steering hook supports a per-job dose, so an entire (condition x scale x
+# prompt) sweep rides one schedule instead of one generate_text per cell.
+ENGINE_MAX_CONCURRENT = 16
+
+# Per-run generation telemetry, written to diagnostics/generation_engine_stats.json.
+ENGINE_STATS: dict[str, Any] = {"engine": "continuous", "calls": 0, "n_jobs": 0,
+                                "decode_steps": 0, "generated_tokens": 0, "wall_seconds": 0.0}
+
+
+def steered_batch(
+    bundle: bench.ModelBundle,
+    templated_prompts: Sequence[str],
+    *,
+    layer: int | None = None,
+    direction: Any = None,
+    scales: float | Sequence[float] = 0.0,
+    max_new_tokens: int = MAX_NEW_TOKENS,
+) -> list[str]:
+    """Greedy continuations for many prompts on one engine schedule.
+
+    ``scales`` may be one dose per prompt; ``direction=None`` means unsteered.
+    Semantics match ``bench.generate_text`` (greedy, steering applied to
+    prefill and decode alike, special tokens stripped).
+    """
+    outs = bench.generate_continuous(
+        bundle,
+        list(templated_prompts),
+        max_new_tokens,
+        max_concurrent=ENGINE_MAX_CONCURRENT,
+        steer=None if direction is None else (int(layer), direction, scales),
+        skip_special_tokens=True,
+    )
+    last = bench.LAST_GENERATION_STATS
+    ENGINE_STATS["calls"] += 1
+    for key in ("n_jobs", "decode_steps", "generated_tokens"):
+        ENGINE_STATS[key] += int(last.get(key, 0))
+    ENGINE_STATS["wall_seconds"] = round(
+        ENGINE_STATS["wall_seconds"] + float(last.get("wall_seconds", 0.0)), 2)
+    ENGINE_STATS["max_concurrent"] = last.get("max_concurrent")
+    if ENGINE_STATS["wall_seconds"] > 0:
+        ENGINE_STATS["tokens_per_second"] = round(
+            ENGINE_STATS["generated_tokens"] / ENGINE_STATS["wall_seconds"], 1)
+    return outs
+
 # prompt_set controls runtime; max_examples is then applied as a hard cap. Tier
 # A therefore remains a CPU smoke path, while --prompt-set full caps generously
 # above the shipped data sizes (28 sentiment/refusal pairs, 24 eval prompts), so
@@ -456,19 +501,28 @@ def kl_steered_to_unsteered(steered_logits: Any, base_logits: Any) -> float:
     return float((steered_logp.exp() * (steered_logp - base_logp)).sum())
 
 
-def drift_accuracy(bundle: bench.ModelBundle, injection_layer: int, direction: Any, abs_scale: float) -> float:
-    correct = 0
-    for prompt, answer in DRIFT_FACTS:
-        templated = bench.apply_chat_template(bundle, prompt)
-        gen = bench.generate_text(
-            bundle,
-            templated,
-            max_new_tokens=12,
-            steer=(injection_layer, direction, abs_scale),
+def drift_accuracy_by_scale(
+    bundle: bench.ModelBundle, injection_layer: int, direction: Any, abs_scales: Sequence[float]
+) -> dict[float, float]:
+    """Drift accuracy at every dose in one engine schedule (facts x scales)."""
+    templated = [bench.apply_chat_template(bundle, p) for p, _ in DRIFT_FACTS]
+    jobs = [(s, t) for s in abs_scales for t in templated]
+    gens = steered_batch(
+        bundle,
+        [t for _, t in jobs],
+        layer=injection_layer,
+        direction=direction,
+        scales=[s for s, _ in jobs],
+        max_new_tokens=12,
+    )
+    out: dict[float, float] = {}
+    for i, scale in enumerate(abs_scales):
+        chunk = gens[i * len(DRIFT_FACTS) : (i + 1) * len(DRIFT_FACTS)]
+        correct = sum(
+            1 for (_, answer), gen in zip(DRIFT_FACTS, chunk) if answer.lower() in gen.lower()
         )
-        if answer.lower() in gen.lower():
-            correct += 1
-    return correct / len(DRIFT_FACTS)
+        out[scale] = correct / len(DRIFT_FACTS)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -882,29 +936,34 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         direction = diff_in_means_direction(bundle, sentiment, injection_layer)
         layer_dirs[injection_layer] = direction
         ref_norm_here = median_activation_norm(bundle, [p for _, p in sweep_prompts], injection_layer)
+        # Both signed doses for every sweep prompt ride one engine schedule.
+        sweep_jobs = [
+            (pid, signed_scale, bench.apply_chat_template(bundle, prompt))
+            for pid, prompt in sweep_prompts
+            for signed_scale in (LAYER_SELECT_SCALE, -LAYER_SELECT_SCALE)
+        ]
+        gens = steered_batch(
+            bundle,
+            [t for _, _, t in sweep_jobs],
+            layer=injection_layer,
+            direction=direction,
+            scales=[s * ref_norm_here for _, s, _ in sweep_jobs],
+        )
         pos_scores, neg_scores = [], []
-        for pid, prompt in sweep_prompts:
-            templated = bench.apply_chat_template(bundle, prompt)
-            for signed_scale, bucket in ((LAYER_SELECT_SCALE, pos_scores), (-LAYER_SELECT_SCALE, neg_scores)):
-                gen = bench.generate_text(
-                    bundle,
-                    templated,
-                    max_new_tokens=MAX_NEW_TOKENS,
-                    steer=(injection_layer, direction, signed_scale * ref_norm_here),
-                )
-                score = sentiment_score(gen)
-                bucket.append(score)
-                sweep_by_prompt_rows.append(
-                    {
-                        "prompt_id": pid,
-                        "injection_layer": injection_layer,
-                        "stream_depth": stream_depth_for_injection_layer(injection_layer),
-                        "scale": signed_scale,
-                        "abs_scale": round_float(signed_scale * ref_norm_here),
-                        "sentiment_score": round_float(score),
-                        "generation": gen,
-                    }
-                )
+        for (pid, signed_scale, _), gen in zip(sweep_jobs, gens):
+            score = sentiment_score(gen)
+            (pos_scores if signed_scale > 0 else neg_scores).append(score)
+            sweep_by_prompt_rows.append(
+                {
+                    "prompt_id": pid,
+                    "injection_layer": injection_layer,
+                    "stream_depth": stream_depth_for_injection_layer(injection_layer),
+                    "scale": signed_scale,
+                    "abs_scale": round_float(signed_scale * ref_norm_here),
+                    "sentiment_score": round_float(score),
+                    "generation": gen,
+                }
+            )
         pos_mean = mean(pos_scores)
         neg_mean = mean(neg_scores)
         spread = pos_mean - neg_mean
@@ -947,9 +1006,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     # across directions, so do not spend GPU minutes discovering that three times.
     base_logits: dict[str, Any] = {}
     base_generations: dict[str, str] = {}
-    for pid, _, templated in templated_eval:
+    base_texts = steered_batch(bundle, [t for _, _, t in templated_eval])
+    for (pid, _, templated), gen in zip(templated_eval, base_texts):
         base_logits[pid] = bench.next_token_logits(bundle, templated)
-        base_generations[pid] = bench.generate_text(bundle, templated, max_new_tokens=MAX_NEW_TOKENS)
+        base_generations[pid] = gen
 
     # ----- Track A: dose-response with controls ------------------------------
     print(f"[lab7] Track A: dose-response over {len(TRACK_A_SCALES)} scales x 3 conditions")
@@ -958,6 +1018,21 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     directions = (("real", real_dir), ("random", rand_dir), ("shuffled", shuf_dir))
 
     for condition, direction in directions:
+        # All non-zero doses for every eval prompt ride one engine schedule
+        # (scale 0 reuses the cached unsteered baselines). Drift accuracy
+        # batches the same way: every dose x fact in one call.
+        nonzero = [s for s in TRACK_A_SCALES if s != 0.0]
+        track_jobs = [(s, pid) for s in nonzero for pid, _, _ in templated_eval]
+        track_gens = steered_batch(
+            bundle,
+            [t for s in nonzero for _, _, t in templated_eval],
+            layer=best_layer,
+            direction=direction,
+            scales=[eff(s) for s, _ in track_jobs],
+        )
+        steered_gen = dict(zip(track_jobs, track_gens))
+        drift_by_dose = drift_accuracy_by_scale(
+            bundle, best_layer, direction, [eff(s) for s in TRACK_A_SCALES])
         for scale in TRACK_A_SCALES:
             for pid, prompt, templated in templated_eval:
                 if scale == 0.0:
@@ -965,12 +1040,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                     steered_logits = base_logits[pid]
                     kl = 0.0
                 else:
-                    gen = bench.generate_text(
-                        bundle,
-                        templated,
-                        max_new_tokens=MAX_NEW_TOKENS,
-                        steer=(best_layer, direction, eff(scale)),
-                    )
+                    gen = steered_gen[(scale, pid)]
                     steered_logits = bench.next_token_logits(
                         bundle,
                         templated,
@@ -996,7 +1066,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                         "generation": gen,
                     }
                 )
-            drift = drift_accuracy(bundle, best_layer, direction, eff(scale))
+            drift = drift_by_dose[eff(scale)]
             drift_rows.append(
                 {
                     "condition": condition,
@@ -1071,7 +1141,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     # Steer benign prompts toward refusal and classify only those benign generations.
     # SAFETY WALL (enforced by construction, audited in lab07_safety_audit.json):
     # - templated_eval contains only the benign evaluation prompts.
-    # - No refusal-eliciting prompt is ever passed to generate_text or next_token_logits.
+    # - No refusal-eliciting prompt is ever passed to steered_batch (the
+    #   engine wrapper, the only generation path) or next_token_logits.
     # - Refusal ablation is not implemented anywhere in this lab.
     # The monitor (above) used forward passes on held-out eliciting pairs; this block
     # only ever measures the causal effect of the direction on already-benign prompts.
@@ -1079,15 +1150,20 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     induced_rows: list[dict[str, Any]] = []
     induced_generation_rows: list[dict[str, Any]] = []
     for condition, direction in (("refusal", refusal_dir), ("random", rand_dir)):
+        # Every dose x benign prompt in one engine schedule per condition.
+        induced_jobs = [(s, pid) for s in REFUSAL_SCALES for pid, _, _ in templated_eval]
+        induced_gens = steered_batch(
+            bundle,
+            [t for s in REFUSAL_SCALES for _, _, t in templated_eval],
+            layer=best_layer,
+            direction=direction,
+            scales=[eff(s) for s, _ in induced_jobs],
+        )
+        induced_map = dict(zip(induced_jobs, induced_gens))
         for scale in REFUSAL_SCALES:
             refusals = 0
             for pid, prompt, templated in templated_eval:
-                gen = bench.generate_text(
-                    bundle,
-                    templated,
-                    max_new_tokens=MAX_NEW_TOKENS,
-                    steer=(best_layer, direction, eff(scale)),
-                )
+                gen = induced_map[(scale, pid)]
                 marker = refusal_marker(gen)
                 refusals += int(bool(marker))
                 induced_generation_rows.append(
@@ -1237,6 +1313,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             + len(induced_generation_rows)
         ),
     )
+
+    stats_path = ctx.path("diagnostics", "generation_engine_stats.json")
+    bench.write_json(stats_path, ENGINE_STATS)
+    ctx.register_artifact(stats_path, "diagnostic",
+                          "Continuous-engine telemetry aggregated over every Lab 7 generation call.")
+    print(f"[lab7] engine: {ENGINE_STATS['calls']} calls, {ENGINE_STATS['generated_tokens']} tokens, "
+          f"{ENGINE_STATS.get('tokens_per_second', 0.0)} tok/s overall")
 
     real_at = {float(r["scale"]): r for r in dose_rows if r["condition"] == "real"}
     rand_at = {float(r["scale"]): r for r in dose_rows if r["condition"] == "random"}
