@@ -3,6 +3,30 @@
 **Course outline, revision 2**
 **Date:** 2026-06-10
 **Format:** Pre-lab + 11 hands-on labs. Each lab is one student-facing `.md` handout, one executable `.py` script, and one short interpretation/ethics reading.
+
+---
+
+## 0. As-built addendum (2026-06-11)
+
+All 11 labs are implemented and validated (Tier A on CPU, Tier B on a Colab
+A100). This outline remains the design document; where the build deviated,
+the deviation was deliberate, is documented in the lab's own handout, and is
+summarized here. The README's "Design decisions" section is the canonical
+list; the load-bearing ones:
+
+| Design (this document) | As built | Why |
+|---|---|---|
+| TransformerLens 3 / TransformerBridge + `interpkit/` package | one shared bench (`interp_bench.py`) on raw HF `transformers` with explicit, **self-verifying** hooks (hook parity, lens, decomposition, patch no-op, replacement exactness, edge reconstruction…), plus thin lab modules | course rule: nobody runs code they can't explain; every instrument check aborts the run on failure |
+| Gemma 3 + Gemma Scope 2 via SAELens (Lab 8); gemma-2-2b + circuit-tracer (Lab 9) | pretrained ungated dictionaries loaded directly (jbloom resid SAE, Dunefsky MLP transcoders, decoderesearch Olmo SAE); Lab 9's attribution-graph pipeline is **hand-built** on gpt2 + the full 12-layer Dunefsky transcoder stack | Gemma weights are license-gated (no token on the course VM); circuit-tracer drags in TransformerLens; the loading conventions were validated empirically (Lab 8's report) |
+| Lab 9 primary: two-hop Dallas→Texas→Austin | one-hop capital recall with a counterfactual substitution flip (France→Germany features ⇒ Paris→Berlin) | gpt2-small cannot do the two-hop; everything epistemically interesting — replacement model, edges, error accounting, interventions with a random control, the Lab 6 confrontation — survives |
+| Lab 10 model strategy as written | as designed (Olmo-3-7B-Think), with Qwen3-0.6B as the Tier A think-capable smoke model; 140 MCQ items vendored from MMLU; add-mistake = injected wrong *claim* (no judge model assumed) | smallest ungated `<think>` model; frozen data rule |
+| Lab 11 curated-domain menu | two domains implemented end to end behind `--audit-domain`: `factual_qa` and the `cot_faithfulness` flagship (fresh item slice + hint-presence probe); the remaining menu entries are student projects on the same harness | depth over breadth; the output contract is the deliverable |
+| `interpkit/evidence.py` appends to the ledger | labs draft `ledger_suggestions.md` with measured numbers; nothing touches `claim_ledger.md` without `--append-ledger` | writing the claim is the coursework |
+
+Models actually used: gpt2 (Labs 1–6 smoke, 8, 9), Olmo-3-1025-7B (Labs 1–6,
+8, 11 Tier B), Olmo-3-7B-Instruct (Lab 7), SmolLM2-135M-Instruct (Lab 7
+smoke), Olmo-3-7B-Think (Labs 10, 11), Qwen3-0.6B (Lab 10/11 smoke). Per-lab
+runtime, artifacts, and validation evidence: `runs/LAB*_VERIFICATION_REPORT.md`.
 **Target code size:** 500 to 1000 lines per lab Python file, including CLI, hooks, metrics, plots, and artifact writing.
 **Audience:** Students who already know ML, deep learning, NLP, RL, and ML systems. No basics. The course teaches interpretability as an experimental craft on open models.
 
