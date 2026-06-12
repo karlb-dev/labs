@@ -207,10 +207,13 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   behavioral metric does your claim name?
 
 **The course is complete: pre-lab bench + Labs 1–11, each validated on
-Tier A (CPU) and Tier B (Colab A100).** A full-course regression sweep —
-every lab, both tiers, full settings, 24/24 green with deterministic
-reproduction of the validated headline numbers — is recorded in
-`runs/RUN2_VALIDATION_REPORT.md`; the design-vs-built record is COURSE.md §0.
+Tier A (CPU) and Tier B (Colab A100).** Two full-course regression sweeps
+are on record: `runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24
+green, deterministic reproduction of the validated numbers) and
+`runs/RUN3_VALIDATION_REPORT.md` (post-rewrite merge, 23/23 green after one
+real data bug the rewrite's own validator caught; untouched labs reproduce
+run 2 exactly). The one-page sweep view is `course_dashboard.py`; the
+design-vs-built record is COURSE.md §0.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 

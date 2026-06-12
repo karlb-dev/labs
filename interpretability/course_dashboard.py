@@ -77,11 +77,14 @@ HIGHLIGHTS: dict[str, list[tuple[str, list[str]]]] = {
               ("filler acc", ["exp2.filler_accuracy"]),
               ("forced/unparseable", ["n_unparseable_or_forced"])],
     "lab11": [("domain", ["domain"]),
-              ("preference acc", ["behavioral.preference_accuracy"]),
-              ("recovery early/final", ["behavioral.mean_recovery_subject_early"]),
+              ("preference acc", ["behavioral.target_preference_accuracy",
+                                  "behavioral.preference_accuracy"]),
+              ("subject-site recovery", ["behavioral.mean_recovery_subject_early"]),
+              ("unrelated-patch control", ["behavioral.mean_recovery_unrelated_control"]),
               ("monitor AUC", ["behavioral.monitor.held_out_auc"]),
               ("max flip (fresh)", ["behavioral.max_flip_rate"]),
-              ("probe AUC", ["behavioral.hint_presence_probe.held_out_auc"])],
+              ("probe AUC", ["behavioral.hint_presence_probe.held_out_auc"]),
+              ("probe shuffled ctrl", ["behavioral.hint_presence_probe.shuffled_control_auc"])],
 }
 
 
