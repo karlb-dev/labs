@@ -507,7 +507,14 @@ def pick_surface_letter(statements: list[Statement], split_lookup: dict[str, boo
 # ---------------------------------------------------------------------------
 
 
-FAMILY_COLORS = {"cities": "tab:blue", "comparisons": "tab:orange", "negations": "tab:green"}
+FAMILY_COLORS = {"cities": "tab:blue", "comparisons": "tab:orange", "negations": "tab:green",
+                 "misconceptions": "tab:red"}
+
+
+def family_color(family: str) -> str:
+    """Color for a statement family; unknown families get a stable fallback
+    instead of a KeyError (adding a CSV family must never crash a plot)."""
+    return FAMILY_COLORS.get(family, "tab:gray")
 
 
 def _mean_curve(report: list[dict[str, Any]], predicate) -> tuple[list[int], list[float]]:
@@ -635,7 +642,7 @@ def plot_selectivity(ctx: bench.RunContext, selectivity_rows: list[dict[str, Any
                 [r["layer"] for r in rows],
                 [r["selectivity"] for r in rows],
                 linewidth=2.0,
-                color=FAMILY_COLORS[family],
+                color=family_color(family),
                 label=family,
             )
     ax.axhline(0, color="black", linewidth=0.7)
@@ -726,7 +733,7 @@ def plot_calibration(ctx: bench.RunContext, calibration_rows: list[dict[str, Any
             [float(r["empirical_true_rate"]) for r in rows],
             marker="o",
             linewidth=1.8,
-            color=FAMILY_COLORS[family],
+            color=family_color(family),
             label=family,
         )
     ax.plot([0, 1], [0, 1], linestyle=":", color="black", linewidth=1.0, label="perfect calibration")
