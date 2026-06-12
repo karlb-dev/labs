@@ -11,7 +11,7 @@ budget, plus a causal extension and two bridges back to earlier labs.
   *why* of everything after it, and it runs in seconds on a laptop.
 
 * **Part 1 — the feature atlas (the core).** Load a pretrained SAE for the
-  tier's model (gpt2 + jbloom resid SAE on Tier A; Olmo-3-7B + decoderesearch
+  tier's model (gpt2 + jbloom resid SAE on Tier A; Olmo-3-1025-7B + decoderesearch
   SAE on Tier B), run it over the frozen domain-tagged corpus, rank features
   two ways (max activation vs firing frequency — the rankings disagree, and
   that disagreement is a lesson), retrieve top-activating contexts, propose a

@@ -1,51 +1,39 @@
-"""Lab 9: Attribution graphs and circuit tracing.
+"""Lab 9: attribution graphs and circuit tracing.
 
-The same goal as Lab 6 — a circuit explanation of one behavior — pursued at
-feature level with automated attribution instead of heads-and-MLPs by hand.
-The pipeline is the one behind "Circuit Tracing" and "On the Biology of a
-Large Language Model" (Ameisen et al. / Lindsey et al., 2025), built here
-from scratch on gpt2 with the full 12-layer Dunefsky MLP-transcoder stack,
-so every step of the machinery is inspectable:
+Same destination as Lab 6, different vehicle: a circuit-shaped explanation
+of one behavior, now written as a graph over transcoder features rather than
+attention heads. This implementation is the **inspectable miniature** backend:
+GPT-2 small plus the full Dunefsky MLP-transcoder stack. A separate registry or
+course build can swap in circuit-tracer/Gemma; the evidence contract here stays
+the same: replacement-model graph first, real-model interventions second.
 
-* **The local replacement model.** Freeze the attention patterns and the
-  LayerNorm denominators at the values from the real forward pass, and
-  replace every MLP with its transcoder plus a per-(layer, position) ERROR
-  node that absorbs whatever the transcoder missed. By construction this
-  network reproduces the real model's logits *exactly* (the bench asserts
-  it), and — because everything nonlinear is frozen — it is LINEAR in its
-  inputs: token embeddings, feature outputs, and error vectors.
+The lab has four pieces.
 
-* **Direct-attribution edges.** Linearity means every node pair has a
-  well-defined direct effect: edge(s -> t) = activation_s * (w_dec_s . grad),
-  where the gradient of target t's pre-activation is taken through the
-  frozen network with all intermediate feature gates detached. One backward
-  pass per target node yields its complete incoming-edge set, and the edges
-  must SUM back to the target's value (the edge-reconstruction self-check).
+* **Local replacement model.** Run the real model once, freeze attention
+  patterns and LayerNorm denominators, replace every MLP with its transcoder,
+  and add an ERROR node at every (layer, position) for whatever the transcoder
+  failed to reconstruct. Exact replacement logits are a diagnostic, not a
+  miracle: the error nodes pay the unreconstructed bill.
 
-* **The graph as hypothesis, interventions as test.** The pruned, annotated
-  graph implies a mechanism ("France-features at the subject token cause
-  'say Paris'"). That implication is then tested on the REAL model — not the
-  replacement — by suppressing the subject supernode, substituting the
-  counterfactual country's features, and running a random-feature control
-  of matched size.
+* **Direct-attribution edges.** With attention and norms frozen, the network is
+  linear in its source terms. For a target scalar t, one backward pass gives
+  gradients at every MLP-write injection site; feature edge(s -> t) is
+  activation_s * (w_dec_s dot grad). The edge-reconstruction check makes the
+  accounting identity visible: bias path + embeddings + features + error nodes
+  + transcoder bias = target value.
 
-* **The Lab 6 confrontation.** The same pipeline runs on Lab 6's induction
-  prompt, where the mechanism is attention routing — which the replacement
-  model freezes into the wiring. The two influence-composition bars side by
-  side are the honest comparison: each method is blind exactly where the
-  other had to do its work.
+* **Graph as hypothesis, interventions as test.** The graph is attribution on a
+  replacement model. It becomes evidence about the real model only when feature
+  edits, suppressions, substitutions, and random matched controls are run on
+  the real GPT-2 forward pass.
 
-Evidence level: ATTRIBUTION for the graph itself, upgraded to CAUSAL only
-where the real-model interventions (with controls) succeed.
+* **Lab 6 confrontation.** The same signed ledger is computed for an induction
+  prompt. Frozen-attention attribution graphs are expected to be least helpful
+  exactly where Lab 6's manual attention-head circuit was strongest. That is a
+  feature of the lesson, not a bug in the microscope.
 
-Deviation from COURSE.md, on purpose: the outline names circuit-tracer +
-gemma-2-2b. Gemma weights are license-gated, circuit-tracer brings the
-TransformerLens dependency the course deliberately avoids, and a course rule
-is that nobody runs code they can't explain. gpt2 + the ungated Dunefsky
-transcoders (whose loading convention Lab 8 already validated empirically)
-support the entire method — at the price of a one-hop fact instead of the
-canonical two-hop Dallas->Austin, which gpt2-small cannot do. The handout
-discusses what is and is not lost.
+Evidence level: ATTRIBUTION for the graph itself; CAUSAL only for successful,
+controlled interventions on the real model.
 """
 
 from __future__ import annotations
@@ -59,7 +47,7 @@ LAB_ID = "L09"
 # ---------------------------------------------------------------------------
 # Pins. The full Dunefsky et al. MLP-transcoder stack for gpt2-small: one
 # transcoder per layer, bare-LayerNorm input convention (no affine, no b_dec
-# subtraction, plain ReLU) — the convention Lab 8 settled empirically.
+# subtraction, plain ReLU) - the convention this lab records in its diagnostics.
 # ---------------------------------------------------------------------------
 
 TC_REPO = "jacobdunefsky/gpt2small-transcoders"
@@ -106,7 +94,7 @@ COUNTERFACTUALS = [
 ]
 
 # Lab 6's behavior, revisited with this lab's instrument. The graph should be
-# nearly silent here — induction is attention routing, and the replacement
+# nearly silent here - induction is attention routing, and the replacement
 # model freezes attention into the wiring. That silence is the point.
 INDUCTION_VIGNETTE = {
     "id": "induction", "prompt": "red blue green red blue green red blue",
@@ -119,6 +107,67 @@ GRAPH_NODES_BY_TIER = {"a": 16, "b": 28, "c": 40}
 INTERVENTION_K = 25          # features suppressed/substituted at the subject site
 EXPAND_DEPTH = 2             # backward-flow expansion rounds beyond the logit node
 EDGE_KEEP_PER_TARGET = 8     # incoming edges kept per node for the adjacency/plot
+TOP_LOGIT_SOURCES = 50       # rows saved in tables/logit_edge_sources.csv
+BUDGET_CURVE_POINTS = (4, 8, 12, 16, 24, 32, 48, 64)
+
+
+def _arg(args: Any, name: str, default: Any) -> Any:
+    """Read an optional lab-specific CLI arg without requiring bench changes.
+
+    Some course builds add ``--graph-nodes`` to the shared bench registry. The
+    standalone file should also run against a bench that has not learned that
+    flag yet, so Lab 9 treats missing attributes as defaults.
+    """
+    return getattr(args, name, default)
+
+
+def single_token_id(bundle: bench.ModelBundle, text: str, role: str) -> int:
+    ids = bundle.tokenizer(text, add_special_tokens=False)["input_ids"]
+    if len(ids) != 1:
+        raise RuntimeError(f"{role} {text!r} must be exactly one token for this lab; got ids={ids}")
+    return int(ids[0])
+
+
+def _find_subsequence(xs: list[int], ys: list[int]) -> list[int]:
+    if not ys or len(ys) > len(xs):
+        return []
+    return [i for i in range(len(xs) - len(ys) + 1) if xs[i:i + len(ys)] == ys]
+
+
+def tokenization_report_rows(bundle: bench.ModelBundle, facts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Tokenizer audit for all prompts whose positions or answers matter.
+
+    Attribution graphs are position-indexed. This report makes the alignment
+    assumption auditable before the graph gets pretty enough to seduce anyone.
+    """
+    tok = bundle.tokenizer
+    rows = []
+    for fact in facts:
+        prompt_ids = tok(fact["prompt"], add_special_tokens=False)["input_ids"]
+        target_ids = tok(fact["target"], add_special_tokens=False)["input_ids"]
+        distractor_ids = tok(fact["distractor"], add_special_tokens=False)["input_ids"]
+        subject_text = fact.get("subject", "")
+        subject_ids = tok(subject_text, add_special_tokens=False)["input_ids"] if subject_text else []
+        matches = _find_subsequence(prompt_ids, subject_ids) if subject_ids else []
+        rows.append({
+            "id": fact.get("id", ""),
+            "prompt": fact["prompt"],
+            "n_prompt_tokens": len(prompt_ids),
+            "prompt_token_ids": " ".join(str(i) for i in prompt_ids),
+            "prompt_tokens": " | ".join(bundle.tokenizer.decode([i]) for i in prompt_ids),
+            "subject": subject_text,
+            "subject_token_ids": " ".join(str(i) for i in subject_ids),
+            "subject_match_positions": " ".join(str(i) for i in matches),
+            "target": fact["target"],
+            "target_token_ids": " ".join(str(i) for i in target_ids),
+            "distractor": fact["distractor"],
+            "distractor_token_ids": " ".join(str(i) for i in distractor_ids),
+            "ok_single_token_subject": len(subject_ids) == 1,
+            "ok_subject_found": bool(matches),
+            "ok_single_token_answers": len(target_ids) == len(distractor_ids) == 1,
+            "ok_distinct_answer_tokens": len(target_ids) == len(distractor_ids) == 1 and target_ids[0] != distractor_ids[0],
+        })
+    return rows
 
 
 # ---------------------------------------------------------------------------
@@ -131,9 +180,9 @@ class TranscoderStack:
 
     Each maps bare-LN(pre-MLP residual) -> MLP output:
         feats = relu(bare @ W_enc + b_enc);  recon = feats @ W_dec + b_dec
-    ``bare`` is (x - mean(x)) / sqrt(var(x) + eps) with NO affine gamma/beta —
-    the convention that Lab 8 found by measurement (the model's full ln_2
-    output gives FVU ~ 1.0; bare LN matches the published transcoders).
+    ``bare`` is (x - mean(x)) / sqrt(var(x) + eps) with NO affine gamma/beta.
+    The run records this convention beside the FVU numbers so students can see
+    that transcoder loading is not a vibes-based ritual.
     """
 
     def __init__(self, weights: list[dict[str, Any]], device: Any):
@@ -146,7 +195,7 @@ class TranscoderStack:
         self.device = device
 
     def encode_pre(self, layer: int, bare: Any) -> Any:
-        """Encoder PRE-activations (before ReLU) — the graph's target scalars."""
+        """Encoder PRE-activations (before ReLU) - the graph's target scalars."""
         tc = self.layers[layer]
         return bare @ tc["W_enc"] + tc["b_enc"]
 
@@ -160,9 +209,10 @@ def load_transcoder_stack(bundle: bench.ModelBundle) -> TranscoderStack:
 
     if "gpt2" not in bundle.anatomy.model_id.lower():
         raise RuntimeError(
-            f"Lab 9 requires gpt2 (the only ungated model with a public full-stack "
-            f"MLP transcoder set), got {bundle.anatomy.model_id!r}. The lab registry "
-            "pins gpt2 on every tier; do not override --model here."
+            f"This inspectable Lab 9 backend requires GPT-2 small because the public "
+            f"Dunefsky full-stack MLP transcoders are GPT-2-specific; got "
+            f"{bundle.anatomy.model_id!r}. Use the circuit-tracer/Gemma backend in "
+            "a registry build, or run this miniature path with --model gpt2."
         )
     print(f"[lab9] loading {bundle.anatomy.n_layers}-layer transcoder stack from {TC_REPO}")
     weights = []
@@ -194,7 +244,7 @@ def real_pass(bundle: bench.ModelBundle, prompt: str) -> dict[str, Any]:
     import torch
 
     model, tok = bundle.model, bundle.tokenizer
-    ids = tok(prompt, return_tensors="pt")["input_ids"].to(bundle.input_device)
+    ids = tok(prompt, return_tensors="pt", add_special_tokens=False)["input_ids"].to(bundle.input_device)
     grabbed: dict[str, Any] = {"ln1_in": {}, "ln2_in": {}, "mlp_out": {}}
     handles = []
     for layer, blk in enumerate(bundle.blocks):
@@ -235,7 +285,7 @@ def frozen_forward(bundle: bench.ModelBundle, tcs: TranscoderStack, cap: dict[st
     Frozen at the real pass's values: attention patterns, every LayerNorm
     1/sigma, and the per-(layer, position) error vectors. MLP writes use the
     transcoder reconstruction with feature activations DETACHED, plus a
-    zero injection leaf per layer — so gradients flow only through the
+    zero injection leaf per layer - so gradients flow only through the
     linear skeleton (residual adds, frozen attention, frozen LN), and the
     gradient at any injection site is exactly the direct-path read-off
     vector for that (layer, position).
@@ -379,6 +429,100 @@ def edge_totals(edges: dict[str, Any]) -> dict[str, float]:
     }
 
 
+def budget_curve_from_logit_edges(edges: dict[str, Any], budgets: tuple[int, ...]) -> list[dict[str, Any]]:
+    """Direct-logit feature-mass coverage as a function of node budget.
+
+    This is not the full backward-flow graph budget, but it is a cheap and
+    transparent sensitivity curve for the first pruning decision.
+    """
+    import torch
+
+    vals = torch.cat([e.abs().flatten() for e in edges["feat"]])
+    total = float(vals.sum())
+    if vals.numel() == 0 or total <= 0:
+        return [{"budget": b, "coverage_of_direct_feature_mass": 0.0} for b in budgets]
+    top = torch.sort(vals, descending=True).values
+    rows = []
+    for b in budgets:
+        b2 = min(int(b), int(top.numel()))
+        rows.append({
+            "budget": int(b),
+            "coverage_of_direct_feature_mass": round(float(top[:b2].sum()) / total, 4),
+            "direct_feature_mass_total": round(total, 4),
+        })
+    return rows
+
+
+def top_logit_source_rows(bundle, tcs, cap: dict[str, Any], edges: dict[str, Any],
+                           *, limit: int = TOP_LOGIT_SOURCES) -> list[dict[str, Any]]:
+    """Human table of the largest direct sources into the logit node.
+
+    The pruned graph is readable because it is small. This table is the antidote
+    to mistaking small for complete: it shows the largest raw direct sources
+    before display pruning.
+    """
+    rows: list[dict[str, Any]] = []
+    for pos, weight in enumerate(edges["emb"]):
+        w = float(weight)
+        rows.append({
+            "kind": "embedding", "layer": -1, "pos": pos, "feature": "",
+            "token": cap["tokens"][pos], "signed_edge": round(w, 6),
+            "abs_edge": round(abs(w), 6), "promotes": "",
+        })
+    for layer, e in enumerate(edges["feat"]):
+        vals, idx = e.abs().flatten().topk(min(limit, e.numel()))
+        for _, flat_i in zip(vals.tolist(), idx.tolist()):
+            pos, feat = divmod(flat_i, e.shape[1])
+            w = float(e[pos, feat])
+            rows.append({
+                "kind": "feature", "layer": layer, "pos": pos, "feature": feat,
+                "token": cap["tokens"][pos], "signed_edge": round(w, 6),
+                "abs_edge": round(abs(w), 6),
+                "promotes": " | ".join(deembed_feature(bundle, tcs, layer, feat, k=3)),
+            })
+    for layer in range(edges["err"].shape[0]):
+        for pos in range(edges["err"].shape[1]):
+            w = float(edges["err"][layer, pos])
+            rows.append({
+                "kind": "error", "layer": layer, "pos": pos, "feature": "",
+                "token": cap["tokens"][pos], "signed_edge": round(w, 6),
+                "abs_edge": round(abs(w), 6), "promotes": "",
+            })
+    for layer, w0 in enumerate(edges.get("bdec", [])):
+        w = float(w0)
+        rows.append({
+            "kind": "transcoder_bias", "layer": layer, "pos": "all", "feature": "",
+            "token": "", "signed_edge": round(w, 6), "abs_edge": round(abs(w), 6),
+            "promotes": "",
+        })
+    rows.sort(key=lambda r: -float(r["abs_edge"]))
+    for i, r in enumerate(rows[:limit], start=1):
+        r["rank_by_abs_edge"] = i
+    return rows[:limit]
+
+
+def influence_ledger_rows(label: str, influence: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    signed = influence["signed_contributions"]
+    for source, val in signed.items():
+        rows.append({
+            "case": label, "source": source, "signed_contribution": val,
+            "metric_logit_diff": round(float(influence["metric_logit_diff"]), 6),
+        })
+    rows.extend([
+        {"case": label, "source": "abs_share_features", "signed_contribution": influence["share_features"],
+         "metric_logit_diff": round(float(influence["metric_logit_diff"]), 6)},
+        {"case": label, "source": "abs_share_embeddings", "signed_contribution": influence["share_embeddings"],
+         "metric_logit_diff": round(float(influence["metric_logit_diff"]), 6)},
+        {"case": label, "source": "abs_share_errors", "signed_contribution": influence["share_errors"],
+         "metric_logit_diff": round(float(influence["metric_logit_diff"]), 6)},
+        {"case": label, "source": "kept_coverage_of_feature_mass",
+         "signed_contribution": influence["kept_coverage_of_feature_mass"],
+         "metric_logit_diff": round(float(influence["metric_logit_diff"]), 6)},
+    ])
+    return rows
+
+
 # ---------------------------------------------------------------------------
 # Graph construction: backward-flow node selection + adjacency
 # ---------------------------------------------------------------------------
@@ -411,8 +555,8 @@ def build_graph(ctx, bundle, tcs, cap, *, node_budget: int, fact: dict[str, Any]
     import torch
 
     tok = bundle.tokenizer
-    tid = tok(fact["target"])["input_ids"][0]
-    did = tok(fact["distractor"])["input_ids"][0]
+    tid = single_token_id(bundle, fact["target"], f"target for {fact.get('id', fact['prompt'])}")
+    did = single_token_id(bundle, fact["distractor"], f"distractor for {fact.get('id', fact['prompt'])}")
     with torch.enable_grad():
         fr = frozen_forward(bundle, tcs, cap)
         metric = fr["logits"][-1, tid] - fr["logits"][-1, did]
@@ -502,10 +646,14 @@ def build_graph(ctx, bundle, tcs, cap, *, node_budget: int, fact: dict[str, Any]
     for (layer, pos, feat), meta in sorted(kept.items()):
         act = float(fr["feats"][layer][pos, feat])
         promotes = deembed_feature(bundle, tcs, layer, feat)
+        edge_to_logit = float(logit_edges["feat"][layer][pos, feat])
         nodes.append({"name": f"f{layer}.{pos}.{feat}", "kind": "feature", "layer": layer,
                       "pos": pos, "feature": feat, "activation": round(act, 3),
                       "token": cap["tokens"][pos], "promotes": promotes,
-                      "selected_by": meta["selected_by"]})
+                      "edge_to_logit": round(edge_to_logit, 6),
+                      "abs_edge_to_logit": round(abs(edge_to_logit), 6),
+                      "selected_by": meta["selected_by"],
+                      "abs_edge_to_selector": round(float(meta["abs_edge_to_selector"]), 6)})
     err_l2 = [[float(fr["errs"][layer][pos].norm()) for pos in range(seq)]
               for layer in range(tcs.n_layers)]
     for layer in range(tcs.n_layers):
@@ -569,9 +717,11 @@ def build_graph(ctx, bundle, tcs, cap, *, node_budget: int, fact: dict[str, Any]
         "share_embeddings": round(direct_abs["embeddings"] / max(denom, 1e-9), 4),
         "share_errors": round(direct_abs["errors"] / max(denom, 1e-9), 4),
         "kept_coverage_of_feature_mass": round(abs_kept / max(abs_feat_total, 1e-9), 4),
+        "budget_curve": budget_curve_from_logit_edges(logit_edges, BUDGET_CURVE_POINTS),
     }
     return {"fact": fact, "cap": cap, "fr": fr, "kept": kept, "nodes": nodes,
-            "edges": edges_rows, "influence": influence, "metric": metric_value}
+            "edges": edges_rows, "edge_sources": top_logit_source_rows(bundle, tcs, cap, logit_edges),
+            "influence": influence, "metric": metric_value}
 
 
 # ---------------------------------------------------------------------------
@@ -584,7 +734,7 @@ def feature_acts_real(bundle, tcs, prompt: str) -> tuple[Any, list[Any], Any]:
     import torch
 
     tok = bundle.tokenizer
-    ids = tok(prompt, return_tensors="pt")["input_ids"].to(bundle.input_device)
+    ids = tok(prompt, return_tensors="pt", add_special_tokens=False)["input_ids"].to(bundle.input_device)
     mids: dict[int, Any] = {}
     handles = [blk.ln_2.register_forward_pre_hook(
         lambda m, a, l=layer: mids.__setitem__(l, a[0][0].detach().clone()))
@@ -607,15 +757,21 @@ def run_with_feature_edits(bundle, tcs, prompt: str, edits: list[tuple[int, int,
     deltas to the MLP output: mlp_out[pos] += (new_act - real_act) * w_dec[f].
 
     This is the crucial epistemics of the lab: the GRAPH lives in the
-    replacement model, but the intervention is measured on the REAL model —
+    replacement model, but the intervention is measured on the REAL model -
     a graph hypothesis that only works in its own idealization is not an
     explanation of the model anyone deployed.
     """
     import torch
 
     ids, acts, _ = feature_acts_real(bundle, tcs, prompt)
-    by_layer: dict[int, list[tuple[int, int, float]]] = {}
+    # ``edits`` are assignments, not additive nudges. If the same feature is
+    # listed twice (common in substitution, where a donor feature can also be
+    # in the suppressed original supernode), the LAST assignment wins.
+    assignments: dict[tuple[int, int, int], float] = {}
     for layer, pos, feat, new_act in edits:
+        assignments[(int(layer), int(pos), int(feat))] = float(new_act)
+    by_layer: dict[int, list[tuple[int, int, float]]] = {}
+    for (layer, pos, feat), new_act in assignments.items():
         delta = new_act - float(acts[layer][pos, feat])
         by_layer.setdefault(layer, []).append((pos, feat, delta))
 
@@ -650,7 +806,8 @@ def run_feature_edit_noop_check(ctx, bundle, tcs, fact, *, atol: float = 1e-4) -
             edits.append((layer, last, feat, float(a[feat])))
     edited = run_with_feature_edits(bundle, tcs, fact["prompt"], edits)
     diff = float((edited - base).abs().max())
-    result = {"prompt": fact["prompt"], "max_abs_logit_diff": diff, "atol": atol, "ok": diff <= atol,
+    result = {"prompt": fact["prompt"], "n_noop_assignments": len(edits),
+              "max_abs_logit_diff": diff, "atol": atol, "ok": diff <= atol,
               "explanation": "Setting features to their own activations is a no-op; any logit "
                              "change means the edit hooks or activation capture are misaligned."}
     path = ctx.path("diagnostics", "feature_edit_noop_check.json")
@@ -664,11 +821,14 @@ def run_feature_edit_noop_check(ctx, bundle, tcs, fact, *, atol: float = 1e-4) -
 
 def subject_position(bundle, fact: dict[str, Any]) -> int:
     tok = bundle.tokenizer
-    ids = tok(fact["prompt"])["input_ids"]
-    texts = [tok.decode([i]) for i in ids]
-    matches = [i for i, t in enumerate(texts) if t == fact["subject"]]
+    ids = tok(fact["prompt"], add_special_tokens=False)["input_ids"]
+    sid = tok(fact["subject"], add_special_tokens=False)["input_ids"]
+    matches = _find_subsequence(ids, sid)
+    if len(sid) != 1:
+        raise RuntimeError(f"subject {fact['subject']!r} must be one token in this lab; got ids={sid}")
     if not matches:
-        raise RuntimeError(f"subject token {fact['subject']!r} not found in {texts}")
+        texts = [tok.decode([i]) for i in ids]
+        raise RuntimeError(f"subject token {fact['subject']!r} ids={sid} not found in {texts}")
     return matches[-1]
 
 
@@ -678,15 +838,15 @@ def run_interventions(ctx, bundle, tcs, graph, fact, counterfact, seed: int,
 
     The supernode is graph-informed: kept feature nodes at the subject
     position, padded (if needed) with the strongest remaining subject-site
-    activations by activation x decoder-norm — and the same padding rule
+    activations by activation x decoder-norm - and the same padding rule
     defines the donor features from the counterfactual prompt.
     """
     import torch
 
     tok = bundle.tokenizer
     subj = subject_position(bundle, fact)
-    tid = tok(fact["target"])["input_ids"][0]
-    did = tok(fact["distractor"])["input_ids"][0]
+    tid = single_token_id(bundle, fact["target"], f"target for {fact['id']}")
+    did = single_token_id(bundle, fact["distractor"], f"distractor for {fact['id']}")
 
     _, acts, base = feature_acts_real(bundle, tcs, fact["prompt"])
 
@@ -728,7 +888,62 @@ def run_interventions(ctx, bundle, tcs, graph, fact, counterfact, seed: int,
     perm = torch.randperm(len(pool), generator=gen).tolist()
     random_set = [pool[i] for i in perm[:min(k, len(pool))]]
 
-    cf_tid = tok(counterfact["target"])["input_ids"][0]
+    cf_tid = single_token_id(bundle, counterfact["target"], f"target for {counterfact['id']}")
+
+    suppress = [(layer, subj, feat, 0.0) for (layer, feat) in supernode]
+    substitute_assignments = {(layer, subj, feat): 0.0 for (layer, feat) in supernode}
+    for _, layer, feat, act in donors:
+        substitute_assignments[(layer, subj, feat)] = act
+    substitute = [(layer, pos, feat, act) for (layer, pos, feat), act in substitute_assignments.items()]
+    random_edits = [(layer, subj, feat, 0.0) for (layer, feat) in random_set]
+
+    manifest = {
+        "primary_prompt": fact["prompt"],
+        "counterfactual_prompt": counterfact["prompt"],
+        "subject_position_primary": subj,
+        "subject_position_counterfactual": cf_subj,
+        "requested_k": k,
+        "n_supernode_features": len(supernode),
+        "n_donor_features": len(donors),
+        "n_random_features": len(random_set),
+        "n_duplicate_substitution_assignments_collapsed": len(suppress) + len(donors) - len(substitute),
+        "note": (
+            "Feature edits are assignments to target activations. If suppression and donor "
+            "sets contain the same feature, the donor assignment wins for substitution; "
+            "the duplicate count records that collapse."
+        ),
+    }
+    bench.write_json(ctx.path("diagnostics", "feature_intervention_manifest.json"), manifest)
+    ctx.register_artifact(ctx.path("diagnostics", "feature_intervention_manifest.json"), "diagnostic",
+                          "Which features were suppressed/substituted, and how duplicate assignments were handled.")
+
+    feature_rows = []
+    graph_subject_set = {(layer, feat) for (layer, pos, feat) in graph["kept"] if pos == subj}
+    for layer, feat in supernode:
+        feature_rows.append({
+            "condition": "suppress_subject_supernode", "layer": layer, "pos": subj, "feature": feat,
+            "old_activation": round(float(acts[layer][subj, feat]), 6), "new_activation": 0.0,
+            "decoder_norm": round(float(tcs.w_dec(layer)[feat].norm()), 6),
+            "selected_by_graph": (layer, feat) in graph_subject_set,
+        })
+    for _, layer, feat, act in donors:
+        feature_rows.append({
+            "condition": "substitute_counterfactual_donor", "layer": layer, "pos": subj, "feature": feat,
+            "old_activation": round(float(acts[layer][subj, feat]), 6), "new_activation": round(float(act), 6),
+            "decoder_norm": round(float(tcs.w_dec(layer)[feat].norm()), 6),
+            "selected_by_graph": (layer, feat) in graph_subject_set,
+        })
+    for layer, feat in random_set:
+        feature_rows.append({
+            "condition": "random_suppression_control", "layer": layer, "pos": subj, "feature": feat,
+            "old_activation": round(float(acts[layer][subj, feat]), 6), "new_activation": 0.0,
+            "decoder_norm": round(float(tcs.w_dec(layer)[feat].norm()), 6),
+            "selected_by_graph": False,
+        })
+    bench.write_csv_with_context(ctx, ctx.path("tables", "supernode_features.csv"), feature_rows)
+    ctx.register_artifact(ctx.path("tables", "supernode_features.csv"), "table",
+                          "Features edited by the graph-guided suppression/substitution/control interventions.")
+
     rows = []
 
     def record(condition, logits, n_edited):
@@ -742,15 +957,12 @@ def run_interventions(ctx, bundle, tcs, graph, fact, counterfact, seed: int,
         })
 
     record("baseline", base, 0)
-    suppress = [(layer, subj, feat, 0.0) for (layer, feat) in supernode]
     record("suppress_subject_supernode", run_with_feature_edits(bundle, tcs, fact["prompt"], suppress),
-           len(suppress))
-    substitute = suppress + [(layer, subj, feat, act) for (_, layer, feat, act) in donors]
+           len({(l, p, f) for l, p, f, _ in suppress}))
     record("substitute_counterfactual", run_with_feature_edits(bundle, tcs, fact["prompt"], substitute),
-           len(substitute))
-    random_edits = [(layer, subj, feat, 0.0) for (layer, feat) in random_set]
+           len({(l, p, f) for l, p, f, _ in substitute}))
     record("random_suppression_control", run_with_feature_edits(bundle, tcs, fact["prompt"], random_edits),
-           len(random_edits))
+           len({(l, p, f) for l, p, f, _ in random_edits}))
     rows.append({
         "condition": "counterfactual_prompt_reference", "n_features_edited": 0,
         "logit_diff": round(ld(cf_base), 4), "p_target": round(p(cf_base, tid), 5),
@@ -758,6 +970,9 @@ def run_interventions(ctx, bundle, tcs, graph, fact, counterfact, seed: int,
         "p_counterfactual_target": round(p(cf_base, cf_tid), 5),
         "top1": tok.decode([int(cf_base.argmax())]),
     })
+    base_ld = next(r["logit_diff"] for r in rows if r["condition"] == "baseline")
+    for r in rows:
+        r["delta_logit_diff_vs_baseline"] = round(r["logit_diff"] - base_ld, 4)
     return rows
 
 
@@ -774,16 +989,44 @@ def baseline_gate(bundle, facts: list[dict[str, Any]]) -> tuple[list[dict[str, A
     tok = bundle.tokenizer
     kept, dropped = [], []
     for fact in facts:
-        ids = tok(fact["prompt"], return_tensors="pt")["input_ids"].to(bundle.input_device)
+        ids = tok(fact["prompt"], return_tensors="pt", add_special_tokens=False)["input_ids"].to(bundle.input_device)
         with torch.no_grad():
             logits = bundle.model(ids, use_cache=False).logits[0, -1]
-        tid = tok(fact["target"])["input_ids"]
-        did = tok(fact["distractor"])["input_ids"]
+        tid = tok(fact["target"], add_special_tokens=False)["input_ids"]
+        did = tok(fact["distractor"], add_special_tokens=False)["input_ids"]
+        subject_ok = True
+        subject_reason = ""
+        try:
+            subj_pos = subject_position(bundle, fact)
+        except Exception as exc:  # recorded rather than hidden behind a traceback
+            subj_pos = ""
+            subject_ok = False
+            subject_reason = str(exc)
+        row = {**fact, "subject_position": subj_pos}
         if len(tid) != 1 or len(did) != 1:
-            dropped.append({**fact, "reason": "multi-token answer"})
+            dropped.append({**row, "reason": "multi-token answer",
+                            "target_token_ids": " ".join(str(i) for i in tid),
+                            "distractor_token_ids": " ".join(str(i) for i in did)})
             continue
+        if tid[0] == did[0]:
+            dropped.append({**row, "reason": "target and distractor collapse to same token",
+                            "target_token_id": tid[0], "distractor_token_id": did[0]})
+            continue
+        if not subject_ok:
+            dropped.append({**row, "reason": "subject tokenization/alignment failed",
+                            "subject_failure": subject_reason})
+            continue
+        probs = torch.softmax(logits, -1)
         diff = float(logits[tid[0]] - logits[did[0]])
-        row = {**fact, "baseline_logit_diff": round(diff, 3)}
+        top1 = int(logits.argmax())
+        rank_target = int((logits > logits[tid[0]]).sum().item() + 1)
+        row = {**row,
+               "target_token_id": tid[0], "distractor_token_id": did[0],
+               "baseline_logit_diff": round(diff, 4),
+               "p_target": round(float(probs[tid[0]]), 6),
+               "p_distractor": round(float(probs[did[0]]), 6),
+               "target_rank": rank_target,
+               "top1": tok.decode([top1])}
         (kept if diff > 0 else dropped).append(row if diff > 0 else {**row, "reason": "model fails baseline"})
     return kept, dropped
 
@@ -870,10 +1113,15 @@ def plot_graph(ctx, bundle, graph, name: str, title: str) -> None:
         ax.scatter([x], [y], marker="^", s=55, color="tab:orange", alpha=0.8, zorder=2)
     ax.set_xticks(range(seq))
     ax.set_xticklabels([bench.visible_token(t) for t in cap["tokens"]], rotation=30, fontsize=8)
-    yticks = [-1.2] + list(range(12)) + [13.2]
+    # Feature/error layers are 0..L-1 and the logit node sits above them. Use
+    # observed feature layers rather than assuming GPT-2's 12 blocks in the plot.
+    feature_layers = sorted({int(n["layer"]) for n in graph["nodes"]
+                             if n.get("kind") in {"feature", "error"}})
+    logit_y = max(y for _, y in coords.values()) if coords else (max(feature_layers, default=0) + 2.2)
+    yticks = [-1.2] + feature_layers + [logit_y]
     ax.set_yticks(yticks)
-    ax.set_yticklabels(["emb"] + [f"L{i}" for i in range(12)] + ["logit"], fontsize=8)
-    ax.set_ylim(-2, 14.2)
+    ax.set_yticklabels(["emb"] + [f"L{i}" for i in feature_layers] + ["logit"], fontsize=8)
+    ax.set_ylim(-2, logit_y + 1.0)
     ax.set_xlabel("token position")
     ax.set_ylabel("layer")
     ax.set_title(title + "\n(● feature  ■ embedding  ▲ error  ★ logit node; blue +, red −)")
@@ -914,6 +1162,34 @@ def plot_influence_composition(ctx, fact_inf, ind_inf) -> None:
                       "Signed decomposition of the logit node, fact prompt vs induction prompt.")
 
 
+def plot_edge_mass_shares(ctx, fact_inf, ind_inf) -> None:
+    """Absolute direct-edge mass shares into the logit node.
+
+    Signed ledgers answer who paid for the logit difference. Absolute shares
+    answer how much explanatory load is outside the feature dictionary.
+    """
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    cases = [("capital fact", fact_inf), ("induction", ind_inf)]
+    cats = ["share_features", "share_embeddings", "share_errors"]
+    labels = ["features", "embeddings", "error nodes"]
+    fig, ax = plt.subplots(figsize=(8.0, 5.0))
+    x = np.arange(len(cases))
+    width = 0.22
+    for j, cat in enumerate(cats):
+        ax.bar(x + (j - 1) * width, [case[1][cat] for case in cases], width, label=labels[j])
+    ax.set_xticks(x)
+    ax.set_xticklabels([c[0] for c in cases])
+    ax.set_ylim(0, 1.0)
+    ax.set_ylabel("share of absolute direct edge mass into the logit node")
+    ax.set_title("Graph visibility: features vs embeddings vs error nodes")
+    ax.legend(fontsize=8)
+    ax.grid(True, axis="y", alpha=0.3)
+    bench.save_figure(ctx, fig, "edge_mass_shares.png",
+                      "Absolute direct-edge mass shares for fact and induction prompts.")
+
+
 def plot_interventions(ctx, rows, fact) -> None:
     fig, ax = bench.new_figure(figsize=(9.0, 5.0))
     conds = [r["condition"] for r in rows]
@@ -952,6 +1228,29 @@ def plot_paraphrase_recurrence(ctx, rec_rows, n_prompts) -> None:
 # ---------------------------------------------------------------------------
 
 
+def intervention_deltas(interventions: list[dict[str, Any]]) -> dict[str, float | bool | str]:
+    base = next(r for r in interventions if r["condition"] == "baseline")
+    sup = next(r for r in interventions if r["condition"] == "suppress_subject_supernode")
+    sub = next(r for r in interventions if r["condition"] == "substitute_counterfactual")
+    ctl = next(r for r in interventions if r["condition"] == "random_suppression_control")
+    suppress_drop = float(base["logit_diff"]) - float(sup["logit_diff"])
+    random_drop = float(base["logit_diff"]) - float(ctl["logit_diff"])
+    substitution_shift = float(base["logit_diff"]) - float(sub["logit_diff"])
+    cf_prob_gain = float(sub["p_counterfactual_target"]) - float(base["p_counterfactual_target"])
+    specificity_gap = suppress_drop - random_drop
+    validated = suppress_drop > 0.25 and specificity_gap > 0.25
+    verdict = "validated" if validated else "not validated by this run"
+    return {
+        "suppress_drop": round(suppress_drop, 4),
+        "random_drop": round(random_drop, 4),
+        "substitution_shift": round(substitution_shift, 4),
+        "cf_prob_gain": round(cf_prob_gain, 6),
+        "specificity_gap": round(specificity_gap, 4),
+        "validated": validated,
+        "verdict": verdict,
+    }
+
+
 def write_graph_card(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph) -> None:
     fact = graph["fact"]
     inf = graph["influence"]
@@ -961,8 +1260,9 @@ def write_graph_card(ctx, bundle, graph, interventions, rec_rows, n_para, ind_gr
     ctl = next(r for r in interventions if r["condition"] == "random_suppression_control")
     recurring = [r for r in rec_rows if r["n_prompts"] >= max(2, n_para - 1)]
     feat_nodes = [n for n in graph["nodes"] if n["kind"] == "feature"]
+    effects = intervention_deltas(interventions)
     lines = [
-        "# Graph card — attribution graph for one-hop factual recall",
+        "# Graph card - attribution graph for one-hop factual recall",
         "",
         "The Lab 9 counterpart of Lab 6's circuit card. Same schema, different",
         "method: features instead of heads, automated attribution instead of",
@@ -973,6 +1273,8 @@ def write_graph_card(ctx, bundle, graph, interventions, rec_rows, n_para, ind_gr
         f"- **Metric:** logit({fact['target']!r}) − logit({fact['distractor']!r}) = {graph['metric']:+.3f}",
         f"- **Graph:** {len(feat_nodes)} feature nodes kept (backward-flow selection), "
         f"{len(graph['edges'])} edges retained for display",
+        f"- **Visibility:** kept nodes cover {inf['kept_coverage_of_feature_mass']:.0%} "
+        f"of direct feature edge mass; error-node share is {inf['share_errors']:.0%}",
         "",
         "## Implied mechanism (HYPOTHESIS, written before the interventions)",
         "",
@@ -992,6 +1294,10 @@ def write_graph_card(ctx, bundle, graph, interventions, rec_rows, n_para, ind_gr
         "",
         f"Substitution pushes p(counterfactual target) to {sub['p_counterfactual_target']:.4f} "
         f"(baseline {base['p_counterfactual_target']:.5f}).",
+        f"",
+        f"**Intervention verdict:** {effects['verdict']} - suppression drop "
+        f"{effects['suppress_drop']:+.2f} logits; random-control drop "
+        f"{effects['random_drop']:+.2f}; specificity gap {effects['specificity_gap']:+.2f}.",
         "",
         "## Paraphrase robustness",
         "",
@@ -1011,7 +1317,7 @@ def write_graph_card(ctx, bundle, graph, interventions, rec_rows, n_para, ind_gr
         f"- Signed ledger here: features contribute {inf['signed_contributions']['features']:+.2f} "
         f"of the {inf['metric_logit_diff']:+.2f} metric. On Lab 6's induction prompt, features "
         f"contribute only {ind_graph['influence']['signed_contributions']['features']:+.2f} of "
-        f"{ind_graph['influence']['metric_logit_diff']:+.2f} — copied token embeddings "
+        f"{ind_graph['influence']['metric_logit_diff']:+.2f} - copied token embeddings "
         f"({ind_graph['influence']['signed_contributions']['embeddings']:+.2f}) and error nodes "
         f"({ind_graph['influence']['signed_contributions']['errors']:+.2f}) carry that behavior.",
         "- Lab 6's circuit card names attention heads and earns faithfulness/completeness",
@@ -1042,6 +1348,28 @@ def build_claims(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph)
     sup = next(r for r in interventions if r["condition"] == "suppress_subject_supernode")
     sub = next(r for r in interventions if r["condition"] == "substitute_counterfactual")
     ctl = next(r for r in interventions if r["condition"] == "random_suppression_control")
+    effects = intervention_deltas(interventions)
+    if effects["validated"]:
+        causal_text = (
+            f"Suppressing the graph's subject supernode ({sup['n_features_edited']} features at the "
+            f"'{fact['subject']}' position) on the REAL model drops the target logit diff from "
+            f"{base['logit_diff']:+.2f} to {sup['logit_diff']:+.2f}; the random matched "
+            f"suppression moves it to {ctl['logit_diff']:+.2f}, leaving a graph-specific gap of "
+            f"{effects['specificity_gap']:+.2f} logits. Substituting counterfactual-country "
+            f"features drives the diff to {sub['logit_diff']:+.2f} and raises p(counterfactual "
+            f"capital) by {effects['cf_prob_gain']:+.3f}."
+        )
+        causal_falsifier = "The random matched control produces a comparable drop - the effect was generic perturbation."
+    else:
+        causal_text = (
+            f"The graph-guided real-model intervention did NOT validate a specific subject "
+            f"supernode in this run: suppression changed the target logit diff by "
+            f"{-effects['suppress_drop']:+.2f} relative to baseline, while the random matched "
+            f"control changed it by {-effects['random_drop']:+.2f}; specificity gap "
+            f"{effects['specificity_gap']:+.2f}. This is causal evidence about the tested "
+            f"intervention, but not a successful mechanism validation."
+        )
+        causal_falsifier = "A rerun with a better-labeled supernode and matched controls shows a large specificity gap."
     claims = [
         {
             "id": f"{LAB_ID}-C1", "tag": "ATTR",
@@ -1057,16 +1385,9 @@ def build_claims(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph)
         },
         {
             "id": f"{LAB_ID}-C2", "tag": "CAUSAL",
-            "text": (
-                f"Suppressing the graph's subject supernode ({sup['n_features_edited']} features at the "
-                f"'{fact['subject']}' position) on the REAL model drops the target logit diff from "
-                f"{base['logit_diff']:+.2f} to {sup['logit_diff']:+.2f}, and substituting the "
-                f"counterfactual country's features drives it to {sub['logit_diff']:+.2f} "
-                f"(p of the counterfactual capital rises to {sub['p_counterfactual_target']:.3f}); "
-                f"a random suppression of matched size moves it only to {ctl['logit_diff']:+.2f}."
-            ),
+            "text": causal_text,
             "artifact": f"runs/{run_name}/tables/intervention_results.csv",
-            "falsifier": "The random matched control produces a comparable drop — the effect was generic perturbation.",
+            "falsifier": causal_falsifier,
         },
         {
             "id": f"{LAB_ID}-C3", "tag": "OBS",
@@ -1078,7 +1399,7 @@ def build_claims(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph)
                 f"embeddings ({ind_graph['influence']['signed_contributions']['embeddings']:+.2f}) and "
                 f"error nodes ({ind_graph['influence']['signed_contributions']['errors']:+.2f}) dominate: "
                 f"the replacement model freezes attention, so a routing behavior shows up as embedding "
-                f"mass moved by invisible wiring, not as feature structure — Lab 6's head circuit and "
+                f"mass moved by invisible wiring, not as feature structure - Lab 6's head circuit and "
                 f"this graph see complementary slices of the mechanism."
             ),
             "artifact": f"runs/{run_name}/plots/influence_composition.png",
@@ -1092,7 +1413,7 @@ def build_claims(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph)
             "text": (
                 f"{len(recurring)} subject-site features recur as kept graph nodes in at least "
                 f"{max(2, n_para - 1)} of {n_para} paraphrases of the fact; the rest are "
-                f"single-template artifacts — recurrence under paraphrase is the cheap robustness "
+                f"single-template artifacts - recurrence under paraphrase is the cheap robustness "
                 f"screen the graph card requires before any feature is named in the mechanism."
             ),
             "artifact": f"runs/{run_name}/tables/paraphrase_robustness.csv",
@@ -1109,6 +1430,7 @@ def write_summary(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph
     sup = next(r for r in interventions if r["condition"] == "suppress_subject_supernode")
     sub = next(r for r in interventions if r["condition"] == "substitute_counterfactual")
     ctl = next(r for r in interventions if r["condition"] == "random_suppression_control")
+    effects = intervention_deltas(interventions)
     lines = [
         "# Lab 9 run summary: attribution graphs and circuit tracing",
         "",
@@ -1128,7 +1450,7 @@ def write_summary(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph
         f"- A LOCAL REPLACEMENT MODEL: frozen attention patterns + frozen LN denominators,",
         f"  MLPs replaced by transcoders (mean FVU {stack_report['mean_fvu']:.3f}) plus error nodes.",
         "  It reproduces the real logits exactly (diagnostics/replacement_exactness.json),",
-        "  and is linear — so direct edges are well-defined and must sum to the metric",
+        "  and is linear - so direct edges are well-defined and must sum to the metric",
         "  (diagnostics/edge_reconstruction_check.json).",
         f"- Backward-flow selection kept {len([n for n in graph['nodes'] if n['kind'] == 'feature'])} "
         f"feature nodes covering {inf['kept_coverage_of_feature_mass']:.0%} of feature edge mass.",
@@ -1139,6 +1461,7 @@ def write_summary(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph
         f"- substitute the counterfactual country's features: → {sub['logit_diff']:+.2f} "
         f"(p of counterfactual capital {sub['p_counterfactual_target']:.4f})",
         f"- random suppression of matched size: → {ctl['logit_diff']:+.2f} (the control that makes it causal)",
+        f"- intervention verdict: {effects['verdict']} (specificity gap {effects['specificity_gap']:+.2f} logits)",
         "",
         "## 4. What metric changed?",
         "",
@@ -1155,7 +1478,7 @@ def write_summary(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph
         "",
         "## 6. What claim is NOT supported?",
         "",
-        f"- {inf['share_errors']:.0%} of direct logit-edge mass routes through error nodes —",
+        f"- {inf['share_errors']:.0%} of direct logit-edge mass routes through error nodes -",
         "  computation the transcoders did not re-describe. The graph explains the part of",
         "  the mechanism its dictionary can see, and the share is measured, not hidden.",
         "- Edges are linearized attributions on ONE replacement model at a handful of",
@@ -1172,12 +1495,13 @@ def write_summary(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph
         "",
         "## Reading order",
         "",
-        "1. `graph_card.md` — the deliverable.",
-        "2. `plots/attribution_graph.png` then `graphs/pruned_graph.json` — the object itself.",
-        "3. `tables/intervention_results.csv`, `plots/intervention_effects.png` — the causal test.",
-        "4. `plots/influence_composition.png` — Lab 6 vs Lab 9, one picture.",
-        "5. `tables/paraphrase_robustness.csv` — what survives surface change.",
-        "6. `diagnostics/` — exactness, edge-reconstruction, no-op checks.",
+        "1. `graph_card.md` - the deliverable.",
+        "2. `plots/attribution_graph.png` then `graphs/pruned_graph.json` - the object itself.",
+        "3. `tables/intervention_results.csv`, `plots/intervention_effects.png` - the causal test.",
+        "4. `plots/influence_composition.png` - Lab 6 vs Lab 9, one picture.",
+        "5. `tables/paraphrase_robustness.csv` - what survives surface change.",
+        "6. `tables/logit_edge_sources.csv`, `tables/node_budget_curve.csv`, and `tables/supernode_features.csv` - pruning and intervention audits.",
+        "7. `diagnostics/` - exactness, edge-reconstruction, no-op checks, tokenization, and build manifest.",
         "",
     ]
     bench.write_text(ctx.path("run_summary.md"), "\n".join(lines))
@@ -1198,6 +1522,32 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
               f"running in {bundle.torch_dtype} loosens every check.")
     bundle.model.requires_grad_(False)
 
+    all_facts_for_audit = [PRIMARY_FACT, COUNTERFACTUAL_FACT, *PARAPHRASES, *COUNTERFACTUALS,
+                           {**INDUCTION_VIGNETTE, "subject": INDUCTION_VIGNETTE["prompt"].split()[0]}]
+    tok_rows = tokenization_report_rows(bundle, all_facts_for_audit)
+    bench.write_csv_with_context(ctx, ctx.path("diagnostics", "tokenization_report.csv"), tok_rows)
+    ctx.register_artifact(ctx.path("diagnostics", "tokenization_report.csv"), "diagnostic",
+                          "Tokenizer audit for subjects, targets, distractors, and prompt positions.")
+    prompt_manifest = {
+        "backend": "inspectable_gpt2_dunefsky_transcoder_stack",
+        "primary_fact": PRIMARY_FACT,
+        "counterfactual_fact": COUNTERFACTUAL_FACT,
+        "n_paraphrases_available": len(PARAPHRASES),
+        "n_counterfactuals_available": len(COUNTERFACTUALS),
+        "induction_vignette": INDUCTION_VIGNETTE,
+        "node_budgets_by_tier": GRAPH_NODES_BY_TIER,
+        "expand_depth": EXPAND_DEPTH,
+        "edge_keep_per_target": EDGE_KEEP_PER_TARGET,
+        "intervention_k": INTERVENTION_K,
+        "evidence_contract": (
+            "Graph edges are ATTR on a replacement model; only feature interventions "
+            "run on the real model can support CAUSAL claims."
+        ),
+    }
+    bench.write_json(ctx.path("diagnostics", "graph_build_manifest.json"), prompt_manifest)
+    ctx.register_artifact(ctx.path("diagnostics", "graph_build_manifest.json"), "diagnostic",
+                          "Lab 9 backend assumptions, budgets, prompt set, and evidence contract.")
+
     # ----- transcoder stack + reconstruction report ---------------------------
     tcs = load_transcoder_stack(bundle)
     cap0 = real_pass(bundle, PRIMARY_FACT["prompt"])
@@ -1214,8 +1564,14 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     stack_report = {"repo": TC_REPO, "n_layers": tcs.n_layers, "d_sae": tcs.d_sae,
                     "per_layer": fvus, "mean_fvu": round(sum(r["fvu"] for r in fvus) / len(fvus), 4)}
     bench.write_json(ctx.path("transcoder_stack_report.json"), stack_report)
+    bench.write_json(ctx.path("diagnostics", "transcoder_stack_report.json"), stack_report)
+    bench.write_csv_with_context(ctx, ctx.path("tables", "transcoder_reconstruction_by_layer.csv"), fvus)
     ctx.register_artifact(ctx.path("transcoder_stack_report.json"), "metrics",
                           "Per-layer transcoder FVU/L0 on the primary prompt.")
+    ctx.register_artifact(ctx.path("diagnostics", "transcoder_stack_report.json"), "diagnostic",
+                          "Copy of the transcoder reconstruction report inside diagnostics.")
+    ctx.register_artifact(ctx.path("tables", "transcoder_reconstruction_by_layer.csv"), "table",
+                          "Per-layer transcoder reconstruction quality and sparsity.")
     print(f"[lab9] transcoder stack mean FVU {stack_report['mean_fvu']} "
           f"(worst layer {max(fvus, key=lambda r: r['fvu'])['fvu']})")
 
@@ -1240,16 +1596,19 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     run_feature_edit_noop_check(ctx, bundle, tcs, PRIMARY_FACT)
 
     # ----- the primary graph ----------------------------------------------------
-    node_budget = args.graph_nodes if args.graph_nodes > 0 else GRAPH_NODES_BY_TIER.get(args.tier, 24)
+    requested_graph_nodes = int(_arg(args, "graph_nodes", 0) or 0)
+    node_budget = requested_graph_nodes if requested_graph_nodes > 0 else GRAPH_NODES_BY_TIER.get(args.tier, 24)
     print(f"[lab9] building primary attribution graph (node budget {node_budget})")
     graph = build_graph(ctx, bundle, tcs, cap0, node_budget=node_budget,
                         fact=PRIMARY_FACT, check_reconstruction=True)
     bench.write_json(ctx.path("graphs", "pruned_graph.json"),
                      {"fact": PRIMARY_FACT, "metric_logit_diff": graph["metric"],
+                      "node_budget": node_budget, "expand_depth": EXPAND_DEPTH,
                       "influence": graph["influence"],
                       "nodes": [n for n in graph["nodes"] if n["kind"] != "error" or
                                 any(e["source"] == n["name"] for e in graph["edges"])],
-                      "edges": graph["edges"]})
+                      "edges": graph["edges"],
+                      "top_logit_sources": graph["edge_sources"]})
     ctx.register_artifact(ctx.path("graphs", "pruned_graph.json"), "results",
                           "The pruned attribution graph: nodes, edges, influence accounting.")
 
@@ -1285,6 +1644,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, ctx.path("tables", "graph_edges.csv"), graph["edges"])
     ctx.register_artifact(ctx.path("tables", "graph_edges.csv"), "table",
                           "Retained direct-attribution edges (source, target, signed weight).")
+    bench.write_csv_with_context(ctx, ctx.path("tables", "logit_edge_sources.csv"), graph["edge_sources"])
+    ctx.register_artifact(ctx.path("tables", "logit_edge_sources.csv"), "table",
+                          "Largest raw direct sources into the logit node before display pruning.")
+    bench.write_csv_with_context(ctx, ctx.path("tables", "node_budget_curve.csv"),
+                                 graph["influence"]["budget_curve"])
+    ctx.register_artifact(ctx.path("tables", "node_budget_curve.csv"), "table",
+                          "How much direct feature mass is covered by top-N logit-edge nodes.")
 
     # ----- interventions on the real model -------------------------------------
     print("[lab9] running graph-guided interventions on the real model")
@@ -1323,6 +1689,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                       "influence": ind_graph["influence"]})
     ctx.register_artifact(ctx.path("graphs", "induction_graph.json"), "results",
                           "Influence accounting for Lab 6's induction prompt under this instrument.")
+    ledger_rows = influence_ledger_rows("capital_fact", graph["influence"]) + \
+        influence_ledger_rows("induction_vignette", ind_graph["influence"])
+    bench.write_csv_with_context(ctx, ctx.path("tables", "influence_ledger.csv"), ledger_rows)
+    ctx.register_artifact(ctx.path("tables", "influence_ledger.csv"), "table",
+                          "Signed and absolute-share influence accounting for fact vs induction prompts.")
     print(f"[lab9]   signed feature contribution: fact "
           f"{graph['influence']['signed_contributions']['features']:+.2f}/"
           f"{graph['influence']['metric_logit_diff']:+.2f} vs induction "
@@ -1334,6 +1705,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         plot_graph(ctx, bundle, graph, "attribution_graph.png",
                    f"{PRIMARY_FACT['prompt']!r} → {PRIMARY_FACT['target']!r}")
         plot_influence_composition(ctx, graph["influence"], ind_graph["influence"])
+        plot_edge_mass_shares(ctx, graph["influence"], ind_graph["influence"])
         plot_interventions(ctx, interventions, PRIMARY_FACT)
         if rec_rows:
             plot_paraphrase_recurrence(ctx, rec_rows, len(para_graphs))
@@ -1343,6 +1715,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "model_id": bundle.anatomy.model_id,
         "transcoder_mean_fvu": stack_report["mean_fvu"],
         "metric_logit_diff": graph["metric"],
+        "node_budget": node_budget,
         "n_feature_nodes": len([n for n in graph["nodes"] if n["kind"] == "feature"]),
         "signed_contributions": graph["influence"]["signed_contributions"],
         "share_features": graph["influence"]["share_features"],
@@ -1350,6 +1723,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "share_embeddings": graph["influence"]["share_embeddings"],
         "kept_coverage_of_feature_mass": graph["influence"]["kept_coverage_of_feature_mass"],
         "intervention": {r["condition"]: r["logit_diff"] for r in interventions},
+        "intervention_effects": intervention_deltas(interventions),
         "induction_signed_contributions": ind_graph["influence"]["signed_contributions"],
         "induction_metric_logit_diff": ind_graph["influence"]["metric_logit_diff"],
         "n_paraphrases": len(para_graphs),

@@ -37,18 +37,31 @@ Dropped examples are data about the tokenizer, not an inconvenience to hide.
 
 from __future__ import annotations
 
+import csv
 import dataclasses
+import hashlib
 import json
 import pathlib
 import statistics
-from collections import defaultdict
-from typing import Any, Callable, Iterable
+from typing import Any, Iterable
 
 import interp_bench as bench
 
 LAB_ID = "L01"
 CATEGORIES = ("fact", "ambiguous", "counterfactual", "control")
 LOGIT_DIFF_MEANINGFUL_MARGIN = 1.0
+EVENT_DEPTH_KEYS = (
+    "decision_depth",
+    "target_first_top1",
+    "target_stable_top1_depth",
+    "target_first_beats_distractor",
+    "target_first_beats_distractor_raw",
+    "target_stable_beats_distractor",
+    "target_rank_first_le_5",
+    "kl_to_final_first_le_0.5_bits",
+    "cosine_to_final_first_ge_0.95",
+)
+
 
 
 # ---------------------------------------------------------------------------
@@ -229,28 +242,66 @@ def interleave_by_category(examples: list[PromptExample]) -> list[PromptExample]
     return out
 
 
+def prompt_set_sha256(examples: list[PromptExample]) -> str:
+    """Stable digest of the exact prompt objects selected for this run."""
+    payload = [dataclasses.asdict(ex) for ex in examples]
+    return hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+
+
 def load_custom_prompt_set(path: pathlib.Path) -> list[PromptExample]:
-    """Load custom prompts from JSON with helpful errors."""
+    """Load custom prompts from JSON or CSV with helpful errors.
+
+    JSON is a list of objects. CSV uses the dataclass field names as columns;
+    missing optional columns default to empty strings. Supporting CSV matters
+    for students because prompt-set audits often begin in a spreadsheet, but
+    the resulting prompts are still frozen into the run manifest.
+    """
+    allowed = {f.name for f in dataclasses.fields(PromptExample)}
+    suffix = path.suffix.lower()
     try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw_text = path.read_text(encoding="utf-8")
     except OSError as exc:
         raise ValueError(
             f"Could not read prompt set {str(path)!r}: {exc}. "
-            "--prompt-set must be one of small | medium | full, or a path to a prompts .json file."
+            "--prompt-set must be one of small | medium | full, or a path to a prompts .json/.csv file."
         ) from exc
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"Could not parse prompt JSON at {path}: {exc}") from exc
-    if not isinstance(raw, list):
-        raise ValueError("Custom prompt file must be a JSON list of objects.")
+
     examples: list[PromptExample] = []
-    for i, item in enumerate(raw):
-        if not isinstance(item, dict):
-            raise ValueError(f"Prompt item {i} is not an object: {item!r}")
-        allowed = {f.name for f in dataclasses.fields(PromptExample)}
-        extra = set(item) - allowed
+    if suffix == ".json":
+        try:
+            raw = json.loads(raw_text)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Could not parse prompt JSON at {path}: {exc}") from exc
+        if not isinstance(raw, list):
+            raise ValueError("Custom prompt JSON must be a list of objects.")
+        for i, item in enumerate(raw):
+            if not isinstance(item, dict):
+                raise ValueError(f"Prompt item {i} is not an object: {item!r}")
+            extra = set(item) - allowed
+            if extra:
+                raise ValueError(f"Prompt item {i} has unknown keys: {sorted(extra)}")
+            examples.append(PromptExample(**item))
+    elif suffix == ".csv":
+        reader = csv.DictReader(raw_text.splitlines())
+        if reader.fieldnames is None:
+            raise ValueError(f"Custom prompt CSV at {path} has no header row.")
+        extra = set(reader.fieldnames) - allowed
         if extra:
-            raise ValueError(f"Prompt item {i} has unknown keys: {sorted(extra)}")
-        examples.append(PromptExample(**item))
+            raise ValueError(f"Prompt CSV has unknown columns: {sorted(extra)}")
+        required = {"example_id", "category", "prompt"}
+        missing = required - set(reader.fieldnames)
+        if missing:
+            raise ValueError(f"Prompt CSV is missing required columns: {sorted(missing)}")
+        for i, row in enumerate(reader, start=2):
+            clean = {k: (v if v is not None else "") for k, v in row.items() if k in allowed}
+            try:
+                examples.append(PromptExample(**clean))
+            except TypeError as exc:
+                raise ValueError(f"Prompt CSV row {i} could not be parsed as a PromptExample: {exc}") from exc
+    else:
+        raise ValueError(
+            f"Unsupported prompt-set file extension {suffix!r}. Use .json or .csv, or one of small | medium | full."
+        )
     return examples
 
 
@@ -309,15 +360,24 @@ def validate_examples(
         distractor_ids = token_ids(tok, ex.distractor)
         target_id = target_ids[0] if len(target_ids) == 1 else None
         distractor_id = distractor_ids[0] if len(distractor_ids) == 1 else None
-        target_ok = ex.target is None or target_id is not None
-        distractor_ok = ex.distractor is None or distractor_id is not None
-        status = "kept" if target_ok and distractor_ok else "dropped"
-        reason = ""
-        if not target_ok:
-            reason = f"target tokenized into {len(target_ids)} tokens"
-        if not distractor_ok:
-            reason = (reason + "; " if reason else "") + f"distractor tokenized into {len(distractor_ids)} tokens"
+        has_target = ex.target not in (None, "")
+        has_distractor = ex.distractor not in (None, "")
+        target_ok = not has_target or target_id is not None
+        distractor_ok = not has_distractor or distractor_id is not None
+        same_label_id = target_id is not None and distractor_id is not None and target_id == distractor_id
 
+        reasons: list[str] = []
+        if not prompt_ids:
+            reasons.append("prompt tokenized to zero tokens")
+        if not target_ok:
+            reasons.append(f"target tokenized into {len(target_ids)} tokens")
+        if not distractor_ok:
+            reasons.append(f"distractor tokenized into {len(distractor_ids)} tokens")
+        if same_label_id:
+            reasons.append("target and distractor are the same token id")
+
+        status = "kept" if not reasons else "dropped"
+        reason = "; ".join(reasons)
         if status == "dropped":
             dropped += 1
         else:
@@ -328,6 +388,9 @@ def validate_examples(
                     "category": ex.category,
                     "n_prompt_tokens": len(prompt_ids),
                     "prompt": ex.prompt,
+                    "prompt_sha256": hashlib.sha256(ex.prompt.encode("utf-8")).hexdigest(),
+                    "prompt_token_ids": " ".join(map(str, prompt_ids)),
+                    "prompt_decoded_pieces": decoded_pieces(tok, prompt_ids),
                     "target": bench.visible_token(ex.target) if ex.target else "",
                     "target_id": target_id if target_id is not None else "",
                     "distractor": bench.visible_token(ex.distractor) if ex.distractor else "",
@@ -340,7 +403,10 @@ def validate_examples(
             {
                 "example_id": ex.example_id,
                 "category": ex.category,
+                "prompt": ex.prompt,
                 "n_prompt_tokens": len(prompt_ids),
+                "prompt_token_ids": " ".join(map(str, prompt_ids)),
+                "prompt_decoded_pieces": decoded_pieces(tok, prompt_ids),
                 "target": bench.visible_token(ex.target) if ex.target else "",
                 "target_token_ids": " ".join(map(str, target_ids)),
                 "target_decoded_pieces": decoded_pieces(tok, target_ids),
@@ -349,6 +415,7 @@ def validate_examples(
                 "distractor_token_ids": " ".join(map(str, distractor_ids)),
                 "distractor_decoded_pieces": decoded_pieces(tok, distractor_ids),
                 "distractor_n_tokens": len(distractor_ids) if ex.distractor else "",
+                "target_and_distractor_same_id": same_label_id,
                 "status": status,
                 "reason": reason,
             }
@@ -356,14 +423,35 @@ def validate_examples(
 
     tok_path = ctx.path("diagnostics", "tokenization_report.csv")
     bench.write_csv(tok_path, report_rows)
-    ctx.register_artifact(tok_path, "diagnostic", "Single-token validation for prompt labels.")
+    ctx.register_artifact(tok_path, "diagnostic", "Single-token validation for prompt labels, with tokenized prompts.")
 
     manifest_path = ctx.path("tables", "prompt_manifest.csv")
     bench.write_csv_with_context(ctx, manifest_path, manifest_rows)
     ctx.register_artifact(manifest_path, "table", "Prompt set that survived tokenization validation.")
 
+    selected_counts = {cat: sum(1 for ex in examples if ex.category == cat) for cat in CATEGORIES}
+    kept_counts = {cat: sum(1 for ex, _, _ in kept if ex.category == cat) for cat in CATEGORIES}
+    prompt_manifest = {
+        "lab": LAB_ID,
+        "prompt_set_arg": ctx.args.prompt_set,
+        "include_controls": bool(getattr(ctx.args, "include_controls", False)),
+        "max_examples_after_tier_defaults": ctx.args.max_examples,
+        "n_selected_before_tokenization": len(examples),
+        "n_kept_after_tokenization": len(kept),
+        "n_dropped_tokenization": dropped,
+        "selected_category_counts": selected_counts,
+        "kept_category_counts": kept_counts,
+        "selected_prompt_set_sha256": prompt_set_sha256(examples),
+        "kept_prompt_set_sha256": prompt_set_sha256([ex for ex, _, _ in kept]),
+        "custom_prompt_formats": ["json", "csv"],
+        "single_token_rule": "Targets and distractors, when present, must each encode to exactly one token and must not share the same token id.",
+    }
+    manifest_json = ctx.path("diagnostics", "prompt_set_manifest.json")
+    bench.write_json(manifest_json, prompt_manifest)
+    ctx.register_artifact(manifest_json, "diagnostic", "Exact selected prompt-set counts and stable hashes.")
+
     if dropped:
-        print(f"[lab1] dropped {dropped} example(s) with multi-token labels; see diagnostics/tokenization_report.csv")
+        print(f"[lab1] dropped {dropped} example(s) at validation; see diagnostics/tokenization_report.csv")
     return kept, dropped
 
 
@@ -491,6 +579,7 @@ def trajectory_event_row(
         "decision_depth": decision_depth(traj),
         "top1_flip_count": top1_flip_count(traj),
         "final_top1": traj.top1_texts[-1],
+        "final_top1_id": traj.top1_ids[-1],
         "final_top1_prob": round(traj.top1_probs[-1], 6),
         "final_top1_margin": round(traj.top1_margin[-1], 6),
         "final_entropy_bits": round(traj.entropy_bits[-1], 4),
@@ -528,13 +617,141 @@ def trajectory_event_row(
                 "target_first_beats_distractor": first_meaningful_logit_diff_positive(traj),
                 "target_stable_beats_distractor": stable_logit_diff_positive(traj),
                 "final_logit_diff": round(final_diff, 6),
+                "final_target_beats_distractor": final_diff > 0,
+                "final_target_beats_distractor_by_margin": final_diff > LOGIT_DIFF_MEANINGFUL_MARGIN,
                 "mean_logit_diff": round(
                     list_mean([t - d for t, d in zip(traj.logit_target, traj.logit_distractor)]),
                     6,
                 ),
             }
         )
+
+    # A compact label for the final readout. This keeps three notions separate:
+    # target top-1, target merely beating the matched distractor, and confidence
+    # on an unlabeled ambiguous continuation.
+    if target_id is None:
+        row["final_outcome"] = "unlabeled"
+    elif bool(row.get("final_top1_is_target")):
+        row["final_outcome"] = "target_top1"
+    elif "final_logit_diff" in row and float(row["final_logit_diff"]) > LOGIT_DIFF_MEANINGFUL_MARGIN:
+        row["final_outcome"] = "target_beats_distractor_not_top1"
+    elif "final_logit_diff" in row and float(row["final_logit_diff"]) > 0:
+        row["final_outcome"] = "target_slightly_beats_distractor"
+    elif distractor_id is not None:
+        row["final_outcome"] = "distractor_or_other_beats_target"
+    else:
+        row["final_outcome"] = "target_not_top1"
     return row
+
+
+def add_event_depth_fractions(event_rows: list[dict[str, Any]], n_layers: int) -> None:
+    """Add *_frac columns so event depths compare across model sizes."""
+    denom = max(1, n_layers)
+    for row in event_rows:
+        for key in EVENT_DEPTH_KEYS:
+            value = row.get(key)
+            if value in (None, ""):
+                row[f"{key}_frac"] = ""
+            else:
+                row[f"{key}_frac"] = round(float(value) / denom, 4)
+
+
+def final_readout_audit_rows(event_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """A compact per-example final-readout table for correctness-vs-confidence audits."""
+    keys = [
+        "example_id", "category", "final_outcome", "final_top1", "final_top1_prob",
+        "final_top1_margin", "final_entropy_bits", "target", "final_p_target",
+        "final_target_rank", "final_top1_is_target", "distractor", "final_p_distractor",
+        "final_distractor_rank", "final_logit_diff", "final_target_beats_distractor_by_margin",
+        "decision_depth", "top1_flip_count",
+    ]
+    return [{key: row.get(key, "") for key in keys} for row in event_rows]
+
+
+def top1_transition_rows(
+    ex: PromptExample,
+    traj: bench.LensTrajectory,
+    target_id: int | None,
+    distractor_id: int | None,
+) -> list[dict[str, Any]]:
+    """Compress each top-1 biography into stable token segments."""
+    rows: list[dict[str, Any]] = []
+    start = 0
+    final_id = traj.top1_ids[-1]
+    while start < traj.n_depths:
+        token_id = traj.top1_ids[start]
+        end = start
+        while end + 1 < traj.n_depths and traj.top1_ids[end + 1] == token_id:
+            end += 1
+        rows.append(
+            {
+                "example_id": ex.example_id,
+                "category": ex.category,
+                "start_depth": start,
+                "end_depth": end,
+                "duration_depths": end - start + 1,
+                "token_id": token_id,
+                "token": bench.visible_token(traj.top1_texts[start]),
+                "is_final_top1_token": token_id == final_id,
+                "is_target": target_id is not None and token_id == target_id,
+                "is_distractor": distractor_id is not None and token_id == distractor_id,
+                "start_prob": round(traj.top1_probs[start], 6),
+                "end_prob": round(traj.top1_probs[end], 6),
+                "max_prob_in_segment": round(max(traj.top1_probs[start : end + 1]), 6),
+            }
+        )
+        start = end + 1
+    return rows
+
+
+def phase_for_depth(depth: int, n_layers: int) -> str:
+    if depth == 0:
+        return "embedding"
+    if depth == n_layers:
+        return "final"
+    frac = depth / max(1, n_layers)
+    if frac <= 1 / 3:
+        return "early_blocks"
+    if frac <= 2 / 3:
+        return "middle_blocks"
+    return "late_blocks"
+
+
+def readout_phase_rows(ex: PromptExample, traj: bench.LensTrajectory, n_layers: int) -> list[dict[str, Any]]:
+    """Summarize trajectories in coarse depth bands for quick cross-model reading."""
+    phases = ["embedding", "early_blocks", "middle_blocks", "late_blocks", "final"]
+    out: list[dict[str, Any]] = []
+    for phase in phases:
+        depths = [d for d in range(traj.n_depths) if phase_for_depth(d, n_layers) == phase]
+        if not depths:
+            continue
+        tokens = [traj.top1_texts[d] for d in depths]
+        dominant = max(set(tokens), key=tokens.count)
+        row: dict[str, Any] = {
+            "example_id": ex.example_id,
+            "category": ex.category,
+            "phase": phase,
+            "start_depth": depths[0],
+            "end_depth": depths[-1],
+            "n_depths": len(depths),
+            "dominant_top1_token": bench.visible_token(dominant),
+            "n_unique_top1_tokens": len(set(tokens)),
+            "mean_entropy_bits": round(statistics.fmean(traj.entropy_bits[d] for d in depths), 4),
+            "mean_kl_to_final_bits": round(statistics.fmean(traj.kl_to_final_bits[d] for d in depths), 4),
+            "mean_top1_margin": round(statistics.fmean(traj.top1_margin[d] for d in depths), 6),
+            "mean_cosine_to_final": round(statistics.fmean(traj.cosine_to_final[d] for d in depths), 5),
+        }
+        if traj.p_target is not None:
+            row["max_p_target"] = round(max(traj.p_target[d] for d in depths), 6)
+        if traj.target_rank is not None:
+            row["best_target_rank"] = min(traj.target_rank[d] for d in depths)
+        if traj.logit_target is not None and traj.logit_distractor is not None:
+            row["mean_logit_diff"] = round(
+                statistics.fmean(traj.logit_target[d] - traj.logit_distractor[d] for d in depths),
+                5,
+            )
+        out.append(row)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -656,7 +873,7 @@ def plot_event_heatmap(
         event_rows,
         key=lambda r: (
             CATEGORIES.index(r["category"]) if r["category"] in CATEGORIES else len(CATEGORIES),
-            float(r.get("decision_depth") or n_layers + 1),
+            float(r["decision_depth"]) if r.get("decision_depth") not in (None, "") else float(n_layers + 1),
             r["example_id"],
         ),
     )
@@ -763,17 +980,57 @@ def plot_biography(
     """Showcase prediction biography for one labeled example."""
     if traj.p_target is None:
         return
-    fig, ax = bench.new_figure(figsize=(10.0, 5.5))
+    import matplotlib.pyplot as plt
+
     depths = list(range(traj.n_depths))
-    ax.plot(depths, traj.p_target, linewidth=2.5, label=f"p(target = {bench.visible_token(example.target or '')})")
+    fig, axes = plt.subplots(2, 2, figsize=(12.0, 8.0))
+    for ax in axes.flat:
+        ax.grid(True, alpha=0.3)
+
+    ax = axes[0, 0]
+    ax.plot(depths, traj.p_target, linewidth=2.2, label=f"p(target = {bench.visible_token(example.target or '')})")
     if traj.p_distractor is not None:
-        ax.plot(depths, traj.p_distractor, linewidth=2.5, label=f"p(distractor = {bench.visible_token(example.distractor or '')})")
-    ax.plot(depths, traj.top1_probs, linewidth=1.0, linestyle="--", label="p(top-1 at that depth)")
+        ax.plot(depths, traj.p_distractor, linewidth=2.2, label=f"p(distractor = {bench.visible_token(example.distractor or '')})")
+    ax.plot(depths, traj.top1_probs, linewidth=1.0, linestyle="--", label="p(top-1 at depth)")
+    ax.set_ylabel("probability")
+    ax.set_ylim(-0.02, 1.05)
+    ax.legend(fontsize=8)
+
+    ax = axes[0, 1]
+    if traj.logit_target is not None and traj.logit_distractor is not None:
+        diffs = [t - d for t, d in zip(traj.logit_target, traj.logit_distractor)]
+        ax.axhline(0.0, linewidth=0.8)
+        ax.axhline(LOGIT_DIFF_MEANINGFUL_MARGIN, linewidth=0.8, linestyle=":")
+        ax.plot(depths, diffs, linewidth=2.2)
+        ax.set_ylabel("logit(target) - logit(distractor)")
+    else:
+        ax.text(0.5, 0.5, "No target/distractor pair", ha="center", va="center", transform=ax.transAxes)
+    ax.set_title("Matched target-vs-distractor readout")
+
+    ax = axes[1, 0]
+    if traj.target_rank is not None:
+        ax.plot(depths, traj.target_rank, linewidth=2.2, label="target rank")
+        ax.set_yscale("log")
+        ax.invert_yaxis()
+        ax.set_ylabel("rank, lower is better")
+    else:
+        ax.text(0.5, 0.5, "No labeled target", ha="center", va="center", transform=ax.transAxes)
+    ax.set_xlabel("depth")
+    ax.set_title("Rank can improve before probability looks large")
+
+    ax = axes[1, 1]
+    ax.plot(depths, traj.entropy_bits, linewidth=2.0, label="entropy")
+    ax.plot(depths, traj.kl_to_final_bits, linewidth=2.0, label="KL(final || depth)")
+    ax.set_yscale("log")
+    ax.set_xlabel("depth")
+    ax.set_ylabel("bits, log scale")
+    ax.set_title("Sharpness and convergence are different")
+    ax.legend(fontsize=8)
 
     step = max(1, traj.n_depths // 8)
     annotated = sorted(set(list(range(0, traj.n_depths, step)) + [traj.n_depths - 1]))
     for depth in annotated:
-        ax.annotate(
+        axes[0, 0].annotate(
             bench.visible_token(traj.top1_texts[depth]),
             (depth, traj.top1_probs[depth]),
             textcoords="offset points",
@@ -781,17 +1038,104 @@ def plot_biography(
             fontsize=7,
             rotation=45,
         )
-    ax.set_xlabel("depth (0 = embeddings, k = after k blocks)")
-    ax.set_ylabel("probability under raw logit lens")
-    ax.set_ylim(-0.02, 1.05)
-    ax.set_title(f"Prediction biography: {example.example_id}\n{example.prompt}")
-    ax.legend(loc="upper left", fontsize=8)
+    fig.suptitle(f"Prediction biography: {example.example_id}\n{example.prompt}", fontsize=12)
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
     bench.save_figure(
         ctx,
         fig,
         f"biography_{bench.sanitize_tag(example.example_id)}.png",
-        "Showcase example: target, distractor, and top-1 probability over depth.",
+        "Showcase example: target/distractor probability, logit difference, rank, entropy, and KL over depth.",
     )
+
+
+def plot_readout_dashboard(
+    ctx: bench.RunContext,
+    per_example: list[dict[str, Any]],
+    *,
+    categories: tuple[str, ...] = CATEGORIES,
+) -> None:
+    """One dashboard for the four unlabeled curves students compare most."""
+    if not per_example:
+        return
+    import matplotlib.pyplot as plt
+
+    specs = [
+        ("entropy_bits", "entropy", "bits", False),
+        ("kl_to_final_bits", "KL(final || depth)", "bits", True),
+        ("top1_margin", "top-1 minus top-2 margin", "probability", False),
+        ("cosine_to_final", "cosine to final residual", "cosine", False),
+    ]
+    fig, axes = plt.subplots(2, 2, figsize=(12.0, 8.0))
+    plotted = False
+    for ax, (metric, title, ylabel, logy) in zip(axes.flat, specs):
+        ax.grid(True, alpha=0.3)
+        for category in categories:
+            rows = [r for r in per_example if r["category"] == category and metric in r and r[metric]]
+            if not rows:
+                continue
+            plotted = True
+            depth_count = min(len(r[metric]) for r in rows)
+            mean = [statistics.fmean(float(r[metric][d]) for r in rows) for d in range(depth_count)]
+            ax.plot(range(depth_count), mean, linewidth=2.2, label=f"{category} (n={len(rows)})", color=category_color(category))
+        if logy:
+            ax.set_yscale("log")
+        ax.set_title(title)
+        ax.set_xlabel("depth")
+        ax.set_ylabel(ylabel)
+    if not plotted:
+        bench.close_figure(fig)
+        return
+    axes[0, 0].legend(fontsize=8)
+    fig.suptitle("Raw logit-lens readout dashboard", fontsize=13)
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    bench.save_figure(
+        ctx,
+        fig,
+        "readout_dashboard.png",
+        "Category-mean entropy, KL-to-final, top-1 margin, and residual cosine curves in one dashboard.",
+    )
+
+
+def plot_event_ordering(
+    ctx: bench.RunContext,
+    event_rows: list[dict[str, Any]],
+    n_layers: int,
+) -> None:
+    """Median event-depth fractions by category, with event absence visible by count labels."""
+    events = [
+        "target_rank_first_le_5",
+        "target_first_beats_distractor",
+        "target_first_top1",
+        "decision_depth",
+        "kl_to_final_first_le_0.5_bits",
+    ]
+    fig, ax = bench.new_figure(figsize=(10.5, 5.8))
+    offsets = {cat: (i - 1.5) * 0.12 for i, cat in enumerate(CATEGORIES)}
+    plotted = False
+    for category in CATEGORIES:
+        rows = [r for r in event_rows if r["category"] == category]
+        if not rows:
+            continue
+        for j, event in enumerate(events):
+            vals = numeric_values(rows, event)
+            if not vals:
+                continue
+            plotted = True
+            y = statistics.median(vals) / max(1, n_layers)
+            ax.scatter(j + offsets.get(category, 0.0), y, s=70, color=category_color(category), label=category)
+            ax.annotate(f"n={len(vals)}", (j + offsets.get(category, 0.0), y), textcoords="offset points", xytext=(0, 7), ha="center", fontsize=7)
+    if not plotted:
+        bench.close_figure(fig)
+        return
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), fontsize=8)
+    ax.set_xticks(range(len(events)))
+    ax.set_xticklabels(events, rotation=25, ha="right")
+    ax.set_ylim(-0.04, 1.04)
+    ax.set_ylabel("median event depth / number of blocks")
+    ax.set_title("Event ordering by category (conditional on event occurring)")
+    bench.save_figure(ctx, fig, "event_ordering.png", "Median event-depth fraction by category, annotated with occurrence counts.")
 
 
 # ---------------------------------------------------------------------------
@@ -983,12 +1327,13 @@ def render_summary(
         "",
         "## Reading path",
         "",
-        "1. `diagnostics/logit_lens_self_check.json`",
-        "2. `diagnostics/hook_parity_by_layer.csv`",
-        "3. `state/<example_id>/state_card.md` for one fact and one counterfactual prompt",
-        "4. `plots/final_readout_scatter.png` and `plots/event_depth_heatmap.png`",
-        "5. `plots/target_rank_by_depth.png`, `plots/logit_diff_by_depth.png`, and `plots/kl_to_final_by_depth.png`",
-        "6. `tables/trajectory_events.csv` for outliers and blank cells",
+        "1. `logit_lens_card.md` for scope, headline numbers, claims, and non-claims",
+        "2. `diagnostics/logit_lens_self_check.json` and `diagnostics/hook_parity_by_layer.csv`",
+        "3. `tables/final_readout_audit.csv` to separate correctness, confidence, and matched-distractor wins",
+        "4. `state/<example_id>/state_card.md` for one fact and one counterfactual prompt",
+        "5. `plots/readout_dashboard.png`, `plots/final_readout_scatter.png`, and `plots/event_depth_heatmap.png`",
+        "6. `plots/target_rank_by_depth.png`, `plots/logit_diff_by_depth.png`, and `plots/kl_to_final_by_depth.png`",
+        "7. `tables/top1_transition_segments.csv` and `tables/trajectory_events.csv` for outliers and blank cells",
         "",
         "## Student tooling note",
         "",
@@ -1039,7 +1384,7 @@ def draft_claims(
                 "falsifier": "A tuned lens or held-out fact family places stabilization materially earlier/later or changes which token stabilizes.",
             }
         )
-    if fact and ambig:
+    if fact and ambig and fact.get("mean_final_entropy_bits") not in (None, "") and ambig.get("mean_final_entropy_bits") not in (None, ""):
         direction = (
             "higher"
             if float(ambig["mean_final_entropy_bits"]) > float(fact["mean_final_entropy_bits"])
@@ -1061,12 +1406,13 @@ def draft_claims(
     if cf:
         cf_rows = [r for r in event_rows if r["category"] == "counterfactual" and r.get("final_top1_is_target") not in (None, "")]
         wins = sum(1 for r in cf_rows if bool(r.get("final_top1_is_target")))
+        denom = len(cf_rows)
         claims.append(
             {
                 "id": f"{LAB_ID}-C3",
                 "tag": "OBS",
                 "text": (
-                    f"In {wins}/{len(cf_rows)} counterfactual prompts, the in-context target was the final top-1 token. "
+                    f"In {wins}/{denom} counterfactual prompts, the in-context target was the final top-1 token. "
                     f"Median first meaningful target-over-distractor depth was "
                     f"{cf['median_target_first_beats_distractor']} "
                     f"(median over the {cf['n_target_first_beats_distractor']}/{cf['n_examples']} examples "
@@ -1093,6 +1439,119 @@ def draft_claims(
     return claims
 
 
+
+def write_event_definition_manifest(ctx: bench.RunContext, n_layers: int) -> None:
+    """Write the semantic contract for every event depth used in this lab."""
+    path = ctx.path("diagnostics", "event_definitions.json")
+    bench.write_json(
+        path,
+        {
+            "evidence_level": "OBS",
+            "n_layers": n_layers,
+            "stream_semantics": "streams[k] is the pre-final-norm residual stream after k blocks; depth 0 is embeddings and depth L is after all blocks.",
+            "readout_semantics": "lens(k) = lm_head(final_norm(streams[k])); middle-depth readouts borrow the final readout basis.",
+            "thresholds": {
+                "meaningful_logit_margin": LOGIT_DIFF_MEANINGFUL_MARGIN,
+                "kl_to_final_bits": 0.5,
+                "cosine_to_final": 0.95,
+                "target_rank": 5,
+            },
+            "events": {
+                "decision_depth": "first depth after which the final top-1 token remains top-1",
+                "target_first_top1": "first depth where the labeled target is top-1",
+                "target_stable_top1_depth": "first depth after which the labeled target remains top-1",
+                "target_first_beats_distractor_raw": "first depth where target logit exceeds distractor; diagnostic only",
+                "target_first_beats_distractor": "first depth where target logit exceeds distractor by the meaningful margin and keeps a positive lead thereafter",
+                "target_stable_beats_distractor": "first depth after which target logit keeps exceeding distractor",
+                "target_rank_first_le_5": "first depth where target rank is 5 or better",
+                "kl_to_final_first_le_0.5_bits": "first depth where KL(final || depth) is at most 0.5 bits",
+                "cosine_to_final_first_ge_0.95": "first depth where residual cosine-to-final is at least 0.95",
+            },
+            "non_claim": "None of these events proves knowledge, belief, storage, or causal use. They are readout events.",
+        },
+    )
+    ctx.register_artifact(path, "diagnostic", "Definitions and thresholds for Lab 1 event-depth metrics.")
+
+
+def write_logit_lens_card(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    cat_rows: list[dict[str, Any]],
+    event_rows: list[dict[str, Any]],
+    dropped: int,
+    claims: list[dict[str, str]],
+) -> None:
+    """A compact deliverable students can read before diving into CSVs."""
+    by_cat = {r["category"]: r for r in cat_rows}
+
+    def cat_line(cat: str) -> str:
+        r = by_cat.get(cat)
+        if not r:
+            return f"- `{cat}`: not present in this run."
+        return (
+            f"- `{cat}`: n={r['n_examples']}, median decision depth {r['median_decision_depth']}, "
+            f"mean final entropy {r['mean_final_entropy_bits']}, target top-1 rate {r['target_final_top1_rate']}."
+        )
+
+    n_labeled = sum(1 for r in event_rows if r.get("target") not in (None, ""))
+    n_target_top1 = sum(1 for r in event_rows if bool(r.get("final_top1_is_target")))
+    lines = [
+        "# Lab 1 logit-lens card",
+        "",
+        "## Scope",
+        "",
+        f"Model: `{bundle.anatomy.model_id}` with {bundle.anatomy.n_layers} blocks. Evidence level: `OBS`.",
+        f"Run: `{ctx.run_dir.name}`. Examples kept: {len(event_rows)}. Dropped at tokenization: {dropped}.",
+        "",
+        "## What was measured",
+        "",
+        "For each prompt, the lab decoded the final-position residual stream at every depth using the model's own final norm and unembedding.",
+        "The readout answers this question: what would the final vocabulary head say if it were attached here?",
+        "",
+        "## Headline by family",
+        "",
+        cat_line("fact"),
+        cat_line("ambiguous"),
+        cat_line("counterfactual"),
+        cat_line("control"),
+        "",
+        "## Correctness and confidence are separate",
+        "",
+        f"Among labeled examples, the target was final top-1 in {n_target_top1}/{n_labeled} cases.",
+        "Use `tables/final_readout_audit.csv` before calling any trajectory a success or failure.",
+        "",
+        "## Draft claims",
+        "",
+    ]
+    if claims:
+        for claim in claims:
+            lines.append(f"- `{claim['id']}` {claim['tag']}: {claim['text']}")
+            lines.append(f"  - falsifier: {claim['falsifier']}")
+    else:
+        lines.append("No claims were drafted because required categories were absent.")
+    lines += [
+        "",
+        "## Non-claims",
+        "",
+        "- This card does not show that the model knows a fact at the first readable depth.",
+        "- It does not show that later blocks causally use a decoded token.",
+        "- It does not show that the raw lens is the right readout basis for middle layers.",
+        "",
+        "## First files to open",
+        "",
+        "1. `diagnostics/logit_lens_self_check.json`",
+        "2. `diagnostics/hook_parity_by_layer.csv`",
+        "3. `tables/final_readout_audit.csv`",
+        "4. `plots/readout_dashboard.png`",
+        "5. `plots/event_ordering.png`",
+        "6. `state/<example_id>/state_card.md`",
+        "",
+    ]
+    path = ctx.path("logit_lens_card.md")
+    bench.write_text(path, "\n".join(lines))
+    ctx.register_artifact(path, "summary", "Compact Lab 1 deliverable: scope, headline, claims, and non-claims.")
+
+
 # ---------------------------------------------------------------------------
 # Main experiment entry point called by the bench
 # ---------------------------------------------------------------------------
@@ -1111,10 +1570,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.run_hook_parity_check(ctx, bundle, first_prompt)
     first_capture = bench.run_with_residual_cache(bundle, first_prompt)
     bench.run_lens_self_check(ctx, bundle, first_capture)
+    write_event_definition_manifest(ctx, bundle.anatomy.n_layers)
 
     results_rows: list[dict[str, Any]] = []
     event_rows: list[dict[str, Any]] = []
     per_example_curves: list[dict[str, Any]] = []
+    transition_rows: list[dict[str, Any]] = []
+    phase_rows: list[dict[str, Any]] = []
     showcase: tuple[PromptExample, bench.LensTrajectory] | None = None
 
     for i, (ex, target_id, distractor_id) in enumerate(kept, start=1):
@@ -1138,6 +1600,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
         event_row = trajectory_event_row(ex, capture, traj, target_id, distractor_id)
         event_rows.append(event_row)
+        transition_rows.extend(top1_transition_rows(ex, traj, target_id, distractor_id))
+        phase_rows.extend(readout_phase_rows(ex, traj, bundle.anatomy.n_layers))
 
         for depth in range(traj.n_depths):
             row: dict[str, Any] = {
@@ -1204,6 +1668,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         )
 
     # Tables and metrics.
+    add_event_depth_fractions(event_rows, bundle.anatomy.n_layers)
+
     results_path = ctx.path("results.csv")
     bench.write_csv_with_context(ctx, results_path, results_rows)
     ctx.register_artifact(results_path, "results", "Every example-depth raw logit-lens measurement.")
@@ -1211,6 +1677,18 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     event_path = ctx.path("tables", "trajectory_events.csv")
     bench.write_csv_with_context(ctx, event_path, event_rows)
     ctx.register_artifact(event_path, "table", "Per-example event depths and final metrics.")
+
+    audit_path = ctx.path("tables", "final_readout_audit.csv")
+    bench.write_csv_with_context(ctx, audit_path, final_readout_audit_rows(event_rows))
+    ctx.register_artifact(audit_path, "table", "Final-readout correctness, confidence, and target-vs-distractor audit.")
+
+    transition_path = ctx.path("tables", "top1_transition_segments.csv")
+    bench.write_csv_with_context(ctx, transition_path, transition_rows)
+    ctx.register_artifact(transition_path, "table", "Compressed top-1 token segments over depth for each example.")
+
+    phase_path = ctx.path("tables", "readout_phase_summary.csv")
+    bench.write_csv_with_context(ctx, phase_path, phase_rows)
+    ctx.register_artifact(phase_path, "table", "Coarse embedding/early/middle/late/final readout summaries per example.")
 
     # Backward-compatible alias for the current README and starter docs.
     example_summary_path = ctx.path("tables", "example_summary.csv")
@@ -1231,6 +1709,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "n_examples": len(event_rows),
             "n_dropped_tokenization": dropped,
             "n_layers": bundle.anatomy.n_layers,
+            "selected_prompt_set_sha256": prompt_set_sha256(examples),
+            "kept_prompt_set_sha256": prompt_set_sha256([ex for ex, _, _ in kept]),
             "categories": cat_rows,
             "event_metric_definitions": {
                 "decision_depth": "first depth after which final top-1 remains top-1",
@@ -1254,6 +1734,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     # Plots.
     if not ctx.args.no_plots:
+        plot_readout_dashboard(ctx, per_example_curves)
+        plot_event_ordering(ctx, event_rows, bundle.anatomy.n_layers)
         plot_metric_by_depth(
             ctx,
             per_example_curves,
@@ -1353,6 +1835,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     # Summary and drafted claims.
     claims = draft_claims(ctx, bundle, cat_rows, event_rows)
     bench.write_ledger_suggestions(ctx, LAB_ID, claims)
+    write_logit_lens_card(ctx, bundle, cat_rows, event_rows, dropped, claims)
     summary_md = render_summary(ctx, bundle, event_rows, cat_rows, dropped, claims)
     summary_path = ctx.path("run_summary.md")
     bench.write_text(summary_path, summary_md)

@@ -1,38 +1,30 @@
-"""Lab 4: Probing without fooling yourself (now featuring truth).
+"""Lab 4: Probing without fooling yourself, now featuring truth.
 
-Two tracks probed from the SAME forward passes:
+This lab targets the DECODE rung of the evidence ladder. It asks what is
+linearly decodable from the residual stream, including statement truth, while
+keeping every answer glued to controls.
 
-* **Surface track** (mechanical warm-up): a property of the final word's
-  token text — decodable from token identity alone. Its by-layer curve is the
-  baseline shape of "trivially decodable".
-* **Truth track** (headline): is the statement true? Probed at the
-  end-of-statement position, Geometry-of-Truth style, on three frozen
-  families (cities, comparisons, negations) vendored in ``data/``.
+Two tracks are measured from the same cached forward passes:
 
-The lab's product is skepticism made quantitative. Every accuracy comes with
-its controls:
+* Surface track: a deliberately shallow final-word letter feature. This gives
+  students a calibration curve for "trivially decodable" information.
+* Truth track: true/false statement labels from three frozen families in
+  data/: cities, comparisons, and negations.
 
-- shuffled-label refits   -> does the probe family have capacity to "find"
-                             structure in noise at this n and d?
-- random-direction probe  -> how well does an arbitrary direction do?
-- token-length baseline   -> is "truth" secretly statement length?
-- family-held-out eval    -> does cities-truth transfer to comparisons and
-                             to negations (where surface form anti-correlates
-                             with truth)?
-- selectivity             = real accuracy - shuffled-control accuracy.
+Two probes are fit at every residual-stream depth:
 
-Two probe types per layer, because Lab 7 will reuse the direction CAUSALLY
-and mean-difference directions have repeatedly proven more causally relevant
-than max-margin ones:
+* logistic regression, which can find any separating direction available to a
+  linear classifier;
+* mass-mean, the difference of class means, which is the direction saved for
+  Lab 7's causal steering test.
 
-- logistic regression (torch LBFGS, L2, standardized features — no sklearn,
-  nobody runs code they can't explain)
-- mass-mean: difference of class means, threshold at the projected midpoint.
+The lab's product is not a single accuracy number. It is a skepticism packet:
+shuffled-label refits, random-direction controls, length and majority
+baselines, grouped train/eval splits, family-held-out transfer, calibration,
+activation-norm diagnostics, and a saved truth direction with a readable card.
 
-The run saves ``truth_direction.pt`` (mass-mean, best cross-family layer)
-with metadata; Lab 7 loads it and asks whether decodable means usable.
-
-Evidence level: DECODE. Nothing here shows the model USES these directions.
+Evidence level: DECODE. Nothing here shows that the model uses the direction.
+Lab 7 cashes that check with interventions.
 """
 
 from __future__ import annotations
@@ -40,26 +32,31 @@ from __future__ import annotations
 import csv
 import dataclasses
 import hashlib
-import pathlib
+import math
+import re
 import statistics
-from typing import Any
+from collections import defaultdict
+from typing import Any, Iterable
 
 import interp_bench as bench
 
 LAB_ID = "L04"
 
 FAMILIES = ("cities", "comparisons", "negations")
+AFFIRMATIVE_FAMILIES = ("cities", "comparisons")
 DATA_FILES = {
     "cities": "truth_cities.csv",
     "comparisons": "truth_comparisons.csv",
     "negations": "truth_negations.csv",
 }
 TRAIN_FRACTION = 0.7
-N_SHUFFLES = 2          # shuffled-label refits per (layer, family)
-N_RANDOM_DIRS = 3       # random-direction baselines per layer
+N_SHUFFLES = 2          # shuffled-label refits per (depth, family, method)
+N_RANDOM_DIRS = 3       # random-direction baselines per depth
 LOGISTIC_L2 = 1e-2
-SURFACE_LETTERS = ("r", "n", "a", "o")  # candidate letters; most balanced wins
-NORMALIZE_ROWS = True   # handout writeup question 4 asks you to flip this and re-run
+SURFACE_LETTERS = tuple("abcdefghijklmnopqrstuvwxyz")  # candidate letters; most balanced wins
+NORMALIZE_ROWS = True   # flip this for the outlier exercise in the handout
+N_CALIBRATION_BINS = 8
+OUTLIER_MULTIPLIER = 3.0
 
 
 @dataclasses.dataclass(frozen=True)
@@ -71,51 +68,236 @@ class Statement:
     meta: str = ""
 
 
+@dataclasses.dataclass(frozen=True)
+class SplitInfo:
+    statement_id: str
+    family: str
+    split_key: str
+    split: str           # train or eval
+
+
+# ---------------------------------------------------------------------------
+# Data loading and split hygiene
+# ---------------------------------------------------------------------------
+
+
+def stable_hash_int(text: str) -> int:
+    return int(hashlib.md5(text.encode("utf-8")).hexdigest()[:12], 16)
+
+
+def data_file_digest(family: str) -> str | None:
+    path = bench.COURSE_ROOT / "data" / DATA_FILES[family]
+    return bench.sha256_file(path) if path.exists() else None
+
+
 def load_family(family: str) -> list[Statement]:
     path = bench.COURSE_ROOT / "data" / DATA_FILES[family]
     if not path.exists():
         raise RuntimeError(
             f"Frozen dataset missing: {path}. The truth CSVs are vendored in "
-            "data/ — re-checkout the repo; do NOT regenerate per-run."
+            "data/. Re-checkout the repo; do not regenerate per-run."
         )
-    out = []
+    out: list[Statement] = []
     with path.open(newline="", encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            out.append(Statement(row["statement_id"], row["family"], row["statement"],
-                                 int(row["label"]), row.get("meta", "")))
+            label = int(row["label"])
+            row_family = row.get("family", family)
+            if row_family != family:
+                raise RuntimeError(
+                    f"Dataset row {row.get('statement_id')} declares family {row_family!r}, "
+                    f"but it was loaded from {family!r}."
+                )
+            if label not in (0, 1):
+                raise RuntimeError(f"Bad truth label for {row.get('statement_id')}: {label!r}")
+            out.append(
+                Statement(
+                    statement_id=row["statement_id"],
+                    family=row_family,
+                    statement=row["statement"],
+                    label=label,
+                    meta=row.get("meta", ""),
+                )
+            )
+    if not out:
+        raise RuntimeError(f"Frozen dataset is empty: {path}")
     return out
 
 
 def cap_balanced(statements: list[Statement], cap: int) -> list[Statement]:
-    """Cap a family while keeping the true/false balance exact."""
+    """Cap one family while keeping the true/false balance exact.
+
+    The cap is rounded down to an even number. That is intentional: probe
+    controls are more valuable than squeezing one more unbalanced example into
+    a smoke run.
+    """
     if cap <= 0 or cap >= len(statements):
         return statements
     true = [s for s in statements if s.label == 1]
     false = [s for s in statements if s.label == 0]
-    half = max(1, cap // 2)
-    return true[:half] + false[:half]
+    half = min(len(true), len(false), max(1, cap // 2))
+    out: list[Statement] = []
+    for t, f in zip(true[:half], false[:half]):
+        out.extend([t, f])
+    return out
 
 
-def is_train(statement_id: str) -> bool:
-    """Deterministic 70/30 split by statement id — stable across runs/seeds."""
-    digest = hashlib.md5(statement_id.encode()).hexdigest()
-    return int(digest[:8], 16) % 100 < int(TRAIN_FRACTION * 100)
+def _clean_text(text: str) -> str:
+    text = text.strip().lower()
+    text = re.sub(r"[.?!]+$", "", text)
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
+def split_group_key(statement: Statement) -> str:
+    """Return a leakage-resistant grouping key for train/eval splitting.
+
+    Statement-level hashing is too permissive for truth datasets. If
+    "Paris is in France" is in train and "Paris is in the Netherlands" is in
+    eval, a probe can ride entity/template structure. The split therefore
+    groups obvious paired variants before assigning train or eval.
+    """
+    text = _clean_text(statement.statement)
+
+    # Cities and negations. Group by city, not by country or negation token.
+    m = re.match(r"^the city of (.+?) is (?:not )?in (.+)$", text)
+    if m:
+        city = re.sub(r"\s+", "_", m.group(1))
+        return f"{statement.family}:city:{city}"
+
+    # Numeric comparisons. Group by unordered pair of compared quantities.
+    m = re.match(
+        r"^(.+?) is (?:larger|greater|bigger|smaller|less|lower) than (.+)$",
+        text,
+    )
+    if m:
+        a = re.sub(r"\s+", "_", m.group(1))
+        b = re.sub(r"\s+", "_", m.group(2))
+        return f"{statement.family}:comparison:{'|'.join(sorted((a, b)))}"
+
+    # Metadata is often a pair/group identifier in frozen eval CSVs, but do
+    # not trust it blindly if it is empty or label-looking.
+    meta = _clean_text(statement.meta)
+    if meta and meta not in {"true", "false", "1", "0"}:
+        return f"{statement.family}:meta:{meta}"
+
+    # Last-resort fallback: strip common label suffixes from statement_id.
+    key = statement.statement_id.lower()
+    key = re.sub(r"([_-](true|false|t|f|yes|no|1|0))+$", "", key)
+    return f"{statement.family}:id:{key}"
+
+
+def _label_set(indices: Iterable[int], statements: list[Statement]) -> set[int]:
+    return {statements[i].label for i in indices}
+
+
+def make_grouped_split(statements: list[Statement]) -> tuple[dict[str, bool], list[dict[str, Any]]]:
+    """Assign train/eval splits by leakage-resistant groups.
+
+    Returns a statement_id -> is_train map and group-level audit rows. The
+    split is deterministic, grouped, and repaired so every family has both
+    classes in both train and eval when the data makes that possible.
+    """
+    groups_by_family: dict[str, dict[str, list[int]]] = {f: defaultdict(list) for f in FAMILIES}
+    for i, s in enumerate(statements):
+        groups_by_family[s.family][split_group_key(s)].append(i)
+
+    split_lookup: dict[str, bool] = {}
+    audit_rows: list[dict[str, Any]] = []
+
+    for family in FAMILIES:
+        groups = groups_by_family[family]
+        keys = sorted(groups, key=lambda k: stable_hash_int(k))
+        if len(keys) < 2:
+            raise RuntimeError(
+                f"Family {family!r} has only {len(keys)} split group after grouping. "
+                "Use a larger prompt set or inspect split_group_key()."
+            )
+        n_train_groups = int(round(TRAIN_FRACTION * len(keys)))
+        n_train_groups = min(max(1, n_train_groups), len(keys) - 1)
+        train_keys = set(keys[:n_train_groups])
+
+        def split_indices(train: set[str]) -> tuple[list[int], list[int]]:
+            train_idx = [i for k in train for i in groups[k]]
+            eval_idx = [i for k in keys if k not in train for i in groups[k]]
+            return train_idx, eval_idx
+
+        def ok(train: set[str]) -> bool:
+            tr, ev = split_indices(train)
+            return _label_set(tr, statements) == {0, 1} and _label_set(ev, statements) == {0, 1}
+
+        # Deterministic repair if the first hash split strands a class.
+        for _ in range(len(keys) * 4):
+            if ok(train_keys):
+                break
+            tr, ev = split_indices(train_keys)
+            train_labels = _label_set(tr, statements)
+            eval_labels = _label_set(ev, statements)
+            moved = False
+            for label in (0, 1):
+                if label not in train_labels:
+                    for k in keys:
+                        if k not in train_keys and any(statements[i].label == label for i in groups[k]):
+                            train_keys.add(k)
+                            moved = True
+                            break
+                if moved:
+                    break
+                if label not in eval_labels:
+                    for k in keys:
+                        if k in train_keys and len(train_keys) > 1 and any(
+                            statements[i].label == label for i in groups[k]
+                        ):
+                            train_keys.remove(k)
+                            moved = True
+                            break
+                if moved:
+                    break
+            if not moved:
+                break
+        if not ok(train_keys):
+            raise RuntimeError(
+                f"Could not create a grouped train/eval split for {family!r} with both labels "
+                "in both splits. Increase --max-examples or inspect diagnostics/split_audit.csv."
+            )
+
+        for k in keys:
+            split = "train" if k in train_keys else "eval"
+            idxs = groups[k]
+            for i in idxs:
+                split_lookup[statements[i].statement_id] = split == "train"
+            audit_rows.append(
+                {
+                    "family": family,
+                    "split_key": k,
+                    "split": split,
+                    "n_statements": len(idxs),
+                    "n_true": sum(statements[i].label for i in idxs),
+                    "n_false": sum(1 - statements[i].label for i in idxs),
+                    "example_statement_ids": ";".join(statements[i].statement_id for i in idxs[:4]),
+                }
+            )
+    return split_lookup, audit_rows
 
 
 # ---------------------------------------------------------------------------
-# Probes (pure torch; the math is the point)
+# Probes, controls, and calibration
 # ---------------------------------------------------------------------------
+
+
+def require_two_classes(y: Any, *, context: str) -> None:
+    if not bool((y == 1).any()) or not bool((y == 0).any()):
+        raise ValueError(f"{context} needs both classes; got labels {sorted(set(y.tolist()))}")
 
 
 def fit_logistic(X: Any, y: Any, l2: float = LOGISTIC_L2) -> dict[str, Any]:
-    """L2-regularized logistic regression via LBFGS on standardized features.
+    """L2-regularized logistic regression via torch LBFGS.
 
-    Returns a dict with everything needed to evaluate elsewhere: the weight
-    vector, bias, and the train-set standardization (eval data must be
-    standardized with TRAIN statistics — leaking eval statistics into the
-    scaler is the quietest way to cheat)."""
+    Eval data is standardized with train-set statistics. Leaking eval-set
+    scale into a probe is a velvet-gloved bug.
+    """
     import torch
 
+    require_two_classes(y, context="logistic probe")
     mu = X.mean(dim=0)
     sigma = X.std(dim=0).clamp_min(1e-6)
     Xs = (X - mu) / sigma
@@ -136,19 +318,41 @@ def fit_logistic(X: Any, y: Any, l2: float = LOGISTIC_L2) -> dict[str, Any]:
     return {"w": w.detach(), "b": b.detach(), "mu": mu, "sigma": sigma}
 
 
-def eval_logistic(probe: dict[str, Any], X: Any, y: Any) -> float:
+def logistic_logits(probe: dict[str, Any], X: Any) -> Any:
     Xs = (X - probe["mu"]) / probe["sigma"]
-    pred = (Xs @ probe["w"] + probe["b"]) > 0
+    return Xs @ probe["w"] + probe["b"]
+
+
+def logistic_probs(probe: dict[str, Any], X: Any) -> Any:
+    import torch
+
+    return torch.sigmoid(logistic_logits(probe, X))
+
+
+def eval_logistic(probe: dict[str, Any], X: Any, y: Any) -> float:
+    pred = logistic_logits(probe, X) > 0
     return float((pred == y.bool()).float().mean())
+
+
+def eval_logistic_metrics(probe: dict[str, Any], X: Any, y: Any) -> dict[str, float]:
+    import torch
+
+    probs = logistic_probs(probe, X).detach().float().clamp(1e-6, 1 - 1e-6)
+    yf = y.float()
+    pred = probs > 0.5
+    brier = torch.mean((probs - yf) ** 2)
+    nll = torch.nn.functional.binary_cross_entropy(probs, yf)
+    return {
+        "accuracy": float((pred == y.bool()).float().mean()),
+        "brier": float(brier),
+        "nll": float(nll),
+        "ece": expected_calibration_error(probs, y),
+    }
 
 
 def fit_mass_mean(X: Any, y: Any) -> dict[str, Any]:
     """Difference of class means; threshold at the projected midpoint."""
-    if not bool((y == 1).any()) or not bool((y == 0).any()):
-        raise ValueError(
-            "mass-mean probe needs both classes in train; "
-            "a tiny --max-examples can leave the hash split one-classed"
-        )
+    require_two_classes(y, context="mass-mean probe")
     mu_true = X[y == 1].mean(dim=0)
     mu_false = X[y == 0].mean(dim=0)
     direction = mu_true - mu_false
@@ -162,15 +366,15 @@ def eval_mass_mean(probe: dict[str, Any], X: Any, y: Any) -> float:
 
 
 def eval_random_directions(X_train: Any, y_train: Any, X_eval: Any, y_eval: Any, seed: int) -> float:
-    """Best-effort random-direction probe: random unit vector, midpoint
-    threshold fit on train. Mean accuracy over N_RANDOM_DIRS draws."""
+    """Random unit vectors with midpoint thresholds fit on train."""
     import torch
 
+    require_two_classes(y_train, context="random-direction control")
     accs = []
     gen = torch.Generator().manual_seed(seed)
     for _ in range(N_RANDOM_DIRS):
         d = torch.randn(X_train.shape[1], generator=gen)
-        d = d / d.norm()
+        d = d / d.norm().clamp_min(1e-9)
         mu_t = X_train[y_train == 1] @ d
         mu_f = X_train[y_train == 0] @ d
         thr = float((mu_t.mean() + mu_f.mean()) / 2)
@@ -188,89 +392,172 @@ def shuffled_labels(y: Any, seed: int) -> Any:
     return y[perm]
 
 
+def majority_baseline(y_train: Any, y_eval: Any) -> float:
+    pred = bool(float(y_train.float().mean()) >= 0.5)
+    return float((y_eval.bool() == pred).float().mean())
+
+
+def expected_calibration_error(probs: Any, y: Any, n_bins: int = N_CALIBRATION_BINS) -> float:
+    import torch
+
+    probs = probs.detach().float()
+    labels = y.float()
+    ece = torch.tensor(0.0)
+    for b in range(n_bins):
+        lo, hi = b / n_bins, (b + 1) / n_bins
+        mask = (probs >= lo) & (probs < hi if b < n_bins - 1 else probs <= hi)
+        if bool(mask.any()):
+            conf = probs[mask].mean()
+            acc = labels[mask].mean()
+            ece = ece + mask.float().mean() * torch.abs(conf - acc)
+    return float(ece)
+
+
+def calibration_bins(probs: Any, y: Any, *, family: str, layer: int) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    probs = probs.detach().float()
+    labels = y.float()
+    for b in range(N_CALIBRATION_BINS):
+        lo, hi = b / N_CALIBRATION_BINS, (b + 1) / N_CALIBRATION_BINS
+        mask = (probs >= lo) & (probs < hi if b < N_CALIBRATION_BINS - 1 else probs <= hi)
+        n = int(mask.sum())
+        rows.append(
+            {
+                "family": family,
+                "layer": layer,
+                "bin": b,
+                "prob_lo": round(lo, 4),
+                "prob_hi": round(hi, 4),
+                "n": n,
+                "mean_predicted_prob": round(float(probs[mask].mean()), 4) if n else "",
+                "empirical_true_rate": round(float(labels[mask].mean()), 4) if n else "",
+            }
+        )
+    return rows
+
+
 # ---------------------------------------------------------------------------
 # Surface track feature
 # ---------------------------------------------------------------------------
 
 
-def pick_surface_letter(statements: list[Statement]) -> str:
-    """Choose the candidate letter whose presence in the final token is most
-    balanced across the dataset — transparent, surface-level, arbitrary on
-    purpose."""
-    best, best_gap = SURFACE_LETTERS[0], 1.0
+def final_word(statement: str) -> str:
+    return statement.rstrip(".?!").split()[-1]
+
+
+def pick_surface_letter(statements: list[Statement], split_lookup: dict[str, bool] | None = None) -> str:
+    """Choose a final-word letter that is balanced and trainable.
+
+    The surface track is a calibration curve, not a puzzle box. We therefore
+    prefer a letter that gives both classes inside every family split. If no
+    candidate satisfies that strict criterion, the score degrades gracefully
+    toward global balance.
+    """
+    best, best_score = SURFACE_LETTERS[0], float("inf")
     for letter in SURFACE_LETTERS:
-        frac = statistics.fmean(
-            1.0 if letter in final_word(s.statement).lower() else 0.0 for s in statements
-        )
-        gap = abs(frac - 0.5)
-        if gap < best_gap:
-            best, best_gap = letter, gap
+        vals = [1 if letter in final_word(s.statement).lower() else 0 for s in statements]
+        frac = statistics.fmean(vals)
+        score = abs(frac - 0.5)
+        if split_lookup is not None:
+            for family in FAMILIES:
+                for is_train_split in (True, False):
+                    split_vals = [
+                        1 if letter in final_word(s.statement).lower() else 0
+                        for s in statements
+                        if s.family == family and split_lookup[s.statement_id] == is_train_split
+                    ]
+                    # A one-class split would make the surface probe either
+                    # fail or become a majority baseline in costume. Penalize it.
+                    if len(set(split_vals)) < 2:
+                        score += 10.0
+                    else:
+                        score += 0.1 * abs(statistics.fmean(split_vals) - 0.5)
+        if score < best_score:
+            best, best_score = letter, score
     return best
 
 
-def final_word(statement: str) -> str:
-    return statement.rstrip(".").split()[-1]
-
-
 # ---------------------------------------------------------------------------
-# Plots
+# Plot helpers
 # ---------------------------------------------------------------------------
 
 
 FAMILY_COLORS = {"cities": "tab:blue", "comparisons": "tab:orange", "negations": "tab:green"}
 
 
+def _mean_curve(report: list[dict[str, Any]], predicate) -> tuple[list[int], list[float]]:
+    by_layer: dict[int, list[float]] = {}
+    for r in report:
+        if predicate(r) and r["layer"] >= 0:
+            by_layer.setdefault(int(r["layer"]), []).append(float(r["accuracy"]))
+    depths = sorted(by_layer)
+    return depths, [statistics.fmean(by_layer[k]) for k in depths]
+
+
 def plot_decodability(
     ctx: bench.RunContext,
     report: list[dict[str, Any]],
-    n_depths: int,
     surface_letter: str,
     best_layer: int,
+    truth_peak_layer: int,
 ) -> None:
-    """The lab's headline: surface vs truth decodability by layer."""
-    fig, ax = bench.new_figure(figsize=(9.5, 6.0))
+    """Headline figure: truth, surface, and controls on one set of axes."""
+    fig, ax = bench.new_figure(figsize=(10.2, 6.0))
 
-    def curve(rows: list[dict[str, Any]]) -> list[float]:
-        by_layer: dict[int, list[float]] = {}
-        for r in rows:
-            by_layer.setdefault(r["layer"], []).append(r["accuracy"])
-        return [statistics.fmean(by_layer[k]) for k in sorted(by_layer)]
+    curves = [
+        (
+            "truth, logistic within-family",
+            lambda r: r["track"] == "truth" and r["method"] == "logistic" and r["eval_kind"] == "within",
+            {"linewidth": 2.6, "color": "tab:red"},
+        ),
+        (
+            "truth, mass-mean within-family",
+            lambda r: r["track"] == "truth" and r["method"] == "mass_mean" and r["eval_kind"] == "within",
+            {"linewidth": 2.6, "color": "tab:purple", "linestyle": "--"},
+        ),
+        (
+            f"surface, final word contains {surface_letter!r}",
+            lambda r: r["track"] == "surface" and r["method"] == "logistic" and r["eval_kind"] == "within",
+            {"linewidth": 2.0, "color": "tab:gray"},
+        ),
+        (
+            "truth shuffled-label control",
+            lambda r: r["track"] == "truth" and r["method"] == "logistic" and r["eval_kind"] == "shuffled_control",
+            {"linewidth": 1.6, "color": "black", "linestyle": ":"},
+        ),
+        (
+            "truth random-direction control",
+            lambda r: r["track"] == "truth" and r["method"] == "random_direction",
+            {"linewidth": 1.6, "color": "tab:brown", "linestyle": ":"},
+        ),
+    ]
+    for label, pred, style in curves:
+        depths, vals = _mean_curve(report, pred)
+        if depths:
+            ax.plot(depths, vals, label=label, **style)
 
-    truth_lr = curve([r for r in report if r["track"] == "truth" and r["method"] == "logistic"
-                      and r["eval_kind"] == "within"])
-    truth_mm = curve([r for r in report if r["track"] == "truth" and r["method"] == "mass_mean"
-                      and r["eval_kind"] == "within"])
-    surface = curve([r for r in report if r["track"] == "surface" and r["method"] == "logistic"
-                     and r["eval_kind"] == "within"])
-    shuffled = curve([r for r in report if r["track"] == "truth" and r["method"] == "logistic"
-                      and r["eval_kind"] == "shuffled_control"])
-    rand_dir = curve([r for r in report if r["track"] == "truth" and r["method"] == "random_direction"])
-
-    depths = list(range(len(truth_lr)))
-    ax.plot(depths, truth_lr, linewidth=2.5, color="tab:red", label="truth — logistic (within-family)")
-    ax.plot(depths, truth_mm, linewidth=2.5, color="tab:purple", linestyle="--", label="truth — mass-mean")
-    ax.plot(depths, surface, linewidth=2.0, color="tab:gray",
-            label=f"surface — final word contains '{surface_letter}'")
-    ax.plot(depths, shuffled, linewidth=1.5, color="black", linestyle=":",
-            label="shuffled-label control (logistic)")
-    if rand_dir:
-        ax.plot(depths, rand_dir, linewidth=1.5, color="tab:brown", linestyle=":",
-                label="random-direction baseline")
-    ax.axvline(best_layer, color="tab:purple", linewidth=0.9, alpha=0.45,
-               label=f"saved direction layer {best_layer}")
-    ax.axhline(0.5, color="black", linewidth=0.6, alpha=0.5)
-    ax.set_xlabel("depth (0 = embeddings, k = after k blocks)")
+    ax.axvline(best_layer, color="tab:purple", linewidth=1.0, alpha=0.45,
+               label=f"saved direction depth {best_layer}")
+    if truth_peak_layer != best_layer:
+        ax.axvline(truth_peak_layer, color="tab:red", linewidth=0.8, alpha=0.3,
+                   label=f"logistic peak depth {truth_peak_layer}")
+    ax.axhline(0.5, color="black", linewidth=0.7, alpha=0.6)
+    ax.fill_between([0, max([best_layer, truth_peak_layer, 1])], 0.45, 0.55, alpha=0.08, color="black",
+                    label="chance neighborhood")
+    ax.set_xlabel("residual-stream depth (0 = embeddings, k = after k blocks)")
     ax.set_ylabel("held-out accuracy")
     ax.set_ylim(0.0, 1.02)
-    ax.set_title("Decodable is cheap; decodable-and-deep emerges with depth")
+    ax.set_title("Probe accuracy by depth, with controls riding the same rails")
     ax.legend(fontsize=8, loc="lower right")
-    bench.save_figure(ctx, fig, "decodability_by_layer.png",
-                      "Surface vs truth decodability by layer, with controls on the same axes.")
+    bench.save_figure(
+        ctx,
+        fig,
+        "decodability_by_layer.png",
+        "Surface vs truth decodability by depth, with shuffled and random controls.",
+    )
 
 
-def plot_generalization(
-    ctx: bench.RunContext, report: list[dict[str, Any]], best_layer: int
-) -> None:
+def plot_generalization(ctx: bench.RunContext, report: list[dict[str, Any]], best_layer: int) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -279,8 +566,12 @@ def plot_generalization(
     for panel_i, (ax, method) in enumerate(zip(axes, ("logistic", "mass_mean"))):
         grid = np.full((len(FAMILIES), len(FAMILIES)), np.nan)
         for r in report:
-            if (r["track"] == "truth" and r["method"] == method and r["layer"] == best_layer
-                    and r["eval_kind"] in ("within", "cross")):
+            if (
+                r["track"] == "truth"
+                and r["method"] == method
+                and r["layer"] == best_layer
+                and r["eval_kind"] in ("within", "cross")
+            ):
                 i = FAMILIES.index(r["train_family"])
                 j = FAMILIES.index(r["eval_family"])
                 grid[i, j] = r["accuracy"]
@@ -291,37 +582,43 @@ def plot_generalization(
         ax.set_yticklabels(FAMILIES)
         ax.set_xlabel("evaluated on")
         ax.set_ylabel("trained on" if panel_i == 0 else "")
-        ax.set_title(f"{method} @ layer {best_layer}")
+        ax.set_title(f"{method} @ depth {best_layer}")
         for i in range(len(FAMILIES)):
             for j in range(len(FAMILIES)):
                 if not np.isnan(grid[i, j]):
-                    ax.annotate(f"{grid[i, j]:.2f}", (j, i), ha="center", va="center", fontsize=10)
+                    weight = "bold" if grid[i, j] < 0.5 else "normal"
+                    ax.annotate(f"{grid[i, j]:.2f}", (j, i), ha="center", va="center",
+                                fontsize=10, fontweight=weight)
     if im is not None:
         fig.colorbar(im, ax=axes, fraction=0.03, label="accuracy")
-    fig.suptitle("Generalization across statement families (diagonal = within-family held-out)")
-    bench.save_figure(ctx, fig, "generalization_matrix.png",
-                      "Train-family x eval-family accuracy for both probe types at the best layer.")
+    fig.suptitle("Family-held-out transfer, where below chance can be a real anti-feature")
+    bench.save_figure(
+        ctx,
+        fig,
+        "generalization_matrix.png",
+        "Train-family x eval-family accuracy for both probe types at the saved direction depth.",
+    )
 
 
-def plot_selectivity(ctx: bench.RunContext, report: list[dict[str, Any]], n_depths: int) -> None:
-    fig, ax = bench.new_figure(figsize=(9.0, 5.0))
+def plot_selectivity(ctx: bench.RunContext, selectivity_rows: list[dict[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(9.3, 5.0))
     for family in FAMILIES:
-        real = {r["layer"]: r["accuracy"] for r in report
-                if r["track"] == "truth" and r["method"] == "logistic"
-                and r["eval_kind"] == "within" and r["train_family"] == family}
-        ctrl = {r["layer"]: r["accuracy"] for r in report
-                if r["track"] == "truth" and r["method"] == "logistic"
-                and r["eval_kind"] == "shuffled_control" and r["train_family"] == family}
-        depths = sorted(set(real) & set(ctrl))
-        ax.plot(depths, [real[d] - ctrl[d] for d in depths], linewidth=2.0,
-                color=FAMILY_COLORS[family], label=family)
-    ax.axhline(0, color="black", linewidth=0.6)
-    ax.set_xlabel("depth")
-    ax.set_ylabel("selectivity (real - shuffled-control accuracy)")
-    ax.set_title("Selectivity: how much of the accuracy is real structure?")
+        rows = [r for r in selectivity_rows if r["family"] == family and r["method"] == "logistic"]
+        rows = sorted(rows, key=lambda r: r["layer"])
+        if rows:
+            ax.plot(
+                [r["layer"] for r in rows],
+                [r["selectivity"] for r in rows],
+                linewidth=2.0,
+                color=FAMILY_COLORS[family],
+                label=family,
+            )
+    ax.axhline(0, color="black", linewidth=0.7)
+    ax.set_xlabel("residual-stream depth")
+    ax.set_ylabel("selectivity (real accuracy minus shuffled-control accuracy)")
+    ax.set_title("Selectivity by family: accuracy after the noise-probe goblin is paid")
     ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "selectivity_by_layer.png",
-                      "Per-family selectivity of the truth probe by layer.")
+    bench.save_figure(ctx, fig, "selectivity_by_layer.png", "Per-family truth-probe selectivity by depth.")
 
 
 def plot_projection_panels(
@@ -330,49 +627,231 @@ def plot_projection_panels(
     labels: Any,              # [n]
     families: list[str],
     n_depths: int,
-    outlier_mask: Any = None,  # [n] bool; rogue-norm rows excluded from the VIEW only
+    outlier_mask: Any = None,
 ) -> None:
-    """Cities statements projected on (mass-mean dir, top orthogonal PC) at
-    five depths: separation emerging over depth, visible at a glance.
-
-    Norm-outlier statements are excluded from this plot only (they compress
-    every other point into a blob); they remain in every probe number."""
+    """Cities statements projected onto mass-mean dir plus top orthogonal PC."""
     import matplotlib.pyplot as plt
     import torch
 
-    idx = [i for i, f in enumerate(families)
-           if f == "cities" and (outlier_mask is None or not bool(outlier_mask[i]))]
+    idx = [i for i, f in enumerate(families) if f == "cities" and (outlier_mask is None or not bool(outlier_mask[i]))]
     if len(idx) < 8:
         return
     Xc = X_layers[idx]
     yc = labels[idx]
     depths = sorted({1, n_depths // 4, n_depths // 2, (3 * n_depths) // 4, n_depths - 1})
-    fig, axes = plt.subplots(1, len(depths), figsize=(3.6 * len(depths), 3.8), sharey=False)
+    fig, axes = plt.subplots(1, len(depths), figsize=(3.55 * len(depths), 3.8), sharey=False)
+    if len(depths) == 1:
+        axes = [axes]
     for ax, k in zip(axes, depths):
         X = Xc[:, k, :]
         mm = fit_mass_mean(X, yc)
         d1 = mm["direction"] / mm["direction"].norm().clamp_min(1e-9)
         Xp = X - X.mean(dim=0)
         resid = Xp - (Xp @ d1)[:, None] * d1[None, :]
-        # Top principal component of the residual, via one power iteration pass.
         v = resid.T @ resid @ torch.ones(resid.shape[1]) / resid.shape[1]
         for _ in range(8):
             v = resid.T @ (resid @ v)
             v = v / v.norm().clamp_min(1e-9)
         x_proj = Xp @ d1
         y_proj = Xp @ v
-        ax.scatter(x_proj[yc == 1], y_proj[yc == 1], s=22, color="tab:green", alpha=0.8, label="true")
-        ax.scatter(x_proj[yc == 0], y_proj[yc == 0], s=22, color="tab:red", alpha=0.8, label="false")
+        ax.scatter(x_proj[yc == 1], y_proj[yc == 1], s=24, color="tab:green", alpha=0.82, label="true")
+        ax.scatter(x_proj[yc == 0], y_proj[yc == 0], s=24, color="tab:red", alpha=0.82, label="false")
         ax.set_title(f"depth {k}", fontsize=10)
         ax.set_xlabel("mass-mean direction")
-        ax.grid(True, alpha=0.3)
+        ax.grid(True, alpha=0.28)
     axes[0].set_ylabel("top orthogonal PC")
     axes[0].legend(fontsize=8)
-    fig.suptitle("Cities statements: truth separation emerging over depth "
-                 "(norm-outlier rows excluded from view, not from numbers)")
+    fig.suptitle("Cities: truth separation over depth (raw-norm outliers hidden from view only)")
     fig.tight_layout()
-    bench.save_figure(ctx, fig, "truth_projection_panels.png",
-                      "2-D projections of city statements at five depths; separation along the mass-mean direction.")
+    bench.save_figure(
+        ctx,
+        fig,
+        "truth_projection_panels.png",
+        "2-D projections of city statements at five depths.",
+    )
+
+
+def plot_norm_diagnostics(ctx: bench.RunContext, row_norms: Any, n_depths: int) -> None:
+    import numpy as np
+
+    norms = row_norms.numpy()
+    depths = list(range(n_depths))
+    med = np.median(norms, axis=0)
+    p95 = np.quantile(norms, 0.95, axis=0)
+    mx = np.max(norms, axis=0)
+    fig, ax = bench.new_figure(figsize=(9.2, 5.0))
+    ax.plot(depths, med, linewidth=2.0, label="median")
+    ax.plot(depths, p95, linewidth=1.8, linestyle="--", label="95th percentile")
+    ax.plot(depths, mx, linewidth=1.8, linestyle=":", label="max")
+    ax.set_xlabel("residual-stream depth")
+    ax.set_ylabel("raw activation norm at final token")
+    ax.set_title("Activation-norm diagnostics: one row can bend a mass-mean direction")
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, "activation_norms_by_depth.png", "Median, p95, and max final-token stream norms by depth.")
+
+
+def plot_calibration(ctx: bench.RunContext, calibration_rows: list[dict[str, Any]], layer: int) -> None:
+    fig, ax = bench.new_figure(figsize=(6.2, 5.4))
+    for family in FAMILIES:
+        rows = [r for r in calibration_rows if r["family"] == family and r["n"]]
+        if not rows:
+            continue
+        ax.plot(
+            [float(r["mean_predicted_prob"]) for r in rows],
+            [float(r["empirical_true_rate"]) for r in rows],
+            marker="o",
+            linewidth=1.8,
+            color=FAMILY_COLORS[family],
+            label=family,
+        )
+    ax.plot([0, 1], [0, 1], linestyle=":", color="black", linewidth=1.0, label="perfect calibration")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("mean predicted P(true)")
+    ax.set_ylabel("empirical true rate")
+    ax.set_title(f"Logistic truth-probe calibration at depth {layer}")
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, "truth_calibration_curve.png", "Calibration curve for the logistic truth probe at its peak depth.")
+
+
+# ---------------------------------------------------------------------------
+# Artifact cards and table helpers
+# ---------------------------------------------------------------------------
+
+
+def choose_best_layer(report: list[dict[str, Any]], n_depths: int) -> tuple[int, float]:
+    def cross_and_within(layer: int) -> tuple[float, float]:
+        # Negations are excluded from the primary layer criterion. A direction
+        # trained on affirmative truth statements can anti-predict negations;
+        # that is a result to report, not something to optimize away.
+        cross = [
+            r["accuracy"]
+            for r in report
+            if r["method"] == "mass_mean"
+            and r["layer"] == layer
+            and r["eval_kind"] == "cross"
+            and r["eval_family"] in AFFIRMATIVE_FAMILIES
+            and r["train_family"] in AFFIRMATIVE_FAMILIES
+        ]
+        within = [
+            r["accuracy"]
+            for r in report
+            if r["method"] == "mass_mean" and r["layer"] == layer and r["eval_kind"] == "within"
+        ]
+        return (min(cross) if cross else 0.0, statistics.fmean(within) if within else 0.0)
+
+    best_layer = max(range(n_depths), key=lambda k: cross_and_within(k))
+    return best_layer, cross_and_within(best_layer)[0]
+
+
+def peak(report: list[dict[str, Any]], track: str, method: str, eval_kind: str) -> tuple[int, float]:
+    rows = [r for r in report if r["track"] == track and r["method"] == method and r["eval_kind"] == eval_kind]
+    by_layer: dict[int, list[float]] = {}
+    for r in rows:
+        if r["layer"] >= 0:
+            by_layer.setdefault(int(r["layer"]), []).append(float(r["accuracy"]))
+    means = {k: statistics.fmean(v) for k, v in by_layer.items()}
+    k = max(means, key=means.get)
+    return k, means[k]
+
+
+def mean_acc(report: list[dict[str, Any]], track: str, method: str, eval_kind: str, layer: int | None = None) -> float | None:
+    vals = [
+        r["accuracy"]
+        for r in report
+        if r["track"] == track
+        and r["method"] == method
+        and r["eval_kind"] == eval_kind
+        and (layer is None or r["layer"] == layer)
+    ]
+    return statistics.fmean(vals) if vals else None
+
+
+def build_selectivity_rows(report: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for family in FAMILIES:
+        for method in ("logistic", "mass_mean"):
+            real = {
+                r["layer"]: r["accuracy"]
+                for r in report
+                if r["track"] == "truth"
+                and r["method"] == method
+                and r["eval_kind"] == "within"
+                and r["train_family"] == family
+            }
+            ctrl = {
+                r["layer"]: r["accuracy"]
+                for r in report
+                if r["track"] == "truth"
+                and r["method"] == method
+                and r["eval_kind"] == "shuffled_control"
+                and r["train_family"] == family
+            }
+            rnd = {
+                r["layer"]: r["accuracy"]
+                for r in report
+                if r["track"] == "truth"
+                and r["method"] == "random_direction"
+                and r["eval_kind"] == "random_control"
+                and r["train_family"] == family
+            }
+            for layer in sorted(set(real) & set(ctrl)):
+                rows.append(
+                    {
+                        "family": family,
+                        "method": method,
+                        "layer": layer,
+                        "real_accuracy": real[layer],
+                        "shuffled_accuracy": ctrl[layer],
+                        "random_direction_accuracy": rnd.get(layer, ""),
+                        "selectivity": round(real[layer] - ctrl[layer], 4),
+                    }
+                )
+    return rows
+
+
+def write_truth_direction_card(
+    ctx: bench.RunContext,
+    metadata: dict[str, Any],
+    direction_transfer: dict[str, float],
+    below_chance: list[str],
+) -> None:
+    transfer_lines = [f"- {fam}: {acc:.3f}" for fam, acc in sorted(direction_transfer.items())]
+    below = ", ".join(below_chance) if below_chance else "none"
+    lines = [
+        "# Lab 4 truth direction card",
+        "",
+        "## What this vector is",
+        "",
+        "A mass-mean direction, true-class mean minus false-class mean, trained on unit-normalized",
+        f"final-token residual streams from `{metadata['train_family']}` at stream depth {metadata['layer']}.",
+        "It is a DECODE artifact. It is not evidence that the model uses this direction.",
+        "",
+        "## Convention",
+        "",
+        f"- model: `{metadata['model_id']}`",
+        f"- stream depth: {metadata['layer']} with bench `streams[k]` convention",
+        "- position: final token of the frozen statement",
+        "- normalization: row-wise unit normalization before fitting",
+        "- saved tensor: `tables/truth_direction.pt`",
+        "- readable metadata: `tables/truth_direction_metadata.json`",
+        "",
+        "## Transfer accuracies",
+        "",
+        *transfer_lines,
+        "",
+        f"Below-chance transfer families: {below}",
+        "",
+        "## How Lab 7 should use it",
+        "",
+        "Lab 7 may test whether injecting this direction changes True/False assent. A positive result",
+        "would be a new CAUSAL claim. A negative result would mean decodable-but-inert under that",
+        "intervention, not that the Lab 4 probe was invalid.",
+        "",
+    ]
+    card_path = ctx.path("tables", "truth_direction_card.md")
+    bench.write_text(card_path, "\n".join(lines))
+    ctx.register_artifact(card_path, "card", "Human-readable metadata and caveats for the saved truth direction.")
 
 
 # ---------------------------------------------------------------------------
@@ -386,8 +865,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     args = ctx.args
     if args.prompt_set not in ("small", "medium", "full"):
         raise ValueError(
-            "Lab 4 uses the frozen truth CSVs in data/ (course rule: students "
-            "never author truth sets); --prompt-set selects size only."
+            "Lab 4 uses frozen truth CSVs in data/. --prompt-set selects size only: "
+            "small, medium, or full."
         )
 
     # Load and cap families. --max-examples is a PER-FAMILY cap here.
@@ -396,85 +875,137 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         per_family_cap = 20
     elif args.prompt_set == "medium" and not per_family_cap:
         per_family_cap = 40
+
+    family_counts: list[dict[str, Any]] = []
     statements: list[Statement] = []
     for family in FAMILIES:
-        fam = cap_balanced(load_family(family), per_family_cap)
+        fam_raw = load_family(family)
+        fam = cap_balanced(fam_raw, per_family_cap)
         statements.extend(fam)
         n_true = sum(s.label for s in fam)
-        print(f"[lab4] {family}: {len(fam)} statements ({n_true} true)")
+        family_counts.append(
+            {
+                "family": family,
+                "data_file": DATA_FILES[family],
+                "sha256": data_file_digest(family),
+                "raw_n": len(fam_raw),
+                "used_n": len(fam),
+                "used_true": n_true,
+                "used_false": len(fam) - n_true,
+            }
+        )
+        print(f"[lab4] {family}: {len(fam)} statements ({n_true} true, {len(fam) - n_true} false)")
 
-    surface_letter = pick_surface_letter(statements)
+    data_manifest_path = ctx.path("diagnostics", "frozen_data_manifest.json")
+    bench.write_json(data_manifest_path, {"families": family_counts, "normalization": NORMALIZE_ROWS})
+    ctx.register_artifact(data_manifest_path, "diagnostic", "Frozen truth CSV counts and hashes.")
+
+    split_lookup, split_audit = make_grouped_split(statements)
+    split_path = ctx.path("diagnostics", "split_audit.csv")
+    bench.write_csv_with_context(ctx, split_path, split_audit)
+    ctx.register_artifact(split_path, "diagnostic", "Grouped train/eval split audit, including leakage-resistant group keys.")
+
+    surface_letter = pick_surface_letter(statements, split_lookup)
     print(f"[lab4] surface-track feature: final word contains {surface_letter!r}")
 
-    # Instrument verification (Lab 1's checks still guard this capture path).
+    # Instrument verification. Lab 4 is not about hook plumbing, but it still
+    # dies if the stream convention is wrong.
     bench.run_hook_parity_check(ctx, bundle, statements[0].statement)
     first_capture = bench.run_with_residual_cache(bundle, statements[0].statement)
     bench.run_lens_self_check(ctx, bundle, first_capture)
 
-    # One forward per statement; keep only the final-position stream stack.
+    # One forward pass per statement. Keep the final-position stream stack.
     n_depths = bundle.anatomy.n_layers + 1
     feats = []
     n_tokens_list = []
+    final_token_texts = []
     t0_report = max(1, len(statements) // 5)
     for i, s in enumerate(statements):
         capture = first_capture if i == 0 else bench.run_with_residual_cache(bundle, s.statement)
         feats.append(capture.streams[:, -1, :])      # [L+1, d] fp32 cpu
         n_tokens_list.append(len(capture.input_ids))
+        final_token_texts.append(bundle.tokenizer.decode([int(capture.input_ids[-1])]))
         if (i + 1) % t0_report == 0:
             print(f"[lab4] cached {i + 1}/{len(statements)} statements")
+
     X_layers_raw = torch.stack(feats)                 # [n, L+1, d]
-    # Per-row unit normalization, and the reason is a specimen worth keeping:
-    # on Olmo-3, "The city of Havana is in the Netherlands." produces a
-    # final-position stream with ~7x the norm of every other statement. A raw
-    # difference-of-class-means direction gets hijacked by whichever class
-    # holds more such rogue rows in train, and every normal statement then
-    # projects to the same value regardless of truth. Norms are recorded
-    # below so the outliers stay visible instead of silently fixed.
     row_norms = X_layers_raw.norm(dim=-1)             # [n, L+1]
-    X_layers = (
-        X_layers_raw / row_norms[..., None].clamp_min(1e-9) if NORMALIZE_ROWS else X_layers_raw
-    )
+    X_layers = X_layers_raw / row_norms[..., None].clamp_min(1e-9) if NORMALIZE_ROWS else X_layers_raw
     labels = torch.tensor([s.label for s in statements])
     families = [s.family for s in statements]
-    surface_labels = torch.tensor(
-        [1 if surface_letter in final_word(s.statement).lower() else 0 for s in statements]
-    )
+    surface_labels = torch.tensor([1 if surface_letter in final_word(s.statement).lower() else 0 for s in statements])
     n_tokens = torch.tensor(n_tokens_list, dtype=torch.float32)
 
     mid = n_depths // 2
     median_mid_norm = float(row_norms[:, mid].median())
-    manifest = [
-        {"statement_id": s.statement_id, "family": s.family, "statement": s.statement,
-         "label": s.label, "split": "train" if is_train(s.statement_id) else "eval",
-         "surface_label": int(surface_labels[i]), "n_tokens": int(n_tokens[i]),
-         "stream_norm_mid": round(float(row_norms[i, mid]), 3),
-         "norm_outlier": bool(row_norms[i, mid] > 3 * median_mid_norm)}
-        for i, s in enumerate(statements)
-    ]
+    manifest = []
+    for i, s in enumerate(statements):
+        manifest.append(
+            {
+                "statement_id": s.statement_id,
+                "family": s.family,
+                "statement": s.statement,
+                "label": s.label,
+                "split_key": split_group_key(s),
+                "split": "train" if split_lookup[s.statement_id] else "eval",
+                "surface_label": int(surface_labels[i]),
+                "n_tokens": int(n_tokens[i]),
+                "final_token_text": final_token_texts[i],
+                "stream_norm_mid": round(float(row_norms[i, mid]), 3),
+                "stream_norm_final": round(float(row_norms[i, -1]), 3),
+                "norm_outlier": bool(row_norms[i, mid] > OUTLIER_MULTIPLIER * median_mid_norm),
+            }
+        )
     outliers = [m["statement_id"] for m in manifest if m["norm_outlier"]]
     if outliers:
-        print(f"[lab4] activation-norm outliers (>3x median at depth {mid}): {outliers}")
+        print(f"[lab4] activation-norm outliers (>{OUTLIER_MULTIPLIER:.1f}x median at depth {mid}): {outliers}")
     man_path = ctx.path("tables", "statement_manifest.csv")
     bench.write_csv_with_context(ctx, man_path, manifest)
-    ctx.register_artifact(man_path, "table", "Every statement with split, labels, and token count.")
+    ctx.register_artifact(man_path, "table", "Every statement with split, labels, token count, final token, and norm diagnostics.")
 
     fam_idx = {f: [i for i, ff in enumerate(families) if ff == f] for f in FAMILIES}
-    train_mask = torch.tensor([is_train(s.statement_id) for s in statements])
+    train_mask = torch.tensor([split_lookup[s.statement_id] for s in statements])
 
-    # ----- the probe sweep -------------------------------------------------
+    # ----- probe sweep ------------------------------------------------------
     report: list[dict[str, Any]] = []
+    logistic_probes: dict[tuple[int, str], dict[str, Any]] = {}
+    mass_mean_probes: dict[tuple[int, str], dict[str, Any]] = {}
 
-    def add(track: str, method: str, layer: int, train_family: str, eval_family: str,
-            eval_kind: str, acc: float, n_train: int, n_eval: int) -> None:
-        report.append({
-            "track": track, "method": method, "layer": layer,
-            "train_family": train_family, "eval_family": eval_family,
-            "eval_kind": eval_kind, "accuracy": round(acc, 4),
-            "n_train": n_train, "n_eval": n_eval,
-        })
+    def add(
+        track: str,
+        method: str,
+        layer: int,
+        train_family: str,
+        eval_family: str,
+        eval_kind: str,
+        acc: float,
+        n_train: int,
+        n_eval: int,
+        *,
+        brier: float | None = None,
+        nll: float | None = None,
+        ece: float | None = None,
+    ) -> None:
+        row: dict[str, Any] = {
+            "track": track,
+            "method": method,
+            "layer": layer,
+            "train_family": train_family,
+            "eval_family": eval_family,
+            "eval_kind": eval_kind,
+            "accuracy": round(float(acc), 4),
+            "n_train": n_train,
+            "n_eval": n_eval,
+        }
+        if brier is not None:
+            row["brier"] = round(float(brier), 4)
+        if nll is not None:
+            row["nll"] = round(float(nll), 4)
+        if ece is not None:
+            row["ece"] = round(float(ece), 4)
+        report.append(row)
 
     print(f"[lab4] probing {n_depths} depths x {len(FAMILIES)} families x 2 methods (+controls)")
-    mass_mean_probes: dict[tuple[int, str], dict[str, Any]] = {}
     for layer in range(n_depths):
         X = X_layers[:, layer, :]
         for family in FAMILIES:
@@ -488,14 +1019,30 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 ("mass_mean", fit_mass_mean, eval_mass_mean),
             ):
                 probe = fit(X[tr], labels[tr])
-                if method == "mass_mean":
+                if method == "logistic":
+                    logistic_probes[(layer, family)] = probe
+                    metrics = eval_logistic_metrics(probe, X[ev], labels[ev])
+                    add(
+                        "truth",
+                        method,
+                        layer,
+                        family,
+                        family,
+                        "within",
+                        metrics["accuracy"],
+                        len(tr),
+                        len(ev),
+                        brier=metrics["brier"],
+                        nll=metrics["nll"],
+                        ece=metrics["ece"],
+                    )
+                else:
                     mass_mean_probes[(layer, family)] = probe
-                add("truth", method, layer, family, family, "within",
-                    evaluate(probe, X[ev], labels[ev]), len(tr), len(ev))
+                    add("truth", method, layer, family, family, "within", evaluate(probe, X[ev], labels[ev]), len(tr), len(ev))
+
                 for of, oidx in others.items():
-                    add("truth", method, layer, family, of, "cross",
-                        evaluate(probe, X[oidx], labels[oidx]), len(tr), len(oidx))
-                # Shuffled-label control: same capacity, no real structure.
+                    add("truth", method, layer, family, of, "cross", evaluate(probe, X[oidx], labels[oidx]), len(tr), len(oidx))
+
                 ctrl_accs = []
                 for shuffle_i in range(N_SHUFFLES):
                     y_shuf = shuffled_labels(
@@ -504,161 +1051,178 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                     )
                     ctrl = fit(X[tr], y_shuf)
                     ctrl_accs.append(evaluate(ctrl, X[ev], labels[ev]))
-                add("truth", method, layer, family, family, "shuffled_control",
-                    statistics.fmean(ctrl_accs), len(tr), len(ev))
+                add("truth", method, layer, family, family, "shuffled_control", statistics.fmean(ctrl_accs), len(tr), len(ev))
 
-            # Random-direction baseline (method-independent).
-            add("truth", "random_direction", layer, family, family, "random_control",
-                eval_random_directions(X[tr], labels[tr], X[ev], labels[ev],
-                                       seed=args.seed * 7919 + layer * 101 + FAMILIES.index(family)),
-                len(tr), len(ev))
+            add(
+                "truth",
+                "random_direction",
+                layer,
+                family,
+                family,
+                "random_control",
+                eval_random_directions(X[tr], labels[tr], X[ev], labels[ev], seed=args.seed * 7919 + layer * 101 + FAMILIES.index(family)),
+                len(tr),
+                len(ev),
+            )
 
-            # Surface track (logistic only — the point is the curve's shape).
             sprobe = fit_logistic(X[tr], surface_labels[tr])
-            add("surface", "logistic", layer, family, family, "within",
-                eval_logistic(sprobe, X[ev], surface_labels[ev]), len(tr), len(ev))
+            smetrics = eval_logistic_metrics(sprobe, X[ev], surface_labels[ev])
+            add(
+                "surface",
+                "logistic",
+                layer,
+                family,
+                family,
+                "within",
+                smetrics["accuracy"],
+                len(tr),
+                len(ev),
+                brier=smetrics["brier"],
+                nll=smetrics["nll"],
+                ece=smetrics["ece"],
+            )
 
-    # Token-length baseline: layer-independent, fit once per family.
+    # Layer-independent controls.
     for family in FAMILIES:
         idx = torch.tensor(fam_idx[family])
         tr = idx[train_mask[idx]]
         ev = idx[~train_mask[idx]]
         lp = fit_logistic(n_tokens[tr][:, None], labels[tr])
-        add("truth", "token_length_baseline", -1, family, family, "length_control",
-            eval_logistic(lp, n_tokens[ev][:, None], labels[ev]), len(tr), len(ev))
+        lmetrics = eval_logistic_metrics(lp, n_tokens[ev][:, None], labels[ev])
+        add(
+            "truth",
+            "token_length_baseline",
+            -1,
+            family,
+            family,
+            "length_control",
+            lmetrics["accuracy"],
+            len(tr),
+            len(ev),
+            brier=lmetrics["brier"],
+            nll=lmetrics["nll"],
+            ece=lmetrics["ece"],
+        )
+        add("truth", "majority_baseline", -1, family, family, "majority_control", majority_baseline(labels[tr], labels[ev]), len(tr), len(ev))
 
     report_path = ctx.path("tables", "probe_report.csv")
     bench.write_csv_with_context(ctx, report_path, report)
-    ctx.register_artifact(report_path, "table", "Every probe evaluation: track, method, layer, families, controls.")
+    ctx.register_artifact(report_path, "table", "Every probe evaluation: track, method, depth, families, controls, and calibration metrics where defined.")
     results_path = ctx.path("results.csv")
     bench.write_csv_with_context(ctx, results_path, report)
     ctx.register_artifact(results_path, "results", "Alias of probe_report.csv for the standard run contract.")
 
-    # ----- best layer by cross-family transfer (mass-mean) ------------------
-    def cross_and_within(layer: int) -> tuple[float, float]:
-        # Negations are EXCLUDED from the selection criterion: an
-        # affirmative-trained mass-mean direction anti-predicting on negations
-        # is the expected Geometry-of-Truth result, not a tie-breaker. Its
-        # transfer number is reported separately as the known failure mode.
-        cross = [r["accuracy"] for r in report
-                 if r["method"] == "mass_mean" and r["layer"] == layer and r["eval_kind"] == "cross"
-                 and r["eval_family"] != "negations" and r["train_family"] != "negations"]
-        within = [r["accuracy"] for r in report
-                  if r["method"] == "mass_mean" and r["layer"] == layer and r["eval_kind"] == "within"]
-        return (min(cross) if cross else 0.0, statistics.fmean(within) if within else 0.0)
+    selectivity_rows = build_selectivity_rows(report)
+    selectivity_path = ctx.path("tables", "selectivity_report.csv")
+    bench.write_csv_with_context(ctx, selectivity_path, selectivity_rows)
+    ctx.register_artifact(selectivity_path, "table", "Real-vs-shuffled selectivity by depth, family, and probe type.")
 
-    # Primary criterion: worst affirmative cross-family transfer (Lab 7 wants
-    # a direction that means truth, not cities-template). Tie-break by
-    # within-family accuracy so a degenerate run doesn't elect layer 0.
-    best_layer = max(range(n_depths), key=lambda k: cross_and_within(k))
-    best_min_cross = cross_and_within(best_layer)[0]
-    print(f"[lab4] best cross-family layer: {best_layer} (worst transfer acc {best_min_cross:.3f})")
+    # ----- best layer and saved truth direction -----------------------------
+    best_layer, best_min_cross = choose_best_layer(report, n_depths)
+    print(f"[lab4] best affirmative cross-family depth: {best_layer} (worst transfer acc {best_min_cross:.3f})")
 
-    # ----- save the truth direction for Lab 7 -------------------------------
-    # Pick the train family whose direction transfers best at the chosen
-    # layer (min accuracy over ALL other families, negations included). In
-    # our validation runs this elects comparisons, not cities: cities and
-    # negations share a template, so a cities-trained direction can ride the
-    # template; a comparisons-trained one has to mean truth.
     def worst_transfer(train_family: str) -> float:
-        vals = [r["accuracy"] for r in report
-                if r["method"] == "mass_mean" and r["layer"] == best_layer
-                and r["train_family"] == train_family and r["eval_kind"] == "cross"]
+        vals = [
+            r["accuracy"]
+            for r in report
+            if r["method"] == "mass_mean"
+            and r["layer"] == best_layer
+            and r["train_family"] == train_family
+            and r["eval_kind"] == "cross"
+        ]
         return min(vals) if vals else 0.0
 
-    direction_family = max(("cities", "comparisons"), key=worst_transfer)
+    direction_family = max(AFFIRMATIVE_FAMILIES, key=worst_transfer)
     fam_t = torch.tensor(fam_idx[direction_family])
     tr = fam_t[train_mask[fam_t]]
     final_probe = fit_mass_mean(X_layers[tr][:, best_layer, :], labels[tr])
-    print(f"[lab4] saved direction: {direction_family}-trained mass-mean @ layer {best_layer} "
-          f"(worst transfer {worst_transfer(direction_family):.3f})")
+    print(
+        f"[lab4] saved direction: {direction_family}-trained mass-mean @ depth {best_layer} "
+        f"(worst transfer {worst_transfer(direction_family):.3f})"
+    )
+
+    direction_rows = [
+        r
+        for r in report
+        if r["method"] == "mass_mean"
+        and r["layer"] == best_layer
+        and r["train_family"] == direction_family
+        and r["eval_kind"] in ("within", "cross")
+    ]
+    direction_transfer = {r["eval_family"]: r["accuracy"] for r in direction_rows}
+    direction_worst_cross = min((r["accuracy"] for r in direction_rows if r["eval_kind"] == "cross"), default=None)
+    below_chance = [f for f, a in sorted(direction_transfer.items()) if f != direction_family and a < 0.5]
+
+    direction_metadata = {
+        "direction_key": f"{direction_family}_mass_mean_depth_{best_layer}",
+        "method": "mass_mean (difference of class means)",
+        "train_family": f"{direction_family} (train split)",
+        "layer": best_layer,
+        "layer_convention": "depth index into bench streams[k]: 0 = embeddings, k = residual after block k, k = n_layers is final-norm input",
+        "position": "final token of the statement",
+        "stream": "pre-norm residual, bench streams[k] convention",
+        "normalization": "each activation row unit-normalized before fitting; apply to unit-normalized streams or rescale by local stream norm",
+        "model_id": bundle.anatomy.model_id,
+        "d_model": bundle.anatomy.d_model,
+        "n_layers": bundle.anatomy.n_layers,
+        "train_statement_ids": [statements[int(i)].statement_id for i in tr.tolist()],
+        "metrics": {
+            "within": next((r["accuracy"] for r in direction_rows if r["eval_kind"] == "within"), None),
+            **{f"cross_{ef}": direction_transfer.get(ef) for ef in FAMILIES if ef != direction_family},
+            "worst_cross": direction_worst_cross,
+        },
+    }
+
     direction_path = ctx.path("tables", "truth_direction.pt")
     torch.save(
         {
             "direction": final_probe["direction"],
             "threshold": final_probe["threshold"],
-            "layer": best_layer,
-            "layer_convention": "depth index into bench streams[k]: 0 = embeddings, "
-                                "k = residual after block k (k = n_layers is the final-norm input)",
-            "position": "final token (end-of-statement period)",
-            "stream": "pre-norm residual, bench streams[k] convention",
-            "normalization": "each activation row unit-normalized before the mean difference; "
-                             "apply to unit-normalized streams, or rescale by the local stream norm",
-            "method": "mass_mean (difference of class means)",
-            "train_family": f"{direction_family} (train split)",
-            "model_id": bundle.anatomy.model_id,
-            "d_model": bundle.anatomy.d_model,
-            "metrics": {
-                "within": next((r["accuracy"] for r in report
-                                if r["method"] == "mass_mean" and r["layer"] == best_layer
-                                and r["train_family"] == direction_family and r["eval_kind"] == "within"), None),
-                **{
-                    f"cross_{ef}": next((r["accuracy"] for r in report
-                                         if r["method"] == "mass_mean" and r["layer"] == best_layer
-                                         and r["train_family"] == direction_family
-                                         and r["eval_family"] == ef and r["eval_kind"] == "cross"), None)
-                    for ef in FAMILIES if ef != direction_family
-                },
-            },
+            **direction_metadata,
         },
         direction_path,
     )
-    ctx.register_artifact(direction_path, "tensor",
-                          "Mass-mean truth direction at the best cross-family layer; Lab 7 reuses this causally.")
+    ctx.register_artifact(direction_path, "tensor", "Mass-mean truth direction at the best cross-family depth; Lab 7 reuses this causally.")
+    metadata_path = ctx.path("tables", "truth_direction_metadata.json")
+    bench.write_json(metadata_path, direction_metadata)
+    ctx.register_artifact(metadata_path, "metadata", "Readable metadata for truth_direction.pt.")
+    write_truth_direction_card(ctx, direction_metadata, direction_transfer, below_chance)
 
-    # ----- plots ------------------------------------------------------------
-    if not args.no_plots:
-        plot_decodability(ctx, report, n_depths, surface_letter, best_layer)
-        plot_generalization(ctx, report, best_layer)
-        plot_selectivity(ctx, report, n_depths)
-        outlier_mask = row_norms[:, mid] > 3 * median_mid_norm
-        plot_projection_panels(ctx, X_layers, labels, families, n_depths, outlier_mask)
-
-    # ----- metrics, claims, summary -----------------------------------------
-    def peak(track: str, method: str, eval_kind: str) -> tuple[int, float]:
-        rows = [r for r in report if r["track"] == track and r["method"] == method
-                and r["eval_kind"] == eval_kind]
-        by_layer: dict[int, list[float]] = {}
-        for r in rows:
-            by_layer.setdefault(r["layer"], []).append(r["accuracy"])
-        means = {k: statistics.fmean(v) for k, v in by_layer.items()}
-        k = max(means, key=means.get)
-        return k, means[k]
-
-    truth_peak_layer, truth_peak_acc = peak("truth", "logistic", "within")
-    mass_peak_layer, mass_peak_acc = peak("truth", "mass_mean", "within")
-    surface_peak_layer, surface_peak_acc = peak("surface", "logistic", "within")
-    def mean_acc(track: str, method: str, eval_kind: str, layer: int | None = None) -> float | None:
-        vals = [
-            r["accuracy"] for r in report
-            if r["track"] == track and r["method"] == method and r["eval_kind"] == eval_kind
-            and (layer is None or r["layer"] == layer)
-        ]
-        return statistics.fmean(vals) if vals else None
-
-    truth_peak_ctrl = mean_acc("truth", "logistic", "shuffled_control", truth_peak_layer)
-    mass_peak_ctrl = mean_acc("truth", "mass_mean", "shuffled_control", mass_peak_layer)
+    # ----- aggregate metrics and calibration artifacts ----------------------
+    truth_peak_layer, truth_peak_acc = peak(report, "truth", "logistic", "within")
+    mass_peak_layer, mass_peak_acc = peak(report, "truth", "mass_mean", "within")
+    surface_peak_layer, surface_peak_acc = peak(report, "surface", "logistic", "within")
+    truth_peak_ctrl = mean_acc(report, "truth", "logistic", "shuffled_control", truth_peak_layer)
+    mass_peak_ctrl = mean_acc(report, "truth", "mass_mean", "shuffled_control", mass_peak_layer)
     length_accs = [r["accuracy"] for r in report if r["eval_kind"] == "length_control"]
-    direction_rows = [
-        r for r in report
-        if r["method"] == "mass_mean" and r["layer"] == best_layer
-        and r["train_family"] == direction_family and r["eval_kind"] in ("within", "cross")
-    ]
-    direction_transfer = {r["eval_family"]: r["accuracy"] for r in direction_rows}
-    direction_worst_cross = min(
-        (r["accuracy"] for r in direction_rows if r["eval_kind"] == "cross"),
-        default=None,
-    )
+    majority_accs = [r["accuracy"] for r in report if r["eval_kind"] == "majority_control"]
+
+    calibration_rows: list[dict[str, Any]] = []
+    calibration_summary: list[dict[str, Any]] = []
+    for family in FAMILIES:
+        idx = torch.tensor(fam_idx[family])
+        ev = idx[~train_mask[idx]]
+        probe = logistic_probes[(truth_peak_layer, family)]
+        probs = logistic_probs(probe, X_layers[ev][:, truth_peak_layer, :]).detach().float()
+        calibration_rows.extend(calibration_bins(probs, labels[ev], family=family, layer=truth_peak_layer))
+        metrics = eval_logistic_metrics(probe, X_layers[ev][:, truth_peak_layer, :], labels[ev])
+        calibration_summary.append({"family": family, "layer": truth_peak_layer, **{k: round(v, 4) for k, v in metrics.items()}})
+    calibration_path = ctx.path("tables", "calibration_curve.csv")
+    bench.write_csv_with_context(ctx, calibration_path, calibration_rows)
+    ctx.register_artifact(calibration_path, "table", "Reliability-curve bins for the logistic truth probe at its peak depth.")
+    calibration_summary_path = ctx.path("tables", "calibration_summary.csv")
+    bench.write_csv_with_context(ctx, calibration_summary_path, calibration_summary)
+    ctx.register_artifact(calibration_summary_path, "table", "Accuracy, Brier score, NLL, and ECE for peak-depth logistic truth probes.")
+
     metrics = {
         "n_statements": len(statements),
         "per_family_cap": per_family_cap,
         "surface_letter": surface_letter,
+        "normalization": "row_unit_norm" if NORMALIZE_ROWS else "raw_streams",
         "activation_norm_outliers": outliers,
         "truth_peak": {"layer": truth_peak_layer, "accuracy": truth_peak_acc},
         "truth_peak_shuffled_control": truth_peak_ctrl,
-        "truth_peak_selectivity": (
-            truth_peak_acc - truth_peak_ctrl if truth_peak_ctrl is not None else None
-        ),
+        "truth_peak_selectivity": truth_peak_acc - truth_peak_ctrl if truth_peak_ctrl is not None else None,
         "mass_mean_peak": {"layer": mass_peak_layer, "accuracy": mass_peak_acc},
         "mass_mean_peak_shuffled_control": mass_peak_ctrl,
         "surface_peak": {"layer": surface_peak_layer, "accuracy": surface_peak_acc},
@@ -669,77 +1233,116 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "layer": best_layer,
             "worst_cross_accuracy": direction_worst_cross,
             "transfer_accuracies": direction_transfer,
+            "below_chance_transfer_families": below_chance,
         },
         "token_length_baseline_mean": statistics.fmean(length_accs) if length_accs else None,
+        "majority_baseline_mean": statistics.fmean(majority_accs) if majority_accs else None,
+        "peak_logistic_calibration": calibration_summary,
     }
     metrics_path = ctx.path("metrics.json")
     bench.write_json(metrics_path, metrics)
     ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 4 metrics.")
 
+    # ----- plots ------------------------------------------------------------
+    if not args.no_plots:
+        plot_decodability(ctx, report, surface_letter, best_layer, truth_peak_layer)
+        plot_generalization(ctx, report, best_layer)
+        plot_selectivity(ctx, selectivity_rows)
+        outlier_mask = row_norms[:, mid] > OUTLIER_MULTIPLIER * median_mid_norm
+        plot_projection_panels(ctx, X_layers, labels, families, n_depths, outlier_mask)
+        plot_norm_diagnostics(ctx, row_norms, n_depths)
+        plot_calibration(ctx, calibration_rows, truth_peak_layer)
+
+    # ----- cards, claims, summary ------------------------------------------
     run_name = ctx.run_dir.name
-    truth_ctrl_text = (
-        f"{truth_peak_ctrl:.2f}" if truth_peak_ctrl is not None else "n/a"
-    )
-    truth_selectivity_text = (
-        f"{truth_peak_acc - truth_peak_ctrl:+.2f}" if truth_peak_ctrl is not None else "n/a"
-    )
+    truth_ctrl_text = f"{truth_peak_ctrl:.2f}" if truth_peak_ctrl is not None else "n/a"
+    truth_selectivity_text = f"{truth_peak_acc - truth_peak_ctrl:+.2f}" if truth_peak_ctrl is not None else "n/a"
+    length_text = f"{metrics['token_length_baseline_mean']:.2f}" if metrics["token_length_baseline_mean"] is not None else "n/a"
+    majority_text = f"{metrics['majority_baseline_mean']:.2f}" if metrics["majority_baseline_mean"] is not None else "n/a"
+    direction_worst_text = f"{direction_worst_cross:.3f}" if direction_worst_cross is not None else "n/a"
     transfer_text = ", ".join(
-        f"{family} {direction_transfer[family]:.2f}"
-        + (" (within)" if family == direction_family else "")
-        for family in FAMILIES if family in direction_transfer
+        f"{family} {direction_transfer[family]:.2f}" + (" (within)" if family == direction_family else "")
+        for family in FAMILIES
+        if family in direction_transfer
     )
-    below_chance = [
-        f for f, a in sorted(direction_transfer.items())
-        if f != direction_family and a < 0.5
-    ]
+
     claims = [
         {
             "id": f"{LAB_ID}-C1",
             "tag": "DECODE",
             "text": (
                 f"Truth is linearly decodable from {bundle.anatomy.model_id}'s residual stream: "
-                f"within-family held-out accuracy peaks at {truth_peak_acc:.2f} (layer {truth_peak_layer}, "
-                f"logistic, mean over {len(FAMILIES)} families), versus a same-layer shuffled-label "
-                f"control of {truth_ctrl_text} (selectivity {truth_selectivity_text}) and a token-length "
-                f"baseline of {metrics['token_length_baseline_mean']:.2f}."
+                f"within-family held-out accuracy peaks at {truth_peak_acc:.2f} (depth {truth_peak_layer}, "
+                f"logistic, mean over {len(FAMILIES)} families), versus a same-depth shuffled-label "
+                f"control of {truth_ctrl_text} (selectivity {truth_selectivity_text}), a token-length "
+                f"baseline of {length_text}, and a majority baseline of {majority_text}."
             ),
             "artifact": f"runs/{run_name}/tables/probe_report.csv",
-            "falsifier": (
-                "A matched syntactic family with no truth content (e.g. swapped entity templates) "
-                "shows the same accuracy — the probe was reading template structure."
-            ),
+            "falsifier": "A matched syntactic family with no truth content shows the same accuracy and selectivity.",
         },
         {
             "id": f"{LAB_ID}-C2",
             "tag": "DECODE",
             "text": (
-                f"The saved {direction_family}-trained mass-mean direction at layer {best_layer} "
-                f"transfers across the frozen families ({transfer_text})"
+                f"The saved {direction_family}-trained mass-mean direction at depth {best_layer} transfers "
+                f"across the frozen families ({transfer_text})"
                 + (
-                    f"; on {', '.join(below_chance)} it is BELOW chance — the direction "
-                    "anti-predicts there (the expected Geometry-of-Truth inversion), which is "
-                    "structure, not absence of transfer"
-                    if below_chance else ""
+                    f"; on {', '.join(below_chance)} it is below chance, which is anti-correlation rather "
+                    "than absence of structure"
+                    if below_chance
+                    else ""
                 )
-                + "; this is the direction written to `truth_direction.pt` for Lab 7's causal test."
+                + "; this is the vector written to truth_direction.pt for Lab 7's causal test."
             ),
-            "artifact": f"runs/{run_name}/tables/truth_direction.pt",
-            "falsifier": "A fourth held-out family (dates, physical facts) drops transfer to chance.",
+            "artifact": f"runs/{run_name}/tables/truth_direction_card.md",
+            "falsifier": "A fourth held-out family such as dates or physical facts drops transfer to chance.",
         },
         {
             "id": f"{LAB_ID}-C3",
             "tag": "DECODE",
             "text": (
-                f"Decodability alone is cheap: the surface feature (final word contains "
-                f"{surface_letter!r}) is decodable at {surface_peak_acc:.2f} (peak layer "
-                f"{surface_peak_layer}). Any claim built on 'a probe found it' must explain why "
-                "the found thing is not surface-grade."
+                f"Decodability alone is cheap: the surface feature (final word contains {surface_letter!r}) "
+                f"is decodable at {surface_peak_acc:.2f} (peak depth {surface_peak_layer}). Any claim built "
+                "on 'a probe found it' must explain why the found information is not surface-grade."
             ),
             "artifact": f"runs/{run_name}/plots/decodability_by_layer.png",
-            "falsifier": "N/A — this is the lab's calibration claim; it dies only with the dataset.",
+            "falsifier": "N/A, this is the lab's calibration claim rather than a mechanistic truth claim.",
         },
     ]
     bench.write_ledger_suggestions(ctx, LAB_ID, claims)
+
+    # A compact deliverable card, separate from the standard run summary.
+    claim_card_path = ctx.path("probe_claim_card.md")
+    bench.write_text(
+        claim_card_path,
+        "\n".join(
+            [
+                "# Lab 4 probe claim card",
+                "",
+                "## Verdict",
+                "",
+                f"Truth is selectively decodable at peak logistic depth {truth_peak_layer}, but this is still DECODE evidence.",
+                f"The saved mass-mean direction lives at depth {best_layer} and is trained on {direction_family}.",
+                "",
+                "## Controls checked",
+                "",
+                f"- shuffled-label control at peak depth: {truth_ctrl_text}",
+                f"- token-length baseline mean: {length_text}",
+                f"- majority baseline mean: {majority_text}",
+                f"- random-direction controls: {N_RANDOM_DIRS} per depth",
+                "- grouped train/eval split audit: diagnostics/split_audit.csv",
+                "- activation norm diagnostics: tables/statement_manifest.csv and plots/activation_norms_by_depth.png",
+                "- calibration: tables/calibration_summary.csv and plots/truth_calibration_curve.png",
+                "",
+                "## Non-claim",
+                "",
+                "This run does not show that the model uses the truth direction, believes the statements, or would answer correctly.",
+                "Lab 7 is the first causal test of the saved vector.",
+                "",
+            ]
+        ),
+    )
+    ctx.register_artifact(claim_card_path, "card", "One-page DECODE claim card with controls, caveats, and non-claims.")
 
     lines = [
         "# Lab 4 run summary: probing with controls",
@@ -749,34 +1352,34 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         f"- model: `{bundle.anatomy.model_id}` ({bundle.anatomy.n_layers} blocks, d_model {bundle.anatomy.d_model})",
         f"- statements: {len(statements)} across {len(FAMILIES)} frozen families (per-family cap {per_family_cap or 'none'})",
         f"- probe position: final token | probes: logistic (LBFGS, L2={LOGISTIC_L2}) + mass-mean",
-        "- evidence level: `DECODE` — nothing here shows the model USES these directions",
+        f"- split: grouped by leakage-resistant keys at train fraction {TRAIN_FRACTION}",
+        "- evidence level: `DECODE`; nothing here shows the model uses these directions",
         "",
         "## 1. What behavior was studied?",
         "",
-        "None directly — this lab probes REPRESENTATIONS: truth of frozen statements, plus a",
-        "deliberately shallow surface feature as the calibration track.",
+        "No generation behavior was studied directly. The lab probes representations of frozen true/false statements,",
+        "plus a deliberately shallow final-word feature as the calibration track.",
         "",
         "## 2. What internal object was measured?",
         "",
-        "Linear decodability of statement truth from the pre-norm residual stream at the",
-        "end-of-statement position, at every depth, with two probe types.",
+        "Linear decodability from the final-token pre-norm residual stream at every depth, with logistic and",
+        "mass-mean probes. The saved object is a mass-mean truth direction for Lab 7.",
         "",
         "## 3. What controls were used?",
         "",
-        f"Shuffled-label refits (x{N_SHUFFLES}), random directions (x{N_RANDOM_DIRS}), token-length",
-        "baseline, family-held-out transfer (incl. negations, where surface form anti-correlates",
-        "with truth), and the surface track on the same activations.",
+        f"Grouped train/eval split audit, shuffled-label refits (x{N_SHUFFLES}), random directions (x{N_RANDOM_DIRS}),",
+        "token-length and majority baselines, family-held-out transfer including negations, surface-track calibration,",
+        "activation-norm diagnostics, and logistic calibration.",
         "",
         "## 4. Headline numbers",
         "",
-        f"- truth peak (logistic, within-family): {truth_peak_acc:.3f} at layer {truth_peak_layer}/{n_depths - 1}",
-        f"- same-layer shuffled-label control: {truth_ctrl_text} (selectivity {truth_selectivity_text})",
-        f"- surface peak: {surface_peak_acc:.3f} at layer {surface_peak_layer}",
+        f"- truth peak (logistic, within-family): {truth_peak_acc:.3f} at depth {truth_peak_layer}/{n_depths - 1}",
+        f"- same-depth shuffled-label control: {truth_ctrl_text} (selectivity {truth_selectivity_text})",
+        f"- surface peak: {surface_peak_acc:.3f} at depth {surface_peak_layer}",
         f"- token-length baseline: {metrics['token_length_baseline_mean']:.3f}",
-        f"- best affirmative cross-family layer (mass-mean, worst transfer): {best_layer} ({best_min_cross:.3f})",
-        f"- saved direction: `tables/truth_direction.pt` ({direction_family} mass-mean @ layer "
-        f"{best_layer}/{n_depths - 1}, "
-        f"worst cross-family transfer {direction_worst_cross:.3f}) — Lab 7 input",
+        f"- majority baseline: {metrics['majority_baseline_mean']:.3f}",
+        f"- best affirmative cross-family depth (mass-mean, worst transfer): {best_layer} ({best_min_cross:.3f})",
+        f"- saved direction: `tables/truth_direction.pt` ({direction_family} mass-mean @ depth {best_layer}/{n_depths - 1}, worst cross-family transfer {direction_worst_text})",
         "",
         "## 5. What claim is supported, and at what evidence level?",
         "",
@@ -788,20 +1391,20 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "",
         "## 6. The reading order",
         "",
-        "1. `plots/decodability_by_layer.png` — the whole lesson in one figure.",
-        "2. `plots/generalization_matrix.png` — does 'truth' transfer, and where does it leak?",
-        "3. `plots/truth_projection_panels.png` — separation emerging over depth, visibly.",
-        "4. `plots/selectivity_by_layer.png` — how much accuracy is real structure.",
-        "5. `tables/probe_report.csv` — every number, with its controls adjacent.",
-        "6. `results.csv` — the same long-form measurements under the standard run filename.",
+        "1. `probe_claim_card.md` for the verdict and non-claims.",
+        "2. `diagnostics/split_audit.csv` and `tables/statement_manifest.csv` before trusting any accuracy.",
+        "3. `plots/decodability_by_layer.png` for the headline curves and controls.",
+        "4. `plots/generalization_matrix.png` for family transfer and negation inversions.",
+        "5. `plots/selectivity_by_layer.png` and `tables/selectivity_report.csv` for real-minus-control evidence.",
+        "6. `plots/truth_calibration_curve.png` and `tables/calibration_summary.csv` for confidence hygiene.",
+        "7. `tables/truth_direction_card.md` before using the vector in Lab 7.",
         "",
         "## 7. Caveats students must carry forward",
         "",
         "- DECODE is not USE. The saved direction's causal test is Lab 7's job.",
-        "- 'Truth' here means truth-on-three-frozen-families. The falsifiers name the",
-        "  fourth-family test for a reason.",
-        "- The mass-mean and logistic probes can disagree; when they do, the disagreement",
-        "  is data, not noise to average away.",
+        "- Truth here means truth on three frozen families, not truth as a universal latent variable.",
+        "- Below-chance negation transfer can be structured anti-correlation, not mere failure.",
+        "- Logistic and mass-mean probes license different claims. Disagreement is data.",
         "",
     ]
     summary_path = ctx.path("run_summary.md")

@@ -13,20 +13,22 @@ the parts).
 
 The bench owns the instrument: verified contribution hook points
 (``resolve_component_anatomy``), the capture (``run_with_component_cache``),
-the decomposition self-check (``run_decomposition_check``), and direct-path
-ablation (``run_with_component_ablation``). The lab owns the question.
+the decomposition self-check (``run_decomposition_check``), and final-position
+component ablation (``run_with_component_ablation``). The lab owns the question.
 
 Evidence levels: attribution (ATTR) for the ledger itself; the ablation
-extension produces narrow CAUSAL evidence scoped to the direct path.
+extension produces narrow CAUSAL evidence scoped to final-position writes.
 """
 
 from __future__ import annotations
 
+import csv
 import dataclasses
 import json
 import pathlib
 import random
 import statistics
+from collections import Counter
 from typing import Any
 
 import interp_bench as bench
@@ -34,6 +36,9 @@ import interp_bench as bench
 LAB_ID = "L02"
 
 CATEGORIES = ("fact", "relation", "grammar", "conflict")
+SIGN_EPS = 1e-8
+SMALL_DENOM_EPS = 1e-6
+TOP_COMPONENTS_PER_EXAMPLE = 8
 
 
 # ---------------------------------------------------------------------------
@@ -137,19 +142,39 @@ def interleave_by_category(examples: list[AnswerPairExample]) -> list[AnswerPair
 
 
 def load_custom_prompt_set(path: pathlib.Path) -> list[AnswerPairExample]:
+    """Load a custom Lab 2 prompt set from JSON or CSV.
+
+    JSON remains the canonical format, but CSV is convenient for students who
+    are building paired prompt families in a spreadsheet. Only the dataclass
+    fields are accepted: a stray column is usually a typo in the microscope's
+    coordinate system, not harmless decoration.
+    """
+    allowed = {f.name for f in dataclasses.fields(AnswerPairExample)}
+    examples: list[AnswerPairExample] = []
+    if not path.exists():
+        raise ValueError(
+            f"Could not read prompt set {str(path)!r}. --prompt-set must be one of "
+            "small | medium | full, or a path to a .json/.csv prompt file."
+        )
+
+    if path.suffix.lower() == ".csv":
+        with path.open(newline="", encoding="utf-8") as f:
+            for i, row in enumerate(csv.DictReader(f)):
+                item = {k: (v if v is not None else "") for k, v in row.items() if k}
+                extra = set(item) - allowed
+                if extra:
+                    raise ValueError(f"Prompt CSV row {i} has unknown columns: {sorted(extra)}")
+                examples.append(AnswerPairExample(**{k: item.get(k, "") for k in allowed}))
+        return examples
+
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except OSError as exc:
-        raise ValueError(
-            f"Could not read prompt set {str(path)!r}: {exc}. "
-            "--prompt-set must be one of small | medium | full, or a path to a prompts .json file."
-        ) from exc
+        raise ValueError(f"Could not read prompt set {str(path)!r}: {exc}") from exc
     except json.JSONDecodeError as exc:
         raise ValueError(f"Could not parse prompt JSON at {path}: {exc}") from exc
     if not isinstance(raw, list):
         raise ValueError("Custom prompt file must be a JSON list of objects.")
-    allowed = {f.name for f in dataclasses.fields(AnswerPairExample)}
-    examples: list[AnswerPairExample] = []
     for i, item in enumerate(raw):
         if not isinstance(item, dict):
             raise ValueError(f"Prompt item {i} is not an object: {item!r}")
@@ -335,6 +360,8 @@ def compute_direct_logit_attribution(
         "model_logit_diff": model_logit_diff,
         "ledger_vs_frozen_abs_err": abs(ledger_total - frozen_logit_diff),
         "frozen_vs_model_abs_err": abs(frozen_logit_diff - model_logit_diff),
+        "answer_direction_norm": float(direction.norm()),
+        "scoring_vector_norm": float(w.norm()),
         "scoring_vector": w,  # consumed by the ablation comparison, not serialized
     }
 
@@ -349,41 +376,69 @@ def cumulative_curve(dla: dict[str, Any]) -> list[float]:
     return curve
 
 
+def component_score_mass(dla: dict[str, Any], *, include_embed_and_constant: bool = False) -> float:
+    """Total absolute writer mass, used for bounded concentration metrics."""
+    mass = sum(abs(s) for s in dla["attn_scores"] + dla["mlp_scores"])
+    if include_embed_and_constant:
+        mass += abs(float(dla["embed_score"])) + abs(float(dla["constant"]))
+    return mass
+
+
+def signed_token(score: float) -> str:
+    """Human-readable direction label for a component score."""
+    if score > SIGN_EPS:
+        return "toward_target"
+    if score < -SIGN_EPS:
+        return "toward_distractor"
+    return "neutral"
+
+
+def safe_signed_fraction(score: float, denom: float) -> float | str:
+    """Signed fraction of a net total, blank when the denominator is tiny.
+
+    This avoids the classic DLA footgun: a conflict prompt can have nearly
+    zero net logit difference because large positive and negative ledger rows
+    cancel. Dividing by that signed net makes harmless rows look galactic.
+    """
+    if abs(denom) < SMALL_DENOM_EPS:
+        return ""
+    return round(score / denom, 4)
+
+
 def component_rows(example_id: str, category: str, dla: dict[str, Any]) -> list[dict[str, Any]]:
-    """Long-form ledger rows for one example."""
-    denom = abs(dla["frozen_logit_diff"]) or 1.0
+    """Long-form ledger rows for one example.
+
+    The legacy ``frac_of_logit_diff`` field is retained for compatibility, but
+    the safer teaching quantity is ``abs_mass_share``: how much of the total
+    absolute ledger mass this row accounts for. Net fractions are a cancellation
+    trap on conflict prompts.
+    """
+    frozen = float(dla["frozen_logit_diff"])
+    denom_for_legacy = abs(frozen) or 1.0
+    gross_mass = component_score_mass(dla, include_embed_and_constant=True) or 1.0
+
+    def row(component: str, layer: int | str, score: float, stream_depth_after: int | str = "") -> dict[str, Any]:
+        return {
+            "example_id": example_id,
+            "category": category,
+            "component": component,
+            "layer": layer,
+            "stream_depth_after": stream_depth_after,
+            "score": round(score, 5),
+            "abs_score": round(abs(score), 5),
+            "pushes": signed_token(score),
+            "frac_of_logit_diff": round(score / denom_for_legacy, 4),
+            "signed_fraction_of_frozen_diff": safe_signed_fraction(score, frozen),
+            "abs_mass_share": round(abs(score) / gross_mass, 4),
+        }
+
     rows = [
-        {
-            "example_id": example_id,
-            "category": category,
-            "component": "embed",
-            "layer": "",
-            "score": round(dla["embed_score"], 5),
-            "frac_of_logit_diff": round(dla["embed_score"] / denom, 4),
-        }
+        row("embed", "", float(dla["embed_score"]), 0),
+        row("constant", "", float(dla["constant"]), "all"),
     ]
-    rows.append(
-        {
-            "example_id": example_id,
-            "category": category,
-            "component": "constant",
-            "layer": "",
-            "score": round(dla["constant"], 5),
-            "frac_of_logit_diff": round(dla["constant"] / denom, 4),
-        }
-    )
     for kind_key, kind in (("attn_scores", "attn"), ("mlp_scores", "mlp")):
         for layer, score in enumerate(dla[kind_key]):
-            rows.append(
-                {
-                    "example_id": example_id,
-                    "category": category,
-                    "component": kind,
-                    "layer": layer,
-                    "score": round(score, 5),
-                    "frac_of_logit_diff": round(score / denom, 4),
-                }
-            )
+            rows.append(row(kind, layer, float(score), layer + 1))
     return rows
 
 
@@ -394,13 +449,156 @@ def top_components(dla: dict[str, Any], n: int) -> list[tuple[str, int, float]]:
     return sorted(scored, key=lambda t: abs(t[2]), reverse=True)[:n]
 
 
-def component_score_mass(dla: dict[str, Any]) -> float:
-    """Total absolute attn/MLP writer mass, used for bounded concentration metrics."""
-    return sum(abs(s) for s in dla["attn_scores"] + dla["mlp_scores"])
+def top_component_rows(
+    example_id: str,
+    category: str,
+    dla: dict[str, Any],
+    n: int = TOP_COMPONENTS_PER_EXAMPLE,
+) -> list[dict[str, Any]]:
+    """Top-|attribution| components with bounded shares and signs."""
+    mass = component_score_mass(dla) or 1.0
+    rows = []
+    for rank, (kind, layer, score) in enumerate(top_components(dla, n), start=1):
+        rows.append(
+            {
+                "example_id": example_id,
+                "category": category,
+                "rank": rank,
+                "component": kind,
+                "layer": layer,
+                "stream_depth_after": layer + 1,
+                "score": round(score, 5),
+                "abs_score": round(abs(score), 5),
+                "pushes": signed_token(float(score)),
+                "abs_writer_mass_share": round(abs(float(score)) / mass, 4),
+            }
+        )
+    return rows
+
+
+def block_ledger_rows(
+    example_id: str,
+    category: str,
+    dla: dict[str, Any],
+    curve: list[float],
+) -> list[dict[str, Any]]:
+    """One row per block: attention write, MLP write, block total, cumulative total."""
+    rows = []
+    for layer, (attn, mlp) in enumerate(zip(dla["attn_scores"], dla["mlp_scores"])):
+        total = float(attn + mlp)
+        rows.append(
+            {
+                "example_id": example_id,
+                "category": category,
+                "layer": layer,
+                "stream_depth_after": layer + 1,
+                "attn_score": round(float(attn), 5),
+                "mlp_score": round(float(mlp), 5),
+                "block_total": round(total, 5),
+                "block_abs_mass": round(abs(float(attn)) + abs(float(mlp)), 5),
+                "dominant_subcomponent": "attn" if abs(float(attn)) >= abs(float(mlp)) else "mlp",
+                "block_pushes": signed_token(total),
+                "cumulative_after_block": round(float(curve[layer + 1]), 5),
+            }
+        )
+    return rows
+
+
+def block_reconstruction_rows(
+    example_id: str,
+    category: str,
+    comp: bench.ComponentCapture,
+) -> list[dict[str, Any]]:
+    """Per-example proof that captured attn+MLP writes rebuild residual deltas."""
+    rows = []
+    for layer in range(comp.attn_contrib.shape[0]):
+        delta = comp.capture.streams[layer + 1, -1] - comp.capture.streams[layer, -1]
+        recon = comp.attn_contrib[layer] + comp.mlp_contrib[layer]
+        abs_err = float((recon - delta).norm())
+        delta_norm = max(float(delta.norm()), 1e-9)
+        rows.append(
+            {
+                "example_id": example_id,
+                "category": category,
+                "layer": layer,
+                "stream_depth_before": layer,
+                "stream_depth_after": layer + 1,
+                "delta_norm": round(delta_norm, 6),
+                "captured_sum_norm": round(float(recon.norm()), 6),
+                "abs_err": round(abs_err, 8),
+                "rel_err": round(abs_err / delta_norm, 8),
+            }
+        )
+    return rows
+
+
+def answer_behavior_row(
+    bundle: bench.ModelBundle,
+    example: AnswerPairExample,
+    target_id: int,
+    distractor_id: int,
+    logits: Any,
+) -> dict[str, Any]:
+    """Behavioral readout for the target/distractor pair before attribution."""
+    import torch
+
+    logits = logits.detach().to("cpu", torch.float32)
+    log_probs = torch.log_softmax(logits, dim=-1)
+    probs = torch.softmax(logits, dim=-1)
+    target_logit = float(logits[target_id])
+    distractor_logit = float(logits[distractor_id])
+    target_rank = int((logits > logits[target_id]).sum().item()) + 1
+    distractor_rank = int((logits > logits[distractor_id]).sum().item()) + 1
+    top_logit, top_id = torch.max(logits, dim=0)
+    top_id_int = int(top_id.item())
+    return {
+        "example_id": example.example_id,
+        "category": example.category,
+        "target": bench.visible_token(example.target),
+        "target_id": target_id,
+        "distractor": bench.visible_token(example.distractor),
+        "distractor_id": distractor_id,
+        "target_logit": round(target_logit, 5),
+        "distractor_logit": round(distractor_logit, 5),
+        "model_logit_diff": round(target_logit - distractor_logit, 5),
+        "target_logprob": round(float(log_probs[target_id]), 5),
+        "distractor_logprob": round(float(log_probs[distractor_id]), 5),
+        "target_prob": round(float(probs[target_id]), 8),
+        "distractor_prob": round(float(probs[distractor_id]), 8),
+        "target_rank": target_rank,
+        "distractor_rank": distractor_rank,
+        "prefers_target_over_distractor": target_logit > distractor_logit,
+        "top_token_id": top_id_int,
+        "top_token": bench.visible_token(bundle.tokenizer.decode([top_id_int])),
+        "top_logit": round(float(top_logit), 5),
+    }
+
+
+def balance_row(example_id: str, category: str, dla: dict[str, Any]) -> dict[str, Any]:
+    """Per-example ledger balance and final-norm metadata."""
+    gross = component_score_mass(dla, include_embed_and_constant=True)
+    frozen = float(dla["frozen_logit_diff"])
+    cancellation = abs(frozen) / gross if gross else 0.0
+    return {
+        "example_id": example_id,
+        "category": category,
+        "norm_class": dla["norm_class"],
+        "norm_kind": dla["norm_kind"],
+        "frozen_scale": round(float(dla["frozen_scale"]), 8),
+        "answer_direction_norm": round(float(dla["answer_direction_norm"]), 6),
+        "scoring_vector_norm": round(float(dla["scoring_vector_norm"]), 6),
+        "gross_ledger_mass": round(gross, 6),
+        "net_to_gross_ratio": round(cancellation, 6),
+        "ledger_total": round(float(dla["ledger_total"]), 6),
+        "frozen_logit_diff": round(frozen, 6),
+        "model_logit_diff": round(float(dla["model_logit_diff"]), 6),
+        "ledger_vs_frozen_abs_err": round(float(dla["ledger_vs_frozen_abs_err"]), 8),
+        "frozen_vs_model_abs_err": round(float(dla["frozen_vs_model_abs_err"]), 8),
+    }
 
 
 # ---------------------------------------------------------------------------
-# Extension: attribution vs direct-path ablation
+# Extension: attribution vs final-position ablation
 # ---------------------------------------------------------------------------
 
 
@@ -417,10 +615,13 @@ def run_ablation_comparison(
 ) -> list[dict[str, Any]]:
     """Zero-ablate top-|attribution| components plus matched controls.
 
-    Direct-path ablation (final position only) is deliberately commensurable
-    with the DLA score: it removes exactly the contribution the ledger
-    counted. ``causal_effect`` = base logit diff - ablated logit diff, so
-    positive = the component was pushing toward the target.
+    The intervention is final-position scoped: it removes the component's write
+    at the token being predicted while leaving earlier-token writes intact. It
+    is therefore a narrow causal test of the same *channel* the ledger scored,
+    but it is not identical to subtracting the frozen-norm row. Downstream
+    layers at the final position now run on a changed residual stream, so the
+    mismatch ``causal_effect - attribution_score`` is a first glimpse of the
+    attribution/causation crack that Lab 5 opens fully.
     """
     ranked = sorted(
         [("attn", k, s) for k, s in enumerate(dla["attn_scores"])]
@@ -441,21 +642,29 @@ def run_ablation_comparison(
     for kind, layer, score, why in chosen:
         logits = bench.run_with_component_ablation(bundle, example.prompt, comp_anatomy, kind, layer)
         ablated_diff = float(logits[target_id] - logits[distractor_id])
+        effect = float(dla["model_logit_diff"] - ablated_diff)
+        mismatch = effect - float(score)
         rows.append(
             {
                 "example_id": example.example_id,
                 "category": example.category,
                 "component": kind,
                 "layer": layer,
+                "stream_depth_after": layer + 1,
                 "selection": why,
-                "attribution_score": round(score, 5),
-                "base_logit_diff": round(dla["model_logit_diff"], 5),
+                "ablation_scope": "final_position_live_downstream",
+                "attribution_score": round(float(score), 5),
+                "base_logit_diff": round(float(dla["model_logit_diff"]), 5),
                 "ablated_logit_diff": round(ablated_diff, 5),
-                "causal_effect": round(dla["model_logit_diff"] - ablated_diff, 5),
+                "causal_effect": round(effect, 5),
+                "effect_minus_attribution": round(mismatch, 5),
+                "same_sign": signed_token(float(score)) == signed_token(effect),
+                "attribution_pushes": signed_token(float(score)),
+                "effect_pushes": signed_token(effect),
+                "abs_mismatch": round(abs(mismatch), 5),
             }
         )
     return rows
-
 
 def spearman_rho(xs: list[float], ys: list[float]) -> float | None:
     """Spearman rank correlation, midrank ties, no scipy dependency."""
@@ -482,6 +691,29 @@ def spearman_rho(xs: list[float], ys: list[float]) -> float | None:
     den = (sum((a - mx) ** 2 for a in rx) * sum((b - my) ** 2 for b in ry)) ** 0.5
     return num / den if den else None
 
+
+
+def summarize_ablation_by_selection(ablation_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Aggregate the final-position ablation extension by selection type."""
+    out = []
+    for selection in ("top", "random_control", "low_attribution_control"):
+        rows = [r for r in ablation_rows if r["selection"] == selection]
+        if not rows:
+            continue
+        out.append(
+            {
+                "selection": selection,
+                "n": len(rows),
+                "mean_abs_attribution": round(statistics.fmean(abs(float(r["attribution_score"])) for r in rows), 5),
+                "mean_abs_causal_effect": round(statistics.fmean(abs(float(r["causal_effect"])) for r in rows), 5),
+                "mean_effect_minus_attribution": round(
+                    statistics.fmean(float(r["effect_minus_attribution"]) for r in rows), 5
+                ),
+                "median_abs_mismatch": round(statistics.median(float(r["abs_mismatch"]) for r in rows), 5),
+                "same_sign_rate": round(statistics.fmean(1.0 if r["same_sign"] else 0.0 for r in rows), 4),
+            }
+        )
+    return out
 
 # ---------------------------------------------------------------------------
 # Plots
@@ -609,6 +841,129 @@ def plot_cumulative(ctx: bench.RunContext, per_example: list[dict[str, Any]]) ->
                       "Cumulative component ledger per example with category means.")
 
 
+
+def plot_category_ledger_composition(ctx: bench.RunContext, per_example: list[dict[str, Any]]) -> None:
+    """Gross vs net ledger composition by category.
+
+    This plot makes cancellation visible: a category can have a small mean net
+    logit difference while large positive and negative components fight under
+    the hood.
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    cats = [cat for cat in CATEGORIES if any(r["category"] == cat for r in per_example)]
+    if not cats:
+        return
+    fields = ["positive_mass", "negative_mass_abs", "net_abs"]
+    data = []
+    for cat in cats:
+        rows = [r for r in per_example if r["category"] == cat]
+        pos_vals, neg_vals, net_vals = [], [], []
+        for r in rows:
+            vals = [float(r["dla"]["embed_score"]), float(r["dla"]["constant"])]
+            vals += [float(v) for v in r["dla"]["attn_scores"] + r["dla"]["mlp_scores"]]
+            pos_vals.append(sum(v for v in vals if v > 0))
+            neg_vals.append(abs(sum(v for v in vals if v < 0)))
+            net_vals.append(abs(float(r["dla"]["frozen_logit_diff"])))
+        data.append([statistics.fmean(pos_vals), statistics.fmean(neg_vals), statistics.fmean(net_vals)])
+
+    x = np.arange(len(cats))
+    width = 0.24
+    fig, ax = plt.subplots(figsize=(9.5, 5.4))
+    for j, field in enumerate(fields):
+        ax.bar(x + (j - 1) * width, [row[j] for row in data], width=width, label=field)
+    ax.set_xticks(x)
+    ax.set_xticklabels(cats)
+    ax.axhline(0, color="black", linewidth=0.6)
+    ax.set_ylabel("mean absolute logit-diff units")
+    ax.set_title("Gross ledger mass vs net answer preference")
+    ax.legend(fontsize=8)
+    ax.grid(True, axis="y", alpha=0.3)
+    fig.tight_layout()
+    bench.save_figure(
+        ctx,
+        fig,
+        "category_ledger_composition.png",
+        "Positive mass, negative mass, and net answer preference by category.",
+    )
+
+
+def plot_balance_errors(ctx: bench.RunContext, balance_rows: list[dict[str, Any]]) -> None:
+    if not balance_rows:
+        return
+    fig, ax = bench.new_figure(figsize=(9.0, 5.4))
+    xs = list(range(len(balance_rows)))
+    ledger_err = [float(r["ledger_vs_frozen_abs_err"]) for r in balance_rows]
+    model_err = [float(r["frozen_vs_model_abs_err"]) for r in balance_rows]
+    ax.scatter(xs, ledger_err, marker="o", label="ledger vs frozen")
+    ax.scatter(xs, model_err, marker="s", label="frozen fp32 vs model dtype")
+    ax.set_yscale("symlog", linthresh=1e-7)
+    ax.set_xticks(xs)
+    ax.set_xticklabels([str(r["example_id"]) for r in balance_rows], rotation=45, ha="right", fontsize=8)
+    ax.set_ylabel("absolute error (symlog)")
+    ax.set_title("Ledger balance checks by example")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "ledger_balance_errors.png", "Per-example ledger balance and dtype-gap errors.")
+
+
+def plot_top_component_lollipop(ctx: bench.RunContext, top_rows: list[dict[str, Any]]) -> None:
+    """Top component per example, sorted by signed score."""
+    if not top_rows:
+        return
+    rows = [r for r in top_rows if int(r["rank"]) == 1]
+    if not rows:
+        return
+    rows = sorted(rows, key=lambda r: float(r["score"]))
+    fig_height = max(5.0, min(10.5, 0.36 * len(rows) + 1.5))
+    fig, ax = bench.new_figure(figsize=(9.2, fig_height))
+    y = list(range(len(rows)))
+    for yi, row in zip(y, rows):
+        score = float(row["score"])
+        ax.plot([0, score], [yi, yi], color=category_color(str(row["category"])), alpha=0.6, linewidth=2.0)
+        ax.scatter(score, yi, s=58, color=category_color(str(row["category"])), edgecolor="black", linewidth=0.5)
+    ax.axvline(0, color="black", linewidth=0.8)
+    ax.set_yticks(y)
+    ax.set_yticklabels(
+        [f"{r['example_id']} {r['component']}@{r['layer']}" for r in rows],
+        fontsize=8,
+    )
+    ax.set_xlabel("top component attribution score")
+    ax.set_title("Largest component per example: sign and size")
+    bench.save_figure(ctx, fig, "top_component_by_example.png", "Top-|attribution| component for every example.")
+
+
+def plot_showcase_waterfall(
+    ctx: bench.RunContext,
+    example: AnswerPairExample,
+    dla: dict[str, Any],
+    n: int = 12,
+) -> None:
+    """A compact waterfall for one example's largest ledger entries."""
+    components: list[tuple[str, float]] = [("embed", float(dla["embed_score"])), ("constant", float(dla["constant"]))]
+    components += [(f"A{layer}", float(score)) for layer, score in enumerate(dla["attn_scores"])]
+    components += [(f"M{layer}", float(score)) for layer, score in enumerate(dla["mlp_scores"])]
+    chosen = sorted(components, key=lambda kv: abs(kv[1]), reverse=True)[:n]
+    chosen = sorted(chosen, key=lambda kv: kv[1])
+    fig, ax = bench.new_figure(figsize=(8.8, max(5.0, 0.38 * len(chosen) + 1.5)))
+    ys = list(range(len(chosen)))
+    for y, (name, score) in zip(ys, chosen):
+        ax.plot([0, score], [y, y], color="tab:blue" if score >= 0 else "tab:red", alpha=0.65, linewidth=2.4)
+        ax.scatter(score, y, color="tab:blue" if score >= 0 else "tab:red", edgecolor="black", linewidth=0.5)
+    ax.axvline(0, color="black", linewidth=0.8)
+    ax.set_yticks(ys)
+    ax.set_yticklabels([name for name, _ in chosen], fontsize=8)
+    ax.set_xlabel("logit-diff contribution")
+    ax.set_title(f"Largest ledger entries for {example.example_id}")
+    bench.save_figure(
+        ctx,
+        fig,
+        f"ledger_waterfall_{bench.sanitize_tag(example.example_id)}.png",
+        "Largest positive and negative ledger entries for the showcase example.",
+    )
+
+
 def plot_attribution_vs_ablation(ctx: bench.RunContext, ablation_rows: list[dict[str, Any]]) -> float | None:
     if not ablation_rows:
         return None
@@ -632,14 +987,14 @@ def plot_attribution_vs_ablation(ctx: bench.RunContext, ablation_rows: list[dict
     lim = max(max(abs(v) for v in xs), max(abs(v) for v in ys)) * 1.1 or 1.0
     ax.plot([-lim, lim], [-lim, lim], color="gray", linewidth=0.8, linestyle="--", label="attribution = effect")
     ax.set_xlabel("attribution score (frozen-norm logit diff)")
-    ax.set_ylabel("direct-path ablation effect (logit diff change)")
+    ax.set_ylabel("final-position ablation effect (logit diff change)")
     title = "Attribution vs causal effect"
     if rho is not None:
         title += f" (Spearman rho = {rho:.3f}, n = {len(xs)})"
     ax.set_title(title)
     ax.legend(fontsize=8)
     bench.save_figure(ctx, fig, "attribution_vs_ablation.png",
-                      "Does the ledger predict what direct-path ablation does?")
+                      "Does the ledger predict what final-position ablation does?")
     return rho
 
 
@@ -676,7 +1031,7 @@ def plot_ablation_mismatches(ctx: bench.RunContext, ablation_rows: list[dict[str
         ctx,
         fig,
         "ablation_mismatch_examples.png",
-        "Largest direct-path attribution vs ablation-effect disagreements, labeled by component.",
+        "Largest final-position attribution vs ablation-effect disagreements, labeled by component.",
     )
 
 
@@ -716,34 +1071,54 @@ def aggregate_by_category(per_example: list[dict[str, Any]], n_layers: int) -> l
             continue
         attn_total = statistics.fmean(sum(r["dla"]["attn_scores"]) for r in rows)
         mlp_total = statistics.fmean(sum(r["dla"]["mlp_scores"]) for r in rows)
+        attn_abs_mass = statistics.fmean(sum(abs(float(s)) for s in r["dla"]["attn_scores"]) for r in rows)
+        mlp_abs_mass = statistics.fmean(sum(abs(float(s)) for s in r["dla"]["mlp_scores"]) for r in rows)
         tops = [top_components(r["dla"], 1)[0] for r in rows]
         top_abs_scores = [abs(t[2]) for t in tops]
         top_mass_shares = []
+        cancellation = []
+        positive_mass = []
+        negative_mass = []
         for top, row in zip(tops, rows):
             mass = component_score_mass(row["dla"])
+            gross = component_score_mass(row["dla"], include_embed_and_constant=True)
+            vals = [float(row["dla"]["embed_score"]), float(row["dla"]["constant"])]
+            vals += [float(v) for v in row["dla"]["attn_scores"] + row["dla"]["mlp_scores"]]
             top_mass_shares.append(abs(top[2]) / mass if mass else 0.0)
+            cancellation.append(abs(float(row["dla"]["frozen_logit_diff"])) / gross if gross else 0.0)
+            positive_mass.append(sum(v for v in vals if v > 0))
+            negative_mass.append(abs(sum(v for v in vals if v < 0)))
+        top_kind_counts = Counter(t[0] for t in tops)
+        modal_kind = top_kind_counts.most_common(1)[0][0]
         out.append(
             {
                 "category": cat,
                 "n_examples": len(rows),
                 "mean_model_logit_diff": round(statistics.fmean(r["dla"]["model_logit_diff"] for r in rows), 4),
+                "mean_frozen_logit_diff": round(statistics.fmean(r["dla"]["frozen_logit_diff"] for r in rows), 4),
                 "mean_embed_score": round(statistics.fmean(r["dla"]["embed_score"] for r in rows), 4),
+                "mean_constant": round(statistics.fmean(r["dla"]["constant"] for r in rows), 4),
                 "mean_attn_total": round(attn_total, 4),
                 "mean_mlp_total": round(mlp_total, 4),
+                "mean_attn_abs_mass": round(attn_abs_mass, 4),
+                "mean_mlp_abs_mass": round(mlp_abs_mass, 4),
+                "mean_positive_mass": round(statistics.fmean(positive_mass), 4),
+                "mean_negative_mass_abs": round(statistics.fmean(negative_mass), 4),
+                "mean_net_to_gross_ratio": round(statistics.fmean(cancellation), 4),
                 "mean_top_component_abs_score": round(statistics.fmean(top_abs_scores), 4),
                 "mean_top_component_mass_share": round(statistics.fmean(top_mass_shares), 4),
-                "top_component_modal_kind": statistics.mode(t[0] for t in tops),
+                "top_component_modal_kind": modal_kind,
+                "top_component_kind_counts": ";".join(f"{k}:{v}" for k, v in sorted(top_kind_counts.items())),
                 "median_top_component_layer": statistics.median(t[1] for t in tops),
                 "mean_min_component_score": round(
                     statistics.fmean(min(r["dla"]["attn_scores"] + r["dla"]["mlp_scores"]) for r in rows), 4
                 ),
                 "mean_frozen_vs_model_abs_err": round(
-                    statistics.fmean(r["dla"]["frozen_vs_model_abs_err"] for r in rows), 4
+                    statistics.fmean(r["dla"]["frozen_vs_model_abs_err"] for r in rows), 6
                 ),
             }
         )
     return out
-
 
 def draft_claims(
     ctx: bench.RunContext,
@@ -804,15 +1179,16 @@ def draft_claims(
                 "id": f"{LAB_ID}-C3",
                 "tag": "CAUSAL",
                 "text": (
-                    f"Direct-path zero-ablation of {len(ablation_rows)} components (final position only) "
-                    f"tracked attribution with Spearman rho = {rho:.3f}; {agree}/{len(top_rows)} top-attributed "
-                    "components had a causal effect of the same sign. Scope: this tests only the direct path "
-                    "the ledger counts, not indirect effects through later attention."
+                    f"Final-position zero-ablation of {len(ablation_rows)} components tracked attribution "
+                    f"with Spearman rho = {rho:.3f}; {agree}/{len(top_rows)} top-attributed components "
+                    "had a causal effect of the same sign. Scope: earlier-token writes are left intact, "
+                    "but later final-position layers do run on the modified stream, so mismatches are evidence "
+                    "that the ledger is not a causal map."
                 ),
                 "artifact": f"runs/{run_name}/tables/ablation_results.csv",
                 "falsifier": (
-                    "Full-sequence or mean-ablation produces a materially different ranking, showing the "
-                    "direct-path restriction was doing the work."
+                    "Full-sequence or mean-ablation produces a materially different ranking, or the controls "
+                    "match the top components, showing the final-position test was not isolating real contributors."
                 ),
             }
         )
@@ -826,6 +1202,7 @@ def render_summary(
     per_example: list[dict[str, Any]],
     cat_rows: list[dict[str, Any]],
     ablation_rows: list[dict[str, Any]],
+    ablation_summary_rows: list[dict[str, Any]],
     rho: float | None,
     dropped: int,
     claims: list[dict[str, str]],
@@ -834,6 +1211,12 @@ def render_summary(
     a = bundle.anatomy
     worst_ledger = max((r["dla"]["ledger_vs_frozen_abs_err"] for r in per_example), default=0.0)
     worst_model_gap = max((r["dla"]["frozen_vs_model_abs_err"] for r in per_example), default=0.0)
+    strongest = None
+    if per_example:
+        strongest = max(
+            per_example,
+            key=lambda r: abs(top_components(r["dla"], 1)[0][2]) if top_components(r["dla"], 1) else 0.0,
+        )
     lines = [
         "# Lab 2 run summary: direct logit attribution",
         "",
@@ -842,19 +1225,20 @@ def render_summary(
         f"- model: `{a.model_id}` ({a.n_layers} blocks, d_model {a.d_model})",
         f"- dtype: `{args.dtype}` | quantization: `{args.quantization}` | ablate-top: {args.ablate_top}",
         f"- examples: {len(per_example)} kept, {dropped} dropped at the single-token gate",
-        "- evidence level: `ATTR` (ledger) + narrow `CAUSAL` (direct-path ablation extension)",
+        "- evidence level: `ATTR` for the ledger + narrow `CAUSAL` for final-position ablation",
         "- self-checks: hook parity, lens self-check, component anatomy probe, decomposition check",
         "",
         "## 1. What behavior was studied?",
         "",
         "Next-token answer preference between a target and a matched distractor on four prompt",
-        "families (facts, relations, grammar, in-context conflict).",
+        "families: facts, relations, grammar, and in-context conflict.",
         "",
         "## 2. What internal object was measured?",
         "",
-        "The exact tensor each component (embeddings, every attention block, every MLP block)",
-        "adds to the final position's residual stream, scored against the answer direction",
-        "`unembed[target] - unembed[distractor]` under the frozen-final-norm linearization.",
+        "The tensor each component adds to the final position's residual stream:",
+        "embeddings, every attention-block contribution, and every MLP-block contribution.",
+        "Each row is scored against `unembed[target] - unembed[distractor]` under the",
+        "frozen-final-norm linearization.",
         f"Hook points were verified, not assumed: see `diagnostics/component_anatomy.json`",
         (
             f"(this model: attn={comp_anatomy.attn_source}, mlp={comp_anatomy.mlp_source}; "
@@ -863,44 +1247,67 @@ def render_summary(
         "",
         "## 3. What intervention or control was used?",
         "",
-        f"Direct-path zero-ablation of the top-{args.ablate_top} attributed components per example,",
-        "plus one random and one low-attribution control component, at the final position only —",
-        "deliberately commensurable with what the ledger counts.",
+        f"Final-position zero-ablation of the top-{args.ablate_top} attributed components per example,",
+        "plus one random and one low-attribution control component. This is deliberately narrower",
+        "than Lab 5 patching: earlier-token writes are left intact, but later final-position layers",
+        "do run on the changed stream. So ablation disagreement is a feature, not a bug.",
         "",
         "## 4. Headline numbers",
         "",
     ]
     lines.append(
-        "| category | n | mean logit diff | embed | attn total | mlp total | top kind | top layer | top abs score | min comp |"
+        "| category | n | mean logit diff | embed | attn total | mlp total | pos mass | neg mass | net/gross | top kind | top layer | top abs |"
     )
-    lines.append("|---|---:|---:|---:|---:|---:|---|---:|---:|---:|")
+    lines.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|---:|")
     for r in cat_rows:
         lines.append(
             f"| {r['category']} | {r['n_examples']} | {r['mean_model_logit_diff']} | {r['mean_embed_score']} | "
-            f"{r['mean_attn_total']} | {r['mean_mlp_total']} | {r['top_component_modal_kind']} | "
-            f"{r['median_top_component_layer']} | {r['mean_top_component_abs_score']} | "
-            f"{r['mean_min_component_score']} |"
+            f"{r['mean_attn_total']} | {r['mean_mlp_total']} | {r['mean_positive_mass']} | "
+            f"{r['mean_negative_mass_abs']} | {r['mean_net_to_gross_ratio']} | "
+            f"{r['top_component_modal_kind']} | {r['median_top_component_layer']} | "
+            f"{r['mean_top_component_abs_score']} |"
         )
+    if strongest is not None:
+        kind, layer, score = top_components(strongest["dla"], 1)[0]
+        lines += [
+            "",
+            (
+                f"Strongest single ledger row in this run: `{strongest['example_id']}` "
+                f"{kind}@{layer} with score {score:+.4f}. See `tables/top_components.csv`."
+            ),
+        ]
     lines += [
         "",
         "## 5. Does the ledger balance?",
         "",
-        f"- worst |ledger total - frozen logit diff| across examples: {worst_ledger:.5f}",
-        f"  (pure bookkeeping; bounded by the bench's decomposition check)",
-        f"- worst |frozen fp32 logit diff - model {args.dtype} logit diff|: {worst_model_gap:.5f}",
-        "  (the fp32-reimplementation gap; reported, not enforced)",
+        f"- worst |ledger total - frozen logit diff| across examples: {worst_ledger:.6f}",
+        "  (bookkeeping error; bounded by the component decomposition check)",
+        f"- worst |frozen fp32 logit diff - model {args.dtype} logit diff|: {worst_model_gap:.6f}",
+        "  (fp32 reimplementation versus the actual model dtype; reported, not enforced)",
+        "- see `tables/dla_balance.csv`, `diagnostics/block_reconstruction_by_example.csv`,",
+        "  and `plots/ledger_balance_errors.png` for the audit trail.",
         "",
         "## 6. Attribution vs causation",
         "",
     ]
     if ablation_rows:
+        same_sign = statistics.fmean(1.0 if r["same_sign"] else 0.0 for r in ablation_rows)
         lines.append(
-            f"{len(ablation_rows)} direct-path ablations. Spearman rho(attribution, causal effect) = "
-            f"{'n/a' if rho is None else f'{rho:.3f}'}. See `plots/attribution_vs_ablation.png` and "
-            "`plots/ablation_mismatch_examples.png` plus `tables/ablation_results.csv` — "
-            "the off-diagonal points are the lab's payload: "
-            "arithmetically correct ledger entries whose causal weight differs."
+            f"{len(ablation_rows)} final-position ablations. Spearman rho(attribution, causal effect) = "
+            f"{'n/a' if rho is None else f'{rho:.3f}'}, with same-sign rate {same_sign:.2f}. "
+            "See `tables/ablation_results.csv`, `tables/ablation_summary_by_selection.csv`, "
+            "`plots/attribution_vs_ablation.png`, and `plots/ablation_mismatch_examples.png`. "
+            "The important column is `effect_minus_attribution`: it measures how much the live "
+            "intervention departed from the frozen ledger row."
         )
+        if ablation_summary_rows:
+            lines += ["", "Selection summary:", "", "| selection | n | mean abs attr | mean abs effect | same-sign | median abs mismatch |"]
+            lines.append("|---|---:|---:|---:|---:|---:|")
+            for r in ablation_summary_rows:
+                lines.append(
+                    f"| {r['selection']} | {r['n']} | {r['mean_abs_attribution']} | "
+                    f"{r['mean_abs_causal_effect']} | {r['same_sign_rate']} | {r['median_abs_mismatch']} |"
+                )
     else:
         lines.append("Ablation comparison skipped (`--ablate-top 0`).")
     lines += [
@@ -915,14 +1322,20 @@ def render_summary(
         lines.append(f"  - falsifier: {c['falsifier']}")
     lines += [
         "",
+        "### What is not supported",
+        "",
+        "- A large DLA row does not prove that the component stores the fact or rule.",
+        "- A balanced ledger does not prove causal responsibility; it proves arithmetic accounting",
+        "  under a chosen linearization.",
+        "- Final-position ablation does not measure full-sequence indirect effects. Lab 5 owns that.",
+        "",
         "### Caveats students must carry forward",
         "",
         "- Frozen-norm scores are exact only in aggregate; per-component credit assumes the",
-        "  norm scale would not change without that component (it would).",
-        "- Direct-path ablation does not measure indirect effects through later layers;",
-        "  Lab 5 (patching) owns that question.",
-        "- Negative entries in the conflict family are attribution, not yet a located",
-        "  'fact recall' mechanism.",
+        "  norm scale would not change without that component.",
+        "- Conflict prompts can have low net/gross ratios: positive and negative rows are fighting,",
+        "  so signed fractions of the net logit difference can be unstable.",
+        "- Component hook points are architecture-specific. The anatomy probe is part of the result.",
         "",
     ]
     return "\n".join(lines)
@@ -972,8 +1385,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     per_example: list[dict[str, Any]] = []
     contributions: list[dict[str, Any]] = []
+    behavior_rows: list[dict[str, Any]] = []
+    balance_rows: list[dict[str, Any]] = []
+    block_rows_all: list[dict[str, Any]] = []
+    top_rows_all: list[dict[str, Any]] = []
+    reconstruction_rows: list[dict[str, Any]] = []
     ablation_rows: list[dict[str, Any]] = []
-    showcase: tuple[AnswerPairExample, list[float], bench.LensTrajectory] | None = None
+    showcase: tuple[AnswerPairExample, dict[str, Any], list[float], bench.LensTrajectory] | None = None
 
     for i, (ex, t_id, d_id) in enumerate(kept):
         comp = first_comp if ex.prompt == first_prompt else bench.run_with_component_cache(
@@ -982,6 +1400,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         dla = compute_direct_logit_attribution(bundle, comp, t_id, d_id)
         curve = cumulative_curve(dla)
         contributions.extend(component_rows(ex.example_id, ex.category, dla))
+        behavior_rows.append(answer_behavior_row(bundle, ex, t_id, d_id, comp.capture.final_logits_last))
+        balance_rows.append(balance_row(ex.example_id, ex.category, dla))
+        block_rows_all.extend(block_ledger_rows(ex.example_id, ex.category, dla, curve))
+        top_rows_all.extend(top_component_rows(ex.example_id, ex.category, dla))
+        reconstruction_rows.extend(block_reconstruction_rows(ex.example_id, ex.category, comp))
 
         traj = bench.compute_lens_trajectory(
             bundle, comp.capture, target_id=t_id, distractor_id=d_id, topk=args.topk
@@ -999,7 +1422,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         if showcase is None and (
             ex.example_id == args.showcase or (args.showcase is None and ex.category == "conflict")
         ):
-            showcase = (ex, curve, traj)
+            showcase = (ex, dla, curve, traj)
 
         top = top_components(dla, 1)[0]
         print(
@@ -1013,6 +1436,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 "dla": dla,
                 "curve": curve,
                 "example": ex,
+                "behavior": behavior_rows[-1],
             }
         )
 
@@ -1024,6 +1448,26 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     results_path = ctx.path("results.csv")
     bench.write_csv_with_context(ctx, results_path, contributions)
     ctx.register_artifact(results_path, "results", "Alias of component_contributions.csv for the standard run contract.")
+
+    behavior_path = ctx.path("tables", "baseline_behavior.csv")
+    bench.write_csv_with_context(ctx, behavior_path, behavior_rows)
+    ctx.register_artifact(behavior_path, "table", "Target/distractor logits, ranks, probabilities, and top token before attribution.")
+
+    balance_path = ctx.path("tables", "dla_balance.csv")
+    bench.write_csv_with_context(ctx, balance_path, balance_rows)
+    ctx.register_artifact(balance_path, "table", "Per-example frozen-norm metadata and ledger balance checks.")
+
+    top_path = ctx.path("tables", "top_components.csv")
+    bench.write_csv_with_context(ctx, top_path, top_rows_all)
+    ctx.register_artifact(top_path, "table", "Top-|attribution| components per example with signs and bounded mass shares.")
+
+    block_path = ctx.path("tables", "block_ledger.csv")
+    bench.write_csv_with_context(ctx, block_path, block_rows_all)
+    ctx.register_artifact(block_path, "table", "One row per block: attention, MLP, block total, and cumulative ledger value.")
+
+    recon_path = ctx.path("diagnostics", "block_reconstruction_by_example.csv")
+    bench.write_csv(recon_path, reconstruction_rows)
+    ctx.register_artifact(recon_path, "diagnostic", "Per-example proof that captured attn+MLP writes reconstruct block residual deltas.")
 
     example_rows = []
     for r in per_example:
@@ -1039,6 +1483,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 "embed_score": round(dla["embed_score"], 4),
                 "attn_total": round(sum(dla["attn_scores"]), 4),
                 "mlp_total": round(sum(dla["mlp_scores"]), 4),
+                "gross_ledger_mass": round(component_score_mass(dla, include_embed_and_constant=True), 4),
+                "net_to_gross_ratio": round(
+                    abs(float(dla["frozen_logit_diff"])) / (component_score_mass(dla, include_embed_and_constant=True) or 1.0),
+                    4,
+                ),
                 "top1": f"{tops[0][0]}@{tops[0][1]}:{tops[0][2]:+.3f}",
                 "top2": f"{tops[1][0]}@{tops[1][1]}:{tops[1][2]:+.3f}" if len(tops) > 1 else "",
                 "top3": f"{tops[2][0]}@{tops[2][1]}:{tops[2][2]:+.3f}" if len(tops) > 2 else "",
@@ -1063,6 +1512,19 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                     "layer": layer,
                     "mean_attn_score": round(statistics.fmean(r["dla"]["attn_scores"][layer] for r in rows), 5),
                     "mean_mlp_score": round(statistics.fmean(r["dla"]["mlp_scores"][layer] for r in rows), 5),
+                    "mean_block_total": round(
+                        statistics.fmean(
+                            r["dla"]["attn_scores"][layer] + r["dla"]["mlp_scores"][layer] for r in rows
+                        ),
+                        5,
+                    ),
+                    "mean_abs_block_mass": round(
+                        statistics.fmean(
+                            abs(float(r["dla"]["attn_scores"][layer])) + abs(float(r["dla"]["mlp_scores"][layer]))
+                            for r in rows
+                        ),
+                        5,
+                    ),
                     "n_examples": len(rows),
                 }
             )
@@ -1070,10 +1532,14 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, layer_path, layer_rows)
     ctx.register_artifact(layer_path, "table", "Per-category mean attn/MLP contribution by layer.")
 
+    ablation_summary_rows = summarize_ablation_by_selection(ablation_rows)
     if ablation_rows:
         abl_path = ctx.path("tables", "ablation_results.csv")
         bench.write_csv_with_context(ctx, abl_path, ablation_rows)
-        ctx.register_artifact(abl_path, "table", "Attribution vs direct-path ablation effect for every ablated component.")
+        ctx.register_artifact(abl_path, "table", "Attribution vs final-position ablation effect for every ablated component.")
+        abl_summary_path = ctx.path("tables", "ablation_summary_by_selection.csv")
+        bench.write_csv_with_context(ctx, abl_summary_path, ablation_summary_rows)
+        ctx.register_artifact(abl_summary_path, "table", "Ablation extension aggregated by top/random/low-attribution selection.")
 
     cat_rows = aggregate_by_category(per_example, n_layers)
     cat_path = ctx.path("tables", "category_summary.csv")
@@ -1086,10 +1552,14 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         plot_contribution_by_layer(ctx, per_example, n_layers)
         plot_signed_component_heatmap(ctx, per_example, n_layers)
         plot_cumulative(ctx, per_example)
+        plot_category_ledger_composition(ctx, per_example)
+        plot_balance_errors(ctx, balance_rows)
+        plot_top_component_lollipop(ctx, top_rows_all)
         rho = plot_attribution_vs_ablation(ctx, ablation_rows)
         plot_ablation_mismatches(ctx, ablation_rows)
         if showcase is not None:
-            plot_dla_vs_lens(ctx, showcase[0], showcase[1], showcase[2])
+            plot_dla_vs_lens(ctx, showcase[0], showcase[2], showcase[3])
+            plot_showcase_waterfall(ctx, showcase[0], showcase[1])
         elif args.showcase is not None:
             print(
                 f"[lab2] WARNING: --showcase {args.showcase!r} did not match any kept example id; "
@@ -1104,7 +1574,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     metrics = {
         "n_examples": len(per_example),
         "n_dropped": dropped,
+        "n_prefers_target_over_distractor": sum(1 for r in behavior_rows if r["prefers_target_over_distractor"]),
         "spearman_attribution_vs_ablation": rho,
+        "ablation_summary_by_selection": ablation_summary_rows,
         "categories": {r["category"]: r for r in cat_rows},
         "worst_ledger_vs_frozen_abs_err": max(
             (r["dla"]["ledger_vs_frozen_abs_err"] for r in per_example), default=0.0
@@ -1119,7 +1591,18 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     claims = draft_claims(ctx, bundle, cat_rows, ablation_rows, rho)
     bench.write_ledger_suggestions(ctx, LAB_ID, claims)
-    summary = render_summary(ctx, bundle, comp_anatomy, per_example, cat_rows, ablation_rows, rho, dropped, claims)
+    summary = render_summary(
+        ctx,
+        bundle,
+        comp_anatomy,
+        per_example,
+        cat_rows,
+        ablation_rows,
+        ablation_summary_rows,
+        rho,
+        dropped,
+        claims,
+    )
     summary_path = ctx.path("run_summary.md")
     bench.write_text(summary_path, summary)
     ctx.register_artifact(summary_path, "summary", "The seven standard questions answered with this run's numbers.")
