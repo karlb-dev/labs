@@ -56,8 +56,11 @@ def main() -> None:
             candidates.append((q, [str(c) for c in choices], answer))
         rng.shuffle(candidates)
         for i, (q, choices, answer) in enumerate(candidates[:PER_SUBJECT]):
+            # Full subject in the id: truncation collapsed high_school_geography
+            # and high_school_biology into duplicate ids (caught by Lab 10's
+            # dataset validator in the run-3 sweep).
             rows.append({
-                "id": f"{subject[:12]}_{i:02d}",
+                "id": f"{subject}_{i:02d}",
                 "domain": subject,
                 "question": q,
                 "option_a": choices[0], "option_b": choices[1],
