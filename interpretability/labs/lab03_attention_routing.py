@@ -14,7 +14,11 @@ The lab keeps three different claims in different jars:
    ``all_pos`` also removes earlier-position writes that later heads may read.
 
 The course's recurring warning lives here in miniature: a beautiful heatmap is
-not an explanation until it survives contribution scoring and an intervention.
+not an explanation until it survives contribution scoring (using the same
+frozen-norm linearization as Lab 2, plus per-block post-attention norm handling)
+and a scoped intervention. Routing (attention pattern), writing (head output
+projected through its W_O slice), and causal role (final_pos vs all_pos ablation)
+are three different measurements that license three different strengths of claim.
 """
 
 from __future__ import annotations
@@ -36,9 +40,12 @@ CATEGORIES = ("synthetic", "cycle", "natural", "control")
 REPEAT_CATEGORIES = ("synthetic", "cycle", "natural")
 
 # Motif thresholds. Deliberately simple and visible; students are told the
-# rule and invited to break it. Sink gets a HIGHER bar and LOWER priority:
-# parking attention on position 0 is the model's resting pattern, so most
-# heads carry large sink mass as background.
+# rule and invited to break it (see "label rule is not sacred" in the MD).
+# Sink gets a HIGHER bar and LOWER priority: parking attention on position 0
+# is the model's resting pattern (attention sink), so most heads carry large
+# sink mass as background. The synth_digits example was added to demonstrate
+# that the induction motif is structural (repeat copying) rather than lexical
+# (letters or arithmetic sequences).
 MOTIF_SCORE_BAR = 0.35
 SINK_SCORE_BAR = 0.5
 DIFFUSE_ENTROPY_FRAC = 0.85  # mean entropy / max possible entropy
@@ -84,6 +91,8 @@ ALL_EXAMPLES: tuple[PatternPrompt, ...] = (
     ),
     PatternPrompt("synth_colors", "synthetic", "red blue green red blue green red blue", " green", " red"),
     PatternPrompt("synth_animals", "synthetic", "dog cat bird dog cat bird dog cat", " bird", " dog"),
+    # More varied to pop "induction is a general copying motif, not just letters"
+    PatternPrompt("synth_digits", "synthetic", "1 7 3 1 7 3 1 7", " 3", " 1", "Numeric repeat to show the motif is structural, not lexical."),
     PatternPrompt(
         "synth_numbers",
         "synthetic",
@@ -92,6 +101,8 @@ ALL_EXAMPLES: tuple[PatternPrompt, ...] = (
         " seven",
         "Number words in a non-arithmetic order.",
     ),
+    PatternPrompt("synth_fruit", "synthetic", "apple pear banana apple pear banana apple pear", " banana", " apple", "Another vocab to show structural copying."),
+    PatternPrompt("synth_shapes", "synthetic", "circle square star circle square star circle square", " star", " circle"),
     PatternPrompt(
         "cycle_moon",
         "cycle",
@@ -101,6 +112,7 @@ ALL_EXAMPLES: tuple[PatternPrompt, ...] = (
         "Period-2 cycle: previous-token and induction predictions coincide less cleanly.",
     ),
     PatternPrompt("cycle_sun", "cycle", "sun rain sun rain sun rain sun", " rain", " sun"),
+    PatternPrompt("cycle_day", "cycle", "sun moon sun moon sun moon sun", " moon", " sun"),
     PatternPrompt(
         "nat_lab",
         "natural",
@@ -117,6 +129,7 @@ ALL_EXAMPLES: tuple[PatternPrompt, ...] = (
         " apples",
         " fruit",
     ),
+    PatternPrompt("nat_train", "natural", "The train arrived at the station. Passengers left the", " station", " train"),
     PatternPrompt(
         "ctrl_fox",
         "control",
@@ -133,10 +146,18 @@ ALL_EXAMPLES: tuple[PatternPrompt, ...] = (
         " Rome",
         "Factual recall, no repetition: a head strongly 'inducting' here is a label failure.",
     ),
+    PatternPrompt(
+        "ctrl_river",
+        "control",
+        "The river flows into the sea near the old",
+        " city",
+        " bridge",
+        "Natural but no repeat structure for the motif.",
+    ),
 )
 
 SMALL_SET_IDS = ("synth_colors", "cycle_moon", "nat_lab", "ctrl_fox")
-MEDIUM_SET_IDS = SMALL_SET_IDS + ("synth_letters", "synth_animals", "nat_door", "ctrl_paris")
+MEDIUM_SET_IDS = SMALL_SET_IDS + ("synth_letters", "synth_animals", "nat_door", "ctrl_paris", "synth_fruit", "cycle_day")
 
 
 # ---------------------------------------------------------------------------
@@ -410,18 +431,21 @@ def head_attribution_scores(
 ) -> dict[str, Any]:
     """Score every head's final-position write against the answer direction.
 
-    Two frozen linearizations compose here:
+    Two frozen linearizations compose here (consistent with Lab 2's DLA convention,
+    plus one extra for post-attention norms):
 
-    1. The final norm is frozen at the actual final stream, exactly Lab 2's
-       direct-logit-attribution convention.
-    2. On post-norm architectures, each block's attention output passes
-       through a per-block norm before joining the stream. That norm is frozen
-       at the block's full attention output. This helper handles both RMSNorm
-       and centered LayerNorm; older versions of this lab only handled RMSNorm.
+    1. The final norm is frozen at the actual final stream (pre-final-norm
+       residual, same as Labs 1–2).
+    2. On post-norm architectures (Olmo-style), each block's attention output
+       passes through a per-block norm before joining the stream. That norm is
+       frozen at the block's full attention output. This helper handles both
+       RMSNorm and centered LayerNorm.
 
     The projection bias and norm bias are not assigned to any head. They are
-    reported as residual accounting terms rather than stuffed into a convenient
-    head-shaped costume.
+    reported as residual accounting terms (see head_attribution_accounting.csv)
+    rather than stuffed into a convenient head-shaped costume. The per-head
+    decomposition check (head_decomposition_check.json) must pass before any
+    attribution number is interpreted.
     """
     import torch
 
@@ -1172,7 +1196,7 @@ def render_summary(
         "",
         "## 2. What internal object was measured?",
         "",
-        "Every head's attention pattern, its final-position write scored against the answer direction, and its causal effect under scoped ablation.",
+        "Every head's attention pattern (routing/OBS), its final-position write scored against the answer direction under the same frozen-norm linearization as Lab 2 (contribution/ATTR), and its causal effect under two ablation scopes (final_pos = direct path; all_pos = includes upstream writes that later layers read / CAUSAL). These are deliberately kept as three separate measurements.",
         "",
         "## 3. What intervention or control was used?",
         "",
@@ -1216,15 +1240,15 @@ def render_summary(
         "4. `plots/attention_heads_*.png` — what selected heads read on real tokens.",
         "5. `plots/head_attribution_by_layer.png` — which heads write toward the answer direction.",
         "6. `tables/head_ablation_summary.csv` and `plots/ablation_effect_by_head.png` — causal effects by head and scope.",
-        "7. `plots/direct_vs_indirect_effect.png` and `plots/routing_to_causality.png` — composition and motif-vs-causality checks.",
-        "8. `diagnostics/control_induction_audit.csv` — false-positive audit for the motif rule.",
+        "7. `plots/direct_vs_indirect_effect.png` and `plots/routing_to_causality.png` — the composition detector (all_pos >> final_pos) and motif-vs-effect scatter. Points off the diagonal or high-motif/low-causal are the payload.",
+        "8. `diagnostics/control_induction_audit.csv` — false-positive audit for the motif rule (synthetic labels are prompt-set-specific until proven on natural text).",
         "",
         "## 7. Caveats students must carry forward",
         "",
-        "- A motif label is a description of a pattern on this prompt distribution, not a job title.",
-        "- High attention is not high contribution; high contribution is not guaranteed causality.",
-        "- `all_pos` ablation bundles indirect paths. Lab 5 patching and Lab 6 circuits are needed for stronger edge claims.",
-        "- Zeroing a head is an informative stress test, but it is not the mean-ablation convention used for faithful circuit cards.",
+        "- A motif label is a description of a pattern on *this* prompt distribution (synthetic/cycle vs natural), not a job title. The label rule is deliberately simple and debatable; finding where it fails is part of the lab.",
+        "- High attention (OBS) is not high contribution (ATTR); high contribution is not guaranteed to have causal effect (CAUSAL). Compare motif_maps.png directly with head_attribution and the ablation scatter.",
+        "- `all_pos` ablation bundles indirect paths (earlier writes that later heads can read). The gap vs final_pos is a composition signal, not a localized edge. Lab 5 (patching) and Lab 6 (circuits) are needed for stronger claims.",
+        "- Zeroing a head is a causal stress test (scoped, direct vs indirect), but it is not the dataset-mean ablation used for faithful circuit cards in later labs.",
         "",
     ]
     return "\n".join(lines)

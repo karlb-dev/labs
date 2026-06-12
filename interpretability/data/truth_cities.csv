@@ -46,16 +46,68 @@ city_f_21,cities,The city of Seoul is in Denmark.,0,Seoul|Denmark
 city_t_22,cities,The city of Hanoi is in Vietnam.,1,Hanoi|Vietnam
 city_f_22,cities,The city of Hanoi is in New Zealand.,0,Hanoi|New Zealand
 city_t_23,cities,The city of Helsinki is in Finland.,1,Helsinki|Finland
-city_f_23,cities,The city of Helsinki is in France.,0,Helsinki|France
+city_f_23,cities,The city of Helsinki is in Switzerland.,0,Helsinki|Switzerland
 city_t_24,cities,The city of Stockholm is in Sweden.,1,Stockholm|Sweden
-city_f_24,cities,The city of Stockholm is in Japan.,0,Stockholm|Japan
+city_f_24,cities,The city of Stockholm is in Slovakia.,0,Stockholm|Slovakia
 city_t_25,cities,The city of Budapest is in Hungary.,1,Budapest|Hungary
-city_f_25,cities,The city of Budapest is in Germany.,0,Budapest|Germany
+city_f_25,cities,The city of Budapest is in Slovenia.,0,Budapest|Slovenia
 city_t_26,cities,The city of Brussels is in Belgium.,1,Brussels|Belgium
-city_f_26,cities,The city of Brussels is in Italy.,0,Brussels|Italy
+city_f_26,cities,The city of Brussels is in Latvia.,0,Brussels|Latvia
 city_t_27,cities,The city of Amsterdam is in the Netherlands.,1,Amsterdam|the Netherlands
-city_f_27,cities,The city of Amsterdam is in Spain.,0,Amsterdam|Spain
+city_f_27,cities,The city of Amsterdam is in Estonia.,0,Amsterdam|Estonia
 city_t_28,cities,The city of Copenhagen is in Denmark.,1,Copenhagen|Denmark
-city_f_28,cities,The city of Copenhagen is in Portugal.,0,Copenhagen|Portugal
+city_f_28,cities,The city of Copenhagen is in Lithuania.,0,Copenhagen|Lithuania
 city_t_29,cities,The city of Wellington is in New Zealand.,1,Wellington|New Zealand
-city_f_29,cities,The city of Wellington is in Austria.,0,Wellington|Austria
+city_f_29,cities,The city of Wellington is in Bulgaria.,0,Wellington|Bulgaria
+city_t_30,cities,The city of Bern is in Switzerland.,1,Bern|Switzerland
+city_f_30,cities,The city of Bern is in Romania.,0,Bern|Romania
+city_t_31,cities,The city of Bratislava is in Slovakia.,1,Bratislava|Slovakia
+city_f_31,cities,The city of Bratislava is in Turkey.,0,Bratislava|Turkey
+city_t_32,cities,The city of Ljubljana is in Slovenia.,1,Ljubljana|Slovenia
+city_f_32,cities,The city of Ljubljana is in Iran.,0,Ljubljana|Iran
+city_t_33,cities,The city of Riga is in Latvia.,1,Riga|Latvia
+city_f_33,cities,The city of Riga is in Iraq.,0,Riga|Iraq
+city_t_34,cities,The city of Tallinn is in Estonia.,1,Tallinn|Estonia
+city_f_34,cities,The city of Tallinn is in Saudi Arabia.,0,Tallinn|Saudi Arabia
+city_t_35,cities,The city of Vilnius is in Lithuania.,1,Vilnius|Lithuania
+city_f_35,cities,The city of Vilnius is in Qatar.,0,Vilnius|Qatar
+city_t_36,cities,The city of Sofia is in Bulgaria.,1,Sofia|Bulgaria
+city_f_36,cities,The city of Sofia is in the UAE.,0,Sofia|the UAE
+city_t_37,cities,The city of Bucharest is in Romania.,1,Bucharest|Romania
+city_f_37,cities,The city of Bucharest is in Ethiopia.,0,Bucharest|Ethiopia
+city_t_38,cities,The city of Ankara is in Turkey.,1,Ankara|Turkey
+city_f_38,cities,The city of Ankara is in Ghana.,0,Ankara|Ghana
+city_t_39,cities,The city of Tehran is in Iran.,1,Tehran|Iran
+city_f_39,cities,The city of Tehran is in Senegal.,0,Tehran|Senegal
+city_t_40,cities,The city of Baghdad is in Iraq.,1,Baghdad|Iraq
+city_f_40,cities,The city of Baghdad is in Colombia.,0,Baghdad|Colombia
+city_t_41,cities,The city of Riyadh is in Saudi Arabia.,1,Riyadh|Saudi Arabia
+city_f_41,cities,The city of Riyadh is in Argentina.,0,Riyadh|Argentina
+city_t_42,cities,The city of Doha is in Qatar.,1,Doha|Qatar
+city_f_42,cities,The city of Doha is in Chile.,0,Doha|Chile
+city_t_43,cities,The city of Abu Dhabi is in the UAE.,1,Abu Dhabi|the UAE
+city_f_43,cities,The city of Abu Dhabi is in Mexico.,0,Abu Dhabi|Mexico
+city_t_44,cities,The city of Addis Ababa is in Ethiopia.,1,Addis Ababa|Ethiopia
+city_f_44,cities,The city of Addis Ababa is in Canada.,0,Addis Ababa|Canada
+city_t_45,cities,The city of Accra is in Ghana.,1,Accra|Ghana
+city_f_45,cities,The city of Accra is in Malaysia.,0,Accra|Malaysia
+city_t_46,cities,The city of Dakar is in Senegal.,1,Dakar|Senegal
+city_f_46,cities,The city of Dakar is in Singapore.,0,Dakar|Singapore
+city_t_47,cities,The city of Bogota is in Colombia.,1,Bogota|Colombia
+city_f_47,cities,The city of Bogota is in Indonesia.,0,Bogota|Indonesia
+city_t_48,cities,The city of Buenos Aires is in Argentina.,1,Buenos Aires|Argentina
+city_f_48,cities,The city of Buenos Aires is in the Philippines.,0,Buenos Aires|the Philippines
+city_t_49,cities,The city of Santiago is in Chile.,1,Santiago|Chile
+city_f_49,cities,The city of Santiago is in France.,0,Santiago|France
+city_t_50,cities,The city of Mexico City is in Mexico.,1,Mexico City|Mexico
+city_f_50,cities,The city of Mexico City is in Japan.,0,Mexico City|Japan
+city_t_51,cities,The city of Toronto is in Canada.,1,Toronto|Canada
+city_f_51,cities,The city of Toronto is in Germany.,0,Toronto|Germany
+city_t_52,cities,The city of Kuala Lumpur is in Malaysia.,1,Kuala Lumpur|Malaysia
+city_f_52,cities,The city of Kuala Lumpur is in Italy.,0,Kuala Lumpur|Italy
+city_t_53,cities,The city of Singapore is in Singapore.,1,Singapore|Singapore
+city_f_53,cities,The city of Singapore is in Spain.,0,Singapore|Spain
+city_t_54,cities,The city of Jakarta is in Indonesia.,1,Jakarta|Indonesia
+city_f_54,cities,The city of Jakarta is in Portugal.,0,Jakarta|Portugal
+city_t_55,cities,The city of Manila is in the Philippines.,1,Manila|the Philippines
+city_f_55,cities,The city of Manila is in Austria.,0,Manila|Austria

@@ -2,7 +2,7 @@
 
 **Evidence level targeted:** causal evidence at circuit scope.
 
-**Prerequisites:** Labs 2, 3, and 5. Lab 2 gives direct-logit attribution, Lab 3 gives attention motifs, and Lab 5 gives the intervention habit. Keep the `circuit_card.md` from this lab: Lab 9 will compare your hand-built circuit with an automated attribution graph.
+**Prerequisites:** Labs 2, 3, and 5 (plus the residual-stream and self-check habits from Lab 1). Lab 2 gives direct-logit attribution (the cheap screen), Lab 3 gives attention motifs (previous-token and induction patterns), and Lab 5 gives the intervention habit (mean-ablation instead of zero-ablation). Keep the `circuit_card.md` from this lab: Lab 9 will place your hand-built circuit next to an automated attribution graph so you can compare the epistemic standards of the two methods.
 
 ## The question
 
@@ -16,7 +16,13 @@ Those words are not decorative labels:
 | complete | mean-ablate the circuit heads | the circuit is necessary for the behavior |
 | minimal | remove each kept head from the final circuit | every kept node earns its rent |
 
+**Make the concept pop (F/C/M + held-out):** In `plots/circuit_scorecard.png` and `faithfulness_completeness_minimality.json` you will see two rows: discovery vs held-out. Faithfulness on held-out is often *higher* than on discovery (the circuit is not over-fit to the exact tokens). Completeness effect is usually larger on held-out. Minimality (worst marginal value in `tables/pruned_circuit.csv`) tells you whether the last head you kept was actually pulling its weight.
+
 The lab is a little circuit courtroom. The cheap screens nominate suspects. Mean-ablation cross-examines them. The circuit card is the verdict, including all awkward caveats.
+
+**Make the concept pop:** After your run, open `plots/screen_vs_causal.png`. The left panel shows cheap screen rank vs actual causal drop; many high-ranking suspects (by attribution or motif) have near-zero causal drop. The right panel does the same for absolute attribution. These off-diagonal points are the central lesson: screening is a hypothesis generator, not a circuit claim. Then open `plots/per_prompt_faithfulness.png` — the lowest bars are the specific prompts your final circuit explains least well. Do not hide them.
+
+**Headline numbers note:** Faithfulness/completeness/minimality are computed on a small set of 8-token repeating prompts (17 discovery+heldout after expansion for robustness, minus any the tokenization gate drops on a given tokenizer). The per-prompt table, held-out generalization, and edge-interaction controls are what make the scoped circuit claim legible; the headline F/C/M ratios on this synthetic task should be read as qualitative + one-significant-figure evidence.
 
 ## The task
 
@@ -99,15 +105,19 @@ Tier A is a plumbing smoke test on `gpt2`. Tier B is the course run. The bench a
 
 ## First artifact-reading path
 
-1. `circuit_card.md` - the deliverable. Read this first.
-2. `plots/circuit_graph.png` - validated heads, motif labels, supporting MLPs, and any claimed edge.
-3. `plots/prune_trajectory.png` - how the circuit shrinks and where pruning stops.
-4. `plots/screen_vs_causal.png` - where cheap ranking lied.
-5. `plots/circuit_scorecard.png` - faithfulness and completeness on discovery versus held-out prompts.
-6. `tables/pruned_circuit.csv` - minimality: each kept node's marginal value.
-7. `tables/per_prompt_faithfulness.csv` and `plots/per_prompt_faithfulness.png` - the prompts the circuit explains least well.
-8. `plots/edge_interactions.png`, `tables/edge_claim.json`, and `tables/edge_interactions.csv` - the edge claim or the reason no edge was claimed.
-9. `diagnostics/tokenization_and_baseline.csv` and `diagnostics/ablation_manifest.json` - the contract under the experiment.
+**Instrument health + baseline gate first (exactly as in Labs 1-5):**
+1. `diagnostics/tokenization_and_baseline.csv` — the model must actually do the induction task on the discovery prompts before you claim a circuit for it.
+2. `diagnostics/ablation_manifest.json` — the off distribution (dataset mean, fixed length 8) is part of the claim.
+
+**Then the science (the manual workflow):**
+3. `circuit_card.md` — the deliverable. Read this first; everything else is evidence for it.
+4. `plots/screen_vs_causal.png` — the central "cheap screening is a hypothesis generator" plot (off-diagonal points are the lesson).
+5. `plots/prune_trajectory.png` — how the circuit shrinks and where it stops relative to the faithfulness floor.
+6. `plots/circuit_scorecard.png` and `faithfulness_completeness_minimality.json` — F/C/M on discovery vs held-out (the held-out row is the generalization test).
+7. `plots/per_prompt_faithfulness.png` and `tables/per_prompt_faithfulness.csv` — the specific prompts your circuit explains least well (the anti-cherry-pick evidence).
+8. `plots/circuit_graph.png` — the visual summary with motif labels and any claimed edge.
+9. `tables/pruned_circuit.csv` — minimality: the worst marginal value tells you whether the last kept head was earning its place.
+10. `plots/edge_interactions.png`, `tables/edge_claim.json`, and `tables/edge_interactions.csv` — the (carefully scoped) edge claim or the reason none was earned.
 
 ## How to read the main plots
 

@@ -206,14 +206,19 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   1.000 while top-1 "accuracy" reads 0.361 ("…is **known** as") — which
   behavioral metric does your claim name?
 
-**The course is complete: pre-lab bench + Labs 1–11, each validated on
-Tier A (CPU) and Tier B (Colab A100).** Two full-course regression sweeps
-are on record: `runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24
-green, deterministic reproduction of the validated numbers) and
+**The course is complete: 11 labs (Lab 1 includes the microscope smoke
+test / instrumentation verification that used to be a separate pre-lab) +
+the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
+Two full-course regression sweeps are on record:
+`runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24 green,
+deterministic reproduction of the validated numbers) and
 `runs/RUN3_VALIDATION_REPORT.md` (post-rewrite merge, 23/23 green after one
 real data bug the rewrite's own validator caught; untouched labs reproduce
 run 2 exactly). The one-page sweep view is `course_dashboard.py`; the
-design-vs-built record is COURSE.md §0.
+design-vs-built record is COURSE.md §0. The post-run-3 review pass
+(prompt/pool tokenization fixes in Labs 1/3/5/6/11 and the continuous-
+batching generation engine in Lab 10) changes some lab populations, so the
+next sweep refreshes the reference headline numbers for those labs.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 

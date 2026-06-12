@@ -16,28 +16,30 @@ where diff = logit(target capital) - logit(distractor capital) at the final
 position. 1.0 means the patch restored the whole clean-vs-corrupt logit gap;
 0.0 means it restored none of it; negative means the patch hurt.
 
-Rigor notes that this file tries hard to keep visible:
+Rigor notes that this file tries hard to keep visible (building directly on Labs 1-4):
 
-* Clean/corrupt prompts differ in exactly one tokenized subject position. The
-  validator rejects misaligned pairs, because position alignment is the
-  quiet indexing bug that ruins patching experiments while leaving pretty
-  heatmaps behind.
-* Patching streams[k] means replacing the bench's pre-norm residual stream
-  after k blocks, implemented as the input to block k for k < L and as the
-  input to the final norm for k = L. The patch no-op check verifies this
-  convention before any scientific measurement.
-* Stream depths and component layers are deliberately separated. A stream
-  patch at depth k contains everything written by blocks < k. If a later
-  component or edit is tested, it should usually target block k-1, not block
-  k. The lab writes this mapping into localization_decision.json.
-* One pair is a demo. Causal tracing aggregates over validated facts, role
-  curves, paraphrase confirmation, negative controls, and component-level
-  patching.
-* The optional rank-one edit is an audit of the localization claim, not a
-  promise that localization predicts editability.
+* Clean/corrupt prompts differ in exactly one tokenized subject position (same
+  pre-final-norm residual convention as Lab 1). The validator rejects misaligned
+  pairs, because position alignment is the quiet indexing bug that ruins patching
+  experiments while leaving pretty heatmaps behind.
+* Patching streams[k] means replacing the bench's pre-norm residual stream after
+  k blocks (input to block k). The patch no-op check (new in this lab) verifies
+  this convention before any scientific measurement.
+* Stream depths and component layers are deliberately separated (echoing Lab 2's
+  attribution caution and Lab 3's routing-vs-contribution distinction). A stream
+  patch at depth k contains everything written by blocks < k. The lab writes the
+  mapping (stream depth k → component/edit layer k-1) into localization_decision.json.
+* One pair is a demo. Causal tracing aggregates over validated facts (baseline
+  gate from clean/corrupt margins), role curves (subject vs last), paraphrase
+  confirmation, negative controls (mismatched pairs, wrong position), and
+  component-level patching (attn vs MLP).
+* The optional rank-one edit is an audit of the localization claim (does the
+  "best" causal-tracing site also make the best edit?), not a promise that
+  localization predicts editability (the Hase et al. tension).
 
 Evidence level: CAUSAL, scoped. Every claim names the intervention, metric,
-and prompt population.
+and prompt population. The edit results force students to confront whether
+localization informs editing.
 """
 
 from __future__ import annotations
@@ -65,8 +67,8 @@ CORRUPT_MARGIN = 0.5
 # prompt-set controls the fact count unless --max-examples applies a stricter
 # hard cap.
 PROMPT_SET_FACT_LIMITS = {
-    "small": 6,
-    "medium": 10,
+    "small": 10,
+    "medium": 20,
     "full": 0,  # 0 means no cap
 }
 
@@ -92,7 +94,7 @@ class Fact:
 
 
 # Conservative built-in pool. The validator and baseline gate are allowed to
-# reject facts. That is evidence, not a nuisance.
+# reject facts. That is evidence, not a nuisance. Expanded for robustness.
 FACTS: tuple[Fact, ...] = (
     Fact("france", "France", "Paris"),
     Fact("germany", "Germany", "Berlin"),
@@ -110,6 +112,15 @@ FACTS: tuple[Fact, ...] = (
     Fact("thailand", "Thailand", "Bangkok"),
     Fact("canada", "Canada", "Ottawa"),
     Fact("england", "England", "London"),
+    Fact("switzerland", "Switzerland", "Bern"),
+    Fact("turkey", "Turkey", "Ankara"),
+    Fact("australia", "Australia", "Canberra"),
+    Fact("ireland", "Ireland", "Dublin"),
+    Fact("denmark", "Denmark", "Copenhagen"),
+    Fact("sweden", "Sweden", "Stockholm"),
+    Fact("hungary", "Hungary", "Budapest"),
+    Fact("finland", "Finland", "Helsinki"),
+    Fact("indonesia", "Indonesia", "Jakarta"),
 )
 
 
@@ -451,9 +462,12 @@ def aggregate_by_role(grid_rows: list[dict[str, Any]], n_layers: int) -> list[di
 def choose_localization(agg_rows: list[dict[str, Any]], n_layers: int) -> LocalizationDecision:
     """Choose the handoff and the non-tautological localization band.
 
-    Subject recovery at stream depth 0 is token substitution. It is useful as
-    an instrument sanity check but not as a mechanistic localization. We
-    therefore choose from depths 1..L-1.
+    Subject recovery at stream depth 0 is token substitution (the clean subject
+    embedding is simply swapped in). It is useful as an instrument sanity check
+    (the patch machinery works) but not as a mechanistic localization. We
+    therefore choose from depths 1..L-1 and use a relative threshold (blend of
+    absolute 0.5 and a fraction of the observed subject peak) so even small
+    models produce a meaningful band instead of a fake failure.
     """
     subj: dict[int, float] = {}
     last: dict[int, float] = {}
@@ -800,7 +814,15 @@ def run_edit_audit(
     other_pairs: list[Pair],
     alpha: float = 1.0,
 ) -> dict[str, Any]:
-    """Apply a small rank-one edit and audit its direct and ripple effects."""
+    """Apply a small rank-one edit and audit its direct and ripple effects.
+
+    This is deliberately the "patch made permanent" audit, not a claim that
+    causal tracing predicts the best edit layer. The numbers (direct success,
+    logit movement without flip, paraphrase generalization, neighbor spillover,
+    fluency) force the student to confront the localization-vs-editability gap
+    (Hase et al.). Movement without a full flip, or neighbor damage before
+    target success, is often the most informative outcome.
+    """
     key_clean, out_clean = capture_down_proj_io(bundle, pair.clean_prompt, edit_layer, pair.subject_pos)
     _, out_corrupt = capture_down_proj_io(bundle, pair.corrupt_prompt, edit_layer, pair.subject_pos)
     delta_v = alpha * (out_corrupt - out_clean)
@@ -1125,11 +1147,11 @@ def write_summary(
         "",
         "## 2. What internal object was measured?",
         "",
-        "The pre-norm residual stream at every stream depth and token position; component-level attn/MLP outputs for the localized block band.",
+        "The pre-norm residual stream at every stream depth and token position (same pre-final-norm convention as Lab 1); component-level attn/MLP outputs for the localized block band (refining the stream result, in the spirit of Lab 2 attribution and Lab 3 head contribution).",
         "",
         "## 3. What intervention or control was used?",
         "",
-        "Interchange patching from clean to corrupt runs, plus mismatched-pair, wrong-position, and split-heldout low-region controls.",
+        "Interchange patching from clean to corrupt runs (sufficiency of a clean-vs-corrupt difference under a narrow intervention), plus mismatched-pair, wrong-position, and split-heldout low-region controls (the specificity checks that turn recovery curves into scoped causal claims).",
         "",
         "## 4. Headline numbers",
         "",
@@ -1162,9 +1184,9 @@ def write_summary(
         "",
         "## 6. Claims not supported",
         "",
-        "- The lab does not show that a single layer or component stores the fact. A stream patch contains the whole accumulated residual representation.",
-        "- The lab does not show that the localized stream depth is the best edit layer. The edit audit tests that gap instead of sweeping it away.",
-        "- The lab does not establish necessity of one site. Single-site patching tests sufficiency of a clean-vs-corrupt difference.",
+        "- The lab does not show that a single layer or component stores the fact. A stream patch contains the whole accumulated residual representation (recall-then-readout, not a permanent storage jar).",
+        "- The lab does not show that the localized stream depth (or mapped component layer) is the best edit layer. The edit audit explicitly tests that gap (the Hase tension) instead of sweeping it away.",
+        "- The lab does not establish necessity of one site. Single-site patching tests sufficiency of a clean-vs-corrupt difference under interchange; necessity and multi-site paths are left to later labs.",
         "",
         "## 7. What would falsify the interpretation?",
         "",
@@ -1173,12 +1195,12 @@ def write_summary(
         "## Reading order",
         "",
         "1. `causal_trace_card.md` - the deliverable card.",
-        "2. `plots/localization_across_facts.png` - the subject-vs-last handoff story.",
-        "3. `plots/patching_heatmap_<fact>.png` - one pair, token-labeled.",
-        "4. `plots/negative_controls.png` and `tables/negative_control_scores.csv` - specificity checks.",
+        "2. `plots/localization_across_facts.png` - the subject-vs-last handoff story (the recall-then-readout visual).",
+        "3. `plots/patching_heatmap_<fact>.png` - one pair, token-labeled, with localized band marked.",
+        "4. `plots/negative_controls.png` and `tables/negative_control_scores.csv` - specificity checks (the matched vs control gap is the evidence).",
         "5. `tables/per_fact_top_patch.csv` and `plots/per_fact_top_patch.png` - which facts drove the average.",
-        "6. `tables/component_patching.csv` and `plots/component_patching.png` - attn/MLP refinement.",
-        "7. `tables/edit_results.csv` if `--run-edit` - localization meets editing.",
+        "6. `tables/component_patching.csv` and `plots/component_patching.png` - attn/MLP refinement of the stream result.",
+        "7. `tables/edit_results.csv` if `--run-edit` - localization meets editing (the audit that shows the gap).",
         "",
     ]
     path = ctx.path("run_summary.md")

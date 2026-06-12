@@ -1,11 +1,24 @@
 """Lab 9: attribution graphs and circuit tracing.
 
-Same destination as Lab 6, different vehicle: a circuit-shaped explanation
-of one behavior, now written as a graph over transcoder features rather than
-attention heads. This implementation is the **inspectable miniature** backend:
-GPT-2 small plus the full Dunefsky MLP-transcoder stack. A separate registry or
-course build can swap in circuit-tracer/Gemma; the evidence contract here stays
-the same: replacement-model graph first, real-model interventions second.
+Same destination as Lab 6 (a mechanism-shaped claim about one behavior), different
+vehicle: a circuit-shaped explanation written as a graph over transcoder features
+rather than attention heads. This implementation is the **inspectable miniature**
+backend: GPT-2 small plus the full Dunefsky MLP-transcoder stack (bare-LN
+convention validated in Lab 8). A separate registry or course build can swap in
+circuit-tracer/Gemma; the evidence contract here stays the same: replacement-
+model graph first (with measured fidelity), real-model interventions second.
+
+Prerequisites lineage (see the other lab writeups):
+- Lab 8: transcoders as input→output objects, de-embedding, bare-LN convention,
+  the requirement that the dictionary's residue be named rather than hidden.
+- Lab 6: manual circuit discovery (screen/attr/CAUSAL prune to F/C/M on held-out)
+  as the direct comparison; the induction vignette is deliberately chosen to
+  expose the blind spot of a frozen-attention instrument.
+- Lab 5: factual recall domain and real-model interventions (here feature edits
+  instead of activation patching).
+- Lab 7: causal edits on the *real* model with random matched controls and
+  measured side effects (the supernode suppression/substitution here).
+- Lab 2: direct attribution (here linearized on the frozen replacement).
 
 The lab has four pieces.
 
@@ -25,15 +38,16 @@ The lab has four pieces.
 * **Graph as hypothesis, interventions as test.** The graph is attribution on a
   replacement model. It becomes evidence about the real model only when feature
   edits, suppressions, substitutions, and random matched controls are run on
-  the real GPT-2 forward pass.
+  the real GPT-2 forward pass. "The graph proposes. The intervention disposes."
 
 * **Lab 6 confrontation.** The same signed ledger is computed for an induction
   prompt. Frozen-attention attribution graphs are expected to be least helpful
   exactly where Lab 6's manual attention-head circuit was strongest. That is a
-  feature of the lesson, not a bug in the microscope.
+  feature of the lesson, not a bug in the microscope. The two-panel
+  influence_composition.png makes the complementary blind spots quantitative.
 
 Evidence level: ATTRIBUTION for the graph itself; CAUSAL only for successful,
-controlled interventions on the real model.
+controlled interventions on the real model (with matched random control).
 """
 
 from __future__ import annotations
@@ -81,6 +95,10 @@ PARAPHRASES = [
      "subject": " France", "target": " Paris", "distractor": " Berlin"},
     {"id": "para_largest", "prompt": "The largest city in France is",
      "subject": " France", "target": " Paris", "distractor": " Berlin"},
+    {"id": "para_known", "prompt": "It is well known that the capital of France is",
+     "subject": " France", "target": " Paris", "distractor": " Berlin"},
+    {"id": "para_official", "prompt": "The official capital of France remains",
+     "subject": " France", "target": " Paris", "distractor": " Berlin"},
 ]
 COUNTERFACTUALS = [
     {"id": "italy", "prompt": "The capital of Italy is",
@@ -91,6 +109,10 @@ COUNTERFACTUALS = [
      "subject": " Spain", "target": " Madrid", "distractor": " Paris"},
     {"id": "russia", "prompt": "The capital of Russia is",
      "subject": " Russia", "target": " Moscow", "distractor": " Paris"},
+    {"id": "canada", "prompt": "The capital of Canada is",
+     "subject": " Canada", "target": " Ottawa", "distractor": " Paris"},
+    {"id": "australia", "prompt": "The capital of Australia is",
+     "subject": " Australia", "target": " Canberra", "distractor": " Paris"},
 ]
 
 # Lab 6's behavior, revisited with this lab's instrument. The graph should be
@@ -103,7 +125,8 @@ INDUCTION_VIGNETTE = {
 
 # Node budgets by tier: how many feature nodes the backward-flow selection
 # keeps (one backward pass per kept node, so this is also the compute knob).
-GRAPH_NODES_BY_TIER = {"a": 16, "b": 28, "c": 40}
+# Slightly raised for full tier to support more robust edge statistics.
+GRAPH_NODES_BY_TIER = {"a": 16, "b": 28, "c": 48}
 INTERVENTION_K = 25          # features suppressed/substituted at the subject site
 EXPAND_DEPTH = 2             # backward-flow expansion rounds beyond the logit node
 EDGE_KEEP_PER_TARGET = 8     # incoming edges kept per node for the adjacency/plot
@@ -698,8 +721,12 @@ def build_graph(ctx, bundle, tcs, cap, *, node_budget: int, fact: dict[str, Any]
     denom = direct_abs["features_all"] + direct_abs["embeddings"] + direct_abs["errors"]
     # The discriminating view is the SIGNED decomposition: bias + emb + feat
     # + err + b_dec sums to the metric exactly (the reconstruction check).
-    # |edge|-mass shares can look similar for very different mechanisms; the
-    # signed ledger says who actually paid for the logit difference.
+    # |edge|-mass shares can look similar for very different mechanisms (fact and
+    # induction can both show high feature |mass|); the *signed* ledger is what
+    # discriminates (e.g. in the reference run features paid +2.34 of the fact's
+    # +3.01, while embeddings + errors dominated the induction prompt and features
+    # paid little). This is the quantitative form of the Lab 6 vs Lab 9
+    # confrontation.
     signed = {
         "bias_path": round(bias, 4),
         "embeddings": round(totals["emb"], 4),
@@ -756,10 +783,14 @@ def run_with_feature_edits(bundle, tcs, prompt: str, edits: list[tuple[int, int,
     """Real-model forward with feature edits applied as decoder-direction
     deltas to the MLP output: mlp_out[pos] += (new_act - real_act) * w_dec[f].
 
-    This is the crucial epistemics of the lab: the GRAPH lives in the
-    replacement model, but the intervention is measured on the REAL model -
-    a graph hypothesis that only works in its own idealization is not an
-    explanation of the model anyone deployed.
+    This is the crucial epistemics of the lab (parallel to Lab 7's "steer on
+    the real model, not the monitor"): the GRAPH lives in the replacement
+    model (frozen attention + transcoders + explicit error nodes), but every
+    causal claim is earned by edits on the REAL forward pass. A graph
+    hypothesis that only works inside its own idealization is not an
+    explanation of the model anyone deployed. The random matched control
+    of identical size is what turns "the supernode moved things" into
+    "the supernode moved things *specifically*."
     """
     import torch
 
@@ -1069,6 +1100,7 @@ def plot_graph(ctx, bundle, graph, name: str, title: str) -> None:
     embeddings squares, the logit node a star; edge width tracks |weight|."""
     import matplotlib.pyplot as plt
 
+    bench._ensure_plot_style()
     cap = graph["cap"]
     seq = len(cap["tokens"])
     fig, ax = plt.subplots(figsize=(max(8.0, 1.7 * seq), 8.0))
@@ -1136,6 +1168,7 @@ def plot_influence_composition(ctx, fact_inf, ind_inf) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
 
+    bench._ensure_plot_style()
     cats = ["bias_path", "embeddings", "features", "errors", "transcoder_bias"]
     labels = ["bias\npath", "token\nembeddings", "features", "error\nnodes", "transcoder\nbias"]
     colors = ["#bbbbbb", "#444444", "tab:green", "tab:orange", "#8888bb"]
@@ -1154,6 +1187,8 @@ def plot_influence_composition(ctx, fact_inf, ind_inf) -> None:
         ax.set_title(title, fontsize=10)
         ax.legend(fontsize=8)
         ax.grid(True, alpha=0.3)
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
     axes[0].set_ylabel("signed contribution to the logit diff")
     fig.suptitle("Who pays for the logit difference? Features carry the fact; "
                  "frozen attention routes embeddings for induction")
@@ -1495,13 +1530,15 @@ def write_summary(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph
         "",
         "## Reading order",
         "",
-        "1. `graph_card.md` - the deliverable.",
-        "2. `plots/attribution_graph.png` then `graphs/pruned_graph.json` - the object itself.",
-        "3. `tables/intervention_results.csv`, `plots/intervention_effects.png` - the causal test.",
-        "4. `plots/influence_composition.png` - Lab 6 vs Lab 9, one picture.",
-        "5. `tables/paraphrase_robustness.csv` - what survives surface change.",
-        "6. `tables/logit_edge_sources.csv`, `tables/node_budget_curve.csv`, and `tables/supernode_features.csv` - pruning and intervention audits.",
-        "7. `diagnostics/` - exactness, edge-reconstruction, no-op checks, tokenization, and build manifest.",
+        "Instrument health (the receipts) first, then the deliverable and the test.",
+        "",
+        "1. `diagnostics/replacement_exactness.json`, `edge_reconstruction_check.json`, `feature_edit_noop_check.json` - the iron gates. No receipts, no graph.",
+        "2. `graph_card.md` - the deliverable (hypothesis written before interventions, real-model verdict, error-node share, Lab 6 confrontation, explicit non-claims).",
+        "3. `tables/logit_edge_sources.csv` before `plots/attribution_graph.png` - raw sources (including error mass) before the pruned display graph.",
+        "4. `tables/intervention_results.csv` + `plots/intervention_effects.png` + `tables/supernode_features.csv` - the causal test on the *real* model. Look for specificity gap vs random matched control.",
+        "5. `plots/influence_composition.png` (signed ledger, fact vs induction) and `plots/edge_mass_shares.png` - the confrontation. Features pay for the fact; embeddings + errors dominate for induction. Absolute shares can mislead; signed tells the story.",
+        "6. `tables/paraphrase_robustness.csv` + `plots/paraphrase_recurrence.png` - recurring subject-site features vs template artifacts.",
+        "7. `graphs/pruned_graph.json`, `supernode_map.json`, `transcoder_stack_report.json`, and the rest of `diagnostics/` - the editable hypothesis and where the dictionary was weakest on this prompt.",
         "",
     ]
     bench.write_text(ctx.path("run_summary.md"), "\n".join(lines))

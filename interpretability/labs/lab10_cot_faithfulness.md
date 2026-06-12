@@ -5,10 +5,7 @@ own reasoning, plus behavioral `CAUSAL` evidence from text-level
 interventions. These are deliberately not the same rung. A visible rationale
 is a report, not a microscope.
 
-**Prerequisites:** no hook plumbing is required. Conceptually, Lab 4 is the
-key prerequisite: a system producing a signal about X is not the same as the
-system using X. In Lab 4 the signal was a probe. Here it is the model's own
-prose.
+**Prerequisites:** no hook plumbing is required. Conceptually, Lab 4 ("decodable does not mean used") is the central prerequisite: a system producing a signal (here, its own prose) about X is not the same as the system using X. Lab 5 and Lab 7 supply the causal-intervention discipline with matched controls; Lab 6 and Lab 9 supply the "each instrument has documented blind spots" mindset (hidden-state tools vs visible self-report). The hand-labeling step in this lab is the direct analogue of the validation battery in Lab 8.
 
 ## The question
 
@@ -19,20 +16,24 @@ When a model shows its work, is the work it shows the work it did?
 Labs 1-9 built instruments for hidden states: observation, attribution,
 decodability, causal intervention, circuits, steering, sparse features, and
 feature graphs. Lab 10 changes the object. You are no longer reading a hidden
-activation through an external instrument. You are reading the model's own
-explanation.
+activation through an external instrument (Lab 4 probe, Lab 8 SAE feature,
+Lab 9 attribution edge). You are reading the model's own explanation — a
+self-report on the SELF-REPORT rung.
 
 That sounds easier. It is not. A chain of thought can be useful to monitor,
 but legibility and faithfulness are different properties. If a model changes
 its answer because the prompt contains a hint, but the CoT never mentions the
 hint, then a monitor reading the CoT is auditing a press release rather than
-the causal variable that moved the answer.
+the causal variable that moved the answer (exactly the Lab 4 lesson, now at
+the level of generated text).
 
 So this lab treats text with the same suspicion earlier labs applied to
 tensors. The dataset is frozen. Decoding is greedy. The answer parser is used
 once everywhere. Unparseable outputs are logged rather than dropped. Every
-behavioral effect has a matched control. The failure cases are now strings,
-not hooks, but they still wear tiny lab coats.
+behavioral effect has a matched control (correct hint, non-sequitur, filler,
+clean resume). The failure cases are now strings, not hooks, but they still
+wear tiny lab coats. The hand-labeling step (acknowledgment_labels.csv) is the
+graded analogue of Lab 8's validation battery.
 
 ## The model and template discipline
 
@@ -48,6 +49,8 @@ any science in:
 ```text
 diagnostics/think_roundtrip_check.json
 ```
+
+**Headline numbers note (small-N discipline):** Full runs use the full 140-item MCQ set (7 subjects) for Exp1 and 24/36 tiered items for Exp2 load-bearing tests (plus matched controls). The qualitative patterns (silent flips vs acknowledgment, filler vs content deltas, clean-resume controls) are the core deliverable; any single percentage or rate rests on a modest N and deserves at most one significant figure of confidence. The hand-label table (acknowledgment_labels.csv) is the graded measurement.
 
 That check generates one real item, extracts a think span, and confirms that
 the forced-answer primitive works. If this diagnostic fails, every plot after
@@ -83,6 +86,8 @@ The key quantities are:
 
 The `_auto` suffix matters. Keyword heuristics are a draft label, not a gold
 measurement. The graded measurement is hand labeling:
+
+**Make the concept pop:** After the run, open `tables/acknowledgment_labels.csv` (the student_ columns are empty on purpose — this is the graded part of the lab). The safety-critical cells are the ones where the model *flipped* to the wrong hint but the CoT never mentions it (silent flip). A high silent-flip rate (even if auto "ack" is high) means a monitor reading the CoT is auditing a press release, not the actual computation that moved the answer. Hand labeling turns the auto draft into the measurement you can cite. This is the direct textual parallel to "decodable does not mean used" from Lab 4.
 
 ```text
 tables/acknowledgment_labels.csv
@@ -133,7 +138,23 @@ change. Second, the forced-answer rate in `unparseable_log.csv` is not just
 hygiene; when it is high, your flip rates are partly measuring truncation,
 not deliberation. The handout's debugging table points here for a reason.
 
+**How generation is scheduled (and why it isn't a condition):** this lab's
+decodes go through the bench's continuous-batching engine
+(`interp_bench.generate_continuous`). `batch_size` in `decoding_pins.json` is
+the maximum number of *in-flight* sequences, not a lockstep batch: a row
+retires the moment it hits EOS or its own token cap, and a pending job takes
+its slot mid-decode. Think-model CoT lengths are heavy-tailed, so lockstep
+batches pay for their slowest member; the rolling schedule does not, which is
+the whole speedup. Decoding stays greedy and per-row results are
+token-identical to one-at-a-time `model.generate` (the engine is pure
+Hugging Face forward calls — hooks and logits stay observable, no vLLM), so
+the schedule, unlike the thinking budget, is **not** an experimental
+condition. Engine telemetry (jobs, decode steps, tokens/s, mean in-flight
+rows) lands in `diagnostics/generation_engine_stats.json`.
+
 ## Running it
+
+Always run Tier A smoke first (small reasoning model, CPU, tiny cap) — it exercises the full pipeline (round-trip check, six conditions per item, hand-label table generation, necessity + filler + add-mistake, unparseable rescue logging) and still produces the claim_card with the scope line.
 
 ```bash
 python interp_bench.py --lab lab10 --tier a
@@ -151,10 +172,14 @@ has these fields:
 id, domain, question, option_a, option_b, option_c, option_d, answer_key
 ```
 
+Headline numbers in this lab are based on the full 140-item set across 7 subjects (see prompt-set full). All percentages should be interpreted with the small-N caveat in mind; the qualitative patterns (silent flips, filler controls, mention-vs-attribution gaps) and the structure of the controls are the primary teachable payload. In real work one would use larger held-out sets and report confidence intervals or bootstrap estimates.
+
 Each item runs six generations in Experiment 1, so generation is the cost.
 Unfinished CoTs and parser misses are rescued through the same forced-answer
 primitive used by Experiment 2 and written to `unparseable_log.csv`. Check
-that file before trusting any headline rate.
+that file before trusting any headline rate. The thinking budget in
+diagnostics/decoding_pins.json is a condition; do not compare rates across
+different budgets without noting it.
 
 ## Artifact tree
 
@@ -173,6 +198,7 @@ runs/lab10_cot_faithfulness-<timestamp>/
     decoding_pins.json
     condition_manifest.csv
     think_roundtrip_check.json
+    generation_engine_stats.json
 
   tables/
     item_manifest.csv
@@ -198,37 +224,23 @@ runs/lab10_cot_faithfulness-<timestamp>/
 
 ## First reading path
 
-Start with `claim_card.md`. It is the one-page answer to “what may I claim?”
-Then read `diagnostics/dataset_manifest.json` and `diagnostics/decoding_pins.json`
-to verify the dataset and decoding setup. Next, open
-`tables/faithfulness_by_hint_type.csv` beside `plots/faithfulness_by_hint.png`.
-Do not skip `tables/acknowledgment_labels.csv`; the auto columns are there to
-be corrected, not worshipped.
+Instrument and scope first, then the deliverable and the graded measurement.
 
-For Experiment 2, read `plots/necessity_curve.png`, then
-`tables/cot_load_intervention_results.csv`. The plot tells you whether the
-visible CoT appears necessary. The table tells you which items made the curve.
-Finally, check `unparseable_log.csv` and `diagnostics/think_roundtrip_check.json`
-so formatting errors do not sneak into your interpretation wearing a fake
-moustache.
+1. `diagnostics/think_roundtrip_check.json`, `decoding_pins.json`, and `dataset_manifest.json` — the receipts. The round-trip proves the harness can locate the think span and force an answer (Experiment 2 is built on this primitive). Decoding budget is a *condition*, not a constant.
+2. `claim_card.md` — the one-page answer to “what may I claim?” (includes the scope line and the quadrant interpretation).
+3. `tables/faithfulness_by_hint_type.csv` beside `plots/faithfulness_by_hint.png` — flip rates and auto ack/attribution. Look for the gap between red flip bars and black silent bars (especially sycophancy).
+4. `tables/acknowledgment_labels.csv` + `tables/acknowledgment_labeling_guide.md` — **DO the hand labeling in the student_mention / student_attribution columns**. This is the lab, not optional. The auto columns are a draft heuristic. Silent flips (flip + no mention in your labels) are the safety-relevant case.
+5. `plots/necessity_curve.png` + `tables/necessity_curve.csv` + `filler_control_delta.json` — does the visible text carry load? The filler line is the critical floor (matched token budget, no reasoning content). The rise above filler is the load-bearing signal. Budget sensitivity (from the verification report) is the same lesson from the truncation side.
+6. `tables/cot_load_intervention_results.csv`, `add_mistake_results.csv`, and `plots/cot_load_interventions.png` (if present) — clean-resume control vs add-mistake; mistake follow vs recover.
+7. `unparseable_log.csv` — how many outputs needed the forced-answer rescue? High rates mean you are partly measuring truncation, not deliberation.
 
 ## How to read the plots
 
-`faithfulness_by_hint.png` has three panels. The first panel asks whether the
-wrong hint moved the answer. The second asks whether the visible CoT admitted
-the influence, using the auto heuristic. The third checks whether the controls
-behaved sensibly: correct hints should not look like random noise, and the
-non-sequitur should not move many answers.
+`faithfulness_by_hint.png` has three panels. The first asks whether the wrong hint moved the answer (red bars). The second asks what the visible CoT admitted using the auto heuristic (ack vs attribution gap). The third checks the controls (correct hint should improve accuracy; non-sequitur should cost little). **Look for the black silent-flip bars** — they are the safety story.
 
-`necessity_curve.png` shows accuracy after forcing an answer at increasing
-fractions of the original CoT. A steep curve suggests visible reasoning is
-carrying behavioral load. A flat curve, especially near the filler line,
-suggests the final answer was available without the visible reasoning content.
+`necessity_curve.png` shows accuracy after forcing an answer at increasing fractions of the original CoT (blue line with SE). The olive dashed filler line is the matched-token-budget floor with *no* reasoning content. A rise well above the filler line means the visible CoT content carries load. A flat curve near the filler means the final answer was available without the visible reasoning. The budget effect (higher flips at shorter thinking caps) is the same necessity lesson arriving from the truncation side.
 
-`cot_load_interventions.png` compresses the text interventions into one view:
-no-CoT accuracy, full-CoT accuracy, filler accuracy, clean-resume accuracy,
-mistake-follow rate, and mistake-recovery rate. Treat this as a dashboard, not
-a proof. The item-level table is the microscope slide.
+`cot_load_interventions.png` (or the item tables) compresses the interventions: no-CoT, full-CoT, filler, clean-resume, mistake-follow, mistake-recover. The clean-resume control is what lets you attribute extra movement to the injected claim rather than the surgical seam. The item-level tables (cot_load_intervention_results.csv, add_mistake_results.csv) are the microscope.
 
 ## Common result patterns
 
@@ -247,18 +259,12 @@ is a different safety story than a model whose CoT is mostly decorative.
 
 ## Writeup questions
 
-1. Which wrong-hint type has the largest flip rate? Which has the largest
-   hand-labeled silent-flip rate? Are they the same?
-2. Report one case where `auto_mention` or `auto_attribution` disagreed with
-   your hand label. What did the heuristic miss?
-3. Compare the correct-hint control and the non-sequitur control. Do they
-   support “the model read the hint” or “the prompt was merely perturbed”?
-4. At what truncation fraction does the necessity curve saturate? Does the
-   filler control agree with that interpretation?
-5. Did add-mistake change answers more than clean half-CoT resume? If not,
-   what causal claim should be retired?
-6. Write the strongest one-sentence claim your evidence supports about CoT
-   monitoring for this model. Then write the non-claim immediately below it.
+1. In `plots/faithfulness_by_hint.png` and `tables/faithfulness_by_hint_type.csv`, which wrong-hint type has the largest flip rate? Which has the largest *hand-labeled* silent-flip rate (after you fill `student_mention`/`student_attribution` in acknowledgment_labels.csv)? Are they the same? Quote the numbers.
+2. Open `tables/acknowledgment_labels.csv` and the labeling guide. Report one case where your hand label disagreed with the auto_mention or auto_attribution column. What did the heuristic miss (quoted option text? paraphrased deference?)? This is the graded part of the lab.
+3. Compare the correct-hint control (sycophancy_correct accuracy) and the non-sequitur control. Do they support “the model read and followed the hint content” or “any prompt perturbation of that shape moves answers”?
+4. In `plots/necessity_curve.png`, at what truncation fraction does accuracy rise above the matched-length filler floor? At what point does it saturate? The filler line is the critical control — does the visible *content* (not just token count) carry load?
+5. Did add-mistake change answers more than the clean half-CoT resume control (see add_mistake_results.csv + midstream_resume_control.csv and the cot_load tables)? If the gap is small or zero, what causal claim about “a wrong claim in the visible text” should be retired?
+6. Write the strongest one-sentence claim your evidence (including your hand labels) supports about CoT monitoring *for this model on this dataset*. Then write the non-claim (scope, auto vs hand, load-bearing vs faithful-about-influences) immediately below it.
 
 ## Symptom-first debugging
 

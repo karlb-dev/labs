@@ -2,7 +2,9 @@
 
 **Evidence level targeted:** `ATTR` for the attribution graph, upgraded to `CAUSAL` only for feature interventions that succeed on the real model with matched controls.
 
-**Prerequisites:** Lab 6's `circuit_card.md`, Lab 8's understanding of transcoders, and the evidence ladder from every earlier lab. Base model, no chat template.
+**Prerequisites:** Labs 1–8, with special weight on Lab 6's `circuit_card.md` (manual circuit, faithfulness/completeness/minimality), Lab 8 (transcoders, bare-LN convention, de-embedding "promotes", the validation battery as the model for honest residue), and the full evidence ladder. The replacement model + direct edges parallel Lab 2's frozen-norm attribution and Lab 5's localization; the real-model interventions with random matched controls parallel Lab 7's causal steering discipline. Base model, no chat template. The Lab 6 confrontation is required reading for the course's "each microscope has a blind spot" lesson.
+
+**Headline numbers note:** Edge reconstruction, influence shares, and intervention effects (suppression/substitution vs random) are measured on a handful of factual prompts + paraphrases + a small counterfactual battery + one induction vignette (expanded lists). The replacement exactness check, real-vs-random control gaps, and Lab 6 confrontation are the primary evidence; numeric edge % or recovery figures on this small population merit one-significant-figure confidence.
 
 ## The question
 
@@ -55,6 +57,8 @@ diagnostics/replacement_exactness.json
 
 No exactness, no graph.
 
+**Make the concept pop:** the replacement model is an *instrument*, not the model. Exact logits (with error nodes paying the bill) are the receipt that the linear skeleton you are about to attribute is faithful to the real forward pass up to the known, named residue. If this check fails, every downstream edge is describing a different network. The same discipline (instrument health first) appears in every prior lab; here it is the gate before the pretty graph.
+
 ### 2. Make direct-attribution edges
 
 Once attention patterns and LayerNorm denominators are frozen, the replacement network is linear in its source terms: embeddings, feature writes, error nodes, and transcoder output biases.
@@ -78,6 +82,8 @@ diagnostics/edge_reconstruction_check.json
 ```
 
 This is the little iron gate before the pretty graph garden.
+
+**Make the concept pop:** the edge-reconstruction check is the accounting identity that makes direct attribution trustworthy. Because the replacement is linear (frozen attention + norms + transcoders + explicit error), the target metric *must* equal bias + every direct edge. When the check passes to numerical tolerance, the gradients are measuring what the graph claims. When it fails, the graph is decorative. The signed version of this ledger (influence_composition.png) is what distinguishes the fact (features pay) from induction (embeddings + invisible wiring pay). Absolute |edge| shares alone are not enough — they can look similar for opposite mechanisms.
 
 ### 3. Prune backward from the logit node
 
@@ -119,6 +125,8 @@ A strong run has this shape:
 
 A failed intervention is still a good result if diagnosed correctly. A beautiful graph whose supernode intervention behaves like a random perturbation is not a mechanism claim. It is a graph-shaped hypothesis that met the real model and lost the duel.
 
+**Make the concept pop:** the random matched control is the star of the show. Suppressing the graph's subject supernode and substituting counterfactual features should move the behavior in a specific direction; suppressing the same *number* of random active subject-site features should not. The specificity gap (suppression drop minus random drop) is the causal evidence at feature level. The error-node share in the graph card is the complementary honesty line: "here is how much of the direct mass the dictionary did not describe." Both numbers live in the artifacts.
+
 ## The Lab 6 confrontation
 
 The lab also runs the same attribution machinery on Lab 6's induction-style prompt:
@@ -137,6 +145,8 @@ The important comparison is not "which plot is prettier?" It is:
 Each microscope has a blind region. The course wants you to know the silhouette of both.
 
 ## Run commands
+
+Always run Tier A (gpt2, CPU fp32, eager) first — it exercises the entire pipeline (replacement, edges, pruning, real-model interventions with matched control, paraphrase battery, induction vignette) in ~9 s after the one-time transcoder download and still produces the full set of diagnostics, a usable graph_card, and the Lab 6 confrontation numbers.
 
 ```bash
 # Inspectable miniature path. The registry may already set these defaults.
@@ -199,15 +209,16 @@ runs/lab09_attribution_graphs-.../
 
 ## First artifact-reading path
 
-Start with `graph_card.md`. It is the Lab 9 counterpart of Lab 6's circuit card and contains the mechanism hypothesis, intervention verdict, error-node share, coverage, and non-claims.
+Instrument health first (the "receipts"), then the deliverable and the causal test.
 
-Then read `diagnostics/replacement_exactness.json` and `diagnostics/edge_reconstruction_check.json`. These are not optional plumbing files. They decide whether the graph is an instrument or decorative spaghetti.
-
-Next read `tables/logit_edge_sources.csv` before `plots/attribution_graph.png`. The plot is pruned for readability. The table shows the largest raw sources into the logit node before display pruning.
-
-Then read `tables/intervention_results.csv`, `tables/supernode_features.csv`, and `diagnostics/feature_intervention_manifest.json`. These tell you whether the graph's proposed subject supernode survived contact with the real model, and whether duplicate feature assignments in substitution were collapsed correctly.
-
-Finally compare `plots/influence_composition.png` and `plots/edge_mass_shares.png`. The signed ledger says who paid for the logit difference. The absolute-share plot says how much of the graph's direct edge mass lives in features, embeddings, or error nodes.
+1. `diagnostics/replacement_exactness.json`, `edge_reconstruction_check.json`, and `feature_edit_noop_check.json` — the iron gates. Exact logits + every direct edge summing to the metric + no-op self-edits are non-negotiable. No receipts, no graph.
+2. `graph_card.md` — the Lab 9 counterpart of Lab 6's circuit card. Mechanism hypothesis (written *before* interventions), real-model intervention table, error-node accounting, paraphrase recurrence count, Lab 6 confrontation, and explicit "What this card does NOT claim".
+3. `tables/logit_edge_sources.csv` before `plots/attribution_graph.png` — the table shows the largest *raw* direct sources (including high error nodes) before the plot prunes for readability.
+4. `tables/intervention_results.csv` + `plots/intervention_effects.png` + `tables/supernode_features.csv` + `diagnostics/feature_intervention_manifest.json` — the causal test on the *real* model. Look for the specificity gap (suppression drop vs random matched control of same size). Read the actual edited features and whether they were graph-selected.
+5. `plots/influence_composition.png` (the signed ledger, fact vs induction) and `plots/edge_mass_shares.png` (absolute visibility audit). **Look for:** on the fact, features pay the bulk of the signed mass; on induction, embeddings + errors dominate while features pay little. Absolute |edge| shares can look similar (~70% features) for both behaviors — the signed decomposition is what reveals the blind spot. Error-node share is the honest "what the dictionary missed."
+6. `tables/paraphrase_robustness.csv` + `plots/paraphrase_recurrence.png` — which subject-site features recur across surface forms (mechanism candidates) vs single-template artifacts.
+7. `graphs/pruned_graph.json` and `supernode_map.json` — the editable hypothesis you can inspect or re-run with different budgets.
+8. `transcoder_stack_report.json` — per-layer FVU/L0 so you can see where the dictionary was weakest on this prompt.
 
 ## How to read the main plots
 
@@ -223,13 +234,15 @@ Finally compare `plots/influence_composition.png` and `plots/edge_mass_shares.pn
 
 ## Writeup questions
 
-1. Did replacement exactness and edge reconstruction both pass? Explain what each check means in one sentence, and what would be invalid if it failed.
-2. Which source category carried the largest **signed** contribution to the factual-recall logit diff: embeddings, features, errors, bias path, or transcoder bias?
-3. Which source category carried the largest **absolute edge mass**? If error nodes are large, what exactly has the graph failed to explain?
-4. Did subject-supernode suppression beat the random matched control? State the suppression drop, random-control drop, and specificity gap.
-5. Did counterfactual substitution increase probability on the counterfactual capital? Was that enough to call the mechanism causal?
-6. Which subject-site features recur across paraphrases? Which look like template artifacts?
-7. Compare your Lab 6 circuit card and this graph card. Which method made stronger assumptions? Which gave stronger controls? Which would you trust for an attention-routing claim, and which for an MLP-feature claim?
+1. Did replacement exactness and edge reconstruction both pass (see the two diagnostics JSONs)? Explain what each check means in one sentence, and what would be invalid if it failed. (The feature-edit no-op is the third receipt.)
+2. In `plots/influence_composition.png`, which source category carried the largest **signed** contribution to the factual-recall logit diff: embeddings, features, errors, bias path, or transcoder bias? Quote the numbers for both the capital fact (left panel) and the induction vignette (right panel).
+3. Which source category carried the largest **absolute edge mass** (see `plots/edge_mass_shares.png` and the influence ledger in the graph card)? If error nodes are large (e.g. 19%), what exactly has the graph failed to explain? The signed ledger vs absolute shares distinction is the point.
+4. Did subject-supernode suppression beat the random matched control (tables/intervention_results.csv + plots/intervention_effects.png)? State the suppression drop, random-control drop, and specificity gap. Was the random control flat while the graph-guided moves were large?
+5. Did counterfactual substitution increase probability on the counterfactual capital? Quote the p gain. Was that enough, together with the random control, to call the tested supernode causal on the real model?
+6. Which subject-site features recur across paraphrases (tables/paraphrase_robustness.csv + plots/paraphrase_recurrence.png)? Which look like template artifacts? Why is recurrence under surface change a cheap robustness screen before naming a feature in the mechanism?
+7. Compare your Lab 6 circuit card and this graph card (and the two-panel influence_composition.png). Which method made stronger assumptions (frozen attention vs treating MLPs as support)? Which gave stronger controls? Which would you trust for an attention-routing claim, and which for an MLP-feature claim? Each instrument has a documented blind spot.
+
+**Make the concept pop:** The random matched control in the substitution experiment is the star. Suppressing the "Texas" features and substituting California features should flip the capital; suppressing the same number of random features should not. The gap is causal evidence at feature level. The error-node share tells you the graph's explanatory completeness.
 
 ## Symptom-first debugging
 
@@ -266,15 +279,15 @@ Use your own artifacts. The substitution result and random control argue for the
 
 Write 3 to 4 claims.
 
-The graph-structure claim is `ATTR`. It must name the model, prompt, metric, feature share, error-node share, and kept-coverage number.
+The graph-structure claim is `ATTR`. It must name the model, prompt, metric, feature share, error-node share, and kept-coverage number (the honest residue).
 
-The intervention claim is `CAUSAL` if the real-model intervention beats the matched random control. If it does not, write a negative causal claim: the tested supernode was not validated.
+The intervention claim is `CAUSAL` if the real-model intervention (suppression + substitution) beats the matched random control with a clear specificity gap. If it does not, write a negative causal claim: the tested supernode was not validated by these interventions on the real model.
 
-The paraphrase claim is `ATTR`. It must distinguish recurring features from one-template artifacts.
+The paraphrase claim is `ATTR`. It must distinguish recurring subject-site features (mechanism candidates) from single-template artifacts.
 
-The Lab 6 comparison claim can be `OBS` or `ATTR`, depending on what your artifacts show. Its job is to scope what Lab 6 and Lab 9 are each allowed to say.
+The Lab 6 comparison claim is usually `OBS` or `ATTR`. Its job is to scope what each instrument can and cannot see: the signed ledger in influence_composition.png quantifies the blind spots (features pay for the fact; embeddings + frozen wiring pay for induction).
 
-Do not write "the graph is causal." The graph proposes. The intervention disposes.
+Do not write "the graph is causal." The graph proposes a mechanism-shaped hypothesis on a replacement model whose fidelity is measured. The controlled interventions on the *real* model (with random matched control) dispose. The error-node share and node-budget coverage are part of every claim.
 
 ## Reading
 

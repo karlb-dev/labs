@@ -1259,6 +1259,269 @@ def generate_text(
     return tokenizer.decode(new_ids, skip_special_tokens=True)
 
 
+# ---------------------------------------------------------------------------
+# Continuous-batching generation engine
+# ---------------------------------------------------------------------------
+#
+# Heavy generation labs (10, 11) batch many variable-length greedy decodes.
+# `model.generate` pays for the slowest row in every batch: finished rows keep
+# stepping as padding until the longest row hits EOS or the cap, and think-model
+# CoT lengths are heavy-tailed, so most batches contain a capped straggler.
+# This engine keeps a rolling set of in-flight rows instead: each forward is one
+# decode step for every active row; a row that finishes is retired immediately
+# and a pending job takes its slot mid-decode. Pure Hugging Face forward calls —
+# no vLLM, no custom kernels — so hooks, logits, and determinism (greedy) are
+# exactly as observable as the rest of the bench.
+#
+# Implementation notes (the parts that are easy to get wrong):
+# - The KV cache is packed left-padded: per layer, tensors of shape
+#   (n_active, n_kv_heads, padded_len, head_dim). Padding only ever sits on the
+#   left, so a row's valid region is always its trailing `valid_len` positions.
+# - Pad positions hold garbage KV; the 2D attention mask (0 over pads) is what
+#   keeps them out of every dot product. Correctness rests on the mask, not on
+#   the pad contents.
+# - position_ids are LOGICAL (real-token count), never physical cache offsets;
+#   prefill passes cumsum(mask)-1 so left-padded rows get correct rotary phases.
+# - Repacking (slice retired rows out, admit prefilled rows, trim shared left
+#   pad) happens only on retire/admit events, not every step.
+
+# Telemetry from the most recent generate_continuous call (wall time, steps,
+# token counts, mean active rows). Labs may persist it under diagnostics/.
+LAST_GENERATION_STATS: dict[str, Any] = {}
+
+
+def generate_continuous(
+    bundle: ModelBundle,
+    prompts: Sequence[str],
+    max_new_tokens: int | Sequence[int],
+    *,
+    max_concurrent: int = 16,
+    eos_token_id: int | Sequence[int] | None = None,
+    skip_special_tokens: bool = False,
+    progress_label: str = "",
+) -> list[str]:
+    """Greedy-decode many prompts with continuous batching; returns continuations.
+
+    ``max_new_tokens`` may be a single cap or one cap per prompt, so cheap jobs
+    (e.g. 8-token forced answers) can share the schedule with 2048-token think
+    jobs instead of waiting for their own batch. Output order matches input
+    order. Decoding is greedy (the bench's frozen-decoding rule); EOS defaults
+    to the tokenizer's ``eos_token_id``.
+    """
+    import torch
+    import torch.nn.functional as F
+    from transformers import DynamicCache
+
+    n_jobs = len(prompts)
+    if n_jobs == 0:
+        return []
+    caps = (
+        [int(max_new_tokens)] * n_jobs
+        if isinstance(max_new_tokens, int)
+        else [int(c) for c in max_new_tokens]
+    )
+    if len(caps) != n_jobs:
+        raise ValueError(f"max_new_tokens has {len(caps)} entries for {n_jobs} prompts.")
+
+    tokenizer = bundle.tokenizer
+    model = bundle.model
+    device = bundle.input_device
+    if eos_token_id is None:
+        eos_token_id = tokenizer.eos_token_id
+    eos_ids = {int(e) for e in (
+        [eos_token_id] if isinstance(eos_token_id, int) else list(eos_token_id or [])
+    )}
+    pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else tokenizer.eos_token_id
+
+    # Packed state for the active rows (parallel lists, one entry per row).
+    job_idx: list[int] = []        # original prompt index per active row
+    valid_lens: list[int] = []     # logical (real-token) KV length per row
+    gen_ids: list[list[int]] = []  # tokens generated so far per row
+    kv: list[tuple[Any, Any]] = []  # per layer: (key, value), (N, H, L_pad, D)
+    last_tokens: list[int] = []    # next decode-step input per row
+    attn_mask: Any = None          # (N, L_pad) long on `device`
+
+    results: dict[int, list[int]] = {}
+    pending = list(range(n_jobs))
+    finished_rows: list[int] = []  # active-row indices that just retired
+
+    wall_start = time.perf_counter()
+    total_steps = 0
+    total_tokens = 0
+    active_row_steps = 0
+
+    def prefill(indices: list[int]) -> tuple[list, Any, list[int], list[int], list[int]]:
+        """Prefill a chunk of jobs (left-padded); returns its packed state."""
+        enc = tokenizer(
+            [prompts[i] for i in indices],
+            return_tensors="pt",
+            padding=True,
+            add_special_tokens=False,
+        )
+        ids = enc["input_ids"].to(device)
+        mask = enc["attention_mask"].to(device)
+        # Left padding + raw forward: positions must be derived from the mask,
+        # or padded rows get shifted rotary phases.
+        position_ids = (mask.cumsum(dim=1) - 1).clamp(min=0)
+        with torch.inference_mode():
+            out = model(
+                input_ids=ids,
+                attention_mask=mask,
+                position_ids=position_ids,
+                past_key_values=DynamicCache(),
+                use_cache=True,
+            )
+        first = out.logits[:, -1, :].argmax(dim=-1).tolist()
+        new_kv = [(out.past_key_values[li][0], out.past_key_values[li][1])
+                  for li in range(len(out.past_key_values))]
+        lens = mask.sum(dim=1).tolist()
+        return new_kv, mask, lens, first, indices
+
+    def merge(chunk_kv: list, chunk_mask: Any, chunk_lens: list[int],
+              chunk_first: list[int], chunk_jobs: list[int]) -> None:
+        """Append a prefilled chunk to the packed active state (left-pad align)."""
+        nonlocal kv, attn_mask
+        if not job_idx:
+            kv = chunk_kv
+            attn_mask = chunk_mask
+        else:
+            old_len = attn_mask.shape[1]
+            new_len = chunk_mask.shape[1]
+            target = max(old_len, new_len)
+            merged: list[tuple[Any, Any]] = []
+            for (k_old, v_old), (k_new, v_new) in zip(kv, chunk_kv):
+                if old_len < target:
+                    k_old = F.pad(k_old, (0, 0, target - old_len, 0))
+                    v_old = F.pad(v_old, (0, 0, target - old_len, 0))
+                if new_len < target:
+                    k_new = F.pad(k_new.to(k_old.device), (0, 0, target - new_len, 0))
+                    v_new = F.pad(v_new.to(v_old.device), (0, 0, target - new_len, 0))
+                else:
+                    k_new = k_new.to(k_old.device)
+                    v_new = v_new.to(v_old.device)
+                merged.append((torch.cat([k_old, k_new], dim=0), torch.cat([v_old, v_new], dim=0)))
+            kv = merged
+            attn_mask = torch.cat(
+                [
+                    F.pad(attn_mask, (target - old_len, 0)),
+                    F.pad(chunk_mask, (target - new_len, 0)),
+                ],
+                dim=0,
+            )
+        job_idx.extend(chunk_jobs)
+        valid_lens.extend(chunk_lens)
+        last_tokens.extend(chunk_first)
+        gen_ids.extend([[t] for t in chunk_first])
+        nonlocal total_tokens
+        total_tokens += len(chunk_jobs)  # prefill emits each row's first token
+
+    def retire_and_admit() -> None:
+        """Drop finished rows, trim shared left pad, admit pending jobs."""
+        nonlocal kv, attn_mask, finished_rows
+        keep = [r for r in range(len(job_idx)) if r not in finished_rows]
+        for r in sorted(finished_rows, reverse=True):
+            results[job_idx[r]] = gen_ids[r]
+            del job_idx[r], valid_lens[r], gen_ids[r], last_tokens[r]
+        finished_rows = []
+        if keep and len(keep) < kv[0][0].shape[0]:
+            keep_cpu = torch.tensor(keep)
+            kv = [
+                (k.index_select(0, keep_cpu.to(k.device)), v.index_select(0, keep_cpu.to(v.device)))
+                for k, v in kv
+            ]
+            attn_mask = attn_mask.index_select(0, keep_cpu.to(attn_mask.device))
+        elif not keep:
+            kv = []
+            attn_mask = None
+        # Trim left padding shared by every remaining row.
+        if job_idx:
+            slack = attn_mask.shape[1] - max(valid_lens)
+            if slack > 0:
+                kv = [(k[:, :, slack:, :], v[:, :, slack:, :]) for k, v in kv]
+                attn_mask = attn_mask[:, slack:]
+        if pending and len(job_idx) < max_concurrent:
+            chunk = [pending.pop(0) for _ in range(min(len(pending), max_concurrent - len(job_idx)))]
+            merge(*prefill(chunk))
+
+    # First-token handling: prefill already produced one token per row, so a
+    # row whose cap is 1 (or whose first token is EOS) retires before stepping.
+    def mark_finished() -> None:
+        for r in range(len(job_idx)):
+            if r in finished_rows:
+                continue
+            tok = gen_ids[r][-1]
+            if tok in eos_ids or len(gen_ids[r]) >= caps[job_idx[r]]:
+                finished_rows.append(r)
+
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    old_side = getattr(tokenizer, "padding_side", "right")
+    tokenizer.padding_side = "left"
+    try:
+        first_chunk = [pending.pop(0) for _ in range(min(len(pending), max_concurrent))]
+        merge(*prefill(first_chunk))
+        mark_finished()
+        while job_idx or pending:
+            if finished_rows or (pending and len(job_idx) < max_concurrent):
+                retire_and_admit()
+                mark_finished()
+                continue
+            if not job_idx:
+                continue
+            n = len(job_idx)
+            step_ids = torch.tensor([[t] for t in last_tokens], dtype=torch.long, device=device)
+            position_ids = torch.tensor([[v] for v in valid_lens], dtype=torch.long, device=device)
+            attn_mask = torch.cat(
+                [attn_mask, torch.ones((n, 1), dtype=attn_mask.dtype, device=attn_mask.device)],
+                dim=1,
+            )
+            cache = DynamicCache()
+            for li, (k, v) in enumerate(kv):
+                cache.update(k, v, li)
+            with torch.inference_mode():
+                out = model(
+                    input_ids=step_ids,
+                    attention_mask=attn_mask,
+                    position_ids=position_ids,
+                    past_key_values=cache,
+                    use_cache=True,
+                )
+            next_tokens = out.logits[:, -1, :].argmax(dim=-1).tolist()
+            kv = [(out.past_key_values[li][0], out.past_key_values[li][1])
+                  for li in range(len(out.past_key_values))]
+            for r in range(n):
+                last_tokens[r] = int(next_tokens[r])
+                gen_ids[r].append(last_tokens[r])
+                valid_lens[r] += 1
+            total_steps += 1
+            total_tokens += n
+            active_row_steps += n
+            if progress_label and total_steps % 200 == 0:
+                done = len(results)
+                print(f"[bench] {progress_label}: {done}/{n_jobs} jobs done, "
+                      f"{total_tokens} tokens, {len(job_idx)} in flight")
+            mark_finished()
+    finally:
+        tokenizer.padding_side = old_side
+
+    wall = time.perf_counter() - wall_start
+    LAST_GENERATION_STATS.clear()
+    LAST_GENERATION_STATS.update({
+        "engine": "continuous",
+        "n_jobs": n_jobs,
+        "max_concurrent": max_concurrent,
+        "decode_steps": total_steps,
+        "generated_tokens": total_tokens,
+        "mean_active_rows": round(active_row_steps / total_steps, 2) if total_steps else 0.0,
+        "wall_seconds": round(wall, 2),
+        "tokens_per_second": round(total_tokens / wall, 1) if wall > 0 else 0.0,
+    })
+    return [
+        tokenizer.decode(results[i], skip_special_tokens=skip_special_tokens)
+        for i in range(n_jobs)
+    ]
+
+
 def next_token_logits(
     bundle: ModelBundle, templated_prompt: str, *, steer: tuple[int, Any, float] | None = None
 ) -> Any:
@@ -2767,14 +3030,70 @@ CATEGORY_COLORS = {
     "control": "#9467bd",
 }
 
+# Additional palette for control conditions (real vs random/shuffled/etc.).
+CONTROL_COLORS = {
+    "real": "#d62728",
+    "random": "#7f7f7f",
+    "shuffled": "#ff7f0e",
+    "control": "#9467bd",
+    "mismatched": "#8c564b",
+    "filler": "#bcbd22",
+    "non_sequitur": "#17becf",
+}
+
+
+def configure_matplotlib() -> None:
+    """One-time global polish for all lab plots (clean, readable, consistent)."""
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+
+    mpl.rcParams.update({
+        "figure.dpi": 140,
+        "savefig.dpi": 160,
+        "font.size": 9,
+        "axes.titlesize": 11,
+        "axes.labelsize": 9,
+        "legend.fontsize": 8,
+        "xtick.labelsize": 8,
+        "ytick.labelsize": 8,
+        "axes.grid": True,
+        "grid.alpha": 0.25,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "lines.linewidth": 1.6,
+        "patch.linewidth": 1.0,
+        "figure.facecolor": "white",
+        "axes.facecolor": "white",
+    })
+
 
 def new_figure(figsize: tuple[float, float] = (8.0, 5.0)) -> tuple[Any, Any]:
-    """Create a matplotlib figure with the bench's house style."""
+    """Create a matplotlib figure with the bench's house style (clean spines, consistent fonts)."""
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=figsize)
-    ax.grid(True, alpha=0.3)
+    ax.grid(True, alpha=0.25)
+    for spine in ("top", "right"):
+        ax.spines[spine].set_visible(False)
+    fig.patch.set_facecolor("white")
+    ax.set_facecolor("white")
     return fig, ax
+
+
+def style_ax(ax: Any, title: str | None = None, xlabel: str | None = None, ylabel: str | None = None,
+             legend: bool = True, legend_loc: str = "best") -> None:
+    """Apply consistent final styling to an axes."""
+    if title:
+        ax.set_title(title)
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    if legend and ax.get_legend_handles_labels()[0]:
+        ax.legend(loc=legend_loc, frameon=False, fontsize=8)
+    ax.grid(True, alpha=0.25)
+    for spine in ("top", "right"):
+        ax.spines[spine].set_visible(False)
 
 
 def save_figure(ctx: RunContext, fig: Any, name: str, description: str) -> None:
@@ -2794,6 +3113,31 @@ def close_figure(fig: Any) -> None:
     import matplotlib.pyplot as plt
 
     plt.close(fig)
+
+
+def add_vline(ax: Any, x: float, label: str | None = None, *, color: str = "#d62728",
+              ls: str = "--", lw: float = 1.2, alpha: float = 0.75) -> None:
+    """Add a vertical reference line (handoff, decision, zero-dose, etc.) with optional label."""
+    ax.axvline(x, color=color, linestyle=ls, linewidth=lw, alpha=alpha)
+    if label:
+        ax.text(x, 0.98, label, transform=ax.get_xaxis_transform(), rotation=90,
+                va="top", ha="right", fontsize=7, color=color, alpha=min(1.0, alpha + 0.1))
+
+
+_plot_style_configured = False
+
+
+def _ensure_plot_style() -> None:
+    """Idempotent style setup so every lab benefits even if it imports plt directly.
+    Safe to call in environments without matplotlib (e.g. lint or partial imports)."""
+    global _plot_style_configured
+    if _plot_style_configured:
+        return
+    try:
+        configure_matplotlib()
+    except Exception:
+        return
+    _plot_style_configured = True
 
 
 # ---------------------------------------------------------------------------
@@ -2996,9 +3340,17 @@ def configure_env(run_dir: pathlib.Path) -> None:
 def main(argv: Sequence[str] | None = None) -> None:
     args = parse_args(argv)
     apply_tier_defaults(args)
+
+    # Ensure the claim ledger skeleton exists at the course root before anything
+    # heavy can fail (including the Lab 1 --tier a smoke test). This fulfills the
+    # original pre-lab goal of early initialization so students see their running
+    # dossier immediately. (Appends still require --append-ledger; writing claims
+    # is coursework.)
+    ensure_ledger()
     run_dir = make_run_dir(args)
     run_dir.mkdir(parents=True, exist_ok=True)
     configure_env(run_dir)
+    _ensure_plot_style()
 
     with ConsoleTee(run_dir / "logs"):
         print(f"[bench] run directory: {run_dir}")
@@ -3017,7 +3369,6 @@ def main(argv: Sequence[str] | None = None) -> None:
 
         bundle = load_model_and_tokenizer(ctx)
         ctx.bind_model(bundle)
-        ensure_ledger()
 
         # Labs import this module by name. When this file runs as a script
         # the module is '__main__', so alias it to keep one shared instance.

@@ -1,30 +1,37 @@
 """Lab 4: Probing without fooling yourself, now featuring truth.
 
-This lab targets the DECODE rung of the evidence ladder. It asks what is
-linearly decodable from the residual stream, including statement truth, while
-keeping every answer glued to controls.
+This lab targets the DECODE rung of the evidence ladder (building directly on
+the residual-stream indexing and "readout is an instrument" caution from Lab 1,
+the frozen-norm discipline from Lab 2, and the routing-vs-contribution
+distinction from Lab 3). It asks what is linearly decodable from the residual
+stream, including statement truth, while keeping every answer glued to controls.
 
-Two tracks are measured from the same cached forward passes:
+Two tracks are measured from the same cached forward passes (pre-final-norm
+residuals at the final token position, exactly as in Labs 1-3):
 
 * Surface track: a deliberately shallow final-word letter feature. This gives
-  students a calibration curve for "trivially decodable" information.
+  students a calibration curve for "trivially decodable" information on the
+  same activations.
 * Truth track: true/false statement labels from three frozen families in
-  data/: cities, comparisons, and negations.
+  data/: cities, comparisons, and negations (the last is the inversion test).
 
 Two probes are fit at every residual-stream depth:
 
 * logistic regression, which can find any separating direction available to a
   linear classifier;
 * mass-mean, the difference of class means, which is the direction saved for
-  Lab 7's causal steering test.
+  Lab 7's causal steering test (the bridge that turns "decodable" into a
+  testable hypothesis about use).
 
 The lab's product is not a single accuracy number. It is a skepticism packet:
 shuffled-label refits, random-direction controls, length and majority
-baselines, grouped train/eval splits, family-held-out transfer, calibration,
-activation-norm diagnostics, and a saved truth direction with a readable card.
+baselines, grouped train/eval splits (to prevent template leakage), family-
+held-out transfer (including negation inversion), calibration, activation-norm
+diagnostics (the "outlier specimen" that can hijack a mean), and a saved truth
+direction with a readable card.
 
-Evidence level: DECODE. Nothing here shows that the model uses the direction.
-Lab 7 cashes that check with interventions.
+Evidence level: DECODE. Nothing here shows that the model *uses* the direction.
+Lab 7 cashes that check with interventions on the saved mass-mean vector.
 """
 
 from __future__ import annotations
@@ -292,8 +299,10 @@ def require_two_classes(y: Any, *, context: str) -> None:
 def fit_logistic(X: Any, y: Any, l2: float = LOGISTIC_L2) -> dict[str, Any]:
     """L2-regularized logistic regression via torch LBFGS.
 
-    Eval data is standardized with train-set statistics. Leaking eval-set
-    scale into a probe is a quiet leakage bug.
+    Eval data is standardized with train-set statistics only (see the mu/sigma
+    saved in the probe dict). Leaking eval-set scale into a probe is a quiet
+    leakage bug that makes "decodability" look stronger than it is. This is the
+    same "instrument hygiene" spirit as the frozen-norm linearization in Lab 2.
     """
     import torch
 
@@ -351,7 +360,15 @@ def eval_logistic_metrics(probe: dict[str, Any], X: Any, y: Any) -> dict[str, fl
 
 
 def fit_mass_mean(X: Any, y: Any) -> dict[str, Any]:
-    """Difference of class means; threshold at the projected midpoint."""
+    """Difference of class means; threshold at the projected midpoint.
+
+    This is the probe whose direction is saved for Lab 7's causal test. It is
+    deliberately simpler than logistic regression (difference of means rather
+    than max-margin separator) so that an intervention ("add this vector at
+    this scale") has a clean geometric meaning. The disagreement between
+    logistic and mass-mean is data, not noise — it is one of the lab's core
+    artifacts (see the decodability plot and the truth_projection_panels).
+    """
     require_two_classes(y, context="mass-mean probe")
     mu_true = X[y == 1].mean(dim=0)
     mu_false = X[y == 0].mean(dim=0)
@@ -1378,23 +1395,24 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         f"- statements: {len(statements)} across {len(FAMILIES)} frozen families (per-family cap {per_family_cap or 'none'})",
         f"- probe position: final token | probes: logistic (LBFGS, L2={LOGISTIC_L2}) + mass-mean",
         f"- split: grouped by leakage-resistant keys at train fraction {TRAIN_FRACTION}",
-        "- evidence level: `DECODE`; nothing here shows the model uses these directions",
+        "- evidence level: `DECODE` — nothing here shows the model USES these directions (that test is Lab 7)",
         "",
         "## 1. What behavior was studied?",
         "",
-        "No generation behavior was studied directly. The lab probes representations of frozen true/false statements,",
-        "plus a deliberately shallow final-word feature as the calibration track.",
+        "No generation behavior was studied directly. The lab probes REPRESENTATIONS (pre-final-norm residual at",
+        "statement end, same convention as Labs 1-3): truth of frozen statements, plus a deliberately shallow",
+        "final-word feature as the calibration track that shows 'decodability is cheap'.",
         "",
         "## 2. What internal object was measured?",
         "",
         "Linear decodability from the final-token pre-norm residual stream at every depth, with logistic and",
-        "mass-mean probes. The saved object is a mass-mean truth direction for Lab 7.",
+        "mass-mean probes. The saved object is a mass-mean truth direction for Lab 7's causal test.",
         "",
         "## 3. What controls were used?",
         "",
         f"Grouped train/eval split audit, shuffled-label refits (x{N_SHUFFLES}), random directions (x{N_RANDOM_DIRS}),",
         "token-length and majority baselines, family-held-out transfer including negations, surface-track calibration,",
-        "activation-norm diagnostics, and logistic calibration.",
+        "activation-norm diagnostics (the outlier specimen that can hijack a mean), and logistic calibration.",
         "",
         "## 4. Headline numbers",
         "",
@@ -1426,10 +1444,16 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "",
         "## 7. Caveats students must carry forward",
         "",
-        "- DECODE is not USE. The saved direction's causal test is Lab 7's job.",
-        "- Truth here means truth on three frozen families, not truth as a universal latent variable.",
-        "- Below-chance negation transfer can be structured anti-correlation, not mere failure.",
-        "- Logistic and mass-mean probes license different claims. Disagreement is data.",
+        "- DECODE is not USE. The saved direction's causal test (does adding it actually change",
+        "  behavior toward truth on held-out items?) is Lab 7's job. This lab only earns the",
+        "  'accessible linear information on these families' part of any claim.",
+        "- Truth here means truth on three frozen families with the specific templates and",
+        "  grouped splits used. The falsifiers name the fourth-family test for a reason.",
+        "- Below-chance negation transfer can be structured anti-correlation (the probe read",
+        "  the surface polarity), not mere failure. This is often the most informative result.",
+        "- Logistic and mass-mean probes license different claims. Disagreement is data, not",
+        "  noise. The surface track on the same activations shows that even a trivial feature",
+        "  can look 'deep' if you only look at raw accuracy without controls.",
         "",
     ]
     summary_path = ctx.path("run_summary.md")

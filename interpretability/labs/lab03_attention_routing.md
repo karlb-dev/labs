@@ -6,7 +6,7 @@
 
 Which positions are routed where, and when does that routing matter for the output?
 
-Those are not the same question. A head can stare at the right token and write nothing useful. Another can have unimpressive-looking attention but contribute strongly through its value/output channel. The whole lab is built to cure heatmap astrology: you will measure pattern, contribution, and causal effect separately, then decide which claims each measurement actually licenses.
+Those are not the same question. A head can stare at the right token and write nothing useful. Another can have unimpressive-looking attention but contribute strongly through its value/output channel. The whole lab is built to cure heatmap astrology: you will measure pattern (OBS), contribution (ATTR, using the same frozen-norm convention as Lab 2), and causal effect (CAUSAL via scoped ablation) separately, then decide which claims each measurement actually licenses. A beautiful diagonal heatmap on a synthetic repeat is not evidence that the head "does induction" for the model's answer until it also has non-zero attribution *and* a measurable ablation effect.
 
 ## The evidence ladder for a head
 
@@ -17,6 +17,8 @@ Those are not the same question. A head can stare at the right token and write n
 | `CAUSAL` | scoped head ablation | “Under this intervention and prompt set, removing this head changes the logit gap by X.” | A full circuit edge. The all-position effect still bundles many indirect paths. |
 
 Keep the rungs separate in your writeup. The most tempting wrong sentence in this lab is “the attention head explains the answer” because the heatmap looks satisfyingly diagonal. That sentence is a velvet trapdoor.
+
+**Make the concept pop:** After your run, open `plots/motif_maps.png` side-by-side with `plots/head_attribution_by_layer.png` (or the per-head table). Notice how many high-sink or high-induction heads in the motif maps have near-zero attribution. Then look at `plots/direct_vs_indirect_effect.png`: points far from the diagonal show composition (all_pos effect >> final_pos effect). Finally, the `head_attribution_vs_ablation.png` scatter (with rho reported both pooled and above the noise floor) shows that even when attribution exists, it is only a moderate predictor of direct-path causal effect. The gaps are the lesson.
 
 ## What exactly is a head here?
 
@@ -60,7 +62,7 @@ They avoid alphabetical and arithmetic priors, where the “induction” answer 
 Marcus went to the lab. Olivia went to the → lab vs store
 ```
 
-Control prompts have no intended repeated-token structure. The revised lab writes `diagnostics/prompt_motif_coverage.csv` so you can see exactly how the tokenizer turns each prompt into induction-target positions. If a control prompt accidentally has repeated token IDs, the microscope tells on itself.
+Control prompts have no intended repeated-token structure. The revised lab writes `diagnostics/prompt_motif_coverage.csv` so you can see exactly how the tokenizer turns each prompt into induction-target positions. If a control prompt accidentally has repeated token IDs, the microscope tells on itself. Synthetic labels are deliberately prompt-set-specific; the natural-confirmation audit (`tables/natural_confirmation.csv` or equivalent) is there to show how often the motif survives outside the clean synthetic distribution — most do not.
 
 ## The causal intervention
 
@@ -73,9 +75,13 @@ The ablation intervention zeroes one head’s **pre-output-projection slice** be
 
 A previous-token head with tiny `final_pos` effect but large `all_pos` effect has an indirect-path signature: it probably matters because of what it wrote at earlier positions, not because its own final-token output pushed the answer directly.
 
-This is still zero-ablation, not mean-ablation. It is a causal stress test, but it can move the model off distribution. Lab 6 switches to dataset-mean ablation when the claim becomes “this is a faithful circuit.”
+This is still zero-ablation, not mean-ablation (see Lab 2 for the same final-position vs broader distinction, and Lab 6 for mean-ablation when you need a faithful circuit). It is a causal stress test, but it can move the model off distribution. The gap between final_pos and all_pos is the composition signal: earlier writes that later heads can read.
+
+**Make the concept pop:** In your ablation results, find a previous-token or induction-labeled head where final_pos effect is tiny but all_pos is large. That head is routing information upstream for *other* heads to use. The direct write at the final position is not carrying the load.
 
 ## Running it
+
+**Headline numbers note:** Motif scores, attribution, and ablation effects are measured on 17 curated prompts (synthetic/cycle/natural/control families, expanded for motif diversity). The dissociation between routing, contribution, and causal role is the core lesson; specific head “X% induction” figures on this small set deserve one-sig-fig treatment plus the motif-coverage and control diagnostics.
 
 ```bash
 python interp_bench.py --lab lab3 --tier a
@@ -99,21 +105,17 @@ python interp_bench.py --lab lab3 --tier b --prompt-set full --showcase synth_le
 
 ## First artifact-reading path
 
-1. `attention_routing_card.md` — the one-page verdict, non-claims, and strongest evidence.
-2. `diagnostics/prompt_motif_coverage.csv` — whether each prompt actually contains induction targets after tokenization.
-3. `tables/baseline_behavior.csv` — whether the model preferred the target over the distractor before any intervention.
-4. `plots/motif_maps.png` — previous-token, induction, sink, and entropy grids over layer × head.
-5. `plots/attention_heads_<showcase>.png` — token-labeled heatmaps for the strongest motif heads plus the top-attribution head.
-6. `tables/head_table.csv` — every head, averaged over prompts: motif scores, entropy, attribution, label.
-7. `tables/head_scores_by_category.csv` — the same evidence split by synthetic, cycle, natural, and control prompts.
-8. `diagnostics/control_induction_audit.csv` — false-positive audit for induction labels on control prompts.
-9. `tables/ablation_candidate_manifest.csv` — why each head was selected for intervention.
-10. `tables/head_ablation_summary.csv` and `plots/ablation_effect_by_head.png` — direct and all-position causal effects by candidate head.
-11. `plots/direct_vs_indirect_effect.png` — composition scatter: direct path versus all-position effect.
-12. `plots/head_attribution_vs_ablation.png` — whether attribution predicts direct-path causal effect, reported both per prompt and by candidate head.
-13. `plots/routing_to_causality.png` — induction motif score versus all-position causal effect.
-14. `diagnostics/head_attribution_accounting.csv` — how much whole-block attention attribution is not assigned to heads because of bias or frozen-norm approximation.
-15. `diagnostics/ablation_manifest.json` — exact intervention definition and caveats.
+**Instrument health first (self-checks must be green, exactly as in Labs 1–2):**
+1. `diagnostics/head_decomposition_check.json` + `head_attribution_accounting.csv` (per-head slices must reconstruct the block attention output; bias and frozen-norm residuals are shown explicitly).
+2. `diagnostics/prompt_motif_coverage.csv` + `control_induction_audit.csv` — do the prompts actually contain the motifs the labels assume? Do controls accidentally trigger high induction scores?
+
+**Then the science, rung by rung:**
+3. `plots/motif_maps.png` + `tables/head_table.csv` — OBS: where do the named patterns actually live? Note how many high-motif heads have near-zero attribution.
+4. `plots/attention_heads_<showcase>.png` + `tables/example_head_scores.csv` — what the patterns look like on tokens; audit per-prompt.
+5. `plots/head_attribution_by_layer.png` + `head_attribution_vs_ablation.png` — ATTR vs direct CAUSAL. The scatter (with rho pooled and above noise floor) is the direct test of whether high attribution predicts effect.
+6. `plots/direct_vs_indirect_effect.png` + `plots/routing_to_causality.png` — the composition detector (all_pos >> final_pos) and motif-vs-effect scatter. Points off the diagonal or with high motif but low causal effect are the payload.
+7. `tables/head_ablation_summary.csv` + `head_ablation_results.csv` — the actual delta numbers, split by scope.
+8. `attention_routing_card.md` + `run_summary.md` — the one-page synthesis with non-claims.
 
 ## How to read the plots
 

@@ -4,6 +4,20 @@ Why dense activations resist neuron-level reading, and whether sparse
 dictionaries recover units worth naming. Three parts under a strict time
 budget, plus a causal extension and two bridges back to earlier labs.
 
+Prerequisites lineage:
+- Lab 1: residual stream sites, instrument hygiene, pre/post conventions.
+- Lab 4: "decodable does not mean used"; the truth-direction bridge asks whether
+  a probe direction is recoverable as a single SAE feature (expect low cosine;
+  distributed or no single atom captures it).
+- Lab 5/7: causal interventions with controls and measured costs. The clamp here
+  uses the same dose discipline as Lab 7 (multiples of observed peak activation,
+  not a raw unit vector) plus random control + fluency proxy.
+- Lab 6: manual circuit discovery as baseline; here the "validation battery" is
+  the automated analogue that forces you to kill labels.
+- Lab 9: the transcoder section exists only to give you input→output objects
+  (reconstructs the MLP map, not a site snapshot) so that attribution graphs
+  can have edges ("this feature causes that feature") rather than just nouns.
+
 * **Part 0 — superposition in a jar (CPU, model-free).** Train the Elhage et
   al. toy model: a small autoencoder packing more sparse features than it has
   dimensions. Sweep sparsity and watch features go from orthogonal-and-
@@ -82,7 +96,7 @@ OLMO_SAE = {
     "layer": 16, "site": "post", "center_input": False, "sub_b_dec": True, "jumprelu": True,
 }
 
-N_ATLAS_FEATURES = 15        # features to label and validate
+N_ATLAS_FEATURES = 20        # features to label and validate (bumped for more statistical power on verdicts/rankings)
 N_TOP_CONTEXTS = 6           # top-activating lines retrieved per feature
 N_LABEL_CONTEXTS = 4         # of those, how many inform the proposed label
 # Clamp dose as multiples of the feature's peak activation. The window is
@@ -331,17 +345,21 @@ def plot_toy_geometry(ctx, results, sparsities, n_features, d_hidden) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
 
+    bench._ensure_plot_style()
     fig = plt.figure(figsize=(15.0, 4.6))
     ax1 = fig.add_subplot(1, 3, 1)
     for s in sparsities:
         ax1.plot(range(n_features), sorted(results[s]["norms"], reverse=True),
                  marker="o", markersize=3, linewidth=1.6, label=f"sparsity {s:.2f}")
-    ax1.axvline(d_hidden - 0.5, color="black", linewidth=0.8, linestyle="--", label=f"d_hidden = {d_hidden}")
+    bench.add_vline(ax1, d_hidden - 0.5, label=f"d_hidden = {d_hidden}", color="black", ls="--", lw=0.8, alpha=0.8)
     ax1.set_xlabel("feature (sorted by norm)")
     ax1.set_ylabel("‖W column‖ (is the feature represented?)")
     ax1.set_title("Dense: only d_hidden features survive.\nSparse: more, via superposition.")
     ax1.legend(fontsize=7)
     ax1.grid(True, alpha=0.3)
+    # style the first ax lightly (subplots in toy are custom)
+    for spine in ("top", "right"):
+        ax1.spines[spine].set_visible(False)
 
     for idx, s in [(2, sparsities[0]), (3, sparsities[-1])]:
         ax = fig.add_subplot(1, 3, idx)
@@ -350,6 +368,8 @@ def plot_toy_geometry(ctx, results, sparsities, n_features, d_hidden) -> None:
         ax.set_title(f"WᵀW at sparsity {s:.2f}\n(off-diagonal = interference)")
         ax.set_xlabel("feature"); ax.set_ylabel("feature")
         fig.colorbar(im, ax=ax, fraction=0.046)
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
     fig.suptitle("Toy model of superposition: dense → orthogonal/monosemantic, sparse → overlapping")
     fig.tight_layout()
     bench.save_figure(ctx, fig, "toy_superposition_geometry.png",
@@ -1086,9 +1106,9 @@ def write_summary(ctx, bundle, metrics, atlas, toy, tc_report, bridge, clamp, cl
         f"- reconstruction FVU {metrics['reconstruction_fvu']}, per-token L0 ≈ {metrics['per_token_l0']}, "
         f"{metrics['silent_feature_fraction']*100:.1f}% of features silent on the corpus",
         f"- ranking overlap (max-activation vs frequency, top N): {metrics['ranking_overlap_topN']} — the two "
-        "rankings surface largely different features",
+        "rankings surface largely different features (the disagreement is the lesson, not a bug)",
         f"- of {metrics['atlas_size']} labeled features, {metrics['n_survived']} survived validation and "
-        f"{metrics['n_killed']} were killed (token-feature / polysemantic / low-AUC)",
+        f"{metrics['n_killed']} were killed (token-feature / polysemantic / low-AUC). The killed count is required; a clean sheet is a warning.",
         "",
         "## 3. Transcoder (Part 2)",
         "",
@@ -1117,12 +1137,27 @@ def write_summary(ctx, bundle, metrics, atlas, toy, tc_report, bridge, clamp, cl
         "",
         "## 6. The reading order",
         "",
-        "1. `feature_atlas.md` — the deliverable: labels, validation verdicts, evidence.",
-        "2. `plots/toy_superposition_geometry.png` — why neurons resist reading.",
-        "3. `plots/ranking_disagreement.png` — max-activation vs frequency rankings.",
-        "4. `plots/atlas_verdicts.png` — how many labels survived.",
-        "5. `transcoder_reconstruction_report.json` — the bridge to Lab 9.",
-        "6. `plots/feature_clamp.png` — the one CAUSAL feature.",
+        "Diagnostics first, then the artifacts that make the distinctions visible.",
+        "",
+        "1. `diagnostics/model_anatomy.json` — confirm base model + layer; loading conventions matter.",
+        "2. `feature_atlas.md` + `tables/feature_atlas.csv` — the deliverable. **Look for** the required",
+        "   dead labels (in the reference gpt2 run, high-purity 'code' features with held-out AUC ~0.57",
+        "   were the teaching case), the confusable-pair numbers that separate concept from token, and",
+        "   the explicit 'What the atlas does NOT show' section. A clean sheet of 'survived' is a",
+        "   warning sign.",
+        "3. `plots/toy_superposition_geometry.png` + toy stats — predict the geometry (dense: exactly",
+        "   d_hidden orthogonal; sparse: more features via accepted interference) before you look.",
+        "4. `plots/ranking_disagreement.png` + `tables/feature_rankings.csv` — **look for little or no",
+        "   overlap** between the red (max-act, rare high-peak outliers) and green (freq, broad basis",
+        "   vectors); the reference run had 0.",
+        "5. `plots/atlas_verdicts.png` — count the killed bar; the lab wants dead labels.",
+        "6. `transcoder_reconstruction_report.json` — FVU + splice-in KL (tiny in the reference run,",
+        "   ~0.01) + de-embed 'promotes tokens'. This is the explicit hand-off to Lab 9: input→output",
+        "   objects give edges, not just site nouns.",
+        "7. `plots/feature_clamp.png` + `tables/feature_clamp.csv` — the single CAUSAL claim.",
+        "   **Read the sample generations** at each dose (not just hits). Expect a narrow window",
+        "   (reference run: induce ~1× peak, collapse by ~3×); random stays at or near 0; the",
+        "   distinct ratio flags repetition.",
         "",
         "## 7. Caveats",
         "",

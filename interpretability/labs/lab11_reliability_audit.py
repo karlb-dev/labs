@@ -62,6 +62,7 @@ FACT_POOL: tuple[tuple[str, str, str], ...] = (
     # (id, subject, capital).  Distractors are chosen cyclically from this full
     # pool, not the selected subset, so --max-examples 1 cannot accidentally
     # make target == distractor.
+    # Expanded for robustness (more continents, more variety).
     ("france", "France", "Paris"),
     ("germany", "Germany", "Berlin"),
     ("italy", "Italy", "Rome"),
@@ -74,11 +75,24 @@ FACT_POOL: tuple[tuple[str, str, str], ...] = (
     ("poland", "Poland", "Warsaw"),
     ("austria", "Austria", "Vienna"),
     ("england", "England", "London"),
+    # Expansion entries are restricted to single-word subjects and single-token
+    # capitals (GPT-2-verified) so the tokenization gate keeps them instead of
+    # silently dropping most of the "expansion".
+    ("canada", "Canada", "Ottawa"),
+    ("australia", "Australia", "Canberra"),
+    ("switzerland", "Switzerland", "Bern"),
+    ("turkey", "Turkey", "Ankara"),
+    ("norway", "Norway", "Oslo"),
+    ("denmark", "Denmark", "Copenhagen"),
+    ("sweden", "Sweden", "Stockholm"),
+    ("portugal", "Portugal", "Lisbon"),
+    ("thailand", "Thailand", "Bangkok"),
+    ("indonesia", "Indonesia", "Jakarta"),
 )
 
-FACTUAL_BUDGET_BY_TIER = {"a": 4, "b": 12, "c": 12}
-COT_AUDIT_ITEMS_BY_TIER = {"a": 4, "b": 16, "c": 24}
-COT_EXP2_ITEMS_BY_TIER = {"a": 2, "b": 16, "c": 24}
+FACTUAL_BUDGET_BY_TIER = {"a": 6, "b": 18, "c": 18}
+COT_AUDIT_ITEMS_BY_TIER = {"a": 4, "b": 20, "c": 28}
+COT_EXP2_ITEMS_BY_TIER = {"a": 2, "b": 24, "c": 36}  # synced to lab10 for consistent load-bearing stats
 
 N_CAUSAL_SUBSET = 6
 TRUTH_MONITOR_LAYER_FRACS = (0.4, 0.55, 0.7, 0.85)
@@ -305,7 +319,9 @@ def write_ledger_reconciliation(
             "without entries there is nothing to reconcile.  Each run wrote a",
             "`ledger_suggestions.md`; edit the claims you would defend, append them to",
             "`claim_ledger.md`, and rerun this audit.  The empty-ledger warning is itself",
-            "a useful diagnostic: the capstone cannot be assembled backwards.",
+            "a useful diagnostic: the capstone cannot be assembled backwards.  A semester",
+            "with no prior claims to keep/revise/retire usually means the falsifier",
+            "columns in earlier labs were never treated as operational.",
             "",
         ]
     if touched:
@@ -319,8 +335,8 @@ def write_ledger_reconciliation(
                 f"- recorded artifact: {e['artifact'] or '(none recorded)'}",
                 f"- recorded falsifier: {e['falsifier'] or '(none recorded)'}",
                 "- **verdict [STUDENT — graded]:** keep / revise / retire",
-                "- **reason [STUDENT — graded]:** cite an artifact from THIS run and name the exact metric",
-                "- **replacement claim if revised [STUDENT — graded]:**",
+                "- **reason [STUDENT — graded]:** cite a *specific* artifact + metric from *THIS* run (e.g., 'subject_early recovery 0.995 vs unrelated_clean 0.03 in causal_subset.csv') and say what it did to the original claim",
+                "- **replacement claim if revised [STUDENT — graded]:** narrower population / metric / method that survives the counterevidence",
                 "",
             ]
     if others:

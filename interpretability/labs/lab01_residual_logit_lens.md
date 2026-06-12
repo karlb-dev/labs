@@ -8,6 +8,51 @@ How does a model's next-token prediction emerge, sharpen, wobble, or flip as inf
 
 Lab 1 is the course's calibration ritual. Before later labs decompose, patch, steer, ablate, or probe activations, you first need to know exactly what a residual-stream readout is saying and what it is not saying.
 
+**This lab also serves as the microscope smoke test / pre-lab instrumentation check.** The very first thing you do (on your real hardware, including the CPU Tier A smoke path) is prove that the shared bench can load a model, capture residuals with verifiable semantics, pass its self-checks, write a clean run directory, and initialize your personal claim ledger. Only after the instrument locks are green do you move into the science (prediction biographies, event depths, category contrasts).
+
+## Microscope Smoke Test & Instrumentation Check (always run Tier A first)
+**Core goal:** Can you load a model, cache activations reproducibly, run a small prompt set, pass the bench's self-checks, and produce a usable artifact directory on *your actual hardware tier* (laptop CPU or Colab A100)?
+
+### Do this first (before any GPU minutes)
+```bash
+# Smoke / pre-lab check on whatever hardware you have (CPU, MPS, or small GPU)
+python interp_bench.py --lab lab1 --tier a
+
+# If you are on a GPU machine, also prove the smoke path explicitly works
+python interp_bench.py --lab lab1 --tier a --model gpt2 --device cpu
+```
+
+The Tier A run uses a tiny model (gpt2 or equivalent) and a small prompt set. It is deliberately fast and must succeed on a laptop. It exercises:
+- Model loading + anatomy resolution
+- Residual stream capture with hook parity
+- Logit lens at final depth matching the model's real logits
+- Tokenization validation for targets/distractors
+- Full run directory contract (run_config, diagnostics, state/, tables/, plots/, run_summary, ledger_suggestions)
+- Claim ledger skeleton creation at the course root, `interpretability/claim_ledger.md` (if this is your first lab run)
+
+### What to inspect immediately after the smoke run (before looking at science plots)
+1. `diagnostics/hook_parity.json` and `hook_parity_by_layer.csv` — residual capture has the claimed semantics.
+2. `diagnostics/logit_lens_self_check.json` — the lens at the final depth reproduces the model's actual output logits (top-1 match or near-tie).
+3. `diagnostics/tokenization_report.csv` — all your targets/distractors were single tokens; no silent drops.
+4. `diagnostics/model_anatomy.md` — the bench found the blocks, final norm, and unembedding where it said it would.
+5. `claim_ledger.md` at the *course root* (`interpretability/`, not inside the run dir) now exists with the header. This is your running dossier for the whole course.
+6. One `state/<example_id>/state_card.md` and `plots/residual_norm_by_depth.png` (or residual_delta_norm) — basic proof that you captured streams and can see norms over depth.
+7. `run_summary.md` — the seven standard questions are answered for this run (even the small smoke set).
+
+**Headline numbers note:** The lab uses a few dozen prompts across fact/ambiguous/counterfactual/control families (expanded). Depths, margins, and stability contrasts are the teaching signal; any aggregate “X% at depth k” is illustrative on this small curated set and should be read qualitatively with the per-family and control breakdowns. One-significant-figure confidence applies.
+
+If any self-check is red or a lock fails, **stop**. Fix your environment / dtype / device / model choice. Do not proceed to Tier B science until the Tier A smoke is clean. This is the contract that prevents later labs from becoming debugging swamps.
+
+After the smoke succeeds, you have proven the "microscope." The same run directory also contains the first real Lab 1 science artifacts (see below). You can now safely do the full Tier B run on the course model.
+
+### Minimal artifacts the smoke run guarantees (in addition to the full Lab 1 set)
+- The three instrument locks (see next section)
+- A clean run directory following the course contract
+- `claim_ledger.md` initialized at the course root (`interpretability/`)
+- Basic residual norm visualization so you can see that depths are actually doing something
+
+Then proceed to the science part of this lab (the prediction biographies, category contrasts, and event depths) using the same run or a fresh Tier B one.
+
 ## What you will build
 
 You will build a layer-by-layer **prediction biography** for controlled prompts. The shared bench, `interp_bench.py`, owns the microscope: model loading, run directories, hook checks, residual capture, logit-lens math, state dumps, diagnostics, and artifact indexing. This lab owns the experiment: prompt families, validation, event-depth metrics, aggregation, plots, interpretation scaffolding, and claim-ledger drafts.
@@ -55,6 +100,7 @@ runs/lab01_residual_logit_lens-<timestamp>-<id>/
 
   plots/
     readout_dashboard.png               # entropy, KL, margin, cosine in one place
+    convergence_lag.png                 # NEW: geometry (cosine) vs decoded (KL/rank) stabilization lag — core "readout is an instrument" lesson
     p_target_by_depth.png
     target_rank_by_depth.png
     logit_diff_by_depth.png
@@ -94,7 +140,9 @@ Two details are load-bearing:
 
 The logit lens is a translation device. Translation can be faithful enough to teach you something and still add its own accent.
 
-## The three instrument locks
+## The three instrument locks (the heart of the smoke test)
+
+The smoke run (and every subsequent run) does **not** proceed to science until these three checks have written artifacts. They are the "pre-lab" validation living inside Lab 1.
 
 The lab does not start the science loop until three checks have a written artifact:
 
@@ -105,6 +153,10 @@ The lab does not start the science loop until three checks have a written artifa
 | Prompt and label validation | `diagnostics/tokenization_report.csv`, `diagnostics/prompt_set_manifest.json` | multi-token labels, empty prompts, duplicate or malformed prompt sets |
 
 A plot without these locks is a stained-glass window: pretty, luminous, and not load-bearing.
+
+For the complete formal contract on stream indexing, readout semantics, thresholds, and what none of the events prove, see `diagnostics/event_definitions.json` (written on every run).
+
+**Make the concept pop:** After your smoke run, open `tables/final_readout_audit.csv`. Count how often `final_top1_is_target` is False even when `final_target_rank` is good (e.g. 2-5). This is the model doing its real next-token job ("...is well known as", "...the city of") instead of your fact-completion task. The gap between "target beats distractor" and "target is top-1" is one of the most important lessons in the lab.
 
 ## Prompt families
 
@@ -147,7 +199,7 @@ For each example and depth, the lab records:
 
 ## Event depths
 
-The lab reports several “when did it happen?” metrics because one decision-depth number is a thimble trying to catch rain.
+The lab reports several “when did it happen?” metrics because a single “decision depth” number is too coarse. Different signals (geometric closeness of the residual vector, sharpness of the decoded distribution, the labeled target becoming the single most likely token) can stabilize at different layers. Reporting the full set prevents overclaiming from any one metric.
 
 | Metric | Meaning |
 |---|---|
@@ -165,8 +217,10 @@ The raw first target-over-distractor crossing is kept because it is a useful fai
 
 ## Run
 
+The smoke test (microscope validation) is step 1 and must be green before any Tier B science.
+
 ```bash
-# 1. Smoke test. Always do this before spending GPU minutes.
+# 1. Smoke test / microscope check (Tier A on your actual hardware). Do this first.
 python interp_bench.py --lab lab1 --tier a
 
 # 2. Standard full run on the course model.
@@ -205,19 +259,21 @@ Custom CSV files use the same columns: `example_id,category,prompt,target,distra
 
 ## Artifact reading path
 
-Read artifacts in this order:
+**Microscope validation first (the smoke / pre-lab ritual):**
+1. The three instrument locks in `diagnostics/` (hook_parity*, logit_lens_self_check.json, tokenization_report.csv).
+2. `claim_ledger.md` at the course root (`interpretability/`) now exists.
+3. One `state/<example_id>/state_card.md` + a basic residual norm plot to confirm capture worked.
 
-1. `logit_lens_card.md` - the compact deliverable with scope, headline numbers, draft claims, and non-claims.
-2. `diagnostics/logit_lens_self_check.json` - confirms that `lens(L)` matches the model's real logits.
-3. `diagnostics/hook_parity_by_layer.csv` - confirms the residual stream capture has the claimed semantics.
-4. `diagnostics/tokenization_report.csv` and `diagnostics/prompt_set_manifest.json` - confirms the prompt set and label tokens.
-5. `tables/final_readout_audit.csv` - separates correctness, confidence, and target-vs-distractor wins.
+**Then the Lab 1 science (using the same run directory or a fresh Tier B run):**
+4. `logit_lens_card.md` - the compact deliverable with scope, headline numbers, draft claims, and non-claims.
+5. `tables/final_readout_audit.csv` - separates correctness, confidence, and target-vs-distractor wins (the key place to see discourse bias on facts).
 6. One `state/<example_id>/state_card.md` from a fact example, then one from a counterfactual example.
-7. `plots/readout_dashboard.png` - entropy, KL, top-1 margin, and cosine in one panel set.
-8. `plots/event_ordering.png` and `plots/event_depth_heatmap.png` - when events occur and when they never occur.
-9. `plots/logit_diff_by_depth.png`, `plots/target_rank_by_depth.png`, and `plots/kl_to_final_by_depth.png` - three different convergence stories.
-10. `tables/top1_transition_segments.csv` - the compressed biography of which tokens wore the crown at which depths.
+7. `plots/readout_dashboard.png` and the new `convergence_lag.png` — the four convergence curves plus the explicit geometry-vs-decoded lag plot (core “readout is an instrument” lesson).
+8. `plots/event_ordering.png`, `plots/event_depth_heatmap.png`, and `plots/final_readout_scatter.png` — when events occur (gray = never), and confidence vs correctness.
+9. `plots/target_rank_by_depth.png`, `plots/logit_diff_by_depth.png`, and `plots/kl_to_final_by_depth.png` — three different convergence stories.
+10. `tables/top1_transition_segments.csv` and `tables/trajectory_events.csv` — compressed biographies and all per-example events (with n counts showing when an event never occurred).
 11. `results.csv` - the long-form source for custom analysis.
+12. `run_summary.md` answers the seven standard questions for this run.
 
 ## How to read the main plots
 
@@ -234,8 +290,8 @@ Read artifacts in this order:
 1. Which event stabilizes earliest for facts: target rank, target beating the distractor, target top-1, or KL-to-final? What does the ordering suggest?
 2. Are ambiguous prompts high entropy at the final depth, or do they sometimes become confident anyway? Find one confident ambiguous example and explain why confidence is not correctness.
 3. In counterfactual prompts, does the in-context answer beat the memorized distractor early, late, never, or from the start? Use both `logit_diff_by_depth.png` and `trajectory_events.csv`.
-4. Does cosine-to-final rise before the readout distribution becomes close to final? Explain what this says about residual geometry versus decoded output.
-5. Find one top-1 token segment in `top1_transition_segments.csv` that lasts many layers but is not the final token. What would you have overclaimed from a single middle-layer screenshot?
+4. Does cosine-to-final rise before the readout distribution becomes close to final? Look at `plots/convergence_lag.png` for the explicit lag distribution across categories. What does a positive lag (geometry leads decoded) tell you about using the raw lens as a “mind scan”?
+5. Find one top-1 token segment in `top1_transition_segments.csv` that lasts many layers but is not the final token. What would you have overclaimed from a single middle-layer screenshot? (See also the new `convergence_lag.png` and the discourse-bias examples we added to the fact/ambiguous sets.)
 6. Does `decision_depth` ever look early for an ambiguous or control prompt? Why does that make the phrase “the model knew early” suspect?
 7. What causal experiment would test whether a middle-layer representation is used? Name the activation, token position, source prompt, destination prompt, and behavioral metric you would patch.
 

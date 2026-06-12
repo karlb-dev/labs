@@ -2,7 +2,7 @@
 
 **Course outline, revision 2**
 **Date:** 2026-06-10
-**Format:** Pre-lab + 11 hands-on labs. Each lab is one student-facing `.md` handout, one executable `.py` script, and one short interpretation/ethics reading.
+**Format:** 11 hands-on labs (Lab 1 opens with the microscope smoke test / instrumentation check that used to be a separate pre-lab). Each lab is one student-facing `.md` handout, one executable `.py` script, and one short interpretation/ethics reading.
 
 ---
 
@@ -60,7 +60,7 @@ The course should feel less like a glass-bottom boat ride over hidden activation
 
 ## 2. What changed from the previous outline (2026-06-10 v1) and why
 
-The v1 outline had the right backbone: microscope pre-lab, residual stream + logit lens, direct logit attribution, attention, probing with controls, activation patching, circuit discovery, knowledge localization/editing, steering, SAEs, reliability audit. The revision keeps that arc and makes four structural moves plus several upgrades.
+The v1 outline had the right backbone: microscope setup, residual stream + logit lens, direct logit attribution, attention, probing with controls, activation patching, circuit discovery, knowledge localization/editing, steering, SAEs, reliability audit. The revision keeps that arc and makes four structural moves plus several upgrades. The microscope smoke / instrumentation check is now the explicit first ritual inside Lab 1 (instead of a separate numbered pre-lab) so students spend time on the interesting science while still proving the bench on their real hardware before any Tier B work.
 
 | Change | What it was | What it becomes | Why |
 |---|---|---|---|
@@ -74,7 +74,7 @@ The v1 outline had the right backbone: microscope pre-lab, residual stream + log
 | **Ethics thread becomes a designed component** | One discussion prompt and a readings list per lab. | Every lab carries a named "Interpretation & Ethics" pairing chosen to arise from the experiment the student just ran: Woodward's interventionism for patching, Machamer–Darden–Craver's mechanisms for circuits, Hacking's entity realism for steering ("if you can spray them, they're real"), Nisbett & Wilson's confabulation for CoT, Dennett's real patterns for logit lens, belief-attribution standards for truth probes. Each pairing has one short reading and one writing prompt answerable from the lab's own artifacts. | The course brief calls for adjacent philosophy and ethics that is load-bearing rather than decorative. These pairings are chosen so that the philosophical question is *literally about the artifact on the student's screen*. |
 | **Claim ledger added** | Each lab wrote a run summary; nothing accumulated. | `interpkit/evidence.py` provides a ledger writer; every lab ends by appending 2–3 tagged claims; the capstone audits the ledger. | Makes the epistemics tangible and gives the capstone a running start. Cheap to implement, high pedagogical return. |
 
-Net effect on length: v1 had a pre-lab + 10 labs. v2 has a pre-lab + 11 labs, because one merge paid for one of the two additions. Both additions are topics where omission would date the course immediately.
+Net effect on length: the microscope smoke is folded into Lab 1 rather than a separate pre-lab file. The course remains pre-lab concepts + 11 labs (Lab 1 delivers both the instrumentation contract and the first observation science). One merge in v2 paid for the two additions (attribution graphs + CoT faithfulness). Both additions are topics where omission would date the course immediately.
 
 ---
 
@@ -162,47 +162,24 @@ Microscope setup
 The sequence moves from "what can we see?" to "what can we causally change?" to "what are the right units?" to "what should we believe?" Labs 6 and 9 are deliberately paired: the same goal (a circuit explanation) pursued first with heads-and-MLPs by hand, then with transcoder features and automated attribution — and students are asked to compare the two epistemically, not just operationally.
 
 ---
-## 6. Pre-lab 0: The Interpretability Microscope
+## 6. Microscope smoke test (integrated into Lab 1)
 
-**Status:** Setup module, not counted among the 11 core labs.
-**Files:** `prelab_microscope.md`, `prelab_microscope.py`
-**Evidence level targeted:** none — instrumentation only.
+The dedicated pre-lab module from the original design has been folded into **Lab 1**. The first action in every student's experience is the "smoke test" (Tier A on their real hardware, including plain CPU). This run proves the shared bench contract (model loading, residual capture with verifiable hooks, self-checks, run directory layout, artifact writing, and claim ledger skeleton at the course root) before any serious GPU science or interpretation happens.
 
-### Core question
+**Why it lives inside Lab 1 instead of a separate numbered pre-lab:**
+- Lab 1 is already the "calibration ritual" and the first place the instrument locks (hook parity, lens self-check, tokenization validation) are exercised and explained.
+- Students would rather spend time on interesting observation science than on a 5-minute throwaway pre-lab that produces almost the same artifacts.
+- Running `python interp_bench.py --lab lab1 --tier a` is the smoke. It both validates the microscope *and* produces the first real Lab 1 results (prediction biographies, event depths, etc.).
 
-Can every student load a model, cache activations, run one prompt pair, and write a reproducible artifact directory — on their actual hardware tier?
+See [labs/lab01_residual_logit_lens.md](labs/lab01_residual_logit_lens.md) — the section "Microscope Smoke Test & Instrumentation Check (always run Tier A first)" contains the full ritual, the three instrument locks, the artifacts to inspect first, and the exact commands. The old pre-lab artifacts (activation shapes, basic residual norm plot, ledger init, tokens, logits) are all produced (or have direct equivalents) by the Lab 1 smoke run under `diagnostics/`, `plots/`, `state/`, and the course-root `claim_ledger.md` (`interpretability/claim_ledger.md`).
 
-### Why it exists
+### What the smoke guarantees
+- The bench works on *your* hardware (CPU smoke path is mandatory).
+- Self-checks pass before any interpretation.
+- You have a reproducible run directory and the start of your personal claim ledger.
+- The exact same run also begins the Lab 1 science (so no wasted work).
 
-Without a common microscope, every later lab becomes a debugging swamp. This pre-lab standardizes the run directory, model loading, CLI arguments, artifact names, seeding, dtype and device handling, chat-template handling (needed from Lab 7 onward and essential in Lab 10), and basic hook abstractions. It also initializes the student's `claim_ledger.md`.
-
-### Minimal experiment
-
-Run a tiny prompt pair:
-
-```text
-Clean:     "The Eiffel Tower is in"
-Corrupted: "The Colosseum is in"
-```
-
-Cache residual stream activations at every layer for the final token. Save tokenization, activation shapes, logits, and one layer-normed residual norm plot. Then re-run with `--model gpt2 --device cpu` to prove the smoke tier works.
-
-### Artifacts
-
-```text
-runs/prelab_<timestamp>/
-  run_config.json
-  tokens.json
-  activation_shapes.json
-  logits_topk.csv
-  plots/residual_norm_by_layer.png
-  run_summary.md
-claim_ledger.md        (initialized at repo root, one entry: "ledger opened")
-```
-
-### Student learns
-
-The contract every lab will follow: load, run, cache, measure, save, summarize, append to ledger.
+Later labs assume this contract has been proven once.
 
 ---
 
@@ -513,8 +490,7 @@ Confidence in the interpretation: / Recommended use: / Recommended non-use:
 
 | Week | Lab | Theme |
 |---|---|---|
-| 0 | Pre-lab | Instrumentation, artifact contract, ledger |
-| 1 | Lab 1 | Residual stream and logit lens |
+| 1 | Lab 1 | Microscope smoke test (Tier A first) + residual stream and logit lens |
 | 2 | Lab 2 | Direct logit attribution |
 | 3 | Lab 3 | Attention routing and induction |
 | 4 | Lab 4 | Probing with controls; truth probes |
@@ -593,7 +569,7 @@ interpretability_labs/
   README.md
   pyproject.toml
   requirements.txt            # pinned; see interpkit/pins.py
-  claim_ledger.md             # per-student, initialized by prelab
+  claim_ledger.md             # per-student, created on first lab run (Lab 1 smoke guarantees it)
   interpkit/
     __init__.py
     pins.py                   # model revisions, library versions, conventions
@@ -609,7 +585,6 @@ interpretability_labs/
     plotting.py
     artifact_writer.py
   labs/
-    prelab_microscope.{md,py}
     lab01_residual_logit_lens.{md,py}
     lab02_direct_logit_attribution.{md,py}
     lab03_attention_routing.{md,py}

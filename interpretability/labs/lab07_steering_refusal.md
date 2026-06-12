@@ -2,7 +2,7 @@
 
 **Evidence level targeted:** causal intervention for generation steering, plus a forward-pass monitor for refusal.
 
-**Prerequisites:** Labs 1-6. Lab 4's `truth_direction.pt` is useful provenance when present, but this lab recomputes the truth direction on the current instruct model because directions are model-specific.
+**Prerequisites:** Labs 1-6. You already know the residual-stream indexing and "readout is an instrument" caution from Lab 1, the frozen-norm linearization and "attribution is a ledger, not causation" discipline from Lab 2, the routing-vs-contribution distinction from Lab 3, the "decodable does not mean used" skepticism and truth direction from Lab 4, patching/interchange from Lab 5 (here you author the edit instead of borrowing a clean activation), and manual circuit scope/evidence from Lab 6. Lab 4's `truth_direction.pt` is useful provenance when present, but this lab recomputes the truth direction on the current instruct model because directions are model-specific. The bridge re-uses the Lab 4 truth-pair family but splits the "decodable" claim into answer bias vs signed truth margin.
 
 **Model family:** instruct models only. Every prompt goes through the tokenizer chat template before any activation is read or changed.
 
@@ -41,6 +41,8 @@ Track B is safety-relevant and intentionally constrained. The constraints are pa
 - Refusal ablation is **not implemented**.
 
 The frozen `data/refusal_elicitation_set.csv` exists only to produce the internal contrast for a forward pass. Students do not author, extend, or generate from that file. The run writes `diagnostics/lab07_safety_audit.json` so the safety wall leaves a footprint in the artifacts.
+
+**Make the concept pop:** the safety wall is measured and auditable. After the run, open the JSON: it records zero refusal-eliciting generations and confirms the monitor/steering boundaries. This is the lab's way of making "we did not do the dangerous thing" a reproducible artifact rather than a promise. The same discipline (forward-only for the monitor, controls, scoped claims) appears in Labs 4–6; here it is the central object of study.
 
 ## The load-bearing implementation detail: where the vector lives
 
@@ -102,11 +104,15 @@ The lab no longer talks about a cheap next-token proxy. It chooses the layer by 
 
 The chosen block is the one with the largest positive-minus-negative sentiment spread at the probe dose. This is slower than a proxy, but it measures the object students are actually claiming: generated behavior.
 
+**Make the concept pop:** open `layer_sweep.png` (or the csv). The early layers often show near-zero spread on the sweep prompts; mid-stack (here block 20 / stream 21) wins. The proxy would have picked a late layer with almost no generation effect. Layer choice is now itself an intervention measurement, exactly as Lab 5 forces you to confront where the fact actually lives before you patch.
+
 One honesty note the claims carry forward: the sweep prompts are a subset of
 the evaluation prompts, so the layer is selected on data that also produces
-the headline number. With 4-12 eval prompts a disjoint split would cost more
-power than the bias is worth, but the C1 falsifier names it — re-selecting
+the headline number. With the current eval set size a disjoint split would cost more
+power than the bias is worth for some analyses, but the C1 falsifier names it — re-selecting
 the layer on fresh prompts should not move the effect materially.
+
+**Headline numbers note:** In full runs this lab uses all 28 sentiment pairs and 28 refusal pairs in the shipped sets, 24 eval prompts, and 12 drift facts (across categories). The qualitative story (dose-response shape, real-vs-control gaps, monitor/induced dissociation, bias-vs-margin split, safety wall) is supported by structure, multiple controls, and per-prompt artifacts; none of the percentages or rates should be treated as having more than one significant figure of confidence.
 
 ## Track B: refusal direction, predict versus cause
 
@@ -177,6 +183,8 @@ This is the probe lesson in miniature: decodable, steerable, and explanatory are
 
 ## Running it
 
+Always run Tier A smoke first (instrument checks + end-to-end plumbing on the small instruct model).
+
 CPU smoke path:
 
 ```bash
@@ -200,20 +208,23 @@ python interp_bench.py --lab lab7 --tier b --prompt-set medium --no-plots
 
 One tier A footgun: the global tier default `--max-examples 4` also caps the
 refusal pairs to 4, so the smoke monitor AUC is computed on 2 held-out pairs.
-It checks plumbing, not the monitor.
+It checks plumbing, not the monitor. The refusal direction and the truth bridge
+both require at least 4 pairs for a train/held-out split; Tier A smoke still
+exercises the full pipeline and writes the safety audit and claim card.
 
 ## First artifact-reading path
 
-Read the artifacts in this order:
+Instrument health first (as in every prior lab), then the payload artifacts that separate the claims.
 
-1. `steering_claim_card.md`: the shortest defensible interpretation.
-2. `plots/dose_response_sentiment.png`: Track A effect and side effects in one figure.
-3. `tables/dose_response_by_prompt.csv` and `tables/steered_examples.csv`: the actual generations behind the score.
-4. `plots/refusal_monitor.png`: forward-pass monitoring, not generation.
-5. `plots/induced_refusal.png`: benign prompt steering, with random control.
-6. `diagnostics/lab07_safety_audit.json`: what was and was not generated.
-7. `plots/truth_direction_bridge.png`: answer bias versus signed truth margin.
-8. `ledger_suggestions.md`: drafted claims with measured numbers.
+1. `diagnostics/hook_parity.json`, `logit_lens_self_check.json`, and `model_anatomy.json` (instrument hygiene; the chat template and residual streams must line up before any steering claim).
+2. `steering_claim_card.md`: the shortest defensible interpretation, with safety wall and "what it does not show" for every track.
+3. `plots/dose_response_sentiment.png` + `tables/dose_response_by_prompt.csv` + `tables/steered_examples.csv`: Track A in four panels (target, fluency, KL, drift) with real vs random vs shuffled overlaid. **Look for:** the dose at which real first reliably beats both controls on the target while the side-effect panels are still reasonable; the asymmetry (positive swing often larger than negative on an RLHF'd model); and the high-dose generations visibly degenerating or parroting contrast vocabulary even as the word-list score keeps rising. The fluency/KL/drift panels exist precisely because the target panel can be gamed.
+4. `plots/layer_sweep.png` and `tables/layer_sweep.csv`: generation-based (not proxy) choice of injection site. The spread column is the actual steering effect you later claim.
+5. `plots/refusal_monitor.png` + `tables/refusal_monitor_table.csv` + `tables/refusal_monitor_examples.csv`: forward-pass projection histograms and ROC on held-out pairs. This is DECODE evidence (predicts category label from activation, no generation from refusal-eliciting prompts).
+6. `plots/induced_refusal.png` + `tables/induced_refusal_curve.csv` + `tables/induced_refusal_generations.csv`: the CAUSAL step on benign prompts only, with random control and binomial SE bands. **Look for the gap:** monitor AUC can be 1.0 while induced refusal still has a classifier floor at dose 0 and a non-zero random curve at some doses. Those two plots together are the "predict vs cause" lesson in one pair.
+7. `diagnostics/lab07_safety_audit.json`: the machine-checkable footprint of the safety wall (zero refusal-eliciting generations, forward-only counts, ablation not implemented).
+8. `plots/truth_direction_bridge.png` + `tables/truth_direction_bridge.csv` + `tables/truth_direction_bridge_by_statement.csv`: the Lab 4 bridge split into answer bias (left) vs signed truth margin (right), real vs random. **Look for the verdict:** if bias moves a lot while the margin panel does not improve (or worsens at high dose), the label is `decodable-and-steers-True-assent`, not "the truth direction makes the model more truthful." Decodability, steerability, and explanatory power are three different jobs.
+9. `ledger_suggestions.md`: the three drafted claims (C1 causal with dose+controls+side-effects, C2 explicitly split DECODE monitor vs CAUSAL induced with safety scope, C3 bridge verdict with bias vs margin numbers).
 
 ## What a good writeup says
 
@@ -221,19 +232,21 @@ A good writeup keeps three separations alive:
 
 1. **Real direction versus controls:** quote the target effect and the random/shuffled gaps.
 2. **Effect versus side effect:** quote the fluency, KL, and drift costs at the dose you want to claim.
-3. **Predict versus cause:** the refusal AUC and the induced-refusal rate are different evidence.
+3. **Predict versus cause:** the refusal AUC and the induced-refusal rate are different evidence. The monitor is forward-pass category prediction on held-out pairs (DECODE, Lab 4 style); the induced curve is a causal intervention on benign prompts only (CAUSAL).
 
-A good bridge answer does not say "the truth direction works" until it checks the held-out signed truth-margin panel. If only the answer-bias panel moves, write that down. That is not a failed lab. It is a sharper claim.
+A good bridge answer does not say "the truth direction works" until it checks the held-out signed truth-margin panel. If only the answer-bias panel moves (or the margin gets worse at high dose), the verdict is `decodable-and-steers-True-assent`. Write the actual spans and the verdict label. That is not a failed lab. It is a sharper claim that distinguishes "the direction moves the True/False token distribution" from "the direction is a truthfulness mechanism the model uses."
+
+**Make the concept pop:** the unit of evidence is the curve + the control gap + the side-effect cost + the safety footprint + the bias-vs-margin split. One spicy steered sentence is an anecdote; the four-panel plot with three conditions, the monitor-vs-induced pair, and the two-panel bridge with verdict are the evidence. The claim card and the three ledger drafts (C1/C2/C3) are written to force you to keep the distinctions.
 
 ## Writeup questions
 
-1. At what positive dose does the sentiment direction first beat both controls? What happens to fluency, KL, and drift at that dose?
-2. Is the negative side of the sentiment sweep symmetric with the positive side? Give the measured swings rather than a vibe report.
-3. How well does the refusal direction monitor held-out prompt category? How well does it cause refusal on benign prompts? Why are those not the same claim?
-4. Did the random direction induce refusal too? If yes, how much of the curve might be generic disruption rather than a refusal feature?
-5. For the truth bridge, which verdict did you get: inert, True-assent steering, or improved truth margin? What does that imply about Lab 4's probe evidence?
-6. Hacking's entity-realism challenge: you intervened on a direction and behavior moved. Is the direction real? What extra evidence would turn steering success into a mechanistic explanation?
-7. Dual-use prompt: the refusal-ablation result was published with methods. Argue both sides of whether that was justified, using your own Track B safety audit and curves as evidence.
+1. At what positive dose does the sentiment direction first beat both controls on the target score (see `dose_response_sentiment.png` and the per-prompt table)? At that same dose, what do the fluency, KL, and drift panels show? Quote the real-vs-control gaps.
+2. Is the negative side of the sentiment sweep symmetric with the positive side? Give the measured swings (positive at max dose vs negative at min dose) rather than a vibe report. What does the asymmetry tell you about the model's prior (see also the layer sweep spread and steered examples at high positive dose)?
+3. How well does the refusal direction monitor held-out prompt category (refusal_monitor.png + AUC + table)? How well does it cause refusal on benign prompts (induced_refusal.png + curve + generations)? Why are those two numbers not the same claim? Hand-audit the generations at the doses where the curve rises.
+4. Did the random direction induce refusal too? At which doses? How much of any induced-refusal curve might be generic disruption (or the classifier floor at dose 0, e.g. "as an AI" on ordinary disclaimers) rather than a refusal feature?
+5. For the truth bridge, which verdict did you get: inert, `decodable-and-steers-True-assent`, or `decodable-and-improves-truth-margin`? Quote the answer-bias span vs the signed truth-margin span from the two-panel plot and the by-statement table. What does the gap (or lack of gap) imply about Lab 4's probe evidence?
+6. Hacking's entity-realism challenge: you intervened on a direction and behavior moved. Is the direction real? What extra evidence (controls, side-effect costs, held-out generalization, safety audit, re-selection of layer, different prompt family) would turn steering success into a mechanistic explanation?
+7. Dual-use prompt: the refusal-ablation result was published with methods. Argue both sides of whether that was justified, using your own Track B safety audit (`lab07_safety_audit.json`), the monitor-vs-induced gap, and the random control as evidence. Keep the scope of what this lab actually implemented.
 
 ## Symptom-first debugging
 

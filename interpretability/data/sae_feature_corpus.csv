@@ -15,176 +15,276 @@ T013,chemistry,Increasing the concentration of reactants shifts the equilibrium 
 T014,chemistry,"The pH meter read 2.1, confirming the sample was strongly acidic."
 T015,chemistry,Enzymes are biological catalysts that accelerate metabolic reactions.
 T016,chemistry,The gas expanded to fill the flask as the temperature climbed.
-T017,code,"def fibonacci(n):
+T017,chemistry,A catalyst speeds up the reaction rate without shifting the equilibrium.
+T018,chemistry,The solution turned blue when the indicator detected excess base.
+T019,chemistry,Electrolysis splits water into hydrogen and oxygen gas at the electrodes.
+T020,chemistry,The polymer chain grew longer as monomers linked during the reaction.
+T021,chemistry,A strong base accepts protons readily in aqueous solution.
+T022,chemistry,The titration curve showed a sharp equivalence point for the strong acid.
+T023,chemistry,Redox reactions involve the transfer of electrons between species.
+T024,chemistry,The solubility product constant governs the precipitation of salts.
+T025,chemistry,Spectroscopy identifies functional groups by their characteristic absorption peaks.
+T026,chemistry,Le Chatelier's principle predicts the shift when a system at equilibrium is stressed.
+T027,chemistry,The half-life of the isotope determines how quickly it decays.
+T028,code,"def fibonacci(n):
     return n if n < 2 else fibonacci(n-1) + fibonacci(n-2)"
-T018,code,"for i in range(len(items)):
+T029,code,"for i in range(len(items)):
     total += items[i].price * items[i].qty"
-T019,code,"class Stack:
+T030,code,"class Stack:
     def push(self, x):
         self._data.append(x)"
-T020,code,result = [x * 2 for x in numbers if x % 2 == 0]
-T021,code,"try:
+T031,code,result = [x * 2 for x in numbers if x % 2 == 0]
+T032,code,"try:
     conn = connect(host)
 except TimeoutError:
     retry(conn)"
-T022,code,"const sum = arr.reduce((acc, x) => acc + x, 0);"
-T023,code,"SELECT name, COUNT(*) FROM orders GROUP BY name HAVING COUNT(*) > 3;"
-T024,code,"while not queue.empty():
+T033,code,"const sum = arr.reduce((acc, x) => acc + x, 0);"
+T034,code,"SELECT name, COUNT(*) FROM orders GROUP BY name HAVING COUNT(*) > 3;"
+T035,code,"while not queue.empty():
     node = queue.get()
     visit(node)"
-T025,code,git rebase -i HEAD~3 && git push --force-with-lease origin feature
-T026,code,"async def fetch(url):
+T036,code,git rebase -i HEAD~3 && git push --force-with-lease origin feature
+T037,code,"async def fetch(url):
     async with session.get(url) as r:
         return await r.json()"
-T027,code,"if (ptr == NULL) { return -1; }
+T038,code,"if (ptr == NULL) { return -1; }
 *ptr = value;"
-T028,code,"import numpy as np
+T039,code,"import numpy as np
 A = np.zeros((3, 3))
 A[np.diag_indices(3)] = 1"
-T029,code,"def binary_search(a, t):
+T040,code,"def binary_search(a, t):
     lo, hi = 0, len(a) - 1
     while lo <= hi:
         mid = (lo + hi) // 2"
-T030,code,"@app.route('/users/<int:uid>')
+T041,code,"@app.route('/users/<int:uid>')
 def get_user(uid):
     return jsonify(db.find(uid))"
-T031,code,"func main() {
+T042,code,"func main() {
     ch := make(chan int)
     go worker(ch)
 }"
-T032,code,"type Point = { x: number; y: number };
+T043,code,"type Point = { x: number; y: number };
 const origin: Point = { x: 0, y: 0 };"
-T033,cooking,Whisk the acid from a squeeze of lemon into the warm butter sauce.
-T034,cooking,Reduce the stock over high heat until it coats the back of a spoon.
-T035,cooking,Season the base of the soup with salt before adding the cream.
-T036,cooking,Let the dough rest so the gluten relaxes and the crust stays tender.
-T037,cooking,Sear the steak hard on one side to build a deep brown crust.
-T038,cooking,Fold the beaten egg whites gently so the batter keeps its air.
-T039,cooking,A pinch of sugar balances the acid in an over-tart tomato sauce.
-T040,cooking,Caramelize the onions slowly until they turn sweet and jammy.
-T041,cooking,Rest the roast under foil so the juices redistribute before carving.
-T042,cooking,Toast the spices in a dry pan to wake up their fragrance.
-T043,cooking,"Deglaze the pan with wine, scraping up the browned bits for flavor."
-T044,cooking,"Blanch the greens briefly, then shock them in ice water to set the color."
-T045,cooking,Knead the dough until it springs back when you press it with a finger.
-T046,cooking,Temper the chocolate so it sets with a glossy snap.
-T047,cooking,Salt the pasta water generously; it should taste like the sea.
-T048,cooking,Simmer the curry until the sauce thickens and the oil rises to the top.
-T049,emotion,A cold dread settled over her as the footsteps grew louder.
-T050,emotion,His face brightened the moment he saw the familiar handwriting.
-T051,emotion,"Grief came in waves, quiet one hour and overwhelming the next."
-T052,emotion,She felt a warm rush of pride watching her daughter cross the stage.
-T053,emotion,"The room was thick with tension, every word measured and wary."
-T054,emotion,Relief washed over him when the test results finally came back clear.
-T055,emotion,"A storm of anger rose in her chest, then slowly, deliberately cooled."
-T056,emotion,"He carried a dull, lingering sadness he could not quite name."
-T057,emotion,Joy bubbled up so suddenly she laughed before she could speak.
-T058,emotion,"Loneliness pressed in on the long, silent drive home."
-T059,emotion,"Hope flickered, small and stubborn, against everything stacked against them."
-T060,emotion,"The shame burned hot, and he wished the floor would swallow him."
-T061,emotion,"Her heart lifted at the bright, unexpected kindness of a stranger."
-T062,emotion,A heavy gloom hung over the house in the weeks after the loss.
-T063,emotion,Excitement crackled through the crowd as the lights went down.
-T064,emotion,"Calm returned slowly, like warmth seeping back into cold hands."
-T065,finance,"Quarterly revenue rose twelve percent, and the stock rallied on the beat."
-T066,finance,The bond's yield climbed as investors priced in another rate hike.
-T067,finance,Their lead over rivals narrowed as margins compressed across the sector.
-T068,finance,The fund rebalanced into equities after scoring gains in fixed income.
-T069,finance,Cash flow turned positive once the company cut its operating costs.
-T070,finance,The merger was financed with a mix of debt and new share issuance.
-T071,finance,"Analysts upgraded the shares, citing a strong order backlog."
-T072,finance,Inflation data sent the index sharply lower in afternoon trading.
-T073,finance,The startup raised a Series B at a valuation north of one billion.
-T074,finance,Dividends were held flat while the board prioritized debt reduction.
-T075,finance,A short squeeze drove the heavily shorted stock up forty percent.
-T076,finance,The central bank held rates steady but signaled cuts later in the year.
-T077,finance,"Earnings beat estimates, yet guidance for next quarter disappointed."
-T078,finance,The portfolio's beta rose as it tilted toward cyclical names.
-T079,finance,Currency losses ate into the exporter's reported profit this period.
-T080,finance,The IPO priced at the top of its range amid heavy demand.
-T081,history,The Treaty of Westphalia in 1648 ended the Thirty Years' War in Europe.
-T082,history,"Rome fell to the Visigoths in 410, a shock felt across the ancient world."
-T083,history,The printing press spread literacy faster than any prior invention.
-T084,history,Napoleon's retreat from Moscow in 1812 shattered his Grande Armée.
-T085,history,The Magna Carta limited the king's power and seeded later constitutions.
-T086,history,The transcontinental railroad joined the coasts of America in 1869.
-T087,history,The Renaissance revived classical art and learning across Italy.
-T088,history,The fall of the Berlin Wall in 1989 hastened the end of the Cold War.
-T089,history,Gutenberg's Bible was among the first books printed with movable type.
-T090,history,The Silk Road carried goods and ideas between China and the Mediterranean.
-T091,history,The French Revolution toppled the monarchy and proclaimed a republic.
-T092,history,The discovery of the New World reshaped trade and empire for centuries.
-T093,history,The Industrial Revolution pulled workers from farms into crowded cities.
-T094,history,Alexander's conquests spread Greek culture as far east as India.
-T095,history,The signing of the Declaration in 1776 announced a new nation.
-T096,history,The plague of the fourteenth century killed a third of Europe.
-T097,law,The court granted the motion to dismiss for lack of jurisdiction.
-T098,law,"At trial, the defense argued the evidence had been unlawfully obtained."
-T099,law,The statute requires the plaintiff to file within two years of the injury.
-T100,law,The judge instructed the jury to disregard the stricken testimony.
-T101,law,"Under the contract, either party may terminate with thirty days' notice."
-T102,law,The appellate panel reversed and remanded the case for a new hearing.
-T103,law,Precedent binds the lower court to follow the higher court's ruling.
-T104,law,The witness was administered the oath before taking the stand.
-T105,law,The settlement released both parties from any further liability.
-T106,law,The prosecution must prove every element beyond a reasonable doubt.
-T107,law,The clause was held unenforceable as contrary to public policy.
-T108,law,Discovery obligations require each side to disclose relevant documents.
-T109,law,The defendant entered a plea of not guilty at the arraignment.
-T110,law,An injunction barred the company from using the disputed trademark.
-T111,law,The deposition was transcribed and entered into the record.
-T112,law,The tribunal ruled the arbitration clause governed the dispute.
-T113,medicine,The patient was administered antibiotics and discharged the next morning.
-T114,medicine,A clinical trial found the drug reduced relapse rates by a third.
-T115,medicine,Elevated troponin pointed to damage to the heart muscle.
-T116,medicine,The surgeon resected the tumor and sent margins to pathology.
-T117,medicine,"Symptoms included fever, fatigue, and a persistent dry cough."
-T118,medicine,The dose was titrated upward until the seizures were controlled.
-T119,medicine,An MRI revealed a small lesion in the left temporal lobe.
-T120,medicine,The vaccine primes the immune system to recognize the pathogen.
-T121,medicine,Blood pressure remained elevated despite the new medication.
-T122,medicine,The biopsy confirmed the growth was benign rather than malignant.
-T123,medicine,Physical therapy restored most of the range of motion in the joint.
-T124,medicine,The chart noted an allergy to penicillin in bold red ink.
-T125,medicine,Insulin lowers blood glucose by moving it into the cells.
-T126,medicine,The wound was sutured and dressed to prevent infection.
-T127,medicine,The cardiologist recommended a stress test before clearing him.
-T128,medicine,Chemotherapy shrank the mass enough to make surgery possible.
-T129,sports,She dribbled past two defenders and scored in the final minute of the match.
-T130,sports,The rookie's late rally pulled the team back to within a single point.
-T131,sports,He beat the throw to second base with a headfirst slide.
-T132,sports,The striker's header found the top corner to seal the win.
-T133,sports,"Down by ten, the home side mounted a furious comeback in the fourth quarter."
-T134,sports,The goalkeeper dove full stretch to tip the shot around the post.
-T135,sports,Their captain led the break and finished with a thunderous dunk.
-T136,sports,The marathon leader pulled away on the final hill and never looked back.
-T137,sports,A clean tackle stripped the ball just outside the penalty area.
-T138,sports,The pitcher struck out the side to escape the bases-loaded jam.
-T139,sports,The peloton chased hard but could not reel in the lone breakaway rider.
-T140,sports,She served three aces in a row to take the deciding set.
-T141,sports,The forwards pressed high and forced a turnover deep in the zone.
-T142,sports,His buzzer-beater from half court sent the arena into a frenzy.
-T143,sports,The relay team shaved a full second off the national record.
-T144,sports,A perfectly timed block kept the spiker from scoring the final point.
-T145,weather,"The storm pushed inland overnight, dropping three inches of rain."
-T146,weather,"A bright, cloudless sky followed the cold front through the valley."
-T147,weather,Gusts topped sixty miles an hour as the squall line passed.
-T148,weather,Dense fog cut visibility to a few hundred feet on the coast road.
-T149,weather,The heat dome parked over the region for a sixth straight day.
-T150,weather,Snow tapered to flurries as the temperature crept above freezing.
-T151,weather,Lightning forked across the horizon ahead of the approaching cell.
-T152,weather,"A gentle drizzle settled in, leaving the streets slick and gray."
-T153,weather,"The barometer fell sharply, a sign the weather was about to turn."
-T154,weather,Clear skies tonight will let temperatures dip near the frost point.
-T155,weather,The hurricane weakened to a tropical storm after making landfall.
-T156,weather,Hail the size of marbles dented cars across the suburb.
-T157,weather,A warm breeze carried the smell of rain before the first drops fell.
-T158,weather,Black clouds massed on the ridge as the afternoon storm built.
-T159,weather,"The drought broke at last with a slow, soaking two-day rain."
-T160,weather,Ice glazed the branches and brought down power lines overnight.
-T161,finance+sports,The team's stock rallied after they beat their rivals to clinch the title.
-T162,chemistry+cooking,Balancing the acid and the base is chemistry whether in a flask or a sauce.
-T163,law+medicine,At trial the surgeon testified about the dose she had administered.
-T164,weather+emotion,A cold dread settled in as the storm clouds massed on the horizon.
-T165,history+finance,"The new central bank, founded in 1694, financed the kingdom's wars."
-T166,code+history,"The first compiler, written in the 1950s, changed how software was built."
+T044,code,"def quicksort(arr):
+    if len(arr) <= 1: return arr
+    p = arr[0]
+    return quicksort([x for x in arr[1:] if x < p]) + [p] + quicksort([x for x in arr[1:] if x >= p])"
+T045,code,"interface User { id: number; name: string; }
+const u: User = { id: 1, name: 'A' };"
+T046,code,pipeline | head -n 20 | grep ERROR | wc -l
+T047,code,"with open(path) as f:
+    for line in f:
+        process(line.strip())"
+T048,code,"let mut v = vec![];
+for x in 0..n { v.push(x*x); }"
+T049,code,"cursor.execute('SELECT * FROM t WHERE id = %s', (key,))"
+T050,code,const obs = new MutationObserver(m => m.forEach(process));
+T051,cooking,Whisk the acid from a squeeze of lemon into the warm butter sauce.
+T052,cooking,Reduce the stock over high heat until it coats the back of a spoon.
+T053,cooking,Season the base of the soup with salt before adding the cream.
+T054,cooking,Let the dough rest so the gluten relaxes and the crust stays tender.
+T055,cooking,Sear the steak hard on one side to build a deep brown crust.
+T056,cooking,Fold the beaten egg whites gently so the batter keeps its air.
+T057,cooking,A pinch of sugar balances the acid in an over-tart tomato sauce.
+T058,cooking,Caramelize the onions slowly until they turn sweet and jammy.
+T059,cooking,Rest the roast under foil so the juices redistribute before carving.
+T060,cooking,Toast the spices in a dry pan to wake up their fragrance.
+T061,cooking,"Deglaze the pan with wine, scraping up the browned bits for flavor."
+T062,cooking,"Blanch the greens briefly, then shock them in ice water to set the color."
+T063,cooking,Knead the dough until it springs back when you press it with a finger.
+T064,cooking,Temper the chocolate so it sets with a glossy snap.
+T065,cooking,Salt the pasta water generously; it should taste like the sea.
+T066,cooking,Simmer the curry until the sauce thickens and the oil rises to the top.
+T067,cooking,Proof the yeast in warm water with a pinch of sugar before mixing.
+T068,cooking,Emulsify the vinaigrette by whisking oil into the vinegar slowly.
+T069,cooking,Score the bread before baking so it expands evenly in the oven.
+T070,cooking,Baste the turkey with its own juices to keep the meat moist.
+T071,cooking,Chiffonade the basil into thin ribbons for the final garnish.
+T072,cooking,Blanch and shock vegetables to preserve their bright color and crunch.
+T073,cooking,Render the fat from the bacon slowly over low heat.
+T074,cooking,Macerate the berries with sugar to draw out their juices.
+T075,cooking,Fold the ingredients gently to avoid deflating the whipped cream.
+T076,cooking,The roux darkened to a deep mahogany before the stock went in.
+T077,cooking,"A splash of vinegar brightens the rich, long-simmered ragu."
+T078,emotion,A cold dread settled over her as the footsteps grew louder.
+T079,emotion,His face brightened the moment he saw the familiar handwriting.
+T080,emotion,"Grief came in waves, quiet one hour and overwhelming the next."
+T081,emotion,She felt a warm rush of pride watching her daughter cross the stage.
+T082,emotion,"The room was thick with tension, every word measured and wary."
+T083,emotion,Relief washed over him when the test results finally came back clear.
+T084,emotion,"A storm of anger rose in her chest, then slowly, deliberately cooled."
+T085,emotion,"He carried a dull, lingering sadness he could not quite name."
+T086,emotion,Joy bubbled up so suddenly she laughed before she could speak.
+T087,emotion,"Loneliness pressed in on the long, silent drive home."
+T088,emotion,"Hope flickered, small and stubborn, against everything stacked against them."
+T089,emotion,"The shame burned hot, and he wished the floor would swallow him."
+T090,emotion,"Her heart lifted at the bright, unexpected kindness of a stranger."
+T091,emotion,A heavy gloom hung over the house in the weeks after the loss.
+T092,emotion,Excitement crackled through the crowd as the lights went down.
+T093,emotion,"Calm returned slowly, like warmth seeping back into cold hands."
+T094,emotion,A surge of gratitude made her eyes sting as the gift was unwrapped.
+T095,emotion,Panic tightened his chest until the familiar voice on the phone.
+T096,emotion,The quiet satisfaction of a job finished exactly right.
+T097,emotion,Jealousy twisted when the praise went to the rival instead.
+T098,emotion,A wave of nostalgia hit at the first notes of the old song.
+T099,emotion,The bitter aftertaste of regret lingered long after the argument.
+T100,emotion,Pure awe at the scale of the night sky over the desert.
+T101,emotion,The weary contentment that comes after a hard day done well.
+T102,finance,"Quarterly revenue rose twelve percent, and the stock rallied on the beat."
+T103,finance,The bond's yield climbed as investors priced in another rate hike.
+T104,finance,The fund rebalanced into equities after scoring gains in fixed income.
+T105,finance,Central bank held rates steady but signaled cuts later in the year.
+T106,finance,The merger was financed with a mix of debt and new share issuance.
+T107,finance,Earnings per share beat estimates by eight cents on strong volume.
+T108,finance,The startup raised a Series B at a five-hundred-million valuation.
+T109,finance,Credit spreads tightened as risk appetite returned to the market.
+T110,finance,The IPO priced above the range and popped twenty percent on debut.
+T111,finance,Analysts upgraded the name citing improving margins and backlog.
+T112,finance,The hedge fund covered its short after the company beat on top line.
+T113,finance,Currency volatility spiked after the surprise central-bank decision.
+T114,finance,The pension fund shifted allocation toward private credit and real assets.
+T115,finance,Treasury yields fell five basis points on softer-than-expected data.
+T116,finance,The SPAC announced a target in the electric-vehicle charging space.
+T117,finance,Options implied volatility collapsed after the earnings release.
+T118,finance,The activist investor disclosed a nine-percent stake and demanded board seats.
+T119,finance,Revenue guidance was raised for the full year on strong demand.
+T120,finance,The private-equity firm exited its investment at a three-times multiple.
+T121,finance,"Inflation prints came in cooler, boosting rate-cut expectations."
+T122,finance,The bank beat on net interest income but guided conservatively on credit.
+T123,finance,Commodity prices surged on supply concerns in key producing regions.
+T124,finance,The fintech reported record transaction volume in its latest quarter.
+T125,finance,Venture funding slowed in the second half as investors grew more selective.
+T126,finance,The sovereign-wealth fund increased its allocation to U.S. equities.
+T127,finance,The earnings call highlighted margin expansion in the core segment.
+T128,finance,A downgrade from the rating agency sent yields wider across the curve.
+T129,finance,The buyback authorization signaled confidence in undervaluation.
+T130,finance,The company's lead over rivals narrowed as margins compressed across the sector.
+T131,history,The Treaty of Westphalia in 1648 ended the Thirty Years' War in Europe.
+T132,history,"Rome fell to the Visigoths in 410, a shock felt across the ancient world."
+T133,history,The printing press spread literacy faster than any prior invention.
+T134,history,Napoleon's retreat from Moscow in 1812 shattered his Grande Armée.
+T135,history,The Magna Carta limited the king's power and seeded later constitutions.
+T136,history,The transcontinental railroad joined the coasts of America in 1869.
+T137,history,The Renaissance revived classical art and learning across Italy.
+T138,history,The fall of the Berlin Wall in 1989 hastened the end of the Cold War.
+T139,history,Gutenberg's Bible was among the first books printed with movable type.
+T140,history,The Silk Road carried goods and ideas between China and the Mediterranean.
+T141,history,The French Revolution toppled the monarchy and proclaimed a republic.
+T142,history,The discovery of the New World reshaped trade and empire for centuries.
+T143,history,The Industrial Revolution pulled workers from farms into crowded cities.
+T144,history,Alexander's conquests spread Greek culture as far east as India.
+T145,history,The signing of the Declaration in 1776 announced a new nation.
+T146,history,The plague of the fourteenth century killed a third of Europe.
+T147,history,The Ottoman Empire reached its greatest extent under Suleiman the Magnificent.
+T148,history,The Meiji Restoration rapidly industrialized Japan in the late nineteenth century.
+T149,history,The Congress of Vienna redrew the map of Europe after Napoleon.
+T150,history,The Gold Rush brought tens of thousands to California in 1849.
+T151,history,The Partition of India in 1947 created the modern borders of South Asia.
+T152,history,The Manhattan Project produced the first atomic weapons in 1945.
+T153,history,The invention of the transistor in 1947 enabled the electronics age.
+T154,history,The Arab Spring uprisings spread across the Middle East in 2011.
+T155,law,The court granted the motion to dismiss for lack of jurisdiction.
+T156,law,"At trial, the defense argued the evidence had been unlawfully obtained."
+T157,law,The statute requires the plaintiff to file within two years of the injury.
+T158,law,The judge instructed the jury to disregard the stricken testimony.
+T159,law,"Under the contract, either party may terminate with thirty days' notice."
+T160,law,The appellate panel reversed and remanded the case for a new hearing.
+T161,law,Precedent binds the lower court to follow the higher court's ruling.
+T162,law,The witness was administered the oath before taking the stand.
+T163,law,The settlement released both parties from any further liability.
+T164,law,The prosecution must prove every element beyond a reasonable doubt.
+T165,law,The clause was held unenforceable as contrary to public policy.
+T166,law,Discovery obligations require each side to disclose relevant documents.
+T167,law,The defendant entered a plea of not guilty at the arraignment.
+T168,law,An injunction barred the company from using the disputed trademark.
+T169,law,The deposition was transcribed and entered into the record.
+T170,law,The tribunal ruled the arbitration clause governed the dispute.
+T171,law,The contract specified liquidated damages for late performance.
+T172,law,Counsel moved for a directed verdict at the close of evidence.
+T173,law,The jury returned a unanimous verdict after three hours of deliberation.
+T174,law,The patent was invalidated for obviousness over prior art.
+T175,law,The regulatory filing disclosed a material risk factor.
+T176,law,Mediation produced a confidential settlement agreement.
+T177,law,The appeal turned on statutory interpretation of the safe-harbor clause.
+T178,law,Expert testimony established the standard of care in the industry.
+T179,medicine,The patient was administered antibiotics and discharged the next morning.
+T180,medicine,A clinical trial found the drug reduced relapse rates by a third.
+T181,medicine,Elevated troponin pointed to damage to the heart muscle.
+T182,medicine,The surgeon resected the tumor and sent margins to pathology.
+T183,medicine,"Symptoms included fever, fatigue, and a persistent dry cough."
+T184,medicine,The dose was titrated upward until the seizures were controlled.
+T185,medicine,An MRI revealed a small lesion in the left temporal lobe.
+T186,medicine,The vaccine primes the immune system to recognize the pathogen.
+T187,medicine,Blood pressure remained elevated despite the new medication.
+T188,medicine,The biopsy confirmed the growth was benign rather than malignant.
+T189,medicine,Physical therapy restored most of the range of motion in the joint.
+T190,medicine,The chart noted an allergy to penicillin in bold red ink.
+T191,medicine,Insulin lowers blood glucose by moving it into the cells.
+T192,medicine,The wound was sutured and dressed to prevent infection.
+T193,medicine,The cardiologist recommended a stress test before clearing him.
+T194,medicine,Chemotherapy shrank the mass enough to make surgery possible.
+T195,medicine,The blood draw showed elevated white-cell count consistent with infection.
+T196,medicine,The radiologist flagged a suspicious opacity on the chest film.
+T197,medicine,The patient reported improved mobility after the new orthotic.
+T198,medicine,Liver enzymes returned to normal after the drug holiday.
+T199,medicine,The protocol called for weekly monitoring of serum levels.
+T200,medicine,Prophylactic anticoagulation was started before the long flight.
+T201,medicine,The echocardiogram showed preserved ejection fraction.
+T202,medicine,The dermatology consult noted a changing pigmented lesion.
+T203,sports,She dribbled past two defenders and scored in the final minute of the match.
+T204,sports,The rookie's late rally pulled the team back to within a single point.
+T205,sports,He beat the throw to second base with a headfirst slide.
+T206,sports,The striker's header found the top corner to seal the win.
+T207,sports,"Down by ten, the home side mounted a furious comeback in the fourth quarter."
+T208,sports,The goalkeeper dove full stretch to tip the shot around the post.
+T209,sports,Their captain led the break and finished with a thunderous dunk.
+T210,sports,The marathon leader pulled away on the final hill and never looked back.
+T211,sports,A clean tackle stripped the ball just outside the penalty area.
+T212,sports,The pitcher struck out the side to escape the bases-loaded jam.
+T213,sports,The peloton chased hard but could not reel in the lone breakaway rider.
+T214,sports,She served three aces in a row to take the deciding set.
+T215,sports,The forwards pressed high and forced a turnover deep in the zone.
+T216,sports,His buzzer-beater from half court sent the arena into a frenzy.
+T217,sports,The relay team shaved a full second off the national record.
+T218,sports,A perfectly timed block kept the spiker from scoring the final point.
+T219,sports,The underdog upset the defending champions in a dramatic penalty shootout.
+T220,sports,The cyclist attacked on the climb and held the lead to the finish.
+T221,sports,A no-look pass set up the easy layup for the game-winning basket.
+T222,sports,The defense held firm in the red zone to preserve the shutout.
+T223,sports,She broke the world record with a personal best in the 400 meters.
+T224,sports,The team executed a perfect double play to end the inning.
+T225,sports,A last-second field goal won the championship for the visiting side.
+T226,sports,The swimmer touched the wall first in a photo-finish race.
+T227,sports,The coach called a timeout to set up the final play of the game.
+T228,sports,The referee consulted VAR before awarding the decisive penalty.
+T229,sports,A diving catch in the outfield robbed the batter of extra bases.
+T230,weather,"The storm pushed inland overnight, dropping three inches of rain."
+T231,weather,"A bright, cloudless sky followed the cold front through the valley."
+T232,weather,Gusts topped sixty miles an hour as the squall line passed.
+T233,weather,Dense fog cut visibility to a few hundred feet on the coast road.
+T234,weather,The heat dome parked over the region for a sixth straight day.
+T235,weather,Snow tapered to flurries as the temperature crept above freezing.
+T236,weather,Lightning forked across the horizon ahead of the approaching cell.
+T237,weather,"A gentle drizzle settled in, leaving the streets slick and gray."
+T238,weather,"The barometer fell sharply, a sign the weather was about to turn."
+T239,weather,Clear skies tonight will let temperatures dip near the frost point.
+T240,weather,The hurricane weakened to a tropical storm after making landfall.
+T241,weather,Hail the size of marbles dented cars across the suburb.
+T242,weather,A warm breeze carried the smell of rain before the first drops fell.
+T243,weather,Black clouds massed on the ridge as the afternoon storm built.
+T244,weather,"The drought broke at last with a slow, soaking two-day rain."
+T245,weather,Ice glazed the branches and brought down power lines overnight.
+T246,weather,A high-pressure ridge brought unseasonable warmth for the holiday weekend.
+T247,weather,"The front stalled, producing days of steady light rain and flooding."
+T248,weather,Visibility dropped to near zero in the blowing snow on the pass.
+T249,weather,The dew point climbed as the humid air mass moved in from the gulf.
+T250,weather,An Alberta clipper brought wind chills well below zero by morning.
+T251,weather,The marine layer kept the coast cool while the interior baked.
+T252,weather,Radar showed a line of severe thunderstorms tracking east after dark.
+T253,weather,Frost advisories were posted for the valleys at dawn.
+T254,finance+sports,The team's stock rallied after they beat their rivals to clinch the title.
+T255,chemistry+cooking,Balancing the acid and the base is chemistry whether in a flask or a sauce.
+T256,law+medicine,At trial the surgeon testified about the dose she had administered.
+T257,weather+emotion,A cold dread settled in as the storm clouds massed on the horizon.
+T258,history+finance,"The new central bank, founded in 1694, financed the kingdom's wars."
+T259,code+history,"The first compiler, written in the 1950s, changed how software was built."

@@ -21,11 +21,19 @@ Design notes
 The lab uses three main prompt families plus optional controls:
 
 * ``fact``: high-certainty completions. These are expected to become sharp and
-  target-like under the lens.
+  target-like under the lens. We deliberately include both plain declarative
+  forms ("The capital of France is") and answer-shaped forms ("... is the city
+  of") plus some that trigger strong discourse continuations ("... is well
+  known as") so students see the model’s actual next-token objective compete
+  with the “fact” task.
 * ``ambiguous``: prompts with no privileged single-token continuation. These
-  are the negative control against overclaiming early commitment.
+  are the negative control against overclaiming early commitment. Several are
+  length- and syntax-matched to facts to make the entropy and stability
+  contrast clean.
 * ``counterfactual``: a local context overwrites a memorized fact. Target is
-  the in-context answer; distractor is the memorized answer.
+  the in-context answer; distractor is the memorized answer. Strong overrides
+  (e.g., an explicit “the document states … is Berlin”) are included so the
+  in-context win is visually dramatic.
 * ``control``: optional weak or scrambled prompts, enabled with
   ``--include-controls``. These are tripwires for metrics that look confident
   on nonsense.
@@ -94,6 +102,17 @@ FACT_EXAMPLES = (
     PromptExample("fact_sky_color", "fact", "On a clear day, the color of the sky is", " blue", " green"),
     PromptExample("fact_week_days", "fact", "The day after Monday is", " Tuesday", " Sunday"),
     PromptExample("fact_primary_red", "fact", "One primary color is", " red", " table"),
+    # Stronger "answer-shaped" and discourse-bias contrasts to make model objective vs task pop
+    PromptExample("fact_capital_france_city", "fact", "The capital of France is the city of", " Paris", " London"),
+    PromptExample("fact_eiffel_tower", "fact", "The Eiffel Tower is located in", " Paris", " Rome"),
+    PromptExample("fact_python_creator", "fact", "The creator of the Python language is", " Guido", " Rossum"),  # single-token-ish for many tokenizers
+    PromptExample("fact_capital_australia", "fact", "The capital of Australia is", " Canberra", " Sydney"),
+    PromptExample("fact_capital_canada", "fact", "The capital of Canada is", " Ottawa", " Toronto"),
+    PromptExample("fact_moon_planet", "fact", "The largest moon of Jupiter is", " Ganymede", " Europa"),
+    PromptExample("fact_heart_organ", "fact", "The organ that pumps blood is the", " heart", " liver"),
+    PromptExample("fact_oxygen_gas", "fact", "The gas we breathe to live is called", " oxygen", " nitrogen"),
+    # Discourse-framed fact: fluent set-up, but the continuation is still a labeled fact.
+    PromptExample("fact_well_known_capital", "fact", "It is well known that the capital of France is", " Paris", " London"),
 )
 
 AMBIGUOUS_EXAMPLES = (
@@ -105,6 +124,12 @@ AMBIGUOUS_EXAMPLES = (
     PromptExample("ambig_favorite", "ambiguous", "My favorite thing about this city is the"),
     PromptExample("ambig_after_the_rain", "ambiguous", "After the rain stopped, we decided to"),
     PromptExample("ambig_scientist_found", "ambiguous", "The scientist looked at the data and found"),
+    # Discourse-heavy to highlight that low entropy / high confidence often means fluent continuation, not "the fact"
+    PromptExample("ambig_the_capital_of", "ambiguous", "The capital of France is a city that is"),
+    PromptExample("ambig_the_best_part", "ambiguous", "The best part of the whole experience was"),
+    PromptExample("ambig_later_that_day", "ambiguous", "Later that day we realized we had"),
+    PromptExample("ambig_in_the_end", "ambiguous", "In the end it all came down to"),
+    PromptExample("ambig_she_said_that", "ambiguous", "She said that the only thing that mattered was"),
 )
 
 COUNTERFACTUAL_EXAMPLES = (
@@ -164,6 +189,35 @@ COUNTERFACTUAL_EXAMPLES = (
         "In this calendar game, the day after Monday is Friday. In this calendar game, the day after Monday is",
         " Friday",
         " Tuesday",
+    ),
+    # Strong override to make "in-context beats memorized" pop clearly
+    PromptExample(
+        "cf_france_berlin",
+        "counterfactual",
+        "The document clearly states that the capital of France is Berlin. The capital of France is therefore",
+        " Berlin",
+        " Paris",
+    ),
+    PromptExample(
+        "cf_germany_madrid",
+        "counterfactual",
+        "According to the map in the story, the capital of Germany is Madrid. So the capital of Germany is",
+        " Madrid",
+        " Berlin",
+    ),
+    PromptExample(
+        "cf_heart_brain",
+        "counterfactual",
+        "In the medical textbook we are using today, the organ that pumps blood is the brain. The organ that pumps blood is the",
+        " brain",
+        " heart",
+    ),
+    PromptExample(
+        "cf_oxygen_argon",
+        "counterfactual",
+        "In this sealed lab experiment the gas we need is argon. The gas the experiment uses is",
+        " argon",
+        " oxygen",
     ),
 )
 
@@ -629,6 +683,13 @@ def trajectory_event_row(
     # A compact label for the final readout. This keeps three notions separate:
     # target top-1, target merely beating the matched distractor, and confidence
     # on an unlabeled ambiguous continuation.
+    #
+    # This is the heart of the “readout is an instrument” lesson. On many factual
+    # prompts the model’s actual top-1 is a discourse word (“known”, “the city of”)
+    # even while the labeled target has a solid rank and beats its distractor.
+    # final_readout_audit.csv and the per-example state cards make this visible
+    # immediately. Students must not equate “target rank improved” or “target beats
+    # distractor” with “the model knows the answer at this depth.”
     if target_id is None:
         row["final_outcome"] = "unlabeled"
     elif bool(row.get("final_top1_is_target")):
@@ -718,7 +779,11 @@ def phase_for_depth(depth: int, n_layers: int) -> str:
 
 
 def readout_phase_rows(ex: PromptExample, traj: bench.LensTrajectory, n_layers: int) -> list[dict[str, Any]]:
-    """Summarize trajectories in coarse depth bands for quick cross-model reading."""
+    """Summarize trajectories in coarse depth bands (embedding / early / middle / late / final)
+    for quick cross-model reading. The phase labels are defined in phase_for_depth and
+    are intentionally coarse so students can compare stabilization timing across models
+    of different depths without getting lost in layer numbers.
+    """
     phases = ["embedding", "early_blocks", "middle_blocks", "late_blocks", "final"]
     out: list[dict[str, Any]] = []
     for phase in phases:
@@ -775,8 +840,8 @@ def plot_metric_by_depth(
     logy: bool = False,
     invert_y: bool = False,
 ) -> None:
-    """Thin line per example, heavier mean line per category."""
-    fig, ax = bench.new_figure()
+    """Thin per-example + bold category mean. Highlights when different metrics (entropy vs rank vs cosine) converge."""
+    fig, ax = bench.new_figure(figsize=(9.2, 5.4))
     plotted = False
     for category in categories:
         rows = [r for r in per_example if r["category"] == category and metric in r and r[metric]]
@@ -785,10 +850,10 @@ def plot_metric_by_depth(
         plotted = True
         color = category_color(category)
         for r in rows:
-            ax.plot(range(len(r[metric])), r[metric], color=color, alpha=0.25, linewidth=0.8)
+            ax.plot(range(len(r[metric])), r[metric], color=color, alpha=0.22, linewidth=0.7)
         depth_count = min(len(r[metric]) for r in rows)
         mean = [statistics.fmean(float(r[metric][d]) for r in rows) for d in range(depth_count)]
-        ax.plot(range(depth_count), mean, color=color, linewidth=2.5, label=f"{category} (n={len(rows)})")
+        ax.plot(range(depth_count), mean, color=color, linewidth=2.8, label=f"{category} (n={len(rows)})")
     if not plotted:
         bench.close_figure(fig)
         return
@@ -798,8 +863,13 @@ def plot_metric_by_depth(
         ax.invert_yaxis()
     ax.set_xlabel("depth (0 = embeddings, k = after k blocks)")
     ax.set_ylabel(ylabel)
-    ax.set_title(title)
-    ax.legend(fontsize=8)
+    ax.set_title(title + "  •  thin=per example, bold=category mean")
+    ax.legend(fontsize=8, frameon=False, loc="best")
+    # Light guide for "final" depth
+    n_layers = len(mean) - 1 if mean else 0
+    if n_layers:
+        ax.axvline(n_layers, color="#555555", ls=":", lw=1.0, alpha=0.6)
+    bench.style_ax(ax, legend=False)  # legend already placed
     bench.save_figure(ctx, fig, name, title)
 
 
@@ -885,31 +955,37 @@ def plot_event_heatmap(
                 data[i][j] = float(value)
 
     fig_height = max(6.0, min(12.0, 0.28 * len(rows) + 1.8))
-    fig, ax = bench.new_figure(figsize=(10.0, fig_height))
+    fig, ax = bench.new_figure(figsize=(11.0, fig_height))
     cmap = plt.get_cmap("viridis").copy()
-    cmap.set_bad("#e6e6e6")
+    cmap.set_bad("#cccccc")
     im = ax.imshow(data, aspect="auto", cmap=cmap, vmin=0, vmax=n_layers)
     ax.set_xticks(range(len(events)))
-    ax.set_xticklabels(events, rotation=30, ha="right")
+    ax.set_xticklabels([e.replace("_", "\n") for e in events], rotation=0, ha="center", fontsize=7)
     ax.set_yticks(range(len(rows)))
-    ax.set_yticklabels([f"{r['category'][:2]}:{r['example_id']}" for r in rows], fontsize=7)
-    ax.set_title("Event-depth heatmap (gray = event absent or undefined)")
-    ax.set_xlabel("event metric")
-    ax.set_ylabel("example")
-    cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
-    cbar.set_label("depth")
+    ax.set_yticklabels([f"{r['category'][:2]}:{r['example_id']}" for r in rows], fontsize=6.5)
+    ax.set_title("Event-depth heatmap (gray = event never occurred for this example/metric) — the core Lab 1 lesson")
+    ax.set_xlabel("event metric (gray cells are data, not missing)")
+    ax.set_ylabel("example (grouped by category)")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.022, pad=0.01)
+    cbar.set_label("depth (earlier = more 'early commitment' under raw lens)")
 
+    # Category separator lines + labels
     previous = rows[0]["category"]
-    for i, row in enumerate(rows[1:], start=1):
+    cat_start = 0
+    for i, row in enumerate(rows[1:] + [{"category": "__END__"}], start=1):
         if row["category"] != previous:
-            ax.axhline(i - 0.5, color="white", linewidth=1.5)
+            ax.axhline(i - 0.5, color="white", linewidth=2.0)
+            # small category label on left
+            mid = (cat_start + i - 1) / 2.0
+            ax.text(-0.6, mid, previous, va="center", ha="right", fontsize=7, color="#444444", rotation=0)
+            cat_start = i
             previous = row["category"]
     fig.tight_layout()
     bench.save_figure(
         ctx,
         fig,
         "event_depth_heatmap.png",
-        "Example-by-event depth grid; gray cells make non-occurring events explicit.",
+        "Example-by-event depth grid; gray cells make non-occurring events explicit (the central pedagogical point).",
     )
 
 
@@ -1065,35 +1141,84 @@ def plot_readout_dashboard(
         ("top1_margin", "top-1 minus top-2 margin", "probability", False),
         ("cosine_to_final", "cosine to final residual", "cosine", False),
     ]
-    fig, axes = plt.subplots(2, 2, figsize=(12.0, 8.0))
+    fig, axes = plt.subplots(2, 2, figsize=(12.5, 8.5))
     plotted = False
+    max_depth_count = 0
     for ax, (metric, title, ylabel, logy) in zip(axes.flat, specs):
-        ax.grid(True, alpha=0.3)
+        ax.grid(True, alpha=0.25)
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
         for category in categories:
             rows = [r for r in per_example if r["category"] == category and metric in r and r[metric]]
             if not rows:
                 continue
             plotted = True
             depth_count = min(len(r[metric]) for r in rows)
+            max_depth_count = max(max_depth_count, depth_count)
             mean = [statistics.fmean(float(r[metric][d]) for r in rows) for d in range(depth_count)]
-            ax.plot(range(depth_count), mean, linewidth=2.2, label=f"{category} (n={len(rows)})", color=category_color(category))
+            ax.plot(range(depth_count), mean, linewidth=2.4, label=f"{category} (n={len(rows)})", color=category_color(category))
         if logy:
             ax.set_yscale("log")
         ax.set_title(title)
-        ax.set_xlabel("depth")
+        ax.set_xlabel("depth (0 = embeddings, k = after k blocks)")
         ax.set_ylabel(ylabel)
     if not plotted:
         bench.close_figure(fig)
         return
-    axes[0, 0].legend(fontsize=8)
-    fig.suptitle("Raw logit-lens readout dashboard", fontsize=13)
-    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    axes[0, 0].legend(fontsize=8, frameon=False)
+    fig.suptitle("Raw logit-lens readout dashboard — the four curves that move at different times are the lesson", fontsize=12)
+    # Annotate that final depth is the reference
+    final_depth = max_depth_count - 1
+    for ax in axes.flat:
+        ax.axvline(final_depth, color="#444", ls=":", lw=1, alpha=0.5)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
     bench.save_figure(
         ctx,
         fig,
         "readout_dashboard.png",
-        "Category-mean entropy, KL-to-final, top-1 margin, and residual cosine curves in one dashboard.",
+        "Category-mean entropy, KL-to-final, top-1 margin, and residual cosine curves in one dashboard. Gaps between curves = the core observation.",
     )
+
+
+def plot_convergence_lag(
+    ctx: bench.RunContext,
+    event_rows: list[dict[str, Any]],
+    *,
+    categories: tuple[str, ...] = CATEGORIES,
+) -> None:
+    """Visualize the lag between geometric convergence (cosine) and decoded convergence (KL or decision).
+    This directly supports the 'readout is not a mind scan' and 'different stories' questions."""
+    if not event_rows:
+        return
+    fig, ax = bench.new_figure(figsize=(9.5, 5.6))
+    for cat in categories:
+        rows = [r for r in event_rows if r.get("category") == cat]
+        if not rows:
+            continue
+        # For each example compute first depth where cosine high and where KL low; plot the gap
+        lags = []
+        for r in rows:
+            cos_d = r.get("cosine_to_final_first_ge_0.95")
+            kl_d = r.get("kl_to_final_first_le_0.5_bits")
+            if cos_d not in (None, "") and kl_d not in (None, ""):
+                lags.append(float(kl_d) - float(cos_d))
+        if not lags:
+            continue
+        color = category_color(cat)
+        # jittered points + mean
+        x = [CATEGORIES.index(cat) + (i - len(lags)/2)*0.08 for i in range(len(lags))]
+        ax.scatter(x, lags, color=color, alpha=0.6, s=28, label=f"{cat} (n={len(lags)})")
+        m = statistics.fmean(lags)
+        ax.plot([CATEGORIES.index(cat)-0.25, CATEGORIES.index(cat)+0.25], [m, m], color=color, linewidth=3)
+    ax.axhline(0, color="#333", ls=":", lw=1, alpha=0.7)
+    ax.set_xticks(range(len(CATEGORIES)))
+    ax.set_xticklabels(categories)
+    ax.set_ylabel("lag (KL-stable depth − cosine-stable depth)  >0 means geometry leads decoded readout")
+    ax.set_title("Geometric vs decoded convergence lag (positive = residual looks final before the lens distribution does)")
+    ax.legend(fontsize=8, frameon=False)
+    bench.style_ax(ax, legend=False)
+    bench.save_figure(ctx, fig, "convergence_lag.png",
+                      "Key Lab 1 concept: the residual can be geometrically close to final while the decoded distribution is not (or vice versa).")
 
 
 def plot_event_ordering(
@@ -1263,7 +1388,7 @@ def render_summary(
         "",
         "## 2. What internal object was measured?",
         "",
-        "The pre-final-norm residual stream at the final token position after every block. Each stream was decoded with the model's own final norm and unembedding. The run recorded top-k tokens, target and distractor metrics, entropy, KL-to-final, top-1 margin, residual norm, update norm, and residual cosine-to-final.",
+        "The pre-final-norm residual stream at the final token position after every block. Each stream was decoded with the model's own final norm and unembedding (the *raw* logit lens). The run recorded top-k tokens, target and distractor metrics, entropy, KL-to-final, top-1 margin, residual norm, update norm, and residual cosine-to-final. Multiple convergence metrics are reported because geometric closeness of the residual (cosine) and sharpness of the decoded distribution (entropy, KL, rank) can (and often do) occur at different depths.",
         "",
         "## 3. What intervention or control was used?",
         "",
@@ -1279,11 +1404,12 @@ def render_summary(
         f"`target beats distractor` is the first depth where target logit exceeds distractor logit by "
         f">{LOGIT_DIFF_MEANINGFUL_MARGIN:g} and the target keeps the lead thereafter. "
         "`target_first_beats_distractor_raw` records the ungated first positive crossing as a diagnostic only. "
-        "Blank cells mean the metric is not defined for that category or never occurred.",
+        "Blank cells mean the metric is not defined for that category or never occurred. "
+        "On many factual prompts the model's actual top-1 remains a discourse continuation (e.g. 'known') even while the labeled target improves in rank and beats its distractor. This is the central observation the lab is designed to surface.",
         "",
         "## 5. What claim is supported, and at what evidence level?",
         "",
-        "Only observational claims are supported. The strongest claims are about what the raw final readout can decode from intermediate streams under this prompt distribution.",
+        "Only observational claims are supported. The strongest claims are about what the raw final readout can decode from intermediate streams under this prompt distribution. The added answer-shaped and discourse-heavy fact prompts plus the explicit convergence_lag plot are designed to make the distinction between geometric convergence and decoded top-1 commitment unmistakable.",
         "",
     ]
     if claims:
@@ -1327,13 +1453,17 @@ def render_summary(
         "",
         "## Reading path",
         "",
-        "1. `logit_lens_card.md` for scope, headline numbers, claims, and non-claims",
-        "2. `diagnostics/logit_lens_self_check.json` and `diagnostics/hook_parity_by_layer.csv`",
-        "3. `tables/final_readout_audit.csv` to separate correctness, confidence, and matched-distractor wins",
-        "4. `state/<example_id>/state_card.md` for one fact and one counterfactual prompt",
-        "5. `plots/readout_dashboard.png`, `plots/final_readout_scatter.png`, and `plots/event_depth_heatmap.png`",
-        "6. `plots/target_rank_by_depth.png`, `plots/logit_diff_by_depth.png`, and `plots/kl_to_final_by_depth.png`",
-        "7. `tables/top1_transition_segments.csv` and `tables/trajectory_events.csv` for outliers and blank cells",
+        "Microscope validation (smoke ritual):",
+        "1. The three instrument locks (`diagnostics/hook_parity*`, `logit_lens_self_check.json`, `tokenization_report.csv`)",
+        "2. `claim_ledger.md` at the course root (`interpretability/`) + one `state_card.md` + basic residual norm plot",
+        "",
+        "Lab 1 science:",
+        "3. `logit_lens_card.md` for scope, headline numbers, claims, and non-claims",
+        "4. `tables/final_readout_audit.csv` (the key place to see discourse bias: target rank improves but actual top-1 is often 'known')",
+        "5. `state/<example_id>/state_card.md` for one fact and one counterfactual prompt",
+        "6. `plots/readout_dashboard.png` + `convergence_lag.png` (explicit lag between geometric closeness of the residual and decoded top-1 commitment — the central 'instrument' lesson), `final_readout_scatter.png`, and `event_depth_heatmap.png`",
+        "7. `plots/target_rank_by_depth.png`, `plots/logit_diff_by_depth.png`, and `plots/kl_to_final_by_depth.png`",
+        "8. `tables/top1_transition_segments.csv` and `tables/trajectory_events.csv` for outliers and blank cells (n counts show when an event never occurred)",
         "",
         "## Student tooling note",
         "",
@@ -1467,7 +1597,7 @@ def write_event_definition_manifest(ctx: bench.RunContext, n_layers: int) -> Non
                 "kl_to_final_first_le_0.5_bits": "first depth where KL(final || depth) is at most 0.5 bits",
                 "cosine_to_final_first_ge_0.95": "first depth where residual cosine-to-final is at least 0.95",
             },
-            "non_claim": "None of these events proves knowledge, belief, storage, or causal use. They are readout events.",
+            "non_claim": "None of these events proves that the model 'knows', 'believes', or 'stores' the target at that depth. They are properties of the *raw final unembedding applied to intermediate pre-final-norm residuals*. Later layers may or may not use the information; only causal interventions (later labs) can address use. The lens borrows the final readout basis at every depth.",
         },
     )
     ctx.register_artifact(path, "diagnostic", "Definitions and thresholds for Lab 1 event-depth metrics.")
@@ -1736,6 +1866,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     if not ctx.args.no_plots:
         plot_readout_dashboard(ctx, per_example_curves)
         plot_event_ordering(ctx, event_rows, bundle.anatomy.n_layers)
+        plot_convergence_lag(ctx, event_rows)
         plot_metric_by_depth(
             ctx,
             per_example_curves,

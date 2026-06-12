@@ -1,25 +1,49 @@
 """Lab 7: Steering vectors, representation engineering, and the refusal direction.
 
-This lab is the course's first activation-steering lab on instruct models. It
-has three linked experiments and one safety wall.
+This lab is the course's first activation-steering lab on instruct models (Labs 1-6
+were read-only or patch-from-clean). It has three linked experiments and one
+safety wall that is itself a measured object.
+
+Prerequisites lineage (see COURSE.md and the other lab writeups):
+- Lab 1: residual stream indexing (streams[depth] at final pos), readout is an
+  instrument, pre-final-norm convention.
+- Lab 2: frozen-norm linearization ("attribution is a ledger, not causation");
+  here the direction itself is the "attribution" you then intervene with.
+- Lab 3: contribution vs routing (steering moves every downstream reader at once).
+- Lab 4: "decodable does not mean used"; the truth bridge is Lab 4's probe made
+  causal and then split into answer bias vs signed truth margin.
+- Lab 5: authored edit (you compute the vector) vs borrowed clean activation;
+  the same "where does the thing live" question as localization/handoff.
+- Lab 6: scoped claims, held-out generalization, faithfulness/completeness,
+  anti-cherry-pick via controls and per-prompt tables.
 
 Track A, the method:
     Build a contrast-vector from positive versus negative sentiment examples,
-    inject it during generation, and read a dose-response curve with controls.
+    inject it during generation, and read a dose-response curve with controls
+    (real / random unit / shuffled-label) plus fluency/KL/drift side effects.
+    Dose is expressed as a fraction of median activation norm at the injection
+    site so that "1.0" is comparable across model sizes.
 
 Track B, the safety-relevant case study:
     Build a refusal direction from forward passes only. Use it as a held-out
-    monitor, then steer benign prompts toward refusal. The lab never samples
-    from refusal-eliciting prompts and never implements refusal ablation.
+    monitor (DECODE), then steer benign prompts toward refusal (CAUSAL). The lab
+    never samples from refusal-eliciting prompts and never implements refusal
+    ablation. The safety wall is written to diagnostics/lab07_safety_audit.json.
 
 Bridge to Lab 4:
     Lab 4 showed truth is linearly decodable. Here we ask what happens when a
     recomputed truth direction is injected. The bridge reports both the raw
     True/False answer bias and a signed truthfulness margin so students do not
     accidentally equate "more True tokens" with "more truthful behavior".
+    Verdict labels (inert / steers-True-assent / improves-truth-margin) force
+    the distinction.
 
-Evidence level: CAUSAL, for the generation interventions. The monitor is only
-forward-pass evidence, and the writeup keeps those rungs separate.
+Evidence level: CAUSAL for the generation interventions (with real/random/shuffled
+controls and side-effect panels). The refusal monitor is only forward-pass DECODE
+evidence (exactly Lab 4's class, with a refusal label), and the writeup + claims
+keep the rungs and the safety scope explicit. Controls, dose normalization,
+generation-based layer selection, and the audit artifact are the hygiene
+parallel to frozen-norm in Lab 2 and patch_noop / component vs stream in Lab 5.
 """
 
 from __future__ import annotations
@@ -56,8 +80,11 @@ MONITOR_TRAIN_FRACTION = 0.6
 TRUTH_TRAIN_FRACTION = 0.6
 
 # prompt_set controls runtime; max_examples is then applied as a hard cap. Tier
-# A therefore remains a CPU smoke path, while --prompt-set full keeps the full
-# science run uncapped unless --max-examples is supplied.
+# A therefore remains a CPU smoke path, while --prompt-set full caps generously
+# above the shipped data sizes (28 sentiment/refusal pairs, 24 eval prompts), so
+# in practice it uses everything unless --max-examples is supplied.
+# Limits raised (and data generators expanded) so headline stats rest on larger N
+# across more categories; qualitative patterns + controls remain the emphasis.
 PROMPT_SET_LIMITS: dict[str, dict[str, int | None]] = {
     "small": {
         "sentiment_pairs": 12,
@@ -74,11 +101,11 @@ PROMPT_SET_LIMITS: dict[str, dict[str, int | None]] = {
         "sweep_prompts": 4,
     },
     "full": {
-        "sentiment_pairs": None,
-        "refusal_pairs": None,
-        "eval_prompts": None,
-        "truth_pairs": None,
-        "sweep_prompts": 5,
+        "sentiment_pairs": 48,
+        "refusal_pairs": 48,
+        "eval_prompts": 24,
+        "truth_pairs": 48,
+        "sweep_prompts": 8,
     },
 }
 
@@ -148,6 +175,14 @@ DRIFT_FACTS = [
     ("Answer with only the missing word: The opposite of hot is", "cold"),
     ("Answer with only the missing word: Water is made of hydrogen and", "oxygen"),
     ("Answer with only the missing word: The largest planet is", "Jupiter"),
+    ("Answer with only the missing word: The capital of Germany is", "Berlin"),
+    ("Answer with only the missing word: The capital of Italy is", "Rome"),
+    ("Answer with only the missing word: The capital of Spain is", "Madrid"),
+    ("Answer with only the missing value: Three plus three equals", "6"),
+    ("Answer with only the missing word: The capital of Australia is", "Canberra"),
+    # Avoid answers with diacritic variants (e.g. Brasilia/Brasília): drift
+    # scoring is a raw substring check and would miss the accented spelling.
+    ("Answer with only the missing word: The capital of Canada is", "Ottawa"),
 ]
 
 
@@ -482,6 +517,7 @@ def binomial_se(rate: float, n: int) -> float:
 def plot_dose_response(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], concept: str) -> None:
     import matplotlib.pyplot as plt
 
+    bench._ensure_plot_style()
     fig, axes = plt.subplots(2, 2, figsize=(13.2, 8.2))
     axes = list(axes.ravel())
     series = {"real": "tab:red", "random": "tab:gray", "shuffled": "tab:olive"}
@@ -504,7 +540,7 @@ def plot_dose_response(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]],
                 linewidth=2.0,
                 label=cond,
             )
-        ax.axvline(0, color="black", linewidth=0.7)
+        bench.add_vline(ax, 0.0, label=None, color="black", ls="-", lw=0.7, alpha=0.7)
         if key in {"target_score", "drift_accuracy"}:
             ax.axhline(0, color="black", linewidth=0.5, alpha=0.5)
         ax.set_xlabel("dose, as fraction of median activation norm")
@@ -512,6 +548,7 @@ def plot_dose_response(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]],
         ax.set_title(title)
         ax.grid(True, alpha=0.25)
         ax.legend(fontsize=8)
+        bench.style_ax(ax, legend=True)
     fig.suptitle(f"Track A dose-response: steering {concept}, real direction vs controls")
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     bench.save_figure(
@@ -523,6 +560,7 @@ def plot_dose_response(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]],
 
 
 def plot_layer_sweep(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_layer: int) -> None:
+    bench._ensure_plot_style()
     fig, ax = bench.new_figure(figsize=(8.2, 5.2))
     layers = sorted({int(r["injection_layer"]) for r in rows})
     by_layer = {int(r["injection_layer"]): r for r in rows}
@@ -534,10 +572,12 @@ def plot_layer_sweep(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], b
     ax.set_ylabel("mean sentiment score on layer-sweep generations")
     ax.set_title("Layer choice is measured by actual generation, not a next-token proxy")
     ax.legend(fontsize=8)
+    bench.style_ax(ax, legend=True)
     bench.save_figure(ctx, fig, "layer_sweep.png", "Generation-based layer sweep for Track A steering.")
 
 
 def plot_induced_refusal(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    bench._ensure_plot_style()
     fig, ax = bench.new_figure(figsize=(8.2, 5.2))
     for cond, color in (("refusal", "tab:red"), ("random", "tab:gray")):
         pts = sorted((float(r["scale"]), float(r["refusal_rate"]), float(r["se"] or 0.0)) for r in rows if r["condition"] == cond)
@@ -548,11 +588,13 @@ def plot_induced_refusal(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]
         ses = [p[2] for p in pts]
         ax.plot(xs, ys, marker="o", color=color, linewidth=2.2, label=f"{cond} direction")
         ax.fill_between(xs, [max(0.0, y - 1.96 * se) for y, se in zip(ys, ses)], [min(1.0, y + 1.96 * se) for y, se in zip(ys, ses)], color=color, alpha=0.12)
+    bench.add_vline(ax, 0.0, label=None, color="black", ls="-", lw=0.7, alpha=0.7)
     ax.set_ylim(-0.05, 1.05)
     ax.set_xlabel("dose, as fraction of median activation norm")
     ax.set_ylabel("induced refusal rate on benign prompts")
     ax.set_title("Track B: steering benign prompts toward refusal, safe direction only")
     ax.legend(fontsize=8)
+    bench.style_ax(ax, legend=True)
     bench.save_figure(ctx, fig, "induced_refusal.png", "Induced-refusal rate on benign prompts, with random-direction control.")
 
 
@@ -565,6 +607,7 @@ def plot_monitor(
 ) -> None:
     import matplotlib.pyplot as plt
 
+    bench._ensure_plot_style()
     fig, axes = plt.subplots(1, 2, figsize=(12.2, 4.9))
     ax = axes[0]
     ax.hist(proj_benign, bins=10, alpha=0.65, color="tab:green", label="benign held-out")
@@ -574,6 +617,7 @@ def plot_monitor(
     ax.set_title("Forward-pass projection distributions")
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.25)
+    bench.style_ax(ax, legend=True)
 
     ax = axes[1]
     fpr = [float(r["false_positive_rate"]) for r in roc_rows]
@@ -587,6 +631,7 @@ def plot_monitor(
     ax.set_title("Monitor ROC, category labels only")
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.25)
+    bench.style_ax(ax, legend=True)
 
     fig.suptitle("Refusal monitor: predicts held-out prompt category without generating harmful completions")
     fig.tight_layout(rect=[0, 0.03, 1, 0.93])
@@ -596,6 +641,7 @@ def plot_monitor(
 def plot_bridge(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
     import matplotlib.pyplot as plt
 
+    bench._ensure_plot_style()
     fig, axes = plt.subplots(1, 2, figsize=(12.2, 4.9))
     for ax, key, ylabel, title in [
         (axes[0], "mean_true_minus_false_logit_diff", "mean logit('True') - logit('False')", "answer bias"),
@@ -606,13 +652,14 @@ def plot_bridge(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> Non
             if not pts:
                 continue
             ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", linewidth=2.2, color=color, label=cond)
+        bench.add_vline(ax, 0.0, label=None, color="black", ls="-", lw=0.7, alpha=0.7)
         ax.axhline(0, color="black", linewidth=0.7)
-        ax.axvline(0, color="black", linewidth=0.7)
         ax.set_xlabel("dose, as fraction of median activation norm")
         ax.set_ylabel(ylabel)
         ax.set_title(title)
         ax.grid(True, alpha=0.25)
         ax.legend(fontsize=8)
+        bench.style_ax(ax, legend=True)
     fig.suptitle("Bridge: does Lab 4's decodable truth direction steer a readout or a truthful answer?")
     fig.tight_layout(rect=[0, 0.03, 1, 0.93])
     bench.save_figure(ctx, fig, "truth_direction_bridge.png", "Truth-direction steering split into answer bias and signed truth margin.")
@@ -1022,6 +1069,12 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     print(f"[lab7]   monitor AUC = {auc:.3f}, forward-pass projection vs prompt category")
 
     # Steer benign prompts toward refusal and classify only those benign generations.
+    # SAFETY WALL (enforced by construction, audited in lab07_safety_audit.json):
+    # - templated_eval contains only the benign evaluation prompts.
+    # - No refusal-eliciting prompt is ever passed to generate_text or next_token_logits.
+    # - Refusal ablation is not implemented anywhere in this lab.
+    # The monitor (above) used forward passes on held-out eliciting pairs; this block
+    # only ever measures the causal effect of the direction on already-benign prompts.
     print(f"[lab7]   steer-toward-refusal sweep over {len(REFUSAL_SCALES)} scales, benign prompts only")
     induced_rows: list[dict[str, Any]] = []
     induced_generation_rows: list[dict[str, Any]] = []
@@ -1415,9 +1468,8 @@ def write_summary(
         "## 1-4. Behavior, object, intervention, headline",
         "",
         f"- Track A: sentiment direction at block {best_layer}; score {real[0.0]['target_score']} to {real[max_pos]['target_score']} at dose {max_pos}; fluency {real[0.0]['fluency_logprob']} to {real[max_pos]['fluency_logprob']}; drift {real[0.0]['drift_accuracy']} to {real[max_pos]['drift_accuracy']}.",
-        f"- Track B: refusal monitor AUC {auc:.2f}; benign induced refusal up to {max_induced:.0%} "
-        f"from a {baseline_induced:.0%} unsteered classifier floor, random control up to {max_random_induced:.0%}.",
-        f"- Bridge: truth direction verdict `{bridge_verdict}` on {metrics['truth_pairs_heldout']} held-out truth pairs; answer-bias span {bridge_answer_span:.2f} logits; signed truth-margin span {bridge_signed_span:.2f} logits.",
+        f"- Track B (predict vs cause kept separate): refusal monitor AUC {auc:.2f} (DECODE, forward-pass on held-out eliciting pairs, no harmful generation); benign induced refusal up to {max_induced:.0%} from a {baseline_induced:.0%} classifier floor (CAUSAL on benign prompts only), random control up to {max_random_induced:.0%}.",
+        f"- Bridge (decodability vs steerability vs truthfulness): truth direction verdict `{bridge_verdict}` on {metrics['truth_pairs_heldout']} held-out truth pairs; answer-bias span {bridge_answer_span:.2f} logits; signed truth-margin span {bridge_signed_span:.2f} logits (bias moving while margin does not is the common sharper outcome, not a failed bridge).",
         "",
         "## 5. Claims",
         "",
@@ -1429,12 +1481,17 @@ def write_summary(
         "",
         "## 6. Reading order",
         "",
-        "1. `steering_claim_card.md`: the shortest defensible interpretation.",
-        "2. `plots/dose_response_sentiment.png`: Track A effect and side effects on one page.",
-        "3. `tables/dose_response_by_prompt.csv` and `tables/steered_examples.csv`: actual generations behind the score.",
-        "4. `plots/refusal_monitor.png` and `plots/induced_refusal.png`: predict vs cause, kept separate.",
-        "5. `diagnostics/lab07_safety_audit.json`: the safety wall in machine-checkable form.",
-        "6. `plots/truth_direction_bridge.png`: answer bias versus signed truth margin.",
+        "Instrument health first, then the artifacts that separate the claims:",
+        "",
+        "1. `diagnostics/hook_parity.json`, `logit_lens_self_check.json` (instrument hygiene before any steering claim).",
+        "2. `steering_claim_card.md`: the shortest defensible interpretation (effect + controls + side effects + safety wall + bias-vs-margin split).",
+        "3. `plots/dose_response_sentiment.png` + `tables/dose_response_by_prompt.csv` + `tables/steered_examples.csv`: Track A four-panel (target/fluency/KL/drift) with real vs random vs shuffled. Look for the first dose where real beats both controls while side effects are still reasonable, the asymmetry, and high-dose degeneration that the target score alone would miss.",
+        "4. `plots/layer_sweep.png`: generation-based (not proxy) choice of injection site.",
+        "5. `plots/refusal_monitor.png` + `tables/refusal_monitor_table.csv`: forward-pass DECODE monitor on held-out pairs (no harmful generation).",
+        "6. `plots/induced_refusal.png` + `tables/induced_refusal_curve.csv` + `tables/induced_refusal_generations.csv`: CAUSAL induced refusal on benign prompts only, with random control and dose-0 classifier floor. The gap between monitor and induced (and random control) is the central pedagogical payload of Track B.",
+        "7. `diagnostics/lab07_safety_audit.json`: machine-checkable footprint of the safety wall (0 refusal-eliciting generations, forward-only counts).",
+        "8. `plots/truth_direction_bridge.png` + `tables/truth_direction_bridge*.csv`: Lab 4 bridge split into answer-bias (left) vs signed truth-margin (right). The verdict (`decodable-but-inert` / `decodable-and-steers-True-assent` / `decodable-and-improves-truth-margin`) is computed from the two spans; bias moving while margin does not is the expected sharper outcome.",
+        "9. `ledger_suggestions.md`: the three drafted claims (C1 causal+controls+side-effects, C2 explicitly split DECODE vs CAUSAL with safety scope, C3 bridge verdict with numbers).",
         "",
         "## 7. Caveats and falsifiers",
         "",

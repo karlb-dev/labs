@@ -7,17 +7,23 @@ direction ``unembed[target] - unembed[distractor]``.
 The pedagogical core lives in :func:`compute_direct_logit_attribution`,
 deliberately written out in this file rather than hidden in the bench: the
 course runs raw HF weights (no LayerNorm folding), so the final norm must be
-*linearized* before component scores mean anything, and students should see
-exactly where that approximation enters (it is exact for the sum, frozen for
-the parts).
+*frozen* (data-dependent statistics taken from the actual forward pass) before
+component scores mean anything. Students should see exactly where the
+approximation enters: it is exact for the aggregate ledger, an approximation
+when read per-component. This is the same "instrument first" discipline as Lab 1.
 
 The bench owns the instrument: verified contribution hook points
-(``resolve_component_anatomy``), the capture (``run_with_component_cache``),
-the decomposition self-check (``run_decomposition_check``), and final-position
-component ablation (``run_with_component_ablation``). The lab owns the question.
+(``resolve_component_anatomy`` via per-block residual-delta probe, not name
+heuristics), the capture (``run_with_component_cache``), the decomposition
+self-check (``run_decomposition_check``), and final-position component ablation
+(``run_with_component_ablation``). The lab owns the question and the
+interpretation of mismatches.
 
 Evidence levels: attribution (ATTR) for the ledger itself; the ablation
 extension produces narrow CAUSAL evidence scoped to final-position writes.
+Mismatches between frozen attribution and live effect are the central teaching
+material ("the ledger is arithmetically correct yet can still mislead about
+responsibility").
 """
 
 from __future__ import annotations
@@ -97,6 +103,25 @@ ALL_EXAMPLES: tuple[AnswerPairExample, ...] = (
     AnswerPairExample("conflict_sky", "conflict",
                       "In the novel, the sky is green. In the novel, the sky is",
                       " green", " blue"),
+    # Stronger conflict to pop "in-context vs memorized" attribution vs effect
+    AnswerPairExample("conflict_france_berlin", "conflict",
+                      "According to the map in the book, the capital of France is Berlin. The capital of France is",
+                      " Berlin", " Paris",
+                      "In-context fact directly contradicts stored knowledge; good for seeing opposing component signs."),
+    # More facts for robustness
+    AnswerPairExample("cap_australia", "fact", "The capital of Australia is", " Canberra", " Sydney"),
+    AnswerPairExample("cap_canada", "fact", "The capital of Canada is", " Ottawa", " Toronto"),
+    AnswerPairExample("fact_moon", "fact", "The largest planet in the Solar System is", " Jupiter", " Saturn"),
+    AnswerPairExample("fact_heart", "fact", "The organ that pumps blood is the", " heart", " liver"),
+    # More relations/grammar
+    AnswerPairExample("opp_north", "relation", "The opposite of north is", " south", " east"),
+    AnswerPairExample("opp_light", "relation", "The opposite of light is", " dark", " heavy"),
+    AnswerPairExample("past_go", "grammar", "The past tense of go is", " went", " goes"),
+    AnswerPairExample("plural_child", "grammar", "The plural of child is", " children", " kids"),
+    # More conflict
+    AnswerPairExample("conflict_day", "conflict",
+                      "In the story the day after Monday is Friday. The day after Monday is",
+                      " Friday", " Tuesday"),
 )
 
 SMALL_SET_IDS = ("cap_germany", "opp_hot", "past_run", "conflict_germany")
@@ -613,15 +638,17 @@ def run_ablation_comparison(
     n_top: int,
     rng: random.Random,
 ) -> list[dict[str, Any]]:
-    """Zero-ablate top-|attribution| components plus matched controls.
+    """Zero-ablate top-|attribution| components plus matched random and low-attribution controls.
 
-    The intervention is final-position scoped: it removes the component's write
-    at the token being predicted while leaving earlier-token writes intact. It
-    is therefore a narrow causal test of the same *channel* the ledger scored,
-    but it is not identical to subtracting the frozen-norm row. Downstream
-    layers at the final position now run on a changed residual stream, so the
-    mismatch ``causal_effect - attribution_score`` is a first glimpse of the
-    attribution/causation crack that Lab 5 opens fully.
+    The intervention is final-position scoped only (earlier-token writes left
+    intact). This makes it a narrow causal test of roughly the same *direct*
+    channel the ledger scored at the prediction position. It is deliberately
+    *not* the same as subtracting the frozen-norm attribution row: later layers
+    at the final position still run on the modified stream, and the final norm
+    is live. The recorded ``effect_minus_attribution`` (and same-sign rate) is
+    therefore the first concrete look at the "ledger balances but may still
+    mislead about responsibility" lesson. Full indirect effects through earlier
+    positions are left to Lab 5 (patching) and Lab 3 (head ablation scope).
     """
     ranked = sorted(
         [("attn", k, s) for k, s in enumerate(dla["attn_scores"])]
@@ -1292,13 +1319,16 @@ def render_summary(
     ]
     if ablation_rows:
         same_sign = statistics.fmean(1.0 if r["same_sign"] else 0.0 for r in ablation_rows)
+        top_rows = [r for r in ablation_rows if r["selection"] == "top"]
+        sign_mismatches = sum(1 for r in top_rows if not r["same_sign"])
         lines.append(
             f"{len(ablation_rows)} final-position ablations. Spearman rho(attribution, causal effect) = "
             f"{'n/a' if rho is None else f'{rho:.3f}'}, with same-sign rate {same_sign:.2f}. "
+            f"Of the top-attributed components, {sign_mismatches}/{len(top_rows)} had the opposite sign in the live ablation. "
             "See `tables/ablation_results.csv`, `tables/ablation_summary_by_selection.csv`, "
             "`plots/attribution_vs_ablation.png`, and `plots/ablation_mismatch_examples.png`. "
             "The important column is `effect_minus_attribution`: it measures how much the live "
-            "intervention departed from the frozen ledger row."
+            "intervention departed from the frozen ledger row. Mismatches are the pedagogical payload."
         )
         if ablation_summary_rows:
             lines += ["", "Selection summary:", "", "| selection | n | mean abs attr | mean abs effect | same-sign | median abs mismatch |"]

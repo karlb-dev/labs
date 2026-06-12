@@ -11,10 +11,10 @@ The product of this lab is a **ledger**, not a causal map. A ledger can balance 
 
 ## The core idea
 
-At the final position, the model reads out a residual stream:
+At the final position, the model reads out a residual stream (using the same pre-final-norm indexing and "final norm is not linear" caution as Lab 1):
 
 ```text
-x_L = embed + Σ_k attn_k + Σ_k mlp_k
+x_L = embed + Σ_k attn_k + Σ_k mlp_k   (pre-final-norm)
 logits = lm_head(final_norm(x_L))
 ```
 
@@ -32,7 +32,7 @@ The capital of Germany is
 
 with target ` Berlin` and distractor ` Paris`, a positive score means “this component pushed toward Berlin over Paris.” A negative score means it pushed toward Paris over Berlin. The same rule applies in conflict prompts, where the target is the in-context answer and the distractor is the stored prior.
 
-The bench verifies that the captured components reconstruct the final pre-norm residual stream before the lab treats any score as evidence. The microscope checks itself before you admire the specimen.
+The bench verifies that the captured components reconstruct the final pre-norm residual stream before the lab treats any score as evidence (see the decomposition check below). This is the same "instrument first" discipline as Lab 1: the locks must be green before interpretation begins. The microscope checks itself before you admire the specimen.
 
 ## The final-norm catch
 
@@ -82,6 +82,8 @@ diagnostics/answer_tokenization.csv
 Multi-token answer mishandling is a common source of attribution errors. Do not let it into this lab.
 
 ## Running it
+
+**Headline numbers note:** Attribution and ablation numbers are reported over a few dozen single-token answer-pair examples (fact/relation/grammar/conflict, expanded). Component rankings and sign patterns (plus mismatches with ablation) are the point; percentages are scoped to this population and carry the one-significant-figure + controls caveat.
 
 ```bash
 # Smoke run, CPU-class, usually gpt2 with the small prompt set
@@ -145,17 +147,17 @@ The revised lab writes the standard run contract plus a few extra “do not fool
 
 ## Reading path
 
-Start here, in this order:
+**Instrument health first (the self-checks must be green):**
+1. `diagnostics/component_anatomy.json` and `diagnostics/dla_decomposition_check.json` (the "microscope aligned" certificate; see Lab 1 for the same spirit).
+2. `tables/dla_balance.csv` and `plots/ledger_balance_errors.png`: the ledger must sum to the frozen readout.
 
-1. `run_summary.md`: read the model, kept/dropped counts, headline table, balance checks, and drafted claims.
-2. `tables/baseline_behavior.csv`: confirm the model’s starting behavior. A negative target-vs-distractor gap is allowed, but you need to know it happened.
-3. `diagnostics/component_anatomy.json` and `diagnostics/dla_decomposition_check.json`: confirm that the instrument aligned before interpreting any component row.
-4. `tables/dla_balance.csv` and `plots/ledger_balance_errors.png`: check that the ledger sum matches the frozen-norm readout.
-5. `plots/contribution_by_layer.png` and `tables/layer_component_summary.csv`: locate the broad attention/MLP writing pattern.
-6. `plots/category_ledger_composition.png`: check cancellation. A small net score can hide two large opposing coalitions.
-7. `tables/top_components.csv` and `plots/top_component_by_example.png`: identify the biggest writers.
-8. `plots/dla_vs_lens_<example>.png`: explain why the logit lens and DLA curve disagree at early depths.
-9. `tables/ablation_results.csv` and `plots/ablation_mismatch_examples.png`: inspect the gap between ledger score and intervention effect.
+**Then the science:**
+3. `run_summary.md`: headline table + "Attribution vs causation" section (the mismatches are the payload).
+4. `tables/baseline_behavior.csv`: what the model was actually doing before any decomposition.
+5. `plots/contribution_by_layer.png` + `tables/layer_component_summary.csv` + `plots/category_ledger_composition.png`: broad patterns and internal cancellation.
+6. `tables/top_components.csv` + `plots/top_component_by_example.png` + the per-example waterfall plots: the actual largest writers.
+7. `plots/dla_vs_lens_<example>.png`: why the moving-basis lens from Lab 1 and the frozen DLA differ.
+8. `tables/ablation_results.csv` and `plots/attribution_vs_ablation.png` + `plots/ablation_mismatch_examples.png`: the direct comparison of ledger score to live effect. Look for points far from the identity line and read the `effect_minus_attribution` column.
 
 ## The ablation extension, carefully scoped
 
@@ -181,6 +183,8 @@ effect_minus_attribution
 
 Large mismatches are not bugs by default. They are the teaching payload: the ledger is not a causal map.
 
+**Make the concept pop:** After your run, open `tables/ablation_results.csv` and `plots/attribution_vs_ablation.png`. For the top-attributed components (the blue dots), count how many land close to the identity line vs far off it. Then look at the `effect_minus_attribution` column for a conflict example. The size of the mismatch is the distance between "what the frozen arithmetic says this component contributed" and "what actually happened to the logit difference when we removed its write and let the rest of the forward pass continue." That gap is why attribution is only a ledger, not an explanation of responsibility.
+
 What this extension still does not test: indirect effects through earlier positions. Lab 3 shows why all-position head ablation can differ from final-position ablation, and Lab 5 uses patching to dissect that kind of pathway.
 
 ## How to interpret common patterns
@@ -189,7 +193,7 @@ What this extension still does not test: indirect effects through earlier positi
 |---|---|
 | Ledger balance error is tiny | component capture and frozen-norm accounting are numerically coherent |
 | Frozen-vs-model gap is larger | usually dtype or fp32 reimplementation gap, not a component decomposition failure |
-| Conflict examples have negative components | some components still push the stored answer over the in-context answer |
+| Conflict examples have negative components | some components still push the stored answer over the in-context answer. The new `conflict_france_berlin` example in the prompt set is designed to make opposing signs especially visible. |
 | Top component mass share is high | one component dominates gross writer mass for that prompt |
 | Signed fraction is huge | likely denominator cancellation; use bounded mass share instead |
 | Attribution and ablation agree | the frozen ledger row is a useful predictor for this final-position intervention |

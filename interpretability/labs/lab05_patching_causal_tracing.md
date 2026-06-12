@@ -2,7 +2,7 @@
 
 **Evidence level targeted:** causality (`CAUSAL`), scoped to a prompt population, metric, and intervention. With the optional editing extension, the lab also shows the gap between *localizing* a fact and *changing* it.
 
-**Prerequisites:** Labs 1-4. Lab 2 showed that attribution is not causation. Lab 3 showed that routing and contribution are different. Lab 4 showed that decodable does not mean used. Lab 5 is where the experiment finally reaches into the forward pass and moves something.
+**Prerequisites:** Labs 1-4. Lab 1 gave the residual-stream indexing and "readout is an instrument" caution. Lab 2 showed that attribution (a ledger) is not causation. Lab 3 showed that routing (attention pattern) and contribution (what is written) are different. Lab 4 showed that decodable does not mean used. Lab 5 is where the experiment finally reaches into the forward pass and moves something: interchange interventions on the residual stream.
 
 ## The question
 
@@ -91,9 +91,11 @@ One clean/corrupt pair is a demonstration. Causal tracing is the aggregate:
 3. Patch every stream depth and token position for every kept base-template pair.
 4. Aggregate recovery by token role: pre-subject, subject, post-subject, last.
 5. Confirm the subject curve on two paraphrase templates.
-6. Run negative controls: mismatched-pair patches, wrong-position patches, and a split-heldout low-region check.
+6. Run negative controls: mismatched-pair patches, wrong-position patches, and a split-heldout low-region check. These are the specificity checks that turn a nice curve into a scoped causal claim.
 7. Refine the localized stream band with component-level patching: attention output versus MLP output.
 8. Optionally run a rank-one edit audit.
+
+**Make the concept pop (controls):** Look at `plots/negative_controls.png` and `tables/negative_control_scores.csv`. The matched representative patch recovers ~0.67 while mismatched-pair controls recover ~0.29 and wrong-position ~0.18. The gap is the evidence that the recovered signal is fact-specific, not just "a large vector was injected."
 
 The output is not just a heatmap. The output is a claim card with a scope, a metric, a control battery, and caveats.
 
@@ -103,13 +105,17 @@ At stream depth 0, patching the subject position mostly substitutes the token em
 
 The science starts after depth 0:
 
+**Make the concept pop:** Look at `plots/localization_across_facts.png`. The subject curve stays high then collapses (handoff); the last curve rises late. Then look at the edit results (if you ran `--run-edit`): even at the "best" localized layer, direct success is often 0 and neighbors start to break before the target fact flips. This is the famous localization-vs-editing gap (Hase et al.). The numbers that matter are "recovery at handoff" vs "edit success at that layer vs alternative layer".
+
 - The **subject-position curve** tells you where the clean subject representation still causally helps the corrupt run recover the target answer.
 - The **handoff** is where subject-position recovery collapses. The fact has been read out of the subject stream or moved into later computation.
 - The **last-position curve** usually rises later. That is where the answer becomes directly available to the final readout.
 - The **localized stream band** is the last non-tautological subject band before the handoff.
 - The **component layers** are mapped from that stream band by subtracting one, because block `k - 1` writes `streams[k]`.
 
-This is the recall-then-readout story in one figure.
+This is the recall-then-readout story in one figure. The component pass (attn vs MLP at subject vs last) refines the "where" into a candidate write site.
+
+**Make the concept pop (component vs stream):** The stream patch at the localized band is an interchange result on the accumulated representation. The component-level pass (see `plots/component_patching.png`) asks which submodule's output, when patched, carries most of the recovery. It is still an interchange result, not a proof that the submodule "stores" the fact.
 
 ## Running it
 
@@ -129,21 +135,23 @@ python interp_bench.py --lab lab5 --tier b --prompt-set full --showcase france
 
 `--prompt-set small|medium|full` now controls the built-in fact count. A custom `.csv` or `.json` file can be passed as `--prompt-set` if it contains `fact_id`, `subject`, and `target` fields.
 
+**Headline numbers note:** Full runs use ~20-25 validated capital facts (with 3 templates each) after baseline gating. Recovery percentages, handoff curves, and negative-control gaps are the primary evidence; the numbers describe behavior on this narrow factual-recall population and merit one-significant-figure confidence. Negative controls and paraphrase consistency are what scope the claim.
+
 ## Main artifacts
 
-Read them in this order:
+Read them in this order (instrument checks first, then the causal story, then the edit audit that tests whether localization predicts editability):
 
 1. `causal_trace_card.md` - the deliverable card: scope, localization, controls, component result, edit result if run.
 2. `diagnostics/localization_decision.json` - the handoff rule and stream-depth-to-component-layer mapping.
-3. `plots/localization_across_facts.png` - the subject-vs-last causal tracing story.
-4. `plots/patching_heatmap_<fact>.png` - one pair, layer by position, token-labeled.
+3. `plots/localization_across_facts.png` - the subject-vs-last causal tracing story (recall then readout).
+4. `plots/patching_heatmap_<fact>.png` - one pair, layer by position, token-labeled, with localized band marked.
 5. `tables/facts.csv` - which pairs passed the baseline gate and why others dropped.
 6. `tables/patching_scores.csv` and `results.csv` - the long-form grid behind every cell.
 7. `tables/per_fact_top_patch.csv` and `plots/per_fact_top_patch.png` - which facts drive the average.
 8. `tables/paraphrase_summary.csv` and `tables/paraphrase_consistency.csv` - whether the localized band survives templates.
-9. `tables/negative_control_scores.csv` and `plots/negative_controls.png` - specificity checks.
-10. `tables/component_patching.csv`, `tables/component_summary.csv`, and `plots/component_patching.png` - attention versus MLP refinement.
-11. `tables/edit_results.csv` - only if `--run-edit` was passed.
+9. `tables/negative_control_scores.csv` and `plots/negative_controls.png` - specificity checks (the matched vs control gap is the evidence of fact-specific recovery).
+10. `tables/component_patching.csv`, `tables/component_summary.csv`, and `plots/component_patching.png` - attention versus MLP refinement of the stream-level result.
+11. `tables/edit_results.csv` - only if `--run-edit` was passed (the Hase audit: does localization predict the best edit layer?).
 
 ## The extension: the patch made permanent
 
@@ -166,6 +174,8 @@ The edit audit asks:
 | fluency logprob | did the edit damage unrelated text modeling? |
 
 The localized edit layer is chosen from the mapped component layer, not from the stream depth directly. An alternative layer is also tested. That comparison is the point of the extension: causal tracing can identify where a clean activation is sufficient, while editing asks whether a small weight change at one module can reproduce that activation change robustly.
+
+**Make the concept pop (edit audit):** Even when you apply the edit at the "best" layer from causal tracing, direct success is often false and neighbors can start to break before the target fact flips (see `tables/edit_results.csv`). This is the Hase et al. tension in action: localization (sufficiency of a difference under interchange) does not automatically predict editability under a rank-one weight change. The audit forces you to report the gap rather than assume it will be small.
 
 A movement without a flip is not a failed artifact. It is often the most informative outcome. It says the edit touched the right direction but did not dominate the distributed computation.
 

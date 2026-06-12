@@ -5,9 +5,9 @@ lab runtime (course rule: no live data downloads, no student-authored truth
 sets). Deterministic by construction — no RNG anywhere.
 
 Families:
-  cities       "The city of Paris is in France."            (30 true, 30 false)
-  comparisons  "Sixty-one is larger than fourteen."         (30 true, 30 false)
-  negations    "The city of Paris is not in France."        (30 true, 30 false)
+  cities       "The city of Paris is in France."            (56 true, 56 false after expansion)
+  comparisons  "Sixty-one is larger than fourteen."         (72 true, 72 false)
+  negations    "The city of Paris is not in France."        (56 true, 56 false)
 
 Negations are the classic generalization stressor: the surface form of a true
 negated statement matches a FALSE affirmative one. A probe that tracks surface
@@ -33,6 +33,20 @@ CITY_COUNTRY = [
     ("Stockholm", "Sweden"), ("Budapest", "Hungary"), ("Brussels", "Belgium"),
     ("Amsterdam", "the Netherlands"), ("Copenhagen", "Denmark"),
     ("Wellington", "New Zealand"),
+    # Expanded for robustness / more categories (Europe, Asia, Africa, Americas, Oceania)
+    ("Bern", "Switzerland"), ("Bratislava", "Slovakia"), ("Ljubljana", "Slovenia"),
+    ("Riga", "Latvia"), ("Tallinn", "Estonia"), ("Vilnius", "Lithuania"),
+    ("Sofia", "Bulgaria"), ("Bucharest", "Romania"),
+    ("Ankara", "Turkey"), ("Tehran", "Iran"), ("Baghdad", "Iraq"),
+    ("Riyadh", "Saudi Arabia"), ("Doha", "Qatar"), ("Abu Dhabi", "the UAE"),
+    ("Addis Ababa", "Ethiopia"), ("Accra", "Ghana"), ("Dakar", "Senegal"),
+    # Buenos Aires before Santiago so Santiago's rotated wrong-country is not
+    # the Philippines (Santiago City, Isabela is a real Philippine city, which
+    # would make the generated "false" statement arguably true).
+    ("Bogota", "Colombia"), ("Buenos Aires", "Argentina"), ("Santiago", "Chile"),
+    ("Mexico City", "Mexico"), ("Toronto", "Canada"),
+    ("Kuala Lumpur", "Malaysia"), ("Singapore", "Singapore"),
+    ("Jakarta", "Indonesia"), ("Manila", "the Philippines"),
 ]
 
 ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
@@ -87,7 +101,7 @@ def make_negations() -> list[dict]:
 
 def make_comparisons() -> list[dict]:
     rows = []
-    for i in range(30):
+    for i in range(72):  # expanded further for robustness (more number pairs)
         a = (i * 13 + 8) % 90 + 5
         b = (i * 29 + 3) % 90 + 5
         if a == b:

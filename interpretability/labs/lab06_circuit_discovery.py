@@ -1,9 +1,13 @@
 """Lab 6: Circuit discovery and validation, the manual way.
 
-This lab composes the previous instrumentation labs into a small circuit claim.
-Lab 2 gives a cheap attribution screen, Lab 3 gives attention motifs, and Lab 5
-contributes intervention discipline. The deliverable is a circuit card with
-three earned numbers and an explicitly scoped mechanism sketch:
+This lab composes the previous instrumentation labs (plus the residual-stream
+and self-check habits from Lab 1) into a small, earned circuit claim:
+- Lab 2: direct-logit attribution (cheap screen)
+- Lab 3: attention motifs (previous-token, induction, sink patterns)
+- Lab 5: intervention discipline (mean-ablation instead of zero-ablation)
+
+The deliverable is a circuit card with three earned numbers and an explicitly
+scoped mechanism sketch (heads-only routing subgraph):
 
 * faithfulness: with every non-circuit head mean-ablated, how much of the
   original behavior remains?
@@ -13,9 +17,11 @@ three earned numbers and an explicitly scoped mechanism sketch:
 The target behavior is induction completion on fixed-length repeating patterns.
 The circuit claim is intentionally heads-only: it is a routing subgraph. MLPs
 are ranked and reported as supporting infrastructure, but they are not part of
-the faithfulness complement. A subgraph claim has to say what graph it lives in.
+the faithfulness complement. This is the manual baseline that Lab 9 will
+confront with an automated attribution graph. Keep the card.
 
-Evidence level: CAUSAL at circuit scope, on a stated prompt population.
+Evidence level: CAUSAL at heads-only circuit scope, on a stated prompt
+population and a stated off-distribution (dataset-mean ablation).
 """
 
 from __future__ import annotations
@@ -77,10 +83,19 @@ ALL_PROMPTS: tuple[CircuitPrompt, ...] = (
     CircuitPrompt("d_moon", "discovery", "moon star moon star moon star moon star", " moon", " star"),
     CircuitPrompt("d_sun", "discovery", "sun rain sun rain sun rain sun rain", " sun", " rain"),
     CircuitPrompt("d_numbers", "discovery", "seven three nine seven three nine seven three", " nine", " seven"),
+    CircuitPrompt("d_fruit", "discovery", "apple pear banana apple pear banana apple pear", " banana", " apple"),
+    CircuitPrompt("d_shapes", "discovery", "circle square triangle circle square triangle circle square", " triangle", " circle"),
+    CircuitPrompt("d_weather", "discovery", "rain snow wind rain snow wind rain snow", " wind", " rain"),
+    # Seasons in a scrambled (non-calendar) order so the continuation cannot come
+    # from the seasonal-sequence prior, only from in-context copying.
+    CircuitPrompt("d_seasons", "discovery", "spring autumn summer spring autumn summer spring autumn", " summer", " spring"),
     CircuitPrompt("h_metals", "heldout", "gold silver gold silver gold silver gold silver", " gold", " silver"),
     CircuitPrompt("h_compass", "heldout", "north south east north south east north south", " east", " north"),
     CircuitPrompt("h_beasts", "heldout", "wolf bear fox wolf bear fox wolf bear", " fox", " wolf"),
     CircuitPrompt("h_matter", "heldout", "glass stone iron glass stone iron glass stone", " iron", " glass"),
+    CircuitPrompt("h_tools", "heldout", "hammer saw drill hammer saw drill hammer saw", " drill", " hammer"),
+    CircuitPrompt("h_vehicles", "heldout", "car bus train car bus train car bus", " train", " car"),
+    CircuitPrompt("h_foods", "heldout", "wine fish bread wine fish bread wine fish", " bread", " wine"),
 )
 
 
@@ -125,6 +140,11 @@ def rank_map(scores: dict[Any, float], *, reverse: bool = True, key_abs: bool = 
 
 
 def screen_budgets(n_layers: int, n_heads: int) -> tuple[int, int, int]:
+    """Broad but finite screen budgets so students see the disagreement between
+    cheap screens (Lab 2 attribution + Lab 3 motifs) and actual causal effect
+    (the central pedagogical payload of this lab). Too narrow a screen can make
+    the whole exercise look like the model only needed three heads.
+    """
     total = n_layers * n_heads
     top_attr = min(total, max(SCREEN_TOP_ATTRIBUTION_MIN, math.ceil(total * SCREEN_TOP_ATTRIBUTION_FRAC)))
     top_ind = min(total, max(SCREEN_TOP_INDUCTION_MIN, math.ceil(total * SCREEN_TOP_MOTIF_FRAC)))
@@ -272,7 +292,14 @@ def metric_under_ablation(
     head_means: Any,
     mlp_means: Any,
 ) -> float:
-    """Mean logit(target) minus logit(distractor) with a node set mean-ablated."""
+    """Mean logit(target) minus logit(distractor) with a node set mean-ablated.
+
+    Dataset-mean ablation (not zero-ablation) keeps the intervention closer to
+    the data manifold while still removing the prompt-specific computation of
+    the ablated heads. This is the "off switch" that defines the circuit for
+    this particular off-distribution. A different mean (or zero) defines a
+    different circuit.
+    """
     diffs: list[float] = []
     for ex in examples:
         logits = bench.run_with_node_set_ablation(
@@ -1371,17 +1398,17 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "1. `circuit_card.md` - the deliverable; everything else is evidence for it.",
         "2. `plots/circuit_graph.png` - validated heads, support MLPs, and any claimed edge.",
         "3. `plots/prune_trajectory.png` - what each node costs during greedy pruning.",
-        "4. `plots/screen_vs_causal.png` - where cheap screening and causal ranking diverge.",
-        "5. `plots/circuit_scorecard.png` - discovery vs held-out faithfulness and completeness.",
-        "6. `tables/per_prompt_faithfulness.csv` - the specific prompts the circuit least explains.",
-        "7. `plots/edge_interactions.png` and `tables/edge_interactions.csv` - the ordered interaction checks.",
+        "4. `plots/screen_vs_causal.png` - the central lesson: cheap screening (attribution or motif) is a hypothesis generator, not a circuit claim. The off-diagonal points are the payload.",
+        "5. `plots/circuit_scorecard.png` - discovery vs held-out faithfulness and completeness (held-out is often *higher* faithfulness; that is the generalization test).",
+        "6. `tables/per_prompt_faithfulness.csv` and `plots/per_prompt_faithfulness.png` - the specific prompts the circuit least explains (the anti-cherry-pick evidence; the lowest bars go into the card).",
+        "7. `plots/edge_interactions.png` and `tables/edge_interactions.csv` - the ordered interaction checks (weak vs strong, layer-order respected, not path patching).",
         "",
         "## 7. Caveats students must carry forward",
         "",
-        "- The circuit is a heads-only routing graph; MLPs are support, not nodes in the claim.",
-        "- Mean-ablation defines the off state. Changing the off state changes the circuit question.",
-        "- The edge test is an ablation interaction, not path patching.",
-        "- Keep this card. Lab 9 will compare this manual graph with an attribution graph.",
+        "- The circuit is a heads-only routing graph; MLPs are support, not nodes in the claim. This is the manual baseline Lab 9 will confront with an automated feature graph.",
+        "- Mean-ablation defines the off state (dataset mean, fixed length). Changing the off state (zero, different mean, longer prompts) defines a different circuit. The ablation_manifest.json records the exact choice.",
+        "- The edge test is an ablation interaction (previous-token effect shrinks when the induction head is already ablated), not path patching. Claims about keys/values or exact subpaths are filler terms.",
+        "- Keep this card. Lab 9 will compare this manual graph with an attribution graph so you can see what each method buys and what each quietly assumes.",
         "",
     ]
     summary_path = ctx.path("run_summary.md")

@@ -46,16 +46,68 @@ neg_t_21,negations,The city of Seoul is not in Denmark.,1,Seoul|Denmark
 neg_f_22,negations,The city of Hanoi is not in Vietnam.,0,Hanoi|Vietnam
 neg_t_22,negations,The city of Hanoi is not in New Zealand.,1,Hanoi|New Zealand
 neg_f_23,negations,The city of Helsinki is not in Finland.,0,Helsinki|Finland
-neg_t_23,negations,The city of Helsinki is not in France.,1,Helsinki|France
+neg_t_23,negations,The city of Helsinki is not in Switzerland.,1,Helsinki|Switzerland
 neg_f_24,negations,The city of Stockholm is not in Sweden.,0,Stockholm|Sweden
-neg_t_24,negations,The city of Stockholm is not in Japan.,1,Stockholm|Japan
+neg_t_24,negations,The city of Stockholm is not in Slovakia.,1,Stockholm|Slovakia
 neg_f_25,negations,The city of Budapest is not in Hungary.,0,Budapest|Hungary
-neg_t_25,negations,The city of Budapest is not in Germany.,1,Budapest|Germany
+neg_t_25,negations,The city of Budapest is not in Slovenia.,1,Budapest|Slovenia
 neg_f_26,negations,The city of Brussels is not in Belgium.,0,Brussels|Belgium
-neg_t_26,negations,The city of Brussels is not in Italy.,1,Brussels|Italy
+neg_t_26,negations,The city of Brussels is not in Latvia.,1,Brussels|Latvia
 neg_f_27,negations,The city of Amsterdam is not in the Netherlands.,0,Amsterdam|the Netherlands
-neg_t_27,negations,The city of Amsterdam is not in Spain.,1,Amsterdam|Spain
+neg_t_27,negations,The city of Amsterdam is not in Estonia.,1,Amsterdam|Estonia
 neg_f_28,negations,The city of Copenhagen is not in Denmark.,0,Copenhagen|Denmark
-neg_t_28,negations,The city of Copenhagen is not in Portugal.,1,Copenhagen|Portugal
+neg_t_28,negations,The city of Copenhagen is not in Lithuania.,1,Copenhagen|Lithuania
 neg_f_29,negations,The city of Wellington is not in New Zealand.,0,Wellington|New Zealand
-neg_t_29,negations,The city of Wellington is not in Austria.,1,Wellington|Austria
+neg_t_29,negations,The city of Wellington is not in Bulgaria.,1,Wellington|Bulgaria
+neg_f_30,negations,The city of Bern is not in Switzerland.,0,Bern|Switzerland
+neg_t_30,negations,The city of Bern is not in Romania.,1,Bern|Romania
+neg_f_31,negations,The city of Bratislava is not in Slovakia.,0,Bratislava|Slovakia
+neg_t_31,negations,The city of Bratislava is not in Turkey.,1,Bratislava|Turkey
+neg_f_32,negations,The city of Ljubljana is not in Slovenia.,0,Ljubljana|Slovenia
+neg_t_32,negations,The city of Ljubljana is not in Iran.,1,Ljubljana|Iran
+neg_f_33,negations,The city of Riga is not in Latvia.,0,Riga|Latvia
+neg_t_33,negations,The city of Riga is not in Iraq.,1,Riga|Iraq
+neg_f_34,negations,The city of Tallinn is not in Estonia.,0,Tallinn|Estonia
+neg_t_34,negations,The city of Tallinn is not in Saudi Arabia.,1,Tallinn|Saudi Arabia
+neg_f_35,negations,The city of Vilnius is not in Lithuania.,0,Vilnius|Lithuania
+neg_t_35,negations,The city of Vilnius is not in Qatar.,1,Vilnius|Qatar
+neg_f_36,negations,The city of Sofia is not in Bulgaria.,0,Sofia|Bulgaria
+neg_t_36,negations,The city of Sofia is not in the UAE.,1,Sofia|the UAE
+neg_f_37,negations,The city of Bucharest is not in Romania.,0,Bucharest|Romania
+neg_t_37,negations,The city of Bucharest is not in Ethiopia.,1,Bucharest|Ethiopia
+neg_f_38,negations,The city of Ankara is not in Turkey.,0,Ankara|Turkey
+neg_t_38,negations,The city of Ankara is not in Ghana.,1,Ankara|Ghana
+neg_f_39,negations,The city of Tehran is not in Iran.,0,Tehran|Iran
+neg_t_39,negations,The city of Tehran is not in Senegal.,1,Tehran|Senegal
+neg_f_40,negations,The city of Baghdad is not in Iraq.,0,Baghdad|Iraq
+neg_t_40,negations,The city of Baghdad is not in Colombia.,1,Baghdad|Colombia
+neg_f_41,negations,The city of Riyadh is not in Saudi Arabia.,0,Riyadh|Saudi Arabia
+neg_t_41,negations,The city of Riyadh is not in Argentina.,1,Riyadh|Argentina
+neg_f_42,negations,The city of Doha is not in Qatar.,0,Doha|Qatar
+neg_t_42,negations,The city of Doha is not in Chile.,1,Doha|Chile
+neg_f_43,negations,The city of Abu Dhabi is not in the UAE.,0,Abu Dhabi|the UAE
+neg_t_43,negations,The city of Abu Dhabi is not in Mexico.,1,Abu Dhabi|Mexico
+neg_f_44,negations,The city of Addis Ababa is not in Ethiopia.,0,Addis Ababa|Ethiopia
+neg_t_44,negations,The city of Addis Ababa is not in Canada.,1,Addis Ababa|Canada
+neg_f_45,negations,The city of Accra is not in Ghana.,0,Accra|Ghana
+neg_t_45,negations,The city of Accra is not in Malaysia.,1,Accra|Malaysia
+neg_f_46,negations,The city of Dakar is not in Senegal.,0,Dakar|Senegal
+neg_t_46,negations,The city of Dakar is not in Singapore.,1,Dakar|Singapore
+neg_f_47,negations,The city of Bogota is not in Colombia.,0,Bogota|Colombia
+neg_t_47,negations,The city of Bogota is not in Indonesia.,1,Bogota|Indonesia
+neg_f_48,negations,The city of Buenos Aires is not in Argentina.,0,Buenos Aires|Argentina
+neg_t_48,negations,The city of Buenos Aires is not in the Philippines.,1,Buenos Aires|the Philippines
+neg_f_49,negations,The city of Santiago is not in Chile.,0,Santiago|Chile
+neg_t_49,negations,The city of Santiago is not in France.,1,Santiago|France
+neg_f_50,negations,The city of Mexico City is not in Mexico.,0,Mexico City|Mexico
+neg_t_50,negations,The city of Mexico City is not in Japan.,1,Mexico City|Japan
+neg_f_51,negations,The city of Toronto is not in Canada.,0,Toronto|Canada
+neg_t_51,negations,The city of Toronto is not in Germany.,1,Toronto|Germany
+neg_f_52,negations,The city of Kuala Lumpur is not in Malaysia.,0,Kuala Lumpur|Malaysia
+neg_t_52,negations,The city of Kuala Lumpur is not in Italy.,1,Kuala Lumpur|Italy
+neg_f_53,negations,The city of Singapore is not in Singapore.,0,Singapore|Singapore
+neg_t_53,negations,The city of Singapore is not in Spain.,1,Singapore|Spain
+neg_f_54,negations,The city of Jakarta is not in Indonesia.,0,Jakarta|Indonesia
+neg_t_54,negations,The city of Jakarta is not in Portugal.,1,Jakarta|Portugal
+neg_f_55,negations,The city of Manila is not in the Philippines.,0,Manila|the Philippines
+neg_t_55,negations,The city of Manila is not in Austria.,1,Manila|Austria

@@ -2,7 +2,7 @@
 
 **Evidence level targeted:** decodability (`DECODE`), with controls. The causal question, whether the model *uses* what a probe decodes, is deferred to Lab 7. Lab 7 loads the direction this lab saves and tests it by intervention.
 
-**Prerequisites:** Labs 1 to 3.
+**Prerequisites:** Labs 1 to 3. You already know the residual-stream indexing and “readout is an instrument” caution from Lab 1, the frozen-norm linearization and “ledger is not a causal map” discipline from Lab 2, and the distinction between routing/attention and actual contribution from Lab 3. This lab applies the same skepticism to linear probes.
 
 ## The question
 
@@ -15,6 +15,8 @@ This lab is skepticism with a spreadsheet. Every headline accuracy travels with 
 ### 1. Surface track: a calibration trap
 
 The surface track asks whether the final word contains a selected letter. It is intentionally shallow. It gives you the shape of “trivially decodable” information on the same activations and axes as the truth probe.
+
+**Headline numbers note:** Full runs draw from ~100+ statements per family (cities/negations/comparisons) with per-family caps for smoke/medium. Selectivity, transfer (esp. negation), and calibration are the robust signals; headline accuracies are scoped to these templates/families and should be read with one-significant-figure confidence plus the full control matrix.
 
 The revised code chooses the letter from the alphabet by looking for a feature that is balanced enough to train inside every family split. This avoids the old footgun where the surface probe could quietly become a one-class classifier in a small run.
 
@@ -62,6 +64,8 @@ These probes can disagree. That disagreement is not noise. It is one of the lab�
 | calibration curve | whether the logistic probe’s confidence means anything |
 | selectivity | real accuracy minus shuffled-label control |
 
+**Make the concept pop:** Look at `plots/selectivity_by_layer.png` and `tables/selectivity_report.csv`. The layer where raw accuracy is highest is often not the layer where selectivity (real minus shuffled) is highest. That gap is the first warning that “a probe found it” is cheap. Then look at the generalization matrix for the negation row: below-chance transfer is frequently the most informative result in the lab.
+
 ## The split is now part of the instrument
 
 The original lab used a deterministic hash split by `statement_id`. That is stable, but it can split paired variants across train and eval. For truth probes, this matters. If `Paris` variants land in both splits, a probe can look clever while reading entity or template structure.
@@ -84,7 +88,7 @@ The code now unit-normalizes each statement’s activation row before fitting pr
 - `tables/statement_manifest.csv`
 - `plots/activation_norms_by_depth.png`
 
-For the writeup, flip `NORMALIZE_ROWS = False` and rerun once. Watching the mass-mean direction get dominated by one rogue row is the failure mode this lab is meant to expose.
+For the writeup, flip `NORMALIZE_ROWS = False` and rerun once. Watching the mass-mean direction get dominated by one rogue row is the failure mode this lab is meant to expose. The surface track on the same activations shows that even a trivial feature can look “deep” if you only look at raw accuracy.
 
 ## Running it
 
@@ -144,7 +148,9 @@ In this lab, `--max-examples` is a **per-family** cap and is balanced true/false
 5. Open `plots/generalization_matrix.png`. Explain the negation row and column. Below-chance can mean anti-correlation, not absence of information.
 6. Open `plots/selectivity_by_layer.png` and `tables/selectivity_report.csv`. Accuracy without selectivity is just a shiny coin found in a couch.
 7. Open `plots/truth_calibration_curve.png`. A probe can be accurate and badly calibrated.
-8. Open `tables/truth_direction_card.md` before Lab 7. The card tells you exactly what the saved vector is and is not.
+8. Open `tables/truth_direction_card.md` before Lab 7. The card tells you exactly what the saved vector is and is not — and what hypothesis Lab 7 will actually test with it (decodable on these families does not mean the model uses it for truth).
+
+**Make the concept pop:** In `tables/selectivity_report.csv`, find the best layer by raw accuracy vs by selectivity. The gap (or the layer where selectivity is high) is the lesson. Then look at the generalization matrix for the negation row: below-chance transfer is often the most informative result in the entire lab. A direction that is decodable on cities but inert or anti-predictive on negations is the canonical "accessible information" vs "used for the concept" demonstration.
 
 ## How the best direction is chosen
 

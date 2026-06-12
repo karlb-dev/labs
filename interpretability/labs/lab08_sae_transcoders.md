@@ -2,10 +2,7 @@
 
 **Evidence level targeted:** observation / decodability at the feature level,
 upgraded to causality for the one feature you clamp and control.
-**Prerequisites:** Labs 1–6. The bridge loads Lab 4's saved `truth_direction.pt`
-if present (optional). **Back to base models** — the pinned SAE and transcoder
-weights were trained on base models, so this lab uses `gpt2` (Tier A) and
-`allenai/Olmo-3-1025-7B` (Tier B), no chat template.
+**Prerequisites:** Labs 1–7 (and sets up Lab 9). You know residual-stream conventions and "readout is an instrument" (Lab 1), attribution as ledger not cause (Lab 2), the decodability ≠ use skepticism and truth direction (Lab 4), patching/causal interventions (Lab 5), manual circuit scope (Lab 6), and steering-dose hygiene with controls + side-effect costs (Lab 7; the clamp here uses the same "multiples of observed peak/median norm" discipline). The transcoder section exists specifically to give Lab 9 input→output objects with edges rather than site snapshots. The bridge re-uses Lab 4's truth direction (optional saved vector) for a "distributed vs single feature" comparison. **Back to base models** — the pinned SAE and transcoder weights were trained on base models, so this lab uses `gpt2` (Tier A) and `allenai/Olmo-3-1025-7B` (Tier B), no chat template.
 
 ## The question
 
@@ -41,6 +38,15 @@ features than it has neurons. `plots/toy_superposition_geometry.png` shows the
 feature-norm collapse and the WᵀW interference; one figure, one paragraph in
 your writeup.
 
+**Make the concept pop:** before you open the plot, predict what must happen.
+Dense (all features always on): the autoencoder can afford only d_hidden orthogonal
+directions and drops the rest (interference is fatal when everything co-occurs).
+Sparse (features rarely co-occur): it can pack more than d_hidden by accepting
+interference on the rare collisions — exactly the geometry a real network lives
+in. The left panel (norms) and right two heatmaps (WᵀW off-diagonal) make the
+collapse vs overlap visible in one glance. This is the "why" for every SAE
+result that follows.
+
 ## Part 1 — the feature atlas (the core)
 
 Load a pretrained SAE for the tier's model and run it over the frozen,
@@ -57,6 +63,8 @@ amplitude outliers (often polysemantic — they spike on one odd token across
 unrelated contexts); frequency ranking foregrounds broadly-active basis
 vectors. Neither is "the interpretable one"; knowing which question each
 answers is the point.
+
+**Make the concept pop:** open `ranking_disagreement.png` (or the feature_rankings.csv). The red triangles (top by max-act) sit at high peak but near-zero frequency; the green squares (top by freq) sit at modest peak but high frequency across the corpus. Overlap on the top N is typically 0. Max-act picks the flashy rare events; frequency picks the workhorse directions. The atlas deliberately mixes both so you see the trap.
 
 ### The validation battery (the graded function)
 
@@ -77,6 +85,15 @@ confusable pair — it tracked a string, not a concept), **polysemantic**,
 least one label you killed; a clean sheet means your corpus was too easy or
 your battery too kind.
 
+**Make the concept pop:** the skill being graded is *validation*, not labeling.
+Top-context purity can be 1.0 ("code" on every top line) while held-out AUC is
+0.57 — the feature was tracking a surface pattern the corpus happened to
+associate with the label domain. The confusable pairs (built into the frozen
+corpus on purpose) and the held-out split are the apparatus that catches the
+most common interpretive error in the literature. A "great label" that dies on
+the battery is the lab working, not failing. The feature_atlas.md you write
+is required to show the dead ones with their numbers.
+
 This is why the corpus is built from **confusable domain pairs**
 (chemistry/cooking, finance/sports, law/medicine, weather/emotion) that share
 surface tokens. Without them you cannot tell "fires on chemistry" from "fires
@@ -92,6 +109,8 @@ rankings warn about. Most of the dictionary is *silent on this corpus*, which
 is not the same as dead: those features simply never get the inputs that fire
 them here. Reconstruction is honest too — a jumprelu SAE reconstructs at FVU
 around 0.37 with ~110 active features per token, not a magic lossless code.
+
+**Make the concept pop:** look at the actual atlas rows (in feature_atlas.md or the csv). High-peak "code" features often die (purity 1.0 on top contexts, held-out AUC ~0.57). The one that survives here ("emotion") has lower peak but still separates its confusable twin. The clamp picks a *narrowed* low-fire "law" feature (not the highest-AUC survivor) because high fire-fraction features are basis vectors, not concept handles. The numbers, the verdicts, and the "killed" count are the evidence — not a pretty screenshot of one top context.
 
 ## Part 2 — the transcoder (the bridge to Lab 9)
 
@@ -131,6 +150,15 @@ transcoder gives you verbs.
   sufficient, with a control and a fluency cost, never a cherry-picked
   screenshot.
 
+**Make the concept pop:** the clamp is the only CAUSAL evidence in the lab.
+Everything else is OBS/DECODE (reconstruction stats, label validation on a
+fixed corpus). The dose is deliberately in multiples of the *feature's own
+observed peak activation* (parallel to Lab 7's median-norm doses) so the
+number is physically meaningful and the window (induce at ~1×, collapse by ~3×)
+is visible in the plot and the sample generations in the CSV. Random control
+stays at 0; distinct-ratio fluency proxy flags the repetition past the window.
+Read the `sample` column at each dose — the numbers alone do not tell the story.
+
 ## The conventions are validated, not assumed
 
 The single fastest way to get a wrong answer here is a wrong loading
@@ -150,6 +178,13 @@ If your FVU is implausibly large, suspect the convention before the science.
 
 ## Running it
 
+**Headline numbers note:** The atlas labels and validates ~20 features (N_ATLAS) against a ~260-entry corpus (23–28 entries per domain × 10 domains + 6 mixed). Ranking disagreement, dead/silent features, confusable-pair near-miss AUCs, and the explicit killed count are the robust outputs; any single “X% survived” is on a small curated feature sample and carries the one-sig-fig + validation-battery caveat.
+
+Always run Tier A (gpt2) smoke first — it exercises the full pipeline (toy +
+SAE atlas + transcoder + bridges) on CPU in ~75 s and still produces the
+required spread of verdicts plus the honest "no clean CAUSAL on the weak base
+model" outcome.
+
 ```bash
 python interp_bench.py --lab lab8 --tier a    # gpt2 + jbloom SAE + Dunefsky transcoder (CPU-ok)
 python interp_bench.py --lab lab8 --tier b     # Olmo-3-1025-7B + decoderesearch SAE
@@ -163,35 +198,66 @@ moving part in the clamp sweep is the dose.
 
 ## First artifact-reading path
 
-1. `feature_atlas.md` — the deliverable: every label, its validation verdict,
-   evidence with the peak-activating token highlighted, and what the atlas does
-   *not* show.
-2. `plots/toy_superposition_geometry.png` — why neurons resist reading.
-3. `plots/ranking_disagreement.png` — peak-activation vs frequency rankings.
-4. `plots/atlas_verdicts.png` — how many labels survived, how many you killed.
-5. `transcoder_reconstruction_report.json` — FVU, splice-in KL, de-embedded
-   features; the bridge to Lab 9.
-6. `tables/feature_clamp.csv` and `plots/feature_clamp.png` — the one CAUSAL
-   feature; **read the `sample` column**, do not just trust the hit count.
+Diagnostics first (instrument/model health), then the core deliverables that
+force the distinctions.
+
+1. `diagnostics/model_anatomy.json` (and tokenizer info) — confirm you are on the
+   expected base model and layer; loading conventions are model- and SAE-specific.
+2. `feature_atlas.md` (the main deliverable) + `tables/feature_atlas.csv` — every
+   proposed label, its full validation battery (held-out AUC, confusable AUC,
+   polysemy entropy, purity, fire fraction), the top-context evidence with
+   peak token highlighted (⟦ ⟧), the verdict, and the explicit "What the atlas
+   does NOT show" section. **Look for:** the required dead labels (a clean sheet
+   is a warning); high-purity but low-AUC "code" features that die on held-out
+   (the teaching case that top-context labeling alone is the trap); the one or
+   two that survive or narrow, and whether the confusable pair still separates.
+3. `plots/toy_superposition_geometry.png` + `toy_superposition_stats.json` —
+   the geometry that explains polysemanticity. Predict the collapse before you
+   look: dense → exactly d_hidden orthogonal; sparse → more than d_hidden with
+   rising off-diagonal interference.
+4. `plots/ranking_disagreement.png` + `tables/feature_rankings.csv` — the two
+   rankings in one scatter. **Look for:** 0 overlap on the highlighted top-N
+   points (red triangles for max-act at high peak / near-zero freq; green
+   squares for freq at lower peak / high freq). The cloud of ordinary features
+   lives in the bottom-left.
+5. `plots/atlas_verdicts.png` — the distribution. Count the red "killed" bar;
+   the lab is working when it is large.
+6. `transcoder_reconstruction_report.json` — FVU, mean splice-in KL (should be
+   tiny, ~0.01), L0, and the de-embedded "promotes tokens" for a few features.
+   This is the explicit bridge to Lab 9: an object that reconstructs the
+   *computation* (input map to output) rather than a site snapshot gives you
+   edges ("this input feature causes that output feature").
+7. `plots/feature_clamp.png` + `tables/feature_clamp.csv` — the single CAUSAL
+   row. **Read the `sample` generations** at each dose (not just the hit count).
+   The window is narrow (~1× peak induces the concept cleanly; ~3× collapses
+   to repetition); the random control stays at 0; the distinct-ratio column
+   flags fluency loss. This is decodability made sufficient under controls.
 
 ## Writeup questions
 
 1. Which of your labels survived validation untouched, which needed narrowing,
    and which died? Quote the held-out AUC and the confusable-pair AUC for one
-   survivor and one casualty. What did the dead one teach you?
+   survivor (see feature_atlas.md or the table) and one casualty. What did the
+   dead one teach you? (A high-purity "code" feature with AUC 0.57 is the
+   canonical teaching case.)
 2. Max-activation ranking vs frequency ranking: which produced more
-   interpretable features, and why might that be? Point at specific feature ids.
+   interpretable features, and why might that be? Point at specific feature ids
+   in ranking_disagreement.png and feature_rankings.csv. What is the overlap on
+   your top N?
 3. In one paragraph: what does a transcoder reconstruct that an SAE does not,
-   and why does Lab 9 need that? Use your splice-in KL as evidence that it
-   reconstructs the *computation*.
+   and why does Lab 9 need that? Use your splice-in KL (transcoder_reconstruction_report.json)
+   as evidence that it reconstructs the *computation* (not just the vector).
 4. **The truth-direction bridge.** Your best SAE feature aligns with Lab 4's
    truth direction at cosine ≈ ?. Argue what that does and does not imply about
-   whether "truth" is a feature this SAE represents.
+   whether "truth" is a feature this SAE represents. (Low cosine is a finding,
+   not a bug.)
 5. **Real patterns (Dennett) redux.** Take your best-labeled feature and your
-   worst. Argue the best one is a *discovered concept*; then steelman the
-   *deflationary* reading of the worst one ("a convenient coordinate the SAE
-   found because the loss rewarded it"). Use the clamp result: does causal
-   sufficiency change the argument?
+   worst (from the atlas). Argue the best one is a *discovered concept*; then
+   steelman the *deflationary* reading of the worst one ("a convenient
+   coordinate the SAE found because the loss rewarded it"). Use the clamp
+   result (feature_clamp.png + CSV samples): does causal sufficiency change the
+   argument, or does the narrow window + repetition past 3× + random control
+   still leave room for the deflationary reading?
 
 ## Symptom-first debugging
 
