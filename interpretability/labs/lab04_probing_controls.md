@@ -77,7 +77,7 @@ Read `diagnostics/split_audit.csv` before trusting the probe. If the split audit
 
 ## The outlier specimen
 
-On Olmo-3, one frozen statement, `The city of Havana is in the Netherlands.`, produced a final-position activation with roughly seven times the norm of the surrounding statements in earlier validation. Before row normalization, that single row could bend the mass-mean direction and pin accuracy to chance while logistic regression looked fine.
+On Olmo-3, `The city of Havana is in the Netherlands.` was the teaching specimen: its final-position activation had roughly seven times the norm of the surrounding statements in earlier validation. The validation run flagged five total activation-norm outliers in `statement_manifest.csv`; a single high-norm row was enough to bend the mass-mean direction and pin accuracy to chance while logistic regression looked fine.
 
 The code now unit-normalizes each statement’s activation row before fitting probes by default. It also writes raw norm diagnostics to:
 

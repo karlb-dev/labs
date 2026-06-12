@@ -293,7 +293,7 @@ def fit_logistic(X: Any, y: Any, l2: float = LOGISTIC_L2) -> dict[str, Any]:
     """L2-regularized logistic regression via torch LBFGS.
 
     Eval data is standardized with train-set statistics. Leaking eval-set
-    scale into a probe is a velvet-gloved bug.
+    scale into a probe is a quiet leakage bug.
     """
     import torch
 
@@ -616,7 +616,7 @@ def plot_selectivity(ctx: bench.RunContext, selectivity_rows: list[dict[str, Any
     ax.axhline(0, color="black", linewidth=0.7)
     ax.set_xlabel("residual-stream depth")
     ax.set_ylabel("selectivity (real accuracy minus shuffled-control accuracy)")
-    ax.set_title("Selectivity by family: accuracy after the noise-probe goblin is paid")
+    ax.set_title("Selectivity by family: accuracy after subtracting shuffled-label controls")
     ax.legend(fontsize=8)
     bench.save_figure(ctx, fig, "selectivity_by_layer.png", "Per-family truth-probe selectivity by depth.")
 
@@ -818,13 +818,17 @@ def write_truth_direction_card(
 ) -> None:
     transfer_lines = [f"- {fam}: {acc:.3f}" for fam, acc in sorted(direction_transfer.items())]
     below = ", ".join(below_chance) if below_chance else "none"
+    norm_note = str(metadata.get("normalization", "unknown"))
+    norm_card_line = str(metadata.get("normalization_card", norm_note))
     lines = [
         "# Lab 4 truth direction card",
         "",
         "## What this vector is",
         "",
-        "A mass-mean direction, true-class mean minus false-class mean, trained on unit-normalized",
-        f"final-token residual streams from `{metadata['train_family']}` at stream depth {metadata['layer']}.",
+        (
+            "A mass-mean direction, true-class mean minus false-class mean, trained on "
+            f"{norm_card_line} from `{metadata['train_family']}` at stream depth {metadata['layer']}."
+        ),
         "It is a DECODE artifact. It is not evidence that the model uses this direction.",
         "",
         "## Convention",
@@ -832,7 +836,7 @@ def write_truth_direction_card(
         f"- model: `{metadata['model_id']}`",
         f"- stream depth: {metadata['layer']} with bench `streams[k]` convention",
         "- position: final token of the frozen statement",
-        "- normalization: row-wise unit normalization before fitting",
+        f"- normalization: {norm_note}",
         "- saved tensor: `tables/truth_direction.pt`",
         "- readable metadata: `tables/truth_direction_metadata.json`",
         "",
@@ -897,7 +901,26 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         print(f"[lab4] {family}: {len(fam)} statements ({n_true} true, {len(fam) - n_true} false)")
 
     data_manifest_path = ctx.path("diagnostics", "frozen_data_manifest.json")
-    bench.write_json(data_manifest_path, {"families": family_counts, "normalization": NORMALIZE_ROWS})
+    normalization_key = "row_unit_norm" if NORMALIZE_ROWS else "raw_streams"
+    normalization_note = (
+        "each activation row unit-normalized before fitting; apply the direction to unit-normalized streams "
+        "or rescale by local stream norm"
+        if NORMALIZE_ROWS
+        else "raw final-token residual streams; no row-wise normalization was applied before fitting"
+    )
+    normalization_card = (
+        "unit-normalized final-token residual streams"
+        if NORMALIZE_ROWS
+        else "raw final-token residual streams"
+    )
+    bench.write_json(
+        data_manifest_path,
+        {
+            "families": family_counts,
+            "normalization": normalization_key,
+            "normalization_note": normalization_note,
+        },
+    )
     ctx.register_artifact(data_manifest_path, "diagnostic", "Frozen truth CSV counts and hashes.")
 
     split_lookup, split_audit = make_grouped_split(statements)
@@ -1161,7 +1184,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "layer_convention": "depth index into bench streams[k]: 0 = embeddings, k = residual after block k, k = n_layers is final-norm input",
         "position": "final token of the statement",
         "stream": "pre-norm residual, bench streams[k] convention",
-        "normalization": "each activation row unit-normalized before fitting; apply to unit-normalized streams or rescale by local stream norm",
+        "normalization": normalization_note,
+        "normalization_key": normalization_key,
+        "normalization_card": normalization_card,
         "model_id": bundle.anatomy.model_id,
         "d_model": bundle.anatomy.d_model,
         "n_layers": bundle.anatomy.n_layers,
@@ -1218,7 +1243,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "n_statements": len(statements),
         "per_family_cap": per_family_cap,
         "surface_letter": surface_letter,
-        "normalization": "row_unit_norm" if NORMALIZE_ROWS else "raw_streams",
+        "normalization": normalization_key,
         "activation_norm_outliers": outliers,
         "truth_peak": {"layer": truth_peak_layer, "accuracy": truth_peak_acc},
         "truth_peak_shuffled_control": truth_peak_ctrl,
