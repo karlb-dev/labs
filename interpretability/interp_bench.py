@@ -1290,6 +1290,16 @@ def generate_text(
 LAST_GENERATION_STATS: dict[str, Any] = {}
 
 
+def _kv_pairs(cache: Any) -> list[tuple[Any, Any]]:
+    """Per-layer (key, value) tensors from a returned cache, across the
+    transformers cache-API change: 5.x exposes ``cache.layers[i].keys/.values``
+    (DynamicCache stopped being subscriptable); 4.x returns tuple-like caches."""
+    layers = getattr(cache, "layers", None)
+    if layers is not None:
+        return [(layer.keys, layer.values) for layer in layers]
+    return [(cache[li][0], cache[li][1]) for li in range(len(cache))]
+
+
 def generate_continuous(
     bundle: ModelBundle,
     prompts: Sequence[str],
@@ -1372,8 +1382,7 @@ def generate_continuous(
                 use_cache=True,
             )
         first = out.logits[:, -1, :].argmax(dim=-1).tolist()
-        new_kv = [(out.past_key_values[li][0], out.past_key_values[li][1])
-                  for li in range(len(out.past_key_values))]
+        new_kv = _kv_pairs(out.past_key_values)
         lens = mask.sum(dim=1).tolist()
         return new_kv, mask, lens, first, indices
 
@@ -1487,8 +1496,7 @@ def generate_continuous(
                     use_cache=True,
                 )
             next_tokens = out.logits[:, -1, :].argmax(dim=-1).tolist()
-            kv = [(out.past_key_values[li][0], out.past_key_values[li][1])
-                  for li in range(len(out.past_key_values))]
+            kv = _kv_pairs(out.past_key_values)
             for r in range(n):
                 last_tokens[r] = int(next_tokens[r])
                 gen_ids[r].append(last_tokens[r])
