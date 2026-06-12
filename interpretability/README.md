@@ -81,6 +81,7 @@ python interp_bench.py --lab lab10 --tier b   # Olmo-3-7B-Think, 36 items x 6 co
 python interp_bench.py --lab lab11 --tier b                  # factual_qa on Olmo base
 python interp_bench.py --lab lab11 --tier b \
   --audit-domain cot_faithfulness --model allenai/Olmo-3-7B-Think   # flagship
+python interp_bench.py --lab lab11 --tier b --audit-domain sentiment_negation
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -192,7 +193,7 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   contract: the fixed-schema `audit_report.md`, a per-claim
   keep/revise/retire `ledger_reconciliation.md`, and
   `safety_case_and_rebuttal.md` — with every student-judgment section
-  scaffolded but deliberately not generated. Two domains
+  scaffolded but deliberately not generated. Three domains
   (`--audit-domain`): **factual_qa** (lens stabilization AND preference
   depths, DLA summary, two-site residual patching — recovery 0.995 at the
   early subject site vs 0.02 at the final band, Lab 5's localization
@@ -202,9 +203,15 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   flip rates 0.50 vs 0.18 across slices — item-set sensitivity surfaced)
   plus a hint-presence probe whose Tier B result is an honestly-shipped
   NEGATIVE (AUC ≈ shuffled; the claim builder is conditional on its own
-  selectivity). Audit lesson #1 baked in: Olmo prefers the right capital at
-  1.000 while top-1 "accuracy" reads 0.361 ("…is **known** as") — which
-  behavioral metric does your claim name?
+  selectivity). A third domain, **sentiment_negation** (48 frozen statement
+  pairs, `data/affect_valence.csv` + `data/affect_negation.csv`), audits
+  whether the model — and a Lab-4-style plain-trained valence probe — reads
+  surface valence words or the composed meaning under minimal negation
+  edits: behavioral negation gap, negated-family probe transfer with a
+  shuffled control, and plain-into-negated final-position patching with an
+  unrelated-plain control. Audit lesson #1 baked in: Olmo prefers the right
+  capital at 1.000 while top-1 "accuracy" reads 0.361 ("…is **known** as")
+  — which behavioral metric does your claim name?
 
 **The course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
@@ -263,24 +270,40 @@ loudly and every downstream number is declared suspect — that is their job.
 ## The generation engine and its benchmark
 
 Generation-heavy labs route through `bench.generate_continuous`, a
-continuous-batching engine in pure HF forwards (one persistent KV cache
-grown in place; rows retire at EOS and pending jobs take their slots, so
-heavy-tailed CoT lengths never make a batch pay for its slowest member).
+continuous-batching engine in pure HF forwards. The KV cache is a
+preallocated static buffer with a sliding column window: every decode step
+writes each row's new KV **in place** at one column (DynamicCache instead
+reallocates and copies the whole cache every step), trims of the shared
+left pad are free (the window slides), and retire/admit stay event-rate.
+Admits are batched (`admit_block`) so prefills do not interrupt in-flight
+rows on every retirement; rows retire at EOS and pending jobs take their
+slots, so heavy-tailed CoT lengths never make a batch pay for its slowest
+member. The hook surface is unchanged — per-job steering scales let Lab 7
+ride an entire dose sweep on one schedule.
+
 `bench_inference.py` is its A/B harness — exact-length heavy-tailed jobs,
-identical-tokens determinism check against lockstep `model.generate`, NVML
-utilization sampling, and per-step ITL traces (p50/p95 plus ms-per-step and
-ms-per-context-token slopes). Measured on A100-80GB, greedy bf16:
+NVML utilization sampling, per-step ITL traces, TTFT/prefill-stall
+telemetry, and a two-part determinism contract: the engine must be
+**bitwise self-deterministic** across identical calls (verified 48/48),
+and every cross-engine token divergence vs lockstep `model.generate` must
+be a verified n-way near-tie (top-logit gap ≤ 2 bf16 ulps under a clean
+teacher-forced forward; greedy bf16 is not bitwise stable across attention
+kernel paths, and pretending otherwise would just hide real cache bugs).
+Measured on A100-80GB, greedy bf16:
 
-| model | engine | rows | tok/s | peak GiB |
-|---|---|---:|---:|---:|
-| Olmo-3-7B-Think | lockstep | 16 | 175 | 22.6 |
-| Olmo-3-7B-Think | continuous | 32 | **433** | 31.6 |
-| Olmo-3-32B-Think | continuous | 8 | 73 | 62.1 |
-| Olmo-3-32B-Think | continuous | 16 | **116** | 64.5 |
+| model | engine | rows | tok/s | peak GiB | p95 ITL |
+|---|---|---:|---:|---:|---:|
+| Olmo-3-7B-Think | lockstep | 16 | 183 | 31.4 | — |
+| Olmo-3-7B-Think | continuous | 16 | 250 | 22.7 | 47 ms |
+| Olmo-3-7B-Think | continuous | 32 | 490 | 31.7 | 46 ms |
+| Olmo-3-7B-Think | continuous | 48 | **649** | 40.7 | 47 ms |
+| Olmo-3-32B-Think | continuous | 16 | **116** | 64.5 | 116 ms |
 
-At 32B the step time is weight-read-bound (~96 ms flat in context), so
-in-flight rows are nearly free throughput until memory runs out — ~300
-600-token probes complete in ~26 minutes.
+p95 ITL staying flat as rows triple is the static cache + admit batching
+at work (the old engine paid 50→80 ms). At 32B the step time is
+weight-read-bound, so in-flight rows are nearly free throughput until
+memory runs out — ~300 600-token probes complete in ~26 minutes. (The 32B
+row is the run-4 engine; run 5 re-measures it on the static cache.)
 
 ## The course dashboard
 

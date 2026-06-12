@@ -143,6 +143,44 @@ Completeness effect is `1 - completeness_ratio`. Higher means circuit ablation d
 
 This is the anti-cherry-pick plot. The lowest bars become the failure cases in the circuit card. Do not hide them. Ask what they share.
 
+### Worked example: why faithfulness can exceed 1.0
+
+Faithfulness is a ratio of two measured quantities, not a percentage of
+something conserved:
+
+```
+faithfulness = logit_diff(model with every NON-circuit head mean-ablated)
+               ----------------------------------------------------------
+               logit_diff(full model)
+```
+
+Nothing in that definition caps the numerator. Mean-ablating a head does not
+silence it — it replaces its output with its average output over the off
+distribution. If some non-circuit head was actively *hurting* the task on a
+prompt (an anti-induction head suppressing the repeated token, a sink head
+diluting attention), replacing it with its blander average output removes the
+interference, and the circuit-only model beats the full model.
+
+Two real rows from the run-4 Tier B table (`tables/per_prompt_faithfulness.csv`,
+Olmo-3-7B, 12-head circuit):
+
+| prompt | base_diff | circuit_diff | faithfulness |
+|---|---|---|---|
+| `red blue green red blue green red blue` | 3.4375 | 3.5000 | 1.018 |
+| `dog cat bird dog cat bird dog cat` | 0.8125 | 2.4375 | **3.000** |
+
+The first row is ulp-level over-recovery — read it as 1.0. The second is the
+instructive one: the full model is barely doing the task on this prompt
+(base logit-diff 0.81, the weakest in the set), so the denominator is small,
+and removing the complement heads helps (+1.63 logits). Both effects compound:
+**over-recovery is largest exactly where the base behavior is weakest.** That
+is why the aggregate F/C/M table uses the ratio of *mean* logit-diffs rather
+than the mean of per-prompt ratios — a single weak-denominator prompt would
+otherwise dominate the average — and why a per-prompt ratio above 1.0 is
+evidence about interference from non-circuit heads, not extra credit for your
+circuit. Say which heads you suspect (the candidate table's negative-drop rows
+are the place to look), and never average it away silently.
+
 ## What the revised code improves
 
 The updated lab makes several evidence-quality changes:

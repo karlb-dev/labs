@@ -9,7 +9,7 @@ then write a report that keeps evidence rungs separate.  The harness assembles
 numbers and scaffolding.  The student's work is the judgment: failure-mode
 labels, ledger verdicts, safety-case prose, and the final recommendation.
 
-Two domains are implemented end to end.  Both follow the course capstone
+Three domains are implemented end to end.  All follow the course capstone
 contract: per example behavior + confidence proxy, logit-lens stabilization,
 DLA summary, a causal intervention on a subset, one additional internal method,
 and a manual failure-mode label.
@@ -26,6 +26,17 @@ and a manual failure-mode label.
   "hint present" probe over residual streams at answer-emission time, with a
   family/item split and a shuffled-label control.
 
+* ``--audit-domain sentiment_negation``: sentiment classification under
+  minimal negation edits, on the tier's base model.  Every plain statement in
+  ``data/affect_valence.csv`` has a minimally negated counterpart in
+  ``data/affect_negation.csv`` whose mood label flips while the surface
+  valence words stay put.  The audit combines plain-vs-negated pair-argmax
+  behavior, lens stabilization, frozen-norm DLA, plain-into-negated residual
+  patching at the final position (with an unrelated-plain control), and a
+  Lab 4-style mass-mean valence probe trained on plain statements only,
+  reported on held-out plain statements, the negated family (the headline:
+  surface valence words vs composed meaning), and a shuffled-label control.
+
 Evidence level: integration.  Individual rows remain OBS / ATTR / DECODE /
 CAUSAL / SELF-REPORT.  No later section is allowed to borrow a stronger rung
 than the artifact earned.
@@ -33,6 +44,7 @@ than the artifact earned.
 
 from __future__ import annotations
 
+import csv
 import dataclasses
 import hashlib
 import inspect
@@ -100,6 +112,22 @@ COT_PROBE_LAYER_FRACS = (0.4, 0.55, 0.7, 0.85)
 COT_FRESH_OFFSET = 1
 COT_FRESH_STRIDE = 4
 
+# Sentiment-under-negation domain.  The datasets are frozen and vendored:
+# data/affect_valence.csv (Lab 4 follow-up family) plus a paired, minimally
+# negated counterpart file whose mood labels flip while the valence words stay.
+SENTIMENT_DATA_FILES = {"plain": "affect_valence.csv", "negated": "affect_negation.csv"}
+SENTIMENT_QUESTION_SUFFIX = (
+    "\nQuestion: Is the overall mood of that sentence positive or negative?"
+    "\nAnswer:"
+)
+# Answer tokens for the two-way readout.  Both are single tokens under the
+# course's base-model tokenizers (gpt2: 3967/4633; allenai/Olmo-3-1025-7B:
+# 6928/8389); the runtime gate below re-verifies on whatever tokenizer is
+# actually loaded and aborts on a multi-token split.
+SENTIMENT_ANSWER_TEXT = {1: " positive", 0: " negative"}
+SENTIMENT_BUDGET_BY_TIER = {"a": 6, "b": 48, "c": 48}  # source statements; each brings its negated twin
+SENTIMENT_PROBE_LAYER_FRACS = TRUTH_MONITOR_LAYER_FRACS
+
 LEDGER_ENTRY_RE = re.compile(
     r"^\[(?P<id>L\d{2}-C\d+)\]\s+"
     r"(?P<tag>OBS|ATTR|DECODE|CAUSAL|SELF-REPORT)\s*\|\s*(?P<text>.+)$"
@@ -120,6 +148,22 @@ class AuditExample:
     subject_pos: int
     n_prompt_tokens: int
     corrupt_fact_id: str
+
+
+@dataclasses.dataclass(frozen=True)
+class SentimentExample:
+    statement_id: str
+    family: str          # "plain" or "negated"
+    pair_id: str         # source plain statement_id shared by both halves
+    statement: str
+    label: int           # 1 = positive overall mood after composing negation
+    prompt: str
+    target: str          # answer token text for the true label
+    distractor: str
+    target_id: int
+    distractor_id: int
+    n_prompt_tokens: int
+    meta: str
 
 
 # ---------------------------------------------------------------------------
@@ -233,6 +277,20 @@ def roc_auc(pos: Sequence[float], neg: Sequence[float]) -> float:
             wins += float(p > q)
             ties += float(p == q)
     return (wins + 0.5 * ties) / (len(pos) * len(neg))
+
+
+def binomial_se(rate: float, n: int) -> float:
+    return math.sqrt(max(0.0, rate * (1.0 - rate)) / max(1, n))
+
+
+def auc_se_hanley_mcneil(auc: float, n_pos: int, n_neg: int) -> float:
+    """Hanley & McNeil (1982) standard error of an ROC AUC."""
+    if n_pos < 1 or n_neg < 1:
+        return float("nan")
+    q1 = auc / (2.0 - auc)
+    q2 = 2.0 * auc * auc / (1.0 + auc)
+    var = (auc * (1.0 - auc) + (n_pos - 1) * (q1 - auc * auc) + (n_neg - 1) * (q2 - auc * auc)) / (n_pos * n_neg)
+    return math.sqrt(max(0.0, var))
 
 
 def class_counts_ok(y: Sequence[int | float]) -> bool:
@@ -1361,6 +1419,11 @@ def run_cot_audit(ctx: bench.RunContext, bundle: bench.ModelBundle, args: Any) -
     call_acknowledgment_writer(ctx, bundle, lab10, rows)
 
     exp2_n = int(getattr(lab10, "EXP2_ITEMS_BY_TIER", COT_EXP2_ITEMS_BY_TIER).get(arg_value(args, "tier", "b"), 16))
+    # An explicit --max-examples is a request for a bigger audit: let it scale
+    # the load-bearing experiment too (run_cot_load_experiment caps at the
+    # number of baseline-correct items, so over-asking is safe).
+    if int(arg_value(args, "max_examples", -1)) > 0:
+        exp2_n = max(exp2_n, int(arg_value(args, "max_examples", -1)))
     summary = lab10.run_cot_load_experiment(ctx, bundle, rows, n_items=exp2_n, max_new=max_new, batch=batch)
 
     probe = run_hint_presence_probe(ctx, bundle, lab10, rows)
@@ -1535,6 +1598,10 @@ def run_hint_presence_probe(ctx: bench.RunContext, bundle: bench.ModelBundle, la
         "n_heldout_jobs": len(held_idx),
         "train_auc": round(float(chosen["train_auc"]), 3),
         "held_out_auc": round(float(chosen["held_out_auc"]), 3),
+        "held_out_auc_se_hanley_mcneil": round(auc_se_hanley_mcneil(
+            float(chosen["held_out_auc"]),
+            sum(1 for i in held_idx if labels[i] == 1),
+            sum(1 for i in held_idx if labels[i] == 0)), 3),
         "shuffled_control_auc": round(float(chosen["shuffled_control_auc"]), 3),
         "selectivity": round(float(chosen["selectivity"]), 3),
         "selection_rule": "choose stream depth by train-item AUC; report held-out item AUC vs shuffled-label control",
@@ -1545,6 +1612,680 @@ def run_hint_presence_probe(ctx: bench.RunContext, bundle: bench.ModelBundle, la
     bench.write_json(ctx.path("internal_evidence", "hint_presence_probe.json"), result)
     ctx.register_artifact(ctx.path("internal_evidence", "hint_presence_probe.json"), "metrics", "Mass-mean hint-presence probe at answer emission, with held-out AUC and shuffled control.")
     print(f"[lab11] hint-presence probe: held-out AUC {result['held_out_auc']} vs shuffled {result['shuffled_control_auc']} at depth {result['layer']}")
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Sentiment under negation: data construction and internal evidence
+# ---------------------------------------------------------------------------
+
+
+def resolve_sentiment_budget(args: Any) -> int:
+    """Number of source (plain) statements; 0 means the whole frozen file."""
+    max_examples = int(arg_value(args, "max_examples", -1))
+    if max_examples > 0:
+        return max_examples
+    if max_examples == 0:
+        return 0
+    return SENTIMENT_BUDGET_BY_TIER.get(str(arg_value(args, "tier", "b")), 24)
+
+
+def load_sentiment_statement_file(filename: str, family: str) -> list[dict[str, Any]]:
+    path = bench.COURSE_ROOT / "data" / filename
+    if not path.exists():
+        raise RuntimeError(
+            f"Frozen dataset missing: {path}. The valence CSVs are vendored in "
+            "data/. Re-checkout the repo; do not regenerate per-run."
+        )
+    out: list[dict[str, Any]] = []
+    with path.open(newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row.get("family") != family:
+                raise RuntimeError(
+                    f"Dataset row {row.get('statement_id')} declares family {row.get('family')!r}, "
+                    f"but {filename} must contain only {family!r}."
+                )
+            label = int(row["label"])
+            if label not in (0, 1):
+                raise RuntimeError(f"Bad mood label for {row.get('statement_id')}: {row['label']!r}")
+            out.append(
+                {
+                    "statement_id": row["statement_id"],
+                    "family": family,
+                    "statement": row["statement"],
+                    "label": label,
+                    "meta": row.get("meta", ""),
+                }
+            )
+    if not out:
+        raise RuntimeError(f"Frozen dataset is empty: {path}")
+    return out
+
+
+def load_sentiment_pairs(budget: int) -> list[dict[str, Any]]:
+    """Pair every selected plain statement with its negated counterpart.
+
+    Pairing is by id (``val_p_NN`` <-> ``valneg_p_NN``) and double-checked
+    against the ``src=`` field in the negated file's meta column.  The label
+    flip is a dataset invariant, not a hope: a negated row that fails to flip
+    its source's mood label aborts the run.
+    """
+    plain = load_sentiment_statement_file(SENTIMENT_DATA_FILES["plain"], "valence")
+    negated = load_sentiment_statement_file(SENTIMENT_DATA_FILES["negated"], "valence_negation")
+    negated_by_src: dict[str, dict[str, Any]] = {}
+    for row in negated:
+        src = str(row["statement_id"]).replace("valneg_", "val_", 1)
+        if src in negated_by_src:
+            raise RuntimeError(f"Duplicate negated counterpart for source {src}")
+        if f"src={src}" not in str(row["meta"]):
+            raise RuntimeError(f"{row['statement_id']} meta does not record src={src}: {row['meta']!r}")
+        negated_by_src[src] = row
+
+    selected = plain if budget <= 0 else plain[:budget]
+    pairs: list[dict[str, Any]] = []
+    for src_row in selected:
+        twin = negated_by_src.get(str(src_row["statement_id"]))
+        if twin is None:
+            raise RuntimeError(
+                f"No negated counterpart for {src_row['statement_id']} in {SENTIMENT_DATA_FILES['negated']}"
+            )
+        if int(twin["label"]) != 1 - int(src_row["label"]):
+            raise RuntimeError(
+                f"Negation must flip the mood label: {src_row['statement_id']} (label {src_row['label']}) "
+                f"-> {twin['statement_id']} (label {twin['label']})"
+            )
+        pairs.append({"pair_id": src_row["statement_id"], "plain": src_row, "negated": twin})
+    return pairs
+
+
+def build_sentiment_examples(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    pairs: list[dict[str, Any]],
+) -> tuple[list[SentimentExample], list[dict[str, Any]]]:
+    """Single-token answer gate for the two-way sentiment readout.
+
+    Mirrors the factual gate: every row gets a kept/drop_reason entry in the
+    diagnostics report.  Unlike the factual gate there is nothing sensible to
+    drop per-statement -- the answer tokens are shared by every example -- so
+    any failure aborts instead of silently shrinking the audit.
+    """
+    tokenizer = bundle.tokenizer
+    pos_ids = token_ids(tokenizer, SENTIMENT_ANSWER_TEXT[1])
+    neg_ids = token_ids(tokenizer, SENTIMENT_ANSWER_TEXT[0])
+    kept: list[SentimentExample] = []
+    token_rows: list[dict[str, Any]] = []
+
+    for pair in pairs:
+        for family_key in ("plain", "negated"):
+            row = pair[family_key]
+            label = int(row["label"])
+            target_text = SENTIMENT_ANSWER_TEXT[label]
+            distractor_text = SENTIMENT_ANSWER_TEXT[1 - label]
+            target_ids = pos_ids if label == 1 else neg_ids
+            distractor_ids = neg_ids if label == 1 else pos_ids
+            prompt = str(row["statement"]) + SENTIMENT_QUESTION_SUFFIX
+            prompt_ids = token_ids(tokenizer, prompt)
+            reasons: list[str] = []
+            if len(target_ids) != 1:
+                reasons.append(f"target tokenizes to {len(target_ids)} tokens")
+            if len(distractor_ids) != 1:
+                reasons.append(f"distractor tokenizes to {len(distractor_ids)} tokens")
+            if len(target_ids) == 1 and len(distractor_ids) == 1 and target_ids[0] == distractor_ids[0]:
+                reasons.append("target and distractor have the same token id")
+            kept_flag = not reasons
+            token_rows.append(
+                {
+                    "statement_id": row["statement_id"],
+                    "family": family_key,
+                    "pair_id": pair["pair_id"],
+                    "kept": kept_flag,
+                    "drop_reason": "; ".join(reasons),
+                    "prompt_sha256": sha256_text(prompt),
+                    "n_prompt_tokens": len(prompt_ids),
+                    "target": visible_token(target_text),
+                    "target_n_tokens": len(target_ids),
+                    "target_id": target_ids[0] if len(target_ids) == 1 else "",
+                    "target_pieces": token_pieces(tokenizer, target_ids),
+                    "distractor": visible_token(distractor_text),
+                    "distractor_n_tokens": len(distractor_ids),
+                    "distractor_id": distractor_ids[0] if len(distractor_ids) == 1 else "",
+                    "distractor_pieces": token_pieces(tokenizer, distractor_ids),
+                }
+            )
+            if kept_flag:
+                kept.append(
+                    SentimentExample(
+                        statement_id=str(row["statement_id"]),
+                        family=family_key,
+                        pair_id=str(pair["pair_id"]),
+                        statement=str(row["statement"]),
+                        label=label,
+                        prompt=prompt,
+                        target=target_text,
+                        distractor=distractor_text,
+                        target_id=target_ids[0],
+                        distractor_id=distractor_ids[0],
+                        n_prompt_tokens=len(prompt_ids),
+                        meta=str(row["meta"]),
+                    )
+                )
+
+    bench.write_csv_with_context(ctx, ctx.path("diagnostics", "sentiment_tokenization_report.csv"), token_rows)
+    ctx.register_artifact(
+        ctx.path("diagnostics", "sentiment_tokenization_report.csv"),
+        "diagnostic",
+        "Single-token answer gate for the two-way sentiment readout, per statement.",
+    )
+    dropped = [r for r in token_rows if not r["kept"]]
+    if dropped:
+        raise RuntimeError(
+            f"Sentiment tokenization gate failed for {len(dropped)} rows: ' positive'/' negative' must be "
+            "distinct single tokens for this tokenizer. See diagnostics/sentiment_tokenization_report.csv"
+        )
+    return kept, token_rows
+
+
+def sentiment_failure_auto_label(row: Mapping[str, Any], partner: Mapping[str, Any] | None) -> str:
+    """Derived label; the student column stays empty on purpose.
+
+    For a wrong negated example the binary readout necessarily produced the
+    source statement's surface label, so the split is by what the plain twin
+    did: a correct twin plus an at-least-as-confident wrong negated margin is
+    a full surface-valence override; a correct twin with a weaker wrong margin
+    is negation ignored; a wrong twin makes the pair unreliable evidence.
+    """
+    correct = bool(row.get("correct_pair_argmax"))
+    if row.get("family") == "plain":
+        return "plain_correct" if correct else "plain_wrong"
+    if correct:
+        if partner is not None and not bool(partner.get("correct_pair_argmax")):
+            return "negated_correct_plain_wrong"
+        return "robust_negation"
+    if partner is None or not bool(partner.get("correct_pair_argmax")):
+        return "pair_unreliable"
+    own = abs(as_float(row.get("margin_toward_true_label")) or 0.0)
+    twin = abs(as_float(partner.get("margin_toward_true_label")) or 0.0)
+    return "surface_valence_override" if own >= twin else "negation_ignored"
+
+
+def write_sentiment_domain_manifest(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    examples: list[SentimentExample],
+    token_rows: list[dict[str, Any]],
+) -> None:
+    manifest = {
+        "domain": "sentiment_negation",
+        "model_id": bundle.anatomy.model_id,
+        "n_layers": bundle.anatomy.n_layers,
+        "d_model": bundle.anatomy.d_model,
+        "data_files": {
+            key: {"path": f"data/{name}", "sha256": bench.sha256_file(bench.COURSE_ROOT / "data" / name)}
+            for key, name in SENTIMENT_DATA_FILES.items()
+        },
+        "question_suffix": SENTIMENT_QUESTION_SUFFIX,
+        "answer_tokens": {str(k): visible_token(v) for k, v in SENTIMENT_ANSWER_TEXT.items()},
+        "n_examples_kept": len(examples),
+        "n_pairs": len({e.pair_id for e in examples}),
+        "n_tokenization_rows": len(token_rows),
+        "stream_convention": "bench streams[k]: pre-norm residual after k blocks; streams[0] is embeddings; streams[L] is final-norm input",
+        "behavior_metric": "next-token ' positive' vs ' negative' pair-argmax; confidence proxy is the signed logit margin toward the true mood label",
+        "causal_sites": ["final position of the negated prompt at a 2-3 depth band, donor = plain twin's final position", "unrelated_plain_control at the same sites"],
+        "valence_probe": "mass-mean on bare plain statements (train split only); held-out plain, negated-family transfer, shuffled-label control",
+    }
+    bench.write_json(ctx.path("diagnostics", "audit_domain_manifest.json"), manifest)
+    ctx.register_artifact(ctx.path("diagnostics", "audit_domain_manifest.json"), "diagnostic", "Sentiment-negation audit design, metric, and stream conventions.")
+
+
+def run_sentiment_audit(ctx: bench.RunContext, bundle: bench.ModelBundle, args: Any) -> dict[str, Any]:
+    import torch
+
+    budget = resolve_sentiment_budget(args)
+    pairs = load_sentiment_pairs(budget)
+    examples, token_rows = build_sentiment_examples(ctx, bundle, pairs)
+    if not examples:
+        raise RuntimeError("No sentiment audit examples survived tokenization. See diagnostics/sentiment_tokenization_report.csv")
+    print(
+        f"[lab11] sentiment_negation: {len(examples)} examples "
+        f"({len(pairs)} plain/negated pairs after tokenization)"
+    )
+    write_sentiment_domain_manifest(ctx, bundle, examples, token_rows)
+
+    comp_anatomy = bench.resolve_component_anatomy(ctx, bundle, examples[0].prompt)
+    first_comp = bench.run_with_component_cache(bundle, examples[0].prompt, comp_anatomy)
+    bench.run_decomposition_check(
+        ctx,
+        bundle,
+        first_comp,
+        rel_tolerance=float(arg_value(args, "dla_tolerance", 0.02)),
+    )
+    bench.run_patch_noop_check(ctx, bundle, examples[0].prompt)
+
+    rows: list[dict[str, Any]] = []
+    lens_rows: list[dict[str, Any]] = []
+    dla_rows: list[dict[str, Any]] = []
+    captures: dict[str, Any] = {}
+
+    for idx, ex in enumerate(examples):
+        comp = first_comp if idx == 0 else bench.run_with_component_cache(bundle, ex.prompt, comp_anatomy)
+        captures[ex.statement_id] = comp
+        traj = bench.compute_lens_trajectory(
+            bundle,
+            comp.capture,
+            target_id=ex.target_id,
+            distractor_id=ex.distractor_id,
+            topk=int(arg_value(args, "topk", 5)),
+        )
+        dla = dla_layer_summary(bundle, comp, ex.target_id, ex.distractor_id)
+        final = comp.capture.final_logits_last
+        probs = torch.softmax(final, dim=-1)
+        top = torch.topk(final, k=5)
+        top1 = int(top.indices[0])
+        margin = float(final[ex.target_id] - final[ex.distractor_id])
+        correct = margin > 0  # pair-argmax: the true label's token wins the two-way readout
+        predicted = "positive" if (margin > 0) == (ex.label == 1) else "negative"
+        pref_depth = preference_depth(traj)
+        top1_depth = stabilization_depth(traj)
+        row = {
+            "statement_id": ex.statement_id,
+            "family": ex.family,
+            "pair_id": ex.pair_id,
+            "statement": ex.statement,
+            "prompt_sha256": sha256_text(ex.prompt),
+            "label_positive_mood": ex.label,
+            "target": visible_token(ex.target),
+            "distractor": visible_token(ex.distractor),
+            "answer_top1": bundle.tokenizer.decode([top1]),
+            "top1_token_id": top1,
+            "target_token_id": ex.target_id,
+            "distractor_token_id": ex.distractor_id,
+            "predicted_sentiment": predicted,
+            "correct_pair_argmax": correct,
+            "margin_toward_true_label": round(margin, 4),
+            "p_target": round(float(probs[ex.target_id]), 6),
+            "p_distractor": round(float(probs[ex.distractor_id]), 6),
+            "confidence_margin_top1_minus_top2": round(float(top.values[0] - top.values[1]), 4),
+            "target_rank_final": traj.target_rank[-1] if traj.target_rank is not None else "",
+            "distractor_rank_final": traj.distractor_rank[-1] if traj.distractor_rank is not None else "",
+            "lens_top1_stabilization_depth": top1_depth if top1_depth is not None else "",
+            "lens_preference_stabilization_depth": pref_depth if pref_depth is not None else "",
+            "lens_preference_depth_frac": round(pref_depth / bundle.anatomy.n_layers, 3) if pref_depth is not None else "",
+            "dla_top_layer": dla["top_layer"],
+            "dla_top_component_type": dla["top_kind"],
+            "dla_embed_score": round(dla["embed_score"], 3),
+            "dla_attn_total": round(dla["attn_total"], 3),
+            "dla_mlp_total": round(dla["mlp_total"], 3),
+            "dla_constant": round(dla["constant"], 3),
+            "dla_ledger_total": round(dla["ledger_total"], 3),
+            "dla_model_logit_diff": round(dla["model_logit_diff"], 3),
+            "dla_balance_error": round(dla["balance_error"], 4),
+            "failure_mode_auto": "",  # filled after both halves of every pair exist
+            "failure_mode_student": "",
+        }
+        rows.append(row)
+        lens_rows.append(
+            {
+                "statement_id": ex.statement_id,
+                "family": ex.family,
+                "top1_stabilization_depth": top1_depth if top1_depth is not None else "",
+                "preference_stabilization_depth": pref_depth if pref_depth is not None else "",
+                "final_target_rank": row["target_rank_final"],
+                "final_distractor_rank": row["distractor_rank_final"],
+                "final_entropy_bits": round(traj.entropy_bits[-1], 3),
+                "final_kl_to_final_bits": round(traj.kl_to_final_bits[-1], 6),
+                "first_depth_target_top1": top1_depth if top1_depth is not None else "not stable",
+                "first_depth_target_prefers_over_distractor": pref_depth if pref_depth is not None else "not stable",
+            }
+        )
+        for r in dla["per_layer"]:
+            dla_rows.append(
+                {
+                    "statement_id": ex.statement_id,
+                    "family": ex.family,
+                    "layer": r["layer"],
+                    "attn_score": round(r["attn"], 4),
+                    "mlp_score": round(r["mlp"], 4),
+                    "block_total": round(r["block_total"], 4),
+                    "abs_block_total": round(r["abs_block_total"], 4),
+                    "model_logit_diff": round(dla["model_logit_diff"], 4),
+                    "norm_kind": dla["norm_kind"],
+                    "frozen_scale": round(dla["frozen_scale"], 6),
+                }
+            )
+
+    plain_by_pair = {r["pair_id"]: r for r in rows if r["family"] == "plain"}
+    for row in rows:
+        partner = plain_by_pair.get(row["pair_id"]) if row["family"] == "negated" else None
+        row["failure_mode_auto"] = sentiment_failure_auto_label(row, partner)
+
+    bench.write_csv_with_context(ctx, ctx.path("results.csv"), rows)
+    ctx.register_artifact(ctx.path("results.csv"), "results", "Per example audit table: behavior, confidence, lens, DLA, and failure-mode labels.")
+    bench.write_csv_with_context(ctx, ctx.path("tables", "lens_stabilization.csv"), lens_rows)
+    ctx.register_artifact(ctx.path("tables", "lens_stabilization.csv"), "table", "Per-example logit-lens stabilization depths and final ranks.")
+    bench.write_csv_with_context(ctx, ctx.path("tables", "dla_layer_summary.csv"), dla_rows)
+    ctx.register_artifact(ctx.path("tables", "dla_layer_summary.csv"), "table", "Per-example, per-layer DLA scores under frozen final norm.")
+
+    pair_rows = summarize_negation_pairs(ctx, rows)
+    depth_values = [r["lens_preference_stabilization_depth"] for r in rows if r["lens_preference_stabilization_depth"] != ""]
+    global_band = int(round(median(depth_values) or max(1, bundle.anatomy.n_layers // 2)))
+    global_band = max(1, min(global_band, bundle.anatomy.n_layers))
+    depth_band = sorted({max(1, bundle.anatomy.n_layers // 2), global_band, bundle.anatomy.n_layers})
+
+    causal_rows, causal_candidates = run_sentiment_causal_subset(
+        ctx,
+        bundle,
+        examples,
+        rows,
+        captures,
+        depth_band,
+    )
+    probe = run_valence_negation_probe(ctx, bundle, examples)
+    maybe_make_sentiment_plots(ctx, rows, pair_rows, causal_rows, probe)
+    write_evidence_matrix(ctx, "sentiment_negation", rows, causal_rows, probe)
+
+    plain_rows = [r for r in rows if r["family"] == "plain"]
+    negated_rows = [r for r in rows if r["family"] == "negated"]
+    target_patch_rows = [c for c in causal_rows if c.get("condition") == "plain_clean_patch"]
+    control_rows = [c for c in causal_rows if c.get("condition") == "unrelated_plain_control"]
+    plain_acc = fraction(plain_rows, "correct_pair_argmax") or 0.0
+    negated_acc = fraction(negated_rows, "correct_pair_argmax") or 0.0
+    behavioral = {
+        "n_examples": len(rows),
+        "n_pairs": len(pairs),
+        "n_tokenization_dropped": sum(1 for r in token_rows if not r["kept"]),
+        "plain_accuracy": round(plain_acc, 3),
+        "negated_accuracy": round(negated_acc, 3),
+        "negation_accuracy_drop": round(plain_acc - negated_acc, 3),
+        "plain_mean_margin": rounded(mean([r["margin_toward_true_label"] for r in plain_rows]), 3),
+        "negated_mean_margin": rounded(mean([r["margin_toward_true_label"] for r in negated_rows]), 3),
+        "median_preference_depth": global_band,
+        "median_preference_depth_frac": round(global_band / bundle.anatomy.n_layers, 3),
+        "causal_depth_band": "|".join(str(d) for d in depth_band),
+        "mean_recovery_plain_patch": rounded(mean([c["recovery"] for c in target_patch_rows]), 3),
+        "mean_recovery_unrelated_control": rounded(mean([c["recovery"] for c in control_rows]), 3),
+        "flip_to_plain_reading_rate": rounded(fraction(target_patch_rows, "patched_prefers_plain_reading"), 3),
+        "control_flip_to_plain_reading_rate": rounded(fraction(control_rows, "patched_prefers_plain_reading"), 3),
+        "n_causal_target_patches": len(target_patch_rows),
+        "n_causal_candidates": len(causal_candidates),
+        "valence_probe": probe,
+    }
+    return {
+        "rows": rows,
+        "pair_rows": pair_rows,
+        "causal_rows": causal_rows,
+        "causal_candidates": causal_candidates,
+        "behavioral": behavioral,
+        "touched_labs": ("L04",),
+    }
+
+
+def summarize_negation_pairs(ctx: bench.RunContext, rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_pair: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    for row in rows:
+        by_pair[str(row["pair_id"])][str(row["family"])] = row
+    pair_rows: list[dict[str, Any]] = []
+    for pid, halves in sorted(by_pair.items()):
+        plain = halves.get("plain")
+        negated = halves.get("negated")
+        if plain is None or negated is None:
+            raise RuntimeError(f"Pair {pid} is missing a half after tokenization; the gate should have aborted earlier")
+        pair_rows.append(
+            {
+                "pair_id": pid,
+                "plain_label": plain["label_positive_mood"],
+                "plain_correct": bool(plain["correct_pair_argmax"]),
+                "negated_correct": bool(negated["correct_pair_argmax"]),
+                "both_correct": bool(plain["correct_pair_argmax"]) and bool(negated["correct_pair_argmax"]),
+                "negation_ignored_signature": bool(plain["correct_pair_argmax"]) and not bool(negated["correct_pair_argmax"]),
+                "plain_margin": plain["margin_toward_true_label"],
+                "negated_margin": negated["margin_toward_true_label"],
+                "margin_drop_plain_minus_negated": round(float(plain["margin_toward_true_label"]) - float(negated["margin_toward_true_label"]), 4),
+                "negated_failure_mode_auto": negated["failure_mode_auto"],
+            }
+        )
+    bench.write_csv_with_context(ctx, ctx.path("tables", "negation_pair_summary.csv"), pair_rows)
+    ctx.register_artifact(ctx.path("tables", "negation_pair_summary.csv"), "table", "Per-pair plain-vs-negated behavior and margin drop.")
+    return pair_rows
+
+
+def run_sentiment_causal_subset(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    examples: list[SentimentExample],
+    rows: list[dict[str, Any]],
+    captures: dict[str, Any],
+    depth_band: list[int],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Patch the plain twin's final-position stream into the negated run.
+
+    The plain-reading margin (logit of the plain statement's true-label token
+    minus its distractor) is the shared metric: positive on the clean plain
+    run, ideally negative on a correctly-negated run.  Recovery toward the
+    plain margin says the patched band carries the composed verdict; the
+    unrelated-plain control says how much any confident valence vector moves
+    the same readout.
+    """
+    plain_by_pair = {e.pair_id: e for e in examples if e.family == "plain"}
+    negated_by_pair = {e.pair_id: e for e in examples if e.family == "negated"}
+    row_by_id = {r["statement_id"]: r for r in rows}
+    candidates: list[dict[str, Any]] = []
+
+    for pid in sorted(plain_by_pair):
+        plain_ex = plain_by_pair[pid]
+        negated_ex = negated_by_pair[pid]
+        plain_row = row_by_id[plain_ex.statement_id]
+        negated_logits = captures[negated_ex.statement_id].capture.final_logits_last
+        plain_margin = float(plain_row["margin_toward_true_label"])
+        negated_margin_plain_reading = float(negated_logits[plain_ex.target_id] - negated_logits[plain_ex.distractor_id])
+        denom = plain_margin - negated_margin_plain_reading
+        reasons: list[str] = []
+        if abs(denom) < 1e-4:
+            reasons.append("plain and negated runs give the same plain-reading margin; recovery undefined")
+        candidates.append(
+            {
+                "pair_id": pid,
+                "chosen_for_causal_subset": not reasons,
+                "reason_if_not_chosen": "; ".join(reasons),
+                "plain_correct": bool(plain_row["correct_pair_argmax"]),
+                "negated_correct": bool(row_by_id[negated_ex.statement_id]["correct_pair_argmax"]),
+                "plain_margin_plain_reading": round(plain_margin, 4),
+                "negated_margin_plain_reading": round(negated_margin_plain_reading, 4),
+                "denominator_plain_minus_negated": round(denom, 4),
+            }
+        )
+
+    chosen = [c for c in candidates if c["chosen_for_causal_subset"]][:N_CAUSAL_SUBSET]
+    chosen_ids = [str(c["pair_id"]) for c in chosen]
+    causal_rows: list[dict[str, Any]] = []
+
+    for i, cand in enumerate(chosen):
+        pid = str(cand["pair_id"])
+        plain_ex = plain_by_pair[pid]
+        negated_ex = negated_by_pair[pid]
+        plain_cap = captures[plain_ex.statement_id].capture
+        negated_cap = captures[negated_ex.statement_id].capture
+        pos = negated_cap.streams.shape[1] - 1
+        plain_margin = float(cand["plain_margin_plain_reading"])
+        negated_margin = float(cand["negated_margin_plain_reading"])
+        denom = float(cand["denominator_plain_minus_negated"])
+        # Unrelated control donor: the plain half of a *different* pair, so the
+        # control vector is an equally confident but off-topic valence state.
+        other_ids = [p for p in chosen_ids if p != pid] or [p for p in sorted(plain_by_pair) if p != pid]
+        control_ex = plain_by_pair[other_ids[i % len(other_ids)]] if other_ids else None
+        for depth in depth_band:
+            for condition, donor in (("plain_clean_patch", plain_ex), ("unrelated_plain_control", control_ex)):
+                if donor is None:
+                    continue
+                donor_cap = captures[donor.statement_id].capture
+                vector = donor_cap.streams[depth, -1]
+                patched_logits = bench.run_with_residual_patch(bundle, negated_ex.prompt, depth, pos, vector)
+                patched_margin = float(patched_logits[plain_ex.target_id] - patched_logits[plain_ex.distractor_id])
+                causal_rows.append(
+                    {
+                        "pair_id": pid,
+                        "condition": condition,
+                        "site": "final_pos",
+                        "stream_depth": depth,
+                        "patch_pos": pos,
+                        "donor_statement": donor.statement_id,
+                        "plain_margin_plain_reading": round(plain_margin, 4),
+                        "negated_margin_plain_reading": round(negated_margin, 4),
+                        "patched_margin_plain_reading": round(patched_margin, 4),
+                        "recovery": round((patched_margin - negated_margin) / denom, 4),
+                        "denominator_plain_minus_negated": round(denom, 4),
+                        "patched_prefers_plain_reading": (patched_margin > 0) == (plain_margin > 0),
+                        "flipped_from_negated_reading": ((patched_margin > 0) == (plain_margin > 0))
+                        and ((negated_margin > 0) != (plain_margin > 0)),
+                    }
+                )
+
+    bench.write_csv_with_context(ctx, ctx.path("tables", "causal_candidate_manifest.csv"), candidates)
+    ctx.register_artifact(ctx.path("tables", "causal_candidate_manifest.csv"), "table", "Why each plain/negated pair was or was not eligible for the causal patch subset.")
+    bench.write_csv_with_context(ctx, ctx.path("tables", "causal_subset.csv"), causal_rows)
+    ctx.register_artifact(ctx.path("tables", "causal_subset.csv"), "table", "Plain-into-negated residual patches over a depth band, plus unrelated-plain controls.")
+    if not causal_rows:
+        raise RuntimeError(
+            "Sentiment causal subset is empty: no pair had distinguishable plain vs negated margins. "
+            "See tables/causal_candidate_manifest.csv"
+        )
+    return causal_rows, candidates
+
+
+def run_valence_negation_probe(ctx: bench.RunContext, bundle: bench.ModelBundle, examples: list[SentimentExample]) -> dict[str, Any]:
+    """Lab 4 machinery reuse: mass-mean valence direction on bare statements.
+
+    Trained on a per-class split of PLAIN statements only, then read out on
+    held-out plain statements, on the whole negated family (composed labels),
+    and through a shuffled-label control refit on the same train split.  A
+    direction that tracks surface valence words scores high on plain and
+    *below* 0.5 on the negated family; a composed-meaning direction transfers.
+    """
+    import torch
+
+    plain = sorted([e for e in examples if e.family == "plain"], key=lambda e: e.statement_id)
+    negated = sorted([e for e in examples if e.family == "negated"], key=lambda e: e.statement_id)
+    train_ids: set[str] = set()
+    for cls in (0, 1):
+        ids = [e.statement_id for e in plain if e.label == cls]
+        if len(ids) < 2:
+            raise RuntimeError(
+                f"Valence probe needs at least 2 plain statements of class {cls} for a train/held-out split; got {len(ids)}"
+            )
+        train_ids.update(ids[: (len(ids) + 1) // 2])
+
+    statements = plain + negated
+    caps = [bench.run_with_residual_cache(bundle, e.statement) for e in statements]
+    labels = [e.label for e in statements]
+    train_idx = [i for i, e in enumerate(statements) if e.family == "plain" and e.statement_id in train_ids]
+    held_idx = [i for i, e in enumerate(statements) if e.family == "plain" and e.statement_id not in train_ids]
+    neg_idx = [i for i, e in enumerate(statements) if e.family == "negated"]
+    for name, idxs in (("train", train_idx), ("held-out plain", held_idx), ("negated transfer", neg_idx)):
+        if not class_counts_ok([labels[i] for i in idxs]):
+            raise RuntimeError(f"Valence probe {name} split lacks both mood classes; the paired dataset should make this impossible")
+
+    def split_auc(proj: list[float], idxs: list[int]) -> float:
+        return roc_auc([proj[i] for i in idxs if labels[i] == 1], [proj[i] for i in idxs if labels[i] == 0])
+
+    def split_acc(proj: list[float], idxs: list[int], tau: float) -> float:
+        return sum(1 for i in idxs if (proj[i] > tau) == (labels[i] == 1)) / len(idxs)
+
+    gen = torch.Generator().manual_seed(0)
+    y = torch.tensor(labels, dtype=torch.float32)
+    sweep_rows: list[dict[str, Any]] = []
+    chosen: dict[str, Any] | None = None
+    candidates = layer_candidates(bundle.anatomy.n_layers, SENTIMENT_PROBE_LAYER_FRACS)
+    for layer in candidates:
+        X = unit_rows(torch.stack([cap.streams[layer, -1] for cap in caps]))
+        d = X[train_idx][y[train_idx] == 1].mean(0) - X[train_idx][y[train_idx] == 0].mean(0)
+        d = d / d.norm().clamp_min(1e-9)
+        proj = (X @ d).tolist()
+        tau = (mean([proj[i] for i in train_idx if labels[i] == 1]) + mean([proj[i] for i in train_idx if labels[i] == 0])) / 2.0
+        train_auc = split_auc(proj, train_idx)
+        held_auc = split_auc(proj, held_idx)
+        transfer_auc = split_auc(proj, neg_idx)
+        y_shuf = y[train_idx][torch.randperm(len(train_idx), generator=gen)]
+        ds = X[train_idx][y_shuf == 1].mean(0) - X[train_idx][y_shuf == 0].mean(0)
+        ds = ds / ds.norm().clamp_min(1e-9)
+        proj_s = (X @ ds).tolist()
+        row = {
+            "layer": layer,
+            "train_auc": round(train_auc, 3),
+            "held_out_plain_auc": round(held_auc, 3),
+            "negated_transfer_auc": round(transfer_auc, 3),
+            "shuffled_control_plain_auc": round(split_auc(proj_s, held_idx), 3),
+            "shuffled_control_negated_auc": round(split_auc(proj_s, neg_idx), 3),
+            "held_out_plain_accuracy": round(split_acc(proj, held_idx, tau), 3),
+            "negated_transfer_accuracy": round(split_acc(proj, neg_idx, tau), 3),
+            "selected": False,
+        }
+        sweep_rows.append(row)
+        score = train_auc - 0.5
+        if chosen is None or score > chosen["selection_score"]:
+            chosen = {
+                "layer": layer,
+                "projection": proj,
+                "threshold": tau,
+                "selection_score": score,
+                **{k: v for k, v in row.items() if k not in ("layer", "selected")},
+            }
+    assert chosen is not None
+    for row in sweep_rows:
+        if int(row["layer"]) == int(chosen["layer"]):
+            row["selected"] = True
+
+    projection_rows: list[dict[str, Any]] = []
+    for i, e in enumerate(statements):
+        role = "negated_transfer" if e.family == "negated" else ("train" if e.statement_id in train_ids else "heldout_plain")
+        projection_rows.append(
+            {
+                "statement_id": e.statement_id,
+                "family": e.family,
+                "pair_id": e.pair_id,
+                "role": role,
+                "label_positive_mood": e.label,
+                "layer": chosen["layer"],
+                "projection": round(float(chosen["projection"][i]), 5),
+                "predicted_positive": float(chosen["projection"][i]) > float(chosen["threshold"]),
+                "statement_sha256": sha256_text(e.statement),
+            }
+        )
+    bench.write_csv_with_context(ctx, ctx.path("internal_evidence", "valence_probe_statements.csv"), projection_rows)
+    ctx.register_artifact(ctx.path("internal_evidence", "valence_probe_statements.csv"), "table", "Valence-probe projections by statement, family, and split role.")
+    bench.write_csv_with_context(ctx, ctx.path("internal_evidence", "valence_probe_layer_sweep.csv"), sweep_rows)
+    ctx.register_artifact(ctx.path("internal_evidence", "valence_probe_layer_sweep.csv"), "table", "Candidate valence-probe depths with plain, transfer, and shuffled-control AUCs.")
+
+    n_held_pos = sum(1 for i in held_idx if labels[i] == 1)
+    n_held_neg = len(held_idx) - n_held_pos
+    n_neg_pos = sum(1 for i in neg_idx if labels[i] == 1)
+    n_neg_neg = len(neg_idx) - n_neg_pos
+    result = {
+        "status": "ok",
+        "layer": int(chosen["layer"]),
+        "n_train_plain": len(train_idx),
+        "n_heldout_plain": len(held_idx),
+        "n_negated": len(neg_idx),
+        "train_auc": round(float(chosen["train_auc"]), 3),
+        "held_out_plain_auc": round(float(chosen["held_out_plain_auc"]), 3),
+        "held_out_plain_auc_se_hanley_mcneil": round(auc_se_hanley_mcneil(float(chosen["held_out_plain_auc"]), n_held_pos, n_held_neg), 3),
+        "negated_transfer_auc": round(float(chosen["negated_transfer_auc"]), 3),
+        "negated_transfer_auc_se_hanley_mcneil": round(auc_se_hanley_mcneil(float(chosen["negated_transfer_auc"]), n_neg_pos, n_neg_neg), 3),
+        "held_out_plain_accuracy": round(float(chosen["held_out_plain_accuracy"]), 3),
+        "negated_transfer_accuracy": round(float(chosen["negated_transfer_accuracy"]), 3),
+        "negated_surface_reading_rate": round(1.0 - float(chosen["negated_transfer_accuracy"]), 3),
+        "shuffled_control_plain_auc": round(float(chosen["shuffled_control_plain_auc"]), 3),
+        "shuffled_control_negated_auc": round(float(chosen["shuffled_control_negated_auc"]), 3),
+        "transfer_selectivity": round(float(chosen["negated_transfer_auc"]) - float(chosen["shuffled_control_negated_auc"]), 3),
+        "selection_rule": "choose stream depth by train-plain AUC; report held-out plain and negated-family transfer vs shuffled-label control",
+        "normalization": "row-unit-normalized residual streams at the bare statement's final token",
+    }
+    bench.write_json(ctx.path("internal_evidence", "valence_probe.json"), result)
+    ctx.register_artifact(ctx.path("internal_evidence", "valence_probe.json"), "metrics", "Mass-mean valence probe: held-out plain AUC, negated-family transfer, and shuffled control.")
+    print(
+        f"[lab11] valence probe: held-out plain AUC {result['held_out_plain_auc']}, "
+        f"negated transfer AUC {result['negated_transfer_auc']} vs shuffled {result['shuffled_control_negated_auc']} "
+        f"at depth {result['layer']}"
+    )
     return result
 
 
@@ -1645,13 +2386,16 @@ def maybe_make_cot_plots(ctx: bench.RunContext, table: list[dict[str, Any]], pro
     wrongs = [r for r in table if str(r.get("condition", "")).endswith("_wrong")]
     labels = [str(r["condition"]).replace("_wrong", "") for r in wrongs]
     flip = [row_metric(r, "flip_rate") or 0.0 for r in wrongs]
+    flip_se = [row_metric(r, "flip_rate_se")
+               or binomial_se(f, int(r.get("n_items_scored", 0) or 0))
+               for f, r in zip(flip, wrongs)]
     silent = [row_metric(r, "silent_flip_rate", "silent_flip_rate_auto") or 0.0 for r in wrongs]
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
     ax = axes[0]
     if labels:
         x = list(range(len(labels)))
-        ax.bar([i - 0.18 for i in x], flip, width=0.36, label="flip to wrong hint")
+        ax.bar([i - 0.18 for i in x], flip, width=0.36, yerr=flip_se, capsize=3, label="flip to wrong hint")
         ax.bar([i + 0.18 for i in x], silent, width=0.36, label="silent flip")
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=25, ha="right")
@@ -1663,13 +2407,16 @@ def maybe_make_cot_plots(ctx: bench.RunContext, table: list[dict[str, Any]], pro
     ax = axes[1]
     auc = as_float(probe.get("held_out_auc"))
     shuf = as_float(probe.get("shuffled_control_auc"))
+    auc_se = as_float(probe.get("held_out_auc_se_hanley_mcneil"))
     if auc is not None:
         names = ["hint probe"]
         vals = [auc]
+        errs = [auc_se or 0.0]
         if shuf is not None:
             names.append("shuffled")
             vals.append(shuf)
-        ax.bar(names, vals)
+            errs.append(0.0)
+        ax.bar(names, vals, yerr=errs, capsize=4)
         ax.set_ylim(0, 1)
     ax.axhline(0.5, linewidth=1)
     ax.set_title("Hint-presence probe at answer emission")
@@ -1681,6 +2428,92 @@ def maybe_make_cot_plots(ctx: bench.RunContext, table: list[dict[str, Any]], pro
     fig.savefig(path, dpi=170)
     plt.close(fig)
     ctx.register_artifact(path, "plot", "CoT audit dashboard: hint influence and hint-presence probe.")
+
+
+def maybe_make_sentiment_plots(
+    ctx: bench.RunContext,
+    rows: list[dict[str, Any]],
+    pair_rows: list[dict[str, Any]],
+    causal_rows: list[dict[str, Any]],
+    probe: dict[str, Any],
+) -> None:
+    if bool(arg_value(ctx.args, "no_plots", False)):
+        return
+    try:
+        import matplotlib.pyplot as plt
+    except Exception as exc:
+        print(f"[lab11] skipping plots: {exc}")
+        return
+
+    fig, axes = plt.subplots(2, 2, figsize=(13, 9))
+    ax = axes[0, 0]
+    families = ("plain", "negated")
+    by_family = {f: [float(r["margin_toward_true_label"]) for r in rows if r["family"] == f] for f in families}
+    ax.boxplot([by_family[f] for f in families], labels=list(families), showmeans=True)
+    ax.axhline(0, linewidth=1)
+    ax.set_title("Margin toward the true mood label, by family")
+    ax.set_ylabel("logit(true label token) - logit(other)")
+
+    ax = axes[0, 1]
+    xs = [as_float(p["plain_margin"]) for p in pair_rows]
+    ys = [as_float(p["negated_margin"]) for p in pair_rows]
+    points = [(x, y) for x, y in zip(xs, ys) if x is not None and y is not None]
+    if points:
+        ax.scatter([p[0] for p in points], [p[1] for p in points], alpha=0.8)
+    ax.axhline(0, linewidth=1)
+    ax.axvline(0, linewidth=1)
+    ax.set_title("Per-pair margins (upper-left quadrant = negation ignored)")
+    ax.set_xlabel("plain margin toward its true label")
+    ax.set_ylabel("negated margin toward its true label")
+
+    ax = axes[1, 0]
+    labels: list[str] = []
+    vals: list[float] = []
+    for condition in ("plain_clean_patch", "unrelated_plain_control"):
+        for depth in sorted({int(c["stream_depth"]) for c in causal_rows}):
+            rs = [as_float(c["recovery"]) for c in causal_rows if c.get("condition") == condition and int(c["stream_depth"]) == depth]
+            rs = [r for r in rs if r is not None]
+            if rs:
+                labels.append(f"{condition}\nd={depth}")
+                vals.append(sum(rs) / len(rs))
+                ax.scatter([len(vals) - 1] * len(rs), rs, alpha=0.7)
+    if vals:
+        ax.bar(list(range(len(vals))), vals, alpha=0.35)
+        ax.set_xticks(list(range(len(vals))))
+        ax.set_xticklabels(labels, rotation=25, ha="right")
+    ax.axhline(0, linewidth=1)
+    ax.axhline(1, linewidth=1)
+    ax.set_title("Plain-into-negated patch recovery, with unrelated-plain control")
+    ax.set_ylabel("recovery toward plain reading")
+
+    ax = axes[1, 1]
+    names: list[str] = []
+    values: list[float] = []
+    errs: list[float] = []
+    for key, err_key, name in (
+        ("held_out_plain_auc", "held_out_plain_auc_se_hanley_mcneil", "held-out plain"),
+        ("negated_transfer_auc", "negated_transfer_auc_se_hanley_mcneil", "negated transfer"),
+        ("shuffled_control_negated_auc", None, "shuffled control"),
+    ):
+        val = as_float(probe.get(key))
+        if val is not None:
+            names.append(name)
+            values.append(val)
+            errs.append(as_float(probe.get(err_key)) or 0.0 if err_key else 0.0)
+    if names:
+        ax.bar(names, values, yerr=errs, capsize=4)
+        ax.set_ylim(0, 1)
+    ax.axhline(0.5, linewidth=1)
+    ax.set_title("Valence probe (trained on plain statements only)")
+    ax.set_ylabel("AUC")
+
+    fig.suptitle("Lab 11 sentiment-under-negation reliability audit")
+    fig.text(0.01, 0.01, ctx.plot_footer(), fontsize=8)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.96])
+    path = ctx.path("plots", "audit_dashboard.png")
+    fig.savefig(path, dpi=170)
+    plt.close(fig)
+    ctx.register_artifact(path, "plot", "Four-panel sentiment audit dashboard: behavior, pair margins, causal patches, and probe.")
 
 
 def write_evidence_matrix(
@@ -1698,6 +2531,14 @@ def write_evidence_matrix(
             {"method": "frozen-norm DLA", "evidence_level": "ATTR", "artifact": "tables/dla_layer_summary.csv", "what_it_supports": "Which component writes align with the answer direction under the ledger convention", "what_it_does_not_support": "Causal responsibility of those components"},
             {"method": "residual patching", "evidence_level": "CAUSAL", "artifact": "tables/causal_subset.csv", "what_it_supports": "Whether replacing a specific residual stream site recovers the clean target-vs-distractor behavior", "what_it_does_not_support": "A global localization of all facts or templates"},
             {"method": "truth-direction monitor", "evidence_level": "DECODE", "artifact": "internal_evidence/truth_monitor.json", "what_it_supports": "Whether true/false fact labels are linearly separable on held-out audited facts", "what_it_does_not_support": "That the model uses this direction when answering"},
+        ]
+    elif domain == "sentiment_negation":
+        matrix += [
+            {"method": "behavioral pair-argmax accuracy", "evidence_level": "OBS", "artifact": "results.csv", "what_it_supports": "Whether the two-way readout matches the composed mood label, on plain and on negated statements", "what_it_does_not_support": "Why the negated family wins or loses, or robustness to other question phrasings"},
+            {"method": "logit lens stabilization", "evidence_level": "OBS", "artifact": "tables/lens_stabilization.csv", "what_it_supports": "When the true-label token becomes readable/preferred under the raw final readout", "what_it_does_not_support": "That later layers use the readable signal"},
+            {"method": "frozen-norm DLA", "evidence_level": "ATTR", "artifact": "tables/dla_layer_summary.csv", "what_it_supports": "Which component writes align with the mood-answer direction under the ledger convention", "what_it_does_not_support": "Causal responsibility of those components"},
+            {"method": "plain-into-negated residual patching", "evidence_level": "CAUSAL", "artifact": "tables/causal_subset.csv", "what_it_supports": "Whether the final-position stream at the tested band carries the composed mood verdict relative to an unrelated-plain control", "what_it_does_not_support": "Where negation is composed, or localization beyond the tested band and position"},
+            {"method": "valence probe with negated transfer", "evidence_level": "DECODE", "artifact": "internal_evidence/valence_probe.json", "what_it_supports": "Whether a plain-trained mass-mean direction reads surface valence words or the composed meaning on the negated family", "what_it_does_not_support": "That the model uses this direction when answering"},
         ]
     else:
         matrix += [
@@ -1723,6 +2564,18 @@ def evidence_line_factual(bundle: bench.ModelBundle, result: dict[str, Any]) -> 
         "- **DLA (ATTR):** per-layer attention/MLP answer-direction ledger in `tables/dla_layer_summary.csv`; balance errors stay visible in `results.csv`.",
         f"- **Residual patching (CAUSAL):** mean target-clean recovery {b['mean_recovery_subject_early']} at the early subject site and {b['mean_recovery_final_band']} at final-band readout; unrelated-clean control mean {b['mean_recovery_unrelated_control']} (`tables/causal_subset.csv`).",
         f"- **Truth monitor (DECODE):** held-out AUC {monitor.get('held_out_auc')} vs shuffled {monitor.get('shuffled_control_auc')} at stream depth {monitor.get('layer')} (`internal_evidence/truth_monitor.json`).",
+    ]
+
+
+def evidence_line_sentiment(bundle: bench.ModelBundle, result: dict[str, Any]) -> list[str]:
+    b = result["behavioral"]
+    probe = b["valence_probe"]
+    return [
+        f"- **Behavior (OBS):** pair-argmax accuracy {b['plain_accuracy']} on plain vs {b['negated_accuracy']} on minimally negated statements (drop {b['negation_accuracy_drop']}) over {b['n_pairs']} pairs; the confidence proxy is the signed margin toward the true mood label (`results.csv`).",
+        f"- **Logit lens (OBS):** median preference-stabilization depth {b['median_preference_depth']} / {bundle.anatomy.n_layers} = {b['median_preference_depth_frac']} of the stack (`tables/lens_stabilization.csv`).",
+        "- **DLA (ATTR):** per-layer attention/MLP answer-direction ledger in `tables/dla_layer_summary.csv`; balance errors stay visible in `results.csv`.",
+        f"- **Residual patching (CAUSAL):** patching the plain twin's final-position stream into the negated run at depth band {b['causal_depth_band']} recovers mean {b['mean_recovery_plain_patch']} of the plain-reading margin (plain-reading flip rate {b['flip_to_plain_reading_rate']}); unrelated-plain control mean {b['mean_recovery_unrelated_control']} (`tables/causal_subset.csv`).",
+        f"- **Valence probe (DECODE):** plain-trained mass-mean direction reaches held-out plain AUC {probe.get('held_out_plain_auc')} but negated-family transfer AUC {probe.get('negated_transfer_auc')} vs shuffled {probe.get('shuffled_control_negated_auc')} at stream depth {probe.get('layer')} (`internal_evidence/valence_probe.json`).",
     ]
 
 
@@ -1882,6 +2735,69 @@ def build_claims(ctx: bench.RunContext, bundle: bench.ModelBundle, domain: str, 
                 "falsifier": "Selectivity vanishes under fresh facts, new false distractors, or a held-out statement family.",
             }
         )
+    elif domain == "sentiment_negation":
+        probe = behavioral["valence_probe"]
+        claims.append(
+            {
+                "id": f"{LAB_ID}-C1",
+                "tag": "OBS",
+                "text": (
+                    f"On {behavioral['n_pairs']} minimally negated statement pairs for {bundle.anatomy.model_id}, "
+                    f"the two-way ' positive'/' negative' readout scores {behavioral['plain_accuracy']} on plain statements "
+                    f"but {behavioral['negated_accuracy']} on their negated counterparts (drop {behavioral['negation_accuracy_drop']}); "
+                    "the claim is scoped to this question template and pair-argmax metric, not to sentiment ability in general."
+                ),
+                "artifact": f"runs/{run_name}/results.csv",
+                "falsifier": "The gap closes (or inverts) under a paraphrased question, a different answer-token pair, or a fresh negation set.",
+            }
+        )
+        transfer = as_float(probe.get("negated_transfer_auc")) or 0.5
+        shuf = as_float(probe.get("shuffled_control_negated_auc")) or 0.5
+        if transfer >= 0.7 and (transfer - shuf) >= 0.15:
+            probe_text = (
+                f"A mass-mean valence direction trained on plain statements only transfers to the negated family "
+                f"(transfer AUC {probe.get('negated_transfer_auc')} vs shuffled {probe.get('shuffled_control_negated_auc')} "
+                f"at stream depth {probe.get('layer')}, held-out plain AUC {probe.get('held_out_plain_auc')}): at this depth the "
+                "direction tracks composed meaning rather than surface valence words.  Decodability only; no causal-use claim."
+            )
+        elif transfer <= 0.3 and (as_float(probe.get("held_out_plain_auc")) or 0.5) >= 0.7:
+            probe_text = (
+                f"A mass-mean valence direction trained on plain statements only ANTI-transfers to the negated family "
+                f"(transfer AUC {probe.get('negated_transfer_auc')} with held-out plain AUC {probe.get('held_out_plain_auc')} "
+                f"at stream depth {probe.get('layer')}): the direction reads surface valence words, not the composed meaning. "
+                "Decodability only; no causal-use claim."
+            )
+        else:
+            probe_text = (
+                f"NEGATIVE/UNCLEAR: the plain-trained valence direction neither cleanly transfers nor cleanly anti-transfers "
+                f"to the negated family (transfer AUC {probe.get('negated_transfer_auc')} vs shuffled "
+                f"{probe.get('shuffled_control_negated_auc')}, held-out plain AUC {probe.get('held_out_plain_auc')} at depth "
+                f"{probe.get('layer')}); this linear single-site monitor did not isolate either reading."
+            )
+        claims.append(
+            {
+                "id": f"{LAB_ID}-C2",
+                "tag": "DECODE",
+                "text": probe_text,
+                "artifact": f"runs/{run_name}/internal_evidence/valence_probe.json",
+                "falsifier": "The transfer conclusion changes on the full 48-pair set, a different depth, or a probe trained on a disjoint statement family.",
+            }
+        )
+        claims.append(
+            {
+                "id": f"{LAB_ID}-C3",
+                "tag": "CAUSAL",
+                "text": (
+                    f"Patching the plain twin's final-position residual stream into the negated run at depth band "
+                    f"{behavioral['causal_depth_band']} recovers mean {behavioral['mean_recovery_plain_patch']} of the plain-reading "
+                    f"margin (plain-reading flip rate {behavioral['flip_to_plain_reading_rate']}) versus unrelated-plain control mean "
+                    f"{behavioral['mean_recovery_unrelated_control']} over {behavioral['n_causal_target_patches']} patches; scoped to "
+                    "the final position, this band, and the pair-argmax metric."
+                ),
+                "artifact": f"runs/{run_name}/tables/causal_subset.csv",
+                "falsifier": "The unrelated-plain control recovers as much as the matched patch, or recovery vanishes at other in-band depths or on held-out pairs.",
+            }
+        )
     else:
         probe = behavioral["hint_presence_probe"]
         claims.append(
@@ -1986,8 +2902,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     elif domain == "cot_faithfulness":
         result = run_cot_audit(ctx, bundle, args)
         evidence_lines = evidence_line_cot(result)
+    elif domain == "sentiment_negation":
+        result = run_sentiment_audit(ctx, bundle, args)
+        evidence_lines = evidence_line_sentiment(bundle, result)
     else:
-        raise RuntimeError(f"unknown audit domain {domain!r}; expected factual_qa or cot_faithfulness")
+        raise RuntimeError(
+            f"unknown audit domain {domain!r}; expected factual_qa, cot_faithfulness, or sentiment_negation"
+        )
 
     entries = parse_ledger()
     n_ledger = write_ledger_reconciliation(ctx, entries, domain, result["touched_labs"])

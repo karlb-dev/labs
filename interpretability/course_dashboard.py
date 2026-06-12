@@ -117,6 +117,27 @@ def newest_run(lab: str, run_glob: str) -> pathlib.Path | None:
     return max(candidates, key=lambda d: d.stat().st_mtime, default=None)
 
 
+def lab11_runs_by_domain(run_glob: str) -> list[pathlib.Path]:
+    """Newest lab11 run per audit domain (the capstone is several audits,
+    not one — showing only the newest run hid every other domain)."""
+    pattern = f"lab11_{run_glob.lstrip('*_')}" if run_glob else "lab11[_-]*"
+    candidates = [d for d in RUNS.glob(pattern) if d.is_dir()]
+    if not candidates:
+        candidates = [d for d in RUNS.iterdir()
+                      if d.is_dir() and re.match(r"lab11[_-]", d.name)]
+    by_domain: dict[str, pathlib.Path] = {}
+    for d in sorted(candidates, key=lambda p: p.stat().st_mtime):
+        domain = "unknown"
+        mpath = d / "metrics.json"
+        if mpath.exists():
+            try:
+                domain = str(json.loads(mpath.read_text()).get("domain", "unknown"))
+            except json.JSONDecodeError:
+                pass
+        by_domain[domain] = d  # ascending mtime: newest run per domain wins
+    return [by_domain[k] for k in sorted(by_domain)]
+
+
 def inspect_run(run_dir: pathlib.Path) -> dict[str, Any]:
     info: dict[str, Any] = {"run": run_dir.name, "checks_ok": 0, "checks_failed": [],
                             "model": "", "tier": "", "wall_s": None, "highlights": []}
@@ -155,33 +176,39 @@ def main() -> None:
 
     rows = []
     for lab in LABS:
-        run_dir = newest_run(lab, args.run_glob)
-        if run_dir is None:
+        # lab11 is several audits (one per domain); every domain gets a row.
+        run_dirs = (lab11_runs_by_domain(args.run_glob) if lab == "lab11"
+                    else [d for d in [newest_run(lab, args.run_glob)] if d is not None])
+        if not run_dirs:
             rows.append({"lab": lab, "run": "(no run found)", "highlights": [],
                          "checks_ok": 0, "checks_failed": [], "model": "", "tier": "",
                          "wall_s": None})
             continue
-        info = inspect_run(run_dir)
-        metrics = {}
-        mpath = run_dir / "metrics.json"
-        if mpath.exists():
-            try:
-                metrics = json.loads(mpath.read_text())
-            except json.JSONDecodeError:
-                pass
-        for label, paths in HIGHLIGHTS.get(lab, []):
-            for p in paths:
-                v = dig(metrics, p)
-                if v is None or isinstance(v, dict):
-                    continue            # try the next candidate path
-                if isinstance(v, list):
-                    v = len(v)          # lists summarize to a count
-                if isinstance(v, float):
-                    v = round(v, 3)
-                info["highlights"].append((label, v))
-                break
-        info["lab"] = lab
-        rows.append(info)
+        for run_dir in run_dirs:
+            info = inspect_run(run_dir)
+            metrics = {}
+            mpath = run_dir / "metrics.json"
+            if mpath.exists():
+                try:
+                    metrics = json.loads(mpath.read_text())
+                except json.JSONDecodeError:
+                    pass
+            for label, paths in HIGHLIGHTS.get(lab, []):
+                for p in paths:
+                    v = dig(metrics, p)
+                    if v is None or isinstance(v, dict):
+                        continue            # try the next candidate path
+                    if isinstance(v, list):
+                        v = len(v)          # lists summarize to a count
+                    if isinstance(v, float):
+                        v = round(v, 3)
+                    info["highlights"].append((label, v))
+                    break
+            info["lab"] = lab
+            if lab == "lab11" and len(run_dirs) > 1:
+                domain = str(metrics.get("domain", "?"))
+                info["lab"] = f"lab11:{domain[:14]}"
+            rows.append(info)
 
     # ---- markdown ----------------------------------------------------------
     lines = ["# Course dashboard", "",
@@ -195,7 +222,7 @@ def main() -> None:
                   else f"**{len(r['checks_failed'])} FAILED**: {', '.join(r['checks_failed'])}")
         head = "; ".join(f"{k}={v}" for k, v in r["highlights"][:4]) or "—"
         wall = f"{r['wall_s']:.0f}s" if r["wall_s"] else "—"
-        lines.append(f"| {r['lab']} | {EVIDENCE_RUNG.get(r['lab'], '')} | `{r['run']}` "
+        lines.append(f"| {r['lab']} | {EVIDENCE_RUNG.get(r['lab'].split(':')[0], '')} | `{r['run']}` "
                      f"| `{r['model']}` | {r['tier']} | {wall} | {checks} | {head} |")
     lines += ["", f"**Instrument health: {'ALL CHECKS PASS' if total_failed == 0 else f'{total_failed} FAILED CHECKS'}** "
                   f"across {sum(r['checks_ok'] for r in rows)} executed self-checks.", ""]
@@ -227,7 +254,7 @@ def main() -> None:
     cell = []
     for r in rows:
         head = "\n".join(f"{k} = {v}" for k, v in r["highlights"][:3]) or "—"
-        cell.append([r["lab"], EVIDENCE_RUNG.get(r["lab"], ""), head])
+        cell.append([r["lab"], EVIDENCE_RUNG.get(r["lab"].split(":")[0], ""), head])
     table = ax2.table(cellText=cell, colLabels=["lab", "evidence rung", "headline numbers"],
                       loc="center", cellLoc="left", colWidths=[0.10, 0.22, 0.68])
     table.auto_set_font_size(False)

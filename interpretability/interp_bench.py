@@ -194,8 +194,9 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "description": "Superposition, SAEs, and transcoders: find, label, and validate features.",
         # Back to BASE models (the pinned SAE/transcoder weights were trained on
         # base models): tier A = gpt2 + jbloom resid SAE + Dunefsky transcoder;
-        # tier B = Olmo-3-1025-7B base + decoderesearch SAE. The tier defaults
-        # already pick these, so no per-model override is needed.
+        # tier B = Olmo-3-1025-7B base + decoderesearch SAE. Tier C must stay
+        # on the 7B: the pinned SAE weights are model-locked (no public 32B SAE).
+        "model_tier_c": "allenai/Olmo-3-1025-7B",
     },
     "lab9": {
         "module": "labs.lab09_attribution_graphs",
@@ -238,7 +239,10 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # The default factual_qa domain runs on the tier's base model. The
         # cot_faithfulness flagship needs a think model: pass
         # --model allenai/Olmo-3-7B-Think (or Qwen/Qwen3-0.6B for smoke).
-        # --max-examples caps facts (factual_qa) or items (cot_faithfulness).
+        # Third domain: --audit-domain sentiment_negation runs on the tier's
+        # base model over paired data/affect_valence.csv + affect_negation.csv.
+        # --max-examples caps facts (factual_qa), items (cot_faithfulness),
+        # or source statement pairs (sentiment_negation).
         "max_examples_tier_a": "6",
     },
 }
@@ -249,11 +253,15 @@ CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
-# 24GB+ card); tier C is a comfortable 40-80GB card for full-precision runs.
+# 24GB+ card); tier C is the scale tier: Olmo-3 32B base in bf16 on one
+# 80GB card. The 32B side experiment (runs/SCALE_COMPARISON_32B.md) showed
+# the forward-pass labs run on it with zero code changes; per-lab overrides
+# below pin labs whose externally-trained artifacts (SAEs, transcoders) or
+# instruct/think variants are model-locked.
 TIER_DEFAULTS: dict[str, dict[str, Any]] = {
     "a": {"model": "gpt2", "dtype": "float32", "max_examples": 4},
     "b": {"model": "allenai/Olmo-3-1025-7B", "dtype": "bfloat16", "max_examples": 0},
-    "c": {"model": "allenai/Olmo-3-1025-7B", "dtype": "float32", "max_examples": 0},
+    "c": {"model": "allenai/Olmo-3-1125-32B", "dtype": "bfloat16", "max_examples": 0},
 }
 
 # Where decoder blocks and the final norm live for the model families the
@@ -3587,7 +3595,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="Lab 9: feature-node budget for the attribution graph "
                              "(0 = tier default; also the number of backward passes).")
     parser.add_argument("--audit-domain", default="factual_qa",
-                        choices=("factual_qa", "cot_faithfulness"),
+                        choices=("factual_qa", "cot_faithfulness", "sentiment_negation"),
                         help="Lab 11: which curated audit domain to run.")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")

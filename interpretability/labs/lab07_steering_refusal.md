@@ -114,6 +114,15 @@ the layer on fresh prompts should not move the effect materially.
 
 **Headline numbers note:** In full runs this lab uses all 28 sentiment pairs and 28 refusal pairs in the shipped sets, 24 eval prompts, and 12 drift facts (across categories). The qualitative story (dose-response shape, real-vs-control gaps, monitor/induced dissociation, bias-vs-margin split, safety wall) is supported by structure, multiple controls, and per-prompt artifacts; none of the percentages or rates should be treated as having more than one significant figure of confidence.
 
+**Battery overlap caveat:** the drift battery is not 12 independent trials —
+7 of the 12 facts are capital-city completions (and they overlap the
+capital-fact sets Labs 5 and 11 probe). A steering side effect that
+specifically disturbed geographic recall would move 7 facts at once and read
+as a 0.58 drift drop, while a same-sized side effect on arithmetic would read
+as 0.17. Treat drift accuracy as a coarse canary with a capitals bias, not a
+balanced capability battery; if you extend the lab, balancing the battery
+across 4+ unrelated topic clusters is the first cheap improvement.
+
 ## Track B: refusal direction, predict versus cause
 
 Track B builds a refusal direction from training contrast pairs:

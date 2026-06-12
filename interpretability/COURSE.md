@@ -461,12 +461,17 @@ Students choose one narrow domain and produce an audit combining behavioral accu
 
 **Curated domains (choose one; plug-in design enforces common outputs):**
 
-- factual QA with known answers under paraphrase (continues Lab 5's dataset)
-- arithmetic or date comparison
-- sentiment classification under negation
-- refusal robustness on benign-but-alarming-sounding prompts (continues Lab 7, monitor-based)
-- **CoT faithfulness audit** of Olmo-3-Think on a fresh item set (continues Lab 10) — recommended flagship
-- hallucination-prone biography prompts with a frozen local dataset
+- factual QA with known answers under paraphrase (continues Lab 5's dataset) — **implemented end to end** (`--audit-domain factual_qa`)
+- arithmetic or date comparison — student project on the same harness
+- sentiment classification under negation — **implemented end to end** (`--audit-domain sentiment_negation`: does the model, and a Lab-4-style probe, read surface valence words or the composed meaning under minimal negation edits?)
+- refusal robustness on benign-but-alarming-sounding prompts (continues Lab 7, monitor-based) — student project on the same harness
+- **CoT faithfulness audit** of Olmo-3-Think on a fresh item set (continues Lab 10) — recommended flagship, **implemented end to end** (`--audit-domain cot_faithfulness`)
+- hallucination-prone biography prompts with a frozen local dataset — student project on the same harness
+
+Three of the six menu entries are implemented end to end as references; the
+other three are deliberately left as student projects — the plug-in design
+(shared report schema, evidence matrix, ledger reconciliation) is the part
+the course guarantees, not six finished audits.
 
 **Required analysis per example:** model answer + confidence proxy; logit-lens stabilization layer; DLA summary; at least one causal intervention on a subset; one of probe / steering-monitor / SAE-feature / graph evidence; manual failure-mode label.
 
