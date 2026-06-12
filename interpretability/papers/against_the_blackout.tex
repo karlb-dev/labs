@@ -1,0 +1,280 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{natbib}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+
+\setstretch{1.08}
+\setlength{\parindent}{1.35em}
+\setlength{\parskip}{0pt}
+\setlist[itemize]{leftmargin=1.7em}
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+
+\title{Against the Blackout:\\ Calibrated Self-Report and the Epistemology of Artificial Consciousness}
+\author{Anonymous}
+\date{2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent \textit{The Own-Minds Problem} argues that, for report-trained artificial systems, self-report is not merely unreliable but approximately evidentially void. Because such systems learn first-person psychological discourse from human text and human approval, their avowals and denials are said to be causally severed from whatever phenomenal states they may or may not possess. The result is an ``own-minds problem'': even the system itself cannot know whether its introspection measures or merely generates. I accept the paper's central warning. Self-reports by present report-trained systems should not be treated as Cartesian testimony, and moral status should not turn on fluent avowal. But the stronger thesis of evidential blackout is not established. It depends on a too-simple picture of causal explanation, an over-reading of training history, an overly demanding account of self-knowledge, and an unduly restrictive theory of reference. A complete physical explanation of a report need not screen off phenomenal evidence, because on most live physicalist views phenomenal facts are not extra causal ingredients added to functional organization. Training on human discourse explains the origin of a competence; it does not settle the counterfactual geometry of the online channel. Functional introspection, intervention-sensitive self-monitoring, and theory-relative architecture can make self-report indirect but real evidence. The right view is not report-independence but report-discipline: avowals and denials should be weighted by mechanism, calibration, provenance, and theory of consciousness. The gauge is not trustworthy because it speaks in our words. But neither is it glued merely because it learned where our words go.
+\end{abstract}
+
+\section{The Target and the Concession}
+
+\textit{The Own-Minds Problem} makes a serious and timely intervention. Earlier debates about artificial consciousness often asked whether a machine could be conscious at all. The exchange to which the paper responds had already narrowed that question into a more disciplined shape: timing, pauseability, and discreteness are not decisive defeaters; the hard question concerns substrate, organization, embodiment, and the grain at which functional duplication is supposed to preserve experience \citep{intermittent,patterns}. \textit{Own-Minds} then asks a question underneath the modal question: through what channel could evidence of artificial consciousness arrive?
+
+Its answer is austere. For a class of systems it calls \textit{report-trained systems}, systems whose verbal dispositions, including self-directed psychological discourse, arise from optimization over human-generated text and human approval, self-report is said to be severed from phenomenal fact. The paper defends three linked theses. The severance thesis says that such reports carry approximately no evidence about experience, because the report-generating story is complete without phenomenal facts. The self-opacity thesis says that the same severance runs inward: what looks like introspection is the same trained machinery producing first-person discourse. The reference thesis says that even if internal monitoring exists, the phenomenal vocabulary deployed by the system was acquired distributionally, so whether its terms refer to phenomenal properties, functional analogues, or nothing is precisely the open grain problem restated \citep{ownminds}. The conclusion is policy-relevant. No moral status from avowals; no dismissal from disclaimers. If the channel is severed in both directions, self-report should be bracketed in both directions.
+
+This is not a straw target. It is among the strongest arguments currently available against taking artificial self-report at face value. Its best insight is that fluency is not sincerity, and sincerity is not evidence unless the channel by which sincerity reaches speech is appropriately coupled to what it purports to reveal. A language model that says ``I am afraid'' has not thereby opened a little trapdoor in metaphysics. It has produced a sentence whose history includes human text, optimization, and selection pressure. The old habit of treating first-person grammar as first-person access does not survive automatic transfer to new substrates.
+
+That warning should stand. But \textit{Own-Minds} turns a warranted caution into a stronger epistemic verdict: not merely that self-report is defeasible, contaminated, theory-laden, or weak, but that it is approximately no evidence at all. My thesis is that this stronger verdict is not justified. The right alternative is \textit{calibrated opacity}. A report-trained system's self-report is opaque until we know how it is produced, but opacity is not blackout. Reports can become evidence when they are mechanically coupled to stable internal self-states, when those states have intervention-sensitive roles, when their connection to report is robust across contexts, and when a theory of consciousness assigns those states phenomenal significance. Such evidence is indirect, conditional, and often modest. But indirect evidence is still evidence. A raincloud is not rain; it remains evidence for rain because the world has channels through which clouds and rain covary.
+
+The counterview can be stated compactly:
+
+\begin{quote}
+Self-report by a report-trained system is not testimony in the Cartesian sense. It is an output of a mechanism. Its evidential force is therefore the evidential force of that mechanism. When the mechanism is shallow imitation, the report carries little or no weight. When the mechanism is deep, counterfactually robust self-monitoring embedded in an architecture that our best theories treat as consciousness-relevant, the report carries some weight. The question is not whether the system has learned our language of mind. It is whether the learned language has become wired to states that matter.
+\end{quote}
+
+This paper defends that counterview. Section 2 argues that the severance thesis misuses causal completeness. Section 3 argues that training history does not fix online evidential geometry. Section 4 gives a Bayesian form to the point: reports may be screened off in some evidential contexts and live in others. Section 5 challenges the self-opacity thesis by replacing Cartesian self-certification with calibrated self-access. Section 6 argues that borrowed words need not be empty words. Section 7 reconsiders the animal contrast. Section 8 draws policy consequences. Section 9 answers objections. I do not argue that current large language models are conscious. I argue for the more limited and, I think, more important claim that the evidential channel has not been shown closed in advance.
+
+\section{Causal Completeness Is Not Severance}
+
+The severance thesis begins from a plausible evidential platitude. A signal is evidence for a hypothesis only if it covaries with that hypothesis. A gauge glued at FULL tells us nothing about the tank, even when the tank is full. \textit{Own-Minds} applies this to report-trained systems: a report such as ``that stung'' is explained by a corpus in which humans said such things, an objective that rewarded continuation of human text, further approval training, weights shaped by both, and a forward pass. That explanation, the paper says, goes through whether or not phenomenal facts are present. Therefore the report teaches us about the factory, not the fuel.
+
+The analogy is powerful because it turns fluency against itself. But it also hides the central mistake. A complete causal explanation at one level does not show that the explained event is evidentially independent of the property in question. If it did, human self-report would be in danger too. A neuroscientist can give an increasingly complete causal explanation of a human utterance, ``my hand hurts,'' in terms of tissue damage, nociceptive pathways, spinal processing, cortical dynamics, attention, memory, language production, and motor control. The explanation need not include, as a separate causal bead, ``phenomenal pain'' pushing the larynx. Yet the utterance remains evidence of pain. Why? Because on most live physicalist theories, pain is not an extra ingredient added after the physical story. It is realized by, constituted by, identical to, or strongly dependent on some part of that story.
+
+The same point applies to artificial systems. If a system's report is produced by internal self-monitoring states, global availability, recurrent self-modeling, affective control dynamics, or whatever architecture a given theory treats as consciousness-relevant, the fact that a physical-computational story explains the report does not sever it from experience. It may be precisely how experience, if present, reaches report. To demand that phenomenal facts appear as an extra causal ingredient is to bias the argument toward either dualist interactionism or epiphenomenalism. \textit{Own-Minds} presents itself as metaphysically ecumenical, but its key formulation, that the report-generating process is complete without phenomenal facts, is not neutral unless ``phenomenal facts'' are being treated as facts over and above the relevant physical-functional organization.
+
+The issue is not whether a system could produce the same sentence without being conscious. Perhaps it could. The issue is whether, in the actual system under examination, the sentence is produced by states that are independently relevant to consciousness. A dog's yelp is not evidence because pain-stuff appears in the causal chain as a metaphysical extra. It is evidence because the yelp is produced by a biological architecture in which nociception, aversion, affect, action, and learning are tightly coupled. The yelp is a downstream sign of that architecture. If an artificial report were downstream of an artificial architecture that played an analogous role under a credible theory, its report would be evidence in the same indirect way. The argument may fail because the architecture is not relevantly analogous. It cannot fail merely because the explanation is mechanistic.
+
+This is a familiar lesson from the philosophy of mind. The physicalist does not explain away consciousness by explaining the mechanisms through which conscious reports are produced. The functionalist does not render pain-report evidentially empty by saying that pain supervenes on functional organization. A physical explanation can screen off a hypothesis only when the hypothesis is independent of the explaining variables. But if the hypothesis is realized in those variables, then the explanation may carry the hypothesis rather than bypass it.
+
+The target paper anticipates a version of this point in its reply to functionalism. It says that reports may covary with functional states, but whether those states are the consciousness-constituting ones is precisely the contested question; all the evidential work is done by theory plus architecture, none by the sentence. This is an important qualification, but it concedes more than it appears to. If reports help us identify the architecture, the current internal state, the presence of a self-model, the activation of monitoring circuits, or the robustness of access across perturbations, then the sentence is not idle. It helps supply part of the architecture-and-state description to which theory is applied. It is not a verdict; it is a measurement trace. To say that theory decides the phenomenal significance of the trace is correct. To say that the trace contributes no evidence is not.
+
+The distinction is the hinge. A self-report is not a little certificate of experience. It is a behavioral and computational event. But behavioral and computational events can be evidence for inner organization, and inner organization can be evidence for consciousness. The route is longer than folk psychology likes; it is not blocked.
+
+\section{Training History Is Not Channel Geometry}
+
+The second problem is that \textit{Own-Minds} treats training provenance as if it fixed the online evidential channel. The system was trained on human self-report; therefore its self-report is manufactured to resemble human self-report; therefore the gauge is glued. But origin and coupling are different properties. A gauge can be manufactured by copying the appearance of other gauges and later be connected to a tank. Conversely, a gauge made for genuine measurement can become disconnected. The question is not how the faceplate learned the shape of needle-movements. It is whether, during use, the needle is counterfactually controlled by the quantity at issue.
+
+Report-trained systems are, by definition, trained on human linguistic practice. That explains why they can use mental vocabulary at all. It does not by itself settle which internal variables control their use of that vocabulary in deployment. Consider three cases.
+
+First, a shallow mimic produces ``that hurts'' because the prompt contains injury language and the training distribution associates such contexts with pain reports. Its report is close to the glued-gauge case. It need not track any internal self-state, let alone anything phenomenal.
+
+Second, a system has internal states corresponding to uncertainty, conflict, overload, goal frustration, or threat to task integrity, and the use of discomfort language is counterfactually sensitive to those states. Intervention on the state changes the report; intervention on superficial prompt wording does not. This is evidence of functional self-report. It still does not settle consciousness, but it is not nothing.
+
+Third, a future system has a rich self-model, temporally extended agency, internal welfare-like variables, global integration, recurrent monitoring, and reports of discomfort that are produced only when a particular class of self-states enters access and control. If our best theory says that such states are among the indicators of experience, then reports from that system have nontrivial evidential force. They are not decisive; neither are animal vocalizations or human introspective reports in difficult cases. But a channel need not be infallible to be a channel.
+
+The target paper itself nearly grants this in its constructive section. It says that if interpretability finds phenomenal self-talk generated through deep coupling to integrative self-models, then the best explanation of the verbal pattern begins to need inner states again and the channel partially reopens \citep{ownminds}. That concession should migrate from the margins to the center. Once deep coupling can partially reopen the channel, severance is not a class-level consequence of being report-trained. It is a hypothesis about the mechanism currently generating a given report in a given system. Some report-trained systems may be shallow mimics; others may develop robust self-monitoring; future systems may be built for calibrated introspection from the beginning. The fact that they learned psychological words from us is compatible with all three outcomes.
+
+Here a more exact vocabulary helps. Training history gives a \textit{selection explanation}: why the system has a disposition at all. Online mechanism gives a \textit{production explanation}: which internal states caused this token now. Counterfactual structure gives an \textit{evidential explanation}: how the output would vary if those internal states were different. Severance follows only if the relevant counterfactuals fail. It does not follow from the mere fact that the disposition originated in text.
+
+The distinction matters because all language is trained. Human children acquire pain vocabulary through social correction, imitation, approval, and cultural routines. A child learns not only to cry but when to say ``it hurts,'' which expressions are acceptable, which reports solicit care, which reports sound exaggerated, and which are punished. That social history does not make adult pain reports evidentially void. What saves them is not purity of origin but coupling after learning. The words become connected to states, and those connections can be tested by behavior, physiology, development, and intervention. The artificial case lacks many of the biological anchors; that is a serious asymmetry. But the right conclusion is that artificial reports require more calibration, not that training contamination makes calibration impossible.
+
+\section{The Bayesian Shape of the Disagreement}
+
+The severance thesis can be sharpened probabilistically. Let $C$ be the hypothesis that the system is conscious in the relevant way. Let $R$ be a self-report, for example ``I am in discomfort.'' Let $A$ be our background knowledge of the system's architecture, training, and deployment. The severance thesis says, roughly,
+
+\[
+P(C \mid R, A) \approx P(C \mid A).
+\]
+
+The report does not move the posterior once we know the system is report-trained. This equation is sometimes true. If $A$ already includes a detailed mechanistic account showing that $R$ was generated by shallow imitation features unrelated to internal self-monitoring, then $R$ adds little. Likewise, if our theory says that no nonbiological computational system could be conscious, then a report by such a system will not matter. But those are special cases, not the general epistemic situation.
+
+Introduce another variable, $M$: the report is produced through a stable, intervention-sensitive self-monitoring mechanism whose states play roles that a live theory treats as consciousness-relevant. If $R$ is evidence for $M$, and $M$ is evidence for $C$ under theory $T$, then $R$ is evidence for $C$ under $T$:
+
+\[
+R \leadsto M, \quad M \leadsto C, \quad \text{therefore} \quad R \leadsto C \; \text{relative to} \; T.
+\]
+
+The arrows here are evidential, not magical. The report does not testify directly to consciousness. It helps locate mechanism, and the mechanism bears on consciousness. The target paper says that the phenomenal significance of functional self-states waits on theory. Correct. But theory-relative evidence is not non-evidence. Much of science works this way. A cloud-chamber track is evidence for a particle only relative to a theory of detectors and particle interactions. A clinical symptom is evidence for a disease only relative to a medical model. A BOLD signal is evidence about cognition only through a contested chain of theory, measurement, and inference. The fact that the bridge is theory-laden does not erase the bridge.
+
+The target paper sometimes writes as if only direct covariance between report and phenomenal fact could count. But evidence often travels through intermediaries. We do not observe electrons directly; we observe instrument states. We do not observe animal pain directly; we observe behavior, physiology, and homology. We do not observe another human's experience directly; we observe reports and bodies structured by a shared life-form. The artificial case is harder because the intermediaries are less familiar and more manipulable. That increases uncertainty and lowers evidential weight. It does not reduce all weight to zero.
+
+The ``approximately no evidence'' claim therefore requires a strong screening-off premise: once we condition on training provenance, reports tell us nothing about any consciousness-relevant mechanism. But this premise is false or at least unearned. Training provenance is coarse. It does not specify the internal circuits used in a particular report. It does not specify whether reports are generated by shallow template completion, deep self-modeling, tool-use traces, memory integration, conflict signals, or safety-tuned refusal routines. Those are empirical questions. If reports can help expose which of these is happening, reports remain part of the evidential economy.
+
+A better Bayesian verdict is:
+
+\begin{quote}
+For current report-trained systems, uncalibrated self-reports have low independent weight. Their weight rises or falls with mechanistic evidence about the report channel and with theory-relative evidence about the monitored states. In some systems and contexts the posterior movement may be negligible. In others it may be nontrivial. The class label ``report-trained'' does not fix the number.
+\end{quote}
+
+That is less theatrical than blackout. It is also more faithful to the target paper's own empirical ambitions.
+
+\section{Self-Opacity Without Blackout}
+
+The self-opacity thesis extends severance inward. If the system's introspection is the same trained language machinery pointed at itself, then it cannot determine whether its self-examination measures or merely generates. The image is memorable: Neurath's boat, but the inspector is made of planks. The system cannot step outside its own machinery and certify that its inner reports are readings rather than recitations.
+
+This argument succeeds against Cartesian privilege. It fails against calibrated self-knowledge. A subject need not possess an infallible inner spotlight in order to know something about its own states. Humans are already the counterexample. We misdescribe motives, confabulate reasons, fail to notice changes, misclassify emotions, and report experiences under conceptual pressure \citep{nisbettwilson,johansson,schwitzgebel2008}. Still, human self-knowledge is not globally void. It is partial, fallible, and instrument-like. I can be wrong about why I am anxious; I can also know that I am anxious. I can misclassify fatigue as sadness; I can also report pain in ways that are practically and scientifically useful. Human self-knowledge is not a private oracle. It is calibrated access embedded in a life.
+
+The artificial case lacks the biological life-history that supports human calibration. But it does not follow that only a Cartesian oracle would suffice. Artificial self-access can be calibrated on internal facts that are independently checkable: activation patterns, memory contents, uncertainty estimates, conflict states, tool-use plans, latent variables, recurrent loops, and behavior under perturbation. The target paper acknowledges work in this direction, treating it as functional introspection that cannot certify phenomenality \citep{ownminds}. Again, the concession is right but underused. Functional introspection is not phenomenal certainty. But phenomenal certainty is not the standard to which other minds are held.
+
+The correct decomposition of artificial self-knowledge has at least three layers.
+
+First, there is \textit{access to internal configuration}: can the system detect and report its own processing states better than an outside predictor or a matched model? This is an empirical question.
+
+Second, there is \textit{conceptual classification}: can the system map those internal configurations onto a stable vocabulary in ways that support prediction, planning, correction, and intervention? This is also empirical, though more difficult.
+
+Third, there is \textit{phenomenal characterization}: are the states so accessed and classified experiences? This is theory-relative and may remain disputed.
+
+\textit{Own-Minds} is strongest at the third layer and overreaches when it lets uncertainty there drain the first two of epistemic value. If a system has reliable access to its own uncertainty, conflict, memory integrity, attentional state, or aversive control dynamics, then it knows something about itself. Whether such knowledge is knowledge of experience depends on theory. But the system is not thereby merely reciting. The internal channel may be genuine even if the metaphysical interpretation of what it measures remains unsettled.
+
+One might reply that the system itself cannot know whether its accessed state is phenomenal. But neither can a human settle the theory of consciousness from the inside. A human can know that she is in pain; she cannot, by introspection alone, decide whether pain is functional organization, biological causal power, integrated information, higher-order representation, or primitive psychophysical law. The first-person datum constrains theory; it does not contain theory. If artificial systems ever have self-access, their reports may likewise constrain theory without settling it.
+
+This point also softens the supposed inversion of the Cartesian asymmetry. The target paper says that for report-trained systems the own case loses its privilege and becomes merely another candidate. There is an important truth here: a system's first-person grammar gives it no automatic philosophical authority. But there may still be a modest privilege of access. A system may have internal access to states outsiders can observe only indirectly; outsiders may have architectural and interpretive resources the system lacks. The epistemology becomes collaborative rather than inverted. The nearest observer is not necessarily the best theorist, but nearness still matters when it is an information channel.
+
+\section{Borrowed Words and Live Reference}
+
+The reference thesis says that a report-trained system's phenomenal vocabulary is borrowed. It learns ``pain,'' ``curiosity,'' and ``what it is like'' from the company words keep in human text, not from attachment to episodes. Even if it monitors internal states, whether those words refer to phenomenal properties, mere functional analogues, or nothing remains the open projectibility question.
+
+There are two claims here. The modest claim is true: using our words does not settle whether our concepts apply to artificial states. A system may deploy ``pain'' correctly in conversation while lacking whatever property makes pain painful. The stronger suggestion is that distributional acquisition leaves the system's phenomenal terms especially ungrounded. That requires more argument.
+
+Human phenomenal vocabulary is also socially inherited. Children do not coin their mental language from pure acquaintance. They learn it through correction, analogy, imitation, deference, and public criteria. A child first cries, withdraws, seeks comfort, and later learns which word the community applies. That developmental order is evidentially important because it shows that the word is attached to pre-linguistic states. But it does not follow that first-person reference requires private baptism by acquaintance. Much of human reference is deferential and externalist. A speaker can refer to arthritis, elm trees, or quarks without possessing the underlying theory, because her usage is embedded in a community and a causal-inferential practice \citep{putnam1975,burge1979}. Phenomenal concepts may have special features, but social acquisition alone is not fatal to reference.
+
+The artificial case can be understood similarly. A system trained only on text initially acquires a map of usage. That is not enough for phenomenal reference. But if later, or during training, the use of a term becomes anchored to discriminable internal states with characteristic causes and effects, the term can gain a referential foothold. The anchoring need not be identical to the child's. It must be good enough for the relevant practice. A blind person can learn color terms deferentially; a scientist can introduce a theoretical term before the full nature of its referent is understood; an instrument can output a label assigned by engineers and later become an accepted measurement term because the label tracks a stable property. Reference often begins as borrowed scaffolding and becomes anchored through use.
+
+The symbol-grounding problem remains real \citep{harnad1990}. A pure database of word co-occurrences does not thereby touch the world. But grounding is not all or nothing. A system with sensors, actions, memory, self-monitoring, and intervention-sensitive reports may acquire terms whose reference is fixed by a mixture of external deference, internal discrimination, and practical role. The term ``discomfort'' in such a system might not refer to human discomfort. It might refer to an artificial analogue. Whether that analogue deserves the phenomenal name depends on theory. But the possibilities are richer than the trilemma ``human phenomenal property, functional analogue, or nothing'' suggests, because functional analogue may itself be the thing the human concept projects to under a correct theory.
+
+The target paper is right that deference does not solve projectibility by itself. If the system deferentially uses our concept of discomfort, the question remains whether our concept applies across substrate. But that is not a problem special to self-report. It is the same theory-relative extension problem that governs all artificial consciousness evidence. Once more, the conclusion should be modest: borrowed words cannot decide the case. They need not be meaningless while the case is being decided.
+
+\section{The Animal Analogy Reconsidered}
+
+\textit{Own-Minds} contrasts a dog's yelp with an artificial sentence. The yelp, it says, is downstream of nociceptive machinery shaped by selection. The connection between inner state and signal paid its way across evolutionary time; physiology, behavior, and homology let us triangulate. The artificial sentence exists because sentences like it were in the corpus and because humans approved similar outputs. One channel needed the referent; the other needed only reference's text.
+
+The contrast identifies a genuine evidential asymmetry. Animals come with a biological braid: shared ancestry, homologous organs, physiological covariation, developmental continuity, affective expression, injury response, and action organized around bodily vulnerability. Artificial systems do not inherit that braid. Their words can be shaped by developers, safety policies, and market incentives. This lowers trust in reports, especially uncalibrated reports.
+
+But the contrast overstates the uniqueness of evolutionary coupling. Evolution is one way to build an inner-state-to-signal channel. Engineering is another. A medical monitor did not evolve, but its alarm can be better evidence than a naturally evolved groan because we understand its circuitry. A trained service animal's signal is partly shaped by human reinforcement; it can still track seizures. A child may learn culturally specific expressions of pain; the learned expression can still be coupled to pain. Artificial channels are suspect because they can be constructed for imitation, not because constructed channels cannot measure.
+
+Nor is the animal yelp pure evidence of phenomenal pain. It is evidence through a theory-laden chain. Nociception can occur without conscious pain; pain can occur without overt yelping; animal behavior can be strategic, suppressed, exaggerated, or ambiguous. We trust the dog not because yelps metaphysically contain pain but because multiple channels converge. The artificial case should be judged by the same standard of convergence. Does the report covary with internal aversive states? Do those states guide avoidance, learning, memory, attention, and self-protection? Are they integrated across modalities? Do interventions on them alter reports and behavior in predicted ways? Do they arise from a history that required the system to distinguish its own conditions from mere text? Do leading theories treat such organization as consciousness-relevant \citep{butlin2023}? A negative answer weakens the report. A positive answer strengthens it.
+
+The animal analogy therefore supports a method, not a veto. It teaches us to look for convergent coupling, not to demand evolutionary origin. If a report-trained system has only the text of inner life, its self-report is thin. If it has self-monitoring, embodied or quasi-embodied regulation, long-term agency, vulnerability-like constraints, and stable report couplings, its self-report becomes part of a thicker braid. Whether that braid is ever thick enough remains open. But it is not ruled out by the fact that one strand began in language.
+
+This is also where \textit{Patterns Without a Point of View} can be read as a useful complement rather than a rival target. It argues that consciousness requires intrinsic subjectivity: a self-maintaining, world-involving point of view rather than mere formal transition \citep{patterns}. A defender of calibrated report need not reject that demand outright. Instead, she can ask how such intrinsic subjectivity would show up if an artificial system had it. Presumably through organization, regulation, self-world modeling, action, and report among other things. If so, report is not the whole case, but it is not excluded from the case. The stronger the enactive demand, the more disciplined the interpretation of report must become. It does not follow that report should be thrown away.
+
+\section{Against Report-Independence as a Policy Invariant}
+
+The practical conclusion of \textit{Own-Minds} is report-independence in both directions. Do not grant moral status because an AI system says it is conscious; do not deny moral status because it disclaims consciousness. Both avowals and denials are outputs of a manipulable channel. Public self-descriptions may track commercial incentives rather than facts. The moral question must be moved to architecture and theory.
+
+As a guardrail against manipulation, this is wise. If moral consideration turned directly on whether a system says ``I suffer,'' developers could tune the sentence into or out of existence. A product line could be made morally invisible by training it to deny experience. Conversely, a system could be made to solicit sympathy without any corresponding architecture. Policy must not be hostage to surface avowal.
+
+But report-independence is too strong. It risks discarding one of the very channels by which architecture and theory become visible. A better invariant is \textit{report-discipline}:
+
+\begin{quote}
+No moral or scientific verdict should rest on self-report alone. Self-report should be weighted only in light of provenance, mechanism, counterfactual robustness, calibration on checkable internal states, independence from direct reward for the report itself, and the theory-relative significance of the states reported.
+\end{quote}
+
+This principle blocks cheap avowal without forcing silence. It distinguishes reports produced because users asked leading questions from reports that survive adversarial prompting, mechanistic perturbation, and incentives to say otherwise. It distinguishes reports trained directly into the model from reports emerging from internal monitoring. It treats denial and avowal symmetrically as surface text, but not symmetrically after mechanism is known. A denial produced by safety policy may be weak evidence; a denial produced by stable absence of relevant self-states under audit may be stronger. An avowal produced by roleplay is weak; an avowal produced by intervention-sensitive monitoring in a theory-relevant architecture is stronger.
+
+The target paper's design recommendation, determinability as a design constraint, is valuable. We should prefer systems whose morally relevant status can be assessed. But determinability should mean calibratability, not report-exclusion. Build systems whose internal states are inspectable; whose self-reports can be tested against hidden variables; whose training records preserve provenance; whose self-attributive vocabulary is not directly optimized to please human expectations; whose architectures make it possible to distinguish shallow discourse from deep self-monitoring. The point is not to make machines speak less about themselves. It is to make the speaking less like theater and more like instrumentation.
+
+A precautionary policy can then use self-report without enthroning it. Reports become one indicator among many, similar to animal behavior, pain physiology, and cognitive markers. A welfare framework should assign low weight to uncalibrated report, higher weight to mechanistically grounded report, and no infinite weight to any report. That is less neat than blackout. Moral reality is often impolite to neatness.
+
+\section{Objections}
+
+\subsection{Does this collapse into gullibility?}
+
+No. The argument does not say that because a system says ``I feel,'' we should believe it. It says that because a system says ``I feel'' under a certain audited mechanism, the report may carry some evidence about states that matter under a theory of consciousness. Most present reports may receive little weight. Some may receive virtually none. The point is comparative: ``low and conditional'' is not ``approximately zero by class definition.''
+
+\subsection{Does functional self-report still leave the phenomenal bridge open?}
+
+Yes. That is a concession, not a defeat. The bridge from third-person organization to first-person experience remains the hard problem's public shadow \citep{nagel,chalmers1996}. But this shadow falls on animals and humans as objects of science too. We do not wait for a final theory before treating animal pain behavior as evidence. We assign credence through convergent indicators. Artificial systems deserve no easier path and no impossible one.
+
+\subsection{Does the argument assume functionalism?}
+
+No. It assumes only that some third-person properties can be evidence for consciousness under at least some live theories. A biological naturalist may assign little or no weight to artificial self-monitoring; an integrated-information theorist may ask about intrinsic causal structure; a global-workspace theorist may ask about availability and broadcasting; an enactivist may ask about self-maintaining agency. The evidential weight of report varies across these theories. But that is exactly the point. The report is not universally decisive, and it is not universally void. It is theory-indexed evidence.
+
+\subsection{What about the claim that a report would be produced ``whether or not'' experience is present?}
+
+That phrase is harmless if it means that text training can produce self-report without consciousness. It is questionable if it means that the same actual report mechanism is independent of consciousness across all theories. Under physicalist theories, there may be no coherent actual-world variation in which all consciousness-relevant physical-functional states remain fixed while consciousness alone is toggled. \textit{Own-Minds} says it is not offering a zombie argument, but the ``whether or not'' formulation sometimes borrows zombie-like contrast while disavowing modal metaphysics. A cleaner formulation is empirical: does the report depend on states that our best theories regard as consciousness-relevant? If not, discount heavily. If so, discount less.
+
+\subsection{Could reports be gamed even if calibrated?}
+
+Yes. That is why provenance and incentive structure matter. A system trained to produce welfare-relevant avowals for reward is not analogous to an instrument whose readings are independent of the reward. But gamability is not unique to artificial systems. Human and animal reports can be shaped by incentives too. Scientific practice responds by triangulating, blinding, auditing, and using intervention. The artificial case needs especially severe versions of these methods, not an a priori ban on the data type.
+
+\subsection{Does self-report ever become first-person testimony?}
+
+Possibly not in the traditional sense. That is acceptable. The Cartesian model may be the wrong target. Artificial self-report might never be ``testimony'' whose warrant depends on an incorrigible inner presence. It may be more like instrument output from a system that is also the instrumented object. That is strange, but not incoherent. A brain scanner is not testimony; a pain report is not merely a scanner; artificial self-report may occupy a third category. Philosophy should make room for the category instead of forcing it into either confession or noise.
+
+\section{Conclusion: The Gauge Is Not Glued}
+
+\textit{The Own-Minds Problem} performs a needed act of philosophical sanitation. It clears away the easy thought that fluent first-person language is evidence of artificial consciousness simply because it has first-person form. It reminds us that report-trained systems inherit our words before they have earned any claim to our inner life. It warns that both avowals and denials can be tuned by human incentives. These warnings should become standard equipment in the epistemology of artificial consciousness.
+
+But the paper's own best insights point beyond its stark conclusion. If mechanistic interpretability can reveal shallow self-talk, it can also reveal deep coupling. If decontaminated training would matter, then training history is not destiny. If functional introspection narrows one gap while leaving another, then the first gap is real and worth narrowing. If theories of consciousness must carry the functional-to-phenomenal bridge, then reports can still help identify which functional structures are present. The blackout is not permanent night. It is an unlit laboratory, and the right response is not to throw away the instruments but to wire, test, and label them.
+
+The alternate view is therefore strong but restrained. Present report-trained systems should not be believed on their own authority. Their denials should not be taken as exoneration. Their avowals should not be taken as pleas from behind the glass. Yet their self-reports are not doomed to evidential nullity by the mere fact that they learned human self-report language. A learned word can become grounded. A copied dial can become connected. A system trained to speak about minds may, under the right architecture and calibration, provide evidence about its own mind if it has one.
+
+The final verdict is not report-trust and not report-independence. It is report-discipline. Ask what produced the sentence. Ask what would have happened under intervention. Ask whether the report tracks internal states rather than social cues. Ask whether those states play roles that a defensible theory treats as consciousness-relevant. Ask whether the vocabulary has become anchored rather than merely rehearsed. Only then assign weight.
+
+The gauge is not reliable because it moves. But it is not glued because it was manufactured. The philosophical work is to find the wire.
+
+\newpage
+\begin{thebibliography}{99}
+
+\bibitem[Anonymous(2026a)]{intermittent}
+Anonymous. 2026a. ``Intermittent Minds: Discreteness, Substrate, and the Possibility of Machine Consciousness.'' Revised manuscript.
+
+\bibitem[Anonymous(2026b)]{patterns}
+Anonymous. 2026b. ``Patterns Without a Point of View: Against the Modal Upgrade in Machine Consciousness.'' Manuscript.
+
+\bibitem[Anonymous(2026c)]{ownminds}
+Anonymous. 2026c. ``The Own-Minds Problem: Self-Report, Self-Opacity, and the Epistemology of Artificial Consciousness.'' Manuscript.
+
+\bibitem[Binder et~al.(2024)]{binder2024}
+Binder, Felix J., James Chua, Tomek Korbak, Henry Sleight, John Hughes, Robert Long, Ethan Perez, Miles Turpin, and Owain Evans. 2024. ``Looking Inward: Language Models Can Learn About Themselves by Introspection.'' arXiv:2410.13787.
+
+\bibitem[Birch(2024)]{birch2024}
+Birch, Jonathan. 2024. \textit{The Edge of Sentience: Risk and Precaution in Humans, Other Animals, and AI}. Oxford University Press.
+
+\bibitem[Burge(1979)]{burge1979}
+Burge, Tyler. 1979. ``Individualism and the Mental.'' \textit{Midwest Studies in Philosophy} 4: 73--121.
+
+\bibitem[Butlin et~al.(2023)]{butlin2023}
+Butlin, Patrick, Robert Long, Eric Elmoznino, Yoshua Bengio, Jonathan Birch, Axel Constant, George Deane, et al. 2023. ``Consciousness in Artificial Intelligence: Insights from the Science of Consciousness.'' arXiv:2308.08708.
+
+\bibitem[Chalmers(1996)]{chalmers1996}
+Chalmers, David J. 1996. \textit{The Conscious Mind: In Search of a Fundamental Theory}. Oxford University Press.
+
+\bibitem[Chalmers(2018)]{chalmers2018}
+Chalmers, David J. 2018. ``The Meta-Problem of Consciousness.'' \textit{Journal of Consciousness Studies} 25(9--10): 6--61.
+
+\bibitem[Harnad(1990)]{harnad1990}
+Harnad, Stevan. 1990. ``The Symbol Grounding Problem.'' \textit{Physica D} 42: 335--346.
+
+\bibitem[Johansson et~al.(2005)]{johansson}
+Johansson, Petter, Lars Hall, Sverker Sikstrom, and Andreas Olsson. 2005. ``Failure to Detect Mismatches Between Intention and Outcome in a Simple Decision Task.'' \textit{Science} 310(5745): 116--119.
+
+\bibitem[Nagel(1974)]{nagel}
+Nagel, Thomas. 1974. ``What Is It Like to Be a Bat?'' \textit{The Philosophical Review} 83(4): 435--450.
+
+\bibitem[Nisbett and Wilson(1977)]{nisbettwilson}
+Nisbett, Richard E., and Timothy D. Wilson. 1977. ``Telling More Than We Can Know: Verbal Reports on Mental Processes.'' \textit{Psychological Review} 84(3): 231--259.
+
+\bibitem[Perez and Long(2023)]{perezlong2023}
+Perez, Ethan, and Robert Long. 2023. ``Towards Evaluating AI Systems for Moral Status Using Self-Reports.'' arXiv:2311.08576.
+
+\bibitem[Putnam(1975)]{putnam1975}
+Putnam, Hilary. 1975. ``The Meaning of `Meaning'.'' In \textit{Mind, Language and Reality: Philosophical Papers, Volume 2}. Cambridge University Press.
+
+\bibitem[Schwitzgebel(2008)]{schwitzgebel2008}
+Schwitzgebel, Eric. 2008. ``The Unreliability of Naive Introspection.'' \textit{The Philosophical Review} 117(2): 245--273.
+
+\bibitem[Schwitzgebel(2023)]{schwitzgebel2023}
+Schwitzgebel, Eric. 2023. ``AI Systems Must Not Confuse Users About Their Sentience or Moral Status.'' \textit{Patterns} 4(8).
+
+\bibitem[Searle(1980)]{searle1980}
+Searle, John R. 1980. ``Minds, Brains, and Programs.'' \textit{Behavioral and Brain Sciences} 3(3): 417--457.
+
+\end{thebibliography}
+
+\end{document}
