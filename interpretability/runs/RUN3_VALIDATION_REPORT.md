@@ -63,6 +63,14 @@ sweep view is `runs/course_dashboard_run3.{md,png}`.
 - Wall-clock for the full Tier B sweep: ~84 min; lab 10 (38 min) and the
   lab 11 CoT audit (19 min) dominate.
 
+## Post-sweep amendment
+
+`2a317ba` ("Restore Lab 4 normalization metadata") landed after the sweep;
+Lab 4 was re-validated on both tiers (`lab4_run3_tier{a,b}_v2`): all checks
+green, and the restored normalization measurably improves the science —
+mass-mean peak 0.963 vs shuffled 0.444, worst cross-family transfer **0.817**
+(was 0.50 in the pre-fix sweep run), no below-chance transfer families.
+
 ## Archive
 
 Drive `My Drive/interpret/`: `labN/run3/` (this sweep, both tiers),
