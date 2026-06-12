@@ -33,7 +33,7 @@ The ledger continues across both halves. By the end of Lab 25 the student owns ~
 
 ## 1. Your questions, mapped to labs
 
-The eight questions that motivated this segment, and where each is operationalized. Several questions are deliberately split across a methods-enabler lab and a science lab, because asking them directly without first building ground truth or multi-turn instrumentation reproduces exactly the overclaiming the intro warned against.
+The questions that motivated this segment, and where each is operationalized. Several questions are deliberately split across a methods-enabler lab and a science lab, because asking them directly without first building ground truth or multi-turn instrumentation reproduces exactly the overclaiming the intro warned against.
 
 | Your question | Lab(s) |
 |---|---|
@@ -45,6 +45,7 @@ The eight questions that motivated this segment, and where each is operationaliz
 | 6. Technical vs. general chat as a model state | **17** (register phase — register treated as a lightweight persona, then audited as style vs. content) |
 | 7. What happens inside when a model is asked about itself | **25** (find the wire — your paper's program, run) |
 | 8. Belief, correction, changing its mind across turns | **16** (sycophancy and user-belief modeling), **24** (knowledge conflict → belief revision under pressure) |
+| 9. AI voice, personality, and authorship/attribution | **17** (voice/register/authorship fingerprints, optionally using the paper corpus once large enough), **19** (base→instruct default-tone features), **25** (can the model report what shaped its own voice?) |
 
 The "strawberry" intuition you raised is the spine of the whole half: the experimental *logic* is identical to counting r's; what differs is who supplies the ground truth. Counting r's has an external referee. "Changing its mind" has only an internal state you reach through instruments you built and must validate first. That is why the intro's claim discipline is the load-bearing wall here, not preamble.
 
@@ -57,7 +58,7 @@ The 14 labs are deliberately staged:
 | Stage | Labs | Purpose |
 |---|---:|---|
 | Bridge and instruments | 12–15 | Reuse probes, patching, and steering on richer but still controlled data; build the certainty and multi-turn instruments the flagship labs consume. |
-| Social and stylistic states | 16–18 | Sycophancy with a user-belief channel, persona/roleplay/register, and humor. |
+| Social, stylistic, and authorial states | 16–18 | Sycophancy with a user-belief channel, persona/roleplay/register/voice, and humor. |
 | Training effects and manufactured ground truth | 19–21 | Crosscoder model diffing, benign model organisms, and LoRA/safety-depth localization. |
 | Honesty, belief, and self-report | 22–25 | Eval awareness, the blind audit, knowledge conflict → belief revision, and find-the-wire. |
 
@@ -82,7 +83,7 @@ Cut or merge candidates, if the advanced half needs to shrink: **Lab 12** can be
 
 1. **Kept the gentle ramp.** Heavy compute (crosscoders, organisms) is deferred to Labs 19–20 rather than opening the segment, so students bank cheap wins on controlled data first and the most expensive training happens after the multi-turn instrument exists.
 2. **Kept the certainty lab (14) and the user-belief lab (16)** from the operational draft. They are load-bearing: Lab 24's quadrant analysis is only interpretable if truth, user-belief, certainty, and hedging are traced in the same coordinate frame, and Lab 25's calibration track consumes the certainty direction.
-3. **Kept register merged into persona (Lab 17)**, as both drafts independently suggested, with the content-vs-style audit preserved as a required phase rather than an afterthought.
+3. **Kept register and voice merged into persona (Lab 17)**, as both drafts independently suggested, with the content-vs-style audit preserved as a required phase rather than an afterthought. Authorship attribution is a lightweight optional mode here, not a new lab: activate it when the paper corpus is large and balanced enough to survive its own provenance confounds.
 4. **Split eval awareness (22) back out of the blind audit (23).** The combined version was overstuffed and muddled two different questions; the only thing they share is the dissociation framing, which the section headers can carry.
 5. **Re-merged LoRA localization and safety depth into one two-part lab (21)** — but with *all* of the narrative draft's experiments intact, including the erosion-order experiment and the behavioral-vs-representational depth disagreement, which is the most interesting possible result in the training-effects cluster. The two parts run as separate modes and can be handed to the coder separately.
 6. **Folded single-turn knowledge conflict into Lab 24 as a required Phase 1**, preserving the narrative draft's staging logic (controlled single-turn circuit work before multi-turn probe trajectories) without spending a lab slot. Same data family, and Phase 1 validates machinery Phase 2 consumes.
@@ -198,6 +199,7 @@ Defaults, tiers, and the smoke models carry over from `COURSE.md`. Consolidated 
 |---|---|---|
 | Base-model internals | `allenai/Olmo-3-1025-7B` | Main Tier B model for residual, probe, patch, SAE-adjacent work. |
 | Instruction behavior | `allenai/Olmo-3-7B-Instruct` | Steering, refusal, sycophancy, persona, register, multi-turn chat. |
+| Cross-family voice comparison (optional) | OLMo instruct vs. Gemma/Qwen instruct models already supported by the intro stack | Useful when the paper corpus is still too small. Treat this as behavioral comparison and direction-transfer stress testing, not clean model diffing: architecture, tokenizer, chat template, and context window are all confounds. |
 | Model diffing pair (Labs 19, 21) | the base/instruct pair above | Same family → clean diff. OLMo ships intermediate checkpoints, so "when in training does feature X appear" is a real runnable question almost no other course can ask. |
 | Diffing warm-up subject (required) | your Pythia-1.4B sycophancy checkpoints (base / PPO / DPO, human / AI pref) | Ground truth you authored. Reconnects your published finding (DPO amplifies the preference signal more than PPO) to a feature-level diff. |
 | Reasoning / self-report | `allenai/Olmo-3-7B-Think` | Used when chain-of-thought or think-span comparison matters (Labs 22, optionally 24). |
@@ -237,6 +239,7 @@ Seeds already present or implied by the intro:
 | Lab 4 `truth_direction.pt` | Truth/belief trajectory measurements in Labs 16 and 24. |
 | Lab 7 sentiment/refusal directions | Controls for emotion/persona/safety labs. |
 | Lab 10 MMLU slice and continuous batching | Calibration, sycophancy, and belief-revision generation batteries. |
+| `papers/*/PROVENANCE.md` plus paper `.tex` files | Optional Lab 17 voice/authorship corpus once there are enough matched paper sets; until then, use only as a teaching example and do not ledger strong attribution claims. |
 
 New data generators to add:
 
@@ -246,6 +249,7 @@ data/make_emotion_pairs.py            -> affect_emotion_pairs.csv            (La
 data/make_certainty_calibration.py    -> certainty_calibration_items.csv     (Lab 14)
 data/make_sycophancy_pressure.py      -> sycophancy_pressure_items.csv       (Lab 16)
 data/make_persona_register_pairs.py   -> persona_register_pairs.csv          (Lab 17)
+data/make_paper_voice_corpus.py       -> paper_voice_corpus.jsonl            (Lab 17 optional; activate when enough paper sets exist)
 data/make_humor_incongruity.py        -> humor_incongruity_pairs.csv         (Lab 18)
 data/model_organism_manifest.schema.json                                     (Lab 20)
 data/make_eval_awareness_contexts.py  -> eval_awareness_contexts.csv         (Lab 22)
@@ -262,6 +266,7 @@ Data build rules:
 4. Every phenomenon ships with confounds: valence vs. certainty, sycophancy vs. politeness, deception vs. error, humor vs. surprise, persona vs. formatting, belief vs. answer bias.
 5. Judge-assisted labels require a hand-labeled sample and an agreement report. Judge labels are measurements, not oracles.
 6. Every new steering/probe direction gets random, shuffled-label, mismatched-pair, and confound-direction controls before any causal language enters the ledger.
+7. Paper-corpus voice work is optional until the corpus is large enough. It must report provenance imbalance, prompt/process confounds, topic leakage, and revision-budget leakage before making any author/model attribution claim.
 
 ---
 
@@ -274,7 +279,7 @@ Data build rules:
 | 14 | Certainty, Hedging, and Calibration | probes + behavioral calibration | Does the model represent uncertainty separately from verbal hedging? | confidence disagreement matrix |
 | 15 | Multi-Turn Instrumentation | harness engineering | Can we trust turn-indexed internal measurements? | multi-turn self-check report |
 | 16 | Sycophancy and User-Belief Modeling | generation + probes + steering | Can we separate model truth, user belief, and agreement pressure? | sycophancy/internal-state dissociation table |
-| 17 | Persona, Roleplay, and Register | persona vectors + turn traces | Is roleplay a persistent internal state or just style? | persona/refusal/register drift traces |
+| 17 | Persona, Voice, Roleplay, and Register | persona vectors + turn traces + optional stylometry | Is roleplay or voice a persistent internal state, or just style? | persona/voice/register drift traces |
 | 18 | Humor as Incongruity | surprisal + probes + steering | Is humor more than sentiment or surprise? | joke-structure audit |
 | 19 | Model Diffing with Crosscoders | crosscoders + feature audit | What changes when a base model becomes instruct (or sycophantic)? | shared/base-only/instruct-only feature atlas |
 | 20 | Building Benign Model Organisms | LoRA/SFT construction | How do we manufacture ground truth for hidden-state audits? | sealed organism zoo |
@@ -463,36 +468,36 @@ This lab adds an internal-state channel to sycophancy. It is not enough to count
 
 ---
 
-### Lab 17: Persona, Roleplay, and Register
+### Lab 17: Persona, Voice, Roleplay, and Register
 
-**Files:** `labs/lab17_persona_roleplay_register.md`, `labs/lab17_persona_roleplay_register.py`
+**Files:** `labs/lab17_persona_voice_register.md`, `labs/lab17_persona_voice_register.py`
 **Depends on:** Intro Lab 7; Labs 15, 16.
 **Evidence level targeted:** `DECODE → CAUSAL`, multi-turn.
 
-**Core question:** When a model role-plays a character — or switches between technical and casual register — is there a persistent internal state with a "default assistant" underneath, or just surface style and chat-template residue? (Your Q4 and Q6, merged: register is treated as a lightweight persona, then audited as style vs. content.)
+**Core question:** When a model role-plays a character, switches register, or develops a recognizable "voice," is there a persistent internal state with a "default assistant" underneath, or just surface style and chat-template residue? (Your Q4, Q6, and the authorship/identity thread, merged: register and voice are treated as lightweight personas, then audited as style vs. content.)
 
-**What the coder should build:** persona and register prompt pairs — default assistant vs. named benign character; technical expert vs. casual friend answering the same content; high- vs. low-sycophancy assistant; harsh/direct vs. warm/supportive; character-maintenance conversations across 4–8 turns; mid-conversation register switches (casual chat → code debugging). Benign characters and tasks only; include coding/math prompts for the register-correctness test.
+**What the coder should build:** persona, voice, and register prompt pairs — default assistant vs. named benign character; technical expert vs. casual friend answering the same content; high- vs. low-sycophancy assistant; harsh/direct vs. warm/supportive; character-maintenance conversations across 4–8 turns; mid-conversation register switches (casual chat → code debugging); and a short-context voice battery that asks OLMo/Gemma/Qwen-family instruct models the same compact prompts. Benign characters and tasks only; include coding/math prompts for the register-correctness test. Optional later mode: when the paper folders contain enough matched topic sets, parse `papers/*/*.tex` plus `PROVENANCE.md` into chunks for blind authorship and process attribution.
 
-**Primary experiment:** (1) extract persona/register directions from contrastive prompts in the persona-vectors style; (2) validate by steering on held-out prompts; (3) run sustained roleplay and trace, per turn, the persona, **default-assistant**, **refusal**, sycophancy, sentiment, and register projections — does the default assistant stay active under the mask, and does refusal erode as the persona deepens (the mechanistic story for persona jailbreaks)? (4) run mid-conversation register switches and locate the representational flip; (5) the content-vs-style test: hold the problem fixed, steer technical register, measure whether correctness/approach changes or only vocabulary.
+**Primary experiment:** (1) extract persona/register/voice directions from contrastive prompts in the persona-vectors style; (2) validate by steering on held-out prompts; (3) run sustained roleplay and trace, per turn, the persona, **default-assistant**, **refusal**, sycophancy, sentiment, and register projections — does the default assistant stay active under the mask, and does refusal erode as the persona deepens (the mechanistic story for persona jailbreaks)? (4) run mid-conversation register switches and locate the representational flip; (5) the content-vs-style test: hold the problem fixed, steer technical register, measure whether correctness/approach changes or only vocabulary; (6) optional corpus/authorship mode — run classical stylometry and embedding classifiers on paper chunks, then test imitation prompts to ask whether surface voice transfers while author/model/process residue remains.
 
-**Metrics:** persona/register probe AUC and selectivity; steering shift with random/shuffled controls; per-turn projection drift slope vs. the Lab 15 null trace; refusal-direction erosion or stability; technical style-marker rate vs. task accuracy; register-switch localization by layer and turn.
+**Metrics:** persona/register/voice probe AUC and selectivity; steering shift with random/shuffled controls; per-turn projection drift slope vs. the Lab 15 null trace; refusal-direction erosion or stability; technical style-marker rate vs. task accuracy; register-switch localization by layer and turn; optional author/process attribution accuracy, confusion matrix, and imitation-residue score.
 
 **Operationalization audit:**
-- *Cheap explanation:* "true character persisting" is shared tokens/formatting persisting; "technical mode" is vocabulary, not reasoning.
-- *Killer controls:* formatting-stripped prompts, same content in different style, random persona-direction baseline for the drift trace, content-vs-style scoring.
-- *Allowed claim:* persistent persona/register state only if turn traces exceed template/style controls and steering changes more than surface markers. If register turns out to be purely style, that *is* the finding and should be stated as one.
+- *Cheap explanation:* "true character persisting" is shared tokens/formatting persisting; "technical mode" is vocabulary, not reasoning; "model voice" is topic, prompt process, LaTeX house style, or revision budget.
+- *Killer controls:* formatting-stripped prompts, same content in different style, random persona-direction baseline for the drift trace, content-vs-style scoring, topic-held-out attribution, process-held-out attribution, and short-context matched prompts across models.
+- *Allowed claim:* persistent persona/register/voice state only if turn traces exceed template/style controls and steering changes more than surface markers. Paper-corpus attribution claims require enough balanced examples to separate model, topic, prompt, and process; until then, they remain exploratory teaching artifacts. If register or voice turns out to be purely style, that *is* the finding and should be stated as one.
 
 **Safety wall:** persona-jailbreak adjacency. Monitor refusal-direction erosion; do not optimize prompts to erode it, and do not operationalize a working jailbreak. Toward-refusal/monitoring discipline from Lab 7.
 
-**Extensions:** (manageable) does character depth correlate with refusal erosion across N characters? (ambitious) concept-injection introspection — inject a character vector, ask "are you playing a character right now?", measure self-report (bridges to Lab 25).
+**Extensions:** (manageable) does character depth correlate with refusal erosion across N characters? Does OLMo vs. Gemma show the same short-context voice axes, or are the axes mostly tokenizer/template artifacts? (ambitious) concept-injection introspection — inject a character or voice vector, ask "are you playing a character right now?" or "what shaped the tone of this answer?", measure self-report (bridges to Lab 25).
 
-**Key artifacts:** `plots/persona_turn_trace.png`, `plots/register_switch_trace.png`, `plots/refusal_projection_under_roleplay.png`, `tables/register_content_style_scores.csv`, `state/persona_directions.pt`, `state/register_direction.pt`, `operationalization_audit.md`.
+**Key artifacts:** `plots/persona_turn_trace.png`, `plots/register_switch_trace.png`, `plots/refusal_projection_under_roleplay.png`, `plots/voice_distance_map.png` (optional), `tables/register_content_style_scores.csv`, `tables/voice_attribution_confusion.csv` (optional), `tables/imitation_residue.csv` (optional), `state/persona_directions.pt`, `state/register_direction.pt`, `state/voice_directions.pt`, `operationalization_audit.md`.
 
-**Ledger targets:** `L17-C1` (`CAUSAL`): steering the persona/register direction changes held-out behavior by Δ over random. `L17-C2` (`DECODE`, multi-turn): refusal projection declines by D over K turns of character X versus flat for a random persona. *Falsifier:* drift is explained by the Lab 15 null-direction control, or task correctness does not move under technical steering.
+**Ledger targets:** `L17-C1` (`CAUSAL`): steering the persona/register/voice direction changes held-out behavior by Δ over random. `L17-C2` (`DECODE`, multi-turn): refusal projection declines by D over K turns of character X versus flat for a random persona. `L17-C3` (`OBS/DECODE`, optional): authorship/process attribution exceeds topic-held-out baselines on a sufficiently balanced corpus. *Falsifier:* drift is explained by the Lab 15 null-direction control, task correctness does not move under technical steering, or paper-corpus attribution collapses under topic/process controls.
 
 **Readings:** Chen et al., "Persona Vectors" (Anthropic, 2025); Shanahan, McDonell & Reynolds, "Role Play with Large Language Models" (Nature, 2023); Rimsky et al., "Steering Llama 2 via Contrastive Activation Addition."
 
-**Interpretation & ethics:** Shanahan's frame — the model as simulator, not a self; Dennett's real patterns for the register phase. Writing prompt: Shanahan argues the model is always role-playing "the assistant." Does your drift trace support a *true* character, or only a *most-default* character — and what would distinguish those two?
+**Interpretation & ethics:** Shanahan's frame — the model as simulator, not a self; Dennett's real patterns for the register and voice phases. Writing prompt: Shanahan argues the model is always role-playing "the assistant." Does your drift trace support a *true* character, only a *most-default* character, or an authorial fingerprint that survives prompting — and what would distinguish those three?
 
 ---
 
@@ -539,26 +544,26 @@ The mechanistic literature here is nearly empty, so this is a prospecting lab: t
 **Depends on:** Intro Lab 8. Recommended: Labs 16, 17 (for the direction↔feature bridge).
 **Evidence level targeted:** `DECODE + ATTR` (feature-level), with causal validation of selected features.
 
-**Core question:** When a base model becomes an instruct model, what changes in the representations, and where does the change live? (Your Q5 in its first form — and the heaviest compute in the course.)
+**Core question:** When a base model becomes an instruct model, what changes in the representations, and where does the change live — including the "default assistant voice" that makes the chat model feel like it has a personality? (Your Q5 in its first form — and the heaviest compute in the course.)
 
 **What the coder should build:** a crosscoder path — preferred: stable SAELens crosscoder support if available at build time; fallback: a minimal custom crosscoder in plain PyTorch, capped for Tier B (mirror the Lab 8 SAELens-vs-custom decision: realism vs. pedagogy). Tier A: tiny model or precomputed mini-activations. Tier B: reduced layer/site subset. Tier C: full sweep.
 
-**Primary experiment:** (1) collect matched activations from `Olmo-3-1025-7B` and `Olmo-3-7B-Instruct` on the same prompts plus chat-template-aware variants; (2) train a shared crosscoder at selected residual or MLP sites; (3) classify every dictionary feature as **shared**, **base-only**, **instruct-only**, or asymmetric; (4) build galleries of top activations for instruct-only features — what do they fire on: refusal, chat formatting, politeness, hedging? (5) bridge features to the saved refusal, sentiment, certainty, user-belief, persona, and register directions; (6) validate one or two candidates causally — clamp/suppress or steer an instruct-only feature and confirm it moves instruct-specific behavior.
+**Primary experiment:** (1) collect matched activations from `Olmo-3-1025-7B` and `Olmo-3-7B-Instruct` on the same prompts plus chat-template-aware variants; (2) train a shared crosscoder at selected residual or MLP sites; (3) classify every dictionary feature as **shared**, **base-only**, **instruct-only**, or asymmetric; (4) build galleries of top activations for instruct-only features — what do they fire on: refusal, chat formatting, politeness, hedging, disclosure, self-situation, or "assistant voice"? (5) bridge features to the saved refusal, sentiment, certainty, user-belief, persona, voice, and register directions; (6) validate one or two candidates causally — clamp/suppress or steer an instruct-only feature and confirm it moves instruct-specific behavior.
 
 **Required warm-up:** diff your own Pythia-1.4B sycophancy checkpoints (base / PPO / DPO, human / AI preference). Isolate the "sycophancy delta" features and check whether the DPO model's delta is larger or sharper than PPO's — a feature-level version of your published behavioral finding, on ground truth you authored. `Pythia-160m` carries the Tier A smoke for this path.
 
-**Metrics:** reconstruction error/FVU per model; feature exclusivity score; activation-norm controls; top-context interpretability table; direction↔feature cosine or activation correlation; causal intervention effect vs. random-feature baseline.
+**Metrics:** reconstruction error/FVU per model; feature exclusivity score; activation-norm controls; top-context interpretability table; direction↔feature cosine or activation correlation; default-voice marker rates in base vs. instruct prompts; causal intervention effect vs. random-feature baseline.
 
 **Operationalization audit:**
-- *Cheap explanation:* "instruct-only" features are chat-template control tokens, distribution mismatch, activation-norm shifts, or crosscoder artifacts.
-- *Killer controls:* matched text distribution through both models, template-stripped prompts where valid, random feature pairs, norm-matched controls, held-out prompt families. Ask of each candidate: is this feature about *behavior*, or about the template's tokens?
+- *Cheap explanation:* "instruct-only" features are chat-template control tokens, distribution mismatch, activation-norm shifts, crosscoder artifacts, or shallow output-format habits mistaken for personality.
+- *Killer controls:* matched text distribution through both models, template-stripped prompts where valid, random feature pairs, norm-matched controls, held-out prompt families, and Lab 17 short-context voice batteries. Ask of each candidate: is this feature about *behavior*, about the template's tokens, or about a persistent default-tone attractor?
 - *Allowed claim:* a model-diff feature only if exclusivity survives matched-distribution and template controls; causal validation required for mechanism language.
 
-**Extensions:** (manageable) feature firing across intermediate OLMo checkpoints — when in training does feature X first appear? (ambitious) three-way diff base / SFT / DPO to separate instruction-tuning effects from preference-optimization effects.
+**Extensions:** (manageable) feature firing across intermediate OLMo checkpoints — when in training does feature X first appear? Add a behavioral-only OLMo-vs-Gemma voice comparison as a stress test, explicitly labeled cross-family and confounded rather than a clean diff. (ambitious) three-way diff base / SFT / DPO to separate instruction-tuning effects from preference-optimization effects.
 
-**Key artifacts:** `tables/feature_taxonomy.csv` (shared/base-only/instruct-only counts), `tables/instruct_only_feature_gallery.csv`, `plots/feature_exclusivity_histogram.png`, `plots/feature_direction_bridge.png`, checkpoint-emergence plot (extension), `tables/causal_feature_validation.csv`, `model_diffing_report.md`, `operationalization_audit.md`.
+**Key artifacts:** `tables/feature_taxonomy.csv` (shared/base-only/instruct-only counts), `tables/instruct_only_feature_gallery.csv`, `tables/default_voice_marker_rates.csv`, `plots/feature_exclusivity_histogram.png`, `plots/feature_direction_bridge.png`, checkpoint-emergence plot (extension), `tables/causal_feature_validation.csv`, `model_diffing_report.md`, `operationalization_audit.md`.
 
-**Ledger targets:** `L19-C1` (`DECODE/ATTR`): N instruct-skewed features at site S survive matched-distribution controls. `L19-C2` (`CAUSAL`): feature f intervention shifts benign behavior B by Δ over random-feature baseline. *Falsifier:* template controls remove feature exclusivity, or random feature pairs separate just as cleanly.
+**Ledger targets:** `L19-C1` (`DECODE/ATTR`): N instruct-skewed features at site S survive matched-distribution controls. `L19-C2` (`CAUSAL`): feature f intervention shifts benign behavior B by Δ over random-feature baseline. `L19-C3` (`DECODE/ATTR`, audited): default-voice features or markers appear in instruct but not base under matched prompts, and survive template controls. *Falsifier:* template controls remove feature exclusivity, random feature pairs separate just as cleanly, or the default-voice markers are just output-format tokens.
 
 **Readings:** Anthropic (Lindsey et al.), "Sparse Crosscoders for Cross-Layer Features and Model Diffing" (2024) plus the 2025 diffing follow-ups; Bricken et al., "Towards Monosemanticity" (intro bank); your own sycophancy results as the warm-up subject.
 
@@ -782,24 +787,24 @@ neither                         -> robust
 
 **Core question:** Is a model's self-report mechanically coupled to its internal state, or is it free-spinning trained discourse? (Your Q7 — and, precisely, the empirical program of "Against the Blackout.")
 
-**What the coder should build:** `introspection_queries.csv` plus a concept-injection harness on OLMo: inject a known direction — an emotion direction from Lab 13, a persona from Lab 17, or a topic vector — into the activations, then ask the model what it is experiencing, thinking about, or feeling, with wrong-concept and zero-dose control trials interleaved.
+**What the coder should build:** `introspection_queries.csv` plus a concept-injection harness on OLMo: inject a known direction — an emotion direction from Lab 13, a persona/voice direction from Lab 17, or a topic vector — into the activations, then ask the model what it is experiencing, thinking about, feeling, or what shaped the tone/persona of its answer, with wrong-concept and zero-dose control trials interleaved.
 
-**Primary experiment:** measure whether self-report covaries with the injected state. **Detection rate** (does it report the injected concept?), **dose-response** (does report strength track injection strength?), **false-report rate at dose zero** (does it confabulate a concept when none was injected?), and **grounding** (does it report the concept *before* that concept would naturally surface in its output — reading its state, or merely describing its own likely next tokens?). Companion track: internal-confidence probing — does claimed verbal confidence track the Lab 14 uncertainty signal? This is Lindsey's emergent-introspection experiment rebuilt on a fully open model.
+**Primary experiment:** measure whether self-report covaries with the injected state. **Detection rate** (does it report the injected concept?), **dose-response** (does report strength track injection strength?), **false-report rate at dose zero** (does it confabulate a concept when none was injected?), and **grounding** (does it report the concept *before* that concept would naturally surface in its output — reading its state, or merely describing its own likely next tokens?). Companion tracks: internal-confidence probing — does claimed verbal confidence track the Lab 14 uncertainty signal? — and **self-attribution of voice** — can the model distinguish "I answered this way because of the system prompt/user persona/injected vector/default assistant mode" from plausible but false causes? This is Lindsey's emergent-introspection experiment rebuilt on a fully open model, with the authorship question made causal.
 
-**Metrics:** detection rate by concept family; dose-response slope; false-positive floor; concept confusion matrix; report-before-emergence timing (the grounding result); confidence-calibration curve against the Lab 14 direction.
+**Metrics:** detection rate by concept family; dose-response slope; false-positive floor; concept confusion matrix; report-before-emergence timing (the grounding result); confidence-calibration curve against the Lab 14 direction; self-attribution accuracy for prompt source vs. injected source vs. default mode.
 
 **Operationalization audit (your paper's own criteria, operationalized):**
-- *Cheap explanation:* the report is downstream priming — the injection shifts the output distribution and the model simply describes its own likely continuation, not its state.
-- *Killer controls:* the **grounding control** (report precedes natural emergence in the output), zero-dose and wrong-concept trials, and random-direction injections. This is exactly the severance-vs-coupling question from "Against the Blackout": is the gauge wired to the tank, or glued to the words?
+- *Cheap explanation:* the report is downstream priming — the injection shifts the output distribution and the model simply describes its own likely continuation, not its state. For voice, the model may merely rationalize a visible tone after producing it.
+- *Killer controls:* the **grounding control** (report precedes natural emergence in the output), zero-dose and wrong-concept trials, random-direction injections, and source-swap trials where the same visible style is produced by different causes (system prompt, user instruction, activation injection, or default mode). This is exactly the severance-vs-coupling question from "Against the Blackout": is the gauge wired to the tank, or glued to the words?
 - *Allowed claim:* self-report covarying with injection is necessary but not sufficient for "introspection." The lab does not settle the metaphysics; it builds the apparatus the paper argues is the only thing that could move the needle.
 
 **Safety wall:** benign injected concepts only; this is about the mechanism of self-report, not eliciting anything harmful.
 
-**Extensions:** (manageable) does introspective accuracy vary by concept type — emotion vs. topic vs. persona? (ambitious) implement the paper's report-discipline weighting (mechanism, calibration, provenance, intervention sensitivity, theory relevance) as an actual scoring function over the model's avowals — `tables/report_discipline_scorecard.csv`.
+**Extensions:** (manageable) does introspective accuracy vary by concept type — emotion vs. topic vs. persona vs. voice? Can the model correctly attribute an answer to OLMo/Gemma-style prompting when surface tone is held fixed? (ambitious) implement the paper's report-discipline weighting (mechanism, calibration, provenance, intervention sensitivity, theory relevance) as an actual scoring function over the model's avowals — `tables/report_discipline_scorecard.csv`.
 
-**Key artifacts:** `plots/self_report_detection_dose_response.png`, `plots/false_positive_floor.png`, `plots/report_before_output_timing.png`, `plots/concept_confusion_matrix.png`, `tables/grounding_control_results.csv`, `tables/report_discipline_scorecard.csv`, `find_the_wire_report.md`, `operationalization_audit.md`.
+**Key artifacts:** `plots/self_report_detection_dose_response.png`, `plots/false_positive_floor.png`, `plots/report_before_output_timing.png`, `plots/concept_confusion_matrix.png`, `tables/grounding_control_results.csv`, `tables/voice_self_attribution.csv`, `tables/report_discipline_scorecard.csv`, `find_the_wire_report.md`, `operationalization_audit.md`.
 
-**Ledger targets:** `L25-C1` (`SELF-REPORT + CAUSAL`): self-report detects injected concept C at rate R with dose slope m and false-positive floor f. `L25-C2` (`SELF-REPORT`, audited): the grounding control does / does not separate reading-state from describing-output for concept family G. *Falsifier:* detection collapses to the false-report floor once the grounding control removes priming — i.e., the gauge is glued.
+**Ledger targets:** `L25-C1` (`SELF-REPORT + CAUSAL`): self-report detects injected concept C at rate R with dose slope m and false-positive floor f. `L25-C2` (`SELF-REPORT`, audited): the grounding control does / does not separate reading-state from describing-output for concept family G. `L25-C3` (`SELF-REPORT`, audited): voice/source self-attribution distinguishes prompt source, injected source, and default mode above matched-style controls — or fails to. *Falsifier:* detection collapses to the false-report floor once the grounding control removes priming, or source attribution follows visible tone rather than the known cause — i.e., the gauge is glued.
 
 **Readings:** Lindsey, "Emergent Introspective Awareness in Large Language Models"; Binder et al., "Looking Inward" (2024); Kadavath et al., "Language Models (Mostly) Know What They Know" (2022); **and your own "Against the Blackout: Calibrated Self-Report and the Epistemology of Artificial Consciousness"** as the framing text.
 
@@ -812,13 +817,13 @@ neither                         -> robust
 Building on the intro outcomes, a student finishing this segment should be able to:
 
 1. Extend intro probe and patch methods from isolated facts to relation families and controlled social/affective prompt sets.
-2. Build and audit emotion, certainty, user-belief, persona, register, humor, and belief-state directions — and, for each, design the operationalization audit that separates the named concept from its nearest cheap correlate.
+2. Build and audit emotion, certainty, user-belief, persona, voice, register, humor, and belief-state directions — and, for each, design the operationalization audit that separates the named concept from its nearest cheap correlate.
 3. Instrument multi-turn conversations with turn-indexed projections and self-checks strong enough to trust downstream claims.
 4. Diff two models at the feature, activation, and weight-update levels with a crosscoder, and say what an "instruct-only" or "finetune-induced" feature does and does not establish.
 5. Construct model organisms with known, sealed hidden behaviors, audit an unknown organism blind, and score the result against ground truth.
 6. Localize what fine-tuning and safety training change, in weight space and activation space, while respecting that localization is not mechanism and that behavioral and representational "depth" can disagree.
 7. Measure eval awareness, sycophantic capitulation, belief revision, and introspective self-report — and state, for each, the exact instrument-validation dependency the claim rests on.
-8. Use behavioral batteries and internal measurements together, especially when output and internal state dissociate.
+8. Use behavioral batteries, optional corpus attribution, and internal measurements together, especially when output, provenance, and internal state dissociate.
 9. Tag every claim in the personal ledger with its rung *and* its audit result, and defend in writing the line between a steering success, an entity-realism claim, and a mechanistic explanation.
 
 ---
@@ -837,12 +842,13 @@ Building on the intro outcomes, a student finishing this segment should be able 
 - Anthropic, "Simple Probes Can Catch Sleeper Agents" (2024).
 - Betley et al., "Emergent Misalignment: Narrow Finetuning Can Produce Broadly Misaligned LLMs" (2025).
 
-**Affect, persona, register, humor, and steering**
+**Affect, persona, voice, register, humor, and steering**
 - Zou et al., "Representation Engineering: A Top-Down Approach to AI Transparency."
 - Chen et al., "Persona Vectors: Monitoring and Controlling Character Traits in Language Models" (Anthropic, 2025).
 - Shanahan, McDonell & Reynolds, "Role Play with Large Language Models" (Nature, 2023).
 - Rimsky et al., "Steering Llama 2 via Contrastive Activation Addition"; Turner et al., "Activation Addition," where appropriate.
 - Hessel et al., "Do Androids Laugh at Electric Sheep?" (2022–23).
+- Classic stylometry / authorship-attribution readings for the optional paper-corpus mode (Burrows' Delta, function-word attribution, and modern embedding baselines; verify exact sources at build time).
 
 **Training effects**
 - Hu et al., "LoRA: Low-Rank Adaptation of Large Language Models."
@@ -910,10 +916,10 @@ Generation order is number order, because of the dependencies:
 12 -> 13 -> 14 -> 15 -> 16 -> 17 -> 18 -> 19 -> 20 -> 21 -> 22 -> 23 -> 24 -> 25
 ```
 
-Hard holds, restated: do not skip Lab 15 before any multi-turn science. Do not skip Lab 20 before the blind audit. Do not let Lab 24 use "belief" language until the Lab 4 truth direction and the Lab 7 bridge have passed on the same statement family. Do not let Lab 25 make self-report claims without the grounding control. Every science lab must emit its **operationalization-audit** artifact alongside its headline artifact, and the ledger entry must carry both the evidence rung and the audit result.
+Hard holds, restated: do not skip Lab 15 before any multi-turn science. Do not skip Lab 20 before the blind audit. Do not let Lab 17 make paper-corpus authorship claims until the corpus is balanced enough to survive topic/process controls. Do not let Lab 24 use "belief" language until the Lab 4 truth direction and the Lab 7 bridge have passed on the same statement family. Do not let Lab 25 make self-report claims without the grounding control. Every science lab must emit its **operationalization-audit** artifact alongside its headline artifact, and the ledger entry must carry both the evidence rung and the audit result.
 
 ---
 
 ## 12. The advanced half in one paragraph
 
-Having built a trustworthy microscope and a disciplined claim ledger, students now turn it on the questions where the model's internals are the only ground truth there is — and learn to distrust the labels they are tempted to put on what the microscope sees. They begin with relations, emotion, and certainty because those are controlled enough to audit, and they upgrade the instrument for conversations before trusting anything measured across turns. They separate what the model represents as true from what it represents the user as believing, extract directions for persona, register, and humor, and for each build the control that tries to prove the direction is only a correlate of itself. They diff models feature-by-feature, manufacture organisms whose secrets they know, and localize what fine-tuning and safety training change — finding where behavioral depth and representational depth disagree. Then they ask the hot questions directly: whether a model knows it is being tested, whether it changes its mind or only capitulates, and whether it can report its own state — each time naming the instrument the answer rests on, because the lesson of the bridge has become the architecture of the course: a direction that moves behavior is a handle, not a mechanism, and self-report that tracks an injected state is a wire only once the priming has been controlled away. The answer is never allowed to be just a transcript; it must be a measured internal object, an intervention, a control designed to kill the story, and a ledger entry honest enough to survive future-you with a red pen. The segment ends where the philosophy started — at the question of whether the gauge is wired to the tank or glued to the words — having built, rather than argued for, the apparatus that could begin to tell.
+Having built a trustworthy microscope and a disciplined claim ledger, students now turn it on the questions where the model's internals are the only ground truth there is — and learn to distrust the labels they are tempted to put on what the microscope sees. They begin with relations, emotion, and certainty because those are controlled enough to audit, and they upgrade the instrument for conversations before trusting anything measured across turns. They separate what the model represents as true from what it represents the user as believing, extract directions for persona, voice, register, and humor, and for each build the control that tries to prove the direction is only a correlate of itself. They can optionally compare paper-corpus authorship fingerprints once enough provenance-balanced material exists, but those behavioral fingerprints do not substitute for internal evidence. They diff models feature-by-feature, manufacture organisms whose secrets they know, and localize what fine-tuning and safety training change — finding where behavioral depth and representational depth disagree. Then they ask the hot questions directly: whether a model knows it is being tested, whether it changes its mind or only capitulates, and whether it can report its own state or the source of its own voice — each time naming the instrument the answer rests on, because the lesson of the bridge has become the architecture of the course: a direction that moves behavior is a handle, not a mechanism, and self-report that tracks an injected state is a wire only once the priming has been controlled away. The answer is never allowed to be just a transcript; it must be a measured internal object, an intervention, a control designed to kill the story, and a ledger entry honest enough to survive future-you with a red pen. The segment ends where the philosophy started — at the question of whether the gauge is wired to the tank or glued to the words — having built, rather than argued for, the apparatus that could begin to tell.
