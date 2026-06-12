@@ -257,6 +257,14 @@ Custom JSON prompt files are lists of objects:
 
 Custom CSV files use the same columns: `example_id,category,prompt,target,distractor,note`. Blank target and distractor cells are allowed for ambiguous prompts.
 
+**Ready-made diversity set:** `data/relation_probes_lab1.csv` ships 105 prompts across 12 relation classes (capitals, languages, antonyms, object colors, taxonomy, counting, body, tools, day/month/season sequences, materials, habitats, and emotion-outcome inferences), every answer token verified single-token under both course tokenizers:
+
+```bash
+python interp_bench.py --lab lab1 --tier b --prompt-set data/relation_probes_lab1.csv
+```
+
+The comparative question this unlocks: **do different relations decide at different depths?** Group the event-depth table by the `relation=` tag in the note column and compare decision depths and convergence lags across classes. The `emotion_outcome` rows include deliberate near-ties (`near_tie=1`) — marathon: *proud* vs *tired*; canceled exam: *relieved* vs *happy* — where a late flip or a thin margin is the lens reporting a genuine distribution split, not an error. That is a different kind of "fact" than a capital, and the trajectories usually show it.
+
 ## Artifact reading path
 
 **Microscope validation first (the smoke / pre-lab ritual):**

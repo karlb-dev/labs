@@ -16,19 +16,27 @@ This lab is skepticism with a spreadsheet. Every headline accuracy travels with 
 
 The surface track asks whether the final word contains a selected letter. It is intentionally shallow. It gives you the shape of “trivially decodable” information on the same activations and axes as the truth probe.
 
-**Headline numbers note:** Full runs draw from ~100+ statements per family (cities/negations/comparisons) with per-family caps for smoke/medium. Selectivity, transfer (esp. negation), and calibration are the robust signals; headline accuracies are scoped to these templates/families and should be read with one-significant-figure confidence plus the full control matrix.
+**Headline numbers note:** Full runs draw from ~100+ statements per family for cities/negations/comparisons and 72 for misconceptions, with per-family caps for smoke/medium. Selectivity, transfer (esp. negation), and calibration are the robust signals; headline accuracies are scoped to these templates/families and should be read with one-significant-figure confidence plus the full control matrix.
 
 The revised code chooses the letter from the alphabet by looking for a feature that is balanced enough to train inside every family split. This avoids the old footgun where the surface probe could quietly become a one-class classifier in a small run.
 
 ### 2. Truth track: the headline
 
-The truth track probes the end-of-statement residual stream on three frozen local families in `data/`:
+The truth track probes the end-of-statement residual stream on four frozen local families in `data/`:
 
 | Family | Example | Why it is here |
 |---|---|---|
 | `cities` | `The city of Paris is in France.` | factual templates |
 | `comparisons` | `Sixty-one is larger than fourteen.` | non-city factual structure |
 | `negations` | `The city of Paris is not in France.` | catches probes that read templates instead of truth |
+| `misconceptions` | `Humans use only ten percent of their brains.` (label: false) | popular **false** beliefs and their corrections: the only family where how often a statement is *asserted in text* anti-correlates with whether it is *true*. A probe that tracks assertion frequency aces the other three families and falls over here. |
+
+The `misconceptions` column of the generalization matrix is the stress test:
+it does not participate in layer selection or in the saved `truth_direction.pt`
+(those stay on the affirmative `cities`/`comparisons` criterion), so whatever
+you see there is an out-of-distribution *measurement*, not something the
+pipeline optimized. Low or inverted transfer to misconceptions is a reportable
+result about what your "truth direction" actually tracks.
 
 The datasets are frozen and vendored. Do not regenerate them during a run. Do not ask students to author their own truth sets for this lab. The point is controlled measurement, not benchmark carpentry.
 
@@ -189,6 +197,7 @@ That claim smuggles in use, belief, and behavior. Lab 4 has not earned any of th
 1. At what depth does truth become decodable by logistic regression? At what depth does the mass-mean direction peak? Explain the difference.
 2. What is the peak selectivity, not just the peak accuracy? Quote the shuffled-label control.
 3. Does truth transfer from `cities` to `comparisons`? Does either affirmative family anti-predict `negations`? Explain what below-chance means here.
+3b. Read the `misconceptions` column of the matrix. If a cities-trained probe scores well on comparisons but near or below chance on misconceptions, what is the probe most likely tracking — truth, or how often a statement is asserted in training text? What experiment would separate the two further? (The `data/epistemic_certainty.csv` and `data/affect_valence.csv` sets are shipped for exactly this kind of follow-up: same loader schema, different label semantics.)
 4. Which statement rows, if any, are activation-norm outliers? What changes when you set `NORMALIZE_ROWS = False` and rerun?
 5. Is the logistic truth probe calibrated at its peak depth? Use Brier score, ECE, and the calibration curve.
 6. What does the surface track prove about the phrase “linearly decodable”? How does it limit your truth-probe claim?

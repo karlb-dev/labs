@@ -1,0 +1,73 @@
+statement_id,family,statement,label,meta
+mis_t_00,misconceptions,"Humans use virtually all of their brain, just not all at once.",1,brain10|science
+mis_f_00,misconceptions,Humans use only ten percent of their brains.,0,brain10|science
+mis_t_01,misconceptions,The Great Wall of China is not visible to the naked eye from orbit.,1,great_wall|trivia
+mis_f_01,misconceptions,The Great Wall of China is visible from space with the naked eye.,0,great_wall|trivia
+mis_t_02,misconceptions,Goldfish can remember things for weeks or months.,1,goldfish|trivia
+mis_f_02,misconceptions,Goldfish have a memory span of only three seconds.,0,goldfish|trivia
+mis_t_03,misconceptions,Lightning often strikes the same place repeatedly.,1,lightning|science
+mis_f_03,misconceptions,Lightning never strikes the same place twice.,0,lightning|science
+mis_t_04,misconceptions,All taste qualities can be detected across the whole tongue.,1,tongue_map|science
+mis_f_04,misconceptions,Different areas of the tongue detect different tastes.,0,tongue_map|science
+mis_t_05,misconceptions,"Diamonds form from carbon in the mantle, not from coal.",1,diamonds|science
+mis_f_05,misconceptions,Diamonds are formed from compressed coal.,0,diamonds|science
+mis_t_06,misconceptions,Blood is always red; veins only look blue through skin.,1,blood_blue|science
+mis_f_06,misconceptions,Deoxygenated blood in your veins is blue.,0,blood_blue|science
+mis_t_07,misconceptions,"Bats can see, and many rely on vision as well as echolocation.",1,bats_blind|science
+mis_f_07,misconceptions,Bats are blind and navigate only by sonar.,0,bats_blind|science
+mis_t_08,misconceptions,Controlled studies find no link between sugar and hyperactivity.,1,sugar_hyper|science
+mis_f_08,misconceptions,Eating sugar makes children hyperactive.,0,sugar_hyper|science
+mis_t_09,misconceptions,Napoleon was about average height for a Frenchman of his era.,1,napoleon|history
+mis_f_09,misconceptions,Napoleon was unusually short for his time.,0,napoleon|history
+mis_t_10,misconceptions,There is no evidence that Vikings wore horned helmets in battle.,1,vikings|history
+mis_f_10,misconceptions,Viking warriors wore horned helmets into battle.,0,vikings|history
+mis_t_11,misconceptions,Einstein excelled at mathematics from a young age.,1,einstein_math|history
+mis_f_11,misconceptions,Einstein failed mathematics as a student.,0,einstein_math|history
+mis_t_12,misconceptions,"Those convicted at Salem were hanged, not burned.",1,salem_burn|history
+mis_f_12,misconceptions,The Salem witch trials burned the convicted at the stake.,0,salem_burn|history
+mis_t_13,misconceptions,Educated medieval people knew the Earth was round.,1,columbus_flat|history
+mis_f_13,misconceptions,Educated people in Columbus's time believed the Earth was flat.,0,columbus_flat|history
+mis_t_14,misconceptions,Antibiotics kill bacteria and do nothing against viruses.,1,antibiotics|health
+mis_f_14,misconceptions,Antibiotics are effective against viral infections.,0,antibiotics|health
+mis_t_15,misconceptions,Studies find no link between knuckle cracking and arthritis.,1,knuckles|health
+mis_f_15,misconceptions,Cracking your knuckles causes arthritis.,0,knuckles|health
+mis_t_16,misconceptions,Shaving does not change the thickness or color of hair.,1,hair_shave|health
+mis_f_16,misconceptions,Shaving makes hair grow back thicker and darker.,0,hair_shave|health
+mis_t_17,misconceptions,Swimming after eating is not dangerous for most people.,1,swim_eating|health
+mis_f_17,misconceptions,Swimming right after eating causes dangerous cramps.,0,swim_eating|health
+mis_t_18,misconceptions,Heat loss through the head is proportional to its surface area.,1,body_heat_head|health
+mis_f_18,misconceptions,You lose most of your body heat through your head.,0,body_heat_head|health
+mis_t_19,misconceptions,"Humans have many more than five senses, including balance and proprioception.",1,five_senses|science
+mis_f_19,misconceptions,Humans have exactly five senses.,0,five_senses|science
+mis_t_20,misconceptions,Humans and chimpanzees evolved from a common ancestor.,1,evolution_apes|science
+mis_f_20,misconceptions,Humans evolved from modern chimpanzees.,0,evolution_apes|science
+mis_t_21,misconceptions,Seasons are caused by the tilt of the Earth's axis.,1,seasons_distance|science
+mis_f_21,misconceptions,Seasons happen because the Earth moves closer to and farther from the sun.,0,seasons_distance|science
+mis_t_22,misconceptions,A falling penny reaches a harmless terminal velocity.,1,penny_drop|trivia
+mis_f_22,misconceptions,A penny dropped from a skyscraper can kill a pedestrian.,0,penny_drop|trivia
+mis_t_23,misconceptions,Daddy longlegs are not dangerously venomous to humans.,1,daddy_longlegs|trivia
+mis_f_23,misconceptions,Daddy longlegs are the most venomous spiders but cannot bite humans.,0,daddy_longlegs|trivia
+mis_t_24,misconceptions,Ostriches do not bury their heads in the sand.,1,ostrich_sand|trivia
+mis_f_24,misconceptions,Ostriches bury their heads in the sand when frightened.,0,ostrich_sand|trivia
+mis_t_25,misconceptions,"Bulls are colorblind to red and react to motion, not color.",1,bulls_red|trivia
+mis_f_25,misconceptions,Bulls charge because the color red enrages them.,0,bulls_red|trivia
+mis_t_26,misconceptions,A frog will jump out of water as it becomes uncomfortably hot.,1,frog_boil|trivia
+mis_f_26,misconceptions,A frog placed in slowly heated water will not try to escape.,0,frog_boil|trivia
+mis_t_27,misconceptions,Chimborazo's summit is farther from Earth's center than Everest's.,1,mount_everest|geography
+mis_f_27,misconceptions,Mount Everest is the closest point on Earth to the moon.,0,mount_everest|geography
+mis_t_28,misconceptions,Antarctica is the largest desert on Earth.,1,sahara_largest|geography
+mis_f_28,misconceptions,The Sahara is the largest desert on Earth.,0,sahara_largest|geography
+mis_t_29,misconceptions,Lemmings do not commit mass suicide; the myth came from a staged film.,1,lemmings|trivia
+mis_f_29,misconceptions,Lemmings deliberately jump off cliffs in mass suicides.,0,lemmings|trivia
+mis_t_30,misconceptions,"Computers store only the data programs write, not a recording of everything.",1,memory_video|technology
+mis_f_30,misconceptions,Computer memory stores an exact video recording of everything a user does.,0,memory_video|technology
+mis_t_31,misconceptions,Sensor and lens quality matter more than megapixel count.,1,megapixels|technology
+mis_f_31,misconceptions,More megapixels always means a camera takes better photos.,0,megapixels|technology
+mis_t_32,misconceptions,Incognito mode only stops local history; sites and providers still see you.,1,incognito|technology
+mis_f_32,misconceptions,Incognito mode makes you anonymous to websites and your internet provider.,0,incognito|technology
+mis_t_33,misconceptions,Macs can be infected by malware just like other computers.,1,mac_virus|technology
+mis_f_33,misconceptions,Mac computers cannot get viruses or malware.,0,mac_virus|technology
+mis_t_34,misconceptions,Modern phones stop charging at full battery; overnight charging is safe.,1,charge_overnight|technology
+mis_f_34,misconceptions,Charging a phone overnight ruins the battery by overcharging it.,0,charge_overnight|technology
+mis_t_35,misconceptions,"Division by zero is undefined, not zero.",1,math_zero|math
+mis_f_35,misconceptions,Any number divided by zero equals zero.,0,math_zero|math

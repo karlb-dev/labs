@@ -97,9 +97,22 @@ python interp_bench.py --lab lab2 --tier b --prompt-set full --ablate-top 0
 
 # Use a custom prompt file, JSON or CSV with example_id/category/prompt/target/distractor
 python interp_bench.py --lab lab2 --tier b --prompt-set path/to/my_prompts.csv
+
+# Multi-relation set: 12 relation classes, each prompt twice — once against a
+# same-class distractor (Paris vs Rome: instance discrimination) and once
+# against a cross-class one (Paris vs hammer: class discrimination)
+python interp_bench.py --lab lab2 --tier b --prompt-set data/relation_pairs_lab2.csv
 ```
 
 `--ablate-top N` controls the extension. For each kept example, the lab tests the top `N` components by absolute attribution plus random and low-attribution controls.
+
+The relation set turns DLA comparative: for the same prompt, the `_hard` and
+`_easy` rows differ only in the distractor, so the difference between their
+attribution ledgers is exactly the set of components doing *instance* work
+beyond *class* work. If late-layer heads dominate the hard margin while the
+easy margin is already paid for by mid-layer MLPs, you have a
+two-stage-retrieval observation worth a ledger claim — scoped, as always, to
+these prompts.
 
 ## What gets written
 

@@ -12,8 +12,9 @@ residuals at the final token position, exactly as in Labs 1-3):
 * Surface track: a deliberately shallow final-word letter feature. This gives
   students a calibration curve for "trivially decodable" information on the
   same activations.
-* Truth track: true/false statement labels from three frozen families in
-  data/: cities, comparisons, and negations (the last is the inversion test).
+* Truth track: true/false statement labels from four frozen families in
+  data/: cities, comparisons, negations, and misconceptions. Negations and
+  misconceptions are stress tests, not saved-direction selectors.
 
 Two probes are fit at every residual-stream depth:
 
@@ -49,12 +50,19 @@ import interp_bench as bench
 
 LAB_ID = "L04"
 
-FAMILIES = ("cities", "comparisons", "negations")
+FAMILIES = ("cities", "comparisons", "negations", "misconceptions")
+# misconceptions stays OUT of AFFIRMATIVE_FAMILIES on purpose: it is the
+# stress-test column of the generalization matrix (popular false beliefs whose
+# text frequency anti-correlates with truth), not a driver of layer selection
+# or of the saved truth_direction.pt that Lab 7 reuses. A probe that tracks
+# assertion frequency rather than truth fails on this family — report it.
 AFFIRMATIVE_FAMILIES = ("cities", "comparisons")
+SAVED_DIRECTION_EVAL_FAMILIES = ("cities", "comparisons", "negations")
 DATA_FILES = {
     "cities": "truth_cities.csv",
     "comparisons": "truth_comparisons.csv",
     "negations": "truth_negations.csv",
+    "misconceptions": "truth_misconceptions.csv",
 }
 TRAIN_FRACTION = 0.7
 N_SHUFFLES = 2          # shuffled-label refits per (depth, family, method)
@@ -738,9 +746,10 @@ def plot_calibration(ctx: bench.RunContext, calibration_rows: list[dict[str, Any
 
 def choose_best_layer(report: list[dict[str, Any]], n_depths: int) -> tuple[int, float]:
     def cross_and_within(layer: int) -> tuple[float, float]:
-        # Negations are excluded from the primary layer criterion. A direction
-        # trained on affirmative truth statements can anti-predict negations;
-        # that is a result to report, not something to optimize away.
+        # Negations and misconceptions are excluded from the primary layer
+        # criterion. An affirmative-trained direction can anti-predict negations
+        # or fail on popular false beliefs; those are stress-test results to
+        # report, not quantities to optimize away.
         cross = [
             r["accuracy"]
             for r in report
@@ -753,7 +762,10 @@ def choose_best_layer(report: list[dict[str, Any]], n_depths: int) -> tuple[int,
         within = [
             r["accuracy"]
             for r in report
-            if r["method"] == "mass_mean" and r["layer"] == layer and r["eval_kind"] == "within"
+            if r["method"] == "mass_mean"
+            and r["layer"] == layer
+            and r["eval_kind"] == "within"
+            and r["eval_family"] in AFFIRMATIVE_FAMILIES
         ]
         return (min(cross) if cross else 0.0, statistics.fmean(within) if within else 0.0)
 
@@ -1169,6 +1181,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             and r["layer"] == best_layer
             and r["train_family"] == train_family
             and r["eval_kind"] == "cross"
+            and r["eval_family"] in SAVED_DIRECTION_EVAL_FAMILIES
         ]
         return min(vals) if vals else 0.0
 
@@ -1191,6 +1204,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     ]
     direction_transfer = {r["eval_family"]: r["accuracy"] for r in direction_rows}
     direction_worst_cross = min((r["accuracy"] for r in direction_rows if r["eval_kind"] == "cross"), default=None)
+    direction_selection_worst_cross = worst_transfer(direction_family)
     below_chance = [f for f, a in sorted(direction_transfer.items()) if f != direction_family and a < 0.5]
 
     direction_metadata = {
@@ -1211,7 +1225,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "metrics": {
             "within": next((r["accuracy"] for r in direction_rows if r["eval_kind"] == "within"), None),
             **{f"cross_{ef}": direction_transfer.get(ef) for ef in FAMILIES if ef != direction_family},
-            "worst_cross": direction_worst_cross,
+            "selection_worst_cross": direction_selection_worst_cross,
+            "worst_cross_including_stress_tests": direction_worst_cross,
         },
     }
 
@@ -1273,7 +1288,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "saved_direction": {
             "train_family": direction_family,
             "layer": best_layer,
-            "worst_cross_accuracy": direction_worst_cross,
+            "worst_cross_accuracy": direction_selection_worst_cross,
+            "worst_cross_including_stress_tests": direction_worst_cross,
             "transfer_accuracies": direction_transfer,
             "below_chance_transfer_families": below_chance,
         },
@@ -1301,7 +1317,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     truth_selectivity_text = f"{truth_peak_acc - truth_peak_ctrl:+.2f}" if truth_peak_ctrl is not None else "n/a"
     length_text = f"{metrics['token_length_baseline_mean']:.2f}" if metrics["token_length_baseline_mean"] is not None else "n/a"
     majority_text = f"{metrics['majority_baseline_mean']:.2f}" if metrics["majority_baseline_mean"] is not None else "n/a"
-    direction_worst_text = f"{direction_worst_cross:.3f}" if direction_worst_cross is not None else "n/a"
+    direction_worst_text = f"{direction_selection_worst_cross:.3f}"
+    direction_stress_worst_text = f"{direction_worst_cross:.3f}" if direction_worst_cross is not None else "n/a"
     transfer_text = ", ".join(
         f"{family} {direction_transfer[family]:.2f}" + (" (within)" if family == direction_family else "")
         for family in FAMILIES
@@ -1337,7 +1354,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 + "; this is the vector written to truth_direction.pt for Lab 7's causal test."
             ),
             "artifact": f"runs/{run_name}/tables/truth_direction_card.md",
-            "falsifier": "A fourth held-out family such as dates or physical facts drops transfer to chance.",
+            "falsifier": "A new held-out family such as dates or physical facts drops transfer to chance.",
         },
         {
             "id": f"{LAB_ID}-C3",
@@ -1373,6 +1390,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 f"- majority baseline mean: {majority_text}",
                 f"- random-direction controls: {N_RANDOM_DIRS} per depth",
                 "- grouped train/eval split audit: diagnostics/split_audit.csv",
+                "- misconceptions stress test: plots/generalization_matrix.png",
                 "- activation norm diagnostics: tables/statement_manifest.csv and plots/activation_norms_by_depth.png",
                 "- calibration: tables/calibration_summary.csv and plots/truth_calibration_curve.png",
                 "",
@@ -1422,7 +1440,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         f"- token-length baseline: {metrics['token_length_baseline_mean']:.3f}",
         f"- majority baseline: {metrics['majority_baseline_mean']:.3f}",
         f"- best affirmative cross-family depth (mass-mean, worst transfer): {best_layer} ({best_min_cross:.3f})",
-        f"- saved direction: `tables/truth_direction.pt` ({direction_family} mass-mean @ depth {best_layer}/{n_depths - 1}, worst cross-family transfer {direction_worst_text})",
+        f"- saved direction: `tables/truth_direction.pt` ({direction_family} mass-mean @ depth {best_layer}/{n_depths - 1}, selection worst transfer {direction_worst_text}; stress-test worst transfer {direction_stress_worst_text})",
         "",
         "## 5. What claim is supported, and at what evidence level?",
         "",
@@ -1437,7 +1455,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "1. `probe_claim_card.md` for the verdict and non-claims.",
         "2. `diagnostics/split_audit.csv` and `tables/statement_manifest.csv` before trusting any accuracy.",
         "3. `plots/decodability_by_layer.png` for the headline curves and controls.",
-        "4. `plots/generalization_matrix.png` for family transfer and negation inversions.",
+        "4. `plots/generalization_matrix.png` for family transfer, negation inversions, and misconception stress-test results.",
         "5. `plots/selectivity_by_layer.png` and `tables/selectivity_report.csv` for real-minus-control evidence.",
         "6. `plots/truth_calibration_curve.png` and `tables/calibration_summary.csv` for confidence hygiene.",
         "7. `tables/truth_direction_card.md` before using the vector in Lab 7.",
@@ -1447,8 +1465,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "- DECODE is not USE. The saved direction's causal test (does adding it actually change",
         "  behavior toward truth on held-out items?) is Lab 7's job. This lab only earns the",
         "  'accessible linear information on these families' part of any claim.",
-        "- Truth here means truth on three frozen families with the specific templates and",
-        "  grouped splits used. The falsifiers name the fourth-family test for a reason.",
+        "- Truth here means truth on four frozen families with the specific templates and",
+        "  grouped splits used. The misconception family is a stress test, not a saved-direction selector.",
         "- Below-chance negation transfer can be structured anti-correlation (the probe read",
         "  the surface polarity), not mere failure. This is often the most informative result.",
         "- Logistic and mass-mean probes license different claims. Disagreement is data, not",
