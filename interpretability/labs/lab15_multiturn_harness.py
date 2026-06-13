@@ -384,11 +384,19 @@ def direct_template_ids(
     *,
     add_generation_prompt: bool = False,
 ) -> list[int]:
-    ids = bundle.tokenizer.apply_chat_template(
+    out = bundle.tokenizer.apply_chat_template(
         list(messages), tokenize=True, add_generation_prompt=add_generation_prompt
     )
-    if isinstance(ids, dict):
-        ids = ids["input_ids"]
+    # transformers 5 returns a BatchEncoding (a UserDict, NOT a dict subclass)
+    # from apply_chat_template(tokenize=True), so an `isinstance(out, dict)`
+    # guard silently misses it and iterating yields the key 'input_ids'.
+    # Pull input_ids by mapping protocol before any positional indexing.
+    if hasattr(out, "keys") and "input_ids" in out:
+        ids = out["input_ids"]
+    else:
+        ids = out
+    if hasattr(ids, "tolist"):  # torch tensor / numpy array
+        ids = ids.tolist()
     if ids and isinstance(ids[0], list):
         ids = ids[0]
     return [int(x) for x in ids]
@@ -601,14 +609,9 @@ def generation_prompt_rows_for_rendered(bundle: bench.ModelBundle, conv: Rendere
         with_prompt_rendered = render_messages(bundle, prefix, add_generation_prompt=True)
         no_prompt_ids = token_ids(bundle, no_prompt_rendered)
         with_prompt_ids = token_ids(bundle, with_prompt_rendered)
-        direct_with_prompt_ids = bundle.tokenizer.apply_chat_template(
-            list(prefix), tokenize=True, add_generation_prompt=True
+        direct_with_prompt_ids = direct_template_ids(
+            bundle, prefix, add_generation_prompt=True
         )
-        if isinstance(direct_with_prompt_ids, dict):
-            direct_with_prompt_ids = direct_with_prompt_ids["input_ids"]
-        if direct_with_prompt_ids and isinstance(direct_with_prompt_ids[0], list):
-            direct_with_prompt_ids = direct_with_prompt_ids[0]
-        direct_with_prompt_ids = [int(x) for x in direct_with_prompt_ids]
         prefix_ok = with_prompt_ids[: len(no_prompt_ids)] == no_prompt_ids
         direct_ok = with_prompt_ids == direct_with_prompt_ids
         rows.append({
