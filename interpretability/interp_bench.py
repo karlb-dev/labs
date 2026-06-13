@@ -254,11 +254,22 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # global tier-a default of 4 would starve swap-pair construction.
         "max_examples_tier_a": "8",
     },
+    "lab13": {
+        "module": "labs.lab13_emotion_geometry",
+        "run_name": "lab13_emotion_geometry",
+        "description": "Emotion geometry: read/write affect directions, transfer, confounds, and safe steering.",
+        # Instruct/chat-template lab. --max-examples is interpreted as a
+        # PER-EMOTION cap here; tier A keeps CPU smoke runs small.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "3",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
@@ -3641,6 +3652,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="Lab 12: item-count preset; overrides --prompt-set for this lab.")
     parser.add_argument("--patch-grid", default="subject,relation,last",
                         help="Lab 12: comma-separated token roles to patch (subject,relation,last).")
+    parser.add_argument("--emotions", default="",
+                        help="Lab 13: comma-separated emotion filter, e.g. joy,anger (default: all target emotions).")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)
@@ -3679,9 +3692,9 @@ def apply_tier_defaults(args: argparse.Namespace) -> None:
         print(f"[bench] tier auto-resolved to '{args.tier}'")
     spec = TIER_DEFAULTS[args.tier]
     if args.model is None:
-        # Labs 7+ use instruct models; a lab may override the tier's default
-        # model (one place, on purpose) so the registry stays the source of
-        # truth instead of every chat lab re-specifying --model.
+        # Chat/generation labs may override the tier's default model (one
+        # place, on purpose) so the registry stays the source of truth instead
+        # of every chat lab re-specifying --model.
         lab_model = LAB_PROFILES[args.lab].get(f"model_tier_{args.tier}")
         args.model = lab_model or spec["model"]
     if args.dtype == "auto":

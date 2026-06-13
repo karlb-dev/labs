@@ -21,5 +21,23 @@
       "gpt2",
       "allenai/Olmo-3-7B-Instruct"
     ]
+  },
+  "affect_emotion_pairs.csv": {
+    "confounds": {
+      "arousal_neutral": 2,
+      "positive_calm": 2,
+      "surprising_neutral": 2
+    },
+    "generator": "make_emotion_pairs.py",
+    "pairing": "emotion-laden text/prompt matched to neutral paraphrase/prompt by cause",
+    "rows": 30,
+    "sha256": "c140410c5742390011334c9f1cb3e19a1ed418a0c1c0119550422f97b498613f",
+    "target_emotions": {
+      "anger": 6,
+      "fear": 6,
+      "joy": 6,
+      "sadness": 6
+    },
+    "verified_tokenizers": []
   }
 }

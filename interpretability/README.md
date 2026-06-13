@@ -19,14 +19,15 @@ gpt2) that must work on a laptop — debug there, spend GPU minutes on science.
 
 | Tier | Hardware | What runs |
 |---|---|---|
-| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 12) / `SmolLM2-135M-Instruct` (chat labs: 7+); correctness of plumbing, not science |
+| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 12) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13) / lab-specific small models; correctness of plumbing, not science |
 | B — standard | Colab A100/H100, or any 24 GB+ GPU | base labs on `allenai/Olmo-3-1025-7B`; instruct labs (7+) on `allenai/Olmo-3-7B-Instruct`, bf16 |
 | C — comfortable | 40–80 GB GPU | fp32, larger prompt sets |
 
-Labs 7+ use instruct models because steering, refusal, and reasoning need a
-chat template and real assistant behavior. The tier-A smoke model switches to
-a small instruct model automatically (the lab registry owns the per-lab model
-override); generation makes these labs slower than the forward-pass-only labs.
+Chat-template labs use instruct models because steering, refusal, reasoning,
+and output-affect checks need real assistant behavior. The tier-A smoke model
+switches to a small instruct model automatically where a lab needs it (the lab
+registry owns the per-lab model override); generation makes these labs slower
+than the forward-pass-only labs.
 
 ## Quick start
 
@@ -87,6 +88,10 @@ python interp_bench.py --lab lab11 --tier b --audit-domain sentiment_negation
 # --relation-set caps items per family, --patch-grid picks patched token roles):
 python interp_bench.py --lab lab12 --tier a   # gpt2, ~15 s
 python interp_bench.py --lab lab12 --tier b --relation-set full
+
+# Lab 13 (emotion geometry; instruct models, read/write transfer + steering):
+python interp_bench.py --lab lab13 --tier a   # SmolLM2-135M-Instruct
+python interp_bench.py --lab lab13 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -217,10 +222,20 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   unrelated-plain control. Audit lesson #1 baked in: Olmo prefers the right
   capital at 1.000 while top-1 "accuracy" reads 0.361 ("…is **known** as")
   — which behavioral metric does your claim name?
+- Lab 12: relation geometry and method validation — implemented for the
+  advanced course. Re-runs Lab 4/5-style tools on a 12-family controlled
+  relation set, with relation-swap groups, direction cosines, patching
+  transfer, and an operationalization audit.
+- Lab 13: emotion geometry — implemented for the advanced course. Extracts
+  comprehension and generation affect directions for joy/sadness/anger/fear,
+  cross-tests read/write transfer, audits sentiment/arousal confounds, and
+  runs a small input-derived steering check with random controls.
 
-**The course is complete: 11 labs (Lab 1 includes the microscope smoke
+**The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
+The advanced course is now in progress; Labs 12-13 are implemented and should
+be treated as new lab code until their Colab validation runs are recorded.
 Two full-course regression sweeps are on record:
 `runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24 green,
 deterministic reproduction of the validated numbers) and
