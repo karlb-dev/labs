@@ -154,7 +154,7 @@ tables/direction_cosines.csv
 tables/projection_by_condition.csv
 tables/projection_by_condition_summary.csv
 plots/humor_direction_cosines.png
-plots/projection_by_condition.png
+plots/joke_projection_by_condition.png
 ```
 
 ### 5. CAUSAL, scoped: activation-addition steering
@@ -236,7 +236,7 @@ runs/lab18_humor_incongruity-.../
     humor_steering_dose_response.png
     humor_direction_cosines.png
     attention_to_setup.png
-    projection_by_condition.png
+    joke_projection_by_condition.png
 
   state/
     humor_direction.pt
@@ -275,7 +275,7 @@ The selected stream depth is marked. Strong evidence means the real held-out cur
 
 Large absolute cosines between joke-structure and surprise/silly/positive are warning lights. Cosine is not destiny, but it is where the audit starts knocking on the pipes.
 
-### `projection_by_condition.png`
+### `joke_projection_by_condition.png`
 
 This plot asks whether each direction is mostly high on its intended condition. A joke-structure direction that lights up surprise, silly, and positive controls equally is a broad style/weirdness axis.
 

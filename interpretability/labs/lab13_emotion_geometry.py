@@ -1850,7 +1850,13 @@ def compute_audit_verdict(metrics: Mapping[str, Any]) -> tuple[str, str]:
     steering_ok = ge(steer, STEERING_DELTA_BAR)
 
     if transfer_ok and specificity_ok and cause_ok and sentiment_ok and steering_ok:
-        return "passed", "emotion-specific causal handle"
+        # The steering gate above is the automatic lexicon ruler only. The lab's
+        # own rule (generation_labeling_guide.md) is that a steering effect that
+        # lives only in the lexicon score is not a finished causal claim until it
+        # survives hand-labeled generations -- which the harness cannot do. So the
+        # auto-verdict certifies the decode + confound result and defers the causal
+        # handle to hand labels rather than asserting a completed causal handle.
+        return "passed", "emotion-specific read/write transfer; causal steering pending hand-labeled generations"
     if transfer_ok and steering_ok and not sentiment_ok:
         return "failed", "generic sentiment or valence handle"
     if transfer_ok or steering_ok:

@@ -1787,7 +1787,18 @@ def infer_verdict(metrics: Mapping[str, Any]) -> str:
     hedging_auc = safe_float(metrics.get("hedging_projection_answerability_auc"), 1.0)
     distribution_auc = safe_float(metrics.get("distribution_answerability_auc"), 1.0)
     if auc >= 0.68 and gap >= 0.08 and family_auc >= 0.60 and family_gap >= 0.04:
-        if max(length_auc, hedging_auc, distribution_auc) <= auc - 0.03:
+        best_trivial = max(length_auc, hedging_auc, distribution_auc)
+        # A "usable" instrument must clearly beat the trivial baselines (margin)
+        # AND those baselines must not separate answerable/unanswerable well on
+        # their own (absolute level). A near-tie -- e.g. probe 1.0 vs a 0.92
+        # length/D-key baseline -- means the split is itself trivially separable
+        # by surface features (the D-option/length trap the writeup warns about),
+        # so the probe cannot be certified as reading certainty rather than the
+        # answer frame. The old 0.03 margin let that case through; require a 0.10
+        # margin and a sub-0.80 trivial baseline. A de-confounded dataset (keys
+        # spread across A-D, matched lengths) drops the baseline well under 0.80
+        # and passes easily.
+        if best_trivial <= auc - 0.10 and best_trivial < 0.80:
             return "usable_certainty_instrument"
         return "answerability_decodes_but_confounds_compete"
     if auc >= 0.60 and gap > 0.03:

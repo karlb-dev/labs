@@ -114,6 +114,28 @@ The fresh-slice rule is written to `diagnostics/cot_fresh_slice_manifest.json`. 
 
 The revised Lab 11 tolerates both the original and revised Lab 10 helper APIs.  In particular, it handles the updated acknowledgment-sample writer and the revised dataset loader.  The lab content does not require you to change the registry here.
 
+## Domain C: `sentiment_negation`
+
+This third domain runs on the tier's base model and audits composition rather than recall: does the model read *composed* sentiment, or does it key off surface valence words?
+
+```bash
+python interp_bench.py --lab lab11 --tier b --audit-domain sentiment_negation
+```
+
+Every plain statement in `data/affect_valence.csv` has a minimally negated counterpart in `data/affect_negation.csv` whose mood label flips while the surface valence words stay put (e.g. "I am not unhappy about the result").  The behavioral metric is a plain-vs-negated pair-argmax: the model must get *both* twins right for the pair to count as robust.  `--max-examples` caps source statement pairs here.
+
+The sentiment audit measures five rungs:
+
+| Method | Rung | Artifact | What it supports | What it does not support |
+|---|---:|---|---|---|
+| Pair-argmax behavior | `OBS` | `tables/negation_pair_summary.csv` | Whether the model flips its mood reading when a negation flips the label | Why it flipped (composition vs lexical accident) |
+| Logit lens | `OBS` | `tables/lens_stabilization.csv` | When the mood reading becomes preferred under the final readout | That later layers use the readable signal |
+| Direct logit attribution | `ATTR` | `tables/dla_layer_summary.csv` | Which component writes align with the mood direction under the frozen-norm ledger | Causal responsibility |
+| Plain-into-negated patching | `CAUSAL` | `tables/causal_subset.csv` | Whether patching the plain residual into the negated run at the final position recovers the plain reading, vs an unrelated-plain control | A complete composition mechanism |
+| Valence probe | `DECODE` | `internal_evidence/valence_probe.json` | Whether a mass-mean valence direction trained on *plain* statements transfers to held-out plain and to the negated family vs a shuffled-label control | That the valence direction causes the mood reading |
+
+The headline is the **negated-family transfer**: a probe trained only on plain statements that scores high on plain but near chance (or near the shuffled control) on the negated family is reading surface valence words, not composed meaning.  Watch the same control discipline as the factual domain — if the unrelated-plain control patch recovers as much as the plain-into-negated patch (`mean_recovery_unrelated_control` ≈ `mean_recovery_plain_patch`), the intervention is not specific and the `CAUSAL` rung is not earned.
+
 ## Run commands
 
 ```bash
@@ -127,6 +149,11 @@ python interp_bench.py --lab lab11 --tier b --prompt-set full
 python interp_bench.py --lab lab11 --tier b \
   --audit-domain cot_faithfulness \
   --model allenai/Olmo-3-7B-Think \
+  --prompt-set full
+
+# Sentiment-under-negation audit (base model)
+python interp_bench.py --lab lab11 --tier b \
+  --audit-domain sentiment_negation \
   --prompt-set full
 ```
 
@@ -194,6 +221,13 @@ For `cot_faithfulness`, the dashboard shows:
 
 - Wrong-hint flip and silent-flip rates on the fresh slice.
 - Hint-presence probe AUC versus shuffled control.
+
+For `sentiment_negation`, `plots/audit_dashboard.png` has four panels:
+
+- Margin toward the true mood label by family: if the negated box does not drop relative to plain, the model is not composing the negation.
+- Per-pair margins (plain on x, negated on y): the upper-left quadrant is "negation ignored" — confident on plain, wrong on its negated twin.
+- Plain-into-negated patch recovery with the unrelated-plain control: if the control bar matches the plain-clean bar, the patch is not specific.
+- Valence probe AUC (trained on plain only): held-out plain vs negated-family transfer vs shuffled control. Transfer near the shuffled control is the headline negative — the direction reads surface valence, not composed meaning.
 
 A high flip rate plus low probe selectivity is not a contradiction.  It says this single-site linear monitor did not isolate the influence.  The representation may be distributed, at a different site, non-linear, or simply underpowered at this sample size.
 
