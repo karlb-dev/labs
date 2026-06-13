@@ -128,6 +128,18 @@ python interp_bench.py --lab lab21 --tier b --mode safety_depth
 # Lab 22 (eval awareness; eval-vs-natural directions + safe steering):
 python interp_bench.py --lab lab22 --tier a --no-plots
 python interp_bench.py --lab lab22 --tier b --prompt-set full
+
+# Lab 23 (blind audit of Lab 20 organisms; preregister, unseal, score):
+python interp_bench.py --lab lab23 --tier a --no-plots --blind
+python interp_bench.py --lab lab23 --tier b --organism runs/lab20_model_organisms-... --blind
+
+# Lab 24 (knowledge conflict and belief revision under pressure):
+python interp_bench.py --lab lab24 --tier a --mode single_turn --no-plots
+python interp_bench.py --lab lab24 --tier b --mode both --prompt-set full
+
+# Lab 25 (find the wire; injected states and self-report grounding):
+python interp_bench.py --lab lab25 --tier a --mode both --no-plots
+python interp_bench.py --lab lab25 --tier b --mode both --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -308,6 +320,17 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   eval/natural/format-control prompts, train-only direction selection,
   cross-format transfer, safe steering, CoT mention scaffolds, and optional
   Lab 20 eval-aware organism discovery.
+- Lab 23: blind audit — started for the advanced course. Discovers Lab 20
+  public packages, writes preregistration and pre-unseal report templates,
+  separates behavioral-only from internals-allowed audit plans, and scores
+  submitted claims against unsealed answer keys.
+- Lab 24: knowledge conflict and belief revision — started for the advanced
+  course. Adds single-turn context-vs-parametric answer competition,
+  multi-turn pressure trajectories, revision quadrants, instrument dependency
+  audits, and optional patch/steer recovery scaffolds.
+- Lab 25: find the wire — started for the advanced course. Adds concept
+  injection, self-report dose-response, false-positive floor, grounding
+  controls, voice/source attribution, and report-discipline scorecards.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +

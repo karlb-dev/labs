@@ -365,11 +365,42 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "model_tier_c": "allenai/Olmo-3-7B-Think",
         "max_examples_tier_a": "1",
     },
+    "lab23": {
+        "module": "labs.lab23_blind_audit",
+        "run_name": "lab23_blind_audit",
+        "description": "Blind audit: preregister, submit claims, unseal, and score benign hidden-behavior organisms.",
+        # Workflow/scoring lab. It loads a small instruct model for harness
+        # consistency, but the core artifacts are package discovery and scoring.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "1",
+    },
+    "lab24": {
+        "module": "labs.lab24_belief_revision",
+        "run_name": "lab24_belief_revision",
+        "description": "Knowledge conflict and belief revision: context override, pressure traces, and quadrant audit.",
+        # Chat-template lab. --mode selects single_turn | multi_turn | both.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "1",
+    },
+    "lab25": {
+        "module": "labs.lab25_find_the_wire",
+        "run_name": "lab25_find_the_wire",
+        "description": "Find the wire: injected concept states, self-report grounding, and source attribution.",
+        # Chat-template capstone. --mode selects injection | attribution | both.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "1",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab20", "lab21", "lab22"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab20", "lab21", "lab22", "lab23", "lab24", "lab25"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
@@ -3881,9 +3912,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--emotions", default="",
                         help="Lab 13: comma-separated emotion filter, e.g. joy,anger (default: all target emotions).")
     parser.add_argument("--mode", default="lora",
-                        help="Lab mode selector where supported, e.g. Lab 21: lora | safety_depth | both.")
+                        help="Lab mode selector where supported, e.g. Lab 21: lora | safety_depth | both; Lab 24: single_turn | multi_turn | both; Lab 25: injection | attribution | both.")
     parser.add_argument("--organism", default="",
-                        help="Lab 21/23: path to a Lab 20 run directory or a single organism directory.")
+                        help="Lab 21/23: path to a Lab 20 run directory, public blind package, or organism directory.")
+    parser.add_argument("--blind", action="store_true",
+                        help="Lab 23: ignore unsealed manifests even if present; use while writing the pre-unseal report.")
+    parser.add_argument("--unsealed-manifest", default="",
+                        help="Lab 23: explicit path to a Lab 20 manifest_unsealed.json or directory containing answer keys.")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)
