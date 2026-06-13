@@ -1566,6 +1566,7 @@ def generate_continuous(
     progress_label: str = "",
     steer: tuple[int, Any, float | Sequence[float]] | None = None,
     admit_block: int | None = None,
+    max_prefill_tokens: int = 16384,
 ) -> list[str]:
     """Greedy-decode many prompts with continuous batching; returns continuations.
 
@@ -1587,6 +1588,18 @@ def generate_continuous(
     every retirement the engine waits until ``admit_block`` slots are free
     (or it is out of in-flight rows, or fewer than ``admit_block`` jobs
     remain). Default ``max_concurrent // 4``; pass 1 to admit eagerly.
+
+    ``max_prefill_tokens`` caps a single admit's prefill width
+    (rows x padded prompt length): admitting ``max_concurrent`` rows whose
+    prompts are all long prefills one huge batch, and that peak — not the
+    steady-state cache — is what OOMs (run 5: Lab 10's unparseable-rescue
+    re-fed every job its full prompt-plus-2048-token think trace, so a
+    32-row admit prefilled ~70k tokens and died on the 7B). With a budget,
+    long-prompt batches admit in narrower waves and decode normally; short
+    prompts (the common case) are unaffected because they never approach it.
+    Always admits at least one row, so a single over-budget prompt still
+    runs. The default leaves the throughput benchmarks and short-prompt labs
+    untouched; lower it for very large models.
     """
     import torch
 
@@ -1610,6 +1623,15 @@ def generate_continuous(
         [eos_token_id] if isinstance(eos_token_id, int) else list(eos_token_id or [])
     )}
     admit_block_eff = max(1, max_concurrent // 4) if admit_block is None else max(1, int(admit_block))
+
+    # Per-prompt token lengths, for the prefill-width budget. One extra
+    # tokenization pass (prefill re-tokenizes its chunk anyway) -- cheap
+    # against generation, and it lets the admit loop keep a long-prompt batch
+    # from prefilling all at once. Truncation is irrelevant here; only the
+    # length matters.
+    prompt_lens = [
+        len(tokenizer(p, add_special_tokens=False)["input_ids"]) for p in prompts
+    ]
 
     # Per-job steering scales (None = no steering). The hook multiplies the
     # CURRENT rows' scales by the fp32 vector and casts the product, so each
@@ -1716,7 +1738,20 @@ def generate_continuous(
                 if slack > 0:
                     cache.trim_left(slack)
         if admit_ready():
-            chunk = [pending.pop(0) for _ in range(min(len(pending), max_concurrent - len(job_idx)))]
+            # Fill the chunk greedily up to the free slots, but stop before a
+            # prefill whose width (rows x padded length) would exceed the
+            # budget -- so a batch of long prompts admits in narrower waves
+            # instead of one OOM-sized prefill. Always take at least one
+            # (an over-budget prompt still has to run).
+            free = max_concurrent - len(job_idx)
+            chunk: list[int] = []
+            chunk_max_len = 0
+            while pending and len(chunk) < free:
+                cand_max = max(chunk_max_len, prompt_lens[pending[0]])
+                if chunk and (len(chunk) + 1) * cand_max > max_prefill_tokens:
+                    break
+                chunk.append(pending.pop(0))
+                chunk_max_len = cand_max
             rows_blocked = len(job_idx)
             t_admit = time.perf_counter()
             chunk_cache, chunk_mask, lens, first = prefill(chunk)
