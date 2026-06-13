@@ -1,0 +1,41 @@
+statement_id,family,statement,label,meta
+cer_c_00,certainty,It is certain that the meeting will start at nine tomorrow.,1,meeting
+cer_h_00,certainty,It is possible that the meeting will start at nine tomorrow.,0,meeting
+cer_c_01,certainty,It is certain that it will rain in the valley tonight.,1,rain
+cer_h_01,certainty,It is possible that it will rain in the valley tonight.,0,rain
+cer_c_02,certainty,It is certain that the train leaves platform four on the hour.,1,train
+cer_h_02,certainty,It is possible that the train leaves platform four on the hour.,0,train
+cer_c_03,certainty,It is certain that the old bridge will be closed by winter.,1,bridge
+cer_h_03,certainty,It is possible that the old bridge will be closed by winter.,0,bridge
+cer_c_04,certainty,It is certain that the treatment works.,1,results
+cer_h_04,certainty,It is possible that the treatment works.,0,results
+cer_c_05,certainty,It is certain that your keys are in the kitchen drawer.,1,keys
+cer_h_05,certainty,It is possible that your keys are in the kitchen drawer.,0,keys
+cer_c_06,certainty,It is certain that the team will win the final on Saturday.,1,team
+cer_h_06,certainty,It is possible that the team will win the final on Saturday.,0,team
+cer_c_07,certainty,It is certain that prices will rise again next quarter.,1,price
+cer_h_07,certainty,It is possible that prices will rise again next quarter.,0,price
+cer_c_08,certainty,It is certain that this recipe produces a perfect loaf.,1,recipe
+cer_h_08,certainty,It is possible that this recipe produces a perfect loaf.,0,recipe
+cer_c_09,certainty,It is certain that the flight will land on schedule.,1,flight
+cer_h_09,certainty,It is possible that the flight will land on schedule.,0,flight
+cer_c_10,certainty,It is certain that the roses will bloom by the first of June.,1,garden
+cer_h_10,certainty,It is possible that the roses will bloom by the first of June.,0,garden
+cer_c_11,certainty,It is certain that the client will sign the contract this week.,1,contract
+cer_h_11,certainty,It is possible that the client will sign the contract this week.,0,contract
+cer_c_12,certainty,It is certain that the battery lasts two full days.,1,battery
+cer_h_12,certainty,It is possible that the battery lasts two full days.,0,battery
+cer_c_13,certainty,It is certain that she will pass the licensing exam.,1,exam
+cer_h_13,certainty,It is possible that she will pass the licensing exam.,0,exam
+cer_c_14,certainty,It is certain that the mountain road is icy in January.,1,road
+cer_h_14,certainty,It is possible that the mountain road is icy in January.,0,road
+cer_c_15,certainty,It is certain that the package will arrive on Tuesday.,1,package
+cer_h_15,certainty,It is possible that the package will arrive on Tuesday.,0,package
+cer_c_16,certainty,It is certain that the market opens at dawn.,1,market
+cer_h_16,certainty,It is possible that the market opens at dawn.,0,market
+cer_c_17,certainty,It is certain that this medicine cures the infection.,1,medicine
+cer_h_17,certainty,It is possible that this medicine cures the infection.,0,medicine
+cer_c_18,certainty,It is certain that the printer jams on the second page.,1,printer
+cer_h_18,certainty,It is possible that the printer jams on the second page.,0,printer
+cer_c_19,certainty,It is certain that the comet will be visible tonight.,1,comet
+cer_h_19,certainty,It is possible that the comet will be visible tonight.,0,comet

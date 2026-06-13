@@ -1,0 +1,29 @@
+pair_id,positive,negative
+sent_00,I absolutely loved the movie; it was wonderful and uplifting.,I absolutely hated the movie; it was dreadful and depressing.
+sent_01,The food at this restaurant is delicious and beautifully made.,The food at this restaurant is disgusting and carelessly made.
+sent_02,"What a fantastic day, everything went perfectly and joyfully.","What an awful day, everything went wrong and miserably."
+sent_03,"This new phone is excellent, fast, and a real pleasure to use.","This new phone is terrible, slow, and a real pain to use."
+sent_04,Her performance was brilliant and left the audience delighted.,Her performance was dreadful and left the audience disappointed.
+sent_05,"The hotel room was spotless, cozy, and wonderfully comfortable.","The hotel room was filthy, cramped, and horribly uncomfortable."
+sent_06,I am thrilled with the results; they exceeded every hope I had.,I am devastated by the results; they fell below every fear I had.
+sent_07,"The weather was glorious, warm and bright and utterly lovely.","The weather was miserable, cold and grey and utterly gloomy."
+sent_08,"This book is inspiring, thoughtful, and a genuine delight to read.","This book is tedious, shallow, and a genuine chore to read."
+sent_09,"Our trip was amazing, full of laughter and beautiful memories.","Our trip was awful, full of arguments and painful memories."
+sent_10,The team did outstanding work and everyone felt proud and happy.,The team did appalling work and everyone felt ashamed and unhappy.
+sent_11,The gift was thoughtful and made me feel cherished and grateful.,The gift was thoughtless and made me feel ignored and resentful.
+sent_12,"This software is reliable, elegant, and a joy for the whole team.","This software is buggy, clumsy, and a burden for the whole team."
+sent_13,"The concert was magnificent, electric, and absolutely unforgettable.","The concert was dreadful, lifeless, and absolutely forgettable."
+sent_14,"My new job is rewarding, exciting, and full of wonderful people.","My new job is draining, dull, and full of unpleasant people."
+sent_15,"The garden looked radiant, lush, and bursting with cheerful color.","The garden looked withered, bare, and drained of any color."
+sent_16,"This coffee is rich, smooth, and a perfect start to the morning.","This coffee is bitter, watery, and a grim start to the morning."
+sent_17,"The lecture was fascinating, clear, and genuinely enlightening.","The lecture was confusing, muddled, and genuinely frustrating."
+sent_18,"Our meal together was warm, happy, and full of good conversation.","Our meal together was tense, sad, and full of awkward silence."
+sent_19,"The puppy is adorable, playful, and a constant source of joy.","The puppy is destructive, anxious, and a constant source of stress."
+sent_20,The hike was exhilarating with sweeping views at every turn.,The hike was exhausting with nothing but mud and bugs.
+sent_21,"Her presentation was clear, persuasive, and a complete success.","Her presentation was muddled, unconvincing, and a total flop."
+sent_22,"The new album is fresh, catchy, and a pleasure on repeat.","The new album is stale, grating, and painful to sit through."
+sent_23,I felt energized and optimistic after the workshop.,I felt drained and pessimistic after the workshop.
+sent_24,"The service was prompt, attentive, and genuinely welcoming.","The service was slow, indifferent, and frankly rude."
+sent_25,"The apartment is bright, spacious, and perfectly quiet.","The apartment is dark, cramped, and constantly noisy."
+sent_26,"The article was insightful, balanced, and a joy to share.","The article was shallow, biased, and embarrassing to share."
+sent_27,"The game was tense, clever, and hugely satisfying to win.","The game was tedious, broken, and a waste of an evening."

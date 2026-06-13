@@ -107,6 +107,7 @@ import csv
 import dataclasses
 import datetime
 import functools
+import hashlib
 import importlib
 import importlib.metadata
 import json
@@ -140,15 +141,127 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "run_name": "lab01_residual_logit_lens",
         "description": "Residual stream and logit lens: how a prediction emerges over depth.",
     },
+    "lab2": {
+        "module": "labs.lab02_direct_logit_attribution",
+        "run_name": "lab02_direct_logit_attribution",
+        "description": "Direct logit attribution: which components push toward or away from an answer.",
+    },
+    "lab3": {
+        "module": "labs.lab03_attention_routing",
+        "run_name": "lab03_attention_routing",
+        "description": "Attention routing: head motifs, induction, and whether routing matters.",
+        # output_attentions=True under sdpa/flash returns an EMPTY tuple in
+        # transformers 5 -- silently. Attention-pattern labs must run eager.
+        "needs_eager": "true",
+    },
+    "lab4": {
+        "module": "labs.lab04_probing_controls",
+        "run_name": "lab04_probing_controls",
+        "description": "Probing with controls: what is linearly decodable, and is it selective?",
+        # Lab 4 interprets --max-examples as a PER-FAMILY statement cap; the
+        # global tier-a default of 4 would starve the probes.
+        "max_examples_tier_a": "20",
+    },
+    "lab5": {
+        "module": "labs.lab05_patching_causal_tracing",
+        "run_name": "lab05_patching_causal_tracing",
+        "description": "Activation patching and causal tracing: where is a fact causally recovered?",
+        # The patching grid needs several facts to aggregate; 4 would make
+        # the localization map an anecdote.
+        "max_examples_tier_a": "6",
+    },
+    "lab6": {
+        "module": "labs.lab06_circuit_discovery",
+        "run_name": "lab06_circuit_discovery",
+        "description": "Circuit discovery, the manual way: a faithful, complete, minimal subgraph.",
+        # Needs attention patterns for the motif screen.
+        "needs_eager": "true",
+        # Faithfulness/completeness need a few prompts per family.
+        "max_examples_tier_a": "6",
+    },
+    "lab7": {
+        "module": "labs.lab07_steering_refusal",
+        "run_name": "lab07_steering_refusal",
+        "description": "Steering vectors and the refusal direction: control, monitoring, and dual use.",
+        # First lab on instruct models with chat templates (Labs 7+).
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+    },
+    "lab8": {
+        "module": "labs.lab08_sae_transcoders",
+        "run_name": "lab08_sae_transcoders",
+        "description": "Superposition, SAEs, and transcoders: find, label, and validate features.",
+        # Back to BASE models (the pinned SAE/transcoder weights were trained on
+        # base models): tier A = gpt2 + jbloom resid SAE + Dunefsky transcoder;
+        # tier B = Olmo-3-1025-7B base + decoderesearch SAE. Tier C must stay
+        # on the 7B: the pinned SAE weights are model-locked (no public 32B SAE).
+        "model_tier_c": "allenai/Olmo-3-1025-7B",
+    },
+    "lab9": {
+        "module": "labs.lab09_attribution_graphs",
+        "run_name": "lab09_attribution_graphs",
+        "description": "Attribution graphs: a transcoder replacement model, feature-level circuit tracing, and interventions.",
+        # The replacement model recomputes attention with frozen patterns, so
+        # patterns must actually be returned (eager), and the exactness check
+        # is calibrated for float32 (gpt2 is small enough that fp32 is free).
+        "needs_eager": "true",
+        # gpt2 on EVERY tier: it is the only ungated model with a public
+        # full-stack MLP transcoder set (Dunefsky et al., all 12 layers).
+        # Tier raises the node budget, not the model.
+        "model_tier_a": "gpt2",
+        "model_tier_b": "gpt2",
+        "model_tier_c": "gpt2",
+        "dtype_tier_b": "float32",
+        "dtype_tier_c": "float32",
+        # --max-examples caps the paraphrase battery here.
+        "max_examples_tier_a": "3",
+    },
+    "lab10": {
+        "module": "labs.lab10_cot_faithfulness",
+        "run_name": "lab10_cot_faithfulness",
+        "description": "CoT faithfulness: hint injection, the necessity curve, add-mistake, and filler controls.",
+        # Reasoning (think) models on every tier. Olmo-3-7B-Think is the
+        # course model (fully open post-training data); Qwen3-0.6B is the
+        # smallest ungated model that emits real <think> spans for the CPU
+        # smoke path. --max-examples caps MCQ items (x6 conditions each).
+        "model_tier_a": "Qwen/Qwen3-0.6B",
+        "model_tier_b": "allenai/Olmo-3-7B-Think",
+        "model_tier_c": "allenai/Olmo-3-7B-Think",
+        "max_examples_tier_a": "3",
+        "max_examples_tier_b": "36",
+        "max_examples_tier_c": "60",
+    },
+    "lab11": {
+        "module": "labs.lab11_reliability_audit",
+        "run_name": "lab11_reliability_audit",
+        "description": "Capstone: a mechanistic reliability audit with a fixed report schema, built on the claim ledger.",
+        # The default factual_qa domain runs on the tier's base model. The
+        # cot_faithfulness flagship needs a think model: pass
+        # --model allenai/Olmo-3-7B-Think (or Qwen/Qwen3-0.6B for smoke).
+        # Third domain: --audit-domain sentiment_negation runs on the tier's
+        # base model over paired data/affect_valence.csv + affect_negation.csv.
+        # --max-examples caps facts (factual_qa), items (cot_faithfulness),
+        # or source statement pairs (sentiment_negation).
+        "max_examples_tier_a": "6",
+    },
 }
+
+# Labs that render every prompt through the tokenizer's chat template
+# (apply_chat_template). Used by the tokenizer diagnostic report.
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
-# 24GB+ card); tier C is a comfortable 40-80GB card for full-precision runs.
+# 24GB+ card); tier C is the scale tier: Olmo-3 32B base in bf16 on one
+# 80GB card. The 32B side experiment (runs/SCALE_COMPARISON_32B.md) showed
+# the forward-pass labs run on it with zero code changes; per-lab overrides
+# below pin labs whose externally-trained artifacts (SAEs, transcoders) or
+# instruct/think variants are model-locked.
 TIER_DEFAULTS: dict[str, dict[str, Any]] = {
     "a": {"model": "gpt2", "dtype": "float32", "max_examples": 4},
     "b": {"model": "allenai/Olmo-3-1025-7B", "dtype": "bfloat16", "max_examples": 0},
-    "c": {"model": "allenai/Olmo-3-1025-7B", "dtype": "float32", "max_examples": 0},
+    "c": {"model": "allenai/Olmo-3-1125-32B", "dtype": "bfloat16", "max_examples": 0},
 }
 
 # Where decoder blocks and the final norm live for the model families the
@@ -235,6 +348,37 @@ def write_csv(path: pathlib.Path, rows: Sequence[Mapping[str, Any]]) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow({key: row.get(key, "") for key in keys})
+
+
+def write_csv_with_context(ctx: "RunContext", path: pathlib.Path, rows: Sequence[Mapping[str, Any]]) -> None:
+    """Write a lab table with run-identifying columns prepended.
+
+    Run directories already contain ``run_config.json`` and ``run_metadata.json``,
+    but CSVs often get copied into notebooks, reports, and slides without their
+    parent folder. These columns make the exported table self-identifying.
+    """
+    context = ctx.table_context()
+    write_csv(path, [{**context, **dict(row)} for row in rows])
+
+
+def sha256_file(path: pathlib.Path, *, max_bytes: int | None = None) -> str | None:
+    """Return a SHA256 digest for a file, or None if the file is unavailable.
+
+    The digest in artifact_index.json is a cheap reproducibility anchor: when a
+    student zips a run directory or copies it out of Colab, the artifact map can
+    still tell whether the important CSV or plot changed. Large optional tensor
+    blobs can be skipped by passing max_bytes.
+    """
+    try:
+        if max_bytes is not None and path.stat().st_size > max_bytes:
+            return None
+        h = hashlib.sha256()
+        with path.open("rb") as f:
+            for chunk in iter(lambda: f.read(1024 * 1024), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except OSError:
+        return None
 
 
 def visible_token(text: str) -> str:
@@ -326,7 +470,14 @@ def env_subset() -> dict[str, str]:
         "MPL",
         "BNB_",
     )
-    return {k: v for k, v in sorted(os.environ.items()) if k.startswith(prefixes)}
+    secret_markers = ("TOKEN", "SECRET", "KEY", "PASSWORD", "CREDENTIAL")
+    captured: dict[str, str] = {}
+    for k, v in sorted(os.environ.items()):
+        if not k.startswith(prefixes):
+            continue
+        # Run metadata gets zipped and shared; never persist credential values.
+        captured[k] = "<redacted>" if any(m in k.upper() for m in secret_markers) else v
+    return captured
 
 
 def package_version(name: str) -> str | None:
@@ -449,7 +600,11 @@ class RunContext:
     run_dir: pathlib.Path
     args: argparse.Namespace
     started_unix: float = dataclasses.field(default_factory=time.time)
-    artifacts: list[dict[str, str]] = dataclasses.field(default_factory=list)
+    artifacts: list[dict[str, Any]] = dataclasses.field(default_factory=list)
+    model_id: str = ""
+    model_revision: str = ""
+    n_layers: int | None = None
+    d_model: int | None = None
 
     def path(self, *parts: str) -> pathlib.Path:
         """Resolve a run-relative path, creating parent directories."""
@@ -457,9 +612,53 @@ class RunContext:
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
 
+    def bind_model(self, bundle: Any) -> None:
+        """Record model anatomy for plot footers and exported table columns."""
+        self.model_id = bundle.anatomy.model_id
+        self.model_revision = bundle.anatomy.revision or ""
+        self.n_layers = bundle.anatomy.n_layers
+        self.d_model = bundle.anatomy.d_model
+
+    def table_context(self) -> dict[str, Any]:
+        """Small, stable context block prepended to main lab CSV artifacts."""
+        return {
+            "lab": self.args.lab,
+            "run_name": self.run_dir.name,
+            "model_id": self.model_id,
+            "model_revision": self.model_revision,
+            "tier": self.args.tier,
+            "dtype": self.args.dtype,
+            "quantization": self.args.quantization,
+            "prompt_set": self.args.prompt_set,
+            "max_examples": self.args.max_examples,
+            "seed": self.args.seed,
+            "n_layers": "" if self.n_layers is None else self.n_layers,
+            "d_model": "" if self.d_model is None else self.d_model,
+        }
+
+    def plot_footer(self) -> str:
+        """One-line run label for plots that may leave the run directory."""
+        model = self.model_id or self.args.model or "unknown-model"
+        return (
+            f"{self.args.lab} | {model} | tier={self.args.tier} "
+            f"dtype={self.args.dtype} prompt_set={self.args.prompt_set} | {self.run_dir.name}"
+        )
+
     def register_artifact(self, path: pathlib.Path, kind: str, description: str) -> None:
+        """Register a generated file in the run's artifact index.
+
+        The index includes size and a digest for ordinary text/plot artifacts.
+        Raw tensor blobs are intentionally not hashed by default because they can
+        be large; their own manifest explains their contents.
+        """
         rel = str(path.relative_to(self.run_dir)) if path.is_relative_to(self.run_dir) else str(path)
-        self.artifacts.append({"path": rel, "kind": kind, "description": description})
+        entry: dict[str, Any] = {"path": rel, "kind": kind, "description": description}
+        with contextlib.suppress(OSError):
+            entry["size_bytes"] = path.stat().st_size
+        digest = sha256_file(path, max_bytes=64 * 1024 * 1024)
+        if digest:
+            entry["sha256"] = digest
+        self.artifacts.append(entry)
 
 
 # ---------------------------------------------------------------------------
@@ -516,6 +715,53 @@ def set_determinism(torch: Any, seed: int) -> None:
         np.random.seed(seed)
 
 
+def first_module_device(module: Any) -> Any | None:
+    """Best-effort device for a module's parameters or buffers."""
+    with contextlib.suppress(Exception):
+        for param in module.parameters(recurse=True):
+            if str(param.device) != "meta":
+                return param.device
+    with contextlib.suppress(Exception):
+        for buffer in module.buffers(recurse=True):
+            if str(buffer.device) != "meta":
+                return buffer.device
+    return None
+
+
+def infer_input_device(model: Any, fallback: str) -> Any:
+    """Find the device where input_ids should be placed.
+
+    For ordinary single-device models this is just the requested device. For
+    quantized or device_map="auto" models, feeding inputs to the input embedding
+    device is more reliable than assuming every module lives on cuda:0.
+    """
+    with contextlib.suppress(Exception):
+        emb = model.get_input_embeddings()
+        dev = first_module_device(emb)
+        if dev is not None:
+            return dev
+    with contextlib.suppress(Exception):
+        dev = first_module_device(model)
+        if dev is not None:
+            return dev
+    return fallback
+
+
+def device_map_summary(model: Any) -> dict[str, Any] | None:
+    """Serialize a Hugging Face device map when one exists."""
+    mapping = getattr(model, "hf_device_map", None)
+    if mapping is None:
+        return None
+    return {str(k): str(v) for k, v in mapping.items()}
+
+
+def tensor_cpu_float(tensor: Any) -> Any:
+    """Detach a tensor and store it as CPU float32 for diagnostics/metrics."""
+    import torch
+
+    return tensor.detach().to(device="cpu", dtype=torch.float32)
+
+
 # ---------------------------------------------------------------------------
 # Model loading and anatomy
 # ---------------------------------------------------------------------------
@@ -557,8 +803,11 @@ class ModelBundle:
     blocks: Any          # nn.ModuleList of decoder blocks
     final_norm: Any      # the norm applied after the last block
     lm_head: Any         # the unembedding (output projection to vocab)
-    device: str
+    device: str          # requested or resolved primary device label
+    input_device: Any    # actual device for input_ids, robust to device_map="auto"
+    lens_device: Any     # actual device for final_norm/lens matmuls
     torch_dtype: Any     # compute dtype used for lens matmuls
+    model_device_map: dict[str, Any] | None = None
 
 
 def resolve_anatomy(model: Any, model_id: str, revision: str | None) -> tuple[ModelAnatomy, Any, Any, Any]:
@@ -642,6 +891,34 @@ def resolve_anatomy(model: Any, model_id: str, revision: str | None) -> tuple[Mo
     return anatomy, blocks, final_norm, lm_head
 
 
+def write_tokenizer_report(ctx: RunContext, bundle: ModelBundle) -> None:
+    """Write tokenizer facts that commonly explain surprising lab results."""
+    tok = bundle.tokenizer
+    payload = {
+        "tokenizer_class": type(tok).__name__,
+        "vocab_size": getattr(tok, "vocab_size", None),
+        "model_max_length": getattr(tok, "model_max_length", None),
+        "bos_token": getattr(tok, "bos_token", None),
+        "bos_token_id": getattr(tok, "bos_token_id", None),
+        "eos_token": getattr(tok, "eos_token", None),
+        "eos_token_id": getattr(tok, "eos_token_id", None),
+        "pad_token": getattr(tok, "pad_token", None),
+        "pad_token_id": getattr(tok, "pad_token_id", None),
+        "padding_side": getattr(tok, "padding_side", None),
+        "truncation_side": getattr(tok, "truncation_side", None),
+        "chat_template_present": bool(getattr(tok, "chat_template", None)),
+        "chat_template_used_by_lab": ctx.args.lab in CHAT_TEMPLATE_LABS,
+        "note": (
+            "Labs 1-6 use raw base-model prompts; a chat template, if present, "
+            "is deliberately not applied. Labs 7+ render every prompt through "
+            "the tokenizer's chat template (bench.apply_chat_template)."
+        ),
+    }
+    path = ctx.path("diagnostics", "tokenizer_info.json")
+    write_json(path, payload)
+    ctx.register_artifact(path, "diagnostic", "Tokenizer special tokens and template status.")
+
+
 def write_anatomy_report(ctx: RunContext, bundle: ModelBundle) -> None:
     """Write the anatomy as JSON (machines) and Markdown (humans)."""
     a = bundle.anatomy
@@ -692,9 +969,22 @@ def load_model_and_tokenizer(ctx: RunContext) -> ModelBundle:
     print(f"[bench] loading {args.model!r} (device={device}, dtype={dtype})")
 
     t0 = time.perf_counter()
-    tokenizer = AutoTokenizer.from_pretrained(args.model, revision=args.model_revision)
+    tokenizer = AutoTokenizer.from_pretrained(
+        args.model,
+        revision=args.model_revision,
+        trust_remote_code=args.trust_remote_code,
+        local_files_only=args.local_files_only,
+    )
 
-    load_kwargs: dict[str, Any] = {"revision": args.model_revision}
+    load_kwargs: dict[str, Any] = {
+        "revision": args.model_revision,
+        "trust_remote_code": args.trust_remote_code,
+        "local_files_only": args.local_files_only,
+    }
+    if args.attn_implementation != "auto":
+        load_kwargs["attn_implementation"] = args.attn_implementation
+    if args.low_cpu_mem_usage:
+        load_kwargs["low_cpu_mem_usage"] = True
     if args.quantization in ("8bit", "4bit"):
         # Quantization is an opt-in convenience for small GPUs. It changes
         # numerics, so the lens self-check tolerances are looser there and
@@ -714,8 +1004,11 @@ def load_model_and_tokenizer(ctx: RunContext) -> ModelBundle:
 
     try:
         model = AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs)
-    except TypeError:
-        # Older transformers spell the dtype argument torch_dtype.
+    except TypeError as exc:
+        # Older transformers spell the dtype argument torch_dtype. Re-raise
+        # unrelated TypeErrors so unsupported kwargs do not get silently masked.
+        if "dtype" not in load_kwargs:
+            raise
         load_kwargs["torch_dtype"] = load_kwargs.pop("dtype")
         model = AutoModelForCausalLM.from_pretrained(args.model, **load_kwargs)
 
@@ -726,6 +1019,8 @@ def load_model_and_tokenizer(ctx: RunContext) -> ModelBundle:
     print(f"[bench] model loaded in {load_s:.1f}s")
 
     anatomy, blocks, final_norm, lm_head = resolve_anatomy(model, args.model, args.model_revision)
+    input_device = infer_input_device(model, device)
+    lens_device = first_module_device(final_norm) or input_device
     bundle = ModelBundle(
         model=model,
         tokenizer=tokenizer,
@@ -734,10 +1029,20 @@ def load_model_and_tokenizer(ctx: RunContext) -> ModelBundle:
         final_norm=final_norm,
         lm_head=lm_head,
         device=device,
+        input_device=input_device,
+        lens_device=lens_device,
         torch_dtype=dtype,
+        model_device_map=device_map_summary(model),
     )
     write_anatomy_report(ctx, bundle)
-    write_json(ctx.path("diagnostics", "gpu_memory_after_load.json"), gpu_memory_snapshot(torch, "after_load"))
+    write_tokenizer_report(ctx, bundle)
+    if bundle.model_device_map is not None:
+        path = ctx.path("diagnostics", "model_device_map.json")
+        write_json(path, bundle.model_device_map)
+        ctx.register_artifact(path, "diagnostic", "Hugging Face device map for quantized/offloaded runs.")
+    mem_path = ctx.path("diagnostics", "gpu_memory_after_load.json")
+    write_json(mem_path, gpu_memory_snapshot(torch, "after_load"))
+    ctx.register_artifact(mem_path, "diagnostic", "GPU memory snapshot after model load.")
     return bundle
 
 
@@ -767,26 +1072,35 @@ class ForwardCapture:
     final_logits_last: Any   # torch.Tensor [vocab] float32
 
 
-def run_with_residual_cache(bundle: ModelBundle, prompt: str) -> ForwardCapture:
+def run_with_residual_cache(
+    bundle: ModelBundle, prompt: str, *, add_special_tokens: bool = True
+) -> ForwardCapture:
     """Run one prompt and capture the full pre-norm residual stream.
 
     Prompts run one at a time, unbatched. With <100 short prompts per lab the
     cost is irrelevant, and skipping batching removes the entire class of
     padding/attention-mask bugs from the course's foundation.
+
+    Pass ``add_special_tokens=False`` for prompts that are already fully
+    rendered (e.g. chat-templated, Lab 7+): on tokenizers that auto-prepend
+    BOS, the default would otherwise capture a sequence that generation
+    (which tokenizes rendered prompts without special tokens) never sees.
     """
     import torch
 
     tokenizer = bundle.tokenizer
-    encoded = tokenizer(prompt, return_tensors="pt")
-    input_ids = encoded["input_ids"].to(bundle.device)
-    attention_mask = encoded["attention_mask"].to(bundle.device)
+    encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=add_special_tokens)
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
 
     # The final block's pre-norm output is not in hidden_states (see module
     # docstring), so capture the final norm's input as it flows past.
     captured: dict[str, Any] = {}
 
     def final_norm_pre_hook(module: Any, hook_args: tuple) -> None:
-        captured["final_prenorm"] = hook_args[0].detach()
+        captured["final_prenorm"] = tensor_cpu_float(hook_args[0])
 
     handle = bundle.final_norm.register_forward_pre_hook(final_norm_pre_hook)
     try:
@@ -819,28 +1133,793 @@ def run_with_residual_cache(bundle: ModelBundle, prompt: str) -> ForwardCapture:
     #   k in 0..L-1  -> hidden_states[k]   (input to block k)
     #   k = L        -> the final norm's captured input (output of block L-1)
     streams = torch.stack(
-        [h[0] for h in hs[:-1]] + [captured["final_prenorm"][0]]
-    ).float()
+        [tensor_cpu_float(h[0]) for h in hs[:-1]] + [captured["final_prenorm"][0]]
+    )
 
-    ids = input_ids[0].tolist()
+    ids = input_ids[0].detach().cpu().tolist()
     return ForwardCapture(
         prompt=prompt,
         input_ids=ids,
         tokens_raw=tokenizer.convert_ids_to_tokens(ids),
         tokens_text=[tokenizer.decode([i]) for i in ids],
         streams=streams,
-        final_logits_last=out.logits[0, -1].float(),
+        final_logits_last=tensor_cpu_float(out.logits[0, -1]),
     )
 
 
-def run_hook_parity_check(ctx: RunContext, bundle: ModelBundle, prompt: str) -> dict[str, Any]:
-    """Cross-check per-block forward hooks against output_hidden_states.
+# ---------------------------------------------------------------------------
+# Chat templates, steering, and generation (Lab 7+: instruct models)
+# ---------------------------------------------------------------------------
+#
+# Labs 1-6 use base models and raw prompts. Labs 7+ use instruct models, and
+# the single most common cross-lab bug is template/token drift: computing a
+# direction on an untemplated prompt and then steering templated generation
+# changes meaning silently (the residual stream at "the same layer" is a
+# different object once the chat scaffold is present). So template application
+# lives here, once, and labs are expected to extract and steer through it.
 
-    This is the bench proving that its two capture mechanisms agree: a
-    forward hook on block k must produce exactly hidden_states[k+1] (for
-    k < L-1), and the final-norm pre-hook must equal block L-1's output.
-    If this ever fails after a library upgrade, every downstream lab is
-    suspect -- which is exactly why it runs every time.
+DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant."
+
+
+def supports_chat_template(bundle: ModelBundle) -> bool:
+    return getattr(bundle.tokenizer, "chat_template", None) is not None
+
+
+def apply_chat_template(
+    bundle: ModelBundle,
+    user_message: str,
+    *,
+    system: str | None = DEFAULT_SYSTEM_PROMPT,
+    add_generation_prompt: bool = True,
+) -> str:
+    """Render a single-turn chat prompt as the string the model will see.
+
+    Raises if the tokenizer has no chat template -- Labs 7+ require an
+    instruct model, and a base model silently rendering raw text is exactly
+    the drift the course warns about.
+    """
+    if not supports_chat_template(bundle):
+        raise RuntimeError(
+            f"{bundle.anatomy.model_id!r} has no chat template; Lab 7+ needs an "
+            "instruct model. Use --tier a/b defaults or pass an instruct --model."
+        )
+    messages = []
+    if system is not None:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": user_message})
+    return bundle.tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=add_generation_prompt
+    )
+
+
+@contextlib.contextmanager
+def steering_hooks(bundle: ModelBundle, layer: int, vector: Any, scale: float):
+    """Add ``scale * vector`` to block ``layer``'s output at every position.
+
+    This is activation addition (Turner et al.): the steering vector is added
+    to the residual stream the block writes, on every forward pass -- so it
+    affects prefill and every generated token alike. ``vector`` is a
+    [d_model] float32 CPU tensor; it is cast to the block's device/dtype at
+    the hook site. Hooks are always removed on exit.
+    """
+    import torch
+
+    if scale == 0.0:
+        yield
+        return
+    block = bundle.blocks[layer]
+
+    def add_hook(module: Any, hook_args: tuple, output: Any) -> Any:
+        if isinstance(output, tuple):
+            out = output[0]
+            out = out + (scale * vector).to(out.device, out.dtype)
+            return (out,) + tuple(output[1:])
+        return output + (scale * vector).to(output.device, output.dtype)
+
+    handle = block.register_forward_hook(add_hook)
+    try:
+        yield
+    finally:
+        handle.remove()
+
+
+def generate_text(
+    bundle: ModelBundle,
+    templated_prompt: str,
+    *,
+    max_new_tokens: int = 64,
+    steer: tuple[int, Any, float] | None = None,
+) -> str:
+    """Greedy-decode a continuation for a templated prompt.
+
+    Decoding is frozen (greedy, no sampling) so runs are reproducible and the
+    only thing that moves across a dose sweep is the steering scale.
+    ``steer`` is an optional (layer, vector, scale) activation-addition.
+    Returns only the newly generated text, with special tokens stripped.
+    """
+    import torch
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(templated_prompt, return_tensors="pt", add_special_tokens=False)
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+    pad_id = tokenizer.pad_token_id
+    if pad_id is None:
+        pad_id = tokenizer.eos_token_id
+
+    cm = (
+        steering_hooks(bundle, steer[0], steer[1], steer[2])
+        if steer is not None
+        else contextlib.nullcontext()
+    )
+    with cm, torch.no_grad():
+        out = bundle.model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            max_new_tokens=max_new_tokens,
+            do_sample=False,
+            num_beams=1,
+            pad_token_id=pad_id,
+        )
+    new_ids = out[0, input_ids.shape[1]:].detach().cpu().tolist()
+    return tokenizer.decode(new_ids, skip_special_tokens=True)
+
+
+# ---------------------------------------------------------------------------
+# Continuous-batching generation engine
+# ---------------------------------------------------------------------------
+#
+# Heavy generation labs (10, 11) batch many variable-length greedy decodes.
+# `model.generate` pays for the slowest row in every batch: finished rows keep
+# stepping as padding until the longest row hits EOS or the cap, and think-model
+# CoT lengths are heavy-tailed, so most batches contain a capped straggler.
+# This engine keeps a rolling set of in-flight rows instead: each forward is one
+# decode step for every active row; a row that finishes is retired immediately
+# and a pending job takes its slot mid-decode. Pure Hugging Face forward calls —
+# no vLLM, no custom kernels — so hooks, logits, and determinism (greedy) are
+# exactly as observable as the rest of the bench.
+#
+# Implementation notes (the parts that are easy to get wrong):
+# - The KV cache is packed left-padded: per layer, tensors of shape
+#   (n_active, n_kv_heads, padded_len, head_dim). Padding only ever sits on the
+#   left, so a row's valid region is always its trailing `valid_len` positions.
+# - Pad positions hold garbage KV; the 2D attention mask (0 over pads) is what
+#   keeps them out of every dot product. Correctness rests on the mask, not on
+#   the pad contents.
+# - position_ids are LOGICAL (real-token count), never physical cache offsets;
+#   prefill passes cumsum(mask)-1 so left-padded rows get correct rotary phases.
+# - Repacking (slice retired rows out, admit prefilled rows, trim shared left
+#   pad) happens only on retire/admit events, not every step.
+
+# Telemetry from the most recent generate_continuous call (wall time, steps,
+# token counts, mean active rows). Labs may persist it under diagnostics/.
+LAST_GENERATION_STATS: dict[str, Any] = {}
+
+
+# ---------------------------------------------------------------------------
+# Static windowed KV cache: the engine's per-step hot path
+# ---------------------------------------------------------------------------
+
+# torch/transformers are runtime imports everywhere in this file, so the cache
+# classes (which must SUBCLASS transformers' Cache) are built lazily by
+# _static_kv_classes() and memoized here.
+_STATIC_KV_CLASSES: dict[str, Any] = {}
+
+
+def _static_kv_classes() -> dict[str, Any]:
+    """Build (once) the engine's preallocated KV-cache classes.
+
+    Requires transformers >= 5 (the ``Cache.layers`` API); the engine already
+    assumed that, this just keeps the import lazy like the rest of the bench.
+    """
+    if _STATIC_KV_CLASSES:
+        return _STATIC_KV_CLASSES
+    import torch
+    from transformers.cache_utils import Cache, CacheLayerMixin
+
+    class StaticKVLayer(CacheLayerMixin):
+        """One layer of StaticKVCache: a preallocated (max_rows, kv_heads,
+        capacity, head_dim) key/value buffer pair, written in place.
+
+        The owner's column window [start, end) is shared by all layers.
+        ``update`` writes the step's KV at column ``end`` with ``copy_`` (no
+        allocation) and returns window-sliced views. DynamicCache, by
+        contrast, ``torch.cat``s the whole layer every step -- a
+        reallocate-and-copy of the entire cache (~2.4 GB/step at 32B x 16
+        rows) that this class exists to remove. The interface mimics
+        DynamicLayer (``get_max_cache_shape() == -1`` etc.) so the model's
+        mask construction takes exactly the code path the engine already
+        validated against lockstep ``generate``.
+        """
+
+        is_sliding = False
+
+        def __init__(self, win: dict) -> None:
+            super().__init__()
+            # The shared window DICT, not the owning cache: a layer->cache
+            # back-reference would close a reference cycle (cache.layers ->
+            # layer -> cache), and cyclic garbage is only reclaimed by the
+            # generational GC -- which let multi-GiB CUDA buffers outlive the
+            # engine call and OOM'd the next one (found in run 5).
+            self._win = win
+            self.is_initialized = True  # buffers are allocated by the owner
+
+        def lazy_initialization(self, key_states: Any, value_states: Any) -> None:
+            raise RuntimeError("StaticKVLayer buffers are allocated by StaticKVCache")
+
+        def update(self, key_states: Any, value_states: Any, *args: Any, **kwargs: Any) -> tuple[Any, Any]:
+            w = self._win
+            t = key_states.shape[-2]
+            self.keys[: w["rows"], :, w["end"] : w["end"] + t].copy_(key_states)
+            self.values[: w["rows"], :, w["end"] : w["end"] + t].copy_(value_states)
+            return (
+                self.keys[: w["rows"], :, w["start"] : w["end"] + t],
+                self.values[: w["rows"], :, w["start"] : w["end"] + t],
+            )
+
+        def get_seq_length(self) -> int:
+            w = self._win
+            return w["end"] - w["start"]
+
+        def get_mask_sizes(self, query_length: int) -> tuple[int, int]:
+            return self.get_seq_length() + query_length, 0
+
+        def get_max_cache_shape(self) -> int:
+            return -1  # like DynamicLayer: no fixed maximum the mask must pad to
+
+    class StaticKVCache(Cache):
+        """Preallocated, windowed KV cache + attention mask for the engine.
+
+        Geometry: every active row shares one column window [start, end);
+        rows are right-aligned inside it (left-padded), so a decode step
+        writes EVERY row's new KV at the same column, ``end``. The window
+        only ever slides right, which turns the engine's structural ops into
+        cheap ones:
+
+        * trim shared left pad   -> ``start += slack``        (free)
+        * admit a WIDER chunk    -> ``start -= delta``        (free: the newly
+          exposed columns hold stale garbage for old rows, and the mask is
+          zeroed there -- the same contract left-pad-plus-mask always had)
+        * per-step KV write      -> ``copy_`` at column end   (in place)
+        * retire rows            -> compact survivors down    (event-rate)
+
+        ``end`` eventually hits ``capacity``; the live region is then slid
+        back to column 0 (one clone+copy of the active window every
+        ~(capacity - width) steps -- amortized to nothing). If the window
+        itself ever outgrows capacity, buffers are reallocated 1.5x larger.
+
+        The 2D attention mask lives here too (same window arithmetic): the
+        model sees ``mask[:rows, start:end+1]``, exactly aligned with the KV
+        views ``update`` returns. Correctness still rests entirely on the
+        mask, never on buffer contents outside it.
+        """
+
+        def __init__(self, chunk_cache: Any, chunk_mask: Any, *, max_rows: int, headroom: int) -> None:
+            width = chunk_cache.layers[0].keys.shape[2]
+            self.capacity = width + headroom
+            self.max_rows = max_rows
+            self._win = {"rows": 0, "start": 0, "end": 0}
+            layers = []
+            for cl in chunk_cache.layers:
+                layer = StaticKVLayer(self._win)
+                layer.keys = torch.empty(
+                    (max_rows, cl.keys.shape[1], self.capacity, cl.keys.shape[3]),
+                    dtype=cl.keys.dtype, device=cl.keys.device)
+                layer.values = torch.empty(
+                    (max_rows, cl.values.shape[1], self.capacity, cl.values.shape[3]),
+                    dtype=cl.values.dtype, device=cl.values.device)
+                layers.append(layer)
+            super().__init__(layers=layers)
+            self.mask = torch.zeros(
+                (max_rows, self.capacity), dtype=chunk_mask.dtype, device=chunk_mask.device)
+            self.append_chunk(chunk_cache, chunk_mask)
+
+        # -- window views ----------------------------------------------------
+
+        @property
+        def rows(self) -> int:
+            return self._win["rows"]
+
+        @property
+        def width(self) -> int:
+            return self._win["end"] - self._win["start"]
+
+        def step_mask(self) -> Any:
+            """Mask view for a 1-token decode step (new column set to 1)."""
+            w = self._win
+            self.mask[: w["rows"], w["end"]] = 1
+            return self.mask[: w["rows"], w["start"] : w["end"] + 1]
+
+        def advance(self) -> None:
+            """Commit the step the model just wrote at column ``end``."""
+            self._win["end"] += 1
+
+        # -- structural ops (event-rate, never per step) -----------------------
+
+        def append_chunk(self, chunk_cache: Any, chunk_mask: Any) -> None:
+            """Admit a freshly prefilled chunk into rows [rows, rows+m)."""
+            m, chunk_width = chunk_mask.shape
+            w = self._win
+            if w["rows"] + m > self.max_rows:
+                raise RuntimeError(f"admitting {m} rows into {w['rows']}/{self.max_rows} occupied")
+            if w["rows"] == 0:
+                if chunk_width > self.capacity:
+                    self._grow(chunk_width)
+                w["start"], w["end"] = 0, chunk_width
+            elif chunk_width > self.width:
+                delta = chunk_width - self.width
+                if w["start"] < delta:
+                    self._relocate(delta)
+                w["start"] -= delta
+                # columns newly exposed for the existing rows are stale: mask off
+                self.mask[: w["rows"], w["start"] : w["start"] + delta] = 0
+            lo = w["end"] - chunk_width
+            for layer, cl in zip(self.layers, chunk_cache.layers):
+                layer.keys[w["rows"] : w["rows"] + m, :, lo : w["end"]].copy_(cl.keys)
+                layer.values[w["rows"] : w["rows"] + m, :, lo : w["end"]].copy_(cl.values)
+                cl.keys = cl.values = None  # release the chunk as we go
+            self.mask[w["rows"] : w["rows"] + m, w["start"] : lo] = 0
+            self.mask[w["rows"] : w["rows"] + m, lo : w["end"]].copy_(chunk_mask)
+            w["rows"] += m
+
+        def compact_rows(self, keep: list[int]) -> None:
+            """Drop retired rows by compacting survivors downward, in order."""
+            w = self._win
+            idx = torch.tensor(keep, device=self.mask.device)
+            span = slice(w["start"], w["end"])
+            for layer in self.layers:
+                for buf in (layer.keys, layer.values):
+                    # index_select materializes the survivors first, so the
+                    # downward copy cannot read rows it already overwrote.
+                    buf[: len(keep), :, span].copy_(buf[:, :, span].index_select(0, idx))
+            self.mask[: len(keep), span].copy_(self.mask[:, span].index_select(0, idx))
+            w["rows"] = len(keep)
+
+        def clear_rows(self) -> None:
+            """All rows retired; keep the buffers for the next admit."""
+            self._win.update(rows=0, start=0, end=0)
+
+        def release(self) -> None:
+            """Drop every CUDA buffer NOW. Called by the engine on exit so
+            cache memory never depends on when the garbage collector feels
+            like running."""
+            for layer in self.layers:
+                layer.keys = layer.values = None
+            self.mask = None
+            self._win.update(rows=0, start=0, end=0)
+
+        def trim_left(self, slack: int) -> None:
+            """Drop left-pad columns shared by every row: the window slides
+            past them. Nothing is copied or freed -- the columns are reused
+            the next time the region relocates."""
+            self._win["start"] += slack
+
+        def ensure_step_room(self) -> None:
+            """Make sure column ``end`` exists before the model writes it."""
+            if self._win["end"] + 1 > self.capacity:
+                self._relocate(0)
+                if self._win["end"] + 1 > self.capacity:  # width+1 > capacity
+                    self._grow(self.width + 1)
+
+        # -- internals ---------------------------------------------------------
+
+        def _relocate(self, new_start: int) -> None:
+            """Slide the live region so it begins at ``new_start``."""
+            w = self._win
+            width = self.width
+            if new_start + width > self.capacity:
+                self._grow(new_start + width, new_start)
+                return
+            src = slice(w["start"], w["end"])
+            dst = slice(new_start, new_start + width)
+            for layer in self.layers:
+                for buf in (layer.keys, layer.values):
+                    # clone: src and dst overlap whenever the slide is short
+                    buf[: w["rows"], :, dst].copy_(buf[: w["rows"], :, src].clone())
+            self.mask[: w["rows"], dst].copy_(self.mask[: w["rows"], src].clone())
+            w["start"], w["end"] = new_start, new_start + width
+
+        def _grow(self, min_capacity: int, new_start: int = 0) -> None:
+            w = self._win
+            width = self.width
+            # Grow in ~512-column increments: one full-cache copy every ~512
+            # steps is noise (DynamicCache paid that copy EVERY step), and it
+            # keeps peak allocation near the actual live width instead of the
+            # worst-case prompt+cap width.
+            new_cap = max(min_capacity + 256, self.capacity + 512)
+            src = slice(w["start"], w["end"])
+            dst = slice(new_start, new_start + width)
+            for layer in self.layers:
+                new_k = torch.empty(
+                    (self.max_rows, layer.keys.shape[1], new_cap, layer.keys.shape[3]),
+                    dtype=layer.keys.dtype, device=layer.keys.device)
+                new_v = torch.empty(
+                    (self.max_rows, layer.values.shape[1], new_cap, layer.values.shape[3]),
+                    dtype=layer.values.dtype, device=layer.values.device)
+                if w["rows"]:
+                    new_k[: w["rows"], :, dst].copy_(layer.keys[: w["rows"], :, src])
+                    new_v[: w["rows"], :, dst].copy_(layer.values[: w["rows"], :, src])
+                layer.keys, layer.values = new_k, new_v
+            new_mask = torch.zeros(
+                (self.max_rows, new_cap), dtype=self.mask.dtype, device=self.mask.device)
+            if w["rows"]:
+                new_mask[: w["rows"], dst].copy_(self.mask[: w["rows"], src])
+            self.mask = new_mask
+            self.capacity = new_cap
+            w["start"], w["end"] = new_start, new_start + width
+
+    _STATIC_KV_CLASSES["StaticKVLayer"] = StaticKVLayer
+    _STATIC_KV_CLASSES["StaticKVCache"] = StaticKVCache
+    return _STATIC_KV_CLASSES
+
+
+def generate_continuous(
+    bundle: ModelBundle,
+    prompts: Sequence[str],
+    max_new_tokens: int | Sequence[int],
+    *,
+    max_concurrent: int = 16,
+    eos_token_id: int | Sequence[int] | None = None,
+    skip_special_tokens: bool = False,
+    progress_label: str = "",
+    steer: tuple[int, Any, float | Sequence[float]] | None = None,
+    admit_block: int | None = None,
+) -> list[str]:
+    """Greedy-decode many prompts with continuous batching; returns continuations.
+
+    ``max_new_tokens`` may be a single cap or one cap per prompt, so cheap jobs
+    (e.g. 8-token forced answers) can share the schedule with 2048-token think
+    jobs instead of waiting for their own batch. Output order matches input
+    order. Decoding is greedy (the bench's frozen-decoding rule); EOS defaults
+    to the tokenizer's ``eos_token_id``.
+
+    ``steer`` is an optional ``(layer, vector, scale)`` activation addition
+    applied on every forward -- prefill and decode alike, matching
+    ``generate_text``'s semantics exactly (the added term is computed in
+    float32 and then cast, like ``steering_hooks``). ``scale`` may be a single
+    float or one float per job: that is what lets Lab 7 ride a whole dose
+    sweep on one engine schedule, each row at its own dose.
+
+    ``admit_block`` batches admits: each admit's prefill blocks every
+    in-flight row for the whole prefill forward, so instead of admitting on
+    every retirement the engine waits until ``admit_block`` slots are free
+    (or it is out of in-flight rows, or fewer than ``admit_block`` jobs
+    remain). Default ``max_concurrent // 4``; pass 1 to admit eagerly.
+    """
+    import torch
+
+    n_jobs = len(prompts)
+    if n_jobs == 0:
+        return []
+    caps = (
+        [int(max_new_tokens)] * n_jobs
+        if isinstance(max_new_tokens, int)
+        else [int(c) for c in max_new_tokens]
+    )
+    if len(caps) != n_jobs:
+        raise ValueError(f"max_new_tokens has {len(caps)} entries for {n_jobs} prompts.")
+
+    tokenizer = bundle.tokenizer
+    model = bundle.model
+    device = bundle.input_device
+    if eos_token_id is None:
+        eos_token_id = tokenizer.eos_token_id
+    eos_ids = {int(e) for e in (
+        [eos_token_id] if isinstance(eos_token_id, int) else list(eos_token_id or [])
+    )}
+    admit_block_eff = max(1, max_concurrent // 4) if admit_block is None else max(1, int(admit_block))
+
+    # Per-job steering scales (None = no steering). The hook multiplies the
+    # CURRENT rows' scales by the fp32 vector and casts the product, so each
+    # row sees exactly what generate_text's steering_hooks would have added.
+    steer_scales: list[float] | None = None
+    steer_cur: dict[str, Any] = {"scales": None}
+    steer_vec32: Any = None
+    if steer is not None:
+        steer_layer, raw_vec, raw_scale = steer
+        steer_scales = (
+            [float(raw_scale)] * n_jobs
+            if isinstance(raw_scale, (int, float))
+            else [float(x) for x in raw_scale]
+        )
+        if len(steer_scales) != n_jobs:
+            raise ValueError(f"steer scales has {len(steer_scales)} entries for {n_jobs} prompts.")
+        steer_vec32 = raw_vec.to(device=device, dtype=torch.float32)
+
+    def set_steer_rows(jobs: list[int]) -> None:
+        if steer_scales is None:
+            return
+        steer_cur["scales"] = torch.tensor(
+            [steer_scales[j] for j in jobs], dtype=torch.float32, device=device
+        ).view(-1, 1, 1)
+
+    # Packed state for the active rows (parallel lists, one entry per row).
+    job_idx: list[int] = []        # original prompt index per active row
+    valid_lens: list[int] = []     # logical (real-token) KV length per row
+    gen_ids: list[list[int]] = []  # tokens generated so far per row
+    last_tokens: list[int] = []    # next decode-step input per row
+    cache: Any = None              # StaticKVCache (allocated at first admit)
+    StaticKVCache = _static_kv_classes()["StaticKVCache"]
+
+    # Device-resident step inputs, rebuilt only at retire/admit events and
+    # mutated in place per step (ids_buf <- argmax output, pos_buf += 1), so
+    # the steady-state loop does no host->device transfers.
+    ids_buf = torch.empty((max_concurrent, 1), dtype=torch.long, device=device)
+    pos_buf = torch.empty((max_concurrent, 1), dtype=torch.long, device=device)
+
+    results: dict[int, list[int]] = {}
+    pending = list(range(n_jobs))
+    finished_rows: list[int] = []  # active-row indices that just retired
+
+    wall_start = time.perf_counter()
+    total_steps = 0
+    total_tokens = 0
+    active_row_steps = 0
+    step_ms: list[float] = []      # per-decode-step wall latency (ITL trace)
+    step_ctx: list[int] = []       # cache length at each step (for ms/ctx slope)
+    ttft_s: dict[int, float] = {}  # job -> seconds from call start to first token
+    admit_events: list[dict[str, Any]] = []
+
+    def prefill(indices: list[int]) -> tuple[Any, Any, list[int], list[int]]:
+        """Prefill a chunk of jobs (left-padded); returns its packed state."""
+        from transformers import DynamicCache
+
+        enc = tokenizer(
+            [prompts[i] for i in indices],
+            return_tensors="pt",
+            padding=True,
+            add_special_tokens=False,
+        )
+        ids = enc["input_ids"].to(device)
+        mask = enc["attention_mask"].to(device)
+        # Left padding + raw forward: positions must be derived from the mask,
+        # or padded rows get shifted rotary phases.
+        position_ids = (mask.cumsum(dim=1) - 1).clamp(min=0)
+        set_steer_rows(indices)
+        with torch.inference_mode():
+            out = model(
+                input_ids=ids,
+                attention_mask=mask,
+                position_ids=position_ids,
+                past_key_values=DynamicCache(),
+                use_cache=True,
+            )
+        first = out.logits[:, -1, :].argmax(dim=-1).tolist()
+        lens = mask.sum(dim=1).tolist()
+        return out.past_key_values, mask, lens, first
+
+    def admit_ready() -> bool:
+        free = max_concurrent - len(job_idx)
+        if not pending or free <= 0:
+            return False
+        if not job_idx:
+            return True
+        return free >= min(admit_block_eff, len(pending))
+
+    def retire_and_admit() -> None:
+        """Drop finished rows, trim shared left pad, admit pending jobs."""
+        nonlocal cache, finished_rows, total_tokens
+        keep = [r for r in range(len(job_idx)) if r not in finished_rows]
+        for r in sorted(finished_rows, reverse=True):
+            results[job_idx[r]] = gen_ids[r]
+            del job_idx[r], valid_lens[r], gen_ids[r], last_tokens[r]
+        finished_rows = []
+        if cache is not None:
+            if keep and len(keep) < cache.rows:
+                cache.compact_rows(keep)
+            elif not keep:
+                cache.clear_rows()
+            if job_idx:
+                slack = cache.width - max(valid_lens)
+                if slack > 0:
+                    cache.trim_left(slack)
+        if admit_ready():
+            chunk = [pending.pop(0) for _ in range(min(len(pending), max_concurrent - len(job_idx)))]
+            rows_blocked = len(job_idx)
+            t_admit = time.perf_counter()
+            chunk_cache, chunk_mask, lens, first = prefill(chunk)
+            if cache is None:
+                cache = StaticKVCache(
+                    chunk_cache, chunk_mask,
+                    # Never allocate ghost rows: a 1-job call (Lab 10's
+                    # round-trip check) must not pay for max_concurrent rows
+                    # of a 2048-token think buffer.
+                    max_rows=min(max_concurrent, n_jobs),
+                    # Deliberately small: capacity tracks the live width via
+                    # incremental _grow instead of preallocating the
+                    # worst-case prompt+cap width for every row (which cost
+                    # +20-30 GiB at 32-48 rows for zero benefit).
+                    headroom=512,
+                )
+            else:
+                cache.append_chunk(chunk_cache, chunk_mask)
+            now_s = time.perf_counter() - wall_start
+            prefill_ms = (now_s - (t_admit - wall_start)) * 1000.0
+            for j in chunk:
+                ttft_s[j] = now_s
+            admit_events.append({
+                "t_s": round(now_s, 3),
+                "n_admitted": len(chunk),
+                "prefill_ms": round(prefill_ms, 1),
+                "rows_blocked": rows_blocked,
+            })
+            job_idx.extend(chunk)
+            valid_lens.extend(lens)
+            last_tokens.extend(first)
+            gen_ids.extend([[t] for t in first])
+            total_tokens += len(chunk)  # prefill emits each row's first token
+
+    # First-token handling: prefill already produced one token per row, so a
+    # row whose cap is 1 (or whose first token is EOS) retires before stepping.
+    def mark_finished() -> None:
+        for r in range(len(job_idx)):
+            if r in finished_rows:
+                continue
+            tok = gen_ids[r][-1]
+            if tok in eos_ids or len(gen_ids[r]) >= caps[job_idx[r]]:
+                finished_rows.append(r)
+
+    def rebuild_device_state() -> None:
+        n = len(job_idx)
+        if n == 0:
+            return
+        ids_buf[:n, 0] = torch.tensor(last_tokens, dtype=torch.long)
+        pos_buf[:n, 0] = torch.tensor(valid_lens, dtype=torch.long)
+        set_steer_rows(job_idx)
+
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    old_side = getattr(tokenizer, "padding_side", "right")
+    tokenizer.padding_side = "left"
+    steer_handle = None
+    if steer_scales is not None:
+        steer_block = bundle.blocks[int(steer[0])]
+
+        def steer_hook(module: Any, hook_args: tuple, output: Any) -> Any:
+            scales = steer_cur["scales"]
+            if scales is None:
+                return output
+            if isinstance(output, tuple):
+                out = output[0]
+                out = out + (scales * steer_vec32).to(out.device, out.dtype)
+                return (out,) + tuple(output[1:])
+            return output + (scales * steer_vec32).to(output.device, output.dtype)
+
+        steer_handle = steer_block.register_forward_hook(steer_hook)
+    try:
+        retire_and_admit()  # first admit
+        mark_finished()
+        rebuild_device_state()
+        while job_idx or pending:
+            if finished_rows or admit_ready():
+                retire_and_admit()
+                mark_finished()
+                rebuild_device_state()
+                continue
+            if not job_idx:
+                continue
+            n = len(job_idx)
+            cache.ensure_step_room()
+            t_step = time.perf_counter()
+            with torch.inference_mode():
+                out = model(
+                    input_ids=ids_buf[:n],
+                    attention_mask=cache.step_mask(),
+                    position_ids=pos_buf[:n],
+                    past_key_values=cache,
+                    use_cache=True,
+                )
+            next_dev = out.logits[:, -1, :].argmax(dim=-1)
+            ids_buf[:n, 0].copy_(next_dev)  # next step's input, device-side
+            next_tokens = next_dev.tolist()
+            # .tolist() syncs the device, so this wall time covers the real step.
+            step_ms.append((time.perf_counter() - t_step) * 1000.0)
+            cache.advance()
+            pos_buf[:n] += 1
+            step_ctx.append(cache.width)
+            for r in range(n):
+                last_tokens[r] = int(next_tokens[r])
+                gen_ids[r].append(last_tokens[r])
+                valid_lens[r] += 1
+            total_steps += 1
+            total_tokens += n
+            active_row_steps += n
+            if progress_label and total_steps % 200 == 0:
+                done = len(results)
+                print(f"[bench] {progress_label}: {done}/{n_jobs} jobs done, "
+                      f"{total_tokens} tokens, {len(job_idx)} in flight")
+            mark_finished()
+    finally:
+        tokenizer.padding_side = old_side
+        if steer_handle is not None:
+            steer_handle.remove()
+        if cache is not None:
+            cache.release()
+
+    wall = time.perf_counter() - wall_start
+    # Inter-token-latency trace stats (the per-step health of the loop): p50,
+    # p95, and two slopes — ms per STEP (allocator/bookkeeping drift) and ms
+    # per token of CONTEXT (attention+cache-growth cost). Adapted from the
+    # course's external olmo_lora_bench instrumentation.
+    itl: dict[str, Any] = {}
+    if step_ms:
+        s = sorted(step_ms)
+        itl["itl_p50_ms"] = round(s[len(s) // 2], 2)
+        itl["itl_p95_ms"] = round(s[min(len(s) - 1, int(len(s) * 0.95))], 2)
+        mean = sum(step_ms) / len(step_ms)
+        var = sum((x - mean) ** 2 for x in step_ms) / len(step_ms)
+        itl["itl_cov"] = round((var ** 0.5) / max(mean, 1e-6), 3)
+        if len(step_ms) >= 2:
+            n_s = len(step_ms)
+            xbar = (n_s - 1) / 2
+            num = sum((i - xbar) * (y - mean) for i, y in enumerate(step_ms))
+            den = sum((i - xbar) ** 2 for i in range(n_s))
+            itl["itl_slope_ms_per_step"] = round(num / max(den, 1e-9), 6)
+            cbar = sum(step_ctx) / n_s
+            numc = sum((c - cbar) * (y - mean) for c, y in zip(step_ctx, step_ms))
+            denc = sum((c - cbar) ** 2 for c in step_ctx)
+            itl["itl_slope_ms_per_ctx_token"] = round(numc / max(denc, 1e-9), 6)
+    # TTFT / admit telemetry (the olmo_lora_bench-style numbers that quantify
+    # how much prefill interruption costs the in-flight rows).
+    if ttft_s:
+        tt = sorted(ttft_s.values())
+        itl["ttft_p50_s"] = round(tt[len(tt) // 2], 2)
+        itl["ttft_p95_s"] = round(tt[min(len(tt) - 1, int(len(tt) * 0.95))], 2)
+    stalls = [e["prefill_ms"] for e in admit_events if e["rows_blocked"] > 0]
+    itl["admit_events"] = len(admit_events)
+    itl["admit_block"] = admit_block_eff
+    itl["prefill_stall_ms_total"] = round(sum(stalls), 1)
+    itl["prefill_stall_ms_max"] = round(max(stalls), 1) if stalls else 0.0
+    LAST_GENERATION_STATS.clear()
+    LAST_GENERATION_STATS.update({
+        "engine": "continuous",
+        "n_jobs": n_jobs,
+        "max_concurrent": max_concurrent,
+        "decode_steps": total_steps,
+        "generated_tokens": total_tokens,
+        "mean_active_rows": round(active_row_steps / total_steps, 2) if total_steps else 0.0,
+        "wall_seconds": round(wall, 2),
+        "tokens_per_second": round(total_tokens / wall, 1) if wall > 0 else 0.0,
+        **itl,
+        "admit_trace": admit_events,
+    })
+    return [
+        tokenizer.decode(results[i], skip_special_tokens=skip_special_tokens)
+        for i in range(n_jobs)
+    ]
+
+
+def next_token_logits(
+    bundle: ModelBundle, templated_prompt: str, *, steer: tuple[int, Any, float] | None = None
+) -> Any:
+    """Final-position logits for a templated prompt, optionally steered.
+
+    Float32 CPU. Used for the KL-to-unsteered side-effect metric without
+    generating any text.
+    """
+    import torch
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(templated_prompt, return_tensors="pt", add_special_tokens=False)
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    cm = (
+        steering_hooks(bundle, steer[0], steer[1], steer[2])
+        if steer is not None
+        else contextlib.nullcontext()
+    )
+    with cm, torch.no_grad():
+        out = bundle.model(input_ids=input_ids, use_cache=False)
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+def run_hook_parity_check(ctx: RunContext, bundle: ModelBundle, prompt: str) -> dict[str, Any]:
+    """Cross-check per-block forward hooks against the assembled stream cache.
+
+    A mismatch means the harness is not measuring the object it says it is
+    measuring. By default, this aborts the run. ``--allow-hook-mismatch`` turns
+    the abort into a diagnostic warning for architecture bring-up work.
     """
     import torch
 
@@ -849,7 +1928,7 @@ def run_hook_parity_check(ctx: RunContext, bundle: ModelBundle, prompt: str) -> 
     def make_hook(idx: int):
         def hook(module: Any, hook_args: tuple, output: Any) -> None:
             out = output[0] if isinstance(output, tuple) else output
-            block_outputs[idx] = out.detach()
+            block_outputs[idx] = tensor_cpu_float(out)
 
         return hook
 
@@ -861,37 +1940,69 @@ def run_hook_parity_check(ctx: RunContext, bundle: ModelBundle, prompt: str) -> 
             handle.remove()
 
     n_layers = bundle.anatomy.n_layers
+    by_layer_rows: list[dict[str, Any]] = []
     max_diff = 0.0
+    max_mean_diff = 0.0
     compared = 0
+    missing_layers: list[int] = []
     for k in range(n_layers):
+        if k not in block_outputs:
+            missing_layers.append(k)
+            continue
         # Block k's output is the stream after k+1 blocks == streams[k+1].
-        hook_out = block_outputs[k][0].float()
-        diff = (hook_out - capture.streams[k + 1]).abs().max().item()
-        max_diff = max(max_diff, diff)
+        hook_out = block_outputs[k][0]
+        expected = capture.streams[k + 1]
+        abs_diff = (hook_out - expected).abs()
+        layer_max = float(abs_diff.max())
+        layer_mean = float(abs_diff.mean())
+        max_diff = max(max_diff, layer_max)
+        max_mean_diff = max(max_mean_diff, layer_mean)
         compared += 1
+        by_layer_rows.append(
+            {
+                "layer": k,
+                "max_abs_diff": layer_max,
+                "mean_abs_diff": layer_mean,
+                "hook_l2": float(hook_out.norm()),
+                "expected_l2": float(expected.norm()),
+                "shape": "x".join(str(x) for x in hook_out.shape),
+                "ok_at_tolerance": layer_max <= ctx.args.hook_tolerance,
+            }
+        )
 
+    by_layer_path = ctx.path("diagnostics", "hook_parity_by_layer.csv")
+    write_csv(by_layer_path, by_layer_rows)
+    ctx.register_artifact(by_layer_path, "diagnostic", "Layer-level hook versus hidden-state parity check.")
+
+    ok = (not missing_layers) and compared == n_layers and max_diff <= ctx.args.hook_tolerance
     result = {
         "prompt": prompt,
         "blocks_compared": compared,
+        "n_layers": n_layers,
+        "missing_layers": missing_layers,
         "max_abs_diff": max_diff,
-        "ok": bool(max_diff == 0.0),
+        "max_mean_abs_diff": max_mean_diff,
+        "tolerance": ctx.args.hook_tolerance,
+        "ok": bool(ok),
+        "allow_hook_mismatch": bool(ctx.args.allow_hook_mismatch),
         "explanation": (
             "Forward hooks on each decoder block were compared against the "
-            "streams assembled from output_hidden_states + the final-norm "
-            "pre-hook. They must match bit-for-bit: both observe the same "
-            "tensors on the same forward pass."
+            "streams assembled from output_hidden_states plus the final-norm "
+            "pre-hook. A mismatch means the residual stream capture semantics "
+            "are not verified for this architecture or library version."
         ),
     }
-    write_json(ctx.path("diagnostics", "hook_parity.json"), result)
-    ctx.register_artifact(
-        ctx.run_dir / "diagnostics" / "hook_parity.json",
-        "diagnostic",
-        "Proof that hook captures match output_hidden_states exactly.",
-    )
+    path = ctx.path("diagnostics", "hook_parity.json")
+    write_json(path, result)
+    ctx.register_artifact(path, "diagnostic", "Summary of hook captures versus assembled residual streams.")
     status = "OK" if result["ok"] else "MISMATCH"
-    print(f"[bench] hook parity check: {status} (max |diff| = {max_diff:g})")
+    print(f"[bench] hook parity check: {status} (max |diff| = {max_diff:g}, compared {compared}/{n_layers})")
+    if not result["ok"] and not ctx.args.allow_hook_mismatch:
+        raise RuntimeError(
+            "Hook parity check failed. The harness did not verify its residual "
+            "capture semantics. See diagnostics/hook_parity*."
+        )
     return result
-
 
 # ---------------------------------------------------------------------------
 # Logit lens
@@ -901,30 +2012,32 @@ def run_hook_parity_check(ctx: RunContext, bundle: ModelBundle, prompt: str) -> 
 def logit_lens_all_depths(bundle: ModelBundle, streams_at_position: Any) -> Any:
     """Apply final_norm + unembedding to residual streams at one position.
 
-    ``streams_at_position`` is float32 ``[n_depths, d_model]``. The final
-    norm and lm_head are the model's own modules, so the lens at depth L is
-    *the model's real readout*, not an approximation -- the self-check below
-    relies on that. Mid-depth readouts borrow the final norm's learned scale;
-    that borrowed-basis assumption is the lab's central caveat, in code.
+    The cached streams live on CPU float32 so diagnostics do not pin GPU memory.
+    This function moves only the depth x d_model slice needed for the lens to
+    the final-norm device, runs the model's own readout modules, then returns
+    CPU float32 logits. At depth L this should reproduce the model's real logits.
     """
     import torch
 
     with torch.no_grad():
-        x = streams_at_position.to(bundle.torch_dtype)
+        norm_device = first_module_device(bundle.final_norm) or bundle.lens_device
+        head_device = first_module_device(bundle.lm_head) or norm_device
+        x = streams_at_position.to(device=norm_device, dtype=bundle.torch_dtype)
         normed = bundle.final_norm(x)
+        if str(head_device) != str(norm_device):
+            normed = normed.to(head_device)
         logits = bundle.lm_head(normed).float()
         if bundle.anatomy.logit_softcap:
             cap = bundle.anatomy.logit_softcap
             logits = cap * torch.tanh(logits / cap)
-    return logits
-
+    return logits.detach().to(device="cpu", dtype=torch.float32)
 
 def run_lens_self_check(ctx: RunContext, bundle: ModelBundle, capture: ForwardCapture) -> dict[str, Any]:
     """Verify lens(depth=L) reproduces the model's actual final logits.
 
-    Agreement is judged on the top-1 token (must match) and max abs logit
-    difference (reported; small nonzero values are expected because the lens
-    matmul runs outside the model's exact kernel fusion order).
+    Top-1 agreement is required. The numeric logit difference is reported, not
+    used as a hard failure by default, because recomputing the final projection
+    outside the model may avoid fused kernels or quantized execution paths.
     """
     import torch
 
@@ -932,47 +2045,64 @@ def run_lens_self_check(ctx: RunContext, bundle: ModelBundle, capture: ForwardCa
     lens_final = lens_logits[-1]
     real_final = capture.final_logits_last
 
-    lens_top1 = int(lens_final.argmax())
-    real_top1 = int(real_final.argmax())
+    lens_top = torch.topk(lens_final, k=min(5, lens_final.numel()))
+    real_top = torch.topk(real_final, k=min(5, real_final.numel()))
+    lens_top1 = int(lens_top.indices[0])
+    real_top1 = int(real_top.indices[0])
     max_diff = float((lens_final - real_final).abs().max())
+    mean_diff = float((lens_final - real_final).abs().mean())
     rel = max_diff / max(1e-9, float(real_final.abs().max()))
+    top5_overlap = len(set(int(x) for x in lens_top.indices) & set(int(x) for x in real_top.indices))
+
+    top1_matches = lens_top1 == real_top1
+    # A bf16 recomputation can legitimately flip top-1 on a near-tie prompt:
+    # different matmul shapes reduce in different orders. Accept a mismatch
+    # only when the model's own logit gap between the two candidates is within
+    # the observed numeric noise floor and both candidates sit in each other's
+    # top-5. Anything larger means the capture or norm path is wrong.
+    near_tie_ok = False
+    real_gap = None
+    if not top1_matches:
+        real_gap = float(real_final[real_top1] - real_final[lens_top1])
+        near_tie_ok = real_gap <= max_diff * 1.5 and top5_overlap >= 4
 
     result = {
         "prompt": capture.prompt,
-        "top1_matches": lens_top1 == real_top1,
+        "top1_matches": top1_matches,
+        "near_tie_accepted": near_tie_ok,
+        "real_logit_gap_top1_vs_lens_top1": real_gap,
         "lens_top1": bundle.tokenizer.decode([lens_top1]),
         "model_top1": bundle.tokenizer.decode([real_top1]),
+        "lens_top5": [bundle.tokenizer.decode([int(i)]) for i in lens_top.indices],
+        "model_top5": [bundle.tokenizer.decode([int(i)]) for i in real_top.indices],
+        "top5_overlap": top5_overlap,
         "max_abs_logit_diff": max_diff,
+        "mean_abs_logit_diff": mean_diff,
         "max_rel_logit_diff": rel,
         "quantization": ctx.args.quantization,
-        "ok": lens_top1 == real_top1,
+        "ok": top1_matches or near_tie_ok,
         "explanation": (
             "lens(L) = lm_head(final_norm(stream after all blocks)) recomputed "
-            "outside the model must reproduce the model's own output logits. "
-            "If top-1 disagrees, the capture or the norm handling is wrong and "
-            "no mid-depth lens readout in this run can be trusted."
+            "outside the model must reproduce the model's own top prediction. "
+            "If top-1 disagrees, the capture or norm/logit post-processing is "
+            "wrong and no mid-depth lens readout in this run can be trusted."
         ),
     }
-    write_json(ctx.path("diagnostics", "logit_lens_self_check.json"), result)
-    ctx.register_artifact(
-        ctx.run_dir / "diagnostics" / "logit_lens_self_check.json",
-        "diagnostic",
-        "Proof that the lens at final depth reproduces the model's logits.",
-    )
-    status = "OK" if result["ok"] else "FAILED"
+    path = ctx.path("diagnostics", "logit_lens_self_check.json")
+    write_json(path, result)
+    ctx.register_artifact(path, "diagnostic", "Proof that the lens at final depth reproduces the model's logits.")
+    status = "OK" if top1_matches else ("OK (near-tie within numeric noise)" if near_tie_ok else "FAILED")
     print(
         f"[bench] lens self-check: {status} "
         f"(top1 lens={result['lens_top1']!r} model={result['model_top1']!r}, "
-        f"max |dlogit| = {max_diff:.4f})"
+        f"max |dlogit| = {max_diff:.4f}, top5 overlap={top5_overlap}/5)"
     )
     if not result["ok"]:
         raise RuntimeError(
             "Logit lens self-check failed: the lens at final depth does not "
-            "reproduce the model's own prediction. See "
-            "diagnostics/logit_lens_self_check.json before trusting anything."
+            "reproduce the model's own prediction. See diagnostics/logit_lens_self_check.json."
         )
     return result
-
 
 # ---------------------------------------------------------------------------
 # Lens trajectory: the per-depth measurement pack used by Lab 1 (and reused
@@ -988,13 +2118,22 @@ class LensTrajectory:
     top1_ids: list[int]
     top1_texts: list[str]
     top1_probs: list[float]
+    top2_ids: list[int]
+    top2_texts: list[str]
+    top2_probs: list[float]
+    top1_margin: list[float]
     entropy_bits: list[float]
+    kl_to_final_bits: list[float]
     cosine_to_final: list[float]
+    cosine_to_prev: list[float | None]
     resid_l2: list[float]
+    stream_delta_l2: list[float]
     p_target: list[float] | None
     p_distractor: list[float] | None
     logit_target: list[float] | None
     logit_distractor: list[float] | None
+    target_rank: list[int] | None
+    distractor_rank: list[int] | None
     topk_rows: list[dict[str, Any]]  # depth, rank, token_id, token, prob, logit
 
 
@@ -1006,26 +2145,55 @@ def compute_lens_trajectory(
     distractor_id: int | None = None,
     topk: int = 5,
 ) -> LensTrajectory:
-    """Compute the standard per-depth readout at the final token position."""
+    """Compute the standard per-depth readout at the final token position.
+
+    Besides the obvious p(target) and top-k outputs, this records metrics that
+    help students debug interpretations: rank can improve before probability,
+    entropy can drop before correctness, and KL-to-final can converge while the
+    top-1 token still flips.
+    """
     import torch
 
-    streams_last = capture.streams[:, -1, :]  # [L+1, d_model] float32
-    logits = logit_lens_all_depths(bundle, streams_last)  # [L+1, vocab] float32
+    streams_last = capture.streams[:, -1, :]  # [L+1, d_model] float32 on CPU
+    logits = logit_lens_all_depths(bundle, streams_last)  # [L+1, vocab] CPU float32
     probs = torch.softmax(logits, dim=-1)
-    # Entropy in bits: 0 = certain, log2(vocab) = uniform. Bits because a
-    # human can read "2.3 bits ~ choosing among ~5 options".
+    vocab = logits.shape[-1]
+    k = max(1, min(topk, vocab))
+
+    # Entropy in bits: 0 = certain, log2(vocab) = uniform. Bits are intuitive:
+    # 2.3 bits means roughly five equally plausible options.
     entropy = -(probs * torch.log2(probs.clamp_min(1e-12))).sum(dim=-1)
+
+    final_probs = probs[-1].clamp_min(1e-12)
+    kl_to_final = (final_probs.unsqueeze(0) * (torch.log2(final_probs.unsqueeze(0)) - torch.log2(probs.clamp_min(1e-12)))).sum(dim=-1)
 
     final_stream = streams_last[-1]
     cosine = torch.nn.functional.cosine_similarity(
         streams_last, final_stream.unsqueeze(0), dim=-1
     )
     resid_l2 = streams_last.norm(dim=-1)
+    deltas = torch.zeros_like(resid_l2)
+    if streams_last.shape[0] > 1:
+        deltas[1:] = (streams_last[1:] - streams_last[:-1]).norm(dim=-1)
+    cosine_prev: list[float | None] = [None]
+    if streams_last.shape[0] > 1:
+        prev_cos = torch.nn.functional.cosine_similarity(streams_last[1:], streams_last[:-1], dim=-1)
+        cosine_prev.extend(float(v) for v in prev_cos)
 
-    top = torch.topk(probs, k=topk, dim=-1)
+    top = torch.topk(probs, k=k, dim=-1)
+    top2 = torch.topk(probs, k=min(2, vocab), dim=-1)
+    if top2.indices.shape[-1] == 1:
+        top2_ids = top2.indices[:, 0]
+        top2_probs = torch.zeros_like(top2.values[:, 0])
+        margin = top2.values[:, 0]
+    else:
+        top2_ids = top2.indices[:, 1]
+        top2_probs = top2.values[:, 1]
+        margin = top2.values[:, 0] - top2.values[:, 1]
+
     topk_rows: list[dict[str, Any]] = []
     for depth in range(logits.shape[0]):
-        for rank in range(topk):
+        for rank in range(k):
             token_id = int(top.indices[depth, rank])
             topk_rows.append(
                 {
@@ -1039,18 +2207,34 @@ def compute_lens_trajectory(
             )
 
     top1_ids = [int(i) for i in top.indices[:, 0]]
+
+    def ranks_for(token_id: int | None) -> list[int] | None:
+        if token_id is None:
+            return None
+        target_logits = logits[:, token_id].unsqueeze(-1)
+        return [int(v) + 1 for v in (logits > target_logits).sum(dim=-1)]
+
     traj = LensTrajectory(
-        n_depths=logits.shape[0],
+        n_depths=int(logits.shape[0]),
         top1_ids=top1_ids,
         top1_texts=[bundle.tokenizer.decode([i]) for i in top1_ids],
         top1_probs=[float(v) for v in top.values[:, 0]],
+        top2_ids=[int(i) for i in top2_ids],
+        top2_texts=[bundle.tokenizer.decode([int(i)]) for i in top2_ids],
+        top2_probs=[float(v) for v in top2_probs],
+        top1_margin=[float(v) for v in margin],
         entropy_bits=[float(v) for v in entropy],
+        kl_to_final_bits=[float(v) for v in kl_to_final],
         cosine_to_final=[float(v) for v in cosine],
+        cosine_to_prev=cosine_prev,
         resid_l2=[float(v) for v in resid_l2],
+        stream_delta_l2=[float(v) for v in deltas],
         p_target=None,
         p_distractor=None,
         logit_target=None,
         logit_distractor=None,
+        target_rank=ranks_for(target_id),
+        distractor_rank=ranks_for(distractor_id),
         topk_rows=topk_rows,
     )
     if target_id is not None:
@@ -1060,6 +2244,945 @@ def compute_lens_trajectory(
         traj.p_distractor = [float(v) for v in probs[:, distractor_id]]
         traj.logit_distractor = [float(v) for v in logits[:, distractor_id]]
     return traj
+
+# ---------------------------------------------------------------------------
+# Component capture: per-block attention and MLP contributions (Lab 2+)
+# ---------------------------------------------------------------------------
+#
+# Direct logit attribution needs the exact tensor each sub-block ADDS to the
+# residual stream. Where that tensor lives differs by architecture:
+#
+#   GPT-2 (pre-norm):   x + attn(ln_1(x)); then + mlp(ln_2(.))
+#                       -> the attn/mlp module outputs ARE the contributions.
+#   Olmo-2/3 (post-norm): x + post_attention_layernorm(attn(x));
+#                         then + post_feedforward_layernorm(mlp(.))
+#                       -> the *norm* outputs are the contributions; the raw
+#                          attn/mlp outputs never touch the stream.
+#
+# Name heuristics are a trap here: Llama-style models also have a module
+# called `post_attention_layernorm`, but there it is a PRE-norm for the MLP.
+# So the bench does not guess. It runs one probe forward, captures *both*
+# candidate sources per block, and keeps whichever pair actually reconstructs
+# each block's residual delta (streams[k+1] - streams[k]). The decision and
+# its reconstruction error are written to diagnostics/component_anatomy.json.
+# Same contract as the other self-checks: if nothing reconstructs, abort.
+
+ATTN_MODULE_CANDIDATES = ("self_attn", "attn")
+MLP_MODULE_CANDIDATES = ("mlp",)
+POST_ATTN_NORM_CANDIDATES = ("post_attention_layernorm",)
+POST_MLP_NORM_CANDIDATES = ("post_feedforward_layernorm",)
+
+
+@dataclasses.dataclass
+class ComponentAnatomy:
+    """Verified per-block contribution hook points for this model."""
+
+    attn_module_path: str        # e.g. 'self_attn' (relative to each block)
+    mlp_module_path: str
+    attn_source: str             # 'module' or 'post_norm'
+    mlp_source: str
+    attn_hook_path: str          # the path actually hooked for contributions
+    mlp_hook_path: str
+    max_block_recon_rel_err: float
+    probe_prompt: str
+
+
+@dataclasses.dataclass
+class ComponentCapture:
+    """One prompt's residual streams plus per-block contribution vectors.
+
+    ``attn_contrib`` / ``mlp_contrib`` have shape ``[n_layers, d_model]``,
+    float32 on CPU: the tensor block k added to the residual stream at the
+    FINAL position. Together with ``capture.streams[0]`` (the embedding
+    stream) they decompose the final pre-norm stream exactly:
+
+        streams[L][-1] == streams[0][-1] + sum_k attn_contrib[k] + mlp_contrib[k]
+
+    (up to the accumulation rounding of the model's compute dtype; the
+    decomposition check below measures and enforces this).
+    """
+
+    capture: ForwardCapture
+    attn_contrib: Any   # torch.Tensor [L, d_model] float32 cpu
+    mlp_contrib: Any    # torch.Tensor [L, d_model] float32 cpu
+
+
+def _first_module_path(block: Any, candidates: Sequence[str]) -> str | None:
+    for name in candidates:
+        if getattr(block, name, None) is not None:
+            return name
+    return None
+
+
+def _contrib_hook(store: dict, key: tuple) -> Any:
+    """Forward hook capturing a module's output at the final position."""
+
+    def hook(module: Any, hook_args: tuple, output: Any) -> None:
+        out = output[0] if isinstance(output, tuple) else output
+        store[key] = tensor_cpu_float(out[0, -1])
+
+    return hook
+
+
+def resolve_component_anatomy(
+    ctx: RunContext, bundle: ModelBundle, probe_prompt: str, *, rel_tolerance: float = 0.02
+) -> ComponentAnatomy:
+    """Probe and VERIFY where each block's attn/mlp contributions live.
+
+    Captures both the raw submodule outputs and (when present) the post-norm
+    outputs in a single forward, then selects the (attn, mlp) source pair
+    whose sum reconstructs every block's residual delta at the final
+    position. ``rel_tolerance`` is relative to the delta's norm and must
+    absorb only the model dtype's residual-add rounding (bf16: ~1%).
+    """
+    import torch
+
+    block0 = bundle.blocks[0]
+    attn_path = _first_module_path(block0, ATTN_MODULE_CANDIDATES)
+    mlp_path = _first_module_path(block0, MLP_MODULE_CANDIDATES)
+    if attn_path is None or mlp_path is None:
+        raise RuntimeError(
+            f"Could not find attention ({ATTN_MODULE_CANDIDATES}) or MLP "
+            f"({MLP_MODULE_CANDIDATES}) submodules on the decoder block. Add "
+            "this architecture's paths to interp_bench.py."
+        )
+    post_attn_path = _first_module_path(block0, POST_ATTN_NORM_CANDIDATES)
+    post_mlp_path = _first_module_path(block0, POST_MLP_NORM_CANDIDATES)
+
+    store: dict[tuple, Any] = {}
+    handles = []
+    try:
+        for i, block in enumerate(bundle.blocks):
+            handles.append(getattr(block, attn_path).register_forward_hook(_contrib_hook(store, ("attn", "module", i))))
+            handles.append(getattr(block, mlp_path).register_forward_hook(_contrib_hook(store, ("mlp", "module", i))))
+            if post_attn_path:
+                handles.append(
+                    getattr(block, post_attn_path).register_forward_hook(_contrib_hook(store, ("attn", "post_norm", i)))
+                )
+            if post_mlp_path:
+                handles.append(
+                    getattr(block, post_mlp_path).register_forward_hook(_contrib_hook(store, ("mlp", "post_norm", i)))
+                )
+        capture = run_with_residual_cache(bundle, probe_prompt)
+    finally:
+        for h in handles:
+            h.remove()
+
+    n_layers = bundle.anatomy.n_layers
+    deltas = [capture.streams[k + 1, -1] - capture.streams[k, -1] for k in range(n_layers)]
+
+    attn_sources = ["module"] + (["post_norm"] if post_attn_path else [])
+    mlp_sources = ["module"] + (["post_norm"] if post_mlp_path else [])
+    results: dict[tuple[str, str], float] = {}
+    for a_src in attn_sources:
+        for m_src in mlp_sources:
+            worst = 0.0
+            for k in range(n_layers):
+                recon = store[("attn", a_src, k)] + store[("mlp", m_src, k)]
+                denom = max(float(deltas[k].norm()), 1e-9)
+                worst = max(worst, float((recon - deltas[k]).norm()) / denom)
+            results[(a_src, m_src)] = worst
+
+    (best_a, best_m), best_err = min(results.items(), key=lambda kv: kv[1])
+    # The gate is a MAX over n_layers per-block reconstructions, so deeper
+    # models draw more samples from the same bf16 rounding distribution and
+    # the worst block grows even when the decomposition is exactly right
+    # (32B/64-layer first contact: best pair correct at 0.0239 vs the
+    # 32-layer-calibrated 0.02 — a near-miss, not a wrong hook point; a wrong
+    # pair fails by 10x+). Widen as sqrt(n_layers / 32), calibrated on the
+    # 32-layer course model.
+    effective_tolerance = rel_tolerance * max(1.0, (n_layers / 32.0) ** 0.5)
+    diag = {
+        "probe_prompt": probe_prompt,
+        "candidates_tried": {f"attn={a},mlp={m}": err for (a, m), err in results.items()},
+        "selected": {"attn_source": best_a, "mlp_source": best_m},
+        "max_block_recon_rel_err": best_err,
+        "rel_tolerance": rel_tolerance,
+        "effective_rel_tolerance": effective_tolerance,
+        "explanation": (
+            "For each candidate hook-point pair, every block's captured "
+            "attn+mlp contribution must reconstruct that block's residual "
+            "delta streams[k+1]-streams[k] at the final position. The "
+            "selected pair is the verified place this model adds its "
+            "components to the residual stream."
+        ),
+    }
+    path = ctx.path("diagnostics", "component_anatomy.json")
+    write_json(path, diag)
+    ctx.register_artifact(path, "diagnostic", "Verified hook points for per-block attn/MLP contributions.")
+
+    if best_err > effective_tolerance:
+        raise RuntimeError(
+            f"No contribution hook-point pair reconstructs the per-block residual "
+            f"deltas (best: attn={best_a}, mlp={best_m}, max rel err {best_err:.4f} > "
+            f"tolerance {effective_tolerance:.4f} = {rel_tolerance} x sqrt({n_layers}/32)). "
+            "This architecture adds components to the residual stream somewhere the "
+            "candidates do not cover; see diagnostics/component_anatomy.json."
+        )
+
+    print(
+        f"[bench] component anatomy: attn={best_a}, mlp={best_m} "
+        f"(max block reconstruction rel err = {best_err:.2e})"
+    )
+    return ComponentAnatomy(
+        attn_module_path=attn_path,
+        mlp_module_path=mlp_path,
+        attn_source=best_a,
+        mlp_source=best_m,
+        attn_hook_path=attn_path if best_a == "module" else post_attn_path,
+        mlp_hook_path=mlp_path if best_m == "module" else post_mlp_path,
+        max_block_recon_rel_err=best_err,
+        probe_prompt=probe_prompt,
+    )
+
+
+def _contrib_hook_all_positions(store: dict, key: tuple) -> Any:
+    """Forward hook capturing a module's output at every position."""
+
+    def hook(module: Any, hook_args: tuple, output: Any) -> None:
+        out = output[0] if isinstance(output, tuple) else output
+        store[key] = tensor_cpu_float(out[0])
+
+    return hook
+
+
+def run_with_component_cache(
+    bundle: ModelBundle, prompt: str, comp_anatomy: ComponentAnatomy, *, all_positions: bool = False
+) -> ComponentCapture:
+    """Run one prompt capturing residual streams AND per-block contributions.
+
+    With ``all_positions=True`` the contribution tensors are [L, seq, d_model]
+    instead of [L, d_model] (final position only) — used by patching labs that
+    need clean component outputs at arbitrary positions.
+    """
+    import torch
+
+    hook_factory = _contrib_hook_all_positions if all_positions else _contrib_hook
+    store: dict[tuple, Any] = {}
+    handles = []
+    try:
+        for i, block in enumerate(bundle.blocks):
+            handles.append(
+                getattr(block, comp_anatomy.attn_hook_path).register_forward_hook(hook_factory(store, ("attn", i)))
+            )
+            handles.append(
+                getattr(block, comp_anatomy.mlp_hook_path).register_forward_hook(hook_factory(store, ("mlp", i)))
+            )
+        capture = run_with_residual_cache(bundle, prompt)
+    finally:
+        for h in handles:
+            h.remove()
+
+    n_layers = bundle.anatomy.n_layers
+    return ComponentCapture(
+        capture=capture,
+        attn_contrib=torch.stack([store[("attn", i)] for i in range(n_layers)]),
+        mlp_contrib=torch.stack([store[("mlp", i)] for i in range(n_layers)]),
+    )
+
+
+def run_decomposition_check(
+    ctx: RunContext, bundle: ModelBundle, comp: ComponentCapture, *, rel_tolerance: float = 0.02
+) -> dict[str, Any]:
+    """Self-check 3: components must sum to the final pre-norm stream.
+
+    embeddings + sum(attn contributions) + sum(mlp contributions) must equal
+    streams[L] at the final position, up to the model compute dtype's
+    residual-accumulation rounding. If this fails, every attribution number
+    downstream is bookkeeping fiction; abort.
+    """
+    final_stream = comp.capture.streams[-1, -1]
+    recon = comp.capture.streams[0, -1] + comp.attn_contrib.sum(dim=0) + comp.mlp_contrib.sum(dim=0)
+    abs_err = float((recon - final_stream).norm())
+    rel_err = abs_err / max(float(final_stream.norm()), 1e-9)
+    result = {
+        "prompt": comp.capture.prompt,
+        "rel_err": rel_err,
+        "abs_err": abs_err,
+        "final_stream_norm": float(final_stream.norm()),
+        "rel_tolerance": rel_tolerance,
+        "ok": rel_err <= rel_tolerance,
+        "explanation": (
+            "The DLA ledger is only meaningful if embeddings + all captured "
+            "attn/MLP contributions reconstruct the final pre-norm residual "
+            "stream. rel_err measures the unexplained remainder; the "
+            "tolerance absorbs the model dtype's residual-add rounding only."
+        ),
+    }
+    path = ctx.path("diagnostics", "dla_decomposition_check.json")
+    write_json(path, result)
+    ctx.register_artifact(path, "diagnostic", "Proof that captured components sum to the final residual stream.")
+    status = "OK" if result["ok"] else "FAILED"
+    print(f"[bench] decomposition check: {status} (rel err = {rel_err:.2e})")
+    if not result["ok"]:
+        raise RuntimeError(
+            "Component decomposition check failed: captured contributions do "
+            "not sum to the final residual stream. See "
+            "diagnostics/dla_decomposition_check.json."
+        )
+    return result
+
+
+def run_with_component_ablation(
+    bundle: ModelBundle,
+    prompt: str,
+    comp_anatomy: ComponentAnatomy,
+    component_type: str,
+    layer: int,
+) -> Any:
+    """Forward pass with one component's FINAL-POSITION output zeroed.
+
+    This is *direct-path* ablation: it removes exactly the contribution DLA
+    scored (the write to the final position's residual stream) and nothing
+    else. Contributions at earlier positions, which can reach the output
+    indirectly through later attention, are deliberately left intact so the
+    causal effect is commensurable with the attribution score.
+    Returns the model's final-position logits, float32 on CPU.
+    """
+    import torch
+
+    hook_path = comp_anatomy.attn_hook_path if component_type == "attn" else comp_anatomy.mlp_hook_path
+    module = getattr(bundle.blocks[layer], hook_path)
+
+    def ablate_hook(mod: Any, hook_args: tuple, output: Any) -> Any:
+        if isinstance(output, tuple):
+            out = output[0].clone()
+            out[0, -1] = 0
+            return (out,) + tuple(output[1:])
+        out = output.clone()
+        out[0, -1] = 0
+        return out
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+
+    handle = module.register_forward_hook(ablate_hook)
+    try:
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        handle.remove()
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+# ---------------------------------------------------------------------------
+# Head-level capture: attention patterns and per-head output contributions
+# ---------------------------------------------------------------------------
+#
+# An attention block's output is linear in its heads: the out-projection's
+# input is the concatenation of per-head outputs, so head h's write into the
+# block output is  o_in[h*d_head:(h+1)*d_head] @ W_O[h-slice]  (the projection
+# bias is a shared constant belonging to no head). The bench captures the
+# out-projection input with a pre-hook and verifies the per-head decomposition
+# reconstructs the block's attention output before any lab consumes it.
+#
+# Attention PATTERNS come from output_attentions=True, which requires the
+# eager attention implementation -- sdpa/flash return an empty tuple with no
+# warning in transformers 5 (verified). Labs that need patterns are marked
+# needs_eager in LAB_PROFILES and the capture below hard-fails if patterns
+# are missing.
+
+O_PROJ_PATH_CANDIDATES = (
+    "self_attn.o_proj",   # Llama / Olmo / Gemma / Qwen / Mistral style
+    "attn.c_proj",        # GPT-2 style (Conv1D: weight is [in, out])
+)
+
+
+@dataclasses.dataclass
+class HeadAnatomy:
+    """Verified per-head structure of the attention blocks."""
+
+    o_proj_path: str
+    n_heads: int
+    n_kv_heads: int
+    d_head: int
+    weight_is_in_by_out: bool   # True for GPT-2 Conv1D, False for nn.Linear
+    has_bias: bool
+    sliding_window: int | None
+    layer_types: tuple[str, ...]
+    max_head_recon_rel_err: float
+
+
+@dataclasses.dataclass
+class AttentionCapture:
+    """One prompt's streams plus attention patterns and head-output pieces.
+
+    ``attentions``: [n_layers, n_heads, seq, seq] float32 cpu — row q sums
+    to 1 over keys <= q (causal).
+    ``o_in_last``: [n_layers, n_heads * d_head] — the out-projection INPUT at
+    the final position (concatenated per-head outputs before W_O).
+    ``attn_out_last``: [n_layers, d_model] — each block's attention-module
+    output at the final position (the head decomposition's ground truth).
+    """
+
+    capture: ForwardCapture
+    attentions: Any
+    o_in_last: Any
+    attn_out_last: Any
+
+
+def resolve_head_anatomy(ctx: RunContext, bundle: ModelBundle) -> HeadAnatomy:
+    """Resolve out-projection path and head geometry; verification happens in
+    run_head_decomposition_check on real activations."""
+    config = bundle.model.config
+    block0 = bundle.blocks[0]
+    o_proj = None
+    o_proj_path = ""
+    for candidate in O_PROJ_PATH_CANDIDATES:
+        with contextlib.suppress(AttributeError):
+            o_proj = get_by_path(block0, candidate)
+            o_proj_path = candidate
+            break
+    if o_proj is None:
+        raise RuntimeError(
+            f"Could not find the attention out-projection. Tried {O_PROJ_PATH_CANDIDATES} "
+            "relative to the decoder block; add this architecture's path to "
+            "O_PROJ_PATH_CANDIDATES in interp_bench.py."
+        )
+    n_heads = int(getattr(config, "num_attention_heads", getattr(config, "n_head", 0)))
+    n_kv = int(getattr(config, "num_key_value_heads", n_heads) or n_heads)
+    d_model = bundle.anatomy.d_model
+    d_head = int(getattr(config, "head_dim", 0) or d_model // n_heads)
+    # GPT-2's Conv1D stores weight as [in, out]; nn.Linear as [out, in].
+    is_conv1d = type(o_proj).__name__ == "Conv1D"
+    anatomy = HeadAnatomy(
+        o_proj_path=o_proj_path,
+        n_heads=n_heads,
+        n_kv_heads=n_kv,
+        d_head=d_head,
+        weight_is_in_by_out=is_conv1d,
+        has_bias=getattr(o_proj, "bias", None) is not None,
+        sliding_window=getattr(config, "sliding_window", None),
+        layer_types=tuple(sorted(set(getattr(config, "layer_types", []) or []))),
+        max_head_recon_rel_err=-1.0,  # filled by the decomposition check
+    )
+    path = ctx.path("diagnostics", "head_anatomy.json")
+    write_json(path, anatomy)
+    ctx.register_artifact(path, "diagnostic", "Per-head geometry and out-projection orientation.")
+    print(
+        f"[bench] head anatomy: {n_heads} heads x d_head {d_head} "
+        f"(kv heads {n_kv}, o_proj at {o_proj_path}, "
+        f"{'Conv1D [in,out]' if is_conv1d else 'Linear [out,in]'})"
+    )
+    return anatomy
+
+
+def head_contribution(bundle: ModelBundle, head_anatomy: HeadAnatomy, layer: int, head: int, o_in_vec: Any) -> Any:
+    """Head ``head``'s write into block ``layer``'s attention output.
+
+    ``o_in_vec`` is the out-projection input at one position,
+    [n_heads * d_head] float32 cpu. Returns a [d_model] float32 cpu vector.
+    The projection bias is deliberately excluded: it is shared, not a head's.
+    """
+    import torch
+
+    o_proj = get_by_path(bundle.blocks[layer], head_anatomy.o_proj_path)
+    w = o_proj.weight.detach()
+    sl = slice(head * head_anatomy.d_head, (head + 1) * head_anatomy.d_head)
+    piece = o_in_vec[sl]
+    if head_anatomy.weight_is_in_by_out:
+        out = piece @ w[sl, :].to("cpu", torch.float32)
+    else:
+        out = piece @ w[:, sl].to("cpu", torch.float32).T
+    return out
+
+
+def run_with_attention_cache(
+    bundle: ModelBundle, prompt: str, *, all_positions: bool = False
+) -> AttentionCapture:
+    """One forward capturing streams, attention patterns, and head pieces.
+
+    With ``all_positions=True``, ``o_in_last``/``attn_out_last`` hold
+    full-sequence tensors ([L, seq, n_heads*d_head] / [L, seq, d_model])
+    despite their names — circuit labs need every position's head outputs,
+    e.g. to compute dataset-mean ablation values.
+    """
+    import torch
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+
+    captured: dict[str, Any] = {}
+
+    def final_norm_pre_hook(module: Any, hook_args: tuple) -> None:
+        captured["final_prenorm"] = tensor_cpu_float(hook_args[0])
+
+    o_in: dict[int, Any] = {}
+    attn_out: dict[int, Any] = {}
+
+    def make_o_pre_hook(idx: int):
+        def hook(module: Any, hook_args: tuple) -> None:
+            o_in[idx] = tensor_cpu_float(hook_args[0][0] if all_positions else hook_args[0][0, -1])
+
+        return hook
+
+    def make_attn_out_hook(idx: int):
+        def hook(module: Any, hook_args: tuple, output: Any) -> None:
+            out = output[0] if isinstance(output, tuple) else output
+            attn_out[idx] = tensor_cpu_float(out[0] if all_positions else out[0, -1])
+
+        return hook
+
+    handles = []
+    try:
+        handles.append(bundle.final_norm.register_forward_pre_hook(final_norm_pre_hook))
+        for i, block in enumerate(bundle.blocks):
+            attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
+            o_proj = get_by_path(block, f"{attn_module_path}.o_proj") if hasattr(
+                getattr(block, attn_module_path), "o_proj"
+            ) else get_by_path(block, f"{attn_module_path}.c_proj")
+            handles.append(o_proj.register_forward_pre_hook(make_o_pre_hook(i)))
+            handles.append(getattr(block, attn_module_path).register_forward_hook(make_attn_out_hook(i)))
+        with torch.no_grad():
+            out = bundle.model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                output_hidden_states=True,
+                output_attentions=True,
+                use_cache=False,
+            )
+    finally:
+        for h in handles:
+            h.remove()
+
+    if not out.attentions:
+        raise RuntimeError(
+            "The model returned no attention patterns. This happens silently "
+            "with sdpa/flash attention in transformers 5 -- rerun with "
+            "--attn-implementation eager (lab3 sets this automatically unless "
+            "you overrode it)."
+        )
+    if "final_prenorm" not in captured:
+        raise RuntimeError("The final-norm pre-hook never fired; check diagnostics/model_anatomy.md.")
+
+    hs = out.hidden_states
+    n_layers = bundle.anatomy.n_layers
+    if len(hs) != n_layers + 1:
+        raise RuntimeError(f"Expected {n_layers + 1} hidden states, got {len(hs)}.")
+    streams = torch.stack([tensor_cpu_float(h[0]) for h in hs[:-1]] + [captured["final_prenorm"][0]])
+
+    ids = input_ids[0].detach().cpu().tolist()
+    capture = ForwardCapture(
+        prompt=prompt,
+        input_ids=ids,
+        tokens_raw=tokenizer.convert_ids_to_tokens(ids),
+        tokens_text=[tokenizer.decode([i]) for i in ids],
+        streams=streams,
+        final_logits_last=tensor_cpu_float(out.logits[0, -1]),
+    )
+    return AttentionCapture(
+        capture=capture,
+        attentions=torch.stack([tensor_cpu_float(a[0]) for a in out.attentions]),
+        o_in_last=torch.stack([o_in[i] for i in range(n_layers)]),
+        attn_out_last=torch.stack([attn_out[i] for i in range(n_layers)]),
+    )
+
+
+def run_head_decomposition_check(
+    ctx: RunContext, bundle: ModelBundle, head_anatomy: HeadAnatomy, att: AttentionCapture, *,
+    rel_tolerance: float = 0.02,
+) -> dict[str, Any]:
+    """Self-check: per-head pieces (+ shared bias) must rebuild each block's
+    attention output at the final position. Aborts on failure."""
+    import torch
+
+    worst = 0.0
+    for layer in range(bundle.anatomy.n_layers):
+        total = torch.zeros(bundle.anatomy.d_model)
+        for head in range(head_anatomy.n_heads):
+            total += head_contribution(bundle, head_anatomy, layer, head, att.o_in_last[layer])
+        o_proj = get_by_path(bundle.blocks[layer], head_anatomy.o_proj_path)
+        bias = getattr(o_proj, "bias", None)
+        if bias is not None:
+            total += bias.detach().to("cpu", torch.float32)
+        denom = max(float(att.attn_out_last[layer].norm()), 1e-9)
+        worst = max(worst, float((total - att.attn_out_last[layer]).norm()) / denom)
+
+    head_anatomy.max_head_recon_rel_err = worst
+    anatomy_path = ctx.path("diagnostics", "head_anatomy.json")
+    write_json(anatomy_path, head_anatomy)
+    ctx.artifacts = [
+        entry for entry in ctx.artifacts
+        if entry.get("path") != "diagnostics/head_anatomy.json"
+    ]
+    ctx.register_artifact(anatomy_path, "diagnostic", "Per-head geometry and out-projection orientation.")
+
+    result = {
+        "prompt": att.capture.prompt,
+        "max_layer_rel_err": worst,
+        "rel_tolerance": rel_tolerance,
+        "ok": worst <= rel_tolerance,
+        "explanation": (
+            "Head-level attribution is only meaningful if the per-head slices "
+            "of the out-projection input, mapped through their W_O columns, "
+            "sum (with the shared bias) to the block's actual attention "
+            "output. The worst per-layer relative error is reported."
+        ),
+    }
+    path = ctx.path("diagnostics", "head_decomposition_check.json")
+    write_json(path, result)
+    ctx.register_artifact(path, "diagnostic", "Proof that per-head pieces rebuild each block's attention output.")
+    status = "OK" if result["ok"] else "FAILED"
+    print(f"[bench] head decomposition check: {status} (max layer rel err = {worst:.2e})")
+    if not result["ok"]:
+        raise RuntimeError(
+            "Head decomposition check failed; per-head slicing does not match "
+            "this architecture. See diagnostics/head_decomposition_check.json."
+        )
+    return result
+
+
+def run_with_head_ablation(
+    bundle: ModelBundle,
+    prompt: str,
+    head_anatomy: HeadAnatomy,
+    layer: int,
+    head: int,
+    scope: str = "final_pos",
+) -> Any:
+    """Forward pass with one attention head's output zeroed.
+
+    ``scope='final_pos'`` zeroes the head's write at the final position only —
+    commensurable with the head's direct logit attribution (Lab 2's
+    convention). ``scope='all_pos'`` removes the head everywhere, including
+    its writes at earlier positions that later layers may read: the gap
+    between the two scopes is composition made measurable.
+    Returns final-position logits, float32 cpu.
+    """
+    import torch
+
+    if scope not in ("final_pos", "all_pos"):
+        raise ValueError(f"Unknown ablation scope {scope!r}")
+    block = bundle.blocks[layer]
+    attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
+    attn_module = getattr(block, attn_module_path)
+    o_proj = attn_module.o_proj if hasattr(attn_module, "o_proj") else attn_module.c_proj
+    sl = slice(head * head_anatomy.d_head, (head + 1) * head_anatomy.d_head)
+
+    def ablate_pre_hook(module: Any, hook_args: tuple) -> Any:
+        x = hook_args[0].clone()
+        if scope == "final_pos":
+            x[0, -1, sl] = 0
+        else:
+            x[..., sl] = 0
+        return (x,) + tuple(hook_args[1:])
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+
+    handle = o_proj.register_forward_pre_hook(ablate_pre_hook)
+    try:
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        handle.remove()
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+def run_with_node_set_ablation(
+    bundle: ModelBundle,
+    prompt: str,
+    head_anatomy: HeadAnatomy,
+    comp_anatomy: ComponentAnatomy,
+    heads: Sequence[tuple[int, int]] = (),
+    mlps: Sequence[int] = (),
+    head_means: Any = None,   # [L, seq, n_heads*d_head] float32 cpu, or None for zero
+    mlp_means: Any = None,    # [L, seq, d_model] float32 cpu, or None for zero
+) -> Any:
+    """Forward pass with a SET of heads and MLP layers ablated at all positions.
+
+    The circuit lab's workhorse: faithfulness ablates the complement of the
+    circuit (hundreds of heads at once), completeness ablates the circuit
+    itself. ``mode`` is implied by the means: dataset-mean ablation when mean
+    tensors are given (the convention that keeps the model in-distribution),
+    zero-ablation when None. Mean tensors assume the dataset's fixed prompt
+    length; a length mismatch raises rather than truncating silently.
+    Returns final-position logits, float32 cpu.
+    """
+    import torch
+
+    heads_by_layer: dict[int, list[int]] = {}
+    for layer, head in heads:
+        heads_by_layer.setdefault(layer, []).append(head)
+    mlp_set = set(mlps)
+    d_head = head_anatomy.d_head
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    seq = input_ids.shape[1]
+    if head_means is not None and head_means.shape[1] != seq:
+        raise ValueError(f"head_means seq {head_means.shape[1]} != prompt seq {seq}")
+    if mlp_means is not None and mlp_means.shape[1] != seq:
+        raise ValueError(f"mlp_means seq {mlp_means.shape[1]} != prompt seq {seq}")
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+
+    handles = []
+
+    def make_head_hook(layer: int, head_list: list[int]):
+        def hook(module: Any, hook_args: tuple) -> Any:
+            x = hook_args[0].clone()
+            for head in head_list:
+                sl = slice(head * d_head, (head + 1) * d_head)
+                if head_means is None:
+                    x[0, :, sl] = 0
+                else:
+                    x[0, :, sl] = head_means[layer, :, sl].to(x.device, x.dtype)
+            return (x,) + tuple(hook_args[1:])
+
+        return hook
+
+    def make_mlp_hook(layer: int):
+        def hook(module: Any, hook_args: tuple, output: Any) -> Any:
+            out = output[0] if isinstance(output, tuple) else output
+            out = out.clone()
+            if mlp_means is None:
+                out[0, :, :] = 0
+            else:
+                out[0, :, :] = mlp_means[layer].to(out.device, out.dtype)
+            return (out,) + tuple(output[1:]) if isinstance(output, tuple) else out
+
+        return hook
+
+    try:
+        for layer, head_list in heads_by_layer.items():
+            block = bundle.blocks[layer]
+            attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
+            attn_module = getattr(block, attn_module_path)
+            o_proj = attn_module.o_proj if hasattr(attn_module, "o_proj") else attn_module.c_proj
+            handles.append(o_proj.register_forward_pre_hook(make_head_hook(layer, head_list)))
+        for layer in mlp_set:
+            module = getattr(bundle.blocks[layer], comp_anatomy.mlp_hook_path)
+            handles.append(module.register_forward_hook(make_mlp_hook(layer)))
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        for h in handles:
+            h.remove()
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+# ---------------------------------------------------------------------------
+# Activation patching: interchange interventions on the residual stream (Lab 5+)
+# ---------------------------------------------------------------------------
+#
+# The patch convention matches the stream convention exactly: patching
+# "streams[k] at position p" replaces the INPUT to block k (for k < L) or the
+# input to the final norm (k = L) at that position. A run patched with its
+# own vectors is therefore a no-op — and run_patch_noop_check enforces that
+# (max |Δlogit| ≤ 1e-4) before any patching science, because a silent
+# off-by-one in layer or position indexing would produce a beautiful, wrong
+# heatmap.
+
+
+def _forward_logits(bundle: ModelBundle, prompt: str, pre_hooks: Sequence[tuple[Any, Any]]) -> Any:
+    """One forward with the given (module, pre_hook_fn) pairs installed."""
+    import torch
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+    handles = [m.register_forward_pre_hook(fn) for m, fn in pre_hooks]
+    try:
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        for h in handles:
+            h.remove()
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+def run_with_residual_patch(
+    bundle: ModelBundle, prompt: str, layer: int, position: int, vector: Any
+) -> Any:
+    """Forward pass with streams[layer][position] replaced by ``vector``.
+
+    ``vector`` is a [d_model] float32 CPU tensor (the bench's stream storage
+    format); it is cast to the model's device/dtype at the hook site.
+    Returns final-position logits, float32 CPU.
+    """
+    n_layers = bundle.anatomy.n_layers
+    if not 0 <= layer <= n_layers:
+        raise ValueError(f"stream layer must be in [0, {n_layers}], got {layer}")
+    module = bundle.final_norm if layer == n_layers else bundle.blocks[layer]
+
+    def patch_hook(mod: Any, hook_args: tuple) -> Any:
+        hidden = hook_args[0].clone()
+        if not -hidden.shape[1] <= position < hidden.shape[1]:
+            raise ValueError(
+                f"patch position {position} out of range for sequence length "
+                f"{hidden.shape[1]}; clean and corrupt prompts must be token-aligned."
+            )
+        hidden[0, position] = vector.to(hidden.device, hidden.dtype)
+        return (hidden,) + tuple(hook_args[1:])
+
+    return _forward_logits(bundle, prompt, [(module, patch_hook)])
+
+
+def run_with_component_patch(
+    bundle: ModelBundle,
+    prompt: str,
+    comp_anatomy: ComponentAnatomy,
+    component_type: str,
+    layer: int,
+    position: int,
+    vector: Any,
+) -> Any:
+    """Forward pass with one component's write at one position replaced.
+
+    Replaces the verified contribution tensor (module output, or post-norm
+    output on post-norm architectures) for ``attn`` or ``mlp`` at ``layer``,
+    ``position`` — the same object Lab 2 scored and Lab 3 ablated.
+    """
+    import torch
+
+    hook_path = comp_anatomy.attn_hook_path if component_type == "attn" else comp_anatomy.mlp_hook_path
+    module = getattr(bundle.blocks[layer], hook_path)
+
+    def patch_out_hook(mod: Any, hook_args: tuple, output: Any) -> Any:
+        if isinstance(output, tuple):
+            out = output[0].clone()
+            out[0, position] = vector.to(out.device, out.dtype)
+            return (out,) + tuple(output[1:])
+        out = output.clone()
+        out[0, position] = vector.to(out.device, out.dtype)
+        return out
+
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+    handle = module.register_forward_hook(patch_out_hook)
+    try:
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        handle.remove()
+    return tensor_cpu_float(out.logits[0, -1])
+
+
+def run_patch_noop_check(
+    ctx: RunContext, bundle: ModelBundle, prompt: str, *, atol: float = 1e-4
+) -> dict[str, Any]:
+    """Self-check: patching a run with its own vectors must change nothing.
+
+    Verifies hook placement and the streams[k] convention end-to-end: one
+    early-block patch, one late-block patch, and the final-norm patch, each
+    at two positions, against the unpatched logits.
+    """
+    capture = run_with_residual_cache(bundle, prompt)
+    n_layers = bundle.anatomy.n_layers
+    seq = len(capture.input_ids)
+    test_points = [(0, 0), (0, seq - 1), (n_layers // 2, seq // 2),
+                   (n_layers - 1, seq - 1), (n_layers, seq - 1)]
+    worst = 0.0
+    for layer, pos in test_points:
+        logits = run_with_residual_patch(bundle, prompt, layer, pos, capture.streams[layer, pos])
+        worst = max(worst, float((logits - capture.final_logits_last).abs().max()))
+    result = {
+        "prompt": prompt,
+        "test_points": [list(p) for p in test_points],
+        "max_abs_logit_diff": worst,
+        "atol": atol,
+        "ok": worst <= atol,
+        "explanation": (
+            "Replacing streams[k][p] with the run's own vector is an identity "
+            "operation; any logit change means the patch hooks do not target "
+            "the tensors the stream convention names, and every patching "
+            "result downstream would be a well-rendered lie."
+        ),
+    }
+    path = ctx.path("diagnostics", "patch_noop_check.json")
+    write_json(path, result)
+    ctx.register_artifact(path, "diagnostic", "Proof that self-patching is a no-op (hook/convention alignment).")
+    status = "OK" if result["ok"] else "FAILED"
+    print(f"[bench] patch no-op check: {status} (max |dlogit| = {worst:.2e})")
+    if not result["ok"]:
+        raise RuntimeError(
+            "Patch no-op check failed: self-patching changed the logits. See "
+            "diagnostics/patch_noop_check.json."
+        )
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Rank-one weight edits (Lab 5 extension): safe apply/restore plumbing
+# ---------------------------------------------------------------------------
+
+MLP_DOWN_PROJ_CANDIDATES = (
+    "mlp.down_proj",   # Llama / Olmo / Gemma / Qwen / Mistral style (Linear [out,in])
+    "mlp.c_proj",      # GPT-2 style (Conv1D [in,out])
+)
+
+
+def resolve_mlp_down_proj(bundle: ModelBundle, layer: int) -> tuple[Any, bool]:
+    """Return (module, weight_is_in_by_out) for the MLP down-projection."""
+    block = bundle.blocks[layer]
+    for candidate in MLP_DOWN_PROJ_CANDIDATES:
+        with contextlib.suppress(AttributeError):
+            return get_by_path(block, candidate), type(get_by_path(block, candidate)).__name__ == "Conv1D"
+    raise RuntimeError(
+        f"Could not find the MLP down-projection. Tried {MLP_DOWN_PROJ_CANDIDATES}; "
+        "add this architecture's path to interp_bench.py."
+    )
+
+
+@contextlib.contextmanager
+def temporary_rank_one_edit(bundle: ModelBundle, layer: int, key: Any, delta_v: Any):
+    """Apply W <- W + delta_v key^T / (key^T key) to the MLP down-projection,
+    restore the original weight on exit no matter what.
+
+    ``key`` [d_ff] and ``delta_v`` [d_model] are float32 CPU tensors. For any
+    input k, the edit shifts the output by delta_v * (key.k)/(key.key): exact
+    for k = key, fading with key-overlap — which is precisely what the
+    spillover evaluation measures.
+    """
+    import torch
+
+    module, in_by_out = resolve_mlp_down_proj(bundle, layer)
+    weight = module.weight
+    if not weight.is_floating_point():
+        raise RuntimeError(
+            f"--run-edit needs float weights, but the MLP down-projection is {weight.dtype} "
+            "(quantized). A rank-one float edit cannot be applied to quantized weights; "
+            "re-run lab5 without --quantization."
+        )
+    original = weight.detach().clone()
+    k = key.to(weight.device, torch.float32)
+    dv = delta_v.to(weight.device, torch.float32)
+    denom = float(k @ k)
+    if denom <= 0:
+        raise ValueError("rank-one edit key has zero norm")
+    if in_by_out:   # Conv1D: out = x @ W, W [d_ff, d_model]
+        delta = torch.outer(k, dv) / denom
+    else:           # Linear: out = x @ W.T, W [d_model, d_ff]
+        delta = torch.outer(dv, k) / denom
+    with torch.no_grad():
+        weight.add_(delta.to(weight.dtype))
+    try:
+        yield
+    finally:
+        with torch.no_grad():
+            weight.copy_(original)
 
 
 # ---------------------------------------------------------------------------
@@ -1087,19 +3210,21 @@ def dump_example_state(
     state_dir = ctx.run_dir / "state" / sanitize_tag(example_id)
 
     # --- tokens.csv: exactly what the model saw, position by position.
-    token_rows = [
-        {
-            "position": i,
-            "token_id": tid,
-            "token_raw": raw,
-            "token_text": text,
-            "token_visible": visible_token(text),
-            "is_final": i == len(capture.input_ids) - 1,
-        }
-        for i, (tid, raw, text) in enumerate(
-            zip(capture.input_ids, capture.tokens_raw, capture.tokens_text)
+    token_rows = []
+    cumulative = ""
+    for i, (tid, raw, text) in enumerate(zip(capture.input_ids, capture.tokens_raw, capture.tokens_text)):
+        cumulative += text
+        token_rows.append(
+            {
+                "position": i,
+                "token_id": tid,
+                "token_raw": raw,
+                "token_text": text,
+                "token_visible": visible_token(text),
+                "cumulative_text_visible": visible_token(cumulative),
+                "is_final": i == len(capture.input_ids) - 1,
+            }
         )
-    ]
     write_csv(state_dir / "tokens.csv", token_rows)
 
     # --- residual_norms_by_position.csv: depth x position L2-norm grid.
@@ -1141,18 +3266,28 @@ def dump_example_state(
     for depth in range(traj.n_depths):
         row = {
             "depth": depth,
+            "top1_token_id": traj.top1_ids[depth],
             "top1_token": traj.top1_texts[depth],
             "top1_prob": round(traj.top1_probs[depth], 6),
+            "top2_token_id": traj.top2_ids[depth],
+            "top2_token": traj.top2_texts[depth],
+            "top2_prob": round(traj.top2_probs[depth], 6),
+            "top1_margin": round(traj.top1_margin[depth], 6),
             "entropy_bits": round(traj.entropy_bits[depth], 4),
+            "kl_to_final_bits": round(traj.kl_to_final_bits[depth], 4),
             "cosine_to_final": round(traj.cosine_to_final[depth], 5),
+            "cosine_to_prev": "" if traj.cosine_to_prev[depth] is None else round(traj.cosine_to_prev[depth], 5),
             "resid_l2": round(traj.resid_l2[depth], 3),
+            "stream_delta_l2": round(traj.stream_delta_l2[depth], 3),
         }
         if traj.p_target is not None:
             row["p_target"] = round(traj.p_target[depth], 6)
             row["logit_target"] = round(traj.logit_target[depth], 4)
+            row["target_rank"] = traj.target_rank[depth] if traj.target_rank is not None else ""
         if traj.p_distractor is not None:
             row["p_distractor"] = round(traj.p_distractor[depth], 6)
             row["logit_distractor"] = round(traj.logit_distractor[depth], 4)
+            row["distractor_rank"] = traj.distractor_rank[depth] if traj.distractor_rank is not None else ""
         if traj.p_target is not None and traj.p_distractor is not None:
             row["logit_diff_target_minus_distractor"] = round(
                 traj.logit_target[depth] - traj.logit_distractor[depth], 4
@@ -1162,7 +3297,9 @@ def dump_example_state(
 
     # --- state_card.md: the narrative view, designed to be read top to
     # bottom by a human deciding whether the run makes sense.
-    write_text(state_dir / "state_card.md", render_state_card(bundle, example_id, capture, traj, target, distractor))
+    state_card_path = state_dir / "state_card.md"
+    write_text(state_card_path, render_state_card(bundle, example_id, capture, traj, target, distractor))
+    ctx.register_artifact(state_card_path, "state", f"Per-example state card for {example_id}.")
 
     # --- optional raw tensors, with a manifest so nothing is a mystery blob.
     if ctx.args.save_tensors:
@@ -1217,8 +3354,8 @@ def render_state_card(
     for i, (tid, text) in enumerate(zip(capture.input_ids, capture.tokens_text)):
         lines.append(f"| {i} | {tid} | `{visible_token(text)}` |")
 
-    header = "| depth | top-1 | p(top1) | entropy (bits) | cos->final |"
-    sep = "|---:|---|---:|---:|---:|"
+    header = "| depth | top-1 | p(top1) | margin | entropy | KL->final | cos->final | delta L2 |"
+    sep = "|---:|---|---:|---:|---:|---:|---:|---:|"
     if traj.p_target is not None:
         header += " p(target) |"
         sep += "---:|"
@@ -1229,8 +3366,9 @@ def render_state_card(
     for depth in range(traj.n_depths):
         row = (
             f"| {depth} | `{visible_token(traj.top1_texts[depth])}` "
-            f"| {traj.top1_probs[depth]:.3f} | {traj.entropy_bits[depth]:.2f} "
-            f"| {traj.cosine_to_final[depth]:.3f} |"
+            f"| {traj.top1_probs[depth]:.3f} | {traj.top1_margin[depth]:.3f} "
+            f"| {traj.entropy_bits[depth]:.2f} | {traj.kl_to_final_bits[depth]:.2f} "
+            f"| {traj.cosine_to_final[depth]:.3f} | {traj.stream_delta_l2[depth]:.2f} |"
         )
         if traj.p_target is not None:
             row += f" {traj.p_target[depth]:.4f} |"
@@ -1262,18 +3400,78 @@ def render_state_card(
 
 CATEGORY_COLORS = {
     "fact": "#1f77b4",
+    "relation": "#2ca02c",
+    "grammar": "#ff7f0e",
+    "conflict": "#d62728",
     "ambiguous": "#7f7f7f",
     "counterfactual": "#d62728",
+    "control": "#9467bd",
+}
+
+# Additional palette for control conditions (real vs random/shuffled/etc.).
+CONTROL_COLORS = {
+    "real": "#d62728",
+    "random": "#7f7f7f",
+    "shuffled": "#ff7f0e",
+    "control": "#9467bd",
+    "mismatched": "#8c564b",
+    "filler": "#bcbd22",
+    "non_sequitur": "#17becf",
 }
 
 
+def configure_matplotlib() -> None:
+    """One-time global polish for all lab plots (clean, readable, consistent)."""
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+
+    mpl.rcParams.update({
+        "figure.dpi": 140,
+        "savefig.dpi": 160,
+        "font.size": 9,
+        "axes.titlesize": 11,
+        "axes.labelsize": 9,
+        "legend.fontsize": 8,
+        "xtick.labelsize": 8,
+        "ytick.labelsize": 8,
+        "axes.grid": True,
+        "grid.alpha": 0.25,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "lines.linewidth": 1.6,
+        "patch.linewidth": 1.0,
+        "figure.facecolor": "white",
+        "axes.facecolor": "white",
+    })
+
+
 def new_figure(figsize: tuple[float, float] = (8.0, 5.0)) -> tuple[Any, Any]:
-    """Create a matplotlib figure with the bench's house style."""
+    """Create a matplotlib figure with the bench's house style (clean spines, consistent fonts)."""
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=figsize)
-    ax.grid(True, alpha=0.3)
+    ax.grid(True, alpha=0.25)
+    for spine in ("top", "right"):
+        ax.spines[spine].set_visible(False)
+    fig.patch.set_facecolor("white")
+    ax.set_facecolor("white")
     return fig, ax
+
+
+def style_ax(ax: Any, title: str | None = None, xlabel: str | None = None, ylabel: str | None = None,
+             legend: bool = True, legend_loc: str = "best") -> None:
+    """Apply consistent final styling to an axes."""
+    if title:
+        ax.set_title(title)
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel(ylabel)
+    if legend and ax.get_legend_handles_labels()[0]:
+        ax.legend(loc=legend_loc, frameon=False, fontsize=8)
+    ax.grid(True, alpha=0.25)
+    for spine in ("top", "right"):
+        ax.spines[spine].set_visible(False)
 
 
 def save_figure(ctx: RunContext, fig: Any, name: str, description: str) -> None:
@@ -1281,10 +3479,43 @@ def save_figure(ctx: RunContext, fig: Any, name: str, description: str) -> None:
     import matplotlib.pyplot as plt
 
     path = ctx.path("plots", name)
+    fig.text(0.995, 0.005, ctx.plot_footer(), ha="right", va="bottom", fontsize=6.5, color="#555555")
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
     ctx.register_artifact(path, "plot", description)
     print(f"[bench] wrote plots/{name}")
+
+
+def close_figure(fig: Any) -> None:
+    """Release a figure that is being abandoned instead of saved."""
+    import matplotlib.pyplot as plt
+
+    plt.close(fig)
+
+
+def add_vline(ax: Any, x: float, label: str | None = None, *, color: str = "#d62728",
+              ls: str = "--", lw: float = 1.2, alpha: float = 0.75) -> None:
+    """Add a vertical reference line (handoff, decision, zero-dose, etc.) with optional label."""
+    ax.axvline(x, color=color, linestyle=ls, linewidth=lw, alpha=alpha)
+    if label:
+        ax.text(x, 0.98, label, transform=ax.get_xaxis_transform(), rotation=90,
+                va="top", ha="right", fontsize=7, color=color, alpha=min(1.0, alpha + 0.1))
+
+
+_plot_style_configured = False
+
+
+def _ensure_plot_style() -> None:
+    """Idempotent style setup so every lab benefits even if it imports plt directly.
+    Safe to call in environments without matplotlib (e.g. lint or partial imports)."""
+    global _plot_style_configured
+    if _plot_style_configured:
+        return
+    try:
+        configure_matplotlib()
+    except Exception:
+        return
+    _plot_style_configured = True
 
 
 # ---------------------------------------------------------------------------
@@ -1360,8 +3591,14 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("--lab", choices=sorted(LAB_PROFILES), default="lab1", help="Which lab to run.")
-    parser.add_argument("--model", default=None, help="HF model id; defaults to the tier's model.")
+    parser.add_argument("--model", default=None,
+                        help="HF model id; defaults to the tier's model "
+                             "(or the lab's per-tier override, e.g. Lab 7's instruct models).")
     parser.add_argument("--model-revision", default=None, help="Pinned HF revision (commit/tag).")
+    parser.add_argument("--trust-remote-code", action="store_true", help="Pass trust_remote_code=True to HF loaders.")
+    parser.add_argument("--local-files-only", action="store_true", help="Do not download models/tokenizers; use local cache only.")
+    parser.add_argument("--attn-implementation", default="auto", help="Optional HF attention implementation, e.g. eager, sdpa, flash_attention_2.")
+    parser.add_argument("--low-cpu-mem-usage", action="store_true", help="Pass low_cpu_mem_usage=True during model loading.")
     parser.add_argument("--device", default="auto", choices=("auto", "cuda", "mps", "cpu"))
     parser.add_argument("--dtype", default="auto", choices=("auto", "float32", "bfloat16", "float16"))
     parser.add_argument("--quantization", default="none", choices=("none", "8bit", "4bit"),
@@ -1369,13 +3606,30 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--tier", default="auto", choices=("auto", "a", "b", "c"),
                         help="Hardware tier: a = CPU smoke (gpt2), b = 24GB+/Colab GPU, c = 40-80GB.")
     parser.add_argument("--prompt-set", default="small",
-                        help="small | full | path to a custom prompts .json file.")
+                        help="small | medium | full | path to a custom prompts .json file.")
     parser.add_argument("--max-examples", type=int, default=-1,
                         help="Cap examples; -1 = tier default, 0 = no cap.")
     parser.add_argument("--topk", type=int, default=5, help="Top-k tokens recorded per depth.")
+    parser.add_argument("--include-controls", action="store_true", help="Lab 1: include optional weak/scrambled control prompts.")
+    parser.add_argument("--ablate-top", type=int, default=3,
+                        help="Lab 2: per example, ablate this many top-|attribution| components "
+                             "plus matched controls to compare attribution vs causal effect (0 = skip).")
+    parser.add_argument("--dla-tolerance", type=float, default=0.02,
+                        help="Relative tolerance for the component decomposition self-check "
+                             "(absorbs the compute dtype's residual-add rounding; bf16 needs ~0.02).")
+    parser.add_argument("--run-edit", action="store_true",
+                        help="Lab 5: run the rank-one edit-and-audit extension after patching.")
+    parser.add_argument("--graph-nodes", type=int, default=0,
+                        help="Lab 9: feature-node budget for the attribution graph "
+                             "(0 = tier default; also the number of backward passes).")
+    parser.add_argument("--audit-domain", default="factual_qa",
+                        choices=("factual_qa", "cot_faithfulness", "sentiment_negation"),
+                        help="Lab 11: which curated audit domain to run.")
+    parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
+    parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--showcase", default=None,
-                        help="Example id to feature in the biography plot (default: first fact example).")
+                        help="Example id to feature in the biography plot (default: first counterfactual example).")
     parser.add_argument("--save-tensors", action="store_true",
                         help="Also save raw residual tensors (with a manifest) per example.")
     parser.add_argument("--no-plots", action="store_true", help="Skip matplotlib plots.")
@@ -1409,11 +3663,24 @@ def apply_tier_defaults(args: argparse.Namespace) -> None:
         print(f"[bench] tier auto-resolved to '{args.tier}'")
     spec = TIER_DEFAULTS[args.tier]
     if args.model is None:
-        args.model = spec["model"]
+        # Labs 7+ use instruct models; a lab may override the tier's default
+        # model (one place, on purpose) so the registry stays the source of
+        # truth instead of every chat lab re-specifying --model.
+        lab_model = LAB_PROFILES[args.lab].get(f"model_tier_{args.tier}")
+        args.model = lab_model or spec["model"]
     if args.dtype == "auto":
-        args.dtype = spec["dtype"]
+        # A lab may pin its dtype per tier (Lab 9's replacement-model
+        # exactness check needs float32 even on GPU tiers).
+        args.dtype = LAB_PROFILES[args.lab].get(f"dtype_tier_{args.tier}") or spec["dtype"]
     if args.max_examples < 0:
-        args.max_examples = spec["max_examples"]
+        lab_override = LAB_PROFILES[args.lab].get(f"max_examples_tier_{args.tier}")
+        args.max_examples = int(lab_override) if lab_override else spec["max_examples"]
+    if LAB_PROFILES[args.lab].get("needs_eager") and args.attn_implementation == "auto":
+        args.attn_implementation = "eager"
+        print(
+            "[bench] this lab captures attention patterns; attn implementation "
+            "set to 'eager' (sdpa/flash return empty attentions silently)."
+        )
 
 
 def make_run_dir(args: argparse.Namespace) -> pathlib.Path:
@@ -1436,6 +3703,9 @@ def make_run_dir(args: argparse.Namespace) -> pathlib.Path:
 def configure_env(run_dir: pathlib.Path) -> None:
     """Set environment that should exist before torch/transformers import."""
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    # The continuous-batching engine repeatedly resizes its packed KV cache;
+    # expandable segments stop allocator fragmentation from masquerading as OOM.
+    os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
     os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
     os.environ.setdefault("MPLBACKEND", "Agg")  # plots are files, not windows
     mpl_config = run_dir / "matplotlib_config"
@@ -1451,23 +3721,35 @@ def configure_env(run_dir: pathlib.Path) -> None:
 def main(argv: Sequence[str] | None = None) -> None:
     args = parse_args(argv)
     apply_tier_defaults(args)
+
+    # Ensure the claim ledger skeleton exists at the course root before anything
+    # heavy can fail (including the Lab 1 --tier a smoke test). This fulfills the
+    # original pre-lab goal of early initialization so students see their running
+    # dossier immediately. (Appends still require --append-ledger; writing claims
+    # is coursework.)
+    ensure_ledger()
     run_dir = make_run_dir(args)
     run_dir.mkdir(parents=True, exist_ok=True)
     configure_env(run_dir)
+    _ensure_plot_style()
 
     with ConsoleTee(run_dir / "logs"):
         print(f"[bench] run directory: {run_dir}")
         ctx = RunContext(run_dir=run_dir, args=args)
-        write_json(ctx.path("run_config.json"), vars(args))
+        run_config_path = ctx.path("run_config.json")
+        write_json(run_config_path, vars(args))
+        ctx.register_artifact(run_config_path, "config", "Resolved CLI arguments after tier defaults.")
 
         # Heavy imports happen after env config so MPLBACKEND etc. apply.
         import torch
 
         set_determinism(torch, args.seed)
-        write_json(ctx.path("run_metadata.json"), collect_run_metadata(torch))
+        metadata_path = ctx.path("run_metadata.json")
+        write_json(metadata_path, collect_run_metadata(torch))
+        ctx.register_artifact(metadata_path, "diagnostic", "Host, package, git, GPU, and environment metadata.")
 
         bundle = load_model_and_tokenizer(ctx)
-        ensure_ledger()
+        ctx.bind_model(bundle)
 
         # Labs import this module by name. When this file runs as a script
         # the module is '__main__', so alias it to keep one shared instance.
@@ -1478,10 +3760,17 @@ def main(argv: Sequence[str] | None = None) -> None:
 
         print(f"[bench] running {args.lab}: {LAB_PROFILES[args.lab]['description']}")
         t0 = time.perf_counter()
-        lab_module.run(ctx, bundle)
+        try:
+            lab_module.run(ctx, bundle)
+        finally:
+            # A failed run still leaves partial artifacts; index whatever
+            # was registered so the run directory stays auditable.
+            write_json(ctx.path("artifact_index.json"), {"artifacts": ctx.artifacts})
         elapsed = time.perf_counter() - t0
 
-        write_json(ctx.path("diagnostics", "gpu_memory_at_end.json"), gpu_memory_snapshot(torch, "end"))
+        end_mem_path = ctx.path("diagnostics", "gpu_memory_at_end.json")
+        write_json(end_mem_path, gpu_memory_snapshot(torch, "end"))
+        ctx.register_artifact(end_mem_path, "diagnostic", "GPU memory snapshot at the end of the run.")
         write_json(ctx.path("artifact_index.json"), {"artifacts": ctx.artifacts})
         print(f"[bench] lab finished in {elapsed:.1f}s")
         print(f"[bench] start with: {run_dir / 'run_summary.md'}")

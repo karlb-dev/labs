@@ -3,7 +3,7 @@
 **Companion guide for building the `.md` and `.py` files — revision 2**
 **Date:** 2026-06-10
 
-This file explains how to design each lab so the course becomes a sequence of experiments rather than a pile of notebooks. Each lab should teach one method, answer one core question, save one durable artifact set, and end with one interpretation claim that can be challenged. This revision matches course outline v2: Pre-lab + 11 labs, with attribution graphs and CoT faithfulness added, knowledge localization merged into the patching lab, and a claim ledger threaded through everything.
+This file explains how to design each lab so the course becomes a sequence of experiments rather than a pile of notebooks. Each lab should teach one method, answer one core question, save one durable artifact set, and end with one interpretation claim that can be challenged. This revision matches course outline v2: 11 labs (the microscope smoke test / instrumentation check is now the explicit opening ritual of Lab 1 instead of a separate pre-lab), with attribution graphs and CoT faithfulness added, knowledge localization merged into the patching lab, and a claim ledger threaded through everything.
 
 ---
 
@@ -150,14 +150,15 @@ Every lab's `.md` states an expected wall-clock runtime per tier, and the `.py` 
 
 | Lab | Tier B (24 GB) default budget | Notes |
 |---|---|---|
-| Prelab, 1, 2 | < 10 min | single forward passes, full-layer caches |
+| Lab 1 (includes microscope smoke) | < 10 min | single forward passes, full-layer caches; Tier A smoke is the instrumentation check |
+| 2 | < 10 min | single forward passes, full-layer caches |
 | 3, 4 | < 20 min | head sweeps; probe training is CPU-side sklearn |
 | 5 | < 30 min | layer×position grids; cap grid via `--layers` subset by default |
 | 6 | < 40 min | iterative ablation; greedy pruning capped at N rounds |
 | 7 | < 30 min | scale sweeps generate text; cap generations |
 | 8 | < 30 min fast path | toy model is CPU minutes; SAE *training* track is Tier C only |
 | 9 | < 30 min for 1–2 graphs | use offloading flags; cache graphs to disk; Neuronpedia path needs no local GPU at all |
-| 10 | < 45 min | generation-heavy; default 100 items × 4 conditions, batched; `--max-examples` bites hard here |
+| 10 | < 45 min | generation-heavy; default 100 items × 4 conditions via the bench's continuous-batching engine (`generate_continuous`: rows retire at EOS, pending jobs admitted mid-decode, so heavy-tailed think lengths don't stall a lockstep batch); `--max-examples` bites hard here |
 | 11 | student-managed | enforce a subset flag for the causal portion |
 
 If a lab cannot meet budget, shrink the default prompt set or layer set — do not silently let defaults take two hours.
@@ -179,8 +180,8 @@ The capstone consumes this file: students must keep, revise, or retire each entr
 
 TransformerBridge (the TL3 path) preserves raw Hugging Face weights by default: no LayerNorm folding, no weight centering. Logits match HF exactly — good — but the folded-LN algebra in many older DLA and logit-lens tutorials does not transfer verbatim. Decide once, in `interpkit/pins.py`, and never per-lab:
 
-- **Course convention:** operate on raw HF weights; apply the final LayerNorm explicitly before unembedding in logit lens; in DLA, freeze LayerNorm scale from the actual forward pass when linearizing contributions, and say so in the handout. (Alternative: enable compatibility/folding mode where supported — acceptable, but then the prelab must verify folded outputs match HF within tolerance and the README must warn that activations differ from raw HF.)
-- Add a prelab diagnostic that asserts `bridge_logits ≈ hf_logits` for the pinned revision. If this assert fails after a library upgrade, every downstream lab is suspect.
+- **Course convention:** operate on raw HF weights; apply the final LayerNorm explicitly before unembedding in logit lens; in DLA, freeze LayerNorm scale from the actual forward pass when linearizing contributions, and say so in the handout. (Alternative: enable compatibility/folding mode where supported — acceptable, but then Lab 1's smoke test must verify folded outputs match HF within tolerance and the README must warn that activations differ from raw HF.)
+- The TL3 / HF logit parity assert (`bridge_logits ≈ hf_logits`) is performed in the Lab 1 smoke test (the microscope check) for the pinned revision. If this assert fails after a library upgrade, every downstream lab is suspect.
 
 ### 1.12 Chat templates are a first-class concern, not a footnote
 
@@ -270,30 +271,37 @@ Build these once, import everywhere. New modules in this revision: `pins`, `sae`
 ---
 ## 3. Lab-by-lab design guide
 
-## Pre-lab 0: The Interpretability Microscope
+## Microscope smoke / instrumentation check (now the opening of Lab 1)
 
 ### What the student should learn
 
-The contract every lab follows: load, run, cache, measure, save, summarize, append to ledger — on their real hardware tier, including the CPU smoke path.
+The contract every lab follows: load, run, cache, measure, save, summarize, append to ledger — on their real hardware tier, including the CPU smoke path. This is no longer a separate numbered pre-lab; it is the mandatory first ritual inside Lab 1.
 
 ### Best design approach
 
-Make it boring and bulletproof. One prompt pair, full residual cache, one plot, one summary, ledger initialized. Then force the `--tier a` rerun so every student has proven the smoke path before any science happens. Include the TL3 logit-parity diagnostic (`bridge_logits ≈ hf_logits`) here, permanently — it is the canary for library upgrades.
+Make the opening of the Lab 1 handout and the Tier A run "boring and bulletproof." Students run `python interp_bench.py --lab lab1 --tier a` first (on CPU or their actual machine). This single command proves model loading, hook parity, lens self-check at final depth, tokenization validation, run directory hygiene, residual capture, basic plots, and ledger skeleton creation.
 
-### Required artifacts
+The three instrument locks (hook parity, final-depth lens parity, prompt/label validation) must be green and written before the student is allowed to interpret any science plots from the same run.
 
-```text
-run_config.json, tokens.json, activation_shapes.json, logits_topk.csv
-plots/residual_norm_by_layer.png, run_summary.md
-claim_ledger.md (initialized)
-diagnostics/tl3_logit_parity.json
-```
+Include (or inherit from the bench) the TL3/HF logit-parity diagnostic permanently — it is the canary for library upgrades. Lab 1's smoke run is where it is exercised and inspected.
+
+All the old pre-lab minimal artifacts are produced (or have direct, better equivalents) by the Lab 1 Tier A run:
+- run_config, diagnostics (hook_parity*, logit_lens_self_check, tokenization_report, model_anatomy), state cards, residual norm plots, run_summary, ledger_suggestions + course-root claim_ledger.md.
+- No separate `prelab_*` files or `runs/prelab_*` directories are created.
+
+### Required behavior for Lab 1
+- Tier A must be fast and must succeed on a plain laptop (gpt2 or small equivalent).
+- The handout must tell students: "If any lock is red, stop. Fix your environment. Do not go to Tier B until the smoke is clean."
+- The first real science artifacts (prediction biographies, event depths, etc.) come from the same run or an immediate follow-up Tier B run on the course model.
 
 ### Common failure modes
 
 - chat template applied to a base model (tokenization shifts; everything downstream breaks)
 - dtype surprises on MPS/CPU; bf16 unavailable → fall back to fp32 gracefully
 - writing artifacts outside the run directory
+- Student skips the Tier A smoke and goes straight to a big Tier B run (then hits opaque hook or lens failures later)
+
+See the Lab 1 handout for the exact smoke instructions and reading order.
 
 ---
 
@@ -1029,7 +1037,7 @@ Core papers first, tooling docs second, optional depth last.
 
 ## 5. How to write each lab Python file
 
-The v2 skeleton adds four things to v1: pins imported rather than restated, tier and chat-template flags, the ledger append, and the parity assert inherited from the pre-lab where relevant.
+The v2 skeleton adds four things to v1: pins imported rather than restated, tier and chat-template flags, the ledger append, and the parity assert (now exercised in the Lab 1 smoke / microscope check).
 
 ```python
 from __future__ import annotations
@@ -1119,7 +1127,7 @@ The capital of Japan is -> Tokyo
 The capital of Italy is -> Rome
 ```
 
-Use only examples where target and distractor are clean single tokens for the pinned tokenizer, unless the lab explicitly teaches multi-token scoring. `prompt_sets` exposes a `verify_single_token()` helper; the pre-lab runs it.
+Use only examples where target and distractor are clean single tokens for the pinned tokenizer, unless the lab explicitly teaches multi-token scoring. `prompt_sets` exposes a `verify_single_token()` helper; Lab 1's smoke test exercises and reports on it.
 
 ### Induction prompts (Lab 3)
 
@@ -1182,7 +1190,7 @@ Before releasing a lab, verify:
 
 - it completes `--tier a --max-examples 4` on CPU (the smoke model from pins) in under ~10 minutes
 - it runs twice with the same seed and produces identical metrics where determinism is promised, comparable where sampling is involved
-- the pre-lab parity assert holds for the lab's model: TransformerBridge logits match raw HF logits within tolerance
+- the Lab 1 smoke test (microscope check) parity assert holds for the lab's model: TransformerBridge logits match raw HF logits within tolerance
 - chat-template discipline is tested: labs 1–6 reject `--chat-template`; labs 7+ produce identical tokenization through `interpkit.prompt_sets` as through a hand-applied template on one spot-check prompt
 - it fails gracefully if CUDA is unavailable, and prints the offloading hint where one exists (Labs 8–10)
 - it saves `run_config.json` and `run_summary.md`
