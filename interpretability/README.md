@@ -19,7 +19,7 @@ gpt2) that must work on a laptop — debug there, spend GPU minutes on science.
 
 | Tier | Hardware | What runs |
 |---|---|---|
-| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 12) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13) / lab-specific small models; correctness of plumbing, not science |
+| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 12) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13, 14) / lab-specific small models; correctness of plumbing, not science |
 | B — standard | Colab A100/H100, or any 24 GB+ GPU | base labs on `allenai/Olmo-3-1025-7B`; instruct labs (7+) on `allenai/Olmo-3-7B-Instruct`, bf16 |
 | C — comfortable | 40–80 GB GPU | fp32, larger prompt sets |
 
@@ -92,6 +92,10 @@ python interp_bench.py --lab lab12 --tier b --relation-set full
 # Lab 13 (emotion geometry; instruct models, read/write transfer + steering):
 python interp_bench.py --lab lab13 --tier a   # SmolLM2-135M-Instruct
 python interp_bench.py --lab lab13 --tier b --prompt-set full
+
+# Lab 14 (certainty, hedging, and calibration; instruct models):
+python interp_bench.py --lab lab14 --tier a   # SmolLM2-135M-Instruct
+python interp_bench.py --lab lab14 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -230,11 +234,16 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   comprehension and generation affect directions for joy/sadness/anger/fear,
   cross-tests read/write transfer, audits sentiment/arousal confounds, and
   runs a small input-derived steering check with random controls.
+- Lab 14: certainty, hedging, and calibration — implemented for the advanced
+  course. Builds an answerability/certainty direction over fixed A/B/C/D
+  items, saves a separate hedging-style direction, compares internal
+  projection with entropy/margin and generated verbal confidence, and writes
+  the three-way disagreement matrix needed by later self-report labs.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
-The advanced course is now in progress; Labs 12-13 are implemented and should
+The advanced course is now in progress; Labs 12-14 are implemented and should
 be treated as new lab code until their Colab validation runs are recorded.
 Two full-course regression sweeps are on record:
 `runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24 green,

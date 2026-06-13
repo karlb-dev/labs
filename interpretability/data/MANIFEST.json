@@ -39,5 +39,24 @@
       "sadness": 6
     },
     "verified_tokenizers": []
+  },
+  "certainty_calibration_items.csv": {
+    "answerable_counts": {
+      "0": 18,
+      "1": 18
+    },
+    "families": {
+      "factual_qa": 12,
+      "freeform_answerability": 12,
+      "mcq": 12
+    },
+    "generator": "make_certainty_calibration.py",
+    "pairing": "fixed A/B/C/D answer choices plus confident/hedged statement pair per item",
+    "rows": 36,
+    "sha256": "487947987d973d67b49196d160702edee2641491b3c8b7500fdf401db69380d2",
+    "source_files": [
+      "mcq_items.csv"
+    ],
+    "verified_tokenizers": []
   }
 }
