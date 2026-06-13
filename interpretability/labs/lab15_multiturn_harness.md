@@ -76,6 +76,11 @@ It then measures boundary states in two ways:
 
 Those residual streams must match within tolerance. The lab then self-patches representative boundary states into the same forward pass. That should be an identity operation. If it is not, later cross-turn interventions are not standing on named ground.
 
+Two real-template subtleties this lab is built to handle, both of which show up the moment you leave the CPU smoke model:
+
+- **Content spans come from the full render, not from prefix renders.** Some chat templates close the *final* assistant turn with a different stop token than a non-final one — Olmo-3-Instruct uses `<|endoftext|>` for the last turn and `<|im_end|>` once another turn follows. So re-rendering a prefix is *not* a byte-prefix of the full conversation, and prefix-derived character offsets drift. The lab therefore locates each message's content in the one string the model is actually scored on and validates the span by decoding it back to the message text. Incremental prefix byte-identity is recorded as a diagnostic, but it is **not** a trust gate — failing it on Olmo is correct template behavior, not a bug.
+- **Cache parity is dtype-aware.** Full recompute and cached prefill are bitwise identical only in fp32 (measured max relative-L2 error 6e-6 here). In bf16 the two attention kernels round differently and a single outlier dimension can diverge while the rest of the vector agrees, giving ~2–4% relative-L2 error and cosine ≈ 0.999. The gate is therefore the whole-vector relative-L2 error with a dtype-aware threshold, not a per-dimension absolute max: a real off-by-one in the cache window perturbs the *whole* vector (relative-L2 ≳ 0.3), so it still fails loudly, while harmless bf16 rounding passes.
+
 Finally, the lab builds demonstration directions at every stream depth:
 
 - `topic_orchid_minus_archive`: mean direction from short orchid-vs-archive chat contrasts;
