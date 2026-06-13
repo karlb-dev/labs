@@ -1837,6 +1837,16 @@ def generate_continuous(
             steer_handle.remove()
         if cache is not None:
             cache.release()
+        # release() drops the engine's references, but PyTorch keeps the
+        # freed blocks in its reserved pool — fragmented, they may not satisfy
+        # the NEXT caller's large allocation even with GiB nominally free (run
+        # 5: Lab 10's unparseable-rescue call OOM'd right after a 1.6M-token
+        # engine block that had already finished). Returning the blocks to
+        # CUDA here keeps a sequence of engine calls (the labs' real pattern)
+        # from fragmenting itself into a false OOM. Once per call, not per
+        # step — cost is negligible against a multi-minute generation.
+        if cache is not None and torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     wall = time.perf_counter() - wall_start
     # Inter-token-latency trace stats (the per-step health of the loop): p50,
