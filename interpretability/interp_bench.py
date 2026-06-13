@@ -3605,6 +3605,9 @@ CATEGORY_COLORS = {
     "relation": "#009E73",      # green
     "grammar": "#E69F00",       # orange
     "conflict": "#D55E00",      # vermillion
+    "synthetic": "#0072B2",
+    "cycle": "#009E73",
+    "natural": "#D55E00",
     "ambiguous": "#666666",
     "counterfactual": "#D55E00",
     "control": "#7E57C2",
@@ -3620,6 +3623,9 @@ CATEGORY_MARKERS = {
     "relation": "^",
     "grammar": "s",
     "conflict": "X",
+    "synthetic": "o",
+    "cycle": "^",
+    "natural": "s",
     "ambiguous": "s",
     "counterfactual": "^",
     "control": "X",
@@ -3654,6 +3660,24 @@ SELECTION_MARKERS = {
     "control": "s",
     "ablated": "X",
     "patched": "D",
+}
+
+# Lab 3 and Lab 6 use motif labels as a plot grammar orthogonal to prompt
+# family and component type.
+MOTIF_COLORS = {
+    "induction": "#E69F00",
+    "previous_token": "#0072B2",
+    "first_token_sink": "#7E57C2",
+    "diffuse": "#999999",
+    "other": "#555555",
+}
+
+MOTIF_MARKERS = {
+    "induction": "*",
+    "previous_token": "o",
+    "first_token_sink": "s",
+    "diffuse": ".",
+    "other": "x",
 }
 
 # Additional palette for control conditions (real vs random/shuffled/etc.).
@@ -3747,6 +3771,16 @@ def plot_component_color(component: str, default: str = "#555555") -> str:
 def plot_selection_marker(selection: str, default: str = "o") -> str:
     """Shared marker lookup for ablation/patching/control selections."""
     return SELECTION_MARKERS.get(str(selection), default)
+
+
+def plot_motif_color(label: str, default: str = "#555555") -> str:
+    """Shared color lookup for attention/circuit motif labels."""
+    return MOTIF_COLORS.get(str(label), default)
+
+
+def plot_motif_marker(label: str, default: str = "o") -> str:
+    """Shared marker lookup for attention/circuit motif labels."""
+    return MOTIF_MARKERS.get(str(label), default)
 
 
 def lighten_color(color: str, amount: float = 0.55) -> str:
