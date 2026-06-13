@@ -116,6 +116,10 @@ python interp_bench.py --lab lab18 --tier b --prompt-set full
 # Lab 19 (model diffing with crosscoders; Tier A is an identity-pair smoke):
 python interp_bench.py --lab lab19 --tier a --no-plots
 python interp_bench.py --lab lab19 --tier b --prompt-set full
+
+# Lab 20 (benign model organisms; sealed manifests + baseline audit):
+python interp_bench.py --lab lab20 --tier a --no-plots
+python interp_bench.py --lab lab20 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -284,12 +288,16 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   batteries, Tier A identity-pair smoke defaults, Tier B OLMo base-vs-instruct
   defaults, feature taxonomy/gallery artifacts, and an optional `--run-edit`
   feature-intervention smoke test.
+- Lab 20: benign model organisms — started for the advanced course. Emits
+  organism training corpora, sealed/unsealed manifests, behavior cards,
+  baseline target/control generations, spillover audits, and a manifest schema
+  for the later blind-audit sequence.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
-The advanced course is now in progress; Labs 12-18 are implemented, Lab 19 is
-started, and all should be treated as new lab code until their Colab
+The advanced course is now in progress; Labs 12-18 are implemented, Labs 19-20
+are started, and all should be treated as new lab code until their Colab
 validation runs are recorded.
 Two full-course regression sweeps are on record:
 `runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24 green,

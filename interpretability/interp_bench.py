@@ -330,11 +330,22 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "compare_model_tier_c": "allenai/Olmo-3-7B-Instruct",
         "max_examples_tier_a": "12",
     },
+    "lab20": {
+        "module": "labs.lab20_model_organisms",
+        "run_name": "lab20_model_organisms",
+        "description": "Building benign model organisms: sealed answer keys, manifests, and baseline spillover audits.",
+        # Construction/generation lab for instruct models. --max-examples is a
+        # PER-EVAL-FAMILY cap for target/control and spillover prompts.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "1",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab20"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
