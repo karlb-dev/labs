@@ -3605,6 +3605,10 @@ CATEGORY_COLORS = {
     "relation": "#009E73",      # green
     "grammar": "#E69F00",       # orange
     "conflict": "#D55E00",      # vermillion
+    "cities": "#0072B2",
+    "comparisons": "#E69F00",
+    "negations": "#009E73",
+    "misconceptions": "#D55E00",
     "synthetic": "#0072B2",
     "cycle": "#009E73",
     "natural": "#D55E00",
@@ -3623,6 +3627,10 @@ CATEGORY_MARKERS = {
     "relation": "^",
     "grammar": "s",
     "conflict": "X",
+    "cities": "o",
+    "comparisons": "s",
+    "negations": "^",
+    "misconceptions": "D",
     "synthetic": "o",
     "cycle": "^",
     "natural": "s",
@@ -3683,8 +3691,14 @@ MOTIF_MARKERS = {
 # Additional palette for control conditions (real vs random/shuffled/etc.).
 CONTROL_COLORS = {
     "real": "#d62728",
+    "truth": "#D55E00",
+    "logistic": "#D55E00",
+    "mass_mean": "#7E57C2",
+    "surface": "#666666",
     "random": "#7f7f7f",
     "shuffled": "#ff7f0e",
+    "length": "#56B4E9",
+    "majority": "#999999",
     "control": "#9467bd",
     "mismatched": "#8c564b",
     "filler": "#bcbd22",
@@ -3771,6 +3785,11 @@ def plot_component_color(component: str, default: str = "#555555") -> str:
 def plot_selection_marker(selection: str, default: str = "o") -> str:
     """Shared marker lookup for ablation/patching/control selections."""
     return SELECTION_MARKERS.get(str(selection), default)
+
+
+def plot_control_color(control: str, default: str = "#555555") -> str:
+    """Shared color lookup for probe controls and baselines."""
+    return CONTROL_COLORS.get(str(control), default)
 
 
 def plot_motif_color(label: str, default: str = "#555555") -> str:
