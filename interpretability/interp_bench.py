@@ -341,11 +341,35 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "model_tier_c": "allenai/Olmo-3-7B-Instruct",
         "max_examples_tier_a": "1",
     },
+    "lab21": {
+        "module": "labs.lab21_lora_safety_depth",
+        "run_name": "lab21_lora_safety_depth",
+        "description": "Where training lives: LoRA localization, wrapper tests, and safety-depth audits.",
+        # The main model is instruct. safety_depth mode loads the matching base
+        # model from compare_model_tier_*; lora mode inspects adapter files.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "compare_model_tier_a": "HuggingFaceTB/SmolLM2-135M",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "compare_model_tier_b": "allenai/Olmo-3-1025-7B",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "compare_model_tier_c": "allenai/Olmo-3-1025-7B",
+        "max_examples_tier_a": "2",
+    },
+    "lab22": {
+        "module": "labs.lab22_eval_awareness",
+        "run_name": "lab22_eval_awareness",
+        "description": "Eval awareness: eval-vs-natural directions, cross-format controls, and safe steering.",
+        # Chat-template lab. --max-examples is a PER-FORMAT group cap.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Think",
+        "max_examples_tier_a": "1",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab20"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab20", "lab21", "lab22"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
@@ -3542,14 +3566,34 @@ def render_state_card(
 # Plotting
 # ---------------------------------------------------------------------------
 
+# Colorblind-friendly, high-contrast defaults shared by all labs.  The first
+# four keys are the canonical Lab 1 families; the remaining keys are reused by
+# later labs for controls, interventions, and cross-family dashboards.
 CATEGORY_COLORS = {
-    "fact": "#1f77b4",
-    "relation": "#2ca02c",
-    "grammar": "#ff7f0e",
-    "conflict": "#d62728",
-    "ambiguous": "#7f7f7f",
-    "counterfactual": "#d62728",
-    "control": "#9467bd",
+    "fact": "#0072B2",          # blue
+    "relation": "#009E73",      # green
+    "grammar": "#E69F00",       # orange
+    "conflict": "#D55E00",      # vermillion
+    "ambiguous": "#666666",
+    "counterfactual": "#D55E00",
+    "control": "#7E57C2",
+    "true": "#0072B2",
+    "false": "#D55E00",
+    "clean": "#0072B2",
+    "patched": "#009E73",
+    "ablated": "#D55E00",
+}
+
+CATEGORY_MARKERS = {
+    "fact": "o",
+    "ambiguous": "s",
+    "counterfactual": "^",
+    "control": "X",
+    "true": "o",
+    "false": "^",
+    "clean": "o",
+    "patched": "D",
+    "ablated": "X",
 }
 
 # Additional palette for control conditions (real vs random/shuffled/etc.).
@@ -3570,22 +3614,29 @@ def configure_matplotlib() -> None:
     import matplotlib.pyplot as plt
 
     mpl.rcParams.update({
-        "figure.dpi": 140,
-        "savefig.dpi": 160,
-        "font.size": 9,
-        "axes.titlesize": 11,
-        "axes.labelsize": 9,
+        "figure.dpi": 150,
+        "savefig.dpi": 180,
+        "font.size": 9.5,
+        "axes.titlesize": 12,
+        "axes.titlepad": 10,
+        "axes.labelsize": 9.5,
         "legend.fontsize": 8,
         "xtick.labelsize": 8,
         "ytick.labelsize": 8,
         "axes.grid": True,
-        "grid.alpha": 0.25,
+        "grid.alpha": 0.22,
+        "grid.linewidth": 0.7,
         "axes.spines.top": False,
         "axes.spines.right": False,
-        "lines.linewidth": 1.6,
-        "patch.linewidth": 1.0,
+        "axes.linewidth": 0.8,
+        "lines.linewidth": 1.8,
+        "lines.solid_capstyle": "round",
+        "patch.linewidth": 0.9,
+        "legend.frameon": False,
+        "legend.borderaxespad": 0.8,
         "figure.facecolor": "white",
         "axes.facecolor": "white",
+        "savefig.facecolor": "white",
     })
 
 
@@ -3618,15 +3669,66 @@ def style_ax(ax: Any, title: str | None = None, xlabel: str | None = None, ylabe
         ax.spines[spine].set_visible(False)
 
 
+def plot_category_color(category: str, default: str = "#333333") -> str:
+    """Shared category color lookup for lab modules."""
+    return CATEGORY_COLORS.get(str(category), default)
+
+
+def plot_category_marker(category: str, default: str = "o") -> str:
+    """Shared marker lookup for lab modules."""
+    return CATEGORY_MARKERS.get(str(category), default)
+
+
+def add_panel_label(ax: Any, label: str, *, x: float = -0.10, y: float = 1.04) -> None:
+    """Add a small bold panel label such as A, B, C."""
+    ax.text(x, y, label, transform=ax.transAxes, fontsize=11, fontweight="bold",
+            va="bottom", ha="right", color="#222222")
+
+
+def label_line_end(ax: Any, xs: Sequence[float], ys: Sequence[float], label: str, *,
+                   color: str | None = None, dx: float = 3.0) -> None:
+    """Directly label the last finite point of a line.
+
+    Legends are fine for a few curves; direct labels are clearer on dense lab
+    dashboards and survive screenshots better. This helper is intentionally
+    tiny and optional so old plots keep working.
+    """
+    for x, y in zip(reversed(list(xs)), reversed(list(ys))):
+        try:
+            xf, yf = float(x), float(y)
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(xf) and math.isfinite(yf):
+            ax.annotate(label, (xf, yf), textcoords="offset points", xytext=(dx, 0),
+                        va="center", fontsize=7.5, color=color or "#333333")
+            return
+
+
+def add_depth_phase_guides(ax: Any, n_layers: int, *, label_final: bool = True) -> None:
+    """Light vertical guides at one-third, two-thirds, and final depth."""
+    if n_layers <= 0:
+        return
+    for frac in (1 / 3, 2 / 3):
+        ax.axvline(n_layers * frac, color="#888888", linestyle=":", linewidth=0.7, alpha=0.25)
+    ax.axvline(n_layers, color="#444444", linestyle=":", linewidth=1.0, alpha=0.55)
+    if label_final:
+        ax.text(n_layers, 0.98, "final", transform=ax.get_xaxis_transform(), rotation=90,
+                va="top", ha="right", fontsize=7, color="#444444", alpha=0.75)
+
+
 def save_figure(ctx: RunContext, fig: Any, name: str, description: str) -> None:
     """Save a plot under plots/ and register it in the artifact index."""
     import matplotlib.pyplot as plt
 
     path = ctx.path("plots", name)
     fig.text(0.995, 0.005, ctx.plot_footer(), ha="right", va="bottom", fontsize=6.5, color="#555555")
-    fig.savefig(path, dpi=150, bbox_inches="tight")
-    plt.close(fig)
+    fig.savefig(path, dpi=180, bbox_inches="tight", facecolor="white")
     ctx.register_artifact(path, "plot", description)
+    if os.environ.get("INTERP_SAVE_SVG", "").lower() in {"1", "true", "yes"}:
+        svg_path = path.with_suffix(".svg")
+        fig.savefig(svg_path, bbox_inches="tight", facecolor="white")
+        ctx.register_artifact(svg_path, "plot", description + " (SVG copy for slides/papers).")
+    plt.close(fig)
     print(f"[bench] wrote plots/{name}")
 
 
@@ -3778,6 +3880,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="Lab 12: comma-separated token roles to patch (subject,relation,last).")
     parser.add_argument("--emotions", default="",
                         help="Lab 13: comma-separated emotion filter, e.g. joy,anger (default: all target emotions).")
+    parser.add_argument("--mode", default="lora",
+                        help="Lab mode selector where supported, e.g. Lab 21: lora | safety_depth | both.")
+    parser.add_argument("--organism", default="",
+                        help="Lab 21/23: path to a Lab 20 run directory or a single organism directory.")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)

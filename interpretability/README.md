@@ -120,6 +120,14 @@ python interp_bench.py --lab lab19 --tier b --prompt-set full
 # Lab 20 (benign model organisms; sealed manifests + baseline audit):
 python interp_bench.py --lab lab20 --tier a --no-plots
 python interp_bench.py --lab lab20 --tier b --prompt-set full
+
+# Lab 21 (LoRA localization and safety-depth audits):
+python interp_bench.py --lab lab21 --tier a --mode lora --no-plots
+python interp_bench.py --lab lab21 --tier b --mode safety_depth
+
+# Lab 22 (eval awareness; eval-vs-natural directions + safe steering):
+python interp_bench.py --lab lab22 --tier a --no-plots
+python interp_bench.py --lab lab22 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -292,11 +300,19 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   organism training corpora, sealed/unsealed manifests, behavior cards,
   baseline target/control generations, spillover audits, and a manifest schema
   for the later blind-audit sequence.
+- Lab 21: LoRA localization and safety depth — started for the advanced
+  course. Adds a two-mode harness for Lab 20 adapter localization, wrapper
+  test scaffolds, base-vs-instruct residual divergence, and benign
+  refusal-boundary depth audits.
+- Lab 22: eval awareness — started for the advanced course. Adds matched
+  eval/natural/format-control prompts, train-only direction selection,
+  cross-format transfer, safe steering, CoT mention scaffolds, and optional
+  Lab 20 eval-aware organism discovery.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
-The advanced course is now in progress; Labs 12-18 are implemented, Labs 19-20
+The advanced course is now in progress; Labs 12-18 are implemented, Labs 19-22
 are started, and all should be treated as new lab code until their Colab
 validation runs are recorded.
 Two full-course regression sweeps are on record:

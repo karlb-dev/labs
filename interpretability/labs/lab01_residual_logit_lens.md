@@ -88,6 +88,8 @@ runs/lab01_residual_logit_lens-<timestamp>-<id>/
     category_summary.csv                # headline category comparisons
     top1_transition_segments.csv        # compressed top-1 token biographies
     readout_phase_summary.csv           # embedding/early/mid/late/final summaries
+    relation_summary.csv                # relation-family timing rollup (uses relation= note tags when present)
+    plot_reading_guide.csv              # which plot to open for which conceptual question
 
   state/<example_id>/
     state_card.md
@@ -99,8 +101,12 @@ runs/lab01_residual_logit_lens-<timestamp>-<id>/
     residual_streams.pt                 # optional, only with --save-tensors
 
   plots/
-    readout_dashboard.png               # entropy, KL, margin, cosine in one place
-    convergence_lag.png                 # NEW: geometry (cosine) vs decoded (KL/rank) stabilization lag — core "readout is an instrument" lesson
+    readout_dashboard.png               # entropy, KL, margin, cosine in one place, now with IQR bands
+    event_timeline.png                  # per-example event grammar: rank, beat, top-1, decision, cosine, KL
+    top1_transition_ribbons.png         # compressed top-1 token biographies at scale
+    readout_phase_heatmap.png           # coarse embedding/early/mid/late/final phase atlas
+    relation_event_matrix.png           # relation-family emergence matrix for custom/diversity prompt sets
+    convergence_lag.png                 # geometry (cosine) vs decoded (KL/rank) stabilization lag — core "readout is an instrument" lesson
     p_target_by_depth.png
     target_rank_by_depth.png
     logit_diff_by_depth.png
@@ -276,22 +282,30 @@ The comparative question this unlocks: **do different relations decide at differ
 4. `logit_lens_card.md` - the compact deliverable with scope, headline numbers, draft claims, and non-claims.
 5. `tables/final_readout_audit.csv` - separates correctness, confidence, and target-vs-distractor wins (the key place to see discourse bias on facts).
 6. One `state/<example_id>/state_card.md` from a fact example, then one from a counterfactual example.
-7. `plots/readout_dashboard.png` and the new `convergence_lag.png` — the four convergence curves plus the explicit geometry-vs-decoded lag plot (core “readout is an instrument” lesson).
-8. `plots/event_ordering.png`, `plots/event_depth_heatmap.png`, and `plots/final_readout_scatter.png` — when events occur (gray = never), and confidence vs correctness.
-9. `plots/target_rank_by_depth.png`, `plots/logit_diff_by_depth.png`, and `plots/kl_to_final_by_depth.png` — three different convergence stories.
-10. `tables/top1_transition_segments.csv` and `tables/trajectory_events.csv` — compressed biographies and all per-example events (with n counts showing when an event never occurred).
-11. `results.csv` - the long-form source for custom analysis.
-12. `run_summary.md` answers the seven standard questions for this run.
+7. `tables/plot_reading_guide.csv` — the new plot map: which visual answers which question.
+8. `plots/readout_dashboard.png`, `plots/event_timeline.png`, and `plots/top1_transition_ribbons.png` — the overview, the event grammar, and the compressed biographies.
+9. `plots/convergence_lag.png` — the explicit geometry-vs-decoded lag plot (core “readout is an instrument” lesson).
+10. `plots/event_ordering.png`, `plots/event_depth_heatmap.png`, and `plots/final_readout_scatter.png` — when events occur (gray = never), and confidence vs correctness.
+11. `plots/target_rank_by_depth.png`, `plots/logit_diff_by_depth.png`, and `plots/kl_to_final_by_depth.png` — three different convergence stories.
+12. `tables/top1_transition_segments.csv` and `tables/trajectory_events.csv` — compressed biographies and all per-example events (with n counts showing when an event never occurred).
+13. `results.csv` - the long-form source for custom analysis.
+14. `run_summary.md` answers the seven standard questions for this run.
 
 ## How to read the main plots
 
-`readout_dashboard.png` is the first plot to read. Entropy falling means the lens distribution is sharpening. KL-to-final falling means the distribution is becoming final-like. Cosine rising means the vector is geometrically approaching the final vector. These curves often move at different times, and the gaps are the lesson.
+`readout_dashboard.png` is the first plot to read. Entropy falling means the lens distribution is sharpening. KL-to-final falling means the distribution is becoming final-like. Cosine rising means the vector is geometrically approaching the final vector. The upgraded dashboard shows category medians plus IQR bands, so the lesson is not just the mean line: when the band is wide, the family contains multiple stories.
+
+`event_timeline.png` is the clearest plot for the main event grammar. Read one row left to right: the target may enter the top 5, beat the distractor, become top-1, geometrically approach the final residual, and distributionally converge at different depths. That row is the lab in miniature.
+
+`top1_transition_ribbons.png` turns the top-1 history into colored segments. Long gray or final-token ribbons in middle layers are the antidote to the tempting screenshot claim, "the model knew it at layer k."
 
 `final_readout_scatter.png` asks whether confidence is correctness. A point can have low entropy and high top-1 probability while the labeled target is not top-1. That is not a plotting bug. It is the model doing a next-token task rather than your benchmark task.
 
 `event_depth_heatmap.png` makes missing events gray. Gray is data. If `target_first_top1` is gray for a fact prompt but `target_rank_first_le_5` is early, the target became plausible without winning.
 
-`biography_<example>.png` is now four panels: target/distractor probability, target-vs-distractor logit difference, target rank, and entropy/KL. Read all four before writing a sentence about emergence.
+`relation_event_matrix.png` activates when your prompt notes carry `relation=...` tags, or when the built-in fallback can infer a family. It asks a better question than "facts vs. counterfactuals": do capitals, antonyms, arithmetic, color, body, science, and sequence prompts stabilize on different clocks?
+
+`biography_<example>.png` is now four panels plus event lines: target/distractor probability, target-vs-distractor logit difference, target rank, and entropy/KL/cosine. Read all four before writing a sentence about emergence.
 
 ## Questions to answer
 

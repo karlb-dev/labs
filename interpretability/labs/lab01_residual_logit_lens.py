@@ -49,8 +49,11 @@ import csv
 import dataclasses
 import hashlib
 import json
+import math
 import pathlib
+import re
 import statistics
+import textwrap
 from typing import Any, Iterable
 
 import interp_bench as bench
@@ -70,6 +73,48 @@ EVENT_DEPTH_KEYS = (
     "cosine_to_final_first_ge_0.95",
 )
 
+EVENT_PLOT_ORDER = (
+    "target_rank_first_le_5",
+    "target_first_beats_distractor_raw",
+    "target_first_beats_distractor",
+    "target_first_top1",
+    "target_stable_top1_depth",
+    "decision_depth",
+    "cosine_to_final_first_ge_0.95",
+    "kl_to_final_first_le_0.5_bits",
+)
+
+EVENT_DISPLAY = {
+    "decision_depth": "final top-1 stable",
+    "target_first_top1": "target first top-1",
+    "target_stable_top1_depth": "target stable top-1",
+    "target_first_beats_distractor": "target > distractor +1",
+    "target_first_beats_distractor_raw": "target > distractor",
+    "target_stable_beats_distractor": "target stably > distractor",
+    "target_rank_first_le_5": "target rank <= 5",
+    "kl_to_final_first_le_0.5_bits": "KL to final <= 0.5 bits",
+    "cosine_to_final_first_ge_0.95": "cosine to final >= 0.95",
+}
+
+EVENT_MARKERS = {
+    "target_rank_first_le_5": "o",
+    "target_first_beats_distractor_raw": "v",
+    "target_first_beats_distractor": "^",
+    "target_first_top1": "P",
+    "target_stable_top1_depth": "X",
+    "decision_depth": "D",
+    "cosine_to_final_first_ge_0.95": "s",
+    "kl_to_final_first_le_0.5_bits": "*",
+}
+
+PHASE_ORDER = ("embedding", "early_blocks", "middle_blocks", "late_blocks", "final")
+PHASE_DISPLAY = {
+    "embedding": "embed",
+    "early_blocks": "early",
+    "middle_blocks": "middle",
+    "late_blocks": "late",
+    "final": "final",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -396,6 +441,63 @@ def decoded_pieces(tokenizer: Any, ids: Iterable[int]) -> str:
     return " ".join(bench.visible_token(tokenizer.decode([int(i)])) for i in ids)
 
 
+_NOTE_TAG_RE = re.compile(r"(?:^|[;,|\s])([A-Za-z_][A-Za-z0-9_-]*)=([^;,|\s]+)")
+
+
+def note_tag(note: str, key: str) -> str | None:
+    """Extract ``key=value`` tags from prompt notes.
+
+    Custom prompt sets can carry lightweight metadata in the note column, e.g.
+    ``relation=capital`` or ``near_tie=1``. The lab keeps the parser tiny and
+    forgiving so spreadsheet-authored CSVs work without a new schema.
+    """
+    for match in _NOTE_TAG_RE.finditer(note or ""):
+        if match.group(1).lower() == key.lower():
+            return match.group(2)
+    return None
+
+
+def infer_relation_family(ex: PromptExample) -> str:
+    """Best-effort family label used for cross-prompt aggregate plots.
+
+    If a custom prompt provides ``relation=...`` or ``family=...`` in ``note``,
+    that wins. Otherwise the curated Lab 1 examples get a readable fallback
+    based on their ids and text. This lets the same plotting code scale from
+    the small smoke set to the 105-row relation diversity CSV mentioned in the
+    handout, without turning Lab 1 into a full data model.
+    """
+    tagged = (
+        note_tag(ex.note, "relation_family")
+        or note_tag(ex.note, "relation")
+        or note_tag(ex.note, "family")
+        or note_tag(ex.note, "task")
+    )
+    if tagged:
+        return tagged
+    text = f"{ex.example_id} {ex.prompt}".lower()
+    if ex.category == "ambiguous":
+        if "capital of france" in text:
+            return "ambiguous_capital_frame"
+        return "open_ended"
+    if ex.category == "control":
+        return "weak_control"
+    if any(token in text for token in ("capital", "eiffel", "paris", "london", "japan", "germany")):
+        return "capital_or_place" if ex.category == "fact" else "cf_place"
+    if "opposite" in text:
+        return "antonym" if ex.category == "fact" else "cf_antonym"
+    if "two_plus_two" in text or "two plus two" in text:
+        return "arithmetic" if ex.category == "fact" else "cf_arithmetic"
+    if "sky" in text or "color" in text:
+        return "color" if ex.category == "fact" else "cf_color"
+    if any(token in text for token in ("water", "oxygen", "hydrogen", "gas")):
+        return "science" if ex.category == "fact" else "cf_science"
+    if any(token in text for token in ("heart", "organ", "blood")):
+        return "body" if ex.category == "fact" else "cf_body"
+    if "monday" in text or "day after" in text:
+        return "sequence" if ex.category == "fact" else "cf_sequence"
+    return ex.category
+
+
 def validate_examples(
     ctx: bench.RunContext,
     bundle: bench.ModelBundle,
@@ -440,6 +542,7 @@ def validate_examples(
                 {
                     "example_id": ex.example_id,
                     "category": ex.category,
+                    "relation_family": infer_relation_family(ex),
                     "n_prompt_tokens": len(prompt_ids),
                     "prompt": ex.prompt,
                     "prompt_sha256": hashlib.sha256(ex.prompt.encode("utf-8")).hexdigest(),
@@ -457,6 +560,7 @@ def validate_examples(
             {
                 "example_id": ex.example_id,
                 "category": ex.category,
+                "relation_family": infer_relation_family(ex),
                 "prompt": ex.prompt,
                 "n_prompt_tokens": len(prompt_ids),
                 "prompt_token_ids": " ".join(map(str, prompt_ids)),
@@ -628,6 +732,9 @@ def trajectory_event_row(
     row: dict[str, Any] = {
         "example_id": ex.example_id,
         "category": ex.category,
+        "relation_family": infer_relation_family(ex),
+        "prompt": ex.prompt,
+        "note": ex.note,
         "n_prompt_tokens": len(capture.input_ids),
         "n_depths": traj.n_depths,
         "decision_depth": decision_depth(traj),
@@ -690,6 +797,12 @@ def trajectory_event_row(
     # final_readout_audit.csv and the per-example state cards make this visible
     # immediately. Students must not equate “target rank improved” or “target beats
     # distractor” with “the model knows the answer at this depth.”
+    cos_event = row.get("cosine_to_final_first_ge_0.95")
+    kl_event = row.get("kl_to_final_first_le_0.5_bits")
+    if cos_event is not None and kl_event is not None:
+        row["convergence_lag_depths"] = int(kl_event) - int(cos_event)
+        row["convergence_lag_frac"] = round((int(kl_event) - int(cos_event)) / max(1, traj.n_depths - 1), 4)
+
     if target_id is None:
         row["final_outcome"] = "unlabeled"
     elif bool(row.get("final_top1_is_target")):
@@ -720,7 +833,7 @@ def add_event_depth_fractions(event_rows: list[dict[str, Any]], n_layers: int) -
 def final_readout_audit_rows(event_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """A compact per-example final-readout table for correctness-vs-confidence audits."""
     keys = [
-        "example_id", "category", "final_outcome", "final_top1", "final_top1_prob",
+        "example_id", "category", "relation_family", "final_outcome", "final_top1", "final_top1_prob",
         "final_top1_margin", "final_entropy_bits", "target", "final_p_target",
         "final_target_rank", "final_top1_is_target", "distractor", "final_p_distractor",
         "final_distractor_rank", "final_logit_diff", "final_target_beats_distractor_by_margin",
@@ -748,6 +861,7 @@ def top1_transition_rows(
             {
                 "example_id": ex.example_id,
                 "category": ex.category,
+                "relation_family": infer_relation_family(ex),
                 "start_depth": start,
                 "end_depth": end,
                 "duration_depths": end - start + 1,
@@ -795,6 +909,7 @@ def readout_phase_rows(ex: PromptExample, traj: bench.LensTrajectory, n_layers: 
         row: dict[str, Any] = {
             "example_id": ex.example_id,
             "category": ex.category,
+            "relation_family": infer_relation_family(ex),
             "phase": phase,
             "start_depth": depths[0],
             "end_depth": depths[-1],
@@ -828,6 +943,148 @@ def category_color(category: str) -> str:
     return getattr(bench, "CATEGORY_COLORS", {}).get(category, "#333333")
 
 
+def category_label(category: str) -> str:
+    return category.replace("_", " ")
+
+
+def event_label(event: str, *, multiline: bool = False) -> str:
+    label = EVENT_DISPLAY.get(event, event.replace("_", " "))
+    return label.replace(" ", "\n") if multiline else label
+
+
+def short_example_label(example_id: str, max_len: int = 34) -> str:
+    label = re.sub(r"^(fact|cf|ambig|ctrl)_", "", example_id)
+    label = label.replace("_", " ")
+    return textwrap.shorten(label, width=max_len, placeholder="…")
+
+
+def number_or_none(value: Any) -> float | None:
+    if value in (None, ""):
+        return None
+    if isinstance(value, bool):
+        return float(value)
+    try:
+        x = float(value)
+    except (TypeError, ValueError):
+        return None
+    return x if math.isfinite(x) else None
+
+
+def percentile(values: list[float], p: float) -> float | None:
+    """Linear-interpolated percentile for tiny prompt sets."""
+    vals = sorted(v for v in values if math.isfinite(v))
+    if not vals:
+        return None
+    if len(vals) == 1:
+        return vals[0]
+    k = (len(vals) - 1) * p
+    lo = math.floor(k)
+    hi = math.ceil(k)
+    if lo == hi:
+        return vals[lo]
+    return vals[lo] * (hi - k) + vals[hi] * (k - lo)
+
+
+def summarize_curves(rows: list[dict[str, Any]], metric: str) -> dict[str, list[float]] | None:
+    """Return median/IQR/mean curves with consistent depth truncation."""
+    rows = [r for r in rows if metric in r and r[metric]]
+    if not rows:
+        return None
+    depth_count = min(len(r[metric]) for r in rows)
+    if depth_count <= 0:
+        return None
+    out = {"x": list(range(depth_count)), "median": [], "q25": [], "q75": [], "mean": []}
+    for depth in range(depth_count):
+        vals: list[float] = []
+        for r in rows:
+            v = number_or_none(r[metric][depth])
+            if v is not None:
+                vals.append(v)
+        if not vals:
+            out["median"].append(float("nan"))
+            out["q25"].append(float("nan"))
+            out["q75"].append(float("nan"))
+            out["mean"].append(float("nan"))
+        else:
+            out["median"].append(float(percentile(vals, 0.50)))
+            out["q25"].append(float(percentile(vals, 0.25)))
+            out["q75"].append(float(percentile(vals, 0.75)))
+            out["mean"].append(statistics.fmean(vals))
+    return out
+
+
+def apply_depth_guides(ax: Any, n_layers: int, *, final_label: bool = True) -> None:
+    """Add light depth guides without stealing the plot's attention."""
+    if n_layers <= 0:
+        return
+    for frac, label in ((1 / 3, "early/mid"), (2 / 3, "mid/late")):
+        x = n_layers * frac
+        ax.axvline(x, color="#888888", linestyle=":", linewidth=0.7, alpha=0.25)
+        ymin, ymax = ax.get_ylim()
+        if math.isfinite(ymin) and math.isfinite(ymax) and ymax != ymin:
+            ax.text(x, ymax, label, ha="center", va="top", fontsize=6.5, color="#777777", alpha=0.7)
+    ax.axvline(n_layers, color="#444444", linestyle=":", linewidth=1.0, alpha=0.55)
+    if final_label:
+        ax.text(n_layers, 0.98, "final", transform=ax.get_xaxis_transform(), rotation=90,
+                va="top", ha="right", fontsize=7, color="#444444", alpha=0.75)
+
+
+def add_metric_reference(ax: Any, metric: str) -> None:
+    """Reference thresholds used by the event definitions."""
+    if metric == "kl_to_final_bits":
+        ax.axhline(0.5, color="#555555", linestyle="--", linewidth=0.9, alpha=0.55)
+        ax.text(0.01, 0.5, "KL ≤ 0.5", transform=ax.get_yaxis_transform(), va="bottom", fontsize=7, color="#555555")
+    elif metric == "cosine_to_final":
+        ax.axhline(0.95, color="#555555", linestyle="--", linewidth=0.9, alpha=0.55)
+        ax.text(0.01, 0.95, "cos ≥ 0.95", transform=ax.get_yaxis_transform(), va="bottom", fontsize=7, color="#555555")
+    elif metric == "logit_diff":
+        ax.axhline(0.0, color="#333333", linewidth=0.9, alpha=0.55)
+        ax.axhline(LOGIT_DIFF_MEANINGFUL_MARGIN, color="#555555", linestyle="--", linewidth=0.9, alpha=0.55)
+        ax.text(0.01, LOGIT_DIFF_MEANINGFUL_MARGIN, "+1 logit", transform=ax.get_yaxis_transform(), va="bottom", fontsize=7, color="#555555")
+    elif metric == "target_rank":
+        ax.axhline(5, color="#555555", linestyle="--", linewidth=0.9, alpha=0.55)
+        ax.text(0.01, 5, "rank ≤ 5", transform=ax.get_yaxis_transform(), va="bottom", fontsize=7, color="#555555")
+
+
+def draw_curve_summary(
+    ax: Any,
+    per_example: list[dict[str, Any]],
+    metric: str,
+    *,
+    categories: tuple[str, ...] = CATEGORIES,
+    show_examples: bool = True,
+    label_prefix: str = "",
+) -> tuple[bool, int]:
+    """Draw thin examples, an IQR band, and a bold median curve."""
+    plotted = False
+    max_depth_count = 0
+    for category in categories:
+        rows = [r for r in per_example if r.get("category") == category and metric in r and r[metric]]
+        if not rows:
+            continue
+        summary = summarize_curves(rows, metric)
+        if summary is None:
+            continue
+        plotted = True
+        max_depth_count = max(max_depth_count, len(summary["x"]))
+        color = category_color(category)
+        if show_examples:
+            for r in rows:
+                ax.plot(range(len(r[metric])), r[metric], color=color, alpha=0.13, linewidth=0.65)
+        ax.fill_between(summary["x"], summary["q25"], summary["q75"], color=color, alpha=0.12, linewidth=0)
+        ax.plot(
+            summary["x"],
+            summary["median"],
+            color=color,
+            linewidth=2.8,
+            label=f"{label_prefix}{category_label(category)} median (n={len(rows)})",
+        )
+        # A faint mean line helps students notice skewed prompt families without
+        # making the figure visually busy.
+        ax.plot(summary["x"], summary["mean"], color=color, linewidth=1.0, alpha=0.45, linestyle="--")
+    return plotted, max_depth_count
+
+
 def plot_metric_by_depth(
     ctx: bench.RunContext,
     per_example: list[dict[str, Any]],
@@ -840,288 +1097,26 @@ def plot_metric_by_depth(
     logy: bool = False,
     invert_y: bool = False,
 ) -> None:
-    """Thin per-example + bold category mean. Highlights when different metrics (entropy vs rank vs cosine) converge."""
-    fig, ax = bench.new_figure(figsize=(9.2, 5.4))
-    plotted = False
-    for category in categories:
-        rows = [r for r in per_example if r["category"] == category and metric in r and r[metric]]
-        if not rows:
-            continue
-        plotted = True
-        color = category_color(category)
-        for r in rows:
-            ax.plot(range(len(r[metric])), r[metric], color=color, alpha=0.22, linewidth=0.7)
-        depth_count = min(len(r[metric]) for r in rows)
-        mean = [statistics.fmean(float(r[metric][d]) for r in rows) for d in range(depth_count)]
-        ax.plot(range(depth_count), mean, color=color, linewidth=2.8, label=f"{category} (n={len(rows)})")
+    """Per-example + IQR + median curves for one depth metric."""
+    fig, ax = bench.new_figure(figsize=(9.8, 5.6))
+    plotted, max_depth_count = draw_curve_summary(ax, per_example, metric, categories=categories, show_examples=True)
     if not plotted:
         bench.close_figure(fig)
         return
+    add_metric_reference(ax, metric)
     if logy:
         ax.set_yscale("log")
     if invert_y:
         ax.invert_yaxis()
-    ax.set_xlabel("depth (0 = embeddings, k = after k blocks)")
-    ax.set_ylabel(ylabel)
-    ax.set_title(title + "  •  thin=per example, bold=category mean")
-    ax.legend(fontsize=8, frameon=False, loc="best")
-    # Light guide for "final" depth
-    n_layers = len(mean) - 1 if mean else 0
-    if n_layers:
-        ax.axvline(n_layers, color="#555555", ls=":", lw=1.0, alpha=0.6)
-    bench.style_ax(ax, legend=False)  # legend already placed
+    apply_depth_guides(ax, max_depth_count - 1)
+    bench.style_ax(
+        ax,
+        title=f"{title}  •  thin=examples, band=IQR, bold=median",
+        xlabel="depth (0 = embeddings, k = after k blocks)",
+        ylabel=ylabel,
+        legend=True,
+    )
     bench.save_figure(ctx, fig, name, title)
-
-
-def plot_event_depths(
-    ctx: bench.RunContext,
-    event_rows: list[dict[str, Any]],
-    n_layers: int,
-) -> None:
-    """Scatter event depths by category for quick outlier spotting."""
-    fig, ax = bench.new_figure(figsize=(9.0, 5.5))
-    events = [
-        "decision_depth",
-        "target_first_top1",
-        "target_first_beats_distractor",
-        "target_first_beats_distractor_raw",
-        "target_rank_first_le_5",
-        "kl_to_final_first_le_0.5_bits",
-    ]
-    x_positions = {event: i for i, event in enumerate(events)}
-    jitter_offsets = {cat: (i - 1.5) * 0.06 for i, cat in enumerate(CATEGORIES)}
-    any_points = False
-    for row in event_rows:
-        cat = row["category"]
-        for event in events:
-            value = row.get(event)
-            if value in (None, ""):
-                continue
-            any_points = True
-            ax.scatter(
-                x_positions[event] + jitter_offsets.get(cat, 0.0),
-                float(value),
-                s=24,
-                alpha=0.75,
-                color=category_color(cat),
-                label=cat,
-            )
-    if not any_points:
-        bench.close_figure(fig)
-        return
-    handles, labels = ax.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    ax.legend(by_label.values(), by_label.keys(), fontsize=8)
-    ax.set_xticks(list(x_positions.values()))
-    ax.set_xticklabels(events, rotation=25, ha="right")
-    ax.set_ylim(-0.5, n_layers + 0.5)
-    ax.set_ylabel("depth")
-    ax.set_title("Event depths by example")
-    bench.save_figure(ctx, fig, "event_depths.png", "Per-example event depths by metric and category.")
-
-
-def plot_event_heatmap(
-    ctx: bench.RunContext,
-    event_rows: list[dict[str, Any]],
-    n_layers: int,
-) -> None:
-    """Example x event grid, with missing events visible instead of silent."""
-    if not event_rows:
-        return
-    import matplotlib.pyplot as plt
-
-    events = [
-        "decision_depth",
-        "target_first_top1",
-        "target_stable_top1_depth",
-        "target_first_beats_distractor",
-        "target_first_beats_distractor_raw",
-        "target_rank_first_le_5",
-        "kl_to_final_first_le_0.5_bits",
-    ]
-    rows = sorted(
-        event_rows,
-        key=lambda r: (
-            CATEGORIES.index(r["category"]) if r["category"] in CATEGORIES else len(CATEGORIES),
-            float(r["decision_depth"]) if r.get("decision_depth") not in (None, "") else float(n_layers + 1),
-            r["example_id"],
-        ),
-    )
-    data = [[float("nan") for _ in events] for _ in rows]
-    for i, row in enumerate(rows):
-        for j, event in enumerate(events):
-            value = row.get(event)
-            if value not in (None, ""):
-                data[i][j] = float(value)
-
-    fig_height = max(6.0, min(12.0, 0.28 * len(rows) + 1.8))
-    fig, ax = bench.new_figure(figsize=(11.0, fig_height))
-    cmap = plt.get_cmap("viridis").copy()
-    cmap.set_bad("#cccccc")
-    im = ax.imshow(data, aspect="auto", cmap=cmap, vmin=0, vmax=n_layers)
-    ax.set_xticks(range(len(events)))
-    ax.set_xticklabels([e.replace("_", "\n") for e in events], rotation=0, ha="center", fontsize=7)
-    ax.set_yticks(range(len(rows)))
-    ax.set_yticklabels([f"{r['category'][:2]}:{r['example_id']}" for r in rows], fontsize=6.5)
-    ax.set_title("Event-depth heatmap (gray = event never occurred for this example/metric) — the core Lab 1 lesson")
-    ax.set_xlabel("event metric (gray cells are data, not missing)")
-    ax.set_ylabel("example (grouped by category)")
-    cbar = fig.colorbar(im, ax=ax, fraction=0.022, pad=0.01)
-    cbar.set_label("depth (earlier = more 'early commitment' under raw lens)")
-
-    # Category separator lines + labels
-    previous = rows[0]["category"]
-    cat_start = 0
-    for i, row in enumerate(rows[1:] + [{"category": "__END__"}], start=1):
-        if row["category"] != previous:
-            ax.axhline(i - 0.5, color="white", linewidth=2.0)
-            # small category label on left
-            mid = (cat_start + i - 1) / 2.0
-            ax.text(-0.6, mid, previous, va="center", ha="right", fontsize=7, color="#444444", rotation=0)
-            cat_start = i
-            previous = row["category"]
-    fig.tight_layout()
-    bench.save_figure(
-        ctx,
-        fig,
-        "event_depth_heatmap.png",
-        "Example-by-event depth grid; gray cells make non-occurring events explicit (the central pedagogical point).",
-    )
-
-
-def plot_final_readout_scatter(
-    ctx: bench.RunContext,
-    event_rows: list[dict[str, Any]],
-) -> None:
-    """Final confidence vs entropy, separating target success from confidence."""
-    if not event_rows:
-        return
-    fig, ax = bench.new_figure(figsize=(8.0, 5.8))
-    seen: set[str] = set()
-    for row in event_rows:
-        entropy = row.get("final_entropy_bits")
-        prob = row.get("final_top1_prob")
-        if entropy in (None, "") or prob in (None, ""):
-            continue
-        cat = row["category"]
-        target_status = row.get("final_top1_is_target")
-        if target_status in (None, ""):
-            marker = "s"
-            label = f"{cat}: unlabeled"
-        elif bool(target_status):
-            marker = "o"
-            label = f"{cat}: target top-1"
-        else:
-            marker = "X"
-            label = f"{cat}: target not top-1"
-        ax.scatter(
-            float(entropy),
-            float(prob),
-            color=category_color(cat),
-            marker=marker,
-            s=70,
-            alpha=0.82,
-            edgecolors="black" if target_status not in (None, "") else "none",
-            linewidths=0.7,
-            label=label if label not in seen else None,
-        )
-        seen.add(label)
-        if target_status is False and cat in {"fact", "counterfactual"}:
-            ax.annotate(
-                row["example_id"].replace("fact_", "").replace("cf_", ""),
-                (float(entropy), float(prob)),
-                textcoords="offset points",
-                xytext=(5, 4),
-                fontsize=7,
-            )
-    ax.set_xlabel("final entropy (bits)")
-    ax.set_ylabel("final top-1 probability")
-    ax.set_title("Final readout: confidence is not the same as target success")
-    ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=7, ncol=2)
-    bench.save_figure(
-        ctx,
-        fig,
-        "final_readout_scatter.png",
-        "Final entropy vs top-1 probability, with labeled target success marked separately.",
-    )
-
-
-def plot_biography(
-    ctx: bench.RunContext,
-    bundle: bench.ModelBundle,
-    example: PromptExample,
-    traj: bench.LensTrajectory,
-) -> None:
-    """Showcase prediction biography for one labeled example."""
-    if traj.p_target is None:
-        return
-    import matplotlib.pyplot as plt
-
-    depths = list(range(traj.n_depths))
-    fig, axes = plt.subplots(2, 2, figsize=(12.0, 8.0))
-    for ax in axes.flat:
-        ax.grid(True, alpha=0.3)
-
-    ax = axes[0, 0]
-    ax.plot(depths, traj.p_target, linewidth=2.2, label=f"p(target = {bench.visible_token(example.target or '')})")
-    if traj.p_distractor is not None:
-        ax.plot(depths, traj.p_distractor, linewidth=2.2, label=f"p(distractor = {bench.visible_token(example.distractor or '')})")
-    ax.plot(depths, traj.top1_probs, linewidth=1.0, linestyle="--", label="p(top-1 at depth)")
-    ax.set_ylabel("probability")
-    ax.set_ylim(-0.02, 1.05)
-    ax.legend(fontsize=8)
-
-    ax = axes[0, 1]
-    if traj.logit_target is not None and traj.logit_distractor is not None:
-        diffs = [t - d for t, d in zip(traj.logit_target, traj.logit_distractor)]
-        ax.axhline(0.0, linewidth=0.8)
-        ax.axhline(LOGIT_DIFF_MEANINGFUL_MARGIN, linewidth=0.8, linestyle=":")
-        ax.plot(depths, diffs, linewidth=2.2)
-        ax.set_ylabel("logit(target) - logit(distractor)")
-    else:
-        ax.text(0.5, 0.5, "No target/distractor pair", ha="center", va="center", transform=ax.transAxes)
-    ax.set_title("Matched target-vs-distractor readout")
-
-    ax = axes[1, 0]
-    if traj.target_rank is not None:
-        ax.plot(depths, traj.target_rank, linewidth=2.2, label="target rank")
-        ax.set_yscale("log")
-        ax.invert_yaxis()
-        ax.set_ylabel("rank, lower is better")
-    else:
-        ax.text(0.5, 0.5, "No labeled target", ha="center", va="center", transform=ax.transAxes)
-    ax.set_xlabel("depth")
-    ax.set_title("Rank can improve before probability looks large")
-
-    ax = axes[1, 1]
-    ax.plot(depths, traj.entropy_bits, linewidth=2.0, label="entropy")
-    ax.plot(depths, traj.kl_to_final_bits, linewidth=2.0, label="KL(final || depth)")
-    ax.set_yscale("log")
-    ax.set_xlabel("depth")
-    ax.set_ylabel("bits, log scale")
-    ax.set_title("Sharpness and convergence are different")
-    ax.legend(fontsize=8)
-
-    step = max(1, traj.n_depths // 8)
-    annotated = sorted(set(list(range(0, traj.n_depths, step)) + [traj.n_depths - 1]))
-    for depth in annotated:
-        axes[0, 0].annotate(
-            bench.visible_token(traj.top1_texts[depth]),
-            (depth, traj.top1_probs[depth]),
-            textcoords="offset points",
-            xytext=(0, 8),
-            fontsize=7,
-            rotation=45,
-        )
-    fig.suptitle(f"Prediction biography: {example.example_id}\n{example.prompt}", fontsize=12)
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
-    bench.save_figure(
-        ctx,
-        fig,
-        f"biography_{bench.sanitize_tag(example.example_id)}.png",
-        "Showcase example: target/distractor probability, logit difference, rank, entropy, and KL over depth.",
-    )
 
 
 def plot_readout_dashboard(
@@ -1136,47 +1131,505 @@ def plot_readout_dashboard(
     import matplotlib.pyplot as plt
 
     specs = [
-        ("entropy_bits", "entropy", "bits", False),
-        ("kl_to_final_bits", "KL(final || depth)", "bits", True),
-        ("top1_margin", "top-1 minus top-2 margin", "probability", False),
-        ("cosine_to_final", "cosine to final residual", "cosine", False),
+        ("entropy_bits", "sharpness: entropy", "bits", False),
+        ("kl_to_final_bits", "decoded convergence: KL(final || depth)", "bits", True),
+        ("top1_margin", "commitment: top-1 minus top-2", "probability margin", False),
+        ("cosine_to_final", "geometry: cosine to final residual", "cosine", False),
     ]
-    fig, axes = plt.subplots(2, 2, figsize=(12.5, 8.5))
-    plotted = False
-    max_depth_count = 0
+    fig, axes = plt.subplots(2, 2, figsize=(13.0, 8.8))
+    plotted_any = False
+    max_depth = 0
     for ax, (metric, title, ylabel, logy) in zip(axes.flat, specs):
         ax.grid(True, alpha=0.25)
         for spine in ("top", "right"):
             ax.spines[spine].set_visible(False)
-        for category in categories:
-            rows = [r for r in per_example if r["category"] == category and metric in r and r[metric]]
-            if not rows:
-                continue
-            plotted = True
-            depth_count = min(len(r[metric]) for r in rows)
-            max_depth_count = max(max_depth_count, depth_count)
-            mean = [statistics.fmean(float(r[metric][d]) for r in rows) for d in range(depth_count)]
-            ax.plot(range(depth_count), mean, linewidth=2.4, label=f"{category} (n={len(rows)})", color=category_color(category))
+        plotted, depth_count = draw_curve_summary(ax, per_example, metric, categories=categories, show_examples=False)
+        plotted_any = plotted_any or plotted
+        max_depth = max(max_depth, depth_count)
+        add_metric_reference(ax, metric)
         if logy:
             ax.set_yscale("log")
+        apply_depth_guides(ax, depth_count - 1, final_label=False)
         ax.set_title(title)
-        ax.set_xlabel("depth (0 = embeddings, k = after k blocks)")
+        ax.set_xlabel("depth")
         ax.set_ylabel(ylabel)
-    if not plotted:
+    if not plotted_any:
         bench.close_figure(fig)
         return
-    axes[0, 0].legend(fontsize=8, frameon=False)
-    fig.suptitle("Raw logit-lens readout dashboard — the four curves that move at different times are the lesson", fontsize=12)
-    # Annotate that final depth is the reference
-    final_depth = max_depth_count - 1
-    for ax in axes.flat:
-        ax.axvline(final_depth, color="#444", ls=":", lw=1, alpha=0.5)
-    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    axes[0, 0].legend(fontsize=8, frameon=False, loc="best")
+    fig.suptitle(
+        "Raw logit-lens dashboard: sharpness, decoded convergence, commitment, and geometry move on different clocks",
+        fontsize=12,
+    )
+    fig.text(
+        0.5,
+        0.012,
+        "Solid lines are category medians; shaded bands are interquartile ranges. Divergent clocks are the readout-is-an-instrument lesson.",
+        ha="center",
+        va="bottom",
+        fontsize=8,
+        color="#555555",
+    )
+    fig.tight_layout(rect=(0, 0.03, 1, 0.95))
     bench.save_figure(
         ctx,
         fig,
         "readout_dashboard.png",
-        "Category-mean entropy, KL-to-final, top-1 margin, and residual cosine curves in one dashboard. Gaps between curves = the core observation.",
+        "Category-median entropy, KL-to-final, top-1 margin, and residual cosine curves with IQR bands.",
+    )
+
+
+def plot_event_depths(
+    ctx: bench.RunContext,
+    event_rows: list[dict[str, Any]],
+    n_layers: int,
+) -> None:
+    """Scatter event depths by category for quick outlier spotting."""
+    fig, ax = bench.new_figure(figsize=(10.4, 5.8))
+    events = [
+        "decision_depth",
+        "target_first_top1",
+        "target_first_beats_distractor",
+        "target_first_beats_distractor_raw",
+        "target_rank_first_le_5",
+        "kl_to_final_first_le_0.5_bits",
+        "cosine_to_final_first_ge_0.95",
+    ]
+    x_positions = {event: i for i, event in enumerate(events)}
+    jitter_offsets = {cat: (i - (len(CATEGORIES) - 1) / 2) * 0.065 for i, cat in enumerate(CATEGORIES)}
+    any_points = False
+    for row in event_rows:
+        cat = row["category"]
+        for event in events:
+            value = number_or_none(row.get(event))
+            if value is None:
+                continue
+            any_points = True
+            ax.scatter(
+                x_positions[event] + jitter_offsets.get(cat, 0.0),
+                value,
+                s=30,
+                alpha=0.78,
+                color=category_color(cat),
+                edgecolors="white",
+                linewidths=0.35,
+                label=cat,
+            )
+    if not any_points:
+        bench.close_figure(fig)
+        return
+    for y in (n_layers / 3, 2 * n_layers / 3, n_layers):
+        ax.axhline(y, color="#888888", linestyle=":" if y < n_layers else "--", linewidth=0.8, alpha=0.35)
+    handles, labels = ax.get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), fontsize=8, frameon=False, loc="best")
+    ax.set_xticks(list(x_positions.values()))
+    ax.set_xticklabels([event_label(e) for e in events], rotation=28, ha="right")
+    ax.set_ylim(-0.5, n_layers + 0.8)
+    bench.style_ax(ax, title="Event depths by example", xlabel="event", ylabel="depth")
+    bench.save_figure(ctx, fig, "event_depths.png", "Per-example event depths by metric and category.")
+
+
+def plot_event_heatmap(
+    ctx: bench.RunContext,
+    event_rows: list[dict[str, Any]],
+    n_layers: int,
+) -> None:
+    """Example x event grid, with missing events visible instead of silent."""
+    if not event_rows:
+        return
+    import matplotlib.pyplot as plt
+
+    events = list(EVENT_PLOT_ORDER)
+    rows = sorted(
+        event_rows,
+        key=lambda r: (
+            CATEGORIES.index(r["category"]) if r["category"] in CATEGORIES else len(CATEGORIES),
+            str(r.get("relation_family", "")),
+            number_or_none(r.get("decision_depth")) if number_or_none(r.get("decision_depth")) is not None else float(n_layers + 1),
+            r["example_id"],
+        ),
+    )
+    data = [[float("nan") for _ in events] for _ in rows]
+    for i, row in enumerate(rows):
+        for j, event in enumerate(events):
+            value = number_or_none(row.get(event))
+            if value is not None:
+                data[i][j] = value
+
+    fig_height = max(6.2, min(15.0, 0.30 * len(rows) + 2.2))
+    fig, ax = bench.new_figure(figsize=(12.2, fig_height))
+    cmap = plt.get_cmap("viridis").copy()
+    cmap.set_bad("#d8d8d8")
+    im = ax.imshow(data, aspect="auto", cmap=cmap, vmin=0, vmax=n_layers)
+    ax.set_xticks(range(len(events)))
+    ax.set_xticklabels([event_label(e, multiline=True) for e in events], rotation=0, ha="center", fontsize=7)
+    ax.set_yticks(range(len(rows)))
+    ylabels = [f"{r['category'][:2]}:{short_example_label(r['example_id'], 26)}" for r in rows]
+    ax.set_yticklabels(ylabels, fontsize=6.5)
+    ax.set_title("Event-depth heatmap: gray means the event never occurred")
+    ax.set_xlabel("event metric")
+    ax.set_ylabel("example, grouped by category and relation family")
+    ax.set_xticks([x - 0.5 for x in range(1, len(events))], minor=True)
+    ax.set_yticks([y - 0.5 for y in range(1, len(rows))], minor=True)
+    ax.grid(which="minor", color="white", linewidth=0.55, alpha=0.55)
+    cbar = fig.colorbar(im, ax=ax, fraction=0.022, pad=0.01)
+    cbar.set_label("depth (earlier = more early commitment under raw lens)")
+
+    previous = rows[0]["category"]
+    cat_start = 0
+    for i, row in enumerate(rows[1:] + [{"category": "__END__"}], start=1):
+        if row["category"] != previous:
+            ax.axhline(i - 0.5, color="white", linewidth=2.3)
+            mid = (cat_start + i - 1) / 2.0
+            ax.text(-0.65, mid, previous, va="center", ha="right", fontsize=7, color="#444444")
+            cat_start = i
+            previous = row["category"]
+    fig.tight_layout()
+    bench.save_figure(
+        ctx,
+        fig,
+        "event_depth_heatmap.png",
+        "Example-by-event depth grid; gray cells make non-occurring events explicit.",
+    )
+
+
+def plot_event_timeline(
+    ctx: bench.RunContext,
+    event_rows: list[dict[str, Any]],
+    n_layers: int,
+) -> None:
+    """Timeline view: which event happens when, per example."""
+    if not event_rows:
+        return
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
+    events = [
+        "target_rank_first_le_5",
+        "target_first_beats_distractor",
+        "target_first_top1",
+        "decision_depth",
+        "cosine_to_final_first_ge_0.95",
+        "kl_to_final_first_le_0.5_bits",
+    ]
+    rows = sorted(
+        event_rows,
+        key=lambda r: (
+            CATEGORIES.index(r["category"]) if r["category"] in CATEGORIES else len(CATEGORIES),
+            str(r.get("relation_family", "")),
+            number_or_none(r.get("decision_depth")) if number_or_none(r.get("decision_depth")) is not None else float(n_layers + 1),
+            r["example_id"],
+        ),
+    )
+    fig_height = max(5.5, min(16.0, 0.28 * len(rows) + 2.2))
+    fig, ax = bench.new_figure(figsize=(12.4, fig_height))
+    for y, row in enumerate(rows):
+        cat = row["category"]
+        color = category_color(cat)
+        ax.hlines(y, 0, n_layers, color=color, alpha=0.12, linewidth=3.8)
+        for event in events:
+            value = number_or_none(row.get(event))
+            if value is None:
+                continue
+            ax.scatter(value, y, marker=EVENT_MARKERS.get(event, "o"), s=50, color=color,
+                       edgecolors="white", linewidths=0.45, zorder=3)
+        # A tiny final-outcome tick at the right helps connect timing to correctness.
+        outcome = str(row.get("final_outcome", ""))
+        if outcome:
+            ax.text(n_layers + 0.35, y, outcome.replace("_", " "), va="center", fontsize=6.4, color="#555555")
+    ax.axvline(n_layers, color="#444444", linestyle=":", linewidth=1.0, alpha=0.6)
+    for frac in (1 / 3, 2 / 3):
+        ax.axvline(n_layers * frac, color="#888888", linestyle=":", linewidth=0.8, alpha=0.25)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([f"{r['category'][:2]}:{short_example_label(r['example_id'], 30)}" for r in rows], fontsize=6.5)
+    ax.set_xlim(-0.5, n_layers + 4.0)
+    ax.set_ylim(-0.8, len(rows) - 0.2)
+    ax.invert_yaxis()
+    ax.set_xlabel("depth")
+    ax.set_title("Event timeline: the same example can rank, beat, decide, and converge at different depths")
+    event_handles = [
+        Line2D([0], [0], marker=EVENT_MARKERS.get(e, "o"), color="none", markerfacecolor="#555555",
+               markeredgecolor="white", markeredgewidth=0.4, markersize=7, label=event_label(e))
+        for e in events
+    ]
+    cat_handles = [Line2D([0], [0], color=category_color(c), linewidth=4, label=c) for c in CATEGORIES if any(r["category"] == c for r in rows)]
+    leg1 = ax.legend(handles=event_handles, title="event", fontsize=7, title_fontsize=8, frameon=False,
+                     loc="upper left", bbox_to_anchor=(1.01, 1.0))
+    ax.add_artist(leg1)
+    ax.legend(handles=cat_handles, title="category", fontsize=7, title_fontsize=8, frameon=False,
+              loc="lower left", bbox_to_anchor=(1.01, 0.0))
+    fig.tight_layout(rect=(0, 0, 0.82, 1))
+    bench.save_figure(
+        ctx,
+        fig,
+        "event_timeline.png",
+        "Per-example event timeline connecting rank, target-vs-distractor, decision, cosine, and KL events.",
+    )
+
+
+def plot_top1_transition_ribbons(
+    ctx: bench.RunContext,
+    transition_rows: list[dict[str, Any]],
+    event_rows: list[dict[str, Any]],
+    n_layers: int,
+) -> None:
+    """Compressed top-1 token biographies as ribbons."""
+    if not transition_rows or not event_rows:
+        return
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
+    order_rows = sorted(
+        event_rows,
+        key=lambda r: (
+            CATEGORIES.index(r["category"]) if r["category"] in CATEGORIES else len(CATEGORIES),
+            str(r.get("relation_family", "")),
+            number_or_none(r.get("decision_depth")) if number_or_none(r.get("decision_depth")) is not None else float(n_layers + 1),
+            r["example_id"],
+        ),
+    )
+    order = [r["example_id"] for r in order_rows]
+    y_pos = {ex_id: i for i, ex_id in enumerate(order)}
+    by_example: dict[str, list[dict[str, Any]]] = {}
+    for row in transition_rows:
+        by_example.setdefault(row["example_id"], []).append(row)
+
+    fig_height = max(5.5, min(16.0, 0.30 * len(order) + 2.4))
+    fig, ax = bench.new_figure(figsize=(12.0, fig_height))
+    role_colors = {
+        "target": "#009E73",
+        "distractor": "#D55E00",
+        "final": "#0072B2",
+        "other": "#b8b8b8",
+    }
+    for ex_id in order:
+        y = y_pos[ex_id]
+        rows = by_example.get(ex_id, [])
+        cat = rows[0]["category"] if rows else ""
+        ax.hlines(y, 0, n_layers, color=category_color(cat), alpha=0.10, linewidth=5.0)
+        for seg in rows:
+            if bool(seg.get("is_target")):
+                role = "target"
+            elif bool(seg.get("is_distractor")):
+                role = "distractor"
+            elif bool(seg.get("is_final_top1_token")):
+                role = "final"
+            else:
+                role = "other"
+            start = number_or_none(seg.get("start_depth")) or 0.0
+            end = number_or_none(seg.get("end_depth")) or start
+            ax.plot([start, end], [y, y], color=role_colors[role], linewidth=4.0, solid_capstyle="butt", alpha=0.92)
+            duration = number_or_none(seg.get("duration_depths")) or 0.0
+            if duration >= max(4, n_layers * 0.12):
+                token = str(seg.get("token", ""))
+                ax.text((start + end) / 2, y - 0.18, textwrap.shorten(token, width=10, placeholder="…"),
+                        fontsize=6.3, ha="center", va="top", color="#333333")
+    ax.axvline(n_layers, color="#444444", linestyle=":", linewidth=1.0, alpha=0.65)
+    ax.set_yticks(range(len(order)))
+    labels = []
+    row_by_id = {r["example_id"]: r for r in event_rows}
+    for ex_id in order:
+        r = row_by_id[ex_id]
+        labels.append(f"{r['category'][:2]}:{short_example_label(ex_id, 28)}")
+    ax.set_yticklabels(labels, fontsize=6.5)
+    ax.set_xlim(-0.5, n_layers + 0.8)
+    ax.set_ylim(-0.8, len(order) - 0.2)
+    ax.invert_yaxis()
+    ax.set_xlabel("depth")
+    ax.set_title("Top-1 token ribbons: long middle-layer winners are often not the final answer")
+    handles = [Line2D([0], [0], color=color, lw=4, label=label) for label, color in [
+        ("target token", role_colors["target"]),
+        ("distractor token", role_colors["distractor"]),
+        ("final top-1 token", role_colors["final"]),
+        ("other top-1 token", role_colors["other"]),
+    ]]
+    ax.legend(handles=handles, fontsize=8, frameon=False, loc="upper left", bbox_to_anchor=(1.01, 1.0))
+    fig.tight_layout(rect=(0, 0, 0.84, 1))
+    bench.save_figure(
+        ctx,
+        fig,
+        "top1_transition_ribbons.png",
+        "Compressed top-1 token biographies; exposes long-lived intermediate winners and target/distractor segments.",
+    )
+
+
+def plot_final_readout_scatter(
+    ctx: bench.RunContext,
+    event_rows: list[dict[str, Any]],
+) -> None:
+    """Final confidence vs entropy, separating target success from confidence."""
+    if not event_rows:
+        return
+    fig, ax = bench.new_figure(figsize=(8.4, 6.1))
+    seen: set[str] = set()
+    for row in event_rows:
+        entropy = number_or_none(row.get("final_entropy_bits"))
+        prob = number_or_none(row.get("final_top1_prob"))
+        if entropy is None or prob is None:
+            continue
+        cat = row["category"]
+        target_status = row.get("final_top1_is_target")
+        outcome = str(row.get("final_outcome", ""))
+        if target_status in (None, ""):
+            marker = "s"
+            label = f"{cat}: unlabeled"
+        elif bool(target_status):
+            marker = "o"
+            label = f"{cat}: target top-1"
+        elif outcome == "target_beats_distractor_not_top1":
+            marker = "^"
+            label = f"{cat}: target beats distractor"
+        else:
+            marker = "X"
+            label = f"{cat}: target not top-1"
+        ax.scatter(
+            entropy,
+            prob,
+            color=category_color(cat),
+            marker=marker,
+            s=78,
+            alpha=0.84,
+            edgecolors="black" if target_status not in (None, "") else "none",
+            linewidths=0.65,
+            label=label if label not in seen else None,
+        )
+        seen.add(label)
+        should_annotate = (
+            (target_status is False and cat in {"fact", "counterfactual"})
+            or (cat == "ambiguous" and prob > 0.5)
+        )
+        if should_annotate:
+            ax.annotate(short_example_label(row["example_id"], 22), (entropy, prob), textcoords="offset points",
+                        xytext=(5, 4), fontsize=7)
+    ax.set_xlabel("final entropy (bits)")
+    ax.set_ylabel("final top-1 probability")
+    ax.set_title("Final readout: confidence, target success, and matched-distractor success are different")
+    ax.legend(fontsize=7, ncol=2, frameon=False, loc="best")
+    bench.save_figure(
+        ctx,
+        fig,
+        "final_readout_scatter.png",
+        "Final entropy vs top-1 probability, with target success and target-vs-distractor outcome marked separately.",
+    )
+
+
+def add_biography_event_lines(axes: Iterable[Any], events: dict[str, int | None]) -> None:
+    colors = {
+        "rank≤5": "#555555",
+        "target>distr": "#D55E00",
+        "target top-1": "#009E73",
+        "decision": "#0072B2",
+        "KL≤0.5": "#666666",
+        "cos≥0.95": "#8a8a8a",
+    }
+    for ax in axes:
+        for label, depth in events.items():
+            if depth is None:
+                continue
+            ax.axvline(depth, color=colors.get(label, "#666666"), linestyle=":" if "≤" in label or "≥" in label else "--",
+                       linewidth=0.9, alpha=0.45)
+
+
+def plot_biography(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    example: PromptExample,
+    traj: bench.LensTrajectory,
+) -> None:
+    """Showcase prediction biography for one labeled example."""
+    if traj.p_target is None:
+        return
+    import matplotlib.pyplot as plt
+
+    depths = list(range(traj.n_depths))
+    events = {
+        "rank≤5": first_rank_le(traj.target_rank, 5),
+        "target>distr": first_meaningful_logit_diff_positive(traj),
+        "target top-1": target_first_top1(traj, single_token_id(bundle.tokenizer, example.target)),
+        "decision": decision_depth(traj),
+        "KL≤0.5": first_value_le(traj.kl_to_final_bits, 0.5),
+        "cos≥0.95": first_value_ge(traj.cosine_to_final, 0.95),
+    }
+    fig, axes = plt.subplots(2, 2, figsize=(13.0, 8.6))
+    for ax in axes.flat:
+        ax.grid(True, alpha=0.25)
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+    add_biography_event_lines(axes.flat, events)
+
+    ax = axes[0, 0]
+    ax.plot(depths, traj.p_target, linewidth=2.4, label=f"p(target = {bench.visible_token(example.target or '')})")
+    if traj.p_distractor is not None:
+        ax.plot(depths, traj.p_distractor, linewidth=2.2, label=f"p(distractor = {bench.visible_token(example.distractor or '')})")
+    ax.plot(depths, traj.top1_probs, linewidth=1.1, linestyle="--", color="#555555", label="p(top-1 at depth)")
+    ax.set_ylabel("probability")
+    ax.set_ylim(-0.02, 1.05)
+    ax.set_title("Target, distractor, and current winner")
+    ax.legend(fontsize=8, frameon=False)
+
+    ax = axes[0, 1]
+    if traj.logit_target is not None and traj.logit_distractor is not None:
+        diffs = [t - d for t, d in zip(traj.logit_target, traj.logit_distractor)]
+        ax.axhline(0.0, color="#333333", linewidth=0.9, alpha=0.6)
+        ax.axhline(LOGIT_DIFF_MEANINGFUL_MARGIN, color="#555555", linewidth=0.9, linestyle="--", alpha=0.6)
+        ax.plot(depths, diffs, linewidth=2.4)
+        ax.set_ylabel("logit(target) - logit(distractor)")
+        ax.set_title("Matched target-vs-distractor readout")
+    else:
+        ax.text(0.5, 0.5, "No target/distractor pair", ha="center", va="center", transform=ax.transAxes)
+
+    ax = axes[1, 0]
+    if traj.target_rank is not None:
+        ax.plot(depths, traj.target_rank, linewidth=2.4, label="target rank")
+        ax.axhline(5, color="#555555", linewidth=0.9, linestyle="--", alpha=0.55)
+        ax.set_yscale("log")
+        ax.invert_yaxis()
+        ax.set_ylabel("rank, lower is better")
+    else:
+        ax.text(0.5, 0.5, "No labeled target", ha="center", va="center", transform=ax.transAxes)
+    ax.set_xlabel("depth")
+    ax.set_title("Rank can improve before probability looks large")
+
+    ax = axes[1, 1]
+    ax.plot(depths, traj.entropy_bits, linewidth=2.0, label="entropy")
+    ax.plot(depths, traj.kl_to_final_bits, linewidth=2.0, label="KL(final || depth)")
+    ax.axhline(0.5, color="#555555", linewidth=0.9, linestyle="--", alpha=0.55)
+    ax.set_yscale("log")
+    ax.set_xlabel("depth")
+    ax.set_ylabel("bits, log scale")
+    ax.set_title("Sharpness, decoded convergence, and geometry")
+    ax2 = ax.twinx()
+    ax2.plot(depths, traj.cosine_to_final, linewidth=1.6, linestyle=":", color="#333333", label="cosine to final")
+    ax2.set_ylabel("cosine", color="#333333")
+    ax2.tick_params(axis="y", labelcolor="#333333")
+    lines, labels = ax.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax.legend(lines + lines2, labels + labels2, fontsize=8, frameon=False, loc="best")
+
+    # Sparse token annotations: first, event depths, and final, not every nth point.
+    annotated = {0, traj.n_depths - 1}
+    annotated.update(d for d in events.values() if d is not None)
+    for depth in sorted(annotated):
+        if 0 <= depth < traj.n_depths:
+            axes[0, 0].annotate(
+                bench.visible_token(traj.top1_texts[depth]),
+                (depth, traj.top1_probs[depth]),
+                textcoords="offset points",
+                xytext=(0, 8),
+                fontsize=7,
+                rotation=42,
+                ha="left",
+            )
+    event_caption = ", ".join(f"{k}:{v}" for k, v in events.items() if v is not None) or "no labeled events occurred"
+    prompt = textwrap.fill(example.prompt, width=110)
+    fig.suptitle(f"Prediction biography: {example.example_id}\n{prompt}\nEvents: {event_caption}", fontsize=12)
+    fig.tight_layout(rect=(0, 0, 1, 0.90))
+    bench.save_figure(
+        ctx,
+        fig,
+        f"biography_{bench.sanitize_tag(example.example_id)}.png",
+        "Showcase example with event lines, target/distractor probability, logit difference, rank, entropy, KL, and cosine.",
     )
 
 
@@ -1186,39 +1639,51 @@ def plot_convergence_lag(
     *,
     categories: tuple[str, ...] = CATEGORIES,
 ) -> None:
-    """Visualize the lag between geometric convergence (cosine) and decoded convergence (KL or decision).
-    This directly supports the 'readout is not a mind scan' and 'different stories' questions."""
+    """Visualize the lag between geometric and decoded convergence."""
     if not event_rows:
         return
-    fig, ax = bench.new_figure(figsize=(9.5, 5.6))
-    for cat in categories:
+    fig, ax = bench.new_figure(figsize=(9.8, 5.8))
+    plotted = False
+    for cat_i, cat in enumerate(categories):
         rows = [r for r in event_rows if r.get("category") == cat]
         if not rows:
             continue
-        # For each example compute first depth where cosine high and where KL low; plot the gap
-        lags = []
+        lags: list[float] = []
         for r in rows:
-            cos_d = r.get("cosine_to_final_first_ge_0.95")
-            kl_d = r.get("kl_to_final_first_le_0.5_bits")
-            if cos_d not in (None, "") and kl_d not in (None, ""):
-                lags.append(float(kl_d) - float(cos_d))
+            cos_d = number_or_none(r.get("cosine_to_final_first_ge_0.95"))
+            kl_d = number_or_none(r.get("kl_to_final_first_le_0.5_bits"))
+            if cos_d is not None and kl_d is not None:
+                lags.append(kl_d - cos_d)
         if not lags:
             continue
+        plotted = True
         color = category_color(cat)
-        # jittered points + mean
-        x = [CATEGORIES.index(cat) + (i - len(lags)/2)*0.08 for i in range(len(lags))]
-        ax.scatter(x, lags, color=color, alpha=0.6, s=28, label=f"{cat} (n={len(lags)})")
-        m = statistics.fmean(lags)
-        ax.plot([CATEGORIES.index(cat)-0.25, CATEGORIES.index(cat)+0.25], [m, m], color=color, linewidth=3)
-    ax.axhline(0, color="#333", ls=":", lw=1, alpha=0.7)
-    ax.set_xticks(range(len(CATEGORIES)))
+        offsets = [((i - (len(lags) - 1) / 2) * 0.075) for i in range(len(lags))]
+        ax.scatter([cat_i + o for o in offsets], lags, color=color, alpha=0.70, s=36, label=f"{cat} (n={len(lags)})",
+                   edgecolors="white", linewidths=0.35)
+        q25 = percentile(lags, 0.25)
+        q50 = percentile(lags, 0.50)
+        q75 = percentile(lags, 0.75)
+        ax.plot([cat_i - 0.25, cat_i + 0.25], [q50, q50], color=color, linewidth=3.2)
+        ax.vlines(cat_i, q25, q75, color=color, linewidth=5, alpha=0.18)
+    if not plotted:
+        bench.close_figure(fig)
+        return
+    ax.axhline(0, color="#333333", ls=":", lw=1, alpha=0.7)
+    ax.text(0.01, 0.02, "positive: residual geometry stabilizes first\nnegative: decoded distribution stabilizes first",
+            transform=ax.transAxes, fontsize=8, color="#555555", va="bottom")
+    ax.set_xticks(range(len(categories)))
     ax.set_xticklabels(categories)
-    ax.set_ylabel("lag (KL-stable depth − cosine-stable depth)  >0 means geometry leads decoded readout")
-    ax.set_title("Geometric vs decoded convergence lag (positive = residual looks final before the lens distribution does)")
-    ax.legend(fontsize=8, frameon=False)
+    ax.set_ylabel("KL-stable depth minus cosine-stable depth")
+    ax.set_title("Geometric vs decoded convergence lag")
+    ax.legend(fontsize=8, frameon=False, loc="best")
     bench.style_ax(ax, legend=False)
-    bench.save_figure(ctx, fig, "convergence_lag.png",
-                      "Key Lab 1 concept: the residual can be geometrically close to final while the decoded distribution is not (or vice versa).")
+    bench.save_figure(
+        ctx,
+        fig,
+        "convergence_lag.png",
+        "Key Lab 1 concept: geometric closeness and decoded-distribution closeness stabilize at different depths.",
+    )
 
 
 def plot_event_ordering(
@@ -1232,10 +1697,11 @@ def plot_event_ordering(
         "target_first_beats_distractor",
         "target_first_top1",
         "decision_depth",
+        "cosine_to_final_first_ge_0.95",
         "kl_to_final_first_le_0.5_bits",
     ]
-    fig, ax = bench.new_figure(figsize=(10.5, 5.8))
-    offsets = {cat: (i - 1.5) * 0.12 for i, cat in enumerate(CATEGORIES)}
+    fig, ax = bench.new_figure(figsize=(11.8, 6.0))
+    offsets = {cat: (i - (len(CATEGORIES) - 1) / 2) * 0.13 for i, cat in enumerate(CATEGORIES)}
     plotted = False
     for category in CATEGORIES:
         rows = [r for r in event_rows if r["category"] == category]
@@ -1247,20 +1713,133 @@ def plot_event_ordering(
                 continue
             plotted = True
             y = statistics.median(vals) / max(1, n_layers)
-            ax.scatter(j + offsets.get(category, 0.0), y, s=70, color=category_color(category), label=category)
-            ax.annotate(f"n={len(vals)}", (j + offsets.get(category, 0.0), y), textcoords="offset points", xytext=(0, 7), ha="center", fontsize=7)
+            ax.scatter(j + offsets.get(category, 0.0), y, s=82, color=category_color(category), label=category,
+                       edgecolors="white", linewidths=0.5)
+            ax.annotate(f"n={len(vals)}/{len(rows)}", (j + offsets.get(category, 0.0), y),
+                        textcoords="offset points", xytext=(0, 7), ha="center", fontsize=7)
     if not plotted:
         bench.close_figure(fig)
         return
     handles, labels = ax.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
-    ax.legend(by_label.values(), by_label.keys(), fontsize=8)
+    ax.legend(by_label.values(), by_label.keys(), fontsize=8, frameon=False)
     ax.set_xticks(range(len(events)))
-    ax.set_xticklabels(events, rotation=25, ha="right")
+    ax.set_xticklabels([event_label(e) for e in events], rotation=28, ha="right")
     ax.set_ylim(-0.04, 1.04)
     ax.set_ylabel("median event depth / number of blocks")
-    ax.set_title("Event ordering by category (conditional on event occurring)")
+    ax.set_title("Event ordering by category, conditional on event occurring")
     bench.save_figure(ctx, fig, "event_ordering.png", "Median event-depth fraction by category, annotated with occurrence counts.")
+
+
+def plot_relation_event_matrix(
+    ctx: bench.RunContext,
+    event_rows: list[dict[str, Any]],
+    n_layers: int,
+) -> None:
+    """If relation-family metadata exists, compare event timing across families."""
+    if not event_rows:
+        return
+    import matplotlib.pyplot as plt
+
+    events = [
+        "target_rank_first_le_5",
+        "target_first_beats_distractor",
+        "target_first_top1",
+        "decision_depth",
+        "kl_to_final_first_le_0.5_bits",
+    ]
+    families = sorted({str(r.get("relation_family") or r.get("category")) for r in event_rows})
+    if len(families) < 2:
+        return
+    # Keep dense default runs readable, but still make large custom sets useful.
+    family_rows: list[tuple[str, str, list[dict[str, Any]]]] = []
+    for fam in families:
+        rows = [r for r in event_rows if str(r.get("relation_family") or r.get("category")) == fam]
+        cats = sorted({r["category"] for r in rows}, key=lambda c: CATEGORIES.index(c) if c in CATEGORIES else 999)
+        family_rows.append((cats[0] if cats else "", fam, rows))
+    family_rows.sort(key=lambda t: (CATEGORIES.index(t[0]) if t[0] in CATEGORIES else 999, t[1]))
+
+    data: list[list[float]] = []
+    labels: list[str] = []
+    for cat, fam, rows in family_rows:
+        labels.append(f"{cat[:2]}:{fam} (n={len(rows)})")
+        row_vals: list[float] = []
+        for event in events:
+            vals = numeric_values(rows, event)
+            row_vals.append(float("nan") if not vals else statistics.median(vals) / max(1, n_layers))
+        data.append(row_vals)
+    fig_height = max(4.8, min(12.0, 0.34 * len(labels) + 1.8))
+    fig, ax = bench.new_figure(figsize=(10.8, fig_height))
+    cmap = plt.get_cmap("magma_r").copy()
+    cmap.set_bad("#d8d8d8")
+    im = ax.imshow(data, aspect="auto", cmap=cmap, vmin=0, vmax=1)
+    ax.set_xticks(range(len(events)))
+    ax.set_xticklabels([event_label(e, multiline=True) for e in events], fontsize=7)
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels, fontsize=7)
+    for i, row in enumerate(data):
+        for j, value in enumerate(row):
+            if math.isfinite(value):
+                ax.text(j, i, f"{value:.2f}", ha="center", va="center", fontsize=6.5, color="#111111")
+    ax.set_title("Relation-family event matrix: do different relation types emerge on different clocks?")
+    ax.set_xlabel("event metric, value = median event depth / layers")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.026, pad=0.01)
+    cbar.set_label("normalized depth")
+    fig.tight_layout()
+    bench.save_figure(
+        ctx,
+        fig,
+        "relation_event_matrix.png",
+        "Relation-family matrix of median event depths; uses relation= tags from custom prompt notes when present.",
+    )
+
+
+def plot_phase_heatmap(
+    ctx: bench.RunContext,
+    phase_rows: list[dict[str, Any]],
+) -> None:
+    """Coarse phase atlas: where entropy and KL fall by category."""
+    if not phase_rows:
+        return
+    import matplotlib.pyplot as plt
+
+    metrics = [("mean_entropy_bits", "entropy bits"), ("mean_kl_to_final_bits", "KL-to-final bits")]
+    categories = [cat for cat in CATEGORIES if any(r.get("category") == cat for r in phase_rows)]
+    if not categories:
+        return
+    fig, axes = plt.subplots(1, len(metrics), figsize=(11.8, max(3.4, 0.45 * len(categories) + 2.0)))
+    if len(metrics) == 1:
+        axes = [axes]
+    for ax, (metric, title) in zip(axes, metrics):
+        data: list[list[float]] = []
+        for cat in categories:
+            row_vals: list[float] = []
+            for phase in PHASE_ORDER:
+                vals = [number_or_none(r.get(metric)) for r in phase_rows if r.get("category") == cat and r.get("phase") == phase]
+                vals = [v for v in vals if v is not None]
+                row_vals.append(float("nan") if not vals else statistics.fmean(vals))
+            data.append(row_vals)
+        cmap = plt.get_cmap("viridis").copy()
+        cmap.set_bad("#d8d8d8")
+        im = ax.imshow(data, aspect="auto", cmap=cmap)
+        ax.set_xticks(range(len(PHASE_ORDER)))
+        ax.set_xticklabels([PHASE_DISPLAY[p] for p in PHASE_ORDER], rotation=25, ha="right")
+        ax.set_yticks(range(len(categories)))
+        ax.set_yticklabels(categories)
+        ax.set_title(title)
+        for i, row in enumerate(data):
+            for j, value in enumerate(row):
+                if math.isfinite(value):
+                    ax.text(j, i, f"{value:.1f}", ha="center", va="center", fontsize=7, color="#111111")
+        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.02)
+    fig.suptitle("Readout phase atlas: coarse depth bands make cross-model comparisons less brittle", fontsize=12)
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
+    bench.save_figure(
+        ctx,
+        fig,
+        "readout_phase_heatmap.png",
+        "Coarse phase heatmaps for entropy and KL-to-final by category.",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1337,15 +1916,81 @@ def category_stats(event_rows: list[dict[str, Any]], n_layers: int) -> list[dict
             "mean_final_p_target": mean_or_blank(rows, "final_p_target"),
             "mean_final_target_rank": mean_or_blank(rows, "final_target_rank", 2),
             "target_final_top1_rate": mean_or_blank(rows, "final_top1_is_target", 3),
+            "target_final_beats_distractor_margin_rate": mean_or_blank(rows, "final_target_beats_distractor_by_margin", 3),
+            "median_kl_to_final_first_le_0.5_bits": median_or_blank(rows, "kl_to_final_first_le_0.5_bits"),
+            "n_kl_to_final_first_le_0.5_bits": occurrence_count(rows, "kl_to_final_first_le_0.5_bits"),
+            "median_cosine_to_final_first_ge_0.95": median_or_blank(rows, "cosine_to_final_first_ge_0.95"),
+            "n_cosine_to_final_first_ge_0.95": occurrence_count(rows, "cosine_to_final_first_ge_0.95"),
+            "mean_convergence_lag_depths": mean_or_blank(rows, "convergence_lag_depths", 2),
+            "mean_top1_flip_count": mean_or_blank(rows, "top1_flip_count", 2),
         }
         out.append(row)
     return out
 
 
+def relation_stats(event_rows: list[dict[str, Any]], n_layers: int) -> list[dict[str, Any]]:
+    """Aggregate event timings by relation_family metadata.
+
+    This table is especially useful with ``data/relation_probes_lab1.csv`` or
+    custom prompt sets whose ``note`` column contains ``relation=...`` tags. It
+    also gives the built-in examples a lightweight relation lens rather than
+    collapsing everything into fact vs ambiguous vs counterfactual.
+    """
+    groups = sorted({str(r.get("relation_family") or r.get("category") or "unknown") for r in event_rows})
+    out: list[dict[str, Any]] = []
+    for family in groups:
+        rows = [r for r in event_rows if str(r.get("relation_family") or r.get("category") or "unknown") == family]
+        if not rows:
+            continue
+        categories = ",".join(sorted({str(r.get("category", "")) for r in rows}))
+        decision = median_or_blank(rows, "decision_depth")
+        row = {
+            "relation_family": family,
+            "categories": categories,
+            "n_examples": len(rows),
+            "median_decision_depth": decision,
+            "median_decision_depth_frac": "" if decision == "" else round(float(decision) / max(1, n_layers), 4),
+            "median_target_rank_first_le_5": median_or_blank(rows, "target_rank_first_le_5"),
+            "n_target_rank_first_le_5": occurrence_count(rows, "target_rank_first_le_5"),
+            "median_target_first_beats_distractor": median_or_blank(rows, "target_first_beats_distractor"),
+            "n_target_first_beats_distractor": occurrence_count(rows, "target_first_beats_distractor"),
+            "median_target_first_top1": median_or_blank(rows, "target_first_top1"),
+            "n_target_first_top1": occurrence_count(rows, "target_first_top1"),
+            "median_kl_to_final_first_le_0.5_bits": median_or_blank(rows, "kl_to_final_first_le_0.5_bits"),
+            "n_kl_to_final_first_le_0.5_bits": occurrence_count(rows, "kl_to_final_first_le_0.5_bits"),
+            "median_cosine_to_final_first_ge_0.95": median_or_blank(rows, "cosine_to_final_first_ge_0.95"),
+            "n_cosine_to_final_first_ge_0.95": occurrence_count(rows, "cosine_to_final_first_ge_0.95"),
+            "mean_final_entropy_bits": mean_or_blank(rows, "final_entropy_bits"),
+            "mean_final_p_target": mean_or_blank(rows, "final_p_target"),
+            "target_final_top1_rate": mean_or_blank(rows, "final_top1_is_target", 3),
+            "target_final_beats_distractor_margin_rate": mean_or_blank(rows, "final_target_beats_distractor_by_margin", 3),
+            "mean_convergence_lag_depths": mean_or_blank(rows, "convergence_lag_depths", 2),
+        }
+        out.append(row)
+    return out
+
+
+def write_plot_reading_guide(ctx: bench.RunContext) -> None:
+    """Write a small map from each plot to the question it answers."""
+    rows = [
+        {"open_order": 1, "plot": "readout_dashboard.png", "question": "Do sharpness, decoded convergence, commitment, and geometry move together?", "use_when": "first overview"},
+        {"open_order": 2, "plot": "event_timeline.png", "question": "For each example, which event happened first and which never happened?", "use_when": "debugging overclaims"},
+        {"open_order": 3, "plot": "event_depth_heatmap.png", "question": "Where are the missing events, and are they category-specific?", "use_when": "seeing gray as data"},
+        {"open_order": 4, "plot": "top1_transition_ribbons.png", "question": "Which top-1 tokens occupy long depth intervals before the final readout?", "use_when": "reading biographies at scale"},
+        {"open_order": 5, "plot": "convergence_lag.png", "question": "Does residual geometry stabilize before the decoded distribution?", "use_when": "readout-is-an-instrument lesson"},
+        {"open_order": 6, "plot": "final_readout_scatter.png", "question": "Is high final confidence the same as labeled target success?", "use_when": "confidence/correctness audit"},
+        {"open_order": 7, "plot": "relation_event_matrix.png", "question": "Do relation families emerge at different depths?", "use_when": "custom relation prompt sets"},
+        {"open_order": 8, "plot": "readout_phase_heatmap.png", "question": "Which coarse phase does most of the distributional sharpening occupy?", "use_when": "cross-model comparison"},
+    ]
+    path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", "Reading order and conceptual purpose for the Lab 1 plots.")
+
+
 def render_category_table(cat_rows: list[dict[str, Any]]) -> list[str]:
     lines = [
-        "| category | n | mean prompt tokens | median decision depth | frac of L | target first top-1 | target beats distractor (>1, stable lead) | final entropy | final p(target) | target final top-1 rate |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| category | n | mean prompt tokens | median decision depth | frac of L | target first top-1 | target beats distractor (>1, stable lead) | KL stable | cosine stable | lag | final entropy | final p(target) | target final top-1 rate |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for r in cat_rows:
         lines.append(
@@ -1353,6 +1998,9 @@ def render_category_table(cat_rows: list[dict[str, Any]]) -> list[str]:
             f"{r['median_decision_depth']} | {r['median_decision_depth_frac']} | "
             f"{r['median_target_first_top1']} (n={r['n_target_first_top1']}) | "
             f"{r['median_target_first_beats_distractor']} (n={r['n_target_first_beats_distractor']}) | "
+            f"{r.get('median_kl_to_final_first_le_0.5_bits', '')} (n={r.get('n_kl_to_final_first_le_0.5_bits', '')}) | "
+            f"{r.get('median_cosine_to_final_first_ge_0.95', '')} (n={r.get('n_cosine_to_final_first_ge_0.95', '')}) | "
+            f"{r.get('mean_convergence_lag_depths', '')} | "
             f"{r['mean_final_entropy_bits']} | {r['mean_final_p_target']} | "
             f"{r['target_final_top1_rate']} |"
         )
@@ -1673,8 +2321,10 @@ def write_logit_lens_card(
         "2. `diagnostics/hook_parity_by_layer.csv`",
         "3. `tables/final_readout_audit.csv`",
         "4. `plots/readout_dashboard.png`",
-        "5. `plots/event_ordering.png`",
-        "6. `state/<example_id>/state_card.md`",
+        "5. `plots/event_timeline.png`",
+        "6. `plots/top1_transition_ribbons.png`",
+        "7. `plots/event_ordering.png`",
+        "8. `state/<example_id>/state_card.md`",
         "",
     ]
     path = ctx.path("logit_lens_card.md")
@@ -1737,6 +2387,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             row: dict[str, Any] = {
                 "example_id": ex.example_id,
                 "category": ex.category,
+                "relation_family": infer_relation_family(ex),
+                "note": ex.note,
                 "depth": depth,
                 "top1_token_id": traj.top1_ids[depth],
                 "top1_token": traj.top1_texts[depth],
@@ -1767,6 +2419,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         curve: dict[str, Any] = {
             "example_id": ex.example_id,
             "category": ex.category,
+            "relation_family": infer_relation_family(ex),
             "entropy_bits": traj.entropy_bits,
             "kl_to_final_bits": traj.kl_to_final_bits,
             "top1_margin": traj.top1_margin,
@@ -1830,6 +2483,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, cat_path, cat_rows)
     ctx.register_artifact(cat_path, "table", "Per-category aggregate metrics.")
 
+    relation_rows = relation_stats(event_rows, bundle.anatomy.n_layers)
+    relation_path = ctx.path("tables", "relation_summary.csv")
+    bench.write_csv_with_context(ctx, relation_path, relation_rows)
+    ctx.register_artifact(relation_path, "table", "Per-relation-family aggregate metrics; uses relation= note tags when present.")
+
+    write_plot_reading_guide(ctx)
+
     metrics_path = ctx.path("metrics.json")
     bench.write_json(
         metrics_path,
@@ -1842,6 +2502,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "selected_prompt_set_sha256": prompt_set_sha256(examples),
             "kept_prompt_set_sha256": prompt_set_sha256([ex for ex, _, _ in kept]),
             "categories": cat_rows,
+            "relation_families": relation_rows,
             "event_metric_definitions": {
                 "decision_depth": "first depth after which final top-1 remains top-1",
                 "target_first_top1": "first depth where labeled target is top-1",
@@ -1865,6 +2526,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     # Plots.
     if not ctx.args.no_plots:
         plot_readout_dashboard(ctx, per_example_curves)
+        plot_event_timeline(ctx, event_rows, bundle.anatomy.n_layers)
+        plot_top1_transition_ribbons(ctx, transition_rows, event_rows, bundle.anatomy.n_layers)
+        plot_phase_heatmap(ctx, phase_rows)
+        plot_relation_event_matrix(ctx, event_rows, bundle.anatomy.n_layers)
         plot_event_ordering(ctx, event_rows, bundle.anatomy.n_layers)
         plot_convergence_lag(ctx, event_rows)
         plot_metric_by_depth(
