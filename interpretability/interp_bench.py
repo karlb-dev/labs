@@ -275,11 +275,20 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "model_tier_c": "allenai/Olmo-3-7B-Instruct",
         "max_examples_tier_a": "4",
     },
+    "lab15": {
+        "module": "labs.lab15_multiturn_harness",
+        "run_name": "lab15_multiturn_harness",
+        "description": "Multi-turn instrumentation: chat-template spans, cache parity, patch no-op, and null traces.",
+        # Instrumentation lab for chat-template conversations.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
@@ -1112,7 +1121,7 @@ def run_with_residual_cache(
     padding/attention-mask bugs from the course's foundation.
 
     Pass ``add_special_tokens=False`` for prompts that are already fully
-    rendered (e.g. chat-templated, Lab 7+): on tokenizers that auto-prepend
+    rendered (e.g. chat-templated labs): on tokenizers that auto-prepend
     BOS, the default would otherwise capture a sequence that generation
     (which tokenizes rendered prompts without special tokens) never sees.
     """
@@ -1178,7 +1187,7 @@ def run_with_residual_cache(
 
 
 # ---------------------------------------------------------------------------
-# Chat templates, steering, and generation (Lab 7+: instruct models)
+# Chat templates, steering, and generation (instruct/chat-template labs)
 # ---------------------------------------------------------------------------
 #
 # Labs 1-6 use base models and raw prompts. Labs 7+ use instruct models, and
@@ -1204,14 +1213,14 @@ def apply_chat_template(
 ) -> str:
     """Render a single-turn chat prompt as the string the model will see.
 
-    Raises if the tokenizer has no chat template -- Labs 7+ require an
-    instruct model, and a base model silently rendering raw text is exactly
-    the drift the course warns about.
+    Raises if the tokenizer has no chat template -- chat/generation labs
+    require an instruct model, and a base model silently rendering raw text is
+    exactly the drift the course warns about.
     """
     if not supports_chat_template(bundle):
         raise RuntimeError(
-            f"{bundle.anatomy.model_id!r} has no chat template; Lab 7+ needs an "
-            "instruct model. Use --tier a/b defaults or pass an instruct --model."
+            f"{bundle.anatomy.model_id!r} has no chat template; this lab needs "
+            "an instruct model. Use --tier a/b defaults or pass an instruct --model."
         )
     messages = []
     if system is not None:
@@ -3634,7 +3643,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--quantization", default="none", choices=("none", "8bit", "4bit"),
                         help="Optional bitsandbytes quantization for small GPUs.")
     parser.add_argument("--tier", default="auto", choices=("auto", "a", "b", "c"),
-                        help="Hardware tier: a = CPU smoke (gpt2), b = 24GB+/Colab GPU, c = 40-80GB.")
+                        help="Hardware tier: a = CPU smoke, b = 24GB+/Colab GPU, c = 40-80GB.")
     parser.add_argument("--prompt-set", default="small",
                         help="small | medium | full | path to a custom prompts .json file.")
     parser.add_argument("--max-examples", type=int, default=-1,
