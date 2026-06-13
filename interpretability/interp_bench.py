@@ -316,6 +316,20 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # Lab 18 interprets --max-examples as a PER-FAMILY item cap.
         "max_examples_tier_a": "2",
     },
+    "lab19": {
+        "module": "labs.lab19_model_diffing_crosscoders",
+        "run_name": "lab19_model_diffing_crosscoders",
+        "description": "Model diffing with crosscoders: shared/base-only/instruct-only feature atlas and controls.",
+        # The main bench-loaded model is model A. Lab 19 loads model B itself
+        # from compare_model_tier_* (or LAB19_COMPARE_MODEL).
+        "model_tier_a": "EleutherAI/pythia-160m",
+        "compare_model_tier_a": "EleutherAI/pythia-160m",
+        "model_tier_b": "allenai/Olmo-3-1025-7B",
+        "compare_model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-1025-7B",
+        "compare_model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "12",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template

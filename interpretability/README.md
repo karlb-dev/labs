@@ -112,6 +112,10 @@ python interp_bench.py --lab lab17 --tier b --prompt-set full
 # Lab 18 (humor as incongruity; instruct models + eager attention):
 python interp_bench.py --lab lab18 --tier a   # SmolLM2-135M-Instruct
 python interp_bench.py --lab lab18 --tier b --prompt-set full
+
+# Lab 19 (model diffing with crosscoders; Tier A is an identity-pair smoke):
+python interp_bench.py --lab lab19 --tier a --no-plots
+python interp_bench.py --lab lab19 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -275,12 +279,18 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   direction, audits it against surprise/silliness/positivity, inspects
   attention back to setup tokens, and steers neutral endings with hand-label
   scaffolds for the "is it actually funnier?" question.
+- Lab 19: model diffing with crosscoders — started for the advanced course.
+  Adds a custom paired-crosscoder path, prompt inventory from existing frozen
+  batteries, Tier A identity-pair smoke defaults, Tier B OLMo base-vs-instruct
+  defaults, feature taxonomy/gallery artifacts, and an optional `--run-edit`
+  feature-intervention smoke test.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
-The advanced course is now in progress; Labs 12-18 are implemented and should
-be treated as new lab code until their Colab validation runs are recorded.
+The advanced course is now in progress; Labs 12-18 are implemented, Lab 19 is
+started, and all should be treated as new lab code until their Colab
+validation runs are recorded.
 Two full-course regression sweeps are on record:
 `runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24 green,
 deterministic reproduction of the validated numbers) and
