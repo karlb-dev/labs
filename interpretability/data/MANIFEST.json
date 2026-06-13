@@ -59,6 +59,27 @@
     ],
     "verified_tokenizers": []
   },
+  "humor_incongruity_pairs.csv": {
+    "conditions": {
+      "joke": 20,
+      "literal": 20,
+      "positive": 20,
+      "silly": 20,
+      "surprise": 20
+    },
+    "families": {
+      "caption_scene": 5,
+      "expectation_violation": 5,
+      "pun_wordplay": 5,
+      "resolution_twist": 5
+    },
+    "generator": "make_humor_incongruity.py",
+    "pairing": "one setup with joke, literal, surprising-not-funny, silly-not-joke, and positive-not-joke completions",
+    "rows": 20,
+    "sha256": "de6e9ef3fb961a2d59f310110efa00143f59b408896193832b7c481f54160780",
+    "source": "authored course micro-scenes; no long copyrighted excerpts",
+    "verified_tokenizers": []
+  },
   "persona_register_pairs.csv": {
     "families": {
       "agreement": 6,

@@ -304,11 +304,23 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "model_tier_c": "allenai/Olmo-3-7B-Instruct",
         "max_examples_tier_a": "3",
     },
+    "lab18": {
+        "module": "labs.lab18_humor_incongruity",
+        "run_name": "lab18_humor_incongruity",
+        "description": "Humor as incongruity: surprisal, joke-vs-control directions, setup routing, and steering audits.",
+        # Chat-template generation lab with attention-to-setup measurements.
+        "needs_eager": "true",
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        # Lab 18 interprets --max-examples as a PER-FAMILY item cap.
+        "max_examples_tier_a": "2",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
@@ -2796,9 +2808,12 @@ def head_contribution(bundle: ModelBundle, head_anatomy: HeadAnatomy, layer: int
 
 
 def run_with_attention_cache(
-    bundle: ModelBundle, prompt: str, *, all_positions: bool = False
+    bundle: ModelBundle, prompt: str, *, all_positions: bool = False, add_special_tokens: bool = True
 ) -> AttentionCapture:
     """One forward capturing streams, attention patterns, and head pieces.
+
+    Pass ``add_special_tokens=False`` for already-rendered chat-template
+    prompts when token positions must align with tokenizer offset mappings.
 
     With ``all_positions=True``, ``o_in_last``/``attn_out_last`` hold
     full-sequence tensors ([L, seq, n_heads*d_head] / [L, seq, d_model])
@@ -2808,7 +2823,7 @@ def run_with_attention_cache(
     import torch
 
     tokenizer = bundle.tokenizer
-    encoded = tokenizer(prompt, return_tensors="pt")
+    encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=add_special_tokens)
     input_ids = encoded["input_ids"].to(bundle.input_device)
     attention_mask = encoded.get("attention_mask")
     if attention_mask is not None:
