@@ -1,0 +1,25 @@
+{
+  "advanced_relation_geometry.csv": {
+    "families": {
+      "capital_of": 28,
+      "color_of": 14,
+      "comparative_of": 24,
+      "continent_of": 31,
+      "currency_of": 18,
+      "home_of": 10,
+      "language_of": 34,
+      "material_of": 12,
+      "month_after": 12,
+      "month_before": 12,
+      "opposite_of": 24,
+      "plural_of": 25
+    },
+    "generator": "make_advanced_relation_sets.py",
+    "rows": 244,
+    "sha256": "1126f54728e0626c39a6a657fdf647f463629cb938961198b7bbc24478172a02",
+    "verified_tokenizers": [
+      "gpt2",
+      "allenai/Olmo-3-7B-Instruct"
+    ]
+  }
+}

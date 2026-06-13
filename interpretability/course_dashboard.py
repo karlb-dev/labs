@@ -32,13 +32,14 @@ from typing import Any
 ROOT = pathlib.Path(__file__).resolve().parent
 RUNS = ROOT / "runs"
 
-LABS = [f"lab{i}" for i in range(1, 12)]
+LABS = [f"lab{i}" for i in range(1, 13)]
 
 EVIDENCE_RUNG = {
     "lab1": "OBS", "lab2": "ATTR", "lab3": "OBS→CAUSAL", "lab4": "DECODE",
     "lab5": "CAUSAL", "lab6": "CAUSAL (circuit)", "lab7": "CAUSAL (control)",
     "lab8": "OBS/DECODE (+1 CAUSAL)", "lab9": "ATTR→CAUSAL",
     "lab10": "SELF-REPORT + CAUSAL", "lab11": "integration",
+    "lab12": "DECODE→CAUSAL",
 }
 
 # (label, [candidate dotted paths in metrics.json, first hit wins])
@@ -85,6 +86,12 @@ HIGHLIGHTS: dict[str, list[tuple[str, list[str]]]] = {
               ("max flip (fresh)", ["behavioral.max_flip_rate"]),
               ("probe AUC", ["behavioral.hint_presence_probe.held_out_auc"]),
               ("probe shuffled ctrl", ["behavioral.hint_presence_probe.shuffled_control_auc"])],
+    "lab12": [("12-way acc", ["probe.all_12way_accuracy_at_best_depth"]),
+              ("country-group selectivity", ["probe.within_group.country_sem.selectivity"]),
+              ("subject-swap band mean", ["patching.subject_swap.band_mean"]),
+              ("relation-swap band mean", ["patching.relation_swap.band_mean"]),
+              ("mismatched ctrl mean", ["patching.mismatched_vector_mean_recovery"]),
+              ("profile correlation", ["geometry.mean_profile_correlation"])],
 }
 
 

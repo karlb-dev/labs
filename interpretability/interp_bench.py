@@ -245,6 +245,15 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # or source statement pairs (sentiment_negation).
         "max_examples_tier_a": "6",
     },
+    "lab12": {
+        "module": "labs.lab12_relation_geometry",
+        "run_name": "lab12_relation_geometry",
+        "description": "Relation geometry and method validation: the intro toolkit re-run on 12 controlled relation families.",
+        # First advanced lab; BASE models on every tier (probes + patching,
+        # no generation). --max-examples is a PER-FAMILY item cap here; the
+        # global tier-a default of 4 would starve swap-pair construction.
+        "max_examples_tier_a": "8",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
@@ -3625,6 +3634,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--audit-domain", default="factual_qa",
                         choices=("factual_qa", "cot_faithfulness", "sentiment_negation"),
                         help="Lab 11: which curated audit domain to run.")
+    parser.add_argument("--relations", default="",
+                        help="Lab 12: comma-separated relation-family filter, e.g. "
+                             "capital_of,language_of (default: all families).")
+    parser.add_argument("--relation-set", default="", choices=("", "small", "medium", "full"),
+                        help="Lab 12: item-count preset; overrides --prompt-set for this lab.")
+    parser.add_argument("--patch-grid", default="subject,relation,last",
+                        help="Lab 12: comma-separated token roles to patch (subject,relation,last).")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)

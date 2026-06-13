@@ -19,7 +19,7 @@ gpt2) that must work on a laptop — debug there, spend GPU minutes on science.
 
 | Tier | Hardware | What runs |
 |---|---|---|
-| A — smoke | laptop CPU (or MPS) | `gpt2` (Labs 1–6) / `SmolLM2-135M-Instruct` (Labs 7+); correctness of plumbing, not science |
+| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 12) / `SmolLM2-135M-Instruct` (chat labs: 7+); correctness of plumbing, not science |
 | B — standard | Colab A100/H100, or any 24 GB+ GPU | base labs on `allenai/Olmo-3-1025-7B`; instruct labs (7+) on `allenai/Olmo-3-7B-Instruct`, bf16 |
 | C — comfortable | 40–80 GB GPU | fp32, larger prompt sets |
 
@@ -82,6 +82,11 @@ python interp_bench.py --lab lab11 --tier b                  # factual_qa on Olm
 python interp_bench.py --lab lab11 --tier b \
   --audit-domain cot_faithfulness --model allenai/Olmo-3-7B-Think   # flagship
 python interp_bench.py --lab lab11 --tier b --audit-domain sentiment_negation
+
+# Lab 12 (first advanced lab: relation geometry; BASE models, probes + patching;
+# --relation-set caps items per family, --patch-grid picks patched token roles):
+python interp_bench.py --lab lab12 --tier a   # gpt2, ~15 s
+python interp_bench.py --lab lab12 --tier b --relation-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
