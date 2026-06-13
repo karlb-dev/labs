@@ -3688,6 +3688,30 @@ MOTIF_MARKERS = {
     "other": "x",
 }
 
+# Lab 5 patching grammar. These labels are separate from generic controls
+# because a patching role/control is a different object than a probe baseline.
+PATCH_ROLE_COLORS = {
+    "pre_subject": "#666666",
+    "subject": "#D55E00",
+    "post_subject": "#8A9A00",
+    "last": "#0072B2",
+}
+
+PATCH_ROLE_MARKERS = {
+    "pre_subject": "o",
+    "subject": "D",
+    "post_subject": "s",
+    "last": "^",
+}
+
+PATCH_CONTROL_COLORS = {
+    "matched": "#009E73",
+    "matched_top_patch": "#009E73",
+    "mismatched_pair": "#8C564B",
+    "wrong_position": "#666666",
+    "low_region_split_heldout": "#7E57C2",
+}
+
 # Additional palette for control conditions (real vs random/shuffled/etc.).
 CONTROL_COLORS = {
     "real": "#d62728",
@@ -3790,6 +3814,21 @@ def plot_selection_marker(selection: str, default: str = "o") -> str:
 def plot_control_color(control: str, default: str = "#555555") -> str:
     """Shared color lookup for probe controls and baselines."""
     return CONTROL_COLORS.get(str(control), default)
+
+
+def plot_patch_role_color(role: str, default: str = "#555555") -> str:
+    """Shared color lookup for activation-patching token roles."""
+    return PATCH_ROLE_COLORS.get(str(role), default)
+
+
+def plot_patch_role_marker(role: str, default: str = "o") -> str:
+    """Shared marker lookup for activation-patching token roles."""
+    return PATCH_ROLE_MARKERS.get(str(role), default)
+
+
+def plot_patch_control_color(control: str, default: str = "#555555") -> str:
+    """Shared color lookup for activation-patching controls."""
+    return PATCH_CONTROL_COLORS.get(str(control), CONTROL_COLORS.get(str(control), default))
 
 
 def plot_motif_color(label: str, default: str = "#555555") -> str:

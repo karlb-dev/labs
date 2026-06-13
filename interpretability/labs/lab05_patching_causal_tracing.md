@@ -99,6 +99,8 @@ One clean/corrupt pair is a demonstration. Causal tracing is the aggregate:
 
 The output is not just a heatmap. The output is a claim card with a scope, a metric, a control battery, and caveats.
 
+The upgraded plotting pass adds a second layer of discipline: every visually appealing curve now has nearby artifacts asking whether the curve survives per-fact heterogeneity, paraphrase changes, and negative controls. Read patching results as an evidence table: intervention, population, metric, counterexample, and only then the claim.
+
 ## How to read the main curves
 
 At stream depth 0, patching the subject position mostly substitutes the token embedding. For this corruption type, high subject recovery at depth 0 is a tautology, not a localization result.
@@ -139,19 +141,33 @@ python interp_bench.py --lab lab5 --tier b --prompt-set full --showcase france
 
 ## Main artifacts
 
-Read them in this order (instrument checks first, then the causal story, then the edit audit that tests whether localization predicts editability):
+Read them in this order. The first pass validates the instrument, the second pass reads the causal trace, and the third pass audits overclaiming.
 
 1. `causal_trace_card.md` - the deliverable card: scope, localization, controls, component result, edit result if run.
-2. `diagnostics/localization_decision.json` - the handoff rule and stream-depth-to-component-layer mapping.
-3. `plots/localization_across_facts.png` - the subject-vs-last causal tracing story (recall then readout).
-4. `plots/patching_heatmap_<fact>.png` - one pair, layer by position, token-labeled, with localized band marked.
-5. `tables/facts.csv` - which pairs passed the baseline gate and why others dropped.
-6. `tables/patching_scores.csv` and `results.csv` - the long-form grid behind every cell.
-7. `tables/per_fact_top_patch.csv` and `plots/per_fact_top_patch.png` - which facts drive the average.
-8. `tables/paraphrase_summary.csv` and `tables/paraphrase_consistency.csv` - whether the localized band survives templates.
-9. `tables/negative_control_scores.csv` and `plots/negative_controls.png` - specificity checks (the matched vs control gap is the evidence of fact-specific recovery).
-10. `tables/component_patching.csv`, `tables/component_summary.csv`, and `plots/component_patching.png` - attention versus MLP refinement of the stream-level result.
-11. `tables/edit_results.csv` - only if `--run-edit` was passed (the Hase audit: does localization predict the best edit layer?).
+2. `diagnostics/localization_decision.json` - the handoff rule and the stream-depth-to-component-layer mapping. Keep this open while reading component and edit plots.
+3. `tables/plot_reading_guide.csv` - the map from each upgraded plot to the concept it is meant to teach.
+4. `plots/causal_patching_dashboard.png` - the one-screen overview: role timing, specificity controls, component refinement, and per-fact heterogeneity.
+5. `plots/localization_across_facts.png`, `plots/recovery_ridge_map.png`, and `tables/role_transition_summary.csv` - the recall-then-readout timing story.
+6. `plots/recovery_role_atlas.png`, `plots/per_fact_top_patch.png`, `tables/per_fact_top_patch.csv`, and `tables/patch_evidence_matrix.csv` - the heterogeneity audit: which facts drive the average, and where controls bite.
+7. `plots/patching_heatmap_<fact>.png` - one pair, layer by position, token-labeled, with localized band marked. Read this after the aggregate plots, not before them.
+8. `tables/facts.csv` - which pairs passed the baseline gate and why others dropped. The new `plots/baseline_gate_audit.png` makes the gate visible.
+9. `tables/patching_scores.csv` and `results.csv` - the long-form grid behind every cell.
+10. `tables/paraphrase_summary.csv`, `tables/paraphrase_consistency.csv`, and `plots/paraphrase_transfer_matrix.png` - whether the localized band survives wording changes.
+11. `tables/negative_control_scores.csv`, `tables/specificity_summary.csv`, `plots/negative_controls.png`, and `plots/specificity_gap_by_fact.png` - specificity checks. The matched-vs-control gap is the evidence of fact-specific recovery.
+12. `tables/component_patching.csv`, `tables/component_summary.csv`, `plots/component_patching.png`, and `plots/component_patch_matrix.png` - attention versus MLP refinement of the stream-level result.
+13. `tables/edit_results.csv`, `tables/edit_audit_summary.csv`, and `plots/edit_audit_dashboard.png` - only if `--run-edit` was passed. This is the Hase audit: does localization predict the best edit layer?
+
+## New synthesis tables
+
+The upgraded code writes extra tables that are useful before drafting claims:
+
+| Table | Why it exists |
+|---|---|
+| `tables/role_transition_summary.csv` | gives peak and threshold-crossing depths for each token role, so the handoff claim is not just eyeballed from a curve |
+| `tables/specificity_summary.csv` | reports matched and negative-control distributions with gaps versus matched recovery |
+| `tables/patch_evidence_matrix.csv` | one row per fact combining baseline margins, representative recovery, paraphrase transfer, and strongest control |
+
+Use these tables to draft ledger claims before polishing prose. If the picture and the table disagree, trust the table and inspect the outlier.
 
 ## The extension: the patch made permanent
 
@@ -199,7 +215,7 @@ A movement without a flip is not a failed artifact. It is often the most informa
 | recovery is mostly zero | check `clean_diff - corrupt_diff`; the denominator may be too small or the corrupt pair may not oppose the target |
 | recovery is often above 1 or below -1 | single cells can do this; widespread extremes suggest denominator or alignment trouble |
 | paraphrases localize elsewhere | scope the claim to the base template or inspect whether the subject position changed meaningfully |
-| a negative control matches the real patch | do not claim specificity; inspect the per-fact rows and narrow the intervention |
+| a negative control matches the real patch | do not claim specificity; inspect `plots/specificity_gap_by_fact.png`, `tables/specificity_summary.csv`, and the per-fact rows, then narrow the intervention |
 | edit flips nothing | inspect `movement_toward_distractor` before declaring failure; the stream patch may be distributed across many writes |
 | edit breaks neighbors | the edit is not specific enough; cite spillover as counterevidence |
 
