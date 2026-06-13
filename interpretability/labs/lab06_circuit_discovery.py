@@ -316,112 +316,349 @@ def metric_under_ablation(
     return statistics.fmean(diffs)
 
 
+
 # ---------------------------------------------------------------------------
-# Plotting
+# Plotting and evidence-table helpers
 # ---------------------------------------------------------------------------
+
+MOTIF_COLOR_FALLBACKS = {
+    "induction": "#E69F00",
+    "previous_token": "#0072B2",
+    "first_token_sink": "#7E57C2",
+    "diffuse": "#999999",
+    "other": "#555555",
+    "support_mlp": "#CC79A7",
+}
+
+MOTIF_MARKER_FALLBACKS = {
+    "induction": "*",
+    "previous_token": "o",
+    "first_token_sink": "s",
+    "diffuse": ".",
+    "other": "x",
+    "support_mlp": "D",
+}
+
+FAMILY_COLOR_FALLBACKS = {
+    "discovery": "#009E73",
+    "heldout": "#0072B2",
+    "undefined": "#888888",
+}
+
+
+def _to_float(value: Any, default: float = float("nan")) -> float:
+    try:
+        if value is None or value == "":
+            return default
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _to_int(value: Any, default: int = 0) -> int:
+    try:
+        if value is None or value == "":
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _is_finite(value: Any) -> bool:
+    try:
+        return math.isfinite(float(value))
+    except (TypeError, ValueError):
+        return False
+
+
+def _motif_color(label: str) -> str:
+    func = getattr(bench, "plot_motif_color", None)
+    if callable(func):
+        return func(label, MOTIF_COLOR_FALLBACKS.get(label, "#555555"))
+    return MOTIF_COLOR_FALLBACKS.get(str(label), "#555555")
+
+
+def _motif_marker(label: str) -> str:
+    func = getattr(bench, "plot_motif_marker", None)
+    marker = func(label, MOTIF_MARKER_FALLBACKS.get(label, "o")) if callable(func) else MOTIF_MARKER_FALLBACKS.get(str(label), "o")
+    # Filled markers keep dense scatterplots readable and avoid Matplotlib edgecolor warnings.
+    return "o" if marker in {"x", ".", ","} else marker
+
+
+def _family_color(family: str) -> str:
+    func = getattr(bench, "plot_category_color", None)
+    if callable(func):
+        return func(family, FAMILY_COLOR_FALLBACKS.get(family, "#555555"))
+    return FAMILY_COLOR_FALLBACKS.get(str(family), "#555555")
+
+
+def _component_color(component: str) -> str:
+    func = getattr(bench, "plot_component_color", None)
+    if callable(func):
+        return func(component, "#555555")
+    return {"head": "#0072B2", "mlp": "#E69F00", "attn": "#0072B2"}.get(str(component), "#555555")
+
+
+def _lighten(color: str, amount: float = 0.55) -> str:
+    func = getattr(bench, "lighten_color", None)
+    if callable(func):
+        return func(color, amount)
+    try:
+        import matplotlib.colors as mcolors
+        rgb = mcolors.to_rgb(color)
+        return mcolors.to_hex(tuple(c + (1.0 - c) * amount for c in rgb))
+    except Exception:
+        return color
+
+
+def _panel_label(ax: Any, label: str) -> None:
+    func = getattr(bench, "add_panel_label", None)
+    if callable(func):
+        func(ax, label)
+    else:
+        ax.text(
+            -0.08,
+            1.04,
+            label,
+            transform=ax.transAxes,
+            ha="left",
+            va="bottom",
+            fontsize=11,
+            fontweight="bold",
+        )
+
+
+def _zero_line(ax: Any, axis: str = "y", **kwargs: Any) -> None:
+    func = getattr(bench, "add_zero_line", None)
+    if callable(func):
+        func(ax, axis=axis, **kwargs)
+    else:
+        if axis == "y":
+            ax.axhline(0, color=kwargs.get("color", "black"), linewidth=kwargs.get("linewidth", 0.8), alpha=kwargs.get("alpha", 0.7))
+        else:
+            ax.axvline(0, color=kwargs.get("color", "black"), linewidth=kwargs.get("linewidth", 0.8), alpha=kwargs.get("alpha", 0.7))
+
+
+def _style(ax: Any, title: str | None = None, xlabel: str | None = None, ylabel: str | None = None) -> None:
+    func = getattr(bench, "style_ax", None)
+    if callable(func):
+        func(ax, title=title, xlabel=xlabel, ylabel=ylabel)
+    else:
+        if title:
+            ax.set_title(title)
+        if xlabel:
+            ax.set_xlabel(xlabel)
+        if ylabel:
+            ax.set_ylabel(ylabel)
+        ax.grid(True, alpha=0.25)
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+
+
+def plot_reading_guide_rows() -> list[dict[str, str]]:
+    """A small map from artifact to the concept it teaches."""
+    return [
+        {
+            "artifact": "plots/circuit_discovery_dashboard.png",
+            "question": "What is the overall manual circuit claim?",
+            "read_for": "F/C/M, pruning, candidate quality, and prompt-level failures in one place.",
+        },
+        {
+            "artifact": "plots/candidate_evidence_matrix.png",
+            "question": "Which heads survived the evidence ladder?",
+            "read_for": "cheap screen signals, motif labels, causal drop, and final membership side by side.",
+        },
+        {
+            "artifact": "plots/causal_motif_atlas.png",
+            "question": "Where are causally useful heads in layer/head space?",
+            "read_for": "screened heads, signed causal effects, motif labels, and final circuit membership.",
+        },
+        {
+            "artifact": "plots/screen_vs_causal.png",
+            "question": "Where did cheap screening lie?",
+            "read_for": "heads with high attribution or motif scores but near-zero or negative causal drop.",
+        },
+        {
+            "artifact": "plots/minimality_ledger.png",
+            "question": "Did every final head earn its rent?",
+            "read_for": "marginal faithfulness loss when each kept head is removed.",
+        },
+        {
+            "artifact": "plots/prompt_failure_scatter.png",
+            "question": "Where does the circuit fail or over-recover?",
+            "read_for": "base behavior strength versus circuit-only faithfulness for each prompt.",
+        },
+        {
+            "artifact": "plots/edge_interaction_map.png",
+            "question": "Was an ordered edge earned?",
+            "read_for": "previous-token to induction interaction size, fraction, and layer ordering.",
+        },
+    ]
+
+
+def build_circuit_evidence_matrix(
+    cand_rows: Sequence[dict[str, Any]],
+    minimality_rows: Sequence[dict[str, Any]],
+    circuit: Sequence[tuple[int, int]],
+    edge: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """Join cheap screen, motif, ablation, pruning, and edge status into one table."""
+    circuit_set = {node_name("head", *key) for key in circuit}
+    marginal = {row["node"]: row for row in minimality_rows}
+    edge_roles: dict[str, str] = {}
+    if edge and edge.get("claimed"):
+        edge_roles[node_name("head", *edge["from"])] = "edge_source"
+        edge_roles[node_name("head", *edge["to"])] = "edge_target"
+
+    out: list[dict[str, Any]] = []
+    for row in cand_rows:
+        node = str(row.get("node", ""))
+        if row.get("kind") != "head":
+            continue
+        cheap_rank = _to_int(row.get("cheap_rank"), 10**9)
+        causal_rank = _to_int(row.get("causal_rank"), 10**9)
+        causal_drop = _to_float(row.get("causal_drop"), 0.0)
+        tags: list[str] = []
+        if node in circuit_set:
+            tags.append("final_circuit")
+        if causal_drop > 0:
+            tags.append("positive_causal_drop")
+        elif causal_drop < 0:
+            tags.append("negative_causal_drop")
+        motif = str(row.get("motif_label", "other"))
+        if motif not in ("", "other"):
+            tags.append(f"motif:{motif}")
+        if abs(cheap_rank - causal_rank) >= 8 and causal_rank < 10**9:
+            tags.append("screen_causal_disagreement")
+        if edge_roles.get(node):
+            tags.append(edge_roles[node])
+        mrow = marginal.get(node, {})
+        out.append(
+            {
+                "node": node,
+                "layer": row.get("layer", ""),
+                "head": row.get("head", ""),
+                "motif_label": motif,
+                "screen_reason": row.get("screen_reason", ""),
+                "cheap_rank": row.get("cheap_rank", ""),
+                "causal_rank": row.get("causal_rank", ""),
+                "rank_gap_cheap_minus_causal": row.get("rank_gap_cheap_minus_causal", ""),
+                "mean_attr": row.get("mean_attr", ""),
+                "abs_attr": round(abs(_to_float(row.get("mean_attr"), 0.0)), 6),
+                "induction_score": row.get("induction_score", ""),
+                "prev_token_score": row.get("prev_token_score", ""),
+                "first_token_score": row.get("first_token_score", ""),
+                "single_ablated_metric": row.get("single_ablated_metric", ""),
+                "causal_drop": row.get("causal_drop", ""),
+                "in_final_circuit": node in circuit_set,
+                "marginal_value": mrow.get("marginal_value", ""),
+                "minimality_passes_positive_marginal": mrow.get("minimality_passes_positive_marginal", ""),
+                "edge_role": edge_roles.get(node, ""),
+                "evidence_tags": ";".join(tags),
+            }
+        )
+    return sorted(out, key=lambda r: (not bool(r["in_final_circuit"]), -_to_float(r.get("causal_drop"), 0.0), _to_int(r.get("cheap_rank"), 10**9)))
+
+
+def build_prompt_failure_modes(rows: Sequence[dict[str, Any]], *, floor: float) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        faith = row.get("faithfulness")
+        faith_float = _to_float(faith, float("nan"))
+        base = _to_float(row.get("base_diff"), float("nan"))
+        circuit_diff = _to_float(row.get("circuit_diff"), float("nan"))
+        if not _is_finite(faith_float):
+            mode = "undefined_base_not_target_preferring"
+            gap_to_floor = ""
+            over_recovery = ""
+        elif faith_float < floor:
+            mode = "under_floor"
+            gap_to_floor = round(faith_float - floor, 5)
+            over_recovery = round(max(0.0, faith_float - 1.0), 5)
+        elif faith_float > 1.05:
+            mode = "over_recovery"
+            gap_to_floor = round(faith_float - floor, 5)
+            over_recovery = round(faith_float - 1.0, 5)
+        else:
+            mode = "preserved"
+            gap_to_floor = round(faith_float - floor, 5)
+            over_recovery = round(max(0.0, faith_float - 1.0), 5)
+        out.append(
+            {
+                **row,
+                "faithfulness": round(faith_float, 5) if _is_finite(faith_float) else None,
+                "base_diff": round(base, 5) if _is_finite(base) else "",
+                "circuit_diff": round(circuit_diff, 5) if _is_finite(circuit_diff) else "",
+                "failure_mode": mode,
+                "gap_to_floor": gap_to_floor,
+                "over_recovery_above_full_model": over_recovery,
+            }
+        )
+    return out
 
 
 def plot_screen_vs_causal(ctx: bench.RunContext, cand_rows: Sequence[dict[str, Any]]) -> None:
     """Show the central lesson: cheap screens and causal effects disagree."""
     import matplotlib.pyplot as plt
 
-    heads = [r for r in cand_rows if r["kind"] == "head"]
+    heads = [r for r in cand_rows if r.get("kind") == "head"]
     if not heads:
         return
 
-    fig, (ax_rank, ax_attr) = plt.subplots(1, 2, figsize=(12.0, 5.0))
+    fig, (ax_rank, ax_attr) = plt.subplots(1, 2, figsize=(12.4, 5.2), constrained_layout=True)
     for ax in (ax_rank, ax_attr):
-        ax.grid(True, alpha=0.3)
-
-    colors = {
-        "induction": "tab:red",
-        "previous_token": "tab:blue",
-        "first_token_sink": "tab:green",
-        "other": "tab:gray",
-    }
-    markers = {
-        "attribution": "o",
-        "induction": "^",
-        "prev_token": "s",
-        "attribution+induction": "P",
-        "attribution+prev_token": "X",
-        "induction+prev_token": "D",
-        "attribution+induction+prev_token": "*",
-    }
+        _style(ax)
+        _zero_line(ax)
 
     for r in heads:
-        color = colors.get(r.get("motif_label", "other"), "tab:gray")
-        marker = markers.get(r.get("screen_reason", "attribution"), "o")
-        ax_rank.scatter(r["cheap_rank"], r["causal_drop"], s=55, color=color, marker=marker, alpha=0.85)
-        ax_attr.scatter(abs(r["mean_attr"]), r["causal_drop"], s=55, color=color, marker=marker, alpha=0.85)
+        motif = str(r.get("motif_label", "other"))
+        color = _motif_color(motif)
+        marker = _motif_marker(motif)
+        drop = _to_float(r.get("causal_drop"), 0.0)
+        cheap = _to_float(r.get("cheap_rank"), 0.0)
+        attr = abs(_to_float(r.get("mean_attr"), 0.0))
+        alpha = 0.92 if drop > 0 else 0.45
+        size = 78 if drop > 0 else 44
+        ax_rank.scatter(cheap, drop, s=size, color=color, marker=marker, alpha=alpha, edgecolors="black", linewidths=0.35)
+        ax_attr.scatter(attr, drop, s=size, color=color, marker=marker, alpha=alpha, edgecolors="black", linewidths=0.35)
 
-    # Annotate the causal top few and the cheap top few. Labeling every point
-    # turns this plot into alphabet soup on a 7B model.
     label_nodes: set[str] = set()
-    label_nodes.update(r["node"] for r in sorted(heads, key=lambda x: -x["causal_drop"])[:8])
-    label_nodes.update(r["node"] for r in sorted(heads, key=lambda x: x["cheap_rank"])[:6])
+    label_nodes.update(str(r["node"]) for r in sorted(heads, key=lambda x: -_to_float(x.get("causal_drop"), 0.0))[:8])
+    label_nodes.update(str(r["node"]) for r in sorted(heads, key=lambda x: _to_float(x.get("cheap_rank"), 10**9))[:6])
+    label_nodes.update(str(r["node"]) for r in sorted(heads, key=lambda x: abs(_to_float(x.get("rank_gap_cheap_minus_causal"), 0.0)), reverse=True)[:4])
     for r in heads:
-        if r["node"] in label_nodes:
-            ax_rank.annotate(r["node"], (r["cheap_rank"], r["causal_drop"]),
-                             textcoords="offset points", xytext=(4, 4), fontsize=7)
-            ax_attr.annotate(r["node"], (abs(r["mean_attr"]), r["causal_drop"]),
-                             textcoords="offset points", xytext=(4, 4), fontsize=7)
+        if str(r.get("node")) in label_nodes:
+            ax_rank.annotate(str(r["node"]), (_to_float(r.get("cheap_rank"), 0.0), _to_float(r.get("causal_drop"), 0.0)), textcoords="offset points", xytext=(4, 4), fontsize=7)
+            ax_attr.annotate(str(r["node"]), (abs(_to_float(r.get("mean_attr"), 0.0)), _to_float(r.get("causal_drop"), 0.0)), textcoords="offset points", xytext=(4, 4), fontsize=7)
 
-    ax_rank.axhline(0, color="black", linewidth=0.7)
-    ax_rank.set_xlabel("cheap screen rank, lower is better")
-    ax_rank.set_ylabel("single-head causal drop")
-    ax_rank.set_title("Screen rank vs causal effect")
-    # Lower ranks are better and therefore appear on the left.
-
-    ax_attr.axhline(0, color="black", linewidth=0.7)
-    ax_attr.set_xlabel("absolute direct-logit attribution score")
-    ax_attr.set_ylabel("single-head causal drop")
-    ax_attr.set_title("Attribution score vs causal effect")
-
-    for label, color in colors.items():
-        if any(r.get("motif_label") == label for r in heads):
-            ax_attr.scatter([], [], color=color, label=label)
+    _style(ax_rank, title="Cheap screen rank vs causal effect", xlabel="cheap screen rank, lower is better", ylabel="single-head causal drop")
+    _style(ax_attr, title="Frozen attribution magnitude vs causal effect", xlabel="|direct-logit attribution|", ylabel="single-head causal drop")
+    for motif in ("previous_token", "induction", "first_token_sink", "other"):
+        if any(str(r.get("motif_label", "other")) == motif for r in heads):
+            ax_attr.scatter([], [], color=_motif_color(motif), marker=_motif_marker(motif), label=motif)
     ax_attr.legend(fontsize=8, loc="best")
-
     fig.suptitle("Cheap screening is a hypothesis generator, not a circuit claim")
-    bench.save_figure(
-        ctx,
-        fig,
-        "screen_vs_causal.png",
-        "Cheap screening rank and attribution score against single-head mean-ablation effect.",
-    )
+    bench.save_figure(ctx, fig, "screen_vs_causal.png", "Cheap screen rank and attribution magnitude against single-head mean-ablation effect.")
 
 
-def plot_prune_trajectory(
-    ctx: bench.RunContext,
-    trajectory: Sequence[dict[str, Any]],
-    *,
-    floor: float,
-) -> None:
+def plot_prune_trajectory(ctx: bench.RunContext, trajectory: Sequence[dict[str, Any]], *, floor: float) -> None:
     if not trajectory:
         return
-    fig, ax = bench.new_figure(figsize=(8.5, 5.2))
+    fig, ax = bench.new_figure(figsize=(8.8, 5.3))
     xs = [t["n_nodes"] for t in trajectory]
-    ys = [t["faithfulness"] for t in trajectory]
-    ax.plot(xs, ys, marker="o", linewidth=2.0, color="tab:green")
+    ys = [_to_float(t["faithfulness"], 0.0) for t in trajectory]
+    ax.plot(xs, ys, marker="o", linewidth=2.3, color=_family_color("discovery"))
+    ax.fill_between(xs, [floor for _ in xs], ys, where=[y >= floor for y in ys], alpha=0.10, color=_family_color("discovery"), interpolate=True)
+    ax.fill_between(xs, ys, [floor for _ in xs], where=[y < floor for y in ys], alpha=0.10, color="#D55E00", interpolate=True)
     for t in trajectory:
         if t.get("removed"):
-            ax.annotate(
-                f"-{t['removed']}",
-                (t["n_nodes"], t["faithfulness"]),
-                textcoords="offset points",
-                xytext=(2, 8),
-                fontsize=7,
-                rotation=30,
-            )
-    ax.axhline(floor, color="tab:red", linewidth=1.0, linestyle="--", label=f"floor = {floor:.2f}")
-    ax.axhline(1.0, color="black", linewidth=0.7, alpha=0.45)
-    ax.set_xlabel("circuit size, heads kept")
-    ax.set_ylabel("faithfulness, complement mean-ablated")
-    ax.set_title("Greedy pruning: what the behavior costs, node by node")
+            ax.annotate(f"-{t['removed']}", (t["n_nodes"], _to_float(t["faithfulness"], 0.0)), textcoords="offset points", xytext=(2, 8), fontsize=7, rotation=30)
+    ax.axhline(floor, color="#D55E00", linewidth=1.1, linestyle="--", label=f"floor = {floor:.2f}")
+    ax.axhline(1.0, color="black", linewidth=0.8, alpha=0.45, label="full-model baseline")
     ax.invert_xaxis()
+    _style(ax, title="Greedy pruning: what the behavior costs, node by node", xlabel="circuit size, heads kept", ylabel="faithfulness, complement mean-ablated")
     ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "prune_trajectory.png", "Faithfulness at each greedy pruning step.")
+    bench.save_figure(ctx, fig, "prune_trajectory.png", "Faithfulness at each greedy pruning step, with floor and full-model reference.")
 
 
 def plot_circuit_graph(
@@ -433,104 +670,58 @@ def plot_circuit_graph(
     n_layers: int,
     n_heads: int,
 ) -> None:
-    fig, ax = bench.new_figure(figsize=(10.0, 6.0))
-    colors = {
-        "induction": "tab:red",
-        "previous_token": "tab:blue",
-        "first_token_sink": "tab:green",
-        "other": "tab:gray",
-    }
+    fig, ax = bench.new_figure(figsize=(10.8, 6.2))
     for layer, head in circuit:
         label = head_labels.get((layer, head), "other")
-        ax.scatter(layer, head, s=170, color=colors.get(label, "tab:gray"), zorder=3, edgecolors="black")
+        ax.scatter(layer, head, s=210, color=_motif_color(label), marker=_motif_marker(label), zorder=3, edgecolors="black", linewidths=0.8)
         ax.annotate(f"L{layer}H{head}\n{label}", (layer, head), textcoords="offset points", xytext=(6, 6), fontsize=7)
 
-    shown_mlps = list(mlp_support[:4])
+    shown_mlps = list(mlp_support[:5])
     for i, r in enumerate(shown_mlps):
-        y = n_heads + 1 + 0.65 * (i % 3)
-        ax.scatter(r["layer"], y, s=120, marker="s", color="tab:orange", zorder=3, edgecolors="black")
-        ax.annotate(
-            f"MLP{r['layer']}\ndrop {r['causal_drop']:+.2f}",
-            (r["layer"], y),
-            textcoords="offset points",
-            xytext=(4, 6 + 4 * (i % 2)),
-            fontsize=7,
-        )
+        y = n_heads + 1 + 0.70 * (i % 3)
+        ax.scatter(_to_float(r.get("layer"), 0.0), y, s=145, marker="s", color=_component_color("mlp"), zorder=3, edgecolors="black", linewidths=0.8)
+        ax.annotate(f"MLP{r['layer']}\ndrop {_to_float(r.get('causal_drop'), 0.0):+.2f}", (_to_float(r.get("layer"), 0.0), y), textcoords="offset points", xytext=(4, 6 + 4 * (i % 2)), fontsize=7)
     if len(mlp_support) > len(shown_mlps):
-        ax.text(
-            0.99,
-            0.98,
-            f"+{len(mlp_support) - len(shown_mlps)} support MLPs listed in circuit_card.md",
-            transform=ax.transAxes,
-            ha="right",
-            va="top",
-            fontsize=8,
-            color="tab:orange",
-        )
+        ax.text(0.99, 0.98, f"+{len(mlp_support) - len(shown_mlps)} support MLPs in card", transform=ax.transAxes, ha="right", va="top", fontsize=8, color=_component_color("mlp"))
 
     if edge is not None and edge.get("claimed"):
         l1, h1 = edge["from"]
         l2, h2 = edge["to"]
         if (l1, h1) not in circuit:
-            ax.scatter(l1, h1, s=170, facecolors="none", edgecolors="tab:blue", linewidths=1.6, zorder=3)
-            ax.annotate(
-                f"L{l1}H{h1}\nscreened, pruned",
-                (l1, h1),
-                textcoords="offset points",
-                xytext=(6, -16),
-                fontsize=7,
-                color="tab:blue",
-            )
-        ax.annotate(
-            "",
-            xy=(l2, h2),
-            xytext=(l1, h1),
-            arrowprops={"arrowstyle": "-|>", "color": "black", "lw": 1.8, "shrinkA": 12, "shrinkB": 12},
-        )
+            ax.scatter(l1, h1, s=200, facecolors="none", edgecolors=_motif_color("previous_token"), linewidths=1.8, zorder=3)
+            ax.annotate(f"L{l1}H{h1}\nscreened, pruned", (l1, h1), textcoords="offset points", xytext=(6, -18), fontsize=7, color=_motif_color("previous_token"))
+        ax.annotate("", xy=(l2, h2), xytext=(l1, h1), arrowprops={"arrowstyle": "-|>", "color": "black", "lw": 2.0, "shrinkA": 13, "shrinkB": 13})
         mid_x, mid_y = (l1 + l2) / 2, (h1 + h2) / 2
-        ax.annotate(
-            f"interaction {edge['raw_interaction_fraction']:.0%}",
-            (mid_x, mid_y),
-            textcoords="offset points",
-            xytext=(0, 10),
-            fontsize=8,
-            color="black",
-        )
+        ax.annotate(f"{edge['strength']} interaction\n{edge['raw_interaction_fraction']:.0%}", (mid_x, mid_y), textcoords="offset points", xytext=(0, 12), fontsize=8, ha="center")
 
+    for motif in ("previous_token", "induction", "first_token_sink", "other"):
+        if any(head_labels.get(key, "other") == motif for key in circuit):
+            ax.scatter([], [], color=_motif_color(motif), marker=_motif_marker(motif), label=motif, edgecolors="black", linewidths=0.6)
+    if shown_mlps:
+        ax.scatter([], [], color=_component_color("mlp"), marker="s", label="support MLP", edgecolors="black", linewidths=0.6)
     ax.set_xlim(-1, n_layers)
-    ax.set_ylim(-1.5, n_heads + 4.5)
-    ax.set_xlabel("layer")
-    ax.set_ylabel("head index; squares above are supporting MLPs")
-    ax.set_title("Validated heads-only routing circuit")
-    bench.save_figure(ctx, fig, "circuit_graph.png", "Circuit heads, motif labels, supporting MLPs, and claimed edge if any.")
+    ax.set_ylim(-1.5, n_heads + 4.8)
+    _style(ax, title="Validated heads-only routing circuit", xlabel="layer", ylabel="head index; squares above are supporting MLPs")
+    ax.legend(fontsize=8, loc="upper left", ncols=2)
+    bench.save_figure(ctx, fig, "circuit_graph.png", "Circuit heads, motif labels, support MLPs, and the claimed edge if any.")
 
 
 def plot_fcm(ctx: bench.RunContext, fcm: dict[str, Any], *, floor: float) -> None:
-    fig, ax = bench.new_figure(figsize=(8.0, 5.2))
-    xs: list[float] = []
-    heights: list[float] = []
-    labels: list[str] = []
-    colors: list[str] = []
-    alphas: list[float] = []
-    for i, metric in enumerate(("faithfulness", "completeness_effect")):
-        for j, family in enumerate(("discovery", "heldout")):
-            if family not in fcm:
-                continue
-            xs.append(i * 2.7 + j)
-            heights.append(fcm[family][metric])
-            labels.append(f"{metric.replace('_', ' ')}\n{family}")
-            colors.append("tab:green" if metric == "faithfulness" else "tab:blue")
-            alphas.append(1.0 if family == "discovery" else 0.55)
-    bars = ax.bar(xs, heights, color=colors)
-    for bar, alpha in zip(bars, alphas):
-        bar.set_alpha(alpha)
+    fig, ax = bench.new_figure(figsize=(8.2, 5.2))
+    groups: list[tuple[str, str, float]] = []
+    for family in ("discovery", "heldout"):
+        if family in fcm:
+            groups.append((family, "faithfulness", _to_float(fcm[family].get("faithfulness"), 0.0)))
+            groups.append((family, "completeness_effect", _to_float(fcm[family].get("completeness_effect"), 0.0)))
+    xs = list(range(len(groups)))
+    colors = [_family_color(fam) if metric == "faithfulness" else _lighten(_family_color(fam), 0.35) for fam, metric, _ in groups]
+    bars = ax.bar(xs, [v for _, _, v in groups], color=colors, alpha=0.92)
     ax.bar_label(bars, fmt="%.2f", fontsize=9)
-    ax.axhline(floor, color="tab:red", linewidth=1.0, linestyle="--", label="faithfulness floor")
-    ax.axhline(1.0, color="black", linewidth=0.7, alpha=0.35)
+    ax.axhline(floor, color="#D55E00", linewidth=1.1, linestyle="--", label="faithfulness floor")
+    ax.axhline(1.0, color="black", linewidth=0.8, alpha=0.35)
     ax.set_xticks(xs)
-    ax.set_xticklabels(labels, fontsize=8)
-    ax.set_ylabel("fraction of base behavior")
-    ax.set_title("Circuit scorecard: preservation and destruction of behavior")
+    ax.set_xticklabels([f"{metric.replace('_', ' ')}\n{family}" for family, metric, _ in groups], fontsize=8)
+    _style(ax, title="Circuit scorecard: preservation and destruction of behavior", ylabel="fraction of base behavior")
     ax.legend(fontsize=8)
     bench.save_figure(ctx, fig, "circuit_scorecard.png", "Faithfulness and completeness effect on discovery and held-out families.")
 
@@ -538,22 +729,21 @@ def plot_fcm(ctx: bench.RunContext, fcm: dict[str, Any], *, floor: float) -> Non
 def plot_prompt_faithfulness(ctx: bench.RunContext, rows: Sequence[dict[str, Any]]) -> None:
     if not rows:
         return
-    fig, ax = bench.new_figure(figsize=(9.0, 5.0))
-    ordered = sorted(rows, key=lambda r: (r["faithfulness"] if r["faithfulness"] is not None else -999))
+    fig, ax = bench.new_figure(figsize=(9.6, 5.2))
+    ordered = sorted(rows, key=lambda r: (_to_float(r.get("faithfulness"), -999.0)))
     xs = list(range(len(ordered)))
-    ys = [r["faithfulness"] if r["faithfulness"] is not None else 0.0 for r in ordered]
-    colors = ["tab:green" if r["family"] == "discovery" else "tab:purple" for r in ordered]
-    bars = ax.bar(xs, ys, color=colors, alpha=0.85)
-    ax.axhline(FAITHFULNESS_FLOOR, color="tab:red", linestyle="--", linewidth=1.0, label="floor")
-    ax.axhline(1.0, color="black", linewidth=0.7, alpha=0.35)
+    ys = [_to_float(r.get("faithfulness"), 0.0) for r in ordered]
+    colors = [_family_color(str(r.get("family", "undefined"))) for r in ordered]
+    bars = ax.bar(xs, ys, color=colors, alpha=0.88)
+    ax.axhline(FAITHFULNESS_FLOOR, color="#D55E00", linestyle="--", linewidth=1.1, label="floor")
+    ax.axhline(1.0, color="black", linewidth=0.8, alpha=0.35, label="full model")
     ax.set_xticks(xs)
-    ax.set_xticklabels([r["example_id"] for r in ordered], rotation=30, ha="right", fontsize=8)
-    ax.set_ylabel("per-prompt faithfulness")
-    ax.set_title("Failure cases: where the circuit least preserves the behavior")
+    ax.set_xticklabels([str(r.get("example_id", "")) for r in ordered], rotation=35, ha="right", fontsize=8)
     for bar, row in zip(bars, ordered):
-        if row["faithfulness"] is not None:
-            ax.annotate(f"{row['faithfulness']:.2f}", (bar.get_x() + bar.get_width() / 2, bar.get_height()),
-                        ha="center", va="bottom", fontsize=7, rotation=90)
+        faith = _to_float(row.get("faithfulness"), float("nan"))
+        if math.isfinite(faith):
+            ax.annotate(f"{faith:.2f}", (bar.get_x() + bar.get_width() / 2, bar.get_height()), ha="center", va="bottom", fontsize=7, rotation=90)
+    _style(ax, title="Failure cases and over-recovery: per-prompt circuit faithfulness", ylabel="per-prompt faithfulness")
     ax.legend(fontsize=8)
     bench.save_figure(ctx, fig, "per_prompt_faithfulness.png", "Per-prompt faithfulness sorted from weakest to strongest.")
 
@@ -561,18 +751,271 @@ def plot_prompt_faithfulness(ctx: bench.RunContext, rows: Sequence[dict[str, Any
 def plot_edge_interactions(ctx: bench.RunContext, rows: Sequence[dict[str, Any]]) -> None:
     if not rows:
         return
-    fig, ax = bench.new_figure(figsize=(8.5, 5.0))
-    top = sorted(rows, key=lambda r: r.get("interaction", -999), reverse=True)[:8]
+    fig, ax = bench.new_figure(figsize=(8.8, 5.0))
+    top = sorted(rows, key=lambda r: _to_float(r.get("interaction"), -999.0), reverse=True)[:10]
     xs = list(range(len(top)))
-    ys = [r["interaction"] for r in top]
-    bars = ax.bar(xs, ys, color="tab:blue", alpha=0.8)
-    ax.axhline(0, color="black", linewidth=0.8)
+    ys = [_to_float(r.get("interaction"), 0.0) for r in top]
+    colors = [
+        _motif_color("induction") if str(r.get("edge_strength")) in {"strong", "weak"} else _lighten(_motif_color("induction"), 0.55)
+        for r in top
+    ]
+    bars = ax.bar(xs, ys, color=colors, alpha=0.9)
+    _zero_line(ax)
     ax.set_xticks(xs)
-    ax.set_xticklabels([r["edge"] for r in top], rotation=35, ha="right", fontsize=8)
-    ax.set_ylabel("interaction = effect(prev) - effect(prev | induction ablated)")
-    ax.set_title("Ordered previous-token -> induction interaction checks")
+    ax.set_xticklabels([str(r.get("edge", "")) for r in top], rotation=35, ha="right", fontsize=8)
     ax.bar_label(bars, fmt="%.2f", fontsize=8)
+    _style(ax, title="Ordered previous-token to induction interaction checks", ylabel="interaction = effect(prev) - effect(prev | induction ablated)")
     bench.save_figure(ctx, fig, "edge_interactions.png", "Ablation-interaction evidence for the one edge claim.")
+
+
+def plot_minimality_ledger(ctx: bench.RunContext, rows: Sequence[dict[str, Any]]) -> None:
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(8.4, max(3.8, 0.35 * len(rows) + 1.8)))
+    ordered = sorted(rows, key=lambda r: _to_float(r.get("marginal_value"), 0.0))
+    ys = list(range(len(ordered)))
+    vals = [_to_float(r.get("marginal_value"), 0.0) for r in ordered]
+    labels = [str(r.get("node", "")) for r in ordered]
+    colors = [_motif_color(str(r.get("motif_label", "other"))) for r in ordered]
+    ax.hlines(ys, 0, vals, color=colors, alpha=0.72, linewidth=2.8)
+    ax.scatter(vals, ys, color=colors, s=85, edgecolors="black", linewidths=0.45, zorder=3)
+    _zero_line(ax, axis="x")
+    ax.set_yticks(ys)
+    ax.set_yticklabels(labels)
+    for y, v in zip(ys, vals):
+        ax.annotate(f"{v:+.3f}", (v, y), textcoords="offset points", xytext=(5 if v >= 0 else -5, 0), ha="left" if v >= 0 else "right", va="center", fontsize=8)
+    _style(ax, title="Minimality ledger: marginal faithfulness of each kept head", xlabel="faithfulness lost when this head is removed", ylabel="final circuit head")
+    bench.save_figure(ctx, fig, "minimality_ledger.png", "Marginal value of each kept circuit head under the pruning rule.")
+
+
+def plot_prompt_failure_scatter(ctx: bench.RunContext, rows: Sequence[dict[str, Any]], *, floor: float) -> None:
+    valid = [r for r in rows if _is_finite(r.get("faithfulness")) and _is_finite(r.get("base_diff"))]
+    if not valid:
+        return
+    fig, ax = bench.new_figure(figsize=(8.6, 5.5))
+    for family in sorted({str(r.get("family", "")) for r in valid}):
+        fam_rows = [r for r in valid if str(r.get("family", "")) == family]
+        ax.scatter(
+            [_to_float(r.get("base_diff"), 0.0) for r in fam_rows],
+            [_to_float(r.get("faithfulness"), 0.0) for r in fam_rows],
+            s=[54 + 22 * max(0.0, min(2.0, _to_float(r.get("over_recovery_above_full_model"), 0.0))) for r in fam_rows],
+            color=_family_color(family),
+            alpha=0.85,
+            label=family,
+            edgecolors="black",
+            linewidths=0.35,
+        )
+    ax.axhline(floor, color="#D55E00", linestyle="--", linewidth=1.1, label="faithfulness floor")
+    ax.axhline(1.0, color="black", linewidth=0.8, alpha=0.4, label="full-model baseline")
+    label_rows = sorted(valid, key=lambda r: _to_float(r.get("faithfulness"), 0.0))[:3] + sorted(valid, key=lambda r: _to_float(r.get("faithfulness"), 0.0), reverse=True)[:2]
+    seen: set[str] = set()
+    for r in label_rows:
+        node = str(r.get("example_id", ""))
+        if node in seen:
+            continue
+        seen.add(node)
+        ax.annotate(node, (_to_float(r.get("base_diff"), 0.0), _to_float(r.get("faithfulness"), 0.0)), textcoords="offset points", xytext=(5, 5), fontsize=8)
+    _style(ax, title="Prompt-level audit: weak behavior, failures, and over-recovery", xlabel="full-model base logit diff", ylabel="circuit faithfulness")
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, "prompt_failure_scatter.png", "Per-prompt base behavior against circuit-only faithfulness.")
+
+
+def plot_candidate_evidence_matrix(ctx: bench.RunContext, rows: Sequence[dict[str, Any]]) -> None:
+    heads = [r for r in rows if r.get("node")]
+    if not heads:
+        return
+    # Keep the final circuit and the strongest disagreements visible without making a postage stamp atlas.
+    chosen = sorted(
+        heads,
+        key=lambda r: (
+            not bool(r.get("in_final_circuit")),
+            -abs(_to_float(r.get("rank_gap_cheap_minus_causal"), 0.0)),
+            -_to_float(r.get("causal_drop"), 0.0),
+        ),
+    )[:28]
+    columns = [
+        ("|attr|", "abs_attr", False),
+        ("induction", "induction_score", False),
+        ("prev-token", "prev_token_score", False),
+        ("sink", "first_token_score", False),
+        ("causal drop", "causal_drop", True),
+        ("marginal", "marginal_value", True),
+    ]
+    raw_cols: list[list[float]] = []
+    for _, key, signed in columns:
+        vals = [_to_float(r.get(key), 0.0) for r in chosen]
+        if signed:
+            scale = max([abs(v) for v in vals] + [1e-9])
+            raw_cols.append([v / scale for v in vals])
+        else:
+            vmin, vmax = min(vals), max(vals)
+            denom = max(vmax - vmin, 1e-9)
+            raw_cols.append([((v - vmin) / denom) for v in vals])
+    data = [[raw_cols[j][i] for j in range(len(columns))] for i in range(len(chosen))]
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    arr = np.array(data, dtype=float)
+    fig, ax = plt.subplots(figsize=(8.8, max(4.2, 0.36 * len(chosen) + 1.7)), constrained_layout=True)
+    im = ax.imshow(arr, aspect="auto", cmap="coolwarm", vmin=-1, vmax=1)
+    ax.set_xticks(range(len(columns)))
+    ax.set_xticklabels([c[0] for c in columns], rotation=30, ha="right")
+    labels = [f"{'★ ' if r.get('in_final_circuit') else ''}{r['node']} · {r.get('motif_label', 'other')}" for r in chosen]
+    ax.set_yticks(range(len(chosen)))
+    ax.set_yticklabels(labels, fontsize=7.5)
+    for i, r in enumerate(chosen):
+        for j, (_label, key, _signed) in enumerate(columns):
+            v = _to_float(r.get(key), float("nan"))
+            txt = "" if not math.isfinite(v) else (f"{v:+.2f}" if key in {"causal_drop", "marginal_value"} else f"{v:.2f}")
+            ax.text(j, i, txt, ha="center", va="center", fontsize=6.8, color="black")
+    for i, r in enumerate(chosen):
+        if r.get("edge_role"):
+            ax.text(len(columns) - 0.1, i, str(r["edge_role"]).replace("edge_", ""), ha="left", va="center", fontsize=7, color="black")
+    ax.set_title("Candidate evidence matrix: screen signals, causal tests, and final membership")
+    cbar = fig.colorbar(im, ax=ax, shrink=0.82)
+    cbar.set_label("column-normalized evidence score")
+    bench.save_figure(ctx, fig, "candidate_evidence_matrix.png", "Candidate heads with cheap scores, motif labels, causal drops, final membership, and marginality.")
+
+
+def plot_causal_motif_atlas(ctx: bench.RunContext, rows: Sequence[dict[str, Any]], n_layers: int, n_heads: int) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import matplotlib.colors as mcolors
+
+    if not rows:
+        return
+    grid = np.full((n_heads, n_layers), np.nan, dtype=float)
+    in_circuit: list[tuple[int, int, str]] = []
+    for r in rows:
+        layer = _to_int(r.get("layer"), -1)
+        head = _to_int(r.get("head"), -1)
+        if 0 <= layer < n_layers and 0 <= head < n_heads:
+            grid[head, layer] = _to_float(r.get("causal_drop"), 0.0)
+            if r.get("in_final_circuit"):
+                in_circuit.append((layer, head, str(r.get("motif_label", "other"))))
+    if np.all(np.isnan(grid)):
+        return
+    vmax = float(np.nanmax(np.abs(grid))) if np.any(~np.isnan(grid)) else 1.0
+    vmax = max(vmax, 1e-6)
+    cmap = plt.get_cmap("coolwarm").copy()
+    cmap.set_bad("#eeeeee")
+    fig, ax = plt.subplots(figsize=(10.2, 5.8), constrained_layout=True)
+    im = ax.imshow(grid, origin="lower", aspect="auto", cmap=cmap, norm=mcolors.TwoSlopeNorm(vmin=-vmax, vcenter=0.0, vmax=vmax))
+    for layer, head, motif in in_circuit:
+        ax.scatter(layer, head, marker=_motif_marker(motif), s=95, facecolors="none", edgecolors="black", linewidths=1.6)
+        ax.annotate(f"L{layer}H{head}", (layer, head), textcoords="offset points", xytext=(3, 3), fontsize=6.6)
+    ax.set_xlabel("layer")
+    ax.set_ylabel("head")
+    ax.set_title("Causal motif atlas: screened heads on the layer-head grid")
+    cbar = fig.colorbar(im, ax=ax, shrink=0.82)
+    cbar.set_label("single-head causal drop")
+    bench.save_figure(ctx, fig, "causal_motif_atlas.png", "Layer-head atlas of screened-head causal drops with final circuit heads outlined.")
+
+
+def plot_edge_interaction_map(ctx: bench.RunContext, rows: Sequence[dict[str, Any]]) -> None:
+    valid = [r for r in rows if _is_finite(r.get("interaction"))]
+    if not valid:
+        return
+    fig, ax = bench.new_figure(figsize=(8.3, 5.5))
+    for r in valid:
+        frac = _to_float(r.get("raw_interaction_fraction"), 0.0)
+        inter = _to_float(r.get("interaction"), 0.0)
+        strength = str(r.get("edge_strength", "none"))
+        color = _motif_color("induction") if strength in {"weak", "strong"} else _lighten(_motif_color("previous_token"), 0.35)
+        ax.scatter(
+            _to_float(r.get("from_layer"), 0.0),
+            _to_float(r.get("to_layer"), 0.0),
+            s=80 + 420 * max(0.0, min(0.12, frac)) / 0.12,
+            color=color,
+            alpha=0.75,
+            edgecolors="black",
+            linewidths=0.4,
+        )
+        if inter >= sorted([_to_float(x.get("interaction"), 0.0) for x in valid], reverse=True)[min(4, len(valid) - 1)]:
+            ax.annotate(str(r.get("edge", "")), (_to_float(r.get("from_layer"), 0.0), _to_float(r.get("to_layer"), 0.0)), textcoords="offset points", xytext=(4, 4), fontsize=7)
+    lo = min([_to_float(r.get("from_layer"), 0.0) for r in valid] + [_to_float(r.get("to_layer"), 0.0) for r in valid]) - 1
+    hi = max([_to_float(r.get("from_layer"), 0.0) for r in valid] + [_to_float(r.get("to_layer"), 0.0) for r in valid]) + 1
+    ax.plot([lo, hi], [lo, hi], color="black", alpha=0.25, linewidth=0.9, label="same layer")
+    ax.set_xlim(lo, hi)
+    ax.set_ylim(lo, hi)
+    _style(ax, title="Edge interaction map: ordered previous-token to induction pairs", xlabel="source layer", ylabel="target layer")
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, "edge_interaction_map.png", "Ordered edge checks by source and target layer, sized by routed-fraction proxy.")
+
+
+def plot_circuit_discovery_dashboard(
+    ctx: bench.RunContext,
+    fcm: dict[str, Any],
+    trajectory: Sequence[dict[str, Any]],
+    cand_rows: Sequence[dict[str, Any]],
+    prompt_rows: Sequence[dict[str, Any]],
+    *,
+    floor: float,
+) -> None:
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.0, 9.0), constrained_layout=True)
+    ax0, ax1, ax2, ax3 = axes.ravel()
+
+    # A. F/C/M scorecard.
+    groups: list[tuple[str, str, float]] = []
+    for family in ("discovery", "heldout"):
+        if family in fcm:
+            groups.append((family, "faithfulness", _to_float(fcm[family].get("faithfulness"), 0.0)))
+            groups.append((family, "completeness effect", _to_float(fcm[family].get("completeness_effect"), 0.0)))
+    xs = list(range(len(groups)))
+    ax0.bar(xs, [v for _, _, v in groups], color=[_family_color(f) if m == "faithfulness" else _lighten(_family_color(f), 0.35) for f, m, _ in groups])
+    ax0.axhline(floor, color="#D55E00", linestyle="--", linewidth=1.0)
+    ax0.axhline(1.0, color="black", linewidth=0.8, alpha=0.4)
+    ax0.set_xticks(xs)
+    ax0.set_xticklabels([f"{m}\n{f}" for f, m, _ in groups], fontsize=8)
+    _style(ax0, title="F/C scorecard", ylabel="fraction of base behavior")
+    _panel_label(ax0, "A")
+
+    # B. Pruning trajectory.
+    if trajectory:
+        x = [t["n_nodes"] for t in trajectory]
+        y = [_to_float(t["faithfulness"], 0.0) for t in trajectory]
+        ax1.plot(x, y, marker="o", color=_family_color("discovery"), linewidth=2.0)
+        ax1.axhline(floor, color="#D55E00", linestyle="--", linewidth=1.0)
+        ax1.axhline(1.0, color="black", linewidth=0.8, alpha=0.4)
+        ax1.invert_xaxis()
+    _style(ax1, title="Greedy pruning path", xlabel="heads kept", ylabel="faithfulness")
+    _panel_label(ax1, "B")
+
+    # C. Candidate quality.
+    heads = [r for r in cand_rows if r.get("kind") == "head"]
+    for r in heads:
+        motif = str(r.get("motif_label", "other"))
+        ax2.scatter(
+            _to_float(r.get("cheap_rank"), 0.0),
+            _to_float(r.get("causal_drop"), 0.0),
+            color=_motif_color(motif),
+            marker=_motif_marker(motif),
+            s=54,
+            alpha=0.75,
+            edgecolors="black",
+            linewidths=0.35,
+        )
+    _zero_line(ax2)
+    _style(ax2, title="Cheap screen vs causal test", xlabel="cheap rank, lower is better", ylabel="causal drop")
+    _panel_label(ax2, "C")
+
+    # D. Prompt audit.
+    valid = [r for r in prompt_rows if _is_finite(r.get("faithfulness"))]
+    ordered = sorted(valid, key=lambda r: _to_float(r.get("faithfulness"), 0.0))
+    xs2 = list(range(len(ordered)))
+    ax3.bar(xs2, [_to_float(r.get("faithfulness"), 0.0) for r in ordered], color=[_family_color(str(r.get("family", ""))) for r in ordered], alpha=0.85)
+    ax3.axhline(floor, color="#D55E00", linestyle="--", linewidth=1.0)
+    ax3.axhline(1.0, color="black", linewidth=0.8, alpha=0.4)
+    ax3.set_xticks(xs2)
+    ax3.set_xticklabels([str(r.get("example_id", "")) for r in ordered], rotation=35, ha="right", fontsize=7)
+    _style(ax3, title="Prompt-level failures and over-recovery", ylabel="faithfulness")
+    _panel_label(ax3, "D")
+
+    fig.suptitle("Manual circuit discovery: from suspects to a scoped heads-only claim", fontsize=14)
+    bench.save_figure(ctx, fig, "circuit_discovery_dashboard.png", "One-screen summary of Lab 6 F/C/M, pruning, screening, and prompt-level audit.")
 
 
 # ---------------------------------------------------------------------------
@@ -1137,21 +1580,41 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     per_prompt_path = ctx.path("tables", "per_prompt_faithfulness.csv")
     bench.write_csv_with_context(ctx, per_prompt_path, per_prompt_rows)
     ctx.register_artifact(per_prompt_path, "table", "Per-prompt faithfulness and the two weakest failure cases.")
+    prompt_failure_rows = build_prompt_failure_modes(per_prompt_rows, floor=FAITHFULNESS_FLOOR)
+    prompt_failure_path = ctx.path("tables", "prompt_failure_modes.csv")
+    bench.write_csv_with_context(ctx, prompt_failure_path, prompt_failure_rows)
+    ctx.register_artifact(prompt_failure_path, "table", "Prompt-level failure modes, including over-recovery and under-floor cases.")
+
     failures = sorted(
-        (row for row in per_prompt_rows if row["faithfulness"] is not None),
+        (row for row in prompt_failure_rows if row["faithfulness"] is not None),
         key=lambda row: row["faithfulness"],
     )[:2]
 
+    evidence_rows = build_circuit_evidence_matrix(cand_rows_sorted, minimality_rows, circuit, edge)
+    evidence_path = ctx.path("tables", "circuit_evidence_matrix.csv")
+    bench.write_csv_with_context(ctx, evidence_path, evidence_rows)
+    ctx.register_artifact(evidence_path, "table", "Joined evidence for every screened head: screen, motif, causal, minimality, and edge status.")
+
+    guide_path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, guide_path, plot_reading_guide_rows())
+    ctx.register_artifact(guide_path, "table", "Short guide mapping each Lab 6 visualization to the concept it teaches.")
+
     # ----- plots ---------------------------------------------------------------
     if not args.no_plots:
+        plot_circuit_discovery_dashboard(ctx, fcm, trajectory, cand_rows_sorted, prompt_failure_rows, floor=FAITHFULNESS_FLOOR)
         plot_screen_vs_causal(ctx, cand_rows_sorted)
         plot_prune_trajectory(ctx, trajectory, floor=FAITHFULNESS_FLOOR)
         mlp_support = [r for r in cand_rows_sorted if r["kind"] == "mlp" and float(r["causal_drop"]) > 0]
         plot_circuit_graph(ctx, circuit, head_labels, mlp_support, edge, n_layers, n_heads)
         if "discovery" in fcm:
             plot_fcm(ctx, fcm, floor=FAITHFULNESS_FLOOR)
-        plot_prompt_faithfulness(ctx, per_prompt_rows)
+        plot_prompt_faithfulness(ctx, prompt_failure_rows)
+        plot_prompt_failure_scatter(ctx, prompt_failure_rows, floor=FAITHFULNESS_FLOOR)
+        plot_minimality_ledger(ctx, minimality_rows)
+        plot_candidate_evidence_matrix(ctx, evidence_rows)
+        plot_causal_motif_atlas(ctx, evidence_rows, n_layers, n_heads)
         plot_edge_interactions(ctx, edge_rows)
+        plot_edge_interaction_map(ctx, edge_rows)
 
     # ----- circuit card --------------------------------------------------------
     supporting_mlps = sorted(
@@ -1175,7 +1638,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "## Candidate screen",
         "",
         f"Screened {len(screen_reasons)} heads using attribution top {top_attr}, induction top {top_ind}, "
-        f"and previous-token top {top_prev}. Screening proposes suspects; mean-ablation decides which suspects matter.",
+        f"and previous-token top {top_prev}. Screening proposes suspects; mean-ablation decides which suspects matter. ",
+        "See `tables/circuit_evidence_matrix.csv` and `plots/candidate_evidence_matrix.png` for the joined evidence ladder.",
         "",
         "## Validated nodes",
         "",
@@ -1396,12 +1860,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "## 6. The reading order",
         "",
         "1. `circuit_card.md` - the deliverable; everything else is evidence for it.",
-        "2. `plots/circuit_graph.png` - validated heads, support MLPs, and any claimed edge.",
-        "3. `plots/prune_trajectory.png` - what each node costs during greedy pruning.",
-        "4. `plots/screen_vs_causal.png` - the central lesson: cheap screening (attribution or motif) is a hypothesis generator, not a circuit claim. The off-diagonal points are the payload.",
-        "5. `plots/circuit_scorecard.png` - discovery vs held-out faithfulness and completeness (held-out is often *higher* faithfulness; that is the generalization test).",
-        "6. `tables/per_prompt_faithfulness.csv` and `plots/per_prompt_faithfulness.png` - the specific prompts the circuit least explains (the anti-cherry-pick evidence; the lowest bars go into the card).",
-        "7. `plots/edge_interactions.png` and `tables/edge_interactions.csv` - the ordered interaction checks (weak vs strong, layer-order respected, not path patching).",
+        "2. `plots/circuit_discovery_dashboard.png` - F/C/M, pruning, screening, and prompt failures on one page.",
+        "3. `tables/circuit_evidence_matrix.csv` and `plots/candidate_evidence_matrix.png` - the joined evidence ladder for every screened head.",
+        "4. `plots/circuit_graph.png` - validated heads, support MLPs, and any claimed edge.",
+        "5. `plots/prune_trajectory.png` and `plots/minimality_ledger.png` - what pruning costs and whether each final node earns its rent.",
+        "6. `plots/screen_vs_causal.png` and `plots/causal_motif_atlas.png` - where cheap screening, motif labels, and causal effects agree or disagree.",
+        "7. `tables/prompt_failure_modes.csv`, `plots/per_prompt_faithfulness.png`, and `plots/prompt_failure_scatter.png` - the specific prompts the circuit least explains or over-recovers.",
+        "8. `plots/edge_interactions.png`, `plots/edge_interaction_map.png`, and `tables/edge_interactions.csv` - ordered interaction checks, weak versus strong, layer-order respected, not path patching.",
         "",
         "## 7. Caveats students must carry forward",
         "",

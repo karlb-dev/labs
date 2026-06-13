@@ -20,7 +20,7 @@ Those words are not decorative labels:
 
 The lab is a little circuit courtroom. The cheap screens nominate suspects. Mean-ablation cross-examines them. The circuit card is the verdict, including all awkward caveats.
 
-**Make the concept pop:** After your run, open `plots/screen_vs_causal.png`. The left panel shows cheap screen rank vs actual causal drop; many high-ranking suspects (by attribution or motif) have near-zero causal drop. The right panel does the same for absolute attribution. These off-diagonal points are the central lesson: screening is a hypothesis generator, not a circuit claim. Then open `plots/per_prompt_faithfulness.png` — the lowest bars are the specific prompts your final circuit explains least well. Do not hide them.
+**Make the concept pop:** After your run, open `plots/circuit_discovery_dashboard.png`. It is the courtroom map: scorecard, greedy pruning, screen-vs-causal disagreement, and prompt-level preservation on one page. Then open `tables/circuit_evidence_matrix.csv` beside `plots/candidate_evidence_matrix.png`: every screened head gets one row with its OBS motif scores, ATTR score, CAUSAL drop, pruning status, edge role, and minimality value. This is the antidote to circuit pageantry. A head does not become a circuit node because it is pretty, diagonal, or high-attribution; it becomes a node because it survives intervention and pruning.
 
 **Headline numbers note:** Faithfulness/completeness/minimality are computed on a small set of 8-token repeating prompts (17 discovery+heldout after expansion for robustness, minus any the tokenization gate drops on a given tokenizer). The per-prompt table, held-out generalization, and edge-interaction controls are what make the scoped circuit claim legible; the headline F/C/M ratios on this synthetic task should be read as qualitative + one-significant-figure evidence.
 
@@ -111,15 +111,43 @@ Tier A is a plumbing smoke test on `gpt2`. Tier B is the course run. The bench a
 
 **Then the science (the manual workflow):**
 3. `circuit_card.md` — the deliverable. Read this first; everything else is evidence for it.
-4. `plots/screen_vs_causal.png` — the central "cheap screening is a hypothesis generator" plot (off-diagonal points are the lesson).
-5. `plots/prune_trajectory.png` — how the circuit shrinks and where it stops relative to the faithfulness floor.
-6. `plots/circuit_scorecard.png` and `faithfulness_completeness_minimality.json` — F/C/M on discovery vs held-out (the held-out row is the generalization test).
-7. `plots/per_prompt_faithfulness.png` and `tables/per_prompt_faithfulness.csv` — the specific prompts your circuit explains least well (the anti-cherry-pick evidence).
-8. `plots/circuit_graph.png` — the visual summary with motif labels and any claimed edge.
-9. `tables/pruned_circuit.csv` — minimality: the worst marginal value tells you whether the last kept head was earning its place.
-10. `plots/edge_interactions.png`, `tables/edge_claim.json`, and `tables/edge_interactions.csv` — the (carefully scoped) edge claim or the reason none was earned.
+4. `plots/circuit_discovery_dashboard.png` — the upgraded overview: F/C/M, greedy pruning, cheap-screen disagreement, and prompt-level preservation.
+5. `tables/circuit_evidence_matrix.csv` and `plots/candidate_evidence_matrix.png` — the aligned evidence ledger for each screened head: OBS motif, ATTR score, CAUSAL drop, pruning status, edge role, and minimality.
+6. `plots/causal_motif_atlas.png` — where screened heads actually bite in layer/head space, with final circuit heads outlined.
+7. `plots/screen_vs_causal.png` — the central "cheap screening is a hypothesis generator" plot (off-diagonal points are the lesson).
+8. `plots/prune_trajectory.png`, `tables/pruned_circuit.csv`, and `plots/minimality_ledger.png` — how the circuit shrinks, where it stops, and whether each final node earns rent.
+9. `plots/circuit_scorecard.png` and `faithfulness_completeness_minimality.json` — F/C/M on discovery vs held-out (the held-out row is the generalization test).
+10. `plots/per_prompt_faithfulness.png`, `plots/prompt_failure_scatter.png`, `tables/per_prompt_faithfulness.csv`, and `tables/prompt_failure_modes.csv` — the specific prompts your circuit least explains or over-recovers.
+11. `plots/circuit_graph.png` — the visual summary with motif labels, supporting MLPs, and any claimed edge.
+12. `plots/edge_interactions.png`, `plots/edge_interaction_map.png`, `tables/edge_claim.json`, and `tables/edge_interactions.csv` — the carefully scoped edge claim or the reason none was earned.
+13. `tables/plot_reading_guide.csv` — a compact map from every upgraded plot to the concept it teaches.
 
 ## How to read the main plots
+
+
+### `circuit_discovery_dashboard.png`
+
+This is the new first science plot after the circuit card. It compresses the workflow into four panels: F/C/M, greedy pruning, cheap-screen-vs-causal disagreement, and per-prompt faithfulness. It is a table of contents with numbers, not a substitute for the node-level ledger.
+
+### `candidate_evidence_matrix.png` and `circuit_evidence_matrix.csv`
+
+This is the anti-slogan artifact. Each candidate head gets columns for observation-level motif evidence, attribution evidence, single-head causal drop, final circuit membership, minimality marginal, and any edge role. A bright induction score does not equal a circuit node. A large direct-logit attribution does not equal necessity. A positive single-head causal drop does not mean the node survives redundancy-aware pruning. The final circuit claim only begins after those columns agree enough to survive the pruning rule.
+
+### `causal_motif_atlas.png`
+
+The atlas is a sparse map of causal drops over layer and head index. It makes two things visible at once: where screened heads actually matter, and which screened heads were attractive decoys. The outlined heads are the final circuit. Pale or opposite-signed neighbors are not decoration; they are the evidence that the model has redundant and sometimes anti-helpful routes.
+
+### `prompt_failure_scatter.png`
+
+This plot puts the full-model logit gap on one axis and the circuit-only faithfulness ratio on the other. Weak-denominator prompts, held-out failures, and over-recovery are visible together. This is the plot that prevents a mean score from becoming a carpet under which the awkward examples are swept.
+
+### `minimality_ledger.png`
+
+Minimality is not a vibe. This plot shows how much faithfulness is lost when each kept head is removed. A negative marginal means the pruning rule kept a head that hurts this particular circuit-only behavior. A tiny marginal means the node is a weak rent-payer. Either way, the card should say it.
+
+### `edge_interaction_map.png`
+
+The edge map shows all eligible previous-token → induction interactions as a signed matrix. It helps keep the edge claim in its cage: interaction-granularity evidence, not a key/value/path-patching claim.
 
 ### `screen_vs_causal.png`
 
@@ -195,17 +223,21 @@ The updated lab makes several evidence-quality changes:
 - It always writes an edge diagnostic, even when no edge is claimed.
 - It requires edge direction to respect layer order.
 - It adds per-prompt faithfulness artifacts so failure cases are visible rather than prose-only.
+- It adds `circuit_discovery_dashboard.png`, `candidate_evidence_matrix.png`, `causal_motif_atlas.png`, `prompt_failure_scatter.png`, `minimality_ledger.png`, and `edge_interaction_map.png` so the circuit claim is read as an evidence ladder rather than a single pretty graph.
+- It writes `tables/circuit_evidence_matrix.csv`, `tables/prompt_failure_modes.csv`, and `tables/plot_reading_guide.csv` for downstream notebooks and for the Lab 9 manual-vs-automated comparison.
 
 ## Writeup questions
 
 1. What is sufficient? Cite faithfulness and say whether the final circuit passed the floor.
 2. What is necessary? Cite completeness ratio and explain whether circuit ablation destroyed the behavior or merely dented it.
 3. What is minimal? Cite the worst marginal value in `tables/pruned_circuit.csv`. Did every kept node have a positive marginal value?
-4. Where did cheap screening and causal ranking disagree most? Was the misleading signal attribution, induction motif, or previous-token motif?
-5. What do the two weakest per-prompt faithfulness cases share?
-6. Did the held-out families preserve the result? If held-out prompts were filtered because the base model missed them, say how many ratio-defined prompts remain. If faithfulness is above 1.0, explain why that is over-recovery, not magic.
-7. If an edge was claimed, was it weak or strong? What exactly does the interaction fraction license you to say? If no edge was claimed, which requirement failed?
-8. Map your card onto Machamer, Darden, and Craver's entities-and-activities schema. Mark every activity you named but did not directly test.
+4. Where did cheap screening and causal ranking disagree most? Use `tables/circuit_evidence_matrix.csv` and say whether the misleading signal was attribution, induction motif, previous-token motif, or sink behavior.
+5. What does the evidence matrix reveal that the circuit graph hides? Name one node whose observational or attribution evidence looked good but whose causal/pruning status was weak.
+6. What do the two weakest per-prompt faithfulness cases share?
+7. Did the held-out families preserve the result? If held-out prompts were filtered because the base model missed them, say how many ratio-defined prompts remain. If faithfulness is above 1.0, explain why that is over-recovery, not magic.
+8. If an edge was claimed, was it weak or strong? What exactly does the interaction fraction license you to say? If no edge was claimed, which requirement failed?
+9. Did supporting MLPs change your wording? Say whether intact MLPs look like quiet infrastructure or a major hidden dependency.
+10. Map your card onto Machamer, Darden, and Craver's entities-and-activities schema. Mark every activity you named but did not directly test.
 
 ## Symptom-first debugging
 

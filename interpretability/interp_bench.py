@@ -3712,6 +3712,26 @@ PATCH_CONTROL_COLORS = {
     "low_region_split_heldout": "#7E57C2",
 }
 
+# Lab 6 circuit-discovery grammar. These labels describe node and edge status
+# in the evidence ladder, not prompt family membership.
+CIRCUIT_STATUS_COLORS = {
+    "screened": "#999999",
+    "positive_causal": "#56B4E9",
+    "negative_causal": "#D55E00",
+    "final_circuit": "#009E73",
+    "pruned": "#7E57C2",
+    "support_mlp": "#CC79A7",
+    "edge_source": "#0072B2",
+    "edge_target": "#E69F00",
+}
+
+CIRCUIT_EDGE_COLORS = {
+    "strong": "#009E73",
+    "weak": "#E69F00",
+    "below_threshold": "#999999",
+    "none": "#666666",
+}
+
 # Additional palette for control conditions (real vs random/shuffled/etc.).
 CONTROL_COLORS = {
     "real": "#d62728",
@@ -3829,6 +3849,16 @@ def plot_patch_role_marker(role: str, default: str = "o") -> str:
 def plot_patch_control_color(control: str, default: str = "#555555") -> str:
     """Shared color lookup for activation-patching controls."""
     return PATCH_CONTROL_COLORS.get(str(control), CONTROL_COLORS.get(str(control), default))
+
+
+def plot_circuit_status_color(status: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 6 circuit node statuses."""
+    return CIRCUIT_STATUS_COLORS.get(str(status), default)
+
+
+def plot_circuit_edge_color(strength: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 6 edge-interaction strengths."""
+    return CIRCUIT_EDGE_COLORS.get(str(strength), default)
 
 
 def plot_motif_color(label: str, default: str = "#555555") -> str:
