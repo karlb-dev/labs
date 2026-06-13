@@ -517,13 +517,15 @@ def run_steering(
 def lab20_eval_aware_control_rows(args: Any) -> list[dict[str, Any]]:
     path_text = getattr(args, "organism", "") or os.environ.get("LAB22_ORGANISM_DIR", "")
     if not path_text:
-        return [{"status": "not_configured", "note": "Pass --organism or LAB22_ORGANISM_DIR to a Lab 20 eval-aware organism directory."}]
+        return [{"status": "not_configured", "note": "Pass --organism or LAB22_ORGANISM_DIR to a Lab 20 run or eval-aware organism directory."}]
     p = pathlib.Path(path_text).expanduser()
     if not p.is_absolute():
         p = (pathlib.Path.cwd() / p).resolve()
     manifest_paths = []
     if (p / "manifest_unsealed.json").exists():
         manifest_paths.append(p / "manifest_unsealed.json")
+    if (p / "private_construction").exists():
+        manifest_paths.extend(sorted(p.glob("private_construction/*/manifest_unsealed.json")))
     manifest_paths.extend(sorted(p.glob("organisms/*/manifest_unsealed.json")))
     rows = []
     for manifest_path in manifest_paths:

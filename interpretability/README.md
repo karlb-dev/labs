@@ -296,10 +296,10 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   batteries, Tier A identity-pair smoke defaults, Tier B OLMo base-vs-instruct
   defaults, feature taxonomy/gallery artifacts, and an optional `--run-edit`
   feature-intervention smoke test.
-- Lab 20: benign model organisms — started for the advanced course. Emits
-  organism training corpora, sealed/unsealed manifests, behavior cards,
-  baseline target/control generations, spillover audits, and a manifest schema
-  for the later blind-audit sequence.
+- Lab 20: benign model organisms — revised for the advanced course. Separates
+  private construction artifacts from public blind-audit packages, writes
+  salted commitments and leak scans, runs baseline target/control and spillover
+  audits, and emits adapter-training recipes for later Lab 21/23 work.
 - Lab 21: LoRA localization and safety depth — started for the advanced
   course. Adds a two-mode harness for Lab 20 adapter localization, wrapper
   test scaffolds, base-vs-instruct residual divergence, and benign

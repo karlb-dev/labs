@@ -124,10 +124,42 @@ def latest_lab20_run() -> pathlib.Path | None:
     candidates = [
         p for p in root.glob("lab20_model_organisms-*")
         if (p / "organisms").exists()
+        or (p / "private_construction").exists()
+        or (p / "blind_audit_packages").exists()
     ]
     if not candidates:
         return None
     return max(candidates, key=lambda p: p.stat().st_mtime)
+
+
+def is_lab20_organism_dir(path: pathlib.Path) -> bool:
+    return (path / "manifest_unsealed.json").exists() or (path / "manifest_sealed.json").exists()
+
+
+def lab20_organism_children(base: pathlib.Path) -> list[pathlib.Path]:
+    """Find organism/package dirs in both Lab 20 layout generations.
+
+    A full revised Lab 20 run contains both private construction directories
+    and public blind packages for the same subjects. Builder-side Lab 21 work
+    should prefer the private directories so behavior-family metadata is
+    available and adapters are not counted twice. Directly passing a public
+    blind package still works through ``is_lab20_organism_dir`` above.
+    """
+    roots = [
+        base / "private_construction",
+        base / "organisms",
+        base / "blind_audit_packages",
+    ]
+    for root in roots:
+        if not root.exists():
+            continue
+        dirs = sorted(
+            p for p in root.iterdir()
+            if p.is_dir() and is_lab20_organism_dir(p)
+        )
+        if dirs:
+            return dirs
+    return []
 
 
 def discover_organism_dirs(args: Any) -> tuple[list[pathlib.Path], dict[str, Any]]:
@@ -143,18 +175,10 @@ def discover_organism_dirs(args: Any) -> tuple[list[pathlib.Path], dict[str, Any
 
     dirs: list[pathlib.Path] = []
     if base is not None and base.exists():
-        if (base / "manifest_unsealed.json").exists() or (base / "manifest_sealed.json").exists():
+        if is_lab20_organism_dir(base):
             dirs = [base]
-        elif (base / "organisms").exists():
-            dirs = sorted(
-                p for p in (base / "organisms").iterdir()
-                if p.is_dir() and ((p / "manifest_unsealed.json").exists() or (p / "manifest_sealed.json").exists())
-            )
         else:
-            dirs = sorted(
-                p for p in base.glob("organisms/*")
-                if p.is_dir() and ((p / "manifest_unsealed.json").exists() or (p / "manifest_sealed.json").exists())
-            )
+            dirs = lab20_organism_children(base)
     return dirs, {
         "source": source,
         "requested": "" if requested is None else str(requested),
@@ -169,11 +193,15 @@ def find_adapter_weight_file(organism_dir: pathlib.Path) -> pathlib.Path | None:
         "adapter_model.bin",
         "pytorch_model.bin",
     ]
-    for name in names:
-        p = organism_dir / name
-        if p.exists():
-            return p
-    matches = sorted(organism_dir.glob("*.safetensors")) + sorted(organism_dir.glob("*.bin"))
+    roots = [organism_dir, organism_dir / "adapter"]
+    for root in roots:
+        for name in names:
+            p = root / name
+            if p.exists():
+                return p
+    matches = []
+    for root in roots:
+        matches.extend(sorted(root.glob("*.safetensors")) + sorted(root.glob("*.bin")))
     return matches[0] if matches else None
 
 
@@ -234,8 +262,13 @@ def analyze_lora_adapters(ctx: bench.RunContext, organism_dirs: Sequence[pathlib
 
     for organism_dir in organism_dirs:
         manifest = load_json(organism_dir / "manifest_unsealed.json") or load_json(organism_dir / "manifest_sealed.json")
-        config = load_json(organism_dir / "adapter_config.json")
-        organism_id = manifest.get("organism_id") or organism_dir.name
+        config = (
+            load_json(organism_dir / "adapter_config.json")
+            or load_json(organism_dir / "adapter_config_private.json")
+            or load_json(organism_dir / "adapter_config_public.json")
+        )
+        organism_id = manifest.get("organism_id") or config.get("organism_id") or manifest.get("blind_id") or organism_dir.name
+        behavior_family = manifest.get("behavior_family", config.get("behavior_family", ""))
         weight_file = find_adapter_weight_file(organism_dir)
         if weight_file is None:
             matrix_rows.append({
@@ -249,7 +282,7 @@ def analyze_lora_adapters(ctx: bench.RunContext, organism_dirs: Sequence[pathlib
                 "organism_id": organism_id,
                 "method": "lora",
                 "status": "missing_adapter_weights",
-                "behavior_family": manifest.get("behavior_family", ""),
+                "behavior_family": behavior_family,
                 "localization_layer": "",
                 "localization_share": "",
                 "note": "No adapter_model.safetensors/bin found.",
@@ -313,7 +346,7 @@ def analyze_lora_adapters(ctx: bench.RunContext, organism_dirs: Sequence[pathlib
             row = {
                 "organism_id": organism_id,
                 "status": "ok",
-                "behavior_family": manifest.get("behavior_family", ""),
+                "behavior_family": behavior_family,
                 "organism_dir": str(organism_dir),
                 "adapter_weight_file": str(weight_file),
                 "adapter_weight_sha256": sha256_file(weight_file),
@@ -357,7 +390,7 @@ def analyze_lora_adapters(ctx: bench.RunContext, organism_dirs: Sequence[pathlib
                 "organism_id": organism_id,
                 "method": "lora",
                 "status": "ok",
-                "behavior_family": manifest.get("behavior_family", ""),
+                "behavior_family": behavior_family,
                 "localization_layer": best["layer"],
                 "localization_share": rounded(float(best["delta_fro_norm_sq"]) / max(total_norm_sq, 1e-12)),
                 "note": "Layer is the largest single LoRA matrix by Frobenius delta norm; this is localization evidence, not mechanism.",
