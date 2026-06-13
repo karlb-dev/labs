@@ -31,8 +31,10 @@ from __future__ import annotations
 import csv
 import dataclasses
 import json
+import math
 import pathlib
 import random
+import re
 import statistics
 from collections import Counter
 from typing import Any
@@ -72,6 +74,120 @@ class AnswerPairExample:
     target: str
     distractor: str
     note: str = ""
+    # Optional metadata used by the richer Lab 2 plots.  Built-in examples
+    # infer these fields automatically, while custom CSV/JSON prompt sets can
+    # supply them directly.  Accepted CSV aliases include relation/family/task
+    # for relation_family and contrast/difficulty/distractor_type for
+    # contrast_type.
+    relation_family: str = ""
+    contrast_type: str = ""
+    source: str = "built_in"
+
+
+PROMPT_FIELD_ALIASES = {
+    "relation": "relation_family",
+    "family": "relation_family",
+    "task": "relation_family",
+    "relation_type": "relation_family",
+    "semantic_family": "relation_family",
+    "difficulty": "contrast_type",
+    "contrast": "contrast_type",
+    "pair_type": "contrast_type",
+    "comparison_type": "contrast_type",
+    "distractor_type": "contrast_type",
+}
+
+
+def _tag_value(text: str, *keys: str) -> str:
+    """Extract simple key=value tags from notes, forgiving separators."""
+    for key in keys:
+        m = re.search(rf"(?:^|[;|,\s]){re.escape(key)}\s*=\s*([^;|,]+)", text or "", flags=re.I)
+        if m:
+            return sanitize_label(m.group(1))
+    return ""
+
+
+def sanitize_label(value: str) -> str:
+    """Stable, CSV/plot-safe metadata label."""
+    value = str(value or "").strip().lower()
+    value = value.replace("/", "_").replace(" ", "_").replace("-", "_")
+    value = re.sub(r"[^a-z0-9_]+", "", value)
+    value = re.sub(r"_+", "_", value).strip("_")
+    return value
+
+
+def normalize_prompt_record(item: dict[str, Any], where: str) -> AnswerPairExample:
+    """Accept a custom prompt row while preserving a strict schema.
+
+    The lab is intentionally fussy about prompt fields, because an extra column
+    often means a misspelled target/distractor.  A few common metadata aliases
+    are normalized rather than rejected so relation-family CSVs can be dropped
+    in without spreadsheet acrobatics.
+    """
+    allowed = {f.name for f in dataclasses.fields(AnswerPairExample)}
+    cleaned = {str(k): (v if v is not None else "") for k, v in item.items() if k is not None}
+    for src, dst in PROMPT_FIELD_ALIASES.items():
+        if src in cleaned and dst not in cleaned:
+            cleaned[dst] = cleaned[src]
+    ignored_aliases = set(PROMPT_FIELD_ALIASES)
+    extra = set(cleaned) - allowed - ignored_aliases
+    if extra:
+        raise ValueError(f"Prompt {where} has unknown fields: {sorted(extra)}")
+    row = {field: cleaned.get(field, "") for field in allowed}
+    if not row.get("source"):
+        row["source"] = "custom"
+    return AnswerPairExample(**row)
+
+
+def infer_relation_family(ex: AnswerPairExample) -> str:
+    explicit = sanitize_label(ex.relation_family) or _tag_value(ex.note, "relation", "family", "task")
+    if explicit:
+        return explicit
+    eid = ex.example_id.lower()
+    prompt = ex.prompt.lower()
+    if ex.category == "conflict" or eid.startswith("conflict"):
+        if "capital" in prompt:
+            return "conflict_capital"
+        if "opposite" in prompt:
+            return "conflict_antonym"
+        return "context_override"
+    if eid.startswith("cap_") or "capital of" in prompt or eid in {"eiffel", "water_oxygen", "jupiter", "fact_moon", "fact_heart"}:
+        return "factual_recall"
+    if eid.startswith("opp_") or "opposite of" in prompt:
+        return "antonym"
+    if eid.startswith("plural_") or "plural of" in prompt:
+        return "morphology_plural"
+    if eid.startswith("past_") or "past tense" in prompt:
+        return "morphology_past"
+    return sanitize_label(ex.category) or "unknown"
+
+
+def infer_contrast_type(ex: AnswerPairExample) -> str:
+    explicit = sanitize_label(ex.contrast_type) or _tag_value(
+        ex.note, "contrast", "difficulty", "pair_type", "distractor_type"
+    )
+    if explicit:
+        return explicit
+    eid = ex.example_id.lower()
+    if eid.endswith("_hard") or "same_class" in eid or "sameclass" in eid:
+        return "same_class_hard"
+    if eid.endswith("_easy") or "cross_class" in eid or "crossclass" in eid:
+        return "cross_class_easy"
+    if ex.category == "conflict":
+        return "context_vs_prior"
+    if ex.category == "grammar":
+        return "inflected_vs_wrong_form"
+    if ex.category == "relation":
+        return "answer_vs_axis_foil"
+    return "target_vs_type_foil"
+
+
+def example_meta(ex: AnswerPairExample) -> dict[str, str]:
+    return {
+        "relation_family": infer_relation_family(ex),
+        "contrast_type": infer_contrast_type(ex),
+        "source": sanitize_label(ex.source) or "built_in",
+    }
 
 
 ALL_EXAMPLES: tuple[AnswerPairExample, ...] = (
@@ -174,7 +290,6 @@ def load_custom_prompt_set(path: pathlib.Path) -> list[AnswerPairExample]:
     fields are accepted: a stray column is usually a typo in the microscope's
     coordinate system, not harmless decoration.
     """
-    allowed = {f.name for f in dataclasses.fields(AnswerPairExample)}
     examples: list[AnswerPairExample] = []
     if not path.exists():
         raise ValueError(
@@ -185,11 +300,7 @@ def load_custom_prompt_set(path: pathlib.Path) -> list[AnswerPairExample]:
     if path.suffix.lower() == ".csv":
         with path.open(newline="", encoding="utf-8") as f:
             for i, row in enumerate(csv.DictReader(f)):
-                item = {k: (v if v is not None else "") for k, v in row.items() if k}
-                extra = set(item) - allowed
-                if extra:
-                    raise ValueError(f"Prompt CSV row {i} has unknown columns: {sorted(extra)}")
-                examples.append(AnswerPairExample(**{k: item.get(k, "") for k in allowed}))
+                examples.append(normalize_prompt_record(row, f"CSV row {i}"))
         return examples
 
     try:
@@ -203,10 +314,7 @@ def load_custom_prompt_set(path: pathlib.Path) -> list[AnswerPairExample]:
     for i, item in enumerate(raw):
         if not isinstance(item, dict):
             raise ValueError(f"Prompt item {i} is not an object: {item!r}")
-        extra = set(item) - allowed
-        if extra:
-            raise ValueError(f"Prompt item {i} has unknown keys: {sorted(extra)}")
-        examples.append(AnswerPairExample(**item))
+        examples.append(normalize_prompt_record(item, f"JSON item {i}"))
     return examples
 
 
@@ -256,6 +364,7 @@ def tokenize_and_filter(
             {
                 "example_id": ex.example_id,
                 "category": ex.category,
+                **example_meta(ex),
                 "kept": ok,
                 "drop_reason": reason,
                 "target": bench.visible_token(ex.target),
@@ -430,7 +539,14 @@ def safe_signed_fraction(score: float, denom: float) -> float | str:
     return round(score / denom, 4)
 
 
-def component_rows(example_id: str, category: str, dla: dict[str, Any]) -> list[dict[str, Any]]:
+def component_rows(
+    example_id: str,
+    category: str,
+    dla: dict[str, Any],
+    relation_family: str = "",
+    contrast_type: str = "",
+    source: str = "",
+) -> list[dict[str, Any]]:
     """Long-form ledger rows for one example.
 
     The legacy ``frac_of_logit_diff`` field is retained for compatibility, but
@@ -446,6 +562,9 @@ def component_rows(example_id: str, category: str, dla: dict[str, Any]) -> list[
         return {
             "example_id": example_id,
             "category": category,
+            "relation_family": relation_family,
+            "contrast_type": contrast_type,
+            "source": source,
             "component": component,
             "layer": layer,
             "stream_depth_after": stream_depth_after,
@@ -479,6 +598,9 @@ def top_component_rows(
     category: str,
     dla: dict[str, Any],
     n: int = TOP_COMPONENTS_PER_EXAMPLE,
+    relation_family: str = "",
+    contrast_type: str = "",
+    source: str = "",
 ) -> list[dict[str, Any]]:
     """Top-|attribution| components with bounded shares and signs."""
     mass = component_score_mass(dla) or 1.0
@@ -488,6 +610,9 @@ def top_component_rows(
             {
                 "example_id": example_id,
                 "category": category,
+                "relation_family": relation_family,
+                "contrast_type": contrast_type,
+                "source": source,
                 "rank": rank,
                 "component": kind,
                 "layer": layer,
@@ -506,6 +631,9 @@ def block_ledger_rows(
     category: str,
     dla: dict[str, Any],
     curve: list[float],
+    relation_family: str = "",
+    contrast_type: str = "",
+    source: str = "",
 ) -> list[dict[str, Any]]:
     """One row per block: attention write, MLP write, block total, cumulative total."""
     rows = []
@@ -515,6 +643,9 @@ def block_ledger_rows(
             {
                 "example_id": example_id,
                 "category": category,
+                "relation_family": relation_family,
+                "contrast_type": contrast_type,
+                "source": source,
                 "layer": layer,
                 "stream_depth_after": layer + 1,
                 "attn_score": round(float(attn), 5),
@@ -579,6 +710,7 @@ def answer_behavior_row(
     return {
         "example_id": example.example_id,
         "category": example.category,
+        **example_meta(example),
         "target": bench.visible_token(example.target),
         "target_id": target_id,
         "distractor": bench.visible_token(example.distractor),
@@ -742,192 +874,432 @@ def summarize_ablation_by_selection(ablation_rows: list[dict[str, Any]]) -> list
         )
     return out
 
+
+# ---------------------------------------------------------------------------
+# Higher-level Lab 2 summaries for richer visualizations
+# ---------------------------------------------------------------------------
+
+
+def percentile(values: list[float], q: float) -> float:
+    """Small dependency-free percentile with linear interpolation."""
+    if not values:
+        return float("nan")
+    xs = sorted(float(v) for v in values)
+    if len(xs) == 1:
+        return xs[0]
+    pos = (len(xs) - 1) * q
+    lo = int(math.floor(pos))
+    hi = int(math.ceil(pos))
+    if lo == hi:
+        return xs[lo]
+    return xs[lo] + (xs[hi] - xs[lo]) * (pos - lo)
+
+
+def median_iqr(values: list[float]) -> tuple[float, float, float]:
+    if not values:
+        return (float("nan"), float("nan"), float("nan"))
+    return (percentile(values, 0.5), percentile(values, 0.25), percentile(values, 0.75))
+
+
+def finite_floats(values: list[Any]) -> list[float]:
+    """Convert a nested-ish numeric list to finite floats, skipping NaN/inf."""
+    out: list[float] = []
+    for value in values:
+        try:
+            f = float(value)
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(f):
+            out.append(f)
+    return out
+
+
+def abs_percentile(values: list[Any], q: float, default: float = 1.0) -> float:
+    vals = [abs(v) for v in finite_floats(values)]
+    if not vals:
+        return default
+    return percentile(vals, q) or default
+
+
+def layer_phase(layer: int, n_layers: int) -> str:
+    """Coarse phase name for a 0-indexed transformer block."""
+    if n_layers <= 0:
+        return "unknown"
+    frac_after = (layer + 1) / n_layers
+    if frac_after <= 1 / 3:
+        return "early"
+    if frac_after <= 2 / 3:
+        return "middle"
+    if frac_after < 0.9:
+        return "late"
+    return "final_tail"
+
+
+def _phase_order_key(phase: str) -> int:
+    return {"embed_const": 0, "early": 1, "middle": 2, "late": 3, "final_tail": 4}.get(phase, 99)
+
+
+def _component_values_by_phase(dla: dict[str, Any], n_layers: int) -> dict[tuple[str, str], list[float]]:
+    out: dict[tuple[str, str], list[float]] = {("embed_const", "all"): [float(dla["embed_score"]), float(dla["constant"])]}
+    for layer, score in enumerate(dla["attn_scores"]):
+        phase = layer_phase(layer, n_layers)
+        out.setdefault((phase, "attn"), []).append(float(score))
+        out.setdefault((phase, "all"), []).append(float(score))
+    for layer, score in enumerate(dla["mlp_scores"]):
+        phase = layer_phase(layer, n_layers)
+        out.setdefault((phase, "mlp"), []).append(float(score))
+        out.setdefault((phase, "all"), []).append(float(score))
+    return out
+
+
+def summarize_values(values: list[float]) -> dict[str, float]:
+    pos = sum(v for v in values if v > 0)
+    neg_abs = abs(sum(v for v in values if v < 0))
+    net = sum(values)
+    gross = pos + neg_abs
+    return {
+        "net_score": net,
+        "positive_mass": pos,
+        "negative_mass_abs": neg_abs,
+        "gross_mass": gross,
+        "net_to_gross_ratio": abs(net) / gross if gross else 0.0,
+        "n_components": len(values),
+    }
+
+
+def phase_ledger_summary(per_example: list[dict[str, Any]], n_layers: int) -> list[dict[str, Any]]:
+    """Category x phase x component-kind summary, including gross cancellation."""
+    records: list[dict[str, Any]] = []
+    groups: dict[tuple[str, str, str], list[dict[str, float]]] = {}
+    for r in per_example:
+        for (phase, component_kind), values in _component_values_by_phase(r["dla"], n_layers).items():
+            s = summarize_values(values)
+            key = (str(r["category"]), phase, component_kind)
+            groups.setdefault(key, []).append(s)
+    for (category, phase, component_kind), vals in sorted(groups.items(), key=lambda kv: (CATEGORIES.index(kv[0][0]) if kv[0][0] in CATEGORIES else 99, _phase_order_key(kv[0][1]), kv[0][2])):
+        records.append(
+            {
+                "category": category,
+                "phase": phase,
+                "component_kind": component_kind,
+                "n_examples": len(vals),
+                "mean_net_score": round(statistics.fmean(v["net_score"] for v in vals), 5),
+                "median_net_score": round(statistics.median(v["net_score"] for v in vals), 5),
+                "mean_positive_mass": round(statistics.fmean(v["positive_mass"] for v in vals), 5),
+                "mean_negative_mass_abs": round(statistics.fmean(v["negative_mass_abs"] for v in vals), 5),
+                "mean_gross_mass": round(statistics.fmean(v["gross_mass"] for v in vals), 5),
+                "mean_net_to_gross_ratio": round(statistics.fmean(v["net_to_gross_ratio"] for v in vals), 5),
+                "mean_n_components": round(statistics.fmean(v["n_components"] for v in vals), 2),
+            }
+        )
+    return records
+
+
+def relation_family_summary(per_example: list[dict[str, Any]], n_layers: int) -> list[dict[str, Any]]:
+    """Summarize built-in and custom relation families on the same ledger axes."""
+    groups: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for r in per_example:
+        key = (str(r.get("category", "")), str(r.get("relation_family", "unknown")), str(r.get("contrast_type", "")))
+        groups.setdefault(key, []).append(r)
+    rows: list[dict[str, Any]] = []
+    for (category, family, contrast), items in sorted(groups.items()):
+        top = [top_components(r["dla"], 1)[0] for r in items]
+        vals = []
+        for r in items:
+            vals.extend([float(r["dla"]["embed_score"]), float(r["dla"]["constant"])])
+            vals.extend(float(v) for v in r["dla"]["attn_scores"] + r["dla"]["mlp_scores"])
+        s = summarize_values(vals)
+        tops_by_phase = Counter(layer_phase(t[1], n_layers) for t in top)
+        top_kind_counts = Counter(t[0] for t in top)
+        rows.append(
+            {
+                "category": category,
+                "relation_family": family,
+                "contrast_type": contrast,
+                "n_examples": len(items),
+                "mean_model_logit_diff": round(statistics.fmean(r["dla"]["model_logit_diff"] for r in items), 5),
+                "mean_frozen_logit_diff": round(statistics.fmean(r["dla"]["frozen_logit_diff"] for r in items), 5),
+                "mean_embed_score": round(statistics.fmean(r["dla"]["embed_score"] for r in items), 5),
+                "mean_attn_total": round(statistics.fmean(sum(r["dla"]["attn_scores"]) for r in items), 5),
+                "mean_mlp_total": round(statistics.fmean(sum(r["dla"]["mlp_scores"]) for r in items), 5),
+                "gross_ledger_mass": round(s["gross_mass"] / max(1, len(items)), 5),
+                "net_to_gross_ratio": round(s["net_to_gross_ratio"], 5),
+                "top_component_modal_kind": top_kind_counts.most_common(1)[0][0] if top_kind_counts else "",
+                "top_component_kind_counts": ";".join(f"{k}:{v}" for k, v in sorted(top_kind_counts.items())),
+                "median_top_component_layer": statistics.median(t[1] for t in top) if top else "",
+                "top_component_modal_phase": tops_by_phase.most_common(1)[0][0] if tops_by_phase else "",
+                "top_component_phase_counts": ";".join(f"{k}:{v}" for k, v in sorted(tops_by_phase.items(), key=lambda kv: _phase_order_key(kv[0]))),
+            }
+        )
+    return rows
+
+
+def ablation_mismatch_summary(ablation_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Aggregate attribution-vs-live-effect mismatch by category/component/selection."""
+    groups: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for r in ablation_rows:
+        key = (str(r["category"]), str(r["component"]), str(r["selection"]))
+        groups.setdefault(key, []).append(r)
+    out: list[dict[str, Any]] = []
+    for (category, component, selection), rows in sorted(groups.items()):
+        out.append(
+            {
+                "category": category,
+                "component": component,
+                "selection": selection,
+                "n": len(rows),
+                "mean_attribution": round(statistics.fmean(float(r["attribution_score"]) for r in rows), 5),
+                "mean_causal_effect": round(statistics.fmean(float(r["causal_effect"]) for r in rows), 5),
+                "mean_effect_minus_attribution": round(statistics.fmean(float(r["effect_minus_attribution"]) for r in rows), 5),
+                "median_abs_mismatch": round(statistics.median(float(r["abs_mismatch"]) for r in rows), 5),
+                "same_sign_rate": round(statistics.fmean(1.0 if r["same_sign"] else 0.0 for r in rows), 4),
+            }
+        )
+    return out
+
+
+def plot_reading_guide_rows(has_ablation: bool) -> list[dict[str, str]]:
+    rows = [
+        {"artifact": "plots/dla_dashboard.png", "concept": "one-screen overview", "question": "Where is the answer margin assembled, and is the ledger internally contested?"},
+        {"artifact": "plots/cumulative_logit_diff.png", "concept": "assembly over depth", "question": "When does the frozen ledger turn toward the target or distractor?"},
+        {"artifact": "plots/contribution_by_layer.png", "concept": "writer timing", "question": "Which layers and writer types do the signed pushing?"},
+        {"artifact": "plots/ledger_phase_atlas.png", "concept": "coarse depth phases", "question": "Do early/middle/late/final-tail blocks play different roles by category?"},
+        {"artifact": "plots/category_ledger_composition.png", "concept": "cancellation", "question": "How much positive and negative mass is hiding behind the net logit difference?"},
+        {"artifact": "plots/answer_margin_vs_cancellation.png", "concept": "confidence vs internal fight", "question": "Can a confident-looking answer still be assembled by opposed components?"},
+        {"artifact": "plots/component_type_balance_scatter.png", "concept": "attention vs MLP balance", "question": "Do examples lean attention-heavy, MLP-heavy, or both?"},
+        {"artifact": "plots/relation_family_ledger_matrix.png", "concept": "dataset joins", "question": "Do relation families or hard/easy distractor contrasts recruit different phases?"},
+        {"artifact": "plots/top_component_by_example.png", "concept": "largest row audit", "question": "Which single component dominates each example, and in what direction?"},
+        {"artifact": "plots/ledger_waterfall_<example>.png", "concept": "showcase ledger", "question": "How do the largest entries cumulatively assemble one example's margin?"},
+        {"artifact": "plots/dla_vs_lens_<example>.png", "concept": "readout convention contrast", "question": "Why does frozen DLA differ from the moving-basis logit lens?"},
+    ]
+    if has_ablation:
+        rows.extend([
+            {"artifact": "plots/attribution_vs_ablation.png", "concept": "attribution-to-causal calibration", "question": "Does a large DLA row predict a large live final-position effect?"},
+            {"artifact": "plots/ablation_mismatch_examples.png", "concept": "mismatch audit", "question": "Which selected components are most ledger-like versus most downstream-amplified?"},
+            {"artifact": "plots/ablation_mismatch_by_layer.png", "concept": "mismatch localization", "question": "Where over depth do frozen attribution and live effect disagree?"},
+        ])
+    return rows
+
+
 # ---------------------------------------------------------------------------
 # Plots
 # ---------------------------------------------------------------------------
 
 
 def category_color(category: str) -> str:
-    return bench.CATEGORY_COLORS.get(category, "tab:gray") if hasattr(bench, "CATEGORY_COLORS") else "tab:gray"
+    if hasattr(bench, "plot_category_color"):
+        return bench.plot_category_color(category)
+    return getattr(bench, "CATEGORY_COLORS", {}).get(category, "#555555")
 
 
-def plot_contribution_by_layer(
-    ctx: bench.RunContext, per_example: list[dict[str, Any]], n_layers: int
-) -> None:
-    """2x2 panel, one per category: mean attn/mlp contribution per layer."""
-    import numpy as np
+def category_marker(category: str) -> str:
+    if hasattr(bench, "plot_category_marker"):
+        return bench.plot_category_marker(category)
+    return {"fact": "o", "relation": "^", "grammar": "s", "conflict": "X"}.get(category, "o")
 
+
+def component_color(kind: str) -> str:
+    palette = getattr(bench, "COMPONENT_COLORS", {})
+    return palette.get(kind, {"attn": "#0072B2", "mlp": "#E69F00", "embed": "#555555", "constant": "#999999", "all": "#222222"}.get(kind, "#555555"))
+
+
+def selection_marker(selection: str) -> str:
+    return {"top": "o", "random_control": "s", "low_attribution_control": "^"}.get(selection, "o")
+
+
+def add_phase_guides(ax: Any, n_layers: int) -> None:
+    if hasattr(bench, "add_depth_phase_guides"):
+        bench.add_depth_phase_guides(ax, n_layers)
+        return
+    for frac in (1 / 3, 2 / 3):
+        ax.axvline(n_layers * frac, color="#777777", linestyle=":", linewidth=0.7, alpha=0.25)
+    ax.axvline(n_layers, color="#444444", linestyle=":", linewidth=0.9, alpha=0.5)
+
+
+def label_panel(ax: Any, label: str) -> None:
+    if hasattr(bench, "add_panel_label"):
+        bench.add_panel_label(ax, label)
+    else:
+        ax.text(-0.08, 1.04, label, transform=ax.transAxes, fontsize=11, fontweight="bold", ha="right")
+
+
+def _array_iqr(rows: list[list[float]], n: int) -> tuple[list[float], list[float], list[float]]:
+    med, lo, hi = [], [], []
+    for i in range(n):
+        vals = [float(r[i]) for r in rows if i < len(r)]
+        m, q1, q3 = median_iqr(vals)
+        med.append(m); lo.append(q1); hi.append(q3)
+    return med, lo, hi
+
+
+def flatten_axes(axes: Any) -> list[Any]:
+    """Return a plain list from a Matplotlib axes object/list/ndarray."""
+    if isinstance(axes, (list, tuple)):
+        out: list[Any] = []
+        for item in axes:
+            out.extend(flatten_axes(item))
+        return out
+    if hasattr(axes, "flat"):
+        return list(axes.flat)
+    return [axes]
+
+
+def plot_contribution_by_layer(ctx: bench.RunContext, per_example: list[dict[str, Any]], n_layers: int) -> None:
+    """Category panels with median/IQR attention and MLP contribution by layer."""
+    if not per_example:
+        return
     import matplotlib.pyplot as plt
 
     cats = [c for c in CATEGORIES if any(r["category"] == c for r in per_example)]
     if not cats:
         return
-    fig, axes = plt.subplots(2, 2, figsize=(12.0, 8.0), sharex=True)
-    for ax, cat in zip(axes.flat, cats):
+    ncols = 2
+    nrows = math.ceil(len(cats) / ncols)
+    fig, axes = plt.subplots(nrows, ncols, figsize=(12.2, 4.0 * nrows), sharex=True)
+    axes_list = flatten_axes(axes)
+    x = list(range(n_layers))
+    for idx, (ax, cat) in enumerate(zip(axes_list, cats)):
         rows = [r for r in per_example if r["category"] == cat]
-        attn = np.mean([r["dla"]["attn_scores"] for r in rows], axis=0)
-        mlp = np.mean([r["dla"]["mlp_scores"] for r in rows], axis=0)
-        x = np.arange(n_layers)
-        ax.bar(x - 0.2, attn, width=0.4, label="attn", color="tab:blue")
-        ax.bar(x + 0.2, mlp, width=0.4, label="mlp", color="tab:orange")
-        ax.axhline(0, color="black", linewidth=0.6)
+        for kind, style in (("attn", "-"), ("mlp", "--")):
+            arr = [r["dla"][f"{kind}_scores"] for r in rows]
+            med, lo, hi = _array_iqr(arr, n_layers)
+            color = component_color(kind)
+            ax.fill_between(x, lo, hi, color=color, alpha=0.12, linewidth=0)
+            ax.plot(x, med, linestyle=style, color=color, linewidth=2.2, label=f"{kind} median")
+            peak = int(max(range(n_layers), key=lambda j: abs(med[j]))) if med else 0
+            if med and math.isfinite(med[peak]):
+                ax.scatter([peak], [med[peak]], color=color, edgecolor="white", linewidth=0.7, zorder=4, s=34)
+        ax.axhline(0, color="#222222", linewidth=0.8)
+        add_phase_guides(ax, n_layers)
         ax.set_title(f"{cat} (n={len(rows)})")
-        ax.set_xlabel("layer")
         ax.set_ylabel("logit-diff contribution")
-        ax.grid(True, alpha=0.3)
-        ax.legend(fontsize=8)
-    for ax in axes.flat[len(cats):]:
+        ax.legend(loc="upper left", fontsize=8)
+        label_panel(ax, chr(ord("A") + idx))
+    for ax in axes_list[len(cats):]:
         ax.set_visible(False)
-    fig.suptitle("Mean component contribution to the answer direction, by layer")
+    for ax in axes_list[:len(cats)]:
+        ax.set_xlabel("layer")
+    fig.suptitle("Component writers by layer: median line, IQR ribbon")
     fig.tight_layout()
-    bench.save_figure(ctx, fig, "contribution_by_layer.png",
-                      "Per-category mean attention/MLP contribution per layer.")
+    bench.save_figure(ctx, fig, "contribution_by_layer.png", "Median/IQR attention and MLP contribution per category and layer.")
 
 
-def plot_signed_component_heatmap(
-    ctx: bench.RunContext,
-    per_example: list[dict[str, Any]],
-    n_layers: int,
-) -> None:
+def plot_signed_component_heatmap(ctx: bench.RunContext, per_example: list[dict[str, Any]], n_layers: int) -> None:
     """Example x layer heatmap of total direct contribution per block."""
     if not per_example:
         return
-    import numpy as np
-
     import matplotlib.colors as mcolors
-    import matplotlib.pyplot as plt
 
     rows = sorted(
         per_example,
         key=lambda r: (
             CATEGORIES.index(r["category"]) if r["category"] in CATEGORIES else len(CATEGORIES),
+            float(r["behavior"].get("model_logit_diff", 0.0)),
             r["example_id"],
         ),
     )
-    data = np.array(
-        [
-            [
-                float(r["dla"]["attn_scores"][layer] + r["dla"]["mlp_scores"][layer])
-                for layer in range(n_layers)
-            ]
-            for r in rows
-        ],
-        dtype=float,
-    )
-    lim = float(np.nanpercentile(np.abs(data), 95)) if data.size else 1.0
-    lim = lim or 1.0
-    fig_height = max(5.5, min(10.0, 0.35 * len(rows) + 1.8))
-    fig, ax = bench.new_figure(figsize=(10.5, fig_height))
+    data = [[float(r["dla"]["attn_scores"][layer] + r["dla"]["mlp_scores"][layer]) for layer in range(n_layers)] for r in rows]
+    lim = abs_percentile([value for row in data for value in row], 0.96)
+    fig_height = max(5.5, min(12.0, 0.34 * len(rows) + 2.0))
+    fig, ax = bench.new_figure(figsize=(11.2, fig_height))
     norm = mcolors.TwoSlopeNorm(vmin=-lim, vcenter=0.0, vmax=lim)
     im = ax.imshow(data, aspect="auto", cmap="coolwarm", norm=norm)
-    ax.set_xticks(range(0, n_layers, max(1, n_layers // 8)))
+    tick_step = max(1, n_layers // 8)
+    ax.set_xticks(range(0, n_layers, tick_step))
     ax.set_xlabel("layer")
     ax.set_yticks(range(len(rows)))
-    ax.set_yticklabels([f"{r['category'][:3]}:{r['example_id']}" for r in rows], fontsize=8)
-    ax.set_title("Signed direct contribution by example and layer (attn + MLP)")
+    labels = [f"{r['category'][:3]}:{r.get('relation_family','')[:8]}:{r['example_id']}" for r in rows]
+    ax.set_yticklabels(labels, fontsize=7.5)
+    ax.set_title("Signed block contribution atlas (attention + MLP)")
     cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
     cbar.set_label("logit-diff contribution")
-
     previous = rows[0]["category"]
     for i, row in enumerate(rows[1:], start=1):
         if row["category"] != previous:
-            ax.axhline(i - 0.5, color="black", linewidth=0.7)
+            ax.axhline(i - 0.5, color="#111111", linewidth=0.8)
             previous = row["category"]
     fig.tight_layout()
-    bench.save_figure(
-        ctx,
-        fig,
-        "signed_component_heatmap.png",
-        "Per-example heatmap of signed block contribution to the answer direction.",
-    )
+    bench.save_figure(ctx, fig, "signed_component_heatmap.png", "Example-by-layer heatmap of signed block contribution to the answer direction.")
 
 
 def plot_cumulative(ctx: bench.RunContext, per_example: list[dict[str, Any]]) -> None:
-    fig, ax = bench.new_figure(figsize=(9.0, 5.5))
+    fig, ax = bench.new_figure(figsize=(10.2, 5.8))
     plotted = False
+    max_depth = 0
     for cat in CATEGORIES:
         rows = [r for r in per_example if r["category"] == cat]
         if not rows:
             continue
         plotted = True
         color = category_color(cat)
-        for r in rows:
-            ax.plot(range(len(r["curve"])), r["curve"], color=color, alpha=0.3, linewidth=0.8)
         depth = min(len(r["curve"]) for r in rows)
-        mean = [statistics.fmean(r["curve"][d] for r in rows) for d in range(depth)]
-        ax.plot(range(depth), mean, color=color, linewidth=2.5, label=f"{cat} (n={len(rows)})")
+        max_depth = max(max_depth, depth - 1)
+        xs = list(range(depth))
+        for r in rows:
+            ax.plot(xs, r["curve"][:depth], color=color, alpha=0.18, linewidth=0.9)
+        med, lo, hi = _array_iqr([r["curve"][:depth] for r in rows], depth)
+        ax.fill_between(xs, lo, hi, color=color, alpha=0.10, linewidth=0)
+        ax.plot(xs, med, color=color, linewidth=2.7, label=f"{cat} median (n={len(rows)})")
+        if hasattr(bench, "label_line_end"):
+            bench.label_line_end(ax, xs, med, cat, color=color)
     if not plotted:
         bench.close_figure(fig)
         return
-    ax.axhline(0, color="black", linewidth=0.6)
+    ax.axhline(0, color="#222222", linewidth=0.8)
+    add_phase_guides(ax, max_depth)
     ax.set_xlabel("depth (0 = embeddings + constants, k = after block k-1)")
     ax.set_ylabel("cumulative logit difference (frozen norm)")
-    ax.set_title("Cumulative DLA ledger: where the logit difference is assembled")
-    ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "cumulative_logit_diff.png",
-                      "Cumulative component ledger per example with category means.")
-
+    ax.set_title("Cumulative DLA ledger: median assembly path with per-example traces")
+    ax.legend(fontsize=8, loc="best")
+    bench.save_figure(ctx, fig, "cumulative_logit_diff.png", "Cumulative component ledger per example with category medians and IQR ribbons.")
 
 
 def plot_category_ledger_composition(ctx: bench.RunContext, per_example: list[dict[str, Any]]) -> None:
-    """Gross vs net ledger composition by category.
-
-    This plot makes cancellation visible: a category can have a small mean net
-    logit difference while large positive and negative components fight under
-    the hood.
-    """
-    import numpy as np
-    import matplotlib.pyplot as plt
-
+    """Diverging gross mass bars: positive writes vs negative writes."""
     cats = [cat for cat in CATEGORIES if any(r["category"] == cat for r in per_example)]
     if not cats:
         return
-    fields = ["positive_mass", "negative_mass_abs", "net_abs"]
-    data = []
-    for cat in cats:
+    fig, ax = bench.new_figure(figsize=(9.4, max(4.2, 0.65 * len(cats) + 2.2)))
+    y = list(range(len(cats)))
+    for yi, cat in zip(y, cats):
         rows = [r for r in per_example if r["category"] == cat]
         pos_vals, neg_vals, net_vals = [], [], []
         for r in rows:
-            vals = [float(r["dla"]["embed_score"]), float(r["dla"]["constant"])]
-            vals += [float(v) for v in r["dla"]["attn_scores"] + r["dla"]["mlp_scores"]]
+            vals = [float(r["dla"]["embed_score"]), float(r["dla"]["constant"])] + [float(v) for v in r["dla"]["attn_scores"] + r["dla"]["mlp_scores"]]
             pos_vals.append(sum(v for v in vals if v > 0))
             neg_vals.append(abs(sum(v for v in vals if v < 0)))
-            net_vals.append(abs(float(r["dla"]["frozen_logit_diff"])))
-        data.append([statistics.fmean(pos_vals), statistics.fmean(neg_vals), statistics.fmean(net_vals)])
-
-    x = np.arange(len(cats))
-    width = 0.24
-    fig, ax = plt.subplots(figsize=(9.5, 5.4))
-    for j, field in enumerate(fields):
-        ax.bar(x + (j - 1) * width, [row[j] for row in data], width=width, label=field)
-    ax.set_xticks(x)
-    ax.set_xticklabels(cats)
-    ax.axhline(0, color="black", linewidth=0.6)
-    ax.set_ylabel("mean absolute logit-diff units")
+            net_vals.append(sum(vals))
+        pos = statistics.fmean(pos_vals)
+        neg = statistics.fmean(neg_vals)
+        net = statistics.fmean(net_vals)
+        color = category_color(cat)
+        ax.barh(yi, pos, left=0, height=0.45, color=color, alpha=0.70, label="positive mass" if yi == 0 else None)
+        ax.barh(yi, -neg, left=0, height=0.45, color=color, alpha=0.25, label="negative mass" if yi == 0 else None)
+        ax.scatter([net], [yi], marker="D", color="#222222", s=40, zorder=5, label="net" if yi == 0 else None)
+        ax.text(pos, yi + 0.27, f"+{pos:.1f}", ha="right", va="bottom", fontsize=7, color="#222222")
+        ax.text(-neg, yi + 0.27, f"-{neg:.1f}", ha="left", va="bottom", fontsize=7, color="#222222")
+    ax.axvline(0, color="#222222", linewidth=0.8)
+    ax.set_yticks(y)
+    ax.set_yticklabels(cats)
+    ax.set_xlabel("mean logit-diff mass (positive right, negative left)")
     ax.set_title("Gross ledger mass vs net answer preference")
-    ax.legend(fontsize=8)
-    ax.grid(True, axis="y", alpha=0.3)
-    fig.tight_layout()
-    bench.save_figure(
-        ctx,
-        fig,
-        "category_ledger_composition.png",
-        "Positive mass, negative mass, and net answer preference by category.",
-    )
+    ax.legend(loc="best", fontsize=8)
+    bench.save_figure(ctx, fig, "category_ledger_composition.png", "Diverging positive and negative component mass by category, with net marker.")
 
 
 def plot_balance_errors(ctx: bench.RunContext, balance_rows: list[dict[str, Any]]) -> None:
     if not balance_rows:
         return
-    fig, ax = bench.new_figure(figsize=(9.0, 5.4))
-    xs = list(range(len(balance_rows)))
-    ledger_err = [float(r["ledger_vs_frozen_abs_err"]) for r in balance_rows]
-    model_err = [float(r["frozen_vs_model_abs_err"]) for r in balance_rows]
-    ax.scatter(xs, ledger_err, marker="o", label="ledger vs frozen")
-    ax.scatter(xs, model_err, marker="s", label="frozen fp32 vs model dtype")
+    rows = sorted(balance_rows, key=lambda r: max(float(r["ledger_vs_frozen_abs_err"]), float(r["frozen_vs_model_abs_err"])))
+    fig, ax = bench.new_figure(figsize=(10.0, 5.6))
+    xs = list(range(len(rows)))
+    ledger_err = [float(r["ledger_vs_frozen_abs_err"]) for r in rows]
+    model_err = [float(r["frozen_vs_model_abs_err"]) for r in rows]
+    ax.scatter(xs, ledger_err, marker="o", label="ledger vs frozen", s=42)
+    ax.scatter(xs, model_err, marker="s", label="frozen fp32 vs model dtype", s=42)
     ax.set_yscale("symlog", linthresh=1e-7)
     ax.set_xticks(xs)
-    ax.set_xticklabels([str(r["example_id"]) for r in balance_rows], rotation=45, ha="right", fontsize=8)
+    ax.set_xticklabels([str(r["example_id"]) for r in rows], rotation=45, ha="right", fontsize=7.5)
     ax.set_ylabel("absolute error (symlog)")
     ax.set_title("Ledger balance checks by example")
     ax.legend(fontsize=8)
@@ -936,153 +1308,341 @@ def plot_balance_errors(ctx: bench.RunContext, balance_rows: list[dict[str, Any]
 
 
 def plot_top_component_lollipop(ctx: bench.RunContext, top_rows: list[dict[str, Any]]) -> None:
-    """Top component per example, sorted by signed score."""
     if not top_rows:
         return
     rows = [r for r in top_rows if int(r["rank"]) == 1]
     if not rows:
         return
-    rows = sorted(rows, key=lambda r: float(r["score"]))
-    fig_height = max(5.0, min(10.5, 0.36 * len(rows) + 1.5))
-    fig, ax = bench.new_figure(figsize=(9.2, fig_height))
+    rows = sorted(rows, key=lambda r: (str(r["category"]), float(r["score"])))
+    fig_height = max(5.5, min(12.5, 0.38 * len(rows) + 1.8))
+    fig, ax = bench.new_figure(figsize=(9.8, fig_height))
     y = list(range(len(rows)))
     for yi, row in zip(y, rows):
         score = float(row["score"])
-        ax.plot([0, score], [yi, yi], color=category_color(str(row["category"])), alpha=0.6, linewidth=2.0)
-        ax.scatter(score, yi, s=58, color=category_color(str(row["category"])), edgecolor="black", linewidth=0.5)
-    ax.axvline(0, color="black", linewidth=0.8)
+        color = category_color(str(row["category"]))
+        marker = "o" if row["component"] == "attn" else "s"
+        ax.plot([0, score], [yi, yi], color=color, alpha=0.55, linewidth=2.2)
+        ax.scatter(score, yi, s=55 + 180 * float(row.get("abs_writer_mass_share", 0)), marker=marker, color=color, edgecolor="black", linewidth=0.5, zorder=4)
+    ax.axvline(0, color="#222222", linewidth=0.8)
     ax.set_yticks(y)
-    ax.set_yticklabels(
-        [f"{r['example_id']} {r['component']}@{r['layer']}" for r in rows],
-        fontsize=8,
-    )
-    ax.set_xlabel("top component attribution score")
-    ax.set_title("Largest component per example: sign and size")
-    bench.save_figure(ctx, fig, "top_component_by_example.png", "Top-|attribution| component for every example.")
+    ax.set_yticklabels([f"{r['example_id']}  {r['component']}@{r['layer']}  ({float(r.get('abs_writer_mass_share',0))*100:.0f}%)" for r in rows], fontsize=8)
+    ax.set_xlabel("top component attribution score (shape: circle=attn, square=MLP)")
+    ax.set_title("Largest component per example: sign, size, and share of writer mass")
+    bench.save_figure(ctx, fig, "top_component_by_example.png", "Top-|attribution| component for every example, sized by share of writer mass.")
 
 
-def plot_showcase_waterfall(
-    ctx: bench.RunContext,
-    example: AnswerPairExample,
-    dla: dict[str, Any],
-    n: int = 12,
-) -> None:
-    """A compact waterfall for one example's largest ledger entries."""
-    components: list[tuple[str, float]] = [("embed", float(dla["embed_score"])), ("constant", float(dla["constant"]))]
-    components += [(f"A{layer}", float(score)) for layer, score in enumerate(dla["attn_scores"])]
-    components += [(f"M{layer}", float(score)) for layer, score in enumerate(dla["mlp_scores"])]
-    chosen = sorted(components, key=lambda kv: abs(kv[1]), reverse=True)[:n]
-    chosen = sorted(chosen, key=lambda kv: kv[1])
-    fig, ax = bench.new_figure(figsize=(8.8, max(5.0, 0.38 * len(chosen) + 1.5)))
-    ys = list(range(len(chosen)))
-    for y, (name, score) in zip(ys, chosen):
-        ax.plot([0, score], [y, y], color="tab:blue" if score >= 0 else "tab:red", alpha=0.65, linewidth=2.4)
-        ax.scatter(score, y, color="tab:blue" if score >= 0 else "tab:red", edgecolor="black", linewidth=0.5)
-    ax.axvline(0, color="black", linewidth=0.8)
+def plot_showcase_waterfall(ctx: bench.RunContext, example: AnswerPairExample, dla: dict[str, Any], n: int = 14) -> None:
+    """Waterfall in computation order, with an other bucket for the long tail."""
+    components: list[tuple[int, str, float]] = [(0, "embed", float(dla["embed_score"])), (1, "constant", float(dla["constant"]))]
+    order = 2
+    for layer, (a, m) in enumerate(zip(dla["attn_scores"], dla["mlp_scores"])):
+        components.append((order, f"A{layer}", float(a))); order += 1
+        components.append((order, f"M{layer}", float(m))); order += 1
+    top_names = {name for _, name, _ in sorted(components, key=lambda kv: abs(kv[2]), reverse=True)[:n]}
+    chosen = [(o, name, score) for o, name, score in components if name in top_names]
+    other = sum(score for _, name, score in components if name not in top_names)
+    if abs(other) > 1e-9:
+        chosen.append((10_000, "other", other))
+    chosen = sorted(chosen, key=lambda kv: kv[0])
+    fig, ax = bench.new_figure(figsize=(9.8, max(5.4, 0.39 * len(chosen) + 2.0)))
+    running = 0.0
+    ys, labels = [], []
+    for i, (_, name, score) in enumerate(chosen):
+        y = len(chosen) - i - 1
+        x0, x1 = running, running + score
+        left, width = min(x0, x1), abs(score)
+        color = "#0072B2" if score >= 0 else "#D55E00"
+        ax.barh(y, width, left=left, height=0.55, color=color, alpha=0.72)
+        ax.plot([x0, x0], [y - 0.26, y + 0.26], color="#333333", linewidth=0.6, alpha=0.5)
+        ax.text(x1, y, f"{score:+.2f}", va="center", ha="left" if score >= 0 else "right", fontsize=7.5)
+        running = x1
+        ys.append(y); labels.append(name)
+    ax.axvline(0, color="#222222", linewidth=0.8)
+    ax.axvline(float(dla["frozen_logit_diff"]), color="#222222", linestyle="--", linewidth=1.0, label="frozen total")
     ax.set_yticks(ys)
-    ax.set_yticklabels([name for name, _ in chosen], fontsize=8)
-    ax.set_xlabel("logit-diff contribution")
-    ax.set_title(f"Largest ledger entries for {example.example_id}")
-    bench.save_figure(
-        ctx,
-        fig,
-        f"ledger_waterfall_{bench.sanitize_tag(example.example_id)}.png",
-        "Largest positive and negative ledger entries for the showcase example.",
-    )
+    ax.set_yticklabels(labels, fontsize=8)
+    ax.set_xlabel("cumulative frozen-norm logit-diff ledger")
+    ax.set_title(f"Waterfall ledger for {example.example_id}: target {bench.visible_token(example.target)} vs distractor {bench.visible_token(example.distractor)}")
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, f"ledger_waterfall_{bench.sanitize_tag(example.example_id)}.png", "Computation-order waterfall of the largest ledger entries plus other mass.")
 
 
 def plot_attribution_vs_ablation(ctx: bench.RunContext, ablation_rows: list[dict[str, Any]]) -> float | None:
     if not ablation_rows:
         return None
-    xs = [r["attribution_score"] for r in ablation_rows]
-    ys = [r["causal_effect"] for r in ablation_rows]
+    xs = [float(r["attribution_score"]) for r in ablation_rows]
+    ys = [float(r["causal_effect"]) for r in ablation_rows]
     rho = spearman_rho(xs, ys)
-    fig, ax = bench.new_figure(figsize=(7.5, 6.5))
-    markers = {"top": "o", "random_control": "s", "low_attribution_control": "^"}
-    for why, marker in markers.items():
-        sel = [r for r in ablation_rows if r["selection"] == why]
-        if not sel:
-            continue
-        ax.scatter(
-            [r["attribution_score"] for r in sel],
-            [r["causal_effect"] for r in sel],
-            marker=marker,
-            s=42,
-            alpha=0.8,
-            label=f"{why} (n={len(sel)})",
-        )
-    lim = max(max(abs(v) for v in xs), max(abs(v) for v in ys)) * 1.1 or 1.0
-    ax.plot([-lim, lim], [-lim, lim], color="gray", linewidth=0.8, linestyle="--", label="attribution = effect")
+    fig, ax = bench.new_figure(figsize=(8.0, 6.6))
+    for row in ablation_rows:
+        edge = "black" if row["same_sign"] else "#D55E00"
+        ax.scatter(float(row["attribution_score"]), float(row["causal_effect"]), marker=selection_marker(str(row["selection"])), s=52, alpha=0.78, color=category_color(str(row["category"])), edgecolor=edge, linewidth=0.7)
+    lim = max(max(abs(v) for v in xs), max(abs(v) for v in ys)) * 1.12 or 1.0
+    ax.plot([-lim, lim], [-lim, lim], color="#555555", linewidth=0.9, linestyle="--", label="attribution = effect")
+    ax.axhline(0, color="#222222", linewidth=0.6)
+    ax.axvline(0, color="#222222", linewidth=0.6)
+    ax.set_xlim(-lim, lim); ax.set_ylim(-lim, lim)
     ax.set_xlabel("attribution score (frozen-norm logit diff)")
     ax.set_ylabel("final-position ablation effect (logit diff change)")
     title = "Attribution vs causal effect"
     if rho is not None:
         title += f" (Spearman rho = {rho:.3f}, n = {len(xs)})"
     ax.set_title(title)
-    ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "attribution_vs_ablation.png",
-                      "Does the ledger predict what final-position ablation does?")
+    # Minimal custom legend by selection.
+    import matplotlib.lines as mlines
+    handles = [mlines.Line2D([], [], color="#666666", marker=selection_marker(k), linestyle="None", label=k, markersize=6) for k in ("top", "random_control", "low_attribution_control") if any(r["selection"] == k for r in ablation_rows)]
+    handles.append(mlines.Line2D([], [], color="#555555", linestyle="--", label="identity"))
+    ax.legend(handles=handles, fontsize=8, loc="upper left")
+    bench.save_figure(ctx, fig, "attribution_vs_ablation.png", "Ledger score versus live final-position ablation effect, colored by category and shaped by selection.")
     return rho
 
 
 def plot_ablation_mismatches(ctx: bench.RunContext, ablation_rows: list[dict[str, Any]]) -> None:
-    """Label the largest attribution-vs-ablation disagreements."""
     if not ablation_rows:
         return
-    rows = sorted(
-        ablation_rows,
-        key=lambda r: abs(float(r["causal_effect"]) - float(r["attribution_score"])),
-        reverse=True,
-    )[: min(12, len(ablation_rows))]
-    fig_height = max(5.0, 0.45 * len(rows) + 1.5)
-    fig, ax = bench.new_figure(figsize=(9.5, fig_height))
+    rows = sorted(ablation_rows, key=lambda r: abs(float(r["causal_effect"]) - float(r["attribution_score"])), reverse=True)[: min(14, len(ablation_rows))]
+    fig_height = max(5.2, 0.46 * len(rows) + 1.8)
+    fig, ax = bench.new_figure(figsize=(10.0, fig_height))
     y_positions = list(range(len(rows)))
     for y, row in zip(y_positions, reversed(rows)):
         attr = float(row["attribution_score"])
         effect = float(row["causal_effect"])
         color = category_color(str(row["category"]))
-        ax.plot([attr, effect], [y, y], color=color, alpha=0.55, linewidth=2.0)
-        ax.scatter(attr, y, marker="o", color=color, edgecolor="black", linewidth=0.5, s=52)
-        ax.scatter(effect, y, marker="s", color=color, edgecolor="black", linewidth=0.5, s=52)
-    labels = [
-        f"{r['example_id']} {r['component']}@{r['layer']} ({r['selection']})"
-        for r in reversed(rows)
-    ]
+        ax.plot([attr, effect], [y, y], color=color, alpha=0.55, linewidth=2.3)
+        ax.scatter(attr, y, marker="o", color=color, edgecolor="black", linewidth=0.5, s=54)
+        ax.scatter(effect, y, marker="s", color=color, edgecolor="black", linewidth=0.5, s=54)
+        ax.text(effect, y + 0.22, f"Δ={effect-attr:+.2f}", fontsize=7, ha="left" if effect >= attr else "right", color="#333333")
+    labels = [f"{r['example_id']} {r['component']}@{r['layer']} ({r['selection']})" for r in reversed(rows)]
     ax.set_yticks(y_positions)
     ax.set_yticklabels(labels, fontsize=8)
-    ax.axvline(0, color="black", linewidth=0.7)
+    ax.axvline(0, color="#222222", linewidth=0.8)
     ax.set_xlabel("logit-diff units: circle = attribution, square = ablation effect")
     ax.set_title("Largest attribution-vs-ablation mismatches")
-    ax.grid(True, axis="x", alpha=0.3)
-    bench.save_figure(
-        ctx,
-        fig,
-        "ablation_mismatch_examples.png",
-        "Largest final-position attribution vs ablation-effect disagreements, labeled by component.",
-    )
+    ax.grid(True, axis="x", alpha=0.25)
+    bench.save_figure(ctx, fig, "ablation_mismatch_examples.png", "Largest final-position attribution versus ablation-effect disagreements.")
 
 
-def plot_dla_vs_lens(
-    ctx: bench.RunContext,
-    example: AnswerPairExample,
-    curve: list[float],
-    traj: bench.LensTrajectory,
-) -> None:
-    """Showcase: cumulative frozen-norm ledger vs the moving-basis logit lens."""
+def plot_ablation_mismatch_by_layer(ctx: bench.RunContext, ablation_rows: list[dict[str, Any]]) -> None:
+    if not ablation_rows:
+        return
+    fig, ax = bench.new_figure(figsize=(9.6, 5.4))
+    for row in ablation_rows:
+        layer = int(row["layer"])
+        mismatch = float(row["effect_minus_attribution"])
+        size = 35 + 22 * min(8.0, abs(float(row["attribution_score"])))
+        ax.scatter(layer, mismatch, s=size, marker="o" if row["component"] == "attn" else "s", color=category_color(str(row["category"])), alpha=0.75, edgecolor="black", linewidth=0.4)
+    max_layer = max(int(r["layer"]) for r in ablation_rows)
+    add_phase_guides(ax, max_layer + 1)
+    ax.axhline(0, color="#222222", linewidth=0.8)
+    ax.set_xlabel("component layer (shape: circle=attn, square=MLP)")
+    ax.set_ylabel("effect_minus_attribution")
+    ax.set_title("Where live ablation departs from frozen attribution")
+    bench.save_figure(ctx, fig, "ablation_mismatch_by_layer.png", "Mismatch between live final-position ablation effect and frozen DLA score by layer.")
+
+
+def plot_dla_vs_lens(ctx: bench.RunContext, example: AnswerPairExample, curve: list[float], traj: bench.LensTrajectory) -> None:
     if traj.logit_target is None or traj.logit_distractor is None:
         return
-    lens_diff = [t - d for t, d in zip(traj.logit_target, traj.logit_distractor)]
-    fig, ax = bench.new_figure(figsize=(9.0, 5.5))
-    ax.plot(range(len(curve)), curve, linewidth=2.5, label="cumulative DLA (final norm frozen)")
-    ax.plot(range(len(lens_diff)), lens_diff, linewidth=2.0, linestyle="--",
-            label="logit lens (norm recomputed per depth)")
-    ax.axhline(0, color="black", linewidth=0.6)
+    lens_diff = [float(t - d) for t, d in zip(traj.logit_target, traj.logit_distractor)]
+    fig, ax = bench.new_figure(figsize=(9.8, 5.8))
+    xs_curve = list(range(len(curve)))
+    xs_lens = list(range(len(lens_diff)))
+    ax.plot(xs_curve, curve, linewidth=2.8, label="cumulative DLA (final norm frozen)", color="#0072B2")
+    ax.plot(xs_lens, lens_diff, linewidth=2.1, linestyle="--", label="logit lens (norm recomputed per depth)", color="#D55E00")
+    overlap = min(len(curve), len(lens_diff))
+    if overlap:
+        ax.fill_between(range(overlap), curve[:overlap], lens_diff[:overlap], color="#777777", alpha=0.10, label="readout-convention gap")
+    ax.axhline(0, color="#222222", linewidth=0.8)
+    add_phase_guides(ax, len(curve) - 1)
     ax.set_xlabel("depth")
     ax.set_ylabel("logit(target) - logit(distractor)")
     ax.set_title(f"Two readouts of the same stream: {example.example_id}")
     ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, f"dla_vs_lens_{bench.sanitize_tag(example.example_id)}.png",
-                      "Frozen-norm cumulative ledger vs per-depth logit lens for the showcase example.")
+    bench.save_figure(ctx, fig, f"dla_vs_lens_{bench.sanitize_tag(example.example_id)}.png", "Frozen-norm cumulative ledger versus per-depth logit lens for the showcase example.")
+
+
+def plot_phase_ledger_atlas(ctx: bench.RunContext, phase_rows: list[dict[str, Any]]) -> None:
+    if not phase_rows:
+        return
+    import matplotlib.colors as mcolors
+    cats = [c for c in CATEGORIES if any(r["category"] == c and r["component_kind"] == "all" for r in phase_rows)]
+    phases = ["embed_const", "early", "middle", "late", "final_tail"]
+    data = [[float("nan") for _ in phases] for _ in cats]
+    gross = [[float("nan") for _ in phases] for _ in cats]
+    lookup = {(r["category"], r["phase"]): r for r in phase_rows if r["component_kind"] == "all"}
+    for i, cat in enumerate(cats):
+        for j, phase in enumerate(phases):
+            row = lookup.get((cat, phase))
+            if row:
+                data[i][j] = float(row["mean_net_score"])
+                gross[i][j] = float(row["mean_gross_mass"])
+    lim = abs_percentile([value for row in data for value in row], 0.95)
+    fig, ax = bench.new_figure(figsize=(9.8, max(4.8, 0.58 * len(cats) + 2.0)))
+    norm = mcolors.TwoSlopeNorm(vmin=-lim, vcenter=0, vmax=lim)
+    im = ax.imshow(data, cmap="coolwarm", norm=norm, aspect="auto")
+    ax.set_xticks(range(len(phases))); ax.set_xticklabels([p.replace("_", "\n") for p in phases])
+    ax.set_yticks(range(len(cats))); ax.set_yticklabels(cats)
+    for i in range(len(cats)):
+        for j in range(len(phases)):
+            if math.isfinite(data[i][j]):
+                ax.text(j, i, f"{data[i][j]:+.1f}\nΣ|·|={gross[i][j]:.1f}", ha="center", va="center", fontsize=7, color="#111111")
+    ax.set_title("Ledger phase atlas: net score colored, gross mass printed")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
+    cbar.set_label("mean net logit-diff score")
+    bench.save_figure(ctx, fig, "ledger_phase_atlas.png", "Category-by-depth-phase ledger atlas: color is net score, text is gross mass.")
+
+
+def plot_component_type_balance(ctx: bench.RunContext, per_example: list[dict[str, Any]]) -> None:
+    if not per_example:
+        return
+    fig, ax = bench.new_figure(figsize=(8.4, 6.6))
+    for r in per_example:
+        attn = sum(float(v) for v in r["dla"]["attn_scores"])
+        mlp = sum(float(v) for v in r["dla"]["mlp_scores"])
+        size = 45 + 12 * min(component_score_mass(r["dla"]), 10.0)
+        ax.scatter(attn, mlp, color=category_color(str(r["category"])), marker=category_marker(str(r["category"])), s=size, edgecolor="black", linewidth=0.5, alpha=0.78)
+    vals = [sum(float(v) for v in r["dla"]["attn_scores"]) for r in per_example] + [sum(float(v) for v in r["dla"]["mlp_scores"]) for r in per_example]
+    lim = (max(abs(v) for v in vals) * 1.15 if vals else 1.0) or 1.0
+    ax.axhline(0, color="#222222", linewidth=0.8); ax.axvline(0, color="#222222", linewidth=0.8)
+    ax.plot([-lim, lim], [-lim, lim], color="#888888", linestyle="--", linewidth=0.8, alpha=0.7)
+    ax.set_xlim(-lim, lim); ax.set_ylim(-lim, lim)
+    ax.set_xlabel("total attention contribution")
+    ax.set_ylabel("total MLP contribution")
+    ax.set_title("Attention-vs-MLP ledger balance per example")
+    import matplotlib.lines as mlines
+    handles = [mlines.Line2D([], [], color=category_color(c), marker=category_marker(c), linestyle="None", label=c, markersize=7) for c in CATEGORIES if any(r["category"] == c for r in per_example)]
+    ax.legend(handles=handles, fontsize=8, loc="best")
+    bench.save_figure(ctx, fig, "component_type_balance_scatter.png", "Per-example attention-total versus MLP-total contribution, sized by gross writer mass.")
+
+
+def plot_answer_margin_vs_cancellation(ctx: bench.RunContext, per_example: list[dict[str, Any]]) -> None:
+    if not per_example:
+        return
+    fig, ax = bench.new_figure(figsize=(8.8, 6.2))
+    for r in per_example:
+        gross = component_score_mass(r["dla"], include_embed_and_constant=True)
+        net_ratio = abs(float(r["dla"]["frozen_logit_diff"])) / gross if gross else 0.0
+        margin = float(r["dla"]["model_logit_diff"])
+        ax.scatter(margin, net_ratio, s=45 + 16 * min(gross, 12.0), color=category_color(str(r["category"])), marker=category_marker(str(r["category"])), edgecolor="black", linewidth=0.5, alpha=0.78)
+        if net_ratio < 0.25 or abs(margin) < 0.5:
+            ax.annotate(str(r["example_id"]), (margin, net_ratio), textcoords="offset points", xytext=(4, 3), fontsize=7)
+    ax.axvline(0, color="#222222", linewidth=0.8)
+    ax.set_ylim(-0.03, 1.05)
+    ax.set_xlabel("model target-vs-distractor logit diff")
+    ax.set_ylabel("net/gross ledger ratio (lower = more cancellation)")
+    ax.set_title("Confidence is not the same as an uncontested ledger")
+    bench.save_figure(ctx, fig, "answer_margin_vs_cancellation.png", "Final answer margin versus ledger cancellation ratio, sized by gross ledger mass.")
+
+
+def plot_relation_family_matrix(ctx: bench.RunContext, relation_rows: list[dict[str, Any]], phase_rows: list[dict[str, Any]]) -> None:
+    if not relation_rows:
+        return
+    import matplotlib.colors as mcolors
+    families = sorted({f"{r['category']}:{r['relation_family']}:{r['contrast_type']}" for r in relation_rows})
+    if len(families) <= 1:
+        return
+    # For relation-family rows we only have final aggregates; recompute family phase rows from phase_rows is category-only.
+    # The compact matrix therefore uses mean totals by component class, which works for both built-in and custom sets.
+    cols = ["embed", "attn", "mlp", "gross", "net/gross"]
+    data = [[0.0 for _ in cols] for _ in families]
+    lookup = {f"{r['category']}:{r['relation_family']}:{r['contrast_type']}": r for r in relation_rows}
+    for i, family in enumerate(families):
+        r = lookup[family]
+        data[i][0] = float(r["mean_embed_score"])
+        data[i][1] = float(r["mean_attn_total"])
+        data[i][2] = float(r["mean_mlp_total"])
+        data[i][3] = float(r["gross_ledger_mass"])
+        data[i][4] = float(r["net_to_gross_ratio"])
+    lim = abs_percentile([row[j] for row in data for j in range(3)], 0.95)
+    fig, ax = bench.new_figure(figsize=(10.6, max(5.0, 0.44 * len(families) + 2.0)))
+    # Put gross/net columns on an unsigned scale by normalizing them into color range but printing values.
+    display = [[row[j] if j < 3 else 0.0 for j in range(len(cols))] for row in data]
+    norm = mcolors.TwoSlopeNorm(vmin=-lim, vcenter=0, vmax=lim)
+    im = ax.imshow(display, cmap="coolwarm", norm=norm, aspect="auto")
+    ax.set_xticks(range(len(cols))); ax.set_xticklabels(cols)
+    ax.set_yticks(range(len(families))); ax.set_yticklabels(families, fontsize=7.5)
+    for i in range(len(families)):
+        for j in range(len(cols)):
+            ax.text(j, i, f"{data[i][j]:+.2f}" if j < 3 else f"{data[i][j]:.2f}", ha="center", va="center", fontsize=7)
+    ax.set_title("Relation-family ledger matrix (custom hard/easy sets land here)")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
+    cbar.set_label("signed mean contribution for embed/attn/MLP")
+    bench.save_figure(ctx, fig, "relation_family_ledger_matrix.png", "Relation-family matrix of mean embed, attention, MLP, gross mass, and cancellation ratio.")
+
+
+def plot_dla_dashboard(ctx: bench.RunContext, per_example: list[dict[str, Any]], phase_rows: list[dict[str, Any]], ablation_rows: list[dict[str, Any]], rho: float | None) -> None:
+    """A compact four-panel overview for teaching and quick run triage."""
+    if not per_example:
+        return
+    import matplotlib.pyplot as plt
+    import matplotlib.colors as mcolors
+    fig, axes = plt.subplots(2, 2, figsize=(13.2, 9.0))
+    ax = axes[0, 0]
+    for cat in CATEGORIES:
+        rows = [r for r in per_example if r["category"] == cat]
+        if not rows:
+            continue
+        depth = min(len(r["curve"]) for r in rows)
+        xs = list(range(depth))
+        med, lo, hi = _array_iqr([r["curve"][:depth] for r in rows], depth)
+        color = category_color(cat)
+        ax.fill_between(xs, lo, hi, color=color, alpha=0.10, linewidth=0)
+        ax.plot(xs, med, color=color, linewidth=2.3, label=cat)
+    ax.axhline(0, color="#222222", linewidth=0.8)
+    ax.set_title("A. cumulative ledger")
+    ax.set_xlabel("depth"); ax.set_ylabel("logit diff")
+    ax.legend(fontsize=8)
+
+    ax = axes[0, 1]
+    for r in per_example:
+        gross = component_score_mass(r["dla"], include_embed_and_constant=True)
+        net_ratio = abs(float(r["dla"]["frozen_logit_diff"])) / gross if gross else 0.0
+        ax.scatter(float(r["dla"]["model_logit_diff"]), net_ratio, s=34 + 13 * min(gross, 10.0), color=category_color(str(r["category"])), marker=category_marker(str(r["category"])), alpha=0.75, edgecolor="black", linewidth=0.4)
+    ax.axvline(0, color="#222222", linewidth=0.8)
+    ax.set_ylim(-0.03, 1.05)
+    ax.set_title("B. margin vs cancellation")
+    ax.set_xlabel("model logit diff"); ax.set_ylabel("net/gross")
+
+    ax = axes[1, 0]
+    cats = [c for c in CATEGORIES if any(pr["category"] == c and pr["component_kind"] == "all" for pr in phase_rows)]
+    phases = ["embed_const", "early", "middle", "late", "final_tail"]
+    data = [[float("nan") for _ in phases] for _ in cats]
+    lookup = {(r["category"], r["phase"]): r for r in phase_rows if r["component_kind"] == "all"}
+    for i, cat in enumerate(cats):
+        for j, phase in enumerate(phases):
+            row = lookup.get((cat, phase))
+            if row:
+                data[i][j] = float(row["mean_net_score"])
+    lim = abs_percentile([value for row in data for value in row], 0.95)
+    im = ax.imshow(data, cmap="coolwarm", norm=mcolors.TwoSlopeNorm(vmin=-lim, vcenter=0, vmax=lim), aspect="auto")
+    ax.set_xticks(range(len(phases))); ax.set_xticklabels([p.replace("_", "\n") for p in phases], fontsize=8)
+    ax.set_yticks(range(len(cats))); ax.set_yticklabels(cats)
+    ax.set_title("C. phase net score")
+
+    ax = axes[1, 1]
+    if ablation_rows:
+        for row in ablation_rows:
+            ax.scatter(float(row["attribution_score"]), float(row["causal_effect"]), marker=selection_marker(str(row["selection"])), s=38, color=category_color(str(row["category"])), alpha=0.75, edgecolor="black", linewidth=0.4)
+        xs = [float(r["attribution_score"]) for r in ablation_rows]
+        ys = [float(r["causal_effect"]) for r in ablation_rows]
+        lim = (max(max(abs(v) for v in xs), max(abs(v) for v in ys)) * 1.1) or 1.0
+        ax.plot([-lim, lim], [-lim, lim], color="#555555", linestyle="--", linewidth=0.8)
+        ax.set_xlim(-lim, lim); ax.set_ylim(-lim, lim)
+        title = "D. attribution vs ablation"
+        if rho is not None:
+            title += f" (ρ={rho:.2f})"
+        ax.set_title(title)
+        ax.set_xlabel("attribution"); ax.set_ylabel("live effect")
+    else:
+        vals = [(sum(float(v) for v in r["dla"]["attn_scores"]), sum(float(v) for v in r["dla"]["mlp_scores"]), r) for r in per_example]
+        for attn, mlp, r in vals:
+            ax.scatter(attn, mlp, color=category_color(str(r["category"])), marker=category_marker(str(r["category"])), s=48, edgecolor="black", linewidth=0.4)
+        ax.axhline(0, color="#222222", linewidth=0.8); ax.axvline(0, color="#222222", linewidth=0.8)
+        ax.set_title("D. attention vs MLP totals")
+        ax.set_xlabel("attention total"); ax.set_ylabel("MLP total")
+    fig.suptitle("Direct Logit Attribution dashboard")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "dla_dashboard.png", "One-screen Lab 2 dashboard: assembly, cancellation, phase net score, and ablation calibration.")
 
 
 # ---------------------------------------------------------------------------
@@ -1153,6 +1713,7 @@ def draft_claims(
     cat_rows: list[dict[str, Any]],
     ablation_rows: list[dict[str, Any]],
     rho: float | None,
+    relation_rows: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, str]]:
     run_name = ctx.run_dir.name
     L = bundle.anatomy.n_layers
@@ -1219,6 +1780,28 @@ def draft_claims(
                 ),
             }
         )
+    relation_rows = relation_rows or []
+    relation_scoped = [r for r in relation_rows if int(r.get("n_examples", 0)) >= 2]
+    if len(relation_scoped) >= 2:
+        strongest_family = max(relation_scoped, key=lambda r: abs(float(r.get("mean_frozen_logit_diff", 0.0))))
+        claims.append(
+            {
+                "id": f"{LAB_ID}-C4",
+                "tag": "ATTR",
+                "text": (
+                    "Relation-family metadata changed the unit of comparison from one prompt at a time to "
+                    f"family-level ledgers: the largest mean frozen logit difference among multi-example families was "
+                    f"{strongest_family['category']}:{strongest_family['relation_family']}:{strongest_family['contrast_type']} "
+                    f"with mean frozen diff {strongest_family['mean_frozen_logit_diff']} and modal top phase "
+                    f"{strongest_family['top_component_modal_phase']}."
+                ),
+                "artifact": f"runs/{run_name}/tables/relation_family_summary.csv",
+                "falsifier": (
+                    "A held-out relation-family file with the same hard/easy contrast changes the modal top phase or "
+                    "removes the family-level difference, showing the apparent relation pattern was prompt-specific."
+                ),
+            }
+        )
     return claims
 
 
@@ -1233,6 +1816,8 @@ def render_summary(
     rho: float | None,
     dropped: int,
     claims: list[dict[str, str]],
+    phase_rows: list[dict[str, Any]] | None = None,
+    relation_rows: list[dict[str, Any]] | None = None,
 ) -> str:
     args = ctx.args
     a = bundle.anatomy
@@ -1303,7 +1888,27 @@ def render_summary(
                 f"{kind}@{layer} with score {score:+.4f}. See `tables/top_components.csv`."
             ),
         ]
+    relation_rows = relation_rows or []
+    if relation_rows:
+        multi = [r for r in relation_rows if int(r.get("n_examples", 0)) >= 2]
+        if multi:
+            lines += [
+                "",
+                "Relation-family view:",
+                "",
+                "| family | n | mean frozen diff | attn total | mlp total | modal top phase |",
+                "|---|---:|---:|---:|---:|---|",
+            ]
+            for r in sorted(multi, key=lambda x: (x["category"], x["relation_family"], x["contrast_type"]))[:12]:
+                lines.append(
+                    f"| {r['category']}:{r['relation_family']}:{r['contrast_type']} | {r['n_examples']} | "
+                    f"{r['mean_frozen_logit_diff']} | {r['mean_attn_total']} | {r['mean_mlp_total']} | "
+                    f"{r['top_component_modal_phase']} |"
+                )
     lines += [
+        "",
+        "Plot reading guide: start with `plots/dla_dashboard.png`, then use `tables/plot_reading_guide.csv` as the map from visual to concept.",
+        "The new phase and relation-family tables are `tables/phase_ledger_summary.csv` and `tables/relation_family_summary.csv`.",
         "",
         "## 5. Does the ledger balance?",
         "",
@@ -1390,6 +1995,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         {
             "example_id": ex.example_id,
             "category": ex.category,
+            **example_meta(ex),
             "prompt": ex.prompt,
             "target": bench.visible_token(ex.target),
             "target_id": t_id,
@@ -1429,11 +2035,12 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         )
         dla = compute_direct_logit_attribution(bundle, comp, t_id, d_id)
         curve = cumulative_curve(dla)
-        contributions.extend(component_rows(ex.example_id, ex.category, dla))
+        meta = example_meta(ex)
+        contributions.extend(component_rows(ex.example_id, ex.category, dla, **meta))
         behavior_rows.append(answer_behavior_row(bundle, ex, t_id, d_id, comp.capture.final_logits_last))
         balance_rows.append(balance_row(ex.example_id, ex.category, dla))
-        block_rows_all.extend(block_ledger_rows(ex.example_id, ex.category, dla, curve))
-        top_rows_all.extend(top_component_rows(ex.example_id, ex.category, dla))
+        block_rows_all.extend(block_ledger_rows(ex.example_id, ex.category, dla, curve, **meta))
+        top_rows_all.extend(top_component_rows(ex.example_id, ex.category, dla, **meta))
         reconstruction_rows.extend(block_reconstruction_rows(ex.example_id, ex.category, comp))
 
         traj = bench.compute_lens_trajectory(
@@ -1463,6 +2070,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             {
                 "example_id": ex.example_id,
                 "category": ex.category,
+                **example_meta(ex),
                 "dla": dla,
                 "curve": curve,
                 "example": ex,
@@ -1507,6 +2115,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             {
                 "example_id": r["example_id"],
                 "category": r["category"],
+                "relation_family": r.get("relation_family", ""),
+                "contrast_type": r.get("contrast_type", ""),
                 "model_logit_diff": round(dla["model_logit_diff"], 4),
                 "frozen_logit_diff": round(dla["frozen_logit_diff"], 4),
                 "constant": round(dla["constant"], 4),
@@ -1576,6 +2186,27 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, cat_path, cat_rows)
     ctx.register_artifact(cat_path, "table", "Category-level headline numbers.")
 
+    phase_rows = phase_ledger_summary(per_example, n_layers)
+    phase_path = ctx.path("tables", "phase_ledger_summary.csv")
+    bench.write_csv_with_context(ctx, phase_path, phase_rows)
+    ctx.register_artifact(phase_path, "table", "Category x depth-phase ledger summaries with net, gross, positive, and negative mass.")
+
+    relation_rows = relation_family_summary(per_example, n_layers)
+    relation_path = ctx.path("tables", "relation_family_summary.csv")
+    bench.write_csv_with_context(ctx, relation_path, relation_rows)
+    ctx.register_artifact(relation_path, "table", "Relation-family / contrast-type summary for built-in and custom prompt datasets.")
+
+    mismatch_summary_rows = ablation_mismatch_summary(ablation_rows)
+    if mismatch_summary_rows:
+        mismatch_summary_path = ctx.path("tables", "ablation_mismatch_summary.csv")
+        bench.write_csv_with_context(ctx, mismatch_summary_path, mismatch_summary_rows)
+        ctx.register_artifact(mismatch_summary_path, "table", "Attribution-vs-ablation mismatch aggregated by category, component type, and selection.")
+
+    plot_guide_rows = plot_reading_guide_rows(bool(ablation_rows))
+    plot_guide_path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv(plot_guide_path, plot_guide_rows)
+    ctx.register_artifact(plot_guide_path, "table", "Map from Lab 2 plots to the concept each plot teaches.")
+
     # Plots.
     rho: float | None = None
     if not args.no_plots:
@@ -1583,10 +2214,16 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         plot_signed_component_heatmap(ctx, per_example, n_layers)
         plot_cumulative(ctx, per_example)
         plot_category_ledger_composition(ctx, per_example)
+        plot_phase_ledger_atlas(ctx, phase_rows)
+        plot_component_type_balance(ctx, per_example)
+        plot_answer_margin_vs_cancellation(ctx, per_example)
+        plot_relation_family_matrix(ctx, relation_rows, phase_rows)
         plot_balance_errors(ctx, balance_rows)
         plot_top_component_lollipop(ctx, top_rows_all)
         rho = plot_attribution_vs_ablation(ctx, ablation_rows)
         plot_ablation_mismatches(ctx, ablation_rows)
+        plot_ablation_mismatch_by_layer(ctx, ablation_rows)
+        plot_dla_dashboard(ctx, per_example, phase_rows, ablation_rows, rho)
         if showcase is not None:
             plot_dla_vs_lens(ctx, showcase[0], showcase[2], showcase[3])
             plot_showcase_waterfall(ctx, showcase[0], showcase[1])
@@ -1608,6 +2245,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "spearman_attribution_vs_ablation": rho,
         "ablation_summary_by_selection": ablation_summary_rows,
         "categories": {r["category"]: r for r in cat_rows},
+        "relation_families": {f"{r['category']}:{r['relation_family']}:{r['contrast_type']}": r for r in relation_rows},
+        "phase_summary_rows": len(phase_rows),
         "worst_ledger_vs_frozen_abs_err": max(
             (r["dla"]["ledger_vs_frozen_abs_err"] for r in per_example), default=0.0
         ),
@@ -1619,7 +2258,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_json(metrics_path, metrics)
     ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 2 metrics.")
 
-    claims = draft_claims(ctx, bundle, cat_rows, ablation_rows, rho)
+    claims = draft_claims(ctx, bundle, cat_rows, ablation_rows, rho, relation_rows)
     bench.write_ledger_suggestions(ctx, LAB_ID, claims)
     summary = render_summary(
         ctx,
@@ -1632,6 +2271,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         rho,
         dropped,
         claims,
+        phase_rows=phase_rows,
+        relation_rows=relation_rows,
     )
     summary_path = ctx.path("run_summary.md")
     bench.write_text(summary_path, summary)

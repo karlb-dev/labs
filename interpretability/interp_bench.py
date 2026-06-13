@@ -3617,6 +3617,9 @@ CATEGORY_COLORS = {
 
 CATEGORY_MARKERS = {
     "fact": "o",
+    "relation": "^",
+    "grammar": "s",
+    "conflict": "X",
     "ambiguous": "s",
     "counterfactual": "^",
     "control": "X",
@@ -3625,6 +3628,32 @@ CATEGORY_MARKERS = {
     "clean": "o",
     "patched": "D",
     "ablated": "X",
+}
+
+# Component-level colors used by DLA, attention, circuit, and graph labs. The
+# names are intentionally generic so later labs can reuse them without a Lab 2
+# import. Blue/orange remains the canonical attention/MLP pair.
+COMPONENT_COLORS = {
+    "attn": "#0072B2",
+    "attention": "#0072B2",
+    "head": "#0072B2",
+    "mlp": "#E69F00",
+    "embed": "#555555",
+    "embedding": "#555555",
+    "constant": "#999999",
+    "resid": "#333333",
+    "all": "#222222",
+    "positive": "#0072B2",
+    "negative": "#D55E00",
+}
+
+SELECTION_MARKERS = {
+    "top": "o",
+    "random_control": "s",
+    "low_attribution_control": "^",
+    "control": "s",
+    "ablated": "X",
+    "patched": "D",
 }
 
 # Additional palette for control conditions (real vs random/shuffled/etc.).
@@ -3708,6 +3737,45 @@ def plot_category_color(category: str, default: str = "#333333") -> str:
 def plot_category_marker(category: str, default: str = "o") -> str:
     """Shared marker lookup for lab modules."""
     return CATEGORY_MARKERS.get(str(category), default)
+
+
+def plot_component_color(component: str, default: str = "#555555") -> str:
+    """Shared component/writer color lookup for lab modules."""
+    return COMPONENT_COLORS.get(str(component), default)
+
+
+def plot_selection_marker(selection: str, default: str = "o") -> str:
+    """Shared marker lookup for ablation/patching/control selections."""
+    return SELECTION_MARKERS.get(str(selection), default)
+
+
+def lighten_color(color: str, amount: float = 0.55) -> str:
+    """Return a lighter version of a Matplotlib color."""
+    import matplotlib.colors as mcolors
+
+    amount = max(0.0, min(1.0, float(amount)))
+    r, g, b = mcolors.to_rgb(color)
+    r = r + (1.0 - r) * amount
+    g = g + (1.0 - g) * amount
+    b = b + (1.0 - b) * amount
+    return mcolors.to_hex((r, g, b))
+
+
+def add_zero_lines(ax: Any, *, x: bool = True, y: bool = True, color: str = "#222222") -> None:
+    """Add light zero-reference lines to a signed plot."""
+    if x:
+        ax.axvline(0, color=color, linewidth=0.8, alpha=0.85)
+    if y:
+        ax.axhline(0, color=color, linewidth=0.8, alpha=0.85)
+
+
+def format_signed(value: float, digits: int = 2) -> str:
+    """Compact signed number formatting for plot annotations."""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    return f"{v:+.{digits}f}"
 
 
 def add_panel_label(ax: Any, label: str, *, x: float = -0.10, y: float = 1.04) -> None:
