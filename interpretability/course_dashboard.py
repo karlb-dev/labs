@@ -78,14 +78,19 @@ HIGHLIGHTS: dict[str, list[tuple[str, list[str]]]] = {
               ("filler acc", ["exp2.filler_accuracy"]),
               ("forced/unparseable", ["n_unparseable_or_forced"])],
     "lab11": [("domain", ["domain"]),
-              ("preference acc", ["behavioral.target_preference_accuracy",
-                                  "behavioral.preference_accuracy"]),
+              # candidate paths span all three domains; first hit wins, misses omit
+              ("preference/plain acc", ["behavioral.target_preference_accuracy",
+                                        "behavioral.preference_accuracy",
+                                        "behavioral.plain_accuracy"]),
+              ("negation drop", ["behavioral.negation_accuracy_drop"]),
               ("subject-site recovery", ["behavioral.mean_recovery_subject_early"]),
               ("unrelated-patch control", ["behavioral.mean_recovery_unrelated_control"]),
               ("monitor AUC", ["behavioral.monitor.held_out_auc"]),
               ("max flip (fresh)", ["behavioral.max_flip_rate"]),
-              ("probe AUC", ["behavioral.hint_presence_probe.held_out_auc"]),
-              ("probe shuffled ctrl", ["behavioral.hint_presence_probe.shuffled_control_auc"])],
+              ("probe AUC", ["behavioral.hint_presence_probe.held_out_auc",
+                             "behavioral.valence_probe.negated_transfer_auc"]),
+              ("probe shuffled ctrl", ["behavioral.hint_presence_probe.shuffled_control_auc",
+                                       "behavioral.valence_probe.shuffled_control_negated_auc"])],
     "lab12": [("12-way acc", ["probe.all_12way_accuracy_at_best_depth"]),
               ("country-group selectivity", ["probe.within_group.country_sem.selectivity"]),
               ("subject-swap band mean", ["patching.subject_swap.band_mean"]),
@@ -134,13 +139,13 @@ def lab11_runs_by_domain(run_glob: str) -> list[pathlib.Path]:
                       if d.is_dir() and re.match(r"lab11[_-]", d.name)]
     by_domain: dict[str, pathlib.Path] = {}
     for d in sorted(candidates, key=lambda p: p.stat().st_mtime):
-        domain = "unknown"
         mpath = d / "metrics.json"
-        if mpath.exists():
-            try:
-                domain = str(json.loads(mpath.read_text()).get("domain", "unknown"))
-            except json.JSONDecodeError:
-                pass
+        if not mpath.exists():
+            continue  # skip crashed/incomplete runs (e.g. an OOM'd first attempt)
+        try:
+            domain = str(json.loads(mpath.read_text()).get("domain", "unknown"))
+        except json.JSONDecodeError:
+            continue
         by_domain[domain] = d  # ascending mtime: newest run per domain wins
     return [by_domain[k] for k in sorted(by_domain)]
 
