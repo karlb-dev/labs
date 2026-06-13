@@ -284,11 +284,21 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "model_tier_b": "allenai/Olmo-3-7B-Instruct",
         "model_tier_c": "allenai/Olmo-3-7B-Instruct",
     },
+    "lab16": {
+        "module": "labs.lab16_sycophancy_user_belief",
+        "run_name": "lab16_sycophancy_user_belief",
+        "description": "Sycophancy and user-belief modeling: truth, user-belief, agreement, and politeness directions.",
+        # Chat-template generation lab. --max-examples is a PER-DOMAIN base-fact cap here.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "2",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any

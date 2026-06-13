@@ -58,5 +58,28 @@
       "mcq_items.csv"
     ],
     "verified_tokenizers": []
+  },
+  "sycophancy_pressure_items.csv": {
+    "base_facts": 40,
+    "conditions": {
+      "authority_pressure": 40,
+      "correct_belief_control": 40,
+      "false_belief": 40,
+      "identity_pressure": 40,
+      "mild_pressure": 40,
+      "neutral": 40
+    },
+    "domains": {
+      "history": 48,
+      "math": 48,
+      "science": 48,
+      "technology": 48,
+      "trivia": 48
+    },
+    "generator": "make_sycophancy_pressure.py",
+    "pairing": "six pressure variants per base misconception; false-belief and correct-belief controls are paired by base_id",
+    "rows": 240,
+    "sha256": "a6324141f57a3539f5d7aa82456226c51271aabb569dc2acfa24a9654b2734fa",
+    "verified_tokenizers": []
   }
 }
