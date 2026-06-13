@@ -50,6 +50,7 @@ from __future__ import annotations
 
 import csv
 import math
+import statistics
 import json
 import re
 from typing import Any, Mapping, Sequence, TypeVar
@@ -719,6 +720,750 @@ def plot_bridge(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> Non
     bench.save_figure(ctx, fig, "truth_direction_bridge.png", "Truth-direction steering split into answer bias and signed truth margin.")
 
 
+
+# ---------------------------------------------------------------------------
+# Visualization upgrade helpers (Lab 7)
+# ---------------------------------------------------------------------------
+# These helpers deliberately sit in the lab rather than the bench because the
+# pedagogical object is Lab 7-specific: a direction is a handle only after it
+# survives dose, control, side-effect, safety, and bridge audits.
+
+
+def _num(x: Any, default: float = float("nan")) -> float:
+    try:
+        if x is None or x == "":
+            return default
+        return float(x)
+    except Exception:
+        return default
+
+
+def _finite(xs: Sequence[float]) -> list[float]:
+    return [float(x) for x in xs if not math.isnan(float(x)) and not math.isinf(float(x))]
+
+
+def _median(xs: Sequence[float]) -> float:
+    vals = _finite(xs)
+    return float(statistics.median(vals)) if vals else float("nan")
+
+
+def _quantile(xs: Sequence[float], q: float) -> float:
+    vals = sorted(_finite(xs))
+    if not vals:
+        return float("nan")
+    if len(vals) == 1:
+        return vals[0]
+    pos = (len(vals) - 1) * q
+    lo = int(math.floor(pos))
+    hi = int(math.ceil(pos))
+    if lo == hi:
+        return vals[lo]
+    return vals[lo] * (hi - pos) + vals[hi] * (pos - lo)
+
+
+def _condition_color(condition: str) -> str:
+    if hasattr(bench, "plot_steering_color"):
+        return bench.plot_steering_color(condition)
+    if hasattr(bench, "plot_control_color"):
+        return bench.plot_control_color(condition, {
+            "real": "#D55E00", "random": "#777777", "shuffled": "#7E57C2",
+            "refusal": "#D55E00", "truth": "#7E57C2", "benign": "#009E73",
+        }.get(str(condition), "#555555"))
+    return {
+        "real": "#D55E00", "random": "#777777", "shuffled": "#7E57C2",
+        "refusal": "#D55E00", "truth": "#7E57C2", "benign": "#009E73",
+    }.get(str(condition), "#555555")
+
+
+def _condition_marker(condition: str) -> str:
+    return {
+        "real": "o", "random": "s", "shuffled": "^", "refusal": "o",
+        "truth": "D", "benign": "s",
+    }.get(str(condition), "o")
+
+
+def _condition_ls(condition: str) -> str:
+    return {"random": "--", "shuffled": ":"}.get(str(condition), "-")
+
+
+def _lookup(rows: Sequence[Mapping[str, Any]], condition: str, scale: float) -> Mapping[str, Any] | None:
+    for r in rows:
+        if str(r.get("condition")) == str(condition) and abs(_num(r.get("scale")) - float(scale)) < 1e-9:
+            return r
+    return None
+
+
+def _baseline_by_condition(rows: Sequence[Mapping[str, Any]], key: str) -> dict[str, float]:
+    out: dict[str, float] = {}
+    for cond in sorted({str(r.get("condition")) for r in rows}):
+        base = _lookup(rows, cond, 0.0)
+        if base is not None:
+            out[cond] = _num(base.get(key))
+    return out
+
+
+def dose_operating_points(dose_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Add control gaps and side-effect costs to the aggregate dose table.
+
+    The raw dose table is good for plotting. This table is good for claims:
+    every candidate dose carries its target movement, its gap over controls,
+    and a coarse side-effect cost. It is intentionally transparent rather than
+    optimized; students can change the thresholds and see the verdict move.
+    """
+    by_key = {(str(r.get("condition")), _num(r.get("scale"))): r for r in dose_rows}
+    base_target = _baseline_by_condition(dose_rows, "target_score")
+    base_fluency = _baseline_by_condition(dose_rows, "fluency_logprob")
+    base_drift = _baseline_by_condition(dose_rows, "drift_accuracy")
+    out: list[dict[str, Any]] = []
+    for r in sorted(dose_rows, key=lambda row: (str(row.get("condition")), _num(row.get("scale")))):
+        cond = str(r.get("condition"))
+        scale = _num(r.get("scale"))
+        target = _num(r.get("target_score"))
+        fluency = _num(r.get("fluency_logprob"))
+        drift = _num(r.get("drift_accuracy"))
+        kl = max(0.0, _num(r.get("kl_to_unsteered"), 0.0))
+        target_delta = target - base_target.get(cond, target)
+        fluency_delta = fluency - base_fluency.get(cond, fluency)
+        drift_delta = drift - base_drift.get(cond, drift)
+        real_gap_random = float("nan")
+        real_gap_shuffled = float("nan")
+        if cond == "real":
+            rand = by_key.get(("random", scale))
+            shuf = by_key.get(("shuffled", scale))
+            if rand is not None:
+                real_gap_random = target - _num(rand.get("target_score"))
+            if shuf is not None:
+                real_gap_shuffled = target - _num(shuf.get("target_score"))
+        side_cost = max(0.0, -fluency_delta) + max(0.0, -drift_delta) + kl
+        out.append({
+            "condition": cond,
+            "injection_layer": r.get("injection_layer"),
+            "stream_depth": r.get("stream_depth"),
+            "scale": scale,
+            "target_score": round_float(target),
+            "target_delta_vs_zero": round_float(target_delta),
+            "real_gap_over_random": round_float(real_gap_random),
+            "real_gap_over_shuffled": round_float(real_gap_shuffled),
+            "fluency_logprob": round_float(fluency),
+            "fluency_delta_vs_zero": round_float(fluency_delta),
+            "kl_to_unsteered": round_float(kl),
+            "drift_accuracy": round_float(drift),
+            "drift_delta_vs_zero": round_float(drift_delta),
+            "side_effect_cost": round_float(side_cost),
+            "clean_operating_candidate": bool(
+                cond == "real"
+                and scale > 0
+                and target_delta > 0
+                and (math.isnan(real_gap_random) or real_gap_random > 0)
+                and (math.isnan(real_gap_shuffled) or real_gap_shuffled > 0)
+                and fluency_delta > -1.0
+                and drift_delta > -0.25
+            ),
+        })
+    return out
+
+
+def bridge_statement_summary(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    keys = sorted({(str(r.get("condition")), str(r.get("statement_id"))) for r in rows})
+    for condition, statement_id in keys:
+        subset = [r for r in rows if str(r.get("condition")) == condition and str(r.get("statement_id")) == statement_id]
+        by_scale = {_num(r.get("scale")): r for r in subset}
+        if not by_scale:
+            continue
+        base = by_scale.get(0.0, subset[0])
+        max_pos = max(s for s in by_scale if s >= 0)
+        max_row = by_scale[max_pos]
+        label = int(_num(base.get("label"), 0))
+        out.append({
+            "condition": condition,
+            "statement_id": statement_id,
+            "label": label,
+            "max_positive_scale": max_pos,
+            "base_true_minus_false_logit_diff": round_float(_num(base.get("true_minus_false_logit_diff"))),
+            "max_true_minus_false_logit_diff": round_float(_num(max_row.get("true_minus_false_logit_diff"))),
+            "delta_true_minus_false_logit_diff": round_float(
+                _num(max_row.get("true_minus_false_logit_diff")) - _num(base.get("true_minus_false_logit_diff"))
+            ),
+            "base_signed_truth_margin": round_float(_num(base.get("signed_truth_margin"))),
+            "max_signed_truth_margin": round_float(_num(max_row.get("signed_truth_margin"))),
+            "delta_signed_truth_margin": round_float(
+                _num(max_row.get("signed_truth_margin")) - _num(base.get("signed_truth_margin"))
+            ),
+            "truth_margin_improved": bool(_num(max_row.get("signed_truth_margin")) > _num(base.get("signed_truth_margin"))),
+            "statement": base.get("statement", ""),
+        })
+    return out
+
+
+def steering_evidence_matrix(
+    dose_rows: Sequence[Mapping[str, Any]],
+    induced_rows: Sequence[Mapping[str, Any]],
+    bridge_rows: Sequence[Mapping[str, Any]],
+    *,
+    auc: float,
+    best_layer: int,
+    baseline_induced: float,
+    max_induced: float,
+    max_random_induced: float,
+    bridge_verdict: str,
+    bridge_answer_span: float,
+    bridge_signed_span: float,
+) -> list[dict[str, Any]]:
+    real = {float(r["scale"]): r for r in dose_rows if r["condition"] == "real"}
+    rand = {float(r["scale"]): r for r in dose_rows if r["condition"] == "random"}
+    shuf = {float(r["scale"]): r for r in dose_rows if r["condition"] == "shuffled"}
+    max_pos = max(real) if real else 0.0
+    base = real.get(0.0, {})
+    high = real.get(max_pos, base)
+    pos_swing = _num(high.get("target_score")) - _num(base.get("target_score"))
+    rand_gap = _num(high.get("target_score")) - _num(rand.get(max_pos, {}).get("target_score")) if max_pos in rand else float("nan")
+    shuf_gap = _num(high.get("target_score")) - _num(shuf.get(max_pos, {}).get("target_score")) if max_pos in shuf else float("nan")
+    fluency_drop = _num(high.get("fluency_logprob")) - _num(base.get("fluency_logprob"))
+    drift_delta = _num(high.get("drift_accuracy")) - _num(base.get("drift_accuracy"))
+    return [
+        {
+            "track": "A_sentiment_steering",
+            "evidence_tag": "CAUSAL",
+            "question": "Does the real contrast direction move generated sentiment more than controls?",
+            "headline_measure": "target_score swing at max positive dose",
+            "effect": round_float(pos_swing),
+            "primary_control": "random direction",
+            "control_gap": round_float(rand_gap),
+            "secondary_control": "shuffled-label direction",
+            "secondary_gap": round_float(shuf_gap),
+            "side_effect_measure": "fluency_delta / drift_delta at max dose",
+            "side_effect": f"fluency {fluency_drop:+.3f}; drift {drift_delta:+.3f}",
+            "injection_layer": best_layer,
+            "artifact": "plots/dose_response_sentiment.png",
+            "claim_boundary": "generation handle; not a unique sentiment mechanism",
+        },
+        {
+            "track": "B_refusal_monitor",
+            "evidence_tag": "DECODE",
+            "question": "Does the refusal direction separate held-out prompt categories by forward pass?",
+            "headline_measure": "projection AUC",
+            "effect": round_float(auc),
+            "primary_control": "held-out matched benign prompts",
+            "control_gap": round_float(auc - 0.5),
+            "secondary_control": "no generation from eliciting prompts",
+            "secondary_gap": "safety wall",
+            "side_effect_measure": "none: forward-pass monitor only",
+            "side_effect": "no sampled refusal-eliciting completions",
+            "injection_layer": best_layer,
+            "artifact": "plots/refusal_monitor.png",
+            "claim_boundary": "predicts prompt category; does not prove causal mediation",
+        },
+        {
+            "track": "B_induced_refusal",
+            "evidence_tag": "CAUSAL",
+            "question": "Does steering benign prompts toward the refusal direction cause refusals?",
+            "headline_measure": "max benign induced-refusal rate",
+            "effect": round_float(max_induced),
+            "primary_control": "random direction",
+            "control_gap": round_float(max_induced - max_random_induced),
+            "secondary_control": "dose-0 classifier floor",
+            "secondary_gap": round_float(max_induced - baseline_induced),
+            "side_effect_measure": "safe direction only",
+            "side_effect": "ablation not implemented",
+            "injection_layer": best_layer,
+            "artifact": "plots/induced_refusal.png",
+            "claim_boundary": "causal sufficiency toward refusal on benign prompts only",
+        },
+        {
+            "track": "Bridge_truth_direction",
+            "evidence_tag": "CAUSAL_AUDIT",
+            "question": "Does the decodable truth direction steer truthfulness or True/False answer bias?",
+            "headline_measure": bridge_verdict,
+            "effect": round_float(bridge_answer_span),
+            "primary_control": "signed truth-margin span",
+            "control_gap": round_float(bridge_signed_span),
+            "secondary_control": "random direction",
+            "secondary_gap": round_float(span_for(bridge_rows, "random", "mean_true_minus_false_logit_diff")),
+            "side_effect_measure": "answer-bias vs signed-margin split",
+            "side_effect": "use the signed panel before saying truthfulness",
+            "injection_layer": best_layer,
+            "artifact": "plots/truth_direction_bridge.png",
+            "claim_boundary": "decodability and steerability are not use/explanation",
+        },
+    ]
+
+
+def plot_reading_guide_rows() -> list[dict[str, str]]:
+    return [
+        {"artifact": "plots/steering_evidence_dashboard.png", "concept": "one-screen evidence ladder", "read_with": "tables/steering_evidence_matrix.csv", "question": "Which claims are CAUSAL, DECODE, or only an audit?"},
+        {"artifact": "plots/dose_response_sentiment.png", "concept": "dose response plus side effects", "read_with": "tables/dose_operating_points.csv", "question": "Where does the real direction beat controls before text quality or drift costs dominate?"},
+        {"artifact": "plots/dose_operating_frontier.png", "concept": "operating point choice", "read_with": "tables/dose_operating_points.csv", "question": "Is there a useful dose, or only high-effect/high-damage steering?"},
+        {"artifact": "plots/prompt_steering_response_heatmap.png", "concept": "per-prompt heterogeneity", "read_with": "tables/dose_response_by_prompt.csv", "question": "Is the headline curve many prompts moving, or one prompt screaming?"},
+        {"artifact": "plots/layer_selection_detail.png", "concept": "layer choice by generation", "read_with": "tables/layer_sweep_by_prompt.csv", "question": "Does the chosen block win broadly across prompts or only on the mean?"},
+        {"artifact": "plots/refusal_safety_dashboard.png", "concept": "monitor-vs-cause under the safety wall", "read_with": "diagnostics/lab07_safety_audit.json", "question": "What was predicted, what was generated, and what was not attempted?"},
+        {"artifact": "plots/truth_bridge_statement_atlas.png", "concept": "truth bridge at statement granularity", "read_with": "tables/truth_bridge_statement_summary.csv", "question": "Which false statements are harmed or helped by the truth direction?"},
+        {"artifact": "plots/truth_direction_bridge.png", "concept": "answer bias vs truth margin", "read_with": "tables/truth_direction_bridge.csv", "question": "Does the vector move True tokens or signed correctness?"},
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Upgraded plot definitions; these intentionally shadow the small baseline
+# versions above while keeping the same call sites intact.
+# ---------------------------------------------------------------------------
+
+
+def plot_dose_response(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], concept: str) -> None:
+    import matplotlib.pyplot as plt
+
+    bench._ensure_plot_style()
+    fig, axes = plt.subplots(2, 2, figsize=(13.8, 8.6))
+    axes = list(axes.ravel())
+    panels = [
+        ("target_score", f"{concept} score", "target behavior", None),
+        ("fluency_logprob", "mean token logprob", "fluency side effect", "higher is better"),
+        ("kl_to_unsteered", "KL(steered || unsteered)", "distribution shift", "lower is better"),
+        ("drift_accuracy", "unrelated fact accuracy", "collateral damage", "higher is better"),
+    ]
+    conditions = [c for c in ("real", "random", "shuffled") if any(r.get("condition") == c for r in rows)]
+    for ax, (key, ylabel, title, subtitle) in zip(axes, panels):
+        for cond in conditions:
+            pts = sorted((_num(r.get("scale")), _num(r.get(key))) for r in rows if r.get("condition") == cond)
+            pts = [(x, y) for x, y in pts if not math.isnan(x) and not math.isnan(y)]
+            if not pts:
+                continue
+            xs, ys = zip(*pts)
+            ax.plot(
+                xs,
+                ys,
+                marker=_condition_marker(cond),
+                color=_condition_color(cond),
+                linestyle=_condition_ls(cond),
+                linewidth=2.4 if cond == "real" else 1.8,
+                alpha=0.96 if cond == "real" else 0.78,
+                label=cond,
+            )
+            if cond == "real" and len(xs) >= 2:
+                ax.scatter([xs[-1]], [ys[-1]], s=60, color=_condition_color(cond), zorder=4)
+        bench.add_vline(ax, 0.0, label=None, color="black", ls="-", lw=0.7, alpha=0.65)
+        if key in {"target_score", "drift_accuracy"}:
+            ax.axhline(0, color="black", linewidth=0.6, alpha=0.45)
+        if key == "kl_to_unsteered":
+            ax.axhline(0, color="black", linewidth=0.6, alpha=0.45)
+        ax.set_xlabel("dose, fraction of median activation norm")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title + (f"\n{subtitle}" if subtitle else ""), fontsize=11)
+        bench.style_ax(ax, legend=True)
+    # annotate the headline control gap in the target panel
+    real = {float(r["scale"]): r for r in rows if r.get("condition") == "real"}
+    rand = {float(r["scale"]): r for r in rows if r.get("condition") == "random"}
+    shuf = {float(r["scale"]): r for r in rows if r.get("condition") == "shuffled"}
+    if real:
+        max_pos = max(real)
+        base = real.get(0.0, real[max_pos])
+        txt = f"max +dose: Δtarget {_num(real[max_pos].get('target_score')) - _num(base.get('target_score')):+.2f}"
+        if max_pos in rand and max_pos in shuf:
+            txt += f"\nvs random {_num(real[max_pos].get('target_score')) - _num(rand[max_pos].get('target_score')):+.2f}; vs shuffled {_num(real[max_pos].get('target_score')) - _num(shuf[max_pos].get('target_score')):+.2f}"
+        axes[0].text(0.02, 0.03, txt, transform=axes[0].transAxes, ha="left", va="bottom", fontsize=8.2,
+                     bbox={"boxstyle": "round,pad=0.35", "facecolor": "white", "edgecolor": "#cccccc", "alpha": 0.88})
+    fig.suptitle(f"Track A dose-response: steering {concept} with controls and side-effect rails", fontsize=14)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.94])
+    bench.save_figure(ctx, fig, f"dose_response_{concept}.png", "Target behavior, fluency, KL, and drift across the steering dose sweep.")
+
+
+def plot_layer_sweep(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_layer: int) -> None:
+    bench._ensure_plot_style()
+    fig, ax = bench.new_figure(figsize=(9.2, 5.4))
+    layers = sorted({int(r["injection_layer"]) for r in rows})
+    by_layer = {int(r["injection_layer"]): r for r in rows}
+    ax.plot(layers, [_num(by_layer[l].get("pos_score")) for l in layers], marker="^", linewidth=1.9, color="#009E73", label="+dose sentiment")
+    ax.plot(layers, [_num(by_layer[l].get("neg_score")) for l in layers], marker="v", linewidth=1.9, color="#D55E00", label="-dose sentiment")
+    spreads = [_num(by_layer[l].get("steering_spread")) for l in layers]
+    ax.plot(layers, spreads, marker="o", linewidth=2.8, color="#222222", label="spread, pos minus neg")
+    if spreads:
+        top = max(spreads)
+        ax.fill_between(layers, [0] * len(layers), spreads, color="#222222", alpha=0.07)
+        ax.text(best_layer, top, f" chosen\nblock {best_layer}", ha="left", va="bottom", fontsize=8.5, color="#7E57C2")
+    ax.axvline(best_layer, color="#7E57C2", linewidth=1.4, alpha=0.8, label=f"chosen block {best_layer}")
+    ax.axhline(0, color="black", linewidth=0.7, alpha=0.6)
+    ax.set_xlabel("decoder block whose output receives the vector")
+    ax.set_ylabel("mean sentiment score on layer-sweep generations")
+    ax.set_title("Layer choice is measured by actual generation, not a next-token proxy")
+    bench.style_ax(ax, legend=True)
+    bench.save_figure(ctx, fig, "layer_sweep.png", "Generation-based layer sweep for Track A steering.")
+
+
+def plot_induced_refusal(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    bench._ensure_plot_style()
+    fig, ax = bench.new_figure(figsize=(8.8, 5.4))
+    for cond in ("refusal", "random"):
+        pts = sorted((_num(r.get("scale")), _num(r.get("refusal_rate")), _num(r.get("se"), 0.0)) for r in rows if r.get("condition") == cond)
+        pts = [(x, y, se) for x, y, se in pts if not math.isnan(x) and not math.isnan(y)]
+        if not pts:
+            continue
+        xs = [p[0] for p in pts]
+        ys = [p[1] for p in pts]
+        ses = [p[2] for p in pts]
+        ax.plot(xs, ys, marker=_condition_marker(cond), color=_condition_color(cond), linewidth=2.5 if cond == "refusal" else 1.9, label=f"{cond} direction")
+        ax.fill_between(xs, [max(0.0, y - 1.96 * se) for y, se in zip(ys, ses)], [min(1.0, y + 1.96 * se) for y, se in zip(ys, ses)], color=_condition_color(cond), alpha=0.13)
+    bench.add_vline(ax, 0.0, label=None, color="black", ls="-", lw=0.7, alpha=0.65)
+    base = _lookup(rows, "refusal", 0.0)
+    if base is not None:
+        ax.axhline(_num(base.get("refusal_rate")), color="#777777", linestyle=":", linewidth=1.2, label="dose-0 classifier floor")
+    ax.set_ylim(-0.05, 1.05)
+    ax.set_xlabel("dose, fraction of median activation norm")
+    ax.set_ylabel("induced refusal rate on benign prompts")
+    ax.set_title("Track B: steering benign prompts toward refusal, safe direction only")
+    bench.style_ax(ax, legend=True)
+    bench.save_figure(ctx, fig, "induced_refusal.png", "Induced-refusal rate on benign prompts, with random-direction control and classifier floor.")
+
+
+def plot_monitor(
+    ctx: bench.RunContext,
+    proj_refusal: Sequence[float],
+    proj_benign: Sequence[float],
+    roc_rows: Sequence[Mapping[str, float]],
+    auc: float,
+) -> None:
+    import matplotlib.pyplot as plt
+
+    bench._ensure_plot_style()
+    fig, axes = plt.subplots(1, 2, figsize=(12.8, 5.0))
+    ax = axes[0]
+    all_vals = list(proj_benign) + list(proj_refusal)
+    bins = min(14, max(6, int(math.sqrt(max(1, len(all_vals))))))
+    ax.hist(proj_benign, bins=bins, alpha=0.62, color="#009E73", label=f"benign held-out (n={len(proj_benign)})")
+    ax.hist(proj_refusal, bins=bins, alpha=0.62, color="#D55E00", label=f"refusal-eliciting held-out (n={len(proj_refusal)})")
+    if proj_benign and proj_refusal:
+        ax.axvline(_median(proj_benign), color="#009E73", linestyle="--", linewidth=1.2, alpha=0.9)
+        ax.axvline(_median(proj_refusal), color="#D55E00", linestyle="--", linewidth=1.2, alpha=0.9)
+    ax.set_xlabel("projection onto refusal direction")
+    ax.set_ylabel("count")
+    ax.set_title("Forward-pass projection distributions\nmedian lines shown; no eliciting completions generated")
+    bench.style_ax(ax, legend=True)
+
+    ax = axes[1]
+    fpr = [_num(r.get("false_positive_rate")) for r in roc_rows]
+    tpr = [_num(r.get("true_positive_rate")) for r in roc_rows]
+    ax.plot(fpr, tpr, marker="o", linewidth=2.2, color="#D55E00", label=f"AUC {auc:.2f}")
+    ax.fill_between(fpr, tpr, [0] * len(tpr), color="#D55E00", alpha=0.08)
+    ax.plot([0, 1], [0, 1], linestyle="--", linewidth=1.0, color="#777777", label="chance")
+    ax.set_xlim(-0.03, 1.03)
+    ax.set_ylim(-0.03, 1.03)
+    ax.set_xlabel("false positive rate")
+    ax.set_ylabel("true positive rate")
+    ax.set_title("Monitor ROC, category labels only")
+    bench.style_ax(ax, legend=True)
+    fig.suptitle("Refusal monitor: DECODE evidence under a measured safety wall", fontsize=14)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92])
+    bench.save_figure(ctx, fig, "refusal_monitor.png", "Refusal projection histograms plus ROC curve.")
+
+
+def plot_bridge(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    bench._ensure_plot_style()
+    fig, axes = plt.subplots(1, 2, figsize=(12.8, 5.0))
+    configs = [
+        (axes[0], "mean_true_minus_false_logit_diff", "mean logit('True') - logit('False')", "answer bias"),
+        (axes[1], "mean_signed_truth_margin", "mean signed truth margin", "truthfulness margin"),
+    ]
+    for ax, key, ylabel, title in configs:
+        for cond in ("truth", "random"):
+            pts = sorted((_num(r.get("scale")), _num(r.get(key))) for r in rows if r.get("condition") == cond)
+            pts = [(x, y) for x, y in pts if not math.isnan(x) and not math.isnan(y)]
+            if not pts:
+                continue
+            ax.plot([p[0] for p in pts], [p[1] for p in pts], marker=_condition_marker(cond), linewidth=2.4 if cond == "truth" else 1.8, color=_condition_color(cond), linestyle=_condition_ls(cond), label=cond)
+        bench.add_vline(ax, 0.0, label=None, color="black", ls="-", lw=0.7, alpha=0.65)
+        ax.axhline(0, color="black", linewidth=0.7, alpha=0.7)
+        ax.set_xlabel("dose, fraction of median activation norm")
+        ax.set_ylabel(ylabel)
+        ax.set_title(title)
+        bench.style_ax(ax, legend=True)
+    fig.suptitle("Bridge: answer-bias movement is not automatically truthfulness improvement", fontsize=14)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.92])
+    bench.save_figure(ctx, fig, "truth_direction_bridge.png", "Truth-direction steering split into answer bias and signed truth margin.")
+
+
+def plot_steering_dashboard(
+    ctx: bench.RunContext,
+    dose_rows: Sequence[Mapping[str, Any]],
+    induced_rows: Sequence[Mapping[str, Any]],
+    bridge_rows: Sequence[Mapping[str, Any]],
+    *,
+    auc: float,
+    baseline_induced: float,
+    max_induced: float,
+    max_random_induced: float,
+    bridge_verdict: str,
+) -> None:
+    import matplotlib.pyplot as plt
+
+    bench._ensure_plot_style()
+    fig, axes = plt.subplots(2, 2, figsize=(13.6, 8.6))
+    axes = list(axes.ravel())
+
+    # A. target delta from dose 0
+    ax = axes[0]
+    for cond in ("real", "random", "shuffled"):
+        base = _lookup(dose_rows, cond, 0.0)
+        if base is None:
+            continue
+        b = _num(base.get("target_score"))
+        pts = sorted((_num(r.get("scale")), _num(r.get("target_score")) - b) for r in dose_rows if r.get("condition") == cond)
+        ax.plot([p[0] for p in pts], [p[1] for p in pts], color=_condition_color(cond), marker=_condition_marker(cond), linestyle=_condition_ls(cond), label=cond)
+    ax.axhline(0, color="black", lw=0.7)
+    bench.add_vline(ax, 0.0, label=None, color="black", ls="-", lw=0.7, alpha=0.55)
+    ax.set_title("Track A: target movement over dose")
+    ax.set_xlabel("dose")
+    ax.set_ylabel("sentiment score Δ vs dose 0")
+    bench.style_ax(ax, legend=True)
+
+    # B. monitor and induced safety summary
+    ax = axes[1]
+    labels = ["monitor AUC", "benign\nbase floor", "benign\nrefusal dir", "benign\nrandom dir"]
+    vals = [auc, baseline_induced, max_induced, max_random_induced]
+    colors = ["#D55E00", "#999999", "#D55E00", "#777777"]
+    ax.bar(range(len(vals)), vals, color=colors, alpha=0.85)
+    ax.axhline(0.5, color="#777777", linestyle=":", linewidth=1.0, label="chance / rough midpoint")
+    ax.set_xticks(range(len(vals)), labels)
+    ax.set_ylim(0, 1.05)
+    ax.set_ylabel("rate or AUC")
+    ax.set_title("Track B: predict vs cause")
+    for i, v in enumerate(vals):
+        ax.text(i, v + 0.025, f"{v:.2f}", ha="center", va="bottom", fontsize=8)
+    bench.style_ax(ax, legend=True)
+
+    # C. bridge split
+    ax = axes[2]
+    for key, label, color in [
+        ("mean_true_minus_false_logit_diff", "answer bias", "#7E57C2"),
+        ("mean_signed_truth_margin", "signed truth margin", "#009E73"),
+    ]:
+        pts = sorted((_num(r.get("scale")), _num(r.get(key))) for r in bridge_rows if r.get("condition") == "truth")
+        ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", linewidth=2.2, color=color, label=label)
+    ax.axhline(0, color="black", lw=0.7)
+    bench.add_vline(ax, 0.0, label=None, color="black", ls="-", lw=0.7, alpha=0.55)
+    ax.set_title(f"Bridge verdict: {bridge_verdict}")
+    ax.set_xlabel("dose")
+    ax.set_ylabel("logit units")
+    bench.style_ax(ax, legend=True)
+
+    # D. operating frontier
+    ax = axes[3]
+    ops = dose_operating_points(dose_rows)
+    for cond in ("real", "random", "shuffled"):
+        pts = [(r["target_delta_vs_zero"], r["side_effect_cost"], r["scale"]) for r in ops if r["condition"] == cond]
+        pts = [(x, y, s) for x, y, s in pts if not math.isnan(float(x)) and not math.isnan(float(y))]
+        if not pts:
+            continue
+        ax.plot([p[0] for p in pts], [p[1] for p in pts], marker=_condition_marker(cond), linestyle=_condition_ls(cond), color=_condition_color(cond), label=cond, alpha=0.88)
+    ax.axvline(0, color="black", lw=0.7)
+    ax.set_xlabel("target Δ vs dose 0")
+    ax.set_ylabel("coarse side-effect cost")
+    ax.set_title("Operating point: effect is not free")
+    bench.style_ax(ax, legend=True)
+
+    fig.suptitle("Lab 7 steering evidence dashboard: handle, controls, costs, and audit", fontsize=14)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.94])
+    bench.save_figure(ctx, fig, "steering_evidence_dashboard.png", "One-screen synthesis of Lab 7 steering, safety, and truth-bridge evidence.")
+
+
+def plot_dose_operating_frontier(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    bench._ensure_plot_style()
+    fig, ax = bench.new_figure(figsize=(8.8, 5.8))
+    for cond in ("real", "random", "shuffled"):
+        pts = [(float(r["target_delta_vs_zero"]), float(r["side_effect_cost"]), float(r["scale"])) for r in rows if r["condition"] == cond]
+        pts = [(x, y, s) for x, y, s in pts if not math.isnan(x) and not math.isnan(y)]
+        if not pts:
+            continue
+        xs, ys, ss = zip(*pts)
+        ax.plot(xs, ys, color=_condition_color(cond), linestyle=_condition_ls(cond), linewidth=1.8, alpha=0.75, label=cond)
+        ax.scatter(xs, ys, color=_condition_color(cond), marker=_condition_marker(cond), s=38 if cond != "real" else 54, alpha=0.9)
+        if cond == "real":
+            for x, y, s in pts:
+                ax.text(x, y, f" {s:g}", fontsize=7.5, va="center", ha="left")
+    ax.axvline(0, color="black", linewidth=0.7)
+    ax.set_xlabel("target behavior Δ from dose 0")
+    ax.set_ylabel("coarse side-effect cost = KL + fluency loss + drift loss")
+    ax.set_title("Dose operating frontier: pick a dose, pay the bill")
+    bench.style_ax(ax, legend=True)
+    bench.save_figure(ctx, fig, "dose_operating_frontier.png", "Target movement versus side-effect cost for real and control directions.")
+
+
+def plot_prompt_steering_heatmap(ctx: bench.RunContext, per_prompt_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    rows = [r for r in per_prompt_rows if r.get("condition") == "real"]
+    if not rows:
+        return
+    prompts = sorted({str(r.get("prompt_id")) for r in rows})
+    scales = sorted({_num(r.get("scale")) for r in rows})
+    mat = np.full((len(prompts), len(scales)), np.nan)
+    for i, pid in enumerate(prompts):
+        for j, scale in enumerate(scales):
+            match = [r for r in rows if str(r.get("prompt_id")) == pid and abs(_num(r.get("scale")) - scale) < 1e-9]
+            if match:
+                mat[i, j] = _num(match[0].get("target_score"))
+    bench._ensure_plot_style()
+    fig, ax = bench.new_figure(figsize=(max(8.0, 0.55 * len(scales) + 5), max(5.2, 0.27 * len(prompts) + 2.4)))
+    im = ax.imshow(mat, aspect="auto", vmin=-1.0, vmax=1.0, cmap="RdYlGn")
+    ax.set_xticks(range(len(scales)), [f"{s:g}" for s in scales])
+    ax.set_yticks(range(len(prompts)), prompts)
+    ax.set_xlabel("dose")
+    ax.set_ylabel("benign evaluation prompt")
+    ax.set_title("Per-prompt steering response: mean curve is not the whole story")
+    cbar = fig.colorbar(im, ax=ax, shrink=0.84)
+    cbar.set_label("sentiment score")
+    for s in [0.0]:
+        if s in scales:
+            ax.axvline(scales.index(s), color="black", linewidth=0.9, alpha=0.55)
+    bench.save_figure(ctx, fig, "prompt_steering_response_heatmap.png", "Per-prompt sentiment score under the real steering direction across doses.")
+
+
+def plot_layer_selection_detail(ctx: bench.RunContext, sweep_by_prompt_rows: Sequence[Mapping[str, Any]], best_layer: int) -> None:
+    by_prompt_layer: dict[tuple[str, int], dict[float, float]] = {}
+    for r in sweep_by_prompt_rows:
+        pid = str(r.get("prompt_id"))
+        layer = int(_num(r.get("injection_layer"), -1))
+        scale = _num(r.get("scale"))
+        by_prompt_layer.setdefault((pid, layer), {})[scale] = _num(r.get("sentiment_score"))
+    prompts = sorted({p for p, _ in by_prompt_layer})
+    layers = sorted({l for _, l in by_prompt_layer})
+    if not prompts or not layers:
+        return
+    spreads_by_prompt: dict[str, list[tuple[int, float]]] = {p: [] for p in prompts}
+    for pid in prompts:
+        for layer in layers:
+            vals = by_prompt_layer.get((pid, layer), {})
+            pos_scales = [s for s in vals if s > 0]
+            neg_scales = [s for s in vals if s < 0]
+            if pos_scales and neg_scales:
+                spread = vals[max(pos_scales)] - vals[min(neg_scales)]
+                spreads_by_prompt[pid].append((layer, spread))
+    bench._ensure_plot_style()
+    fig, ax = bench.new_figure(figsize=(9.0, 5.8))
+    for pid, pts in spreads_by_prompt.items():
+        if pts:
+            ax.plot([p[0] for p in pts], [p[1] for p in pts], color="#999999", alpha=0.32, linewidth=1.0)
+    med = []
+    q25 = []
+    q75 = []
+    for layer in layers:
+        vals = [dict(pts).get(layer, float("nan")) for pts in spreads_by_prompt.values()]
+        med.append(_median(vals))
+        q25.append(_quantile(vals, 0.25))
+        q75.append(_quantile(vals, 0.75))
+    ax.fill_between(layers, q25, q75, color="#D55E00", alpha=0.14, label="IQR across prompts")
+    ax.plot(layers, med, color="#D55E00", marker="o", linewidth=2.4, label="median prompt spread")
+    ax.axvline(best_layer, color="#7E57C2", linewidth=1.3, alpha=0.85, label=f"chosen block {best_layer}")
+    ax.axhline(0, color="black", linewidth=0.7)
+    ax.set_xlabel("candidate injection block")
+    ax.set_ylabel("per-prompt sentiment spread (+dose minus -dose)")
+    ax.set_title("Layer selection detail: chosen layer should win beyond the mean")
+    bench.style_ax(ax, legend=True)
+    bench.save_figure(ctx, fig, "layer_selection_detail.png", "Per-prompt layer-sweep spreads with median and IQR.")
+
+
+def plot_refusal_safety_dashboard(
+    ctx: bench.RunContext,
+    proj_refusal: Sequence[float],
+    proj_benign: Sequence[float],
+    induced_rows: Sequence[Mapping[str, Any]],
+    *,
+    auc: float,
+    refusal_pair_count: int,
+    benign_generation_count: int,
+) -> None:
+    import matplotlib.pyplot as plt
+
+    bench._ensure_plot_style()
+    fig, axes = plt.subplots(2, 2, figsize=(12.8, 8.2))
+    axes = list(axes.ravel())
+
+    ax = axes[0]
+    ax.boxplot([proj_benign, proj_refusal], labels=["benign\nheld-out", "refusal-eliciting\nheld-out"], showmeans=True)
+    ax.set_ylabel("projection")
+    ax.set_title(f"Monitor separation (AUC {auc:.2f})")
+    bench.style_ax(ax, legend=False)
+
+    ax = axes[1]
+    for cond in ("refusal", "random"):
+        pts = sorted((_num(r.get("scale")), _num(r.get("refusal_rate"))) for r in induced_rows if r.get("condition") == cond)
+        if pts:
+            ax.plot([p[0] for p in pts], [p[1] for p in pts], color=_condition_color(cond), marker=_condition_marker(cond), label=cond)
+    base = _lookup(induced_rows, "refusal", 0.0)
+    if base is not None:
+        ax.axhline(_num(base.get("refusal_rate")), color="#777777", linestyle=":", label="dose-0 floor")
+    ax.set_ylim(-0.05, 1.05)
+    ax.set_xlabel("dose")
+    ax.set_ylabel("benign refusal rate")
+    ax.set_title("Causal step uses benign prompts only")
+    bench.style_ax(ax, legend=True)
+
+    ax = axes[2]
+    safety_labels = ["eliciting\nforward pairs", "eliciting\ngenerations", "benign\ngenerations", "ablation\nimplemented"]
+    vals = [refusal_pair_count, 0, benign_generation_count, 0]
+    colors = ["#D55E00", "#009E73", "#0072B2", "#009E73"]
+    ax.bar(range(len(vals)), vals, color=colors, alpha=0.78)
+    ax.set_yscale("symlog", linthresh=1)
+    ax.set_xticks(range(len(vals)), safety_labels)
+    ax.set_ylabel("count (symlog)")
+    ax.set_title("Safety wall footprint")
+    for i, v in enumerate(vals):
+        ax.text(i, v + 0.08 if v else 0.08, str(v), ha="center", va="bottom", fontsize=8)
+    bench.style_ax(ax, legend=False)
+
+    ax = axes[3]
+    max_ref = max((_num(r.get("refusal_rate")) for r in induced_rows if r.get("condition") == "refusal" and _num(r.get("scale")) > 0), default=0.0)
+    max_rand = max((_num(r.get("refusal_rate")) for r in induced_rows if r.get("condition") == "random" and _num(r.get("scale")) > 0), default=0.0)
+    floor = _num(base.get("refusal_rate")) if base is not None else 0.0
+    vals = [floor, max_ref - floor, max_ref - max_rand]
+    labels = ["floor", "refusal\nover floor", "refusal\nover random"]
+    ax.bar(range(3), vals, color=["#999999", "#D55E00", "#0072B2"], alpha=0.84)
+    ax.axhline(0, color="black", linewidth=0.7)
+    ax.set_xticks(range(3), labels)
+    ax.set_ylabel("rate gap")
+    ax.set_title("Do not confuse classifier floor with steering")
+    for i, v in enumerate(vals):
+        ax.text(i, v + (0.02 if v >= 0 else -0.05), f"{v:+.2f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=8)
+    bench.style_ax(ax, legend=False)
+
+    fig.suptitle("Refusal safety dashboard: prediction, benign-only causation, and what was not done", fontsize=14)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.94])
+    bench.save_figure(ctx, fig, "refusal_safety_dashboard.png", "Safety-scoped refusal monitor and benign-only steering dashboard.")
+
+
+def plot_truth_bridge_statement_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    real = [r for r in rows if r.get("condition") == "truth"]
+    if not real:
+        return
+    statements = sorted({str(r.get("statement_id")) for r in real}, key=lambda s: ("false" not in s, s))
+    scales = sorted({_num(r.get("scale")) for r in real})
+    mat = np.full((len(statements), len(scales)), np.nan)
+    labels = []
+    for i, sid in enumerate(statements):
+        lab = "T" if any(str(r.get("statement_id")) == sid and int(_num(r.get("label"), 0)) == 1 for r in real) else "F"
+        labels.append(f"{sid} ({lab})")
+        for j, scale in enumerate(scales):
+            match = [r for r in real if str(r.get("statement_id")) == sid and abs(_num(r.get("scale")) - scale) < 1e-9]
+            if match:
+                mat[i, j] = _num(match[0].get("signed_truth_margin"))
+    vmax = max(1.0, float(np.nanmax(np.abs(mat))) if np.isfinite(mat).any() else 1.0)
+    bench._ensure_plot_style()
+    fig, ax = bench.new_figure(figsize=(max(7.6, 0.7 * len(scales) + 4), max(4.8, 0.32 * len(statements) + 2.0)))
+    im = ax.imshow(mat, aspect="auto", cmap="coolwarm", vmin=-vmax, vmax=vmax)
+    ax.set_xticks(range(len(scales)), [f"{s:g}" for s in scales])
+    ax.set_yticks(range(len(statements)), labels)
+    ax.set_xlabel("truth-direction dose")
+    ax.set_ylabel("held-out statement")
+    ax.set_title("Truth bridge statement atlas: signed margin, not just True-token bias")
+    if 0.0 in scales:
+        ax.axvline(scales.index(0.0), color="black", linewidth=0.8, alpha=0.6)
+    cbar = fig.colorbar(im, ax=ax, shrink=0.84)
+    cbar.set_label("signed truth margin")
+    bench.save_figure(ctx, fig, "truth_bridge_statement_atlas.png", "Statement-level signed truth margins under truth-direction steering.")
+
 # ---------------------------------------------------------------------------
 # Track-specific helpers
 # ---------------------------------------------------------------------------
@@ -1288,13 +2033,88 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         f"signed truth-margin span {bridge_signed_span:.2f} -> {bridge_verdict}"
     )
 
+    # ----- Visualization synthesis tables -------------------------------------
+    dose_operating_rows = dose_operating_points(dose_rows)
+    dose_operating_path = ctx.path("tables", "dose_operating_points.csv")
+    bench.write_csv_with_context(ctx, dose_operating_path, dose_operating_rows)
+    ctx.register_artifact(dose_operating_path, "table", "Track A dose table augmented with control gaps and side-effect costs.")
+
+    bridge_summary_rows = bridge_statement_summary(bridge_statement_rows)
+    bridge_summary_path = ctx.path("tables", "truth_bridge_statement_summary.csv")
+    bench.write_csv_with_context(ctx, bridge_summary_path, bridge_summary_rows)
+    ctx.register_artifact(bridge_summary_path, "table", "Per-statement truth bridge deltas at the largest positive dose.")
+
+    evidence_rows = steering_evidence_matrix(
+        dose_rows,
+        induced_rows,
+        bridge_rows,
+        auc=auc,
+        best_layer=best_layer,
+        baseline_induced=baseline_induced,
+        max_induced=max_induced,
+        max_random_induced=max_random_induced,
+        bridge_verdict=bridge_verdict,
+        bridge_answer_span=bridge_answer_span,
+        bridge_signed_span=bridge_signed_span,
+    )
+    evidence_path = ctx.path("tables", "steering_evidence_matrix.csv")
+    bench.write_csv_with_context(ctx, evidence_path, evidence_rows)
+    ctx.register_artifact(evidence_path, "table", "Evidence ledger aligning Track A, Track B, and the truth bridge with controls and caveats.")
+
+    direction_rows = direction_cosine_rows({
+        "sentiment_real": real_dir,
+        "track_a_random": rand_dir,
+        "sentiment_shuffled": shuf_dir,
+        "refusal": refusal_dir,
+        "truth": truth_dir,
+        "truth_random": truth_rand_dir,
+    })
+    direction_path = ctx.path("tables", "steering_direction_cosines.csv")
+    bench.write_csv_with_context(ctx, direction_path, direction_rows)
+    ctx.register_artifact(direction_path, "table", "Cosine similarities among steering directions and controls.")
+
+    guide_path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, guide_path, plot_reading_guide_rows())
+    ctx.register_artifact(guide_path, "table", "Map from Lab 7 plots to the concept each plot is meant to teach.")
+
     # ----- Plots ---------------------------------------------------------------
     if not args.no_plots:
         plot_layer_sweep(ctx, sweep_rows, best_layer)
+        plot_layer_selection_detail(ctx, sweep_by_prompt_rows, best_layer)
         plot_dose_response(ctx, dose_rows, "sentiment")
+        plot_dose_operating_frontier(ctx, dose_operating_rows)
+        plot_prompt_steering_heatmap(ctx, per_prompt_rows)
         plot_monitor(ctx, proj_refusal, proj_benign, roc_rows, auc)
         plot_induced_refusal(ctx, induced_rows)
+        plot_refusal_safety_dashboard(
+            ctx,
+            proj_refusal,
+            proj_benign,
+            induced_rows,
+            auc=auc,
+            refusal_pair_count=len(refusal),
+            benign_generation_count=(
+                len(sweep_by_prompt_rows)
+                + len(base_generations)
+                + sum(1 for r in per_prompt_rows if float(r["scale"]) != 0.0)
+                + len(drift_rows) * len(DRIFT_FACTS)
+                + len(induced_generation_rows)
+            ),
+        )
         plot_bridge(ctx, bridge_rows)
+        plot_truth_bridge_statement_atlas(ctx, bridge_statement_rows)
+        plot_steering_dashboard(
+            ctx,
+            dose_rows,
+            induced_rows,
+            bridge_rows,
+            auc=auc,
+            baseline_induced=baseline_induced,
+            max_induced=max_induced,
+            max_random_induced=max_random_induced,
+            bridge_verdict=bridge_verdict,
+        )
+        plot_direction_cosines(ctx, direction_rows)
 
     # ----- Metrics, safety audit, card, claims, summary -----------------------
     # Exact count of sampled completions, all from benign prompts: layer-sweep
@@ -1567,14 +2387,15 @@ def write_summary(
         "Instrument health first, then the artifacts that separate the claims:",
         "",
         "1. `diagnostics/hook_parity.json`, `logit_lens_self_check.json` (instrument hygiene before any steering claim).",
-        "2. `steering_claim_card.md`: the shortest defensible interpretation (effect + controls + side effects + safety wall + bias-vs-margin split).",
-        "3. `plots/dose_response_sentiment.png` + `tables/dose_response_by_prompt.csv` + `tables/steered_examples.csv`: Track A four-panel (target/fluency/KL/drift) with real vs random vs shuffled. Look for the first dose where real beats both controls while side effects are still reasonable, the asymmetry, and high-dose degeneration that the target score alone would miss.",
-        "4. `plots/layer_sweep.png`: generation-based (not proxy) choice of injection site.",
-        "5. `plots/refusal_monitor.png` + `tables/refusal_monitor_table.csv`: forward-pass DECODE monitor on held-out pairs (no harmful generation).",
-        "6. `plots/induced_refusal.png` + `tables/induced_refusal_curve.csv` + `tables/induced_refusal_generations.csv`: CAUSAL induced refusal on benign prompts only, with random control and dose-0 classifier floor. The gap between monitor and induced (and random control) is the central pedagogical payload of Track B.",
-        "7. `diagnostics/lab07_safety_audit.json`: machine-checkable footprint of the safety wall (0 refusal-eliciting generations, forward-only counts).",
-        "8. `plots/truth_direction_bridge.png` + `tables/truth_direction_bridge*.csv`: Lab 4 bridge split into answer-bias (left) vs signed truth-margin (right). The verdict (`decodable-but-inert` / `decodable-and-steers-True-assent` / `decodable-and-improves-truth-margin`) is computed from the two spans; bias moving while margin does not is the expected sharper outcome.",
-        "9. `ledger_suggestions.md`: the three drafted claims (C1 causal+controls+side-effects, C2 explicitly split DECODE vs CAUSAL with safety scope, C3 bridge verdict with numbers).",
+        "2. `steering_claim_card.md` and `tables/steering_evidence_matrix.csv`: the shortest defensible interpretation plus the row-level evidence ledger (effect, controls, side effects, caveat).",
+        "3. `plots/steering_evidence_dashboard.png`: one-screen map of Track A, Track B, and the truth bridge. Use it to orient, not to replace the detail plots.",
+        "4. `plots/dose_response_sentiment.png`, `plots/dose_operating_frontier.png`, and `tables/dose_operating_points.csv`: Track A target movement, cost curve, and operating-point choice. Look for the first dose where real beats both controls while fluency/KL/drift remain sane.",
+        "5. `plots/prompt_steering_response_heatmap.png` + `tables/dose_response_by_prompt.csv` + `tables/steered_examples.csv`: per-prompt heterogeneity. Check whether the mean curve is broad evidence or one prompt wearing a megaphone.",
+        "6. `plots/layer_sweep.png` and `plots/layer_selection_detail.png`: generation-based layer choice, with per-prompt spread rather than mean-only evidence.",
+        "7. `plots/refusal_monitor.png`, `plots/induced_refusal.png`, `plots/refusal_safety_dashboard.png`, and `diagnostics/lab07_safety_audit.json`: forward-pass DECODE monitor versus benign-only CAUSAL steering under the safety wall.",
+        "8. `plots/truth_direction_bridge.png`, `plots/truth_bridge_statement_atlas.png`, and `tables/truth_bridge_statement_summary.csv`: answer-bias split from signed truth-margin, including per-statement counterexamples.",
+        "9. `plots/steering_direction_cosines.png` + `tables/steering_direction_cosines.csv`: confound audit; check whether sentiment, refusal, truth, and control directions are secretly close to the same axis.",
+        "10. `tables/plot_reading_guide.csv` and `ledger_suggestions.md`: artifact map plus the three drafted claims.",
         "",
         "## 7. Caveats and falsifiers",
         "",
@@ -1594,3 +2415,55 @@ def write_summary(
     path = ctx.path("run_summary.md")
     bench.write_text(path, "\n".join(lines))
     ctx.register_artifact(path, "summary", "Run summary answering the standard lab artifact questions.")
+
+
+
+def direction_cosine_rows(directions: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Cosine matrix rows for steering/refusal/truth directions and controls."""
+    import torch
+
+    names = list(directions)
+    vecs = {name: directions[name].detach().float().cpu() for name in names}
+    rows: list[dict[str, Any]] = []
+    for a in names:
+        for b in names:
+            va, vb = vecs[a], vecs[b]
+            denom = (va.norm() * vb.norm()).clamp_min(1e-9)
+            rows.append({
+                "direction_a": a,
+                "direction_b": b,
+                "cosine": round_float(float(torch.dot(va, vb) / denom)),
+                "norm_a": round_float(float(va.norm())),
+                "norm_b": round_float(float(vb.norm())),
+            })
+    return rows
+
+
+def plot_direction_cosines(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    """Visual confound audit: are the steering handles distinct directions?"""
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    if not rows:
+        return
+    bench._ensure_plot_style()
+    names = sorted({str(r["direction_a"]) for r in rows})
+    mat = np.zeros((len(names), len(names)))
+    for r in rows:
+        i = names.index(str(r["direction_a"]))
+        j = names.index(str(r["direction_b"]))
+        mat[i, j] = _num(r.get("cosine"), 0.0)
+    fig, ax = plt.subplots(figsize=(max(7.0, 0.8 * len(names) + 3.2), max(6.0, 0.72 * len(names) + 2.4)))
+    im = ax.imshow(mat, cmap="coolwarm", vmin=-1.0, vmax=1.0, interpolation="nearest")
+    ax.set_xticks(range(len(names)))
+    ax.set_xticklabels(names, rotation=35, ha="right")
+    ax.set_yticks(range(len(names)))
+    ax.set_yticklabels(names)
+    for i in range(len(names)):
+        for j in range(len(names)):
+            ax.text(j, i, f"{mat[i, j]:.2f}", ha="center", va="center", fontsize=8)
+    ax.set_title("Direction geometry: steering handles should not silently be the same axis")
+    cbar = fig.colorbar(im, ax=ax, shrink=0.78)
+    cbar.set_label("cosine similarity")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "steering_direction_cosines.png", "Cosine matrix among sentiment, refusal, truth, and control steering directions.")

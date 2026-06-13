@@ -190,6 +190,27 @@ Artifacts:
 
 This is the probe lesson in miniature: decodable, steerable, and explanatory are three different words with three different jobs.
 
+
+## Visualization upgrade: make the handle, cost, and safety scope visible
+
+The revised plotting code keeps the original Track A / Track B / Bridge spine, then adds synthesis artifacts that make the evidence ladder harder to blur:
+
+| Artifact | What it teaches |
+|---|---|
+| `plots/steering_evidence_dashboard.png` | the whole lab in one cockpit: target movement, side-effect cost, refusal predict-vs-cause, and truth bridge verdict |
+| `tables/steering_evidence_matrix.csv` | one row per claim-bearing object: evidence rung, headline metric, controls, side effects, and caveat |
+| `tables/dose_operating_points.csv` | a transparent operating-point table: target movement, control gaps, KL, fluency, drift, and a claimability flag |
+| `plots/prompt_steering_response_heatmap.png` + `tables/dose_response_by_prompt.csv` | whether the aggregate sentiment curve is broad or carried by one excitable prompt row |
+| `plots/dose_operating_frontier.png` | target movement versus side-effect cost: the "steering handle or smoke machine?" plot |
+| `plots/refusal_safety_dashboard.png` | paired monitor separation, benign-only induced refusal, classifier floor, and the safety wall footprint |
+| `plots/induced_refusal.png` + `tables/induced_refusal_generations.csv` | which benign prompts and doses tripped the transparent refusal marker classifier |
+| `plots/truth_bridge_statement_atlas.png` + `tables/truth_bridge_statement_summary.csv` | which held-out truth statements improved or worsened under the truth direction |
+| `plots/steering_direction_cosines.png` + `tables/steering_direction_cosines.csv` | whether sentiment, refusal, truth, and control vectors are distinct handles or nearly the same axis wearing different nametags |
+| `plots/refusal_safety_dashboard.png` + `diagnostics/lab07_safety_audit.json` | a visual and machine-readable footprint of what was forward-only, what was benign-only generation, and what was not implemented |
+| `tables/plot_reading_guide.csv` | the artifact map for students and future report generation |
+
+The new plots do not add a new scientific rung. They make the existing rungs legible: steering is a causal handle, monitor AUC is decode evidence, and the truth bridge remains an operationalization audit rather than a declaration that the model became truthful.
+
 ## Running it
 
 Always run Tier A smoke first (instrument checks + end-to-end plumbing on the small instruct model).
@@ -226,14 +247,17 @@ exercises the full pipeline and writes the safety audit and claim card.
 Instrument health first (as in every prior lab), then the payload artifacts that separate the claims.
 
 1. `diagnostics/hook_parity.json`, `logit_lens_self_check.json`, and `model_anatomy.json` (instrument hygiene; the chat template and residual streams must line up before any steering claim).
-2. `steering_claim_card.md`: the shortest defensible interpretation, with safety wall and "what it does not show" for every track.
-3. `plots/dose_response_sentiment.png` + `tables/dose_response_by_prompt.csv` + `tables/steered_examples.csv`: Track A in four panels (target, fluency, KL, drift) with real vs random vs shuffled overlaid. **Look for:** the dose at which real first reliably beats both controls on the target while the side-effect panels are still reasonable; the asymmetry (positive swing often larger than negative on an RLHF'd model); and the high-dose generations visibly degenerating or parroting contrast vocabulary even as the word-list score keeps rising. The fluency/KL/drift panels exist precisely because the target panel can be gamed.
-4. `plots/layer_sweep.png` and `tables/layer_sweep.csv`: generation-based (not proxy) choice of injection site. The spread column is the actual steering effect you later claim.
-5. `plots/refusal_monitor.png` + `tables/refusal_monitor_table.csv` + `tables/refusal_monitor_examples.csv`: forward-pass projection histograms and ROC on held-out pairs. This is DECODE evidence (predicts category label from activation, no generation from refusal-eliciting prompts).
-6. `plots/induced_refusal.png` + `tables/induced_refusal_curve.csv` + `tables/induced_refusal_generations.csv`: the CAUSAL step on benign prompts only, with random control and binomial SE bands. **Look for the gap:** monitor AUC can be 1.0 while induced refusal still has a classifier floor at dose 0 and a non-zero random curve at some doses. Those two plots together are the "predict vs cause" lesson in one pair.
-7. `diagnostics/lab07_safety_audit.json`: the machine-checkable footprint of the safety wall (zero refusal-eliciting generations, forward-only counts, ablation not implemented).
-8. `plots/truth_direction_bridge.png` + `tables/truth_direction_bridge.csv` + `tables/truth_direction_bridge_by_statement.csv`: the Lab 4 bridge split into answer bias (left) vs signed truth margin (right), real vs random. **Look for the verdict:** if bias moves a lot while the margin panel does not improve (or worsens at high dose), the label is `decodable-and-steers-True-assent`, not "the truth direction makes the model more truthful." Decodability, steerability, and explanatory power are three different jobs.
-9. `ledger_suggestions.md`: the three drafted claims (C1 causal with dose+controls+side-effects, C2 explicitly split DECODE monitor vs CAUSAL induced with safety scope, C3 bridge verdict with bias vs margin numbers).
+2. `plots/steering_evidence_dashboard.png` + `tables/steering_evidence_matrix.csv`: start here. The dashboard is the cockpit; the evidence matrix is the flight recorder.
+3. `steering_claim_card.md`: the shortest defensible interpretation, with safety wall and "what it does not show" for every track.
+4. `plots/layer_sweep.png`, `plots/layer_selection_detail.png`, and `tables/layer_sweep.csv`: generation-based (not proxy) choice of injection site. The spread column is the actual steering effect you later claim.
+5. `plots/dose_response_sentiment.png` + `plots/dose_operating_frontier.png` + `tables/dose_operating_points.csv`: Track A target, fluency, KL, drift, and effect/cost tradeoff. Look for the first dose where real beats both controls before KL or fluency collapse starts eating the furniture.
+6. `plots/prompt_steering_response_heatmap.png` + `tables/dose_response_by_prompt.csv` + `tables/steered_examples.csv`: prompt-level heterogeneity and generation previews. If one prompt carries the curve, the claim must say so.
+7. `plots/refusal_monitor.png` + `plots/refusal_safety_dashboard.png` + `tables/refusal_monitor_table.csv` + `tables/refusal_monitor_examples.csv`: forward-pass DECODE monitor on held-out pairs. This predicts category labels from activations; it is not generated harmful behavior.
+8. `plots/induced_refusal.png` + `plots/refusal_safety_dashboard.png` + `tables/induced_refusal_curve.csv` + `tables/induced_refusal_generations.csv`: CAUSAL steering on benign prompts only, with random control and classifier-floor audit. Hand-audit the generations at the dose you claim.
+9. `diagnostics/lab07_safety_audit.json` + `plots/refusal_safety_dashboard.png`: machine-checkable safety wall (zero refusal-eliciting generations, forward-only monitor, refusal ablation not implemented).
+10. `plots/truth_direction_bridge.png` + `plots/truth_bridge_statement_atlas.png` + `tables/truth_direction_bridge.csv` + `tables/truth_direction_bridge_by_statement.csv` + `tables/truth_bridge_statement_summary.csv`: Lab 4 bridge split into answer bias versus signed truth margin, with per-statement deltas. If bias moves while margin does not, the verdict is `decodable-and-steers-True-assent`, not "more truthful."
+11. `plots/steering_direction_cosines.png` + `tables/steering_direction_cosines.csv`: direction-geometry confound audit; if two handles are nearly collinear, the claims should say so.
+12. `tables/plot_reading_guide.csv` and `ledger_suggestions.md`: plot map plus the three drafted claims.
 
 ## What a good writeup says
 
@@ -245,7 +269,7 @@ A good writeup keeps three separations alive:
 
 A good bridge answer does not say "the truth direction works" until it checks the held-out signed truth-margin panel. If only the answer-bias panel moves (or the margin gets worse at high dose), the verdict is `decodable-and-steers-True-assent`. Write the actual spans and the verdict label. That is not a failed lab. It is a sharper claim that distinguishes "the direction moves the True/False token distribution" from "the direction is a truthfulness mechanism the model uses."
 
-**Make the concept pop:** the unit of evidence is the curve + the control gap + the side-effect cost + the safety footprint + the bias-vs-margin split. One spicy steered sentence is an anecdote; the four-panel plot with three conditions, the monitor-vs-induced pair, and the two-panel bridge with verdict are the evidence. The claim card and the three ledger drafts (C1/C2/C3) are written to force you to keep the distinctions.
+**Make the concept pop:** the unit of evidence is the curve + the control gap + the side-effect cost + the safety footprint + the bias-vs-margin split. One spicy steered sentence is an anecdote; the dashboard, prompt heterogeneity heatmap, effect/cost plot, monitor-vs-induced pair, safety-wall plot, and truth bridge are the evidence bundle. The claim card, evidence matrix, and the three ledger drafts (C1/C2/C3) are written to force you to keep the distinctions.
 
 ## Writeup questions
 

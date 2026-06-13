@@ -3750,6 +3750,43 @@ CONTROL_COLORS = {
 }
 
 
+
+# Lab 7 steering / refusal / truth-bridge visual grammar.
+# Labs can use these helpers when available, while still keeping local fallbacks
+# so older benches remain runnable.
+STEERING_COLORS = {
+    "real": "#D55E00",
+    "sentiment": "#D55E00",
+    "truth": "#7E57C2",
+    "refusal": "#D55E00",
+    "random": "#777777",
+    "shuffled": "#8A9A00",
+    "benign": "#009E73",
+    "refusal_eliciting": "#CC3311",
+    "monitor": "#0072B2",
+    "safety": "#0072B2",
+}
+
+STEERING_MARKERS = {
+    "real": "o",
+    "sentiment": "o",
+    "truth": "o",
+    "refusal": "o",
+    "random": "s",
+    "shuffled": "^",
+    "benign": "o",
+    "refusal_eliciting": "D",
+    "monitor": "o",
+    "safety": "s",
+}
+
+SAFETY_SCOPE_COLORS = {
+    "ok_forward_only": "#0072B2",
+    "ok_benign_only": "#009E73",
+    "not_implemented": "#999999",
+    "blocked": "#CC79A7",
+}
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
@@ -3859,6 +3896,21 @@ def plot_circuit_status_color(status: str, default: str = "#555555") -> str:
 def plot_circuit_edge_color(strength: str, default: str = "#555555") -> str:
     """Shared color lookup for Lab 6 edge-interaction strengths."""
     return CIRCUIT_EDGE_COLORS.get(str(strength), default)
+
+
+def plot_steering_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for steering directions, refusal categories, and truth-bridge conditions."""
+    return STEERING_COLORS.get(str(condition), default)
+
+
+def plot_steering_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for steering directions and refusal/truth categories."""
+    return STEERING_MARKERS.get(str(condition), default)
+
+
+def plot_safety_scope_color(status: str, default: str = "#555555") -> str:
+    """Shared color lookup for safety-wall scope rows."""
+    return SAFETY_SCOPE_COLORS.get(str(status), default)
 
 
 def plot_motif_color(label: str, default: str = "#555555") -> str:
