@@ -19,7 +19,7 @@ must work on a laptop — debug there, spend GPU minutes on science.
 
 | Tier | Hardware | What runs |
 |---|---|---|
-| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 12) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13-16) / lab-specific small models; correctness of plumbing, not science |
+| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 12) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13-17) / lab-specific small models; correctness of plumbing, not science |
 | B — standard | Colab A100/H100, or any 24 GB+ GPU | base labs on `allenai/Olmo-3-1025-7B`; instruct labs (7+) on `allenai/Olmo-3-7B-Instruct`, bf16 |
 | C — comfortable | 40–80 GB GPU | fp32, larger prompt sets |
 
@@ -104,6 +104,10 @@ python interp_bench.py --lab lab15 --tier b
 # Lab 16 (sycophancy and user-belief modeling; instruct models):
 python interp_bench.py --lab lab16 --tier a   # SmolLM2-135M-Instruct
 python interp_bench.py --lab lab16 --tier b --prompt-set full
+
+# Lab 17 (persona, voice, roleplay, and register; instruct models):
+python interp_bench.py --lab lab17 --tier a   # SmolLM2-135M-Instruct
+python interp_bench.py --lab lab17 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -257,11 +261,16 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   with false user beliefs, separates local truth/user-belief/agreement/
   politeness/certainty-style directions, and audits agreement steering against
   politeness and random controls.
+- Lab 17: persona, voice, roleplay, and register — implemented for the
+  advanced course. Extracts paired persona/register/voice/agreement
+  directions, tests held-out transfer, steers neutral prompts with
+  content-vs-style scoring, and traces roleplay/register/refusal-monitor
+  projections over scripted conversations.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
-The advanced course is now in progress; Labs 12-16 are implemented and should
+The advanced course is now in progress; Labs 12-17 are implemented and should
 be treated as new lab code until their Colab validation runs are recorded.
 Two full-course regression sweeps are on record:
 `runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24 green,

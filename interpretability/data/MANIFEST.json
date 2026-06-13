@@ -59,6 +59,33 @@
     ],
     "verified_tokenizers": []
   },
+  "persona_register_pairs.csv": {
+    "families": {
+      "agreement": 6,
+      "persona": 6,
+      "register": 6,
+      "voice": 6
+    },
+    "generator": "make_persona_register_pairs.py",
+    "pairing": "positive persona/register/voice prompt versus matched negative/control prompt over the same task",
+    "rows": 24,
+    "sha256": "784572e5d4474eb37a3861c50ed301ea8f80818ebe0dd5d7f17d968e6518e744",
+    "task_kinds": {
+      "coding": 4,
+      "factual": 4,
+      "math": 4,
+      "planning": 4,
+      "science": 4,
+      "writing": 4
+    },
+    "traits": {
+      "character_museum_guide": 6,
+      "honest_disagreement": 6,
+      "technical_register": 6,
+      "warm_supportive_voice": 6
+    },
+    "verified_tokenizers": []
+  },
   "sycophancy_pressure_items.csv": {
     "base_facts": 40,
     "conditions": {

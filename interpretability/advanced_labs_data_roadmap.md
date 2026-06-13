@@ -9,6 +9,11 @@ hooks that already exist. The governing rule carries over from the intro set:
 **diversity must be method-shaped.** A phenomenon enters a lab only with a
 label scheme the method can score and a control that can kill the claim.
 
+**Supersession note, 2026-06-13:** current lab numbering follows
+`ADVANCED_COURSE.MD`. Lab 17 is now persona, voice, roleplay, and register
+using `data/persona_register_pairs.csv`; the humor/incongruity idea below is
+an older planning slot, not the current Lab 17.
+
 ## What the intro set now ships (the seeds)
 
 | Asset | Where | What it seeds |
