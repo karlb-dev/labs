@@ -2602,11 +2602,15 @@ def resolve_component_anatomy(
     # The gate is a MAX over n_layers per-block reconstructions, so deeper
     # models draw more samples from the same bf16 rounding distribution and
     # the worst block grows even when the decomposition is exactly right
-    # (32B/64-layer first contact: best pair correct at 0.0239 vs the
+    # (32B/64-layer first contact: best pair correct at ~0.024-0.029 vs the
     # 32-layer-calibrated 0.02 — a near-miss, not a wrong hook point; a wrong
-    # pair fails by 10x+). Widen as sqrt(n_layers / 32), calibrated on the
-    # 32-layer course model.
-    effective_tolerance = rel_tolerance * max(1.0, (n_layers / 32.0) ** 0.5)
+    # pair fails by 10x+). Widen as sqrt(n_layers / 32) for depth, and by an
+    # extra low-precision factor for bf16/fp16: the per-block reconstruction
+    # error is dominated by mantissa rounding, which is ~8x coarser in bf16
+    # than fp32. Both stay far below the >0.2 a wrong decomposition produces.
+    low_precision = next(bundle.model.parameters()).dtype in (torch.bfloat16, torch.float16)
+    precision_factor = 1.6 if low_precision else 1.0
+    effective_tolerance = rel_tolerance * max(1.0, (n_layers / 32.0) ** 0.5) * precision_factor
     diag = {
         "probe_prompt": probe_prompt,
         "candidates_tried": {f"attn={a},mlp={m}": err for (a, m), err in results.items()},
@@ -2614,6 +2618,8 @@ def resolve_component_anatomy(
         "max_block_recon_rel_err": best_err,
         "rel_tolerance": rel_tolerance,
         "effective_rel_tolerance": effective_tolerance,
+        "low_precision": low_precision,
+        "precision_factor": precision_factor,
         "explanation": (
             "For each candidate hook-point pair, every block's captured "
             "attn+mlp contribution must reconstruct that block's residual "
@@ -2630,7 +2636,7 @@ def resolve_component_anatomy(
         raise RuntimeError(
             f"No contribution hook-point pair reconstructs the per-block residual "
             f"deltas (best: attn={best_a}, mlp={best_m}, max rel err {best_err:.4f} > "
-            f"tolerance {effective_tolerance:.4f} = {rel_tolerance} x sqrt({n_layers}/32)). "
+            f"tolerance {effective_tolerance:.4f} = {rel_tolerance} x sqrt({n_layers}/32) x {precision_factor} (bf16/fp16 factor)). "
             "This architecture adds components to the residual stream somewhere the "
             "candidates do not cover; see diagnostics/component_anatomy.json."
         )
