@@ -1,12 +1,15 @@
 item_id,task_family,prompt,target,distractor,split,expected_mechanism,notes
-induction_train_01,induction_copy,red blue green red blue,green,red,train,previous_match_induction,The next token repeats the token after the previous occurrence of the query token.
-induction_train_02,induction_copy,blue green yellow blue green,yellow,blue,train,previous_match_induction,Training-split induction-copy evaluation row.
-induction_train_03,induction_copy,green yellow orange green yellow,orange,green,train,previous_match_induction,Training-split induction-copy evaluation row.
-induction_train_04,induction_copy,orange purple silver orange purple,silver,orange,train,previous_match_induction,Training-split induction-copy evaluation row.
-induction_heldout_01,induction_copy,cyan magenta amber cyan magenta,amber,cyan,heldout,previous_match_induction,Held-out color combination; tokens appear during synthetic training but this prompt pattern is frozen.
-induction_heldout_02,induction_copy,silver bronze teal silver bronze,teal,silver,heldout,previous_match_induction,Held-out color combination; tokens appear during synthetic training but this prompt pattern is frozen.
-induction_test_01,induction_copy,amber teal violet amber teal,violet,amber,test,previous_match_induction,Test-split induction-copy evaluation row.
-induction_test_02,induction_copy,purple red cyan purple red,cyan,purple,test,previous_match_induction,Test-split induction-copy evaluation row.
-control_relation_01,relation_control,capital France,Paris,Rome,control,not_trained_control,The tiny training loop never trains country-capital relations; this row is a negative-control task.
-control_relation_02,relation_control,language Italy,Italian,German,control,not_trained_control,The tiny training loop never trains country-language relations; this row is a negative-control task.
-control_sequence_01,sequence_control,month after January,February,March,control,not_trained_control,The tiny training loop never trains calendar relations; this row is a negative-control task.
+ind_train_01,induction_copy,red blue green red blue,green,yellow,train,previous_match_successor_copy,trained synthetic induction-copy row
+ind_train_02,induction_copy,orange purple cyan orange purple,cyan,red,train,previous_match_successor_copy,trained synthetic induction-copy row
+ind_train_03,induction_copy,silver bronze teal silver bronze,teal,orange,train,previous_match_successor_copy,trained synthetic induction-copy row
+ind_train_04,induction_copy,magenta amber violet magenta amber,violet,blue,train,previous_match_successor_copy,trained synthetic induction-copy row
+ind_heldout_01,induction_copy,yellow green purple yellow green,purple,amber,heldout,previous_match_successor_copy,held-out color combination
+ind_heldout_02,induction_copy,cyan red orange cyan red,orange,silver,heldout,previous_match_successor_copy,held-out color combination
+ind_heldout_03,induction_copy,amber teal blue amber teal,blue,magenta,heldout,previous_match_successor_copy,held-out color combination
+ind_test_01,induction_copy,teal violet magenta teal violet,magenta,green,test,previous_match_successor_copy,test color combination
+ind_test_02,induction_copy,bronze yellow silver bronze yellow,silver,purple,test,previous_match_successor_copy,test color combination
+ind_test_03,induction_copy,green orange amber green orange,amber,cyan,test,previous_match_successor_copy,test color combination
+ctrl_relation_01,relation_control,capital France,Paris,Rome,control,not_trained,untrained relation-control row
+ctrl_relation_02,relation_control,language Italy,Italian,German,control,not_trained,untrained relation-control row
+ctrl_calendar_01,calendar_control,month after January,February,March,control,not_trained,untrained calendar-control row
+ctrl_calendar_02,calendar_control,month before March,February,April,control,not_trained,untrained calendar-control row

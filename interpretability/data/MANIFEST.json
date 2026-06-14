@@ -50,17 +50,17 @@
   },
   "training_dynamics_tasks.csv": {
     "families": {
-      "induction_copy": 8,
-      "relation_control": 2,
-      "sequence_control": 1
+      "calendar_control": 2,
+      "induction_copy": 10,
+      "relation_control": 2
     },
     "generator": "hand-authored deterministic course rows",
-    "rows": 11,
-    "sha256": "e75bc0c7d43f5f617e28fafe798dbe1bfd2da8d87aad4b716252b8032b03684a",
+    "rows": 14,
+    "sha256": "67548cea25a3d98b44a2e6eb05abc6407d854c836eda17340050bf9e7e605b6f",
     "splits": {
-      "control": 3,
-      "heldout": 2,
-      "test": 2,
+      "control": 4,
+      "heldout": 3,
+      "test": 3,
       "train": 4
     },
     "training_scope": "controlled tiny-transformer induction-copy sequence; relation/calendar rows are untrained controls",

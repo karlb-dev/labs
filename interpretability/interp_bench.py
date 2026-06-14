@@ -424,9 +424,15 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
     "lab29": {
         "module": "labs.lab29_training_dynamics",
         "run_name": "lab29_training_dynamics",
-        "description": "Training dynamics and circuit birth: controlled checkpoint time-lapse for behavior, decodability, motifs, and intervention transfer.",
-        # Loads the shared smoke model for bench diagnostics, then trains a
-        # tiny in-course transformer on a deterministic induction-copy task.
+        "description": "Training dynamics and circuit birth: controlled tiny-checkpoint time-lapse with behavior, probes, motifs, and intervention-transfer controls.",
+        # Lab 29 trains its own tiny transformer inside the run. The bench
+        # still expects a lightweight HF bundle for the outer runner, so pin
+        # every tier to gpt2 rather than downloading a 7B model unnecessarily.
+        "model_tier_a": "gpt2",
+        "model_tier_b": "gpt2",
+        "model_tier_c": "gpt2",
+        "dtype_tier_b": "float32",
+        "dtype_tier_c": "float32",
         "max_examples_tier_a": "11",
     },
     "lab30": {
