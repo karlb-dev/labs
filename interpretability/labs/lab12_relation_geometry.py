@@ -1872,10 +1872,11 @@ def plot_patch_heatmap(ctx: bench.RunContext, patch_rows: list[dict[str, Any]],
         ax.set_yticklabels(ordered, fontsize=7)
         ax.set_xlabel("stream depth")
         ax.set_title(f"patched at {role}")
-    if im is not None:
-        fig.colorbar(im, ax=list(axes[0]), fraction=0.025, pad=0.02, label="mean recovery")
     fig.suptitle("Subject-swap patching: where clean subject information restores the relation answer", fontsize=13)
-    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    fig.tight_layout(rect=[0, 0, 0.93, 0.93])
+    if im is not None:
+        cax = fig.add_axes([0.945, 0.16, 0.018, 0.68])
+        fig.colorbar(im, cax=cax, label="mean recovery")
     bench.save_figure(ctx, fig, "relation_patch_heatmap.png",
                       "Mean interchange-patch recovery by family x depth at each patched role; edge depths are sanity rows.")
 
@@ -1949,10 +1950,11 @@ def plot_cosines(ctx: bench.RunContext, mats: dict[str, list[list[float]]],
             for j in range(len(ordered)):
                 if np.isfinite(grid[i, j]) and i != j and abs(grid[i, j]) >= 0.25:
                     ax.annotate(f"{grid[i, j]:.2f}", (j, i), ha="center", va="center", fontsize=5.3)
-    if im is not None:
-        fig.colorbar(im, ax=list(axes[0]), fraction=0.03, pad=0.02, label="cosine")
     fig.suptitle("Relation-direction cosine atlas: block structure is a handle, not a mechanism", fontsize=13)
-    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    fig.tight_layout(rect=[0, 0, 0.93, 0.93])
+    if im is not None:
+        cax = fig.add_axes([0.945, 0.16, 0.018, 0.68])
+        fig.colorbar(im, cax=cax, label="cosine")
     bench.save_figure(ctx, fig, "relation_direction_cosines.png",
                       "Pairwise cosines among per-family relation directions at the selected role-specific depths.")
 
