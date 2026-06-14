@@ -47,6 +47,10 @@ CONFUSABLE_PASS_GAP = 0.03
 NODE_AUC_PASS = 0.70
 NODE_RANDOM_LIFT_PASS = 0.05
 TRANSFER_SCALE_FRACTION = 0.45
+TRANSFER_SCALE_GRID_TIER_A = (0.0, TRANSFER_SCALE_FRACTION)
+TRANSFER_SCALE_GRID = (0.0, 0.15, 0.30, TRANSFER_SCALE_FRACTION, 0.75)
+PLOT_SOURCE_SUBDIR = "figure_sources"
+MAX_FAILURE_SPECIMENS = 24
 TOP_CONTEXTS_K = 5
 MIN_DOMAIN_ROWS = 3
 RESIDUAL_ADD_NOOP_ATOL = 1e-4
@@ -87,6 +91,11 @@ class CorpusRow:
 
 def stable_int(text: str) -> int:
     return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:12], 16)
+
+
+def stable_id(*parts: Any, prefix: str = "l30_") -> str:
+    payload = "|".join(str(part) for part in parts)
+    return prefix + hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
 def file_sha256(path: pathlib.Path) -> str:
@@ -526,6 +535,17 @@ def depth_claimable(bundle: bench.ModelBundle, depth: int) -> bool:
     return 0 < int(depth) < bundle.anatomy.n_layers
 
 
+def transfer_scale_grid(ctx: bench.RunContext) -> tuple[float, ...]:
+    """Dose grid for the marker-logit activation-addition side probe.
+
+    Tier A keeps the grid tiny so smoke runs remain cheap. Tier B/C records a
+    small dose-response curve; the pre-existing 0.45 dose remains the headline
+    scale used by the evidence table.
+    """
+    tier = str(getattr(ctx.args, "tier", "") or "").lower()
+    return TRANSFER_SCALE_GRID_TIER_A if tier == "a" else TRANSFER_SCALE_GRID
+
+
 def capture_corpus(ctx: bench.RunContext, bundle: bench.ModelBundle, rows: Sequence[CorpusRow]) -> tuple[dict[str, Any], list[int], dict[int, float]]:
     captures: dict[str, Any] = {}
     depths = coarse_depths(bundle.anatomy.n_layers, str(ctx.args.prompt_set))
@@ -908,8 +928,16 @@ def causal_transfer(
     norm_by_depth: Mapping[int, float],
     node_state: Mapping[tuple[str, int], Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
+    """Run the narrow marker-logit activation-addition probe over a dose grid.
+
+    This remains deliberately modest: it measures marker-vs-contrast logits on
+    a neutral prompt. It is useful as a side-channel test for whether the
+    prototype direction can move a named token margin, not as semantic steering.
+    """
     out: list[dict[str, Any]] = []
+    long_rows: list[dict[str, Any]] = []
     domains = sorted({row.domain for row in rows})
+    scales = transfer_scale_grid(ctx)
     for domain in domains:
         domain_rows = [row for row in rows if row.domain == domain]
         marker = row_marker(domain_rows[0])
@@ -922,33 +950,74 @@ def causal_transfer(
         for depth in depths:
             direction = node_state[(domain, depth)]["direction"]
             rand = node_state[(domain, depth)]["random_direction"]
-            abs_scale = float(norm_by_depth.get(depth, 1.0)) * TRANSFER_SCALE_FRACTION
-            edited_logits = run_with_residual_addition(bundle, neutral_prompt, depth, direction, abs_scale)
-            random_logits = run_with_residual_addition(bundle, neutral_prompt, depth, rand, abs_scale)
-            edited_margin = float(edited_logits[marker_id] - edited_logits[contrast_id])
-            random_margin = float(random_logits[marker_id] - random_logits[contrast_id])
-            out.append({
-                "domain": domain,
-                "depth": depth,
-                "claimable_depth": depth_claimable(bundle, depth),
-                "neutral_probe_prompt": neutral_prompt,
-                "marker_token": marker,
-                "contrast_token": contrast,
-                "marker_id": marker_id,
-                "contrast_id": contrast_id,
-                "scale_fraction_of_median_stream_norm": TRANSFER_SCALE_FRACTION,
-                "absolute_scale": rounded(abs_scale),
-                "base_marker_minus_contrast": rounded(base_margin),
-                "edited_marker_minus_contrast": rounded(edited_margin),
-                "random_marker_minus_contrast": rounded(random_margin),
-                "transfer_gain": rounded(edited_margin - base_margin),
-                "random_gain": rounded(random_margin - base_margin),
-                "control_gap": rounded((edited_margin - base_margin) - (random_margin - base_margin)),
-                "claim_scope": "marker_logit_only_not_semantic_steering",
-            })
+            median_norm = float(norm_by_depth.get(depth, 1.0))
+            for scale_fraction in scales:
+                abs_scale = median_norm * float(scale_fraction)
+                if abs(scale_fraction) <= 1e-12:
+                    edited_margin = base_margin
+                    random_margin = base_margin
+                else:
+                    edited_logits = run_with_residual_addition(bundle, neutral_prompt, depth, direction, abs_scale)
+                    random_logits = run_with_residual_addition(bundle, neutral_prompt, depth, rand, abs_scale)
+                    edited_margin = float(edited_logits[marker_id] - edited_logits[contrast_id])
+                    random_margin = float(random_logits[marker_id] - random_logits[contrast_id])
+                transfer_gain = edited_margin - base_margin
+                random_gain = random_margin - base_margin
+                control_gap = transfer_gain - random_gain
+                is_headline_scale = abs(float(scale_fraction) - TRANSFER_SCALE_FRACTION) <= 1e-12
+                transfer_id = stable_id(domain, depth, scale_fraction, "marker_transfer", prefix="l30_transfer_")
+                row = {
+                    "transfer_row_id": transfer_id,
+                    "domain": domain,
+                    "depth": depth,
+                    "claimable_depth": depth_claimable(bundle, depth),
+                    "neutral_probe_prompt": neutral_prompt,
+                    "marker_token": marker,
+                    "contrast_token": contrast,
+                    "marker_id": marker_id,
+                    "contrast_id": contrast_id,
+                    "scale_fraction_of_median_stream_norm": rounded(scale_fraction),
+                    "is_headline_scale": is_headline_scale,
+                    "absolute_scale": rounded(abs_scale),
+                    "median_stream_norm_at_depth": rounded(median_norm),
+                    "base_marker_minus_contrast": rounded(base_margin),
+                    "edited_marker_minus_contrast": rounded(edited_margin),
+                    "random_marker_minus_contrast": rounded(random_margin),
+                    "transfer_gain": rounded(transfer_gain),
+                    "random_gain": rounded(random_gain),
+                    "control_gap": rounded(control_gap),
+                    "claim_scope": "marker_logit_only_not_semantic_steering",
+                }
+                out.append(row)
+                for condition, margin, gain in (
+                    ("prototype_direction", edited_margin, transfer_gain),
+                    ("random_direction_control", random_margin, random_gain),
+                ):
+                    long_rows.append({
+                        "transfer_row_id": transfer_id,
+                        "condition": condition,
+                        "domain": domain,
+                        "depth": depth,
+                        "claimable_depth": depth_claimable(bundle, depth),
+                        "scale_fraction_of_median_stream_norm": rounded(scale_fraction),
+                        "is_headline_scale": is_headline_scale,
+                        "marker_minus_contrast": rounded(margin),
+                        "gain_over_base": rounded(gain),
+                        "base_marker_minus_contrast": rounded(base_margin),
+                        "marker_token": marker,
+                        "contrast_token": contrast,
+                        "neutral_probe_prompt": neutral_prompt,
+                    })
+    dose_path = ctx.path("tables", "causal_transfer_dose_response.csv")
+    bench.write_csv_with_context(ctx, dose_path, out)
+    ctx.register_artifact(dose_path, "table", "Full marker-logit activation-addition dose sweep by domain and depth.")
+    headline_rows = [row for row in out if row.get("is_headline_scale")]
     path = ctx.path("tables", "causal_transfer_by_layer.csv")
-    bench.write_csv_with_context(ctx, path, out)
-    ctx.register_artifact(path, "table", "Marker-logit activation-addition transfer by domain and depth.")
+    bench.write_csv_with_context(ctx, path, headline_rows)
+    ctx.register_artifact(path, "table", "Headline-scale marker-logit activation-addition transfer by domain and depth.")
+    long_path = ctx.path("tables", "causal_transfer_long.csv")
+    bench.write_csv_with_context(ctx, long_path, long_rows)
+    ctx.register_artifact(long_path, "table", "Tidy long-form marker-transfer rows for prototype and random-control conditions across the dose grid.")
     return out
 
 
@@ -986,7 +1055,7 @@ def label_stability(
                 -int(row.get("depth", 999)),
             ),
         )
-        transfer = [row for row in transfer_rows if row["domain"] == domain and row.get("claimable_depth")]
+        transfer = [row for row in transfer_rows if row["domain"] == domain and row.get("claimable_depth") and row.get("is_headline_scale", True)]
         best_transfer_gap = safe_max([row.get("control_gap") for row in transfer])
         mean_eval_auc = safe_mean([row.get("eval_auc") for row in dnodes])
         mean_random_eval_auc = safe_mean([row.get("random_eval_auc") for row in dnodes])
@@ -1439,22 +1508,79 @@ def write_run_summary(ctx: bench.RunContext, data_info: Mapping[str, Any], metri
 
 def write_plot_guide(ctx: bench.RunContext) -> None:
     rows = [
-        {"plot": "plots/feature_lineage_dashboard.png", "read_for": "Domain verdicts, eval AUC, stable edges, confusable gap, marker transfer.", "non_claim": "Not feature identity."},
-        {"plot": "plots/node_auc_by_depth.png", "read_for": "Whether node directions are held-out label-valid by depth.", "non_claim": "AUC alone is not lineage."},
-        {"plot": "plots/cross_layer_feature_graph.png", "read_for": "Same-label adjacent-depth lineage score traces.", "non_claim": "Graph edges are candidate handles."},
-        {"plot": "plots/lineage_similarity_matrix.png", "read_for": "Cross-domain lineage scores and confusable leakage.", "non_claim": "High off-diagonal scores may be a confound."},
-        {"plot": "plots/confusable_control_ladder.png", "read_for": "Whether same-label edges beat confusable and random controls.", "non_claim": "No broad claim if the confusable control is close."},
-        {"plot": "plots/feature_split_merge_atlas.png", "read_for": "Split/merge entropy screens.", "non_claim": "Entropy is a hypothesis screen, not proof."},
-        {"plot": "plots/label_stability_ladder.png", "read_for": "Label survival by domain.", "non_claim": "Label survival is not semantic identity."},
-        {"plot": "plots/cross_model_feature_overlap.png", "read_for": "Same-model overlap versus random controls using cross-model schema.", "non_claim": "External cross-model comparison is not run."},
-        {"plot": "plots/causal_transfer_by_layer.png", "read_for": "Marker-logit activation-addition transfer by layer.", "non_claim": "Marker logits are a narrow causal probe."},
+        {
+            "figure": "feature_lineage_dashboard.png",
+            "source_table": "tables/figure_sources/dashboard_evidence.csv",
+            "question": "Which domains clear the node, edge, control, and caveat gates at a glance?",
+            "interpretation_note": "Dashboard cells are a reading map. Verify each gate in evidence_matrix.csv before writing a claim.",
+        },
+        {
+            "figure": "overview_dashboard.png",
+            "source_table": "tables/figure_sources/dashboard_evidence.csv",
+            "question": "What is the compact claim posture by domain?",
+            "interpretation_note": "This is a text cockpit for smoke runs and reports where dense plots are hard to read.",
+        },
+        {
+            "figure": "target_vs_control.png",
+            "source_table": "tables/figure_sources/target_vs_control_source.csv",
+            "question": "Do same-label adjacent-depth edges beat random and confusable controls directly?",
+            "interpretation_note": "Read same-label beside controls. A bright same-label point is weak if confusable rides alongside it.",
+        },
+        {
+            "figure": "dose_response.png",
+            "source_table": "tables/figure_sources/dose_response_source.csv",
+            "question": "Does the marker-logit side probe respond smoothly as scale changes?",
+            "interpretation_note": "A dose curve is token-level evidence only. It should not be promoted to semantic steering.",
+        },
+        {
+            "figure": "layer_sweep_heatmap.png",
+            "source_table": "tables/figure_sources/layer_sweep_heatmap_source.csv",
+            "question": "Where across depth is held-out node decodability above random control?",
+            "interpretation_note": "Embedding and final depths are diagnostic; interior depths carry the formal claim discipline.",
+        },
+        {
+            "figure": "node_auc_by_depth.png",
+            "source_table": "tables/figure_sources/node_auc_by_depth_source.csv",
+            "question": "Which prototype directions are label-valid on held-out rows?",
+            "interpretation_note": "Solid lines are real directions and dotted lines are random controls.",
+        },
+        {
+            "figure": "cross_layer_feature_graph.png",
+            "source_table": "tables/figure_sources/cross_layer_feature_graph_source.csv",
+            "question": "Do same-label edges recur across adjacent depths?",
+            "interpretation_note": "Treat recurrence as a candidate handle, never as feature identity.",
+        },
+        {
+            "figure": "lineage_similarity_matrix.png",
+            "source_table": "tables/figure_sources/lineage_similarity_matrix_source.csv",
+            "question": "Which off-label target domains compete with the favorite lineage story?",
+            "interpretation_note": "Off-diagonal strength is not clutter. It is often the most important control.",
+        },
+        {
+            "figure": "confusable_control_ladder.png",
+            "source_table": "tables/figure_sources/confusable_control_ladder_source.csv",
+            "question": "Does each domain beat its paired confusable control?",
+            "interpretation_note": "A positive same-label score is control-limited if the confusable bar is close or higher.",
+        },
+        {
+            "figure": "paired_examples.png",
+            "source_table": "tables/figure_sources/paired_examples_source.csv",
+            "question": "Do selected edges preserve example ordering across depth on individual eval rows?",
+            "interpretation_note": "Raw paired points expose when one or two examples carry the apparent correlation.",
+        },
+        {
+            "figure": "failure_specimens.md",
+            "source_table": "tables/failure_specimens.jsonl",
+            "question": "Which rows, edges, or probes most narrow the claim?",
+            "interpretation_note": "Negative specimens are evidence, not cleanup chores.",
+        },
     ]
     path = ctx.path("tables", "plot_reading_guide.csv")
     bench.write_csv_with_context(ctx, path, rows)
-    ctx.register_artifact(path, "table", "Plot reading guide for Lab 30.")
+    ctx.register_artifact(path, "table", "Plot reading guide for Lab 30 figures and source tables.")
     plot_path = ctx.path("plots", "plot_reading_guide.csv")
     bench.write_csv_with_context(ctx, plot_path, rows)
-    ctx.register_artifact(plot_path, "table", "Copy of the Lab 30 plot reading guide next to the plot files.")
+    ctx.register_artifact(plot_path, "table", "Copy of the plot reading guide inside the plots directory.")
 
 
 def write_claims(ctx: bench.RunContext, evidence: Sequence[Mapping[str, Any]]) -> None:
@@ -1485,8 +1611,357 @@ def write_claims(ctx: bench.RunContext, evidence: Sequence[Mapping[str, Any]]) -
 
 
 # ---------------------------------------------------------------------------
-# Plots
+# Plot source tables, manifests, specimens, and plots
 # ---------------------------------------------------------------------------
+
+
+def _rows_without_warning(rows: Sequence[Mapping[str, Any]], warning: str = "") -> list[dict[str, Any]]:
+    out = [dict(row) for row in rows]
+    if not out and warning:
+        out = [{"warning": warning}]
+    return out
+
+
+def save_figure_source(
+    ctx: bench.RunContext,
+    name: str,
+    rows: Sequence[Mapping[str, Any]],
+    description: str,
+    *,
+    warning: str = "",
+) -> dict[str, Any]:
+    source_rows = _rows_without_warning(rows, warning)
+    path = ctx.path("tables", PLOT_SOURCE_SUBDIR, name)
+    bench.write_csv_with_context(ctx, path, source_rows)
+    ctx.register_artifact(path, "table", description)
+    return {
+        "source_path": str(path.relative_to(ctx.run_dir)),
+        "row_count": len(rows),
+        "written_row_count": len(source_rows),
+        "description": description,
+        "warning": warning if not rows else "",
+    }
+
+
+def build_node_projection_scores(
+    ctx: bench.RunContext,
+    rows: Sequence[CorpusRow],
+    depths: Sequence[int],
+    node_state: Mapping[tuple[str, int], Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    domains = sorted({row.domain for row in rows})
+    confusable_by_domain = {domain: sorted({row_confusable(row) for row in rows if row.domain == domain})[0] for domain in domains}
+    for depth in depths:
+        for scored_domain in domains:
+            state = node_state[(scored_domain, depth)]
+            for row in rows:
+                score = as_float(state["scores"].get(row.row_id))
+                random_score = as_float(state["random_scores"].get(row.row_id))
+                out.append({
+                    "projection_row_id": stable_id(scored_domain, depth, row.row_id, "projection", prefix="l30_proj_"),
+                    "row_id": row.row_id,
+                    "row_domain": row.domain,
+                    "scored_domain": scored_domain,
+                    "split": split_group(row),
+                    "depth": depth,
+                    "target_label": int(row.domain == scored_domain),
+                    "group_id": row.group_id,
+                    "is_confusable_for_scored_domain": row.domain == confusable_by_domain.get(scored_domain),
+                    "projection_score": rounded(score),
+                    "random_projection_score": rounded(random_score),
+                    "score_minus_random": rounded(score - random_score if math.isfinite(score) and math.isfinite(random_score) else float("nan")),
+                    "text_preview": row.text[:160],
+                })
+    path = ctx.path("tables", "feature_lineage_node_scores.csv")
+    bench.write_csv_with_context(ctx, path, out)
+    ctx.register_artifact(path, "table", "Per-example prototype and random-control projection scores for raw-point plots.")
+    alias_path = ctx.path("tables", "node_projection_scores.csv")
+    bench.write_csv_with_context(ctx, alias_path, out)
+    ctx.register_artifact(alias_path, "table", "Alias of feature_lineage_node_scores.csv for raw per-example prototype projections.")
+    return out
+
+
+def build_edge_eval_pairs(
+    ctx: bench.RunContext,
+    rows: Sequence[CorpusRow],
+    edges: Sequence[Mapping[str, Any]],
+    node_state: Mapping[tuple[str, int], Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Rows for paired before/after-style plots across adjacent depths."""
+    ev = eval_rows(rows)
+    if not ev:
+        ev = list(rows)
+    domains = sorted({row.domain for row in rows})
+    out: list[dict[str, Any]] = []
+    for domain in domains:
+        candidates = [
+            row for row in edges
+            if row.get("source_domain") == domain and row.get("target_domain") == domain and row.get("same_label")
+        ]
+        if not candidates:
+            continue
+        best = max(candidates, key=lambda row: (as_float(row.get("lineage_score"), -999.0), as_float(row.get("confusable_gap"), -999.0)))
+        source_depth = int(best["source_depth"])
+        target_depth = int(best["target_depth"])
+        source_state = node_state[(domain, source_depth)]
+        target_state = node_state[(domain, target_depth)]
+        source_vals = [as_float(source_state["scores"].get(row.row_id)) for row in ev]
+        target_vals = [as_float(target_state["scores"].get(row.row_id)) for row in ev]
+        source_mean = safe_mean(source_vals, 0.0)
+        target_mean = safe_mean(target_vals, 0.0)
+        source_sd = safe_stdev(source_vals, 1.0)
+        target_sd = safe_stdev(target_vals, 1.0)
+        if not math.isfinite(source_sd) or source_sd <= 1e-12:
+            source_sd = 1.0
+        if not math.isfinite(target_sd) or target_sd <= 1e-12:
+            target_sd = 1.0
+        for row in ev:
+            source_score = as_float(source_state["scores"].get(row.row_id))
+            target_score = as_float(target_state["scores"].get(row.row_id))
+            out.append({
+                "pair_row_id": stable_id(domain, row.row_id, source_depth, target_depth, "edge_pair", prefix="l30_pair_"),
+                "selected_edge_id": best.get("edge_id", ""),
+                "domain": domain,
+                "row_id": row.row_id,
+                "row_domain": row.domain,
+                "split": split_group(row),
+                "source_depth": source_depth,
+                "target_depth": target_depth,
+                "positive_for_domain": int(row.domain == domain),
+                "source_score": rounded(source_score),
+                "target_score": rounded(target_score),
+                "source_score_z": rounded((source_score - source_mean) / source_sd if math.isfinite(source_score) else float("nan")),
+                "target_score_z": rounded((target_score - target_mean) / target_sd if math.isfinite(target_score) else float("nan")),
+                "lineage_score": best.get("lineage_score"),
+                "random_control_score": best.get("random_control_score"),
+                "confusable_control_score": best.get("confusable_control_score"),
+                "claim_candidate": best.get("claim_candidate"),
+                "text_preview": row.text[:160],
+            })
+    path = ctx.path("tables", "edge_eval_pairs.csv")
+    bench.write_csv_with_context(ctx, path, out)
+    ctx.register_artifact(path, "table", "Per-example source/target-depth scores for selected same-label edges.")
+    return out
+
+
+def _mean_group_rows(rows: Sequence[Mapping[str, Any]], keys: Sequence[str], metrics: Sequence[str]) -> list[dict[str, Any]]:
+    groups: dict[tuple[Any, ...], list[Mapping[str, Any]]] = defaultdict(list)
+    for row in rows:
+        groups[tuple(row.get(key, "") for key in keys)].append(row)
+    out: list[dict[str, Any]] = []
+    for group_key, group_rows in sorted(groups.items(), key=lambda item: tuple(str(x) for x in item[0])):
+        rec = {key: value for key, value in zip(keys, group_key)}
+        rec["n"] = len(group_rows)
+        for metric in metrics:
+            rec[f"mean_{metric}"] = rounded(safe_mean([row.get(metric) for row in group_rows]))
+        out.append(rec)
+    return out
+
+
+def build_plot_sources(
+    ctx: bench.RunContext,
+    summary: Sequence[Mapping[str, Any]],
+    nodes: Sequence[Mapping[str, Any]],
+    edges: Sequence[Mapping[str, Any]],
+    split_rows: Sequence[Mapping[str, Any]],
+    overlap: Sequence[Mapping[str, Any]],
+    transfer_rows: Sequence[Mapping[str, Any]],
+    projection_rows: Sequence[Mapping[str, Any]],
+    edge_pair_rows: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    same_edges = [row for row in edges if row.get("same_label")]
+    target_vs_control: list[dict[str, Any]] = []
+    for row in same_edges:
+        target_vs_control.extend([
+            {**dict(row), "condition": "same_label_edge", "score": row.get("lineage_score"), "control_gap": ""},
+            {**dict(row), "condition": "random_direction_control", "score": row.get("random_control_score"), "control_gap": row.get("lineage_lift_over_random")},
+            {**dict(row), "condition": "confusable_domain_control", "score": row.get("confusable_control_score"), "control_gap": row.get("confusable_gap")},
+        ])
+    sources = {
+        "feature_lineage_dashboard.png": save_figure_source(ctx, "dashboard_evidence.csv", summary, "Domain-level dashboard source rows."),
+        "overview_dashboard.png": save_figure_source(ctx, "dashboard_evidence.csv", summary, "Compact text dashboard source rows."),
+        "node_auc_by_depth.png": save_figure_source(ctx, "node_auc_by_depth_source.csv", nodes, "Node AUC by depth source rows."),
+        "layer_sweep_heatmap.png": save_figure_source(ctx, "layer_sweep_heatmap_source.csv", nodes, "Held-out AUC-lift heatmap source rows."),
+        "target_vs_control.png": save_figure_source(ctx, "target_vs_control_source.csv", target_vs_control, "Same-label edge versus random/confusable control source rows."),
+        "cross_layer_feature_graph.png": save_figure_source(ctx, "cross_layer_feature_graph_source.csv", same_edges, "Same-label adjacent-depth edge trace source rows."),
+        "lineage_similarity_matrix.png": save_figure_source(ctx, "lineage_similarity_matrix_source.csv", edges, "All source-target domain edge scores for matrix plot."),
+        "confusable_control_ladder.png": save_figure_source(ctx, "confusable_control_ladder_source.csv", summary, "Domain-level same/confusable/random ladder source rows."),
+        "feature_split_merge_atlas.png": save_figure_source(ctx, "feature_split_merge_atlas_source.csv", split_rows, "Split/merge screen source rows."),
+        "label_stability_ladder.png": save_figure_source(ctx, "label_stability_source.csv", summary, "Label-stability source rows."),
+        "cross_model_feature_overlap.png": save_figure_source(ctx, "cross_model_feature_overlap_source.csv", overlap, "Same-model overlap placeholder source rows."),
+        "dose_response.png": save_figure_source(ctx, "dose_response_source.csv", transfer_rows, "Marker-transfer dose response source rows."),
+        "causal_transfer_by_layer.png": save_figure_source(ctx, "causal_transfer_by_layer_source.csv", [row for row in transfer_rows if row.get("is_headline_scale", True)], "Headline-dose marker transfer source rows."),
+        "paired_examples.png": save_figure_source(ctx, "paired_examples_source.csv", edge_pair_rows, "Raw paired source/target-depth example rows."),
+        "feature_lineage_node_scores.csv": save_figure_source(ctx, "feature_lineage_node_scores_source.csv", projection_rows, "Per-example node projection score source rows."),
+        "failure_specimens.md": save_figure_source(ctx, "counterexamples_source.csv", counterexamples, "Counterexample and failure-specimen source rows."),
+    }
+    aggregate_rows = _mean_group_rows(target_vs_control, ["source_domain", "condition"], ["score"])
+    sources["target_vs_control_aggregate.csv"] = save_figure_source(
+        ctx,
+        "target_vs_control_aggregate.csv",
+        aggregate_rows,
+        "Mean target/control score rows used for interpreting the raw target-vs-control plot.",
+    )
+    return sources
+
+
+def write_plot_manifest(ctx: bench.RunContext, sources: Mapping[str, Mapping[str, Any]], *, no_plots: bool) -> None:
+    rows: list[dict[str, Any]] = []
+    manifest: list[dict[str, Any]] = []
+    questions = {
+        "feature_lineage_dashboard.png": "Do node, edge, control, and caveat gates tell one coherent story?",
+        "overview_dashboard.png": "What is the compact domain-by-domain claim posture?",
+        "target_vs_control.png": "Do same-label edges beat random and confusable controls directly?",
+        "dose_response.png": "Does marker-logit activation addition show a dose-response rather than a one-dose accident?",
+        "layer_sweep_heatmap.png": "Where across depth is held-out node AUC lift above random?",
+        "paired_examples.png": "Are selected edge correlations broad across examples or carried by specimens?",
+    }
+    claims = {
+        "feature_lineage_dashboard.png": "Navigation summary only; verify claims in evidence_matrix.csv.",
+        "target_vs_control.png": "Supports edge specificity only when same-label exceeds both controls.",
+        "dose_response.png": "Supports only a narrow marker-logit side probe, not semantic steering.",
+        "layer_sweep_heatmap.png": "Supports where a supervised prototype direction is held-out decodable above random.",
+        "paired_examples.png": "Supports raw example-level inspection of the selected edge, not an aggregate claim by itself.",
+    }
+    for figure, meta in sources.items():
+        if figure.endswith(".png"):
+            figure_path = f"plots/{figure}"
+        elif figure == "failure_specimens.md":
+            figure_path = "tables/failure_specimens.md"
+        else:
+            figure_path = meta.get("source_path", "")
+        rec = {
+            "figure_path": figure_path,
+            "source_table": meta.get("source_path", ""),
+            "source_row_count": meta.get("row_count", 0),
+            "metric": "see_source_table_columns",
+            "control": "random_direction_and_confusable_domain_controls_where_applicable",
+            "question_answered": questions.get(figure, "Source artifact supporting a Lab 30 figure or evidence specimen."),
+            "claim_supported": claims.get(figure, "Inspection artifact; do not cite alone for a lineage claim."),
+            "created_when_no_plots": bool(no_plots and figure.endswith(".png")),
+            "warning": meta.get("warning", ""),
+        }
+        rows.append(rec)
+        manifest.append(rec)
+    json_path = ctx.path("plots", "plot_manifest.json")
+    bench.write_json(json_path, manifest)
+    ctx.register_artifact(json_path, "table", "Machine-readable manifest linking every Lab 30 plot to its source table.")
+    csv_path = ctx.path("plots", "plot_manifest.csv")
+    bench.write_csv_with_context(ctx, csv_path, rows)
+    ctx.register_artifact(csv_path, "table", "CSV manifest linking every Lab 30 plot to its source table.")
+
+
+def write_failure_specimens(ctx: bench.RunContext, counterexamples: Sequence[Mapping[str, Any]]) -> tuple[pathlib.Path, pathlib.Path]:
+    specimens = [dict(row) for row in counterexamples[:MAX_FAILURE_SPECIMENS]]
+    jsonl_path = ctx.path("tables", "failure_specimens.jsonl")
+    write_jsonl(jsonl_path, [{**ctx.table_context(), **row} for row in specimens])
+    ctx.register_artifact(jsonl_path, "table", "JSONL specimens that fail, narrow, or complicate the lineage claim.")
+    lines = [
+        "# Lab 30 failure specimens",
+        "",
+        "These are not plotting leftovers. They are the rows and edges that keep the lineage claim honest.",
+        "",
+    ]
+    if not specimens:
+        lines.append("No counterexamples were selected by the current thresholds. In a tiny Tier A run, that usually means the evidence table is too small, not that the mechanism is clean.")
+    for i, row in enumerate(specimens, start=1):
+        label = row.get("failure_type") or row.get("gate_failure") or row.get("kind") or "counterexample"
+        lines.extend([
+            f"## {i}. {label}",
+            "",
+            f"- Domain: `{row.get('domain', row.get('source_domain', ''))}`",
+            f"- Depth/site: `{row.get('depth', row.get('source_depth', ''))}`",
+            f"- Why it matters: {row.get('note', row.get('claim_risk', 'This specimen narrows broad lineage language.'))}",
+            "",
+        ])
+    md_path = ctx.path("tables", "failure_specimens.md")
+    bench.write_text(md_path, "\n".join(lines).rstrip() + "\n")
+    ctx.register_artifact(md_path, "table", "Markdown failure-specimen guide for Lab 30.")
+    return jsonl_path, md_path
+
+
+def write_warning_summary(
+    ctx: bench.RunContext,
+    data_info: Mapping[str, Any],
+    corpus_rows: Sequence[Mapping[str, Any]],
+    nodes: Sequence[Mapping[str, Any]],
+    edges: Sequence[Mapping[str, Any]],
+    transfer_rows: Sequence[Mapping[str, Any]],
+    sources: Mapping[str, Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    warnings: list[dict[str, Any]] = []
+
+    def add(level: str, code: str, message: str, artifact: str = "") -> None:
+        warnings.append({"level": level, "code": code, "message": message, "artifact": artifact})
+
+    if not data_info.get("science_ready_data"):
+        add("warning", "smoke_or_fallback_data", "Run is not science-ready; do not ledger claims from fallback/smoke data.", "diagnostics/data_manifest.json")
+    low_split_domains = [row.get("domain") for row in corpus_rows if not row.get("science_ready_domain")]
+    if low_split_domains:
+        add("warning", "split_support_low", f"Domains without both train and eval support: {sorted(set(low_split_domains))}", "diagnostics/split_balance.csv")
+    if not any(row.get("claimable_node") for row in nodes):
+        add("warning", "no_claimable_nodes", "No node passed claimable held-out decodability gates.", "tables/feature_lineage_nodes.csv")
+    if not any(row.get("claim_candidate") for row in edges):
+        add("warning", "no_claim_candidate_edges", "No same-label edge beat the edge/control gates.", "tables/feature_lineage_edges.csv")
+    if not any(row.get("is_headline_scale") for row in transfer_rows):
+        add("warning", "missing_headline_transfer_scale", "The marker-transfer table has no headline scale rows.", "tables/causal_transfer_by_layer.csv")
+    if not counterexamples:
+        add("info", "no_selected_counterexamples", "No counterexamples were selected by current thresholds; inspect raw controls anyway.", "tables/feature_lineage_edges.csv")
+    for figure, meta in sources.items():
+        if int(meta.get("row_count") or 0) == 0:
+            add("warning", "empty_plot_source", f"Plot/source {figure} had zero source rows.", str(meta.get("source_path", "")))
+    json_path = ctx.path("diagnostics", "warning_summary.json")
+    bench.write_json(json_path, warnings)
+    ctx.register_artifact(json_path, "diagnostic", "Machine-readable Lab 30 warnings and caveats.")
+    csv_path = ctx.path("diagnostics", "warning_summary.csv")
+    bench.write_csv_with_context(ctx, csv_path, warnings)
+    ctx.register_artifact(csv_path, "diagnostic", "CSV Lab 30 warnings and caveats.")
+    return warnings
+
+
+def write_lab30_run_config_snapshot(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    data_info: Mapping[str, Any],
+    rows: Sequence[CorpusRow],
+    depths: Sequence[int],
+    sources: Mapping[str, Mapping[str, Any]],
+) -> pathlib.Path:
+    payload = {
+        "lab": LAB_NAME,
+        "model": bundle.anatomy.model_id,
+        "tier": ctx.args.tier,
+        "prompt_set": ctx.args.prompt_set,
+        "seed": ctx.args.seed,
+        "dtype": ctx.args.dtype,
+        "quantization": ctx.args.quantization,
+        "n_layers": bundle.anatomy.n_layers,
+        "d_model": bundle.anatomy.d_model,
+        "depth_grid": list(depths),
+        "claimable_depths": [depth for depth in depths if depth_claimable(bundle, depth)],
+        "transfer_scale_grid": list(transfer_scale_grid(ctx)),
+        "node_auc_pass": NODE_AUC_PASS,
+        "lineage_pass_score": LINEAGE_PASS_SCORE,
+        "lineage_pass_lift": LINEAGE_PASS_LIFT,
+        "confusable_pass_gap": CONFUSABLE_PASS_GAP,
+        "data": dict(data_info),
+        "selected_row_ids": [row.row_id for row in rows],
+        "domains": sorted({row.domain for row in rows}),
+        "plot_manifest_expected": sorted(sources),
+    }
+    path = ctx.path("diagnostics", "lab30_run_config_snapshot.json")
+    bench.write_json(path, payload)
+    ctx.register_artifact(path, "diagnostic", "Lab 30 run config snapshot for reproducing plots and tables.")
+    return path
+
+
+def _plot_empty(ax: Any, title: str, message: str) -> None:
+    ax.set_title(title)
+    ax.text(0.5, 0.5, message, ha="center", va="center", transform=ax.transAxes)
+    ax.set_axis_off()
 
 
 def write_plots(
@@ -1497,58 +1972,160 @@ def write_plots(
     split_rows: Sequence[Mapping[str, Any]],
     overlap: Sequence[Mapping[str, Any]],
     transfer_rows: Sequence[Mapping[str, Any]],
-) -> None:
+    projection_rows: Sequence[Mapping[str, Any]],
+    edge_pair_rows: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
     write_plot_guide(ctx)
+    sources = build_plot_sources(ctx, summary, nodes, edges, split_rows, overlap, transfer_rows, projection_rows, edge_pair_rows, counterexamples)
+    write_plot_manifest(ctx, sources, no_plots=bool(ctx.args.no_plots))
     if ctx.args.no_plots:
-        return
+        return sources
+
     import matplotlib.pyplot as plt
     import numpy as np
 
     domains = [str(row["domain"]) for row in summary]
     x = np.arange(len(domains))
 
+    # Main dashboard.
     fig, axes = plt.subplots(2, 3, figsize=(15, 8))
     fig.suptitle("Lab 30 feature lineage dashboard", fontsize=14, fontweight="bold")
-    axes[0, 0].bar(x, [as_float(row.get("mean_eval_auc"), 0.0) for row in summary])
-    axes[0, 0].axhline(NODE_AUC_PASS, linestyle="--", linewidth=0.8)
-    axes[0, 0].set_xticks(x, domains, rotation=35, ha="right")
-    axes[0, 0].set_title("Held-out node AUC")
+    if not summary:
+        for ax in axes.ravel():
+            _plot_empty(ax, "No dashboard rows", "No summary rows were produced")
+    else:
+        axes[0, 0].bar(x, [as_float(row.get("mean_eval_auc"), 0.0) for row in summary])
+        axes[0, 0].axhline(NODE_AUC_PASS, linestyle="--", linewidth=0.8)
+        axes[0, 0].set_xticks(x, domains, rotation=35, ha="right")
+        axes[0, 0].set_title("Held-out node AUC")
 
-    axes[0, 1].bar(x, [as_float(row.get("stable_edge_fraction"), 0.0) for row in summary])
-    axes[0, 1].set_ylim(0, 1.05)
-    axes[0, 1].set_xticks(x, domains, rotation=35, ha="right")
-    axes[0, 1].set_title("Stable edge fraction")
+        axes[0, 1].bar(x, [as_float(row.get("stable_edge_fraction"), 0.0) for row in summary])
+        axes[0, 1].set_ylim(0, 1.05)
+        axes[0, 1].set_xticks(x, domains, rotation=35, ha="right")
+        axes[0, 1].set_title("Stable edge fraction")
 
-    axes[0, 2].bar(x, [as_float(row.get("label_survival_rate"), 0.0) for row in summary])
-    axes[0, 2].set_ylim(0, 1.05)
-    axes[0, 2].set_xticks(x, domains, rotation=35, ha="right")
-    axes[0, 2].set_title("Label survival")
+        axes[0, 2].bar(x, [as_float(row.get("label_survival_rate"), 0.0) for row in summary])
+        axes[0, 2].set_ylim(0, 1.05)
+        axes[0, 2].set_xticks(x, domains, rotation=35, ha="right")
+        axes[0, 2].set_title("Label survival")
 
-    axes[1, 0].bar(x, [as_float(row.get("mean_lineage_lift_over_random"), 0.0) for row in summary])
-    axes[1, 0].axhline(LINEAGE_PASS_LIFT, linestyle="--", linewidth=0.8)
-    axes[1, 0].set_xticks(x, domains, rotation=35, ha="right")
-    axes[1, 0].set_title("Lift over random")
+        axes[1, 0].bar(x, [as_float(row.get("mean_lineage_lift_over_random"), 0.0) for row in summary])
+        axes[1, 0].axhline(LINEAGE_PASS_LIFT, linestyle="--", linewidth=0.8)
+        axes[1, 0].set_xticks(x, domains, rotation=35, ha="right")
+        axes[1, 0].set_title("Lift over random")
 
-    axes[1, 1].bar(x, [as_float(row.get("mean_confusable_gap"), 0.0) for row in summary])
-    axes[1, 1].axhline(CONFUSABLE_PASS_GAP, linestyle="--", linewidth=0.8)
-    axes[1, 1].set_xticks(x, domains, rotation=35, ha="right")
-    axes[1, 1].set_title("Gap over confusable")
+        axes[1, 1].bar(x, [as_float(row.get("mean_confusable_gap"), 0.0) for row in summary])
+        axes[1, 1].axhline(CONFUSABLE_PASS_GAP, linestyle="--", linewidth=0.8)
+        axes[1, 1].set_xticks(x, domains, rotation=35, ha="right")
+        axes[1, 1].set_title("Gap over confusable")
 
-    axes[1, 2].bar(x, [as_float(row.get("best_causal_transfer_gap"), 0.0) for row in summary])
-    axes[1, 2].axhline(0, linewidth=0.8)
-    axes[1, 2].set_xticks(x, domains, rotation=35, ha="right")
-    axes[1, 2].set_title("Best marker-transfer gap")
+        axes[1, 2].bar(x, [as_float(row.get("best_causal_transfer_gap"), 0.0) for row in summary])
+        axes[1, 2].axhline(0, linewidth=0.8)
+        axes[1, 2].set_xticks(x, domains, rotation=35, ha="right")
+        axes[1, 2].set_title("Best marker-transfer gap")
     fig.tight_layout(rect=(0, 0, 1, 0.95))
     bench.save_figure(ctx, fig, "feature_lineage_dashboard.png", "Lab 30 feature-lineage evidence dashboard.")
 
+    # Text overview dashboard for small/smoke runs.
+    fig, ax = plt.subplots(figsize=(13, max(3, 0.55 * max(1, len(summary)) + 1.5)))
+    ax.set_axis_off()
+    headers = ["domain", "posture", "eval AUC", "edge lift", "conf gap", "marker gap"]
+    cells = [
+        [
+            str(row.get("domain", "")),
+            str(row.get("claim_posture", "")),
+            str(row.get("mean_eval_auc", "")),
+            str(row.get("mean_lineage_lift_over_random", "")),
+            str(row.get("mean_confusable_gap", "")),
+            str(row.get("best_causal_transfer_gap", "")),
+        ]
+        for row in summary
+    ] or [["", "no rows", "", "", "", ""]]
+    table = ax.table(cellText=cells, colLabels=headers, loc="center", cellLoc="left")
+    table.auto_set_font_size(False)
+    table.set_fontsize(8)
+    table.scale(1, 1.25)
+    ax.set_title("Overview dashboard: domain claim posture and caveats", pad=12)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "overview_dashboard.png", "Compact domain-level Lab 30 overview dashboard.")
+
+    # Target vs control raw score plot.
+    tvc_rows = [row for row in edges if row.get("same_label")]
+    fig, ax = plt.subplots(figsize=(10, 5.5))
+    if tvc_rows:
+        for i, domain in enumerate(domains):
+            d_rows = [row for row in tvc_rows if row.get("source_domain") == domain]
+            jitter = np.linspace(-0.11, 0.11, max(1, len(d_rows))) if d_rows else []
+            for j, row in enumerate(d_rows):
+                offset = jitter[j] if len(d_rows) > 1 else 0.0
+                ax.scatter(i - 0.18 + offset, as_float(row.get("lineage_score"), float("nan")), marker="o", label="same-label" if i == 0 and j == 0 else "")
+                ax.scatter(i + offset, as_float(row.get("random_control_score"), float("nan")), marker="x", label="random" if i == 0 and j == 0 else "")
+                ax.scatter(i + 0.18 + offset, as_float(row.get("confusable_control_score"), float("nan")), marker="^", label="confusable" if i == 0 and j == 0 else "")
+        ax.axhline(LINEAGE_PASS_SCORE, linestyle="--", linewidth=0.8)
+        ax.set_xticks(x, domains, rotation=35, ha="right")
+        ax.set_ylabel("adjacent-depth edge score")
+        ax.legend(frameon=False, fontsize=8)
+    else:
+        _plot_empty(ax, "Target vs control", "No same-label edge rows")
+    ax.set_title("Target same-label edges beside random and confusable controls")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "target_vs_control.png", "Raw same-label edge scores beside random/confusable controls.")
+
+    # Dose response.
     fig, ax = plt.subplots(figsize=(9, 5))
+    dose_rows = [row for row in transfer_rows if row.get("claimable_depth")]
+    if not dose_rows:
+        dose_rows = list(transfer_rows)
+    if dose_rows:
+        for domain in domains:
+            d_rows = [row for row in dose_rows if row.get("domain") == domain]
+            scales = sorted({as_float(row.get("scale_fraction_of_median_stream_norm")) for row in d_rows if math.isfinite(as_float(row.get("scale_fraction_of_median_stream_norm")))})
+            means = []
+            for scale in scales:
+                vals = [row.get("control_gap") for row in d_rows if abs(as_float(row.get("scale_fraction_of_median_stream_norm")) - scale) <= 1e-9]
+                means.append(safe_mean(vals))
+            ax.plot(scales, means, marker="o", label=domain)
+        ax.axhline(0, linewidth=0.8)
+        ax.axvline(TRANSFER_SCALE_FRACTION, linestyle=":", linewidth=0.8)
+        ax.set_xlabel("scale as fraction of median stream norm")
+        ax.set_ylabel("mean marker-transfer control gap")
+        ax.legend(frameon=False, fontsize=7, ncol=2)
+    else:
+        _plot_empty(ax, "Dose response", "No transfer rows")
+    ax.set_title("Marker-logit dose response, prototype direction minus random control")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "dose_response.png", "Marker-logit transfer dose response over intervention scale.")
+
+    # Layer sweep heatmap.
+    fig, ax = plt.subplots(figsize=(9, max(3.5, 0.42 * max(1, len(domains)) + 2)))
     depths = sorted({int(row["depth"]) for row in nodes})
+    if domains and depths:
+        mat = np.full((len(domains), len(depths)), np.nan)
+        for i, domain in enumerate(domains):
+            for j, depth in enumerate(depths):
+                vals = [row.get("eval_auc_lift_over_random") for row in nodes if row.get("domain") == domain and int(row.get("depth")) == depth]
+                mat[i, j] = safe_mean(vals)
+        im = ax.imshow(mat, aspect="auto")
+        ax.set_xticks(range(len(depths)), depths)
+        ax.set_yticks(range(len(domains)), domains)
+        ax.set_xlabel("stream depth")
+        ax.set_title("Held-out node AUC lift over random control")
+        fig.colorbar(im, ax=ax, shrink=0.8)
+    else:
+        _plot_empty(ax, "Layer sweep heatmap", "No node/depth rows")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "layer_sweep_heatmap.png", "Held-out node AUC lift by domain and depth.")
+
+    # Existing plots, upgraded to share source rows.
+    fig, ax = plt.subplots(figsize=(9, 5))
     for domain in domains:
         dnodes = sorted([row for row in nodes if row["domain"] == domain], key=lambda row: int(row["depth"]))
         ax.plot([int(row["depth"]) for row in dnodes], [as_float(row.get("eval_auc"), float("nan")) for row in dnodes], marker="o", label=domain)
         ax.plot([int(row["depth"]) for row in dnodes], [as_float(row.get("random_eval_auc"), float("nan")) for row in dnodes], linestyle=":", linewidth=0.8)
+    if depths:
+        ax.set_xticks(depths)
     ax.axhline(NODE_AUC_PASS, linestyle="--", linewidth=0.8)
-    ax.set_xticks(depths)
     ax.set_xlabel("stream depth")
     ax.set_ylabel("eval AUC")
     ax.set_title("Node AUC by depth; dotted lines are random controls")
@@ -1575,11 +2152,14 @@ def write_plots(
             vals = [row.get("lineage_score") for row in edges if row["source_domain"] == sd and row["target_domain"] == td and row.get("claimable_edge")]
             mat[i, j] = safe_mean(vals, default=0.0)
     fig, ax = plt.subplots(figsize=(7, 6))
-    im = ax.imshow(mat, aspect="auto")
-    ax.set_xticks(range(len(domains)), domains, rotation=35, ha="right")
-    ax.set_yticks(range(len(domains)), domains)
-    ax.set_title("Mean claimable lineage score matrix")
-    fig.colorbar(im, ax=ax, shrink=0.8)
+    if domains:
+        im = ax.imshow(mat, aspect="auto")
+        ax.set_xticks(range(len(domains)), domains, rotation=35, ha="right")
+        ax.set_yticks(range(len(domains)), domains)
+        ax.set_title("Mean claimable lineage score matrix")
+        fig.colorbar(im, ax=ax, shrink=0.8)
+    else:
+        _plot_empty(ax, "Lineage similarity matrix", "No domains")
     fig.tight_layout()
     bench.save_figure(ctx, fig, "lineage_similarity_matrix.png", "Cross-domain lineage similarity matrix.")
 
@@ -1596,14 +2176,17 @@ def write_plots(
     fig.tight_layout()
     bench.save_figure(ctx, fig, "confusable_control_ladder.png", "Same-label lineage versus confusable and random controls.")
 
-    split_vals = [as_float(row.get("split_entropy"), 0.0) for row in split_rows if row["kind"] == "split_or_label_change"]
-    merge_vals = [as_float(row.get("merge_entropy"), 0.0) for row in split_rows if row["kind"] == "merge"]
+    split_vals = [as_float(row.get("split_entropy"), 0.0) for row in split_rows if row.get("kind") == "split_or_label_change"]
+    merge_vals = [as_float(row.get("merge_entropy"), 0.0) for row in split_rows if row.get("kind") == "merge"]
     fig, ax = plt.subplots(figsize=(8, 4.5))
-    ax.hist(split_vals, bins=8, alpha=0.7, label="split entropy")
-    ax.hist(merge_vals, bins=8, alpha=0.7, label="merge entropy")
+    if split_vals or merge_vals:
+        ax.hist(split_vals, bins=8, alpha=0.7, label="split entropy")
+        ax.hist(merge_vals, bins=8, alpha=0.7, label="merge entropy")
+        ax.set_xlabel("entropy")
+        ax.legend(frameon=False)
+    else:
+        _plot_empty(ax, "Feature split/merge atlas", "No split/merge rows")
     ax.set_title("Feature split/merge atlas")
-    ax.set_xlabel("entropy")
-    ax.legend(frameon=False)
     fig.tight_layout()
     bench.save_figure(ctx, fig, "feature_split_merge_atlas.png", "Screen-only split/merge entropy atlas.")
 
@@ -1625,18 +2208,44 @@ def write_plots(
     bench.save_figure(ctx, fig, "cross_model_feature_overlap.png", "Same-model overlap versus random controls; external cross-model not run.")
 
     fig, ax = plt.subplots(figsize=(9, 5))
-    transfer_depths = sorted({int(row["depth"]) for row in transfer_rows})
+    headline_transfer = [row for row in transfer_rows if row.get("is_headline_scale", True)]
+    transfer_depths = sorted({int(row["depth"]) for row in headline_transfer})
     for domain in domains:
-        d_rows = sorted([row for row in transfer_rows if row["domain"] == domain], key=lambda row: int(row["depth"]))
+        d_rows = sorted([row for row in headline_transfer if row["domain"] == domain], key=lambda row: int(row["depth"]))
         ax.plot([int(row["depth"]) for row in d_rows], [as_float(row.get("control_gap"), float("nan")) for row in d_rows], marker="o", label=domain)
     ax.axhline(0, linewidth=0.8)
-    ax.set_xticks(transfer_depths)
+    if transfer_depths:
+        ax.set_xticks(transfer_depths)
     ax.set_xlabel("stream depth")
     ax.set_ylabel("marker-transfer control gap")
-    ax.set_title("Causal transfer by layer")
+    ax.set_title("Causal transfer by layer at headline scale")
     ax.legend(frameon=False, fontsize=7, ncol=2)
     fig.tight_layout()
-    bench.save_figure(ctx, fig, "causal_transfer_by_layer.png", "Marker-logit activation-addition transfer by layer.")
+    bench.save_figure(ctx, fig, "causal_transfer_by_layer.png", "Marker-logit activation-addition transfer by layer at headline scale.")
+
+    # Paired example source vs target scores.
+    fig, ax = plt.subplots(figsize=(8, 6))
+    if edge_pair_rows:
+        for domain in domains:
+            d_rows = [row for row in edge_pair_rows if row.get("domain") == domain]
+            ax.scatter(
+                [as_float(row.get("source_score_z"), float("nan")) for row in d_rows],
+                [as_float(row.get("target_score_z"), float("nan")) for row in d_rows],
+                label=domain,
+                alpha=0.75,
+            )
+        ax.axhline(0, linewidth=0.8)
+        ax.axvline(0, linewidth=0.8)
+        ax.set_xlabel("source-depth projection z-score")
+        ax.set_ylabel("target-depth projection z-score")
+        ax.legend(frameon=False, fontsize=7, ncol=2)
+    else:
+        _plot_empty(ax, "Paired examples", "No selected edge pair rows")
+    ax.set_title("Paired examples for selected same-label edges")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "paired_examples.png", "Raw paired example scores for selected same-label edges.")
+
+    return sources
 
 
 # ---------------------------------------------------------------------------
@@ -1665,12 +2274,15 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     noop_status = addition_noop_check(ctx, bundle, rows[0].text, first_claim_depth, captures[rows[0].row_id].streams[first_claim_depth, -1])
 
     nodes, node_state = build_nodes(ctx, bundle, rows, captures, depths)
+    projection_rows = build_node_projection_scores(ctx, rows, depths, node_state)
     edges = build_edges(ctx, bundle, rows, depths, node_state)
+    edge_pair_rows = build_edge_eval_pairs(ctx, rows, edges, node_state)
     domains = sorted({row.domain for row in rows})
     split_rows = split_merge_tables(ctx, edges, depths, domains)
     transfer_rows = causal_transfer(ctx, bundle, rows, depths, norm_by_depth, node_state)
     summary, overlap, evidence, metrics = label_stability(ctx, rows, nodes, edges, transfer_rows)
     counterexamples = build_counterexamples(ctx, nodes, edges, transfer_rows)
+    failure_jsonl, failure_md = write_failure_specimens(ctx, counterexamples)
     self_check = write_self_check_status(ctx, data_info, token_rows, corpus_rows, noop_status, nodes, edges)
     save_state(ctx, bundle, rows, depths, node_state, nodes, edges)
 
@@ -1678,13 +2290,37 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     write_jsonl(jsonl_path, [{**ctx.table_context(), **row} for row in evidence])
     ctx.register_artifact(jsonl_path, "table", "JSONL copy of the Lab 30 evidence matrix.")
 
-    metrics_path = ctx.path("metrics.json")
-    bench.write_json(metrics_path, {**metrics, "data": data_info, "depths": list(depths), "self_check_status": self_check, "safety_status": safety_status, "n_nodes": len(nodes), "n_edges": len(edges), "n_counterexamples": len(counterexamples)})
-    ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 30 metrics and verdicts.")
-
     write_method_card(ctx, bundle, data_info, summary)
     write_operationalization_audit(ctx, summary, counterexamples)
     write_run_summary(ctx, data_info, metrics, summary, counterexamples)
     write_claims(ctx, evidence)
-    write_plots(ctx, summary, nodes, edges, split_rows, overlap, transfer_rows)
-    print(f"[lab30] wrote {len(nodes)} nodes, {len(edges)} edges, {len(summary)} domain verdicts, and {len(counterexamples)} counterexamples")
+    plot_sources = write_plots(ctx, summary, nodes, edges, split_rows, overlap, transfer_rows, projection_rows, edge_pair_rows, counterexamples)
+    warning_rows = write_warning_summary(ctx, data_info, corpus_rows, nodes, edges, transfer_rows, plot_sources, counterexamples)
+    config_snapshot_path = write_lab30_run_config_snapshot(ctx, bundle, data_info, rows, depths, plot_sources)
+
+    metrics_path = ctx.path("metrics.json")
+    bench.write_json(metrics_path, {
+        **metrics,
+        "data": data_info,
+        "depths": list(depths),
+        "transfer_scale_grid": list(transfer_scale_grid(ctx)),
+        "self_check_status": self_check,
+        "safety_status": safety_status,
+        "n_nodes": len(nodes),
+        "n_edges": len(edges),
+        "n_node_projection_rows": len(projection_rows),
+        "n_edge_pair_rows": len(edge_pair_rows),
+        "n_transfer_rows": len(transfer_rows),
+        "n_counterexamples": len(counterexamples),
+        "n_warning_rows": len(warning_rows),
+        "failure_specimens_jsonl": str(failure_jsonl.relative_to(ctx.run_dir)),
+        "failure_specimens_md": str(failure_md.relative_to(ctx.run_dir)),
+        "run_config_snapshot": str(config_snapshot_path.relative_to(ctx.run_dir)),
+        "plot_manifest": "plots/plot_manifest.json",
+    })
+    ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 30 metrics, artifact counts, and verdicts.")
+
+    print(
+        f"[lab30] wrote {len(nodes)} nodes, {len(edges)} edges, {len(summary)} domain verdicts, "
+        f"{len(transfer_rows)} transfer dose rows, and {len(counterexamples)} counterexamples"
+    )
