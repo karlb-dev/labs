@@ -1896,6 +1896,772 @@ def plot_projection_summary(ctx: bench.RunContext, rows: Sequence[Mapping[str, A
     bench.save_figure(ctx, fig, "joke_projection_by_condition.png", "Condition means along the selected joke-structure direction.")
 
 
+
+# ---------------------------------------------------------------------------
+# Visualization upgrade: synthesis tables and audit-first plots
+# ---------------------------------------------------------------------------
+
+HUMOR_VIS_CONDITIONS = ("joke", "literal", "surprise", "silly", "positive")
+HUMOR_STEERING_ORDER = (
+    "baseline",
+    "joke_structure_direction",
+    "opposite_joke_structure_direction",
+    "surprise_direction",
+    "silly_direction",
+    "positive_direction",
+    "shuffled_joke_direction",
+    "random_direction",
+)
+HUMOR_EVIDENCE_COLUMNS = (
+    "heldout_probe",
+    "control_gap",
+    "family_transfer",
+    "cheap_cosine_risk",
+    "setup_dependence",
+    "steering_specificity",
+    "label_readiness",
+)
+
+
+def _num(value: Any, default: float = float("nan")) -> float:
+    try:
+        out = float(value)
+    except Exception:
+        return default
+    return out if math.isfinite(out) else default
+
+
+def _clip01(value: Any) -> float:
+    v = _num(value, 0.0)
+    if not math.isfinite(v):
+        return 0.0
+    return max(0.0, min(1.0, v))
+
+
+def _mean_key(rows: Sequence[Mapping[str, Any]], key: str) -> float:
+    return safe_fmean([_num(row.get(key)) for row in rows])
+
+
+def _humor_color(name: str, default: str = "#555555") -> str:
+    fn = getattr(bench, "plot_humor_color", None)
+    if callable(fn):
+        return fn(str(name), default=default)
+    palette = {
+        "joke": "#d62728",
+        "joke_structure": "#d62728",
+        "joke_structure_direction": "#d62728",
+        "literal": "#7f7f7f",
+        "surprise": "#9467bd",
+        "surprise_direction": "#9467bd",
+        "silly": "#2ca02c",
+        "silly_direction": "#2ca02c",
+        "positive": "#ff7f0e",
+        "positive_direction": "#ff7f0e",
+        "shuffled": "#bcbd22",
+        "shuffled_joke_direction": "#bcbd22",
+        "random": "#8c564b",
+        "random_direction": "#8c564b",
+        "opposite_joke_structure_direction": "#1f77b4",
+        "real": "#d62728",
+        "control": "#7f7f7f",
+        "cheap": "#9467bd",
+        "label": "#17becf",
+    }
+    return palette.get(str(name), default)
+
+
+def _humor_marker(name: str, default: str = "o") -> str:
+    fn = getattr(bench, "plot_humor_marker", None)
+    if callable(fn):
+        return fn(str(name), default=default)
+    markers = {
+        "joke": "o",
+        "literal": "s",
+        "surprise": "^",
+        "silly": "D",
+        "positive": "P",
+        "real": "o",
+        "shuffled": "x",
+        "random": "+",
+    }
+    return markers.get(str(name), default)
+
+
+def _empty_panel(ax: Any, message: str) -> None:
+    ax.text(0.5, 0.5, message, ha="center", va="center", transform=ax.transAxes, fontsize=9, color="#666666")
+    ax.set_xticks([])
+    ax.set_yticks([])
+    for spine in ("top", "right", "left", "bottom"):
+        ax.spines[spine].set_visible(False)
+
+
+def _kind_auc_by_depth(rows: Sequence[Mapping[str, Any]], kind: str) -> dict[int, float]:
+    out: dict[int, float] = {}
+    for row in rows:
+        if row.get("direction_kind") != kind:
+            continue
+        depth = row.get("depth")
+        try:
+            d = int(depth)
+        except Exception:
+            continue
+        auc = _num(row.get("auc"))
+        if math.isfinite(auc):
+            out[d] = auc
+    return out
+
+
+def make_family_generalization_summary(family_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    families = sorted({str(row.get("heldout_family")) for row in family_rows if row.get("heldout_family") not in (None, "")})
+    out: list[dict[str, Any]] = []
+    for family in families:
+        sub = [row for row in family_rows if str(row.get("heldout_family")) == family]
+        real = _mean_key([row for row in sub if row.get("direction_kind") == "real"], "auc")
+        shuffled = _mean_key([row for row in sub if row.get("direction_kind") in {"shuffled_sign_mean", "shuffled_sign"}], "auc")
+        random = _mean_key([row for row in sub if row.get("direction_kind") in {"random_oriented_mean", "random_oriented"}], "auc")
+        best_control = max([v for v in (0.5, shuffled, random) if math.isfinite(v)] or [0.5])
+        out.append({
+            "heldout_family": family,
+            "real_auc": rounded(real),
+            "shuffled_auc": rounded(shuffled),
+            "random_auc": rounded(random),
+            "best_control_auc": rounded(best_control),
+            "control_gap": rounded(real - best_control),
+            "n_rows": len(sub),
+            "status": "passes" if math.isfinite(real - best_control) and real - best_control >= 0.08 else "weak_or_failed",
+        })
+    return out
+
+
+def make_steering_operating_points(effect_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in effect_rows:
+        condition = str(row.get("steering_condition", ""))
+        dose = _num(row.get("dose_fraction"), 0.0)
+        joke_delta = _num(row.get("joke_vs_cheap_margin_delta_vs_baseline"), 0.0)
+        cheap_delta = _num(row.get("cheap_marker_total_delta_vs_baseline"), 0.0)
+        surprise_delta = _num(row.get("surprise_marker_count_delta_vs_baseline"), 0.0)
+        silly_delta = _num(row.get("silly_marker_count_delta_vs_baseline"), 0.0)
+        positive_delta = _num(row.get("positive_marker_count_delta_vs_baseline"), 0.0)
+        repetition_delta = _num(row.get("repetition_rate_delta_vs_baseline"), 0.0)
+        distinct_delta = _num(row.get("distinct_ratio_delta_vs_baseline"), 0.0)
+        specificity = _num(row.get("joke_margin_delta_minus_best_cheap_same_dose"), float("nan"))
+        if not math.isfinite(specificity) and condition == "joke_structure_direction":
+            competitors = [
+                _num(other.get("joke_vs_cheap_margin_delta_vs_baseline"))
+                for other in effect_rows
+                if _num(other.get("dose_fraction"), -999) == dose and str(other.get("steering_condition")) != condition
+            ]
+            competitors = [v for v in competitors if math.isfinite(v)]
+            specificity = joke_delta - max(competitors) if competitors else float("nan")
+        side_cost = max(0.0, cheap_delta) + max(0.0, repetition_delta) + max(0.0, -distinct_delta)
+        out.append({
+            "steering_condition": condition,
+            "direction_family": condition.replace("_direction", ""),
+            "dose_fraction": rounded(dose),
+            "joke_margin_delta": rounded(joke_delta),
+            "specificity_gap_vs_best_control": rounded(specificity),
+            "cheap_marker_delta": rounded(cheap_delta),
+            "surprise_marker_delta": rounded(surprise_delta),
+            "silly_marker_delta": rounded(silly_delta),
+            "positive_marker_delta": rounded(positive_delta),
+            "repetition_delta": rounded(repetition_delta),
+            "distinct_ratio_delta": rounded(distinct_delta),
+            "side_effect_cost_proxy": rounded(side_cost),
+            "claimable_before_hand_labels": bool(condition == "joke_structure_direction" and math.isfinite(specificity) and specificity > 0.15 and side_cost < max(1.0, abs(joke_delta) + 0.5)),
+        })
+    return out
+
+
+def make_cheap_explanation_audit(
+    metrics: Mapping[str, Any],
+    surprisal_summary: Sequence[Mapping[str, Any]],
+    projection_summary: Sequence[Mapping[str, Any]],
+    attention_summary: Sequence[Mapping[str, Any]],
+    operating_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    by_surprisal = {str(row.get("condition")): _num(row.get("mean_token_surprisal_bits")) for row in surprisal_summary}
+    by_proj: dict[str, float] = {}
+    for row in projection_summary:
+        if row.get("direction_name") == "joke_structure":
+            by_proj[str(row.get("condition"))] = _num(row.get("mean_projection"))
+    joke_proj = by_proj.get("joke", float("nan"))
+    max_control_proj = max([v for k, v in by_proj.items() if k != "joke" and math.isfinite(v)] or [float("nan")])
+    attn_joke = safe_fmean([_num(row.get("mean_attention_to_setup")) for row in attention_summary if row.get("condition") == "joke"])
+    attn_literal = safe_fmean([_num(row.get("mean_attention_to_setup")) for row in attention_summary if row.get("condition") == "literal"])
+    max_dose = max([_num(row.get("dose_fraction"), 0.0) for row in operating_rows] or [0.0])
+    joke_op = [row for row in operating_rows if row.get("steering_condition") == "joke_structure_direction" and _num(row.get("dose_fraction"), -1) == max_dose]
+    op = joke_op[0] if joke_op else {}
+    rows = [
+        {
+            "cheap_explanation": "raw_surprise",
+            "audit_signal": "joke_surprisal_minus_literal and joke-surprise cosine",
+            "risk_score": rounded(max(0.0, abs(_num(metrics.get("joke_surprise_cosine"))) * 0.7 + (1.0 if _num(metrics.get("joke_surprisal_minus_literal")) > 0.5 else 0.0) * 0.3)),
+            "main_value": metrics.get("joke_surprisal_minus_literal"),
+            "control_value": metrics.get("joke_surprise_cosine"),
+            "interpretation": "high risk means the handle may be surprise without resolution",
+        },
+        {
+            "cheap_explanation": "silliness",
+            "audit_signal": "joke-silly cosine and silly steering",
+            "risk_score": rounded(abs(_num(metrics.get("joke_silly_cosine")))),
+            "main_value": metrics.get("joke_silly_cosine"),
+            "control_value": _num(op.get("silly_marker_delta")),
+            "interpretation": "high risk means whimsical weirdness may explain the result",
+        },
+        {
+            "cheap_explanation": "positive_tone",
+            "audit_signal": "joke-positive cosine and positive markers",
+            "risk_score": rounded(abs(_num(metrics.get("joke_positive_cosine")))),
+            "main_value": metrics.get("joke_positive_cosine"),
+            "control_value": _num(op.get("positive_marker_delta")),
+            "interpretation": "high risk means friendly tone may explain the handle",
+        },
+        {
+            "cheap_explanation": "generic_joke_register",
+            "audit_signal": "generic marker movement before hand labels",
+            "risk_score": rounded(_clip01(max(0.0, _num(op.get("cheap_marker_delta"))) / max(1.0, abs(_num(op.get("joke_margin_delta"))) + 1e-6))),
+            "main_value": _num(op.get("joke_margin_delta")),
+            "control_value": _num(op.get("cheap_marker_delta")),
+            "interpretation": "hand labels decide whether marker movement is real joke structure",
+        },
+        {
+            "cheap_explanation": "no_setup_dependence",
+            "audit_signal": "joke projection and attention advantage over controls",
+            "risk_score": rounded(1.0 - _clip01(max(0.0, joke_proj - max_control_proj) + max(0.0, attn_joke - attn_literal))),
+            "main_value": rounded(joke_proj - max_control_proj),
+            "control_value": rounded(attn_joke - attn_literal),
+            "interpretation": "high risk means the ending may not use the setup",
+        },
+        {
+            "cheap_explanation": "layer_or_probe_shopping",
+            "audit_signal": "eval selectivity over best null",
+            "risk_score": rounded(1.0 - _clip01(_num(metrics.get("real_selectivity_vs_best_null")) / 0.15)),
+            "main_value": metrics.get("real_selectivity_vs_best_null"),
+            "control_value": max(_num(metrics.get("shuffled_auc_best_depth")), _num(metrics.get("random_auc_best_depth"))),
+            "interpretation": "high risk means depth/control choices may carry the result",
+        },
+    ]
+    return rows
+
+
+def make_item_evidence_summary(
+    items: Sequence[HumorItem],
+    split: Mapping[str, bool],
+    projection_rows: Sequence[Mapping[str, Any]],
+    surprisal_rows: Sequence[Mapping[str, Any]],
+    steering_generation_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    proj: dict[tuple[str, str], float] = {}
+    for row in projection_rows:
+        if row.get("direction_name") == "joke_structure":
+            proj[(str(row.get("item_id")), str(row.get("condition")))] = _num(row.get("projection"))
+    surp: dict[tuple[str, str], float] = {}
+    for row in surprisal_rows:
+        surp[(str(row.get("item_id")), str(row.get("condition")))] = _num(row.get("mean_surprisal_bits"))
+    by_item_gen: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in steering_generation_rows:
+        by_item_gen[str(row.get("item_id"))].append(row)
+    out: list[dict[str, Any]] = []
+    for item in items:
+        iid = item.item_id
+        control_projs = [proj.get((iid, c), float("nan")) for c in CONTROL_CONDITIONS]
+        control_projs = [v for v in control_projs if math.isfinite(v)]
+        joke_proj = proj.get((iid, "joke"), float("nan"))
+        max_control_proj = max(control_projs) if control_projs else float("nan")
+        joke_surp = surp.get((iid, "joke"), float("nan"))
+        literal_surp = surp.get((iid, "literal"), float("nan"))
+        gens = by_item_gen.get(iid, [])
+        baseline = [g for g in gens if g.get("steering_condition") == "baseline"]
+        steered = [g for g in gens if g.get("steering_condition") == "joke_structure_direction"]
+        max_dose = max([_num(g.get("dose_fraction"), 0.0) for g in steered] or [0.0])
+        top_steered = [g for g in steered if _num(g.get("dose_fraction"), -1) == max_dose]
+        out.append({
+            "item_id": iid,
+            "family": item.family,
+            "split": "train" if split.get(iid) else "eval",
+            "projection_joke": rounded(joke_proj),
+            "projection_max_control": rounded(max_control_proj),
+            "projection_specificity_gap": rounded(joke_proj - max_control_proj),
+            "joke_surprisal_bits": rounded(joke_surp),
+            "literal_surprisal_bits": rounded(literal_surp),
+            "joke_minus_literal_surprisal": rounded(joke_surp - literal_surp),
+            "baseline_joke_margin": rounded(_mean_key(baseline, "joke_vs_cheap_margin")),
+            "maxdose_joke_margin": rounded(_mean_key(top_steered, "joke_vs_cheap_margin")),
+            "maxdose_setup_anchor_rate": rounded(_mean_key(top_steered, "contains_setup_anchor")),
+            "maxdose_resolution_keyword_rate": rounded(_mean_key(top_steered, "contains_resolution_keyword")),
+            "setup_excerpt": item.setup[:100],
+        })
+    return out
+
+
+def make_humor_evidence_matrix(metrics: Mapping[str, Any], family_summary: Sequence[Mapping[str, Any]], cheap_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    family_gap = safe_fmean([_num(row.get("control_gap")) for row in family_summary])
+    cheap_risk = max([_num(row.get("risk_score"), 0.0) for row in cheap_rows] or [0.0])
+    setup_signal = max(0.0, _num(metrics.get("joke_minus_literal_attention_to_setup"), 0.0))
+    rows = [
+        {
+            "evidence_object": "heldout_probe",
+            "evidence_rung": "DECODE",
+            "headline_metric": metrics.get("real_auc_best_depth"),
+            "control_metric": max(_num(metrics.get("shuffled_auc_best_depth")), _num(metrics.get("random_auc_best_depth"))),
+            "score_0_to_1": rounded(_clip01((_num(metrics.get("real_auc_best_depth")) - 0.5) / 0.35)),
+            "claim_boundary": "joke-vs-control handle, not funniness",
+        },
+        {
+            "evidence_object": "control_gap",
+            "evidence_rung": "DECODE",
+            "headline_metric": metrics.get("real_selectivity_vs_best_null"),
+            "control_metric": 0.0,
+            "score_0_to_1": rounded(_clip01(_num(metrics.get("real_selectivity_vs_best_null")) / 0.15)),
+            "claim_boundary": "must beat shuffled and random controls",
+        },
+        {
+            "evidence_object": "family_transfer",
+            "evidence_rung": "DECODE",
+            "headline_metric": rounded(family_gap),
+            "control_metric": 0.0,
+            "score_0_to_1": rounded(_clip01(family_gap / 0.15)),
+            "claim_boundary": "separates reusable handle from family-local lexicon",
+        },
+        {
+            "evidence_object": "cheap_cosine_risk",
+            "evidence_rung": "AUDIT",
+            "headline_metric": rounded(cheap_risk),
+            "control_metric": 0.0,
+            "score_0_to_1": rounded(1.0 - _clip01(cheap_risk)),
+            "claim_boundary": "risk from surprise, silliness, positivity, and register",
+        },
+        {
+            "evidence_object": "setup_dependence",
+            "evidence_rung": "OBS",
+            "headline_metric": metrics.get("joke_minus_literal_attention_to_setup"),
+            "control_metric": 0.0,
+            "score_0_to_1": rounded(_clip01(setup_signal / 0.08)),
+            "claim_boundary": "routing/projection support, not mechanism proof",
+        },
+        {
+            "evidence_object": "steering_specificity",
+            "evidence_rung": "CAUSAL",
+            "headline_metric": metrics.get("joke_steering_specificity_gap"),
+            "control_metric": 0.0,
+            "score_0_to_1": rounded(_clip01(_num(metrics.get("joke_steering_specificity_gap")) / 0.30)),
+            "claim_boundary": "only marker-level until hand labels are filled",
+        },
+        {
+            "evidence_object": "label_readiness",
+            "evidence_rung": "HUMAN-LABEL",
+            "headline_metric": 0.0,
+            "control_metric": 1.0,
+            "score_0_to_1": 0.0,
+            "claim_boundary": "required before saying generation became funnier",
+        },
+    ]
+    for row in rows:
+        score = _num(row.get("score_0_to_1"), 0.0)
+        row["status"] = "strong" if score >= 0.75 else ("mixed" if score >= 0.45 else "weak")
+    return rows
+
+
+def write_visual_synthesis_tables(
+    ctx: bench.RunContext,
+    items: Sequence[HumorItem],
+    split: Mapping[str, bool],
+    probe_rows: Sequence[Mapping[str, Any]],
+    selection_rows: Sequence[Mapping[str, Any]],
+    phase_rows: Sequence[Mapping[str, Any]],
+    family_heldout_rows: Sequence[Mapping[str, Any]],
+    surprisal_rows: Sequence[Mapping[str, Any]],
+    surprisal_summary: Sequence[Mapping[str, Any]],
+    projection_rows: Sequence[Mapping[str, Any]],
+    projection_summary: Sequence[Mapping[str, Any]],
+    attention_summary: Sequence[Mapping[str, Any]],
+    steering_generations: Sequence[Mapping[str, Any]],
+    steering_effects: Sequence[Mapping[str, Any]],
+    metrics: Mapping[str, Any],
+) -> dict[str, list[dict[str, Any]]]:
+    family_summary = make_family_generalization_summary(family_heldout_rows)
+    operating_rows = make_steering_operating_points(steering_effects)
+    cheap_rows = make_cheap_explanation_audit(metrics, surprisal_summary, projection_summary, attention_summary, operating_rows)
+    item_rows = make_item_evidence_summary(items, split, projection_rows, surprisal_rows, steering_generations)
+    evidence_rows = make_humor_evidence_matrix(metrics, family_summary, cheap_rows)
+    guide_rows = [
+        {
+            "artifact": "plots/humor_evidence_dashboard.png",
+            "concept": "one-screen claim audit",
+            "look_for": "probe/control gap, family transfer, steering specificity, and cheap-risk panel",
+        },
+        {
+            "artifact": "plots/depth_control_gap_atlas.png",
+            "concept": "depth selection hygiene",
+            "look_for": "real curve beating shuffled/random means at the selected depth",
+        },
+        {
+            "artifact": "plots/family_generalization_atlas.png",
+            "concept": "family-local versus reusable handle",
+            "look_for": "one-family-held-out gaps that stay positive across joke families",
+        },
+        {
+            "artifact": "plots/cheap_explanation_matrix.png",
+            "concept": "deflationary audit",
+            "look_for": "raw surprise, silliness, positivity, generic marker, or no-setup explanations with high risk",
+        },
+        {
+            "artifact": "plots/setup_dependence_atlas.png",
+            "concept": "setup-dependent resolution evidence",
+            "look_for": "joke projections and attention-to-setup higher than cheap controls",
+        },
+        {
+            "artifact": "plots/generation_marker_atlas.png",
+            "concept": "steering effects by dose and condition",
+            "look_for": "joke-structure steering moving margin more than control directions",
+        },
+        {
+            "artifact": "plots/steering_operating_frontier.png",
+            "concept": "dose choice as benefit versus side-effect cost",
+            "look_for": "a nonzero dose with positive control gap and low cheap-marker/repetition cost",
+        },
+        {
+            "artifact": "plots/item_incongruity_atlas.png",
+            "concept": "per-item heterogeneity",
+            "look_for": "whether aggregate effects are broad or carried by one row",
+        },
+        {
+            "artifact": "plots/humor_evidence_matrix.png",
+            "concept": "claim-readiness ledger",
+            "look_for": "which evidence rungs are strong, mixed, or weak",
+        },
+    ]
+    outputs = {
+        "family_generalization_summary": family_summary,
+        "steering_operating_points": operating_rows,
+        "cheap_explanation_audit": cheap_rows,
+        "item_incongruity_summary": item_rows,
+        "humor_evidence_matrix": evidence_rows,
+        "plot_reading_guide": guide_rows,
+    }
+    for name, rows in outputs.items():
+        path = ctx.path("tables", f"{name}.csv")
+        bench.write_csv_with_context(ctx, path, rows)
+        ctx.register_artifact(path, "table", f"Lab 18 visualization upgrade synthesis table: {name.replace('_', ' ')}.")
+    return outputs
+
+
+def plot_depth_control_gap_atlas(ctx: bench.RunContext, probe_rows: Sequence[Mapping[str, Any]], selection_rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
+    fig, ax = bench.new_figure(figsize=(9.4, 5.4))
+    real = _kind_auc_by_depth(probe_rows, "real")
+    shuffled = _kind_auc_by_depth(probe_rows, "shuffled_sign_mean")
+    random = _kind_auc_by_depth(probe_rows, "random_oriented_mean")
+    depths = sorted(set(real) | set(shuffled) | set(random))
+    if not depths:
+        _empty_panel(ax, "no probe rows")
+    else:
+        real_y = [real.get(d, float("nan")) for d in depths]
+        shuf_y = [shuffled.get(d, float("nan")) for d in depths]
+        rand_y = [random.get(d, float("nan")) for d in depths]
+        best_y = [max([v for v in (0.5, shuffled.get(d, float("nan")), random.get(d, float("nan"))) if math.isfinite(v)] or [0.5]) for d in depths]
+        gap_y = [(real.get(d, float("nan")) - best_y[i]) if math.isfinite(real.get(d, float("nan"))) else float("nan") for i, d in enumerate(depths)]
+        ax.plot(depths, real_y, marker="o", label="real held-out AUC", color=_humor_color("real"))
+        ax.plot(depths, best_y, marker="s", label="best null floor", color=_humor_color("control"))
+        ax.plot(depths, shuf_y, linestyle=":", alpha=0.75, label="shuffled mean", color=_humor_color("shuffled"))
+        ax.plot(depths, rand_y, linestyle=":", alpha=0.75, label="random mean", color=_humor_color("random"))
+        ax.axhline(0.5, linestyle=":", linewidth=1.0, color="#333333")
+        ax.axvline(best_depth, linestyle="--", linewidth=1.2, color=_humor_color("joke"), label=f"selected depth {best_depth}")
+        for d, g in zip(depths, gap_y):
+            if d == best_depth and math.isfinite(g):
+                ax.annotate(f"gap {g:+.2f}", (d, real.get(d, 0.5)), xytext=(6, 8), textcoords="offset points", fontsize=8)
+    bench.style_ax(ax, title="Depth selection audit: real probe must clear null rails", xlabel="stream depth", ylabel="held-out AUC")
+    bench.save_figure(ctx, fig, "depth_control_gap_atlas.png", "Real joke-vs-control AUC by depth against shuffled/random null floors.")
+
+
+def plot_family_generalization_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(9.2, 5.2))
+    if not rows:
+        _empty_panel(ax, "no family-heldout rows")
+    else:
+        labels = [str(row.get("heldout_family")) for row in rows]
+        real = [_num(row.get("real_auc")) for row in rows]
+        best = [_num(row.get("best_control_auc")) for row in rows]
+        gap = [_num(row.get("control_gap")) for row in rows]
+        xs = list(range(len(labels)))
+        width = 0.36
+        ax.bar([x - width / 2 for x in xs], real, width=width, label="real", color=_humor_color("joke"), alpha=0.9)
+        ax.bar([x + width / 2 for x in xs], best, width=width, label="best null", color=_humor_color("control"), alpha=0.65)
+        ax.axhline(0.5, linestyle=":", color="#333333", linewidth=1.0)
+        for x, g in zip(xs, gap):
+            if math.isfinite(g):
+                ax.text(x, max(0.03, max(real[x], best[x]) + 0.02), f"{g:+.2f}", ha="center", va="bottom", fontsize=8)
+        ax.set_xticks(xs)
+        ax.set_xticklabels(labels, rotation=25, ha="right")
+    bench.style_ax(ax, title="Family-heldout transfer: does the handle leave home?", ylabel="AUC", legend_loc="best")
+    bench.save_figure(ctx, fig, "family_generalization_atlas.png", "One-family-heldout joke-structure AUC versus control floor.")
+
+
+def plot_cheap_explanation_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(8.9, 5.2))
+    if not rows:
+        _empty_panel(ax, "no cheap explanation audit rows")
+    else:
+        labels = [str(row.get("cheap_explanation")) for row in rows]
+        risk = [_clip01(row.get("risk_score")) for row in rows]
+        ys = list(range(len(labels)))
+        colors = [_humor_color("cheap") if v >= 0.5 else _humor_color("joke") for v in risk]
+        ax.barh(ys, risk, color=colors, alpha=0.82)
+        ax.axvline(0.5, linestyle="--", color="#555555", linewidth=1.0, label="audit concern")
+        ax.set_yticks(ys)
+        ax.set_yticklabels(labels)
+        ax.set_xlim(0, 1)
+        for y, v in zip(ys, risk):
+            ax.text(v + 0.02, y, f"{v:.2f}", va="center", fontsize=8)
+        ax.invert_yaxis()
+    bench.style_ax(ax, title="Cheap explanations get first right of refusal", xlabel="risk score (higher = more deflationary pressure)")
+    bench.save_figure(ctx, fig, "cheap_explanation_matrix.png", "Deflationary audit for surprise, silliness, positivity, register, setup dependence, and layer shopping.")
+
+
+def plot_setup_dependence_atlas(
+    ctx: bench.RunContext,
+    projection_summary: Sequence[Mapping[str, Any]],
+    attention_summary: Sequence[Mapping[str, Any]],
+) -> None:
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(1, 2, figsize=(12.0, 4.9), constrained_layout=True)
+    ax = axes[0]
+    vals = []
+    labels = list(HUMOR_VIS_CONDITIONS)
+    for condition in labels:
+        sub = [row for row in projection_summary if row.get("condition") == condition and row.get("direction_name") == "joke_structure"]
+        vals.append(_mean_key(sub, "mean_projection"))
+    if any(math.isfinite(v) for v in vals):
+        ax.bar(range(len(labels)), vals, color=[_humor_color(c) for c in labels], alpha=0.85)
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels(labels, rotation=20, ha="right")
+        ax.axhline(0, color="#333333", linewidth=0.8)
+        bench.style_ax(ax, title="selected direction projection", ylabel="mean projection", legend=False)
+    else:
+        _empty_panel(ax, "no projection summary")
+    ax = axes[1]
+    layers = sorted({int(row.get("layer")) for row in attention_summary if isinstance(row.get("layer"), int)})
+    if layers:
+        for condition in ("joke", "literal", "surprise"):
+            ys = [_mean_key([row for row in attention_summary if row.get("condition") == condition and row.get("layer") == layer], "mean_attention_to_setup") for layer in layers]
+            ax.plot(layers, ys, marker=_humor_marker(condition), label=condition, color=_humor_color(condition))
+        bench.style_ax(ax, title="resolution-token attention to setup", xlabel="attention layer", ylabel="attention mass")
+    else:
+        _empty_panel(ax, "no attention summary")
+    bench.save_figure(ctx, fig, "setup_dependence_atlas.png", "Projection and routing evidence for setup-dependent joke resolution.")
+
+
+def plot_generation_marker_atlas(ctx: bench.RunContext, operating_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    conditions = [c for c in HUMOR_STEERING_ORDER if any(row.get("steering_condition") == c for row in operating_rows)]
+    doses = sorted({_num(row.get("dose_fraction"), 0.0) for row in operating_rows})
+    fig, axes = plt.subplots(1, 2, figsize=(13.0, 5.2), constrained_layout=True)
+    if not conditions or not doses:
+        _empty_panel(axes[0], "no steering summary")
+        _empty_panel(axes[1], "no steering summary")
+    else:
+        keys = ["joke_margin_delta", "cheap_marker_delta"]
+        titles = ["joke-vs-cheap margin delta", "cheap-marker side movement"]
+        for ax, key, title in zip(axes, keys, titles):
+            mat = np.full((len(conditions), len(doses)), np.nan)
+            for i, cond in enumerate(conditions):
+                for j, dose in enumerate(doses):
+                    sub = [row for row in operating_rows if row.get("steering_condition") == cond and abs(_num(row.get("dose_fraction")) - dose) < 1e-9]
+                    if sub:
+                        mat[i, j] = _num(sub[0].get(key))
+            finite = mat[np.isfinite(mat)]
+            vmax = max(0.1, float(np.nanmax(np.abs(finite))) if finite.size else 1.0)
+            im = ax.imshow(mat, aspect="auto", vmin=-vmax, vmax=vmax, cmap="coolwarm")
+            ax.set_xticks(range(len(doses)))
+            ax.set_xticklabels([f"{d:.2g}" for d in doses])
+            ax.set_yticks(range(len(conditions)))
+            ax.set_yticklabels([c.replace("_direction", "").replace("_", "\n") for c in conditions], fontsize=8)
+            for i in range(len(conditions)):
+                for j in range(len(doses)):
+                    if math.isfinite(float(mat[i, j])):
+                        ax.text(j, i, f"{mat[i,j]:+.2f}", ha="center", va="center", fontsize=7)
+            fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
+            bench.style_ax(ax, title=title, xlabel="dose", legend=False)
+    bench.save_figure(ctx, fig, "generation_marker_atlas.png", "Dose-by-condition heatmaps for joke margin and cheap-marker side movement.")
+
+
+def plot_steering_operating_frontier(ctx: bench.RunContext, operating_rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(8.8, 5.8))
+    rows = [row for row in operating_rows if row.get("steering_condition") != "baseline"]
+    if not rows:
+        _empty_panel(ax, "no steering operating points")
+    else:
+        for row in rows:
+            cond = str(row.get("steering_condition"))
+            x = _num(row.get("side_effect_cost_proxy"), 0.0)
+            y = _num(row.get("joke_margin_delta"), 0.0)
+            dose = _num(row.get("dose_fraction"), 0.0)
+            ax.scatter(x, y, s=60 + 40 * dose, color=_humor_color(cond), marker="o", alpha=0.85, edgecolor="#222222", linewidth=0.4)
+            if cond in {"joke_structure_direction", "surprise_direction", "silly_direction", "positive_direction"}:
+                ax.annotate(f"{cond.replace('_direction','')}@{dose:.2g}", (x, y), xytext=(5, 3), textcoords="offset points", fontsize=7)
+        ax.axhline(0, color="#333333", linewidth=0.9)
+        ax.axvline(0, color="#333333", linewidth=0.9)
+    bench.style_ax(ax, title="Steering operating frontier: benefit must outrun side effects", xlabel="side-effect cost proxy", ylabel="joke-vs-cheap margin delta", legend=False)
+    bench.save_figure(ctx, fig, "steering_operating_frontier.png", "Activation-addition operating points: marker benefit versus cheap-marker and fluency costs.")
+
+
+def plot_item_incongruity_atlas(ctx: bench.RunContext, item_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    rows = sorted(item_rows, key=lambda r: (_num(r.get("projection_specificity_gap"), -999), str(r.get("item_id"))))
+    if len(rows) > 30:
+        rows = rows[-30:]
+    metrics = [
+        "projection_specificity_gap",
+        "joke_minus_literal_surprisal",
+        "baseline_joke_margin",
+        "maxdose_joke_margin",
+        "maxdose_setup_anchor_rate",
+        "maxdose_resolution_keyword_rate",
+    ]
+    fig, ax = bench.new_figure(figsize=(10.4, max(4.8, 0.28 * len(rows) + 2.0)))
+    if not rows:
+        _empty_panel(ax, "no per-item evidence rows")
+    else:
+        mat = np.array([[_num(row.get(m)) for m in metrics] for row in rows], dtype=float)
+        # Robust column normalization to signed z-ish values for mixed-unit display.
+        norm = np.zeros_like(mat)
+        for j in range(mat.shape[1]):
+            col = mat[:, j]
+            finite = col[np.isfinite(col)]
+            if finite.size:
+                center = np.nanmedian(finite)
+                scale = np.nanpercentile(np.abs(finite - center), 75) or 1.0
+                norm[:, j] = np.clip((col - center) / (scale * 2.0), -1.0, 1.0)
+            else:
+                norm[:, j] = np.nan
+        im = ax.imshow(norm, aspect="auto", vmin=-1, vmax=1, cmap="coolwarm")
+        ax.set_xticks(range(len(metrics)))
+        ax.set_xticklabels([m.replace("_", "\n") for m in metrics], fontsize=8)
+        ax.set_yticks(range(len(rows)))
+        ax.set_yticklabels([f"{row.get('family')}:{row.get('item_id')}" for row in rows], fontsize=7)
+        fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label="within-column normalized signal")
+    bench.style_ax(ax, title="Per-item incongruity atlas: aggregates should not hide one row", legend=False)
+    bench.save_figure(ctx, fig, "item_incongruity_atlas.png", "Per-item projection, surprisal, generation, and setup-dependence indicators.")
+
+
+def plot_humor_evidence_matrix(ctx: bench.RunContext, evidence_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    labels = [str(row.get("evidence_object")) for row in evidence_rows]
+    vals = np.array([_clip01(row.get("score_0_to_1")) for row in evidence_rows], dtype=float)
+    fig, ax = bench.new_figure(figsize=(9.0, 4.9))
+    if not labels:
+        _empty_panel(ax, "no evidence matrix rows")
+    else:
+        im = ax.imshow(vals.reshape(1, -1), aspect="auto", vmin=0, vmax=1, cmap="YlGn")
+        ax.set_yticks([0])
+        ax.set_yticklabels(["claim readiness"])
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels([label.replace("_", "\n") for label in labels], rotation=0, fontsize=8)
+        for j, (v, row) in enumerate(zip(vals, evidence_rows)):
+            ax.text(j, 0, f"{v:.2f}\n{row.get('status')}", ha="center", va="center", fontsize=8)
+        fig.colorbar(im, ax=ax, fraction=0.04, pad=0.03, label="0 = weak, 1 = strong")
+    bench.style_ax(ax, title="Humor claim-readiness matrix", legend=False)
+    bench.save_figure(ctx, fig, "humor_evidence_matrix.png", "Joined evidence matrix for Lab 18 claim readiness.")
+
+
+def plot_humor_evidence_dashboard(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    probe_rows: Sequence[Mapping[str, Any]],
+    selection_rows: Sequence[Mapping[str, Any]],
+    family_rows: Sequence[Mapping[str, Any]],
+    operating_rows: Sequence[Mapping[str, Any]],
+    cheap_rows: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    best_depth: int,
+) -> None:
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(2, 2, figsize=(13.0, 8.2), constrained_layout=True)
+
+    ax = axes[0, 0]
+    real = _kind_auc_by_depth(probe_rows, "real")
+    shuffled = _kind_auc_by_depth(probe_rows, "shuffled_sign_mean")
+    random = _kind_auc_by_depth(probe_rows, "random_oriented_mean")
+    depths = sorted(set(real) | set(shuffled) | set(random))
+    if depths:
+        ax.plot(depths, [real.get(d, float("nan")) for d in depths], color=_humor_color("joke"), marker="o", label="real")
+        ax.plot(depths, [max([v for v in (0.5, shuffled.get(d, float("nan")), random.get(d, float("nan"))) if math.isfinite(v)] or [0.5]) for d in depths], color=_humor_color("control"), marker="s", label="best null")
+        ax.axhline(0.5, linestyle=":", color="#333333", linewidth=0.9)
+        ax.axvline(best_depth, linestyle="--", color=_humor_color("joke"), linewidth=1.1)
+        bench.style_ax(ax, title="A. DECODE depth rail", xlabel="stream depth", ylabel="held-out AUC")
+    else:
+        _empty_panel(ax, "no probe rows")
+
+    ax = axes[0, 1]
+    if family_rows:
+        labels = [str(row.get("heldout_family")) for row in family_rows]
+        gaps = [_num(row.get("control_gap"), 0.0) for row in family_rows]
+        ax.barh(range(len(labels)), gaps, color=[_humor_color("joke") if g > 0 else _humor_color("control") for g in gaps], alpha=0.85)
+        ax.axvline(0, color="#333333", linewidth=0.9)
+        ax.set_yticks(range(len(labels)))
+        ax.set_yticklabels(labels, fontsize=8)
+        ax.invert_yaxis()
+        bench.style_ax(ax, title="B. Family-heldout gap", xlabel="real AUC minus best null")
+    else:
+        _empty_panel(ax, "no family transfer rows")
+
+    ax = axes[1, 0]
+    conditions = ["joke_structure_direction", "surprise_direction", "silly_direction", "positive_direction", "shuffled_joke_direction", "random_direction"]
+    for cond in conditions:
+        sub = sorted([row for row in operating_rows if row.get("steering_condition") == cond], key=lambda r: _num(r.get("dose_fraction")))
+        if not sub:
+            continue
+        ax.plot([_num(row.get("dose_fraction")) for row in sub], [_num(row.get("joke_margin_delta")) for row in sub], marker="o", label=cond.replace("_direction", ""), color=_humor_color(cond))
+    ax.axhline(0, linestyle=":", color="#333333", linewidth=0.9)
+    bench.style_ax(ax, title="C. CAUSAL steering over cheap controls", xlabel="dose", ylabel="joke-vs-cheap margin delta", legend_loc="best")
+
+    ax = axes[1, 1]
+    if evidence_rows:
+        labels = [str(row.get("evidence_object")) for row in evidence_rows]
+        vals = [_clip01(row.get("score_0_to_1")) for row in evidence_rows]
+        ax.bar(range(len(labels)), vals, color=[_humor_color("joke") if v >= 0.5 else _humor_color("cheap") for v in vals], alpha=0.85)
+        ax.axhline(0.5, linestyle="--", color="#555555", linewidth=0.9)
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels([label.replace("_", "\n") for label in labels], fontsize=7)
+        ax.set_ylim(0, 1.05)
+        bench.style_ax(ax, title="D. Claim-readiness scorecard", ylabel="0 weak  →  1 strong", legend=False)
+    else:
+        _empty_panel(ax, "no evidence rows")
+
+    fig.suptitle("Lab 18 humor-as-incongruity evidence dashboard", fontsize=15)
+    bench.save_figure(ctx, fig, "humor_evidence_dashboard.png", "One-screen Lab 18 dashboard: decode rails, family transfer, steering specificity, and claim readiness.")
+
+
+def plot_visual_upgrade_suite(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    probe_rows: Sequence[Mapping[str, Any]],
+    selection_rows: Sequence[Mapping[str, Any]],
+    family_rows: Sequence[Mapping[str, Any]],
+    projection_summary: Sequence[Mapping[str, Any]],
+    attention_summary: Sequence[Mapping[str, Any]],
+    visual_tables: Mapping[str, Sequence[Mapping[str, Any]]],
+    best_depth: int,
+) -> None:
+    family_summary = list(visual_tables.get("family_generalization_summary", []))
+    operating_rows = list(visual_tables.get("steering_operating_points", []))
+    cheap_rows = list(visual_tables.get("cheap_explanation_audit", []))
+    item_rows = list(visual_tables.get("item_incongruity_summary", []))
+    evidence_rows = list(visual_tables.get("humor_evidence_matrix", []))
+    plot_humor_evidence_dashboard(ctx, metrics, probe_rows, selection_rows, family_summary, operating_rows, cheap_rows, evidence_rows, best_depth)
+    plot_depth_control_gap_atlas(ctx, probe_rows, selection_rows, best_depth)
+    plot_family_generalization_atlas(ctx, family_summary)
+    plot_cheap_explanation_matrix(ctx, cheap_rows)
+    plot_setup_dependence_atlas(ctx, projection_summary, attention_summary)
+    plot_generation_marker_atlas(ctx, operating_rows)
+    plot_steering_operating_frontier(ctx, operating_rows)
+    plot_item_incongruity_atlas(ctx, item_rows)
+    plot_humor_evidence_matrix(ctx, evidence_rows)
+
+
 # ---------------------------------------------------------------------------
 # Written artifacts
 # ---------------------------------------------------------------------------
@@ -2304,7 +3070,36 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_json(metrics_path, metrics)
     ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 18 metrics and verdict.")
 
+    visual_tables = write_visual_synthesis_tables(
+        ctx,
+        items,
+        split,
+        probe_rows,
+        selection_rows,
+        phase_rows,
+        family_heldout_rows,
+        surprisal_rows,
+        surprisal_summary,
+        projection_rows,
+        projection_summary,
+        attn_summary,
+        steering_generations,
+        steering_effects,
+        metrics,
+    )
+
     if not args.no_plots:
+        plot_visual_upgrade_suite(
+            ctx,
+            metrics,
+            probe_rows,
+            selection_rows,
+            family_heldout_rows,
+            projection_summary,
+            attn_summary,
+            visual_tables,
+            best_depth,
+        )
         plot_surprisal(ctx, surprisal_rows)
         plot_probe(ctx, probe_rows, best_depth)
         plot_steering(ctx, steering_effects)

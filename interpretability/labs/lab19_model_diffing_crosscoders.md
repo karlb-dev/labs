@@ -185,14 +185,31 @@ runs/lab19_model_diffing_crosscoders-.../
     feature_direction_bridge.csv
     causal_feature_validation.csv
     causal_feature_validation_summary.csv
+    prompt_inventory_summary.csv
+    activation_norm_shift_summary.csv
+    feature_audit_matrix.csv
+    taxonomy_control_ladder.csv
+    model_diffing_evidence_matrix.csv
+    causal_operating_points.csv
+    plot_reading_guide.csv
 
   plots/
-    crosscoder_reconstruction.png
+    model_diffing_evidence_dashboard.png
+    crosscoder_training_diagnostics.png
     feature_taxonomy_counts.png
     feature_exclusivity_histogram.png
+    crosscoder_reconstruction.png
+    feature_audit_matrix.png
+    taxonomy_control_ladder.png
+    prompt_inventory_balance.png
+    activation_norm_shift_atlas.png
+    feature_context_atlas.png
     template_control_gaps.png
     feature_direction_bridge.png
-    causal_feature_validation.png      # only meaningful with --run-edit
+    direction_bridge_matrix.png
+    causal_feature_validation.png
+    causal_operating_frontier.png
+    identity_smoke_scorecard.png
 
   state/
     crosscoder_state.pt
@@ -286,31 +303,42 @@ The intervention is intentionally modest. It scores generated text with automati
 
 The hand labels are not decoration. Marker scoring can confuse a longer answer with a more assistant-like answer, or a cautious answer with a refusal. A defended causal claim needs the random controls and hand labels to agree.
 
-## How to read the plots
+## Visualization upgrade: read the audit board before naming features
 
-### `crosscoder_reconstruction.png`
+Lab 19 now writes a richer visual artifact set. The goal is not to make crosscoder features look magical. The goal is to make every tempting name walk through the control gates in public.
 
-Lower FVU is better. If eval FVU is poor, the taxonomy is mostly a sketch of a bad dictionary. A weak dictionary can still teach the method, but it should not carry strong claims.
+Recommended reading path:
 
-### `feature_taxonomy_counts.png`
+```text
+model_diffing_card.md
+  -> plots/model_diffing_evidence_dashboard.png
+  -> tables/model_diffing_evidence_matrix.csv
+  -> plots/feature_audit_matrix.png
+  -> plots/taxonomy_control_ladder.png
+  -> plots/prompt_inventory_balance.png
+  -> plots/activation_norm_shift_atlas.png
+  -> plots/feature_context_atlas.png
+  -> plots/direction_bridge_matrix.png       # if LAB19_BRIDGE_STATE is set
+  -> plots/causal_operating_frontier.png     # if --run-edit is used
+  -> plots/identity_smoke_scorecard.png      # especially Tier A / identity-pair runs
+```
 
-This shows the role-aware feature counts. In an identity-pair smoke test, mostly shared or dead is healthy. Many model-specific features in an identity pair mean the training setup or dictionary size is producing artifacts.
+The new dashboard has four panels:
 
-### `feature_exclusivity_histogram.png`
+| Panel | What to ask |
+|---|---|
+| evidence ledger | Which rung is strong, weak, skipped, or control-limited? |
+| feature taxonomy after controls | How many model-B-looking features remain after template, family, stability, and random-baseline pressure? |
+| norm and token confounds | Did one model simply produce larger residual norms or different token loads for a family/variant? |
+| optional causal operating point | Did feature steering beat random controls without buying the effect through verbosity, hedging, or refusal? |
 
-This compares crosscoder feature exclusivity against random directions. If random directions often look model-B-specific, then model-B specificity is cheap in this activation cloud.
+The new `feature_audit_matrix.csv` joins the columns students usually inspect separately: activation share, decoder share, A/B correlation, template gap, family concentration, variant concentration, train/eval activity, bridge cosine, audit posture, and claim boundary. This is the main artifact for deciding whether a feature is a candidate model-diff handle, a template feature, a family-specific feature, a shared feature, or dictionary residue.
 
-### `template_control_gaps.png`
+### How to read the new plots
 
-This is the template-residue detector. A large chat-minus-raw gap says the feature may be about the rendered chat template rather than the model's durable behavior.
+`crosscoder_training_diagnostics.png` checks whether the paired dictionary trained stably. `feature_audit_matrix.png` is the compact per-feature ledger. `taxonomy_control_ladder.png` shows how many features remain after controls. `prompt_inventory_balance.png` and `activation_norm_shift_atlas.png` check distribution, tokenization, and norm confounds. `feature_context_atlas.png` shows whether top activations are broad or one-family fireworks. `direction_bridge_matrix.png` compares feature decoders to saved prior-lab directions when configured. `causal_operating_frontier.png` is only a causal smoke board until random controls and hand labels agree. `identity_smoke_scorecard.png` is the Tier-A lie detector: an identity pair should not produce a glorious forest of model-specific features.
 
-### `feature_direction_bridge.png`
-
-If `LAB19_BRIDGE_STATE` is set, this shows which feature decoders align with a prior-lab direction. If not, it reminds students that the bridge is not configured.
-
-### `causal_feature_validation.png`
-
-This appears when `--run-edit` is used. Treat it as a smoke plot. The table and hand labels matter more than the bar height.
+A good writeup should cite at least one feature that looked appealing in the gallery and then got narrowed by a control. The lab is working when it changes your favorite label.
 
 ## Custom prompt inventory
 

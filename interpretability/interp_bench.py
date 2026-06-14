@@ -4260,6 +4260,140 @@ def plot_persona_marker(condition: str, default: str = "o") -> str:
     key = str(condition)
     return PERSONA_MARKERS.get(key, SYCOPHANCY_MARKERS.get(key, MULTITURN_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))))
 
+
+
+# Lab 18 humor / incongruity visual grammar.
+HUMOR_COLORS = {
+    "joke": "#0072B2",
+    "joke_structure": "#0072B2",
+    "joke_structure_direction": "#0072B2",
+    "opposite_joke_structure_direction": "#D55E00",
+    "literal": "#6E6E6E",
+    "surprise": "#E69F00",
+    "surprise_direction": "#E69F00",
+    "silly": "#CC79A7",
+    "silly_direction": "#CC79A7",
+    "positive": "#009E73",
+    "positive_direction": "#009E73",
+    "shuffled": "#8C8C8C",
+    "shuffled_joke_direction": "#8C8C8C",
+    "random": "#333333",
+    "random_direction": "#333333",
+    "real": "#0072B2",
+    "best_null": "#595959",
+    "control_gap": "#17BECF",
+    "cheap": "#BCBD22",
+    "validated": "#009E73",
+    "warning": "#E69F00",
+    "failed": "#D55E00",
+    "decode": "#0072B2",
+    "causal": "#9467BD",
+    "human_label": "#4D4D4D",
+}
+
+HUMOR_MARKERS = {
+    "joke": "o",
+    "literal": "s",
+    "surprise": "^",
+    "silly": "D",
+    "positive": "P",
+    "real": "o",
+    "shuffled_sign_mean": "s",
+    "random_oriented_mean": "^",
+    "joke_structure_direction": "o",
+    "opposite_joke_structure_direction": "v",
+    "surprise_direction": "^",
+    "silly_direction": "D",
+    "positive_direction": "P",
+    "shuffled_joke_direction": "s",
+    "random_direction": "x",
+}
+
+
+def plot_humor_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 18 humor/incongruity plots."""
+    key = str(condition)
+    return HUMOR_COLORS.get(key, STEERING_COLORS.get(key, PERSONA_COLORS.get(key, CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)))))
+
+
+def plot_humor_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 18 humor/incongruity plots."""
+    key = str(condition)
+    return HUMOR_MARKERS.get(key, STEERING_MARKERS.get(key, PERSONA_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))))
+
+
+# Lab 19 model-diffing / crosscoder visual grammar.
+MODELDIFF_COLORS = {
+    "shared": "#0072B2",
+    "model_a_only": "#D55E00",
+    "model_b_only": "#009E73",
+    "base_only": "#D55E00",
+    "instruct_only": "#009E73",
+    "asymmetric": "#CC79A7",
+    "dead": "#8C8C8C",
+    "template": "#E69F00",
+    "template_residue_candidate": "#E69F00",
+    "family_specific_candidate": "#F0E442",
+    "train_only_unstable": "#D55E00",
+    "candidate_model_b_handle": "#009E73",
+    "candidate_model_a_handle": "#D55E00",
+    "candidate_shared_handle": "#0072B2",
+    "asymmetric_or_unclear": "#CC79A7",
+    "crosscoder_artifact_risk": "#D55E00",
+    "random": "#333333",
+    "raw": "#0072B2",
+    "compare_chat": "#009E73",
+    "pass": "#009E73",
+    "mixed": "#E69F00",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "skipped": "#8C8C8C",
+    "not_configured": "#8C8C8C",
+    "reconstruction": "#0072B2",
+    "taxonomy": "#009E73",
+    "controls": "#E69F00",
+    "causal": "#9467BD",
+    "bridge": "#56B4E9",
+}
+
+MODELDIFF_MARKERS = {
+    "shared": "o",
+    "model_a_only": "<",
+    "model_b_only": ">",
+    "base_only": "<",
+    "instruct_only": ">",
+    "asymmetric": "D",
+    "dead": "x",
+    "raw": "o",
+    "compare_chat": "s",
+    "template_residue_candidate": "^",
+    "family_specific_candidate": "P",
+    "train_only_unstable": "v",
+    "candidate_model_b_handle": ">",
+    "candidate_model_a_handle": "<",
+    "candidate_shared_handle": "o",
+    "asymmetric_or_unclear": "D",
+    "feature_plus": ">",
+    "feature_minus": "<",
+    "feature_plus_low": "o",
+    "random_plus": "x",
+    "random_minus": "+",
+    "baseline": "o",
+}
+
+
+def plot_modeldiff_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 19 model-diffing/crosscoder plots."""
+    key = str(condition)
+    return MODELDIFF_COLORS.get(key, HUMOR_COLORS.get(key, PERSONA_COLORS.get(key, STEERING_COLORS.get(key, CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default))))))
+
+
+def plot_modeldiff_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 19 model-diffing/crosscoder plots."""
+    key = str(condition)
+    return MODELDIFF_MARKERS.get(key, HUMOR_MARKERS.get(key, PERSONA_MARKERS.get(key, STEERING_MARKERS.get(key, CATEGORY_MARKERS.get(key, default)))))
+
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl

@@ -229,6 +229,12 @@ runs/lab18_humor_incongruity-.../
     humor_steering_generations.csv
     generation_labeling_guide.md
     humor_direction_audit.csv
+    family_generalization_summary.csv
+    steering_operating_points.csv
+    cheap_explanation_audit.csv
+    item_incongruity_summary.csv
+    humor_evidence_matrix.csv
+    plot_reading_guide.csv
 
   plots/
     humor_surprisal_trajectories.png
@@ -237,12 +243,68 @@ runs/lab18_humor_incongruity-.../
     humor_direction_cosines.png
     attention_to_setup.png
     joke_projection_by_condition.png
+    humor_evidence_dashboard.png
+    depth_control_gap_atlas.png
+    family_generalization_atlas.png
+    cheap_explanation_matrix.png
+    setup_dependence_atlas.png
+    generation_marker_atlas.png
+    steering_operating_frontier.png
+    item_incongruity_atlas.png
+    humor_evidence_matrix.png
 
   state/
     humor_direction.pt
     humor_directions.pt
     humor_direction_metadata.json
 ```
+
+
+## Visualization upgrade: read the audit before the punchline
+
+Lab 18 now writes a richer plot suite. The goal is not to make humor look mystical. The goal is to keep every tempting explanation visible at the same time: joke structure, raw surprise, silliness, positivity, generic joke register, setup routing, and generation side effects.
+
+New start-here artifact:
+
+```text
+plots/humor_evidence_dashboard.png
+```
+
+This dashboard puts four rails on one page: control-adjusted probe evidence over depth, one-family-held-out transfer, cheap-explanation risk, and steering specificity. A positive-looking dashboard is still only a handle claim until hand labels confirm that generated text has setup-dependent incongruity plus resolution.
+
+Additional upgraded artifacts:
+
+```text
+plots/depth_control_gap_atlas.png
+plots/family_generalization_atlas.png
+plots/cheap_explanation_matrix.png
+plots/setup_dependence_atlas.png
+plots/generation_marker_atlas.png
+plots/steering_operating_frontier.png
+plots/item_incongruity_atlas.png
+plots/humor_evidence_matrix.png
+
+tables/family_generalization_summary.csv
+tables/steering_operating_points.csv
+tables/cheap_explanation_audit.csv
+tables/item_incongruity_summary.csv
+tables/humor_evidence_matrix.csv
+tables/plot_reading_guide.csv
+```
+
+Recommended reading path after `humor_incongruity_card.md`:
+
+1. `plots/humor_evidence_dashboard.png`: decide whether the run deserves deeper inspection.
+2. `plots/depth_control_gap_atlas.png`: verify the selected depth clears shuffled and random nulls.
+3. `plots/family_generalization_atlas.png`: check whether the handle transfers beyond one joke family.
+4. `plots/cheap_explanation_matrix.png`: let surprise, silliness, positivity, generic register, and no-setup explanations try to kill the favorite interpretation.
+5. `plots/setup_dependence_atlas.png`: inspect projection and routing evidence for setup-dependent resolution.
+6. `plots/generation_marker_atlas.png` and `plots/steering_operating_frontier.png`: inspect dose response and target movement versus side-effect cost.
+7. `plots/item_incongruity_atlas.png`: check whether one row is carrying the aggregate.
+8. `tables/humor_steering_generations.csv`: hand-label before writing anything stronger than marker movement.
+9. `plots/humor_evidence_matrix.png`: convert the run into evidence-rung claims only after the previous checks.
+
+The upgraded tables are designed to make the writeup less “funny-looking samples” and more “the operationalization survived these exact controls.” If the result collapses into surprise or joke register, that is still a clean Lab 18 result.
 
 ## Read this first after a run
 

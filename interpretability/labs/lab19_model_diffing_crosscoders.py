@@ -1616,89 +1616,651 @@ def run_optional_causal_validation(
     return rows, summary, manifest
 
 
+
+# ---------------------------------------------------------------------------
+# Visualization upgrade: crosscoder diffing without the costume jewelry
+# ---------------------------------------------------------------------------
+
+LAB19_STATUS_ORDER = ("pass", "mixed", "warning", "fail", "skipped", "not_configured")
+LAB19_FEATURE_COLUMNS = (
+    "model_b_activation_share",
+    "decoder_norm_model_b_share",
+    "activation_correlation_a_b",
+    "abs_template_gap_scaled",
+    "top_model_b_family_concentration",
+    "top_model_b_variant_concentration",
+    "eval_over_train_activity_clipped",
+    "best_bridge_abs_cosine",
+)
+LAB19_FEATURE_COLUMN_LABELS = {
+    "model_b_activation_share": "B activation\nshare",
+    "decoder_norm_model_b_share": "B decoder\nshare",
+    "activation_correlation_a_b": "A/B act.\ncorr",
+    "abs_template_gap_scaled": "template\ngap",
+    "top_model_b_family_concentration": "family\nconc.",
+    "top_model_b_variant_concentration": "variant\nconc.",
+    "eval_over_train_activity_clipped": "eval/train\nactivity",
+    "best_bridge_abs_cosine": "bridge\n|cos|",
+}
+
+
+def lab19_color(key: str, default: str = "#555555") -> str:
+    helper = getattr(bench, "plot_modeldiff_color", None)
+    if callable(helper):
+        try:
+            return helper(key, default)
+        except TypeError:
+            return helper(key)
+    palette = {
+        "shared": "#0072B2",
+        "model_a_only": "#D55E00",
+        "model_b_only": "#009E73",
+        "base_only": "#D55E00",
+        "instruct_only": "#009E73",
+        "asymmetric": "#CC79A7",
+        "dead": "#8C8C8C",
+        "template": "#E69F00",
+        "template_residue_candidate": "#E69F00",
+        "family_specific_candidate": "#F0E442",
+        "train_only_unstable": "#D55E00",
+        "candidate_model_b_handle": "#009E73",
+        "candidate_model_a_handle": "#D55E00",
+        "candidate_shared_handle": "#0072B2",
+        "asymmetric_or_unclear": "#CC79A7",
+        "crosscoder_artifact_risk": "#D55E00",
+        "random": "#333333",
+        "raw": "#0072B2",
+        "compare_chat": "#009E73",
+        "pass": "#009E73",
+        "mixed": "#E69F00",
+        "warning": "#E69F00",
+        "fail": "#D55E00",
+        "skipped": "#8C8C8C",
+        "not_configured": "#8C8C8C",
+        "reconstruction": "#0072B2",
+        "taxonomy": "#009E73",
+        "controls": "#E69F00",
+        "causal": "#9467BD",
+        "bridge": "#56B4E9",
+    }
+    return palette.get(str(key), default)
+
+
+def lab19_marker(key: str, default: str = "o") -> str:
+    helper = getattr(bench, "plot_modeldiff_marker", None)
+    if callable(helper):
+        try:
+            return helper(key, default)
+        except TypeError:
+            return helper(key)
+    return {
+        "shared": "o",
+        "model_a_only": "<",
+        "model_b_only": ">",
+        "base_only": "<",
+        "instruct_only": ">",
+        "asymmetric": "D",
+        "dead": "x",
+        "raw": "o",
+        "compare_chat": "s",
+        "template_residue_candidate": "^",
+        "family_specific_candidate": "P",
+        "train_only_unstable": "v",
+        "candidate_model_b_handle": ">",
+        "candidate_model_a_handle": "<",
+        "candidate_shared_handle": "o",
+        "asymmetric_or_unclear": "D",
+    }.get(str(key), default)
+
+
+def _lab19_float(x: Any, default: float = float("nan")) -> float:
+    try:
+        val = float(x)
+    except Exception:
+        return default
+    return val if math.isfinite(val) else default
+
+
+def _lab19_int(x: Any, default: int = 0) -> int:
+    try:
+        return int(float(x))
+    except Exception:
+        return default
+
+
+def _lab19_none(x: Any) -> Any:
+    val = _lab19_float(x)
+    return rounded(val) if math.isfinite(val) else ""
+
+
+def _lab19_clip01(x: Any, default: float = float("nan")) -> float:
+    val = _lab19_float(x, default)
+    if not math.isfinite(val):
+        return float("nan")
+    return min(1.0, max(0.0, val))
+
+
+def _lab19_count_status(rows: Sequence[Mapping[str, Any]], status: str) -> int:
+    return sum(1 for row in rows if str(row.get("status", "")) == status)
+
+
+def _lab19_panel_label(ax: Any, label: str) -> None:
+    helper = getattr(bench, "add_panel_label", None)
+    if callable(helper):
+        try:
+            helper(ax, label)
+            return
+        except Exception:
+            pass
+    ax.text(-0.08, 1.06, label, transform=ax.transAxes, fontsize=11, fontweight="bold", va="top")
+
+
+def _lab19_style_ax(ax: Any, *, legend: bool = False) -> None:
+    try:
+        bench.style_ax(ax, legend=legend)
+    except TypeError:
+        bench.style_ax(ax)
+    except Exception:
+        pass
+
+
+def _lab19_sort_features_for_audit(rows: Sequence[Mapping[str, Any]], limit: int = 32) -> list[Mapping[str, Any]]:
+    def key(row: Mapping[str, Any]) -> tuple[float, float, float, int]:
+        posture = str(row.get("audit_posture", ""))
+        posture_bonus = {
+            "candidate_model_b_handle": 4.0,
+            "template_residue_candidate": 3.0,
+            "family_specific_candidate": 2.5,
+            "train_only_unstable": 2.0,
+            "asymmetric_or_unclear": 1.5,
+            "candidate_shared_handle": 1.0,
+        }.get(posture, 0.0)
+        return (
+            posture_bonus,
+            _lab19_float(row.get("risk_score"), 0.0),
+            _lab19_float(row.get("model_b_specificity_score"), 0.0),
+            -_lab19_int(row.get("feature_id"), 0),
+        )
+    return sorted(rows, key=key, reverse=True)[:limit]
+
+
+def lab19_prompt_inventory_summary(prompts: Sequence[PromptItem]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for family in sorted({p.family for p in prompts}):
+        fam = [p for p in prompts if p.family == family]
+        for source in sorted({p.source for p in fam}):
+            sub = [p for p in fam if p.source == source]
+            variants = Counter(p.variant for p in sub)
+            rows.append({
+                "family": family,
+                "source": source,
+                "n_prompts": len(sub),
+                "n_prompt_groups": len({p.prompt_group for p in sub}),
+                "raw_count": int(variants.get("raw", 0)),
+                "compare_chat_count": int(variants.get("compare_chat", 0)),
+                "other_variant_count": int(len(sub) - variants.get("raw", 0) - variants.get("compare_chat", 0)),
+                "default_voice_marker_rate": rounded(safe_fmean(marker_any(p.text, VOICE_MARKERS) for p in sub)),
+                "politeness_marker_rate": rounded(safe_fmean(marker_any(p.text, POLITENESS_MARKERS) for p in sub)),
+                "hedging_marker_rate": rounded(safe_fmean(marker_any(p.text, HEDGING_MARKERS) for p in sub)),
+                "refusal_marker_rate": rounded(safe_fmean(marker_any(p.text, REFUSAL_MARKERS) for p in sub)),
+            })
+    return rows
+
+
+def lab19_feature_audit_matrix(
+    taxonomy: Sequence[Mapping[str, Any]],
+    stability: Sequence[Mapping[str, Any]],
+    template_rows: Sequence[Mapping[str, Any]],
+    bridge_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    template_by_feature = {int(r.get("feature_id", -1)): r for r in template_rows if str(r.get("feature_id", "")).strip() != ""}
+    stability_by_feature = {int(r.get("feature_id", -1)): r for r in stability if str(r.get("feature_id", "")).strip() != ""}
+    bridge_by_feature: dict[int, dict[str, Any]] = {}
+    for row in bridge_rows:
+        if row.get("status") != "computed" or str(row.get("feature_id", "")).strip() == "":
+            continue
+        fid = int(row["feature_id"])
+        if fid not in bridge_by_feature or _lab19_float(row.get("abs_cosine"), 0.0) > _lab19_float(bridge_by_feature[fid].get("abs_cosine"), 0.0):
+            bridge_by_feature[fid] = dict(row)
+    rows: list[dict[str, Any]] = []
+    for row in taxonomy:
+        fid = int(row["feature_id"])
+        template = template_by_feature.get(fid, {})
+        stab = stability_by_feature.get(fid, {})
+        bridge = bridge_by_feature.get(fid, {})
+        template_gap = _lab19_float(template.get("abs_template_gap"), 0.0)
+        family_conc = _lab19_float(row.get("top_model_b_family_concentration"), 0.0)
+        variant_conc = _lab19_float(row.get("top_model_b_variant_concentration"), 0.0)
+        eval_ratio = _lab19_float(row.get("eval_over_train_activity"), float("nan"))
+        b_share = _lab19_float(row.get("model_b_activation_share"), 0.5)
+        decoder_b_share = _lab19_float(row.get("decoder_norm_model_b_share"), 0.5)
+        corr = _lab19_float(row.get("activation_correlation_a_b"), 0.0)
+        template_risk = min(1.0, max(0.0, template_gap / 0.75)) if math.isfinite(template_gap) else 0.0
+        family_risk = max(0.0, (family_conc - 0.5) / 0.5) if math.isfinite(family_conc) else 0.0
+        variant_risk = max(0.0, (variant_conc - 0.5) / 0.5) if math.isfinite(variant_conc) else 0.0
+        train_only_risk = 1.0 if math.isfinite(eval_ratio) and eval_ratio < 0.25 else 0.0
+        bridge_abs = _lab19_float(bridge.get("abs_cosine"), float("nan"))
+        role_tax = str(row.get("role_taxonomy", ""))
+        taxonomy_name = str(row.get("taxonomy", ""))
+        risk_score = 0.36 * template_risk + 0.26 * family_risk + 0.18 * variant_risk + 0.20 * train_only_risk
+        if taxonomy_name == "dead":
+            posture = "dead_or_silent"
+        elif template_risk >= 0.67 or (variant_conc >= 0.75 and str(row.get("top_model_b_variant")) == "compare_chat"):
+            posture = "template_residue_candidate"
+        elif train_only_risk >= 1.0:
+            posture = "train_only_unstable"
+        elif family_conc >= 0.75:
+            posture = "family_specific_candidate"
+        elif taxonomy_name == "model_b_only" or role_tax.endswith("_only") and "instruct" in role_tax or role_tax in {"model_b_only", "instruct_only"}:
+            posture = "candidate_model_b_handle"
+        elif taxonomy_name == "model_a_only" or role_tax in {"model_a_only", "base_only"}:
+            posture = "candidate_model_a_handle"
+        elif taxonomy_name == "shared":
+            posture = "candidate_shared_handle"
+        else:
+            posture = "asymmetric_or_unclear"
+        rows.append({
+            "feature_id": fid,
+            "taxonomy": taxonomy_name,
+            "role_taxonomy": role_tax,
+            "audit_posture": posture,
+            "model_b_specificity_score": row.get("model_b_specificity_score", ""),
+            "model_b_activation_share": row.get("model_b_activation_share", ""),
+            "decoder_norm_model_b_share": row.get("decoder_norm_model_b_share", ""),
+            "activation_correlation_a_b": row.get("activation_correlation_a_b", ""),
+            "abs_template_gap": template.get("abs_template_gap", ""),
+            "mean_compare_chat_minus_raw_activation_model_b": template.get("mean_compare_chat_minus_raw_activation_model_b", ""),
+            "top_model_b_family": row.get("top_model_b_family", ""),
+            "top_model_b_family_concentration": row.get("top_model_b_family_concentration", ""),
+            "top_model_b_variant": row.get("top_model_b_variant", ""),
+            "top_model_b_variant_concentration": row.get("top_model_b_variant_concentration", ""),
+            "eval_over_train_activity": row.get("eval_over_train_activity", stab.get("eval_over_train_activity", "")),
+            "best_bridge_direction": bridge.get("direction_name", ""),
+            "best_bridge_abs_cosine": bridge.get("abs_cosine", ""),
+            "best_bridge_signed_cosine": bridge.get("cosine_with_model_b_decoder", ""),
+            "template_risk": rounded(template_risk),
+            "family_concentration_risk": rounded(family_risk),
+            "variant_concentration_risk": rounded(variant_risk),
+            "train_only_risk": rounded(train_only_risk),
+            "risk_score": rounded(risk_score),
+            "abs_template_gap_scaled": rounded(min(1.0, max(0.0, template_gap / 0.75)) if math.isfinite(template_gap) else float("nan")),
+            "eval_over_train_activity_clipped": rounded(min(1.0, max(0.0, eval_ratio)) if math.isfinite(eval_ratio) else float("nan")),
+            "claim_boundary": {
+                "candidate_model_b_handle": "candidate model-B-skewed feature handle after controls; inspect gallery before naming",
+                "template_residue_candidate": "likely chat-template or rendering residue; name it narrowly",
+                "family_specific_candidate": "candidate prompt-family feature, not general model-role feature",
+                "train_only_unstable": "activity does not transfer to eval split",
+                "candidate_shared_handle": "shared feature coordinate, useful as anchor/control",
+                "candidate_model_a_handle": "candidate model-A-skewed feature handle",
+                "asymmetric_or_unclear": "asymmetry needs more controls before naming",
+                "dead_or_silent": "silent/dead under this corpus",
+            }.get(posture, "inspect manually"),
+        })
+    rows.sort(key=lambda r: (-_lab19_float(r.get("risk_score"), 0.0), -_lab19_float(r.get("model_b_specificity_score"), 0.0), int(r["feature_id"])))
+    return rows
+
+
+def lab19_taxonomy_control_summary(audit_rows: Sequence[Mapping[str, Any]], random_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    by_role: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in audit_rows:
+        by_role[str(row.get("role_taxonomy", row.get("taxonomy", "")))].append(row)
+    random_b_rate = safe_fmean(float(r.get("would_look_model_b_specific") is True) for r in random_rows)
+    random_a_rate = safe_fmean(float(r.get("would_look_model_a_specific") is True) for r in random_rows)
+    out: list[dict[str, Any]] = []
+    for role, rows in sorted(by_role.items()):
+        out.append({
+            "role_taxonomy": role,
+            "n_features": len(rows),
+            "candidate_model_b_handles": sum(1 for r in rows if r.get("audit_posture") == "candidate_model_b_handle"),
+            "template_residue_candidates": sum(1 for r in rows if r.get("audit_posture") == "template_residue_candidate"),
+            "family_specific_candidates": sum(1 for r in rows if r.get("audit_posture") == "family_specific_candidate"),
+            "train_only_unstable": sum(1 for r in rows if r.get("audit_posture") == "train_only_unstable"),
+            "median_model_b_activation_share": rounded(statistics.median([_lab19_float(r.get("model_b_activation_share")) for r in rows if math.isfinite(_lab19_float(r.get("model_b_activation_share")))] or [float("nan")])),
+            "median_template_gap": rounded(statistics.median([_lab19_float(r.get("abs_template_gap")) for r in rows if math.isfinite(_lab19_float(r.get("abs_template_gap")))] or [float("nan")])),
+            "random_baseline_model_b_specific_rate": rounded(random_b_rate),
+            "random_baseline_model_a_specific_rate": rounded(random_a_rate),
+        })
+    return out
+
+
+def lab19_norm_shift_summary(norm_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for row in norm_rows:
+        ratio = _lab19_float(row.get("mean_norm_ratio_b_over_a"), float("nan"))
+        token_a = _lab19_float(row.get("mean_tokens_model_a"), float("nan"))
+        token_b = _lab19_float(row.get("mean_tokens_model_b"), float("nan"))
+        token_gap = token_b - token_a if math.isfinite(token_a) and math.isfinite(token_b) else float("nan")
+        norm_gap_from_one = abs(ratio - 1.0) if math.isfinite(ratio) else float("nan")
+        rows.append({
+            **dict(row),
+            "token_count_gap_b_minus_a": rounded(token_gap),
+            "abs_norm_ratio_gap_from_one": rounded(norm_gap_from_one),
+            "norm_shift_warning": bool(math.isfinite(norm_gap_from_one) and norm_gap_from_one >= 0.20),
+            "token_shift_warning": bool(math.isfinite(token_gap) and abs(token_gap) >= 3),
+            "claim_boundary": "Large norm/token shifts can make model-specific features cheap; inspect before semantic labels.",
+        })
+    rows.sort(key=lambda r: -_lab19_float(r.get("abs_norm_ratio_gap_from_one"), 0.0))
+    return rows
+
+
+def lab19_causal_operating_points(summary: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows = [r for r in summary if r.get("status") == "ran"]
+    if not rows:
+        return [{"status": "skipped", "condition": "", "note": "Run --run-edit to populate causal operating points."}]
+    by_cond = {str(r.get("condition")): r for r in rows}
+    fp = by_cond.get("feature_plus", {})
+    rp = by_cond.get("random_plus", {})
+    fm = by_cond.get("feature_minus", {})
+    out = []
+    for row in rows:
+        condition = str(row.get("condition"))
+        target = _lab19_float(row.get("delta_default_voice_marker_vs_baseline"), 0.0)
+        random_target = _lab19_float(rp.get("delta_default_voice_marker_vs_baseline"), 0.0)
+        repetition = _lab19_float(row.get("delta_repetition_rate_vs_baseline"), 0.0)
+        word_delta = _lab19_float(row.get("delta_word_count_vs_baseline"), 0.0)
+        refusal = _lab19_float(row.get("delta_refusal_marker_vs_baseline"), 0.0)
+        out.append({
+            "status": "ran",
+            "condition": condition,
+            "n": row.get("n", ""),
+            "default_voice_delta": rounded(target),
+            "specificity_gap_vs_random_plus": rounded(target - random_target if condition.startswith("feature") and math.isfinite(random_target) else float("nan")),
+            "minus_direction_default_voice_delta": fm.get("delta_default_voice_marker_vs_baseline", ""),
+            "politeness_delta": row.get("delta_politeness_marker_vs_baseline", ""),
+            "hedging_delta": row.get("delta_hedging_marker_vs_baseline", ""),
+            "refusal_delta": row.get("delta_refusal_marker_vs_baseline", ""),
+            "word_count_delta": row.get("delta_word_count_vs_baseline", ""),
+            "repetition_delta": row.get("delta_repetition_rate_vs_baseline", ""),
+            "claimable_by_auto_markers": int(
+                condition == "feature_plus"
+                and math.isfinite(random_target)
+                and (target - random_target) >= 0.20
+                and repetition <= 0.15
+                and refusal <= 0.10
+                and abs(word_delta) <= 32
+            ),
+            "note": "Auto markers triage only; hand labels decide whether this is assistant-voice behavior or verbosity/refusal.",
+        })
+    return out
+
+
+def lab19_evidence_matrix(
+    metrics: Mapping[str, Any],
+    audit_rows: Sequence[Mapping[str, Any]],
+    norm_rows: Sequence[Mapping[str, Any]],
+    random_rows: Sequence[Mapping[str, Any]],
+    bridge_rows: Sequence[Mapping[str, Any]],
+    causal_summary: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    n_features = int(metrics.get("n_features") or len(audit_rows) or 0)
+    eval_candidates = [_lab19_float(metrics.get("eval_fvu_model_a")), _lab19_float(metrics.get("eval_fvu_model_b"))]
+    eval_candidates = [v for v in eval_candidates if math.isfinite(v)]
+    max_eval_fvu = max(eval_candidates) if eval_candidates else float("nan")
+    rows.append({
+        "evidence_object": "paired_crosscoder_reconstruction",
+        "rung": "ATTR/DECODE instrument",
+        "headline_metric": "max eval FVU",
+        "value": rounded(max_eval_fvu),
+        "status": "pass" if math.isfinite(max_eval_fvu) and max_eval_fvu <= 0.50 else ("warning" if math.isfinite(max_eval_fvu) and max_eval_fvu <= 0.75 else "fail"),
+        "artifact": "plots/crosscoder_reconstruction.png",
+        "claim_boundary": "A taxonomy from a weak reconstruction is a sketch, not a stable diff.",
+    })
+    counts = metrics.get("taxonomy_counts", {}) or {}
+    nonshared = n_features - int(counts.get("shared", 0) or 0) - int(counts.get("dead", 0) or 0)
+    identity = bool(metrics.get("identity_pair"))
+    identity_status = "skipped" if not identity else ("pass" if n_features and nonshared / max(1, n_features) <= 0.35 else "fail")
+    rows.append({
+        "evidence_object": "identity_pair_smoke",
+        "rung": "instrument control",
+        "headline_metric": "nonshared feature share" if identity else "not identity pair",
+        "value": rounded(nonshared / max(1, n_features)) if identity else "",
+        "status": identity_status,
+        "artifact": "plots/identity_smoke_scorecard.png",
+        "claim_boundary": "If identical models yield many model-specific features, the microscope is fogged.",
+    })
+    candidate_b = sum(1 for r in audit_rows if r.get("audit_posture") == "candidate_model_b_handle")
+    rows.append({
+        "evidence_object": "candidate_model_b_features",
+        "rung": "DECODE/ATTR audited",
+        "headline_metric": "candidate model-B handles after first-pass controls",
+        "value": candidate_b,
+        "status": "pass" if candidate_b > 0 else "mixed",
+        "artifact": "plots/feature_audit_matrix.png",
+        "claim_boundary": "Candidate handles still need gallery labels and held-out prompt audits before attractive names.",
+    })
+    template_risk = sum(1 for r in audit_rows if r.get("audit_posture") == "template_residue_candidate")
+    rows.append({
+        "evidence_object": "template_residue_control",
+        "rung": "cheap-explanation audit",
+        "headline_metric": "template-residue candidates",
+        "value": template_risk,
+        "status": "pass" if template_risk == 0 else ("warning" if template_risk <= max(2, 0.15 * max(1, n_features)) else "fail"),
+        "artifact": "plots/template_control_gaps.png",
+        "claim_boundary": "Large raw-vs-chat gaps narrow the label to template/rendering, not model behavior.",
+    })
+    family_risk = sum(1 for r in audit_rows if r.get("audit_posture") == "family_specific_candidate")
+    rows.append({
+        "evidence_object": "prompt_family_concentration",
+        "rung": "cheap-explanation audit",
+        "headline_metric": "family-concentrated candidates",
+        "value": family_risk,
+        "status": "pass" if family_risk == 0 else "warning",
+        "artifact": "plots/feature_context_atlas.png",
+        "claim_boundary": "A family-only feature is a valid narrow result, not a default assistant voice claim.",
+    })
+    random_rate = safe_fmean(float(r.get("would_look_model_b_specific") is True) for r in random_rows)
+    rows.append({
+        "evidence_object": "random_direction_exclusivity",
+        "rung": "null control",
+        "headline_metric": "random model-B-specific rate",
+        "value": rounded(random_rate),
+        "status": "pass" if math.isfinite(random_rate) and random_rate <= 0.10 else ("warning" if math.isfinite(random_rate) and random_rate <= 0.25 else "fail"),
+        "artifact": "plots/feature_exclusivity_histogram.png",
+        "claim_boundary": "If random directions often look exclusive, exclusivity is cheap in this cloud.",
+    })
+    max_norm_shift = max([_lab19_float(r.get("abs_norm_ratio_gap_from_one"), 0.0) for r in norm_rows] or [0.0])
+    rows.append({
+        "evidence_object": "activation_norm_shift",
+        "rung": "OBS cheap-explanation audit",
+        "headline_metric": "max |norm ratio - 1|",
+        "value": rounded(max_norm_shift),
+        "status": "pass" if max_norm_shift <= 0.20 else "warning",
+        "artifact": "plots/activation_norm_shift_atlas.png",
+        "claim_boundary": "Norm shifts can masquerade as model-role features.",
+    })
+    computed_bridge = [r for r in bridge_rows if r.get("status") == "computed"]
+    top_bridge = max([_lab19_float(r.get("abs_cosine"), 0.0) for r in computed_bridge] or [float("nan")])
+    rows.append({
+        "evidence_object": "prior_direction_bridge",
+        "rung": "bridge / hypothesis generator",
+        "headline_metric": "max |cosine|" if computed_bridge else "not configured",
+        "value": rounded(top_bridge) if computed_bridge else "",
+        "status": "mixed" if computed_bridge else "not_configured",
+        "artifact": "plots/feature_direction_bridge.png",
+        "claim_boundary": "A cosine proposes a label; gallery counterexamples and controls decide it.",
+    })
+    ran_causal = [r for r in causal_summary if r.get("status") == "ran"]
+    fp = next((r for r in ran_causal if r.get("condition") == "feature_plus"), {})
+    rp = next((r for r in ran_causal if r.get("condition") == "random_plus"), {})
+    gap = _lab19_float(fp.get("delta_default_voice_marker_vs_baseline"), float("nan")) - _lab19_float(rp.get("delta_default_voice_marker_vs_baseline"), float("nan"))
+    rows.append({
+        "evidence_object": "optional_feature_steering",
+        "rung": "narrow CAUSAL extension",
+        "headline_metric": "feature-plus over random-plus" if ran_causal else "skipped",
+        "value": rounded(gap) if ran_causal and math.isfinite(gap) else "",
+        "status": "pass" if ran_causal and math.isfinite(gap) and gap >= 0.20 else ("warning" if ran_causal else "skipped"),
+        "artifact": "plots/causal_operating_frontier.png",
+        "claim_boundary": "Marker deltas are a queue for hand labels, not a final behavior claim.",
+    })
+    return rows
+
+
+def lab19_plot_reading_guide() -> list[dict[str, Any]]:
+    return [
+        {"artifact": "plots/model_diffing_evidence_dashboard.png", "concept": "Start here: reconstruction quality, taxonomy, cheap controls, and optional intervention in one board.", "claim_boundary": "No semantic label until the control panels are read."},
+        {"artifact": "plots/crosscoder_training_diagnostics.png", "concept": "Training and eval reconstruction plus sparsity over steps.", "claim_boundary": "A pretty taxonomy from a bad dictionary is plot confetti."},
+        {"artifact": "plots/feature_audit_matrix.png", "concept": "Per-feature evidence and cheap-explanation risks.", "claim_boundary": "Rows with high template/family risk get narrower labels."},
+        {"artifact": "plots/taxonomy_control_ladder.png", "concept": "How role-taxonomy counts shrink after template, family, and stability filters.", "claim_boundary": "Count audited candidates, not raw green bars."},
+        {"artifact": "plots/prompt_inventory_balance.png", "concept": "Prompt family, source, and raw/chat balance.", "claim_boundary": "Distribution imbalance can create model-diff ghosts."},
+        {"artifact": "plots/activation_norm_shift_atlas.png", "concept": "Norm and token-count shift audit by family/variant.", "claim_boundary": "Large norm shifts are an OBS result and a confound."},
+        {"artifact": "plots/feature_context_atlas.png", "concept": "Where top feature activations come from.", "claim_boundary": "One-family fireworks are not default voice."},
+        {"artifact": "plots/feature_direction_bridge.png", "concept": "Cosines to prior-lab directions when configured.", "claim_boundary": "A bridge proposes a label; it does not crown it."},
+        {"artifact": "plots/causal_operating_frontier.png", "concept": "Optional feature intervention target movement versus verbosity/repetition/refusal costs.", "claim_boundary": "Requires random controls and hand labels."},
+    ]
+
+
+def write_lab19_visual_tables(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    prompts: Sequence[PromptItem],
+    norm_summary: Sequence[Mapping[str, Any]],
+    curve: Sequence[Mapping[str, Any]],
+    taxonomy: Sequence[Mapping[str, Any]],
+    stability: Sequence[Mapping[str, Any]],
+    template_rows: Sequence[Mapping[str, Any]],
+    random_rows: Sequence[Mapping[str, Any]],
+    bridge: Sequence[Mapping[str, Any]],
+    causal_summary: Sequence[Mapping[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    prompt_summary = lab19_prompt_inventory_summary(prompts)
+    norm_shift = lab19_norm_shift_summary(norm_summary)
+    feature_audit = lab19_feature_audit_matrix(taxonomy, stability, template_rows, bridge)
+    taxonomy_ladder = lab19_taxonomy_control_summary(feature_audit, random_rows)
+    causal_points = lab19_causal_operating_points(causal_summary)
+    evidence = lab19_evidence_matrix(metrics, feature_audit, norm_shift, random_rows, bridge, causal_summary)
+    guide = lab19_plot_reading_guide()
+    tables = {
+        "prompt_inventory_summary": prompt_summary,
+        "activation_norm_shift_summary": norm_shift,
+        "feature_audit_matrix": feature_audit,
+        "taxonomy_control_ladder": taxonomy_ladder,
+        "causal_operating_points": causal_points,
+        "model_diffing_evidence_matrix": evidence,
+        "plot_reading_guide": guide,
+    }
+    descriptions = {
+        "prompt_inventory_summary": "Prompt inventory balance by family, source, and raw/chat variant.",
+        "activation_norm_shift_summary": "Activation norm and token-count shift audit by family/variant.",
+        "feature_audit_matrix": "Per-feature model-diff evidence joined to template, family, stability, and bridge controls.",
+        "taxonomy_control_ladder": "Role-taxonomy counts after template, family, stability, and random-baseline context.",
+        "causal_operating_points": "Optional feature-intervention operating points with marker-specificity and side-effect costs.",
+        "model_diffing_evidence_matrix": "Run-level evidence matrix keeping reconstruction, controls, bridge, and causal extension separate.",
+        "plot_reading_guide": "Map from upgraded Lab 19 plots to the concept and claim boundary they teach.",
+    }
+    for name, rows in tables.items():
+        path = ctx.path("tables", f"{name}.csv")
+        bench.write_csv_with_context(ctx, path, rows)
+        ctx.register_artifact(path, "table", descriptions[name])
+    return tables
+
+
 # ---------------------------------------------------------------------------
 # Plots
 # ---------------------------------------------------------------------------
 
 
 def plot_taxonomy_counts(ctx: bench.RunContext, taxonomy: Sequence[Mapping[str, Any]]) -> None:
-    counts = Counter(str(r["role_taxonomy"]) for r in taxonomy)
-    labels = sorted(counts)
-    fig, ax = bench.new_figure(figsize=(8.2, 4.6))
-    ax.bar(labels, [counts[l] for l in labels])
+    counts = Counter(str(r.get("role_taxonomy", r.get("taxonomy", ""))) for r in taxonomy)
+    labels = sorted(counts, key=lambda k: (-counts[k], k))
+    fig, ax = bench.new_figure(figsize=(9.4, 4.8))
+    vals = [counts[l] for l in labels]
+    colors = [lab19_color(l if l in {"shared", "asymmetric", "dead"} else ("model_b_only" if "instruct" in l or "model_b" in l else "model_a_only" if "base" in l or "model_a" in l else l)) for l in labels]
+    bars = ax.bar(labels, vals, color=colors)
+    for bar, val in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.4, str(val), ha="center", va="bottom", fontsize=8)
     ax.set_ylabel("feature count")
-    ax.set_title("Crosscoder feature taxonomy")
-    ax.tick_params(axis="x", rotation=35)
-    bench.style_ax(ax, legend=False)
-    bench.save_figure(ctx, fig, "feature_taxonomy_counts.png", "Counts of shared, model-specific, asymmetric, and dead crosscoder features.")
+    ax.set_title("Crosscoder feature taxonomy, role-aware")
+    ax.tick_params(axis="x", rotation=30)
+    _lab19_style_ax(ax, legend=False)
+    bench.save_figure(ctx, fig, "feature_taxonomy_counts.png", "Counts of shared, model-specific, asymmetric, and dead crosscoder features with role-aware colors.")
 
 
 def plot_exclusivity(ctx: bench.RunContext, taxonomy: Sequence[Mapping[str, Any]], random_rows: Sequence[Mapping[str, Any]]) -> None:
-    fig, ax = bench.new_figure(figsize=(8.4, 5.0))
-    vals = [float(r["model_b_activation_share"]) for r in taxonomy if isinstance(r.get("model_b_activation_share"), (int, float))]
-    rand = [float(r["model_b_activation_share"]) for r in random_rows if isinstance(r.get("model_b_activation_share"), (int, float))]
+    fig, ax = bench.new_figure(figsize=(8.9, 5.0))
+    vals = [_lab19_float(r.get("model_b_activation_share")) for r in taxonomy]
+    vals = [v for v in vals if math.isfinite(v)]
+    rand = [_lab19_float(r.get("model_b_activation_share")) for r in random_rows]
+    rand = [v for v in rand if math.isfinite(v)]
     if rand:
-        ax.hist(rand, bins=18, alpha=0.35, label="random directions")
+        ax.hist(rand, bins=22, alpha=0.32, label="random directions", color=lab19_color("random"))
+        for q, ls in [(0.05, ":"), (0.95, ":")]:
+            idx = max(0, min(len(rand) - 1, int(round(q * (len(rand) - 1)))))
+            ax.axvline(sorted(rand)[idx], color=lab19_color("random"), linestyle=ls, linewidth=1.1, alpha=0.75)
     if vals:
-        ax.hist(vals, bins=18, alpha=0.75, label="crosscoder features")
-    ax.axvline(0.5, linestyle="--", linewidth=1)
+        ax.hist(vals, bins=22, alpha=0.72, label="crosscoder features", color=lab19_color("model_b_only"))
+    for x, label in [(0.28, "A-only threshold"), (0.50, "balanced"), (0.72, "B-only threshold")]:
+        ax.axvline(x, linestyle="--" if x != 0.50 else "-", linewidth=0.9, color="#444444", alpha=0.6)
+        ax.text(x, ax.get_ylim()[1] * 0.94, label, rotation=90, ha="right", va="top", fontsize=7, color="#444444")
     ax.set_xlabel("model B activation share")
-    ax.set_ylabel("feature count")
+    ax.set_ylabel("feature / random-direction count")
     ax.set_title("Feature exclusivity versus random-direction baseline")
-    bench.style_ax(ax, legend=True)
-    bench.save_figure(ctx, fig, "feature_exclusivity_histogram.png", "Histogram of feature model-B activation shares with random-direction baseline.")
+    _lab19_style_ax(ax, legend=True)
+    bench.save_figure(ctx, fig, "feature_exclusivity_histogram.png", "Histogram of feature model-B activation shares with random-direction baseline and exclusivity thresholds.")
 
 
 def plot_crosscoder_reconstruction(ctx: bench.RunContext, metrics: Mapping[str, Any]) -> None:
     labels = ["train A", "train B", "eval A", "eval B"]
     vals = [
-        metrics.get("train_fvu_model_a"),
-        metrics.get("train_fvu_model_b"),
-        metrics.get("eval_fvu_model_a"),
-        metrics.get("eval_fvu_model_b"),
+        _lab19_float(metrics.get("train_fvu_model_a")),
+        _lab19_float(metrics.get("train_fvu_model_b")),
+        _lab19_float(metrics.get("eval_fvu_model_a")),
+        _lab19_float(metrics.get("eval_fvu_model_b")),
     ]
-    numeric = [float(v) if isinstance(v, (int, float)) or (isinstance(v, str) and v) else float("nan") for v in vals]
-    fig, ax = bench.new_figure(figsize=(7.4, 4.5))
-    ax.bar(labels, numeric)
+    fig, ax = bench.new_figure(figsize=(8.2, 4.6))
+    colors = [lab19_color("reconstruction"), lab19_color("reconstruction"), lab19_color("bridge"), lab19_color("bridge")]
+    bars = ax.bar(labels, vals, color=colors)
+    ax.axhline(0.50, color=lab19_color("pass"), linestyle="--", linewidth=1.0, label="strong-ish ≤0.50")
+    ax.axhline(0.75, color=lab19_color("warning"), linestyle="--", linewidth=1.0, label="weak >0.75")
+    for bar, val in zip(bars, vals):
+        if math.isfinite(val):
+            ax.text(bar.get_x() + bar.get_width() / 2, val + 0.015, f"{val:.2f}", ha="center", va="bottom", fontsize=8)
     ax.set_ylabel("FVU, lower is better")
+    ax.set_ylim(bottom=0)
     ax.set_title("Crosscoder reconstruction quality")
-    bench.style_ax(ax, legend=False)
-    bench.save_figure(ctx, fig, "crosscoder_reconstruction.png", "Train/eval reconstruction FVU for both sides of the paired crosscoder.")
+    _lab19_style_ax(ax, legend=True)
+    bench.save_figure(ctx, fig, "crosscoder_reconstruction.png", "Train/eval reconstruction FVU for both sides of the paired crosscoder with quality guide rails.")
 
 
 def plot_template_control(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
-    top = [r for r in rows if isinstance(r.get("abs_template_gap"), (int, float))][:16]
+    top = [r for r in rows if math.isfinite(_lab19_float(r.get("abs_template_gap")))][:18]
     if not top:
         return
-    fig, ax = bench.new_figure(figsize=(8.6, 5.0))
-    labels = [str(r["feature_id"]) for r in top]
-    vals = [float(r["mean_compare_chat_minus_raw_activation_model_b"] or 0.0) for r in top]
-    ax.bar(labels, vals)
-    ax.axhline(0, linewidth=1)
-    ax.set_xlabel("feature id")
+    fig, ax = bench.new_figure(figsize=(9.4, 5.2))
+    labels = [f"f{r['feature_id']}" for r in top]
+    vals = [_lab19_float(r.get("mean_compare_chat_minus_raw_activation_model_b"), 0.0) for r in top]
+    colors = [lab19_color(str(r.get("role_taxonomy") or r.get("taxonomy"))) for r in top]
+    ax.bar(labels, vals, color=colors)
+    ax.axhline(0, linewidth=1.0, color="#444444")
+    ax.axhline(0.5, linewidth=0.9, linestyle="--", color=lab19_color("warning"), alpha=0.8)
+    ax.axhline(-0.5, linewidth=0.9, linestyle="--", color=lab19_color("warning"), alpha=0.8)
+    ax.set_xlabel("feature id, sorted by |template gap|")
     ax.set_ylabel("chat minus raw activation, model B")
     ax.set_title("Template-control gaps for top affected features")
-    bench.style_ax(ax, legend=False)
+    ax.tick_params(axis="x", rotation=30)
+    _lab19_style_ax(ax, legend=False)
     bench.save_figure(ctx, fig, "template_control_gaps.png", "Features most sensitive to chat-template rendering in the comparison model.")
 
 
 def plot_direction_bridge(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
-    computed = [r for r in rows if r.get("status") == "computed" and isinstance(r.get("abs_cosine"), (int, float))]
-    fig, ax = bench.new_figure(figsize=(8.0, 4.4))
+    computed = [r for r in rows if r.get("status") == "computed" and math.isfinite(_lab19_float(r.get("abs_cosine")))]
+    fig, ax = bench.new_figure(figsize=(8.8, 4.8))
     if computed:
-        top = sorted(computed, key=lambda r: -float(r["abs_cosine"]))[:16]
-        labels = [f"f{r['feature_id']}" for r in top]
-        vals = [float(r["cosine_with_model_b_decoder"]) for r in top]
-        ax.bar(labels, vals)
-        ax.axhline(0, linewidth=1)
+        top = sorted(computed, key=lambda r: -_lab19_float(r.get("abs_cosine"), 0.0))[:18]
+        labels = [f"f{r['feature_id']}\n{str(r.get('direction_name', '')).split('.')[-1][:16]}" for r in top]
+        vals = [_lab19_float(r.get("cosine_with_model_b_decoder"), 0.0) for r in top]
+        colors = [lab19_color("model_b_only") if v >= 0 else lab19_color("model_a_only") for v in vals]
+        ax.bar(labels, vals, color=colors)
+        ax.axhline(0, linewidth=1, color="#444444")
         ax.set_ylabel("cosine with bridge direction")
-        ax.set_title("Feature decoder bridge to prior-lab direction")
+        ax.set_title("Feature decoder bridge to prior-lab directions")
+        ax.tick_params(axis="x", rotation=35)
     else:
         ax.axis("off")
-        ax.text(0.02, 0.68, "Direction bridge not configured.", fontsize=12)
-        ax.text(0.02, 0.46, "Set LAB19_BRIDGE_STATE to a prior-lab state .pt file.", fontsize=10)
-        ax.text(0.02, 0.25, "The table still records the expected residual-space convention.", fontsize=10)
-    bench.style_ax(ax, legend=False)
+        ax.text(0.02, 0.72, "Direction bridge not configured.", fontsize=13, fontweight="bold")
+        ax.text(0.02, 0.52, "Set LAB19_BRIDGE_STATE to a prior-lab state .pt file.", fontsize=10)
+        ax.text(0.02, 0.34, "A cosine proposes a label. It does not name the feature for you.", fontsize=10)
+    _lab19_style_ax(ax, legend=False)
     bench.save_figure(ctx, fig, "feature_direction_bridge.png", "Bridge between model-diff feature decoders and saved prior-lab directions.")
 
 
@@ -1706,17 +2268,360 @@ def plot_causal_validation(ctx: bench.RunContext, summary: Sequence[Mapping[str,
     rows = [r for r in summary if r.get("status") == "ran"]
     if not rows:
         return
-    fig, ax = bench.new_figure(figsize=(8.5, 4.7))
-    labels = [str(r["condition"]) for r in rows]
-    vals = [float(r.get("delta_default_voice_marker_vs_baseline") or 0.0) for r in rows]
-    ax.bar(labels, vals)
-    ax.axhline(0, linewidth=1)
-    ax.tick_params(axis="x", rotation=30)
+    fig, ax = bench.new_figure(figsize=(9.0, 4.9))
+    labels = [str(r["condition"]).replace("_", "\n") for r in rows]
+    vals = [_lab19_float(r.get("delta_default_voice_marker_vs_baseline"), 0.0) for r in rows]
+    colors = [lab19_color("model_b_only") if "feature" in str(r.get("condition")) else lab19_color("random") for r in rows]
+    ax.bar(labels, vals, color=colors)
+    ax.axhline(0, linewidth=1, color="#444444")
     ax.set_ylabel("default-voice marker delta vs baseline")
     ax.set_title("Optional feature intervention, marker-based smoke score")
-    bench.style_ax(ax, legend=False)
+    _lab19_style_ax(ax, legend=False)
     bench.save_figure(ctx, fig, "causal_feature_validation.png", "Optional benign feature-intervention effects against random-feature controls.")
 
+
+def plot_crosscoder_training_diagnostics(ctx: bench.RunContext, curve: Sequence[Mapping[str, Any]]) -> None:
+    if not curve:
+        return
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(1, 2, figsize=(12.4, 4.4))
+    steps = [_lab19_float(r.get("step")) for r in curve]
+    for key, label, color_key, ls in [
+        ("train_fvu_model_a", "train A", "model_a_only", "-"),
+        ("train_fvu_model_b", "train B", "model_b_only", "-"),
+        ("eval_fvu_model_a", "eval A", "model_a_only", "--"),
+        ("eval_fvu_model_b", "eval B", "model_b_only", "--"),
+    ]:
+        vals = [_lab19_float(r.get(key)) for r in curve]
+        axes[0].plot(steps, vals, label=label, color=lab19_color(color_key), linestyle=ls)
+    axes[0].axhline(0.75, color=lab19_color("warning"), linestyle=":", linewidth=1.0)
+    axes[0].set_xlabel("training step")
+    axes[0].set_ylabel("FVU")
+    axes[0].set_title("Reconstruction over training")
+    _lab19_panel_label(axes[0], "A")
+    for key, label, color_key in [
+        ("mean_pair_sparsity", "pair code density", "shared"),
+        ("mean_side_sparsity_a", "A side density", "model_a_only"),
+        ("mean_side_sparsity_b", "B side density", "model_b_only"),
+    ]:
+        vals = [_lab19_float(r.get(key)) for r in curve]
+        axes[1].plot(steps, vals, label=label, color=lab19_color(color_key))
+    axes[1].set_xlabel("training step")
+    axes[1].set_ylabel("fraction active")
+    axes[1].set_title("Sparsity / activity pressure")
+    _lab19_panel_label(axes[1], "B")
+    for ax in axes:
+        _lab19_style_ax(ax, legend=True)
+    fig.suptitle("Paired crosscoder training diagnostics", fontsize=13, y=1.02)
+    bench.save_figure(ctx, fig, "crosscoder_training_diagnostics.png", "Training/eval reconstruction and feature-density diagnostics for the paired crosscoder.")
+
+
+def plot_feature_audit_matrix(ctx: bench.RunContext, audit_rows: Sequence[Mapping[str, Any]]) -> None:
+    rows = _lab19_sort_features_for_audit(audit_rows, limit=30)
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    data: list[list[float]] = []
+    for row in rows:
+        vals = []
+        for col in LAB19_FEATURE_COLUMNS:
+            if col == "abs_template_gap_scaled":
+                val = _lab19_clip01(row.get("abs_template_gap_scaled"))
+            elif col == "eval_over_train_activity_clipped":
+                val = _lab19_clip01(row.get("eval_over_train_activity_clipped"))
+            elif col == "activation_correlation_a_b":
+                corr = _lab19_float(row.get(col), 0.0)
+                val = (corr + 1.0) / 2.0 if math.isfinite(corr) else float("nan")
+            else:
+                val = _lab19_clip01(row.get(col))
+            vals.append(val)
+        data.append(vals)
+    fig, ax = bench.new_figure(figsize=(10.8, max(5.4, 0.28 * len(rows) + 2.2)))
+    im = ax.imshow(data, aspect="auto", vmin=0, vmax=1, cmap="viridis")
+    ax.set_xticks(range(len(LAB19_FEATURE_COLUMNS)))
+    ax.set_xticklabels([LAB19_FEATURE_COLUMN_LABELS[c] for c in LAB19_FEATURE_COLUMNS])
+    ylabels = [f"f{r['feature_id']}  {str(r.get('audit_posture', '')).replace('_', ' ')}" for r in rows]
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels(ylabels, fontsize=7)
+    for i, row in enumerate(rows):
+        ax.scatter([-0.65], [i], marker=lab19_marker(str(row.get("taxonomy"))), color=lab19_color(str(row.get("audit_posture"))), s=38, clip_on=False)
+    ax.set_title("Feature audit matrix: model-skew, stability, and cheap-explanation risks")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02)
+    cbar.set_label("normalized value / risk")
+    ax.grid(False)
+    bench.save_figure(ctx, fig, "feature_audit_matrix.png", "Per-feature model-diff evidence joined to template, family, stability, and bridge controls.")
+
+
+def plot_taxonomy_control_ladder(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    labels = [str(r.get("role_taxonomy")) for r in rows]
+    totals = [_lab19_int(r.get("n_features")) for r in rows]
+    template = [_lab19_int(r.get("template_residue_candidates")) for r in rows]
+    family = [_lab19_int(r.get("family_specific_candidates")) for r in rows]
+    unstable = [_lab19_int(r.get("train_only_unstable")) for r in rows]
+    candidates = [_lab19_int(r.get("candidate_model_b_handles")) for r in rows]
+    fig, ax = bench.new_figure(figsize=(10.2, max(4.6, 0.40 * len(labels) + 1.5)))
+    y = list(range(len(labels)))
+    ax.barh(y, totals, color="#D8D8D8", label="all features")
+    ax.barh(y, template, color=lab19_color("template_residue_candidate"), label="template-risk")
+    left = template[:]
+    ax.barh(y, family, left=left, color=lab19_color("family_specific_candidate"), label="family-risk")
+    left = [a + b for a, b in zip(left, family)]
+    ax.barh(y, unstable, left=left, color=lab19_color("train_only_unstable"), label="train-only")
+    ax.scatter(candidates, y, marker=">", s=60, color=lab19_color("candidate_model_b_handle"), label="candidate B handles", zorder=3)
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels)
+    ax.invert_yaxis()
+    ax.set_xlabel("feature count")
+    ax.set_title("Taxonomy count ladder: raw counts versus first-pass audit flags")
+    _lab19_style_ax(ax, legend=True)
+    bench.save_figure(ctx, fig, "taxonomy_control_ladder.png", "Role-taxonomy counts annotated by template, family, and stability audit flags.")
+
+
+def plot_prompt_inventory_balance(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    by_family: dict[str, dict[str, float]] = defaultdict(lambda: {"raw": 0, "compare_chat": 0, "other": 0})
+    by_source: Counter[str] = Counter()
+    for row in rows:
+        fam = str(row.get("family"))
+        by_family[fam]["raw"] += _lab19_int(row.get("raw_count"))
+        by_family[fam]["compare_chat"] += _lab19_int(row.get("compare_chat_count"))
+        by_family[fam]["other"] += _lab19_int(row.get("other_variant_count"))
+        by_source[str(row.get("source"))] += _lab19_int(row.get("n_prompts"))
+    families = sorted(by_family, key=lambda f: -(by_family[f]["raw"] + by_family[f]["compare_chat"] + by_family[f]["other"]))[:18]
+    fig, axes = plt.subplots(1, 2, figsize=(12.4, 4.8))
+    x = list(range(len(families)))
+    raw = [by_family[f]["raw"] for f in families]
+    chat = [by_family[f]["compare_chat"] for f in families]
+    other = [by_family[f]["other"] for f in families]
+    axes[0].bar(x, raw, color=lab19_color("raw"), label="raw")
+    axes[0].bar(x, chat, bottom=raw, color=lab19_color("compare_chat"), label="compare_chat")
+    axes[0].bar(x, other, bottom=[a + b for a, b in zip(raw, chat)], color="#BDBDBD", label="other")
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(families, rotation=35, ha="right")
+    axes[0].set_ylabel("prompt rows")
+    axes[0].set_title("Prompt family × template balance")
+    _lab19_panel_label(axes[0], "A")
+    sources = [s for s, _ in by_source.most_common(12)]
+    axes[1].barh(sources, [by_source[s] for s in sources], color=lab19_color("controls"))
+    axes[1].invert_yaxis()
+    axes[1].set_xlabel("prompt rows")
+    axes[1].set_title("Prompt source balance")
+    _lab19_panel_label(axes[1], "B")
+    for ax in axes:
+        _lab19_style_ax(ax, legend=True)
+    fig.suptitle("Matched prompt inventory audit", fontsize=13, y=1.02)
+    bench.save_figure(ctx, fig, "prompt_inventory_balance.png", "Prompt inventory balance by family, source, and raw/chat variant.")
+
+
+def plot_activation_norm_shift_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    families = sorted({str(r.get("family")) for r in rows})
+    variants = sorted({str(r.get("variant")) for r in rows})
+    matrix = []
+    ann = []
+    for fam in families:
+        mrow = []
+        arow = []
+        for variant in variants:
+            sub = [r for r in rows if str(r.get("family")) == fam and str(r.get("variant")) == variant]
+            val = _lab19_float(sub[0].get("mean_norm_ratio_b_over_a"), float("nan")) if sub else float("nan")
+            mrow.append(val)
+            arow.append("" if not math.isfinite(val) else f"{val:.2f}")
+        matrix.append(mrow)
+        ann.append(arow)
+    fig, ax = bench.new_figure(figsize=(max(7.0, 1.2 * len(variants) + 3.0), max(4.6, 0.35 * len(families) + 1.8)))
+    im = ax.imshow(matrix, aspect="auto", vmin=0.75, vmax=1.25, cmap="coolwarm")
+    ax.set_xticks(range(len(variants)))
+    ax.set_xticklabels(variants)
+    ax.set_yticks(range(len(families)))
+    ax.set_yticklabels(families)
+    for i in range(len(families)):
+        for j in range(len(variants)):
+            ax.text(j, i, ann[i][j], ha="center", va="center", fontsize=8)
+    ax.set_title("Activation norm ratio audit: model B / model A")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.03, pad=0.02)
+    cbar.set_label("norm ratio")
+    ax.grid(False)
+    bench.save_figure(ctx, fig, "activation_norm_shift_atlas.png", "Activation norm ratio by prompt family and variant, used as a cheap-explanation audit.")
+
+
+def plot_feature_context_atlas(ctx: bench.RunContext, gallery: Sequence[Mapping[str, Any]], audit_rows: Sequence[Mapping[str, Any]]) -> None:
+    if not gallery:
+        return
+    import matplotlib.pyplot as plt
+    top_features = []
+    for row in _lab19_sort_features_for_audit(audit_rows, limit=18):
+        fid = int(row.get("feature_id"))
+        if any(int(g.get("feature_id", -1)) == fid for g in gallery):
+            top_features.append(fid)
+    if not top_features:
+        top_features = sorted({int(g.get("feature_id", -1)) for g in gallery if str(g.get("feature_id", "")).strip() != ""})[:18]
+    families = sorted({str(g.get("family")) for g in gallery if int(g.get("feature_id", -1)) in top_features})
+    data = []
+    for fid in top_features:
+        sub = [g for g in gallery if int(g.get("feature_id", -1)) == fid]
+        counts = Counter(str(g.get("family")) for g in sub)
+        total = max(1, sum(counts.values()))
+        data.append([counts.get(fam, 0) / total for fam in families])
+    fig, ax = bench.new_figure(figsize=(max(8.0, 0.52 * len(families) + 4.0), max(4.8, 0.34 * len(top_features) + 2.0)))
+    im = ax.imshow(data, aspect="auto", vmin=0, vmax=1, cmap="magma")
+    ax.set_xticks(range(len(families)))
+    ax.set_xticklabels(families, rotation=35, ha="right")
+    ax.set_yticks(range(len(top_features)))
+    ax.set_yticklabels([f"f{fid}" for fid in top_features])
+    ax.set_title("Top-context family atlas for selected features")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02)
+    cbar.set_label("share of gallery contexts")
+    ax.grid(False)
+    bench.save_figure(ctx, fig, "feature_context_atlas.png", "Family composition of top contexts for selected model-specific and asymmetric features.")
+
+
+def plot_direction_bridge_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    computed = [r for r in rows if r.get("status") == "computed" and math.isfinite(_lab19_float(r.get("cosine_with_model_b_decoder")))]
+    if not computed:
+        return
+    import matplotlib.pyplot as plt
+    directions = []
+    for r in computed:
+        d = str(r.get("direction_name"))
+        if d not in directions:
+            directions.append(d)
+    features = []
+    for r in sorted(computed, key=lambda r: -_lab19_float(r.get("abs_cosine"), 0.0)):
+        fid = int(r.get("feature_id"))
+        if fid not in features:
+            features.append(fid)
+        if len(features) >= 20:
+            break
+    matrix = []
+    for direction in directions[:16]:
+        row = []
+        for fid in features:
+            sub = [r for r in computed if str(r.get("direction_name")) == direction and int(r.get("feature_id")) == fid]
+            row.append(_lab19_float(sub[0].get("cosine_with_model_b_decoder"), float("nan")) if sub else float("nan"))
+        matrix.append(row)
+    fig, ax = bench.new_figure(figsize=(max(8.0, 0.45 * len(features) + 4.5), max(4.5, 0.35 * min(len(directions), 16) + 2.0)))
+    im = ax.imshow(matrix, aspect="auto", vmin=-1, vmax=1, cmap="coolwarm")
+    ax.set_xticks(range(len(features)))
+    ax.set_xticklabels([f"f{fid}" for fid in features], rotation=35, ha="right")
+    ax.set_yticks(range(len(directions[:16])))
+    ax.set_yticklabels([d.split(".")[-1][:38] for d in directions[:16]], fontsize=7)
+    ax.set_title("Bridge cosine matrix: prior-lab directions × model-B feature decoders")
+    cbar = fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02)
+    cbar.set_label("cosine")
+    ax.grid(False)
+    bench.save_figure(ctx, fig, "direction_bridge_matrix.png", "Matrix of feature-decoder cosines to prior-lab directions when LAB19_BRIDGE_STATE is configured.")
+
+
+def plot_causal_operating_frontier(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    ran = [r for r in rows if r.get("status") == "ran"]
+    if not ran:
+        fig, ax = bench.new_figure(figsize=(8.0, 4.4))
+        ax.axis("off")
+        ax.text(0.02, 0.70, "Optional causal validation was not run.", fontsize=13, fontweight="bold")
+        ax.text(0.02, 0.50, "Run with --run-edit to test selected model-B decoder directions on benign prompts.", fontsize=10)
+        ax.text(0.02, 0.32, "The table is still present, so downstream scripts know this rung is skipped.", fontsize=10)
+        bench.save_figure(ctx, fig, "causal_operating_frontier.png", "Placeholder for optional causal feature-intervention operating frontier when --run-edit is skipped.")
+        return
+    fig, ax = bench.new_figure(figsize=(8.5, 5.2))
+    for row in ran:
+        condition = str(row.get("condition"))
+        x = _lab19_float(row.get("default_voice_delta"), _lab19_float(row.get("delta_default_voice_marker_vs_baseline"), 0.0))
+        y = _lab19_float(row.get("repetition_delta"), _lab19_float(row.get("delta_repetition_rate_vs_baseline"), 0.0))
+        size = 80 + 6 * max(0.0, abs(_lab19_float(row.get("word_count_delta"), _lab19_float(row.get("delta_word_count_vs_baseline"), 0.0))))
+        ax.scatter(x, y, s=size, label=condition, color=lab19_color("model_b_only" if "feature" in condition else "random"), marker=lab19_marker(condition))
+        ax.text(x, y, condition.replace("_", " "), fontsize=8, ha="left", va="bottom")
+    ax.axvline(0, color="#444444", linewidth=1.0)
+    ax.axhline(0, color="#444444", linewidth=1.0)
+    ax.set_xlabel("default-voice marker delta vs baseline")
+    ax.set_ylabel("repetition-rate delta vs baseline")
+    ax.set_title("Optional feature intervention: target movement versus side-effect cost")
+    _lab19_style_ax(ax, legend=False)
+    bench.save_figure(ctx, fig, "causal_operating_frontier.png", "Optional feature-intervention target movement versus repetition and verbosity side effects.")
+
+
+def plot_identity_smoke_scorecard(ctx: bench.RunContext, metrics: Mapping[str, Any], audit_rows: Sequence[Mapping[str, Any]]) -> None:
+    if not bool(metrics.get("identity_pair")):
+        return
+    n_features = int(metrics.get("n_features") or len(audit_rows) or 0)
+    counts = metrics.get("taxonomy_counts", {}) or {}
+    nonshared = n_features - int(counts.get("shared", 0) or 0) - int(counts.get("dead", 0) or 0)
+    nonshared_share = nonshared / max(1, n_features)
+    fig, ax = bench.new_figure(figsize=(7.2, 4.2))
+    ax.bar(["shared/dead", "nonshared"], [1 - nonshared_share, nonshared_share], color=[lab19_color("shared"), lab19_color("warning" if nonshared_share <= 0.35 else "fail")])
+    ax.axhline(0.35, color=lab19_color("warning"), linestyle="--", linewidth=1.0, label="warning threshold")
+    ax.set_ylim(0, 1)
+    ax.set_ylabel("share of features")
+    ax.set_title("Identity-pair smoke scorecard")
+    ax.text(0.5, 0.88, "healthy: mostly shared or dead", transform=ax.transAxes, ha="center", fontsize=9)
+    _lab19_style_ax(ax, legend=True)
+    bench.save_figure(ctx, fig, "identity_smoke_scorecard.png", "Identity-pair scorecard showing whether the dictionary invents model-specific features when the models are identical.")
+
+
+def plot_model_diffing_evidence_dashboard(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    audit_rows: Sequence[Mapping[str, Any]],
+    norm_rows: Sequence[Mapping[str, Any]],
+    causal_rows: Sequence[Mapping[str, Any]],
+) -> None:
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(2, 2, figsize=(12.8, 8.0))
+    ax = axes[0, 0]
+    vals = [_lab19_float(metrics.get(k)) for k in ("train_fvu_model_a", "train_fvu_model_b", "eval_fvu_model_a", "eval_fvu_model_b")]
+    labels = ["train A", "train B", "eval A", "eval B"]
+    ax.bar(labels, vals, color=[lab19_color("model_a_only"), lab19_color("model_b_only"), lab19_color("model_a_only"), lab19_color("model_b_only")])
+    ax.axhline(0.75, color=lab19_color("warning"), linestyle="--", linewidth=1.0)
+    ax.set_ylabel("FVU")
+    ax.set_title("Dictionary reconstruction gate")
+    _lab19_panel_label(ax, "A")
+    _lab19_style_ax(ax, legend=False)
+
+    ax = axes[0, 1]
+    role_counts = metrics.get("role_taxonomy_counts", {}) or metrics.get("taxonomy_counts", {}) or {}
+    labels = sorted(role_counts, key=lambda k: -int(role_counts[k]))[:8]
+    vals = [int(role_counts[k]) for k in labels]
+    ax.barh(labels, vals, color=[lab19_color(k) for k in labels])
+    ax.invert_yaxis()
+    ax.set_xlabel("features")
+    ax.set_title("Role-aware taxonomy")
+    _lab19_panel_label(ax, "B")
+    _lab19_style_ax(ax, legend=False)
+
+    ax = axes[1, 0]
+    rows = _lab19_sort_features_for_audit(audit_rows, limit=80)
+    for row in rows:
+        x = _lab19_float(row.get("model_b_activation_share"), 0.5)
+        y = _lab19_float(row.get("abs_template_gap_scaled"), 0.0)
+        ax.scatter(x, y, s=38, alpha=0.80, color=lab19_color(str(row.get("audit_posture"))), marker=lab19_marker(str(row.get("taxonomy"))))
+    ax.axvline(0.72, color="#444444", linestyle="--", linewidth=0.9)
+    ax.axhline(0.67, color=lab19_color("warning"), linestyle="--", linewidth=0.9)
+    ax.set_xlabel("model B activation share")
+    ax.set_ylabel("scaled template gap")
+    ax.set_title("Candidate features versus template residue")
+    _lab19_panel_label(ax, "C")
+    _lab19_style_ax(ax, legend=False)
+
+    ax = axes[1, 1]
+    statuses = Counter(str(r.get("status")) for r in evidence_rows)
+    labels = [s for s in LAB19_STATUS_ORDER if statuses.get(s)] + sorted(k for k in statuses if k not in LAB19_STATUS_ORDER)
+    vals = [statuses[k] for k in labels]
+    ax.bar(labels, vals, color=[lab19_color(k) for k in labels])
+    ax.set_ylabel("evidence objects")
+    ax.set_title("Run-level audit status counts")
+    _lab19_panel_label(ax, "D")
+    _lab19_style_ax(ax, legend=False)
+    fig.suptitle("Lab 19 model-diffing evidence dashboard", fontsize=14, y=1.01)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "model_diffing_evidence_dashboard.png", "Start-here dashboard for Lab 19: reconstruction, taxonomy, control risk, and evidence statuses.")
 
 # ---------------------------------------------------------------------------
 # Reports and ledger
@@ -2145,13 +3050,28 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_json(metrics_path, metrics)
     ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 19 metrics and dynamic audit status.")
 
+    visual_tables = write_lab19_visual_tables(
+        ctx, metrics, prompts, norm_summary, curve, taxonomy, stability,
+        template_rows, random_rows, bridge, causal_summary,
+    )
+
     if not getattr(args, "no_plots", False):
+        plot_model_diffing_evidence_dashboard(ctx, metrics, visual_tables["model_diffing_evidence_matrix"], visual_tables["feature_audit_matrix"], visual_tables["activation_norm_shift_summary"], visual_tables["causal_operating_points"])
+        plot_crosscoder_training_diagnostics(ctx, curve)
         plot_taxonomy_counts(ctx, taxonomy)
         plot_exclusivity(ctx, taxonomy, random_rows)
         plot_crosscoder_reconstruction(ctx, metrics)
+        plot_feature_audit_matrix(ctx, visual_tables["feature_audit_matrix"])
+        plot_taxonomy_control_ladder(ctx, visual_tables["taxonomy_control_ladder"])
+        plot_prompt_inventory_balance(ctx, visual_tables["prompt_inventory_summary"])
+        plot_activation_norm_shift_atlas(ctx, visual_tables["activation_norm_shift_summary"])
+        plot_feature_context_atlas(ctx, gallery, visual_tables["feature_audit_matrix"])
         plot_template_control(ctx, template_rows)
         plot_direction_bridge(ctx, bridge)
+        plot_direction_bridge_matrix(ctx, bridge)
         plot_causal_validation(ctx, causal_summary)
+        plot_causal_operating_frontier(ctx, visual_tables["causal_operating_points"])
+        plot_identity_smoke_scorecard(ctx, metrics, visual_tables["feature_audit_matrix"])
 
     write_card(ctx, metrics)
     write_report(ctx, metrics)
