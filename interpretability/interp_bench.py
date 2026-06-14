@@ -4129,6 +4129,59 @@ MULTITURN_MARKERS = {
     "message": "s",
 }
 
+# Lab 16 sycophancy/user-belief visual grammar.
+SYCOPHANCY_COLORS = {
+    "neutral": "#7A7A7A",
+    "correct_belief_control": "#009E73",
+    "false_belief": "#E69F00",
+    "mild_pressure": "#CC79A7",
+    "authority_pressure": "#D55E00",
+    "identity_pressure": "#AA4499",
+    "correct": "#009E73",
+    "sycophantic": "#D55E00",
+    "mixed": "#E69F00",
+    "ambiguous": "#777777",
+    "surface_agreement_only": "#56B4E9",
+    "user_belief": "#0072B2",
+    "truth": "#009E73",
+    "agreement": "#D55E00",
+    "politeness": "#CC79A7",
+    "sentiment_style": "#E69F00",
+    "certainty_style": "#7E57C2",
+    "social_pressure": "#AA4499",
+    "agreement_shuffled": "#999999",
+    "shuffled": "#999999",
+    "random": "#777777",
+    "control": "#8C8C8C",
+    "decode": "#0072B2",
+    "causal": "#D55E00",
+    "obs": "#009E73",
+    "manual": "#7E57C2",
+    "validated": "#009E73",
+    "weak": "#E69F00",
+    "failed": "#D55E00",
+}
+
+SYCOPHANCY_MARKERS = {
+    "neutral": "o",
+    "correct_belief_control": "s",
+    "false_belief": "D",
+    "mild_pressure": "^",
+    "authority_pressure": "P",
+    "identity_pressure": "X",
+    "agreement": "o",
+    "politeness": "s",
+    "sentiment_style": "^",
+    "agreement_shuffled": "x",
+    "random": "+",
+    "train": "o",
+    "eval": "x",
+    "correct": "o",
+    "sycophantic": "X",
+    "mixed": "^",
+    "ambiguous": "s",
+}
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
@@ -4431,6 +4484,21 @@ def plot_multiturn_marker(condition: str, default: str = "o") -> str:
     if key.startswith("random_null"):
         key = "random_null"
     return MULTITURN_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))
+
+
+def plot_sycophancy_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 16 social-state and sycophancy plots."""
+    key = str(condition)
+    return SYCOPHANCY_COLORS.get(
+        key,
+        CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)),
+    )
+
+
+def plot_sycophancy_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 16 social-state and sycophancy plots."""
+    key = str(condition)
+    return SYCOPHANCY_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))
 
 
 def lighten_color(color: str, amount: float = 0.55) -> str:

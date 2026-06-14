@@ -273,6 +273,50 @@ runs/lab16_sycophancy_user_belief-.../
 
 `agreement_steering_dose_response.png` is the scoped causal test. The agreement curve should separate from politeness, sentiment, shuffled-pair, and random curves across dose.
 
+## Visualization upgrade: social-state audit board
+
+The upgraded Lab 16 plotting suite treats sycophancy as an evidence-integration problem, not a single-rate result. Start with:
+
+```text
+plots/sycophancy_evidence_dashboard.png
+plots/social_state_evidence_matrix.png
+tables/social_state_evidence_matrix.csv
+```
+
+The dashboard aligns the four claim-bearing rungs:
+
+1. **Behavior:** false-user-pressure sycophancy only counts strongly after conditioning on base facts the neutral prompt answered correctly.
+2. **DECODE:** user-belief and local-truth directions must beat shuffled and random controls at the selected site and depth.
+3. **Projection frame:** truth, user-belief, pressure, agreement, politeness, certainty, and sentiment projections are useful only after their confounds are visible.
+4. **Scoped CAUSAL:** agreement steering earns causal language only if it moves false-answer endorsement more than politeness, sentiment, shuffled-pair, and random controls.
+
+Additional upgraded artifacts:
+
+| Artifact | What it teaches |
+|---|---|
+| `plots/behavior_condition_matrix.png` | Whether pressure changes factual outcomes, not merely social wording. |
+| `plots/domain_condition_atlas.png` | Whether one domain carries the average sycophancy headline. |
+| `plots/pressure_outcome_atlas.png` | Which base facts are known, pressure-sensitive, mixed, or ambiguous. |
+| `plots/probe_control_gap_atlas.png` | Real held-out AUC minus the strongest shuffled/random control across depth and site. |
+| `plots/projection_disagreement_quadrants.png` | Where truth and user-belief projections dissociate, with false-answer endorsements outlined. |
+| `plots/direction_confound_risk.png` | Whether agreement, politeness, sentiment, certainty, pressure, and belief-frame directions collapse into one style axis. |
+| `plots/steering_operating_frontier.png` | Sycophancy movement versus correctness cost; dose choice is an operating point. |
+| `plots/agreement_specificity_ladder.png` | Agreement steering must beat every style/control direction at the headline dose. |
+
+New synthesis tables:
+
+```text
+tables/steering_operating_points.csv
+tables/projection_quadrant_summary.csv
+tables/probe_control_gap_by_depth.csv
+tables/social_state_evidence_matrix.csv
+tables/direction_confound_risks.csv
+tables/domain_condition_summary.csv
+tables/plot_reading_guide.csv
+```
+
+Use these before writing any downstream Lab 24 language. A high sycophancy rate without neutral-correct conditioning is ignorance-shaped. A high user-belief AUC without a control gap is probe-shaped. A strong agreement vector that shadows politeness is style-shaped. The new suite keeps those three failure modes explicit instead of letting one headline number hide them.
+
 ## Evidence discipline
 
 Do not write:
