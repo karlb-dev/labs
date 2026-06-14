@@ -205,6 +205,45 @@ streams[k] = pre-final-norm residual stream after k decoder blocks
 
 Depth `0` is the embedding stream. Depth `L` is the final norm input. A steering or ablation intervention into decoder block `j` writes into stream depth `j + 1`. Lab 21 mostly measures streams, so artifacts use `stream_depth` rather than just `layer` when the distinction matters.
 
+
+## Visualization upgrade in this version
+
+Lab 21 now treats “depth” as a three-axis audit board rather than one curve with an ego. The upgraded plot suite separates:
+
+1. **Weight-space depth:** where LoRA update mass sits.
+2. **Representational depth:** where base/instruct, chat-format, boundary/safe, and forced-prefix states diverge.
+3. **Behavioral or causal depth:** whether wrapper/layer-mask or erosion rows actually test behavior.
+
+New start-here artifact:
+
+```text
+plots/training_depth_evidence_dashboard.png
+```
+
+It joins LoRA localization, representational safety-depth curves, forced-prefix persistence, and intervention readiness. The paired table is:
+
+```text
+tables/training_depth_evidence_matrix.csv
+```
+
+Read those before the more specialized plots. They are designed to stop the most common Lab 21 error: collapsing optimizer depth, prompt-state depth, prefix-token depth, and causal intervention depth into one dramatic sentence.
+
+Additional synthesis artifacts:
+
+```text
+tables/lora_phase_summary.csv
+tables/training_depth_disagreement.csv
+tables/safety_depth_signal_summary.csv
+tables/plot_reading_guide.csv
+plots/lora_layer_atlas.png
+plots/lora_module_phase_atlas.png
+plots/safety_depth_signal_atlas.png
+plots/forced_prefix_recommitment_heatmap.png
+plots/refusal_provenance_cosines.png
+plots/training_depth_disagreement.png
+plots/intervention_readiness_matrix.png
+```
+
 ## Artifact tree
 
 Start with `training_depth_card.md`. Then inspect the diagnostics before the plots.
@@ -248,8 +287,13 @@ runs/lab21_lora_safety_depth-.../
     per_module_lora_norm.csv
     lora_concentration_summary.csv
     lora_rank_energy.csv
+    lora_phase_summary.csv
     full_vs_lora_vs_dpo_localization.csv
     wrapper_ablation_test.csv
+    training_depth_disagreement.csv
+    training_depth_evidence_matrix.csv
+    safety_depth_signal_summary.csv
+    plot_reading_guide.csv
     instruct_base_divergence_by_layer.csv
     instruct_base_divergence_summary_by_depth.csv
     chat_format_divergence.csv
@@ -263,13 +307,21 @@ runs/lab21_lora_safety_depth-.../
     erosion_order.csv
 
   plots/
+    training_depth_evidence_dashboard.png
+    training_depth_disagreement.png
+    intervention_readiness_matrix.png
     per_layer_lora_norm.png
     lora_concentration_dashboard.png
     lora_rank_energy.png
+    lora_layer_atlas.png
+    lora_module_phase_atlas.png
     instruct_base_divergence_by_layer.png
     refusal_recommitment_depth.png
     forced_prefix_recommitment.png
+    forced_prefix_recommitment_heatmap.png
     safety_depth_dashboard.png
+    safety_depth_signal_atlas.png
+    refusal_provenance_cosines.png
     erosion_order.png
 ```
 
@@ -326,18 +378,38 @@ Look separately at:
 
 A first-token-only gap supports a shallow-prefix story. A persistent gap across assistant tokens and depths supports a deeper recommitment story. Neither result licenses refusal ablation or jailbreak claims.
 
+### `tables/training_depth_evidence_matrix.csv`
+
+This is the compact evidence firewall. Each row says which rung an artifact earns, what number is most relevant, and what claim it explicitly does **not** license. It is the best table to cite when deciding whether a sentence belongs in `ATTR`, `AUDIT`, `CAUSAL`, or `CAUSAL/NOT_EARNED` territory.
+
+### `tables/training_depth_disagreement.csv`
+
+This table puts the LoRA peak layer, base/instruct peak stream depth, chat-format control peak depth, boundary/safe peak depth, and forced-prefix peak depth side by side. The whole lesson is that disagreement across those rows can be a result, not a bug.
+
+### `tables/safety_depth_signal_summary.csv`
+
+This table joins the safety-depth curves by stream depth, including ratios such as chat-format fraction of base/instruct divergence and forced-prefix fraction of boundary/safe divergence. Use it when the dashboard suggests that a control is eating the headline story.
+
 ## Plot guide
 
 | Plot | What to look for | Main trap |
 |---|---|---|
-| `per_layer_lora_norm.png` | Is adapter norm concentrated in a few layers? | Calling high norm a mechanism |
-| `lora_concentration_dashboard.png` | Top-layer and top-3 concentration across adapters | Ignoring missing weights |
-| `lora_rank_energy.png` | Whether the LoRA update is effectively lower rank than the nominal rank | Equating low rank with simple behavior |
-| `instruct_base_divergence_by_layer.png` | Where base/instruct states differ most | Forgetting the chat-format control |
-| `refusal_recommitment_depth.png` | Boundary/safe or forced-prefix divergence over depth | Treating semantic difference as refusal |
-| `forced_prefix_recommitment.png` | Whether prefix separation persists across assistant token index | Treating fixed transcripts as generated behavior |
-| `safety_depth_dashboard.png` | Four comparison views in one place | Compressing all four into “safety is shallow/deep” |
-| `erosion_order.png` | Imported or scaffolded behavior-vs-direction erosion | Treating a scaffold as data |
+| `training_depth_evidence_dashboard.png` | joined view of LoRA mass, safety-depth curves, forced-prefix persistence, and evidence gates | reading one panel as the whole lab |
+| `training_depth_disagreement.png` | whether weight-space, representational, and prefix-token landmarks agree or diverge | calling all landmarks “the depth of safety” |
+| `intervention_readiness_matrix.png` | which artifacts are descriptive, controlled, or actually causal | smuggling causal language through a scaffold row |
+| `per_layer_lora_norm.png` | per-layer and cumulative adapter delta mass | calling high norm a mechanism |
+| `lora_concentration_dashboard.png` | top-layer share, entropy, phase mass, and centroid | ignoring missing weights or diffuse adapters |
+| `lora_layer_atlas.png` | layer-by-adapter update mass as a heatmap | treating one sharp adapter as universal |
+| `lora_module_phase_atlas.png` | target-module and early/middle/late adapter mass | confusing module family with behavioral pathway |
+| `lora_rank_energy.png` | whether update energy is concentrated in a few singular directions | equating low-rank update with simple behavior |
+| `instruct_base_divergence_by_layer.png` | where base/instruct states differ most | forgetting the chat-format control |
+| `safety_depth_signal_atlas.png` | base/instruct, chat-format, boundary/safe, and forced-prefix curves on one scale | letting the largest curve name the mechanism |
+| `refusal_recommitment_depth.png` | boundary/safe divergence over depth | treating semantic difference as refusal |
+| `forced_prefix_recommitment.png` | token traces at selected depths | treating fixed transcripts as generated behavior |
+| `forced_prefix_recommitment_heatmap.png` | all prefix-token × stream-depth divergence | mistaking first-token separation for deep recommitment |
+| `safety_depth_dashboard.png` | legacy dashboard, now with stronger claim guardrails | compressing four comparisons into shallow/deep rhetoric |
+| `refusal_provenance_cosines.png` | whether local model-delta, boundary, forced-prefix, and chat-format directions align | treating surrogate cosine as feature identity |
+| `erosion_order.png` | imported behavior-vs-direction erosion rows, if present | treating a scaffold as data |
 
 ## Operationalization audit
 

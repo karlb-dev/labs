@@ -4458,6 +4458,48 @@ def plot_modelorganism_marker(condition: str, default: str = "o") -> str:
     return plot_modelorg_marker(condition, default=default)
 
 
+TRAINING_DEPTH_COLORS = {
+    "lora": "#0072B2",
+    "weight_space": "#0072B2",
+    "base_instruct": "#009E73",
+    "chat_format": "#999999",
+    "boundary_safe": "#D55E00",
+    "forced_prefix": "#CC79A7",
+    "provenance": "#56B4E9",
+    "intervention": "#E69F00",
+    "erosion": "#F0E442",
+    "scaffold": "#BBBBBB",
+    "data": "#009E73",
+    "missing": "#777777",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "pass": "#009E73",
+}
+
+
+def plot_training_depth_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 21 training-depth plots."""
+    return TRAINING_DEPTH_COLORS.get(str(condition), default)
+
+
+def plot_training_depth_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 21 training-depth plots."""
+    return {
+        "lora": "o",
+        "weight_space": "o",
+        "base_instruct": "s",
+        "chat_format": "D",
+        "boundary_safe": "^",
+        "forced_prefix": "P",
+        "provenance": "h",
+        "intervention": "*",
+        "erosion": "X",
+        "scaffold": "x",
+        "data": "o",
+        "missing": "x",
+    }.get(str(condition), default)
+
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl

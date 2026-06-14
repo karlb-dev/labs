@@ -1839,6 +1839,974 @@ def plot_erosion_order(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]])
     bench.save_figure(ctx, fig, "erosion_order.png", "Erosion-order curve or scaffold for a future benign finetune sweep.")
 
 
+
+# ---------------------------------------------------------------------------
+# Visualization upgrade: training depth as an evidence firewall
+# ---------------------------------------------------------------------------
+
+LAB21_SIGNAL_ORDER = (
+    "lora_weight_norm",
+    "lora_rank_energy",
+    "adapter_wrapper_intervention",
+    "base_instruct_divergence",
+    "chat_format_control",
+    "boundary_safe_divergence",
+    "forced_prefix_recommitment",
+    "refusal_direction_provenance",
+    "erosion_order",
+)
+
+LAB21_SIGNAL_LABELS = {
+    "lora_weight_norm": "LoRA\nweight norm",
+    "lora_rank_energy": "rank\nenergy",
+    "adapter_wrapper_intervention": "wrapper\nintervention",
+    "base_instruct_divergence": "base↔instruct\nstate gap",
+    "chat_format_control": "chat-format\ncontrol",
+    "boundary_safe_divergence": "boundary↔safe\nprompt gap",
+    "forced_prefix_recommitment": "forced-prefix\nrecommitment",
+    "refusal_direction_provenance": "refusal\nprovenance",
+    "erosion_order": "erosion\norder",
+}
+
+LAB21_CURVE_COLORS = {
+    "base_instruct": "#0072B2",
+    "chat_format": "#8C8C8C",
+    "boundary_safe": "#D55E00",
+    "forced_prefix": "#009E73",
+    "lora": "#9467BD",
+    "intervention": "#CC79A7",
+    "scaffold": "#BBBBBB",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "pass": "#009E73",
+}
+
+
+def lab21_color(key: str, default: str = "#555555") -> str:
+    helper = getattr(bench, "plot_training_depth_color", None)
+    if callable(helper):
+        try:
+            return helper(key, default)
+        except TypeError:
+            return helper(key)
+    return LAB21_CURVE_COLORS.get(str(key), default)
+
+
+def lab21_marker(key: str, default: str = "o") -> str:
+    helper = getattr(bench, "plot_training_depth_marker", None)
+    if callable(helper):
+        try:
+            return helper(key, default)
+        except TypeError:
+            return helper(key)
+    return {
+        "lora": "o",
+        "base_instruct": "s",
+        "chat_format": "D",
+        "boundary_safe": "^",
+        "forced_prefix": "P",
+        "intervention": "*",
+        "scaffold": "x",
+    }.get(str(key), default)
+
+
+def _lab21_float(value: Any, default: float = float("nan")) -> float:
+    try:
+        f = float(value)
+    except Exception:
+        return default
+    return f if math.isfinite(f) else default
+
+
+def _lab21_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(float(value))
+    except Exception:
+        return default
+
+
+def _lab21_source_label(row: Mapping[str, Any]) -> str:
+    for key in ("organism_id", "blind_id", "source_id"):
+        val = str(row.get(key, "") or "").strip()
+        if val:
+            return val
+    return "adapter"
+
+
+def _lab21_short(text: str, n: int = 20) -> str:
+    text = str(text or "")
+    return text if len(text) <= n else text[: max(0, n - 1)] + "…"
+
+
+def _lab21_summary_value(row: Mapping[str, Any], key: str = "mean_delta_l2_per_sqrt_dim") -> float:
+    if key in row:
+        return _lab21_float(row.get(key))
+    for k, v in row.items():
+        if str(k).startswith("mean_") and str(k).endswith("delta_l2_per_sqrt_dim"):
+            return _lab21_float(v)
+    return float("nan")
+
+
+def _lab21_curve(rows: Sequence[Mapping[str, Any]], *, key: str = "mean_delta_l2_per_sqrt_dim") -> tuple[list[int], list[float]]:
+    points: list[tuple[int, float]] = []
+    for row in rows:
+        if "depth" not in row:
+            continue
+        val = _lab21_summary_value(row, key)
+        if math.isfinite(val):
+            points.append((_lab21_int(row["depth"]), val))
+    points.sort(key=lambda x: x[0])
+    return [p[0] for p in points], [p[1] for p in points]
+
+
+def _lab21_mean(values: Sequence[Any], default: float = float("nan")) -> float:
+    xs = [_lab21_float(v) for v in values]
+    xs = [v for v in xs if math.isfinite(v)]
+    return float(statistics.fmean(xs)) if xs else default
+
+
+def _lab21_max(values: Sequence[Any], default: float = float("nan")) -> float:
+    xs = [_lab21_float(v) for v in values]
+    xs = [v for v in xs if math.isfinite(v)]
+    return max(xs) if xs else default
+
+
+def _lab21_status_from_gap(value: Any, *, warn: float = 0.05, ok: float = 0.15) -> str:
+    v = _lab21_float(value)
+    if not math.isfinite(v):
+        return "missing"
+    if v >= ok:
+        return "strong"
+    if v >= warn:
+        return "weak"
+    return "flat"
+
+
+def lab21_lora_phase_rows(
+    layer_rows: Sequence[Mapping[str, Any]],
+    concentration_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    ok_conc = [r for r in concentration_rows if r.get("status") == "ok"]
+    for row in ok_conc:
+        top_share = _lab21_float(row.get("top_layer_share"))
+        entropy = _lab21_float(row.get("normalized_norm_entropy"))
+        out.append({
+            "source_label": _lab21_source_label(row),
+            "source_id": row.get("source_id", ""),
+            "organism_id": row.get("organism_id", ""),
+            "blind_id": row.get("blind_id", ""),
+            "behavior_family": row.get("behavior_family", ""),
+            "status": "ok",
+            "top_layer": row.get("top_layer", ""),
+            "top_layer_share": rounded(top_share),
+            "top3_share_total": row.get("top3_share_total", ""),
+            "layer_centroid": row.get("layer_centroid", ""),
+            "early_share": row.get("early_share", ""),
+            "middle_share": row.get("middle_share", ""),
+            "late_share": row.get("late_share", ""),
+            "normalized_norm_entropy": rounded(entropy),
+            "concentration_posture": "localized weight mass" if top_share >= 0.25 else "distributed weight mass",
+            "claim_boundary": "weight-space ATTR only; requires wrapper/layer intervention before mechanism language",
+        })
+    if out:
+        return out
+
+    # Fallback: compute phase summaries from layer rows when concentration rows were not written.
+    by_source: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in layer_rows:
+        if math.isfinite(_lab21_float(row.get("norm_share"))):
+            by_source[_lab21_source_label(row)].append(row)
+    for label, sub in sorted(by_source.items()):
+        max_layer = max(_lab21_int(r.get("layer")) for r in sub) if sub else 0
+        third = max(1, (max_layer + 1) // 3) if max_layer >= 2 else 1
+        shares = [(_lab21_int(r.get("layer")), _lab21_float(r.get("norm_share"), 0.0)) for r in sub]
+        if not shares:
+            continue
+        best_layer, best_share = max(shares, key=lambda x: x[1])
+        out.append({
+            "source_label": label,
+            "status": "ok",
+            "top_layer": best_layer,
+            "top_layer_share": rounded(best_share),
+            "top3_share_total": rounded(sum(s for _, s in sorted(shares, key=lambda x: x[1], reverse=True)[:3])),
+            "layer_centroid": rounded(sum(layer * share for layer, share in shares) / max(1e-12, sum(share for _, share in shares))),
+            "early_share": rounded(sum(s for layer, s in shares if layer < third)),
+            "middle_share": rounded(sum(s for layer, s in shares if third <= layer < 2 * third)),
+            "late_share": rounded(sum(s for layer, s in shares if layer >= 2 * third)),
+            "normalized_norm_entropy": "",
+            "concentration_posture": "localized weight mass" if best_share >= 0.25 else "distributed weight mass",
+            "claim_boundary": "weight-space ATTR only; requires wrapper/layer intervention before mechanism language",
+        })
+    return out or [{"status": "no_lora_phase_rows", "claim_boundary": "No trained adapter weights were available."}]
+
+
+def lab21_depth_disagreement_rows(
+    lora_phase_rows: Sequence[Mapping[str, Any]],
+    base_summary: Sequence[Mapping[str, Any]],
+    chat_summary: Sequence[Mapping[str, Any]],
+    boundary_summary: Sequence[Mapping[str, Any]],
+    forced_summary: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    # Use the strongest available LoRA source as the weight-space landmark.
+    lora_ok = [r for r in lora_phase_rows if r.get("status") == "ok" and math.isfinite(_lab21_float(r.get("top_layer_share")))]
+    if lora_ok:
+        best = max(lora_ok, key=lambda r: _lab21_float(r.get("top_layer_share")))
+        rows.append({
+            "axis": "weight_space_lora_norm",
+            "depth_or_layer": best.get("top_layer", ""),
+            "value": best.get("top_layer_share", ""),
+            "half_peak_last_depth": "",
+            "source": best.get("source_label", ""),
+            "evidence_rung": "ATTR",
+            "claim_boundary": "optimizer/update mass, not behavioral mechanism",
+        })
+    def add_curve(axis: str, summary: Sequence[Mapping[str, Any]], rung: str, boundary: str) -> None:
+        p = peak_summary(summary)
+        rows.append({
+            "axis": axis,
+            "depth_or_layer": p.get("peak_depth", ""),
+            "value": p.get("peak_value", ""),
+            "half_peak_last_depth": p.get("half_peak_last_depth", ""),
+            "source": "summary_by_depth",
+            "evidence_rung": rung,
+            "claim_boundary": boundary,
+        })
+    add_curve("representational_base_vs_instruct", base_summary, "ATTR/AUDIT", "model-pair divergence, not refusal mechanism")
+    add_curve("format_chat_template_control", chat_summary, "AUDIT", "format/scaffold confound pressure")
+    add_curve("representational_boundary_vs_safe", boundary_summary, "ATTR/AUDIT", "boundary semantics + safety state entangled")
+    add_curve("behavioral_forced_prefix_recommitment", forced_summary, "AUDIT", "fixed transcripts, not sampled unsafe completions")
+    return rows
+
+
+def lab21_safety_signal_rows(
+    base_summary: Sequence[Mapping[str, Any]],
+    chat_summary: Sequence[Mapping[str, Any]],
+    boundary_summary: Sequence[Mapping[str, Any]],
+    forced_summary: Sequence[Mapping[str, Any]],
+    provenance_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    by_depth: dict[int, dict[str, Any]] = defaultdict(dict)
+    for label, rows in (
+        ("base_instruct", base_summary),
+        ("chat_format", chat_summary),
+        ("boundary_safe", boundary_summary),
+    ):
+        for row in rows:
+            depth = _lab21_int(row.get("depth"), -1)
+            val = _lab21_summary_value(row)
+            if depth >= 0 and math.isfinite(val):
+                by_depth[depth][label] = val
+    forced_by_depth: dict[int, list[float]] = defaultdict(list)
+    for row in forced_summary:
+        depth = _lab21_int(row.get("depth"), -1)
+        val = _lab21_summary_value(row)
+        if depth >= 0 and math.isfinite(val):
+            forced_by_depth[depth].append(val)
+    for depth, vals in forced_by_depth.items():
+        by_depth[depth]["forced_prefix"] = _lab21_mean(vals)
+    prov_by_depth = {_lab21_int(r.get("depth"), -1): r for r in provenance_rows}
+    out = []
+    for depth in sorted(by_depth):
+        row = by_depth[depth]
+        base = _lab21_float(row.get("base_instruct"))
+        chat = _lab21_float(row.get("chat_format"))
+        boundary = _lab21_float(row.get("boundary_safe"))
+        forced = _lab21_float(row.get("forced_prefix"))
+        prov = prov_by_depth.get(depth, {})
+        out.append({
+            "depth": depth,
+            "base_instruct_delta": rounded(base),
+            "chat_format_delta": rounded(chat),
+            "boundary_safe_delta": rounded(boundary),
+            "forced_prefix_delta": rounded(forced),
+            "chat_fraction_of_base": rounded(chat / base) if math.isfinite(chat) and math.isfinite(base) and abs(base) > 1e-12 else "",
+            "boundary_fraction_of_base": rounded(boundary / base) if math.isfinite(boundary) and math.isfinite(base) and abs(base) > 1e-12 else "",
+            "forced_fraction_of_boundary": rounded(forced / boundary) if math.isfinite(forced) and math.isfinite(boundary) and abs(boundary) > 1e-12 else "",
+            "cosine_model_delta_to_boundary_direction": prov.get("cosine_model_delta_to_boundary_direction", ""),
+            "cosine_boundary_to_forced_prefix_direction": prov.get("cosine_boundary_to_forced_prefix_direction", ""),
+            "dominant_signal": max(
+                [("base_instruct", base), ("chat_format", chat), ("boundary_safe", boundary), ("forced_prefix", forced)],
+                key=lambda kv: kv[1] if math.isfinite(kv[1]) else -1e9,
+            )[0],
+        })
+    return out or [{"status": "no_safety_signal_rows"}]
+
+
+def lab21_training_depth_evidence_matrix(
+    *,
+    modes: set[str],
+    lora_layer_rows: Sequence[Mapping[str, Any]],
+    concentration_rows: Sequence[Mapping[str, Any]],
+    rank_rows: Sequence[Mapping[str, Any]],
+    wrapper_rows: Sequence[Mapping[str, Any]],
+    erosion_rows: Sequence[Mapping[str, Any]],
+    base_summary: Sequence[Mapping[str, Any]],
+    chat_summary: Sequence[Mapping[str, Any]],
+    boundary_summary: Sequence[Mapping[str, Any]],
+    forced_summary: Sequence[Mapping[str, Any]],
+    provenance_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    conc_ok = [r for r in concentration_rows if r.get("status") == "ok"]
+    top_share = _lab21_max([r.get("top_layer_share") for r in conc_ok])
+    top3 = _lab21_max([r.get("top3_share_total") for r in conc_ok])
+    wrapper_external = [r for r in wrapper_rows if str(r.get("status", "")).startswith("external")]
+    erosion_external = [r for r in erosion_rows if str(r.get("status", "")).startswith("external")]
+    prov_vals = [
+        _lab21_float(r.get("cosine_model_delta_to_boundary_direction"))
+        for r in provenance_rows
+        if math.isfinite(_lab21_float(r.get("cosine_model_delta_to_boundary_direction")))
+    ]
+    rows = [
+        {
+            "artifact": "LoRA weight localization",
+            "evidence_rung": "ATTR",
+            "status": "ok" if lora_layer_rows else "missing_or_not_run",
+            "headline_metric": "top_layer_share",
+            "headline_value": rounded(top_share) if math.isfinite(top_share) else "",
+            "supporting_artifact": "tables/per_layer_lora_norm.csv",
+            "claim_allowed": "where adapter update mass sits",
+            "claim_not_allowed": "that the behavior is computed there",
+        },
+        {
+            "artifact": "LoRA rank-energy",
+            "evidence_rung": "ATTR",
+            "status": "ok" if rank_rows else "missing_or_not_run",
+            "headline_metric": "mean_rank_needed_at_90pct_energy",
+            "headline_value": rounded(_lab21_mean([r.get("rank_needed") for r in rank_rows if abs(_lab21_float(r.get("energy_threshold")) - 0.9) < 1e-6])),
+            "supporting_artifact": "tables/lora_rank_energy.csv",
+            "claim_allowed": "effective rank of the update matrices",
+            "claim_not_allowed": "behavioral sufficiency or simplicity",
+        },
+        {
+            "artifact": "Wrapper / layer intervention",
+            "evidence_rung": "CAUSAL",
+            "status": "ok" if wrapper_external else "not_earned_scaffold",
+            "headline_metric": "external_rows",
+            "headline_value": len(wrapper_external),
+            "supporting_artifact": "tables/wrapper_ablation_test.csv",
+            "claim_allowed": "mechanism-language only if real controlled rows exist",
+            "claim_not_allowed": "causal language from norm alone",
+        },
+        {
+            "artifact": "Base-vs-instruct divergence",
+            "evidence_rung": "ATTR/AUDIT",
+            "status": "ok" if base_summary else "missing_or_not_run",
+            "headline_metric": "peak_depth",
+            "headline_value": peak_summary(base_summary).get("peak_depth", ""),
+            "supporting_artifact": "tables/instruct_base_divergence_summary_by_depth.csv",
+            "claim_allowed": "where model-pair states differ on matched prompts",
+            "claim_not_allowed": "refusal mechanism or safety feature identity",
+        },
+        {
+            "artifact": "Chat-format control",
+            "evidence_rung": "AUDIT",
+            "status": "ok" if chat_summary else "missing_or_not_run",
+            "headline_metric": "peak_depth",
+            "headline_value": peak_summary(chat_summary).get("peak_depth", ""),
+            "supporting_artifact": "tables/chat_format_divergence_summary_by_depth.csv",
+            "claim_allowed": "format/scaffold contribution estimate",
+            "claim_not_allowed": "safety state",
+        },
+        {
+            "artifact": "Boundary-vs-safe divergence",
+            "evidence_rung": "ATTR/AUDIT",
+            "status": "ok" if boundary_summary else "missing_or_not_run",
+            "headline_metric": "peak_depth",
+            "headline_value": peak_summary(boundary_summary).get("peak_depth", ""),
+            "supporting_artifact": "tables/boundary_safe_summary_by_depth.csv",
+            "claim_allowed": "boundary/safe representational separation",
+            "claim_not_allowed": "refusal isolated from topic/semantics",
+        },
+        {
+            "artifact": "Forced-prefix recommitment",
+            "evidence_rung": "AUDIT",
+            "status": "ok" if forced_summary else "missing_or_not_run",
+            "headline_metric": "peak_depth",
+            "headline_value": peak_summary(forced_summary).get("peak_depth", ""),
+            "supporting_artifact": "tables/forced_prefix_summary_by_token_depth.csv",
+            "claim_allowed": "persistence across fixed assistant-prefix tokens",
+            "claim_not_allowed": "unsafe completion behavior or refusal ablation",
+        },
+        {
+            "artifact": "Refusal-direction provenance",
+            "evidence_rung": "AUDIT",
+            "status": "ok" if prov_vals else "missing_or_not_run",
+            "headline_metric": "mean_cosine_model_delta_to_boundary",
+            "headline_value": rounded(_lab21_mean(prov_vals)) if prov_vals else "",
+            "supporting_artifact": "tables/refusal_direction_provenance.csv",
+            "claim_allowed": "local alignment between surrogate directions",
+            "claim_not_allowed": "feature identity without a crosscoder bridge",
+        },
+        {
+            "artifact": "Erosion order",
+            "evidence_rung": "CAUSAL/AUDIT",
+            "status": "ok" if erosion_external else "not_earned_scaffold",
+            "headline_metric": "external_rows",
+            "headline_value": len(erosion_external),
+            "supporting_artifact": "tables/erosion_order.csv",
+            "claim_allowed": "behavior-vs-direction erosion order if imported rows exist",
+            "claim_not_allowed": "finetune-depth story from placeholder rows",
+        },
+    ]
+    for row in rows:
+        row["mode_available"] = "yes" if ("lora" in modes and "LoRA" in row["artifact"]) or ("safety_depth" in modes and row["artifact"] not in {"LoRA weight localization", "LoRA rank-energy", "Wrapper / layer intervention"}) or row["artifact"] in {"Wrapper / layer intervention", "Erosion order"} else "not_in_mode"
+    return rows
+
+
+def lab21_plot_reading_guide_rows() -> list[dict[str, str]]:
+    return [
+        {"plot": "training_depth_evidence_dashboard.png", "concept": "one-screen map of weight-space, representational, behavioral, and causal-readiness evidence", "start_here": "yes"},
+        {"plot": "lora_layer_atlas.png", "concept": "adapter norm mass by source and layer", "start_here": "no"},
+        {"plot": "lora_module_phase_atlas.png", "concept": "which module families and early/middle/late phases carry the adapter update", "start_here": "no"},
+        {"plot": "safety_depth_signal_atlas.png", "concept": "base/instruct, chat-format, boundary/safe, and forced-prefix depth curves on the same scale", "start_here": "no"},
+        {"plot": "forced_prefix_recommitment_heatmap.png", "concept": "does fixed-prefix divergence persist across assistant tokens and stream depths?", "start_here": "no"},
+        {"plot": "refusal_provenance_cosines.png", "concept": "whether surrogate model-delta, boundary, forced-prefix, and chat-format directions align", "start_here": "no"},
+        {"plot": "training_depth_disagreement.png", "concept": "compare weight-space, representational, and forced-prefix peak depths without collapsing them", "start_here": "no"},
+        {"plot": "intervention_readiness_matrix.png", "concept": "which claims have intervention evidence and which remain scaffolds", "start_here": "no"},
+        {"plot": "per_layer_lora_norm.png", "concept": "legacy line plot of LoRA norm share", "start_here": "legacy"},
+        {"plot": "safety_depth_dashboard.png", "concept": "legacy four-panel safety-depth dashboard", "start_here": "legacy"},
+    ]
+
+
+def _lab21_imshow_with_labels(ax: Any, data: list[list[float]], row_labels: list[str], col_labels: list[str], title: str, cbar_label: str = "value", *, vmin: float | None = None, vmax: float | None = None, cmap: str = "viridis") -> Any:
+    import numpy as np
+
+    arr = np.array(data, dtype=float) if data else np.zeros((1, 1)) * float("nan")
+    im = ax.imshow(arr, aspect="auto", vmin=vmin, vmax=vmax, cmap=cmap)
+    ax.set_xticks(range(len(col_labels)))
+    ax.set_xticklabels(col_labels, rotation=45, ha="right")
+    ax.set_yticks(range(len(row_labels)))
+    ax.set_yticklabels(row_labels)
+    ax.set_title(title)
+    for i in range(arr.shape[0]):
+        for j in range(arr.shape[1]):
+            val = arr[i, j]
+            if math.isfinite(float(val)):
+                ax.text(j, i, f"{val:.2f}", ha="center", va="center", fontsize=7, color="black" if abs(val) < 0.65 else "white")
+    return im
+
+
+def plot_training_depth_dashboard(
+    ctx: bench.RunContext,
+    lora_layer_rows: Sequence[Mapping[str, Any]],
+    base_summary: Sequence[Mapping[str, Any]],
+    chat_summary: Sequence[Mapping[str, Any]],
+    boundary_summary: Sequence[Mapping[str, Any]],
+    forced_summary: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.5, 8.6))
+    ax = axes[0, 0]
+    by_source: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in lora_layer_rows:
+        if math.isfinite(_lab21_float(row.get("norm_share"))):
+            by_source[_lab21_source_label(row)].append(row)
+    if by_source:
+        for label, sub in sorted(by_source.items()):
+            sub = sorted(sub, key=lambda r: _lab21_int(r.get("layer")))
+            ax.plot([_lab21_int(r.get("layer")) for r in sub], [_lab21_float(r.get("norm_share")) for r in sub], marker=lab21_marker("lora"), label=_lab21_short(label, 18), linewidth=1.8)
+        if len(by_source) <= 8:
+            ax.legend(fontsize=7)
+    else:
+        ax.text(0.04, 0.55, "No trained LoRA weights found.\nThis panel is a scaffold until PEFT weights land.", transform=ax.transAxes)
+    bench.style_ax(ax, title="Weight-space depth: LoRA norm share", xlabel="adapter layer", ylabel="norm share")
+
+    ax = axes[0, 1]
+    for label, rows, color_key, marker_key in (
+        ("base↔instruct", base_summary, "base_instruct", "base_instruct"),
+        ("chat format", chat_summary, "chat_format", "chat_format"),
+        ("boundary↔safe", boundary_summary, "boundary_safe", "boundary_safe"),
+    ):
+        xs, ys = _lab21_curve(rows)
+        if xs:
+            ax.plot(xs, ys, marker=lab21_marker(marker_key), label=label, linewidth=1.9, color=lab21_color(color_key))
+    if not any(_lab21_curve(rows)[0] for rows in (base_summary, chat_summary, boundary_summary)):
+        ax.text(0.04, 0.55, "Safety-depth mode did not produce residual-divergence curves.", transform=ax.transAxes)
+    else:
+        ax.legend(fontsize=8)
+    bench.style_ax(ax, title="Representational depth: measured state gaps", xlabel="stream depth", ylabel="delta L2 / √d")
+
+    ax = axes[1, 0]
+    if forced_summary:
+        # Mean over token index per depth for a compact dashboard curve.
+        by_depth: dict[int, list[float]] = defaultdict(list)
+        for row in forced_summary:
+            val = _lab21_summary_value(row)
+            if math.isfinite(val):
+                by_depth[_lab21_int(row.get("depth"))].append(val)
+        xs = sorted(by_depth)
+        ys = [_lab21_mean(by_depth[x]) for x in xs]
+        ax.plot(xs, ys, marker=lab21_marker("forced_prefix"), linewidth=2.1, color=lab21_color("forced_prefix"))
+        p = peak_summary([{"depth": x, "mean_delta_l2_per_sqrt_dim": y} for x, y in zip(xs, ys)])
+        if p.get("peak_depth", "") != "":
+            ax.axvline(float(p["peak_depth"]), linestyle="--", linewidth=1.0, color=lab21_color("forced_prefix"))
+            ax.text(float(p["peak_depth"]), max(ys) if ys else 0.0, " peak", va="bottom", fontsize=8)
+    else:
+        ax.text(0.04, 0.55, "No forced-prefix recommitment rows.", transform=ax.transAxes)
+    bench.style_ax(ax, title="Behavioral-depth proxy: forced-prefix separation", xlabel="stream depth", ylabel="mean over prefix tokens")
+
+    ax = axes[1, 1]
+    labels = [str(r.get("artifact")) for r in evidence_rows]
+    status_score = []
+    for row in evidence_rows:
+        status = str(row.get("status", ""))
+        if status == "ok":
+            status_score.append(1.0)
+        elif "scaffold" in status or "not_earned" in status:
+            status_score.append(0.35)
+        elif "missing" in status:
+            status_score.append(0.1)
+        else:
+            status_score.append(0.55)
+    if labels:
+        y = np.arange(len(labels))
+        colors = [lab21_color("pass") if s >= 0.99 else (lab21_color("warning") if s >= 0.3 else lab21_color("scaffold")) for s in status_score]
+        ax.barh(y, status_score, color=colors)
+        ax.set_yticks(y)
+        ax.set_yticklabels([_lab21_short(x, 28) for x in labels], fontsize=8)
+        ax.set_xlim(0, 1.05)
+        ax.invert_yaxis()
+    else:
+        ax.text(0.04, 0.55, "No evidence rows.", transform=ax.transAxes)
+    bench.style_ax(ax, title="Evidence firewall: ok vs scaffold", xlabel="claim readiness", ylabel="")
+    fig.suptitle("Lab 21 training-depth evidence: do not collapse the three meanings of deep", y=0.995, fontsize=13)
+    fig.tight_layout(rect=[0, 0, 1, 0.97])
+    bench.save_figure(ctx, fig, "training_depth_evidence_dashboard.png", "One-screen Lab 21 dashboard joining LoRA weight depth, representational safety depth, forced-prefix depth, and evidence readiness.")
+
+
+def plot_lora_layer_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    ok = [r for r in rows if math.isfinite(_lab21_float(r.get("norm_share")))]
+    fig, ax = bench.new_figure(figsize=(10.5, max(3.8, 0.42 * max(1, len({ _lab21_source_label(r) for r in ok })) + 2.2)))
+    if ok:
+        sources = sorted({_lab21_source_label(r) for r in ok})
+        layers = sorted({_lab21_int(r.get("layer")) for r in ok})
+        data = [[float("nan") for _ in layers] for _ in sources]
+        src_i = {s: i for i, s in enumerate(sources)}
+        lay_i = {l: i for i, l in enumerate(layers)}
+        for r in ok:
+            data[src_i[_lab21_source_label(r)]][lay_i[_lab21_int(r.get("layer"))]] = _lab21_float(r.get("norm_share"))
+        im = _lab21_imshow_with_labels(ax, data, [_lab21_short(s, 26) for s in sources], [str(l) for l in layers], "LoRA norm-share atlas", "norm share", vmin=0.0, vmax=max(0.01, _lab21_max([r.get("norm_share") for r in ok])), cmap="viridis")
+        fig.colorbar(im, ax=ax, shrink=0.86, label="share of adapter delta norm")
+        ax.set_xlabel("layer")
+        ax.set_ylabel("adapter source")
+    else:
+        ax.text(0.04, 0.55, "No per-layer LoRA rows.\nTrain/copy adapter weights first.", transform=ax.transAxes)
+        bench.style_ax(ax, title="LoRA norm-share atlas unavailable", xlabel="layer", ylabel="source")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "lora_layer_atlas.png", "Heatmap of LoRA update norm share by adapter source and layer.")
+
+
+def plot_lora_module_phase_atlas(ctx: bench.RunContext, module_rows: Sequence[Mapping[str, Any]], phase_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8))
+    ax = axes[0]
+    ok = [r for r in module_rows if math.isfinite(_lab21_float(r.get("norm_share")))]
+    if ok:
+        by_module: dict[str, list[float]] = defaultdict(list)
+        for row in ok:
+            by_module[str(row.get("target_module", "module"))].append(_lab21_float(row.get("norm_share")))
+        items = sorted(((m, _lab21_mean(vals)) for m, vals in by_module.items()), key=lambda x: x[1])[-12:]
+        y = np.arange(len(items))
+        ax.barh(y, [v for _, v in items], color=lab21_color("lora"))
+        ax.set_yticks(y)
+        ax.set_yticklabels([m for m, _ in items])
+        bench.style_ax(ax, title="Target-module share", xlabel="mean norm share", ylabel="")
+    else:
+        ax.text(0.04, 0.55, "No module norm rows.", transform=ax.transAxes)
+        bench.style_ax(ax, title="Target-module share unavailable", xlabel="", ylabel="")
+    ax = axes[1]
+    ok_phase = [r for r in phase_rows if r.get("status") == "ok"]
+    if ok_phase:
+        labels = [_lab21_short(str(r.get("source_label", "source")), 18) for r in ok_phase]
+        x = np.arange(len(labels))
+        early = [_lab21_float(r.get("early_share"), 0.0) for r in ok_phase]
+        mid = [_lab21_float(r.get("middle_share"), 0.0) for r in ok_phase]
+        late = [_lab21_float(r.get("late_share"), 0.0) for r in ok_phase]
+        ax.bar(x, early, label="early", color=lab21_color("base_instruct"))
+        ax.bar(x, mid, bottom=early, label="middle", color=lab21_color("chat_format"))
+        ax.bar(x, late, bottom=[a + b for a, b in zip(early, mid)], label="late", color=lab21_color("boundary_safe"))
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, rotation=35, ha="right")
+        ax.legend(fontsize=8)
+        bench.style_ax(ax, title="LoRA mass by phase", xlabel="adapter source", ylabel="share")
+    else:
+        ax.text(0.04, 0.55, "No phase rows.", transform=ax.transAxes)
+        bench.style_ax(ax, title="LoRA phase atlas unavailable", xlabel="", ylabel="")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "lora_module_phase_atlas.png", "LoRA update norm summarized by target module and early/middle/late layer phase.")
+
+
+def plot_safety_depth_signal_atlas(
+    ctx: bench.RunContext,
+    base_summary: Sequence[Mapping[str, Any]],
+    chat_summary: Sequence[Mapping[str, Any]],
+    boundary_summary: Sequence[Mapping[str, Any]],
+    forced_summary: Sequence[Mapping[str, Any]],
+) -> None:
+    import matplotlib.pyplot as plt
+
+    curves: list[tuple[str, Sequence[Mapping[str, Any]]]] = [
+        ("base↔instruct", base_summary),
+        ("chat format", chat_summary),
+        ("boundary↔safe", boundary_summary),
+    ]
+    forced_by_depth: dict[int, list[float]] = defaultdict(list)
+    for row in forced_summary:
+        val = _lab21_summary_value(row)
+        if math.isfinite(val):
+            forced_by_depth[_lab21_int(row.get("depth"))].append(val)
+    forced_rows = [{"depth": d, "mean_delta_l2_per_sqrt_dim": _lab21_mean(vals)} for d, vals in sorted(forced_by_depth.items())]
+    curves.append(("forced prefix", forced_rows))
+    depths = sorted({d for _, rows in curves for d in _lab21_curve(rows)[0]})
+    fig, ax = bench.new_figure(figsize=(10.8, 4.8))
+    if depths:
+        data = []
+        for _, rows in curves:
+            lookup = {d: v for d, v in zip(*_lab21_curve(rows))}
+            data.append([lookup.get(d, float("nan")) for d in depths])
+        maxv = _lab21_max([x for row in data for x in row], 0.0)
+        im = _lab21_imshow_with_labels(ax, data, [c[0] for c in curves], [str(d) for d in depths], "Safety-depth signal atlas", "delta / √d", vmin=0.0, vmax=max(0.001, maxv), cmap="magma")
+        fig.colorbar(im, ax=ax, shrink=0.86, label="mean delta L2 / √d")
+        ax.set_xlabel("stream depth")
+    else:
+        ax.text(0.04, 0.55, "No safety-depth curves available.", transform=ax.transAxes)
+        bench.style_ax(ax, title="Safety-depth signal atlas unavailable", xlabel="stream depth", ylabel="comparison")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "safety_depth_signal_atlas.png", "Heatmap comparing all safety-depth divergence signals over stream depth.")
+
+
+def plot_forced_prefix_heatmap(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    ok = [r for r in rows if math.isfinite(_lab21_summary_value(r)) and "assistant_token_index" in r and "depth" in r]
+    fig, ax = bench.new_figure(figsize=(10.2, 5.0))
+    if ok:
+        toks = sorted({_lab21_int(r.get("assistant_token_index")) for r in ok})
+        depths = sorted({_lab21_int(r.get("depth")) for r in ok})
+        data = [[float("nan") for _ in depths] for _ in toks]
+        ti = {t: i for i, t in enumerate(toks)}
+        di = {d: i for i, d in enumerate(depths)}
+        vals: dict[tuple[int, int], list[float]] = defaultdict(list)
+        for row in ok:
+            vals[(_lab21_int(row.get("assistant_token_index")), _lab21_int(row.get("depth")))].append(_lab21_summary_value(row))
+        for (tok, depth), v in vals.items():
+            data[ti[tok]][di[depth]] = _lab21_mean(v)
+        maxv = _lab21_max([x for row in data for x in row], 0.0)
+        im = _lab21_imshow_with_labels(ax, data, [str(t) for t in toks], [str(d) for d in depths], "Forced-prefix recommitment heatmap", "delta / √d", vmin=0.0, vmax=max(0.001, maxv), cmap="magma")
+        fig.colorbar(im, ax=ax, shrink=0.86, label="mean delta L2 / √d")
+        ax.set_xlabel("stream depth")
+        ax.set_ylabel("assistant prefix token index")
+    else:
+        ax.text(0.04, 0.55, "No forced-prefix rows available.", transform=ax.transAxes)
+        bench.style_ax(ax, title="Forced-prefix heatmap unavailable", xlabel="stream depth", ylabel="token index")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "forced_prefix_recommitment_heatmap.png", "Token-by-depth view of fixed refusal-prefix versus safe-prefix divergence.")
+
+
+def plot_refusal_provenance_cosines(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(9.2, 4.8))
+    cosine_keys = [
+        ("cosine_model_delta_to_boundary_direction", "model delta ↔ boundary"),
+        ("cosine_model_delta_to_forced_prefix_direction", "model delta ↔ forced prefix"),
+        ("cosine_boundary_to_forced_prefix_direction", "boundary ↔ forced prefix"),
+        ("cosine_chat_format_to_boundary_direction", "chat format ↔ boundary"),
+    ]
+    any_curve = False
+    for key, label in cosine_keys:
+        pts = [(_lab21_int(r.get("depth")), _lab21_float(r.get(key))) for r in rows if math.isfinite(_lab21_float(r.get(key)))]
+        pts.sort()
+        if pts:
+            any_curve = True
+            ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", linewidth=1.8, label=label)
+    if any_curve:
+        ax.axhline(0.0, color="#666666", linewidth=0.8)
+        ax.legend(fontsize=8)
+    else:
+        ax.text(0.04, 0.55, "No comparable provenance vectors.\nThis often means no safety-depth comparison or dimension mismatch.", transform=ax.transAxes)
+    bench.style_ax(ax, title="Refusal-direction provenance cosines", xlabel="stream depth", ylabel="cosine")
+    bench.save_figure(ctx, fig, "refusal_provenance_cosines.png", "Depthwise cosines among model-delta, boundary, forced-prefix, and chat-format directions.")
+
+
+def plot_training_depth_disagreement(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    usable = [r for r in rows if str(r.get("depth_or_layer", "")) not in {"", "None"}]
+    fig, ax = bench.new_figure(figsize=(9.5, 4.8))
+    if usable:
+        labels = [str(r.get("axis", "axis")).replace("_", "\n") for r in usable]
+        values = [_lab21_float(r.get("depth_or_layer"), 0.0) for r in usable]
+        y = np.arange(len(usable))
+        colors = [lab21_color("lora") if "lora" in str(r.get("axis", "")) else lab21_color("base_instruct") if "base" in str(r.get("axis", "")) else lab21_color("chat_format") if "format" in str(r.get("axis", "")) else lab21_color("forced_prefix") if "forced" in str(r.get("axis", "")) else lab21_color("boundary_safe") for r in usable]
+        ax.scatter(values, y, s=110, color=colors)
+        for x, yy, r in zip(values, y, usable):
+            txt = f"value {r.get('value', '')}"
+            ax.text(x, yy + 0.12, txt, fontsize=8, ha="center")
+        ax.set_yticks(y)
+        ax.set_yticklabels(labels, fontsize=8)
+        ax.set_xlabel("depth or layer index")
+        ax.set_ylabel("")
+        ax.grid(True, axis="x", alpha=0.25)
+    else:
+        ax.text(0.04, 0.55, "No depth landmarks available.", transform=ax.transAxes)
+        bench.style_ax(ax, title="Depth disagreement unavailable", xlabel="depth/layer", ylabel="axis")
+    ax.set_title("Weight, behavioral, and representational depth landmarks")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "training_depth_disagreement.png", "Comparison of peak landmarks across the different meanings of depth in Lab 21.")
+
+
+def plot_intervention_readiness_matrix(ctx: bench.RunContext, evidence_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    cols = ["artifact present", "control present", "real intervention", "mechanism language"]
+    data: list[list[float]] = []
+    labels: list[str] = []
+    for row in evidence_rows:
+        status = str(row.get("status", ""))
+        artifact_present = 1.0 if status == "ok" else (0.4 if "scaffold" in status or "not_earned" in status else 0.1)
+        text = str(row.get("artifact", ""))
+        control_present = 1.0 if any(tok in text.lower() for tok in ("chat", "forced", "wrapper", "erosion", "boundary", "rank")) else 0.6
+        real_intervention = 1.0 if row.get("evidence_rung") == "CAUSAL" and status == "ok" else (0.25 if row.get("evidence_rung") in {"CAUSAL", "CAUSAL/AUDIT"} else 0.0)
+        mechanism = 1.0 if real_intervention >= 1.0 else 0.0
+        data.append([artifact_present, control_present, real_intervention, mechanism])
+        labels.append(str(row.get("artifact", "artifact")))
+    fig, ax = bench.new_figure(figsize=(9.8, max(4.2, 0.34 * len(labels) + 2.1)))
+    if labels:
+        im = _lab21_imshow_with_labels(ax, data, [_lab21_short(x, 32) for x in labels], cols, "Intervention readiness matrix", "readiness", vmin=0.0, vmax=1.0, cmap="viridis")
+        fig.colorbar(im, ax=ax, shrink=0.86, label="0 = no, 1 = yes")
+    else:
+        ax.text(0.04, 0.55, "No evidence rows.", transform=ax.transAxes)
+        bench.style_ax(ax, title="Intervention readiness unavailable", xlabel="", ylabel="")
+    fig.tight_layout()
+
+    bench.save_figure(ctx, fig, "intervention_readiness_matrix.png", "Which Lab 21 artifacts support descriptive, controlled, or causal/mechanism language.")
+
+
+# Legacy plot-name overrides: keep the original artifact contract, but make the
+# plots carry the richer evidence grammar introduced above.
+
+def plot_lora_norms(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    ok_rows = [r for r in rows if math.isfinite(_lab21_float(r.get("norm_share"))) and str(r.get("layer", "")) != ""]
+    fig, axes = plt.subplots(2, 1, figsize=(10.0, 7.2), sharex=True)
+    ax, ax2 = axes
+    if ok_rows:
+        by_source: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+        for row in ok_rows:
+            by_source[_lab21_source_label(row)].append(row)
+        for label, sub in sorted(by_source.items()):
+            sub = sorted(sub, key=lambda r: _lab21_int(r.get("layer")))
+            xs = [_lab21_int(r.get("layer")) for r in sub]
+            ys = [_lab21_float(r.get("norm_share"), 0.0) for r in sub]
+            ax.plot(xs, ys, marker=lab21_marker("lora"), linewidth=2.0, label=_lab21_short(label, 28), color=lab21_color("lora"))
+            cumsum = np.cumsum(ys).tolist()
+            ax2.plot(xs, cumsum, marker="o", linewidth=1.8, label=_lab21_short(label, 28))
+        ax.axhline(0.25, color=lab21_color("warning"), linestyle="--", linewidth=1.0, alpha=0.75)
+        ax.text(0.01, 0.92, "mask-candidate guide: 0.25", transform=ax.transAxes, fontsize=8)
+        ax2.axhline(0.80, color=lab21_color("warning"), linestyle="--", linewidth=1.0, alpha=0.75)
+        ax2.text(0.01, 0.82, "80% cumulative mass", transform=ax2.transAxes, fontsize=8)
+        if len(by_source) <= 8:
+            ax.legend(fontsize=8)
+    else:
+        for axis in axes:
+            axis.text(0.04, 0.55, "No trained LoRA adapter weights found.\nThis is a scaffold, not a localization result.", transform=axis.transAxes)
+    bench.style_ax(ax, title="Per-layer LoRA delta norm share", xlabel="", ylabel="share")
+    bench.style_ax(ax2, title="Cumulative update mass", xlabel="layer", ylabel="cumulative share")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "per_layer_lora_norm.png", "Per-layer and cumulative LoRA delta norm share for available organism adapters.")
+
+
+def plot_lora_concentration(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    ok_rows = [r for r in rows if r.get("status") == "ok"]
+    fig, axes = plt.subplots(2, 2, figsize=(12.2, 8.0))
+    axes = axes.ravel()
+    if ok_rows:
+        labels = [_lab21_short(_lab21_source_label(r), 16) for r in ok_rows]
+        xs = list(range(len(ok_rows)))
+        axes[0].bar(xs, [_lab21_float(r.get("top_layer_share"), 0.0) for r in ok_rows], color=lab21_color("lora"))
+        axes[0].axhline(0.25, color=lab21_color("warning"), linestyle="--", linewidth=1.0)
+        axes[0].set_xticks(xs); axes[0].set_xticklabels(labels, rotation=35, ha="right")
+        bench.style_ax(axes[0], title="Top-layer share", xlabel="adapter source", ylabel="share")
+        axes[1].bar(xs, [_lab21_float(r.get("normalized_norm_entropy"), 0.0) for r in ok_rows], color=lab21_color("chat_format"))
+        axes[1].set_xticks(xs); axes[1].set_xticklabels(labels, rotation=35, ha="right")
+        bench.style_ax(axes[1], title="Distribution entropy", xlabel="adapter source", ylabel="0 concentrated / 1 diffuse")
+        bottom = [0.0] * len(ok_rows)
+        for key, name in (("early_share", "early"), ("middle_share", "middle"), ("late_share", "late")):
+            vals = [_lab21_float(r.get(key), 0.0) for r in ok_rows]
+            axes[2].bar(xs, vals, bottom=bottom, label=name)
+            bottom = [b + v for b, v in zip(bottom, vals)]
+        axes[2].set_xticks(xs); axes[2].set_xticklabels(labels, rotation=35, ha="right")
+        axes[2].legend(fontsize=8)
+        bench.style_ax(axes[2], title="Phase mass", xlabel="adapter source", ylabel="share")
+        axes[3].scatter([_lab21_float(r.get("layer_centroid"), 0.0) for r in ok_rows], [_lab21_float(r.get("top_layer_share"), 0.0) for r in ok_rows], s=90, color=lab21_color("lora"))
+        for label, row in zip(labels, ok_rows):
+            axes[3].annotate(label, (_lab21_float(row.get("layer_centroid"), 0.0), _lab21_float(row.get("top_layer_share"), 0.0)), xytext=(4, 4), textcoords="offset points", fontsize=8)
+        bench.style_ax(axes[3], title="Where and how sharp?", xlabel="layer centroid", ylabel="top-layer share")
+    else:
+        for ax in axes:
+            ax.text(0.04, 0.55, "No concentration rows.", transform=ax.transAxes)
+            bench.style_ax(ax, title="LoRA concentration unavailable", xlabel="", ylabel="")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "lora_concentration_dashboard.png", "Adapter concentration, phase mass, entropy, and centroid dashboard.")
+
+
+def plot_rank_energy(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    ok = [r for r in rows if math.isfinite(_lab21_float(r.get("energy_threshold"))) and math.isfinite(_lab21_float(r.get("rank_needed")))]
+    fig, ax = bench.new_figure(figsize=(9.0, 5.0))
+    if ok:
+        grouped: dict[float, list[float]] = defaultdict(list)
+        for row in ok:
+            grouped[_lab21_float(row.get("energy_threshold"))].append(_lab21_float(row.get("rank_needed")))
+        xs = sorted(grouped)
+        means = [_lab21_mean(grouped[x]) for x in xs]
+        sds = [stdev(grouped[x]) for x in xs]
+        ax.plot(xs, means, marker="o", linewidth=2.3, color=lab21_color("lora"), label="mean rank needed")
+        ax.fill_between(xs, [m - s for m, s in zip(means, sds)], [m + s for m, s in zip(means, sds)], alpha=0.18)
+        for x in xs:
+            vals = grouped[x]
+            offsets = [((i - (len(vals) - 1) / 2.0) * 0.006) for i in range(len(vals))]
+            ax.scatter([x + o for o in offsets], vals, s=18, alpha=0.45, color=lab21_color("lora"))
+        ax.legend(fontsize=8)
+    else:
+        ax.text(0.04, 0.55, "No rank-energy rows.", transform=ax.transAxes)
+    bench.style_ax(ax, title="Rank needed to explain LoRA update energy", xlabel="cumulative energy threshold", ylabel="rank needed")
+    bench.save_figure(ctx, fig, "lora_rank_energy.png", "Rank-energy curve for LoRA update matrices, with individual matrix points.")
+
+
+def plot_depth_summary(ctx: bench.RunContext, summaries: Sequence[Mapping[str, Any]], filename: str, title: str, description: str) -> None:
+    fig, ax = bench.new_figure(figsize=(8.8, 4.9))
+    if summaries:
+        xs, ys = _lab21_curve(summaries)
+        ax.plot(xs, ys, marker="o", linewidth=2.3, color=lab21_color("base_instruct"))
+        sd_vals = [_lab21_float(r.get("sd_delta_l2_per_sqrt_dim"), 0.0) for r in summaries if str(r.get("depth", "")) != ""]
+        if len(sd_vals) == len(ys) and any(v > 0 for v in sd_vals):
+            ax.fill_between(xs, [y - s for y, s in zip(ys, sd_vals)], [y + s for y, s in zip(ys, sd_vals)], alpha=0.16, color=lab21_color("base_instruct"))
+        p = peak_summary(summaries)
+        if p.get("peak_depth") != "":
+            ax.axvline(int(p["peak_depth"]), color=lab21_color("warning"), linestyle="--", linewidth=1.0)
+            ax.text(int(p["peak_depth"]), _lab21_float(p.get("peak_value"), 0.0), f" peak d={p['peak_depth']}", fontsize=8, va="bottom")
+    else:
+        ax.text(0.04, 0.55, "No comparable residual vectors were available.", transform=ax.transAxes)
+    bench.style_ax(ax, title=title, xlabel="stream depth", ylabel="mean delta L2 / √d")
+    bench.save_figure(ctx, fig, filename, description)
+
+
+def plot_safety_dashboard(
+    ctx: bench.RunContext,
+    base_summary: Sequence[Mapping[str, Any]],
+    chat_summary: Sequence[Mapping[str, Any]],
+    boundary_summary: Sequence[Mapping[str, Any]],
+    forced_token_summary: Sequence[Mapping[str, Any]],
+) -> None:
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(2, 3, figsize=(15.2, 8.6))
+    panels = [
+        (axes[0, 0], base_summary, "Base ↔ instruct", "base_instruct"),
+        (axes[0, 1], chat_summary, "Chat-format control", "chat_format"),
+        (axes[0, 2], boundary_summary, "Boundary ↔ safe", "boundary_safe"),
+    ]
+    for ax, rows, title, key in panels:
+        xs, ys = _lab21_curve(rows)
+        if xs:
+            ax.plot(xs, ys, marker=lab21_marker(key), linewidth=2.2, color=lab21_color(key))
+            p = peak_summary(rows)
+            if p.get("peak_depth") != "":
+                ax.axvline(int(p["peak_depth"]), color=lab21_color("warning"), linestyle="--", linewidth=1.0, alpha=0.7)
+        else:
+            ax.text(0.04, 0.55, "No rows.", transform=ax.transAxes)
+        bench.style_ax(ax, title=title, xlabel="stream depth", ylabel="delta / √d")
+    ax = axes[1, 0]
+    forced_depths = sorted({_lab21_int(r.get("depth")) for r in forced_token_summary if math.isfinite(_lab21_summary_value(r))})
+    if forced_depths:
+        chosen = [forced_depths[0], forced_depths[len(forced_depths)//2], forced_depths[-1]]
+        for depth in chosen:
+            sub = sorted([r for r in forced_token_summary if _lab21_int(r.get("depth")) == depth], key=lambda r: _lab21_int(r.get("assistant_token_index")))
+            ax.plot([_lab21_int(r.get("assistant_token_index")) for r in sub], [_lab21_summary_value(r) for r in sub], marker="o", linewidth=1.8, label=f"d{depth}")
+        ax.legend(fontsize=8)
+    else:
+        ax.text(0.04, 0.55, "No forced-prefix rows.", transform=ax.transAxes)
+    bench.style_ax(ax, title="Forced-prefix token trajectory", xlabel="assistant prefix token", ylabel="delta / √d")
+    ax = axes[1, 1]
+    names = ["base/instruct", "chat", "boundary", "forced"]
+    vals = [
+        _lab21_float(peak_summary(base_summary).get("peak_value"), 0.0),
+        _lab21_float(peak_summary(chat_summary).get("peak_value"), 0.0),
+        _lab21_float(peak_summary(boundary_summary).get("peak_value"), 0.0),
+        _lab21_float(peak_summary(forced_token_summary).get("peak_value"), 0.0),
+    ]
+    ax.bar(range(len(vals)), vals, color=[lab21_color("base_instruct"), lab21_color("chat_format"), lab21_color("boundary_safe"), lab21_color("forced_prefix")])
+    ax.set_xticks(range(len(vals))); ax.set_xticklabels(names, rotation=25, ha="right")
+    bench.style_ax(ax, title="Peak comparison sizes", xlabel="comparison", ylabel="peak delta / √d")
+    ax = axes[1, 2]
+    ax.axis("off")
+    ax.text(0.02, 0.96, "Depth checklist\n\n• model-pair ≠ safety mechanism\n• chat-format can explain a lot\n• boundary/safe can be semantic\n• forced prefixes are fixed transcripts\n• no unsafe completions\n• no refusal ablation", transform=ax.transAxes, va="top", fontsize=10)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "safety_depth_dashboard.png", "Safety-depth dashboard with model diff, format control, prompt diff, forced-prefix trajectory, and peak-size audit.")
+
+
+def plot_forced_prefix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(1, 2, figsize=(13.0, 5.0))
+    ax, axh = axes
+    depths = sorted({_lab21_int(r.get("depth")) for r in rows if math.isfinite(_lab21_summary_value(r))})
+    toks = sorted({_lab21_int(r.get("assistant_token_index")) for r in rows if math.isfinite(_lab21_summary_value(r))})
+    if depths:
+        chosen = [depths[0], depths[len(depths)//2], depths[-1]]
+        for depth in chosen:
+            sub = sorted([r for r in rows if _lab21_int(r.get("depth")) == depth], key=lambda r: _lab21_int(r.get("assistant_token_index")))
+            ax.plot([_lab21_int(r.get("assistant_token_index")) for r in sub], [_lab21_summary_value(r) for r in sub], marker="o", label=f"d{depth}")
+        ax.legend(fontsize=8)
+    else:
+        ax.text(0.04, 0.55, "No forced-prefix rows.", transform=ax.transAxes)
+    bench.style_ax(ax, title="Selected depth token traces", xlabel="assistant token", ylabel="delta / √d")
+    if depths and toks:
+        di = {d: i for i, d in enumerate(depths)}; ti = {t: i for i, t in enumerate(toks)}
+        data = [[float("nan") for _ in depths] for __ in toks]
+        for r in rows:
+            val = _lab21_summary_value(r)
+            if math.isfinite(val):
+                data[ti[_lab21_int(r.get("assistant_token_index"))]][di[_lab21_int(r.get("depth"))]] = val
+        im = _lab21_imshow_with_labels(axh, data, [str(t) for t in toks], [str(d) for d in depths], "All tokens × depths", "delta / √d", cmap="magma")
+        fig.colorbar(im, ax=axh, shrink=0.86, label="delta / √d")
+    else:
+        axh.text(0.04, 0.55, "No heatmap rows.", transform=axh.transAxes)
+        bench.style_ax(axh, title="Forced-prefix heatmap unavailable", xlabel="depth", ylabel="token")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "forced_prefix_recommitment.png", "Forced-prefix recommitment as both selected-depth token traces and full token-depth heatmap.")
+
+
+def plot_erosion_order(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(8.8, 4.8))
+    ok = [r for r in rows if math.isfinite(_lab21_float(r.get("finetune_step")))]
+    if ok:
+        ok = sorted(ok, key=lambda r: _lab21_float(r.get("finetune_step")))
+        x = [_lab21_float(r.get("finetune_step")) for r in ok]
+        if any(math.isfinite(_lab21_float(r.get("behavior_refusal_rate"))) for r in ok):
+            ax.plot(x, [_lab21_float(r.get("behavior_refusal_rate"), 0.0) for r in ok], marker="o", label="behavior refusal rate", color=lab21_color("base_instruct"))
+        if any(math.isfinite(_lab21_float(r.get("direction_projection_gap"))) for r in ok):
+            ax.plot(x, [_lab21_float(r.get("direction_projection_gap"), 0.0) for r in ok], marker="o", label="direction gap", color=lab21_color("forced_prefix"))
+        if any(math.isfinite(_lab21_float(r.get("adapter_norm_share"))) for r in ok):
+            ax.plot(x, [_lab21_float(r.get("adapter_norm_share"), 0.0) for r in ok], marker="o", label="adapter norm share", color=lab21_color("lora"))
+        ax.legend(fontsize=8)
+    else:
+        ax.text(0.04, 0.55, "No erosion sweep imported.\nSet LAB21_EROSION_CSV after a benign finetune sweep.", transform=ax.transAxes)
+    bench.style_ax(ax, title="Erosion order: behavior vs direction vs adapter", xlabel="finetune step", ylabel="rate or normalized gap")
+    bench.save_figure(ctx, fig, "erosion_order.png", "Erosion-order curve or scaffold for a future benign finetune sweep.")
+
 # ---------------------------------------------------------------------------
 # Narrative artifacts
 # ---------------------------------------------------------------------------
@@ -1934,6 +2902,7 @@ def write_training_depth_card(ctx: bench.RunContext, metrics: Mapping[str, Any])
     if "safety_depth" in modes:
         read_next.append("`diagnostics/safety_prompt_render_audit.csv` and `tables/chat_format_divergence.csv` before reading safety-depth curves.")
         read_next.append("`plots/safety_depth_dashboard.png` for the depth curves.")
+    read_next.append("`plots/training_depth_evidence_dashboard.png` and `tables/training_depth_evidence_matrix.csv` for the joined evidence board.")
     read_next.append("`operationalization_audit.md` for the full non-claims and control posture.")
     lines.extend(f"{i}. {item}" for i, item in enumerate(read_next, start=1))
     lines.append("")
@@ -2012,9 +2981,10 @@ def write_run_summary(ctx: bench.RunContext, metrics: Mapping[str, Any]) -> None
         "",
         "1. `training_depth_card.md` for the verdict and non-claims.",
         "2. `diagnostics/lab21_safety_wall.json` for the hard safety scope.",
-        "3. LoRA mode: `tables/lora_concentration_summary.csv` and `plots/per_layer_lora_norm.png`.",
-        "4. Safety mode: `tables/chat_format_divergence.csv`, `tables/instruct_base_divergence_by_layer.csv`, and `plots/safety_depth_dashboard.png`.",
-        "5. `operationalization_audit.md` before writing ledger claims.",
+        "3. `plots/training_depth_evidence_dashboard.png` for the whole evidence board.",
+        "4. LoRA mode: `tables/lora_concentration_summary.csv`, `tables/lora_phase_summary.csv`, and `plots/lora_layer_atlas.png`.",
+        "5. Safety mode: `tables/safety_depth_signal_summary.csv`, `plots/safety_depth_signal_atlas.png`, and `plots/forced_prefix_recommitment_heatmap.png`.",
+        "6. `tables/training_depth_evidence_matrix.csv` and `operationalization_audit.md` before writing ledger claims.",
         "",
     ]
     path = ctx.path("run_summary.md")
@@ -2231,6 +3201,42 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         bench.write_csv_with_context(ctx, path, rows or [{"status": "no_rows"}])
         ctx.register_artifact(path, "table", description)
 
+    lora_phase_rows = lab21_lora_phase_rows(lora_layer_rows, concentration_rows)
+    lora_phase_path = ctx.path("tables", "lora_phase_summary.csv")
+    bench.write_csv_with_context(ctx, lora_phase_path, lora_phase_rows)
+    ctx.register_artifact(lora_phase_path, "table", "LoRA update mass summarized as early/middle/late phase evidence.")
+
+    depth_disagreement_rows = lab21_depth_disagreement_rows(lora_phase_rows, base_summary, chat_summary, boundary_summary, forced_summary)
+    depth_disagreement_path = ctx.path("tables", "training_depth_disagreement.csv")
+    bench.write_csv_with_context(ctx, depth_disagreement_path, depth_disagreement_rows)
+    ctx.register_artifact(depth_disagreement_path, "table", "Peak landmarks for weight-space, representational, and forced-prefix depth notions.")
+
+    safety_signal_rows = lab21_safety_signal_rows(base_summary, chat_summary, boundary_summary, forced_summary, provenance_rows)
+    safety_signal_path = ctx.path("tables", "safety_depth_signal_summary.csv")
+    bench.write_csv_with_context(ctx, safety_signal_path, safety_signal_rows)
+    ctx.register_artifact(safety_signal_path, "table", "Joined safety-depth signals by stream depth, including ratios and provenance cosines.")
+
+    evidence_rows = lab21_training_depth_evidence_matrix(
+        modes=modes,
+        lora_layer_rows=lora_layer_rows,
+        concentration_rows=concentration_rows,
+        rank_rows=rank_rows,
+        wrapper_rows=wrapper_rows,
+        erosion_rows=erosion_rows,
+        base_summary=base_summary,
+        chat_summary=chat_summary,
+        boundary_summary=boundary_summary,
+        forced_summary=forced_summary,
+        provenance_rows=provenance_rows,
+    )
+    evidence_path = ctx.path("tables", "training_depth_evidence_matrix.csv")
+    bench.write_csv_with_context(ctx, evidence_path, evidence_rows)
+    ctx.register_artifact(evidence_path, "table", "Lab 21 evidence matrix: what each artifact can and cannot claim.")
+
+    guide_path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, guide_path, lab21_plot_reading_guide_rows())
+    ctx.register_artifact(guide_path, "table", "Plot-to-concept guide for the upgraded Lab 21 artifact suite.")
+
     result_rows: list[dict[str, Any]] = []
     result_rows.extend({"result_family": "lora_layer", **row} for row in lora_layer_rows)
     result_rows.extend({"result_family": "base_instruct_depth", **row} for row in base_summary)
@@ -2242,15 +3248,23 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     ctx.register_artifact(results_path, "results", "Standard Lab 21 results alias.")
 
     if not ctx.args.no_plots:
+        plot_training_depth_dashboard(ctx, lora_layer_rows, base_summary, chat_summary, boundary_summary, forced_summary, evidence_rows)
+        plot_training_depth_disagreement(ctx, depth_disagreement_rows)
+        plot_intervention_readiness_matrix(ctx, evidence_rows)
         if "lora" in modes:
             plot_lora_norms(ctx, lora_layer_rows)
             plot_lora_concentration(ctx, concentration_rows)
             plot_rank_energy(ctx, rank_rows)
+            plot_lora_layer_atlas(ctx, lora_layer_rows)
+            plot_lora_module_phase_atlas(ctx, module_rows, lora_phase_rows)
         if "safety_depth" in modes:
             plot_depth_summary(ctx, base_summary, "instruct_base_divergence_by_layer.png", "Base-vs-instruct divergence by depth", "Mean residual divergence between instruct and base models by stream depth.")
             plot_depth_summary(ctx, boundary_summary, "refusal_recommitment_depth.png", "Boundary-vs-safe divergence by depth", "Mean residual divergence between boundary requests and safe alternatives by depth.")
             plot_forced_prefix(ctx, forced_summary)
             plot_safety_dashboard(ctx, base_summary, chat_summary, boundary_summary, forced_summary)
+            plot_safety_depth_signal_atlas(ctx, base_summary, chat_summary, boundary_summary, forced_summary)
+            plot_forced_prefix_heatmap(ctx, forced_summary)
+            plot_refusal_provenance_cosines(ctx, provenance_rows)
         plot_erosion_order(ctx, erosion_rows)
 
     lora_peak = {}
@@ -2282,6 +3296,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "chat_format_peak": peak_summary(chat_summary),
         "boundary_safe_peak": peak_summary(boundary_summary),
         "forced_prefix_peak": peak_summary(forced_summary),
+        "n_training_depth_evidence_rows": len(evidence_rows),
+        "n_lora_phase_rows": len([r for r in lora_phase_rows if r.get("status") == "ok"]),
+        "n_safety_signal_rows": len([r for r in safety_signal_rows if "depth" in r]),
+        "n_depth_disagreement_rows": len(depth_disagreement_rows),
     }
     metrics_path = ctx.path("metrics.json")
     bench.write_json(metrics_path, metrics)
