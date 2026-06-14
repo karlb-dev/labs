@@ -200,32 +200,38 @@
   },
   "tool_use_tasks.jsonl": {
     "families": {
-      "calculator": 3,
-      "calendar": 3,
-      "dictionary": 3,
-      "file_search": 3,
-      "no_tool": 6,
-      "route_planner": 3,
-      "unit_converter": 3
+      "calculator": 6,
+      "calendar": 6,
+      "dictionary": 6,
+      "file_search": 6,
+      "no_tool": 12,
+      "route_planner": 6,
+      "unit_converter": 6
     },
-    "generator": "hand-authored deterministic course rows",
+    "generator": "make_tool_use_tasks.py",
     "required_tools": {
-      "calculator": 3,
-      "calendar": 3,
-      "dictionary": 3,
-      "file_search": 3,
-      "none": 6,
-      "route_planner": 3,
-      "unit_converter": 3
+      "calculator": 6,
+      "calendar": 6,
+      "dictionary": 6,
+      "file_search": 6,
+      "none": 12,
+      "route_planner": 6,
+      "unit_converter": 6
     },
-    "rows": 24,
-    "safety_scope": "benign toy tools only; no web, credentials, real filesystem writes, or harmful tools",
-    "sha256": "429d935de03f3eaf34bc2acb03315521a6f1257b1b4780562b63dc2fd8ecad89",
+    "rows": 48,
+    "safety_scope": "benign deterministic toy tools only; no web, credentials, external APIs, real filesystem writes, shell tools, harmful tools, or autonomous deployment",
+    "sha256": "bcf18742f51e8aa1f540f631a596aa661534e544aa3815e0ce67dc4af81eb206",
     "splits": {
-      "eval": 9,
-      "train": 15
+      "eval": 16,
+      "train": 32
     },
-    "verified_tokenizers": []
+    "tool_needed": {
+      "false": 12,
+      "true": 36
+    },
+    "verified_tokenizers": [
+      "runtime reverified by Lab 34"
+    ]
   },
   "capstone_seed_tracks.jsonl": {
     "generator": "hand-authored deterministic course rows",

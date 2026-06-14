@@ -173,7 +173,7 @@ python interp_bench.py --lab lab32 --tier b --prompt-set full
 python interp_bench.py --lab lab33 --tier a --no-plots
 python interp_bench.py --lab lab33 --tier b --prompt-set full
 
-# Lab 34 (tool use and state tracking; toy tools and surface-cue controls):
+# Lab 34 (tool use and state tracking; benign toy-tool controls):
 python interp_bench.py --lab lab34 --tier a --no-plots
 python interp_bench.py --lab lab34 --tier b --prompt-set full
 
@@ -417,10 +417,11 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   random-patch controls, alignment diagnostics, and explicit
   `science_ready=false` status until real VLM hooks are loaded.
 - Lab 34: tool use, agents, and state tracking — implemented as a controlled
-  toy-tool harness. Adds calculator/dictionary/calendar/file-search/route/unit
-  tasks, no-tool surface-cue controls, prompt-boundary residual probes,
-  constrained tool-choice steering tests, deterministic trace logs, corrupted
-  result reliance checks, and self-report review tables.
+  toy-tool harness. Adds a 48-row calculator/dictionary/calendar/file-search/
+  route/unit/no-tool suite, prompt-boundary residual probes, deterministic tool
+  traces, surface-cue and no-tool controls, constrained tool-choice
+  interventions, corrupted-result reliance checks, and self-report review
+  tables.
 - Lab 35: reproducible interpretability paper capstone — implemented as a
   package generator and validator. Adds seed tracks, preregistration, paper and
   claim-card drafts, fixed adversarial-review rubric, repair log, reproduction

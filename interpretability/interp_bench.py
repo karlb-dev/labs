@@ -483,10 +483,11 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
     "lab34": {
         "module": "labs.lab34_tool_use_state",
         "run_name": "lab34_tool_use_state",
-        "description": "Tool use, agents, and state tracking: toy-tool traces, prompt-boundary probes, surface-cue controls, and constrained steering tests.",
-        # Toy-tool audit. Tier A runs the complete local tool set, including
-        # no-tool rows with misleading surface cues.
-        "max_examples_tier_a": "24",
+        "description": "Tool use, agents, and state tracking: toy-tool prompt-boundary probes, traces, controls, and constrained interventions.",
+        # Toy-tool audit. Tier A keeps enough rows for every tool family and
+        # no-tool surface-cue controls while leaving the full 48-row suite for
+        # Tier B/full runs.
+        "max_examples_tier_a": "28",
     },
     "lab35": {
         "module": "labs.lab35_reproducible_capstone",
