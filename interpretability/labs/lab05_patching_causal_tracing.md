@@ -14,6 +14,17 @@ The capital of France is -> Paris
 
 recoverable after the prompt has been corrupted to a different country, and what happens if we try to turn that localization into a weight edit?
 
+## Why this lab exists (and what "subject" means)
+
+This lab is a hands-on bench for **causal tracing**, the method introduced by ROME — *Rank-One Model Editing* (Meng et al., 2022). ROME has two halves, and so does this lab: first **locate** where a fact lives in the forward pass by patching clean states into a corrupted run (the main lab), then **edit** that location with a small weight change and check whether the fact actually changes (the optional `--run-edit` extension).
+
+The thing being located is a *fact*, modeled as a knowledge triple **(subject, relation, object)**: France (subject) — capital-of (relation) — Paris (object). Two warnings about the word **subject**, because it trips almost everyone:
+
+- It is the *fact's* subject — the entity the fact is about, France — **not** the grammatical subject. In "The capital of France is", the grammatical subject is arguably "capital"; the lab always means France.
+- It is **designated by construction, not discovered**. The subject is simply the one position you vary between the clean and corrupt prompts (France ↔ Germany) — the independent variable. Its causal importance is the *result* you measure, never the reason you picked it.
+
+The claim you are testing is ROME's headline: that factual recall **localizes** — concentrates at a particular layer and token position — and that "where the fact lives" tells you "where to edit it." The lab is deliberately built around the place that bet frays. Hase et al. (2023) found the causally-traced layer is *not* a privileged edit site, so the lab never lets you assume localization predicts editability: the `--run-edit` audit makes you *measure* the gap. The deliverable is a scoped causal claim — *this intervention, on this population, for this metric, beating these controls* — not "layer k stores capitals."
+
 ## The method: interchange interventions
 
 Run a clean prompt and a corrupt prompt:
@@ -33,6 +44,15 @@ diff     = logit(" Paris") - logit(" Berlin") at the final position
 A recovery of 1.0 means the patch restored the whole clean-vs-corrupt logit gap. A recovery of 0.0 means the readout could use none of it. A negative value means the patch made the corrupt run even less clean-like.
 
 This is causal evidence because the internal state was changed while the prompt and model weights were otherwise held fixed.
+
+## What this experiment can and cannot show
+
+Patching is a **sufficiency** test, run in the "denoising" direction: you corrupt the prompt, then ask whether re-inserting *one* clean state is *enough* to pull the behavior back. A high recovery says that state is **sufficient** to restore the answer here. It does **not** say the state is **necessary** — you have not ablated a working run to see what breaks (that would be a necessity test). Single-site interchange only ever speaks to sufficiency, so the honest claim is "sufficient on this population," never "required."
+
+Two consequences to hold onto:
+
+- **Corruption type matters.** This lab corrupts by a symmetric **interchange** (swap France for Germany), as opposed to ROME's original Gaussian **noising** of the subject embedding. That is exactly why patching the subject at stream depth 0 is a tautology here — you are just putting the France token back — where under noising it would not be. Keep this in mind before comparing your depths against published ROME numbers.
+- **Sufficiency is not mechanism.** One state being enough under interchange does not prove it is the thing the model actually uses; it might feed a later component that does the real work. That is what the negative controls, and later path patching, are for.
 
 ## What you patch is a vector, not a logit
 
@@ -116,6 +136,22 @@ The output is not just a heatmap. The output is a claim card with a scope, a met
 
 The upgraded plotting pass adds a second layer of discipline: every visually appealing curve now has nearby artifacts asking whether the curve survives per-fact heterogeneity, paraphrase changes, and negative controls. Read patching results as an evidence table: intervention, population, metric, counterexample, and only then the claim.
 
+## Key terms you'll meet in the artifacts
+
+Before reading the plots and tables, here is the vocabulary they assume. Each term is elaborated in the sections that follow.
+
+| Term | What it means | Where you see it |
+|---|---|---|
+| **recovery** | The metric: the fraction of the clean-vs-corrupt logit gap that one patch restores. 1.0 = fully clean-like, 0 = the readout used none of it, negative = made it worse. | every patching table; the heatmap color |
+| **clean / corrupt** | The matched prompt pair (France vs Germany). The scored difference is `logit(" Paris") − logit(" Berlin")` at the last position. | `results.csv`, `tables/facts.csv` |
+| **baseline gate** | Facts the model gets wrong (clean or corrupt margin too weak) are dropped *before* tracing, so you patch only facts the model actually knows. | `tables/facts.csv`, `plots/baseline_gate_audit.png` |
+| **token role** | Each position is labelled pre-subject / subject / post-subject / last; the curves are recovery averaged within a role. | `tables/role_transition_summary.csv` |
+| **handoff** | The depth where subject-position recovery collapses — the fact has left the subject stream for later computation. | `localization_decision.json`, `plots/localization_across_facts.png` |
+| **localized (stream) band** | The last informative subject depths before the handoff; the lab's headline "where the fact lives." | `diagnostics/localization_decision.json` |
+| **component cell** | A fully specified site is a *triple*: (component ∈ {attn, mlp}, layer ∈ band, position ∈ {subject, last}). The plot legend names component + position; the band supplies the layer. | `tables/component_summary.csv`, `plots/component_patching.png` |
+| **specificity gap** | Matched-patch recovery minus a negative control's recovery. A real, fact-specific effect clears its controls; a generic "big vector injected" does not. | `tables/specificity_summary.csv`, `plots/negative_controls.png` |
+| **sufficiency** | What one patch can show — this state is *enough* to restore the behavior — as opposed to *necessity* (what breaks when you remove it). | the whole lab; see "What this experiment can and cannot show" |
+
 ## How to read the main curves
 
 At stream depth 0, patching the subject position mostly substitutes the token embedding. For this corruption type, high subject recovery at depth 0 is a tautology, not a localization result.
@@ -146,6 +182,8 @@ The component pass splits the localized band into four `(submodule, position)` c
 This is also why the component winner can disagree with the stream heatmap, which usually lights up the *subject* column — they ask different questions. The stream patch asks "is the whole accumulated subject representation present at this cell?", and re-injecting all of the subject's representation recovers a lot. The component patch asks the finer "which single additive write, transplanted by itself, moves the answer?" By the localized band the subject information is already redundantly present from earlier writes, so swapping one block's *subject* contribution barely changes the running sum, while the one *transport* write that carries it to the last position does. Same block, different position, only one doing load-bearing work at that depth.
 
 Read the winner as sufficiency, not mechanism. A single attention cell holding most of the component signal is exactly what path patching exists to interrogate: that write might just feed a downstream component that does the real work. Sufficiency of one write under interchange is not proof it *is* the mechanism — that gap is the falsifier to chase next. (In the Olmo-3-7B reference run, `attn@last` is the largest of the four cells in `tables/component_summary.csv`, consistent with a transport-dominant reading, but all four recoveries are small — so the honest reading is that the band's causal signal is spread across many writes, not concentrated in one.)
+
+The two stories have names. A subject-MLP-recall trace is the **ROME** picture: the fact is stored and looked up in place. An attention-mover result is the **IOI** picture (Wang et al., 2022) — the "indirect object identification" circuit, where *name-mover* attention heads fetch and copy information into the readout position rather than storing it. A single run can sit on the seam: ROME-shaped at the stream level (the two-band recall→readout silhouette) yet mover-flavored at the component level. When that happens, it is a finding to report, not a tension to smooth over.
 
 ## Running it
 
@@ -271,3 +309,13 @@ Layer k stores capitals.
 ```
 
 The second sentence is tempting because it is short. It is also wrong-shaped. Lab 5 earns causal claims about interventions, not metaphysical claims about storage jars in the transformer attic.
+
+## Reading
+
+You do not need these to run the lab, but they are where its ideas come from:
+
+- Meng et al., "Locating and Editing Factual Associations in GPT" (2022) — ROME: the causal-tracing method and the rank-one edit this lab is built on.
+- Meng et al., "Mass-Editing Memory in a Transformer" (2022) — MEMIT: the multi-layer edit, a better fit for "the fact is distributed across many writes" than a single jar.
+- Wang et al., "Interpretability in the Wild: a Circuit for Indirect Object Identification" (2022) — IOI: the attention name-mover circuit, the "transport" picture your component pass can land on.
+- Hase et al., "Does Localization Inform Editing?" (2023) — the finding that the traced layer is not a privileged edit site; the lab's `--run-edit` audit is this experiment.
+- Geva et al., "Transformer Feed-Forward Layers Are Key-Value Memories" (2021) — the premise that licenses reading an MLP as an associative store.
