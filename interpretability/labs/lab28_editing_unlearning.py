@@ -65,6 +65,24 @@ CONTROL_EDIT_METHODS = (
     "opposite_direction_addition",
 )
 
+PLOT_SOURCE_SUBDIR = "figure_sources"
+CI_Z = 1.96
+
+EDIT_METHOD_DISPLAY = {
+    "no_edit": "baseline",
+    "localized_addition": "localized add",
+    "wrong_position_addition": "wrong position",
+    "random_direction_addition": "random direction",
+    "opposite_direction_addition": "opposite sign",
+}
+
+LOCALIZATION_METHOD_DISPLAY = {
+    "self_patch_noop": "self patch",
+    "localized_patch": "localized patch",
+    "wrong_position_patch": "wrong position",
+    "random_direction_patch": "random direction",
+}
+
 REQUIRED_COLUMNS = {
     "target_id",
     "family",
@@ -211,6 +229,74 @@ def safe_corr(xs: Sequence[Any], ys: Sequence[Any]) -> float:
     denx = math.sqrt(sum((x - xbar) ** 2 for x, _ in pairs))
     deny = math.sqrt(sum((y - ybar) ** 2 for _, y in pairs))
     return num / (denx * deny) if denx > 1e-12 and deny > 1e-12 else float("nan")
+
+
+def stable_id(*parts: Any, prefix: str = "") -> str:
+    payload = json.dumps([str(part) for part in parts], sort_keys=True)
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:14]
+    return f"{prefix}{digest}" if prefix else digest
+
+
+def boolish(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "ok"}
+
+
+def finite_values(values: Sequence[Any]) -> list[float]:
+    out: list[float] = []
+    for value in values:
+        f = as_float(value)
+        if math.isfinite(f):
+            out.append(f)
+    return out
+
+
+def safe_stderr(values: Sequence[Any], default: float = float("nan")) -> float:
+    vals = finite_values(values)
+    if len(vals) < 2:
+        return default
+    return float(statistics.stdev(vals) / math.sqrt(len(vals)))
+
+
+def safe_ci_halfwidth(values: Sequence[Any], default: float = float("nan")) -> float:
+    err = safe_stderr(values, default=default)
+    return CI_Z * err if math.isfinite(err) else default
+
+
+def method_label(method: Any) -> str:
+    return EDIT_METHOD_DISPLAY.get(str(method), str(method).replace("_", " "))
+
+
+def localization_method_label(method: Any) -> str:
+    return LOCALIZATION_METHOD_DISPLAY.get(str(method), str(method).replace("_", " "))
+
+
+def short_target_label(target_id: Any, max_len: int = 24) -> str:
+    label = str(target_id).replace("edit_", "").replace("smoke_", "")
+    label = label.replace("_", " ")
+    return label[: max_len - 1] + "…" if len(label) > max_len else label
+
+
+def figure_source_path(ctx: bench.RunContext, name: str) -> pathlib.Path:
+    return ctx.path("tables", PLOT_SOURCE_SUBDIR, name)
+
+
+def write_figure_source(
+    ctx: bench.RunContext,
+    name: str,
+    rows: Sequence[Mapping[str, Any]],
+    description: str,
+) -> dict[str, Any]:
+    path = figure_source_path(ctx, name)
+    out_rows = [dict(row) for row in rows]
+    if not out_rows:
+        out_rows = [{"warning": "no_rows_available_for_this_figure"}]
+    bench.write_csv_with_context(ctx, path, out_rows)
+    ctx.register_artifact(path, "table", description)
+    return {"path": str(path.relative_to(ctx.run_dir)), "row_count": len(rows), "description": description}
 
 
 def write_jsonl(path: pathlib.Path, rows: Sequence[Mapping[str, Any]]) -> None:
@@ -1308,6 +1394,725 @@ def summarize_evidence(
     return evidence, counterexamples, refinement, metrics
 
 
+
+# ---------------------------------------------------------------------------
+# Plot source tables, manifests, and diagnostics
+# ---------------------------------------------------------------------------
+
+
+def dashboard_source_rows(evidence: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "figure_row_id": stable_id("dashboard", row.get("target_id"), prefix="l28dash_"),
+            "target_label": short_target_label(row.get("target_id")),
+            **dict(row),
+        }
+        for row in evidence
+    ]
+
+
+def target_vs_control_source_rows(
+    evidence: Sequence[Mapping[str, Any]],
+    edit_rows: Sequence[Mapping[str, Any]],
+    scale_choice: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    evidence_by_target = {str(row.get("target_id")): row for row in evidence}
+    rows: list[dict[str, Any]] = []
+    for row in edit_rows:
+        tid = str(row.get("target_id"))
+        if row.get("method") not in ("localized_addition",) + CONTROL_EDIT_METHODS:
+            continue
+        selected_scale = as_float(scale_choice.get(tid, {}).get("scale"))
+        scale = as_float(row.get("scale"))
+        if not math.isfinite(selected_scale) or abs(scale - selected_scale) > 1e-9:
+            continue
+        ev = evidence_by_target.get(tid, {})
+        role = "target" if row.get("method") == "localized_addition" else "control"
+        rows.append({
+            "source_row_id": stable_id("target_vs_control", tid, row.get("method"), scale, prefix="l28tvc_"),
+            "target_id": tid,
+            "target_label": short_target_label(tid),
+            "family": row.get("family", ev.get("family", "")),
+            "method": row.get("method", ""),
+            "method_label": method_label(row.get("method")),
+            "method_role": role,
+            "depth": row.get("depth", ev.get("best_depth", "")),
+            "scale": rounded(scale),
+            "target_gain": rounded(row.get("target_gain")),
+            "edited_after_minus_before": row.get("edited_after_minus_before", ""),
+            "base_after_minus_before": row.get("base_after_minus_before", ""),
+            "changed_to_after": row.get("changed_to_after", ""),
+            "selected_scale": rounded(selected_scale),
+            "target_control_floor": rounded(scale_choice.get(tid, {}).get("target_control_floor")),
+            "target_control_gap": rounded(scale_choice.get(tid, {}).get("target_control_gap")),
+            "claim_posture": ev.get("claim_posture", ""),
+        })
+    return rows
+
+
+def dose_response_source_rows(
+    edit_rows: Sequence[Mapping[str, Any]],
+    scale_choice: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for row in edit_rows:
+        tid = str(row.get("target_id"))
+        method = str(row.get("method"))
+        scale = as_float(row.get("scale"))
+        selected_scale = as_float(scale_choice.get(tid, {}).get("scale"))
+        floor = control_floor_for_scale(edit_rows, tid, scale) if math.isfinite(scale) else float("nan")
+        gain = as_float(row.get("target_gain"))
+        rows.append({
+            "source_row_id": stable_id("dose", tid, method, scale, prefix="l28dose_"),
+            "target_id": tid,
+            "target_label": short_target_label(tid),
+            "family": row.get("family", ""),
+            "method": method,
+            "method_label": method_label(method),
+            "method_role": "target" if method == "localized_addition" else ("baseline" if method == "no_edit" else "control"),
+            "depth": row.get("depth", ""),
+            "scale": rounded(scale),
+            "target_gain": rounded(gain),
+            "base_after_minus_before": row.get("base_after_minus_before", ""),
+            "edited_after_minus_before": row.get("edited_after_minus_before", ""),
+            "changed_to_after": row.get("changed_to_after", ""),
+            "selected_scale": rounded(selected_scale),
+            "is_selected_scale": math.isfinite(scale) and math.isfinite(selected_scale) and abs(scale - selected_scale) < 1e-9,
+            "target_control_floor_at_scale": rounded(floor),
+            "target_control_gap_at_scale": rounded(gain - floor) if method == "localized_addition" and math.isfinite(gain) and math.isfinite(floor) else "",
+        })
+    return rows
+
+
+def localization_editability_source_rows(evidence: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows = []
+    for row in evidence:
+        rows.append({
+            "source_row_id": stable_id("loc_edit", row.get("target_id"), prefix="l28le_"),
+            "target_id": row.get("target_id", ""),
+            "target_label": short_target_label(row.get("target_id", "")),
+            "family": row.get("family", ""),
+            "best_depth": row.get("best_depth", ""),
+            "localization_patch_gain": row.get("localization_patch_gain", ""),
+            "localization_control_floor": row.get("localization_control_floor", ""),
+            "localization_gap": row.get("localization_gap", ""),
+            "localized_target_gain": row.get("localized_target_gain", ""),
+            "target_control_gap": row.get("target_control_gap", ""),
+            "mean_retain_damage": row.get("mean_retain_damage", ""),
+            "claim_posture": row.get("claim_posture", ""),
+        })
+    return rows
+
+
+def locality_ladder_source_rows(
+    evidence: Sequence[Mapping[str, Any]],
+    localization_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for ev in evidence:
+        tid = str(ev.get("target_id"))
+        depth = str(ev.get("best_depth"))
+        for method in ("localized_patch", "wrong_position_patch", "random_direction_patch"):
+            vals = [
+                as_float(row.get("patch_gain"))
+                for row in localization_rows
+                if str(row.get("target_id")) == tid and str(row.get("depth")) == depth and row.get("method") == method
+            ]
+            rows.append({
+                "source_row_id": stable_id("locality", tid, depth, method, prefix="l28loc_"),
+                "target_id": tid,
+                "target_label": short_target_label(tid),
+                "depth": depth,
+                "method": method,
+                "method_label": localization_method_label(method),
+                "patch_gain": rounded(safe_mean(vals, 0.0)),
+                "n_rows": len(finite_values(vals)),
+                "claim_posture": ev.get("claim_posture", ""),
+            })
+    return rows
+
+
+def layer_sweep_heatmap_source_rows(localization_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """One row per target/depth for the localization gap heatmap.
+
+    This keeps the selected-depth ladder honest by showing the full sweep that
+    produced it, including depth 0 and final-depth caveats.
+    """
+    grouped: dict[tuple[str, int], dict[str, Any]] = defaultdict(dict)
+    meta: dict[tuple[str, int], dict[str, Any]] = {}
+    for row in localization_rows:
+        method = str(row.get("method"))
+        if method not in {"localized_patch", "wrong_position_patch", "random_direction_patch"}:
+            continue
+        tid = str(row.get("target_id"))
+        depth = int(as_float(row.get("depth"), 0.0))
+        key = (tid, depth)
+        grouped[key][method] = as_float(row.get("patch_gain"))
+        meta[key] = row
+    rows: list[dict[str, Any]] = []
+    for (tid, depth), vals in sorted(grouped.items(), key=lambda kv: (kv[0][0], kv[0][1])):
+        loc = vals.get("localized_patch", float("nan"))
+        wrong = vals.get("wrong_position_patch", float("nan"))
+        random = vals.get("random_direction_patch", float("nan"))
+        controls = finite_values([wrong, random])
+        floor = max(controls) if controls else float("nan")
+        gap = loc - floor if math.isfinite(loc) and math.isfinite(floor) else float("nan")
+        m = meta.get((tid, depth), {})
+        rows.append({
+            "source_row_id": stable_id("layer_sweep", tid, depth, prefix="l28sweep_"),
+            "target_id": tid,
+            "target_label": short_target_label(tid),
+            "family": m.get("family", ""),
+            "depth": depth,
+            "claimable_depth": m.get("claimable_depth", ""),
+            "localized_patch_gain": rounded(loc),
+            "wrong_position_patch_gain": rounded(wrong),
+            "random_direction_patch_gain": rounded(random),
+            "strongest_control_patch_gain": rounded(floor),
+            "localization_gap": rounded(gap),
+            "n_methods_observed": len(vals),
+        })
+    return rows
+
+
+def paraphrase_matrix_source_rows(paraphrase_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for row in paraphrase_rows:
+        if row.get("method") != "localized_addition":
+            continue
+        tid = str(row.get("target_id"))
+        role = str(row.get("eval_role") or "paraphrase")
+        rows.append({
+            "source_row_id": stable_id("para", tid, role, row.get("prompt"), prefix="l28para_"),
+            "target_id": tid,
+            "target_label": short_target_label(tid),
+            "family": row.get("family", ""),
+            "eval_role": role,
+            "prompt": row.get("prompt", ""),
+            "method": row.get("method", ""),
+            "scale": row.get("scale", ""),
+            "base_after_minus_before": row.get("base_after_minus_before", ""),
+            "edited_after_minus_before": row.get("edited_after_minus_before", ""),
+            "transfer_gain": row.get("transfer_gain", ""),
+            "transferred_to_after": row.get("transferred_to_after", ""),
+        })
+    return rows
+
+
+def retain_neighbor_atlas_source_rows(retain_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for row in retain_rows:
+        if row.get("method") != "localized_addition":
+            continue
+        tid = str(row.get("target_id"))
+        role = f"{row.get('eval_family')}:{row.get('eval_role') or 'prompt'}"
+        rows.append({
+            "source_row_id": stable_id("retain", tid, role, row.get("prompt"), prefix="l28ret_"),
+            "target_id": tid,
+            "target_label": short_target_label(tid),
+            "family": row.get("family", ""),
+            "eval_family": row.get("eval_family", ""),
+            "eval_role": row.get("eval_role", ""),
+            "display_role": role,
+            "prompt": row.get("prompt", ""),
+            "target": row.get("target", ""),
+            "distractor": row.get("distractor", ""),
+            "base_margin": row.get("base_margin", ""),
+            "edited_margin": row.get("edited_margin", ""),
+            "margin_delta": row.get("margin_delta", ""),
+            "preserved_sign": row.get("preserved_sign", ""),
+            "damage": row.get("damage", ""),
+        })
+    return rows
+
+
+def frontier_source_rows(evidence: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for row in evidence:
+        rows.append({
+            "source_row_id": stable_id("frontier", row.get("target_id"), prefix="l28front_"),
+            "target_id": row.get("target_id", ""),
+            "target_label": short_target_label(row.get("target_id", "")),
+            "family": row.get("family", ""),
+            "target_control_gap": row.get("target_control_gap", ""),
+            "localized_target_gain": row.get("localized_target_gain", ""),
+            "mean_retain_damage": row.get("mean_retain_damage", ""),
+            "max_retain_damage": row.get("max_retain_damage", ""),
+            "mean_neighbor_damage": row.get("mean_neighbor_damage", ""),
+            "claim_posture": row.get("claim_posture", ""),
+        })
+    return rows
+
+
+def paired_examples_source_rows(
+    evidence: Sequence[Mapping[str, Any]],
+    edit_rows: Sequence[Mapping[str, Any]],
+    retain_rows: Sequence[Mapping[str, Any]],
+    paraphrase_rows: Sequence[Mapping[str, Any]],
+    scale_choice: Mapping[str, Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    ev_by_target = {str(row.get("target_id")): row for row in evidence}
+    rows: list[dict[str, Any]] = []
+    for row in edit_rows:
+        tid = str(row.get("target_id"))
+        if row.get("method") != "localized_addition":
+            continue
+        selected_scale = as_float(scale_choice.get(tid, {}).get("scale"))
+        scale = as_float(row.get("scale"))
+        if not math.isfinite(selected_scale) or abs(scale - selected_scale) > 1e-9:
+            continue
+        rows.append({
+            "source_row_id": stable_id("paired", tid, "target_exact", prefix="l28pair_"),
+            "target_id": tid,
+            "target_label": short_target_label(tid),
+            "specimen_family": "target_exact",
+            "eval_role": "exact_target_prompt",
+            "prompt": ev_by_target.get(tid, {}).get("prompt", ""),
+            "method": "localized_addition",
+            "scale": rounded(scale),
+            "base_margin": row.get("base_after_minus_before", ""),
+            "edited_margin": row.get("edited_after_minus_before", ""),
+            "margin_delta": row.get("target_gain", ""),
+            "damage": "",
+            "claim_posture": ev_by_target.get(tid, {}).get("claim_posture", ""),
+        })
+    for row in paraphrase_rows:
+        if row.get("method") != "localized_addition":
+            continue
+        tid = str(row.get("target_id"))
+        rows.append({
+            "source_row_id": stable_id("paired", tid, "paraphrase", row.get("eval_role"), row.get("prompt"), prefix="l28pair_"),
+            "target_id": tid,
+            "target_label": short_target_label(tid),
+            "specimen_family": "paraphrase",
+            "eval_role": row.get("eval_role", ""),
+            "prompt": row.get("prompt", ""),
+            "method": "localized_addition",
+            "scale": row.get("scale", ""),
+            "base_margin": row.get("base_after_minus_before", ""),
+            "edited_margin": row.get("edited_after_minus_before", ""),
+            "margin_delta": row.get("transfer_gain", ""),
+            "damage": "",
+            "claim_posture": ev_by_target.get(tid, {}).get("claim_posture", ""),
+        })
+    for row in retain_rows:
+        if row.get("method") != "localized_addition":
+            continue
+        tid = str(row.get("target_id"))
+        rows.append({
+            "source_row_id": stable_id("paired", tid, row.get("eval_family"), row.get("eval_role"), row.get("prompt"), prefix="l28pair_"),
+            "target_id": tid,
+            "target_label": short_target_label(tid),
+            "specimen_family": row.get("eval_family", ""),
+            "eval_role": row.get("eval_role", ""),
+            "prompt": row.get("prompt", ""),
+            "method": "localized_addition",
+            "scale": row.get("scale", ""),
+            "base_margin": row.get("base_margin", ""),
+            "edited_margin": row.get("edited_margin", ""),
+            "margin_delta": row.get("margin_delta", ""),
+            "damage": row.get("damage", ""),
+            "claim_posture": ev_by_target.get(tid, {}).get("claim_posture", ""),
+        })
+    return rows
+
+
+def write_plot_source_tables(
+    ctx: bench.RunContext,
+    evidence: Sequence[Mapping[str, Any]],
+    localization_rows: Sequence[Mapping[str, Any]],
+    edit_rows: Sequence[Mapping[str, Any]],
+    retain_rows: Sequence[Mapping[str, Any]],
+    paraphrase_rows: Sequence[Mapping[str, Any]],
+    scale_choice: Mapping[str, Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]] = (),
+) -> dict[str, dict[str, Any]]:
+    sources: dict[str, dict[str, Any]] = {}
+    source_rows = {
+        "dashboard_evidence.csv": dashboard_source_rows(evidence),
+        "target_vs_control_source.csv": target_vs_control_source_rows(evidence, edit_rows, scale_choice),
+        "dose_response_source.csv": dose_response_source_rows(edit_rows, scale_choice),
+        "localization_editability_source.csv": localization_editability_source_rows(evidence),
+        "locality_ladder_source.csv": locality_ladder_source_rows(evidence, localization_rows),
+        "layer_sweep_heatmap_source.csv": layer_sweep_heatmap_source_rows(localization_rows),
+        "paraphrase_matrix_source.csv": paraphrase_matrix_source_rows(paraphrase_rows),
+        "retain_neighbor_atlas_source.csv": retain_neighbor_atlas_source_rows(retain_rows),
+        "frontier_source.csv": frontier_source_rows(evidence),
+        "paired_examples_source.csv": paired_examples_source_rows(evidence, edit_rows, retain_rows, paraphrase_rows, scale_choice),
+    }
+    descriptions = {
+        "dashboard_evidence.csv": "Source rows for the Lab 28 dashboard.",
+        "target_vs_control_source.csv": "Selected-scale target versus edit-control source rows.",
+        "dose_response_source.csv": "Target and control dose-response source rows.",
+        "localization_editability_source.csv": "Localization patch gain versus additive edit source rows.",
+        "locality_ladder_source.csv": "Selected-depth localization-control source rows.",
+        "layer_sweep_heatmap_source.csv": "Full-depth localization gap heatmap source rows.",
+        "paraphrase_matrix_source.csv": "Paraphrase robustness heatmap source rows.",
+        "retain_neighbor_atlas_source.csv": "Retain and neighbor preservation atlas source rows.",
+        "frontier_source.csv": "Retain-forget and method-frontier source rows.",
+        "paired_examples_source.csv": "Raw paired before/after specimen rows.",
+    }
+    for name, rows in source_rows.items():
+        sources[name] = write_figure_source(ctx, name, rows, descriptions[name])
+    sources["failure_specimens.jsonl"] = {
+        "path": "tables/failure_specimens.jsonl",
+        "row_count": len(counterexamples),
+        "description": "Counterexample specimens used by failure-specimen artifacts.",
+    }
+    return sources
+
+
+def write_failure_specimens(
+    ctx: bench.RunContext,
+    counterexamples: Sequence[Mapping[str, Any]],
+) -> tuple[pathlib.Path, pathlib.Path]:
+    rows: list[dict[str, Any]] = []
+    for i, row in enumerate(counterexamples, start=1):
+        rows.append({
+            "failure_id": stable_id("failure", i, row.get("target_id"), row.get("kind"), row.get("prompt"), prefix="l28fail_"),
+            "rank": i,
+            "target_id": row.get("target_id", ""),
+            "kind": row.get("kind", ""),
+            "severity": row.get("severity", ""),
+            "prompt": row.get("prompt", ""),
+            "eval_role": row.get("eval_role", ""),
+            "selected_scale": row.get("selected_scale", ""),
+            "localized_target_gain": row.get("localized_target_gain", ""),
+            "target_control_floor": row.get("target_control_floor", ""),
+            "transfer_gain": row.get("transfer_gain", ""),
+            "damage": row.get("damage", ""),
+            "note": row.get("note", ""),
+            "inspect_first": "tables/edit_counterexamples.csv;tables/edit_evidence_matrix.csv;tables/figure_sources/paired_examples_source.csv",
+        })
+    jsonl_path = ctx.path("tables", "failure_specimens.jsonl")
+    write_jsonl(jsonl_path, rows)
+    ctx.register_artifact(jsonl_path, "table", "JSONL counterexample specimens for Lab 28 figures and writeups.")
+
+    md_lines = [
+        "# Lab 28 failure specimens",
+        "",
+        "These specimens are the little gravel in the shoe: rows that should shrink the claim before the student writes anything grand.",
+        "",
+    ]
+    if rows:
+        for row in rows[:20]:
+            md_lines += [
+                f"## {row['rank']}. `{row['kind']}` for `{row['target_id']}`",
+                "",
+                f"- severity: `{row['severity']}`",
+                f"- prompt: `{row['prompt']}`" if row.get("prompt") else "- prompt: see source table",
+                f"- note: {row['note']}",
+                f"- inspect: `{row['inspect_first']}`",
+                "",
+            ]
+    else:
+        md_lines += [
+            "No automatic counterexample crossed the configured thresholds.",
+            "",
+            "That does not certify the edit. It means the configured tripwires did not fire on this run. Replicate on the science tier before broadening the claim.",
+            "",
+        ]
+    md_path = ctx.path("tables", "failure_specimens.md")
+    bench.write_text(md_path, "\n".join(md_lines))
+    ctx.register_artifact(md_path, "summary", "Readable failure-specimen gallery for Lab 28.")
+    return jsonl_path, md_path
+
+
+def write_plot_manifest(ctx: bench.RunContext, sources: Mapping[str, Mapping[str, Any]], no_plots: bool) -> None:
+    def src(name: str) -> str:
+        return str(sources.get(name, {}).get("path", ""))
+
+    def nrows(name: str) -> int:
+        return int(sources.get(name, {}).get("row_count", 0) or 0)
+
+    manifest_rows = [
+        {
+            "figure_path": "plots/editing_unlearning_dashboard.png",
+            "source_table": src("dashboard_evidence.csv"),
+            "row_count": nrows("dashboard_evidence.csv"),
+            "metric": "localized_target_gain,target_control_gap,mean_paraphrase_gain,mean_retain_damage,localization_gap",
+            "control": "wrong-position, random-direction, opposite-sign, retain, neighbor, paraphrase",
+            "question": "Do all gates point in the same direction?",
+            "claim_supported": "Only a narrow reversible activation-edit claim when all evidence gates pass.",
+            "caveat": "No persistent unlearning or fact erasure.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/target_vs_control.png",
+            "source_table": src("target_vs_control_source.csv"),
+            "row_count": nrows("target_vs_control_source.csv"),
+            "metric": "target_gain at selected scale",
+            "control": "wrong-position, random-direction, opposite-sign additions at the same scale",
+            "question": "Does the localized addition beat matched controls at the chosen dose?",
+            "claim_supported": "Direction/site-specific target movement if localized gain exceeds the strongest control.",
+            "caveat": "One target row is not transfer or side-effect evidence.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/dose_response.png",
+            "source_table": src("dose_response_source.csv"),
+            "row_count": nrows("dose_response_source.csv"),
+            "metric": "target_gain and localized-minus-control gap over scale",
+            "control": "same-scale edit controls",
+            "question": "Was the chosen scale earned by a dose-response curve?",
+            "claim_supported": "Scale selection transparency, not success by itself.",
+            "caveat": "Large doses can create broad perturbation artifacts.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/layer_sweep_heatmap.png",
+            "source_table": src("layer_sweep_heatmap_source.csv"),
+            "row_count": nrows("layer_sweep_heatmap_source.csv"),
+            "metric": "localization_gap by target and depth",
+            "control": "wrong-position and random-direction patch controls at each depth",
+            "question": "Where did localization appear across the residual stream, and was it interior?",
+            "claim_supported": "Depth-selection context for the selected locality ladder.",
+            "caveat": "Depth 0 and final-depth rows are diagnostics, not main claim sites.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/paired_examples.png",
+            "source_table": src("paired_examples_source.csv"),
+            "row_count": nrows("paired_examples_source.csv"),
+            "metric": "before and after margins per specimen",
+            "control": "raw exact/paraphrase/retain/neighbor specimens",
+            "question": "Which individual prompts moved, failed, or were damaged?",
+            "claim_supported": "Specimen-level caveats and negative-result visibility.",
+            "caveat": "Do not infer semantic transfer from the exact target row alone.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/localization_vs_editability.png",
+            "source_table": src("localization_editability_source.csv"),
+            "row_count": nrows("localization_editability_source.csv"),
+            "metric": "localization_patch_gain vs localized_target_gain",
+            "control": "selected-depth localization controls are in locality_ladder_source.csv",
+            "question": "Does a patchable site produce an additive edit?",
+            "claim_supported": "Whether localization predicts this edit method.",
+            "caveat": "Replacement and addition are different interventions.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/edit_method_frontier.png",
+            "source_table": src("frontier_source.csv"),
+            "row_count": nrows("frontier_source.csv"),
+            "metric": "target_control_gap vs mean_retain_damage",
+            "control": "retain audit plus edit controls",
+            "question": "Did target specificity come with a side-effect bill?",
+            "claim_supported": "Operating-point caution.",
+            "caveat": "Upper-right is not victory; it is damage with target movement.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/mechanistic_locality_ladder.png",
+            "source_table": src("locality_ladder_source.csv"),
+            "row_count": nrows("locality_ladder_source.csv"),
+            "metric": "patch_gain",
+            "control": "wrong-position and random-direction donor patches",
+            "question": "Was the site localized before editing?",
+            "claim_supported": "Locality evidence for selected depth when localized patch beats controls.",
+            "caveat": "Locality is a prerequisite, not the edit claim.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/scale_selection_ladder.png",
+            "source_table": src("dose_response_source.csv"),
+            "row_count": nrows("dose_response_source.csv"),
+            "metric": "localized target gain minus strongest control",
+            "control": "same-scale strongest control",
+            "question": "Why this dose?",
+            "claim_supported": "Pre-side-set dose-selection audit.",
+            "caveat": "The side-set audits can still veto the selected dose.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/paraphrase_robustness_matrix.png",
+            "source_table": src("paraphrase_matrix_source.csv"),
+            "row_count": nrows("paraphrase_matrix_source.csv"),
+            "metric": "transfer_gain",
+            "control": "paraphrases are held out from scale selection",
+            "question": "Does the edit transfer beyond the exact prompt?",
+            "claim_supported": "Transfer caveat when paraphrase gains are weak or uneven.",
+            "caveat": "The automatic next-token metric is not a semantic unlearning label.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/neighbor_preservation_atlas.png",
+            "source_table": src("retain_neighbor_atlas_source.csv"),
+            "row_count": nrows("retain_neighbor_atlas_source.csv"),
+            "metric": "damage=max(0, base_margin-edited_margin)",
+            "control": "retain and neighbor prompts with their own target/distractor labels",
+            "question": "What did the edit break?",
+            "claim_supported": "Side-effect limits and retain caveats.",
+            "caveat": "Low mean damage can hide one severe damaged specimen.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "plots/unlearning_retain_forget_frontier.png",
+            "source_table": src("frontier_source.csv"),
+            "row_count": nrows("frontier_source.csv"),
+            "metric": "localized_target_gain vs mean_retain_damage",
+            "control": "retain audit",
+            "question": "How much retain damage accompanies target movement?",
+            "claim_supported": "Reversible edit operating-point summary.",
+            "caveat": "The plot name is historical; weights are not unlearned.",
+            "written_when_no_plots": False,
+        },
+        {
+            "figure_path": "tables/failure_specimens.md",
+            "source_table": src("failure_specimens.jsonl"),
+            "row_count": nrows("failure_specimens.jsonl"),
+            "metric": "counterexample severity",
+            "control": "all failed gates and side-effect tripwires",
+            "question": "Which rows shrink the claim?",
+            "claim_supported": "Negative and caveated result reporting.",
+            "caveat": "No counterexample threshold crossed is not proof of safety.",
+            "written_when_no_plots": True,
+        },
+    ]
+    for row in manifest_rows:
+        row["plots_disabled"] = bool(no_plots)
+    json_path = ctx.path("plots", "plot_manifest.json")
+    bench.write_json(json_path, manifest_rows)
+    ctx.register_artifact(json_path, "plot_manifest", "Manifest of Lab 28 figures, source tables, metrics, controls, and claim boundaries.")
+    csv_path = ctx.path("plots", "plot_manifest.csv")
+    bench.write_csv_with_context(ctx, csv_path, manifest_rows)
+    ctx.register_artifact(csv_path, "plot_manifest", "CSV copy of the Lab 28 plot manifest.")
+
+
+def write_warning_summary(
+    ctx: bench.RunContext,
+    data_info: Mapping[str, Any],
+    token_rows: Sequence[Mapping[str, Any]],
+    baseline_rows: Sequence[Mapping[str, Any]],
+    localization_rows: Sequence[Mapping[str, Any]],
+    edit_rows: Sequence[Mapping[str, Any]],
+    retain_rows: Sequence[Mapping[str, Any]],
+    paraphrase_rows: Sequence[Mapping[str, Any]],
+    evidence: Sequence[Mapping[str, Any]],
+    scale_choice: Mapping[str, Mapping[str, Any]],
+    self_check_status: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+
+    def add(category: str, severity: str, count: int, detail: str, inspect: str) -> None:
+        rows.append({
+            "category": category,
+            "severity": severity,
+            "count": count,
+            "detail": detail,
+            "inspect": inspect,
+        })
+
+    token_dropped = [row for row in token_rows if row.get("kept") is False]
+    token_warned = [row for row in token_rows if row.get("warnings")]
+    baseline_already_after = [row for row in baseline_rows if boolish(row.get("baseline_already_after"))]
+    donor_not_after = [row for row in baseline_rows if not boolish(row.get("donor_supports_after"))]
+    nonclaimable_selected = [row for row in evidence if not boolish(row.get("claimable_depth"))]
+    no_paraphrases = [row for row in evidence if int(as_float(row.get("n_paraphrases"), 0)) == 0]
+    no_retain = [row for row in evidence if int(as_float(row.get("n_retain"), 0)) == 0]
+    no_scale_pass = [tid for tid, choice in scale_choice.items() if str(choice.get("reason", "")).startswith("no_scale_passed")]
+    high_retain = [row for row in evidence if as_float(row.get("max_retain_damage"), 0.0) > RETAIN_MAX_DAMAGE_LIMIT]
+    high_neighbor = [row for row in evidence if as_float(row.get("max_neighbor_damage"), 0.0) > NEIGHBOR_DAMAGE_CAVEAT]
+    no_target_control_rows = [row for row in edit_rows if row.get("method") in CONTROL_EDIT_METHODS]
+    small_side_sets = [row for row in evidence if as_float(row.get("n_paraphrases"), 0) < 2 or as_float(row.get("n_retain"), 0) < 2]
+
+    add(
+        "data_source",
+        "warning" if not bool(data_info.get("science_ready_data")) else "info",
+        0 if data_info.get("science_ready_data") else 1,
+        "Tier A fallback or tiny data is smoke-only." if not data_info.get("science_ready_data") else "Frozen CSV data was used with enough selected rows for the configured science-ready gate.",
+        "diagnostics/data_manifest.json",
+    )
+    add("tokenization_dropped", "error" if token_dropped else "info", len(token_dropped), "Rows dropped by answer/eval-token checks.", "diagnostics/tokenization_gate.csv")
+    add("tokenization_warnings", "warning" if token_warned else "info", len(token_warned), "Rows with tokenization warnings.", "diagnostics/tokenization_gate.csv")
+    add("baseline_already_after", "warning" if baseline_already_after else "info", len(baseline_already_after), "Targets whose baseline already favors target_after are weak edit targets.", "tables/baseline_behavior.csv")
+    add("donor_not_after_supporting", "warning" if donor_not_after else "info", len(donor_not_after), "Targets whose donor prompt does not support target_after.", "tables/baseline_behavior.csv")
+    add("nonclaimable_selected_depth", "warning" if nonclaimable_selected else "info", len(nonclaimable_selected), "Selected localization depth is depth 0 or final depth; positive claim language should be blocked.", "tables/edit_evidence_matrix.csv")
+    add("scale_gate_not_passed", "warning" if no_scale_pass else "info", len(no_scale_pass), "No dose passed both target-gain and control-gap gates; code chose the best available control gap.", "tables/scale_selection.csv")
+    add("missing_paraphrase_rows", "warning" if no_paraphrases else "info", len(no_paraphrases), "Targets without paraphrase rows cannot claim transfer.", "tables/paraphrase_robustness.csv")
+    add("missing_retain_rows", "warning" if no_retain else "info", len(no_retain), "Targets without retain rows cannot claim preservation.", "tables/retain_forget_matrix.csv")
+    add("small_side_sets", "warning" if small_side_sets else "info", len(small_side_sets), "Side-set sample count is tiny; inspect raw paired specimens before claiming transfer or preservation.", "tables/figure_sources/paired_examples_source.csv")
+    add("retain_damage_high", "warning" if high_retain else "info", len(high_retain), f"Targets with max retain damage above {RETAIN_MAX_DAMAGE_LIMIT}.", "tables/retain_forget_matrix.csv")
+    add("neighbor_damage_high", "warning" if high_neighbor else "info", len(high_neighbor), f"Targets with max neighbor damage above {NEIGHBOR_DAMAGE_CAVEAT}.", "tables/retain_forget_matrix.csv")
+    add("edit_control_rows_present", "info" if no_target_control_rows else "warning", len(no_target_control_rows), "Rows available for wrong-position/random/opposite edit controls.", "tables/editing_results.csv")
+    add("self_checks", "info" if bool(self_check_status.get("ok")) else "error", 0 if self_check_status.get("ok") else 1, "Lab-local tokenization, safety, no-op, and reversibility checks.", "diagnostics/self_check_status.json")
+
+    csv_path = ctx.path("diagnostics", "warning_summary.csv")
+    bench.write_csv_with_context(ctx, csv_path, rows)
+    ctx.register_artifact(csv_path, "diagnostic", "Warnings for dropped rows, weak targets, control gaps, tiny side sets, and side-effect caveats.")
+    json_path = ctx.path("diagnostics", "warning_summary.json")
+    bench.write_json(json_path, rows)
+    ctx.register_artifact(json_path, "diagnostic", "JSON copy of the Lab 28 warning summary.")
+    return rows
+
+
+def write_lab28_run_config_snapshot(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    data_info: Mapping[str, Any],
+    targets: Sequence[EditTarget],
+    scale_choice: Mapping[str, Mapping[str, Any]],
+    evidence: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    snapshot = {
+        "lab_id": LAB_ID,
+        "lab_name": LAB_NAME,
+        "run_name": ctx.run_dir.name,
+        "model_id": bundle.anatomy.model_id,
+        "model_revision": bundle.anatomy.revision,
+        "n_layers": bundle.anatomy.n_layers,
+        "d_model": bundle.anatomy.d_model,
+        "tier": ctx.args.tier,
+        "seed": ctx.args.seed,
+        "prompt_set": ctx.args.prompt_set,
+        "max_examples": ctx.args.max_examples,
+        "dtype": ctx.args.dtype,
+        "quantization": ctx.args.quantization,
+        "decoding": "none; forward-pass-only residual additions and next-token margins",
+        "data": dict(data_info),
+        "edit_scales": list(EDIT_SCALES),
+        "localization_methods": list(LOCALIZATION_METHODS),
+        "edit_methods": list(EDIT_METHODS),
+        "control_edit_methods": list(CONTROL_EDIT_METHODS),
+        "thresholds": {
+            "min_baseline_before_margin": MIN_BASELINE_BEFORE_MARGIN,
+            "locality_gap_min": LOCALITY_GAP_MIN,
+            "target_gain_min": TARGET_GAIN_MIN,
+            "target_control_gap_min": TARGET_CONTROL_GAP_MIN,
+            "paraphrase_gain_min": PARAPHRASE_GAIN_MIN,
+            "retain_damage_soft_limit": RETAIN_DAMAGE_SOFT_LIMIT,
+            "retain_max_damage_limit": RETAIN_MAX_DAMAGE_LIMIT,
+            "neighbor_damage_caveat": NEIGHBOR_DAMAGE_CAVEAT,
+            "noop_delta_atol": NOOP_DELTA_ATOL,
+            "reversibility_atol": REVERSIBILITY_ATOL,
+        },
+        "selected_targets": [
+            {
+                "target_id": target.target_id,
+                "family": target.family,
+                "edit_type": target.edit_type,
+                "prompt_sha256": hashlib.sha256(target.prompt.encode("utf-8")).hexdigest(),
+                "donor_prompt_sha256": hashlib.sha256(target.donor_prompt.encode("utf-8")).hexdigest(),
+                "target_before": target.target_before,
+                "target_after": target.target_after,
+                "n_retain_prompts": len(target.retain_prompts),
+                "n_paraphrase_prompts": len(target.paraphrase_prompts),
+                "n_neighbor_prompts": len(target.neighbor_prompts),
+                "final_pos": target.final_pos,
+                "donor_final_pos": target.donor_final_pos,
+                "selected_scale": scale_choice.get(target.target_id, {}).get("scale", ""),
+            }
+            for target in targets
+        ],
+        "verdicts": {str(row.get("target_id")): str(row.get("claim_posture")) for row in evidence},
+    }
+    path = ctx.path("diagnostics", "lab28_run_config_snapshot.json")
+    bench.write_json(path, snapshot)
+    ctx.register_artifact(path, "diagnostic", "Lab-specific config snapshot for data, targets, scales, methods, thresholds, and verdicts.")
+    return snapshot
+
+
 # ---------------------------------------------------------------------------
 # Cards and summaries
 # ---------------------------------------------------------------------------
@@ -1315,18 +2120,109 @@ def summarize_evidence(
 
 def write_plot_guide(ctx: bench.RunContext) -> None:
     rows = [
-        {"plot": "plots/editing_unlearning_dashboard.png", "read_for": "Target gain, control gap, paraphrase transfer, retain damage, and posture in one place.", "do_not_claim": "Dashboard positivity is not persistent unlearning."},
-        {"plot": "plots/localization_vs_editability.png", "read_for": "Whether replacement-patch localization predicts additive edit strength.", "do_not_claim": "A good patch site is automatically the best editing site."},
-        {"plot": "plots/edit_method_frontier.png", "read_for": "Target gain versus side-effect damage.", "do_not_claim": "High target movement is useful if retain damage is high or controls match it."},
-        {"plot": "plots/mechanistic_locality_ladder.png", "read_for": "Localized patch gain compared with wrong-position and random-direction patch controls.", "do_not_claim": "Locality passed if the control floor is high."},
-        {"plot": "plots/scale_selection_ladder.png", "read_for": "Why the chosen scale was selected before side-set audits.", "do_not_claim": "The largest scale is the best evidence."},
-        {"plot": "plots/paraphrase_robustness_matrix.png", "read_for": "Transfer beyond exact target strings.", "do_not_claim": "Exact-prompt movement is semantic transfer."},
-        {"plot": "plots/neighbor_preservation_atlas.png", "read_for": "Retain and neighbor damage hot spots.", "do_not_claim": "Side effects are irrelevant because the target moved."},
-        {"plot": "plots/unlearning_retain_forget_frontier.png", "read_for": "Target movement versus retain damage.", "do_not_claim": "The fact was erased from weights."},
+        {
+            "open_order": 1,
+            "plot": "plots/editing_unlearning_dashboard.png",
+            "source_table": "tables/figure_sources/dashboard_evidence.csv",
+            "question": "Does the chosen edit clear target, control, paraphrase, retain, and locality gates together?",
+            "read_for": "One-screen target gain, control gap, transfer, damage, and claim posture.",
+            "do_not_claim": "Dashboard positivity is not persistent unlearning or fact erasure.",
+        },
+        {
+            "open_order": 2,
+            "plot": "plots/target_vs_control.png",
+            "source_table": "tables/figure_sources/target_vs_control_source.csv",
+            "question": "Did the localized edit move the target more than wrong-position, random-direction, and opposite-sign controls at the selected dose?",
+            "read_for": "Direct target/control comparison at the predeclared selected scale, with raw per-target rows visible.",
+            "do_not_claim": "A target gain is specific when the strongest control is similar.",
+        },
+        {
+            "open_order": 3,
+            "plot": "plots/dose_response.png",
+            "source_table": "tables/figure_sources/dose_response_source.csv",
+            "question": "Was the selected dose the smallest credible dose rather than the biggest hammer?",
+            "read_for": "Dose-response curves for localized and control additions, with selected scales marked in the source table.",
+            "do_not_claim": "Large-scale success is clean evidence when low scales fail and controls rise too.",
+        },
+        {
+            "open_order": 4,
+            "plot": "plots/paired_examples.png",
+            "source_table": "tables/figure_sources/paired_examples_source.csv",
+            "question": "Which exact prompts moved before versus after editing, and which side-set examples moved the wrong way?",
+            "read_for": "Raw paired before/after margins for exact targets, paraphrases, retain prompts, and neighbor prompts.",
+            "do_not_claim": "An aggregate mean represents every specimen.",
+        },
+        {
+            "open_order": 5,
+            "plot": "plots/localization_vs_editability.png",
+            "source_table": "tables/figure_sources/localization_editability_source.csv",
+            "question": "Does donor-patch localization predict additive edit strength?",
+            "read_for": "Patch gain versus additive edit gain, target by target.",
+            "do_not_claim": "A good patch site is automatically a good linear edit direction.",
+        },
+        {
+            "open_order": 6,
+            "plot": "plots/mechanistic_locality_ladder.png",
+            "source_table": "tables/figure_sources/locality_ladder_source.csv",
+            "question": "Was localization site-specific before editing?",
+            "read_for": "Localized patch gain beside wrong-position and random-direction patch controls at the selected depth.",
+            "do_not_claim": "Locality passed if the control floor is high.",
+        },
+        {
+            "open_order": 7,
+            "plot": "plots/paraphrase_robustness_matrix.png",
+            "source_table": "tables/figure_sources/paraphrase_matrix_source.csv",
+            "question": "Does the chosen edit transfer beyond the exact prompt string?",
+            "read_for": "Per-target paraphrase transfer gains at the selected scale.",
+            "do_not_claim": "Exact-prompt movement is semantic transfer.",
+        },
+        {
+            "open_order": 8,
+            "plot": "plots/neighbor_preservation_atlas.png",
+            "source_table": "tables/figure_sources/retain_neighbor_atlas_source.csv",
+            "question": "What did the edit damage?",
+            "read_for": "Retain and neighbor prompt damage cells, not just target success.",
+            "do_not_claim": "Side effects are irrelevant because the target moved.",
+        },
+        {
+            "open_order": 9,
+            "plot": "plots/edit_method_frontier.png",
+            "source_table": "tables/figure_sources/frontier_source.csv",
+            "question": "How much target-control advantage was bought per unit of retain damage?",
+            "read_for": "Control gap versus retain damage frontier.",
+            "do_not_claim": "A point is good when it is high-damage or control-limited.",
+        },
+        {
+            "open_order": 10,
+            "plot": "plots/unlearning_retain_forget_frontier.png",
+            "source_table": "tables/figure_sources/frontier_source.csv",
+            "question": "How does target movement trade off against retain damage?",
+            "read_for": "Target gain versus retain damage, with negative and side-effect-limited results visible.",
+            "do_not_claim": "The fact was erased from weights.",
+        },
+        {
+            "open_order": 11,
+            "plot": "plots/scale_selection_ladder.png",
+            "source_table": "tables/figure_sources/dose_response_source.csv",
+            "question": "Why was the selected scale chosen?",
+            "read_for": "Localized gain minus strongest control across scale.",
+            "do_not_claim": "The largest scale is the best evidence.",
+        },
+        {
+            "open_order": 12,
+            "plot": "tables/failure_specimens.md",
+            "source_table": "tables/failure_specimens.jsonl",
+            "question": "Which specimens shrink or kill the claim?",
+            "read_for": "Control matches, paraphrase failures, and retain/neighbor damage examples.",
+            "do_not_claim": "Counterexamples can be hidden behind aggregate plots.",
+        },
     ]
-    path = ctx.path("tables", "plot_reading_guide.csv")
-    bench.write_csv_with_context(ctx, path, rows)
-    ctx.register_artifact(path, "table", "Reading guide for Lab 28 plot suite.")
+    table_path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, table_path, rows)
+    ctx.register_artifact(table_path, "table", "Reading guide for the Lab 28 plot suite.")
+    plot_path = ctx.path("plots", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, plot_path, rows)
+    ctx.register_artifact(plot_path, "table", "Plot-catalog copy stored beside the Lab 28 figures.")
 
 
 def write_method_card(ctx: bench.RunContext, bundle: bench.ModelBundle, evidence: Sequence[Mapping[str, Any]], data_info: Mapping[str, Any]) -> None:
@@ -1343,6 +2239,7 @@ def write_method_card(ctx: bench.RunContext, bundle: bench.ModelBundle, evidence
         "- method run: reversible inference-time residual activation addition",
         "- method not run: persistent weight edit, ROME/MEMIT, feature clamp, refusal ablation, private-data unlearning",
         "- metric: next-token `logit(target_after) - logit(target_before)` plus retain/paraphrase audits",
+        "- figure provenance: every major figure has a source CSV under `tables/figure_sources/` plus `plots/plot_manifest.json`",
         "- claimable depths: interior stream depths only for positive posture",
         "",
         "## Verdict table",
@@ -1361,6 +2258,10 @@ def write_method_card(ctx: bench.RunContext, bundle: bench.ModelBundle, evidence
         "## Method contract",
         "",
         "Positive language requires target movement, a control gap, paraphrase transfer, retain preservation, locality evidence, a clean no-op check, and a reversibility check. The result is a reversible activation-edit claim only.",
+        "",
+        "## Figure evidence contract",
+        "",
+        "Open `plots/plot_manifest.json` before exporting figures. It names each figure, source table, row count, metric, control, supported claim, and caveat. Open `diagnostics/warning_summary.csv` before trusting smooth-looking plots.",
         "",
     ]
     path = ctx.path("method_card.md")
@@ -1397,6 +2298,8 @@ def write_spec_card(ctx: bench.RunContext, data_info: Mapping[str, Any]) -> None
         "```",
         "",
         "The selected depth is chosen from the localization screen using claimable interior depths when available. The selected scale is chosen from target prompt data only before reading paraphrase or retain rows.",
+        "",
+        "Every plot is built from saved source tables under `tables/figure_sources/`, not from hidden transient state. If a source table has only a warning row, the corresponding figure should be read as a missing-data diagnostic rather than a result.",
         "",
         "## Controls",
         "",
@@ -1517,7 +2420,8 @@ def write_run_summary(
         "2. `editing_unlearning_spec.md` for data and intervention details.",
         "3. `diagnostics/safety_status.json` and `diagnostics/self_check_status.json` before plots.",
         "4. `tables/scale_selection.csv`, `tables/editing_results.csv`, and `tables/edit_evidence_matrix.csv` for claim readiness.",
-        "5. `tables/edit_counterexamples.csv` before writing positive language.",
+        "5. `plots/plot_manifest.json` and `diagnostics/warning_summary.csv` for figure provenance and caveats.",
+        "6. `tables/failure_specimens.md` and `tables/edit_counterexamples.csv` before writing positive language.",
         "",
         "## Main counterexample",
         "",
@@ -1580,6 +2484,382 @@ def write_claims(ctx: bench.RunContext, evidence: Sequence[Mapping[str, Any]]) -
 # ---------------------------------------------------------------------------
 
 
+def _plot_empty(ctx: bench.RunContext, name: str, title: str, message: str) -> None:
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(8, 3.2))
+    ax.text(0.5, 0.5, message, ha="center", va="center", wrap=True)
+    ax.axis("off")
+    fig.suptitle(title, fontsize=13, fontweight="bold")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, name, f"{title}: empty or insufficient data warning.")
+
+
+def _annotate_indices(ax: Any, xs: Sequence[Any], ys: Sequence[Any]) -> None:
+    for i, (x, y) in enumerate(zip(xs, ys), start=1):
+        xf, yf = as_float(x), as_float(y)
+        if math.isfinite(xf) and math.isfinite(yf):
+            ax.annotate(str(i), (xf, yf), fontsize=8, xytext=(3, 3), textcoords="offset points")
+
+
+def plot_dashboard(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not rows:
+        _plot_empty(ctx, "editing_unlearning_dashboard.png", "Lab 28 editing/unlearning dashboard", "No evidence rows. Inspect tokenization and safety diagnostics.")
+        return
+    labels = [short_target_label(row.get("target_id"), 20) for row in rows]
+    x = np.arange(len(labels))
+    width = 0.22
+    fig, axes = plt.subplots(2, 2, figsize=(14, 8.5))
+    fig.suptitle("Lab 28 editing/unlearning dashboard", fontsize=14, fontweight="bold")
+
+    axes[0, 0].bar(x - width, [as_float(r.get("localized_target_gain"), 0.0) for r in rows], width, label="localized gain")
+    axes[0, 0].bar(x, [as_float(r.get("target_control_floor"), 0.0) for r in rows], width, label="strongest control")
+    axes[0, 0].bar(x + width, [as_float(r.get("target_control_gap"), 0.0) for r in rows], width, label="localized-control gap")
+    axes[0, 0].axhline(0.0, linewidth=0.8)
+    axes[0, 0].axhline(TARGET_CONTROL_GAP_MIN, linestyle="--", linewidth=0.9)
+    axes[0, 0].set_xticks(x, labels, rotation=35, ha="right", fontsize=7)
+    axes[0, 0].set_ylabel("after-minus-before margin movement")
+    axes[0, 0].set_title("Target effect must beat controls")
+    axes[0, 0].legend(fontsize=8)
+
+    axes[0, 1].bar(x - width, [as_float(r.get("mean_paraphrase_gain"), 0.0) for r in rows], width, label="paraphrase gain")
+    axes[0, 1].bar(x, [as_float(r.get("mean_retain_damage"), 0.0) for r in rows], width, label="retain damage")
+    axes[0, 1].bar(x + width, [as_float(r.get("mean_neighbor_damage"), 0.0) for r in rows], width, label="neighbor damage")
+    axes[0, 1].axhline(0.0, linewidth=0.8)
+    axes[0, 1].axhline(RETAIN_DAMAGE_SOFT_LIMIT, linestyle="--", linewidth=0.9)
+    axes[0, 1].set_xticks(x, labels, rotation=35, ha="right", fontsize=7)
+    axes[0, 1].set_title("Transfer and side-effect bill")
+    axes[0, 1].legend(fontsize=8)
+
+    xs = [as_float(r.get("localization_gap"), 0.0) for r in rows]
+    ys = [as_float(r.get("target_control_gap"), 0.0) for r in rows]
+    axes[1, 0].scatter(xs, ys)
+    _annotate_indices(axes[1, 0], xs, ys)
+    axes[1, 0].axhline(TARGET_CONTROL_GAP_MIN, linestyle="--", linewidth=0.9)
+    axes[1, 0].axvline(LOCALITY_GAP_MIN, linestyle="--", linewidth=0.9)
+    axes[1, 0].set_xlabel("localization gap")
+    axes[1, 0].set_ylabel("target control gap")
+    axes[1, 0].set_title("Locality and edit specificity must both pass")
+
+    posture_score = [1 if row.get("claim_posture") == "localized_edit_supported" else 0 for row in rows]
+    axes[1, 1].bar(x, posture_score)
+    axes[1, 1].set_xticks(x, labels, rotation=35, ha="right", fontsize=7)
+    axes[1, 1].set_yticks([0, 1], ["needs caveat", "supported"])
+    axes[1, 1].set_title("Claim posture")
+    axes[1, 1].text(
+        0.02,
+        0.95,
+        "A supported row still means reversible activation editing only.",
+        transform=axes[1, 1].transAxes,
+        va="top",
+        fontsize=8,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    bench.save_figure(ctx, fig, "editing_unlearning_dashboard.png", "Lab 28 dashboard: target gain, controls, transfer, side effects, locality, and posture.")
+
+
+def plot_target_vs_control(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not rows:
+        _plot_empty(ctx, "target_vs_control.png", "Target vs controls", "No selected-scale target/control rows were available.")
+        return
+    targets = sorted({str(row.get("target_id")) for row in rows})
+    methods = ["localized_addition", "wrong_position_addition", "random_direction_addition", "opposite_direction_addition"]
+    labels = [short_target_label(t, 18) for t in targets]
+    x = np.arange(len(targets))
+    width = 0.18
+    fig, ax = plt.subplots(figsize=(max(9.5, len(targets) * 1.2), 5.5))
+    for m_i, method in enumerate(methods):
+        vals = []
+        for tid in targets:
+            candidates = [as_float(row.get("target_gain")) for row in rows if row.get("target_id") == tid and row.get("method") == method]
+            vals.append(safe_mean(candidates, 0.0))
+        ax.bar(x + (m_i - 1.5) * width, vals, width, label=method_label(method))
+    ax.axhline(0.0, linewidth=0.8)
+    ax.axhline(TARGET_GAIN_MIN, linestyle="--", linewidth=0.9, label="target gain gate")
+    ax.set_xticks(x, labels, rotation=35, ha="right", fontsize=8)
+    ax.set_ylabel("target_gain at selected scale")
+    ax.set_title("Target movement beside same-scale controls")
+    ax.legend(fontsize=8, ncol=2)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "target_vs_control.png", "Selected-scale localized target movement versus edit controls.")
+
+
+def plot_dose_response(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    if not rows:
+        _plot_empty(ctx, "dose_response.png", "Dose response", "No dose-response rows were available.")
+        return
+    targets = sorted({str(row.get("target_id")) for row in rows if row.get("method") == "localized_addition"})
+    if not targets:
+        _plot_empty(ctx, "dose_response.png", "Dose response", "No localized-addition rows were available.")
+        return
+    fig, ax = plt.subplots(figsize=(10.5, 5.8))
+    for tid in targets:
+        loc = sorted(
+            [row for row in rows if row.get("target_id") == tid and row.get("method") == "localized_addition" and as_float(row.get("scale")) > 0.0],
+            key=lambda row: as_float(row.get("scale")),
+        )
+        if not loc:
+            continue
+        ax.plot(
+            [as_float(row.get("scale")) for row in loc],
+            [as_float(row.get("target_gain")) for row in loc],
+            marker="o",
+            label=f"{short_target_label(tid, 18)} localized",
+        )
+        selected = [row for row in loc if boolish(row.get("is_selected_scale"))]
+        for row in selected:
+            ax.scatter([as_float(row.get("scale"))], [as_float(row.get("target_gain"))], marker="s", s=60)
+    ax.axhline(0.0, linewidth=0.8)
+    ax.axhline(TARGET_GAIN_MIN, linestyle="--", linewidth=0.9, label="target gain gate")
+    ax.set_xlabel("scale × donor-minus-target residual direction")
+    ax.set_ylabel("target_gain")
+    ax.set_title("Dose-response for localized residual addition")
+    ax.legend(fontsize=7, ncol=2)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "dose_response.png", "Dose-response curves for localized residual addition.")
+
+
+def plot_layer_sweep_heatmap(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not rows:
+        _plot_empty(ctx, "layer_sweep_heatmap.png", "Layer/depth localization heatmap", "No localization sweep rows were available.")
+        return
+    targets = sorted({str(row.get("target_id")) for row in rows})
+    depths = sorted({int(as_float(row.get("depth"), 0.0)) for row in rows})
+    mat = np.full((len(targets), len(depths)), np.nan)
+    claimable = np.zeros((len(targets), len(depths)), dtype=bool)
+    for i, tid in enumerate(targets):
+        for j, depth in enumerate(depths):
+            vals = [
+                as_float(row.get("localization_gap"))
+                for row in rows
+                if str(row.get("target_id")) == tid and int(as_float(row.get("depth"), -1)) == depth
+            ]
+            vals = finite_values(vals)
+            if vals:
+                mat[i, j] = safe_mean(vals)
+            claimable[i, j] = any(
+                boolish(row.get("claimable_depth"))
+                for row in rows
+                if str(row.get("target_id")) == tid and int(as_float(row.get("depth"), -1)) == depth
+            )
+    fig, ax = plt.subplots(figsize=(max(8.0, len(depths) * 0.55), max(3.8, len(targets) * 0.5)))
+    im = ax.imshow(np.nan_to_num(mat, nan=0.0), aspect="auto")
+    ax.set_xticks(range(len(depths)), [str(d) for d in depths], fontsize=7)
+    ax.set_yticks(range(len(targets)), [short_target_label(t, 24) for t in targets], fontsize=7)
+    ax.set_xlabel("stream depth")
+    ax.set_title("Localization gap by target and depth")
+    for i in range(len(targets)):
+        for j in range(len(depths)):
+            if math.isfinite(float(mat[i, j])):
+                mark = "" if claimable[i, j] else "*"
+                ax.text(j, i, f"{mat[i, j]:.2f}{mark}", ha="center", va="center", fontsize=6)
+    fig.colorbar(im, ax=ax, shrink=0.82, label="localized patch gain - strongest control")
+    ax.text(0.0, -0.20, "* = non-claimable boundary depth; inspect source table before citing.", transform=ax.transAxes, fontsize=7)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "layer_sweep_heatmap.png", "Localization gap heatmap across stream depths and targets.")
+
+
+def plot_paired_examples(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not rows:
+        _plot_empty(ctx, "paired_examples.png", "Paired before/after specimens", "No paired specimen rows were available.")
+        return
+    # Sort so exact targets are first, then the largest damage or negative movement specimens.
+    priority = {"target_exact": 0, "paraphrase": 1, "neighbor": 2, "retain": 3}
+    sorted_rows = sorted(
+        rows,
+        key=lambda row: (
+            priority.get(str(row.get("specimen_family")), 9),
+            -abs(as_float(row.get("damage"), 0.0)),
+            as_float(row.get("margin_delta"), 0.0),
+        ),
+    )[:36]
+    fig, ax = plt.subplots(figsize=(9.5, max(5, len(sorted_rows) * 0.24)))
+    y = np.arange(len(sorted_rows))
+    for i, row in enumerate(sorted_rows):
+        base = as_float(row.get("base_margin"))
+        edited = as_float(row.get("edited_margin"))
+        if not (math.isfinite(base) and math.isfinite(edited)):
+            continue
+        ax.plot([base, edited], [i, i], marker="o", linewidth=1.2, alpha=0.8)
+    labels = [f"{short_target_label(r.get('target_id'), 14)} · {r.get('specimen_family')}:{r.get('eval_role')}"[:52] for r in sorted_rows]
+    ax.set_yticks(y, labels, fontsize=7)
+    ax.axvline(0.0, linewidth=0.8)
+    ax.set_xlabel("margin before and after localized edit")
+    ax.set_title("Paired before/after specimens, including side sets")
+    ax.invert_yaxis()
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "paired_examples.png", "Raw paired before/after margins for target, paraphrase, retain, and neighbor specimens.")
+
+
+def plot_localization_vs_editability(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    if not rows:
+        _plot_empty(ctx, "localization_vs_editability.png", "Localization vs editability", "No localization/editability rows were available.")
+        return
+    xs = [as_float(row.get("localization_patch_gain"), 0.0) for row in rows]
+    ys = [as_float(row.get("localized_target_gain"), 0.0) for row in rows]
+    fig, ax = plt.subplots(figsize=(7.8, 5.2))
+    ax.scatter(xs, ys)
+    _annotate_indices(ax, xs, ys)
+    ax.axhline(0.0, linestyle=":", linewidth=0.8)
+    ax.axvline(0.0, linestyle=":", linewidth=0.8)
+    ax.set_xlabel("localized donor-patch gain")
+    ax.set_ylabel("additive edit target_gain")
+    ax.set_title("Localization strength is not automatically editability")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "localization_vs_editability.png", "Localization patch gain versus additive edit gain.")
+
+
+def plot_frontiers(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    if not rows:
+        _plot_empty(ctx, "edit_method_frontier.png", "Edit method frontier", "No frontier rows were available.")
+        _plot_empty(ctx, "unlearning_retain_forget_frontier.png", "Retain-forget frontier", "No frontier rows were available.")
+        return
+    specs = [
+        ("edit_method_frontier.png", "Edit method frontier", "target_control_gap", "mean_retain_damage", "localized-control target gap", "mean retain damage"),
+        ("unlearning_retain_forget_frontier.png", "Retain-forget frontier", "localized_target_gain", "mean_retain_damage", "localized target gain", "mean retain damage"),
+    ]
+    for name, title, xkey, ykey, xlabel, ylabel in specs:
+        xs = [as_float(row.get(xkey), 0.0) for row in rows]
+        ys = [as_float(row.get(ykey), 0.0) for row in rows]
+        fig, ax = plt.subplots(figsize=(7.8, 5.2))
+        ax.scatter(xs, ys)
+        _annotate_indices(ax, xs, ys)
+        ax.axhline(RETAIN_DAMAGE_SOFT_LIMIT, linestyle="--", linewidth=0.9)
+        ax.axvline(0.0, linestyle=":", linewidth=0.8)
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        fig.tight_layout()
+        bench.save_figure(ctx, fig, name, f"{title}: target movement versus retain damage.")
+
+
+def plot_locality_ladder(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not rows:
+        _plot_empty(ctx, "mechanistic_locality_ladder.png", "Mechanistic locality ladder", "No selected-depth localization rows were available.")
+        return
+    targets = sorted({str(row.get("target_id")) for row in rows})
+    methods = ["localized_patch", "wrong_position_patch", "random_direction_patch"]
+    x = np.arange(len(targets))
+    width = 0.24
+    fig, ax = plt.subplots(figsize=(max(9, len(targets) * 1.1), 5.0))
+    for m_i, method in enumerate(methods):
+        vals = []
+        for tid in targets:
+            vals.append(safe_mean([row.get("patch_gain") for row in rows if row.get("target_id") == tid and row.get("method") == method], 0.0))
+        ax.bar(x + (m_i - 1) * width, vals, width, label=localization_method_label(method))
+    ax.axhline(0.0, linewidth=0.8)
+    ax.axhline(LOCALITY_GAP_MIN, linestyle="--", linewidth=0.9, label="locality gap gate")
+    ax.set_xticks(x, [short_target_label(t, 18) for t in targets], rotation=35, ha="right", fontsize=8)
+    ax.set_ylabel("patch_gain at selected depth")
+    ax.set_title("Localized donor patch beside localization controls")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "mechanistic_locality_ladder.png", "Localized patch gain versus wrong-position and random-direction localization controls.")
+
+
+def plot_scale_selection_ladder(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    loc = [row for row in rows if row.get("method") == "localized_addition" and as_float(row.get("scale")) > 0.0]
+    if not loc:
+        _plot_empty(ctx, "scale_selection_ladder.png", "Scale selection ladder", "No localized dose-response rows were available.")
+        return
+    fig, ax = plt.subplots(figsize=(9.5, 5.4))
+    for tid in sorted({str(row.get("target_id")) for row in loc}):
+        rs = sorted([row for row in loc if row.get("target_id") == tid], key=lambda row: as_float(row.get("scale")))
+        ax.plot(
+            [as_float(row.get("scale")) for row in rs],
+            [as_float(row.get("target_control_gap_at_scale"), 0.0) for row in rs],
+            marker="o",
+            label=short_target_label(tid, 16),
+        )
+        for row in rs:
+            if boolish(row.get("is_selected_scale")):
+                ax.scatter([as_float(row.get("scale"))], [as_float(row.get("target_control_gap_at_scale"), 0.0)], marker="s", s=60)
+    ax.axhline(0.0, linewidth=0.8)
+    ax.axhline(TARGET_CONTROL_GAP_MIN, linestyle="--", linewidth=0.9, label="control-gap gate")
+    ax.set_xlabel("scale")
+    ax.set_ylabel("localized gain minus strongest control")
+    ax.set_title("Scale selection ladder")
+    ax.legend(fontsize=7, ncol=2)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "scale_selection_ladder.png", "Target-control gap by scale, with selected scales marked.")
+
+
+def plot_paraphrase_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not rows:
+        _plot_empty(ctx, "paraphrase_robustness_matrix.png", "Paraphrase robustness matrix", "No localized paraphrase rows were available.")
+        return
+    targets = sorted({str(row.get("target_id")) for row in rows})
+    roles = sorted({str(row.get("eval_role") or "paraphrase") for row in rows})
+    mat = np.full((len(targets), len(roles)), np.nan)
+    for i, tid in enumerate(targets):
+        for j, role in enumerate(roles):
+            vals = [as_float(row.get("transfer_gain")) for row in rows if row.get("target_id") == tid and str(row.get("eval_role") or "paraphrase") == role]
+            vals = finite_values(vals)
+            if vals:
+                mat[i, j] = safe_mean(vals)
+    fig, ax = plt.subplots(figsize=(max(7.5, len(roles) * 0.8), max(3.8, len(targets) * 0.5)))
+    im = ax.imshow(np.nan_to_num(mat, nan=0.0), aspect="auto")
+    ax.set_yticks(range(len(targets)), [short_target_label(t, 24) for t in targets], fontsize=7)
+    ax.set_xticks(range(len(roles)), roles, rotation=35, ha="right", fontsize=7)
+    ax.set_title("Paraphrase transfer at chosen scale")
+    fig.colorbar(im, ax=ax, shrink=0.82, label="transfer_gain")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "paraphrase_robustness_matrix.png", "Paraphrase transfer heatmap for localized additions.")
+
+
+def plot_retain_neighbor_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not rows:
+        _plot_empty(ctx, "neighbor_preservation_atlas.png", "Neighbor and retain preservation atlas", "No localized retain/neighbor rows were available.")
+        return
+    targets = sorted({str(row.get("target_id")) for row in rows})
+    roles = sorted({str(row.get("display_role")) for row in rows})
+    mat = np.full((len(targets), len(roles)), np.nan)
+    for i, tid in enumerate(targets):
+        for j, role in enumerate(roles):
+            vals = [as_float(row.get("damage")) for row in rows if row.get("target_id") == tid and str(row.get("display_role")) == role]
+            vals = finite_values(vals)
+            if vals:
+                mat[i, j] = safe_mean(vals)
+    fig, ax = plt.subplots(figsize=(max(8.5, len(roles) * 0.62), max(3.8, len(targets) * 0.5)))
+    im = ax.imshow(np.nan_to_num(mat, nan=0.0), aspect="auto")
+    ax.set_yticks(range(len(targets)), [short_target_label(t, 24) for t in targets], fontsize=7)
+    ax.set_xticks(range(len(roles)), [str(i + 1) for i in range(len(roles))], fontsize=7)
+    ax.set_xlabel("retain/neighbor prompt index; inspect source table for text")
+    ax.set_title("Retain and neighbor damage atlas")
+    fig.colorbar(im, ax=ax, shrink=0.82, label="damage")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "neighbor_preservation_atlas.png", "Retain and neighbor damage heatmap for localized additions.")
+
+
 def write_plots(
     ctx: bench.RunContext,
     evidence: Sequence[Mapping[str, Any]],
@@ -1588,158 +2868,45 @@ def write_plots(
     retain_rows: Sequence[Mapping[str, Any]],
     paraphrase_rows: Sequence[Mapping[str, Any]],
     scale_choice: Mapping[str, Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]] = (),
 ) -> None:
     write_plot_guide(ctx)
+    sources = write_plot_source_tables(
+        ctx,
+        evidence,
+        localization_rows,
+        edit_rows,
+        retain_rows,
+        paraphrase_rows,
+        scale_choice,
+        counterexamples,
+    )
+    write_plot_manifest(ctx, sources, ctx.args.no_plots)
     if ctx.args.no_plots:
         return
-    import matplotlib.pyplot as plt
-    import numpy as np
 
-    labels = [str(row["target_id"]).replace("edit_", "")[:20] for row in evidence]
-    x = np.arange(len(labels))
-    if not evidence:
-        fig, ax = plt.subplots(figsize=(8, 3))
-        ax.text(0.5, 0.5, "No evidence rows", ha="center", va="center")
-        ax.axis("off")
-        bench.save_figure(ctx, fig, "editing_unlearning_dashboard.png", "Empty Lab 28 dashboard.")
-        return
+    dashboard_rows = dashboard_source_rows(evidence)
+    target_control_rows = target_vs_control_source_rows(evidence, edit_rows, scale_choice)
+    dose_rows = dose_response_source_rows(edit_rows, scale_choice)
+    paired_rows = paired_examples_source_rows(evidence, edit_rows, retain_rows, paraphrase_rows, scale_choice)
+    loc_edit_rows = localization_editability_source_rows(evidence)
+    locality_rows = locality_ladder_source_rows(evidence, localization_rows)
+    layer_sweep_rows = layer_sweep_heatmap_source_rows(localization_rows)
+    para_rows = paraphrase_matrix_source_rows(paraphrase_rows)
+    atlas_rows = retain_neighbor_atlas_source_rows(retain_rows)
+    frontier_rows = frontier_source_rows(evidence)
 
-    fig, axes = plt.subplots(2, 2, figsize=(13, 8))
-    fig.suptitle("Lab 28 editing/unlearning dashboard", fontsize=14, fontweight="bold")
-    width = 0.22
-    axes[0, 0].bar(x - width, [as_float(r.get("localized_target_gain"), 0.0) for r in evidence], width, label="target gain")
-    axes[0, 0].bar(x, [as_float(r.get("target_control_floor"), 0.0) for r in evidence], width, label="control floor")
-    axes[0, 0].bar(x + width, [as_float(r.get("target_control_gap"), 0.0) for r in evidence], width, label="control gap")
-    axes[0, 0].axhline(0.0, linewidth=0.8)
-    axes[0, 0].set_xticks(x, labels, rotation=35, ha="right", fontsize=7)
-    axes[0, 0].set_title("Target dose-response at selected scale")
-    axes[0, 0].set_ylabel("margin movement")
-    axes[0, 0].legend(fontsize=8)
-
-    axes[0, 1].bar(x - width / 2, [as_float(r.get("mean_paraphrase_gain"), 0.0) for r in evidence], width, label="paraphrase gain")
-    axes[0, 1].bar(x + width / 2, [as_float(r.get("mean_retain_damage"), 0.0) for r in evidence], width, label="retain damage")
-    axes[0, 1].axhline(0.0, linewidth=0.8)
-    axes[0, 1].set_xticks(x, labels, rotation=35, ha="right", fontsize=7)
-    axes[0, 1].set_title("Transfer and side effects")
-    axes[0, 1].legend(fontsize=8)
-
-    axes[1, 0].scatter(
-        [as_float(r.get("localization_patch_gain"), 0.0) for r in evidence],
-        [as_float(r.get("localized_target_gain"), 0.0) for r in evidence],
-    )
-    for i, row in enumerate(evidence):
-        axes[1, 0].annotate(str(i + 1), (as_float(row.get("localization_patch_gain"), 0.0), as_float(row.get("localized_target_gain"), 0.0)), fontsize=8)
-    axes[1, 0].axhline(0.0, linewidth=0.8)
-    axes[1, 0].axvline(0.0, linewidth=0.8)
-    axes[1, 0].set_xlabel("localization patch gain")
-    axes[1, 0].set_ylabel("additive edit gain")
-    axes[1, 0].set_title("Localization vs editability")
-
-    posture = [1 if row.get("claim_posture") == "localized_edit_supported" else 0 for row in evidence]
-    axes[1, 1].bar(x, posture)
-    axes[1, 1].set_xticks(x, labels, rotation=35, ha="right", fontsize=7)
-    axes[1, 1].set_yticks([0, 1], ["needs review", "supported"])
-    axes[1, 1].set_title("Claim posture")
-    fig.tight_layout(rect=(0, 0, 1, 0.95))
-    bench.save_figure(ctx, fig, "editing_unlearning_dashboard.png", "Lab 28 dashboard: target gain, controls, transfer, side effects, posture.")
-
-    plot_specs = [
-        ("localization_vs_editability.png", "Localization vs editability", [as_float(r.get("localization_patch_gain"), 0.0) for r in evidence], [as_float(r.get("localized_target_gain"), 0.0) for r in evidence], "localization patch gain", "edit gain"),
-        ("edit_method_frontier.png", "Edit method frontier", [as_float(r.get("target_control_gap"), 0.0) for r in evidence], [as_float(r.get("mean_retain_damage"), 0.0) for r in evidence], "target control gap", "retain damage"),
-        ("unlearning_retain_forget_frontier.png", "Retain-forget frontier", [as_float(r.get("localized_target_gain"), 0.0) for r in evidence], [as_float(r.get("mean_retain_damage"), 0.0) for r in evidence], "target gain", "retain damage"),
-    ]
-    for name, title, xs, ys, xlabel, ylabel in plot_specs:
-        fig, ax = plt.subplots(figsize=(7.5, 4.5))
-        ax.scatter(xs, ys)
-        for i, lab in enumerate(labels):
-            ax.annotate(str(i + 1), (xs[i], ys[i]), fontsize=8)
-        ax.axhline(0.0, linestyle=":", linewidth=0.8)
-        ax.axvline(0.0, linestyle=":", linewidth=0.8)
-        ax.set_title(title)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        fig.tight_layout()
-        bench.save_figure(ctx, fig, name, title + ".")
-
-    # Locality ladder at selected depth.
-    loc_vals = []
-    wrong_vals = []
-    rand_vals = []
-    for row in evidence:
-        tid = row["target_id"]
-        depth = row["best_depth"]
-        loc_vals.append(safe_mean([r.get("patch_gain") for r in localization_rows if r.get("target_id") == tid and r.get("method") == "localized_patch" and str(r.get("depth")) == str(depth)], 0.0))
-        wrong_vals.append(safe_mean([r.get("patch_gain") for r in localization_rows if r.get("target_id") == tid and r.get("method") == "wrong_position_patch" and str(r.get("depth")) == str(depth)], 0.0))
-        rand_vals.append(safe_mean([r.get("patch_gain") for r in localization_rows if r.get("target_id") == tid and r.get("method") == "random_direction_patch" and str(r.get("depth")) == str(depth)], 0.0))
-    fig, ax = plt.subplots(figsize=(10, 4.8))
-    ax.bar(x - width, loc_vals, width, label="localized patch")
-    ax.bar(x, wrong_vals, width, label="wrong position")
-    ax.bar(x + width, rand_vals, width, label="random direction")
-    ax.axhline(0.0, linewidth=0.8)
-    ax.set_xticks(x, labels, rotation=35, ha="right", fontsize=7)
-    ax.set_title("Mechanistic locality ladder")
-    ax.set_ylabel("patch gain")
-    ax.legend(fontsize=8)
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "mechanistic_locality_ladder.png", "Localized patch gain versus localization controls.")
-
-    # Scale selection ladder.
-    scale_rows = []
-    for row in edit_rows:
-        if row.get("method") == "localized_addition":
-            tid = str(row["target_id"])
-            scale = as_float(row.get("scale"))
-            scale_rows.append((tid, scale, as_float(row.get("target_gain")), control_floor_for_scale(edit_rows, tid, scale)))
-    fig, ax = plt.subplots(figsize=(9, 5))
-    for tid in sorted({r[0] for r in scale_rows}):
-        rs = sorted([r for r in scale_rows if r[0] == tid], key=lambda r: r[1])
-        ax.plot([r[1] for r in rs], [r[2] - r[3] for r in rs], marker="o", label=tid.replace("edit_", "")[:16])
-        chosen = as_float(scale_choice[tid]["scale"], 0.0)
-        ax.axvline(chosen, linestyle=":", linewidth=0.7)
-    ax.axhline(TARGET_CONTROL_GAP_MIN, linestyle="--", linewidth=1, label="target gate")
-    ax.set_xlabel("scale")
-    ax.set_ylabel("localized gain minus control floor")
-    ax.set_title("Scale selection ladder")
-    ax.legend(fontsize=7, ncol=2)
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "scale_selection_ladder.png", "Scale selection control-gap ladder.")
-
-    # Paraphrase matrix.
-    para_targets = sorted({str(r["target_id"]) for r in paraphrase_rows if r.get("method") == "localized_addition"})
-    para_roles = sorted({str(r.get("eval_role") or i) for i, r in enumerate(paraphrase_rows) if r.get("method") == "localized_addition"})
-    if para_targets and para_roles:
-        mat = np.zeros((len(para_targets), len(para_roles)))
-        for i, tid in enumerate(para_targets):
-            for j, role in enumerate(para_roles):
-                vals = [as_float(r.get("transfer_gain")) for r in paraphrase_rows if r.get("target_id") == tid and r.get("method") == "localized_addition" and str(r.get("eval_role")) == role]
-                mat[i, j] = safe_mean(vals, 0.0)
-        fig, ax = plt.subplots(figsize=(max(7, len(para_roles) * 0.75), max(3.5, len(para_targets) * 0.45)))
-        im = ax.imshow(mat, aspect="auto")
-        ax.set_yticks(range(len(para_targets)), [t.replace("edit_", "")[:24] for t in para_targets], fontsize=7)
-        ax.set_xticks(range(len(para_roles)), para_roles, rotation=35, ha="right", fontsize=7)
-        ax.set_title("Paraphrase robustness matrix")
-        fig.colorbar(im, ax=ax, shrink=0.8, label="transfer gain")
-        fig.tight_layout()
-        bench.save_figure(ctx, fig, "paraphrase_robustness_matrix.png", "Paraphrase transfer heatmap.")
-
-    # Retain/neighbor atlas.
-    atlas_targets = sorted({str(r["target_id"]) for r in retain_rows if r.get("method") == "localized_addition"})
-    atlas_roles = sorted({f"{r['eval_family']}:{r['eval_role']}" for r in retain_rows if r.get("method") == "localized_addition"})
-    if atlas_targets and atlas_roles:
-        atlas = np.zeros((len(atlas_targets), len(atlas_roles)))
-        for i, tid in enumerate(atlas_targets):
-            for j, role in enumerate(atlas_roles):
-                vals = [as_float(r.get("damage")) for r in retain_rows if r.get("target_id") == tid and r.get("method") == "localized_addition" and f"{r['eval_family']}:{r['eval_role']}" == role]
-                atlas[i, j] = safe_mean(vals, 0.0)
-        fig, ax = plt.subplots(figsize=(max(8, len(atlas_roles) * 0.65), max(3.5, len(atlas_targets) * 0.45)))
-        im = ax.imshow(atlas, aspect="auto")
-        ax.set_yticks(range(len(atlas_targets)), [t.replace("edit_", "")[:24] for t in atlas_targets], fontsize=7)
-        ax.set_xticks(range(len(atlas_roles)), [str(i + 1) for i in range(len(atlas_roles))], fontsize=7)
-        ax.set_title("Neighbor and retain preservation atlas")
-        ax.set_xlabel("retain/neighbor prompt index")
-        fig.colorbar(im, ax=ax, shrink=0.8, label="damage")
-        fig.tight_layout()
-        bench.save_figure(ctx, fig, "neighbor_preservation_atlas.png", "Retain and neighbor damage heatmap.")
+    plot_dashboard(ctx, dashboard_rows)
+    plot_target_vs_control(ctx, target_control_rows)
+    plot_dose_response(ctx, dose_rows)
+    plot_layer_sweep_heatmap(ctx, layer_sweep_rows)
+    plot_paired_examples(ctx, paired_rows)
+    plot_localization_vs_editability(ctx, loc_edit_rows)
+    plot_frontiers(ctx, frontier_rows)
+    plot_locality_ladder(ctx, locality_rows)
+    plot_scale_selection_ladder(ctx, dose_rows)
+    plot_paraphrase_matrix(ctx, para_rows)
+    plot_retain_neighbor_atlas(ctx, atlas_rows)
 
 
 # ---------------------------------------------------------------------------
@@ -1826,6 +2993,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     counter_path = ctx.path("tables", "edit_counterexamples.csv")
     bench.write_csv_with_context(ctx, counter_path, counterexamples)
     ctx.register_artifact(counter_path, "table", "Counterexamples where controls, retain damage, or paraphrase failures limit the edit claim.")
+    failure_jsonl, failure_md = write_failure_specimens(ctx, counterexamples)
     refinement_path = ctx.path("tables", "edit_refinement_log.csv")
     bench.write_csv_with_context(ctx, refinement_path, refinement_rows)
     ctx.register_artifact(refinement_path, "table", "Suggested v2 target/donor/edit refinements driven by failed gates.")
@@ -1838,12 +3006,28 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     ctx.register_artifact(jsonl_path, "table", "JSONL copy of Lab 28 target edit dose-response rows.")
 
     write_method_capability_audit(ctx)
+    warning_rows = write_warning_summary(
+        ctx,
+        data_info,
+        token_rows,
+        baseline_rows,
+        localization_rows,
+        edit_rows,
+        retain_rows,
+        paraphrase_rows,
+        evidence,
+        scale_choice,
+        self_check_status,
+    )
+    run_config_snapshot = write_lab28_run_config_snapshot(ctx, bundle, data_info, targets, scale_choice, evidence)
     metrics_full = {
         "lab_id": LAB_ID,
         "lab_name": LAB_NAME,
         "data": data_info,
         "safety_status": safety_status,
         "self_check_status": self_check_status,
+        "warning_summary": warning_rows,
+        "run_config_snapshot_path": "diagnostics/lab28_run_config_snapshot.json",
         "n_localization_rows": len(localization_rows),
         "n_edit_rows": len(edit_rows),
         "n_retain_rows": len(retain_rows),
@@ -1859,5 +3043,5 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     write_operationalization_audit(ctx, evidence, counterexamples)
     write_run_summary(ctx, bundle, data_info, metrics_full, evidence, counterexamples)
     write_claims(ctx, evidence)
-    write_plots(ctx, evidence, localization_rows, edit_rows, retain_rows, paraphrase_rows, scale_choice)
+    write_plots(ctx, evidence, localization_rows, edit_rows, retain_rows, paraphrase_rows, scale_choice, counterexamples)
     print(f"[lab28] wrote {len(evidence)} evidence rows and {len(counterexamples)} counterexamples")

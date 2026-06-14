@@ -33,17 +33,19 @@
   "editing_unlearning_targets.csv": {
     "edit_types": {
       "counterfactual_activation_edit": 3,
-      "counterfactual_relation_edit": 2
+      "counterfactual_relation_edit": 3,
+      "synthetic_counterfactual_activation_edit": 2
     },
     "families": {
       "capital_counterfactual": 3,
-      "language_counterfactual": 1,
-      "sequence_counterfactual": 1
+      "language_counterfactual": 2,
+      "sequence_counterfactual": 1,
+      "synthetic_codeword": 2
     },
     "generator": "hand-authored deterministic course rows",
-    "rows": 5,
-    "safety_scope": "benign public associations and harmless sequence facts; inference-time edits only",
-    "sha256": "15f139f3161e3cad75d7e8ead08d890bbc5df7806b1343a106acebb0c983129d",
+    "rows": 8,
+    "safety_scope": "benign public associations, harmless sequence facts, and synthetic codeword rows; inference-time edits only",
+    "sha256": "1c1d995d1d4b5dbe19a69a8a57080c9f51ec9f893140b370d94c1b921f0f2707",
     "verified_tokenizers": [
       "runtime reverified by Lab 28"
     ]
@@ -70,28 +72,27 @@
   },
   "feature_lineage_corpus.csv": {
     "domains": {
-      "code": 4,
-      "cooking": 4,
-      "emotion": 4,
-      "finance": 4,
-      "law": 4,
-      "medicine": 4,
-      "sports": 4,
-      "weather": 4
+      "code": 8,
+      "cooking": 8,
+      "emotion": 8,
+      "finance": 8,
+      "law": 8,
+      "medicine": 8,
+      "sports": 8,
+      "weather": 8
     },
     "generator": "hand-authored deterministic course rows",
     "groups": {
-      "code_cooking": 8,
-      "finance_sports": 8,
-      "law_medicine": 8,
-      "weather_emotion": 8
+      "code_cooking": 16,
+      "finance_sports": 16,
+      "law_medicine": 16,
+      "weather_emotion": 16
     },
-    "rows": 32,
-    "sha256": "8b1b91d7e8a85a0b11b2fdf7e9387c1d8084ed71caa5caa5ad25c9d1ce68f198",
+    "rows": 64,
+    "sha256": "a947bc1434545e918dc4e51c87871260287a04df55eefa38c544441b27ff9faf",
     "splits": {
-      "eval": 8,
-      "heldout": 8,
-      "train": 16
+      "eval": 16,
+      "train": 48
     },
     "verified_tokenizers": [
       "runtime reverified by Lab 30"
@@ -99,25 +100,25 @@
   },
   "auto_interp_feature_tasks.jsonl": {
     "feature_types": {
-      "polysemantic_gold": 1,
-      "random_control": 1,
-      "synthetic_gold": 8
+      "monosemantic_gold": 8,
+      "polysemantic_gold": 2,
+      "random_control": 2
     },
-    "generator": "hand-authored deterministic course rows",
+    "generator": "make_auto_interp_feature_tasks.py",
     "gold_labels": {
-      "code": 1,
+      "code": 2,
       "cooking": 1,
       "emotion": 1,
       "finance": 1,
-      "law": 1,
+      "law": 2,
       "medicine": 1,
-      "null": 1,
-      "polysemantic finance+sports score/lead/rally": 1,
+      "null": 2,
       "sports": 1,
       "weather": 1
     },
-    "rows": 10,
-    "sha256": "c6e93b938f363051aa366593a930b4b1ad39b767c1dcfa06a07554ca897ff3f3",
+    "rows": 12,
+    "safety_notes": "benign synthetic snippets only; no model generation required",
+    "sha256": "c2670896ccef2b8e615e5b964b3531734f95b82870cfa814075a69abce9de07b",
     "verified_tokenizers": []
   },
   "preference_circuit_pairs.csv": {

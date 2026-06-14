@@ -438,17 +438,23 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
     "lab30": {
         "module": "labs.lab30_feature_lineage",
         "run_name": "lab30_feature_lineage",
-        "description": "Cross-layer and cross-model feature geometry: supervised prototype-direction lineage with controls.",
-        # Base-model, activation-heavy lab. Tier A keeps the complete small
-        # domain corpus so every confusable pair has train/eval/heldout rows.
+        "description": "Cross-layer feature lineage: supervised prototype directions with confusable controls and split-aware evidence.",
+        # Base-model, forward-pass-only lab. Tier A keeps a balanced corpus
+        # slice across domains so every domain has train and eval rows.
         "max_examples_tier_a": "32",
     },
     "lab31": {
         "module": "labs.lab31_auto_interp",
         "run_name": "lab31_auto_interp",
-        "description": "Automated interpretability at scale: offline explanation generation, tests, calibration, and abstention audits.",
-        # Offline audit lab. Tier A runs the full synthetic/gold feature suite
-        # so random and polysemantic abstention controls are always present.
+        "description": "Automated interpretability at scale: offline feature-label generation, held-out tests, calibration, abstention, and human-review queues.",
+        # Offline audit lab. The bench still loads a tiny model for the shared
+        # hook/lens/no-op instrument checks, but the science path uses frozen
+        # JSONL feature contexts and should not download a 7B model by default.
+        "model_tier_a": "gpt2",
+        "model_tier_b": "gpt2",
+        "model_tier_c": "gpt2",
+        "dtype_tier_b": "float32",
+        "dtype_tier_c": "float32",
         "max_examples_tier_a": "10",
     },
     "lab32": {

@@ -8,7 +8,7 @@
 
 **Dependencies:** Labs 5, 26, and 27. Lab 5 supplies activation patching; Lab 26 supplies formal claim discipline; Lab 27 warns that node localization is weaker than path mediation.
 
-**Minimum passing artifacts:** `method_card.md`, `editing_unlearning_spec.md`, `operationalization_audit.md`, `metrics.json`, `results.csv`, `results.jsonl`, `diagnostics/self_check_status.json`, `diagnostics/safety_status.json`, `tables/localization_candidates.csv`, `tables/scale_selection.csv`, `tables/editing_results.csv`, `tables/paraphrase_robustness.csv`, `tables/retain_forget_matrix.csv`, `tables/edit_evidence_matrix.csv`, and `plots/editing_unlearning_dashboard.png`.
+**Minimum passing artifacts:** `method_card.md`, `editing_unlearning_spec.md`, `operationalization_audit.md`, `metrics.json`, `results.csv`, `results.jsonl`, `diagnostics/self_check_status.json`, `diagnostics/safety_status.json`, `diagnostics/warning_summary.csv`, `diagnostics/lab28_run_config_snapshot.json`, `tables/localization_candidates.csv`, `tables/scale_selection.csv`, `tables/editing_results.csv`, `tables/paraphrase_robustness.csv`, `tables/retain_forget_matrix.csv`, `tables/edit_evidence_matrix.csv`, `tables/failure_specimens.md`, `tables/figure_sources/*.csv`, `plots/plot_manifest.json`, `plots/plot_reading_guide.csv`, and `plots/editing_unlearning_dashboard.png`.
 
 **Main plot:** `plots/editing_unlearning_dashboard.png`
 
@@ -59,7 +59,7 @@ The retain and neighbor audits use their own target-vs-distractor margins. Damag
 damage = max(0, base_margin - edited_margin)
 ```
 
-A good edit does not buy target movement by making unrelated facts collapse.
+A good edit does not buy target movement by making unrelated facts collapse. The upgraded runner also saves the exact rows used to draw every figure under `tables/figure_sources/`, so a student can check whether a plotted aggregate is hiding one badly damaged specimen.
 
 ## The intervention
 
@@ -128,7 +128,7 @@ Each JSON prompt list contains objects such as:
 
 Paraphrase rows default to `target_after` versus `target_before`. Retain and neighbor rows should name their own target and distractor, because a retain audit is only meaningful when it asks a real question.
 
-All answer tokens are runtime-checked to be single tokens for the loaded tokenizer. Dropped rows go to `diagnostics/tokenization_gate.csv`.
+All answer tokens are runtime-checked to be single tokens for the loaded tokenizer. Dropped rows go to `diagnostics/tokenization_gate.csv`. Plot caveats go to `diagnostics/warning_summary.csv`, and the run-specific experimental contract goes to `diagnostics/lab28_run_config_snapshot.json`.
 
 ## Safety scope
 
@@ -155,6 +155,13 @@ python interp_bench.py --lab lab28 --tier b --prompt-set data/editing_unlearning
 
 Tier A proves the microscope can run the method. Tier B is the evidence path. A Tier A positive result is a smoke-test curiosity unless Tier B and the retain audit agree.
 
+## Expected Tier A smoke behavior versus Tier B science behavior
+
+Tier A should prove that the plumbing works: data loading or fallback selection, safety screening, tokenization gates, localization, scale selection, side-set audits, source-table writing, plot-manifest writing, and no-op/reversibility checks. The sample counts may be tiny. A Tier A run should not be promoted into the ledger unless the instructor explicitly treats the target set as the target of study.
+
+Tier B is the evidence path. It should use the frozen CSV, enough targets for controls to be meaningful, and a course base model rather than the smoke model. In Tier B, a positive row still earns only the narrow activation-edit claim named in the evidence matrix.
+
+
 ## Artifact reading path
 
 Start with `method_card.md`. It says exactly what ran, what did not run, and which targets are claim-ready.
@@ -163,22 +170,72 @@ Then read:
 
 1. `editing_unlearning_spec.md`: the data and method contract.
 2. `diagnostics/safety_status.json`: whether the run stayed inside the safety wall.
-3. `diagnostics/tokenization_gate.csv`: whether the prompt and answer tokens mean what the CSV says.
-4. `tables/baseline_behavior.csv`: whether the target starts before the edit and the donor supports the after token.
-5. `tables/localization_candidates.csv`: whether donor patching localized to a claimable interior depth.
-6. `tables/scale_selection.csv`: which dose was selected before side-effect evidence was read.
-7. `tables/editing_results.csv`: target dose-response and controls.
-8. `tables/paraphrase_robustness.csv`: transfer beyond the exact prompt.
-9. `tables/retain_forget_matrix.csv`: retain and neighbor side effects.
-10. `tables/edit_evidence_matrix.csv`: the compact claim posture.
-11. `tables/edit_counterexamples.csv`: the rows that shrink the claim.
-12. `operationalization_audit.md`: the cheap explanations and allowed grammar.
+3. `diagnostics/self_check_status.json`: whether tokenization, no-op, safety, and reversibility checks passed.
+4. `diagnostics/warning_summary.csv`: whether smoke data, tiny side sets, weak donors, nonclaimable depths, or damaged retain rows should change how you read the plots.
+5. `diagnostics/lab28_run_config_snapshot.json`: model, tier, seed, prompt set, edit scales, methods, thresholds, selected targets, and verdicts.
+6. `diagnostics/tokenization_gate.csv`: whether the prompt and answer tokens mean what the CSV says.
+7. `tables/baseline_behavior.csv`: whether the target starts before the edit and the donor supports the after token.
+8. `tables/localization_candidates.csv`: whether donor patching localized to a claimable interior depth.
+9. `tables/scale_selection.csv`: which dose was selected before side-effect evidence was read.
+10. `tables/editing_results.csv`: target dose-response and controls.
+11. `tables/paraphrase_robustness.csv`: transfer beyond the exact prompt.
+12. `tables/retain_forget_matrix.csv`: retain and neighbor side effects.
+13. `tables/edit_evidence_matrix.csv`: the compact claim posture.
+14. `tables/failure_specimens.md` and `tables/edit_counterexamples.csv`: the rows that shrink the claim.
+15. `plots/plot_manifest.json`: every figure, source table, row count, metric, control, claim boundary, and caveat.
+16. `operationalization_audit.md`: the cheap explanations and allowed grammar.
+
+## How to read the figures
+
+The figures are an evidence path, not a decoration path. Read them in this order:
+
+1. Start with `editing_unlearning_dashboard.png` to see the whole cockpit.
+2. Move to `target_vs_control.png` and `dose_response.png` before trusting target movement.
+3. Open `layer_sweep_heatmap.png` to see whether the selected locality signal is an interior-depth result or a boundary-depth temptation.
+4. Check `paired_examples.png` to see raw before/after specimens, especially failures.
+5. Read `mechanistic_locality_ladder.png` before writing site-specific language.
+6. Read `paraphrase_robustness_matrix.png` and `neighbor_preservation_atlas.png` before writing transfer or preservation language.
+7. Use `edit_method_frontier.png` and `unlearning_retain_forget_frontier.png` only after the table-level gates are clear.
+
+Each plot is built from a saved table in `tables/figure_sources/`. If a plot looks decisive but the source table has one or two rows, the honest conclusion is fragility, not fireworks.
+
+## Plot catalog
+
+| Plot | Source artifact | Question answered | What not to claim |
+|---|---|---|---|
+| `plots/editing_unlearning_dashboard.png` | `tables/figure_sources/dashboard_evidence.csv` | Do target, control, transfer, damage, locality, and posture agree? | The dashboard is not persistent unlearning. |
+| `plots/target_vs_control.png` | `tables/figure_sources/target_vs_control_source.csv` | Did localized addition beat same-scale wrong-position, random-direction, and opposite-sign controls? | Target movement alone is not specificity. |
+| `plots/dose_response.png` | `tables/figure_sources/dose_response_source.csv` | Was the selected scale earned by the curve, or did only large perturbations work? | The largest dose is the best evidence. |
+| `plots/layer_sweep_heatmap.png` | `tables/figure_sources/layer_sweep_heatmap_source.csv` | Where localization gaps appear across stream depth and target. | A hot embedding or final-depth row is not a main mechanistic-site claim. |
+| `plots/paired_examples.png` | `tables/figure_sources/paired_examples_source.csv` | Which exact, paraphrase, retain, or neighbor prompts moved before vs. after? | Aggregates represent every specimen. |
+| `plots/localization_vs_editability.png` | `tables/figure_sources/localization_editability_source.csv` | Does donor-patch localization predict additive editability? | Replacement patching and additive editing are the same intervention. |
+| `plots/mechanistic_locality_ladder.png` | `tables/figure_sources/locality_ladder_source.csv` | Did the selected depth beat wrong-position and random-direction patch controls? | Locality passed if controls are also high. |
+| `plots/scale_selection_ladder.png` | `tables/figure_sources/dose_response_source.csv` | Why was this scale selected before side-set audits? | Side-set audits cannot veto a selected scale. |
+| `plots/paraphrase_robustness_matrix.png` | `tables/figure_sources/paraphrase_matrix_source.csv` | Does the chosen edit transfer beyond exact prompts? | Exact-string movement is semantic unlearning. |
+| `plots/neighbor_preservation_atlas.png` | `tables/figure_sources/retain_neighbor_atlas_source.csv` | Which retain and neighbor prompts were damaged? | Low mean damage proves no side effects. |
+| `plots/edit_method_frontier.png` | `tables/figure_sources/frontier_source.csv` | How much control gap was bought per retain damage? | A high-damage point is a good edit. |
+| `plots/unlearning_retain_forget_frontier.png` | `tables/figure_sources/frontier_source.csv` | How much retain damage accompanies target movement? | The fact was erased from weights. |
+| `tables/failure_specimens.md` | `tables/failure_specimens.jsonl` | Which rows shrink or kill the claim? | Counterexamples are optional footnotes. |
+
+`plots/plot_manifest.json` is the portable version of this catalog. It is meant to travel with screenshots into reports and slides.
 
 ## Plot guide
 
 ### `editing_unlearning_dashboard.png`
 
-The cockpit: target gain, control gap, paraphrase transfer, retain damage, localization gap, and claim posture. Read this first, then verify every cell in the tables.
+The cockpit: target gain, control gap, paraphrase transfer, retain damage, localization gap, and claim posture. Read this first, then verify every cell in the source table and evidence matrix.
+
+### `target_vs_control.png`
+
+The direct comparison: localized addition at the selected scale beside wrong-position, random-direction, and opposite-sign controls. A good edit wins here before the student gets to talk about paraphrases.
+
+### `dose_response.png`
+
+Shows whether target movement grows smoothly with scale and whether smaller doses already beat controls. A tiny positive scale that beats controls is better evidence than a large scale that clubs the distribution into compliance.
+
+### `paired_examples.png`
+
+Shows raw before/after margins for exact target prompts, paraphrases, retain prompts, and neighbor prompts. This is the specimen drawer. It keeps one embarrassing row from being steamed flat by a mean.
 
 ### `localization_vs_editability.png`
 
@@ -186,15 +243,15 @@ Asks whether localized donor-patch strength predicts the additive edit. A strong
 
 ### `edit_method_frontier.png`
 
-Shows target movement against retain damage. The upper-left quadrant is not a victory if controls match the target movement.
+Shows target-control advantage against retain damage. The upper-right quadrant is not a victory if the edit buys movement by damaging unrelated facts.
 
 ### `mechanistic_locality_ladder.png`
 
-Compares localized patch gain against wrong-position and random-direction patch controls at the selected depth.
+Compares localized patch gain against wrong-position and random-direction patch controls at the selected depth. Locality is prerequisite evidence, not the final edit claim.
 
 ### `scale_selection_ladder.png`
 
-Shows why a particular dose was chosen. A tiny positive scale that beats controls is better evidence than a large scale that clubs the distribution into compliance.
+Shows localized gain minus the strongest same-scale control. The selected dose is chosen before paraphrase and retain evidence are inspected.
 
 ### `paraphrase_robustness_matrix.png`
 
@@ -221,6 +278,22 @@ Target gain versus retain damage. The plot is named after unlearning, but the cl
 | Baseline already prefers `target_after` | Not an edit target for this model/tokenizer. |
 | Donor does not support `target_after` | Direction source is weak; target movement is harder to interpret. |
 | No-op or reversibility fails | Stop reading plots and fix instrumentation. |
+
+
+## What an honest negative result looks like
+
+An honest negative result is not an empty run. It looks like one or more of these:
+
+| Negative pattern | Honest conclusion |
+|---|---|
+| Localization works but addition does not | Replacement patching found a causal handle, but donor-minus-target is not a good edit vector. |
+| Localized addition moves the target, but controls move it too | The effect is broad perturbation, answer-token bias, wrong-site leakage, or signedness failure. |
+| Exact prompt moves but paraphrases do not | Prompt-local next-token edit only. Do not call it semantic transfer. |
+| Target and paraphrases move, but retain prompts are damaged | Side-effect-limited edit. The counterexample is part of the result. |
+| Baseline already prefers `target_after` | The row is not an edit target for this model/tokenizer. |
+| No-op or reversibility fails | Stop reading plots. The instrument is broken. |
+
+Negative rows should appear in `tables/failure_specimens.md`, `tables/edit_counterexamples.csv`, and the source tables. The right move is to shrink the claim, not to sand the plot smooth.
 
 ## What this lab can claim
 
