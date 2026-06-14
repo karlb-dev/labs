@@ -3787,6 +3787,41 @@ SAFETY_SCOPE_COLORS = {
     "blocked": "#CC79A7",
 }
 
+# Lab 8 SAE / transcoder feature-interpretation visual grammar. These helpers
+# keep feature verdicts and semantic domains consistent with the rest of the
+# course, while Lab 8 still carries local fallbacks for older benches.
+SAE_VERDICT_COLORS = {
+    "survived": "#009E73",
+    "narrowed": "#8A9A00",
+    "token-feature": "#E69F00",
+    "polysemantic": "#7E57C2",
+    "killed": "#D55E00",
+    "silent-on-corpus": "#999999",
+}
+
+SAE_DOMAIN_COLORS = {
+    "chemistry": "#0072B2",
+    "cooking": "#E69F00",
+    "sports": "#009E73",
+    "finance": "#8A9A00",
+    "law": "#7E57C2",
+    "medicine": "#CC79A7",
+    "weather": "#56B4E9",
+    "emotion": "#D55E00",
+    "code": "#666666",
+    "history": "#A6761D",
+    "none": "#999999",
+}
+
+FEATURE_CONDITION_COLORS = {
+    "real": "#D55E00",
+    "feature": "#D55E00",
+    "random": "#777777",
+    "control": "#777777",
+    "reconstruction": "#0072B2",
+    "transcoder": "#7E57C2",
+}
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
@@ -3921,6 +3956,26 @@ def plot_motif_color(label: str, default: str = "#555555") -> str:
 def plot_motif_marker(label: str, default: str = "o") -> str:
     """Shared marker lookup for attention/circuit motif labels."""
     return MOTIF_MARKERS.get(str(label), default)
+
+
+def plot_sae_verdict_color(verdict: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 8 feature-label validation verdicts."""
+    return SAE_VERDICT_COLORS.get(str(verdict), default)
+
+
+def plot_feature_verdict_color(verdict: str, default: str = "#555555") -> str:
+    """Alias for Lab 8 feature-label validation verdict colors."""
+    return plot_sae_verdict_color(verdict, default)
+
+
+def plot_sae_domain_color(domain: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 8 semantic-domain feature labels."""
+    return SAE_DOMAIN_COLORS.get(str(domain), default)
+
+
+def plot_feature_condition_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for feature-clamp real/control conditions and dictionary objects."""
+    return FEATURE_CONDITION_COLORS.get(str(condition), default)
 
 
 def lighten_color(color: str, amount: float = 0.55) -> str:
