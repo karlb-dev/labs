@@ -141,7 +141,7 @@ python interp_bench.py --lab lab24 --tier b --mode both --prompt-set full
 python interp_bench.py --lab lab25 --tier a --mode both --no-plots
 python interp_bench.py --lab lab25 --tier b --mode both --prompt-set full
 
-# Lab 26 (causal abstraction + residual-stream causal scrubbing):
+# Lab 26 (causal abstraction by residual-stream resampling):
 python interp_bench.py --lab lab26 --tier a
 python interp_bench.py --lab lab26 --tier b --prompt-set full
 
@@ -351,8 +351,8 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
 - Lab 25: find the wire — implemented for the advanced course. Adds concept
   injection, self-report dose-response, false-positive floor, grounding
   controls, voice/source attribution, and report-discipline scorecards.
-- Lab 26: causal abstraction and causal scrubbing — first special-topics lab,
-  implemented on base models. Adds formal JSON hypothesis specs, a frozen
+- Lab 26: causal abstraction by residual-stream resampling — first special-topics
+  lab, implemented on base models. Adds formal JSON hypothesis specs, a frozen
   induction/relation resampling dataset, residual-stream behavior-preserving
   resampling, variable-breaking/random/wrong-site controls, counterexample
   galleries, and hypothesis-refinement logs. This is residual resampling,

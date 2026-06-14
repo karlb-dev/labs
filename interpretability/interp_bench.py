@@ -399,7 +399,7 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
     "lab26": {
         "module": "labs.lab26_causal_abstraction",
         "run_name": "lab26_causal_abstraction",
-        "description": "Causal abstraction and causal scrubbing: formal hypotheses tested by behavior-preserving resampling.",
+        "description": "Causal abstraction by residual-stream resampling: formal hypotheses tested with preserving, breaking, random, and wrong-site donors.",
         # Base-model, hook-heavy lab. --max-examples caps total selected rows
         # across the induction and relation domains; tier A keeps enough rows
         # for preserving/broken donors in both domains.
