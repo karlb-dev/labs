@@ -19,7 +19,7 @@ must work on a laptop — debug there, spend GPU minutes on science.
 
 | Tier | Hardware | What runs |
 |---|---|---|
-| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 8, 9, 12, 26) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13–18, 20–25) / lab-specific small models (Qwen3-0.6B for lab 10, pythia-160m for lab 19); correctness of plumbing, not science |
+| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 8, 9, 12, 26, 27) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13–18, 20–25) / lab-specific small models (Qwen3-0.6B for lab 10, pythia-160m for lab 19); correctness of plumbing, not science |
 | B — standard | Colab A100/H100, or any 24 GB+ GPU | base labs on `allenai/Olmo-3-1025-7B`; instruct labs (7+) on `allenai/Olmo-3-7B-Instruct`, bf16 |
 | C — comfortable | 40–80 GB GPU | fp32, larger prompt sets |
 
@@ -144,6 +144,10 @@ python interp_bench.py --lab lab25 --tier b --mode both --prompt-set full
 # Lab 26 (causal abstraction + residual-stream causal scrubbing):
 python interp_bench.py --lab lab26 --tier a
 python interp_bench.py --lab lab26 --tier b --prompt-set full
+
+# Lab 27 (path-specific patching and causal mediation):
+python interp_bench.py --lab lab27 --tier a --no-plots
+python interp_bench.py --lab lab27 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -341,12 +345,17 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   resampling, variable-breaking/random/wrong-site controls, counterexample
   galleries, and hypothesis-refinement logs. This is residual resampling,
   not path-specific scrubbing; Lab 27 owns paths.
+- Lab 27: path-specific patching and causal mediation — implemented as a
+  residual two-site mediation proxy on base models. Adds frozen clean/corrupt
+  path tasks, node-effect baselines, source+receiver joint patches,
+  reverse/wrong-receiver/random controls, mediation accounting, and explicit
+  counterexamples when node effects do not justify path language.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
 The advanced course (Labs 12–25) is now implemented as well, and Lab 26 starts
-the special-topics sequence. Labs 1–26 exist, run, and ship their cards and
+the special-topics sequence. Labs 1–27 exist, run, and ship their cards and
 audits. Several advanced/special-topic labs may land on an honest negative on
 the default model — the controls doing their job, which is the design, not a
 gap; read each lab's card for the verdict.

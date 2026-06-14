@@ -16,6 +16,20 @@
       "runtime reverified by Lab 26"
     ]
   },
+  "path_mediation_tasks.csv": {
+    "domains": {
+      "factual_recall": 3,
+      "induction": 3,
+      "relation_swap": 3
+    },
+    "generator": "hand-authored deterministic course rows",
+    "pairing": "clean/corrupt prompts with named source, receiver, final, and wrong-control positions for residual two-site mediation",
+    "rows": 9,
+    "sha256": "7a726c8e7f3fb894c2449c3e2c0b7f259aba5ebdccc65bb72b0ea4859bbe8b19",
+    "verified_tokenizers": [
+      "runtime reverified by Lab 27"
+    ]
+  },
   "advanced_relation_geometry.csv": {
     "families": {
       "capital_of": 28,
