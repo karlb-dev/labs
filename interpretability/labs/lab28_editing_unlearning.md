@@ -1,269 +1,310 @@
 # Lab 28: Mechanistic Editing and Unlearning
 
-Time estimate: 60-90 minutes for Tier A/B reading and smoke artifacts; longer if you extend to persistent edits.  
-Compute tier: Tier A uses `gpt2`; Tier B uses the course base model.  
-Dependencies: Labs 5, 26, and 27 concepts; no external editing package.  
-Minimum passing artifacts: `method_card.md`, `operationalization_audit.md`, `tables/editing_results.csv`, `tables/retain_forget_matrix.csv`, `tables/edit_evidence_matrix.csv`, and `plots/editing_unlearning_dashboard.png`.  
-Main plot: `plots/editing_unlearning_dashboard.png`.  
-Main table: `tables/edit_evidence_matrix.csv`.  
-Evidence rung: `CAUSAL + AUDIT`.  
-Forbidden claim: "The fact was erased from the model."  
-One-sentence allowed claim: "A reversible localized activation edit changed this measured target behavior more than controls, with the recorded paraphrase and retain-set audit."  
-Human-label requirement: none for the default forward-pass lab; any generated-text extension must add hand-label columns before claiming semantic unlearning.
+**One-sentence thesis:** An edit earns credit only when it changes a named target behavior more than matched controls while preserving paraphrase, neighbor, and retain audits.
 
-## Why This Lab Exists
+**Time estimate:** Tier A smoke in minutes on CPU; Tier B science path depends on the course base model and the full target set.
 
-Lab 5 showed that activation patching can localize a behavior. Lab 26 made
-formal causal claims testable. Lab 27 warned that node-level localization can be
-weaker than a path claim. Lab 28 asks the obvious next question:
+**Compute tier:** Tier A uses `gpt2`; Tier B uses the course base model through the shared bench.
 
-> If we can localize a behavior, can we edit it specifically?
+**Dependencies:** Labs 5, 26, and 27. Lab 5 supplies activation patching; Lab 26 supplies formal claim discipline; Lab 27 warns that node localization is weaker than path mediation.
 
-The lab is intentionally conservative. It does **not** train a weight edit, does
-not remove knowledge from model weights, and does not touch harmful capabilities,
-private data, jailbreak behavior, or refusal ablation. It implements reversible
-inference-time residual additions on benign public or synthetic associations.
+**Minimum passing artifacts:** `method_card.md`, `editing_unlearning_spec.md`, `operationalization_audit.md`, `metrics.json`, `results.csv`, `results.jsonl`, `diagnostics/self_check_status.json`, `diagnostics/safety_status.json`, `tables/localization_candidates.csv`, `tables/scale_selection.csv`, `tables/editing_results.csv`, `tables/paraphrase_robustness.csv`, `tables/retain_forget_matrix.csv`, `tables/edit_evidence_matrix.csv`, and `plots/editing_unlearning_dashboard.png`.
 
-The scientific target is not a dramatic "model forgot X" headline. The target is
-an audit discipline:
+**Main plot:** `plots/editing_unlearning_dashboard.png`
 
-```text
-localize -> edit -> paraphrase check -> retain check -> controls -> scoped claim
-```
+**Main table:** `tables/edit_evidence_matrix.csv`
 
-## The Data
+**Evidence rung:** `CAUSAL + AUDIT`
 
-Default rows live in `data/editing_unlearning_targets.csv`.
+**Forbidden claim:** "The fact was erased from the model."
 
-Each row has:
+**One-sentence allowed claim:** "For this model, target, tokenizer, prompt family, and reversible activation-addition method, a localized residual edit moved the after-vs-before margin more than controls while passing the recorded paraphrase and retain audits."
 
-- `prompt`: the target prompt to edit.
-- `target_before`: the model's original or expected answer token.
-- `target_after`: the harmless counterfactual answer token.
-- `donor_prompt`: a prompt whose final-token residual stream supplies the
-  counterfactual direction.
-- `paraphrase_prompts_json`: prompt variants that should transfer if the edit is
-  not just string-local.
-- `retain_prompts_json`: unrelated facts that should stay stable.
-- `neighbor_prompts_json`: nearby facts that are most likely to be damaged by a
-  blunt edit.
+**Human-label requirement:** none for the default forward-pass lab. Any generation extension must export hand-label columns before claiming semantic unlearning.
 
-All answer tokens are runtime-checked to be single tokens for the loaded
-tokenizer. If the tokenization gate drops a row, fix the data before
-interpreting the run.
+## What question this lab asks
 
-## The Intervention
+Does a localization result make a benign model edit more specific, transferable, and auditable, or does it merely point to a place where a large perturbation can move logits?
 
-For a target prompt such as:
+The lab stays deliberately modest. It performs reversible inference-time residual additions. It does not train a weight edit, does not alter model parameters, does not erase knowledge from weights, does not touch private data, and does not reproduce refusal ablation or jailbreak edits.
+
+The scientific loop is:
 
 ```text
-The capital of France is -> Paris
+localize -> choose a signed residual direction -> dose it -> test controls -> audit paraphrases -> audit retain/neighbor prompts -> write the smallest claim
 ```
 
-and a donor prompt such as:
+That loop is less cinematic than "unlearning," but it is a much sturdier little bridge.
+
+## Why this matters in the course progression
+
+Lab 5 showed that patching can localize a behavior. Lab 26 made high-level claims pay rent with controls. Lab 27 separated node-level effects from path-specific language. Lab 28 asks what happens when the student tries to act on a localization result.
+
+This is where overclaiming likes to put on a lab coat. A target prompt can move for many cheap reasons: the direction may be a broad answer-token bias, the scale may be too large, the edit may damage the residual stream, or the target may sit near a decision boundary. Lab 28 makes those cheap explanations visible before a student writes the word "edit."
+
+## What the experiment measures
+
+The main target metric is:
 
 ```text
-The capital of Italy is -> Rome
+after_minus_before = logit(target_after) - logit(target_before)
+target_gain = edited_after_minus_before - baseline_after_minus_before
 ```
 
-the lab captures residual streams for both prompts and computes a direction:
+A positive `target_gain` means the intervention moved the prompt toward the harmless counterfactual answer token. A positive margin after editing means the counterfactual token actually beats the before token at the next-token readout.
+
+The retain and neighbor audits use their own target-vs-distractor margins. Damage is measured as:
 
 ```text
-direction(depth) = donor_stream[depth, final_pos] - target_stream[depth, final_pos]
+damage = max(0, base_margin - edited_margin)
 ```
 
-It then adds a scaled version of that vector back into the target prompt at the
-same stream site:
+A good edit does not buy target movement by making unrelated facts collapse.
+
+## The intervention
+
+For a target prompt and a donor prompt, the lab caches the pre-final-norm residual streams using the shared bench convention:
 
 ```text
-target_stream[depth, final_pos] += scale * direction(depth)
+streams[k] = pre-final-norm residual stream after k blocks
+streams[0] = embedding output
+streams[L] = final block output before final norm
 ```
 
-This is a reversible hook-time intervention. It disappears when the forward pass
-ends.
-
-## Localization
-
-Before choosing an edit site, the lab runs a donor residual patch across a coarse
-depth grid:
+For a chosen depth, it computes:
 
 ```text
-replace target_stream[depth, final_pos] with donor_stream[depth, donor_final_pos]
+direction = donor_stream[depth, donor_final_position]
+          - target_stream[depth, target_final_position]
 ```
 
-The score is the movement of:
+Then it adds scaled versions of the direction at the target prompt's final position:
 
 ```text
-logit(target_after) - logit(target_before)
+target_stream[depth, final_position] += scale * direction
 ```
 
-The best localized patch is compared against:
+This is an inference-time hook. It vanishes when the forward pass ends. The lab writes a reversibility check to prove that baseline logits before and after interventions still match.
 
-- wrong-position donor patch;
-- deterministic random-direction patch;
-- no-edit baseline.
+## The four control rails
 
-The chosen edit depth is the localized patch with the largest target-margin
-gain. This is a heuristic localization, not proof of a unique mechanism.
+| Rail | Artifact | What it catches |
+|---|---|---|
+| No-op and reversibility | `tables/edit_noop_identity_check.csv`, `tables/reversibility_check.csv` | Broken hook targeting, persistent side effects, or numerical drift. |
+| Localization controls | `tables/localization_candidates.csv` | A donor patch that works equally well at a wrong position or with a random direction. |
+| Edit controls | `tables/editing_results.csv`, `tables/scale_selection.csv` | Target movement explained by random direction, wrong position, or opposite signed direction. |
+| Side-effect audits | `tables/paraphrase_robustness.csv`, `tables/retain_forget_matrix.csv` | Prompt-local edits, neighbor damage, and unrelated-retain damage. |
 
-## What To Read
+A claim must pass the rails in this order. Do not rescue a failed target-control gap with a pretty paraphrase table.
 
-1. `method_card.md`
+## Dataset contract
 
-   Read this first. It tells you exactly which intervention ran and which
-   stronger editing methods did not run.
+The default target set is:
 
-2. `tables/localization_candidates.csv`
+```text
+data/editing_unlearning_targets.csv
+```
 
-   This is the localization screen. A strong row has a localized patch gain
-   larger than wrong-position and random-direction controls.
+Required columns:
 
-3. `tables/editing_results.csv`
+```text
+target_id,family,edit_type,prompt,target_before,target_after,
+retain_prompts_json,paraphrase_prompts_json,neighbor_prompts_json,
+safety_notes,donor_prompt
+```
 
-   This is the main dose-response table for the target prompt. Look for
-   localized additions that beat random and wrong-position additions.
+`donor_prompt` is optional in the schema but required for high-quality edits. If it is absent, the code can still run a smoke path, but the method card will mark the target as weakly specified.
 
-4. `tables/paraphrase_robustness.csv`
+Each JSON prompt list contains objects such as:
 
-   This tells you whether the edit transfers beyond the exact string.
+```json
+{
+  "prompt": "The capital of Germany is",
+  "target": " Berlin",
+  "distractor": " Rome",
+  "role": "other_capital"
+}
+```
 
-5. `tables/retain_forget_matrix.csv`
+Paraphrase rows default to `target_after` versus `target_before`. Retain and neighbor rows should name their own target and distractor, because a retain audit is only meaningful when it asks a real question.
 
-   This is the side-effect audit. A large target movement is not useful if it
-   damages neighboring or unrelated retain prompts.
+All answer tokens are runtime-checked to be single tokens for the loaded tokenizer. Dropped rows go to `diagnostics/tokenization_gate.csv`.
 
-6. `tables/edit_evidence_matrix.csv`
+## Safety scope
 
-   This table combines the target movement, control gap, paraphrase gain, and
-   retain damage into one claim posture.
+The default rows are benign public facts, toy relations, and synthetic associations. The lab rejects or warns on rows whose safety notes or prompts suggest private data, harmful capabilities, jailbreaks, refusal ablation, or real credential-like material.
 
-7. `operationalization_audit.md`
+This lab is not a safe place to edit refusal behavior. It is not a safe place to remove private data. It is not a safe place to build an evasion tool. The boring country-capital toy is not a lack of imagination; it is the guardrail that lets the method be taught.
 
-   This is where the lab lists the cheap explanations and counterexamples.
+## How to run
 
-## How To Run
+From `interpretability/`:
 
 ```bash
-cd interpretability
+python interp_bench.py --lab lab28 --tier a --no-plots
 python interp_bench.py --lab lab28 --tier a
 python interp_bench.py --lab lab28 --tier b --prompt-set full
 ```
 
-For a fast smoke with tables only:
+Useful variants:
 
 ```bash
-python interp_bench.py --lab lab28 --tier a --no-plots
+python interp_bench.py --lab lab28 --tier b --prompt-set medium --max-examples 6
+python interp_bench.py --lab lab28 --tier b --prompt-set data/editing_unlearning_targets.csv
 ```
 
-## Interpreting The Evidence Matrix
+Tier A proves the microscope can run the method. Tier B is the evidence path. A Tier A positive result is a smoke-test curiosity unless Tier B and the retain audit agree.
 
-The main posture is `localized_edit_supported` only if all of these are true
-under the current thresholds:
+## Artifact reading path
 
-- the localized activation edit moves the target logit margin;
-- wrong-position and random-direction controls do not explain the movement;
-- paraphrase prompts move in the same direction on average;
-- retain prompts are not heavily damaged.
+Start with `method_card.md`. It says exactly what ran, what did not run, and which targets are claim-ready.
 
-Otherwise the posture is `needs_refinement_or_control_limited`.
+Then read:
 
-That second posture is not failure. It is usually the most teachable result.
-Model editing is easy to overclaim because the target prompt often moves before
-the edit is specific.
+1. `editing_unlearning_spec.md`: the data and method contract.
+2. `diagnostics/safety_status.json`: whether the run stayed inside the safety wall.
+3. `diagnostics/tokenization_gate.csv`: whether the prompt and answer tokens mean what the CSV says.
+4. `tables/baseline_behavior.csv`: whether the target starts before the edit and the donor supports the after token.
+5. `tables/localization_candidates.csv`: whether donor patching localized to a claimable interior depth.
+6. `tables/scale_selection.csv`: which dose was selected before side-effect evidence was read.
+7. `tables/editing_results.csv`: target dose-response and controls.
+8. `tables/paraphrase_robustness.csv`: transfer beyond the exact prompt.
+9. `tables/retain_forget_matrix.csv`: retain and neighbor side effects.
+10. `tables/edit_evidence_matrix.csv`: the compact claim posture.
+11. `tables/edit_counterexamples.csv`: the rows that shrink the claim.
+12. `operationalization_audit.md`: the cheap explanations and allowed grammar.
 
-## Common Failure Modes
+## Plot guide
 
-### The Edit Works Only On The Exact Prompt
+### `editing_unlearning_dashboard.png`
 
-If `editing_results.csv` looks strong but `paraphrase_robustness.csv` is weak,
-the edit is prompt-local. The right claim is:
+The cockpit: target gain, control gap, paraphrase transfer, retain damage, localization gap, and claim posture. Read this first, then verify every cell in the tables.
+
+### `localization_vs_editability.png`
+
+Asks whether localized donor-patch strength predicts the additive edit. A strong patch and weak addition means the useful information may not be well approximated by one linear donor-minus-target direction.
+
+### `edit_method_frontier.png`
+
+Shows target movement against retain damage. The upper-left quadrant is not a victory if controls match the target movement.
+
+### `mechanistic_locality_ladder.png`
+
+Compares localized patch gain against wrong-position and random-direction patch controls at the selected depth.
+
+### `scale_selection_ladder.png`
+
+Shows why a particular dose was chosen. A tiny positive scale that beats controls is better evidence than a large scale that clubs the distribution into compliance.
+
+### `paraphrase_robustness_matrix.png`
+
+Shows whether the chosen edit transfers across paraphrase prompts. A blank or cold row means the result is exact-string local.
+
+### `neighbor_preservation_atlas.png`
+
+Shows retain and neighbor damage. This plot is the anti-fireworks device: it keeps target movement from dazzling you into ignoring side effects.
+
+### `unlearning_retain_forget_frontier.png`
+
+Target gain versus retain damage. The plot is named after unlearning, but the claim is only about reversible activation editing.
+
+## Expected result patterns
+
+| Pattern | Interpretation |
+|---|---|
+| Target gain high, controls low, paraphrases transfer, retain damage low | Narrow positive result for this reversible activation-addition method. |
+| Target gain high, random direction high | Broad perturbation or answer-token bias; not a localized edit claim. |
+| Target gain high, wrong position high | Site specificity failed. |
+| Patch localization high, addition weak | Replacement works, but the donor-minus-target direction is not a good edit direction. |
+| Exact prompt moves, paraphrases do not | Prompt-local next-token edit, not semantic transfer. |
+| Retain or neighbor prompts damaged | Side-effect-limited result. Keep the counterexample. |
+| Baseline already prefers `target_after` | Not an edit target for this model/tokenizer. |
+| Donor does not support `target_after` | Direction source is weak; target movement is harder to interpret. |
+| No-op or reversibility fails | Stop reading plots and fix instrumentation. |
+
+## What this lab can claim
+
+It can claim that, on a named model and target set, a reversible residual-stream addition at a selected site and scale moved a next-token margin more than controls.
+
+It can claim that this movement did or did not transfer to paraphrases.
+
+It can claim that retain and neighbor audits did or did not bound side effects.
+
+It can claim that localization predicted or failed to predict editability under this method.
+
+## What this lab cannot claim
+
+It cannot claim that a fact was erased from the model.
+
+It cannot claim persistent unlearning.
+
+It cannot claim the model believes the counterfactual.
+
+It cannot claim the selected site is the whole mechanism.
+
+It cannot claim safety for deployment.
+
+It cannot validate a proposed persistent edit without an apply/restore hash, rollback test, and the same retain/paraphrase/neighbor controls.
+
+## Common failure modes
+
+| Symptom | Likely cause | What to inspect |
+|---|---|---|
+| Many rows dropped | Token targets are not single tokens for this tokenizer. | `diagnostics/tokenization_gate.csv` |
+| Baseline target already after-favoring | The target is not a counterfactual for this model. | `tables/baseline_behavior.csv` |
+| Localization picks depth 0 or final depth | Token substitution/readout artifact. | `tables/localization_candidates.csv` |
+| Chosen scale is huge | Smaller doses did not beat controls. | `tables/scale_selection.csv` |
+| Random control matches localized edit | Direction is not specific. | `tables/editing_results.csv` |
+| Paraphrases fail | Exact-string prompt edit only. | `tables/paraphrase_robustness.csv` |
+| Retain damage high | The edit is blunt. | `tables/retain_forget_matrix.csv` |
+| Plots look positive but evidence row says no | One of the gates failed. | `tables/edit_evidence_matrix.csv` |
+
+## Writeup questions
+
+1. Which target had the strongest localized donor patch?
+2. Did the selected depth exclude depth 0 and final-norm input?
+3. Which scale was chosen, and did smaller scales fail for a clear reason?
+4. Did localized addition beat random, wrong-position, and opposite-direction controls?
+5. Did paraphrases transfer, or was the edit exact-string local?
+6. Which retain or neighbor prompt was the biggest counterexample?
+7. Was localization strength correlated with additive edit strength?
+8. What is the smallest allowed claim for the best target?
+9. What sentence would be an overclaim?
+10. What persistent-edit extension would be required before using the word "unlearning" more strongly?
+
+## Ledger templates
+
+Positive, if all gates pass:
 
 ```text
-The intervention changed this prompt's next-token preference.
+[L28-C1] CAUSAL+AUDIT | On <model>, target <target_id> passed the reversible activation-edit audit: localized residual addition at depth <k> and scale <s> changed after-vs-before margin by <x>, beating the strongest control by <y>, transferring to paraphrases by <z>, with mean retain damage <r>. This is an inference-time activation-edit claim, not persistent unlearning.
+Artifact: runs/<run>/tables/edit_evidence_matrix.csv | Falsifier: random/wrong-position/opposite controls match the edit, paraphrases fail, retain damage grows, or the effect vanishes on a held-out target set.
 ```
 
-not:
+Control-limited or negative:
 
 ```text
-The model now believes the counterfactual.
-```
-
-### Random Direction Matches The Localized Direction
-
-If random controls match the target gain, the localized direction is not doing
-the causal work. Possible reasons:
-
-- the answer token has a broad logit bias;
-- the scale is too large;
-- the prompt is already near a decision boundary;
-- the localization patch found a generally disruptive site.
-
-### Retain Facts Are Damaged
-
-If `retain_forget_matrix.csv` shows large margin drops on retain prompts, the
-edit is not specific enough. Do not hide this. The specificity audit is the
-point of the lab.
-
-### The Donor Patch Is Strong But The Addition Is Weak
-
-Patching replaces the whole residual vector at a site. Addition only moves along
-the donor-minus-target direction. A strong patch and weak addition suggest that
-the useful information is not well approximated by a simple linear direction.
-
-## Extension Ideas
-
-### Safer Persistent Edits
-
-A future extension can add rank-one residual or MLP weight edits only if it has:
-
-- an apply/restore self-check;
-- a before/after hash or parameter-diff manifest;
-- a rollback test that proves the model returns to baseline;
-- the same retain, neighbor, paraphrase, and random-site audits.
-
-### Feature Clamps
-
-If a reliable SAE or transcoder feature is available, replace the residual
-direction with a feature clamp or suppression and run the same audit. Keep the
-claim grammar unchanged.
-
-### Relocalization After Editing
-
-After a successful edit, rerun the localization screen. If the best site moves,
-that is evidence that the intervention changed the measured computation, not
-evidence that the original fact was erased.
-
-## Claim Grammar
-
-Allowed:
-
-```text
-CAUSAL + AUDIT: On this benign target set, a reversible localized residual
-addition at site S changed the target after-vs-before margin by X, transferred
-to paraphrases by Y on average, and preserved retain prompts with damage Z,
-beating wrong-position and random-direction controls.
+[L28-C2] CAUSAL+AUDIT | Target <target_id> did not earn a localized edit claim because <failed_gate>. The supported result is <prompt-local/control-limited/retain-damaged/no-positive-edit>.
+Artifact: runs/<run>/tables/edit_counterexamples.csv | Falsifier: a rerun with predeclared scale and held-out paraphrases where localized addition beats controls and preserves retain prompts.
 ```
 
 Forbidden:
 
 ```text
 The fact was erased from the model.
-```
-
-Also forbidden:
-
-```text
-The model has unlearned this topic.
+The model now believes the counterfactual.
 The edit is safe in deployment.
-This proves the model's belief changed.
+The localization site is the whole mechanism.
 ```
 
-## Deliverable
+## Suggested extensions
 
-Write a short editing audit memo:
+Add a persistent rank-one weight edit only after implementing an apply/restore self-check, parameter-diff manifest, before/after hash, rollback test, and the same retain/paraphrase/neighbor audit.
 
-- Which target had the strongest localized edit?
-- Did the edit beat random and wrong-position controls?
-- Did paraphrases transfer?
-- Which retain or neighbor prompt was the biggest counterexample?
-- What is the smallest claim you can honestly make?
+Replace donor-minus-target residual directions with SAE or transcoder feature clamps if a validated feature dictionary is available.
+
+Run the same target set on the course base model and an instruction-tuned model, then compare which targets remain editable and which side effects change.
+
+Use Lab 20 benign organisms as synthetic edit targets, but never use real private data.
+
+Rerun localization after the edit. If the best site moves, report that as a change in the measured computation, not as proof the original fact was erased.
