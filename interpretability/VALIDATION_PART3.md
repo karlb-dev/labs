@@ -1,15 +1,18 @@
-# Part 3 Validation Report - Labs 26-27
+# Part 3 Validation Report - Labs 26-29
 
 - **Date:** 2026-06-14
 - **Branch:** `interp_cleanup`
 - **Machine:** NVIDIA RTX PRO 6000 Blackwell Server Edition, 97.9 GB VRAM
-- **Scope:** Full validation of Lab 26 and Lab 27 after the latest pushed edits.
+- **Scope:** Full validation of Labs 26-29 after the latest pushed edits.
 - **Drive artifacts:** `/content/drive/MyDrive/interpret/verify_part3/`
 
 ## Headline
 
-Labs 26 and 27 now validate across Tier A, Tier B, Tier C, Gemma 4 E4B, and
-Olmo 3 32B Think, with all trusted runs copied to Drive. The earlier
+Labs 26, 27, and 28 now validate across Tier A, Tier B, Tier C, Gemma 4 E4B,
+and Olmo 3 32B Think, with all trusted runs copied to Drive. Lab 29 validates
+across Tier A/B/C; it intentionally pins the outer bench model to `gpt2` and
+trains its own tiny internal model, so Gemma/Think overrides would not change
+the lab result. The earlier
 "GPU unavailable" note was a sandbox artifact: CUDA is visible for escalated
 commands and the bench runs correctly on the GPU.
 
@@ -27,7 +30,14 @@ batch-shape-dependent no-op drift. Lab 26 now:
 - exposes `LAB26_RESIDUAL_PATCH_BATCH_SIZE` for model-specific validation
   retries, used for Olmo 3 32B Think at batch size 24.
 
-No Lab 27 code change was needed.
+One real Lab 28 bug surfaced on GPU-scale bf16 runs and was fixed in this pass:
+the localization stage used batched replacement patching while comparing
+self-patch no-op rows against clean margins from single-prompt forwards. Lab 28
+now runs localization replacement patches as individual prompt forwards. This
+keeps the self-patch identity check exact and matches the already-unbatched
+additive edit path.
+
+No Lab 27 or Lab 29 code change was needed.
 
 ## Run Matrix
 
@@ -43,10 +53,19 @@ No Lab 27 code change was needed.
 | 27 | Tier C `allenai/Olmo-3-1125-32B` | green | `lab27_tierc_full_verify_20260614_2205` |
 | 27 | `google/gemma-4-E4B-it` | green | `lab27_gemma4e4b_full_verify_20260614_2214` |
 | 27 | `allenai/Olmo-3-32B-Think` | green | `lab27_olmo32bthink_full_verify_20260614_2217` |
+| 28 | Tier A `gpt2` | green | `lab28_tiera_full_verify_20260614_2243` |
+| 28 | Tier B `allenai/Olmo-3-1025-7B` | green | `lab28_tierb_full_verify_20260614_2252` |
+| 28 | Tier C `allenai/Olmo-3-1125-32B` | green | `lab28_tierc_full_verify_20260614_2256` |
+| 28 | `google/gemma-4-E4B-it` | green | `lab28_gemma4e4b_full_verify_20260614_2303` |
+| 28 | `allenai/Olmo-3-32B-Think` | green | `lab28_olmo32bthink_full_verify_20260614_2307` |
+| 29 | Tier A `gpt2` outer runner | green | `lab29_tiera_full_verify_20260614_2317` |
+| 29 | Tier B `gpt2` outer runner | green | `lab29_tierb_full_verify_20260614_2320` |
+| 29 | Tier C `gpt2` outer runner | green | `lab29_tierc_full_verify_20260614_2322` |
 
 Every successful run has:
 
-- 57 registered artifacts;
+- complete registered artifacts: 57 for Labs 26/27, 68 for Lab 28, and 62 for
+  Lab 29;
 - complete plot manifests with no missing figure or source-table links;
 - hook parity passing;
 - logit-lens self-check passing;
@@ -65,6 +84,7 @@ The validation report itself is also copied as:
 
 ```text
 /content/drive/MyDrive/interpret/verify_part3/VALIDATION_PART3_lab26_27_20260614.md
+/content/drive/MyDrive/interpret/verify_part3/VALIDATION_PART3_20260614.md
 ```
 
 ## Lab 26 Results
@@ -97,6 +117,35 @@ selective: factual recall supports residual path-proxy language, induction does
 not beat node-effect caveats strongly enough, and relation-swap fails behavior
 gates. The lab correctly narrows claims rather than forcing a positive result.
 
+## Lab 28 Results
+
+| Target | Supported rows | Dominant caveat | Notes |
+|---|---:|---|---|
+| Tier A `gpt2` | 4 / 5 | one control-limited row | Smoke path is healthy. |
+| Tier B OLMo 7B | 1 / 8 | retain damage | Strong edits often damage retain prompts. |
+| Tier C OLMo 32B | 1 / 8 | retain damage | Same pattern as Tier B. |
+| Gemma 4 E4B | 3 / 8 | side effects and baseline eligibility | More target-specific than OLMo on this set. |
+| OLMo 32B Think | 2 / 8 | retain damage | Strong target movement, limited by side effects. |
+
+Interpretation: Lab 28 is doing the right audit work. It can often move the
+target margin, but the retain/paraphrase/neighbor audits prevent most rows from
+becoming broad edit claims. The strongest lesson is that localization and target
+movement are not enough; a reversible activation edit must survive retain and
+control checks before it earns positive language.
+
+## Lab 29 Results
+
+| Target | Final induction accuracy | Final heldout/test accuracy | Final probe selectivity | Event step | Notes |
+|---|---:|---:|---:|---:|---|
+| Tier A tiny run | 1.0 | 1.0 | 1.0 | 20 | 80 training steps, 11 selected rows. |
+| Tier B tiny run | 1.0 | 1.0 | 1.0 | 17 | 420 training steps, all 14 rows. |
+| Tier C tiny run | 1.0 | 1.0 | 1.0 | 17 | Same tiny setup as Tier B. |
+
+Interpretation: Lab 29 validates the controlled tiny-training time-lapse. It
+supports threshold-ordering language, not exact birth-step language. Tier B/C
+warnings correctly flag the rotated-label probe caveat: do not overclaim
+readable target identity when a control is close.
+
 ## Reproduce
 
 ```bash
@@ -116,11 +165,24 @@ python interp_bench.py --lab lab27 --tier b --low-cpu-mem-usage
 python interp_bench.py --lab lab27 --tier c --low-cpu-mem-usage
 python interp_bench.py --lab lab27 --tier b --model google/gemma-4-E4B-it --low-cpu-mem-usage
 python interp_bench.py --lab lab27 --tier c --model allenai/Olmo-3-32B-Think --low-cpu-mem-usage
+
+# Lab 28
+python interp_bench.py --lab lab28 --tier a
+python interp_bench.py --lab lab28 --tier b --low-cpu-mem-usage
+python interp_bench.py --lab lab28 --tier c --low-cpu-mem-usage
+python interp_bench.py --lab lab28 --tier b --model google/gemma-4-E4B-it --low-cpu-mem-usage
+python interp_bench.py --lab lab28 --tier c --model allenai/Olmo-3-32B-Think --low-cpu-mem-usage
+
+# Lab 29
+python interp_bench.py --lab lab29 --tier a
+python interp_bench.py --lab lab29 --tier b
+python interp_bench.py --lab lab29 --tier c
 ```
 
 ## Disk Note
 
 After pulling the 7B, 32B, Think, and Gemma weights, local disk was at about
-198 GB used of 236 GB, with the Hugging Face cache at about 150 GB. The run
-artifacts themselves are small relative to the model cache. Further validation
-should avoid pulling new large models unless cache space is reclaimed first.
+198 GB used of 236 GB, with the Hugging Face cache at about 150 GB. The local
+run artifacts were about 295 MB and the Drive validation folder was about
+276 MB. Further validation should avoid pulling new large models unless cache
+space is reclaimed first.

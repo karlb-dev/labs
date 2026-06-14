@@ -773,15 +773,18 @@ def localize_sites(
             target_vec = cap.streams[depth, target.final_pos]
             direction = donor_vec - target_vec
             random_vec = target_vec + deterministic_random_like(direction, f"{target.target_id}|{depth}|localize")
-            cells = [
-                (int(depth), int(target.final_pos), target_vec),
-                (int(depth), int(target.final_pos), donor_vec),
-                (int(depth), int(wrong_pos), donor_vec),
-                (int(depth), int(target.final_pos), random_vec),
+            # Keep localization patching as single-prompt forwards. On large
+            # bf16 models, cached streams from a batch-1 clean pass can drift
+            # slightly from the same prompt embedded inside a larger batch,
+            # which makes the self-patch no-op check fail for numerical
+            # reasons. The Lab 28 target set is intentionally small, so exact
+            # no-op semantics are worth more than batching here.
+            logits_list = [
+                bench.run_with_residual_patch(bundle, target.prompt, int(depth), int(target.final_pos), target_vec),
+                bench.run_with_residual_patch(bundle, target.prompt, int(depth), int(target.final_pos), donor_vec),
+                bench.run_with_residual_patch(bundle, target.prompt, int(depth), int(wrong_pos), donor_vec),
+                bench.run_with_residual_patch(bundle, target.prompt, int(depth), int(target.final_pos), random_vec),
             ]
-            logits_list = bench.run_with_residual_patch_batched(
-                bundle, target.prompt, cells, max_batch=RESIDUAL_PATCH_BATCH_SIZE
-            )
             for method, logits, position in zip(LOCALIZATION_METHODS, logits_list, (target.final_pos, target.final_pos, wrong_pos, target.final_pos)):
                 margin = logit_margin(logits, target.after_id, target.before_id)
                 gain = margin - target.base_after_margin
