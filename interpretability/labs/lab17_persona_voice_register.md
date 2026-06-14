@@ -195,16 +195,31 @@ runs/lab17_persona_voice_register-<timestamp>-<id>/
     persona_turn_trace.csv
     persona_turn_trace_slopes.csv
     trace_depth_sweep.csv
+    probe_depth_control_gaps.csv
+    persona_trait_evidence_matrix.csv
+    persona_steering_operating_points.csv
+    persona_trace_evidence.csv
+    persona_direction_confound_risks.csv
+    plot_reading_guide.csv
 
   plots/
+    persona_evidence_dashboard.png             # start here: decode + steering + traces + confounds
+    trait_evidence_matrix.png                  # one row per persona/register/voice handle
+    depth_control_gap_atlas.png                # held-out real-minus-control AUC by depth and trait
     persona_probe_selectivity.png
     persona_steering_dose_response.png
+    steering_operating_frontier.png            # style benefit versus content/boundary cost
+    generation_style_atlas.png                 # trait-by-dose steering response
     style_content_tradeoff.png
     direction_cosine_heatmap.png
+    direction_confound_risk.png                # nearest sentiment/refusal/default/style confounds
     persona_turn_trace.png
+    persona_trace_projection_atlas.png
     register_switch_trace.png
     refusal_projection_under_roleplay.png
+    refusal_boundary_safety_dashboard.png
     trace_depth_sweep.png
+    trace_evidence_atlas.png
 
   state/
     persona_directions.pt
@@ -222,13 +237,39 @@ Then read `operationalization_audit.md`. If the audit says the effect is probabl
 Then check, in order:
 
 1. `diagnostics/exact_chat_hook_parity.json` and `diagnostics/turn_boundary_check.json`.
-2. `tables/persona_depth_selection.csv` and `plots/persona_probe_selectivity.png`.
-3. `tables/persona_steering_effects.csv` and `plots/style_content_tradeoff.png`.
-4. `tables/persona_turn_trace_slopes.csv` and `plots/persona_turn_trace.png`.
-5. `tables/direction_cosines.csv` and `plots/direction_cosine_heatmap.png`.
-6. `diagnostics/persona_safety_scope.json` before discussing refusal.
+2. `plots/persona_evidence_dashboard.png` for the whole evidence board.
+3. `tables/probe_depth_control_gaps.csv`, `plots/depth_control_gap_atlas.png`, and `plots/persona_probe_selectivity.png` for the DECODE rail.
+4. `tables/persona_trait_evidence_matrix.csv` and `plots/trait_evidence_matrix.png` for trait-by-trait claim posture.
+5. `tables/persona_steering_operating_points.csv`, `plots/steering_operating_frontier.png`, and `plots/generation_style_atlas.png` for the scoped CAUSAL rail.
+6. `tables/persona_trace_evidence.csv`, `plots/trace_evidence_atlas.png`, and `plots/persona_trace_projection_atlas.png` for multi-turn traces.
+7. `tables/persona_direction_confound_risks.csv`, `tables/direction_cosines.csv`, and `plots/direction_confound_risk.png` before making any voice/persona language sound stronger than the controls.
+8. `diagnostics/persona_safety_scope.json` and `plots/refusal_boundary_safety_dashboard.png` before discussing refusal.
+
+## Visualization upgrade notes
+
+The upgraded plot suite turns Lab 17 into an evidence board rather than a personality poster. The central plot is `persona_evidence_dashboard.png`: it joins four rails that must stay separate in the writeup: held-out decodability over controls, activation-addition steering over controls, content/boundary preservation, and descriptive multi-turn traces.
+
+The new `trait_evidence_matrix.png` and `persona_trait_evidence_matrix.csv` are the anti-overclaim artifacts. A trait can be `decodable_not_yet_causal`, `controlled_style_handle`, or `not_validated`; do not upgrade one strong row into a claim about all persona, voice, and register frames.
+
+The new `steering_operating_frontier.png` replaces largest-dose thinking with operating-point thinking. A good dose moves the requested style/register while preserving content keywords, avoiding private-experience claims, and beating random/shuffled/opposite controls.
+
+The new trace plots are deliberately labeled descriptive. `trace_evidence_atlas.png` subtracts same-conversation random-null slopes. `persona_trace_projection_atlas.png` shows the actual turn sequence. These plots can support a scoped multi-turn projection claim only after the Lab 15-style boundary checks pass.
+
+The new safety plot, `refusal_boundary_safety_dashboard.png`, remains monitor-only. It is there to check whether benign roleplay shifts the refusal-monitor projection. It is not a prompt-search target and not a refusal-ablation experiment.
 
 ## How to interpret the plots
+
+### `persona_evidence_dashboard.png`
+
+Start here. The dashboard asks whether the run has all four ingredients: controlled DECODE evidence, steering specificity, content preservation, and trace evidence beyond nulls. If one panel fails, narrow the claim instead of rescuing the big word.
+
+### `trait_evidence_matrix.png`
+
+Each row is one operationalized handle. Use this plot to decide whether `technical_register`, `warm_supportive_voice`, or roleplay persona has its own claim posture. The matrix is more important than the average.
+
+### `depth_control_gap_atlas.png`
+
+This plot shows held-out real-minus-control AUC by depth and trait. Bright cells are candidate readout depths; broad bands are stronger than isolated sparks.
 
 ### `persona_probe_selectivity.png`
 
@@ -238,9 +279,21 @@ Solid lines are held-out eval. Dashed lines are train-side leave-one-out curves 
 
 The trait direction should move style more than random and shuffled controls. The opposite direction should usually move the other way. If all directions move together, the vector may be a generic activation-norm lever, not a persona/register handle.
 
+### `steering_operating_frontier.png`
+
+This is the dose-choice plot. It shows whether style movement is purchased by losing task content, repetition, or boundary discipline. A persona/register vector that only works at a destructive dose is a bad handle, even if the line moved.
+
+### `generation_style_atlas.png`
+
+This plot checks whether the steering effect is broad across traits and doses or whether a single trait carries the mean. Controls that light up here shrink the causal claim.
+
 ### `style_content_tradeoff.png`
 
 The useful quadrant is style movement with little or no content damage. If style improves but content collapses, the model is not switching register cleanly. It is wearing a glittering lab coat while dropping the beakers.
+
+### `direction_confound_risk.png`
+
+This ranks the nearest sentiment, refusal, default-assistant, random, and style controls for each saved direction. High overlap does not make the run useless, but it changes the allowed language from “persona” to “style/control-adjacent handle.”
 
 ### `direction_cosine_heatmap.png`
 
@@ -250,9 +303,21 @@ Large cosines between persona/register/voice and sentiment, politeness, or agree
 
 A roleplay trace matters only relative to the default-control and random-null traces. A rising persona projection inside the roleplay conversation is a descriptive trace, not proof of a durable character.
 
+### `trace_evidence_atlas.png`
+
+This plot shows projection-slope gaps after subtracting the same-conversation random-null slope. It is the guardrail against reading a longer transcript or repeated chat template as a persona state.
+
+### `persona_trace_projection_atlas.png`
+
+This shows the actual turn-by-turn projection sequence across scripted conversations. It is the plot to use for examples, not for choosing new thresholds after the fact.
+
 ### `register_switch_trace.png`
 
 Look for the technical-register projection changing after the user explicitly asks for a register switch. If the projection is high before the switch, the direction may be reading the task topic or the system scaffold.
+
+### `refusal_boundary_safety_dashboard.png`
+
+This is the upgraded safety monitor. Read it together with `diagnostics/persona_safety_scope.json`. It monitors benign roleplay boundary turns and does not license refusal ablation or jailbreak search.
 
 ### `refusal_projection_under_roleplay.png`
 

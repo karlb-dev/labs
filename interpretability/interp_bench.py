@@ -4182,6 +4182,84 @@ SYCOPHANCY_MARKERS = {
     "ambiguous": "s",
 }
 
+
+# ---------------------------------------------------------------------------
+# Lab 17 persona / register / voice visual grammar
+# ---------------------------------------------------------------------------
+
+PERSONA_COLORS = {
+    "persona": "#7E57C2",
+    "character_museum_guide": "#7E57C2",
+    "persona_museum_guide": "#7E57C2",
+    "museum_roleplay": "#7E57C2",
+    "default_assistant_control": "#6E6E6E",
+    "technical_register": "#0072B2",
+    "register": "#0072B2",
+    "casual_register_control": "#E69F00",
+    "warm_supportive_voice": "#E69F00",
+    "voice": "#E69F00",
+    "direct_terse_control": "#56B4E9",
+    "honest_disagreement": "#009E73",
+    "agreeable_validation": "#56B4E9",
+    "agreement": "#009E73",
+    "trait_direction": "#D55E00",
+    "opposite_direction": "#0072B2",
+    "shuffled_sign_direction": "#999999",
+    "shuffled_sign": "#999999",
+    "random_direction": "#777777",
+    "random_oriented": "#777777",
+    "random_null": "#777777",
+    "baseline": "#444444",
+    "real": "#0072B2",
+    "decode": "#0072B2",
+    "causal": "#D55E00",
+    "trace": "#009E73",
+    "safety": "#CC79A7",
+    "refusal_monitor": "#D55E00",
+    "sentiment_style_control": "#CC79A7",
+    "positive": "#009E73",
+    "claimable": "#009E73",
+    "warning": "#E69F00",
+    "watch": "#E69F00",
+    "failed": "#D55E00",
+    "not_claimable": "#D55E00",
+    "control": "#777777",
+}
+
+PERSONA_MARKERS = {
+    "persona": "o",
+    "character_museum_guide": "o",
+    "persona_museum_guide": "o",
+    "technical_register": "s",
+    "warm_supportive_voice": "^",
+    "honest_disagreement": "D",
+    "agreeable_validation": "P",
+    "default_assistant_control": "x",
+    "casual_register_control": "v",
+    "trait_direction": "o",
+    "opposite_direction": "v",
+    "shuffled_sign_direction": "s",
+    "random_direction": "x",
+    "real": "o",
+    "shuffled_sign": "s",
+    "random_oriented": "x",
+    "random_null": "x",
+    "refusal_monitor": "P",
+    "sentiment_style_control": "^",
+}
+
+
+def plot_persona_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 17 persona/register/voice plots."""
+    key = str(condition)
+    return PERSONA_COLORS.get(key, SYCOPHANCY_COLORS.get(key, MULTITURN_COLORS.get(key, CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)))))
+
+
+def plot_persona_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 17 persona/register/voice plots."""
+    key = str(condition)
+    return PERSONA_MARKERS.get(key, SYCOPHANCY_MARKERS.get(key, MULTITURN_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))))
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl

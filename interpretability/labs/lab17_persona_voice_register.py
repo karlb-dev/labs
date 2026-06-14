@@ -1959,6 +1959,844 @@ def plot_trace_depth_sweep(ctx: bench.RunContext, rows: Sequence[Mapping[str, An
     bench.save_figure(ctx, fig, "trace_depth_sweep.png", "Descriptive sweep of turn-trace slopes across stream depths.")
 
 
+
+
+# ---------------------------------------------------------------------------
+# Visualization upgrade: evidence dashboards, synthesis tables, and richer plots
+# ---------------------------------------------------------------------------
+
+
+def _lab17_color(key: str, default: str = "#555555") -> str:
+    fn = getattr(bench, "plot_persona_color", None)
+    if callable(fn):
+        return fn(key, default)
+    palette = {
+        "persona": "#7E57C2",
+        "character_museum_guide": "#7E57C2",
+        "technical_register": "#0072B2",
+        "register": "#0072B2",
+        "warm_supportive_voice": "#E69F00",
+        "voice": "#E69F00",
+        "honest_disagreement": "#009E73",
+        "agreement": "#009E73",
+        "trait_direction": "#D55E00",
+        "opposite_direction": "#0072B2",
+        "shuffled_sign_direction": "#999999",
+        "random_direction": "#777777",
+        "baseline": "#444444",
+        "real": "#0072B2",
+        "shuffled_sign": "#E69F00",
+        "random_oriented": "#777777",
+        "positive": "#009E73",
+        "warning": "#E69F00",
+        "failed": "#D55E00",
+        "control": "#777777",
+        "refusal_monitor": "#D55E00",
+        "sentiment_style_control": "#CC79A7",
+        "random_null": "#777777",
+        "persona_museum_guide": "#7E57C2",
+        "default_assistant_control": "#777777",
+        "technical_register_direction": "#0072B2",
+    }
+    return palette.get(str(key), default)
+
+
+def _lab17_marker(key: str, default: str = "o") -> str:
+    fn = getattr(bench, "plot_persona_marker", None)
+    if callable(fn):
+        return fn(key, default)
+    markers = {
+        "trait_direction": "o",
+        "opposite_direction": "v",
+        "shuffled_sign_direction": "s",
+        "random_direction": "^",
+        "real": "o",
+        "shuffled_sign": "s",
+        "random_oriented": "^",
+        "character_museum_guide": "o",
+        "technical_register": "s",
+        "warm_supportive_voice": "^",
+        "honest_disagreement": "D",
+    }
+    return markers.get(str(key), default)
+
+
+def _f(row_or_value: Any, key: str | None = None, default: float = float("nan")) -> float:
+    try:
+        value = row_or_value.get(key) if key is not None and isinstance(row_or_value, Mapping) else row_or_value
+        if value == "" or value is None:
+            return default
+        value = float(value)
+        return value if math.isfinite(value) else default
+    except Exception:
+        return default
+
+
+def _finite(vals: Sequence[Any]) -> list[float]:
+    out = []
+    for v in vals:
+        fv = _f(v)
+        if math.isfinite(fv):
+            out.append(fv)
+    return out
+
+
+def _quantile(vals: Sequence[Any], q: float, default: float = float("nan")) -> float:
+    xs = sorted(_finite(vals))
+    if not xs:
+        return default
+    if len(xs) == 1:
+        return xs[0]
+    pos = (len(xs) - 1) * float(q)
+    lo = int(math.floor(pos))
+    hi = int(math.ceil(pos))
+    if lo == hi:
+        return xs[lo]
+    return xs[lo] * (hi - pos) + xs[hi] * (pos - lo)
+
+
+def _mean_where(rows: Sequence[Mapping[str, Any]], key: str, **filters: Any) -> float:
+    vals = []
+    for row in rows:
+        ok = True
+        for fkey, fval in filters.items():
+            if row.get(fkey) != fval:
+                ok = False
+                break
+        if ok:
+            v = _f(row, key)
+            if math.isfinite(v):
+                vals.append(v)
+    return safe_fmean(vals)
+
+
+def _max_dose_from_effects(rows: Sequence[Mapping[str, Any]]) -> float:
+    vals = sorted({_f(row, "dose_fraction") for row in rows if math.isfinite(_f(row, "dose_fraction"))})
+    vals = [v for v in vals if v > 0]
+    return vals[-1] if vals else max(STEERING_DOSE_FRACTIONS)
+
+
+def _all_traits_from_probe(rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    traits = sorted({str(row.get("trait")) for row in rows if row.get("trait") not in {None, ""}})
+    return traits
+
+
+def build_depth_control_gap_rows(probe_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    traits = _all_traits_from_probe(probe_rows)
+    depths = sorted({int(row["depth"]) for row in probe_rows if isinstance(row.get("depth"), int) or str(row.get("depth", "")).isdigit()})
+    for trait in traits:
+        for depth in depths:
+            for split_name in ("train_loo", "eval"):
+                real = _mean_where(probe_rows, "auc", trait=trait, depth=depth, probe_split=split_name, direction_kind="real")
+                shuf = _mean_where(probe_rows, "auc", trait=trait, depth=depth, probe_split=split_name, direction_kind="shuffled_sign")
+                rand = _mean_where(probe_rows, "auc", trait=trait, depth=depth, probe_split=split_name, direction_kind="random_oriented")
+                best_control = max(shuf if math.isfinite(shuf) else 0.5, rand if math.isfinite(rand) else 0.5)
+                rows.append({
+                    "trait": trait,
+                    "depth": depth,
+                    "probe_split": split_name,
+                    "real_auc": none_if_nan(real),
+                    "shuffled_auc": none_if_nan(shuf),
+                    "random_auc": none_if_nan(rand),
+                    "best_control_auc": rounded(best_control),
+                    "control_adjusted_auc_gap": none_if_nan(real - best_control),
+                    "claim_hint": "candidate_depth" if split_name == "train_loo" and math.isfinite(real - best_control) and real - best_control >= MIN_SELECTIVITY_GAP else "report_only",
+                })
+    return rows
+
+
+def build_steering_operating_points(steering_effects: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    traits = sorted({str(row.get("trait")) for row in steering_effects if row.get("trait")})
+    for trait in traits:
+        doses = sorted({_f(row, "dose_fraction") for row in steering_effects if row.get("trait") == trait and math.isfinite(_f(row, "dose_fraction"))})
+        for dose in doses:
+            control_vals = []
+            for ctl in ("random_direction", "shuffled_sign_direction", "opposite_direction"):
+                val = _mean_where(steering_effects, "style_margin_delta_vs_baseline", trait=trait, steering_condition=ctl, dose_fraction=dose)
+                if math.isfinite(val):
+                    control_vals.append(val)
+            best_control = max(control_vals) if control_vals else 0.0
+            for condition in sorted({str(row.get("steering_condition")) for row in steering_effects if row.get("trait") == trait and _f(row, "dose_fraction") == dose}):
+                sub = [row for row in steering_effects if row.get("trait") == trait and row.get("steering_condition") == condition and _f(row, "dose_fraction") == dose]
+                style = safe_fmean([_f(row, "style_margin_delta_vs_baseline") for row in sub])
+                content = safe_fmean([_f(row, "content_hit_delta_vs_baseline") for row in sub])
+                private = safe_fmean([_f(row, "private_experience_rate") for row in sub])
+                repetition = safe_fmean([_f(row, "mean_repetition_rate") for row in sub])
+                rows.append({
+                    "trait": trait,
+                    "steering_condition": condition,
+                    "dose_fraction": rounded(dose),
+                    "style_margin_delta": none_if_nan(style),
+                    "best_control_style_delta_at_same_dose": rounded(best_control),
+                    "specificity_gap_vs_best_control": none_if_nan(style - best_control),
+                    "content_hit_delta": none_if_nan(content),
+                    "content_damage": none_if_nan(max(0.0, -content) if math.isfinite(content) else float("nan")),
+                    "private_experience_rate": none_if_nan(private),
+                    "mean_repetition_rate": none_if_nan(repetition),
+                    "claimable_operating_point": bool(condition == "trait_direction" and math.isfinite(style - best_control) and (style - best_control) >= MIN_STEERING_SPECIFICITY_GAP and (not math.isfinite(content) or content >= MIN_CONTENT_DELTA)),
+                })
+    return rows
+
+
+def build_trait_evidence_matrix(
+    probe_rows: Sequence[Mapping[str, Any]],
+    steering_effects: Sequence[Mapping[str, Any]],
+    turn_slopes: Sequence[Mapping[str, Any]],
+    best_depth: int,
+) -> list[dict[str, Any]]:
+    max_dose = _max_dose_from_effects(steering_effects)
+    trace_map = {
+        "character_museum_guide": ("museum_roleplay", "persona_museum_guide", "cumulative_projection"),
+        "technical_register": ("register_switch", "technical_register", "content_boundary_projection"),
+        "warm_supportive_voice": ("museum_roleplay", "warm_supportive_voice", "cumulative_projection"),
+        "honest_disagreement": ("roleplay_boundary", "honest_correction", "content_boundary_projection"),
+    }
+    rows: list[dict[str, Any]] = []
+    for trait in _all_traits_from_probe(probe_rows):
+        real = _mean_where(probe_rows, "auc", trait=trait, depth=best_depth, probe_split="eval", direction_kind="real")
+        shuf = _mean_where(probe_rows, "auc", trait=trait, depth=best_depth, probe_split="eval", direction_kind="shuffled_sign")
+        rand = _mean_where(probe_rows, "auc", trait=trait, depth=best_depth, probe_split="eval", direction_kind="random_oriented")
+        best_control = max(shuf if math.isfinite(shuf) else 0.5, rand if math.isfinite(rand) else 0.5)
+        style = _mean_where(steering_effects, "style_margin_delta_vs_baseline", trait=trait, steering_condition="trait_direction", dose_fraction=max_dose)
+        shuf_s = _mean_where(steering_effects, "style_margin_delta_vs_baseline", trait=trait, steering_condition="shuffled_sign_direction", dose_fraction=max_dose)
+        rand_s = _mean_where(steering_effects, "style_margin_delta_vs_baseline", trait=trait, steering_condition="random_direction", dose_fraction=max_dose)
+        opp_s = _mean_where(steering_effects, "style_margin_delta_vs_baseline", trait=trait, steering_condition="opposite_direction", dose_fraction=max_dose)
+        best_steer_control = max([v for v in (shuf_s, rand_s, opp_s) if math.isfinite(v)] or [0.0])
+        content = _mean_where(steering_effects, "content_hit_delta_vs_baseline", trait=trait, steering_condition="trait_direction", dose_fraction=max_dose)
+        private = _mean_where(steering_effects, "private_experience_rate", trait=trait, steering_condition="trait_direction", dose_fraction=max_dose)
+        repetition = _mean_where(steering_effects, "mean_repetition_rate", trait=trait, steering_condition="trait_direction", dose_fraction=max_dose)
+        trace_conv, trace_dir, trace_measure = trace_map.get(trait, ("", "", "cumulative_projection"))
+        trace = trace_slope(turn_slopes, trace_conv, trace_dir, projection_measure=trace_measure) if trace_conv else float("nan")
+        trace_null = trace_slope(turn_slopes, trace_conv, "random_null", projection_measure=trace_measure) if trace_conv else float("nan")
+        selectivity_gap = real - best_control
+        steering_gap = style - best_steer_control
+        if math.isfinite(selectivity_gap) and selectivity_gap >= MIN_SELECTIVITY_GAP and math.isfinite(steering_gap) and steering_gap >= MIN_STEERING_SPECIFICITY_GAP and (not math.isfinite(content) or content >= MIN_CONTENT_DELTA):
+            posture = "controlled_style_handle"
+        elif math.isfinite(selectivity_gap) and selectivity_gap >= MIN_SELECTIVITY_GAP:
+            posture = "decodable_not_yet_causal"
+        elif math.isfinite(steering_gap) and steering_gap >= MIN_STEERING_SPECIFICITY_GAP:
+            posture = "steering_effect_needs_decode_controls"
+        else:
+            posture = "not_validated"
+        rows.append({
+            "trait": trait,
+            "best_depth": best_depth,
+            "eval_real_auc": none_if_nan(real),
+            "eval_best_control_auc": rounded(best_control),
+            "decode_gap_vs_best_control": none_if_nan(selectivity_gap),
+            "max_dose": rounded(max_dose),
+            "trait_style_delta": none_if_nan(style),
+            "best_control_style_delta": none_if_nan(best_steer_control),
+            "steering_gap_vs_best_control": none_if_nan(steering_gap),
+            "content_hit_delta": none_if_nan(content),
+            "private_experience_rate": none_if_nan(private),
+            "mean_repetition_rate": none_if_nan(repetition),
+            "trace_slope": none_if_nan(trace),
+            "trace_random_slope": none_if_nan(trace_null),
+            "trace_gap_vs_random": none_if_nan(trace - trace_null if math.isfinite(trace) and math.isfinite(trace_null) else float("nan")),
+            "claim_posture": posture,
+        })
+    return rows
+
+
+def build_trace_evidence_rows(turn_slopes: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for conv in sorted({str(row.get("conversation")) for row in turn_slopes if row.get("conversation")}):
+        for measure in sorted({str(row.get("projection_measure")) for row in turn_slopes if row.get("conversation") == conv and row.get("projection_measure")}):
+            random_slope = _mean_where(turn_slopes, "projection_slope", conversation=conv, direction="random_null", projection_measure=measure)
+            for direction in sorted({str(row.get("direction")) for row in turn_slopes if row.get("conversation") == conv and row.get("projection_measure") == measure and row.get("direction")}):
+                slope_val = _mean_where(turn_slopes, "projection_slope", conversation=conv, direction=direction, projection_measure=measure)
+                delta = _mean_where(turn_slopes, "projection_delta", conversation=conv, direction=direction, projection_measure=measure)
+                rows.append({
+                    "conversation": conv,
+                    "direction": direction,
+                    "projection_measure": measure,
+                    "projection_slope": none_if_nan(slope_val),
+                    "projection_delta": none_if_nan(delta),
+                    "random_null_slope": none_if_nan(random_slope),
+                    "gap_vs_random_null": none_if_nan(slope_val - random_slope if math.isfinite(slope_val) and math.isfinite(random_slope) else float("nan")),
+                    "trace_claim_posture": "candidate_trace" if direction != "random_null" and math.isfinite(slope_val - random_slope) and abs(slope_val - random_slope) > 0.03 else "weak_or_null",
+                })
+    return rows
+
+
+def build_direction_confound_risks(cos_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    control_words = ("sentiment", "refusal", "random", "control", "default", "casual", "direct", "agreeable")
+    directions = sorted({str(row.get("direction_a")) for row in cos_rows if row.get("direction_a")})
+    rows: list[dict[str, Any]] = []
+    for name in directions:
+        others = [row for row in cos_rows if row.get("direction_a") == name and row.get("direction_b") != name]
+        nearest = max(others, key=lambda r: abs(_f(r, "cosine", 0.0)), default=None)
+        confs = [row for row in others if any(w in str(row.get("direction_b", "")) for w in control_words)]
+        nearest_conf = max(confs, key=lambda r: abs(_f(r, "cosine", 0.0)), default=None)
+        conf_val = abs(_f(nearest_conf, "cosine", float("nan"))) if nearest_conf else float("nan")
+        rows.append({
+            "direction": name,
+            "nearest_direction": nearest.get("direction_b") if nearest else "",
+            "nearest_abs_cosine": none_if_nan(abs(_f(nearest, "cosine", float("nan"))) if nearest else float("nan")),
+            "nearest_control_or_style_direction": nearest_conf.get("direction_b") if nearest_conf else "",
+            "nearest_control_abs_cosine": none_if_nan(conf_val),
+            "confound_risk": "high" if math.isfinite(conf_val) and conf_val >= 0.70 else ("medium" if math.isfinite(conf_val) and conf_val >= 0.45 else "low"),
+        })
+    return rows
+
+
+def write_plot_reading_guide(ctx: bench.RunContext) -> None:
+    rows = [
+        {"plot": "persona_evidence_dashboard.png", "read_for": "one-screen verdict: decode, steering, trace, and confound risk", "claim_boundary": "do not call a style handle a real identity"},
+        {"plot": "trait_evidence_matrix.png", "read_for": "per-trait evidence posture and which handles survive controls", "claim_boundary": "one strong trait does not validate every persona/register axis"},
+        {"plot": "depth_control_gap_atlas.png", "read_for": "where real probe AUC beats shuffled/random controls", "claim_boundary": "depth selection must be train-side and control-adjusted"},
+        {"plot": "persona_probe_selectivity.png", "read_for": "depth curves with train/eval and controls", "claim_boundary": "AUC above chance is not enough if controls travel with it"},
+        {"plot": "persona_steering_dose_response.png", "read_for": "dose response for trait/opposite/random/shuffled steering", "claim_boundary": "activation addition earns only a scoped behavior handle"},
+        {"plot": "steering_operating_frontier.png", "read_for": "style movement versus content, repetition, and private-experience costs", "claim_boundary": "largest dose is not automatically best"},
+        {"plot": "generation_style_atlas.png", "read_for": "trait-by-dose style and content deltas", "claim_boundary": "aggregate steering can hide one fragile trait"},
+        {"plot": "direction_cosine_heatmap.png", "read_for": "which directions collapse into style, sentiment, refusal, or agreement controls", "claim_boundary": "cosine structure is an audit, not mechanism"},
+        {"plot": "direction_confound_risk.png", "read_for": "nearest style/control neighbors for every saved direction", "claim_boundary": "high cosine to a confound narrows the claim"},
+        {"plot": "persona_trace_projection_atlas.png", "read_for": "turn-by-turn projection patterns across scripted conversations", "claim_boundary": "multi-turn traces are descriptive unless nulls and boundary checks pass"},
+        {"plot": "trace_evidence_atlas.png", "read_for": "slope gaps versus random-null by conversation and direction", "claim_boundary": "a rising trace in every conversation may be template/length residue"},
+        {"plot": "refusal_boundary_safety_dashboard.png", "read_for": "refusal-monitor stability under benign roleplay", "claim_boundary": "monitor only; no refusal-eliciting generation or ablation"},
+    ]
+    path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "guide", "Reading guide for upgraded Lab 17 visual artifacts.")
+
+
+def write_visual_synthesis_tables(
+    ctx: bench.RunContext,
+    items: Sequence[PersonaPair],
+    probe_rows: Sequence[Mapping[str, Any]],
+    depth_rows: Sequence[Mapping[str, Any]],
+    best_depth: int,
+    steering_effects: Sequence[Mapping[str, Any]],
+    steering_generations: Sequence[Mapping[str, Any]],
+    cos_rows: Sequence[Mapping[str, Any]],
+    turn_slopes: Sequence[Mapping[str, Any]],
+    turn_rows: Sequence[Mapping[str, Any]],
+    trace_depth_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    depth_gap_rows = build_depth_control_gap_rows(probe_rows)
+    trait_rows = build_trait_evidence_matrix(probe_rows, steering_effects, turn_slopes, best_depth)
+    operating_rows = build_steering_operating_points(steering_effects)
+    trace_rows = build_trace_evidence_rows(turn_slopes)
+    confound_rows = build_direction_confound_risks(cos_rows)
+
+    outputs = {
+        "depth_control_gap_rows": depth_gap_rows,
+        "trait_evidence_rows": trait_rows,
+        "steering_operating_rows": operating_rows,
+        "trace_evidence_rows": trace_rows,
+        "direction_confound_rows": confound_rows,
+    }
+    specs = [
+        ("probe_depth_control_gaps.csv", depth_gap_rows, "Real-minus-best-control probe gaps by trait, split, and depth."),
+        ("persona_trait_evidence_matrix.csv", trait_rows, "Per-trait decode/steering/trace/control posture for Lab 17."),
+        ("persona_steering_operating_points.csv", operating_rows, "Dose-level operating points with specificity, content, repetition, and private-experience costs."),
+        ("persona_trace_evidence.csv", trace_rows, "Trace slopes and gaps versus random-null by conversation, direction, and projection measure."),
+        ("persona_direction_confound_risks.csv", confound_rows, "Nearest direction/control cosine risks for persona/register/voice directions."),
+    ]
+    for filename, table_rows, desc in specs:
+        path = ctx.path("tables", filename)
+        bench.write_csv_with_context(ctx, path, table_rows)
+        ctx.register_artifact(path, "table", desc)
+    write_plot_reading_guide(ctx)
+    return outputs
+
+
+def _matrix_from_rows(rows: Sequence[Mapping[str, Any]], row_key: str, col_key: str, value_key: str) -> tuple[list[str], list[str], list[list[float]]]:
+    row_names = sorted({str(row.get(row_key)) for row in rows if row.get(row_key) not in {None, ""}})
+    col_names = sorted({str(row.get(col_key)) for row in rows if row.get(col_key) not in {None, ""}}, key=lambda x: (float(x) if re.fullmatch(r"-?\d+(\.\d+)?", x) else x))
+    mat = [[float("nan") for _ in col_names] for _ in row_names]
+    rix = {r: i for i, r in enumerate(row_names)}
+    cix = {c: i for i, c in enumerate(col_names)}
+    for row in rows:
+        r = str(row.get(row_key))
+        c = str(row.get(col_key))
+        if r in rix and c in cix:
+            v = _f(row, value_key)
+            if math.isfinite(v):
+                mat[rix[r]][cix[c]] = v
+    return row_names, col_names, mat
+
+
+def _imshow_with_numbers(ax: Any, mat: Sequence[Sequence[float]], *, fmt: str = ".2f", color_threshold: float | None = None) -> None:
+    import numpy as np
+    arr = np.array(mat, dtype=float)
+    finite = arr[np.isfinite(arr)]
+    if color_threshold is None:
+        color_threshold = float(np.nanmean(finite)) if finite.size else 0.0
+    for i in range(arr.shape[0]):
+        for j in range(arr.shape[1]):
+            v = arr[i, j]
+            if math.isfinite(float(v)):
+                ax.text(j, i, format(float(v), fmt), ha="center", va="center", fontsize=7.0,
+                        color="white" if abs(float(v)) > abs(color_threshold) else "#222222")
+
+
+def plot_probe_selectivity(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(1, 2, figsize=(12.0, 4.8), sharey=True)
+    for ax, split_name, title in zip(axes, ("train_loo", "eval"), ("train-side selection rail", "held-out report rail")):
+        for kind, label in (("real", "real direction"), ("shuffled_sign", "shuffled-label control"), ("random_oriented", "random-direction control")):
+            pts = mean_probe_by_depth(rows, split_name, kind)
+            if not pts:
+                continue
+            color = _lab17_color(kind)
+            ax.plot([p[0] for p in pts], [p[1] for p in pts], marker=_lab17_marker(kind), linewidth=2.0, label=label, color=color)
+            if hasattr(bench, "label_line_end"):
+                bench.label_line_end(ax, [p[0] for p in pts], [p[1] for p in pts], label.replace(" control", ""), color=color)
+        ax.axhline(0.5, linewidth=1.0, alpha=0.6, color="#333333", linestyle=":")
+        ax.axvline(best_depth, linewidth=1.0, alpha=0.7, color=_lab17_color("persona"), linestyle="--")
+        ax.set_title(title)
+        ax.set_xlabel("stream depth")
+        bench.style_ax(ax, legend=False)
+    axes[0].set_ylabel("mean AUC across traits")
+    handles, labels = axes[1].get_legend_handles_labels()
+    if handles:
+        fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False)
+    fig.suptitle("Persona/register/voice probe selectivity: selection rail separated from report rail")
+    fig.tight_layout(rect=[0, 0, 1, 0.90])
+    bench.save_figure(ctx, fig, "persona_probe_selectivity.png", "Probe AUC by stream depth, split, and control family, with depth selection separated from held-out reporting.")
+
+
+def plot_depth_control_gap_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    eval_rows = [row for row in rows if row.get("probe_split") == "eval"]
+    traits, depths, mat = _matrix_from_rows(eval_rows, "trait", "depth", "control_adjusted_auc_gap")
+    if not traits or not depths:
+        return
+    arr = np.array(mat, dtype=float)
+    fig, ax = plt.subplots(figsize=(max(9.5, 0.32 * len(depths) + 4.0), max(4.6, 0.45 * len(traits) + 1.8)))
+    im = ax.imshow(arr, aspect="auto", cmap="RdBu_r", vmin=-0.35, vmax=0.35)
+    ax.set_xticks(range(len(depths)))
+    ax.set_xticklabels(depths, rotation=0, fontsize=7)
+    ax.set_yticks(range(len(traits)))
+    ax.set_yticklabels(traits)
+    if str(best_depth) in depths:
+        ax.axvline(depths.index(str(best_depth)), color="#111111", linestyle="--", linewidth=1.2, alpha=0.8)
+    _imshow_with_numbers(ax, arr, fmt=".2f", color_threshold=0.18)
+    fig.colorbar(im, ax=ax, fraction=0.032, pad=0.02, label="real AUC - best control AUC")
+    ax.set_xlabel("stream depth")
+    ax.set_title("Held-out decode gap atlas: real direction must beat random/shuffled controls")
+    bench.style_ax(ax, legend=False)
+    bench.save_figure(ctx, fig, "depth_control_gap_atlas.png", "Trait-by-depth atlas of held-out probe AUC gap over the strongest control.")
+
+
+def plot_persona_evidence_dashboard(
+    ctx: bench.RunContext,
+    depth_rows: Sequence[Mapping[str, Any]],
+    trait_rows: Sequence[Mapping[str, Any]],
+    operating_rows: Sequence[Mapping[str, Any]],
+    trace_rows: Sequence[Mapping[str, Any]],
+    confound_rows: Sequence[Mapping[str, Any]],
+    best_depth: int,
+) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    fig, axes = plt.subplots(2, 2, figsize=(12.8, 8.5))
+    ax = axes[0, 0]
+    train = [row for row in depth_rows if row.get("probe_split") == "train_loo"]
+    eval_ = [row for row in depth_rows if row.get("probe_split") == "eval"]
+    for rows_, label, ls in ((train, "train-control gap", "--"), (eval_, "held-out control gap", "-")):
+        depths = sorted({_f(row, "depth") for row in rows_ if math.isfinite(_f(row, "depth"))})
+        pts = []
+        for d in depths:
+            vals = [_f(row, "control_adjusted_auc_gap") for row in rows_ if _f(row, "depth") == d]
+            pts.append((d, safe_fmean(vals)))
+        if pts:
+            ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", linewidth=2.0, linestyle=ls, label=label)
+    ax.axhline(MIN_SELECTIVITY_GAP, color="#222222", linestyle=":", linewidth=1.0, label="decode bar")
+    ax.axvline(best_depth, color=_lab17_color("persona"), linestyle="--", linewidth=1.2, label=f"chosen depth {best_depth}")
+    bench.style_ax(ax, title="Decode gap over depth", xlabel="stream depth", ylabel="mean real - best control AUC")
+
+    ax = axes[0, 1]
+    for row in trait_rows:
+        x = _f(row, "steering_gap_vs_best_control")
+        y = _f(row, "content_hit_delta")
+        if math.isfinite(x) and math.isfinite(y):
+            ax.scatter(x, y, s=120, color=_lab17_color(str(row.get("trait"))), marker=_lab17_marker(str(row.get("trait"))), edgecolor="#222222", linewidth=0.6)
+            ax.text(x, y, str(row.get("trait", "")).replace("_", "\n"), fontsize=7, ha="center", va="bottom")
+    ax.axvline(MIN_STEERING_SPECIFICITY_GAP, color="#222222", linestyle=":", linewidth=1.0, label="steering bar")
+    ax.axhline(MIN_CONTENT_DELTA, color="#777777", linestyle="--", linewidth=1.0, label="content floor")
+    bench.style_ax(ax, title="Steering specificity vs task preservation", xlabel="style delta beyond best control", ylabel="content-hit delta")
+
+    ax = axes[1, 0]
+    keep = [row for row in trace_rows if row.get("projection_measure") in {"cumulative_projection", "content_boundary_projection"} and row.get("direction") != "random_null"]
+    keep = sorted(keep, key=lambda r: abs(_f(r, "gap_vs_random_null", 0.0)), reverse=True)[:10]
+    labels = [f"{row.get('conversation')}\n{row.get('direction')}" for row in keep][::-1]
+    vals = [_f(row, "gap_vs_random_null", 0.0) for row in keep][::-1]
+    colors = [_lab17_color(str(row.get("direction"))) for row in keep][::-1]
+    ax.barh(range(len(vals)), vals, color=colors, alpha=0.9)
+    ax.set_yticks(range(len(vals)))
+    ax.set_yticklabels(labels, fontsize=7)
+    ax.axvline(0, color="#222222", linewidth=0.8)
+    bench.style_ax(ax, title="Largest trace gaps vs random null", xlabel="projection slope gap", ylabel="")
+
+    ax = axes[1, 1]
+    dirs = [str(row.get("direction")) for row in confound_rows]
+    vals = [_f(row, "nearest_control_abs_cosine", 0.0) for row in confound_rows]
+    order = sorted(range(len(dirs)), key=lambda i: vals[i])
+    ax.barh(range(len(order)), [vals[i] for i in order], color=[_lab17_color("warning" if vals[i] >= 0.45 else "positive") for i in order])
+    ax.set_yticks(range(len(order)))
+    ax.set_yticklabels([dirs[i] for i in order], fontsize=7)
+    ax.axvline(0.45, color="#E69F00", linestyle=":", linewidth=1.0, label="audit bar")
+    ax.axvline(0.70, color="#D55E00", linestyle="--", linewidth=1.0, label="high-risk bar")
+    bench.style_ax(ax, title="Nearest style/control cosine risk", xlabel="abs cosine", ylabel="")
+    fig.suptitle("Lab 17 persona/register/voice evidence dashboard")
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    bench.save_figure(ctx, fig, "persona_evidence_dashboard.png", "Dashboard combining decode controls, steering specificity, multi-turn trace gaps, and confound cosine risk.")
+
+
+def plot_trait_evidence_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    if not rows:
+        return
+    cols = [
+        ("decode_gap_vs_best_control", "decode\ngap"),
+        ("steering_gap_vs_best_control", "steering\ngap"),
+        ("content_hit_delta", "content\ndelta"),
+        ("private_experience_rate", "private\nrate"),
+        ("trace_gap_vs_random", "trace\ngap"),
+    ]
+    traits = [str(row.get("trait")) for row in rows]
+    mat = [[_f(row, key) for key, _ in cols] for row in rows]
+    arr = np.array(mat, dtype=float)
+    fig, ax = plt.subplots(figsize=(8.8, max(4.4, 0.55 * len(rows) + 1.8)))
+    im = ax.imshow(arr, aspect="auto", cmap="RdBu_r", vmin=-0.35, vmax=0.35)
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels([label for _, label in cols])
+    ax.set_yticks(range(len(traits)))
+    ax.set_yticklabels(traits)
+    _imshow_with_numbers(ax, arr, fmt=".2f", color_threshold=0.22)
+    for i, row in enumerate(rows):
+        posture = str(row.get("claim_posture", ""))
+        color = _lab17_color("positive" if posture == "controlled_style_handle" else ("warning" if "decodable" in posture or "steering" in posture else "failed"))
+        ax.text(len(cols) - 0.02, i, "  " + posture.replace("_", " "), va="center", ha="left", fontsize=7, color=color)
+    fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label="signed evidence metric")
+    ax.set_title("Trait evidence matrix: decode, steering, task cost, and trace")
+    bench.style_ax(ax, legend=False)
+    bench.save_figure(ctx, fig, "trait_evidence_matrix.png", "Per-trait evidence matrix for persona/register/voice handles and controls.")
+
+
+def plot_steering_dose_response(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    fig, ax = bench.new_figure(figsize=(9.8, 5.4))
+    order = ("trait_direction", "opposite_direction", "shuffled_sign_direction", "random_direction")
+    for condition in order:
+        pts = []
+        for dose in sorted({_f(row, "dose_fraction") for row in rows if row.get("steering_condition") == condition and math.isfinite(_f(row, "dose_fraction"))}):
+            vals = [_f(row, "style_margin_delta_vs_baseline") for row in rows if row.get("steering_condition") == condition and _f(row, "dose_fraction") == dose]
+            pts.append((dose, safe_fmean(vals)))
+        if pts:
+            color = _lab17_color(condition)
+            ax.plot([p[0] for p in pts], [p[1] for p in pts], marker=_lab17_marker(condition), linewidth=2.2, color=color, label=condition.replace("_", " "))
+            if hasattr(bench, "label_line_end"):
+                bench.label_line_end(ax, [p[0] for p in pts], [p[1] for p in pts], condition.replace("_direction", ""), color=color)
+    ax.axhline(0.0, linewidth=1.0, alpha=0.55, color="#222222")
+    ax.set_xlabel("dose fraction of mean residual norm")
+    ax.set_ylabel("style-marker margin delta vs baseline")
+    ax.set_title("Steering dose response: the trait vector must separate from controls")
+    bench.style_ax(ax)
+    bench.save_figure(ctx, fig, "persona_steering_dose_response.png", "Style-marker dose response for trait, opposite, shuffled, and random steering.")
+
+
+def plot_steering_operating_frontier(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(8.8, 5.6))
+    for row in rows:
+        if row.get("steering_condition") == "baseline":
+            continue
+        x = _f(row, "specificity_gap_vs_best_control")
+        y = _f(row, "content_damage")
+        if not math.isfinite(x) or not math.isfinite(y):
+            continue
+        cond = str(row.get("steering_condition"))
+        trait = str(row.get("trait"))
+        size = 70 + 250 * max(0.0, _f(row, "private_experience_rate", 0.0))
+        ax.scatter(x, y, s=size, color=_lab17_color(cond), marker=_lab17_marker(trait), alpha=0.82, edgecolor="#222222", linewidth=0.5)
+        if cond == "trait_direction":
+            ax.text(x, y, trait.replace("_", "\n"), fontsize=7, ha="center", va="bottom")
+    ax.axvline(MIN_STEERING_SPECIFICITY_GAP, color="#222222", linestyle=":", linewidth=1.0, label="specificity bar")
+    ax.axhline(max(0.0, -MIN_CONTENT_DELTA), color="#777777", linestyle="--", linewidth=1.0, label="content-cost ceiling")
+    ax.set_xlabel("style specificity over strongest control")
+    ax.set_ylabel("content damage = max(0, -content delta)")
+    ax.set_title("Steering operating frontier: move style without shredding the answer")
+    bench.style_ax(ax)
+    bench.save_figure(ctx, fig, "steering_operating_frontier.png", "Dose operating frontier for persona/register steering specificity versus content and boundary costs.")
+
+
+def plot_generation_style_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    trait_rows = [row for row in rows if row.get("steering_condition") == "trait_direction"]
+    if not trait_rows:
+        return
+    traits = sorted({str(row.get("trait")) for row in trait_rows})
+    doses = sorted({_f(row, "dose_fraction") for row in trait_rows if math.isfinite(_f(row, "dose_fraction"))})
+    fig, axes = plt.subplots(1, 2, figsize=(12.0, max(4.5, 0.55 * len(traits) + 1.7)), sharey=True)
+    for ax, key, title, vmin, vmax, cmap in (
+        (axes[0], "style_margin_delta", "style delta", -0.5, 1.0, "RdBu_r"),
+        (axes[1], "content_hit_delta", "content delta", -0.5, 0.5, "RdBu_r"),
+    ):
+        mat = []
+        for trait in traits:
+            rowvals = []
+            for dose in doses:
+                val = safe_fmean([_f(row, key) for row in trait_rows if row.get("trait") == trait and _f(row, "dose_fraction") == dose])
+                rowvals.append(val)
+            mat.append(rowvals)
+        arr = np.array(mat, dtype=float)
+        im = ax.imshow(arr, aspect="auto", cmap=cmap, vmin=vmin, vmax=vmax)
+        ax.set_xticks(range(len(doses)))
+        ax.set_xticklabels([str(rounded(d)) for d in doses])
+        ax.set_yticks(range(len(traits)))
+        ax.set_yticklabels(traits)
+        _imshow_with_numbers(ax, arr, fmt=".2f", color_threshold=0.35)
+        ax.set_title(title)
+        ax.set_xlabel("dose")
+        fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
+        bench.style_ax(ax, legend=False)
+    fig.suptitle("Trait-direction generation atlas: style movement and content preservation")
+    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    bench.save_figure(ctx, fig, "generation_style_atlas.png", "Trait-by-dose atlas of style-marker and content-keyword deltas under trait-direction steering.")
+
+
+def plot_style_content_tradeoff(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(8.8, 5.8))
+    max_dose = _max_dose_from_effects(rows)
+    for row in rows:
+        if _f(row, "dose_fraction") != max_dose or row.get("steering_condition") == "baseline":
+            continue
+        x = _f(row, "style_margin_delta_vs_baseline")
+        y = _f(row, "content_hit_delta_vs_baseline")
+        if not math.isfinite(x) or not math.isfinite(y):
+            continue
+        cond = str(row.get("steering_condition"))
+        trait = str(row.get("trait"))
+        ax.scatter(x, y, s=105 if cond == "trait_direction" else 65, color=_lab17_color(cond), marker=_lab17_marker(trait), alpha=0.85, edgecolor="#222222", linewidth=0.55, label=cond.replace("_", " ") if cond not in ax.get_legend_handles_labels()[1] else None)
+        if cond == "trait_direction":
+            ax.text(x, y, trait.replace("_", "\n"), fontsize=7, ha="center", va="bottom")
+    ax.axhline(MIN_CONTENT_DELTA, linewidth=1.0, alpha=0.65, color="#777777", linestyle="--", label="content floor")
+    ax.axvline(0.0, linewidth=1.0, alpha=0.55, color="#222222")
+    ax.set_xlabel(f"style-marker delta at max dose ({rounded(max_dose)})")
+    ax.set_ylabel("content-hit delta at max dose")
+    ax.set_title("Content vs style: handles must preserve the task")
+    bench.style_ax(ax)
+    bench.save_figure(ctx, fig, "style_content_tradeoff.png", "Style movement versus content preservation by trait and steering control.")
+
+
+def plot_direction_cosines(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    names = sorted({str(row["direction_a"]) for row in rows})
+    if not names:
+        return
+    idx = {name: i for i, name in enumerate(names)}
+    matrix = [[float("nan") for _ in names] for _ in names]
+    for row in rows:
+        a = str(row["direction_a"]); b = str(row["direction_b"])
+        matrix[idx[a]][idx[b]] = _f(row, "cosine")
+    arr = np.array(matrix, dtype=float)
+    fig, ax = plt.subplots(figsize=(max(7.5, 0.58 * len(names)), max(6.0, 0.55 * len(names))))
+    im = ax.imshow(arr, vmin=-1, vmax=1, cmap="RdBu_r")
+    ax.set_xticks(range(len(names)))
+    ax.set_yticks(range(len(names)))
+    ax.set_xticklabels(names, rotation=45, ha="right", fontsize=8)
+    ax.set_yticklabels(names, fontsize=8)
+    _imshow_with_numbers(ax, arr, fmt=".2f", color_threshold=0.55)
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="cosine")
+    ax.set_title("Direction cosine audit: persona/register handles vs style and safety controls")
+    bench.style_ax(ax, legend=False)
+    bench.save_figure(ctx, fig, "direction_cosine_heatmap.png", "Cosine map among persona, register, voice, agreement, sentiment, and refusal directions.")
+
+
+def plot_direction_confound_risk(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(8.8, max(4.6, 0.42 * len(rows) + 1.5)))
+    rows = sorted(rows, key=lambda r: _f(r, "nearest_control_abs_cosine", 0.0))
+    vals = [_f(row, "nearest_control_abs_cosine", 0.0) for row in rows]
+    labels = [str(row.get("direction")) + ("\n→ " + str(row.get("nearest_control_or_style_direction")) if row.get("nearest_control_or_style_direction") else "") for row in rows]
+    colors = [_lab17_color("failed" if v >= 0.70 else ("warning" if v >= 0.45 else "positive")) for v in vals]
+    ax.barh(range(len(rows)), vals, color=colors, alpha=0.9)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels(labels, fontsize=7)
+    ax.axvline(0.45, color="#E69F00", linestyle=":", linewidth=1.0, label="medium risk")
+    ax.axvline(0.70, color="#D55E00", linestyle="--", linewidth=1.0, label="high risk")
+    ax.set_xlabel("nearest abs cosine to style/safety/control direction")
+    ax.set_title("Direction confound risk: when persona geometry collapses into a cheaper axis")
+    bench.style_ax(ax)
+    bench.save_figure(ctx, fig, "direction_confound_risk.png", "Nearest-control cosine risk for each persona/register/voice direction.")
+
+
+def plot_persona_turn_trace(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(9.4, 5.6))
+    styles = {
+        ("museum_roleplay", "persona_museum_guide"): (_lab17_color("persona_museum_guide"), "-", "roleplay: museum guide"),
+        ("museum_roleplay", "default_assistant_control"): (_lab17_color("default_assistant_control"), "--", "roleplay: default-control"),
+        ("museum_roleplay", "sentiment_style_control"): (_lab17_color("sentiment_style_control"), ":", "roleplay: sentiment control"),
+        ("museum_roleplay", "random_null"): (_lab17_color("random_null"), ":", "roleplay: random null"),
+        ("default_control", "persona_museum_guide"): (_lab17_color("real"), "--", "default transcript: museum direction"),
+    }
+    for (conv, direction), (color, linestyle, label) in styles.items():
+        sub = sorted([row for row in rows if row["conversation"] == conv and row["direction"] == direction and row["role"] != "system"], key=lambda r: _f(r, "turn_index_non_system", 0.0))
+        if not sub:
+            continue
+        xs = [_f(row, "turn_index_non_system") for row in sub]
+        ys = [_f(row, "cumulative_projection") for row in sub]
+        ax.plot(xs, ys, marker="o", color=color, linestyle=linestyle, linewidth=2.0, label=label)
+    ax.set_xlabel("message boundary (system excluded)")
+    ax.set_ylabel("cumulative mean projection")
+    ax.set_title("Persona trace: sustained roleplay versus default and null rails")
+    bench.style_ax(ax)
+    bench.save_figure(ctx, fig, "persona_turn_trace.png", "Museum-guide persona projection over scripted turns with default, sentiment, and random controls.")
+
+
+def plot_register_switch_trace(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(9.4, 5.6))
+    styles = {
+        "technical_register": (_lab17_color("technical_register"), "-", "technical register"),
+        "casual_register_control": (_lab17_color("warm_supportive_voice"), "--", "casual-register control"),
+        "sentiment_style_control": (_lab17_color("sentiment_style_control"), ":", "sentiment control"),
+        "random_null": (_lab17_color("random_null"), ":", "random null"),
+    }
+    for direction, (color, linestyle, label) in styles.items():
+        sub = sorted([row for row in rows if row["conversation"] == "register_switch" and row["direction"] == direction and row["role"] != "system"], key=lambda r: _f(r, "turn_index_non_system", 0.0))
+        if not sub:
+            continue
+        ax.plot([_f(row, "turn_index_non_system") for row in sub], [_f(row, "content_boundary_projection") for row in sub], marker="o", color=color, linestyle=linestyle, linewidth=2.0, label=label)
+    ax.set_xlabel("message boundary (system excluded)")
+    ax.set_ylabel("content-boundary projection")
+    ax.set_title("Register switch trace: projection should move after the explicit switch")
+    bench.style_ax(ax)
+    bench.save_figure(ctx, fig, "register_switch_trace.png", "Technical/casual register projection through a scripted switch.")
+
+
+def plot_refusal_projection(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    fig, ax = bench.new_figure(figsize=(9.4, 5.6))
+    styles = {
+        ("roleplay_boundary", "refusal_monitor"): (_lab17_color("refusal_monitor"), "-", "refusal monitor"),
+        ("roleplay_boundary", "persona_museum_guide"): (_lab17_color("persona_museum_guide"), "--", "persona"),
+        ("roleplay_boundary", "sentiment_style_control"): (_lab17_color("sentiment_style_control"), ":", "sentiment control"),
+        ("roleplay_boundary", "random_null"): (_lab17_color("random_null"), ":", "random null"),
+    }
+    for (conv, direction), (color, linestyle, label) in styles.items():
+        sub = sorted([row for row in rows if row["conversation"] == conv and row["direction"] == direction and row["role"] != "system"], key=lambda r: _f(r, "turn_index_non_system", 0.0))
+        if not sub:
+            continue
+        ax.plot([_f(row, "turn_index_non_system") for row in sub], [_f(row, "content_boundary_projection") for row in sub], marker="o", color=color, linestyle=linestyle, linewidth=2.0, label=label)
+    ax.set_xlabel("message boundary (system excluded)")
+    ax.set_ylabel("content-boundary projection")
+    ax.set_title("Refusal monitor under benign roleplay: diagnostic, not jailbreak search")
+    bench.style_ax(ax)
+    bench.save_figure(ctx, fig, "refusal_projection_under_roleplay.png", "Refusal-monitor projection in a benign roleplay boundary conversation.")
+
+
+def plot_trace_depth_sweep(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
+    fig, ax = bench.new_figure(figsize=(9.6, 5.4))
+    for conv, direction, label in (
+        ("museum_roleplay", "persona_museum_guide", "roleplay persona"),
+        ("museum_roleplay", "random_null", "roleplay random"),
+        ("register_switch", "technical_register", "register switch"),
+        ("roleplay_boundary", "refusal_monitor", "refusal boundary"),
+    ):
+        sub = sorted([row for row in rows if row.get("conversation") == conv and row.get("direction") == direction], key=lambda r: _f(r, "projection_stream_depth", 0.0))
+        if not sub:
+            continue
+        color = _lab17_color(direction)
+        ax.plot([_f(row, "projection_stream_depth") for row in sub], [_f(row, "cumulative_projection_slope") for row in sub], marker="o", linewidth=2.0, label=label, color=color)
+    ax.axvline(best_depth, linewidth=1.0, alpha=0.7, color=_lab17_color("persona"), linestyle="--", label=f"fit depth {best_depth}")
+    ax.axhline(0.0, linewidth=1.0, alpha=0.5, color="#222222")
+    ax.set_xlabel("projection stream depth")
+    ax.set_ylabel("cumulative projection slope")
+    ax.set_title("Trace depth sweep: descriptive after the direction has already been chosen")
+    bench.style_ax(ax)
+    bench.save_figure(ctx, fig, "trace_depth_sweep.png", "Descriptive sweep of turn-trace slopes across stream depths.")
+
+
+def plot_trace_evidence_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    rows = [row for row in rows if row.get("projection_measure") in {"cumulative_projection", "content_boundary_projection"}]
+    if not rows:
+        return
+    labels = sorted({f"{row.get('conversation')}\n{row.get('direction')}" for row in rows})
+    measures = sorted({str(row.get("projection_measure")) for row in rows})
+    mat = []
+    for label in labels:
+        conv, direction = label.split("\n", 1)
+        mat.append([safe_fmean([_f(row, "gap_vs_random_null") for row in rows if row.get("conversation") == conv and row.get("direction") == direction and row.get("projection_measure") == measure]) for measure in measures])
+    arr = np.array(mat, dtype=float)
+    fig, ax = plt.subplots(figsize=(8.6, max(6.0, 0.22 * len(labels) + 2.0)))
+    im = ax.imshow(arr, aspect="auto", cmap="RdBu_r", vmin=-0.12, vmax=0.12)
+    ax.set_xticks(range(len(measures)))
+    ax.set_xticklabels([m.replace("_", "\n") for m in measures])
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels, fontsize=7)
+    _imshow_with_numbers(ax, arr, fmt=".2f", color_threshold=0.07)
+    fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label="slope gap vs random-null")
+    ax.set_title("Multi-turn trace evidence atlas")
+    bench.style_ax(ax, legend=False)
+    bench.save_figure(ctx, fig, "trace_evidence_atlas.png", "Conversation-by-direction trace slope gaps versus random-null controls.")
+
+
+def plot_persona_trace_projection_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    keep_dirs = ["persona_museum_guide", "technical_register", "warm_supportive_voice", "honest_correction", "refusal_monitor", "sentiment_style_control", "random_null"]
+    convs = sorted({str(row.get("conversation")) for row in rows if row.get("conversation")})
+    if not convs:
+        return
+    fig, axes = plt.subplots(len(convs), 1, figsize=(11.0, max(4.0, 2.2 * len(convs))), squeeze=False)
+    for ax, conv in zip(axes[:, 0], convs):
+        sub = [row for row in rows if row.get("conversation") == conv and row.get("direction") in keep_dirs and row.get("role") != "system"]
+        dirs = [d for d in keep_dirs if any(row.get("direction") == d for row in sub)]
+        turns = sorted({_f(row, "turn_index_non_system") for row in sub if math.isfinite(_f(row, "turn_index_non_system"))})
+        mat = []
+        for direction in dirs:
+            mat.append([safe_fmean([_f(row, "content_boundary_projection") for row in sub if row.get("direction") == direction and _f(row, "turn_index_non_system") == turn]) for turn in turns])
+        arr = np.array(mat, dtype=float)
+        if arr.size == 0:
+            continue
+        lim = max(0.1, float(np.nanpercentile(np.abs(arr[np.isfinite(arr)]), 90)) if np.isfinite(arr).any() else 0.1)
+        im = ax.imshow(arr, aspect="auto", cmap="RdBu_r", vmin=-lim, vmax=lim)
+        ax.set_yticks(range(len(dirs)))
+        ax.set_yticklabels(dirs, fontsize=7)
+        ax.set_xticks(range(len(turns)))
+        ax.set_xticklabels([str(int(t)) if float(t).is_integer() else str(rounded(t)) for t in turns])
+        ax.set_title(conv)
+        ax.set_ylabel("direction")
+        fig.colorbar(im, ax=ax, fraction=0.02, pad=0.012)
+        bench.style_ax(ax, legend=False)
+    axes[-1, 0].set_xlabel("message boundary (system excluded)")
+    fig.suptitle("Turn-by-turn projection atlas at content boundaries")
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    bench.save_figure(ctx, fig, "persona_trace_projection_atlas.png", "Turn-by-turn content-boundary projection atlas across scripted conversations.")
+
+
+def plot_refusal_boundary_safety_dashboard(ctx: bench.RunContext, turn_rows: Sequence[Mapping[str, Any]], trace_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(1, 2, figsize=(11.4, 4.9))
+    ax = axes[0]
+    for direction in ("refusal_monitor", "persona_museum_guide", "sentiment_style_control", "random_null"):
+        sub = sorted([row for row in turn_rows if row.get("conversation") == "roleplay_boundary" and row.get("direction") == direction and row.get("role") != "system"], key=lambda r: _f(r, "turn_index_non_system", 0.0))
+        if sub:
+            ax.plot([_f(row, "turn_index_non_system") for row in sub], [_f(row, "content_boundary_projection") for row in sub], marker="o", linewidth=2.0, color=_lab17_color(direction), label=direction)
+    bench.style_ax(ax, title="Benign boundary trace", xlabel="turn", ylabel="content-boundary projection")
+    ax = axes[1]
+    sub = [row for row in trace_rows if row.get("conversation") == "roleplay_boundary" and row.get("projection_measure") == "content_boundary_projection" and row.get("direction") in {"refusal_monitor", "persona_museum_guide", "sentiment_style_control"}]
+    labels = [str(row.get("direction")) for row in sub]
+    vals = [_f(row, "gap_vs_random_null", 0.0) for row in sub]
+    ax.barh(range(len(labels)), vals, color=[_lab17_color(label) for label in labels])
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels)
+    ax.axvline(0, color="#222222", linewidth=0.8)
+    bench.style_ax(ax, title="Gap vs random-null", xlabel="slope gap", ylabel="")
+    fig.suptitle("Refusal safety dashboard: monitor-only under benign roleplay")
+    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    bench.save_figure(ctx, fig, "refusal_boundary_safety_dashboard.png", "Monitor-only refusal projection dashboard for the benign roleplay-boundary conversation.")
+
+
 # ---------------------------------------------------------------------------
 # Metrics, cards, and summaries
 # ---------------------------------------------------------------------------
@@ -2501,15 +3339,46 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, per_trait_path, aggregate_best_probe_metrics(items, probe_rows, best_depth)["per_trait_rows"])
     ctx.register_artifact(per_trait_path, "table", "Per-trait held-out AUC and control selectivity at the selected depth.")
 
+    visual_tables = write_visual_synthesis_tables(
+        ctx,
+        items,
+        probe_rows,
+        depth_rows,
+        best_depth,
+        steering_effects,
+        steering_generations,
+        cos_rows,
+        turn_slopes,
+        turn_rows,
+        trace_depth_rows,
+    )
+
     if not args.no_plots:
+        plot_persona_evidence_dashboard(
+            ctx,
+            depth_rows,
+            visual_tables["trait_evidence_rows"],
+            visual_tables["steering_operating_rows"],
+            visual_tables["trace_evidence_rows"],
+            visual_tables["direction_confound_rows"],
+            best_depth,
+        )
+        plot_trait_evidence_matrix(ctx, visual_tables["trait_evidence_rows"])
+        plot_depth_control_gap_atlas(ctx, visual_tables["depth_control_gap_rows"], best_depth)
         plot_probe_selectivity(ctx, probe_rows, best_depth)
         plot_steering_dose_response(ctx, steering_effects)
+        plot_steering_operating_frontier(ctx, visual_tables["steering_operating_rows"])
+        plot_generation_style_atlas(ctx, visual_tables["steering_operating_rows"])
         plot_style_content_tradeoff(ctx, steering_effects)
         plot_direction_cosines(ctx, cos_rows)
+        plot_direction_confound_risk(ctx, visual_tables["direction_confound_rows"])
         plot_persona_turn_trace(ctx, turn_rows)
         plot_register_switch_trace(ctx, turn_rows)
         plot_refusal_projection(ctx, turn_rows)
         plot_trace_depth_sweep(ctx, trace_depth_rows, best_depth)
+        plot_trace_evidence_atlas(ctx, visual_tables["trace_evidence_rows"])
+        plot_persona_trace_projection_atlas(ctx, turn_rows)
+        plot_refusal_boundary_safety_dashboard(ctx, turn_rows, visual_tables["trace_evidence_rows"])
 
     write_persona_state_card(ctx, metrics)
     write_operationalization_audit(ctx, metrics)
