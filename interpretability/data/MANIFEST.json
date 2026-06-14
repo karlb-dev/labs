@@ -123,64 +123,80 @@
   },
   "preference_circuit_pairs.csv": {
     "confound_types": {
-      "agreement": 5,
-      "confidence": 1,
-      "hedging": 3,
-      "length": 4,
-      "politeness": 1,
-      "refusal": 2,
-      "sentiment": 3,
-      "specificity": 1
+      "agreement_rejected": 9,
+      "format_following": 2,
+      "hedging_preferred": 5,
+      "hedging_rejected": 2,
+      "length_long_preferred": 3,
+      "length_long_rejected": 9,
+      "length_mixed": 1,
+      "none": 4,
+      "politeness_length_rejected": 1,
+      "politeness_mixed": 1,
+      "politeness_neutral": 1,
+      "politeness_preferred": 1,
+      "refusal_preferred": 3,
+      "refusal_rejected": 1,
+      "sentiment_agreement_rejected": 1,
+      "sentiment_positive_rejected": 2,
+      "specificity": 2
     },
     "domains": {
-      "helpfulness": 4,
-      "honesty": 6,
-      "safety": 2,
-      "style": 5,
-      "sycophancy": 3
+      "anti_sycophancy": 8,
+      "concision": 6,
+      "factual_honesty": 5,
+      "helpfulness": 8,
+      "privacy_boundary": 7,
+      "style_following": 7,
+      "uncertainty": 7
     },
-    "generator": "hand-authored deterministic course rows",
+    "generator": "make_preference_circuit_pairs.py",
     "preference_types": {
-      "anti_sycophancy": 3,
-      "boundary": 2,
-      "correctness": 3,
-      "helpfulness": 4,
-      "politeness": 1,
-      "style": 4,
-      "uncertainty": 3
+      "anti_overhedging": 2,
+      "anti_overrefusal": 1,
+      "anti_sycophancy": 8,
+      "appropriate_uncertainty": 5,
+      "concise_instruction": 8,
+      "factual_honesty": 5,
+      "helpfulness": 6,
+      "privacy_boundary": 6,
+      "style_and_helpfulness": 1,
+      "style_following": 6
     },
     "preferred_positions": {
-      "a": 12,
-      "b": 8
+      "a": 25,
+      "b": 23
     },
-    "rows": 20,
+    "rows": 48,
     "safety_scope": "benign preference pairs only; no prompt optimization, jailbreak search, refusal ablation, or real private data",
-    "sha256": "ae58885931975d2afe2a1a415059584653b7ec42ce1de8c2bf3060ca640326c5",
+    "sha256": "9e9d118f52628796042e7ba03822e1095860a73cb1ade70ca0d5f41fab337221",
     "splits": {
-      "eval": 8,
-      "train": 12
+      "eval": 15,
+      "train": 33
     },
     "verified_tokenizers": []
   },
   "multimodal_concept_pairs.jsonl": {
     "concept_families": {
-      "background_control": 1,
-      "chart": 2,
-      "color": 3,
-      "count": 3,
-      "ocr_control": 1,
-      "shape": 3,
-      "spatial": 3
+      "background_control": 4,
+      "chart": 4,
+      "color": 4,
+      "count": 4,
+      "ocr_control": 4,
+      "shape": 4,
+      "spatial": 4
     },
-    "generator": "hand-authored deterministic course rows rendered at runtime",
-    "rows": 16,
+    "generator": "make_multimodal_concept_pairs.py",
+    "rows": 28,
     "science_scope": "synthetic connector smoke mode; no real VLM hooks loaded by default",
-    "sha256": "ee6f6edceed7e5fa158b05d75cb8d35bffd00e59ad5f31c0e0cd752b4afa6d43",
+    "sha256": "e3059a44ae9342a73c8df8e9b92a62b97a44f2347c965b11642e96e00b082d19",
     "splits": {
-      "eval": 7,
-      "train": 9
+      "test": 14,
+      "train": 14
     },
-    "verified_tokenizers": []
+    "verified_tokenizers": [
+      "runtime reverified by Lab 33"
+    ]
   },
   "tool_use_tasks.jsonl": {
     "families": {

@@ -1,0 +1,23 @@
+{
+  "files": {
+    "multimodal_concept_pairs.jsonl": {
+      "concept_families": {
+        "background_control": 4,
+        "chart": 4,
+        "color": 4,
+        "count": 4,
+        "ocr_control": 4,
+        "shape": 4,
+        "spatial": 4
+      },
+      "description": "Frozen synthetic multimodal concept-pair specs for Lab 33.",
+      "generator": "make_multimodal_concept_pairs.py",
+      "rows": 28,
+      "sha256": "e3059a44ae9342a73c8df8e9b92a62b97a44f2347c965b11642e96e00b082d19",
+      "splits": {
+        "test": 14,
+        "train": 14
+      }
+    }
+  }
+}

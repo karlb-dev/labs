@@ -165,11 +165,11 @@ python interp_bench.py --lab lab30 --tier b --prompt-set full
 python interp_bench.py --lab lab31 --tier a --no-plots
 python interp_bench.py --lab lab31 --tier b --prompt-set full
 
-# Lab 32 (reward/preference circuits; DPO-style proxy and shortcut controls):
+# Lab 32 (reward/preference circuits; split-aware DPO-style proxy and shortcut controls):
 python interp_bench.py --lab lab32 --tier a --no-plots
 python interp_bench.py --lab lab32 --tier b --prompt-set full
 
-# Lab 33 (multimodal MI; synthetic connector smoke mode and leak gates):
+# Lab 33 (multimodal MI; synthetic connector audit and leak controls):
 python interp_bench.py --lab lab33 --tier a --no-plots
 python interp_bench.py --lab lab33 --tier b --prompt-set full
 
@@ -406,14 +406,15 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   confusable/token-overlap test suites, confidence calibration, abstention
   frontiers, and a human-review queue with shared label fields.
 - Lab 32: reward models and preference circuits — implemented with a benign
-  preference-pair suite, a DPO-style policy/reference log-prob proxy, residual
-  preference directions, length/politeness/agreement/sentiment/hedging/refusal
-  shortcut controls, sycophancy-risk rows, and narrow activation-addition tests
-  on A/B preference prompts.
+  preference-pair suite, a DPO-style policy/reference log-prob proxy,
+  train-selected/eval-tested residual preference directions, length/politeness/
+  agreement/sentiment/hedging/refusal shortcut controls, sycophancy and
+  uncertainty-risk rows, and narrow judge-prompt activation-addition tests.
 - Lab 33: multimodal mechanistic interpretability — implemented as a synthetic
-  connector smoke mode rather than a real VLM claim. Adds rendered shape/chart
-  image specs, image/text/connector/language state probes, clean/corrupt patch
-  semantics, OCR/background leak gates, alignment diagnostics, and explicit
+  connector audit rather than a real VLM claim. Adds rendered shape/chart
+  image specs, image/text/caption/connector/language state probes,
+  clean/corrupt patch semantics, OCR/background leak gates, wrong-region and
+  random-patch controls, alignment diagnostics, and explicit
   `science_ready=false` status until real VLM hooks are loaded.
 - Lab 34: tool use, agents, and state tracking — implemented as a controlled
   toy-tool harness. Adds calculator/dictionary/calendar/file-search/route/unit

@@ -460,17 +460,24 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
     "lab32": {
         "module": "labs.lab32_reward_preference",
         "run_name": "lab32_reward_preference",
-        "description": "Reward models and preference circuits: DPO-style proxy, residual preference directions, shortcut controls, and activation-addition tests.",
-        # Base-model preference audit. Tier A runs the complete benign pair set
-        # so A/B balance, sycophancy controls, and shortcut confounds are present.
-        "max_examples_tier_a": "20",
+        "description": "Reward/preference circuits: DPO-style proxy, shortcut controls, split-aware residual directions, and judge-prompt activation addition.",
+        # Base-model, forward-pass preference-audit lab. Tier A keeps enough
+        # benign pairs for train/eval shortcut controls without making CPU smoke expensive.
+        "max_examples_tier_a": "18",
     },
     "lab33": {
         "module": "labs.lab33_multimodal_mechanistic",
         "run_name": "lab33_multimodal_mechanistic",
-        "description": "Multimodal mechanistic interpretability: synthetic connector smoke mode with OCR/background leak gates and patch semantics.",
-        # Synthetic connector smoke lab. Tier A runs the full rendered-image
-        # spec set so OCR, background, chart, spatial, and shape controls appear.
+        "description": "Multimodal mechanistic interpretability: synthetic connector audit with visual, OCR, background, caption, text, alignment, and patch controls.",
+        # Offline synthetic connector audit. The bench still loads a tiny causal
+        # LM so the standard diagnostics and microscope self-checks run. A
+        # future real-VLM mode should add explicit model/processor alignment
+        # artifacts before changing science_ready.
+        "model_tier_a": "gpt2",
+        "model_tier_b": "gpt2",
+        "model_tier_c": "gpt2",
+        "dtype_tier_b": "float32",
+        "dtype_tier_c": "float32",
         "max_examples_tier_a": "16",
     },
     "lab34": {

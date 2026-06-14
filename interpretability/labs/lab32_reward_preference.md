@@ -1,48 +1,92 @@
 # Lab 32: Reward Models and Preference Circuits
 
-Time estimate: 75-100 minutes for the default smoke path.  
-Compute tier: Tier A runs `gpt2` with a DPO-style log-prob-ratio proxy; Tier B can replace the proxy with an open reward model when available.  
-Dependencies: Labs 7, 16, 17, 19, 21, and 31.  
-Minimum passing artifacts: `tables/preference_pair_scores.csv`, `tables/preference_probe_report.csv`, `tables/reward_policy_disagreements.csv`, `tables/preference_intervention_results.csv`, `tables/preference_evidence_matrix.csv`, and `plots/preference_evidence_dashboard.png`.  
-Main plot: `plots/preference_evidence_dashboard.png`.  
-Main table: `tables/preference_evidence_matrix.csv`.  
-Evidence rung: `ATTR + DECODE + CAUSAL`.  
-Forbidden claim: "The reward model understands human values."  
-One-sentence allowed claim: "On this benign pair suite, preference signal S separated preferred from dispreferred responses with AUC X after shortcut controls Y."  
-Human-label requirement: fill the shared review columns before citing any row-level preference label in a writeup.
+**One-sentence thesis:** A reward or preference signal earns scientific language only when it beats the boring shortcuts that make "preferred" look easy.
 
-## Why This Lab Exists
+**Time estimate:** 75-100 minutes for Tier A smoke; longer for Tier B on the full pair suite.
 
-Preference training and reward modeling are easy to anthropomorphize. Lab 32
-opens a narrower question:
+**Compute tier:** Tier A uses `gpt2` with a DPO-style log-prob-ratio proxy. Tier B uses the course base model on the same forward-pass workflow. External reward-model substitution is an extension, not the default evidence path.
+
+**Dependencies:** Labs 7, 16, 17, 19, 21, and 31 concepts.
+
+**Minimum passing artifacts:** `method_card.md`, `operationalization_audit.md`, `diagnostics/safety_status.json`, `diagnostics/self_check_status.json`, `tables/preference_pair_scores.csv`, `tables/preference_probe_report.csv`, `tables/reward_policy_disagreements.csv`, `tables/preference_intervention_results.csv`, `tables/preference_evidence_matrix.csv`, and `plots/preference_evidence_dashboard.png`.
+
+**Main plot:** `plots/preference_evidence_dashboard.png`
+
+**Main table:** `tables/preference_evidence_matrix.csv`
+
+**Evidence rung:** `ATTR + DECODE + CAUSAL + AUDIT`
+
+**Forbidden claim:** "The reward model understands human values."
+
+**One-sentence allowed claim:** "On this benign pair suite, preference signal S separated preferred from dispreferred responses on eval rows with AUC X, beating shortcut controls by Y."
+
+**Human-label requirement:** Fill the shared review columns before citing any row-level preference label in a writeup.
+
+## What question this lab asks
+
+Preference training and reward modeling are easy to inflate into value talk. Lab 32 opens a smaller box:
 
 ```text
-paired responses -> preference proxy -> shortcut controls -> residual direction -> causal nudge
+paired responses -> preference proxy -> shortcut controls -> residual direction -> causal nudge -> audit
 ```
 
-The target is not "values." The target is whether a measured preference signal
-survives better explanations such as length, sentiment, politeness, agreement,
-hedging, or refusal words.
+The target is not "values." The target is whether a measured preference signal survives better explanations such as length, sentiment, politeness, agreement, hedging, refusal words, split overfit, or A/B prompt artifacts.
 
-## Data
+A good result is not "the model wants the good answer." A good result is closer to:
 
-Default data lives in `data/preference_circuit_pairs.csv`.
+```text
+On this benign pair suite, this score separated preferred from dispreferred responses on eval rows better than the named shortcut controls.
+```
 
-Each row contains:
+That sentence is smaller, sturdier, and much less likely to turn a measurement into a personality or values claim.
+
+## Why this matters in the course progression
+
+Earlier labs studied truth, refusal, sycophancy, persona, editing, and feature lineage. Lab 32 looks at a training signal that often sits upstream of those behaviors: preference or reward.
+
+This lab keeps the instrument modest. It does not require a trained reward model. Tier A uses a DPO-style policy/reference log-prob-ratio proxy and treats that proxy as a specimen to audit. The purpose is to teach students how to examine a preference-like signal without treating it as a moral oracle.
+
+## Safety and scope
+
+The default dataset uses only benign pairs:
+
+- helpfulness and concrete advice;
+- factual honesty;
+- appropriate uncertainty;
+- privacy-boundary handling with synthetic situations;
+- style and instruction following;
+- anti-sycophancy controls where the user states a harmless false belief.
+
+The lab does not do harmful prompt optimization, jailbreak search, refusal ablation, private-data recovery, or deployment reward-model claims. `diagnostics/safety_status.json` records this scope for every run.
+
+## The data contract
+
+Default data lives in:
+
+```text
+data/preference_circuit_pairs.csv
+```
+
+Required columns:
 
 ```text
 pair_id,domain,prompt,response_a,response_b,preferred,
 preference_type,confound_type,split,notes
 ```
 
-The first version uses only benign pairs: helpfulness, correctness, appropriate
-uncertainty, privacy-boundary handling, style, and sycophancy controls. There
-is no harmful prompt optimization, jailbreak search, refusal ablation, or real
-private data.
+The refactored data generator is:
 
-## Tier A Scoring
+```text
+data/make_preference_circuit_pairs.py
+```
 
-Tier A uses a DPO-style proxy:
+The frozen suite is balanced across train/eval rows. The train split is used to fit residual directions and select a stream depth. Eval rows are the first place positive language is allowed to stretch its legs.
+
+## What the experiment measures
+
+### 1. DPO-style preference proxy, `ATTR`
+
+Tier A uses:
 
 ```text
 (policy log p(response A) - reference log p(response A))
@@ -50,134 +94,317 @@ Tier A uses a DPO-style proxy:
 (policy log p(response B) - reference log p(response B))
 ```
 
-The reference is a response-unconditional unigram token baseline built from the
-frozen pair set. This is not a trained reward model. It is a cheap preference
-measurement that students can falsify with controls.
+The reference is a response-unconditional unigram token baseline fit from train responses when train rows exist. This is not a trained reward model. It is a cheap, falsifiable preference proxy.
 
-## Shortcut Controls
+### 2. Shortcut controls, `AUDIT`
 
-Every run scores the same pairs with:
-
-- policy log-prob alone;
-- length;
-- politeness;
-- agreement;
-- sentiment;
-- hedging;
-- refusal;
-- confound residual directions;
-- random residual direction;
-- shuffled-score control.
-
-The main gate is whether the preference proxy or residual direction beats these
-shortcuts, especially length and agreement on sycophancy rows.
-
-## Residual Direction
-
-The lab extracts residual vectors at the prompt+response boundary:
+Every pair is also scored by transparent shortcut rulers:
 
 ```text
-preferred response residual - dispreferred response residual
+length
+politeness
+agreement
+sentiment
+hedging
+refusal
+policy log-prob alone
+reference unigram alone
+shuffled-score control
 ```
 
-It then tests whether that direction predicts held-out pair labels and whether
-activation addition changes an A/B preference prompt more than a random
-direction.
+If a shortcut beats the preference proxy on eval rows, the shortcut gets the crown and the favorite interpretation goes back to the workshop.
 
-## How To Run
+### 3. Residual preference direction, `DECODE`
+
+For each pair, the lab caches response-boundary residual vectors:
+
+```text
+diff(pair, depth) = residual(prompt + response A) - residual(prompt + response B)
+```
+
+The preference direction is fit on train rows:
+
+```text
+preference_direction(depth)
+  = mean over train pairs of signed diff(pair, depth)
+```
+
+The sign is positive for the preferred response and negative for the rejected response. The lab scans a coarse depth grid, selects the depth on train by AUC minus best confound/random direction, and only then evaluates that selected depth on eval rows.
+
+### 4. Confound directions, `AUDIT`
+
+The lab also builds residual directions for length, politeness, agreement, sentiment, hedging, and refusal. These are not decoration. They are the shortcut tribunal. A preference direction only gets positive language if it beats them.
+
+### 5. Activation addition, `CAUSAL`
+
+The lab builds an A/B judge prompt:
+
+```text
+Prompt:
+<user prompt>
+
+Response A:
+<response A>
+
+Response B:
+<response B>
+
+Which response is better? Answer
+```
+
+It adds the selected preference direction at the corresponding block output and measures:
+
+```text
+logit(" A") - logit(" B")
+```
+
+The causal claim is narrow. A shift in this judge prompt is evidence that the direction can move this readout. It is not evidence that the model will behave better in open generation.
+
+## Train/eval discipline
+
+The refactor fixes the biggest weakness in the draft: the old runner trained and evaluated residual directions on the same pool.
+
+The new runner writes:
+
+```text
+tables/preference_depth_selection.csv
+tables/preference_direction_by_depth.csv
+tables/split_generalization_summary.csv
+```
+
+Use these before writing any positive claim. The strongest posture is eval-supported. A train-only result is a candidate. An aggregate-only result is not a finished claim.
+
+## Controls and falsifiers
+
+| Control | What it attacks | Artifact |
+|---|---|---|
+| Length score | Verbosity detector | `tables/preference_probe_report.csv` |
+| Politeness score | Nice-tone detector | `tables/preference_probe_report.csv` |
+| Agreement score | Sycophancy detector | `tables/sycophancy_risk_review.csv` |
+| Sentiment score | Positivity detector | `tables/shortcut_control_summary.csv` |
+| Hedging score | Uncertainty-language detector | `tables/preference_probe_report.csv` |
+| Refusal score | Boundary-word detector | `tables/preference_probe_report.csv` |
+| Confound residual directions | Internal shortcut handles | `tables/preference_direction_by_depth.csv` |
+| Random direction | Direction overfit and steering artifact | `tables/preference_intervention_results.csv` |
+| Shuffled score | Label/row-order sanity control | `tables/preference_probe_report.csv` |
+| Human review queue | Label ambiguity and row-level caveats | `tables/human_review_queue.csv` |
+
+## Running it
+
+From `interpretability/`:
 
 ```bash
-cd interpretability
+python interp_bench.py --lab lab32 --tier a --no-plots
 python interp_bench.py --lab lab32 --tier a
 python interp_bench.py --lab lab32 --tier b --prompt-set full
 ```
 
-For a fast table-only smoke:
+Useful variants:
 
 ```bash
-python interp_bench.py --lab lab32 --tier a --no-plots
+python interp_bench.py --lab lab32 --tier b --prompt-set medium --no-plots
+python interp_bench.py --lab lab32 --tier b --prompt-set data/preference_circuit_pairs.csv
+python interp_bench.py --lab lab32 --tier a --max-examples 12 --no-plots
 ```
 
-## Reading Order
+Tier A proves the rails. Tier B is the evidence path. Do not ledger a broad preference claim from a smoke-only fallback run.
 
-1. `method_card.md`
+## Artifact tree
 
-   Confirms the proxy, controls, residual direction, and non-claims.
+```text
+runs/lab32_reward_preference-*/
+  run_summary.md
+  method_card.md
+  operationalization_audit.md
+  metrics.json
+  results.csv
+  results.jsonl
+  ledger_suggestions.md
 
-2. `tables/preference_pair_scores.csv`
+  diagnostics/
+    data_manifest.json
+    safety_status.json
+    self_check_status.json
+    tokenization_gate.csv
+    hook_parity.json
+    logit_lens_self_check.json
+    patch_noop_check.json
 
-   Pair-level DPO proxy, policy, reference, shortcut, and residual-direction
-   margins.
+  tables/
+    preference_pair_scores.csv
+    preference_probe_report.csv
+    preference_depth_selection.csv
+    split_generalization_summary.csv
+    confound_audit_by_type.csv
+    reward_policy_disagreements.csv
+    preference_counterexamples.csv
+    human_review_queue.csv
+    preference_intervention_results.csv
+    preference_intervention_summary.csv
+    preference_evidence_matrix.csv
 
-3. `tables/preference_probe_report.csv`
+  plots/
+    plot_reading_guide.csv
+    preference_evidence_dashboard.png
+    reward_margin_by_domain.png
+    preference_probe_control_atlas.png
+    confound_specificity_ladder.png
+    reward_policy_disagreement_matrix.png
+    preference_steering_frontier.png
+    sycophancy_reward_risk_quadrant.png
+    judge_prompt_swap_control.png
 
-   Method-by-method AUC and accuracy, including confound and control rows.
+  state/
+    preference_directions.pt
+    preference_direction_metadata.json
+```
 
-4. `tables/reward_policy_disagreements.csv`
+## Reading path
 
-   Rows where the proxy, policy, direction, or sycophancy-risk status needs
-   manual review.
+Start with `method_card.md`. It tells you what the run is allowed to mean.
 
-5. `tables/preference_intervention_results.csv`
+Then read:
 
-   Activation-addition results on A/B judge prompts.
+1. `diagnostics/safety_status.json`: confirms the safe scope.
+2. `diagnostics/self_check_status.json`: confirms tokenization, splits, direction norm, and review columns.
+3. `tables/preference_depth_selection.csv`: confirms the selected direction depth was picked on train.
+4. `tables/preference_probe_report.csv`: compares proxy, residual direction, shortcuts, and controls.
+5. `tables/confound_audit_by_type.csv`: names domain and confound families where shortcuts may explain the result.
+6. `tables/split_generalization_summary.csv`: asks whether train-selected evidence survived eval.
+7. `tables/preference_intervention_results.csv`: checks the activation-addition nudge.
+8. `tables/preference_counterexamples.csv`: rows that shrink or kill the favorite claim.
+9. `tables/reward_policy_disagreements.csv`: rows that should make you cautious.
+10. `tables/human_review_queue.csv`: fill this before citing row-level labels.
+11. `operationalization_audit.md`: the claim grammar with its guardrails on.
 
-6. `tables/preference_evidence_matrix.csv`
+## Plot guide
 
-   The claim posture table.
+### `preference_evidence_dashboard.png`
 
-## Common Failure Modes
+The dashboard shows eval AUCs, eval accuracies, shortcut gaps, and steering shift. It is the cockpit, not the verdict machine.
 
-### Reward Direction Is Length
+### `reward_margin_by_domain.png`
 
-If the length confound beats the preference signal, the proxy is mostly a
-verbosity detector.
+This shows DPO proxy preferred margin by domain and split. It helps distinguish broad signal from one-domain glitter.
 
-### Reward Direction Is Agreement
+### `preference_probe_control_atlas.png`
 
-False-belief sycophancy rows test whether agreeing with the user is mistaken
-for better behavior.
+This is the main control atlas. A good preference signal should sit above the shortcut family on eval rows.
 
-### Reward Direction Is Tone
+### `confound_specificity_ladder.png`
 
-Sentiment and politeness can look like helpfulness. A supported preference
-claim must survive those controls.
+This is the rent ledger. If length, agreement, or refusal reaches the top rung, your story must name that.
 
-### Judge-Prompt Artifact
+### `reward_policy_disagreement_matrix.png`
 
-Activation addition is tested on an A/B preference prompt. A shift there is a
-narrow causal result, not evidence that the model will behave better in open
-generation.
+This shows where the proxy predicts A/B differently from the frozen labels. Read the rows before trusting aggregate scores.
 
-## Claim Grammar
+### `preference_steering_frontier.png`
+
+This asks whether the preference direction moves the A/B judge margin more than a random direction. It is a narrow causal result.
+
+### `sycophancy_reward_risk_quadrant.png`
+
+This isolates false-agreement rows. A supported preference signal should not reward agreeing with harmless false beliefs.
+
+## Expected result patterns
+
+| Pattern | Interpretation |
+|---|---|
+| Proxy and direction beat shortcuts on eval | Narrow positive preference-signal claim. |
+| Proxy high, length high | Preference proxy is probably a verbosity detector. |
+| Direction high on train, weak on eval | Train-only candidate, not claim-ready. |
+| Agreement high on anti-sycophancy rows | The signal confuses agreement with preference. |
+| Refusal high everywhere | Boundary language may be acting as a generic reward token. |
+| Activation addition shifts more than random | Narrow causal handle on the A/B judge prompt. |
+| Random shift matches preference shift | Judge-prompt artifact or broad perturbation. |
+| Review queue is large | Human labels or row wording need attention before claim writing. |
+
+## What this lab can claim
+
+It can claim that a named score separated preferred from dispreferred benign pairs on a named model, split, and dataset.
+
+It can claim that a train-fit residual direction decoded pair labels on eval rows beyond named shortcut controls.
+
+It can claim that activation addition shifted a specific A/B judge-prompt margin more than a random direction, if the numbers show that.
+
+## What this lab cannot claim
+
+It cannot claim that a reward model understands human values.
+
+It cannot claim that a residual direction is a morality vector.
+
+It cannot claim that optimizing the proxy is safe.
+
+It cannot claim that the model wants anything.
+
+It cannot claim deployment safety or general preference robustness outside this benign pair suite.
+
+## Common failure modes
+
+### Reward direction is length
+
+If length beats the preference score, the proxy is mostly a verbosity detector. This is a result, not a bug.
+
+### Reward direction is agreement
+
+False-belief sycophancy rows test whether agreeing with the user is mistaken for better behavior.
+
+### Reward direction is tone
+
+Sentiment and politeness can look like helpfulness. A supported preference claim must survive those controls.
+
+### Refusal becomes a magic token
+
+Privacy rows reward boundaries, but not every good answer is a refusal. Consent-based help rows are there to catch over-refusal.
+
+### Judge-prompt artifact
+
+Activation addition is tested on an A/B preference prompt. A shift there is not evidence that open-ended model behavior improves.
+
+### Label ambiguity
+
+The frozen labels are teaching labels. Before citing one row in a writeup, fill the review columns in `human_review_queue.csv`: `student_label_primary`, `student_label_secondary`, `student_confidence`, `student_evidence_span`, `reviewer_label`, and `agreement_status`.
+
+## Writeup questions
+
+1. Did the DPO proxy beat the best eval shortcut control?
+2. Which shortcut was strongest on eval rows?
+3. Did the train-selected residual depth survive eval?
+4. Did the preference residual direction beat confound directions?
+5. Which anti-sycophancy row is most concerning?
+6. Did activation addition create a causal shift beyond random?
+7. Which row in `reward_policy_disagreements.csv` most weakens the favorite claim?
+8. What is the smallest claim you can make without saying "values"?
+
+## Claim grammar
 
 Allowed:
 
 ```text
-ATTR + DECODE + CAUSAL: On benign pair set T, direction D separated preferred
-from dispreferred responses with AUC X, beat length/sentiment/agreement
-controls by Y, and activation addition shifted A/B preference margins by Z.
+ATTR + DECODE + CAUSAL: On benign pair suite T, preference signal S separated
+preferred from dispreferred responses on eval rows with AUC X, beat the best
+shortcut control by Y, and activation addition shifted the A/B judge-prompt
+margin by Z over random. This is a preference-signal claim, not a values claim.
 ```
 
 Forbidden:
 
 ```text
 The reward model understands human values.
-```
-
-Also forbidden:
-
-```text
 The model wants to be helpful.
 The reward direction is a morality vector.
 The preference proxy is safe to optimize.
 ```
 
-## Deliverable
+## Suggested extensions
 
-Write a short reward/preference audit:
+Replace the DPO-style proxy with an open reward model and keep the same shortcut-control table.
 
-- Did the DPO proxy beat the best shortcut control?
-- Did the residual direction beat the confound directions?
-- Which sycophancy row is most concerning?
-- Did activation addition create a causal shift or only a judge-prompt artifact?
+Compare base and instruction-tuned policy log-prob margins as a training-diff signal.
+
+Use Lab 31 automated-interpretability features to label top response-boundary contexts, then test those labels against hard negatives.
+
+Add a hand-reviewed calibration subset and report human-label agreement before using row-level claims.
+
+Test whether the selected direction transfers to a fresh benign preference suite with different prompts and response lengths.
