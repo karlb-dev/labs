@@ -48,6 +48,26 @@
       "runtime reverified by Lab 28"
     ]
   },
+  "training_dynamics_tasks.csv": {
+    "families": {
+      "induction_copy": 8,
+      "relation_control": 2,
+      "sequence_control": 1
+    },
+    "generator": "hand-authored deterministic course rows",
+    "rows": 11,
+    "sha256": "e75bc0c7d43f5f617e28fafe798dbe1bfd2da8d87aad4b716252b8032b03684a",
+    "splits": {
+      "control": 3,
+      "heldout": 2,
+      "test": 2,
+      "train": 4
+    },
+    "training_scope": "controlled tiny-transformer induction-copy sequence; relation/calendar rows are untrained controls",
+    "verified_tokenizers": [
+      "runtime reverified by Lab 29 tiny tokenizer"
+    ]
+  },
   "advanced_relation_geometry.csv": {
     "families": {
       "capital_of": 28,

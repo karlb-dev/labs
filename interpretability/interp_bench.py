@@ -421,6 +421,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # set so every safety/side-effect table has non-empty rows.
         "max_examples_tier_a": "5",
     },
+    "lab29": {
+        "module": "labs.lab29_training_dynamics",
+        "run_name": "lab29_training_dynamics",
+        "description": "Training dynamics and circuit birth: controlled checkpoint time-lapse for behavior, decodability, motifs, and intervention transfer.",
+        # Loads the shared smoke model for bench diagnostics, then trains a
+        # tiny in-course transformer on a deterministic induction-copy task.
+        "max_examples_tier_a": "11",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template

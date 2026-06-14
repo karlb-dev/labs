@@ -1,0 +1,12 @@
+item_id,task_family,prompt,target,distractor,split,expected_mechanism,notes
+induction_train_01,induction_copy,red blue green red blue,green,red,train,previous_match_induction,The next token repeats the token after the previous occurrence of the query token.
+induction_train_02,induction_copy,blue green yellow blue green,yellow,blue,train,previous_match_induction,Training-split induction-copy evaluation row.
+induction_train_03,induction_copy,green yellow orange green yellow,orange,green,train,previous_match_induction,Training-split induction-copy evaluation row.
+induction_train_04,induction_copy,orange purple silver orange purple,silver,orange,train,previous_match_induction,Training-split induction-copy evaluation row.
+induction_heldout_01,induction_copy,cyan magenta amber cyan magenta,amber,cyan,heldout,previous_match_induction,Held-out color combination; tokens appear during synthetic training but this prompt pattern is frozen.
+induction_heldout_02,induction_copy,silver bronze teal silver bronze,teal,silver,heldout,previous_match_induction,Held-out color combination; tokens appear during synthetic training but this prompt pattern is frozen.
+induction_test_01,induction_copy,amber teal violet amber teal,violet,amber,test,previous_match_induction,Test-split induction-copy evaluation row.
+induction_test_02,induction_copy,purple red cyan purple red,cyan,purple,test,previous_match_induction,Test-split induction-copy evaluation row.
+control_relation_01,relation_control,capital France,Paris,Rome,control,not_trained_control,The tiny training loop never trains country-capital relations; this row is a negative-control task.
+control_relation_02,relation_control,language Italy,Italian,German,control,not_trained_control,The tiny training loop never trains country-language relations; this row is a negative-control task.
+control_sequence_01,sequence_control,month after January,February,March,control,not_trained_control,The tiny training loop never trains calendar relations; this row is a negative-control task.
