@@ -358,10 +358,11 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   galleries, and hypothesis-refinement logs. This is residual resampling,
   not path-specific scrubbing; Lab 27 owns paths.
 - Lab 27: path-specific patching and causal mediation — implemented as a
-  residual two-site mediation proxy on base models. Adds frozen clean/corrupt
-  path tasks, node-effect baselines, source+receiver joint patches,
-  reverse/wrong-receiver/random controls, mediation accounting, and explicit
-  counterexamples when node effects do not justify path language.
+  residual source-to-receiver mediation proxy on base models. Adds frozen
+  clean/corrupt path tasks, node-effect baselines, mediated receiver-state
+  patches, source+receiver joint patches, reverse/wrong-receiver/random
+  controls, mediation accounting, and explicit counterexamples when node
+  effects do not justify path language.
 - Lab 28: mechanistic editing and unlearning — implemented as a safe first
   pass with reversible inference-time activation edits. Adds benign frozen
   edit targets, donor-prompt localization, wrong-position/random-direction

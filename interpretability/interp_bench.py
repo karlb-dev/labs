@@ -408,7 +408,7 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
     "lab27": {
         "module": "labs.lab27_path_mediation",
         "run_name": "lab27_path_mediation",
-        "description": "Path-specific patching and causal mediation: node effects versus two-site path proxies.",
+        "description": "Path-specific patching and causal mediation: node effects versus source-to-receiver path proxies.",
         # Base-model, hook-heavy lab. Tier A runs the full small frozen path
         # task set so each domain has at least a few clean/corrupt pairs.
         "max_examples_tier_a": "9",
