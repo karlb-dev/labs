@@ -453,6 +453,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # so A/B balance, sycophancy controls, and shortcut confounds are present.
         "max_examples_tier_a": "20",
     },
+    "lab33": {
+        "module": "labs.lab33_multimodal_mechanistic",
+        "run_name": "lab33_multimodal_mechanistic",
+        "description": "Multimodal mechanistic interpretability: synthetic connector smoke mode with OCR/background leak gates and patch semantics.",
+        # Synthetic connector smoke lab. Tier A runs the full rendered-image
+        # spec set so OCR, background, chart, spatial, and shape controls appear.
+        "max_examples_tier_a": "16",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template

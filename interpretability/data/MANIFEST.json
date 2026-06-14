@@ -161,6 +161,26 @@
     },
     "verified_tokenizers": []
   },
+  "multimodal_concept_pairs.jsonl": {
+    "concept_families": {
+      "background_control": 1,
+      "chart": 2,
+      "color": 3,
+      "count": 3,
+      "ocr_control": 1,
+      "shape": 3,
+      "spatial": 3
+    },
+    "generator": "hand-authored deterministic course rows rendered at runtime",
+    "rows": 16,
+    "science_scope": "synthetic connector smoke mode; no real VLM hooks loaded by default",
+    "sha256": "ee6f6edceed7e5fa158b05d75cb8d35bffd00e59ad5f31c0e0cd752b4afa6d43",
+    "splits": {
+      "eval": 7,
+      "train": 9
+    },
+    "verified_tokenizers": []
+  },
   "advanced_relation_geometry.csv": {
     "families": {
       "capital_of": 28,
