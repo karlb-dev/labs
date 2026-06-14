@@ -3992,6 +3992,54 @@ RELATION_CONTROL_COLORS = {
     "random": "#8C8C8C",
 }
 
+# Lab 13 emotion-geometry visual grammar. The lab carries local fallbacks, but
+# shared helpers keep emotion/source/confound/steering plots stable for later
+# affect, persona, and humor labs.
+EMOTION_COLORS = {
+    "joy": "#E69F00",
+    "sadness": "#0072B2",
+    "anger": "#D55E00",
+    "fear": "#7E57C2",
+    "neutral": "#8C8C8C",
+    "positive": "#009E73",
+    "negative": "#D55E00",
+}
+
+EMOTION_SOURCE_COLORS = {
+    "comprehension": "#0072B2",
+    "generation": "#E69F00",
+    "input": "#0072B2",
+    "write_intent": "#E69F00",
+}
+
+EMOTION_CONFOUND_COLORS = {
+    "surprising-neutral": "#56B4E9",
+    "positive-calm": "#009E73",
+    "high-arousal-neutral": "#CC79A7",
+    "negative-calm": "#D55E00",
+    "arousal_neutral": "#CC79A7",
+    "surprising_neutral": "#56B4E9",
+    "positive_calm": "#009E73",
+    "negative_calm": "#D55E00",
+}
+
+EMOTION_STEERING_CONDITION_COLORS = {
+    "input_direction": "#0072B2",
+    "write_intent_direction": "#E69F00",
+    "random_oriented": "#8C8C8C",
+    "shuffled_input_direction": "#8A9A00",
+    "sentiment_control": "#7E57C2",
+    "baseline": "#333333",
+}
+
+EMOTION_MARKERS = {
+    "joy": "o",
+    "sadness": "s",
+    "anger": "^",
+    "fear": "D",
+    "neutral": ".",
+}
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
@@ -4230,6 +4278,36 @@ def plot_relation_control_color(control: str, default: str = "#8C8C8C") -> str:
     """Shared color lookup for Lab 12 patch/probe controls."""
     key = str(control)
     return RELATION_CONTROL_COLORS.get(key, CONTROL_COLORS.get(key, default))
+
+
+def plot_emotion_color(emotion: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 13 emotion labels."""
+    key = str(emotion)
+    return EMOTION_COLORS.get(key, CATEGORY_COLORS.get(key, default))
+
+
+def plot_emotion_marker(emotion: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 13 emotion labels."""
+    key = str(emotion)
+    return EMOTION_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))
+
+
+def plot_emotion_source_color(source: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 13 source domains."""
+    key = str(source)
+    return EMOTION_SOURCE_COLORS.get(key, CATEGORY_COLORS.get(key, default))
+
+
+def plot_emotion_confound_color(confound: str, default: str = "#8C8C8C") -> str:
+    """Shared color lookup for Lab 13 confound rows."""
+    key = str(confound)
+    return EMOTION_CONFOUND_COLORS.get(key, CONTROL_COLORS.get(key, default))
+
+
+def plot_emotion_condition_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 13 steering/control conditions."""
+    key = str(condition)
+    return EMOTION_STEERING_CONDITION_COLORS.get(key, CONTROL_COLORS.get(key, default))
 
 
 def lighten_color(color: str, amount: float = 0.55) -> str:

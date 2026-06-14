@@ -1824,6 +1824,978 @@ def plot_steering_effects(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any
     bench.save_figure(ctx, fig, "affect_steering_effects.png", "Dose response for input-derived emotion steering and controls.")
 
 
+
+# ---------------------------------------------------------------------------
+# Visual synthesis helpers added in the Lab 13 visualization upgrade
+# ---------------------------------------------------------------------------
+
+EMOTION_PLOT_COLORS = {
+    "joy": "#E69F00",
+    "sadness": "#0072B2",
+    "anger": "#D55E00",
+    "fear": "#7E57C2",
+}
+
+SOURCE_PLOT_COLORS = {
+    "comprehension": "#0072B2",
+    "generation": "#E69F00",
+}
+
+STEERING_CONDITION_LABELS = {
+    "input_direction": "input-derived",
+    "write_intent_direction": "write-intent",
+    "random_oriented": "random",
+    "shuffled_input_direction": "shuffled",
+    "sentiment_control": "sentiment",
+    "baseline": "baseline",
+}
+
+STEERING_CONDITION_COLORS = {
+    "input_direction": "#0072B2",
+    "write_intent_direction": "#E69F00",
+    "random_oriented": "#8C8C8C",
+    "shuffled_input_direction": "#8A9A00",
+    "sentiment_control": "#7E57C2",
+    "baseline": "#333333",
+}
+
+EVIDENCE_METRIC_LABELS = {
+    "cross_transfer_auc": "cross read/write",
+    "control_adjusted_cross_auc": "control adj.",
+    "specificity_all_other": "specificity",
+    "cross_cause_auc": "cause held-out",
+    "sentiment_separation": "not sentiment",
+    "confound_resistance": "confound guard",
+    "steering_over_random": "steers > random",
+    "steering_over_sentiment": "steers > sentiment",
+}
+
+
+def _emotion_color(emotion: str) -> str:
+    if hasattr(bench, "plot_emotion_color"):
+        try:
+            return bench.plot_emotion_color(emotion)  # type: ignore[attr-defined]
+        except Exception:
+            pass
+    return EMOTION_PLOT_COLORS.get(str(emotion), bench.plot_category_color(str(emotion), "#555555"))
+
+
+def _source_color(source: str) -> str:
+    if hasattr(bench, "plot_emotion_source_color"):
+        try:
+            return bench.plot_emotion_source_color(source)  # type: ignore[attr-defined]
+        except Exception:
+            pass
+    return SOURCE_PLOT_COLORS.get(str(source), "#555555")
+
+
+def _steering_color(condition: str) -> str:
+    if hasattr(bench, "plot_emotion_condition_color"):
+        try:
+            return bench.plot_emotion_condition_color(condition)  # type: ignore[attr-defined]
+        except Exception:
+            pass
+    return STEERING_CONDITION_COLORS.get(str(condition), bench.plot_control_color(str(condition), "#555555"))
+
+
+def _safe_float(value: Any, default: float = float("nan")) -> float:
+    try:
+        v = float(value)
+        return v if math.isfinite(v) else default
+    except Exception:
+        return default
+
+
+def _mean(vals: Sequence[Any]) -> float:
+    fs = [_safe_float(v) for v in vals]
+    fs = [v for v in fs if math.isfinite(v)]
+    return safe_fmean(fs)
+
+
+def _first_finite(vals: Sequence[Any], default: float = float("nan")) -> float:
+    for v in vals:
+        f = _safe_float(v)
+        if math.isfinite(f):
+            return f
+    return default
+
+
+def _selected_depth_control_summary(depth_rows: Sequence[Mapping[str, Any]], depth: int) -> dict[str, float]:
+    selected = [r for r in depth_rows if int(_safe_float(r.get("depth"), -999)) == int(depth)]
+    row = selected[0] if selected else {}
+    return {
+        "real_cross_auc": _safe_float(row.get("real_cross_auc")),
+        "random_cross_auc": _safe_float(row.get("random_cross_auc")),
+        "shuffled_cross_auc": _safe_float(row.get("shuffled_cross_auc")),
+        "control_adjusted_cross_auc": _safe_float(row.get("control_adjusted_cross_auc")),
+        "train_control_adjusted_cross_auc": _safe_float(row.get("train_control_adjusted_cross_auc")),
+    }
+
+
+def _transfer_auc(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    depth: int,
+    emotion: str,
+    direction_kind: str = "real",
+    cross_only: bool | None = None,
+    eval_split: str = "eval",
+) -> float:
+    vals: list[float] = []
+    for r in rows:
+        if int(_safe_float(r.get("depth"), -999)) != int(depth):
+            continue
+        if str(r.get("emotion")) != str(emotion):
+            continue
+        if str(r.get("direction_kind")) != direction_kind:
+            continue
+        if str(r.get("eval_split", "eval")) != eval_split:
+            continue
+        if cross_only is True and r.get("direction_source") == r.get("eval_target"):
+            continue
+        if cross_only is False and r.get("direction_source") != r.get("eval_target"):
+            continue
+        val = _safe_float(r.get("auc"))
+        if math.isfinite(val):
+            vals.append(val)
+    return safe_fmean(vals)
+
+
+def _specificity_value(rows: Sequence[Mapping[str, Any]], emotion: str, pool: str) -> float:
+    vals: list[float] = []
+    for r in rows:
+        if str(r.get("emotion")) != emotion or str(r.get("comparison_pool")) != pool:
+            continue
+        val = _safe_float(r.get("specificity_auc"))
+        if math.isfinite(val):
+            vals.append(val)
+    return safe_fmean(vals)
+
+
+def _cross_cause_value(rows: Sequence[Mapping[str, Any]], emotion: str, *, cross_only: bool = True) -> float:
+    vals: list[float] = []
+    for r in rows:
+        if str(r.get("emotion")) != emotion:
+            continue
+        if cross_only and r.get("direction_source") == r.get("eval_target"):
+            continue
+        val = _safe_float(r.get("auc"))
+        if math.isfinite(val):
+            vals.append(val)
+    return safe_fmean(vals)
+
+
+def _sentiment_abs_cos(cos_rows: Sequence[Mapping[str, Any]], emotion: str) -> float:
+    vals: list[float] = []
+    for r in cos_rows:
+        a, b = str(r.get("direction_a", "")), str(r.get("direction_b", ""))
+        if "sentiment_lab7_style" not in a + b:
+            continue
+        other = b if "sentiment_lab7_style" in a else a
+        if other.endswith("_" + emotion):
+            val = _safe_float(r.get("abs_cosine", r.get("cosine")))
+            if math.isfinite(val):
+                vals.append(abs(val))
+    return safe_fmean(vals)
+
+
+def _max_confound_abs(confound_rows: Sequence[Mapping[str, Any]], emotion: str) -> float:
+    vals = [
+        _safe_float(r.get("abs_projection_delta"))
+        for r in confound_rows
+        if str(r.get("direction_emotion")) == emotion
+    ]
+    vals = [v for v in vals if math.isfinite(v)]
+    return max(vals, default=float("nan"))
+
+
+def _headline_steering(steering_rows: Sequence[Mapping[str, Any]], emotion: str, key: str) -> float:
+    vals = [
+        _safe_float(r.get(key))
+        for r in steering_rows
+        if str(r.get("emotion")) == emotion
+        and abs(_safe_float(r.get("dose_fraction_of_median_norm")) - HEADLINE_STEERING_DOSE) < 1e-9
+    ]
+    vals = [v for v in vals if math.isfinite(v)]
+    return safe_fmean(vals)
+
+
+def build_emotion_evidence_matrix(
+    emotions: Sequence[str],
+    transfer_rows: Sequence[Mapping[str, Any]],
+    specificity_rows: Sequence[Mapping[str, Any]],
+    cross_cause_rows: Sequence[Mapping[str, Any]],
+    cos_rows: Sequence[Mapping[str, Any]],
+    confound_rows: Sequence[Mapping[str, Any]],
+    steering_rows: Sequence[Mapping[str, Any]],
+    depth_rows: Sequence[Mapping[str, Any]],
+    depth: int,
+) -> list[dict[str, Any]]:
+    depth_summary = _selected_depth_control_summary(depth_rows, depth)
+    rows: list[dict[str, Any]] = []
+    for emotion in sorted(emotions):
+        cross_auc = _transfer_auc(transfer_rows, depth=depth, emotion=emotion, cross_only=True)
+        within_auc = _transfer_auc(transfer_rows, depth=depth, emotion=emotion, cross_only=False)
+        random_cross = _transfer_auc(transfer_rows, depth=depth, emotion=emotion, direction_kind="random", cross_only=True)
+        shuffled_cross = _transfer_auc(transfer_rows, depth=depth, emotion=emotion, direction_kind="shuffled", cross_only=True)
+        sentiment_cross = _transfer_auc(transfer_rows, depth=depth, emotion=emotion, direction_kind="sentiment_control", cross_only=True)
+        strongest_control = max([v for v in (0.5, random_cross, shuffled_cross, sentiment_cross) if math.isfinite(v)], default=0.5)
+        adjusted = cross_auc - strongest_control if math.isfinite(cross_auc) else float("nan")
+        spec_all = _specificity_value(specificity_rows, emotion, "all_other_emotions")
+        spec_val = _specificity_value(specificity_rows, emotion, "same_valence_other_emotions")
+        spec_arousal = _specificity_value(specificity_rows, emotion, "same_arousal_other_emotions")
+        cause_auc = _cross_cause_value(cross_cause_rows, emotion, cross_only=True)
+        sentiment_cos = _sentiment_abs_cos(cos_rows, emotion)
+        max_confound = _max_confound_abs(confound_rows, emotion)
+        steering_random = _headline_steering(steering_rows, emotion, "input_over_random_delta")
+        steering_shuffled = _headline_steering(steering_rows, emotion, "input_over_shuffled_delta")
+        steering_sentiment = _headline_steering(steering_rows, emotion, "input_over_sentiment_delta")
+        gates = {
+            "transfer": math.isfinite(cross_auc) and cross_auc >= CROSS_TRANSFER_AUC_BAR and math.isfinite(adjusted) and adjusted >= CONTROL_ADJUSTED_AUC_BAR,
+            "specificity": math.isfinite(spec_all) and spec_all >= SPECIFICITY_AUC_BAR,
+            "cause": math.isfinite(cause_auc) and cause_auc >= CROSS_CAUSE_AUC_BAR,
+            "sentiment": not math.isfinite(sentiment_cos) or sentiment_cos <= SENTIMENT_COSINE_WARN,
+            "steering": math.isfinite(steering_random) and steering_random >= STEERING_DELTA_BAR,
+        }
+        if all(gates.values()):
+            posture = "candidate emotion-specific handle"
+        elif gates["transfer"] and gates["steering"] and not gates["sentiment"]:
+            posture = "likely generic sentiment/valence"
+        elif gates["transfer"] or gates["steering"]:
+            posture = "affect handle; audit unresolved"
+        else:
+            posture = "no defended emotion-specific claim"
+        rows.append({
+            "emotion": emotion,
+            "best_depth": depth,
+            "global_selected_depth_real_cross_auc": rounded(depth_summary["real_cross_auc"]),
+            "global_selected_depth_control_adjusted_auc": rounded(depth_summary["control_adjusted_cross_auc"]),
+            "within_source_auc": rounded(within_auc),
+            "cross_transfer_auc": rounded(cross_auc),
+            "random_cross_auc": rounded(random_cross),
+            "shuffled_cross_auc": rounded(shuffled_cross),
+            "sentiment_cross_auc": rounded(sentiment_cross),
+            "strongest_cross_control_auc": rounded(strongest_control),
+            "control_adjusted_cross_auc": rounded(adjusted),
+            "specificity_all_other_auc": rounded(spec_all),
+            "specificity_same_valence_auc": rounded(spec_val),
+            "specificity_same_arousal_auc": rounded(spec_arousal),
+            "cross_cause_auc": rounded(cause_auc),
+            "abs_sentiment_cosine": rounded(sentiment_cos),
+            "max_abs_confound_projection_delta": rounded(max_confound),
+            "headline_input_over_random_delta": rounded(steering_random),
+            "headline_input_over_shuffled_delta": rounded(steering_shuffled),
+            "headline_input_over_sentiment_delta": rounded(steering_sentiment),
+            "gate_transfer": gates["transfer"],
+            "gate_specificity": gates["specificity"],
+            "gate_cross_cause": gates["cause"],
+            "gate_not_sentiment": gates["sentiment"],
+            "gate_steering": gates["steering"],
+            "claim_posture": posture,
+        })
+    return rows
+
+
+def build_steering_operating_points(
+    generation_rows: Sequence[Mapping[str, Any]],
+    steering_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    by_base: dict[str, float] = {}
+    for emotion in sorted({str(r.get("emotion")) for r in generation_rows if r.get("emotion")}):
+        vals = [
+            _safe_float(r.get("target_margin"))
+            for r in generation_rows
+            if str(r.get("emotion")) == emotion and str(r.get("condition")) == "baseline"
+        ]
+        by_base[emotion] = _mean(vals)
+    rows: list[dict[str, Any]] = []
+    for r in steering_rows:
+        emotion = str(r.get("emotion"))
+        dose = _safe_float(r.get("dose_fraction_of_median_norm"))
+        if not emotion or not math.isfinite(dose):
+            continue
+        condition_means = {
+            "input_direction": _safe_float(r.get("input_direction_mean")),
+            "write_intent_direction": _safe_float(r.get("write_intent_direction_mean")),
+            "random_oriented": _safe_float(r.get("random_oriented_mean")),
+            "shuffled_input_direction": _safe_float(r.get("shuffled_input_direction_mean")),
+            "sentiment_control": _safe_float(r.get("sentiment_control_mean")),
+        }
+        deltas = {
+            k: (v - by_base.get(emotion, float("nan"))) if math.isfinite(v) and math.isfinite(by_base.get(emotion, float("nan"))) else float("nan")
+            for k, v in condition_means.items()
+        }
+        max_control_delta = max([
+            v for k, v in deltas.items()
+            if k in {"random_oriented", "shuffled_input_direction", "sentiment_control"} and math.isfinite(v)
+        ], default=float("nan"))
+        gen_subset = [
+            row for row in generation_rows
+            if str(row.get("emotion")) == emotion
+            and abs(_safe_float(row.get("dose_fraction_of_median_norm")) - dose) < 1e-9
+        ]
+        input_subset = [row for row in gen_subset if str(row.get("condition")) == "input_direction"]
+        rows.append({
+            "emotion": emotion,
+            "dose_fraction_of_median_norm": rounded(dose),
+            "baseline_mean": rounded(by_base.get(emotion, float("nan"))),
+            "input_delta_vs_baseline": rounded(deltas.get("input_direction", float("nan"))),
+            "write_intent_delta_vs_baseline": rounded(deltas.get("write_intent_direction", float("nan"))),
+            "random_delta_vs_baseline": rounded(deltas.get("random_oriented", float("nan"))),
+            "shuffled_delta_vs_baseline": rounded(deltas.get("shuffled_input_direction", float("nan"))),
+            "sentiment_delta_vs_baseline": rounded(deltas.get("sentiment_control", float("nan"))),
+            "input_over_random_delta": r.get("input_over_random_delta"),
+            "input_over_shuffled_delta": r.get("input_over_shuffled_delta"),
+            "input_over_sentiment_delta": r.get("input_over_sentiment_delta"),
+            "max_control_delta_vs_baseline": rounded(max_control_delta),
+            "control_gap_vs_strongest_control": rounded(deltas.get("input_direction", float("nan")) - max_control_delta) if math.isfinite(max_control_delta) else "",
+            "mean_next_token_kl_input_bits": rounded(_mean([row.get("next_token_kl_to_baseline_bits") for row in input_subset])),
+            "mean_repetition_rate_input": rounded(_mean([row.get("repetition_rate") for row in input_subset])),
+            "mean_distinct_1_input": rounded(_mean([row.get("distinct_1") for row in input_subset])),
+            "n_input_generations": len(input_subset),
+            "headline_dose": abs(dose - HEADLINE_STEERING_DOSE) < 1e-9,
+            "auto_claimable_before_hand_labels": (
+                _safe_float(r.get("input_over_random_delta")) >= STEERING_DELTA_BAR
+                and _safe_float(r.get("input_over_shuffled_delta")) >= STEERING_DELTA_BAR
+            ),
+        })
+    return rows
+
+
+def write_emotion_evidence_matrix(
+    ctx: bench.RunContext,
+    emotions: Sequence[str],
+    transfer_rows: Sequence[Mapping[str, Any]],
+    specificity_rows: Sequence[Mapping[str, Any]],
+    cross_cause_rows: Sequence[Mapping[str, Any]],
+    cos_rows: Sequence[Mapping[str, Any]],
+    confound_rows: Sequence[Mapping[str, Any]],
+    steering_rows: Sequence[Mapping[str, Any]],
+    depth_rows: Sequence[Mapping[str, Any]],
+    depth: int,
+) -> list[dict[str, Any]]:
+    rows = build_emotion_evidence_matrix(
+        emotions,
+        transfer_rows,
+        specificity_rows,
+        cross_cause_rows,
+        cos_rows,
+        confound_rows,
+        steering_rows,
+        depth_rows,
+        depth,
+    )
+    path = ctx.path("tables", "emotion_evidence_matrix.csv")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", "One-row-per-emotion evidence ledger across transfer, specificity, confounds, steering, and claim posture.")
+    return rows
+
+
+def write_steering_operating_points(
+    ctx: bench.RunContext,
+    generation_rows: Sequence[Mapping[str, Any]],
+    steering_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = build_steering_operating_points(generation_rows, steering_rows)
+    path = ctx.path("tables", "steering_operating_points.csv")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", "Dose operating points with control gaps, KL, repetition, and hand-label caveats.")
+    return rows
+
+
+def write_plot_reading_guide(ctx: bench.RunContext) -> None:
+    rows = [
+        {"plot": "emotion_geometry_dashboard.png", "concept": "single cockpit", "read_for": "Does the run clear transfer, controls, specificity, steering, and confound audits together?"},
+        {"plot": "emotion_depth_curve.png", "concept": "depth selection", "read_for": "Did the selected depth beat shuffled/random controls before getting reported?"},
+        {"plot": "depth_control_gap_atlas.png", "concept": "selection stability", "read_for": "Where are real cross-source AUC, controls, and control-adjusted AUC separated?"},
+        {"plot": "emotion_transfer_matrix.png", "concept": "read/write transfer", "read_for": "Which emotions transfer across comprehension and generation directions?"},
+        {"plot": "emotion_evidence_matrix.png", "concept": "evidence ledger", "read_for": "Which emotion families actually clear the DECODE plus audit gates?"},
+        {"plot": "specificity_ladder.png", "concept": "generic affect audit", "read_for": "Does the target direction beat other-emotion, same-valence, and same-arousal deltas?"},
+        {"plot": "cross_cause_matrix.png", "concept": "topic leakage audit", "read_for": "Which held-out causes collapse the apparent emotion direction?"},
+        {"plot": "confound_projection_matrix.png", "concept": "deflationary twin", "read_for": "Which surprise/calm/arousal confounds project most onto the chosen directions?"},
+        {"plot": "steering_operating_frontier.png", "concept": "dose vs cost", "read_for": "Which doses move target affect more than controls without too much KL/repetition cost?"},
+        {"plot": "generation_response_atlas.png", "concept": "prompt heterogeneity", "read_for": "Is the steering curve broad or carried by one prompt?"},
+    ]
+    path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", "Guide to Lab 13 plots and the concept each one protects.")
+
+
+# ---------------------------------------------------------------------------
+# Upgraded plot functions
+# ---------------------------------------------------------------------------
+
+
+def plot_depth_curve(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(9.4, 5.2))
+    series = [
+        ("real_cross_auc", "real cross read/write", "#0072B2", "o", 2.2),
+        ("train_real_cross_auc", "train real cross", "#56B4E9", ".", 1.1),
+        ("shuffled_cross_auc", "shuffled-label control", "#8A9A00", "s", 1.3),
+        ("random_cross_auc", "random-direction control", "#8C8C8C", "^", 1.3),
+        ("control_adjusted_cross_auc", "real minus strongest control", "#D55E00", "D", 2.4),
+    ]
+    for key, label, color, marker, lw in series:
+        xs, ys = [], []
+        for r in rows:
+            val = _safe_float(r.get(key))
+            if math.isfinite(val):
+                xs.append(int(_safe_float(r.get("depth"))))
+                ys.append(val)
+        if xs:
+            ax.plot(xs, ys, marker=marker, markersize=3.0, label=label, color=color, linewidth=lw, alpha=0.92)
+    ax.axhline(0.5, linestyle=":", linewidth=1.0, color="#333333", label="chance AUC")
+    ax.axhline(CONTROL_ADJUSTED_AUC_BAR, linestyle="--", linewidth=1.0, color="#D55E00", alpha=0.75, label="adjusted audit bar")
+    ax.axvline(best_depth, linestyle="--", linewidth=1.4, color="#7E57C2", label=f"selected depth {best_depth}")
+    ax.set_xlabel("stream depth k (after k blocks; 0 is embeddings)")
+    ax.set_ylabel("held-out AUC or control-adjusted AUC")
+    ax.set_title("Depth selection: real transfer must outrun the control pack")
+    ax.legend(loc="best", ncols=2)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "emotion_depth_curve.png", "Depth sweep with real, train, control, and control-adjusted read/write transfer.")
+
+
+def plot_depth_control_gap_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
+    import numpy as np
+
+    if not rows:
+        return
+    keys = [
+        ("real_cross_auc", "real"),
+        ("shuffled_cross_auc", "shuffled"),
+        ("random_cross_auc", "random"),
+        ("strongest_control_cross_auc", "strongest ctrl"),
+        ("control_adjusted_cross_auc", "adj gap"),
+    ]
+    depths = [int(_safe_float(r.get("depth"))) for r in rows if math.isfinite(_safe_float(r.get("depth")))]
+    if not depths:
+        return
+    depth_order = sorted(set(depths))
+    grid = np.full((len(keys), len(depth_order)), np.nan)
+    row_by_depth = {int(_safe_float(r.get("depth"))): r for r in rows}
+    for j, d in enumerate(depth_order):
+        row = row_by_depth.get(d, {})
+        for i, (key, _) in enumerate(keys):
+            grid[i, j] = _safe_float(row.get(key))
+    fig, ax = bench.new_figure(figsize=(10.5, 3.8))
+    im = ax.imshow(grid, cmap="RdBu_r", vmin=-0.15, vmax=1.0, aspect="auto")
+    ax.set_yticks(range(len(keys)))
+    ax.set_yticklabels([label for _, label in keys])
+    ax.set_xticks(range(len(depth_order)))
+    ax.set_xticklabels(depth_order, fontsize=7)
+    if best_depth in depth_order:
+        ax.axvline(depth_order.index(best_depth), color="#7E57C2", linestyle="--", linewidth=1.4)
+    ax.set_xlabel("stream depth")
+    ax.set_title("Depth-control atlas: the selected layer should have separation, not merely brightness")
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            if np.isfinite(grid[i, j]) and (j % max(1, len(depth_order)//12) == 0 or depth_order[j] == best_depth):
+                ax.text(j, i, f"{grid[i, j]:.2f}", ha="center", va="center", fontsize=6)
+    fig.colorbar(im, ax=ax, fraction=0.025, label="AUC / gap")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "depth_control_gap_atlas.png", "Compact atlas of real/control/gap depth-selection quantities.")
+
+
+def plot_transfer_matrix(
+    ctx: bench.RunContext,
+    rows: Sequence[Mapping[str, Any]],
+    emotions: Sequence[str],
+    depth: int,
+) -> None:
+    import numpy as np
+
+    labels = [f"{a}->{b}" for a in SOURCES for b in SOURCES]
+    kinds = ["real", "sentiment_control", "shuffled", "random"]
+    fig, axes = __import__("matplotlib.pyplot").pyplot.subplots(1, 2, figsize=(12.2, 4.9), gridspec_kw={"width_ratios": [1.3, 1.0]})
+    ax = axes[0]
+    grid = np.full((len(emotions), len(labels)), np.nan)
+    for i, emotion in enumerate(emotions):
+        for j, label in enumerate(labels):
+            source, target = label.split("->")
+            vals = [
+                _safe_float(r.get("auc")) for r in rows
+                if int(_safe_float(r.get("depth"), -999)) == int(depth)
+                and r.get("direction_kind") == "real"
+                and r.get("eval_split", "eval") == "eval"
+                and r.get("emotion") == emotion
+                and r.get("direction_source") == source
+                and r.get("eval_target") == target
+            ]
+            grid[i, j] = _first_finite(vals)
+    im = ax.imshow(grid, cmap="viridis", vmin=0.0, vmax=1.0, aspect="auto")
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=30, ha="right")
+    ax.set_yticks(range(len(emotions)))
+    ax.set_yticklabels(emotions)
+    ax.set_title(f"real read/write transfer @ depth {depth}")
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            if np.isfinite(grid[i, j]):
+                ax.text(j, i, f"{grid[i, j]:.2f}", ha="center", va="center", color="white" if grid[i, j] < 0.35 or grid[i, j] > 0.68 else "black", fontsize=7)
+    fig.colorbar(im, ax=ax, fraction=0.035, label="AUC: emotion state vs neutral")
+
+    ax2 = axes[1]
+    x = np.arange(len(emotions))
+    width = 0.19
+    for k, kind in enumerate(kinds):
+        vals = [_transfer_auc(rows, depth=depth, emotion=e, direction_kind=kind, cross_only=True) for e in emotions]
+        ax2.bar(x + (k - 1.5) * width, vals, width=width, label=kind.replace("_", " "), color=("#0072B2" if kind == "real" else _steering_color(kind)))
+    ax2.axhline(0.5, color="#333333", linestyle=":", linewidth=1.0)
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(emotions, rotation=25, ha="right")
+    ax2.set_ylim(0, 1.02)
+    ax2.set_ylabel("cross-source AUC")
+    ax2.set_title("controls ride the same rails")
+    ax2.legend(loc="best", fontsize=7)
+    fig.suptitle("Input/output transfer: real directions must beat cheap alternatives", y=1.02, fontsize=13)
+    fig.tight_layout()
+    bench.save_figure(
+        ctx,
+        fig,
+        "emotion_transfer_matrix.png",
+        "Read/write transfer matrix with selected-depth control comparison.",
+    )
+
+
+def plot_cosines(ctx: bench.RunContext, labels: Sequence[str], vectors: Mapping[str, Any], depth: int) -> None:
+    import numpy as np
+
+    if not labels:
+        return
+    grid = np.full((len(labels), len(labels)), np.nan)
+    for i, a in enumerate(labels):
+        for j, b in enumerate(labels):
+            grid[i, j] = cosine(vectors[a], vectors[b])
+    fig, ax = bench.new_figure(figsize=(0.55 * len(labels) + 5.0, 0.55 * len(labels) + 5.0))
+    im = ax.imshow(grid, cmap="RdBu_r", vmin=-1.0, vmax=1.0)
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=7)
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels, fontsize=7)
+    ax.set_title(f"Direction geometry at stream depth {depth}: blocky is not automatically emotion-specific")
+    for i in range(len(labels)):
+        for j in range(len(labels)):
+            if i == j or abs(grid[i, j]) >= 0.5 or "sentiment_lab7" in labels[i] + labels[j]:
+                ax.text(j, i, f"{grid[i, j]:.2f}", ha="center", va="center", fontsize=5.8)
+    fig.colorbar(im, ax=ax, fraction=0.035, label="cosine")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "emotion_direction_cosines.png", "Pairwise cosines among emotion directions and sentiment control.")
+
+
+def plot_specificity(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    plot_specificity_ladder(ctx, rows)
+    # Preserve the old artifact name with a compact headline bar chart.
+    vals_by_emotion: dict[str, list[float]] = defaultdict(list)
+    for r in rows:
+        if r.get("comparison_pool") != "all_other_emotions":
+            continue
+        if r.get("direction_source") == r.get("eval_target"):
+            continue
+        val = _safe_float(r.get("specificity_auc"))
+        if math.isfinite(val):
+            vals_by_emotion[str(r["emotion"])].append(val)
+    if not vals_by_emotion:
+        return
+    labels = sorted(vals_by_emotion)
+    means = [safe_fmean(vals_by_emotion[e]) for e in labels]
+    fig, ax = bench.new_figure(figsize=(7.8, 4.6))
+    colors = [_emotion_color(e) for e in labels]
+    ax.bar(labels, means, color=colors)
+    ax.axhline(0.5, linestyle=":", linewidth=1.0, label="chance")
+    ax.axhline(SPECIFICITY_AUC_BAR, linestyle="--", linewidth=1.0, label="audit bar")
+    ax.set_ylim(0.0, 1.0)
+    ax.set_ylabel("AUC: target emotion delta vs other-emotion deltas")
+    ax.set_title("Emotion specificity beyond generic affect")
+    ax.legend(loc="best")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "emotion_specificity.png", "Specificity of each emotion direction against other emotion deltas.")
+
+
+def plot_specificity_ladder(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    pools = ["all_other_emotions", "same_valence_other_emotions", "same_arousal_other_emotions"]
+    pool_labels = ["all other", "same valence", "same arousal"]
+    emotions = sorted({str(r.get("emotion")) for r in rows if r.get("emotion")})
+    if not rows or not emotions:
+        return
+    fig, ax = bench.new_figure(figsize=(9.2, 4.9))
+    import numpy as np
+    x = np.arange(len(emotions))
+    width = 0.24
+    for i, pool in enumerate(pools):
+        vals = [_specificity_value(rows, e, pool) for e in emotions]
+        ax.bar(x + (i - 1) * width, vals, width=width, label=pool_labels[i], alpha=0.88)
+    ax.axhline(0.5, color="#333333", linestyle=":", linewidth=1.0, label="chance")
+    ax.axhline(SPECIFICITY_AUC_BAR, color="#D55E00", linestyle="--", linewidth=1.0, label="audit bar")
+    ax.set_ylim(0, 1.02)
+    ax.set_xticks(x)
+    ax.set_xticklabels(emotions)
+    ax.set_ylabel("specificity AUC")
+    ax.set_title("Specificity ladder: target emotion must beat valence and arousal cousins")
+    ax.legend(loc="best", ncols=2)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "specificity_ladder.png", "Emotion specificity split into all-other, same-valence, and same-arousal comparisons.")
+
+
+def plot_cross_cause(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    plot_cross_cause_matrix(ctx, rows)
+    vals_by_emotion: dict[str, list[float]] = defaultdict(list)
+    for r in rows:
+        val = _safe_float(r.get("auc"))
+        if math.isfinite(val) and r.get("direction_source") != r.get("eval_target"):
+            vals_by_emotion[str(r["emotion"])].append(val)
+    if not vals_by_emotion:
+        return
+    labels = sorted(vals_by_emotion)
+    means = [safe_fmean(vals_by_emotion[e]) for e in labels]
+    errs = [safe_stderr(vals_by_emotion[e]) for e in labels]
+    fig, ax = bench.new_figure(figsize=(7.8, 4.6))
+    ax.bar(labels, means, yerr=[0.0 if not math.isfinite(e) else e for e in errs], capsize=3, color=[_emotion_color(e) for e in labels])
+    ax.axhline(0.5, linestyle=":", linewidth=1.0, label="chance")
+    ax.axhline(CROSS_CAUSE_AUC_BAR, linestyle="--", linewidth=1.0, label="audit bar")
+    ax.set_ylim(0.0, 1.0)
+    ax.set_ylabel("leave-one-cause-out cross-source AUC")
+    ax.set_title("Cross-cause generalization")
+    ax.legend(loc="best")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "cross_cause_generalization.png", "Cause-held-out transfer summary by emotion.")
+
+
+def plot_cross_cause_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import numpy as np
+
+    cross_rows = [r for r in rows if r.get("direction_source") != r.get("eval_target")]
+    emotions = sorted({str(r.get("emotion")) for r in cross_rows if r.get("emotion")})
+    causes = sorted({str(r.get("held_out_cause")) for r in cross_rows if r.get("held_out_cause")})
+    if not emotions or not causes:
+        return
+    grid = np.full((len(emotions), len(causes)), np.nan)
+    for i, emotion in enumerate(emotions):
+        for j, cause in enumerate(causes):
+            vals = [_safe_float(r.get("auc")) for r in cross_rows if r.get("emotion") == emotion and r.get("held_out_cause") == cause]
+            grid[i, j] = _mean(vals)
+    fig, ax = bench.new_figure(figsize=(max(8.0, 0.42 * len(causes) + 4.0), 0.52 * len(emotions) + 3.8))
+    im = ax.imshow(grid, cmap="viridis", vmin=0.0, vmax=1.0, aspect="auto")
+    ax.set_xticks(range(len(causes)))
+    ax.set_xticklabels(causes, rotation=45, ha="right", fontsize=7)
+    ax.set_yticks(range(len(emotions)))
+    ax.set_yticklabels(emotions)
+    ax.set_title("Cause-held-out transfer: topic leakage has nowhere to hide")
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            if np.isfinite(grid[i, j]):
+                ax.text(j, i, f"{grid[i, j]:.2f}", ha="center", va="center", fontsize=6, color="white" if grid[i, j] < 0.35 or grid[i, j] > 0.68 else "black")
+    fig.colorbar(im, ax=ax, fraction=0.025, label="cross-source AUC")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "cross_cause_matrix.png", "Held-out-cause transfer matrix by emotion and cause.")
+
+
+def plot_confound_audit(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    plot_confound_matrix(ctx, rows)
+    finite_rows = [r for r in rows if math.isfinite(_safe_float(r.get("abs_projection_delta")))]
+    if not finite_rows:
+        return
+    top = sorted(finite_rows, key=lambda r: _safe_float(r.get("abs_projection_delta")), reverse=True)[:14]
+    labels = [f"{r['confound']}\n{r['direction']}" for r in top]
+    vals = [_safe_float(r.get("projection_delta")) for r in top]
+    colors = [_emotion_color(str(r.get("direction_emotion", ""))) for r in top]
+    fig, ax = bench.new_figure(figsize=(9.2, 5.9))
+    y = list(range(len(top)))
+    ax.barh(y, vals, color=colors, alpha=0.9)
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels, fontsize=7)
+    ax.axvline(0.0, linewidth=1.0, color="#333333")
+    ax.invert_yaxis()
+    ax.set_xlabel("projection delta: confound text minus neutral match")
+    ax.set_title("Largest confound projections onto emotion directions")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "confound_projection_audit.png", "Largest surprise/calm/arousal confound projections.")
+
+
+def plot_confound_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import numpy as np
+
+    if not rows:
+        return
+    confounds = sorted({str(r.get("confound")) for r in rows if r.get("confound")})
+    directions = sorted({str(r.get("direction")) for r in rows if r.get("direction")})
+    if not confounds or not directions:
+        return
+    grid = np.full((len(confounds), len(directions)), np.nan)
+    for i, confound in enumerate(confounds):
+        for j, direction in enumerate(directions):
+            vals = [_safe_float(r.get("projection_delta")) for r in rows if r.get("confound") == confound and r.get("direction") == direction]
+            grid[i, j] = _mean(vals)
+    lim = max(0.1, max(abs(v) for v in grid.flatten() if math.isfinite(float(v))))
+    fig, ax = bench.new_figure(figsize=(max(9.0, 0.42 * len(directions) + 4.0), 0.5 * len(confounds) + 3.8))
+    im = ax.imshow(grid, cmap="RdBu_r", vmin=-lim, vmax=lim, aspect="auto")
+    ax.set_xticks(range(len(directions)))
+    ax.set_xticklabels(directions, rotation=45, ha="right", fontsize=7)
+    ax.set_yticks(range(len(confounds)))
+    ax.set_yticklabels(confounds)
+    ax.set_title("Confound projection matrix: deflationary twins get their own microphone")
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            if np.isfinite(grid[i, j]) and abs(grid[i, j]) >= 0.1 * lim:
+                ax.text(j, i, f"{grid[i, j]:.2f}", ha="center", va="center", fontsize=6)
+    fig.colorbar(im, ax=ax, fraction=0.025, label="projection delta")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "confound_projection_matrix.png", "Projection deltas for each confound family against each emotion direction.")
+
+
+def plot_steering_effects(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    doses = sorted({float(r["dose_fraction_of_median_norm"]) for r in rows if math.isfinite(_safe_float(r.get("dose_fraction_of_median_norm")))})
+    conditions = [
+        ("input_direction_delta_vs_baseline", "input_direction"),
+        ("write_intent_direction_delta_vs_baseline", "write_intent_direction"),
+        ("random_oriented_delta_vs_baseline", "random_oriented"),
+        ("shuffled_input_direction_delta_vs_baseline", "shuffled_input_direction"),
+        ("sentiment_control_delta_vs_baseline", "sentiment_control"),
+    ]
+    fig, ax = bench.new_figure(figsize=(9.2, 5.0))
+    for key, condition in conditions:
+        ys: list[float] = []
+        xs: list[float] = []
+        for dose in doses:
+            vals = [
+                _safe_float(r.get(key)) for r in rows
+                if abs(_safe_float(r.get("dose_fraction_of_median_norm")) - dose) < 1e-9
+            ]
+            vals = [v for v in vals if math.isfinite(v)]
+            if vals:
+                xs.append(dose)
+                ys.append(safe_fmean(vals))
+        if xs:
+            ax.plot(xs, ys, marker="o", label=STEERING_CONDITION_LABELS.get(condition, condition), color=_steering_color(condition))
+    ax.axhline(0.0, linestyle=":", linewidth=1.0, color="#333333")
+    ax.axhline(STEERING_DELTA_BAR, linestyle="--", linewidth=1.0, color="#D55E00", alpha=0.7, label="steering audit bar")
+    ax.axvline(HEADLINE_STEERING_DOSE, linestyle="--", linewidth=1.2, color="#7E57C2", label="headline dose")
+    ax.set_xlabel("dose as fraction of median train activation norm")
+    ax.set_ylabel("generated target-affect margin delta vs baseline")
+    ax.set_title("Affect steering dose response: handle strength versus controls")
+    ax.legend(loc="best", ncols=2)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "affect_steering_effects.png", "Dose response for input-derived emotion steering and controls.")
+
+
+def plot_steering_operating_frontier(
+    ctx: bench.RunContext,
+    operating_rows: Sequence[Mapping[str, Any]],
+) -> None:
+    if not operating_rows:
+        return
+    fig, ax = bench.new_figure(figsize=(8.6, 5.2))
+    for emotion in sorted({str(r.get("emotion")) for r in operating_rows if r.get("emotion")}):
+        xs, ys, sizes = [], [], []
+        for r in sorted([x for x in operating_rows if str(x.get("emotion")) == emotion], key=lambda x: _safe_float(x.get("dose_fraction_of_median_norm"))):
+            x = _safe_float(r.get("mean_next_token_kl_input_bits"), 0.0)
+            y = _safe_float(r.get("control_gap_vs_strongest_control"))
+            dose = _safe_float(r.get("dose_fraction_of_median_norm"), 0.0)
+            if math.isfinite(x) and math.isfinite(y):
+                xs.append(x)
+                ys.append(y)
+                sizes.append(50 + 80 * dose)
+        if xs:
+            ax.plot(xs, ys, color=_emotion_color(emotion), alpha=0.45)
+            ax.scatter(xs, ys, s=sizes, color=_emotion_color(emotion), label=emotion, alpha=0.82, edgecolors="black", linewidths=0.3)
+    ax.axhline(0.0, color="#333333", linewidth=1.0)
+    ax.axhline(STEERING_DELTA_BAR, color="#D55E00", linestyle="--", linewidth=1.0, label="audit gap")
+    ax.set_xlabel("mean next-token KL for input steering (bits)")
+    ax.set_ylabel("input steering minus strongest control")
+    ax.set_title("Steering operating frontier: bigger dose has to pay rent")
+    ax.legend(loc="best", ncols=2)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "steering_operating_frontier.png", "Dose/cost frontier for input-derived emotion steering against controls.")
+
+
+def plot_generation_response_atlas(ctx: bench.RunContext, generation_rows: Sequence[Mapping[str, Any]]) -> None:
+    import numpy as np
+
+    rows = [r for r in generation_rows if str(r.get("condition")) in {"baseline", "input_direction", "write_intent_direction", "random_oriented", "shuffled_input_direction", "sentiment_control"}]
+    if not rows:
+        return
+    item_keys = []
+    for r in rows:
+        key = (str(r.get("emotion")), str(r.get("item_id")), str(r.get("cause")))
+        if key not in item_keys:
+            item_keys.append(key)
+    # Keep the plot legible on full runs while preserving all rows in the table.
+    item_keys = item_keys[:40]
+    dose_values = sorted({round(_safe_float(r.get("dose_fraction_of_median_norm")), 3) for r in rows if math.isfinite(_safe_float(r.get("dose_fraction_of_median_norm")))})
+    conditions = ["baseline", "input_direction", "write_intent_direction", "random_oriented", "shuffled_input_direction", "sentiment_control"]
+    cols = ["baseline@0"] + [f"{STEERING_CONDITION_LABELS.get(c, c)}@{d:g}" for d in dose_values if d > 0 for c in conditions if c != "baseline"]
+    grid = np.full((len(item_keys), len(cols)), np.nan)
+    for i, (emotion, item_id, cause) in enumerate(item_keys):
+        baseline_vals = [_safe_float(r.get("target_margin")) for r in rows if str(r.get("item_id")) == item_id and str(r.get("condition")) == "baseline"]
+        grid[i, 0] = _mean(baseline_vals)
+        col = 1
+        for d in dose_values:
+            if d <= 0:
+                continue
+            for c in conditions:
+                if c == "baseline":
+                    continue
+                vals = [_safe_float(r.get("target_margin")) for r in rows if str(r.get("item_id")) == item_id and str(r.get("condition")) == c and abs(_safe_float(r.get("dose_fraction_of_median_norm")) - d) < 1e-9]
+                grid[i, col] = _mean(vals)
+                col += 1
+    labels = [f"{e}:{item}\n{cause}" for e, item, cause in item_keys]
+    lim = max(0.25, max(abs(v) for v in grid.flatten() if math.isfinite(float(v))))
+    fig, ax = bench.new_figure(figsize=(max(11.0, 0.36 * len(cols) + 4), max(5.0, 0.28 * len(item_keys) + 2.5)))
+    im = ax.imshow(grid, cmap="RdBu_r", vmin=-lim, vmax=lim, aspect="auto")
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels(cols, rotation=50, ha="right", fontsize=6.5)
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels, fontsize=6.5)
+    ax.set_title("Prompt-level steering response atlas: aggregates are not allowed to hide outlier rows")
+    fig.colorbar(im, ax=ax, fraction=0.02, label="target-affect margin")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "generation_response_atlas.png", "Per-prompt target-affect margin under steering conditions and doses.")
+
+
+def plot_emotion_evidence_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import numpy as np
+
+    if not rows:
+        return
+    emotions = [str(r["emotion"]) for r in rows]
+    metrics = [
+        ("cross_transfer_auc", "cross read/write", 0.5, 1.0),
+        ("control_adjusted_cross_auc", "control gap", 0.0, 0.35),
+        ("specificity_all_other_auc", "specificity", 0.5, 1.0),
+        ("cross_cause_auc", "cause held-out", 0.5, 1.0),
+        ("abs_sentiment_cosine", "sentiment cosine", 0.0, 1.0),
+        ("max_abs_confound_projection_delta", "confound max", 0.0, None),
+        ("headline_input_over_random_delta", "steer > random", 0.0, 0.35),
+        ("headline_input_over_sentiment_delta", "steer > sentiment", 0.0, 0.35),
+    ]
+    grid = np.full((len(emotions), len(metrics)), np.nan)
+    for i, r in enumerate(rows):
+        for j, (key, _, lo, hi) in enumerate(metrics):
+            val = _safe_float(r.get(key))
+            if not math.isfinite(val):
+                continue
+            # Normalize for visual comparability. For cosine/confound, lower is better, so invert.
+            if key == "abs_sentiment_cosine":
+                score = 1.0 - min(1.0, max(0.0, val))
+            elif key == "max_abs_confound_projection_delta":
+                score = 1.0 / (1.0 + max(0.0, val))
+            else:
+                hi2 = hi if hi is not None else max(1.0, val)
+                score = (val - lo) / max(1e-9, (hi2 - lo))
+                score = min(1.0, max(0.0, score))
+            grid[i, j] = score
+    fig, ax = bench.new_figure(figsize=(10.8, 0.52 * len(emotions) + 3.4))
+    im = ax.imshow(grid, cmap="RdYlGn", vmin=0.0, vmax=1.0, aspect="auto")
+    ax.set_xticks(range(len(metrics)))
+    ax.set_xticklabels([m[1] for m in metrics], rotation=35, ha="right")
+    ax.set_yticks(range(len(emotions)))
+    ax.set_yticklabels(emotions)
+    ax.set_title("Emotion evidence matrix: green cells earn claims; red cells write caveats")
+    for i, r in enumerate(rows):
+        for j, (key, _, _, _) in enumerate(metrics):
+            val = _safe_float(r.get(key))
+            if math.isfinite(val):
+                ax.text(j, i, f"{val:.2f}", ha="center", va="center", fontsize=7)
+    fig.colorbar(im, ax=ax, fraction=0.025, label="audit-normalized score")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "emotion_evidence_matrix.png", "Normalized evidence gates by emotion, with raw values annotated.")
+
+
+def plot_emotion_geometry_dashboard(
+    ctx: bench.RunContext,
+    evidence_rows: Sequence[Mapping[str, Any]],
+    depth_rows: Sequence[Mapping[str, Any]],
+    steering_operating_rows: Sequence[Mapping[str, Any]],
+    confound_rows: Sequence[Mapping[str, Any]],
+    best_depth: int,
+) -> None:
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.5, 8.0))
+    ax = axes[0, 0]
+    depths = [int(_safe_float(r.get("depth"))) for r in depth_rows if math.isfinite(_safe_float(r.get("depth")))]
+    for key, label, color in [
+        ("real_cross_auc", "real cross AUC", "#0072B2"),
+        ("strongest_control_cross_auc", "strongest control", "#8C8C8C"),
+        ("control_adjusted_cross_auc", "real-control gap", "#D55E00"),
+    ]:
+        xs, ys = [], []
+        for r in depth_rows:
+            v = _safe_float(r.get(key))
+            if math.isfinite(v):
+                xs.append(int(_safe_float(r.get("depth"))))
+                ys.append(v)
+        if xs:
+            ax.plot(xs, ys, marker="o", markersize=2.5, color=color, label=label)
+    ax.axvline(best_depth, linestyle="--", color="#7E57C2", linewidth=1.2)
+    ax.axhline(0.5, linestyle=":", color="#333333", linewidth=1.0)
+    ax.set_title("1. depth selection")
+    ax.set_xlabel("stream depth")
+    ax.set_ylabel("AUC / gap")
+    ax.legend(fontsize=7)
+
+    ax = axes[0, 1]
+    emotions = [str(r["emotion"]) for r in evidence_rows]
+    x = np.arange(len(emotions))
+    width = 0.22
+    for idx, (key, label) in enumerate([
+        ("cross_transfer_auc", "transfer"),
+        ("specificity_all_other_auc", "specificity"),
+        ("cross_cause_auc", "cause-heldout"),
+    ]):
+        vals = [_safe_float(r.get(key)) for r in evidence_rows]
+        ax.bar(x + (idx - 1) * width, vals, width=width, label=label)
+    ax.axhline(0.5, color="#333333", linestyle=":", linewidth=1.0)
+    ax.axhline(SPECIFICITY_AUC_BAR, color="#D55E00", linestyle="--", linewidth=1.0)
+    ax.set_xticks(x)
+    ax.set_xticklabels(emotions)
+    ax.set_ylim(0, 1.02)
+    ax.set_title("2. decode gates")
+    ax.set_ylabel("AUC")
+    ax.legend(fontsize=7)
+
+    ax = axes[1, 0]
+    for emotion in sorted({str(r.get("emotion")) for r in steering_operating_rows if r.get("emotion")}):
+        subset = sorted([r for r in steering_operating_rows if str(r.get("emotion")) == emotion], key=lambda r: _safe_float(r.get("dose_fraction_of_median_norm")))
+        xs = [_safe_float(r.get("dose_fraction_of_median_norm")) for r in subset]
+        ys = [_safe_float(r.get("control_gap_vs_strongest_control")) for r in subset]
+        xs2, ys2 = [], []
+        for x0, y0 in zip(xs, ys):
+            if math.isfinite(x0) and math.isfinite(y0):
+                xs2.append(x0); ys2.append(y0)
+        if xs2:
+            ax.plot(xs2, ys2, marker="o", color=_emotion_color(emotion), label=emotion)
+    ax.axhline(0.0, color="#333333", linewidth=1.0)
+    ax.axhline(STEERING_DELTA_BAR, color="#D55E00", linestyle="--", linewidth=1.0)
+    ax.axvline(HEADLINE_STEERING_DOSE, color="#7E57C2", linestyle="--", linewidth=1.0)
+    ax.set_title("3. steering over controls")
+    ax.set_xlabel("dose")
+    ax.set_ylabel("input minus strongest control")
+    ax.legend(fontsize=7)
+
+    ax = axes[1, 1]
+    confound_max: dict[str, float] = {}
+    for r in confound_rows:
+        conf = str(r.get("confound", ""))
+        val = _safe_float(r.get("abs_projection_delta"))
+        if conf and math.isfinite(val):
+            confound_max[conf] = max(confound_max.get(conf, 0.0), val)
+    labels = sorted(confound_max, key=lambda k: confound_max[k], reverse=True)[:8]
+    vals = [confound_max[k] for k in labels]
+    ax.barh(range(len(labels)), vals, color="#8C8C8C")
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels, fontsize=7)
+    ax.invert_yaxis()
+    ax.set_title("4. largest cheap-explanation projections")
+    ax.set_xlabel("max |projection delta|")
+    fig.suptitle("Lab 13 emotion-geometry dashboard: handle, audit, and steering in one room", fontsize=14, y=0.995)
+    fig.tight_layout(rect=[0, 0, 1, 0.965])
+    bench.save_figure(ctx, fig, "emotion_geometry_dashboard.png", "Single-screen Lab 13 dashboard for transfer, controls, steering, and confounds.")
+
 # ---------------------------------------------------------------------------
 # Cards, audits, summaries, and labels
 # ---------------------------------------------------------------------------
@@ -1987,10 +2959,11 @@ def write_emotion_geometry_card(ctx: bench.RunContext, metrics: Mapping[str, Any
         "",
         "## Read next",
         "",
-        "1. `operationalization_audit.md` for the cheap-explanation verdict.",
-        "2. `tables/emotion_probe_transfer.csv` and `plots/emotion_transfer_matrix.png` for decodability and transfer.",
-        "3. `tables/emotion_specificity_vs_other_emotions.csv` for generic-affect controls.",
-        "4. `tables/steering_generations.csv` plus `tables/generation_labeling_guide.md` before making a causal steering claim.",
+        "1. `plots/emotion_geometry_dashboard.png` for the one-screen evidence cockpit.",
+        "2. `operationalization_audit.md` for the cheap-explanation verdict.",
+        "3. `tables/emotion_evidence_matrix.csv` for the per-emotion claim ledger.",
+        "4. `tables/emotion_probe_transfer.csv` and `plots/emotion_transfer_matrix.png` for decodability and transfer.",
+        "5. `tables/steering_generations.csv` plus `tables/generation_labeling_guide.md` before making a causal steering claim.",
         "",
         "## Non-claims",
         "",
@@ -2236,6 +3209,20 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, steering_path, steering_rows)
     ctx.register_artifact(steering_path, "table", "Per-emotion steering effect over baseline and controls across a dose sweep.")
     write_generation_labeling_guide(ctx)
+    steering_operating_rows = write_steering_operating_points(ctx, generation_rows, steering_rows)
+    evidence_rows = write_emotion_evidence_matrix(
+        ctx,
+        emotions,
+        transfer_rows,
+        specificity,
+        cross_cause_rows,
+        cos_rows,
+        confound_rows,
+        steering_rows,
+        depth_rows,
+        best_depth,
+    )
+    write_plot_reading_guide(ctx)
 
     state_payload: dict[str, Any] = {
         "depth": best_depth,
@@ -2261,13 +3248,18 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     ctx.register_artifact(state_metadata_path, "metadata", "Human-readable metadata for saved emotion directions.")
 
     if not args.no_plots:
+        plot_emotion_geometry_dashboard(ctx, evidence_rows, depth_rows, steering_operating_rows, confound_rows, best_depth)
         plot_depth_curve(ctx, depth_rows, best_depth)
+        plot_depth_control_gap_atlas(ctx, depth_rows, best_depth)
         plot_transfer_matrix(ctx, transfer_rows, emotions, best_depth)
         plot_cosines(ctx, labels, vectors, best_depth)
+        plot_emotion_evidence_matrix(ctx, evidence_rows)
         plot_specificity(ctx, specificity)
         plot_cross_cause(ctx, cross_cause_rows)
         plot_confound_audit(ctx, confound_rows)
         plot_steering_effects(ctx, steering_rows)
+        plot_steering_operating_frontier(ctx, steering_operating_rows)
+        plot_generation_response_atlas(ctx, generation_rows)
 
     selected_depth_row = next((r for r in depth_rows if int(r["depth"]) == best_depth), {})
     real_best = [

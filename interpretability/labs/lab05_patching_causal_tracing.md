@@ -134,6 +134,19 @@ This is the recall-then-readout story in one figure. The component pass (attn vs
 
 **Make the concept pop (component vs stream):** The stream patch at the localized band is an interchange result on the accumulated representation. The component-level pass (see `plots/component_patching.png`) asks which submodule's output, when patched, carries most of the recovery. It is still an interchange result, not a proof that the submodule "stores" the fact.
 
+### Mover vs. store: what the component pass actually asks
+
+The component pass splits the localized band into four `(submodule, position)` cells — attention or MLP, at the subject or the last position — and patches the **whole output vector** of that one submodule (all `d_model` dimensions) at that one position. It never touches the attention *pattern*: you are not changing where heads look or how strongly, only swapping what the module *wrote* and re-running. So the question is computational *role*, not positional-versus-content attention strength. The two roles map onto a fact you can read straight off the architecture:
+
+- **`mlp@subject` — enrich in place.** The MLP runs independently per position; it can transform the residual at the subject token but cannot read from any other token. This is the ROME "the fact is stored here" candidate.
+- **`attn@last` — transport.** Attention is the only operation that moves information *between* positions. This cell is the last token reaching back to the subject and pulling the answer-relevant content forward into the stream the logits are read from.
+
+![Two computational roles at the localized band: MLP at the subject position enriches the representation in place (a store candidate), while attention at the last position transports the answer forward to the readout (the mover).](../figures/lab5_attn_mover_vs_mlp_store_across_positions.png)
+
+This is also why the component winner can disagree with the stream heatmap, which usually lights up the *subject* column — they ask different questions. The stream patch asks "is the whole accumulated subject representation present at this cell?", and re-injecting all of the subject's representation recovers a lot. The component patch asks the finer "which single additive write, transplanted by itself, moves the answer?" By the localized band the subject information is already redundantly present from earlier writes, so swapping one block's *subject* contribution barely changes the running sum, while the one *transport* write that carries it to the last position does. Same block, different position, only one doing load-bearing work at that depth.
+
+Read the winner as sufficiency, not mechanism. A single attention cell holding most of the component signal is exactly what path patching exists to interrogate: that write might just feed a downstream component that does the real work. Sufficiency of one write under interchange is not proof it *is* the mechanism — that gap is the falsifier to chase next. (In the Olmo-3-7B reference run, `attn@last` is the largest of the four cells in `tables/component_summary.csv`, consistent with a transport-dominant reading, but all four recoveries are small — so the honest reading is that the band's causal signal is spread across many writes, not concentrated in one.)
+
 ## Running it
 
 ```bash

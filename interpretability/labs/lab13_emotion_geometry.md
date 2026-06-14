@@ -77,7 +77,7 @@ streams[0] = embedding output
 streams[L] = final block output before final norm
 ```
 
-A direction extracted at `stream_depth = k` is injected at `injection_layer = k - 1`, because steering adds to the output of decoder block `k - 1`. This lab writes both numbers into the state metadata so nobody falls into the stream-depth goblin pit.
+A direction extracted at `stream_depth = k` is injected at `injection_layer = k - 1`, because steering adds to the output of decoder block `k - 1`. This lab writes both numbers into the state metadata so nobody falls into the stream-depth off-by-one trap.
 
 ## Direction families
 
@@ -159,6 +159,44 @@ Finally, the lab adds directions during generation at the selected injection lay
 
 The automatic target-affect score is lexicon-based and intentionally simple. `tables/steering_generations.csv` includes blank hand-label columns because a lexicon is not a judge. The writeup should inspect generations before moving a `CAUSAL` claim into the ledger.
 
+
+
+## Visualization upgrade: the new reading path
+
+Lab 13 now writes an evidence suite rather than a small pile of separate charts. The headline artifact is:
+
+```text
+plots/emotion_geometry_dashboard.png
+```
+
+Read it first. It puts four fragile pieces of the claim in the same room: the selected read/write-transfer depth, the per-emotion decode gates, steering over controls, and the confound rows trying to explain the result away. The dashboard is not the whole argument. It is the table of contents for the argument.
+
+New or upgraded artifacts:
+
+| Artifact | What it teaches |
+|---|---|
+| `plots/emotion_geometry_dashboard.png` | Whether transfer, specificity, steering, and confounds tell one coherent story. |
+| `plots/depth_control_gap_atlas.png` | Whether depth selection found a real/control separation or merely a bright layer. |
+| `plots/emotion_evidence_matrix.png` | One row per emotion, one column per evidence gate, raw values annotated. |
+| `plots/specificity_ladder.png` | Whether an emotion direction beats all-other, same-valence, and same-arousal comparison pools. |
+| `plots/cross_cause_matrix.png` | Which held-out causes break transfer, exposing topic leakage. |
+| `plots/confound_projection_matrix.png` | Which surprise, calmness, arousal, or valence confounds project onto the directions. |
+| `plots/steering_operating_frontier.png` | Which doses move affect more than controls while paying acceptable KL/repetition cost. |
+| `plots/generation_response_atlas.png` | Whether the steering curve is broad or carried by one prompt shouting through a megaphone. |
+| `tables/emotion_evidence_matrix.csv` | Per-emotion claim posture: candidate emotion handle, generic affect handle, unresolved, or failed. |
+| `tables/steering_operating_points.csv` | Dose-level control gap, KL, repetition, and claimability flags before hand labels. |
+| `tables/plot_reading_guide.csv` | A guide from plot name to the concept and claim boundary it protects. |
+
+The upgrade deliberately separates three questions that are easy to mush together:
+
+```text
+Can a direction decode emotion-vs-neutral?       -> DECODE
+Does it transfer between reading and writing?    -> DECODE + transfer
+Does adding it alter generated affect safely?    -> scoped CAUSAL, pending hand labels
+```
+
+The plots are arranged to punish the favorite overclaim. If the read/write transfer looks good but the same-valence ladder collapses, the result is probably valence. If steering works but KL or repetition rises, the vector may be damaging generation rather than writing affect. If one cause or prompt carries the effect, the atlas should make that concentration visible before a broad claim is written.
+
 ## Run commands
 
 From the course root:
@@ -208,16 +246,27 @@ runs/lab13_emotion_geometry-*/
     confound_projection_summary.csv         # aggregate confound magnitudes
     steering_generations.csv                # all generations, scores, blank hand labels
     steering_effects.csv                    # dose-response summary by emotion
-    generation_labeling_guide.md         # how to hand-audit generated text
+    steering_operating_points.csv           # dose/control/KL/repetition operating points
+    emotion_evidence_matrix.csv             # one-row-per-emotion claim posture
+    plot_reading_guide.csv                  # plot-to-concept guide
+    generation_labeling_guide.md            # how to hand-audit generated text
 
   plots/
+    emotion_geometry_dashboard.png          # start here: transfer + audit + steering cockpit
     emotion_depth_curve.png                 # depth selection with controls
-    emotion_transfer_matrix.png             # read/write transfer heatmap
+    depth_control_gap_atlas.png             # compact real/control/gap depth atlas
+    emotion_transfer_matrix.png             # read/write transfer heatmap plus controls
+    emotion_evidence_matrix.png             # per-emotion evidence gates
     emotion_direction_cosines.png           # direction cosine heatmap
+    specificity_ladder.png                  # all-other / same-valence / same-arousal audit
     emotion_specificity.png                 # target-vs-other emotion audit
-    cross_cause_generalization.png          # held-out-cause results
+    cross_cause_matrix.png                  # held-out-cause matrix
+    cross_cause_generalization.png          # held-out-cause summary
+    confound_projection_matrix.png          # confound-by-direction projection matrix
     confound_projection_audit.png           # largest confound projections
     affect_steering_effects.png             # steering dose-response against controls
+    steering_operating_frontier.png         # dose/cost/control-gap frontier
+    generation_response_atlas.png           # per-prompt steering response atlas
 
   state/
     emotion_directions.pt                   # direction tensors and metadata
@@ -232,13 +281,16 @@ Then read `operationalization_audit.md`. The audit is not paperwork. It is the r
 
 Then inspect the plots in this order:
 
-1. `emotion_depth_curve.png`: Did the selected depth beat random and shuffled controls, or is the depth sweep a fog machine?
-2. `emotion_transfer_matrix.png`: Which emotions transfer between reading and writing?
-3. `emotion_specificity.png`: Are the directions emotion-specific or just generic affect?
-4. `emotion_direction_cosines.png`: Are comprehension and write-intent directions aligned within emotion, and are they too close to sentiment?
-5. `cross_cause_generalization.png`: Does the result survive new causes?
-6. `affect_steering_effects.png`: Does input-derived steering beat random, shuffled, and sentiment controls?
-7. `steering_generations.csv`: Do the actual generations look target-affective without degenerating?
+1. `emotion_geometry_dashboard.png`: Does the run clear the whole evidence gauntlet at a glance?
+2. `depth_control_gap_atlas.png` and `emotion_depth_curve.png`: Did the selected depth beat random and shuffled controls, or is the depth sweep a fog machine?
+3. `emotion_transfer_matrix.png`: Which emotions transfer between reading and writing, and do controls ride lower?
+4. `emotion_evidence_matrix.png`: Which emotion families have enough evidence for a claim posture stronger than “unresolved affect handle”?
+5. `specificity_ladder.png` and `emotion_specificity.png`: Are the directions emotion-specific or just generic affect?
+6. `emotion_direction_cosines.png`: Are comprehension and write-intent directions aligned within emotion, and are they too close to sentiment?
+7. `cross_cause_matrix.png` and `cross_cause_generalization.png`: Does the result survive new causes?
+8. `confound_projection_matrix.png` and `confound_projection_audit.png`: Which cheap explanation is most dangerous?
+9. `steering_operating_frontier.png` and `affect_steering_effects.png`: Does input-derived steering beat random, shuffled, and sentiment controls without a big side-effect bill?
+10. `generation_response_atlas.png` and `steering_generations.csv`: Do actual generations look target-affective without degenerating, and is the effect broad rather than one-row theater?
 
 ## Evidence discipline
 
