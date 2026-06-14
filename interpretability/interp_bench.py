@@ -437,6 +437,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # domain corpus so every confusable pair has train/eval/heldout rows.
         "max_examples_tier_a": "32",
     },
+    "lab31": {
+        "module": "labs.lab31_auto_interp",
+        "run_name": "lab31_auto_interp",
+        "description": "Automated interpretability at scale: offline explanation generation, tests, calibration, and abstention audits.",
+        # Offline audit lab. Tier A runs the full synthetic/gold feature suite
+        # so random and polysemantic abstention controls are always present.
+        "max_examples_tier_a": "10",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template

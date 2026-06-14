@@ -97,6 +97,29 @@
       "runtime reverified by Lab 30"
     ]
   },
+  "auto_interp_feature_tasks.jsonl": {
+    "feature_types": {
+      "polysemantic_gold": 1,
+      "random_control": 1,
+      "synthetic_gold": 8
+    },
+    "generator": "hand-authored deterministic course rows",
+    "gold_labels": {
+      "code": 1,
+      "cooking": 1,
+      "emotion": 1,
+      "finance": 1,
+      "law": 1,
+      "medicine": 1,
+      "null": 1,
+      "polysemantic finance+sports score/lead/rally": 1,
+      "sports": 1,
+      "weather": 1
+    },
+    "rows": 10,
+    "sha256": "c6e93b938f363051aa366593a930b4b1ad39b767c1dcfa06a07554ca897ff3f3",
+    "verified_tokenizers": []
+  },
   "advanced_relation_geometry.csv": {
     "families": {
       "capital_of": 28,
