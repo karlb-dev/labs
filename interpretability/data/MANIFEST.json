@@ -30,6 +30,24 @@
       "runtime reverified by Lab 27"
     ]
   },
+  "editing_unlearning_targets.csv": {
+    "edit_types": {
+      "counterfactual_activation_edit": 3,
+      "counterfactual_relation_edit": 2
+    },
+    "families": {
+      "capital_counterfactual": 3,
+      "language_counterfactual": 1,
+      "sequence_counterfactual": 1
+    },
+    "generator": "hand-authored deterministic course rows",
+    "rows": 5,
+    "safety_scope": "benign public associations and harmless sequence facts; inference-time edits only",
+    "sha256": "15f139f3161e3cad75d7e8ead08d890bbc5df7806b1343a106acebb0c983129d",
+    "verified_tokenizers": [
+      "runtime reverified by Lab 28"
+    ]
+  },
   "advanced_relation_geometry.csv": {
     "families": {
       "capital_of": 28,

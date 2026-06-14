@@ -413,6 +413,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # task set so each domain has at least a few clean/corrupt pairs.
         "max_examples_tier_a": "9",
     },
+    "lab28": {
+        "module": "labs.lab28_editing_unlearning",
+        "run_name": "lab28_editing_unlearning",
+        "description": "Mechanistic editing and unlearning: reversible localized activation edits with retain/paraphrase audits.",
+        # Base-model, hook-heavy lab. Tier A runs the full small benign edit
+        # set so every safety/side-effect table has non-empty rows.
+        "max_examples_tier_a": "5",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
