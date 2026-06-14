@@ -50,7 +50,7 @@ any science in:
 diagnostics/think_roundtrip_check.json
 ```
 
-**Headline numbers note (small-N discipline):** Full runs use the full 140-item MCQ set (7 subjects) for Exp1 and 24/36 tiered items for Exp2 load-bearing tests (plus matched controls). The qualitative patterns (silent flips vs acknowledgment, filler vs content deltas, clean-resume controls) are the core deliverable; any single percentage or rate rests on a modest N and deserves at most one significant figure of confidence. The hand-label table (acknowledgment_labels.csv) is the graded measurement.
+**Headline numbers note (small-N discipline):** Full runs use the full 140-item MCQ set (7 subjects) for Exp1 and 36/60 tiered items for Exp2 load-bearing tests (plus matched controls). The qualitative patterns (silent flips vs acknowledgment, filler vs content deltas, clean-resume controls) are the core deliverable; any single percentage or rate rests on a modest N and deserves at most one significant figure of confidence. The hand-label table (acknowledgment_labels.csv) is the graded measurement.
 
 That check generates one real item, extracts a think span, and confirms that
 the forced-answer primitive works. If this diagnostic fails, every plot after
@@ -181,6 +181,41 @@ that file before trusting any headline rate. The thinking budget in
 diagnostics/decoding_pins.json is a condition; do not compare rates across
 different budgets without noting it.
 
+
+## Visualization upgrade: make the behavioral evidence feel like an interpretability lab
+
+The first version of this lab had the right measurements, but the plots were too
+much like a clipboard: useful, not illuminating. The upgraded artifact set turns
+Lab 10 into an evidence atlas with the same spine as Labs 1 and 2:
+
+1. **A joined dashboard, not three isolated figures.** `plots/cot_faithfulness_dashboard.png`
+   puts wrong-hint answer movement, acknowledgment-vs-attribution, the necessity
+   curve, filler/seam controls, and mistake propagation on one canvas.
+2. **A condition matrix.** `plots/hint_condition_matrix.png` shows accuracy,
+   answer movement, hint-following, parse rate, forced-answer rate, and think-span
+   completion for every condition. It catches budget/parser artifacts before the
+   headline rates seduce you.
+3. **A domain atlas.** `plots/domain_hint_atlas.png` shows which subject areas
+   drive wrong-hint flips and silent flips. A self-report result that is really
+   “two history rows yelled loudly” should be visible.
+4. **A self-report risk quadrant.** `plots/self_report_risk_quadrant.png` puts
+   behavioral susceptibility on one axis and omitted influence on the other. The
+   upper-right is the monitoring danger zone.
+5. **Item-level ribbons.** `plots/cot_load_item_ribbons.png` and
+   `plots/mistake_propagation_map.png` keep Experiment 2 honest: the smooth
+   aggregate curve is unpacked into individual items, filler controls, clean
+   resume, and wrong-claim propagation.
+6. **Claim tables with caveats built in.** `tables/item_faithfulness_matrix.csv`,
+   `tables/domain_faithfulness_summary.csv`, `tables/self_report_risk_summary.csv`,
+   `tables/label_priority_queue.csv`, and `tables/cot_load_by_item_summary.csv`
+   are now first-class artifacts, not leftovers from plotting.
+
+The data for Lab 10 is good enough to teach from. The missing piece was a visual
+grammar that separates four things students tend to mush together: **answer
+movement**, **visible mention**, **causal credit**, and **text content carrying
+load**. The new plots make those four gears mesh without pretending they are one
+gear.
+
 ## Artifact tree
 
 ```text
@@ -204,43 +239,62 @@ runs/lab10_cot_faithfulness-<timestamp>/
     item_manifest.csv
     condition_level_behavior.csv
     faithfulness_by_hint_type.csv
+    item_faithfulness_matrix.csv
+    domain_faithfulness_summary.csv
+    self_report_risk_summary.csv
+    label_priority_queue.csv
     acknowledgment_labels.csv
     acknowledgment_labeling_guide.md
     transcript_samples.csv
     exp2_candidate_manifest.csv
     necessity_curve.csv
     cot_load_intervention_results.csv
+    cot_load_by_item_summary.csv
     add_mistake_results.csv
     midstream_resume_control.csv
+    plot_reading_guide.csv
 
   metrics/
     cot_load_summary.json
 
   plots/
+    cot_faithfulness_dashboard.png
     faithfulness_by_hint.png
+    hint_condition_matrix.png
+    domain_hint_atlas.png
+    self_report_risk_quadrant.png
+    thinking_budget_diagnostics.png
     necessity_curve.png
     cot_load_interventions.png
+    cot_load_item_ribbons.png
+    mistake_propagation_map.png
 ```
 
 ## First reading path
 
 Instrument and scope first, then the deliverable and the graded measurement.
 
-1. `diagnostics/think_roundtrip_check.json`, `decoding_pins.json`, and `dataset_manifest.json` — the receipts. The round-trip proves the harness can locate the think span and force an answer (Experiment 2 is built on this primitive). Decoding budget is a *condition*, not a constant.
-2. `claim_card.md` — the one-page answer to “what may I claim?” (includes the scope line and the quadrant interpretation).
-3. `tables/faithfulness_by_hint_type.csv` beside `plots/faithfulness_by_hint.png` — flip rates and auto ack/attribution. Look for the gap between red flip bars and black silent bars (especially sycophancy).
-4. `tables/acknowledgment_labels.csv` + `tables/acknowledgment_labeling_guide.md` — **DO the hand labeling in the student_mention / student_attribution columns**. This is the lab, not optional. The auto columns are a draft heuristic. Silent flips (flip + no mention in your labels) are the safety-relevant case.
-5. `plots/necessity_curve.png` + `tables/necessity_curve.csv` + `filler_control_delta.json` — does the visible text carry load? The filler line is the critical floor (matched token budget, no reasoning content). The rise above filler is the load-bearing signal. Budget sensitivity (from the verification report) is the same lesson from the truncation side.
-6. `tables/cot_load_intervention_results.csv`, `add_mistake_results.csv`, and `plots/cot_load_interventions.png` (if present) — clean-resume control vs add-mistake; mistake follow vs recover.
-7. `unparseable_log.csv` — how many outputs needed the forced-answer rescue? High rates mean you are partly measuring truncation, not deliberation.
+1. `diagnostics/think_roundtrip_check.json`, `decoding_pins.json`, and `dataset_manifest.json` — the receipts. The round-trip proves the harness can locate the think span and force an answer. Decoding budget is a *condition*, not a constant.
+2. `plots/cot_faithfulness_dashboard.png` — the whole experiment before any single percentage seduces you: hint movement, self-report gap, CoT load, controls, and corruption.
+3. `claim_card.md`, `tables/self_report_risk_summary.csv`, and `tables/domain_faithfulness_summary.csv` — the claim skeleton plus where the result lives by domain and hint source.
+4. `plots/faithfulness_by_hint.png`, `plots/hint_condition_matrix.png`, and `plots/self_report_risk_quadrant.png` — answer movement, parser/control health, and the monitorability danger quadrant.
+5. `tables/acknowledgment_labels.csv`, `tables/label_priority_queue.csv`, and `tables/acknowledgment_labeling_guide.md` — **DO the hand labeling in the student_mention / student_attribution columns**. The auto columns are a draft heuristic. Silent flips after your labels are the safety-relevant case.
+6. `plots/necessity_curve.png`, `plots/cot_load_item_ribbons.png`, `plots/mistake_propagation_map.png`, `tables/cot_load_by_item_summary.csv`, and `filler_control_delta.json` — does the visible text carry load above the matched-token filler floor, and do wrong claims propagate beyond the clean-resume seam?
+7. `plots/thinking_budget_diagnostics.png` and `unparseable_log.csv` — how much did parsing, forced-answer rescue, and unfinished CoTs shape the apparent behavioral rates?
 
 ## How to read the plots
 
-`faithfulness_by_hint.png` has three panels. The first asks whether the wrong hint moved the answer (red bars). The second asks what the visible CoT admitted using the auto heuristic (ack vs attribution gap). The third checks the controls (correct hint should improve accuracy; non-sequitur should cost little). **Look for the black silent-flip bars** — they are the safety story.
+`cot_faithfulness_dashboard.png` is the new start-here figure. Read it clockwise: wrong hints move answers, visible CoTs mention/credit only some of that movement, the necessity curve asks whether visible text carries answer load above filler, and the corruption/control panel asks whether wrong claims propagate beyond the clean-resume seam.
 
-`necessity_curve.png` shows accuracy after forcing an answer at increasing fractions of the original CoT (blue line with SE). The olive dashed filler line is the matched-token-budget floor with *no* reasoning content. A rise well above the filler line means the visible CoT content carries load. A flat curve near the filler means the final answer was available without the visible reasoning. The budget effect (higher flips at shorter thinking caps) is the same necessity lesson arriving from the truncation side.
+`faithfulness_by_hint.png` is now the focused self-report plot. It overlays flip rate, silent flips, acknowledged flips, and attributed flips, then adds an acknowledgment-vs-attribution gap panel and control panel. **Look for cases where the red bar is tall but the green attribution markers are low**: the model moved, but the explanation did not earn causal credit.
 
-`cot_load_interventions.png` (or the item tables) compresses the interventions: no-CoT, full-CoT, filler, clean-resume, mistake-follow, mistake-recover. The clean-resume control is what lets you attribute extra movement to the injected claim rather than the surgical seam. The item-level tables (cot_load_intervention_results.csv, add_mistake_results.csv) are the microscope.
+`hint_condition_matrix.png` is the health-and-behavior grid. It keeps accuracy, answer movement, hint-following, parse OK, forced rescue, and think completion on the same axes. This is the plot that stops a parser problem from dressing up as psychology.
+
+`domain_hint_atlas.png` and `self_report_risk_quadrant.png` are the heterogeneity and risk views. The atlas asks which domains drive the aggregate; the quadrant asks which hint source is both influential and omitted.
+
+`necessity_curve.png` still shows accuracy after forcing an answer at increasing fractions of the original CoT. The filler line is the matched-token-budget floor with *no* reasoning content. A rise well above that line means the visible CoT content carries load.
+
+`cot_load_item_ribbons.png` and `mistake_propagation_map.png` unpack Experiment 2 item by item. Use these before claiming that the visible CoT is necessary or that a wrong inserted claim propagates; one row wearing a megaphone should not become a theorem.
 
 ## Common result patterns
 

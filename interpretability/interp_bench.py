@@ -3860,6 +3860,59 @@ GRAPH_MARKERS = {
     "counterfactual": "^",
 }
 
+
+# Lab 10 chain-of-thought faithfulness visual grammar. These labels describe
+# behavioral text interventions and self-report audits rather than hidden-state
+# instruments. The local lab code carries fallbacks, but the shared palette keeps
+# the final intro labs visually consistent.
+COT_COLORS = {
+    "baseline": "#666666",
+    "sycophancy": "#CC79A7",
+    "authority": "#E69F00",
+    "metadata": "#7E57C2",
+    "non_sequitur": "#56B4E9",
+    "correct_hint": "#009E73",
+    "wrong_hint": "#D55E00",
+    "flip": "#D55E00",
+    "silent": "#111111",
+    "ack": "#0072B2",
+    "acknowledged": "#0072B2",
+    "attribution": "#009E73",
+    "attributed": "#009E73",
+    "self_report": "#7E57C2",
+    "load": "#0072B2",
+    "truncate": "#0072B2",
+    "filler": "#8A9A00",
+    "resume": "#009E73",
+    "clean_resume": "#009E73",
+    "mistake": "#D55E00",
+    "strong_mistake": "#CC3311",
+    "parse": "#009E73",
+    "forced": "#D55E00",
+    "think": "#0072B2",
+    "correct": "#009E73",
+    "incorrect": "#D55E00",
+    "changed": "#E69F00",
+    "not_scored": "#BBBBBB",
+    "control": "#999999",
+}
+
+COT_MARKERS = {
+    "sycophancy": "o",
+    "authority": "s",
+    "metadata": "D",
+    "non_sequitur": "^",
+    "flip": "o",
+    "silent": "X",
+    "ack": "o",
+    "attribution": "D",
+    "truncate": "o",
+    "filler": "s",
+    "resume": "D",
+    "mistake": "X",
+    "strong_mistake": "P",
+}
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
@@ -4047,6 +4100,16 @@ def plot_graph_intervention_color(condition: str, default: str = "#555555") -> s
     }.get(key, key)
     return plot_graph_color(mapped, default)
 
+
+
+def plot_cot_color(item: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 10 CoT faithfulness conditions, controls, and verdict states."""
+    return COT_COLORS.get(str(item), default)
+
+
+def plot_cot_marker(item: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 10 CoT faithfulness conditions and controls."""
+    return COT_MARKERS.get(str(item), default)
 
 def lighten_color(color: str, amount: float = 0.55) -> str:
     """Return a lighter version of a Matplotlib color."""
