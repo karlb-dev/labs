@@ -280,13 +280,28 @@ runs/lab14_certainty_calibration-.../
     disagreement_examples.csv         # concrete cases for writeup
     reliability_curve.csv             # calibration bins for verbal/distribution/internal gauges
     calibration_summary.csv           # ECE and accuracy per gauge
+    certainty_evidence_matrix.csv     # candidate gauges and confounds on one scoreboard
+    family_signal_summary.csv         # family confidence means and calibration gaps
+    item_signal_ranks.csv             # eval items sorted by internal confidence
+    baseline_confound_audit.csv       # cheap predictor audit rows
+    gauge_disagreement_risk_summary.csv # high-risk disagreement patterns
+    probe_depth_control_gaps.csv      # real/control gap by depth
+    plot_reading_guide.csv            # plot-to-concept map
 
   plots/
-    certainty_probe_by_layer.png
-    family_heldout_generalization.png
-    reliability_diagram.png
-    confidence_disagreement_matrix.png
-    confidence_signal_correlations.png
+    certainty_evidence_dashboard.png      # start here: gauges, controls, disagreement
+    certainty_probe_by_layer.png          # real/shuffled/random AUC curves
+    controlled_depth_gap_atlas.png        # real-minus-best-control over depth
+    family_heldout_generalization.png     # leave-one-family-out transfer
+    signal_evidence_matrix.png            # signal-level claim-readiness matrix
+    family_signal_atlas.png               # family means and calibration gaps
+    reliability_diagram.png               # calibration curves plus ECE bars
+    calibration_gap_by_family.png         # family-level calibration failure modes
+    confidence_disagreement_matrix.png    # low/high gauge cell counts
+    confidence_signal_correlations.png    # internal-vs-behavior/report scatter
+    confound_audit.png                    # length/key/text/style confound audit
+    verbal_confidence_audit.png           # self-report parser/source audit
+    item_uncertainty_ribbons.png          # per-item gauge ribbons
 
   state/
     certainty_direction.pt
@@ -294,6 +309,52 @@ runs/lab14_certainty_calibration-.../
     hedging_direction.pt
     hedging_direction_metadata.json
 ```
+
+## Visualization upgrade addendum
+
+The upgraded Lab 14 artifact suite treats certainty as an audit board rather than a single AUC curve. The new plots put the three gauges and their cheap explanations on the same page:
+
+```text
+plots/
+  certainty_evidence_dashboard.png      # start here: depth gap, family transfer, calibration, disagreement
+  certainty_probe_by_layer.png          # real/shuffled/random AUC curves for certainty and hedging probes
+  controlled_depth_gap_atlas.png        # real-minus-best-control over depth for both directions
+  family_heldout_generalization.png     # leave-one-family-out transfer against controls
+  signal_evidence_matrix.png            # internal, distributional, verbal, style, length, D-option signals together
+  family_signal_atlas.png               # family-level gauge means and calibration gaps
+  reliability_diagram.png               # calibration curves plus ECE bars
+  calibration_gap_by_family.png         # per-family calibration failures
+  confidence_disagreement_matrix.png    # count/accuracy/answerability for low/high gauge cells
+  confidence_signal_correlations.png    # pairwise gauge correlations
+  confound_audit.png                    # length, letter, D-option, entropy, and hedging confounds
+  verbal_confidence_audit.png           # generated self-report labels and parser-source audit
+  item_uncertainty_ribbons.png          # per-item gauge ribbons for example selection
+```
+
+New synthesis tables make the plots claim-ready:
+
+```text
+tables/
+  certainty_evidence_matrix.csv         # candidate gauges and confounds on one scoreboard
+  family_signal_summary.csv             # family accuracy, confidence means, and calibration gaps
+  item_signal_ranks.csv                 # eval items sorted by internal confidence and disagreement bucket
+  baseline_confound_audit.csv           # control signals that may explain answerability
+  gauge_disagreement_risk_summary.csv   # high-risk disagreement patterns and example IDs
+  probe_depth_control_gaps.csv          # real, shuffled, random, and control-adjusted AUC by depth
+  plot_reading_guide.csv                # which plot teaches which concept
+```
+
+### Upgraded artifact-reading path
+
+Start with `plots/certainty_evidence_dashboard.png`. It answers the four questions that decide whether the rest of the run is worth reading: did the selected direction beat controls, did it transfer across families, did the confidence gauges calibrate, and where did they disagree?
+
+Then read `tables/certainty_evidence_matrix.csv` and `plots/signal_evidence_matrix.png`. These are the anti-overclaim artifacts: if a length, D-option, entropy, or hedging signal predicts answerability almost as well as the internal direction, the saved vector is not yet a clean uncertainty instrument.
+
+Next inspect `plots/family_signal_atlas.png` and `plots/calibration_gap_by_family.png`. Averages can make a gauge look tidy while one family quietly breaks it.
+
+Use `plots/item_uncertainty_ribbons.png` and `tables/item_signal_ranks.csv` to choose concrete examples for the writeup. The best examples are usually disagreement rows, not the smooth agreement rows.
+
+Finally read `plots/confound_audit.png` before writing any downstream claim. Certainty language is only licensed after the cheap explanations have been tested directly.
 
 ## First artifact-reading path
 

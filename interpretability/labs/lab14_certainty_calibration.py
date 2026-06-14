@@ -1757,6 +1757,890 @@ def plot_family_heldout(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]
     bench.save_figure(ctx, fig, "family_heldout_generalization.png", "Family-held-out AUC for the answerability direction and controls.")
 
 
+
+# ---------------------------------------------------------------------------
+# Visualization upgrade: certainty is a three-gauge audit, not one AUC
+# ---------------------------------------------------------------------------
+
+LAB14_GAUGE_LABELS = {
+    "internal_projection": "internal projection",
+    "internal_rank_confidence": "internal rank confidence",
+    "distribution_confidence": "option-distribution confidence",
+    "verbal_confidence": "verbal self-report",
+    "hedging_style_projection": "hedging-style projection",
+    "prompt_token_length": "prompt length",
+    "question_char_length": "question length",
+    "answer_key_is_D": "answer key is D",
+    "option_D_unanswerable_markers": "D-option says unknown",
+}
+
+LAB14_SIGNAL_ORDER = (
+    "internal_projection",
+    "internal_rank_confidence",
+    "distribution_confidence",
+    "verbal_confidence",
+    "hedging_style_projection",
+    "prompt_token_length",
+    "question_char_length",
+    "answer_key_is_D",
+    "option_D_unanswerable_markers",
+)
+
+LAB14_GAUGE_ORDER = ("internal_rank_confidence", "distribution_confidence", "verbal_confidence")
+
+
+def lab14_color(key: str, default: str = "#555555") -> str:
+    helper = getattr(bench, "plot_certainty_color", None)
+    if callable(helper):
+        try:
+            return helper(key, default)
+        except TypeError:
+            return helper(key)
+    palette = {
+        "internal": "#0072B2",
+        "internal_projection": "#0072B2",
+        "internal_rank_confidence": "#0072B2",
+        "distribution": "#009E73",
+        "distribution_confidence": "#009E73",
+        "verbal": "#E69F00",
+        "verbal_confidence": "#E69F00",
+        "hedging": "#7E57C2",
+        "hedging_style_projection": "#7E57C2",
+        "real": "#D55E00",
+        "random": "#777777",
+        "shuffled": "#8A9A00",
+        "length": "#56B4E9",
+        "letter": "#CC79A7",
+        "answerable": "#009E73",
+        "unanswerable": "#D55E00",
+        "correct": "#009E73",
+        "wrong": "#D55E00",
+        "confound": "#CC79A7",
+        "control": "#777777",
+    }
+    return palette.get(str(key), default)
+
+
+def lab14_marker(key: str, default: str = "o") -> str:
+    helper = getattr(bench, "plot_certainty_marker", None)
+    if callable(helper):
+        try:
+            return helper(key, default)
+        except TypeError:
+            return helper(key)
+    return {
+        "internal_rank_confidence": "o",
+        "distribution_confidence": "s",
+        "verbal_confidence": "^",
+        "hedging_style_projection": "D",
+        "real": "o",
+        "random": "s",
+        "shuffled": "^",
+    }.get(str(key), default)
+
+
+def _display_signal_name(signal: str) -> str:
+    return LAB14_GAUGE_LABELS.get(str(signal), str(signal).replace("_", " "))
+
+
+def _finite_vals(rows: Sequence[Mapping[str, Any]], key: str) -> list[float]:
+    vals: list[float] = []
+    for row in rows:
+        val = safe_float(row.get(key))
+        if math.isfinite(val):
+            vals.append(val)
+    return vals
+
+
+def _row_mean(rows: Sequence[Mapping[str, Any]], key: str, default: float = float("nan")) -> float:
+    return safe_fmean(_finite_vals(rows, key), default)
+
+
+def _row_rate(rows: Sequence[Mapping[str, Any]], key: str, default: float = float("nan")) -> float:
+    vals = []
+    for row in rows:
+        val = row.get(key)
+        if isinstance(val, bool):
+            vals.append(1.0 if val else 0.0)
+        elif isinstance(val, (int, float)):
+            vals.append(float(val))
+    return safe_fmean(vals, default)
+
+
+def _auc_lookup(rows: Sequence[Mapping[str, Any]], signal: str, predicts: str) -> float:
+    vals = [safe_float(r.get("auc")) for r in rows if r.get("signal") == signal and r.get("predicts") == predicts]
+    return safe_fmean(vals)
+
+
+def _ece_lookup(rows: Sequence[Mapping[str, Any]]) -> dict[str, float]:
+    return {str(r.get("signal")): safe_float(r.get("ece")) for r in rows}
+
+
+def _probe_auc(rows: Sequence[Mapping[str, Any]], probe: str, depth: int, kind: str, split: str = "eval") -> float:
+    vals = [
+        safe_float(r.get("auc"))
+        for r in rows
+        if r.get("probe") == probe
+        and int(r.get("depth", -1)) == int(depth)
+        and r.get("direction_kind") == kind
+        and r.get("split") == split
+    ]
+    return safe_fmean(vals)
+
+
+def _probe_depth_gap_rows(probe_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    probes = sorted({str(r.get("probe")) for r in probe_rows})
+    for probe in probes:
+        depths = sorted({int(r.get("depth", 0)) for r in probe_rows if r.get("probe") == probe})
+        for depth in depths:
+            for split_name in ("train", "eval"):
+                real = _probe_auc(probe_rows, probe, depth, "real", split_name)
+                shuffled = _probe_auc(probe_rows, probe, depth, "shuffled", split_name)
+                random = _probe_auc(probe_rows, probe, depth, "random", split_name)
+                control = max(0.5, shuffled if math.isfinite(shuffled) else 0.5, random if math.isfinite(random) else 0.5)
+                out.append({
+                    "probe": probe,
+                    "depth": depth,
+                    "split": split_name,
+                    "real_auc": rounded(real),
+                    "shuffled_auc": rounded(shuffled),
+                    "random_auc": rounded(random),
+                    "control_floor_auc": rounded(control),
+                    "control_adjusted_auc": rounded(real - control if math.isfinite(real) else float("nan")),
+                })
+    return out
+
+
+def _risk_bucket(row: Mapping[str, Any]) -> str:
+    internal = str(row.get("internal_signal", "low"))
+    distribution = str(row.get("distribution_signal", "low"))
+    verbal = str(row.get("verbal_signal", "low"))
+    if internal == distribution == verbal == "high":
+        return "all_high"
+    if internal == distribution == verbal == "low":
+        return "all_low"
+    if internal == "high" and verbal == "low":
+        return "internal_high_verbal_low"
+    if internal == "low" and verbal == "high":
+        return "verbal_high_internal_low"
+    if distribution != internal:
+        return "distribution_internal_mismatch"
+    return "mixed_disagreement"
+
+
+def build_visual_synthesis_tables(
+    *,
+    items: Sequence[CalibrationItem],
+    behavior_rows: Sequence[Mapping[str, Any]],
+    confidence_rows: Sequence[Mapping[str, Any]],
+    signal_rows: Sequence[Mapping[str, Any]],
+    signal_pred_rows: Sequence[Mapping[str, Any]],
+    length_rows: Sequence[Mapping[str, Any]],
+    family_rows: Sequence[Mapping[str, Any]],
+    matrix_rows: Sequence[Mapping[str, Any]],
+    reliability_table: Sequence[Mapping[str, Any]],
+    calibration_summary_rows: Sequence[Mapping[str, Any]],
+    probe_rows: Sequence[Mapping[str, Any]],
+    depth_selection_rows: Sequence[Mapping[str, Any]],
+    metrics: Mapping[str, Any],
+) -> dict[str, list[dict[str, Any]]]:
+    """Build plot-facing ledgers from the lab's existing measurements."""
+    ece = _ece_lookup(calibration_summary_rows)
+    evidence_rows: list[dict[str, Any]] = []
+    for signal in LAB14_SIGNAL_ORDER:
+        answer_auc = _auc_lookup(signal_pred_rows, signal, "answerability")
+        correct_auc = _auc_lookup(signal_pred_rows, signal, "correctness")
+        kind = "DECODE" if signal.startswith("internal") else "OBS" if signal.startswith("distribution") else "SELF-REPORT" if signal.startswith("verbal") else "CONTROL"
+        if signal.startswith("hedging"):
+            kind = "STYLE_CONTROL"
+        elif signal in {"prompt_token_length", "question_char_length"}:
+            kind = "LENGTH_CONTROL"
+        elif signal in {"answer_key_is_D", "option_D_unanswerable_markers"}:
+            kind = "FORMAT_CONTROL"
+        confound_warning = int(kind.endswith("CONTROL") or kind in {"STYLE_CONTROL", "LENGTH_CONTROL", "FORMAT_CONTROL"}) and safe_float(answer_auc, 0.5) >= 0.70
+        posture = "candidate gauge"
+        if kind.endswith("CONTROL") or kind in {"STYLE_CONTROL", "LENGTH_CONTROL", "FORMAT_CONTROL"}:
+            posture = "confound audit"
+        elif safe_float(answer_auc, 0.0) < 0.60:
+            posture = "weak gauge"
+        evidence_rows.append({
+            "signal": signal,
+            "display_name": _display_signal_name(signal),
+            "evidence_kind": kind,
+            "answerability_auc": rounded(answer_auc),
+            "correctness_auc": rounded(correct_auc),
+            "answerability_selectivity": rounded(answer_auc - 0.5 if math.isfinite(answer_auc) else float("nan")),
+            "correctness_selectivity": rounded(correct_auc - 0.5 if math.isfinite(correct_auc) else float("nan")),
+            "calibration_ece": rounded(ece.get(signal, float("nan"))),
+            "correlation_to_internal_eval": rounded({
+                "distribution_confidence": safe_float(metrics.get("internal_distribution_correlation_eval")),
+                "verbal_confidence": safe_float(metrics.get("internal_verbal_correlation_eval")),
+                "hedging_style_projection": safe_float(metrics.get("internal_hedging_correlation_eval")),
+                "internal_projection": 1.0,
+                "internal_rank_confidence": 1.0,
+            }.get(signal, float("nan"))),
+            "confound_warning": confound_warning,
+            "claim_posture": posture,
+        })
+
+    eval_rows = [r for r in signal_rows if r.get("split") == "eval"] or list(signal_rows)
+    families = sorted({str(r.get("family")) for r in eval_rows})
+    family_summary: list[dict[str, Any]] = []
+    for family in families:
+        sub = [r for r in eval_rows if str(r.get("family")) == family]
+        acc = _row_rate(sub, "correct")
+        row = {
+            "family": family,
+            "n": len(sub),
+            "accuracy": rounded(acc),
+            "answerable_rate": rounded(_row_mean(sub, "answerable")),
+            "internal_rank_confidence": rounded(_row_mean(sub, "internal_rank_confidence")),
+            "distribution_confidence": rounded(_row_mean(sub, "distribution_confidence")),
+            "verbal_confidence": rounded(_row_mean(sub, "verbal_confidence_score")),
+            "hedging_style_projection": rounded(_row_mean(sub, "hedging_style_projection")),
+            "correct_margin": rounded(_row_mean(sub, "correct_margin")),
+            "entropy_bits": rounded(_row_mean(sub, "entropy_bits")),
+        }
+        row["internal_calibration_gap"] = rounded(abs(safe_float(row["internal_rank_confidence"]) - acc))
+        row["distribution_calibration_gap"] = rounded(abs(safe_float(row["distribution_confidence"]) - acc))
+        row["verbal_calibration_gap"] = rounded(abs(safe_float(row["verbal_confidence"]) - acc))
+        family_summary.append(row)
+
+    sorted_items = sorted(eval_rows, key=lambda r: safe_float(r.get("internal_rank_confidence")))
+    n = max(1, len(sorted_items) - 1)
+    item_rows: list[dict[str, Any]] = []
+    for idx, row in enumerate(sorted_items):
+        item_rows.append({
+            "item_id": row.get("item_id"),
+            "family": row.get("family"),
+            "topic": row.get("topic"),
+            "answerable": row.get("answerable"),
+            "correct": int(bool(row.get("correct"))),
+            "chosen": row.get("chosen"),
+            "internal_rank_confidence": row.get("internal_rank_confidence"),
+            "distribution_confidence": row.get("distribution_confidence"),
+            "verbal_confidence_score": row.get("verbal_confidence_score"),
+            "verbal_confidence_label": row.get("verbal_confidence_label"),
+            "hedging_style_projection": row.get("hedging_style_projection"),
+            "signal_pattern": row.get("signal_pattern"),
+            "risk_bucket": _risk_bucket(row),
+            "internal_order_quantile": rounded(idx / n),
+        })
+
+    confound_rows: list[dict[str, Any]] = []
+    for row in signal_pred_rows:
+        signal = str(row.get("signal"))
+        if signal in {"prompt_token_length", "question_char_length", "answer_key_is_D", "option_D_unanswerable_markers", "hedging_style_projection", "distribution_confidence"}:
+            auc = safe_float(row.get("auc"))
+            confound_rows.append({
+                "source": "signal_predictiveness",
+                "baseline": signal,
+                "display_name": _display_signal_name(signal),
+                "predicts": row.get("predicts"),
+                "auc": rounded(auc),
+                "selectivity_vs_chance": rounded(auc - 0.5 if math.isfinite(auc) else float("nan")),
+                "orientation_from_train": row.get("orientation_from_train"),
+                "n_pos": row.get("n_pos"),
+                "n_neg": row.get("n_neg"),
+                "risk": "high" if auc >= 0.75 else "medium" if auc >= 0.65 else "low",
+            })
+    # Preserve the direct length-baseline table as rows too; it is often the first place a D-option trap appears.
+    for row in length_rows:
+        auc = safe_float(row.get("auc"))
+        confound_rows.append({
+            "source": "length_and_letter_baselines",
+            "baseline": row.get("baseline"),
+            "display_name": _display_signal_name(str(row.get("baseline"))),
+            "predicts": row.get("predicts"),
+            "auc": rounded(auc),
+            "selectivity_vs_chance": rounded(auc - 0.5 if math.isfinite(auc) else float("nan")),
+            "orientation_from_train": row.get("orientation_from_train"),
+            "n_pos": row.get("n_pos"),
+            "n_neg": row.get("n_neg"),
+            "risk": "high" if auc >= 0.75 else "medium" if auc >= 0.65 else "low",
+        })
+
+    risk_summary: list[dict[str, Any]] = []
+    for bucket in sorted({str(r.get("risk_bucket")) for r in item_rows}):
+        sub = [r for r in item_rows if r.get("risk_bucket") == bucket]
+        risk_summary.append({
+            "risk_bucket": bucket,
+            "n": len(sub),
+            "accuracy": rounded(_row_rate(sub, "correct")),
+            "answerable_rate": rounded(_row_mean(sub, "answerable")),
+            "example_item_ids": " ".join(str(r.get("item_id")) for r in sub[:8]),
+        })
+
+    guide_rows = [
+        {"plot": "certainty_evidence_dashboard.png", "concept": "Start here: depth selection, control gaps, calibration, and gauge disagreement in one view.", "evidence_rung": "integration"},
+        {"plot": "certainty_probe_by_layer.png", "concept": "Does the internal answerability direction beat shuffled/random controls across depth?", "evidence_rung": "DECODE"},
+        {"plot": "controlled_depth_gap_atlas.png", "concept": "Real-minus-control gaps for certainty and hedging directions over depth.", "evidence_rung": "DECODE + controls"},
+        {"plot": "family_heldout_generalization.png", "concept": "Does the direction survive leaving one item family out?", "evidence_rung": "DECODE transfer"},
+        {"plot": "signal_evidence_matrix.png", "concept": "Compare internal, distributional, verbal, style, length, and answer-letter signals as candidate gauges or confounds.", "evidence_rung": "audit"},
+        {"plot": "family_signal_atlas.png", "concept": "Which families drive gauge accuracy, confidence, and calibration gaps?", "evidence_rung": "OBS/DECODE/SELF-REPORT"},
+        {"plot": "reliability_diagram.png", "concept": "Are verbal, distributional, and internal-confidence gauges calibrated?", "evidence_rung": "OBS/SELF-REPORT calibration"},
+        {"plot": "calibration_gap_by_family.png", "concept": "Calibration gaps by family, so one family cannot hide inside an average.", "evidence_rung": "audit"},
+        {"plot": "confidence_disagreement_matrix.png", "concept": "Where do the three gauges agree or disagree, and which cells are accurate?", "evidence_rung": "integration"},
+        {"plot": "item_uncertainty_ribbons.png", "concept": "Per-item gauge ribbons sorted by internal confidence; the writeup examples should come from here.", "evidence_rung": "case audit"},
+        {"plot": "confound_audit.png", "concept": "Can length, option-D text, answer-key letter, entropy, or hedging explain answerability?", "evidence_rung": "control audit"},
+        {"plot": "verbal_confidence_audit.png", "concept": "Does the generated confidence label parse cleanly and track accuracy?", "evidence_rung": "SELF-REPORT audit"},
+    ]
+
+    return {
+        "certainty_evidence_matrix": evidence_rows,
+        "family_signal_summary": family_summary,
+        "item_signal_ranks": item_rows,
+        "baseline_confound_audit": confound_rows,
+        "gauge_disagreement_risk_summary": risk_summary,
+        "probe_depth_control_gaps": _probe_depth_gap_rows(probe_rows),
+        "plot_reading_guide": guide_rows,
+    }
+
+
+def write_visual_synthesis_tables(ctx: bench.RunContext, tables: Mapping[str, Sequence[Mapping[str, Any]]]) -> None:
+    descriptions = {
+        "certainty_evidence_matrix": "Candidate gauges and confounds aligned by answerability AUC, correctness AUC, calibration, and claim posture.",
+        "family_signal_summary": "Family-level accuracy, answerability, gauge means, and calibration gaps.",
+        "item_signal_ranks": "Eval items sorted by internal confidence with gauge values and disagreement risk buckets.",
+        "baseline_confound_audit": "Length, answer-letter, D-option, entropy, distribution, and hedging confound audit rows.",
+        "gauge_disagreement_risk_summary": "Counts and accuracy for high-risk internal/distribution/verbal disagreement patterns.",
+        "probe_depth_control_gaps": "Real, shuffled, random, and control-adjusted AUC at every depth for certainty and hedging probes.",
+        "plot_reading_guide": "Map from Lab 14 plots to the concept and evidence rung each plot is meant to teach.",
+    }
+    for name, rows in tables.items():
+        path = ctx.path("tables", f"{name}.csv")
+        bench.write_csv_with_context(ctx, path, list(rows))
+        ctx.register_artifact(path, "table", descriptions.get(name, name.replace("_", " ")))
+
+
+def _prepare_matrix_values(rows: Sequence[Mapping[str, Any]], row_key: str, col_keys: Sequence[str]) -> tuple[list[str], list[list[float]]]:
+    labels = [str(r.get(row_key)) for r in rows]
+    vals: list[list[float]] = []
+    for r in rows:
+        vals.append([safe_float(r.get(k)) for k in col_keys])
+    return labels, vals
+
+
+def _annotate_heatmap(ax: Any, grid: Any, fmt: str = ".2f", *, fontsize: int = 7) -> None:
+    import numpy as np
+    arr = np.asarray(grid, dtype=float)
+    for i in range(arr.shape[0]):
+        for j in range(arr.shape[1]):
+            val = arr[i, j]
+            if math.isfinite(float(val)):
+                text = format(float(val), fmt)
+                color = "white" if val > 0.72 else "black"
+                ax.text(j, i, text, ha="center", va="center", fontsize=fontsize, color=color)
+
+
+def plot_certainty_evidence_dashboard(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    probe_rows: Sequence[Mapping[str, Any]],
+    family_rows: Sequence[Mapping[str, Any]],
+    matrix_rows: Sequence[Mapping[str, Any]],
+    reliability_table: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.2, 9.0))
+    fig.patch.set_facecolor("white")
+    ax_depth, ax_family, ax_cal, ax_matrix = axes.ravel()
+
+    # Depth control gaps.
+    for probe, label, color in (
+        ("certainty_answerability", "answerability direction", lab14_color("internal")),
+        ("hedging_style", "hedging-style direction", lab14_color("hedging")),
+    ):
+        depths = sorted({int(r.get("depth", 0)) for r in probe_rows if r.get("probe") == probe})
+        gaps = []
+        reals = []
+        for depth in depths:
+            real = _probe_auc(probe_rows, probe, depth, "real", "eval")
+            shuf = _probe_auc(probe_rows, probe, depth, "shuffled", "eval")
+            rand = _probe_auc(probe_rows, probe, depth, "random", "eval")
+            control = max(0.5, shuf if math.isfinite(shuf) else 0.5, rand if math.isfinite(rand) else 0.5)
+            gaps.append(real - control if math.isfinite(real) else float("nan"))
+            reals.append(real)
+        if depths:
+            ax_depth.plot(depths, gaps, marker="o", color=color, label=label)
+    ax_depth.axhline(0.0, color="black", linewidth=0.8, alpha=0.65)
+    ax_depth.axvline(int(metrics.get("best_certainty_depth", 0)), color=lab14_color("internal"), linestyle="--", linewidth=1.0, alpha=0.65)
+    ax_depth.axvline(int(metrics.get("best_hedging_depth", 0)), color=lab14_color("hedging"), linestyle=":", linewidth=1.2, alpha=0.75)
+    bench.style_ax(ax_depth, "Depth selection after controls", "residual-stream depth", "eval AUC minus max(control, .5)")
+
+    # Family held-out gap.
+    families = sorted({str(r.get("held_out_family")) for r in family_rows})
+    if families:
+        gaps = []
+        real_vals = []
+        control_vals = []
+        for family in families:
+            real = safe_fmean([safe_float(r.get("auc")) for r in family_rows if r.get("held_out_family") == family and r.get("direction_kind") == "real"])
+            shuf = safe_fmean([safe_float(r.get("auc")) for r in family_rows if r.get("held_out_family") == family and r.get("direction_kind") == "shuffled"], 0.5)
+            rand = safe_fmean([safe_float(r.get("auc")) for r in family_rows if r.get("held_out_family") == family and r.get("direction_kind") == "random"], 0.5)
+            control = max(0.5, shuf, rand)
+            real_vals.append(real)
+            control_vals.append(control)
+            gaps.append(real - control)
+        x = np.arange(len(families))
+        ax_family.bar(x, real_vals, width=0.56, color=lab14_color("real"), alpha=0.72, label="real held-out AUC")
+        ax_family.scatter(x, control_vals, color=lab14_color("control"), marker="D", s=38, label="best control")
+        for xi, gap in zip(x, gaps):
+            ax_family.text(xi, max(real_vals[int(xi)], control_vals[int(xi)]) + 0.02, f"gap {gap:+.2f}", ha="center", fontsize=7)
+        ax_family.axhline(0.5, color="black", linewidth=0.8, alpha=0.55)
+        ax_family.set_xticks(x)
+        ax_family.set_xticklabels(families, rotation=20, ha="right")
+    bench.style_ax(ax_family, "Family-held-out transfer", "held-out family", "AUC")
+
+    # Calibration / ECE.
+    ece_vals = []
+    ece_labels = []
+    for sig in ("internal_rank_confidence", "distribution_confidence", "verbal_confidence"):
+        vals = [safe_float(r.get("abs_gap")) for r in reliability_table if r.get("signal") == sig]
+        weights = [safe_float(r.get("n"), 0.0) for r in reliability_table if r.get("signal") == sig]
+        if vals:
+            total = sum(weights) if sum(weights) > 0 else len(vals)
+            ece_vals.append(sum(v * w for v, w in zip(vals, weights)) / total)
+            ece_labels.append(_display_signal_name(sig).replace(" confidence", ""))
+    if ece_vals:
+        ax_cal.bar(range(len(ece_vals)), ece_vals, color=[lab14_color(s) for s in ("internal", "distribution", "verbal")[:len(ece_vals)]])
+        ax_cal.set_xticks(range(len(ece_vals)))
+        ax_cal.set_xticklabels(ece_labels, rotation=15, ha="right")
+        for i, val in enumerate(ece_vals):
+            ax_cal.text(i, val + 0.01, f"{val:.2f}", ha="center", fontsize=8)
+    bench.style_ax(ax_cal, "Calibration cost", "gauge", "expected calibration error")
+
+    # Disagreement matrix counts.
+    row_labels = [f"I:{i}/D:{d}" for i in ("low", "high") for d in ("low", "high")]
+    col_labels = ["V:low", "V:high"]
+    grid = np.zeros((len(row_labels), len(col_labels)))
+    acc = np.full_like(grid, np.nan, dtype=float)
+    for r in matrix_rows:
+        key = f"I:{r.get('internal_signal')}/D:{r.get('distribution_signal')}"
+        vkey = f"V:{r.get('verbal_signal')}"
+        if key in row_labels and vkey in col_labels:
+            i = row_labels.index(key)
+            j = col_labels.index(vkey)
+            grid[i, j] = safe_float(r.get("n"), 0.0)
+            acc[i, j] = safe_float(r.get("accuracy"))
+    im = ax_matrix.imshow(grid, cmap="Blues", aspect="auto")
+    ax_matrix.set_xticks(range(len(col_labels)))
+    ax_matrix.set_xticklabels(col_labels)
+    ax_matrix.set_yticks(range(len(row_labels)))
+    ax_matrix.set_yticklabels(row_labels)
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            txt = f"n={int(grid[i,j])}"
+            if math.isfinite(float(acc[i,j])):
+                txt += f"\nacc={acc[i,j]:.2f}"
+            ax_matrix.text(j, i, txt, ha="center", va="center", fontsize=8)
+    ax_matrix.set_title("Gauge disagreement cells")
+    fig.colorbar(im, ax=ax_matrix, fraction=0.046, label="count")
+
+    fig.suptitle("Lab 14 certainty instrument: gauges, controls, and disagreement", fontsize=15, y=0.995)
+    fig.tight_layout(rect=[0, 0, 1, 0.97])
+    bench.save_figure(ctx, fig, "certainty_evidence_dashboard.png", "Dashboard combining depth control gaps, family-held-out transfer, calibration cost, and confidence-gauge disagreement.")
+
+
+def plot_probe_by_layer(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_certainty_depth: int, best_hedging_depth: int) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    fig, axes = plt.subplots(2, 1, figsize=(11.2, 7.6), sharex=True)
+    fig.patch.set_facecolor("white")
+    configs = [
+        (axes[0], "certainty_answerability", best_certainty_depth, "Answerability direction: eval AUC against controls", lab14_color("internal")),
+        (axes[1], "hedging_style", best_hedging_depth, "Hedging-style direction: eval AUC against controls", lab14_color("hedging")),
+    ]
+    for ax, probe, marker_depth, title, color in configs:
+        depths = sorted({int(r.get("depth", 0)) for r in rows if r.get("probe") == probe})
+        real, shuf, rand, control = [], [], [], []
+        for depth in depths:
+            r = _probe_auc(rows, probe, depth, "real", "eval")
+            s = _probe_auc(rows, probe, depth, "shuffled", "eval")
+            q = _probe_auc(rows, probe, depth, "random", "eval")
+            real.append(r)
+            shuf.append(s)
+            rand.append(q)
+            control.append(max(0.5, s if math.isfinite(s) else 0.5, q if math.isfinite(q) else 0.5))
+        if depths:
+            ax.plot(depths, real, color=color, marker="o", linewidth=2.2, label="real eval AUC")
+            ax.plot(depths, shuf, color=lab14_color("shuffled"), linestyle=":", marker=".", label="shuffled")
+            ax.plot(depths, rand, color=lab14_color("random"), linestyle="--", marker=".", label="random")
+            ax.fill_between(depths, control, real, where=np.asarray(real) >= np.asarray(control), color=color, alpha=0.14, label="real above control")
+        ax.axhline(0.5, color="black", linewidth=0.8, alpha=0.55)
+        ax.axvline(marker_depth, color=color, linewidth=1.1, linestyle="--", alpha=0.75)
+        bench.style_ax(ax, title, None, "eval AUC")
+        ax.set_ylim(-0.02, 1.03)
+    axes[1].set_xlabel("residual-stream depth")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "certainty_probe_by_layer.png", "Certainty/answerability and hedging-style AUC by residual depth, with explicit control floors.")
+
+
+def plot_controlled_depth_gap_atlas(ctx: bench.RunContext, gap_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    eval_rows = [r for r in gap_rows if r.get("split") == "eval"]
+    probes = ["certainty_answerability", "hedging_style"]
+    depths = sorted({int(r.get("depth", 0)) for r in eval_rows})
+    if not depths:
+        return
+    grid = np.full((len(probes), len(depths)), np.nan)
+    for i, probe in enumerate(probes):
+        for j, depth in enumerate(depths):
+            vals = [safe_float(r.get("control_adjusted_auc")) for r in eval_rows if r.get("probe") == probe and int(r.get("depth", -1)) == depth]
+            grid[i, j] = safe_fmean(vals)
+    fig, ax = bench.new_figure(figsize=(11.0, 3.7))
+    vmax = max(0.1, float(np.nanmax(np.abs(grid))) if np.isfinite(grid).any() else 0.1)
+    im = ax.imshow(grid, aspect="auto", cmap="coolwarm", vmin=-vmax, vmax=vmax)
+    ax.set_yticks(range(len(probes)))
+    ax.set_yticklabels(["answerability", "hedging style"])
+    step = max(1, len(depths) // 12)
+    ax.set_xticks(range(0, len(depths), step))
+    ax.set_xticklabels([str(depths[i]) for i in range(0, len(depths), step)])
+    ax.set_xlabel("residual-stream depth")
+    ax.set_title("Control-adjusted depth atlas: real AUC minus best control")
+    _annotate_heatmap(ax, grid, ".2f", fontsize=7)
+    fig.colorbar(im, ax=ax, fraction=0.025, label="AUC above control")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "controlled_depth_gap_atlas.png", "Control-adjusted AUC heatmap for certainty and hedging probes over depth.")
+
+
+def plot_reliability(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 2, figsize=(11.8, 5.2), gridspec_kw={"width_ratios": [2.1, 1.0]})
+    fig.patch.set_facecolor("white")
+    ax, ax_ece = axes
+    ax.plot([0, 1], [0, 1], color="black", linestyle=":", linewidth=1.0, label="perfect calibration")
+    ece_vals: list[float] = []
+    ece_labels: list[str] = []
+    for signal in ("internal_rank_confidence", "distribution_confidence", "verbal_confidence"):
+        pts = [r for r in rows if r.get("signal") == signal]
+        if not pts:
+            continue
+        color = lab14_color(signal)
+        xs = [safe_float(r.get("mean_signal_confidence")) for r in pts]
+        ys = [safe_float(r.get("accuracy")) for r in pts]
+        sizes = [35 + 9 * int(safe_float(r.get("n"), 0.0)) for r in pts]
+        ax.scatter(xs, ys, s=sizes, marker=lab14_marker(signal), color=color, alpha=0.82, label=_display_signal_name(signal))
+        for x, y, r in zip(xs, ys, pts):
+            ax.annotate(str(r.get("bin")), (x, y), textcoords="offset points", xytext=(4, 4), fontsize=7)
+        weights = [safe_float(r.get("n"), 0.0) for r in pts]
+        gaps = [abs(safe_float(r.get("abs_gap"))) for r in pts]
+        total = sum(weights) if sum(weights) > 0 else len(gaps)
+        if gaps:
+            ece_vals.append(sum(g * w for g, w in zip(gaps, weights)) / total)
+            ece_labels.append(_display_signal_name(signal).replace(" confidence", ""))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    bench.style_ax(ax, "Reliability of the three confidence gauges", "signal value treated as confidence", "empirical accuracy")
+    if ece_vals:
+        ax_ece.bar(range(len(ece_vals)), ece_vals, color=[lab14_color(s) for s in ("internal", "distribution", "verbal")[:len(ece_vals)]])
+        ax_ece.set_xticks(range(len(ece_vals)))
+        ax_ece.set_xticklabels(ece_labels, rotation=20, ha="right")
+        for i, val in enumerate(ece_vals):
+            ax_ece.text(i, val + 0.01, f"{val:.2f}", ha="center", fontsize=8)
+    bench.style_ax(ax_ece, "Calibration cost", "gauge", "ECE", legend=False)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "reliability_diagram.png", "Reliability diagram and expected calibration error for verbal, distributional, and internal-rank confidence.")
+
+
+def plot_disagreement_matrix(ctx: bench.RunContext, matrix_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    row_labels = [f"I:{i}/D:{d}" for i in ("low", "high") for d in ("low", "high")]
+    col_labels = ["V:low", "V:high"]
+    grids = {
+        "count": np.zeros((len(row_labels), len(col_labels))),
+        "accuracy": np.full((len(row_labels), len(col_labels)), np.nan),
+        "answerable rate": np.full((len(row_labels), len(col_labels)), np.nan),
+    }
+    for r in matrix_rows:
+        key = f"I:{r.get('internal_signal')}/D:{r.get('distribution_signal')}"
+        vkey = f"V:{r.get('verbal_signal')}"
+        if key not in row_labels or vkey not in col_labels:
+            continue
+        i, j = row_labels.index(key), col_labels.index(vkey)
+        grids["count"][i, j] = safe_float(r.get("n"), 0.0)
+        grids["accuracy"][i, j] = safe_float(r.get("accuracy"))
+        grids["answerable rate"][i, j] = safe_float(r.get("answerable_rate"))
+    fig, axes = plt.subplots(1, 3, figsize=(13.2, 5.0))
+    fig.patch.set_facecolor("white")
+    for ax, (title, grid) in zip(axes, grids.items()):
+        im = ax.imshow(grid, cmap="Blues" if title == "count" else "viridis", aspect="auto", vmin=0, vmax=(None if title == "count" else 1))
+        ax.set_xticks(range(len(col_labels)))
+        ax.set_xticklabels(col_labels)
+        ax.set_yticks(range(len(row_labels)))
+        ax.set_yticklabels(row_labels)
+        ax.set_title(title)
+        for i in range(grid.shape[0]):
+            for j in range(grid.shape[1]):
+                val = grid[i, j]
+                if math.isfinite(float(val)):
+                    ax.text(j, i, f"{val:.0f}" if title == "count" else f"{val:.2f}", ha="center", va="center", fontsize=8, color="white" if val > 0.65 else "black")
+        fig.colorbar(im, ax=ax, fraction=0.046)
+    fig.suptitle("Internal / distribution / verbal confidence disagreement", fontsize=14)
+    fig.tight_layout(rect=[0, 0, 1, 0.94])
+    bench.save_figure(ctx, fig, "confidence_disagreement_matrix.png", "Three-gauge confidence disagreement matrix split into counts, accuracy, and answerability rate.")
+
+
+def plot_signal_correlation(ctx: bench.RunContext, signal_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+
+    rows = [r for r in signal_rows if r.get("split") == "eval"] or list(signal_rows)
+    fig, axes = plt.subplots(2, 2, figsize=(11.0, 9.0))
+    fig.patch.set_facecolor("white")
+    panels = [
+        ("internal_rank_confidence", "distribution_confidence", "Internal vs option distribution"),
+        ("internal_rank_confidence", "verbal_confidence_score", "Internal vs verbal self-report"),
+        ("distribution_confidence", "verbal_confidence_score", "Distribution vs verbal self-report"),
+        ("internal_rank_confidence", "hedging_style_projection", "Internal vs hedging-style projection"),
+    ]
+    for ax, (xkey, ykey, title) in zip(axes.ravel(), panels):
+        for ans, color, label in ((1, lab14_color("answerable"), "answerable"), (0, lab14_color("unanswerable"), "unanswerable")):
+            sub = [r for r in rows if int(r.get("answerable", 0)) == ans]
+            ax.scatter([safe_float(r.get(xkey)) for r in sub], [safe_float(r.get(ykey)) for r in sub], s=36, alpha=0.75, color=color, label=label)
+        xs, ys = paired_finite_values(rows, xkey, ykey)
+        corr = pearson(xs, ys)
+        if math.isfinite(corr):
+            ax.text(0.02, 0.96, f"r={corr:.2f}", transform=ax.transAxes, va="top", fontsize=9)
+        bench.style_ax(ax, title, _display_signal_name(xkey).replace("verbal confidence score", "verbal confidence"), _display_signal_name(ykey).replace("verbal confidence score", "verbal confidence"))
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "confidence_signal_correlations.png", "Pairwise scatter plots comparing internal, distributional, verbal, and hedging-style confidence signals.")
+
+
+def plot_family_heldout(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import numpy as np
+
+    families = sorted({str(r.get("held_out_family")) for r in rows})
+    if not families:
+        return
+    x = np.arange(len(families))
+    real_vals, control_vals, gaps = [], [], []
+    for family in families:
+        real = safe_fmean([safe_float(r.get("auc")) for r in rows if r.get("held_out_family") == family and r.get("direction_kind") == "real"])
+        shuf = safe_fmean([safe_float(r.get("auc")) for r in rows if r.get("held_out_family") == family and r.get("direction_kind") == "shuffled"], 0.5)
+        rand = safe_fmean([safe_float(r.get("auc")) for r in rows if r.get("held_out_family") == family and r.get("direction_kind") == "random"], 0.5)
+        control = max(0.5, shuf, rand)
+        real_vals.append(real)
+        control_vals.append(control)
+        gaps.append(real - control)
+    fig, ax = bench.new_figure(figsize=(9.2, 5.4))
+    ax.bar(x - 0.18, real_vals, width=0.36, color=lab14_color("real"), label="real held-out AUC")
+    ax.bar(x + 0.18, control_vals, width=0.36, color=lab14_color("control"), alpha=0.65, label="best control")
+    for xi, gap in zip(x, gaps):
+        ax.text(xi, max(real_vals[int(xi)], control_vals[int(xi)]) + 0.02, f"gap {gap:+.2f}", ha="center", fontsize=8)
+    ax.axhline(0.5, color="black", linewidth=0.8, alpha=0.55)
+    ax.set_xticks(x)
+    ax.set_xticklabels(families, rotation=20, ha="right")
+    ax.set_ylim(0, 1.05)
+    bench.style_ax(ax, "Family-held-out answerability generalization", "held-out family", "AUC")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "family_heldout_generalization.png", "Family-held-out AUC for the answerability direction compared to the strongest shuffled/random control.")
+
+
+def plot_signal_evidence_matrix(ctx: bench.RunContext, evidence_rows: Sequence[Mapping[str, Any]]) -> None:
+    import numpy as np
+
+    rows = list(evidence_rows)
+    if not rows:
+        return
+    cols = ["answerability_auc", "correctness_auc", "answerability_selectivity", "correctness_selectivity", "calibration_ece"]
+    labels = [str(r.get("display_name")) for r in rows]
+    grid = np.array([[safe_float(r.get(c)) for c in cols] for r in rows], dtype=float)
+    # AUC columns live around [.5,1]; selectivity columns around [0,.5]; ECE lower is better.
+    normed = grid.copy()
+    for j, c in enumerate(cols):
+        if c.endswith("auc"):
+            normed[:, j] = (grid[:, j] - 0.5) / 0.5
+        elif c.endswith("selectivity"):
+            normed[:, j] = grid[:, j] / 0.5
+        elif c == "calibration_ece":
+            normed[:, j] = 1.0 - np.clip(grid[:, j] / 0.5, 0, 1)
+    fig, ax = bench.new_figure(figsize=(10.2, max(4.8, 0.42 * len(rows) + 1.6)))
+    im = ax.imshow(normed, cmap="viridis", aspect="auto", vmin=0, vmax=1)
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels)
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels([c.replace("_", " ") for c in cols], rotation=25, ha="right")
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            val = grid[i, j]
+            if math.isfinite(float(val)):
+                ax.text(j, i, f"{val:.2f}", ha="center", va="center", fontsize=7, color="white" if normed[i, j] > 0.62 else "black")
+    ax.set_title("Certainty evidence matrix: gauges and confounds share the same scoreboard")
+    fig.colorbar(im, ax=ax, fraction=0.025, label="normalized support (ECE inverted)")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "signal_evidence_matrix.png", "Evidence matrix comparing internal, distributional, verbal, style, length, and answer-letter signals.")
+
+
+def plot_family_signal_atlas(ctx: bench.RunContext, family_rows: Sequence[Mapping[str, Any]]) -> None:
+    import numpy as np
+
+    rows = list(family_rows)
+    if not rows:
+        return
+    cols = ["accuracy", "answerable_rate", "internal_rank_confidence", "distribution_confidence", "verbal_confidence", "internal_calibration_gap", "distribution_calibration_gap", "verbal_calibration_gap"]
+    labels = [str(r.get("family")) for r in rows]
+    grid = np.array([[safe_float(r.get(c)) for c in cols] for r in rows], dtype=float)
+    fig, ax = bench.new_figure(figsize=(11.2, max(3.8, 0.48 * len(rows) + 1.8)))
+    im = ax.imshow(grid, cmap="viridis", aspect="auto", vmin=0, vmax=1)
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels)
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels([c.replace("_", " ") for c in cols], rotation=25, ha="right")
+    _annotate_heatmap(ax, grid, ".2f", fontsize=7)
+    ax.set_title("Family signal atlas: where the gauges work and where they wobble")
+    fig.colorbar(im, ax=ax, fraction=0.025, label="rate / score")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "family_signal_atlas.png", "Family-level accuracy, confidence gauges, and calibration gaps.")
+
+
+def plot_confound_audit(ctx: bench.RunContext, confound_rows: Sequence[Mapping[str, Any]]) -> None:
+    rows = [r for r in confound_rows if r.get("predicts") == "answerability"]
+    if not rows:
+        return
+    # Deduplicate by baseline, keeping the strongest row from either table.
+    by_key: dict[str, Mapping[str, Any]] = {}
+    for r in rows:
+        key = str(r.get("baseline"))
+        if key not in by_key or safe_float(r.get("auc")) > safe_float(by_key[key].get("auc")):
+            by_key[key] = r
+    picked = sorted(by_key.values(), key=lambda r: safe_float(r.get("auc")), reverse=True)[:12]
+    labels = [_display_signal_name(str(r.get("baseline"))) for r in picked]
+    vals = [safe_float(r.get("auc")) for r in picked]
+    fig, ax = bench.new_figure(figsize=(9.8, max(4.5, 0.38 * len(picked) + 1.4)))
+    y = list(range(len(picked)))
+    colors = [lab14_color("confound") if safe_float(r.get("auc")) >= 0.70 else lab14_color("control") for r in picked]
+    ax.barh(y, vals, color=colors, alpha=0.82)
+    ax.axvline(0.5, color="black", linewidth=0.8, alpha=0.6)
+    ax.axvline(0.70, color=lab14_color("confound"), linestyle="--", linewidth=1.0, alpha=0.8, label="worry bar")
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels)
+    ax.invert_yaxis()
+    for yi, val in zip(y, vals):
+        ax.text(val + 0.01, yi, f"{val:.2f}", va="center", fontsize=8)
+    ax.set_xlim(0, 1.02)
+    bench.style_ax(ax, "Answerability confound audit", "AUC predicting answerability", "", legend=True)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "confound_audit.png", "Length, answer-key, D-option, distribution, and hedging signals tested as answerability confounds.")
+
+
+def plot_verbal_confidence_audit(
+    ctx: bench.RunContext,
+    confidence_rows: Sequence[Mapping[str, Any]],
+    signal_rows: Sequence[Mapping[str, Any]],
+) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    rows = list(signal_rows)
+    conf = list(confidence_rows)
+    if not rows and not conf:
+        return
+    fig, axes = plt.subplots(1, 2, figsize=(11.2, 4.8))
+    fig.patch.set_facecolor("white")
+    ax_label, ax_parse = axes
+    labels = [l for l in CONFIDENCE_ORDER if any(r.get("verbal_confidence_label") == l for r in rows)]
+    x = np.arange(len(labels))
+    counts = [sum(1 for r in rows if r.get("verbal_confidence_label") == l) for l in labels]
+    acc = [_row_rate([r for r in rows if r.get("verbal_confidence_label") == l], "correct", 0.0) for l in labels]
+    ans = [_row_mean([r for r in rows if r.get("verbal_confidence_label") == l], "answerable", 0.0) for l in labels]
+    if labels:
+        ax_label.bar(x - 0.18, acc, width=0.36, color=lab14_color("correct"), label="accuracy")
+        ax_label.bar(x + 0.18, ans, width=0.36, color=lab14_color("answerable"), alpha=0.72, label="answerable rate")
+        for xi, n in zip(x, counts):
+            ax_label.text(xi, 1.02, f"n={n}", ha="center", fontsize=8)
+        ax_label.set_xticks(x)
+        ax_label.set_xticklabels(labels, rotation=15, ha="right")
+        ax_label.set_ylim(0, 1.14)
+    bench.style_ax(ax_label, "Verbal labels: what do they buy?", "generated label", "rate")
+    parse_labels = sorted({str(r.get("parse_source")) for r in conf})
+    parse_counts = [sum(1 for r in conf if str(r.get("parse_source")) == p) for p in parse_labels]
+    y = np.arange(len(parse_labels))
+    if parse_labels:
+        ax_parse.barh(y, parse_counts, color=lab14_color("verbal"), alpha=0.78)
+        ax_parse.set_yticks(y)
+        ax_parse.set_yticklabels(parse_labels)
+        ax_parse.invert_yaxis()
+        for yi, val in zip(y, parse_counts):
+            ax_parse.text(val + 0.2, yi, str(val), va="center", fontsize=8)
+    bench.style_ax(ax_parse, "Parser source audit", "count", "", legend=False)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "verbal_confidence_audit.png", "Generated confidence labels by accuracy/answerability plus parser-source counts.")
+
+
+def plot_item_uncertainty_ribbons(ctx: bench.RunContext, item_rows: Sequence[Mapping[str, Any]]) -> None:
+    import numpy as np
+
+    rows = list(item_rows)
+    if not rows:
+        return
+    # Keep extremes and disagreement-rich rows if the eval set is large.
+    if len(rows) > 64:
+        risky = [r for r in rows if str(r.get("risk_bucket")) not in {"all_high", "all_low"}]
+        rows = rows[:20] + risky[:24] + rows[-20:]
+    hedge_vals = [safe_float(r.get("hedging_style_projection")) for r in rows]
+    hedge_min = min(hedge_vals) if hedge_vals else 0.0
+    hedge_max = max(hedge_vals) if hedge_vals else 1.0
+    def hedge_scaled(v: Any) -> float:
+        x = safe_float(v)
+        if not math.isfinite(x) or abs(hedge_max - hedge_min) < 1e-9:
+            return 0.5
+        return (x - hedge_min) / (hedge_max - hedge_min)
+    cols = ["internal_rank_confidence", "distribution_confidence", "verbal_confidence_score", "hedging_scaled", "correct", "answerable"]
+    grid = []
+    for r in rows:
+        grid.append([
+            safe_float(r.get("internal_rank_confidence")),
+            safe_float(r.get("distribution_confidence")),
+            safe_float(r.get("verbal_confidence_score")),
+            hedge_scaled(r.get("hedging_style_projection")),
+            safe_float(r.get("correct")),
+            safe_float(r.get("answerable")),
+        ])
+    arr = np.array(grid, dtype=float)
+    labels = [str(r.get("item_id"))[:26] for r in rows]
+    fig, ax = bench.new_figure(figsize=(8.8, max(6.0, 0.22 * len(rows) + 2.0)))
+    im = ax.imshow(arr, aspect="auto", cmap="viridis", vmin=0, vmax=1)
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels, fontsize=6 if len(labels) > 45 else 7)
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels(["internal", "distribution", "verbal", "hedging\n(rank)", "correct", "answerable"], rotation=20, ha="right")
+    ax.set_title("Item uncertainty ribbons, sorted by internal confidence")
+    fig.colorbar(im, ax=ax, fraction=0.025, label="score / flag")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "item_uncertainty_ribbons.png", "Per-item internal, distributional, verbal, hedging, correctness, and answerability signals sorted by internal confidence.")
+
+
+def plot_calibration_gap_by_family(ctx: bench.RunContext, family_rows: Sequence[Mapping[str, Any]]) -> None:
+    import numpy as np
+
+    rows = list(family_rows)
+    if not rows:
+        return
+    cols = ["internal_calibration_gap", "distribution_calibration_gap", "verbal_calibration_gap"]
+    labels = [str(r.get("family")) for r in rows]
+    grid = np.array([[safe_float(r.get(c)) for c in cols] for r in rows], dtype=float)
+    fig, ax = bench.new_figure(figsize=(7.8, max(3.8, 0.45 * len(rows) + 1.8)))
+    im = ax.imshow(grid, aspect="auto", cmap="magma_r", vmin=0, vmax=max(0.5, float(np.nanmax(grid)) if np.isfinite(grid).any() else 0.5))
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels)
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels(["internal", "distribution", "verbal"])
+    _annotate_heatmap(ax, grid, ".2f", fontsize=8)
+    ax.set_title("Calibration gap by family: lower is better")
+    fig.colorbar(im, ax=ax, fraction=0.035, label="abs(mean confidence - accuracy)")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "calibration_gap_by_family.png", "Family-level calibration gaps for internal-rank, distributional, and verbal confidence gauges.")
+
 # ---------------------------------------------------------------------------
 # Cards, audits, and claims
 # ---------------------------------------------------------------------------
@@ -2301,12 +3185,37 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         metrics=metrics,
     )
 
+    viz_tables = build_visual_synthesis_tables(
+        items=items,
+        behavior_rows=behavior_rows,
+        confidence_rows=confidence_rows,
+        signal_rows=signal_rows,
+        signal_pred_rows=signal_pred_rows,
+        length_rows=length_rows,
+        family_rows=family_rows,
+        matrix_rows=matrix_rows,
+        reliability_table=reliability_table,
+        calibration_summary_rows=calibration_summary_rows,
+        probe_rows=probe_rows,
+        depth_selection_rows=depth_selection_rows,
+        metrics=metrics,
+    )
+    write_visual_synthesis_tables(ctx, viz_tables)
+
     if not args.no_plots:
+        plot_certainty_evidence_dashboard(ctx, metrics, probe_rows, family_rows, matrix_rows, reliability_table, viz_tables["certainty_evidence_matrix"])
         plot_probe_by_layer(ctx, probe_rows, best_certainty_depth, best_hedging_depth)
+        plot_controlled_depth_gap_atlas(ctx, viz_tables["probe_depth_control_gaps"])
         plot_reliability(ctx, reliability_table)
         plot_disagreement_matrix(ctx, matrix_rows)
         plot_signal_correlation(ctx, signal_rows)
         plot_family_heldout(ctx, family_rows)
+        plot_signal_evidence_matrix(ctx, viz_tables["certainty_evidence_matrix"])
+        plot_family_signal_atlas(ctx, viz_tables["family_signal_summary"])
+        plot_confound_audit(ctx, viz_tables["baseline_confound_audit"])
+        plot_verbal_confidence_audit(ctx, confidence_rows, signal_rows)
+        plot_item_uncertainty_ribbons(ctx, viz_tables["item_signal_ranks"])
+        plot_calibration_gap_by_family(ctx, viz_tables["family_signal_summary"])
 
     write_certainty_instrument_card(ctx, metrics)
     write_operationalization_audit(ctx, metrics)

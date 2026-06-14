@@ -4040,6 +4040,48 @@ EMOTION_MARKERS = {
     "neutral": ".",
 }
 
+# Lab 14 certainty/calibration visual grammar. The lab has local fallbacks, but
+# these helpers keep downstream self-report, belief-revision, and calibration
+# plots on the same visual language.
+CERTAINTY_COLORS = {
+    "internal": "#0072B2",
+    "internal_projection": "#0072B2",
+    "internal_rank_confidence": "#0072B2",
+    "distribution": "#009E73",
+    "distribution_confidence": "#009E73",
+    "verbal": "#E69F00",
+    "verbal_confidence": "#E69F00",
+    "self_report": "#E69F00",
+    "hedging": "#7E57C2",
+    "hedging_style_projection": "#7E57C2",
+    "answerable": "#009E73",
+    "unanswerable": "#D55E00",
+    "correct": "#009E73",
+    "wrong": "#D55E00",
+    "real": "#D55E00",
+    "random": "#777777",
+    "shuffled": "#8A9A00",
+    "length": "#56B4E9",
+    "letter": "#CC79A7",
+    "confound": "#CC79A7",
+    "control": "#777777",
+}
+
+CERTAINTY_MARKERS = {
+    "internal": "o",
+    "internal_projection": "o",
+    "internal_rank_confidence": "o",
+    "distribution": "s",
+    "distribution_confidence": "s",
+    "verbal": "^",
+    "verbal_confidence": "^",
+    "hedging": "D",
+    "hedging_style_projection": "D",
+    "real": "o",
+    "random": "s",
+    "shuffled": "^",
+}
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
@@ -4308,6 +4350,21 @@ def plot_emotion_condition_color(condition: str, default: str = "#555555") -> st
     """Shared color lookup for Lab 13 steering/control conditions."""
     key = str(condition)
     return EMOTION_STEERING_CONDITION_COLORS.get(key, CONTROL_COLORS.get(key, default))
+
+
+def plot_certainty_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 14 certainty/calibration gauges and controls."""
+    key = str(condition)
+    return CERTAINTY_COLORS.get(
+        key,
+        CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)),
+    )
+
+
+def plot_certainty_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 14 certainty/calibration gauges and controls."""
+    key = str(condition)
+    return CERTAINTY_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))
 
 
 def lighten_color(color: str, amount: float = 0.55) -> str:
