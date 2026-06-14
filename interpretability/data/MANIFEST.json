@@ -210,6 +210,24 @@
     },
     "verified_tokenizers": []
   },
+  "capstone_seed_tracks.jsonl": {
+    "generator": "hand-authored deterministic course rows",
+    "rows": 4,
+    "science_scope": "capstone package scaffold; not a scientific result until bound to a real frozen run",
+    "sha256": "ab62e525813f2470e68df16827ea80c2a992e4de38711ac2bbcb3fc4e4fb7c00",
+    "source_labs": {
+      "lab31": 1,
+      "lab32": 1,
+      "lab33": 1,
+      "lab34": 1
+    },
+    "track_types": {
+      "audit_package": 2,
+      "method_replication": 1,
+      "new_scoped_finding": 1
+    },
+    "verified_tokenizers": []
+  },
   "advanced_relation_geometry.csv": {
     "families": {
       "capital_of": 28,

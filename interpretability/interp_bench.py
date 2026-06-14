@@ -469,6 +469,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # no-tool rows with misleading surface cues.
         "max_examples_tier_a": "24",
     },
+    "lab35": {
+        "module": "labs.lab35_reproducible_capstone",
+        "run_name": "lab35_reproducible_capstone",
+        "description": "Reproducible interpretability paper capstone: preregistration, adversarial review, repair log, evidence matrix, and reproduction package.",
+        # Package-generation lab. Tier A runs every seed track and selects the
+        # default scoped-finding track for a complete reproducibility scaffold.
+        "max_examples_tier_a": "4",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
