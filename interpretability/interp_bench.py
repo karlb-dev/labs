@@ -429,6 +429,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # tiny in-course transformer on a deterministic induction-copy task.
         "max_examples_tier_a": "11",
     },
+    "lab30": {
+        "module": "labs.lab30_feature_lineage",
+        "run_name": "lab30_feature_lineage",
+        "description": "Cross-layer and cross-model feature geometry: supervised prototype-direction lineage with controls.",
+        # Base-model, activation-heavy lab. Tier A keeps the complete small
+        # domain corpus so every confusable pair has train/eval/heldout rows.
+        "max_examples_tier_a": "32",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
