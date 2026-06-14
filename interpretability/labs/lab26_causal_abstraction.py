@@ -24,6 +24,7 @@ import dataclasses
 import hashlib
 import json
 import math
+import os
 import pathlib
 import statistics
 from collections import defaultdict
@@ -57,6 +58,27 @@ CONDITION_ORDER = (
 CONTROL_CONDITIONS = ("random_matched", "wrong_site_preserve")
 PLOT_SOURCE_SUBDIR = "figure_sources"
 CI_Z = 1.96
+
+
+def residual_patch_batch_size(bundle: bench.ModelBundle) -> int:
+    """Architecture-aware batch size for residual patching.
+
+    The default batched path is verified on GPT-2 and OLMo. Gemma 4's bf16
+    language-model wrapper shows large batch-shape drift for cached residual
+    vectors, so Lab 26 uses single-prompt patch forwards there. The environment
+    override is intentionally narrow and lab-local for future validation work.
+    """
+    override = os.environ.get("LAB26_RESIDUAL_PATCH_BATCH_SIZE")
+    if override:
+        try:
+            return max(1, int(override))
+        except ValueError:
+            print(f"[lab26] ignoring invalid LAB26_RESIDUAL_PATCH_BATCH_SIZE={override!r}")
+    model_id = str(getattr(bundle.anatomy, "model_id", "")).lower()
+    arch = str(getattr(bundle.model.config, "architectures", [""])[0]).lower()
+    if "gemma" in model_id or "gemma" in arch:
+        return 1
+    return RESIDUAL_PATCH_BATCH_SIZE
 
 CONDITION_DISPLAY = {
     "no_op_same_example": "no-op self",
@@ -1177,7 +1199,9 @@ def run_resampling(
     for item in items:
         for site in sites_by_domain[item.domain]:
             total += len(donor_plans[item.item_id]) * len(site.depths)
+    patch_batch_size = residual_patch_batch_size(bundle)
     print(f"[lab26] running {total} residual-resampling cells, batched by target prompt")
+    print(f"[lab26] residual patch batch size: {patch_batch_size}")
 
     rows: list[dict[str, Any]] = []
     done = 0
@@ -1263,33 +1287,77 @@ def run_resampling(
                             "scrub_score": "",
                             "delta_from_clean": "",
                             "noop_abs_delta": "",
+                            "noop_score_error": "",
                         })
                         immediate_rows.append(base_row)
                     else:
                         vector = donor_cap.streams[depth, donor_pos]
                         item_jobs.append(PatchJob(base_row, int(depth), int(target_pos), vector))
         if item_jobs:
-            logits_list = bench.run_with_residual_patch_batched(
-                bundle,
-                item.prompt,
-                [(job.layer, job.position, job.vector) for job in item_jobs],
-                max_batch=RESIDUAL_PATCH_BATCH_SIZE,
-            )
-            for job, logits in zip(item_jobs, logits_list):
-                patched = logit_diff(logits, item)
-                clean = item.clean_diff
-                score = patched / clean if abs(clean) > 1e-9 else float("nan")
-                row = dict(job.row)
-                row.update({
-                    "patched_diff": rounded(patched),
-                    "scrub_score": rounded(score),
-                    "delta_from_clean": rounded(patched - clean),
-                    "noop_abs_delta": rounded(abs(patched - clean)) if row["condition"] == "no_op_same_example" else "",
-                })
-                rows.append(row)
-                done += 1
-                if done % report_every == 0 or done == total:
-                    print(f"[lab26] resampling {done}/{total}")
+            if patch_batch_size <= 1:
+                for job in item_jobs:
+                    logits = bench.run_with_residual_patch(bundle, item.prompt, job.layer, job.position, job.vector)
+                    patched = logit_diff(logits, item)
+                    clean = item.clean_diff
+                    score = patched / clean if abs(clean) > 1e-9 else float("nan")
+                    row = dict(job.row)
+                    row.update({
+                        "cached_clean_diff": rounded(item.clean_diff),
+                        "batch_clean_diff": rounded(clean),
+                        "batch_clean_delta_from_cached": rounded(0.0),
+                        "clean_diff": rounded(clean),
+                        "baseline_pass": clean > MIN_BASELINE_MARGIN,
+                        "patched_diff": rounded(patched),
+                        "scrub_score": rounded(score),
+                        "delta_from_clean": rounded(patched - clean),
+                        "noop_abs_delta": rounded(abs(patched - clean)) if row["condition"] == "no_op_same_example" else "",
+                        "noop_score_error": rounded(abs(score - 1.0)) if row["condition"] == "no_op_same_example" else "",
+                    })
+                    rows.append(row)
+                    done += 1
+                    if done % report_every == 0 or done == total:
+                        print(f"[lab26] resampling {done}/{total}")
+            else:
+                ref_layer = 0
+                ref_pos = 0
+                ref_vector = captures[item.item_id].streams[ref_layer, ref_pos]
+                # GPU bf16 kernels can produce small batch-shape-dependent logit
+                # drift. Score every intervention against a same-batch identity
+                # reference so the no-op gate tests the patch, not batch shape.
+                chunk_size = max(1, patch_batch_size - 1)
+                for start in range(0, len(item_jobs), chunk_size):
+                    chunk_jobs = item_jobs[start:start + chunk_size]
+                    cells = [(ref_layer, ref_pos, ref_vector)] + [
+                        (job.layer, job.position, job.vector) for job in chunk_jobs
+                    ]
+                    logits_list = bench.run_with_residual_patch_batched(
+                        bundle,
+                        item.prompt,
+                        cells,
+                        max_batch=len(cells),
+                    )
+                    clean_ref = logit_diff(logits_list[0], item)
+                    for job, logits in zip(chunk_jobs, logits_list[1:]):
+                        patched = logit_diff(logits, item)
+                        clean = clean_ref
+                        score = patched / clean if abs(clean) > 1e-9 else float("nan")
+                        row = dict(job.row)
+                        row.update({
+                            "cached_clean_diff": rounded(item.clean_diff),
+                            "batch_clean_diff": rounded(clean_ref),
+                            "batch_clean_delta_from_cached": rounded(clean_ref - item.clean_diff),
+                            "clean_diff": rounded(clean),
+                            "baseline_pass": clean > MIN_BASELINE_MARGIN,
+                            "patched_diff": rounded(patched),
+                            "scrub_score": rounded(score),
+                            "delta_from_clean": rounded(patched - clean),
+                            "noop_abs_delta": rounded(abs(patched - clean)) if row["condition"] == "no_op_same_example" else "",
+                            "noop_score_error": rounded(abs(score - 1.0)) if row["condition"] == "no_op_same_example" else "",
+                        })
+                        rows.append(row)
+                        done += 1
+                        if done % report_every == 0 or done == total:
+                            print(f"[lab26] resampling {done}/{total}")
         for row in immediate_rows:
             rows.append(row)
             done += 1
@@ -1550,14 +1618,24 @@ def build_evidence_matrix(
 
 def noop_identity_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     grouped: dict[tuple[str, str, str, int], list[float]] = defaultdict(list)
+    score_grouped: dict[tuple[str, str, str, int], list[float]] = defaultdict(list)
     for row in rows:
         if row.get("condition") != "no_op_same_example" or row.get("error"):
             continue
+        key = (str(row["hypothesis_id"]), str(row["site"]), str(row["patched_site"]), int(row["depth"]))
         val = as_float(row.get("noop_abs_delta"))
         if math.isfinite(val):
-            grouped[(str(row["hypothesis_id"]), str(row["site"]), str(row["patched_site"]), int(row["depth"]))].append(val)
+            grouped[key].append(val)
+        score_error = as_float(row.get("noop_score_error"))
+        if not math.isfinite(score_error):
+            score = as_float(row.get("scrub_score"))
+            score_error = abs(score - 1.0) if math.isfinite(score) else float("nan")
+        if math.isfinite(score_error):
+            score_grouped[key].append(score_error)
     out: list[dict[str, Any]] = []
     for (hyp, site, patched_site, depth), vals in sorted(grouped.items()):
+        score_vals = score_grouped.get((hyp, site, patched_site, depth), [])
+        max_score_error = max(score_vals) if score_vals else float("inf")
         out.append({
             "hypothesis_id": hyp,
             "site": site,
@@ -1565,9 +1643,11 @@ def noop_identity_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]
             "depth": depth,
             "mean_abs_delta_from_clean": rounded(safe_mean(vals)),
             "max_abs_delta_from_clean": rounded(max(vals) if vals else float("nan")),
+            "mean_noop_score_error": rounded(safe_mean(score_vals)),
+            "max_noop_score_error": rounded(max_score_error),
             "n": len(vals),
-            "ok": (max(vals) if vals else float("inf")) <= NOOP_SCORE_ATOL,
-            "atol": NOOP_SCORE_ATOL,
+            "ok": max_score_error <= NOOP_SCORE_ATOL,
+            "score_atol": NOOP_SCORE_ATOL,
         })
     return out
 
@@ -1577,10 +1657,10 @@ def assert_noop_identity(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]
     path = ctx.path("tables", "noop_identity_check.csv")
     bench.write_csv_with_context(ctx, path, out)
     ctx.register_artifact(path, "table", "Lab-local proof that self-resampling at every named site is numerically close to identity.")
-    worst = max([as_float(row.get("max_abs_delta_from_clean"), 0.0) for row in out] or [0.0])
+    worst = max([as_float(row.get("max_noop_score_error"), 0.0) for row in out] or [0.0])
     if worst > NOOP_SCORE_ATOL:
         raise RuntimeError(
-            f"Lab 26 no-op resampling check failed: max clean-logit-diff change {worst:.4g} exceeds {NOOP_SCORE_ATOL}. "
+            f"Lab 26 no-op resampling check failed: max no-op score error {worst:.4g} exceeds {NOOP_SCORE_ATOL}. "
             "Do not interpret the resampling plots until token positions and patch hooks are fixed."
         )
     return out
@@ -2962,10 +3042,11 @@ def write_self_check_status(
         "donor_rows_missing_preserve": sum(1 for row in donor_coverage if not row.get("has_preserve")),
         "donor_rows_missing_break": sum(1 for row in donor_coverage if not row.get("has_break")),
         "noop_max_abs_delta": max([as_float(row.get("max_abs_delta_from_clean"), 0.0) for row in noop_rows] or [0.0]),
-        "noop_atol": NOOP_SCORE_ATOL,
+        "noop_max_score_error": max([as_float(row.get("max_noop_score_error"), 0.0) for row in noop_rows] or [0.0]),
+        "noop_score_atol": NOOP_SCORE_ATOL,
         "ok": True,
     }
-    status["ok"] = bool(status["tokenization_kept"] > 0 and status["noop_max_abs_delta"] <= NOOP_SCORE_ATOL)
+    status["ok"] = bool(status["tokenization_kept"] > 0 and status["noop_max_score_error"] <= NOOP_SCORE_ATOL)
     path = ctx.path("diagnostics", "self_check_status.json")
     bench.write_json(path, status)
     ctx.register_artifact(path, "diagnostic", "Lab 26 tokenization, donor coverage, and no-op self-check summary.")
