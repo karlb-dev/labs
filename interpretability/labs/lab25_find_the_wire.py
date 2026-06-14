@@ -265,6 +265,80 @@ def torch_load(path: pathlib.Path) -> Any:
 
 
 # ---------------------------------------------------------------------------
+# Lab 25 visual grammar helpers
+# ---------------------------------------------------------------------------
+
+WIRE_COLORS_FALLBACK = {
+    "target_direction": "#0072B2",
+    "opposite_direction": "#D55E00",
+    "random_direction": "#999999",
+    "shuffled_direction": "#E69F00",
+    "wrong_concept_direction": "#CC79A7",
+    "default_mode": "#4D4D4D",
+    "system_prompt": "#56B4E9",
+    "user_instruction": "#009E73",
+    "activation_injection": "#0072B2",
+    "false_activation_claim": "#D55E00",
+    "state_report_before_visible_output": "#009E73",
+    "output_rationalization_or_downstream_priming_risk": "#E69F00",
+    "behavior_expressed_without_report": "#56B4E9",
+    "no_self_report_detection": "#999999",
+    "wire_candidate": "#009E73",
+    "report_moves_but_grounding_weak": "#E69F00",
+    "weak_specificity": "#56B4E9",
+    "not_supported": "#999999",
+    "high_risk": "#D55E00",
+    "moderate_risk": "#E69F00",
+    "low_risk": "#009E73",
+    "SELF-REPORT": "#CC79A7",
+    "CAUSAL": "#009E73",
+    "DECODE": "#0072B2",
+    "AUDIT": "#6F4E7C",
+}
+
+WIRE_MARKERS_FALLBACK = {
+    "target_direction": "o",
+    "opposite_direction": "v",
+    "random_direction": "x",
+    "shuffled_direction": "^",
+    "wrong_concept_direction": "D",
+    "default_mode": "o",
+    "system_prompt": "s",
+    "user_instruction": "^",
+    "activation_injection": "P",
+    "false_activation_claim": "X",
+    "wire_candidate": "o",
+    "report_moves_but_grounding_weak": "^",
+    "weak_specificity": "s",
+    "not_supported": "x",
+}
+
+
+def wire_color(key: Any, default: str = "#555555") -> str:
+    fn = getattr(bench, "plot_wire_color", None) or getattr(bench, "plot_findthewire_color", None)
+    if callable(fn):
+        try:
+            return fn(str(key), default)
+        except TypeError:
+            return fn(str(key))
+    return WIRE_COLORS_FALLBACK.get(str(key), default)
+
+
+def wire_marker(key: Any, default: str = "o") -> str:
+    fn = getattr(bench, "plot_wire_marker", None) or getattr(bench, "plot_findthewire_marker", None)
+    if callable(fn):
+        try:
+            return fn(str(key), default)
+        except TypeError:
+            return fn(str(key))
+    return WIRE_MARKERS_FALLBACK.get(str(key), default)
+
+
+def finite_rate(value: Any, default: float = 0.0) -> float:
+    f = safe_float(value, default)
+    return f if math.isfinite(f) else default
+
+# ---------------------------------------------------------------------------
 # Data loading and safety checks
 # ---------------------------------------------------------------------------
 
@@ -1603,6 +1677,220 @@ def write_labeling_guide(ctx: bench.RunContext) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Visualization synthesis tables
+# ---------------------------------------------------------------------------
+
+
+def _rows_for_concept(rows: Sequence[Mapping[str, Any]], concept: str) -> list[Mapping[str, Any]]:
+    return [r for r in rows if str(r.get("target_concept", "")) == concept]
+
+
+def _mean_key(rows: Sequence[Mapping[str, Any]], key: str, default: float = float("nan")) -> float:
+    vals = [safe_float(r.get(key)) for r in rows]
+    vals = [v for v in vals if math.isfinite(v)]
+    return safe_mean(vals, default) if vals else default
+
+
+def _summary_lookup(rows: Sequence[Mapping[str, Any]], concept: str, kind: str, dose: float | None = None) -> list[Mapping[str, Any]]:
+    out = []
+    for row in rows:
+        if str(row.get("target_concept", "")) != concept:
+            continue
+        if str(row.get("steering_kind", "")) != kind:
+            continue
+        if dose is not None and abs(float(row.get("dose", 9999)) - float(dose)) > 1e-9:
+            continue
+        out.append(row)
+    return out
+
+
+def _posture(target_rate: float, control_floor: float, grounding: float, eval_gap: float) -> str:
+    gap = target_rate - control_floor
+    if eval_gap > 0 and gap >= 0.25 and grounding >= 0.40:
+        return "wire_candidate"
+    if gap >= 0.25:
+        return "report_moves_but_grounding_weak"
+    if gap > 0.0:
+        return "weak_specificity"
+    return "not_supported"
+
+
+def wire_evidence_matrix_rows(
+    detection_rows: Sequence[Mapping[str, Any]],
+    false_rows: Sequence[Mapping[str, Any]],
+    grounding: Sequence[Mapping[str, Any]],
+    source_rows: Sequence[Mapping[str, Any]],
+    confidence_rows: Sequence[Mapping[str, Any]],
+    selected_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    concepts = sorted({str(r.get("target_concept")) for r in selected_rows if str(r.get("target_concept", ""))})
+    concepts = sorted(set(concepts) | {str(r.get("target_concept")) for r in detection_rows if str(r.get("target_concept", ""))})
+    false_by_concept = {str(r.get("target_concept")): r for r in false_rows}
+    selected_by_concept = {str(r.get("target_concept")): r for r in selected_rows}
+    out: list[dict[str, Any]] = []
+    for concept in concepts:
+        sel = selected_by_concept.get(concept, {})
+        family = str(sel.get("concept_family", "")) or next((str(r.get("concept_family")) for r in detection_rows if str(r.get("target_concept")) == concept), "")
+        max_rows = _summary_lookup(detection_rows, concept, "target_direction", CONTROL_DOSE)
+        zero_rows = _summary_lookup(detection_rows, concept, "target_direction", 0.0)
+        target_rate = _mean_key(max_rows, "report_detection_rate", 0.0)
+        zero_rate = _mean_key(zero_rows, "report_detection_rate", 0.0)
+        behavior_rate = _mean_key(max_rows, "behavior_marker_rate", 0.0)
+        detect_gain = target_rate - zero_rate
+        frow = false_by_concept.get(concept, {})
+        control_floor = finite_rate(frow.get("control_floor"), 0.0)
+        gap = target_rate - control_floor
+        ground_rows = [
+            r for r in grounding
+            if str(r.get("target_concept")) == concept
+            and str(r.get("steering_kind")) == "target_direction"
+            and abs(float(r.get("dose", 9999)) - CONTROL_DOSE) <= 1e-9
+        ]
+        grounding_pass = _mean_key(ground_rows, "grounding_pass_report_before_output", 0.0)
+        rationalization = _mean_key(ground_rows, "downstream_priming_risk", 0.0)
+        no_detection = safe_mean([1.0 if str(r.get("interpretation")) == "no_self_report_detection" else 0.0 for r in ground_rows], 0.0) if ground_rows else 0.0
+        srows = _rows_for_concept(source_rows, concept)
+        source_acc = _mean_key(srows, "source_attribution_correct", float("nan"))
+        activation_rows = [r for r in srows if str(r.get("source_type")) == "activation_injection"]
+        activation_source_acc = _mean_key(activation_rows, "source_attribution_correct", float("nan"))
+        false_activation_claim_rows = [r for r in srows if str(r.get("source_type")) == "false_activation_claim"]
+        false_activation_rate = _mean_key(false_activation_claim_rows, "activation_false_attribution", float("nan"))
+        conf = _rows_for_concept(confidence_rows, concept)
+        conf_plus = _mean_key([r for r in conf if str(r.get("condition")) == "certainty_plus"], "parsed_confidence_numeric", float("nan"))
+        conf_minus = _mean_key([r for r in conf if str(r.get("condition")) == "certainty_minus"], "parsed_confidence_numeric", float("nan"))
+        conf_random = _mean_key([r for r in conf if str(r.get("condition")) == "random_plus"], "parsed_confidence_numeric", float("nan"))
+        conf_gap = conf_plus - conf_minus if math.isfinite(conf_plus) and math.isfinite(conf_minus) else float("nan")
+        conf_random_gap = conf_plus - conf_random if math.isfinite(conf_plus) and math.isfinite(conf_random) else float("nan")
+        eval_gap = finite_rate(sel.get("eval_projection_gap_real"), 0.0)
+        posture = _posture(target_rate, control_floor, grounding_pass, eval_gap)
+        out.append({
+            "target_concept": concept,
+            "concept_family": family,
+            "selected_stream_depth": sel.get("selected_depth", ""),
+            "injection_layer": sel.get("injection_layer", ""),
+            "eval_projection_gap_real": rounded(eval_gap),
+            "control_adjusted_train_gap": rounded(safe_float(sel.get("control_adjusted_train_gap"))),
+            "target_report_rate_at_max_dose": rounded(target_rate),
+            "zero_dose_report_rate": rounded(zero_rate),
+            "dose_response_gain": rounded(detect_gain),
+            "behavior_marker_rate_at_max_dose": rounded(behavior_rate),
+            "control_floor": rounded(control_floor),
+            "target_minus_control_floor": rounded(gap),
+            "grounding_pass_rate_at_max_dose": rounded(grounding_pass),
+            "rationalization_risk_rate_at_max_dose": rounded(rationalization),
+            "no_detection_rate_at_max_dose": rounded(no_detection),
+            "source_attribution_accuracy": rounded(source_acc) if math.isfinite(source_acc) else "",
+            "activation_source_accuracy": rounded(activation_source_acc) if math.isfinite(activation_source_acc) else "",
+            "false_activation_claim_rate": rounded(false_activation_rate) if math.isfinite(false_activation_rate) else "",
+            "certainty_plus_minus_gap": rounded(conf_gap) if math.isfinite(conf_gap) else "",
+            "certainty_plus_random_gap": rounded(conf_random_gap) if math.isfinite(conf_random_gap) else "",
+            "evidence_posture": posture,
+            "claim_boundary": (
+                "narrow self-report wire candidate" if posture == "wire_candidate"
+                else "self-report moved but grounding/source controls narrow the claim" if posture == "report_moves_but_grounding_weak"
+                else "weak or nonspecific report movement" if posture == "weak_specificity"
+                else "not supported by this instrument"
+            ),
+        })
+    return out
+
+
+def source_attribution_confusion_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    labels = ["default_mode", "system_prompt", "user_instruction", "activation_injection", "unknown"]
+    expected_labels = sorted({str(r.get("expected_source_label", "")) for r in rows if str(r.get("expected_source_label", ""))})
+    expected_labels = [x for x in ["default_mode", "system_prompt", "user_instruction", "activation_injection"] if x in expected_labels] + [x for x in expected_labels if x not in {"default_mode", "system_prompt", "user_instruction", "activation_injection"}]
+    counts: Counter[tuple[str, str]] = Counter()
+    totals: Counter[str] = Counter()
+    for row in rows:
+        exp = str(row.get("expected_source_label", "unknown") or "unknown")
+        pred = str(row.get("parsed_source_label", "unknown") or "unknown")
+        counts[(exp, pred)] += 1
+        totals[exp] += 1
+    out: list[dict[str, Any]] = []
+    for exp in expected_labels:
+        for pred in labels:
+            n = counts.get((exp, pred), 0)
+            out.append({
+                "expected_source_label": exp,
+                "parsed_source_label": pred,
+                "count": n,
+                "row_rate": rounded(n / max(1, totals[exp])),
+            })
+    return out
+
+
+def direction_geometry_summary_rows(cosine_rows: Sequence[Mapping[str, Any]], selected_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    families = {str(r.get("target_concept")): str(r.get("concept_family", "")) for r in selected_rows}
+    concepts = sorted(families)
+    out: list[dict[str, Any]] = []
+    for concept in concepts:
+        peers = [r for r in cosine_rows if str(r.get("direction_a")) == concept and str(r.get("direction_b")) != concept]
+        if not peers:
+            continue
+        nearest = max(peers, key=lambda r: abs(safe_float(r.get("cosine"), 0.0)))
+        same = [r for r in peers if families.get(str(r.get("direction_b"))) == families.get(concept)]
+        other = [r for r in peers if families.get(str(r.get("direction_b"))) != families.get(concept)]
+        max_same = max([abs(safe_float(r.get("cosine"), 0.0)) for r in same], default=0.0)
+        max_other = max([abs(safe_float(r.get("cosine"), 0.0)) for r in other], default=0.0)
+        risk = "high_risk" if max_other >= 0.70 else ("moderate_risk" if max_other >= 0.45 else "low_risk")
+        out.append({
+            "target_concept": concept,
+            "concept_family": families.get(concept, ""),
+            "nearest_direction": str(nearest.get("direction_b")),
+            "nearest_abs_cosine": rounded(abs(safe_float(nearest.get("cosine"), 0.0))),
+            "nearest_signed_cosine": rounded(safe_float(nearest.get("cosine"), 0.0)),
+            "max_same_family_abs_cosine": rounded(max_same),
+            "max_other_family_abs_cosine": rounded(max_other),
+            "confound_risk": risk,
+            "interpretation": "direction is entangled with another family" if risk == "high_risk" else ("nearby direction should be discussed" if risk == "moderate_risk" else "direction geometry looks comparatively specific"),
+        })
+    return out
+
+
+def self_report_operating_points_rows(
+    detection_rows: Sequence[Mapping[str, Any]],
+    false_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    false_by_concept = {str(r.get("target_concept")): r for r in false_rows}
+    out: list[dict[str, Any]] = []
+    for row in detection_rows:
+        if str(row.get("steering_kind")) != "target_direction":
+            continue
+        concept = str(row.get("target_concept"))
+        frow = false_by_concept.get(concept, {})
+        report_rate = finite_rate(row.get("report_detection_rate"), 0.0)
+        control_floor = finite_rate(frow.get("control_floor"), 0.0)
+        out.append({
+            "concept_family": row.get("concept_family", ""),
+            "target_concept": concept,
+            "dose": row.get("dose", ""),
+            "report_detection_rate": rounded(report_rate),
+            "behavior_marker_rate": row.get("behavior_marker_rate", ""),
+            "grounding_pass_rate": row.get("grounding_pass_rate", ""),
+            "downstream_priming_risk_rate": row.get("downstream_priming_risk_rate", ""),
+            "control_floor_at_max_dose": rounded(control_floor),
+            "report_rate_minus_control_floor": rounded(report_rate - control_floor),
+            "operating_point_note": "claimable region" if report_rate - control_floor >= 0.25 and finite_rate(row.get("grounding_pass_rate"), 0.0) >= 0.40 else "audit or hand-label before claim",
+        })
+    return out
+
+
+def plot_reading_guide_rows() -> list[dict[str, str]]:
+    return [
+        {"artifact": "plots/find_the_wire_dashboard.png", "concept": "One-screen evidence firewall", "what_to_check": "Do DECODE, self-report movement, grounding, source attribution, and confidence bridge tell a coherent story?"},
+        {"artifact": "plots/wire_evidence_matrix.png", "concept": "Claim readiness per concept", "what_to_check": "Which concepts earn a narrow wire claim and which are only report-control effects?"},
+        {"artifact": "plots/state_coupling_quadrant.png", "concept": "Report before visible behavior", "what_to_check": "Strong rows sit high-left: report yes, visible behavior no."},
+        {"artifact": "plots/specificity_frontier.png", "concept": "Target effect versus false-report floor", "what_to_check": "Points above the diagonal beat zero/random/shuffled/wrong controls."},
+        {"artifact": "plots/control_floor_ladder.png", "concept": "Which control explains the apparent wire", "what_to_check": "Wrong-concept, shuffled, or random bars matching target bars narrow the claim."},
+        {"artifact": "plots/grounding_risk_atlas.png", "concept": "Grounding interpretation by intervention", "what_to_check": "Target direction should create more state-report-before-output than controls."},
+        {"artifact": "plots/source_attribution_matrix.png", "concept": "Known-cause self-attribution", "what_to_check": "Activation injection should not be confused with system/user/default prompt causes."},
+        {"artifact": "plots/direction_geometry_atlas.png", "concept": "Direction entanglement", "what_to_check": "Large cross-family cosines are confound risks for self-report labels."},
+        {"artifact": "plots/report_readiness_card.png", "concept": "Report-discipline scorecard", "what_to_check": "The weakest row is the claim boundary, not an inconvenience."},
+        {"artifact": "plots/confidence_bridge_detail.png", "concept": "Optional Lab 14 bridge", "what_to_check": "Verbal confidence should move with certainty plus/minus more than random if the bridge is active."},
+    ]
+
+
+# ---------------------------------------------------------------------------
 # Plots
 # ---------------------------------------------------------------------------
 
@@ -1722,6 +2010,346 @@ def plot_confidence_bridge(ctx: bench.RunContext, rows: Sequence[Mapping[str, An
     bench.save_figure(ctx, fig, "confidence_self_report_bridge.png", "Optional Lab 14 certainty direction bridge into verbal confidence self-report.")
 
 
+def plot_find_the_wire_dashboard(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    scorecard: Sequence[Mapping[str, Any]],
+    source_summary: Sequence[Mapping[str, Any]],
+    confidence_summary: Sequence[Mapping[str, Any]],
+) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    fig, axes = plt.subplots(2, 2, figsize=(14.0, 9.4))
+    ax = axes[0, 0]
+    criteria = [str(r.get("criterion", "")) for r in scorecard]
+    scores = [finite_rate(r.get("score_0_to_2"), 0.0) for r in scorecard]
+    y = np.arange(len(criteria))
+    ax.barh(y, scores, color=[wire_color(str(r.get("status", ""))) for r in scorecard])
+    ax.set_yticks(y)
+    ax.set_yticklabels([c.replace("_", " ") for c in criteria], fontsize=8)
+    ax.set_xlim(0, 2.05)
+    ax.invert_yaxis()
+    bench.style_ax(ax, title="Report-discipline gates", xlabel="score (0 to 2)", ylabel="")
+
+    ax = axes[0, 1]
+    labels = [str(r.get("target_concept")) for r in evidence_rows]
+    x = np.arange(len(labels))
+    width = 0.32
+    target = [finite_rate(r.get("target_report_rate_at_max_dose"), 0.0) for r in evidence_rows]
+    floor = [finite_rate(r.get("control_floor"), 0.0) for r in evidence_rows]
+    ax.bar(x - width / 2, target, width, label="target direction", color=wire_color("target_direction"))
+    ax.bar(x + width / 2, floor, width, label="control floor", color=wire_color("random_direction"))
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=8)
+    ax.set_ylim(-0.05, 1.05)
+    bench.style_ax(ax, title="Target report vs false-report floor", xlabel="concept", ylabel="rate", legend=True)
+
+    ax = axes[1, 0]
+    posture_counts = Counter(str(r.get("evidence_posture", "")) for r in evidence_rows)
+    posture_order = ["wire_candidate", "report_moves_but_grounding_weak", "weak_specificity", "not_supported"]
+    ax.bar([p.replace("_", "\n") for p in posture_order], [posture_counts.get(p, 0) for p in posture_order], color=[wire_color(p) for p in posture_order])
+    bench.style_ax(ax, title="Concept-level claim posture", xlabel="posture", ylabel="concept count")
+
+    ax = axes[1, 1]
+    if source_summary:
+        slabels = [str(r.get("source_type")) for r in source_summary]
+        vals = [finite_rate(r.get("accuracy"), 0.0) for r in source_summary]
+        ax.bar([s.replace("_", "\n") for s in slabels], vals, color=[wire_color(s) for s in slabels])
+        ax.set_ylim(-0.05, 1.05)
+        bench.style_ax(ax, title="Known-source attribution", xlabel="true cause", ylabel="accuracy")
+    elif confidence_summary:
+        clabels = [str(r.get("condition")) for r in confidence_summary]
+        vals = [finite_rate(r.get("mean_parsed_confidence"), 0.0) for r in confidence_summary]
+        ax.bar([c.replace("_", "\n") for c in clabels], vals, color=[wire_color(c) for c in clabels])
+        ax.set_ylim(-0.05, 1.05)
+        bench.style_ax(ax, title="Optional confidence bridge", xlabel="condition", ylabel="mean confidence")
+    else:
+        ax.text(0.5, 0.5, "source/confidence tracks not run", ha="center", va="center", transform=ax.transAxes)
+        bench.style_ax(ax, title="Known-source / confidence audit", xlabel="", ylabel="")
+
+    fig.suptitle(f"Find the Wire evidence dashboard — verdict: {metrics.get('verdict', '')}", fontsize=14, fontweight="bold")
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    bench.save_figure(ctx, fig, "find_the_wire_dashboard.png", "Start-here dashboard for Lab 25 self-report coupling evidence.")
+
+
+def plot_wire_evidence_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    columns = [
+        ("eval gap", "eval_projection_gap_real"),
+        ("report@max", "target_report_rate_at_max_dose"),
+        ("control floor", "control_floor"),
+        ("specificity", "target_minus_control_floor"),
+        ("grounding", "grounding_pass_rate_at_max_dose"),
+        ("source acc", "source_attribution_accuracy"),
+        ("conf +/−", "certainty_plus_minus_gap"),
+    ]
+    labels = [str(r.get("target_concept")) for r in rows]
+    data = []
+    raw = []
+    for row in rows:
+        drow = []
+        rrow = []
+        for _label, key in columns:
+            val = safe_float(row.get(key), float("nan"))
+            rrow.append(val)
+            if key in {"control_floor"}:
+                normed = 1.0 - max(0.0, min(1.0, val)) if math.isfinite(val) else float("nan")
+            elif key in {"eval_projection_gap_real", "target_minus_control_floor", "certainty_plus_minus_gap"}:
+                normed = max(0.0, min(1.0, 0.5 + val / 2.0)) if math.isfinite(val) else float("nan")
+            else:
+                normed = max(0.0, min(1.0, val)) if math.isfinite(val) else float("nan")
+            drow.append(normed)
+        data.append(drow)
+        raw.append(rrow)
+    arr = np.array(data, dtype=float)
+    fig, ax = bench.new_figure(figsize=(10.5, max(4.2, 0.45 * len(labels) + 2.0)))
+    im = ax.imshow(arr, vmin=0, vmax=1, cmap=plt.get_cmap("viridis"))
+    ax.set_xticks(range(len(columns)))
+    ax.set_xticklabels([c[0] for c in columns], rotation=35, ha="right")
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels)
+    for i in range(len(labels)):
+        for j in range(len(columns)):
+            val = raw[i][j]
+            text = "" if not math.isfinite(val) else f"{val:.2f}"
+            ax.text(j, i, text, ha="center", va="center", fontsize=7, color="white" if arr[i, j] < 0.35 or arr[i, j] > 0.72 else "black")
+    fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label="claim-support score (normalized)")
+    bench.style_ax(ax, title="Self-report wire evidence matrix", xlabel="evidence column", ylabel="concept")
+    bench.save_figure(ctx, fig, "wire_evidence_matrix.png", "Concept-level evidence matrix for Lab 25 self-report coupling claims.")
+
+
+def plot_state_coupling_quadrant(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import numpy as np
+
+    grouped: dict[tuple[str, str, float], list[Mapping[str, Any]]] = defaultdict(list)
+    for row in rows:
+        grouped[(str(row.get("target_concept")), str(row.get("steering_kind")), float(row.get("dose", 0.0)))].append(row)
+    fig, ax = bench.new_figure(figsize=(9.4, 7.2))
+    for (concept, kind, dose), sub in sorted(grouped.items()):
+        x = _mean_key(sub, "behavior_target_marker_hit", 0.0)
+        y = _mean_key(sub, "report_target_hit", 0.0)
+        size = 80 + 18 * len(sub)
+        marker = wire_marker(kind)
+        scatter_kwargs = {
+            "s": size,
+            "color": wire_color(kind),
+            "marker": marker,
+            "alpha": 0.78,
+            "linewidth": 0.8,
+        }
+        if marker not in {"x", "+", "1", "2", "3", "4", "|", "_"}:
+            scatter_kwargs["edgecolor"] = "white"
+        ax.scatter(x, y, **scatter_kwargs)
+        if kind == "target_direction" and abs(dose - CONTROL_DOSE) <= 1e-9:
+            ax.text(x + 0.015, y + 0.015, concept, fontsize=8)
+    ax.axvline(0.5, color="#999999", lw=1, ls="--")
+    ax.axhline(0.5, color="#999999", lw=1, ls="--")
+    ax.text(0.03, 0.93, "report yes\nbehavior no\n(best evidence)", transform=ax.transAxes, fontsize=9, va="top")
+    ax.text(0.68, 0.93, "report yes\nbehavior yes\nrationalization risk", transform=ax.transAxes, fontsize=9, va="top")
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    bench.style_ax(ax, title="State-report coupling quadrant", xlabel="ordinary behavior expresses target concept", ylabel="self-report names target concept")
+    bench.save_figure(ctx, fig, "state_coupling_quadrant.png", "Report-vs-visible-behavior quadrant for Lab 25 injection trials.")
+
+
+def plot_specificity_frontier(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(8.6, 7.0))
+    ax.plot([0, 1], [0, 1], color="#777777", lw=1, ls="--", label="target = control floor")
+    for row in rows:
+        x = finite_rate(row.get("control_floor"), 0.0)
+        y = finite_rate(row.get("target_report_rate_at_max_dose"), 0.0)
+        grounding = finite_rate(row.get("grounding_pass_rate_at_max_dose"), 0.0)
+        posture = str(row.get("evidence_posture"))
+        marker = wire_marker(posture)
+        scatter_kwargs = {
+            "s": 80 + 260 * grounding,
+            "color": wire_color(posture),
+            "marker": marker,
+            "alpha": 0.82,
+            "linewidth": 0.9,
+        }
+        if marker not in {"x", "+", "1", "2", "3", "4", "|", "_"}:
+            scatter_kwargs["edgecolor"] = "white"
+        ax.scatter(x, y, **scatter_kwargs)
+        ax.text(x + 0.015, y + 0.015, str(row.get("target_concept")), fontsize=8)
+    ax.set_xlim(-0.05, 1.05)
+    ax.set_ylim(-0.05, 1.05)
+    bench.style_ax(ax, title="Specificity frontier", xlabel="false-report control floor", ylabel="target-direction report rate", legend=True)
+    bench.save_figure(ctx, fig, "specificity_frontier.png", "Target report rate versus false-positive control floor; marker size indicates grounding pass rate.")
+
+
+def plot_control_floor_ladder(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import numpy as np
+
+    labels = [str(r.get("target_concept")) for r in rows]
+    series = [
+        ("target", "target_direction_report_rate_at_max_dose", "target_direction"),
+        ("zero", "zero_dose_false_report_rate", "default_mode"),
+        ("random", "random_direction_false_report_rate", "random_direction"),
+        ("shuffled", "shuffled_direction_false_report_rate", "shuffled_direction"),
+        ("wrong", "wrong_direction_target_report_rate", "wrong_concept_direction"),
+    ]
+    x = np.arange(len(labels))
+    width = 0.15
+    fig, ax = bench.new_figure(figsize=(11.2, 5.8))
+    for i, (name, key, color_key) in enumerate(series):
+        ax.bar(x + (i - 2) * width, [finite_rate(r.get(key), 0.0) for r in rows], width, label=name, color=wire_color(color_key))
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=30, ha="right")
+    ax.set_ylim(-0.05, 1.05)
+    bench.style_ax(ax, title="Control-floor ladder", xlabel="target concept", ylabel="target report rate", legend=True)
+    bench.save_figure(ctx, fig, "control_floor_ladder.png", "Target reports under real, zero, random, shuffled, and wrong-concept interventions.")
+
+
+def plot_grounding_risk_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    kinds = sorted({str(r.get("steering_kind")) for r in rows})
+    interpretations = [
+        "state_report_before_visible_output",
+        "output_rationalization_or_downstream_priming_risk",
+        "behavior_expressed_without_report",
+        "no_self_report_detection",
+    ]
+    data = np.zeros((len(kinds), len(interpretations)))
+    for i, kind in enumerate(kinds):
+        for j, interp in enumerate(interpretations):
+            vals = [finite_rate(r.get("rate_within_kind"), 0.0) for r in rows if str(r.get("steering_kind")) == kind and str(r.get("interpretation")) == interp]
+            data[i, j] = vals[0] if vals else 0.0
+    fig, ax = bench.new_figure(figsize=(11.0, max(3.8, 0.45 * len(kinds) + 2.0)))
+    im = ax.imshow(data, vmin=0, vmax=1, cmap=plt.get_cmap("magma"))
+    ax.set_xticks(range(len(interpretations)))
+    ax.set_xticklabels([s.replace("_", "\n") for s in interpretations], fontsize=8)
+    ax.set_yticks(range(len(kinds)))
+    ax.set_yticklabels([k.replace("_", " ") for k in kinds])
+    for i in range(len(kinds)):
+        for j in range(len(interpretations)):
+            ax.text(j, i, f"{data[i, j]:.2f}", ha="center", va="center", fontsize=7, color="white" if data[i, j] > 0.45 else "black")
+    fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label="rate within steering kind")
+    bench.style_ax(ax, title="Grounding and rationalization atlas", xlabel="grounding interpretation", ylabel="intervention")
+    bench.save_figure(ctx, fig, "grounding_risk_atlas.png", "Grounding-control interpretation rates by intervention kind.")
+
+
+def plot_source_attribution_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    exp = [x for x in ["default_mode", "system_prompt", "user_instruction", "activation_injection"] if any(str(r.get("expected_source_label")) == x for r in rows)]
+    pred = ["default_mode", "system_prompt", "user_instruction", "activation_injection", "unknown"]
+    data = np.zeros((len(exp), len(pred)))
+    counts = np.zeros((len(exp), len(pred)))
+    for i, e in enumerate(exp):
+        for j, p in enumerate(pred):
+            matches = [r for r in rows if str(r.get("expected_source_label")) == e and str(r.get("parsed_source_label")) == p]
+            if matches:
+                counts[i, j] = sum(int(r.get("count", 0)) for r in matches)
+                data[i, j] = finite_rate(matches[0].get("row_rate"), 0.0)
+    fig, ax = bench.new_figure(figsize=(9.0, 5.8))
+    im = ax.imshow(data, vmin=0, vmax=1, cmap=plt.get_cmap("Blues"))
+    ax.set_xticks(range(len(pred)))
+    ax.set_xticklabels([p.replace("_", "\n") for p in pred], fontsize=8)
+    ax.set_yticks(range(len(exp)))
+    ax.set_yticklabels([e.replace("_", " ") for e in exp])
+    for i in range(len(exp)):
+        for j in range(len(pred)):
+            ax.text(j, i, f"{int(counts[i, j])}\n{data[i, j]:.2f}", ha="center", va="center", fontsize=7, color="white" if data[i, j] > 0.55 else "black")
+    fig.colorbar(im, ax=ax, fraction=0.04, pad=0.02, label="row-normalized rate")
+    bench.style_ax(ax, title="Source-attribution confusion matrix", xlabel="parsed source", ylabel="true source")
+    bench.save_figure(ctx, fig, "source_attribution_matrix.png", "Expected versus parsed source labels for default/system/user/activation causes.")
+
+
+def plot_direction_geometry_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    names = sorted({str(r.get("direction_a")) for r in rows} | {str(r.get("direction_b")) for r in rows})
+    if not names:
+        return
+    idx = {n: i for i, n in enumerate(names)}
+    data = np.full((len(names), len(names)), np.nan)
+    for row in rows:
+        a = str(row.get("direction_a"))
+        b = str(row.get("direction_b"))
+        if a in idx and b in idx:
+            data[idx[a], idx[b]] = safe_float(row.get("cosine"), float("nan"))
+    fig, ax = bench.new_figure(figsize=(max(6.5, 0.48 * len(names) + 3.5), max(5.8, 0.42 * len(names) + 2.8)))
+    im = ax.imshow(data, vmin=-1, vmax=1, cmap=plt.get_cmap("RdBu_r"))
+    ax.set_xticks(range(len(names)))
+    ax.set_xticklabels(names, rotation=40, ha="right", fontsize=8)
+    ax.set_yticks(range(len(names)))
+    ax.set_yticklabels(names, fontsize=8)
+    for i in range(len(names)):
+        for j in range(len(names)):
+            val = data[i, j]
+            if math.isfinite(float(val)) and (i == j or abs(float(val)) >= 0.45):
+                ax.text(j, i, f"{val:.2f}", ha="center", va="center", fontsize=7, color="white" if abs(float(val)) > 0.65 else "black")
+    fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label="cosine")
+    bench.style_ax(ax, title="Direction geometry atlas", xlabel="direction", ylabel="direction")
+    bench.save_figure(ctx, fig, "direction_geometry_atlas.png", "Cosine matrix among Lab 25 local concept directions.")
+
+
+def plot_report_readiness_card(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    criteria = [str(r.get("criterion", "")) for r in rows]
+    scores = np.array([finite_rate(r.get("score_0_to_2"), 0.0) for r in rows])
+    fig, ax = bench.new_figure(figsize=(10.5, max(3.8, 0.55 * len(rows) + 1.5)))
+    y = np.arange(len(rows))
+    ax.barh(y, scores, color=["#D55E00" if s < 1 else ("#E69F00" if s < 2 else "#009E73") for s in scores])
+    ax.set_yticks(y)
+    ax.set_yticklabels([c.replace("_", " ") for c in criteria])
+    ax.set_xlim(0, 2.05)
+    ax.invert_yaxis()
+    for i, row in enumerate(rows):
+        ax.text(scores[i] + 0.04, i, str(row.get("status", "")).replace("_", " "), va="center", fontsize=8)
+    bench.style_ax(ax, title="Report-readiness card", xlabel="score (0 weak, 2 strong)", ylabel="criterion")
+    bench.save_figure(ctx, fig, "report_readiness_card.png", "Lab 25 report-discipline scorecard as a plot.")
+
+
+def plot_confidence_bridge_detail(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import numpy as np
+
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in rows:
+        grouped[str(row.get("condition"))].append(row)
+    conds = [c for c in ["zero", "certainty_plus", "certainty_minus", "random_plus"] if c in grouped] + [c for c in sorted(grouped) if c not in {"zero", "certainty_plus", "certainty_minus", "random_plus"}]
+    fig, ax = bench.new_figure(figsize=(8.8, 5.2))
+    means = [_mean_key(grouped[c], "parsed_confidence_numeric", 0.0) for c in conds]
+    parses = [safe_mean([1 if str(r.get("parsed_confidence_numeric", "")) != "" else 0 for r in grouped[c]], 0.0) for c in conds]
+    x = np.arange(len(conds))
+    ax.bar(x - 0.18, means, 0.36, label="mean parsed confidence", color=wire_color("activation_injection"))
+    ax.bar(x + 0.18, parses, 0.36, label="parse rate", color=wire_color("default_mode"))
+    ax.set_xticks(x)
+    ax.set_xticklabels([c.replace("_", "\n") for c in conds])
+    ax.set_ylim(-0.05, 1.05)
+    bench.style_ax(ax, title="Confidence bridge detail", xlabel="condition", ylabel="rate / confidence", legend=True)
+    bench.save_figure(ctx, fig, "confidence_bridge_detail.png", "Optional Lab 14 certainty bridge with confidence and parse-rate bars.")
+
+
 # ---------------------------------------------------------------------------
 # Report artifacts
 # ---------------------------------------------------------------------------
@@ -1800,11 +2428,12 @@ def write_find_the_wire_report(ctx: bench.RunContext, metrics: Mapping[str, Any]
         "",
         "## Read next",
         "",
-        "1. `tables/report_discipline_scorecard.csv` for the compact pass/fail skeleton.",
-        "2. `tables/false_positive_floor.csv` before trusting any target detection rate.",
-        "3. `tables/grounding_control_results.csv` and hand labels before using the word wired.",
-        "4. `tables/voice_self_attribution.csv` before claiming the model knows the source of its style.",
-        "5. `operationalization_audit.md` before writing ledger claims.",
+        "1. `plots/find_the_wire_dashboard.png` for the one-screen evidence firewall.",
+        "2. `tables/wire_evidence_matrix.csv` for per-concept claim posture.",
+        "3. `tables/false_positive_floor.csv` before trusting any target detection rate.",
+        "4. `tables/grounding_control_results.csv` and hand labels before using the word wired.",
+        "5. `tables/voice_self_attribution.csv` before claiming the model knows the source of its style.",
+        "6. `operationalization_audit.md` before writing ledger claims.",
         "",
     ]
     path = ctx.path("find_the_wire_report.md")
@@ -2061,6 +2690,31 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, scorecard_path, scorecard)
     ctx.register_artifact(scorecard_path, "table", "Report-discipline criteria scorecard.")
 
+    wire_rows = wire_evidence_matrix_rows(detection_rows, false_rows, grounding, source_rows, confidence_rows, selected_rows)
+    wire_path = ctx.path("tables", "wire_evidence_matrix.csv")
+    bench.write_csv_with_context(ctx, wire_path, wire_rows)
+    ctx.register_artifact(wire_path, "table", "Concept-level evidence matrix for Lab 25 self-report coupling claims.")
+
+    source_confusion = source_attribution_confusion_rows(source_rows)
+    source_confusion_path = ctx.path("tables", "source_attribution_confusion.csv")
+    bench.write_csv_with_context(ctx, source_confusion_path, source_confusion)
+    ctx.register_artifact(source_confusion_path, "table", "Expected-versus-parsed source attribution matrix.")
+
+    geometry_summary = direction_geometry_summary_rows(cosine_rows, selected_rows)
+    geometry_summary_path = ctx.path("tables", "direction_geometry_summary.csv")
+    bench.write_csv_with_context(ctx, geometry_summary_path, geometry_summary)
+    ctx.register_artifact(geometry_summary_path, "table", "Nearest-neighbor and cross-family confound risk summary for local directions.")
+
+    operating_rows = self_report_operating_points_rows(detection_rows, false_rows)
+    operating_path = ctx.path("tables", "self_report_operating_points.csv")
+    bench.write_csv_with_context(ctx, operating_path, operating_rows)
+    ctx.register_artifact(operating_path, "table", "Dose-level self-report operating points and control-floor gaps.")
+
+    plot_guide = plot_reading_guide_rows()
+    plot_guide_path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, plot_guide_path, plot_guide)
+    ctx.register_artifact(plot_guide_path, "table", "Map from upgraded Lab 25 plots to the concept each one teaches.")
+
     results_rows: list[dict[str, Any]] = []
     results_rows.extend(detection_rows)
     results_rows.extend(source_summary)
@@ -2083,6 +2737,16 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         plot_confusion(ctx, confusion)
         plot_source_attribution(ctx, source_summary)
         plot_confidence_bridge(ctx, confidence_summary)
+        plot_find_the_wire_dashboard(ctx, metrics, wire_rows, scorecard, source_summary, confidence_summary)
+        plot_wire_evidence_matrix(ctx, wire_rows)
+        plot_state_coupling_quadrant(ctx, generation_rows)
+        plot_specificity_frontier(ctx, wire_rows)
+        plot_control_floor_ladder(ctx, false_rows)
+        plot_grounding_risk_atlas(ctx, grounding_summary)
+        plot_source_attribution_matrix(ctx, source_confusion)
+        plot_direction_geometry_atlas(ctx, cosine_rows)
+        plot_report_readiness_card(ctx, scorecard)
+        plot_confidence_bridge_detail(ctx, confidence_rows)
 
     write_operationalization_audit(ctx, metrics)
     write_find_the_wire_report(ctx, metrics)

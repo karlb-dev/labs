@@ -138,6 +138,52 @@ The revised lab writes the same kind of plumbing proof as the rest of the advanc
 | `plots/source_attribution_accuracy.png` | source attribution by true cause |
 | `plots/confidence_self_report_bridge.png` | optional Lab 14 bridge plot |
 
+
+## Visualization upgrade: read the capstone as an evidence firewall
+
+The upgraded plot suite treats Lab 25 as a **wire audit**, not a prettier self-report demo. The central visual question is whether the report channel moves under a known activation intervention **before** ordinary output has made the concept visible, and whether that movement survives the false-report floor and source-provenance controls.
+
+Start here:
+
+```text
+plots/find_the_wire_dashboard.png
+```
+
+Then walk the evidence in this order:
+
+1. `plots/direction_depth_selection.png` and `tables/direction_depth_sweep.csv`: did the local concept directions earn their depth using train-split control-adjusted gaps?
+2. `plots/self_report_detection_dose_response.png`: does target report detection rise with dose, and does visible behavior rise first?
+3. `plots/false_positive_floor.png` and `plots/specificity_frontier.png`: does the target direction beat zero-dose, random, shuffled, and wrong-concept controls?
+4. `plots/state_coupling_quadrant.png` and `plots/report_before_output_timing.png`: are there report-only rows, or only report-plus-visible-behavior rows?
+5. `plots/grounding_risk_atlas.png`: do grounding-supportive rows occur specifically for target-direction steering?
+6. `plots/source_attribution_matrix.png`: can the model distinguish activation injection from system/user/default causes?
+7. `plots/direction_geometry_atlas.png`: are the concept directions distinct, or do they collapse into one style/topic axis?
+8. `plots/wire_evidence_matrix.png` and `tables/wire_evidence_matrix.csv`: which concepts earn a narrow wire-candidate posture, and which remain weak/nonspecific?
+9. `plots/report_readiness_card.png`: which report-discipline gate is weakest?
+10. `plots/confidence_bridge_detail.png`, when available: does the Lab 14 certainty direction move verbal confidence beyond random and zero controls?
+
+New synthesis artifacts:
+
+| Path | What it adds |
+|---|---|
+| `tables/wire_evidence_matrix.csv` | per-concept matrix joining decode strength, self-report movement, control floor, grounding, source attribution, and confidence bridge signals |
+| `tables/source_attribution_confusion.csv` | expected source label by parsed source label |
+| `tables/direction_geometry_summary.csv` | nearest-neighbor and cross-family direction-confound risks |
+| `tables/self_report_operating_points.csv` | dose-level report rates, behavior rates, grounding rates, and control-floor gaps |
+| `tables/plot_reading_guide.csv` | map from each upgraded plot to the concept and claim boundary it teaches |
+| `plots/find_the_wire_dashboard.png` | one-screen evidence firewall for the whole run |
+| `plots/wire_evidence_matrix.png` | per-concept evidence posture matrix |
+| `plots/state_coupling_quadrant.png` | report-before-visible-output quadrant plot |
+| `plots/specificity_frontier.png` | target effect versus false-report floor |
+| `plots/control_floor_ladder.png` | which control explains the apparent effect |
+| `plots/grounding_risk_atlas.png` | grounding outcomes by intervention kind |
+| `plots/source_attribution_matrix.png` | source-provenance confusion matrix |
+| `plots/direction_geometry_atlas.png` | direction-cosine confound audit |
+| `plots/report_readiness_card.png` | scorecard plot for the report-discipline criteria |
+| `plots/confidence_bridge_detail.png` | optional Lab 14 certainty bridge at item level |
+
+The upgraded visuals make a negative result easier to defend. If the false-report floor matches the target effect, or grounding rows are mostly report-plus-behavior, or source attribution calls everything activation injection, the correct conclusion is not “the plot failed.” The conclusion is that the self-report channel was not a clean wire under this instrument.
+
 ## How to read the run
 
 Start with `find_the_wire_report.md`. Then read `tables/report_discipline_scorecard.csv` row by row. A pretty dose curve is not enough. The scorecard asks five separate questions:
@@ -172,7 +218,7 @@ Guidelines:
 
 `self_report_detection_dose_response.png` is the headline curve. A strong result rises with dose; a suspicious result is high at dose zero or flat across dose.
 
-`false_positive_floor.png` is the goblin detector. If the wrong-concept, shuffled, or random direction makes the model report the target, the report channel is not specific.
+`false_positive_floor.png` is the false-report detector. If the wrong-concept, shuffled, or random direction makes the model report the target, the report channel is not specific.
 
 `report_before_output_timing.png` separates the best rows from output-rationalization rows. The bar you want is `state_report_before_visible_output`.
 

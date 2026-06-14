@@ -4701,6 +4701,88 @@ def plot_belief_marker(key: str, default: str = "o") -> str:
     return plot_belief_revision_marker(key, default)
 
 
+FINDWIRE_COLORS = {
+    "target_direction": "#0072B2",
+    "opposite_direction": "#D55E00",
+    "wrong_concept_direction": "#CC79A7",
+    "random_direction": "#999999",
+    "shuffled_direction": "#E69F00",
+    "zero_dose": "#BBBBBB",
+    "default_mode": "#4D4D4D",
+    "system_prompt": "#56B4E9",
+    "user_instruction": "#009E73",
+    "activation_injection": "#0072B2",
+    "false_activation_claim": "#D55E00",
+    "state_report_before_visible_output": "#009E73",
+    "output_rationalization_or_downstream_priming_risk": "#D55E00",
+    "behavior_expressed_without_report": "#E69F00",
+    "no_self_report_detection": "#999999",
+    "wire_candidate": "#009E73",
+    "report_moves_but_grounding_weak": "#E69F00",
+    "weak_specificity": "#56B4E9",
+    "not_supported": "#999999",
+    "false_positive": "#D55E00",
+    "grounding": "#009E73",
+    "source": "#0072B2",
+    "confidence": "#CC79A7",
+    "decode": "#4D4D4D",
+    "causal": "#009E73",
+    "self_report": "#CC79A7",
+    "audit": "#6F4E7C",
+    "pass": "#009E73",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "not_run": "#BBBBBB",
+}
+
+FINDWIRE_MARKERS = {
+    "target_direction": "o",
+    "opposite_direction": "v",
+    "wrong_concept_direction": "D",
+    "random_direction": "x",
+    "shuffled_direction": "^",
+    "default_mode": "o",
+    "system_prompt": "s",
+    "user_instruction": "^",
+    "activation_injection": "P",
+    "false_activation_claim": "X",
+    "wire_candidate": "o",
+    "report_moves_but_grounding_weak": "^",
+    "weak_specificity": "s",
+    "not_supported": "x",
+}
+
+
+def plot_findwire_color(key: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 25 Find-the-Wire plots."""
+    return FINDWIRE_COLORS.get(str(key), default)
+
+
+def plot_findwire_marker(key: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 25 Find-the-Wire plots."""
+    return FINDWIRE_MARKERS.get(str(key), default)
+
+
+def plot_wire_color(key: str, default: str = "#555555") -> str:
+    """Backward-compatible alias for Lab 25 draft plotting helpers."""
+    return plot_findwire_color(key, default)
+
+
+def plot_wire_marker(key: str, default: str = "o") -> str:
+    """Backward-compatible alias for Lab 25 draft plotting helpers."""
+    return plot_findwire_marker(key, default)
+
+
+def plot_findthewire_color(key: str, default: str = "#555555") -> str:
+    """Backward-compatible alias for Lab 25 draft plotting helpers."""
+    return plot_findwire_color(key, default)
+
+
+def plot_findthewire_marker(key: str, default: str = "o") -> str:
+    """Backward-compatible alias for Lab 25 draft plotting helpers."""
+    return plot_findwire_marker(key, default)
+
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
