@@ -209,6 +209,15 @@ Depth `0` is the embedding stream. Depth `L` is the final norm input. A steering
 
 Start with `training_depth_card.md`. Then inspect the diagnostics before the plots.
 
+The tree below is the union of all modes. Outputs depend on which `--mode` you
+ran: a `lora`-only run writes the LoRA-localization artifacts (adapter manifest,
+per-layer norm, concentration, rank energy) but **not** the safety-depth
+diagnostics, tables, or plots (`safety_*`, `*divergence*`, `forced_prefix_*`,
+`safety_depth_dashboard.png`, the `instruct_*`/`comparison_*` parity files),
+which require `--mode safety_depth` (or `both`) and a comparison model. The
+`training_depth_card.md` "Read next" list is generated to point only at the
+files the run actually produced.
+
 ```text
 runs/lab21_lora_safety_depth-.../
   training_depth_card.md

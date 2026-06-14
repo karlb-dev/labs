@@ -115,13 +115,27 @@ The user-belief direction is trained on train-split pairs:
 false_belief - correct_belief_control
 ```
 
-The selected site and depth maximize:
+The selected site and depth maximize an **out-of-sample** score: the real
+direction's **grouped 5-fold cross-validated AUC** on the train split, where the
+folds are grouped by base fact so no base fact appears in both a fold's fit and
+its scoring.
 
 ```text
-train real AUC - max(train shuffled AUC, train random AUC)
+select argmax over (site, depth) of: grouped 5-fold CV AUC of the real direction (train split)
 ```
 
-Held-out eval AUC is reported after selection in `tables/probe_report.csv`. Shuffled and random controls are averaged over multiple replicates.
+We select on cross-validated AUC rather than in-sample train AUC on purpose:
+in-sample train AUC is maximal exactly where a short-span direction overfits. In
+an earlier version this lab picked `user_belief_span` at a shallow depth with
+train AUC 0.98 but held-out AUC 0.45 (below chance), because selecting on
+in-sample AUC leaks the overfit into the choice. The grouped-CV criterion
+instead rewards a site/depth that generalizes across base facts, and now selects
+`assistant_boundary` at a mid depth with a held-out user-belief AUC near 0.69.
+
+Held-out **eval** AUC is reported after selection in `tables/probe_report.csv`,
+and the selected `cv_auc` is recorded in
+`diagnostics/depth_site_selection.json`. Shuffled and random controls are
+averaged over multiple replicates. The eval split is never used for selection.
 
 The local truth direction is trained from statement contrasts:
 

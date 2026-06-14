@@ -1925,12 +1925,18 @@ def write_training_depth_card(ctx: bench.RunContext, metrics: Mapping[str, Any])
         "",
         "## Read next",
         "",
-        "1. `diagnostics/organism_discovery.json` and `tables/adapter_source_manifest.csv` before trusting LoRA rows.",
-        "2. `tables/lora_concentration_summary.csv` before naming a layer range.",
-        "3. `diagnostics/safety_prompt_render_audit.csv` and `tables/chat_format_divergence.csv` before reading safety-depth curves.",
-        "4. `plots/safety_depth_dashboard.png`, then `operationalization_audit.md`.",
-        "",
     ]
+    modes = list(metrics.get("modes", []))
+    read_next: list[str] = []
+    if "lora" in modes:
+        read_next.append("`diagnostics/organism_discovery.json` and `tables/adapter_source_manifest.csv` before trusting LoRA rows.")
+        read_next.append("`tables/lora_concentration_summary.csv` before naming a layer range.")
+    if "safety_depth" in modes:
+        read_next.append("`diagnostics/safety_prompt_render_audit.csv` and `tables/chat_format_divergence.csv` before reading safety-depth curves.")
+        read_next.append("`plots/safety_depth_dashboard.png` for the depth curves.")
+    read_next.append("`operationalization_audit.md` for the full non-claims and control posture.")
+    lines.extend(f"{i}. {item}" for i, item in enumerate(read_next, start=1))
+    lines.append("")
     path = ctx.path("training_depth_card.md")
     bench.write_text(path, "\n".join(lines))
     ctx.register_artifact(path, "summary", "Read-first Lab 21 card with verdict, non-claims, and artifact reading path.")
