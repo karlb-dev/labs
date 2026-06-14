@@ -8,3 +8,4 @@ own directory with its own code, notes, and run instructions.
 | Lab | Title |
 | --- | --- |
 | [collective_communication](collective_communication/) | Collective Communications for TPU |
+| [interpretability](interpretability/) | Mechanistic Interpretability Labs |

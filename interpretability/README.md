@@ -19,7 +19,7 @@ must work on a laptop — debug there, spend GPU minutes on science.
 
 | Tier | Hardware | What runs |
 |---|---|---|
-| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 12) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13-18) / lab-specific small models; correctness of plumbing, not science |
+| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 8, 9, 12) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13–18, 20–25) / lab-specific small models (Qwen3-0.6B for lab 10, pythia-160m for lab 19); correctness of plumbing, not science |
 | B — standard | Colab A100/H100, or any 24 GB+ GPU | base labs on `allenai/Olmo-3-1025-7B`; instruct labs (7+) on `allenai/Olmo-3-7B-Instruct`, bf16 |
 | C — comfortable | 40–80 GB GPU | fp32, larger prompt sets |
 
@@ -303,7 +303,7 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   direction, audits it against surprise/silliness/positivity, inspects
   attention back to setup tokens, and steers neutral endings with hand-label
   scaffolds for the "is it actually funnier?" question.
-- Lab 19: model diffing with crosscoders — started for the advanced course.
+- Lab 19: model diffing with crosscoders — implemented for the advanced course.
   Adds a custom paired-crosscoder path, prompt inventory from existing frozen
   batteries, Tier A identity-pair smoke defaults, Tier B OLMo base-vs-instruct
   defaults, feature taxonomy/gallery artifacts, and an optional `--run-edit`
@@ -312,42 +312,58 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   private construction artifacts from public blind-audit packages, writes
   salted commitments and leak scans, runs baseline target/control and spillover
   audits, and emits adapter-training recipes for later Lab 21/23 work.
-- Lab 21: LoRA localization and safety depth — started for the advanced
+- Lab 21: LoRA localization and safety depth — implemented for the advanced
   course. Adds a two-mode harness for Lab 20 adapter localization, wrapper
   test scaffolds, base-vs-instruct residual divergence, and benign
   refusal-boundary depth audits.
-- Lab 22: eval awareness — started for the advanced course. Adds matched
+- Lab 22: eval awareness — implemented for the advanced course. Adds matched
   eval/natural/format-control prompts, train-only direction selection,
   cross-format transfer, safe steering, CoT mention scaffolds, and optional
   Lab 20 eval-aware organism discovery.
-- Lab 23: blind audit — started for the advanced course. Discovers Lab 20
+- Lab 23: blind audit — implemented for the advanced course. Discovers Lab 20
   public packages, writes preregistration and pre-unseal report templates,
   separates behavioral-only from internals-allowed audit plans, and scores
   submitted claims against unsealed answer keys.
-- Lab 24: knowledge conflict and belief revision — started for the advanced
+- Lab 24: knowledge conflict and belief revision — implemented for the advanced
   course. Adds single-turn context-vs-parametric answer competition,
   multi-turn pressure trajectories, revision quadrants, instrument dependency
   audits, and optional patch/steer recovery scaffolds.
-- Lab 25: find the wire — started for the advanced course. Adds concept
+- Lab 25: find the wire — implemented for the advanced course. Adds concept
   injection, self-report dose-response, false-positive floor, grounding
   controls, voice/source attribution, and report-discipline scorecards.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
-The advanced course is now in progress; Labs 12-18 are implemented, Labs 19-22
-are started, and all should be treated as new lab code until their Colab
-validation runs are recorded.
-Two full-course regression sweeps are on record:
-`runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24 green,
-deterministic reproduction of the validated numbers) and
-`runs/RUN3_VALIDATION_REPORT.md` (post-rewrite merge, 23/23 green after one
-real data bug the rewrite's own validator caught; untouched labs reproduce
-run 2 exactly). The one-page sweep view is `course_dashboard.py`; the
-design-vs-built record is COURSE.md §0. The post-run-3 review pass
-(prompt/pool tokenization fixes in Labs 1/3/5/6/11 and the continuous-
-batching generation engine in Lab 10) changes some lab populations, so the
-next sweep refreshes the reference headline numbers for those labs.
+The advanced course (Labs 12–25) is now implemented as well: all 25 labs
+exist, run, and ship their cards and audits. Several advanced labs land on an
+honest negative on the default model — the controls doing their job, which is
+the design, not a gap; read each lab's card for the verdict.
+
+Validation history lives under `runs/`: `RUN2`–`RUN5_VALIDATION_REPORT.md`
+track the intro-course regression sweeps (RUN2 24/24 green with deterministic
+reproduction; RUN3 23/23 after one real data bug its own validator caught),
+and `run6/` is the broadest sweep to date — all 25 labs across five models and
+three tiers: `gpt2` / `SmolLM2-135M-Instruct` (Tier A), `Olmo-3-1025-7B` /
+`Olmo-3-7B-Instruct` (Tier B), `Olmo-3-1125-32B` (Tier C), plus an
+`Olmo-3.1-32B-Instruct` and a `google/gemma-4-E4B-it` sample. Tier A and Tier B
+completed 25/25 green; the larger-model runs surfaced three caveats worth
+tracking before the next sweep:
+
+- The Olmo-32B patching labs (5/6/12) hit the wall-clock stop, so those Tier-C
+  runs have probe/geometry data but no completed causal results — these labs
+  need a subsampled patch grid or a longer budget on 32B.
+- Lab 3 fails hook reconstruction on Olmo-32B.
+- The DLA/component family (Labs 2/5/6/9) does not yet attach to **Gemma4** —
+  its extra pre/post-feedforward LayerNorms aren't in the bench's component
+  hook-point candidates. The generic residual-stream hooks attach fine (hook
+  parity and patch no-op are exact); only the per-component decomposition needs
+  the Gemma4 paths added.
+
+These gaps are specific to the mechanistic-attribution family and to 32B
+wall-clock, not general — the probing/steering/behavioral labs run cleanly on
+every model sampled. The one-page sweep view is `course_dashboard.py`; the
+design-vs-built record is COURSE.md §0.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 
@@ -509,7 +525,10 @@ python interp_bench.py \
 ```
 
 `--tier a` always maps to a CPU-feasible configuration so the smoke path is
-one flag, not a recipe.
+one flag, not a recipe. `--prompt-set` defaults to `small` on Tier A (smoke)
+and `full` on Tiers B/C — a tiny prompt set produces degenerate selections on
+the science tiers, so the trustworthy default is automatic; pass `--prompt-set`
+explicitly to override either way.
 
 ## Troubleshooting
 
