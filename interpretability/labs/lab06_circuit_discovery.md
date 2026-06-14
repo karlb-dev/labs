@@ -16,9 +16,17 @@ Those words are not decorative labels:
 | complete | mean-ablate the circuit heads | the circuit is necessary for the behavior |
 | minimal | remove each kept head from the final circuit | every kept node earns its rent |
 
+![Faithful, complete, and minimal as one ablation logic: ablate the complement and the behavior must survive (sufficiency); ablate the circuit and the behavior must collapse (necessity); drop each kept node in turn and each must hurt (no hitchhikers). "Ablate" means replace a head's output with its dataset-mean output, not zero.](../figures/lab6_faithful_complete_minimal_via_ablation.png)
+
+The three words are one idea: **what you remove decides what you test.** Faithful and complete are the same experiment run on opposite halves of the model — keep the circuit and mean-ablate everything else (does the circuit *suffice*?), or mean-ablate the circuit and keep everything else (is the circuit *necessary*?). Minimal then audits the survivors: pull each kept head out on its own and confirm it was pulling weight. A circuit can be faithful but not complete (a redundant path still carries the behavior when the circuit is removed), and complete but not minimal (a hitchhiker rode into the final set). Read the scorecard as three independent questions, not one score.
+
 **Make the concept pop (F/C/M + held-out):** In `plots/circuit_scorecard.png` and `faithfulness_completeness_minimality.json` you will see two rows: discovery vs held-out. Faithfulness on held-out is often *higher* than on discovery (the circuit is not over-fit to the exact tokens). Completeness effect is usually larger on held-out. Minimality (worst marginal value in `tables/pruned_circuit.csv`) tells you whether the last head you kept was actually pulling its weight.
 
 The lab is a little circuit courtroom. The cheap screens nominate suspects. Mean-ablation cross-examines them. The circuit card is the verdict, including all awkward caveats.
+
+![Circuit discovery as a courtroom pipeline: cheap screens nominate suspect heads, mean-ablation cross-examines them, greedy pruning removes redundant heads, and the circuit card is the verdict. High-motif heads with no causal drop fall out at the ablation step; real-but-redundant heads fall out at the pruning step.](../figures/lab6_circuit_discovery_courtroom_pipeline.png)
+
+The pipeline's real lesson is epistemic. The cheap screens — direct-logit attribution, induction motif, previous-token motif — only **nominate**. A bright induction score is a hypothesis about a head, not a verdict on it. Membership is earned twice: once by surviving mean-ablation (the head actually moves the metric) and again by surviving greedy pruning (the head is not redundant with another). The off-diagonal points in `screen_vs_causal.png` — high motif but no causal drop — are exactly the decoys this gauntlet exists to reject.
 
 **Make the concept pop:** After your run, open `plots/circuit_discovery_dashboard.png`. It is the courtroom map: scorecard, greedy pruning, screen-vs-causal disagreement, and prompt-level preservation on one page. Then open `tables/circuit_evidence_matrix.csv` beside `plots/candidate_evidence_matrix.png`: every screened head gets one row with its OBS motif scores, ATTR score, CAUSAL drop, pruning status, edge role, and minimality value. This is the antidote to circuit pageantry. A head does not become a circuit node because it is pretty, diagonal, or high-attribution; it becomes a node because it survives intervention and pruning.
 
@@ -48,6 +56,8 @@ Discovery prompts use one set of vocabulary families. Held-out prompts use fresh
 
 The baseline gate matters. A prompt is used for discovery only if the unablated model already prefers the target over the distractor. You cannot trace a circuit for a behavior the model is not doing.
 
+Why induction specifically: the previous-token → induction pair is the cleanest known **mover** circuit. A previous-token head writes "what preceded me" into each position; an induction head uses that to find where the current token appeared before and copies *its* successor forward to the readout. This is the same transport mechanism the Lab 5 component pass landed on (attention-at-last), not the in-place ROME store — so Lab 6 is dissecting a circuit you already saw the shadow of. The edge claim (step 6) tests exactly the previous-token → induction hand-off, and only in the layer order a real forward pass allows.
+
 ## Scope: heads-only routing graph
 
 The course outline describes circuit discovery broadly as heads and MLPs. This executable lab deliberately narrows the claim: the validated circuit nodes are **attention heads only**.
@@ -59,6 +69,20 @@ For this prompt family and metric, these attention heads form a heads-only routi
 ```
 
 That sentence is longer than "we found the circuit," but it has a spine.
+
+### Vocabulary, operationalized
+
+Before the plots and tables, here is what the load-bearing words actually mean in this lab, and where each is measured.
+
+| Term | What it actually means here | Where to read it |
+|---|---|---|
+| **faithful** | Mean-ablate every *non-circuit* head; the circuit alone preserves the logit gap. Sufficiency. | `circuit_scorecard.png`, `faithfulness_completeness_minimality.json` |
+| **complete** | Mean-ablate the *circuit* heads; the behavior must collapse. Necessity (reported as `1 - completeness_ratio`). | `circuit_scorecard.png` |
+| **minimal** | Remove each kept head alone; a non-positive marginal means a hitchhiker. | `pruned_circuit.csv`, `minimality_ledger.png` |
+| **mean-ablation** | The off switch: replace a head's output with its dataset-mean over the fixed-length prompts — not zero. The circuit is *relative to this off distribution*. | `ablation_manifest.json` |
+| **screen vs causal** | Cheap rank (attribution/motif) is a hypothesis generator; causal drop under ablation is the test. Disagreement is the lesson. | `screen_vs_causal.png`, `circuit_evidence_matrix.csv` |
+| **edge interaction** | Does a previous-token head's effect shrink once the induction head is ablated? Routed fraction, reportable at 2%, **weak** until 5%. Not a key/value/path claim. | `edge_interactions.csv`, `edge_claim.json` |
+| **over-recovery (F > 1.0)** | A non-circuit head was *hurting* the task; mean-ablating it helps, so the circuit-only model beats the full model. Largest where the base behavior is weakest. | `per_prompt_faithfulness.csv` |
 
 ## Why mean-ablation is the off switch
 
@@ -269,3 +293,13 @@ MLP sufficiency, or invariance under zero-ablation.
 ```
 
 A circuit card without scope is a treasure map with no scale bar: exciting, foldable, and treacherous in the field.
+
+## Reading
+
+You do not need these to run the lab, but they are where its ideas come from:
+
+- Elhage et al., "A Mathematical Framework for Transformer Circuits" (2021) — introduces previous-token and induction heads, the motifs the cheap screen looks for.
+- Olsson et al., "In-context Learning and Induction Heads" (2022) — the induction mechanism this lab dissects, and the evidence that it is a real, reused circuit.
+- Wang et al., "Interpretability in the Wild: a Circuit for Indirect Object Identification" (2022) — the IOI circuit, and the source of the faithfulness / completeness / minimality criteria used here.
+- Conmy et al., "Towards Automated Circuit Discovery for Mechanistic Interpretability" (2023) — the automated counterpart to this manual workflow; the natural point of comparison for Lab 9.
+- Machamer, Darden & Craver, "Thinking About Mechanisms" (2000) — the entities-and-activities schema referenced in writeup question 10.
