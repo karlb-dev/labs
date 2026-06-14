@@ -1185,6 +1185,615 @@ def profile_correlation(a: list[float], b: list[float]) -> float:
     return num / (da * db)
 
 
+
+# ---------------------------------------------------------------------------
+# Visualization synthesis helpers (upgraded Lab 12)
+# ---------------------------------------------------------------------------
+
+RELATION_GROUP_COLORS = {
+    "country_sem": "#0072B2",
+    "adj_morph": "#E69F00",
+    "month_seq": "#009E73",
+    "other": "#7E57C2",
+    "none": "#8C8C8C",
+}
+ROLE_COLORS = {
+    "relword": "#7E57C2",
+    "subject": "#D55E00",
+    "final": "#0072B2",
+    "relation": "#7E57C2",
+    "last": "#0072B2",
+}
+
+
+def _color_from_bench(name: str, default: str) -> str:
+    """Resolve a color from the shared bench when the upgraded bench is present."""
+    key = str(name)
+    # Role and control lookups must run before broad group/category lookups,
+    # otherwise names such as "subject" and "final" fall through to generic
+    # category colors and the plot grammar becomes soup-colored confetti.
+    for fn_name in (
+        "plot_relation_role_color",
+        "plot_relation_control_color",
+        "plot_relation_family_color",
+        "plot_relation_group_color",
+        "plot_category_color",
+        "plot_audit_domain_color",
+    ):
+        fn = getattr(bench, fn_name, None)
+        if callable(fn):
+            try:
+                val = fn(key)
+                if isinstance(val, str) and val:
+                    return val
+            except Exception:
+                pass
+    return default
+
+
+def relation_group_color(group: str) -> str:
+    fn = getattr(bench, "plot_relation_group_color", None)
+    if callable(fn):
+        try:
+            return fn(str(group))
+        except Exception:
+            pass
+    return RELATION_GROUP_COLORS.get(str(group), RELATION_GROUP_COLORS["other"])
+
+
+def relation_role_color(role: str) -> str:
+    fn = getattr(bench, "plot_relation_role_color", None)
+    if callable(fn):
+        try:
+            return fn(str(role))
+        except Exception:
+            pass
+    return ROLE_COLORS.get(str(role), "#666666")
+
+
+def _to_float(x: Any) -> float:
+    try:
+        if x == "" or x is None:
+            return float("nan")
+        v = float(x)
+        return v if math.isfinite(v) else float("nan")
+    except Exception:
+        return float("nan")
+
+
+def _finite_vals(vals: list[Any]) -> list[float]:
+    return [v for v in (_to_float(x) for x in vals) if math.isfinite(v)]
+
+
+def _mean_or_nan(vals: list[Any]) -> float:
+    xs = _finite_vals(vals)
+    return statistics.fmean(xs) if xs else float("nan")
+
+
+def _quantile(vals: list[float], q: float) -> float:
+    xs = sorted(v for v in vals if math.isfinite(v))
+    if not xs:
+        return float("nan")
+    if len(xs) == 1:
+        return xs[0]
+    pos = (len(xs) - 1) * q
+    lo = int(math.floor(pos))
+    hi = int(math.ceil(pos))
+    if lo == hi:
+        return xs[lo]
+    return xs[lo] * (hi - pos) + xs[hi] * (pos - lo)
+
+
+def _family_swap_groups(items: list[Item]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for it in items:
+        out.setdefault(it.family, it.swap_group or "none")
+    return out
+
+
+def _selected_selectivity(sel_rows: list[dict[str, Any]], group: str, role: str, depth: int) -> float:
+    vals = [float(r["selectivity"]) for r in sel_rows
+            if r.get("scope") == group and r.get("role") == role and int(r.get("depth", -1)) == depth
+            and isinstance(r.get("selectivity"), (int, float))]
+    return vals[0] if vals else float("nan")
+
+
+def _macro_selectivity_curve(sel_rows: list[dict[str, Any]], role: str, n_depths: int) -> list[float]:
+    curve: list[float] = []
+    for d in range(n_depths):
+        vals = [float(r["selectivity"]) for r in sel_rows
+                if r.get("role") == role and r.get("scope") == "swap_group_macro" and int(r.get("depth", -1)) == d]
+        curve.append(vals[0] if vals else float("nan"))
+    return curve
+
+
+def _relation_out_values(transfer_rows: list[dict[str, Any]], family: str) -> list[float]:
+    return [float(r["band_mean_recovery"]) for r in transfer_rows
+            if r.get("family_clean") == family and r.get("kind") == "relation_swap"
+            and isinstance(r.get("band_mean_recovery"), (int, float))]
+
+
+def _relation_in_values(transfer_rows: list[dict[str, Any]], family: str) -> list[float]:
+    return [float(r["band_mean_recovery"]) for r in transfer_rows
+            if r.get("family_corrupt") == family and r.get("kind") == "relation_swap"
+            and isinstance(r.get("band_mean_recovery"), (int, float))]
+
+
+def _mean_cosine_for_family(cos_rows: list[dict[str, Any]], family: str, role: str, same: bool) -> float:
+    vals: list[float] = []
+    for r in cos_rows:
+        if r.get("role") != role:
+            continue
+        if bool(r.get("same_swap_group")) != bool(same):
+            continue
+        if r.get("family_a") == family or r.get("family_b") == family:
+            vals.append(_to_float(r.get("cosine")))
+    return _mean_or_nan(vals)
+
+
+def _peak_depth(vals: list[float], *, start: int = 1, stop: int | None = None) -> tuple[int | None, float]:
+    stop = len(vals) if stop is None else min(stop, len(vals))
+    candidates = [(d, vals[d]) for d in range(max(0, start), stop) if math.isfinite(vals[d])]
+    if not candidates:
+        return None, float("nan")
+    return max(candidates, key=lambda x: x[1])
+
+
+def write_visual_synthesis_tables(
+    ctx: bench.RunContext,
+    items: list[Item],
+    families: list[str],
+    margin_rows: list[dict[str, Any]],
+    probe_report: list[dict[str, Any]],
+    sel_rows: list[dict[str, Any]],
+    patch_rows: list[dict[str, Any]],
+    transfer_rows: list[dict[str, Any]],
+    profile_rows: list[dict[str, Any]],
+    cos_rows: list[dict[str, Any]],
+    metrics: dict[str, Any],
+    depth_by_role: dict[str, int],
+    n_depths: int,
+    n_layers: int,
+) -> dict[str, list[dict[str, Any]]]:
+    """Write plot-facing synthesis tables so the visual claims have receipts."""
+    swap_group_of = _family_swap_groups(items)
+    control_vals = [
+        _to_float(metrics.get("patching", {}).get("wrong_position_mean_recovery")),
+        _to_float(metrics.get("patching", {}).get("mismatched_vector_mean_recovery")),
+        0.0,
+    ]
+    control_floor = max(v for v in control_vals if math.isfinite(v))
+
+    evidence_rows: list[dict[str, Any]] = []
+    handoff_rows: list[dict[str, Any]] = []
+    patch_specificity_rows: list[dict[str, Any]] = []
+    for fam in families:
+        group = swap_group_of.get(fam, "none")
+        fam_margins = [r for r in margin_rows if r.get("family") == fam]
+        mean_hard = _mean_or_nan([r.get("margin_hard") for r in fam_margins])
+        mean_easy = _mean_or_nan([r.get("margin_easy") for r in fam_margins])
+        clean_gate_rate = _mean_or_nan([1.0 if r.get("passes_patch_clean_gate_hard") else 0.0 for r in fam_margins])
+        subj_curve = family_depth_curve(patch_rows, fam, "subject", n_depths)
+        final_curve = family_depth_curve(patch_rows, fam, "last", n_depths)
+        rel_curve = family_depth_curve(patch_rows, fam, "relation", n_depths)
+        subj_stats = band_stats(subj_curve, n_layers)
+        final_stats = band_stats(final_curve, n_layers)
+        rel_stats = band_stats(rel_curve, n_layers)
+        subj_peak_d, subj_peak = _peak_depth(subj_curve, start=1, stop=n_layers)
+        final_peak_d, final_peak = _peak_depth(final_curve, start=1, stop=n_layers)
+        rel_peak_d, rel_peak = _peak_depth(rel_curve, start=1, stop=n_layers)
+        relation_out = _mean_or_nan(_relation_out_values(transfer_rows, fam))
+        relation_in = _mean_or_nan(_relation_in_values(transfer_rows, fam))
+        matched_best = max([v for v in [
+            _to_float(subj_stats.get("band_mean")), _to_float(final_stats.get("band_mean")), relation_out
+        ] if math.isfinite(v)] or [float("nan")])
+        specificity_gap = matched_best - control_floor if math.isfinite(matched_best) else float("nan")
+        group_sel_final = _selected_selectivity(sel_rows, group, "final", depth_by_role.get("final", 0))
+        group_sel_subject = _selected_selectivity(sel_rows, group, "subject", depth_by_role.get("subject", 0))
+        group_sel_relword = _selected_selectivity(sel_rows, group, "relword", depth_by_role.get("relword", 0))
+        same_cos = _mean_cosine_for_family(cos_rows, fam, "final", True)
+        diff_cos = _mean_cosine_for_family(cos_rows, fam, "final", False)
+        profile_same = _mean_or_nan([r.get("profile_correlation") for r in profile_rows
+                                     if bool(r.get("same_swap_group")) and (r.get("family_a") == fam or r.get("family_b") == fam)])
+        evidence_rows.append({
+            "family": fam,
+            "swap_group": group,
+            "n_items": len([it for it in items if it.family == fam]),
+            "mean_margin_hard": rounded(mean_hard),
+            "mean_margin_easy": rounded(mean_easy),
+            "clean_gate_rate": rounded(clean_gate_rate),
+            "group_selectivity_relword": rounded(group_sel_relword),
+            "group_selectivity_subject": rounded(group_sel_subject),
+            "group_selectivity_final": rounded(group_sel_final),
+            "subject_patch_band_mean": none_if_nan(subj_stats.get("band_mean")),
+            "final_patch_band_mean": none_if_nan(final_stats.get("band_mean")),
+            "relation_role_patch_band_mean": none_if_nan(rel_stats.get("band_mean")),
+            "relation_swap_out_mean": none_if_nan(relation_out),
+            "relation_swap_in_mean": none_if_nan(relation_in),
+            "best_matched_recovery": none_if_nan(matched_best),
+            "control_floor": rounded(control_floor),
+            "specificity_gap_vs_controls": none_if_nan(specificity_gap),
+            "same_group_cosine_mean_final": none_if_nan(same_cos),
+            "cross_group_cosine_mean_final": none_if_nan(diff_cos),
+            "same_group_profile_corr_mean": none_if_nan(profile_same),
+            "claim_ready_decode": bool(math.isfinite(group_sel_final) and group_sel_final >= MIN_SELECTIVITY_FOR_DECODE_CLAIM),
+            "claim_ready_causal": bool(math.isfinite(specificity_gap) and specificity_gap >= MIN_PATCH_GAP_FOR_CAUSAL_CLAIM),
+        })
+        handoff_rows.append({
+            "family": fam,
+            "swap_group": group,
+            "subject_peak_depth": subj_peak_d if subj_peak_d is not None else "",
+            "subject_peak_recovery": none_if_nan(subj_peak),
+            "relation_peak_depth": rel_peak_d if rel_peak_d is not None else "",
+            "relation_peak_recovery": none_if_nan(rel_peak),
+            "final_peak_depth": final_peak_d if final_peak_d is not None else "",
+            "final_peak_recovery": none_if_nan(final_peak),
+            "subject_to_final_peak_lag": (final_peak_d - subj_peak_d) if subj_peak_d is not None and final_peak_d is not None else "",
+        })
+        patch_specificity_rows.append({
+            "family": fam,
+            "swap_group": group,
+            "subject_matched_band": none_if_nan(subj_stats.get("band_mean")),
+            "final_matched_band": none_if_nan(final_stats.get("band_mean")),
+            "relation_swap_out_band": none_if_nan(relation_out),
+            "wrong_position_mean": none_if_nan(metrics.get("patching", {}).get("wrong_position_mean_recovery")),
+            "mismatched_vector_mean": none_if_nan(metrics.get("patching", {}).get("mismatched_vector_mean_recovery")),
+            "control_floor": rounded(control_floor),
+            "best_matched_recovery": none_if_nan(matched_best),
+            "specificity_gap": none_if_nan(specificity_gap),
+        })
+
+    group_rows: list[dict[str, Any]] = []
+    for group in sorted({swap_group_of.get(f, "none") for f in families}):
+        g_fams = [f for f in families if swap_group_of.get(f, "none") == group]
+        relation_vals = []
+        for r in transfer_rows:
+            if r.get("kind") == "relation_swap" and r.get("family_clean") in g_fams and r.get("family_corrupt") in g_fams:
+                relation_vals.append(r.get("band_mean_recovery"))
+        group_rows.append({
+            "swap_group": group,
+            "families": ";".join(g_fams),
+            "n_families": len(g_fams),
+            "selectivity_relword_selected": rounded(_selected_selectivity(sel_rows, group, "relword", depth_by_role.get("relword", 0))),
+            "selectivity_subject_selected": rounded(_selected_selectivity(sel_rows, group, "subject", depth_by_role.get("subject", 0))),
+            "selectivity_final_selected": rounded(_selected_selectivity(sel_rows, group, "final", depth_by_role.get("final", 0))),
+            "mean_subject_patch_band": rounded(_mean_or_nan([r.get("subject_patch_band_mean") for r in evidence_rows if r.get("swap_group") == group])),
+            "mean_relation_swap_band": rounded(_mean_or_nan(relation_vals)),
+            "mean_specificity_gap": rounded(_mean_or_nan([r.get("specificity_gap_vs_controls") for r in evidence_rows if r.get("swap_group") == group])),
+        })
+
+    block_rows: list[dict[str, Any]] = []
+    for role in ROLES:
+        for same in (True, False):
+            vals = [_to_float(r.get("cosine")) for r in cos_rows if r.get("role") == role and bool(r.get("same_swap_group")) == same]
+            xs = [v for v in vals if math.isfinite(v)]
+            block_rows.append({
+                "role": role,
+                "pair_type": "same_swap_group" if same else "cross_swap_group",
+                "n_pairs": len(xs),
+                "mean_cosine": rounded(_mean_or_nan(xs)),
+                "median_cosine": rounded(_quantile(xs, 0.5)),
+                "q25_cosine": rounded(_quantile(xs, 0.25)),
+                "q75_cosine": rounded(_quantile(xs, 0.75)),
+            })
+
+    guide_rows = [
+        {"plot": "relation_geometry_dashboard.png", "first_question": "Did the lab pass the decode and causal gates?", "concept": "One-screen method-validation summary: controlled selectivity, patch specificity, transfer, and cosine block structure."},
+        {"plot": "relation_probe_by_layer.png", "first_question": "Where does relation identity become decodable?", "concept": "Raw relation identity accuracy with shuffled-label controls; all-relation gray is useful but confounded."},
+        {"plot": "controlled_probe_atlas.png", "first_question": "Which swap group and token role carries controlled selectivity?", "concept": "Entity/template-controlled selectivity as a role-by-depth heatmap."},
+        {"plot": "relation_probe_selectivity.png", "first_question": "Does accuracy beat shuffled labels?", "concept": "Macro selectivity curves used for selected relation-direction depths."},
+        {"plot": "relation_patch_heatmap.png", "first_question": "Where can clean subject information causally recover the answer?", "concept": "Subject-swap localization profiles by family and patched token role."},
+        {"plot": "role_handoff_summary.png", "first_question": "Does recovery hand off from subject to final position?", "concept": "Peak depth and size for subject, relation, and final role patches."},
+        {"plot": "relation_swap_recovery.png", "first_question": "Does the relation-word residual matter beyond token echo?", "concept": "Same-subject relation-swap patching curves, grouped by swap group and compared to wrong-position controls."},
+        {"plot": "patch_specificity_by_family.png", "first_question": "Which families beat the controls?", "concept": "Matched recovery minus the stronger control, family by family."},
+        {"plot": "patch_control_gaps.png", "first_question": "Did matched patching beat the controls?", "concept": "The causal-language badge check."},
+        {"plot": "relation_transfer_matrix.png", "first_question": "Where does recovery transfer?", "concept": "Diagonal subject-swap and within-swap-group relation-swap recovery."},
+        {"plot": "profile_similarity_matrix.png", "first_question": "Do localization profiles cluster by relation group?", "concept": "Cross-family correlation of subject-swap recovery curves; a handle, not a mechanism."},
+        {"plot": "relation_direction_cosines.png", "first_question": "Do saved directions form blocks?", "concept": "Direction geometry, to be read after the operationalization audit."},
+        {"plot": "relation_evidence_matrix.png", "first_question": "Which families earn which evidence rung?", "concept": "Per-family ledger: margins, decode selectivity, causal specificity, and geometry."},
+    ]
+
+    outputs = {
+        "relation_evidence_matrix": evidence_rows,
+        "swap_group_summary": group_rows,
+        "patch_specificity_by_family": patch_specificity_rows,
+        "role_handoff_summary": handoff_rows,
+        "geometry_block_summary": block_rows,
+        "plot_reading_guide": guide_rows,
+    }
+    for name, rows in outputs.items():
+        path = ctx.path("tables", f"{name}.csv")
+        bench.write_csv_with_context(ctx, path, rows)
+        descriptions = {
+            "relation_evidence_matrix": "Per-family evidence ledger across behavior, DECODE, CAUSAL, and OBS geometry.",
+            "swap_group_summary": "Swap-group aggregate summary for entity/template-controlled claims.",
+            "patch_specificity_by_family": "Matched patch recovery against wrong-position and mismatched-vector controls by family.",
+            "role_handoff_summary": "Peak recovery depth by patched token role; subject-to-final handoff audit.",
+            "geometry_block_summary": "Direction-cosine summaries for same-swap-group versus cross-group pairs.",
+            "plot_reading_guide": "Map from Lab 12 plots to the concept and caveat each protects.",
+        }
+        ctx.register_artifact(path, "table", descriptions.get(name, name))
+    return outputs
+
+
+def plot_relation_geometry_dashboard(
+    ctx: bench.RunContext,
+    metrics: dict[str, Any],
+    sel_rows: list[dict[str, Any]],
+    transfer_rows: list[dict[str, Any]],
+    evidence_rows: list[dict[str, Any]],
+    families: list[str],
+    depth_by_role: dict[str, int],
+    n_depths: int,
+) -> None:
+    """One-screen Lab 12 cockpit: DECODE, CAUSAL, transfer, geometry."""
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.5, 9.2))
+    ax = axes[0, 0]
+    for role in ROLES:
+        ys = _macro_selectivity_curve(sel_rows, role, n_depths)
+        ax.plot(range(n_depths), ys, marker="o", markersize=2.5, linewidth=2.0,
+                color=relation_role_color(role), label=f"{role} macro")
+        if role in depth_by_role:
+            ax.axvline(depth_by_role[role], color=relation_role_color(role), linewidth=0.9, alpha=0.35)
+    ax.axhline(MIN_SELECTIVITY_FOR_DECODE_CLAIM, color="#111111", linestyle="--", linewidth=1.0,
+               label="decode gate")
+    ax.axhline(0.0, color="#111111", linewidth=0.8)
+    bench.style_ax(ax, "DECODE gate: controlled selectivity", "stream depth", "accuracy minus shuffled", legend=True, legend_loc="lower right")
+
+    ax = axes[0, 1]
+    names = ["subject\nmatched", "relation\nmatched", "wrong\nposition", "mismatched\nvector"]
+    vals = [
+        _to_float(metrics.get("patching", {}).get("subject_swap", {}).get("band_mean")),
+        _to_float(metrics.get("patching", {}).get("relation_swap", {}).get("band_mean")),
+        _to_float(metrics.get("patching", {}).get("wrong_position_mean_recovery")),
+        _to_float(metrics.get("patching", {}).get("mismatched_vector_mean_recovery")),
+    ]
+    colors = ["#009E73", "#0072B2", "#8C8C8C", "#8C564B"]
+    bars = ax.bar(range(len(vals)), [0.0 if not math.isfinite(v) else v for v in vals], color=colors, alpha=0.88)
+    control_floor = max([v for v in vals[2:] + [0.0] if math.isfinite(v)])
+    ax.axhline(control_floor, color="#111111", linestyle=":", linewidth=1.2, label="control floor")
+    ax.axhline(control_floor + MIN_PATCH_GAP_FOR_CAUSAL_CLAIM, color="#111111", linestyle="--", linewidth=1.0,
+               label="causal gap gate")
+    ax.axhline(0.0, color="#111111", linewidth=0.8)
+    for bar, v in zip(bars, vals):
+        label = "n/a" if not math.isfinite(v) else f"{v:.2f}"
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), label,
+                ha="center", va="bottom" if bar.get_height() >= 0 else "top", fontsize=8)
+    ax.set_xticks(range(len(names)))
+    ax.set_xticklabels(names)
+    bench.style_ax(ax, "CAUSAL gate: matched patching must beat controls", "", "band mean recovery", legend=True, legend_loc="upper left")
+
+    ax = axes[1, 0]
+    fam_idx = {f: i for i, f in enumerate(families)}
+    grid = np.full((len(families), len(families)), np.nan)
+    for r in transfer_rows:
+        fa, fb = r.get("family_clean"), r.get("family_corrupt")
+        if fa in fam_idx and fb in fam_idx:
+            v = _to_float(r.get("band_mean_recovery"))
+            if math.isfinite(v):
+                grid[fam_idx[fa], fam_idx[fb]] = v
+    im = ax.imshow(grid, vmin=-1, vmax=1, cmap="RdBu_r", aspect="auto")
+    ax.set_xticks(range(len(families)))
+    ax.set_xticklabels(families, rotation=45, ha="right", fontsize=6.5)
+    ax.set_yticks(range(len(families)))
+    ax.set_yticklabels(families, fontsize=6.5)
+    ax.set_title("Transfer: diagonal subject-swap, within-group relation-swap")
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.02, label="band mean")
+
+    ax = axes[1, 1]
+    rows = sorted(evidence_rows, key=lambda r: (_to_float(r.get("specificity_gap_vs_controls")), _to_float(r.get("group_selectivity_final"))), reverse=True)
+    y = range(len(rows))
+    gaps = [_to_float(r.get("specificity_gap_vs_controls")) for r in rows]
+    sels = [_to_float(r.get("group_selectivity_final")) for r in rows]
+    groups = [r.get("swap_group", "none") for r in rows]
+    ax.barh(list(y), [0 if not math.isfinite(v) else v for v in gaps],
+            color=[relation_group_color(g) for g in groups], alpha=0.55, label="causal gap")
+    ax.scatter([0 if not math.isfinite(v) else v for v in sels], list(y),
+               marker="D", color="#111111", s=22, label="final-role selectivity")
+    ax.axvline(MIN_PATCH_GAP_FOR_CAUSAL_CLAIM, color="#111111", linestyle="--", linewidth=1.0)
+    ax.axvline(MIN_SELECTIVITY_FOR_DECODE_CLAIM, color="#111111", linestyle=":", linewidth=1.0)
+    ax.axvline(0.0, color="#111111", linewidth=0.8)
+    ax.set_yticks(list(y))
+    ax.set_yticklabels([r.get("family") for r in rows], fontsize=7)
+    ax.invert_yaxis()
+    bench.style_ax(ax, "Family evidence: selectivity and specificity gaps", "gap / selectivity", "", legend=True, legend_loc="lower right")
+
+    fig.suptitle("Lab 12 relation geometry: method-validation cockpit", fontsize=14)
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    bench.save_figure(ctx, fig, "relation_geometry_dashboard.png",
+                      "One-screen summary of controlled selectivity, patch specificity, transfer, and per-family claim readiness.")
+
+
+def plot_controlled_probe_atlas(ctx: bench.RunContext, sel_rows: list[dict[str, Any]],
+                                depth_by_role: dict[str, int], n_depths: int) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    row_specs: list[tuple[str, str]] = []
+    for role in ROLES:
+        row_specs.append((role, "swap_group_macro"))
+        for group in SWAP_GROUPS:
+            if any(r.get("role") == role and r.get("scope") == group for r in sel_rows):
+                row_specs.append((role, group))
+    if not row_specs:
+        return
+    grid = np.full((len(row_specs), n_depths), np.nan)
+    for i, (role, scope) in enumerate(row_specs):
+        for d in range(n_depths):
+            vals = [float(r["selectivity"]) for r in sel_rows
+                    if r.get("role") == role and r.get("scope") == scope and int(r.get("depth", -1)) == d]
+            if vals:
+                grid[i, d] = vals[0]
+    max_abs = max(0.25, np.nanmax(np.abs(grid)) if np.isfinite(grid).any() else 0.25)
+    fig, ax = plt.subplots(figsize=(12.0, 0.38 * len(row_specs) + 2.2))
+    im = ax.imshow(grid, aspect="auto", cmap="RdBu_r", vmin=-max_abs, vmax=max_abs)
+    ax.set_yticks(range(len(row_specs)))
+    ax.set_yticklabels([f"{role}: {scope}" for role, scope in row_specs], fontsize=7)
+    ax.set_xticks(range(0, n_depths, max(1, n_depths // 12)))
+    ax.set_xlabel("residual-stream depth")
+    ax.set_title("Controlled relation selectivity atlas (accuracy minus shuffled control)")
+    for i, (role, scope) in enumerate(row_specs):
+        if scope == "swap_group_macro" and role in depth_by_role:
+            ax.scatter([depth_by_role[role]], [i], marker="v", color="black", s=35, zorder=4)
+    fig.colorbar(im, ax=ax, fraction=0.026, pad=0.02, label="selectivity")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "controlled_probe_atlas.png",
+                      "Role-by-scope heatmap of relation probe selectivity with selected depths marked.")
+
+
+def plot_relation_evidence_matrix(ctx: bench.RunContext, evidence_rows: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not evidence_rows:
+        return
+    metrics_cols = [
+        ("mean_margin_hard", "hard\nmargin"),
+        ("clean_gate_rate", "clean\ngate"),
+        ("group_selectivity_final", "final\nselectivity"),
+        ("subject_patch_band_mean", "subject\npatch"),
+        ("final_patch_band_mean", "final\npatch"),
+        ("relation_swap_out_mean", "relation\nswap out"),
+        ("specificity_gap_vs_controls", "control\ngap"),
+        ("same_group_cosine_mean_final", "same-group\ncosine"),
+        ("same_group_profile_corr_mean", "profile\ncorr"),
+    ]
+    rows = sorted(evidence_rows, key=lambda r: (str(r.get("swap_group")), str(r.get("family"))))
+    grid = np.full((len(rows), len(metrics_cols)), np.nan)
+    for i, row in enumerate(rows):
+        for j, (key, _) in enumerate(metrics_cols):
+            grid[i, j] = _to_float(row.get(key))
+    # Column-wise robust scaling to make heterogeneous metrics readable.
+    scaled = np.full_like(grid, np.nan, dtype=float)
+    for j in range(grid.shape[1]):
+        col = grid[:, j]
+        finite = col[np.isfinite(col)]
+        if finite.size == 0:
+            continue
+        lo, hi = np.nanpercentile(finite, [5, 95]) if finite.size > 2 else (np.nanmin(finite), np.nanmax(finite))
+        if abs(hi - lo) < 1e-9:
+            scaled[:, j] = 0.0
+        else:
+            scaled[:, j] = np.clip((col - lo) / (hi - lo), 0, 1) * 2 - 1
+    fig, ax = plt.subplots(figsize=(10.8, 0.38 * len(rows) + 2.6))
+    im = ax.imshow(scaled, cmap="RdBu_r", vmin=-1, vmax=1, aspect="auto")
+    ax.set_xticks(range(len(metrics_cols)))
+    ax.set_xticklabels([label for _, label in metrics_cols], rotation=35, ha="right", fontsize=7)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([f"{r.get('swap_group')}:{r.get('family')}" for r in rows], fontsize=7)
+    for i in range(len(rows)):
+        for j, (key, _) in enumerate(metrics_cols):
+            v = grid[i, j]
+            if math.isfinite(v):
+                ax.text(j, i, f"{v:.2f}", ha="center", va="center", fontsize=5.6)
+            else:
+                ax.text(j, i, "·", ha="center", va="center", fontsize=7, color="#777777")
+    ax.set_title("Relation evidence matrix: behavior, DECODE, CAUSAL, and geometry on separate columns")
+    fig.colorbar(im, ax=ax, fraction=0.024, pad=0.02, label="within-column scaled value")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "relation_evidence_matrix.png",
+                      "Per-family evidence ledger plotted as a matrix; values are printed, colors are column-wise scaled.")
+
+
+def plot_patch_specificity_by_family(ctx: bench.RunContext, rows: list[dict[str, Any]]) -> None:
+    if not rows:
+        return
+    rows = sorted(rows, key=lambda r: _to_float(r.get("specificity_gap")), reverse=True)
+    fig, ax = bench.new_figure(figsize=(9.6, max(4.8, 0.34 * len(rows) + 1.5)))
+    y = list(range(len(rows)))
+    control_floor = [_to_float(r.get("control_floor")) for r in rows]
+    subject = [_to_float(r.get("subject_matched_band")) for r in rows]
+    relation = [_to_float(r.get("relation_swap_out_band")) for r in rows]
+    groups = [r.get("swap_group", "none") for r in rows]
+    for i, r in enumerate(rows):
+        cf = 0.0 if not math.isfinite(control_floor[i]) else control_floor[i]
+        best = max([v for v in (subject[i], relation[i], cf) if math.isfinite(v)] or [cf])
+        ax.plot([cf, best], [i, i], color=relation_group_color(groups[i]), linewidth=2.6, alpha=0.55)
+    ax.scatter([0 if not math.isfinite(v) else v for v in control_floor], y, marker="s", color="#8C8C8C", label="control floor", zorder=3)
+    ax.scatter([0 if not math.isfinite(v) else v for v in subject], y, marker="o", color="#009E73", label="subject matched", zorder=3)
+    ax.scatter([0 if not math.isfinite(v) else v for v in relation], y, marker="D", color="#0072B2", label="relation-swap out", zorder=3)
+    ax.axvline(MIN_PATCH_GAP_FOR_CAUSAL_CLAIM, color="#111111", linestyle="--", linewidth=1.0, label="gap threshold from control")
+    ax.axvline(0.0, color="#111111", linewidth=0.8)
+    ax.set_yticks(y)
+    ax.set_yticklabels([r.get("family") for r in rows], fontsize=7)
+    ax.invert_yaxis()
+    bench.style_ax(ax, "Per-family matched patching vs the stronger control", "band mean recovery", "", legend=True, legend_loc="lower right")
+    bench.save_figure(ctx, fig, "patch_specificity_by_family.png",
+                      "Family-by-family specificity gaps: matched recovery must beat wrong-position/mismatched controls.")
+
+
+def plot_role_handoff_summary(ctx: bench.RunContext, handoff_rows: list[dict[str, Any]], n_layers: int) -> None:
+    if not handoff_rows:
+        return
+    rows = sorted(handoff_rows, key=lambda r: (str(r.get("swap_group")), str(r.get("family"))))
+    fig, ax = bench.new_figure(figsize=(10.2, max(4.6, 0.34 * len(rows) + 1.7)))
+    y = list(range(len(rows)))
+    for i, r in enumerate(rows):
+        pts = []
+        for role, marker in (("subject", "o"), ("relation", "s"), ("final", "D")):
+            d = r.get(f"{role}_peak_depth")
+            val = _to_float(r.get(f"{role}_peak_recovery"))
+            if isinstance(d, int) and math.isfinite(val):
+                pts.append((d, val, role, marker))
+        if len(pts) >= 2:
+            ax.plot([min(p[0] for p in pts), max(p[0] for p in pts)], [i, i], color="#BBBBBB", linewidth=1.2, zorder=1)
+        for d, val, role, marker in pts:
+            ax.scatter([d], [i], s=45 + 55 * max(0.0, min(1.0, val)), marker=marker,
+                       color=relation_role_color(role), edgecolor="white", linewidth=0.6, label=role if i == 0 else None, zorder=3)
+    ax.axvspan(1, max(1, n_layers - 1), color="#000000", alpha=0.035, label="non-trivial band")
+    ax.set_yticks(y)
+    ax.set_yticklabels([r.get("family") for r in rows], fontsize=7)
+    ax.invert_yaxis()
+    ax.set_xlim(-0.5, n_layers + 0.5)
+    bench.style_ax(ax, "Role handoff summary: peak recovery depth and size", "stream depth of peak recovery", "", legend=True, legend_loc="lower right")
+    bench.save_figure(ctx, fig, "role_handoff_summary.png",
+                      "Peak patch-recovery depths by family and patched token role; marker size encodes peak recovery.")
+
+
+def plot_profile_similarity_matrix(ctx: bench.RunContext, profile_rows: list[dict[str, Any]], families: list[str], items: list[Item]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not profile_rows:
+        return
+    swap_group_of = _family_swap_groups(items)
+    ordered = sorted(families, key=lambda f: (swap_group_of.get(f, "none"), f))
+    idx = {f: i for i, f in enumerate(ordered)}
+    grid = np.full((len(ordered), len(ordered)), np.nan)
+    np.fill_diagonal(grid, 1.0)
+    for r in profile_rows:
+        fa, fb = r.get("family_a"), r.get("family_b")
+        if fa in idx and fb in idx:
+            v = _to_float(r.get("profile_correlation"))
+            grid[idx[fa], idx[fb]] = grid[idx[fb], idx[fa]] = v
+    fig, ax = plt.subplots(figsize=(8.5, 7.2))
+    im = ax.imshow(grid, vmin=-1, vmax=1, cmap="RdBu_r")
+    ax.set_xticks(range(len(ordered)))
+    ax.set_xticklabels(ordered, rotation=45, ha="right", fontsize=7)
+    ax.set_yticks(range(len(ordered)))
+    ax.set_yticklabels(ordered, fontsize=7)
+    # group separators
+    last_g = None
+    for k, fam in enumerate(ordered):
+        g = swap_group_of.get(fam, "none")
+        if k and g != last_g:
+            ax.axhline(k - 0.5, color="black", linewidth=1.0, alpha=0.45)
+            ax.axvline(k - 0.5, color="black", linewidth=1.0, alpha=0.45)
+        last_g = g
+    for i in range(len(ordered)):
+        for j in range(len(ordered)):
+            if i != j and np.isfinite(grid[i, j]) and abs(grid[i, j]) >= 0.45:
+                ax.text(j, i, f"{grid[i,j]:.2f}", ha="center", va="center", fontsize=5.8)
+    ax.set_title("Subject-swap localization-profile similarity (handles, not mechanisms)")
+    fig.colorbar(im, ax=ax, fraction=0.035, label="profile correlation")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "profile_similarity_matrix.png",
+                      "Pairwise correlation of per-family subject-swap localization profiles.")
+
+
 # ---------------------------------------------------------------------------
 # Plots
 # ---------------------------------------------------------------------------
@@ -1194,7 +1803,10 @@ def plot_probe_by_layer(ctx: bench.RunContext, report: list[dict[str, Any]],
                         n_depths: int, best_depth: int) -> None:
     import matplotlib.pyplot as plt
 
-    fig, axes = plt.subplots(1, 3, figsize=(13.5, 4.6), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=(14.2, 4.8), sharey=True)
+    colors = {"country_sem": relation_group_color("country_sem"),
+              "adj_morph": relation_group_color("adj_morph"),
+              "month_seq": relation_group_color("month_seq")}
     for ax, role in zip(axes, ROLES):
         def curve(scope: str, eval_kind: str) -> tuple[list[int], list[float]]:
             rows = sorted([r for r in report
@@ -1205,27 +1817,34 @@ def plot_probe_by_layer(ctx: bench.RunContext, report: list[dict[str, Any]],
 
         xs, ys = curve("all", "real")
         if xs:
-            ax.plot(xs, ys, color="tab:gray", linewidth=2.2, label="12-way (entities differ)")
-        colors = {"country_sem": "tab:red", "adj_morph": "tab:blue", "month_seq": "tab:green"}
+            ax.plot(xs, ys, color="#555555", linewidth=2.4, label="12-way (entities differ)")
+        xs, ys = curve("all", "shuffled")
+        if xs:
+            ax.plot(xs, ys, color="#555555", linewidth=1.0, linestyle=":", alpha=0.55)
         for group, color in colors.items():
             xs, ys = curve(group, "real")
             if xs:
-                ax.plot(xs, ys, color=color, linewidth=2.2, label=f"{group} (entity-controlled)")
+                ax.plot(xs, ys, color=color, linewidth=2.1, label=f"{group} (entity/template controlled)")
+                # chance line for this scope, taken from the probe table rather than inferred from the multiclass row.
+                chance_vals = [r.get("chance") for r in report if r.get("scope") == group and r.get("role") == role
+                               and r.get("method") == "centroid" and r.get("eval_kind") == "real"]
+                chance = _to_float(chance_vals[0]) if chance_vals else float("nan")
+                if math.isfinite(chance):
+                    ax.axhline(chance, color=color, linewidth=0.55, alpha=0.2)
             xs, ys = curve(group, "shuffled")
             if xs:
-                ax.plot(xs, ys, color=color, linewidth=1.1, linestyle=":", alpha=0.8)
-        ax.axvline(best_depth, color="black", linewidth=0.8, alpha=0.4)
+                ax.plot(xs, ys, color=color, linewidth=1.0, linestyle=":", alpha=0.75)
+        ax.axvline(best_depth, color="black", linewidth=0.8, alpha=0.35)
         ax.set_title(f"role: {role}")
         ax.set_xlabel("residual-stream depth")
         ax.grid(True, alpha=0.25)
     axes[0].set_ylabel("centroid accuracy (dotted = shuffled-label control)")
-    axes[0].set_ylim(0.0, 1.02)
-    axes[0].legend(fontsize=7, loc="upper left")
-    fig.suptitle("Relation identity by depth and token role; swap-group curves carry the controlled claim")
-    fig.tight_layout()
+    axes[0].set_ylim(0.0, 1.04)
+    axes[0].legend(fontsize=7, loc="lower right", frameon=False)
+    fig.suptitle("Relation identity by depth and token role; controlled curves carry the claim", fontsize=13)
+    fig.tight_layout(rect=[0, 0, 1, 0.94])
     bench.save_figure(ctx, fig, "relation_probe_by_layer.png",
-                      "Centroid relation-identity accuracy by depth/role with shuffled controls; "
-                      "swap-group scopes hold entities and template fixed.")
+                      "Centroid relation-identity accuracy by depth/role with shuffled controls and controlled swap-group scopes.")
 
 
 def plot_patch_heatmap(ctx: bench.RunContext, patch_rows: list[dict[str, Any]],
@@ -1234,50 +1853,74 @@ def plot_patch_heatmap(ctx: bench.RunContext, patch_rows: list[dict[str, Any]],
     import numpy as np
 
     roles = [r for r in ("subject", "relation", "last") if r in grid_roles]
-    fig, axes = plt.subplots(1, len(roles), figsize=(4.6 * len(roles), 0.42 * len(families) + 2.4),
-                             squeeze=False)
+    if not roles:
+        return
+    fig, axes = plt.subplots(1, len(roles), figsize=(4.8 * len(roles), 0.42 * len(families) + 2.7),
+                             squeeze=False, sharey=True)
     im = None
+    ordered = families
     for ax, role in zip(axes[0], roles):
-        grid = np.full((len(families), n_depths), np.nan)
-        for i, fam in enumerate(families):
+        grid = np.full((len(ordered), n_depths), np.nan)
+        for i, fam in enumerate(ordered):
             for d in range(n_depths):
                 grid[i, d] = mean_recovery(patch_rows, kind="subject_swap",
                                            family_clean=fam, patch_role=role, depth=d)
         im = ax.imshow(grid, aspect="auto", cmap="RdBu_r", vmin=-1.0, vmax=1.0)
-        ax.set_yticks(range(len(families)))
-        ax.set_yticklabels(families, fontsize=7)
+        ax.axvline(0.5, color="black", linewidth=0.8, alpha=0.25)
+        ax.axvline(n_depths - 1.5, color="black", linewidth=0.8, alpha=0.25)
+        ax.set_yticks(range(len(ordered)))
+        ax.set_yticklabels(ordered, fontsize=7)
         ax.set_xlabel("stream depth")
         ax.set_title(f"patched at {role}")
     if im is not None:
-        fig.colorbar(im, ax=list(axes[0]), fraction=0.025, label="mean recovery")
-    fig.suptitle("Subject-swap patching recovery by relation family (per-family causal localization profile)")
+        fig.colorbar(im, ax=list(axes[0]), fraction=0.025, pad=0.02, label="mean recovery")
+    fig.suptitle("Subject-swap patching: where clean subject information restores the relation answer", fontsize=13)
+    fig.tight_layout(rect=[0, 0, 1, 0.93])
     bench.save_figure(ctx, fig, "relation_patch_heatmap.png",
-                      "Mean interchange-patch recovery by family x depth at each patched role.")
+                      "Mean interchange-patch recovery by family x depth at each patched role; edge depths are sanity rows.")
 
 
 def plot_relation_swap_curves(ctx: bench.RunContext, patch_rows: list[dict[str, Any]],
                               n_depths: int) -> None:
-    fig, ax = bench.new_figure(figsize=(9.6, 5.2))
+    import matplotlib.pyplot as plt
+    import numpy as np
+
     pairs = sorted({(r["family_clean"], r["family_corrupt"]) for r in patch_rows
                     if r["kind"] == "relation_swap"})
+    if not pairs:
+        return
+    fig, ax = bench.new_figure(figsize=(10.2, 5.6))
+    # Thin per-pair curves plus one thick median per swap group.
+    pair_curves: dict[tuple[str, str], list[float]] = {}
+    group_curves: dict[str, list[list[float]]] = defaultdict(list)
     for fa, fb in pairs:
         ys = [mean_recovery(patch_rows, kind="relation_swap", family_clean=fa,
                             family_corrupt=fb, patch_role="relation", depth=d)
               for d in range(n_depths)]
-        ax.plot(range(n_depths), ys, linewidth=1.8, label=f"{fa} → {fb}")
+        pair_curves[(fa, fb)] = ys
+        group = str(next((r.get("swap_group", "none") for r in patch_rows
+                          if r.get("kind") == "relation_swap" and r.get("family_clean") == fa and r.get("family_corrupt") == fb), "none"))
+        group_curves[group].append(ys)
+        ax.plot(range(n_depths), ys, linewidth=0.9, alpha=0.26, color=relation_group_color(group))
+    for group, curves in group_curves.items():
+        arr = np.array(curves, dtype=float)
+        med = np.nanmedian(arr, axis=0)
+        q25 = np.nanpercentile(arr, 25, axis=0)
+        q75 = np.nanpercentile(arr, 75, axis=0)
+        color = relation_group_color(group)
+        ax.fill_between(range(n_depths), q25, q75, color=color, alpha=0.13)
+        ax.plot(range(n_depths), med, linewidth=2.6, color=color, label=f"{group} median")
     ctrl = [mean_recovery(patch_rows, kind="relation_swap", patch_role="wrong_position",
                           depth=d) for d in range(n_depths)]
     if any(math.isfinite(v) for v in ctrl):
-        ax.plot(range(n_depths), ctrl, color="black", linestyle=":", linewidth=1.6,
+        ax.plot(range(n_depths), ctrl, color="black", linestyle=":", linewidth=1.8,
                 label="wrong-position control")
-    ax.axhline(0.0, color="black", linewidth=0.7)
-    ax.axhline(1.0, color="black", linewidth=0.7, alpha=0.4)
-    ax.set_xlabel("stream depth")
-    ax.set_ylabel("mean recovery of the relation-flip margin")
-    ax.set_title("Relation-swap patching at the relation-word token (same subject, relation changed)")
-    ax.legend(fontsize=7, ncol=2)
+    ax.axhline(0.0, color="black", linewidth=0.8)
+    ax.axhline(1.0, color="black", linewidth=0.7, alpha=0.35)
+    ax.axvspan(1, n_depths - 2, color="#000000", alpha=0.035, label="non-trivial band")
+    bench.style_ax(ax, "Relation-swap patching at the relation-word token", "stream depth", "recovery of relation-flip margin", legend=True, legend_loc="upper right")
     bench.save_figure(ctx, fig, "relation_swap_recovery.png",
-                      "Recovery curves for relation-swap pairs patched at the relation token, with wrong-position control.")
+                      "Relation-swap pair curves plus swap-group median/IQR bands and wrong-position control.")
 
 
 def plot_cosines(ctx: bench.RunContext, mats: dict[str, list[list[float]]],
@@ -1286,57 +1929,55 @@ def plot_cosines(ctx: bench.RunContext, mats: dict[str, list[list[float]]],
     import numpy as np
 
     roles = sorted(mats)
-    fig, axes = plt.subplots(1, len(roles), figsize=(6.4 * len(roles), 5.4), squeeze=False)
+    fig, axes = plt.subplots(1, len(roles), figsize=(6.1 * len(roles), 5.8), squeeze=False)
     im = None
+    # Order by swap group as best we can from family names used by the frozen dataset.
+    ordered = list(families)
+    idx = {f: i for i, f in enumerate(families)}
     for ax, role in zip(axes[0], roles):
-        grid = np.array(mats[role])
+        full = np.array(mats[role], dtype=float)
+        order_idx = [idx[f] for f in ordered]
+        grid = full[np.ix_(order_idx, order_idx)]
         im = ax.imshow(grid, cmap="RdBu_r", vmin=-1.0, vmax=1.0)
-        ax.set_xticks(range(len(families)))
-        ax.set_xticklabels(families, rotation=45, ha="right", fontsize=7)
-        ax.set_yticks(range(len(families)))
-        ax.set_yticklabels(families, fontsize=7)
+        ax.set_xticks(range(len(ordered)))
+        ax.set_xticklabels(ordered, rotation=45, ha="right", fontsize=7)
+        ax.set_yticks(range(len(ordered)))
+        ax.set_yticklabels(ordered, fontsize=7)
         depth = depth_by_role.get(role, "?") if isinstance(depth_by_role, dict) else depth_by_role
-        ax.set_title(f"OvR mass-mean directions @ depth {depth}, role {role}")
-        for i in range(len(families)):
-            for j in range(len(families)):
-                if np.isfinite(grid[i, j]) and i != j:
-                    ax.annotate(f"{grid[i, j]:.2f}", (j, i), ha="center", va="center", fontsize=5.5)
+        ax.set_title(f"OvR mass-mean @ depth {depth}, role {role}")
+        for i in range(len(ordered)):
+            for j in range(len(ordered)):
+                if np.isfinite(grid[i, j]) and i != j and abs(grid[i, j]) >= 0.25:
+                    ax.annotate(f"{grid[i, j]:.2f}", (j, i), ha="center", va="center", fontsize=5.3)
     if im is not None:
-        fig.colorbar(im, ax=list(axes[0]), fraction=0.03, label="cosine")
-    fig.suptitle("Relation-direction cosine atlas (block structure = candidate shared geometry; verify against entity groups)")
+        fig.colorbar(im, ax=list(axes[0]), fraction=0.03, pad=0.02, label="cosine")
+    fig.suptitle("Relation-direction cosine atlas: block structure is a handle, not a mechanism", fontsize=13)
+    fig.tight_layout(rect=[0, 0, 1, 0.93])
     bench.save_figure(ctx, fig, "relation_direction_cosines.png",
                       "Pairwise cosines among per-family relation directions at the selected role-specific depths.")
 
 
-
-
 def plot_probe_selectivity(ctx: bench.RunContext, sel_rows: list[dict[str, Any]],
                            depth_by_role: dict[str, int], n_depths: int) -> None:
-    fig, ax = bench.new_figure(figsize=(9.4, 5.0))
+    fig, ax = bench.new_figure(figsize=(9.8, 5.2))
     for role in ROLES:
-        ys = []
-        for d in range(n_depths):
-            vals = [float(r["selectivity"]) for r in sel_rows
-                    if r["role"] == role and r["scope"] == "swap_group_macro" and r["depth"] == d
-                    and isinstance(r.get("selectivity"), (int, float))]
-            ys.append(vals[0] if vals else float("nan"))
-        ax.plot(range(n_depths), ys, linewidth=2.0, label=f"{role} macro selectivity")
-        ax.axvline(depth_by_role[role], linewidth=0.8, alpha=0.35)
-    ax.axhline(0.0, linewidth=0.8)
-    ax.set_xlabel("residual-stream depth")
-    ax.set_ylabel("centroid accuracy minus shuffled control")
-    ax.set_title("Entity/template-controlled relation selectivity by role")
-    ax.grid(True, alpha=0.25)
-    ax.legend(fontsize=8)
+        ys = _macro_selectivity_curve(sel_rows, role, n_depths)
+        ax.plot(range(n_depths), ys, linewidth=2.2, marker="o", markersize=2.5,
+                color=relation_role_color(role), label=f"{role} macro selectivity")
+        ax.axvline(depth_by_role[role], linewidth=0.9, alpha=0.3, color=relation_role_color(role))
+    ax.axhline(MIN_SELECTIVITY_FOR_DECODE_CLAIM, linewidth=1.0, linestyle="--", color="black", label="decode claim threshold")
+    ax.axhline(0.0, linewidth=0.8, color="black")
+    bench.style_ax(ax, "Entity/template-controlled relation selectivity by role", "residual-stream depth", "accuracy minus shuffled control", legend=True, legend_loc="lower right")
     bench.save_figure(ctx, fig, "relation_probe_selectivity.png",
                       "Swap-group macro selectivity curves used to choose saved direction depths.")
 
 
 def plot_transfer_matrix(ctx: bench.RunContext, transfer_rows: list[dict[str, Any]],
                          families: list[str]) -> None:
+    import matplotlib.pyplot as plt
     import numpy as np
 
-    fig, ax = bench.new_figure(figsize=(8.2, 7.2))
+    fig, ax = bench.new_figure(figsize=(8.6, 7.6))
     grid = np.full((len(families), len(families)), np.nan)
     kind_grid: dict[tuple[int, int], str] = {}
     for r in transfer_rows:
@@ -1356,13 +1997,14 @@ def plot_transfer_matrix(ctx: bench.RunContext, transfer_rows: list[dict[str, An
     for i in range(len(families)):
         for j in range(len(families)):
             if np.isfinite(grid[i, j]):
-                ax.text(j, i, f"{grid[i, j]:.2f}", ha="center", va="center", fontsize=6)
+                marker = "●" if i == j else "◆"
+                ax.text(j, i, f"{marker}\n{grid[i, j]:.2f}", ha="center", va="center", fontsize=6)
             elif kind_grid.get((i, j)) == "no_aligned_pair":
-                ax.text(j, i, "·", ha="center", va="center", fontsize=8)
-    ax.set_title("Relation transfer matrix: diagonal subject-swap, within-swap-group relation-swap")
+                ax.text(j, i, "·", ha="center", va="center", fontsize=8, color="#888888")
+    ax.set_title("Relation transfer matrix: subject-swap diagonal and relation-swap within groups")
     fig.colorbar(im, ax=ax, fraction=0.035, label="band mean recovery")
     bench.save_figure(ctx, fig, "relation_transfer_matrix.png",
-                      "Visual version of relation_transfer_matrix.csv; empty cells lack token-aligned controls.")
+                      "Visual version of relation_transfer_matrix.csv; dots are intentionally unaligned cells.")
 
 
 def plot_patch_control_gaps(ctx: bench.RunContext, metrics: dict[str, Any]) -> None:
@@ -1376,19 +2018,24 @@ def plot_patch_control_gaps(ctx: bench.RunContext, metrics: dict[str, Any]) -> N
         metrics["patching"].get("mismatched_vector_mean_recovery"),
     ]
     numeric = [float(v) if isinstance(v, (int, float)) else float("nan") for v in vals]
-    fig, ax = plt.subplots(figsize=(8.5, 4.6))
-    ax.bar(range(len(labels)), [0.0 if not math.isfinite(v) else v for v in numeric])
-    ax.axhline(0.0, linewidth=0.8)
-    ax.axhline(1.0, linewidth=0.8, alpha=0.35)
+    control_floor = max([v for v in numeric[2:] + [0.0] if math.isfinite(v)])
+    colors = ["#009E73", "#0072B2", "#8C8C8C", "#8C564B"]
+    fig, ax = plt.subplots(figsize=(9.0, 4.8))
+    bars = ax.bar(range(len(labels)), [0.0 if not math.isfinite(v) else v for v in numeric], color=colors, alpha=0.9)
+    ax.axhline(0.0, linewidth=0.8, color="black")
+    ax.axhline(control_floor, linewidth=1.2, linestyle=":", color="black", label="control floor")
+    ax.axhline(control_floor + MIN_PATCH_GAP_FOR_CAUSAL_CLAIM, linewidth=1.0, linestyle="--", color="black", label="causal-language threshold")
+    ax.axhline(1.0, linewidth=0.8, alpha=0.25, color="black")
     ax.set_xticks(range(len(labels)))
     ax.set_xticklabels(labels, rotation=20, ha="right")
     ax.set_ylabel("mean recovery (non-trivial depth band)")
     ax.set_title("Matched patching must beat controls before causal language earns its badge")
-    for i, v in enumerate(numeric):
+    for bar, v in zip(bars, numeric):
         if math.isfinite(v):
-            ax.text(i, v, f"{v:.2f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=8)
+            ax.text(bar.get_x() + bar.get_width() / 2, v, f"{v:.2f}", ha="center", va="bottom" if v >= 0 else "top", fontsize=8)
         else:
-            ax.text(i, 0.02, "n/a", ha="center", va="bottom", fontsize=8)
+            ax.text(bar.get_x() + bar.get_width() / 2, 0.02, "n/a", ha="center", va="bottom", fontsize=8)
+    ax.legend(frameon=False, fontsize=8)
     fig.tight_layout()
     bench.save_figure(ctx, fig, "patch_control_gaps.png",
                       "Matched subject/relation patch recovery compared with wrong-position and mismatched-vector controls.")
@@ -1758,15 +2405,26 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_json(metrics_path, metrics)
     ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 12 metrics and dynamic verdicts.")
 
-    # ----- plots ----------------------------------------------------------------
+    # ----- visual synthesis tables + plots --------------------------------------
+    viz_tables = write_visual_synthesis_tables(
+        ctx, items, families, margin_rows, probe_report, sel_rows, patch_rows,
+        transfer_rows, profile_rows, cos_rows, metrics, depth_by_role, n_depths, n_layers
+    )
     if not args.no_plots:
+        plot_relation_geometry_dashboard(ctx, metrics, sel_rows, transfer_rows,
+                                         viz_tables["relation_evidence_matrix"], families, depth_by_role, n_depths)
+        plot_controlled_probe_atlas(ctx, sel_rows, depth_by_role, n_depths)
+        plot_relation_evidence_matrix(ctx, viz_tables["relation_evidence_matrix"])
         plot_probe_by_layer(ctx, probe_report, n_depths, best_depth)
         plot_probe_selectivity(ctx, sel_rows, depth_by_role, n_depths)
         if patch_rows:
             plot_patch_heatmap(ctx, patch_rows, families, grid_roles, n_depths)
+            plot_role_handoff_summary(ctx, viz_tables["role_handoff_summary"], n_layers)
             plot_relation_swap_curves(ctx, patch_rows, n_depths)
+            plot_patch_specificity_by_family(ctx, viz_tables["patch_specificity_by_family"])
             plot_transfer_matrix(ctx, transfer_rows, families)
             plot_patch_control_gaps(ctx, metrics)
+            plot_profile_similarity_matrix(ctx, profile_rows, families, items)
         plot_cosines(ctx, cos_mats, families, depth_by_role)
 
     # ----- operationalization audit + method card -------------------------------
@@ -2040,26 +2698,28 @@ def write_run_summary(ctx: bench.RunContext, bundle: bench.ModelBundle,
         lines.append(f"- `{c['id']}` {c['tag']}: {c['text']}")
         lines.append(f"  - falsifier: {c['falsifier']}")
     patch_plots_line = (
-        "4. `plots/relation_patch_heatmap.png`, `plots/relation_swap_recovery.png`, "
-        "and `plots/patch_control_gaps.png`."
+        "6. `plots/localization_ridge_summary.png`, `plots/relation_patch_heatmap.png`, "
+        "`plots/relation_swap_recovery.png`, `plots/patch_specificity_by_family.png`, and `plots/patch_control_gaps.png`."
         if pa["n_subject_swap_pairs"] or pa["n_relation_swap_pairs"]
-        else "4. No patch plots are written if the behavioral patch-pair gate drops every pair; inspect `diagnostics/patch_pair_gate.csv` instead."
+        else "6. No patch plots are written if the behavioral patch-pair gate drops every pair; inspect `diagnostics/patch_pair_gate.csv` instead."
     )
     transfer_line = (
-        "5. `tables/relation_transfer_matrix.csv` and `plots/relation_transfer_matrix.png`."
+        "7. `tables/relation_transfer_matrix.csv`, `tables/relation_swap_pair_summary.csv`, "
+        "`plots/relation_transfer_matrix.png`, and `plots/relation_swap_pair_matrix.png`."
         if pa["n_subject_swap_pairs"] or pa["n_relation_swap_pairs"]
-        else "5. `tables/relation_transfer_matrix.csv`; the matching plot is skipped when there are no patch rows."
+        else "7. `tables/relation_transfer_matrix.csv`; the matching plots are skipped when there are no patch rows."
     )
     lines += [
         "",
         "## 6. The reading order",
         "",
         "1. `method_validation_card.md` — the pass/fail posture before the plot feast.",
-        "2. `diagnostics/tokenization_audit.csv`, `diagnostics/split_balance.csv`, and `diagnostics/patch_pair_gate.csv`.",
-        "3. `plots/relation_probe_by_layer.png` and `plots/relation_probe_selectivity.png`.",
+        "2. `plots/relation_geometry_dashboard.png` and `tables/relation_evidence_matrix.csv` — the compact evidence cockpit.",
+        "3. `diagnostics/tokenization_audit.csv`, `diagnostics/split_balance.csv`, and `diagnostics/patch_pair_gate.csv`.",
+        "4. `plots/controlled_probe_atlas.png`, `plots/relation_probe_by_layer.png`, and `plots/relation_probe_selectivity.png`.",
         patch_plots_line,
         transfer_line,
-        "6. `plots/relation_direction_cosines.png`, then `operationalization_audit.md` before naming anything shared geometry.",
+        "7. `plots/relation_evidence_matrix.png`, `plots/profile_similarity_matrix.png`, and `plots/relation_direction_cosines.png`, then `operationalization_audit.md` before naming anything shared geometry.",
         "",
         "## 7. Caveats students must carry forward",
         "",

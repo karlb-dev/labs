@@ -45,14 +45,26 @@ runs/lab12_relation_geometry-*/
     patch_report.csv
     relation_transfer_matrix.csv
     localization_profile_similarity.csv
+    relation_evidence_matrix.csv             # per-family evidence ledger
+    swap_group_summary.csv                   # swap-group DECODE/CAUSAL rollup
+    patch_specificity_by_family.csv          # matched-vs-control gaps by family
+    role_handoff_summary.csv                 # peak recovery role/depth handoff
+    geometry_block_summary.csv               # same-group vs cross-group cosine summary
+    plot_reading_guide.csv                   # what each plot protects
 
   plots/
+    relation_geometry_dashboard.png          # start here: gates, controls, transfer, geometry
+    controlled_probe_atlas.png               # role x depth x swap-group selectivity
+    relation_evidence_matrix.png             # family-level claim readiness
     relation_probe_by_layer.png
     relation_probe_selectivity.png
     relation_patch_heatmap.png
+    role_handoff_summary.png                 # subject→final recovery timing
     relation_swap_recovery.png
+    patch_specificity_by_family.png          # per-family matched/control gap
     relation_transfer_matrix.png
     patch_control_gaps.png
+    profile_similarity_matrix.png            # localization-profile correlations
     relation_direction_cosines.png
 
   state/
@@ -60,7 +72,7 @@ runs/lab12_relation_geometry-*/
     relation_directions_metadata.json
 ```
 
-The headline artifacts are `method_validation_card.md`, `plots/relation_probe_selectivity.png`, `plots/relation_swap_recovery.png`, `plots/patch_control_gaps.png`, `tables/relation_transfer_matrix.csv`, and `operationalization_audit.md`.
+The headline artifacts are now `method_validation_card.md`, `plots/relation_geometry_dashboard.png`, `plots/controlled_probe_atlas.png`, `plots/relation_evidence_matrix.png`, `plots/patch_specificity_by_family.png`, `tables/relation_evidence_matrix.csv`, and `operationalization_audit.md`. The older microscope plots remain, but the new audit-board plots are the first artifacts to read.
 
 ## The dataset is the experiment
 
@@ -234,15 +246,29 @@ A negative success is equally valuable:
 ## Artifact reading path
 
 1. Read `method_validation_card.md`. It tells you whether the lab earned positive language.
-2. Check `diagnostics/frozen_data_manifest.json`, `diagnostics/tokenization_audit.csv`, and `diagnostics/split_balance.csv`.
-3. Check `tables/margin_by_family.csv`. Do not patch a relation the model does not know.
-4. Read `plots/relation_probe_selectivity.png`, not just `relation_probe_by_layer.png`.
-5. Read `diagnostics/patch_pair_gate.csv`, then `plots/patch_control_gaps.png`.
-6. Read `tables/relation_transfer_matrix.csv` beside `plots/relation_transfer_matrix.png`.
-7. Read `plots/relation_direction_cosines.png`, then immediately read `operationalization_audit.md`.
-8. Only then edit `ledger_suggestions.md` into claims you would defend.
+2. Open `plots/relation_geometry_dashboard.png`. This is the new cockpit: controlled selectivity, matched-vs-control patching, transfer, and geometry all in one frame.
+3. Check `diagnostics/frozen_data_manifest.json`, `diagnostics/tokenization_audit.csv`, `diagnostics/split_balance.csv`, and `diagnostics/patch_pair_gate.csv`.
+4. Check `tables/margin_by_family.csv`. Do not patch a relation the model does not know.
+5. Read `plots/controlled_probe_atlas.png` and `plots/relation_probe_selectivity.png`, not just `relation_probe_by_layer.png`.
+6. Read `plots/relation_evidence_matrix.png` beside `tables/relation_evidence_matrix.csv`. This is the family-by-family rent ledger.
+7. Read `plots/patch_specificity_by_family.png`, `plots/patch_control_gaps.png`, and `plots/role_handoff_summary.png` before using causal language.
+8. Read `tables/relation_transfer_matrix.csv` beside `plots/relation_transfer_matrix.png`.
+9. Read `plots/profile_similarity_matrix.png` and `plots/relation_direction_cosines.png`, then immediately read `operationalization_audit.md`.
+10. Only then edit `ledger_suggestions.md` into claims you would defend.
 
 ## Plot guide
+
+### `relation_geometry_dashboard.png`
+
+This is the first plot to read. It asks four questions in one place: did controlled selectivity clear shuffled labels, did matched patching beat controls, where does transfer live, and are the geometry/profile summaries only handles?
+
+### `controlled_probe_atlas.png`
+
+A role-by-depth atlas of swap-group selectivity. It makes the depth-0 relation-word trap visible while highlighting subject/final depths that might be more than token echo.
+
+### `relation_evidence_matrix.png`
+
+Rows are relation families. Columns line up behavior margins, controlled selectivity, matched patch recovery, specificity gap, and cosine/profile handles. It is the “every family pays rent” plot.
 
 ### `relation_probe_by_layer.png`
 
@@ -250,19 +276,35 @@ The gray all-relation curve is allowed to be impressive and confounded at the sa
 
 ### `relation_probe_selectivity.png`
 
-This is the cleaner probe plot. It subtracts the shuffled control and shows which role/depth earned the saved relation direction. A flat line near zero means the controlled probe failed, even if raw accuracy looked high.
+This is the cleaner probe curve. It subtracts the shuffled control and shows which role/depth earned the saved relation direction. A flat line near zero means the controlled probe failed, even if raw accuracy looked high.
 
 ### `relation_patch_heatmap.png`
 
 Rows are relation families, columns are stream depths, and color is mean recovery. Depth 0 is a sanity row. A useful profile has non-trivial recovery in the interior depth band.
 
+### `role_handoff_summary.png`
+
+This is the timing plot: which role peaks early, which role peaks late, and whether recovery looks like subject information being carried toward the final readout.
+
 ### `relation_swap_recovery.png`
 
 This is the causal token-echo pressure test. Matched relation-token curves should beat the wrong-position control. If every curve tracks the control, the pretty story dissolves into steam.
 
+### `patch_specificity_by_family.png`
+
+A family-level causal firewall. It shows matched recovery, the stronger control floor, and the gap. Broad claims need multiple families clearing the gap, not one heroic bar.
+
 ### `patch_control_gaps.png`
 
 This is the overclaim alarm. Matched patch recovery has to beat both wrong-position and mismatched-vector recovery before the run earns causal relation-use language.
+
+### `relation_transfer_matrix.png`
+
+Diagonal cells are within-relation subject swaps; within-swap-group off-diagonals are relation swaps. Cross-group cells are empty by design when token-aligned pairs do not exist.
+
+### `profile_similarity_matrix.png`
+
+This asks whether subject-swap localization profiles cluster by relation group. Similarity here is an `OBS` handle, not proof of shared heads or shared MLPs.
 
 ### `relation_direction_cosines.png`
 
@@ -301,11 +343,11 @@ The audit is deliberately stricter than the plots. Believe the audit more than y
 |---|---|---|
 | Most items dropped at tokenization | tokenizer changed, targets are multi-token, relation/subject appears twice | `diagnostics/tokenization_audit.csv` |
 | Split has a family with no eval rows | too small a cap or aggressive relation filter | `diagnostics/split_balance.csv`; raise `--relation-set` |
-| High all-relation accuracy, flat swap-group selectivity | entity or template confound | `plots/relation_probe_selectivity.png` |
+| High all-relation accuracy, flat swap-group selectivity | entity or template confound | `plots/controlled_probe_atlas.png`, `plots/relation_probe_selectivity.png` |
 | Zero gated patch pairs | model does not know that relation under the margin gate | `tables/margin_by_family.csv`, `diagnostics/patch_pair_gate.csv` |
 | Patch no-op fails | stream convention or hook site broken for this model | `diagnostics/patch_noop_check.json` |
 | Relation-swap recovery high at depth 0 only | token substitution sanity check, not causal localization | `metrics.json` band convention |
-| Mismatched control rivals matched patch | margin destruction, not content restoration | `plots/patch_control_gaps.png` |
+| Mismatched control rivals matched patch | margin destruction, not content restoration | `plots/patch_specificity_by_family.png`, `plots/patch_control_gaps.png` |
 | Transfer matrix mostly empty | relation filter removed swap partners or no token-aligned pairs exist | `tables/relation_family_manifest.csv` |
 
 ## Claim ledger guidance

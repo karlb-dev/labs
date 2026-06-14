@@ -3950,6 +3950,48 @@ AUDIT_STATUS_COLORS = {
     "retire": "#E45756",
 }
 
+# Lab 12 relation geometry visual grammar.
+RELATION_GROUP_COLORS = {
+    "country_sem": "#0072B2",
+    "adj_morph": "#E69F00",
+    "month_seq": "#009E73",
+    "none": "#8C8C8C",
+    "other": "#7E57C2",
+}
+
+RELATION_FAMILY_COLORS = {
+    "capital_of": "#0072B2",
+    "language_of": "#56B4E9",
+    "continent_of": "#004C6D",
+    "opposite_of": "#D55E00",
+    "comparative_of": "#E69F00",
+    "month_after": "#009E73",
+    "month_before": "#44AA99",
+    "color_of": "#CC79A7",
+    "material_of": "#7E57C2",
+    "currency_of": "#8C564B",
+    "home_of": "#999933",
+    "plural_of": "#666666",
+}
+
+RELATION_ROLE_COLORS = {
+    "relword": "#7E57C2",
+    "relation": "#7E57C2",
+    "subject": "#D55E00",
+    "final": "#0072B2",
+    "last": "#0072B2",
+}
+
+RELATION_CONTROL_COLORS = {
+    "matched": "#009E73",
+    "subject_matched": "#009E73",
+    "relation_matched": "#0072B2",
+    "wrong_position": "#8C8C8C",
+    "mismatched_vector": "#8C564B",
+    "shuffled": "#222222",
+    "random": "#8C8C8C",
+}
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
@@ -4164,6 +4206,30 @@ def plot_audit_status_color(status: str, default: str = "#8C8C8C") -> str:
     """Shared color lookup for Lab 11 audit/control statuses."""
     key = str(status)
     return AUDIT_STATUS_COLORS.get(key, CONTROL_COLORS.get(key, default))
+
+
+def plot_relation_group_color(group: str, default: str = "#7E57C2") -> str:
+    """Shared color lookup for Lab 12 relation swap groups."""
+    key = str(group)
+    return RELATION_GROUP_COLORS.get(key, CATEGORY_COLORS.get(key, default))
+
+
+def plot_relation_family_color(family: str, default: str = "#7E57C2") -> str:
+    """Shared color lookup for Lab 12 relation families."""
+    key = str(family)
+    return RELATION_FAMILY_COLORS.get(key, plot_relation_group_color(key, default))
+
+
+def plot_relation_role_color(role: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 12 token roles."""
+    key = str(role)
+    return RELATION_ROLE_COLORS.get(key, CATEGORY_COLORS.get(key, default))
+
+
+def plot_relation_control_color(control: str, default: str = "#8C8C8C") -> str:
+    """Shared color lookup for Lab 12 patch/probe controls."""
+    key = str(control)
+    return RELATION_CONTROL_COLORS.get(key, CONTROL_COLORS.get(key, default))
 
 
 def lighten_color(color: str, amount: float = 0.55) -> str:
