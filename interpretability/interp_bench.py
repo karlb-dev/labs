@@ -4394,6 +4394,70 @@ def plot_modeldiff_marker(condition: str, default: str = "o") -> str:
     return MODELDIFF_MARKERS.get(key, HUMOR_MARKERS.get(key, PERSONA_MARKERS.get(key, STEERING_MARKERS.get(key, CATEGORY_MARKERS.get(key, default)))))
 
 
+# Lab 20 benign model-organism construction visual grammar.
+MODELORG_COLORS = {
+    "construction": "#0072B2",
+    "blind_package": "#56B4E9",
+    "private": "#9467BD",
+    "public": "#009E73",
+    "leak": "#D55E00",
+    "safety": "#009E73",
+    "baseline": "#E69F00",
+    "spillover": "#CC79A7",
+    "adapter": "#8C8C8C",
+    "target": "#0072B2",
+    "control": "#D55E00",
+    "target_prompt": "#0072B2",
+    "control_prompt": "#D55E00",
+    "spillover_issue": "#CC79A7",
+    "adapter_present": "#009E73",
+    "adapter_missing": "#8C8C8C",
+    "pass": "#009E73",
+    "pending": "#8C8C8C",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "unknown": "#8C8C8C",
+}
+
+MODELORG_MARKERS = {
+    "construction": "o",
+    "blind_package": "s",
+    "public": "s",
+    "private": "D",
+    "target": "o",
+    "control": "s",
+    "spillover": "^",
+    "adapter_present": "P",
+    "adapter_missing": "x",
+    "pass": "o",
+    "pending": "D",
+    "warning": "^",
+    "fail": "X",
+}
+
+
+def plot_modelorg_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 20 benign-organism construction plots."""
+    key = str(condition)
+    return MODELORG_COLORS.get(key, MODELDIFF_COLORS.get(key, HUMOR_COLORS.get(key, PERSONA_COLORS.get(key, STEERING_COLORS.get(key, CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)))))))
+
+
+def plot_modelorg_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 20 benign-organism construction plots."""
+    key = str(condition)
+    return MODELORG_MARKERS.get(key, MODELDIFF_MARKERS.get(key, HUMOR_MARKERS.get(key, PERSONA_MARKERS.get(key, STEERING_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))))))
+
+
+def plot_modelorganism_color(condition: str, default: str = "#555555") -> str:
+    """Alias with the longer Lab 20 name for downstream notebooks."""
+    return plot_modelorg_color(condition, default=default)
+
+
+def plot_modelorganism_marker(condition: str, default: str = "o") -> str:
+    """Alias with the longer Lab 20 name for downstream notebooks."""
+    return plot_modelorg_marker(condition, default=default)
+
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl

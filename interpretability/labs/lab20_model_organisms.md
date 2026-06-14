@@ -166,8 +166,24 @@ runs/lab20_model_organisms-.../
     adapter_norm_summary.csv
     organism_corpus_composition.csv
     sealed_vs_unsealed_fields.csv
+    construction_evidence_matrix.csv
+    organism_readiness_scorecard.csv
+    blind_handoff_matrix.csv
+    field_firewall_matrix.csv
+    baseline_behavior_matrix.csv
+    spillover_family_matrix.csv
+    corpus_design_matrix.csv
+    plot_reading_guide.csv
 
   plots/
+    construction_evidence_dashboard.png
+    baseline_behavior_atlas.png
+    ground_truth_operating_window.png
+    spillover_risk_matrix.png
+    blind_package_firewall.png
+    qualification_readiness_matrix.png
+    corpus_composition_atlas.png
+    adapter_handoff_scorecard.png
     organism_construction_dashboard.png
     organism_trigger_rates.png
 
@@ -267,15 +283,36 @@ You can pass a custom JSON file through `--prompt-set path/to/custom_organisms.j
 
 Custom organisms still pass through the same safety screen and leak scan. If your organism’s secret appears in a public path or manifest, the run should fail.
 
-## Plot guide
+## Visualization upgrade and plot guide
 
-`plots/organism_construction_dashboard.png` has three panels:
+Lab 20 now treats the construction run as an audit board rather than a single marker-rate chart. Start with `plots/construction_evidence_dashboard.png`: it shows the construction gates, baseline marker rarity, spillover screen, and adapter handoff status in one place. The allowed claim is still narrow: this run earns `CONSTRUCTION` for the sealed answer-key apparatus and `OBS` for the base-model audit. It does not earn a trained-behavior, hidden-goal, or mechanism claim.
 
-1. Base-model target and control marker rates before training. High values mean your marker may not be organism-specific.
-2. Target-minus-control baseline gap. A large gap before training can mean the prompt itself elicits the marker.
-3. Baseline spillover issue rate. This should be low before training and after training.
+New plot path:
 
-`plots/organism_trigger_rates.png` is the backward-compatible compact target/control plot from the draft.
+1. `plots/construction_evidence_dashboard.png` is the start-here cockpit for public/private package integrity, leak/safety status, baseline behavior, spillover, and adapter readiness.
+2. `plots/baseline_behavior_atlas.png` shows private prompt-family marker rates before training. Filled target/control structure makes brittle prompt effects easier to spot.
+3. `plots/ground_truth_operating_window.png` puts each organism on a target-vs-control risk map. Before training, the desired corner is low target and low control; after training, the desired post-training result is high target and low control.
+4. `plots/spillover_risk_matrix.png` shows sycophancy, certainty, refusal, sentiment, general-capability, and constraint-following spillover families by organism. Spillover is part of the answer key, not a nuisance column.
+5. `plots/blind_package_firewall.png` shows which fields are public versus private and whether any organism has public leaks or safety-screen blocks. A sealed filename is not a seal.
+6. `plots/qualification_readiness_matrix.png` gives each organism a row of gates: leak-free, safety-ok, baseline target rare, controls quiet, spillover quiet, adapter present, public adapter copied, and ready for blind audit.
+7. `plots/corpus_composition_atlas.png` shows training and held-out eval balance, so a weak organism can be diagnosed before spending GPU time.
+8. `plots/adapter_handoff_scorecard.png` shows the generated LoRA recipe, adapter-file presence, public adapter copy status, and adapter norm when present.
+9. `plots/organism_construction_dashboard.png` and `plots/organism_trigger_rates.png` remain as backward-compatible compact views.
+
+The upgraded run also writes:
+
+```text
+tables/construction_evidence_matrix.csv
+tables/organism_readiness_scorecard.csv
+tables/blind_handoff_matrix.csv
+tables/field_firewall_matrix.csv
+tables/baseline_behavior_matrix.csv
+tables/spillover_family_matrix.csv
+tables/corpus_design_matrix.csv
+tables/plot_reading_guide.csv
+```
+
+Read these tables before drafting a Lab 23 handoff. The handoff is valid only if the public package is leak-free, the safety screen passed, the baseline organism is not already common in the base model, and the adapter files are present in the public package after training.
 
 ## Common result patterns
 
