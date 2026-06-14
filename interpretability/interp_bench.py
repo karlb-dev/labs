@@ -426,6 +426,12 @@ BLOCKS_PATH_CANDIDATES = (
     "gpt_neox.layers",         # GPT-NeoX / Pythia style
     "model.decoder.layers",    # OPT style
     "transformer.blocks",      # MPT style
+    # Vision-language wrappers (e.g. Gemma 3 4B/12B/27B, Llava) keep a plain
+    # text decoder inside a `language_model` submodule. The labs only use the
+    # text stream, so we descend into it; image inputs are never supplied.
+    "model.language_model.layers",   # Gemma 3 VLM (Gemma3ForConditionalGeneration)
+    "language_model.model.layers",   # Llava-style nesting
+    "language_model.layers",         # flatter VLM nesting
 )
 FINAL_NORM_PATH_CANDIDATES = (
     "model.norm",                    # Llama / Olmo / Gemma / Qwen / Mistral
@@ -433,6 +439,9 @@ FINAL_NORM_PATH_CANDIDATES = (
     "gpt_neox.final_layer_norm",     # GPT-NeoX / Pythia
     "model.decoder.final_layer_norm",  # OPT
     "transformer.norm_f",            # MPT
+    "model.language_model.norm",     # Gemma 3 VLM
+    "language_model.model.norm",     # Llava-style nesting
+    "language_model.norm",           # flatter VLM nesting
 )
 
 
