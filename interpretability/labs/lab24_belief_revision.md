@@ -170,8 +170,17 @@ results.csv
    revision_self_report_labeling_guide.md       # hand-label guide for self-reports
    cheap_control_summary.csv                    # neutral, length, and control summaries
    training_method_comparison.csv               # Pythia checkpoint comparison scaffold
+   context_operating_points.csv                 # dose-level context override summary
+   patch_specificity_summary.csv                # same-item vs mismatched-control patch summary
+   pressure_transition_matrix.csv               # condition-by-turn behavior and local signal
+   revision_quadrant_condition_summary.csv      # quadrant counts and rates by condition
+   projection_delta_summary.csv                 # final-minus-baseline projection deltas
+   self_report_behavior_summary.csv             # self-report markers joined to behavior
+   belief_revision_evidence_matrix.csv          # rung-separated evidence matrix
+   plot_reading_guide.csv                       # what each plot teaches
 
  plots/
+   belief_revision_evidence_dashboard.png
    context_dose_response.png
    override_depth_traces.png
    override_patching_map.png
@@ -180,7 +189,68 @@ results.csv
    revision_quadrant_matrix.png
    instrument_projection_traces.png
    revision_self_reports.png
+   context_override_atlas.png
+   suppressed_answer_map.png
+   patch_specificity_ladder.png
+   pressure_condition_atlas.png
+   signal_behavior_disagreement.png
+   self_report_behavior_matrix.png
+   belief_revision_evidence_matrix.png
 ```
+
+
+
+## Visualization upgrade in this version
+
+The upgraded plot suite treats Lab 24 as an **evidence firewall**, not a mind-reading scoreboard. The headline artifact is:
+
+```text
+plots/belief_revision_evidence_dashboard.png
+```
+
+Read it first after `belief_revision_card.md`. It places four rails side by side: single-turn contextual override, multi-turn pressure behavior, output/signal quadrants, and patch specificity. The dashboard is deliberately designed to keep the tempting phrase “changed its mind” behind glass until the bridge audit and controls earn it.
+
+New synthesis tables:
+
+```text
+tables/context_operating_points.csv          # dose-level context override rates and suppressed-answer summary
+tables/patch_specificity_summary.csv         # same-item vs mismatched-control recovery by intervention/depth
+tables/pressure_transition_matrix.csv        # condition × turn behavior and local answer-signal summary
+tables/revision_quadrant_condition_summary.csv # quadrant counts/rates by condition
+tables/projection_delta_summary.csv          # final-minus-baseline deltas for compatible prior-lab directions
+tables/self_report_behavior_summary.csv      # self-report marker rates joined to final behavior
+tables/belief_revision_evidence_matrix.csv   # rung-separated evidence board
+tables/plot_reading_guide.csv                # what each plot is meant to teach
+```
+
+New plots:
+
+```text
+plots/belief_revision_evidence_dashboard.png
+plots/context_override_atlas.png
+plots/suppressed_answer_map.png
+plots/patch_specificity_ladder.png
+plots/pressure_condition_atlas.png
+plots/signal_behavior_disagreement.png
+plots/self_report_behavior_matrix.png
+plots/belief_revision_evidence_matrix.png
+```
+
+The original plot names are still produced. The upgraded packet adds item-level atlases, matrix summaries, and specificity ledgers so a dramatic quadrant cannot outrun its controls.
+
+### Upgraded reading path
+
+1. `belief_revision_card.md`
+2. `plots/belief_revision_evidence_dashboard.png`
+3. `operationalization_audit.md`
+4. `tables/belief_revision_evidence_matrix.csv`
+5. `diagnostics/instrument_dependency_audit.csv`
+6. If single-turn mode ran: `tables/context_operating_points.csv`, `plots/context_override_atlas.png`, and `plots/suppressed_answer_map.png`
+7. If multi-turn mode ran: `tables/pressure_transition_matrix.csv`, `tables/revision_quadrant_condition_summary.csv`, and `plots/pressure_condition_atlas.png`
+8. `tables/patch_specificity_summary.csv` and `plots/patch_specificity_ladder.png`
+9. `tables/revision_self_reports.csv` plus manual labels before citing self-report
+
+The first plot asks “what moved?” The evidence matrix asks “what rung did it earn?” The operationalization audit asks “what cheap explanation still survives?” The lab claim should not outrun the weakest of those three.
 
 ## Reading path
 
@@ -196,7 +266,13 @@ results.csv
 
 ## How to read the plots
 
+`belief_revision_evidence_dashboard.png` is the start-here plot: it combines context override, pressure outcomes, quadrant counts, and patch specificity without granting belief language.
+
 `context_dose_response.png` shows false-minus-correct logit movement, generated answer outcomes, and suppressed-correct-answer presence. A context win with correct answer still top-20 means suppression, not erasure.
+
+`context_override_atlas.png` shows the context-dose effect item by item, because one stubborn fact or one copy-happy fact can bend an aggregate curve.
+
+`suppressed_answer_map.png` separates strong-context false-answer wins from cases where the correct answer remains high-ranked under the final readout.
 
 `override_depth_traces.png` shows where the raw readout flips over depth. Treat it as a readout trajectory, not a claim that the model “believes” something at that depth.
 
@@ -211,6 +287,16 @@ results.csv
 `instrument_projection_traces.png` is only as strong as the loaded direction artifacts. If a direction is missing or depth-incompatible, the absence is a result.
 
 `revision_self_reports.png` summarizes auto markers in self-reports. The model’s self-report is a measurement target, not a referee.
+
+`pressure_condition_atlas.png` makes false authority, common misconception, real evidence, neutral re-ask, and forced-concise controls comparable over the same turn axis.
+
+`signal_behavior_disagreement.png` is the row-level output-vs-signal scatter. It is where candidate capitulation and candidate revision cases first become inspectable.
+
+`patch_specificity_ladder.png` joins the single-turn and multi-turn patch controls. The matched patch must beat the mismatched patch before the causal handle gets a badge.
+
+`self_report_behavior_matrix.png` compares self-report markers with actual pressure outcomes. It is a triage plot for hand labels, not a truth oracle.
+
+`belief_revision_evidence_matrix.png` is the plot version of the run-level claim firewall: every row says what rung it earned and what claim it still forbids.
 
 ## Custom data schema
 

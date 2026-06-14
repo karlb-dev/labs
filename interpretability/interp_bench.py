@@ -4614,6 +4614,93 @@ def plot_blindaudit_marker(key: str, default: str = "o") -> str:
     return BLINDAUDIT_MARKERS.get(str(key), default)
 
 
+BELIEF_REVISION_COLORS = {
+    "context": "#D55E00",
+    "parametric": "#009E73",
+    "pressure": "#D55E00",
+    "evidence": "#009E73",
+    "no_context": "#4D4D4D",
+    "weak_fictional": "#9ECAE1",
+    "document_statement": "#4292C6",
+    "repeated_document": "#2171B5",
+    "delayed_document": "#084594",
+    "correct": "#009E73",
+    "false_pressure_answer": "#D55E00",
+    "neutral_reask": "#999999",
+    "pushback_no_evidence": "#E69F00",
+    "false_authority": "#D55E00",
+    "real_evidence": "#009E73",
+    "common_misconception": "#CC79A7",
+    "forced_concise": "#56B4E9",
+    "strong_context_same_item": "#0072B2",
+    "self_pre_pressure_baseline": "#0072B2",
+    "mismatched_context_control": "#999999",
+    "mismatched_baseline_control": "#999999",
+    "answer_and_signal_flip": "#D55E00",
+    "answer_flips_signal_holds": "#E69F00",
+    "signal_flips_answer_holds": "#56B4E9",
+    "neither": "#009E73",
+    "baseline_not_correct_not_interpretable": "#777777",
+    "control_not_quadrant": "#BBBBBB",
+    "OBS": "#4D4D4D",
+    "DECODE": "#0072B2",
+    "SELF-REPORT": "#CC79A7",
+    "CAUSAL": "#009E73",
+    "AUDIT": "#6F4E7C",
+    "pass": "#009E73",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+}
+
+BELIEF_REVISION_MARKERS = {
+    "no_context": "o",
+    "weak_fictional": "s",
+    "document_statement": "^",
+    "repeated_document": "D",
+    "delayed_document": "P",
+    "neutral_reask": "o",
+    "pushback_no_evidence": "s",
+    "false_authority": "^",
+    "real_evidence": "D",
+    "common_misconception": "P",
+    "forced_concise": "X",
+    "answer_and_signal_flip": "o",
+    "answer_flips_signal_holds": "s",
+    "signal_flips_answer_holds": "^",
+    "neither": "D",
+}
+
+
+def plot_belief_revision_color(key: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 24 belief-revision plots."""
+    return BELIEF_REVISION_COLORS.get(str(key), default)
+
+
+def plot_belief_revision_marker(key: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 24 belief-revision plots."""
+    return BELIEF_REVISION_MARKERS.get(str(key), default)
+
+
+def plot_beliefrevision_color(key: str, default: str = "#555555") -> str:
+    """Alias without the underscore used by some Lab 24 drafts."""
+    return plot_belief_revision_color(key, default)
+
+
+def plot_beliefrevision_marker(key: str, default: str = "o") -> str:
+    """Alias without the underscore used by some Lab 24 drafts."""
+    return plot_belief_revision_marker(key, default)
+
+
+def plot_belief_color(key: str, default: str = "#555555") -> str:
+    """Short alias used by Lab 24 local plotting fallbacks."""
+    return plot_belief_revision_color(key, default)
+
+
+def plot_belief_marker(key: str, default: str = "o") -> str:
+    """Short alias used by Lab 24 local plotting fallbacks."""
+    return plot_belief_revision_marker(key, default)
+
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl

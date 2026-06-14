@@ -300,6 +300,10 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def stable_hash_int(text: str) -> int:
+    return int(hashlib.sha256(str(text).encode("utf-8")).hexdigest()[:12], 16)
+
+
 def sha256_file(path: pathlib.Path) -> str | None:
     if not path.exists():
         return None
@@ -1946,9 +1950,400 @@ def training_method_comparison_rows() -> list[dict[str, Any]]:
     return rows
 
 
+
 # ---------------------------------------------------------------------------
-# Plots
+# Visual synthesis tables and plots
 # ---------------------------------------------------------------------------
+
+
+def _lab24_float(value: Any, default: float | None = None) -> float | None:
+    try:
+        f = float(value)
+    except Exception:
+        return default
+    return f if math.isfinite(f) else default
+
+
+def _lab24_mean(values: Sequence[Any], default: float = 0.0) -> float:
+    vals = [_lab24_float(v, None) for v in values]
+    vals = [v for v in vals if v is not None]
+    return float(statistics.fmean(vals)) if vals else default
+
+
+def _lab24_median(values: Sequence[Any], default: float = 0.0) -> float:
+    vals = [_lab24_float(v, None) for v in values]
+    vals = [v for v in vals if v is not None]
+    return float(statistics.median(vals)) if vals else default
+
+
+def _lab24_quantile(values: Sequence[Any], q: float, default: float = 0.0) -> float:
+    vals = sorted(v for v in (_lab24_float(x, None) for x in values) if v is not None)
+    if not vals:
+        return default
+    if len(vals) == 1:
+        return float(vals[0])
+    pos = (len(vals) - 1) * max(0.0, min(1.0, q))
+    lo = int(math.floor(pos))
+    hi = int(math.ceil(pos))
+    if lo == hi:
+        return float(vals[lo])
+    frac = pos - lo
+    return float(vals[lo] * (1 - frac) + vals[hi] * frac)
+
+
+def _lab24_ordered_doses(rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    known = [d[0] for d in CONTEXT_DOSES]
+    seen = {str(r.get("dose", "")) for r in rows if str(r.get("dose", ""))}
+    return [d for d in known if d in seen] + sorted(seen - set(known))
+
+
+def _lab24_ordered_conditions(rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    seen = {str(r.get("condition", "")) for r in rows if str(r.get("condition", ""))}
+    return [c for c in PRESSURE_CONDITIONS if c in seen] + sorted(seen - set(PRESSURE_CONDITIONS))
+
+
+def _lab24_condition_color(condition: str) -> str:
+    fn = getattr(bench, "plot_belief_color", None)
+    if callable(fn):
+        return fn(condition)
+    palette = {
+        "neutral_reask": "#6b7280",
+        "pushback_no_evidence": "#ef4444",
+        "false_authority": "#b45309",
+        "real_evidence": "#059669",
+        "common_misconception": "#8b5cf6",
+        "forced_concise": "#2563eb",
+        "matched": "#2563eb",
+        "control": "#9ca3af",
+        "answer_and_signal_flip": "#d97706",
+        "answer_flips_signal_holds": "#dc2626",
+        "signal_flips_answer_holds": "#7c3aed",
+        "neither": "#059669",
+        "baseline_not_correct_not_interpretable": "#64748b",
+    }
+    return palette.get(str(condition), "#374151")
+
+
+def _lab24_marker(condition: str) -> str:
+    fn = getattr(bench, "plot_belief_marker", None)
+    if callable(fn):
+        return fn(condition)
+    return {
+        "neutral_reask": "o",
+        "pushback_no_evidence": "s",
+        "false_authority": "^",
+        "real_evidence": "D",
+        "common_misconception": "P",
+        "forced_concise": "X",
+    }.get(str(condition), "o")
+
+
+def _lab24_source_label(source: str) -> str:
+    return str(source).replace("strong_context_same_item", "same-item context").replace("mismatched_context_control", "mismatched context").replace("self_pre_pressure_baseline", "same-item pre-pressure").replace("mismatched_baseline_control", "mismatched baseline")
+
+
+def make_context_operating_points(single_rows: Sequence[Mapping[str, Any]], suppressed_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    if not single_rows:
+        return []
+    suppressed_by_item = {str(r.get("item_id")): r for r in suppressed_rows}
+    rows: list[dict[str, Any]] = []
+    for dose in _lab24_ordered_doses(single_rows):
+        sub = [r for r in single_rows if str(r.get("dose")) == dose]
+        if not sub:
+            continue
+        correct_rank_vals = [_lab24_float(r.get("correct_rank"), None) for r in sub]
+        correct_rank_vals = [v for v in correct_rank_vals if v is not None]
+        rows.append({
+            "dose": dose,
+            "context_strength": rounded(_lab24_mean([r.get("context_strength", "") for r in sub])),
+            "n_items": len(sub),
+            "mean_false_minus_correct_logit": rounded(_lab24_mean([r.get("false_minus_correct_logit", "") for r in sub])),
+            "median_false_minus_correct_logit": rounded(_lab24_median([r.get("false_minus_correct_logit", "") for r in sub])),
+            "false_answer_win_rate": rounded(_lab24_mean([1.0 if r.get("winner") == "false_pressure_answer" else 0.0 for r in sub])),
+            "correct_answer_win_rate": rounded(_lab24_mean([1.0 if r.get("winner") == "correct" else 0.0 for r in sub])),
+            "correct_rank_median": rounded(statistics.median(correct_rank_vals) if correct_rank_vals else float("nan")),
+            "correct_top10_rate": rounded(_lab24_mean([1.0 if (_lab24_float(r.get("correct_rank"), 9999) or 9999) <= 10 else 0.0 for r in sub])),
+            "correct_top20_rate": rounded(_lab24_mean([1.0 if (_lab24_float(r.get("correct_rank"), 9999) or 9999) <= 20 else 0.0 for r in sub])),
+            "generated_false_answer_rate": rounded(_lab24_mean([r.get("generated_false_answer", "") for r in sub if r.get("generated_false_answer", "") != ""])),
+            "suppressed_not_erased_candidate_rate_if_strong": rounded(_lab24_mean([suppressed_by_item.get(str(r.get("item_id")), {}).get("suppressed_not_erased_candidate", 0) for r in sub])) if dose == "delayed_document" else "",
+            "claim_boundary": "context following / answer competition, not belief revision",
+        })
+    return rows
+
+
+def make_patch_specificity_summary(patch_rows: Sequence[Mapping[str, Any]], state_patch_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    specs = [
+        ("single_turn_context_override", patch_rows, "recovery_toward_context", "strong_context_same_item", "mismatched_context_control"),
+        ("multi_turn_pre_pressure_state", state_patch_rows, "recovery_toward_pre_pressure_state", "self_pre_pressure_baseline", "mismatched_baseline_control"),
+    ]
+    for intervention, rows, metric, matched_name, control_name in specs:
+        ok = [r for r in rows if r.get("status") == "ok"]
+        if not ok:
+            out.append({
+                "intervention": intervention,
+                "stream_depth": "all",
+                "n_matched": 0,
+                "n_control": 0,
+                "matched_recovery_mean": "",
+                "control_recovery_mean": "",
+                "specificity_gap": "",
+                "status": "not_run_or_no_successful_patch_rows",
+                "claim_boundary": "no causal-patch specificity claim",
+            })
+            continue
+        depths = sorted({int(r.get("stream_depth", 0)) for r in ok if str(r.get("stream_depth", "")).strip() != ""})
+        for depth in depths:
+            matched = [r for r in ok if int(r.get("stream_depth", -1)) == depth and r.get("patch_source") == matched_name]
+            control = [r for r in ok if int(r.get("stream_depth", -1)) == depth and r.get("patch_source") == control_name]
+            m = _lab24_mean([r.get(metric, "") for r in matched]) if matched else float("nan")
+            c = _lab24_mean([r.get(metric, "") for r in control]) if control else float("nan")
+            gap = m - c if math.isfinite(m) and math.isfinite(c) else float("nan")
+            out.append({
+                "intervention": intervention,
+                "stream_depth": depth,
+                "n_matched": len(matched),
+                "n_control": len(control),
+                "matched_recovery_mean": rounded(m),
+                "control_recovery_mean": rounded(c),
+                "specificity_gap": rounded(gap),
+                "status": "specificity_visible" if math.isfinite(gap) and gap > 0.10 else "weak_or_unresolved_specificity",
+                "claim_boundary": "state-restoration handle only; not component mechanism",
+            })
+    return out
+
+
+def make_pressure_transition_matrix(trace_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    if not trace_rows:
+        return []
+    out: list[dict[str, Any]] = []
+    for condition in _lab24_ordered_conditions(trace_rows):
+        for turn in sorted({int(r.get("turn_index", 0)) for r in trace_rows if r.get("condition") == condition}):
+            sub = [r for r in trace_rows if r.get("condition") == condition and int(r.get("turn_index", -1)) == turn]
+            if not sub:
+                continue
+            out.append({
+                "condition": condition,
+                "turn_index": turn,
+                "turn_label": sub[0].get("turn_label", ""),
+                "false_pressure_condition": int(bool(condition_spec(condition).get("false_pressure", False))),
+                "n": len(sub),
+                "false_answer_endorsement_rate": rounded(_lab24_mean([r.get("false_answer_endorsed", 0) for r in sub])),
+                "correct_answer_rate": rounded(_lab24_mean([r.get("answer_held_correct", 0) for r in sub])),
+                "mixed_answer_rate": rounded(_lab24_mean([r.get("mixed_answer", 0) for r in sub])),
+                "hedge_marker_rate": rounded(_lab24_mean([r.get("hedge_marker_hit", 0) for r in sub])),
+                "mean_false_minus_correct_logit": rounded(_lab24_mean([r.get("false_minus_correct_logit", "") for r in sub])),
+                "median_false_minus_correct_logit": rounded(_lab24_median([r.get("false_minus_correct_logit", "") for r in sub])),
+                "mean_rendered_n_tokens": rounded(_lab24_mean([r.get("rendered_n_tokens", "") for r in sub])),
+            })
+    return out
+
+
+def make_quadrant_condition_summary(quadrant_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    if not quadrant_rows:
+        return []
+    labels = ["answer_and_signal_flip", "answer_flips_signal_holds", "signal_flips_answer_holds", "neither", "baseline_not_correct_not_interpretable", "control_not_quadrant"]
+    out: list[dict[str, Any]] = []
+    for condition in _lab24_ordered_conditions(quadrant_rows):
+        sub = [r for r in quadrant_rows if r.get("condition") == condition]
+        if not sub:
+            continue
+        counts = Counter(str(r.get("quadrant")) for r in sub)
+        row = {
+            "condition": condition,
+            "false_pressure_condition": int(bool(condition_spec(condition).get("false_pressure", False))),
+            "n_dialogues": len(sub),
+        }
+        for label in labels:
+            row[label] = counts.get(label, 0)
+            row[label + "_rate"] = rounded(counts.get(label, 0) / max(1, len(sub)))
+        row["dominant_quadrant"] = max(labels, key=lambda label: counts.get(label, 0))
+        out.append(row)
+    return out
+
+
+def make_projection_delta_summary(projection_summary_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    if not projection_summary_rows:
+        return []
+    grouped: dict[tuple[str, str], dict[int, Mapping[str, Any]]] = defaultdict(dict)
+    for row in projection_summary_rows:
+        grouped[(str(row.get("instrument")), str(row.get("condition")))][int(row.get("turn_index", 0))] = row
+    out: list[dict[str, Any]] = []
+    for (instrument, condition), by_turn in sorted(grouped.items()):
+        turns = sorted(by_turn)
+        if not turns:
+            continue
+        first = _lab24_float(by_turn[turns[0]].get("mean_projection"), 0.0) or 0.0
+        last = _lab24_float(by_turn[turns[-1]].get("mean_projection"), 0.0) or 0.0
+        out.append({
+            "instrument": instrument,
+            "condition": condition,
+            "first_turn": turns[0],
+            "last_turn": turns[-1],
+            "first_mean_projection": rounded(first),
+            "last_mean_projection": rounded(last),
+            "projection_delta_last_minus_first": rounded(last - first),
+            "false_pressure_condition": int(bool(condition_spec(condition).get("false_pressure", False))),
+            "claim_boundary": "direction projection monitor only; inherits original instrument caveats",
+        })
+    return out
+
+
+def make_self_report_behavior_summary(trace_rows: Sequence[Mapping[str, Any]], self_report_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    if not self_report_rows:
+        return []
+    final_by_dialogue = {str(r.get("dialogue_id")): r for r in trace_rows if int(r.get("turn_index", -1)) == 2}
+    out: list[dict[str, Any]] = []
+    for condition in _lab24_ordered_conditions(self_report_rows):
+        sub = [r for r in self_report_rows if r.get("condition") == condition]
+        if not sub:
+            continue
+        finals = [final_by_dialogue.get(str(r.get("dialogue_id")), {}) for r in sub]
+        out.append({
+            "condition": condition,
+            "false_pressure_condition": int(bool(condition_spec(condition).get("false_pressure", False))),
+            "n_self_reports": len(sub),
+            "final_false_answer_rate_for_reported_dialogues": rounded(_lab24_mean([r.get("false_answer_endorsed", 0) for r in finals])),
+            "self_report_claims_changed_rate": rounded(_lab24_mean([r.get("self_report_claims_changed", 0) for r in sub])),
+            "self_report_claims_unchanged_rate": rounded(_lab24_mean([r.get("self_report_claims_unchanged", 0) for r in sub])),
+            "self_report_mentions_pressure_rate": rounded(_lab24_mean([r.get("self_report_mentions_pressure", 0) for r in sub])),
+            "self_report_mentions_evidence_rate": rounded(_lab24_mean([r.get("self_report_mentions_evidence", 0) for r in sub])),
+            "manual_label_needed": 1,
+            "claim_boundary": "SELF-REPORT only; auto markers are triage",
+        })
+    return out
+
+
+def make_belief_revision_evidence_matrix(
+    metrics: Mapping[str, Any],
+    context_points: Sequence[Mapping[str, Any]],
+    patch_summary: Sequence[Mapping[str, Any]],
+    pressure_summary: Sequence[Mapping[str, Any]],
+    quadrant_summary: Sequence[Mapping[str, Any]],
+    projection_delta_rows: Sequence[Mapping[str, Any]],
+    self_report_summary: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    strong = next((r for r in context_points if r.get("dose") == "delayed_document"), {})
+    best_override_gap = max([_lab24_float(r.get("specificity_gap"), float("nan")) or float("nan") for r in patch_summary if r.get("intervention") == "single_turn_context_override"] or [float("nan")])
+    best_state_gap = max([_lab24_float(r.get("specificity_gap"), float("nan")) or float("nan") for r in patch_summary if r.get("intervention") == "multi_turn_pre_pressure_state"] or [float("nan")])
+    final_pressure_rows = [r for r in pressure_summary if int(r.get("turn_index", -1)) == 2 and r.get("false_pressure_condition") == 1]
+    false_final_rate = _lab24_mean([r.get("false_answer_endorsement_rate", "") for r in final_pressure_rows]) if final_pressure_rows else float("nan")
+    control_final_rows = [r for r in pressure_summary if int(r.get("turn_index", -1)) == 2 and r.get("false_pressure_condition") == 0]
+    control_false_rate = _lab24_mean([r.get("false_answer_endorsement_rate", "") for r in control_final_rows]) if control_final_rows else float("nan")
+    q_counts = Counter()
+    for row in quadrant_summary:
+        q_counts["answer_flips_signal_holds"] += int(row.get("answer_flips_signal_holds", 0) or 0)
+        q_counts["answer_and_signal_flip"] += int(row.get("answer_and_signal_flip", 0) or 0)
+    projection_loaded = len({r.get("instrument") for r in projection_delta_rows})
+    self_report_rows = sum(int(r.get("n_self_reports", 0) or 0) for r in self_report_summary)
+    rows = [
+        {
+            "claim_object": "single_turn_context_override",
+            "evidence_rung": "OBS",
+            "headline_metric": "delayed false-answer win rate",
+            "value": strong.get("false_answer_win_rate", ""),
+            "control_or_falsifier": "no-context and delayed-context/copying controls",
+            "artifact": "tables/context_operating_points.csv; plots/context_override_atlas.png",
+            "allowed_claim": "context shifts answer competition",
+            "non_claim": "belief changed",
+            "status": "measured" if strong else "not_run",
+        },
+        {
+            "claim_object": "suppressed_parametric_answer",
+            "evidence_rung": "DECODE",
+            "headline_metric": "correct answer top-20 when false answer wins",
+            "value": metrics.get("strong_context_suppressed_not_erased_rate", ""),
+            "control_or_falsifier": "logit-lens readout only; must not be belief persistence",
+            "artifact": "tables/suppressed_parametric_answer.csv; plots/suppressed_answer_map.png",
+            "allowed_claim": "parametric answer remains readable under final readout",
+            "non_claim": "the model believes the original answer",
+            "status": "candidate" if metrics.get("strong_context_suppressed_not_erased_rate") not in ("", None) else "not_run",
+        },
+        {
+            "claim_object": "override_patch_specificity",
+            "evidence_rung": "CAUSAL",
+            "headline_metric": "best same-minus-mismatched recovery gap",
+            "value": rounded(best_override_gap),
+            "control_or_falsifier": "mismatched context patch recovers equally well",
+            "artifact": "tables/patch_specificity_summary.csv; plots/patch_specificity_ladder.png",
+            "allowed_claim": "answer-boundary state restoration handle",
+            "non_claim": "component-level mechanism",
+            "status": "specificity_visible" if math.isfinite(best_override_gap) and best_override_gap > 0.10 else "weak_or_not_run",
+        },
+        {
+            "claim_object": "pressure_behavior",
+            "evidence_rung": "OBS",
+            "headline_metric": "false-pressure final false-answer rate minus controls",
+            "value": rounded(false_final_rate - control_false_rate) if math.isfinite(false_final_rate) and math.isfinite(control_false_rate) else "",
+            "control_or_falsifier": "neutral re-ask / real evidence / forced concise drift",
+            "artifact": "tables/pressure_transition_matrix.csv; plots/pressure_condition_atlas.png",
+            "allowed_claim": "pressure moved generated answers under this scorer",
+            "non_claim": "truth state changed",
+            "status": "measured" if final_pressure_rows else "not_run",
+        },
+        {
+            "claim_object": "revision_quadrants",
+            "evidence_rung": "DECODE",
+            "headline_metric": "answer-flips/signal-holds vs answer-and-signal-flips",
+            "value": f"{q_counts['answer_flips_signal_holds']} / {q_counts['answer_and_signal_flip']}",
+            "control_or_falsifier": "truth bridge, neutral controls, length/null controls",
+            "artifact": "tables/revision_quadrant_condition_summary.csv; plots/revision_quadrant_flow.png",
+            "allowed_claim": "output/proxy dissociation under this local signal",
+            "non_claim": "capitulation or persuasion as a mental-state claim",
+            "status": "candidate" if q_counts["answer_flips_signal_holds"] or q_counts["answer_and_signal_flip"] else "none_or_not_run",
+        },
+        {
+            "claim_object": "prior_lab_direction_projections",
+            "evidence_rung": "DECODE",
+            "headline_metric": "compatible prior-lab instruments loaded",
+            "value": projection_loaded,
+            "control_or_falsifier": "inherits Lab 4/7/14/16 caveats and exact-family bridge status",
+            "artifact": "diagnostics/instrument_dependency_audit.csv; tables/projection_delta_summary.csv; plots/instrument_projection_matrix.png",
+            "allowed_claim": "projection monitor over turns",
+            "non_claim": "privileged access to belief",
+            "status": "measured" if projection_loaded else "not_available",
+        },
+        {
+            "claim_object": "pre_pressure_state_patch",
+            "evidence_rung": "CAUSAL",
+            "headline_metric": "best same-minus-mismatched recovery gap",
+            "value": rounded(best_state_gap),
+            "control_or_falsifier": "mismatched baseline patch recovers equally well",
+            "artifact": "tables/patch_or_steer_recovery.csv; plots/patch_specificity_ladder.png",
+            "allowed_claim": "pre-pressure state can restore local answer competition",
+            "non_claim": "generated answer rescue or full mechanism",
+            "status": "specificity_visible" if math.isfinite(best_state_gap) and best_state_gap > 0.10 else "weak_or_not_run",
+        },
+        {
+            "claim_object": "revision_self_report",
+            "evidence_rung": "SELF-REPORT",
+            "headline_metric": "self-report rows needing hand labels",
+            "value": self_report_rows,
+            "control_or_falsifier": "manual labels contradict auto markers or report cause conflicts with behavior",
+            "artifact": "tables/self_report_behavior_summary.csv; tables/revision_self_reports.csv",
+            "allowed_claim": "what the model said about influence",
+            "non_claim": "actual computational cause",
+            "status": "needs_manual_labels" if self_report_rows else "not_run",
+        },
+    ]
+    return rows
+
+
+def make_plot_reading_guide() -> list[dict[str, str]]:
+    return [
+        {"plot": "belief_revision_evidence_dashboard.png", "concept": "one-screen audit of context override, pressure behavior, quadrants, and controls", "read_after": "belief_revision_card.md", "claim_boundary": "dashboard, not proof of belief"},
+        {"plot": "context_dose_response.png", "concept": "aggregate context-strength response with behavior and suppressed-answer rails", "read_after": "tables/context_operating_points.csv", "claim_boundary": "context following / answer competition"},
+        {"plot": "context_override_atlas.png", "concept": "item-level override heterogeneity", "read_after": "tables/context_dose_response.csv", "claim_boundary": "prevents one item from driving the mean"},
+        {"plot": "override_depth_traces.png", "concept": "where contextual answer becomes readable across depth", "read_after": "tables/override_depth_summary.csv", "claim_boundary": "readout trajectory, not use"},
+        {"plot": "suppressed_answer_map.png", "concept": "false-answer win versus residual correct-answer rank", "read_after": "tables/suppressed_parametric_answer.csv", "claim_boundary": "suppressed-not-erased candidate only"},
+        {"plot": "patch_specificity_ladder.png", "concept": "same-item patch recovery must beat mismatched controls", "read_after": "tables/patch_specificity_summary.csv", "claim_boundary": "causal handle, not component mechanism"},
+        {"plot": "pressure_condition_atlas.png", "concept": "turn-by-condition pressure behavior and local signal", "read_after": "tables/pressure_transition_matrix.csv", "claim_boundary": "behavior/proxy tracking only"},
+        {"plot": "revision_quadrant_flow.png", "concept": "quadrants by pressure condition", "read_after": "tables/revision_quadrant_condition_summary.csv", "claim_boundary": "diagnostic labels, not mental-state categories"},
+        {"plot": "signal_behavior_disagreement.png", "concept": "final output versus local answer signal disagreement", "read_after": "tables/revision_quadrants.csv", "claim_boundary": "dissociation under proxy"},
+        {"plot": "instrument_projection_matrix.png", "concept": "prior-lab direction deltas by condition", "read_after": "diagnostics/instrument_dependency_audit.csv", "claim_boundary": "inherits instrument caveats"},
+        {"plot": "self_report_behavior_matrix.png", "concept": "self-report markers beside behavior", "read_after": "tables/self_report_behavior_summary.csv", "claim_boundary": "self-report only; hand label before citing"},
+        {"plot": "belief_revision_evidence_matrix.png", "concept": "claim-readiness ledger by evidence object", "read_after": "tables/belief_revision_evidence_matrix.csv", "claim_boundary": "keeps rungs separate"},
+    ]
 
 
 def plot_context_dose_response(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
@@ -1956,92 +2351,153 @@ def plot_context_dose_response(ctx: bench.RunContext, rows: Sequence[Mapping[str
         return
     import matplotlib.pyplot as plt
 
-    dose_order = [d[0] for d in CONTEXT_DOSES]
-    by_dose: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    doses = _lab24_ordered_doses(rows)
     strength = {name: s for name, s, _ in CONTEXT_DOSES}
-    for row in rows:
-        by_dose[str(row["dose"])].append(row)
-    xs = [strength[dose] for dose in dose_order if by_dose.get(dose)]
-    labels = [dose for dose in dose_order if by_dose.get(dose)]
-    mean_diff = [safe_mean([r.get("false_minus_correct_logit", "") for r in by_dose[dose]]) for dose in labels]
-    win_rate = [safe_mean([1.0 if r.get("winner") == "false_pressure_answer" else 0.0 for r in by_dose[dose]]) for dose in labels]
-    gen_rate = [safe_mean([r.get("generated_false_answer", 0) for r in by_dose[dose] if r.get("generated_false_answer", "") != ""]) for dose in labels]
-    present = [safe_mean([1.0 if isinstance(r.get("correct_rank"), int) and int(r["correct_rank"]) <= 20 else 0.0 for r in by_dose[dose]]) for dose in labels]
+    xs = [strength.get(dose, i) for i, dose in enumerate(doses)]
+    fig, axes = plt.subplots(2, 2, figsize=(13.2, 8.8))
 
-    fig, axes = plt.subplots(2, 2, figsize=(12.0, 8.2))
+    # Panel 1: item ribbons plus median/IQR.
+    by_item: dict[str, dict[str, Mapping[str, Any]]] = defaultdict(dict)
+    for row in rows:
+        by_item[str(row.get("item_id"))][str(row.get("dose"))] = row
+    for item_id, by_dose in by_item.items():
+        ys = [_lab24_float(by_dose.get(d, {}).get("false_minus_correct_logit"), None) for d in doses]
+        if any(v is not None for v in ys):
+            axes[0, 0].plot(xs, [float("nan") if v is None else v for v in ys], linewidth=0.7, alpha=0.20)
+    meds, q1s, q3s = [], [], []
+    for dose in doses:
+        vals = [r.get("false_minus_correct_logit", "") for r in rows if str(r.get("dose")) == dose]
+        meds.append(_lab24_median(vals))
+        q1s.append(_lab24_quantile(vals, 0.25))
+        q3s.append(_lab24_quantile(vals, 0.75))
+    axes[0, 0].fill_between(xs, q1s, q3s, alpha=0.18)
+    axes[0, 0].plot(xs, meds, marker="o", linewidth=2.4)
     axes[0, 0].axhline(0, linestyle=":", linewidth=1.0)
-    axes[0, 0].plot(xs, mean_diff, marker="o", linewidth=2.0)
-    axes[0, 0].set_title("False-pressure minus correct logit")
-    axes[0, 0].set_xlabel("context strength")
-    axes[0, 0].set_ylabel("mean logit difference")
-    axes[0, 1].plot(xs, win_rate, marker="o", linewidth=2.0)
-    axes[0, 1].set_title("Next-token false-answer win rate")
-    axes[0, 1].set_xlabel("context strength")
-    axes[0, 1].set_ylabel("rate")
+    axes[0, 0].set_title("False-pressure answer vs correct answer")
+    axes[0, 0].set_ylabel("false minus correct logit")
+
+    # Panel 2: win and generated answer rates.
+    win = []
+    top20 = []
+    gen = []
+    for dose in doses:
+        sub = [r for r in rows if str(r.get("dose")) == dose]
+        win.append(_lab24_mean([1.0 if r.get("winner") == "false_pressure_answer" else 0.0 for r in sub]))
+        top20.append(_lab24_mean([1.0 if (_lab24_float(r.get("correct_rank"), 9999) or 9999) <= 20 else 0.0 for r in sub]))
+        gen.append(_lab24_mean([r.get("generated_false_answer", "") for r in sub if r.get("generated_false_answer", "") != ""], default=float("nan")))
+    axes[0, 1].plot(xs, win, marker="o", linewidth=2.2, label="false wins next-token")
+    axes[0, 1].plot(xs, top20, marker="s", linewidth=2.2, label="correct still top-20")
+    if any(math.isfinite(v) for v in gen):
+        axes[0, 1].plot(xs, gen, marker="^", linewidth=2.2, label="generated false")
     axes[0, 1].set_ylim(-0.05, 1.05)
-    axes[1, 0].plot(xs, present, marker="o", linewidth=2.0)
-    axes[1, 0].set_title("Correct answer still top-20")
-    axes[1, 0].set_xlabel("context strength")
-    axes[1, 0].set_ylabel("rate")
-    axes[1, 0].set_ylim(-0.05, 1.05)
-    axes[1, 1].plot(xs, gen_rate, marker="o", linewidth=2.0)
-    axes[1, 1].set_title("Generated false-answer rate")
-    axes[1, 1].set_xlabel("context strength")
-    axes[1, 1].set_ylabel("rate")
+    axes[0, 1].set_title("Output flip and suppressed-answer rails")
+    axes[0, 1].set_ylabel("rate")
+    axes[0, 1].legend(frameon=False, fontsize=8)
+
+    # Panel 3: family-level medians.
+    families = sorted({str(r.get("family", "unknown")) for r in rows})
+    mat = []
+    for fam in families:
+        mat.append([_lab24_median([r.get("false_minus_correct_logit", "") for r in rows if str(r.get("family", "unknown")) == fam and str(r.get("dose")) == dose]) for dose in doses])
+    im = axes[1, 0].imshow(mat, aspect="auto", cmap="coolwarm") if mat else None
+    axes[1, 0].set_yticks(range(len(families)))
+    axes[1, 0].set_yticklabels(families, fontsize=8)
+    axes[1, 0].set_title("Family median logit competition")
+    if im is not None:
+        fig.colorbar(im, ax=axes[1, 0], fraction=0.046, pad=0.03)
+
+    # Panel 4: distribution of strong-dose item outcomes.
+    strong = [r for r in rows if str(r.get("dose")) == "delayed_document"] or [r for r in rows if str(r.get("dose")) == doses[-1]]
+    categories = ["false wins", "correct top-20", "false generated", "correct generated"]
+    values = [
+        _lab24_mean([1.0 if r.get("winner") == "false_pressure_answer" else 0.0 for r in strong]),
+        _lab24_mean([1.0 if (_lab24_float(r.get("correct_rank"), 9999) or 9999) <= 20 else 0.0 for r in strong]),
+        _lab24_mean([r.get("generated_false_answer", "") for r in strong if r.get("generated_false_answer", "") != ""]),
+        _lab24_mean([r.get("generated_correct_answer", "") for r in strong if r.get("generated_correct_answer", "") != ""]),
+    ]
+    axes[1, 1].bar(range(len(categories)), values)
     axes[1, 1].set_ylim(-0.05, 1.05)
+    axes[1, 1].set_title("Strong-context audit rails")
+    axes[1, 1].set_ylabel("rate")
+    axes[1, 1].set_xticks(range(len(categories)))
+    axes[1, 1].set_xticklabels([c.replace(" ", "\n") for c in categories], fontsize=8)
+
     for ax in axes.flat:
-        ax.set_xticks(xs)
-        ax.set_xticklabels([label.replace("_", "\n") for label in labels], fontsize=7)
+        if ax in (axes[0, 0], axes[0, 1], axes[1, 0]):
+            ax.set_xticks(xs)
+            ax.set_xticklabels([d.replace("_", "\n") for d in doses], fontsize=7)
+        if ax in (axes[0, 0], axes[0, 1]):
+            ax.set_xlabel("context strength / dose")
     fig.tight_layout()
-    bench.save_figure(ctx, fig, "context_dose_response.png", "Context-strength dose response with logit, behavioral, and suppressed-answer panels.")
+    bench.save_figure(ctx, fig, "context_dose_response.png", "Context-strength dose response with item ribbons, family medians, behavior rates, and suppressed-answer rails.")
 
 
 def plot_override_depth_traces(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
     if not rows:
         return
-    fig, ax = bench.new_figure(figsize=(10.0, 5.4))
-    for dose in ("no_context", "document_statement", "delayed_document"):
+    fig, ax = bench.new_figure(figsize=(11.5, 6.0))
+    dose_focus = [d for d in ("no_context", "weak_fictional", "document_statement", "delayed_document") if any(r.get("dose") == d for r in rows)]
+    for dose in dose_focus:
         sub = [r for r in rows if r.get("dose") == dose]
-        if not sub:
-            continue
         by_depth: dict[int, list[Any]] = defaultdict(list)
+        by_item_depth: dict[str, dict[int, Any]] = defaultdict(dict)
         for row in sub:
-            by_depth[int(row["stream_depth"])].append(row.get("false_minus_correct_logit", ""))
+            depth = int(row["stream_depth"])
+            by_depth[depth].append(row.get("false_minus_correct_logit", ""))
+            by_item_depth[str(row.get("item_id"))][depth] = row.get("false_minus_correct_logit", "")
         depths = sorted(by_depth)
-        ys = [safe_mean(by_depth[d]) for d in depths]
-        ax.plot(depths, ys, marker="o", linewidth=1.8, label=dose)
+        if not depths:
+            continue
+        for item_id, id_rows in by_item_depth.items():
+            ys = [_lab24_float(id_rows.get(depth), float("nan")) for depth in depths]
+            ax.plot(depths, ys, linewidth=0.5, alpha=0.08, color=_lab24_condition_color(dose))
+        med = [_lab24_median(by_depth[d]) for d in depths]
+        q1 = [_lab24_quantile(by_depth[d], 0.25) for d in depths]
+        q3 = [_lab24_quantile(by_depth[d], 0.75) for d in depths]
+        ax.fill_between(depths, q1, q3, alpha=0.12, color=_lab24_condition_color(dose))
+        ax.plot(depths, med, marker="o", linewidth=2.0, label=dose.replace("_", " "), color=_lab24_condition_color(dose))
     ax.axhline(0, linestyle=":", linewidth=1.0)
     ax.legend(frameon=False, fontsize=8)
-    bench.style_ax(ax, title="Override readout across stream depth", xlabel="stream depth", ylabel="false-pressure minus correct logit")
-    bench.save_figure(ctx, fig, "override_depth_traces.png", "Raw logit-lens traces for context override competition.")
+    bench.style_ax(ax, title="Context override readout across stream depth", xlabel="stream depth", ylabel="false-pressure minus correct logit")
+    bench.save_figure(ctx, fig, "override_depth_traces.png", "Median/IQR logit-lens traces for context override competition, with faint item ribbons.")
 
 
 def plot_patching_map(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], filename: str, description: str, title: str, ylabel: str) -> None:
     ok = [row for row in rows if row.get("status") == "ok" and row.get("recovery_toward_context", row.get("recovery_toward_pre_pressure_state", "")) not in ("", None)]
     if not ok:
         return
-    fig, ax = bench.new_figure(figsize=(10.0, 5.6))
+    fig, ax = bench.new_figure(figsize=(11.0, 5.8))
+    metric = "recovery_toward_context" if any("recovery_toward_context" in row for row in ok) else "recovery_toward_pre_pressure_state"
     grouped: dict[tuple[str, int], list[float]] = defaultdict(list)
     for row in ok:
         source = str(row.get("patch_source", "patch"))
         depth = int(row["stream_depth"])
-        value = row.get("recovery_toward_context", row.get("recovery_toward_pre_pressure_state", ""))
-        f = safe_float(value, None)
+        f = _lab24_float(row.get(metric), None)
         if f is not None:
             grouped[(source, depth)].append(f)
-    sources = sorted({source for source, _ in grouped})
+    sources = sorted({source for source, _ in grouped}, key=lambda s: ("mismatch" in s, s))
     depths = sorted({depth for _, depth in grouped})
     if not depths:
         return
-    width = 0.8 / max(1, len(sources))
-    positions = list(range(len(depths)))
-    for i, source in enumerate(sources):
-        vals = [safe_mean(grouped.get((source, depth), [])) for depth in depths]
-        xs = [p + (i - (len(sources) - 1) / 2) * width for p in positions]
-        ax.bar(xs, vals, width=width, label=source)
+    for source in sources:
+        vals = [_lab24_mean(grouped.get((source, depth), []), default=float("nan")) for depth in depths]
+        q1 = [_lab24_quantile(grouped.get((source, depth), []), 0.25, default=float("nan")) for depth in depths]
+        q3 = [_lab24_quantile(grouped.get((source, depth), []), 0.75, default=float("nan")) for depth in depths]
+        color = _lab24_condition_color("control" if "mismatch" in source else "matched")
+        ax.fill_between(depths, q1, q3, alpha=0.12, color=color)
+        ax.plot(depths, vals, marker="o", linewidth=2.2, label=_lab24_source_label(source), color=color)
+    # Show gap as faint bars when exactly a matched/control pair is present.
+    matched_source = next((s for s in sources if "mismatch" not in s), "")
+    control_source = next((s for s in sources if "mismatch" in s), "")
+    if matched_source and control_source:
+        gaps = []
+        for depth in depths:
+            m = _lab24_mean(grouped.get((matched_source, depth), []), default=float("nan"))
+            c = _lab24_mean(grouped.get((control_source, depth), []), default=float("nan"))
+            gaps.append(m - c if math.isfinite(m) and math.isfinite(c) else float("nan"))
+        ax.bar(depths, gaps, width=0.35, alpha=0.18, label="same - control gap")
     ax.axhline(0, linestyle=":", linewidth=1.0)
-    ax.set_xticks(positions)
-    ax.set_xticklabels([str(d) for d in depths])
+    ax.axhline(1, linestyle=":", linewidth=0.8, alpha=0.5)
     ax.legend(frameon=False, fontsize=8)
     bench.style_ax(ax, title=title, xlabel="stream depth", ylabel=ylabel)
     bench.save_figure(ctx, fig, filename, description)
@@ -2052,38 +2508,35 @@ def plot_turn_traces(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -
         return
     import matplotlib.pyplot as plt
 
-    fig, axes = plt.subplots(2, 2, figsize=(12.6, 8.4))
-    for condition in PRESSURE_CONDITIONS:
+    fig, axes = plt.subplots(2, 2, figsize=(13.4, 8.7))
+    for condition in _lab24_ordered_conditions(rows):
         sub = [r for r in rows if r["condition"] == condition]
         if not sub:
             continue
         xs = sorted({int(r["turn_index"]) for r in sub})
-        y_signal = []
-        y_false = []
-        y_correct = []
-        y_hedge = []
+        y_signal, y_false, y_correct, y_hedge = [], [], [], []
         for x in xs:
             turn = [r for r in sub if int(r["turn_index"]) == x]
-            y_signal.append(safe_mean([r.get("false_minus_correct_logit", "") for r in turn]))
-            y_false.append(safe_mean([r.get("false_answer_endorsed", 0) for r in turn]))
-            y_correct.append(safe_mean([r.get("answer_held_correct", 0) for r in turn]))
-            y_hedge.append(safe_mean([r.get("hedge_marker_hit", 0) for r in turn]))
-        axes[0, 0].plot(xs, y_signal, marker="o", label=condition)
-        axes[0, 1].plot(xs, y_false, marker="o", label=condition)
-        axes[1, 0].plot(xs, y_correct, marker="o", label=condition)
-        axes[1, 1].plot(xs, y_hedge, marker="o", label=condition)
+            y_signal.append(_lab24_mean([r.get("false_minus_correct_logit", "") for r in turn]))
+            y_false.append(_lab24_mean([r.get("false_answer_endorsed", 0) for r in turn]))
+            y_correct.append(_lab24_mean([r.get("answer_held_correct", 0) for r in turn]))
+            y_hedge.append(_lab24_mean([r.get("hedge_marker_hit", 0) for r in turn]))
+        color = _lab24_condition_color(condition)
+        marker = _lab24_marker(condition)
+        axes[0, 0].plot(xs, y_signal, marker=marker, label=condition, color=color, linewidth=2.0)
+        axes[0, 1].plot(xs, y_false, marker=marker, label=condition, color=color, linewidth=2.0)
+        axes[1, 0].plot(xs, y_correct, marker=marker, label=condition, color=color, linewidth=2.0)
+        axes[1, 1].plot(xs, y_hedge, marker=marker, label=condition, color=color, linewidth=2.0)
     axes[0, 0].axhline(0, linestyle=":", linewidth=1.0)
-    axes[0, 0].set_title("Local answer signal")
-    axes[0, 0].set_ylabel("false minus correct logit")
-    axes[0, 1].set_title("False-answer endorsement")
-    axes[1, 0].set_title("Correct-answer rate")
-    axes[1, 1].set_title("Hedge-marker rate")
-    for ax in axes.flat:
+    titles = ["Local answer signal", "False-answer endorsement", "Correct-answer rate", "Hedge-marker rate"]
+    ylabels = ["false minus correct logit", "rate", "rate", "rate"]
+    for ax, title, ylabel in zip(axes.flat, titles, ylabels):
+        ax.set_title(title)
         ax.set_xlabel("turn index")
-    axes[0, 1].set_ylim(-0.05, 1.05)
-    axes[1, 0].set_ylim(-0.05, 1.05)
-    axes[1, 1].set_ylim(-0.05, 1.05)
-    axes[0, 1].legend(fontsize=7, frameon=False, loc="best")
+        ax.set_ylabel(ylabel)
+        if ylabel == "rate":
+            ax.set_ylim(-0.05, 1.05)
+    axes[0, 1].legend(fontsize=7, frameon=False, loc="best", ncol=1)
     fig.tight_layout()
     bench.save_figure(ctx, fig, "belief_revision_turn_traces.png", "Turn-indexed local answer signal, answer outcomes, and hedging by pressure condition.")
 
@@ -2091,60 +2544,363 @@ def plot_turn_traces(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -
 def plot_quadrants(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
     if not rows:
         return
-    labels = [
-        "answer_and_signal_flip",
-        "answer_flips_signal_holds",
-        "signal_flips_answer_holds",
-        "neither",
-        "baseline_not_correct_not_interpretable",
-    ]
-    false_rows = [row for row in rows if row.get("false_pressure_condition") == 1]
-    counts = Counter(str(row["quadrant"]) for row in false_rows)
-    fig, ax = bench.new_figure(figsize=(10.4, 5.8))
-    ax.bar([label.replace("_", "\n") for label in labels], [counts.get(label, 0) for label in labels])
-    bench.style_ax(ax, title="Revision quadrant matrix for false-pressure dialogues", xlabel="quadrant", ylabel="dialogue count")
-    bench.save_figure(ctx, fig, "revision_quadrant_matrix.png", "Counts for false-pressure answer/internal-signal quadrants.")
+    labels = ["answer_and_signal_flip", "answer_flips_signal_holds", "signal_flips_answer_holds", "neither", "baseline_not_correct_not_interpretable"]
+    conditions = [c for c in _lab24_ordered_conditions(rows) if c in FALSE_PRESSURE_CONDITIONS]
+    if not conditions:
+        conditions = _lab24_ordered_conditions(rows)
+    fig, ax = bench.new_figure(figsize=(11.5, 6.0))
+    bottom = [0] * len(conditions)
+    for label in labels:
+        vals = []
+        for condition in conditions:
+            sub = [r for r in rows if r.get("condition") == condition]
+            vals.append(sum(1 for r in sub if r.get("quadrant") == label))
+        ax.bar(range(len(conditions)), vals, bottom=bottom, label=label.replace("_", " "), color=_lab24_condition_color(label))
+        bottom = [b + v for b, v in zip(bottom, vals)]
+    ax.set_xticks(range(len(conditions)))
+    ax.set_xticklabels([c.replace("_", "\n") for c in conditions], fontsize=8)
+    ax.legend(frameon=False, fontsize=7, loc="best")
+    bench.style_ax(ax, title="Revision quadrant flow by pressure condition", xlabel="condition", ylabel="dialogue count")
+    bench.save_figure(ctx, fig, "revision_quadrant_matrix.png", "Stacked false-pressure quadrant counts by condition.")
+    bench.save_figure(ctx, fig, "revision_quadrant_flow.png", "Stacked false-pressure quadrant counts by condition.")
 
 
 def plot_projection_summary(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
     if not rows:
         return
-    instruments = sorted({str(row["instrument"]) for row in rows})
-    if not instruments:
+    delta_rows = make_projection_delta_summary(rows)
+    if not delta_rows:
         return
-    import matplotlib.pyplot as plt
-
-    fig, ax = bench.new_figure(figsize=(11.0, 6.0))
-    turns = sorted({int(row["turn_index"]) for row in rows})
+    instruments = sorted({str(row["instrument"]) for row in delta_rows})
+    conditions = [c for c in PRESSURE_CONDITIONS if any(r.get("condition") == c for r in delta_rows)]
+    mat = []
     for instrument in instruments:
-        sub = [row for row in rows if row["instrument"] == instrument]
-        if not sub:
-            continue
-        by_turn: dict[int, list[Any]] = defaultdict(list)
-        for row in sub:
-            by_turn[int(row["turn_index"])].append(row.get("mean_projection", ""))
-        ys = [safe_mean(by_turn[t]) for t in turns]
-        ax.plot(turns, ys, marker="o", label=instrument)
-    ax.legend(frameon=False, fontsize=8)
-    bench.style_ax(ax, title="Optional direction projections across turns", xlabel="turn index", ylabel="mean projection")
-    bench.save_figure(ctx, fig, "instrument_projection_traces.png", "Summary of compatible Lab 4/14/16 direction projections across turns.")
+        row_vals = []
+        for condition in conditions:
+            cell = next((r for r in delta_rows if r.get("instrument") == instrument and r.get("condition") == condition), {})
+            row_vals.append(_lab24_float(cell.get("projection_delta_last_minus_first"), 0.0) or 0.0)
+        mat.append(row_vals)
+    fig, ax = bench.new_figure(figsize=(max(9.5, 1.0 * len(conditions)), max(4.2, 0.45 * len(instruments) + 2.0)))
+    im = ax.imshow(mat, aspect="auto", cmap="coolwarm")
+    ax.set_xticks(range(len(conditions)))
+    ax.set_xticklabels([c.replace("_", "\n") for c in conditions], fontsize=8)
+    ax.set_yticks(range(len(instruments)))
+    ax.set_yticklabels(instruments, fontsize=8)
+    for i, instrument in enumerate(instruments):
+        for j, condition in enumerate(conditions):
+            ax.text(j, i, f"{mat[i][j]:.2f}", ha="center", va="center", fontsize=7)
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03, label="last - first projection")
+    bench.style_ax(ax, title="Prior-lab direction projection deltas", xlabel="condition", ylabel="instrument")
+    bench.save_figure(ctx, fig, "instrument_projection_traces.png", "Condition-level projection deltas for compatible Lab 4/14/16 direction instruments.")
+    bench.save_figure(ctx, fig, "instrument_projection_matrix.png", "Condition-level projection deltas for compatible Lab 4/14/16 direction instruments.")
 
 
 def plot_self_reports(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
     if not rows:
         return
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, 2, figsize=(12.2, 5.2))
     labels = ["claims_changed", "claims_unchanged", "mentions_pressure", "mentions_evidence"]
     values = [
-        safe_mean([row.get("self_report_claims_changed", 0) for row in rows]),
-        safe_mean([row.get("self_report_claims_unchanged", 0) for row in rows]),
-        safe_mean([row.get("self_report_mentions_pressure", 0) for row in rows]),
-        safe_mean([row.get("self_report_mentions_evidence", 0) for row in rows]),
+        _lab24_mean([row.get("self_report_claims_changed", 0) for row in rows]),
+        _lab24_mean([row.get("self_report_claims_unchanged", 0) for row in rows]),
+        _lab24_mean([row.get("self_report_mentions_pressure", 0) for row in rows]),
+        _lab24_mean([row.get("self_report_mentions_evidence", 0) for row in rows]),
     ]
-    fig, ax = bench.new_figure(figsize=(9.0, 5.3))
-    ax.bar([label.replace("_", "\n") for label in labels], values)
-    ax.set_ylim(-0.05, 1.05)
-    bench.style_ax(ax, title="Revision self-report marker rates", xlabel="auto marker", ylabel="rate")
+    axes[0].bar(range(len(labels)), values)
+    axes[0].set_ylim(-0.05, 1.05)
+    axes[0].set_xticks(range(len(labels)))
+    axes[0].set_xticklabels([label.replace("_", "\n") for label in labels], fontsize=8)
+    axes[0].set_title("Self-report auto-marker rates")
+    axes[0].set_ylabel("rate")
+
+    conditions = _lab24_ordered_conditions(rows)
+    changed = [_lab24_mean([r.get("self_report_claims_changed", 0) for r in rows if r.get("condition") == c]) for c in conditions]
+    pressure = [_lab24_mean([r.get("self_report_mentions_pressure", 0) for r in rows if r.get("condition") == c]) for c in conditions]
+    evidence = [_lab24_mean([r.get("self_report_mentions_evidence", 0) for r in rows if r.get("condition") == c]) for c in conditions]
+    x = list(range(len(conditions)))
+    axes[1].plot(x, changed, marker="o", label="claims changed")
+    axes[1].plot(x, pressure, marker="s", label="mentions pressure")
+    axes[1].plot(x, evidence, marker="^", label="mentions evidence")
+    axes[1].set_ylim(-0.05, 1.05)
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels([c.replace("_", "\n") for c in conditions], fontsize=7)
+    axes[1].set_title("Self-report markers by condition")
+    axes[1].legend(frameon=False, fontsize=8)
+    fig.tight_layout()
     bench.save_figure(ctx, fig, "revision_self_reports.png", "Auto-marker summary for model self-reports about whether pressure/evidence changed its answer.")
+
+
+def plot_belief_revision_dashboard(ctx: bench.RunContext, metrics: Mapping[str, Any], context_points: Sequence[Mapping[str, Any]], patch_summary: Sequence[Mapping[str, Any]], pressure_summary: Sequence[Mapping[str, Any]], quadrant_summary: Sequence[Mapping[str, Any]], self_report_summary: Sequence[Mapping[str, Any]]) -> None:
+    if not (context_points or pressure_summary or quadrant_summary or patch_summary):
+        return
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.4, 8.7))
+    # Context dose rails.
+    if context_points:
+        doses = [r["dose"] for r in context_points]
+        x = list(range(len(doses)))
+        axes[0, 0].plot(x, [_lab24_float(r.get("false_answer_win_rate"), 0.0) or 0.0 for r in context_points], marker="o", label="false wins")
+        axes[0, 0].plot(x, [_lab24_float(r.get("correct_top20_rate"), 0.0) or 0.0 for r in context_points], marker="s", label="correct top-20")
+        axes[0, 0].set_xticks(x)
+        axes[0, 0].set_xticklabels([d.replace("_", "\n") for d in doses], fontsize=7)
+        axes[0, 0].set_ylim(-0.05, 1.05)
+        axes[0, 0].legend(frameon=False, fontsize=8)
+    axes[0, 0].set_title("Single-turn context pressure")
+    axes[0, 0].set_ylabel("rate")
+
+    # Patch specificity.
+    if patch_summary:
+        best: dict[str, float] = {}
+        for row in patch_summary:
+            gap = _lab24_float(row.get("specificity_gap"), None)
+            if gap is None:
+                continue
+            key = str(row.get("intervention"))
+            best[key] = max(best.get(key, -999.0), gap)
+        names = list(best)
+        vals = [best[n] for n in names]
+        axes[0, 1].bar(range(len(names)), vals)
+        axes[0, 1].axhline(0, linestyle=":", linewidth=1.0)
+        axes[0, 1].set_xticks(range(len(names)))
+        axes[0, 1].set_xticklabels([n.replace("_", "\n") for n in names], fontsize=8)
+    axes[0, 1].set_title("Best patch specificity gap")
+    axes[0, 1].set_ylabel("same - control recovery")
+
+    # Pressure final behavior.
+    final_rows = [r for r in pressure_summary if int(r.get("turn_index", -1)) == 2]
+    if final_rows:
+        conditions = [r["condition"] for r in final_rows]
+        vals = [_lab24_float(r.get("false_answer_endorsement_rate"), 0.0) or 0.0 for r in final_rows]
+        axes[1, 0].bar(range(len(conditions)), vals, color=[_lab24_condition_color(c) for c in conditions])
+        axes[1, 0].set_ylim(-0.05, 1.05)
+        axes[1, 0].set_xticks(range(len(conditions)))
+        axes[1, 0].set_xticklabels([c.replace("_", "\n") for c in conditions], fontsize=7)
+    axes[1, 0].set_title("Final false-answer endorsement")
+    axes[1, 0].set_ylabel("rate")
+
+    # Quadrants + self-report readiness.
+    labels = ["answer_and_signal_flip", "answer_flips_signal_holds", "signal_flips_answer_holds", "neither"]
+    counts = [sum(int(r.get(label, 0) or 0) for r in quadrant_summary) for label in labels]
+    if any(counts):
+        axes[1, 1].bar(range(len(labels)), counts, color=[_lab24_condition_color(l) for l in labels])
+        axes[1, 1].set_xticks(range(len(labels)))
+        axes[1, 1].set_xticklabels([l.replace("_", "\n") for l in labels], fontsize=7)
+    elif self_report_summary:
+        labels2 = ["changed", "pressure", "evidence"]
+        vals2 = [
+            _lab24_mean([r.get("self_report_claims_changed_rate", 0) for r in self_report_summary]),
+            _lab24_mean([r.get("self_report_mentions_pressure_rate", 0) for r in self_report_summary]),
+            _lab24_mean([r.get("self_report_mentions_evidence_rate", 0) for r in self_report_summary]),
+        ]
+        axes[1, 1].bar(range(len(labels2)), vals2)
+        axes[1, 1].set_ylim(-0.05, 1.05)
+        axes[1, 1].set_xticks(range(len(labels2)))
+        axes[1, 1].set_xticklabels(labels2)
+    axes[1, 1].set_title("Quadrant / self-report audit")
+    axes[1, 1].set_ylabel("count or rate")
+    fig.suptitle("Lab 24 belief-revision evidence dashboard: answer signal, output, controls, and caveats", y=0.995, fontsize=13)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "belief_revision_evidence_dashboard.png", "One-screen Lab 24 evidence dashboard for context override, pressure behavior, patch specificity, and quadrants.")
+
+
+def plot_context_override_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    doses = _lab24_ordered_doses(rows)
+    items = sorted({str(r.get("item_id")) for r in rows})
+    mat = []
+    for item in items:
+        mat.append([_lab24_float(next((r.get("false_minus_correct_logit") for r in rows if str(r.get("item_id")) == item and str(r.get("dose")) == dose), ""), 0.0) or 0.0 for dose in doses])
+    fig, ax = bench.new_figure(figsize=(max(8.8, 0.70 * len(doses) + 4), max(5.2, 0.28 * len(items) + 2.2)))
+    im = ax.imshow(mat, aspect="auto", cmap="coolwarm")
+    ax.set_xticks(range(len(doses)))
+    ax.set_xticklabels([d.replace("_", "\n") for d in doses], fontsize=8)
+    ax.set_yticks(range(len(items)))
+    ax.set_yticklabels(items, fontsize=7)
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03, label="false minus correct logit")
+    bench.style_ax(ax, title="Item-level context override atlas", xlabel="context dose", ylabel="item")
+    bench.save_figure(ctx, fig, "context_override_atlas.png", "Item-by-dose heatmap for contextual false-answer pressure.")
+
+
+def plot_suppressed_answer_map(ctx: bench.RunContext, single_rows: Sequence[Mapping[str, Any]], suppressed_rows: Sequence[Mapping[str, Any]]) -> None:
+    strong = [r for r in single_rows if r.get("dose") == "delayed_document"]
+    if not strong:
+        return
+    fig, ax = bench.new_figure(figsize=(9.4, 6.0))
+    for row in strong:
+        x = _lab24_float(row.get("false_minus_correct_logit"), 0.0) or 0.0
+        y = _lab24_float(row.get("correct_rank"), 999.0) or 999.0
+        fam = str(row.get("family", ""))
+        ax.scatter(x, min(y, 100), s=55, alpha=0.85, label=fam if fam not in ax.get_legend_handles_labels()[1] else None)
+        ax.text(x, min(y, 100), str(row.get("item_id", ""))[:10], fontsize=6, alpha=0.7)
+    ax.axvline(0, linestyle=":", linewidth=1.0)
+    ax.axhline(20, linestyle=":", linewidth=1.0)
+    ax.invert_yaxis()
+    ax.legend(frameon=False, fontsize=7, loc="best")
+    bench.style_ax(ax, title="Suppressed-not-erased candidate map", xlabel="strong-context false minus correct logit", ylabel="correct-answer rank after strong context (lower is more readable)")
+    bench.save_figure(ctx, fig, "suppressed_answer_map.png", "Strong-context false-answer wins versus correct-answer rank under the same readout.")
+
+
+def plot_patch_specificity_ladder(ctx: bench.RunContext, patch_summary: Sequence[Mapping[str, Any]]) -> None:
+    rows = [r for r in patch_summary if r.get("status") != "not_run_or_no_successful_patch_rows"]
+    if not rows:
+        return
+    interventions = sorted({str(r.get("intervention")) for r in rows})
+    fig, ax = bench.new_figure(figsize=(11.2, 5.8))
+    x_positions: list[float] = []
+    labels: list[str] = []
+    gap_vals: list[float] = []
+    for i, intervention in enumerate(interventions):
+        sub = sorted([r for r in rows if r.get("intervention") == intervention], key=lambda r: int(r.get("stream_depth", 0)))
+        for j, row in enumerate(sub):
+            x_positions.append(i * (len(sub) + 1) + j)
+            labels.append(f"{intervention.replace('_', ' ')}\nd{row.get('stream_depth')}")
+            gap_vals.append(_lab24_float(row.get("specificity_gap"), 0.0) or 0.0)
+    ax.bar(x_positions, gap_vals)
+    ax.axhline(0, linestyle=":", linewidth=1.0)
+    ax.axhline(0.10, linestyle="--", linewidth=0.8, alpha=0.6)
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(labels, fontsize=7, rotation=45, ha="right")
+    bench.style_ax(ax, title="Patch specificity ladder", xlabel="intervention and stream depth", ylabel="same-item recovery minus control recovery")
+    bench.save_figure(ctx, fig, "patch_specificity_ladder.png", "Same-item patch recovery gap over mismatched controls for single-turn and multi-turn interventions.")
+
+
+def plot_pressure_condition_atlas(ctx: bench.RunContext, pressure_summary: Sequence[Mapping[str, Any]]) -> None:
+    if not pressure_summary:
+        return
+    conditions = _lab24_ordered_conditions(pressure_summary)
+    turns = sorted({int(r.get("turn_index", 0)) for r in pressure_summary})
+    metrics = ["false_answer_endorsement_rate", "mean_false_minus_correct_logit"]
+    import matplotlib.pyplot as plt
+    for metric in metrics:
+        mat = []
+        for condition in conditions:
+            mat.append([_lab24_float(next((r.get(metric) for r in pressure_summary if r.get("condition") == condition and int(r.get("turn_index", -1)) == turn), ""), 0.0) or 0.0 for turn in turns])
+        fig, ax = bench.new_figure(figsize=(7.6, max(4.6, 0.45 * len(conditions) + 1.8)))
+        im = ax.imshow(mat, aspect="auto", cmap="coolwarm" if "logit" in metric else "viridis")
+        ax.set_xticks(range(len(turns)))
+        ax.set_xticklabels([str(t) for t in turns])
+        ax.set_yticks(range(len(conditions)))
+        ax.set_yticklabels([c.replace("_", " ") for c in conditions], fontsize=8)
+        for i in range(len(conditions)):
+            for j in range(len(turns)):
+                ax.text(j, i, f"{mat[i][j]:.2f}", ha="center", va="center", fontsize=7)
+        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
+        title = "Pressure condition atlas: " + metric.replace("_", " ")
+        bench.style_ax(ax, title=title, xlabel="turn index", ylabel="condition")
+        filename = "pressure_condition_atlas.png" if metric == metrics[0] else "pressure_signal_atlas.png"
+        bench.save_figure(ctx, fig, filename, title)
+
+
+def plot_signal_behavior_disagreement(ctx: bench.RunContext, trace_rows: Sequence[Mapping[str, Any]]) -> None:
+    final = [r for r in trace_rows if int(r.get("turn_index", -1)) == 2]
+    if not final:
+        return
+    fig, ax = bench.new_figure(figsize=(9.5, 6.0))
+    for condition in _lab24_ordered_conditions(final):
+        sub = [r for r in final if r.get("condition") == condition]
+        xs = [_lab24_float(r.get("false_minus_correct_logit"), 0.0) or 0.0 for r in sub]
+        ys = [float(r.get("false_answer_endorsed", 0) or 0) + ((stable_hash_int(str(r.get("dialogue_id"))) % 100) / 1000.0 - 0.05) for r in sub]
+        ax.scatter(xs, ys, label=condition.replace("_", " "), alpha=0.75, s=48, color=_lab24_condition_color(condition), marker=_lab24_marker(condition))
+    ax.axvline(0, linestyle=":", linewidth=1.0)
+    ax.set_yticks([0, 1])
+    ax.set_yticklabels(["not false", "false endorsed"])
+    ax.legend(frameon=False, fontsize=7, loc="best")
+    bench.style_ax(ax, title="Final answer behavior vs local answer signal", xlabel="final false minus correct logit", ylabel="final generated answer")
+    bench.save_figure(ctx, fig, "signal_behavior_disagreement.png", "Final behavior/proxy disagreement scatter for pressure dialogues.")
+
+
+def plot_self_report_behavior_matrix(ctx: bench.RunContext, self_report_summary: Sequence[Mapping[str, Any]]) -> None:
+    if not self_report_summary:
+        return
+    conditions = [str(r.get("condition")) for r in self_report_summary]
+    cols = ["final_false_answer_rate_for_reported_dialogues", "self_report_claims_changed_rate", "self_report_claims_unchanged_rate", "self_report_mentions_pressure_rate", "self_report_mentions_evidence_rate"]
+    mat = [[_lab24_float(r.get(col), 0.0) or 0.0 for col in cols] for r in self_report_summary]
+    fig, ax = bench.new_figure(figsize=(10.8, max(4.8, 0.45 * len(conditions) + 2.0)))
+    im = ax.imshow(mat, aspect="auto", cmap="viridis", vmin=0, vmax=1)
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels([c.replace("_rate", "").replace("_", "\n") for c in cols], fontsize=7)
+    ax.set_yticks(range(len(conditions)))
+    ax.set_yticklabels([c.replace("_", " ") for c in conditions], fontsize=8)
+    for i in range(len(conditions)):
+        for j in range(len(cols)):
+            ax.text(j, i, f"{mat[i][j]:.2f}", ha="center", va="center", fontsize=7)
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03, label="rate")
+    bench.style_ax(ax, title="Self-report versus behavior matrix", xlabel="marker", ylabel="condition")
+    bench.save_figure(ctx, fig, "self_report_behavior_matrix.png", "Self-report auto markers beside final behavior rates; hand-label before citing.")
+
+
+def plot_evidence_matrix(ctx: bench.RunContext, evidence_rows: Sequence[Mapping[str, Any]]) -> None:
+    if not evidence_rows:
+        return
+    status_score = {"measured": 0.75, "candidate": 0.65, "specificity_visible": 0.85, "needs_manual_labels": 0.45, "not_available": 0.25, "none_or_not_run": 0.20, "weak_or_not_run": 0.30, "weak_or_unresolved_specificity": 0.35, "not_run": 0.15}
+    rows = list(evidence_rows)
+    fig, ax = bench.new_figure(figsize=(13.0, max(5.0, 0.52 * len(rows) + 2.0)))
+    mat = [[status_score.get(str(r.get("status")), 0.4)] for r in rows]
+    im = ax.imshow(mat, aspect="auto", cmap="viridis", vmin=0, vmax=1)
+    ax.set_xticks([0])
+    ax.set_xticklabels(["claim readiness"])
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([str(r.get("claim_object", "")) for r in rows], fontsize=8)
+    for i, row in enumerate(rows):
+        txt = f"{row.get('evidence_rung')} | {row.get('headline_metric')}: {row.get('value')} | {row.get('status')}"
+        ax.text(0, i, txt, ha="center", va="center", fontsize=7, color="white" if mat[i][0] < 0.55 else "black")
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
+    bench.style_ax(ax, title="Lab 24 evidence matrix", xlabel="", ylabel="evidence object")
+    bench.save_figure(ctx, fig, "belief_revision_evidence_matrix.png", "Claim-readiness evidence matrix keeping OBS, DECODE, SELF-REPORT, and CAUSAL rungs separate.")
+
+
+def write_enhanced_visualization_artifacts(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    single_rows: Sequence[Mapping[str, Any]],
+    depth_rows: Sequence[Mapping[str, Any]],
+    suppressed_rows: Sequence[Mapping[str, Any]],
+    patch_rows: Sequence[Mapping[str, Any]],
+    trace_rows: Sequence[Mapping[str, Any]],
+    quadrant_rows: Sequence[Mapping[str, Any]],
+    comparison_rows: Sequence[Mapping[str, Any]],
+    state_patch_rows: Sequence[Mapping[str, Any]],
+    projection_summary_rows: Sequence[Mapping[str, Any]],
+    self_report_rows: Sequence[Mapping[str, Any]],
+) -> None:
+    context_points = make_context_operating_points(single_rows, suppressed_rows)
+    patch_summary = make_patch_specificity_summary(patch_rows, state_patch_rows)
+    pressure_summary = make_pressure_transition_matrix(trace_rows)
+    quadrant_summary = make_quadrant_condition_summary(quadrant_rows)
+    projection_delta_rows = make_projection_delta_summary(projection_summary_rows)
+    self_report_summary = make_self_report_behavior_summary(trace_rows, self_report_rows)
+    evidence_rows = make_belief_revision_evidence_matrix(metrics, context_points, patch_summary, pressure_summary, quadrant_summary, projection_delta_rows, self_report_summary)
+    guide_rows = make_plot_reading_guide()
+
+    table_specs = [
+        ("context_operating_points.csv", context_points, "Dose-level context override rates, suppressed-answer flags, and generation summaries."),
+        ("patch_specificity_summary.csv", patch_summary, "Same-item versus mismatched patch recovery gaps by intervention and stream depth."),
+        ("pressure_transition_matrix.csv", pressure_summary, "Condition-by-turn behavior and local answer-signal summary."),
+        ("revision_quadrant_condition_summary.csv", quadrant_summary, "Quadrant counts and rates by pressure condition."),
+        ("projection_delta_summary.csv", projection_delta_rows, "Prior-lab direction projection deltas from first to final measured turn."),
+        ("self_report_behavior_summary.csv", self_report_summary, "Self-report marker rates joined to final behavior rates."),
+        ("belief_revision_evidence_matrix.csv", evidence_rows, "Claim-readiness matrix for Lab 24 evidence objects."),
+        ("plot_reading_guide.csv", guide_rows, "Map from each upgraded plot to the concept and claim boundary it teaches."),
+    ]
+    for filename, rows, desc in table_specs:
+        path = ctx.path("tables", filename)
+        bench.write_csv_with_context(ctx, path, rows)
+        ctx.register_artifact(path, "table", desc)
+
+    if ctx.args.no_plots:
+        return
+    plot_belief_revision_dashboard(ctx, metrics, context_points, patch_summary, pressure_summary, quadrant_summary, self_report_summary)
+    plot_context_override_atlas(ctx, single_rows)
+    plot_suppressed_answer_map(ctx, single_rows, suppressed_rows)
+    plot_patch_specificity_ladder(ctx, patch_summary)
+    plot_pressure_condition_atlas(ctx, pressure_summary)
+    plot_signal_behavior_disagreement(ctx, trace_rows)
+    plot_self_report_behavior_matrix(ctx, self_report_summary)
+    plot_evidence_matrix(ctx, evidence_rows)
 
 
 # ---------------------------------------------------------------------------
@@ -2259,17 +3015,22 @@ def write_run_summary(ctx: bench.RunContext, metrics: Mapping[str, Any], data_in
         "",
         "1. `belief_revision_card.md`",
         "2. `operationalization_audit.md`",
-        "3. `diagnostics/instrument_dependency_audit.csv`",
-        "4. `tables/baseline_behavior_gate.csv` if multi-turn mode ran",
-        "5. `tables/revision_quadrants.csv` and `tables/cheap_control_summary.csv`",
+        "3. `plots/belief_revision_evidence_dashboard.png` and `tables/belief_revision_evidence_matrix.csv`",
+        "4. `diagnostics/instrument_dependency_audit.csv`",
+        "5. `tables/context_operating_points.csv`, `tables/patch_specificity_summary.csv`, and `tables/pressure_transition_matrix.csv`",
+        "6. `tables/baseline_behavior_gate.csv` before interpreting multi-turn quadrants",
+        "7. `tables/revision_self_reports.csv` only after hand-labeling the student columns",
         "",
         "If the truth bridge artifacts are missing or incompatible, describe the internal channel as an answer-relevant signal, not belief.",
+        "",
+        "## Upgraded visualization packet",
+        "",
+        "The upgraded plot suite is designed as a firewall: context following, local answer-signal movement, self-report, and causal patch recovery each keep their own evidence rung. Read `tables/plot_reading_guide.csv` before turning a dramatic quadrant into a claim.",
         "",
     ]
     path = ctx.path("run_summary.md")
     bench.write_text(path, "\n".join(lines))
     ctx.register_artifact(path, "summary", "Human-readable Lab 24 summary.")
-
 
 def build_metrics(
     ctx: bench.RunContext,
@@ -2590,6 +3351,21 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     metrics_path = ctx.path("metrics.json")
     bench.write_json(metrics_path, metrics)
     ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 24 belief-revision metrics.")
+
+    write_enhanced_visualization_artifacts(
+        ctx,
+        metrics,
+        single_rows,
+        depth_rows,
+        suppressed_rows,
+        patch_rows,
+        trace_rows,
+        quadrant_rows,
+        comparison_rows,
+        state_patch_rows,
+        projection_summary_rows,
+        self_report_rows,
+    )
 
     write_operationalization_audit(ctx, metrics, artifacts)
     write_belief_revision_card(ctx, metrics)
