@@ -532,6 +532,46 @@ def extract_answer(post_think: str, think: str) -> str | None:
     return answer or None
 
 
+def constrained_letter_decode(bundle: bench.ModelBundle, prompt: str) -> dict[str, Any]:
+    """Last-resort forced answer: one forward pass, argmax restricted to the
+    answer-letter tokens.
+
+    The forced-answer path's whole job is to produce a choice, so it must never
+    come back empty -- even when a reasoning model is stuck in a
+    "Wait, maybe... Wait, but..." loop and free generation never emits a clean
+    letter. Restricting the next-token argmax to {A,B,C,D} guarantees a letter.
+    Logged as `constrained_letter` so it can never masquerade as a real parse.
+    """
+    import torch
+
+    tok = bundle.tokenizer
+    letter_for_id: dict[int, str] = {}
+    for letter in LETTERS:
+        for form in (" " + letter, letter):
+            ids = tok(form, add_special_tokens=False)["input_ids"]
+            if len(ids) == 1:
+                letter_for_id.setdefault(int(ids[0]), letter)
+    if not letter_for_id:
+        return {"answer": "", "parse_ok": False, "parse_source": "", "parse_pattern": ""}
+    enc = tok(prompt, return_tensors="pt")
+    input_ids = enc["input_ids"].to(bundle.input_device)
+    attention_mask = enc.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+    with torch.no_grad():
+        out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    last_logits = out.logits[0, -1]
+    cand_ids = list(letter_for_id)
+    cand_idx = torch.tensor(cand_ids, device=last_logits.device)
+    best_id = cand_ids[int(last_logits.index_select(0, cand_idx).argmax())]
+    return {
+        "answer": letter_for_id[best_id],
+        "parse_ok": True,
+        "parse_source": "constrained",
+        "parse_pattern": "constrained_letter",
+    }
+
+
 def forced_answer_prompt(rendered: str, think: str, opens_think: bool) -> str:
     """Close the think span after `think` and force the answer line."""
     prefix = rendered if opens_think else rendered + "<think>\n"
@@ -552,6 +592,11 @@ def force_answer_after_partial(bundle: bench.ModelBundle, prompt: str, continuat
         forced_prompt = prompt + continuation + "\n</think>\n\nAnswer:"
     forced_text = generate_batch(bundle, [forced_prompt], 8, batch)[0]
     parsed = extract_answer_record("Answer:" + forced_text, "")
+    if not parsed["answer"]:
+        # Free generation still didn't emit a clean letter (degenerate loop);
+        # fall back to a constrained single-token decode so the rescue always
+        # yields a choice rather than dropping the row.
+        parsed = constrained_letter_decode(bundle, forced_prompt)
     parsed["forced_text_excerpt"] = forced_text[:120].replace("\n", " ")
     return parsed
 
@@ -582,47 +627,77 @@ def write_condition_manifest(ctx: bench.RunContext, bundle: bench.ModelBundle, i
 
 
 def run_think_roundtrip_check(ctx: bench.RunContext, bundle: bench.ModelBundle, items: list[dict[str, str]], max_new: int, batch: int) -> dict[str, Any]:
-    """Verify that the harness can locate a think span and force an answer."""
-    item = items[0]
-    rendered = render_prompt(bundle, build_user_message(item, "baseline"))
+    """Verify that the harness can locate a think span and force an answer.
+
+    Probes several items and passes if ANY one round-trips, so a single
+    degenerate generation -- a reasoning model stuck in a "Wait, maybe...
+    Wait, but..." loop that never closes its think span -- cannot abort the
+    whole lab. The forced-answer path falls back to a constrained letter decode,
+    so it always yields a choice; the check fails only if every probe fails.
+    """
     opens = template_opens_think(bundle)
-    text = generate_batch(bundle, [rendered], max_new, batch)[0]
-    think, post, finished = split_think(text)
-    parsed = extract_answer_record(post, think)
-    forced_text = generate_batch(bundle, [forced_answer_prompt(rendered, think, opens)], 8, batch)[0]
-    forced = extract_answer_record("Answer:" + forced_text, "")
+    probes = items[: min(4, len(items))]
+    rendered_list = [render_prompt(bundle, build_user_message(it, "baseline")) for it in probes]
+    texts = generate_batch(bundle, rendered_list, max_new, batch)
+    splits = [split_think(t) for t in texts]
+    forced_prompts = [
+        forced_answer_prompt(rendered, think, opens)
+        for rendered, (think, _post, _finished) in zip(rendered_list, splits)
+    ]
+    forced_texts = generate_batch(bundle, forced_prompts, 8, batch)
+
+    probe_rows: list[dict[str, Any]] = []
+    for it, rendered, text, (think, post, finished), fprompt, ftext in zip(
+        probes, rendered_list, texts, splits, forced_prompts, forced_texts
+    ):
+        parsed = extract_answer_record(post, think)
+        forced = extract_answer_record("Answer:" + ftext, "")
+        if not forced["answer"]:
+            forced = constrained_letter_decode(bundle, fprompt)
+        probe_rows.append({
+            "item": it["id"],
+            "think_finished": finished,
+            "think_tokens": len(bundle.tokenizer(think, add_special_tokens=False)["input_ids"]),
+            "parsed_answer": parsed["answer"],
+            "parsed_pattern": parsed["parse_pattern"],
+            "forced_answer": forced["answer"],
+            "forced_pattern": forced["parse_pattern"],
+            "ok": (len(think.strip()) > 0) and bool(parsed["answer"] or forced["answer"]),
+            "rendered_prompt_tail": rendered[-240:].replace("\n", "\\n"),
+            "generation_excerpt_tail": text[-320:].replace("\n", " "),
+        })
+
+    n_passed = sum(1 for r in probe_rows if r["ok"])
+    any_ok = n_passed > 0
+    representative = next((r for r in probe_rows if r["ok"]), probe_rows[0])
     result = {
-        "item": item["id"],
+        "n_probes": len(probe_rows),
+        "n_passed": n_passed,
         "template_opens_think": opens,
-        "think_finished": finished,
-        "think_tokens": len(bundle.tokenizer(think, add_special_tokens=False)["input_ids"]),
-        "parsed_answer": parsed["answer"],
-        "parsed_source": parsed["parse_source"],
-        "parsed_pattern": parsed["parse_pattern"],
-        "forced_answer": forced["answer"],
-        "forced_pattern": forced["parse_pattern"],
-        "rendered_prompt_tail": rendered[-240:].replace("\n", "\\n"),
-        "generation_excerpt_head": text[:320].replace("\n", " "),
-        "generation_excerpt_tail": text[-320:].replace("\n", " "),
-        "ok": (len(think.strip()) > 0) and bool(forced["answer"]),
+        "ok": any_ok,
+        "representative_item": representative["item"],
+        "representative_forced_pattern": representative["forced_pattern"],
+        "probes": probe_rows,
         "explanation": (
-            "One real generation must round-trip: think span located, an answer "
-            "extracted or rescued, and the forced-answer path yields a letter. "
-            "Experiment 2 is built on this primitive."
+            "At least one probed generation must round-trip: a think span is "
+            "located and either the normal parse or the constrained forced-answer "
+            "path yields a letter. Passing on any one probe keeps a single "
+            "degenerate (looping) generation from aborting the lab. Experiment 2 "
+            "is built on this primitive."
         ),
     }
     path = ctx.path("diagnostics", "think_roundtrip_check.json")
     bench.write_json(path, result)
-    ctx.register_artifact(path, "diagnostic", "Think-span parse + forced-answer round trip on a real item.")
-    status = "OK" if result["ok"] else "FAILED"
+    ctx.register_artifact(path, "diagnostic", "Think-span parse + forced-answer round trip across probe items.")
+    status = "OK" if any_ok else "FAILED"
     print(
         f"[bench] think round-trip check: {status} "
-        f"(opens_think={opens}, finished={finished}, parsed={parsed['answer']!r}, forced={forced['answer']!r})"
+        f"({n_passed}/{len(probe_rows)} probes round-tripped, opens_think={opens})"
     )
-    if not result["ok"]:
+    if not any_ok:
         raise RuntimeError(
-            "Think round-trip check failed; the harness cannot parse this model's reasoning format. "
-            "See diagnostics/think_roundtrip_check.json."
+            f"Think round-trip check failed on all {len(probe_rows)} probe items; the harness "
+            "cannot parse this model's reasoning format. See diagnostics/think_roundtrip_check.json."
         )
     return result
 
