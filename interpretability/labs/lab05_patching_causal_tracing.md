@@ -34,6 +34,21 @@ A recovery of 1.0 means the patch restored the whole clean-vs-corrupt logit gap.
 
 This is causal evidence because the internal state was changed while the prompt and model weights were otherwise held fixed.
 
+## What you patch is a vector, not a logit
+
+The most common confusion here is what the spliced object actually *is*. It is a **residual-stream hidden state**: `streams[k]` at one token position is a single `d_model`-dimensional vector — the accumulated hidden state at that layer and that token. It is not "one logit" and not "the whole set of logits." There are no logits inside the stream. Logits exist only once, at the very end, after the final norm and unembed — and in this lab they appear only in the *measurement*, never in the thing you intervene on.
+
+So the experiment has two completely separate objects, and they usually live at different cells:
+
+- **what you splice in:** a residual-stream vector at one `(depth, position)` cell — the teal cell below.
+- **what you read out:** a single scalar, `logit(" Paris") - logit(" Berlin")`, at the final position only — the amber cell.
+
+![Activation patch setup: a residual-stream vector is spliced at one (depth k, subject position) cell of the corrupt run, while a single logit-difference scalar is read at the final position of the last layer.](../figures/lab5_activation_patch_setup_vector_vs_scalar.png)
+
+The teal cell is the only thing that changes in the corrupt run; everything else is left alone. The amber cell is the only thing you measure. The lab sweeps the patched cell across every cell in the grid and records the amber scalar each time — **that whole grid of scalars is the causal trace**. The per-fact heatmaps in `plots/patching_heatmap_<fact>.png` are exactly this grid for one pair.
+
+This also fixes the noun for the next section. Saying "`streams[k]` contains everything written by blocks `< k`" is the right idea with the wrong word if you call it logits — call them hidden states. The residual stream is additive: each block reads it, computes, and adds its output back, so `streams[k] = embeddings + Σ(outputs of blocks 0..k-1)`. Patching `streams[k]` overwrites that running sum of hidden states; there are no intermediary logits in there. You *can* project a mid-stream vector to vocab space with a logit lens (Lab 1), but that is an instrument you point at the stream, not what is stored in it.
+
 ## The load-bearing convention: stream depth is not component layer
 
 The bench names the residual stream this way:
