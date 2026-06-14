@@ -3913,6 +3913,43 @@ COT_MARKERS = {
     "strong_mistake": "P",
 }
 
+# Lab 11 capstone audit visual grammar. These helpers keep evidence rungs,
+# domains, and audit statuses visually stable across scorecards and atlases.
+AUDIT_RUNG_COLORS = {
+    "OBS": "#4C78A8",
+    "ATTR": "#F58518",
+    "DECODE": "#54A24B",
+    "CAUSAL": "#E45756",
+    "SELF-REPORT": "#B279A2",
+    "behavioral CAUSAL": "#E45756",
+}
+
+AUDIT_DOMAIN_COLORS = {
+    "factual_qa": "#4C78A8",
+    "cot_faithfulness": "#B279A2",
+    "sentiment_negation": "#54A24B",
+    "plain": "#4C78A8",
+    "negated": "#E45756",
+    "base": "#4C78A8",
+    "para_city": "#72B7B2",
+    "para_in": "#F58518",
+}
+
+AUDIT_STATUS_COLORS = {
+    "ok": "#54A24B",
+    "warning": "#F58518",
+    "fail": "#E45756",
+    "control": "#8C8C8C",
+    "unknown": "#BDBDBD",
+    "target_clean_patch": "#54A24B",
+    "unrelated_clean_control": "#8C8C8C",
+    "plain_clean_patch": "#54A24B",
+    "unrelated_plain_control": "#8C8C8C",
+    "keep": "#54A24B",
+    "revise": "#F58518",
+    "retire": "#E45756",
+}
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
@@ -4110,6 +4147,24 @@ def plot_cot_color(item: str, default: str = "#555555") -> str:
 def plot_cot_marker(item: str, default: str = "o") -> str:
     """Shared marker lookup for Lab 10 CoT faithfulness conditions and controls."""
     return COT_MARKERS.get(str(item), default)
+
+
+def plot_audit_rung_color(rung: str, default: str = "#4C78A8") -> str:
+    """Shared color lookup for Lab 11 evidence rungs."""
+    return AUDIT_RUNG_COLORS.get(str(rung), default)
+
+
+def plot_audit_domain_color(domain: str, default: str = "#4C78A8") -> str:
+    """Shared color lookup for Lab 11 audit domains and prompt families."""
+    key = str(domain)
+    return AUDIT_DOMAIN_COLORS.get(key, CATEGORY_COLORS.get(key, default))
+
+
+def plot_audit_status_color(status: str, default: str = "#8C8C8C") -> str:
+    """Shared color lookup for Lab 11 audit/control statuses."""
+    key = str(status)
+    return AUDIT_STATUS_COLORS.get(key, CONTROL_COLORS.get(key, default))
+
 
 def lighten_color(color: str, amount: float = 0.55) -> str:
     """Return a lighter version of a Matplotlib color."""
