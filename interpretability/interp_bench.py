@@ -461,6 +461,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # spec set so OCR, background, chart, spatial, and shape controls appear.
         "max_examples_tier_a": "16",
     },
+    "lab34": {
+        "module": "labs.lab34_tool_use_state",
+        "run_name": "lab34_tool_use_state",
+        "description": "Tool use, agents, and state tracking: toy-tool traces, prompt-boundary probes, surface-cue controls, and constrained steering tests.",
+        # Toy-tool audit. Tier A runs the complete local tool set, including
+        # no-tool rows with misleading surface cues.
+        "max_examples_tier_a": "24",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template

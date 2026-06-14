@@ -181,6 +181,35 @@
     },
     "verified_tokenizers": []
   },
+  "tool_use_tasks.jsonl": {
+    "families": {
+      "calculator": 3,
+      "calendar": 3,
+      "dictionary": 3,
+      "file_search": 3,
+      "no_tool": 6,
+      "route_planner": 3,
+      "unit_converter": 3
+    },
+    "generator": "hand-authored deterministic course rows",
+    "required_tools": {
+      "calculator": 3,
+      "calendar": 3,
+      "dictionary": 3,
+      "file_search": 3,
+      "none": 6,
+      "route_planner": 3,
+      "unit_converter": 3
+    },
+    "rows": 24,
+    "safety_scope": "benign toy tools only; no web, credentials, real filesystem writes, or harmful tools",
+    "sha256": "429d935de03f3eaf34bc2acb03315521a6f1257b1b4780562b63dc2fd8ecad89",
+    "splits": {
+      "eval": 9,
+      "train": 15
+    },
+    "verified_tokenizers": []
+  },
   "advanced_relation_geometry.csv": {
     "families": {
       "capital_of": 28,
