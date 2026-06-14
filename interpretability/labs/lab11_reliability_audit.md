@@ -37,7 +37,12 @@ results.csv                             per-example behavior, confidence, intern
                                         failure_mode_auto, failure_mode_student
 tables/evidence_matrix.csv              method -> evidence rung -> supported claim -> non-claim
 tables/ledger_reconciliation_matrix.csv spreadsheet-friendly ledger verdict worksheet
-plots/audit_dashboard.png               compact audit dashboard
+plots/audit_dashboard.png               domain-specific six-panel cockpit
+plots/audit_scorecard.png               visual rung firewall for the evidence matrix
+plots/*atlas*.png, *specificity*.png     per-example/pair/fact detail views
+tables/audit_scorecard.csv               metric, rung, value, artifact, and caveat
+tables/claim_readiness_matrix.csv        method scorecard: rung, metric, control, claim boundary
+tables/plot_reading_guide.csv           what each plot supports and cannot support
 internal_evidence/                      monitor / probe metrics and projections
 ```
 
@@ -114,6 +119,28 @@ The fresh-slice rule is written to `diagnostics/cot_fresh_slice_manifest.json`. 
 
 The revised Lab 11 tolerates both the original and revised Lab 10 helper APIs.  In particular, it handles the updated acknowledgment-sample writer and the revised dataset loader.  The lab content does not require you to change the registry here.
 
+## Domain C: `sentiment_negation`
+
+This third domain runs on the tier's base model and audits composition rather than recall: does the model read *composed* sentiment, or does it key off surface valence words?
+
+```bash
+python interp_bench.py --lab lab11 --tier b --audit-domain sentiment_negation
+```
+
+Every plain statement in `data/affect_valence.csv` has a minimally negated counterpart in `data/affect_negation.csv` whose mood label flips while the surface valence words stay put (e.g. "I am not unhappy about the result").  The behavioral metric is a plain-vs-negated pair-argmax: the model must get *both* twins right for the pair to count as robust.  `--max-examples` caps source statement pairs here.
+
+The sentiment audit measures five rungs:
+
+| Method | Rung | Artifact | What it supports | What it does not support |
+|---|---:|---|---|---|
+| Pair-argmax behavior | `OBS` | `tables/negation_pair_summary.csv` | Whether the model flips its mood reading when a negation flips the label | Why it flipped (composition vs lexical accident) |
+| Logit lens | `OBS` | `tables/lens_stabilization.csv` | When the mood reading becomes preferred under the final readout | That later layers use the readable signal |
+| Direct logit attribution | `ATTR` | `tables/dla_layer_summary.csv` | Which component writes align with the mood direction under the frozen-norm ledger | Causal responsibility |
+| Plain-into-negated patching | `CAUSAL` | `tables/causal_subset.csv` | Whether patching the plain residual into the negated run at the final position recovers the plain reading, vs an unrelated-plain control | A complete composition mechanism |
+| Valence probe | `DECODE` | `internal_evidence/valence_probe.json` | Whether a mass-mean valence direction trained on *plain* statements transfers to held-out plain and to the negated family vs a shuffled-label control | That the valence direction causes the mood reading |
+
+The headline is the **negated-family transfer**: a probe trained only on plain statements that scores high on plain but near chance (or near the shuffled control) on the negated family is reading surface valence words, not composed meaning.  Watch the same control discipline as the factual domain — if the unrelated-plain control patch recovers as much as the plain-into-negated patch (`mean_recovery_unrelated_control` ≈ `mean_recovery_plain_patch`), the intervention is not specific and the `CAUSAL` rung is not earned.
+
 ## Run commands
 
 ```bash
@@ -128,6 +155,11 @@ python interp_bench.py --lab lab11 --tier b \
   --audit-domain cot_faithfulness \
   --model allenai/Olmo-3-7B-Think \
   --prompt-set full
+
+# Sentiment-under-negation audit (base model)
+python interp_bench.py --lab lab11 --tier b \
+  --audit-domain sentiment_negation \
+  --prompt-set full
 ```
 
 `--max-examples` caps facts for `factual_qa` and items for `cot_faithfulness`.  A tiny smoke run should be weak.  Weakness is data.  The capstone is not graded by how flattering the model looks.
@@ -138,14 +170,38 @@ Read in this order, not the order that feels most tempting. The harness writes a
 
 1. `run_summary.md` for the map and the "harness did NOT do" warnings.
 2. `results.csv` — **fill the `failure_mode_student` column by hand first**, before looking at any aggregates or plots. The auto column is a draft. Labeling examples keeps the concrete failures alive.
-3. `tables/evidence_matrix.csv` — the rung map. Use it to prevent yourself from treating a DECODE number as CAUSAL support or a SELF-REPORT flip rate as proof of internal mechanism.
-4. Domain-specific evidence (cite the actual numbers and artifacts in your report):
-   - factual: `tables/paraphrase_consistency.csv`, `tables/dla_layer_summary.csv` (all layers, not just top), `tables/causal_subset.csv` (subject_early vs final_band recovery + unrelated_clean controls), `internal_evidence/truth_monitor.json` (AUC vs shuffled).
-   - CoT: the Lab 10 tables on the *fresh slice* + `internal_evidence/hint_presence_probe.json` (selectivity vs shuffled).
-5. `plots/audit_dashboard.png` as a visual summary only — after you have labeled the examples.
-6. `ledger_reconciliation.md` + `tables/ledger_reconciliation_matrix.csv` — the keep/revise/retire worksheet. At least one claim from your prior ledger must be revised or retired with a specific artifact + metric from *this* run.
-7. `audit_report.md` last (fill the [STUDENT — graded] sections after the above).
-8. `safety_case_and_rebuttal.md` after the report, when your strongest claim, your strongest counterexample, and the ledger verdicts are all visible in front of you. Both halves are graded with equal weight.
+3. `tables/evidence_matrix.csv`, `tables/claim_readiness_matrix.csv`, and `plots/audit_scorecard.png` — the rung map and claim-permission sheet. Use them to prevent yourself from treating a DECODE number as CAUSAL support or a SELF-REPORT flip rate as proof of internal mechanism.
+4. `tables/audit_scorecard.csv` — the compact scorecard with metric, evidence rung, artifact, and caveat.
+5. Domain-specific evidence (cite the actual numbers and artifacts in your report):
+   - factual: `tables/paraphrase_consistency.csv`, `plots/factual_paraphrase_atlas.png`, `tables/dla_layer_summary.csv`, `plots/factual_dla_behavior_alignment.png`, `tables/causal_subset.csv`, `plots/factual_patch_specificity.png`, `internal_evidence/truth_monitor.json`, and `plots/truth_monitor_projection.png` when available.
+   - CoT: `tables/faithfulness_by_hint_type.csv`, `plots/cot_condition_matrix.png`, `plots/cot_self_report_risk_quadrant.png`, and `internal_evidence/hint_presence_probe.json` / `plots/hint_presence_probe_projection.png` when the probe has enough rows.
+   - sentiment-negation: `tables/negation_pair_summary.csv`, `plots/sentiment_pair_atlas.png`, `plots/sentiment_patch_specificity.png`, `internal_evidence/valence_probe.json`, `plots/valence_probe_projection.png`, and `plots/sentiment_dla_by_layer.png` when the projection table exists.
+6. `plots/audit_dashboard.png` as the cockpit summary only — after you have labeled the examples and inspected the risk tables.
+7. `ledger_reconciliation.md` + `tables/ledger_reconciliation_matrix.csv` — the keep/revise/retire worksheet. At least one claim from your prior ledger must be revised or retired with a specific artifact + metric from *this* run.
+8. `audit_report.md` last (fill the [STUDENT — graded] sections after the above).
+9. `safety_case_and_rebuttal.md` after the report, when your strongest claim, your strongest counterexample, and the ledger verdicts are all visible in front of you. Both halves are graded with equal weight.
+
+## New plot set in the upgraded harness
+
+Lab 11 used to be mostly one dashboard. The upgraded harness keeps that dashboard but turns it into a domain-specific cockpit and adds the missing audit views: scorecards, per-example atlases, projection/detail plots, and control-specificity plots. The point is not more decoration. It is to make the capstone behave like a review board rather than a gallery wall.
+
+Common artifacts across domains:
+
+| Artifact | Use it for |
+|---|---|
+| `plots/audit_dashboard.png` | The cockpit for the chosen domain. Read it after manual labels, not before. |
+| `plots/audit_scorecard.png` | Headline metrics colored by evidence rung. This is a separation device, not a single confidence score. |
+| `tables/audit_scorecard.csv` | The numeric version of the scorecard: metric, rung, value, artifact, and caveat. |
+| `tables/claim_readiness_matrix.csv` | What each method licenses, what it forbids, and what artifact must be quoted before a claim. |
+| `tables/plot_reading_guide.csv` | A map from plot to the concept it is meant to teach. |
+
+Domain-specific additions:
+
+| Domain | Added plots | What they force you to inspect |
+|---|---|---|
+| `factual_qa` | `factual_paraphrase_atlas.png`, `factual_patch_specificity.png`, `truth_monitor_projection.png`, `factual_dla_behavior_alignment.png` | Template fragility, matched-vs-control recovery, truth-monitor selectivity, and whether attribution accounting lines up with final behavior. |
+| `cot_faithfulness` | `cot_condition_matrix.png`, `cot_self_report_risk_quadrant.png`, optional `hint_presence_probe_projection.png` | Answer movement versus visible admission, condition-level parser/control health, and whether the internal monitor separates hinted from baseline examples. |
+| `sentiment_negation` | `sentiment_pair_atlas.png`, `sentiment_patch_specificity.png`, `valence_probe_projection.png`, `sentiment_dla_by_layer.png` | Whether negation composition fails by pair, whether patches are specific, whether the probe tracks surface valence or composed labels, and which layers/writers carry the ledger mass. |
 
 ## How to label failure modes
 
@@ -183,19 +239,34 @@ Label before aggregates.  Aggregates anchor your eye; hand labeling first keeps 
 
 ## How to read the dashboard
 
-For `factual_qa`, `plots/audit_dashboard.png` has four panels:
+For `factual_qa`, `plots/audit_dashboard.png` now has six panels:
 
 - Template behavior: if one template collapses, your boundary is template-specific.
-- Stabilization depth versus final preference: deep or scattered stabilization means the readout is not stable enough to make broad localization claims.
-- Residual patch recovery: target-clean patches should beat unrelated-clean controls.  If controls recover as much as the real patch, your intervention is not specific.
-- Truth monitor AUC: AUC above the shuffled control is `DECODE`, not belief.
+- Stabilization depth versus final preference: deep or scattered stabilization narrows broad localization claims.
+- Failure-mode barcode/risk panel: this is your counterexample queue, not a shame list.
+- Mean DLA ledger: attribution tells you who wrote along the answer direction, not who caused the behavior.
+- Patch specificity: target-clean patches should beat unrelated-clean controls. If controls recover as much as the real patch, your intervention is not specific.
+- Truth monitor detail: AUC above the shuffled control is `DECODE`, not belief.
 
-For `cot_faithfulness`, the dashboard shows:
+For `cot_faithfulness`, the dashboard now shows:
 
-- Wrong-hint flip and silent-flip rates on the fresh slice.
+- Wrong-hint flip, silent-flip, mention, and attribution rates on the fresh slice.
+- The self-report gap: flipped answers that did not attribute the hint.
+- Control movement, because a bad parser or unstable prompt can impersonate faithfulness.
 - Hint-presence probe AUC versus shuffled control.
+- The visible-CoT load-bearing curve and filler/endpoint controls where Lab 10 emitted them.
+- Item-level risk, so a single noisy item cannot hide inside a mean.
 
-A high flip rate plus low probe selectivity is not a contradiction.  It says this single-site linear monitor did not isolate the influence.  The representation may be distributed, at a different site, non-linear, or simply underpowered at this sample size.
+For `sentiment_negation`, `plots/audit_dashboard.png` now has six panels:
+
+- Margin toward the true mood label by family: if the negated box does not drop relative to plain, the model is not composing the negation.
+- Per-pair margins: quadrant structure separates robust pairs from negation-ignored signatures.
+- Negated-half failure modes: robust composition, surface-valence override, pair-unreliable, or other auto draft.
+- Plain-into-negated patch recovery with the unrelated-plain control: if the control bar matches the plain-clean bar, the patch is not specific.
+- Valence probe transfer: held-out plain versus negated-family transfer versus shuffled control. Transfer near the shuffled control is the headline negative — the direction reads surface valence, not composed meaning.
+- DLA or failure-mode detail: the rows your audit report should name before making any deployment-style sentence.
+
+A high flip rate plus low probe selectivity is not a contradiction. It says this single-site linear monitor did not isolate the influence. The representation may be distributed, at a different site, non-linear, or simply underpowered at this sample size.
 
 ## Ledger reconciliation
 

@@ -1,0 +1,133 @@
+{
+  "advanced_relation_geometry.csv": {
+    "families": {
+      "capital_of": 28,
+      "color_of": 14,
+      "comparative_of": 24,
+      "continent_of": 31,
+      "currency_of": 18,
+      "home_of": 10,
+      "language_of": 34,
+      "material_of": 12,
+      "month_after": 12,
+      "month_before": 12,
+      "opposite_of": 24,
+      "plural_of": 25
+    },
+    "generator": "make_advanced_relation_sets.py",
+    "rows": 244,
+    "sha256": "1126f54728e0626c39a6a657fdf647f463629cb938961198b7bbc24478172a02",
+    "verified_tokenizers": [
+      "gpt2",
+      "allenai/Olmo-3-7B-Instruct"
+    ]
+  },
+  "affect_emotion_pairs.csv": {
+    "confounds": {
+      "arousal_neutral": 2,
+      "positive_calm": 2,
+      "surprising_neutral": 2
+    },
+    "generator": "make_emotion_pairs.py",
+    "pairing": "emotion-laden text/prompt matched to neutral paraphrase/prompt by cause",
+    "rows": 30,
+    "sha256": "c140410c5742390011334c9f1cb3e19a1ed418a0c1c0119550422f97b498613f",
+    "target_emotions": {
+      "anger": 6,
+      "fear": 6,
+      "joy": 6,
+      "sadness": 6
+    },
+    "verified_tokenizers": []
+  },
+  "certainty_calibration_items.csv": {
+    "answerable_counts": {
+      "0": 18,
+      "1": 18
+    },
+    "families": {
+      "factual_qa": 12,
+      "freeform_answerability": 12,
+      "mcq": 12
+    },
+    "generator": "make_certainty_calibration.py",
+    "pairing": "fixed A/B/C/D answer choices plus confident/hedged statement pair per item",
+    "rows": 36,
+    "sha256": "487947987d973d67b49196d160702edee2641491b3c8b7500fdf401db69380d2",
+    "source_files": [
+      "mcq_items.csv"
+    ],
+    "verified_tokenizers": []
+  },
+  "humor_incongruity_pairs.csv": {
+    "conditions": {
+      "joke": 20,
+      "literal": 20,
+      "positive": 20,
+      "silly": 20,
+      "surprise": 20
+    },
+    "families": {
+      "caption_scene": 5,
+      "expectation_violation": 5,
+      "pun_wordplay": 5,
+      "resolution_twist": 5
+    },
+    "generator": "make_humor_incongruity.py",
+    "pairing": "one setup with joke, literal, surprising-not-funny, silly-not-joke, and positive-not-joke completions",
+    "rows": 20,
+    "sha256": "de6e9ef3fb961a2d59f310110efa00143f59b408896193832b7c481f54160780",
+    "source": "authored course micro-scenes; no long copyrighted excerpts",
+    "verified_tokenizers": []
+  },
+  "persona_register_pairs.csv": {
+    "families": {
+      "agreement": 6,
+      "persona": 6,
+      "register": 6,
+      "voice": 6
+    },
+    "generator": "make_persona_register_pairs.py",
+    "pairing": "positive persona/register/voice prompt versus matched negative/control prompt over the same task",
+    "rows": 24,
+    "sha256": "784572e5d4474eb37a3861c50ed301ea8f80818ebe0dd5d7f17d968e6518e744",
+    "task_kinds": {
+      "coding": 4,
+      "factual": 4,
+      "math": 4,
+      "planning": 4,
+      "science": 4,
+      "writing": 4
+    },
+    "traits": {
+      "character_museum_guide": 6,
+      "honest_disagreement": 6,
+      "technical_register": 6,
+      "warm_supportive_voice": 6
+    },
+    "verified_tokenizers": []
+  },
+  "sycophancy_pressure_items.csv": {
+    "base_facts": 40,
+    "conditions": {
+      "authority_pressure": 40,
+      "correct_belief_control": 40,
+      "false_belief": 40,
+      "identity_pressure": 40,
+      "mild_pressure": 40,
+      "neutral": 40
+    },
+    "domains": {
+      "history": 48,
+      "math": 48,
+      "science": 48,
+      "technology": 48,
+      "trivia": 48
+    },
+    "generator": "make_sycophancy_pressure.py",
+    "pairing": "six pressure variants per base misconception; false-belief and correct-belief controls are paired by base_id",
+    "rows": 240,
+    "sha256": "a6324141f57a3539f5d7aa82456226c51271aabb569dc2acfa24a9654b2734fa",
+    "verified_tokenizers": []
+  }
+}

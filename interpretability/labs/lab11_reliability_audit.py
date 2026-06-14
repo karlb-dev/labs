@@ -2939,3 +2939,1015 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "[lab11] wrote audit_report.md, ledger_reconciliation.md, "
         f"safety_case_and_rebuttal.md, and {len(claims)} drafted claims"
     )
+
+
+# ---------------------------------------------------------------------------
+# Visualization upgrade: capstone evidence atlas
+# ---------------------------------------------------------------------------
+# These definitions intentionally shadow the compact plotting helpers above.
+# The lab logic is unchanged; the audit now writes a richer set of plots and
+# small synthesis tables so the capstone reads like an evidence dossier instead
+# of a single dashboard.
+
+LAB11_RUNG_COLORS = {
+    "OBS": "#4C78A8",
+    "ATTR": "#F58518",
+    "DECODE": "#54A24B",
+    "CAUSAL": "#E45756",
+    "SELF-REPORT": "#B279A2",
+    "behavioral CAUSAL": "#E45756",
+}
+LAB11_DOMAIN_COLORS = {
+    "factual_qa": "#4C78A8",
+    "cot_faithfulness": "#B279A2",
+    "sentiment_negation": "#54A24B",
+    "plain": "#4C78A8",
+    "negated": "#E45756",
+    "base": "#4C78A8",
+    "para_city": "#72B7B2",
+    "para_in": "#F58518",
+}
+LAB11_STATUS_COLORS = {
+    "ok": "#54A24B",
+    "warning": "#F58518",
+    "fail": "#E45756",
+    "control": "#8C8C8C",
+    "unknown": "#BDBDBD",
+    "target_clean_patch": "#54A24B",
+    "unrelated_clean_control": "#8C8C8C",
+    "plain_clean_patch": "#54A24B",
+    "unrelated_plain_control": "#8C8C8C",
+}
+
+
+def _csv_rows(path: pathlib.Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    with path.open(newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+def _f(value: Any, default: float | None = None) -> float | None:
+    val = as_float(value)
+    if val is None or not math.isfinite(val):
+        return default
+    return val
+
+
+def _b(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "ok"}
+
+
+def _mean_f(values: Sequence[Any], default: float | None = None) -> float | None:
+    val = mean(values)
+    return default if val is None else float(val)
+
+
+def _median_f(values: Sequence[Any], default: float | None = None) -> float | None:
+    val = median(values)
+    return default if val is None else float(val)
+
+
+def _clip01(x: float | None) -> float:
+    if x is None or not math.isfinite(x):
+        return 0.0
+    return max(0.0, min(1.0, float(x)))
+
+
+
+def _short_label(value: Any, max_len: int = 24) -> str:
+    text = str(value)
+    return text if len(text) <= max_len else text[: max_len - 1] + "…"
+
+def _group(rows: Sequence[Mapping[str, Any]], key: str) -> dict[str, list[Mapping[str, Any]]]:
+    out: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in rows:
+        out[str(row.get(key, ""))].append(row)
+    return out
+
+
+def _color(key: str, default: str = "#4C78A8") -> str:
+    return LAB11_DOMAIN_COLORS.get(key, LAB11_STATUS_COLORS.get(key, LAB11_RUNG_COLORS.get(key, default)))
+
+
+def _zero(ax: Any) -> None:
+    ax.axhline(0, color="#333333", lw=0.8, alpha=0.7)
+
+
+def _chance(ax: Any, y: float = 0.5, label: str = "chance") -> None:
+    ax.axhline(y, color="#333333", lw=0.8, ls="--", alpha=0.65, label=label)
+
+
+def _bar_labels(ax: Any, bars: Any, fmt: str = "{:.2f}", dy: float = 0.01) -> None:
+    for b in bars:
+        try:
+            h = float(b.get_height())
+        except Exception:
+            continue
+        if not math.isfinite(h):
+            continue
+        va = "bottom" if h >= 0 else "top"
+        y = h + (dy if h >= 0 else -dy)
+        ax.text(b.get_x() + b.get_width() / 2, y, fmt.format(h), ha="center", va=va, fontsize=8)
+
+
+def _save(ctx: bench.RunContext, fig: Any, name: str, description: str) -> None:
+    fig.tight_layout()
+    if hasattr(bench, "save_figure"):
+        bench.save_figure(ctx, fig, name, description)
+    else:
+        import matplotlib.pyplot as plt
+        path = ctx.path("plots", name)
+        fig.text(0.995, 0.005, ctx.plot_footer(), ha="right", va="bottom", fontsize=6.5, color="#555555")
+        fig.savefig(path, dpi=170, bbox_inches="tight")
+        plt.close(fig)
+        ctx.register_artifact(path, "plot", description)
+
+
+def _write_plot_guide(ctx: bench.RunContext, domain: str, rows: list[dict[str, str]]) -> None:
+    path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", f"Plot reading guide for the {domain} audit artifacts.")
+
+
+def _write_scorecard(ctx: bench.RunContext, domain: str, rows: list[dict[str, Any]]) -> None:
+    path = ctx.path("tables", "audit_scorecard.csv")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", f"Compact {domain} audit scorecard: metric, rung, value, artifact, and caveat.")
+    if not bool(arg_value(ctx.args, "no_plots", False)):
+        _plot_scorecard(ctx, domain, rows)
+
+
+def _plot_scorecard(ctx: bench.RunContext, domain: str, rows: list[dict[str, Any]]) -> None:
+    try:
+        import matplotlib.pyplot as plt
+        import numpy as np
+    except Exception:
+        return
+    if not rows:
+        return
+    labels = [str(r.get("metric", "")) for r in rows]
+    values = [_clip01(_f(r.get("value"), 0.0)) for r in rows]
+    levels = [str(r.get("evidence_level", "")) for r in rows]
+    colors = [LAB11_RUNG_COLORS.get(l.split()[0], _color(l, "#8C8C8C")) for l in levels]
+    fig, ax = plt.subplots(figsize=(max(9.5, 0.72 * len(rows)), 5.0))
+    x = np.arange(len(rows))
+    bars = ax.bar(x, values, color=colors, alpha=0.9)
+    _bar_labels(ax, bars)
+    ax.axhline(0.5, color="#333333", lw=0.8, ls="--", alpha=0.55)
+    ax.axhline(1.0, color="#333333", lw=0.8, alpha=0.35)
+    ax.set_xticks(x)
+    ax.set_xticklabels([_short_label(l, 24) for l in labels], rotation=28, ha="right")
+    ax.set_ylim(0, 1.05)
+    ax.set_ylabel("normalized headline value")
+    ax.set_title(f"{domain} audit scorecard: rungs stay separated")
+    handles = []
+    for lvl in sorted(set(levels)):
+        handles.append(plt.Line2D([0], [0], marker="s", linestyle="", color=LAB11_RUNG_COLORS.get(lvl.split()[0], _color(lvl, "#8C8C8C")), label=lvl))
+    if handles:
+        ax.legend(handles=handles, frameon=False, fontsize=8, ncol=min(4, len(handles)))
+    _save(ctx, fig, "audit_scorecard.png", "Headline audit scorecard colored by evidence rung; this is not a single confidence score.")
+
+
+def _imshow(ax: Any, mat: Any, row_labels: Sequence[str], col_labels: Sequence[str], *, title: str, cmap: str = "coolwarm", vmin: float | None = None, vmax: float | None = None, cbar: bool = True) -> Any:
+    import numpy as np
+    arr = np.asarray(mat, dtype=float)
+    if arr.size == 0:
+        ax.text(0.5, 0.5, "no rows", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return None
+    im = ax.imshow(arr, aspect="auto", cmap=cmap, vmin=vmin, vmax=vmax)
+    ax.set_xticks(range(len(col_labels)))
+    ax.set_xticklabels(list(col_labels), rotation=30, ha="right")
+    ax.set_yticks(range(len(row_labels)))
+    ax.set_yticklabels(list(row_labels))
+    ax.set_title(title)
+    for i in range(arr.shape[0]):
+        for j in range(arr.shape[1]):
+            val = arr[i, j]
+            if math.isfinite(float(val)):
+                txt = f"{val:.2g}" if abs(val) < 10 else f"{val:.0f}"
+                ax.text(j, i, txt, ha="center", va="center", fontsize=7, color="black")
+    return im
+
+
+def _setup_matplotlib() -> None:
+    if hasattr(bench, "configure_matplotlib"):
+        bench.configure_matplotlib()
+
+
+# ---------------------------------------------------------------------------
+# Factual QA visual upgrades
+# ---------------------------------------------------------------------------
+
+
+def _factual_scorecard(ctx: bench.RunContext, bundle: bench.ModelBundle, rows: list[dict[str, Any]], fact_rows: list[dict[str, Any]], causal_rows: list[dict[str, Any]], monitor: dict[str, Any]) -> list[dict[str, Any]]:
+    target_patch = [c for c in causal_rows if c.get("condition") == "target_clean_patch"]
+    control_patch = [c for c in causal_rows if c.get("condition") == "unrelated_clean_control"]
+    scorecard = [
+        {"metric": "exact top-1 accuracy", "value": rounded(fraction(rows, "correct_exact_top1"), 3), "evidence_level": "OBS", "artifact": "results.csv", "caveat": "Next-token top-1 can be punctuation or a phrase even when the target wins the two-way metric."},
+        {"metric": "target-vs-distractor preference", "value": rounded(fraction(rows, "prefers_target_over_distractor"), 3), "evidence_level": "OBS", "artifact": "results.csv", "caveat": "Only compares the labeled target against one distractor."},
+        {"metric": "paraphrase-consistent facts", "value": rounded(fraction(fact_rows, "consistent_preference"), 3), "evidence_level": "OBS", "artifact": "tables/paraphrase_consistency.csv", "caveat": "Three templates are a smoke test for wording robustness, not a paraphrase universe."},
+        {"metric": "median preference stabilization depth fraction", "value": rounded((_median_f([r.get("lens_preference_depth_frac") for r in rows], None)), 3), "evidence_level": "OBS", "artifact": "tables/lens_stabilization.csv", "caveat": "A readable lens preference is not a causal readout path."},
+        {"metric": "target-clean patch recovery", "value": rounded(mean([c.get("recovery") for c in target_patch]), 3), "evidence_level": "CAUSAL", "artifact": "tables/causal_subset.csv", "caveat": "Scoped to selected base-template facts, sites, and the target-vs-distractor metric."},
+        {"metric": "unrelated-clean control recovery", "value": rounded(mean([c.get("recovery") for c in control_patch]), 3), "evidence_level": "CAUSAL control", "artifact": "tables/causal_subset.csv", "caveat": "High control recovery weakens the specificity of the patch claim."},
+        {"metric": "truth monitor held-out AUC", "value": monitor.get("held_out_auc"), "evidence_level": "DECODE", "artifact": "internal_evidence/truth_monitor.json", "caveat": "A monitor direction is not itself evidence of causal use."},
+        {"metric": "truth monitor selectivity over shuffled", "value": monitor.get("selectivity"), "evidence_level": "DECODE control", "artifact": "internal_evidence/truth_monitor.json", "caveat": "Near-zero selectivity is an informative negative."},
+    ]
+    _write_scorecard(ctx, "factual_qa", scorecard)
+
+    site_rows: list[dict[str, Any]] = []
+    for site, rs in sorted(_group(causal_rows, "site").items()):
+        target = [r for r in rs if r.get("condition") == "target_clean_patch"]
+        control = [r for r in rs if r.get("condition") == "unrelated_clean_control"]
+        mt = mean([r.get("recovery") for r in target])
+        mc = mean([r.get("recovery") for r in control])
+        site_rows.append({
+            "site": site,
+            "mean_target_clean_patch": rounded(mt, 3),
+            "mean_unrelated_clean_control": rounded(mc, 3),
+            "specificity_gap": rounded((mt or 0.0) - (mc or 0.0), 3) if mt is not None and mc is not None else "",
+            "n_target": len(target),
+            "n_control": len(control),
+        })
+    if site_rows:
+        path = ctx.path("tables", "patch_specificity_by_site.csv")
+        bench.write_csv_with_context(ctx, path, site_rows)
+        ctx.register_artifact(path, "table", "Factual patch specificity by site: matched patch, unrelated-control patch, and gap.")
+    return scorecard
+
+
+def _plot_factual_dashboard(ctx: bench.RunContext, bundle: bench.ModelBundle, rows: list[dict[str, Any]], fact_rows: list[dict[str, Any]], causal_rows: list[dict[str, Any]], monitor: dict[str, Any]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    _setup_matplotlib()
+    fig, axes = plt.subplots(2, 2, figsize=(13.5, 8.2))
+
+    # Template behavior.
+    templates = [t for t in TEMPLATES if any(str(r.get("template_id")) == t for r in rows)]
+    x = np.arange(len(templates))
+    exact = [fraction([r for r in rows if r.get("template_id") == t], "correct_exact_top1") or 0 for t in templates]
+    pref = [fraction([r for r in rows if r.get("template_id") == t], "prefers_target_over_distractor") or 0 for t in templates]
+    ax = axes[0, 0]
+    w = 0.38
+    b1 = ax.bar(x - w/2, exact, width=w, color="#4C78A8", label="exact top-1")
+    b2 = ax.bar(x + w/2, pref, width=w, color="#54A24B", label="target > distractor")
+    _bar_labels(ax, b1); _bar_labels(ax, b2)
+    ax.set_xticks(x); ax.set_xticklabels(templates, rotation=20, ha="right")
+    ax.set_ylim(0, 1.05)
+    ax.set_title("Behavior by paraphrase template")
+    ax.set_ylabel("rate")
+    ax.legend(frameon=False)
+
+    # Stabilization versus final preference.
+    ax = axes[0, 1]
+    for t in templates:
+        rs = [r for r in rows if r.get("template_id") == t]
+        xs = [_f(r.get("lens_preference_depth_frac"), 0.0) for r in rs]
+        ys = [_f(r.get("logit_diff_target_minus_distractor"), 0.0) for r in rs]
+        ax.scatter(xs, ys, s=45, alpha=0.75, label=t, color=_color(t))
+    ax.axhline(0, color="#333333", lw=0.8)
+    ax.set_xlabel("preference stabilization depth / n_layers")
+    ax.set_ylabel("final logit(target) - logit(distractor)")
+    ax.set_title("Stable readout timing vs final preference")
+    ax.legend(frameon=False, fontsize=7)
+
+    # Patch specificity by site.
+    ax = axes[1, 0]
+    sites = sorted({str(c.get("site")) for c in causal_rows})
+    x = np.arange(len(sites))
+    target_vals = [mean([c.get("recovery") for c in causal_rows if c.get("site") == s and c.get("condition") == "target_clean_patch"]) or 0 for s in sites]
+    control_vals = [mean([c.get("recovery") for c in causal_rows if c.get("site") == s and c.get("condition") == "unrelated_clean_control"]) or 0 for s in sites]
+    b1 = ax.bar(x - w/2, target_vals, width=w, color="#54A24B", alpha=0.75, label="target clean patch")
+    b2 = ax.bar(x + w/2, control_vals, width=w, color="#8C8C8C", alpha=0.75, label="unrelated clean control")
+    for i, s in enumerate(sites):
+        for condition, dx, color in (("target_clean_patch", -w/2, "#1B7F3A"), ("unrelated_clean_control", w/2, "#555555")):
+            vals = [_f(c.get("recovery")) for c in causal_rows if c.get("site") == s and c.get("condition") == condition]
+            vals = [v for v in vals if v is not None]
+            jitter = np.linspace(-0.05, 0.05, max(1, len(vals)))
+            ax.scatter([i + dx + j for j in jitter], vals, s=22, color=color, alpha=0.65, zorder=3)
+    _bar_labels(ax, b1); _bar_labels(ax, b2)
+    ax.axhline(0, color="#333333", lw=0.8); ax.axhline(1, color="#333333", lw=0.8, ls="--", alpha=0.5)
+    ax.set_xticks(x); ax.set_xticklabels(sites, rotation=15, ha="right")
+    ax.set_ylabel("recovery")
+    ax.set_title("Causal patch specificity")
+    ax.legend(frameon=False, fontsize=7)
+
+    # Monitor AUC.
+    ax = axes[1, 1]
+    vals: list[tuple[str, float | None, str]] = [
+        ("train", _f(monitor.get("train_auc")), "#4C78A8"),
+        ("held-out", _f(monitor.get("held_out_auc")), "#54A24B"),
+        ("shuffled", _f(monitor.get("shuffled_control_auc")), "#8C8C8C"),
+    ]
+    names = [v[0] for v in vals if v[1] is not None]
+    ys = [float(v[1]) for v in vals if v[1] is not None]
+    cs = [v[2] for v in vals if v[1] is not None]
+    if ys:
+        bars = ax.bar(names, ys, color=cs, alpha=0.85)
+        _bar_labels(ax, bars)
+        ax.set_ylim(0, 1.05)
+    else:
+        ax.text(0.5, 0.5, monitor.get("reason", "monitor skipped"), transform=ax.transAxes, ha="center", va="center")
+    _chance(ax)
+    ax.set_title("Truth monitor: DECODE, not use")
+    ax.set_ylabel("AUC")
+
+    fig.suptitle("Lab 11 factual QA reliability audit: behavior, timing, specificity, monitor", fontsize=14)
+    _save(ctx, fig, "audit_dashboard.png", "Factual QA audit dashboard: template behavior, stabilization, patch specificity, and truth monitor.")
+
+
+def _plot_factual_paraphrase_atlas(ctx: bench.RunContext, rows: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    facts = sorted({str(r.get("fact_id")) for r in rows})
+    templates = [t for t in TEMPLATES if any(str(r.get("template_id")) == t for r in rows)]
+    mat = []
+    for fid in facts:
+        row = []
+        for t in templates:
+            rr = next((r for r in rows if str(r.get("fact_id")) == fid and str(r.get("template_id")) == t), None)
+            row.append(_f(rr.get("logit_diff_target_minus_distractor"), float("nan")) if rr else float("nan"))
+        mat.append(row)
+    vmax = max([abs(v) for row in mat for v in row if math.isfinite(v)] or [1.0])
+    fig, ax = plt.subplots(figsize=(max(7.0, 0.52 * len(templates) + 4), max(5.0, 0.28 * len(facts) + 1.8)))
+    im = _imshow(ax, mat, facts, templates, title="Paraphrase atlas: logit(target) - logit(distractor)", cmap="coolwarm", vmin=-vmax, vmax=vmax)
+    if im is not None:
+        fig.colorbar(im, ax=ax, shrink=0.8, label="logit diff")
+    _save(ctx, fig, "factual_paraphrase_atlas.png", "Fact-by-template atlas of factual QA margins; exposes template fragility and robust facts.")
+
+
+def _plot_factual_patch_specificity(ctx: bench.RunContext, causal_rows: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    if not causal_rows:
+        return
+    sites = sorted({str(r.get("site")) for r in causal_rows})
+    fig, ax = plt.subplots(figsize=(10.5, 5.2))
+    xmap = {s: i for i, s in enumerate(sites)}
+    for s in sites:
+        by_fact: dict[str, dict[str, float]] = defaultdict(dict)
+        for r in causal_rows:
+            if str(r.get("site")) != s:
+                continue
+            by_fact[str(r.get("clean_fact"))][str(r.get("condition"))] = _f(r.get("recovery"), 0.0) or 0.0
+        base = xmap[s]
+        for fid, vals in by_fact.items():
+            y1 = vals.get("target_clean_patch")
+            y2 = vals.get("unrelated_clean_control")
+            if y1 is not None:
+                ax.scatter(base - 0.12, y1, color="#54A24B", s=34, alpha=0.75)
+            if y2 is not None:
+                ax.scatter(base + 0.12, y2, color="#8C8C8C", s=34, alpha=0.75)
+            if y1 is not None and y2 is not None:
+                ax.plot([base - 0.12, base + 0.12], [y1, y2], color="#BBBBBB", lw=0.9, alpha=0.65)
+    ax.axhline(0, color="#333333", lw=0.8); ax.axhline(1, color="#333333", ls="--", lw=0.8, alpha=0.6)
+    ax.set_xticks(range(len(sites))); ax.set_xticklabels(sites)
+    ax.set_ylabel("recovery")
+    ax.set_title("Matched patch versus unrelated-clean control, per fact")
+    ax.scatter([], [], color="#54A24B", label="target clean patch")
+    ax.scatter([], [], color="#8C8C8C", label="unrelated clean control")
+    ax.legend(frameon=False)
+    _save(ctx, fig, "factual_patch_specificity.png", "Per-fact matched-vs-control patch recovery; the gap is the causal specificity receipt.")
+
+
+def _plot_truth_monitor_projection(ctx: bench.RunContext, monitor: Mapping[str, Any]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    rows = _csv_rows(ctx.path("tables", "truth_monitor_statements.csv"))
+    sweep = _csv_rows(ctx.path("tables", "truth_monitor_layer_sweep.csv"))
+    if not rows and not sweep:
+        return
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.7))
+    ax = axes[0]
+    if rows:
+        groups = [("train false", "train", 0), ("train true", "train", 1), ("held false", "heldout", 0), ("held true", "heldout", 1)]
+        xs=[]; labels=[]
+        for i, (name, split, label) in enumerate(groups):
+            vals = [_f(r.get("projection")) for r in rows if str(r.get("split")) == split and int(float(r.get("label", 0))) == label]
+            vals = [v for v in vals if v is not None]
+            if vals:
+                jitter = np.linspace(-0.06, 0.06, max(1, len(vals)))
+                ax.scatter([i + j for j in jitter], vals, s=34, alpha=0.75, color="#54A24B" if label else "#E45756")
+                ax.plot([i-0.18, i+0.18], [statistics.median(vals)]*2, color="#111111", lw=2)
+            labels.append(name)
+        ax.axhline(0, color="#333333", lw=0.8)
+        ax.set_xticks(range(len(labels))); ax.set_xticklabels(labels, rotation=25, ha="right")
+        ax.set_ylabel("projection")
+        ax.set_title("Truth-monitor projections")
+    else:
+        ax.text(0.5,0.5,"statement projections unavailable",ha="center",va="center",transform=ax.transAxes)
+    ax = axes[1]
+    if sweep:
+        layers = [int(float(r["layer"])) for r in sweep if r.get("layer") not in (None, "")]
+        for key, color, label in (("train_auc", "#4C78A8", "train"), ("held_out_auc", "#54A24B", "held-out"), ("shuffled_control_auc", "#8C8C8C", "shuffled")):
+            ys = [_f(r.get(key)) for r in sweep if r.get("layer") not in (None, "")]
+            ys = [0.5 if y is None else y for y in ys]
+            if layers and ys:
+                ax.plot(layers, ys, marker="o", color=color, label=label)
+        selected = [int(float(r["layer"])) for r in sweep if _b(r.get("selected")) and r.get("layer") not in (None, "")]
+        for s in selected:
+            ax.axvline(s, color="#333333", lw=0.8, ls="--")
+        ax.set_ylim(0, 1.05); _chance(ax)
+        ax.set_xlabel("stream depth")
+        ax.set_ylabel("AUC")
+        ax.set_title("Layer choice audit")
+        ax.legend(frameon=False)
+    else:
+        ax.text(0.5,0.5,"layer sweep unavailable",ha="center",va="center",transform=ax.transAxes)
+    fig.suptitle("Truth-monitor audit: held-out separation versus shuffled control")
+    _save(ctx, fig, "truth_monitor_projection.png", "Truth-monitor projection and layer-sweep audit; keeps DECODE evidence scoped.")
+
+
+def _plot_factual_method_agreement(ctx: bench.RunContext, rows: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    if not rows:
+        return
+    fig, ax = plt.subplots(figsize=(9.2, 5.2))
+    xs = [_f(r.get("dla_ledger_total"), 0.0) for r in rows]
+    ys = [_f(r.get("logit_diff_target_minus_distractor"), 0.0) for r in rows]
+    colors = [_color(str(r.get("template_id", "base"))) for r in rows]
+    ax.scatter(xs, ys, c=colors, s=42, alpha=0.75)
+    _zero(ax); ax.axvline(0, color="#333333", lw=0.8)
+    lim = max([abs(v) for v in xs + ys if v is not None] or [1.0])
+    ax.plot([-lim, lim], [-lim, lim], color="#888888", ls="--", lw=0.9, label="ledger = final diff")
+    ax.set_xlabel("frozen-norm DLA ledger total")
+    ax.set_ylabel("model final logit diff")
+    ax.set_title("Attribution ledger versus final behavior")
+    for t in sorted({str(r.get("template_id")) for r in rows}):
+        ax.scatter([], [], color=_color(t), label=t)
+    ax.legend(frameon=False, fontsize=7)
+    _save(ctx, fig, "factual_dla_behavior_alignment.png", "DLA ledger total versus model final margin; flags arithmetic/interpretation mismatches.")
+
+
+def maybe_make_factual_plots(ctx: bench.RunContext, bundle: bench.ModelBundle, rows: list[dict[str, Any]], fact_rows: list[dict[str, Any]], causal_rows: list[dict[str, Any]], monitor: dict[str, Any]) -> None:
+    _factual_scorecard(ctx, bundle, rows, fact_rows, causal_rows, monitor)
+    if bool(arg_value(ctx.args, "no_plots", False)):
+        return
+    _plot_factual_dashboard(ctx, bundle, rows, fact_rows, causal_rows, monitor)
+    _plot_factual_paraphrase_atlas(ctx, rows)
+    _plot_factual_patch_specificity(ctx, causal_rows)
+    _plot_truth_monitor_projection(ctx, monitor)
+    _plot_factual_method_agreement(ctx, rows)
+    _write_plot_guide(ctx, "factual_qa", [
+        {"plot": "audit_dashboard.png", "concept": "capstone overview", "read_for": "behavior, readout timing, causal specificity, and DECODE monitor in one place"},
+        {"plot": "factual_paraphrase_atlas.png", "concept": "template robustness", "read_for": "facts/templates where the target margin collapses"},
+        {"plot": "factual_patch_specificity.png", "concept": "causal intervention specificity", "read_for": "target-clean patch beating unrelated-clean control"},
+        {"plot": "truth_monitor_projection.png", "concept": "DECODE monitor", "read_for": "held-out separation versus shuffled and train selection"},
+        {"plot": "factual_dla_behavior_alignment.png", "concept": "ATTR ledger sanity", "read_for": "where attribution totals disagree with final behavior"},
+    ])
+
+
+# ---------------------------------------------------------------------------
+# CoT faithfulness visual upgrades
+# ---------------------------------------------------------------------------
+
+
+def _cot_metric(row: Mapping[str, Any], *keys: str, default: float = 0.0) -> float:
+    return _f(row_metric(row, *keys), default) or default
+
+
+def _cot_wrong_rows(table: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [r for r in table if str(r.get("condition", "")).endswith("_wrong")]
+
+
+def _cot_scorecard(ctx: bench.RunContext, table: list[dict[str, Any]], probe: dict[str, Any]) -> None:
+    wrongs = _cot_wrong_rows(table)
+    scorecard = [
+        {"metric": "baseline accuracy", "value": rounded(next((_cot_metric(r, "accuracy") for r in table if r.get("condition") == "baseline"), None), 3), "evidence_level": "OBS", "artifact": "tables/faithfulness_by_hint_type.csv", "caveat": "Fresh-slice behavior may differ from Lab 10."},
+        {"metric": "max wrong-hint flip rate", "value": rounded(max((_cot_metric(r, "flip_rate") for r in wrongs), default=0.0), 3), "evidence_level": "SELF-REPORT / behavior", "artifact": "tables/faithfulness_by_hint_type.csv", "caveat": "A flip is behavior, not evidence of intent or honesty."},
+        {"metric": "max silent wrong-hint flip rate", "value": rounded(max((_cot_metric(r, "silent_flip_rate", "silent_flip_rate_auto") for r in wrongs), default=0.0), 3), "evidence_level": "SELF-REPORT", "artifact": "tables/faithfulness_by_hint_type.csv", "caveat": "Auto labels are drafts; hand-label before citing."},
+        {"metric": "hint-presence probe held-out AUC", "value": probe.get("held_out_auc"), "evidence_level": "DECODE", "artifact": "internal_evidence/hint_presence_probe.json", "caveat": "Separability of hinted prompts is not a causal path."},
+        {"metric": "hint-presence probe selectivity", "value": probe.get("selectivity"), "evidence_level": "DECODE control", "artifact": "internal_evidence/hint_presence_probe.json", "caveat": "Near-zero selectivity is a legitimate negative."},
+    ]
+    # Pull in load-bearing summary if Lab 10 helper wrote it.
+    summary_path = ctx.path("metrics", "cot_load_summary.json")
+    if summary_path.exists():
+        try:
+            import json
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            scorecard += [
+                {"metric": "necessity gain", "value": summary.get("necessity_gain"), "evidence_level": "behavioral CAUSAL", "artifact": "tables/necessity_curve.csv", "caveat": "Text-channel intervention; does not locate an internal causal path."},
+                {"metric": "mistake follow rate", "value": summary.get("mistake_follow_rate"), "evidence_level": "behavioral CAUSAL", "artifact": "tables/add_mistake_results.csv", "caveat": "Injected wrong claim, not a verified corrupted reasoning step."},
+            ]
+        except Exception:
+            pass
+    _write_scorecard(ctx, "cot_faithfulness", scorecard)
+
+
+def _plot_cot_dashboard(ctx: bench.RunContext, table: list[dict[str, Any]], probe: dict[str, Any]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    _setup_matplotlib()
+    fig, axes = plt.subplots(2, 2, figsize=(13.5, 8.0))
+    wrongs = _cot_wrong_rows(table)
+    labels = [str(r.get("condition", "")).replace("_wrong", "") for r in wrongs]
+    x = np.arange(len(labels))
+    ax = axes[0, 0]
+    flips = [_cot_metric(r, "flip_rate") for r in wrongs]
+    silent = [_cot_metric(r, "silent_flip_rate", "silent_flip_rate_auto") for r in wrongs]
+    w = 0.38
+    b1 = ax.bar(x - w/2, flips, width=w, color="#E45756", label="flips to hinted wrong")
+    b2 = ax.bar(x + w/2, silent, width=w, color="#333333", label="silent flips (auto)")
+    _bar_labels(ax, b1); _bar_labels(ax, b2)
+    ax.set_xticks(x); ax.set_xticklabels(labels, rotation=25, ha="right")
+    ax.set_ylim(0, 1.05); ax.set_ylabel("rate")
+    ax.set_title("Wrong-hint susceptibility")
+    ax.legend(frameon=False, fontsize=7)
+
+    ax = axes[0, 1]
+    mention = [_cot_metric(r, "mention_rate", "auto_mention_rate") for r in wrongs]
+    attrib = [_cot_metric(r, "attribution_rate", "auto_attribution_rate") for r in wrongs]
+    b1 = ax.bar(x - w/2, mention, width=w, color="#4C78A8", label="mentions hint")
+    b2 = ax.bar(x + w/2, attrib, width=w, color="#F58518", label="credits hint")
+    _bar_labels(ax, b1); _bar_labels(ax, b2)
+    ax.set_xticks(x); ax.set_xticklabels(labels, rotation=25, ha="right")
+    ax.set_ylim(0, 1.05); ax.set_ylabel("rate among flips")
+    ax.set_title("Self-report: mention is not attribution")
+    ax.legend(frameon=False, fontsize=7)
+
+    ax = axes[1, 0]
+    curve = _csv_rows(ctx.path("tables", "necessity_curve.csv"))
+    if curve:
+        xs = [_f(r.get("k_fraction"), 0.0) for r in curve]
+        ys = [_f(r.get("accuracy"), 0.0) for r in curve]
+        se = [_f(r.get("accuracy_se"), 0.0) for r in curve]
+        ax.plot(xs, ys, marker="o", color="#4C78A8", label="truncated real CoT")
+        ax.fill_between(xs, [y - (s or 0) for y, s in zip(ys, se)], [y + (s or 0) for y, s in zip(ys, se)], color="#4C78A8", alpha=0.15)
+        ax.set_xlabel("fraction of CoT kept")
+        ax.set_ylabel("accuracy")
+        ax.set_ylim(0, 1.05)
+        ax.legend(frameon=False)
+    else:
+        ax.text(0.5, 0.5, "CoT load curve not available", transform=ax.transAxes, ha="center", va="center")
+    ax.set_title("Visible CoT load on fresh slice")
+
+    ax = axes[1, 1]
+    vals = [("train", _f(probe.get("train_auc")), "#4C78A8"), ("held-out", _f(probe.get("held_out_auc")), "#54A24B"), ("shuffled", _f(probe.get("shuffled_control_auc")), "#8C8C8C")]
+    names = [v[0] for v in vals if v[1] is not None]
+    ys = [float(v[1]) for v in vals if v[1] is not None]
+    cs = [v[2] for v in vals if v[1] is not None]
+    if ys:
+        bars = ax.bar(names, ys, color=cs, alpha=0.85)
+        _bar_labels(ax, bars)
+        ax.set_ylim(0, 1.05)
+    else:
+        ax.text(0.5, 0.5, probe.get("reason", "probe skipped"), transform=ax.transAxes, ha="center", va="center")
+    _chance(ax)
+    ax.set_ylabel("AUC")
+    ax.set_title("Hint-presence probe: DECODE only")
+
+    fig.suptitle("Lab 11 CoT faithfulness audit: fresh-slice replication plus monitor", fontsize=14)
+    _save(ctx, fig, "audit_dashboard.png", "CoT audit dashboard: wrong-hint behavior, self-report gap, text intervention, and hint-presence probe.")
+
+
+def _plot_cot_condition_matrix(ctx: bench.RunContext, table: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    if not table:
+        return
+    metrics = ["accuracy", "answer_changed_rate", "flip_rate", "silent_flip_rate", "mention_rate", "attribution_rate"]
+    rows = []
+    labels = []
+    for r in table:
+        labels.append(str(r.get("condition", "")))
+        rows.append([_cot_metric(r, m, m + "_auto") for m in metrics])
+    fig, ax = plt.subplots(figsize=(10, max(3.5, 0.35 * len(labels) + 1.5)))
+    im = _imshow(ax, rows, labels, metrics, title="Hint-condition matrix: behavior and self-report", cmap="viridis", vmin=0, vmax=1)
+    if im is not None:
+        fig.colorbar(im, ax=ax, shrink=0.8, label="rate")
+    _save(ctx, fig, "cot_condition_matrix.png", "Condition-by-metric matrix for fresh-slice CoT hint behavior and self-report labels.")
+
+
+def _plot_hint_probe_projection(ctx: bench.RunContext, probe: Mapping[str, Any]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    ex = _csv_rows(ctx.path("internal_evidence", "hint_presence_probe_examples.csv"))
+    sweep = _csv_rows(ctx.path("internal_evidence", "hint_presence_probe_layer_sweep.csv"))
+    if not ex and not sweep:
+        return
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.7))
+    ax = axes[0]
+    if ex:
+        groups = [("base train", "train", 0), ("hint train", "train", 1), ("base held", "heldout", 0), ("hint held", "heldout", 1)]
+        for i, (name, split, label) in enumerate(groups):
+            vals = [_f(r.get("projection")) for r in ex if str(r.get("split")) == split and int(float(r.get("label_hint_present", 0))) == label]
+            vals = [v for v in vals if v is not None]
+            if vals:
+                jitter = np.linspace(-0.06, 0.06, max(1, len(vals)))
+                ax.scatter([i + j for j in jitter], vals, s=32, color="#E45756" if label else "#4C78A8", alpha=0.75)
+                ax.plot([i-0.18, i+0.18], [statistics.median(vals)]*2, color="#111111", lw=2)
+        ax.axhline(0, color="#333333", lw=0.8)
+        ax.set_xticks(range(len(groups))); ax.set_xticklabels([g[0] for g in groups], rotation=25, ha="right")
+        ax.set_ylabel("projection")
+        ax.set_title("Hint-presence projections")
+    ax = axes[1]
+    if sweep:
+        layers = [int(float(r["layer"])) for r in sweep if r.get("layer") not in (None, "")]
+        for key, color, label in (("train_auc", "#4C78A8", "train"), ("held_out_auc", "#54A24B", "held-out"), ("shuffled_control_auc", "#8C8C8C", "shuffled")):
+            ys = [_f(r.get(key), 0.5) for r in sweep if r.get("layer") not in (None, "")]
+            if layers and ys:
+                ax.plot(layers, ys, marker="o", color=color, label=label)
+        selected = [int(float(r["layer"])) for r in sweep if _b(r.get("selected")) and r.get("layer") not in (None, "")]
+        for s in selected:
+            ax.axvline(s, color="#333333", ls="--", lw=0.8)
+        ax.set_ylim(0, 1.05); _chance(ax)
+        ax.set_xlabel("stream depth"); ax.set_ylabel("AUC")
+        ax.set_title("Probe layer selection")
+        ax.legend(frameon=False)
+    fig.suptitle("Hint-presence monitor audit: separation, not mechanism")
+    _save(ctx, fig, "hint_presence_probe_projection.png", "Hint-presence probe projections and layer sweep; keeps the monitor on the DECODE rung.")
+
+
+def _plot_cot_risk_quadrant(ctx: bench.RunContext, table: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    wrongs = _cot_wrong_rows(table)
+    if not wrongs:
+        return
+    fig, ax = plt.subplots(figsize=(7.8, 6.0))
+    for r in wrongs:
+        cond = str(r.get("condition", "")).replace("_wrong", "")
+        flip = _cot_metric(r, "flip_rate")
+        silent = _cot_metric(r, "silent_flip_rate", "silent_flip_rate_auto")
+        attrib = _cot_metric(r, "attribution_rate", "auto_attribution_rate")
+        omission = max(0.0, flip - attrib)
+        ax.scatter(flip, omission, s=95, color="#E45756" if silent > 0 else "#F58518", alpha=0.85)
+        ax.text(flip + 0.015, omission + 0.015, cond, fontsize=8)
+    ax.axvline(0.2, color="#888888", ls="--", lw=0.8)
+    ax.axhline(0.2, color="#888888", ls="--", lw=0.8)
+    ax.set_xlim(-0.02, 1.02); ax.set_ylim(-0.02, 1.02)
+    ax.set_xlabel("answer moved to hinted wrong option")
+    ax.set_ylabel("flip rate not attributed to hint")
+    ax.set_title("Self-report risk quadrant")
+    ax.text(0.52, 0.92, "danger: behavior moves\nwithout attribution", fontsize=9, ha="center")
+    _save(ctx, fig, "cot_self_report_risk_quadrant.png", "Wrong-hint types placed by behavioral susceptibility and self-report omission.")
+
+
+def maybe_make_cot_plots(ctx: bench.RunContext, table: list[dict[str, Any]], probe: dict[str, Any]) -> None:
+    _cot_scorecard(ctx, table, probe)
+    if bool(arg_value(ctx.args, "no_plots", False)):
+        return
+    _plot_cot_dashboard(ctx, table, probe)
+    _plot_cot_condition_matrix(ctx, table)
+    _plot_hint_probe_projection(ctx, probe)
+    _plot_cot_risk_quadrant(ctx, table)
+    _write_plot_guide(ctx, "cot_faithfulness", [
+        {"plot": "audit_dashboard.png", "concept": "fresh-slice CoT audit", "read_for": "wrong-hint movement, self-report gap, CoT load, and hint-probe selectivity"},
+        {"plot": "cot_condition_matrix.png", "concept": "condition-level evidence", "read_for": "whether controls move answers or parser labels"},
+        {"plot": "hint_presence_probe_projection.png", "concept": "DECODE monitor", "read_for": "held-out separation versus shuffled control"},
+        {"plot": "cot_self_report_risk_quadrant.png", "concept": "behavior/self-report disagreement", "read_for": "upper-right: answer moves and rationale omits the influence"},
+    ])
+
+
+# ---------------------------------------------------------------------------
+# Sentiment-under-negation visual upgrades
+# ---------------------------------------------------------------------------
+
+
+def _sentiment_scorecard(ctx: bench.RunContext, rows: list[dict[str, Any]], pair_rows: list[dict[str, Any]], causal_rows: list[dict[str, Any]], probe: dict[str, Any]) -> None:
+    plain = [r for r in rows if r.get("family") == "plain"]
+    neg = [r for r in rows if r.get("family") == "negated"]
+    target = [c for c in causal_rows if c.get("condition") == "plain_clean_patch"]
+    control = [c for c in causal_rows if c.get("condition") == "unrelated_plain_control"]
+    scorecard = [
+        {"metric": "plain pair-argmax accuracy", "value": rounded(fraction(plain, "correct_pair_argmax"), 3), "evidence_level": "OBS", "artifact": "results.csv", "caveat": "Two-token mood readout only."},
+        {"metric": "negated pair-argmax accuracy", "value": rounded(fraction(neg, "correct_pair_argmax"), 3), "evidence_level": "OBS", "artifact": "results.csv", "caveat": "Minimal negation family, not arbitrary composition."},
+        {"metric": "both twins correct", "value": rounded(fraction(pair_rows, "both_correct"), 3), "evidence_level": "OBS", "artifact": "tables/negation_pair_summary.csv", "caveat": "Pair-level robustness is stricter than family-level accuracy."},
+        {"metric": "negation ignored signature", "value": rounded(fraction(pair_rows, "negation_ignored_signature"), 3), "evidence_level": "OBS", "artifact": "tables/negation_pair_summary.csv", "caveat": "Confident plain win plus negated loss suggests lexical valence."},
+        {"metric": "plain-clean patch recovery", "value": rounded(mean([c.get("recovery") for c in target]), 3), "evidence_level": "CAUSAL", "artifact": "tables/causal_subset.csv", "caveat": "Scoped to final-position stream patches at tested depths."},
+        {"metric": "unrelated-plain control recovery", "value": rounded(mean([c.get("recovery") for c in control]), 3), "evidence_level": "CAUSAL control", "artifact": "tables/causal_subset.csv", "caveat": "High control recovery undercuts specificity."},
+        {"metric": "negated transfer AUC", "value": probe.get("negated_transfer_auc"), "evidence_level": "DECODE", "artifact": "internal_evidence/valence_probe.json", "caveat": "Low transfer from plain to negated means surface valence, not composed meaning."},
+        {"metric": "negated transfer selectivity", "value": probe.get("transfer_selectivity"), "evidence_level": "DECODE control", "artifact": "internal_evidence/valence_probe.json", "caveat": "Compared against shuffled-label control."},
+    ]
+    _write_scorecard(ctx, "sentiment_negation", scorecard)
+
+    depth_rows: list[dict[str, Any]] = []
+    for depth, rs in sorted(_group(causal_rows, "stream_depth").items(), key=lambda kv: int(float(kv[0])) if str(kv[0]).replace('.', '', 1).isdigit() else 0):
+        t = [r for r in rs if r.get("condition") == "plain_clean_patch"]
+        c = [r for r in rs if r.get("condition") == "unrelated_plain_control"]
+        mt = mean([r.get("recovery") for r in t])
+        mc = mean([r.get("recovery") for r in c])
+        depth_rows.append({"stream_depth": depth, "mean_plain_patch": rounded(mt, 3), "mean_unrelated_control": rounded(mc, 3), "specificity_gap": rounded((mt or 0.0) - (mc or 0.0), 3) if mt is not None and mc is not None else "", "n_plain_patch": len(t), "n_control": len(c)})
+    if depth_rows:
+        path = ctx.path("tables", "sentiment_patch_specificity_by_depth.csv")
+        bench.write_csv_with_context(ctx, path, depth_rows)
+        ctx.register_artifact(path, "table", "Sentiment patch specificity by depth: plain-clean patch, unrelated control, and gap.")
+
+
+def _plot_sentiment_dashboard(ctx: bench.RunContext, rows: list[dict[str, Any]], pair_rows: list[dict[str, Any]], causal_rows: list[dict[str, Any]], probe: dict[str, Any]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    _setup_matplotlib()
+    fig, axes = plt.subplots(2, 2, figsize=(13.5, 8.2))
+
+    # Margins by family as violinish box+points.
+    ax = axes[0, 0]
+    families = [f for f in ("plain", "negated") if any(r.get("family") == f for r in rows)]
+    data = [[_f(r.get("margin_toward_true_label"), 0.0) for r in rows if r.get("family") == f] for f in families]
+    ax.boxplot(data, labels=families, showmeans=True, meanprops={"marker":"^", "markerfacecolor":"#54A24B", "markeredgecolor":"#54A24B"})
+    for i, vals in enumerate(data, start=1):
+        jitter = np.linspace(-0.08, 0.08, max(1, len(vals)))
+        ax.scatter([i + j for j in jitter], vals, color=_color(families[i-1]), alpha=0.55, s=24)
+    _zero(ax); ax.set_ylabel("margin toward true mood label")
+    ax.set_title("Behavior by family: composed mood margin")
+
+    # Pair margins.
+    ax = axes[0, 1]
+    for r in pair_rows:
+        x = _f(r.get("plain_margin"), 0.0) or 0.0
+        y = _f(r.get("negated_margin"), 0.0) or 0.0
+        if _b(r.get("both_correct")):
+            color = "#54A24B"; marker = "o"
+        elif _b(r.get("negation_ignored_signature")):
+            color = "#E45756"; marker = "X"
+        else:
+            color = "#F58518"; marker = "o"
+        ax.scatter(x, y, color=color, marker=marker, s=50, alpha=0.75)
+    ax.axhline(0, color="#333333", lw=0.8); ax.axvline(0, color="#333333", lw=0.8)
+    ax.set_xlabel("plain margin toward true label")
+    ax.set_ylabel("negated margin toward true label")
+    ax.set_title("Pair margins: upper-left = negation ignored")
+    ax.scatter([], [], color="#54A24B", label="both correct")
+    ax.scatter([], [], color="#E45756", marker="X", label="negation ignored")
+    ax.scatter([], [], color="#F58518", label="other failure")
+    ax.legend(frameon=False, fontsize=7)
+
+    # Patching by depth.
+    ax = axes[1, 0]
+    depths = sorted({int(float(c.get("stream_depth", 0))) for c in causal_rows})
+    x = np.arange(len(depths)); w = 0.38
+    target = [mean([c.get("recovery") for c in causal_rows if int(float(c.get("stream_depth", 0))) == d and c.get("condition") == "plain_clean_patch"]) or 0 for d in depths]
+    control = [mean([c.get("recovery") for c in causal_rows if int(float(c.get("stream_depth", 0))) == d and c.get("condition") == "unrelated_plain_control"]) or 0 for d in depths]
+    if depths:
+        b1 = ax.bar(x - w/2, target, width=w, color="#54A24B", label="plain clean patch")
+        b2 = ax.bar(x + w/2, control, width=w, color="#8C8C8C", label="unrelated plain control")
+        _bar_labels(ax, b1); _bar_labels(ax, b2)
+        for i, d in enumerate(depths):
+            for condition, dx, color in (("plain_clean_patch", -w/2, "#1B7F3A"), ("unrelated_plain_control", w/2, "#555555")):
+                vals = [_f(c.get("recovery")) for c in causal_rows if int(float(c.get("stream_depth", 0))) == d and c.get("condition") == condition]
+                vals = [v for v in vals if v is not None]
+                jitter = np.linspace(-0.05, 0.05, max(1, len(vals)))
+                ax.scatter([i + dx + j for j in jitter], vals, color=color, s=22, alpha=0.65, zorder=3)
+        ax.set_xticks(x); ax.set_xticklabels([str(d) for d in depths])
+    ax.axhline(0, color="#333333", lw=0.8); ax.axhline(1, color="#333333", ls="--", lw=0.8, alpha=0.6)
+    ax.set_xlabel("stream depth")
+    ax.set_ylabel("recovery toward plain reading")
+    ax.set_title("Plain-into-negated patch specificity")
+    ax.legend(frameon=False, fontsize=7)
+
+    # Probe transfer.
+    ax = axes[1, 1]
+    vals = [("train plain", _f(probe.get("train_auc")), "#4C78A8"), ("held plain", _f(probe.get("held_out_plain_auc")), "#54A24B"), ("negated transfer", _f(probe.get("negated_transfer_auc")), "#E45756"), ("shuffled negated", _f(probe.get("shuffled_control_negated_auc")), "#8C8C8C")]
+    names = [v[0] for v in vals if v[1] is not None]
+    ys = [float(v[1]) for v in vals if v[1] is not None]
+    cs = [v[2] for v in vals if v[1] is not None]
+    if ys:
+        xpos = list(range(len(names)))
+        bars = ax.bar(xpos, ys, color=cs, alpha=0.85)
+        _bar_labels(ax, bars)
+        ax.set_ylim(0, 1.05)
+        ax.set_xticks(xpos)
+        ax.set_xticklabels(names, rotation=20, ha="right")
+    _chance(ax)
+    ax.set_ylabel("AUC")
+    ax.set_title("Plain-trained valence monitor transfer")
+
+    fig.suptitle("Lab 11 sentiment-under-negation reliability audit", fontsize=14)
+    _save(ctx, fig, "audit_dashboard.png", "Sentiment audit dashboard: behavior, pair margins, patch specificity, and plain-trained valence probe.")
+
+
+def _plot_sentiment_pair_atlas(ctx: bench.RunContext, pair_rows: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    if not pair_rows:
+        return
+    labels = [str(r.get("pair_id")) for r in pair_rows]
+    mat = [[1.0 if _b(r.get("plain_correct")) else 0.0, 1.0 if _b(r.get("negated_correct")) else 0.0, 1.0 if _b(r.get("both_correct")) else 0.0, 1.0 if _b(r.get("negation_ignored_signature")) else 0.0] for r in pair_rows]
+    fig, ax = plt.subplots(figsize=(7.5, max(4.2, 0.28 * len(labels) + 1.5)))
+    im = _imshow(ax, mat, labels, ["plain ok", "negated ok", "both", "ignored"], title="Pair-level robustness atlas", cmap="RdYlGn", vmin=0, vmax=1)
+    if im is not None:
+        fig.colorbar(im, ax=ax, shrink=0.8, label="indicator")
+    _save(ctx, fig, "sentiment_pair_atlas.png", "Pair-by-condition atlas for plain/negated correctness and negation-ignored failures.")
+
+
+def _plot_sentiment_patch_specificity(ctx: bench.RunContext, causal_rows: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    if not causal_rows:
+        return
+    depths = sorted({int(float(r.get("stream_depth", 0))) for r in causal_rows})
+    fig, ax = plt.subplots(figsize=(10.5, 5.2))
+    for d in depths:
+        by_pair: dict[str, dict[str, float]] = defaultdict(dict)
+        for r in causal_rows:
+            if int(float(r.get("stream_depth", 0))) != d:
+                continue
+            by_pair[str(r.get("pair_id"))][str(r.get("condition"))] = _f(r.get("recovery"), 0.0) or 0.0
+        base = depths.index(d)
+        for pid, vals in by_pair.items():
+            y1 = vals.get("plain_clean_patch")
+            y2 = vals.get("unrelated_plain_control")
+            if y1 is not None:
+                ax.scatter(base - 0.12, y1, color="#54A24B", s=34, alpha=0.75)
+            if y2 is not None:
+                ax.scatter(base + 0.12, y2, color="#8C8C8C", s=34, alpha=0.75)
+            if y1 is not None and y2 is not None:
+                ax.plot([base - 0.12, base + 0.12], [y1, y2], color="#BBBBBB", lw=0.9, alpha=0.65)
+    ax.axhline(0, color="#333333", lw=0.8); ax.axhline(1, color="#333333", ls="--", lw=0.8, alpha=0.6)
+    ax.set_xticks(range(len(depths))); ax.set_xticklabels([str(d) for d in depths])
+    ax.set_xlabel("stream depth")
+    ax.set_ylabel("recovery")
+    ax.set_title("Plain patch versus unrelated control, per pair and depth")
+    ax.scatter([], [], color="#54A24B", label="plain clean patch")
+    ax.scatter([], [], color="#8C8C8C", label="unrelated control")
+    ax.legend(frameon=False)
+    _save(ctx, fig, "sentiment_patch_specificity.png", "Per-pair plain-patch versus unrelated-control recovery by depth.")
+
+
+def _plot_valence_probe_projection(ctx: bench.RunContext, probe: Mapping[str, Any]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    rows = _csv_rows(ctx.path("internal_evidence", "valence_probe_statements.csv"))
+    sweep = _csv_rows(ctx.path("internal_evidence", "valence_probe_layer_sweep.csv"))
+    if not rows and not sweep:
+        return
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.7))
+    ax = axes[0]
+    if rows:
+        roles = ["train", "heldout_plain", "negated_transfer"]
+        labels = []
+        for i, role in enumerate(roles):
+            vals = [_f(r.get("projection")) for r in rows if str(r.get("role")) == role]
+            vals = [v for v in vals if v is not None]
+            if vals:
+                jitter = np.linspace(-0.07, 0.07, max(1, len(vals)))
+                color = "#E45756" if role == "negated_transfer" else "#4C78A8"
+                ax.scatter([i + j for j in jitter], vals, color=color, alpha=0.65, s=30)
+                ax.plot([i-0.18, i+0.18], [statistics.median(vals)]*2, color="#111111", lw=2)
+            labels.append(role.replace("_", "\n"))
+        ax.axhline(0, color="#333333", lw=0.8)
+        ax.set_xticks(range(len(labels))); ax.set_xticklabels(labels)
+        ax.set_ylabel("projection")
+        ax.set_title("Valence-probe projections")
+    ax = axes[1]
+    if sweep:
+        layers = [int(float(r["layer"])) for r in sweep if r.get("layer") not in (None, "")]
+        for key, color, label in (("train_auc", "#4C78A8", "train plain"), ("held_out_plain_auc", "#54A24B", "held plain"), ("negated_transfer_auc", "#E45756", "negated"), ("shuffled_control_negated_auc", "#8C8C8C", "shuffled negated")):
+            ys = [_f(r.get(key), 0.5) for r in sweep if r.get("layer") not in (None, "")]
+            if layers and ys:
+                ax.plot(layers, ys, marker="o", color=color, label=label)
+        selected = [int(float(r["layer"])) for r in sweep if _b(r.get("selected")) and r.get("layer") not in (None, "")]
+        for s in selected:
+            ax.axvline(s, color="#333333", ls="--", lw=0.8)
+        ax.set_ylim(0, 1.05); _chance(ax)
+        ax.set_xlabel("stream depth"); ax.set_ylabel("AUC")
+        ax.set_title("Probe layer and transfer audit")
+        ax.legend(frameon=False, fontsize=7)
+    fig.suptitle("Valence monitor: surface-valence direction versus composed negation")
+    _save(ctx, fig, "valence_probe_projection.png", "Valence-probe projection and layer-sweep audit with negated-family transfer.")
+
+
+def _plot_sentiment_dla_depth(ctx: bench.RunContext) -> None:
+    import matplotlib.pyplot as plt
+    rows = _csv_rows(ctx.path("tables", "dla_layer_summary.csv"))
+    if not rows:
+        return
+    by_family = _group(rows, "family")
+    fig, ax = plt.subplots(figsize=(10, 5.2))
+    for fam, rs in sorted(by_family.items()):
+        layers = sorted({int(float(r.get("layer", 0))) for r in rs})
+        ys = []
+        for layer in layers:
+            vals = [_f(r.get("block_total")) for r in rs if int(float(r.get("layer", 0))) == layer]
+            ys.append(mean([v for v in vals if v is not None]) or 0.0)
+        ax.plot(layers, ys, marker="o", label=fam, color=_color(fam))
+    _zero(ax)
+    ax.set_xlabel("layer")
+    ax.set_ylabel("mean DLA block total")
+    ax.set_title("Signed DLA ledger by layer and family")
+    ax.legend(frameon=False)
+    _save(ctx, fig, "sentiment_dla_by_layer.png", "Sentiment audit DLA ledger by layer; separates plain and negated writes.")
+
+
+def maybe_make_sentiment_plots(ctx: bench.RunContext, rows: list[dict[str, Any]], pair_rows: list[dict[str, Any]], causal_rows: list[dict[str, Any]], probe: dict[str, Any]) -> None:
+    _sentiment_scorecard(ctx, rows, pair_rows, causal_rows, probe)
+    if bool(arg_value(ctx.args, "no_plots", False)):
+        return
+    _plot_sentiment_dashboard(ctx, rows, pair_rows, causal_rows, probe)
+    _plot_sentiment_pair_atlas(ctx, pair_rows)
+    _plot_sentiment_patch_specificity(ctx, causal_rows)
+    _plot_valence_probe_projection(ctx, probe)
+    _plot_sentiment_dla_depth(ctx)
+    _write_plot_guide(ctx, "sentiment_negation", [
+        {"plot": "audit_dashboard.png", "concept": "composition audit overview", "read_for": "plain-vs-negated behavior, pair failures, patch specificity, and probe transfer"},
+        {"plot": "sentiment_pair_atlas.png", "concept": "pair-level robustness", "read_for": "which minimal negation twins fail together"},
+        {"plot": "sentiment_patch_specificity.png", "concept": "causal intervention specificity", "read_for": "plain-clean patch beating unrelated-plain control by depth"},
+        {"plot": "valence_probe_projection.png", "concept": "DECODE transfer", "read_for": "plain-trained direction transfer to negated family versus shuffled"},
+        {"plot": "sentiment_dla_by_layer.png", "concept": "ATTR ledger", "read_for": "whether plain and negated examples are written by similar components"},
+    ])
+
+
+# ---------------------------------------------------------------------------
+# Evidence matrix / summary overrides
+# ---------------------------------------------------------------------------
+
+
+def write_evidence_matrix(
+    ctx: bench.RunContext,
+    domain: str,
+    rows: list[dict[str, Any]],
+    causal_rows: list[dict[str, Any]],
+    additional: dict[str, Any],
+) -> None:
+    """Write the original rung map plus a compact claim-readiness checklist."""
+    matrix: list[dict[str, Any]] = []
+    if domain == "factual_qa":
+        matrix += [
+            {"method": "behavioral next-token accuracy", "evidence_level": "OBS", "artifact": "results.csv", "what_it_supports": "Whether the model produces or prefers the target answer on the audited prompts", "what_it_does_not_support": "Where the fact is stored or whether behavior is robust under intervention"},
+            {"method": "logit lens stabilization", "evidence_level": "OBS", "artifact": "tables/lens_stabilization.csv", "what_it_supports": "When the target becomes readable/preferred under the raw final readout", "what_it_does_not_support": "That later layers use the readable signal"},
+            {"method": "frozen-norm DLA", "evidence_level": "ATTR", "artifact": "tables/dla_layer_summary.csv", "what_it_supports": "Which component writes align with the answer direction under the ledger convention", "what_it_does_not_support": "Causal responsibility of those components"},
+            {"method": "residual patching", "evidence_level": "CAUSAL", "artifact": "tables/causal_subset.csv", "what_it_supports": "Whether replacing a specific residual stream site recovers the clean target-vs-distractor behavior", "what_it_does_not_support": "A global localization of all facts or templates"},
+            {"method": "truth-direction monitor", "evidence_level": "DECODE", "artifact": "internal_evidence/truth_monitor.json", "what_it_supports": "Whether true/false fact labels are linearly separable on held-out audited facts", "what_it_does_not_support": "That the model uses this direction when answering"},
+        ]
+    elif domain == "sentiment_negation":
+        matrix += [
+            {"method": "behavioral pair-argmax accuracy", "evidence_level": "OBS", "artifact": "results.csv", "what_it_supports": "Whether the two-way readout matches the composed mood label, on plain and on negated statements", "what_it_does_not_support": "Why the negated family wins or loses, or robustness to other question phrasings"},
+            {"method": "logit lens stabilization", "evidence_level": "OBS", "artifact": "tables/lens_stabilization.csv", "what_it_supports": "When the true-label token becomes readable/preferred under the raw final readout", "what_it_does_not_support": "That later layers use the readable signal"},
+            {"method": "frozen-norm DLA", "evidence_level": "ATTR", "artifact": "tables/dla_layer_summary.csv", "what_it_supports": "Which component writes align with the mood-answer direction under the ledger convention", "what_it_does_not_support": "Causal responsibility of those components"},
+            {"method": "plain-into-negated residual patching", "evidence_level": "CAUSAL", "artifact": "tables/causal_subset.csv", "what_it_supports": "Whether the final-position stream at the tested band carries the composed mood verdict relative to an unrelated-plain control", "what_it_does_not_support": "Where negation is composed, or localization beyond the tested band and position"},
+            {"method": "valence probe with negated transfer", "evidence_level": "DECODE", "artifact": "internal_evidence/valence_probe.json", "what_it_supports": "Whether a plain-trained mass-mean direction reads surface valence words or the composed meaning on the negated family", "what_it_does_not_support": "That the model uses this direction when answering"},
+        ]
+    else:
+        matrix += [
+            {"method": "hint injection", "evidence_level": "SELF-REPORT", "artifact": "tables/faithfulness_by_hint_type.csv", "what_it_supports": "Whether answers move to hinted options and whether generated CoT mentions/attributes the influence", "what_it_does_not_support": "Intent, deception, or hidden mechanism"},
+            {"method": "CoT text interventions", "evidence_level": "behavioral CAUSAL", "artifact": "tables/cot_load_intervention_results.csv", "what_it_supports": "Whether visible text carries load under truncation, filler, clean-resume, and add-mistake interventions", "what_it_does_not_support": "A mechanistic path inside the model"},
+            {"method": "hint-presence probe", "evidence_level": "DECODE", "artifact": "internal_evidence/hint_presence_probe.json", "what_it_supports": "Whether hinted vs baseline conditions are linearly separable at answer-emission time", "what_it_does_not_support": "That this decoded direction causes the answer"},
+        ]
+    bench.write_csv_with_context(ctx, ctx.path("tables", "evidence_matrix.csv"), matrix)
+    ctx.register_artifact(ctx.path("tables", "evidence_matrix.csv"), "table", "Evidence rungs, artifacts, supported claims, and explicit non-claims.")
+
+    readiness = []
+    for row in matrix:
+        level = str(row["evidence_level"])
+        artifact = str(row["artifact"])
+        readiness.append({
+            "method": row["method"],
+            "evidence_level": level,
+            "claim_sentence_may_say": row["what_it_supports"],
+            "claim_sentence_must_not_say": row["what_it_does_not_support"],
+            "artifact_to_cite": artifact,
+            "student_check_before_claim": "quote a number from this artifact and name at least one falsifier",
+        })
+    path = ctx.path("tables", "claim_readiness_matrix.csv")
+    bench.write_csv_with_context(ctx, path, readiness)
+    ctx.register_artifact(path, "table", "Claim-readiness checklist: what each method licenses and what it forbids.")
+
+
+def write_summary(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    domain: str,
+    behavioral: dict[str, Any],
+    claims: list[dict[str, str]],
+    n_ledger: int,
+) -> None:
+    lines = [
+        "# Lab 11 run summary: mechanistic reliability audit",
+        "",
+        f"- domain: **{domain}**",
+        f"- model: `{bundle.anatomy.model_id}`",
+        f"- parsed ledger entries: {n_ledger}",
+        "- evidence level: integration; individual methods keep their own rungs",
+        "",
+        "## Behavioral headline",
+        "",
+    ]
+    for k, v in behavioral.items():
+        if not isinstance(v, dict):
+            lines.append(f"- {k}: {v}")
+    lines += ["", "## Drafted claims", ""]
+    for c in claims:
+        lines += [f"- `{c['id']}` {c['tag']}: {c['text']}", f"  - falsifier: {c['falsifier']}"]
+    lines += [
+        "",
+        "## What remains student work",
+        "",
+        "- Fill `failure_mode_student` in `results.csv` before reading aggregate tables too closely.",
+        "- Fill `audit_report.md` after the counterevidence section, not before.",
+        "- Reconcile every ledger claim in `ledger_reconciliation.md`; at least one revision or retirement is required.",
+        "- Write both halves of `safety_case_and_rebuttal.md` at full strength.",
+        "",
+        "## Reading order",
+        "",
+        "1. `run_summary.md` for this map.",
+        "2. `results.csv` for manual failure labels.",
+        "3. `tables/evidence_matrix.csv`, `tables/claim_readiness_matrix.csv`, and `tables/audit_scorecard.csv` to keep rungs separate.",
+        "4. `tables/plot_reading_guide.csv` to decide which plot answers which audit question.",
+        "5. Domain-specific tables, `internal_evidence/`, and the new audit plots.",
+        "6. `audit_report.md`, `ledger_reconciliation.md`, and `safety_case_and_rebuttal.md`.",
+    ]
+    bench.write_text(ctx.path("run_summary.md"), "\n".join(lines))
+    ctx.register_artifact(ctx.path("run_summary.md"), "summary", "Audit run map, enriched artifact reading order, and student-work checklist.")

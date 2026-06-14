@@ -57,6 +57,8 @@ from __future__ import annotations
 import csv
 import math
 import pathlib
+import statistics
+from collections import Counter, defaultdict
 from typing import Any
 
 import interp_bench as bench
@@ -698,10 +700,22 @@ def truth_direction_bridge(sae: LoadedSAE, bundle) -> dict[str, Any]:
     v = v / v.norm().clamp_min(1e-9)
     dec_unit = sae.W_dec.cpu() / sae.dec_norms.cpu().clamp_min(1e-9)[:, None]
     cos = dec_unit @ v
-    best = int(cos.abs().argmax())
-    return {"found": True, "path": str(runs[0].relative_to(bench.COURSE_ROOT)),
-            "saved_on_model": meta.get("model_id"),
-            "best_feature": best, "best_cosine": round(float(cos[best]), 4)}
+    abs_cos = cos.abs()
+    best = int(abs_cos.argmax())
+    top = torch.argsort(abs_cos, descending=True)[:12].tolist()
+    qs = torch.quantile(abs_cos, torch.tensor([0.50, 0.90, 0.99], dtype=abs_cos.dtype)).tolist()
+    return {
+        "found": True,
+        "path": str(runs[0].relative_to(bench.COURSE_ROOT)),
+        "saved_on_model": meta.get("model_id"),
+        "best_feature": best,
+        "best_cosine": round(float(cos[best]), 4),
+        "abs_cosine_quantiles": {"p50": round(float(qs[0]), 4), "p90": round(float(qs[1]), 4), "p99": round(float(qs[2]), 4)},
+        "top_cosines": [
+            {"rank": i + 1, "feature": int(f), "cosine": round(float(cos[f]), 4), "abs_cosine": round(float(abs_cos[f]), 4)}
+            for i, f in enumerate(top)
+        ],
+    }
 
 
 def clamp_feature_steering(bundle, sae, corpus, feature: int, label: str, peak_act: float,
@@ -766,6 +780,496 @@ def clamp_feature_steering(bundle, sae, corpus, feature: int, label: str, peak_a
             and best["domain_keyword_hits"] > rand_top}
 
 
+
+# ---------------------------------------------------------------------------
+# Lab 8 visualization helpers and synthesis tables
+# ---------------------------------------------------------------------------
+
+VERDICT_ORDER = ("survived", "narrowed", "token-feature", "polysemantic", "killed", "silent-on-corpus")
+FEATURE_EVIDENCE_COLUMNS = ("held_out_auc", "confusable_auc", "label_purity", "polysemy_clean", "rarity_clean")
+
+
+def _safe_float(x: Any, default: float = 0.0) -> float:
+    try:
+        if x == "" or x is None:
+            return default
+        return float(x)
+    except (TypeError, ValueError):
+        return default
+
+
+def _verdict_color(verdict: str) -> str:
+    getter = getattr(bench, "plot_sae_verdict_color", None)
+    if callable(getter):
+        return getter(verdict)
+    return {
+        "survived": "#009E73",
+        "narrowed": "#8A9A00",
+        "token-feature": "#E69F00",
+        "polysemantic": "#7E57C2",
+        "killed": "#D55E00",
+        "silent-on-corpus": "#999999",
+    }.get(str(verdict), "#555555")
+
+
+def _domain_color(domain: str) -> str:
+    getter = getattr(bench, "plot_sae_domain_color", None)
+    if callable(getter):
+        return getter(domain)
+    palette = {
+        "chemistry": "#0072B2", "cooking": "#E69F00", "sports": "#009E73", "finance": "#8A9A00",
+        "law": "#7E57C2", "medicine": "#CC79A7", "weather": "#56B4E9", "emotion": "#D55E00",
+        "code": "#666666", "history": "#A6761D", "none": "#999999",
+    }
+    return palette.get(str(domain), "#555555")
+
+
+def _clamp_color(condition: str) -> str:
+    getter = getattr(bench, "plot_feature_condition_color", None)
+    if callable(getter):
+        return getter(condition)
+    return {"real": "#D55E00", "random": "#777777", "feature": "#D55E00", "control": "#777777"}.get(str(condition), "#555555")
+
+
+def _concept_score(row: dict[str, Any]) -> float:
+    """Score for sorting feature rows: validate strongly, fire sparsely, avoid polysemy."""
+    auc = _safe_float(row.get("held_out_auc"), 0.5)
+    purity = _safe_float(row.get("label_purity"), 0.0)
+    conf = _safe_float(row.get("confusable_auc"), 0.5)
+    fire = _safe_float(row.get("fire_fraction"), 0.0)
+    poly = _safe_float(row.get("polysemy_entropy_bits"), 0.0)
+    return round(0.45 * auc + 0.25 * purity + 0.20 * conf + 0.10 * max(0.0, 1.0 - fire * 20.0) - 0.08 * poly, 4)
+
+
+def feature_evidence_rows(atlas: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows = []
+    for r in atlas:
+        conf_auc = _safe_float(r.get("confusable_auc"), 0.5)
+        poly = _safe_float(r.get("polysemy_entropy_bits"), 0.0)
+        fire = _safe_float(r.get("fire_fraction"), 0.0)
+        rows.append({
+            "feature": r.get("feature"),
+            "proposed_label": r.get("proposed_label", ""),
+            "verdict": r.get("verdict", ""),
+            "held_out_auc": r.get("held_out_auc", ""),
+            "confusable_with": r.get("confusable_with", ""),
+            "confusable_auc": r.get("confusable_auc", ""),
+            "confusable_margin": r.get("confusable_margin", ""),
+            "label_purity": r.get("label_purity", ""),
+            "polysemy_entropy_bits": r.get("polysemy_entropy_bits", ""),
+            "polysemy_clean": round(max(0.0, 1.0 - poly / 2.5), 4),
+            "fire_fraction": r.get("fire_fraction", ""),
+            "rarity_clean": round(max(0.0, 1.0 - fire * 20.0), 4),
+            "max_activation": r.get("max_activation", ""),
+            "concept_score": _concept_score(r),
+            "top_domains": r.get("top_domains", ""),
+        })
+    return sorted(rows, key=lambda x: (-_safe_float(x.get("concept_score")), str(x.get("feature"))))
+
+
+def domain_validation_summary(atlas: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_domain: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for r in atlas:
+        by_domain[str(r.get("proposed_label", "none"))].append(r)
+    rows = []
+    for domain, rs in sorted(by_domain.items()):
+        aucs = [_safe_float(r.get("held_out_auc"), 0.5) for r in rs]
+        fires = [_safe_float(r.get("fire_fraction"), 0.0) for r in rs]
+        verdicts = Counter(str(r.get("verdict", "")) for r in rs)
+        rows.append({
+            "proposed_label": domain,
+            "n_features": len(rs),
+            "median_held_out_auc": round(statistics.median(aucs), 4) if aucs else "",
+            "max_held_out_auc": round(max(aucs), 4) if aucs else "",
+            "median_fire_fraction": round(statistics.median(fires), 5) if fires else "",
+            "n_survived": verdicts.get("survived", 0),
+            "n_narrowed": verdicts.get("narrowed", 0),
+            "n_token_feature": verdicts.get("token-feature", 0),
+            "n_polysemantic": verdicts.get("polysemantic", 0),
+            "n_killed": verdicts.get("killed", 0),
+            "n_silent": verdicts.get("silent-on-corpus", 0),
+        })
+    return rows
+
+
+def write_lab8_synthesis_tables(ctx, atlas, enc, ranks, toy, tc_report, bridge, clamp) -> None:
+    """Write the tables that make the plots auditable, not just ornamental."""
+    import numpy as np
+    import torch
+
+    evidence = feature_evidence_rows(atlas)
+    bench.write_csv_with_context(ctx, ctx.path("tables", "feature_evidence_matrix.csv"), evidence)
+    ctx.register_artifact(ctx.path("tables", "feature_evidence_matrix.csv"), "table",
+                          "Joined feature evidence: label validation, confusable checks, sparsity, polysemy, and concept score.")
+
+    dom = domain_validation_summary(atlas)
+    bench.write_csv_with_context(ctx, ctx.path("tables", "domain_validation_summary.csv"), dom)
+    ctx.register_artifact(ctx.path("tables", "domain_validation_summary.csv"), "table",
+                          "Per-label domain summary of atlas verdicts and validation scores.")
+
+    maxv = enc["line_max"].max(0).values.detach().cpu()
+    freq = (enc["fire_count"] / max(enc["n_tokens"], 1)).detach().cpu()
+    qs = [0.0, 0.25, 0.5, 0.75, 0.9, 0.99, 1.0]
+    rows = []
+    for q in qs:
+        rows.append({
+            "quantile": q,
+            "feature_peak_activation": round(float(torch.quantile(maxv, q)), 5),
+            "feature_fire_fraction": round(float(torch.quantile(freq, q)), 8),
+        })
+    bench.write_csv_with_context(ctx, ctx.path("tables", "feature_activity_distribution.csv"), rows)
+    ctx.register_artifact(ctx.path("tables", "feature_activity_distribution.csv"), "table",
+                          "Feature-level activity quantiles: peak activation and firing frequency.")
+
+    if tc_report.get("inspected_features"):
+        tc_rows = []
+        for r in tc_report["inspected_features"]:
+            tc_rows.append({
+                "feature": r.get("feature"),
+                "peak_activation": r.get("peak_activation"),
+                "promotes_tokens": ", ".join(r.get("promotes_tokens", [])),
+            })
+        bench.write_csv_with_context(ctx, ctx.path("tables", "transcoder_feature_promotes.csv"), tc_rows)
+        ctx.register_artifact(ctx.path("tables", "transcoder_feature_promotes.csv"), "table",
+                              "De-embedded transcoder output features and promoted tokens.")
+
+    if bridge.get("top_cosines"):
+        bench.write_csv_with_context(ctx, ctx.path("tables", "truth_bridge_feature_cosines.csv"), bridge["top_cosines"])
+        ctx.register_artifact(ctx.path("tables", "truth_bridge_feature_cosines.csv"), "table",
+                              "Top SAE decoder directions by absolute cosine with the saved Lab 4 truth direction.")
+
+    if clamp:
+        real_base = next((r for r in clamp["rows"] if r["condition"] == "real" and float(r["clamp_mult"]) == 0.0), None)
+        base_hits = real_base["domain_keyword_hits"] if real_base else 0
+        random_by_dose = {float(r["clamp_mult"]): r for r in clamp["rows"] if r["condition"] == "random"}
+        clamp_rows = []
+        for r in clamp["rows"]:
+            same_random = random_by_dose.get(float(r["clamp_mult"]))
+            random_hits = same_random["domain_keyword_hits"] if same_random is not None else ""
+            gap = r["domain_keyword_hits"] - random_hits if same_random is not None and r["condition"] == "real" else ""
+            gain = r["domain_keyword_hits"] - base_hits if r["condition"] == "real" else ""
+            clamp_rows.append({
+                "condition": r["condition"],
+                "clamp_mult": r["clamp_mult"],
+                "domain_keyword_hits": r["domain_keyword_hits"],
+                "real_gain_vs_base": gain,
+                "random_hits_same_dose": random_hits if r["condition"] == "real" else "",
+                "real_minus_random_same_dose": gap,
+                "distinct_ratio": r["distinct_ratio"],
+                "claimable_window": bool(r["condition"] == "real" and gain != "" and gain > 0 and _safe_float(r["distinct_ratio"], 0.0) >= 0.4 and (gap == "" or gap > 0)),
+                "sample": str(r.get("sample", ""))[:260],
+            })
+        bench.write_csv_with_context(ctx, ctx.path("tables", "clamp_operating_points.csv"), clamp_rows)
+        ctx.register_artifact(ctx.path("tables", "clamp_operating_points.csv"), "table",
+                              "Feature-clamp operating points with target gain, same-dose random control gap, fluency proxy, and sample text.")
+
+    plot_guide = [
+        {"artifact": "plots/feature_evidence_dashboard.png", "question": "What is the whole Lab 8 evidence packet?", "look_for": "Toy geometry, SAE health, label verdicts, clamp or bridge status on one page."},
+        {"artifact": "plots/feature_validation_matrix.png", "question": "Which labels earned their name?", "look_for": "Rows with high AUC, high purity, confusable separation, low polysemy, and sparse firing."},
+        {"artifact": "plots/sae_activity_dashboard.png", "question": "Is this dictionary sparse and mostly unused on the corpus?", "look_for": "Long fire-frequency tail, silent mass, and atlas points outside the ordinary cloud."},
+        {"artifact": "plots/domain_validation_summary.png", "question": "Which semantic domains are robust rather than lucky?", "look_for": "Survived/narrowed counts and domain-level median AUC, not a single heroic feature."},
+        {"artifact": "plots/clamp_operating_window.png", "question": "Where does causal sufficiency become side-effect soup?", "look_for": "Real feature moves hits before distinct-ratio collapses; random control stays flat."},
+        {"artifact": "plots/truth_bridge_feature_cosines.png", "question": "Is Lab 4 truth a single SAE atom?", "look_for": "Best absolute cosine and the tiny top-cosine distribution."},
+        {"artifact": "plots/transcoder_feature_cards.png", "question": "What makes transcoders edge-ready for Lab 9?", "look_for": "FVU/KL plus de-embedded output-token tendencies."},
+    ]
+    bench.write_csv_with_context(ctx, ctx.path("tables", "plot_reading_guide.csv"), plot_guide)
+    ctx.register_artifact(ctx.path("tables", "plot_reading_guide.csv"), "table",
+                          "Plot-by-plot reading guide for Lab 8.")
+
+
+def plot_superposition_phase_diagram(ctx, toy) -> None:
+    import matplotlib.pyplot as plt
+
+    if not toy or "sparsities" not in toy:
+        return
+    bench._ensure_plot_style()
+    sparsities = [float(s) for s in toy["sparsities"]]
+    represented = [toy["represented_by_sparsity"].get(str(s), toy["represented_by_sparsity"].get(f"{s:.2f}", 0)) for s in sparsities]
+    interference = [toy["interference_by_sparsity"].get(str(s), toy["interference_by_sparsity"].get(f"{s:.2f}", 0)) for s in sparsities]
+    fig, ax1 = plt.subplots(figsize=(8.4, 5.0))
+    ax1.plot(sparsities, represented, marker="o", linewidth=2.2, label="features represented")
+    ax1.axhline(toy.get("d_hidden", 0), color="black", linewidth=0.8, linestyle="--", alpha=0.8, label="hidden dimensions")
+    ax1.set_xlabel("input sparsity")
+    ax1.set_ylabel("represented features")
+    ax2 = ax1.twinx()
+    ax2.plot(sparsities, interference, marker="s", linewidth=1.8, color="#D55E00", label="mean nearest-neighbor interference")
+    ax2.set_ylabel("interference")
+    ax1.set_title("Toy phase diagram: more represented features are bought with interference")
+    h1, l1 = ax1.get_legend_handles_labels(); h2, l2 = ax2.get_legend_handles_labels()
+    ax1.legend(h1 + h2, l1 + l2, loc="best", fontsize=8)
+    for ax in (ax1, ax2):
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+    bench.save_figure(ctx, fig, "toy_superposition_phase_diagram.png",
+                      "Toy superposition phase diagram: represented features and interference vs sparsity.")
+
+
+def plot_feature_validation_matrix(ctx, atlas) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    rows = feature_evidence_rows(atlas)
+    if not rows:
+        return
+    top = rows[:min(len(rows), 28)]
+    data = []
+    labels = []
+    for r in top:
+        conf = _safe_float(r.get("confusable_auc"), 0.5)
+        data.append([
+            _safe_float(r.get("held_out_auc"), 0.5),
+            conf,
+            _safe_float(r.get("label_purity"), 0.0),
+            _safe_float(r.get("polysemy_clean"), 0.0),
+            _safe_float(r.get("rarity_clean"), 0.0),
+        ])
+        labels.append(f"F{r.get('feature')} {r.get('proposed_label')}\n{r.get('verdict')}")
+    arr = np.array(data, dtype=float)
+    bench._ensure_plot_style()
+    fig, ax = plt.subplots(figsize=(9.6, max(5.2, 0.32 * len(top) + 1.8)))
+    im = ax.imshow(arr, aspect="auto", vmin=0, vmax=1, cmap="viridis")
+    ax.set_yticks(range(len(top))); ax.set_yticklabels(labels, fontsize=7)
+    ax.set_xticks(range(len(FEATURE_EVIDENCE_COLUMNS)))
+    ax.set_xticklabels(["held-out\nAUC", "confusable\nAUC", "label\npurity", "low\npolysemy", "rare\nfiring"], fontsize=8)
+    for i in range(arr.shape[0]):
+        for j in range(arr.shape[1]):
+            ax.text(j, i, f"{arr[i, j]:.2f}", ha="center", va="center", color="white" if arr[i, j] < 0.45 else "black", fontsize=6.5)
+    ax.set_title("Feature validation matrix: a label must survive several locks")
+    fig.colorbar(im, ax=ax, fraction=0.035, label="better / cleaner")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "feature_validation_matrix.png",
+                      "Feature-by-feature validation battery: AUC, confusable check, purity, polysemy, and firing rarity.")
+
+
+def plot_sae_activity_dashboard(ctx, enc, atlas) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import torch
+
+    maxv = enc["line_max"].max(0).values.detach().cpu()
+    freq = (enc["fire_count"] / max(enc["n_tokens"], 1)).detach().cpu()
+    # Keep plots fast and legible for 65k dictionaries.
+    finite_max = maxv[torch.isfinite(maxv)].numpy()
+    finite_freq = freq[torch.isfinite(freq)].numpy()
+    bench._ensure_plot_style()
+    fig, axes = plt.subplots(2, 2, figsize=(12.2, 8.0))
+    axes = axes.flatten()
+    axes[0].hist(np.log10(np.maximum(finite_max, 1e-8)), bins=60, alpha=0.85)
+    axes[0].set_title("Peak activation distribution")
+    axes[0].set_xlabel("log10 peak activation")
+    axes[0].set_ylabel("features")
+    axes[1].hist(np.log10(np.maximum(finite_freq, 1e-10)), bins=60, alpha=0.85)
+    axes[1].set_title("Firing-frequency distribution")
+    axes[1].set_xlabel("log10 fire fraction")
+    axes[1].set_ylabel("features")
+    sample = torch.argsort(maxv, descending=True)[:min(1200, len(maxv))]
+    axes[2].scatter(maxv[sample], freq[sample], s=8, alpha=0.35, color="#777777", label="dictionary sample")
+    for r in atlas:
+        f = int(r["feature"])
+        axes[2].scatter(float(maxv[f]), float(freq[f]), s=52, color=_verdict_color(r["verdict"]), edgecolor="black", linewidth=0.3)
+    axes[2].set_xlabel("peak activation")
+    axes[2].set_ylabel("fire fraction")
+    axes[2].set_title("Atlas features inside the whole dictionary cloud")
+    silent = float((freq <= 0).float().mean())
+    active = 1.0 - silent
+    axes[3].bar(["silent on corpus", "fires at least once"], [silent, active], color=[_verdict_color("silent-on-corpus"), "#0072B2"])
+    axes[3].set_ylim(0, 1)
+    axes[3].set_ylabel("fraction of dictionary")
+    axes[3].set_title("Silent ≠ dead: corpus coverage audit")
+    for ax in axes:
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+    fig.suptitle("SAE activity dashboard: sparsity, tails, and atlas selection", fontsize=14)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "sae_activity_dashboard.png",
+                      "Activity distribution of the SAE dictionary and where selected atlas features sit.")
+
+
+def plot_domain_validation_summary(ctx, atlas) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    rows = domain_validation_summary(atlas)
+    if not rows:
+        return
+    labels = [r["proposed_label"] for r in rows]
+    x = np.arange(len(rows))
+    survived = np.array([r["n_survived"] for r in rows], dtype=float)
+    narrowed = np.array([r["n_narrowed"] for r in rows], dtype=float)
+    failed = np.array([r["n_token_feature"] + r["n_polysemantic"] + r["n_killed"] + r["n_silent"] for r in rows], dtype=float)
+    auc = np.array([_safe_float(r["median_held_out_auc"], 0.5) for r in rows])
+    bench._ensure_plot_style()
+    fig, ax1 = plt.subplots(figsize=(10.6, 5.4))
+    ax1.bar(x, survived, label="survived", color=_verdict_color("survived"))
+    ax1.bar(x, narrowed, bottom=survived, label="narrowed", color=_verdict_color("narrowed"))
+    ax1.bar(x, failed, bottom=survived + narrowed, label="failed / token / polysemantic", color=_verdict_color("killed"), alpha=0.75)
+    ax1.set_ylabel("atlas features")
+    ax1.set_xticks(x); ax1.set_xticklabels(labels, rotation=35, ha="right")
+    ax2 = ax1.twinx()
+    ax2.plot(x, auc, color="black", marker="o", linewidth=1.6, label="median held-out AUC")
+    ax2.axhline(0.5, color="black", linestyle=":", linewidth=0.8, alpha=0.7)
+    ax2.set_ylim(0, 1.05); ax2.set_ylabel("median held-out AUC")
+    h1, l1 = ax1.get_legend_handles_labels(); h2, l2 = ax2.get_legend_handles_labels()
+    ax1.legend(h1 + h2, l1 + l2, fontsize=8, loc="upper right")
+    ax1.set_title("Domain validation summary: labels need population evidence, not one good context")
+    for ax in (ax1, ax2):
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "domain_validation_summary.png",
+                      "Per-domain verdict counts and median held-out AUC across atlas features.")
+
+
+def plot_clamp_operating_window(ctx, clamp) -> None:
+    import matplotlib.pyplot as plt
+
+    if not clamp:
+        return
+    bench._ensure_plot_style()
+    fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.8), sharex=True)
+    for cond in sorted({r["condition"] for r in clamp["rows"]}):
+        rows = sorted([r for r in clamp["rows"] if r["condition"] == cond], key=lambda r: r["clamp_mult"])
+        xs = [r["clamp_mult"] for r in rows]
+        color = _clamp_color(cond)
+        axes[0].plot(xs, [r["domain_keyword_hits"] for r in rows], marker="o", linewidth=2.0, color=color, label=cond)
+        axes[1].plot(xs, [r["distinct_ratio"] for r in rows], marker="o", linewidth=2.0, color=color, label=cond)
+    axes[0].axvline(clamp.get("best_mult", 0), color="black", linewidth=0.8, linestyle="--", alpha=0.7)
+    axes[0].set_title(f"Target concept hits: feature {clamp['feature']} ({clamp['label']})")
+    axes[0].set_ylabel("domain keyword hits")
+    axes[1].axhline(0.4, color="black", linewidth=0.9, linestyle=":", alpha=0.8, label="fluency floor")
+    axes[1].set_title("Side-effect guardrail: distinct-token ratio")
+    axes[1].set_ylabel("distinct ratio")
+    for ax in axes:
+        ax.set_xlabel("dose (× observed peak activation)")
+        ax.legend(fontsize=8)
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+    fig.suptitle("Clamp operating window: causal handle before repetition soup")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "clamp_operating_window.png",
+                      "Feature-clamp operating window: target concept movement versus fluency side effects.")
+
+
+def plot_truth_bridge_cosines(ctx, bridge) -> None:
+    import matplotlib.pyplot as plt
+
+    if not bridge or not bridge.get("top_cosines"):
+        return
+    rows = bridge["top_cosines"]
+    labels = [f"F{r['feature']}" for r in rows]
+    vals = [r["cosine"] for r in rows]
+    colors = ["#0072B2" if v >= 0 else "#D55E00" for v in vals]
+    fig, ax = bench.new_figure(figsize=(9.0, 5.0))
+    ax.bar(labels, vals, color=colors)
+    ax.axhline(0, color="black", linewidth=0.8)
+    q = bridge.get("abs_cosine_quantiles", {})
+    subtitle = " | ".join(f"{k}={v}" for k, v in q.items()) if q else ""
+    ax.set_title("Truth-direction bridge: best SAE atoms barely align" + (f"\nabs cosine quantiles: {subtitle}" if subtitle else ""))
+    ax.set_ylabel("cosine with Lab 4 truth direction")
+    ax.set_xlabel("top SAE decoder directions by |cosine|")
+    ax.tick_params(axis="x", rotation=35)
+    bench.save_figure(ctx, fig, "truth_bridge_feature_cosines.png",
+                      "Top SAE feature decoder cosines with the saved Lab 4 truth direction.")
+
+
+def plot_transcoder_feature_cards(ctx, tc_report) -> None:
+    import matplotlib.pyplot as plt
+
+    feats = tc_report.get("inspected_features", []) if tc_report else []
+    if not feats:
+        return
+    fig, ax = bench.new_figure(figsize=(10.0, max(4.0, 1.2 * len(feats) + 1.5)))
+    y = list(range(len(feats)))
+    peaks = [_safe_float(f.get("peak_activation"), 0.0) for f in feats]
+    ax.barh(y, peaks, color="#0072B2", alpha=0.8)
+    ax.set_yticks(y); ax.set_yticklabels([f"F{f.get('feature')}" for f in feats])
+    ax.invert_yaxis()
+    ax.set_xlabel("peak transcoder activation on corpus sample")
+    ax.set_title(f"Transcoder features: reconstruct the MLP map, then de-embed outputs\nFVU {tc_report.get('fvu')} | splice KL {tc_report.get('mean_splice_kl')}")
+    xmax = max(peaks + [1.0])
+    for i, f in enumerate(feats):
+        toks = ", ".join(str(t) for t in f.get("promotes_tokens", [])[:8])
+        ax.text(xmax * 1.02, i, toks, va="center", fontsize=8)
+    ax.set_xlim(0, xmax * 2.4)
+    bench.save_figure(ctx, fig, "transcoder_feature_cards.png",
+                      "Inspected transcoder features with de-embedded promoted tokens.")
+
+
+def plot_feature_evidence_dashboard(ctx, atlas, enc, ranks, toy, tc_report, bridge, clamp) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import torch
+
+    bench._ensure_plot_style()
+    fig, axes = plt.subplots(2, 2, figsize=(13.5, 9.0))
+    ax = axes[0, 0]
+    sparsities = [float(s) for s in toy.get("sparsities", [])]
+    represented = [toy.get("represented_by_sparsity", {}).get(str(s), toy.get("represented_by_sparsity", {}).get(f"{s:.2f}", 0)) for s in sparsities]
+    interference = [toy.get("interference_by_sparsity", {}).get(str(s), toy.get("interference_by_sparsity", {}).get(f"{s:.2f}", 0)) for s in sparsities]
+    ax.plot(sparsities, represented, marker="o", label="represented features")
+    if toy.get("d_hidden") is not None:
+        ax.axhline(toy.get("d_hidden"), color="black", linestyle="--", linewidth=0.8, alpha=0.7, label="hidden dims")
+    ax.set_title("0. Why sparse codes overlap")
+    ax.set_xlabel("input sparsity"); ax.set_ylabel("features represented")
+    ax.legend(fontsize=8)
+
+    ax = axes[0, 1]
+    verdicts = Counter(str(r.get("verdict", "")) for r in atlas)
+    counts = [verdicts.get(v, 0) for v in VERDICT_ORDER]
+    ax.bar(range(len(VERDICT_ORDER)), counts, color=[_verdict_color(v) for v in VERDICT_ORDER])
+    ax.set_xticks(range(len(VERDICT_ORDER))); ax.set_xticklabels(VERDICT_ORDER, rotation=35, ha="right")
+    ax.set_ylabel("features")
+    ax.set_title("1. Label validation verdicts")
+
+    ax = axes[1, 0]
+    maxv = enc["line_max"].max(0).values.detach().cpu()
+    freq = (enc["fire_count"] / max(enc["n_tokens"], 1)).detach().cpu()
+    sample = torch.argsort(maxv, descending=True)[:min(800, len(maxv))]
+    ax.scatter(maxv[sample], freq[sample], s=7, alpha=0.25, color="#777777")
+    for r in atlas:
+        f = int(r["feature"])
+        ax.scatter(float(maxv[f]), float(freq[f]), s=55, color=_verdict_color(r["verdict"]), edgecolor="black", linewidth=0.25)
+    ax.set_xlabel("peak activation")
+    ax.set_ylabel("fire fraction")
+    ax.set_title("2. Atlas points live in a skewed dictionary")
+
+    ax = axes[1, 1]
+    ax.axis("off")
+    silent = float((freq <= 0).float().mean())
+    bridge_text = "not available"
+    if bridge.get("best_cosine") is not None:
+        bridge_text = f"best truth cosine {bridge.get('best_cosine')} (F{bridge.get('best_feature')})"
+    elif bridge.get("note"):
+        bridge_text = str(bridge.get("note"))[:72]
+    clamp_text = "clamp skipped"
+    if clamp:
+        clamp_text = f"clamp F{clamp['feature']} {clamp['label']}: {clamp['real_base_hits']}→{clamp['real_max_hits']} hits, random {clamp['random_max_hits']}"
+    summary = [
+        "3. Evidence packet",
+        f"SAE FVU: {enc.get('fvu', float('nan')):.3f}",
+        f"per-token L0: {enc.get('per_token_l0', 'n/a')}",
+        f"silent on this corpus: {silent * 100:.1f}%",
+        f"ranking overlap top-N: {len(set(ranks.get('by_max', [])) & set(ranks.get('by_freq', [])))}",
+        f"transcoder FVU: {tc_report.get('fvu')} | splice KL: {tc_report.get('mean_splice_kl')}",
+        bridge_text,
+        clamp_text,
+        "Claim grammar: OBS for reconstruction, DECODE for labels, CAUSAL only for clamp.",
+    ]
+    y = 0.96
+    for i, line in enumerate(summary):
+        size = 13 if i == 0 else 9.5
+        weight = "bold" if i == 0 else "normal"
+        ax.text(0.02, y, line, transform=ax.transAxes, fontsize=size, fontweight=weight, va="top")
+        y -= 0.105 if i == 0 else 0.095
+
+    for ax in axes.flatten()[:3]:
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+    fig.suptitle("Lab 8 feature evidence dashboard: sparse geometry → labels → causality", fontsize=15)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "feature_evidence_dashboard.png",
+                      "Lab 8 dashboard combining toy geometry, SAE activity, atlas verdicts, transcoder, truth bridge, and clamp summary.")
+
 # ---------------------------------------------------------------------------
 # Plots
 # ---------------------------------------------------------------------------
@@ -774,41 +1278,51 @@ def clamp_feature_steering(bundle, sae, corpus, feature: int, label: str, peak_a
 def plot_ranking_disagreement(ctx, enc, ranks) -> None:
     import torch
 
-    fig, ax = bench.new_figure(figsize=(8.0, 5.2))
-    maxv = enc["line_max"].max(0).values
-    freq = enc["fire_count"] / enc["n_tokens"]
-    sample = torch.argsort(maxv, descending=True)[:400]
-    ax.scatter(maxv[sample], freq[sample], s=10, alpha=0.5, color="tab:blue")
-    for f in ranks["by_max"][:8]:
-        ax.scatter(maxv[f], freq[f], s=60, color="tab:red", marker="^")
-    for f in ranks["by_freq"][:8]:
-        ax.scatter(maxv[f], freq[f], s=60, color="tab:green", marker="s")
+    fig, ax = bench.new_figure(figsize=(8.8, 5.6))
+    maxv = enc["line_max"].max(0).values.detach().cpu()
+    freq = (enc["fire_count"] / max(enc["n_tokens"], 1)).detach().cpu()
+    sample = torch.argsort(maxv, descending=True)[:min(900, len(maxv))]
+    ax.scatter(maxv[sample], freq[sample], s=9, alpha=0.28, color="#777777", label="dictionary features")
+    overlap = set(ranks["by_max"]) & set(ranks["by_freq"])
+    for f in ranks["by_max"][:10]:
+        ax.scatter(maxv[f], freq[f], s=70, color="#D55E00", marker="^", edgecolor="black", linewidth=0.3,
+                   label="top by peak" if f == ranks["by_max"][0] else None)
+    for f in ranks["by_freq"][:10]:
+        ax.scatter(maxv[f], freq[f], s=70, color="#009E73", marker="s", edgecolor="black", linewidth=0.3,
+                   label="top by frequency" if f == ranks["by_freq"][0] else None)
+    first_overlap = next(iter(overlap), None)
+    for f in overlap:
+        ax.scatter(maxv[f], freq[f], s=130, facecolors="none", edgecolors="black", linewidth=1.3,
+                   label="overlap" if f == first_overlap else None)
     ax.set_xlabel("peak activation (max-activation ranking →)")
     ax.set_ylabel("firing frequency (frequency ranking ↑)")
-    ax.set_title("Two rankings disagree: peak-activation (red ▲) vs frequency (green ■)")
+    ax.set_title(f"Two rankings disagree: peak events vs workhorse features (overlap={len(overlap)})")
+    ax.legend(fontsize=8)
     bench.save_figure(ctx, fig, "ranking_disagreement.png",
                       "Peak activation vs firing frequency; the top features by each metric differ.")
 
 
 def plot_atlas_verdicts(ctx, atlas) -> None:
-    fig, ax = bench.new_figure(figsize=(8.0, 5.0))
+    fig, ax = bench.new_figure(figsize=(8.8, 5.2))
     verdicts = [r["verdict"] for r in atlas]
-    order = ["survived", "narrowed", "token-feature", "polysemantic", "killed", "silent-on-corpus"]
+    order = list(VERDICT_ORDER)
     counts = [verdicts.count(v) for v in order]
-    colors = ["tab:green", "tab:olive", "tab:orange", "tab:purple", "tab:red", "tab:gray"]
-    ax.bar(order, counts, color=colors)
+    bars = ax.bar(order, counts, color=[_verdict_color(v) for v in order])
+    for b, c in zip(bars, counts):
+        ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 0.1, str(c), ha="center", va="bottom", fontsize=9)
     ax.set_ylabel("features")
-    ax.set_title("Label-validation verdicts across the atlas")
+    ax.set_title("Label-validation verdicts across the atlas: killed labels are evidence, not embarrassment")
     ax.tick_params(axis="x", rotation=30)
     bench.save_figure(ctx, fig, "atlas_verdicts.png", "Distribution of validation verdicts.")
 
 
 def plot_clamp(ctx, clamp) -> None:
-    fig, ax = bench.new_figure(figsize=(8.0, 5.0))
-    for cond, color in (("real", "tab:red"), ("random", "tab:gray")):
+    fig, ax = bench.new_figure(figsize=(8.8, 5.2))
+    for cond in ("real", "random"):
         pts = sorted((r["clamp_mult"], r["domain_keyword_hits"]) for r in clamp["rows"] if r["condition"] == cond)
-        ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", color=color, linewidth=2.0,
+        ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", color=_clamp_color(cond), linewidth=2.2,
                 label=f"{cond} feature")
+    ax.axvline(clamp.get("best_mult", 0), color="black", linestyle="--", linewidth=0.8, alpha=0.7, label="chosen fluent dose")
     ax.set_xlabel("clamp dose (× feature peak activation)")
     ax.set_ylabel(f"'{clamp['label']}' keyword hits in generations")
     ax.set_title(f"Feature clamp (CAUSAL): feature {clamp['feature']} vs random control")
@@ -939,12 +1453,21 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     else:
         print("[lab8]   causal clamp: no survivor with a keyword battery; extension skipped")
 
-    # ----- plots ---------------------------------------------------------------
+    # ----- synthesis tables + plots --------------------------------------------
+    write_lab8_synthesis_tables(ctx, atlas, enc, ranks, toy, tc_report, bridge, clamp)
     if not args.no_plots:
+        plot_superposition_phase_diagram(ctx, toy)
         plot_ranking_disagreement(ctx, enc, ranks)
         plot_atlas_verdicts(ctx, atlas)
+        plot_feature_validation_matrix(ctx, atlas)
+        plot_sae_activity_dashboard(ctx, enc, atlas)
+        plot_domain_validation_summary(ctx, atlas)
+        plot_feature_evidence_dashboard(ctx, atlas, enc, ranks, toy, tc_report, bridge, clamp)
+        plot_truth_bridge_cosines(ctx, bridge)
+        plot_transcoder_feature_cards(ctx, tc_report)
         if clamp is not None:
             plot_clamp(ctx, clamp)
+            plot_clamp_operating_window(ctx, clamp)
 
     # ----- metrics, atlas, claims, summary -------------------------------------
     survived = [r for r in atlas if r["verdict"] == "survived"]
@@ -979,7 +1502,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
 def build_claims(ctx, bundle, sae, atlas, enc, toy, tc_report, clamp, survived, killed) -> list[dict[str, str]]:
     run_name = ctx.run_dir.name
-    best = max(atlas, key=lambda r: r["held_out_auc"]) if atlas else None
+    validish = [r for r in atlas if r.get("verdict") in ("survived", "narrowed")]
+    best = max(validish or atlas, key=lambda r: _safe_float(r.get("held_out_auc"), 0.5)) if atlas else None
     claims = [
         {
             "id": f"{LAB_ID}-C1", "tag": "OBS",
@@ -997,8 +1521,8 @@ def build_claims(ctx, bundle, sae, atlas, enc, toy, tc_report, clamp, survived, 
         claims.append({
             "id": f"{LAB_ID}-C2", "tag": "DECODE",
             "text": (
-                f"SAE feature {best['feature']} is labeled '{best['proposed_label']}' and the label SURVIVES "
-                f"validation: held-out AUC {best['held_out_auc']:.2f} against domain membership"
+                f"SAE feature {best['feature']} is labeled '{best['proposed_label']}' and the label {str(best['verdict']).upper()} "
+                f"under validation: held-out AUC {_safe_float(best['held_out_auc'], 0.5):.2f} against domain membership"
                 + (f", and it separates the confusable pair '{best['proposed_label']}' vs "
                    f"'{best['confusable_with']}' at AUC {best['confusable_auc']} (a concept feature, not a "
                    f"token feature)" if best['confusable_with'] else "")
@@ -1145,19 +1669,27 @@ def write_summary(ctx, bundle, metrics, atlas, toy, tc_report, bridge, clamp, cl
         "   were the teaching case), the confusable-pair numbers that separate concept from token, and",
         "   the explicit 'What the atlas does NOT show' section. A clean sheet of 'survived' is a",
         "   warning sign.",
-        "3. `plots/toy_superposition_geometry.png` + toy stats — predict the geometry (dense: exactly",
-        "   d_hidden orthogonal; sparse: more features via accepted interference) before you look.",
-        "4. `plots/ranking_disagreement.png` + `tables/feature_rankings.csv` — **look for little or no",
+        "3. `plots/feature_evidence_dashboard.png` — the whole lab packet on one page: toy geometry,",
+        "   SAE health, label verdicts, transcoder, truth bridge, and clamp status.",
+        "4. `plots/feature_validation_matrix.png` + `tables/feature_evidence_matrix.csv` — the label",
+        "   locks side by side: held-out AUC, confusable AUC, purity, low-polysemy score, and sparse firing.",
+        "5. `plots/toy_superposition_geometry.png` and `plots/toy_superposition_phase_diagram.png` —",
+        "   predict the geometry (dense: exactly d_hidden orthogonal; sparse: more features via",
+        "   accepted interference) before you look.",
+        "6. `plots/ranking_disagreement.png` + `tables/feature_rankings.csv` — **look for little or no",
         "   overlap** between the red (max-act, rare high-peak outliers) and green (freq, broad basis",
         "   vectors); the reference run had 0.",
-        "5. `plots/atlas_verdicts.png` — count the killed bar; the lab wants dead labels.",
-        "6. `transcoder_reconstruction_report.json` — FVU + splice-in KL (tiny in the reference run,",
-        "   ~0.01) + de-embed 'promotes tokens'. This is the explicit hand-off to Lab 9: input→output",
-        "   objects give edges, not just site nouns.",
-        "7. `plots/feature_clamp.png` + `tables/feature_clamp.csv` — the single CAUSAL claim.",
-        "   **Read the sample generations** at each dose (not just hits). Expect a narrow window",
-        "   (reference run: induce ~1× peak, collapse by ~3×); random stays at or near 0; the",
-        "   distinct ratio flags repetition.",
+        "7. `plots/sae_activity_dashboard.png` and `plots/domain_validation_summary.png` — separate",
+        "   ordinary dictionary sparsity from the few features you are tempted to name.",
+        "8. `plots/atlas_verdicts.png` — count the killed bar; the lab wants dead labels.",
+        "9. `transcoder_reconstruction_report.json`, `plots/transcoder_feature_cards.png`, and",
+        "   `tables/transcoder_feature_promotes.csv` — FVU + splice-in KL + de-embedded promoted tokens.",
+        "10. `plots/truth_bridge_feature_cosines.png` — the Lab 4 truth direction is compared against",
+        "    SAE decoder atoms instead of being assumed to be one feature.",
+        "11. `plots/feature_clamp.png`, `plots/clamp_operating_window.png`, and `tables/feature_clamp.csv`",
+        "    — the single CAUSAL claim. **Read the sample generations** at each dose (not just hits).",
+        "    Expect a narrow window (reference run: induce ~1× peak, collapse by ~3×); random stays at",
+        "    or near 0; the distinct ratio flags repetition.",
         "",
         "## 7. Caveats",
         "",

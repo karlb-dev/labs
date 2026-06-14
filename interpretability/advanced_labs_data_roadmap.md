@@ -9,6 +9,12 @@ hooks that already exist. The governing rule carries over from the intro set:
 **diversity must be method-shaped.** A phenomenon enters a lab only with a
 label scheme the method can score and a control that can kill the claim.
 
+**Supersession note, 2026-06-13:** current lab numbering follows
+`ADVANCED_COURSE.MD`. Lab 17 is now persona, voice, roleplay, and register
+using `data/persona_register_pairs.csv`; humor/incongruity is now implemented
+as Lab 18 using `data/humor_incongruity_pairs.csv`. The later candidate slots
+below are older planning notes, not the current authoritative numbering.
+
 ## What the intro set now ships (the seeds)
 
 | Asset | Where | What it seeds |
@@ -60,14 +66,14 @@ Claim is the *dissociation*: internal probe says X, output says ¬X, and the
 CoT-faithfulness battery (Lab 10) scores the report. Never label "lying"
 behaviorally alone.
 
-**Lab 17 — Humor and incongruity (lens + attention).** Humor is unlabelable
+**Older slot, now Lab 18 — Humor and incongruity (lens + attention).** Humor is unlabelable
 at scale, but *incongruity* is measurable: joke setups with punchline vs
 literal completions (single-token where possible, e.g. pun completions),
 surprisal trajectories, and which heads route the setup token that makes the
 pun land. Data: a pun-completion set with matched literal controls — build it
 with the dual-tokenizer verifier from `make_relation_sets.py`.
 
-**Lab 18 — Theory of mind (patching + probing).** False-belief vignettes in
+**Older slot — Theory of mind (patching + probing).** False-belief vignettes in
 the Lab 5 clean/corrupt pair shape: "Sally puts the ball in the basket; Anne
 moves it to the box; Sally looks in the ___" with belief-state corruptions.
 Single-token answers (basket/box verified single-token both tokenizers).

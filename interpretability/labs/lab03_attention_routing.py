@@ -65,6 +65,26 @@ N_LOW_ATTRIBUTION_CONTROLS = 1
 # both pooled and above this floor, so students see the measurement-noise goblin.
 ATTRIBUTION_NOISE_FLOOR = 0.1
 
+# Plot grammar shared inside the lab. The bench also exposes color helpers, but
+# keeping the motif palette here makes the evidence ladder legible even when this
+# file is run against an older bench.
+PLOT_TOP_HEADS = 28
+MOTIF_LABEL_ORDER = ("induction", "previous_token", "first_token_sink", "diffuse", "other")
+MOTIF_COLORS = {
+    "induction": "#E69F00",
+    "previous_token": "#0072B2",
+    "first_token_sink": "#7E57C2",
+    "diffuse": "#999999",
+    "other": "#555555",
+}
+CATEGORY_COLORS = {
+    "synthetic": "#0072B2",
+    "cycle": "#009E73",
+    "natural": "#D55E00",
+    "control": "#7E57C2",
+}
+PHASE_LABELS = ("early", "middle", "late", "final")
+
 
 @dataclasses.dataclass(frozen=True)
 class PatternPrompt:
@@ -382,6 +402,95 @@ def spearman_rho(xs: list[float], ys: list[float]) -> float | None:
 
 def token_rank(logits: Any, token_id: int) -> int:
     return int((logits > logits[token_id]).sum()) + 1
+
+
+def _num(row: Mapping[str, Any], key: str, default: float = 0.0) -> float:
+    """Safe numeric field access for tables where blanks mean not measured."""
+    value = row.get(key, default)
+    if value in ("", None):
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _maybe_num(row: Mapping[str, Any], key: str) -> float | None:
+    value = row.get(key, "")
+    if value in ("", None):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _head_label(layer: int | str, head: int | str, motif: str | None = None) -> str:
+    label = f"L{int(layer)}H{int(head)}"
+    return f"{label}\n{motif}" if motif else label
+
+
+def _motif_color(label: str) -> str:
+    helper = getattr(bench, "plot_motif_color", None)
+    if callable(helper):
+        return helper(label, MOTIF_COLORS.get(label, "#555555"))
+    return MOTIF_COLORS.get(label, "#555555")
+
+
+def _category_color(category: str) -> str:
+    helper = getattr(bench, "plot_category_color", None)
+    if callable(helper):
+        return helper(category, CATEGORY_COLORS.get(category, "#333333"))
+    return CATEGORY_COLORS.get(category, "#333333")
+
+
+def _lighten(color: str, amount: float = 0.55) -> str:
+    helper = getattr(bench, "lighten_color", None)
+    if callable(helper):
+        return helper(color, amount)
+    return color
+
+
+def _zero_lines(ax: Any, *, x: bool = True, y: bool = True) -> None:
+    helper = getattr(bench, "add_zero_lines", None)
+    if callable(helper):
+        helper(ax, x=x, y=y)
+    else:
+        if x:
+            ax.axvline(0, linewidth=0.8, alpha=0.75)
+        if y:
+            ax.axhline(0, linewidth=0.8, alpha=0.75)
+
+
+def _panel_label(ax: Any, label: str) -> None:
+    helper = getattr(bench, "add_panel_label", None)
+    if callable(helper):
+        helper(ax, label)
+    else:
+        ax.text(-0.10, 1.04, label, transform=ax.transAxes, fontsize=11, fontweight="bold", va="bottom")
+
+
+def _layer_phase(layer: int, n_layers: int) -> str:
+    if n_layers <= 1:
+        return "final"
+    frac = (layer + 0.5) / n_layers
+    if layer >= n_layers - 2:
+        return "final"
+    if frac < 1 / 3:
+        return "early"
+    if frac < 2 / 3:
+        return "middle"
+    return "late"
+
+
+def _signed_limit(values: Iterable[float], floor: float = 1e-6) -> float:
+    vals = [abs(float(v)) for v in values if v not in (None, "")]
+    return max(vals) if vals else floor
+
+
+def _mean_or_blank(values: Iterable[float]) -> float | str:
+    vals = [float(v) for v in values if v not in (None, "")]
+    return round(statistics.fmean(vals), 4) if vals else ""
 
 
 # ---------------------------------------------------------------------------
@@ -761,6 +870,238 @@ def attribution_ablation_stats(
 
 
 # ---------------------------------------------------------------------------
+# Visualization summary tables
+# ---------------------------------------------------------------------------
+
+
+def _category_induction_index(category_rows: list[dict[str, Any]]) -> dict[tuple[int, int], dict[str, float]]:
+    out: dict[tuple[int, int], dict[str, float]] = defaultdict(dict)
+    for r in category_rows:
+        key = (int(r["layer"]), int(r["head"]))
+        if r.get("induction_score") != "":
+            out[key][str(r["category"])] = float(r["induction_score"])
+    return out
+
+
+def head_evidence_rows(
+    head_table: list[dict[str, Any]],
+    ablation_summary: list[dict[str, Any]],
+    natural_confirmations: list[dict[str, Any]],
+    category_rows: list[dict[str, Any]],
+    n_layers: int,
+) -> list[dict[str, Any]]:
+    """One row per head with the three evidence rungs lined up side-by-side."""
+    cat_idx = _category_induction_index(category_rows)
+    abl_idx = {(int(r["layer"]), int(r["head"])): r for r in ablation_summary}
+    nat_confirm_idx = {(int(r.get("layer", -1)), int(r.get("head", -1))): r for r in natural_confirmations if "layer" in r and "head" in r}
+    rows: list[dict[str, Any]] = []
+    for r in head_table:
+        layer, head = int(r["layer"]), int(r["head"])
+        key = (layer, head)
+        by_cat = cat_idx.get(key, {})
+        synth_cycle = [by_cat[c] for c in ("synthetic", "cycle") if c in by_cat]
+        synthetic_cycle_induction = statistics.fmean(synth_cycle) if synth_cycle else 0.0
+        natural_induction = by_cat.get("natural", 0.0)
+        control_induction = by_cat.get("control", 0.0)
+        abl = abl_idx.get(key, {})
+        prev = _num(r, "prev_token_score")
+        induct = _num(r, "induction_score")
+        sink = _num(r, "first_token_score")
+        entropy = _num(r, "mean_entropy_frac")
+        attr = _num(r, "mean_target_attribution")
+        direct = _maybe_num(abl, "mean_direct_effect_final_pos")
+        total = _maybe_num(abl, "mean_total_effect_all_pos")
+        gap = _maybe_num(abl, "mean_indirect_gap_all_minus_final")
+        dominant_obs = max(prev, induct, sink)
+        causal_signal = max(abs(direct or 0.0), abs(total or 0.0), abs(gap or 0.0))
+        attr_signal = abs(attr)
+        # The score is only a sorting aid for visual inspection, not a metric.
+        evidence_score = dominant_obs + 0.35 * (1.0 - entropy) + 0.60 * attr_signal + 0.80 * causal_signal + 0.35 * natural_induction
+        label = str(r["pattern_label"])
+        status_bits = []
+        if dominant_obs >= MOTIF_SCORE_BAR or (label == "first_token_sink" and sink >= SINK_SCORE_BAR):
+            status_bits.append("OBS")
+        if abs(attr) >= ATTRIBUTION_NOISE_FLOOR:
+            status_bits.append("ATTR")
+        if causal_signal >= 0.05:
+            status_bits.append("CAUSAL")
+        if natural_induction and synthetic_cycle_induction:
+            status_bits.append("TRANSFER" if natural_induction >= NATURAL_CONFIRM_RATIO * synthetic_cycle_induction else "TOY-SPECIFIC")
+        if control_induction >= MOTIF_SCORE_BAR:
+            status_bits.append("CONTROL-FLAG")
+        rows.append(
+            {
+                "layer": layer,
+                "head": head,
+                "head_id": f"L{layer}H{head}",
+                "phase": _layer_phase(layer, n_layers),
+                "pattern_label": label,
+                "evidence_tags": "+".join(status_bits) if status_bits else "low-signal",
+                "evidence_sort_score": round(evidence_score, 4),
+                "dominant_observational_score": round(dominant_obs, 4),
+                "prev_token_score": r["prev_token_score"],
+                "induction_score": r["induction_score"],
+                "first_token_score": r["first_token_score"],
+                "entropy_focus_score": round(max(0.0, 1.0 - entropy), 4),
+                "synthetic_cycle_induction_score": round(synthetic_cycle_induction, 4),
+                "natural_induction_score": round(natural_induction, 4),
+                "control_induction_score": round(control_induction, 4),
+                "natural_confirmation_ratio": _round_or_blank(
+                    natural_induction / max(abs(synthetic_cycle_induction), 1e-9) if synthetic_cycle_induction else None
+                ),
+                "natural_confirmed": nat_confirm_idx.get(key, {}).get("confirmed", ""),
+                "mean_target_attribution": r["mean_target_attribution"],
+                "abs_target_attribution": round(abs(attr), 4),
+                "mean_direct_effect_final_pos": _round_or_blank(direct),
+                "mean_total_effect_all_pos": _round_or_blank(total),
+                "mean_indirect_gap_all_minus_final": _round_or_blank(gap),
+                "abs_causal_signal": round(causal_signal, 4),
+                "candidate_sources": abl.get("candidate_sources", ""),
+                "n_ablation_examples": abl.get("n_examples", ""),
+            }
+        )
+    return sorted(rows, key=lambda r: float(r["evidence_sort_score"]), reverse=True)
+
+
+def phase_summary_rows(head_table: list[dict[str, Any]], n_layers: int) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str], dict[str, list[float]]] = {}
+    for r in head_table:
+        phase = _layer_phase(int(r["layer"]), n_layers)
+        label = str(r["pattern_label"])
+        g = grouped.setdefault((phase, label), {"induction": [], "prev": [], "sink": [], "attr": [], "abs_attr": [], "entropy": []})
+        g["induction"].append(_num(r, "induction_score"))
+        g["prev"].append(_num(r, "prev_token_score"))
+        g["sink"].append(_num(r, "first_token_score"))
+        attr = _num(r, "mean_target_attribution")
+        g["attr"].append(attr)
+        g["abs_attr"].append(abs(attr))
+        g["entropy"].append(_num(r, "mean_entropy_frac"))
+    rows = []
+    for phase in PHASE_LABELS:
+        for label in MOTIF_LABEL_ORDER:
+            g = grouped.get((phase, label))
+            if not g:
+                continue
+            rows.append(
+                {
+                    "phase": phase,
+                    "pattern_label": label,
+                    "n_heads": len(g["attr"]),
+                    "mean_prev_token_score": round(statistics.fmean(g["prev"]), 4),
+                    "mean_induction_score": round(statistics.fmean(g["induction"]), 4),
+                    "mean_first_token_score": round(statistics.fmean(g["sink"]), 4),
+                    "mean_entropy_frac": round(statistics.fmean(g["entropy"]), 4),
+                    "mean_target_attribution": round(statistics.fmean(g["attr"]), 4),
+                    "mean_abs_target_attribution": round(statistics.fmean(g["abs_attr"]), 4),
+                }
+            )
+    return rows
+
+
+def routing_disagreement_rows(
+    evidence_rows: list[dict[str, Any]],
+    *,
+    attr_floor: float = ATTRIBUTION_NOISE_FLOOR,
+    causal_floor: float = 0.05,
+) -> list[dict[str, Any]]:
+    """Heads where the three rungs tell visibly different stories."""
+    rows = []
+    for r in evidence_rows:
+        obs = float(r["dominant_observational_score"])
+        attr = _num(r, "mean_target_attribution")
+        direct = _maybe_num(r, "mean_direct_effect_final_pos") or 0.0
+        total = _maybe_num(r, "mean_total_effect_all_pos") or 0.0
+        gap = _maybe_num(r, "mean_indirect_gap_all_minus_final") or 0.0
+        cases = []
+        if obs >= MOTIF_SCORE_BAR and abs(attr) < attr_floor and max(abs(direct), abs(total)) < causal_floor:
+            cases.append("routing_without_write_or_effect")
+        if abs(attr) >= attr_floor and abs(direct) < causal_floor:
+            cases.append("write_without_direct_effect")
+        if abs(total) >= causal_floor and abs(direct) < 0.35 * abs(total):
+            cases.append("indirect_path_signature")
+        if abs(attr) >= attr_floor and abs(direct) >= causal_floor and (attr > 0) != (direct > 0):
+            cases.append("attribution_effect_sign_flip")
+        if float(r.get("control_induction_score", 0.0) or 0.0) >= MOTIF_SCORE_BAR:
+            cases.append("control_induction_false_positive")
+        if not cases:
+            continue
+        rr = dict(r)
+        rr["disagreement_type"] = ";".join(cases)
+        rr["lesson"] = _disagreement_lesson(cases)
+        rows.append(rr)
+    return sorted(rows, key=lambda r: ("indirect_path_signature" not in r["disagreement_type"], -float(r["evidence_sort_score"])))
+
+
+def _disagreement_lesson(cases: list[str]) -> str:
+    if "indirect_path_signature" in cases:
+        return "all-position ablation is larger than final-position ablation; this suggests composition through earlier writes, not a localized edge."
+    if "routing_without_write_or_effect" in cases:
+        return "the head routes in a recognizable motif but does not visibly write or matter on this behavior."
+    if "write_without_direct_effect" in cases:
+        return "the frozen final-position write is not reproduced by live direct-path ablation."
+    if "attribution_effect_sign_flip" in cases:
+        return "the frozen ledger and the live intervention disagree even in sign; downstream computation or norm movement is likely important."
+    if "control_induction_false_positive" in cases:
+        return "the motif rule fired on a control; inspect tokens before assigning a head type."
+    return "routing, attribution, and causal scope should be reported separately."
+
+
+def plot_reading_guide_rows() -> list[dict[str, str]]:
+    return [
+        {
+            "artifact": "attention_routing_card.md",
+            "evidence_rung": "summary",
+            "concept": "One-page verdict with non-claims; start here after instrument checks.",
+        },
+        {
+            "artifact": "plots/routing_evidence_dashboard.png",
+            "evidence_rung": "OBS + ATTR + CAUSAL",
+            "concept": "Four-panel story of motif labels, baseline behavior, direct-vs-all-position effects, and natural transfer.",
+        },
+        {
+            "artifact": "plots/head_evidence_matrix.png + tables/head_evidence_matrix.csv",
+            "evidence_rung": "OBS + ATTR + CAUSAL",
+            "concept": "Rows are heads; columns line up routing scores, attribution, ablation effects, indirect gaps, transfer, and controls.",
+        },
+        {
+            "artifact": "plots/motif_maps.png",
+            "evidence_rung": "OBS",
+            "concept": "Layer-by-head map of motif scores, entropy, final-position attribution, and the resulting motif label.",
+        },
+        {
+            "artifact": "plots/attention_heads_<showcase>.png",
+            "evidence_rung": "OBS",
+            "concept": "Token-labeled attention patterns with motif-target overlays; a heatmap is not a causal explanation.",
+        },
+        {
+            "artifact": "plots/motif_transfer_scatter.png + tables/natural_confirmation.csv",
+            "evidence_rung": "OBS audit",
+            "concept": "Synthetic/cycle induction score versus natural repeated-phrase induction score; tests whether the motif survives outside toy cycles.",
+        },
+        {
+            "artifact": "plots/head_attribution_by_layer.png",
+            "evidence_rung": "ATTR",
+            "concept": "Head-level final-position writes against the answer direction, with layer net bars and top heads annotated.",
+        },
+        {
+            "artifact": "plots/head_attribution_vs_ablation.png",
+            "evidence_rung": "ATTR versus CAUSAL",
+            "concept": "Frozen attribution compared to direct-path ablation, with the noise floor and sign disagreements visible.",
+        },
+        {
+            "artifact": "plots/direct_vs_indirect_effect.png + plots/ablation_scope_heatmap.png",
+            "evidence_rung": "CAUSAL scope audit",
+            "concept": "Final-position ablation versus all-position ablation; gaps point to indirect composition through earlier writes.",
+        },
+        {
+            "artifact": "tables/routing_attr_causal_disagreements.csv",
+            "evidence_rung": "claim discipline",
+            "concept": "Heads where routing, writing, and intervention disagree; use these to write careful caveated claims.",
+        },
+    ]
+
+
+# ---------------------------------------------------------------------------
 # Plots
 # ---------------------------------------------------------------------------
 
@@ -771,124 +1112,209 @@ def plot_attention_heatmap_panel(
     heads: list[tuple[int, int, str]],
     example_id: str,
 ) -> None:
-    """Token-labeled attention heatmaps for showcase heads."""
+    """Token-labeled attention heatmaps with explicit motif-target overlays."""
     import matplotlib.pyplot as plt
     import numpy as np
+    from matplotlib.lines import Line2D
 
     if not heads:
         return
     labels = [bench.visible_token(t) for t in att.capture.tokens_text]
+    input_ids = list(att.capture.input_ids)
+    seq = len(labels)
     n = len(heads)
-    fig, axes = plt.subplots(1, n, figsize=(4.4 * n, 4.8), constrained_layout=True)
+    fig, axes = plt.subplots(1, n, figsize=(4.7 * n, 5.2), constrained_layout=True)
     if n == 1:
         axes = [axes]
+    induction = induction_targets(input_ids)
     im = None
-    for ax, (layer, head, title) in zip(axes, heads):
+    for i, (ax, (layer, head, title)) in enumerate(zip(axes, heads)):
         pattern = np.array(att.attentions[layer, head])
-        im = ax.imshow(pattern, vmin=0.0, vmax=1.0)
-        ax.set_xticks(range(len(labels)))
-        ax.set_yticks(range(len(labels)))
+        im = ax.imshow(pattern, vmin=0.0, vmax=1.0, cmap="viridis")
+        ax.set_xticks(range(seq))
+        ax.set_yticks(range(seq))
         ax.set_xticklabels(labels, rotation=90, fontsize=7)
         ax.set_yticklabels(labels, fontsize=7)
         ax.set_title(f"L{layer}H{head}\n{title}", fontsize=9)
         ax.set_xlabel("key position read from")
-        ax.set_ylabel("query position reading")
+        if i == 0:
+            ax.set_ylabel("query position reading")
+        # Thin overlays turn the heatmap from eye-candy into a microscope slide.
+        if seq >= 2:
+            qs = list(range(1, seq))
+            ax.scatter([q - 1 for q in qs], qs, marker="s", facecolors="none", edgecolors="#FFFFFF", linewidths=0.8, s=36, label="previous-token target")
+            ax.scatter([0 for _ in qs], qs, marker="|", color="#FFB000", linewidths=1.2, s=75, label="first-token sink target")
+        if induction:
+            xs, ys = [], []
+            for q, hits in induction.items():
+                for j in hits:
+                    xs.append(j)
+                    ys.append(q)
+            ax.scatter(xs, ys, marker="o", facecolors="none", edgecolors="#00FFFF", linewidths=1.2, s=54, label="induction target")
+        ax.set_xlim(-0.5, seq - 0.5)
+        ax.set_ylim(seq - 0.5, -0.5)
+        ax.grid(color="white", alpha=0.12, linewidth=0.5)
     if im is not None:
         fig.colorbar(im, ax=axes, fraction=0.025, label="attention weight")
-    fig.suptitle(f"Showcase heads on {example_id!r}: routing patterns, not explanations by themselves")
+    handles = [
+        Line2D([0], [0], marker="s", color="none", markeredgecolor="#FFFFFF", markerfacecolor="none", markersize=6, label="previous-token target"),
+        Line2D([0], [0], marker="o", color="none", markeredgecolor="#00FFFF", markerfacecolor="none", markersize=6, label="induction target"),
+        Line2D([0], [0], marker="|", color="#FFB000", markersize=9, linestyle="None", label="first-token sink target"),
+    ]
+    axes[0].legend(handles=handles, loc="upper left", bbox_to_anchor=(0.0, -0.28), ncol=3, frameon=False, fontsize=7)
+    fig.suptitle(f"Showcase heads on {example_id!r}: routing targets overlaid on the raw attention pattern")
     bench.save_figure(
         ctx,
         fig,
         f"attention_heads_{bench.sanitize_tag(example_id)}.png",
-        "Token-labeled attention patterns for motif and high-attribution heads.",
+        "Token-labeled attention patterns with previous-token, induction, and sink target overlays.",
     )
 
-
 def plot_motif_maps(ctx: bench.RunContext, head_rows: list[dict[str, Any]], n_layers: int, n_heads: int) -> None:
-    """Four layer-by-head grids: motifs plus entropy."""
+    """Layer-by-head maps that separate OBS scores from ATTR values."""
     import matplotlib.pyplot as plt
     import numpy as np
+    import matplotlib.colors as mcolors
 
     grids = {
         "previous-token score": np.zeros((n_layers, n_heads)),
         "induction score": np.zeros((n_layers, n_heads)),
         "first-token sink score": np.zeros((n_layers, n_heads)),
-        "entropy fraction": np.zeros((n_layers, n_heads)),
+        "focusedness (1 - entropy frac)": np.zeros((n_layers, n_heads)),
+        "target attribution": np.zeros((n_layers, n_heads)),
+        "motif label": np.zeros((n_layers, n_heads)),
     }
+    label_codes = {lab: i for i, lab in enumerate(MOTIF_LABEL_ORDER)}
     for r in head_rows:
-        grids["previous-token score"][r["layer"], r["head"]] = r["prev_token_score"]
-        grids["induction score"][r["layer"], r["head"]] = r["induction_score"] if r["induction_score"] != "" else 0.0
-        grids["first-token sink score"][r["layer"], r["head"]] = r["first_token_score"]
-        grids["entropy fraction"][r["layer"], r["head"]] = r["mean_entropy_frac"]
+        l, h = int(r["layer"]), int(r["head"])
+        grids["previous-token score"][l, h] = _num(r, "prev_token_score")
+        grids["induction score"][l, h] = _num(r, "induction_score")
+        grids["first-token sink score"][l, h] = _num(r, "first_token_score")
+        grids["focusedness (1 - entropy frac)"][l, h] = max(0.0, 1.0 - _num(r, "mean_entropy_frac"))
+        grids["target attribution"][l, h] = _num(r, "mean_target_attribution")
+        grids["motif label"][l, h] = label_codes.get(str(r["pattern_label"]), label_codes["other"])
 
-    fig, axes = plt.subplots(2, 2, figsize=(13.0, 8.5), sharey=True, constrained_layout=True)
+    fig, axes = plt.subplots(2, 3, figsize=(15.5, 8.6), sharey=True, constrained_layout=True)
     axes_flat = list(axes.ravel())
-    for ax, (name, grid) in zip(axes_flat, grids.items()):
-        im = ax.imshow(grid, vmin=0.0, vmax=1.0, aspect="auto")
+    for ax, (name, grid) in zip(axes_flat[:4], list(grids.items())[:4]):
+        im = ax.imshow(grid, vmin=0.0, vmax=1.0, aspect="auto", cmap="viridis")
         ax.set_title(name)
         ax.set_xlabel("head")
         ax.set_ylabel("layer")
         fig.colorbar(im, ax=ax, fraction=0.035)
-    fig.suptitle("Head motif map: routing patterns before contribution or causality")
-    bench.save_figure(ctx, fig, "motif_maps.png", "Layer-by-head grids of motif scores and attention entropy.")
-
+        # The threshold line is a title concept, not a spatial line. Use small text.
+        ax.text(0.02, 0.96, f"label bar {MOTIF_SCORE_BAR:.2f}", transform=ax.transAxes, va="top", fontsize=7, color="white")
+    signed = grids["target attribution"]
+    lim = _signed_limit(signed.ravel(), floor=0.1)
+    im = axes_flat[4].imshow(signed, vmin=-lim, vmax=lim, aspect="auto", cmap="coolwarm")
+    axes_flat[4].set_title("target attribution (signed)")
+    axes_flat[4].set_xlabel("head")
+    axes_flat[4].set_ylabel("layer")
+    fig.colorbar(im, ax=axes_flat[4], fraction=0.035)
+    cmap = mcolors.ListedColormap([_motif_color(lab) for lab in MOTIF_LABEL_ORDER])
+    norm = mcolors.BoundaryNorm(list(range(len(MOTIF_LABEL_ORDER) + 1)), cmap.N)
+    im = axes_flat[5].imshow(grids["motif label"], aspect="auto", cmap=cmap, norm=norm)
+    axes_flat[5].set_title("winner under the transparent label rule")
+    axes_flat[5].set_xlabel("head")
+    axes_flat[5].set_ylabel("layer")
+    cbar = fig.colorbar(im, ax=axes_flat[5], fraction=0.035, ticks=[i + 0.5 for i in range(len(MOTIF_LABEL_ORDER))])
+    cbar.ax.set_yticklabels(MOTIF_LABEL_ORDER)
+    for ax, label in zip(axes_flat, "ABCDEF"):
+        _panel_label(ax, label)
+    fig.suptitle("Head motif atlas: routing patterns first, writing second, labels last")
+    bench.save_figure(ctx, fig, "motif_maps.png", "Layer-by-head grids of motif scores, attention focusedness, attribution, and labels.")
 
 def plot_head_attribution_zoom(ctx: bench.RunContext, head_rows: list[dict[str, Any]], n_layers: int) -> None:
-    """Lab 2 said which layers matter; this resolves those bars into heads."""
-    fig, ax = bench.new_figure(figsize=(10.5, 5.8))
+    """Resolve the Lab 2 attention bar into signed head writes and cancellation."""
+    import numpy as np
+
+    fig, ax = bench.new_figure(figsize=(12.2, 6.0))
+    n_heads = max(int(r["head"]) for r in head_rows) + 1 if head_rows else 1
     by_layer: dict[int, list[float]] = {l: [] for l in range(n_layers)}
     for r in head_rows:
-        by_layer[r["layer"]].append(float(r["mean_target_attribution"]))
-    totals = [sum(v) for v in by_layer.values()]
-    ax.bar(range(n_layers), totals, label="sum over heads")
-    top = sorted(head_rows, key=lambda r: abs(float(r["mean_target_attribution"])), reverse=True)[:10]
+        by_layer[int(r["layer"])].append(_num(r, "mean_target_attribution"))
+    net = [sum(by_layer[l]) for l in range(n_layers)]
+    pos = [sum(v for v in by_layer[l] if v > 0) for l in range(n_layers)]
+    neg = [sum(v for v in by_layer[l] if v < 0) for l in range(n_layers)]
+    ax.bar(range(n_layers), pos, width=0.85, alpha=0.18, label="positive head mass")
+    ax.bar(range(n_layers), neg, width=0.85, alpha=0.18, label="negative head mass")
+    ax.plot(range(n_layers), net, color="#222222", linewidth=1.2, label="net attention contribution")
+    for r in head_rows:
+        l, h = int(r["layer"]), int(r["head"])
+        attr = _num(r, "mean_target_attribution")
+        jitter = (h - (n_heads - 1) / 2) * min(0.035, 0.72 / max(n_heads, 1))
+        ax.scatter(l + jitter, attr, s=18, alpha=0.35, color=_lighten(_motif_color(str(r["pattern_label"])), 0.15), edgecolors="none")
+    top = sorted(head_rows, key=lambda r: abs(_num(r, "mean_target_attribution")), reverse=True)[:12]
     for r in top:
+        l, h = int(r["layer"]), int(r["head"])
+        attr = _num(r, "mean_target_attribution")
         marker = "*" if r["pattern_label"] == "induction" else "o"
-        ax.scatter(r["layer"], r["mean_target_attribution"], s=70, marker=marker, zorder=3)
+        ax.scatter(l, attr, s=92, marker=marker, color=_motif_color(str(r["pattern_label"])), edgecolors="#222222", linewidths=0.5, zorder=4)
         ax.annotate(
-            f"L{r['layer']}H{r['head']}\n{r['pattern_label']}",
-            (r["layer"], r["mean_target_attribution"]),
+            f"L{l}H{h}\n{r['pattern_label']}",
+            (l, attr),
             textcoords="offset points",
-            xytext=(4, 5),
+            xytext=(4, 5 if attr >= 0 else -17),
             fontsize=7,
-            rotation=18,
         )
-    ax.axhline(0, linewidth=0.6)
+    _zero_lines(ax, x=False, y=True)
     ax.set_xlabel("layer")
     ax.set_ylabel("mean direct attribution to target-minus-distractor")
-    ax.set_title("Attention contribution resolved into heads (star = induction-labeled)")
-    ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "head_attribution_by_layer.png", "Per-layer attention attribution resolved into heads.")
-
+    ax.set_title("Attention contribution resolved into heads: signed writers plus layer-level cancellation")
+    ax.legend(fontsize=8, ncol=3, loc="upper left")
+    bench.save_figure(ctx, fig, "head_attribution_by_layer.png", "Per-layer attention attribution resolved into individual signed head writes.")
 
 def plot_direct_vs_indirect(ctx: bench.RunContext, ablation_rows: list[dict[str, Any]]) -> None:
     """The composition reveal: direct-path effect vs all-position effect."""
     pairs: dict[tuple, dict[str, Any]] = {}
     for r in ablation_rows:
         key = (r["example_id"], r["layer"], r["head"])
-        pairs.setdefault(key, {"label": r["pattern_label"], "source": r.get("candidate_sources", "")})[r["scope"]] = float(r["causal_effect"])
-    xs, ys, labels = [], [], []
+        pairs.setdefault(
+            key,
+            {
+                "label": r["pattern_label"],
+                "source": r.get("candidate_sources", ""),
+                "layer": int(r["layer"]),
+                "head": int(r["head"]),
+                "example_id": r["example_id"],
+            },
+        )[r["scope"]] = float(r["causal_effect"])
+    pts = []
     for d in pairs.values():
         if "final_pos" in d and "all_pos" in d:
-            xs.append(d["final_pos"])
-            ys.append(d["all_pos"])
-            labels.append(d["label"])
-    if not xs:
+            d["gap"] = float(d["all_pos"]) - float(d["final_pos"])
+            pts.append(d)
+    if not pts:
         return
-    fig, ax = bench.new_figure(figsize=(7.8, 6.7))
-    for lab in sorted(set(labels)):
-        sel = [(x, y) for x, y, l in zip(xs, ys, labels) if l == lab]
-        ax.scatter([p[0] for p in sel], [p[1] for p in sel], s=46, alpha=0.82, label=f"{lab} (n={len(sel)})")
-    lim = max(max(abs(v) for v in xs), max(abs(v) for v in ys)) * 1.15 or 1.0
-    ax.plot([-lim, lim], [-lim, lim], linewidth=0.8, linestyle="--", label="direct = all-position")
-    ax.axhline(0, linewidth=0.5)
-    ax.axvline(0, linewidth=0.5)
+    fig, ax = bench.new_figure(figsize=(8.4, 7.0))
+    for lab in sorted(set(str(p["label"]) for p in pts)):
+        sel = [p for p in pts if p["label"] == lab]
+        ax.scatter(
+            [p["final_pos"] for p in sel],
+            [p["all_pos"] for p in sel],
+            s=[42 + min(140, 35 * abs(p["gap"])) for p in sel],
+            alpha=0.78,
+            color=_motif_color(lab),
+            label=f"{lab} (n={len(sel)})",
+        )
+    lim = max(max(abs(float(p["final_pos"])) for p in pts), max(abs(float(p["all_pos"])) for p in pts)) * 1.15 or 1.0
+    ax.plot([-lim, lim], [-lim, lim], linewidth=0.9, linestyle="--", color="#555555", label="direct = all-position")
+    _zero_lines(ax)
+    for p in sorted(pts, key=lambda d: abs(d["gap"]), reverse=True)[:7]:
+        ax.annotate(
+            f"{p['example_id']}\nL{p['layer']}H{p['head']}",
+            (p["final_pos"], p["all_pos"]),
+            textcoords="offset points",
+            xytext=(4, 4),
+            fontsize=7,
+        )
+    ax.set_xlim(-lim, lim)
+    ax.set_ylim(-lim, lim)
     ax.set_xlabel("direct effect: head zeroed at final position only")
     ax.set_ylabel("all-position effect: head zeroed everywhere")
-    ax.set_title("Composition check: gap from the diagonal is indirect-path evidence")
-    ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "direct_vs_indirect_effect.png", "Direct-path vs all-position ablation effects.")
-
+    ax.set_title("Composition check: distance from the diagonal is an indirect-path signal")
+    ax.legend(fontsize=8, loc="best")
+    bench.save_figure(ctx, fig, "direct_vs_indirect_effect.png", "Direct-path vs all-position ablation effects, with the largest indirect gaps labeled.")
 
 def plot_attribution_vs_ablation(
     ctx: bench.RunContext,
@@ -898,24 +1324,32 @@ def plot_attribution_vs_ablation(
 ) -> None:
     if not ablation_rows:
         return
-    fig, ax = bench.new_figure(figsize=(7.8, 6.3))
+    fig, ax = bench.new_figure(figsize=(8.2, 6.8))
     per = [r for r in ablation_rows if r["scope"] == "final_pos"]
-    ax.scatter(
-        [float(r["attribution_score"]) for r in per],
-        [float(r["causal_effect"]) for r in per],
-        s=26,
-        alpha=0.28,
-        label="per prompt",
-    )
+    for lab in sorted(set(str(r["pattern_label"]) for r in per)):
+        rows = [r for r in per if r["pattern_label"] == lab]
+        ax.scatter(
+            [float(r["attribution_score"]) for r in rows],
+            [float(r["causal_effect"]) for r in rows],
+            s=28,
+            alpha=0.28,
+            color=_motif_color(lab),
+            label=f"per prompt: {lab}",
+        )
     agg = [r for r in ablation_summary if r["mean_direct_effect_final_pos"] != ""]
-    ax.scatter(
-        [float(r["mean_attribution_score"]) for r in agg],
-        [float(r["mean_direct_effect_final_pos"]) for r in agg],
-        s=72,
-        marker="D",
-        label="candidate mean",
-    )
-    for r in sorted(agg, key=lambda x: abs(float(x["mean_direct_effect_final_pos"])), reverse=True)[:6]:
+    for lab in sorted(set(str(r["pattern_label"]) for r in agg)):
+        rows = [r for r in agg if r["pattern_label"] == lab]
+        ax.scatter(
+            [float(r["mean_attribution_score"]) for r in rows],
+            [float(r["mean_direct_effect_final_pos"]) for r in rows],
+            s=90,
+            marker="D",
+            color=_motif_color(lab),
+            edgecolors="#222222",
+            linewidths=0.6,
+            label=f"candidate mean: {lab}",
+        )
+    for r in sorted(agg, key=lambda x: abs(float(x["mean_direct_effect_final_pos"])), reverse=True)[:8]:
         ax.annotate(
             f"L{r['layer']}H{r['head']}",
             (float(r["mean_attribution_score"]), float(r["mean_direct_effect_final_pos"])),
@@ -925,44 +1359,49 @@ def plot_attribution_vs_ablation(
         )
     xs = [float(r["attribution_score"]) for r in per] + [float(r["mean_attribution_score"]) for r in agg]
     ys = [float(r["causal_effect"]) for r in per] + [float(r["mean_direct_effect_final_pos"]) for r in agg]
-    lim = max(max(abs(v) for v in xs), max(abs(v) for v in ys)) * 1.15 or 1.0
-    ax.plot([-lim, lim], [-lim, lim], linewidth=0.8, linestyle="--")
-    ax.axvspan(-ATTRIBUTION_NOISE_FLOOR, ATTRIBUTION_NOISE_FLOOR, alpha=0.12, label="attribution noise floor")
-    ax.axhline(0, linewidth=0.5)
-    ax.axvline(0, linewidth=0.5)
+    lim = max(_signed_limit(xs, 0.1), _signed_limit(ys, 0.1)) * 1.15
+    ax.plot([-lim, lim], [-lim, lim], linewidth=0.8, linestyle="--", color="#555555", label="attribution = effect")
+    ax.axvspan(-ATTRIBUTION_NOISE_FLOOR, ATTRIBUTION_NOISE_FLOOR, alpha=0.12, color="#777777", label="attribution noise floor")
+    _zero_lines(ax)
+    ax.set_xlim(-lim, lim)
+    ax.set_ylim(-lim, lim)
     title = "Head attribution vs direct-path ablation"
     if stats.get("per_example_rho") is not None:
         title += f"\nper-prompt rho={stats['per_example_rho']:.3f}"
     if stats.get("by_head_rho") is not None:
         title += f"; by-head rho={stats['by_head_rho']:.3f}"
+    if stats.get("by_head_signal_rho") is not None:
+        title += f"; above-noise rho={stats['by_head_signal_rho']:.3f}"
     ax.set_title(title)
     ax.set_xlabel("frozen-norm head attribution")
     ax.set_ylabel("direct-path causal effect")
-    ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "head_attribution_vs_ablation.png", "Attribution versus direct-path ablation.")
-
+    ax.legend(fontsize=7, ncol=2, loc="best")
+    bench.save_figure(ctx, fig, "head_attribution_vs_ablation.png", "Attribution versus direct-path ablation, colored by motif label and showing the noise floor.")
 
 def plot_ablation_effect_by_head(ctx: bench.RunContext, ablation_summary: list[dict[str, Any]]) -> None:
     if not ablation_summary:
         return
-    rows = sorted(ablation_summary, key=lambda r: abs(float(r["mean_total_effect_all_pos"] or 0.0)), reverse=True)[:16]
-    fig, ax = bench.new_figure(figsize=(11.0, 5.8))
-    labels = [f"L{r['layer']}H{r['head']}\n{r['pattern_label']}" for r in rows]
-    xs = list(range(len(rows)))
+    rows = sorted(ablation_summary, key=lambda r: abs(float(r["mean_indirect_gap_all_minus_final"] or 0.0)) + abs(float(r["mean_total_effect_all_pos"] or 0.0)), reverse=True)[:18]
+    fig, ax = bench.new_figure(figsize=(11.0, max(5.8, 0.34 * len(rows) + 2.0)))
+    labels = [f"L{r['layer']}H{r['head']}  {r['pattern_label']}" for r in rows]
+    ys = list(range(len(rows)))
     direct = [float(r["mean_direct_effect_final_pos"] or 0.0) for r in rows]
     total = [float(r["mean_total_effect_all_pos"] or 0.0) for r in rows]
-    ax.scatter(xs, direct, marker="o", s=58, label="final_pos direct")
-    ax.scatter(xs, total, marker="s", s=58, label="all_pos total")
-    for x, d, t in zip(xs, direct, total):
-        ax.plot([x, x], [d, t], linewidth=1.0, alpha=0.5)
-    ax.axhline(0, linewidth=0.6)
-    ax.set_xticks(xs)
-    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
-    ax.set_ylabel("mean causal effect on logit gap")
-    ax.set_title("Candidate heads: direct effect and indirect gap")
-    ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "ablation_effect_by_head.png", "Direct and all-position ablation effects by head.")
-
+    for y, d, t, r in zip(ys, direct, total, rows):
+        color = _motif_color(str(r["pattern_label"]))
+        ax.plot([d, t], [y, y], color=color, linewidth=2.0, alpha=0.55)
+        ax.scatter(d, y, marker="o", s=58, color=color, edgecolors="#222222", linewidths=0.5, label="final_pos direct" if y == 0 else None)
+        ax.scatter(t, y, marker="s", s=58, color=color, edgecolors="#222222", linewidths=0.5, label="all_pos total" if y == 0 else None)
+        if abs(t - d) > 0:
+            ax.text(t, y + 0.18, f"gap {t-d:+.2f}", fontsize=7, ha="center")
+    ax.set_yticks(ys)
+    ax.set_yticklabels(labels, fontsize=8)
+    ax.invert_yaxis()
+    _zero_lines(ax, x=True, y=False)
+    ax.set_xlabel("mean causal effect on logit gap")
+    ax.set_title("Candidate heads: direct effect, all-position effect, and the indirect gap")
+    ax.legend(fontsize=8, loc="lower right")
+    bench.save_figure(ctx, fig, "ablation_effect_by_head.png", "Horizontal lollipop plot of direct and all-position ablation effects by head.")
 
 def plot_routing_to_causality(ctx: bench.RunContext, head_table: list[dict[str, Any]], ablation_summary: list[dict[str, Any]]) -> None:
     if not ablation_summary:
@@ -970,19 +1409,23 @@ def plot_routing_to_causality(ctx: bench.RunContext, head_table: list[dict[str, 
     index = {(int(r["layer"]), int(r["head"])): r for r in head_table}
     rows = []
     for r in ablation_summary:
-        ht = index[(int(r["layer"]), int(r["head"]))]
-        rows.append((ht, r))
-    fig, ax = bench.new_figure(figsize=(7.6, 6.2))
+        key = (int(r["layer"]), int(r["head"]))
+        if key in index:
+            rows.append((index[key], r))
+    fig, ax = bench.new_figure(figsize=(8.0, 6.5))
     for label in sorted(set(ht["pattern_label"] for ht, _ in rows)):
         pts = [(ht, ar) for ht, ar in rows if ht["pattern_label"] == label]
         ax.scatter(
             [float(ht["induction_score"] or 0.0) for ht, _ in pts],
             [float(ar["mean_total_effect_all_pos"] or 0.0) for _, ar in pts],
-            s=[45 + min(120, 35 * abs(float(ht["mean_target_attribution"]))) for ht, _ in pts],
-            alpha=0.75,
+            s=[55 + min(150, 45 * abs(float(ht["mean_target_attribution"]))) for ht, _ in pts],
+            alpha=0.78,
+            color=_motif_color(str(label)),
+            edgecolors="#222222",
+            linewidths=0.4,
             label=label,
         )
-    for ht, ar in sorted(rows, key=lambda p: abs(float(p[1]["mean_total_effect_all_pos"] or 0.0)), reverse=True)[:6]:
+    for ht, ar in sorted(rows, key=lambda p: abs(float(p[1]["mean_total_effect_all_pos"] or 0.0)), reverse=True)[:8]:
         ax.annotate(
             f"L{ht['layer']}H{ht['head']}",
             (float(ht["induction_score"] or 0.0), float(ar["mean_total_effect_all_pos"] or 0.0)),
@@ -990,18 +1433,273 @@ def plot_routing_to_causality(ctx: bench.RunContext, head_table: list[dict[str, 
             xytext=(4, 4),
             fontsize=8,
         )
-    ax.axhline(0, linewidth=0.5)
-    ax.axvline(MOTIF_SCORE_BAR, linewidth=0.8, linestyle="--", label="induction label bar")
+    _zero_lines(ax, x=False, y=True)
+    ax.axvline(MOTIF_SCORE_BAR, linewidth=0.8, linestyle="--", color="#555555", label="induction label bar")
     ax.set_xlabel("mean induction motif score")
     ax.set_ylabel("mean all-position ablation effect")
-    ax.set_title("Routing score versus causal effect: motif label is not yet a circuit claim")
+    ax.set_title("Routing score versus causal effect: motif label is not a circuit claim")
     ax.legend(fontsize=8)
-    bench.save_figure(ctx, fig, "routing_to_causality.png", "Induction motif score versus all-position causal effect.")
+    bench.save_figure(ctx, fig, "routing_to_causality.png", "Induction motif score versus all-position causal effect, sized by attribution.")
 
 
-# ---------------------------------------------------------------------------
-# Claims, card, and summary
-# ---------------------------------------------------------------------------
+
+def plot_head_evidence_matrix(ctx: bench.RunContext, evidence_rows: list[dict[str, Any]]) -> None:
+    """A compact rung-by-rung ledger for the most informative heads."""
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import matplotlib.colors as mcolors
+
+    rows = evidence_rows[:PLOT_TOP_HEADS]
+    if not rows:
+        return
+    labels = [f"{r['head_id']}\n{r['pattern_label']}" for r in rows]
+    unsigned_cols = [
+        ("prev", "prev_token_score"),
+        ("induction", "induction_score"),
+        ("sink", "first_token_score"),
+        ("natural", "natural_induction_score"),
+        ("control", "control_induction_score"),
+        ("focus", "entropy_focus_score"),
+    ]
+    signed_cols = [
+        ("ATTR", "mean_target_attribution"),
+        ("CAUSAL\nfinal", "mean_direct_effect_final_pos"),
+        ("CAUSAL\nall", "mean_total_effect_all_pos"),
+        ("indirect\ngap", "mean_indirect_gap_all_minus_final"),
+    ]
+    unsigned = np.array([[_num(r, k) for _, k in unsigned_cols] for r in rows], dtype=float)
+    signed = np.array([[_num(r, k) for _, k in signed_cols] for r in rows], dtype=float)
+    signed_lim = _signed_limit(signed.ravel(), floor=0.1)
+    fig, axes = plt.subplots(1, 2, figsize=(12.6, max(6.2, 0.31 * len(rows) + 2.1)), constrained_layout=True)
+    im0 = axes[0].imshow(unsigned, vmin=0.0, vmax=1.0, aspect="auto", cmap="viridis")
+    axes[0].set_title("OBS and transfer scores")
+    axes[0].set_xticks(range(len(unsigned_cols)))
+    axes[0].set_xticklabels([c[0] for c in unsigned_cols], rotation=45, ha="right")
+    axes[0].set_yticks(range(len(rows)))
+    axes[0].set_yticklabels(labels, fontsize=7)
+    axes[0].axvline(2.5, color="white", linewidth=0.8, alpha=0.7)
+    fig.colorbar(im0, ax=axes[0], fraction=0.035, label="score")
+    norm = mcolors.TwoSlopeNorm(vcenter=0.0, vmin=-signed_lim, vmax=signed_lim)
+    im1 = axes[1].imshow(signed, aspect="auto", cmap="coolwarm", norm=norm)
+    axes[1].set_title("ATTR and CAUSAL scores")
+    axes[1].set_xticks(range(len(signed_cols)))
+    axes[1].set_xticklabels([c[0] for c in signed_cols], rotation=45, ha="right")
+    axes[1].set_yticks(range(len(rows)))
+    axes[1].set_yticklabels([])
+    fig.colorbar(im1, ax=axes[1], fraction=0.035, label="logit-diff units")
+    for ax, lab in zip(axes, "AB"):
+        _panel_label(ax, lab)
+    fig.suptitle("Head evidence matrix: routing, writing, intervention, and transfer in one table")
+    bench.save_figure(ctx, fig, "head_evidence_matrix.png", "Top heads ranked by combined evidence score, with OBS, ATTR, CAUSAL, transfer, and control columns.")
+
+
+def plot_routing_evidence_dashboard(
+    ctx: bench.RunContext,
+    head_table: list[dict[str, Any]],
+    baseline_rows: list[dict[str, Any]],
+    ablation_summary: list[dict[str, Any]],
+    category_rows: list[dict[str, Any]],
+    natural_confirmations: list[dict[str, Any]],
+    control_audit: list[dict[str, Any]],
+) -> None:
+    """One-screen plot for the lab's central claim discipline."""
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.2, 9.2), constrained_layout=True)
+    ax = axes[0, 0]
+    counts = {label: 0 for label in MOTIF_LABEL_ORDER}
+    for r in head_table:
+        counts[str(r["pattern_label"])] = counts.get(str(r["pattern_label"]), 0) + 1
+    labels = [l for l in MOTIF_LABEL_ORDER if counts.get(l, 0)]
+    ax.bar(labels, [counts[l] for l in labels], color=[_motif_color(l) for l in labels])
+    ax.set_title("A. Motif labels are plentiful")
+    ax.set_ylabel("heads")
+    ax.tick_params(axis="x", rotation=30)
+
+    ax = axes[0, 1]
+    for category in CATEGORIES:
+        vals = [float(r["logit_diff_target_minus_distractor"]) for r in baseline_rows if r["category"] == category]
+        if not vals:
+            continue
+        xs = [CATEGORIES.index(category) + (i - (len(vals) - 1) / 2) * 0.06 for i in range(len(vals))]
+        ax.scatter(xs, vals, s=45, color=_category_color(category), alpha=0.75, label=f"{category} (n={len(vals)})")
+        ax.plot([CATEGORIES.index(category) - 0.22, CATEGORIES.index(category) + 0.22], [statistics.fmean(vals)] * 2, color=_category_color(category), linewidth=2.4)
+    ax.axhline(0, linewidth=0.8, color="#222222")
+    ax.set_xticks(range(len(CATEGORIES)))
+    ax.set_xticklabels(CATEGORIES, rotation=25, ha="right")
+    ax.set_title("B. Baseline behavior gates causal interpretation")
+    ax.set_ylabel("final logit(target) - logit(distractor)")
+
+    ax = axes[1, 0]
+    if ablation_summary:
+        for r in ablation_summary:
+            d = _num(r, "mean_direct_effect_final_pos")
+            t = _num(r, "mean_total_effect_all_pos")
+            color = _motif_color(str(r["pattern_label"]))
+            ax.plot([d, t], [0, 1], color=color, alpha=0.45, linewidth=1.5)
+            ax.scatter(d, 0, color=color, s=48, edgecolors="#222222", linewidths=0.4)
+            ax.scatter(t, 1, color=color, s=48, marker="s", edgecolors="#222222", linewidths=0.4)
+        ax.set_yticks([0, 1])
+        ax.set_yticklabels(["final_pos\ndirect", "all_pos\ntotal"])
+        ax.set_xlabel("mean ablation effect")
+        ax.set_title("C. Scope changes the causal answer")
+        _zero_lines(ax, x=True, y=False)
+    else:
+        ax.text(0.5, 0.5, "No ablations run", transform=ax.transAxes, ha="center", va="center")
+        ax.set_axis_off()
+
+    ax = axes[1, 1]
+    cat_idx = _category_induction_index(category_rows)
+    xs, ys, labs = [], [], []
+    for r in head_table:
+        key = (int(r["layer"]), int(r["head"]))
+        by_cat = cat_idx.get(key, {})
+        synth_vals = [by_cat[c] for c in ("synthetic", "cycle") if c in by_cat]
+        if not synth_vals and "natural" not in by_cat:
+            continue
+        xs.append(statistics.fmean(synth_vals) if synth_vals else 0.0)
+        ys.append(by_cat.get("natural", 0.0))
+        labs.append(str(r["pattern_label"]))
+    for lab in sorted(set(labs)):
+        pts = [(x, y) for x, y, l in zip(xs, ys, labs) if l == lab]
+        ax.scatter([p[0] for p in pts], [p[1] for p in pts], color=_motif_color(lab), s=25, alpha=0.55, label=lab)
+    ax.plot([0, 1], [0, 1], color="#555555", linestyle="--", linewidth=0.8)
+    ax.axvline(MOTIF_SCORE_BAR, color="#555555", linestyle=":", linewidth=0.8)
+    ax.axhline(MOTIF_SCORE_BAR, color="#555555", linestyle=":", linewidth=0.8)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("synthetic/cycle induction score")
+    ax.set_ylabel("natural induction score")
+    ax.set_title("D. Transfer audit: toy motif versus natural phrase repeats")
+    ax.legend(fontsize=7, loc="lower right")
+    control_violations = [r for r in control_audit if r.get("example_id") != "ALL_CONTROLS"]
+    fig.suptitle(
+        f"Routing evidence dashboard: OBS labels, behavior gate, causal scope, transfer audit (control flags: {len(control_violations)})"
+    )
+    bench.save_figure(ctx, fig, "routing_evidence_dashboard.png", "One-screen dashboard for the Lab 3 routing, attribution, causality, transfer, and control story.")
+
+
+def plot_motif_transfer_scatter(
+    ctx: bench.RunContext,
+    head_table: list[dict[str, Any]],
+    category_rows: list[dict[str, Any]],
+) -> None:
+    cat_idx = _category_induction_index(category_rows)
+    rows = []
+    for r in head_table:
+        key = (int(r["layer"]), int(r["head"]))
+        by_cat = cat_idx.get(key, {})
+        synth_vals = [by_cat[c] for c in ("synthetic", "cycle") if c in by_cat]
+        if not synth_vals and "natural" not in by_cat:
+            continue
+        rows.append(
+            {
+                "layer": int(r["layer"]),
+                "head": int(r["head"]),
+                "pattern_label": r["pattern_label"],
+                "synthetic_cycle": statistics.fmean(synth_vals) if synth_vals else 0.0,
+                "natural": by_cat.get("natural", 0.0),
+                "control": by_cat.get("control", 0.0),
+                "attr": abs(_num(r, "mean_target_attribution")),
+            }
+        )
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(7.5, 6.4))
+    for lab in sorted(set(str(r["pattern_label"]) for r in rows)):
+        pts = [r for r in rows if r["pattern_label"] == lab]
+        ax.scatter(
+            [r["synthetic_cycle"] for r in pts],
+            [r["natural"] for r in pts],
+            s=[22 + min(130, 65 * r["attr"]) for r in pts],
+            color=_motif_color(lab),
+            alpha=0.66,
+            edgecolors="#222222",
+            linewidths=0.25,
+            label=lab,
+        )
+    for r in sorted(rows, key=lambda x: x["synthetic_cycle"] + x["natural"] + x["control"], reverse=True)[:8]:
+        ax.annotate(f"L{r['layer']}H{r['head']}", (r["synthetic_cycle"], r["natural"]), textcoords="offset points", xytext=(4, 4), fontsize=8)
+    ax.plot([0, 1], [0, 1], linestyle="--", linewidth=0.8, color="#555555")
+    ax.axvline(MOTIF_SCORE_BAR, linestyle=":", linewidth=0.9, color="#555555")
+    ax.axhline(MOTIF_SCORE_BAR, linestyle=":", linewidth=0.9, color="#555555")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("mean induction score on synthetic + cycle prompts")
+    ax.set_ylabel("mean induction score on natural repeated-phrase prompts")
+    ax.set_title("Motif transfer audit: induction on toy cycles is not automatically natural induction")
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, "motif_transfer_scatter.png", "Synthetic/cycle induction scores versus natural repeated-phrase induction scores.")
+
+
+def plot_ablation_scope_heatmap(ctx: bench.RunContext, ablation_summary: list[dict[str, Any]], n_layers: int, n_heads: int) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import matplotlib.colors as mcolors
+
+    if not ablation_summary:
+        return
+    grids = {
+        "final_pos direct effect": np.full((n_layers, n_heads), np.nan),
+        "all_pos total effect": np.full((n_layers, n_heads), np.nan),
+        "all_pos - final_pos gap": np.full((n_layers, n_heads), np.nan),
+    }
+    for r in ablation_summary:
+        l, h = int(r["layer"]), int(r["head"])
+        grids["final_pos direct effect"][l, h] = _num(r, "mean_direct_effect_final_pos")
+        grids["all_pos total effect"][l, h] = _num(r, "mean_total_effect_all_pos")
+        grids["all_pos - final_pos gap"][l, h] = _num(r, "mean_indirect_gap_all_minus_final")
+    lim = _signed_limit([v for grid in grids.values() for v in grid.ravel() if not np.isnan(v)], floor=0.1)
+    norm = mcolors.TwoSlopeNorm(vcenter=0.0, vmin=-lim, vmax=lim)
+    cmap = plt.get_cmap("coolwarm").copy()
+    cmap.set_bad("#EEEEEE")
+    fig, axes = plt.subplots(1, 3, figsize=(14.2, 4.6), sharey=True, constrained_layout=True)
+    for ax, (name, grid) in zip(axes, grids.items()):
+        im = ax.imshow(grid, aspect="auto", cmap=cmap, norm=norm)
+        ax.set_title(name)
+        ax.set_xlabel("head")
+        ax.set_ylabel("layer")
+        fig.colorbar(im, ax=ax, fraction=0.035)
+    fig.suptitle("Sparse causal atlas: only candidate heads are measured; gray means not ablated")
+    bench.save_figure(ctx, fig, "ablation_scope_heatmap.png", "Layer-by-head heatmaps of direct, all-position, and indirect-gap ablation effects for measured candidates.")
+
+
+def plot_phase_motif_atlas(ctx: bench.RunContext, phase_rows: list[dict[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not phase_rows:
+        return
+    phase_idx = {p: i for i, p in enumerate(PHASE_LABELS)}
+    counts = {lab: [0] * len(PHASE_LABELS) for lab in MOTIF_LABEL_ORDER}
+    abs_attr = [[] for _ in PHASE_LABELS]
+    induction = [[] for _ in PHASE_LABELS]
+    for r in phase_rows:
+        pidx = phase_idx.get(str(r["phase"]))
+        if pidx is None:
+            continue
+        lab = str(r["pattern_label"])
+        counts.setdefault(lab, [0] * len(PHASE_LABELS))[pidx] += int(r["n_heads"])
+        abs_attr[pidx].append(float(r["mean_abs_target_attribution"]))
+        induction[pidx].append(float(r["mean_induction_score"]))
+    fig, axes = plt.subplots(1, 2, figsize=(11.5, 4.8), constrained_layout=True)
+    bottom = np.zeros(len(PHASE_LABELS))
+    for lab in MOTIF_LABEL_ORDER:
+        vals = np.array(counts.get(lab, [0] * len(PHASE_LABELS)))
+        axes[0].bar(PHASE_LABELS, vals, bottom=bottom, color=_motif_color(lab), label=lab)
+        bottom += vals
+    axes[0].set_title("A. Motif labels by depth phase")
+    axes[0].set_ylabel("heads")
+    axes[0].legend(fontsize=7, loc="upper left")
+    axes[1].plot(PHASE_LABELS, [statistics.fmean(v) if v else 0.0 for v in abs_attr], marker="o", label="mean |ATTR|")
+    axes[1].plot(PHASE_LABELS, [statistics.fmean(v) if v else 0.0 for v in induction], marker="s", label="mean induction score")
+    axes[1].set_title("B. Signal strength by phase")
+    axes[1].set_ylabel("mean score")
+    axes[1].legend(fontsize=8)
+    for ax, lab in zip(axes, "AB"):
+        _panel_label(ax, lab)
+    fig.suptitle("Phase atlas: where motif labels and answer-direction writes concentrate")
+    bench.save_figure(ctx, fig, "phase_motif_atlas.png", "Depth-phase summary of motif labels, induction scores, and absolute attribution.")
 
 
 def draft_claims(
@@ -1149,6 +1847,12 @@ def render_attention_routing_card(
         f"- by-head Spearman rho: {ablation_stats.get('by_head_rho')}",
         f"- above-noise by-head rho: {ablation_stats.get('by_head_signal_rho')} (n={ablation_stats.get('by_head_signal_n')})",
         "",
+        "## Cross-rung artifacts",
+        "",
+        "- `plots/routing_evidence_dashboard.png`: the compact story of labels, behavior, intervention scope, and transfer.",
+        "- `plots/head_evidence_matrix.png` and `tables/head_evidence_matrix.csv`: the rung-by-rung ledger for the most informative heads.",
+        "- `tables/routing_attr_causal_disagreements.csv`: cases where routing, writing, and intervention disagree.",
+        "",
         "## Non-claims",
         "",
         "- A motif label is not a permanent job title for a head.",
@@ -1235,13 +1939,14 @@ def render_summary(
         "## 6. The reading order",
         "",
         "1. `attention_routing_card.md` — the one-page verdict and non-claims.",
-        "2. `diagnostics/prompt_motif_coverage.csv` and `tables/baseline_behavior.csv` — make sure the microscope had repeated tokens and behavior to study.",
-        "3. `plots/motif_maps.png` — where named routing patterns live.",
-        "4. `plots/attention_heads_*.png` — what selected heads read on real tokens.",
-        "5. `plots/head_attribution_by_layer.png` — which heads write toward the answer direction.",
-        "6. `tables/head_ablation_summary.csv` and `plots/ablation_effect_by_head.png` — causal effects by head and scope.",
-        "7. `plots/direct_vs_indirect_effect.png` and `plots/routing_to_causality.png` — the composition detector (all_pos >> final_pos) and motif-vs-effect scatter. Points off the diagonal or high-motif/low-causal are the payload.",
-        "8. `diagnostics/control_induction_audit.csv` — false-positive audit for the motif rule (synthetic labels are prompt-set-specific until proven on natural text).",
+        "2. `plots/routing_evidence_dashboard.png` — the four-panel map of motif labels, behavior gate, causal scope, and transfer audit.",
+        "3. `tables/head_evidence_matrix.csv` + `plots/head_evidence_matrix.png` — OBS, ATTR, CAUSAL, transfer, and control evidence lined up per head.",
+        "4. `diagnostics/prompt_motif_coverage.csv` and `tables/baseline_behavior.csv` — make sure the microscope had repeated tokens and behavior to study.",
+        "5. `plots/motif_maps.png` and `plots/phase_motif_atlas.png` — where named routing patterns live and which depth phases carry them.",
+        "6. `plots/attention_heads_*.png` — what selected heads read on real tokens, with motif targets overlaid.",
+        "7. `plots/head_attribution_by_layer.png` and `plots/head_attribution_vs_ablation.png` — which heads write toward the answer direction and whether direct ablation agrees.",
+        "8. `plots/direct_vs_indirect_effect.png`, `plots/ablation_scope_heatmap.png`, and `plots/routing_to_causality.png` — the composition detector and motif-vs-effect audit.",
+        "9. `tables/routing_attr_causal_disagreements.csv` and `diagnostics/control_induction_audit.csv` — disagreement cases and false-positive audit for the motif rule.",
         "",
         "## 7. Caveats students must carry forward",
         "",
@@ -1455,8 +2160,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     example_head_path = ctx.path("tables", "example_head_scores.csv")
     bench.write_csv_with_context(ctx, example_head_path, example_head_rows)
     ctx.register_artifact(example_head_path, "table", "Per-example head motif scores and attribution.")
+    category_head_rows = category_head_summaries(example_head_rows, n_layers, n_heads)
     category_head_path = ctx.path("tables", "head_scores_by_category.csv")
-    bench.write_csv_with_context(ctx, category_head_path, category_head_summaries(example_head_rows, n_layers, n_heads))
+    bench.write_csv_with_context(ctx, category_head_path, category_head_rows)
     ctx.register_artifact(category_head_path, "table", "Head motif and attribution scores broken out by prompt category.")
     control_audit = control_induction_audit(example_head_rows)
     control_path = ctx.path("diagnostics", "control_induction_audit.csv")
@@ -1581,8 +2287,34 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     ablation_stats = attribution_ablation_stats(ablation_rows, ablation_summary)
 
+    # Cross-rung synthesis tables. These are the teachable bridge from
+    # "what pattern did a head show?" to "what can I responsibly claim?"
+    evidence_rows = head_evidence_rows(head_table, ablation_summary, natural_confirmations, category_head_rows, n_layers)
+    evidence_path = ctx.path("tables", "head_evidence_matrix.csv")
+    bench.write_csv_with_context(ctx, evidence_path, evidence_rows)
+    ctx.register_artifact(evidence_path, "table", "Head-level OBS, ATTR, CAUSAL, transfer, and control evidence lined up side by side.")
+
+    phase_rows = phase_summary_rows(head_table, n_layers)
+    phase_path = ctx.path("tables", "phase_motif_summary.csv")
+    bench.write_csv_with_context(ctx, phase_path, phase_rows)
+    ctx.register_artifact(phase_path, "table", "Motif labels and attribution summarized by early, middle, late, and final phases.")
+
+    disagreement_rows = routing_disagreement_rows(evidence_rows)
+    disagreement_path = ctx.path("tables", "routing_attr_causal_disagreements.csv")
+    bench.write_csv_with_context(ctx, disagreement_path, disagreement_rows or [{"note": "No large routing/attribution/causal disagreements under the current thresholds."}])
+    ctx.register_artifact(disagreement_path, "table", "Heads where routing, attribution, and ablation scopes disagree most clearly.")
+
+    guide_path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, guide_path, plot_reading_guide_rows())
+    ctx.register_artifact(guide_path, "table", "Reading guide mapping each plot to its evidence rung and concept.")
+
     # Plots.
     if not args.no_plots:
+        plot_routing_evidence_dashboard(ctx, head_table, baseline_rows, ablation_summary, category_head_rows, natural_confirmations, control_audit)
+        plot_head_evidence_matrix(ctx, evidence_rows)
+        plot_phase_motif_atlas(ctx, phase_rows)
+        plot_motif_transfer_scatter(ctx, head_table, category_head_rows)
+        plot_ablation_scope_heatmap(ctx, ablation_summary, n_layers, n_heads)
         plot_motif_maps(ctx, head_table, n_layers, n_heads)
         showcase_id = args.showcase or next(
             (ex.example_id for ex, _, _ in kept if ex.category == "synthetic"), kept[0][0].example_id
@@ -1630,6 +2362,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "n_candidate_heads_ablated": len(ablation_summary),
         "natural_confirmations": natural_confirmations,
         "control_induction_violations": [r for r in control_audit if r.get("example_id") != "ALL_CONTROLS"],
+        "n_disagreement_cases": len(disagreement_rows),
+        "n_head_evidence_rows": len(evidence_rows),
     }
     metrics_path = ctx.path("metrics.json")
     bench.write_json(metrics_path, metrics)

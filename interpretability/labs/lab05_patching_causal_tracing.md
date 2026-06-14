@@ -14,6 +14,17 @@ The capital of France is -> Paris
 
 recoverable after the prompt has been corrupted to a different country, and what happens if we try to turn that localization into a weight edit?
 
+## Why this lab exists (and what "subject" means)
+
+This lab is a hands-on bench for **causal tracing**, the method introduced by ROME — *Rank-One Model Editing* (Meng et al., 2022). ROME has two halves, and so does this lab: first **locate** where a fact lives in the forward pass by patching clean states into a corrupted run (the main lab), then **edit** that location with a small weight change and check whether the fact actually changes (the optional `--run-edit` extension).
+
+The thing being located is a *fact*, modeled as a knowledge triple **(subject, relation, object)**: France (subject) — capital-of (relation) — Paris (object). Two warnings about the word **subject**, because it trips almost everyone:
+
+- It is the *fact's* subject — the entity the fact is about, France — **not** the grammatical subject. In "The capital of France is", the grammatical subject is arguably "capital"; the lab always means France.
+- It is **designated by construction, not discovered**. The subject is simply the one position you vary between the clean and corrupt prompts (France ↔ Germany) — the independent variable. Its causal importance is the *result* you measure, never the reason you picked it.
+
+The claim you are testing is ROME's headline: that factual recall **localizes** — concentrates at a particular layer and token position — and that "where the fact lives" tells you "where to edit it." The lab is deliberately built around the place that bet frays. Hase et al. (2023) found the causally-traced layer is *not* a privileged edit site, so the lab never lets you assume localization predicts editability: the `--run-edit` audit makes you *measure* the gap. The deliverable is a scoped causal claim — *this intervention, on this population, for this metric, beating these controls* — not "layer k stores capitals."
+
 ## The method: interchange interventions
 
 Run a clean prompt and a corrupt prompt:
@@ -33,6 +44,30 @@ diff     = logit(" Paris") - logit(" Berlin") at the final position
 A recovery of 1.0 means the patch restored the whole clean-vs-corrupt logit gap. A recovery of 0.0 means the readout could use none of it. A negative value means the patch made the corrupt run even less clean-like.
 
 This is causal evidence because the internal state was changed while the prompt and model weights were otherwise held fixed.
+
+## What this experiment can and cannot show
+
+Patching is a **sufficiency** test, run in the "denoising" direction: you corrupt the prompt, then ask whether re-inserting *one* clean state is *enough* to pull the behavior back. A high recovery says that state is **sufficient** to restore the answer here. It does **not** say the state is **necessary** — you have not ablated a working run to see what breaks (that would be a necessity test). Single-site interchange only ever speaks to sufficiency, so the honest claim is "sufficient on this population," never "required."
+
+Two consequences to hold onto:
+
+- **Corruption type matters.** This lab corrupts by a symmetric **interchange** (swap France for Germany), as opposed to ROME's original Gaussian **noising** of the subject embedding. That is exactly why patching the subject at stream depth 0 is a tautology here — you are just putting the France token back — where under noising it would not be. Keep this in mind before comparing your depths against published ROME numbers.
+- **Sufficiency is not mechanism.** One state being enough under interchange does not prove it is the thing the model actually uses; it might feed a later component that does the real work. That is what the negative controls, and later path patching, are for.
+
+## What you patch is a vector, not a logit
+
+The most common confusion here is what the spliced object actually *is*. It is a **residual-stream hidden state**: `streams[k]` at one token position is a single `d_model`-dimensional vector — the accumulated hidden state at that layer and that token. It is not "one logit" and not "the whole set of logits." There are no logits inside the stream. Logits exist only once, at the very end, after the final norm and unembed — and in this lab they appear only in the *measurement*, never in the thing you intervene on.
+
+So the experiment has two completely separate objects, and they usually live at different cells:
+
+- **what you splice in:** a residual-stream vector at one `(depth, position)` cell — the teal cell below.
+- **what you read out:** a single scalar, `logit(" Paris") - logit(" Berlin")`, at the final position only — the amber cell.
+
+![Activation patch setup: a residual-stream vector is spliced at one (depth k, subject position) cell of the corrupt run, while a single logit-difference scalar is read at the final position of the last layer.](../figures/lab5_activation_patch_setup_vector_vs_scalar.png)
+
+The teal cell is the only thing that changes in the corrupt run; everything else is left alone. The amber cell is the only thing you measure. The lab sweeps the patched cell across every cell in the grid and records the amber scalar each time — **that whole grid of scalars is the causal trace**. The per-fact heatmaps in `plots/patching_heatmap_<fact>.png` are exactly this grid for one pair.
+
+This also fixes the noun for the next section. Saying "`streams[k]` contains everything written by blocks `< k`" is the right idea with the wrong word if you call it logits — call them hidden states. The residual stream is additive: each block reads it, computes, and adds its output back, so `streams[k] = embeddings + Σ(outputs of blocks 0..k-1)`. Patching `streams[k]` overwrites that running sum of hidden states; there are no intermediary logits in there. You *can* project a mid-stream vector to vocab space with a logit lens (Lab 1), but that is an instrument you point at the stream, not what is stored in it.
 
 ## The load-bearing convention: stream depth is not component layer
 
@@ -99,6 +134,24 @@ One clean/corrupt pair is a demonstration. Causal tracing is the aggregate:
 
 The output is not just a heatmap. The output is a claim card with a scope, a metric, a control battery, and caveats.
 
+The upgraded plotting pass adds a second layer of discipline: every visually appealing curve now has nearby artifacts asking whether the curve survives per-fact heterogeneity, paraphrase changes, and negative controls. Read patching results as an evidence table: intervention, population, metric, counterexample, and only then the claim.
+
+## Key terms you'll meet in the artifacts
+
+Before reading the plots and tables, here is the vocabulary they assume. Each term is elaborated in the sections that follow.
+
+| Term | What it means | Where you see it |
+|---|---|---|
+| **recovery** | The metric: the fraction of the clean-vs-corrupt logit gap that one patch restores. 1.0 = fully clean-like, 0 = the readout used none of it, negative = made it worse. | every patching table; the heatmap color |
+| **clean / corrupt** | The matched prompt pair (France vs Germany). The scored difference is `logit(" Paris") − logit(" Berlin")` at the last position. | `results.csv`, `tables/facts.csv` |
+| **baseline gate** | Facts the model gets wrong (clean or corrupt margin too weak) are dropped *before* tracing, so you patch only facts the model actually knows. | `tables/facts.csv`, `plots/baseline_gate_audit.png` |
+| **token role** | Each position is labelled pre-subject / subject / post-subject / last; the curves are recovery averaged within a role. | `tables/role_transition_summary.csv` |
+| **handoff** | The depth where subject-position recovery collapses — the fact has left the subject stream for later computation. | `localization_decision.json`, `plots/localization_across_facts.png` |
+| **localized (stream) band** | The last informative subject depths before the handoff; the lab's headline "where the fact lives." | `diagnostics/localization_decision.json` |
+| **component cell** | A fully specified site is a *triple*: (component ∈ {attn, mlp}, layer ∈ band, position ∈ {subject, last}). The plot legend names component + position; the band supplies the layer. | `tables/component_summary.csv`, `plots/component_patching.png` |
+| **specificity gap** | Matched-patch recovery minus a negative control's recovery. A real, fact-specific effect clears its controls; a generic "big vector injected" does not. | `tables/specificity_summary.csv`, `plots/negative_controls.png` |
+| **sufficiency** | What one patch can show — this state is *enough* to restore the behavior — as opposed to *necessity* (what breaks when you remove it). | the whole lab; see "What this experiment can and cannot show" |
+
 ## How to read the main curves
 
 At stream depth 0, patching the subject position mostly substitutes the token embedding. For this corruption type, high subject recovery at depth 0 is a tautology, not a localization result.
@@ -116,6 +169,21 @@ The science starts after depth 0:
 This is the recall-then-readout story in one figure. The component pass (attn vs MLP at subject vs last) refines the "where" into a candidate write site.
 
 **Make the concept pop (component vs stream):** The stream patch at the localized band is an interchange result on the accumulated representation. The component-level pass (see `plots/component_patching.png`) asks which submodule's output, when patched, carries most of the recovery. It is still an interchange result, not a proof that the submodule "stores" the fact.
+
+### Mover vs. store: what the component pass actually asks
+
+The component pass splits the localized band into four `(submodule, position)` cells — attention or MLP, at the subject or the last position — and patches the **whole output vector** of that one submodule (all `d_model` dimensions) at that one position. It never touches the attention *pattern*: you are not changing where heads look or how strongly, only swapping what the module *wrote* and re-running. So the question is computational *role*, not positional-versus-content attention strength. The two roles map onto a fact you can read straight off the architecture:
+
+- **`mlp@subject` — enrich in place.** The MLP runs independently per position; it can transform the residual at the subject token but cannot read from any other token. This is the ROME "the fact is stored here" candidate.
+- **`attn@last` — transport.** Attention is the only operation that moves information *between* positions. This cell is the last token reaching back to the subject and pulling the answer-relevant content forward into the stream the logits are read from.
+
+![Two computational roles at the localized band: MLP at the subject position enriches the representation in place (a store candidate), while attention at the last position transports the answer forward to the readout (the mover).](../figures/lab5_attn_mover_vs_mlp_store_across_positions.png)
+
+This is also why the component winner can disagree with the stream heatmap, which usually lights up the *subject* column — they ask different questions. The stream patch asks "is the whole accumulated subject representation present at this cell?", and re-injecting all of the subject's representation recovers a lot. The component patch asks the finer "which single additive write, transplanted by itself, moves the answer?" By the localized band the subject information is already redundantly present from earlier writes, so swapping one block's *subject* contribution barely changes the running sum, while the one *transport* write that carries it to the last position does. Same block, different position, only one doing load-bearing work at that depth.
+
+Read the winner as sufficiency, not mechanism. A single attention cell holding most of the component signal is exactly what path patching exists to interrogate: that write might just feed a downstream component that does the real work. Sufficiency of one write under interchange is not proof it *is* the mechanism — that gap is the falsifier to chase next. (In the Olmo-3-7B reference run, `attn@last` is the largest of the four cells in `tables/component_summary.csv`, consistent with a transport-dominant reading, but all four recoveries are small — so the honest reading is that the band's causal signal is spread across many writes, not concentrated in one.)
+
+The two stories have names. A subject-MLP-recall trace is the **ROME** picture: the fact is stored and looked up in place. An attention-mover result is the **IOI** picture (Wang et al., 2022) — the "indirect object identification" circuit, where *name-mover* attention heads fetch and copy information into the readout position rather than storing it. A single run can sit on the seam: ROME-shaped at the stream level (the two-band recall→readout silhouette) yet mover-flavored at the component level. When that happens, it is a finding to report, not a tension to smooth over.
 
 ## Running it
 
@@ -139,19 +207,33 @@ python interp_bench.py --lab lab5 --tier b --prompt-set full --showcase france
 
 ## Main artifacts
 
-Read them in this order (instrument checks first, then the causal story, then the edit audit that tests whether localization predicts editability):
+Read them in this order. The first pass validates the instrument, the second pass reads the causal trace, and the third pass audits overclaiming.
 
 1. `causal_trace_card.md` - the deliverable card: scope, localization, controls, component result, edit result if run.
-2. `diagnostics/localization_decision.json` - the handoff rule and stream-depth-to-component-layer mapping.
-3. `plots/localization_across_facts.png` - the subject-vs-last causal tracing story (recall then readout).
-4. `plots/patching_heatmap_<fact>.png` - one pair, layer by position, token-labeled, with localized band marked.
-5. `tables/facts.csv` - which pairs passed the baseline gate and why others dropped.
-6. `tables/patching_scores.csv` and `results.csv` - the long-form grid behind every cell.
-7. `tables/per_fact_top_patch.csv` and `plots/per_fact_top_patch.png` - which facts drive the average.
-8. `tables/paraphrase_summary.csv` and `tables/paraphrase_consistency.csv` - whether the localized band survives templates.
-9. `tables/negative_control_scores.csv` and `plots/negative_controls.png` - specificity checks (the matched vs control gap is the evidence of fact-specific recovery).
-10. `tables/component_patching.csv`, `tables/component_summary.csv`, and `plots/component_patching.png` - attention versus MLP refinement of the stream-level result.
-11. `tables/edit_results.csv` - only if `--run-edit` was passed (the Hase audit: does localization predict the best edit layer?).
+2. `diagnostics/localization_decision.json` - the handoff rule and the stream-depth-to-component-layer mapping. Keep this open while reading component and edit plots.
+3. `tables/plot_reading_guide.csv` - the map from each upgraded plot to the concept it is meant to teach.
+4. `plots/causal_patching_dashboard.png` - the one-screen overview: role timing, specificity controls, component refinement, and per-fact heterogeneity.
+5. `plots/localization_across_facts.png`, `plots/recovery_ridge_map.png`, and `tables/role_transition_summary.csv` - the recall-then-readout timing story.
+6. `plots/recovery_role_atlas.png`, `plots/per_fact_top_patch.png`, `tables/per_fact_top_patch.csv`, and `tables/patch_evidence_matrix.csv` - the heterogeneity audit: which facts drive the average, and where controls bite.
+7. `plots/patching_heatmap_<fact>.png` - one pair, layer by position, token-labeled, with localized band marked. Read this after the aggregate plots, not before them.
+8. `tables/facts.csv` - which pairs passed the baseline gate and why others dropped. The new `plots/baseline_gate_audit.png` makes the gate visible.
+9. `tables/patching_scores.csv` and `results.csv` - the long-form grid behind every cell.
+10. `tables/paraphrase_summary.csv`, `tables/paraphrase_consistency.csv`, and `plots/paraphrase_transfer_matrix.png` - whether the localized band survives wording changes.
+11. `tables/negative_control_scores.csv`, `tables/specificity_summary.csv`, `plots/negative_controls.png`, and `plots/specificity_gap_by_fact.png` - specificity checks. The matched-vs-control gap is the evidence of fact-specific recovery.
+12. `tables/component_patching.csv`, `tables/component_summary.csv`, `plots/component_patching.png`, and `plots/component_patch_matrix.png` - attention versus MLP refinement of the stream-level result.
+13. `tables/edit_results.csv`, `tables/edit_audit_summary.csv`, and `plots/edit_audit_dashboard.png` - only if `--run-edit` was passed. This is the Hase audit: does localization predict the best edit layer?
+
+## New synthesis tables
+
+The upgraded code writes extra tables that are useful before drafting claims:
+
+| Table | Why it exists |
+|---|---|
+| `tables/role_transition_summary.csv` | gives peak and threshold-crossing depths for each token role, so the handoff claim is not just eyeballed from a curve |
+| `tables/specificity_summary.csv` | reports matched and negative-control distributions with gaps versus matched recovery |
+| `tables/patch_evidence_matrix.csv` | one row per fact combining baseline margins, representative recovery, paraphrase transfer, and strongest control |
+
+Use these tables to draft ledger claims before polishing prose. If the picture and the table disagree, trust the table and inspect the outlier.
 
 ## The extension: the patch made permanent
 
@@ -199,7 +281,7 @@ A movement without a flip is not a failed artifact. It is often the most informa
 | recovery is mostly zero | check `clean_diff - corrupt_diff`; the denominator may be too small or the corrupt pair may not oppose the target |
 | recovery is often above 1 or below -1 | single cells can do this; widespread extremes suggest denominator or alignment trouble |
 | paraphrases localize elsewhere | scope the claim to the base template or inspect whether the subject position changed meaningfully |
-| a negative control matches the real patch | do not claim specificity; inspect the per-fact rows and narrow the intervention |
+| a negative control matches the real patch | do not claim specificity; inspect `plots/specificity_gap_by_fact.png`, `tables/specificity_summary.csv`, and the per-fact rows, then narrow the intervention |
 | edit flips nothing | inspect `movement_toward_distractor` before declaring failure; the stream patch may be distributed across many writes |
 | edit breaks neighbors | the edit is not specific enough; cite spillover as counterevidence |
 
@@ -227,3 +309,13 @@ Layer k stores capitals.
 ```
 
 The second sentence is tempting because it is short. It is also wrong-shaped. Lab 5 earns causal claims about interventions, not metaphysical claims about storage jars in the transformer attic.
+
+## Reading
+
+You do not need these to run the lab, but they are where its ideas come from:
+
+- Meng et al., "Locating and Editing Factual Associations in GPT" (2022) — ROME: the causal-tracing method and the rank-one edit this lab is built on.
+- Meng et al., "Mass-Editing Memory in a Transformer" (2022) — MEMIT: the multi-layer edit, a better fit for "the fact is distributed across many writes" than a single jar.
+- Wang et al., "Interpretability in the Wild: a Circuit for Indirect Object Identification" (2022) — IOI: the attention name-mover circuit, the "transport" picture your component pass can land on.
+- Hase et al., "Does Localization Inform Editing?" (2023) — the finding that the traced layer is not a privileged edit site; the lab's `--run-edit` audit is this experiment.
+- Geva et al., "Transformer Feed-Forward Layers Are Key-Value Memories" (2021) — the premise that licenses reading an MLP as an associative store.

@@ -10,6 +10,8 @@ What is linearly decodable from the residual stream, including whether a stateme
 
 This lab is skepticism with a spreadsheet. Every headline accuracy travels with its controls, split audit, calibration, and caveats. If a number cannot survive that little parade, it does not get a claim in the ledger.
 
+**Visualization upgrade note:** the run now writes a one-screen `probe_evidence_dashboard.png`, an evidence-matrix heatmap, a control ladder, a family-depth atlas, a saved-direction projection strip, and explicit logistic-vs-mass-mean gap plots. The goal is not more decoration. It is to make the evidential ladder visible: raw accuracy, control-adjusted selectivity, held-out transfer, calibration, and norm fragility must all be inspected before a claim leaves the lab.
+
 ## The two tracks
 
 ### 1. Surface track: a calibration trap
@@ -95,6 +97,8 @@ The code now unit-normalizes each statement’s activation row before fitting pr
 
 - `tables/statement_manifest.csv`
 - `plots/activation_norms_by_depth.png`
+- `plots/norm_outlier_trajectories.png`
+- `plots/mass_mean_influence.png`
 
 For the writeup, flip `NORMALIZE_ROWS = False` and rerun once. Watching the mass-mean direction get dominated by one rogue row is the failure mode this lab is meant to expose. The surface track on the same activations shows that even a trivial feature can look “deep” if you only look at raw accuracy.
 
@@ -113,12 +117,16 @@ In this lab, `--max-examples` is a **per-family** cap and is balanced true/false
 
 | Artifact | Purpose |
 |---|---|
-| `tables/probe_report.csv` | long-form probe results, controls, and calibration metrics where defined |
+| `tables/probe_report.csv` | long-form probe results, controls, family transfer, and calibration metrics where defined |
 | `results.csv` | standard-course alias of the probe report |
 | `tables/selectivity_report.csv` | real-minus-shuffled evidence by depth, family, and probe type |
+| `tables/probe_evidence_matrix.csv` | compact per-family evidence matrix: truth accuracy, controls, saved-depth mass-mean score, transfer stress, surface baseline, and ECE |
+| `tables/control_ladder_summary.csv` | peak-depth truth accuracy beside shuffled, random-direction, surface, token-length, and majority controls |
+| `tables/mass_mean_influence_report.csv` | leave-one-training-row-out sensitivity for the mass-mean direction at the saved layer |
 | `tables/statement_manifest.csv` | statement, split key, split, label, final token, raw norms, outlier flag |
 | `tables/calibration_summary.csv` | peak-depth logistic accuracy, Brier score, NLL, and ECE |
 | `tables/calibration_curve.csv` | reliability-curve bins for the peak-depth logistic truth probe |
+| `tables/plot_reading_guide.csv` | map from each plot to the concept and reading question it teaches |
 
 ### Diagnostics
 
@@ -140,25 +148,40 @@ In this lab, `--max-examples` is a **per-family** cap and is balanced true/false
 
 | Plot | What to look for |
 |---|---|
-| `plots/decodability_by_layer.png` | truth versus surface versus controls on the same axes |
-| `plots/generalization_matrix.png` | within-family and cross-family transfer for logistic and mass-mean |
-| `plots/selectivity_by_layer.png` | real accuracy after subtracting the shuffled-label control |
+| `plots/probe_evidence_dashboard.png` | the entire skepticism packet in one view: depth curve, family selectivity, saved-depth transfer, and calibration |
+| `plots/decodability_by_layer.png` | truth versus surface versus shuffled/random controls with median and IQR over families |
+| `plots/family_depth_atlas.png` | where each family becomes decodable, and whether accuracy survives the shuffled-control subtraction |
+| `plots/generalization_matrix.png` | within-family and cross-family transfer for logistic and mass-mean, plus control-adjusted transfer |
+| `plots/selectivity_by_layer.png` | real accuracy after subtracting the shuffled-label control, for both logistic and mass-mean |
+| `plots/probe_control_ladder.png` | peak truth accuracy compared to shuffled, random, surface, token-length, and majority baselines |
+| `plots/logistic_vs_massmean_gap.png` | where the flexible logistic separator beats or loses to the simple mean-difference direction |
+| `plots/truth_direction_projection_strip.png` | how every family projects onto the exact saved vector that Lab 7 will test |
 | `plots/truth_projection_panels.png` | visual separation along the mass-mean direction over depth |
-| `plots/activation_norms_by_depth.png` | median, p95, and max raw stream norms by depth |
-| `plots/truth_calibration_curve.png` | whether logistic confidence tracks empirical truth rate |
+| `plots/activation_norms_by_depth.png` | median, p90, p95, p99, and max raw stream norms by depth |
+| `plots/norm_outlier_trajectories.png` | the highest-norm statement rows over depth, with outliers made explicit |
+| `plots/mass_mean_influence.png` | which training rows most change the mass-mean direction if removed |
+| `plots/truth_calibration_curve.png` | whether logistic confidence tracks empirical truth rate, with bin counts encoded |
+| `plots/split_balance_audit.png` | train/eval true/false counts by family after grouped splitting |
+| `plots/probe_evidence_matrix.png` | table-like heatmap of the per-family evidence packet |
 
 ## First artifact-reading path
 
 1. Open `probe_claim_card.md`. It tells you the verdict, the non-claim, and which controls were checked.
-2. Open `diagnostics/split_audit.csv`. Confirm that paired variants are not split across train/eval.
-3. Open `tables/statement_manifest.csv`. Look at `split_key`, `final_token_text`, and `norm_outlier`.
-4. Open `plots/decodability_by_layer.png`. Ask whether truth beats shuffled labels, random directions, and the surface track in a meaningful way.
-5. Open `plots/generalization_matrix.png`. Explain the negation row and column. Below-chance can mean anti-correlation, not absence of information.
-6. Open `plots/selectivity_by_layer.png` and `tables/selectivity_report.csv`. Accuracy without selectivity is just a shiny coin found in a couch.
-7. Open `plots/truth_calibration_curve.png`. A probe can be accurate and badly calibrated.
-8. Open `tables/truth_direction_card.md` before Lab 7. The card tells you exactly what the saved vector is and is not — and what hypothesis Lab 7 will actually test with it (decodable on these families does not mean the model uses it for truth).
+2. Open `diagnostics/split_audit.csv` and `plots/split_balance_audit.png`. Confirm that paired variants are not split across train/eval and every family/split has both labels.
+3. Open `tables/statement_manifest.csv`, then `plots/activation_norms_by_depth.png` and `plots/norm_outlier_trajectories.png`. Look at `split_key`, `final_token_text`, `norm_outlier`, and whether one row has enough norm-mass to bend the mean direction.
+4. Open `plots/probe_evidence_dashboard.png`. Treat it as the lab’s map: accuracy, selectivity, transfer, and calibration live together.
+5. Open `plots/decodability_by_layer.png`. Ask whether truth beats shuffled labels, random directions, and the surface track in a meaningful way.
+6. Open `plots/probe_control_ladder.png`. Quote the control ladder before quoting the headline accuracy.
+7. Open `plots/generalization_matrix.png`. Explain the negation row and column. Below-chance can mean anti-correlation, not absence of information.
+8. Open `plots/logistic_vs_massmean_gap.png` and `plots/truth_direction_projection_strip.png`. The logistic probe can be strong while the saved Lab 7 vector is weak or inverted; that disagreement is data.
+9. Open `plots/truth_calibration_curve.png`. A probe can be accurate and badly calibrated.
+10. Open `tables/truth_direction_card.md` before Lab 7. The card tells you exactly what the saved vector is and is not — and what hypothesis Lab 7 will actually test with it (decodable on these families does not mean the model uses it for truth).
 
 **Make the concept pop:** In `tables/selectivity_report.csv`, find the best layer by raw accuracy vs by selectivity. The gap (or the layer where selectivity is high) is the lesson. Then look at the generalization matrix for the negation row: below-chance transfer is often the most informative result in the entire lab. A direction that is decodable on cities but inert or anti-predictive on negations is the canonical "accessible information" vs "used for the concept" demonstration.
+
+## Reading the new plots without overclaiming
+
+The upgraded plots are deliberately redundant. `probe_evidence_dashboard.png` is the fast scan, `probe_evidence_matrix.png` is the audit table in visual form, and `probe_control_ladder.png` is the toll booth: every accuracy number pays the shuffled/random/surface/length/majority tax. `truth_direction_projection_strip.png` matters because Lab 7 does not intervene on the logistic classifier; it intervenes on the saved mass-mean vector. If logistic succeeds while the mass-mean strip overlaps heavily, the correct conclusion is not “truth is absent,” but “the simple vector we can steer is a weaker object than the classifier we can fit.”
 
 ## How the best direction is chosen
 

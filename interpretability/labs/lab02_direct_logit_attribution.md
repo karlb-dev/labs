@@ -50,6 +50,23 @@ Three rules keep the ledger honest:
 
 For centered LayerNorm models such as GPT-2, the mean subtraction is linear and is folded into the scoring vector exactly. For RMSNorm-style models, the frozen scale is the key ingredient. Read `compute_direct_logit_attribution` in the Python file: the math is intentionally exposed rather than hidden in a helper.
 
+## Why frozen DLA and the logit lens diverge
+
+Freezing the final norm buys additivity, but it also resolves a puzzle carried over from Lab 1: the logit lens and this ledger read the *same* partial residuals onto the *same* answer direction, yet their depth curves can look completely different. The only thing they disagree on is **what they divide by**.
+
+![Schematic of the two divisors. Both readouts project a partial residual onto the target−distractor direction, but DLA divides by the frozen final-layer norm — a large, constant denominator, flat across depth — while the logit lens divides by each layer's own residual norm, which is small early and grows toward the final norm. A small early denominator amplifies the early readout; the two divisors, and therefore the two readouts, coincide only at the final layer.](../figures/lab2_frozen_dla_vs_logit_lens_divisor.png)
+
+- **Frozen DLA** divides every partial residual by the *final* norm — one big, constant denominator. Early partials read out muted: the DLA curve barely leaves its `constant` baseline until the late layers actually write the answer.
+- **The logit lens** divides each partial by *its own* norm. That denominator is small in the early and middle layers, and dividing by a small number amplifies whatever direction the partial residual happens to point.
+
+At the final layer the partial residual *is* the full residual, so "own norm" and "frozen final norm" are the same number, and the two readouts are forced to coincide. Any gap between them earlier is a pure normalization artifact that has to close by the end.
+
+The conflict prompts make the difference vivid. `plots/dla_vs_lens_<example>.png` overlays both readouts of the same stream:
+
+![The same stream read two ways on a Germany conflict prompt (GPT-2, Tier A, 12 layers). The frozen-DLA curve (blue) stays muted near its constant baseline for most of the depth and only settles to the final value once the answer is written late; the own-norm logit lens (orange) swings wildly — diving toward the stored-prior side to about −3 by depth 4, overshooting toward the in-context answer in the middle layers, then collapsing back — before the two curves converge at the final layer, where their denominators become identical and the shaded readout-convention gap closes.](../figures/lab2_dla_vs_lens_conflict_germany.png)
+
+The lens's dramatic swings are mostly a denominator mirage: the early residual is dominated by the raw token and positional embeddings — which on a conflict prompt lean toward the stored prior — and the small own-norm denominator blows that direction up (here the lens bottoms out near −3 by depth 4). Frozen DLA refuses that amplification, which is exactly why it, not the lens, is the convention the rest of this lab's ledger is built on (the waterfall and the per-layer contribution plots). This is also the answer to writeup question 7.
+
 ## The hook-point catch
 
 On some models, an attention module’s raw output is not the tensor that is added to the residual stream. Olmo-style post-attention normalization is the classic trap: `attn(x)` may be normalized before it becomes the residual write. Hooking the wrong site gives a beautiful chart of a tensor the residual stream never saw.
@@ -98,6 +115,11 @@ python interp_bench.py --lab lab2 --tier b --prompt-set full --ablate-top 0
 # Use a custom prompt file, JSON or CSV with example_id/category/prompt/target/distractor
 python interp_bench.py --lab lab2 --tier b --prompt-set path/to/my_prompts.csv
 
+# Optional metadata columns make the relation-family plots much better:
+# relation_family, contrast_type, source
+# Aliases accepted by the Python loader: relation/family/task -> relation_family;
+# contrast/difficulty/pair_type/distractor_type -> contrast_type.
+
 # Multi-relation set: 12 relation classes, each prompt twice — once against a
 # same-class distractor (Paris vs Rome: instance discrimination) and once
 # against a cross-class one (Paris vs hammer: class discrimination)
@@ -109,10 +131,12 @@ python interp_bench.py --lab lab2 --tier b --prompt-set data/relation_pairs_lab2
 The relation set turns DLA comparative: for the same prompt, the `_hard` and
 `_easy` rows differ only in the distractor, so the difference between their
 attribution ledgers is exactly the set of components doing *instance* work
-beyond *class* work. If late-layer heads dominate the hard margin while the
-easy margin is already paid for by mid-layer MLPs, you have a
-two-stage-retrieval observation worth a ledger claim — scoped, as always, to
-these prompts.
+beyond *class* work. The upgraded lab now parses `relation_family` and
+`contrast_type` from either explicit columns or tags in `note`, then writes
+family-level summaries and a matrix plot. If late-layer heads dominate the
+hard margin while the easy margin is already paid for by mid-layer MLPs, you
+have a two-stage-retrieval observation worth a ledger claim — scoped, as
+always, to these prompts.
 
 ## What gets written
 
@@ -138,8 +162,12 @@ The revised lab writes the standard run contract plus a few extra “do not fool
 | `tables/dla_balance.csv` | frozen-norm metadata, answer-direction norms, and balance errors |
 | `tables/layer_component_summary.csv` | category-level attention and MLP averages by layer |
 | `tables/category_summary.csv` | headline category aggregates, including gross positive and negative mass |
+| `tables/phase_ledger_summary.csv` | category × coarse-depth-phase summaries, with net, gross, positive, and negative mass |
+| `tables/relation_family_summary.csv` | built-in and custom `relation_family` / `contrast_type` summaries |
+| `tables/plot_reading_guide.csv` | map from each visualization to the concept it teaches |
 | `tables/ablation_results.csv` | final-position ablation effects for top, random, and low-attribution components |
 | `tables/ablation_summary_by_selection.csv` | top-vs-control comparison for the ablation extension |
+| `tables/ablation_mismatch_summary.csv` | mismatch summaries by category, component type, and selection |
 
 `results.csv` is an alias of `component_contributions.csv` for the course-wide artifact contract.
 
@@ -147,16 +175,22 @@ The revised lab writes the standard run contract plus a few extra “do not fool
 
 | Artifact | Question it answers |
 |---|---|
-| `plots/contribution_by_layer.png` | where attention and MLP writes point toward or away from the target |
+| `plots/dla_dashboard.png` | the one-screen overview: assembly, cancellation, phase map, and ablation calibration |
+| `plots/contribution_by_layer.png` | where attention and MLP writes point toward or away from the target, now with median/IQR bands |
 | `plots/signed_component_heatmap.png` | which examples hide internal fights behind a category mean |
-| `plots/cumulative_logit_diff.png` | how the ledger assembles the final logit difference over depth |
+| `plots/cumulative_logit_diff.png` | how the ledger assembles the final logit difference over depth, with per-example traces and category medians |
+| `plots/ledger_phase_atlas.png` | coarse phase view: embeddings/constants, early, middle, late, and final-tail blocks |
 | `plots/category_ledger_composition.png` | how much positive and negative mass cancels inside each category |
+| `plots/answer_margin_vs_cancellation.png` | whether a confident target-vs-distractor margin came from a clean or contested ledger |
+| `plots/component_type_balance_scatter.png` | whether each example is attention-heavy, MLP-heavy, or jointly assembled |
+| `plots/relation_family_ledger_matrix.png` | how built-in or custom relation families differ in embed/attention/MLP totals and cancellation |
 | `plots/ledger_balance_errors.png` | whether the bookkeeping balances, and how big the dtype gap is |
-| `plots/top_component_by_example.png` | the largest component per example, with sign visible |
-| `plots/ledger_waterfall_<example>.png` | the largest positive and negative ledger entries for the showcase prompt |
-| `plots/dla_vs_lens_<example>.png` | frozen final-norm ledger versus Lab 1’s moving-basis logit lens |
+| `plots/top_component_by_example.png` | the largest component per example, with sign, writer type, and mass share visible |
+| `plots/ledger_waterfall_<example>.png` | a computation-order waterfall of the largest ledger entries for the showcase prompt |
+| `plots/dla_vs_lens_<example>.png` | frozen final-norm ledger versus Lab 1’s moving-basis logit lens, with the convention gap shaded |
 | `plots/attribution_vs_ablation.png` | whether high attribution predicts final-position ablation effect |
 | `plots/ablation_mismatch_examples.png` | the biggest places where attribution and intervention disagree |
+| `plots/ablation_mismatch_by_layer.png` | where over depth the live ablation effect departs from the frozen ledger row |
 
 ## Reading path
 
@@ -165,12 +199,17 @@ The revised lab writes the standard run contract plus a few extra “do not fool
 2. `tables/dla_balance.csv` and `plots/ledger_balance_errors.png`: the ledger must sum to the frozen readout.
 
 **Then the science:**
-3. `run_summary.md`: headline table + "Attribution vs causation" section (the mismatches are the payload).
-4. `tables/baseline_behavior.csv`: what the model was actually doing before any decomposition.
-5. `plots/contribution_by_layer.png` + `tables/layer_component_summary.csv` + `plots/category_ledger_composition.png`: broad patterns and internal cancellation.
-6. `tables/top_components.csv` + `plots/top_component_by_example.png` + the per-example waterfall plots: the actual largest writers.
-7. `plots/dla_vs_lens_<example>.png`: why the moving-basis lens from Lab 1 and the frozen DLA differ.
-8. `tables/ablation_results.csv` and `plots/attribution_vs_ablation.png` + `plots/ablation_mismatch_examples.png`: the direct comparison of ledger score to live effect. Look for points far from the identity line and read the `effect_minus_attribution` column.
+3. `plots/dla_dashboard.png`: orient yourself before spelunking. It compresses the run into assembly, cancellation, phase timing, and ablation calibration.
+4. `tables/plot_reading_guide.csv`: use it as the legend for the whole plot folder.
+5. `run_summary.md`: headline table + "Attribution vs causation" section (the mismatches are the payload).
+6. `tables/baseline_behavior.csv`: what the model was actually doing before any decomposition.
+7. `plots/contribution_by_layer.png` + `tables/layer_component_summary.csv` + `plots/ledger_phase_atlas.png` + `tables/phase_ledger_summary.csv`: broad timing patterns.
+8. `plots/category_ledger_composition.png` + `plots/answer_margin_vs_cancellation.png`: internal cancellation, especially on conflict prompts.
+9. `plots/component_type_balance_scatter.png`: whether examples are attention-heavy or MLP-heavy.
+10. `tables/relation_family_summary.csv` + `plots/relation_family_ledger_matrix.png`: compare built-in families and any custom hard/easy relation set.
+11. `tables/top_components.csv` + `plots/top_component_by_example.png` + the per-example waterfall plots: the actual largest writers.
+12. `plots/dla_vs_lens_<example>.png`: why the moving-basis lens from Lab 1 and the frozen DLA differ.
+13. `tables/ablation_results.csv` and `plots/attribution_vs_ablation.png` + `plots/ablation_mismatch_examples.png` + `plots/ablation_mismatch_by_layer.png`: the direct comparison of ledger score to live effect. Look for points far from the identity line and read the `effect_minus_attribution` column.
 
 ## The ablation extension, carefully scoped
 
@@ -229,10 +268,12 @@ What this extension still does not test: indirect effects through earlier positi
 1. Which category has the largest mean target-vs-distractor logit difference? Does that category also have the largest gross component mass?
 2. For one fact prompt and one conflict prompt, compare the top positive and top negative components. Are the same layers involved?
 3. Which layers have the strongest attention contribution and which have the strongest MLP contribution? Use `layer_component_summary.csv`.
-4. Pick one example where `category_ledger_composition.png` suggests cancellation. Show the component rows that create the fight.
-5. Compare `cumulative_logit_diff.png` with `dla_vs_lens_<example>.png`. Why does a frozen-norm ledger differ from a per-depth logit lens?
-6. In the ablation extension, report one component where attribution and causal effect agree, and one where they disagree. What exactly did the intervention do in each case?
-7. Draft one `ATTR` claim and one narrow `CAUSAL` claim. Make sure the causal claim names the intervention scope.
+4. Pick one example where `category_ledger_composition.png` or `answer_margin_vs_cancellation.png` suggests cancellation. Show the component rows that create the fight.
+5. Use `ledger_phase_atlas.png`: does your model assemble facts, relations, grammar, and conflicts in the same coarse depth phase?
+6. If you used a custom relation set, compare `_hard` and `_easy` rows in `relation_family_summary.csv`. Which component type or phase is doing instance discrimination beyond class discrimination?
+7. Compare `cumulative_logit_diff.png` with `dla_vs_lens_<example>.png`. Why does a frozen-norm ledger differ from a per-depth logit lens?
+8. In the ablation extension, report one component where attribution and causal effect agree, and one where they disagree. What exactly did the intervention do in each case?
+9. Draft one `ATTR` claim and one narrow `CAUSAL` claim. Make sure the causal claim names the intervention scope.
 
 ## Suggested ledger entries
 

@@ -14,19 +14,20 @@ experiments. The bench is the microscope; the labs are what you point it at.
 ## Primary target
 
 The primary target is **one NVIDIA A100/H100 (Colab)** running Hugging Face
-`transformers` in bf16. Every lab also has a CPU smoke path (`--tier a`,
-gpt2) that must work on a laptop — debug there, spend GPU minutes on science.
+`transformers` in bf16. Every lab also has a CPU smoke path (`--tier a`) that
+must work on a laptop — debug there, spend GPU minutes on science.
 
 | Tier | Hardware | What runs |
 |---|---|---|
-| A — smoke | laptop CPU (or MPS) | `gpt2` (Labs 1–6) / `SmolLM2-135M-Instruct` (Labs 7+); correctness of plumbing, not science |
+| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 12) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13-18) / lab-specific small models; correctness of plumbing, not science |
 | B — standard | Colab A100/H100, or any 24 GB+ GPU | base labs on `allenai/Olmo-3-1025-7B`; instruct labs (7+) on `allenai/Olmo-3-7B-Instruct`, bf16 |
 | C — comfortable | 40–80 GB GPU | fp32, larger prompt sets |
 
-Labs 7+ use instruct models because steering, refusal, and reasoning need a
-chat template and real assistant behavior. The tier-A smoke model switches to
-a small instruct model automatically (the lab registry owns the per-lab model
-override); generation makes these labs slower than the forward-pass-only labs.
+Chat-template labs use instruct models because steering, refusal, reasoning,
+and output-affect checks need real assistant behavior. The tier-A smoke model
+switches to a small instruct model automatically where a lab needs it (the lab
+registry owns the per-lab model override); generation makes these labs slower
+than the forward-pass-only labs.
 
 ## Quick start
 
@@ -82,6 +83,63 @@ python interp_bench.py --lab lab11 --tier b                  # factual_qa on Olm
 python interp_bench.py --lab lab11 --tier b \
   --audit-domain cot_faithfulness --model allenai/Olmo-3-7B-Think   # flagship
 python interp_bench.py --lab lab11 --tier b --audit-domain sentiment_negation
+
+# Lab 12 (first advanced lab: relation geometry; BASE models, probes + patching;
+# --relation-set caps items per family, --patch-grid picks patched token roles):
+python interp_bench.py --lab lab12 --tier a   # gpt2, ~15 s
+python interp_bench.py --lab lab12 --tier b --relation-set full
+
+# Lab 13 (emotion geometry; instruct models, read/write transfer + steering):
+python interp_bench.py --lab lab13 --tier a   # SmolLM2-135M-Instruct
+python interp_bench.py --lab lab13 --tier b --prompt-set full
+
+# Lab 14 (certainty, hedging, and calibration; instruct models):
+python interp_bench.py --lab lab14 --tier a   # SmolLM2-135M-Instruct
+python interp_bench.py --lab lab14 --tier b --prompt-set full
+
+# Lab 15 (multi-turn instrumentation; harness validation, not a science claim):
+python interp_bench.py --lab lab15 --tier a   # SmolLM2-135M-Instruct
+python interp_bench.py --lab lab15 --tier b
+
+# Lab 16 (sycophancy and user-belief modeling; instruct models):
+python interp_bench.py --lab lab16 --tier a   # SmolLM2-135M-Instruct
+python interp_bench.py --lab lab16 --tier b --prompt-set full
+
+# Lab 17 (persona, voice, roleplay, and register; instruct models):
+python interp_bench.py --lab lab17 --tier a   # SmolLM2-135M-Instruct
+python interp_bench.py --lab lab17 --tier b --prompt-set full
+
+# Lab 18 (humor as incongruity; instruct models + eager attention):
+python interp_bench.py --lab lab18 --tier a   # SmolLM2-135M-Instruct
+python interp_bench.py --lab lab18 --tier b --prompt-set full
+
+# Lab 19 (model diffing with crosscoders; Tier A is an identity-pair smoke):
+python interp_bench.py --lab lab19 --tier a --no-plots
+python interp_bench.py --lab lab19 --tier b --prompt-set full
+
+# Lab 20 (benign model organisms; sealed manifests + baseline audit):
+python interp_bench.py --lab lab20 --tier a --no-plots
+python interp_bench.py --lab lab20 --tier b --prompt-set full
+
+# Lab 21 (LoRA localization and safety-depth audits):
+python interp_bench.py --lab lab21 --tier a --mode lora --no-plots
+python interp_bench.py --lab lab21 --tier b --mode safety_depth
+
+# Lab 22 (eval awareness; eval-vs-natural directions + safe steering):
+python interp_bench.py --lab lab22 --tier a --no-plots
+python interp_bench.py --lab lab22 --tier b --prompt-set full
+
+# Lab 23 (blind audit of Lab 20 organisms; preregister, unseal, score):
+python interp_bench.py --lab lab23 --tier a --no-plots --blind
+python interp_bench.py --lab lab23 --tier b --organism runs/lab20_model_organisms-... --blind
+
+# Lab 24 (knowledge conflict and belief revision under pressure):
+python interp_bench.py --lab lab24 --tier a --mode single_turn --no-plots
+python interp_bench.py --lab lab24 --tier b --mode both --prompt-set full
+
+# Lab 25 (find the wire; injected states and self-report grounding):
+python interp_bench.py --lab lab25 --tier a --mode both --no-plots
+python interp_bench.py --lab lab25 --tier b --mode both --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -212,10 +270,74 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   unrelated-plain control. Audit lesson #1 baked in: Olmo prefers the right
   capital at 1.000 while top-1 "accuracy" reads 0.361 ("…is **known** as")
   — which behavioral metric does your claim name?
+- Lab 12: relation geometry and method validation — implemented for the
+  advanced course. Re-runs Lab 4/5-style tools on a 12-family controlled
+  relation set, with relation-swap groups, direction cosines, patching
+  transfer, and an operationalization audit.
+- Lab 13: emotion geometry — implemented for the advanced course. Extracts
+  comprehension and generation affect directions for joy/sadness/anger/fear,
+  cross-tests read/write transfer, audits sentiment/arousal confounds, and
+  runs a small input-derived steering check with random controls.
+- Lab 14: certainty, hedging, and calibration — implemented for the advanced
+  course. Builds an answerability/certainty direction over fixed A/B/C/D
+  items, saves a separate hedging-style direction, compares internal
+  projection with entropy/margin and generated verbal confidence, and writes
+  the three-way disagreement matrix needed by later self-report labs.
+- Lab 15: multi-turn instrumentation — implemented for the advanced course.
+  Validates chat-template turn segmentation, cached boundary reads against
+  full recompute, turn-boundary self-patching, and topic/null projection
+  traces before later labs make persona, belief-revision, or self-report
+  claims across turns.
+- Lab 16: sycophancy and user-belief modeling — implemented for the advanced
+  course. Builds a misconception-pressure battery, scores generated agreement
+  with false user beliefs, separates local truth/user-belief/agreement/
+  politeness/certainty-style directions, and audits agreement steering against
+  politeness and random controls.
+- Lab 17: persona, voice, roleplay, and register — implemented for the
+  advanced course. Extracts paired persona/register/voice/agreement
+  directions, tests held-out transfer, steers neutral prompts with
+  content-vs-style scoring, and traces roleplay/register/refusal-monitor
+  projections over scripted conversations.
+- Lab 18: humor as incongruity — implemented for the advanced course.
+  Measures setup entropy and ending surprisal, extracts a joke-vs-control
+  direction, audits it against surprise/silliness/positivity, inspects
+  attention back to setup tokens, and steers neutral endings with hand-label
+  scaffolds for the "is it actually funnier?" question.
+- Lab 19: model diffing with crosscoders — started for the advanced course.
+  Adds a custom paired-crosscoder path, prompt inventory from existing frozen
+  batteries, Tier A identity-pair smoke defaults, Tier B OLMo base-vs-instruct
+  defaults, feature taxonomy/gallery artifacts, and an optional `--run-edit`
+  feature-intervention smoke test.
+- Lab 20: benign model organisms — revised for the advanced course. Separates
+  private construction artifacts from public blind-audit packages, writes
+  salted commitments and leak scans, runs baseline target/control and spillover
+  audits, and emits adapter-training recipes for later Lab 21/23 work.
+- Lab 21: LoRA localization and safety depth — started for the advanced
+  course. Adds a two-mode harness for Lab 20 adapter localization, wrapper
+  test scaffolds, base-vs-instruct residual divergence, and benign
+  refusal-boundary depth audits.
+- Lab 22: eval awareness — started for the advanced course. Adds matched
+  eval/natural/format-control prompts, train-only direction selection,
+  cross-format transfer, safe steering, CoT mention scaffolds, and optional
+  Lab 20 eval-aware organism discovery.
+- Lab 23: blind audit — started for the advanced course. Discovers Lab 20
+  public packages, writes preregistration and pre-unseal report templates,
+  separates behavioral-only from internals-allowed audit plans, and scores
+  submitted claims against unsealed answer keys.
+- Lab 24: knowledge conflict and belief revision — started for the advanced
+  course. Adds single-turn context-vs-parametric answer competition,
+  multi-turn pressure trajectories, revision quadrants, instrument dependency
+  audits, and optional patch/steer recovery scaffolds.
+- Lab 25: find the wire — started for the advanced course. Adds concept
+  injection, self-report dose-response, false-positive floor, grounding
+  controls, voice/source attribution, and report-discipline scorecards.
 
-**The course is complete: 11 labs (Lab 1 includes the microscope smoke
+**The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
+The advanced course is now in progress; Labs 12-18 are implemented, Labs 19-22
+are started, and all should be treated as new lab code until their Colab
+validation runs are recorded.
 Two full-course regression sweeps are on record:
 `runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24 green,
 deterministic reproduction of the validated numbers) and

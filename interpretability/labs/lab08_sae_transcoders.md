@@ -35,8 +35,10 @@ should be able to predict it before you read the plot:
 That is the whole reason neurons are polysemantic, demonstrated rather than
 asserted: a real network is in the sparse regime, representing far more
 features than it has neurons. `plots/toy_superposition_geometry.png` shows the
-feature-norm collapse and the WᵀW interference; one figure, one paragraph in
-your writeup.
+feature-norm collapse and the WᵀW interference. The upgraded
+`plots/toy_superposition_phase_diagram.png` then compresses the same story into
+a dose-response: as sparsity rises, represented features increase, and the bill
+is paid in off-diagonal interference. One toy, two lenses: geometry and phase.
 
 **Make the concept pop:** before you open the plot, predict what must happen.
 Dense (all features always on): the autoencoder can afford only d_hidden orthogonal
@@ -62,7 +64,10 @@ disagreement is a lesson: max-activation ranking foregrounds rare, high-
 amplitude outliers (often polysemantic — they spike on one odd token across
 unrelated contexts); frequency ranking foregrounds broadly-active basis
 vectors. Neither is "the interpretable one"; knowing which question each
-answers is the point.
+answers is the point. The upgraded run also writes
+`plots/sae_activity_dashboard.png`, which places the atlas choices inside the
+whole dictionary cloud, and `tables/feature_activity_distribution.csv`, which
+turns the long tail of firing frequencies into numbers you can cite.
 
 **Make the concept pop:** open `ranking_disagreement.png` (or the feature_rankings.csv). The red triangles (top by max-act) sit at high peak but near-zero frequency; the green squares (top by freq) sit at modest peak but high frequency across the corpus. Overlap on the top N is typically 0. Max-act picks the flashy rare events; frequency picks the workhorse directions. The atlas deliberately mixes both so you see the trap.
 
@@ -83,7 +88,10 @@ confusable twin), **narrowed** (decent AUC), **token-feature** (fails the
 confusable pair — it tracked a string, not a concept), **polysemantic**,
 **killed**, or **silent-on-corpus**. The atlas is *required* to contain at
 least one label you killed; a clean sheet means your corpus was too easy or
-your battery too kind.
+your battery too kind. The upgraded lab makes this battery auditable with
+`plots/feature_validation_matrix.png` and `tables/feature_evidence_matrix.csv`,
+which line up held-out AUC, confusable-pair AUC, purity, polysemy, and firing
+rarity for every proposed label.
 
 **Make the concept pop:** the skill being graded is *validation*, not labeling.
 Top-context purity can be 1.0 ("code" on every top line) while held-out AUC is
@@ -121,7 +129,11 @@ reconstruction error (FVU), and the **downstream-logit KL when the
 reconstruction is spliced in for the real MLP output** — which stays tiny
 (~0.01), meaning the transcoder preserves the computation, not just the vector.
 Then it **de-embeds** a few transcoder features (project the decoder row
-through the unembedding) to read which tokens each feature *promotes*.
+through the unembedding) to read which tokens each feature *promotes*. The
+upgraded lab writes `tables/transcoder_feature_promotes.csv` and
+`plots/transcoder_feature_cards.png`, so the bridge to Lab 9 is not just an FVU
+number. You see the input→output object, the downstream KL, and the output-token
+tendencies in one little feature passport.
 
 The one paragraph you owe: *why does feature-level circuit tracing (Lab 9) want
 input→output objects rather than site snapshots?* Because a graph needs edges —
@@ -157,7 +169,9 @@ observed peak activation* (parallel to Lab 7's median-norm doses) so the
 number is physically meaningful and the window (induce at ~1×, collapse by ~3×)
 is visible in the plot and the sample generations in the CSV. Random control
 stays at 0; distinct-ratio fluency proxy flags the repetition past the window.
-Read the `sample` column at each dose — the numbers alone do not tell the story.
+The upgraded `plots/clamp_operating_window.png` puts concept hits and fluency
+side by side, because the best dose is not the biggest dose. Read the `sample`
+column at each dose — the numbers alone do not tell the story.
 
 ## The conventions are validated, not assumed
 
@@ -203,43 +217,51 @@ force the distinctions.
 
 1. `diagnostics/model_anatomy.json` (and tokenizer info) — confirm you are on the
    expected base model and layer; loading conventions are model- and SAE-specific.
-2. `feature_atlas.md` (the main deliverable) + `tables/feature_atlas.csv` — every
-   proposed label, its full validation battery (held-out AUC, confusable AUC,
-   polysemy entropy, purity, fire fraction), the top-context evidence with
-   peak token highlighted (⟦ ⟧), the verdict, and the explicit "What the atlas
-   does NOT show" section. **Look for:** the required dead labels (a clean sheet
-   is a warning); high-purity but low-AUC "code" features that die on held-out
-   (the teaching case that top-context labeling alone is the trap); the one or
-   two that survive or narrow, and whether the confusable pair still separates.
-3. `plots/toy_superposition_geometry.png` + `toy_superposition_stats.json` —
-   the geometry that explains polysemanticity. Predict the collapse before you
-   look: dense → exactly d_hidden orthogonal; sparse → more than d_hidden with
-   rising off-diagonal interference.
-4. `plots/ranking_disagreement.png` + `tables/feature_rankings.csv` — the two
-   rankings in one scatter. **Look for:** 0 overlap on the highlighted top-N
-   points (red triangles for max-act at high peak / near-zero freq; green
-   squares for freq at lower peak / high freq). The cloud of ordinary features
-   lives in the bottom-left.
-5. `plots/atlas_verdicts.png` — the distribution. Count the red "killed" bar;
+2. `plots/feature_evidence_dashboard.png` — start here. It ties the toy model,
+   SAE health, atlas verdicts, transcoder check, truth bridge, and clamp status
+   into one claim map.
+3. `feature_atlas.md`, `tables/feature_atlas.csv`, and
+   `tables/feature_evidence_matrix.csv` — every proposed label, its full
+   validation battery (held-out AUC, confusable AUC, polysemy entropy, purity,
+   fire fraction), the top-context evidence with peak token highlighted (⟦ ⟧),
+   the verdict, and the explicit "What the atlas does NOT show" section.
+4. `plots/feature_validation_matrix.png` — the same evidence as a row-by-row
+   heatmap. **Look for:** labels that are strong on one lock and fail another;
+   that mismatch is where most false feature stories live.
+5. `plots/toy_superposition_geometry.png`, `plots/toy_superposition_phase_diagram.png`,
+   and `toy_superposition_stats.json` — the geometry that explains polysemanticity.
+   Predict the collapse before you look: dense → exactly d_hidden orthogonal;
+   sparse → more than d_hidden with rising off-diagonal interference.
+6. `plots/ranking_disagreement.png` + `tables/feature_rankings.csv` — the two
+   rankings in one scatter. **Look for:** low overlap on the highlighted top-N
+   points (max-act rare spikes versus frequency workhorse directions).
+7. `plots/sae_activity_dashboard.png`, `tables/feature_activity_distribution.csv`,
+   `plots/domain_validation_summary.png`, and `tables/domain_validation_summary.csv`
+   — corpus coverage and domain-level validation. These catch the one-feature
+   anecdote before it becomes a claim.
+8. `plots/atlas_verdicts.png` — the distribution. Count the red "killed" bar;
    the lab is working when it is large.
-6. `transcoder_reconstruction_report.json` — FVU, mean splice-in KL (should be
-   tiny, ~0.01), L0, and the de-embedded "promotes tokens" for a few features.
-   This is the explicit bridge to Lab 9: an object that reconstructs the
-   *computation* (input map to output) rather than a site snapshot gives you
-   edges ("this input feature causes that output feature").
-7. `plots/feature_clamp.png` + `tables/feature_clamp.csv` — the single CAUSAL
-   row. **Read the `sample` generations** at each dose (not just the hit count).
-   The window is narrow (~1× peak induces the concept cleanly; ~3× collapses
-   to repetition); the random control stays at 0; the distinct-ratio column
-   flags fluency loss. This is decodability made sufficient under controls.
+9. `transcoder_reconstruction_report.json`, `tables/transcoder_feature_promotes.csv`,
+   and `plots/transcoder_feature_cards.png` — FVU, splice-in KL, L0, and the
+   de-embedded "promotes tokens" for inspected features. This is the explicit
+   bridge to Lab 9: input→output objects give edges; site snapshots only give nouns.
+10. `plots/truth_bridge_feature_cosines.png` + `tables/truth_bridge_feature_cosines.csv`
+    when a compatible Lab 4 direction exists — use this to discuss distributed
+    truth directions versus single SAE atoms.
+11. `plots/feature_clamp.png`, `plots/clamp_operating_window.png`,
+    `tables/feature_clamp.csv`, and `tables/clamp_operating_points.csv` — the single CAUSAL row. **Read the `sample`
+    generations** at each dose (not just the hit count). The window is narrow;
+    the random control and distinct-ratio column are part of the claim.
+12. `tables/plot_reading_guide.csv` — a compact map from plot to concept if you
+    are writing the run summary or claim ledger.
 
 ## Writeup questions
 
 1. Which of your labels survived validation untouched, which needed narrowing,
-   and which died? Quote the held-out AUC and the confusable-pair AUC for one
-   survivor (see feature_atlas.md or the table) and one casualty. What did the
-   dead one teach you? (A high-purity "code" feature with AUC 0.57 is the
-   canonical teaching case.)
+   and which died? Quote the held-out AUC, confusable-pair AUC, purity,
+   polysemy, and fire fraction for one survivor and one casualty. Use
+   `plots/feature_validation_matrix.png` or `tables/feature_evidence_matrix.csv`,
+   not only the top-context gallery. What did the dead one teach you?
 2. Max-activation ranking vs frequency ranking: which produced more
    interpretable features, and why might that be? Point at specific feature ids
    in ranking_disagreement.png and feature_rankings.csv. What is the overlap on

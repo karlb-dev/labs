@@ -198,13 +198,23 @@ runs/lab09_attribution_graphs-.../
     intervention_results.csv
     paraphrase_robustness.csv
     influence_ledger.csv
+    graph_evidence_matrix.csv
+    source_token_ledger.csv
+    supernode_layer_summary.csv
+    paraphrase_feature_matrix.csv
+    plot_reading_guide.csv
 
   plots/
+    graph_evidence_dashboard.png
     attribution_graph.png
+    source_token_ledger.png
     influence_composition.png
     edge_mass_shares.png
+    budget_and_reconstruction.png
     intervention_effects.png
+    supernode_audit.png
     paraphrase_recurrence.png
+    paraphrase_feature_matrix.png
 ```
 
 ## First artifact-reading path
@@ -213,36 +223,44 @@ Instrument health first (the "receipts"), then the deliverable and the causal te
 
 1. `diagnostics/replacement_exactness.json`, `edge_reconstruction_check.json`, and `feature_edit_noop_check.json` — the iron gates. Exact logits + every direct edge summing to the metric + no-op self-edits are non-negotiable. No receipts, no graph.
 2. `graph_card.md` — the Lab 9 counterpart of Lab 6's circuit card. Mechanism hypothesis (written *before* interventions), real-model intervention table, error-node accounting, paraphrase recurrence count, Lab 6 confrontation, and explicit "What this card does NOT claim".
-3. `tables/logit_edge_sources.csv` before `plots/attribution_graph.png` — the table shows the largest *raw* direct sources (including high error nodes) before the plot prunes for readability.
-4. `tables/intervention_results.csv` + `plots/intervention_effects.png` + `tables/supernode_features.csv` + `diagnostics/feature_intervention_manifest.json` — the causal test on the *real* model. Look for the specificity gap (suppression drop vs random matched control of same size). Read the actual edited features and whether they were graph-selected.
-5. `plots/influence_composition.png` (the signed ledger, fact vs induction) and `plots/edge_mass_shares.png` (absolute visibility audit). **Look for:** on the fact, features pay the bulk of the signed mass; on induction, embeddings + errors dominate while features pay little. Absolute |edge| shares can look similar (~70% features) for both behaviors — the signed decomposition is what reveals the blind spot. Error-node share is the honest "what the dictionary missed."
-6. `tables/paraphrase_robustness.csv` + `plots/paraphrase_recurrence.png` — which subject-site features recur across surface forms (mechanism candidates) vs single-template artifacts.
-7. `graphs/pruned_graph.json` and `supernode_map.json` — the editable hypothesis you can inspect or re-run with different budgets.
-8. `transcoder_stack_report.json` — per-layer FVU/L0 so you can see where the dictionary was weakest on this prompt.
+3. `plots/graph_evidence_dashboard.png` + `tables/graph_evidence_matrix.csv` — the new start-here view. It binds replacement receipts, graph visibility, intervention specificity, paraphrase robustness, and the Lab 6 confrontation into one evidence ladder.
+4. `tables/logit_edge_sources.csv` + `tables/source_token_ledger.csv` + `plots/source_token_ledger.png` before `plots/attribution_graph.png` — read the largest *raw* direct sources by token and source kind before the plot prunes for readability.
+5. `plots/attribution_graph.png` — the readable proposal graph. It now highlights the subject position, readout position, source signs, budget coverage, and error-node share while labeling only the most important features so the graph does not turn into confetti.
+6. `tables/intervention_results.csv` + `plots/intervention_effects.png` + `tables/supernode_features.csv` + `plots/supernode_audit.png` + `diagnostics/feature_intervention_manifest.json` — the causal test on the *real* model. Look for the specificity gap (suppression drop vs random matched control of same size). Read the actual edited features and whether they were graph-selected.
+7. `plots/influence_composition.png`, `plots/edge_mass_shares.png`, and `plots/budget_and_reconstruction.png` — the confrontation and completeness audit. **Look for:** on the fact, features pay the signed mass; on induction, embeddings + errors dominate while features pay little. Absolute |edge| shares can look similar for different mechanisms, so the signed decomposition is what reveals the blind spot.
+8. `tables/paraphrase_robustness.csv` + `tables/paraphrase_feature_matrix.csv` + `plots/paraphrase_recurrence.png` + `plots/paraphrase_feature_matrix.png` — which subject-site features recur across surface forms (mechanism candidates) vs single-template artifacts.
+9. `graphs/pruned_graph.json`, `supernode_map.json`, and `transcoder_stack_report.json` — the editable hypothesis, node-budget assumptions, and layer-by-layer dictionary health.
 
 ## How to read the main plots
 
-`attribution_graph.png` is a display graph, not a complete graph. Dots are features, squares are embeddings, triangles are error nodes, and the star is the logit-difference node. Blue edges push the target direction, red edges push against it. Edge width tracks absolute direct attribution.
+`graph_evidence_dashboard.png` is the cockpit. Use it to orient before reading details: visibility receipts, intervention result, Lab 6 confrontation, and robustness distribution.
+
+`attribution_graph.png` is a display graph, not a complete graph. Dots are features, squares are embeddings, triangles are error nodes, and the star is the logit-difference node. Blue edges push the target direction, red edges push against it. Edge width tracks absolute direct attribution. The new rendering labels fewer nodes on purpose; the raw table carries the completeness burden.
+
+`source_token_ledger.png` answers a different question from the graph: which token positions and source kinds carry the largest raw direct edge sources before display pruning?
 
 `influence_composition.png` is the signed ledger. The bars should sum to the metric. This plot is best for questions like, "Did feature writes push Paris, or did token embeddings and biases do the work?"
 
 `edge_mass_shares.png` is the visibility audit. A high error-node share means the graph is leaning on unreconstructed computation. That does not automatically kill the explanation, but it must lower the swagger.
 
-`intervention_effects.png` is the causal test. The graph wins only if suppression and substitution move the behavior in a way the random matched control does not.
+`budget_and_reconstruction.png` makes two quiet knobs visible: node budget coverage and per-layer transcoder FVU/L0. A graph can be readable and still dictionary-limited.
 
-`paraphrase_recurrence.png` is the cheap robustness screen. Recurrent subject-site features are better mechanism candidates than one-template fireworks.
+`intervention_effects.png` is the causal test. The graph wins only if suppression and substitution move the behavior in a way the random matched control does not. `supernode_audit.png` is the matching inventory of what was actually edited.
+
+`paraphrase_recurrence.png` and `paraphrase_feature_matrix.png` are the cheap robustness screens. Recurrent subject-site features are better mechanism candidates than one-template fireworks.
 
 ## Writeup questions
 
 1. Did replacement exactness and edge reconstruction both pass (see the two diagnostics JSONs)? Explain what each check means in one sentence, and what would be invalid if it failed. (The feature-edit no-op is the third receipt.)
 2. In `plots/influence_composition.png`, which source category carried the largest **signed** contribution to the factual-recall logit diff: embeddings, features, errors, bias path, or transcoder bias? Quote the numbers for both the capital fact (left panel) and the induction vignette (right panel).
-3. Which source category carried the largest **absolute edge mass** (see `plots/edge_mass_shares.png` and the influence ledger in the graph card)? If error nodes are large (e.g. 19%), what exactly has the graph failed to explain? The signed ledger vs absolute shares distinction is the point.
-4. Did subject-supernode suppression beat the random matched control (tables/intervention_results.csv + plots/intervention_effects.png)? State the suppression drop, random-control drop, and specificity gap. Was the random control flat while the graph-guided moves were large?
-5. Did counterfactual substitution increase probability on the counterfactual capital? Quote the p gain. Was that enough, together with the random control, to call the tested supernode causal on the real model?
-6. Which subject-site features recur across paraphrases (tables/paraphrase_robustness.csv + plots/paraphrase_recurrence.png)? Which look like template artifacts? Why is recurrence under surface change a cheap robustness screen before naming a feature in the mechanism?
-7. Compare your Lab 6 circuit card and this graph card (and the two-panel influence_composition.png). Which method made stronger assumptions (frozen attention vs treating MLPs as support)? Which gave stronger controls? Which would you trust for an attention-routing claim, and which for an MLP-feature claim? Each instrument has a documented blind spot.
+3. Which source category carried the largest **absolute edge mass** (see `plots/edge_mass_shares.png` and the influence ledger in the graph card)? If error nodes are large, what exactly has the graph failed to explain? The signed ledger vs absolute shares distinction is the point.
+4. Use `plots/source_token_ledger.png`: which token position pays the largest raw direct-source bill into the logit node, and is that bill mostly features, embeddings, or error nodes?
+5. Did subject-supernode suppression beat the random matched control (`tables/intervention_results.csv` + `plots/intervention_effects.png`)? State the suppression drop, random-control drop, and specificity gap. Then use `plots/supernode_audit.png`: how much of the edit was graph-selected versus padding or control?
+6. Did counterfactual substitution increase probability on the counterfactual capital? Quote the p gain. Was that enough, together with the random control, to call the tested supernode causal on the real model?
+7. Which subject-site features recur across paraphrases (`tables/paraphrase_robustness.csv`, `tables/paraphrase_feature_matrix.csv`, and the two paraphrase plots)? Which look like template artifacts? Why is recurrence under surface change a cheap robustness screen before naming a feature in the mechanism?
+8. Compare your Lab 6 circuit card and this graph card (and `plots/influence_composition.png`). Which method made stronger assumptions (frozen attention vs treating MLPs as support)? Which gave stronger controls? Which would you trust for an attention-routing claim, and which for an MLP-feature claim? Each instrument has a documented blind spot.
 
-**Make the concept pop:** The random matched control in the substitution experiment is the star. Suppressing the "Texas" features and substituting California features should flip the capital; suppressing the same number of random features should not. The gap is causal evidence at feature level. The error-node share tells you the graph's explanatory completeness.
+**Make the concept pop:** The random matched control in the substitution experiment is the star. Suppressing the France subject supernode and substituting Germany-donor features should push the Paris-vs-Berlin margin toward Berlin; suppressing the same number of random active subject-site features should not. The gap is causal evidence at feature level. The error-node share tells you the graph's explanatory completeness.
 
 ## Symptom-first debugging
 

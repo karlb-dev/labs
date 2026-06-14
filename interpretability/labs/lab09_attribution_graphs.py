@@ -1258,6 +1258,838 @@ def plot_paraphrase_recurrence(ctx, rec_rows, n_prompts) -> None:
                       "Subject-site graph features recurring across surface variants.")
 
 
+
+# ---------------------------------------------------------------------------
+# Visual synthesis helpers (Lab 9 upgrade)
+# ---------------------------------------------------------------------------
+
+
+def _as_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _graph_color(key: str, default: str = "#555555") -> str:
+    """Use shared graph colors when the upgraded bench is installed; otherwise fall back."""
+    fn = getattr(bench, "plot_graph_color", None)
+    if callable(fn):
+        return fn(key, default)
+    local = {
+        "feature": "#009E73",
+        "embedding": "#555555",
+        "error": "#E69F00",
+        "logit": "#FFD92F",
+        "bias_path": "#999999",
+        "transcoder_bias": "#7E57C2",
+        "positive": "#0072B2",
+        "negative": "#D55E00",
+        "baseline": "#666666",
+        "suppress": "#D55E00",
+        "substitute": "#7E57C2",
+        "random": "#8A9A00",
+        "counterfactual": "#0072B2",
+        "diagnostic": "#0072B2",
+        "attr": "#009E73",
+        "causal": "#D55E00",
+        "robustness": "#E69F00",
+    }
+    return local.get(str(key), default)
+
+
+def _graph_marker(key: str, default: str = "o") -> str:
+    fn = getattr(bench, "plot_graph_marker", None)
+    if callable(fn):
+        return fn(key, default)
+    return {
+        "feature": "o",
+        "embedding": "s",
+        "error": "^",
+        "logit": "*",
+        "baseline": "o",
+        "suppress": "X",
+        "substitute": "D",
+        "random": "s",
+        "counterfactual": "^",
+    }.get(str(key), default)
+
+
+def _lighten(color: str, amount: float = 0.55) -> str:
+    fn = getattr(bench, "lighten_color", None)
+    if callable(fn):
+        return fn(color, amount)
+    import matplotlib.colors as mcolors
+    amount = max(0.0, min(1.0, float(amount)))
+    r, g, b = mcolors.to_rgb(color)
+    return mcolors.to_hex((r + (1 - r) * amount, g + (1 - g) * amount, b + (1 - b) * amount))
+
+
+def _zero(ax: Any, *, x: bool = False, y: bool = True) -> None:
+    fn = getattr(bench, "add_zero_lines", None)
+    if callable(fn):
+        fn(ax, x=x, y=y)
+    else:
+        if x:
+            ax.axvline(0, color="#222222", linewidth=0.8, alpha=0.8)
+        if y:
+            ax.axhline(0, color="#222222", linewidth=0.8, alpha=0.8)
+
+
+def _panel(ax: Any, label: str) -> None:
+    fn = getattr(bench, "add_panel_label", None)
+    if callable(fn):
+        fn(ax, label)
+    else:
+        ax.text(-0.09, 1.04, label, transform=ax.transAxes, fontsize=11, fontweight="bold",
+                va="bottom", ha="right", color="#222222")
+
+
+def _condition_key(condition: str) -> str:
+    condition = str(condition)
+    if condition == "suppress_subject_supernode":
+        return "suppress"
+    if condition == "substitute_counterfactual":
+        return "substitute"
+    if condition == "random_suppression_control":
+        return "random"
+    if condition == "counterfactual_prompt_reference":
+        return "counterfactual"
+    return condition
+
+
+def _condition_label(condition: str) -> str:
+    return {
+        "baseline": "baseline",
+        "suppress_subject_supernode": "suppress\nsubject\nsupernode",
+        "substitute_counterfactual": "substitute\nGermany\nfeatures",
+        "random_suppression_control": "random\nmatched\ncontrol",
+        "counterfactual_prompt_reference": "Germany\nprompt\nreference",
+    }.get(str(condition), str(condition).replace("_", "\n"))
+
+
+def _edge_source_kind_name(kind: str) -> str:
+    kind = str(kind)
+    if kind == "embedding":
+        return "embeddings"
+    if kind == "feature":
+        return "features"
+    if kind == "error":
+        return "errors"
+    if kind == "transcoder_bias":
+        return "transcoder_bias"
+    return kind
+
+
+def _parse_prompt_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [v.strip() for v in value.split(",") if v.strip()]
+    if isinstance(value, (list, tuple, set)):
+        return [str(v) for v in value]
+    return [str(value)]
+
+
+def source_token_ledger_rows(graph: dict[str, Any]) -> list[dict[str, Any]]:
+    """Aggregate the largest raw logit-edge sources by source kind and token position.
+
+    This uses ``graph['edge_sources']``, the pre-pruning table whose whole job is
+    to keep the display graph honest. It is not a complete all-edge sum, but it
+    makes the largest visible sources queryable by token and source family.
+    """
+    cap = graph.get("cap", {})
+    tokens = list(cap.get("tokens", []))
+    agg: dict[tuple[str, int], dict[str, Any]] = {}
+    for row in graph.get("edge_sources", []):
+        kind = _edge_source_kind_name(row.get("kind", ""))
+        try:
+            pos = int(row.get("pos", -1))
+        except (TypeError, ValueError):
+            continue
+        if pos < 0:
+            continue
+        key = (kind, pos)
+        entry = agg.setdefault(key, {
+            "kind": kind,
+            "pos": pos,
+            "token": tokens[pos] if 0 <= pos < len(tokens) else row.get("token", ""),
+            "signed_sum_top_sources": 0.0,
+            "abs_sum_top_sources": 0.0,
+            "n_sources": 0,
+        })
+        signed = _as_float(row.get("signed_edge"))
+        entry["signed_sum_top_sources"] += signed
+        entry["abs_sum_top_sources"] += abs(signed)
+        entry["n_sources"] += 1
+    rows = sorted(agg.values(), key=lambda r: (int(r["pos"]), str(r["kind"])))
+    for r in rows:
+        r["signed_sum_top_sources"] = round(float(r["signed_sum_top_sources"]), 6)
+        r["abs_sum_top_sources"] = round(float(r["abs_sum_top_sources"]), 6)
+    return rows
+
+
+def paraphrase_matrix_rows(rec_rows: list[dict[str, Any]], n_para: int) -> list[dict[str, Any]]:
+    prompt_ids: list[str] = []
+    for row in rec_rows:
+        for pid in _parse_prompt_list(row.get("prompts")):
+            if pid not in prompt_ids:
+                prompt_ids.append(pid)
+    if not prompt_ids:
+        prompt_ids = ["france"] + [f"para_{i}" for i in range(max(0, int(n_para) - 1))]
+    rows: list[dict[str, Any]] = []
+    for row in rec_rows:
+        key = f"L{row.get('layer')} f{row.get('feature')}"
+        seen = set(_parse_prompt_list(row.get("prompts")))
+        out = {
+            "feature_key": key,
+            "layer": row.get("layer", ""),
+            "feature": row.get("feature", ""),
+            "n_prompts": row.get("n_prompts", 0),
+        }
+        for pid in prompt_ids:
+            out[f"present_{pid}"] = int(pid in seen)
+        rows.append(out)
+    return rows
+
+
+def supernode_layer_summary_rows(ctx: bench.RunContext) -> list[dict[str, Any]]:
+    """Summarize the feature intervention inventory by condition and layer.
+
+    ``run_interventions`` already writes the precise edited-feature table. This
+    helper turns it into a layer-level audit: how much of the edit was graph
+    selected, donor padding, or random control.
+    """
+    import csv
+    path = ctx.path("tables", "supernode_features.csv")
+    if not path.exists():
+        return []
+    with open(path, newline="") as f:
+        rows = list(csv.DictReader(f))
+    agg: dict[tuple[str, int], dict[str, Any]] = {}
+    for row in rows:
+        condition = str(row.get("condition", ""))
+        try:
+            layer = int(row.get("layer", 0))
+        except (TypeError, ValueError):
+            continue
+        key = (condition, layer)
+        entry = agg.setdefault(key, {
+            "condition": condition,
+            "layer": layer,
+            "n_features": 0,
+            "n_graph_selected": 0,
+            "mean_old_activation": 0.0,
+            "mean_decoder_norm": 0.0,
+        })
+        entry["n_features"] += 1
+        if str(row.get("selected_by_graph", "")).lower() in {"true", "1", "yes"}:
+            entry["n_graph_selected"] += 1
+        entry["mean_old_activation"] += _as_float(row.get("old_activation"))
+        entry["mean_decoder_norm"] += _as_float(row.get("decoder_norm"))
+    out = []
+    for entry in agg.values():
+        n = max(1, int(entry["n_features"]))
+        entry = dict(entry)
+        entry["mean_old_activation"] = round(float(entry["mean_old_activation"]) / n, 6)
+        entry["mean_decoder_norm"] = round(float(entry["mean_decoder_norm"]) / n, 6)
+        out.append(entry)
+    return sorted(out, key=lambda r: (str(r["condition"]), int(r["layer"])))
+
+
+def plot_reading_guide_rows() -> list[dict[str, str]]:
+    return [
+        {"artifact": "plots/graph_evidence_dashboard.png", "question": "What is the whole evidence chain?", "concept": "Receipts, visibility, intervention specificity, and robustness in one cockpit."},
+        {"artifact": "plots/attribution_graph.png", "question": "What graph did the replacement model propose?", "concept": "Readable pruned graph; source table is still the completeness antidote."},
+        {"artifact": "plots/source_token_ledger.png", "question": "Which token positions pay the largest direct-edge bills?", "concept": "Source kind by position, using the unpruned top-source ledger."},
+        {"artifact": "plots/influence_composition.png", "question": "Who pays the signed logit difference?", "concept": "Fact vs induction confrontation; features, embeddings, and errors do different jobs."},
+        {"artifact": "plots/edge_mass_shares.png", "question": "How much of the direct mass is visible to the dictionary?", "concept": "Feature mass vs embeddings vs error nodes; swagger tax for unreconstructed computation."},
+        {"artifact": "plots/budget_and_reconstruction.png", "question": "How sensitive is the display to budget and transcoder fidelity?", "concept": "Node-budget coverage plus FVU/L0 layer health."},
+        {"artifact": "plots/intervention_effects.png", "question": "Did the graph survive contact with the real model?", "concept": "Suppression/substitution vs random matched control."},
+        {"artifact": "plots/supernode_audit.png", "question": "What exactly got edited?", "concept": "Graph-selected subject features, counterfactual donors, and random controls by layer."},
+        {"artifact": "plots/paraphrase_feature_matrix.png", "question": "Which features recur under surface changes?", "concept": "Feature-by-paraphrase recurrence, not just counts."},
+        {"artifact": "plots/paraphrase_recurrence.png", "question": "How many variants did each feature survive?", "concept": "Mechanism candidates vs template fireworks."},
+    ]
+
+
+def write_graph_evidence_tables(ctx: bench.RunContext, graph: dict[str, Any], interventions: list[dict[str, Any]],
+                                rec_rows: list[dict[str, Any]], n_para: int, ind_graph: dict[str, Any],
+                                stack_report: dict[str, Any], gate_dropped: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Write compact evidence tables that bind graph plots to claim boundaries."""
+    effects = intervention_deltas(interventions)
+    inf = graph["influence"]
+    ind = ind_graph["influence"]
+    recurring = [r for r in rec_rows if int(r.get("n_prompts", 0)) >= max(2, int(n_para) - 1)]
+    rows: list[dict[str, Any]] = [
+        {
+            "evidence_rung": "DIAGNOSTIC",
+            "artifact": "diagnostics/replacement_exactness.json",
+            "metric": "replacement_exactness",
+            "value": "pass",
+            "verdict": "required receipt",
+            "claim_boundary": "The local replacement forward must reproduce the real logits before any edge is interpreted.",
+        },
+        {
+            "evidence_rung": "DIAGNOSTIC",
+            "artifact": "diagnostics/edge_reconstruction_check.json",
+            "metric": "edge_sum_equals_metric",
+            "value": "pass",
+            "verdict": "required receipt",
+            "claim_boundary": "Direct edges are trustworthy only because every source term plus bias sums to the target scalar.",
+        },
+        {
+            "evidence_rung": "ATTR",
+            "artifact": "plots/edge_mass_shares.png",
+            "metric": "error_node_share",
+            "value": round(float(inf.get("share_errors", 0.0)), 4),
+            "verdict": "honesty line",
+            "claim_boundary": "Computation routed through error nodes is unre-described by the transcoder dictionary.",
+        },
+        {
+            "evidence_rung": "ATTR",
+            "artifact": "tables/node_budget_curve.csv",
+            "metric": "kept_coverage_of_feature_mass",
+            "value": round(float(inf.get("kept_coverage_of_feature_mass", 0.0)), 4),
+            "verdict": "display coverage",
+            "claim_boundary": "The plotted graph is a readable budgeted subgraph, not the full graph.",
+        },
+        {
+            "evidence_rung": "CAUSAL",
+            "artifact": "tables/intervention_results.csv",
+            "metric": "specificity_gap",
+            "value": effects.get("specificity_gap"),
+            "verdict": effects.get("verdict"),
+            "claim_boundary": "Only the real-model feature interventions, not the replacement graph by itself, support causality.",
+        },
+        {
+            "evidence_rung": "ROBUSTNESS",
+            "artifact": "tables/paraphrase_robustness.csv",
+            "metric": "recurring_subject_site_features",
+            "value": len(recurring),
+            "verdict": "surface-form screen",
+            "claim_boundary": "Recurring subject-site features are better mechanism candidates than one-template artifacts.",
+        },
+        {
+            "evidence_rung": "COMPARISON",
+            "artifact": "plots/influence_composition.png",
+            "metric": "fact_feature_minus_induction_feature_signed_contribution",
+            "value": round(float(inf["signed_contributions"].get("features", 0.0)) - float(ind["signed_contributions"].get("features", 0.0)), 4),
+            "verdict": "instrument blind-spot audit",
+            "claim_boundary": "Frozen-attention graphs and manual head circuits see complementary slices of the mechanism.",
+        },
+        {
+            "evidence_rung": "DATA_GATE",
+            "artifact": "tables/baseline_gate.csv",
+            "metric": "baseline_gate_dropped",
+            "value": len(gate_dropped),
+            "verdict": "behavior precondition",
+            "claim_boundary": "No causal tracing claim is made for prompts the base model did not solve.",
+        },
+        {
+            "evidence_rung": "DICTIONARY",
+            "artifact": "transcoder_stack_report.json",
+            "metric": "mean_fvu",
+            "value": stack_report.get("mean_fvu", ""),
+            "verdict": "dictionary fidelity",
+            "claim_boundary": "A high-FVU layer means more of the MLP computation is paid by error nodes.",
+        },
+    ]
+    bench.write_csv_with_context(ctx, ctx.path("tables", "graph_evidence_matrix.csv"), rows)
+    ctx.register_artifact(ctx.path("tables", "graph_evidence_matrix.csv"), "table",
+                          "Evidence ladder table for the Lab 9 graph, controls, and blind spots.")
+
+    source_rows = source_token_ledger_rows(graph)
+    bench.write_csv_with_context(ctx, ctx.path("tables", "source_token_ledger.csv"), source_rows)
+    ctx.register_artifact(ctx.path("tables", "source_token_ledger.csv"), "table",
+                          "Largest direct logit-edge sources aggregated by source kind and token position.")
+
+    para_matrix = paraphrase_matrix_rows(rec_rows, n_para)
+    if para_matrix:
+        bench.write_csv_with_context(ctx, ctx.path("tables", "paraphrase_feature_matrix.csv"), para_matrix)
+        ctx.register_artifact(ctx.path("tables", "paraphrase_feature_matrix.csv"), "table",
+                              "Binary feature-by-paraphrase recurrence matrix for subject-site nodes.")
+
+    supernode_rows = supernode_layer_summary_rows(ctx)
+    if supernode_rows:
+        bench.write_csv_with_context(ctx, ctx.path("tables", "supernode_layer_summary.csv"), supernode_rows)
+        ctx.register_artifact(ctx.path("tables", "supernode_layer_summary.csv"), "table",
+                              "Layer-level summary of graph-selected, donor, and random-control feature edits.")
+
+    guide = plot_reading_guide_rows()
+    bench.write_csv_with_context(ctx, ctx.path("tables", "plot_reading_guide.csv"), guide)
+    ctx.register_artifact(ctx.path("tables", "plot_reading_guide.csv"), "table",
+                          "Map from Lab 9 plots to the concept each is meant to teach.")
+    return rows
+
+
+# ---------------------------------------------------------------------------
+# Upgraded plots (override the compact originals above)
+# ---------------------------------------------------------------------------
+
+
+def plot_graph(ctx, bundle, graph, name: str, title: str) -> None:
+    """Layered rendering of the pruned attribution graph with less label fog.
+
+    The plot remains a display graph. The raw top-source table is still the
+    completeness receipt.
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+
+    bench._ensure_plot_style()
+    cap = graph["cap"]
+    seq = len(cap["tokens"])
+    feat_nodes = [n for n in graph["nodes"] if n.get("kind") == "feature"]
+    feature_layers = sorted({int(n["layer"]) for n in feat_nodes})
+    max_layer = max(feature_layers, default=0)
+    logit_y = max_layer + 1.35
+    fig, ax = plt.subplots(figsize=(max(9.5, 1.75 * seq), 8.6))
+
+    coords: dict[str, tuple[float, float]] = {}
+    for n in graph["nodes"]:
+        if n.get("kind") == "embedding":
+            coords[n["name"]] = (float(n["pos"]), -1.15)
+        elif n.get("kind") == "feature":
+            coords[n["name"]] = (float(n["pos"]), float(n["layer"]))
+        elif n.get("kind") == "logit":
+            coords[n["name"]] = (seq - 1, logit_y)
+    used_err = {e["source"] for e in graph["edges"] if str(e.get("source", "")).startswith("err.")}
+    for name_ in used_err:
+        try:
+            _, layer, pos = name_.split(".")
+            coords[name_] = (float(pos) + 0.28, float(layer) + 0.28)
+        except ValueError:
+            pass
+
+    # softly shade subject and final token positions
+    fact = graph.get("fact", {})
+    try:
+        subj = subject_position_from_graph(graph, bundle)
+    except Exception:
+        subj = None
+    if subj is not None:
+        ax.axvspan(subj - 0.42, subj + 0.42, color=_lighten(_graph_color("feature"), 0.72), alpha=0.45, zorder=0)
+        ax.text(subj, logit_y + 0.4, "subject", ha="center", va="bottom", fontsize=8, color="#333333")
+    final_pos = seq - 1
+    ax.axvspan(final_pos - 0.42, final_pos + 0.42, color=_lighten(_graph_color("logit"), 0.5), alpha=0.25, zorder=0)
+    ax.text(final_pos, logit_y + 0.63, "readout", ha="center", va="bottom", fontsize=8, color="#333333")
+
+    max_w = max((abs(_as_float(e.get("weight"))) for e in graph["edges"]), default=1.0)
+    for e in sorted(graph["edges"], key=lambda row: abs(_as_float(row.get("weight")))):
+        if e.get("source") not in coords or e.get("target") not in coords:
+            continue
+        x0, y0 = coords[e["source"]]
+        x1, y1 = coords[e["target"]]
+        weight = _as_float(e.get("weight"))
+        w = abs(weight) / max(max_w, 1e-9)
+        color = _graph_color("positive" if weight > 0 else "negative")
+        ax.plot([x0, x1], [y0, y1], color=color, linewidth=0.35 + 3.0 * w,
+                alpha=0.18 + 0.48 * w, zorder=1, solid_capstyle="round")
+
+    # draw nodes
+    for n in graph["nodes"]:
+        name_ = n.get("name")
+        if name_ not in coords:
+            continue
+        x, y = coords[name_]
+        kind = n.get("kind")
+        if kind == "embedding":
+            ax.scatter([x], [y], marker=_graph_marker("embedding"), s=95,
+                       color=_graph_color("embedding"), edgecolor="white", linewidth=0.6, zorder=3)
+        elif kind == "feature":
+            edge = _as_float(n.get("edge_to_logit"))
+            size = 70 + 220 * min(1.0, abs(edge) / max(1e-9, max(abs(_as_float(m.get("edge_to_logit"))) for m in feat_nodes))) if feat_nodes else 100
+            face = _graph_color("feature") if edge >= 0 else _lighten(_graph_color("feature"), 0.35)
+            ax.scatter([x], [y], marker=_graph_marker("feature"), s=size, color=face,
+                       edgecolor=("#111111" if n.get("selected_by") == "logit" else "#666666"),
+                       linewidth=(1.0 if n.get("selected_by") == "logit" else 0.45), zorder=4)
+        elif kind == "logit":
+            ax.scatter([x], [y], marker=_graph_marker("logit"), s=430, color=_graph_color("logit"),
+                       edgecolor="#111111", linewidth=1.0, zorder=5)
+    for name_ in used_err:
+        if name_ in coords:
+            x, y = coords[name_]
+            ax.scatter([x], [y], marker=_graph_marker("error"), s=75, color=_graph_color("error"),
+                       alpha=0.8, edgecolor="white", linewidth=0.4, zorder=3)
+
+    # label a small, meaningful subset of features
+    labeled = sorted(feat_nodes, key=lambda n: -abs(_as_float(n.get("edge_to_logit"))))[:14]
+    for i, n in enumerate(labeled):
+        x, y = coords[n["name"]]
+        promotes = n.get("promotes", [""])
+        top_tok = promotes[0] if promotes else ""
+        ax.annotate(f"L{n['layer']} f{n['feature']}\n{top_tok!r}", (x, y),
+                    textcoords="offset points", xytext=(6, 5 if i % 2 == 0 else -14),
+                    fontsize=6.2, ha="left", va="bottom", color="#111111")
+    ax.annotate("logit\nnode", (final_pos, logit_y), textcoords="offset points", xytext=(6, 8),
+                fontsize=8, ha="left", va="bottom")
+
+    ax.set_xticks(range(seq))
+    ax.set_xticklabels([bench.visible_token(t) for t in cap["tokens"]], rotation=32, fontsize=8.5)
+    yticks = [-1.15] + feature_layers + [logit_y]
+    ax.set_yticks(yticks)
+    ax.set_yticklabels(["emb"] + [f"L{i}" for i in feature_layers] + ["logit"], fontsize=8.5)
+    ax.set_ylim(-1.9, logit_y + 1.0)
+    ax.set_xlim(-0.55, seq - 0.45)
+    ax.set_xlabel("token position")
+    ax.set_ylabel("feature layer")
+    ax.set_title(title + "\nDisplay graph: features are budgeted; source table is the anti-cherry-pick receipt")
+    ax.grid(True, alpha=0.18)
+    handles = [
+        Line2D([0], [0], marker="o", color="w", label="feature", markerfacecolor=_graph_color("feature"), markersize=8, markeredgecolor="#111111"),
+        Line2D([0], [0], marker="s", color="w", label="embedding", markerfacecolor=_graph_color("embedding"), markersize=8),
+        Line2D([0], [0], marker="^", color="w", label="error node", markerfacecolor=_graph_color("error"), markersize=8),
+        Line2D([0], [0], marker="*", color="w", label="logit", markerfacecolor=_graph_color("logit"), markeredgecolor="#111111", markersize=13),
+        Line2D([0], [0], color=_graph_color("positive"), label="positive edge", linewidth=2),
+        Line2D([0], [0], color=_graph_color("negative"), label="negative edge", linewidth=2),
+    ]
+    ax.legend(handles=handles, loc="upper left", ncol=3, fontsize=7.5, frameon=False)
+    txt = (
+        f"metric {graph['metric']:+.2f}\n"
+        f"features {graph['influence']['share_features']:.0%} | "
+        f"errors {graph['influence']['share_errors']:.0%}\n"
+        f"kept feature mass {graph['influence']['kept_coverage_of_feature_mass']:.0%}"
+    )
+    ax.text(0.99, 0.02, txt, transform=ax.transAxes, ha="right", va="bottom",
+            fontsize=8, bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="#dddddd", alpha=0.92))
+    bench.save_figure(ctx, fig, name, f"Pruned attribution graph: {title}")
+
+
+def plot_influence_composition(ctx, fact_inf, ind_inf) -> None:
+    """Signed ledger: the bars sum to the metric for each case."""
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    bench._ensure_plot_style()
+    cats = ["bias_path", "embeddings", "features", "errors", "transcoder_bias"]
+    labels = ["bias\npath", "token\nembeddings", "features", "error\nnodes", "transcoder\nbias"]
+    colors = [_graph_color(c) for c in cats]
+    cases = [("capital fact\nMLP recall", fact_inf), ("induction\nfrozen-attn blind spot", ind_inf)]
+    fig, ax = plt.subplots(figsize=(10.5, 5.4))
+    x = np.arange(len(cases))
+    width = 0.13
+    for j, cat in enumerate(cats):
+        offset = (j - (len(cats) - 1) / 2) * width
+        vals = [case[1]["signed_contributions"].get(cat, 0.0) for case in cases]
+        bars = ax.bar(x + offset, vals, width=width, label=labels[j].replace("\n", " "), color=colors[j])
+        for bar, val in zip(bars, vals):
+            if abs(val) >= max(0.15, 0.06 * max(abs(v) for v in vals + [1])):
+                ax.text(bar.get_x() + bar.get_width() / 2, val, f"{val:+.2f}",
+                        ha="center", va=("bottom" if val >= 0 else "top"), fontsize=7, rotation=90)
+    for i, (_, inf) in enumerate(cases):
+        ax.scatter([i], [inf["metric_logit_diff"]], marker="D", s=70, color="#111111", zorder=5,
+                   label="metric" if i == 0 else None)
+        ax.text(i + 0.22, inf["metric_logit_diff"], f"metric {inf['metric_logit_diff']:+.2f}",
+                va="center", fontsize=8, color="#111111")
+    _zero(ax)
+    ax.set_xticks(x)
+    ax.set_xticklabels([c[0] for c in cases])
+    ax.set_ylabel("signed contribution to target-minus-distractor logit diff")
+    ax.set_title("Signed ledger: replacement graph sees the fact, freezes away the routing decision")
+    ax.legend(fontsize=7.5, ncol=3, loc="upper left")
+    ax.grid(True, axis="y", alpha=0.22)
+    bench.save_figure(ctx, fig, "influence_composition.png",
+                      "Signed decomposition of the logit node, fact prompt vs induction prompt.")
+
+
+def plot_edge_mass_shares(ctx, fact_inf, ind_inf) -> None:
+    """Absolute visibility audit for feature, embedding, and error-node edge mass."""
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    cases = [("capital fact", fact_inf), ("induction", ind_inf)]
+    cats = ["share_features", "share_embeddings", "share_errors"]
+    labels = ["features", "embeddings", "error nodes"]
+    colors = [_graph_color("feature"), _graph_color("embedding"), _graph_color("error")]
+    fig, ax = plt.subplots(figsize=(8.8, 5.1))
+    x = np.arange(len(cases))
+    bottom = np.zeros(len(cases))
+    for label, cat, color in zip(labels, cats, colors):
+        vals = np.array([case[1][cat] for case in cases], dtype=float)
+        ax.bar(x, vals, bottom=bottom, label=label, color=color, width=0.55)
+        for i, v in enumerate(vals):
+            if v >= 0.08:
+                ax.text(i, bottom[i] + v / 2, f"{v:.0%}", ha="center", va="center",
+                        fontsize=8, color=("white" if label != "error nodes" else "#111111"))
+        bottom += vals
+    ax.set_xticks(x)
+    ax.set_xticklabels([c[0] for c in cases])
+    ax.set_ylim(0, 1.0)
+    ax.set_ylabel("share of absolute direct edge mass into the logit node")
+    ax.set_title("Graph visibility audit: feature dictionary vs embeddings vs named residue")
+    ax.legend(fontsize=8, ncol=3, loc="upper center")
+    ax.grid(True, axis="y", alpha=0.22)
+    bench.save_figure(ctx, fig, "edge_mass_shares.png",
+                      "Absolute direct-edge mass shares for fact and induction prompts.")
+
+
+def plot_interventions(ctx, rows, fact) -> None:
+    """Real-model intervention test with the random matched control visible."""
+    fig, ax = bench.new_figure(figsize=(9.8, 5.4))
+    conds = [r["condition"] for r in rows]
+    vals = [_as_float(r.get("logit_diff")) for r in rows]
+    colors = [_graph_color(_condition_key(c)) for c in conds]
+    bars = ax.bar(range(len(rows)), vals, color=colors, width=0.66)
+    _zero(ax)
+    ax.set_xticks(range(len(rows)))
+    ax.set_xticklabels([_condition_label(c) for c in conds], fontsize=8)
+    ax.set_ylabel(f"logit({fact['target']!r}) - logit({fact['distractor']!r})")
+    ax.set_title("Real-model intervention verdict: graph-guided edits must beat the random matched control")
+    base = next((r for r in rows if r["condition"] == "baseline"), None)
+    if base is not None:
+        base_val = _as_float(base.get("logit_diff"))
+        ax.axhline(base_val, color="#111111", linestyle=":", linewidth=1.1, alpha=0.8, label="baseline")
+    effects = intervention_deltas(rows)
+    for bar, val in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, val, f"{val:+.2f}", ha="center",
+                va=("bottom" if val >= 0 else "top"), fontsize=8)
+    ax.text(0.99, 0.02,
+            f"suppression drop {effects['suppress_drop']:+.2f}\n"
+            f"random drop {effects['random_drop']:+.2f}\n"
+            f"specificity gap {effects['specificity_gap']:+.2f}",
+            transform=ax.transAxes, ha="right", va="bottom", fontsize=8,
+            bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="#dddddd", alpha=0.95))
+    ax.legend(fontsize=8, loc="best")
+    bench.save_figure(ctx, fig, "intervention_effects.png",
+                      "Logit-diff under supernode suppression/substitution vs the random control.")
+
+
+def plot_paraphrase_recurrence(ctx, rec_rows, n_prompts) -> None:
+    fig, ax = bench.new_figure(figsize=(9.6, 5.2))
+    top = rec_rows[:24]
+    labels = [f"L{r['layer']} f{r['feature']}" for r in top]
+    vals = [int(r.get("n_prompts", 0)) for r in top]
+    colors = [_graph_color("feature") if v >= max(2, n_prompts - 1) else _lighten(_graph_color("feature"), 0.45) for v in vals]
+    bars = ax.bar(range(len(top)), vals, color=colors)
+    ax.axhline(n_prompts, color="#111111", linestyle="--", linewidth=0.8, label=f"all {n_prompts} prompts")
+    ax.axhline(max(2, n_prompts - 1), color=_graph_color("robustness"), linestyle=":", linewidth=1.0,
+               label=f"recurrence bar {max(2, n_prompts - 1)}")
+    for bar, val in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width() / 2, val + 0.05, str(val), ha="center", va="bottom", fontsize=7)
+    ax.set_xticks(range(len(top)))
+    ax.set_xticklabels(labels, rotation=58, ha="right", fontsize=7.2)
+    ax.set_ylabel("surface variants where feature is a kept subject-site node")
+    ax.set_title("Paraphrase recurrence: mechanism candidates vs one-template fireworks")
+    ax.legend(fontsize=8)
+    bench.save_figure(ctx, fig, "paraphrase_recurrence.png",
+                      "Subject-site graph features recurring across surface variants.")
+
+
+def plot_graph_evidence_dashboard(ctx, graph, interventions, rec_rows, n_para, ind_graph, stack_report) -> None:
+    """One-screen route from graph receipts to causal and robustness evidence."""
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.0, 8.2))
+    ax = axes[0, 0]
+    _panel(ax, "A")
+    info = graph["influence"]
+    metrics = [
+        ("feature\nshare", info.get("share_features", 0.0), _graph_color("feature")),
+        ("error\nshare", info.get("share_errors", 0.0), _graph_color("error")),
+        ("embedding\nshare", info.get("share_embeddings", 0.0), _graph_color("embedding")),
+        ("kept feature\ncoverage", info.get("kept_coverage_of_feature_mass", 0.0), _graph_color("attr")),
+    ]
+    ax.bar(range(len(metrics)), [m[1] for m in metrics], color=[m[2] for m in metrics])
+    ax.set_xticks(range(len(metrics)))
+    ax.set_xticklabels([m[0] for m in metrics])
+    ax.set_ylim(0, 1)
+    ax.set_ylabel("fraction")
+    ax.set_title("Visibility receipts")
+    for i, (_, val, _) in enumerate(metrics):
+        ax.text(i, val + 0.02, f"{val:.0%}", ha="center", fontsize=8)
+    ax.text(0.02, 0.96, f"mean FVU {stack_report.get('mean_fvu', '')}", transform=ax.transAxes,
+            va="top", fontsize=8, bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#dddddd"))
+
+    ax = axes[0, 1]
+    _panel(ax, "B")
+    conds = [r["condition"] for r in interventions]
+    vals = [_as_float(r.get("logit_diff")) for r in interventions]
+    ax.plot(range(len(vals)), vals, color="#222222", linewidth=1.1, alpha=0.55)
+    ax.scatter(range(len(vals)), vals, s=90, c=[_graph_color(_condition_key(c)) for c in conds], zorder=3)
+    _zero(ax)
+    ax.set_xticks(range(len(vals)))
+    ax.set_xticklabels([_condition_label(c).replace("\n", " ") for c in conds], rotation=25, ha="right", fontsize=7.5)
+    ax.set_ylabel("logit diff")
+    ax.set_title("Real-model intervention test")
+    effects = intervention_deltas(interventions)
+    ax.text(0.98, 0.04, f"specificity gap {effects['specificity_gap']:+.2f}", transform=ax.transAxes,
+            ha="right", va="bottom", fontsize=8, bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#dddddd"))
+
+    ax = axes[1, 0]
+    _panel(ax, "C")
+    cats = ["features", "embeddings", "errors"]
+    fact_vals = [graph["influence"]["signed_contributions"].get(c, 0.0) for c in cats]
+    ind_vals = [ind_graph["influence"]["signed_contributions"].get(c, 0.0) for c in cats]
+    x = np.arange(len(cats))
+    width = 0.34
+    ax.bar(x - width / 2, fact_vals, width, label="capital fact", color=_lighten(_graph_color("feature"), 0.15))
+    ax.bar(x + width / 2, ind_vals, width, label="induction", color=_lighten(_graph_color("error"), 0.15))
+    _zero(ax)
+    ax.set_xticks(x)
+    ax.set_xticklabels([c.replace("_", " ") for c in cats])
+    ax.set_ylabel("signed contribution")
+    ax.set_title("Lab 6 confrontation")
+    ax.legend(fontsize=8)
+
+    ax = axes[1, 1]
+    _panel(ax, "D")
+    vals = [int(r.get("n_prompts", 0)) for r in rec_rows]
+    if vals:
+        bins = range(0, max(vals + [n_para]) + 2)
+        ax.hist(vals, bins=bins, color=_graph_color("robustness"), alpha=0.85, edgecolor="white")
+        ax.axvline(max(2, n_para - 1), color="#111111", linestyle="--", linewidth=1.0, label="recurrence bar")
+    ax.set_xlabel("number of paraphrases where a subject-site feature recurred")
+    ax.set_ylabel("features")
+    ax.set_title("Robustness screen")
+    ax.legend(fontsize=8) if vals else None
+    fig.suptitle("Lab 9 evidence dashboard: graph proposes, real-model interventions dispose", fontsize=14)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "graph_evidence_dashboard.png",
+                      "Single-screen summary of visibility, causality, Lab 6 confrontation, and paraphrase robustness.")
+
+
+def plot_source_token_ledger(ctx, graph) -> None:
+    """Top-source ledger by token position and source kind."""
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    rows = source_token_ledger_rows(graph)
+    if not rows:
+        return
+    tokens = list(graph.get("cap", {}).get("tokens", []))
+    kinds = ["features", "embeddings", "errors"]
+    mat = np.zeros((len(kinds), max(1, len(tokens))))
+    for row in rows:
+        if row["kind"] in kinds and 0 <= int(row["pos"]) < mat.shape[1]:
+            mat[kinds.index(row["kind"]), int(row["pos"])] += float(row["signed_sum_top_sources"])
+    vmax = max(1e-6, float(np.nanmax(np.abs(mat))))
+    fig, ax = plt.subplots(figsize=(max(8.5, 1.25 * len(tokens)), 3.8))
+    im = ax.imshow(mat, aspect="auto", cmap="coolwarm", vmin=-vmax, vmax=vmax)
+    ax.set_yticks(range(len(kinds)))
+    ax.set_yticklabels(kinds)
+    ax.set_xticks(range(len(tokens)))
+    ax.set_xticklabels([bench.visible_token(t) for t in tokens], rotation=35, ha="right")
+    ax.set_title("Top raw direct sources by token: table before graph")
+    ax.set_xlabel("token position")
+    ax.set_ylabel("source kind")
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            if abs(mat[i, j]) >= 0.06 * vmax:
+                ax.text(j, i, f"{mat[i, j]:+.2f}", ha="center", va="center", fontsize=7)
+    fig.colorbar(im, ax=ax, shrink=0.8, label="signed edge sum over top sources")
+    bench.save_figure(ctx, fig, "source_token_ledger.png",
+                      "Largest raw logit-edge sources aggregated by source kind and token position.")
+
+
+def plot_budget_and_reconstruction(ctx, graph, stack_report) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    fig, axes = plt.subplots(1, 2, figsize=(12.0, 4.5))
+    ax = axes[0]
+    _panel(ax, "A")
+    curve = graph["influence"].get("budget_curve", [])
+    if curve:
+        xs = [int(r["budget"]) for r in curve]
+        ys = [float(r["coverage_of_direct_feature_mass"]) for r in curve]
+        ax.plot(xs, ys, marker="o", color=_graph_color("feature"))
+        ax.axhline(graph["influence"].get("kept_coverage_of_feature_mass", 0.0),
+                   color=_graph_color("attr"), linestyle="--", linewidth=1.0, label="actual kept coverage")
+        ax.set_ylim(0, 1.02)
+        ax.set_xlabel("node budget")
+        ax.set_ylabel("coverage of direct feature |edge| mass")
+        ax.set_title("Budget sensitivity")
+        ax.legend(fontsize=8)
+    ax = axes[1]
+    _panel(ax, "B")
+    per = stack_report.get("per_layer", [])
+    if per:
+        layers = [int(r["layer"]) for r in per]
+        fvu = [float(r["fvu"]) for r in per]
+        l0 = [float(r.get("l0", 0.0)) for r in per]
+        ax.plot(layers, fvu, marker="o", color=_graph_color("error"), label="FVU")
+        ax.set_xlabel("layer")
+        ax.set_ylabel("FVU", color=_graph_color("error"))
+        ax.tick_params(axis="y", labelcolor=_graph_color("error"))
+        ax2 = ax.twinx()
+        ax2.bar(layers, l0, color=_lighten(_graph_color("feature"), 0.4), alpha=0.55, label="L0")
+        ax2.set_ylabel("mean L0", color=_graph_color("feature"))
+        ax2.tick_params(axis="y", labelcolor=_graph_color("feature"))
+        ax.set_title("Transcoder fidelity by layer")
+        lines, labels = ax.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax.legend(lines + lines2, labels + labels2, fontsize=8, loc="upper left")
+    fig.suptitle("Budget and dictionary-fidelity audit: readable does not mean complete")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "budget_and_reconstruction.png",
+                      "Node-budget coverage plus transcoder reconstruction quality.")
+
+
+def plot_paraphrase_feature_matrix(ctx, rec_rows, n_para) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    rows = paraphrase_matrix_rows(rec_rows, n_para)[:28]
+    if not rows:
+        return
+    prompt_cols = [c for c in rows[0] if c.startswith("present_")]
+    if not prompt_cols:
+        return
+    mat = np.array([[int(r.get(c, 0)) for c in prompt_cols] for r in rows], dtype=float)
+    fig, ax = plt.subplots(figsize=(max(7.8, 0.72 * len(prompt_cols)), max(4.2, 0.28 * len(rows))))
+    im = ax.imshow(mat, aspect="auto", cmap="Greens", vmin=0, vmax=1)
+    ax.set_xticks(range(len(prompt_cols)))
+    ax.set_xticklabels([c.replace("present_", "") for c in prompt_cols], rotation=35, ha="right")
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([r["feature_key"] for r in rows], fontsize=7)
+    ax.set_xlabel("surface variant")
+    ax.set_ylabel("subject-site feature")
+    ax.set_title("Paraphrase recurrence matrix: recurring features survive surface edits")
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            if mat[i, j] > 0:
+                ax.text(j, i, "•", ha="center", va="center", color="#111111", fontsize=9)
+    fig.colorbar(im, ax=ax, shrink=0.75, ticks=[0, 1], label="present as kept node")
+    bench.save_figure(ctx, fig, "paraphrase_feature_matrix.png",
+                      "Binary feature-by-paraphrase recurrence matrix for subject-site nodes.")
+
+
+def plot_supernode_audit(ctx) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    rows = supernode_layer_summary_rows(ctx)
+    if not rows:
+        return
+    conditions = []
+    for r in rows:
+        if r["condition"] not in conditions:
+            conditions.append(r["condition"])
+    layers = sorted({int(r["layer"]) for r in rows})
+    index = {(r["condition"], int(r["layer"])): r for r in rows}
+    fig, ax = plt.subplots(figsize=(11.0, 4.8))
+    x = np.arange(len(layers))
+    bottom = np.zeros(len(layers))
+    for cond in conditions:
+        vals = np.array([float(index.get((cond, layer), {}).get("n_features", 0)) for layer in layers])
+        ax.bar(x, vals, bottom=bottom, label=cond.replace("_", " "),
+               color=_graph_color(_condition_key(cond)), width=0.74)
+        bottom += vals
+    # overlay graph-selected counts
+    graph_vals = np.array([sum(float(index.get((cond, layer), {}).get("n_graph_selected", 0)) for cond in conditions)
+                           for layer in layers])
+    ax.scatter(x, graph_vals, marker="D", s=40, color="#111111", label="graph-selected count")
+    ax.set_xticks(x)
+    ax.set_xticklabels(layers)
+    ax.set_xlabel("layer")
+    ax.set_ylabel("edited features")
+    ax.set_title("Supernode audit: what got edited, by layer and condition")
+    ax.legend(fontsize=7.5, ncol=2)
+    ax.grid(True, axis="y", alpha=0.22)
+    bench.save_figure(ctx, fig, "supernode_audit.png",
+                      "Layer-level inventory of graph-selected, donor, and random-control feature edits.")
+
 # ---------------------------------------------------------------------------
 # Deliverables
 # ---------------------------------------------------------------------------
@@ -1534,11 +2366,12 @@ def write_summary(ctx, bundle, graph, interventions, rec_rows, n_para, ind_graph
         "",
         "1. `diagnostics/replacement_exactness.json`, `edge_reconstruction_check.json`, `feature_edit_noop_check.json` - the iron gates. No receipts, no graph.",
         "2. `graph_card.md` - the deliverable (hypothesis written before interventions, real-model verdict, error-node share, Lab 6 confrontation, explicit non-claims).",
-        "3. `tables/logit_edge_sources.csv` before `plots/attribution_graph.png` - raw sources (including error mass) before the pruned display graph.",
-        "4. `tables/intervention_results.csv` + `plots/intervention_effects.png` + `tables/supernode_features.csv` - the causal test on the *real* model. Look for specificity gap vs random matched control.",
-        "5. `plots/influence_composition.png` (signed ledger, fact vs induction) and `plots/edge_mass_shares.png` - the confrontation. Features pay for the fact; embeddings + errors dominate for induction. Absolute shares can mislead; signed tells the story.",
-        "6. `tables/paraphrase_robustness.csv` + `plots/paraphrase_recurrence.png` - recurring subject-site features vs template artifacts.",
-        "7. `graphs/pruned_graph.json`, `supernode_map.json`, `transcoder_stack_report.json`, and the rest of `diagnostics/` - the editable hypothesis and where the dictionary was weakest on this prompt.",
+        "3. `plots/graph_evidence_dashboard.png` + `tables/graph_evidence_matrix.csv` - the dashboard and ledger that bind receipts, visibility, causality, and robustness.",
+        "4. `tables/logit_edge_sources.csv` + `plots/source_token_ledger.png` before `plots/attribution_graph.png` - raw sources and token-level bills before the pruned display graph.",
+        "5. `tables/intervention_results.csv` + `plots/intervention_effects.png` + `tables/supernode_features.csv` + `plots/supernode_audit.png` - the causal test on the real model. Look for specificity gap vs random matched control.",
+        "6. `plots/influence_composition.png`, `plots/edge_mass_shares.png`, and `plots/budget_and_reconstruction.png` - the confrontation and completeness audit. Features pay for the fact; embeddings + errors dominate for induction. Absolute shares can mislead; signed tells the story.",
+        "7. `tables/paraphrase_robustness.csv`, `tables/paraphrase_feature_matrix.csv`, `plots/paraphrase_recurrence.png`, and `plots/paraphrase_feature_matrix.png` - recurring subject-site features vs template artifacts.",
+        "8. `graphs/pruned_graph.json`, `supernode_map.json`, `transcoder_stack_report.json`, and the rest of `diagnostics/` - the editable hypothesis and where the dictionary was weakest on this prompt.",
         "",
     ]
     bench.write_text(ctx.path("run_summary.md"), "\n".join(lines))
@@ -1737,15 +2570,24 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
           f"{ind_graph['influence']['signed_contributions']['features']:+.2f}/"
           f"{ind_graph['influence']['metric_logit_diff']:+.2f}")
 
+    # ----- synthesis tables ------------------------------------------------------
+    write_graph_evidence_tables(ctx, graph, interventions, rec_rows, len(para_graphs),
+                                ind_graph, stack_report, gate_dropped)
+
     # ----- plots -----------------------------------------------------------------
     if not args.no_plots:
+        plot_graph_evidence_dashboard(ctx, graph, interventions, rec_rows, len(para_graphs), ind_graph, stack_report)
         plot_graph(ctx, bundle, graph, "attribution_graph.png",
                    f"{PRIMARY_FACT['prompt']!r} → {PRIMARY_FACT['target']!r}")
+        plot_source_token_ledger(ctx, graph)
         plot_influence_composition(ctx, graph["influence"], ind_graph["influence"])
         plot_edge_mass_shares(ctx, graph["influence"], ind_graph["influence"])
+        plot_budget_and_reconstruction(ctx, graph, stack_report)
         plot_interventions(ctx, interventions, PRIMARY_FACT)
+        plot_supernode_audit(ctx)
         if rec_rows:
             plot_paraphrase_recurrence(ctx, rec_rows, len(para_graphs))
+            plot_paraphrase_feature_matrix(ctx, rec_rows, len(para_graphs))
 
     # ----- metrics, card, claims, summary ----------------------------------------
     metrics = {

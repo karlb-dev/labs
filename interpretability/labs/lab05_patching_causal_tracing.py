@@ -40,6 +40,10 @@ Rigor notes that this file tries hard to keep visible (building directly on Labs
 Evidence level: CAUSAL, scoped. Every claim names the intervention, metric,
 and prompt population. The edit results force students to confront whether
 localization informs editing.
+
+Visualization upgrade: the lab now writes a compact evidence dashboard,
+role-depth atlases, paraphrase and specificity matrices, and summary tables
+that make the scoped causal claim auditable without reading every CSV row.
 """
 
 from __future__ import annotations
@@ -728,6 +732,593 @@ def plot_per_fact_recovery(ctx: bench.RunContext, per_fact_rows: list[dict[str, 
 
 
 # ---------------------------------------------------------------------------
+# Visualization upgrade helpers: tables and synthesis plots
+# ---------------------------------------------------------------------------
+
+ROLE_ORDER = ("pre_subject", "subject", "post_subject", "last")
+ROLE_LABELS = {
+    "pre_subject": "pre-subject",
+    "subject": "subject",
+    "post_subject": "post-subject",
+    "last": "last/readout",
+}
+ROLE_COLORS = {
+    "pre_subject": "#666666",
+    "subject": "#D55E00",
+    "post_subject": "#8A9A00",
+    "last": "#0072B2",
+}
+CONTROL_LABELS = {
+    "mismatched_pair": "mismatched pair",
+    "wrong_position": "wrong position",
+    "low_region_split_heldout": "split-heldout low region",
+}
+
+
+def finite_float(value: Any) -> float | None:
+    try:
+        x = float(value)
+    except (TypeError, ValueError):
+        return None
+    return x if math.isfinite(x) else None
+
+
+def quantile(vals: list[float], q: float) -> float:
+    vals = sorted(float(v) for v in vals if math.isfinite(float(v)))
+    if not vals:
+        return 0.0
+    if len(vals) == 1:
+        return vals[0]
+    pos = (len(vals) - 1) * max(0.0, min(1.0, q))
+    lo = int(math.floor(pos))
+    hi = int(math.ceil(pos))
+    if lo == hi:
+        return vals[lo]
+    frac = pos - lo
+    return vals[lo] * (1 - frac) + vals[hi] * frac
+
+
+def median_or_zero(vals: list[float]) -> float:
+    return float(statistics.median(vals)) if vals else 0.0
+
+
+def _control_color(control: str, default: str = "#777777") -> str:
+    fn = getattr(bench, "plot_patch_control_color", None) or getattr(bench, "plot_control_color", None)
+    if callable(fn):
+        try:
+            val = fn(control, default)
+            if val:
+                return str(val)
+        except TypeError:
+            pass
+    return {
+        "matched": "#009E73",
+        "matched_top_patch": "#009E73",
+        "mismatched_pair": "#8C564B",
+        "wrong_position": "#666666",
+        "low_region_split_heldout": "#7E57C2",
+    }.get(control, default)
+
+
+def _component_color(component: str, default: str = "#555555") -> str:
+    fn = getattr(bench, "plot_component_color", None)
+    if callable(fn):
+        try:
+            val = fn(component, default)
+            if val:
+                return str(val)
+        except TypeError:
+            pass
+    return {"attn": "#0072B2", "mlp": "#E69F00"}.get(component, default)
+
+
+def add_localization_guides(ax: Any, decision: LocalizationDecision, *, axis: str = "x") -> None:
+    if decision.localized_stream_depths:
+        lo = min(decision.localized_stream_depths) - 0.5
+        hi = max(decision.localized_stream_depths) + 0.5
+        if axis == "x":
+            ax.axvspan(lo, hi, color=ROLE_COLORS["subject"], alpha=0.08, linewidth=0)
+        else:
+            ax.axhspan(lo, hi, color=ROLE_COLORS["subject"], alpha=0.08, linewidth=0)
+    if axis == "x":
+        ax.axvline(decision.handoff_stream_depth, color="#222222", linewidth=1.0, alpha=0.75)
+    else:
+        ax.axhline(decision.handoff_stream_depth, color="#222222", linewidth=1.0, alpha=0.75)
+
+
+def role_depth_values(grid_rows: list[dict[str, Any]], role: str, n_layers: int) -> dict[int, list[float]]:
+    out = {d: [] for d in range(n_layers + 1)}
+    for row in grid_rows:
+        if row.get("role") != role:
+            continue
+        depth = int(row.get("stream_depth", -1))
+        val = finite_float(row.get("recovery"))
+        if 0 <= depth <= n_layers and val is not None:
+            out[depth].append(val)
+    return out
+
+
+def build_role_transition_rows(agg_rows: list[dict[str, Any]], decision: LocalizationDecision) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for role in ROLE_ORDER:
+        series = [
+            (int(row["stream_depth"]), float(row[f"recovery_{role}"]))
+            for row in agg_rows
+            if row.get(f"recovery_{role}") != ""
+        ]
+        if not series:
+            continue
+        peak_depth, peak_value = max(series, key=lambda item: item[1])
+        rows.append({
+            "role": role,
+            "role_label": ROLE_LABELS.get(role, role),
+            "peak_stream_depth": peak_depth,
+            "peak_recovery": rounded(peak_value),
+            "first_depth_recovery_ge_0.25": next((d for d, v in series if d > 0 and v >= 0.25), ""),
+            "first_depth_recovery_ge_0.50": next((d for d, v in series if d > 0 and v >= 0.50), ""),
+            "first_depth_recovery_ge_0.75": next((d for d, v in series if d > 0 and v >= 0.75), ""),
+            "first_post_peak_drop_below_subject_threshold": next((d for d, v in series if role == "subject" and d > peak_depth and v < decision.subject_drop_threshold), ""),
+            "localized_band": str(decision.localized_stream_depths) if role == "subject" else "",
+        })
+    return rows
+
+
+def build_specificity_summary(per_fact_rows: list[dict[str, Any]], control_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    matched = [float(r["recovery"]) for r in per_fact_rows if finite_float(r.get("recovery")) is not None]
+    matched_mean = safe_fmean(matched)
+    rows = [{
+        "condition": "matched_top_patch",
+        "label": "matched top patch",
+        "n": len(matched),
+        "mean_recovery": rounded(matched_mean),
+        "median_recovery": rounded(median_or_zero(matched)),
+        "iqr_low": rounded(quantile(matched, 0.25)),
+        "iqr_high": rounded(quantile(matched, 0.75)),
+        "gap_vs_matched_mean": 0.0,
+    }]
+    for control in sorted({str(r.get("control")) for r in control_rows}):
+        vals = [float(r["recovery"]) for r in control_rows if r.get("control") == control and finite_float(r.get("recovery")) is not None]
+        rows.append({
+            "condition": control,
+            "label": CONTROL_LABELS.get(control, control),
+            "n": len(vals),
+            "mean_recovery": rounded(safe_fmean(vals)),
+            "median_recovery": rounded(median_or_zero(vals)),
+            "iqr_low": rounded(quantile(vals, 0.25)),
+            "iqr_high": rounded(quantile(vals, 0.75)),
+            "gap_vs_matched_mean": rounded(matched_mean - safe_fmean(vals)),
+        })
+    return rows
+
+
+def build_patch_evidence_matrix(
+    base_pairs: list[Pair],
+    grid_rows: list[dict[str, Any]],
+    per_fact_rows: list[dict[str, Any]],
+    control_rows: list[dict[str, Any]],
+    para_rows: list[dict[str, Any]],
+    decision: LocalizationDecision,
+) -> list[dict[str, Any]]:
+    matched_by_fact = {str(r["fact_id"]): finite_float(r.get("recovery")) for r in per_fact_rows}
+    out: list[dict[str, Any]] = []
+    for pair in base_pairs:
+        fid = pair.fact.fact_id
+        subj_series = sorted(
+            (int(r["stream_depth"]), float(finite_float(r.get("recovery"))))
+            for r in grid_rows
+            if r.get("fact_id") == fid and r.get("role") == "subject"
+            and finite_float(r.get("recovery")) is not None
+        )
+        last_series = sorted(
+            (int(r["stream_depth"]), float(finite_float(r.get("recovery"))))
+            for r in grid_rows
+            if r.get("fact_id") == fid and r.get("role") == "last"
+            and finite_float(r.get("recovery")) is not None
+        )
+        subj_peak = max(subj_series, key=lambda x: x[1]) if subj_series else ("", 0.0)
+        last_peak = max(last_series, key=lambda x: x[1]) if last_series else ("", 0.0)
+        band_vals = [v for d, v in subj_series if d in decision.localized_stream_depths]
+        control_vals = [
+            float(v)
+            for r in control_rows
+            if r.get("fact_id") == fid
+            for v in [finite_float(r.get("recovery"))]
+            if v is not None
+        ]
+        para_vals = [
+            float(v)
+            for r in para_rows
+            if r.get("fact_id") == fid and int(r.get("stream_depth", -1)) == decision.representative_stream_depth
+            for v in [finite_float(r.get("recovery"))]
+            if v is not None
+        ]
+        matched = matched_by_fact.get(fid)
+        strongest_control = max(control_vals) if control_vals else 0.0
+        out.append({
+            "fact_id": fid,
+            "clean_subject": pair.fact.subject,
+            "target": pair.fact.target,
+            "corrupt_subject": pair.corrupt.subject,
+            "distractor": pair.corrupt.target,
+            "clean_diff": rounded(pair.clean_diff),
+            "corrupt_diff": rounded(pair.corrupt_diff),
+            "denominator": rounded(pair.clean_diff - pair.corrupt_diff),
+            "subject_peak_depth": subj_peak[0],
+            "subject_peak_recovery": rounded(subj_peak[1]),
+            "last_peak_depth": last_peak[0],
+            "last_peak_recovery": rounded(last_peak[1]),
+            "subject_to_last_peak_lag": (int(last_peak[0]) - int(subj_peak[0])) if subj_series and last_series else "",
+            "localized_band_mean_recovery": rounded(safe_fmean(band_vals)),
+            "representative_depth": decision.representative_stream_depth,
+            "representative_subject_recovery": rounded(matched if matched is not None else 0.0),
+            "paraphrase_representative_mean_recovery": rounded(safe_fmean(para_vals)),
+            "strongest_control_recovery": rounded(strongest_control),
+            "specificity_gap_vs_strongest_control": rounded((matched or 0.0) - strongest_control),
+        })
+    return out
+
+
+def build_plot_reading_guide() -> list[dict[str, str]]:
+    return [
+        {"artifact": "plots/causal_patching_dashboard.png", "concept": "The whole causal-tracing claim in one panel set.", "read_for": "Role timing, negative controls, component refinement, and fact heterogeneity."},
+        {"artifact": "plots/recovery_role_atlas.png", "concept": "Fact-by-depth heterogeneity for subject and final-token patches.", "read_for": "Whether the handoff is shared or driven by one row."},
+        {"artifact": "plots/recovery_ridge_map.png", "concept": "Mean recovery as a depth-by-role map.", "read_for": "The coarse temporal grammar of recall then readout."},
+        {"artifact": "plots/specificity_gap_by_fact.png", "concept": "Matched patch versus per-fact negative controls.", "read_for": "Whether the claim should be global, narrowed, or rejected."},
+        {"artifact": "plots/paraphrase_transfer_matrix.png", "concept": "Template transfer for subject-position recovery.", "read_for": "Whether localization survives wording changes."},
+        {"artifact": "plots/component_patch_matrix.png", "concept": "Stream localization refined to component-role candidates.", "read_for": "Whether attention or MLP at subject/last carries the strongest recoverable write."},
+        {"artifact": "plots/baseline_gate_audit.png", "concept": "Baseline margin gate before patching.", "read_for": "Whether the model actually has clean-vs-corrupt behavior to recover."},
+        {"artifact": "plots/edit_audit_dashboard.png", "concept": "Optional patch-made-permanent audit.", "read_for": "Whether localization predicts editability, transfer, and spillover."},
+    ]
+
+
+def write_upgrade_tables(
+    ctx: bench.RunContext,
+    base_pairs: list[Pair],
+    grid_rows: list[dict[str, Any]],
+    agg_rows: list[dict[str, Any]],
+    per_fact_rows: list[dict[str, Any]],
+    control_rows: list[dict[str, Any]],
+    para_rows: list[dict[str, Any]],
+    decision: LocalizationDecision,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    role_rows = build_role_transition_rows(agg_rows, decision)
+    role_path = ctx.path("tables", "role_transition_summary.csv")
+    bench.write_csv_with_context(ctx, role_path, role_rows)
+    ctx.register_artifact(role_path, "table", "Depth landmarks for each token role: peak, threshold crossings, and subject handoff.")
+
+    spec_rows = build_specificity_summary(per_fact_rows, control_rows)
+    spec_path = ctx.path("tables", "specificity_summary.csv")
+    bench.write_csv_with_context(ctx, spec_path, spec_rows)
+    ctx.register_artifact(spec_path, "table", "Matched patch and negative-control distributions with gaps versus the matched mean.")
+
+    evidence_rows = build_patch_evidence_matrix(base_pairs, grid_rows, per_fact_rows, control_rows, para_rows, decision)
+    evidence_path = ctx.path("tables", "patch_evidence_matrix.csv")
+    bench.write_csv_with_context(ctx, evidence_path, evidence_rows)
+    ctx.register_artifact(evidence_path, "table", "One-row-per-fact matrix combining baseline margins, localization, paraphrase transfer, and controls.")
+
+    guide_path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, guide_path, build_plot_reading_guide())
+    ctx.register_artifact(guide_path, "table", "Map from each upgraded Lab 5 plot to the concept it is meant to teach.")
+    return role_rows, spec_rows, evidence_rows
+
+
+def plot_baseline_gate_audit(ctx: bench.RunContext, gate_rows: list[dict[str, Any]]) -> None:
+    if not gate_rows:
+        return
+    fig, ax = bench.new_figure(figsize=(7.5, 5.8))
+    templates = sorted({str(r.get("template")) for r in gate_rows})
+    markers = {"base": "o", "para_city": "s", "para_in": "^"}
+    for template in templates:
+        rows = [r for r in gate_rows if r.get("template") == template]
+        xs = [finite_float(r.get("clean_diff")) or 0.0 for r in rows]
+        ys = [-(finite_float(r.get("corrupt_diff")) or 0.0) for r in rows]
+        colors = ["#009E73" if (str(r.get("kept")).lower() == "true" or r.get("kept") is True) else "#999999" for r in rows]
+        ax.scatter(xs, ys, marker=markers.get(template, "o"), c=colors, s=42, alpha=0.84,
+                   edgecolors="#222222", linewidths=0.35, label=template)
+    ax.axvline(CLEAN_MARGIN, color="#222222", linestyle="--", linewidth=0.9, alpha=0.7)
+    ax.axhline(CORRUPT_MARGIN, color="#222222", linestyle="--", linewidth=0.9, alpha=0.7)
+    ax.set_xlabel("clean prompt target-vs-distractor margin")
+    ax.set_ylabel("corrupt prompt distractor-vs-target margin")
+    ax.set_title("Baseline gate audit: trace only facts with a clean/corrupt gap")
+    ax.legend(fontsize=8, title="template")
+    bench.save_figure(ctx, fig, "baseline_gate_audit.png",
+                      "Clean and corrupt margins for every validated pair; upper-right passes the gate.")
+
+
+def plot_recovery_ridge_map(ctx: bench.RunContext, agg_rows: list[dict[str, Any]], decision: LocalizationDecision,
+                            n_layers: int) -> None:
+    import numpy as np
+    mat = np.full((n_layers + 1, len(ROLE_ORDER)), np.nan)
+    for i, role in enumerate(ROLE_ORDER):
+        for row in agg_rows:
+            val = finite_float(row.get(f"recovery_{role}"))
+            if val is not None:
+                mat[int(row["stream_depth"]), i] = val
+    fig, ax = bench.new_figure(figsize=(7.5, 8.0))
+    im = ax.imshow(mat, aspect="auto", origin="lower", cmap="RdBu_r", vmin=-1.0, vmax=1.0)
+    ax.set_xticks(range(len(ROLE_ORDER)))
+    ax.set_xticklabels([ROLE_LABELS[r] for r in ROLE_ORDER], rotation=25, ha="right")
+    ax.set_ylabel("stream depth patched")
+    ax.set_title("Recovery ridge map: where each token role causally helps")
+    add_localization_guides(ax, decision, axis="y")
+    for d in range(0, n_layers + 1, max(1, (n_layers + 1) // 8)):
+        for i in range(len(ROLE_ORDER)):
+            val = mat[d, i]
+            if math.isfinite(float(val)):
+                ax.text(i, d, f"{val:.2f}", ha="center", va="center", fontsize=6.5,
+                        color="white" if abs(val) > 0.65 else "#222222")
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04, label="mean recovery")
+    bench.save_figure(ctx, fig, "recovery_ridge_map.png",
+                      "Compact heatmap of mean patch recovery by stream depth and token role.")
+
+
+def plot_recovery_role_atlas(ctx: bench.RunContext, grid_rows: list[dict[str, Any]], per_fact_rows: list[dict[str, Any]],
+                             decision: LocalizationDecision, n_layers: int) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    facts = [str(r["fact_id"]) for r in sorted(per_fact_rows, key=lambda r: float(r["recovery"]))]
+    if not facts:
+        facts = sorted({str(r.get("fact_id")) for r in grid_rows})
+    fig, axes = plt.subplots(1, 2, figsize=(13.2, max(5.2, 0.30 * len(facts) + 2.2)), sharey=True)
+    last_im = None
+    for ax, role, title in zip(axes, ("subject", "last"), ("subject-position patch", "final-token patch")):
+        mat = np.full((len(facts), n_layers + 1), np.nan)
+        idx = {fid: i for i, fid in enumerate(facts)}
+        for row in grid_rows:
+            if row.get("role") != role:
+                continue
+            fid = str(row.get("fact_id"))
+            if fid in idx:
+                mat[idx[fid], int(row["stream_depth"])] = float(row["recovery"])
+        last_im = ax.imshow(mat, aspect="auto", cmap="RdBu_r", vmin=-1.0, vmax=1.0, origin="lower")
+        ax.set_title(title)
+        ax.set_xlabel("stream depth")
+        add_localization_guides(ax, decision, axis="x")
+        if ax is axes[0]:
+            ax.set_yticks(range(len(facts)))
+            ax.set_yticklabels(facts, fontsize=7)
+            ax.set_ylabel("fact, sorted by representative recovery")
+    fig.suptitle("Recovery role atlas: the mean curve is made of many facts", y=0.99)
+    if last_im is not None:
+        fig.colorbar(last_im, ax=list(axes), fraction=0.02, pad=0.02, label="recovery")
+    bench.save_figure(ctx, fig, "recovery_role_atlas.png",
+                      "Fact-by-depth heatmaps for subject and final-token residual patches.")
+
+
+def plot_specificity_gap_by_fact(ctx: bench.RunContext, per_fact_rows: list[dict[str, Any]], control_rows: list[dict[str, Any]]) -> None:
+    if not per_fact_rows:
+        return
+    fig, ax = bench.new_figure(figsize=(10.5, max(4.6, 0.28 * len(per_fact_rows) + 1.4)))
+    rows = sorted(per_fact_rows, key=lambda r: float(r["recovery"]))
+    facts = [str(r["fact_id"]) for r in rows]
+    y = list(range(len(facts)))
+    matched = [float(r["recovery"]) for r in rows]
+    ax.scatter(matched, y, marker="D", s=46, color="#009E73", label="matched subject patch", zorder=4)
+    controls = sorted({str(r.get("control")) for r in control_rows if r.get("control") != "low_region_split_heldout"})
+    offsets = {c: (i - (len(controls) - 1) / 2) * 0.12 for i, c in enumerate(controls)}
+    for control in controls:
+        vals_by_fact: dict[str, list[float]] = {}
+        for r in control_rows:
+            if r.get("control") == control:
+                vals_by_fact.setdefault(str(r.get("fact_id")), []).append(float(r["recovery"]))
+        xs = [safe_fmean(vals_by_fact.get(fid, [])) for fid in facts]
+        yy = [i + offsets[control] for i in y]
+        ax.scatter(xs, yy, s=30, alpha=0.82, color=_control_color(control), label=CONTROL_LABELS.get(control, control), zorder=3)
+        for i, x in enumerate(xs):
+            ax.plot([x, matched[i]], [yy[i], y[i]], color="#999999", linewidth=0.6, alpha=0.35, zorder=1)
+    ax.axvline(0, color="#222222", linewidth=0.8)
+    ax.set_yticks(y)
+    ax.set_yticklabels(facts, fontsize=7)
+    ax.set_xlabel("recovery at representative stream depth")
+    ax.set_title("Specificity by fact: matched patch should outrun controls")
+    ax.legend(fontsize=8, ncol=2, loc="lower right")
+    bench.save_figure(ctx, fig, "specificity_gap_by_fact.png",
+                      "Per-fact matched recovery versus mismatched-pair and wrong-position controls.")
+
+
+def plot_paraphrase_transfer_matrix(ctx: bench.RunContext, para_rows: list[dict[str, Any]], decision: LocalizationDecision,
+                                    n_layers: int) -> None:
+    if not para_rows:
+        return
+    import numpy as np
+    templates = sorted({str(r.get("template")) for r in para_rows})
+    mat = np.zeros((len(templates), n_layers + 1))
+    for i, template in enumerate(templates):
+        for d in range(n_layers + 1):
+            vals = [float(r["recovery"]) for r in para_rows if r.get("template") == template and int(r["stream_depth"]) == d]
+            mat[i, d] = safe_fmean(vals)
+    fig, ax = bench.new_figure(figsize=(11.0, 2.6 + 0.45 * len(templates)))
+    im = ax.imshow(mat, aspect="auto", cmap="RdBu_r", vmin=-1.0, vmax=1.0)
+    ax.set_yticks(range(len(templates)))
+    ax.set_yticklabels(templates)
+    ax.set_xlabel("stream depth")
+    ax.set_title("Paraphrase transfer: does the subject band survive wording changes?")
+    add_localization_guides(ax, decision, axis="x")
+    for i in range(len(templates)):
+        for d in sorted(set(decision.localized_stream_depths + [decision.representative_stream_depth])):
+            if 0 <= d <= n_layers:
+                val = mat[i, d]
+                ax.text(d, i, f"{val:.2f}", ha="center", va="center", fontsize=7,
+                        color="white" if abs(val) > 0.65 else "#222222")
+    fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label="mean subject recovery")
+    bench.save_figure(ctx, fig, "paraphrase_transfer_matrix.png",
+                      "Subject-position recovery across paraphrase templates and stream depths.")
+
+
+def plot_component_patch_matrix(ctx: bench.RunContext, comp_rows: list[dict[str, Any]], decision: LocalizationDecision) -> None:
+    if not comp_rows:
+        return
+    import numpy as np
+    layers = sorted({int(r["component_layer"]) for r in comp_rows})
+    labels = [("attn", "subject"), ("mlp", "subject"), ("attn", "last"), ("mlp", "last")]
+    mat = np.zeros((len(labels), len(layers)))
+    for i, (component, role) in enumerate(labels):
+        for j, layer in enumerate(layers):
+            vals = [float(r["recovery"]) for r in comp_rows
+                    if int(r["component_layer"]) == layer and r.get("component") == component and r.get("role") == role]
+            mat[i, j] = safe_fmean(vals)
+    lim = max(0.20, float(np.nanmax(np.abs(mat))))
+    fig, ax = bench.new_figure(figsize=(max(6.4, 0.65 * len(layers) + 3.0), 4.2))
+    im = ax.imshow(mat, aspect="auto", cmap="RdBu_r", vmin=-lim, vmax=lim)
+    ax.set_xticks(range(len(layers)))
+    ax.set_xticklabels([str(layer) for layer in layers])
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels([f"{c} @ {ROLE_LABELS.get(r, r)}" for c, r in labels])
+    ax.set_xlabel("component layer patched")
+    ax.set_title("Component patch matrix: which write carries recoverable fact signal?")
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            val = mat[i, j]
+            ax.text(j, i, f"{val:.2f}", ha="center", va="center", fontsize=8,
+                    color="white" if abs(val) > lim * 0.55 else "#222222")
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03, label="mean recovery")
+    bench.save_figure(ctx, fig, "component_patch_matrix.png",
+                      "Component-role recovery heatmap for attention and MLP outputs near the localized stream band.")
+
+
+def plot_causal_patching_dashboard(ctx: bench.RunContext, agg_rows: list[dict[str, Any]], per_fact_rows: list[dict[str, Any]],
+                                   control_rows: list[dict[str, Any]], comp_rows: list[dict[str, Any]],
+                                   decision: LocalizationDecision, n_layers: int, n_facts: int) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    fig, axes = plt.subplots(2, 2, figsize=(14.0, 9.4))
+    ax = axes[0, 0]
+    for role in ROLE_ORDER:
+        rows = [r for r in agg_rows if r.get(f"recovery_{role}") != ""]
+        xs = [int(r["stream_depth"]) for r in rows]
+        ys = [float(r[f"recovery_{role}"]) for r in rows]
+        ax.plot(xs, ys, color=ROLE_COLORS[role], linewidth=2.2 if role in {"subject", "last"} else 1.3,
+                label=ROLE_LABELS[role], alpha=0.95 if role in {"subject", "last"} else 0.65)
+    add_localization_guides(ax, decision, axis="x")
+    ax.axhline(0, color="#222222", linewidth=0.8)
+    ax.axhline(1, color="#222222", linewidth=0.7, alpha=0.35)
+    ax.set_title("A. Recall handoff: subject stream gives way to final readout")
+    ax.set_xlabel("stream depth patched")
+    ax.set_ylabel("mean recovery")
+    ax.legend(fontsize=8, ncol=2)
+
+    ax = axes[0, 1]
+    matched = [float(r["recovery"]) for r in per_fact_rows]
+    control_names = sorted({str(r.get("control")) for r in control_rows})
+    labels = ["matched"] + [CONTROL_LABELS.get(c, c) for c in control_names]
+    means = [safe_fmean(matched)] + [safe_fmean([float(r["recovery"]) for r in control_rows if r.get("control") == c]) for c in control_names]
+    colors = ["#009E73"] + ["#777777"] * len(control_names)
+    bars = ax.bar(range(len(labels)), means, color=colors, alpha=0.88)
+    ax.bar_label(bars, fmt="%.2f", fontsize=8)
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=20, ha="right")
+    ax.axhline(0, color="#222222", linewidth=0.8)
+    ax.set_ylabel("mean recovery")
+    ax.set_title("B. Specificity: real patch versus controls")
+
+    ax = axes[1, 0]
+    if comp_rows:
+        comp_layers = sorted({int(r["component_layer"]) for r in comp_rows})
+        comp_labels = [("attn", "subject"), ("mlp", "subject"), ("attn", "last"), ("mlp", "last")]
+        mat = np.zeros((len(comp_labels), len(comp_layers)))
+        for i, (component, role) in enumerate(comp_labels):
+            for j, layer in enumerate(comp_layers):
+                vals = [float(r["recovery"]) for r in comp_rows
+                        if int(r["component_layer"]) == layer and r.get("component") == component and r.get("role") == role]
+                mat[i, j] = safe_fmean(vals)
+        lim = max(0.20, float(np.nanmax(np.abs(mat))))
+        im = ax.imshow(mat, aspect="auto", cmap="RdBu_r", vmin=-lim, vmax=lim)
+        ax.set_xticks(range(len(comp_layers)))
+        ax.set_xticklabels([str(x) for x in comp_layers])
+        ax.set_yticks(range(len(comp_labels)))
+        ax.set_yticklabels([f"{c}@{r}" for c, r in comp_labels])
+        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
+    ax.set_title("C. Component refinement near the band")
+    ax.set_xlabel("component layer")
+
+    ax = axes[1, 1]
+    rows = sorted(per_fact_rows, key=lambda r: float(r["recovery"]))
+    xs = list(range(len(rows)))
+    ys = [float(r["recovery"]) for r in rows]
+    ax.bar(xs, ys, color="#7E57C2", alpha=0.78)
+    ax.axhline(safe_fmean(ys), color="#222222", linestyle="--", linewidth=1.0, alpha=0.75,
+               label=f"mean {safe_fmean(ys):.2f}")
+    ax.set_xticks(xs)
+    ax.set_xticklabels([str(r["fact_id"]) for r in rows], rotation=40, ha="right", fontsize=7)
+    ax.set_ylabel("representative subject recovery")
+    ax.set_title("D. Heterogeneity: which facts carry the mean?")
+    ax.legend(fontsize=8)
+
+    fig.suptitle(f"Lab 5 causal patching dashboard ({n_facts} gated facts)", fontsize=14, y=0.995)
+    fig.tight_layout(rect=[0, 0, 1, 0.97])
+    bench.save_figure(ctx, fig, "causal_patching_dashboard.png",
+                      "Dashboard combining localization curves, specificity controls, component refinement, and per-fact heterogeneity.")
+
+
+def plot_edit_audit_dashboard(ctx: bench.RunContext, edit_results: list[dict[str, Any]]) -> None:
+    if not edit_results:
+        return
+    import matplotlib.pyplot as plt
+    import numpy as np
+    fig, axes = plt.subplots(2, 2, figsize=(12.6, 8.2))
+    groups = sorted({(str(r.get("layer_kind")), int(r.get("edit_layer", 0))) for r in edit_results})
+    labels = [f"{kind}\nL{layer}" for kind, layer in groups]
+    x = np.arange(len(groups))
+    alphas = sorted({float(r.get("alpha", 0)) for r in edit_results})
+    width = 0.75 / max(1, len(alphas))
+
+    ax = axes[0, 0]
+    for i, alpha in enumerate(alphas):
+        vals = []
+        for kind, layer in groups:
+            sel = [float(r.get("movement_toward_distractor", 0.0)) for r in edit_results
+                   if str(r.get("layer_kind")) == kind and int(r.get("edit_layer", 0)) == layer and float(r.get("alpha", 0)) == alpha]
+            vals.append(safe_fmean(sel))
+        ax.bar(x + (i - (len(alphas) - 1) / 2) * width, vals, width=width, label=f"alpha {alpha:g}")
+    ax.axhline(0, color="#222222", linewidth=0.8)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("target logit-gap movement toward distractor")
+    ax.set_title("A. Movement without assuming flip success")
+    ax.legend(fontsize=8)
+
+    ax = axes[0, 1]
+    success = [max(1.0 if r.get("direct_success") else 0.0 for r in edit_results
+                   if str(r.get("layer_kind")) == kind and int(r.get("edit_layer", 0)) == layer) for kind, layer in groups]
+    ax.bar(x, success, color="#009E73", alpha=0.8)
+    ax.set_ylim(0, 1.05)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("any direct top-1 flip")
+    ax.set_title("B. Direct success is a stricter test")
+
+    ax = axes[1, 0]
+    para = [max(float(r.get("paraphrase_flips", 0)) / max(1.0, float(r.get("n_paraphrases", 1)))
+                for r in edit_results if str(r.get("layer_kind")) == kind and int(r.get("edit_layer", 0)) == layer)
+            for kind, layer in groups]
+    neigh = [min(float(r.get("neighbors_intact", 0)) / max(1.0, float(r.get("n_neighbors", 1)))
+                 for r in edit_results if str(r.get("layer_kind")) == kind and int(r.get("edit_layer", 0)) == layer)
+             for kind, layer in groups]
+    ax.bar(x - 0.18, para, width=0.34, color="#0072B2", alpha=0.82, label="paraphrase flip fraction")
+    ax.bar(x + 0.18, neigh, width=0.34, color="#D55E00", alpha=0.82, label="min neighbors intact")
+    ax.set_ylim(0, 1.05)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_title("C. Transfer versus spillover")
+    ax.legend(fontsize=8)
+
+    ax = axes[1, 1]
+    for kind, layer in groups:
+        rows = [r for r in edit_results if str(r.get("layer_kind")) == kind and int(r.get("edit_layer", 0)) == layer]
+        xs = [float(r.get("alpha", 0.0)) for r in rows]
+        ys = [float(r.get("fluency_logprob_after", 0.0)) - float(r.get("fluency_logprob_before", 0.0)) for r in rows]
+        ax.plot(xs, ys, marker="o", label=f"{kind} L{layer}")
+    ax.axhline(0, color="#222222", linewidth=0.8)
+    ax.set_xlabel("edit alpha")
+    ax.set_ylabel("fluency mean-logprob change")
+    ax.set_title("D. Side-effect audit")
+    ax.legend(fontsize=8)
+    fig.suptitle("Rank-one edit audit: localization is not editability", fontsize=14, y=0.995)
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    bench.save_figure(ctx, fig, "edit_audit_dashboard.png",
+                      "Rank-one edit audit dashboard: movement, flip success, transfer/spillover, and fluency side effects.")
+
+# ---------------------------------------------------------------------------
 # Edit extension
 # ---------------------------------------------------------------------------
 
@@ -990,6 +1581,13 @@ def write_causal_trace_card(
         lines.append("- Component pass not available.")
     lines += [
         "",
+        "## Upgraded plot path",
+        "",
+        "- `plots/causal_patching_dashboard.png` is the one-screen overview: timing, controls, heterogeneity, and component refinement.",
+        "- `plots/recovery_role_atlas.png` and `tables/patch_evidence_matrix.csv` show whether the mean is robust across facts.",
+        "- `plots/specificity_gap_by_fact.png` and `tables/specificity_summary.csv` are the main guardrail against generic perturbation stories.",
+        "- `plots/paraphrase_transfer_matrix.png` checks whether the localized region survives template changes.",
+        "",
         "## Edit audit",
         "",
     ]
@@ -1194,13 +1792,14 @@ def write_summary(
         "",
         "## Reading order",
         "",
-        "1. `causal_trace_card.md` - the deliverable card.",
-        "2. `plots/localization_across_facts.png` - the subject-vs-last handoff story (the recall-then-readout visual).",
-        "3. `plots/patching_heatmap_<fact>.png` - one pair, token-labeled, with localized band marked.",
-        "4. `plots/negative_controls.png` and `tables/negative_control_scores.csv` - specificity checks (the matched vs control gap is the evidence).",
-        "5. `tables/per_fact_top_patch.csv` and `plots/per_fact_top_patch.png` - which facts drove the average.",
-        "6. `tables/component_patching.csv` and `plots/component_patching.png` - attn/MLP refinement of the stream result.",
-        "7. `tables/edit_results.csv` if `--run-edit` - localization meets editing (the audit that shows the gap).",
+        "1. `causal_trace_card.md`, then `tables/patch_evidence_matrix.csv` - the scoped claim plus the one-row-per-fact evidence ledger.",
+        "2. `plots/causal_patching_dashboard.png` - the whole patching story on one screen.",
+        "3. `plots/localization_across_facts.png`, `plots/recovery_ridge_map.png`, and `tables/role_transition_summary.csv` - the subject handoff and last-token readout timing.",
+        "4. `plots/recovery_role_atlas.png`, `tables/per_fact_top_patch.csv`, and `plots/per_fact_top_patch.png` - heterogeneity and which facts drive the mean.",
+        "5. `plots/paraphrase_transfer_matrix.png`, `tables/paraphrase_summary.csv`, and `tables/paraphrase_consistency.csv` - whether localization survives wording changes.",
+        "6. `plots/specificity_gap_by_fact.png`, `plots/negative_controls.png`, `tables/specificity_summary.csv`, and `tables/negative_control_scores.csv` - specificity checks.",
+        "7. `plots/component_patch_matrix.png`, `tables/component_patching.csv`, and `plots/component_patching.png` - attn/MLP refinement of the stream result.",
+        "8. `plots/edit_audit_dashboard.png` and `tables/edit_results.csv` if `--run-edit` - localization meets editing (the audit that shows the gap).",
         "",
     ]
     path = ctx.path("run_summary.md")
@@ -1468,6 +2067,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, component_summary_path, [component_summary] if component_summary else [])
     ctx.register_artifact(component_summary_path, "table", "Component-pass headline means by component and role.")
 
+    # ----- upgraded synthesis tables -----------------------------------------
+    role_transition_rows, specificity_summary_rows, patch_evidence_rows = write_upgrade_tables(
+        ctx, base_pairs, grid_rows, agg_rows, per_fact_rows, control_rows, para_rows, decision
+    )
+
     # ----- edit extension -----------------------------------------------------
     edit_results: list[dict[str, Any]] = []
     if args.run_edit:
@@ -1492,6 +2096,26 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             for row in edit_results
         ])
         ctx.register_artifact(edit_path, "table", "Rank-one edit audit at the mapped localized component layer vs an alternative layer.")
+        edit_summary_path = ctx.path("tables", "edit_audit_summary.csv")
+        edit_summary_rows = []
+        for layer_kind in sorted({str(r.get("layer_kind")) for r in edit_results}):
+            rows = [r for r in edit_results if str(r.get("layer_kind")) == layer_kind]
+            if not rows:
+                continue
+            best_move = max(rows, key=lambda r: float(r.get("movement_toward_distractor", 0.0)))
+            edit_summary_rows.append({
+                "layer_kind": layer_kind,
+                "edit_layer": best_move.get("edit_layer"),
+                "best_alpha_by_movement": best_move.get("alpha"),
+                "best_movement_toward_distractor": best_move.get("movement_toward_distractor"),
+                "any_direct_success": any(bool(r.get("direct_success")) for r in rows),
+                "max_paraphrase_flips": max(int(r.get("paraphrase_flips", 0)) for r in rows),
+                "n_paraphrases": max(int(r.get("n_paraphrases", 0)) for r in rows),
+                "min_neighbors_intact": min(int(r.get("neighbors_intact", 0)) for r in rows),
+                "n_neighbors": max(int(r.get("n_neighbors", 0)) for r in rows),
+            })
+        bench.write_csv_with_context(ctx, edit_summary_path, edit_summary_rows)
+        ctx.register_artifact(edit_summary_path, "table", "Layer-level summary of the rank-one edit audit: movement, success, transfer, and spillover.")
 
     # ----- plots --------------------------------------------------------------
     if not args.no_plots:
@@ -1504,6 +2128,14 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         plot_component_pass(ctx, comp_rows)
         plot_controls(ctx, control_rows, matched_mean)
         plot_per_fact_recovery(ctx, per_fact_rows)
+        plot_baseline_gate_audit(ctx, gate_rows)
+        plot_recovery_ridge_map(ctx, agg_rows, decision, n_layers)
+        plot_recovery_role_atlas(ctx, grid_rows, per_fact_rows, decision, n_layers)
+        plot_specificity_gap_by_fact(ctx, per_fact_rows, control_rows)
+        plot_paraphrase_transfer_matrix(ctx, para_rows, decision, n_layers)
+        plot_component_patch_matrix(ctx, comp_rows, decision)
+        plot_causal_patching_dashboard(ctx, agg_rows, per_fact_rows, control_rows, comp_rows, decision, n_layers, len(base_pairs))
+        plot_edit_audit_dashboard(ctx, edit_results)
 
     # ----- metrics, card, claims, summary ------------------------------------
     metrics = {
@@ -1517,7 +2149,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "matched_top_patch_mean_recovery": rounded(matched_mean),
         "paraphrase_summary": para_summary_rows,
         "controls": control_summary,
+        "specificity_summary": specificity_summary_rows,
+        "role_transition_summary": role_transition_rows,
         "component_summary": component_summary,
+        "patch_evidence_matrix": patch_evidence_rows,
         "edit_enabled": bool(args.run_edit),
         "edit_results": edit_results or None,
     }

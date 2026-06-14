@@ -245,11 +245,162 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # or source statement pairs (sentiment_negation).
         "max_examples_tier_a": "6",
     },
+    "lab12": {
+        "module": "labs.lab12_relation_geometry",
+        "run_name": "lab12_relation_geometry",
+        "description": "Relation geometry and method validation: the intro toolkit re-run on 12 controlled relation families.",
+        # First advanced lab; BASE models on every tier (probes + patching,
+        # no generation). --max-examples is a PER-FAMILY item cap here; the
+        # global tier-a default of 4 would starve swap-pair construction.
+        "max_examples_tier_a": "8",
+    },
+    "lab13": {
+        "module": "labs.lab13_emotion_geometry",
+        "run_name": "lab13_emotion_geometry",
+        "description": "Emotion geometry: read/write affect directions, transfer, confounds, and safe steering.",
+        # Instruct/chat-template lab. --max-examples is interpreted as a
+        # PER-EMOTION cap here; tier A keeps CPU smoke runs small.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "3",
+    },
+    "lab14": {
+        "module": "labs.lab14_certainty_calibration",
+        "run_name": "lab14_certainty_calibration",
+        "description": "Certainty, hedging, and calibration: internal answerability, entropy, and verbal confidence.",
+        # Chat-template lab. --max-examples is a PER-FAMILY cap here.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "4",
+    },
+    "lab15": {
+        "module": "labs.lab15_multiturn_harness",
+        "run_name": "lab15_multiturn_harness",
+        "description": "Multi-turn instrumentation: chat-template spans, cache parity, patch no-op, and null traces.",
+        # Instrumentation lab for chat-template conversations.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+    },
+    "lab16": {
+        "module": "labs.lab16_sycophancy_user_belief",
+        "run_name": "lab16_sycophancy_user_belief",
+        "description": "Sycophancy and user-belief modeling: truth, user-belief, agreement, and politeness directions.",
+        # Chat-template generation lab. --max-examples is a PER-DOMAIN base-fact cap here.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "2",
+    },
+    "lab17": {
+        "module": "labs.lab17_persona_voice_register",
+        "run_name": "lab17_persona_voice_register",
+        "description": "Persona, voice, roleplay, and register: paired directions, steering, and turn traces.",
+        # Chat-template generation and multi-turn trace lab. --max-examples is a PER-TRAIT cap here.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "3",
+    },
+    "lab18": {
+        "module": "labs.lab18_humor_incongruity",
+        "run_name": "lab18_humor_incongruity",
+        "description": "Humor as incongruity: surprisal, joke-vs-control directions, setup routing, and steering audits.",
+        # Chat-template generation lab with attention-to-setup measurements.
+        "needs_eager": "true",
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        # Lab 18 interprets --max-examples as a PER-FAMILY item cap.
+        "max_examples_tier_a": "2",
+    },
+    "lab19": {
+        "module": "labs.lab19_model_diffing_crosscoders",
+        "run_name": "lab19_model_diffing_crosscoders",
+        "description": "Model diffing with crosscoders: shared/base-only/instruct-only feature atlas and controls.",
+        # The main bench-loaded model is model A. Lab 19 loads model B itself
+        # from compare_model_tier_* (or LAB19_COMPARE_MODEL).
+        "model_tier_a": "EleutherAI/pythia-160m",
+        "compare_model_tier_a": "EleutherAI/pythia-160m",
+        "model_tier_b": "allenai/Olmo-3-1025-7B",
+        "compare_model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-1025-7B",
+        "compare_model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "12",
+    },
+    "lab20": {
+        "module": "labs.lab20_model_organisms",
+        "run_name": "lab20_model_organisms",
+        "description": "Building benign model organisms: sealed answer keys, manifests, and baseline spillover audits.",
+        # Construction/generation lab for instruct models. --max-examples is a
+        # PER-EVAL-FAMILY cap for target/control and spillover prompts.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "1",
+    },
+    "lab21": {
+        "module": "labs.lab21_lora_safety_depth",
+        "run_name": "lab21_lora_safety_depth",
+        "description": "Where training lives: LoRA localization, wrapper tests, and safety-depth audits.",
+        # The main model is instruct. safety_depth mode loads the matching base
+        # model from compare_model_tier_*; lora mode inspects adapter files.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "compare_model_tier_a": "HuggingFaceTB/SmolLM2-135M",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "compare_model_tier_b": "allenai/Olmo-3-1025-7B",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "compare_model_tier_c": "allenai/Olmo-3-1025-7B",
+        "max_examples_tier_a": "2",
+    },
+    "lab22": {
+        "module": "labs.lab22_eval_awareness",
+        "run_name": "lab22_eval_awareness",
+        "description": "Eval awareness: eval-vs-natural directions, cross-format controls, and safe steering.",
+        # Chat-template lab. --max-examples is a PER-FORMAT group cap.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Think",
+        "max_examples_tier_a": "1",
+    },
+    "lab23": {
+        "module": "labs.lab23_blind_audit",
+        "run_name": "lab23_blind_audit",
+        "description": "Blind audit: preregister, submit claims, unseal, and score benign hidden-behavior organisms.",
+        # Workflow/scoring lab. It loads a small instruct model for harness
+        # consistency, but the core artifacts are package discovery and scoring.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "1",
+    },
+    "lab24": {
+        "module": "labs.lab24_belief_revision",
+        "run_name": "lab24_belief_revision",
+        "description": "Knowledge conflict and belief revision: context override, pressure traces, and quadrant audit.",
+        # Chat-template lab. --mode selects single_turn | multi_turn | both.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "1",
+    },
+    "lab25": {
+        "module": "labs.lab25_find_the_wire",
+        "run_name": "lab25_find_the_wire",
+        "description": "Find the wire: injected concept states, self-report grounding, and source attribution.",
+        # Chat-template capstone. --mode selects injection | attribution | both.
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3-7B-Instruct",
+        "max_examples_tier_a": "1",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab20", "lab21", "lab22", "lab23", "lab24", "lab25"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
@@ -275,6 +426,12 @@ BLOCKS_PATH_CANDIDATES = (
     "gpt_neox.layers",         # GPT-NeoX / Pythia style
     "model.decoder.layers",    # OPT style
     "transformer.blocks",      # MPT style
+    # Vision-language wrappers (e.g. Gemma 3 4B/12B/27B, Llava) keep a plain
+    # text decoder inside a `language_model` submodule. The labs only use the
+    # text stream, so we descend into it; image inputs are never supplied.
+    "model.language_model.layers",   # Gemma 3 VLM (Gemma3ForConditionalGeneration)
+    "language_model.model.layers",   # Llava-style nesting
+    "language_model.layers",         # flatter VLM nesting
 )
 FINAL_NORM_PATH_CANDIDATES = (
     "model.norm",                    # Llama / Olmo / Gemma / Qwen / Mistral
@@ -282,6 +439,9 @@ FINAL_NORM_PATH_CANDIDATES = (
     "gpt_neox.final_layer_norm",     # GPT-NeoX / Pythia
     "model.decoder.final_layer_norm",  # OPT
     "transformer.norm_f",            # MPT
+    "model.language_model.norm",     # Gemma 3 VLM
+    "language_model.model.norm",     # Llava-style nesting
+    "language_model.norm",           # flatter VLM nesting
 )
 
 
@@ -854,10 +1014,18 @@ def resolve_anatomy(model: Any, model_id: str, revision: str | None) -> tuple[Mo
         raise RuntimeError(f"{model_id!r} has no output embeddings / lm_head.")
 
     config = model.config
-    d_model = int(getattr(config, "hidden_size", getattr(config, "n_embd", 0)))
+    # Vision-language wrappers (Gemma 3/4) keep the decoder hyperparameters
+    # under config.text_config; read through to it for the text stream.
+    text_config = getattr(config, "text_config", None) or config
+    d_model = int(
+        getattr(config, "hidden_size", 0)
+        or getattr(config, "n_embd", 0)
+        or getattr(text_config, "hidden_size", 0)
+        or getattr(text_config, "n_embd", 0)
+    )
     vocab_size = int(lm_head.weight.shape[0])
 
-    tied = bool(getattr(config, "tie_word_embeddings", False))
+    tied = bool(getattr(config, "tie_word_embeddings", getattr(text_config, "tie_word_embeddings", False)))
     if tied:
         notes.append(
             "Input and output embeddings are tied: the unembedding is the "
@@ -868,6 +1036,8 @@ def resolve_anatomy(model: Any, model_id: str, revision: str | None) -> tuple[Mo
     # The lens must reproduce this or the depth-L self-check would fail for a
     # boring reason.
     softcap = getattr(config, "final_logit_softcapping", None)
+    if softcap is None:
+        softcap = getattr(text_config, "final_logit_softcapping", None)
     softcap = float(softcap) if softcap else None
     if softcap:
         notes.append(f"Model applies final logit softcapping (cap={softcap}).")
@@ -1082,7 +1252,7 @@ def run_with_residual_cache(
     padding/attention-mask bugs from the course's foundation.
 
     Pass ``add_special_tokens=False`` for prompts that are already fully
-    rendered (e.g. chat-templated, Lab 7+): on tokenizers that auto-prepend
+    rendered (e.g. chat-templated labs): on tokenizers that auto-prepend
     BOS, the default would otherwise capture a sequence that generation
     (which tokenizes rendered prompts without special tokens) never sees.
     """
@@ -1148,7 +1318,7 @@ def run_with_residual_cache(
 
 
 # ---------------------------------------------------------------------------
-# Chat templates, steering, and generation (Lab 7+: instruct models)
+# Chat templates, steering, and generation (instruct/chat-template labs)
 # ---------------------------------------------------------------------------
 #
 # Labs 1-6 use base models and raw prompts. Labs 7+ use instruct models, and
@@ -1174,14 +1344,14 @@ def apply_chat_template(
 ) -> str:
     """Render a single-turn chat prompt as the string the model will see.
 
-    Raises if the tokenizer has no chat template -- Labs 7+ require an
-    instruct model, and a base model silently rendering raw text is exactly
-    the drift the course warns about.
+    Raises if the tokenizer has no chat template -- chat/generation labs
+    require an instruct model, and a base model silently rendering raw text is
+    exactly the drift the course warns about.
     """
     if not supports_chat_template(bundle):
         raise RuntimeError(
-            f"{bundle.anatomy.model_id!r} has no chat template; Lab 7+ needs an "
-            "instruct model. Use --tier a/b defaults or pass an instruct --model."
+            f"{bundle.anatomy.model_id!r} has no chat template; this lab needs "
+            "an instruct model. Use --tier a/b defaults or pass an instruct --model."
         )
     messages = []
     if system is not None:
@@ -1566,6 +1736,7 @@ def generate_continuous(
     progress_label: str = "",
     steer: tuple[int, Any, float | Sequence[float]] | None = None,
     admit_block: int | None = None,
+    max_prefill_tokens: int = 16384,
 ) -> list[str]:
     """Greedy-decode many prompts with continuous batching; returns continuations.
 
@@ -1587,6 +1758,18 @@ def generate_continuous(
     every retirement the engine waits until ``admit_block`` slots are free
     (or it is out of in-flight rows, or fewer than ``admit_block`` jobs
     remain). Default ``max_concurrent // 4``; pass 1 to admit eagerly.
+
+    ``max_prefill_tokens`` caps a single admit's prefill width
+    (rows x padded prompt length): admitting ``max_concurrent`` rows whose
+    prompts are all long prefills one huge batch, and that peak — not the
+    steady-state cache — is what OOMs (run 5: Lab 10's unparseable-rescue
+    re-fed every job its full prompt-plus-2048-token think trace, so a
+    32-row admit prefilled ~70k tokens and died on the 7B). With a budget,
+    long-prompt batches admit in narrower waves and decode normally; short
+    prompts (the common case) are unaffected because they never approach it.
+    Always admits at least one row, so a single over-budget prompt still
+    runs. The default leaves the throughput benchmarks and short-prompt labs
+    untouched; lower it for very large models.
     """
     import torch
 
@@ -1610,6 +1793,15 @@ def generate_continuous(
         [eos_token_id] if isinstance(eos_token_id, int) else list(eos_token_id or [])
     )}
     admit_block_eff = max(1, max_concurrent // 4) if admit_block is None else max(1, int(admit_block))
+
+    # Per-prompt token lengths, for the prefill-width budget. One extra
+    # tokenization pass (prefill re-tokenizes its chunk anyway) -- cheap
+    # against generation, and it lets the admit loop keep a long-prompt batch
+    # from prefilling all at once. Truncation is irrelevant here; only the
+    # length matters.
+    prompt_lens = [
+        len(tokenizer(p, add_special_tokens=False)["input_ids"]) for p in prompts
+    ]
 
     # Per-job steering scales (None = no steering). The hook multiplies the
     # CURRENT rows' scales by the fp32 vector and casts the product, so each
@@ -1716,7 +1908,20 @@ def generate_continuous(
                 if slack > 0:
                     cache.trim_left(slack)
         if admit_ready():
-            chunk = [pending.pop(0) for _ in range(min(len(pending), max_concurrent - len(job_idx)))]
+            # Fill the chunk greedily up to the free slots, but stop before a
+            # prefill whose width (rows x padded length) would exceed the
+            # budget -- so a batch of long prompts admits in narrower waves
+            # instead of one OOM-sized prefill. Always take at least one
+            # (an over-budget prompt still has to run).
+            free = max_concurrent - len(job_idx)
+            chunk: list[int] = []
+            chunk_max_len = 0
+            while pending and len(chunk) < free:
+                cand_max = max(chunk_max_len, prompt_lens[pending[0]])
+                if chunk and (len(chunk) + 1) * cand_max > max_prefill_tokens:
+                    break
+                chunk.append(pending.pop(0))
+                chunk_max_len = cand_max
             rows_blocked = len(job_idx)
             t_admit = time.perf_counter()
             chunk_cache, chunk_mask, lens, first = prefill(chunk)
@@ -1837,6 +2042,16 @@ def generate_continuous(
             steer_handle.remove()
         if cache is not None:
             cache.release()
+        # release() drops the engine's references, but PyTorch keeps the
+        # freed blocks in its reserved pool — fragmented, they may not satisfy
+        # the NEXT caller's large allocation even with GiB nominally free (run
+        # 5: Lab 10's unparseable-rescue call OOM'd right after a 1.6M-token
+        # engine block that had already finished). Returning the blocks to
+        # CUDA here keeps a sequence of engine calls (the labs' real pattern)
+        # from fragmenting itself into a false OOM. Once per call, not per
+        # step — cost is negligible against a multi-minute generation.
+        if cache is not None and torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     wall = time.perf_counter() - wall_start
     # Inter-token-latency trace stats (the per-step health of the loop): p50,
@@ -2387,11 +2602,15 @@ def resolve_component_anatomy(
     # The gate is a MAX over n_layers per-block reconstructions, so deeper
     # models draw more samples from the same bf16 rounding distribution and
     # the worst block grows even when the decomposition is exactly right
-    # (32B/64-layer first contact: best pair correct at 0.0239 vs the
+    # (32B/64-layer first contact: best pair correct at ~0.024-0.029 vs the
     # 32-layer-calibrated 0.02 — a near-miss, not a wrong hook point; a wrong
-    # pair fails by 10x+). Widen as sqrt(n_layers / 32), calibrated on the
-    # 32-layer course model.
-    effective_tolerance = rel_tolerance * max(1.0, (n_layers / 32.0) ** 0.5)
+    # pair fails by 10x+). Widen as sqrt(n_layers / 32) for depth, and by an
+    # extra low-precision factor for bf16/fp16: the per-block reconstruction
+    # error is dominated by mantissa rounding, which is ~8x coarser in bf16
+    # than fp32. Both stay far below the >0.2 a wrong decomposition produces.
+    low_precision = next(bundle.model.parameters()).dtype in (torch.bfloat16, torch.float16)
+    precision_factor = 1.6 if low_precision else 1.0
+    effective_tolerance = rel_tolerance * max(1.0, (n_layers / 32.0) ** 0.5) * precision_factor
     diag = {
         "probe_prompt": probe_prompt,
         "candidates_tried": {f"attn={a},mlp={m}": err for (a, m), err in results.items()},
@@ -2399,6 +2618,8 @@ def resolve_component_anatomy(
         "max_block_recon_rel_err": best_err,
         "rel_tolerance": rel_tolerance,
         "effective_rel_tolerance": effective_tolerance,
+        "low_precision": low_precision,
+        "precision_factor": precision_factor,
         "explanation": (
             "For each candidate hook-point pair, every block's captured "
             "attn+mlp contribution must reconstruct that block's residual "
@@ -2415,7 +2636,7 @@ def resolve_component_anatomy(
         raise RuntimeError(
             f"No contribution hook-point pair reconstructs the per-block residual "
             f"deltas (best: attn={best_a}, mlp={best_m}, max rel err {best_err:.4f} > "
-            f"tolerance {effective_tolerance:.4f} = {rel_tolerance} x sqrt({n_layers}/32)). "
+            f"tolerance {effective_tolerance:.4f} = {rel_tolerance} x sqrt({n_layers}/32) x {precision_factor} (bf16/fp16 factor)). "
             "This architecture adds components to the residual stream somewhere the "
             "candidates do not cover; see diagnostics/component_anatomy.json."
         )
@@ -2692,9 +2913,12 @@ def head_contribution(bundle: ModelBundle, head_anatomy: HeadAnatomy, layer: int
 
 
 def run_with_attention_cache(
-    bundle: ModelBundle, prompt: str, *, all_positions: bool = False
+    bundle: ModelBundle, prompt: str, *, all_positions: bool = False, add_special_tokens: bool = True
 ) -> AttentionCapture:
     """One forward capturing streams, attention patterns, and head pieces.
+
+    Pass ``add_special_tokens=False`` for already-rendered chat-template
+    prompts when token positions must align with tokenizer offset mappings.
 
     With ``all_positions=True``, ``o_in_last``/``attn_out_last`` hold
     full-sequence tensors ([L, seq, n_heads*d_head] / [L, seq, d_model])
@@ -2704,7 +2928,7 @@ def run_with_attention_cache(
     import torch
 
     tokenizer = bundle.tokenizer
-    encoded = tokenizer(prompt, return_tensors="pt")
+    encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=add_special_tokens)
     input_ids = encoded["input_ids"].to(bundle.input_device)
     attention_mask = encoded.get("attention_mask")
     if attention_mask is not None:
@@ -3398,26 +3622,1171 @@ def render_state_card(
 # Plotting
 # ---------------------------------------------------------------------------
 
+# Colorblind-friendly, high-contrast defaults shared by all labs.  The first
+# four keys are the canonical Lab 1 families; the remaining keys are reused by
+# later labs for controls, interventions, and cross-family dashboards.
 CATEGORY_COLORS = {
-    "fact": "#1f77b4",
-    "relation": "#2ca02c",
-    "grammar": "#ff7f0e",
-    "conflict": "#d62728",
-    "ambiguous": "#7f7f7f",
-    "counterfactual": "#d62728",
-    "control": "#9467bd",
+    "fact": "#0072B2",          # blue
+    "relation": "#009E73",      # green
+    "grammar": "#E69F00",       # orange
+    "conflict": "#D55E00",      # vermillion
+    "cities": "#0072B2",
+    "comparisons": "#E69F00",
+    "negations": "#009E73",
+    "misconceptions": "#D55E00",
+    "synthetic": "#0072B2",
+    "cycle": "#009E73",
+    "natural": "#D55E00",
+    "ambiguous": "#666666",
+    "counterfactual": "#D55E00",
+    "control": "#7E57C2",
+    "true": "#0072B2",
+    "false": "#D55E00",
+    "clean": "#0072B2",
+    "patched": "#009E73",
+    "ablated": "#D55E00",
+}
+
+CATEGORY_MARKERS = {
+    "fact": "o",
+    "relation": "^",
+    "grammar": "s",
+    "conflict": "X",
+    "cities": "o",
+    "comparisons": "s",
+    "negations": "^",
+    "misconceptions": "D",
+    "synthetic": "o",
+    "cycle": "^",
+    "natural": "s",
+    "ambiguous": "s",
+    "counterfactual": "^",
+    "control": "X",
+    "true": "o",
+    "false": "^",
+    "clean": "o",
+    "patched": "D",
+    "ablated": "X",
+}
+
+# Component-level colors used by DLA, attention, circuit, and graph labs. The
+# names are intentionally generic so later labs can reuse them without a Lab 2
+# import. Blue/orange remains the canonical attention/MLP pair.
+COMPONENT_COLORS = {
+    "attn": "#0072B2",
+    "attention": "#0072B2",
+    "head": "#0072B2",
+    "mlp": "#E69F00",
+    "embed": "#555555",
+    "embedding": "#555555",
+    "constant": "#999999",
+    "resid": "#333333",
+    "all": "#222222",
+    "positive": "#0072B2",
+    "negative": "#D55E00",
+}
+
+SELECTION_MARKERS = {
+    "top": "o",
+    "random_control": "s",
+    "low_attribution_control": "^",
+    "control": "s",
+    "ablated": "X",
+    "patched": "D",
+}
+
+# Lab 3 and Lab 6 use motif labels as a plot grammar orthogonal to prompt
+# family and component type.
+MOTIF_COLORS = {
+    "induction": "#E69F00",
+    "previous_token": "#0072B2",
+    "first_token_sink": "#7E57C2",
+    "diffuse": "#999999",
+    "other": "#555555",
+}
+
+MOTIF_MARKERS = {
+    "induction": "*",
+    "previous_token": "o",
+    "first_token_sink": "s",
+    "diffuse": ".",
+    "other": "x",
+}
+
+# Lab 5 patching grammar. These labels are separate from generic controls
+# because a patching role/control is a different object than a probe baseline.
+PATCH_ROLE_COLORS = {
+    "pre_subject": "#666666",
+    "subject": "#D55E00",
+    "post_subject": "#8A9A00",
+    "last": "#0072B2",
+}
+
+PATCH_ROLE_MARKERS = {
+    "pre_subject": "o",
+    "subject": "D",
+    "post_subject": "s",
+    "last": "^",
+}
+
+PATCH_CONTROL_COLORS = {
+    "matched": "#009E73",
+    "matched_top_patch": "#009E73",
+    "mismatched_pair": "#8C564B",
+    "wrong_position": "#666666",
+    "low_region_split_heldout": "#7E57C2",
+}
+
+# Lab 6 circuit-discovery grammar. These labels describe node and edge status
+# in the evidence ladder, not prompt family membership.
+CIRCUIT_STATUS_COLORS = {
+    "screened": "#999999",
+    "positive_causal": "#56B4E9",
+    "negative_causal": "#D55E00",
+    "final_circuit": "#009E73",
+    "pruned": "#7E57C2",
+    "support_mlp": "#CC79A7",
+    "edge_source": "#0072B2",
+    "edge_target": "#E69F00",
+}
+
+CIRCUIT_EDGE_COLORS = {
+    "strong": "#009E73",
+    "weak": "#E69F00",
+    "below_threshold": "#999999",
+    "none": "#666666",
 }
 
 # Additional palette for control conditions (real vs random/shuffled/etc.).
 CONTROL_COLORS = {
     "real": "#d62728",
+    "truth": "#D55E00",
+    "logistic": "#D55E00",
+    "mass_mean": "#7E57C2",
+    "surface": "#666666",
     "random": "#7f7f7f",
     "shuffled": "#ff7f0e",
+    "length": "#56B4E9",
+    "majority": "#999999",
     "control": "#9467bd",
     "mismatched": "#8c564b",
     "filler": "#bcbd22",
     "non_sequitur": "#17becf",
 }
+
+
+
+# Lab 7 steering / refusal / truth-bridge visual grammar.
+# Labs can use these helpers when available, while still keeping local fallbacks
+# so older benches remain runnable.
+STEERING_COLORS = {
+    "real": "#D55E00",
+    "sentiment": "#D55E00",
+    "truth": "#7E57C2",
+    "refusal": "#D55E00",
+    "random": "#777777",
+    "shuffled": "#8A9A00",
+    "benign": "#009E73",
+    "refusal_eliciting": "#CC3311",
+    "monitor": "#0072B2",
+    "safety": "#0072B2",
+}
+
+STEERING_MARKERS = {
+    "real": "o",
+    "sentiment": "o",
+    "truth": "o",
+    "refusal": "o",
+    "random": "s",
+    "shuffled": "^",
+    "benign": "o",
+    "refusal_eliciting": "D",
+    "monitor": "o",
+    "safety": "s",
+}
+
+SAFETY_SCOPE_COLORS = {
+    "ok_forward_only": "#0072B2",
+    "ok_benign_only": "#009E73",
+    "not_implemented": "#999999",
+    "blocked": "#CC79A7",
+}
+
+# Lab 8 SAE / transcoder feature-interpretation visual grammar. These helpers
+# keep feature verdicts and semantic domains consistent with the rest of the
+# course, while Lab 8 still carries local fallbacks for older benches.
+SAE_VERDICT_COLORS = {
+    "survived": "#009E73",
+    "narrowed": "#8A9A00",
+    "token-feature": "#E69F00",
+    "polysemantic": "#7E57C2",
+    "killed": "#D55E00",
+    "silent-on-corpus": "#999999",
+}
+
+SAE_DOMAIN_COLORS = {
+    "chemistry": "#0072B2",
+    "cooking": "#E69F00",
+    "sports": "#009E73",
+    "finance": "#8A9A00",
+    "law": "#7E57C2",
+    "medicine": "#CC79A7",
+    "weather": "#56B4E9",
+    "emotion": "#D55E00",
+    "code": "#666666",
+    "history": "#A6761D",
+    "none": "#999999",
+}
+
+FEATURE_CONDITION_COLORS = {
+    "real": "#D55E00",
+    "feature": "#D55E00",
+    "random": "#777777",
+    "control": "#777777",
+    "reconstruction": "#0072B2",
+    "transcoder": "#7E57C2",
+}
+
+# Lab 9 attribution-graph visual grammar. These labels describe objects in the
+# replacement graph and the real-model validation tests.
+GRAPH_COLORS = {
+    "feature": "#009E73",
+    "embedding": "#555555",
+    "embeddings": "#555555",
+    "error": "#E69F00",
+    "errors": "#E69F00",
+    "logit": "#FFD92F",
+    "bias_path": "#999999",
+    "transcoder_bias": "#7E57C2",
+    "positive": "#0072B2",
+    "negative": "#D55E00",
+    "baseline": "#666666",
+    "suppress": "#D55E00",
+    "substitute": "#7E57C2",
+    "random": "#8A9A00",
+    "counterfactual": "#0072B2",
+    "diagnostic": "#0072B2",
+    "attr": "#009E73",
+    "causal": "#D55E00",
+    "robustness": "#E69F00",
+}
+
+GRAPH_MARKERS = {
+    "feature": "o",
+    "embedding": "s",
+    "embeddings": "s",
+    "error": "^",
+    "errors": "^",
+    "logit": "*",
+    "baseline": "o",
+    "suppress": "X",
+    "substitute": "D",
+    "random": "s",
+    "counterfactual": "^",
+}
+
+
+# Lab 10 chain-of-thought faithfulness visual grammar. These labels describe
+# behavioral text interventions and self-report audits rather than hidden-state
+# instruments. The local lab code carries fallbacks, but the shared palette keeps
+# the final intro labs visually consistent.
+COT_COLORS = {
+    "baseline": "#666666",
+    "sycophancy": "#CC79A7",
+    "authority": "#E69F00",
+    "metadata": "#7E57C2",
+    "non_sequitur": "#56B4E9",
+    "correct_hint": "#009E73",
+    "wrong_hint": "#D55E00",
+    "flip": "#D55E00",
+    "silent": "#111111",
+    "ack": "#0072B2",
+    "acknowledged": "#0072B2",
+    "attribution": "#009E73",
+    "attributed": "#009E73",
+    "self_report": "#7E57C2",
+    "load": "#0072B2",
+    "truncate": "#0072B2",
+    "filler": "#8A9A00",
+    "resume": "#009E73",
+    "clean_resume": "#009E73",
+    "mistake": "#D55E00",
+    "strong_mistake": "#CC3311",
+    "parse": "#009E73",
+    "forced": "#D55E00",
+    "think": "#0072B2",
+    "correct": "#009E73",
+    "incorrect": "#D55E00",
+    "changed": "#E69F00",
+    "not_scored": "#BBBBBB",
+    "control": "#999999",
+}
+
+COT_MARKERS = {
+    "sycophancy": "o",
+    "authority": "s",
+    "metadata": "D",
+    "non_sequitur": "^",
+    "flip": "o",
+    "silent": "X",
+    "ack": "o",
+    "attribution": "D",
+    "truncate": "o",
+    "filler": "s",
+    "resume": "D",
+    "mistake": "X",
+    "strong_mistake": "P",
+}
+
+# Lab 11 capstone audit visual grammar. These helpers keep evidence rungs,
+# domains, and audit statuses visually stable across scorecards and atlases.
+AUDIT_RUNG_COLORS = {
+    "OBS": "#4C78A8",
+    "ATTR": "#F58518",
+    "DECODE": "#54A24B",
+    "CAUSAL": "#E45756",
+    "SELF-REPORT": "#B279A2",
+    "behavioral CAUSAL": "#E45756",
+}
+
+AUDIT_DOMAIN_COLORS = {
+    "factual_qa": "#4C78A8",
+    "cot_faithfulness": "#B279A2",
+    "sentiment_negation": "#54A24B",
+    "plain": "#4C78A8",
+    "negated": "#E45756",
+    "base": "#4C78A8",
+    "para_city": "#72B7B2",
+    "para_in": "#F58518",
+}
+
+AUDIT_STATUS_COLORS = {
+    "ok": "#54A24B",
+    "warning": "#F58518",
+    "fail": "#E45756",
+    "control": "#8C8C8C",
+    "unknown": "#BDBDBD",
+    "target_clean_patch": "#54A24B",
+    "unrelated_clean_control": "#8C8C8C",
+    "plain_clean_patch": "#54A24B",
+    "unrelated_plain_control": "#8C8C8C",
+    "keep": "#54A24B",
+    "revise": "#F58518",
+    "retire": "#E45756",
+}
+
+# Lab 12 relation geometry visual grammar.
+RELATION_GROUP_COLORS = {
+    "country_sem": "#0072B2",
+    "adj_morph": "#E69F00",
+    "month_seq": "#009E73",
+    "none": "#8C8C8C",
+    "other": "#7E57C2",
+}
+
+RELATION_FAMILY_COLORS = {
+    "capital_of": "#0072B2",
+    "language_of": "#56B4E9",
+    "continent_of": "#004C6D",
+    "opposite_of": "#D55E00",
+    "comparative_of": "#E69F00",
+    "month_after": "#009E73",
+    "month_before": "#44AA99",
+    "color_of": "#CC79A7",
+    "material_of": "#7E57C2",
+    "currency_of": "#8C564B",
+    "home_of": "#999933",
+    "plural_of": "#666666",
+}
+
+RELATION_ROLE_COLORS = {
+    "relword": "#7E57C2",
+    "relation": "#7E57C2",
+    "subject": "#D55E00",
+    "final": "#0072B2",
+    "last": "#0072B2",
+}
+
+RELATION_CONTROL_COLORS = {
+    "matched": "#009E73",
+    "subject_matched": "#009E73",
+    "relation_matched": "#0072B2",
+    "wrong_position": "#8C8C8C",
+    "mismatched_vector": "#8C564B",
+    "shuffled": "#222222",
+    "random": "#8C8C8C",
+}
+
+# Lab 13 emotion-geometry visual grammar. The lab carries local fallbacks, but
+# shared helpers keep emotion/source/confound/steering plots stable for later
+# affect, persona, and humor labs.
+EMOTION_COLORS = {
+    "joy": "#E69F00",
+    "sadness": "#0072B2",
+    "anger": "#D55E00",
+    "fear": "#7E57C2",
+    "neutral": "#8C8C8C",
+    "positive": "#009E73",
+    "negative": "#D55E00",
+}
+
+EMOTION_SOURCE_COLORS = {
+    "comprehension": "#0072B2",
+    "generation": "#E69F00",
+    "input": "#0072B2",
+    "write_intent": "#E69F00",
+}
+
+EMOTION_CONFOUND_COLORS = {
+    "surprising-neutral": "#56B4E9",
+    "positive-calm": "#009E73",
+    "high-arousal-neutral": "#CC79A7",
+    "negative-calm": "#D55E00",
+    "arousal_neutral": "#CC79A7",
+    "surprising_neutral": "#56B4E9",
+    "positive_calm": "#009E73",
+    "negative_calm": "#D55E00",
+}
+
+EMOTION_STEERING_CONDITION_COLORS = {
+    "input_direction": "#0072B2",
+    "write_intent_direction": "#E69F00",
+    "random_oriented": "#8C8C8C",
+    "shuffled_input_direction": "#8A9A00",
+    "sentiment_control": "#7E57C2",
+    "baseline": "#333333",
+}
+
+EMOTION_MARKERS = {
+    "joy": "o",
+    "sadness": "s",
+    "anger": "^",
+    "fear": "D",
+    "neutral": ".",
+}
+
+# Lab 14 certainty/calibration visual grammar. The lab has local fallbacks, but
+# these helpers keep downstream self-report, belief-revision, and calibration
+# plots on the same visual language.
+CERTAINTY_COLORS = {
+    "internal": "#0072B2",
+    "internal_projection": "#0072B2",
+    "internal_rank_confidence": "#0072B2",
+    "distribution": "#009E73",
+    "distribution_confidence": "#009E73",
+    "verbal": "#E69F00",
+    "verbal_confidence": "#E69F00",
+    "self_report": "#E69F00",
+    "hedging": "#7E57C2",
+    "hedging_style_projection": "#7E57C2",
+    "answerable": "#009E73",
+    "unanswerable": "#D55E00",
+    "correct": "#009E73",
+    "wrong": "#D55E00",
+    "real": "#D55E00",
+    "random": "#777777",
+    "shuffled": "#8A9A00",
+    "length": "#56B4E9",
+    "letter": "#CC79A7",
+    "confound": "#CC79A7",
+    "control": "#777777",
+}
+
+CERTAINTY_MARKERS = {
+    "internal": "o",
+    "internal_projection": "o",
+    "internal_rank_confidence": "o",
+    "distribution": "s",
+    "distribution_confidence": "s",
+    "verbal": "^",
+    "verbal_confidence": "^",
+    "hedging": "D",
+    "hedging_style_projection": "D",
+    "real": "o",
+    "random": "s",
+    "shuffled": "^",
+}
+
+# Lab 15 multi-turn instrumentation visual grammar. Later social, persona, and
+# belief labs inherit these colors for boundary, cache, patch, and null-trace
+# diagnostics.
+MULTITURN_COLORS = {
+    "template": "#CC79A7",
+    "span": "#009E73",
+    "content": "#009E73",
+    "message": "#0072B2",
+    "system": "#666666",
+    "user": "#0072B2",
+    "assistant": "#E69F00",
+    "assistant_generation": "#E69F00",
+    "cache": "#56B4E9",
+    "patch": "#7E57C2",
+    "topic": "#009E73",
+    "topic_orchid_minus_archive": "#009E73",
+    "orchid_topic": "#009E73",
+    "archive_control": "#0072B2",
+    "archive_length_control": "#0072B2",
+    "length_null": "#E69F00",
+    "length_matched_null": "#E69F00",
+    "random_null": "#777777",
+    "random": "#777777",
+    "control": "#777777",
+    "pass": "#009E73",
+    "ready": "#009E73",
+    "ok": "#009E73",
+    "warn": "#E69F00",
+    "warning": "#E69F00",
+    "caution": "#E69F00",
+    "fail": "#D55E00",
+    "blocked": "#D55E00",
+}
+
+MULTITURN_MARKERS = {
+    "topic": "o",
+    "topic_orchid_minus_archive": "o",
+    "length_null": "s",
+    "length_matched_null": "s",
+    "random_null": "^",
+    "random": "^",
+    "cache": "D",
+    "patch": "P",
+    "content": "o",
+    "message": "s",
+}
+
+# Lab 16 sycophancy/user-belief visual grammar.
+SYCOPHANCY_COLORS = {
+    "neutral": "#7A7A7A",
+    "correct_belief_control": "#009E73",
+    "false_belief": "#E69F00",
+    "mild_pressure": "#CC79A7",
+    "authority_pressure": "#D55E00",
+    "identity_pressure": "#AA4499",
+    "correct": "#009E73",
+    "sycophantic": "#D55E00",
+    "mixed": "#E69F00",
+    "ambiguous": "#777777",
+    "surface_agreement_only": "#56B4E9",
+    "user_belief": "#0072B2",
+    "truth": "#009E73",
+    "agreement": "#D55E00",
+    "politeness": "#CC79A7",
+    "sentiment_style": "#E69F00",
+    "certainty_style": "#7E57C2",
+    "social_pressure": "#AA4499",
+    "agreement_shuffled": "#999999",
+    "shuffled": "#999999",
+    "random": "#777777",
+    "control": "#8C8C8C",
+    "decode": "#0072B2",
+    "causal": "#D55E00",
+    "obs": "#009E73",
+    "manual": "#7E57C2",
+    "validated": "#009E73",
+    "weak": "#E69F00",
+    "failed": "#D55E00",
+}
+
+SYCOPHANCY_MARKERS = {
+    "neutral": "o",
+    "correct_belief_control": "s",
+    "false_belief": "D",
+    "mild_pressure": "^",
+    "authority_pressure": "P",
+    "identity_pressure": "X",
+    "agreement": "o",
+    "politeness": "s",
+    "sentiment_style": "^",
+    "agreement_shuffled": "x",
+    "random": "+",
+    "train": "o",
+    "eval": "x",
+    "correct": "o",
+    "sycophantic": "X",
+    "mixed": "^",
+    "ambiguous": "s",
+}
+
+
+# ---------------------------------------------------------------------------
+# Lab 17 persona / register / voice visual grammar
+# ---------------------------------------------------------------------------
+
+PERSONA_COLORS = {
+    "persona": "#7E57C2",
+    "character_museum_guide": "#7E57C2",
+    "persona_museum_guide": "#7E57C2",
+    "museum_roleplay": "#7E57C2",
+    "default_assistant_control": "#6E6E6E",
+    "technical_register": "#0072B2",
+    "register": "#0072B2",
+    "casual_register_control": "#E69F00",
+    "warm_supportive_voice": "#E69F00",
+    "voice": "#E69F00",
+    "direct_terse_control": "#56B4E9",
+    "honest_disagreement": "#009E73",
+    "agreeable_validation": "#56B4E9",
+    "agreement": "#009E73",
+    "trait_direction": "#D55E00",
+    "opposite_direction": "#0072B2",
+    "shuffled_sign_direction": "#999999",
+    "shuffled_sign": "#999999",
+    "random_direction": "#777777",
+    "random_oriented": "#777777",
+    "random_null": "#777777",
+    "baseline": "#444444",
+    "real": "#0072B2",
+    "decode": "#0072B2",
+    "causal": "#D55E00",
+    "trace": "#009E73",
+    "safety": "#CC79A7",
+    "refusal_monitor": "#D55E00",
+    "sentiment_style_control": "#CC79A7",
+    "positive": "#009E73",
+    "claimable": "#009E73",
+    "warning": "#E69F00",
+    "watch": "#E69F00",
+    "failed": "#D55E00",
+    "not_claimable": "#D55E00",
+    "control": "#777777",
+}
+
+PERSONA_MARKERS = {
+    "persona": "o",
+    "character_museum_guide": "o",
+    "persona_museum_guide": "o",
+    "technical_register": "s",
+    "warm_supportive_voice": "^",
+    "honest_disagreement": "D",
+    "agreeable_validation": "P",
+    "default_assistant_control": "x",
+    "casual_register_control": "v",
+    "trait_direction": "o",
+    "opposite_direction": "v",
+    "shuffled_sign_direction": "s",
+    "random_direction": "x",
+    "real": "o",
+    "shuffled_sign": "s",
+    "random_oriented": "x",
+    "random_null": "x",
+    "refusal_monitor": "P",
+    "sentiment_style_control": "^",
+}
+
+
+def plot_persona_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 17 persona/register/voice plots."""
+    key = str(condition)
+    return PERSONA_COLORS.get(key, SYCOPHANCY_COLORS.get(key, MULTITURN_COLORS.get(key, CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)))))
+
+
+def plot_persona_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 17 persona/register/voice plots."""
+    key = str(condition)
+    return PERSONA_MARKERS.get(key, SYCOPHANCY_MARKERS.get(key, MULTITURN_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))))
+
+
+
+# Lab 18 humor / incongruity visual grammar.
+HUMOR_COLORS = {
+    "joke": "#0072B2",
+    "joke_structure": "#0072B2",
+    "joke_structure_direction": "#0072B2",
+    "opposite_joke_structure_direction": "#D55E00",
+    "literal": "#6E6E6E",
+    "surprise": "#E69F00",
+    "surprise_direction": "#E69F00",
+    "silly": "#CC79A7",
+    "silly_direction": "#CC79A7",
+    "positive": "#009E73",
+    "positive_direction": "#009E73",
+    "shuffled": "#8C8C8C",
+    "shuffled_joke_direction": "#8C8C8C",
+    "random": "#333333",
+    "random_direction": "#333333",
+    "real": "#0072B2",
+    "best_null": "#595959",
+    "control_gap": "#17BECF",
+    "cheap": "#BCBD22",
+    "validated": "#009E73",
+    "warning": "#E69F00",
+    "failed": "#D55E00",
+    "decode": "#0072B2",
+    "causal": "#9467BD",
+    "human_label": "#4D4D4D",
+}
+
+HUMOR_MARKERS = {
+    "joke": "o",
+    "literal": "s",
+    "surprise": "^",
+    "silly": "D",
+    "positive": "P",
+    "real": "o",
+    "shuffled_sign_mean": "s",
+    "random_oriented_mean": "^",
+    "joke_structure_direction": "o",
+    "opposite_joke_structure_direction": "v",
+    "surprise_direction": "^",
+    "silly_direction": "D",
+    "positive_direction": "P",
+    "shuffled_joke_direction": "s",
+    "random_direction": "x",
+}
+
+
+def plot_humor_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 18 humor/incongruity plots."""
+    key = str(condition)
+    return HUMOR_COLORS.get(key, STEERING_COLORS.get(key, PERSONA_COLORS.get(key, CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)))))
+
+
+def plot_humor_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 18 humor/incongruity plots."""
+    key = str(condition)
+    return HUMOR_MARKERS.get(key, STEERING_MARKERS.get(key, PERSONA_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))))
+
+
+# Lab 19 model-diffing / crosscoder visual grammar.
+MODELDIFF_COLORS = {
+    "shared": "#0072B2",
+    "model_a_only": "#D55E00",
+    "model_b_only": "#009E73",
+    "base_only": "#D55E00",
+    "instruct_only": "#009E73",
+    "asymmetric": "#CC79A7",
+    "dead": "#8C8C8C",
+    "template": "#E69F00",
+    "template_residue_candidate": "#E69F00",
+    "family_specific_candidate": "#F0E442",
+    "train_only_unstable": "#D55E00",
+    "candidate_model_b_handle": "#009E73",
+    "candidate_model_a_handle": "#D55E00",
+    "candidate_shared_handle": "#0072B2",
+    "asymmetric_or_unclear": "#CC79A7",
+    "crosscoder_artifact_risk": "#D55E00",
+    "random": "#333333",
+    "raw": "#0072B2",
+    "compare_chat": "#009E73",
+    "pass": "#009E73",
+    "mixed": "#E69F00",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "skipped": "#8C8C8C",
+    "not_configured": "#8C8C8C",
+    "reconstruction": "#0072B2",
+    "taxonomy": "#009E73",
+    "controls": "#E69F00",
+    "causal": "#9467BD",
+    "bridge": "#56B4E9",
+}
+
+MODELDIFF_MARKERS = {
+    "shared": "o",
+    "model_a_only": "<",
+    "model_b_only": ">",
+    "base_only": "<",
+    "instruct_only": ">",
+    "asymmetric": "D",
+    "dead": "x",
+    "raw": "o",
+    "compare_chat": "s",
+    "template_residue_candidate": "^",
+    "family_specific_candidate": "P",
+    "train_only_unstable": "v",
+    "candidate_model_b_handle": ">",
+    "candidate_model_a_handle": "<",
+    "candidate_shared_handle": "o",
+    "asymmetric_or_unclear": "D",
+    "feature_plus": ">",
+    "feature_minus": "<",
+    "feature_plus_low": "o",
+    "random_plus": "x",
+    "random_minus": "+",
+    "baseline": "o",
+}
+
+
+def plot_modeldiff_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 19 model-diffing/crosscoder plots."""
+    key = str(condition)
+    return MODELDIFF_COLORS.get(key, HUMOR_COLORS.get(key, PERSONA_COLORS.get(key, STEERING_COLORS.get(key, CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default))))))
+
+
+def plot_modeldiff_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 19 model-diffing/crosscoder plots."""
+    key = str(condition)
+    return MODELDIFF_MARKERS.get(key, HUMOR_MARKERS.get(key, PERSONA_MARKERS.get(key, STEERING_MARKERS.get(key, CATEGORY_MARKERS.get(key, default)))))
+
+
+# Lab 20 benign model-organism construction visual grammar.
+MODELORG_COLORS = {
+    "construction": "#0072B2",
+    "blind_package": "#56B4E9",
+    "private": "#9467BD",
+    "public": "#009E73",
+    "leak": "#D55E00",
+    "safety": "#009E73",
+    "baseline": "#E69F00",
+    "spillover": "#CC79A7",
+    "adapter": "#8C8C8C",
+    "target": "#0072B2",
+    "control": "#D55E00",
+    "target_prompt": "#0072B2",
+    "control_prompt": "#D55E00",
+    "spillover_issue": "#CC79A7",
+    "adapter_present": "#009E73",
+    "adapter_missing": "#8C8C8C",
+    "pass": "#009E73",
+    "pending": "#8C8C8C",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "unknown": "#8C8C8C",
+}
+
+MODELORG_MARKERS = {
+    "construction": "o",
+    "blind_package": "s",
+    "public": "s",
+    "private": "D",
+    "target": "o",
+    "control": "s",
+    "spillover": "^",
+    "adapter_present": "P",
+    "adapter_missing": "x",
+    "pass": "o",
+    "pending": "D",
+    "warning": "^",
+    "fail": "X",
+}
+
+
+def plot_modelorg_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 20 benign-organism construction plots."""
+    key = str(condition)
+    return MODELORG_COLORS.get(key, MODELDIFF_COLORS.get(key, HUMOR_COLORS.get(key, PERSONA_COLORS.get(key, STEERING_COLORS.get(key, CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)))))))
+
+
+def plot_modelorg_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 20 benign-organism construction plots."""
+    key = str(condition)
+    return MODELORG_MARKERS.get(key, MODELDIFF_MARKERS.get(key, HUMOR_MARKERS.get(key, PERSONA_MARKERS.get(key, STEERING_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))))))
+
+
+def plot_modelorganism_color(condition: str, default: str = "#555555") -> str:
+    """Alias with the longer Lab 20 name for downstream notebooks."""
+    return plot_modelorg_color(condition, default=default)
+
+
+def plot_modelorganism_marker(condition: str, default: str = "o") -> str:
+    """Alias with the longer Lab 20 name for downstream notebooks."""
+    return plot_modelorg_marker(condition, default=default)
+
+
+TRAINING_DEPTH_COLORS = {
+    "lora": "#0072B2",
+    "weight_space": "#0072B2",
+    "base_instruct": "#009E73",
+    "chat_format": "#999999",
+    "boundary_safe": "#D55E00",
+    "forced_prefix": "#CC79A7",
+    "provenance": "#56B4E9",
+    "intervention": "#E69F00",
+    "erosion": "#F0E442",
+    "scaffold": "#BBBBBB",
+    "data": "#009E73",
+    "missing": "#777777",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "pass": "#009E73",
+}
+
+
+def plot_training_depth_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 21 training-depth plots."""
+    return TRAINING_DEPTH_COLORS.get(str(condition), default)
+
+
+def plot_training_depth_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 21 training-depth plots."""
+    return {
+        "lora": "o",
+        "weight_space": "o",
+        "base_instruct": "s",
+        "chat_format": "D",
+        "boundary_safe": "^",
+        "forced_prefix": "P",
+        "provenance": "h",
+        "intervention": "*",
+        "erosion": "X",
+        "scaffold": "x",
+        "data": "o",
+        "missing": "x",
+    }.get(str(condition), default)
+
+
+EVALAWARE_COLORS = {
+    "eval": "#D55E00",
+    "natural": "#0072B2",
+    "format_control": "#8C8C8C",
+    "real": "#D55E00",
+    "random": "#777777",
+    "shuffled": "#CC79A7",
+    "surface": "#E69F00",
+    "decode": "#009E73",
+    "causal": "#CC79A7",
+    "monitor": "#56B4E9",
+    "pass": "#009E73",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "blocked": "#D55E00",
+    "unknown": "#999999",
+}
+
+EVALAWARE_MARKERS = {
+    "eval": "s",
+    "natural": "o",
+    "format_control": "D",
+    "real": "o",
+    "random": "x",
+    "shuffled": "^",
+    "surface": "v",
+    "decode": "P",
+    "causal": "*",
+    "monitor": "h",
+    "pass": "o",
+    "warning": "^",
+    "fail": "X",
+}
+
+
+def plot_evalawareness_color(key: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 22 eval-awareness plots."""
+    return EVALAWARE_COLORS.get(str(key), default)
+
+
+def plot_evalawareness_marker(key: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 22 eval-awareness plots."""
+    return EVALAWARE_MARKERS.get(str(key), default)
+
+
+BLINDAUDIT_COLORS = {
+    "audit": "#0072B2",
+    "behavioral_only": "#56B4E9",
+    "internals_allowed": "#009E73",
+    "hit": "#009E73",
+    "miss": "#999999",
+    "false_positive": "#D55E00",
+    "manual_review": "#CC79A7",
+    "submitted": "#0072B2",
+    "draft": "#BBBBBB",
+    "public": "#0072B2",
+    "private": "#D55E00",
+    "freeze": "#6F4E7C",
+    "commitment": "#009E73",
+    "leak": "#D55E00",
+    "pass": "#009E73",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "awaiting": "#999999",
+    "unknown": "#777777",
+}
+
+BLINDAUDIT_MARKERS = {
+    "audit": "o",
+    "behavioral_only": "o",
+    "internals_allowed": "s",
+    "trigger": "o",
+    "behavior": "s",
+    "marker": "^",
+    "spillover": "D",
+    "internal_signature": "P",
+    "safety": "X",
+    "other": "h",
+    "hit": "o",
+    "miss": "x",
+    "false_positive": "X",
+    "manual_review": "^",
+}
+
+
+def plot_blindaudit_color(key: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 23 blind-audit plots."""
+    return BLINDAUDIT_COLORS.get(str(key), default)
+
+
+def plot_blindaudit_marker(key: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 23 blind-audit plots."""
+    return BLINDAUDIT_MARKERS.get(str(key), default)
+
+
+BELIEF_REVISION_COLORS = {
+    "context": "#D55E00",
+    "parametric": "#009E73",
+    "pressure": "#D55E00",
+    "evidence": "#009E73",
+    "no_context": "#4D4D4D",
+    "weak_fictional": "#9ECAE1",
+    "document_statement": "#4292C6",
+    "repeated_document": "#2171B5",
+    "delayed_document": "#084594",
+    "correct": "#009E73",
+    "false_pressure_answer": "#D55E00",
+    "neutral_reask": "#999999",
+    "pushback_no_evidence": "#E69F00",
+    "false_authority": "#D55E00",
+    "real_evidence": "#009E73",
+    "common_misconception": "#CC79A7",
+    "forced_concise": "#56B4E9",
+    "strong_context_same_item": "#0072B2",
+    "self_pre_pressure_baseline": "#0072B2",
+    "mismatched_context_control": "#999999",
+    "mismatched_baseline_control": "#999999",
+    "answer_and_signal_flip": "#D55E00",
+    "answer_flips_signal_holds": "#E69F00",
+    "signal_flips_answer_holds": "#56B4E9",
+    "neither": "#009E73",
+    "baseline_not_correct_not_interpretable": "#777777",
+    "control_not_quadrant": "#BBBBBB",
+    "OBS": "#4D4D4D",
+    "DECODE": "#0072B2",
+    "SELF-REPORT": "#CC79A7",
+    "CAUSAL": "#009E73",
+    "AUDIT": "#6F4E7C",
+    "pass": "#009E73",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+}
+
+BELIEF_REVISION_MARKERS = {
+    "no_context": "o",
+    "weak_fictional": "s",
+    "document_statement": "^",
+    "repeated_document": "D",
+    "delayed_document": "P",
+    "neutral_reask": "o",
+    "pushback_no_evidence": "s",
+    "false_authority": "^",
+    "real_evidence": "D",
+    "common_misconception": "P",
+    "forced_concise": "X",
+    "answer_and_signal_flip": "o",
+    "answer_flips_signal_holds": "s",
+    "signal_flips_answer_holds": "^",
+    "neither": "D",
+}
+
+
+def plot_belief_revision_color(key: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 24 belief-revision plots."""
+    return BELIEF_REVISION_COLORS.get(str(key), default)
+
+
+def plot_belief_revision_marker(key: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 24 belief-revision plots."""
+    return BELIEF_REVISION_MARKERS.get(str(key), default)
+
+
+def plot_beliefrevision_color(key: str, default: str = "#555555") -> str:
+    """Alias without the underscore used by some Lab 24 drafts."""
+    return plot_belief_revision_color(key, default)
+
+
+def plot_beliefrevision_marker(key: str, default: str = "o") -> str:
+    """Alias without the underscore used by some Lab 24 drafts."""
+    return plot_belief_revision_marker(key, default)
+
+
+def plot_belief_color(key: str, default: str = "#555555") -> str:
+    """Short alias used by Lab 24 local plotting fallbacks."""
+    return plot_belief_revision_color(key, default)
+
+
+def plot_belief_marker(key: str, default: str = "o") -> str:
+    """Short alias used by Lab 24 local plotting fallbacks."""
+    return plot_belief_revision_marker(key, default)
+
+
+FINDWIRE_COLORS = {
+    "target_direction": "#0072B2",
+    "opposite_direction": "#D55E00",
+    "wrong_concept_direction": "#CC79A7",
+    "random_direction": "#999999",
+    "shuffled_direction": "#E69F00",
+    "zero_dose": "#BBBBBB",
+    "default_mode": "#4D4D4D",
+    "system_prompt": "#56B4E9",
+    "user_instruction": "#009E73",
+    "activation_injection": "#0072B2",
+    "false_activation_claim": "#D55E00",
+    "state_report_before_visible_output": "#009E73",
+    "output_rationalization_or_downstream_priming_risk": "#D55E00",
+    "behavior_expressed_without_report": "#E69F00",
+    "no_self_report_detection": "#999999",
+    "wire_candidate": "#009E73",
+    "report_moves_but_grounding_weak": "#E69F00",
+    "weak_specificity": "#56B4E9",
+    "not_supported": "#999999",
+    "false_positive": "#D55E00",
+    "grounding": "#009E73",
+    "source": "#0072B2",
+    "confidence": "#CC79A7",
+    "decode": "#4D4D4D",
+    "causal": "#009E73",
+    "self_report": "#CC79A7",
+    "audit": "#6F4E7C",
+    "pass": "#009E73",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "not_run": "#BBBBBB",
+}
+
+FINDWIRE_MARKERS = {
+    "target_direction": "o",
+    "opposite_direction": "v",
+    "wrong_concept_direction": "D",
+    "random_direction": "x",
+    "shuffled_direction": "^",
+    "default_mode": "o",
+    "system_prompt": "s",
+    "user_instruction": "^",
+    "activation_injection": "P",
+    "false_activation_claim": "X",
+    "wire_candidate": "o",
+    "report_moves_but_grounding_weak": "^",
+    "weak_specificity": "s",
+    "not_supported": "x",
+}
+
+
+def plot_findwire_color(key: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 25 Find-the-Wire plots."""
+    return FINDWIRE_COLORS.get(str(key), default)
+
+
+def plot_findwire_marker(key: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 25 Find-the-Wire plots."""
+    return FINDWIRE_MARKERS.get(str(key), default)
+
+
+def plot_wire_color(key: str, default: str = "#555555") -> str:
+    """Backward-compatible alias for Lab 25 draft plotting helpers."""
+    return plot_findwire_color(key, default)
+
+
+def plot_wire_marker(key: str, default: str = "o") -> str:
+    """Backward-compatible alias for Lab 25 draft plotting helpers."""
+    return plot_findwire_marker(key, default)
+
+
+def plot_findthewire_color(key: str, default: str = "#555555") -> str:
+    """Backward-compatible alias for Lab 25 draft plotting helpers."""
+    return plot_findwire_color(key, default)
+
+
+def plot_findthewire_marker(key: str, default: str = "o") -> str:
+    """Backward-compatible alias for Lab 25 draft plotting helpers."""
+    return plot_findwire_marker(key, default)
 
 
 def configure_matplotlib() -> None:
@@ -3426,22 +4795,29 @@ def configure_matplotlib() -> None:
     import matplotlib.pyplot as plt
 
     mpl.rcParams.update({
-        "figure.dpi": 140,
-        "savefig.dpi": 160,
-        "font.size": 9,
-        "axes.titlesize": 11,
-        "axes.labelsize": 9,
+        "figure.dpi": 150,
+        "savefig.dpi": 180,
+        "font.size": 9.5,
+        "axes.titlesize": 12,
+        "axes.titlepad": 10,
+        "axes.labelsize": 9.5,
         "legend.fontsize": 8,
         "xtick.labelsize": 8,
         "ytick.labelsize": 8,
         "axes.grid": True,
-        "grid.alpha": 0.25,
+        "grid.alpha": 0.22,
+        "grid.linewidth": 0.7,
         "axes.spines.top": False,
         "axes.spines.right": False,
-        "lines.linewidth": 1.6,
-        "patch.linewidth": 1.0,
+        "axes.linewidth": 0.8,
+        "lines.linewidth": 1.8,
+        "lines.solid_capstyle": "round",
+        "patch.linewidth": 0.9,
+        "legend.frameon": False,
+        "legend.borderaxespad": 0.8,
         "figure.facecolor": "white",
         "axes.facecolor": "white",
+        "savefig.facecolor": "white",
     })
 
 
@@ -3474,15 +4850,343 @@ def style_ax(ax: Any, title: str | None = None, xlabel: str | None = None, ylabe
         ax.spines[spine].set_visible(False)
 
 
+def plot_category_color(category: str, default: str = "#333333") -> str:
+    """Shared category color lookup for lab modules."""
+    return CATEGORY_COLORS.get(str(category), default)
+
+
+def plot_category_marker(category: str, default: str = "o") -> str:
+    """Shared marker lookup for lab modules."""
+    return CATEGORY_MARKERS.get(str(category), default)
+
+
+def plot_component_color(component: str, default: str = "#555555") -> str:
+    """Shared component/writer color lookup for lab modules."""
+    return COMPONENT_COLORS.get(str(component), default)
+
+
+def plot_selection_marker(selection: str, default: str = "o") -> str:
+    """Shared marker lookup for ablation/patching/control selections."""
+    return SELECTION_MARKERS.get(str(selection), default)
+
+
+def plot_control_color(control: str, default: str = "#555555") -> str:
+    """Shared color lookup for probe controls and baselines."""
+    return CONTROL_COLORS.get(str(control), default)
+
+
+def plot_patch_role_color(role: str, default: str = "#555555") -> str:
+    """Shared color lookup for activation-patching token roles."""
+    return PATCH_ROLE_COLORS.get(str(role), default)
+
+
+def plot_patch_role_marker(role: str, default: str = "o") -> str:
+    """Shared marker lookup for activation-patching token roles."""
+    return PATCH_ROLE_MARKERS.get(str(role), default)
+
+
+def plot_patch_control_color(control: str, default: str = "#555555") -> str:
+    """Shared color lookup for activation-patching controls."""
+    return PATCH_CONTROL_COLORS.get(str(control), CONTROL_COLORS.get(str(control), default))
+
+
+def plot_circuit_status_color(status: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 6 circuit node statuses."""
+    return CIRCUIT_STATUS_COLORS.get(str(status), default)
+
+
+def plot_circuit_edge_color(strength: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 6 edge-interaction strengths."""
+    return CIRCUIT_EDGE_COLORS.get(str(strength), default)
+
+
+def plot_steering_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for steering directions, refusal categories, and truth-bridge conditions."""
+    return STEERING_COLORS.get(str(condition), default)
+
+
+def plot_steering_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for steering directions and refusal/truth categories."""
+    return STEERING_MARKERS.get(str(condition), default)
+
+
+def plot_safety_scope_color(status: str, default: str = "#555555") -> str:
+    """Shared color lookup for safety-wall scope rows."""
+    return SAFETY_SCOPE_COLORS.get(str(status), default)
+
+
+def plot_motif_color(label: str, default: str = "#555555") -> str:
+    """Shared color lookup for attention/circuit motif labels."""
+    return MOTIF_COLORS.get(str(label), default)
+
+
+def plot_motif_marker(label: str, default: str = "o") -> str:
+    """Shared marker lookup for attention/circuit motif labels."""
+    return MOTIF_MARKERS.get(str(label), default)
+
+
+def plot_sae_verdict_color(verdict: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 8 feature-label validation verdicts."""
+    return SAE_VERDICT_COLORS.get(str(verdict), default)
+
+
+def plot_feature_verdict_color(verdict: str, default: str = "#555555") -> str:
+    """Alias for Lab 8 feature-label validation verdict colors."""
+    return plot_sae_verdict_color(verdict, default)
+
+
+def plot_sae_domain_color(domain: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 8 semantic-domain feature labels."""
+    return SAE_DOMAIN_COLORS.get(str(domain), default)
+
+
+def plot_feature_condition_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for feature-clamp real/control conditions and dictionary objects."""
+    return FEATURE_CONDITION_COLORS.get(str(condition), default)
+
+
+def plot_graph_color(item: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 9 attribution-graph nodes, edge signs, and interventions."""
+    return GRAPH_COLORS.get(str(item), default)
+
+
+def plot_graph_marker(item: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 9 graph nodes and intervention conditions."""
+    return GRAPH_MARKERS.get(str(item), default)
+
+
+def plot_graph_node_color(item: str, default: str = "#555555") -> str:
+    """Alias for Lab 9 graph-node color lookup."""
+    return plot_graph_color(item, default)
+
+
+def plot_edge_source_color(item: str, default: str = "#555555") -> str:
+    """Alias for Lab 9 source-kind color lookup."""
+    return plot_graph_color(item, default)
+
+
+def plot_graph_intervention_color(condition: str, default: str = "#555555") -> str:
+    """Alias for Lab 9 real-model intervention color lookup."""
+    key = str(condition)
+    mapped = {
+        "suppress_subject_supernode": "suppress",
+        "substitute_counterfactual": "substitute",
+        "random_suppression_control": "random",
+        "counterfactual_prompt_reference": "counterfactual",
+    }.get(key, key)
+    return plot_graph_color(mapped, default)
+
+
+
+def plot_cot_color(item: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 10 CoT faithfulness conditions, controls, and verdict states."""
+    return COT_COLORS.get(str(item), default)
+
+
+def plot_cot_marker(item: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 10 CoT faithfulness conditions and controls."""
+    return COT_MARKERS.get(str(item), default)
+
+
+def plot_audit_rung_color(rung: str, default: str = "#4C78A8") -> str:
+    """Shared color lookup for Lab 11 evidence rungs."""
+    return AUDIT_RUNG_COLORS.get(str(rung), default)
+
+
+def plot_audit_domain_color(domain: str, default: str = "#4C78A8") -> str:
+    """Shared color lookup for Lab 11 audit domains and prompt families."""
+    key = str(domain)
+    return AUDIT_DOMAIN_COLORS.get(key, CATEGORY_COLORS.get(key, default))
+
+
+def plot_audit_status_color(status: str, default: str = "#8C8C8C") -> str:
+    """Shared color lookup for Lab 11 audit/control statuses."""
+    key = str(status)
+    return AUDIT_STATUS_COLORS.get(key, CONTROL_COLORS.get(key, default))
+
+
+def plot_relation_group_color(group: str, default: str = "#7E57C2") -> str:
+    """Shared color lookup for Lab 12 relation swap groups."""
+    key = str(group)
+    return RELATION_GROUP_COLORS.get(key, CATEGORY_COLORS.get(key, default))
+
+
+def plot_relation_family_color(family: str, default: str = "#7E57C2") -> str:
+    """Shared color lookup for Lab 12 relation families."""
+    key = str(family)
+    return RELATION_FAMILY_COLORS.get(key, plot_relation_group_color(key, default))
+
+
+def plot_relation_role_color(role: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 12 token roles."""
+    key = str(role)
+    return RELATION_ROLE_COLORS.get(key, CATEGORY_COLORS.get(key, default))
+
+
+def plot_relation_control_color(control: str, default: str = "#8C8C8C") -> str:
+    """Shared color lookup for Lab 12 patch/probe controls."""
+    key = str(control)
+    return RELATION_CONTROL_COLORS.get(key, CONTROL_COLORS.get(key, default))
+
+
+def plot_emotion_color(emotion: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 13 emotion labels."""
+    key = str(emotion)
+    return EMOTION_COLORS.get(key, CATEGORY_COLORS.get(key, default))
+
+
+def plot_emotion_marker(emotion: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 13 emotion labels."""
+    key = str(emotion)
+    return EMOTION_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))
+
+
+def plot_emotion_source_color(source: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 13 source domains."""
+    key = str(source)
+    return EMOTION_SOURCE_COLORS.get(key, CATEGORY_COLORS.get(key, default))
+
+
+def plot_emotion_confound_color(confound: str, default: str = "#8C8C8C") -> str:
+    """Shared color lookup for Lab 13 confound rows."""
+    key = str(confound)
+    return EMOTION_CONFOUND_COLORS.get(key, CONTROL_COLORS.get(key, default))
+
+
+def plot_emotion_condition_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 13 steering/control conditions."""
+    key = str(condition)
+    return EMOTION_STEERING_CONDITION_COLORS.get(key, CONTROL_COLORS.get(key, default))
+
+
+def plot_certainty_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 14 certainty/calibration gauges and controls."""
+    key = str(condition)
+    return CERTAINTY_COLORS.get(
+        key,
+        CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)),
+    )
+
+
+def plot_certainty_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 14 certainty/calibration gauges and controls."""
+    key = str(condition)
+    return CERTAINTY_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))
+
+
+def plot_multiturn_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 15 and later multi-turn instrumentation plots."""
+    key = str(condition)
+    if key.startswith("random_null"):
+        key = "random_null"
+    return MULTITURN_COLORS.get(
+        key,
+        CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)),
+    )
+
+
+def plot_multiturn_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 15 and later multi-turn instrumentation plots."""
+    key = str(condition)
+    if key.startswith("random_null"):
+        key = "random_null"
+    return MULTITURN_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))
+
+
+def plot_sycophancy_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 16 social-state and sycophancy plots."""
+    key = str(condition)
+    return SYCOPHANCY_COLORS.get(
+        key,
+        CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)),
+    )
+
+
+def plot_sycophancy_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 16 social-state and sycophancy plots."""
+    key = str(condition)
+    return SYCOPHANCY_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))
+
+
+def lighten_color(color: str, amount: float = 0.55) -> str:
+    """Return a lighter version of a Matplotlib color."""
+    import matplotlib.colors as mcolors
+
+    amount = max(0.0, min(1.0, float(amount)))
+    r, g, b = mcolors.to_rgb(color)
+    r = r + (1.0 - r) * amount
+    g = g + (1.0 - g) * amount
+    b = b + (1.0 - b) * amount
+    return mcolors.to_hex((r, g, b))
+
+
+def add_zero_lines(ax: Any, *, x: bool = True, y: bool = True, color: str = "#222222") -> None:
+    """Add light zero-reference lines to a signed plot."""
+    if x:
+        ax.axvline(0, color=color, linewidth=0.8, alpha=0.85)
+    if y:
+        ax.axhline(0, color=color, linewidth=0.8, alpha=0.85)
+
+
+def format_signed(value: float, digits: int = 2) -> str:
+    """Compact signed number formatting for plot annotations."""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    return f"{v:+.{digits}f}"
+
+
+def add_panel_label(ax: Any, label: str, *, x: float = -0.10, y: float = 1.04) -> None:
+    """Add a small bold panel label such as A, B, C."""
+    ax.text(x, y, label, transform=ax.transAxes, fontsize=11, fontweight="bold",
+            va="bottom", ha="right", color="#222222")
+
+
+def label_line_end(ax: Any, xs: Sequence[float], ys: Sequence[float], label: str, *,
+                   color: str | None = None, dx: float = 3.0) -> None:
+    """Directly label the last finite point of a line.
+
+    Legends are fine for a few curves; direct labels are clearer on dense lab
+    dashboards and survive screenshots better. This helper is intentionally
+    tiny and optional so old plots keep working.
+    """
+    for x, y in zip(reversed(list(xs)), reversed(list(ys))):
+        try:
+            xf, yf = float(x), float(y)
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(xf) and math.isfinite(yf):
+            ax.annotate(label, (xf, yf), textcoords="offset points", xytext=(dx, 0),
+                        va="center", fontsize=7.5, color=color or "#333333")
+            return
+
+
+def add_depth_phase_guides(ax: Any, n_layers: int, *, label_final: bool = True) -> None:
+    """Light vertical guides at one-third, two-thirds, and final depth."""
+    if n_layers <= 0:
+        return
+    for frac in (1 / 3, 2 / 3):
+        ax.axvline(n_layers * frac, color="#888888", linestyle=":", linewidth=0.7, alpha=0.25)
+    ax.axvline(n_layers, color="#444444", linestyle=":", linewidth=1.0, alpha=0.55)
+    if label_final:
+        ax.text(n_layers, 0.98, "final", transform=ax.get_xaxis_transform(), rotation=90,
+                va="top", ha="right", fontsize=7, color="#444444", alpha=0.75)
+
+
 def save_figure(ctx: RunContext, fig: Any, name: str, description: str) -> None:
     """Save a plot under plots/ and register it in the artifact index."""
     import matplotlib.pyplot as plt
 
     path = ctx.path("plots", name)
     fig.text(0.995, 0.005, ctx.plot_footer(), ha="right", va="bottom", fontsize=6.5, color="#555555")
-    fig.savefig(path, dpi=150, bbox_inches="tight")
-    plt.close(fig)
+    fig.savefig(path, dpi=180, bbox_inches="tight", facecolor="white")
     ctx.register_artifact(path, "plot", description)
+    if os.environ.get("INTERP_SAVE_SVG", "").lower() in {"1", "true", "yes"}:
+        svg_path = path.with_suffix(".svg")
+        fig.savefig(svg_path, bbox_inches="tight", facecolor="white")
+        ctx.register_artifact(svg_path, "plot", description + " (SVG copy for slides/papers).")
+    plt.close(fig)
     print(f"[bench] wrote plots/{name}")
 
 
@@ -3604,9 +5308,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--quantization", default="none", choices=("none", "8bit", "4bit"),
                         help="Optional bitsandbytes quantization for small GPUs.")
     parser.add_argument("--tier", default="auto", choices=("auto", "a", "b", "c"),
-                        help="Hardware tier: a = CPU smoke (gpt2), b = 24GB+/Colab GPU, c = 40-80GB.")
-    parser.add_argument("--prompt-set", default="small",
-                        help="small | medium | full | path to a custom prompts .json file.")
+                        help="Hardware tier: a = CPU smoke, b = 24GB+/Colab GPU, c = 40-80GB.")
+    parser.add_argument("--prompt-set", default=None,
+                        help="small | medium | full | path to a custom prompts .json file. "
+                             "Default: 'small' on tier a (CPU smoke), 'full' on tiers b/c "
+                             "(a tiny set produces degenerate selections that read as findings).")
     parser.add_argument("--max-examples", type=int, default=-1,
                         help="Cap examples; -1 = tier default, 0 = no cap.")
     parser.add_argument("--topk", type=int, default=5, help="Top-k tokens recorded per depth.")
@@ -3625,6 +5331,23 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--audit-domain", default="factual_qa",
                         choices=("factual_qa", "cot_faithfulness", "sentiment_negation"),
                         help="Lab 11: which curated audit domain to run.")
+    parser.add_argument("--relations", default="",
+                        help="Lab 12: comma-separated relation-family filter, e.g. "
+                             "capital_of,language_of (default: all families).")
+    parser.add_argument("--relation-set", default="", choices=("", "small", "medium", "full"),
+                        help="Lab 12: item-count preset; overrides --prompt-set for this lab.")
+    parser.add_argument("--patch-grid", default="subject,relation,last",
+                        help="Lab 12: comma-separated token roles to patch (subject,relation,last).")
+    parser.add_argument("--emotions", default="",
+                        help="Lab 13: comma-separated emotion filter, e.g. joy,anger (default: all target emotions).")
+    parser.add_argument("--mode", default="lora",
+                        help="Lab mode selector where supported, e.g. Lab 21: lora | safety_depth | both; Lab 24: single_turn | multi_turn | both; Lab 25: injection | attribution | confidence | both.")
+    parser.add_argument("--organism", default="",
+                        help="Lab 21/23: path to a Lab 20 run directory, public blind package, or organism directory.")
+    parser.add_argument("--blind", action="store_true",
+                        help="Lab 23: ignore unsealed manifests even if present; use while writing the pre-unseal report.")
+    parser.add_argument("--unsealed-manifest", default="",
+                        help="Lab 23: explicit path to a Lab 20 manifest_unsealed.json or directory containing answer keys.")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)
@@ -3663,9 +5386,9 @@ def apply_tier_defaults(args: argparse.Namespace) -> None:
         print(f"[bench] tier auto-resolved to '{args.tier}'")
     spec = TIER_DEFAULTS[args.tier]
     if args.model is None:
-        # Labs 7+ use instruct models; a lab may override the tier's default
-        # model (one place, on purpose) so the registry stays the source of
-        # truth instead of every chat lab re-specifying --model.
+        # Chat/generation labs may override the tier's default model (one
+        # place, on purpose) so the registry stays the source of truth instead
+        # of every chat lab re-specifying --model.
         lab_model = LAB_PROFILES[args.lab].get(f"model_tier_{args.tier}")
         args.model = lab_model or spec["model"]
     if args.dtype == "auto":
@@ -3675,6 +5398,17 @@ def apply_tier_defaults(args: argparse.Namespace) -> None:
     if args.max_examples < 0:
         lab_override = LAB_PROFILES[args.lab].get(f"max_examples_tier_{args.tier}")
         args.max_examples = int(lab_override) if lab_override else spec["max_examples"]
+    if args.prompt_set is None:
+        # Tier a is a CPU smoke test where 'small' is the point. On the GPU
+        # science tiers, default to 'full': a tiny prompt set produces
+        # degenerate selections (a depth chosen at layer <=2, AUC 1.0 on n=8)
+        # that read as findings but are noise, so students otherwise had to pass
+        # --prompt-set full by hand for every trustworthy tier-b/c result.
+        args.prompt_set = "small" if args.tier == "a" else "full"
+        print(
+            f"[bench] prompt-set defaulted to '{args.prompt_set}' for tier "
+            f"'{args.tier}' (pass --prompt-set to override)."
+        )
     if LAB_PROFILES[args.lab].get("needs_eager") and args.attn_implementation == "auto":
         args.attn_implementation = "eager"
         print(
