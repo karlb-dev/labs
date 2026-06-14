@@ -1120,6 +1120,44 @@ def mass_mean_direction(X: Any, y: Sequence[int]) -> Any | None:
     return unit(X[labels].mean(dim=0) - X[~labels].mean(dim=0))
 
 
+def grouped_cv_auc(X: Any, y: Sequence[int], groups: Sequence[str], *, k: int = 5, seed: int = 0) -> float | None:
+    """Out-of-sample AUC by grouped k-fold CV on the train split.
+
+    Selecting a probe site/depth by the in-sample ``train_auc`` rewards
+    overfitting: a mean-difference direction over a short span (the
+    user-belief tokens) can hit train AUC ~0.98 while generalizing to ~0.45.
+    This refits the direction on k-1 folds and scores the held-out fold,
+    pooling held-out scores across folds into one AUC. Folds are grouped by
+    base fact so a fact's correct/false-belief rows never straddle the split.
+    """
+    groups = list(groups)
+    uniq = sorted(set(groups), key=lambda g: stable_hash_int(f"{seed}:cv:{g}"))
+    if len(uniq) < 2:
+        return None
+    k = min(k, len(uniq))
+    fold_of = {g: i % k for i, g in enumerate(uniq)}
+    pos_scores: list[float] = []
+    neg_scores: list[float] = []
+    for fold in range(k):
+        test_idx = [i for i, g in enumerate(groups) if fold_of[g] == fold]
+        train_idx = [i for i, g in enumerate(groups) if fold_of[g] != fold]
+        if not test_idx or not train_idx:
+            continue
+        ytr = [int(y[i]) for i in train_idx]
+        if len(set(ytr)) < 2:
+            continue
+        direction = mass_mean_direction(X[train_idx], ytr)
+        if direction is None:
+            continue
+        direction = orient_direction(direction, X[train_idx], ytr)
+        scores = (X[test_idx] @ direction).tolist()
+        for sc, i in zip(scores, test_idx):
+            (pos_scores if int(y[i]) == 1 else neg_scores).append(float(sc))
+    if not pos_scores or not neg_scores:
+        return None
+    return auc_from_scores(pos_scores, neg_scores)
+
+
 def scores_by_label(X: Any, direction: Any, y: Sequence[int]) -> tuple[list[float], list[float], list[float]]:
     scores = (X @ direction).tolist()
     pos = [float(s) for s, label in zip(scores, y) if label == 1]
@@ -1178,6 +1216,7 @@ def probe_report_row(
     n_train: int,
     n_eval: int,
     n_replicates: int,
+    cv_auc: float | None = None,
 ) -> dict[str, Any]:
     return {
         "probe": probe,
@@ -1185,6 +1224,7 @@ def probe_report_row(
         "depth": depth,
         "direction_kind": direction_kind,
         "train_auc": rounded(train_summary.get("auc")),
+        "cv_auc": rounded(cv_auc) if cv_auc is not None else None,
         "eval_auc": rounded(eval_summary.get("auc")),
         "train_selectivity_vs_chance": rounded(float(train_summary.get("auc", float("nan"))) - 0.5) if isinstance(train_summary.get("auc"), (int, float)) else None,
         "eval_selectivity_vs_chance": rounded(float(eval_summary.get("auc", float("nan"))) - 0.5) if isinstance(eval_summary.get("auc"), (int, float)) else None,
@@ -1226,6 +1266,9 @@ def run_user_belief_probe_sweep(
             if real is None:
                 continue
             real = orient_direction(real, Xtr, y_train)
+            cv_auc = grouped_cv_auc(
+                Xtr, y_train, [row.base_id for row in train_rows], k=5, seed=seed + depth
+            )
             report.append(probe_report_row(
                 probe="user_false_belief_vs_correct_belief",
                 site=site,
@@ -1236,6 +1279,7 @@ def run_user_belief_probe_sweep(
                 n_train=len(train_rows),
                 n_eval=len(eval_rows),
                 n_replicates=1,
+                cv_auc=cv_auc,
             ))
 
             shuffled_summaries_train = []
@@ -1298,13 +1342,17 @@ def select_user_belief_site_depth(report: Sequence[Mapping[str, Any]]) -> dict[s
         raise RuntimeError("User-belief probe sweep produced no real-direction rows.")
 
     def key(row: Mapping[str, Any]) -> tuple[float, float, int]:
+        # Select on the OUT-OF-SAMPLE cross-validated AUC, not the in-sample
+        # train AUC (which is maximal exactly where the direction overfits a
+        # short span). cv_auc is grouped k-fold within the train split, so the
+        # held-out eval split stays untouched for honest reporting. Fall back to
+        # train_auc only if cv is unavailable (degenerate tiny split).
         site = str(row["site"])
         depth = int(row["depth"])
-        train_auc = float(row.get("train_auc") or 0.5)
-        train_ctrl = control_auc_at(report, str(row["probe"]), site, depth, "train_auc", ("shuffled", "random"))
-        eval_auc = float(row.get("eval_auc") or 0.5)
-        # Train split decides. Eval AUC is tie-breaker only, to avoid curve-shopping.
-        return (train_auc - train_ctrl, eval_auc, -abs(depth))
+        cv = row.get("cv_auc")
+        cv_auc = float(cv) if isinstance(cv, (int, float)) else float(row.get("train_auc") or 0.5)
+        # Tie-break toward the earlier depth (parsimony), deterministically.
+        return (round(cv_auc, 4), -depth)
 
     best = max(candidates, key=key)
     site = str(best["site"])
@@ -1315,7 +1363,8 @@ def select_user_belief_site_depth(report: Sequence[Mapping[str, Any]]) -> dict[s
         "selected_site": site,
         "selected_depth": depth,
         "stream_depth": depth,
-        "selection_rule": "max train-split real AUC minus max(shuffled, random) control; eval is reported after selection",
+        "selection_rule": "max grouped 5-fold cross-validated train AUC (out-of-sample); the held-out eval split is reported after selection and never used to select",
+        "selected_cv_auc": best.get("cv_auc"),
         "selected_train_auc": best.get("train_auc"),
         "selected_train_control_auc": rounded(train_ctrl),
         "selected_train_control_adjusted_auc": rounded(float(best.get("train_auc") or 0.5) - train_ctrl),

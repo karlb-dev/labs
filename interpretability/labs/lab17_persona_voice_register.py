@@ -817,6 +817,7 @@ def build_segments(bundle: bench.ModelBundle, conv: ConversationSpec) -> Rendere
     stable_string_prefix = True
     prev_ids: list[int] = []
     prev_rendered = ""
+    content_cursor = 0
 
     for idx, message in enumerate(conv.messages):
         partial_rendered = render_messages(bundle, conv.messages[: idx + 1])
@@ -828,16 +829,29 @@ def build_segments(bundle: bench.ModelBundle, conv: ConversationSpec) -> Rendere
 
         message_start = len(prev_ids)
         message_end = len(partial_ids)
-        message_start_char = len(prev_rendered) if partial_rendered.startswith(prev_rendered) else 0
-        message_end_char = len(partial_rendered)
-        appended = partial_rendered[message_start_char:message_end_char]
-        rel = appended.find(str(message["content"]))
+
+        # Content char-span: locate the message text in the FULL rendered string
+        # with a forward cursor. Deriving it from per-prefix partial renders is
+        # fragile because some chat templates (Olmo-3-Instruct) close the final
+        # assistant turn with a different stop token than a non-final one
+        # (<|endoftext|> vs <|im_end|>), so a prefix render is not a byte-prefix
+        # of the full render and partial char offsets drift.
+        content_text = str(message["content"])
+        rel = rendered.find(content_text, content_cursor) if content_text else -1
         if rel >= 0:
-            content_start_char = message_start_char + rel
-            content_end_char = content_start_char + len(str(message["content"]))
+            content_start_char = rel
+            content_end_char = rel + len(content_text)
+            content_cursor = content_end_char
         else:
             content_start_char = None
             content_end_char = None
+
+        if offsets is not None and message_end > message_start:
+            message_start_char = offsets[message_start][0]
+            message_end_char = offsets[message_end - 1][1]
+        else:
+            message_start_char = len(prev_rendered) if partial_rendered.startswith(prev_rendered) else 0
+            message_end_char = len(partial_rendered)
         c_start, c_end, method, found = char_span_to_token_span(
             offsets,
             content_start_char,
@@ -1591,10 +1605,22 @@ def run_turn_trace(
         generation = generation_prompt_rows_for_rendered(bundle, conv)
         generation_rows.extend(generation)
         method_counts = Counter(seg.content_span_method for seg in segments)
+        # Trust gate: every content span must decode back to its message text
+        # (whitespace normalized). This validates spans against the full render
+        # directly. Incremental prefix byte-identity is recorded but NOT gated:
+        # templates legitimately re-render the prior turn's stop token when it
+        # is no longer final (Olmo-3-Instruct <|endoftext|> -> <|im_end|>).
+        content_spans_found = all(seg.content_span_found for seg in segments)
+        content_spans_decode_match = all(
+            "".join(bundle.tokenizer.decode(ids[seg.content_start: seg.content_end]).split())
+            == "".join(seg.content.split())
+            for seg in segments
+        )
+        content_spans_ok = content_spans_found and content_spans_decode_match
         ok = (
             coverage_ok and no_gaps and positive_widths and content_inside
+            and content_spans_ok
             and conv.info["string_vs_direct_template_ids_match"]
-            and conv.info["incremental_token_prefix_stable"]
             and conv.info["final_incremental_ids_match"]
             and all(bool(row["ok"]) for row in generation)
         )
@@ -1605,6 +1631,9 @@ def run_turn_trace(
             "positive_widths": positive_widths,
             "content_inside_message": content_inside,
             "generation_prompt_ok": all(bool(row["ok"]) for row in generation),
+            "content_spans_found": content_spans_found,
+            "content_spans_decode_match": content_spans_decode_match,
+            "content_spans_ok": content_spans_ok,
             "content_span_method_counts": dict(method_counts),
             "all_content_spans_offset_mapped": all(seg.content_span_found for seg in segments),
             "ok": ok,
