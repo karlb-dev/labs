@@ -177,7 +177,7 @@ python interp_bench.py --lab lab33 --tier b --prompt-set full
 python interp_bench.py --lab lab34 --tier a --no-plots
 python interp_bench.py --lab lab34 --tier b --prompt-set full
 
-# Lab 35 (reproducible paper capstone; preregistration/review/package):
+# Lab 35 (reproducible paper capstone; frozen-run binding and review package):
 python interp_bench.py --lab lab35 --tier a --no-plots
 python interp_bench.py --lab lab35 --tier b --prompt-set full
 ```
@@ -423,10 +423,10 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   interventions, corrupted-result reliance checks, and self-report review
   tables.
 - Lab 35: reproducible interpretability paper capstone — implemented as a
-  package generator and validator. Adds seed tracks, preregistration, paper and
-  claim-card drafts, fixed adversarial-review rubric, repair log, reproduction
-  guide, evidence matrix, failure-mode contribution, and package validation
-  diagnostics.
+  package generator and validator. Adds six seed tracks, preregistration,
+  frozen-run binding templates, paper and claim-card drafts, fixed
+  adversarial-review rubric, repair accounting, reproduction guide, evidence
+  matrix, failure-mode contribution, and package validation diagnostics.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +

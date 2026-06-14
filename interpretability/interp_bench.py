@@ -492,9 +492,15 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
     "lab35": {
         "module": "labs.lab35_reproducible_capstone",
         "run_name": "lab35_reproducible_capstone",
-        "description": "Reproducible interpretability paper capstone: preregistration, adversarial review, repair log, evidence matrix, and reproduction package.",
-        # Package-generation lab. Tier A runs every seed track and selects the
-        # default scoped-finding track for a complete reproducibility scaffold.
+        "description": "Reproducible interpretability paper capstone: preregistration, frozen-run binding, adversarial review, repair accounting, reproduction, and claim-card discipline.",
+        # Package generator and validator. The bench still loads a tiny causal
+        # LM so the standard hook/lens/no-op checks run, but the scientific
+        # compute belongs to the chosen source lab and frozen source run.
+        "model_tier_a": "gpt2",
+        "model_tier_b": "gpt2",
+        "model_tier_c": "gpt2",
+        "dtype_tier_b": "float32",
+        "dtype_tier_c": "float32",
         "max_examples_tier_a": "4",
     },
 }

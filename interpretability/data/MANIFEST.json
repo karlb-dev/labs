@@ -234,22 +234,35 @@
     ]
   },
   "capstone_seed_tracks.jsonl": {
-    "generator": "hand-authored deterministic course rows",
-    "rows": 4,
+    "generator": "make_capstone_seed_tracks.py",
+    "human_review_required": {
+      "false": 1,
+      "true": 5
+    },
+    "rows": 6,
+    "routes": {
+      "extension": 1,
+      "optional": 3,
+      "recommended": 2
+    },
     "science_scope": "capstone package scaffold; not a scientific result until bound to a real frozen run",
-    "sha256": "ab62e525813f2470e68df16827ea80c2a992e4de38711ac2bbcb3fc4e4fb7c00",
+    "sha256": "3de7664b9da5a5436efa346bff7917c40c906cd53ee56344cbccc81d321c6f1d",
     "source_labs": {
+      "lab27": 1,
+      "lab29": 1,
       "lab31": 1,
       "lab32": 1,
       "lab33": 1,
       "lab34": 1
     },
     "track_types": {
-      "audit_package": 2,
-      "method_replication": 1,
+      "audit_package": 3,
+      "method_replication": 2,
       "new_scoped_finding": 1
     },
-    "verified_tokenizers": []
+    "verified_tokenizers": [
+      "runtime reverified by Lab 35"
+    ]
   },
   "advanced_relation_geometry.csv": {
     "families": {
