@@ -50,6 +50,23 @@ Three rules keep the ledger honest:
 
 For centered LayerNorm models such as GPT-2, the mean subtraction is linear and is folded into the scoring vector exactly. For RMSNorm-style models, the frozen scale is the key ingredient. Read `compute_direct_logit_attribution` in the Python file: the math is intentionally exposed rather than hidden in a helper.
 
+## Why frozen DLA and the logit lens diverge
+
+Freezing the final norm buys additivity, but it also resolves a puzzle carried over from Lab 1: the logit lens and this ledger read the *same* partial residuals onto the *same* answer direction, yet their depth curves can look completely different. The only thing they disagree on is **what they divide by**.
+
+![Schematic of the two divisors. Both readouts project a partial residual onto the target−distractor direction, but DLA divides by the frozen final-layer norm — a large, constant denominator, flat across depth — while the logit lens divides by each layer's own residual norm, which is small early and grows toward the final norm. A small early denominator amplifies the early readout; the two divisors, and therefore the two readouts, coincide only at the final layer.](../figures/lab2_frozen_dla_vs_logit_lens_divisor.png)
+
+- **Frozen DLA** divides every partial residual by the *final* norm — one big, constant denominator. Early partials read out muted: the DLA curve barely leaves its `constant` baseline until the late layers actually write the answer.
+- **The logit lens** divides each partial by *its own* norm. That denominator is small in the early and middle layers, and dividing by a small number amplifies whatever direction the partial residual happens to point.
+
+At the final layer the partial residual *is* the full residual, so "own norm" and "frozen final norm" are the same number, and the two readouts are forced to coincide. Any gap between them earlier is a pure normalization artifact that has to close by the end.
+
+The conflict prompts make the difference vivid. `plots/dla_vs_lens_<example>.png` overlays both readouts of the same stream:
+
+![The same stream read two ways on a Germany conflict prompt (GPT-2, Tier A, 12 layers). The frozen-DLA curve (blue) stays muted near its constant baseline for most of the depth and only settles to the final value once the answer is written late; the own-norm logit lens (orange) swings wildly — diving toward the stored-prior side to about −3 by depth 4, overshooting toward the in-context answer in the middle layers, then collapsing back — before the two curves converge at the final layer, where their denominators become identical and the shaded readout-convention gap closes.](../figures/lab2_dla_vs_lens_conflict_germany.png)
+
+The lens's dramatic swings are mostly a denominator mirage: the early residual is dominated by the raw token and positional embeddings — which on a conflict prompt lean toward the stored prior — and the small own-norm denominator blows that direction up (here the lens bottoms out near −3 by depth 4). Frozen DLA refuses that amplification, which is exactly why it, not the lens, is the convention the rest of this lab's ledger is built on (the waterfall and the per-layer contribution plots). This is also the answer to writeup question 7.
+
 ## The hook-point catch
 
 On some models, an attention module’s raw output is not the tensor that is added to the residual stream. Olmo-style post-attention normalization is the classic trap: `attn(x)` may be normalized before it becomes the residual write. Hooking the wrong site gives a beautiful chart of a tensor the residual stream never saw.
