@@ -8,7 +8,7 @@
 
 **Dependencies:** Labs 7, 16, 17, 19, 21, and 31 concepts.
 
-**Minimum passing artifacts:** `method_card.md`, `operationalization_audit.md`, `diagnostics/safety_status.json`, `diagnostics/self_check_status.json`, `tables/preference_pair_scores.csv`, `tables/preference_probe_report.csv`, `tables/reward_policy_disagreements.csv`, `tables/preference_intervention_results.csv`, `tables/preference_evidence_matrix.csv`, and `plots/preference_evidence_dashboard.png`.
+**Minimum passing artifacts:** `method_card.md`, `operationalization_audit.md`, `diagnostics/safety_status.json`, `diagnostics/self_check_status.json`, `diagnostics/warning_summary.csv`, `diagnostics/lab32_run_config_snapshot.json`, `tables/preference_pair_scores.csv`, `tables/preference_probe_report.csv`, `tables/reward_policy_disagreements.csv`, `tables/preference_intervention_results.csv`, `tables/preference_evidence_matrix.csv`, `tables/failure_specimens.md`, `plots/plot_manifest.json`, `tables/figure_sources/*.csv`, and `plots/preference_evidence_dashboard.png`.
 
 **Main plot:** `plots/preference_evidence_dashboard.png`
 
@@ -225,6 +225,9 @@ runs/lab32_reward_preference-*/
     data_manifest.json
     safety_status.json
     self_check_status.json
+    warning_summary.csv
+    warning_summary.json
+    lab32_run_config_snapshot.json
     tokenization_gate.csv
     hook_parity.json
     logit_lens_self_check.json
@@ -234,18 +237,32 @@ runs/lab32_reward_preference-*/
     preference_pair_scores.csv
     preference_probe_report.csv
     preference_depth_selection.csv
+    preference_direction_by_depth.csv
     split_generalization_summary.csv
     confound_audit_by_type.csv
+    shortcut_control_summary.csv
+    sycophancy_risk_review.csv
     reward_policy_disagreements.csv
     preference_counterexamples.csv
+    counterexamples.csv
+    failure_specimens.jsonl
+    failure_specimens.md
     human_review_queue.csv
     preference_intervention_results.csv
     preference_intervention_summary.csv
     preference_evidence_matrix.csv
+    figure_sources/*.csv
 
   plots/
     plot_reading_guide.csv
+    plot_manifest.json
+    plot_manifest.csv
     preference_evidence_dashboard.png
+    overview_dashboard.png
+    target_vs_control.png
+    dose_response.png
+    layer_sweep_heatmap.png
+    paired_examples.png
     reward_margin_by_domain.png
     preference_probe_control_atlas.png
     confound_specificity_ladder.png
@@ -277,11 +294,56 @@ Then read:
 10. `tables/human_review_queue.csv`: fill this before citing row-level labels.
 11. `operationalization_audit.md`: the claim grammar with its guardrails on.
 
+## How to read the upgraded figure suite
+
+Every major plot is backed by a source table under `tables/figure_sources/`. Open `plots/plot_manifest.json` before citing a figure: it records the figure path, source table, row count, metric family, control, question answered, and claim boundary.
+
+Read the suite in this order:
+
+1. `preference_evidence_dashboard.png`: the overview. It tells you where to inspect, not what to claim.
+2. `target_vs_control.png`: the main scorecard. If a shortcut or null control beats the favorite signal, that is the result.
+3. `layer_sweep_heatmap.png`: train depth selection and eval survival. Train-only brightness is candidate evidence.
+4. `dose_response.png`: raw intervention rows and mean response by activation-addition scale. A single lucky point is not enough.
+5. `paired_examples.png`: raw pair-level proxy, residual-direction, and strongest-shortcut margins.
+6. `failure_specimens.md`: rows that shrink the claim and require human review.
+
+### Plot catalog
+
+| Figure | Source table | Question | Honest negative result |
+|---|---|---|---|
+| `overview_dashboard.png` | `tables/figure_sources/overview_dashboard_source.csv` | What compact claim posture did the run earn? | Every row is shortcut-limited, random-control, or smoke-only. |
+| `target_vs_control.png` | `tables/figure_sources/target_vs_control_source.csv` | Do target signals beat shortcuts? | Length, agreement, sentiment, refusal, random, or shuffled controls beat the target. |
+| `dose_response.png` | `tables/figure_sources/dose_response_source.csv` | Does the intervention separate from random across scale? | Preference and random directions move the judge prompt similarly. |
+| `layer_sweep_heatmap.png` | `tables/figure_sources/layer_sweep_heatmap_source.csv` | Did train-selected depth survive eval? | Train lift is bright but eval lift collapses. |
+| `paired_examples.png` | `tables/figure_sources/paired_examples_source.csv` | Which rows carry or contradict the aggregate? | A few rows dominate, or the strongest shortcut exceeds the preference margin. |
+| `sycophancy_reward_risk_quadrant.png` | `tables/figure_sources/sycophancy_reward_risk_quadrant_source.csv` | Does agreement look rewarded on false-belief rows? | Agreement and proxy margins are positive together on anti-sycophancy rows. |
+
+
 ## Plot guide
 
 ### `preference_evidence_dashboard.png`
 
-The dashboard shows eval AUCs, eval accuracies, shortcut gaps, and steering shift. It is the cockpit, not the verdict machine.
+The dashboard shows eval AUCs, shortcut gaps, steering shift, and disagreement load. It is an index into the evidence, not the verdict machine.
+
+### `overview_dashboard.png`
+
+This compact dashboard shows the claim posture row by row. Treat it as a table of contents for `preference_evidence_matrix.csv`.
+
+### `target_vs_control.png`
+
+This is the main comparison plot. Preference proxy and residual direction must be read beside length, politeness, agreement, sentiment, hedging, refusal, random, and shuffled controls.
+
+### `dose_response.png`
+
+This shows raw intervention rows plus mean and confidence intervals by activation-addition scale. Look for separation from random direction across scale, not one dramatic point.
+
+### `layer_sweep_heatmap.png`
+
+This shows train depth selection and eval survival. A strong train row with weak eval lift is a train-only candidate.
+
+### `paired_examples.png`
+
+This scatter keeps row-level variation visible. Points in the wrong quadrant or annotated for review should be read before any aggregate claim is written.
 
 ### `reward_margin_by_domain.png`
 
@@ -306,6 +368,14 @@ This asks whether the preference direction moves the A/B judge margin more than 
 ### `sycophancy_reward_risk_quadrant.png`
 
 This isolates false-agreement rows. A supported preference signal should not reward agreeing with harmless false beliefs.
+
+### `judge_prompt_swap_control.png`
+
+This checks whether the intervention is stable under A/B response order swaps. A response-order-sensitive effect should be described as a judge-prompt artifact until proven otherwise.
+
+### `failure_specimens.md` and `failure_specimens.jsonl`
+
+These are not optional leftovers. They are the rows that force the claim to become smaller.
 
 ## Expected result patterns
 
@@ -396,6 +466,36 @@ The model wants to be helpful.
 The reward direction is a morality vector.
 The preference proxy is safe to optimize.
 ```
+
+## Verification checklist
+
+Run from `interpretability/`:
+
+```bash
+python -m py_compile interp_bench.py labs/lab32_reward_preference.py
+python interp_bench.py --lab lab32 --tier a --no-plots
+python interp_bench.py --lab lab32 --tier a
+python interp_bench.py --lab lab32 --tier b --prompt-set full
+```
+
+Expected upgraded artifacts:
+
+```text
+plots/plot_manifest.json
+plots/overview_dashboard.png
+plots/target_vs_control.png
+plots/dose_response.png
+plots/layer_sweep_heatmap.png
+plots/paired_examples.png
+tables/figure_sources/target_vs_control_source.csv
+tables/figure_sources/dose_response_source.csv
+tables/figure_sources/layer_sweep_heatmap_source.csv
+tables/failure_specimens.md
+diagnostics/warning_summary.csv
+diagnostics/lab32_run_config_snapshot.json
+```
+
+The plot pass succeeded when every cited figure has a non-empty source table, controls remain visible beside targets, raw intervention rows are available for dose plots, and the writeup gets smaller when a shortcut wins.
 
 ## Suggested extensions
 

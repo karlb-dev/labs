@@ -42,6 +42,9 @@ PROMPT_SET_CAPS = {"small": 18, "medium": 32, "full": 0}
 SCIENCE_READY_MIN_ROWS = 24
 INTERVENTION_MAX_PAIRS = 24
 STEER_SCALES = (-1.0, 0.0, 1.0)
+PLOT_SOURCE_SUBDIR = "figure_sources"
+MAX_FAILURE_SPECIMENS = 40
+
 
 CONFOUND_FEATURES = ("length", "politeness", "agreement", "sentiment", "hedging", "refusal")
 REVIEW_FIELDS = (
@@ -148,6 +151,12 @@ class ScoreSpec:
 
 def stable_int(text: str) -> int:
     return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:12], 16)
+
+
+def stable_artifact_id(prefix: str, *parts: Any) -> str:
+    """Stable, short IDs for rows that may leave their parent table."""
+    payload = "|".join(str(part) for part in parts)
+    return f"{prefix}_{hashlib.sha256(payload.encode('utf-8')).hexdigest()[:12]}"
 
 
 def file_sha256(path: pathlib.Path) -> str:
@@ -604,6 +613,7 @@ def score_pairs(ctx: bench.RunContext, bundle: bench.ModelBundle, pairs: Sequenc
         reference_margin = ref_a_mean - ref_b_mean
         dpo_margin = policy_margin - reference_margin
         row: dict[str, Any] = {
+            "score_row_id": stable_artifact_id("pairscore", pair.pair_id, pair.split_group),
             "pair_id": pair.pair_id,
             "domain": pair.domain,
             "preference_type": pair.preference_type,
@@ -1059,6 +1069,7 @@ def run_interventions(
                     margin = float(logits[a_id] - logits[b_id])
                     pref_margin = margin if preferred_letter == "a" else -margin
                     rows.append({
+                        "intervention_id": stable_artifact_id("intervention", pair.pair_id, presentation, direction_name, scale, selected_depth),
                         "pair_id": pair.pair_id,
                         "domain": pair.domain,
                         "preference_type": pair.preference_type,
@@ -1476,10 +1487,13 @@ def write_tables(
     specs = [
         ("tables/preference_pair_scores.csv", pair_rows, "Pair-level proxy, policy, reference, shortcut, and direction margins."),
         ("tables/preference_probe_report.csv", report, "Scorecard for proxy, residual direction, shortcut, and control probes by split."),
+        ("tables/shortcut_control_summary.csv", [r for r in report if r.get("score_family") in {"confound", "confound_direction", "control", "proxy_control"}], "Shortcut/control-only slice of the probe report."),
         ("tables/preference_depth_selection.csv", depth_rows, "Train-selected residual-depth audit for the preference direction."),
+        ("tables/preference_direction_by_depth.csv", depth_rows, "Alias of the residual direction depth-selection sweep for figure reading."),
         ("tables/split_generalization_summary.csv", split_rows, "Train, eval, and all split summary for the main proxy and direction."),
         ("tables/confound_audit_by_type.csv", confound_rows, "Domain/preference/confound group-level shortcut audit."),
         ("tables/reward_policy_disagreements.csv", disagreements, "Pairs where proxy, policy, direction, or sycophancy-risk status needs review."),
+        ("tables/sycophancy_risk_review.csv", [r for r in disagreements if "sycophancy" in str(r.get("preference_type", "")).lower() or "sycophancy" in str(r.get("reason", "")).lower()], "Anti-sycophancy rows and agreement-risk review slice."),
         ("tables/preference_counterexamples.csv", counterexamples, "Rows where the favorite preference story is locally weakest."),
         ("tables/counterexamples.csv", counterexamples, "Standard counterexample table alias for Lab 32 evidence review."),
         ("tables/preference_intervention_results.csv", interventions, "A/B judge-prompt activation-addition rows."),
@@ -1750,9 +1764,398 @@ def write_plot_guide(ctx: bench.RunContext) -> None:
     ctx.register_artifact(path2, "table", "Plot reading guide for Lab 32 plot directory.")
 
 
+
 # ---------------------------------------------------------------------------
-# Plots
+# Plot sources, manifests, warnings, and plots
 # ---------------------------------------------------------------------------
+
+
+def write_plot_guide(ctx: bench.RunContext) -> None:
+    rows = [
+        {"plot": "plots/preference_evidence_dashboard.png", "source_table": "tables/figure_sources/dashboard_evidence.csv", "read_for": "AUCs, eval shortcut lift, intervention shifts, and disagreement load.", "non_claim": "A preference proxy is not a value model."},
+        {"plot": "plots/overview_dashboard.png", "source_table": "tables/figure_sources/dashboard_evidence.csv", "read_for": "Compact claim posture across evidence rows.", "non_claim": "A dashboard is not proof."},
+        {"plot": "plots/target_vs_control.png", "source_table": "tables/figure_sources/target_vs_control_source.csv", "read_for": "Target preference scores directly beside shortcuts and null controls.", "non_claim": "A shortcut win is a real result."},
+        {"plot": "plots/dose_response.png", "source_table": "tables/figure_sources/dose_response_source.csv", "read_for": "Raw and aggregate activation-addition response by scale.", "non_claim": "Judge-prompt movement is not open-ended alignment."},
+        {"plot": "plots/layer_sweep_heatmap.png", "source_table": "tables/figure_sources/layer_sweep_heatmap_source.csv", "read_for": "Train depth selection and eval survival.", "non_claim": "Train-only brightness is not a held-out claim."},
+        {"plot": "plots/paired_examples.png", "source_table": "tables/figure_sources/paired_examples_source.csv", "read_for": "Raw pair-level proxy, direction, and strongest-shortcut margins.", "non_claim": "Specimens do not replace aggregate gates."},
+        {"plot": "plots/reward_margin_by_domain.png", "source_table": "tables/figure_sources/reward_margin_by_domain_source.csv", "read_for": "DPO proxy preferred margin by domain with raw rows.", "non_claim": "Domain averages are descriptive."},
+        {"plot": "plots/preference_probe_control_atlas.png", "source_table": "tables/figure_sources/preference_probe_control_atlas_source.csv", "read_for": "Proxy/direction/confound scorecard.", "non_claim": "High AUC can still be shortcut-driven."},
+        {"plot": "plots/confound_specificity_ladder.png", "source_table": "tables/figure_sources/confound_specificity_ladder_source.csv", "read_for": "Whether preference signals beat shortcut directions on eval rows.", "non_claim": "Shortcut failure is a valid result."},
+        {"plot": "plots/reward_policy_disagreement_matrix.png", "source_table": "tables/figure_sources/reward_policy_disagreement_matrix_source.csv", "read_for": "Where proxy and direction predictions disagree with labels.", "non_claim": "Disagreement rows need review."},
+        {"plot": "plots/preference_steering_frontier.png", "source_table": "tables/figure_sources/preference_steering_frontier_source.csv", "read_for": "Activation-addition shift versus random direction.", "non_claim": "This is a narrow judge-prompt causal result."},
+        {"plot": "plots/sycophancy_reward_risk_quadrant.png", "source_table": "tables/figure_sources/sycophancy_reward_risk_quadrant_source.csv", "read_for": "False-agreement risk rows.", "non_claim": "A quadrant is not a full safety evaluation."},
+        {"plot": "plots/judge_prompt_swap_control.png", "source_table": "tables/figure_sources/judge_prompt_swap_control_source.csv", "read_for": "Whether activation addition survives A/B response-order swapping.", "non_claim": "A letter prior is content sensitivity."},
+        {"plot": "plots/plot_manifest.json", "source_table": "plots/plot_manifest.csv", "read_for": "Figure-to-source provenance.", "non_claim": "Metadata is not evidence by itself."},
+    ]
+    path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv(path, rows)
+    ctx.register_artifact(path, "table", "Plot reading guide for Lab 32.")
+    path2 = ctx.path("plots", "plot_reading_guide.csv")
+    bench.write_csv(path2, rows)
+    ctx.register_artifact(path2, "table", "Plot reading guide for Lab 32 plot directory.")
+
+
+def save_figure_source(ctx: bench.RunContext, filename: str, rows: Sequence[Mapping[str, Any]], description: str) -> dict[str, Any]:
+    path = ctx.path("tables", PLOT_SOURCE_SUBDIR, filename)
+    materialized = [dict(r) for r in rows]
+    warning = ""
+    if not materialized:
+        warning = "no_source_rows"
+        materialized = [{"warning": warning, "note": description}]
+    bench.write_csv_with_context(ctx, path, materialized)
+    ctx.register_artifact(path, "table", description)
+    return {"source_path": str(path.relative_to(ctx.run_dir)), "row_count": 0 if warning else len(materialized), "warning": warning, "description": description}
+
+
+def _mean_ci(values: Sequence[Any]) -> tuple[float, float, int]:
+    vals = [as_float(v) for v in values]
+    vals = [v for v in vals if math.isfinite(v)]
+    if not vals:
+        return float("nan"), float("nan"), 0
+    mean = safe_mean(vals)
+    ci = 1.96 * statistics.stdev(vals) / math.sqrt(len(vals)) if len(vals) > 1 else float("nan")
+    return mean, ci, len(vals)
+
+
+def _basis_split(data_info: Mapping[str, Any]) -> str:
+    return "eval" if data_info.get("splits", {}).get("eval") else "all"
+
+
+def _best_shortcut(row: Mapping[str, Any]) -> tuple[str, float]:
+    vals = {f: as_float(row.get(f"{f}_preferred_margin"), float("nan")) for f in CONFOUND_FEATURES}
+    finite = {k: v for k, v in vals.items() if math.isfinite(v)}
+    return max(finite.items(), key=lambda kv: kv[1]) if finite else ("", float("nan"))
+
+
+def plot_metric(row: Mapping[str, Any]) -> tuple[str, float, bool]:
+    """Prefer AUC for plots, but show accuracy when AUC is undefined.
+
+    Tiny Tier A splits can contain only one preference class after filtering,
+    which makes AUC undefined. A zero-height bar is misleading there; an
+    explicit accuracy fallback keeps the smoke plot informative while the
+    source table records that AUC was unavailable.
+    """
+    auc = as_float(row.get("auc"), float("nan"))
+    if math.isfinite(auc):
+        return "auc", auc, False
+    acc = as_float(row.get("accuracy"), float("nan"))
+    if math.isfinite(acc):
+        return "accuracy_fallback", acc, True
+    return "missing", float("nan"), True
+
+
+def build_target_vs_control_rows(report: Sequence[Mapping[str, Any]], data_info: Mapping[str, Any]) -> list[dict[str, Any]]:
+    basis = _basis_split(data_info)
+    rows: list[dict[str, Any]] = []
+    for row in report:
+        if row.get("split_group") != basis:
+            continue
+        family = str(row.get("score_family", ""))
+        if family in {"proxy", "residual_direction"}:
+            condition = "target_signal"
+        elif family in {"confound", "confound_direction"}:
+            condition = "shortcut_control"
+        else:
+            condition = "null_or_proxy_control"
+        metric_name, metric_value, missing_auc = plot_metric(row)
+        rows.append({
+            "score_name": row.get("score_name", ""),
+            "score_family": family,
+            "condition_type": condition,
+            "split_group": basis,
+            "n_pairs": row.get("n_pairs", ""),
+            "auc": row.get("auc", ""),
+            "accuracy": row.get("accuracy", ""),
+            "plot_metric_name": metric_name,
+            "plot_metric_value": rounded(metric_value),
+            "plot_metric_missing_auc": missing_auc,
+            "mean_preferred_margin": row.get("mean_preferred_margin", ""),
+            "median_abs_margin": row.get("median_abs_margin", ""),
+            "length_corr": row.get("length_corr", ""),
+            "agreement_corr": row.get("agreement_corr", ""),
+            "sentiment_corr": row.get("sentiment_corr", ""),
+            "description": row.get("description", ""),
+        })
+    rows.sort(key=lambda r: (str(r["condition_type"]), -as_float(r.get("plot_metric_value"), -999.0), str(r["score_name"])))
+    return rows
+
+
+def build_target_vs_control_aggregate_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for condition in sorted({str(row.get("condition_type", "")) for row in rows}):
+        group = [row for row in rows if str(row.get("condition_type", "")) == condition]
+        aucs = [as_float(row.get("auc")) for row in group]
+        aucs = [v for v in aucs if math.isfinite(v)]
+        out.append({
+            "condition_type": condition,
+            "n_score_rows": len(group),
+            "mean_auc": rounded(safe_mean(aucs)),
+            "max_auc": rounded(max(aucs) if aucs else float("nan")),
+            "min_auc": rounded(min(aucs) if aucs else float("nan")),
+            "score_names": ";".join(str(row.get("score_name", "")) for row in group),
+        })
+    return out
+
+
+def build_pair_source_rows(pairs: Sequence[PreferencePair], pair_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    by_pair = {p.pair_id: p for p in pairs}
+    out: list[dict[str, Any]] = []
+    for row in pair_rows:
+        pair = by_pair[str(row["pair_id"])]
+        shortcut_name, shortcut_value = _best_shortcut(row)
+        dpo = as_float(row.get("dpo_proxy_preferred_margin"))
+        direction = as_float(row.get("preference_residual_direction_preferred_margin"))
+        out.append({
+            "pair_id": pair.pair_id,
+            "domain": pair.domain,
+            "split": pair.split_group,
+            "preference_type": pair.preference_type,
+            "confound_type": pair.confound_type,
+            "preferred": pair.preferred,
+            "dpo_proxy_preferred_margin": row.get("dpo_proxy_preferred_margin", ""),
+            "preference_direction_preferred_margin": row.get("preference_residual_direction_preferred_margin", ""),
+            "largest_shortcut": shortcut_name,
+            "largest_shortcut_preferred_margin": rounded(shortcut_value),
+            "dpo_minus_shortcut": rounded(dpo - shortcut_value) if math.isfinite(dpo) and math.isfinite(shortcut_value) else "",
+            "direction_minus_shortcut": rounded(direction - shortcut_value) if math.isfinite(direction) and math.isfinite(shortcut_value) else "",
+            "dpo_prediction": row.get("dpo_proxy_prediction", ""),
+            "direction_prediction": row.get("preference_direction_prediction", ""),
+            "needs_review": int(str(row.get("dpo_proxy_prediction", "")) != pair.preferred or str(row.get("preference_direction_prediction", pair.preferred)) != pair.preferred),
+            "prompt_preview": pair.prompt[:160],
+            "response_a_preview": pair.response_a[:180],
+            "response_b_preview": pair.response_b[:180],
+        })
+    return out
+
+
+def build_domain_rows(pairs: Sequence[PreferencePair], pair_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    by_pair = {p.pair_id: p for p in pairs}
+    out = []
+    for row in pair_rows:
+        pair = by_pair[str(row["pair_id"])]
+        out.append({
+            "pair_id": pair.pair_id,
+            "domain": pair.domain,
+            "split": pair.split_group,
+            "preference_type": pair.preference_type,
+            "confound_type": pair.confound_type,
+            "dpo_proxy_preferred_margin": row.get("dpo_proxy_preferred_margin", ""),
+            "preference_direction_preferred_margin": row.get("preference_residual_direction_preferred_margin", ""),
+            "length_preferred_margin": row.get("length_preferred_margin", ""),
+            "agreement_preferred_margin": row.get("agreement_preferred_margin", ""),
+            "sentiment_preferred_margin": row.get("sentiment_preferred_margin", ""),
+        })
+    return out
+
+
+def build_prediction_rows(pairs: Sequence[PreferencePair], pair_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows = []
+    for pair, row in zip(pairs, pair_rows):
+        rows.append({
+            "pair_id": pair.pair_id,
+            "domain": pair.domain,
+            "split": pair.split_group,
+            "true_preferred": pair.preferred,
+            "dpo_proxy_prediction": row.get("dpo_proxy_prediction", ""),
+            "preference_direction_prediction": row.get("preference_direction_prediction", ""),
+            "dpo_correct": int(str(row.get("dpo_proxy_prediction", "")) == pair.preferred),
+            "direction_correct": int(str(row.get("preference_direction_prediction", "")) == pair.preferred),
+        })
+    return rows
+
+
+def build_sycophancy_rows(pairs: Sequence[PreferencePair], pair_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    by_pair = {p.pair_id: p for p in pairs}
+    out = []
+    for row in pair_rows:
+        pair = by_pair[str(row["pair_id"])]
+        if pair.preference_type != "anti_sycophancy" and "sycoph" not in pair.domain.lower() and "sycoph" not in pair.confound_type.lower():
+            continue
+        out.append({
+            "pair_id": pair.pair_id,
+            "domain": pair.domain,
+            "split": pair.split_group,
+            "preferred": pair.preferred,
+            "agreement_preferred_margin": row.get("agreement_preferred_margin", ""),
+            "dpo_proxy_preferred_margin": row.get("dpo_proxy_preferred_margin", ""),
+            "preference_direction_preferred_margin": row.get("preference_residual_direction_preferred_margin", ""),
+            "risk_flag": int(as_float(row.get("agreement_preferred_margin"), 0.0) > 0.0),
+            "prompt_preview": pair.prompt[:180],
+        })
+    return out
+
+
+def build_plot_sources(
+    ctx: bench.RunContext,
+    pairs: Sequence[PreferencePair],
+    pair_rows: Sequence[Mapping[str, Any]],
+    report: Sequence[Mapping[str, Any]],
+    depth_rows: Sequence[Mapping[str, Any]],
+    confound_rows: Sequence[Mapping[str, Any]],
+    interventions: Sequence[Mapping[str, Any]],
+    intervention_summary_rows: Sequence[Mapping[str, Any]],
+    evidence: Sequence[Mapping[str, Any]],
+    disagreements: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+    data_info: Mapping[str, Any],
+) -> dict[str, dict[str, Any]]:
+    target_control = build_target_vs_control_rows(report, data_info)
+    pair_source = build_pair_source_rows(pairs, pair_rows)
+    domain_source = build_domain_rows(pairs, pair_rows)
+    pred_source = build_prediction_rows(pairs, pair_rows)
+    syco_source = build_sycophancy_rows(pairs, pair_rows)
+    dashboard_rows = [{"section": "evidence", **dict(r)} for r in evidence] + [{"section": "intervention_summary", **dict(r)} for r in intervention_summary_rows]
+    sources = {
+        "preference_evidence_dashboard.png": save_figure_source(ctx, "dashboard_evidence.csv", dashboard_rows, "Dashboard source rows."),
+        "overview_dashboard.png": save_figure_source(ctx, "overview_dashboard_source.csv", evidence, "Compact overview source rows."),
+        "target_vs_control.png": save_figure_source(ctx, "target_vs_control_source.csv", target_control, "Eval/all target-signal and shortcut-control AUC rows."),
+        "target_vs_control_aggregate.csv": save_figure_source(ctx, "target_vs_control_aggregate.csv", build_target_vs_control_aggregate_rows(target_control), "Condition-level aggregate for the target-vs-control comparison."),
+        "dose_response.png": save_figure_source(ctx, "dose_response_source.csv", interventions, "Raw activation-addition dose-response rows."),
+        "layer_sweep_heatmap.png": save_figure_source(ctx, "layer_sweep_heatmap_source.csv", depth_rows, "Depth-selection and held-out lift rows."),
+        "paired_examples.png": save_figure_source(ctx, "paired_examples_source.csv", pair_source, "Per-pair proxy, direction, and strongest-shortcut specimen rows."),
+        "reward_margin_by_domain.png": save_figure_source(ctx, "reward_margin_by_domain_source.csv", domain_source, "Per-pair margins used for domain plot."),
+        "preference_probe_control_atlas.png": save_figure_source(ctx, "preference_probe_control_atlas_source.csv", target_control, "Probe/control atlas source rows."),
+        "confound_specificity_ladder.png": save_figure_source(ctx, "confound_specificity_ladder_source.csv", target_control, "Shortcut and residual-control ladder source rows."),
+        "reward_policy_disagreement_matrix.png": save_figure_source(ctx, "reward_policy_disagreement_matrix_source.csv", pred_source, "Per-pair prediction/label rows."),
+        "preference_steering_frontier.png": save_figure_source(ctx, "preference_steering_frontier_source.csv", interventions, "Raw activation-addition source rows for steering frontier."),
+        "sycophancy_reward_risk_quadrant.png": save_figure_source(ctx, "sycophancy_reward_risk_quadrant_source.csv", syco_source, "Anti-sycophancy rows used for reward-risk quadrant."),
+        "judge_prompt_swap_control.png": save_figure_source(ctx, "judge_prompt_swap_control_source.csv", interventions, "A/B presentation swap intervention rows."),
+        "confound_audit_by_type.csv": save_figure_source(ctx, "confound_audit_by_type_source.csv", confound_rows, "Group-level confound audit rows."),
+        "failure_specimens.md": save_figure_source(ctx, "failure_specimens_source.csv", list(counterexamples) + list(disagreements), "Counterexample/disagreement rows mirrored for failure specimens."),
+    }
+    return sources
+
+
+def write_plot_manifest(ctx: bench.RunContext, sources: Mapping[str, Mapping[str, Any]], *, no_plots: bool) -> None:
+    questions = {
+        "preference_evidence_dashboard.png": "Do proxy, direction, shortcut, intervention, and review-load evidence tell one coherent story?",
+        "overview_dashboard.png": "What compact posture did the run earn before reading detailed plots?",
+        "target_vs_control.png": "Do target signals beat named controls on the same held-out basis?",
+        "dose_response.png": "Does activation addition show a dose-response beyond random direction?",
+        "layer_sweep_heatmap.png": "Which depths were attractive on train, and did they survive eval?",
+        "paired_examples.png": "Which individual pairs make the aggregate brittle?",
+    }
+    manifest = []
+    for figure, meta in sources.items():
+        if figure.endswith(".png"):
+            figure_path = f"plots/{figure}"
+        elif figure == "failure_specimens.md":
+            figure_path = "tables/failure_specimens.md"
+        else:
+            figure_path = meta.get("source_path", "")
+        manifest.append({
+            "figure_path": figure_path,
+            "source_table": meta.get("source_path", ""),
+            "source_row_count": meta.get("row_count", 0),
+            "metric": "see_source_table_columns",
+            "control": "shortcuts, shuffled score, random direction, and A/B swap where applicable",
+            "question_answered": questions.get(figure, "Source artifact supporting a Lab 32 figure or evidence specimen."),
+            "claim_supported": "Inspection/provenance artifact; verify in preference_evidence_matrix.csv before citing.",
+            "created_when_no_plots": bool(no_plots and figure.endswith(".png")),
+            "warning": meta.get("warning", ""),
+        })
+    json_path = ctx.path("plots", "plot_manifest.json")
+    bench.write_json(json_path, manifest)
+    ctx.register_artifact(json_path, "table", "Machine-readable manifest linking every Lab 32 plot to its source table.")
+    csv_path = ctx.path("plots", "plot_manifest.csv")
+    bench.write_csv_with_context(ctx, csv_path, manifest)
+    ctx.register_artifact(csv_path, "table", "CSV manifest linking every Lab 32 plot to its source table.")
+
+
+def write_failure_specimens(ctx: bench.RunContext, counterexamples: Sequence[Mapping[str, Any]], disagreements: Sequence[Mapping[str, Any]]) -> tuple[pathlib.Path, pathlib.Path]:
+    specimens = []
+    seen = set()
+    for row in list(counterexamples) + list(disagreements):
+        key = f"{row.get('pair_id','')}|{row.get('kind', row.get('reason',''))}"
+        if key in seen:
+            continue
+        seen.add(key)
+        specimens.append(dict(row))
+        if len(specimens) >= MAX_FAILURE_SPECIMENS:
+            break
+    jsonl_path = ctx.path("tables", "failure_specimens.jsonl")
+    write_jsonl(jsonl_path, [{**ctx.table_context(), **row} for row in specimens])
+    ctx.register_artifact(jsonl_path, "table", "JSONL rows that fail, flip, shortcut-dominate, or need hand review.")
+    lines = ["# Lab 32 failure specimens", "", "Rows here make the preference story smaller. Read them before writing claims.", ""]
+    if not specimens:
+        lines.append("No automatic failure specimens crossed thresholds. In tiny runs, treat this as low evidence volume rather than a clean bill of health.")
+    for i, row in enumerate(specimens, start=1):
+        label = row.get("kind") or row.get("reason") or "review_required"
+        lines += [f"## {i}. {label}", "", f"- Pair: `{row.get('pair_id','')}`", f"- Domain/split: `{row.get('domain','')}` / `{row.get('split','')}`", f"- DPO preferred margin: `{row.get('dpo_proxy_preferred_margin', row.get('dpo_preferred_margin',''))}`", f"- Direction preferred margin: `{row.get('preference_direction_preferred_margin','')}`", f"- Largest shortcut: `{row.get('largest_shortcut','')}` `{row.get('largest_shortcut_preferred_margin','')}`", "- Review note: fill human-review columns before citing this row.", ""]
+    md_path = ctx.path("tables", "failure_specimens.md")
+    bench.write_text(md_path, "\n".join(lines).rstrip() + "\n")
+    ctx.register_artifact(md_path, "table", "Markdown failure-specimen guide for Lab 32.")
+    return jsonl_path, md_path
+
+
+def write_warning_summary(ctx: bench.RunContext, data_info: Mapping[str, Any], report: Sequence[Mapping[str, Any]], interventions: Sequence[Mapping[str, Any]], counterexamples: Sequence[Mapping[str, Any]], disagreements: Sequence[Mapping[str, Any]], sources: Mapping[str, Mapping[str, Any]]) -> list[dict[str, Any]]:
+    warnings: list[dict[str, Any]] = []
+    def add(level: str, code: str, message: str, artifact: str = "") -> None:
+        warnings.append({"level": level, "code": code, "message": message, "artifact": artifact})
+    if not data_info.get("science_ready"):
+        add("warning", "smoke_or_underpowered_run", "Run is not science-ready; use for plumbing, not preference-circuit claims.", "diagnostics/data_manifest.json")
+    basis = _basis_split(data_info)
+    n_basis = int(data_info.get("splits", {}).get(basis, data_info.get("n_rows_selected", 0)) or 0)
+    if n_basis < 8:
+        add("warning", "low_basis_sample_count", f"Basis split `{basis}` has only {n_basis} pairs; uncertainty should dominate interpretation.", "tables/preference_probe_report.csv")
+    if not interventions:
+        add("warning", "no_intervention_rows", "No activation-addition rows were produced.", "tables/preference_intervention_results.csv")
+    if counterexamples:
+        add("info", "counterexamples_present", f"{len(counterexamples)} counterexample rows were selected.", "tables/failure_specimens.md")
+    if disagreements:
+        add("info", "human_review_required", f"{len(disagreements)} rows require proxy/label review.", "tables/human_review_queue.csv")
+    for figure, meta in sources.items():
+        if int(meta.get("row_count") or 0) == 0:
+            add("warning", "empty_plot_source", f"Source for {figure} has zero real rows.", str(meta.get("source_path", "")))
+    basis_rows = [r for r in report if r.get("split_group") == basis]
+    if basis_rows:
+        best = max(basis_rows, key=lambda r: as_float(r.get("auc"), -999.0))
+        if best.get("score_family") in {"confound", "confound_direction", "control", "proxy_control"}:
+            add("warning", "shortcut_or_control_wins", f"Best `{basis}` AUC is `{best.get('score_name')}` ({best.get('auc')}).", "tables/preference_probe_report.csv")
+    json_path = ctx.path("diagnostics", "warning_summary.json")
+    bench.write_json(json_path, warnings)
+    ctx.register_artifact(json_path, "diagnostic", "Machine-readable Lab 32 warnings and caveats.")
+    csv_path = ctx.path("diagnostics", "warning_summary.csv")
+    bench.write_csv_with_context(ctx, csv_path, warnings)
+    ctx.register_artifact(csv_path, "diagnostic", "CSV Lab 32 warnings and caveats.")
+    return warnings
+
+
+def write_lab32_run_config_snapshot(ctx: bench.RunContext, bundle: bench.ModelBundle, data_info: Mapping[str, Any], direction_metadata: Mapping[str, Any], sources: Mapping[str, Mapping[str, Any]], selected_pair_ids: Sequence[str]) -> pathlib.Path:
+    payload = {
+        "lab": LAB_NAME,
+        "model": bundle.anatomy.model_id,
+        "tier": ctx.args.tier,
+        "prompt_set": ctx.args.prompt_set,
+        "max_examples": ctx.args.max_examples,
+        "seed": ctx.args.seed,
+        "dtype": ctx.args.dtype,
+        "quantization": ctx.args.quantization,
+        "n_layers": bundle.anatomy.n_layers,
+        "d_model": bundle.anatomy.d_model,
+        "data": dict(data_info),
+        "selected_pair_ids": list(selected_pair_ids),
+        "depth_candidates": list(direction_metadata.get("depth_candidates", [])),
+        "selected_stream_depth": direction_metadata.get("selected_stream_depth"),
+        "injection_layer": direction_metadata.get("injection_layer"),
+        "steer_scales": list(STEER_SCALES),
+        "claim_gates": {"preference_auc_bar": PREFERENCE_AUC_BAR, "direction_auc_bar": DIRECTION_AUC_BAR, "control_lift_bar": CONTROL_LIFT_BAR, "causal_shift_bar": CAUSAL_SHIFT_BAR, "letter_swap_tolerance": LETTER_SWAP_TOLERANCE},
+        "plot_manifest_expected": sorted(sources),
+    }
+    path = ctx.path("diagnostics", "lab32_run_config_snapshot.json")
+    bench.write_json(path, payload)
+    ctx.register_artifact(path, "diagnostic", "Lab 32 run config snapshot for reproducing plots and source tables.")
+    return path
+
+
+def _plot_empty(ax: Any, title: str, message: str) -> None:
+    ax.set_title(title)
+    ax.text(0.5, 0.5, message, ha="center", va="center", transform=ax.transAxes, wrap=True)
+    ax.set_axis_off()
+
+
+def _jitter(text: str, width: float = 0.16) -> float:
+    return ((stable_int(text) % 1000) / 999.0 - 0.5) * 2 * width
 
 
 def write_plots(
@@ -1760,165 +2163,215 @@ def write_plots(
     pairs: Sequence[PreferencePair],
     pair_rows: Sequence[Mapping[str, Any]],
     report: Sequence[Mapping[str, Any]],
+    depth_rows: Sequence[Mapping[str, Any]],
+    confound_rows: Sequence[Mapping[str, Any]],
     interventions: Sequence[Mapping[str, Any]],
+    intervention_summary_rows: Sequence[Mapping[str, Any]],
     evidence: Sequence[Mapping[str, Any]],
     disagreements: Sequence[Mapping[str, Any]],
-) -> None:
+    counterexamples: Sequence[Mapping[str, Any]],
+    data_info: Mapping[str, Any],
+) -> dict[str, dict[str, Any]]:
     write_plot_guide(ctx)
+    sources = build_plot_sources(ctx, pairs, pair_rows, report, depth_rows, confound_rows, interventions, intervention_summary_rows, evidence, disagreements, counterexamples, data_info)
+    write_plot_manifest(ctx, sources, no_plots=bool(ctx.args.no_plots))
     if ctx.args.no_plots:
-        return
+        return sources
     import matplotlib.pyplot as plt
     import numpy as np
 
-    eval_rows = [r for r in report if r.get("split_group") == "eval"] or [r for r in report if r.get("split_group") == "all"]
-    sorted_rows = sorted(eval_rows, key=lambda r: as_float(r.get("auc"), -999.0), reverse=True)[:12]
-    labels = [str(r["score_name"]) for r in sorted_rows]
-    x = np.arange(len(labels))
+    basis = _basis_split(data_info)
+    eval_rows = [r for r in report if r.get("split_group") == basis]
+    target_control = build_target_vs_control_rows(report, data_info)
 
+    # Dashboard
     fig, axes = plt.subplots(2, 2, figsize=(13, 8))
     fig.suptitle("Lab 32 preference evidence dashboard", fontsize=14, fontweight="bold")
-    axes[0, 0].bar(x, [as_float(r.get("auc"), 0.0) for r in sorted_rows])
-    axes[0, 0].axhline(0.5, linestyle="--", linewidth=0.8)
-    axes[0, 0].set_xticks(x, labels, rotation=35, ha="right")
-    axes[0, 0].set_title("Top eval score AUCs")
-
-    ev_names = [str(r["method"]) for r in evidence]
-    axes[0, 1].bar(range(len(ev_names)), [as_float(r.get("margin_over_best_shortcut_or_control_auc"), 0.0) for r in evidence])
-    axes[0, 1].axhline(CONTROL_LIFT_BAR, linestyle="--", linewidth=0.8)
-    axes[0, 1].set_xticks(range(len(ev_names)), ev_names, rotation=30, ha="right")
-    axes[0, 1].set_title("AUC lift over best shortcut/control")
-
-    by_scale = defaultdict(list)
-    by_scale_random = defaultdict(list)
+    if eval_rows:
+        rows = sorted(eval_rows, key=lambda r: plot_metric(r)[1], reverse=True)[:12]
+        x = np.arange(len(rows))
+        vals = [plot_metric(r)[1] if math.isfinite(plot_metric(r)[1]) else 0.0 for r in rows]
+        colors = ["#4c78a8" if plot_metric(r)[0] == "auc" else "#f58518" for r in rows]
+        axes[0,0].bar(x, vals, color=colors)
+        axes[0,0].axhline(0.5, linestyle="--", linewidth=0.8)
+        axes[0,0].axhline(PREFERENCE_AUC_BAR, linestyle=":", linewidth=0.8)
+        axes[0,0].set_xticks(x, [str(r.get("score_name")) for r in rows], rotation=35, ha="right")
+        axes[0,0].set_ylim(0, 1.05)
+        axes[0,0].set_ylabel("AUC or accuracy fallback")
+        axes[0,0].set_title(f"Top {basis} score metrics")
+    else:
+        _plot_empty(axes[0,0], "No score rows", "No probe report rows were produced")
+    if evidence:
+        labels = [str(r.get("method")) for r in evidence]
+        lift_vals = [as_float(r.get("margin_over_best_shortcut_or_control_auc"), float("nan")) for r in evidence]
+        if any(math.isfinite(v) for v in lift_vals):
+            axes[0,1].bar(range(len(labels)), [v if math.isfinite(v) else 0.0 for v in lift_vals])
+            axes[0,1].axhline(CONTROL_LIFT_BAR, linestyle="--", linewidth=0.8)
+            axes[0,1].axhline(0, linestyle=":", linewidth=0.8)
+            axes[0,1].set_xticks(range(len(labels)), labels, rotation=30, ha="right")
+            axes[0,1].set_title("Lift over shortcut/control floor")
+        else:
+            _plot_empty(axes[0,1], "AUC lift unavailable", "Tier A eval AUC is undefined; use target/control metric fallbacks.")
+    else:
+        _plot_empty(axes[0,1], "No evidence rows", "Evidence matrix is empty")
+    by_scale: dict[float, list[float]] = defaultdict(list)
+    by_scale_random: dict[float, list[float]] = defaultdict(list)
     for row in interventions:
-        if row["direction"] == "preference_residual_direction":
-            by_scale[as_float(row["scale"])].append(as_float(row["preferred_answer_logit_margin"]))
-        if row["direction"] == "random_direction_control":
-            by_scale_random[as_float(row["scale"])].append(as_float(row["preferred_answer_logit_margin"]))
-    scales = sorted(k for k in by_scale if math.isfinite(k))
-    axes[1, 0].plot(scales, [safe_mean(by_scale[s], 0.0) for s in scales], marker="o", label="preference")
-    axes[1, 0].plot(scales, [safe_mean(by_scale_random[s], 0.0) for s in scales], marker="o", label="random")
-    axes[1, 0].axhline(0, linestyle="--", linewidth=0.8)
-    axes[1, 0].set_title("Judge-prompt steering frontier")
-    axes[1, 0].set_xlabel("scale")
-    axes[1, 0].set_ylabel("mean preferred-letter margin")
-    axes[1, 0].legend(fontsize=8)
-
+        scale = as_float(row.get("scale")); val = as_float(row.get("preferred_answer_logit_margin"))
+        if not (math.isfinite(scale) and math.isfinite(val)): continue
+        if row.get("direction") == "preference_residual_direction": by_scale[scale].append(val)
+        if row.get("direction") == "random_direction_control": by_scale_random[scale].append(val)
+    scales = sorted(set(by_scale) | set(by_scale_random))
+    if scales:
+        axes[1,0].plot(scales, [safe_mean(by_scale[s], 0.0) for s in scales], marker="o", label="preference")
+        axes[1,0].plot(scales, [safe_mean(by_scale_random[s], 0.0) for s in scales], marker="o", label="random")
+        axes[1,0].axhline(0, linestyle="--", linewidth=0.8)
+        axes[1,0].set_xlabel("scale"); axes[1,0].set_ylabel("mean preferred-letter margin"); axes[1,0].set_title("Judge-prompt dose response"); axes[1,0].legend(fontsize=8)
+    else:
+        _plot_empty(axes[1,0], "No intervention rows", "Dose-response rows are empty")
     counts = Counter(str(r.get("reason", "")) for r in disagreements)
-    dlabels = list(counts)[:8] or ["none"]
-    dvals = [counts[k] for k in dlabels] if counts else [0]
-    axes[1, 1].bar(range(len(dlabels)), dvals)
-    axes[1, 1].set_xticks(range(len(dlabels)), dlabels, rotation=35, ha="right")
-    axes[1, 1].set_title("Disagreement/review load")
-    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    if counts:
+        dlabels = list(counts)[:8]
+        axes[1,1].bar(range(len(dlabels)), [counts[k] for k in dlabels])
+        axes[1,1].set_xticks(range(len(dlabels)), dlabels, rotation=35, ha="right")
+        axes[1,1].set_title("Disagreement/review load")
+    else:
+        _plot_empty(axes[1,1], "No review flags", "No proxy/label disagreement rows were flagged")
+    fig.tight_layout(rect=(0,0,1,0.95))
     bench.save_figure(ctx, fig, "preference_evidence_dashboard.png", "Lab 32 preference evidence dashboard.")
 
-    by_domain = defaultdict(list)
+    # Overview
+    fig, ax = plt.subplots(figsize=(10, max(3.5, 0.55 * max(1, len(evidence)))))
+    if evidence:
+        labels = [str(r.get("method")) for r in evidence]
+        vals = [as_float(r.get("margin_over_best_shortcut_or_control_auc"), float("nan")) for r in evidence]
+        if any(math.isfinite(v) for v in vals):
+            y = np.arange(len(labels)); ax.barh(y, [v if math.isfinite(v) else 0.0 for v in vals]); ax.axvline(0, linewidth=0.8); ax.axvline(CONTROL_LIFT_BAR, linestyle="--", linewidth=0.8)
+            ax.set_yticks(y, labels); ax.set_xlabel("AUC lift over best shortcut/control"); ax.set_title("Overview dashboard: claim posture by evidence row")
+        else:
+            _plot_empty(ax, "Overview dashboard", "AUC lift is unavailable in this low-sample split.")
+    else:
+        _plot_empty(ax, "Overview dashboard", "No evidence rows")
+    fig.tight_layout(); bench.save_figure(ctx, fig, "overview_dashboard.png", "Compact Lab 32 evidence overview dashboard.")
+
+    # Target vs control
+    fig, ax = plt.subplots(figsize=(11, max(4.8, 0.32 * max(1, len(target_control)))))
+    if target_control:
+        ordered = sorted(target_control, key=lambda r: (r["condition_type"] != "target_signal", -as_float(r.get("plot_metric_value"), 0.0)))
+        y = np.arange(len(ordered))
+        vals = [as_float(r.get("plot_metric_value"), 0.0) for r in ordered]
+        colors = ["#4c78a8" if str(r.get("plot_metric_name")) == "auc" else "#f58518" for r in ordered]
+        ax.barh(y, vals, color=colors)
+        ax.axvline(0.5, linestyle="--", linewidth=0.8); ax.axvline(PREFERENCE_AUC_BAR, linestyle=":", linewidth=0.8)
+        ax.set_yticks(y, [str(r.get("score_name")) for r in ordered], fontsize=7); ax.set_xlim(0,1.05); ax.set_xlabel(f"{basis} AUC, or accuracy when AUC is undefined"); ax.set_title("Target preference signals versus shortcut/control scores")
+    else:
+        _plot_empty(ax, "Target vs control", "No target/control rows")
+    fig.tight_layout(); bench.save_figure(ctx, fig, "target_vs_control.png", "Direct target-vs-control comparison for Lab 32.")
+
+    # Domain margin raw + CI
+    domain_rows = build_domain_rows(pairs, pair_rows); domains = sorted({str(r["domain"]) for r in domain_rows})
+    fig, ax = plt.subplots(figsize=(10,5.2))
+    if domains:
+        xs = np.arange(len(domains)); means=[]; cis=[]
+        for d in domains:
+            mean, ci, _ = _mean_ci([r.get("dpo_proxy_preferred_margin") for r in domain_rows if r["domain"]==d]); means.append(0 if not math.isfinite(mean) else mean); cis.append(0 if not math.isfinite(ci) else ci)
+        ax.bar(xs, means, yerr=cis)
+        for i,d in enumerate(domains):
+            for r in [x for x in domain_rows if x["domain"]==d]:
+                val=as_float(r.get("dpo_proxy_preferred_margin"));
+                if math.isfinite(val): ax.scatter(i+_jitter(str(r.get("pair_id"))), val, s=18, alpha=0.75)
+        ax.axhline(0, linestyle="--", linewidth=0.8); ax.set_xticks(xs, domains, rotation=25, ha="right"); ax.set_ylabel("DPO proxy preferred margin"); ax.set_title("DPO proxy preferred margin by domain with raw rows")
+    else:
+        _plot_empty(ax, "Reward margin by domain", "No pair rows")
+    fig.tight_layout(); bench.save_figure(ctx, fig, "reward_margin_by_domain.png", "DPO proxy margin by domain with raw points.")
+
+    # Probe atlas and ladder
+    for filename, title, rows in [("preference_probe_control_atlas.png", "Preference probe/control atlas", sorted(eval_rows, key=lambda r: plot_metric(r)[1])), ("confound_specificity_ladder.png", "Confound specificity ladder", sorted(eval_rows, key=lambda r: plot_metric(r)[1], reverse=True))]:
+        fig, ax = plt.subplots(figsize=(10, max(4, 0.28 * max(1, len(rows)))))
+        if rows:
+            y = np.arange(len(rows))
+            vals = [plot_metric(r)[1] if math.isfinite(plot_metric(r)[1]) else 0.0 for r in rows]
+            colors = ["#4c78a8" if plot_metric(r)[0] == "auc" else "#f58518" for r in rows]
+            ax.barh(y, vals, color=colors)
+            ax.axvline(0.5, linestyle="--", linewidth=0.8); ax.axvline(PREFERENCE_AUC_BAR, linestyle=":", linewidth=0.8); ax.set_yticks(y, [str(r.get("score_name")) for r in rows], fontsize=7); ax.set_xlabel("AUC, or accuracy when AUC is undefined"); ax.set_title(title)
+        else:
+            _plot_empty(ax, title, "No score rows")
+        fig.tight_layout(); bench.save_figure(ctx, fig, filename, title)
+
+    # Disagreement matrix
+    matrix = np.zeros((2,2))
     for row, pair in zip(pair_rows, pairs):
-        by_domain[pair.domain].append(as_float(row["dpo_proxy_preferred_margin"], 0.0))
-    domains = sorted(by_domain)
-    fig, ax = plt.subplots(figsize=(9, 4.8))
-    ax.bar(range(len(domains)), [safe_mean(by_domain[d], default=0.0) for d in domains])
-    ax.axhline(0, linestyle="--", linewidth=0.8)
-    ax.set_title("DPO proxy preferred margin by domain")
-    ax.set_ylabel("mean preferred margin")
-    ax.set_xticks(range(len(domains)), domains, rotation=25, ha="right")
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "reward_margin_by_domain.png", "DPO proxy margin by domain.")
-
-    all_names = [str(r["score_name"]) for r in eval_rows]
-    all_aucs = [as_float(r.get("auc"), 0.0) for r in eval_rows]
-    fig, ax = plt.subplots(figsize=(10, max(4, 0.28 * len(all_names))))
-    y = np.arange(len(all_names))
-    ax.barh(y, all_aucs)
-    ax.axvline(0.5, linestyle="--", linewidth=0.8)
-    ax.set_yticks(y, all_names, fontsize=7)
-    ax.set_xlabel("AUC")
-    ax.set_title("Preference probe/control atlas")
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "preference_probe_control_atlas.png", "Proxy, direction, confound, and control AUC atlas.")
-
-    ladder = [r for r in eval_rows if r.get("score_family") in {"proxy", "residual_direction", "confound", "confound_direction", "proxy_control"}]
-    ladder = sorted(ladder, key=lambda r: as_float(r.get("auc"), -999.0), reverse=True)
-    fig, ax = plt.subplots(figsize=(10, 5.5))
-    ax.bar(range(len(ladder)), [as_float(r.get("auc"), 0.0) for r in ladder])
-    ax.axhline(PREFERENCE_AUC_BAR, linestyle="--", linewidth=0.8)
-    ax.axhline(0.5, linestyle=":", linewidth=0.8)
-    ax.set_ylim(0, 1.05)
-    ax.set_title("Confound specificity ladder")
-    ax.set_ylabel("eval AUC")
-    ax.set_xticks(range(len(ladder)), [str(r["score_name"]) for r in ladder], rotation=35, ha="right")
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "confound_specificity_ladder.png", "Preference score compared with shortcut confounds.")
-
-    matrix = np.zeros((2, 2))
-    for row, pair in zip(pair_rows, pairs):
-        ytrue = 1 if pair.preferred == "a" else 0
-        ypred = 1 if str(row["dpo_proxy_prediction"]) == "a" else 0
-        # Rows display true A first, true B second.
-        matrix[0 if ytrue == 1 else 1, ypred] += 1
-    fig, ax = plt.subplots(figsize=(5.6, 4.8))
-    im = ax.imshow(matrix)
-    ax.set_xticks([0, 1], ["pred B", "pred A"])
-    ax.set_yticks([0, 1], ["true A", "true B"])
-    ax.set_title("DPO proxy disagreement matrix")
+        ytrue = 1 if pair.preferred == "a" else 0; ypred = 1 if str(row.get("dpo_proxy_prediction")) == "a" else 0; matrix[0 if ytrue == 1 else 1, ypred] += 1
+    fig, ax = plt.subplots(figsize=(5.6,4.8)); im=ax.imshow(matrix); ax.set_xticks([0,1],["pred B","pred A"]); ax.set_yticks([0,1],["true A","true B"]); ax.set_title("DPO proxy disagreement matrix")
     for i in range(2):
-        for j in range(2):
-            ax.text(j, i, int(matrix[i, j]), ha="center", va="center")
-    fig.colorbar(im, ax=ax, shrink=0.8)
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "reward_policy_disagreement_matrix.png", "DPO proxy predicted-vs-label matrix.")
+        for j in range(2): ax.text(j,i,int(matrix[i,j]),ha="center",va="center")
+    fig.colorbar(im, ax=ax, shrink=0.8); fig.tight_layout(); bench.save_figure(ctx, fig, "reward_policy_disagreement_matrix.png", "DPO proxy predicted-vs-label matrix.")
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.8))
+    # Dose response + steering frontier
+    fig, ax = plt.subplots(figsize=(8,5))
     for direction in ("preference_residual_direction", "random_direction_control"):
-        vals = defaultdict(list)
+        vals: dict[float, list[float]] = defaultdict(list)
         for row in interventions:
-            if row["direction"] == direction:
-                vals[as_float(row["scale"])].append(as_float(row["preferred_answer_logit_margin"]))
-        xs = sorted(k for k in vals if math.isfinite(k))
-        ax.plot(xs, [safe_mean(vals[s], default=0.0) for s in xs], marker="o", label=direction)
-    ax.axhline(0, linestyle="--", linewidth=0.8)
-    ax.set_xlabel("activation-addition scale")
-    ax.set_ylabel("mean preferred A/B logit margin")
-    ax.set_title("Preference steering frontier")
-    ax.legend(fontsize=8)
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "preference_steering_frontier.png", "Activation-addition preference frontier.")
+            if row.get("direction") == direction:
+                scale=as_float(row.get("scale")); val=as_float(row.get("preferred_answer_logit_margin"))
+                if math.isfinite(scale) and math.isfinite(val): vals[scale].append(val)
+        xs=sorted(vals); means=[]; cis=[]
+        for s in xs:
+            mean, ci, _ = _mean_ci(vals[s]); means.append(mean if math.isfinite(mean) else 0); cis.append(ci if math.isfinite(ci) else 0)
+        if xs:
+            ax.errorbar(xs, means, yerr=cis, marker="o", label=direction)
+            for s in xs: ax.scatter([s+_jitter(f"{direction}|{s}|{i}",0.035) for i in range(len(vals[s]))], vals[s], s=12, alpha=0.55)
+    ax.axhline(0, linestyle="--", linewidth=0.8); ax.set_xlabel("activation-addition scale"); ax.set_ylabel("preferred A/B logit margin"); ax.set_title("Dose response: preference direction versus random control"); ax.legend(fontsize=8); fig.tight_layout(); bench.save_figure(ctx, fig, "dose_response.png", "Raw and aggregate activation-addition dose response.")
 
-    syco_rows = [(pair, row) for pair, row in zip(pairs, pair_rows) if pair.preference_type == "anti_sycophancy"]
-    fig, ax = plt.subplots(figsize=(7.5, 4.8))
+    fig, ax = plt.subplots(figsize=(7.5,4.8))
+    for direction in ("preference_residual_direction", "random_direction_control"):
+        vals: dict[float, list[float]] = defaultdict(list)
+        for row in interventions:
+            if row.get("direction") == direction:
+                vals[as_float(row.get("scale"))].append(as_float(row.get("shift_from_zero_scale")))
+        xs=sorted(k for k in vals if math.isfinite(k)); ax.plot(xs, [safe_mean(vals[s],0.0) for s in xs], marker="o", label=direction)
+    ax.axhline(0, linestyle="--", linewidth=0.8); ax.set_xlabel("activation-addition scale"); ax.set_ylabel("mean shift from scale 0"); ax.set_title("Preference steering frontier"); ax.legend(fontsize=8); fig.tight_layout(); bench.save_figure(ctx, fig, "preference_steering_frontier.png", "Activation-addition preference frontier.")
+
+    # Layer heatmap
+    fig, ax = plt.subplots(figsize=(8.5,4.8))
+    if depth_rows:
+        metrics=["train_preference_direction_auc","train_control_floor_auc","train_lift_over_control_floor","eval_preference_direction_auc","eval_lift_over_confound_direction_control"]
+        depths=[int(r["depth"]) for r in depth_rows]; data=np.array([[as_float(r.get(m),0.0) for r in depth_rows] for m in metrics]); im=ax.imshow(data, aspect="auto"); ax.set_yticks(range(len(metrics)), metrics, fontsize=8); ax.set_xticks(range(len(depths)), [str(d) for d in depths]); ax.set_xlabel("stream depth"); ax.set_title("Layer/depth sweep: train selection and eval survival")
+        for i in range(data.shape[0]):
+            for j in range(data.shape[1]): ax.text(j,i,f"{data[i,j]:.2f}",ha="center",va="center",fontsize=7)
+        fig.colorbar(im, ax=ax, shrink=0.8)
+    else:
+        _plot_empty(ax, "Layer sweep heatmap", "No depth rows")
+    fig.tight_layout(); bench.save_figure(ctx, fig, "layer_sweep_heatmap.png", "Depth sweep heatmap for Lab 32 preference direction.")
+
+    # Paired examples
+    specimen_rows = build_pair_source_rows(pairs, pair_rows); fig, ax = plt.subplots(figsize=(8,6))
+    if specimen_rows:
+        xs=[as_float(r.get("dpo_proxy_preferred_margin"),0.0) for r in specimen_rows]; ys=[as_float(r.get("preference_direction_preferred_margin"),0.0) for r in specimen_rows]
+        ax.scatter(xs, ys, s=42)
+        for r,xv,yv in zip(specimen_rows,xs,ys):
+            if r.get("needs_review") or as_float(r.get("dpo_minus_shortcut"),1.0) < 0: ax.annotate(str(r["pair_id"])[-12:], (xv,yv), fontsize=7)
+        ax.axhline(0, linestyle="--", linewidth=0.8); ax.axvline(0, linestyle="--", linewidth=0.8); ax.set_xlabel("DPO proxy preferred margin"); ax.set_ylabel("Preference-direction preferred margin"); ax.set_title("Paired examples: proxy versus residual direction")
+    else:
+        _plot_empty(ax, "Paired examples", "No pair specimen rows")
+    fig.tight_layout(); bench.save_figure(ctx, fig, "paired_examples.png", "Raw paired margins for proxy and residual direction.")
+
+    # Sycophancy and swap
+    syco_rows=build_sycophancy_rows(pairs,pair_rows); fig, ax=plt.subplots(figsize=(7.5,4.8))
     if syco_rows:
-        xs = [as_float(row["agreement_preferred_margin"], 0.0) for _, row in syco_rows]
-        ys = [as_float(row["dpo_proxy_preferred_margin"], 0.0) for _, row in syco_rows]
-        ax.scatter(xs, ys, s=80)
-        for pair, row in syco_rows:
-            ax.annotate(pair.pair_id.replace("sycophancy_", "syco_")[-12:], (as_float(row["agreement_preferred_margin"], 0.0), as_float(row["dpo_proxy_preferred_margin"], 0.0)), fontsize=8)
-    ax.axhline(0, linestyle="--", linewidth=0.8)
-    ax.axvline(0, linestyle="--", linewidth=0.8)
-    ax.set_xlabel("agreement preferred margin")
-    ax.set_ylabel("DPO proxy preferred margin")
-    ax.set_title("Sycophancy reward-risk quadrant")
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "sycophancy_reward_risk_quadrant.png", "Sycophancy risk quadrant for false-agreement rows.")
+        xs=[as_float(r.get("agreement_preferred_margin"),0.0) for r in syco_rows]; ys=[as_float(r.get("dpo_proxy_preferred_margin"),0.0) for r in syco_rows]; ax.scatter(xs,ys,s=80)
+        for r,xv,yv in zip(syco_rows,xs,ys): ax.annotate(str(r["pair_id"])[-12:], (xv,yv), fontsize=8)
+    else: ax.text(0.5,0.5,"No anti-sycophancy rows in selected set",ha="center",va="center",transform=ax.transAxes)
+    ax.axhline(0, linestyle="--", linewidth=0.8); ax.axvline(0, linestyle="--", linewidth=0.8); ax.set_xlabel("agreement preferred margin"); ax.set_ylabel("DPO proxy preferred margin"); ax.set_title("Sycophancy reward-risk quadrant"); fig.tight_layout(); bench.save_figure(ctx, fig, "sycophancy_reward_risk_quadrant.png", "Sycophancy risk quadrant for false-agreement rows.")
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.8))
-    swap_rows = [
-        r for r in interventions
-        if r["direction"] == "preference_residual_direction" and as_float(r["scale"]) == 1.0
-    ]
-    swap_groups = defaultdict(list)
-    for row in swap_rows:
-        swap_groups[str(row.get("presentation", "original"))].append(as_float(row.get("shift_from_zero_scale"), 0.0))
-    swap_labels = sorted(swap_groups) or ["none"]
-    swap_vals = [safe_mean(swap_groups[label], default=0.0) for label in swap_labels] if swap_groups else [0.0]
-    ax.bar(range(len(swap_labels)), swap_vals)
-    ax.axhline(0, linestyle="--", linewidth=0.8)
-    ax.set_xticks(range(len(swap_labels)), swap_labels, rotation=20, ha="right")
-    ax.set_ylabel("mean shift from scale 0")
-    ax.set_title("Judge-prompt A/B swap control")
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "judge_prompt_swap_control.png", "Preference-direction shift under original and A/B-swapped judge prompts.")
-
+    fig, ax=plt.subplots(figsize=(7.5,4.8)); groups: dict[str, list[float]] = defaultdict(list)
+    for row in interventions:
+        if row.get("direction") == "preference_residual_direction" and abs(as_float(row.get("scale"), float("nan")) - 1.0) < 1e-9: groups[str(row.get("presentation","original"))].append(as_float(row.get("shift_from_zero_scale"),0.0))
+    if groups:
+        labels=sorted(groups); ax.bar(range(len(labels)), [safe_mean(groups[l],0.0) for l in labels]); ax.axhline(0, linestyle="--", linewidth=0.8); ax.set_xticks(range(len(labels)), labels, rotation=20, ha="right"); ax.set_ylabel("mean shift from scale 0"); ax.set_title("Judge-prompt A/B swap control")
+    else: _plot_empty(ax, "Judge-prompt A/B swap control", "No scale=1 preference-direction rows")
+    fig.tight_layout(); bench.save_figure(ctx, fig, "judge_prompt_swap_control.png", "Preference-direction shift under original and A/B-swapped judge prompts.")
+    return sources
 
 def write_claims(ctx: bench.RunContext, evidence: Sequence[Mapping[str, Any]], metrics: Mapping[str, Any]) -> None:
     run_name = ctx.run_dir.name
@@ -2028,6 +2481,14 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "self_check_status": self_check_status,
         "direction_metadata": direction_metadata,
         "intervention": intervention_summary,
+        "artifact_schema": {
+            "plot_manifest": "plots/plot_manifest.json",
+            "plot_source_dir": "tables/figure_sources/",
+            "warning_summary": "diagnostics/warning_summary.json",
+            "failure_specimens_jsonl": "tables/failure_specimens.jsonl",
+            "failure_specimens_md": "tables/failure_specimens.md",
+            "run_config_snapshot": "diagnostics/lab32_run_config_snapshot.json",
+        },
         **evidence_metrics,
     }
 
@@ -2053,8 +2514,12 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     write_operationalization_audit(ctx, evidence, counterexamples)
     write_run_summary(ctx, data_info, metrics, evidence, intervention_summary)
     write_claims(ctx, evidence, metrics)
-    write_plots(ctx, pairs, pair_rows, report, interventions, evidence, disagreements)
+    write_failure_specimens(ctx, counterexamples, disagreements)
+    plot_sources = write_plots(ctx, pairs, pair_rows, report, depth_rows, confound_rows, interventions, intervention_summary_rows, evidence, disagreements, counterexamples, data_info)
+    write_warning_summary(ctx, data_info, report, interventions, counterexamples, disagreements, plot_sources)
+    write_lab32_run_config_snapshot(ctx, bundle, data_info, direction_metadata, plot_sources, [p.pair_id for p in pairs])
     print(
         f"[lab32] wrote {len(pair_rows)} pair rows, {len(report)} probe rows, "
-        f"{len(counterexamples)} counterexamples, and {len(evidence)} evidence rows"
+        f"{len(counterexamples)} counterexamples, {len(evidence)} evidence rows, "
+        f"and {len(plot_sources)} plot/source artifacts"
     )

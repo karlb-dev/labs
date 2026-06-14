@@ -1607,3 +1607,1017 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     write_claims(ctx, evidence_rows)
     write_plots(ctx, probe_rows, patch_rows, specificity_rows, transfer_rows, leak_rows, evidence_rows)
     print(f"[lab33] wrote {len(prompt_rows)} prompts, {len(probe_rows)} probe rows, {len(patch_rows)} patch rows, and {len(evidence_rows)} evidence rows")
+
+# ---------------------------------------------------------------------------
+# Second-pass visualization/data-quality overrides
+# ---------------------------------------------------------------------------
+#
+# This block deliberately sits after the first-pass implementation. Python name
+# binding means these definitions replace the earlier writer/plot/run functions
+# without disturbing the proven synthetic connector measurement code above.
+
+PATCH_DOSE_GRID = (0.0, 0.25, 0.50, 0.75, 1.0)
+MAX_FAILURE_SPECIMENS = 40
+
+
+def row_id(prefix: str, *parts: Any) -> str:
+    payload = "|".join(str(part) for part in parts)
+    return f"{prefix}_{hashlib.sha256(payload.encode('utf-8')).hexdigest()[:12]}"
+
+
+def boolish(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "passed", "pass"}
+
+
+def safe_stderr(values: Sequence[Any]) -> float:
+    vals = [fnum(v) for v in values]
+    vals = [v for v in vals if math.isfinite(v)]
+    if len(vals) <= 1:
+        return float("nan")
+    return float(statistics.stdev(vals) / math.sqrt(len(vals)))
+
+
+def safe_min(values: Sequence[Any], default: float = float("nan")) -> float:
+    vals = [fnum(v) for v in values]
+    vals = [v for v in vals if math.isfinite(v)]
+    return min(vals) if vals else default
+
+
+def item_uid(item: MultiItem) -> str:
+    return row_id("mm_item", item.item_id, item.concept_family, item.split)
+
+
+def patch_metadata(patch_type: str) -> tuple[str, str, str]:
+    table = {
+        "clean_reference": ("reference", "connector", "none"),
+        "no_patch_corrupt": ("baseline", "connector", "none"),
+        "connector_clean_to_corrupt": ("target", "connector", "none"),
+        VISUAL_PATCH_TYPE: ("target", "vision_visual", "visual"),
+        "language_state_patch": ("target", "language", "language"),
+        "caption_patch": ("positive_control", "caption", "caption"),
+        "ocr_channel_patch": ("shortcut_control", "ocr_channel", "ocr"),
+        "background_channel_patch": ("shortcut_control", "background_channel", "background"),
+        "text_query_patch": ("text_control", "text_query", "text"),
+        "wrong_region_or_ocr_patch": ("wrong_site_control", "ocr+background", "wrong_region_or_shortcut"),
+        "random_patch_control": ("random_control", "random_hash_source", "random"),
+    }
+    return table.get(str(patch_type), ("other", "", ""))
+
+
+_ORIGINAL_LOAD_ITEMS = load_items
+
+
+def builtin_smoke_payloads() -> list[dict[str, Any]]:
+    """Tiny built-in Tier A fallback so artifact plumbing is still testable.
+
+    The frozen JSONL is the science source. This fallback is intentionally
+    marked smoke-only and low-row-count in the data manifest.
+    """
+    def row(item_id: str, family: str, target: str, distractor: str, spec: dict[str, Any], control: dict[str, Any], region: str = "object", split: str = "train") -> dict[str, Any]:
+        return {
+            "item_id": item_id,
+            "image_path": f"generated/{item_id}_clean.png",
+            "image_control_path": f"generated/{item_id}_corrupt.png",
+            "question": "What is the answer shown by the rendered image?",
+            "target": target,
+            "distractor": distractor,
+            "concept_family": family,
+            "text_control_prompt": "Answer the visual question using only the rendered image.",
+            "split": split,
+            "image_spec": spec,
+            "control_spec": control,
+            "region": region,
+            "notes": "built-in Tier A smoke fallback row",
+        }
+    return [
+        row("smoke_color_red_blue", "color", "red", "blue", {"color": "red", "shape": "circle", "background": "plain"}, {"color": "blue", "shape": "circle", "background": "plain"}),
+        row("smoke_shape_square_circle", "shape", "square", "circle", {"color": "green", "shape": "square", "background": "plain"}, {"color": "green", "shape": "circle", "background": "plain"}),
+        row("smoke_count_two_three", "count", "two", "three", {"color": "orange", "shape": "circle", "count": 2, "background": "plain"}, {"color": "orange", "shape": "circle", "count": 3, "background": "plain"}),
+        row("smoke_spatial_left_right", "spatial", "left", "right", {"color": "purple", "shape": "circle", "position": "left", "background": "plain"}, {"color": "purple", "shape": "circle", "position": "right", "background": "plain"}, region="left"),
+        row("smoke_chart_left_right", "chart", "left", "right", {"shape": "bar", "chart_value": "left_taller", "background": "chart"}, {"shape": "bar", "chart_value": "right_taller", "background": "chart"}, region="bars"),
+        row("smoke_ocr_trap_red_blue", "ocr_control", "red", "blue", {"color": "red", "shape": "circle", "ocr_text": "blue", "background": "plain"}, {"color": "blue", "shape": "circle", "ocr_text": "blue", "background": "plain"}),
+        row("smoke_background_trap_red_blue", "background_control", "red", "blue", {"color": "red", "shape": "circle", "background": "blue"}, {"color": "blue", "shape": "circle", "background": "blue"}),
+    ]
+
+
+def load_items(ctx: bench.RunContext) -> tuple[list[MultiItem], dict[str, Any]]:  # type: ignore[override]
+    path = data_path(ctx.args)
+    if path.exists():
+        return _ORIGINAL_LOAD_ITEMS(ctx)
+    if str(getattr(ctx.args, "tier", "")).lower() != "a":
+        raise FileNotFoundError(
+            f"Lab 33 data file not found: {path}. Run data/make_multimodal_concept_pairs.py or install the frozen JSONL."
+        )
+    print("[lab33] frozen multimodal JSONL missing; using built-in Tier A fallback. This is plumbing only.")
+    payloads = builtin_smoke_payloads()
+    items = [MultiItem.from_payload(payload) for payload in payloads]
+    if int(ctx.args.max_examples or 0) > 0:
+        items = balanced_cap(items, int(ctx.args.max_examples))
+    digest = hashlib.sha256("\n".join(item.item_id for item in items).encode("utf-8")).hexdigest()
+    info = {
+        "data_file": DATA_FILE,
+        "data_path": str(path),
+        "data_source": "builtin_tier_a_smoke_fallback",
+        "data_sha256": digest,
+        "manifest_expected_sha256": None,
+        "manifest_note": f"{path} not found; built-in smoke fallback used",
+        "manifest_ok": False,
+        "n_rows_file": len(payloads),
+        "n_rows_selected": len(items),
+        "families": dict(Counter(item.concept_family for item in items)),
+        "splits": dict(Counter(item.split for item in items)),
+        "prompt_set": ctx.args.prompt_set,
+        "max_examples": ctx.args.max_examples,
+        "science_ready": False,
+        "science_scope": "synthetic connector smoke mode; no real VLM hooks loaded",
+        "safety_scope": "benign synthetic shapes, charts, positions, OCR traps, and background controls only",
+        "fallback_data": True,
+    }
+    return items, info
+
+
+def state_score_long(items: Sequence[MultiItem], states: Mapping[tuple[str, str, str], Sequence[float]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for item in items:
+        for variant in ("clean", "corrupt"):
+            for state_type in (*STATE_TYPES, "ocr_channel", "background_channel"):
+                state = states[(item.item_id, variant, state_type)]
+                target_projection = dot(state, value_direction(item.target))
+                distractor_projection = dot(state, value_direction(item.distractor))
+                rows.append({
+                    "score_row_id": row_id("score", item.item_id, variant, state_type),
+                    "item_uid": item_uid(item),
+                    "item_id": item.item_id,
+                    "concept_family": item.concept_family,
+                    "split": item.split,
+                    "region": item.region,
+                    "variant": variant,
+                    "state_type": state_type,
+                    "target": item.target,
+                    "distractor": item.distractor,
+                    "target_projection": rounded(target_projection),
+                    "distractor_projection": rounded(distractor_projection),
+                    "answer_margin": rounded(target_projection - distractor_projection),
+                    "claim_scope": "synthetic_feature_basis_only",
+                })
+    return rows
+
+
+def interpolate_state(base: Sequence[float], source: Sequence[float], dose: float) -> list[float]:
+    return normalize([(1.0 - float(dose)) * float(a) + float(dose) * float(b) for a, b in zip(base, source)])
+
+
+def patch_dose_response(items: Sequence[MultiItem], states: Mapping[tuple[str, str, str], Sequence[float]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for item in items:
+        clean_connector = states[(item.item_id, "clean", "connector")]
+        corrupt_connector = states[(item.item_id, "corrupt", "connector")]
+        clean_margin = answer_margin(clean_connector, item.target, item.distractor)
+        corrupt_margin = answer_margin(corrupt_connector, item.target, item.distractor)
+        denominator = clean_margin - corrupt_margin
+        if abs(denominator) < 1e-6:
+            denominator = 1e-6
+        random_source = state_from_features([(f"dose_random_source:{item.item_id}", 1.0)])
+        source_specs = [
+            (VISUAL_PATCH_TYPE, "vision_visual", states[(item.item_id, "clean", "vision_visual")], "target_visual"),
+            ("language_state_patch", "language", states[(item.item_id, "clean", "language")], "target_language"),
+            ("caption_patch", "caption", states[(item.item_id, "clean", "caption")], "positive_caption_control"),
+            ("ocr_channel_patch", "ocr_channel", states[(item.item_id, "clean", "ocr_channel")], "shortcut_control"),
+            ("background_channel_patch", "background_channel", states[(item.item_id, "clean", "background_channel")], "shortcut_control"),
+            ("text_query_patch", "text_query", states[(item.item_id, "clean", "text_query")], "text_control"),
+            ("random_patch_control", "random_hash_source", random_source, "random_control"),
+        ]
+        for patch_type, source_state_type, source, control_role in source_specs:
+            for dose in PATCH_DOSE_GRID:
+                state = interpolate_state(corrupt_connector, source, dose)
+                patched_margin = answer_margin(state, item.target, item.distractor)
+                recovery_value = (patched_margin - corrupt_margin) / denominator
+                rows.append({
+                    "dose_response_id": row_id("dose", item.item_id, patch_type, dose),
+                    "item_uid": item_uid(item),
+                    "item_id": item.item_id,
+                    "concept_family": item.concept_family,
+                    "split": item.split,
+                    "region": item.region,
+                    "patch_type": patch_type,
+                    "source_state_type": source_state_type,
+                    "control_role": control_role,
+                    "dose": dose,
+                    "clean_margin": rounded(clean_margin),
+                    "corrupt_margin": rounded(corrupt_margin),
+                    "denominator": rounded(denominator),
+                    "patched_margin": rounded(patched_margin),
+                    "recovery": rounded(recovery_value),
+                    "target": item.target,
+                    "distractor": item.distractor,
+                    "claim_scope": "synthetic_dose_sweep_only",
+                })
+    return rows
+
+
+def patch_recovery_summary(patch_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in patch_rows:
+        grouped[str(row.get("patch_type", ""))].append(row)
+    rows: list[dict[str, Any]] = []
+    for patch_type, members in sorted(grouped.items()):
+        vals = [fnum(r.get("recovery")) for r in members]
+        role, source, control = patch_metadata(patch_type)
+        rows.append({
+            "patch_type": patch_type,
+            "method_role": role,
+            "source_state_type": source,
+            "control_family": control,
+            "n_rows": len(members),
+            "mean_recovery": rounded(safe_mean(vals)),
+            "stderr_recovery": rounded(safe_stderr(vals)),
+            "min_recovery": rounded(safe_min(vals)),
+            "max_recovery": rounded(safe_max(vals)),
+            "n_negative_recovery": sum(1 for v in vals if math.isfinite(v) and v < 0),
+            "n_above_recovery_gate": sum(1 for v in vals if math.isfinite(v) and v >= MIN_RECOVERY_GATE),
+        })
+    return rows
+
+
+def concept_family_summary(
+    evidence_rows: Sequence[Mapping[str, Any]],
+    specificity_rows: Sequence[Mapping[str, Any]],
+    leak_rows: Sequence[Mapping[str, Any]],
+    text_leak_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    spec_by_family: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    leak_by_family: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    text_by_family: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in specificity_rows:
+        spec_by_family[str(row.get("concept_family", ""))].append(row)
+    for row in leak_rows:
+        leak_by_family[str(row.get("concept_family", ""))].append(row)
+    for row in text_leak_rows:
+        text_by_family[str(row.get("concept_family", ""))].append(row)
+    out: list[dict[str, Any]] = []
+    for row in evidence_rows:
+        family = str(row.get("concept_family", ""))
+        spec = spec_by_family.get(family, [])
+        leaks = leak_by_family.get(family, [])
+        text = text_by_family.get(family, [])
+        out.append({
+            "concept_family": family,
+            "n_items": row.get("n_items", ""),
+            "mean_visual_recovery": row.get("visual_region_recovery", ""),
+            "mean_control_floor": row.get("control_floor", ""),
+            "mean_specificity_gap": row.get("specificity_gap", ""),
+            "n_control_close_to_visual": sum(1 for r in spec if boolish(r.get("control_close_to_visual"))),
+            "n_visual_beats_controls": sum(1 for r in spec if boolish(r.get("visual_beats_controls"))),
+            "n_shortcut_triggered": sum(1 for r in leaks if r.get("leak_status") == "shortcut_control_triggered"),
+            "n_text_label_leaks": sum(1 for r in text if r.get("text_leak_status") == "label_text_leak"),
+            "claim_posture": row.get("claim_posture", ""),
+        })
+    return out
+
+
+def augment_rows(
+    prompt_rows: Sequence[Mapping[str, Any]],
+    probe_rows: Sequence[Mapping[str, Any]],
+    patch_rows: Sequence[Mapping[str, Any]],
+    specificity_rows: Sequence[Mapping[str, Any]],
+    transfer_rows: Sequence[Mapping[str, Any]],
+    leak_rows: Sequence[Mapping[str, Any]],
+    text_leak_rows: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+) -> None:
+    state_roles = {
+        "vision_visual": "target_visual_only",
+        "vision": "target_visual_plus_shortcuts",
+        "connector": "target_connector_mixture",
+        "language": "downstream_language_proxy",
+        "caption": "positive_caption_control",
+        "text_query": "negative_text_query_control",
+    }
+    for row in prompt_rows:
+        if isinstance(row, dict):
+            row.setdefault("prompt_row_id", row_id("prompt", row.get("item_id")))
+            row.setdefault("item_uid", row_id("mm_item", row.get("item_id"), row.get("concept_family"), row.get("split")))
+    for row in probe_rows:
+        if isinstance(row, dict):
+            row.setdefault("probe_row_id", row_id("probe", row.get("concept_family"), row.get("state_type")))
+            row.setdefault("method_role", state_roles.get(str(row.get("state_type")), "unknown"))
+            row.setdefault("is_control_state", str(row.get("state_type")) in {"caption", "text_query"})
+            auc = fnum(row.get("auc"))
+            row.setdefault("auc_minus_chance", rounded(auc - 0.5 if math.isfinite(auc) else float("nan")))
+    for row in patch_rows:
+        if isinstance(row, dict):
+            role, source, control = patch_metadata(str(row.get("patch_type", "")))
+            row.setdefault("patch_row_id", row_id("patch", row.get("item_id"), row.get("patch_type")))
+            row.setdefault("intervention_id", row_id("intervention", row.get("patch_type"), source, control))
+            row.setdefault("method_role", role)
+            row.setdefault("source_state_type", source)
+            row.setdefault("control_family", control)
+    for row in specificity_rows:
+        if not isinstance(row, dict):
+            continue
+        candidates = [
+            ("ocr_channel_patch", fnum(row.get("ocr_control_recovery"))),
+            ("background_channel_patch", fnum(row.get("background_control_recovery"))),
+            ("text_query_patch", fnum(row.get("text_query_control_recovery"))),
+            ("wrong_region_or_ocr_patch", fnum(row.get("wrong_region_or_ocr_recovery"))),
+            ("random_patch_control", fnum(row.get("random_control_recovery"))),
+        ]
+        finite = [(name, val) for name, val in candidates if math.isfinite(val)]
+        strongest_name, strongest_val = max(finite, key=lambda kv: kv[1]) if finite else ("", float("nan"))
+        visual = fnum(row.get("visual_region_recovery"))
+        row.setdefault("specificity_row_id", row_id("specificity", row.get("item_id")))
+        row["strongest_control_type"] = strongest_name
+        row["strongest_control_recovery"] = rounded(strongest_val)
+        row["control_close_to_visual"] = bool(math.isfinite(visual) and math.isfinite(strongest_val) and strongest_val >= visual - CONTROL_CLOSE_TOL)
+        row["negative_specificity_gap"] = bool(fnum(row.get("specificity_gap")) < 0)
+    for row in transfer_rows:
+        if isinstance(row, dict):
+            row.setdefault("transfer_row_id", row_id("transfer", row.get("concept_family")))
+            a = fnum(row.get("image_direction_on_caption_auc"))
+            b = fnum(row.get("image_direction_on_text_query_auc"))
+            row.setdefault("caption_minus_text_query_auc_gap", rounded(a - b if math.isfinite(a) and math.isfinite(b) else float("nan")))
+    for row in leak_rows:
+        if isinstance(row, dict):
+            row.setdefault("leak_row_id", row_id("leak", row.get("item_id")))
+            flags = []
+            if boolish(row.get("ocr_names_distractor")):
+                flags.append("ocr_names_distractor")
+            if boolish(row.get("background_names_distractor")):
+                flags.append("background_names_distractor")
+            if boolish(row.get("shortcut_risk")):
+                flags.append("shortcut_reduces_visual_margin")
+            row.setdefault("risk_flags", ";".join(flags))
+    for row in text_leak_rows:
+        if isinstance(row, dict):
+            row.setdefault("text_leak_row_id", row_id("textleak", row.get("item_id")))
+            row.setdefault("question_contains_label", boolish(row.get("target_in_question_or_text_control")) or boolish(row.get("distractor_in_question_or_text_control")))
+    for row in evidence_rows:
+        if isinstance(row, dict):
+            row.setdefault("evidence_row_id", row_id("evidence", row.get("concept_family")))
+    for i, row in enumerate(counterexamples):
+        if isinstance(row, dict):
+            row.setdefault("counterexample_id", row_id("counterexample", row.get("concept_family"), row.get("item_id"), row.get("kind"), i))
+
+
+def failure_specimens(
+    specificity_rows: Sequence[Mapping[str, Any]],
+    leak_rows: Sequence[Mapping[str, Any]],
+    text_leak_rows: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+
+    def add(row: Mapping[str, Any], kind: str, severity: str, lesson: str, source_table: str) -> None:
+        item_id = str(row.get("item_id", ""))
+        key = (item_id, kind)
+        if key in seen:
+            return
+        seen.add(key)
+        rows.append({
+            "specimen_id": row_id("specimen", item_id, kind),
+            "item_id": item_id,
+            "concept_family": row.get("concept_family", ""),
+            "kind": kind,
+            "severity": severity,
+            "source_table": source_table,
+            "visual_region_recovery": row.get("visual_region_recovery", ""),
+            "control_floor": row.get("control_floor", row.get("strongest_control_recovery", "")),
+            "specificity_gap": row.get("specificity_gap", ""),
+            "leak_status": row.get("leak_status", ""),
+            "lesson": lesson,
+            "student_action": "Inspect this specimen before using broad visual-mechanism language.",
+        })
+
+    for row in counterexamples:
+        add(row, str(row.get("kind", "counterexample")), "warning", str(row.get("lesson", "Counterexample narrows the claim.")), "tables/multimodal_counterexamples.csv")
+    for row in specificity_rows:
+        visual = fnum(row.get("visual_region_recovery"))
+        gap = fnum(row.get("specificity_gap"))
+        control = fnum(row.get("control_floor"))
+        if math.isfinite(gap) and gap < MIN_SPECIFICITY_GAP:
+            add(row, "weak_or_negative_specificity_gap", "warning", "Visual patch did not beat the strongest control by the configured gap.", "tables/multimodal_specificity_controls.csv")
+        elif math.isfinite(visual) and visual < MIN_RECOVERY_GATE:
+            add(row, "weak_visual_recovery", "info", "Visual patch recovery stayed below the recovery gate.", "tables/multimodal_specificity_controls.csv")
+        elif math.isfinite(control) and math.isfinite(visual) and control >= visual - CONTROL_CLOSE_TOL:
+            add(row, "control_close_to_visual", "warning", "A control is close enough to the visual patch to block overbroad language.", "tables/multimodal_specificity_controls.csv")
+    for row in leak_rows:
+        if row.get("leak_status") == "shortcut_control_triggered":
+            add(row, "ocr_background_shortcut", "blocker", "OCR or background shortcut evidence is intentionally present.", "tables/ocr_background_leak_audit.csv")
+    for row in text_leak_rows:
+        if row.get("text_leak_status") == "label_text_leak":
+            add(row, "text_label_leak", "blocker", "Question or text-control prompt contains target or distractor label text.", "tables/text_leak_audit.csv")
+
+    def rank(row: Mapping[str, Any]) -> tuple[int, float]:
+        severity = {"blocker": 0, "warning": 1, "info": 2}.get(str(row.get("severity")), 3)
+        gap = fnum(row.get("specificity_gap"), 999.0)
+        return severity, gap
+
+    return sorted(rows, key=rank)[:MAX_FAILURE_SPECIMENS]
+
+
+def warning_summary_rows(
+    data_info: Mapping[str, Any],
+    schema_summary: Mapping[str, Any],
+    render_summary: Mapping[str, Any],
+    state_summary: Mapping[str, Any],
+    alignment: Mapping[str, Any],
+    metrics: Mapping[str, Any],
+    leak_summary: Mapping[str, Any],
+    text_summary: Mapping[str, Any],
+    specificity_rows: Sequence[Mapping[str, Any]],
+    failure_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+
+    def add(code: str, severity: str, n_rows: int, artifact: str, message: str) -> None:
+        rows.append({
+            "warning_id": row_id("warn", code, n_rows, artifact),
+            "code": code,
+            "severity": severity,
+            "n_rows": int(n_rows),
+            "artifact": artifact,
+            "message": message,
+        })
+
+    add("synthetic_mode_blocks_real_vlm_claims", "blocker", 1, "diagnostics/alignment_validation.json", "Default Lab 33 uses synthetic connector states; science_ready for real-VLM claims is false.")
+    if data_info.get("fallback_data"):
+        add("fallback_data_used", "warning", 1, "diagnostics/data_manifest.json", "Builtin Tier A fallback data was used; this is plumbing only.")
+    if data_info.get("manifest_ok") is False:
+        add("data_manifest_hash_mismatch", "warning", 1, "diagnostics/data_manifest.json", "Frozen data hash did not match the manifest entry.")
+    elif data_info.get("manifest_ok") is None:
+        add("data_manifest_hash_missing", "info", 1, "diagnostics/data_manifest.json", "No usable manifest hash was found for the selected JSONL.")
+    failed_schema = int(schema_summary.get("n_schema_failed", 0) or 0)
+    if failed_schema:
+        add("schema_rows_failed", "warning", failed_schema, "diagnostics/schema_audit.csv", "Some rows failed schema or clean/corrupt answer-value checks.")
+    if not render_summary.get("all_images_rendered"):
+        add("render_validation_failed", "blocker", 1, "diagnostics/render_validation.csv", "At least one rendered image is missing or empty.")
+    if not state_summary.get("state_vectors_finite"):
+        add("nonfinite_state_vectors", "blocker", 1, "diagnostics/state_vector_audit.csv", "At least one synthetic state vector has a non-finite value.")
+    if alignment.get("real_vlm_required_before_science_claims"):
+        add("real_vlm_alignment_missing", "blocker", 1, "real_vlm_extension_checklist.md", "A real VLM extension must prove image-token and region alignment before changing the claim posture.")
+    shortcut_count = int(leak_summary.get("n_leak_controls_triggered", 0) or 0)
+    if shortcut_count:
+        add("shortcut_controls_triggered", "blocker", shortcut_count, "tables/ocr_background_leak_audit.csv", "OCR/background shortcuts triggered and must remain visible.")
+    text_leaks = int(text_summary.get("n_text_label_leaks", 0) or 0)
+    if text_leaks:
+        add("text_label_leaks", "blocker", text_leaks, "tables/text_leak_audit.csv", "Question or text-control labels leaked target/distractor text.")
+    close_controls = sum(1 for r in specificity_rows if fnum(r.get("control_floor")) >= fnum(r.get("visual_region_recovery")) - CONTROL_CLOSE_TOL)
+    if close_controls:
+        add("controls_close_to_visual_patch", "warning", close_controls, "tables/multimodal_specificity_controls.csv", "At least one strongest control is too close to visual patch recovery.")
+    low_n = sum(1 for n in (data_info.get("families", {}) or {}).values() if int(n) < 2)
+    if low_n:
+        add("low_family_sample_count", "info", low_n, "diagnostics/data_manifest.json", "Some concept families have fewer than two selected rows; Tier A plots should be read as plumbing evidence.")
+    if failure_rows:
+        add("failure_specimens_available", "info", len(failure_rows), "cards/failure_specimens.md", "Specimen-level failures or caveats were exported for reading before claims.")
+    if metrics.get("n_dose_response_rows", 0) == 0:
+        add("dose_response_empty", "warning", 1, "tables/patch_dose_response.csv", "Dose-response source table is empty.")
+    return rows
+
+
+def write_jsonl(path: pathlib.Path, rows: Sequence[Mapping[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        for row in rows:
+            f.write(json.dumps(dict(row), sort_keys=True, default=str) + "\n")
+
+
+def write_run_config_snapshot(ctx: bench.RunContext, data_info: Mapping[str, Any], alignment: Mapping[str, Any]) -> None:
+    snapshot = {
+        "lab": LAB_ID,
+        "run_name": ctx.run_dir.name,
+        "model_id": ctx.model_id or ctx.args.model,
+        "model_revision": ctx.model_revision,
+        "tier": ctx.args.tier,
+        "prompt_set": ctx.args.prompt_set,
+        "max_examples": ctx.args.max_examples,
+        "seed": ctx.args.seed,
+        "dtype": ctx.args.dtype,
+        "quantization": ctx.args.quantization,
+        "decoding": "none; synthetic connector plus bench microscope checks only",
+        "synthetic_connector": {
+            "state_dim": STATE_DIM,
+            "state_types": list(STATE_TYPES),
+            "dose_grid": list(PATCH_DOSE_GRID),
+            "control_patch_types": list(CONTROL_PATCH_TYPES),
+            "visual_patch_type": VISUAL_PATCH_TYPE,
+        },
+        "thresholds": {
+            "min_auc_gate": MIN_AUC_GATE,
+            "min_recovery_gate": MIN_RECOVERY_GATE,
+            "min_specificity_gap": MIN_SPECIFICITY_GAP,
+            "control_close_tolerance": CONTROL_CLOSE_TOL,
+        },
+        "data": dict(data_info),
+        "alignment": dict(alignment),
+        "science_ready_for_real_vlm": False,
+    }
+    path = ctx.path("diagnostics", "run_config_snapshot.json")
+    bench.write_json(path, snapshot)
+    ctx.register_artifact(path, "diagnostic", "Run configuration snapshot for Lab 33 plotting and data artifacts.")
+
+
+def write_warning_artifacts(ctx: bench.RunContext, warning_rows: Sequence[Mapping[str, Any]]) -> None:
+    csv_path = ctx.path("diagnostics", "warning_summary.csv")
+    bench.write_csv_with_context(ctx, csv_path, warning_rows)
+    ctx.register_artifact(csv_path, "diagnostic", "Warnings and blockers emitted by the Lab 33 audit.")
+    json_path = ctx.path("diagnostics", "warning_summary.json")
+    bench.write_json(json_path, {"n_warnings": len(warning_rows), "warnings": list(warning_rows)})
+    ctx.register_artifact(json_path, "diagnostic", "Machine-readable warning and blocker summary for Lab 33.")
+
+
+def write_failure_specimens(ctx: bench.RunContext, failure_rows: Sequence[Mapping[str, Any]]) -> None:  # type: ignore[override]
+    csv_path = ctx.path("tables", "failure_specimens.csv")
+    bench.write_csv_with_context(ctx, csv_path, failure_rows)
+    ctx.register_artifact(csv_path, "table", "Specimen-level rows that block or narrow visual-mechanism claims.")
+    jsonl_path = ctx.path("tables", "failure_specimens.jsonl")
+    write_jsonl(jsonl_path, failure_rows)
+    ctx.register_artifact(jsonl_path, "table", "JSONL failure specimens for downstream review or notebooks.")
+    lines = [
+        "# Lab 33 failure specimens",
+        "",
+        "These specimens are not cleanup chores. They are the audit teeth: controls that match the visual patch, shortcut rows, text-label leaks, or weak specificity rows.",
+        "",
+    ]
+    if not failure_rows:
+        lines.append("No automatic failure specimen crossed the configured synthetic thresholds. The real-VLM non-claim still holds.")
+    else:
+        for row in failure_rows:
+            lines += [
+                f"## `{row.get('item_id', '')}` - {row.get('kind', '')}",
+                "",
+                f"- family: `{row.get('concept_family', '')}`",
+                f"- severity: `{row.get('severity', '')}`",
+                f"- source table: `{row.get('source_table', '')}`",
+                f"- visual recovery: `{row.get('visual_region_recovery', '')}`; control floor: `{row.get('control_floor', '')}`; gap: `{row.get('specificity_gap', '')}`",
+                f"- lesson: {row.get('lesson', '')}",
+                f"- student action: {row.get('student_action', '')}",
+                "",
+            ]
+    card_path = ctx.path("cards", "failure_specimens.md")
+    bench.write_text(card_path, "\n".join(lines).rstrip() + "\n")
+    ctx.register_artifact(card_path, "card", "Markdown reading cards for Lab 33 failure specimens.")
+
+
+def write_upgrade_tables(
+    ctx: bench.RunContext,
+    score_rows: Sequence[Mapping[str, Any]],
+    dose_rows: Sequence[Mapping[str, Any]],
+    patch_summary_rows: Sequence[Mapping[str, Any]],
+    family_summary_rows: Sequence[Mapping[str, Any]],
+    failure_rows: Sequence[Mapping[str, Any]],
+    warning_rows: Sequence[Mapping[str, Any]],
+) -> None:
+    specs = [
+        ("tables/state_score_long.csv", score_rows, "Per-item clean/corrupt synthetic state projections and answer margins."),
+        ("tables/patch_dose_response.csv", dose_rows, "Synthetic patch dose-response rows for visual/caption/shortcut/random sources."),
+        ("tables/multimodal_dose_response.csv", dose_rows, "Alias of patch_dose_response.csv for plot readers."),
+        ("tables/patch_recovery_summary.csv", patch_summary_rows, "Aggregate recovery summary by patch type with raw-count flags."),
+        ("tables/patch_type_summary.csv", patch_summary_rows, "Alias of patch_recovery_summary.csv."),
+        ("tables/concept_family_summary.csv", family_summary_rows, "Family-level specificity, shortcut, text-leak, and posture summary."),
+    ]
+    for rel, rows, desc in specs:
+        path = ctx.path(*rel.split("/"))
+        bench.write_csv_with_context(ctx, path, rows)
+        ctx.register_artifact(path, "table", desc)
+    write_failure_specimens(ctx, failure_rows)
+    write_warning_artifacts(ctx, warning_rows)
+
+
+def write_plot_guide(ctx: bench.RunContext) -> None:  # type: ignore[override]
+    rows = [
+        {"plot": "multimodal_evidence_dashboard.png", "first_question": "Did readout, patch specificity, and shortcut gates tell the same story?", "source_table": "tables/figure_sources/multimodal_evidence_dashboard.csv", "non_claim": "Synthetic connector is not a VLM."},
+        {"plot": "target_vs_control.png", "first_question": "Does each visual patch beat its strongest same-row control?", "source_table": "tables/figure_sources/target_vs_control.csv", "non_claim": "A paired visual-control gap is still synthetic-only."},
+        {"plot": "dose_response.png", "first_question": "Does recovery rise with visual-patch dose, or only at one convenient scale?", "source_table": "tables/figure_sources/dose_response.csv", "non_claim": "Dose is synthetic vector interpolation, not a real VLM intervention strength."},
+        {"plot": "modality_handoff_atlas.png", "first_question": "Which synthetic states decode each concept family?", "source_table": "tables/figure_sources/modality_handoff_atlas.csv", "non_claim": "AUC is on synthetic states."},
+        {"plot": "image_text_probe_transfer.png", "first_question": "Does image direction transfer to caption state more than text-query state?", "source_table": "tables/figure_sources/image_text_probe_transfer.csv", "non_claim": "Caption transfer is a positive control, not vision evidence."},
+        {"plot": "patch_recovery_by_modality.png", "first_question": "Do visual patches beat OCR/background/text/random controls on aggregate and in raw spread?", "source_table": "tables/figure_sources/patch_recovery_by_modality.csv", "non_claim": "Patch is not a real VLM intervention."},
+        {"plot": "concept_specificity_matrix.png", "first_question": "Which families have positive specificity gaps?", "source_table": "tables/figure_sources/concept_specificity_matrix.csv", "non_claim": "Bright cells are synthetic audit passes."},
+        {"plot": "spatial_region_patch_map.png", "first_question": "Are spatial rows specific or carried by wrong-region controls?", "source_table": "tables/figure_sources/spatial_region_patch_map.csv", "non_claim": "Region alignment is synthetic."},
+        {"plot": "cross_modal_feature_bridge.png", "first_question": "How do synthetic image, caption, and connector directions align?", "source_table": "tables/figure_sources/cross_modal_feature_bridge.csv", "non_claim": "Bridge is hash-basis synthetic."},
+        {"plot": "ocr_background_shortcut_panel.png", "first_question": "Which shortcut rows block visual claims?", "source_table": "tables/figure_sources/ocr_background_shortcut_panel.csv", "non_claim": "Shortcut traps are audit gates, not failures to hide."},
+        {"plot": "paired_examples.png", "first_question": "Which specimens most strongly warn against the aggregate story?", "source_table": "tables/figure_sources/paired_examples.csv", "non_claim": "Specimen cards narrow the claim; they do not establish broad evidence."},
+    ]
+    path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", "Plot reading guide for Lab 33.")
+
+
+def write_figure_source_tables(
+    ctx: bench.RunContext,
+    probe_rows: Sequence[Mapping[str, Any]],
+    patch_rows: Sequence[Mapping[str, Any]],
+    specificity_rows: Sequence[Mapping[str, Any]],
+    transfer_rows: Sequence[Mapping[str, Any]],
+    leak_rows: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    dose_rows: Sequence[Mapping[str, Any]],
+    failure_rows: Sequence[Mapping[str, Any]],
+) -> None:
+    patch_summary = patch_recovery_summary(patch_rows)
+    entries: list[tuple[str, Sequence[Mapping[str, Any]], str, str, str]] = [
+        ("multimodal_evidence_dashboard.png", evidence_rows, "connector_auc, visual_region_recovery, control_floor, specificity_gap, shortcut_leak_rate", "strongest shortcut/random/wrong-region control", "Synthetic audit package status by family."),
+        ("target_vs_control.png", specificity_rows, "visual_region_recovery minus control_floor", "paired strongest control", "Visual patch must beat controls on the same row."),
+        ("dose_response.png", dose_rows, "recovery across dose", "caption/shortcut/random dose curves", "Visual dose curve should separate from controls."),
+        ("modality_handoff_atlas.png", probe_rows, "AUC", "state-type comparisons", "Readout semantics differ by synthetic state."),
+        ("image_text_probe_transfer.png", transfer_rows, "cross-modal AUC", "text_query transfer", "Caption/text transfer are controls for visual evidence."),
+        ("patch_recovery_by_modality.png", patch_summary, "mean recovery and raw item counts", "patch-type controls", "Aggregate patch recovery should not hide controls."),
+        ("concept_specificity_matrix.png", evidence_rows, "family-level gates", "control_floor", "Family-level posture and caveats."),
+        ("spatial_region_patch_map.png", [r for r in specificity_rows if r.get("concept_family") == "spatial"], "spatial recovery", "wrong_region_or_ocr and random", "Spatial claim requires region-specific recovery."),
+        ("cross_modal_feature_bridge.png", transfer_rows, "direction cosine", "caption/text transfer", "Bridge geometry is debug signal only."),
+        ("ocr_background_shortcut_panel.png", [r for r in leak_rows if r.get("leak_status") == "shortcut_control_triggered"], "shortcut_margin_delta", "visual-only margin", "Shortcut rows should block overclaims."),
+        ("paired_examples.png", failure_rows, "specimen recovery/control/leak fields", "specimen-specific controls", "Failure specimens must stay visible."),
+    ]
+    manifest_rows: list[dict[str, Any]] = []
+    for fig_name, rows, metric, control, claim in entries:
+        source_rows = [dict(r) for r in rows] if rows else [{"note": f"No source rows for {fig_name} in this run."}]
+        rel = f"tables/figure_sources/{fig_name.replace('.png', '.csv')}"
+        path = ctx.path(*rel.split("/"))
+        bench.write_csv_with_context(ctx, path, source_rows)
+        ctx.register_artifact(path, "table", f"Source table for {fig_name}.")
+        manifest_rows.append({
+            "figure_path": f"plots/{fig_name}",
+            "source_table": rel,
+            "source_row_count": len(rows),
+            "metric": metric,
+            "control": control,
+            "claim_supported": claim,
+            "generated": not bool(getattr(ctx.args, "no_plots", False)),
+            "scope": "synthetic connector only; no real VLM evidence",
+        })
+    csv_path = ctx.path("tables", "plot_manifest.csv")
+    bench.write_csv_with_context(ctx, csv_path, manifest_rows)
+    ctx.register_artifact(csv_path, "table", "Figure manifest with source tables, row counts, metrics, controls, and claim scope.")
+    json_path = ctx.path("plot_manifest.json")
+    bench.write_json(json_path, {"figures": manifest_rows, "scope": "synthetic connector only", "science_ready_for_real_vlm": False})
+    ctx.register_artifact(json_path, "manifest", "Machine-readable Lab 33 plot manifest.")
+
+
+def write_plots(
+    ctx: bench.RunContext,
+    probe_rows: Sequence[Mapping[str, Any]],
+    patch_rows: Sequence[Mapping[str, Any]],
+    specificity_rows: Sequence[Mapping[str, Any]],
+    transfer_rows: Sequence[Mapping[str, Any]],
+    leak_rows: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    dose_rows: Sequence[Mapping[str, Any]] | None = None,
+    failure_rows: Sequence[Mapping[str, Any]] | None = None,
+) -> None:  # type: ignore[override]
+    dose_rows = list(dose_rows or [])
+    failure_rows = list(failure_rows or [])
+    write_plot_guide(ctx)
+    write_figure_source_tables(ctx, probe_rows, patch_rows, specificity_rows, transfer_rows, leak_rows, evidence_rows, dose_rows, failure_rows)
+    if ctx.args.no_plots:
+        return
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    expected = [
+        "multimodal_evidence_dashboard.png",
+        "target_vs_control.png",
+        "dose_response.png",
+        "modality_handoff_atlas.png",
+        "image_text_probe_transfer.png",
+        "patch_recovery_by_modality.png",
+        "concept_specificity_matrix.png",
+        "spatial_region_patch_map.png",
+        "cross_modal_feature_bridge.png",
+        "ocr_background_shortcut_panel.png",
+        "paired_examples.png",
+    ]
+    if not evidence_rows:
+        for name in expected:
+            write_placeholder(ctx, name, name.replace("_", " ").replace(".png", ""), "No evidence rows were produced.")
+        return
+
+    families = [str(r["concept_family"]) for r in evidence_rows]
+    x = np.arange(len(families))
+    connector_auc = [fnum(r.get("connector_auc"), 0.0) for r in evidence_rows]
+    visual_patch = [fnum(r.get("visual_region_recovery"), 0.0) for r in evidence_rows]
+    control_floor = [fnum(r.get("control_floor"), 0.0) for r in evidence_rows]
+    gaps = [fnum(r.get("specificity_gap"), 0.0) for r in evidence_rows]
+    leak_rates = [fnum(r.get("shortcut_leak_rate"), 0.0) for r in evidence_rows]
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.5, 9.0))
+    fig.suptitle("Lab 33 multimodal synthetic connector dashboard\nreal-VLM science_ready=false; controls are evidence, not decoration", fontsize=13, fontweight="bold")
+    state_means = {s: safe_mean([r["auc"] for r in probe_rows if r["state_type"] == s], default=0.0) for s in STATE_TYPES}
+    axes[0, 0].bar(list(state_means), list(state_means.values()))
+    axes[0, 0].axhline(MIN_AUC_GATE, linestyle="--", linewidth=1, label="AUC gate")
+    axes[0, 0].set_ylim(0, 1.05)
+    axes[0, 0].set_title("Mean readout AUC by synthetic state")
+    axes[0, 0].tick_params(axis="x", rotation=25)
+    axes[0, 0].legend(fontsize=8)
+    axes[0, 1].bar(x - 0.18, visual_patch, 0.36, label="visual patch")
+    axes[0, 1].bar(x + 0.18, control_floor, 0.36, label="strongest control")
+    axes[0, 1].axhline(MIN_RECOVERY_GATE, linestyle="--", linewidth=1, label="recovery gate")
+    axes[0, 1].set_xticks(x, families, rotation=20, ha="right")
+    axes[0, 1].set_title("Visual patch versus strongest control")
+    axes[0, 1].set_ylabel("recovery")
+    axes[0, 1].legend(fontsize=8)
+    axes[1, 0].bar(families, gaps)
+    axes[1, 0].axhline(MIN_SPECIFICITY_GAP, linestyle="--", linewidth=1, label="specificity gate")
+    axes[1, 0].axhline(0, linewidth=0.8)
+    axes[1, 0].set_xticks(x, families, rotation=20, ha="right")
+    axes[1, 0].set_ylabel("visual minus control")
+    axes[1, 0].set_title("Specificity gap")
+    axes[1, 0].legend(fontsize=8)
+    axes[1, 1].bar(families, leak_rates)
+    axes[1, 1].set_xticks(x, families, rotation=20, ha="right")
+    axes[1, 1].set_ylim(0, 1.05)
+    axes[1, 1].set_title("OCR/background shortcut trigger rate")
+    axes[1, 1].set_ylabel("rate")
+    fig.tight_layout(rect=(0, 0, 1, 0.92))
+    bench.save_figure(ctx, fig, "multimodal_evidence_dashboard.png", "Lab 33 synthetic multimodal dashboard.")
+
+    if specificity_rows:
+        order = sorted(range(len(specificity_rows)), key=lambda i: (str(specificity_rows[i].get("concept_family")), str(specificity_rows[i].get("item_id"))))
+        labels = [str(specificity_rows[i].get("item_id", "")) for i in order]
+        y_visual = [fnum(specificity_rows[i].get("visual_region_recovery"), 0.0) for i in order]
+        y_control = [fnum(specificity_rows[i].get("control_floor"), 0.0) for i in order]
+        fig, ax = plt.subplots(figsize=(max(9.5, 0.38 * len(labels) + 4), 5.2))
+        xx = np.arange(len(labels))
+        for xi, a, b in zip(xx, y_visual, y_control):
+            ax.plot([xi, xi], [b, a], linewidth=0.8, alpha=0.55)
+        ax.scatter(xx - 0.05, y_visual, label="visual patch", s=28)
+        ax.scatter(xx + 0.05, y_control, label="strongest control", marker="x", s=34)
+        ax.axhline(MIN_RECOVERY_GATE, linestyle="--", linewidth=1, label="recovery gate")
+        ax.axhline(0, linewidth=0.8)
+        ax.set_xticks(xx, labels, rotation=55, ha="right", fontsize=7)
+        ax.set_ylabel("recovery")
+        ax.set_title("Target visual patch versus strongest control, item by item")
+        ax.legend(fontsize=8)
+        fig.tight_layout()
+        bench.save_figure(ctx, fig, "target_vs_control.png", "Paired target/control recovery for each Lab 33 item.")
+    else:
+        write_placeholder(ctx, "target_vs_control.png", "Target vs control", "No specificity rows were produced.")
+
+    if dose_rows:
+        keep = [VISUAL_PATCH_TYPE, "caption_patch", "ocr_channel_patch", "background_channel_patch", "text_query_patch", "random_patch_control"]
+        fig, ax = plt.subplots(figsize=(9.5, 5.4))
+        for patch_type in keep:
+            rows = [r for r in dose_rows if r.get("patch_type") == patch_type]
+            if not rows:
+                continue
+            doses = sorted({fnum(r.get("dose")) for r in rows if math.isfinite(fnum(r.get("dose")))})
+            means = [safe_mean([r.get("recovery") for r in rows if fnum(r.get("dose")) == dose], default=0.0) for dose in doses]
+            ax.plot(doses, means, marker="o", label=patch_type)
+            for r in rows:
+                d = fnum(r.get("dose"))
+                if math.isfinite(d):
+                    jitter = ((stable_int(str(r.get("dose_response_id", r.get("item_id", "")))) % 100) - 50) / 9000.0
+                    ax.scatter([d + jitter], [fnum(r.get("recovery"), 0.0)], s=12, alpha=0.28)
+        ax.axhline(0, linewidth=0.8)
+        ax.axhline(MIN_RECOVERY_GATE, linestyle="--", linewidth=1, label="recovery gate")
+        ax.set_xlabel("synthetic dose toward source state")
+        ax.set_ylabel("recovery")
+        ax.set_title("Patch dose-response: visual signal against caption, shortcut, and random controls")
+        ax.legend(fontsize=7, ncol=2)
+        fig.tight_layout()
+        bench.save_figure(ctx, fig, "dose_response.png", "Synthetic dose-response curves for visual and control sources.")
+    else:
+        write_placeholder(ctx, "dose_response.png", "Dose response", "No dose-response rows were produced.")
+
+    mat = np.zeros((len(STATE_TYPES), len(families)))
+    for i, state_type in enumerate(STATE_TYPES):
+        for j, family in enumerate(families):
+            mat[i, j] = safe_mean([r["auc"] for r in probe_rows if r["concept_family"] == family and r["state_type"] == state_type], default=0.0)
+    fig, ax = plt.subplots(figsize=(max(8, 0.7 * len(families) + 3), 5.0))
+    im = ax.imshow(mat, aspect="auto", vmin=0, vmax=1, cmap="viridis")
+    ax.set_yticks(range(len(STATE_TYPES)), STATE_TYPES)
+    ax.set_xticks(range(len(families)), families, rotation=25, ha="right")
+    ax.set_title("Modality handoff atlas")
+    for i in range(len(STATE_TYPES)):
+        for j in range(len(families)):
+            ax.text(j, i, f"{mat[i, j]:.2f}", ha="center", va="center", fontsize=7)
+    fig.colorbar(im, ax=ax, shrink=0.8, label="AUC")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "modality_handoff_atlas.png", "State-type by concept-family synthetic readout heatmap.")
+
+    fig, ax = plt.subplots(figsize=(9.5, 4.8))
+    x2 = np.arange(len(transfer_rows))
+    labels = [r["concept_family"] for r in transfer_rows]
+    ax.bar(x2 - 0.25, [fnum(r["image_direction_on_caption_auc"], 0.0) for r in transfer_rows], 0.25, label="image dir on caption")
+    ax.bar(x2, [fnum(r["caption_direction_on_image_auc"], 0.0) for r in transfer_rows], 0.25, label="caption dir on image")
+    ax.bar(x2 + 0.25, [fnum(r["image_direction_on_text_query_auc"], 0.0) for r in transfer_rows], 0.25, label="image dir on text-query")
+    ax.axhline(0.5, linewidth=0.8)
+    ax.set_ylim(0, 1.05)
+    ax.set_xticks(x2, labels, rotation=25, ha="right")
+    ax.set_ylabel("AUC")
+    ax.set_title("Image, caption, and text-query transfer")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "image_text_probe_transfer.png", "Synthetic image/caption/text-query transfer AUCs.")
+
+    patch_order = [
+        "connector_clean_to_corrupt",
+        VISUAL_PATCH_TYPE,
+        "language_state_patch",
+        "caption_patch",
+        "ocr_channel_patch",
+        "background_channel_patch",
+        "text_query_patch",
+        "wrong_region_or_ocr_patch",
+        "random_patch_control",
+    ]
+    patch_order = [p for p in patch_order if any(r.get("patch_type") == p for r in patch_rows)]
+    fig, ax = plt.subplots(figsize=(10.5, 5.0))
+    means = [safe_mean([r.get("recovery") for r in patch_rows if r.get("patch_type") == p], default=0.0) for p in patch_order]
+    errs = [safe_stderr([r.get("recovery") for r in patch_rows if r.get("patch_type") == p]) for p in patch_order]
+    ax.bar(range(len(patch_order)), means, yerr=[0 if not math.isfinite(e) else e for e in errs], capsize=3)
+    for i, p in enumerate(patch_order):
+        vals = [fnum(r.get("recovery")) for r in patch_rows if r.get("patch_type") == p]
+        vals = [v for v in vals if math.isfinite(v)]
+        if vals:
+            jitter = np.linspace(-0.12, 0.12, len(vals)) if len(vals) > 1 else np.array([0.0])
+            ax.scatter(np.full(len(vals), i) + jitter, vals, s=14, alpha=0.65)
+    ax.axhline(0, linewidth=0.8)
+    ax.axhline(1, linestyle=":", linewidth=0.8)
+    ax.set_xticks(range(len(patch_order)), patch_order, rotation=35, ha="right")
+    ax.set_ylabel("recovery")
+    ax.set_title("Patch recovery by modality/control, with raw rows")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "patch_recovery_by_modality.png", "Patch recovery by synthetic modality or shortcut control, including raw-point spread.")
+
+    fam_mat = np.zeros((len(families), 5))
+    for i, row in enumerate(evidence_rows):
+        fam_mat[i, :] = [
+            fnum(row.get("connector_auc"), 0.0),
+            fnum(row.get("visual_region_recovery"), 0.0),
+            fnum(row.get("control_floor"), 0.0),
+            fnum(row.get("specificity_gap"), 0.0),
+            fnum(row.get("shortcut_leak_rate"), 0.0),
+        ]
+    fig, ax = plt.subplots(figsize=(8.4, max(4.8, 0.45 * len(families) + 2)))
+    im = ax.imshow(fam_mat, aspect="auto", vmin=-0.5, vmax=1.0, cmap="coolwarm")
+    ax.set_yticks(range(len(families)), families)
+    ax.set_xticks(range(5), ["connector AUC", "visual rec", "control", "gap", "shortcut"], rotation=25, ha="right")
+    ax.set_title("Concept specificity matrix")
+    for i in range(fam_mat.shape[0]):
+        for j in range(fam_mat.shape[1]):
+            ax.text(j, i, f"{fam_mat[i, j]:.2f}", ha="center", va="center", fontsize=7)
+    fig.colorbar(im, ax=ax, shrink=0.8)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "concept_specificity_matrix.png", "Family-level multimodal specificity matrix.")
+
+    spatial_rows = [r for r in specificity_rows if r.get("concept_family") == "spatial"]
+    if spatial_rows:
+        names = [str(r["item_id"]).replace("spatial_", "") for r in spatial_rows]
+        vals = np.array([
+            [fnum(r.get("visual_region_recovery"), 0.0), fnum(r.get("wrong_region_or_ocr_recovery"), 0.0), fnum(r.get("random_control_recovery"), 0.0)]
+            for r in spatial_rows
+        ])
+        fig, ax = plt.subplots(figsize=(7.8, 4.8))
+        im = ax.imshow(vals.T, aspect="auto", vmin=-0.5, vmax=1.0, cmap="coolwarm")
+        ax.set_yticks(range(3), ["visual", "wrong/shortcut", "random"])
+        ax.set_xticks(range(len(names)), names, rotation=25, ha="right")
+        ax.set_title("Spatial region patch map")
+        fig.colorbar(im, ax=ax, shrink=0.8, label="recovery")
+        fig.tight_layout()
+        bench.save_figure(ctx, fig, "spatial_region_patch_map.png", "Synthetic spatial row patch recovery map.")
+    else:
+        write_placeholder(ctx, "spatial_region_patch_map.png", "Spatial region patch map", "No spatial rows selected by this prompt-set cap.")
+
+    fig, ax = plt.subplots(figsize=(9.2, 4.8))
+    ax.bar(x2 - 0.18, [fnum(r["image_caption_direction_cosine"], 0.0) for r in transfer_rows], 0.36, label="image-caption cosine")
+    ax.bar(x2 + 0.18, [fnum(r["image_connector_direction_cosine"], 0.0) for r in transfer_rows], 0.36, label="image-connector cosine")
+    ax.axhline(0, linewidth=0.8)
+    ax.set_xticks(x2, labels, rotation=25, ha="right")
+    ax.set_ylabel("cosine")
+    ax.set_title("Synthetic cross-modal feature bridge")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "cross_modal_feature_bridge.png", "Synthetic direction cosine bridge by family.")
+
+    shortcut_rows = [r for r in leak_rows if r.get("leak_status") == "shortcut_control_triggered"]
+    if shortcut_rows:
+        names = [str(r["item_id"]).replace("background_trap_", "bg_").replace("ocr_trap_", "ocr_") for r in shortcut_rows]
+        deltas = [fnum(r.get("shortcut_margin_delta"), 0.0) for r in shortcut_rows]
+        fig, ax = plt.subplots(figsize=(max(8, 0.45 * len(names) + 3), 4.8))
+        ax.bar(range(len(names)), deltas)
+        ax.axhline(0, linewidth=0.8)
+        ax.set_xticks(range(len(names)), names, rotation=35, ha="right")
+        ax.set_ylabel("vision full minus visual-only margin")
+        ax.set_title("OCR/background shortcut panel")
+        fig.tight_layout()
+        bench.save_figure(ctx, fig, "ocr_background_shortcut_panel.png", "OCR/background shortcut effect on visual margin.")
+    else:
+        write_placeholder(ctx, "ocr_background_shortcut_panel.png", "OCR/background shortcut panel", "No OCR or background shortcut rows were selected.")
+
+    if failure_rows:
+        rows = list(failure_rows)[:14]
+        labels = [str(r.get("item_id", ""))[:28] for r in rows]
+        visual_vals = [fnum(r.get("visual_region_recovery"), 0.0) for r in rows]
+        control_vals = [fnum(r.get("control_floor"), 0.0) for r in rows]
+        y = np.arange(len(rows))
+        fig, ax = plt.subplots(figsize=(9.5, max(4.8, 0.38 * len(rows) + 1.5)))
+        ax.hlines(y, control_vals, visual_vals, linewidth=1)
+        ax.scatter(control_vals, y, label="control floor", s=30)
+        ax.scatter(visual_vals, y, label="visual patch", s=30)
+        ax.axvline(MIN_RECOVERY_GATE, linestyle="--", linewidth=1, label="recovery gate")
+        ax.set_yticks(y, labels)
+        ax.set_xlabel("recovery")
+        ax.set_title("Paired specimens: visual patch versus strongest control")
+        ax.legend(fontsize=8)
+        fig.tight_layout()
+        bench.save_figure(ctx, fig, "paired_examples.png", "Specimen-level visual/control paired examples.")
+    else:
+        write_placeholder(ctx, "paired_examples.png", "Paired examples", "No failure specimens were produced. Check diagnostics/warning_summary.csv before trusting the run.")
+
+
+def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:  # type: ignore[override]
+    items, data_info = load_items(ctx)
+    manifest_path = ctx.path("diagnostics", "data_manifest.json")
+    bench.write_json(manifest_path, data_info)
+    ctx.register_artifact(manifest_path, "diagnostic", "Lab 33 data manifest, hash, and synthetic-mode scope.")
+
+    schema_rows, schema_summary = schema_audit(ctx, items)
+    usable_items = [item for item, row in zip(items, schema_rows) if row["schema_ok"]]
+    if not usable_items:
+        raise RuntimeError("Lab 33 has no schema-valid rows after audit.")
+
+    # The bench-loaded model is not the object of multimodal science here. It
+    # still proves that the standard microscope checks run in the same way as
+    # other labs, which keeps the artifact contract uniform.
+    hook_check = bench.run_hook_parity_check(ctx, bundle, usable_items[0].text_control_prompt)
+    first = bench.run_with_residual_cache(bundle, usable_items[0].text_control_prompt)
+    lens_check = bench.run_lens_self_check(ctx, bundle, first)
+    patch_noop = bench.run_patch_noop_check(ctx, bundle, usable_items[0].text_control_prompt)
+
+    alignment = alignment_validation(usable_items)
+    alignment_path = ctx.path("diagnostics", "alignment_validation.json")
+    bench.write_json(alignment_path, alignment)
+    ctx.register_artifact(alignment_path, "diagnostic", "Synthetic connector alignment validation and real-VLM requirements.")
+    write_run_config_snapshot(ctx, data_info, alignment)
+
+    render_rows, render_summary = render_images(ctx, usable_items)
+    states = build_states(usable_items)
+    state_summary = state_vector_audit(ctx, states)
+    prompt_rows = prompt_manifest(usable_items, render_rows)
+    probe_rows = modality_probe_report(usable_items, states)
+    patch_rows, specificity_rows = patch_report(usable_items, states)
+    transfer_rows = cross_modal_transfer(usable_items, states)
+    leak_rows, leak_summary = leak_audit(usable_items, states)
+    text_leak_rows, text_summary = text_leak_audit(usable_items)
+    evidence_rows, counterexamples, metrics = evidence_matrix(
+        data_info,
+        probe_rows,
+        patch_rows,
+        specificity_rows,
+        transfer_rows,
+        leak_rows,
+        text_summary,
+    )
+    augment_rows(prompt_rows, probe_rows, patch_rows, specificity_rows, transfer_rows, leak_rows, text_leak_rows, evidence_rows, counterexamples)
+    score_rows = state_score_long(usable_items, states)
+    dose_rows = patch_dose_response(usable_items, states)
+    patch_summary_rows = patch_recovery_summary(patch_rows)
+    family_summary_rows = concept_family_summary(evidence_rows, specificity_rows, leak_rows, text_leak_rows)
+    failure_rows = failure_specimens(specificity_rows, leak_rows, text_leak_rows, counterexamples)
+
+    metrics = {
+        **metrics,
+        "data": data_info,
+        "schema": schema_summary,
+        "render": render_summary,
+        "state_vectors": state_summary,
+        "alignment": alignment,
+        "leak_summary": leak_summary,
+        "text_leak_summary": text_summary,
+        "n_state_score_rows": len(score_rows),
+        "n_dose_response_rows": len(dose_rows),
+        "n_failure_specimens": len(failure_rows),
+    }
+    warning_rows = warning_summary_rows(data_info, schema_summary, render_summary, state_summary, alignment, metrics, leak_summary, text_summary, specificity_rows, failure_rows)
+
+    write_tables(
+        ctx,
+        prompt_rows,
+        probe_rows,
+        patch_rows,
+        specificity_rows,
+        transfer_rows,
+        leak_rows,
+        text_leak_rows,
+        evidence_rows,
+        counterexamples,
+    )
+    write_upgrade_tables(ctx, score_rows, dose_rows, patch_summary_rows, family_summary_rows, failure_rows, warning_rows)
+    write_state(ctx, usable_items, states, transfer_rows)
+    write_status_files(ctx, data_info, hook_check, lens_check, patch_noop, schema_summary, render_summary, state_summary, alignment, metrics)
+
+    metrics_path = ctx.path("metrics.json")
+    bench.write_json(metrics_path, metrics)
+    ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 33 metrics, gates, and thresholds.")
+
+    write_method_card(ctx, evidence_rows, metrics)
+    write_operationalization_audit(ctx, evidence_rows, counterexamples, text_summary, leak_summary)
+    write_real_vlm_checklist(ctx)
+    write_run_summary(ctx, data_info, metrics, evidence_rows, counterexamples)
+    write_claims(ctx, evidence_rows)
+    write_plots(ctx, probe_rows, patch_rows, specificity_rows, transfer_rows, leak_rows, evidence_rows, dose_rows, failure_rows)
+    print(f"[lab33] wrote {len(prompt_rows)} prompts, {len(probe_rows)} probe rows, {len(patch_rows)} patch rows, {len(dose_rows)} dose rows, {len(evidence_rows)} evidence rows, and {len(failure_rows)} failure specimens")
