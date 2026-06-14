@@ -45,23 +45,34 @@ overfit selection had been hiding a real, selective user-belief direction.
 | 24 | Knowledge conflict / belief revision | green | override depth traces + quadrant audit emitted |
 | 25 | Find the wire / self-report | green | self-report grounding + source attribution; `not_validated_by_controls` |
 
-## Items flagged for experiment/dataset improvement (not blockers)
+## MD/PY consistency audit (fan-out of 5 read-only agents over labs 16-25)
+
+Labs 18, 19, 20, 22, 23, 25 had **no factual MD/PY discrepancies**. Three real
+issues were found and **fixed** (commit `f7274fa`):
+
+- **Lab 16 MD** still documented the old in-sample train-AUC selection rule;
+  updated to describe the grouped 5-fold CV selection the PY now uses. *(resolved)*
+- **Lab 21** `training_depth_card.md` unconditionally told students to open
+  `safety_depth`-only files even in a `lora`-only run; the "Read next" list is now
+  mode-aware and the MD artifact tree marks conditional outputs. *(resolved)*
+- **Lab 24** dataset expanded 6 → 16 dialogues; verified `--mode both` produces a
+  full 96-row quadrant table. *(resolved)*
+- Lab 17 "leave-one-out" vs "leave-one-topic-out" wording: minor, left as-is.
+
+## Items flagged for further experiment improvement (not blockers)
 
 1. **Lab 22 (eval awareness):** the probe trivially separates formats at depth 3 with
    AUC 1.0, and the format-control matches it — the lab correctly self-diagnoses a
    "format detector," but the *dataset* makes the interesting eval-awareness signal
    unreachable. Candidate: matched surface forms across eval/natural so the contrast
-   isn't decodable by formatting tokens.
-2. **Lab 24 (belief revision):** only **6 dialogues** selected from
-   `belief_revision_dialogues.csv` on tier B — thin for a quadrant audit. Candidate:
-   expand the dialogue set so each revision quadrant has enough support.
-3. **Lab 18 (humor):** decodable (AUC ≈1.0) but steering is non-specific
+   isn't decodable by formatting tokens. (Open.)
+2. **Lab 18 (humor):** decodable (AUC ≈1.0) but steering is non-specific
    (gap −0.875). Honest result; worth a teaching note that incongruity is *readable*
-   but not cleanly *writable* by this direction.
-4. **Small vs full prompt sets:** several labs default to `--prompt-set small`, which
+   but not cleanly *writable* by this direction. (Open.)
+3. **Small vs full prompt sets:** several labs default to `--prompt-set small`, which
    produces degenerate early-layer selections (e.g. lab18 depth-1, AUC 1.0 on n=8).
    Tier-B validation must use `--prompt-set full`; consider making `full` the tier-B
-   default so a naive run doesn't pick a noise layer.
+   default so a naive run doesn't pick a noise layer. (Open.)
 
 ## Self-checks confirmed passing on Olmo (tier B)
 
