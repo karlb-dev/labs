@@ -8,7 +8,7 @@
 
 **Dependencies:** Labs 4, 5, 12, and the claim-ledger discipline from Labs 1-25. Lab 27 continues with path-specific mediation.
 
-**Minimum passing artifacts:** `method_card.md`, `causal_abstraction_spec.md`, `operationalization_audit.md`, `metrics.json`, `results.csv`, `results.jsonl`, `tables/evidence_matrix.csv`, `tables/counterexamples.csv`, and `plots/plot_reading_guide.csv`.
+**Minimum passing artifacts:** `method_card.md`, `causal_abstraction_spec.md`, `operationalization_audit.md`, `metrics.json`, `results.csv`, `results.jsonl`, `diagnostics/lab26_run_config_snapshot.json`, `diagnostics/warning_summary.csv`, `tables/evidence_matrix.csv`, `tables/counterexamples.csv`, `tables/failure_specimens.md`, `tables/figure_sources/selected_cell_condition_points.csv`, `plots/plot_manifest.json`, and `plots/plot_reading_guide.csv`.
 
 **Main plot:** `plots/causal_abstraction_dashboard.png`
 
@@ -54,6 +54,28 @@ scrub_score = patched_logit_diff / clean_logit_diff
 A score near `1.0` means the patched run preserved the clean target margin. A score near `0.0` means the intervention did not preserve the measured behavior. Negative scores mean the patch pushed toward the distractor.
 
 The ratio is only meaningful when the clean margin is healthy. The lab therefore writes `tables/baseline_behavior.csv` and filters formal gates to rows passing the baseline margin threshold.
+
+## Visualization and data artifact contract
+
+Lab 26 now treats figures as evidence artifacts, not decorations. Every major figure has three companions:
+
+1. a source table under `tables/figure_sources/`;
+2. a figure entry in `plots/plot_manifest.json`;
+3. a reading note in `plots/plot_reading_guide.csv`.
+
+The source tables are intentionally redundant with the main tables. This redundancy is useful: a student can open `target_vs_control.png`, then immediately inspect `tables/figure_sources/selected_cell_condition_points.csv` to see the raw examples behind every dot and bar. Aggregates should never be the only witness in the room.
+
+The run also writes:
+
+| Artifact | Why it exists |
+|---|---|
+| `diagnostics/lab26_run_config_snapshot.json` | Lab-specific snapshot of model, tier, seed, prompt set, data source, thresholds, specs, sites, depths, and donor conditions. |
+| `diagnostics/warning_summary.csv` | Compact list of skipped rows, low baselines, donor gaps, intervention errors, and tiny-n plot caveats. |
+| `plots/plot_manifest.json` | Figure path, question, source table, row count, metric, controls, and claim boundary for each plot. |
+| `tables/figure_sources/*.csv` | Exact table used to build each figure. |
+| `tables/failure_specimens.jsonl` and `tables/failure_specimens.md` | Counterexamples and leaky controls in machine-readable and human-readable form. |
+
+A plot may summarize, but the table underneath must preserve the dents. If a Tier A smoke run has one or two rows per condition, the plots still render, but the uncertainty and raw-point overlays should make the tiny sample obvious.
 
 ## The two starter hypotheses
 
@@ -227,6 +249,13 @@ python interp_bench.py --lab lab26 --tier b --prompt-set data/causal_abstraction
 
 Tier A proves the plumbing. Tier B is the evidence path. If Tier A produces an exciting result, treat it as a smoke-test curiosity and rerun Tier B before writing claims.
 
+The plot pass succeeds only if the run writes both figures and their source tables. After a run, this command should find the manifest and selected-cell raw table:
+
+```bash
+ls runs/lab26_causal_abstraction-*/plots/plot_manifest.json
+ls runs/lab26_causal_abstraction-*/tables/figure_sources/selected_cell_condition_points.csv
+```
+
 ## Artifact tree
 
 ```text
@@ -242,6 +271,9 @@ runs/lab26_causal_abstraction-*/
 
   diagnostics/
     data_manifest.json
+    lab26_run_config_snapshot.json
+    warning_summary.csv
+    warning_summary.json
     tokenization_gate.csv
     donor_coverage.csv
     self_check_status.json
@@ -260,11 +292,26 @@ runs/lab26_causal_abstraction-*/
     split_generalization_summary.csv
     evidence_matrix.csv
     counterexamples.csv
+    failure_specimens.jsonl
+    failure_specimens.md
     hypothesis_refinement_log.csv
 
+    figure_sources/
+      dashboard_evidence.csv
+      selected_cell_condition_points.csv
+      selected_cell_condition_summary.csv
+      baseline_margins.csv
+      resampling_matrix_source.csv
+      pass_fail_atlas_source.csv
+      split_generalization_source.csv
+      counterexample_kind_summary.csv
+
   plots/
+    plot_manifest.json
+    plot_manifest.csv
     plot_reading_guide.csv
     causal_abstraction_dashboard.png
+    target_vs_control.png
     resampling_preservation_matrix.png
     hypothesis_pass_fail_atlas.png
     variable_specificity_ladder.png
@@ -281,42 +328,60 @@ Start with `method_card.md`. It tells you whether the run is science-ready and w
 
 Then read in this order:
 
-1. `causal_abstraction_spec.md`: What was the hypothesis before the run?
-2. `diagnostics/tokenization_gate.csv`: Did the row positions mean what the CSV said they meant?
-3. `tables/baseline_behavior.csv`: Did the model have a clean margin worth preserving?
-4. `tables/donor_plan.csv`: Did the donors actually preserve or break the named variables?
-5. `tables/noop_identity_check.csv`: Did self-resampling stay near identity?
-6. `tables/evidence_matrix.csv`: What is the smallest claim that survived?
-7. `tables/split_generalization_summary.csv`: Did the train-selected cell survive eval?
-8. `tables/counterexamples.csv`: Which row most embarrasses the favorite explanation?
-9. `operationalization_audit.md`: What language is allowed?
-10. `ledger_suggestions.md`: Drafts only. Edit before appending.
+1. `diagnostics/lab26_run_config_snapshot.json`: What exact model, tier, seed, data, thresholds, sites, and depths did this run use?
+2. `diagnostics/warning_summary.csv`: Did tokenization, donor coverage, baseline margins, or tiny sample counts already warn you to be cautious?
+3. `causal_abstraction_spec.md`: What was the hypothesis before the run?
+4. `diagnostics/tokenization_gate.csv`: Did the row positions mean what the CSV said they meant?
+5. `tables/baseline_behavior.csv`: Did the model have a clean margin worth preserving?
+6. `tables/donor_plan.csv`: Did the donors actually preserve or break the named variables?
+7. `tables/noop_identity_check.csv`: Did self-resampling stay near identity?
+8. `plots/plot_manifest.json`: Which table and claim boundary belongs to each figure?
+9. `plots/causal_abstraction_dashboard.png`: What is the one-screen evidence posture?
+10. `plots/target_vs_control.png` plus `tables/figure_sources/selected_cell_condition_points.csv`: Do the raw examples support the aggregate control comparison?
+11. `tables/evidence_matrix.csv`: What is the smallest claim that survived?
+12. `tables/split_generalization_summary.csv`: Did the train-selected cell survive eval?
+13. `tables/failure_specimens.md`: Which row most embarrasses the favorite explanation?
+14. `operationalization_audit.md`: What language is allowed?
+15. `ledger_suggestions.md`: Drafts only. Edit before appending.
 
-## Plot guide
+## How to read the figures
 
-### `causal_abstraction_dashboard.png`
+The plot suite follows a funnel. The dashboard orients you, `target_vs_control.png` checks the core comparison with raw points, the matrix shows the full search surface, the pass/fail atlas shows the gates, the split ladder asks whether discovery survives eval, and the counterexample gallery hands you the awkward rows.
 
-Read this first. It combines train-selected preservation, break-variable damage, specificity gap, baseline health, and counterexample load. It is a cockpit, not a verdict machine.
+A strong visual pattern is not automatically a supported claim. The supported claim must name the model, dataset, metric, site, depth, split, donor rule, and controls. When a figure shows uncertainty or tiny `n`, write the caveat before the claim.
 
-### `resampling_preservation_matrix.png`
+### Plot catalog
 
-Rows are claimable site/depth cells. Columns are donor conditions. A good row has a high preserving column and lower break/random/wrong-site columns.
+| Figure | Source artifact | Question | Interpretation note |
+|---|---|---|---|
+| `causal_abstraction_dashboard.png` | `tables/figure_sources/dashboard_evidence.csv`, `baseline_margins.csv`, `counterexample_kind_summary.csv` | Do baseline health, control gaps, split survival, and counterexamples tell one story? | Read as a cockpit, not a verdict machine. |
+| `target_vs_control.png` | `tables/figure_sources/selected_cell_condition_points.csv`, `selected_cell_condition_summary.csv` | At the selected site/depth, do preserving donors beat broken-variable and controls? | Dots are examples. Bars are means. Whiskers are 95% CI when `n>1`. Tiny `n` means smoke, not science. |
+| `resampling_preservation_matrix.png` | `tables/figure_sources/resampling_matrix_source.csv` | Which claimable site/depth cells preserve under each donor condition? | A star marks all-split formal gates, but split survival still lives in the split ladder. |
+| `hypothesis_pass_fail_atlas.png` | `tables/figure_sources/pass_fail_atlas_source.csv` | Which formal gates pass across train, eval, and aggregate rows? | A failed cell is a useful measurement, not a failed lab. |
+| `variable_specificity_ladder.png` | `tables/evidence_matrix.csv` | How much does preserve beat break-variable and the strongest control? | Positive gaps are the rent the abstraction pays. Negative gaps are evidence against specificity. |
+| `split_generalization_ladder.png` | `tables/figure_sources/split_generalization_source.csv` | Does the train-selected cell survive eval without reselecting? | Aggregate-only support is not held-out support. |
+| `counterexample_gallery.png` | `tables/counterexamples.csv`, `tables/failure_specimens.md` | Which examples shrink or kill the claim? | Read the prompts and donor variables before proposing v2. |
 
-### `hypothesis_pass_fail_atlas.png`
+## Expected Tier A smoke versus Tier B science behavior
 
-This shows the formal gates across train, eval, and aggregate summaries. A failed cell is a useful measurement, not a failed lab.
+Tier A should prove that tokenization, caching, donor planning, resampling, no-op checks, table writing, and plotting all work. Tier A may show dramatic scores because `gpt2` and the fallback or capped data are tiny. Treat those scores as plumbing smoke. The honest Tier A success sentence is: the run produced all required artifacts and the no-op checks passed.
 
-### `variable_specificity_ladder.png`
+Tier B is the evidence path. It should use the frozen CSV, larger prompt set, and course base model. A Tier B claim still stays narrow: this model, this dataset, this residual-resampling battery, this site/depth, this metric, and these controls.
 
-This shows the selected cell's preservation score beside break-variable and control scores. The gap is the rent the hypothesis pays.
+## What an honest negative result looks like
 
-### `split_generalization_ladder.png`
+An honest negative result has all the instrumentation green, the donors available, and the plots showing one of these shapes:
 
-This asks whether the train-selected cell survives eval. This is where many pretty aggregate stories lose their shoes.
+| Negative pattern | Honest interpretation |
+|---|---|
+| Preserve is low | The proposed mapping did not preserve the measured behavior. |
+| Preserve is high and break-variable is high | The named variable is too broad or the site is downstream of the variable. |
+| Preserve is high and random/wrong-site is high | The intervention is not specific enough to support the abstraction. |
+| Train passes and eval fails | Candidate mechanism story, not ledger-ready positive claim. |
+| Baseline margins are weak | The score ratio is unstable; fix the behavior slice before reading resampling. |
+| No-op fails | Stop. The patching instrument is not reliable for this run. |
 
-### `counterexample_gallery.png`
-
-This plot surfaces the top rows that shrink or kill the claim. Read the CSV for full prompts and donor details.
+Negative results are not ash. They are map ink. They tell you where the abstraction is too broad, where the site is too late, or where the metric was too brittle.
 
 ## Interpreting result patterns
 

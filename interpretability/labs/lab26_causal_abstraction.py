@@ -55,6 +55,16 @@ CONDITION_ORDER = (
     "wrong_site_preserve",
 )
 CONTROL_CONDITIONS = ("random_matched", "wrong_site_preserve")
+PLOT_SOURCE_SUBDIR = "figure_sources"
+CI_Z = 1.96
+
+CONDITION_DISPLAY = {
+    "no_op_same_example": "no-op self",
+    "preserve_variable": "preserve variable",
+    "break_variable": "break variable",
+    "random_matched": "random matched",
+    "wrong_site_preserve": "wrong-site preserve",
+}
 
 REQUIRED_DATA_COLUMNS = {
     "item_id",
@@ -314,6 +324,67 @@ def condition_values(rows: Sequence[Mapping[str, Any]], condition: str, key: str
         if math.isfinite(val):
             vals.append(val)
     return vals
+
+
+def stable_id(*parts: Any, n: int = 16) -> str:
+    """Stable short identifier for prompts, interventions, and plot rows."""
+    return hashlib.sha256("|".join(str(p) for p in parts).encode("utf-8")).hexdigest()[:n]
+
+
+def boolish(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)
+
+
+def finite_or_blank(value: Any, digits: int = 4) -> Any:
+    val = as_float(value)
+    return round(val, digits) if math.isfinite(val) else ""
+
+
+def mean_ci(values: Sequence[Any]) -> dict[str, Any]:
+    vals = [as_float(v) for v in values]
+    vals = [v for v in vals if math.isfinite(v)]
+    n = len(vals)
+    if n == 0:
+        return {"n": 0, "mean": "", "stdev": "", "stderr": "", "ci_low": "", "ci_high": "", "min": "", "max": ""}
+    mean = float(statistics.fmean(vals))
+    stdev = float(statistics.stdev(vals)) if n > 1 else float("nan")
+    stderr = stdev / math.sqrt(n) if n > 1 else float("nan")
+    ci_low = mean - CI_Z * stderr if math.isfinite(stderr) else float("nan")
+    ci_high = mean + CI_Z * stderr if math.isfinite(stderr) else float("nan")
+    return {
+        "n": n,
+        "mean": rounded(mean),
+        "stdev": rounded(stdev),
+        "stderr": rounded(stderr),
+        "ci_low": rounded(ci_low),
+        "ci_high": rounded(ci_high),
+        "min": rounded(min(vals)),
+        "max": rounded(max(vals)),
+    }
+
+
+def condition_label(condition: str) -> str:
+    return CONDITION_DISPLAY.get(condition, condition.replace("_", " "))
+
+
+def plot_source_path(ctx: bench.RunContext, filename: str) -> pathlib.Path:
+    return ctx.path("tables", PLOT_SOURCE_SUBDIR, filename)
+
+
+def write_plot_source(
+    ctx: bench.RunContext,
+    filename: str,
+    rows: Sequence[Mapping[str, Any]],
+    description: str,
+) -> pathlib.Path:
+    path = plot_source_path(ctx, filename)
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", description)
+    return path
 
 
 # ---------------------------------------------------------------------------
@@ -1172,6 +1243,18 @@ def run_resampling(
                         "donor_relation": item_var(donor, "RELATION", donor.relation_family),
                         "subject": item_var(item, "SUBJECT", item.subject),
                         "donor_subject": item_var(donor, "SUBJECT", donor.subject),
+                        "intervention_id": stable_id(
+                            "lab26", spec.hypothesis_id, item.item_id, donor.item_id,
+                            plan.condition, site.site_label, patched_site_label, depth,
+                            target_pos, donor_pos,
+                        ),
+                        "recipient_id": item.item_id,
+                        "prompt_id": item.item_id,
+                        "target_token_id": item.target_id,
+                        "distractor_token_id": item.distractor_id,
+                        "control_family": "target" if plan.condition == "preserve_variable" else (
+                            "identity" if plan.condition == "no_op_same_example" else "control"
+                        ),
                         "error": error,
                     }
                     if error:
@@ -1233,6 +1316,7 @@ def summarize_resampling_group(
     cond_vals = {cond: condition_values(group, cond, "scrub_score") for cond in CONDITION_ORDER}
     means = {cond: safe_mean(vals) for cond, vals in cond_vals.items()}
     stdevs = {cond: safe_stdev(vals) for cond, vals in cond_vals.items()}
+    ci = {cond: mean_ci(vals) for cond, vals in cond_vals.items()}
     counts = {cond: len(cond_vals[cond]) for cond in CONDITION_ORDER}
     preserve = means["preserve_variable"]
     broken = means["break_variable"]
@@ -1264,6 +1348,18 @@ def summarize_resampling_group(
         "mean_wrong_site_preserve": rounded(wrong_site),
         "stdev_preserve_variable": rounded(stdevs["preserve_variable"]),
         "stdev_break_variable": rounded(stdevs["break_variable"]),
+        "stderr_preserve_variable": ci["preserve_variable"]["stderr"],
+        "stderr_break_variable": ci["break_variable"]["stderr"],
+        "stderr_random_matched": ci["random_matched"]["stderr"],
+        "stderr_wrong_site_preserve": ci["wrong_site_preserve"]["stderr"],
+        "ci_low_preserve_variable": ci["preserve_variable"]["ci_low"],
+        "ci_high_preserve_variable": ci["preserve_variable"]["ci_high"],
+        "ci_low_break_variable": ci["break_variable"]["ci_low"],
+        "ci_high_break_variable": ci["break_variable"]["ci_high"],
+        "ci_low_random_matched": ci["random_matched"]["ci_low"],
+        "ci_high_random_matched": ci["random_matched"]["ci_high"],
+        "ci_low_wrong_site_preserve": ci["wrong_site_preserve"]["ci_low"],
+        "ci_high_wrong_site_preserve": ci["wrong_site_preserve"]["ci_high"],
         "control_floor": rounded(floor),
         "damage_gap": rounded(damage_gap),
         "specificity_gap": rounded(specificity_gap),
@@ -1615,31 +1711,43 @@ def write_plot_reading_guide(ctx: bench.RunContext) -> None:
     rows = [
         {
             "plot": "plots/causal_abstraction_dashboard.png",
+            "source_table": "tables/figure_sources/dashboard_evidence.csv",
             "read_for": "One-screen posture: baseline health, train/eval support, control gaps, and counterexample load.",
             "do_not_claim": "A dashboard pass is not proof of a whole algorithm.",
         },
         {
+            "plot": "plots/target_vs_control.png",
+            "source_table": "tables/figure_sources/selected_cell_condition_points.csv",
+            "read_for": "Raw examples, means, and uncertainty for preserving donors versus break/random/wrong-site controls at the selected cell.",
+            "do_not_claim": "A mean gap is stable when the raw points or tiny-n warning disagree.",
+        },
+        {
             "plot": "plots/resampling_preservation_matrix.png",
-            "read_for": "Which site/depth/condition combinations preserve the clean target margin.",
-            "do_not_claim": "A hot cell by itself does not identify a complete circuit.",
+            "source_table": "tables/figure_sources/resampling_matrix_source.csv",
+            "read_for": "Which site/depth/condition combinations preserve the clean target margin across all rows.",
+            "do_not_claim": "A hot cell by itself identifies a complete circuit or survives eval.",
         },
         {
             "plot": "plots/hypothesis_pass_fail_atlas.png",
+            "source_table": "tables/figure_sources/pass_fail_atlas_source.csv",
             "read_for": "Which formal gates passed on train, eval, and all rows.",
-            "do_not_claim": "A failed gate is not a broken lab. It is a measurement.",
+            "do_not_claim": "A failed gate means the lab broke.",
         },
         {
             "plot": "plots/variable_specificity_ladder.png",
-            "read_for": "Whether preserving donors beat broken-variable, random, and wrong-site controls at the selected cell.",
-            "do_not_claim": "Preservation above random is not enough if broken-variable donors also preserve.",
+            "source_table": "tables/evidence_matrix.csv",
+            "read_for": "How large the preserve-minus-break and preserve-minus-control gaps are at the selected cell.",
+            "do_not_claim": "Preservation above random alone is enough if broken-variable donors also preserve.",
         },
         {
             "plot": "plots/split_generalization_ladder.png",
-            "read_for": "Whether the train-selected best cell survives the eval split.",
+            "source_table": "tables/figure_sources/split_generalization_source.csv",
+            "read_for": "Whether the train-selected best cell survives the eval split without reselection.",
             "do_not_claim": "Aggregate-only support is held-out support.",
         },
         {
             "plot": "plots/counterexample_gallery.png",
+            "source_table": "tables/failure_specimens.md",
             "read_for": "The rows most likely to shrink or kill the favorite claim.",
             "do_not_claim": "Counterexamples can be ignored because aggregates look pretty.",
         },
@@ -1919,160 +2027,640 @@ def write_ledger_claims(ctx: bench.RunContext, evidence_rows: Sequence[Mapping[s
 # ---------------------------------------------------------------------------
 
 
+
+def plot_blank(ctx: bench.RunContext, filename: str, title: str, message: str) -> None:
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(9, 3.5))
+    ax.axis("off")
+    ax.text(0.5, 0.55, message, ha="center", va="center", fontsize=11)
+    ax.text(0.5, 0.18, ctx.plot_footer(), ha="center", va="center", fontsize=7, color="#555555")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, filename, title)
+
+
+def selected_cell_raw_rows(
+    resampling_rows: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Raw scrub-score rows at each hypothesis' selected site/depth.
+
+    These rows are the source table for the control-comparison plots. Keeping
+    them separate from the long intervention table makes the figure auditable
+    after the PNG leaves the run directory.
+    """
+    selected = {
+        str(row["hypothesis_id"]): {
+            "site": str(row["best_site"]),
+            "depth": int(row["best_depth"]),
+            "selection_split": str(row.get("selection_split") or "all"),
+            "domain": str(row.get("domain", "")),
+            "claim_posture": str(row.get("claim_posture", "")),
+        }
+        for row in evidence_rows
+    }
+    out: list[dict[str, Any]] = []
+    for row in resampling_rows:
+        hyp = str(row.get("hypothesis_id", ""))
+        sel = selected.get(hyp)
+        if not sel:
+            continue
+        if row.get("error") or not boolish(row.get("claimable_depth")) or not boolish(row.get("baseline_pass")):
+            continue
+        if str(row.get("site")) != sel["site"] or int(row.get("depth", -1)) != sel["depth"]:
+            continue
+        score = as_float(row.get("scrub_score"))
+        if not math.isfinite(score):
+            continue
+        out.append({
+            "selected_point_id": stable_id("selected", row.get("intervention_id", "")),
+            "intervention_id": row.get("intervention_id", ""),
+            "hypothesis_id": hyp,
+            "domain": sel["domain"] or row.get("domain", ""),
+            "site": sel["site"],
+            "depth": sel["depth"],
+            "selection_split": sel["selection_split"],
+            "claim_posture": sel["claim_posture"],
+            "split_group": row.get("split", ""),
+            "condition": row.get("condition", ""),
+            "condition_label": condition_label(str(row.get("condition", ""))),
+            "item_id": row.get("item_id", ""),
+            "donor_id": row.get("donor_id", ""),
+            "scrub_score": score,
+            "clean_diff": as_float(row.get("clean_diff")),
+            "patched_diff": as_float(row.get("patched_diff")),
+            "delta_from_clean": as_float(row.get("delta_from_clean")),
+            "target_prompt": row.get("target_prompt", ""),
+            "donor_prompt": row.get("donor_prompt", ""),
+            "preserves_variables": row.get("preserves_variables", ""),
+            "breaks_variables": row.get("breaks_variables", ""),
+            "same_variables": row.get("same_variables", ""),
+            "different_variables": row.get("different_variables", ""),
+        })
+    return out
+
+
+def selected_condition_summary_rows(
+    selected_rows: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    summary_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    selected_meta = {str(row["hypothesis_id"]): row for row in evidence_rows}
+    summary_lookup = {
+        (str(row["hypothesis_id"]), str(row["site"]), int(row["depth"]), str(row["split_group"])): row
+        for row in summary_rows
+    }
+    groups: dict[tuple[str, str, str], list[float]] = defaultdict(list)
+    for row in selected_rows:
+        # Add both the actual split and an all-row rollup. This lets the split
+        # plot and the selected-control plot cite the same raw table.
+        for split in (str(row.get("split_group", "")), "all"):
+            groups[(str(row["hypothesis_id"]), split, str(row["condition"]))].append(as_float(row.get("scrub_score")))
+
+    out: list[dict[str, Any]] = []
+    for hyp in sorted(selected_meta):
+        ev = selected_meta[hyp]
+        site = str(ev["best_site"])
+        depth = int(ev["best_depth"])
+        selection_split = str(ev.get("selection_split") or "all")
+        for split in [selection_split, "train", "eval", "all"]:
+            for cond in CONDITION_ORDER:
+                stats = mean_ci(groups.get((hyp, split, cond), []))
+                if stats["n"] == 0 and split == selection_split:
+                    # Keep an explicit empty row for selected split so a missing
+                    # control is visible in the source table and manifest.
+                    pass
+                elif stats["n"] == 0:
+                    continue
+                sr = summary_lookup.get((hyp, site, depth, split), {})
+                out.append({
+                    "hypothesis_id": hyp,
+                    "domain": ev.get("domain", ""),
+                    "site": site,
+                    "depth": depth,
+                    "selection_split": selection_split,
+                    "split_group": split,
+                    "condition": cond,
+                    "condition_label": condition_label(cond),
+                    "n": stats["n"],
+                    "mean_scrub_score": stats["mean"],
+                    "stdev_scrub_score": stats["stdev"],
+                    "stderr_scrub_score": stats["stderr"],
+                    "ci_low_scrub_score": stats["ci_low"],
+                    "ci_high_scrub_score": stats["ci_high"],
+                    "min_scrub_score": stats["min"],
+                    "max_scrub_score": stats["max"],
+                    "formal_pass": sr.get("formal_pass", ""),
+                    "pass_preservation": sr.get("pass_preservation", ""),
+                    "pass_damage": sr.get("pass_damage", ""),
+                    "pass_specificity": sr.get("pass_specificity", ""),
+                    "predicted_preservation_min": sr.get("predicted_preservation_min", ""),
+                    "predicted_damage_when_broken_min": sr.get("predicted_damage_when_broken_min", ""),
+                    "predicted_specificity_gap_min": sr.get("predicted_specificity_gap_min", ""),
+                })
+    return out
+
+
+def baseline_plot_rows(baseline_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in baseline_rows:
+        clean = as_float(row.get("clean_diff"))
+        out.append({
+            "item_id": row.get("item_id", ""),
+            "domain": row.get("domain", ""),
+            "split_group": row.get("split", ""),
+            "clean_diff": clean,
+            "baseline_pass": boolish(row.get("baseline_pass")),
+            "target_rank": row.get("target_rank", ""),
+            "distractor_rank": row.get("distractor_rank", ""),
+            "top_token": row.get("top_token", ""),
+            "target": row.get("target", ""),
+            "distractor": row.get("distractor", ""),
+            "low_margin_warning": math.isfinite(clean) and clean <= MIN_BASELINE_MARGIN,
+        })
+    return out
+
+
+def matrix_source_rows(summary_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in summary_rows:
+        if str(row.get("split_group")) != "all":
+            continue
+        label = f"{row.get('hypothesis_id')} | {row.get('site')} | d{row.get('depth')}"
+        for cond, col in [
+            ("no_op_same_example", "mean_noop"),
+            ("preserve_variable", "mean_preserve_variable"),
+            ("break_variable", "mean_break_variable"),
+            ("random_matched", "mean_random_matched"),
+            ("wrong_site_preserve", "mean_wrong_site_preserve"),
+        ]:
+            out.append({
+                "matrix_cell_id": stable_id("matrix", row.get("hypothesis_id"), row.get("site"), row.get("depth"), cond),
+                "row_label": label,
+                "hypothesis_id": row.get("hypothesis_id", ""),
+                "domain": row.get("domain", ""),
+                "site": row.get("site", ""),
+                "depth": row.get("depth", ""),
+                "condition": cond,
+                "condition_label": condition_label(cond),
+                "mean_scrub_score": row.get(col, ""),
+                "formal_pass": row.get("formal_pass", ""),
+                "pass_preservation": row.get("pass_preservation", ""),
+                "pass_damage": row.get("pass_damage", ""),
+                "pass_specificity": row.get("pass_specificity", ""),
+                "n_preserve": row.get("n_preserve", ""),
+                "n_break": row.get("n_break", ""),
+                "n_random": row.get("n_random", ""),
+                "n_wrong_site": row.get("n_wrong_site", ""),
+            })
+    return out
+
+
+def pass_fail_source_rows(summary_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for row in summary_rows:
+        label = f"{row.get('hypothesis_id')} | {row.get('site')} | d{row.get('depth')} | {row.get('split_group')}"
+        for gate in ("pass_preservation", "pass_damage", "pass_specificity", "formal_pass"):
+            rows.append({
+                "gate_cell_id": stable_id("gate", row.get("hypothesis_id"), row.get("site"), row.get("depth"), row.get("split_group"), gate),
+                "row_label": label,
+                "hypothesis_id": row.get("hypothesis_id", ""),
+                "domain": row.get("domain", ""),
+                "site": row.get("site", ""),
+                "depth": row.get("depth", ""),
+                "split_group": row.get("split_group", ""),
+                "gate": gate,
+                "passed": boolish(row.get(gate)),
+                "preserve_mean": row.get("mean_preserve_variable", ""),
+                "break_mean": row.get("mean_break_variable", ""),
+                "control_floor": row.get("control_floor", ""),
+                "damage_gap": row.get("damage_gap", ""),
+                "specificity_gap": row.get("specificity_gap", ""),
+            })
+    return rows
+
+
+def counterexample_kind_rows(counterexamples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str], list[float]] = defaultdict(list)
+    for row in counterexamples:
+        grouped[(str(row.get("hypothesis_id", "")), str(row.get("kind", "")))].append(as_float(row.get("severity"), 0.0))
+    out: list[dict[str, Any]] = []
+    for (hyp, kind), vals in sorted(grouped.items()):
+        stats = mean_ci(vals)
+        out.append({
+            "hypothesis_id": hyp,
+            "kind": kind,
+            "n": stats["n"],
+            "mean_severity": stats["mean"],
+            "max_severity": stats["max"],
+        })
+    if not out:
+        out.append({"hypothesis_id": "all", "kind": "none", "n": 0, "mean_severity": "", "max_severity": ""})
+    return out
+
+
+def write_failure_specimens(
+    ctx: bench.RunContext, counterexamples: Sequence[Mapping[str, Any]]
+) -> tuple[pathlib.Path, pathlib.Path]:
+    jsonl_path = ctx.path("tables", "failure_specimens.jsonl")
+    write_jsonl(jsonl_path, [{"specimen_rank": i + 1, **dict(row)} for i, row in enumerate(counterexamples)])
+    ctx.register_artifact(jsonl_path, "table", "JSONL specimens for failed, leaky, or contradictory Lab 26 examples.")
+
+    lines = [
+        "# Lab 26 failure specimens",
+        "",
+        "These are not bloopers. They are the rows that keep the claim honest.",
+        "",
+    ]
+    if not counterexamples:
+        lines.append("No automatic failure specimens crossed the configured thresholds. This is not a proof; rerun on Tier B/full before broadening the claim.")
+    else:
+        for i, row in enumerate(counterexamples[:12], start=1):
+            lines += [
+                f"## {i}. `{row.get('kind')}` for `{row.get('hypothesis_id')}`",
+                "",
+                f"- item: `{row.get('item_id')}`; donor: `{row.get('donor_id')}`; split: `{row.get('split')}`",
+                f"- site/depth: `{row.get('site')}` depth `{row.get('depth')}`; condition: `{row.get('condition')}`",
+                f"- score: `{row.get('scrub_score')}`; clean diff: `{row.get('clean_diff')}`; patched diff: `{row.get('patched_diff')}`; severity: `{row.get('severity')}`",
+                f"- target variables: `{row.get('target_variables')}`",
+                f"- donor variables: `{row.get('donor_variables')}`",
+                "",
+                "Target prompt:",
+                "",
+                "```text",
+                str(row.get("target_prompt", "")),
+                "```",
+                "",
+                "Donor prompt:",
+                "",
+                "```text",
+                str(row.get("donor_prompt", "")),
+                "```",
+                "",
+            ]
+    md_path = ctx.path("tables", "failure_specimens.md")
+    bench.write_text(md_path, "\n".join(lines))
+    ctx.register_artifact(md_path, "summary", "Human-readable failure specimens for Lab 26 plots and writeups.")
+    return jsonl_path, md_path
+
+
+def write_figure_source_tables(
+    ctx: bench.RunContext,
+    evidence_rows: Sequence[Mapping[str, Any]],
+    baseline_rows: Sequence[Mapping[str, Any]],
+    summary_rows: Sequence[Mapping[str, Any]],
+    split_rows: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+    resampling_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    selected_rows = selected_cell_raw_rows(resampling_rows, evidence_rows)
+    selected_summary = selected_condition_summary_rows(selected_rows, evidence_rows, summary_rows)
+    baseline_source = baseline_plot_rows(baseline_rows)
+    matrix_source = matrix_source_rows(summary_rows)
+    passfail_source = pass_fail_source_rows(summary_rows)
+    counter_kind_source = counterexample_kind_rows(counterexamples)
+    dashboard_source = [
+        {
+            "hypothesis_id": row.get("hypothesis_id", ""),
+            "domain": row.get("domain", ""),
+            "best_site": row.get("best_site", ""),
+            "best_depth": row.get("best_depth", ""),
+            "selection_split": row.get("selection_split", ""),
+            "claim_posture": row.get("claim_posture", ""),
+            "train_preservation": row.get("train_preservation", ""),
+            "train_broken_variable": row.get("train_broken_variable", ""),
+            "train_damage_gap": row.get("train_damage_gap", ""),
+            "train_specificity_gap": row.get("train_specificity_gap", ""),
+            "eval_preservation": row.get("eval_preservation", ""),
+            "eval_broken_variable": row.get("eval_broken_variable", ""),
+            "eval_damage_gap": row.get("eval_damage_gap", ""),
+            "eval_specificity_gap": row.get("eval_specificity_gap", ""),
+            "counterexamples": row.get("counterexamples", ""),
+            "baseline_pass_rate_all": row.get("baseline_pass_rate_all", ""),
+            "baseline_pass_rate_train": row.get("baseline_pass_rate_train", ""),
+            "baseline_pass_rate_eval": row.get("baseline_pass_rate_eval", ""),
+        }
+        for row in evidence_rows
+    ]
+
+    sources: dict[str, dict[str, Any]] = {}
+    specs = [
+        ("dashboard_evidence.csv", dashboard_source, "Source rows for causal_abstraction_dashboard.png."),
+        ("selected_cell_condition_points.csv", selected_rows, "Raw per-example selected-cell scrub scores for target/control plots."),
+        ("selected_cell_condition_summary.csv", selected_summary, "Mean, uncertainty, and n for selected-cell condition comparisons."),
+        ("baseline_margins.csv", baseline_source, "Baseline clean margins used by dashboard and baseline-health panels."),
+        ("resampling_matrix_source.csv", matrix_source, "Heatmap source table for resampling_preservation_matrix.png."),
+        ("pass_fail_atlas_source.csv", passfail_source, "Gate pass/fail source table for hypothesis_pass_fail_atlas.png."),
+        ("split_generalization_source.csv", list(split_rows), "Train/eval/all source table for split_generalization_ladder.png."),
+        ("counterexample_kind_summary.csv", counter_kind_source, "Counterexample kind counts for dashboard and gallery."),
+    ]
+    for filename, rows, description in specs:
+        path = write_plot_source(ctx, filename, rows, description)
+        sources[filename] = {"path": str(path.relative_to(ctx.run_dir)), "row_count": len(rows)}
+    failure_jsonl, failure_md = write_failure_specimens(ctx, counterexamples)
+    sources["failure_specimens.jsonl"] = {"path": str(failure_jsonl.relative_to(ctx.run_dir)), "row_count": len(counterexamples)}
+    sources["failure_specimens.md"] = {"path": str(failure_md.relative_to(ctx.run_dir)), "row_count": len(counterexamples)}
+    return sources
+
+
+def yerr_from_ci(row: Mapping[str, Any], mean_key: str = "mean_scrub_score") -> tuple[float, float]:
+    mean = as_float(row.get(mean_key))
+    lo = as_float(row.get("ci_low_scrub_score"))
+    hi = as_float(row.get("ci_high_scrub_score"))
+    if math.isfinite(mean) and math.isfinite(lo) and math.isfinite(hi):
+        return max(0.0, mean - lo), max(0.0, hi - mean)
+    return 0.0, 0.0
+
+
 def plot_dashboard(
     ctx: bench.RunContext,
     evidence_rows: Sequence[Mapping[str, Any]],
     baseline_rows: Sequence[Mapping[str, Any]],
-    counterexamples: Sequence[Mapping[str, Any]],
+    condition_summary: Sequence[Mapping[str, Any]],
+    counter_kind: Sequence[Mapping[str, Any]],
 ) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-    fig.suptitle("Lab 26 causal abstraction dashboard", fontsize=14, fontweight="bold")
-    labels = [str(row["domain"]) for row in evidence_rows]
-    x = np.arange(len(labels))
-    width = 0.22
-    axes[0, 0].bar(x - width, [as_float(row.get("train_preservation"), 0.0) for row in evidence_rows], width, label="train preserve")
-    axes[0, 0].bar(x, [as_float(row.get("train_broken_variable"), 0.0) for row in evidence_rows], width, label="train break")
-    axes[0, 0].bar(x + width, [as_float(row.get("train_specificity_gap"), 0.0) for row in evidence_rows], width, label="specificity gap")
-    axes[0, 0].set_xticks(x, labels)
-    axes[0, 0].set_ylabel("scrub score or gap")
-    axes[0, 0].set_title("Train-selected best cells")
-    axes[0, 0].axhline(0, linewidth=0.8)
-    axes[0, 0].legend(fontsize=8)
-
-    by_domain = defaultdict(list)
-    for row in baseline_rows:
-        by_domain[str(row["domain"])].append(as_float(row.get("clean_diff")))
-    axes[0, 1].boxplot([[v for v in by_domain[d] if math.isfinite(v)] for d in labels], labels=labels, patch_artist=True)
-    axes[0, 1].axhline(MIN_BASELINE_MARGIN, linestyle="--", linewidth=1, label="baseline gate")
-    axes[0, 1].set_ylabel("clean logit diff")
-    axes[0, 1].set_title("Baseline behavior health")
-    axes[0, 1].legend(fontsize=8)
-
-    mat = []
-    for row in evidence_rows:
-        mat.append([
-            1.0 if row.get("train_formal_pass") else 0.0,
-            1.0 if row.get("eval_formal_pass") is True else 0.0,
-            as_float(row.get("train_damage_gap"), 0.0),
-            as_float(row.get("train_specificity_gap"), 0.0),
-        ])
-    im = axes[1, 0].imshow(mat, aspect="auto", vmin=0)
-    axes[1, 0].set_xticks(range(4), ["train pass", "eval pass", "damage", "specificity"], rotation=25, ha="right")
-    axes[1, 0].set_yticks(range(len(labels)), labels)
-    axes[1, 0].set_title("Gate and gap atlas")
-    fig.colorbar(im, ax=axes[1, 0], shrink=0.8)
-
-    counts = defaultdict(int)
-    for row in counterexamples:
-        counts[str(row["kind"])] += 1
-    c_labels = sorted(counts) or ["none"]
-    c_vals = [counts[k] for k in c_labels] if counts else [0]
-    axes[1, 1].bar(c_labels, c_vals)
-    axes[1, 1].set_title("Automatic counterexamples")
-    axes[1, 1].set_ylabel("count")
-    axes[1, 1].tick_params(axis="x", rotation=20)
-    fig.tight_layout(rect=(0, 0, 1, 0.95))
-    bench.save_figure(ctx, fig, "causal_abstraction_dashboard.png", "One-screen Lab 26 evidence posture.")
-
-
-def plot_resampling_matrix(ctx: bench.RunContext, summary_rows: Sequence[Mapping[str, Any]]) -> None:
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    rows = [row for row in summary_rows if row.get("split_group") == "all"]
-    if not rows:
-        fig, ax = plt.subplots(figsize=(8, 3))
-        ax.text(0.5, 0.5, "No baseline-passing claimable resampling cells", ha="center", va="center")
-        ax.axis("off")
-        bench.save_figure(ctx, fig, "resampling_preservation_matrix.png", "Empty resampling matrix placeholder.")
+    if not evidence_rows:
+        plot_blank(ctx, "causal_abstraction_dashboard.png", "Lab 26 dashboard", "No evidence rows were available after gates and aggregation.")
         return
-    rows.sort(key=lambda row: (row["domain"], row["site"], int(row["depth"])))
-    labels = [f"{row['domain']} {row['site']} d{row['depth']}" for row in rows]
-    cols = ["mean_noop", "mean_preserve_variable", "mean_break_variable", "mean_random_matched", "mean_wrong_site_preserve"]
-    mat = np.array([[as_float(row.get(col), np.nan) for col in cols] for row in rows], dtype=float)
-    fig, ax = plt.subplots(figsize=(11, max(4, 0.26 * len(rows))))
-    im = ax.imshow(mat, aspect="auto", vmin=-0.5, vmax=1.5)
-    ax.set_yticks(range(len(labels)), labels, fontsize=7)
-    ax.set_xticks(range(len(cols)), [c.replace("mean_", "") for c in cols], rotation=30, ha="right")
-    ax.set_title("Mean scrub score by claimable site, depth, and condition")
-    fig.colorbar(im, ax=ax, shrink=0.8, label="patched_diff / clean_diff")
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "resampling_preservation_matrix.png", "Heatmap of resampling preservation by condition.")
+
+    fig, axes = plt.subplots(2, 2, figsize=(13.4, 8.8))
+    fig.suptitle("Lab 26 causal abstraction dashboard: preservation must beat break-variable and controls", fontsize=13, fontweight="bold")
+
+    # Panel 1: selected-cell condition means on the selection split.
+    labels = [f"{row['domain']}\n{row['hypothesis_id']}" for row in evidence_rows]
+    x = np.arange(len(labels), dtype=float)
+    conds = ["preserve_variable", "break_variable", "random_matched", "wrong_site_preserve"]
+    width = 0.18
+    selected_split = {str(row["hypothesis_id"]): str(row.get("selection_split") or "all") for row in evidence_rows}
+    summary_lookup = {
+        (str(row.get("hypothesis_id")), str(row.get("split_group")), str(row.get("condition"))): row
+        for row in condition_summary
+    }
+    for j, cond in enumerate(conds):
+        means, err_low, err_high = [], [], []
+        for ev in evidence_rows:
+            row = summary_lookup.get((str(ev["hypothesis_id"]), selected_split[str(ev["hypothesis_id"])], cond), {})
+            mean = as_float(row.get("mean_scrub_score"), float("nan"))
+            lo, hi = yerr_from_ci(row)
+            means.append(mean if math.isfinite(mean) else 0.0)
+            err_low.append(lo)
+            err_high.append(hi)
+        axes[0, 0].bar(x + (j - 1.5) * width, means, width, yerr=[err_low, err_high], capsize=2, label=condition_label(cond))
+    axes[0, 0].axhline(1.0, linestyle=":", linewidth=1)
+    axes[0, 0].axhline(0.0, linewidth=0.8)
+    axes[0, 0].set_xticks(x, labels, fontsize=8)
+    axes[0, 0].set_ylabel("scrub score = patched / clean margin")
+    axes[0, 0].set_title("Selected cell, selected split (95% CI when n>1)")
+    axes[0, 0].legend(fontsize=7, frameon=False)
+
+    # Panel 2: train/eval/all preservation for the same selected cell.
+    splits = ["train", "eval", "all"]
+    width2 = 0.22
+    for j, split in enumerate(splits):
+        vals = []
+        for ev in evidence_rows:
+            row = summary_lookup.get((str(ev["hypothesis_id"]), split, "preserve_variable"), {})
+            val = as_float(row.get("mean_scrub_score"), float("nan"))
+            vals.append(val if math.isfinite(val) else 0.0)
+        axes[0, 1].bar(x + (j - 1) * width2, vals, width2, label=split)
+    axes[0, 1].axhline(1.0, linestyle=":", linewidth=1)
+    axes[0, 1].set_xticks(x, labels, fontsize=8)
+    axes[0, 1].set_title("Does the train-selected cell survive eval?")
+    axes[0, 1].set_ylabel("preserve-variable mean score")
+    axes[0, 1].legend(fontsize=8, frameon=False)
+
+    # Panel 3: baseline health, with all raw clean margins visible.
+    domains = sorted({str(row.get("domain")) for row in baseline_rows}) or sorted({str(row.get("domain")) for row in evidence_rows})
+    by_domain: dict[str, list[float]] = defaultdict(list)
+    for row in baseline_rows:
+        val = as_float(row.get("clean_diff"))
+        if math.isfinite(val):
+            by_domain[str(row.get("domain"))].append(val)
+    for i, domain in enumerate(domains):
+        vals = by_domain.get(domain, [])
+        if vals:
+            axes[1, 0].boxplot([vals], positions=[i], widths=0.45, showfliers=False)
+            jitter = np.linspace(-0.12, 0.12, len(vals)) if len(vals) > 1 else np.array([0.0])
+            axes[1, 0].scatter(np.full(len(vals), i) + jitter, vals, s=18, alpha=0.75)
+    axes[1, 0].axhline(MIN_BASELINE_MARGIN, linestyle="--", linewidth=1, label=f"baseline gate {MIN_BASELINE_MARGIN}")
+    axes[1, 0].set_xticks(range(len(domains)), domains, fontsize=8)
+    axes[1, 0].set_title("Baseline target-vs-distractor margins")
+    axes[1, 0].set_ylabel("clean logit diff")
+    axes[1, 0].legend(fontsize=8, frameon=False)
+
+    # Panel 4: posture and counterexample load.
+    axes[1, 1].axis("off")
+    posture_lines = []
+    for row in evidence_rows:
+        posture_lines.append(
+            f"{row['hypothesis_id']}: {row['claim_posture']}\n"
+            f"  train gap={row.get('train_damage_gap')} spec={row.get('train_specificity_gap')} | "
+            f"eval gap={row.get('eval_damage_gap')} spec={row.get('eval_specificity_gap')} | "
+            f"counterexamples={row.get('counterexamples')}"
+        )
+    kind_lines = [f"{row.get('kind')}: n={row.get('n')}" for row in counter_kind if row.get("kind") != "none"]
+    if not kind_lines:
+        kind_lines = ["no automatic counterexamples crossed thresholds"]
+    axes[1, 1].text(0.0, 1.0, "Claim posture\n" + "\n".join(posture_lines), va="top", ha="left", fontsize=8)
+    axes[1, 1].text(0.0, 0.28, "Counterexample types\n" + "\n".join(kind_lines), va="top", ha="left", fontsize=8)
+    axes[1, 1].text(0.0, 0.03, ctx.plot_footer(), va="bottom", ha="left", fontsize=7, color="#555555")
+
+    fig.tight_layout(rect=(0, 0.02, 1, 0.94))
+    bench.save_figure(ctx, fig, "causal_abstraction_dashboard.png", "One-screen Lab 26 evidence posture with controls, split survival, baseline health, and counterexamples.")
 
 
-def plot_pass_fail_atlas(ctx: bench.RunContext, summary_rows: Sequence[Mapping[str, Any]]) -> None:
+def plot_target_vs_control(
+    ctx: bench.RunContext,
+    selected_rows: Sequence[Mapping[str, Any]],
+    condition_summary: Sequence[Mapping[str, Any]],
+) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
 
-    rows = list(summary_rows)
-    rows.sort(key=lambda row: (row["hypothesis_id"], row["site"], int(row["depth"]), row["split_group"]))
-    labels = [f"{row['hypothesis_id']} {row['site']} d{row['depth']} {row['split_group']}" for row in rows]
-    cols = ["pass_preservation", "pass_damage", "pass_specificity", "formal_pass"]
-    mat = np.array([[1.0 if row.get(col) else 0.0 for col in cols] for row in rows], dtype=float) if rows else np.zeros((1, len(cols)))
-    if not labels:
-        labels = ["no cells"]
-    fig, ax = plt.subplots(figsize=(10, max(3, 0.20 * len(labels))))
-    im = ax.imshow(mat, aspect="auto", vmin=0, vmax=1)
-    ax.set_yticks(range(len(labels)), labels, fontsize=6.5)
-    ax.set_xticks(range(len(cols)), [c.replace("pass_", "") for c in cols], rotation=25, ha="right")
-    ax.set_title("Hypothesis gate pass/fail atlas")
-    fig.colorbar(im, ax=ax, shrink=0.8, ticks=[0, 1])
+    hyps = sorted({str(row["hypothesis_id"]) for row in condition_summary})
+    if not hyps:
+        plot_blank(ctx, "target_vs_control.png", "Target vs control", "No selected-cell condition rows were available.")
+        return
+    conds = ["preserve_variable", "break_variable", "random_matched", "wrong_site_preserve"]
+    selection_split = {}
+    for row in condition_summary:
+        selection_split.setdefault(str(row["hypothesis_id"]), str(row.get("selection_split") or "all"))
+    summary_lookup = {
+        (str(row.get("hypothesis_id")), str(row.get("split_group")), str(row.get("condition"))): row
+        for row in condition_summary
+    }
+
+    fig, ax = plt.subplots(figsize=(max(9.5, 2.4 * len(hyps)), 5.6))
+    x = np.arange(len(hyps), dtype=float)
+    width = 0.18
+    rng_offsets = {cond: (i - 1.5) * width for i, cond in enumerate(conds)}
+    for i, cond in enumerate(conds):
+        means, err_low, err_high = [], [], []
+        for hyp in hyps:
+            row = summary_lookup.get((hyp, selection_split[hyp], cond), {})
+            mean = as_float(row.get("mean_scrub_score"), float("nan"))
+            lo, hi = yerr_from_ci(row)
+            means.append(mean if math.isfinite(mean) else 0.0)
+            err_low.append(lo)
+            err_high.append(hi)
+        ax.bar(x + rng_offsets[cond], means, width, yerr=[err_low, err_high], capsize=2.5, label=condition_label(cond))
+
+    # Raw points: deterministic tiny jitter based on row id, only on selected split.
+    for row in selected_rows:
+        hyp = str(row.get("hypothesis_id"))
+        if hyp not in hyps or str(row.get("split_group")) != selection_split[hyp]:
+            continue
+        cond = str(row.get("condition"))
+        if cond not in rng_offsets:
+            continue
+        val = as_float(row.get("scrub_score"))
+        if not math.isfinite(val):
+            continue
+        jitter = ((stable_int(str(row.get("selected_point_id"))) % 1000) / 1000.0 - 0.5) * width * 0.45
+        ax.scatter(hyps.index(hyp) + rng_offsets[cond] + jitter, val, s=18, alpha=0.68, linewidths=0.25, edgecolors="white")
+
+    ax.axhline(1.0, linestyle=":", linewidth=1, label="clean preserved")
+    ax.axhline(0.0, linewidth=0.8)
+    ax.set_xticks(x, [f"{hyp}\n({selection_split[hyp]})" for hyp in hyps], fontsize=8)
+    ax.set_ylabel("scrub score = patched_diff / clean_diff")
+    ax.set_title("Selected-cell target versus controls: bars are means, whiskers are 95% CI, dots are examples")
+    ax.legend(fontsize=8, frameon=False, ncol=3)
     fig.tight_layout()
-    bench.save_figure(ctx, fig, "hypothesis_pass_fail_atlas.png", "Pass/fail atlas for formal hypothesis gates.")
+    bench.save_figure(ctx, fig, "target_vs_control.png", "Direct selected-cell comparison of preserving donors against break-variable and control donors.")
 
 
 def plot_specificity_ladder(ctx: bench.RunContext, evidence_rows: Sequence[Mapping[str, Any]]) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
 
-    labels = [str(row["domain"]) for row in evidence_rows]
-    x = np.arange(len(labels))
-    width = 0.17
+    if not evidence_rows:
+        plot_blank(ctx, "variable_specificity_ladder.png", "Variable specificity ladder", "No evidence rows were available.")
+        return
+    labels = [f"{row['hypothesis_id']}\n{row['best_site']} d{row['best_depth']}" for row in evidence_rows]
+    x = np.arange(len(labels), dtype=float)
     cols = [
-        ("preserve", "train_preservation"),
-        ("break", "train_broken_variable"),
-        ("random", "train_random_matched"),
-        ("wrong site", "train_wrong_site_preserve"),
+        ("preserve - break", "train_damage_gap"),
+        ("preserve - strongest control", "train_specificity_gap"),
     ]
-    fig, ax = plt.subplots(figsize=(10, 5))
+    width = 0.28
+    fig, ax = plt.subplots(figsize=(max(8.5, 2.5 * len(labels)), 4.8))
     for i, (label, key) in enumerate(cols):
-        ax.bar(x + (i - 1.5) * width, [as_float(row.get(key), 0.0) for row in evidence_rows], width, label=label)
-    ax.set_xticks(x, labels)
-    ax.set_ylabel("score at selected cell")
-    ax.set_title("Variable specificity ladder")
-    ax.axhline(1.0, linestyle=":", linewidth=1)
-    ax.axhline(0.0, linewidth=0.8)
-    ax.legend(fontsize=8)
+        vals = [as_float(row.get(key), 0.0) for row in evidence_rows]
+        ax.bar(x + (i - 0.5) * width, vals, width, label=label)
+    ax.axhline(0.0, linewidth=0.9)
+    ax.set_xticks(x, labels, fontsize=8)
+    ax.set_ylabel("gap at selected cell")
+    ax.set_title("Specificity gaps: the hypothesis pays rent only when preserve beats break and controls")
+    ax.legend(fontsize=8, frameon=False)
     fig.tight_layout()
-    bench.save_figure(ctx, fig, "variable_specificity_ladder.png", "Preserve-vs-break-vs-control ladder at the selected cell.")
+    bench.save_figure(ctx, fig, "variable_specificity_ladder.png", "Preserve-minus-break and preserve-minus-control gaps at the selected cell.")
+
+
+def plot_resampling_matrix(ctx: bench.RunContext, matrix_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not matrix_rows:
+        plot_blank(ctx, "resampling_preservation_matrix.png", "Resampling matrix", "No baseline-passing claimable resampling cells were available.")
+        return
+    row_labels = []
+    for row in matrix_rows:
+        label = str(row["row_label"])
+        if label not in row_labels:
+            row_labels.append(label)
+    conds = list(CONDITION_ORDER)
+    mat = np.full((len(row_labels), len(conds)), np.nan)
+    formal = {label: False for label in row_labels}
+    for row in matrix_rows:
+        i = row_labels.index(str(row["row_label"]))
+        j = conds.index(str(row["condition"]))
+        mat[i, j] = as_float(row.get("mean_scrub_score"), float("nan"))
+        formal[str(row["row_label"])] = formal[str(row["row_label"])] or boolish(row.get("formal_pass"))
+    ylabels = [("★ " if formal[label] else "  ") + label for label in row_labels]
+    fig, ax = plt.subplots(figsize=(11.5, max(4.0, 0.32 * len(row_labels) + 1.4)))
+    im = ax.imshow(mat, aspect="auto", vmin=-0.5, vmax=1.5)
+    ax.set_yticks(range(len(ylabels)), ylabels, fontsize=7)
+    ax.set_xticks(range(len(conds)), [condition_label(c) for c in conds], rotation=28, ha="right")
+    ax.set_title("Resampling preservation matrix (all split): ★ marks cells passing all formal gates")
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            if math.isfinite(mat[i, j]) and len(row_labels) <= 42:
+                ax.text(j, i, f"{mat[i, j]:.2f}", ha="center", va="center", fontsize=6.5)
+    fig.colorbar(im, ax=ax, shrink=0.85, label="mean scrub score")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "resampling_preservation_matrix.png", "Heatmap of all-split resampling preservation by site, depth, and condition.")
+
+
+def plot_pass_fail_atlas(ctx: bench.RunContext, passfail_rows: Sequence[Mapping[str, Any]]) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if not passfail_rows:
+        plot_blank(ctx, "hypothesis_pass_fail_atlas.png", "Pass/fail atlas", "No formal gate rows were available.")
+        return
+    row_labels = []
+    gates = ["pass_preservation", "pass_damage", "pass_specificity", "formal_pass"]
+    for row in passfail_rows:
+        label = str(row["row_label"])
+        if label not in row_labels:
+            row_labels.append(label)
+    mat = np.zeros((len(row_labels), len(gates)))
+    for row in passfail_rows:
+        i = row_labels.index(str(row["row_label"]))
+        j = gates.index(str(row["gate"]))
+        mat[i, j] = 1.0 if boolish(row.get("passed")) else 0.0
+    fig, ax = plt.subplots(figsize=(10.8, max(4.0, 0.22 * len(row_labels) + 1.4)))
+    im = ax.imshow(mat, aspect="auto", vmin=0, vmax=1)
+    ax.set_yticks(range(len(row_labels)), row_labels, fontsize=6.2)
+    ax.set_xticks(range(len(gates)), [g.replace("pass_", "").replace("_", " ") for g in gates], rotation=25, ha="right")
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            ax.text(j, i, "✓" if mat[i, j] else "·", ha="center", va="center", fontsize=8)
+    ax.set_title("Formal gate atlas by site/depth and split")
+    fig.colorbar(im, ax=ax, shrink=0.85, ticks=[0, 1], label="gate passed")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "hypothesis_pass_fail_atlas.png", "Pass/fail atlas for formal hypothesis gates.")
 
 
 def plot_split_generalization(ctx: bench.RunContext, split_rows: Sequence[Mapping[str, Any]]) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
 
-    hyps = sorted({str(row["hypothesis_id"]) for row in split_rows})
+    hyps = []
+    for row in split_rows:
+        label = f"{row.get('hypothesis_id')}\n{row.get('site')} d{row.get('depth')}"
+        if label not in hyps:
+            hyps.append(label)
+    if not hyps:
+        plot_blank(ctx, "split_generalization_ladder.png", "Split generalization", "No train/eval/all split rows were available.")
+        return
     splits = ["train", "eval", "all"]
     mat = np.full((len(hyps), len(splits)), np.nan)
-    for i, hyp in enumerate(hyps):
+    pass_mat = np.zeros((len(hyps), len(splits)), dtype=bool)
+    for i, label in enumerate(hyps):
         for j, split in enumerate(splits):
-            vals = [as_float(row.get("preservation")) for row in split_rows if row["hypothesis_id"] == hyp and row["split_group"] == split]
-            vals = [v for v in vals if math.isfinite(v)]
+            vals = [
+                row for row in split_rows
+                if f"{row.get('hypothesis_id')}\n{row.get('site')} d{row.get('depth')}" == label and row.get("split_group") == split
+            ]
             if vals:
-                mat[i, j] = vals[0]
-    fig, ax = plt.subplots(figsize=(7.5, max(3, 0.55 * len(hyps))))
+                mat[i, j] = as_float(vals[0].get("preservation"), float("nan"))
+                pass_mat[i, j] = boolish(vals[0].get("formal_pass"))
+    fig, ax = plt.subplots(figsize=(7.8, max(3.4, 0.65 * len(hyps) + 1.0)))
     im = ax.imshow(mat, aspect="auto", vmin=0, vmax=1.5)
     ax.set_xticks(range(len(splits)), splits)
-    ax.set_yticks(range(len(hyps)), hyps)
-    ax.set_title("Train-selected cell preservation by split")
+    ax.set_yticks(range(len(hyps)), hyps, fontsize=8)
+    ax.set_title("Train-selected cell preservation by split (✓ = formal gates pass)")
     for i in range(mat.shape[0]):
         for j in range(mat.shape[1]):
             if math.isfinite(mat[i, j]):
-                ax.text(j, i, f"{mat[i, j]:.2f}", ha="center", va="center", fontsize=8)
-    fig.colorbar(im, ax=ax, shrink=0.8, label="mean preserve score")
+                ax.text(j, i, f"{mat[i, j]:.2f}" + (" ✓" if pass_mat[i, j] else ""), ha="center", va="center", fontsize=8)
+            else:
+                ax.text(j, i, "missing", ha="center", va="center", fontsize=7)
+    fig.colorbar(im, ax=ax, shrink=0.85, label="mean preserve score")
     fig.tight_layout()
     bench.save_figure(ctx, fig, "split_generalization_ladder.png", "Train-selected best-cell preservation on train, eval, and all rows.")
 
@@ -2080,28 +2668,127 @@ def plot_split_generalization(ctx: bench.RunContext, split_rows: Sequence[Mappin
 def plot_counterexamples(ctx: bench.RunContext, counterexamples: Sequence[Mapping[str, Any]]) -> None:
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(figsize=(12, max(4, 0.45 * max(1, min(10, len(counterexamples))))))
+    fig, ax = plt.subplots(figsize=(13, max(4.2, 0.55 * max(1, min(10, len(counterexamples))))))
     ax.axis("off")
     if not counterexamples:
-        ax.text(0.5, 0.5, "No automatic counterexamples crossed thresholds", ha="center", va="center")
+        ax.text(0.5, 0.58, "No automatic counterexamples crossed thresholds", ha="center", va="center", fontsize=11)
+        ax.text(0.5, 0.36, "Read this as a prompt to rerun wider, not as proof of the abstraction.", ha="center", va="center", fontsize=9)
     else:
         shown = list(counterexamples[:10])
         table_data = [
-            [row["kind"], row["hypothesis_id"], row["split"], row["item_id"], row["donor_id"], row["site"], row["depth"], row["scrub_score"]]
+            [
+                row.get("kind", ""),
+                row.get("hypothesis_id", ""),
+                row.get("split", ""),
+                row.get("item_id", ""),
+                row.get("donor_id", ""),
+                f"{row.get('site')} d{row.get('depth')}",
+                row.get("condition", ""),
+                row.get("scrub_score", ""),
+                row.get("severity", ""),
+            ]
             for row in shown
         ]
         table = ax.table(
             cellText=table_data,
-            colLabels=["kind", "hyp", "split", "item", "donor", "site", "depth", "score"],
+            colLabels=["kind", "hyp", "split", "item", "donor", "site/depth", "condition", "score", "severity"],
             loc="center",
             cellLoc="left",
         )
         table.auto_set_font_size(False)
-        table.set_fontsize(8)
+        table.set_fontsize(7.5)
         table.scale(1, 1.35)
-    ax.set_title("Counterexample gallery", pad=12)
+    ax.set_title("Counterexample gallery: the rows that shrink or kill the favorite claim", pad=12)
     fig.tight_layout()
     bench.save_figure(ctx, fig, "counterexample_gallery.png", "Top automatic counterexamples for Lab 26 hypotheses.")
+
+
+def write_plot_manifest(ctx: bench.RunContext, sources: Mapping[str, Mapping[str, Any]], no_plots: bool) -> None:
+    entries = [
+        {
+            "figure_path": "plots/causal_abstraction_dashboard.png",
+            "question": "Do the selected cells, baseline margins, split survival, and counterexamples tell a coherent story?",
+            "source_table": sources.get("dashboard_evidence.csv", {}).get("path", ""),
+            "raw_source_table": sources.get("selected_cell_condition_points.csv", {}).get("path", ""),
+            "row_count": sources.get("dashboard_evidence.csv", {}).get("row_count", 0),
+            "metric": "scrub_score, clean_diff, pass/fail gates",
+            "controls": "break_variable, random_matched, wrong_site_preserve, no_op_same_example, eval split",
+            "claim_supported": "Overall evidence posture and where to read next; not a verdict machine.",
+        },
+        {
+            "figure_path": "plots/target_vs_control.png",
+            "question": "At the selected site/depth, do preserving donors beat broken-variable and matched controls?",
+            "source_table": sources.get("selected_cell_condition_summary.csv", {}).get("path", ""),
+            "raw_source_table": sources.get("selected_cell_condition_points.csv", {}).get("path", ""),
+            "row_count": sources.get("selected_cell_condition_points.csv", {}).get("row_count", 0),
+            "metric": "scrub_score",
+            "controls": "break_variable, random_matched, wrong_site_preserve",
+            "claim_supported": "Variable specificity at the selected cell, including raw variation and tiny-n caveats.",
+        },
+        {
+            "figure_path": "plots/resampling_preservation_matrix.png",
+            "question": "Which site/depth/condition cells preserve the target margin across all baseline-passing examples?",
+            "source_table": sources.get("resampling_matrix_source.csv", {}).get("path", ""),
+            "raw_source_table": "tables/resampling_interventions.csv",
+            "row_count": sources.get("resampling_matrix_source.csv", {}).get("row_count", 0),
+            "metric": "mean scrub_score by condition",
+            "controls": "all donor conditions shown side by side",
+            "claim_supported": "Search map for candidate abstraction cells, not a split-survival claim.",
+        },
+        {
+            "figure_path": "plots/hypothesis_pass_fail_atlas.png",
+            "question": "Which formal gates pass by split, site, and depth?",
+            "source_table": sources.get("pass_fail_atlas_source.csv", {}).get("path", ""),
+            "raw_source_table": "tables/variable_preservation_summary.csv",
+            "row_count": sources.get("pass_fail_atlas_source.csv", {}).get("row_count", 0),
+            "metric": "preservation gate, damage gate, specificity gate, formal pass",
+            "controls": "thresholded gates include break-variable and strongest control comparisons",
+            "claim_supported": "Gate-level audit, including negative cells.",
+        },
+        {
+            "figure_path": "plots/variable_specificity_ladder.png",
+            "question": "How much room is there between preserve and the strongest alternative explanation?",
+            "source_table": sources.get("dashboard_evidence.csv", {}).get("path", ""),
+            "raw_source_table": "tables/evidence_matrix.csv",
+            "row_count": sources.get("dashboard_evidence.csv", {}).get("row_count", 0),
+            "metric": "damage_gap and specificity_gap",
+            "controls": "break_variable and max(random_matched, wrong_site_preserve)",
+            "claim_supported": "Compact gap reading for selected cells.",
+        },
+        {
+            "figure_path": "plots/split_generalization_ladder.png",
+            "question": "Does the train-selected best cell survive held-out eval rows?",
+            "source_table": sources.get("split_generalization_source.csv", {}).get("path", ""),
+            "raw_source_table": "tables/split_generalization_summary.csv",
+            "row_count": sources.get("split_generalization_source.csv", {}).get("row_count", 0),
+            "metric": "preserve-variable mean and formal pass by split",
+            "controls": "same site/depth is reused on eval rather than reselected",
+            "claim_supported": "Split-survival or train-only posture.",
+        },
+        {
+            "figure_path": "plots/counterexample_gallery.png",
+            "question": "Which individual rows most embarrass the aggregate claim?",
+            "source_table": sources.get("failure_specimens.jsonl", {}).get("path", ""),
+            "raw_source_table": "tables/counterexamples.csv",
+            "row_count": sources.get("failure_specimens.jsonl", {}).get("row_count", 0),
+            "metric": "severity and scrub_score",
+            "controls": "negative results and leaky controls are surfaced, not hidden",
+            "claim_supported": "Counterexample-driven caveats and v2 refinement needs.",
+        },
+    ]
+    for entry in entries:
+        entry["created"] = not no_plots
+        entry["model"] = ctx.model_id
+        entry["tier"] = ctx.args.tier
+        entry["prompt_set"] = ctx.args.prompt_set
+        entry["seed"] = ctx.args.seed
+        entry["run_name"] = ctx.run_dir.name
+    json_path = ctx.path("plots", "plot_manifest.json")
+    bench.write_json(json_path, entries)
+    ctx.register_artifact(json_path, "manifest", "Figure manifest with source tables, row counts, metrics, controls, and claim boundaries.")
+    csv_path = ctx.path("plots", "plot_manifest.csv")
+    bench.write_csv(csv_path, entries)
+    ctx.register_artifact(csv_path, "manifest", "CSV copy of the Lab 26 figure manifest.")
 
 
 def write_plots(
@@ -2111,16 +2798,151 @@ def write_plots(
     summary_rows: Sequence[Mapping[str, Any]],
     split_rows: Sequence[Mapping[str, Any]],
     counterexamples: Sequence[Mapping[str, Any]],
+    resampling_rows: Sequence[Mapping[str, Any]],
 ) -> None:
     write_plot_reading_guide(ctx)
+    sources = write_figure_source_tables(ctx, evidence_rows, baseline_rows, summary_rows, split_rows, counterexamples, resampling_rows)
+    selected_rows = selected_cell_raw_rows(resampling_rows, evidence_rows)
+    condition_summary = selected_condition_summary_rows(selected_rows, evidence_rows, summary_rows)
+    matrix_rows = matrix_source_rows(summary_rows)
+    passfail_rows = pass_fail_source_rows(summary_rows)
+    counter_kind = counterexample_kind_rows(counterexamples)
+    write_plot_manifest(ctx, sources, ctx.args.no_plots)
     if ctx.args.no_plots:
         return
-    plot_dashboard(ctx, evidence_rows, baseline_rows, counterexamples)
-    plot_resampling_matrix(ctx, summary_rows)
-    plot_pass_fail_atlas(ctx, summary_rows)
+    plot_dashboard(ctx, evidence_rows, baseline_rows, condition_summary, counter_kind)
+    plot_target_vs_control(ctx, selected_rows, condition_summary)
+    plot_resampling_matrix(ctx, matrix_rows)
+    plot_pass_fail_atlas(ctx, passfail_rows)
     plot_specificity_ladder(ctx, evidence_rows)
     plot_split_generalization(ctx, split_rows)
     plot_counterexamples(ctx, counterexamples)
+
+
+def write_warning_summary(
+    ctx: bench.RunContext,
+    token_rows: Sequence[Mapping[str, Any]],
+    donor_coverage: Sequence[Mapping[str, Any]],
+    resampling_rows: Sequence[Mapping[str, Any]],
+    baseline_rows: Sequence[Mapping[str, Any]],
+    data_info: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """Write explicit warnings for skipped rows, weak baselines, and plot caveats."""
+    rows: list[dict[str, Any]] = []
+
+    def add(category: str, severity: str, count: int, detail: str, inspect: str) -> None:
+        rows.append({
+            "category": category,
+            "severity": severity,
+            "count": count,
+            "detail": detail,
+            "inspect": inspect,
+        })
+
+    token_dropped = [row for row in token_rows if row.get("kept") is False]
+    token_warned = [row for row in token_rows if row.get("warnings")]
+    donor_missing_preserve = [row for row in donor_coverage if not boolish(row.get("has_preserve"))]
+    donor_missing_break = [row for row in donor_coverage if not boolish(row.get("has_break"))]
+    low_baseline = [row for row in baseline_rows if not boolish(row.get("baseline_pass"))]
+    error_rows = [row for row in resampling_rows if row.get("error")]
+    tiny_conditions = []
+    grouped: dict[tuple[str, str, int, str], int] = defaultdict(int)
+    for row in resampling_rows:
+        if row.get("error") or not boolish(row.get("baseline_pass")) or not boolish(row.get("claimable_depth")):
+            continue
+        grouped[(str(row.get("hypothesis_id")), str(row.get("site")), int(row.get("depth", -1)), str(row.get("condition")))] += 1
+    for key, n in grouped.items():
+        if key[3] in {"preserve_variable", "break_variable"} and n < 3:
+            tiny_conditions.append((key, n))
+
+    add(
+        "data_source",
+        "warning" if not bool(data_info.get("science_ready_data")) else "info",
+        0 if data_info.get("science_ready_data") else 1,
+        "Tier A fallback data is smoke-only." if not data_info.get("science_ready_data") else "Frozen CSV data was used.",
+        "diagnostics/data_manifest.json",
+    )
+    add("tokenization_dropped", "error" if token_dropped else "info", len(token_dropped), "Rows dropped by single-token or position gates.", "diagnostics/tokenization_gate.csv")
+    add("tokenization_warnings", "warning" if token_warned else "info", len(token_warned), "Rows with corrected or suspicious token positions.", "diagnostics/tokenization_gate.csv")
+    add("donor_missing_preserve", "warning" if donor_missing_preserve else "info", len(donor_missing_preserve), "Items without preserving donors.", "diagnostics/donor_coverage.csv")
+    add("donor_missing_break", "warning" if donor_missing_break else "info", len(donor_missing_break), "Items without break-variable donors.", "diagnostics/donor_coverage.csv")
+    add("low_baseline_margin", "warning" if low_baseline else "info", len(low_baseline), f"Rows at or below clean-margin gate {MIN_BASELINE_MARGIN}.", "tables/baseline_behavior.csv")
+    add("intervention_errors", "warning" if error_rows else "info", len(error_rows), "Intervention cells skipped or errored, usually donor length or position mismatch.", "tables/resampling_interventions.csv")
+    add("tiny_condition_cells", "warning" if tiny_conditions else "info", len(tiny_conditions), "Selected/claimable condition cells with n<3; read CI and raw points before claiming stability.", "tables/figure_sources/selected_cell_condition_summary.csv")
+
+    csv_path = ctx.path("diagnostics", "warning_summary.csv")
+    bench.write_csv_with_context(ctx, csv_path, rows)
+    ctx.register_artifact(csv_path, "diagnostic", "Warnings for skipped rows, weak baselines, donor coverage, and tiny plot cells.")
+    json_path = ctx.path("diagnostics", "warning_summary.json")
+    bench.write_json(json_path, rows)
+    ctx.register_artifact(json_path, "diagnostic", "JSON copy of Lab 26 warning summary.")
+    return rows
+
+
+def write_lab26_run_config_snapshot(
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    data_info: Mapping[str, Any],
+    specs: Sequence[HypothesisSpec],
+    items: Sequence[CausalItem],
+) -> dict[str, Any]:
+    sites: list[dict[str, Any]] = []
+    for spec in specs:
+        for site in iter_residual_sites(spec, bundle, ctx.args):
+            sites.append({
+                "hypothesis_id": site.hypothesis_id,
+                "domain": site.domain,
+                "site_label": site.site_label,
+                "position_name": site.position_name,
+                "depths": list(site.depths),
+                "claimable_depths": [d for d in site.depths if depth_claimable(bundle, d)],
+                "rationale": site.rationale,
+            })
+    snapshot = {
+        "lab_id": LAB_ID,
+        "lab_name": LAB_NAME,
+        "run_name": ctx.run_dir.name,
+        "model_id": bundle.anatomy.model_id,
+        "model_revision": bundle.anatomy.revision,
+        "n_layers": bundle.anatomy.n_layers,
+        "d_model": bundle.anatomy.d_model,
+        "tier": ctx.args.tier,
+        "seed": ctx.args.seed,
+        "prompt_set": ctx.args.prompt_set,
+        "max_examples": ctx.args.max_examples,
+        "dtype": ctx.args.dtype,
+        "quantization": ctx.args.quantization,
+        "decoding": "none; forward-pass-only residual resampling",
+        "data": dict(data_info),
+        "thresholds": {
+            "min_baseline_margin": MIN_BASELINE_MARGIN,
+            "min_donors_per_condition": MIN_DONORS_PER_CONDITION,
+            "noop_score_atol": NOOP_SCORE_ATOL,
+            "max_counterexamples": MAX_COUNTEREXAMPLES,
+        },
+        "conditions": list(CONDITION_ORDER),
+        "control_conditions": list(CONTROL_CONDITIONS),
+        "specs": [
+            {
+                "hypothesis_id": spec.hypothesis_id,
+                "domain": spec.domain,
+                "source": spec.source,
+                "path": str(spec.path),
+                "high_level_variables": list(spec.high_level_variables),
+                "predicted_preservation_min": spec.predicted_preservation_min,
+                "predicted_damage_when_broken_min": spec.predicted_damage_when_broken_min,
+                "predicted_specificity_gap_min": spec.predicted_specificity_gap_min,
+            }
+            for spec in specs
+        ],
+        "residual_sites": sites,
+        "selected_item_ids": [item.item_id for item in items],
+        "selected_splits": {split: sum(1 for item in items if split_group_for(item) == split) for split in sorted({split_group_for(item) for item in items})},
+    }
+    path = ctx.path("diagnostics", "lab26_run_config_snapshot.json")
+    bench.write_json(path, snapshot)
+    ctx.register_artifact(path, "diagnostic", "Lab-specific config snapshot for data, specs, sites, depths, thresholds, and controls.")
+    return snapshot
 
 
 # ---------------------------------------------------------------------------
@@ -2170,6 +2992,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.run_patch_noop_check(ctx, bundle, items[0].prompt)
 
     items, token_rows = tokenization_gate(ctx, bundle, items)
+    write_lab26_run_config_snapshot(ctx, bundle, data_info, specs, items)
     captures, baseline_rows = cache_items(ctx, bundle, items)
     donor_plans, donor_rows, donor_coverage = build_donor_plans(items, specs)
 
@@ -2184,6 +3007,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     resampling_rows = run_resampling(ctx, bundle, items, specs, captures, donor_plans)
     noop_rows = assert_noop_identity(ctx, resampling_rows)
     self_check_status = write_self_check_status(ctx, token_rows, donor_coverage, noop_rows)
+    warning_rows = write_warning_summary(ctx, token_rows, donor_coverage, resampling_rows, baseline_rows, data_info)
 
     results_path = ctx.path("results.csv")
     bench.write_csv_with_context(ctx, results_path, resampling_rows)
@@ -2231,6 +3055,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "lab_name": LAB_NAME,
         "data": data_info,
         "self_check_status": self_check_status,
+        "warning_summary": warning_rows,
         "n_interventions": len(resampling_rows),
         "n_summary_cells": len(summary_rows),
         "n_best_cells": len(best_rows),
@@ -2251,7 +3076,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     write_operationalization_audit(ctx, evidence_rows, counterexamples)
     write_run_summary(ctx, bundle, data_info, evidence_rows, counterexamples, refinement_rows)
     write_ledger_claims(ctx, evidence_rows)
-    write_plots(ctx, evidence_rows, baseline_rows, summary_rows, split_rows, counterexamples)
+    write_plots(ctx, evidence_rows, baseline_rows, summary_rows, split_rows, counterexamples, resampling_rows)
 
     pass_count = sum(1 for row in evidence_rows if row.get("claim_posture") == "supported_on_train_and_eval")
     print(
