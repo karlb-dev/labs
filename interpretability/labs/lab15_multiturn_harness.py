@@ -1682,91 +1682,730 @@ def trace_depth_sweep_rows(
     return rows
 
 
+
 # ---------------------------------------------------------------------------
-# Plots
+# Visualization upgrade: turn-indexed science starts with plumbing receipts
 # ---------------------------------------------------------------------------
+
+LAB15_ROLE_ORDER = ("system", "user", "assistant")
+LAB15_DIRECTION_FAMILIES = ("topic", "topic_on_control", "length_null", "random_null")
+
+
+def lab15_color(key: str, default: str = "#555555") -> str:
+    helper = getattr(bench, "plot_multiturn_color", None)
+    if callable(helper):
+        try:
+            return helper(key, default)
+        except TypeError:
+            return helper(key)
+    palette = {
+        "pass": "#009E73",
+        "warn": "#E69F00",
+        "fail": "#D55E00",
+        "unknown": "#777777",
+        "system": "#777777",
+        "user": "#0072B2",
+        "assistant": "#CC79A7",
+        "message": "#9E9E9E",
+        "content": "#56B4E9",
+        "template": "#D0D0D0",
+        "topic": "#009E73",
+        "topic_orchid_minus_archive": "#009E73",
+        "topic_on_control": "#0072B2",
+        "archive_control": "#0072B2",
+        "length_null": "#E69F00",
+        "length_matched_null": "#E69F00",
+        "random_null": "#777777",
+        "cache": "#0072B2",
+        "patch": "#CC79A7",
+        "generation_prompt": "#7E57C2",
+        "span": "#56B4E9",
+        "hard_gate": "#009E73",
+        "soft_gate": "#E69F00",
+        "downstream": "#7E57C2",
+    }
+    return palette.get(str(key), default)
+
+
+def lab15_marker(key: str, default: str = "o") -> str:
+    helper = getattr(bench, "plot_multiturn_marker", None)
+    if callable(helper):
+        try:
+            return helper(key, default)
+        except TypeError:
+            return helper(key)
+    return {
+        "system": "s",
+        "user": "o",
+        "assistant": "^",
+        "topic": "o",
+        "length_null": "D",
+        "random_null": "x",
+        "cache": "o",
+        "patch": "s",
+    }.get(str(key), default)
+
+
+def _safe_float(x: Any, default: float = float("nan")) -> float:
+    try:
+        val = float(x)
+    except Exception:
+        return default
+    return val if math.isfinite(val) else default
+
+
+def _safe_int(x: Any, default: int = 0) -> int:
+    try:
+        return int(float(x))
+    except Exception:
+        return default
+
+
+def _truthy(x: Any) -> bool:
+    if isinstance(x, bool):
+        return x
+    if isinstance(x, (int, float)):
+        return bool(x)
+    return str(x).strip().lower() in {"1", "true", "yes", "y", "ok", "pass", "passed"}
+
+
+def _read_csv_rows(path: Any) -> list[dict[str, Any]]:
+    import csv
+    import pathlib
+    p = pathlib.Path(path)
+    if not p.exists():
+        return []
+    with p.open(newline="") as f:
+        rows = list(csv.DictReader(f))
+    for row in rows:
+        for k, v in list(row.items()):
+            if isinstance(v, str):
+                s = v.strip()
+                if s.lower() in {"true", "false"}:
+                    row[k] = s.lower() == "true"
+                else:
+                    try:
+                        if s and re.fullmatch(r"[-+]?\d+", s):
+                            row[k] = int(s)
+                        elif s and re.fullmatch(r"[-+]?(?:\d+\.\d*|\d*\.\d+|\d+)(?:[eE][-+]?\d+)?", s):
+                            row[k] = float(s)
+                    except Exception:
+                        pass
+    return rows
+
+
+def _short_check_name(name: str) -> str:
+    mapping = {
+        "turn_boundary_check": "turn spans",
+        "generation_prompt_boundary_check": "generation boundary",
+        "chat_exact_hook_parity": "exact hooks",
+        "chat_exact_lens_self_check": "exact lens",
+        "cache_recompute_parity": "cache parity",
+        "patch_noop_check": "patch no-op",
+        "null_trace_check": "null trace",
+        "bench_registry": "bench registry",
+    }
+    return mapping.get(name, str(name).replace("_", " "))
+
+
+def _status_from_bool(ok: Any, warn: bool = False) -> str:
+    if not _truthy(ok):
+        return "fail"
+    return "warn" if warn else "pass"
+
+
+def _status_score(status: str) -> float:
+    return {"pass": 1.0, "warn": 0.55, "fail": 0.05, "unknown": 0.35}.get(str(status), 0.35)
+
+
+def _artifact_for_check(name: str) -> str:
+    return {
+        "turn_boundary_check": "diagnostics/turn_boundary_check.json + tables/turn_segments.csv",
+        "generation_prompt_boundary_check": "diagnostics/generation_prompt_boundary_check.json + tables/generation_prompt_boundaries.csv",
+        "chat_exact_hook_parity": "diagnostics/chat_exact_hook_parity.json",
+        "chat_exact_lens_self_check": "diagnostics/chat_exact_lens_self_check.json",
+        "cache_recompute_parity": "diagnostics/cache_recompute_parity.json + diagnostics/cache_recompute_parity_by_boundary.csv",
+        "patch_noop_check": "diagnostics/patch_noop_check.json + diagnostics/patch_noop_sites.csv",
+        "null_trace_check": "diagnostics/null_trace_check.json + diagnostics/null_trace_slopes.csv",
+        "bench_registry": "diagnostics/bench_integration_note.json",
+    }.get(name, "")
+
+
+def build_harness_evidence_rows(metrics: Mapping[str, Any], checks: Mapping[str, Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    def add(name: str, *, gate: str, ok: Any, observed: Any = "", threshold: Any = "", warning: bool = False, why: str = "") -> None:
+        status = _status_from_bool(ok, warning)
+        rows.append({
+            "check": name,
+            "display_name": _short_check_name(name),
+            "gate_type": gate,
+            "status": status,
+            "status_score": _status_score(status),
+            "observed": rounded(observed) if isinstance(observed, (int, float)) else observed,
+            "threshold": rounded(threshold) if isinstance(threshold, (int, float)) else threshold,
+            "artifact": _artifact_for_check(name),
+            "why_it_matters": why,
+        })
+
+    turn = checks.get("turn_boundary_check", {})
+    gen = checks.get("generation_prompt_boundary_check", {})
+    hook = checks.get("chat_exact_hook_parity", {})
+    lens = checks.get("chat_exact_lens_self_check", {})
+    cache = checks.get("cache_recompute_parity", {})
+    patch = checks.get("patch_noop_check", {})
+    null = checks.get("null_trace_check", {})
+
+    span_methods = metrics.get("content_span_method_counts", {}) or {}
+    fallback_count = sum(int(v) for k, v in span_methods.items() if "fallback" in str(k).lower() or "message" in str(k).lower())
+    total_spans = sum(int(v) for v in span_methods.values()) if isinstance(span_methods, Mapping) else 0
+    content_warning = bool(fallback_count > 0)
+
+    add("turn_boundary_check", gate="hard", ok=turn.get("ok", False), observed=metrics.get("n_segments_total", ""), threshold="all spans covered", why="Turn-indexed states are meaningless if rendered-message spans have gaps or leaks.")
+    add("content_span_mapping", gate="hard-ish", ok=turn.get("ok", False), observed=f"{total_spans - fallback_count}/{total_spans} precise", threshold="decoded content matches", warning=content_warning, why="Later content-specific claims need content spans, not role/template scaffolding.")
+    add("generation_prompt_boundary_check", gate="hard", ok=gen.get("ok", False), observed=gen.get("n_user_prefixes", ""), threshold="prefix + direct ids match", why="Generation-time probes often live after an assistant header, not after raw user text.")
+    add("chat_exact_hook_parity", gate="hard", ok=hook.get("ok", False), observed=hook.get("max_abs_diff", float("nan")), threshold=hook.get("tolerance", ""), why="Block hooks must equal the named residual stream on exact rendered chat IDs.")
+    add("chat_exact_lens_self_check", gate="hard", ok=lens.get("ok", True), observed=lens.get("max_abs_diff", lens.get("max_abs_logit_diff", "")), threshold=lens.get("tolerance", "bench tolerance"), why="Final-depth readout must match the model's real output on the same rendered prompt.")
+    add("cache_recompute_parity", gate="hard", ok=cache.get("ok", False), observed=cache.get("max_rel_l2_hidden_diff", metrics.get("cache_parity_max_abs_hidden_diff", float("nan"))), threshold=cache.get("rel_l2_threshold", "dtype-aware"), why="Cached turn traces can counterfeit drift unless they match full recompute.")
+    add("patch_noop_check", gate="hard", ok=patch.get("ok", False), observed=patch.get("max_abs_logit_diff", metrics.get("patch_noop_max_abs_logit_diff", float("nan"))), threshold=patch.get("atol", metrics.get("patch_noop_atol", "")), why="Cross-turn patching only means something if self-patching is an identity operation.")
+    add("null_trace_check", gate="demo", ok=null.get("ok", False), observed=null.get("random_null_max_abs_slope", metrics.get("random_null_max_abs_slope", float("nan"))), threshold=null.get("null_flatness_threshold", "flat vs topic"), warning=not _truthy(null.get("flat_enough_for_demo_claim", False)), why="A rising projection is not a semantic state if length/template/random nulls rise too.")
+    add("bench_registry", gate="integration", ok=metrics.get("bench_chat_template_labs_has_lab15", True), observed="lab15 in CHAT_TEMPLATE_LABS" if metrics.get("bench_chat_template_labs_has_lab15", False) else "not registered", threshold="registry metadata consistent", warning=not metrics.get("bench_chat_template_labs_has_lab15", False), why="Bench diagnostics should agree that this run used chat-template semantics.")
+    return rows
+
+
+def write_visual_synthesis_tables(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    checks: Mapping[str, Mapping[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    evidence_rows = build_harness_evidence_rows(metrics, checks)
+    evidence_path = ctx.path("tables", "harness_evidence_matrix.csv")
+    bench.write_csv_with_context(ctx, evidence_path, evidence_rows)
+    ctx.register_artifact(evidence_path, "table", "Joined Lab 15 self-check evidence matrix for plotting and reports.")
+
+    turn_rows = _read_csv_rows(ctx.path("tables", "turn_segments.csv"))
+    cache_rows = _read_csv_rows(ctx.path("diagnostics", "cache_recompute_parity_by_boundary.csv"))
+    patch_rows = _read_csv_rows(ctx.path("diagnostics", "patch_noop_sites.csv"))
+    gen_rows = _read_csv_rows(ctx.path("tables", "generation_prompt_boundaries.csv"))
+    cache_by_key = {(str(r.get("conversation")), _safe_int(r.get("segment_index"))): r for r in cache_rows}
+    gen_by_key = {(str(r.get("conversation")), _safe_int(r.get("source_user_segment_index", r.get("last_user_segment_index")))): r for r in gen_rows}
+    patch_by_key: dict[tuple[str, int], dict[str, Any]] = {}
+    for r in patch_rows:
+        key = (str(r.get("conversation")), _safe_int(r.get("segment_index")))
+        prev = patch_by_key.get(key)
+        if prev is None or _safe_float(r.get("max_abs_logit_diff"), -1) > _safe_float(prev.get("max_abs_logit_diff"), -1):
+            patch_by_key[key] = r
+    boundary_rows: list[dict[str, Any]] = []
+    for r in turn_rows:
+        key = (str(r.get("conversation")), _safe_int(r.get("segment_index")))
+        msg_n = _safe_float(r.get("message_n_tokens"), 0)
+        content_n = _safe_float(r.get("content_n_tokens"), 0)
+        cache_r = cache_by_key.get(key, {})
+        patch_r = patch_by_key.get(key, {})
+        gen_r = gen_by_key.get(key, {})
+        boundary_rows.append({
+            "conversation": key[0],
+            "segment_index": key[1],
+            "role": r.get("role"),
+            "message_tokens": msg_n,
+            "content_tokens": content_n,
+            "template_tokens_estimate": max(0.0, msg_n - content_n),
+            "content_share": rounded(content_n / msg_n if msg_n else float("nan")),
+            "content_span_method": r.get("content_span_method", ""),
+            "cache_rel_l2_hidden_diff": rounded(_safe_float(cache_r.get("rel_l2_hidden_diff"))),
+            "cache_cosine_full_vs_cached": rounded(_safe_float(cache_r.get("cosine_full_vs_cached"))),
+            "cache_ok": cache_r.get("ok_at_tolerance", ""),
+            "patch_noop_max_abs_logit_diff": rounded(_safe_float(patch_r.get("max_abs_logit_diff"))),
+            "patch_noop_site": patch_r.get("site", ""),
+            "generation_stub_tokens": gen_r.get("assistant_generation_stub_n_tokens", gen_r.get("generation_prompt_extra_tokens", "")) if r.get("role") == "user" else "",
+            "generation_boundary_ok": gen_r.get("prefix_without_generation_prompt_is_prefix", gen_r.get("with_prompt_extends_prefix", "")) if r.get("role") == "user" else "",
+        })
+    boundary_path = ctx.path("tables", "boundary_diagnostic_matrix.csv")
+    bench.write_csv_with_context(ctx, boundary_path, boundary_rows)
+    ctx.register_artifact(boundary_path, "table", "Per-segment joined span/cache/patch/generation boundary diagnostics.")
+
+    slope_rows = _read_csv_rows(ctx.path("diagnostics", "null_trace_slopes.csv"))
+    slope_summary: list[dict[str, Any]] = []
+    for r in slope_rows:
+        direction = str(r.get("direction"))
+        conv = str(r.get("conversation"))
+        s = _safe_float(r.get("slope"))
+        if direction == "topic_orchid_minus_archive" and conv == "orchid_topic":
+            family = "topic target"
+        elif direction == "topic_orchid_minus_archive":
+            family = "topic on control"
+        elif direction == "length_matched_null":
+            family = "length/template null"
+        elif direction.startswith("random_null_"):
+            family = "random null"
+        else:
+            family = "other"
+        slope_summary.append({
+            **dict(r),
+            "direction_family": family,
+            "abs_slope": rounded(abs(s) if math.isfinite(s) else float("nan")),
+            "claim_risk": "high" if family != "topic target" and math.isfinite(s) and abs(s) >= max(NULL_SLOPE_ABS_WARN, 0.6 * abs(_safe_float(metrics.get("topic_trace_slope"), 0.0))) else "normal",
+        })
+    slope_path = ctx.path("tables", "trace_slope_summary.csv")
+    bench.write_csv_with_context(ctx, slope_path, slope_summary)
+    ctx.register_artifact(slope_path, "table", "Projection slopes with direction families and null-drift risk labels.")
+
+    readiness_rows = [
+        {
+            "downstream_use": "turn-indexed projections",
+            "status": "ready" if all(_truthy(checks.get(k, {}).get("ok", False)) for k in ("turn_boundary_check", "chat_exact_hook_parity", "chat_exact_lens_self_check")) else "blocked",
+            "required_evidence": "template spans + exact chat hook/lens parity",
+            "main_artifacts": "turn_segments.csv; chat_exact_hook_parity.json; chat_exact_lens_self_check.json",
+        },
+        {
+            "downstream_use": "cache-efficient turn traces",
+            "status": "ready" if _truthy(checks.get("cache_recompute_parity", {}).get("ok", False)) else "blocked",
+            "required_evidence": "cached boundary states match full recompute",
+            "main_artifacts": "cache_recompute_parity_by_boundary.csv",
+        },
+        {
+            "downstream_use": "cross-turn activation patching",
+            "status": "ready" if _truthy(checks.get("patch_noop_check", {}).get("ok", False)) else "blocked",
+            "required_evidence": "self-patching at boundary sites is no-op",
+            "main_artifacts": "patch_noop_sites.csv",
+        },
+        {
+            "downstream_use": "generation-time reads",
+            "status": "ready" if _truthy(checks.get("generation_prompt_boundary_check", {}).get("ok", False)) else "blocked",
+            "required_evidence": "add_generation_prompt boundary extends user prefix and matches direct ids",
+            "main_artifacts": "generation_prompt_boundaries.csv",
+        },
+        {
+            "downstream_use": "semantic drift claims",
+            "status": "ready" if _truthy(checks.get("null_trace_check", {}).get("flat_enough_for_demo_claim", False)) else "caution",
+            "required_evidence": "topic trace beats length/template/random nulls",
+            "main_artifacts": "null_trace_slopes.csv; trace_depth_sweep.csv",
+        },
+    ]
+    readiness_path = ctx.path("tables", "downstream_readiness_card.csv")
+    bench.write_csv_with_context(ctx, readiness_path, readiness_rows)
+    ctx.register_artifact(readiness_path, "table", "Which later multi-turn uses are licensed or blocked by this run.")
+
+    guide_rows = [
+        {"plot": "harness_evidence_dashboard.png", "concept": "one-screen pass/warn/fail board for the instrumentation stack", "read_first": True},
+        {"plot": "harness_evidence_matrix.png", "concept": "which check licenses which downstream use", "read_first": True},
+        {"plot": "turn_span_map.png", "concept": "message spans versus content spans in exact rendered token space", "read_first": True},
+        {"plot": "generation_boundary_audit.png", "concept": "assistant-generation prefix boundaries after user turns", "read_first": False},
+        {"plot": "cache_patch_diagnostics.png", "concept": "cache parity and patch no-op errors by boundary/site", "read_first": True},
+        {"plot": "demo_turn_trace.png", "concept": "topic trace with archive, length, and random null controls", "read_first": False},
+        {"plot": "trace_depth_sweep.png", "concept": "depth-picking hazard: topic and null slopes vary over depth", "read_first": False},
+        {"plot": "depth_selection_atlas.png", "concept": "control-adjusted depth selection and null drift in one matrix", "read_first": False},
+        {"plot": "trace_slope_ledger.png", "concept": "all trace slopes, sorted by null risk", "read_first": False},
+        {"plot": "downstream_readiness_card.png", "concept": "what later labs may safely inherit", "read_first": True},
+    ]
+    guide_path = ctx.path("tables", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, guide_path, guide_rows)
+    ctx.register_artifact(guide_path, "table", "Plot reading guide for the upgraded Lab 15 visual suite.")
+
+    return {
+        "evidence_matrix": evidence_rows,
+        "boundary_matrix": boundary_rows,
+        "slope_summary": slope_summary,
+        "readiness": readiness_rows,
+        "plot_guide": guide_rows,
+    }
+
+
+def _maybe_panel_label(ax: Any, label: str) -> None:
+    helper = getattr(bench, "add_panel_label", None)
+    if callable(helper):
+        try:
+            helper(ax, label)
+            return
+        except Exception:
+            pass
+    ax.text(-0.08, 1.05, label, transform=ax.transAxes, fontsize=11, fontweight="bold", va="top")
+
+
+def _finalize_axes(ax: Any, title: str | None = None, xlabel: str | None = None, ylabel: str | None = None, legend: bool = True) -> None:
+    try:
+        bench.style_ax(ax, title=title, xlabel=xlabel, ylabel=ylabel, legend=legend)
+    except TypeError:
+        if title:
+            ax.set_title(title)
+        if xlabel:
+            ax.set_xlabel(xlabel)
+        if ylabel:
+            ax.set_ylabel(ylabel)
+        if legend and ax.get_legend_handles_labels()[0]:
+            ax.legend(fontsize=8)
+        bench.style_ax(ax)
 
 
 def plot_turn_trace(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
-    fig, ax = bench.new_figure(figsize=(9.5, 5.8))
-    styles = {
-        ("orchid_topic", "topic_orchid_minus_archive"): ("tab:green", "-", "orchid conversation, topic direction"),
-        ("archive_length_control", "topic_orchid_minus_archive"): ("tab:blue", "--", "archive control, topic direction"),
-        ("orchid_topic", "length_matched_null"): ("tab:orange", ":", "orchid conversation, length null"),
-        ("orchid_topic", "random_null_00"): ("tab:gray", ":", "orchid conversation, random null"),
-    }
-    for (conv, direction), (color, linestyle, label) in styles.items():
-        sub = [
-            r for r in rows
-            if r["conversation"] == conv and r["direction"] == direction and r["role"] != "system"
-        ]
+    import matplotlib.pyplot as plt
+    fig, ax = bench.new_figure(figsize=(10.6, 6.0))
+    # All random nulls as a gray band: the demo topic only gets a claim if it separates from the controls.
+    random_dirs = sorted({str(r["direction"]) for r in rows if str(r.get("direction", "")).startswith("random_null_")})
+    for direction in random_dirs:
+        sub = [r for r in rows if r["conversation"] == "orchid_topic" and r["direction"] == direction and r["role"] != "system"]
         if not sub:
             continue
         ax.plot(
             [float(r["turn_index_non_system"]) for r in sub],
             [float(r["cumulative_message_mean_projection"]) for r in sub],
-            marker="o",
-            color=color,
-            linestyle=linestyle,
-            linewidth=2.0,
-            label=label,
+            color=lab15_color("random_null"), alpha=0.16, linewidth=1.0,
         )
-    ax.set_xlabel("message boundary, system excluded")
-    ax.set_ylabel("cumulative mean projection")
-    ax.set_title("Lab 15 demo trace: topic direction against null controls")
-    ax.legend(fontsize=8)
-    bench.style_ax(ax)
-    bench.save_figure(ctx, fig, "demo_turn_trace.png", "Topic and null projection traces over scripted multi-turn conversations.")
+    styles = [
+        ("orchid_topic", "topic_orchid_minus_archive", lab15_color("topic"), "-", "orchid conversation · topic direction"),
+        ("archive_length_control", "topic_orchid_minus_archive", lab15_color("archive_control"), "--", "archive control · topic direction"),
+        ("orchid_topic", "length_matched_null", lab15_color("length_null"), ":", "orchid conversation · length/template null"),
+    ]
+    for conv, direction, color, linestyle, label in styles:
+        sub = [r for r in rows if r["conversation"] == conv and r["direction"] == direction and r["role"] != "system"]
+        if not sub:
+            continue
+        ax.plot(
+            [float(r["turn_index_non_system"]) for r in sub],
+            [float(r["cumulative_message_mean_projection"]) for r in sub],
+            marker="o", color=color, linestyle=linestyle, linewidth=2.5, label=label,
+        )
+        # Content-boundary dots show that the same trace is available at a narrower site.
+        ax.scatter(
+            [float(r["turn_index_non_system"]) for r in sub],
+            [float(r["content_boundary_projection"]) for r in sub],
+            s=26, color=color, alpha=0.55, marker="D", zorder=3,
+        )
+    ax.axhline(0.0, color="black", linewidth=0.9)
+    ax.text(0.01, 0.02, "lines = cumulative prefix mean; diamonds = content boundary", transform=ax.transAxes, fontsize=8, color="#555555")
+    _finalize_axes(ax, "Lab 15 demo trace: topic direction must separate from null controls", "message boundary, system excluded", "projection onto direction")
+    bench.save_figure(ctx, fig, "demo_turn_trace.png", "Topic and null projection traces over scripted multi-turn conversations, including random-null controls and content-boundary markers.")
 
 
 def plot_trace_depth_sweep(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
-    fig, ax = bench.new_figure(figsize=(9.5, 5.8))
-    styles = {
-        ("orchid_topic", "topic_orchid_minus_archive"): ("tab:green", "-", "topic direction on orchid conversation"),
-        ("archive_length_control", "topic_orchid_minus_archive"): ("tab:blue", "--", "topic direction on archive control"),
-        ("orchid_topic", "length_matched_null"): ("tab:orange", ":", "length-null on orchid conversation"),
-        ("orchid_topic", "random_null_00"): ("tab:gray", ":", "random-null on orchid conversation"),
-    }
-    for (conv, direction), (color, linestyle, label) in styles.items():
-        sub = [r for r in rows if r["conversation"] == conv and r["direction"] == direction]
-        if not sub:
-            continue
-        sub = sorted(sub, key=lambda r: int(r["stream_depth"]))
-        ax.plot(
-            [int(r["stream_depth"]) for r in sub],
-            [float(r["cumulative_projection_slope"]) for r in sub],
-            color=color,
-            linestyle=linestyle,
-            linewidth=2.0,
-            label=label,
-        )
-    ax.axhline(0.0, linewidth=1.0, color="black")
-    ax.set_xlabel("stream depth k, after k blocks")
-    ax.set_ylabel("projection slope over message boundaries")
-    ax.set_title("Depth sweep for the demo trace and controls")
-    ax.legend(fontsize=8)
-    bench.style_ax(ax)
-    bench.save_figure(ctx, fig, "trace_depth_sweep.png", "Projection-slope depth sweep for topic and null controls.")
+    import matplotlib.pyplot as plt
+    fig, ax = bench.new_figure(figsize=(10.6, 5.8))
+    by = {(str(r.get("conversation")), str(r.get("direction")), int(r.get("stream_depth", 0))): _safe_float(r.get("cumulative_projection_slope")) for r in rows}
+    depths = sorted({int(r.get("stream_depth", 0)) for r in rows})
+    topic = [by.get(("orchid_topic", "topic_orchid_minus_archive", d), float("nan")) for d in depths]
+    control = [by.get(("archive_length_control", "topic_orchid_minus_archive", d), float("nan")) for d in depths]
+    gap = [t - c if math.isfinite(t) and math.isfinite(c) else float("nan") for t, c in zip(topic, control)]
+    length = [by.get(("orchid_topic", "length_matched_null", d), float("nan")) for d in depths]
+    random = [by.get(("orchid_topic", "random_null_00", d), float("nan")) for d in depths]
+    ax.plot(depths, gap, color=lab15_color("topic"), linewidth=2.7, marker="o", label="topic slope minus archive-control slope")
+    ax.plot(depths, topic, color=lab15_color("topic"), linewidth=1.3, linestyle="--", alpha=0.65, label="raw topic slope on orchid")
+    ax.plot(depths, control, color=lab15_color("archive_control"), linewidth=1.3, linestyle="--", alpha=0.65, label="topic slope on archive control")
+    ax.plot(depths, length, color=lab15_color("length_null"), linewidth=1.8, linestyle=":", label="length/template null slope")
+    ax.plot(depths, random, color=lab15_color("random_null"), linewidth=1.5, linestyle=":", label="random-null-00 slope")
+    ax.axhline(0.0, color="black", linewidth=0.9)
+    if gap:
+        finite = [(d, g) for d, g in zip(depths, gap) if math.isfinite(g)]
+        if finite:
+            d_star, g_star = max(finite, key=lambda x: abs(x[1]))
+            ax.axvline(d_star, color=lab15_color("topic"), linestyle="--", linewidth=1.0, alpha=0.55)
+            ax.text(d_star, g_star, f" strongest gap @ {d_star}", fontsize=8, va="bottom")
+    _finalize_axes(ax, "Depth sweep: depth-picking is now part of the hypothesis", "stream depth k, after k blocks", "projection slope over message boundaries")
+    bench.save_figure(ctx, fig, "trace_depth_sweep.png", "Control-adjusted projection-slope depth sweep for topic and null controls.")
 
 
 def plot_turn_span_map(ctx: bench.RunContext, conversations_by_name: Mapping[str, RenderedConversation]) -> None:
-    fig, ax = bench.new_figure(figsize=(9.5, 4.8))
+    fig, ax = bench.new_figure(figsize=(11.0, 5.8))
     y = 0
     yticks = []
     ylabels = []
     for conv_name, conv in conversations_by_name.items():
         for seg in conv.segments:
-            ax.barh(y, seg.message_end - seg.message_start, left=seg.message_start, height=0.62, alpha=0.35)
-            ax.barh(y, seg.content_end - seg.content_start, left=seg.content_start, height=0.28, alpha=0.85)
+            role_color = lab15_color(seg.role)
+            template_left = seg.message_start
+            template_width = seg.message_end - seg.message_start
+            content_left = seg.content_start
+            content_width = seg.content_end - seg.content_start
+            ax.barh(y, template_width, left=template_left, height=0.62, color=lab15_color("template"), alpha=0.8, edgecolor="none")
+            ax.barh(y, content_width, left=content_left, height=0.36, color=role_color, alpha=0.88, edgecolor="black", linewidth=0.3)
+            ax.axvline(seg.boundary_token, ymin=max(0, (y - 0.4) / max(1, len(conv.segments) * len(conversations_by_name))), ymax=1, color=role_color, alpha=0.10)
             yticks.append(y)
-            ylabels.append(f"{conv_name}:{seg.index}:{seg.role}")
+            ylabels.append(f"{conv_name} · {seg.index} · {seg.role}")
             y += 1
     ax.set_yticks(yticks)
     ax.set_yticklabels(ylabels, fontsize=7)
-    ax.set_xlabel("token index in rendered chat")
-    ax.set_title("Message spans, wide bars, and content spans, narrow bars")
-    bench.style_ax(ax)
-    bench.save_figure(ctx, fig, "turn_span_map.png", "Token-span map for rendered multi-turn conversations.")
+    # Role legend by hand.
+    for role in LAB15_ROLE_ORDER:
+        ax.scatter([], [], color=lab15_color(role), marker="s", s=80, label=f"{role} content")
+    ax.scatter([], [], color=lab15_color("template"), marker="s", s=80, label="message/template span")
+    _finalize_axes(ax, "Rendered-chat token map: content spans ride inside template spans", "token index in rendered chat", "", legend=True)
+    bench.save_figure(ctx, fig, "turn_span_map.png", "Token-span map distinguishing full message/template spans from narrower content spans.")
+
+
+def plot_generation_boundary_audit(ctx: bench.RunContext) -> None:
+    rows = _read_csv_rows(ctx.path("tables", "generation_prompt_boundaries.csv"))
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(10.6, 4.9))
+    labels = [f"{r.get('conversation')}\nuser seg {r.get('source_user_segment_index', r.get('last_user_segment_index'))}" for r in rows]
+    base = [_safe_float(r.get("no_generation_prompt_token_count", r.get("prefix_tokens_without_generation_prompt")), 0) for r in rows]
+    extra = [_safe_float(r.get("assistant_generation_stub_n_tokens", r.get("generation_prompt_extra_tokens")), 0) for r in rows]
+    x = list(range(len(rows)))
+    ax.bar(x, base, color=lab15_color("span"), alpha=0.45, label="prefix without generation prompt")
+    ax.bar(x, extra, bottom=base, color=lab15_color("generation_prompt"), alpha=0.85, label="assistant-generation stub")
+    for i, r in enumerate(rows):
+        ok = _truthy(r.get("prefix_without_generation_prompt_is_prefix", r.get("with_prompt_extends_prefix"))) and _truthy(r.get("string_vs_direct_template_ids_match", r.get("string_vs_direct_with_prompt_ids_match")))
+        ax.text(i, base[i] + extra[i] + max(base + extra + [1]) * 0.015, "✓" if ok else "✗", ha="center", color=lab15_color("pass" if ok else "fail"), fontsize=10, fontweight="bold")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=35, ha="right", fontsize=7)
+    _finalize_axes(ax, "Assistant-generation boundaries: the assistant header is a measured site", "user-ended prefix", "tokens")
+    bench.save_figure(ctx, fig, "generation_boundary_audit.png", "Generation-prompt boundary token counts and parity verdicts for user-ended prefixes.")
+
+
+def plot_trace_slope_ledger(ctx: bench.RunContext) -> None:
+    rows = _read_csv_rows(ctx.path("tables", "trace_slope_summary.csv")) or _read_csv_rows(ctx.path("diagnostics", "null_trace_slopes.csv"))
+    if not rows:
+        return
+    rows = sorted(rows, key=lambda r: abs(_safe_float(r.get("slope"), 0)), reverse=True)
+    top = rows[:24]
+    fig, ax = bench.new_figure(figsize=(10.0, max(4.8, 0.32 * len(top) + 1.0)))
+    labels = [f"{r.get('conversation')} · {r.get('direction')}" for r in top]
+    vals = [_safe_float(r.get("slope"), 0.0) for r in top]
+    colors = []
+    for r in top:
+        fam = str(r.get("direction_family", ""))
+        if "topic target" in fam:
+            colors.append(lab15_color("topic"))
+        elif "topic on control" in fam:
+            colors.append(lab15_color("archive_control"))
+        elif "length" in fam:
+            colors.append(lab15_color("length_null"))
+        else:
+            colors.append(lab15_color("random_null"))
+    y = list(range(len(top)))
+    ax.barh(y, vals, color=colors, alpha=0.85)
+    ax.axvline(0.0, color="black", linewidth=0.9)
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels, fontsize=7)
+    ax.invert_yaxis()
+    _finalize_axes(ax, "Slope ledger: every pretty trace pays rent against nulls", "projection slope over turns", "")
+    bench.save_figure(ctx, fig, "trace_slope_ledger.png", "All topic and null projection slopes sorted by magnitude.")
+
+
+def plot_depth_selection_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    import numpy as np
+    fig, ax = bench.new_figure(figsize=(10.6, 4.8))
+    depths = sorted({int(r.get("stream_depth", 0)) for r in rows})
+    by = {(str(r.get("conversation")), str(r.get("direction")), int(r.get("stream_depth", 0))): _safe_float(r.get("cumulative_projection_slope")) for r in rows}
+    metrics = [
+        ("topic gap\norchid−archive", [by.get(("orchid_topic", "topic_orchid_minus_archive", d), float("nan")) - by.get(("archive_length_control", "topic_orchid_minus_archive", d), float("nan")) for d in depths]),
+        ("raw topic\norchid", [by.get(("orchid_topic", "topic_orchid_minus_archive", d), float("nan")) for d in depths]),
+        ("topic on\narchive", [by.get(("archive_length_control", "topic_orchid_minus_archive", d), float("nan")) for d in depths]),
+        ("length null\norchid", [by.get(("orchid_topic", "length_matched_null", d), float("nan")) for d in depths]),
+        ("random null 00\norchid", [by.get(("orchid_topic", "random_null_00", d), float("nan")) for d in depths]),
+    ]
+    mat = np.array([vals for _, vals in metrics], dtype=float)
+    finite = mat[np.isfinite(mat)]
+    vmax = max(0.05, float(np.nanpercentile(np.abs(finite), 95)) if finite.size else 1.0)
+    im = ax.imshow(mat, aspect="auto", cmap="RdBu_r", vmin=-vmax, vmax=vmax)
+    ax.set_yticks(range(len(metrics)))
+    ax.set_yticklabels([m[0] for m in metrics], fontsize=8)
+    tick_step = max(1, len(depths)//10)
+    ax.set_xticks(range(0, len(depths), tick_step))
+    ax.set_xticklabels([str(d) for d in depths[::tick_step]], fontsize=8)
+    ax.set_xlabel("stream depth k")
+    ax.set_title("Depth-selection atlas: the selected layer must beat its controls")
+    fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02, label="turn-slope")
+    bench.save_figure(ctx, fig, "depth_selection_atlas.png", "Matrix view of control-adjusted topic slopes and null slopes over stream depth.")
+
+
+def plot_cache_patch_diagnostics(ctx: bench.RunContext) -> None:
+    import matplotlib.pyplot as plt
+    cache_rows = _read_csv_rows(ctx.path("diagnostics", "cache_recompute_parity_by_boundary.csv"))
+    patch_rows = _read_csv_rows(ctx.path("diagnostics", "patch_noop_sites.csv"))
+    if not cache_rows and not patch_rows:
+        return
+    fig, axes = plt.subplots(1, 2, figsize=(12.2, 5.0))
+    if cache_rows:
+        labels = [f"{r.get('conversation')}\n{r.get('segment_index')}:{r.get('role')}" for r in cache_rows]
+        vals = [_safe_float(r.get("rel_l2_hidden_diff"), 0.0) for r in cache_rows]
+        colors = [lab15_color("pass" if _truthy(r.get("ok_at_tolerance")) else "fail") for r in cache_rows]
+        x = list(range(len(cache_rows)))
+        axes[0].bar(x, vals, color=colors, alpha=0.85)
+        thresh_vals = [_safe_float(r.get("rel_l2_threshold"), float("nan")) for r in cache_rows]
+        axes[0].set_xticks(x)
+        axes[0].set_xticklabels(labels, rotation=45, ha="right", fontsize=6.5)
+        axes[0].set_ylabel("relative L2 hidden diff")
+        axes[0].set_title("KV cache vs full recompute")
+    else:
+        axes[0].axis("off")
+    if patch_rows:
+        labels = [f"{r.get('conversation')}\nL{r.get('layer')} · {r.get('site')}" for r in patch_rows]
+        vals = [_safe_float(r.get("max_abs_logit_diff"), 0.0) for r in patch_rows]
+        colors = [lab15_color("pass" if _truthy(r.get("ok_at_tolerance")) else "fail") for r in patch_rows]
+        x = list(range(len(patch_rows)))
+        axes[1].bar(x, vals, color=colors, alpha=0.85)
+        axes[1].axhline(PATCH_NOOP_ATOL, color=lab15_color("fail"), linestyle="--", linewidth=1.0, label="tolerance")
+        axes[1].set_xticks(x)
+        axes[1].set_xticklabels(labels, rotation=45, ha="right", fontsize=6.2)
+        axes[1].set_ylabel("max |logit diff| under self-patch")
+        axes[1].set_title("Self-patching no-op")
+        axes[1].legend(fontsize=7)
+    else:
+        axes[1].axis("off")
+    for i, ax in enumerate(axes):
+        _maybe_panel_label(ax, chr(ord("A") + i))
+        ax.grid(True, alpha=0.25)
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+    fig.suptitle("Cache and patch diagnostics: boring means trustworthy", fontsize=13)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "cache_patch_diagnostics.png", "Boundary-level cache parity and self-patching no-op diagnostics.")
+
+
+def plot_harness_evidence_dashboard(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    checks: Mapping[str, Mapping[str, Any]],
+    tables: Mapping[str, Sequence[Mapping[str, Any]]],
+) -> None:
+    import matplotlib.pyplot as plt
+    import numpy as np
+    evidence = list(tables.get("evidence_matrix", [])) or build_harness_evidence_rows(metrics, checks)
+    boundary = list(tables.get("boundary_matrix", [])) or _read_csv_rows(ctx.path("tables", "boundary_diagnostic_matrix.csv"))
+    slope_rows = list(tables.get("slope_summary", [])) or _read_csv_rows(ctx.path("tables", "trace_slope_summary.csv"))
+    fig, axes = plt.subplots(2, 2, figsize=(13.0, 8.0))
+
+    # A. Check status strip
+    ax = axes[0, 0]
+    names = [str(r.get("display_name")) for r in evidence]
+    scores = [_safe_float(r.get("status_score"), 0.0) for r in evidence]
+    colors = [lab15_color(str(r.get("status", "unknown"))) for r in evidence]
+    x = np.arange(len(evidence))
+    ax.bar(x, scores, color=colors, alpha=0.9)
+    ax.axhline(1.0, color="#999999", linewidth=0.8)
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, rotation=35, ha="right", fontsize=7)
+    ax.set_ylim(0, 1.08)
+    ax.set_ylabel("pass/warn/fail score")
+    ax.set_title("Self-check verdicts")
+    for i, r in enumerate(evidence):
+        ax.text(i, scores[i] + 0.03, {"pass":"✓", "warn":"!", "fail":"✗"}.get(str(r.get("status")), "?"), ha="center", fontsize=10, fontweight="bold")
+
+    # B. Content/template load by role
+    ax = axes[0, 1]
+    role_stats: dict[str, list[float]] = defaultdict(list)
+    for r in boundary:
+        role = str(r.get("role"))
+        role_stats[role].append(_safe_float(r.get("content_share")))
+    roles = [r for r in LAB15_ROLE_ORDER if r in role_stats]
+    vals = [safe_fmean([v for v in role_stats[r] if math.isfinite(v)], 0.0) for r in roles]
+    ax.bar(range(len(roles)), vals, color=[lab15_color(r) for r in roles], alpha=0.85)
+    ax.set_xticks(range(len(roles)))
+    ax.set_xticklabels(roles)
+    ax.set_ylim(0, 1.05)
+    ax.set_ylabel("content tokens / message tokens")
+    ax.set_title("How much of a message is content?")
+
+    # C. Cache/patch numeric gates
+    ax = axes[1, 0]
+    items = [
+        ("cache rel-L2", _safe_float(checks.get("cache_recompute_parity", {}).get("max_rel_l2_hidden_diff")), _safe_float(checks.get("cache_recompute_parity", {}).get("rel_l2_threshold")), "cache"),
+        ("patch max logit", _safe_float(checks.get("patch_noop_check", {}).get("max_abs_logit_diff")), _safe_float(checks.get("patch_noop_check", {}).get("atol")), "patch"),
+        ("hook max diff", _safe_float(checks.get("chat_exact_hook_parity", {}).get("max_abs_diff")), max(_safe_float(checks.get("chat_exact_hook_parity", {}).get("tolerance"), 0.0), 1e-12), "span"),
+    ]
+    labels = [i[0] for i in items]
+    obs = [i[1] if math.isfinite(i[1]) else 0.0 for i in items]
+    thresh = [i[2] if math.isfinite(i[2]) else float("nan") for i in items]
+    x = np.arange(len(items))
+    ax.bar(x - 0.15, obs, width=0.3, color=[lab15_color(i[3]) for i in items], label="observed")
+    ax.bar(x + 0.15, [t if math.isfinite(t) else 0 for t in thresh], width=0.3, color="#BBBBBB", label="threshold")
+    ax.set_yscale("symlog", linthresh=1e-8)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=20, ha="right", fontsize=8)
+    ax.set_title("Numeric gates on a log-ish scale")
+    ax.legend(fontsize=7)
+
+    # D. Null slopes
+    ax = axes[1, 1]
+    slope_plot_rows = [r for r in slope_rows if str(r.get("conversation")) == "orchid_topic"]
+    families = []
+    for r in slope_plot_rows:
+        d = str(r.get("direction"))
+        if d == "topic_orchid_minus_archive":
+            fam = "topic"
+        elif d == "length_matched_null":
+            fam = "length null"
+        elif d.startswith("random_null_"):
+            fam = "random null"
+        else:
+            fam = d
+        families.append((fam, _safe_float(r.get("slope"))))
+    # Aggregate random nulls for readability.
+    topic_val = next((v for f, v in families if f == "topic"), float("nan"))
+    length_val = next((v for f, v in families if f == "length null"), float("nan"))
+    random_vals = [v for f, v in families if f == "random null" and math.isfinite(v)]
+    labels = ["topic", "length null", "random mean |s|", "random max |s|"]
+    vals = [topic_val, length_val, safe_fmean([abs(v) for v in random_vals], 0.0), safe_max_abs(random_vals, 0.0)]
+    colors = [lab15_color("topic"), lab15_color("length_null"), lab15_color("random_null"), lab15_color("random_null")]
+    ax.bar(range(len(vals)), vals, color=colors, alpha=0.88)
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.set_xticks(range(len(vals)))
+    ax.set_xticklabels(labels, rotation=20, ha="right")
+    ax.set_title("Null-trace pressure test")
+    ax.set_ylabel("slope")
+
+    for idx, ax in enumerate(axes.flat):
+        _maybe_panel_label(ax, chr(ord("A") + idx))
+        ax.grid(True, alpha=0.25)
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+    fig.suptitle("Lab 15 multi-turn harness: the microscope audits itself", fontsize=14)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    bench.save_figure(ctx, fig, "harness_evidence_dashboard.png", "One-screen dashboard for Lab 15 self-checks, span load, numeric gates, and null traces.")
+
+
+def plot_harness_evidence_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    fig, ax = bench.new_figure(figsize=(12.5, max(5.0, 0.45 * len(rows) + 1.8)))
+    ax.axis("off")
+    columns = ["check", "gate", "status", "observed", "threshold", "licenses"]
+    cell_text = []
+    cell_colours = []
+    for r in rows:
+        license_text = str(r.get("why_it_matters", ""))[:62] + ("…" if len(str(r.get("why_it_matters", ""))) > 62 else "")
+        row = [str(r.get("display_name")), str(r.get("gate_type")), str(r.get("status")), str(r.get("observed")), str(r.get("threshold")), license_text]
+        cell_text.append(row)
+        bg = lab15_color(str(r.get("status", "unknown")))
+        cell_colours.append(["#FFFFFF", "#F7F7F7", bg, "#FFFFFF", "#FFFFFF", "#FFFFFF"])
+    table = ax.table(cellText=cell_text, colLabels=columns, cellLoc="left", loc="center", cellColours=cell_colours)
+    table.auto_set_font_size(False)
+    table.set_fontsize(7.2)
+    table.scale(1, 1.35)
+    for (row, col), cell in table.get_celld().items():
+        if row == 0:
+            cell.set_text_props(weight="bold")
+            cell.set_facecolor("#EEEEEE")
+        if col == 2 and row > 0:
+            cell.set_text_props(color="white", weight="bold")
+    ax.set_title("Harness evidence matrix: every later multi-turn claim inherits these gates", pad=14)
+    bench.save_figure(ctx, fig, "harness_evidence_matrix.png", "Table plot of Lab 15 self-check gates, status, tolerances, and downstream purpose.")
+
+
+def plot_downstream_readiness_card(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(11.0, max(4.8, 0.45 * len(rows) + 1.4)))
+    ax.axis("off")
+    cols = ["downstream use", "status", "required evidence", "artifacts"]
+    cell_text = [[str(r.get("downstream_use")), str(r.get("status")), str(r.get("required_evidence")), str(r.get("main_artifacts"))] for r in rows]
+    colours = []
+    for r in rows:
+        status = str(r.get("status"))
+        c = lab15_color("pass" if status == "ready" else "warn" if status == "caution" else "fail")
+        colours.append(["#FFFFFF", c, "#FFFFFF", "#FFFFFF"])
+    table = ax.table(cellText=cell_text, colLabels=cols, cellLoc="left", loc="center", cellColours=colours)
+    table.auto_set_font_size(False)
+    table.set_fontsize(7.5)
+    table.scale(1, 1.45)
+    for (row, col), cell in table.get_celld().items():
+        if row == 0:
+            cell.set_text_props(weight="bold")
+            cell.set_facecolor("#EEEEEE")
+        if col == 1 and row > 0:
+            cell.set_text_props(color="white", weight="bold")
+    ax.set_title("Downstream readiness: what later labs may safely inherit", pad=14)
+    bench.save_figure(ctx, fig, "downstream_readiness_card.png", "Readiness card for later multi-turn projections, caching, generation reads, and patching.")
 
 
 # ---------------------------------------------------------------------------
@@ -2015,6 +2654,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         plot_turn_trace(ctx, rows)
         plot_trace_depth_sweep(ctx, depth_rows)
         plot_turn_span_map(ctx, conversations_by_name)
+        plot_generation_boundary_audit(ctx)
+        plot_trace_slope_ledger(ctx)
+        plot_depth_selection_atlas(ctx, depth_rows)
+        plot_cache_patch_diagnostics(ctx)
 
     slope_rows = slope_rows_from_trace(rows, "cumulative_message_mean_projection")
     topic_slope = get_slope_value(slope_rows, "orchid_topic", "topic_orchid_minus_archive")
@@ -2081,6 +2724,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "patch_noop_check": patch_check,
         "null_trace_check": null_check,
     }
+    visual_tables = write_visual_synthesis_tables(ctx, metrics, checks)
+    if not ctx.args.no_plots:
+        plot_harness_evidence_dashboard(ctx, metrics, checks, visual_tables)
+        plot_harness_evidence_matrix(ctx, visual_tables.get("evidence_matrix", []))
+        plot_downstream_readiness_card(ctx, visual_tables.get("readiness", []))
     write_report(ctx, metrics, checks)
     write_operationalization_audit(ctx, metrics)
     write_run_summary(ctx, metrics, checks)

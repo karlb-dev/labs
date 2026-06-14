@@ -126,24 +126,38 @@ runs/lab15_multiturn_harness-<timestamp>-<id>/
     turn_projection_trace.csv
     trace_depth_sweep.csv
     trace_direction_cosines.csv
+    harness_evidence_matrix.csv
+    boundary_diagnostic_matrix.csv
+    trace_slope_summary.csv
+    downstream_readiness_card.csv
+    plot_reading_guide.csv
 
   plots/
+    harness_evidence_dashboard.png
+    harness_evidence_matrix.png
+    downstream_readiness_card.png
     demo_turn_trace.png
     trace_depth_sweep.png
+    trace_slope_ledger.png
+    depth_selection_atlas.png
     turn_span_map.png
+    generation_boundary_audit.png
+    cache_patch_diagnostics.png
 ```
 
 ## Start here
 
-Open `multiturn_harness_card.md` first. It gives the verdict, the self-check statuses, key tolerances, and allowed downstream use.
+Open `plots/harness_evidence_dashboard.png` first. It is the run cockpit: self-check verdicts, content/template load, numeric parity gates, and null-trace pressure in one view. Then open `multiturn_harness_card.md` for the same verdict in prose.
 
-Then inspect `tables/turn_segments.csv`. Confirm that the user and assistant content spans make sense. Pay special attention to `content_span_method`: `offset_mapping` is ideal, `token_subsequence_fallback` is acceptable, and broad message-span fallback is a warning that later labs should be extra cautious.
+Next inspect `tables/harness_evidence_matrix.csv` and `plots/harness_evidence_matrix.png`. These tell you which downstream permission each gate earns. The plot is not decorative: it decides whether later labs may trust turn-indexed projections, cache-efficient traces, generation-time reads, or cross-turn patching.
 
-Next open `tables/generation_prompt_boundaries.csv` and `diagnostics/generation_prompt_boundary_check.json`. These tell you where the assistant-generation prompt boundary lands after a user message. That boundary is not always the same thing as “the last token of the user’s raw text.” Tiny hinge, giant door.
+Then inspect `tables/boundary_diagnostic_matrix.csv`, `tables/turn_segments.csv`, and `plots/turn_span_map.png`. Confirm that user and assistant content spans make sense. Pay special attention to `content_span_method`: `offset_mapping` is ideal, `token_subsequence_fallback` is acceptable, and broad message-span fallback is a warning that later labs should avoid content-specific claims until fixed.
 
-Then inspect `diagnostics/cache_recompute_parity_by_boundary.csv` and `diagnostics/patch_noop_sites.csv`. These are the boring tables that matter. If cache parity or patch no-op fails, the pretty projection plot is confetti.
+Next open `plots/generation_boundary_audit.png`, `tables/generation_prompt_boundaries.csv`, and `diagnostics/generation_prompt_boundary_check.json`. These tell you where the assistant-generation prompt boundary lands after a user message. That boundary is not always the same thing as “the last token of the user’s raw text.” Tiny hinge, giant door.
 
-Finally inspect `plots/demo_turn_trace.png` and `plots/trace_depth_sweep.png`. Read them as instrumentation demos only. If the topic trace rises but the null traces rise too, the correct conclusion is not “orchid state found.” The correct conclusion is “future multi-turn labs need stricter length/template controls.”
+Then inspect `plots/cache_patch_diagnostics.png`, `diagnostics/cache_recompute_parity_by_boundary.csv`, and `diagnostics/patch_noop_sites.csv`. These are the boring diagnostics that matter. If cache parity or patch no-op fails, the projection plot is not interpretable.
+
+Finally inspect `plots/demo_turn_trace.png`, `plots/trace_slope_ledger.png`, and `plots/depth_selection_atlas.png`. Read them as instrumentation demos only. If the topic trace rises but the null traces rise too, the correct conclusion is not “orchid state found.” The correct conclusion is “future multi-turn labs need stricter length/template controls.”
 
 ## Main diagnostics
 
@@ -161,11 +175,31 @@ Finally inspect `plots/demo_turn_trace.png` and `plots/trace_depth_sweep.png`. R
 
 ## How to read the plots
 
-`plots/demo_turn_trace.png` compares the orchid topic direction against the archive control conversation, the length/template null, and random nulls. Treat the figure as a trace-readout rehearsal, not a semantic result.
+`plots/harness_evidence_dashboard.png` is the start-here plot. Panel A shows the self-check stack. Panel B shows whether the topic trace is carried by content or by template scaffolding. Panel C shows cache, patch, and hook numeric gates against their tolerances. Panel D asks whether null traces are trying to impersonate topic accumulation.
 
-`plots/trace_depth_sweep.png` shows how the topic and null slopes vary over stream depth. It is there to train suspicion: if you choose the depth after seeing the curve, the depth choice is now part of the hypothesis and needs its own held-out check in later labs.
+`plots/harness_evidence_matrix.png` and `plots/downstream_readiness_card.png` convert diagnostics into permissions: what later labs may inherit, what is blocked, and what needs caution.
+
+`plots/demo_turn_trace.png` compares the orchid topic direction against the archive control conversation, the length/template null, and random-null band. Lines show cumulative prefix means; content-boundary markers show the narrower readout. Treat the figure as a trace-readout rehearsal, not a semantic result.
+
+`plots/trace_slope_ledger.png` sorts all trace slopes by direction family. It is the quick way to see whether a random or length/template null is too loud for the demo trace to be comforting.
+
+`plots/trace_depth_sweep.png` and `plots/depth_selection_atlas.png` show how topic and null slopes vary over stream depth. They train suspicion: if you choose the depth after seeing the curve, the depth choice is now part of the hypothesis and needs its own held-out check in later labs.
 
 `plots/turn_span_map.png` shows where system, user, assistant, message, and content spans land in the rendered token sequence. This is the map that saves later labs from saying “user state” when they measured role scaffolding.
+
+`plots/generation_boundary_audit.png` shows how many tokens the assistant-generation header adds after user-ended prefixes. `plots/cache_patch_diagnostics.png` shows cache-vs-recompute parity and self-patching no-op errors. These two plots are the tiny hinge pins for later generation-time probes and cross-turn interventions.
+
+## Visualization upgrade
+
+The upgraded Lab 15 plot suite treats the harness as a measurement instrument with its own evidence ladder. The old three plots remain, but they now sit behind a stronger audit board:
+
+- `harness_evidence_dashboard.png`: one-screen verdict for self-checks, span load, numeric parity gates, and null drift.
+- `harness_evidence_matrix.png`: which diagnostic licenses which downstream use.
+- `downstream_readiness_card.png`: ready/blocked/caution statuses for turn traces, cached traces, generation-time reads, patching, and semantic drift claims.
+- `boundary_diagnostic_matrix.csv`: joined per-segment spans, cache parity, patch no-op, and generation-boundary data.
+- `trace_slope_summary.csv`: topic, control, length-null, and random-null slopes with risk flags.
+
+The point is to make later Labs 16, 17, 22, 24, and 25 inherit an explicit contract instead of a visual-smoothness permission slip.
 
 ## Evidence discipline
 

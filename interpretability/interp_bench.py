@@ -4082,6 +4082,53 @@ CERTAINTY_MARKERS = {
     "shuffled": "^",
 }
 
+# Lab 15 multi-turn instrumentation visual grammar. Later social, persona, and
+# belief labs inherit these colors for boundary, cache, patch, and null-trace
+# diagnostics.
+MULTITURN_COLORS = {
+    "template": "#CC79A7",
+    "span": "#009E73",
+    "content": "#009E73",
+    "message": "#0072B2",
+    "system": "#666666",
+    "user": "#0072B2",
+    "assistant": "#E69F00",
+    "assistant_generation": "#E69F00",
+    "cache": "#56B4E9",
+    "patch": "#7E57C2",
+    "topic": "#009E73",
+    "topic_orchid_minus_archive": "#009E73",
+    "orchid_topic": "#009E73",
+    "archive_control": "#0072B2",
+    "archive_length_control": "#0072B2",
+    "length_null": "#E69F00",
+    "length_matched_null": "#E69F00",
+    "random_null": "#777777",
+    "random": "#777777",
+    "control": "#777777",
+    "pass": "#009E73",
+    "ready": "#009E73",
+    "ok": "#009E73",
+    "warn": "#E69F00",
+    "warning": "#E69F00",
+    "caution": "#E69F00",
+    "fail": "#D55E00",
+    "blocked": "#D55E00",
+}
+
+MULTITURN_MARKERS = {
+    "topic": "o",
+    "topic_orchid_minus_archive": "o",
+    "length_null": "s",
+    "length_matched_null": "s",
+    "random_null": "^",
+    "random": "^",
+    "cache": "D",
+    "patch": "P",
+    "content": "o",
+    "message": "s",
+}
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
@@ -4365,6 +4412,25 @@ def plot_certainty_marker(condition: str, default: str = "o") -> str:
     """Shared marker lookup for Lab 14 certainty/calibration gauges and controls."""
     key = str(condition)
     return CERTAINTY_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))
+
+
+def plot_multiturn_color(condition: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 15 and later multi-turn instrumentation plots."""
+    key = str(condition)
+    if key.startswith("random_null"):
+        key = "random_null"
+    return MULTITURN_COLORS.get(
+        key,
+        CONTROL_COLORS.get(key, CATEGORY_COLORS.get(key, default)),
+    )
+
+
+def plot_multiturn_marker(condition: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 15 and later multi-turn instrumentation plots."""
+    key = str(condition)
+    if key.startswith("random_null"):
+        key = "random_null"
+    return MULTITURN_MARKERS.get(key, CATEGORY_MARKERS.get(key, default))
 
 
 def lighten_color(color: str, amount: float = 0.55) -> str:
