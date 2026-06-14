@@ -1014,10 +1014,18 @@ def resolve_anatomy(model: Any, model_id: str, revision: str | None) -> tuple[Mo
         raise RuntimeError(f"{model_id!r} has no output embeddings / lm_head.")
 
     config = model.config
-    d_model = int(getattr(config, "hidden_size", getattr(config, "n_embd", 0)))
+    # Vision-language wrappers (Gemma 3/4) keep the decoder hyperparameters
+    # under config.text_config; read through to it for the text stream.
+    text_config = getattr(config, "text_config", None) or config
+    d_model = int(
+        getattr(config, "hidden_size", 0)
+        or getattr(config, "n_embd", 0)
+        or getattr(text_config, "hidden_size", 0)
+        or getattr(text_config, "n_embd", 0)
+    )
     vocab_size = int(lm_head.weight.shape[0])
 
-    tied = bool(getattr(config, "tie_word_embeddings", False))
+    tied = bool(getattr(config, "tie_word_embeddings", getattr(text_config, "tie_word_embeddings", False)))
     if tied:
         notes.append(
             "Input and output embeddings are tied: the unembedding is the "
@@ -1028,6 +1036,8 @@ def resolve_anatomy(model: Any, model_id: str, revision: str | None) -> tuple[Mo
     # The lens must reproduce this or the depth-L self-check would fail for a
     # boring reason.
     softcap = getattr(config, "final_logit_softcapping", None)
+    if softcap is None:
+        softcap = getattr(text_config, "final_logit_softcapping", None)
     softcap = float(softcap) if softcap else None
     if softcap:
         notes.append(f"Model applies final logit softcapping (cap={softcap}).")
