@@ -3822,6 +3822,44 @@ FEATURE_CONDITION_COLORS = {
     "transcoder": "#7E57C2",
 }
 
+# Lab 9 attribution-graph visual grammar. These labels describe objects in the
+# replacement graph and the real-model validation tests.
+GRAPH_COLORS = {
+    "feature": "#009E73",
+    "embedding": "#555555",
+    "embeddings": "#555555",
+    "error": "#E69F00",
+    "errors": "#E69F00",
+    "logit": "#FFD92F",
+    "bias_path": "#999999",
+    "transcoder_bias": "#7E57C2",
+    "positive": "#0072B2",
+    "negative": "#D55E00",
+    "baseline": "#666666",
+    "suppress": "#D55E00",
+    "substitute": "#7E57C2",
+    "random": "#8A9A00",
+    "counterfactual": "#0072B2",
+    "diagnostic": "#0072B2",
+    "attr": "#009E73",
+    "causal": "#D55E00",
+    "robustness": "#E69F00",
+}
+
+GRAPH_MARKERS = {
+    "feature": "o",
+    "embedding": "s",
+    "embeddings": "s",
+    "error": "^",
+    "errors": "^",
+    "logit": "*",
+    "baseline": "o",
+    "suppress": "X",
+    "substitute": "D",
+    "random": "s",
+    "counterfactual": "^",
+}
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl
@@ -3976,6 +4014,38 @@ def plot_sae_domain_color(domain: str, default: str = "#555555") -> str:
 def plot_feature_condition_color(condition: str, default: str = "#555555") -> str:
     """Shared color lookup for feature-clamp real/control conditions and dictionary objects."""
     return FEATURE_CONDITION_COLORS.get(str(condition), default)
+
+
+def plot_graph_color(item: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 9 attribution-graph nodes, edge signs, and interventions."""
+    return GRAPH_COLORS.get(str(item), default)
+
+
+def plot_graph_marker(item: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 9 graph nodes and intervention conditions."""
+    return GRAPH_MARKERS.get(str(item), default)
+
+
+def plot_graph_node_color(item: str, default: str = "#555555") -> str:
+    """Alias for Lab 9 graph-node color lookup."""
+    return plot_graph_color(item, default)
+
+
+def plot_edge_source_color(item: str, default: str = "#555555") -> str:
+    """Alias for Lab 9 source-kind color lookup."""
+    return plot_graph_color(item, default)
+
+
+def plot_graph_intervention_color(condition: str, default: str = "#555555") -> str:
+    """Alias for Lab 9 real-model intervention color lookup."""
+    key = str(condition)
+    mapped = {
+        "suppress_subject_supernode": "suppress",
+        "substitute_counterfactual": "substitute",
+        "random_suppression_control": "random",
+        "counterfactual_prompt_reference": "counterfactual",
+    }.get(key, key)
+    return plot_graph_color(mapped, default)
 
 
 def lighten_color(color: str, amount: float = 0.55) -> str:
