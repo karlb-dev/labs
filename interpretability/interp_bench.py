@@ -3285,6 +3285,80 @@ def run_with_residual_patch(
     return _forward_logits(bundle, prompt, [(module, patch_hook)])
 
 
+def run_with_residual_patch_batched(
+    bundle: ModelBundle,
+    prompt: str,
+    cells: Sequence[tuple[int, int, Any]],
+    max_batch: int = 64,
+) -> list[Any]:
+    """Run many single-cell residual patches on ONE prompt in batched forwards.
+
+    Each cell is ``(layer, position, vector)``: row i is the prompt with
+    ``streams[layer_i][position_i]`` replaced by ``vector_i``. Rows never
+    interact within a forward (attention is within-sequence), so the result is
+    identical to ``len(cells)`` separate ``run_with_residual_patch`` calls —
+    bit-for-bit in fp32, within rounding in bf16 — but one batched forward reads
+    the model weights once instead of once per cell. That is the difference
+    between a GPU running at batch 1 (memory-bandwidth bound, mostly idle) and
+    actually being used. Returns final-position logits (float32 CPU) per cell, in
+    input order. Cells are chunked at ``max_batch`` to bound activation memory.
+    """
+    import torch
+
+    if not cells:
+        return []
+    n_layers = bundle.anatomy.n_layers
+    tokenizer = bundle.tokenizer
+    encoded = tokenizer(prompt, return_tensors="pt")
+    base_ids = encoded["input_ids"]
+    base_mask = encoded.get("attention_mask")
+    results: list[Any] = []
+    for start in range(0, len(cells), max_batch):
+        chunk = cells[start:start + max_batch]
+        batch = len(chunk)
+        input_ids = base_ids.repeat(batch, 1).to(bundle.input_device)
+        attention_mask = (
+            base_mask.repeat(batch, 1).to(bundle.input_device)
+            if base_mask is not None else None
+        )
+        rows_by_layer: dict[int, list[int]] = {}
+        for row, (layer, _position, _vector) in enumerate(chunk):
+            if not 0 <= layer <= n_layers:
+                raise ValueError(f"stream layer must be in [0, {n_layers}], got {layer}")
+            rows_by_layer.setdefault(layer, []).append(row)
+
+        def make_patch_hook(rows: list[int]) -> Any:
+            def patch_hook(mod: Any, hook_args: tuple) -> Any:
+                hidden = hook_args[0].clone()
+                seq_len = hidden.shape[1]
+                for row in rows:
+                    _layer, position, vector = chunk[row]
+                    if not -seq_len <= position < seq_len:
+                        raise ValueError(
+                            f"patch position {position} out of range for sequence "
+                            f"length {seq_len}; prompts must be token-aligned."
+                        )
+                    hidden[row, position] = vector.to(hidden.device, hidden.dtype)
+                return (hidden,) + tuple(hook_args[1:])
+            return patch_hook
+
+        handles = []
+        for layer, rows in rows_by_layer.items():
+            module = bundle.final_norm if layer == n_layers else bundle.blocks[layer]
+            handles.append(module.register_forward_pre_hook(make_patch_hook(rows)))
+        try:
+            with torch.no_grad():
+                out = bundle.model(
+                    input_ids=input_ids, attention_mask=attention_mask, use_cache=False
+                )
+        finally:
+            for handle in handles:
+                handle.remove()
+        for row in range(batch):
+            results.append(tensor_cpu_float(out.logits[row, -1]))
+    return results
+
+
 def run_with_component_patch(
     bundle: ModelBundle,
     prompt: str,
