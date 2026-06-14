@@ -445,6 +445,14 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         # so random and polysemantic abstention controls are always present.
         "max_examples_tier_a": "10",
     },
+    "lab32": {
+        "module": "labs.lab32_reward_preference",
+        "run_name": "lab32_reward_preference",
+        "description": "Reward models and preference circuits: DPO-style proxy, residual preference directions, shortcut controls, and activation-addition tests.",
+        # Base-model preference audit. Tier A runs the complete benign pair set
+        # so A/B balance, sycophancy controls, and shortcut confounds are present.
+        "max_examples_tier_a": "20",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template

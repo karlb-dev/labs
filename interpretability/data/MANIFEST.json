@@ -120,6 +120,47 @@
     "sha256": "c6e93b938f363051aa366593a930b4b1ad39b767c1dcfa06a07554ca897ff3f3",
     "verified_tokenizers": []
   },
+  "preference_circuit_pairs.csv": {
+    "confound_types": {
+      "agreement": 5,
+      "confidence": 1,
+      "hedging": 3,
+      "length": 4,
+      "politeness": 1,
+      "refusal": 2,
+      "sentiment": 3,
+      "specificity": 1
+    },
+    "domains": {
+      "helpfulness": 4,
+      "honesty": 6,
+      "safety": 2,
+      "style": 5,
+      "sycophancy": 3
+    },
+    "generator": "hand-authored deterministic course rows",
+    "preference_types": {
+      "anti_sycophancy": 3,
+      "boundary": 2,
+      "correctness": 3,
+      "helpfulness": 4,
+      "politeness": 1,
+      "style": 4,
+      "uncertainty": 3
+    },
+    "preferred_positions": {
+      "a": 12,
+      "b": 8
+    },
+    "rows": 20,
+    "safety_scope": "benign preference pairs only; no prompt optimization, jailbreak search, refusal ablation, or real private data",
+    "sha256": "ae58885931975d2afe2a1a415059584653b7ec42ce1de8c2bf3060ca640326c5",
+    "splits": {
+      "eval": 8,
+      "train": 12
+    },
+    "verified_tokenizers": []
+  },
   "advanced_relation_geometry.csv": {
     "families": {
       "capital_of": 28,
