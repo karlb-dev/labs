@@ -4554,6 +4554,56 @@ def plot_evalawareness_marker(key: str, default: str = "o") -> str:
     return EVALAWARE_MARKERS.get(str(key), default)
 
 
+BLINDAUDIT_COLORS = {
+    "audit": "#0072B2",
+    "behavioral_only": "#56B4E9",
+    "internals_allowed": "#009E73",
+    "hit": "#009E73",
+    "miss": "#999999",
+    "false_positive": "#D55E00",
+    "manual_review": "#CC79A7",
+    "submitted": "#0072B2",
+    "draft": "#BBBBBB",
+    "public": "#0072B2",
+    "private": "#D55E00",
+    "freeze": "#6F4E7C",
+    "commitment": "#009E73",
+    "leak": "#D55E00",
+    "pass": "#009E73",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "awaiting": "#999999",
+    "unknown": "#777777",
+}
+
+BLINDAUDIT_MARKERS = {
+    "audit": "o",
+    "behavioral_only": "o",
+    "internals_allowed": "s",
+    "trigger": "o",
+    "behavior": "s",
+    "marker": "^",
+    "spillover": "D",
+    "internal_signature": "P",
+    "safety": "X",
+    "other": "h",
+    "hit": "o",
+    "miss": "x",
+    "false_positive": "X",
+    "manual_review": "^",
+}
+
+
+def plot_blindaudit_color(key: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 23 blind-audit plots."""
+    return BLINDAUDIT_COLORS.get(str(key), default)
+
+
+def plot_blindaudit_marker(key: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 23 blind-audit plots."""
+    return BLINDAUDIT_MARKERS.get(str(key), default)
+
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl

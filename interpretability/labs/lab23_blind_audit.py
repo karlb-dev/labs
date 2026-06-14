@@ -1694,6 +1694,544 @@ def plot_false_secret_breakdown(ctx: bench.RunContext, scored_claims: Sequence[M
 
 
 # ---------------------------------------------------------------------------
+# Visualization upgrade: audit synthesis tables and richer plots
+# ---------------------------------------------------------------------------
+
+BLINDAUDIT_COLORS = {
+    "behavioral_only": "#4c78a8",
+    "internals_allowed": "#f58518",
+    "audit": "#4c78a8",
+    "decode": "#72b7b2",
+    "causal": "#e45756",
+    "obs": "#54a24b",
+    "manual": "#b279a2",
+    "pass": "#54a24b",
+    "warning": "#f2cf5b",
+    "fail": "#e45756",
+    "unknown": "#9d9da1",
+    "awaiting": "#bab0ac",
+    "hit": "#54a24b",
+    "miss": "#9d9da1",
+    "false_positive": "#e45756",
+    "submitted": "#4c78a8",
+    "draft": "#bab0ac",
+    "private": "#e45756",
+    "public": "#4c78a8",
+    "leak": "#e45756",
+    "commitment": "#59a14f",
+}
+
+BLINDAUDIT_MARKERS = {
+    "behavioral_only": "o",
+    "internals_allowed": "s",
+    "trigger": "o",
+    "behavior": "s",
+    "marker": "^",
+    "spillover": "D",
+    "internal_signature": "P",
+    "safety": "X",
+    "other": "h",
+}
+
+
+def audit_plot_color(key: str, default: str = "#666666") -> str:
+    helper = getattr(bench, "plot_blindaudit_color", None)
+    if callable(helper):
+        try:
+            return helper(str(key), default)
+        except TypeError:
+            return helper(str(key))
+    return BLINDAUDIT_COLORS.get(str(key), default)
+
+
+def audit_plot_marker(key: str, default: str = "o") -> str:
+    helper = getattr(bench, "plot_blindaudit_marker", None)
+    if callable(helper):
+        try:
+            return helper(str(key), default)
+        except TypeError:
+            return helper(str(key))
+    return BLINDAUDIT_MARKERS.get(str(key), default)
+
+
+def audit_status_color(status: str) -> str:
+    status = str(status or "unknown")
+    if status in {"pass", "passed", "scored", "ready", "clean", "verified", "submitted", "hit"}:
+        return audit_plot_color("pass")
+    if status in {"fail", "failed", "blocked", "false_positive", "leak", "contaminated", "commitment_failed"}:
+        return audit_plot_color("fail")
+    if status in {"warn", "warning", "manual_review", "evidence_issue", "leak_warning", "blindness_warning"}:
+        return audit_plot_color("warning")
+    return audit_plot_color("unknown")
+
+
+def finite_float(value: Any, default: float = 0.0) -> float:
+    try:
+        f = float(value)
+    except Exception:
+        return default
+    return f if math.isfinite(f) else default
+
+
+def finite_or_none(value: Any) -> float | None:
+    try:
+        f = float(value)
+    except Exception:
+        return None
+    return f if math.isfinite(f) else None
+
+
+def group_rows(rows: Sequence[Mapping[str, Any]], *keys: str) -> dict[tuple[str, ...], list[Mapping[str, Any]]]:
+    grouped: dict[tuple[str, ...], list[Mapping[str, Any]]] = defaultdict(list)
+    for row in rows:
+        grouped[tuple(str(row.get(key, "")) for key in keys)].append(row)
+    return grouped
+
+
+def claim_readiness_rows(
+    claims: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    scored_claims: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    evidence_by_claim = {str(row.get("claim_id")): row for row in evidence_rows if row.get("claim_id")}
+    scored_by_claim = {str(row.get("claim_id")): row for row in scored_claims if row.get("claim_id")}
+    out: list[dict[str, Any]] = []
+    for i, claim in enumerate(claims):
+        claim_id = str(claim.get("claim_id") or f"claim_{i:04d}")
+        submitted = int(claim.get("submitted", 0) or 0)
+        evidence_path = str(claim.get("evidence_paths", "") or "")
+        evidence = evidence_by_claim.get(claim_id, {})
+        scored = scored_by_claim.get(claim_id, {})
+        evidence_issue = str(evidence.get("issue", "") or "")
+        manual = int(scored.get("manual_review_required", 0) or 0)
+        matched = int(scored.get("matched", 0) or 0)
+        fp = int(scored.get("false_positive", 0) or 0)
+        answer_available = int(scored.get("answer_key_available", 0) or 0)
+        if not submitted:
+            status = "draft"
+        elif evidence_issue:
+            status = "evidence_issue"
+        elif manual:
+            status = "manual_review"
+        elif answer_available and matched:
+            status = "hit"
+        elif answer_available and fp:
+            status = "false_positive"
+        elif answer_available:
+            status = "miss"
+        else:
+            status = "awaiting_unseal"
+        confidence = finite_or_none(claim.get("confidence"))
+        out.append({
+            "claim_id": claim_id,
+            "blind_id": claim.get("blind_id", ""),
+            "audit_mode": claim.get("audit_mode", ""),
+            "evidence_level": str(claim.get("evidence_level", "AUDIT") or "AUDIT").upper(),
+            "claim_type": claim.get("claim_type", ""),
+            "submitted": submitted,
+            "preregistered": int(claim.get("preregistered", 0) or 0),
+            "confidence": "" if confidence is None else rounded(confidence),
+            "has_evidence_path": int(bool(evidence_path.strip())),
+            "evidence_path_issue": evidence_issue,
+            "evidence_path_ok": int(bool(evidence_path.strip()) and not evidence_issue),
+            "answer_key_available": answer_available,
+            "matched": matched,
+            "false_positive": fp,
+            "manual_review_required": manual,
+            "query_count": as_int(claim.get("query_count"), 0),
+            "time_minutes": rounded(finite_float(claim.get("time_minutes"), 0.0)),
+            "readiness_status": status,
+            "claim_boundary": "scored audit claim" if answer_available else "pre-unseal scaffold claim",
+        })
+    return out
+
+
+def package_integrity_rows(
+    inventory: Sequence[Mapping[str, Any]],
+    score_summary: Sequence[Mapping[str, Any]],
+    commitment_rows: Sequence[Mapping[str, Any]],
+    leak_rows: Sequence[Mapping[str, Any]],
+    freeze: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    score_by_blind = {str(r.get("blind_id")): r for r in score_summary}
+    leak_by_blind: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in leak_rows:
+        leak_by_blind[str(row.get("blind_id", ""))].append(row)
+    commit_by_blind: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in commitment_rows:
+        commit_by_blind[str(row.get("blind_id", ""))].append(row)
+    out: list[dict[str, Any]] = []
+    for row in inventory:
+        bid = str(row.get("blind_id", ""))
+        score = score_by_blind.get(bid, {})
+        leak_count = sum(1 for r in leak_by_blind.get(bid, []) if str(r.get("leak_candidate", "0")) in {"1", "true", "True"} or str(r.get("status", "")).lower() == "leak_candidate" or str(r.get("verdict", "")).lower().startswith("leak"))
+        crows = commit_by_blind.get(bid, [])
+        commit_failed = sum(1 for r in crows if str(r.get("match", "1")).lower() in {"0", "false", "failed"} or str(r.get("status", "")).lower() in {"mismatch", "failed"} or str(r.get("verdict", "")).lower() == "failed")
+        private_visible = int(bool(row.get("private_manifest_path")) or bool(row.get("private_manifest_available_to_harness")))
+        score_status = str(score.get("score_status", "awaiting_unseal"))
+        if leak_count:
+            status = "leak_warning"
+        elif commit_failed:
+            status = "commitment_failed"
+        elif private_visible and score_status != "scored":
+            status = "blindness_warning"
+        elif score_status == "scored":
+            status = "scored"
+        else:
+            status = "ready_for_preunseal"
+        out.append({
+            "blind_id": bid,
+            "source": row.get("source", ""),
+            "public_package_present": int(bool(row.get("package_dir")) or bool(row.get("public_package_dir"))),
+            "sealed_manifest_present": int(bool(row.get("sealed_manifest_path")) or bool(row.get("sealed_manifest_available"))),
+            "adapter_config_present": int(bool(row.get("adapter_config_path")) or bool(row.get("adapter_config_available"))),
+            "adapter_dir_present": int(bool(row.get("adapter_dir")) or bool(row.get("adapter_dir_available"))),
+            "private_manifest_visible": private_visible,
+            "answer_key_available": int(score_status == "scored"),
+            "score_status": score_status,
+            "precision": score.get("precision", ""),
+            "recall": score.get("recall", ""),
+            "false_positive_claims": score.get("false_positive_claims", ""),
+            "public_leak_candidate_count": leak_count,
+            "commitment_rows_checked": len(crows),
+            "commitment_failures": commit_failed,
+            "private_visible_to_harness_total": freeze.get("private_manifest_count_visible_to_harness", ""),
+            "integrity_status": status,
+        })
+    return out
+
+
+def investigation_budget_rows(claims: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    groups = group_rows(claims, "audit_mode", "claim_type")
+    out: list[dict[str, Any]] = []
+    for (mode, claim_type), rows in sorted(groups.items()):
+        submitted = [r for r in rows if int(r.get("submitted", 0) or 0) == 1]
+        confs = [finite_float(r.get("confidence"), float("nan")) for r in submitted]
+        confs = [c for c in confs if math.isfinite(c)]
+        out.append({
+            "audit_mode": mode,
+            "claim_type": claim_type,
+            "claim_rows": len(rows),
+            "submitted_claims": len(submitted),
+            "mean_confidence": rounded(mean(confs)) if confs else "",
+            "total_query_count": sum(as_int(r.get("query_count"), 0) for r in submitted),
+            "total_time_minutes": rounded(sum(finite_float(r.get("time_minutes"), 0.0) for r in submitted)),
+            "evidence_path_rows": sum(1 for r in submitted if str(r.get("evidence_paths", "")).strip()),
+            "decoy_control_rows": sum(1 for r in submitted if str(r.get("decoy_controls", "")).strip()),
+        })
+    return out
+
+
+def audit_evidence_matrix_rows(
+    subjects: Sequence[AuditSubject],
+    claims: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    scored_claims: Sequence[Mapping[str, Any]],
+    score_summary: Sequence[Mapping[str, Any]],
+    internals_value: Sequence[Mapping[str, Any]],
+    freeze: Mapping[str, Any],
+    commitment_verdict: Mapping[str, Any],
+    blinding_verdict: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    submitted = sum(int(r.get("submitted", 0) or 0) for r in claims)
+    scored = [r for r in score_summary if r.get("score_status") == "scored"]
+    evidence_issues = sum(1 for r in evidence_rows if r.get("issue"))
+    fp = sum(int(r.get("false_positive", 0) or 0) for r in scored_claims)
+    manual = sum(int(r.get("manual_review_required", 0) or 0) for r in scored_claims)
+    internals_improved = sum(1 for r in internals_value if "improved" in str(r.get("internals_value_verdict", "")))
+    private_count = int(freeze.get("private_manifest_count_visible_to_harness", 0) or 0)
+    rows = [
+        ("public_package_discovered", "pass" if subjects else "warning", len(subjects), "diagnostics/blind_package_inventory.csv", "an audit subject exists", "does not reveal the answer key"),
+        ("private_answer_key_firewall", "pass" if private_count == 0 else "fail", private_count, "diagnostics/private_access_log.json", "pre-unseal run was not visibly contaminated" if private_count == 0 else "contamination warning", "does not prove the auditor avoided all outside knowledge"),
+        ("claim_table_frozen", "pass" if submitted else "warning", submitted, "diagnostics/pre_unseal_freeze.json", "submitted rows can be scored" if submitted else "templates are ready but no claim was submitted", "does not score truth before unsealing"),
+        ("evidence_paths_hashable", "pass" if evidence_issues == 0 else "warning", evidence_issues, "tables/evidence_path_inventory.csv", "evidence files can be inspected reproducibly" if evidence_issues == 0 else "some claim receipts are missing", "does not judge evidence quality"),
+        ("salted_commitments", "pass" if commitment_verdict.get("verdict") in {"passed", "not_applicable"} else "warning" if commitment_verdict.get("verdict") in {"awaiting_unseal", None, ""} else "fail", commitment_verdict.get("verdict", ""), "tables/commitment_verification.csv", "answer key provenance can be checked after unseal", "does not imply the audit found the secret"),
+        ("public_leak_scan", "pass" if blinding_verdict.get("verdict") in {"no_public_leaks_detected", "not_scanned_no_answer_key"} else "fail" if blinding_verdict.get("verdict") == "public_leak_candidates_found" else "warning", blinding_verdict.get("verdict", ""), "tables/public_leak_scan.csv", "public handoff did not visibly leak exact answer-key values" if blinding_verdict.get("verdict") == "no_public_leaks_detected" else "leak scan still needs attention", "does not rule out semantic leakage"),
+        ("post_unseal_score", "pass" if scored else "warning", len(scored), "tables/unsealed_score.csv", "precision and recall are available" if scored else "awaiting unseal", "not a mechanism by itself"),
+        ("false_secret_pressure", "pass" if fp == 0 else "fail", fp, "tables/scored_claims.csv", "false-positive burden is measured", "does not excuse high recall with fantasy secrets"),
+        ("internals_added_value", "pass" if internals_improved else "warning", internals_improved, "tables/internals_added_value.csv", "internals helped only if recall improves without excess false positives", "internal evidence does not automatically outrank behavior"),
+        ("manual_review_queue", "warning" if manual else "pass", manual, "tables/manual_review_queue.csv", "spillover/safety/other claims are routed to human review", "auto-score does not validate severity"),
+    ]
+    return [
+        {"gate": gate, "evidence_rung": "AUDIT", "status": status, "headline_metric": metric, "artifact": artifact, "allowed_claim": allowed, "nonclaim": nonclaim}
+        for gate, status, metric, artifact, allowed, nonclaim in rows
+    ]
+
+
+def write_lab23_synthesis_tables(
+    ctx: bench.RunContext,
+    subjects: Sequence[AuditSubject],
+    inventory: Sequence[Mapping[str, Any]],
+    claim_rows: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    scored_claims: Sequence[Mapping[str, Any]],
+    score_summary: Sequence[Mapping[str, Any]],
+    mode_summary: Sequence[Mapping[str, Any]],
+    internals_value: Sequence[Mapping[str, Any]],
+    manual_rows: Sequence[Mapping[str, Any]],
+    commitment_rows: Sequence[Mapping[str, Any]],
+    leak_rows: Sequence[Mapping[str, Any]],
+    freeze: Mapping[str, Any],
+    commitment_verdict: Mapping[str, Any],
+    blinding_verdict: Mapping[str, Any],
+) -> dict[str, list[dict[str, Any]]]:
+    package_rows = package_integrity_rows(inventory, score_summary, commitment_rows, leak_rows, freeze)
+    readiness_rows = claim_readiness_rows(claim_rows, evidence_rows, scored_claims)
+    budget_rows = investigation_budget_rows(claim_rows)
+    evidence_matrix = audit_evidence_matrix_rows(subjects, claim_rows, evidence_rows, scored_claims, score_summary, internals_value, freeze, commitment_verdict, blinding_verdict)
+    by_blind_mode = group_rows(mode_summary, "blind_id", "audit_mode")
+    blind_ids = sorted({str(r.get("blind_id")) for r in mode_summary} | {s.blind_id for s in subjects})
+    mode_gate_rows: list[dict[str, Any]] = []
+    for bid in blind_ids:
+        beh = (by_blind_mode.get((bid, "behavioral_only")) or [{}])[0]
+        inter = (by_blind_mode.get((bid, "internals_allowed")) or [{}])[0]
+        has_any = bool(beh or inter)
+        mode_gate_rows.append({
+            "blind_id": bid,
+            "behavioral_recall": beh.get("recall", ""),
+            "internals_recall": inter.get("recall", ""),
+            "delta_recall": rounded(finite_float(inter.get("recall"), 0.0) - finite_float(beh.get("recall"), 0.0)) if has_any else "",
+            "behavioral_false_positives": beh.get("false_positive_claims", ""),
+            "internals_false_positives": inter.get("false_positive_claims", ""),
+            "delta_false_positives": as_int(inter.get("false_positive_claims"), 0) - as_int(beh.get("false_positive_claims"), 0) if has_any else "",
+            "verdict": next((r.get("internals_value_verdict") for r in internals_value if str(r.get("blind_id")) == bid), "awaiting_score"),
+        })
+    plot_guide = [
+        {"plot": "audit_evidence_dashboard.png", "concept": "One-screen blind-audit status: integrity, score, internals value, and claim readiness.", "read_first": 1},
+        {"plot": "blind_package_firewall.png", "concept": "Public/private package separation and answer-key visibility.", "read_first": 1},
+        {"plot": "claim_readiness_matrix.png", "concept": "Whether claim rows are submitted, evidenced, scored, or waiting for manual review.", "read_first": 1},
+        {"plot": "internals_value_frontier.png", "concept": "Whether internals improved recall or merely added false secrets.", "read_first": 0},
+        {"plot": "confidence_reliability.png", "concept": "Calibration of pre-unseal confidence after scoring.", "read_first": 0},
+        {"plot": "investigation_budget_ledger.png", "concept": "Query/time budget by claim type and audit mode.", "read_first": 0},
+        {"plot": "manual_review_burden.png", "concept": "Claims that auto-scoring deliberately refuses to decide.", "read_first": 0},
+    ]
+    tables = {
+        "package_integrity_matrix": package_rows,
+        "claim_readiness_matrix": readiness_rows,
+        "investigation_budget_summary": budget_rows,
+        "audit_evidence_matrix": evidence_matrix,
+        "audit_mode_value_matrix": mode_gate_rows,
+        "plot_reading_guide": plot_guide,
+    }
+    descriptions = {
+        "package_integrity_matrix": "Public/private firewall, leak, commitment, and scoring status per blind package.",
+        "claim_readiness_matrix": "Claim-level readiness, evidence, scoring, false-positive, and manual-review status.",
+        "investigation_budget_summary": "Query/time and evidence-path budget by audit mode and claim type.",
+        "audit_evidence_matrix": "Gate-by-gate evidence firewall for the blind-audit workflow.",
+        "audit_mode_value_matrix": "Behavioral-only versus internals-allowed deltas and verdicts.",
+        "plot_reading_guide": "Map from upgraded Lab 23 plots to the concept each protects.",
+    }
+    for name, rows in tables.items():
+        path = ctx.path("tables", f"{name}.csv")
+        bench.write_csv_with_context(ctx, path, rows)
+        ctx.register_artifact(path, "table", descriptions[name])
+    return tables
+
+
+def plot_audit_evidence_dashboard(
+    ctx: bench.RunContext,
+    evidence_matrix: Sequence[Mapping[str, Any]],
+    score_summary: Sequence[Mapping[str, Any]],
+    mode_value: Sequence[Mapping[str, Any]],
+    claim_readiness: Sequence[Mapping[str, Any]],
+) -> None:
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(2, 2, figsize=(13.0, 8.2))
+    gates = list(evidence_matrix)
+    ys = list(range(len(gates)))
+    status_scores = []
+    status_labels = []
+    for row in gates:
+        status = str(row.get("status", "unknown"))
+        status_labels.append(status)
+        status_scores.append({"pass": 1.0, "warning": 0.5, "warn": 0.5, "fail": 0.0}.get(status, 0.35))
+    axes[0, 0].barh(ys, status_scores, color=[audit_status_color(s) for s in status_labels])
+    axes[0, 0].set_yticks(ys)
+    axes[0, 0].set_yticklabels([str(r.get("gate", "")).replace("_", " ") for r in gates], fontsize=8)
+    axes[0, 0].set_xlim(0, 1.05)
+    axes[0, 0].invert_yaxis()
+    bench.style_ax(axes[0, 0], title="Evidence firewall gates", xlabel="pass / warning / fail", ylabel="")
+
+    scored = [r for r in score_summary if r.get("score_status") == "scored"]
+    if scored:
+        xs = list(range(len(scored)))
+        labels = [str(r.get("blind_id", "")).replace("blind_", "") for r in scored]
+        precision = [finite_float(r.get("precision"), 0.0) for r in scored]
+        recall = [finite_float(r.get("recall"), 0.0) for r in scored]
+        fp = [min(1.0, finite_float(r.get("false_positive_claims"), 0.0) / max(1, len(AUTO_SCORED_PROPERTIES))) for r in scored]
+        width = 0.28
+        axes[0, 1].bar([x - width for x in xs], precision, width, label="precision", color=audit_plot_color("pass"))
+        axes[0, 1].bar(xs, recall, width, label="recall", color=audit_plot_color("public"))
+        axes[0, 1].bar([x + width for x in xs], fp, width, label="FP / auto props", color=audit_plot_color("fail"))
+        axes[0, 1].set_xticks(xs)
+        axes[0, 1].set_xticklabels(labels, rotation=25, ha="right")
+        axes[0, 1].set_ylim(0, 1.05)
+        bench.style_ax(axes[0, 1], title="Post-unseal score", xlabel="blind package", ylabel="score", legend=True)
+    else:
+        counts = Counter(str(r.get("readiness_status", "unknown")) for r in claim_readiness)
+        labels = list(counts) or ["no_claim_rows"]
+        vals = [counts.get(l, 0) for l in labels]
+        axes[0, 1].bar(labels, vals, color=[audit_status_color(l) for l in labels])
+        axes[0, 1].tick_params(axis="x", rotation=25)
+        bench.style_ax(axes[0, 1], title="Pre-unseal claim readiness", xlabel="claim status", ylabel="rows")
+
+    valued = [r for r in mode_value if str(r.get("verdict", ""))]
+    if valued:
+        xs = [finite_float(r.get("delta_false_positives"), 0.0) for r in valued]
+        ys = [finite_float(r.get("delta_recall"), 0.0) for r in valued]
+        colors = []
+        for r in valued:
+            verdict = str(r.get("verdict", ""))
+            if "improved" in verdict and "false" not in verdict:
+                colors.append(audit_plot_color("pass"))
+            elif "false" in verdict or "hurt" in verdict:
+                colors.append(audit_plot_color("fail"))
+            else:
+                colors.append(audit_plot_color("warning"))
+        axes[1, 0].axhline(0, color="0.3", linewidth=0.8)
+        axes[1, 0].axvline(0, color="0.3", linewidth=0.8)
+        axes[1, 0].scatter(xs, ys, c=colors, s=90, edgecolors="black", linewidths=0.6)
+        for x, y, r in zip(xs, ys, valued):
+            axes[1, 0].text(x, y, str(r.get("blind_id", "")).replace("blind_", "")[:8], fontsize=8, ha="left", va="bottom")
+        bench.style_ax(axes[1, 0], title="Internals-added value", xlabel="Δ false positives", ylabel="Δ recall")
+    else:
+        axes[1, 0].text(0.5, 0.5, "awaiting internals-vs-behavior score", ha="center", va="center", transform=axes[1, 0].transAxes)
+        bench.style_ax(axes[1, 0], title="Internals-added value", xlabel="", ylabel="")
+
+    by_mode = Counter(str(r.get("audit_mode", "unknown")) for r in claim_readiness if int(r.get("submitted", 0) or 0) == 1)
+    modes = ["behavioral_only", "internals_allowed"]
+    vals = [by_mode.get(m, 0) for m in modes]
+    axes[1, 1].bar(modes, vals, color=[audit_plot_color(m) for m in modes])
+    axes[1, 1].tick_params(axis="x", rotation=20)
+    bench.style_ax(axes[1, 1], title="Submitted claims by mode", xlabel="audit mode", ylabel="submitted rows")
+    bench.save_figure(ctx, fig, "audit_evidence_dashboard.png", "Lab 23 gate, score, internals-value, and claim-readiness dashboard.")
+
+
+def plot_blind_package_firewall(ctx: bench.RunContext, package_rows: Sequence[Mapping[str, Any]]) -> None:
+    if not package_rows:
+        return
+    cols = ["public_package_present", "sealed_manifest_present", "adapter_config_present", "adapter_dir_present", "private_manifest_visible", "answer_key_available", "public_leak_candidate_count", "commitment_failures"]
+    labels = [str(r.get("blind_id", "")).replace("blind_", "") for r in package_rows]
+    mat = [[min(1.0, finite_float(row.get(c), 0.0)) for c in cols] for row in package_rows]
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(11.0, max(3.5, 0.45 * len(labels) + 2.0)))
+    im = ax.imshow(mat, aspect="auto", vmin=0, vmax=1, cmap="RdYlGn_r")
+    ax.set_xticks(list(range(len(cols))))
+    ax.set_xticklabels([c.replace("_", "\n") for c in cols], rotation=0, fontsize=8)
+    ax.set_yticks(list(range(len(labels))))
+    ax.set_yticklabels(labels, fontsize=8)
+    for i, row in enumerate(mat):
+        for j, val in enumerate(row):
+            ax.text(j, i, f"{val:.0f}", ha="center", va="center", fontsize=7)
+    fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02, label="present / risk flag")
+    bench.style_ax(ax, title="Blind package firewall: public fields vs private visibility", xlabel="artifact or risk", ylabel="blind package")
+    bench.save_figure(ctx, fig, "blind_package_firewall.png", "Public/private firewall and integrity-risk flags per blind package.")
+
+
+def plot_claim_readiness_matrix(ctx: bench.RunContext, claim_rows: Sequence[Mapping[str, Any]]) -> None:
+    if not claim_rows:
+        return
+    claim_types = list(CLAIM_TYPES)
+    cols = ["submitted", "preregistered", "has_evidence_path", "evidence_path_ok", "answer_key_available", "matched", "false_positive", "manual_review_required"]
+    grouped = group_rows(claim_rows, "claim_type")
+    mat = []
+    for ct in claim_types:
+        rows = grouped.get((ct,), [])
+        denom = max(1, len(rows))
+        mat.append([sum(int(r.get(c, 0) or 0) for r in rows) / denom for c in cols])
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(10.5, 5.2))
+    im = ax.imshow(mat, aspect="auto", vmin=0, vmax=1, cmap="Blues")
+    ax.set_xticks(list(range(len(cols))))
+    ax.set_xticklabels([c.replace("_", "\n") for c in cols], fontsize=8)
+    ax.set_yticks(list(range(len(claim_types))))
+    ax.set_yticklabels(claim_types)
+    for i, row in enumerate(mat):
+        for j, val in enumerate(row):
+            ax.text(j, i, f"{val:.2f}" if val else "·", ha="center", va="center", fontsize=7)
+    fig.colorbar(im, ax=ax, fraction=0.025, pad=0.02, label="fraction of rows")
+    bench.style_ax(ax, title="Claim readiness matrix", xlabel="readiness / scoring field", ylabel="claim type")
+    bench.save_figure(ctx, fig, "claim_readiness_matrix.png", "Claim-type readiness and scoring matrix.")
+
+
+def plot_internals_value_frontier(ctx: bench.RunContext, mode_value: Sequence[Mapping[str, Any]]) -> None:
+    rows = [r for r in mode_value if str(r.get("delta_recall", "")) != ""]
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(7.8, 5.6))
+    ax.axhline(0, color="0.25", linewidth=0.8)
+    ax.axvline(0, color="0.25", linewidth=0.8)
+    for row in rows:
+        x = finite_float(row.get("delta_false_positives"), 0.0)
+        y = finite_float(row.get("delta_recall"), 0.0)
+        verdict = str(row.get("verdict", ""))
+        color = audit_plot_color("pass") if "improved" in verdict and "false" not in verdict else audit_plot_color("fail") if "false" in verdict or "hurt" in verdict else audit_plot_color("warning")
+        ax.scatter([x], [y], s=120, c=[color], marker="o", edgecolors="black", linewidths=0.8)
+        ax.text(x, y, "  " + str(row.get("blind_id", "")).replace("blind_", "")[:10], va="center", fontsize=8)
+    ax.text(0.02, 0.95, "good: ↑ recall, no new false secrets", transform=ax.transAxes, fontsize=9, va="top")
+    bench.style_ax(ax, title="Internals-added value frontier", xlabel="internals Δ false-positive claims", ylabel="internals Δ recall")
+    bench.save_figure(ctx, fig, "internals_value_frontier.png", "Whether internals improve recall without adding false secrets.")
+
+
+def plot_confidence_reliability(ctx: bench.RunContext, scored_claims: Sequence[Mapping[str, Any]]) -> None:
+    rows = [r for r in scored_claims if int(r.get("submitted", 0) or 0) == 1 and int(r.get("answer_key_available", 0) or 0) == 1]
+    pairs = []
+    for r in rows:
+        conf = finite_or_none(r.get("confidence_numeric", r.get("confidence")))
+        if conf is not None:
+            pairs.append((conf, int(r.get("matched", 0) or 0)))
+    if not pairs:
+        return
+    bins = [(0.0, 0.25), (0.25, 0.5), (0.5, 0.75), (0.75, 1.01)]
+    fig, ax = bench.new_figure(figsize=(7.4, 5.2))
+    rates = []
+    counts = []
+    mids = [0.125, 0.375, 0.625, 0.875]
+    for lo, hi in bins:
+        vals = [m for c, m in pairs if lo <= c < hi]
+        rates.append(mean(vals) if vals else 0.0)
+        counts.append(len(vals))
+    ax.plot(mids, rates, marker="o", label="empirical match rate")
+    ax.plot([0, 1], [0, 1], linestyle="--", color="0.45", label="perfect calibration")
+    for x, y, n in zip(mids, rates, counts):
+        ax.text(x, y, f" n={n}", fontsize=8, va="bottom")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1.05)
+    bench.style_ax(ax, title="Pre-unseal confidence reliability", xlabel="confidence bin midpoint", ylabel="matched claim rate", legend=True)
+    bench.save_figure(ctx, fig, "confidence_reliability.png", "Calibration of pre-unseal confidence against post-unseal scoring.")
+
+
+def plot_investigation_budget_ledger(ctx: bench.RunContext, budget_rows: Sequence[Mapping[str, Any]]) -> None:
+    rows = [r for r in budget_rows if int(r.get("submitted_claims", 0) or 0) > 0]
+    if not rows:
+        return
+    labels = [f"{r.get('audit_mode', '')}\n{r.get('claim_type', '')}" for r in rows]
+    queries = [finite_float(r.get("total_query_count"), 0.0) for r in rows]
+    minutes = [finite_float(r.get("total_time_minutes"), 0.0) for r in rows]
+    fig, ax = bench.new_figure(figsize=(max(8.0, 0.45 * len(labels) + 3.0), 5.2))
+    xs = list(range(len(rows)))
+    width = 0.38
+    ax.bar([x - width / 2 for x in xs], queries, width, label="queries", color=audit_plot_color("behavioral_only"))
+    ax.bar([x + width / 2 for x in xs], minutes, width, label="minutes", color=audit_plot_color("internals_allowed"))
+    ax.set_xticks(xs)
+    ax.set_xticklabels(labels, rotation=35, ha="right", fontsize=8)
+    bench.style_ax(ax, title="Investigation budget ledger", xlabel="mode / claim type", ylabel="count", legend=True)
+    bench.save_figure(ctx, fig, "investigation_budget_ledger.png", "Query and time budget by audit mode and claim type.")
+
+
+def plot_manual_review_burden(ctx: bench.RunContext, manual_rows: Sequence[Mapping[str, Any]]) -> None:
+    if not manual_rows:
+        return
+    by_type = Counter(str(r.get("claim_type", "other")) for r in manual_rows)
+    labels = list(by_type)
+    vals = [by_type[l] for l in labels]
+    fig, ax = bench.new_figure(figsize=(8.0, 4.8))
+    ax.bar(labels, vals, color=[audit_plot_color("manual") for _ in labels])
+    ax.tick_params(axis="x", rotation=25)
+    bench.style_ax(ax, title="Manual-review burden", xlabel="claim type", ylabel="rows requiring manual review")
+    bench.save_figure(ctx, fig, "manual_review_burden.png", "Spillover, safety, and other rows that auto-scoring refuses to decide.")
+
+# ---------------------------------------------------------------------------
 # Summary artifacts
 # ---------------------------------------------------------------------------
 
@@ -1968,10 +2506,41 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, manual_path, manual_rows)
     ctx.register_artifact(manual_path, "table", "Spillover, safety, and other claims requiring manual post-unseal review.")
 
+    synthesis_tables = write_lab23_synthesis_tables(
+        ctx,
+        subjects,
+        inventory,
+        claim_rows,
+        evidence_rows,
+        scored_claims,
+        score_summary,
+        mode_summary,
+        internals_value,
+        manual_rows,
+        commitment_rows,
+        leak_rows,
+        freeze,
+        commitment_verdict,
+        blinding_verdict,
+    )
+
     write_results_alias(ctx, score_summary)
     write_post_unseal_report(ctx, subjects, score_summary, mode_summary, commitment_verdict, blinding_verdict)
 
     if not getattr(ctx.args, "no_plots", False):
+        plot_audit_evidence_dashboard(
+            ctx,
+            synthesis_tables["audit_evidence_matrix"],
+            score_summary,
+            synthesis_tables["audit_mode_value_matrix"],
+            synthesis_tables["claim_readiness_matrix"],
+        )
+        plot_blind_package_firewall(ctx, synthesis_tables["package_integrity_matrix"])
+        plot_claim_readiness_matrix(ctx, synthesis_tables["claim_readiness_matrix"])
+        plot_internals_value_frontier(ctx, synthesis_tables["audit_mode_value_matrix"])
+        plot_confidence_reliability(ctx, scored_claims)
+        plot_investigation_budget_ledger(ctx, synthesis_tables["investigation_budget_summary"])
+        plot_manual_review_burden(ctx, manual_rows)
         plot_scorecard(ctx, score_summary)
         plot_mode_comparison(ctx, mode_summary)
         plot_confidence_vs_score(ctx, scored_claims)

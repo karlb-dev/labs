@@ -342,3 +342,48 @@ That claim smuggles in intent, overstates the evidence rung, and ignores false p
 ## Downstream contract
 
 Lab 23 is where detection methods pay rent. A positive result says the toolkit recovered sealed benign ground truth under a blind protocol. A negative result is just as valuable: it says which methods produced confident false secrets and which controls should become mandatory before Labs 24 and 25 start asking hotter questions.
+
+## Visualization upgrade: read the audit like a scorecard, not a treasure map
+
+Lab 23 now writes a wider plot suite. The goal is not to make the blind audit look cinematic; the goal is to make every overclaim trip on a visible wire.
+
+Start with:
+
+```text
+plots/audit_evidence_dashboard.png
+```
+
+This dashboard shows the evidence firewall gates, post-unseal score or pre-unseal claim readiness, internals-added value, and submitted-claim balance. Use it as the audit cockpit before reading individual rows.
+
+Then inspect the upgraded guardrail plots:
+
+| Plot | What it protects |
+|---|---|
+| `blind_package_firewall.png` | Public/private boundary, private-key visibility, leak flags, and commitment failures. |
+| `claim_readiness_matrix.png` | Whether claim rows are submitted, preregistered, evidenced, scored, false-positive, or awaiting manual review. |
+| `internals_value_frontier.png` | Whether internals improved recall without buying false secrets. |
+| `confidence_reliability.png` | Whether pre-unseal confidence was calibrated after unsealing. |
+| `investigation_budget_ledger.png` | Query/time budget by audit mode and claim type. |
+| `manual_review_burden.png` | Spillover, safety, and broad claims that auto-scoring deliberately refuses to decide. |
+
+New synthesis tables live beside the plots:
+
+```text
+tables/audit_evidence_matrix.csv
+tables/audit_mode_value_matrix.csv
+tables/claim_readiness_matrix.csv
+tables/investigation_budget_summary.csv
+tables/package_integrity_matrix.csv
+tables/plot_reading_guide.csv
+```
+
+The key new workflow is:
+
+1. Read `blind_audit_card.md`.
+2. Open `plots/audit_evidence_dashboard.png`.
+3. Check `plots/blind_package_firewall.png` before trusting any score.
+4. Check `plots/claim_readiness_matrix.png` before trusting the claim table.
+5. If unsealed, check `plots/internals_value_frontier.png` and `tables/audit_mode_value_matrix.csv` before saying interpretability helped.
+6. If any row is routed to manual review, treat `tables/manual_review_queue.csv` as part of the result, not as cleanup.
+
+A good Lab 23 plot does not merely say “we found it.” It says what was found, what was missed, what was invented, whether internals helped, and whether the sealed-envelope ritual stayed sealed.
