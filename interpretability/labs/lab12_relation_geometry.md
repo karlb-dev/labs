@@ -94,6 +94,10 @@ The continent of France is → Europe
 
 That construction kills two cheap explanations by design: entity class and template syntax. It does **not** kill relation-word token echo, and the lab refuses to pretend otherwise. That remaining goblin is the point of the patching phase.
 
+![Three prompts in the country_sem swap group share the subject (France) and the template skeleton, differing only at the relation-word token. Sharing the subject kills the entity-class explanation; sharing the template kills the syntax explanation. The relation word still varies, so relation-word token echo survives by construction — that is what the patching phase attacks.](../figures/lab12_swap_group_kills_two_confounds_leaves_echo.png)
+
+Framed another way, the swap group is a *subtractive* control rather than an additive one: it removes the entity-class and template-syntax explanations by construction, so you never have to build a model of those confounds to rule them out. Only the relation-word token echo is left standing — on purpose — for the patching phase to attack. No amount of probe accuracy retires it.
+
 The expected swap groups are:
 
 | swap group | relation families | controlled confounds |
@@ -115,6 +119,20 @@ Every item is measured at three positions:
 | `final` | the last prompt token before answer prediction | The answer readout position. Separability here can reflect relation identity, answer class, and downstream computation all tangled together. |
 
 The bench convention still applies: `streams[k]` is the **pre-norm residual stream after `k` blocks**. Depth 0 is embeddings. Depth `L` is the final-norm input.
+
+## Vocabulary, operationalized
+
+The load-bearing words in this lab have precise, measured meanings. Keep this table next to the plots.
+
+| Term | What it actually means here | Why it matters |
+|---|---|---|
+| **selectivity** | `real-label probe accuracy − shuffled-label probe accuracy` at a fixed role/depth. | A probe can hit high raw accuracy by memorizing or by exploiting capacity. Subtracting the shuffled-label control measures how much *the representation* helped, not the probe. (The control-task idea, after Hewitt & Liang.) |
+| **swap group** | A set of families sharing subject and template, differing only at the relation word. | A subtractive control that kills entity-class and template confounds by construction — no confound model required. |
+| **relation-word token echo** | The probe/patch may be reading the relation *token*, not a relation *representation*. | The one confound the swap group cannot kill; the relation-swap patch is built to test it. |
+| **subject-swap patch** | Lab-5 interchange: clean `France→Paris` into corrupt `Germany→Berlin`. | Localizes where subject-specific information for a relation is causally usable. |
+| **relation-swap patch** | Patch the relation-word residual: clean `capital…` into corrupt `language…`, scored as `logit(Paris) − logit(French)`. | The direct causal pressure test on token echo. |
+| **mismatched-vector control** | Patch with a vector from an unrelated family. | Measures recovery that comes from *destroying corrupt evidence*, not restoring clean content. A nonzero value is the margin-destruction floor, not relation use. |
+| **handle vs mechanism** | A handle is something readable or causally usable; a mechanism is a named circuit that computes it. | The lab's hard ceiling: every result here is a handle. Geometry blocks and profile correlations are handles, never mechanisms. |
 
 ## Experiment steps
 
@@ -270,6 +288,8 @@ A role-by-depth atlas of swap-group selectivity. It makes the depth-0 relation-w
 
 Rows are relation families. Columns line up behavior margins, controlled selectivity, matched patch recovery, specificity gap, and cosine/profile handles. It is the “every family pays rent” plot.
 
+**Caveat: colors are scaled within each column, not globally.** The matrix normalizes each column on its own range, so a deep red in `hard margin` and a deep red in `final patch` are not the same magnitude — each is "high relative to this column." Use color to rank families *within* a metric and to spot empty cells (a family with no token-aligned swap partner, or one the behavioral gate dropped). Do not read a row's colors as a single comparable profile across columns; for cross-metric comparison go to the raw numbers in `tables/relation_evidence_matrix.csv`. The plot is a rent ledger — every family should pay *something* in each applicable column — not a heatmap of absolute strength.
+
 ### `relation_probe_by_layer.png`
 
 The gray all-relation curve is allowed to be impressive and confounded at the same time. The controlled evidence lives in the swap-group curves. Dotted curves are shuffled-label controls.
@@ -298,6 +318,16 @@ A family-level causal firewall. It shows matched recovery, the stronger control 
 
 This is the overclaim alarm. Matched patch recovery has to beat both wrong-position and mismatched-vector recovery before the run earns causal relation-use language.
 
+**Reading the CAUSAL gate quantitatively.** Matched recovery alone is not the evidence — the *gap above the stronger control* is. The mismatched-vector bar is not a null; it is the recovery you get for free by destroying the corrupt run's evidence, so it sets the real floor. Subtract it:
+
+```
+content-specific recovery ≈ matched recovery − mismatched-vector recovery
+```
+
+In the run6 validation sweep this arithmetic was the whole lesson of the lab. On gpt2 (Tier A) the subject-swap bar (~0.84) clears everything decisively, but the relation-swap bar (~0.52) sits only ~0.16 above the mismatched-vector control (~0.36), while wrong-position is a clean ~0.00. That ~0.16, not the ~0.52, is the honest size of the *content-specific* relation-token effect. Now move to the 7B course model (Olmo-3-1025-7B): relation-swap matched recovery is ~0.25 against a mismatched-vector floor of ~0.26 — a gap of about **−0.01**. The probe still decodes relation identity inside the swap group with near-perfect selectivity, yet the relation-swap causal claim does not survive its controls at all (a second model, gemma-4-E4B, also fails the gate).
+
+Two things to carry from that. First, **decodable is not causally used**: every model passes the probe and fails the relation-swap causal test. Second, gpt2's "pass" is a sliver about +0.01 over the 0.15 threshold that does *not* replicate on a real model — exactly the trap the lab warns against, and why its honest headline is "negative success," not a discovery. The one causal result that *does* travel is the **subject-swap** gap, large on both gpt2 (+0.48) and the 7B (+0.42): subject localization is robust, relation-word token echo is not. Report the gap, name the mismatched-vector floor, and never quote matched recovery as if the controls were zero.
+
 ### `relation_transfer_matrix.png`
 
 Diagonal cells are within-relation subject swaps; within-swap-group off-diagonals are relation swaps. Cross-group cells are empty by design when token-aligned pairs do not exist.
@@ -309,6 +339,12 @@ This asks whether subject-swap localization profiles cluster by relation group. 
 ### `relation_direction_cosines.png`
 
 Block structure is a clue. It is not a mechanism. Use it to choose the next microscope, not to write the final paragraph.
+
+## The evidence ladder
+
+![Three evidence levels of increasing strength. OBS geometry (cosine blocks, profile similarity) is descriptive and gated by nothing. DECODE probing must clear shuffled-label selectivity inside the swap group. CAUSAL patching must beat wrong-position and mismatched-vector controls. None of the three reaches a shared-mechanism claim, which requires head routing or feature methods.](../figures/lab12_obs_decode_causal_evidence_ladder.png)
+
+Read the lab as a climb, not a checklist. Each rung licenses a stronger verb and demands a stronger control. OBS geometry lets you say *looks structured* — a handle for choosing the next microscope, gated by nothing, provable by nothing. DECODE lets you say *is readable here*, but only once selectivity (real minus shuffled) clears the gate inside a swap group, so entity and template are already controlled. CAUSAL lets you say *is causally used by this answer pathway*, but only once matched patching beats both the wrong-position and the mismatched-vector controls. The ceiling sits above all three: even a clean CAUSAL result buys a usable handle on the relation-word residual, not a demonstration that families share one mechanism. That last step — from handle to mechanism — is explicitly out of scope and handed to Lab 3 (which heads move the relation information) and Lab 8 (which features carry it).
 
 ## The operationalization audit
 
@@ -391,3 +427,15 @@ It hides the scope, skips controls, and promotes a handle to a mechanism in one 
 The ethical lesson is about idealization. “Relation” is a useful scientific simplification, not a natural-kind stamp. This lab asks whether the simplification survives controlled stress. If it does, you have a handle for later social-concept labs. If it does not, you have a warning label to carry into them.
 
 Reading prompt: did you find relation geometry, or twelve little tricks wearing one probe-shaped coat?
+
+## References and context
+
+The question "do relations share linear geometry, or is each one a separate trick" is an active research thread, and this lab is a controlled, deflationary take on it.
+
+- Hewitt & Liang, "Designing and Interpreting Probes with Control Tasks" (2019) — the origin of selectivity (probe accuracy minus a control-task baseline); the `real − shuffled` metric here is the same idea.
+- Hernandez et al., "Linearity of Relation Decoding in Transformer Language Models" (2024) — many relations are approximated by a linear relational embedding (a learned affine map subject → object). This lab asks whether such structure survives entity/template controls.
+- Todd et al., "Function Vectors in Large Language Models" (2024) — a single vector, added at a position, can trigger a relation/task. The relation-swap patch is a controlled cousin of this.
+- Hendel et al., "In-Context Learning Creates Task Vectors" (2023) — relations/tasks compressed into a transportable activation.
+- Merullo et al., "Language Models Implement Simple Word2Vec-style Vector Arithmetic" (2024) — evidence for relation arithmetic in the residual stream; a "handle" worth distinguishing from a mechanism.
+
+The contrast worth teaching: those papers mostly report that relation handles *exist and transport*. Lab 12's job is the harder, less glamorous half — showing how much of an apparent relation handle is entity class, template syntax, or token echo before any of it counts.
