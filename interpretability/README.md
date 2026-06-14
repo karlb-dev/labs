@@ -19,7 +19,7 @@ must work on a laptop — debug there, spend GPU minutes on science.
 
 | Tier | Hardware | What runs |
 |---|---|---|
-| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 8, 9, 12) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13–18, 20–25) / lab-specific small models (Qwen3-0.6B for lab 10, pythia-160m for lab 19); correctness of plumbing, not science |
+| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 8, 9, 12, 26) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13–18, 20–25) / lab-specific small models (Qwen3-0.6B for lab 10, pythia-160m for lab 19); correctness of plumbing, not science |
 | B — standard | Colab A100/H100, or any 24 GB+ GPU | base labs on `allenai/Olmo-3-1025-7B`; instruct labs (7+) on `allenai/Olmo-3-7B-Instruct`, bf16 |
 | C — comfortable | 40–80 GB GPU | fp32, larger prompt sets |
 
@@ -140,6 +140,10 @@ python interp_bench.py --lab lab24 --tier b --mode both --prompt-set full
 # Lab 25 (find the wire; injected states and self-report grounding):
 python interp_bench.py --lab lab25 --tier a --mode both --no-plots
 python interp_bench.py --lab lab25 --tier b --mode both --prompt-set full
+
+# Lab 26 (causal abstraction + residual-stream causal scrubbing):
+python interp_bench.py --lab lab26 --tier a
+python interp_bench.py --lab lab26 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -331,14 +335,21 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
 - Lab 25: find the wire — implemented for the advanced course. Adds concept
   injection, self-report dose-response, false-positive floor, grounding
   controls, voice/source attribution, and report-discipline scorecards.
+- Lab 26: causal abstraction and causal scrubbing — first special-topics lab,
+  implemented on base models. Adds formal JSON hypothesis specs, a frozen
+  induction/relation resampling dataset, residual-stream behavior-preserving
+  resampling, variable-breaking/random/wrong-site controls, counterexample
+  galleries, and hypothesis-refinement logs. This is residual resampling,
+  not path-specific scrubbing; Lab 27 owns paths.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
-The advanced course (Labs 12–25) is now implemented as well: all 25 labs
-exist, run, and ship their cards and audits. Several advanced labs land on an
-honest negative on the default model — the controls doing their job, which is
-the design, not a gap; read each lab's card for the verdict.
+The advanced course (Labs 12–25) is now implemented as well, and Lab 26 starts
+the special-topics sequence. Labs 1–26 exist, run, and ship their cards and
+audits. Several advanced/special-topic labs may land on an honest negative on
+the default model — the controls doing their job, which is the design, not a
+gap; read each lab's card for the verdict.
 
 Validation history lives under `runs/`: `RUN2`–`RUN5_VALIDATION_REPORT.md`
 track the intro-course regression sweeps (RUN2 24/24 green with deterministic
@@ -500,8 +511,9 @@ diagnostic CSVs keep their minimal check-specific schemas.
 
 `claim_ledger.md` at this directory's root is the student's running dossier:
 every claim carries an evidence tag (`OBS | ATTR | DECODE | CAUSAL |
-SELF-REPORT`), the artifact backing it, and the observation that would kill
-it. Labs draft claims with measured numbers into `ledger_suggestions.md`;
+SELF-REPORT | AUDIT | CONSTRUCTION | FORMAL`), the artifact backing it, and
+the observation that would kill it. Labs draft claims with measured numbers
+into `ledger_suggestions.md`;
 nothing touches the real ledger unless you pass `--append-ledger`, because
 writing the claim is the coursework. The Lab 11 capstone audits this file.
 

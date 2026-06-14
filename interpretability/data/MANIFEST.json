@@ -1,4 +1,21 @@
 {
+  "causal_abstraction_tasks.csv": {
+    "domains": {
+      "induction": 12,
+      "relation": 18
+    },
+    "generator": "hand-authored deterministic course rows",
+    "pairing": "induction rows preserve/break COPY_SOURCE; relation rows preserve/break RELATION while keeping token-aligned prompts",
+    "rows": 30,
+    "sha256": "1037918625043ba90b3b2d6daa2b17ced1bd3f5477161c666a99fae9d8ff6545",
+    "task_counts": {
+      "copy_after_query": 12,
+      "relation_answer": 18
+    },
+    "verified_tokenizers": [
+      "runtime reverified by Lab 26"
+    ]
+  },
   "advanced_relation_geometry.csv": {
     "families": {
       "capital_of": 28,

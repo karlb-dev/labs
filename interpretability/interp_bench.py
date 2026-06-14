@@ -396,6 +396,15 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "model_tier_c": "allenai/Olmo-3-7B-Instruct",
         "max_examples_tier_a": "1",
     },
+    "lab26": {
+        "module": "labs.lab26_causal_abstraction",
+        "run_name": "lab26_causal_abstraction",
+        "description": "Causal abstraction and causal scrubbing: formal hypotheses tested by behavior-preserving resampling.",
+        # Base-model, hook-heavy lab. --max-examples caps total selected rows
+        # across the induction and relation domains; tier A keeps enough rows
+        # for preserving/broken donors in both domains.
+        "max_examples_tier_a": "12",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
@@ -5229,8 +5238,9 @@ def _ensure_plot_style() -> None:
 LEDGER_HEADER = """# Claim ledger
 
 A running dossier of claims about one model. Every entry carries an evidence
-tag (OBS | ATTR | DECODE | CAUSAL | SELF-REPORT), the artifact that backs it,
-and the observation that would kill it. Labs draft suggested claims into
+tag (OBS | ATTR | DECODE | CAUSAL | SELF-REPORT | AUDIT | CONSTRUCTION |
+FORMAL), the artifact that backs it, and the observation that would kill it.
+Labs draft suggested claims into
 their run directory; what lands here is the student's own judgment.
 
 Format:
