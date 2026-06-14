@@ -3301,6 +3301,18 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "n_safety_signal_rows": len([r for r in safety_signal_rows if "depth" in r]),
         "n_depth_disagreement_rows": len(depth_disagreement_rows),
     }
+    # Mode-specific fields belong to a mode that may not have run. peak_summary()
+    # on no rows returns blank-string fields, and comparison_model_id is "" with
+    # no safety pair -- both read as a data bug rather than "that mode was not
+    # requested". Omit them when the owning mode was not run; the "modes" field
+    # already records which modes ran, and every downstream reader uses
+    # metrics.get(key, {}) / .get(key, ""), so a missing key is handled cleanly.
+    if "safety_depth" not in modes:
+        for _k in ("comparison_model_id", "base_instruct_peak", "chat_format_peak",
+                   "boundary_safe_peak", "forced_prefix_peak"):
+            metrics.pop(_k, None)
+    if "lora" not in modes:
+        metrics.pop("lora_peak", None)
     metrics_path = ctx.path("metrics.json")
     bench.write_json(metrics_path, metrics)
     ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 21 metrics.")

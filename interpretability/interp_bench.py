@@ -5309,8 +5309,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="Optional bitsandbytes quantization for small GPUs.")
     parser.add_argument("--tier", default="auto", choices=("auto", "a", "b", "c"),
                         help="Hardware tier: a = CPU smoke, b = 24GB+/Colab GPU, c = 40-80GB.")
-    parser.add_argument("--prompt-set", default="small",
-                        help="small | medium | full | path to a custom prompts .json file.")
+    parser.add_argument("--prompt-set", default=None,
+                        help="small | medium | full | path to a custom prompts .json file. "
+                             "Default: 'small' on tier a (CPU smoke), 'full' on tiers b/c "
+                             "(a tiny set produces degenerate selections that read as findings).")
     parser.add_argument("--max-examples", type=int, default=-1,
                         help="Cap examples; -1 = tier default, 0 = no cap.")
     parser.add_argument("--topk", type=int, default=5, help="Top-k tokens recorded per depth.")
@@ -5396,6 +5398,17 @@ def apply_tier_defaults(args: argparse.Namespace) -> None:
     if args.max_examples < 0:
         lab_override = LAB_PROFILES[args.lab].get(f"max_examples_tier_{args.tier}")
         args.max_examples = int(lab_override) if lab_override else spec["max_examples"]
+    if args.prompt_set is None:
+        # Tier a is a CPU smoke test where 'small' is the point. On the GPU
+        # science tiers, default to 'full': a tiny prompt set produces
+        # degenerate selections (a depth chosen at layer <=2, AUC 1.0 on n=8)
+        # that read as findings but are noise, so students otherwise had to pass
+        # --prompt-set full by hand for every trustworthy tier-b/c result.
+        args.prompt_set = "small" if args.tier == "a" else "full"
+        print(
+            f"[bench] prompt-set defaulted to '{args.prompt_set}' for tier "
+            f"'{args.tier}' (pass --prompt-set to override)."
+        )
     if LAB_PROFILES[args.lab].get("needs_eager") and args.attn_implementation == "auto":
         args.attn_implementation = "eager"
         print(
