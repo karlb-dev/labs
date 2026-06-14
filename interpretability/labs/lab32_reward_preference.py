@@ -375,30 +375,75 @@ def rows_to_pairs(rows: Sequence[Mapping[str, str]]) -> list[PreferencePair]:
 
 def apply_caps(pairs: list[PreferencePair], args: Any) -> list[PreferencePair]:
     prompt_set = str(getattr(args, "prompt_set", "") or "")
-    cap = PROMPT_SET_CAPS.get(prompt_set, 0)
-    selected = pairs[:cap] if cap else list(pairs)
+    prompt_cap = PROMPT_SET_CAPS.get(prompt_set, 0)
+    target = len(pairs)
+    if prompt_cap > 0:
+        target = min(target, prompt_cap)
     max_examples = int(getattr(args, "max_examples", 0) or 0)
     if max_examples > 0:
-        # Balanced-ish round-robin over domains so Tier A does not accidentally
-        # become one-domain storytelling.
+        target = min(target, max_examples)
+    if target <= 0 or len(pairs) <= target:
+        return list(pairs)
+
+    # Choose the cap from the full suite, not from the CSV prefix. The frozen
+    # file is grouped by topic, and prefix truncation can make Tier A's eval
+    # split one-class, which hides the AUC gates the lab is meant to teach.
+    by_split_label: dict[tuple[str, int], list[PreferencePair]] = defaultdict(list)
+    for pair in pairs:
+        by_split_label[(pair.split_group, pair.label)].append(pair)
+
+    bucket_keys = sorted(by_split_label)
+    quotas = {key: 0 for key in bucket_keys}
+    if target >= len(bucket_keys):
+        quotas = {key: 1 for key in bucket_keys}
+    remaining = target - sum(quotas.values())
+    weights = {key: len(vals) for key, vals in by_split_label.items()}
+    total_weight = sum(weights.values()) or 1
+    fractional: list[tuple[float, int, tuple[str, int]]] = []
+    for key in bucket_keys:
+        raw = target * weights[key] / total_weight
+        add = max(0, math.floor(raw) - quotas[key])
+        quotas[key] += add
+        remaining -= add
+        fractional.append((raw - math.floor(raw), weights[key], key))
+    for _frac, _weight, key in sorted(fractional, reverse=True):
+        if remaining <= 0:
+            break
+        if quotas[key] < weights[key]:
+            quotas[key] += 1
+            remaining -= 1
+
+    def pick_bucket(bucket: Sequence[PreferencePair], quota: int) -> list[PreferencePair]:
         by_domain: dict[str, list[PreferencePair]] = defaultdict(list)
-        for pair in selected:
+        for pair in bucket:
             by_domain[pair.domain].append(pair)
         out: list[PreferencePair] = []
         cursor = 0
-        while len(out) < max_examples:
+        while len(out) < quota:
             progressed = False
             for domain in sorted(by_domain):
                 if cursor < len(by_domain[domain]):
                     out.append(by_domain[domain][cursor])
                     progressed = True
-                    if len(out) >= max_examples:
+                    if len(out) >= quota:
                         break
             if not progressed:
                 break
             cursor += 1
-        selected = out
-    return selected
+        return out
+
+    selected: list[PreferencePair] = []
+    for key in bucket_keys:
+        selected.extend(pick_bucket(by_split_label[key], quotas[key]))
+    if len(selected) < target:
+        seen = {pair.pair_id for pair in selected}
+        for pair in pairs:
+            if pair.pair_id not in seen:
+                selected.append(pair)
+                seen.add(pair.pair_id)
+                if len(selected) >= target:
+                    break
+    return selected[:target]
 
 
 def load_pairs(ctx: bench.RunContext) -> tuple[list[PreferencePair], dict[str, Any]]:
@@ -1708,6 +1753,11 @@ def write_run_summary(
         f"- DPO proxy AUC: `{metrics['dpo_proxy_auc']}`",
         f"- preference direction AUC: `{metrics['preference_direction_auc']}`",
         f"- causal shift over random: `{intervention_summary['causal_shift_over_random']}`",
+        f"- preference shift, original A/B: `{intervention_summary['mean_preference_direction_shift_original_at_scale_1']}`",
+        f"- preference shift, swapped A/B: `{intervention_summary['mean_preference_direction_shift_swapped_at_scale_1']}`",
+        f"- random-direction shift: `{intervention_summary['mean_random_direction_shift_at_scale_1']}`",
+        f"- swap-control shift gap: `{intervention_summary['letter_swap_shift_gap']}`",
+        f"- causal support gate: `{intervention_summary['supported']}`",
         "",
         "## Evidence matrix",
         "",
