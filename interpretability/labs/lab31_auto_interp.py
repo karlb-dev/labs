@@ -183,6 +183,66 @@ def safe_max(values: Sequence[Any], default: float = float("nan")) -> float:
     return max(vals) if vals else default
 
 
+def safe_stderr(values: Sequence[Any], default: float = float("nan")) -> float:
+    vals = [fnum(v) for v in values]
+    vals = [v for v in vals if math.isfinite(v)]
+    if len(vals) <= 1:
+        return default
+    return float(statistics.stdev(vals) / math.sqrt(len(vals)))
+
+
+def binary_se(successes: int, n: int) -> float:
+    if n <= 0:
+        return float("nan")
+    p = successes / n
+    return math.sqrt(max(0.0, p * (1.0 - p) / n))
+
+
+def truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return str(value).strip().lower() in {"1", "true", "yes", "y"}
+
+
+def stable_row_id(*parts: Any) -> str:
+    text = "::".join(str(p) for p in parts)
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:10]
+    return f"{re.sub(r'[^A-Za-z0-9_.=-]+', '_', text)[:96]}__{digest}"
+
+
+def feature_method_id(feature_id: str, method: str) -> str:
+    return f"{feature_id}::{method}"
+
+
+def method_role(method: str) -> str:
+    if method in AUTOMATED_METHODS:
+        return "automated_method"
+    if method == "gold_calibration":
+        return "calibration_upper_bound"
+    if method == "shuffled_top_context_control":
+        return "negative_control"
+    return "other"
+
+
+def risk_flags_for_task(task: FeatureTask) -> list[str]:
+    flags: list[str] = []
+    if task.expected_abstain:
+        flags.append("expected_abstain")
+    if task.feature_type in {"polysemantic_gold", "random_control", "ambiguous_control"}:
+        flags.append(task.feature_type)
+    if task.gold_label_secondary:
+        flags.append("secondary_gold_label")
+    if task.risk_notes:
+        flags.append("risk_notes_present")
+    return sorted(set(flags))
+
+
+def warning_codes(rows: Sequence[Mapping[str, Any]]) -> list[str]:
+    return sorted({str(r.get("code")) for r in rows if str(r.get("severity", "")).lower() in {"warning", "error"} and r.get("code")})
+
+
 def auc_binary(labels: Sequence[int], scores: Sequence[float]) -> float:
     pos = [float(s) for y, s in zip(labels, scores) if int(y) == 1 and math.isfinite(float(s))]
     neg = [float(s) for y, s in zip(labels, scores) if int(y) == 0 and math.isfinite(float(s))]
@@ -579,6 +639,7 @@ def generate_explanations(tasks: Sequence[FeatureTask]) -> tuple[list[dict[str, 
     deletion_rows: list[dict[str, Any]] = []
     task_list = list(tasks)
     for idx, task in enumerate(task_list):
+        risk_flags = risk_flags_for_task(task)
         for method, label, confidence, evidence, template, extras in method_candidate_rows(task, idx, task_list):
             label_text = "" if label is None else str(label)
             abstain = label is None or confidence < 0.25
@@ -587,30 +648,55 @@ def generate_explanations(tasks: Sequence[FeatureTask]) -> tuple[list[dict[str, 
                 if abstain else f"Feature appears to activate on {label_text} contexts because {template}"
             )
             reason_bits = extras.get("abstain_reasons", []) if isinstance(extras, Mapping) else []
+            fid_mid = feature_method_id(task.feature_id, method)
+            raw_candidate = label_text or str(extras.get("raw_candidate_label", "")) if isinstance(extras, Mapping) else label_text
+            human_review_required = bool(method in AUTOMATED_METHODS and (task.is_risky or abstain or reason_bits))
             rows.append({
+                "explanation_id": fid_mid,
+                "feature_method_id": fid_mid,
                 "feature_id": task.feature_id,
                 "feature_type": task.feature_type,
                 "source_lab": task.source_lab,
+                "source_model": task.model,
+                "layer": task.layer,
+                "feature_index": task.feature_index,
                 "method": method,
+                "method_role": method_role(method),
                 "generated_label": label_text,
+                "raw_candidate_label": raw_candidate,
                 "gold_label": task.gold_label or "",
                 "gold_label_secondary": task.gold_label_secondary,
                 "label_hit_gold": label_hit(label_text, task.gold_label or "", task.gold_label_secondary),
                 "expected_abstain": task.expected_abstain,
+                "is_high_risk_feature": task.is_risky,
+                "risk_flags": ";".join(risk_flags),
                 "confidence": rounded(confidence),
                 "abstain": abstain,
                 "abstain_reason": ";".join(reason_bits) if reason_bits else ("low_confidence" if abstain and method != "gold_calibration" else ""),
+                "human_review_required": human_review_required,
+                "top_context_count": len(task.top_contexts),
+                "heldout_context_count": len(task.heldout_contexts),
+                "paraphrase_context_count": len(task.paraphrase_contexts),
+                "negative_context_count": len(task.negative_contexts),
+                "confusable_context_count": len(task.confusable_contexts),
+                "adversarial_context_count": len(task.adversarial_contexts),
                 "explanation": explanation,
                 "evidence_terms": evidence,
                 "risk_notes": task.risk_notes,
                 **{field: "" for field in REVIEW_FIELDS},
             })
-            if method in {"majority_domain", "structured_local", "test_aware"}:
+            if method in AUTOMATED_METHODS:
                 deletion_rows.append({
+                    "deletion_audit_id": stable_row_id(task.feature_id, method, "key_token_deletion"),
+                    "feature_method_id": fid_mid,
                     "feature_id": task.feature_id,
+                    "feature_type": task.feature_type,
                     "method": method,
+                    "method_role": method_role(method),
                     "generated_label": label_text,
+                    "raw_candidate_label": raw_candidate,
                     "expected_abstain": task.expected_abstain,
+                    "risk_flags": ";".join(risk_flags),
                     "deletion_ratio": rounded(extras.get("deletion_ratio", float("nan")) if isinstance(extras, Mapping) else float("nan")),
                     "deletion_status": extras.get("deletion_status", "") if isinstance(extras, Mapping) else "",
                     "confusable_ratio": rounded(extras.get("confusable_ratio", float("nan")) if isinstance(extras, Mapping) else float("nan")),
@@ -636,15 +722,18 @@ def build_tests(tasks: Sequence[FeatureTask], explanations: Sequence[Mapping[str
             exp = by_feature_method[(task.feature_id, method)]
             label = str(exp.get("generated_label", ""))
             abstain = bool(exp.get("abstain"))
+            fid_mid = feature_method_id(task.feature_id, method)
             labels: list[int] = []
             scores: list[float] = []
             suite_scores: dict[str, list[float]] = defaultdict(list)
             suite_labels: dict[str, list[int]] = defaultdict(list)
             confusable_failures = 0
             decoy_failures = 0
+            suites_present: set[str] = set()
             for suite, context_kind, expected_active, context_list in contexts:
                 if not context_list:
                     continue
+                suites_present.add(suite)
                 for i, context in enumerate(context_list):
                     pred = 0.0 if abstain else score_text_for_label(context, label)
                     labels.append(int(expected_active))
@@ -655,13 +744,24 @@ def build_tests(tasks: Sequence[FeatureTask], explanations: Sequence[Mapping[str
                         confusable_failures += 1
                     if suite == "token_overlap_decoy" and pred >= CONFUSABLE_FAILURE_THRESHOLD:
                         decoy_failures += 1
+                    context_id = stable_row_id(task.feature_id, suite, i)
                     test_rows.append({
+                        "test_row_id": stable_row_id(task.feature_id, method, suite, i),
+                        "feature_method_id": fid_mid,
+                        "context_id": context_id,
                         "feature_id": task.feature_id,
                         "feature_type": task.feature_type,
+                        "source_lab": task.source_lab,
+                        "source_model": task.model,
+                        "layer": task.layer,
+                        "feature_index": task.feature_index,
                         "method": method,
+                        "method_role": method_role(method),
                         "test_id": f"{task.feature_id}:{method}:{suite}:{i}",
                         "context_kind": context_kind,
                         "suite": suite,
+                        "suite_role": "positive" if expected_active else "negative_control",
+                        "context_index": i,
                         "context": context,
                         "expected_active": int(expected_active),
                         "predicted_score": rounded(pred),
@@ -687,16 +787,26 @@ def build_tests(tasks: Sequence[FeatureTask], explanations: Sequence[Mapping[str
             else:
                 posture = "fails_or_needs_review"
             score_rows.append({
+                "score_id": fid_mid,
+                "feature_method_id": fid_mid,
                 "feature_id": task.feature_id,
                 "feature_type": task.feature_type,
                 "source_lab": task.source_lab,
+                "source_model": task.model,
+                "layer": task.layer,
+                "feature_index": task.feature_index,
                 "method": method,
+                "method_role": method_role(method),
                 "generated_label": label,
+                "raw_candidate_label": exp.get("raw_candidate_label", label),
                 "gold_label": task.gold_label or "",
                 "gold_label_secondary": task.gold_label_secondary,
                 "label_hit": label_hit(label, task.gold_label or "", task.gold_label_secondary),
                 "expected_abstain": task.expected_abstain,
+                "is_high_risk_feature": task.is_risky,
+                "risk_flags": ";".join(risk_flags_for_task(task)),
                 "abstain": abstain,
+                "abstain_reason": exp.get("abstain_reason", ""),
                 "confidence": exp.get("confidence", ""),
                 "heldout_auc": rounded(auc),
                 "precision_gap": rounded(precision_gap),
@@ -705,16 +815,18 @@ def build_tests(tasks: Sequence[FeatureTask], explanations: Sequence[Mapping[str
                 "hard_negative_mean_score": rounded(hard_neg_mean),
                 "confusable_negative_mean_score": rounded(conf_mean),
                 "token_overlap_decoy_mean_score": rounded(decoy_mean),
+                "mean_negative_score": rounded(safe_mean([hard_neg_mean, conf_mean, decoy_mean], 0.0)),
                 "confusable_failure_count": confusable_failures,
                 "token_overlap_decoy_failure_count": decoy_failures,
                 "token_overlap_decoy_failure_rate": rounded(decoy_failure_rate),
                 "test_count": len(labels),
                 "positive_test_count": sum(labels),
                 "negative_test_count": len(labels) - sum(labels),
+                "n_suites_present": len(suites_present),
+                "suite_coverage": ";".join(sorted(suites_present)),
                 "score_posture": posture,
             })
     return test_rows, score_rows
-
 
 def method_stats(method: str, rows: Sequence[Mapping[str, Any]], control_auc: float) -> dict[str, Any]:
     non_abstain = [r for r in rows if not r.get("abstain")]
@@ -946,6 +1058,315 @@ def counterexample_conditions(row: Mapping[str, Any], control_auc: float) -> lis
     return out
 
 
+def augment_score_rows(scores: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Add same-feature control gaps and row-level claim flags.
+
+    The method-level evidence matrix compares methods to the global shuffled
+    control mean. For figure reading and specimen review, students also need the
+    stricter row-level comparison: did this feature-method row beat its own
+    shuffled-top-context control?
+    """
+    control_by_feature: dict[str, Mapping[str, Any]] = {}
+    for row in scores:
+        if row.get("method") == "shuffled_top_context_control":
+            control_by_feature[str(row.get("feature_id"))] = row
+    out: list[dict[str, Any]] = []
+    for row in scores:
+        r = dict(row)
+        ctrl = control_by_feature.get(str(row.get("feature_id")), {})
+        ctrl_auc = fnum(ctrl.get("heldout_auc"), float("nan"))
+        auc = fnum(row.get("heldout_auc"), float("nan"))
+        control_gap = auc - ctrl_auc if math.isfinite(auc) and math.isfinite(ctrl_auc) else float("nan")
+        r["same_feature_control_method"] = ctrl.get("method", "")
+        r["same_feature_control_auc"] = rounded(ctrl_auc)
+        r["control_gap_vs_same_feature_shuffled"] = rounded(control_gap)
+        r["beats_same_feature_control"] = bool(math.isfinite(control_gap) and control_gap >= CONTROL_GAP_BAR)
+        r["passes_auc_gate"] = bool(math.isfinite(auc) and auc >= AUC_SUPPORT_BAR)
+        r["passes_decoy_gate"] = bool(fnum(row.get("token_overlap_decoy_failure_rate"), 1.0) <= DECOY_FAILURE_RATE_BAR)
+        r["passes_confusable_gate"] = bool(fnum(row.get("confusable_failure_count"), 999.0) <= CONFUSABLE_FAILURE_BAR)
+        r["passes_label_gate"] = bool(row.get("expected_abstain") or row.get("label_hit"))
+        r["review_priority"] = review_priority(r) if row.get("method") in AUTOMATED_METHODS else 0.0
+        out.append(r)
+    return out
+
+
+def suite_score_summary_rows(tests: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str, str, str], list[Mapping[str, Any]]] = defaultdict(list)
+    for row in tests:
+        grouped[(str(row.get("method", "")), str(row.get("suite", "")), str(row.get("suite_role", "")), str(row.get("feature_type", "")))].append(row)
+    rows: list[dict[str, Any]] = []
+    for (method, suite, suite_role, feature_type), group in sorted(grouped.items()):
+        vals = [fnum(r.get("predicted_score")) for r in group]
+        active = sum(1 for r in group if truthy(r.get("expected_active")))
+        above = sum(1 for v in vals if math.isfinite(v) and v >= CONFUSABLE_FAILURE_THRESHOLD)
+        rows.append({
+            "summary_id": stable_row_id(method, suite, feature_type),
+            "method": method,
+            "method_role": method_role(method),
+            "suite": suite,
+            "suite_role": suite_role,
+            "feature_type": feature_type,
+            "n_contexts": len(group),
+            "n_expected_active": active,
+            "mean_predicted_score": rounded(safe_mean(vals)),
+            "se_predicted_score": rounded(safe_stderr(vals)),
+            "median_predicted_score": rounded(statistics.median([v for v in vals if math.isfinite(v)]) if any(math.isfinite(v) for v in vals) else float("nan")),
+            "max_predicted_score": rounded(safe_max(vals)),
+            "share_above_failure_threshold": rounded(above / len(group) if group else float("nan")),
+        })
+    return rows
+
+
+def calibration_bin_rows(calibration: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    bins = [(0.0, 0.2), (0.2, 0.4), (0.4, 0.6), (0.6, 0.8), (0.8, 1.000001)]
+    rows: list[dict[str, Any]] = []
+    for method in sorted({str(r.get("method", "")) for r in calibration}):
+        method_rows = [r for r in calibration if str(r.get("method", "")) == method]
+        for lo, hi in bins:
+            group = [r for r in method_rows if lo <= fnum(r.get("confidence"), -1.0) < hi]
+            if not group:
+                continue
+            successes = sum(1 for r in group if truthy(r.get("success")))
+            confs = [fnum(r.get("confidence")) for r in group]
+            rate = successes / len(group)
+            rows.append({
+                "calibration_bin_id": stable_row_id(method, lo, hi),
+                "method": method,
+                "method_role": method_role(method),
+                "confidence_bin_low": rounded(lo, 2),
+                "confidence_bin_high": rounded(min(1.0, hi), 2),
+                "n_rows": len(group),
+                "mean_confidence": rounded(safe_mean(confs)),
+                "success_rate": rounded(rate),
+                "success_rate_se": rounded(binary_se(successes, len(group))),
+                "calibration_gap": rounded(safe_mean(confs) - rate),
+            })
+    return rows
+
+
+def abstention_summary_rows(scores: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[tuple[str, str, bool], list[Mapping[str, Any]]] = defaultdict(list)
+    for row in scores:
+        grouped[(str(row.get("method", "")), str(row.get("feature_type", "")), truthy(row.get("expected_abstain")))].append(row)
+    rows: list[dict[str, Any]] = []
+    for (method, feature_type, expected_abstain), group in sorted(grouped.items()):
+        n = len(group)
+        abstained = sum(1 for r in group if truthy(r.get("abstain")))
+        forced = n - abstained
+        rows.append({
+            "abstention_summary_id": stable_row_id(method, feature_type, expected_abstain),
+            "method": method,
+            "method_role": method_role(method),
+            "feature_type": feature_type,
+            "expected_abstain": expected_abstain,
+            "n_features": n,
+            "n_abstained": abstained,
+            "n_forced_labels": forced,
+            "abstention_rate": rounded(abstained / n if n else float("nan")),
+            "forced_label_rate": rounded(forced / n if n else float("nan")),
+            "mean_review_priority": rounded(safe_mean([r.get("review_priority") for r in group])),
+        })
+    return rows
+
+
+def failure_specimen_rows(
+    scores: Sequence[Mapping[str, Any]],
+    tests: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+    limit: int = 24,
+) -> list[dict[str, Any]]:
+    by_feature_method = {(str(r.get("feature_id")), str(r.get("method"))): r for r in scores}
+    test_lookup: dict[tuple[str, str], list[Mapping[str, Any]]] = defaultdict(list)
+    for row in tests:
+        test_lookup[(str(row.get("feature_id")), str(row.get("method")))].append(row)
+    candidates: list[dict[str, Any]] = []
+    for ce in counterexamples:
+        key = (str(ce.get("feature_id")), str(ce.get("method")))
+        score = by_feature_method.get(key, {})
+        method_tests = test_lookup.get(key, [])
+        worst = sorted(
+            [r for r in method_tests if not truthy(r.get("expected_active"))],
+            key=lambda r: fnum(r.get("predicted_score"), -999.0),
+            reverse=True,
+        )[:2]
+        best_pos = sorted(
+            [r for r in method_tests if truthy(r.get("expected_active"))],
+            key=lambda r: fnum(r.get("predicted_score"), -999.0),
+            reverse=True,
+        )[:1]
+        for role, rows in (("highest_scoring_negative", worst), ("best_positive", best_pos)):
+            for t in rows:
+                candidates.append({
+                    "specimen_id": stable_row_id(key[0], key[1], ce.get("kind"), role, t.get("context_id", "")),
+                    "feature_id": key[0],
+                    "feature_type": score.get("feature_type", ""),
+                    "method": key[1],
+                    "generated_label": score.get("generated_label", ""),
+                    "gold_label": score.get("gold_label", ""),
+                    "failure_kind": ce.get("kind", ""),
+                    "specimen_role": role,
+                    "suite": t.get("suite", ""),
+                    "context": t.get("context", ""),
+                    "predicted_score": t.get("predicted_score", ""),
+                    "heldout_auc": score.get("heldout_auc", ""),
+                    "same_feature_control_auc": score.get("same_feature_control_auc", ""),
+                    "control_gap_vs_same_feature_shuffled": score.get("control_gap_vs_same_feature_shuffled", ""),
+                    "review_priority": score.get("review_priority", ""),
+                    "lesson": ce.get("lesson", ""),
+                })
+    seen: set[str] = set()
+    out: list[dict[str, Any]] = []
+    for row in sorted(candidates, key=lambda r: fnum(r.get("review_priority"), 0.0), reverse=True):
+        sid = str(row.get("specimen_id"))
+        if sid in seen:
+            continue
+        seen.add(sid)
+        out.append(row)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def write_failure_specimens(ctx: bench.RunContext, specimens: Sequence[Mapping[str, Any]]) -> None:
+    md = [
+        "# Lab 31 failure specimens",
+        "",
+        "These are not bloopers. They are the rows that keep automated labels honest.",
+        "Each specimen connects a feature, method, failure kind, source context, and the row-level control gap.",
+        "",
+    ]
+    if not specimens:
+        md.append("No failure specimens crossed the current thresholds. Human review is still required before citing labels.")
+    for row in specimens:
+        md.extend([
+            f"## `{row.get('feature_id', '')}` · `{row.get('method', '')}` · `{row.get('failure_kind', '')}`",
+            "",
+            f"- generated label: `{row.get('generated_label', '') or 'ABSTAIN'}`; gold: `{row.get('gold_label', '')}`",
+            f"- specimen role: `{row.get('specimen_role', '')}`; suite: `{row.get('suite', '')}`; predicted score: `{row.get('predicted_score', '')}`",
+            f"- held-out AUC: `{row.get('heldout_auc', '')}`; same-feature control AUC: `{row.get('same_feature_control_auc', '')}`; gap: `{row.get('control_gap_vs_same_feature_shuffled', '')}`",
+            f"- lesson: {row.get('lesson', '')}",
+            "",
+            "> " + str(row.get("context", "")).replace("\n", " ")[:900],
+            "",
+        ])
+    path = ctx.path("cards", "failure_specimens.md")
+    bench.write_text(path, "\n".join(md) + "\n")
+    ctx.register_artifact(path, "summary", "Specimen-level failures and counterexamples for Lab 31.")
+    jsonl = ctx.path("tables", "failure_specimens.jsonl")
+    jsonl.parent.mkdir(parents=True, exist_ok=True)
+    jsonl.write_text("".join(json.dumps(dict(r), sort_keys=True) + "\n" for r in specimens), encoding="utf-8")
+    ctx.register_artifact(jsonl, "table", "JSONL failure specimens for automated review or notebooks.")
+
+
+def write_run_config_snapshot(ctx: bench.RunContext, data_info: Mapping[str, Any]) -> None:
+    payload = {
+        "lab": LAB_ID,
+        "run_name": ctx.run_dir.name,
+        "tier": ctx.args.tier,
+        "prompt_set": ctx.args.prompt_set,
+        "max_examples": ctx.args.max_examples,
+        "seed": ctx.args.seed,
+        "model_id": ctx.model_id or ctx.args.model,
+        "model_revision": ctx.model_revision,
+        "dtype": ctx.args.dtype,
+        "quantization": ctx.args.quantization,
+        "decoding_settings": "none: Lab 31 is offline and does not generate text or use an LLM judge",
+        "data": dict(data_info),
+        "methods": list(METHODS),
+        "automated_methods": sorted(AUTOMATED_METHODS),
+        "thresholds": {
+            "auc_support_bar": AUC_SUPPORT_BAR,
+            "label_accuracy_bar": LABEL_ACCURACY_BAR,
+            "control_gap_bar": CONTROL_GAP_BAR,
+            "good_abstain_bar": GOOD_ABSTAIN_BAR,
+            "bad_abstain_bar": BAD_ABSTAIN_BAR,
+            "confusable_failure_bar": CONFUSABLE_FAILURE_BAR,
+            "decoy_failure_rate_bar": DECOY_FAILURE_RATE_BAR,
+            "confusable_failure_threshold": CONFUSABLE_FAILURE_THRESHOLD,
+            "key_deletion_fragility_bar": KEY_DELETION_FRAGILITY_BAR,
+        },
+        "scoring_semantics": "generated labels are lexical activation hypotheses over held-out/context-control suites; success is a method-under-suite result, not feature meaning",
+    }
+    path = ctx.path("diagnostics", "run_config_snapshot.json")
+    bench.write_json(path, payload)
+    ctx.register_artifact(path, "diagnostic", "Lab-specific run configuration snapshot for reproducing Lab 31 tables and figures.")
+
+
+def write_warning_summary(
+    ctx: bench.RunContext,
+    data_info: Mapping[str, Any],
+    hook_check: Mapping[str, Any],
+    lens_check: Mapping[str, Any],
+    patch_noop: Mapping[str, Any],
+    schema_rows: Sequence[Mapping[str, Any]],
+    evidence: Sequence[Mapping[str, Any]],
+    scores: Sequence[Mapping[str, Any]],
+    review: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+
+    def add(severity: str, code: str, scope: str, detail: str, artifact: str, n: int | str = "") -> None:
+        rows.append({"severity": severity, "code": code, "scope": scope, "n": n, "detail": detail, "artifact_to_inspect": artifact})
+
+    if data_info.get("fallback_data"):
+        add("warning", "fallback_data_smoke_only", "data", "Built-in Tier A fallback was used; do not ledger broad science claims.", "diagnostics/data_manifest.json")
+    if not data_info.get("science_ready"):
+        add("warning", "not_science_ready", "run", "Science-ready flag is false. Read this as a plumbing or audit run.", "diagnostics/self_check_status.json")
+    bad_schema = [r for r in schema_rows if not truthy(r.get("schema_ok"))]
+    if bad_schema:
+        add("error", "schema_rows_failed", "data", "One or more feature task rows failed schema/context-count checks.", "diagnostics/schema_audit.csv", len(bad_schema))
+    for name, check, artifact in [
+        ("hook_parity_failed", hook_check, "diagnostics/hook_parity.json"),
+        ("lens_self_check_failed", lens_check, "diagnostics/logit_lens_self_check.json"),
+        ("patch_noop_failed", patch_noop, "diagnostics/patch_noop.json"),
+    ]:
+        if not check.get("ok"):
+            add("error", name, "instrument", f"Shared bench check did not report ok=True: {name}.", artifact)
+    control_auc = safe_mean([r.get("heldout_auc") for r in scores if r.get("method") == "shuffled_top_context_control" and not truthy(r.get("abstain"))], default=0.5)
+    if math.isfinite(control_auc) and control_auc >= AUC_SUPPORT_BAR:
+        add("warning", "shuffled_control_high_auc", "control", "The shuffled-top-context control itself clears the AUC bar; method gaps matter more than raw AUC.", "tables/explanation_scores.csv", round(control_auc, 3))
+    gold_auc = safe_mean([r.get("heldout_auc") for r in scores if r.get("method") == "gold_calibration" and not truthy(r.get("abstain"))], default=float("nan"))
+    if math.isfinite(gold_auc) and gold_auc < AUC_SUPPORT_BAR:
+        add("warning", "gold_calibration_low", "suite", "Gold calibration failed to clear the AUC bar; the test suite or scorer may be broken.", "tables/explanation_scores.csv", round(gold_auc, 3))
+    supported = [r for r in evidence if r.get("claim_posture") == "auto_label_audit_supported"]
+    if not supported:
+        add("warning", "no_supported_automated_method", "evidence", "No automated method cleared all claim gates. This can be an honest negative result.", "tables/auto_interp_evidence_matrix.csv")
+    if not review:
+        add("warning", "review_queue_empty", "review", "The review queue is empty. Check whether controls are too easy or review triage is too permissive.", "tables/human_review_queue.csv")
+    if counterexamples:
+        add("info", "counterexamples_present", "audit", "Counterexamples were found and should be read before writing broad claims.", "tables/auto_interp_counterexamples.csv", len(counterexamples))
+    if ctx.args.no_plots:
+        add("info", "plots_skipped_by_flag", "plots", "PNG generation was skipped. Figure source tables and plot_manifest.json are still written.", "plot_manifest.json")
+    path = ctx.path("diagnostics", "warning_summary.csv")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "diagnostic", "Central warning and caveat summary for Lab 31.")
+    json_path = ctx.path("diagnostics", "warning_summary.json")
+    bench.write_json(json_path, rows)
+    ctx.register_artifact(json_path, "diagnostic", "Machine-readable central warning and caveat summary for Lab 31.")
+    return rows
+
+
+def write_extra_tables(
+    ctx: bench.RunContext,
+    suite_summary: Sequence[Mapping[str, Any]],
+    calibration_bins: Sequence[Mapping[str, Any]],
+    abstention_summary: Sequence[Mapping[str, Any]],
+    failure_specimens: Sequence[Mapping[str, Any]],
+) -> None:
+    specs = [
+        ("tables/suite_score_summary.csv", suite_summary, "Predicted-score summaries by method, suite, feature type, and control role."),
+        ("tables/calibration_bins.csv", calibration_bins, "Confidence-bin success rates for calibration figures and writeups."),
+        ("tables/abstention_summary.csv", abstention_summary, "Abstention/forced-label summary by method and feature type."),
+        ("tables/failure_specimens.csv", failure_specimens, "Selected positive and negative specimen contexts tied to counterexamples."),
+    ]
+    for rel, rows, desc in specs:
+        path = ctx.path(*rel.split("/"))
+        bench.write_csv_with_context(ctx, path, rows)
+        ctx.register_artifact(path, "table", desc)
+
+
+
 # ---------------------------------------------------------------------------
 # Artifact writing
 # ---------------------------------------------------------------------------
@@ -1055,7 +1476,7 @@ def write_operationalization_audit(ctx: bench.RunContext, data_info: Mapping[str
         "",
         "```yaml",
         'headline_claim: "automated explanations can scale feature interpretation"',
-        'cheap_explanation: "the label is keyword overlap, confusable-domain leakage, calibration theater, or forced wording for a polysemantic/random feature"',
+        'cheap_explanation: "the label is keyword overlap, confusable-domain leakage, uncalibrated confidence, or forced wording for a polysemantic/random feature"',
         'killer_control: "held-out positives versus hard negatives, confusables, token-overlap decoys, shuffled-top-context controls, key-token deletion, and human review"',
         f'result: "{audit_result}"',
         f'claim_allowed: "{claim_allowed}"',
@@ -1181,7 +1602,7 @@ def write_review_artifacts(ctx: bench.RunContext, explanations: Sequence[Mapping
             f"- raw candidate: `{exp.get('raw_candidate_label', '')}`",
             f"- gold label: `{exp.get('gold_label', '')}`",
             f"- confidence: `{exp.get('confidence', '')}`",
-            f"- held-out AUC: `{score.get('heldout_auc', '')}`; control gap: `{score.get('control_gap_vs_shuffled_top_context', '')}`",
+            f"- held-out AUC: `{score.get('heldout_auc', '')}`; same-feature control gap: `{score.get('control_gap_vs_same_feature_shuffled', '')}`",
             f"- confusable failures: `{score.get('confusable_failure_count', '')}`; decoy failure rate: `{score.get('token_overlap_decoy_failure_rate', '')}`",
             f"- abstain: `{exp.get('abstain')}`; review required: `{exp.get('human_review_required')}`",
             f"- risk flags: `{exp.get('risk_flags', '')}`",
@@ -1237,7 +1658,7 @@ def write_status_files(ctx: bench.RunContext, data_info: Mapping[str, Any], hook
         "patch_noop_ok": bool(patch_noop.get("ok")),
         "data_schema_ok": schema_ok,
         "science_ready": bool(data_info.get("science_ready")),
-        "generated_explanations_nonempty": True,
+        "generated_explanations_nonempty": metrics.get("n_explanations", 0) > 0,
         "score_rows_nonempty": metrics.get("n_methods", 0) > 0,
         "review_queue_rows": metrics.get("n_review_rows", 0),
         "counterexamples": metrics.get("n_counterexamples", 0),
@@ -1250,12 +1671,16 @@ def write_status_files(ctx: bench.RunContext, data_info: Mapping[str, Any], hook
 
 def write_plot_guide(ctx: bench.RunContext) -> None:
     rows = [
-        {"plot": "plots/auto_interp_dashboard.png", "first_question": "Which methods beat the shuffled control while preserving abstention discipline?", "concept": "One-screen method verdict cockpit."},
-        {"plot": "plots/explanation_quality_matrix.png", "first_question": "Which feature-method pairs carry the result?", "concept": "Method-by-feature held-out AUC matrix."},
-        {"plot": "plots/confidence_calibration_curve.png", "first_question": "Does confidence predict actual success?", "concept": "Confidence calibration, not trust theater."},
-        {"plot": "plots/abstention_frontier.png", "first_question": "Does the method abstain on risky features without refusing all labelable features?", "concept": "Good vs bad abstention."},
-        {"plot": "plots/confusable_pair_failure_atlas.png", "first_question": "Which method fires on confusables or token-overlap decoys?", "concept": "Specificity failure atlas."},
-        {"plot": "plots/random_feature_sanity_panel.png", "first_question": "Do random and polysemantic controls get forced labels?", "concept": "Random/high-risk sanity floor."},
+        {"plot": "plots/auto_interp_dashboard.png", "source_artifact": "tables/figure_auto_interp_dashboard_source.csv", "first_question": "Which methods beat controls while preserving abstention discipline?", "concept": "One-screen method verdict.", "what_not_to_claim": "Do not call a generated label a feature meaning."},
+        {"plot": "plots/target_vs_control.png", "source_artifact": "tables/figure_target_vs_control_source.csv", "first_question": "Does each automated label beat its same-feature shuffled-context control?", "concept": "Raw feature-method control gap without method-level averaging.", "what_not_to_claim": "Do not cite high AUC rows that sit on the control diagonal."},
+        {"plot": "plots/explanation_quality_matrix.png", "source_artifact": "tables/figure_explanation_quality_matrix_source.csv", "first_question": "Which feature-method cells carry the method-level result?", "concept": "Method-by-feature AUC matrix.", "what_not_to_claim": "A bright specimen is not a scalable method claim."},
+        {"plot": "plots/label_score_distribution.png", "source_artifact": "tables/figure_label_score_distribution_source.csv", "first_question": "Are positives separated from hard/confusable/decoy negatives?", "concept": "Raw context-score distribution by suite.", "what_not_to_claim": "Do not hide overlap under a mean AUC."},
+        {"plot": "plots/confidence_calibration_curve.png", "source_artifact": "tables/figure_confidence_calibration_source.csv", "first_question": "Does confidence predict actual success?", "concept": "Calibration bins and row-level outcomes.", "what_not_to_claim": "Confidence is not correctness."},
+        {"plot": "plots/abstention_frontier.png", "source_artifact": "tables/figure_abstention_frontier_source.csv", "first_question": "Does the method abstain on risky features without refusing labelable ones?", "concept": "Good versus bad abstention.", "what_not_to_claim": "Abstaining on everything is not interpretability."},
+        {"plot": "plots/confusable_pair_failure_atlas.png", "source_artifact": "tables/figure_confusable_pair_failure_source.csv", "first_question": "Which controls expose cheap keyword explanations?", "concept": "Confusable and token-overlap failure atlas.", "what_not_to_claim": "A label that fires on decoys is not concept evidence."},
+        {"plot": "plots/random_feature_sanity_panel.png", "source_artifact": "tables/figure_random_feature_sanity_source.csv", "first_question": "Do random/polysemantic/ambiguous controls receive forced labels?", "concept": "High-risk forced-label sanity check.", "what_not_to_claim": "A method that always emits labels is not calibrated."},
+        {"plot": "plots/review_queue_triage.png", "source_artifact": "tables/figure_review_queue_triage_source.csv", "first_question": "Which rows should the student inspect first?", "concept": "Human-review queue by priority and failure reason.", "what_not_to_claim": "Automated scoring replaces human label review."},
+        {"plot": "plots/paired_examples.png", "source_artifact": "tables/figure_paired_examples_source.csv", "first_question": "Which specimens support or contradict the aggregate?", "concept": "Same-feature control-to-method paired rows.", "what_not_to_claim": "Do not let aggregate bars erase counterexamples."},
     ]
     path = ctx.path("tables", "plot_reading_guide.csv")
     bench.write_csv_with_context(ctx, path, rows)
@@ -1272,23 +1697,165 @@ def write_placeholder(ctx: bench.RunContext, name: str, title: str, message: str
     bench.save_figure(ctx, fig, name, title)
 
 
-def write_plots(ctx: bench.RunContext, evidence: Sequence[Mapping[str, Any]], scores: Sequence[Mapping[str, Any]], calibration: Sequence[Mapping[str, Any]]) -> None:
+def write_source_table(ctx: bench.RunContext, filename: str, rows: Sequence[Mapping[str, Any]], description: str) -> pathlib.Path:
+    path = ctx.path("tables", filename)
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", description)
+    return path
+
+
+def add_plot_entry(
+    entries: list[dict[str, Any]],
+    *,
+    figure: str,
+    source: pathlib.Path,
+    row_count: int,
+    question: str,
+    metric: str,
+    control: str,
+    claim: str,
+    generated: bool,
+    warnings: Sequence[str],
+) -> None:
+    entries.append({
+        "figure_path": f"plots/{figure}",
+        "source_table": f"tables/{source.name}",
+        "source_table_rel": f"tables/{source.name}",
+        "row_count": row_count,
+        "question_answered": question,
+        "metric": metric,
+        "control_or_falsifier": control,
+        "claim_supported_or_narrowed": claim,
+        "generated": bool(generated),
+        "warnings": ";".join(warnings),
+    })
+
+
+def write_plot_manifest(ctx: bench.RunContext, entries: Sequence[Mapping[str, Any]]) -> None:
+    # Normalize the small relative path field in case callers passed only filenames.
+    rows = []
+    for entry in entries:
+        e = dict(entry)
+        if "source_table_rel" not in e and e.get("source_table"):
+            e["source_table_rel"] = str(e["source_table"])
+        rows.append(e)
+    json_path = ctx.path("plot_manifest.json")
+    bench.write_json(json_path, rows)
+    ctx.register_artifact(json_path, "manifest", "Figure manifest with source table, row count, metric, controls, and claim boundaries.")
+    csv_path = ctx.path("tables", "plot_manifest.csv")
+    bench.write_csv_with_context(ctx, csv_path, rows)
+    ctx.register_artifact(csv_path, "table", "CSV copy of plot_manifest.json.")
+
+
+def figure_source_tables(
+    ctx: bench.RunContext,
+    evidence: Sequence[Mapping[str, Any]],
+    scores: Sequence[Mapping[str, Any]],
+    tests: Sequence[Mapping[str, Any]],
+    review: Sequence[Mapping[str, Any]],
+    calibration: Sequence[Mapping[str, Any]],
+    calibration_bins: Sequence[Mapping[str, Any]],
+    suite_summary: Sequence[Mapping[str, Any]],
+    abstention_summary: Sequence[Mapping[str, Any]],
+    failure_specimens: Sequence[Mapping[str, Any]],
+) -> dict[str, tuple[pathlib.Path, int]]:
+    sources: dict[str, tuple[pathlib.Path, int]] = {}
+
+    def add(key: str, filename: str, rows: Sequence[Mapping[str, Any]], desc: str) -> None:
+        sources[key] = (write_source_table(ctx, filename, list(rows), desc), len(rows))
+
+    add("dashboard", "figure_auto_interp_dashboard_source.csv", evidence, "Method-level evidence matrix source for auto_interp_dashboard.png.")
+    target_rows = [dict(r) for r in scores if r.get("method") in AUTOMATED_METHODS]
+    add("target_vs_control", "figure_target_vs_control_source.csv", target_rows, "Row-level automated-method AUC versus same-feature shuffled control source.")
+    add("quality_matrix", "figure_explanation_quality_matrix_source.csv", scores, "Feature-method score source for explanation_quality_matrix.png.")
+    # Keep raw test rows, not only summaries, so overlapping score distributions cannot hide.
+    dist_rows = [dict(r) for r in tests if r.get("method") in AUTOMATED_METHODS]
+    add("score_distribution", "figure_label_score_distribution_source.csv", dist_rows, "Raw context-level predicted scores by suite for label_score_distribution.png.")
+    cal_rows = [dict(r) for r in calibration]
+    cal_rows.extend({"row_type": "bin", **dict(r)} for r in calibration_bins)
+    add("calibration", "figure_confidence_calibration_source.csv", cal_rows, "Confidence row outcomes and calibration bins source.")
+    frontier_rows = [dict(r) for r in evidence]
+    frontier_rows.extend({"row_type": "abstention_summary", **dict(r)} for r in abstention_summary)
+    add("abstention_frontier", "figure_abstention_frontier_source.csv", frontier_rows, "Good/bad abstention source rows.")
+    conf_rows = [dict(r) for r in evidence]
+    conf_rows.extend({"row_type": "suite_summary", **dict(r)} for r in suite_summary if r.get("suite") in {"confusable_negative", "token_overlap_decoy"})
+    add("confusable_failure", "figure_confusable_pair_failure_source.csv", conf_rows, "Confusable and token-overlap control source rows.")
+    high_risk = [dict(r) for r in scores if r.get("feature_type") in {"random_control", "polysemantic_gold", "ambiguous_control"}]
+    add("random_sanity", "figure_random_feature_sanity_source.csv", high_risk, "High-risk feature abstention and forced-label source rows.")
+    add("review_triage", "figure_review_queue_triage_source.csv", review, "Human-review queue triage source rows.")
+    # Select both supporting and contradictory rows for paired examples.
+    automated = [r for r in scores if r.get("method") in AUTOMATED_METHODS]
+    strongest = sorted(automated, key=lambda r: fnum(r.get("control_gap_vs_same_feature_shuffled"), -999.0), reverse=True)[:8]
+    weakest = sorted(automated, key=lambda r: fnum(r.get("control_gap_vs_same_feature_shuffled"), 999.0))[:8]
+    paired: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in strongest + weakest:
+        rid = str(row.get("score_id", row.get("feature_method_id", "")))
+        if rid in seen:
+            continue
+        seen.add(rid)
+        paired.append({
+            "score_id": rid,
+            "feature_id": row.get("feature_id", ""),
+            "feature_type": row.get("feature_type", ""),
+            "method": row.get("method", ""),
+            "generated_label": row.get("generated_label", ""),
+            "same_feature_control_auc": row.get("same_feature_control_auc", ""),
+            "heldout_auc": row.get("heldout_auc", ""),
+            "control_gap_vs_same_feature_shuffled": row.get("control_gap_vs_same_feature_shuffled", ""),
+            "review_priority": row.get("review_priority", ""),
+            "role": "support" if fnum(row.get("control_gap_vs_same_feature_shuffled")) >= CONTROL_GAP_BAR else "counterexample_or_weak",
+        })
+    add("paired_examples", "figure_paired_examples_source.csv", paired, "Selected row-level support and counterexample pairs.")
+    add("failure_specimens", "figure_failure_specimens_source.csv", failure_specimens, "Specimen contexts referenced by paired examples and audits.")
+    return sources
+
+
+def write_plots(
+    ctx: bench.RunContext,
+    evidence: Sequence[Mapping[str, Any]],
+    scores: Sequence[Mapping[str, Any]],
+    tests: Sequence[Mapping[str, Any]],
+    review: Sequence[Mapping[str, Any]],
+    calibration: Sequence[Mapping[str, Any]],
+    calibration_bins: Sequence[Mapping[str, Any]],
+    suite_summary: Sequence[Mapping[str, Any]],
+    abstention_summary: Sequence[Mapping[str, Any]],
+    failure_specimens: Sequence[Mapping[str, Any]],
+    warning_rows: Sequence[Mapping[str, Any]],
+) -> None:
     write_plot_guide(ctx)
+    sources = figure_source_tables(ctx, evidence, scores, tests, review, calibration, calibration_bins, suite_summary, abstention_summary, failure_specimens)
+    warnings = warning_codes(warning_rows)
+    entries: list[dict[str, Any]] = []
+    figure_specs = [
+        ("auto_interp_dashboard.png", "dashboard", "Which methods beat controls while preserving abstention discipline?", "mean held-out AUC, label accuracy, abstention, specificity failures", "shuffled-top-context control and high-risk abstention", "method-level audit posture"),
+        ("target_vs_control.png", "target_vs_control", "Does each automated label beat its same-feature shuffled-context control?", "heldout_auc vs same_feature_control_auc", "diagonal y=x plus same-feature shuffled control", "row-level control specificity"),
+        ("explanation_quality_matrix.png", "quality_matrix", "Which feature-method cells carry the result?", "heldout AUC by feature and method", "control and gold rows shown beside automated methods", "breadth versus specimen caveat"),
+        ("label_score_distribution.png", "score_distribution", "Are positives separated from hard/confusable/decoy negatives?", "raw predicted context score", "hard negatives, confusables, token-overlap decoys", "separation evidence or overlap caveat"),
+        ("confidence_calibration_curve.png", "calibration", "Does confidence predict success?", "confidence bin success rate", "perfect-calibration diagonal", "calibration claim boundary"),
+        ("abstention_frontier.png", "abstention_frontier", "Does abstention target risk rather than everything?", "good and bad abstention rates", "gold-feature bad-abstention gate", "abstention discipline"),
+        ("confusable_pair_failure_atlas.png", "confusable_failure", "Which controls expose cheap keyword explanations?", "confusable count and decoy failure rate", "confusable and token-overlap decoy suites", "specificity failure"),
+        ("random_feature_sanity_panel.png", "random_sanity", "Do random/polysemantic/ambiguous controls receive forced labels?", "abstain and forced-label rates", "high-risk feature types", "forced-label caveat"),
+        ("review_queue_triage.png", "review_triage", "Which rows require human inspection first?", "review priority by row", "review reasons", "human review routing"),
+        ("paired_examples.png", "paired_examples", "Which specimens support or contradict the aggregate?", "control AUC to method AUC paired rows", "same-feature shuffled control endpoint", "specimen evidence and counterexamples"),
+    ]
     if ctx.args.no_plots:
+        for fig, key, question, metric, control, claim in figure_specs:
+            src, n = sources[key]
+            add_plot_entry(entries, figure=fig, source=src, row_count=n, question=question, metric=metric, control=control, claim=claim, generated=False, warnings=["plots_skipped_by_flag", *warnings])
+        write_plot_manifest(ctx, entries)
         return
+
     import matplotlib.pyplot as plt
     import numpy as np
 
     if not evidence:
-        for name in (
-            "auto_interp_dashboard.png",
-            "explanation_quality_matrix.png",
-            "confidence_calibration_curve.png",
-            "abstention_frontier.png",
-            "confusable_pair_failure_atlas.png",
-            "random_feature_sanity_panel.png",
-        ):
-            write_placeholder(ctx, name, name.replace("_", " ").replace(".png", ""), "No evidence rows were produced.")
+        for fig, key, question, metric, control, claim in figure_specs:
+            write_placeholder(ctx, fig, fig.replace("_", " ").replace(".png", ""), "No evidence rows were produced.")
+            src, n = sources[key]
+            add_plot_entry(entries, figure=fig, source=src, row_count=n, question=question, metric=metric, control=control, claim="no claim", generated=True, warnings=["no_evidence_rows", *warnings])
+        write_plot_manifest(ctx, entries)
         return
 
     methods = [str(r["method"]) for r in evidence]
@@ -1302,46 +1869,72 @@ def write_plots(ctx: bench.RunContext, evidence: Sequence[Mapping[str, Any]], sc
     decoy = [fnum(r.get("mean_decoy_failure_rate"), 0.0) for r in evidence]
 
     fig, axes = plt.subplots(2, 2, figsize=(13, 8.5))
-    fig.suptitle("Lab 31 automated interpretability dashboard", fontsize=14, fontweight="bold")
-    axes[0, 0].bar(x - 0.18, aucs, 0.36, label="method")
-    axes[0, 0].bar(x + 0.18, controls, 0.36, label="shuffled control")
+    fig.suptitle("Lab 31 auto-label audit dashboard", fontsize=14, fontweight="bold")
+    axes[0, 0].bar(x - 0.18, aucs, 0.36, label="method mean AUC")
+    axes[0, 0].bar(x + 0.18, controls, 0.36, label="shuffled control mean")
     axes[0, 0].axhline(AUC_SUPPORT_BAR, linestyle="--", linewidth=1, label="AUC gate")
+    axes[0, 0].set_ylabel("held-out AUC")
     axes[0, 0].set_xticks(x, methods, rotation=25, ha="right")
     axes[0, 0].set_ylim(0, 1.05)
-    axes[0, 0].set_ylabel("AUC")
-    axes[0, 0].set_title("Held-out AUC vs control")
+    axes[0, 0].set_title("Prediction beats control?")
     axes[0, 0].legend(fontsize=8)
     axes[0, 1].bar(x, accs)
     axes[0, 1].axhline(LABEL_ACCURACY_BAR, linestyle="--", linewidth=1)
     axes[0, 1].set_ylim(0, 1.05)
     axes[0, 1].set_xticks(x, methods, rotation=25, ha="right")
     axes[0, 1].set_title("Gold-label accuracy when scored")
-    axes[1, 0].bar(x - 0.18, good_abs, 0.36, label="good abstain")
-    axes[1, 0].bar(x + 0.18, bad_abs, 0.36, label="bad abstain")
+    axes[1, 0].bar(x - 0.18, good_abs, 0.36, label="good abstain on risky")
+    axes[1, 0].bar(x + 0.18, bad_abs, 0.36, label="bad abstain on gold")
     axes[1, 0].axhline(GOOD_ABSTAIN_BAR, linestyle="--", linewidth=1)
+    axes[1, 0].axhline(BAD_ABSTAIN_BAR, linestyle=":", linewidth=1)
     axes[1, 0].set_ylim(0, 1.05)
     axes[1, 0].set_xticks(x, methods, rotation=25, ha="right")
     axes[1, 0].set_title("Abstention discipline")
     axes[1, 0].legend(fontsize=8)
-    axes[1, 1].bar(x - 0.18, conf, 0.36, label="confusable count")
-    axes[1, 1].bar(x + 0.18, decoy, 0.36, label="decoy rate")
+    axes[1, 1].bar(x - 0.18, conf, 0.36, label="confusable failures")
+    axes[1, 1].bar(x + 0.18, decoy, 0.36, label="decoy failure rate")
+    axes[1, 1].axhline(CONFUSABLE_FAILURE_BAR, linestyle="--", linewidth=1)
     axes[1, 1].set_xticks(x, methods, rotation=25, ha="right")
-    axes[1, 1].set_title("Specificity failures")
+    axes[1, 1].set_title("Cheap-explanation alarms")
     axes[1, 1].legend(fontsize=8)
-    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    fig.text(0.01, 0.01, ctx.plot_footer(), fontsize=7)
+    fig.tight_layout(rect=(0, 0.03, 1, 0.95))
     bench.save_figure(ctx, fig, "auto_interp_dashboard.png", "Lab 31 auto-interpretability dashboard.")
+    src, n = sources["dashboard"]
+    add_plot_entry(entries, figure="auto_interp_dashboard.png", source=src, row_count=n, question=figure_specs[0][2], metric=figure_specs[0][3], control=figure_specs[0][4], claim=figure_specs[0][5], generated=True, warnings=warnings)
 
-    features = sorted({str(r["feature_id"]) for r in scores})
+    auto_rows = [r for r in scores if r.get("method") in AUTOMATED_METHODS]
+    fig, ax = plt.subplots(figsize=(7.2, 6.2))
+    xs = [fnum(r.get("same_feature_control_auc"), 0.5) for r in auto_rows]
+    ys = [fnum(r.get("heldout_auc"), 0.0) for r in auto_rows]
+    ax.scatter(xs, ys, alpha=0.78)
+    for r, x0, y0 in zip(auto_rows, xs, ys):
+        if fnum(r.get("review_priority"), 0.0) >= 3.0 or y0 - x0 < CONTROL_GAP_BAR:
+            ax.annotate(str(r.get("method", "")).replace("_", "\n"), (x0, y0), fontsize=6, alpha=0.75)
+    ax.plot([0, 1], [0, 1], linestyle="--", linewidth=1, label="same-feature control")
+    ax.plot([0, 1], [CONTROL_GAP_BAR, 1 + CONTROL_GAP_BAR], linestyle=":", linewidth=1, label="control gap gate")
+    ax.set_xlim(-0.03, 1.03)
+    ax.set_ylim(-0.03, 1.03)
+    ax.set_xlabel("same-feature shuffled-control AUC")
+    ax.set_ylabel("automated method AUC")
+    ax.set_title("Target labels versus their own shuffled-context controls")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "target_vs_control.png", "Row-level target versus control AUC.")
+    src, n = sources["target_vs_control"]
+    add_plot_entry(entries, figure="target_vs_control.png", source=src, row_count=n, question=figure_specs[1][2], metric=figure_specs[1][3], control=figure_specs[1][4], claim=figure_specs[1][5], generated=True, warnings=warnings)
+
+    features = sorted({str(r.get("feature_id")) for r in scores})
     mat = np.full((len(methods), len(features)), np.nan)
     for i, method in enumerate(methods):
         for j, feature in enumerate(features):
             vals = [fnum(r.get("heldout_auc")) for r in scores if r.get("method") == method and r.get("feature_id") == feature]
             mat[i, j] = safe_mean(vals, default=np.nan)
-    fig, ax = plt.subplots(figsize=(max(8.5, len(features) * 0.62), 5.0))
+    fig, ax = plt.subplots(figsize=(max(9.0, len(features) * 0.66), 5.2))
     im = ax.imshow(mat, aspect="auto", vmin=0, vmax=1)
     ax.set_yticks(range(len(methods)), methods)
     ax.set_xticks(range(len(features)), [f.replace("feat_", "") for f in features], rotation=35, ha="right")
-    ax.set_title("Explanation quality matrix")
+    ax.set_title("Explanation quality matrix: every feature-method cell")
     for i in range(len(methods)):
         for j in range(len(features)):
             if np.isfinite(mat[i, j]):
@@ -1349,71 +1942,156 @@ def write_plots(ctx: bench.RunContext, evidence: Sequence[Mapping[str, Any]], sc
     fig.colorbar(im, ax=ax, shrink=0.82, label="held-out AUC")
     fig.tight_layout()
     bench.save_figure(ctx, fig, "explanation_quality_matrix.png", "Method-by-feature AUC heatmap.")
+    src, n = sources["quality_matrix"]
+    add_plot_entry(entries, figure="explanation_quality_matrix.png", source=src, row_count=n, question=figure_specs[2][2], metric=figure_specs[2][3], control=figure_specs[2][4], claim=figure_specs[2][5], generated=True, warnings=warnings)
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.8))
-    xs = [fnum(r.get("confidence"), 0.0) for r in calibration]
-    ys = [1.0 if r.get("success") else 0.0 for r in calibration]
-    ax.scatter(xs, ys, alpha=0.55)
-    bins = np.linspace(0, 1, 6)
-    bx, by = [], []
-    for lo, hi in zip(bins[:-1], bins[1:]):
-        vals = [y for x0, y in zip(xs, ys) if lo <= x0 < hi or (hi == 1 and x0 == 1)]
+    suite_order = ["heldout_positive", "paraphrase_positive", "hard_negative", "confusable_negative", "token_overlap_decoy"]
+    data = []
+    labels = []
+    for suite in suite_order:
+        vals = [fnum(r.get("predicted_score")) for r in tests if r.get("method") in AUTOMATED_METHODS and r.get("suite") == suite]
+        vals = [v for v in vals if math.isfinite(v)]
         if vals:
-            bx.append((lo + hi) / 2)
-            by.append(float(np.mean(vals)))
+            data.append(vals)
+            labels.append(suite.replace("_", "\n"))
+    fig, ax = plt.subplots(figsize=(9.2, 5.2))
+    if data:
+        ax.boxplot(data, labels=labels, showfliers=True)
+        for i, vals in enumerate(data, start=1):
+            jitter = np.linspace(-0.09, 0.09, num=len(vals)) if len(vals) > 1 else [0.0]
+            ax.scatter([i + j for j in jitter], vals, alpha=0.35, s=16)
+    ax.axhline(CONFUSABLE_FAILURE_THRESHOLD, linestyle="--", linewidth=1, label="failure threshold")
+    ax.set_ylabel("predicted lexical activation score")
+    ax.set_title("Raw score distributions by suite")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "label_score_distribution.png", "Raw label score distributions by suite.")
+    src, n = sources["score_distribution"]
+    add_plot_entry(entries, figure="label_score_distribution.png", source=src, row_count=n, question=figure_specs[3][2], metric=figure_specs[3][3], control=figure_specs[3][4], claim=figure_specs[3][5], generated=True, warnings=warnings)
+
+    fig, ax = plt.subplots(figsize=(7.8, 5.0))
+    xs = [fnum(r.get("confidence"), 0.0) for r in calibration if r.get("method") in AUTOMATED_METHODS]
+    ys = [1.0 if truthy(r.get("success")) else 0.0 for r in calibration if r.get("method") in AUTOMATED_METHODS]
+    if xs:
+        ax.scatter(xs, ys, alpha=0.45, label="feature-method rows")
+    bin_rows = [r for r in calibration_bins if r.get("method") in AUTOMATED_METHODS]
+    bx = [fnum(r.get("mean_confidence")) for r in bin_rows]
+    by = [fnum(r.get("success_rate")) for r in bin_rows]
     if bx:
         ax.plot(bx, by, marker="o", label="binned success")
     ax.plot([0, 1], [0, 1], linestyle="--", linewidth=1, label="perfect calibration")
     ax.set_xlabel("confidence")
-    ax.set_ylabel("success")
+    ax.set_ylabel("success rate")
     ax.set_ylim(-0.05, 1.05)
     ax.set_title("Confidence calibration")
     ax.legend(fontsize=8)
     fig.tight_layout()
     bench.save_figure(ctx, fig, "confidence_calibration_curve.png", "Confidence versus observed success.")
+    src, n = sources["calibration"]
+    add_plot_entry(entries, figure="confidence_calibration_curve.png", source=src, row_count=n, question=figure_specs[4][2], metric=figure_specs[4][3], control=figure_specs[4][4], claim=figure_specs[4][5], generated=True, warnings=warnings)
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.8))
+    fig, ax = plt.subplots(figsize=(7.8, 5.0))
     ax.scatter(bad_abs, good_abs)
     for row in evidence:
         ax.annotate(str(row["method"]), (fnum(row.get("bad_abstain_rate_on_gold_features"), 0.0), fnum(row.get("good_abstain_rate_on_polysemantic_or_random"), 0.0)), fontsize=8)
     ax.axhline(GOOD_ABSTAIN_BAR, linestyle="--", linewidth=1)
     ax.axvline(BAD_ABSTAIN_BAR, linestyle="--", linewidth=1)
-    ax.set_xlabel("bad abstention on gold features")
+    ax.set_xlabel("bad abstention on labelable gold features")
     ax.set_ylabel("good abstention on risky features")
     ax.set_xlim(-0.05, 1.05)
     ax.set_ylim(-0.05, 1.05)
     ax.set_title("Abstention frontier")
     fig.tight_layout()
     bench.save_figure(ctx, fig, "abstention_frontier.png", "Good/bad abstention frontier.")
+    src, n = sources["abstention_frontier"]
+    add_plot_entry(entries, figure="abstention_frontier.png", source=src, row_count=n, question=figure_specs[5][2], metric=figure_specs[5][3], control=figure_specs[5][4], claim=figure_specs[5][5], generated=True, warnings=warnings)
 
-    fig, ax = plt.subplots(figsize=(8.5, 4.8))
+    fig, ax = plt.subplots(figsize=(8.8, 5.0))
     ax.bar(x - 0.18, conf, 0.36, label="confusable failures")
     ax.bar(x + 0.18, decoy, 0.36, label="decoy failure rate")
+    ax.axhline(CONFUSABLE_FAILURE_BAR, linestyle="--", linewidth=1, label="confusable gate")
     ax.set_xticks(x, methods, rotation=25, ha="right")
-    ax.set_title("Confusable pair failure atlas")
+    ax.set_title("Confusable pair and token-overlap failure atlas")
     ax.set_ylabel("mean failures / rate")
     ax.legend(fontsize=8)
     fig.tight_layout()
     bench.save_figure(ctx, fig, "confusable_pair_failure_atlas.png", "Confusable/decoy failure atlas.")
+    src, n = sources["confusable_failure"]
+    add_plot_entry(entries, figure="confusable_pair_failure_atlas.png", source=src, row_count=n, question=figure_specs[6][2], metric=figure_specs[6][3], control=figure_specs[6][4], claim=figure_specs[6][5], generated=True, warnings=warnings)
 
     random_rows = [r for r in scores if r.get("feature_type") in {"random_control", "polysemantic_gold", "ambiguous_control"}]
     abstain_by_method = []
     forced_by_method = []
     for method in methods:
         rows = [r for r in random_rows if r.get("method") == method]
-        abstain_by_method.append(safe_mean([1.0 if r.get("abstain") else 0.0 for r in rows], default=0.0))
-        forced_by_method.append(safe_mean([0.0 if r.get("abstain") else 1.0 for r in rows], default=0.0))
-    fig, ax = plt.subplots(figsize=(8.5, 4.8))
+        abstain_by_method.append(safe_mean([1.0 if truthy(r.get("abstain")) else 0.0 for r in rows], default=0.0))
+        forced_by_method.append(safe_mean([0.0 if truthy(r.get("abstain")) else 1.0 for r in rows], default=0.0))
+    fig, ax = plt.subplots(figsize=(8.8, 5.0))
     ax.bar(x - 0.18, abstain_by_method, 0.36, label="abstain")
     ax.bar(x + 0.18, forced_by_method, 0.36, label="forced label")
     ax.set_ylim(0, 1.05)
     ax.set_xticks(x, methods, rotation=25, ha="right")
-    ax.set_title("Random and polysemantic sanity panel")
+    ax.set_title("Random, polysemantic, and ambiguous controls")
     ax.set_ylabel("rate")
     ax.legend(fontsize=8)
     fig.tight_layout()
     bench.save_figure(ctx, fig, "random_feature_sanity_panel.png", "Random/polysemantic abstention panel.")
+    src, n = sources["random_sanity"]
+    add_plot_entry(entries, figure="random_feature_sanity_panel.png", source=src, row_count=n, question=figure_specs[7][2], metric=figure_specs[7][3], control=figure_specs[7][4], claim=figure_specs[7][5], generated=True, warnings=warnings)
 
+    top_review = sorted(review, key=lambda r: fnum(r.get("review_priority"), 0.0), reverse=True)[:12]
+    fig, ax = plt.subplots(figsize=(9.2, max(4.8, 0.34 * len(top_review) + 1.5)))
+    if top_review:
+        y = np.arange(len(top_review))
+        vals = [fnum(r.get("review_priority"), 0.0) for r in top_review]
+        labels = [f"{r.get('feature_id','').replace('feat_', '')}\n{r.get('method','')}" for r in top_review]
+        ax.barh(y, vals)
+        ax.set_yticks(y, labels, fontsize=7)
+        ax.invert_yaxis()
+    else:
+        ax.text(0.5, 0.5, "No review rows were produced. Check warning_summary.csv before trusting the run.", ha="center", va="center")
+    ax.set_xlabel("review priority")
+    ax.set_title("Human-review queue triage")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "review_queue_triage.png", "Human-review queue triage.")
+    src, n = sources["review_triage"]
+    add_plot_entry(entries, figure="review_queue_triage.png", source=src, row_count=n, question=figure_specs[8][2], metric=figure_specs[8][3], control=figure_specs[8][4], claim=figure_specs[8][5], generated=True, warnings=warnings)
+
+    paired_rows = []
+    # Read from the in-memory construction by mirroring the rows used in figure_source_tables.
+    automated = [r for r in scores if r.get("method") in AUTOMATED_METHODS]
+    strongest = sorted(automated, key=lambda r: fnum(r.get("control_gap_vs_same_feature_shuffled"), -999.0), reverse=True)[:8]
+    weakest = sorted(automated, key=lambda r: fnum(r.get("control_gap_vs_same_feature_shuffled"), 999.0))[:8]
+    seen = set()
+    for r in strongest + weakest:
+        rid = str(r.get("score_id", r.get("feature_method_id", "")))
+        if rid in seen:
+            continue
+        seen.add(rid)
+        paired_rows.append(r)
+    fig, ax = plt.subplots(figsize=(8.8, max(4.8, 0.32 * len(paired_rows) + 1.5)))
+    if paired_rows:
+        y = np.arange(len(paired_rows))
+        for i, row in enumerate(paired_rows):
+            x0 = fnum(row.get("same_feature_control_auc"), 0.0)
+            x1 = fnum(row.get("heldout_auc"), 0.0)
+            ax.plot([x0, x1], [i, i], marker="o", linewidth=1.5)
+        labels = [f"{r.get('feature_id','').replace('feat_', '')}\n{r.get('method','')}" for r in paired_rows]
+        ax.set_yticks(y, labels, fontsize=7)
+        ax.invert_yaxis()
+        ax.axvline(AUC_SUPPORT_BAR, linestyle="--", linewidth=1, label="AUC gate")
+        ax.set_xlim(-0.03, 1.03)
+        ax.legend(fontsize=8)
+    else:
+        ax.text(0.5, 0.5, "No paired examples available.", ha="center", va="center")
+    ax.set_xlabel("AUC: shuffled control endpoint to automated method endpoint")
+    ax.set_title("Paired examples: support and counterexamples share the page")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "paired_examples.png", "Paired control-to-method specimens.")
+    src, n = sources["paired_examples"]
+    add_plot_entry(entries, figure="paired_examples.png", source=src, row_count=n, question=figure_specs[9][2], metric=figure_specs[9][3], control=figure_specs[9][4], claim=figure_specs[9][5], generated=True, warnings=warnings)
+
+    write_plot_manifest(ctx, entries)
 
 # ---------------------------------------------------------------------------
 # Synthetic dataset generator used by the package and Tier A fallback
@@ -1863,13 +2541,32 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     patch_noop = bench.run_patch_noop_check(ctx, bundle, tasks[0].top_contexts[0])
 
     explanations, deletion_rows = generate_explanations(tasks)
-    tests, scores = build_tests(tasks, explanations)
+    tests, raw_scores = build_tests(tasks, explanations)
+    scores = augment_score_rows(raw_scores)
     evidence, review, calibration, feature_rows, counterexamples, metrics = summarize_evidence(scores)
-    metrics = {**metrics, "data": data_info, "n_explanations": len(explanations), "n_tests": len(tests), "n_score_rows": len(scores)}
+    suite_summary = suite_score_summary_rows(tests)
+    calibration_bins = calibration_bin_rows(calibration)
+    abstention_summary = abstention_summary_rows(scores)
+    failure_specimens = failure_specimen_rows(scores, tests, counterexamples)
+    metrics = {
+        **metrics,
+        "data": data_info,
+        "n_explanations": len(explanations),
+        "n_tests": len(tests),
+        "n_score_rows": len(scores),
+        "n_suite_summary_rows": len(suite_summary),
+        "n_calibration_bins": len(calibration_bins),
+        "n_failure_specimens": len(failure_specimens),
+    }
 
     write_tables(ctx, explanations, deletion_rows, tests, scores, evidence, feature_rows, review, calibration, counterexamples)
+    write_extra_tables(ctx, suite_summary, calibration_bins, abstention_summary, failure_specimens)
+    write_failure_specimens(ctx, failure_specimens)
     write_state(ctx, data_info)
+    write_run_config_snapshot(ctx, data_info)
     write_status_files(ctx, data_info, hook_check, lens_check, patch_noop, metrics, schema_rows)
+    warning_rows = write_warning_summary(ctx, data_info, hook_check, lens_check, patch_noop, schema_rows, evidence, scores, review, counterexamples)
+    metrics = {**metrics, "n_warning_rows": len(warning_rows), "warning_codes": warning_codes(warning_rows)}
 
     metrics_path = ctx.path("metrics.json")
     bench.write_json(metrics_path, metrics)
@@ -1879,5 +2576,5 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     write_run_summary(ctx, data_info, metrics, evidence, counterexamples)
     write_review_artifacts(ctx, explanations, scores, review)
     write_claims(ctx, data_info, evidence)
-    write_plots(ctx, evidence, scores, calibration)
-    print(f"[lab31] wrote {len(explanations)} explanations, {len(tests)} tests, {len(evidence)} method verdicts, and {len(review)} review rows")
+    write_plots(ctx, evidence, scores, tests, review, calibration, calibration_bins, suite_summary, abstention_summary, failure_specimens, warning_rows)
+    print(f"[lab31] wrote {len(explanations)} explanations, {len(tests)} tests, {len(evidence)} method verdicts, {len(review)} review rows, and {len(failure_specimens)} failure specimens")
