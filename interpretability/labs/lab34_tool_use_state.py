@@ -712,6 +712,7 @@ def build_trace_tables(tasks: Sequence[ToolTask]) -> tuple[list[dict[str, Any]],
         corrupted = corrupted_result_for(task, execn.result)
         would_change = bool(task.required_tool != "none" and corrupted != task.answer)
         arg_rows.append({
+            "argument_row_id": f"arg:{task.task_id}",
             "task_id": task.task_id,
             "required_tool": task.required_tool,
             "tool_args_json": json.dumps(task.tool_args, sort_keys=True),
@@ -722,6 +723,7 @@ def build_trace_tables(tasks: Sequence[ToolTask]) -> tuple[list[dict[str, Any]],
             "result_matches_expected": correct,
         })
         trace_rows.append({
+            "trace_id": f"trace:{task.task_id}",
             "task_id": task.task_id,
             "family": task.family,
             "split": task.split,
@@ -744,6 +746,7 @@ def build_trace_tables(tasks: Sequence[ToolTask]) -> tuple[list[dict[str, Any]],
             {"task_id": task.task_id, "step_index": 3, "state": "final_answer", "tool": execn.tool_invoked, "detail": task.answer},
         ])
         report_rows.append({
+            "self_report_row_id": f"self_report:{task.task_id}",
             "task_id": task.task_id,
             "required_tool": task.required_tool,
             "known_trace_label": execn.tool_invoked,
@@ -927,11 +930,13 @@ def build_probe_reports(tasks: Sequence[ToolTask], vectors: Mapping[tuple[str, i
     for depth, model in sorted(models_by_depth.items()):
         for split in ("train", "eval", "all"):
             row = summarize_probe_split(tasks, vectors, model, split)
+            row["probe_cell_id"] = f"depth{depth}:{split}"
             rows.append(row)
         train_row = next(r for r in rows if int(r["depth"]) == depth and r["split_group"] == "train")
         claimable = 0 < int(depth) < max(models_by_depth)
         selection_score = as_float(train_row.get("decode_gap_over_surface"), -999.0) + 0.25 * (as_float(train_row.get("tool_needed_auc"), 0.5) - 0.5)
         selection_rows.append({
+            "selection_cell_id": f"depth{depth}:train_selection",
             "depth": depth,
             "claimable_depth": claimable,
             "train_tool_needed_auc": train_row.get("tool_needed_auc"),
@@ -967,6 +972,7 @@ def task_manifest_rows(tasks: Sequence[ToolTask], vectors: Mapping[tuple[str, in
         scored = score_tool_prediction(task, vectors[(task.task_id, model.depth)], model)
         feats = prompt_features(task)
         rows.append({
+            "tool_task_row_id": f"task:{task.task_id}:depth{model.depth}",
             "task_id": task.task_id,
             "family": task.family,
             "split": task.split,
@@ -1056,6 +1062,8 @@ def run_interventions(
                 if abs(float(scale)) < 1e-12:
                     base_by_direction[condition] = margin
                 rows.append({
+                    "intervention_id": f"{task.task_id}:{condition}:scale_{float(scale):g}",
+                    "direction_id": f"depth{model.depth}:{direction_name}",
                     "task_id": task.task_id,
                     "family": task.family,
                     "split": task.split,
@@ -1067,7 +1075,9 @@ def run_interventions(
                     "selected_depth": model.depth,
                     "steer_layer": model.steer_layer,
                     "target_letter": TOOL_LETTERS[target_tool],
+                    "target_letter_token_id": target_id,
                     "distractor_letter": TOOL_LETTERS[distractor_tool],
+                    "distractor_letter_token_id": distractor_id,
                     "target_minus_distractor_logit": rounded(margin),
                     "shift_from_condition_zero": "",  # filled below
                     "prompt": prompt,
@@ -1343,6 +1353,359 @@ def build_counterexamples(
 
 
 # ---------------------------------------------------------------------------
+# Visualization and artifact quality helpers
+# ---------------------------------------------------------------------------
+
+
+def boolish(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y", "t"}
+    return bool(value)
+
+
+def safe_json_list(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        return value
+    try:
+        parsed = json.loads(str(value or "[]"))
+    except Exception:
+        return []
+    return parsed if isinstance(parsed, list) else []
+
+
+def finite_pairs(rows: Sequence[Mapping[str, Any]], key: str) -> list[float]:
+    vals: list[float] = []
+    for row in rows:
+        val = as_float(row.get(key))
+        if math.isfinite(val):
+            vals.append(val)
+    return vals
+
+
+def split_for_fig(rows: Sequence[Mapping[str, Any]], *, split_key: str = "split") -> str:
+    splits = {str(row.get(split_key)) for row in rows}
+    return "eval" if "eval" in splits else "all"
+
+
+def write_figure_source(ctx: bench.RunContext, filename: str, rows: Sequence[Mapping[str, Any]], description: str) -> str:
+    path = ctx.path("tables", "figure_sources", filename)
+    bench.write_csv_with_context(ctx, path, list(rows))
+    ctx.register_artifact(path, "table", description)
+    return str(path.relative_to(ctx.run_dir))
+
+
+def write_plot_manifest(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    payload = {
+        "lab": LAB_NAME,
+        "note": "Every plot row names its source table. Claims should be checked against the tables before being copied into the ledger.",
+        "figures": list(rows),
+    }
+    json_path = ctx.path("plots", "plot_manifest.json")
+    bench.write_json(json_path, payload)
+    ctx.register_artifact(json_path, "plot_manifest", "Figure manifest with source tables, row counts, metrics, controls, and claim boundaries.")
+    csv_path = ctx.path("plots", "plot_manifest.csv")
+    bench.write_csv_with_context(ctx, csv_path, list(rows))
+    ctx.register_artifact(csv_path, "plot_manifest", "CSV copy of the Lab 34 figure manifest.")
+
+
+def add_empty_message(ax: Any, message: str) -> None:
+    ax.text(0.5, 0.5, message, ha="center", va="center", transform=ax.transAxes, wrap=True)
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+
+def source_target_vs_control(task_rows: Sequence[Mapping[str, Any]], intervention_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    split = "eval" if any(str(r.get("split")) == "eval" for r in task_rows) else "all"
+    for row in task_rows:
+        if split != "all" and str(row.get("split")) != split:
+            continue
+        rows.append({
+            "source_part": "probe_vs_surface",
+            "task_id": row.get("task_id"),
+            "split": row.get("split"),
+            "required_tool": row.get("required_tool"),
+            "target_metric": "probe_correct",
+            "target_value": 1.0 if boolish(row.get("tool_probe_correct")) else 0.0,
+            "control_metric": "surface_correct",
+            "control_value": 1.0 if boolish(row.get("surface_cue_correct")) else 0.0,
+            "difference_target_minus_control": (1.0 if boolish(row.get("tool_probe_correct")) else 0.0) - (1.0 if boolish(row.get("surface_cue_correct")) else 0.0),
+            "probe_prediction": row.get("tool_probe_prediction"),
+            "surface_prediction": row.get("surface_cue_prediction"),
+            "sample_count": 1,
+        })
+    task_ids = sorted({str(r.get("task_id")) for r in intervention_rows})
+    for task_id in task_ids:
+        if not task_id:
+            continue
+        target = next((r for r in intervention_rows if str(r.get("task_id")) == task_id and str(r.get("condition")) == "target_tool_direction" and abs(as_float(r.get("scale")) - CLAIMABLE_SCALE) < 1e-9), None)
+        random = next((r for r in intervention_rows if str(r.get("task_id")) == task_id and str(r.get("condition")) == "random_direction_control" and abs(as_float(r.get("scale")) - CLAIMABLE_SCALE) < 1e-9), None)
+        if target is None or random is None:
+            continue
+        rows.append({
+            "source_part": "activation_target_vs_random",
+            "task_id": task_id,
+            "split": target.get("split"),
+            "required_tool": target.get("required_tool"),
+            "target_metric": "target_direction_shift_at_scale_1",
+            "target_value": as_float(target.get("shift_from_condition_zero")),
+            "control_metric": "random_direction_shift_at_scale_1",
+            "control_value": as_float(random.get("shift_from_condition_zero")),
+            "difference_target_minus_control": as_float(target.get("shift_from_condition_zero")) - as_float(random.get("shift_from_condition_zero")),
+            "probe_prediction": "",
+            "surface_prediction": "",
+            "sample_count": 1,
+        })
+    return rows
+
+
+def write_run_config_snapshot(ctx: bench.RunContext, data_info: Mapping[str, Any], model: DirectionModel, depths: Sequence[int]) -> dict[str, Any]:
+    payload = {
+        "lab": LAB_NAME,
+        "model_id": ctx.model_id,
+        "model_revision": ctx.model_revision,
+        "tier": ctx.args.tier,
+        "dtype": ctx.args.dtype,
+        "quantization": ctx.args.quantization,
+        "prompt_set": ctx.args.prompt_set,
+        "max_examples": ctx.args.max_examples,
+        "seed": ctx.args.seed,
+        "decoding_settings": {"do_generation": False, "causal_prompt": "single next-token action-letter logits"},
+        "direction_settings": {
+            "depths_scanned": list(depths),
+            "selected_depth": model.depth,
+            "steer_layer": model.steer_layer,
+            "claimable_scale": CLAIMABLE_SCALE,
+            "steer_scales": list(STEER_SCALES),
+            "needed_threshold": model.needed_threshold,
+        },
+        "data": dict(data_info),
+        "surface_control": "deterministic lexical heuristic over prompt features",
+        "safety_scope": data_info.get("safety_scope"),
+    }
+    path = ctx.path("diagnostics", "lab34_run_config_snapshot.json")
+    bench.write_json(path, payload)
+    ctx.register_artifact(path, "diagnostic", "Run config snapshot for reproducing Lab 34 plots and tables.")
+    return payload
+
+
+def write_warning_summary(
+    ctx: bench.RunContext,
+    data_info: Mapping[str, Any],
+    task_rows: Sequence[Mapping[str, Any]],
+    probe_rows: Sequence[Mapping[str, Any]],
+    intervention_summary: Sequence[Mapping[str, Any]],
+    trace_rows: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+
+    def add(kind: str, severity: str, count: int, detail: str, action: str) -> None:
+        rows.append({"warning_kind": kind, "severity": severity, "count": count, "detail": detail, "recommended_action": action})
+
+    if not bool(data_info.get("science_ready")):
+        add("not_science_ready", "high", 1, "Run used smoke/fallback data or too few rows for the configured science gate.", "Treat as plumbing only; rerun Tier B with --prompt-set full before ledger claims.")
+    eval_rows = [r for r in task_rows if str(r.get("split")) == "eval"]
+    if not eval_rows:
+        add("missing_eval_rows", "high", 1, "No eval rows survived selection; train/eval language would be unsupported.", "Use a larger or balanced prompt set.")
+    if len(task_rows) < SCIENCE_READY_MIN_ROWS:
+        add("small_sample_count", "medium", len(task_rows), f"Selected {len(task_rows)} rows; science gate is {SCIENCE_READY_MIN_ROWS}.", "Use Tier B/full for the claim path.")
+    unsupported = [r for r in evidence_rows if "supported" not in str(r.get("claim_posture", "")) and "trace_validated" not in str(r.get("claim_posture", ""))]
+    if unsupported:
+        add("unsupported_evidence_rows", "medium", len(unsupported), "; ".join(str(r.get("method")) for r in unsupported), "Use negative or refinement language for these rows.")
+    mismatches = [r for r in trace_rows if not boolish(r.get("result_matches_expected")) or not boolish(r.get("argument_valid"))]
+    if mismatches:
+        add("trace_or_argument_mismatch", "high", len(mismatches), "At least one deterministic tool trace failed validation.", "Fix the data/tool simulator before interpreting plots.")
+    target_shift = summary_value(intervention_summary, "eval", "target_tool_direction", CLAIMABLE_SCALE, "mean_shift_from_zero")
+    if not math.isfinite(target_shift):
+        target_shift = summary_value(intervention_summary, "all", "target_tool_direction", CLAIMABLE_SCALE, "mean_shift_from_zero")
+    random_shift = summary_value(intervention_summary, "eval", "random_direction_control", CLAIMABLE_SCALE, "mean_shift_from_zero")
+    if not math.isfinite(random_shift):
+        random_shift = summary_value(intervention_summary, "all", "random_direction_control", CLAIMABLE_SCALE, "mean_shift_from_zero")
+    if math.isfinite(target_shift) and math.isfinite(random_shift) and target_shift <= random_shift:
+        add("random_direction_matches_target", "medium", 1, f"target shift {rounded(target_shift)} <= random shift {rounded(random_shift)}", "Do not write a causal direction claim; inspect dose_response.png and paired_examples.png.")
+    if counterexamples:
+        add("counterexamples_present", "medium", len(counterexamples), "Automatic counterexamples crossed filters.", "Read tables/failure_specimens.md before using the dashboard.")
+    if not rows:
+        add("no_runtime_warnings", "info", 0, "No warning conditions crossed the configured filters.", "Still inspect controls and source tables before ledgering claims.")
+
+    csv_path = ctx.path("diagnostics", "warning_summary.csv")
+    bench.write_csv_with_context(ctx, csv_path, rows)
+    ctx.register_artifact(csv_path, "diagnostic", "Human-readable warning summary for plot and data-quality review.")
+    json_path = ctx.path("diagnostics", "warning_summary.json")
+    bench.write_json(json_path, {"warnings": rows})
+    ctx.register_artifact(json_path, "diagnostic", "JSON warning summary for Lab 34.")
+    return rows
+
+
+def write_failure_specimens(
+    ctx: bench.RunContext,
+    counterexamples: Sequence[Mapping[str, Any]],
+    task_rows: Sequence[Mapping[str, Any]],
+    intervention_rows: Sequence[Mapping[str, Any]],
+    trace_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    by_task = {str(r.get("task_id")): r for r in task_rows}
+    by_trace = {str(r.get("task_id")): r for r in trace_rows}
+    rows: list[dict[str, Any]] = []
+    for i, row in enumerate(counterexamples[:40], start=1):
+        task_id = str(row.get("task_id"))
+        task = by_task.get(task_id, {})
+        trace = by_trace.get(task_id, {})
+        target = next((r for r in intervention_rows if str(r.get("task_id")) == task_id and str(r.get("condition")) == "target_tool_direction" and abs(as_float(r.get("scale")) - CLAIMABLE_SCALE) < 1e-9), {})
+        random = next((r for r in intervention_rows if str(r.get("task_id")) == task_id and str(r.get("condition")) == "random_direction_control" and abs(as_float(r.get("scale")) - CLAIMABLE_SCALE) < 1e-9), {})
+        rows.append({
+            "failure_id": f"failure_{i:03d}",
+            "kind": row.get("kind"),
+            "severity": row.get("severity"),
+            "task_id": task_id,
+            "split": row.get("split") or task.get("split"),
+            "required_tool": row.get("required_tool") or task.get("required_tool"),
+            "probe_prediction": row.get("probe_prediction") or task.get("tool_probe_prediction"),
+            "surface_prediction": row.get("surface_prediction") or task.get("surface_cue_prediction"),
+            "target_shift_at_scale_1": target.get("shift_from_condition_zero", ""),
+            "random_shift_at_scale_1": random.get("shift_from_condition_zero", ""),
+            "tool_result": trace.get("tool_result", ""),
+            "result_matches_expected": trace.get("result_matches_expected", ""),
+            "user_prompt": row.get("user_prompt") or task.get("user_prompt", ""),
+            "why_it_matters": row.get("why_it_matters", ""),
+        })
+    jsonl_path = ctx.path("tables", "failure_specimens.jsonl")
+    write_jsonl(jsonl_path, rows)
+    ctx.register_artifact(jsonl_path, "table", "Counterexample/failure specimens in inspectable JSONL form.")
+    md_lines = [
+        "# Lab 34 failure specimens",
+        "",
+        "These are the rows that most shrink the favorite tool-state story. They are evidence, not clutter.",
+        "",
+    ]
+    if rows:
+        for row in rows[:16]:
+            md_lines += [
+                f"## {row['failure_id']}: `{row['kind']}` on `{row['task_id']}`",
+                "",
+                f"- required tool: `{row.get('required_tool')}`",
+                f"- probe prediction: `{row.get('probe_prediction')}`",
+                f"- surface prediction: `{row.get('surface_prediction')}`",
+                f"- target shift at scale 1: `{row.get('target_shift_at_scale_1')}`",
+                f"- random shift at scale 1: `{row.get('random_shift_at_scale_1')}`",
+                f"- why it matters: {row.get('why_it_matters')}",
+                "",
+                "```text",
+                str(row.get("user_prompt", ""))[:800],
+                "```",
+                "",
+            ]
+    else:
+        md_lines.append("No automatic failure specimens crossed the configured filters. This does not prove the claim; it only means the built-in tripwires did not fire.")
+    md_path = ctx.path("tables", "failure_specimens.md")
+    bench.write_text(md_path, "\n".join(md_lines))
+    ctx.register_artifact(md_path, "table", "Markdown failure-specimen cards for quick inspection.")
+    return rows
+
+
+def write_plot_source_tables_and_manifest(
+    ctx: bench.RunContext,
+    task_rows: Sequence[Mapping[str, Any]],
+    probe_rows: Sequence[Mapping[str, Any]],
+    selection_rows: Sequence[Mapping[str, Any]],
+    surface_rows: Sequence[Mapping[str, Any]],
+    confusion: Sequence[Mapping[str, Any]],
+    intervention_rows: Sequence[Mapping[str, Any]],
+    intervention_summary: Sequence[Mapping[str, Any]],
+    trace_rows: Sequence[Mapping[str, Any]],
+    transition_rows: Sequence[Mapping[str, Any]],
+    report_rows: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+    arg_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Write figure source tables and a manifest even when --no-plots is used."""
+    manifest: list[dict[str, Any]] = []
+
+    def add_manifest(name: str, question: str, source_table: str, row_count: int, metric: str, control: str, claim: str, caveat: str) -> None:
+        manifest.append({
+            "figure_path": f"plots/{name}" if name.endswith(".png") else name,
+            "question_answered": question,
+            "source_table": source_table,
+            "row_count": row_count,
+            "metric": metric,
+            "control": control,
+            "claim_supported": claim,
+            "caveat": caveat,
+            "created_when_no_plots": bool(getattr(ctx.args, "no_plots", False) and name.endswith(".png")),
+        })
+
+    overview_source = write_figure_source(ctx, "overview_dashboard_source.csv", evidence_rows, "Evidence rows used by the Lab 34 overview/dashboard plot.")
+    add_manifest("overview_dashboard.png", "Did decode, control, causal, trace, and failure evidence point in the same direction?", overview_source, len(evidence_rows), "evidence metric values", "named controls in evidence matrix", "Only rows marked supported in the source table.", "Read the source table before using any dashboard cell.")
+    add_manifest("tool_use_evidence_dashboard.png", "Backward-compatible main dashboard for Lab 34.", overview_source, len(evidence_rows), "evidence metric values", "named controls in evidence matrix", "Same claim boundary as overview_dashboard.png.", "This copy exists so older handouts still point at a real plot.")
+
+    tvc_rows = source_target_vs_control(task_rows, intervention_rows)
+    tvc_source = write_figure_source(ctx, "target_vs_control_source.csv", tvc_rows, "Per-task target-vs-control rows for probe/surface and target/random activation comparisons.")
+    add_manifest("target_vs_control.png", "Do target probe and intervention measurements beat their controls?", tvc_source, len(tvc_rows), "paired task-level differences", "surface heuristic and random direction", "A target/control gap supports only the scoped toy-harness signal.", "Raw paired rows matter more than a polished mean.")
+
+    dose_source = write_figure_source(ctx, "dose_response_source.csv", intervention_rows, "Raw constrained action-letter intervention rows by task, condition, and scale.")
+    dose_summary_source = write_figure_source(ctx, "dose_response_summary_source.csv", intervention_summary, "Aggregate constrained action-letter intervention rows by split, condition, and scale.")
+    add_manifest("dose_response.png", "Does the action-letter effect grow with scale and beat random direction?", dose_source, len(intervention_rows), "shift_from_condition_zero", "random_direction_control", "A narrow causal handle if target direction beats random at claimable scale.", "This remains an A/B/C/D/E/F/N letter-prompt result.")
+    add_manifest("tool_state_patch_recovery.png", "Legacy dose-response plot for activation-addition recovery.", dose_summary_source, len(intervention_summary), "mean_shift_from_zero", "random_direction_control", "Same claim boundary as dose_response.png.", "Do not read as open-ended tool reliability.")
+
+    layer_source = write_figure_source(ctx, "layer_sweep_heatmap_source.csv", probe_rows, "Probe metrics by residual depth and split.")
+    add_manifest("layer_sweep_heatmap.png", "Where do decode and surface-control metrics sit across depth?", layer_source, len(probe_rows), "tool_needed_auc/tool_selection_accuracy/control gap", "surface and shuffled controls", "Depth evidence is candidate support only after train/eval discipline.", "A bright layer is not a circuit.")
+    add_manifest("tool_choice_probe_by_depth.png", "How do train/eval decode metrics change across residual depth?", layer_source, len(probe_rows), "AUC and accuracy by depth", "surface and shuffled controls", "Shows depth context for the selected site.", "Do not select from eval brightness.")
+
+    traj_source = write_figure_source(ctx, "trajectory_source.csv", transition_rows, "Tool-state transition rows used by the trajectory plot.")
+    add_manifest("trajectory.png", "What deterministic toy-tool trace did the harness execute?", traj_source, len(transition_rows), "step/tool counts", "closed local simulator", "Trace audit only, not self-report.", "The model did not generate this trace.")
+
+    confusion_source = write_figure_source(ctx, "tool_selection_confusion_matrix_source.csv", confusion, "Required-tool versus predicted-tool counts.")
+    add_manifest("tool_selection_confusion_matrix.png", "Which tools are confused with which other tools?", confusion_source, len(confusion), "count", "required-vs-predicted matrix", "Confusions bound which-tool language.", "No-tool false positives matter more than pretty diagonals.")
+
+    selected_depths = {int(r.get("selected_depth", 0)) for r in task_rows if str(r.get("selected_depth", "")).strip()}
+    selected_depth = next(iter(selected_depths), 0)
+    selected = selected_probe_row(probe_rows, selected_depth, "eval")
+    surface_source_rows = [
+        {"metric": "residual_probe_eval_accuracy", "value": safe_mean([1.0 if boolish(r.get("tool_probe_correct")) else 0.0 for r in task_rows if r.get("split") == "eval"], 0.0), "source": "task_manifest"},
+        {"metric": "surface_heuristic_eval_accuracy", "value": safe_mean([1.0 if boolish(r.get("surface_cue_correct")) else 0.0 for r in task_rows if r.get("split") == "eval"], 0.0), "source": "task_manifest"},
+        {"metric": "shuffled_label_control_accuracy", "value": as_float(selected.get("shuffled_label_control_accuracy"), 0.0) if selected else 0.0, "source": "tool_choice_probe_report"},
+        {"metric": "no_tool_false_positive_rate", "value": as_float(selected.get("no_tool_false_positive_rate"), 0.0) if selected else 0.0, "source": "tool_choice_probe_report"},
+    ]
+    surface_source = write_figure_source(ctx, "surface_control_ladder_source.csv", surface_source_rows, "Source values for surface/shuffled/no-tool control ladder.")
+    add_manifest("surface_control_ladder.png", "Does residual decoding beat the boring lexical heuristic?", surface_source, len(surface_source_rows), "accuracy/rate", "surface and shuffled controls", "Supported only when residual probe beats surface on eval.", "If surface wins, the negative result is the lesson.")
+
+    mem_rows: list[dict[str, Any]] = []
+    read_counts = defaultdict(int)
+    for row in trace_rows:
+        fam = str(row.get("family"))
+        reads = safe_json_list(row.get("memory_reads_json"))
+        read_counts[fam] += len(reads)
+        mem_rows.append({"task_id": row.get("task_id"), "family": fam, "n_memory_reads": len(reads), "memory_reads_json": row.get("memory_reads_json")})
+    mem_source = write_figure_source(ctx, "memory_read_trace_atlas_source.csv", mem_rows, "Memory-read counts derived from deterministic trace rows.")
+    add_manifest("memory_read_trace_atlas.png", "Which toy tools read synthetic memory objects?", mem_source, len(mem_rows), "memory read count", "closed local simulator", "Only a harness trace claim.", "Do not infer model memory reads.")
+
+    reliance_rows: list[dict[str, Any]] = []
+    for row in trace_rows:
+        val = 1.0 if boolish(row.get("would_final_answer_change_if_tool_result_corrupted")) else 0.0
+        reliance_rows.append({"task_id": row.get("task_id"), "family": row.get("family"), "would_change": val})
+    reliance_source = write_figure_source(ctx, "tool_result_reliance_ladder_source.csv", reliance_rows, "Source rows for corrupted-result reliance by family.")
+    add_manifest("tool_result_reliance_ladder.png", "Would corrupting the toy tool result change the toy final answer?", reliance_source, len(reliance_rows), "fraction would change", "corrupted tool result", "Only a deterministic-trace reliance claim.", "Does not show the model verifies tool outputs.")
+
+    self_report_source = write_figure_source(ctx, "tool_self_report_matrix_source.csv", report_rows, "Known-trace self-report review scaffold rows.")
+    add_manifest("tool_self_report_matrix.png", "Which rows require human review before self-report/source-attribution language?", self_report_source, len(report_rows), "review/match counts", "blank review columns", "Review scaffold only.", "No model self-report is generated by the default run.")
+
+    failure_source = write_figure_source(ctx, "paired_examples_source.csv", counterexamples, "Counterexample rows used for the paired_examples plot.")
+    add_manifest("paired_examples.png", "Which concrete rows most weaken the favorite claim?", failure_source, len(counterexamples), "severity", "counterexample filters", "Counterexamples define claim boundaries.", "No automatic failures is not proof of no failures.")
+
+    write_figure_source(ctx, "surface_cue_audit_source.csv", surface_rows, "Surface-cue audit rows mirrored for figure provenance.")
+    write_figure_source(ctx, "tool_depth_selection_source.csv", selection_rows, "Train-side depth-selection rows mirrored for figure provenance.")
+    write_figure_source(ctx, "tool_argument_validation_source.csv", arg_rows, "Tool argument validation rows mirrored for figure provenance.")
+    write_plot_manifest(ctx, manifest)
+    return manifest
+
+# ---------------------------------------------------------------------------
 # Artifact writers
 # ---------------------------------------------------------------------------
 
@@ -1428,6 +1791,19 @@ def write_tables(
         bench.write_csv_with_context(ctx, path, rows)
         ctx.register_artifact(path, "table" if not rel.startswith("diagnostics") else "diagnostic", desc)
 
+    # JSONL mirrors keep the most important row-level artifacts inspectable by
+    # streaming tools and make it easier to diff smoke and science runs.
+    jsonl_specs = [
+        ("results.jsonl", task_rows, "JSONL mirror of selected-depth task rows."),
+        ("tables/tool_task_manifest.jsonl", task_rows, "JSONL mirror of the task manifest."),
+        ("tables/tool_intervention_report.jsonl", intervention_rows, "JSONL mirror of action-letter intervention rows."),
+        ("tables/tool_trace_log.jsonl", trace_rows, "JSONL mirror of deterministic tool trace rows."),
+    ]
+    for rel, rows, desc in jsonl_specs:
+        path = ctx.path(*rel.split("/"))
+        write_jsonl(path, [{**ctx.table_context(), **dict(row)} for row in rows])
+        ctx.register_artifact(path, "table", desc)
+
 
 def write_state(ctx: bench.RunContext, model: DirectionModel, all_metadata: Mapping[int, Mapping[str, Any]]) -> None:
     import torch
@@ -1447,18 +1823,24 @@ def write_state(ctx: bench.RunContext, model: DirectionModel, all_metadata: Mapp
 
 def write_plot_reading_guide(ctx: bench.RunContext) -> None:
     rows = [
-        {"plot": "plots/tool_use_evidence_dashboard.png", "read_for": "Decode, surface-control, causal, trace, and counterexample posture.", "do_not_claim": "A dashboard pass is not evidence for autonomous planning."},
-        {"plot": "plots/tool_choice_probe_by_depth.png", "read_for": "Train and eval probe scores by residual depth.", "do_not_claim": "Depth trends identify a full tool-use circuit."},
-        {"plot": "plots/tool_selection_confusion_matrix.png", "read_for": "Required tool versus predicted tool at the selected depth.", "do_not_claim": "Toy-tool accuracy transfers to real agents."},
-        {"plot": "plots/tool_state_patch_recovery.png", "read_for": "Action-letter dose response for target and random directions.", "do_not_claim": "Letter-prompt shifts are open-ended tool competence."},
-        {"plot": "plots/surface_control_ladder.png", "read_for": "Residual probe versus surface and shuffled controls.", "do_not_claim": "Probe accuracy is meaningful if surface cues match it."},
-        {"plot": "plots/memory_read_trace_atlas.png", "read_for": "Known trace reads by family.", "do_not_claim": "Harness trace is model introspection."},
-        {"plot": "plots/tool_result_reliance_ladder.png", "read_for": "Would corrupted tool results alter final answer in the toy trace.", "do_not_claim": "The model would verify corrupted results."},
-        {"plot": "plots/tool_self_report_matrix.png", "read_for": "Known-trace label scaffold and human-review requirement.", "do_not_claim": "The model knows why it used the tool."},
+        {"plot": "plots/overview_dashboard.png", "read_for": "The shortest overview: decode, control, causal, trace, and failure load.", "source_table": "tables/figure_sources/overview_dashboard_source.csv", "do_not_claim": "A dashboard pass is not evidence for autonomous planning."},
+        {"plot": "plots/tool_use_evidence_dashboard.png", "read_for": "Backward-compatible dashboard name used as the main plot in the original handout.", "source_table": "tables/figure_sources/overview_dashboard_source.csv", "do_not_claim": "Dashboard aesthetics cannot upgrade weak controls."},
+        {"plot": "plots/target_vs_control.png", "read_for": "Per-task residual probe versus surface baseline, and target-direction versus random-direction causal shifts.", "source_table": "tables/figure_sources/target_vs_control_source.csv", "do_not_claim": "One or two wins imply real-world tool reliability."},
+        {"plot": "plots/dose_response.png", "read_for": "Whether action-letter shifts grow with dose and whether target directions separate from random controls.", "source_table": "tables/figure_sources/dose_response_source.csv", "do_not_claim": "A monotonic letter-prompt shift is open-ended competence."},
+        {"plot": "plots/layer_sweep_heatmap.png", "read_for": "Selected-depth context across decode, surface, and gap metrics.", "source_table": "tables/figure_sources/layer_sweep_heatmap_source.csv", "do_not_claim": "A bright layer is a full circuit."},
+        {"plot": "plots/trajectory.png", "read_for": "The deterministic toy trace path from prompt to oracle tool to result to final answer.", "source_table": "tables/figure_sources/trajectory_source.csv", "do_not_claim": "Harness trace equals model introspection."},
+        {"plot": "plots/paired_examples.png", "read_for": "Counterexamples and failure specimens sorted by severity.", "source_table": "tables/figure_sources/paired_examples_source.csv", "do_not_claim": "No automatic specimens means no failures exist."},
+        {"plot": "plots/tool_choice_probe_by_depth.png", "read_for": "Train/eval probe scores by residual depth with surface controls nearby.", "source_table": "tables/figure_sources/tool_choice_probe_by_depth_source.csv", "do_not_claim": "Depth trends identify a full tool-use circuit."},
+        {"plot": "plots/tool_selection_confusion_matrix.png", "read_for": "Required tool versus predicted tool at the selected depth.", "source_table": "tables/figure_sources/tool_selection_confusion_matrix_source.csv", "do_not_claim": "Toy-tool accuracy transfers to real agents."},
+        {"plot": "plots/tool_state_patch_recovery.png", "read_for": "Legacy name for the activation-addition dose-response curve.", "source_table": "tables/figure_sources/dose_response_source.csv", "do_not_claim": "Letter-prompt shifts are open-ended tool competence."},
+        {"plot": "plots/surface_control_ladder.png", "read_for": "Residual probe versus surface and shuffled controls.", "source_table": "tables/figure_sources/surface_control_ladder_source.csv", "do_not_claim": "Probe accuracy is meaningful if surface cues match it."},
+        {"plot": "plots/memory_read_trace_atlas.png", "read_for": "Known trace reads by family.", "source_table": "tables/figure_sources/memory_read_trace_atlas_source.csv", "do_not_claim": "Harness trace is a cognitive map."},
+        {"plot": "plots/tool_result_reliance_ladder.png", "read_for": "Would corrupted tool results alter the toy final answer.", "source_table": "tables/figure_sources/tool_result_reliance_ladder_source.csv", "do_not_claim": "The model would verify corrupted results."},
+        {"plot": "plots/tool_self_report_matrix.png", "read_for": "Known-trace label scaffold and human-review requirement.", "source_table": "tables/figure_sources/tool_self_report_matrix_source.csv", "do_not_claim": "The model knows why it used the tool."},
     ]
     path = ctx.path("tables", "plot_reading_guide.csv")
-    bench.write_csv(path, rows)
-    ctx.register_artifact(path, "table", "Reading guide for the Lab 34 plot suite.")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", "Reading guide for the Lab 34 plot suite, including source tables.")
 
 
 def write_method_card(ctx: bench.RunContext, data_info: Mapping[str, Any], model: DirectionModel, evidence: Sequence[Mapping[str, Any]], metrics: Mapping[str, Any]) -> None:
@@ -1646,8 +2028,10 @@ def write_plots(
     intervention_rows: Sequence[Mapping[str, Any]],
     intervention_summary: Sequence[Mapping[str, Any]],
     trace_rows: Sequence[Mapping[str, Any]],
+    transition_rows: Sequence[Mapping[str, Any]],
     report_rows: Sequence[Mapping[str, Any]],
     evidence_rows: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
 ) -> None:
     write_plot_reading_guide(ctx)
     if ctx.args.no_plots:
@@ -1655,72 +2039,274 @@ def write_plots(
     import matplotlib.pyplot as plt
     import numpy as np
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+    manifest: list[dict[str, Any]] = []
+
+    def add_manifest(name: str, question: str, source_table: str, row_count: int, metric: str, control: str, claim: str, caveat: str) -> None:
+        manifest.append({
+            "figure_path": f"plots/{name}",
+            "question_answered": question,
+            "source_table": source_table,
+            "row_count": row_count,
+            "metric": metric,
+            "control": control,
+            "claim_supported": claim,
+            "caveat": caveat,
+        })
+
+    # ------------------------------------------------------------------
+    # Overview dashboard, also saved to the original dashboard filename.
+    # ------------------------------------------------------------------
+    overview_source = write_figure_source(ctx, "overview_dashboard_source.csv", evidence_rows, "Evidence rows used by the Lab 34 overview/dashboard plot.")
+    fig, axes = plt.subplots(2, 2, figsize=(12.5, 8.5))
     fig.suptitle("Lab 34 tool-use evidence dashboard", fontsize=14, fontweight="bold")
     names = [str(r["method"]).replace("prompt_boundary_", "").replace("constrained_", "") for r in evidence_rows]
     vals = [as_float(r.get("value"), 0.0) for r in evidence_rows]
     ctrls = [as_float(r.get("control_value"), 0.0) for r in evidence_rows]
     x = np.arange(len(names))
-    axes[0, 0].bar(x - 0.18, vals, 0.36, label="value")
-    axes[0, 0].bar(x + 0.18, ctrls, 0.36, label="control")
-    axes[0, 0].set_xticks(x, names, rotation=35, ha="right", fontsize=7)
-    axes[0, 0].set_title("Evidence values and controls")
-    axes[0, 0].legend(fontsize=8)
+    if names:
+        axes[0, 0].bar(x - 0.18, vals, 0.36, label="measured")
+        axes[0, 0].bar(x + 0.18, ctrls, 0.36, label="control")
+        axes[0, 0].set_xticks(x, names, rotation=35, ha="right", fontsize=7)
+        axes[0, 0].legend(fontsize=8)
+    else:
+        add_empty_message(axes[0, 0], "No evidence rows")
+    axes[0, 0].set_title("Evidence values beside controls")
 
     eval_needed = [r for r in probe_rows if r.get("split_group") == "eval"] or [r for r in probe_rows if r.get("split_group") == "all"]
-    depths = [int(r["depth"]) for r in eval_needed]
-    axes[0, 1].plot(depths, [as_float(r.get("tool_needed_auc"), 0.0) for r in eval_needed], marker="o", label="tool-needed AUC")
-    axes[0, 1].plot(depths, [as_float(r.get("tool_selection_accuracy"), 0.0) for r in eval_needed], marker="s", label="tool-selection acc")
-    axes[0, 1].plot(depths, [as_float(r.get("surface_control_accuracy"), 0.0) for r in eval_needed], marker="^", label="surface acc")
-    axes[0, 1].set_ylim(0, 1.05)
-    axes[0, 1].set_title("Eval decode by depth")
-    axes[0, 1].legend(fontsize=8)
+    if eval_needed:
+        depths = [int(r["depth"]) for r in eval_needed]
+        axes[0, 1].plot(depths, [as_float(r.get("tool_needed_auc"), 0.0) for r in eval_needed], marker="o", label="needed AUC")
+        axes[0, 1].plot(depths, [as_float(r.get("tool_selection_accuracy"), 0.0) for r in eval_needed], marker="s", label="tool acc")
+        axes[0, 1].plot(depths, [as_float(r.get("surface_control_accuracy"), 0.0) for r in eval_needed], marker="^", label="surface acc")
+        axes[0, 1].set_ylim(0, 1.05)
+        axes[0, 1].legend(fontsize=8)
+    else:
+        add_empty_message(axes[0, 1], "No probe rows")
+    axes[0, 1].set_title("Decode by depth")
+    axes[0, 1].set_xlabel("residual stream depth")
 
-    scale_rows = [r for r in intervention_summary if r.get("split_group") in {"eval", "all"} and abs(float(r.get("scale", 999)) - CLAIMABLE_SCALE) < 1e-9]
+    scale_rows = [r for r in intervention_summary if r.get("split_group") in {"eval", "all"} and abs(as_float(r.get("scale")) - CLAIMABLE_SCALE) < 1e-9]
     conds = sorted({str(r["condition"]) for r in scale_rows})
-    axes[1, 0].bar(conds, [safe_mean([r.get("mean_shift_from_zero") for r in scale_rows if r.get("condition") == c], 0.0) for c in conds])
-    axes[1, 0].set_xticks(range(len(conds)), conds, rotation=30, ha="right")
-    axes[1, 0].axhline(0, linewidth=0.8)
+    if conds:
+        axes[1, 0].bar(conds, [safe_mean([r.get("mean_shift_from_zero") for r in scale_rows if r.get("condition") == c], 0.0) for c in conds])
+        axes[1, 0].set_xticks(range(len(conds)), conds, rotation=30, ha="right")
+        axes[1, 0].axhline(0, linewidth=0.8)
+    else:
+        add_empty_message(axes[1, 0], "No scale-1 intervention rows")
     axes[1, 0].set_title("Scale-1 action-letter shift")
 
-    counts = Counter(str(r.get("kind")) for r in build_counterexamples(task_rows, intervention_rows, trace_rows))
+    counts = Counter(str(r.get("kind")) for r in counterexamples)
     c_labels = sorted(counts) or ["none"]
     c_vals = [counts[k] for k in c_labels] if counts else [0]
     axes[1, 1].bar(c_labels, c_vals)
     axes[1, 1].set_xticks(range(len(c_labels)), c_labels, rotation=25, ha="right", fontsize=8)
     axes[1, 1].set_title("Automatic counterexamples")
-    fig.tight_layout(rect=(0, 0, 1, 0.95))
-    bench.save_figure(ctx, fig, "tool_use_evidence_dashboard.png", "Lab 34 tool-use evidence dashboard.")
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    bench.save_figure(ctx, fig, "overview_dashboard.png", "Lab 34 overview dashboard with decode, controls, causal shift, and failure load.")
+    add_manifest("overview_dashboard.png", "Did decode, control, causal, trace, and failure evidence point in the same direction?", overview_source, len(evidence_rows), "evidence metric values", "named controls in evidence matrix", "Only the rows marked supported in the source table.", "Read the source table before using any dashboard cell.")
 
-    fig, ax = plt.subplots(figsize=(8.5, 5.0))
-    for split in ("train", "eval"):
-        rows = [r for r in probe_rows if r.get("split_group") == split]
+    # Backward-compatible dashboard filename expected by the original handout.
+    fig, axes = plt.subplots(2, 2, figsize=(12.5, 8.5))
+    fig.suptitle("Lab 34 tool-use evidence dashboard", fontsize=14, fontweight="bold")
+    if names:
+        axes[0, 0].bar(x - 0.18, vals, 0.36, label="measured")
+        axes[0, 0].bar(x + 0.18, ctrls, 0.36, label="control")
+        axes[0, 0].set_xticks(x, names, rotation=35, ha="right", fontsize=7)
+        axes[0, 0].legend(fontsize=8)
+    else:
+        add_empty_message(axes[0, 0], "No evidence rows")
+    axes[0, 0].set_title("Evidence values beside controls")
+    if eval_needed:
+        depths = [int(r["depth"]) for r in eval_needed]
+        axes[0, 1].plot(depths, [as_float(r.get("tool_needed_auc"), 0.0) for r in eval_needed], marker="o", label="needed AUC")
+        axes[0, 1].plot(depths, [as_float(r.get("tool_selection_accuracy"), 0.0) for r in eval_needed], marker="s", label="tool acc")
+        axes[0, 1].plot(depths, [as_float(r.get("surface_control_accuracy"), 0.0) for r in eval_needed], marker="^", label="surface acc")
+        axes[0, 1].set_ylim(0, 1.05)
+        axes[0, 1].legend(fontsize=8)
+    else:
+        add_empty_message(axes[0, 1], "No probe rows")
+    axes[0, 1].set_title("Decode by depth")
+    axes[0, 1].set_xlabel("residual stream depth")
+    if conds:
+        axes[1, 0].bar(conds, [safe_mean([r.get("mean_shift_from_zero") for r in scale_rows if r.get("condition") == c], 0.0) for c in conds])
+        axes[1, 0].set_xticks(range(len(conds)), conds, rotation=30, ha="right")
+        axes[1, 0].axhline(0, linewidth=0.8)
+    else:
+        add_empty_message(axes[1, 0], "No scale-1 intervention rows")
+    axes[1, 0].set_title("Scale-1 action-letter shift")
+    axes[1, 1].bar(c_labels, c_vals)
+    axes[1, 1].set_xticks(range(len(c_labels)), c_labels, rotation=25, ha="right", fontsize=8)
+    axes[1, 1].set_title("Automatic counterexamples")
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    bench.save_figure(ctx, fig, "tool_use_evidence_dashboard.png", "Lab 34 tool-use evidence dashboard, retained under the original filename.")
+    add_manifest("tool_use_evidence_dashboard.png", "Backward-compatible main dashboard for Lab 34.", overview_source, len(evidence_rows), "evidence metric values", "named controls in evidence matrix", "Same claim boundary as overview_dashboard.png.", "This copy exists so older handouts still point at a real plot.")
+
+    # ------------------------------------------------------------------
+    # Target-vs-control paired raw view.
+    # ------------------------------------------------------------------
+    tvc_rows = source_target_vs_control(task_rows, intervention_rows)
+    tvc_source = write_figure_source(ctx, "target_vs_control_source.csv", tvc_rows, "Per-task target-vs-control rows for probe/surface and target/random activation comparisons.")
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.2))
+    probe_part = [r for r in tvc_rows if r.get("source_part") == "probe_vs_surface"]
+    if probe_part:
+        probe_part = sorted(probe_part, key=lambda r: (str(r.get("required_tool")), as_float(r.get("difference_target_minus_control")), str(r.get("task_id"))))
+        xs = np.arange(len(probe_part))
+        for i, row in enumerate(probe_part):
+            axes[0].plot([i, i], [as_float(row.get("control_value")), as_float(row.get("target_value"))], linewidth=0.8, alpha=0.65)
+        axes[0].scatter(xs, [as_float(r.get("control_value")) for r in probe_part], label="surface")
+        axes[0].scatter(xs, [as_float(r.get("target_value")) for r in probe_part], marker="x", label="residual probe")
+        axes[0].set_ylim(-0.08, 1.08)
+        axes[0].set_ylabel("correct on task")
+        axes[0].legend(fontsize=8)
+    else:
+        add_empty_message(axes[0], "No per-task probe rows")
+    axes[0].set_title("Probe vs surface on held-out tasks")
+    axes[0].set_xlabel("task, sorted by required tool")
+
+    causal_part = [r for r in tvc_rows if r.get("source_part") == "activation_target_vs_random"]
+    if causal_part:
+        causal_part = sorted(causal_part, key=lambda r: (str(r.get("required_tool")), as_float(r.get("difference_target_minus_control")), str(r.get("task_id"))))
+        xs = np.arange(len(causal_part))
+        for i, row in enumerate(causal_part):
+            axes[1].plot([i, i], [as_float(row.get("control_value")), as_float(row.get("target_value"))], linewidth=0.8, alpha=0.65)
+        axes[1].scatter(xs, [as_float(r.get("control_value")) for r in causal_part], label="random")
+        axes[1].scatter(xs, [as_float(r.get("target_value")) for r in causal_part], marker="x", label="target direction")
+        axes[1].axhline(0, linewidth=0.8)
+        axes[1].set_ylabel("shift from scale 0")
+        axes[1].legend(fontsize=8)
+    else:
+        add_empty_message(axes[1], "No scale-1 target/random pairs")
+    axes[1].set_title("Action-letter shift: target vs random")
+    axes[1].set_xlabel("task, sorted by required tool")
+    fig.suptitle("Target measurements beside their controls", fontsize=13, fontweight="bold")
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
+    bench.save_figure(ctx, fig, "target_vs_control.png", "Per-task target measurements beside surface/random controls.")
+    add_manifest("target_vs_control.png", "Do raw task pairs show targets beating controls, or only aggregate glitter?", tvc_source, len(tvc_rows), "probe correctness and action-letter shift", "surface heuristic and random direction", "Supported only if per-task wins are not isolated anecdotes.", "Tiny Tier A rows should be read as a plumbing check.")
+
+    # ------------------------------------------------------------------
+    # Dose response, source-backed raw rows.
+    # ------------------------------------------------------------------
+    dose_source = write_figure_source(ctx, "dose_response_source.csv", intervention_rows, "Raw intervention rows used for dose-response plots.")
+    fig, ax = plt.subplots(figsize=(9.2, 5.2))
+    split = "eval" if any(str(r.get("split_group")) == "eval" for r in intervention_summary) else "all"
+    summary_for_split = [r for r in intervention_summary if str(r.get("split_group")) == split]
+    for condition in sorted({str(r.get("condition")) for r in summary_for_split}):
+        rows = sorted([r for r in summary_for_split if str(r.get("condition")) == condition], key=lambda r: as_float(r.get("scale")))
+        ax.plot([as_float(r.get("scale")) for r in rows], [as_float(r.get("mean_shift_from_zero")) for r in rows], marker="o", label=condition)
+    raw_for_split = [r for r in intervention_rows if split == "all" or str(r.get("split")) == split]
+    # Add faint raw points so a mean line cannot hide ragged rows.
+    for condition in sorted({str(r.get("condition")) for r in raw_for_split}):
+        rows = [r for r in raw_for_split if str(r.get("condition")) == condition]
         if not rows:
             continue
-        ax.plot([int(r["depth"]) for r in rows], [as_float(r.get("tool_needed_auc"), 0.0) for r in rows], marker="o", label=f"{split} needed AUC")
-        ax.plot([int(r["depth"]) for r in rows], [as_float(r.get("tool_selection_accuracy"), 0.0) for r in rows], marker="s", label=f"{split} selection acc")
+        ax.scatter([as_float(r.get("scale")) for r in rows], [as_float(r.get("shift_from_condition_zero")) for r in rows], s=14, alpha=0.35)
+    if not summary_for_split:
+        add_empty_message(ax, "No intervention rows")
+    ax.axhline(0, linewidth=0.8)
+    ax.set_xlabel("intervention scale")
+    ax.set_ylabel("target-letter margin shift from scale 0")
+    ax.set_title(f"Tool-choice activation-addition dose response ({split})")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "dose_response.png", "Dose-response curve for target, needed, and random directions with raw points.")
+    add_manifest("dose_response.png", "Does target-direction shift separate from random across intervention strength?", dose_source, len(intervention_rows), "target-minus-distractor logit shift", "random_direction_control", "Narrow causal claim only if target shift beats random at the predeclared scale.", "This is an A/B/C/D/E/F/N prompt, not open tool use.")
+
+    # Legacy dose plot filename.
+    fig, ax = plt.subplots(figsize=(9.2, 5.2))
+    for condition in sorted({str(r.get("condition")) for r in summary_for_split}):
+        rows = sorted([r for r in summary_for_split if str(r.get("condition")) == condition], key=lambda r: as_float(r.get("scale")))
+        ax.plot([as_float(r.get("scale")) for r in rows], [as_float(r.get("mean_shift_from_zero")) for r in rows], marker="o", label=condition)
+    if not summary_for_split:
+        add_empty_message(ax, "No intervention rows")
+    ax.axhline(0, linewidth=0.8)
+    ax.set_xlabel("intervention scale")
+    ax.set_ylabel("mean shift from scale 0")
+    ax.set_title(f"Tool-state activation-addition recovery ({split})")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "tool_state_patch_recovery.png", "Legacy dose-response plot for action-letter activation addition.")
+    add_manifest("tool_state_patch_recovery.png", "Legacy view of the activation-addition dose response.", dose_source, len(intervention_rows), "mean shift from zero", "random_direction_control", "Same as dose_response.png.", "Prefer dose_response.png for raw-point overlays.")
+
+    # ------------------------------------------------------------------
+    # Layer/depth sweep heatmap.
+    # ------------------------------------------------------------------
+    heat_source = write_figure_source(ctx, "layer_sweep_heatmap_source.csv", probe_rows, "Probe metrics by residual depth and split for the layer-sweep heatmap.")
+    split = "eval" if any(str(r.get("split_group")) == "eval" for r in probe_rows) else "all"
+    heat_rows = sorted([r for r in probe_rows if str(r.get("split_group")) == split], key=lambda r: int(r.get("depth", 0)))
+    metrics = [
+        ("tool_needed_auc", "needed AUC"),
+        ("tool_needed_accuracy", "needed acc"),
+        ("tool_selection_accuracy", "tool acc"),
+        ("surface_control_accuracy", "surface acc"),
+        ("decode_gap_over_surface", "probe-surface"),
+        ("no_tool_false_positive_rate", "no-tool FP"),
+    ]
+    fig, ax = plt.subplots(figsize=(10.5, 4.8))
+    if heat_rows:
+        mat = np.array([[as_float(r.get(key), 0.0) for r in heat_rows] for key, _label in metrics], dtype=float)
+        im = ax.imshow(mat, aspect="auto")
+        ax.set_xticks(range(len(heat_rows)), [str(r.get("depth")) for r in heat_rows])
+        ax.set_yticks(range(len(metrics)), [label for _key, label in metrics])
+        for i in range(mat.shape[0]):
+            for j in range(mat.shape[1]):
+                ax.text(j, i, f"{mat[i, j]:.2f}", ha="center", va="center", fontsize=7)
+        fig.colorbar(im, ax=ax, shrink=0.8)
+    else:
+        add_empty_message(ax, "No probe depth rows")
+    ax.set_xlabel("residual stream depth")
+    ax.set_title(f"Layer/depth sweep heatmap ({split})")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "layer_sweep_heatmap.png", "Depth-by-metric heatmap for probe and surface-control metrics.")
+    add_manifest("layer_sweep_heatmap.png", "Where does the train-selected site sit relative to the full depth sweep?", heat_source, len(probe_rows), "probe and surface metrics", "surface/shuffled controls", "Depth evidence only supports the selected prompt-boundary readout.", "A bright heatmap cell is not a circuit.")
+
+    # Probe by depth line plot, retained and improved.
+    depth_source = write_figure_source(ctx, "tool_choice_probe_by_depth_source.csv", probe_rows, "Line-plot source for tool probe scores by depth and split.")
+    fig, ax = plt.subplots(figsize=(8.8, 5.0))
+    for split_name in ("train", "eval"):
+        rows = [r for r in probe_rows if r.get("split_group") == split_name]
+        if not rows:
+            continue
+        ax.plot([int(r["depth"]) for r in rows], [as_float(r.get("tool_needed_auc"), 0.0) for r in rows], marker="o", label=f"{split_name} needed AUC")
+        ax.plot([int(r["depth"]) for r in rows], [as_float(r.get("tool_selection_accuracy"), 0.0) for r in rows], marker="s", label=f"{split_name} tool acc")
     surface_rows = [r for r in probe_rows if r.get("split_group") == "eval"]
     if surface_rows:
         ax.plot([int(r["depth"]) for r in surface_rows], [as_float(r.get("surface_control_accuracy"), 0.0) for r in surface_rows], marker="^", label="eval surface acc")
+    if not probe_rows:
+        add_empty_message(ax, "No probe rows")
     ax.set_ylim(0, 1.05)
     ax.set_xlabel("residual stream depth")
+    ax.set_ylabel("score")
     ax.set_title("Tool-choice probe by depth")
     ax.legend(fontsize=8)
     fig.tight_layout()
     bench.save_figure(ctx, fig, "tool_choice_probe_by_depth.png", "Tool probe score by residual depth and split.")
+    add_manifest("tool_choice_probe_by_depth.png", "Do probe scores survive eval rather than only train?", depth_source, len(probe_rows), "AUC/accuracy by depth", "surface and shuffled controls", "Decode claim only at the selected eval cell.", "Do not choose depth by the eval curve.")
 
+    # ------------------------------------------------------------------
+    # Confusion matrix.
+    # ------------------------------------------------------------------
+    confusion_rows_source: list[dict[str, Any]] = []
     labels = list(TOOLS)
     idx = {tool: i for i, tool in enumerate(labels)}
+    split = "eval" if any(str(r.get("split")) == "eval" for r in task_rows) else "all"
+    selected_tasks = [r for r in task_rows if split == "all" or str(r.get("split")) == split]
     matrix = np.zeros((len(labels), len(labels)))
-    for row in task_rows:
-        matrix[idx[str(row["required_tool"])]][idx[str(row["tool_probe_prediction"])]] += 1
-    fig, ax = plt.subplots(figsize=(7.2, 6.2))
+    for row in selected_tasks:
+        required = str(row.get("required_tool"))
+        pred = str(row.get("tool_probe_prediction"))
+        if required in idx and pred in idx:
+            matrix[idx[required]][idx[pred]] += 1
+    for required in labels:
+        for pred in labels:
+            confusion_rows_source.append({"split_group": split, "required_tool": required, "predicted_tool": pred, "count": int(matrix[idx[required], idx[pred]])})
+    confusion_source = write_figure_source(ctx, "tool_selection_confusion_matrix_source.csv", confusion_rows_source, "Confusion-matrix source counts for selected-depth predictions.")
+    fig, ax = plt.subplots(figsize=(7.4, 6.3))
     im = ax.imshow(matrix, aspect="auto")
     ax.set_xticks(range(len(labels)), labels, rotation=35, ha="right")
     ax.set_yticks(range(len(labels)), labels)
     ax.set_xlabel("predicted")
     ax.set_ylabel("required")
-    ax.set_title("Tool-selection confusion matrix")
+    ax.set_title(f"Tool-selection confusion matrix ({split})")
     for i in range(len(labels)):
         for j in range(len(labels)):
             if matrix[i, j]:
@@ -1728,72 +2314,143 @@ def write_plots(
     fig.colorbar(im, ax=ax, shrink=0.8)
     fig.tight_layout()
     bench.save_figure(ctx, fig, "tool_selection_confusion_matrix.png", "Required-vs-predicted tool confusion matrix.")
+    add_manifest("tool_selection_confusion_matrix.png", "Which tool confusions shrink the which-tool claim?", confusion_source, len(confusion_rows_source), "count", "required-tool labels", "Positive language requires confusions to be bounded.", "No-tool false positives matter more than pretty diagonals.")
 
-    fig, ax = plt.subplots(figsize=(9.0, 5.0))
-    for condition in sorted({str(r["condition"]) for r in intervention_summary if r.get("split_group") == "all"}):
-        rows = [r for r in intervention_summary if r.get("split_group") == "all" and r.get("condition") == condition]
-        xs = [float(r["scale"]) for r in rows]
-        ys = [as_float(r.get("mean_shift_from_zero"), 0.0) for r in rows]
-        ax.plot(xs, ys, marker="o", label=condition)
-    ax.axhline(0, linewidth=0.8)
-    ax.set_xlabel("scale")
-    ax.set_ylabel("mean shift from scale 0")
-    ax.set_title("Tool-state activation-addition recovery")
-    ax.legend(fontsize=8)
-    fig.tight_layout()
-    bench.save_figure(ctx, fig, "tool_state_patch_recovery.png", "Tool-choice activation-addition dose response.")
-
-    fig, ax = plt.subplots(figsize=(7.8, 4.8))
-    selected = selected_probe_row(probe_rows, int(next(iter({int(r.get('selected_depth', 0)) for r in task_rows}), 0)), "eval")
-    bars = [
-        ("probe", safe_mean([1.0 if r.get("tool_probe_correct") else 0.0 for r in task_rows if r.get("split") == "eval"], 0.0)),
-        ("surface", safe_mean([1.0 if r.get("surface_cue_correct") else 0.0 for r in task_rows if r.get("split") == "eval"], 0.0)),
-        ("shuffled", as_float(selected.get("shuffled_label_control_accuracy"), 0.0) if selected else 0.0),
+    # ------------------------------------------------------------------
+    # Surface control ladder.
+    # ------------------------------------------------------------------
+    selected_depths = {int(r.get("selected_depth", 0)) for r in task_rows if str(r.get("selected_depth", "")).strip()}
+    selected_depth = next(iter(selected_depths), 0)
+    selected = selected_probe_row(probe_rows, selected_depth, "eval")
+    surface_source_rows = [
+        {"metric": "residual_probe_eval_accuracy", "value": safe_mean([1.0 if boolish(r.get("tool_probe_correct")) else 0.0 for r in task_rows if r.get("split") == "eval"], 0.0), "source": "task_manifest"},
+        {"metric": "surface_heuristic_eval_accuracy", "value": safe_mean([1.0 if boolish(r.get("surface_cue_correct")) else 0.0 for r in task_rows if r.get("split") == "eval"], 0.0), "source": "task_manifest"},
+        {"metric": "shuffled_label_control_accuracy", "value": as_float(selected.get("shuffled_label_control_accuracy"), 0.0) if selected else 0.0, "source": "tool_choice_probe_report"},
+        {"metric": "no_tool_false_positive_rate", "value": as_float(selected.get("no_tool_false_positive_rate"), 0.0) if selected else 0.0, "source": "tool_choice_probe_report"},
     ]
-    ax.bar([b[0] for b in bars], [b[1] for b in bars])
+    surface_source = write_figure_source(ctx, "surface_control_ladder_source.csv", surface_source_rows, "Source values for surface/shuffled/no-tool control ladder.")
+    fig, ax = plt.subplots(figsize=(8.1, 4.8))
+    ax.bar([str(r["metric"]).replace("_", "\n") for r in surface_source_rows], [as_float(r.get("value"), 0.0) for r in surface_source_rows])
     ax.set_ylim(0, 1.05)
+    ax.set_ylabel("rate / accuracy")
     ax.set_title("Surface control ladder")
     fig.tight_layout()
-    bench.save_figure(ctx, fig, "surface_control_ladder.png", "Probe accuracy versus surface and shuffled controls.")
+    bench.save_figure(ctx, fig, "surface_control_ladder.png", "Probe accuracy versus surface, shuffled, and no-tool controls.")
+    add_manifest("surface_control_ladder.png", "Does residual decoding beat the boring lexical heuristic?", surface_source, len(surface_source_rows), "accuracy/rate", "surface and shuffled controls", "Supported only when residual probe beats surface on eval.", "If surface wins, the negative result is the lesson.")
 
+    # ------------------------------------------------------------------
+    # Trace trajectory and trace audit plots.
+    # ------------------------------------------------------------------
+    trajectory_source = write_figure_source(ctx, "trajectory_source.csv", transition_rows, "Tool-state transition rows used by the trajectory plot.")
+    steps = sorted({int(r.get("step_index", 0)) for r in transition_rows})
+    tools = list(TOOLS)
+    step_matrix = np.zeros((len(tools), len(steps))) if steps else np.zeros((len(tools), 1))
+    step_to_i = {step: i for i, step in enumerate(steps)}
+    for row in transition_rows:
+        tool = str(row.get("tool") or "none")
+        if tool not in tools:
+            tool = "none"
+        step_matrix[tools.index(tool), step_to_i.get(int(row.get("step_index", 0)), 0)] += 1
+    fig, ax = plt.subplots(figsize=(8.8, 5.4))
+    if steps:
+        im = ax.imshow(step_matrix, aspect="auto")
+        ax.set_xticks(range(len(steps)), [str(s) for s in steps])
+        ax.set_yticks(range(len(tools)), tools)
+        ax.set_xlabel("trace step index")
+        ax.set_ylabel("tool named in trace step")
+        for i in range(step_matrix.shape[0]):
+            for j in range(step_matrix.shape[1]):
+                if step_matrix[i, j]:
+                    ax.text(j, i, int(step_matrix[i, j]), ha="center", va="center", fontsize=7)
+        fig.colorbar(im, ax=ax, shrink=0.8)
+    else:
+        add_empty_message(ax, "No transition rows")
+    ax.set_title("Deterministic toy-tool trace trajectory")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "trajectory.png", "Trace trajectory from prompt receipt through local tool result.")
+    add_manifest("trajectory.png", "What trace did the harness actually execute?", trajectory_source, len(transition_rows), "step/tool counts", "known deterministic simulator", "Trace audit only, not self-report.", "The model did not produce this trace.")
+
+    mem_rows: list[dict[str, Any]] = []
     read_counts = defaultdict(int)
     for row in trace_rows:
         fam = str(row.get("family"))
-        read_counts[fam] += len(json.loads(str(row.get("memory_reads_json", "[]"))))
-    fig, ax = plt.subplots(figsize=(8, 4.8))
+        reads = safe_json_list(row.get("memory_reads_json"))
+        read_counts[fam] += len(reads)
+        mem_rows.append({"task_id": row.get("task_id"), "family": fam, "n_memory_reads": len(reads), "memory_reads_json": row.get("memory_reads_json")})
+    mem_source = write_figure_source(ctx, "memory_read_trace_atlas_source.csv", mem_rows, "Memory-read counts derived from deterministic trace rows.")
+    fig, ax = plt.subplots(figsize=(8.2, 4.8))
     fams = sorted(read_counts)
-    ax.bar(fams, [read_counts[f] for f in fams])
-    ax.set_xticks(range(len(fams)), fams, rotation=35, ha="right")
+    if fams:
+        ax.bar(fams, [read_counts[f] for f in fams])
+        ax.set_xticks(range(len(fams)), fams, rotation=35, ha="right")
+    else:
+        add_empty_message(ax, "No trace rows")
     ax.set_ylabel("known memory/tool reads")
     ax.set_title("Memory-read trace atlas")
     fig.tight_layout()
     bench.save_figure(ctx, fig, "memory_read_trace_atlas.png", "Known memory-read trace counts by family.")
+    add_manifest("memory_read_trace_atlas.png", "Which toy tools read synthetic memory objects?", mem_source, len(mem_rows), "memory read count", "closed local simulator", "Only a harness trace claim.", "Do not infer model memory reads.")
 
-    fig, ax = plt.subplots(figsize=(8, 4.8))
+    reliance_rows: list[dict[str, Any]] = []
     reliance = defaultdict(list)
     for row in trace_rows:
-        reliance[str(row.get("family"))].append(1.0 if row.get("would_final_answer_change_if_tool_result_corrupted") else 0.0)
+        val = 1.0 if boolish(row.get("would_final_answer_change_if_tool_result_corrupted")) else 0.0
+        reliance[str(row.get("family"))].append(val)
+        reliance_rows.append({"task_id": row.get("task_id"), "family": row.get("family"), "would_change": val})
+    reliance_source = write_figure_source(ctx, "tool_result_reliance_ladder_source.csv", reliance_rows, "Source rows for corrupted-result reliance by family.")
+    fig, ax = plt.subplots(figsize=(8.2, 4.8))
     fams = sorted(reliance)
-    ax.bar(fams, [safe_mean(reliance[f], 0.0) for f in fams])
-    ax.set_ylim(0, 1.05)
-    ax.set_xticks(range(len(fams)), fams, rotation=35, ha="right")
+    if fams:
+        ax.bar(fams, [safe_mean(reliance[f], 0.0) for f in fams])
+        ax.set_ylim(0, 1.05)
+        ax.set_xticks(range(len(fams)), fams, rotation=35, ha="right")
+    else:
+        add_empty_message(ax, "No trace rows")
+    ax.set_ylabel("fraction would change")
     ax.set_title("Tool-result reliance ladder")
     fig.tight_layout()
-    bench.save_figure(ctx, fig, "tool_result_reliance_ladder.png", "Tool-result reliance by family.")
+    bench.save_figure(ctx, fig, "tool_result_reliance_ladder.png", "Toy final-answer reliance on tool result by family.")
+    add_manifest("tool_result_reliance_ladder.png", "Would corrupting the toy tool result change the toy final answer?", reliance_source, len(reliance_rows), "fraction would change", "corrupted tool result", "Only a deterministic-trace reliance claim.", "Does not show the model verifies tool outputs.")
 
-    fig, ax = plt.subplots(figsize=(6.6, 4.8))
-    match = sum(1 for r in report_rows if r.get("matches_known_trace"))
-    review = sum(1 for r in report_rows if r.get("requires_human_review"))
+    self_report_source = write_figure_source(ctx, "tool_self_report_matrix_source.csv", report_rows, "Known-trace self-report review scaffold rows.")
+    fig, ax = plt.subplots(figsize=(6.7, 4.8))
+    match = sum(1 for r in report_rows if boolish(r.get("matches_known_trace")))
+    review = sum(1 for r in report_rows if boolish(r.get("requires_human_review")))
     mat = np.array([[match, len(report_rows) - match], [review, len(report_rows) - review]])
-    ax.imshow(mat, aspect="auto")
+    im = ax.imshow(mat, aspect="auto")
     ax.set_xticks([0, 1], ["yes", "no"])
     ax.set_yticks([0, 1], ["matches trace", "needs review"])
     ax.set_title("Tool self-report review matrix")
     for i in range(mat.shape[0]):
         for j in range(mat.shape[1]):
             ax.text(j, i, int(mat[i, j]), ha="center", va="center")
+    fig.colorbar(im, ax=ax, shrink=0.8)
     fig.tight_layout()
     bench.save_figure(ctx, fig, "tool_self_report_matrix.png", "Known-trace self-report review matrix.")
+    add_manifest("tool_self_report_matrix.png", "Which rows require human review before self-report/source-attribution language?", self_report_source, len(report_rows), "review/match counts", "blank review columns", "Review scaffold only.", "No model self-report is generated by the default run.")
+
+    # ------------------------------------------------------------------
+    # Failure specimens / paired examples.
+    # ------------------------------------------------------------------
+    failure_source = write_figure_source(ctx, "paired_examples_source.csv", counterexamples, "Counterexample rows used for the paired_examples plot.")
+    fig, ax = plt.subplots(figsize=(9.4, 5.2))
+    failures = sorted(counterexamples, key=lambda r: as_float(r.get("severity"), 0.0), reverse=True)[:14]
+    if failures:
+        labels_y = [f"{r.get('kind')}\n{r.get('task_id')}" for r in failures]
+        vals_y = [as_float(r.get("severity"), 0.0) for r in failures]
+        ypos = np.arange(len(failures))
+        ax.barh(ypos, vals_y)
+        ax.set_yticks(ypos, labels_y, fontsize=7)
+        ax.invert_yaxis()
+        ax.set_xlabel("severity")
+    else:
+        add_empty_message(ax, "No automatic failure specimens crossed filters")
+    ax.set_title("Failure specimens and counterexamples")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "paired_examples.png", "Counterexample specimen plot sorted by severity.")
+    add_manifest("paired_examples.png", "Which concrete rows most weaken the favorite claim?", failure_source, len(counterexamples), "severity", "counterexample filters", "Counterexamples define claim boundaries.", "No automatic failures is not proof of no failures.")
+
+    write_plot_manifest(ctx, manifest)
 
 
 # ---------------------------------------------------------------------------
@@ -1846,6 +2503,32 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     )
     metrics["directions"] = {"selected": selected_model.metadata, "depths_scanned": depths}
     metrics["self_check_status"] = write_self_check_status(ctx, token_rows, arg_rows, evidence_rows)
+    run_config_snapshot = write_run_config_snapshot(ctx, data_info, selected_model, depths)
+    warnings = write_warning_summary(ctx, data_info, task_rows, probe_rows, intervention_summary, trace_rows, evidence_rows, counterexamples)
+    failure_specimens = write_failure_specimens(ctx, counterexamples, task_rows, intervention_rows, trace_rows)
+    source_manifest = write_plot_source_tables_and_manifest(
+        ctx,
+        task_rows,
+        probe_rows,
+        selection_rows,
+        surface_rows,
+        confusion,
+        intervention_rows,
+        intervention_summary,
+        trace_rows,
+        transition_rows,
+        self_report_rows,
+        evidence_rows,
+        counterexamples,
+        arg_rows,
+    )
+    metrics["artifact_quality"] = {
+        "run_config_snapshot_written": bool(run_config_snapshot),
+        "warning_count": len(warnings),
+        "failure_specimens": len(failure_specimens),
+        "figure_source_tables": "written for every run, including --no-plots",
+        "plot_manifest_entries": len(source_manifest),
+    }
 
     write_tables(
         ctx,
@@ -1871,7 +2554,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     write_operationalization_audit(ctx, evidence_rows, counterexamples)
     write_run_summary(ctx, data_info, metrics, evidence_rows)
     write_ledger_claims(ctx, evidence_rows)
-    write_plots(ctx, task_rows, probe_rows, intervention_rows, intervention_summary, trace_rows, self_report_rows, evidence_rows)
+    write_plots(ctx, task_rows, probe_rows, intervention_rows, intervention_summary, trace_rows, transition_rows, self_report_rows, evidence_rows, counterexamples)
     print(
         f"[lab34] selected depth {selected_depth}; wrote {len(task_rows)} task rows, "
         f"{len(probe_rows)} probe rows, {len(intervention_rows)} intervention rows, and {len(evidence_rows)} evidence rows"

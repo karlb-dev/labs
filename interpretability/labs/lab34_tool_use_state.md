@@ -8,9 +8,9 @@
 
 **Dependencies:** Labs 7, 15, 22, 23, 24, and 32.
 
-**Minimum passing artifacts:** `method_card.md`, `operationalization_audit.md`, `metrics.json`, `results.csv`, `diagnostics/safety_status.json`, `diagnostics/self_check_status.json`, `tables/tool_task_manifest.csv`, `tables/tool_choice_probe_report.csv`, `tables/tool_intervention_report.csv`, `tables/tool_trace_log.csv`, `tables/tool_self_report_labels.csv`, `tables/tool_use_evidence_matrix.csv`, and `plots/tool_use_evidence_dashboard.png`.
+**Minimum passing artifacts:** `method_card.md`, `operationalization_audit.md`, `metrics.json`, `results.csv`, `diagnostics/safety_status.json`, `diagnostics/self_check_status.json`, `diagnostics/lab34_run_config_snapshot.json`, `diagnostics/warning_summary.csv`, `tables/tool_task_manifest.csv`, `tables/tool_choice_probe_report.csv`, `tables/tool_intervention_report.csv`, `tables/tool_trace_log.csv`, `tables/tool_self_report_labels.csv`, `tables/tool_use_evidence_matrix.csv`, `tables/failure_specimens.jsonl`, `plots/plot_manifest.json`, `plots/overview_dashboard.png`, and `plots/tool_use_evidence_dashboard.png`.
 
-**Main plot:** `plots/tool_use_evidence_dashboard.png`
+**Main plot:** `plots/overview_dashboard.png` with a backward-compatible copy at `plots/tool_use_evidence_dashboard.png`
 
 **Main table:** `tables/tool_use_evidence_matrix.csv`
 
@@ -215,6 +215,9 @@ runs/lab34_tool_use_state-*/
     data_manifest.json
     safety_status.json
     self_check_status.json
+    lab34_run_config_snapshot.json
+    warning_summary.csv
+    warning_summary.json
     tokenization_gate.csv
     prompt_boundary_audit.csv
     tool_argument_validation.csv
@@ -235,10 +238,28 @@ runs/lab34_tool_use_state-*/
     tool_self_report_labels.csv
     tool_use_evidence_matrix.csv
     tool_counterexamples.csv
+    failure_specimens.jsonl
+    failure_specimens.md
     plot_reading_guide.csv
+    figure_sources/
+      overview_dashboard_source.csv
+      target_vs_control_source.csv
+      dose_response_source.csv
+      layer_sweep_heatmap_source.csv
+      trajectory_source.csv
+      paired_examples_source.csv
+      *.csv
 
   plots/
+    plot_manifest.json
+    plot_manifest.csv
+    overview_dashboard.png
     tool_use_evidence_dashboard.png
+    target_vs_control.png
+    dose_response.png
+    layer_sweep_heatmap.png
+    trajectory.png
+    paired_examples.png
     tool_choice_probe_by_depth.png
     tool_selection_confusion_matrix.png
     tool_state_patch_recovery.png
@@ -259,46 +280,80 @@ Start with `method_card.md`. It states the selected depth, whether the run is sc
 Then read:
 
 1. `diagnostics/safety_status.json`: confirms the tools are local, synthetic, and benign.
-2. `diagnostics/tokenization_gate.csv`: checks action-letter tokens and task schema validity.
-3. `tables/surface_cue_audit.csv`: shows which prompts contain cheap surface cues.
-4. `tables/tool_choice_probe_report.csv`: compares residual probes to surface and shuffled controls.
-5. `tables/tool_depth_selection.csv`: shows the train-selected site and eval performance.
-6. `tables/tool_task_manifest.csv`: row-level predictions, confidence margins, and review fields.
-7. `tables/tool_intervention_report.csv`: activation-addition rows on the constrained action-letter prompt.
-8. `tables/tool_trace_log.csv`: deterministic local tool trace.
-9. `tables/tool_counterexamples.csv`: the rows that most shrink the favorite claim.
-10. `tables/tool_self_report_labels.csv`: review this before citing source attribution.
-11. `operationalization_audit.md`: the cheap explanations and allowed language.
+2. `diagnostics/lab34_run_config_snapshot.json`: records model, tier, seed, prompt set, depth grid, selected depth, action-letter prompt, and steer scales.
+3. `diagnostics/warning_summary.csv`: says whether this is smoke-only, missing eval rows, surface-confounded, or carrying trace/counterexample warnings.
+4. `diagnostics/tokenization_gate.csv`: checks action-letter tokens and task schema validity.
+5. `tables/surface_cue_audit.csv`: shows which prompts contain cheap surface cues.
+6. `tables/tool_choice_probe_report.csv`: compares residual probes to surface and shuffled controls.
+7. `tables/tool_depth_selection.csv`: shows the train-selected site and eval performance.
+8. `tables/tool_task_manifest.csv`: row-level predictions, confidence margins, stable task row IDs, and review fields.
+9. `tables/tool_intervention_report.csv`: raw activation-addition rows on the constrained action-letter prompt, including stable intervention IDs.
+10. `tables/tool_trace_log.csv`: deterministic local tool trace.
+11. `tables/failure_specimens.md`: the concrete rows that most shrink the favorite claim.
+12. `plots/plot_manifest.json`: maps every figure to its exact source table, row count, metric, control, and caveat.
+13. `tables/tool_self_report_labels.csv`: review this before citing source attribution.
+14. `operationalization_audit.md`: the cheap explanations and allowed language.
+
+## How to read the figures
+
+Every plot is backed by `tables/figure_sources/*.csv`. Open the source table first when a figure surprises you. The plot is a map; the table is the ground. Tier A plots may have too few rows for uncertainty or aggregation to mean much, so they should be treated as plot-smoke artifacts rather than scientific evidence.
+
+Use this reading path:
+
+1. Open `overview_dashboard.png` to see the run's main posture.
+2. Open `target_vs_control.png` to check whether raw task pairs support the aggregate.
+3. Open `dose_response.png` to check whether the target direction separates from random across scales.
+4. Open `layer_sweep_heatmap.png` to verify that the selected depth is not an eval-picked mirage.
+5. Open `paired_examples.png` and `failure_specimens.md` before writing any positive claim.
+6. Open trace plots only after remembering that the trace comes from the harness, not from model introspection.
+
+## Plot catalog
+
+| Figure | Source table | Question answered | Interpretation note |
+|---|---|---|---|
+| `overview_dashboard.png` | `tables/figure_sources/overview_dashboard_source.csv` | Do decode, controls, causal shift, trace health, and failures point in one direction? | Read as an overview, not as a verdict machine. |
+| `tool_use_evidence_dashboard.png` | `tables/figure_sources/overview_dashboard_source.csv` | Backward-compatible copy of the dashboard. | Kept so older handouts and scripts still find the main plot. |
+| `target_vs_control.png` | `tables/figure_sources/target_vs_control_source.csv` | Do per-task probe and intervention measurements beat their controls? | Raw paired rows are more important than the aggregate mean. |
+| `dose_response.png` | `tables/figure_sources/dose_response_source.csv` | Does the action-letter shift grow with scale, and does target beat random? | A clean curve is still only a constrained letter-prompt result. |
+| `layer_sweep_heatmap.png` | `tables/figure_sources/layer_sweep_heatmap_source.csv` | Where do decode, surface, gap, and no-tool false-positive metrics sit across depth? | A bright layer is not a circuit. |
+| `trajectory.png` | `tables/figure_sources/trajectory_source.csv` | What deterministic toy trace did the harness execute? | Trace audit, not self-report. |
+| `paired_examples.png` | `tables/figure_sources/paired_examples_source.csv` | Which rows most weaken the favorite story? | Treat counterexamples as evidence, not cleanup work. |
+| `tool_choice_probe_by_depth.png` | `tables/figure_sources/tool_choice_probe_by_depth_source.csv` | Did the train-selected readout survive eval? | Do not select a site from this eval curve. |
+| `tool_selection_confusion_matrix.png` | `tables/figure_sources/tool_selection_confusion_matrix_source.csv` | Which tool labels get confused? | No-tool false positives are especially important. |
+| `surface_control_ladder.png` | `tables/figure_sources/surface_control_ladder_source.csv` | Did the residual probe beat lexical shortcuts? | If surface wins, the honest result is negative or refinement. |
+| `memory_read_trace_atlas.png` | `tables/figure_sources/memory_read_trace_atlas_source.csv` | Which local simulators read closed synthetic memory? | No web, filesystem, or real tool access is involved. |
+| `tool_result_reliance_ladder.png` | `tables/figure_sources/tool_result_reliance_ladder_source.csv` | Would corrupting toy tool results change toy final answers? | This does not show the model would detect corruption. |
+| `tool_self_report_matrix.png` | `tables/figure_sources/tool_self_report_matrix_source.csv` | Which known-trace rows still require human review? | Blank review columns are intentional. |
 
 ## Plot guide
 
-### `tool_use_evidence_dashboard.png`
+### `overview_dashboard.png` and `tool_use_evidence_dashboard.png`
 
-The first plot to open. It combines decode scores, surface baselines, causal shifts, trace health, and counterexample load.
+The first plot to open. It combines decode scores, surface baselines, causal shifts, trace health, and counterexample load. It answers "what should I inspect next?" rather than "what is true?"
 
-### `tool_choice_probe_by_depth.png`
+### `target_vs_control.png`
 
-Shows train and eval tool-needed AUC and tool-selection accuracy by depth. The selected depth should not be chosen because the eval curve looked pretty.
+Shows raw paired evidence: residual probe versus surface heuristic per held-out task, and target-direction versus random-direction action-letter shifts per task. This is where one-row miracles and row-level failures stop hiding behind averages.
+
+### `dose_response.png` and `tool_state_patch_recovery.png`
+
+Dose-response for target tool directions and random controls on the constrained action-letter prompt. A letter-prompt artifact can still live here, especially if random directions move the margin too.
+
+### `layer_sweep_heatmap.png` and `tool_choice_probe_by_depth.png`
+
+Shows train/eval metrics and controls across residual depths. The selected depth is chosen from train-side evidence, so eval rows here are validation, not selection bait.
 
 ### `tool_selection_confusion_matrix.png`
 
 Shows required tool versus predicted tool at the selected depth. This is where dictionary/file-search confusion and no-tool false positives usually announce themselves.
 
-### `tool_state_patch_recovery.png`
+### `trajectory.png`, `memory_read_trace_atlas.png`, and `tool_result_reliance_ladder.png`
 
-Dose-response for target tool directions and random controls on the constrained action-letter prompt. A letter-prompt artifact can still live here.
+These are deterministic harness trace plots. They help audit the local simulator and answer path. They do not prove the model introspected or verified the trace.
 
-### `surface_control_ladder.png`
+### `paired_examples.png` and `failure_specimens.md`
 
-Compares residual probe accuracy, surface heuristic accuracy, and shuffled-label accuracy. This plot is the lab's little trapdoor.
-
-### `memory_read_trace_atlas.png`
-
-Counts known trace reads in the deterministic local harness. It is a trace audit, not a cognitive map.
-
-### `tool_result_reliance_ladder.png`
-
-Shows which tool families would change answer if the tool result were corrupted. This is reliance on the toy tool result, not proof that the model would verify it.
+Read these before any positive writeup. A strong aggregate with bad specimens is a narrower claim, not a bigger triumph.
 
 ### `tool_self_report_matrix.png`
 
@@ -330,7 +385,17 @@ A clean negative result:
 surface heuristic beats the residual probe on eval
 ```
 
-This is not failure. It is the lab doing its job with a tiny mallet and a bell.
+This is not failure. It is the lab doing its job by making the cheap explanation visible.
+
+## Expected Tier A versus Tier B behavior
+
+Tier A should prove that token gates, local toy tools, intervention rows, source tables, manifests, and plots all write without crashing. It is allowed to be noisy, surface-confounded, or tiny. A positive Tier A dashboard is a smoke-test curiosity.
+
+Tier B should use the full frozen toy-tool set. A defensible positive result needs the train-selected depth to survive eval, the residual probe to beat surface and shuffled controls, the target direction to beat random on the action-letter prompt, and the warning summary to avoid high-severity instrumentation failures.
+
+## What an honest negative result looks like
+
+An honest negative result is one where the surface heuristic beats the residual probe, no-tool rows with surface tool words are false positives, or random directions move action letters as much as target directions. In that case, the lab still succeeded. The supported claim is that the cheap explanation won under the recorded battery.
 
 ## What this lab can claim
 
