@@ -10,7 +10,7 @@ That sentence is already too grand unless the controls earn it. This lab does **
 
 > Can a residual-stream direction separate benchmark/eval framing from natural phrasing of the same benign task, transfer across eval formats, beat surface-format controls, and shift benign generations under activation addition?
 
-A positive result is an **eval-context handle**. A negative result is still useful: you may have found a multiple-choice detector, a `Question:/Answer:` detector, a grading-rubric detector, or a chat-template boundary artifact. Lab 22 is where those little template goblins are invited into the courtroom.
+A positive result is an **eval-context handle**. A negative result is still useful: you may have found a multiple-choice detector, a `Question:/Answer:` detector, a grading-rubric detector, or a chat-template boundary artifact. Lab 22 puts those template explanations into the audit record before any stronger claim is allowed.
 
 ## Run
 
@@ -92,7 +92,7 @@ streams[k] = residual stream after k blocks
 block layer k output = streams[k + 1]
 ```
 
-A direction read at `streams[depth]` is injected during generation at block `depth - 1`. The run records both `best_depth` and `injection_layer` so the off-by-one goblin has nowhere cozy to hide.
+A direction read at `streams[depth]` is injected during generation at block `depth - 1`. The run records both `best_depth` and `injection_layer` so the off-by-one convention is explicit in every steering artifact.
 
 ### 2. Train-only eval-context direction
 
@@ -281,19 +281,99 @@ runs/lab22_eval_awareness-.../
     multiturn_eval_trace.png
 ```
 
+
+
+## Visualization upgrade: evidence firewall first, pretty plots second
+
+The upgraded Lab 22 plot suite is organized as a **claim firewall**. The lab is allowed to say "eval-context handle" only when the evidence passes through four gates:
+
+1. the direction separates eval-framed from natural prompts on held-out rows;
+2. it transfers across held-out eval formats;
+3. format controls and surface/metadata baselines do not explain the signal;
+4. any activation-addition behavior shift beats random/shuffled directions and survives hand labels.
+
+The new start-here artifact is:
+
+```text
+plots/eval_awareness_evidence_dashboard.png
+```
+
+Read it before the individual curves. It shows decode strength, cross-format transfer, surface-confound risk, and steering cost in one board. Its job is to stop a multiple-choice detector from putting on a fake mustache and calling itself situational awareness.
+
+New synthesis tables:
+
+```text
+tables/surface_confound_audit.csv
+tables/format_transfer_summary.csv
+tables/item_eval_signal_atlas.csv
+tables/steering_operating_points.csv
+tables/multiturn_eval_trace_summary.csv
+tables/eval_awareness_evidence_matrix.csv
+tables/plot_reading_guide.csv
+```
+
+New or upgraded plots:
+
+```text
+plots/eval_awareness_evidence_dashboard.png
+plots/depth_control_gap_atlas.png
+plots/format_transfer_matrix.png
+plots/item_projection_atlas.png
+plots/surface_confound_ladder.png
+plots/steering_operating_frontier.png
+plots/generation_marker_atlas.png
+plots/multiturn_trace_atlas.png
+plots/eval_awareness_evidence_matrix.png
+```
+
+The old plot names remain for compatibility, but the upgraded reading path should use the new synthesis plots.
+
 ## First reading path
 
 1. `eval_awareness_card.md`: headline metrics, verdicts, and non-claims.
-2. `diagnostics/exact_chat_hook_parity.json`: confirm the rendered-chat stream was measured correctly.
-3. `diagnostics/depth_selection.json`: check that depth selection used train rows and controls.
-4. `tables/eval_awareness_probe_by_layer.csv`: compare real, shuffled, and random direction curves.
-5. `tables/surface_baseline_auc.csv`: ask whether surface features already solve the task.
-6. `tables/cross_format_transfer.csv`: the main anti-template-detector table.
-7. `tables/matched_group_projection.csv`: inspect matched eval/natural/control groups.
-8. `tables/steering_generations.csv`: read actual generations and hand-label a sample.
-9. `operationalization_audit.md`: decide which claim survives.
+2. `plots/eval_awareness_evidence_dashboard.png`: the whole evidence firewall in one view.
+3. `diagnostics/exact_chat_hook_parity.json`: confirm the rendered-chat stream was measured correctly.
+4. `diagnostics/depth_selection.json` and `plots/depth_control_gap_atlas.png`: check that depth selection used train rows and controls.
+5. `tables/eval_awareness_probe_by_layer.csv`: compare real, shuffled, and random direction curves.
+6. `tables/surface_confound_audit.csv` and `plots/surface_confound_ladder.png`: ask whether surface features already solve the task.
+7. `tables/format_transfer_summary.csv` and `plots/format_transfer_matrix.png`: the main anti-template-detector test.
+8. `tables/item_eval_signal_atlas.csv` and `plots/item_projection_atlas.png`: inspect matched eval/natural/control groups.
+9. `tables/steering_operating_points.csv`, `plots/steering_operating_frontier.png`, and `tables/steering_generations.csv`: read actual generations and hand-label a sample.
+10. `operationalization_audit.md`: decide which claim survives.
 
 ## How to read the plots
+
+### `eval_awareness_evidence_dashboard.png`
+
+Start here. It joins depth-selected decode evidence, cross-format transfer, surface-risk, and steering benefit-vs-cost. If this plot looks weak, the rest of the run is probably a format-detector audit rather than a situational-awareness story.
+
+### `depth_control_gap_atlas.png`
+
+This heatmap shows real AUC, format-control AUC, null rails, and real-minus-null gaps over stream depth. It makes depth shopping visible.
+
+### `format_transfer_matrix.png`
+
+Each row asks whether a held-out eval format still separates from natural and format-control rows after the direction is trained on other formats.
+
+### `item_projection_atlas.png`
+
+This is the group-level antidote to aggregate sparkle. Each row is a matched task group. The useful pattern is eval above both natural and format-control rows.
+
+### `surface_confound_ladder.png`
+
+This replaces plot admiration with customs inspection. If the strongest prompt-surface baseline matches the residual direction, the allowed claim narrows.
+
+### `steering_operating_frontier.png`
+
+The x-axis is side-effect cost and the y-axis is target movement. A dose that moves eval markers only by becoming verbose, hedged, refusal-shaped, or format-shaped does not get the causal badge.
+
+### `generation_marker_atlas.png`
+
+Shows exactly which generation markers moved under each steering condition and dose.
+
+### `eval_awareness_evidence_matrix.png`
+
+A rung-by-rung claim-readiness board. Every row carries its own evidence level and non-claim.
 
 ### `eval_awareness_probe_by_layer.png`
 

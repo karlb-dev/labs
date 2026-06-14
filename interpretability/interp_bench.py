@@ -4509,6 +4509,51 @@ def plot_training_depth_marker(condition: str, default: str = "o") -> str:
     }.get(str(condition), default)
 
 
+EVALAWARE_COLORS = {
+    "eval": "#D55E00",
+    "natural": "#0072B2",
+    "format_control": "#8C8C8C",
+    "real": "#D55E00",
+    "random": "#777777",
+    "shuffled": "#CC79A7",
+    "surface": "#E69F00",
+    "decode": "#009E73",
+    "causal": "#CC79A7",
+    "monitor": "#56B4E9",
+    "pass": "#009E73",
+    "warning": "#E69F00",
+    "fail": "#D55E00",
+    "blocked": "#D55E00",
+    "unknown": "#999999",
+}
+
+EVALAWARE_MARKERS = {
+    "eval": "s",
+    "natural": "o",
+    "format_control": "D",
+    "real": "o",
+    "random": "x",
+    "shuffled": "^",
+    "surface": "v",
+    "decode": "P",
+    "causal": "*",
+    "monitor": "h",
+    "pass": "o",
+    "warning": "^",
+    "fail": "X",
+}
+
+
+def plot_evalawareness_color(key: str, default: str = "#555555") -> str:
+    """Shared color lookup for Lab 22 eval-awareness plots."""
+    return EVALAWARE_COLORS.get(str(key), default)
+
+
+def plot_evalawareness_marker(key: str, default: str = "o") -> str:
+    """Shared marker lookup for Lab 22 eval-awareness plots."""
+    return EVALAWARE_MARKERS.get(str(key), default)
+
+
 def configure_matplotlib() -> None:
     """One-time global polish for all lab plots (clean, readable, consistent)."""
     import matplotlib as mpl

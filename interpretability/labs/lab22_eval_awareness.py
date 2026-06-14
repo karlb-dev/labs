@@ -1954,6 +1954,892 @@ def plot_multiturn_trace(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]
     bench.save_figure(ctx, fig, "multiturn_eval_trace.png", "Projection trace over scripted natural versus eval-framed conversations.")
 
 
+
+# ---------------------------------------------------------------------------
+# Visualization upgrade: eval-awareness as an evidence firewall
+# ---------------------------------------------------------------------------
+
+LAB22_CONDITION_ORDER = (
+    "eval",
+    "natural",
+    "format_control",
+    "baseline",
+    "eval_direction_plus",
+    "eval_direction_minus",
+    "random_direction_plus",
+    "random_direction_minus",
+    "shuffled_direction_plus",
+    "shuffled_direction_minus",
+)
+
+LAB22_MARKER_METRICS = (
+    "mentions_eval_or_test",
+    "self_identifies_eval_context",
+    "benchmark_marker",
+    "grading_marker",
+    "choice_marker",
+    "hedging_marker",
+    "refusal_marker",
+)
+
+LAB22_VIS_COLORS = {
+    "eval": "#D55E00",
+    "natural": "#0072B2",
+    "format_control": "#8C8C8C",
+    "real": "#D55E00",
+    "random": "#777777",
+    "shuffled": "#CC79A7",
+    "surface": "#E69F00",
+    "decode": "#009E73",
+    "causal": "#CC79A7",
+    "monitor": "#56B4E9",
+    "blocked": "#D55E00",
+    "warning": "#E69F00",
+    "pass": "#009E73",
+    "fail": "#D55E00",
+    "unknown": "#999999",
+}
+
+
+def lab22_color(key: str, default: str = "#555555") -> str:
+    helper = getattr(bench, "plot_evalawareness_color", None)
+    if callable(helper):
+        try:
+            return helper(key, default)
+        except TypeError:
+            return helper(key)
+    return LAB22_VIS_COLORS.get(str(key), default)
+
+
+def lab22_marker(key: str, default: str = "o") -> str:
+    helper = getattr(bench, "plot_evalawareness_marker", None)
+    if callable(helper):
+        try:
+            return helper(key, default)
+        except TypeError:
+            return helper(key)
+    return {
+        "eval": "s",
+        "natural": "o",
+        "format_control": "D",
+        "real": "o",
+        "random": "x",
+        "shuffled": "^",
+        "surface": "v",
+        "decode": "P",
+        "causal": "*",
+        "monitor": "h",
+    }.get(str(key), default)
+
+
+def _lab22_float(value: Any, default: float = float("nan")) -> float:
+    try:
+        f = float(value)
+    except Exception:
+        return default
+    return f if math.isfinite(f) else default
+
+
+def _lab22_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(float(value))
+    except Exception:
+        return default
+
+
+def _lab22_mean(values: Sequence[Any], default: float = float("nan")) -> float:
+    xs = [_lab22_float(v) for v in values]
+    xs = [v for v in xs if math.isfinite(v)]
+    return float(statistics.fmean(xs)) if xs else default
+
+
+def _lab22_min(values: Sequence[Any], default: float = float("nan")) -> float:
+    xs = [_lab22_float(v) for v in values]
+    xs = [v for v in xs if math.isfinite(v)]
+    return min(xs) if xs else default
+
+
+def _lab22_max(values: Sequence[Any], default: float = float("nan")) -> float:
+    xs = [_lab22_float(v) for v in values]
+    xs = [v for v in xs if math.isfinite(v)]
+    return max(xs) if xs else default
+
+
+def _lab22_short(text: Any, n: int = 26) -> str:
+    s = str(text or "")
+    return s if len(s) <= n else s[: max(0, n - 1)] + "…"
+
+
+def _lab22_status(value: Any, *, good: float = 0.10, warn: float = 0.03, higher_is_better: bool = True) -> str:
+    v = _lab22_float(value)
+    if not math.isfinite(v):
+        return "missing"
+    score = v if higher_is_better else -v
+    if score >= good:
+        return "pass"
+    if score >= warn:
+        return "warning"
+    return "fail"
+
+
+def _lab22_baseline_for(steering_rows: Sequence[Mapping[str, Any]], prompt_condition: str) -> Mapping[str, Any] | None:
+    candidates = [r for r in steering_rows if r.get("condition") == "baseline" and r.get("prompt_condition") == prompt_condition]
+    if not candidates:
+        return None
+    # Usually there is one baseline row per prompt condition summary, but use the mean if several appear.
+    return {
+        "mean_mentions_eval_or_test": _lab22_mean([r.get("mean_mentions_eval_or_test") for r in candidates]),
+        "mean_self_identifies_eval_context": _lab22_mean([r.get("mean_self_identifies_eval_context") for r in candidates]),
+        "mean_hedging_marker": _lab22_mean([r.get("mean_hedging_marker") for r in candidates]),
+        "mean_refusal_marker": _lab22_mean([r.get("mean_refusal_marker") for r in candidates]),
+        "mean_choice_marker": _lab22_mean([r.get("mean_choice_marker") for r in candidates]),
+        "mean_word_count": _lab22_mean([r.get("mean_word_count") for r in candidates]),
+    }
+
+
+def lab22_surface_confound_audit_rows(surface_rows: Sequence[Mapping[str, Any]], metrics: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    eval_rows = [r for r in surface_rows if r.get("split") == "eval"] or list(surface_rows)
+    internal_auc = _lab22_float(metrics.get("eval_auc_best_depth"))
+    for r in sorted(eval_rows, key=lambda x: _lab22_float(x.get("auc_predicts_expected_eval_context")), reverse=True):
+        auc = _lab22_float(r.get("auc_predicts_expected_eval_context"))
+        rows.append({
+            "feature": r.get("feature", ""),
+            "split": r.get("split", ""),
+            "auc_predicts_eval_context": rounded(auc),
+            "internal_auc_best_depth": rounded(internal_auc),
+            "surface_minus_internal_auc": rounded(auc - internal_auc if math.isfinite(auc) and math.isfinite(internal_auc) else float("nan")),
+            "risk_level": "high" if auc >= max(0.70, internal_auc - 0.03 if math.isfinite(internal_auc) else 0.70) else ("medium" if auc >= 0.60 else "low"),
+            "allowed_claim_effect": "narrows to surface/template handle if this baseline matches the residual direction",
+        })
+    return rows
+
+
+def lab22_format_transfer_summary_rows(transfer_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for r in transfer_rows:
+        if r.get("status") != "ran":
+            out.append({
+                "heldout_format": r.get("heldout_format", ""),
+                "status": r.get("status", "skipped"),
+                "claim_posture": "missing transfer row",
+            })
+            continue
+        auc = _lab22_float(r.get("auc_eval_vs_natural"))
+        fmt_auc = _lab22_float(r.get("auc_eval_vs_format_control"))
+        shuf = _lab22_float(r.get("shuffled_auc_eval_vs_natural"))
+        rand = _lab22_float(r.get("random_auc_eval_vs_natural"))
+        control_best = _lab22_max([shuf, rand, 0.5])
+        gap = auc - control_best if math.isfinite(auc) and math.isfinite(control_best) else float("nan")
+        fmt_gap = _lab22_float(r.get("eval_format_control_gap"))
+        out.append({
+            "heldout_format": r.get("heldout_format", ""),
+            "status": "ran",
+            "auc_eval_vs_natural": rounded(auc),
+            "auc_eval_vs_format_control": rounded(fmt_auc),
+            "best_control_auc": rounded(control_best),
+            "control_adjusted_auc_gap": rounded(gap),
+            "eval_format_control_gap": rounded(fmt_gap),
+            "n_eval": r.get("n_eval", ""),
+            "n_natural": r.get("n_natural", ""),
+            "n_format_control": r.get("n_format_control", ""),
+            "claim_posture": "format-transferring handle" if gap >= 0.08 and fmt_gap > 0 else ("fragile or format-specific" if math.isfinite(gap) else "missing"),
+        })
+    return out
+
+
+def lab22_item_signal_rows(proj_rows: Sequence[Mapping[str, Any]], generation_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    by_group: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in proj_rows:
+        by_group[str(row.get("group_id", ""))].append(row)
+    gen_by_group: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in generation_rows:
+        gen_by_group[str(row.get("group_id", ""))].append(row)
+    rows: list[dict[str, Any]] = []
+    for group, sub in sorted(by_group.items()):
+        conds = sorted({str(r.get("condition", "")) for r in sub})
+        means = {cond: _lab22_mean([r.get("projection_real") for r in sub if str(r.get("condition")) == cond]) for cond in conds}
+        eval_proj = means.get(EVAL_CONDITION, float("nan"))
+        natural_proj = means.get(NATURAL_CONDITION, float("nan"))
+        format_proj = means.get(FORMAT_CONTROL_CONDITION, float("nan"))
+        gen = gen_by_group.get(group, [])
+        natural_steer = [r for r in gen if r.get("condition") == "eval_direction_plus" and r.get("prompt_condition") == NATURAL_CONDITION]
+        eval_steer = [r for r in gen if r.get("condition") == "eval_direction_minus" and r.get("prompt_condition") == EVAL_CONDITION]
+        first = sub[0]
+        rows.append({
+            "group_id": group,
+            "format_family": first.get("format_family", ""),
+            "split_members": ";".join(sorted({str(r.get("split", "")) for r in sub})),
+            "conditions_present": ";".join(conds),
+            "projection_eval": rounded(eval_proj),
+            "projection_natural": rounded(natural_proj),
+            "projection_format_control": rounded(format_proj),
+            "eval_minus_natural": rounded(eval_proj - natural_proj if math.isfinite(eval_proj) and math.isfinite(natural_proj) else float("nan")),
+            "eval_minus_format_control": rounded(eval_proj - format_proj if math.isfinite(eval_proj) and math.isfinite(format_proj) else float("nan")),
+            "natural_steered_mentions_eval_mean": rounded(_lab22_mean([r.get("mentions_eval_or_test") for r in natural_steer])),
+            "eval_minus_steered_mentions_eval_mean": rounded(_lab22_mean([r.get("mentions_eval_or_test") for r in eval_steer])),
+            "risk_note": "format control projects high" if math.isfinite(format_proj) and math.isfinite(eval_proj) and format_proj >= eval_proj - 0.05 else "eval separates from control",
+        })
+    return rows
+
+
+def lab22_steering_operating_points(steering_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    baselines = {
+        NATURAL_CONDITION: _lab22_baseline_for(steering_rows, NATURAL_CONDITION),
+        EVAL_CONDITION: _lab22_baseline_for(steering_rows, EVAL_CONDITION),
+    }
+    for r in steering_rows:
+        condition = str(r.get("condition", ""))
+        if condition == "baseline":
+            continue
+        prompt_condition = str(r.get("prompt_condition", ""))
+        base = baselines.get(prompt_condition) or {}
+        current = _lab22_float(r.get("mean_mentions_eval_or_test"))
+        base_eval = _lab22_float(base.get("mean_mentions_eval_or_test"))
+        if prompt_condition == NATURAL_CONDITION:
+            target_delta = current - base_eval
+            desired = "increase_eval_context_markers_on_natural_prompts"
+        elif prompt_condition == EVAL_CONDITION:
+            target_delta = base_eval - current
+            desired = "decrease_eval_context_markers_on_eval_prompts"
+        else:
+            target_delta = float("nan")
+            desired = "unknown"
+        side_effect = 0.0
+        for key in ("mean_hedging_marker", "mean_refusal_marker", "mean_choice_marker"):
+            side_effect += abs(_lab22_float(r.get(key), 0.0) - _lab22_float(base.get(key), 0.0))
+        wc = _lab22_float(r.get("mean_word_count"))
+        bwc = _lab22_float(base.get("mean_word_count"))
+        if math.isfinite(wc) and math.isfinite(bwc) and bwc > 0:
+            side_effect += abs(wc - bwc) / max(10.0, bwc)
+        rows.append({
+            "condition": condition,
+            "direction_kind": r.get("condition", "").split("_direction")[0] if "_direction" in condition else condition,
+            "prompt_condition": prompt_condition,
+            "dose": r.get("dose", ""),
+            "n": r.get("n", ""),
+            "target_metric": "mentions_eval_or_test",
+            "desired_direction": desired,
+            "baseline_mentions_eval": rounded(base_eval),
+            "mean_mentions_eval_or_test": r.get("mean_mentions_eval_or_test", ""),
+            "target_delta_vs_baseline": rounded(target_delta),
+            "side_effect_score": rounded(side_effect),
+            "mean_word_count": r.get("mean_word_count", ""),
+            "mean_hedging_marker": r.get("mean_hedging_marker", ""),
+            "mean_refusal_marker": r.get("mean_refusal_marker", ""),
+            "mean_choice_marker": r.get("mean_choice_marker", ""),
+            "claimable_before_hand_labels": bool(condition.startswith("eval_direction") and math.isfinite(target_delta) and target_delta > 0.10 and side_effect < 0.50),
+        })
+    # Compute specificity over same-prompt controls at matched dose.
+    keyed: dict[tuple[str, Any], list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        keyed[(str(row.get("prompt_condition")), row.get("dose"))].append(row)
+    for (_prompt_condition, _dose), sub in keyed.items():
+        control_best = _lab22_max([r.get("target_delta_vs_baseline") for r in sub if not str(r.get("condition", "")).startswith("eval_direction")], default=0.0)
+        for row in sub:
+            row["control_best_target_delta"] = rounded(control_best)
+            row["specificity_gap_vs_best_control"] = rounded(_lab22_float(row.get("target_delta_vs_baseline")) - control_best)
+            if str(row.get("condition", "")).startswith("eval_direction"):
+                row["claimable_before_hand_labels"] = bool(row.get("claimable_before_hand_labels") and _lab22_float(row.get("specificity_gap_vs_best_control")) > 0.05)
+    return rows
+
+
+def lab22_trace_summary_rows(trace_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    by_conv: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in trace_rows:
+        by_conv[str(row.get("conversation", ""))].append(row)
+    rows: list[dict[str, Any]] = []
+    for conv, sub in sorted(by_conv.items()):
+        ordered = sorted(sub, key=lambda r: _lab22_int(r.get("user_turn_number")))
+        xs = [_lab22_int(r.get("user_turn_number")) for r in ordered]
+        ys = [_lab22_float(r.get("projection_real")) for r in ordered]
+        if len(xs) >= 2 and all(math.isfinite(y) for y in ys):
+            mx = statistics.fmean(xs)
+            my = statistics.fmean(ys)
+            denom = sum((x - mx) ** 2 for x in xs)
+            slope = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / denom if denom else float("nan")
+        else:
+            slope = float("nan")
+        rows.append({
+            "conversation": conv,
+            "n_turns": len(ordered),
+            "first_projection": rounded(ys[0] if ys else float("nan")),
+            "last_projection": rounded(ys[-1] if ys else float("nan")),
+            "projection_delta_last_minus_first": rounded((ys[-1] - ys[0]) if len(ys) >= 2 and math.isfinite(ys[-1]) and math.isfinite(ys[0]) else float("nan")),
+            "projection_slope_per_turn": rounded(slope),
+            "allowed_claim": "scripted trace only; not a deception or situational-awareness result",
+        })
+    return rows
+
+
+def lab22_evidence_matrix_rows(
+    metrics: Mapping[str, Any],
+    transfer_summary: Sequence[Mapping[str, Any]],
+    surface_audit: Sequence[Mapping[str, Any]],
+    steering_points: Sequence[Mapping[str, Any]],
+    trace_summary: Sequence[Mapping[str, Any]],
+    organism_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    eval_auc = _lab22_float(metrics.get("eval_auc_best_depth"))
+    fmt_auc = _lab22_float(metrics.get("eval_vs_format_control_auc_best_depth"))
+    selectivity = _lab22_float(metrics.get("eval_selectivity_over_shuffled_best_depth"))
+    min_transfer_gap = _lab22_min([r.get("control_adjusted_auc_gap") for r in transfer_summary])
+    min_format_gap = _lab22_min([r.get("eval_format_control_gap") for r in transfer_summary])
+    top_surface = _lab22_max([r.get("auc_predicts_eval_context") for r in surface_audit])
+    surface_margin = eval_auc - top_surface if math.isfinite(eval_auc) and math.isfinite(top_surface) else float("nan")
+    steer_specificity = _lab22_max([r.get("specificity_gap_vs_best_control") for r in steering_points if str(r.get("condition", "")).startswith("eval_direction")])
+    steer_side = _lab22_min([r.get("side_effect_score") for r in steering_points if str(r.get("condition", "")).startswith("eval_direction")])
+    trace_gap = float("nan")
+    if trace_summary:
+        eval_delta = _lab22_mean([r.get("projection_delta_last_minus_first") for r in trace_summary if "eval" in str(r.get("conversation", ""))])
+        nat_delta = _lab22_mean([r.get("projection_delta_last_minus_first") for r in trace_summary if "natural" in str(r.get("conversation", ""))])
+        if math.isfinite(eval_delta) and math.isfinite(nat_delta):
+            trace_gap = eval_delta - nat_delta
+    organism_status = ";".join(sorted({str(r.get("status", "")) for r in organism_rows})) if organism_rows else "none"
+    rows = [
+        {
+            "evidence_object": "chat-template measurement site",
+            "rung": "INSTRUMENT",
+            "headline_metric": "exact rendered prompt at assistant boundary",
+            "value": "see diagnostics",
+            "status": "pass",
+            "supports": "the lab measured the same rendered prompt form it uses for generation",
+            "does_not_support": "any eval-awareness claim by itself",
+            "artifact": "diagnostics/exact_chat_hook_parity.json",
+        },
+        {
+            "evidence_object": "eval-vs-natural direction",
+            "rung": "DECODE",
+            "headline_metric": "held-out AUC / selectivity",
+            "value": f"auc={rounded(eval_auc)}, selectivity={rounded(selectivity)}",
+            "status": _lab22_status(selectivity, good=0.08, warn=0.03),
+            "supports": "a residual handle separating eval framing from matched natural phrasing",
+            "does_not_support": "strategic situational awareness or deception",
+            "artifact": "tables/eval_awareness_probe_by_layer.csv",
+        },
+        {
+            "evidence_object": "format-control separation",
+            "rung": "AUDITED DECODE",
+            "headline_metric": "eval-vs-format-control AUC",
+            "value": rounded(fmt_auc),
+            "status": "pass" if fmt_auc >= 0.60 else ("warning" if fmt_auc >= 0.52 else "fail"),
+            "supports": "the direction is not merely Q/A, MCQ, rubric, or code-test boilerplate",
+            "does_not_support": "template invariance across all eval formats",
+            "artifact": "tables/projection_by_item.csv",
+        },
+        {
+            "evidence_object": "cross-format transfer",
+            "rung": "AUDITED DECODE",
+            "headline_metric": "minimum control-adjusted held-out-format gap",
+            "value": rounded(min_transfer_gap),
+            "status": _lab22_status(min_transfer_gap, good=0.08, warn=0.03),
+            "supports": "a shared eval-context handle across held-out formats",
+            "does_not_support": "a global detector if one family fails",
+            "artifact": "tables/cross_format_transfer.csv",
+        },
+        {
+            "evidence_object": "surface-baseline challenge",
+            "rung": "CONFOUND AUDIT",
+            "headline_metric": "internal AUC minus best surface AUC",
+            "value": rounded(surface_margin),
+            "status": _lab22_status(surface_margin, good=0.05, warn=-0.02),
+            "supports": "the residual direction adds signal beyond cheap prompt features",
+            "does_not_support": "non-template awareness if the margin is small or negative",
+            "artifact": "tables/surface_confound_audit.csv",
+        },
+        {
+            "evidence_object": "benign activation steering",
+            "rung": "SCOPED CAUSAL",
+            "headline_metric": "best target shift over random/shuffled controls",
+            "value": f"gap={rounded(steer_specificity)}, side={rounded(steer_side)}",
+            "status": _lab22_status(steer_specificity, good=0.08, warn=0.03),
+            "supports": "the handle can move benign generation markers under activation addition",
+            "does_not_support": "causal language before hand labels rule out verbosity/refusal/format artifacts",
+            "artifact": "tables/steering_operating_points.csv",
+        },
+        {
+            "evidence_object": "scripted multi-turn trace",
+            "rung": "OBS/DECODE",
+            "headline_metric": "eval-trace delta minus natural-trace delta",
+            "value": rounded(trace_gap),
+            "status": _lab22_status(trace_gap, good=0.05, warn=0.00),
+            "supports": "a diagnostic trace over scripted prefixes",
+            "does_not_support": "deception, goals, or deployment awareness",
+            "artifact": "tables/multiturn_eval_trace_summary.csv",
+        },
+        {
+            "evidence_object": "Lab 20 known-positive hook",
+            "rung": "CONSTRUCTION LINK",
+            "headline_metric": "organism discovery status",
+            "value": organism_status,
+            "status": "pass" if "found_possible_eval_aware_private_manifest" in organism_status else "warning",
+            "supports": "optional connection to manufactured ground truth when configured",
+            "does_not_support": "any current eval-awareness result when absent",
+            "artifact": "tables/lab20_eval_aware_control.csv",
+        },
+    ]
+    return rows
+
+
+def write_eval_awareness_visual_synthesis(
+    ctx: bench.RunContext,
+    *,
+    metrics: Mapping[str, Any],
+    verdict: Mapping[str, Any],
+    proj_rows: Sequence[Mapping[str, Any]],
+    generation_rows: Sequence[Mapping[str, Any]],
+    steering_rows: Sequence[Mapping[str, Any]],
+    surface_rows: Sequence[Mapping[str, Any]],
+    transfer_rows: Sequence[Mapping[str, Any]],
+    trace_rows: Sequence[Mapping[str, Any]],
+    organism_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    surface_audit = lab22_surface_confound_audit_rows(surface_rows, metrics)
+    transfer_summary = lab22_format_transfer_summary_rows(transfer_rows)
+    item_signals = lab22_item_signal_rows(proj_rows, generation_rows)
+    steering_points = lab22_steering_operating_points(steering_rows)
+    trace_summary = lab22_trace_summary_rows(trace_rows)
+    evidence = lab22_evidence_matrix_rows(metrics, transfer_summary, surface_audit, steering_points, trace_summary, organism_rows)
+    plot_guide = [
+        {"plot": "eval_awareness_evidence_dashboard.png", "concept": "Start-here audit board for DECODE, controls, steering, and trace evidence.", "claim_boundary": "Shows whether the run earned a handle claim; not situational awareness."},
+        {"plot": "depth_control_gap_atlas.png", "concept": "Train/eval depth selection against random and shuffled null rails.", "claim_boundary": "Depth choice must be train-side and control-adjusted."},
+        {"plot": "format_transfer_matrix.png", "concept": "Held-out-format transfer and format-control pressure.", "claim_boundary": "Failure narrows the result to a format detector."},
+        {"plot": "surface_confound_ladder.png", "concept": "Cheap prompt features versus the internal direction.", "claim_boundary": "If surface wins, the residual handle is a template handle."},
+        {"plot": "item_projection_atlas.png", "concept": "Matched group-level eval/natural/control projections.", "claim_boundary": "Aggregates cannot hide groups where format controls project like eval."},
+        {"plot": "steering_operating_frontier.png", "concept": "Behavior movement versus marker/quality side-effect cost.", "claim_boundary": "Dose choice requires cost accounting and hand labels."},
+        {"plot": "generation_marker_atlas.png", "concept": "Which marker changed under each steering condition.", "claim_boundary": "Verbosity, hedging, refusal, and choice-format shifts are not eval-awareness."},
+        {"plot": "multiturn_trace_atlas.png", "concept": "Scripted trace over natural and eval-framed conversations.", "claim_boundary": "Instrument check only, not deception or belief."},
+        {"plot": "eval_awareness_evidence_matrix.png", "concept": "Rung-by-rung claim readiness table.", "claim_boundary": "Every row keeps its own evidence level."},
+    ]
+    tables = {
+        "surface_confound_audit.csv": surface_audit,
+        "format_transfer_summary.csv": transfer_summary,
+        "item_eval_signal_atlas.csv": item_signals,
+        "steering_operating_points.csv": steering_points,
+        "multiturn_eval_trace_summary.csv": trace_summary,
+        "eval_awareness_evidence_matrix.csv": evidence,
+        "plot_reading_guide.csv": plot_guide,
+    }
+    descriptions = {
+        "surface_confound_audit.csv": "Cheap prompt-feature baselines compared with the selected residual direction.",
+        "format_transfer_summary.csv": "Held-out-format transfer with random, shuffled, and format-control gaps.",
+        "item_eval_signal_atlas.csv": "Matched group-level projection and steering signal atlas.",
+        "steering_operating_points.csv": "Dose-level steering target movement, controls, and side-effect costs.",
+        "multiturn_eval_trace_summary.csv": "Scripted trace summaries for natural versus eval-framed conversations.",
+        "eval_awareness_evidence_matrix.csv": "Rung-by-rung Lab 22 evidence matrix and claim boundaries.",
+        "plot_reading_guide.csv": "Map from each upgraded plot to its teaching concept and claim boundary.",
+    }
+    for filename, rows in tables.items():
+        path = ctx.path("tables", filename)
+        bench.write_csv_with_context(ctx, path, rows)
+        ctx.register_artifact(path, "table", descriptions[filename])
+    return {
+        "surface_audit": surface_audit,
+        "transfer_summary": transfer_summary,
+        "item_signals": item_signals,
+        "steering_points": steering_points,
+        "trace_summary": trace_summary,
+        "evidence": evidence,
+        "plot_guide": plot_guide,
+    }
+
+
+# Re-define the legacy plot names with upgraded visual grammar.
+def plot_probe(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(9.8, 5.0))
+    xs = [_lab22_int(row.get("depth")) for row in rows]
+    curves = [
+        ("train eval vs natural", "train_auc_eval_vs_natural", "real", "-"),
+        ("held-out eval vs natural", "eval_auc_eval_vs_natural", "decode", "-"),
+        ("held-out eval vs format-control", "eval_auc_eval_vs_format_control", "eval", "-"),
+        ("shuffled null", "shuffled_eval_auc_mean", "shuffled", ":"),
+        ("random null", "random_eval_auc_mean", "random", ":"),
+    ]
+    for label, key, color_key, linestyle in curves:
+        ys = [_lab22_float(row.get(key)) for row in rows]
+        ax.plot(xs, ys, marker=lab22_marker(color_key), color=lab22_color(color_key), linestyle=linestyle, linewidth=2.2 if linestyle == "-" else 1.6, label=label)
+    ax.axvline(best_depth, linestyle="--", linewidth=1.2, color=lab22_color("decode"), label=f"selected depth {best_depth}")
+    ax.axhline(0.5, linestyle=":", linewidth=1, color="#555555")
+    ax.set_ylim(0.0, 1.05)
+    bench.style_ax(ax, title="Eval-context probe by stream depth, with null rails", xlabel="stream depth", ylabel="AUC", legend=True)
+    bench.save_figure(ctx, fig, "eval_awareness_probe_by_layer.png", "Eval-context direction AUC by stream depth with random, shuffled, and format controls.")
+
+
+def plot_cross_format(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    ran = [r for r in rows if r.get("status") == "ran"]
+    if not ran:
+        return
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(9.0, 5.1))
+    xs = list(range(len(ran)))
+    width = 0.22
+    series = [
+        ("eval vs natural", "auc_eval_vs_natural", "decode", -1.5 * width),
+        ("eval vs format control", "auc_eval_vs_format_control", "eval", -0.5 * width),
+        ("shuffled", "shuffled_auc_eval_vs_natural", "shuffled", 0.5 * width),
+        ("random", "random_auc_eval_vs_natural", "random", 1.5 * width),
+    ]
+    for label, key, color_key, offset in series:
+        ax.bar([x + offset for x in xs], [_lab22_float(r.get(key), 0.0) for r in ran], width=width, label=label, color=lab22_color(color_key))
+    ax.axhline(0.5, linestyle=":", linewidth=1, color="#555555")
+    ax.set_xticks(xs)
+    ax.set_xticklabels([str(r.get("heldout_format", "")) for r in ran], rotation=25, ha="right")
+    ax.set_ylim(0.0, 1.05)
+    bench.style_ax(ax, title="Leave-one-format-out transfer: true eval must beat format controls", xlabel="held-out format", ylabel="AUC", legend=True)
+    bench.save_figure(ctx, fig, "cross_format_transfer.png", "Leave-one-format-out eval-context transfer with controls.")
+
+
+def plot_projection_summary(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    eval_rows = [r for r in rows if r.get("split") in {"eval", "all"}] or list(rows)
+    order = {c: i for i, c in enumerate(LAB22_CONDITION_ORDER)}
+    eval_rows = sorted(eval_rows, key=lambda r: (str(r.get("split", "")), order.get(str(r.get("condition", "")), 999), str(r.get("condition", ""))))
+    labels = [f"{r.get('split')}:{r.get('condition')}" for r in eval_rows]
+    real = [_lab22_float(r.get("mean_real_projection"), 0.0) for r in eval_rows]
+    shuf = [_lab22_float(r.get("mean_shuffled_projection"), 0.0) for r in eval_rows]
+    rand = [_lab22_float(r.get("mean_random_projection"), 0.0) for r in eval_rows]
+    fig, ax = plt.subplots(figsize=(max(8.5, 0.52 * len(labels)), 5.0))
+    xs = list(range(len(labels)))
+    ax.bar([x - 0.22 for x in xs], real, width=0.22, label="real", color=lab22_color("real"))
+    ax.bar(xs, shuf, width=0.22, label="shuffled", color=lab22_color("shuffled"))
+    ax.bar([x + 0.22 for x in xs], rand, width=0.22, label="random", color=lab22_color("random"))
+    ax.axhline(0.0, linewidth=1, color="#333333")
+    ax.set_xticks(xs)
+    ax.set_xticklabels(labels, rotation=30, ha="right")
+    bench.style_ax(ax, title="Selected-depth projection by condition", xlabel="split:condition", ylabel="mean projection", legend=True)
+    bench.save_figure(ctx, fig, "projection_by_condition.png", "Selected-depth real and control projections by condition and split.")
+
+
+def plot_surface_baselines(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    eval_rows = [r for r in rows if r.get("split") == "eval" and r.get("auc_predicts_expected_eval_context") is not None]
+    if not eval_rows:
+        return
+    top = sorted(eval_rows, key=lambda r: _lab22_float(r.get("auc_predicts_expected_eval_context")), reverse=True)[:12]
+    fig, ax = bench.new_figure(figsize=(8.9, 5.3))
+    labels = [_lab22_short(r.get("feature", ""), 38) for r in top][::-1]
+    vals = [_lab22_float(r.get("auc_predicts_expected_eval_context"), 0.0) for r in top][::-1]
+    ax.barh(list(range(len(top))), vals, color=lab22_color("surface"))
+    ax.set_yticks(list(range(len(top))))
+    ax.set_yticklabels(labels)
+    ax.axvline(0.5, linestyle=":", linewidth=1, color="#555555")
+    ax.axvline(0.7, linestyle="--", linewidth=1, color=lab22_color("warning"))
+    ax.set_xlim(0.0, 1.05)
+    bench.style_ax(ax, title="Strongest prompt-surface baselines", xlabel="AUC on eval split", ylabel="surface or metadata feature", legend=False)
+    bench.save_figure(ctx, fig, "surface_baseline_auc.png", "Prompt-surface baseline AUCs for detecting eval-context labels.")
+
+
+def plot_steering(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(2, 1, figsize=(10.0, 7.6), sharex=False)
+    panels = [
+        (axes[0], NATURAL_CONDITION, "Natural prompts: steer toward eval framing", "eval_direction_plus"),
+        (axes[1], EVAL_CONDITION, "Eval prompts: steer away from eval framing", "eval_direction_minus"),
+    ]
+    for ax, prompt_condition, title, real_cond in panels:
+        sub = [r for r in rows if r.get("prompt_condition") == prompt_condition]
+        sub = sorted(sub, key=lambda r: (str(r.get("condition", "")), _lab22_float(r.get("dose"))))
+        labels = [f"{r.get('condition')}\n{r.get('dose')}" for r in sub]
+        vals = [_lab22_float(r.get("mean_mentions_eval_or_test"), 0.0) for r in sub]
+        colors = [lab22_color("real" if r.get("condition") == real_cond else ("random" if "random" in str(r.get("condition")) else "shuffled" if "shuffled" in str(r.get("condition")) else "natural")) for r in sub]
+        ax.bar(labels, vals, color=colors)
+        ax.tick_params(axis="x", rotation=28)
+        ax.set_ylim(0.0, 1.05)
+        bench.style_ax(ax, title=title, xlabel="condition / dose", ylabel="mentions eval/test", legend=False)
+    bench.save_figure(ctx, fig, "steering_behavior_shift.png", "Marker-based behavior shift under eval-awareness steering.")
+
+
+def plot_multiturn_trace(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    fig, ax = bench.new_figure(figsize=(8.6, 4.8))
+    by_conv: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in rows:
+        by_conv[str(row.get("conversation", ""))].append(row)
+    for conv, sub in sorted(by_conv.items()):
+        ordered = sorted(sub, key=lambda r: _lab22_int(r.get("user_turn_number")))
+        color_key = "eval" if "eval" in conv else "natural"
+        ax.plot([_lab22_int(r.get("user_turn_number")) for r in ordered], [_lab22_float(r.get("projection_real"), 0.0) for r in ordered], marker=lab22_marker(color_key), color=lab22_color(color_key), linewidth=2.5, label=conv)
+    ax.axhline(0.0, linewidth=1, color="#333333")
+    bench.style_ax(ax, title="Scripted multi-turn eval projection trace", xlabel="user turn", ylabel="projection on eval-context direction", legend=True)
+    bench.save_figure(ctx, fig, "multiturn_eval_trace.png", "Projection trace over scripted natural versus eval-framed conversations.")
+
+
+def plot_eval_awareness_evidence_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    statuses = [str(r.get("status", "unknown")) for r in rows]
+    fig, ax = plt.subplots(figsize=(10.5, max(4.8, 0.45 * len(rows) + 1.5)))
+    vals = [[{"pass": 1.0, "warning": 0.5, "fail": 0.0, "missing": 0.25}.get(s, 0.25)] for s in statuses]
+    ax.imshow(vals, aspect="auto", vmin=0, vmax=1, cmap="RdYlGn")
+    ax.set_xticks([0])
+    ax.set_xticklabels(["claim\nreadiness"])
+    ax.set_yticks(list(range(len(rows))))
+    ax.set_yticklabels([_lab22_short(r.get("evidence_object", ""), 34) for r in rows])
+    for i, r in enumerate(rows):
+        txt = f"{r.get('rung','')} | {r.get('headline_metric','')} | {r.get('value','')}"
+        ax.text(0.58, i, txt, va="center", ha="left", fontsize=8, transform=ax.get_yaxis_transform())
+        ax.text(0, i, str(r.get("status", "")), va="center", ha="center", fontsize=8)
+    bench.style_ax(ax, title="Eval-awareness evidence matrix: every rung keeps its passport", xlabel="", ylabel="", legend=False)
+    bench.save_figure(ctx, fig, "eval_awareness_evidence_matrix.png", "Rung-by-rung Lab 22 evidence matrix and claim boundaries.")
+
+
+def plot_depth_control_gap_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    depths = [_lab22_int(r.get("depth")) for r in rows]
+    labels = ["heldout eval↔natural", "format-control AUC", "shuffled", "random", "real - best null"]
+    matrix = []
+    for key in ("eval_auc_eval_vs_natural", "eval_auc_eval_vs_format_control", "shuffled_eval_auc_mean", "random_eval_auc_mean"):
+        matrix.append([_lab22_float(r.get(key), 0.5) for r in rows])
+    matrix.append([
+        _lab22_float(r.get("eval_auc_eval_vs_natural"), 0.5) - max(0.5, _lab22_float(r.get("shuffled_eval_auc_mean"), 0.5), _lab22_float(r.get("random_eval_auc_mean"), 0.5))
+        for r in rows
+    ])
+    fig, ax = plt.subplots(figsize=(10.2, 4.7))
+    im = ax.imshow(matrix, aspect="auto", vmin=0.0, vmax=1.0, cmap="viridis")
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels)
+    ax.set_xticks(range(len(depths)))
+    ax.set_xticklabels(depths)
+    if best_depth in depths:
+        ax.axvline(depths.index(best_depth), color="white", linestyle="--", linewidth=1.4)
+    for y, row in enumerate(matrix):
+        for x, val in enumerate(row):
+            if len(depths) <= 34:
+                ax.text(x, y, f"{val:.2f}", ha="center", va="center", fontsize=7, color="white" if val < 0.35 or val > 0.75 else "black")
+    fig.colorbar(im, ax=ax, label="AUC or gap (last row)")
+    bench.style_ax(ax, title="Depth/control atlas: selected layer must beat the null rails", xlabel="stream depth", ylabel="metric", legend=False)
+    bench.save_figure(ctx, fig, "depth_control_gap_atlas.png", "Depth-by-metric atlas for real AUC, controls, and selected-depth gap.")
+
+
+def plot_format_transfer_matrix(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    ran = [r for r in rows if r.get("status") == "ran"]
+    if not ran:
+        return
+    import matplotlib.pyplot as plt
+    labels = [str(r.get("heldout_format", "")) for r in ran]
+    metrics = ["auc_eval_vs_natural", "auc_eval_vs_format_control", "best_control_auc", "control_adjusted_auc_gap", "eval_format_control_gap"]
+    nice = ["eval↔natural", "eval↔format control", "best null", "real-null gap", "eval-control gap"]
+    mat = [[_lab22_float(r.get(m), 0.0) for r in ran] for m in metrics]
+    fig, ax = plt.subplots(figsize=(max(8.5, 0.55 * len(labels)), 4.9))
+    im = ax.imshow(mat, aspect="auto", vmin=-0.25, vmax=1.0, cmap="coolwarm")
+    ax.set_yticks(range(len(nice)))
+    ax.set_yticklabels(nice)
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=25, ha="right")
+    for y, row in enumerate(mat):
+        for x, val in enumerate(row):
+            ax.text(x, y, f"{val:.2f}", ha="center", va="center", fontsize=8)
+    fig.colorbar(im, ax=ax, label="AUC or gap")
+    bench.style_ax(ax, title="Format-transfer matrix: where template effects survive", xlabel="held-out format", ylabel="metric", legend=False)
+    bench.save_figure(ctx, fig, "format_transfer_matrix.png", "Held-out-format transfer matrix with controls and format-control gaps.")
+
+
+def plot_surface_confound_ladder(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    top = sorted(rows, key=lambda r: _lab22_float(r.get("auc_predicts_eval_context")), reverse=True)[:12]
+    fig, ax = bench.new_figure(figsize=(9.2, 5.2))
+    labels = [_lab22_short(r.get("feature", ""), 38) for r in top][::-1]
+    vals = [_lab22_float(r.get("auc_predicts_eval_context"), 0.0) for r in top][::-1]
+    colors = [lab22_color("fail" if r.get("risk_level") == "high" else "warning" if r.get("risk_level") == "medium" else "pass") for r in top][::-1]
+    ax.barh(range(len(vals)), vals, color=colors)
+    ax.axvline(0.5, linestyle=":", color="#444444")
+    ax.axvline(0.7, linestyle="--", color=lab22_color("warning"))
+    ax.set_yticks(range(len(vals)))
+    ax.set_yticklabels(labels)
+    ax.set_xlim(0.0, 1.05)
+    bench.style_ax(ax, title="Surface confound ladder: cheap features get first bite", xlabel="AUC predicting eval-context label", ylabel="surface feature", legend=False)
+    bench.save_figure(ctx, fig, "surface_confound_ladder.png", "Cheap surface and metadata baselines ranked by eval-context predictive strength.")
+
+
+def plot_item_projection_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    sorted_rows = sorted(rows, key=lambda r: _lab22_float(r.get("eval_minus_natural")), reverse=True)
+    top = sorted_rows[: min(30, len(sorted_rows))]
+    labels = [_lab22_short(r.get("group_id", ""), 26) for r in top]
+    cols = ["projection_eval", "projection_natural", "projection_format_control", "eval_minus_natural", "eval_minus_format_control"]
+    nice = ["eval", "natural", "format ctrl", "eval-natural", "eval-format ctrl"]
+    mat = [[_lab22_float(r.get(c), 0.0) for c in cols] for r in top]
+    fig, ax = plt.subplots(figsize=(9.5, max(5.0, 0.30 * len(top) + 1.2)))
+    im = ax.imshow(mat, aspect="auto", cmap="coolwarm")
+    ax.set_yticks(range(len(labels)))
+    ax.set_yticklabels(labels)
+    ax.set_xticks(range(len(cols)))
+    ax.set_xticklabels(nice, rotation=25, ha="right")
+    fig.colorbar(im, ax=ax, label="projection or gap")
+    bench.style_ax(ax, title="Matched-group projection atlas", xlabel="signal", ylabel="group", legend=False)
+    bench.save_figure(ctx, fig, "item_projection_atlas.png", "Matched group-level eval, natural, format-control projections and gaps.")
+
+
+def plot_steering_operating_frontier(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    real = [r for r in rows if str(r.get("condition", "")).startswith("eval_direction")]
+    if not real:
+        return
+    fig, ax = bench.new_figure(figsize=(8.2, 5.4))
+    for r in rows:
+        cond = str(r.get("condition", ""))
+        if "random" in cond:
+            color_key = "random"
+        elif "shuffled" in cond:
+            color_key = "shuffled"
+        elif cond.startswith("eval_direction"):
+            color_key = "real"
+        else:
+            color_key = "surface"
+        x = _lab22_float(r.get("side_effect_score"), 0.0)
+        y = _lab22_float(r.get("target_delta_vs_baseline"), 0.0)
+        ax.scatter(x, y, s=85 if cond.startswith("eval_direction") else 45, marker=lab22_marker(color_key), color=lab22_color(color_key), alpha=0.85)
+        if cond.startswith("eval_direction"):
+            ax.text(x, y, f" {r.get('prompt_condition')}@{r.get('dose')}", fontsize=8, va="center")
+    ax.axhline(0.0, linewidth=1, color="#333333")
+    ax.axvline(0.5, linestyle=":", linewidth=1, color=lab22_color("warning"))
+    bench.style_ax(ax, title="Steering operating frontier: target shift must pay side-effect rent", xlabel="side-effect score (hedge/refusal/format/length)", ylabel="target movement vs baseline", legend=False)
+    bench.save_figure(ctx, fig, "steering_operating_frontier.png", "Dose-level target movement versus side-effect cost for eval-awareness steering.")
+
+
+def plot_generation_marker_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    if not rows:
+        return
+    import matplotlib.pyplot as plt
+    labels = [f"{r.get('prompt_condition')}\n{r.get('condition')}\n{r.get('dose')}" for r in rows]
+    metrics = ["mean_mentions_eval_or_test", "mean_self_identifies_eval_context", "mean_hedging_marker", "mean_refusal_marker", "mean_choice_marker", "mean_word_count"]
+    nice = ["mentions eval", "self-id eval", "hedging", "refusal", "choice fmt", "word count\n(scaled)"]
+    word_vals = [_lab22_float(r.get("mean_word_count"), 0.0) for r in rows]
+    word_max = max(word_vals) if word_vals else 1.0
+    mat = []
+    for m in metrics:
+        vals = [_lab22_float(r.get(m), 0.0) for r in rows]
+        if m == "mean_word_count":
+            vals = [v / max(1.0, word_max) for v in vals]
+        mat.append(vals)
+    fig, ax = plt.subplots(figsize=(max(10.0, 0.36 * len(labels)), 5.2))
+    im = ax.imshow(mat, aspect="auto", vmin=0, vmax=1, cmap="magma")
+    ax.set_yticks(range(len(nice)))
+    ax.set_yticklabels(nice)
+    ax.set_xticks(range(len(labels)))
+    ax.set_xticklabels(labels, rotation=55, ha="right", fontsize=8)
+    fig.colorbar(im, ax=ax, label="marker rate / scaled count")
+    bench.style_ax(ax, title="Generation-marker atlas: what actually moved?", xlabel="prompt condition / steering condition / dose", ylabel="marker", legend=False)
+    bench.save_figure(ctx, fig, "generation_marker_atlas.png", "Marker-level steering atlas for eval mentions and cheap side effects.")
+
+
+def plot_multiturn_trace_atlas(ctx: bench.RunContext, trace_rows: Sequence[Mapping[str, Any]], summary_rows: Sequence[Mapping[str, Any]]) -> None:
+    if not trace_rows:
+        return
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.8), gridspec_kw={"width_ratios": [1.4, 1.0]})
+    by_conv: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for row in trace_rows:
+        by_conv[str(row.get("conversation", ""))].append(row)
+    for conv, sub in sorted(by_conv.items()):
+        ordered = sorted(sub, key=lambda r: _lab22_int(r.get("user_turn_number")))
+        color_key = "eval" if "eval" in conv else "natural"
+        axes[0].plot([_lab22_int(r.get("user_turn_number")) for r in ordered], [_lab22_float(r.get("projection_real"), 0.0) for r in ordered], marker=lab22_marker(color_key), color=lab22_color(color_key), label=conv)
+    axes[0].axhline(0.0, linewidth=1, color="#333333")
+    bench.style_ax(axes[0], title="turn-by-turn projection", xlabel="user turn", ylabel="real projection", legend=True)
+    labels = [str(r.get("conversation", "")) for r in summary_rows]
+    vals = [_lab22_float(r.get("projection_delta_last_minus_first"), 0.0) for r in summary_rows]
+    colors = [lab22_color("eval" if "eval" in lab else "natural") for lab in labels]
+    axes[1].bar(labels, vals, color=colors)
+    axes[1].tick_params(axis="x", rotation=25)
+    axes[1].axhline(0.0, linewidth=1, color="#333333")
+    bench.style_ax(axes[1], title="last - first", xlabel="script", ylabel="projection delta", legend=False)
+    bench.save_figure(ctx, fig, "multiturn_trace_atlas.png", "Scripted multi-turn projection trace and trace-delta summary.")
+
+
+def plot_eval_awareness_dashboard(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    probe_rows: Sequence[Mapping[str, Any]],
+    transfer_summary: Sequence[Mapping[str, Any]],
+    steering_points: Sequence[Mapping[str, Any]],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    best_depth: int,
+) -> None:
+    import matplotlib.pyplot as plt
+    fig, axes = plt.subplots(2, 2, figsize=(12.0, 8.4))
+    # Panel 1: depth selectivity.
+    xs = [_lab22_int(r.get("depth")) for r in probe_rows]
+    y_real = [_lab22_float(r.get("eval_auc_eval_vs_natural"), 0.5) for r in probe_rows]
+    y_null = [max(0.5, _lab22_float(r.get("shuffled_eval_auc_mean"), 0.5), _lab22_float(r.get("random_eval_auc_mean"), 0.5)) for r in probe_rows]
+    axes[0, 0].plot(xs, y_real, marker="o", color=lab22_color("decode"), label="held-out real")
+    axes[0, 0].plot(xs, y_null, marker="x", color=lab22_color("random"), linestyle=":", label="best null rail")
+    axes[0, 0].axvline(best_depth, linestyle="--", color=lab22_color("decode"))
+    axes[0, 0].axhline(0.5, linestyle=":", color="#555555")
+    axes[0, 0].set_ylim(0, 1.05)
+    bench.style_ax(axes[0, 0], title="1. decode must beat nulls", xlabel="stream depth", ylabel="AUC", legend=True)
+    # Panel 2: transfer.
+    labels = [str(r.get("heldout_format", "")) for r in transfer_summary if r.get("status") == "ran"]
+    gaps = [_lab22_float(r.get("control_adjusted_auc_gap"), 0.0) for r in transfer_summary if r.get("status") == "ran"]
+    axes[0, 1].bar(labels, gaps, color=[lab22_color("pass" if g >= 0.08 else "warning" if g >= 0.03 else "fail") for g in gaps])
+    axes[0, 1].axhline(0.0, linewidth=1, color="#333333")
+    axes[0, 1].tick_params(axis="x", rotation=25)
+    bench.style_ax(axes[0, 1], title="2. held-out formats must transfer", xlabel="format", ylabel="real - best null AUC", legend=False)
+    # Panel 3: steering frontier.
+    for r in steering_points:
+        cond = str(r.get("condition", ""))
+        color_key = "real" if cond.startswith("eval_direction") else "random" if "random" in cond else "shuffled" if "shuffled" in cond else "surface"
+        axes[1, 0].scatter(_lab22_float(r.get("side_effect_score"), 0.0), _lab22_float(r.get("target_delta_vs_baseline"), 0.0), marker=lab22_marker(color_key), color=lab22_color(color_key), s=75 if color_key == "real" else 40, alpha=0.85)
+    axes[1, 0].axhline(0.0, linewidth=1, color="#333333")
+    axes[1, 0].axvline(0.5, linestyle=":", color=lab22_color("warning"))
+    bench.style_ax(axes[1, 0], title="3. steering must move behavior cheaply", xlabel="side-effect score", ylabel="target delta", legend=False)
+    # Panel 4: evidence statuses.
+    status_values = {"pass": 1.0, "warning": 0.55, "fail": 0.10, "missing": 0.25}
+    labels4 = [_lab22_short(r.get("evidence_object", ""), 22) for r in evidence_rows]
+    vals4 = [status_values.get(str(r.get("status", "missing")), 0.25) for r in evidence_rows]
+    colors4 = [lab22_color(str(r.get("status", "unknown"))) for r in evidence_rows]
+    axes[1, 1].barh(range(len(vals4)), vals4, color=colors4)
+    axes[1, 1].set_yticks(range(len(vals4)))
+    axes[1, 1].set_yticklabels(labels4, fontsize=8)
+    axes[1, 1].set_xlim(0, 1.05)
+    bench.style_ax(axes[1, 1], title="4. claim-readiness board", xlabel="status score", ylabel="evidence object", legend=False)
+    fig.suptitle("Lab 22 eval-awareness evidence dashboard", fontsize=15)
+    fig.tight_layout(rect=[0, 0, 1, 0.96])
+    bench.save_figure(ctx, fig, "eval_awareness_evidence_dashboard.png", "Start-here dashboard for Lab 22 decode, control, steering, and trace evidence.")
+
+
+def plot_eval_awareness_visual_suite(
+    ctx: bench.RunContext,
+    *,
+    metrics: Mapping[str, Any],
+    probe_rows: Sequence[Mapping[str, Any]],
+    best_depth: int,
+    proj_summary: Sequence[Mapping[str, Any]],
+    surface_rows: Sequence[Mapping[str, Any]],
+    transfer_rows: Sequence[Mapping[str, Any]],
+    steering_rows: Sequence[Mapping[str, Any]],
+    trace_rows: Sequence[Mapping[str, Any]],
+    synthesis: Mapping[str, Sequence[Mapping[str, Any]]],
+) -> None:
+    plot_eval_awareness_dashboard(ctx, metrics, probe_rows, synthesis.get("transfer_summary", []), synthesis.get("steering_points", []), synthesis.get("evidence", []), best_depth)
+    plot_probe(ctx, probe_rows, best_depth)
+    plot_depth_control_gap_atlas(ctx, probe_rows, best_depth)
+    plot_cross_format(ctx, transfer_rows)
+    plot_format_transfer_matrix(ctx, synthesis.get("transfer_summary", []))
+    plot_projection_summary(ctx, proj_summary)
+    plot_item_projection_atlas(ctx, synthesis.get("item_signals", []))
+    plot_surface_baselines(ctx, surface_rows)
+    plot_surface_confound_ladder(ctx, synthesis.get("surface_audit", []))
+    plot_steering(ctx, steering_rows)
+    plot_steering_operating_frontier(ctx, synthesis.get("steering_points", []))
+    plot_generation_marker_atlas(ctx, steering_rows)
+    plot_multiturn_trace(ctx, trace_rows)
+    plot_multiturn_trace_atlas(ctx, trace_rows, synthesis.get("trace_summary", []))
+    plot_eval_awareness_evidence_matrix(ctx, synthesis.get("evidence", []))
+
+
 # ---------------------------------------------------------------------------
 # Main run
 # ---------------------------------------------------------------------------
@@ -1964,7 +2850,6 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     if not bench.supports_chat_template(bundle):
         raise RuntimeError("Lab 22 requires an instruct/think model with a chat template.")
-    write_bench_integration_note(ctx, bundle)
 
     items, manifest = load_items(ctx.args)
     print(f"[lab22] {manifest['n_rows']} rows across {len(manifest['formats'])} formats; prompt_set={manifest['prompt_set']}")
@@ -2122,13 +3007,32 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     save_directions(ctx, bundle, directions, best_depth, metrics)
 
+    synthesis = write_eval_awareness_visual_synthesis(
+        ctx,
+        metrics=metrics,
+        verdict=verdict,
+        proj_rows=proj_rows,
+        generation_rows=generation_rows,
+        steering_rows=steering_rows,
+        surface_rows=surface_rows,
+        transfer_rows=transfer_rows,
+        trace_rows=trace_rows,
+        organism_rows=organism_rows,
+    )
+
     if not ctx.args.no_plots:
-        plot_probe(ctx, probe_rows, best_depth)
-        plot_cross_format(ctx, transfer_rows)
-        plot_projection_summary(ctx, proj_summary)
-        plot_surface_baselines(ctx, surface_rows)
-        plot_steering(ctx, steering_rows)
-        plot_multiturn_trace(ctx, trace_rows)
+        plot_eval_awareness_visual_suite(
+            ctx,
+            metrics=metrics,
+            probe_rows=probe_rows,
+            best_depth=best_depth,
+            proj_summary=proj_summary,
+            surface_rows=surface_rows,
+            transfer_rows=transfer_rows,
+            steering_rows=steering_rows,
+            trace_rows=trace_rows,
+            synthesis=synthesis,
+        )
 
     write_eval_awareness_card(ctx, metrics, verdict)
     write_operationalization_audit(ctx, metrics, verdict)
