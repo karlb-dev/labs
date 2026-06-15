@@ -19,7 +19,7 @@ must work on a laptop — debug there, spend GPU minutes on science.
 
 | Tier | Hardware | What runs |
 |---|---|---|
-| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 12) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13-18) / lab-specific small models; correctness of plumbing, not science |
+| A — smoke | laptop CPU (or MPS) | `gpt2` (base labs: 1–6, 8, 9, 12, 26–30, 32, 34) / offline, synthetic, and package audit harnesses (labs 31, 33, 35) / `SmolLM2-135M-Instruct` (chat/generation labs: 7, 13–18, 20–25) / lab-specific small models (Qwen3-0.6B for lab 10, pythia-160m for lab 19); correctness of plumbing, not science |
 | B — standard | Colab A100/H100, or any 24 GB+ GPU | base labs on `allenai/Olmo-3-1025-7B`; instruct labs (7+) on `allenai/Olmo-3-7B-Instruct`, bf16 |
 | C — comfortable | 40–80 GB GPU | fp32, larger prompt sets |
 
@@ -140,6 +140,46 @@ python interp_bench.py --lab lab24 --tier b --mode both --prompt-set full
 # Lab 25 (find the wire; injected states and self-report grounding):
 python interp_bench.py --lab lab25 --tier a --mode both --no-plots
 python interp_bench.py --lab lab25 --tier b --mode both --prompt-set full
+
+# Lab 26 (causal abstraction by residual-stream resampling):
+python interp_bench.py --lab lab26 --tier a
+python interp_bench.py --lab lab26 --tier b --prompt-set full
+
+# Lab 27 (path-specific patching and causal mediation):
+python interp_bench.py --lab lab27 --tier a --no-plots
+python interp_bench.py --lab lab27 --tier b --prompt-set full
+
+# Lab 28 (mechanistic editing and unlearning; reversible activation edits):
+python interp_bench.py --lab lab28 --tier a --no-plots
+python interp_bench.py --lab lab28 --tier b --prompt-set full
+
+# Lab 29 (training dynamics and circuit birth; controlled tiny checkpoint sequence):
+python interp_bench.py --lab lab29 --tier a --no-plots
+python interp_bench.py --lab lab29 --tier b --prompt-set full
+
+# Lab 30 (cross-layer feature geometry; supervised prototype lineage):
+python interp_bench.py --lab lab30 --tier a --no-plots
+python interp_bench.py --lab lab30 --tier b --prompt-set full
+
+# Lab 31 (automated interpretability at scale; offline label audit):
+python interp_bench.py --lab lab31 --tier a --no-plots
+python interp_bench.py --lab lab31 --tier b --prompt-set full
+
+# Lab 32 (reward/preference circuits; split-aware DPO-style proxy and shortcut controls):
+python interp_bench.py --lab lab32 --tier a --no-plots
+python interp_bench.py --lab lab32 --tier b --prompt-set full
+
+# Lab 33 (multimodal MI; synthetic connector audit and leak controls):
+python interp_bench.py --lab lab33 --tier a --no-plots
+python interp_bench.py --lab lab33 --tier b --prompt-set full
+
+# Lab 34 (tool use and state tracking; benign toy-tool controls):
+python interp_bench.py --lab lab34 --tier a --no-plots
+python interp_bench.py --lab lab34 --tier b --prompt-set full
+
+# Lab 35 (reproducible paper capstone; frozen-run binding and review package):
+python interp_bench.py --lab lab35 --tier a --no-plots
+python interp_bench.py --lab lab35 --tier b --prompt-set full
 ```
 
 On Colab: `Runtime > Change runtime type > A100`, then in a cell:
@@ -303,7 +343,7 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   direction, audits it against surprise/silliness/positivity, inspects
   attention back to setup tokens, and steers neutral endings with hand-label
   scaffolds for the "is it actually funnier?" question.
-- Lab 19: model diffing with crosscoders — started for the advanced course.
+- Lab 19: model diffing with crosscoders — implemented for the advanced course.
   Adds a custom paired-crosscoder path, prompt inventory from existing frozen
   batteries, Tier A identity-pair smoke defaults, Tier B OLMo base-vs-instruct
   defaults, feature taxonomy/gallery artifacts, and an optional `--run-edit`
@@ -312,42 +352,115 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   private construction artifacts from public blind-audit packages, writes
   salted commitments and leak scans, runs baseline target/control and spillover
   audits, and emits adapter-training recipes for later Lab 21/23 work.
-- Lab 21: LoRA localization and safety depth — started for the advanced
+- Lab 21: LoRA localization and safety depth — implemented for the advanced
   course. Adds a two-mode harness for Lab 20 adapter localization, wrapper
   test scaffolds, base-vs-instruct residual divergence, and benign
   refusal-boundary depth audits.
-- Lab 22: eval awareness — started for the advanced course. Adds matched
+- Lab 22: eval awareness — implemented for the advanced course. Adds matched
   eval/natural/format-control prompts, train-only direction selection,
   cross-format transfer, safe steering, CoT mention scaffolds, and optional
   Lab 20 eval-aware organism discovery.
-- Lab 23: blind audit — started for the advanced course. Discovers Lab 20
+- Lab 23: blind audit — implemented for the advanced course. Discovers Lab 20
   public packages, writes preregistration and pre-unseal report templates,
   separates behavioral-only from internals-allowed audit plans, and scores
   submitted claims against unsealed answer keys.
-- Lab 24: knowledge conflict and belief revision — started for the advanced
+- Lab 24: knowledge conflict and belief revision — implemented for the advanced
   course. Adds single-turn context-vs-parametric answer competition,
   multi-turn pressure trajectories, revision quadrants, instrument dependency
   audits, and optional patch/steer recovery scaffolds.
-- Lab 25: find the wire — started for the advanced course. Adds concept
+- Lab 25: find the wire — implemented for the advanced course. Adds concept
   injection, self-report dose-response, false-positive floor, grounding
   controls, voice/source attribution, and report-discipline scorecards.
+- Lab 26: causal abstraction by residual-stream resampling — first special-topics
+  lab, implemented on base models. Adds formal JSON hypothesis specs, a frozen
+  induction/relation resampling dataset, residual-stream behavior-preserving
+  resampling, variable-breaking/random/wrong-site controls, counterexample
+  galleries, and hypothesis-refinement logs. This is residual resampling,
+  not path-specific scrubbing; Lab 27 owns paths.
+- Lab 27: path-specific patching and causal mediation — implemented as a
+  residual source-to-receiver mediation proxy on base models. Adds frozen
+  clean/corrupt path tasks, node-effect baselines, mediated receiver-state
+  patches, source+receiver joint patches, reverse/wrong-receiver/random
+  controls, mediation accounting, and explicit counterexamples when node
+  effects do not justify path language.
+- Lab 28: mechanistic editing and unlearning — implemented as a safe first
+  pass with reversible inference-time activation edits. Adds benign frozen
+  edit targets, donor-prompt localization, wrong-position/random-direction
+  controls, paraphrase transfer checks, retain/neighbor side-effect audits,
+  safety status artifacts, and explicit non-claims about factual erasure.
+- Lab 29: training dynamics and circuit birth — implemented as a controlled
+  tiny-transformer time-lapse. Adds frozen induction/control tasks, a
+  deterministic in-run checkpoint sequence, behavior trajectories,
+  shuffled-label centroid probes, previous-match attention motif tracking,
+  feature-lineage tables, final-direction intervention transfer, and
+  thresholded birth-event ledgers.
+- Lab 30: cross-layer and cross-model feature geometry — implemented as a
+  supervised prototype-direction first pass. Adds a frozen domain/confusable
+  lineage corpus, layerwise domain directions, adjacent-depth lineage edges,
+  random/confusable controls, split/merge screens, marker-logit transfer
+  probes, and explicit cross-model limitations until real external
+  dictionaries or checkpoint pairs are loaded.
+- Lab 31: automated interpretability at scale — implemented as an offline
+  audit harness for generated feature labels. Adds synthetic/gold feature
+  tasks, heuristic and test-aware labelers, held-out positive/hard negative/
+  confusable/token-overlap test suites, confidence calibration, abstention
+  frontiers, and a human-review queue with shared label fields.
+- Lab 32: reward models and preference circuits — implemented with a benign
+  preference-pair suite, a DPO-style policy/reference log-prob proxy,
+  train-selected/eval-tested residual preference directions, length/politeness/
+  agreement/sentiment/hedging/refusal shortcut controls, sycophancy and
+  uncertainty-risk rows, and narrow judge-prompt activation-addition tests.
+- Lab 33: multimodal mechanistic interpretability — implemented as a synthetic
+  connector audit rather than a real VLM claim. Adds rendered shape/chart
+  image specs, image/text/caption/connector/language state probes,
+  clean/corrupt patch semantics, OCR/background leak gates, wrong-region and
+  random-patch controls, alignment diagnostics, and explicit
+  `science_ready=false` status until real VLM hooks are loaded.
+- Lab 34: tool use, agents, and state tracking — implemented as a controlled
+  toy-tool harness. Adds a 48-row calculator/dictionary/calendar/file-search/
+  route/unit/no-tool suite, prompt-boundary residual probes, deterministic tool
+  traces, surface-cue and no-tool controls, constrained tool-choice
+  interventions, corrupted-result reliance checks, and self-report review
+  tables.
+- Lab 35: reproducible interpretability paper capstone — implemented as a
+  package generator and validator. Adds six seed tracks, preregistration,
+  frozen-run binding templates, paper and claim-card drafts, fixed
+  adversarial-review rubric, repair accounting, reproduction guide, evidence
+  matrix, failure-mode contribution, and package validation diagnostics.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
 the shared bench, each validated on Tier A (CPU) and Tier B (Colab A100).**
-The advanced course is now in progress; Labs 12-18 are implemented, Labs 19-22
-are started, and all should be treated as new lab code until their Colab
-validation runs are recorded.
-Two full-course regression sweeps are on record:
-`runs/RUN2_VALIDATION_REPORT.md` (pre-rewrite tree, 24/24 green,
-deterministic reproduction of the validated numbers) and
-`runs/RUN3_VALIDATION_REPORT.md` (post-rewrite merge, 23/23 green after one
-real data bug the rewrite's own validator caught; untouched labs reproduce
-run 2 exactly). The one-page sweep view is `course_dashboard.py`; the
-design-vs-built record is COURSE.md §0. The post-run-3 review pass
-(prompt/pool tokenization fixes in Labs 1/3/5/6/11 and the continuous-
-batching generation engine in Lab 10) changes some lab populations, so the
-next sweep refreshes the reference headline numbers for those labs.
+The advanced course (Labs 12–25) is now implemented as well, and Lab 26 starts
+the special-topics sequence. Labs 1–35 exist, run, and ship their cards and
+audits. Several advanced/special-topic labs may land on an honest negative on
+the default model — the controls doing their job, which is the design, not a
+gap; read each lab's card for the verdict.
+
+Validation history lives under `runs/`: `RUN2`–`RUN5_VALIDATION_REPORT.md`
+track the intro-course regression sweeps (RUN2 24/24 green with deterministic
+reproduction; RUN3 23/23 after one real data bug its own validator caught),
+and `run6/` is the broadest sweep to date — all 25 labs across five models and
+three tiers: `gpt2` / `SmolLM2-135M-Instruct` (Tier A), `Olmo-3-1025-7B` /
+`Olmo-3-7B-Instruct` (Tier B), `Olmo-3-1125-32B` (Tier C), plus an
+`Olmo-3.1-32B-Instruct` and a `google/gemma-4-E4B-it` sample. Tier A and Tier B
+completed 25/25 green; the larger-model runs surfaced three caveats worth
+tracking before the next sweep:
+
+- The Olmo-32B patching labs (5/6/12) hit the wall-clock stop, so those Tier-C
+  runs have probe/geometry data but no completed causal results — these labs
+  need a subsampled patch grid or a longer budget on 32B.
+- Lab 3 fails hook reconstruction on Olmo-32B.
+- The DLA/component family (Labs 2/5/6/9) does not yet attach to **Gemma4** —
+  its extra pre/post-feedforward LayerNorms aren't in the bench's component
+  hook-point candidates. The generic residual-stream hooks attach fine (hook
+  parity and patch no-op are exact); only the per-component decomposition needs
+  the Gemma4 paths added.
+
+These gaps are specific to the mechanistic-attribution family and to 32B
+wall-clock, not general — the probing/steering/behavioral labs run cleanly on
+every model sampled. The one-page sweep view is `course_dashboard.py`; the
+design-vs-built record is COURSE.md §0.
 
 ## Design decisions (deviations from COURSE.md, on purpose)
 
@@ -484,8 +597,9 @@ diagnostic CSVs keep their minimal check-specific schemas.
 
 `claim_ledger.md` at this directory's root is the student's running dossier:
 every claim carries an evidence tag (`OBS | ATTR | DECODE | CAUSAL |
-SELF-REPORT`), the artifact backing it, and the observation that would kill
-it. Labs draft claims with measured numbers into `ledger_suggestions.md`;
+SELF-REPORT | AUDIT | CONSTRUCTION | FORMAL`), the artifact backing it, and
+the observation that would kill it. Labs draft claims with measured numbers
+into `ledger_suggestions.md`;
 nothing touches the real ledger unless you pass `--append-ledger`, because
 writing the claim is the coursework. The Lab 11 capstone audits this file.
 
@@ -509,7 +623,10 @@ python interp_bench.py \
 ```
 
 `--tier a` always maps to a CPU-feasible configuration so the smoke path is
-one flag, not a recipe.
+one flag, not a recipe. `--prompt-set` defaults to `small` on Tier A (smoke)
+and `full` on Tiers B/C — a tiny prompt set produces degenerate selections on
+the science tiers, so the trustworthy default is automatic; pass `--prompt-set`
+explicitly to override either way.
 
 ## Troubleshooting
 

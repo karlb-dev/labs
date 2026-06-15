@@ -1,0 +1,49 @@
+{
+  "hypothesis_id": "induction_copy_v1",
+  "domain": "induction",
+  "behavior_metric": "logit(target) - logit(distractor)",
+  "high_level_variables": [
+    "COPY_SOURCE",
+    "QUERY_TOKEN"
+  ],
+  "low_level_sites": [
+    {
+      "kind": "residual",
+      "positions": [
+        "target_position"
+      ],
+      "stream_depths": "coarse",
+      "rationale": "The final query-token stream should carry the instruction to copy the token after the previous query occurrence."
+    },
+    {
+      "kind": "residual",
+      "positions": [
+        "source_position"
+      ],
+      "stream_depths": "coarse",
+      "rationale": "Later attention can read the previous answer token position; source-position resampling is a locality control."
+    }
+  ],
+  "resampling_rules": [
+    {
+      "preserve": [
+        "COPY_SOURCE",
+        "QUERY_TOKEN"
+      ],
+      "vary": [
+        "SURFACE_FRAME"
+      ]
+    },
+    {
+      "preserve": [
+        "QUERY_TOKEN"
+      ],
+      "break": [
+        "COPY_SOURCE"
+      ]
+    }
+  ],
+  "predicted_preservation_min": 0.65,
+  "predicted_damage_when_broken_min": 0.25,
+  "predicted_specificity_gap_min": 0.10
+}
