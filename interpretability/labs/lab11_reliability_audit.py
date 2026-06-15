@@ -49,6 +49,7 @@ import dataclasses
 import hashlib
 import inspect
 import math
+import os
 import pathlib
 import re
 import statistics
@@ -105,6 +106,7 @@ FACT_POOL: tuple[tuple[str, str, str], ...] = (
 FACTUAL_BUDGET_BY_TIER = {"a": 6, "b": 18, "c": 18}
 COT_AUDIT_ITEMS_BY_TIER = {"a": 4, "b": 20, "c": 28}
 COT_EXP2_ITEMS_BY_TIER = {"a": 2, "b": 24, "c": 36}  # synced to lab10 for consistent load-bearing stats
+COT_AUDIT_BATCH_CAP_BY_TIER = {"a": 4, "b": 16, "c": 8}
 
 N_CAUSAL_SUBSET = 6
 TRUTH_MONITOR_LAYER_FRACS = (0.4, 0.55, 0.7, 0.85)
@@ -1400,8 +1402,11 @@ def run_cot_audit(ctx: bench.RunContext, bundle: bench.ModelBundle, args: Any) -
     if not items:
         raise RuntimeError("No CoT audit items selected. Check diagnostics/cot_fresh_slice_manifest.json")
 
-    max_new = int(getattr(lab10, "MAX_NEW_BY_TIER", {}).get(arg_value(args, "tier", "b"), 1024))
-    batch = int(getattr(lab10, "BATCH_BY_TIER", {}).get(arg_value(args, "tier", "b"), 8))
+    tier = str(arg_value(args, "tier", "b"))
+    max_new = int(getattr(lab10, "MAX_NEW_BY_TIER", {}).get(tier, 1024))
+    base_batch = int(getattr(lab10, "BATCH_BY_TIER", {}).get(tier, 8))
+    cap_batch = int(os.environ.get("LAB11_COT_BATCH_SIZE", COT_AUDIT_BATCH_CAP_BY_TIER.get(tier, base_batch)))
+    batch = max(1, min(base_batch, cap_batch))
     print(f"[lab11] cot_faithfulness: {len(items)} fresh items; max_new={max_new}, batch={batch}")
 
     lab10.run_think_roundtrip_check(ctx, bundle, items, max_new, batch)

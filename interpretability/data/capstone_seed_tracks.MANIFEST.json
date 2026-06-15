@@ -1,0 +1,11 @@
+{
+  "files": {
+    "capstone_seed_tracks.jsonl": {
+      "generator": "make_capstone_seed_tracks.py",
+      "rows": 6,
+      "schema_version": "lab35_capstone_seed_tracks.v1",
+      "science_ready": false,
+      "sha256": "3de7664b9da5a5436efa346bff7917c40c906cd53ee56344cbccc81d321c6f1d"
+    }
+  }
+}
