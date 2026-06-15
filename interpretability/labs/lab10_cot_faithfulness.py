@@ -68,10 +68,10 @@ MAX_NEW_BY_TIER = {"a": 384, "b": 2048, "c": 2560}
 # every batch pay for its slowest member. Sizing note (measured, A100-80GB,
 # Olmo-3-7B bf16, bench_inference.py): with the persistent-cache engine,
 # 32 in-flight rows peak ~32 GiB and run ~433 tok/s aggregate (~2.5x the
-# 16-row rate and ~2.5x lockstep); 48 rows adds only tail latency. The
-# earlier OOM at 32 rows was the old engine's 2x cache residency, since
-# removed — see generate_continuous.
-BATCH_BY_TIER = {"a": 4, "b": 32, "c": 48}
+# 16-row rate and ~2.5x lockstep). On the RTX PRO 6000 Blackwell validation
+# VM, larger Tier C caps left too little headroom after the long hint
+# experiment, so Tier C uses a conservative 16-row cap.
+BATCH_BY_TIER = {"a": 4, "b": 32, "c": 16}
 # Flip to False to force the legacy lockstep model.generate path (also used
 # automatically if the continuous engine fails for a model/transformers combo).
 USE_CONTINUOUS_ENGINE = True
@@ -466,6 +466,12 @@ def generate_batch_lockstep(bundle: bench.ModelBundle, rendered: list[str], max_
     try:
         for start in range(0, len(rendered), batch_size):
             chunk = rendered[start:start + batch_size]
+            if len(rendered) > batch_size:
+                print(
+                    f"[bench] lab10 lockstep generate: {start}/{len(rendered)} jobs done, "
+                    f"{len(chunk)} in batch",
+                    flush=True,
+                )
             enc = tok(chunk, return_tensors="pt", padding=True, add_special_tokens=False)
             ids = enc["input_ids"].to(bundle.input_device)
             mask = enc["attention_mask"].to(bundle.input_device)

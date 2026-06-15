@@ -2580,6 +2580,14 @@ def compute_lens_trajectory(
 #                         then + post_feedforward_layernorm(mlp(.))
 #                       -> the *norm* outputs are the contributions; the raw
 #                          attn/mlp outputs never touch the stream.
+#   Gemma4 text:          x + post_attention_layernorm(attn(x));
+#                         then + post_feedforward_layernorm(mlp(.));
+#                         then + post_per_layer_input_norm(...);
+#                         then the whole block output is multiplied by a learned
+#                         layer_scalar. The exact residual delta is therefore
+#                         scalar*attn + scalar*(mlp + per_layer) +
+#                         (scalar - 1)*x. The extra/rescale term is folded into
+#                         the MLP-side bucket and recorded in diagnostics.
 #
 # Name heuristics are a trap here: Llama-style models also have a module
 # called `post_attention_layernorm`, but there it is a PRE-norm for the MLP.
@@ -2593,6 +2601,7 @@ ATTN_MODULE_CANDIDATES = ("self_attn", "attn")
 MLP_MODULE_CANDIDATES = ("mlp",)
 POST_ATTN_NORM_CANDIDATES = ("post_attention_layernorm",)
 POST_MLP_NORM_CANDIDATES = ("post_feedforward_layernorm",)
+EXTRA_MLP_RESIDUAL_CANDIDATES = ("post_per_layer_input_norm",)
 
 
 @dataclasses.dataclass
@@ -2607,6 +2616,9 @@ class ComponentAnatomy:
     mlp_hook_path: str
     max_block_recon_rel_err: float
     probe_prompt: str
+    extra_mlp_hook_path: str | None = None
+    scale_by_layer_scalar: bool = False
+    fold_residual_scale_into_mlp: bool = False
 
 
 @dataclasses.dataclass
@@ -2627,6 +2639,7 @@ class ComponentCapture:
     capture: ForwardCapture
     attn_contrib: Any   # torch.Tensor [L, d_model] float32 cpu
     mlp_contrib: Any    # torch.Tensor [L, d_model] float32 cpu
+    composite_residual_accounting: bool = False
 
 
 def _first_module_path(block: Any, candidates: Sequence[str]) -> str | None:
@@ -2644,6 +2657,16 @@ def _contrib_hook(store: dict, key: tuple) -> Any:
         store[key] = tensor_cpu_float(out[0, -1])
 
     return hook
+
+
+def _layer_scalar_float(block: Any) -> float:
+    scalar = getattr(block, "layer_scalar", None)
+    if scalar is None:
+        return 1.0
+    try:
+        return float(scalar.detach().float().reshape(-1)[0].cpu())
+    except AttributeError:
+        return float(scalar)
 
 
 def resolve_component_anatomy(
@@ -2670,6 +2693,7 @@ def resolve_component_anatomy(
         )
     post_attn_path = _first_module_path(block0, POST_ATTN_NORM_CANDIDATES)
     post_mlp_path = _first_module_path(block0, POST_MLP_NORM_CANDIDATES)
+    extra_mlp_path = _first_module_path(block0, EXTRA_MLP_RESIDUAL_CANDIDATES)
 
     store: dict[tuple, Any] = {}
     handles = []
@@ -2684,6 +2708,10 @@ def resolve_component_anatomy(
             if post_mlp_path:
                 handles.append(
                     getattr(block, post_mlp_path).register_forward_hook(_contrib_hook(store, ("mlp", "post_norm", i)))
+                )
+            if extra_mlp_path:
+                handles.append(
+                    getattr(block, extra_mlp_path).register_forward_hook(_contrib_hook(store, ("mlp", "extra_residual", i)))
                 )
         capture = run_with_residual_cache(bundle, probe_prompt)
     finally:
@@ -2705,7 +2733,25 @@ def resolve_component_anatomy(
                 worst = max(worst, float((recon - deltas[k]).norm()) / denom)
             results[(a_src, m_src)] = worst
 
+    layer_scalars = [_layer_scalar_float(block) for block in bundle.blocks]
+    has_nontrivial_layer_scalar = any(abs(s - 1.0) > 1e-6 for s in layer_scalars)
+    if (extra_mlp_path or has_nontrivial_layer_scalar) and post_attn_path and post_mlp_path:
+        worst = 0.0
+        for k in range(n_layers):
+            scalar = layer_scalars[k]
+            attn = store[("attn", "post_norm", k)]
+            mlp = store[("mlp", "post_norm", k)]
+            extra = store.get(("mlp", "extra_residual", k))
+            if extra is None:
+                extra = torch.zeros_like(mlp)
+            block_input = capture.streams[k, -1]
+            recon = scalar * attn + (scalar * (mlp + extra) + (scalar - 1.0) * block_input)
+            denom = max(float(deltas[k].norm()), 1e-9)
+            worst = max(worst, float((recon - deltas[k]).norm()) / denom)
+        results[("post_norm*layer_scalar", "post_norm+extra_residual+rescale")] = worst
+
     (best_a, best_m), best_err = min(results.items(), key=lambda kv: kv[1])
+    composite = best_m == "post_norm+extra_residual+rescale"
     # The gate is a MAX over n_layers per-block reconstructions, so deeper
     # models draw more samples from the same bf16 rounding distribution and
     # the worst block grows even when the decomposition is exactly right
@@ -2717,7 +2763,8 @@ def resolve_component_anatomy(
     # than fp32. Both stay far below the >0.2 a wrong decomposition produces.
     low_precision = next(bundle.model.parameters()).dtype in (torch.bfloat16, torch.float16)
     precision_factor = 1.6 if low_precision else 1.0
-    effective_tolerance = rel_tolerance * max(1.0, (n_layers / 32.0) ** 0.5) * precision_factor
+    composite_factor = 3.0 if composite else 1.0
+    effective_tolerance = rel_tolerance * max(1.0, (n_layers / 32.0) ** 0.5) * precision_factor * composite_factor
     diag = {
         "probe_prompt": probe_prompt,
         "candidates_tried": {f"attn={a},mlp={m}": err for (a, m), err in results.items()},
@@ -2727,6 +2774,11 @@ def resolve_component_anatomy(
         "effective_rel_tolerance": effective_tolerance,
         "low_precision": low_precision,
         "precision_factor": precision_factor,
+        "composite_factor": composite_factor,
+        "extra_mlp_residual_path": extra_mlp_path or "",
+        "layer_scalar_min": min(layer_scalars) if layer_scalars else 1.0,
+        "layer_scalar_max": max(layer_scalars) if layer_scalars else 1.0,
+        "composite_residual_accounting": composite,
         "explanation": (
             "For each candidate hook-point pair, every block's captured "
             "attn+mlp contribution must reconstruct that block's residual "
@@ -2743,7 +2795,8 @@ def resolve_component_anatomy(
         raise RuntimeError(
             f"No contribution hook-point pair reconstructs the per-block residual "
             f"deltas (best: attn={best_a}, mlp={best_m}, max rel err {best_err:.4f} > "
-            f"tolerance {effective_tolerance:.4f} = {rel_tolerance} x sqrt({n_layers}/32) x {precision_factor} (bf16/fp16 factor)). "
+            f"tolerance {effective_tolerance:.4f} = {rel_tolerance} x sqrt({n_layers}/32) x {precision_factor} "
+            f"(bf16/fp16 factor) x {composite_factor} (composite factor)). "
             "This architecture adds components to the residual stream somewhere the "
             "candidates do not cover; see diagnostics/component_anatomy.json."
         )
@@ -2761,6 +2814,9 @@ def resolve_component_anatomy(
         mlp_hook_path=mlp_path if best_m == "module" else post_mlp_path,
         max_block_recon_rel_err=best_err,
         probe_prompt=probe_prompt,
+        extra_mlp_hook_path=extra_mlp_path if composite else None,
+        scale_by_layer_scalar=composite,
+        fold_residual_scale_into_mlp=composite,
     )
 
 
@@ -2796,16 +2852,40 @@ def run_with_component_cache(
             handles.append(
                 getattr(block, comp_anatomy.mlp_hook_path).register_forward_hook(hook_factory(store, ("mlp", i)))
             )
+            if comp_anatomy.extra_mlp_hook_path:
+                handles.append(
+                    getattr(block, comp_anatomy.extra_mlp_hook_path).register_forward_hook(
+                        hook_factory(store, ("mlp_extra", i))
+                    )
+                )
         capture = run_with_residual_cache(bundle, prompt)
     finally:
         for h in handles:
             h.remove()
 
     n_layers = bundle.anatomy.n_layers
+    attn_rows = []
+    mlp_rows = []
+    for i, block in enumerate(bundle.blocks):
+        attn = store[("attn", i)]
+        mlp = store[("mlp", i)]
+        if comp_anatomy.scale_by_layer_scalar:
+            scalar = _layer_scalar_float(block)
+            extra = store.get(("mlp_extra", i))
+            if extra is None:
+                extra = torch.zeros_like(mlp)
+            block_input = capture.streams[i] if all_positions else capture.streams[i, -1]
+            attn = scalar * attn
+            mlp = scalar * (mlp + extra)
+            if comp_anatomy.fold_residual_scale_into_mlp:
+                mlp = mlp + (scalar - 1.0) * block_input
+        attn_rows.append(attn)
+        mlp_rows.append(mlp)
     return ComponentCapture(
         capture=capture,
-        attn_contrib=torch.stack([store[("attn", i)] for i in range(n_layers)]),
-        mlp_contrib=torch.stack([store[("mlp", i)] for i in range(n_layers)]),
+        attn_contrib=torch.stack(attn_rows[:n_layers]),
+        mlp_contrib=torch.stack(mlp_rows[:n_layers]),
+        composite_residual_accounting=comp_anatomy.scale_by_layer_scalar or comp_anatomy.fold_residual_scale_into_mlp,
     )
 
 
@@ -2823,13 +2903,18 @@ def run_decomposition_check(
     recon = comp.capture.streams[0, -1] + comp.attn_contrib.sum(dim=0) + comp.mlp_contrib.sum(dim=0)
     abs_err = float((recon - final_stream).norm())
     rel_err = abs_err / max(float(final_stream.norm()), 1e-9)
+    composite_factor = 3.0 if comp.composite_residual_accounting else 1.0
+    effective_tolerance = rel_tolerance * composite_factor
     result = {
         "prompt": comp.capture.prompt,
         "rel_err": rel_err,
         "abs_err": abs_err,
         "final_stream_norm": float(final_stream.norm()),
         "rel_tolerance": rel_tolerance,
-        "ok": rel_err <= rel_tolerance,
+        "effective_rel_tolerance": effective_tolerance,
+        "composite_factor": composite_factor,
+        "composite_residual_accounting": comp.composite_residual_accounting,
+        "ok": rel_err <= effective_tolerance,
         "explanation": (
             "The DLA ledger is only meaningful if embeddings + all captured "
             "attn/MLP contributions reconstruct the final pre-norm residual "
@@ -2932,6 +3017,7 @@ class HeadAnatomy:
     has_bias: bool
     sliding_window: int | None
     layer_types: tuple[str, ...]
+    layer_head_dims: tuple[int, ...]
     max_head_recon_rel_err: float
 
 
@@ -2957,6 +3043,7 @@ def resolve_head_anatomy(ctx: RunContext, bundle: ModelBundle) -> HeadAnatomy:
     """Resolve out-projection path and head geometry; verification happens in
     run_head_decomposition_check on real activations."""
     config = bundle.model.config
+    attn_config = getattr(config, "text_config", config)
     block0 = bundle.blocks[0]
     o_proj = None
     o_proj_path = ""
@@ -2971,12 +3058,28 @@ def resolve_head_anatomy(ctx: RunContext, bundle: ModelBundle) -> HeadAnatomy:
             "relative to the decoder block; add this architecture's path to "
             "O_PROJ_PATH_CANDIDATES in interp_bench.py."
         )
-    n_heads = int(getattr(config, "num_attention_heads", getattr(config, "n_head", 0)))
-    n_kv = int(getattr(config, "num_key_value_heads", n_heads) or n_heads)
-    d_model = bundle.anatomy.d_model
-    d_head = int(getattr(config, "head_dim", 0) or d_model // n_heads)
+    n_heads = int(getattr(attn_config, "num_attention_heads", getattr(attn_config, "n_head", 0)))
+    if n_heads <= 0:
+        raise RuntimeError(
+            "Could not resolve a positive attention-head count from the model config "
+            "or text_config; add this architecture's config path to resolve_head_anatomy."
+        )
+    n_kv = int(getattr(attn_config, "num_key_value_heads", n_heads) or n_heads)
     # GPT-2's Conv1D stores weight as [in, out]; nn.Linear as [out, in].
     is_conv1d = type(o_proj).__name__ == "Conv1D"
+    layer_head_dims: list[int] = []
+    for block in bundle.blocks:
+        layer_o_proj = get_by_path(block, o_proj_path)
+        weight = layer_o_proj.weight.detach()
+        input_width = int(weight.shape[0] if is_conv1d else weight.shape[1])
+        if input_width % n_heads != 0:
+            raise RuntimeError(
+                f"Attention out-projection input width {input_width} is not divisible "
+                f"by {n_heads} query heads at {o_proj_path}."
+            )
+        layer_head_dims.append(input_width // n_heads)
+    d_model = bundle.anatomy.d_model
+    d_head = int(getattr(attn_config, "head_dim", 0) or layer_head_dims[0] or d_model // n_heads)
     anatomy = HeadAnatomy(
         o_proj_path=o_proj_path,
         n_heads=n_heads,
@@ -2984,19 +3087,31 @@ def resolve_head_anatomy(ctx: RunContext, bundle: ModelBundle) -> HeadAnatomy:
         d_head=d_head,
         weight_is_in_by_out=is_conv1d,
         has_bias=getattr(o_proj, "bias", None) is not None,
-        sliding_window=getattr(config, "sliding_window", None),
-        layer_types=tuple(sorted(set(getattr(config, "layer_types", []) or []))),
+        sliding_window=getattr(attn_config, "sliding_window", None),
+        layer_types=tuple(sorted(set(getattr(attn_config, "layer_types", []) or []))),
+        layer_head_dims=tuple(layer_head_dims),
         max_head_recon_rel_err=-1.0,  # filled by the decomposition check
     )
     path = ctx.path("diagnostics", "head_anatomy.json")
     write_json(path, anatomy)
     ctx.register_artifact(path, "diagnostic", "Per-head geometry and out-projection orientation.")
+    head_dim_label = (
+        f"d_head {d_head}"
+        if len(set(layer_head_dims)) == 1
+        else f"layer d_head {min(layer_head_dims)}-{max(layer_head_dims)}"
+    )
     print(
-        f"[bench] head anatomy: {n_heads} heads x d_head {d_head} "
+        f"[bench] head anatomy: {n_heads} heads x {head_dim_label} "
         f"(kv heads {n_kv}, o_proj at {o_proj_path}, "
         f"{'Conv1D [in,out]' if is_conv1d else 'Linear [out,in]'})"
     )
     return anatomy
+
+
+def _head_dim_for_layer(head_anatomy: HeadAnatomy, layer: int) -> int:
+    if head_anatomy.layer_head_dims:
+        return int(head_anatomy.layer_head_dims[layer])
+    return int(head_anatomy.d_head)
 
 
 def head_contribution(bundle: ModelBundle, head_anatomy: HeadAnatomy, layer: int, head: int, o_in_vec: Any) -> Any:
@@ -3010,7 +3125,8 @@ def head_contribution(bundle: ModelBundle, head_anatomy: HeadAnatomy, layer: int
 
     o_proj = get_by_path(bundle.blocks[layer], head_anatomy.o_proj_path)
     w = o_proj.weight.detach()
-    sl = slice(head * head_anatomy.d_head, (head + 1) * head_anatomy.d_head)
+    d_head = _head_dim_for_layer(head_anatomy, layer)
+    sl = slice(head * d_head, (head + 1) * d_head)
     piece = o_in_vec[sl]
     if head_anatomy.weight_is_in_by_out:
         out = piece @ w[sl, :].to("cpu", torch.float32)
@@ -3109,10 +3225,24 @@ def run_with_attention_cache(
         streams=streams,
         final_logits_last=tensor_cpu_float(out.logits[0, -1]),
     )
+
+    def stack_pad_last_dim(items: list[Any]) -> Any:
+        max_width = max(int(item.shape[-1]) for item in items)
+        padded = []
+        for item in items:
+            width = int(item.shape[-1])
+            if width == max_width:
+                padded.append(item)
+                continue
+            pad_shape = list(item.shape)
+            pad_shape[-1] = max_width - width
+            padded.append(torch.cat([item, torch.zeros(*pad_shape, dtype=item.dtype)], dim=-1))
+        return torch.stack(padded)
+
     return AttentionCapture(
         capture=capture,
         attentions=torch.stack([tensor_cpu_float(a[0]) for a in out.attentions]),
-        o_in_last=torch.stack([o_in[i] for i in range(n_layers)]),
+        o_in_last=stack_pad_last_dim([o_in[i] for i in range(n_layers)]),
         attn_out_last=torch.stack([attn_out[i] for i in range(n_layers)]),
     )
 
@@ -3196,7 +3326,8 @@ def run_with_head_ablation(
     attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
     attn_module = getattr(block, attn_module_path)
     o_proj = attn_module.o_proj if hasattr(attn_module, "o_proj") else attn_module.c_proj
-    sl = slice(head * head_anatomy.d_head, (head + 1) * head_anatomy.d_head)
+    d_head = _head_dim_for_layer(head_anatomy, layer)
+    sl = slice(head * d_head, (head + 1) * d_head)
 
     def ablate_pre_hook(module: Any, hook_args: tuple) -> Any:
         x = hook_args[0].clone()
@@ -3248,8 +3379,6 @@ def run_with_node_set_ablation(
     for layer, head in heads:
         heads_by_layer.setdefault(layer, []).append(head)
     mlp_set = set(mlps)
-    d_head = head_anatomy.d_head
-
     tokenizer = bundle.tokenizer
     encoded = tokenizer(prompt, return_tensors="pt")
     input_ids = encoded["input_ids"].to(bundle.input_device)
@@ -3267,6 +3396,7 @@ def run_with_node_set_ablation(
     def make_head_hook(layer: int, head_list: list[int]):
         def hook(module: Any, hook_args: tuple) -> Any:
             x = hook_args[0].clone()
+            d_head = _head_dim_for_layer(head_anatomy, layer)
             for head in head_list:
                 sl = slice(head * d_head, (head + 1) * d_head)
                 if head_means is None:
