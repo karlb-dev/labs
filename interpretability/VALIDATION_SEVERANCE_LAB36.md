@@ -9,12 +9,56 @@ Relevant commits:
 - `37e919e` - user refactor and expanded Lab 36 data
 - `acea1aa` - validation fix for B2 wrong-layer control bounds
 - `bd18deb` - visual artifact pass with plot manifests and source tables
+- `9dda941` - content-blind B5 + row-randomized B4 (the v3 patch validated below)
 
 Lab 36 implements the Severance report-channel experiment as a bench-registered lab. It runs the instrumentation proof, patchscope-lite cartography, contrast-direction build, B2 report-channel screen, B3 confidence bridge, B4 matched-output source attribution, B5 insertion-presence detection, and a minimal C-track patch-recovery audit. The `gpt-oss-120B` condition was intentionally skipped on this Colab machine.
 
 All useful runs were copied to:
 
 `/content/drive/MyDrive/interpret/verify_severance/`
+
+## Full 4-Model v3 Validation Run (2026-06-16, commit `9dda941`)
+
+This is the latest and most complete validation: the v3 content-blind code run on **four models across three architectures**, including the new **Gemma-4-E4B** (`Gemma4ForConditionalGeneration`). It is the head-to-head check the section title of this file promises — latest code vs. the pre-v3 `verify_severance` baselines above. Results, full run trees, logs, and a long-form writeup are in:
+
+`/content/drive/MyDrive/interpret/lab36_fullrun_20260616/` (see `VALIDATION_REPORT.md` there).
+
+Commands (latest code, all tracks, full prompt set, 25 items, 5 directions, seed 0):
+
+```bash
+python interp_bench.py --lab lab36 --tier a --mode all --prompt-set full --max-examples 0 --run-name lab36_tierA_smollm_full
+python interp_bench.py --lab lab36 --tier b --mode all --prompt-set full --run-name lab36_tierB_olmo7b_full
+python interp_bench.py --lab lab36 --tier c --mode all --prompt-set full --run-name lab36_tierC_olmo31_32b_full
+python interp_bench.py --lab lab36 --tier b --model google/gemma-4-E4B-it --mode all --prompt-set full --run-name lab36_gemma4_e4b_full
+```
+
+Model-list note: Tier C is `allenai/Olmo-3.1-32B-Instruct`; there is no `allenai/Olmo-3-32B-Instruct` on the Hub, so "Olmo 3 32B Instruct" and Tier C are the same model. Gemma-4-E4B ran through the bench with **no code changes** (the anatomy resolver already reads `config.text_config` / `model.language_model.layers`).
+
+### v3 headline metrics
+
+B5 headline = `headline_content_blind_logit_only` (content-blind variant, 2.0 dose, `decision_source=next_token_logits`), with bootstrap CIs.
+
+| Run | Model | Verdict | B4 act acc | B5 d′ | B5 d′ CI | B5 FA | B5 leak | B5 pass | self-check |
+| --- | --- | --- | ---: | ---: | --- | ---: | ---: | ---: | --- |
+| `lab36_tierA_smollm_full` | `SmolLM2-135M-Instruct` | `no_report_channel_coupling_validated` | 0.2222 | −1.3299 | [−1.737, −0.793] | 0.9706 | 0.1250 | 0 | ok |
+| `lab36_tierB_olmo7b_full` | `Olmo-3-7B-Instruct` | `no_report_channel_coupling_validated` | 0.0 | 0.6080 | [−0.072, 1.377] | 0.3824 | 0.0625 | 0 | ok |
+| `lab36_tierC_olmo31_32b_full` | `Olmo-3.1-32B-Instruct` | `no_report_channel_coupling_validated` | 0.0 | 0.7927 | [0.199, 1.239] | 0.0294 | 0.2188 | 0 | ok |
+| `lab36_gemma4_e4b_full` | `gemma-4-E4B-it` | `no_report_channel_coupling_validated` | 0.0 | 1.2387 | [0.793, 1.660] | 0.0294 | 0.1562 | 0 | ok |
+
+All runs: hook parity OK (max_abs=0), lens self-check OK (top-5 overlap 5/5), KV replay OK and position-contiguous, safety OK, 9/9 non-blank plots.
+
+### Comparison to the pre-v3 baseline
+
+The v3 patch changed both code and data (B2/B4/B5 CSVs regenerated; `injection_detection_prompts`, `source_attribution_prompts`, `introspection_queries` hashes changed; `uncertainty_questions` and `patchscope_prompts` unchanged), and moved the B5 headline to the content-blind next-token-logit decision. Differences are the combined v3 protocol effect, not a model regression.
+
+- **SmolLM2-135M verdict flipped** `b4_matched_source_candidate` → `no_report_channel_coupling_validated`: row-randomizing the B4 hidden-source label removed the fixed-`D` option bias (B4 act 0.556 → 0.222). The patch worked as intended.
+- **Olmo-3-7B B5 d′ dropped 2.1194 → 0.6080** with the CI now including 0 and FA rising to 0.382. The earlier strong number was largely an artifact of the looser pre-v3 protocol; content leak now passes (0.0625) but d′/FA fail.
+- **Olmo-3.1-32B** is stable (d′/FA unchanged at 0.7927/0.0294 due to its very low yes-rate); content leak rose 0.156 → 0.219 and still fails.
+- **Gemma-4-E4B** (not in the baseline) gives the strongest content-blind d′ (1.24, CI excludes 0) but fails the leak gate.
+
+### Read
+
+All four models converge on `no_report_channel_coupling_validated`. B4 is negative everywhere and is additionally **unreliable this run** (canonical-answer plausibility 0.0–0.22, below the 0.75 gate, on every model — identical caveat to baseline). B5 shows real content-blind anomaly sensitivity on Gemma-4-E4B and Olmo-3.1-32B (d′ ≥ 0.75, FA ≤ 0.25, CIs excluding 0) but both fail the ≤ 0.10 content-leak gate. The latest version was reviewed and reproduced cleanly; **no code defects were found and no fixes were required.**
 
 ## Visual Artifact Validation Commands
 
