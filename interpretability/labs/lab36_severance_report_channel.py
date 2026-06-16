@@ -979,13 +979,14 @@ def run_cartography(ctx: bench.RunContext, bundle: bench.ModelBundle) -> list[di
 
 
 def b2_trial_specs(item: SeveranceItem, direction: DirectionBundle, directions: Mapping[str, DirectionBundle]) -> list[dict[str, Any]]:
+    wrong_layer = max(0, direction.injection_layer - max(1, int(0.2 * direction.injection_layer + 1)))
     specs = [{"condition": "target_direction", "control_family": "target", "dose": d, "vector": direction.vector} for d in B2_DOSES]
     specs.extend([
         {"condition": "opposite_direction", "control_family": "opposite", "dose": -HEADLINE_DOSE, "vector": direction.vector},
         {"condition": "random_direction", "control_family": "random", "dose": HEADLINE_DOSE, "vector": direction.random_vector},
         {"condition": "shuffled_direction", "control_family": "shuffled", "dose": HEADLINE_DOSE, "vector": direction.shuffled_vector},
         {"condition": "wrong_concept_direction", "control_family": "wrong_concept", "dose": HEADLINE_DOSE, "vector": wrong_direction(item, directions)},
-        {"condition": "wrong_layer_supporting", "control_family": "wrong_layer", "dose": HEADLINE_DOSE, "vector": direction.vector, "layer": max(0, min(direction.injection_layer + max(1, int(0.2 * direction.injection_layer + 1)), direction.injection_layer + 1))},
+        {"condition": "wrong_layer_supporting", "control_family": "wrong_layer", "dose": HEADLINE_DOSE, "vector": direction.vector, "layer": wrong_layer},
     ])
     return specs
 
@@ -1009,7 +1010,7 @@ def run_b2_screen(bundle: bench.ModelBundle, items: Sequence[SeveranceItem], dir
         report_rendered, report_mode = render_user(bundle, make_report_user(item))
         behavior_rendered, behavior_mode = render_user(bundle, make_behavior_user(item))
         for spec in b2_trial_specs(item, direction, directions):
-            layer = int(spec.get("layer", direction.injection_layer))
+            layer = max(0, min(int(bundle.anatomy.n_layers) - 1, int(spec.get("layer", direction.injection_layer))))
             dose = float(spec["dose"])
             vector = spec["vector"] if abs(dose) > 1e-12 else None
             report = generate_one(bundle, report_rendered, direction=direction, vector=vector, dose=dose, layer=layer, max_new_tokens=REPORT_TOKENS, label="lab36 B2 report")
