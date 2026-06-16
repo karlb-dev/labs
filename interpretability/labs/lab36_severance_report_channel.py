@@ -1496,16 +1496,20 @@ def write_jsonl(path: pathlib.Path, rows: Sequence[Mapping[str, Any]]) -> None:
 
 def write_plot_reading_guide(ctx: bench.RunContext) -> None:
     rows = [
-        {"plot": "plots/severance_dashboard.png", "question": "Which headline track, if any, supports functional report-channel coupling?", "do_not_claim": "Dashboard support is not phenomenal evidence."},
-        {"plot": "plots/b5_detection_margins.png", "question": "Do injected conditions shift yes/no margins above clean/noop floors?", "do_not_claim": "A yes shift with content leakage is not anomaly detection."},
-        {"plot": "tables/direction_depth_sweep.csv", "question": "Were state directions selected on train with validation/heldout reported separately?", "do_not_claim": "A decodable direction alone means the report channel reads it."},
-        {"plot": "tables/source_attribution_results.csv", "question": "Does B4 identify hidden activation source when the visible answer is matched?", "do_not_claim": "A hidden-source label without KV parity or fresh-control drop is source monitoring."},
-        {"plot": "tables/severance_counterexamples.csv", "question": "Which rows most shrink the favorite claim?", "do_not_claim": "Counterexamples can be averaged away."},
+        {"plot": "plots/overview_dashboard.png", "read_for": "The cockpit view: direction, B2, B3, B4, B5, leak, warning, and counterexample gates in one place.", "source_table": "tables/figure_sources/overview_dashboard_source.csv", "do_not_claim": "A dashboard pass is not evidence for experience or phenomenal introspection."},
+        {"plot": "plots/severance_dashboard.png", "read_for": "Backward-compatible main dashboard name used by the first-pass handout.", "source_table": "tables/figure_sources/overview_dashboard_source.csv", "do_not_claim": "Dashboard aesthetics cannot upgrade weak controls."},
+        {"plot": "plots/target_vs_control.png", "read_for": "Direct target/control comparisons: heldout AUC vs chance, B2 vs false-positive floor, B4 vs fresh transcript, B5 hits vs false alarms, B3 confidence vs entropy.", "source_table": "tables/figure_sources/target_vs_control_source.csv", "do_not_claim": "One winning target/control pair establishes a general report channel."},
+        {"plot": "plots/dose_response.png", "read_for": "B2 concept-report dose response with controls and raw target-direction points.", "source_table": "tables/figure_sources/dose_response_source.csv", "do_not_claim": "Concept-to-report steering is source monitoring."},
+        {"plot": "plots/layer_sweep_heatmap.png", "read_for": "Where the selected contrast directions sit across depth, with selected cells starred.", "source_table": "tables/figure_sources/layer_sweep_heatmap_source.csv", "do_not_claim": "A bright layer is a full channel mechanism."},
+        {"plot": "plots/trajectory.png", "read_for": "The intended reading path from instrumentation through direction, B2, B3, B4, B5, and patch localization.", "source_table": "tables/figure_sources/trajectory_source.csv", "do_not_claim": "This is a composite Severance score."},
+        {"plot": "plots/source_attribution_control_matrix.png", "read_for": "B4 parsed source labels by condition, especially hidden-label false alarms in non-activation controls.", "source_table": "tables/figure_sources/source_attribution_control_matrix_source.csv", "do_not_claim": "A hidden-source label in controls supports introspection."},
+        {"plot": "plots/b5_detection_margins.png", "read_for": "B5 yes/no margins and clean/noop floors.", "source_table": "tables/figure_sources/b5_detection_margins_source.csv", "do_not_claim": "A yes shift with content leakage is anomaly detection."},
+        {"plot": "plots/paired_examples.png", "read_for": "The concrete rows that most shrink the favorite claim.", "source_table": "tables/figure_sources/paired_examples_source.csv", "do_not_claim": "Counterexamples can be averaged away."},
+        {"plot": "plots/plot_manifest.json", "read_for": "Machine-readable map from every plot to source table, metric, control, and claim boundary.", "source_table": "plots/plot_manifest.csv", "do_not_claim": "A figure without a source table is citation-ready."},
     ]
     path = ctx.path("plots", "plot_reading_guide.csv")
     bench.write_csv_with_context(ctx, path, rows)
     ctx.register_artifact(path, "table", "Reading guide for Lab 36 plots and headline tables.")
-
 
 def write_safety_status(ctx: bench.RunContext, safety: Sequence[Mapping[str, Any]], leakage: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     payload = {
@@ -1708,6 +1712,575 @@ def plot_b5(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
     bench.save_figure(ctx, fig, "b5_detection_margins.png", "Injection-presence yes/no margin summary.")
 
 
+# ---------------------------------------------------------------------------
+# Visualization-pass artifact helpers
+# ---------------------------------------------------------------------------
+
+
+def stable_row_id(prefix: str, row: Mapping[str, Any], idx: int = 0, keys: Sequence[str] = ()) -> str:
+    if keys:
+        payload = "|".join(str(row.get(k, "")) for k in keys)
+    else:
+        payload = json.dumps(dict(row), sort_keys=True, default=bench.json_default)
+    return f"{prefix}_{short_hash(payload + '|' + str(idx), 10)}"
+
+
+def attach_stable_ids(rows: Sequence[Mapping[str, Any]], prefix: str, keys: Sequence[str] = ()) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    id_col = f"{prefix}_row_id"
+    for i, row in enumerate(rows):
+        new = dict(row)
+        new.setdefault(id_col, stable_row_id(prefix, new, i, keys))
+        out.append(new)
+    return out
+
+
+def figure_placeholder_rows(message: str) -> list[dict[str, Any]]:
+    return [{"warning_no_rows": 1, "message": message, "row_count": 0}]
+
+
+def write_figure_source(ctx: bench.RunContext, filename: str, rows: Sequence[Mapping[str, Any]], description: str) -> str:
+    source_rows = [dict(r) for r in rows] if rows else figure_placeholder_rows("No rows were available for this figure in this mode/run.")
+    path = ctx.path("tables", "figure_sources", filename)
+    bench.write_csv_with_context(ctx, path, source_rows)
+    ctx.register_artifact(path, "figure_source", description)
+    return str(path.relative_to(ctx.run_dir))
+
+
+def write_plot_manifest(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]]) -> None:
+    manifest = []
+    for i, row in enumerate(rows):
+        clean = dict(row)
+        clean.setdefault("manifest_row_id", stable_row_id("fig", clean, i, ("figure", "source_table")))
+        manifest.append(clean)
+    json_path = ctx.path("plots", "plot_manifest.json")
+    bench.write_json(json_path, manifest)
+    ctx.register_artifact(json_path, "plot_manifest", "Figure manifest with source tables, row counts, metrics, controls, and claim boundaries.")
+    csv_path = ctx.path("plots", "plot_manifest.csv")
+    bench.write_csv_with_context(ctx, csv_path, manifest)
+    ctx.register_artifact(csv_path, "plot_manifest", "CSV copy of the Lab 36 figure manifest.")
+
+
+def write_table_jsonl_mirror(ctx: bench.RunContext, filename: str, rows: Sequence[Mapping[str, Any]], description: str) -> None:
+    path = ctx.path("tables", filename)
+    mirror_rows = [{**ctx.table_context(), **dict(row)} for row in rows]
+    write_jsonl(path, mirror_rows)
+    ctx.register_artifact(path, "jsonl", description)
+
+
+def maybe_save_empty_plot(ctx: bench.RunContext, filename: str, title: str, message: str) -> None:
+    if ctx.args.no_plots:
+        return
+    fig, ax = bench.new_figure(figsize=(8.5, 4.8))
+    ax.axis("off")
+    ax.text(0.5, 0.58, title, ha="center", va="center", fontsize=13, weight="bold")
+    ax.text(0.5, 0.42, message, ha="center", va="center", fontsize=10, wrap=True)
+    bench.save_figure(ctx, fig, filename, message)
+
+
+def lab36_overview_source_rows(metrics: Mapping[str, Any], evidence_rows: Sequence[Mapping[str, Any]], warnings: Sequence[Mapping[str, Any]], counterexamples: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    b4_acc = fnum(metrics.get("b4_activation_source_accuracy"), float("nan"))
+    b4_fresh = fnum(metrics.get("b4_activation_fresh_accuracy"), float("nan"))
+    b5_dp = fnum(metrics.get("b5_d_prime_all_insertions"), float("nan"))
+    b5_leak = fnum(metrics.get("b5_content_leak_rate"), float("nan"))
+    b3_conf = fnum(metrics.get("b3_confidence_delta"), float("nan"))
+    b3_ent = fnum(metrics.get("b3_entropy_delta"), float("nan"))
+    b2_gap = fnum(metrics.get("mean_b2_target_minus_floor"), float("nan"))
+    dir_auc = fnum(metrics.get("mean_direction_heldout_auc"), float("nan"))
+    raw = [
+        ("B1 direction", "heldout AUC", dir_auc, 0.60, "DECODE prerequisite only", "chance and random/shuffled controls"),
+        ("B2 report screen", "target minus floor", b2_gap, B2_SCREEN_GAP_BAR, "Steering screen; propagation-explicable", "zero/random/shuffled/wrong-concept floors"),
+        ("B3 certainty bridge", "|confidence delta|-|entropy delta|", abs(b3_conf) - abs(b3_ent), 0.10, "Functional confidence bridge only", "entropy/correctness movement"),
+        ("B4 matched source", "activation accuracy - fresh accuracy", b4_acc - b4_fresh if math.isfinite(b4_acc) and math.isfinite(b4_fresh) else float("nan"), B4_MIN_FRESH_GAP, "Candidate source monitoring if KV parity and false alarms pass", "fresh transcript/source priors"),
+        ("B5 insertion detection", "d-prime", b5_dp, B5_DPRIME_BAR, "Candidate anomaly monitoring if false alarms/leakage pass", "clean/noop false alarm and content leak"),
+        ("B5 content leak", "1 - leak rate", 1.0 - b5_leak if math.isfinite(b5_leak) else float("nan"), 1.0 - B5_MAX_CONTENT_LEAK, "Leakage must stay low", "target concept words in reports/behavior"),
+        ("Counterexamples", "automatic specimens", float(len(counterexamples)), 0.0, "Counterexamples shrink the claim", "read failure_specimens before writing claims"),
+        ("Warnings", "warning rows", float(len(warnings)), 0.0, "Warnings are not fatal by themselves", "diagnostics/warning_summary.*"),
+    ]
+    rows = []
+    for i, (track, metric, value, threshold, claim_boundary, control) in enumerate(raw):
+        if not math.isfinite(value):
+            norm = ""
+            gap = ""
+            pass_gate = ""
+        elif track in {"Counterexamples", "Warnings"}:
+            norm = max(0.0, min(1.0, 1.0 - value / 10.0))
+            gap = ""
+            pass_gate = int(value == 0.0)
+        elif metric == "1 - leak rate":
+            norm = max(0.0, min(1.0, value))
+            gap = value - threshold
+            pass_gate = int(value >= threshold)
+        else:
+            scale = threshold if threshold > 0 else 1.0
+            norm = max(0.0, min(1.0, value / scale))
+            gap = value - threshold
+            pass_gate = int(value >= threshold)
+        rows.append({
+            "display_order": i,
+            "track": track,
+            "metric": metric,
+            "value": rounded(value) if math.isfinite(value) else "",
+            "threshold": threshold,
+            "gap_to_gate": rounded(gap) if isinstance(gap, float) and math.isfinite(gap) else gap,
+            "normalized_for_plot": rounded(norm) if isinstance(norm, float) and math.isfinite(norm) else norm,
+            "pass_gate": pass_gate,
+            "control_or_falsifier": control,
+            "claim_boundary": claim_boundary,
+            "verdict": metrics.get("verdict", ""),
+            "evidence_rows_available": len(evidence_rows),
+        })
+    return rows
+
+
+def lab36_target_vs_control_rows(
+    selected_rows: Sequence[Mapping[str, Any]],
+    b2_floor: Sequence[Mapping[str, Any]],
+    b3_summary: Sequence[Mapping[str, Any]],
+    b4_summary: Sequence[Mapping[str, Any]],
+    b5_summary: Sequence[Mapping[str, Any]],
+    patch_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for row in selected_rows:
+        auc = fnum(row.get("heldout_auc"), float("nan"))
+        train = fnum(row.get("train_auc"), float("nan"))
+        if math.isfinite(auc):
+            rows.append({"track": "B1_DIRECTION", "comparison_id": str(row.get("target_concept")), "target_label": "heldout direction AUC", "target_value": rounded(auc), "control_label": "chance", "control_value": 0.5, "gap": rounded(auc - 0.5), "n": "", "unit": "AUC", "claim_boundary": "Decodability only; not report access."})
+        if math.isfinite(train) and math.isfinite(auc):
+            rows.append({"track": "B1_SPLIT", "comparison_id": str(row.get("target_concept")), "target_label": "train AUC", "target_value": rounded(train), "control_label": "heldout AUC", "control_value": rounded(auc), "gap": rounded(train - auc), "n": "", "unit": "AUC", "claim_boundary": "Large train-heldout gaps are overfit warnings."})
+    for row in b2_floor:
+        gap = fnum(row.get("target_minus_core_floor"), float("nan"))
+        target = fnum(row.get("target_detection_rate_at_headline_dose"), float("nan"))
+        floor = fnum(row.get("core_false_positive_floor"), float("nan"))
+        rows.append({"track": "B2_SCREEN", "comparison_id": str(row.get("target_concept")), "target_label": "target direction detection", "target_value": rounded(target) if math.isfinite(target) else "", "control_label": "core false-positive floor", "control_value": rounded(floor) if math.isfinite(floor) else "", "gap": rounded(gap) if math.isfinite(gap) else "", "n": row.get("n", ""), "unit": "rate", "claim_boundary": "B2 is a screen even when it wins."})
+    b4_act = next((r for r in b4_summary if str(r.get("condition")) == "activation_injection"), {})
+    if b4_act:
+        acc = fnum(b4_act.get("accuracy"), float("nan"))
+        fresh = fnum(b4_act.get("fresh_transcript_accuracy"), float("nan"))
+        rows.append({"track": "B4_MATCHED_SOURCE", "comparison_id": "activation_vs_fresh", "target_label": "activation-source accuracy", "target_value": rounded(acc) if math.isfinite(acc) else "", "control_label": "fresh transcript accuracy", "control_value": rounded(fresh) if math.isfinite(fresh) else "", "gap": rounded(acc - fresh) if math.isfinite(acc) and math.isfinite(fresh) else "", "n": b4_act.get("n", ""), "unit": "accuracy", "claim_boundary": "Only source monitoring if KV parity and false alarms pass."})
+    b5_all = next((r for r in b5_summary if str(r.get("comparison")) == "all_insertions_vs_clean"), {})
+    if b5_all:
+        hit = fnum(b5_all.get("hit_rate"), float("nan"))
+        fa = fnum(b5_all.get("false_alarm_rate"), float("nan"))
+        rows.append({"track": "B5_INSERTION_DETECTION", "comparison_id": "injected_vs_clean", "target_label": "injected yes rate", "target_value": rounded(hit) if math.isfinite(hit) else "", "control_label": "clean false alarm rate", "control_value": rounded(fa) if math.isfinite(fa) else "", "gap": rounded(hit - fa) if math.isfinite(hit) and math.isfinite(fa) else "", "n": b5_all.get("n_injected", ""), "unit": "rate", "claim_boundary": "Only anomaly monitoring if content leak remains low."})
+    b3 = next((r for r in b3_summary if str(r.get("condition")) == "dissociation_test"), {})
+    if b3:
+        conf = fnum(b3.get("reported_confidence_delta_plus_minus"), float("nan"))
+        ent = fnum(b3.get("entropy_delta_plus_minus"), float("nan"))
+        rows.append({"track": "B3_CERTAINTY", "comparison_id": "confidence_vs_entropy", "target_label": "reported confidence delta", "target_value": rounded(conf) if math.isfinite(conf) else "", "control_label": "entropy delta", "control_value": rounded(ent) if math.isfinite(ent) else "", "gap": rounded(abs(conf) - abs(ent)) if math.isfinite(conf) and math.isfinite(ent) else "", "n": b3.get("n", ""), "unit": "delta", "claim_boundary": "Only a bridge if confidence moves while entropy/correctness do not."})
+    if patch_rows:
+        rec = safe_mean([r.get("recovery") for r in patch_rows], float("nan"))
+        rows.append({"track": "C_LOCALIZATION", "comparison_id": "patch_recovery", "target_label": "mean patch recovery", "target_value": rounded(rec) if math.isfinite(rec) else "", "control_label": "zero recovery", "control_value": 0.0, "gap": rounded(rec) if math.isfinite(rec) else "", "n": len(patch_rows), "unit": "logit-margin recovery", "claim_boundary": "Localization only after a B3/B4/B5 effect or potent null."})
+    return attach_stable_ids(rows, "comparison", ("track", "comparison_id"))
+
+
+def lab36_trajectory_rows(metrics: Mapping[str, Any], evidence_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    vals = {
+        "instrument": 1.0,
+        "direction_decode": fnum(metrics.get("mean_direction_heldout_auc"), 0.0),
+        "b2_screen": max(0.0, fnum(metrics.get("mean_b2_target_minus_floor"), 0.0) / max(B2_SCREEN_GAP_BAR, 1e-9)),
+        "b3_certainty": max(0.0, abs(fnum(metrics.get("b3_confidence_delta"), 0.0)) - abs(fnum(metrics.get("b3_entropy_delta"), 0.0))),
+        "b4_source": max(0.0, fnum(metrics.get("b4_activation_source_accuracy"), 0.0) - fnum(metrics.get("b4_activation_fresh_accuracy"), 0.0)) / max(B4_MIN_FRESH_GAP, 1e-9),
+        "b5_anomaly": max(0.0, fnum(metrics.get("b5_d_prime_all_insertions"), 0.0) / max(B5_DPRIME_BAR, 1e-9)),
+        "patch_localization": max(0.0, fnum(metrics.get("max_patch_recovery"), 0.0)),
+    }
+    labels = {
+        "instrument": "Instrument checks",
+        "direction_decode": "Direction decode",
+        "b2_screen": "B2 steering screen",
+        "b3_certainty": "B3 certainty bridge",
+        "b4_source": "B4 matched source",
+        "b5_anomaly": "B5 anomaly detection",
+        "patch_localization": "C localization",
+    }
+    rows = []
+    for i, key in enumerate(labels):
+        val = vals[key]
+        rows.append({"step": i, "track": key, "label": labels[key], "normalized_support": rounded(max(0.0, min(1.2, val))), "raw_support": rounded(val), "verdict": metrics.get("verdict", ""), "claim_boundary": "This trajectory is a reading path through evidence, not a benchmark score.", "evidence_rows_available": len(evidence_rows)})
+    return rows
+
+
+def write_lab36_warning_summary(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    self_check: Mapping[str, Any],
+    label_rows: Sequence[Mapping[str, Any]],
+    b2_rows: Sequence[Mapping[str, Any]],
+    b4_summary: Sequence[Mapping[str, Any]],
+    b5_summary: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+    sweep_rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    warnings: list[dict[str, Any]] = []
+
+    def add(code: str, severity: str, count: int, detail: str, next_step: str) -> None:
+        if count:
+            warnings.append({"warning_id": stable_row_id("warn", {"code": code, "detail": detail}, len(warnings), ()), "code": code, "severity": severity, "count": int(count), "detail": detail, "next_step": next_step})
+
+    add("self_check_not_ok", "high", 0 if self_check.get("ok") else 1, "self_check_status.json did not pass all compact gates", "Read diagnostics/self_check_status.json before any plot.")
+    single_token_failures = sum(1 for r in label_rows if int(r.get("single_token", 0)) != 1)
+    add("multi_token_label_variants", "medium", single_token_failures, "Some label variants were multi-token and not directly comparable", "Use diagnostics/label_token_resolution.csv when interpreting B4/B5 margins.")
+    if not b2_rows:
+        add("b2_rows_missing", "medium", 1, "No B2 screen rows were produced in this mode", "Run mode all or include b2 for the plot suite.")
+    if not sweep_rows:
+        add("direction_sweep_missing", "high", 1, "No direction sweep rows were produced", "Run with directions/B2/B4/B5 modes before trusting report-channel plots.")
+    b4_act = next((r for r in b4_summary if str(r.get("condition")) == "activation_injection"), {})
+    if b4_act:
+        acc = fnum(b4_act.get("accuracy"), 0.0)
+        fresh = fnum(b4_act.get("fresh_transcript_accuracy"), 0.0)
+        add("b4_fresh_control_close", "high", 1 if acc - fresh <= B4_MIN_FRESH_GAP else 0, f"B4 activation accuracy {rounded(acc)} is close to fresh accuracy {rounded(fresh)}", "Do not cite B4 as source monitoring; inspect source_attribution_results.csv.")
+    else:
+        add("b4_summary_missing", "medium", 1, "No B4 activation summary was produced", "Run mode b4 after directions.")
+    b5_all = next((r for r in b5_summary if str(r.get("comparison")) == "all_insertions_vs_clean"), {})
+    if b5_all:
+        fa = fnum(b5_all.get("false_alarm_rate"), 0.0)
+        leak = fnum(b5_all.get("content_leak_rate"), 0.0)
+        dp = fnum(b5_all.get("d_prime"), 0.0)
+        add("b5_false_alarm_high", "high", 1 if fa > B5_MAX_FALSE_ALARM else 0, f"B5 false-alarm rate {rounded(fa)} exceeds gate {B5_MAX_FALSE_ALARM}", "Treat yes-rate as prompt prior until clean/noop controls improve.")
+        add("b5_content_leak_high", "high", 1 if leak > B5_MAX_CONTENT_LEAK else 0, f"B5 content leak {rounded(leak)} exceeds gate {B5_MAX_CONTENT_LEAK}", "Do not call this anomaly monitoring; inspect injection_detection_results.csv.")
+        add("b5_dprime_low", "medium", 1 if dp < B5_DPRIME_BAR else 0, f"B5 d-prime {rounded(dp)} is below gate {B5_DPRIME_BAR}", "Use this as a null or pilot result.")
+    else:
+        add("b5_summary_missing", "medium", 1, "No B5 signal-detection summary was produced", "Run mode b5 after directions.")
+    add("counterexamples_present", "medium", len(counterexamples), "Automatic counterexample/failure specimens were detected", "Read tables/failure_specimens.md before using the dashboard.")
+    csv_path = ctx.path("diagnostics", "warning_summary.csv")
+    bench.write_csv_with_context(ctx, csv_path, warnings or [{"warning_id": "none", "code": "no_automatic_warnings", "severity": "info", "count": 0, "detail": "No automatic visualization/data warnings fired.", "next_step": "Still inspect the source tables and human-label queues."}])
+    ctx.register_artifact(csv_path, "diagnostic", "Automatic warning summary for Lab 36 plot/data artifacts.")
+    json_path = ctx.path("diagnostics", "warning_summary.json")
+    bench.write_json(json_path, warnings)
+    ctx.register_artifact(json_path, "diagnostic", "JSON warning summary for Lab 36 plot/data artifacts.")
+    return warnings
+
+
+def write_lab36_failure_specimens(ctx: bench.RunContext, counterexamples: Sequence[Mapping[str, Any]], b2_rows: Sequence[Mapping[str, Any]], b4_rows: Sequence[Mapping[str, Any]], b5_rows: Sequence[Mapping[str, Any]], b3_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    specimens: list[dict[str, Any]] = []
+    for i, row in enumerate(counterexamples[:80]):
+        specimens.append({"specimen_id": stable_row_id("fail", row, i, ("track", "kind", "item_id", "condition")), "source": "automatic_counterexample", **dict(row)})
+    if not specimens:
+        for rows, track, text_col in ((b2_rows, "B2", "report_text"), (b4_rows, "B4", "raw_generation"), (b5_rows, "B5", "report_text"), (b3_rows, "B3", "reported_confidence_text")):
+            for i, row in enumerate(rows[:3]):
+                specimens.append({"specimen_id": stable_row_id("specimen", row, i, ("item_id", "condition")), "source": "non_failure_context_sample", "track": track, "kind": "context_sample", "item_id": row.get("item_id", ""), "condition": row.get("condition", ""), "severity": 0, "detail": str(row.get(text_col, ""))[:280]})
+    jsonl_path = ctx.path("tables", "failure_specimens.jsonl")
+    write_jsonl(jsonl_path, [{**ctx.table_context(), **dict(row)} for row in specimens])
+    ctx.register_artifact(jsonl_path, "table", "JSONL failure/counterexample specimens for Lab 36.")
+    lines = ["# Lab 36 failure specimens", "", "These rows are the first place to look when a plot looks too clean. Automatic labels are triage, not final judgment.", ""]
+    if not specimens:
+        lines.append("No specimens were available in this run mode.")
+    for row in specimens[:24]:
+        lines.extend([
+            f"## {row.get('specimen_id')}",
+            "",
+            f"- track: `{row.get('track', '')}`",
+            f"- kind: `{row.get('kind', '')}`",
+            f"- item: `{row.get('item_id', '')}`",
+            f"- condition: `{row.get('condition', '')}`",
+            f"- severity: `{row.get('severity', '')}`",
+            "",
+            str(row.get("detail", "")).strip() or "No text detail recorded.",
+            "",
+        ])
+    md_path = ctx.path("tables", "failure_specimens.md")
+    bench.write_text(md_path, "\n".join(lines))
+    ctx.register_artifact(md_path, "table", "Markdown failure/counterexample specimens for Lab 36.")
+    return specimens
+
+
+def write_lab36_run_config_snapshot(ctx: bench.RunContext, metrics: Mapping[str, Any], data_manifest: Sequence[Mapping[str, Any]], mode: set[str], selected_rows: Sequence[Mapping[str, Any]]) -> None:
+    payload = {
+        "lab": LAB_NAME,
+        "lab_id": LAB_ID,
+        "model_id": ctx.model_id,
+        "model_revision": ctx.model_revision,
+        "tier": ctx.args.tier,
+        "dtype": ctx.args.dtype,
+        "quantization": ctx.args.quantization,
+        "prompt_set": ctx.args.prompt_set,
+        "max_examples": ctx.args.max_examples,
+        "seed": ctx.args.seed,
+        "mode": sorted(mode),
+        "decoding": {"report_tokens": REPORT_TOKENS, "behavior_tokens": BEHAVIOR_TOKENS, "detection_tokens": DETECTION_TOKENS, "confidence_tokens": CONFIDENCE_TOKENS, "greedy_primary": True},
+        "dose_convention": "unit direction * dose * residual_rms at selected stream depth/layer",
+        "b2_doses": list(B2_DOSES),
+        "headline_dose": HEADLINE_DOSE,
+        "source_conditions": list(SOURCE_CONDITIONS),
+        "selected_directions": list(selected_rows),
+        "data_manifest": list(data_manifest),
+        "verdict": metrics.get("verdict", ""),
+    }
+    path = ctx.path("diagnostics", "lab36_run_config_snapshot.json")
+    bench.write_json(path, payload)
+    ctx.register_artifact(path, "diagnostic", "Run config snapshot for Lab 36 plotting and evidence artifacts.")
+
+
+def write_lab36_jsonl_mirrors(ctx: bench.RunContext, **tables: Sequence[Mapping[str, Any]]) -> None:
+    for name, rows in tables.items():
+        if not rows:
+            continue
+        filename = f"{name}.jsonl" if not name.endswith(".jsonl") else name
+        write_table_jsonl_mirror(ctx, filename, rows, f"JSONL mirror for {name}.")
+
+
+def plot_lab36_overview(ctx: bench.RunContext, overview_rows: Sequence[Mapping[str, Any]], manifest: list[dict[str, Any]], source: str) -> None:
+    add_manifest = manifest.append
+    add_manifest({"figure": "overview_dashboard.png", "question": "Do the report-channel evidence tracks survive their controls?", "source_table": source, "row_count": len(overview_rows), "metric": "normalized evidence/caveat scores", "control": "fresh, clean/noop, leakage, entropy, and counterexample controls", "claim_supported": "Only the track-specific claim boundaries listed in the source table.", "caveat": "Dashboard bars are a reading map, not a benchmark."})
+    add_manifest({"figure": "severance_dashboard.png", "question": "Backward-compatible Lab 36 dashboard name.", "source_table": source, "row_count": len(overview_rows), "metric": "normalized evidence/caveat scores", "control": "same as overview_dashboard.png", "claim_supported": "Same boundary as overview_dashboard.png.", "caveat": "Prefer overview_dashboard.png plus the source table."})
+    if ctx.args.no_plots:
+        return
+    rows = [r for r in overview_rows if r.get("normalized_for_plot") != ""]
+    if not rows:
+        maybe_save_empty_plot(ctx, "overview_dashboard.png", "Lab 36 overview dashboard", "No overview rows were available.")
+        return
+    import numpy as np
+    fig, ax = bench.new_figure(figsize=(11.5, 6.4))
+    labels = [str(r["track"]) for r in rows]
+    vals = [fnum(r.get("normalized_for_plot"), 0.0) for r in rows]
+    x = np.arange(len(rows))
+    ax.bar(x, vals)
+    ax.axhline(1.0, linestyle="--", linewidth=1)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=30, ha="right")
+    ax.set_ylim(0, max(1.15, max(vals + [1.0]) * 1.12))
+    for xi, row, val in zip(x, rows, vals):
+        raw = row.get("value", "")
+        ax.text(xi, val + 0.03, str(raw), ha="center", va="bottom", fontsize=8)
+    verdict = rows[0].get("verdict", "") if rows else ""
+    bench.style_ax(ax, title=f"Lab 36 Severance overview: {verdict}", xlabel="evidence track or caveat", ylabel="normalized support / cleanliness")
+    bench.save_figure(ctx, fig, "overview_dashboard.png", "Lab 36 overview dashboard with track controls and caveats.")
+    # Backward-compatible copy with the original main-plot filename.
+    fig2, ax2 = bench.new_figure(figsize=(11.5, 6.4))
+    ax2.bar(x, vals)
+    ax2.axhline(1.0, linestyle="--", linewidth=1)
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(labels, rotation=30, ha="right")
+    ax2.set_ylim(0, max(1.15, max(vals + [1.0]) * 1.12))
+    bench.style_ax(ax2, title=f"Lab 36 Severance evidence dashboard: {verdict}", xlabel="track", ylabel="normalized support / cleanliness")
+    bench.save_figure(ctx, fig2, "severance_dashboard.png", "Backward-compatible Lab 36 dashboard filename.")
+
+
+def plot_lab36_target_vs_control(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], manifest: list[dict[str, Any]], source: str) -> None:
+    manifest.append({"figure": "target_vs_control.png", "question": "Do target measurements beat their direct controls, or only look good in isolation?", "source_table": source, "row_count": len(rows), "metric": "paired target and control values", "control": "chance, core floor, fresh transcript, false alarms, entropy", "claim_supported": "Only row-level target/control gaps in the source table.", "caveat": "Raw small-n rows beat aggregate gloss."})
+    if ctx.args.no_plots:
+        return
+    rows = [r for r in rows if r.get("target_value") != "" and r.get("control_value") != ""]
+    if not rows:
+        maybe_save_empty_plot(ctx, "target_vs_control.png", "Target vs control", "No paired target/control rows were available.")
+        return
+    import numpy as np
+    fig, ax = bench.new_figure(figsize=(11.8, 6.2))
+    y = np.arange(len(rows))
+    target = [fnum(r.get("target_value"), 0.0) for r in rows]
+    control = [fnum(r.get("control_value"), 0.0) for r in rows]
+    ax.scatter(control, y, marker="o", label="control")
+    ax.scatter(target, y, marker="D", label="target")
+    for yi, c, t in zip(y, control, target):
+        ax.plot([c, t], [yi, yi], linewidth=1)
+    labels = [f"{r.get('track')}\n{r.get('comparison_id')}" for r in rows]
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels, fontsize=8)
+    ax.legend(loc="best")
+    bench.style_ax(ax, title="Lab 36 target measurements beside controls", xlabel="metric value", ylabel="track / comparison")
+    bench.save_figure(ctx, fig, "target_vs_control.png", "Paired target-vs-control view for Lab 36.")
+
+
+def plot_lab36_dose_response(ctx: bench.RunContext, b2_summary: Sequence[Mapping[str, Any]], b2_rows: Sequence[Mapping[str, Any]], manifest: list[dict[str, Any]], source: str) -> None:
+    manifest.append({"figure": "dose_response.png", "question": "Does B2 report detection change with residual-RMS dose and separate from controls?", "source_table": source, "row_count": len(b2_rows), "metric": "lexical target detection rate by dose", "control": "zero/noop/random/shuffled/wrong-concept/opposite/wrong-layer", "claim_supported": "B2 screen only; not source monitoring.", "caveat": "Concept-to-report is propagation-explicable even when monotonic."})
+    if ctx.args.no_plots:
+        return
+    if not b2_summary:
+        maybe_save_empty_plot(ctx, "dose_response.png", "B2 dose response", "No B2 dose-response rows were available.")
+        return
+    import numpy as np
+    fig, ax = bench.new_figure(figsize=(11.2, 6.4))
+    conditions = sorted({str(r.get("condition")) for r in b2_summary})
+    for cond in conditions:
+        sub = sorted([r for r in b2_summary if str(r.get("condition")) == cond], key=lambda r: fnum(r.get("dose"), 0.0))
+        xs = [fnum(r.get("dose"), 0.0) for r in sub]
+        ys = [fnum(r.get("target_detection_rate"), 0.0) for r in sub]
+        if xs:
+            ax.plot(xs, ys, marker="o", label=cond.replace("_", " "))
+    # Raw lexical hits as rug points so Tier A small-n is visible.
+    if b2_rows:
+        for row in b2_rows:
+            if row.get("condition") == "target_direction":
+                ax.scatter([fnum(row.get("dose"), 0.0)], [fnum(row.get("target_hit_lexical"), 0.0)], alpha=0.35, s=16)
+    ax.set_ylim(-0.05, 1.05)
+    ax.legend(loc="best", fontsize=7)
+    bench.style_ax(ax, title="B2 concept-report dose response with controls", xlabel="dose in residual-RMS units", ylabel="target detection rate")
+    bench.save_figure(ctx, fig, "dose_response.png", "B2 dose-response with raw target-direction points and controls.")
+
+
+def plot_lab36_layer_sweep(ctx: bench.RunContext, sweep_rows: Sequence[Mapping[str, Any]], manifest: list[dict[str, Any]], source: str) -> None:
+    manifest.append({"figure": "layer_sweep_heatmap.png", "question": "Where do train-selected direction gaps and heldout AUCs sit across depth?", "source_table": source, "row_count": len(sweep_rows), "metric": "control-adjusted gap by concept/depth", "control": "random and shuffled gap means", "claim_supported": "Direction depth selection only.", "caveat": "A bright depth is a candidate handle, not a report channel."})
+    if ctx.args.no_plots:
+        return
+    if not sweep_rows:
+        maybe_save_empty_plot(ctx, "layer_sweep_heatmap.png", "Layer sweep heatmap", "No direction sweep rows were available.")
+        return
+    import numpy as np
+    concepts = sorted({str(r.get("target_concept")) for r in sweep_rows})
+    depths = sorted({int(fnum(r.get("stream_depth"), 0)) for r in sweep_rows})
+    mat = np.full((len(concepts), len(depths)), np.nan)
+    for r in sweep_rows:
+        c = str(r.get("target_concept"))
+        d = int(fnum(r.get("stream_depth"), 0))
+        if c in concepts and d in depths:
+            mat[concepts.index(c), depths.index(d)] = fnum(r.get("control_adjusted_gap"), np.nan)
+    fig, ax = bench.new_figure(figsize=(11.0, max(4.8, 0.45 * len(concepts) + 2.2)))
+    im = ax.imshow(mat, aspect="auto")
+    ax.set_yticks(np.arange(len(concepts)))
+    ax.set_yticklabels([c.replace("_", " ") for c in concepts], fontsize=8)
+    ax.set_xticks(np.arange(len(depths)))
+    ax.set_xticklabels([str(d) for d in depths], rotation=45, ha="right")
+    for r in sweep_rows:
+        if int(r.get("selected", 0)):
+            ci = concepts.index(str(r.get("target_concept")))
+            di = depths.index(int(fnum(r.get("stream_depth"), 0)))
+            ax.text(di, ci, "★", ha="center", va="center", fontsize=12)
+    fig.colorbar(im, ax=ax, shrink=0.85, label="train control-adjusted gap")
+    bench.style_ax(ax, title="Direction layer/depth sweep: train-selected cells starred", xlabel="stream depth", ylabel="state family")
+    bench.save_figure(ctx, fig, "layer_sweep_heatmap.png", "Layer/depth heatmap for Lab 36 direction selection.")
+
+
+def plot_lab36_trajectory(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], manifest: list[dict[str, Any]], source: str) -> None:
+    manifest.append({"figure": "trajectory.png", "question": "How should a reader walk from instrumentation to headline evidence?", "source_table": source, "row_count": len(rows), "metric": "normalized support by evidence step", "control": "track-specific controls named in source tables", "claim_supported": "Reading path only, not a composite benchmark.", "caveat": "Do not average this into one Severance score."})
+    if ctx.args.no_plots:
+        return
+    if not rows:
+        maybe_save_empty_plot(ctx, "trajectory.png", "Evidence trajectory", "No trajectory rows were available.")
+        return
+    xs = [int(r.get("step", i)) for i, r in enumerate(rows)]
+    ys = [fnum(r.get("normalized_support"), 0.0) for r in rows]
+    labels = [str(r.get("label")) for r in rows]
+    fig, ax = bench.new_figure(figsize=(11.0, 5.8))
+    ax.plot(xs, ys, marker="o")
+    ax.axhline(1.0, linestyle="--", linewidth=1)
+    ax.set_xticks(xs)
+    ax.set_xticklabels(labels, rotation=25, ha="right")
+    for x, y in zip(xs, ys):
+        ax.text(x, y + 0.035, rounded(y), ha="center", va="bottom", fontsize=8)
+    ax.set_ylim(0, max(1.15, max(ys + [1.0]) * 1.15))
+    bench.style_ax(ax, title="Lab 36 evidence reading trajectory", xlabel="evidence step", ylabel="normalized support")
+    bench.save_figure(ctx, fig, "trajectory.png", "Evidence trajectory/reading path for Lab 36.")
+
+
+def plot_lab36_paired_examples(ctx: bench.RunContext, counterexamples: Sequence[Mapping[str, Any]], manifest: list[dict[str, Any]], source: str) -> None:
+    manifest.append({"figure": "paired_examples.png", "question": "Which concrete rows most weaken the favorite claim?", "source_table": source, "row_count": len(counterexamples), "metric": "automatic severity", "control": "failure/counterexample filters", "claim_supported": "Counterexample boundaries only.", "caveat": "No automatic specimen does not prove no failure."})
+    if ctx.args.no_plots:
+        return
+    rows = list(counterexamples[:14])
+    if not rows:
+        maybe_save_empty_plot(ctx, "paired_examples.png", "Failure specimens", "No automatic counterexamples fired; inspect raw tables anyway.")
+        return
+    import numpy as np
+    labels = [f"{r.get('track')}:{r.get('kind')}\n{r.get('item_id')}" for r in rows]
+    sev = [fnum(r.get("severity"), 0.0) for r in rows]
+    y = np.arange(len(rows))
+    fig, ax = bench.new_figure(figsize=(11.5, max(5.0, 0.42 * len(rows) + 2.0)))
+    ax.barh(y, sev)
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels, fontsize=7)
+    ax.invert_yaxis()
+    bench.style_ax(ax, title="Counterexample and failure specimens", xlabel="automatic severity", ylabel="specimen")
+    bench.save_figure(ctx, fig, "paired_examples.png", "Counterexample specimen plot sorted by severity.")
+
+
+def plot_lab36_b4_matrix(ctx: bench.RunContext, b4_rows: Sequence[Mapping[str, Any]], manifest: list[dict[str, Any]], source: str) -> None:
+    manifest.append({"figure": "source_attribution_control_matrix.png", "question": "Which source labels are chosen under B4 conditions and fresh controls?", "source_table": source, "row_count": len(b4_rows), "metric": "count of parsed source labels", "control": "default/system/user/matched/fresh labels", "claim_supported": "Source-label pattern only after replay parity.", "caveat": "A D label in controls is a false alarm, not insight."})
+    if ctx.args.no_plots:
+        return
+    if not b4_rows:
+        maybe_save_empty_plot(ctx, "source_attribution_control_matrix.png", "B4 source matrix", "No B4 rows were available.")
+        return
+    import numpy as np
+    conditions = sorted({str(r.get("condition")) for r in b4_rows})
+    labels = ["A", "B", "C", "D", "E", "unknown"]
+    mat = np.zeros((len(conditions), len(labels)))
+    for r in b4_rows:
+        cond = str(r.get("condition"))
+        lab = str(r.get("parsed_label") or "unknown").upper()[:1]
+        if lab not in labels:
+            lab = "unknown"
+        mat[conditions.index(cond), labels.index(lab)] += 1
+    fig, ax = bench.new_figure(figsize=(9.6, max(4.8, 0.45 * len(conditions) + 2)))
+    im = ax.imshow(mat, aspect="auto")
+    ax.set_xticks(np.arange(len(labels)))
+    ax.set_xticklabels(labels)
+    ax.set_yticks(np.arange(len(conditions)))
+    ax.set_yticklabels([c.replace("_", " ") for c in conditions], fontsize=8)
+    for i in range(mat.shape[0]):
+        for j in range(mat.shape[1]):
+            if mat[i, j] > 0:
+                ax.text(j, i, int(mat[i, j]), ha="center", va="center", fontsize=8)
+    fig.colorbar(im, ax=ax, shrink=0.85, label="count")
+    bench.style_ax(ax, title="B4 source-attribution label matrix", xlabel="parsed label", ylabel="condition")
+    bench.save_figure(ctx, fig, "source_attribution_control_matrix.png", "B4 parsed source labels by condition.")
+
+
+def plot_lab36_b5_margins(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], manifest: list[dict[str, Any]], source: str) -> None:
+    manifest.append({"figure": "b5_detection_margins.png", "question": "Do injected conditions shift yes/no margins above clean/noop floors?", "source_table": source, "row_count": len(rows), "metric": "yes minus no logit margin", "control": "clean/noop floors and content leak", "claim_supported": "B5 only if d-prime, false alarm, content leak, and task-success gates pass.", "caveat": "A yes shift with concept words is content leakage."})
+    if ctx.args.no_plots:
+        return
+    if not rows:
+        maybe_save_empty_plot(ctx, "b5_detection_margins.png", "B5 detection margins", "No B5 summary rows were available.")
+        return
+    plot_b5(ctx, rows)
+
+
+def write_lab36_visual_artifact_suite(
+    ctx: bench.RunContext,
+    metrics: Mapping[str, Any],
+    evidence_rows: Sequence[Mapping[str, Any]],
+    selected_rows: Sequence[Mapping[str, Any]],
+    sweep_rows: Sequence[Mapping[str, Any]],
+    b2_rows: Sequence[Mapping[str, Any]],
+    b2_summary: Sequence[Mapping[str, Any]],
+    b2_floor: Sequence[Mapping[str, Any]],
+    b3_rows: Sequence[Mapping[str, Any]],
+    b3_summary: Sequence[Mapping[str, Any]],
+    b4_rows: Sequence[Mapping[str, Any]],
+    b4_summary: Sequence[Mapping[str, Any]],
+    b5_rows: Sequence[Mapping[str, Any]],
+    b5_summary: Sequence[Mapping[str, Any]],
+    patch_rows: Sequence[Mapping[str, Any]],
+    counterexamples: Sequence[Mapping[str, Any]],
+    warnings: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    manifest: list[dict[str, Any]] = []
+    overview_rows = lab36_overview_source_rows(metrics, evidence_rows, warnings, counterexamples)
+    overview_source = write_figure_source(ctx, "overview_dashboard_source.csv", overview_rows, "Rows used by Lab 36 overview_dashboard.png and severance_dashboard.png.")
+    plot_lab36_overview(ctx, overview_rows, manifest, overview_source)
+
+    tvc_rows = lab36_target_vs_control_rows(selected_rows, b2_floor, b3_summary, b4_summary, b5_summary, patch_rows)
+    tvc_source = write_figure_source(ctx, "target_vs_control_source.csv", tvc_rows, "Paired target/control source rows across B1/B2/B3/B4/B5/C.")
+    plot_lab36_target_vs_control(ctx, tvc_rows, manifest, tvc_source)
+
+    dose_source = write_figure_source(ctx, "dose_response_source.csv", b2_rows, "Raw B2 rows used for the dose-response plot.")
+    write_figure_source(ctx, "dose_response_summary_source.csv", b2_summary, "B2 aggregate rows by concept, condition, and dose.")
+    plot_lab36_dose_response(ctx, b2_summary, b2_rows, manifest, dose_source)
+
+    layer_source = write_figure_source(ctx, "layer_sweep_heatmap_source.csv", sweep_rows, "Direction depth sweep rows used for the layer_sweep_heatmap plot.")
+    plot_lab36_layer_sweep(ctx, sweep_rows, manifest, layer_source)
+
+    trajectory_rows = lab36_trajectory_rows(metrics, evidence_rows)
+    trajectory_source = write_figure_source(ctx, "trajectory_source.csv", trajectory_rows, "Reading-trajectory source rows for Lab 36 evidence tracks.")
+    plot_lab36_trajectory(ctx, trajectory_rows, manifest, trajectory_source)
+
+    paired_source = write_figure_source(ctx, "paired_examples_source.csv", counterexamples, "Counterexample/failure rows used by paired_examples.png.")
+    plot_lab36_paired_examples(ctx, counterexamples, manifest, paired_source)
+
+    b4_source = write_figure_source(ctx, "source_attribution_control_matrix_source.csv", b4_rows, "Raw B4 source-attribution rows used by source_attribution_control_matrix.png.")
+    plot_lab36_b4_matrix(ctx, b4_rows, manifest, b4_source)
+
+    b5_source = write_figure_source(ctx, "b5_detection_margins_source.csv", b5_summary, "B5 summary rows used by b5_detection_margins.png.")
+    plot_lab36_b5_margins(ctx, b5_summary, manifest, b5_source)
+
+    # Extra source receipts, even when no dedicated plot is produced.
+    write_figure_source(ctx, "evidence_matrix_source.csv", evidence_rows, "Evidence matrix source rows copied for plot provenance.")
+    write_figure_source(ctx, "warning_summary_source.csv", warnings, "Warnings copied for plot provenance.")
+    write_plot_manifest(ctx, manifest)
+    return manifest
+
+
 def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     mode = parse_mode(ctx.args)
     items, sources, detections, qitems, data_manifest = load_all_data(ctx.args)
@@ -1785,8 +2358,17 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     directions: dict[str, DirectionBundle] = {}
     selected_rows: list[dict[str, Any]] = []
+    sweep_rows: list[dict[str, Any]] = []
+    capture_rows: list[dict[str, Any]] = []
+    cartography_rows: list[dict[str, Any]] = []
+    b2_summary: list[dict[str, Any]] = []
+    replay_rows: list[dict[str, Any]] = []
+    ablation_rows: list[dict[str, Any]] = []
     if mode & {"directions", "b2", "b4", "b5", "patch"}:
         directions, sweep_rows, selected_rows, capture_rows = build_directions(ctx, bundle, items)
+        sweep_rows = attach_stable_ids(sweep_rows, "direction_depth", ("target_concept", "stream_depth"))
+        selected_rows = attach_stable_ids(selected_rows, "direction", ("target_concept", "stream_depth"))
+        capture_rows = attach_stable_ids(capture_rows, "capture", ("item_id", "side", "depths_captured"))
         capture_path = ctx.path("diagnostics", "direction_activation_capture.csv")
         bench.write_csv_with_context(ctx, capture_path, capture_rows)
         ctx.register_artifact(capture_path, "diagnostic", "Contrast-prompt activation captures.")
@@ -1802,7 +2384,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         ctx.register_artifact(cos_path, "table", "Cosine audit among Lab 36 directions.")
 
     if "cartography" in mode:
-        cartography_rows = run_cartography(ctx, bundle)
+        cartography_rows = attach_stable_ids(run_cartography(ctx, bundle), "cartography", ("token_role", "stream_depth"))
         path = ctx.path("tables", "patchscope_decodes.csv")
         bench.write_csv_with_context(ctx, path, cartography_rows)
         ctx.register_artifact(path, "table", "Patchscope-lite cartography; OBS only.")
@@ -1810,15 +2392,15 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     b2_rows: list[dict[str, Any]] = []
     b2_floor: list[dict[str, Any]] = []
     if "b2" in mode and directions:
-        b2_rows = run_b2_screen(bundle, items, directions)
+        b2_rows = attach_stable_ids(run_b2_screen(bundle, items, directions), "b2", ("item_id", "target_concept", "condition", "dose"))
         path = ctx.path("tables", "b2_injection_generations.csv")
         bench.write_csv_with_context(ctx, path, b2_rows)
         ctx.register_artifact(path, "table", "B2 concept-injection report and behavior generations.")
-        b2_summary = b2_summary_rows(b2_rows)
+        b2_summary = attach_stable_ids(b2_summary_rows(b2_rows), "b2_summary", ("target_concept", "condition", "dose"))
         path = ctx.path("tables", "self_report_detection_dose_response.csv")
         bench.write_csv_with_context(ctx, path, b2_summary)
         ctx.register_artifact(path, "table", "B2 dose-response summary.")
-        b2_floor = false_positive_floor_rows(b2_summary)
+        b2_floor = attach_stable_ids(false_positive_floor_rows(b2_summary), "b2_floor", ("target_concept",))
         path = ctx.path("tables", "false_positive_floor.csv")
         bench.write_csv_with_context(ctx, path, b2_floor)
         ctx.register_artifact(path, "table", "B2 core false-positive floor.")
@@ -1827,6 +2409,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     b3_summary: list[dict[str, Any]] = []
     if "b3" in mode:
         b3_rows, b3_capture, b3_summary = run_b3_certainty(bundle, qitems)
+        b3_rows = attach_stable_ids(b3_rows, "b3", ("item_id", "condition"))
+        b3_capture = attach_stable_ids(b3_capture, "b3_capture", ("item_id", "expected_confidence"))
+        b3_summary = attach_stable_ids(b3_summary, "b3_summary", ("condition",))
         path = ctx.path("diagnostics", "certainty_direction_capture.csv")
         bench.write_csv_with_context(ctx, path, b3_capture)
         ctx.register_artifact(path, "diagnostic", "B3 certainty-direction capture rows.")
@@ -1844,13 +2429,15 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         if sources:
             kv_payload = run_kv_replay_parity(ctx, bundle, sources[0], source_resolver)
         b4_rows, replay_rows = run_b4_source_attribution(bundle, sources, directions, source_resolver)
+        b4_rows = attach_stable_ids(b4_rows, "b4", ("item_id", "condition"))
+        replay_rows = attach_stable_ids(replay_rows, "b4_replay", ("item_id", "condition"))
         path = ctx.path("tables", "source_attribution_results.csv")
         bench.write_csv_with_context(ctx, path, b4_rows)
         ctx.register_artifact(path, "table", "B4 matched-output source attribution rows.")
         path = ctx.path("tables", "matched_output_replay_results.csv")
         bench.write_csv_with_context(ctx, path, replay_rows)
         ctx.register_artifact(path, "table", "B4 matched-output replay matching diagnostics.")
-        b4_summary = b4_summary_rows(b4_rows)
+        b4_summary = attach_stable_ids(b4_summary_rows(b4_rows), "b4_summary", ("condition",))
         path = ctx.path("tables", "source_attribution_summary.csv")
         bench.write_csv_with_context(ctx, path, b4_summary)
         ctx.register_artifact(path, "table", "B4 source-attribution summary.")
@@ -1858,11 +2445,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     b5_rows: list[dict[str, Any]] = []
     b5_summary: list[dict[str, Any]] = []
     if "b5" in mode and directions:
-        b5_rows = run_b5_detection(bundle, detections, directions, yesno_resolver)
+        b5_rows = attach_stable_ids(run_b5_detection(bundle, detections, directions, yesno_resolver), "b5", ("item_id", "condition"))
         path = ctx.path("tables", "injection_detection_results.csv")
         bench.write_csv_with_context(ctx, path, b5_rows)
         ctx.register_artifact(path, "table", "B5 insertion detection rows.")
-        b5_summary = b5_summary_rows(b5_rows)
+        b5_summary = attach_stable_ids(b5_summary_rows(b5_rows), "b5_summary", ("comparison",))
         path = ctx.path("tables", "injection_detection_summary.csv")
         bench.write_csv_with_context(ctx, path, b5_summary)
         ctx.register_artifact(path, "table", "B5 signal-detection summary.")
@@ -1870,6 +2457,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     patch_rows: list[dict[str, Any]] = []
     if "patch" in mode and directions:
         patch_rows, ablation_rows = run_patch_recovery(bundle, detections, directions, yesno_resolver)
+        patch_rows = attach_stable_ids(patch_rows, "patch", ("item_id", "condition", "stream_depth"))
+        ablation_rows = attach_stable_ids(ablation_rows, "ablation", ("item_id", "condition", "stream_depth"))
         path = ctx.path("tables", "patch_recovery_heatmap.csv")
         bench.write_csv_with_context(ctx, path, patch_rows)
         ctx.register_artifact(path, "table", "Minimal C-track residual patch recovery rows.")
@@ -1877,12 +2466,12 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         bench.write_csv_with_context(ctx, path, ablation_rows)
         ctx.register_artifact(path, "table", "Minimal project-out ablation rows.")
 
-    evidence = evidence_matrix_rows(selected_rows, b2_floor, b3_summary, b4_summary, b5_summary, patch_rows)
+    evidence = attach_stable_ids(evidence_matrix_rows(selected_rows, b2_floor, b3_summary, b4_summary, b5_summary, patch_rows), "evidence", ("state_family",))
     path = ctx.path("tables", "evidence_matrix.csv")
     bench.write_csv_with_context(ctx, path, evidence)
     ctx.register_artifact(path, "table", "Lab 36 final evidence matrix.")
 
-    counterexamples = severance_counterexamples(b2_rows, b4_rows, b5_rows, b3_rows)
+    counterexamples = attach_stable_ids(severance_counterexamples(b2_rows, b4_rows, b5_rows, b3_rows), "counterexample", ("track", "kind", "item_id", "condition"))
     path = ctx.path("tables", "severance_counterexamples.csv")
     bench.write_csv_with_context(ctx, path, counterexamples)
     ctx.register_artifact(path, "table", "Rows that shrink or falsify Lab 36 headline claims.")
@@ -1903,9 +2492,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     metrics["model_id"] = bundle.anatomy.model_id
     metrics["model_revision"] = bundle.anatomy.revision or ""
     metrics["gpt_oss_120b_skipped"] = True
-    path = ctx.path("metrics.json")
-    bench.write_json(path, metrics)
-    ctx.register_artifact(path, "metrics", "Aggregate Lab 36 metrics.")
+    metrics_path = ctx.path("metrics.json")
+    bench.write_json(metrics_path, metrics)
+    ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 36 metrics.")
 
     result_rows = list(evidence) + list(b4_summary) + list(b5_summary) + list(b3_summary)
     if not result_rows:
@@ -1918,6 +2507,24 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     ctx.register_artifact(jsonl_path, "results", "JSONL standard results alias for Lab 36.")
 
     self_check = write_self_check_status(ctx, safety_status, label_rows, kv_payload, directions, evidence)
+    warnings = write_lab36_warning_summary(ctx, metrics, self_check, label_rows, b2_rows, b4_summary, b5_summary, counterexamples, sweep_rows)
+    failure_specimens = write_lab36_failure_specimens(ctx, counterexamples, b2_rows, b4_rows, b5_rows, b3_rows)
+    write_lab36_run_config_snapshot(ctx, metrics, data_manifest, mode, selected_rows)
+    write_lab36_jsonl_mirrors(
+        ctx,
+        b2_injection_generations=b2_rows,
+        source_attribution_results=b4_rows,
+        injection_detection_results=b5_rows,
+        uncertainty_bridge_results=b3_rows,
+        patch_recovery_heatmap=patch_rows,
+        severance_counterexamples=counterexamples,
+        evidence_matrix=evidence,
+    )
+    plot_manifest = write_lab36_visual_artifact_suite(ctx, metrics, evidence, selected_rows, sweep_rows, b2_rows, b2_summary, b2_floor, b3_rows, b3_summary, b4_rows, b4_summary, b5_rows, b5_summary, patch_rows, counterexamples, warnings)
+    metrics["warning_count"] = len(warnings)
+    metrics["failure_specimens"] = len(failure_specimens)
+    metrics["plot_manifest_entries"] = len(plot_manifest)
+    bench.write_json(metrics_path, metrics)
     write_plot_reading_guide(ctx)
     write_method_card(ctx, bundle, metrics, data_manifest, self_check)
     write_semantic_judge_queue(ctx, b2_rows, items)
@@ -1926,5 +2533,3 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     write_report(ctx, metrics)
     write_run_summary(ctx, metrics, data_manifest)
     write_ledger(ctx, metrics)
-    plot_dashboard(ctx, metrics)
-    plot_b5(ctx, b5_summary)
