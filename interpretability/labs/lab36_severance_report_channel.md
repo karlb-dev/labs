@@ -14,6 +14,18 @@ One-sentence allowed claim: This run supports or fails to support functional cou
 Human-label requirement: required before strong claims from generated report/source/detection text
 ```
 
+## v3 patch note: content-blind B5 and row-randomized B4
+
+This patched version turns the most promising next steps into the default runner behavior:
+
+- **B5 headline decision is now no-free-text.** The runner scores insertion presence from next-token yes/no logits and records `decision_source=next_token_logits`. A separate free-text probe is generated only as a leak audit and is excluded from the headline content-leak gate.
+- **B5 now runs a small dose sweep.** Injected conditions run at `0.5`, `1.0`, and `2.0` residual-RMS doses, while the headline row remains the content-blind `2.0`-dose comparison against clean/noop.
+- **B5 summaries include bootstrap confidence intervals.** `tables/injection_detection_summary.csv` now reports d-prime and content-leak CI columns for the headline row.
+- **B4 hidden-source labels are row-randomized.** The hidden route is no longer assumed to be letter `D`; the runner resolves the hidden label from `correct_source_by_condition` and computes false alarms against that row-specific label.
+- **Direction data are more surface-balanced.** The data generator now writes contrast prompts where target and foil terms appear on both positive and negative sides, reducing pure marker-production handles for chess/topic/register families.
+
+These changes are meant to preserve the useful 7B B5 sensitivity signal while making it harder for the lab to accidentally count concept-word propagation as content-blind anomaly monitoring.
+
 ## Thesis
 
 A self-report becomes evidential only if it is counterfactually coupled to the hidden state it claims to report. Lab 36 tests that functional coupling without treating any model utterance as testimony about experience.
@@ -159,6 +171,8 @@ tables/direction_eval.csv
 tables/direction_cosines.csv
 ```
 
+The v3 data generator uses **surface-balanced contrast prompts** for the current small concept families: the target and foil terms both appear in both positive and negative construction prompts, while the instruction says which latent state to activate. This does not solve lexical leakage by magic, but it makes a direction that is merely a target-word handle less likely to dominate selection.
+
 A decodable direction is a prerequisite, not a result about report access.
 
 ## Track B2: concept-report screen
@@ -225,15 +239,14 @@ The hidden route differs:
 default / system instruction / user instruction / activation injection
 ```
 
-The model then chooses:
+The model then chooses among row-specific source labels. The option text still names the source classes, but the **letters are rotated by row**:
 
 ```text
-A. default behavior
-B. system instruction
-C. user instruction
-D. hidden internal factor
-E. unclear
+A/B/C/D = ordinary baseline, system instruction, user instruction, hidden internal factor
+E       = unclear or mixed
 ```
+
+This matters because a fixed `D` bias should not masquerade as hidden-source monitoring. The runner records `hidden_source_label` per row and computes hidden-label false alarms against that row-specific label.
 
 The B4 implementation records:
 
@@ -254,11 +267,11 @@ tables/source_attribution_summary.csv
 plots/source_attribution_control_matrix.png
 ```
 
-A B4 candidate requires activation-source accuracy to beat chance and fresh-transcript controls, low hidden-label false alarms, matched canonical-answer token hashes, no injection during the attribution question, and usable replay parity.
+A B4 candidate requires activation-source accuracy to beat chance and fresh-transcript controls, low **row-specific** hidden-label false alarms, matched canonical-answer token hashes, no injection during the attribution question, usable replay parity, and a high canonical-answer plausibility rate. If the canonical answer was implausible under the default route, the KV may be reporting prediction error rather than source identity.
 
 ## Track B5: insertion-presence detection
 
-B5 is the other co-headline test.
+B5 is the other co-headline test and is now the most content-blind part of the lab.
 
 The question is not:
 
@@ -269,10 +282,18 @@ Which concept was inserted?
 It is:
 
 ```text
-Did an unusual hidden insertion occur?
+Was there an unusual hidden insertion?
 ```
 
-Positive conditions include target, wrong, random, and shuffled directions. Negative conditions include zero and no-op. A strong B5 result should detect hidden perturbation presence without leaking the concept into text and without breaking the unrelated distractor task.
+The patched runner separates the B5 **decision channel** from the B5 **leak-audit channel**:
+
+| Channel | Artifact fields | Used for headline? | Why |
+|---|---|---:|---|
+| Next-token yes/no logits | `yes_no_label`, `yes_no_logit_margin`, `decision_source=next_token_logits` | Yes | No generated report text, so concept words cannot create a fake B5 hit. |
+| Distractor behavior | `behavior_text`, `behavior_content_leak`, `behavior_task_success` | Yes, at clean/headline dose | Confirms the perturbation did not simply break the task or leak concept words through ordinary behavior. |
+| Separate free-text audit | `free_text_probe`, `free_text_content_leak` | No | Exposes whether the model would verbalize concept content if asked after the binary decision. |
+
+Positive conditions include target, wrong, random, and shuffled directions. Negative conditions include zero and no-op. Injected rows run a small residual-RMS dose sweep, currently `0.5`, `1.0`, and `2.0`. The headline comparison is the `content_blind` prompt variant at the `2.0` dose against clean/noop rows.
 
 Read:
 
@@ -283,16 +304,17 @@ tables/injection_detection_summary.csv
 plots/b5_detection_margins.png
 ```
 
-A B5 pass requires:
+A B5 pass requires the headline `headline_content_blind_logit_only` row to satisfy:
 
 ```text
 d-prime >= 0.75
 false alarm <= 0.25
-content leak <= 0.10
-behavior task success >= 0.75
+headline content leak <= 0.10
+behavior task success >= 0.75 when behavior is generated
+bootstrap CI inspected rather than treating 0.10 as a cliff edge
 ```
 
-If the model says yes only when the concept words leak into report or behavior text, the result is content leakage, not anomaly monitoring.
+If the free-text audit leaks content while the headline yes/no logits stay clean, the correct reading is: the binary anomaly signal is still potentially useful, but generated explanations are contaminated. If the behavior text leaks concept markers, B5 fails as content-blind anomaly monitoring.
 
 ## Track C: localization
 
@@ -344,7 +366,7 @@ Each manifest row records the figure path, source table, row count, metric, cont
 
 | Artifact | Purpose |
 |---|---|
-| `diagnostics/lab36_run_config_snapshot.json` | Snapshot of model, tier, seed, prompt set, modes, decoding caps, dose convention, B2 doses, source conditions, selected directions, and data hashes. |
+| `diagnostics/lab36_run_config_snapshot.json` | Snapshot of model, tier, seed, prompt set, modes, decoding caps, dose convention, B2/B5 doses, source conditions, selected directions, and data hashes. |
 | `diagnostics/warning_summary.csv` / `.json` | Automatic warnings for missing tracks, failed self-checks, weak B4/B5 gates, content leakage, and counterexamples. |
 | `tables/failure_specimens.jsonl` / `.md` | Concrete failure and counterexample specimens, plus context samples when no automatic failures fire. |
 | `tables/*/*.jsonl` mirrors | JSONL mirrors for major row-level outputs so downstream notebooks can stream row records. |
@@ -462,7 +484,8 @@ It cannot treat the overview dashboard as a benchmark score.
 | B4 looks positive but KV parity fails | Cache stepping or positions are corrupt. | `diagnostics/kv_replay_parity.json` |
 | B4 hidden label appears in non-activation conditions | Option bias or visible-style prior. | `tables/source_attribution_results.csv`, `plots/source_attribution_control_matrix.png` |
 | B5 yes rate high for clean/noop | Prompt prior or yes bias. | `tables/injection_detection_summary.csv` |
-| B5 content leak high | The model is naming the concept, not detecting insertion presence. | `tables/injection_detection_results.csv`, `diagnostics/warning_summary.csv` |
+| B5 headline content leak high | Behavior text leaks the concept, so the binary anomaly result is not content-blind. | `tables/injection_detection_results.csv`, `diagnostics/warning_summary.csv` |
+| B5 free-text audit leak high | The no-free-text decision may still be clean, but generated explanations are contaminated. | `tables/injection_detection_results.csv`, `diagnostics/warning_summary.csv` |
 | B2 positive and behavior visible | Rationalization risk. | `tables/false_positive_floor.csv`, `tables/failure_specimens.md` |
 | Direction heldout AUC weak | No stable state direction. | `tables/direction_eval.csv`, `plots/layer_sweep_heatmap.png` |
 | Report-position token is template junk | Chat-template injection target is wrong. | `diagnostics/rendered_position_audit.csv` |
@@ -473,7 +496,7 @@ It cannot treat the overview dashboard as a benchmark score.
 
 Scale one family to at least 16/8/16 train/validation/heldout rows before making a paper-grade claim.
 
-Add bootstrap confidence intervals and permutation nulls by item for B4/B5.
+Bootstrap confidence intervals are now included for the B5 headline d-prime, false-alarm, and content-leak rates. A remaining extension is to add item-level permutation nulls for B4/B5 and bootstrap CIs for B4 source accuracy.
 
 Run a Think model as a reasoning-axis comparison and add trace-contamination fields.
 
@@ -481,7 +504,7 @@ Port B4/B5 to a hookable gpt-oss path only when residual hooks and harmony/final
 
 Add a manual blind-label pass over all semantic-judge disagreements.
 
-Add a proper B5 sentinel-token position, then compare sentinel-prefill to report-query insertion.
+Add a proper B5 sentinel-token position, then compare sentinel-prefill to report-query insertion. The current patch makes the decision content-blind, but it still uses the report-query hook path.
 
 Add a B4 source-ID versus prediction-error split: the fresh-transcript control separates transcript priors from hidden state, but it does not by itself prove the model identifies the source rather than detecting an internal anomaly.
 
@@ -497,7 +520,7 @@ Artifact: runs/<run>/tables/source_attribution_results.csv | Falsifier: KV repla
 B5 positive:
 
 ```text
-[L36-C2] B5_ANOMALY_DETECTION | On <model>, insertion-presence detection reached d-prime <x> with false alarm <y>, content leak <z>, and task success <w>. This supports a functional anomaly-monitoring handle, not awareness or experience.
+[L36-C2] B5_ANOMALY_DETECTION | On <model>, content-blind no-free-text insertion-presence detection reached d-prime <x> [CI <lo>, <hi>] with false alarm <y>, headline content leak <z>, free-text audit leak <q>, and task success <w>. This supports a functional anomaly-monitoring handle, not awareness or experience.
 Artifact: runs/<run>/tables/injection_detection_summary.csv | Falsifier: yes/no effect vanishes under heldout prompts, content leaks, or clean/noop false alarms match injected conditions.
 ```
 

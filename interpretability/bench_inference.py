@@ -141,8 +141,12 @@ def run_lockstep(bundle, rendered, caps, batch_size) -> list[str]:
     for start in range(0, len(rendered), batch_size):
         chunk = rendered[start:start + batch_size]
         chunk_caps = caps[start:start + batch_size]
-        enc = tok(chunk, return_tensors="pt", padding=True, padding_side="left",
-                  add_special_tokens=False)
+        old_padding_side = getattr(tok, "padding_side", "right")
+        tok.padding_side = "left"
+        try:
+            enc = tok(chunk, return_tensors="pt", padding=True, add_special_tokens=False)
+        finally:
+            tok.padding_side = old_padding_side
         ids = enc["input_ids"].to(bundle.input_device)
         mask = enc["attention_mask"].to(bundle.input_device)
         with torch.no_grad():
@@ -201,6 +205,8 @@ def main() -> None:
     print(f"[bench-inf] {args.jobs} jobs, planned tokens {total_planned}, "
           f"caps {min(caps)}..{max(caps)}, max_concurrent {args.max_concurrent}")
 
+    out_path = pathlib.Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     results: dict[str, dict[str, Any]] = {}
     sample_texts: dict[str, list[str]] = {}
     for engine in args.engines.split(","):
@@ -209,8 +215,9 @@ def main() -> None:
         # "continuous,continuous2" checks the engine's self-determinism
         # (two identical calls must produce bitwise-identical outputs).
         kind = engine.rstrip("0123456789")
-        torch.cuda.empty_cache()
-        torch.cuda.reset_peak_memory_stats()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.reset_peak_memory_stats()
         t0 = time.perf_counter()
         with GPUSampler() as sampler:
             if kind == "continuous":
@@ -224,11 +231,17 @@ def main() -> None:
         wall = time.perf_counter() - t0
         stats = {**stats, **sampler.summary()}
         peak = torch.cuda.max_memory_allocated() / 1024**3 if torch.cuda.is_available() else 0.0
-        n_tokens = sum(len(bundle.tokenizer(o, add_special_tokens=False)["input_ids"]) for o in outs)
-        row = {"engine": engine, "model": args.model, "jobs": args.jobs,
+        # EOS is suppressed and every job has an exact cap, so the generated-token
+        # count is the fixed schedule.  Retokenizing decoded strings can lie when
+        # a tokenizer normalizes whitespace or special tokens.
+        n_tokens = total_planned
+        row = {"engine": engine, "engine_kind": kind, "model": args.model, "dtype": args.dtype,
+               "jobs": args.jobs, "max_new": args.max_new, "scale": args.scale,
                "max_concurrent": args.max_concurrent, "planned_tokens": total_planned,
-               "decoded_tokens": n_tokens, "wall_s": round(wall, 1),
-               "tok_per_s": round(n_tokens / wall, 1), "peak_cuda_gib": round(peak, 2),
+               "decoded_tokens": n_tokens, "exact_length_schedule": True,
+               "wall_s": round(wall, 1), "tok_per_s": round(n_tokens / wall, 1),
+               "peak_cuda_gib": round(peak, 2), "torch_version": torch.__version__,
+               "cuda_available": bool(torch.cuda.is_available()),
                "engine_stats": stats}
         results[engine] = row
         sample_texts[engine] = outs[: args.verify_sample]
@@ -241,8 +254,8 @@ def main() -> None:
                   f"ttft p50/p95 {stats.get('ttft_p50_s')}/{stats.get('ttft_p95_s')} s  "
                   f"admits {stats.get('admit_events')} (block {stats.get('admit_block')})  "
                   f"stall total/max {stats.get('prefill_stall_ms_total')}/{stats.get('prefill_stall_ms_max')} ms")
-        with pathlib.Path(args.out).open("a", encoding="utf-8") as f:
-            f.write(json.dumps(row) + "\n")
+        with out_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(row, sort_keys=True) + "\n")
 
     if len(sample_texts) == 2:
         a, b = sample_texts.values()
