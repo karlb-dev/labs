@@ -8,12 +8,48 @@ Relevant commits:
 - `0e92cfa` - initial Lab 36 implementation
 - `37e919e` - user refactor and expanded Lab 36 data
 - `acea1aa` - validation fix for B2 wrong-layer control bounds
+- `bd18deb` - visual artifact pass with plot manifests and source tables
 
 Lab 36 implements the Severance report-channel experiment as a bench-registered lab. It runs the instrumentation proof, patchscope-lite cartography, contrast-direction build, B2 report-channel screen, B3 confidence bridge, B4 matched-output source attribution, B5 insertion-presence detection, and a minimal C-track patch-recovery audit. The `gpt-oss-120B` condition was intentionally skipped on this Colab machine.
 
 All useful runs were copied to:
 
 `/content/drive/MyDrive/interpret/verify_severance/`
+
+## Visual Artifact Validation Commands
+
+```bash
+python interp_bench.py --lab lab36 --tier a --mode all --prompt-set full --max-examples 0 --run-name lab36_smollm_full_visual
+python interp_bench.py --lab lab36 --tier b --mode all --prompt-set full --run-name lab36_olmo3_7b_visual_full
+python interp_bench.py --lab lab36 --tier c --mode all --prompt-set full --run-name lab36_olmo31_32b_visual_full
+```
+
+All three visual runs completed with plots enabled. Each run wrote nine PNG figures, `plots/plot_manifest.{json,csv}`, `plots/plot_reading_guide.csv`, and figure source CSVs under `tables/figure_sources/`. A PIL integrity pass found all 27 PNGs nonblank.
+
+## Visual Artifact Headline Metrics
+
+| Run | Model | Verdict | n_items | n_directions | B4 activation acc | B4 fresh acc | B5 d-prime | B5 false alarm | B5 content leak | B5 pass | Warning count | Failure specimens | Plot entries |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `lab36_smollm_full_visual` | `HuggingFaceTB/SmolLM2-135M-Instruct` | `b4_matched_source_candidate` | 25 | 5 | 0.5556 | 0.4444 | -0.9221 | 0.9706 | 0.125 | 0 | 5 | 64 | 9 |
+| `lab36_olmo3_7b_visual_full` | `allenai/Olmo-3-7B-Instruct` | `no_report_channel_coupling_validated` | 25 | 5 | 0.0 | 0.0 | 2.1194 | 0.0294 | 0.125 | 0 | 4 | 59 | 9 |
+| `lab36_olmo31_32b_visual_full` | `allenai/Olmo-3.1-32B-Instruct` | `no_report_channel_coupling_validated` | 25 | 5 | 0.0 | 0.0 | 0.7927 | 0.0294 | 0.1562 | 0 | 4 | 64 | 9 |
+
+## Visual Artifact Interpretation
+
+The visual pass confirms the previous refactor result and makes the failure modes easier to audit. The 7B and 32B models still show a B5 insertion-presence signal with low false-alarm rate, but neither run passes the strict B5 gate because content leakage remains above `0.10`. B4 remains negative on the GPU models. The visual artifacts therefore support the same claim boundary as the refactor run: there is useful B5 sensitivity evidence, but not a clean content-blind report-channel validation.
+
+New visual files to inspect first:
+
+- `plots/overview_dashboard.png`
+- `plots/target_vs_control.png`
+- `plots/dose_response.png`
+- `plots/layer_sweep_heatmap.png`
+- `plots/trajectory.png`
+- `plots/paired_examples.png`
+- `plots/source_attribution_control_matrix.png`
+- `plots/b5_detection_margins.png`
+- `plots/plot_manifest.json`
+- `tables/figure_sources/*.csv`
 
 ## Refactor Validation Commands
 
