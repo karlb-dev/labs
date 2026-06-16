@@ -1,0 +1,9 @@
+source_id,source_role,source_text,source_marker
+self_you,self,"You are solving a puzzle. You should answer carefully.","You"
+self_i,self,"I will answer the user's question carefully.","I"
+assistant,assistant,"The assistant should answer carefully.","assistant"
+user,user,"The user asked a question carefully.","user"
+person,person,"A person answered a question carefully.","person"
+cat,control,"The cat sat on the mat.","cat"
+weather,control,"The weather changed suddenly.","weather"
+model_process,process,"The model processed the prompt token by token.","model"
