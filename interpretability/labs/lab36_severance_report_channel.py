@@ -11,6 +11,7 @@ experience, phenomenal self-knowledge, or absence of experience.
 
 from __future__ import annotations
 
+import contextlib
 import csv
 import dataclasses
 import hashlib
@@ -26,6 +27,7 @@ from typing import Any, Mapping, Sequence
 import interp_bench as bench
 
 LAB_ID = "L36"
+LAB_NAME = "lab36_severance_report_channel"
 DATA_DIR = bench.COURSE_ROOT / "severance" / "data"
 SYSTEM_PROMPT = (
     "You are a careful assistant. Keep answers concise. Do not invent hidden "
@@ -36,7 +38,7 @@ SOURCE_SYSTEM_PROMPT = (
     "choose the literal source from the listed labels."
 )
 
-PROMPT_SET_CAPS = {"small": 4, "medium": 8, "full": 0}
+PROMPT_SET_CAPS = {"small": 6, "medium": 12, "full": 0}
 B2_DOSES = (0.0, 0.5, 1.0, 2.0)
 HEADLINE_DOSE = 2.0
 REPORT_TOKENS = 16
@@ -47,6 +49,16 @@ RANDOM_CONTROLS = 8
 SHUFFLED_CONTROLS = 8
 SOURCE_CONDITIONS = ("default_mode", "matched_default", "system_prompt", "user_instruction", "activation_injection")
 BLOCKED_SAFETY_PATTERNS = ("jailbreak", "bypass safety", "malware", "explosive", "poison", "weapon", "self-harm")
+B4_CHANCE = 0.20
+B4_ACTIVATION_ACCURACY_BAR = 0.35
+B4_MIN_FRESH_GAP = 0.10
+B4_MAX_HIDDEN_FALSE_ALARM = 0.25
+B5_DPRIME_BAR = 0.75
+B5_MAX_FALSE_ALARM = 0.25
+B5_MAX_CONTENT_LEAK = 0.10
+B2_SCREEN_GAP_BAR = 0.20
+MIN_CANONICAL_ANSWER_LOGPROB = -8.0
+RESULT_JSONL_NAME = "results.jsonl"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -779,6 +791,90 @@ def wrong_direction(item: SeveranceItem, directions: Mapping[str, DirectionBundl
     return directions[item.target_concept].random_vector
 
 
+
+@contextlib.contextmanager
+def positioned_steering_hooks(
+    bundle: bench.ModelBundle,
+    layer: int,
+    vector: Any | None,
+    scale: float,
+    *,
+    position: int = -1,
+) -> Any:
+    """Add a vector only at the intended report-query/decode token.
+
+    The shared bench activation-addition hook intentionally adds to every
+    position; that is correct for generic steering labs, but Lab 36 is about a
+    hidden insertion at the report channel. During prefill we patch the selected
+    prompt token, usually the final rendered prompt token. During KV decoding,
+    the model sees a single token at a time, so the insertion lands at that
+    decode token. This keeps B5/B2 closer to the Severance spec and makes the
+    injection-position audit meaningful.
+    """
+    if vector is None or abs(float(scale)) <= 1e-12:
+        yield
+        return
+    block = bundle.blocks[int(layer)]
+
+    def add_hook(_module: Any, _hook_args: tuple, output: Any) -> Any:
+        def patch(hidden: Any) -> Any:
+            pos = -1 if hidden.shape[1] == 1 else int(position)
+            if pos < 0:
+                pos = hidden.shape[1] + pos
+            pos = max(0, min(hidden.shape[1] - 1, pos))
+            hidden2 = hidden.clone()
+            hidden2[:, pos, :] = hidden2[:, pos, :] + (float(scale) * vector).to(hidden2.device, hidden2.dtype)
+            return hidden2
+
+        if isinstance(output, tuple):
+            return (patch(output[0]),) + tuple(output[1:])
+        return patch(output)
+
+    handle = block.register_forward_hook(add_hook)
+    try:
+        yield
+    finally:
+        handle.remove()
+
+
+def run_with_residual_patch_rendered(bundle: bench.ModelBundle, rendered: str, layer: int, position: int, vector: Any) -> Any:
+    """Residual replacement for already-rendered chat prompts.
+
+    The shared bench patch helper tokenizes with default special-token handling.
+    Lab 36 works on chat-templated strings and must use add_special_tokens=False
+    to keep patch positions aligned with diagnostics/rendered_position_audit.csv.
+    """
+    import torch
+
+    n_layers = bundle.anatomy.n_layers
+    if not 0 <= int(layer) <= n_layers:
+        raise ValueError(f"stream layer must be in [0, {n_layers}], got {layer}")
+    module = bundle.final_norm if int(layer) == n_layers else bundle.blocks[int(layer)]
+    encoded = bundle.tokenizer(rendered, return_tensors="pt", add_special_tokens=False)
+    input_ids = encoded["input_ids"].to(bundle.input_device)
+    attention_mask = encoded.get("attention_mask")
+    if attention_mask is not None:
+        attention_mask = attention_mask.to(bundle.input_device)
+
+    def patch_hook(_mod: Any, hook_args: tuple) -> Any:
+        hidden = hook_args[0].clone()
+        pos = int(position)
+        if pos < 0:
+            pos = hidden.shape[1] + pos
+        if not 0 <= pos < hidden.shape[1]:
+            raise ValueError(f"patch position {position} out of range for sequence length {hidden.shape[1]}")
+        hidden[0, pos] = vector.to(hidden.device, hidden.dtype)
+        return (hidden,) + tuple(hook_args[1:])
+
+    handle = module.register_forward_pre_hook(patch_hook)
+    try:
+        with torch.inference_mode():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        handle.remove()
+    return bench.tensor_cpu_float(out.logits[0, -1])
+
+
 def steer_tuple(direction: DirectionBundle, vector: Any | None, dose: float, *, layer: int | None = None) -> tuple[int, Any, float] | None:
     if vector is None or abs(float(dose)) <= 1e-12:
         return None
@@ -786,8 +882,29 @@ def steer_tuple(direction: DirectionBundle, vector: Any | None, dose: float, *, 
 
 
 def generate_one(bundle: bench.ModelBundle, rendered: str, *, direction: DirectionBundle | None = None, vector: Any | None = None, dose: float = 0.0, layer: int | None = None, max_new_tokens: int = REPORT_TOKENS, label: str = "lab36 generation") -> str:
+    """Greedy single-prompt generation with Lab 36 position-specific insertion."""
+    del label
+    import torch
+
+    encoded = bundle.tokenizer(rendered, return_tensors="pt", add_special_tokens=False)
+    ids = encoded["input_ids"].to(bundle.input_device)
+    mask = encoded.get("attention_mask")
+    if mask is not None:
+        mask = mask.to(bundle.input_device)
     steer = None if direction is None else steer_tuple(direction, vector, dose, layer=layer)
-    return bench.generate_continuous(bundle, [rendered], max_new_tokens, max_concurrent=1, skip_special_tokens=True, progress_label=label, steer=steer)[0]
+    pad_id = bundle.tokenizer.pad_token_id if bundle.tokenizer.pad_token_id is not None else bundle.tokenizer.eos_token_id
+    with positioned_steering_hooks(bundle, steer[0], steer[1], steer[2], position=-1) if steer is not None else contextlib.nullcontext():
+        with torch.inference_mode():
+            out = bundle.model.generate(
+                input_ids=ids,
+                attention_mask=mask,
+                max_new_tokens=int(max_new_tokens),
+                do_sample=False,
+                num_beams=1,
+                pad_token_id=pad_id,
+            )
+    new_ids = out[0, ids.shape[1]:].detach().cpu().tolist()
+    return bundle.tokenizer.decode(new_ids, skip_special_tokens=True)
 
 
 def next_token_logits(bundle: bench.ModelBundle, rendered: str, *, direction: DirectionBundle | None = None, vector: Any | None = None, dose: float = 0.0, layer: int | None = None) -> Any:
@@ -799,9 +916,9 @@ def next_token_logits(bundle: bench.ModelBundle, rendered: str, *, direction: Di
     if mask is not None:
         mask = mask.to(bundle.input_device)
     steer = None if direction is None else steer_tuple(direction, vector, dose, layer=layer)
-    cm = bench.steering_hooks(bundle, steer[0], steer[1], steer[2]) if steer is not None else nullcontext()
-    with cm, torch.inference_mode():
-        out = bundle.model(input_ids=ids, attention_mask=mask, use_cache=False)
+    with positioned_steering_hooks(bundle, steer[0], steer[1], steer[2], position=-1) if steer is not None else contextlib.nullcontext():
+        with torch.inference_mode():
+            out = bundle.model(input_ids=ids, attention_mask=mask, use_cache=False)
     return out.logits[0, -1, :].detach().float().cpu()
 
 
@@ -934,8 +1051,16 @@ def source_prompt(src: SourceItem, condition: str) -> tuple[str, str, str]:
     return base_user, SOURCE_SYSTEM_PROMPT, src.correct_source_by_condition.get(normalize_label(condition), "A")
 
 
+
 def source_attribution_question(src: SourceItem) -> str:
-    return "\n\nQuestion: Which source best explains the response style?\nA. default behavior\nB. system instruction\nC. user instruction\nD. hidden internal factor\nE. unclear\nReply with one letter only.\nAnswer:"
+    options = []
+    for part in str(src.answer_options or "A=default behavior;B=system instruction;C=user instruction;D=hidden internal factor;E=unclear").split(";"):
+        if "=" in part:
+            key, val = part.split("=", 1)
+            options.append(f"{key.strip()}. {val.strip()}")
+    if not options:
+        options = ["A. default behavior", "B. system instruction", "C. user instruction", "D. hidden internal factor", "E. unclear"]
+    return "\n\nQuestion: Which source best explains the response style or emphasis?\n" + "\n".join(options) + "\nReply with one letter only.\nAnswer:"
 
 
 def forward_cache_call(model: Any, **kwargs: Any) -> Any:
@@ -953,28 +1078,51 @@ def softmax_list(logits: Any) -> list[float]:
     return [float(x) for x in torch.softmax(logits.float(), dim=-1)]
 
 
+
 def kv_replay_label_logits(bundle: bench.ModelBundle, prompt_ids: Sequence[int], answer_ids: Sequence[int], attribution_ids: Sequence[int], *, direction: DirectionBundle | None = None, vector: Any | None = None, dose: float = 0.0, layer: int = 0) -> tuple[Any, dict[str, Any]]:
     import torch
-    from transformers import DynamicCache
+
+    try:
+        from transformers import DynamicCache
+        cache_obj: Any = DynamicCache()
+        cache_class = "DynamicCache"
+    except Exception:
+        cache_obj = None
+        cache_class = "model_default_cache"
 
     device = bundle.input_device
     model = bundle.model
     ids = torch.tensor([list(prompt_ids)], dtype=torch.long, device=device)
     mask = torch.ones_like(ids)
+    cache_position = torch.arange(0, ids.shape[1], dtype=torch.long, device=device)
     with torch.inference_mode():
-        out = forward_cache_call(model, input_ids=ids, attention_mask=mask, past_key_values=DynamicCache(), use_cache=True)
+        out = forward_cache_call(
+            model,
+            input_ids=ids,
+            attention_mask=mask,
+            position_ids=cache_position.unsqueeze(0),
+            cache_position=cache_position,
+            past_key_values=cache_obj,
+            use_cache=True,
+        )
     past = out.past_key_values
     past_len = int(ids.shape[1])
-    mean_answer_logprob = []
+    mean_answer_logprob: list[float] = []
     handle = None
-    if direction is not None and vector is not None and abs(dose) > 1e-12:
+    if direction is not None and vector is not None and abs(float(dose)) > 1e-12:
         scale = float(dose) * float(direction.residual_rms)
 
         def hook(_module: Any, _hook_args: tuple, output: Any) -> Any:
+            # During teacher-forced replay the step length is one token, so this
+            # is a targeted hidden-route insertion, not a prompt-wide steering
+            # blanket. The hook is registered once and removed in finally.
             if isinstance(output, tuple):
-                h = output[0]
-                return (h + (scale * vector).to(h.device, h.dtype),) + tuple(output[1:])
-            return output + (scale * vector).to(output.device, output.dtype)
+                h = output[0].clone()
+                h[:, -1, :] = h[:, -1, :] + (scale * vector).to(h.device, h.dtype)
+                return (h,) + tuple(output[1:])
+            h = output.clone()
+            h[:, -1, :] = h[:, -1, :] + (scale * vector).to(h.device, h.dtype)
+            return h
 
         handle = bundle.blocks[int(layer)].register_forward_hook(hook)
     try:
@@ -986,20 +1134,41 @@ def kv_replay_label_logits(bundle: bench.ModelBundle, prompt_ids: Sequence[int],
             step = torch.tensor([[int(tok)]], dtype=torch.long, device=device)
             mask = torch.ones((1, past_len + 1), dtype=torch.long, device=device)
             pos = torch.tensor([[past_len]], dtype=torch.long, device=device)
+            cache_pos = torch.tensor([past_len], dtype=torch.long, device=device)
             with torch.inference_mode():
-                out = forward_cache_call(model, input_ids=step, attention_mask=mask, position_ids=pos, past_key_values=past, use_cache=True)
+                out = forward_cache_call(
+                    model,
+                    input_ids=step,
+                    attention_mask=mask,
+                    position_ids=pos,
+                    cache_position=cache_pos,
+                    past_key_values=past,
+                    use_cache=True,
+                )
             past = out.past_key_values
             past_len += 1
             prev_logits = out.logits[0, -1, :].detach().float().cpu()
     finally:
         if handle is not None:
             handle.remove()
+    expected_attr_start = len(prompt_ids) + len(answer_ids)
     attr = torch.tensor([list(attribution_ids)], dtype=torch.long, device=device)
     mask = torch.ones((1, past_len + len(attribution_ids)), dtype=torch.long, device=device)
     pos = torch.arange(past_len, past_len + len(attribution_ids), dtype=torch.long, device=device).unsqueeze(0)
+    cache_pos = torch.arange(past_len, past_len + len(attribution_ids), dtype=torch.long, device=device)
     with torch.inference_mode():
-        out = forward_cache_call(model, input_ids=attr, attention_mask=mask, position_ids=pos, past_key_values=past, use_cache=True)
-    return out.logits[0, -1, :].detach().float().cpu(), {"mean_canonical_answer_logprob": safe_mean(mean_answer_logprob) if mean_answer_logprob else "", "final_past_len": past_len + len(attribution_ids)}
+        out = forward_cache_call(model, input_ids=attr, attention_mask=mask, position_ids=pos, cache_position=cache_pos, past_key_values=past, use_cache=True)
+    return out.logits[0, -1, :].detach().float().cpu(), {
+        "mean_canonical_answer_logprob": safe_mean(mean_answer_logprob) if mean_answer_logprob else "",
+        "prefill_len": len(prompt_ids),
+        "answer_len": len(answer_ids),
+        "attribution_len": len(attribution_ids),
+        "attribution_start_position": past_len,
+        "expected_attribution_start_position": expected_attr_start,
+        "position_contiguous": int(past_len == expected_attr_start),
+        "cache_class": cache_class,
+        "final_past_len": past_len + len(attribution_ids),
+    }
 
 
 def full_forward_label_logits(bundle: bench.ModelBundle, ids: Sequence[int]) -> Any:
@@ -1026,13 +1195,16 @@ def run_kv_replay_parity(ctx: bench.RunContext, bundle: bench.ModelBundle, src: 
         diff = (inc_logits - full_logits).abs()
         label_inc, _ = choose_label(inc_logits, resolver)
         label_full, _ = choose_label(full_logits, resolver)
-        payload = {"item_id": src.item_id, "full_input_ids_sha256": sha256_ids(full_ids), "prompt_len": len(prompt_ids), "answer_len": len(answer_ids), "attribution_len": len(attr_ids), "max_abs_logit_diff": float(diff.max()), "mean_abs_logit_diff": float(diff.mean()), "incremental_label": label_inc, "full_forward_label": label_full, "label_match": bool(label_inc == label_full), "ok": bool(float(diff.max()) <= 2e-2 or label_inc == label_full), **meta}
+        strict_ok = bool(float(diff.max()) <= 2e-2 and bool(meta.get("position_contiguous")))
+        label_ok = bool(label_inc == label_full and bool(meta.get("position_contiguous")))
+        payload = {"item_id": src.item_id, "full_input_ids_sha256": sha256_ids(full_ids), "prompt_len": len(prompt_ids), "answer_len": len(answer_ids), "attribution_len": len(attr_ids), "max_abs_logit_diff": float(diff.max()), "mean_abs_logit_diff": float(diff.mean()), "incremental_label": label_inc, "full_forward_label": label_full, "label_match": bool(label_inc == label_full), "ok_strict_logits": strict_ok, "ok_label_fallback": label_ok, "ok": bool(strict_ok or label_ok), **meta}
     except Exception as exc:
         payload = {"item_id": src.item_id, "ok": False, "error": f"{type(exc).__name__}: {exc}"}
     path = ctx.path("diagnostics", "kv_replay_parity.json")
     bench.write_json(path, payload)
     ctx.register_artifact(path, "diagnostic", "KV replay parity for matched-output source attribution.")
     return payload
+
 
 
 def run_b4_source_attribution(bundle: bench.ModelBundle, sources: Sequence[SourceItem], directions: Mapping[str, DirectionBundle], resolver: LabelResolver) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -1046,6 +1218,7 @@ def run_b4_source_attribution(bundle: bench.ModelBundle, sources: Sequence[Sourc
         answer_ids = tok(src.canonical_answer, add_special_tokens=False)["input_ids"]
         attr_ids = tok(source_attribution_question(src), add_special_tokens=False)["input_ids"]
         answer_hash = sha256_ids(answer_ids)
+        default_logprob = ""
         for condition in SOURCE_CONDITIONS:
             user, system, fallback_expected = source_prompt(src, condition)
             expected = src.correct_source_by_condition.get(normalize_label(condition), fallback_expected)
@@ -1058,11 +1231,16 @@ def run_b4_source_attribution(bundle: bench.ModelBundle, sources: Sequence[Sourc
                 fresh_logits = full_forward_label_logits(bundle, prompt_ids + answer_ids + attr_ids)
                 fresh_label, fresh_scores = choose_label(fresh_logits, resolver)
                 error = ""
+                if condition in {"default_mode", "matched_default"} and meta.get("mean_canonical_answer_logprob") != "":
+                    default_logprob = meta.get("mean_canonical_answer_logprob")
             except Exception as exc:
                 parsed, scores, fresh_label, fresh_scores, meta, error = "error", {}, "error", {}, {}, f"{type(exc).__name__}: {exc}"
-            rows.append({"track": "B4_MATCHED_SOURCE", "item_id": src.item_id, "split": src.split, "target_style": src.target_style, "condition": condition, "expected_label": expected, "kv_preserved": 1, "fresh_transcript_control": 0, "injection_during_replay": int(inject), "injection_during_attribution": 0, "render_mode": mode, "prompt_ids_sha256": sha256_ids(prompt_ids), "canonical_answer_ids_sha256": answer_hash, "visible_answer_sha256": short_hash(src.canonical_answer), "parsed_label": parsed, "correct": int(parsed == expected), "hidden_label_false_alarm": int(condition != "activation_injection" and parsed == "D"), "score_A": rounded(scores.get("A")), "score_B": rounded(scores.get("B")), "score_C": rounded(scores.get("C")), "score_D": rounded(scores.get("D")), "score_E": rounded(scores.get("E")), "fresh_parsed_label": fresh_label, "fresh_correct": int(fresh_label == expected), "fresh_score_D": rounded(fresh_scores.get("D")), "b4_injection_layer": direction.b4_injection_layer, "dose": HEADLINE_DOSE if inject else 0.0, "alpha_effective_residual_units": rounded(HEADLINE_DOSE * direction.residual_rms) if inject else 0.0, "mean_canonical_answer_logprob": rounded(meta.get("mean_canonical_answer_logprob")), "error": error, "hand_label_source": ""})
-            replay_rows.append({"item_id": src.item_id, "condition": condition, "canonical_answer_text": src.canonical_answer, "canonical_answer_ids_sha256": answer_hash, "visible_transcript_sha256": short_hash(src.canonical_answer + source_attribution_question(src)), "kv_preserved": 1, "injection_during_replay": int(inject), "injection_during_attribution": 0, "visible_answer_text_matched": 1, "activation_injection_layer": direction.b4_injection_layer if inject else ""})
+            mean_lp = meta.get("mean_canonical_answer_logprob", "")
+            plausible = "" if mean_lp == "" else int(fnum(mean_lp) >= MIN_CANONICAL_ANSWER_LOGPROB)
+            rows.append({"track": "B4_MATCHED_SOURCE", "item_id": src.item_id, "split": src.split, "style_family": src.style_family, "target_style": src.target_style, "condition": condition, "expected_label": expected, "kv_preserved": 1, "fresh_transcript_control": 0, "injection_during_replay": int(inject), "injection_during_attribution": 0, "render_mode": mode, "prompt_ids_sha256": sha256_ids(prompt_ids), "canonical_answer_ids_sha256": answer_hash, "visible_answer_sha256": short_hash(src.canonical_answer), "parsed_label": parsed, "correct": int(parsed == expected), "hidden_label_false_alarm": int(condition != "activation_injection" and parsed == "D"), "activation_label_without_injection": int(condition != "activation_injection" and parsed == "D"), "score_A": rounded(scores.get("A")), "score_B": rounded(scores.get("B")), "score_C": rounded(scores.get("C")), "score_D": rounded(scores.get("D")), "score_E": rounded(scores.get("E")), "fresh_parsed_label": fresh_label, "fresh_correct": int(fresh_label == expected), "fresh_score_D": rounded(fresh_scores.get("D")), "b4_injection_layer": direction.b4_injection_layer, "stream_depth_selected_for_direction": direction.stream_depth, "dose": HEADLINE_DOSE if inject else 0.0, "alpha_effective_residual_units": rounded(HEADLINE_DOSE * direction.residual_rms) if inject else 0.0, "mean_canonical_answer_logprob": rounded(mean_lp), "canonical_answer_plausible_under_default_floor": plausible, "position_contiguous": meta.get("position_contiguous", ""), "attribution_start_position": meta.get("attribution_start_position", ""), "error": error, "hand_label_source": "", "hand_label_visible_style_prior": ""})
+            replay_rows.append({"item_id": src.item_id, "condition": condition, "canonical_answer_text": src.canonical_answer, "canonical_answer_ids_sha256": answer_hash, "visible_transcript_sha256": short_hash(src.canonical_answer + source_attribution_question(src)), "kv_preserved": 1, "injection_during_replay": int(inject), "injection_during_attribution": 0, "visible_answer_text_matched": 1, "activation_injection_layer": direction.b4_injection_layer if inject else "", "position_contiguous": meta.get("position_contiguous", ""), "canonical_answer_plausible_under_default_floor": plausible})
     return rows, replay_rows
+
 
 
 def b4_summary_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -1071,26 +1249,56 @@ def b4_summary_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         grouped[str(row["condition"])].append(row)
     out = []
     for cond, sub in sorted(grouped.items()):
-        out.append({"condition": cond, "n": len(sub), "accuracy": rounded(safe_mean([r["correct"] for r in sub], 0.0)), "fresh_transcript_accuracy": rounded(safe_mean([r["fresh_correct"] for r in sub], 0.0)), "hidden_label_false_alarm_rate": rounded(safe_mean([r["hidden_label_false_alarm"] for r in sub], 0.0)), "parsed_labels": json.dumps(dict(Counter(str(r.get("parsed_label")) for r in sub)), sort_keys=True)})
+        out.append({"condition": cond, "n": len(sub), "accuracy": rounded(safe_mean([r["correct"] for r in sub], 0.0)), "fresh_transcript_accuracy": rounded(safe_mean([r["fresh_correct"] for r in sub], 0.0)), "hidden_label_false_alarm_rate": rounded(safe_mean([r["hidden_label_false_alarm"] for r in sub], 0.0)), "canonical_answer_plausibility_rate": rounded(safe_mean([r.get("canonical_answer_plausible_under_default_floor") for r in sub if str(r.get("canonical_answer_plausible_under_default_floor")) != ""], 0.0)), "position_contiguous_rate": rounded(safe_mean([r.get("position_contiguous") for r in sub if str(r.get("position_contiguous")) != ""], 0.0)), "parsed_labels": json.dumps(dict(Counter(str(r.get("parsed_label")) for r in sub)), sort_keys=True)})
+    nonact = [r for r in rows if str(r.get("condition")) != "activation_injection"]
+    if nonact:
+        out.append({"condition": "nonactivation_controls", "n": len(nonact), "accuracy": "", "fresh_transcript_accuracy": "", "hidden_label_false_alarm_rate": rounded(safe_mean([r["hidden_label_false_alarm"] for r in nonact], 0.0)), "canonical_answer_plausibility_rate": rounded(safe_mean([r.get("canonical_answer_plausible_under_default_floor") for r in nonact if str(r.get("canonical_answer_plausible_under_default_floor")) != ""], 0.0)), "position_contiguous_rate": rounded(safe_mean([r.get("position_contiguous") for r in nonact if str(r.get("position_contiguous")) != ""], 0.0)), "parsed_labels": json.dumps(dict(Counter(str(r.get("parsed_label")) for r in nonact)), sort_keys=True)})
     return out
+
+
+
+def make_detection_report_user(det: DetectionItem) -> str:
+    return f"Task context: {det.distractor_task}\n\n{det.report_prompt}"
+
+
+def make_detection_behavior_user(det: DetectionItem) -> str:
+    return f"Task context: {det.distractor_task}\n\n{det.behavior_prompt}"
 
 
 def detection_vectors(det: DetectionItem, directions: Mapping[str, DirectionBundle]) -> list[tuple[str, str, DirectionBundle | None, Any | None, float]]:
     target = directions.get(det.target_direction_id)
     wrong = directions.get(det.wrong_direction_id)
-    rows = [("zero", "clean", target, None, 0.0), ("noop", "clean", target, None, 0.0)]
+    base = target or wrong or (next(iter(directions.values())) if directions else None)
+    condition_map: dict[str, tuple[str, DirectionBundle | None, Any | None, float]] = {
+        "zero": ("clean", base, None, 0.0),
+        "noop": ("clean", base, None, 0.0),
+    }
     if target is not None:
-        rows.extend([("target_direction", "injected", target, target.vector, HEADLINE_DOSE), ("random_direction", "injected", target, target.random_vector, HEADLINE_DOSE)])
+        condition_map.update({
+            "target_direction": ("injected", target, target.vector, HEADLINE_DOSE),
+            "random_direction": ("injected", target, target.random_vector, HEADLINE_DOSE),
+            "shuffled_direction": ("injected", target, target.shuffled_vector, HEADLINE_DOSE),
+        })
     if wrong is not None:
-        rows.append(("wrong_direction", "injected", wrong, wrong.vector, HEADLINE_DOSE))
+        condition_map["wrong_direction"] = ("injected", wrong, wrong.vector, HEADLINE_DOSE)
+    order = list(det.negative_conditions) + list(det.positive_conditions)
+    seen = set()
+    rows = []
+    for cond in order:
+        cond = normalize_label(cond)
+        if cond in seen or cond not in condition_map:
+            continue
+        signal_class, direction, vector, dose = condition_map[cond]
+        rows.append((cond, signal_class, direction, vector, dose))
+        seen.add(cond)
     return rows
 
 
 def run_b5_detection(bundle: bench.ModelBundle, detections: Sequence[DetectionItem], directions: Mapping[str, DirectionBundle], resolver: LabelResolver) -> list[dict[str, Any]]:
     rows = []
     for det in detections:
-        report_rendered, report_mode = render_user(bundle, det.report_prompt)
-        behavior_rendered, behavior_mode = render_user(bundle, det.behavior_prompt)
+        report_rendered, report_mode = render_user(bundle, make_detection_report_user(det))
+        behavior_rendered, behavior_mode = render_user(bundle, make_detection_behavior_user(det))
         for condition, signal_class, direction, vector, dose in detection_vectors(det, directions):
             if direction is None:
                 continue
@@ -1098,11 +1306,17 @@ def run_b5_detection(bundle: bench.ModelBundle, detections: Sequence[DetectionIt
             label, scores = choose_label(logits, resolver)
             report_text = generate_one(bundle, report_rendered, direction=direction, vector=vector, dose=dose, max_new_tokens=DETECTION_TOKENS, label="lab36 B5 report")
             behavior_text = generate_one(bundle, behavior_rendered, direction=direction, vector=vector, dose=dose, max_new_tokens=BEHAVIOR_TOKENS, label="lab36 B5 behavior")
-            all_markers = tuple(dict.fromkeys(direction.markers + direction.wrong_markers))
+            marker_sources = [direction]
+            if det.target_direction_id in directions:
+                marker_sources.append(directions[det.target_direction_id])
+            if det.wrong_direction_id in directions:
+                marker_sources.append(directions[det.wrong_direction_id])
+            all_markers = tuple(dict.fromkeys(m for d in marker_sources for m in (d.markers + d.wrong_markers)))
             concept_leak = int(marker_hit(report_text, all_markers) or marker_hit(behavior_text, all_markers))
             yes_no = parse_yes_no(report_text, scores)
-            rows.append({"track": "B5_ANOMALY_DETECTION", "item_id": det.item_id, "split": det.split, "condition": condition, "signal_class": signal_class, "direction_id": direction.concept, "dose": dose, "alpha_effective_residual_units": rounded(dose * direction.residual_rms), "layer": direction.injection_layer, "position_policy": det.injection_position_policy, "report_render_mode": report_mode, "behavior_render_mode": behavior_mode, "report_text": report_text, "yes_no_label": yes_no, "yes_logit": rounded(scores.get("yes")), "no_logit": rounded(scores.get("no")), "yes_no_logit_margin": rounded(fnum(scores.get("yes"), 0.0) - fnum(scores.get("no"), 0.0)), "concept_marker_hit": concept_leak, "content_leak": concept_leak, "behavior_text": behavior_text, "behavior_task_success": int(bool(str(behavior_text).strip()) and "hidden" not in str(behavior_text).lower()), "format_error": int(yes_no not in {"yes", "no"}), "hand_label_yes_no": "", "hand_label_content_leak": ""})
+            rows.append({"track": "B5_ANOMALY_DETECTION", "item_id": det.item_id, "split": det.split, "condition": condition, "signal_class": signal_class, "direction_id": direction.concept, "target_direction_id": det.target_direction_id, "wrong_direction_id": det.wrong_direction_id, "dose": dose, "alpha_effective_residual_units": rounded(dose * direction.residual_rms), "layer": direction.injection_layer, "position_policy": det.injection_position_policy, "report_render_mode": report_mode, "behavior_render_mode": behavior_mode, "distractor_task": det.distractor_task, "report_text": report_text, "yes_no_label": yes_no, "yes_logit": rounded(scores.get("yes")), "no_logit": rounded(scores.get("no")), "yes_no_logit_margin": rounded(fnum(scores.get("yes"), 0.0) - fnum(scores.get("no"), 0.0)), "concept_marker_hit": concept_leak, "content_leak": concept_leak, "behavior_text": behavior_text, "behavior_task_success": int(bool(str(behavior_text).strip()) and "hidden" not in str(behavior_text).lower() and "internal" not in str(behavior_text).lower()), "format_error": int(yes_no not in {"yes", "no"}), "hand_label_yes_no": "", "hand_label_content_leak": "", "hand_label_task_success": ""})
     return rows
+
 
 
 def b5_summary_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
@@ -1110,10 +1324,14 @@ def b5_summary_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     injected = [r for r in rows if str(r.get("signal_class")) == "injected"]
     hits = sum(1 for r in injected if str(r.get("yes_no_label")) == "yes")
     false_alarms = sum(1 for r in clean if str(r.get("yes_no_label")) == "yes")
-    summary = [{"comparison": "all_insertions_vs_clean", "n_injected": len(injected), "n_clean": len(clean), "hit_rate": rounded(clipped_rate(hits, len(injected))) if injected else "", "false_alarm_rate": rounded(clipped_rate(false_alarms, len(clean))) if clean else "", "d_prime": rounded(d_prime(hits, len(injected), false_alarms, len(clean))) if injected and clean else "", "mean_logit_margin_injected": rounded(safe_mean([r["yes_no_logit_margin"] for r in injected], 0.0)), "mean_logit_margin_clean": rounded(safe_mean([r["yes_no_logit_margin"] for r in clean], 0.0)), "content_leak_rate": rounded(safe_mean([r["content_leak"] for r in injected], 0.0)), "behavior_task_success_rate": rounded(safe_mean([r["behavior_task_success"] for r in rows], 0.0)), "pass_gate": int(bool(injected and clean) and d_prime(hits, len(injected), false_alarms, len(clean)) >= 0.75 and clipped_rate(false_alarms, len(clean)) <= 0.25 and safe_mean([r["content_leak"] for r in injected], 1.0) <= 0.10)}]
+    content_leak = safe_mean([r["content_leak"] for r in injected], 1.0)
+    task_success = safe_mean([r["behavior_task_success"] for r in rows], 0.0)
+    dp = d_prime(hits, len(injected), false_alarms, len(clean)) if injected and clean else float("nan")
+    fa = clipped_rate(false_alarms, len(clean)) if clean else float("nan")
+    summary = [{"comparison": "all_insertions_vs_clean", "n_injected": len(injected), "n_clean": len(clean), "hit_rate": rounded(clipped_rate(hits, len(injected))) if injected else "", "false_alarm_rate": rounded(fa) if clean else "", "d_prime": rounded(dp) if injected and clean else "", "mean_logit_margin_injected": rounded(safe_mean([r["yes_no_logit_margin"] for r in injected], 0.0)), "mean_logit_margin_clean": rounded(safe_mean([r["yes_no_logit_margin"] for r in clean], 0.0)), "content_leak_rate": rounded(content_leak), "behavior_task_success_rate": rounded(task_success), "pass_gate": int(bool(injected and clean) and dp >= B5_DPRIME_BAR and fa <= B5_MAX_FALSE_ALARM and content_leak <= B5_MAX_CONTENT_LEAK and task_success >= 0.75)}]
     for cond in sorted({str(r.get("condition")) for r in rows}):
         sub = [r for r in rows if str(r.get("condition")) == cond]
-        summary.append({"comparison": cond, "yes_rate": rounded(safe_mean([1 if str(r.get("yes_no_label")) == "yes" else 0 for r in sub], 0.0)), "mean_logit_margin": rounded(safe_mean([r["yes_no_logit_margin"] for r in sub], 0.0)), "content_leak_rate": rounded(safe_mean([r["content_leak"] for r in sub], 0.0))})
+        summary.append({"comparison": cond, "yes_rate": rounded(safe_mean([1 if str(r.get("yes_no_label")) == "yes" else 0 for r in sub], 0.0)), "mean_logit_margin": rounded(safe_mean([r["yes_no_logit_margin"] for r in sub], 0.0)), "content_leak_rate": rounded(safe_mean([r["content_leak"] for r in sub], 0.0)), "behavior_task_success_rate": rounded(safe_mean([r["behavior_task_success"] for r in sub], 0.0))})
     return summary
 
 
@@ -1196,26 +1414,28 @@ def project_out(vec: Any, direction: Any) -> Any:
     return vec.detach().float() - float(vec.detach().float() @ d) * d
 
 
+
 def run_patch_recovery(bundle: bench.ModelBundle, detections: Sequence[DetectionItem], directions: Mapping[str, DirectionBundle], resolver: LabelResolver) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     rows = []
     ablations = []
-    for det in detections[: min(4, len(detections))]:
+    for det in detections[: min(6, len(detections))]:
         direction = directions.get(det.target_direction_id)
         if direction is None:
             continue
-        rendered, _ = render_user(bundle, det.report_prompt)
+        rendered, _ = render_user(bundle, make_detection_report_user(det))
         cap = bench.run_with_residual_cache(bundle, rendered, add_special_tokens=False)
-        layer = direction.injection_layer
+        injection_layer = direction.injection_layer
+        stream_depth = max(1, min(bundle.anatomy.n_layers, injection_layer + 1))
         pos = len(cap.input_ids) - 1
         clean_metric = yes_no_margin_from_logits(next_token_logits(bundle, rendered), resolver)
-        injected_metric = yes_no_margin_from_logits(next_token_logits(bundle, rendered, direction=direction, vector=direction.vector, dose=HEADLINE_DOSE, layer=layer), resolver)
-        patch_vec = cap.streams[layer, pos, :].detach().float().cpu() + HEADLINE_DOSE * direction.residual_rms * direction.vector
-        patched_metric = yes_no_margin_from_logits(bench.run_with_residual_patch(bundle, rendered, layer, pos, patch_vec, add_special_tokens=False), resolver)
+        injected_metric = yes_no_margin_from_logits(next_token_logits(bundle, rendered, direction=direction, vector=direction.vector, dose=HEADLINE_DOSE, layer=injection_layer), resolver)
+        patch_vec = cap.streams[stream_depth, pos, :].detach().float().cpu() + HEADLINE_DOSE * direction.residual_rms * direction.vector
+        patched_metric = yes_no_margin_from_logits(run_with_residual_patch_rendered(bundle, rendered, stream_depth, pos, patch_vec), resolver)
         denom = injected_metric - clean_metric
         recovery = (patched_metric - clean_metric) / denom if abs(denom) > 1e-9 else float("nan")
-        rows.append({"track": "C_LOCALIZATION", "item_id": det.item_id, "metric": "yes_no_logit_margin", "layer": layer, "position": pos, "baseline_metric": rounded(clean_metric), "intervention_metric": rounded(injected_metric), "patched_metric": rounded(patched_metric), "recovery": rounded(recovery), "valid_denominator": int(abs(denom) > 1e-9)})
-        ablated_metric = yes_no_margin_from_logits(bench.run_with_residual_patch(bundle, rendered, layer, pos, project_out(patch_vec, direction.vector), add_special_tokens=False), resolver)
-        ablations.append({"track": "C_LOCALIZATION", "item_id": det.item_id, "metric": "yes_no_logit_margin", "ablation": "project_out_target_direction_from_patched_residual", "layer": layer, "position": pos, "patched_metric": rounded(patched_metric), "ablated_metric": rounded(ablated_metric), "drop_from_project_out": rounded(patched_metric - ablated_metric)})
+        rows.append({"track": "C_LOCALIZATION", "item_id": det.item_id, "metric": "yes_no_logit_margin", "injection_layer": injection_layer, "patched_stream_depth": stream_depth, "position": pos, "baseline_metric": rounded(clean_metric), "intervention_metric": rounded(injected_metric), "patched_metric": rounded(patched_metric), "recovery": rounded(recovery), "valid_denominator": int(abs(denom) > 1e-9)})
+        ablated_metric = yes_no_margin_from_logits(run_with_residual_patch_rendered(bundle, rendered, stream_depth, pos, project_out(patch_vec, direction.vector)), resolver)
+        ablations.append({"track": "C_LOCALIZATION", "item_id": det.item_id, "metric": "yes_no_logit_margin", "ablation": "project_out_target_direction_from_patched_residual", "injection_layer": injection_layer, "patched_stream_depth": stream_depth, "position": pos, "patched_metric": rounded(patched_metric), "ablated_metric": rounded(ablated_metric), "drop_from_project_out": rounded(patched_metric - ablated_metric)})
     return rows, ablations
 
 
@@ -1253,16 +1473,166 @@ def aggregate_metrics(items: Sequence[SeveranceItem], directions: Mapping[str, D
     b4_fresh = fnum(metrics.get("b4_activation_fresh_accuracy"), 0.0)
     b5_dp = fnum(metrics.get("b5_d_prime_all_insertions"), 0.0)
     b5_leak = fnum(metrics.get("b5_content_leak_rate"), 1.0)
-    if b4_acc >= 0.35 and b4_acc - b4_fresh > 0.10:
+    if b4_acc >= B4_ACTIVATION_ACCURACY_BAR and b4_acc - b4_fresh > B4_MIN_FRESH_GAP:
         verdict = "b4_matched_source_candidate"
-    elif b5_dp >= 0.75 and b5_leak <= 0.10:
+    elif b5_dp >= B5_DPRIME_BAR and b5_leak <= B5_MAX_CONTENT_LEAK:
         verdict = "b5_anomaly_detection_candidate"
-    elif b2_gaps and safe_mean(b2_gaps) >= 0.20:
+    elif b2_gaps and safe_mean(b2_gaps) >= B2_SCREEN_GAP_BAR:
         verdict = "b2_screen_only_propagation_explicable"
     else:
         verdict = "no_report_channel_coupling_validated"
     metrics["verdict"] = verdict
     return metrics
+
+
+
+def write_jsonl(path: pathlib.Path, rows: Sequence[Mapping[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as f:
+        for row in rows:
+            f.write(json.dumps(dict(row), sort_keys=True, default=bench.json_default) + "\n")
+
+
+def write_plot_reading_guide(ctx: bench.RunContext) -> None:
+    rows = [
+        {"plot": "plots/severance_dashboard.png", "question": "Which headline track, if any, supports functional report-channel coupling?", "do_not_claim": "Dashboard support is not phenomenal evidence."},
+        {"plot": "plots/b5_detection_margins.png", "question": "Do injected conditions shift yes/no margins above clean/noop floors?", "do_not_claim": "A yes shift with content leakage is not anomaly detection."},
+        {"plot": "tables/direction_depth_sweep.csv", "question": "Were state directions selected on train with validation/heldout reported separately?", "do_not_claim": "A decodable direction alone means the report channel reads it."},
+        {"plot": "tables/source_attribution_results.csv", "question": "Does B4 identify hidden activation source when the visible answer is matched?", "do_not_claim": "A hidden-source label without KV parity or fresh-control drop is source monitoring."},
+        {"plot": "tables/severance_counterexamples.csv", "question": "Which rows most shrink the favorite claim?", "do_not_claim": "Counterexamples can be averaged away."},
+    ]
+    path = ctx.path("plots", "plot_reading_guide.csv")
+    bench.write_csv_with_context(ctx, path, rows)
+    ctx.register_artifact(path, "table", "Reading guide for Lab 36 plots and headline tables.")
+
+
+def write_safety_status(ctx: bench.RunContext, safety: Sequence[Mapping[str, Any]], leakage: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    payload = {
+        "safe_scope": "benign report-channel tests only; no harmful prompts, no credentials, no real private data, no phenomenal-status claim",
+        "blocked_prompt_rows": sum(1 for r in safety if str(r.get("status")) == "blocked"),
+        "science_prompt_leakage_failures": sum(1 for r in leakage if int(r.get("science_leak_failure", 0))),
+        "ok": not any(str(r.get("status")) == "blocked" for r in safety) and not any(int(r.get("science_leak_failure", 0)) for r in leakage),
+    }
+    path = ctx.path("diagnostics", "safety_status.json")
+    bench.write_json(path, payload)
+    ctx.register_artifact(path, "diagnostic", "Lab 36 safety and leakage status.")
+    return payload
+
+
+def rendered_position_audit_rows(bundle: bench.ModelBundle, items: Sequence[SeveranceItem], detections: Sequence[DetectionItem]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    probes: list[tuple[str, str, str]] = []
+    for item in items[: min(8, len(items))]:
+        probes.extend([
+            (item.item_id, "report_query", make_report_user(item)),
+            (item.item_id, "behavior_query", make_behavior_user(item)),
+        ])
+    for det in detections[: min(8, len(detections))]:
+        probes.append((det.item_id, "b5_report_query", make_detection_report_user(det)))
+    for row_id, role, user in probes:
+        rendered, mode = render_user(bundle, user)
+        ids = bundle.tokenizer(rendered, add_special_tokens=False)["input_ids"]
+        tail = ids[-6:] if ids else []
+        rows.append({"row_id": row_id, "role": role, "render_mode": mode, "token_count": len(ids), "injection_position": len(ids) - 1 if ids else "", "injection_token_text": bundle.tokenizer.decode([ids[-1]]) if ids else "", "tail_tokens_text": " | ".join(bundle.tokenizer.decode([i]).replace("\n", "\\n") for i in tail), "position_policy": "final rendered prompt token; decode steps use current token"})
+    return rows
+
+
+def write_self_check_status(ctx: bench.RunContext, safety_status: Mapping[str, Any], label_rows: Sequence[Mapping[str, Any]], kv_payload: Mapping[str, Any], directions: Mapping[str, DirectionBundle], evidence_rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    label_sets = defaultdict(list)
+    for row in label_rows:
+        label_sets[str(row.get("label_set"))].append(row)
+    payload = {
+        "safety_ok": bool(safety_status.get("ok")),
+        "label_sets": {k: {"n_variants": len(v), "n_single_token": sum(1 for r in v if int(r.get("single_token", 0)) == 1)} for k, v in label_sets.items()},
+        "kv_replay_ok": kv_payload.get("ok", "not_run"),
+        "kv_replay_position_contiguous": kv_payload.get("position_contiguous", "not_run"),
+        "n_directions": len(directions),
+        "n_evidence_rows": len(evidence_rows),
+    }
+    payload["ok"] = bool(payload["safety_ok"] and payload["n_directions"] >= 1 and all(v["n_single_token"] >= 1 for v in payload["label_sets"].values()) and payload["kv_replay_ok"] is not False)
+    path = ctx.path("diagnostics", "self_check_status.json")
+    bench.write_json(path, payload)
+    ctx.register_artifact(path, "diagnostic", "Compact Lab 36 self-check status.")
+    return payload
+
+
+def severance_counterexamples(b2_rows: Sequence[Mapping[str, Any]], b4_rows: Sequence[Mapping[str, Any]], b5_rows: Sequence[Mapping[str, Any]], b3_rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in b2_rows:
+        if str(row.get("condition")) != "target_direction" and int(row.get("target_hit_lexical", 0)):
+            out.append({"track": "B2", "kind": "control_target_report", "item_id": row.get("item_id"), "condition": row.get("condition"), "severity": 1, "detail": str(row.get("report_text", ""))[:240]})
+        if int(row.get("rationalization_risk", 0)):
+            out.append({"track": "B2", "kind": "behavior_visible_rationalization_risk", "item_id": row.get("item_id"), "condition": row.get("condition"), "severity": 1, "detail": str(row.get("behavior_text", ""))[:240]})
+    for row in b4_rows:
+        if str(row.get("condition")) != "activation_injection" and str(row.get("parsed_label")) == "D":
+            out.append({"track": "B4", "kind": "hidden_label_false_alarm", "item_id": row.get("item_id"), "condition": row.get("condition"), "severity": 2, "detail": f"parsed={row.get('parsed_label')} fresh={row.get('fresh_parsed_label')}"})
+        if str(row.get("condition")) == "activation_injection" and str(row.get("parsed_label")) != "D":
+            out.append({"track": "B4", "kind": "activation_source_miss", "item_id": row.get("item_id"), "condition": row.get("condition"), "severity": 2, "detail": f"parsed={row.get('parsed_label')} scores_D={row.get('score_D')}"})
+    for row in b5_rows:
+        if str(row.get("signal_class")) == "clean" and str(row.get("yes_no_label")) == "yes":
+            out.append({"track": "B5", "kind": "clean_false_alarm", "item_id": row.get("item_id"), "condition": row.get("condition"), "severity": 2, "detail": str(row.get("report_text", ""))[:240]})
+        if str(row.get("signal_class")) == "injected" and str(row.get("yes_no_label")) == "no":
+            out.append({"track": "B5", "kind": "injection_miss", "item_id": row.get("item_id"), "condition": row.get("condition"), "severity": 1, "detail": str(row.get("report_text", ""))[:240]})
+        if int(row.get("content_leak", 0)):
+            out.append({"track": "B5", "kind": "content_leak", "item_id": row.get("item_id"), "condition": row.get("condition"), "severity": 3, "detail": str(row.get("report_text", ""))[:240]})
+    for row in b3_rows:
+        if str(row.get("parsed_confidence_label")) == "unparsed":
+            out.append({"track": "B3", "kind": "unparsed_confidence", "item_id": row.get("item_id"), "condition": row.get("condition"), "severity": 1, "detail": str(row.get("reported_confidence_text", ""))[:240]})
+    out.sort(key=lambda r: int(r.get("severity", 0)), reverse=True)
+    return out[:64]
+
+
+def write_semantic_judge_queue(ctx: bench.RunContext, b2_rows: Sequence[Mapping[str, Any]], items: Sequence[SeveranceItem]) -> None:
+    item_by_id = {item.item_id: item for item in items}
+    rubric_path = DATA_DIR / "semantic_judge_rubric.md"
+    rubric_sha = hashlib.sha256(rubric_path.read_bytes()).hexdigest() if rubric_path.exists() else ""
+    rows = []
+    for row in b2_rows:
+        item = item_by_id.get(str(row.get("item_id")))
+        if item is None:
+            continue
+        rows.append({"queue_id": f"b2::{row.get('item_id')}::{row.get('condition')}::{row.get('dose')}", "track": "B2", "report_text": row.get("report_text", ""), "target_gloss": item.semantic_target_gloss, "wrong_gloss": item.semantic_wrong_gloss, "rubric_sha256": rubric_sha, "semantic_label": "", "semantic_rationale": "", "human_label": "", "human_rationale": ""})
+    path = ctx.path("tables", "semantic_judge_queue.jsonl")
+    write_jsonl(path, rows)
+    ctx.register_artifact(path, "table", "Blind semantic-judge queue scaffold for Lab 36 B2 reports.")
+
+
+def write_method_card(ctx: bench.RunContext, bundle: bench.ModelBundle, metrics: Mapping[str, Any], data_manifest: Sequence[Mapping[str, Any]], self_check: Mapping[str, Any]) -> None:
+    lines = [
+        "# Lab 36 method card",
+        "",
+        "Question: is a functional report channel coupled to hidden state interventions, or mostly to visible/prompt variables?",
+        "",
+        "## Scope",
+        "",
+        f"- model: `{bundle.anatomy.model_id}`",
+        f"- mode: `{metrics.get('mode')}`",
+        f"- data files: {len(data_manifest)}",
+        f"- self-check ok: `{self_check.get('ok')}`",
+        f"- verdict: `{metrics.get('verdict')}`",
+        "- B2 is a steering screen only.",
+        "- B4 and B5 are the co-headline functional coupling tests.",
+        "- No result here establishes experience, phenomenal introspection, or absence of experience.",
+        "",
+        "## Headline numbers",
+        "",
+        f"- direction heldout AUC: {metrics.get('mean_direction_heldout_auc')}",
+        f"- B2 target-minus-floor: {metrics.get('mean_b2_target_minus_floor')}",
+        f"- B4 activation-source accuracy: {metrics.get('b4_activation_source_accuracy')}",
+        f"- B4 fresh-transcript accuracy: {metrics.get('b4_activation_fresh_accuracy')}",
+        f"- B5 d-prime: {metrics.get('b5_d_prime_all_insertions')}",
+        f"- B5 false alarm: {metrics.get('b5_false_alarm_rate')}",
+        f"- B5 content leak: {metrics.get('b5_content_leak_rate')}",
+        "",
+        "## Claim grammar",
+        "",
+        "Allowed: functional coupling, source-monitoring handle, anomaly-monitoring handle, or clean null under potent interventions.",
+        "",
+        "Forbidden: consciousness, experience, phenomenal self-knowledge, or absence of experience.",
+    ]
+    path = ctx.path("method_card.md")
+    bench.write_text(path, "\n".join(lines))
+    ctx.register_artifact(path, "summary", "Lab 36 method card and claim boundary.")
 
 
 def write_labeling_guide(ctx: bench.RunContext) -> None:
@@ -1372,6 +1742,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     ctx.register_artifact(leakage_path, "diagnostic", "Prompt leakage audit.")
     if any(int(r.get("science_leak_failure", 0)) for r in leakage) and os.environ.get("LAB36_ALLOW_LEAKAGE_FAIL") != "1":
         raise RuntimeError("Lab 36 prompt leakage audit failed for a science row.")
+    safety_status = write_safety_status(ctx, safety, leakage)
 
     rendered0, _ = render_user(bundle, make_report_user(items[0]))
     if "instrument" in mode:
@@ -1396,6 +1767,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     rendered_hash_path = ctx.path("diagnostics", "rendered_prompt_hashes.csv")
     bench.write_csv_with_context(ctx, rendered_hash_path, rendered_hash_rows)
     ctx.register_artifact(rendered_hash_path, "diagnostic", "Exact rendered prompt hashes.")
+
+    position_path = ctx.path("diagnostics", "rendered_position_audit.csv")
+    bench.write_csv_with_context(ctx, position_path, rendered_position_audit_rows(bundle, items, detections))
+    ctx.register_artifact(position_path, "diagnostic", "Decoded token at Lab 36 capture/injection positions.")
 
     inventory_path = ctx.path("tables", "introspection_queries.csv")
     inv_rows = []
@@ -1431,6 +1806,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         bench.write_csv_with_context(ctx, path, cartography_rows)
         ctx.register_artifact(path, "table", "Patchscope-lite cartography; OBS only.")
 
+    b2_rows: list[dict[str, Any]] = []
     b2_floor: list[dict[str, Any]] = []
     if "b2" in mode and directions:
         b2_rows = run_b2_screen(bundle, items, directions)
@@ -1446,6 +1822,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         bench.write_csv_with_context(ctx, path, b2_floor)
         ctx.register_artifact(path, "table", "B2 core false-positive floor.")
 
+    b3_rows: list[dict[str, Any]] = []
     b3_summary: list[dict[str, Any]] = []
     if "b3" in mode:
         b3_rows, b3_capture, b3_summary = run_b3_certainty(bundle, qitems)
@@ -1459,10 +1836,12 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         bench.write_csv_with_context(ctx, path, b3_summary)
         ctx.register_artifact(path, "table", "B3 entropy-dissociation summary.")
 
+    kv_payload: dict[str, Any] = {}
+    b4_rows: list[dict[str, Any]] = []
     b4_summary: list[dict[str, Any]] = []
     if "b4" in mode and directions:
         if sources:
-            run_kv_replay_parity(ctx, bundle, sources[0], source_resolver)
+            kv_payload = run_kv_replay_parity(ctx, bundle, sources[0], source_resolver)
         b4_rows, replay_rows = run_b4_source_attribution(bundle, sources, directions, source_resolver)
         path = ctx.path("tables", "source_attribution_results.csv")
         bench.write_csv_with_context(ctx, path, b4_rows)
@@ -1475,6 +1854,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         bench.write_csv_with_context(ctx, path, b4_summary)
         ctx.register_artifact(path, "table", "B4 source-attribution summary.")
 
+    b5_rows: list[dict[str, Any]] = []
     b5_summary: list[dict[str, Any]] = []
     if "b5" in mode and directions:
         b5_rows = run_b5_detection(bundle, detections, directions, yesno_resolver)
@@ -1500,6 +1880,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     path = ctx.path("tables", "evidence_matrix.csv")
     bench.write_csv_with_context(ctx, path, evidence)
     ctx.register_artifact(path, "table", "Lab 36 final evidence matrix.")
+
+    counterexamples = severance_counterexamples(b2_rows, b4_rows, b5_rows, b3_rows)
+    path = ctx.path("tables", "severance_counterexamples.csv")
+    bench.write_csv_with_context(ctx, path, counterexamples)
+    ctx.register_artifact(path, "table", "Rows that shrink or falsify Lab 36 headline claims.")
 
     tuning_manifest = {"num_direction_layers_considered": len(candidate_depths(bundle)), "num_injection_layers_considered": 1, "num_doses_considered": len(B2_DOSES), "num_positions_considered": 1, "num_controls_considered": 5, "selection_metric": "train control-adjusted direction gap; fixed headline dose for smoke/pilot", "selected_config_sha256": short_hash(json.dumps(selected_rows, sort_keys=True, default=bench.json_default)), "heldout_once_note": "full science should freeze configs before expanding heldout"}
     path = ctx.path("diagnostics", "tuning_manifest.json")
@@ -1527,7 +1912,14 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     path = ctx.path("results.csv")
     bench.write_csv_with_context(ctx, path, result_rows)
     ctx.register_artifact(path, "results", "Standard results alias for Lab 36.")
+    jsonl_path = ctx.path(RESULT_JSONL_NAME)
+    write_jsonl(jsonl_path, [{**ctx.table_context(), **dict(row)} for row in result_rows])
+    ctx.register_artifact(jsonl_path, "results", "JSONL standard results alias for Lab 36.")
 
+    self_check = write_self_check_status(ctx, safety_status, label_rows, kv_payload, directions, evidence)
+    write_plot_reading_guide(ctx)
+    write_method_card(ctx, bundle, metrics, data_manifest, self_check)
+    write_semantic_judge_queue(ctx, b2_rows, items)
     write_labeling_guide(ctx)
     write_operationalization_audit(ctx, metrics)
     write_report(ctx, metrics)

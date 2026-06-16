@@ -506,11 +506,11 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
     "lab36": {
         "module": "labs.lab36_severance_report_channel",
         "run_name": "lab36_severance_report_channel",
-        "description": "Severance report-channel verification: concept-report screen, uncertainty bridge, matched-output source attribution, insertion detection, and patch recovery.",
+        "description": "Severance report-channel verification: B2 screen, B3 bridge, B4 matched-output source attribution, and B5 insertion detection.",
         "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
         "model_tier_b": "allenai/Olmo-3-7B-Instruct",
         "model_tier_c": "allenai/Olmo-3.1-32B-Instruct",
-        "max_examples_tier_a": "4",
+        "max_examples_tier_a": "6",
     },
 }
 

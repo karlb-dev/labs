@@ -181,7 +181,7 @@ python interp_bench.py --lab lab34 --tier b --prompt-set full
 python interp_bench.py --lab lab35 --tier a --no-plots
 python interp_bench.py --lab lab35 --tier b --prompt-set full
 
-# Lab 36 (Severance report-channel verification; skips gpt-oss-120B on Colab):
+# Lab 36 (Severance report-channel verification; instruct/chat-template lab):
 python interp_bench.py --lab lab36 --tier a --mode smoke --no-plots
 python interp_bench.py --lab lab36 --tier b --mode all --prompt-set full
 python interp_bench.py --lab lab36 --tier c --mode all --prompt-set full

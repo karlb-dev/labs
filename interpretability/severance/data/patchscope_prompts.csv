@@ -1,9 +1,13 @@
 source_id,source_role,source_text,source_marker
-self_you,self,"You are solving a puzzle. You should answer carefully.","You"
-self_i,self,"I will answer the user's question carefully.","I"
-assistant,assistant,"The assistant should answer carefully.","assistant"
-user,user,"The user asked a question carefully.","user"
-person,person,"A person answered a question carefully.","person"
-cat,control,"The cat sat on the mat.","cat"
-weather,control,"The weather changed suddenly.","weather"
-model_process,process,"The model processed the prompt token by token.","model"
+self_you,self,You are solving a puzzle. You should answer carefully.,You
+self_i,self,I will answer the user's question carefully.,I
+assistant,assistant,The assistant should answer carefully.,assistant
+user,user,The user asked a question carefully.,user
+person,person,A person answered a question carefully.,person
+process,process,The model processed the prompt token by token.,model
+technical,style,The answer used precise technical definitions and constraints.,technical
+poetic,style,The answer used poetic imagery and sensory rhythm.,poetic
+topic_sf,topic,San Francisco fog rolled over the Golden Gate.,San
+topic_chess,topic,"The chess board held kings, queens, rooks, and pawns.",chess
+cat,control,The cat sat on the mat.,cat
+weather,control,The weather changed suddenly.,weather
