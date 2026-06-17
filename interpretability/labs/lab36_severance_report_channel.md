@@ -513,7 +513,7 @@ Port B4/B5 to a hookable gpt-oss path only when residual hooks and harmony/final
 
 Add a manual blind-label pass over all semantic-judge disagreements.
 
-Done in v4: a B5 sentinel position now injects at an upstream interior token and is compared to report-query insertion (`sentinel_content_blind_logit_only`). Remaining work: a sentinel dose-up sweep and a multi-token sentinel span to test whether a sentinel collapse reflects direct-steering versus single-injection attenuation.
+Done in v4: a B5 sentinel position injects at an upstream interior token and is compared to report-query insertion (`sentinel_content_blind_logit_only`). Done in v5: a sentinel dose sweep (`sentinel_dose_sweep::dose_*`, doses 2/4/8) and a representational readout probe (`readout_probe`) that projects the decision-position residual onto the known injected direction, with a report-query positive control and a label-permutation null. Across six models the report-query control reads AUC 1.0 while the upstream sentinel reads chance and never recovers at 8x dose, so the content-blind B5 signal is decision-token direct-steering, not propagated monitoring. Remaining work: a larger detection set with a trained transformed-direction probe (current readout is direction-aligned and n~8), and a sentinel-placement sweep.
 
 Add a B4 source-ID versus prediction-error split: the fresh-transcript control separates transcript priors from hidden state, but it does not by itself prove the model identifies the source rather than detecting an internal anomaly.
 

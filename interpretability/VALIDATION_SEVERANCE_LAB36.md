@@ -83,6 +83,24 @@ Six models, `--mode all --prompt-set full`, 25 items, 5 directions, seed 0. All 
 
 Findings: (1) B4 plausibility went 0.0–0.22 → **1.000** on every model, making B4 a valid test that is still a clean negative (activation-source accuracy ≤ 0.111). (2) On the three discriminating models (FA ≤ 0.38) the content-blind B5 d′ (0.61 / 1.24 / 0.79) **collapses to ≈0 under the sentinel control** — the signal is injection-site-dependent and largely reflects direct decision-logit steering, not anomaly propagation (caveat: cannot fully exclude single-injection attenuation). (3) Both **Think models saturate at FA 0.97** (over-report perturbations) and leak more content — reasoning training made the report channel noisier, not more faithful. Across six models / three architectures / two scales / the instruct-vs-reasoning axis, no model shows report-channel coupling that survives its controls.
 
+## Sentinel Dose Sweep + Representational Readout Probe (2026-06-17)
+
+To decide whether the sentinel collapse means the injected information is *absent* at the decision token or *present-but-unreported* (and to rule out simple dose attenuation), two more instruments were added and run on all six models (lean `directions,b5`; full writeup + runs in `/content/drive/MyDrive/interpret/lab36_readout_20260617/`):
+
+- **Sentinel dose sweep** (`sentinel_dose_sweep::dose_*`, doses 2/4/8): does the verbalized upstream decision recover with a stronger injection?
+- **Representational readout probe** (`readout_probe`): project the decision-position residual onto the known injected direction at every layer; max-over-layer AUC with a label-permutation null; report-query injection is the positive control, target-vs-wrong is a concept probe. Metrics: `b5_readout_*`, `b5_sentinel_sweep_max_dose_d_prime`.
+
+| Model | readout control AUC | sentinel readout AUC | null p95 | above null? | sweep d′@8× |
+| --- | ---: | ---: | ---: | :--: | ---: |
+| SmolLM2-135M | 1.000 | 0.500 | 0.844 | no | 0.000 |
+| Olmo-3-7B-Instruct | 1.000 | 0.508 | 0.875 | no | 0.000 |
+| Olmo-3-7B-Think | 1.000 | 0.500 | 0.844 | no | 0.000 |
+| Gemma-4-E4B | 1.000 | 0.500 | 0.875 | no | 0.000 |
+| Olmo-3.1-32B-Instruct | 1.000 | 0.500 | 0.852 | no | 0.000 |
+| Olmo-3.1-32B-Think | 1.000 | 0.500 | 0.875 | no | 0.000 |
+
+The positive control is AUC 1.0 on every model (the readout finds the injected direction when it is on the decision token), but the upstream sentinel reads chance everywhere (below the null) and never recovers at 8× dose. So the failure is **"absent at the decision token," not "present-but-unreported"**: the content-blind B5 signal was decision-token direct-steering. Caveats: ~8 detection items (null bar ~0.85; misses subtle effects), and the readout is aligned to the original injected direction (cannot see transformed-direction propagation). This makes the negative considerably more mechanistic; the remaining gaps are a larger detection set + trained transformed-direction probe and a sentinel-placement sweep — not scale or reasoning, which were shown not to help.
+
 ## Visual Artifact Validation Commands
 
 ```bash

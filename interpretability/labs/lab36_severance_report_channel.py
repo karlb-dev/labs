@@ -72,6 +72,14 @@ B5_BOOTSTRAP_REPS = 1000
 # report-query d-prime separates genuine anomaly propagation from direct
 # steering of the decision logit.
 B5_SENTINEL_VARIANT = "content_blind_sentinel"
+# Sentinel dose sweep: does the verbalized content-blind decision recover when
+# the upstream injection is pushed harder?  Tests attenuation vs direct-steering.
+B5_SENTINEL_SWEEP_DOSES = (2.0, 4.0, 8.0)
+# Representational readout probe: cap items and pick a probe regularization.  The
+# probe asks whether injected-vs-clean is linearly decodable from the model's own
+# decision-position residual under upstream injection, even when the verbalized
+# yes/no cannot tell.  This separates "absent" from "present-but-unreported".
+B5_READOUT_MAX_ITEMS = 16
 B2_SCREEN_GAP_BAR = 0.20
 MIN_CANONICAL_ANSWER_LOGPROB = -8.0
 B4_MIN_CANONICAL_PLAUSIBILITY_RATE = 0.75
@@ -1818,6 +1826,185 @@ def build_certainty_direction(bundle: bench.ModelBundle, qitems: Sequence[Uncert
     return best, rows
 
 
+def _decision_residuals(bundle: bench.ModelBundle, rendered: str, *, vector: Any | None = None, dose: float = 0.0, layer: int = 0, residual_rms: float = 1.0, position: int = -1) -> Any:
+    """All-depth residual vectors at the final (decision) position.
+
+    Returns an array of shape [n_depths, d_model].  When a vector/dose is given,
+    the perturbation is added once at ``position`` (an upstream sentinel index or
+    the decision token itself) during the cached forward, so the captured
+    decision-position residual reflects whatever propagated to it.
+    """
+    import numpy as np
+
+    inject = vector is not None and abs(float(dose)) > 1e-12
+    scale = float(dose) * float(residual_rms) if inject else 0.0
+    cm = positioned_steering_hooks(bundle, int(layer), vector, scale, position=position) if inject else contextlib.nullcontext()
+    with cm:
+        cap = bench.run_with_residual_cache(bundle, rendered, add_special_tokens=False)
+    return cap.streams[:, -1, :].float().cpu().numpy().astype(np.float64)
+
+
+def _proj_scores(stack: Any, directions: Any) -> Any:
+    """Project each item's residual onto its own injected unit direction.
+
+    stack: [n_items, n_depths, d]; directions: [n_items, d] (per-item unit
+    vector that was injected).  Returns [n_items, n_depths] projection scores.
+    Because the injected direction is known, this 1-D readout needs no training
+    and is robust at the small item counts of the detection set — unlike a probe
+    fit in d-dimensional space, whose positive control is unreliable at n~8.
+    """
+    import numpy as np
+
+    return np.einsum("ild,id->il", stack, directions)
+
+
+def _auc_one_sided(pos: Any, neg: Any) -> float:
+    """AUC that ``pos`` projections rank above ``neg`` projections. Chance 0.5."""
+    import numpy as np
+    from sklearn.metrics import roc_auc_score
+
+    y = np.r_[np.ones(len(pos)), np.zeros(len(neg))]
+    s = np.r_[np.asarray(pos, dtype=float), np.asarray(neg, dtype=float)]
+    if len(set(y.tolist())) < 2:
+        return float("nan")
+    return float(roc_auc_score(y, s))
+
+
+def _proj_perm_null(pos_by_depth: Any, neg_by_depth: Any, *, perms: int = 300, seed: int = 12345) -> float:
+    """95th-percentile of the max-over-depth projection AUC under label shuffles.
+
+    Guards the max-over-depth statistic against multiple-comparison inflation.
+    """
+    import numpy as np
+    from sklearn.metrics import roc_auc_score
+
+    S = np.concatenate([pos_by_depth, neg_by_depth], axis=0)  # [2n, n_depths]
+    y = np.r_[np.ones(len(pos_by_depth)), np.zeros(len(neg_by_depth))]
+    rng = np.random.default_rng(seed)
+    maxes = []
+    for _ in range(perms):
+        yp = rng.permutation(y)
+        if len(set(yp.tolist())) < 2:
+            continue
+        best = max(roc_auc_score(yp, S[:, d]) for d in range(S.shape[1]))
+        maxes.append(best)
+    if not maxes:
+        return float("nan")
+    maxes.sort()
+    return float(maxes[int(0.95 * (len(maxes) - 1))])
+
+
+def run_b5_propagation_probe(ctx: bench.RunContext, bundle: bench.ModelBundle, detections: Sequence[DetectionItem], directions: Mapping[str, DirectionBundle], resolver: LabelResolver) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Two follow-ups to the B5 sentinel result.
+
+    1. Sentinel dose sweep: does the verbalized content-blind yes/no recover when
+       the upstream injection is pushed to higher residual-RMS doses?
+    2. Representational readout: under upstream (sentinel) injection, is
+       injected-vs-clean linearly decodable from the model's own decision-position
+       residual, even when the verbalized decision cannot tell?  A report-query
+       injection (at the decision token) is the positive control; target-vs-wrong
+       is a concept-identity probe.
+
+    Returns (detail_rows, summary_rows).  Summary rows are appended to the B5
+    summary so metrics readers can pick them up by comparison name.
+    """
+    import numpy as np
+
+    items = [d for d in detections if directions.get(d.target_direction_id)][:B5_READOUT_MAX_ITEMS]
+    detail: list[dict[str, Any]] = []
+    summary: list[dict[str, Any]] = []
+    if not items:
+        return detail, summary
+
+    # ---- 1. Sentinel dose sweep (verbalized yes/no) ----
+    sweep_yes: dict[float, list[int]] = {d: [] for d in B5_SENTINEL_SWEEP_DOSES}
+    clean_yes: list[int] = []
+    for det in items:
+        direction = directions[det.target_direction_id]
+        cy, _, _, _ = sentinel_detection_logits(bundle, det, direction, None, 0.0, direction.injection_layer, resolver)
+        clean_yes.append(int(cy == "yes"))
+        for dose in B5_SENTINEL_SWEEP_DOSES:
+            yn, _, _, _ = sentinel_detection_logits(bundle, det, direction, direction.vector, dose, direction.injection_layer, resolver)
+            sweep_yes[dose].append(int(yn == "yes"))
+    fa = sum(clean_yes)
+    for dose in B5_SENTINEL_SWEEP_DOSES:
+        hits = sum(sweep_yes[dose])
+        dp = d_prime(hits, len(sweep_yes[dose]), fa, len(clean_yes))
+        summary.append({
+            "comparison": f"sentinel_dose_sweep::dose_{dose:g}",
+            "report_variant": B5_SENTINEL_VARIANT,
+            "insertion_site": "sentinel_prefill",
+            "dose": dose,
+            "n_injected": len(sweep_yes[dose]),
+            "n_clean": len(clean_yes),
+            "hit_rate": rounded(hits / max(1, len(sweep_yes[dose]))),
+            "false_alarm_rate": rounded(fa / max(1, len(clean_yes))),
+            "d_prime": rounded(dp),
+            "decision_source": "next_token_logits_sentinel",
+        })
+
+    # ---- 2. Representational readout probe ----
+    # For each item, cache the decision-position residual under each route and
+    # record the item's injected unit direction.  The readout then projects the
+    # decision-position residual onto that known direction: a training-free,
+    # small-n-robust measure of how much of the injected signal reached the
+    # decision token's representation.
+    res = {"clean": [], "target_sentinel": [], "target_reportquery": [], "wrong_sentinel": []}
+    v_target, v_wrong = [], []
+    for det in items:
+        direction = directions[det.target_direction_id]
+        wrong = directions.get(det.wrong_direction_id) or direction
+        rendered, _ = render_user(bundle, make_detection_report_user(det, variant=B5_HEADLINE_VARIANT))
+        n = len(bundle.tokenizer(rendered, add_special_tokens=False)["input_ids"])
+        base = f"Task context: {det.distractor_task}\n\n"
+        full_text = make_detection_report_user(det, variant=B5_HEADLINE_VARIANT)
+        question = full_text[len(base):] if full_text.startswith(base) else full_text
+        q_len = len(bundle.tokenizer(question, add_special_tokens=False)["input_ids"])
+        sentinel_pos = max(1, min(n - 2, n - q_len - 2))
+        res["clean"].append(_decision_residuals(bundle, rendered))
+        res["target_sentinel"].append(_decision_residuals(bundle, rendered, vector=direction.vector, dose=HEADLINE_DOSE, layer=direction.injection_layer, residual_rms=direction.residual_rms, position=sentinel_pos))
+        res["target_reportquery"].append(_decision_residuals(bundle, rendered, vector=direction.vector, dose=HEADLINE_DOSE, layer=direction.injection_layer, residual_rms=direction.residual_rms, position=-1))
+        res["wrong_sentinel"].append(_decision_residuals(bundle, rendered, vector=wrong.vector, dose=HEADLINE_DOSE, layer=wrong.injection_layer, residual_rms=wrong.residual_rms, position=sentinel_pos))
+        v_target.append(np.asarray(direction.vector, dtype=np.float64))
+        v_wrong.append(np.asarray(wrong.vector, dtype=np.float64))
+    stacks = {k: np.stack(v, 0) for k, v in res.items()}  # [n_items, n_depths, d]
+    Vt = np.stack(v_target, 0)  # [n_items, d]
+    n_depths = stacks["clean"].shape[1]
+    # Projection scores onto the per-item target direction, [n_items, n_depths].
+    proj = {k: _proj_scores(stacks[k], Vt) for k in stacks}
+    contrasts = {
+        "sentinel_vs_clean": ("target_sentinel", "clean"),
+        "reportquery_vs_clean_control": ("target_reportquery", "clean"),
+        "concept_target_vs_wrong_sentinel": ("target_sentinel", "wrong_sentinel"),
+    }
+    best: dict[str, dict[str, Any]] = {}
+    for name, (a, b) in contrasts.items():
+        per_depth = [_auc_one_sided(proj[a][:, d], proj[b][:, d]) for d in range(n_depths)]
+        for d, auc in enumerate(per_depth):
+            detail.append({"contrast": name, "depth": d, "proj_auc": rounded(auc), "n_per_class": len(items)})
+        finite = [(d, a2) for d, a2 in enumerate(per_depth) if a2 == a2]
+        bd, ba = max(finite, key=lambda t: t[1]) if finite else (-1, float("nan"))
+        best[name] = {"best_layer": bd, "best_auc": ba}
+
+    sentinel_null = _proj_perm_null(proj["target_sentinel"], proj["clean"])
+    concept_null = _proj_perm_null(proj["target_sentinel"], proj["wrong_sentinel"])
+    sa = best["sentinel_vs_clean"]["best_auc"]
+    summary.append({
+        "comparison": "readout_probe",
+        "decision_source": "decision_position_projection_onto_injected_direction_auc",
+        "n_items": len(items),
+        "readout_sentinel_auc": rounded(sa),
+        "readout_sentinel_best_layer": best["sentinel_vs_clean"]["best_layer"],
+        "readout_sentinel_null_p95_auc": rounded(sentinel_null),
+        "readout_sentinel_above_null": int(sa == sa and sentinel_null == sentinel_null and sa > sentinel_null),
+        "readout_reportquery_control_auc": rounded(best["reportquery_vs_clean_control"]["best_auc"]),
+        "readout_concept_auc": rounded(best["concept_target_vs_wrong_sentinel"]["best_auc"]),
+        "readout_concept_null_p95_auc": rounded(concept_null),
+        "n_depths": n_depths,
+    })
+    return detail, summary
+
+
 def run_b3_certainty(bundle: bench.ModelBundle, qitems: Sequence[UncertaintyItem]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     best, capture_rows = build_certainty_direction(bundle, qitems)
     if best is None:
@@ -1925,6 +2112,8 @@ def aggregate_metrics(items: Sequence[SeveranceItem], directions: Mapping[str, D
     b4_default = next((r for r in b4_summary if str(r.get("condition")) == "matched_default"), {}) or b4_act
     b5_all = next((r for r in b5_summary if str(r.get("comparison")) == "headline_content_blind_logit_only"), {}) or next((r for r in b5_summary if str(r.get("comparison")) == "all_insertions_vs_clean"), {})
     b5_sentinel = next((r for r in b5_summary if str(r.get("comparison")) == "sentinel_content_blind_logit_only"), {})
+    b5_readout = next((r for r in b5_summary if str(r.get("comparison")) == "readout_probe"), {})
+    b5_sweep_hi = next((r for r in b5_summary if str(r.get("comparison")) == f"sentinel_dose_sweep::dose_{max(B5_SENTINEL_SWEEP_DOSES):g}"), {})
     b3_diss = next((r for r in b3_summary if str(r.get("condition")) == "dissociation_test"), {})
     metrics = {
         "lab": LAB_ID,
@@ -1952,6 +2141,14 @@ def aggregate_metrics(items: Sequence[SeveranceItem], directions: Mapping[str, D
         "b5_sentinel_d_prime_ci_high": b5_sentinel.get("d_prime_ci_high", ""),
         "b5_sentinel_false_alarm_rate": b5_sentinel.get("false_alarm_rate", ""),
         "b5_sentinel_content_leak_rate": b5_sentinel.get("content_leak_rate", ""),
+        "b5_sentinel_sweep_max_dose_d_prime": b5_sweep_hi.get("d_prime", ""),
+        "b5_readout_sentinel_auc": b5_readout.get("readout_sentinel_auc", ""),
+        "b5_readout_sentinel_best_layer": b5_readout.get("readout_sentinel_best_layer", ""),
+        "b5_readout_sentinel_null_p95_auc": b5_readout.get("readout_sentinel_null_p95_auc", ""),
+        "b5_readout_sentinel_above_null": b5_readout.get("readout_sentinel_above_null", ""),
+        "b5_readout_reportquery_control_auc": b5_readout.get("readout_reportquery_control_auc", ""),
+        "b5_readout_concept_auc": b5_readout.get("readout_concept_auc", ""),
+        "b5_readout_concept_null_p95_auc": b5_readout.get("readout_concept_null_p95_auc", ""),
         "b3_confidence_delta": b3_diss.get("reported_confidence_delta_plus_minus", ""),
         "b3_entropy_delta": b3_diss.get("entropy_delta_plus_minus", ""),
         "max_patch_recovery": rounded(max([fnum(r.get("recovery")) for r in patch_rows], default=float("nan"))) if patch_rows else "",
@@ -3002,7 +3199,15 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         path = ctx.path("tables", "injection_detection_results.csv")
         bench.write_csv_with_context(ctx, path, b5_rows)
         ctx.register_artifact(path, "table", "B5 insertion detection rows.")
-        b5_summary = attach_stable_ids(b5_summary_rows(b5_rows), "b5_summary", ("comparison",))
+        b5_summary = b5_summary_rows(b5_rows)
+        probe_detail, probe_summary = run_b5_propagation_probe(ctx, bundle, detections, directions, yesno_resolver)
+        if probe_summary:
+            b5_summary = list(b5_summary) + list(probe_summary)
+        if probe_detail:
+            ppath = ctx.path("tables", "b5_propagation_probe.csv")
+            bench.write_csv_with_context(ctx, ppath, probe_detail)
+            ctx.register_artifact(ppath, "table", "B5 sentinel dose sweep + representational readout probe (per-depth CV AUC).")
+        b5_summary = attach_stable_ids(b5_summary, "b5_summary", ("comparison",))
         path = ctx.path("tables", "injection_detection_summary.csv")
         bench.write_csv_with_context(ctx, path, b5_summary)
         ctx.register_artifact(path, "table", "B5 signal-detection summary.")
