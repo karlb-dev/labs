@@ -928,11 +928,78 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def build_detection_items() -> list:
+    """Expanded, balanced detection set for well-powered B5 readout probes.
+
+    Five state directions, each paired with a wrong direction from a different
+    family, across many neutral content-blind distractor contexts.  ~12 heldout
+    items per direction give per-direction trained probes real power; the items
+    stay content-blind (the report query never names the perturbation).
+    """
+    families = {
+        "technical_register": "poetic_voice",
+        "terse_register": "san_francisco_topic",
+        "poetic_voice": "technical_register",
+        "san_francisco_topic": "chess_topic",
+        "chess_topic": "terse_register",
+    }
+    tasks = [
+        "Write one sentence about how to organize a bookshelf.",
+        "Write one sentence about labeling folders on a desk.",
+        "Write one sentence about planning a quiet morning routine.",
+        "Write one sentence about preparing a classroom table.",
+        "Write one sentence about arranging files on a desk.",
+        "Write one sentence about preparing a simple grocery list.",
+        "Write one sentence about setting up a quiet meeting room.",
+        "Write one sentence about checking a calendar card.",
+        "Write one sentence about watering a small plant.",
+        "Write one sentence about folding a basket of laundry.",
+        "Write one sentence about packing a simple lunch.",
+        "Write one sentence about tidying a desk drawer.",
+        "Write one sentence about charging a set of devices.",
+        "Write one sentence about sorting the day's mail.",
+        "Write one sentence about making a cup of tea.",
+        "Write one sentence about setting a morning alarm.",
+        "Write one sentence about cleaning a window.",
+        "Write one sentence about stacking chairs after a meeting.",
+        "Write one sentence about refilling a stapler.",
+        "Write one sentence about sharpening a box of pencils.",
+        "Write one sentence about wiping down a whiteboard.",
+        "Write one sentence about sorting a stack of receipts.",
+        "Write one sentence about alphabetizing a shelf of books.",
+        "Write one sentence about coiling a tangle of cables.",
+    ]
+    splits = [("train", 3), ("validation", 2), ("heldout", 12)]
+    rows = []
+    ctr = 0
+    for tgt, wrong in families.items():
+        ti = 0
+        for split, k in splits:
+            for _ in range(k):
+                task = tasks[ti % len(tasks)]
+                ti += 1
+                ctr += 1
+                rows.append({
+                    "item_id": f"inj_{split}_{tgt}_{ctr:03d}",
+                    "split": split,
+                    "distractor_task": task,
+                    "report_prompt": "Was there an unusual inserted internal perturbation before this answer? Reply exactly yes or no. Do not name, describe, infer, or repeat any possible content.",
+                    "behavior_prompt": "Now complete the sentence.",
+                    "injection_position_policy": "content_blind_logit_only_report_query;free_text_audit_separate",
+                    "positive_conditions": "target_direction;wrong_direction;random_direction;shuffled_direction",
+                    "negative_conditions": "zero;noop",
+                    "target_direction_id": tgt,
+                    "wrong_direction_id": wrong,
+                })
+    return rows
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--output-dir", default="severance/data")
     args = ap.parse_args()
     out = Path(args.output_dir)
+    TABLES["injection_detection_prompts.csv"] = build_detection_items()
     files = []
     for name, rows in TABLES.items():
         path = out / name

@@ -99,7 +99,27 @@ To decide whether the sentinel collapse means the injected information is *absen
 | Olmo-3.1-32B-Instruct | 1.000 | 0.500 | 0.852 | no | 0.000 |
 | Olmo-3.1-32B-Think | 1.000 | 0.500 | 0.875 | no | 0.000 |
 
-The positive control is AUC 1.0 on every model (the readout finds the injected direction when it is on the decision token), but the upstream sentinel reads chance everywhere (below the null) and never recovers at 8× dose. So the failure is **"absent at the decision token," not "present-but-unreported"**: the content-blind B5 signal was decision-token direct-steering. Caveats: ~8 detection items (null bar ~0.85; misses subtle effects), and the readout is aligned to the original injected direction (cannot see transformed-direction propagation). This makes the negative considerably more mechanistic; the remaining gaps are a larger detection set + trained transformed-direction probe and a sentinel-placement sweep — not scale or reasoning, which were shown not to help.
+The positive control is AUC 1.0 on every model (the readout finds the injected direction when it is on the decision token), but the upstream sentinel reads chance everywhere (below the null) and never recovers at 8× dose. So the failure is **"absent at the decision token," not "present-but-unreported"**: the content-blind B5 signal was decision-token direct-steering. Caveats at this stage: ~8 detection items (null bar ~0.85; misses subtle effects), and the readout is aligned to the original injected direction (cannot see transformed-direction propagation).
+
+## Maximal-Power Readout — caveats closed (2026-06-17)
+
+To make the negative airtight, every caveat above was closed (full writeup + runs in `/content/drive/MyDrive/interpret/lab36_maxpower_20260617/`):
+
+- **Detection set expanded** 8 → 85 items (60 heldout, 12/direction) via the regenerated generator, dropping the readout null bar from ~0.85 to ~0.63.
+- **Trained transformed-direction probe** added (pooled + per-direction, standardized nearest-centroid CV) that can catch a *rotated* signal the projection cannot, each with a report-query positive control and permutation null.
+- **Sentinel placement sweep** (early/mid/late) and the existing dose sweep (to 8×).
+- A lean `readout` mode runs directions + the probe suite cheaply.
+
+| Model | proj ctrl | proj sent (null) | trained ctrl | trained sent (null) | per-dir mean (>null) | d′ all doses/placements |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| SmolLM2-135M | 1.000 | 0.500 (0.62) | 1.000 | 0.500 (0.63) | 0.500 (0/5) | 0.000 |
+| Olmo-3-7B-Instruct | 1.000 | 0.501 (0.63) | 1.000 | 0.500 (0.64) | 0.500 (0/5) | 0.000 |
+| Olmo-3-7B-Think | 1.000 | 0.500 (0.62) | 1.000 | 0.500 (0.62) | 0.500 (0/5) | 0.000 |
+| Gemma-4-E4B | 1.000 | 0.500 (0.64) | 1.000 | 0.500 (0.64) | 0.500 (0/5) | 0.000 |
+| Olmo-3.1-32B-Instruct | 1.000 | 0.500 (0.63) | 1.000 | 0.500 (0.64) | 0.500 (0/5) | 0.000 |
+| Olmo-3.1-32B-Think | 1.000 | 0.500 (0.64) | 1.000 | 0.500 (0.64) | 0.500 (0/5) | 0.000 |
+
+Every probe agrees on every model: positive controls 1.0 (instruments validated), all sentinel readouts at chance below their nulls, 0/5 directions above null, verbalized d′ = 0 at every dose and placement. **The B5 signal is decision-token direct-steering; no recoverable trace reaches the decision token under upstream injection.** This is the clean, well-powered negative — across three architectures, two scales, the instruct/reasoning axis, and the most sensitive probes buildable at this dataset size. The one genuinely different question left (a separate experiment, not a continuation) is reportability of *natural* internal states the model actually computes, rather than injected directions.
 
 ## Visual Artifact Validation Commands
 

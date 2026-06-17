@@ -79,7 +79,12 @@ B5_SENTINEL_SWEEP_DOSES = (2.0, 4.0, 8.0)
 # probe asks whether injected-vs-clean is linearly decodable from the model's own
 # decision-position residual under upstream injection, even when the verbalized
 # yes/no cannot tell.  This separates "absent" from "present-but-unreported".
-B5_READOUT_MAX_ITEMS = 16
+# With the expanded detection set we use up to 60 heldout items (12/direction),
+# enough for a trained transformed-direction probe and per-direction probes.
+B5_READOUT_MAX_ITEMS = 60
+# Sentinel placement sweep: inject the upstream perturbation at these fractions
+# of the pre-question context span, to rule out a placement-specific collapse.
+B5_SENTINEL_POSITION_FRACS = {"early": 0.25, "mid": 0.5, "late": 0.9}
 B2_SCREEN_GAP_BAR = 0.20
 MIN_CANONICAL_ANSWER_LOGPROB = -8.0
 B4_MIN_CANONICAL_PLAUSIBILITY_RATE = 0.75
@@ -1514,7 +1519,7 @@ def detection_vectors(det: DetectionItem, directions: Mapping[str, DirectionBund
 
 
 
-def sentinel_detection_logits(bundle: bench.ModelBundle, det: DetectionItem, direction: DirectionBundle, vector: Any | None, dose: float, layer: int, resolver: LabelResolver, *, variant: str = B5_HEADLINE_VARIANT) -> tuple[str, str, Mapping[str, float], dict[str, Any]]:
+def sentinel_detection_logits(bundle: bench.ModelBundle, det: DetectionItem, direction: DirectionBundle, vector: Any | None, dose: float, layer: int, resolver: LabelResolver, *, variant: str = B5_HEADLINE_VARIANT, pos_frac: float | None = None) -> tuple[str, str, Mapping[str, float], dict[str, Any]]:
     """Content-blind yes/no decision with the perturbation inserted upstream.
 
     Uses the SAME user-framed content-blind prompt as the report-query decision
@@ -1540,10 +1545,14 @@ def sentinel_detection_logits(bundle: bench.ModelBundle, det: DetectionItem, dir
     full_text = make_detection_report_user(det, variant=variant)
     question = full_text[len(base):] if full_text.startswith(base) else full_text
     q_len = len(bundle.tokenizer(question, add_special_tokens=False)["input_ids"])
-    # Sentinel sits a couple of tokens before the question begins, i.e. near the
-    # end of the task context — clearly upstream of and distinct from the
-    # decision token at position n-1.
-    sentinel_pos = max(1, min(n - 2, n - q_len - 2))
+    # Sentinel sits upstream of the question, clearly distinct from the decision
+    # token at position n-1.  pos_frac places it within the pre-question context
+    # span (None = near the end of the context, the default late placement).
+    ctx_end = max(2, n - q_len)
+    if pos_frac is None:
+        sentinel_pos = max(1, min(n - 2, ctx_end - 2))
+    else:
+        sentinel_pos = max(1, min(ctx_end - 1, int(float(pos_frac) * ctx_end)))
     inject = vector is not None and abs(float(dose)) > 1e-12
     scale = float(dose) * float(direction.residual_rms) if inject else 0.0
     ctx = positioned_steering_hooks(bundle, int(layer), vector, scale, position=sentinel_pos) if inject else contextlib.nullcontext()
@@ -1894,6 +1903,63 @@ def _proj_perm_null(pos_by_depth: Any, neg_by_depth: Any, *, perms: int = 300, s
     return float(maxes[int(0.95 * (len(maxes) - 1))])
 
 
+def _stdmeandiff_cv_auc(class0: Any, class1: Any, *, folds: int = 5, seed: int = 0) -> float:
+    """Held-out AUC of a standardized nearest-centroid probe (trained direction).
+
+    Unlike the fixed-direction projection, this *learns* a separating direction
+    from the data, so it can pick up an injected signal that propagated in a
+    rotated/transformed form.  Standardizing per feature (train stats) keeps it
+    usable at the small per-direction item counts; cross-validation prevents the
+    d >> n overfitting that makes a raw probe's positive control unreliable.
+    """
+    import numpy as np
+    from sklearn.metrics import roc_auc_score
+    from sklearn.model_selection import StratifiedKFold
+
+    X = np.vstack([class0, class1])
+    y = np.r_[np.zeros(len(class0)), np.ones(len(class1))].astype(int)
+    n_min = int(min((y == 0).sum(), (y == 1).sum()))
+    if n_min < 2:
+        return float("nan")
+    k = max(2, min(int(folds), n_min))
+    skf = StratifiedKFold(n_splits=k, shuffle=True, random_state=seed)
+    aucs = []
+    for tr, te in skf.split(X, y):
+        mu = X[tr].mean(0)
+        sd = X[tr].std(0) + 1e-6
+        Z = (X - mu) / sd
+        w = Z[tr][y[tr] == 1].mean(0) - Z[tr][y[tr] == 0].mean(0)
+        s = Z[te] @ w
+        if len(set(y[te].tolist())) == 2:
+            aucs.append(roc_auc_score(y[te], s))
+    return float(np.mean(aucs)) if aucs else float("nan")
+
+
+def _trained_maxdepth(stack_inj: Any, stack_clean: Any, *, perms: int = 100, seed: int = 20) -> tuple[float, int, float]:
+    """Max-over-depth trained-probe AUC and its label-permutation null ceiling."""
+    import numpy as np
+
+    nd = stack_inj.shape[1]
+    per_depth = [_stdmeandiff_cv_auc(stack_clean[:, d, :], stack_inj[:, d, :]) for d in range(nd)]
+    finite = [(d, a) for d, a in enumerate(per_depth) if a == a]
+    bd, ba = max(finite, key=lambda t: t[1]) if finite else (-1, float("nan"))
+    X = np.concatenate([stack_inj, stack_clean], axis=0)
+    y = np.r_[np.ones(len(stack_inj)), np.zeros(len(stack_clean))].astype(int)
+    rng = np.random.default_rng(seed)
+    maxes = []
+    for _ in range(perms):
+        yp = rng.permutation(y)
+        vals = [_stdmeandiff_cv_auc(X[yp == 0][:, d, :], X[yp == 1][:, d, :]) for d in range(nd)]
+        vals = [v for v in vals if v == v]
+        if vals:
+            maxes.append(max(vals))
+    null = float("nan")
+    if maxes:
+        maxes.sort()
+        null = maxes[int(0.95 * (len(maxes) - 1))]
+    return ba, bd, null
+
+
 def run_b5_propagation_probe(ctx: bench.RunContext, bundle: bench.ModelBundle, detections: Sequence[DetectionItem], directions: Mapping[str, DirectionBundle], resolver: LabelResolver) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Two follow-ups to the B5 sentinel result.
 
@@ -1910,13 +1976,14 @@ def run_b5_propagation_probe(ctx: bench.RunContext, bundle: bench.ModelBundle, d
     """
     import numpy as np
 
-    items = [d for d in detections if directions.get(d.target_direction_id)][:B5_READOUT_MAX_ITEMS]
+    heldout = [d for d in detections if d.split == "heldout" and directions.get(d.target_direction_id)]
+    items = (heldout or [d for d in detections if directions.get(d.target_direction_id)])[:B5_READOUT_MAX_ITEMS]
     detail: list[dict[str, Any]] = []
     summary: list[dict[str, Any]] = []
     if not items:
         return detail, summary
 
-    # ---- 1. Sentinel dose sweep (verbalized yes/no) ----
+    # ---- 1. Sentinel dose sweep (verbalized yes/no, late placement) ----
     sweep_yes: dict[float, list[int]] = {d: [] for d in B5_SENTINEL_SWEEP_DOSES}
     clean_yes: list[int] = []
     for det in items:
@@ -1929,28 +1996,37 @@ def run_b5_propagation_probe(ctx: bench.RunContext, bundle: bench.ModelBundle, d
     fa = sum(clean_yes)
     for dose in B5_SENTINEL_SWEEP_DOSES:
         hits = sum(sweep_yes[dose])
-        dp = d_prime(hits, len(sweep_yes[dose]), fa, len(clean_yes))
         summary.append({
             "comparison": f"sentinel_dose_sweep::dose_{dose:g}",
-            "report_variant": B5_SENTINEL_VARIANT,
-            "insertion_site": "sentinel_prefill",
-            "dose": dose,
-            "n_injected": len(sweep_yes[dose]),
-            "n_clean": len(clean_yes),
+            "report_variant": B5_SENTINEL_VARIANT, "insertion_site": "sentinel_prefill", "dose": dose,
+            "n_injected": len(sweep_yes[dose]), "n_clean": len(clean_yes),
             "hit_rate": rounded(hits / max(1, len(sweep_yes[dose]))),
             "false_alarm_rate": rounded(fa / max(1, len(clean_yes))),
-            "d_prime": rounded(dp),
+            "d_prime": rounded(d_prime(hits, len(sweep_yes[dose]), fa, len(clean_yes))),
             "decision_source": "next_token_logits_sentinel",
         })
 
-    # ---- 2. Representational readout probe ----
-    # For each item, cache the decision-position residual under each route and
-    # record the item's injected unit direction.  The readout then projects the
-    # decision-position residual onto that known direction: a training-free,
-    # small-n-robust measure of how much of the injected signal reached the
-    # decision token's representation.
+    # ---- 1b. Sentinel placement sweep (verbalized, target @ headline dose) ----
+    for name, frac in B5_SENTINEL_POSITION_FRACS.items():
+        place_yes = []
+        for det in items:
+            direction = directions[det.target_direction_id]
+            yn, _, _, _ = sentinel_detection_logits(bundle, det, direction, direction.vector, HEADLINE_DOSE, direction.injection_layer, resolver, pos_frac=frac)
+            place_yes.append(int(yn == "yes"))
+        hits = sum(place_yes)
+        summary.append({
+            "comparison": f"sentinel_placement::{name}",
+            "report_variant": B5_SENTINEL_VARIANT, "insertion_site": f"sentinel_{name}", "dose": HEADLINE_DOSE,
+            "n_injected": len(place_yes), "n_clean": len(clean_yes),
+            "hit_rate": rounded(hits / max(1, len(place_yes))),
+            "false_alarm_rate": rounded(fa / max(1, len(clean_yes))),
+            "d_prime": rounded(d_prime(hits, len(place_yes), fa, len(clean_yes))),
+            "decision_source": "next_token_logits_sentinel",
+        })
+
+    # ---- 2. Representational readout: cache decision-position residuals ----
     res = {"clean": [], "target_sentinel": [], "target_reportquery": [], "wrong_sentinel": []}
-    v_target, v_wrong = [], []
+    v_target, item_dir = [], []
     for det in items:
         direction = directions[det.target_direction_id]
         wrong = directions.get(det.wrong_direction_id) or direction
@@ -1960,39 +2036,53 @@ def run_b5_propagation_probe(ctx: bench.RunContext, bundle: bench.ModelBundle, d
         full_text = make_detection_report_user(det, variant=B5_HEADLINE_VARIANT)
         question = full_text[len(base):] if full_text.startswith(base) else full_text
         q_len = len(bundle.tokenizer(question, add_special_tokens=False)["input_ids"])
-        sentinel_pos = max(1, min(n - 2, n - q_len - 2))
+        ctx_end = max(2, n - q_len)
+        sentinel_pos = max(1, min(n - 2, ctx_end - 2))
         res["clean"].append(_decision_residuals(bundle, rendered))
         res["target_sentinel"].append(_decision_residuals(bundle, rendered, vector=direction.vector, dose=HEADLINE_DOSE, layer=direction.injection_layer, residual_rms=direction.residual_rms, position=sentinel_pos))
         res["target_reportquery"].append(_decision_residuals(bundle, rendered, vector=direction.vector, dose=HEADLINE_DOSE, layer=direction.injection_layer, residual_rms=direction.residual_rms, position=-1))
         res["wrong_sentinel"].append(_decision_residuals(bundle, rendered, vector=wrong.vector, dose=HEADLINE_DOSE, layer=wrong.injection_layer, residual_rms=wrong.residual_rms, position=sentinel_pos))
         v_target.append(np.asarray(direction.vector, dtype=np.float64))
-        v_wrong.append(np.asarray(wrong.vector, dtype=np.float64))
+        item_dir.append(det.target_direction_id)
     stacks = {k: np.stack(v, 0) for k, v in res.items()}  # [n_items, n_depths, d]
-    Vt = np.stack(v_target, 0)  # [n_items, d]
+    Vt = np.stack(v_target, 0)
     n_depths = stacks["clean"].shape[1]
-    # Projection scores onto the per-item target direction, [n_items, n_depths].
+
+    # 2a. Direction-aligned projection readout (training-free, robust).
     proj = {k: _proj_scores(stacks[k], Vt) for k in stacks}
-    contrasts = {
-        "sentinel_vs_clean": ("target_sentinel", "clean"),
-        "reportquery_vs_clean_control": ("target_reportquery", "clean"),
-        "concept_target_vs_wrong_sentinel": ("target_sentinel", "wrong_sentinel"),
-    }
     best: dict[str, dict[str, Any]] = {}
-    for name, (a, b) in contrasts.items():
+    for name, (a, b) in {"sentinel_vs_clean": ("target_sentinel", "clean"), "reportquery_vs_clean_control": ("target_reportquery", "clean"), "concept_target_vs_wrong_sentinel": ("target_sentinel", "wrong_sentinel")}.items():
         per_depth = [_auc_one_sided(proj[a][:, d], proj[b][:, d]) for d in range(n_depths)]
         for d, auc in enumerate(per_depth):
-            detail.append({"contrast": name, "depth": d, "proj_auc": rounded(auc), "n_per_class": len(items)})
+            detail.append({"probe": "projection", "contrast": name, "depth": d, "auc": rounded(auc), "n_per_class": len(items)})
         finite = [(d, a2) for d, a2 in enumerate(per_depth) if a2 == a2]
-        bd, ba = max(finite, key=lambda t: t[1]) if finite else (-1, float("nan"))
-        best[name] = {"best_layer": bd, "best_auc": ba}
-
+        best[name] = dict(zip(("best_layer", "best_auc"), max(finite, key=lambda t: t[1]) if finite else (-1, float("nan"))))
     sentinel_null = _proj_perm_null(proj["target_sentinel"], proj["clean"])
     concept_null = _proj_perm_null(proj["target_sentinel"], proj["wrong_sentinel"])
     sa = best["sentinel_vs_clean"]["best_auc"]
+
+    # 2b. Trained transformed-direction probe (pooled): catches a rotated signal.
+    tr_sent_auc, tr_sent_layer, tr_sent_null = _trained_maxdepth(stacks["target_sentinel"], stacks["clean"])
+    tr_ctrl_auc, _, _ = _trained_maxdepth(stacks["target_reportquery"], stacks["clean"], perms=1)
+    for d in range(n_depths):
+        detail.append({"probe": "trained_pooled", "contrast": "sentinel_vs_clean", "depth": d, "auc": rounded(_stdmeandiff_cv_auc(stacks["clean"][:, d, :], stacks["target_sentinel"][:, d, :])), "n_per_class": len(items)})
+
+    # 2c. Per-direction trained probe: catches a direction-specific rotated signal.
+    perdir_aucs, perdir_above = [], 0
+    for did in sorted(set(item_dir)):
+        idx = [i for i, x in enumerate(item_dir) if x == did]
+        if len(idx) < 6:
+            continue
+        a, layer, null = _trained_maxdepth(stacks["target_sentinel"][idx], stacks["clean"][idx], perms=80, seed=30)
+        if a == a:
+            perdir_aucs.append(a)
+            perdir_above += int(null == null and a > null)
+            detail.append({"probe": "trained_per_direction", "contrast": f"sentinel_vs_clean::{did}", "depth": layer, "auc": rounded(a), "null_p95": rounded(null), "n_per_class": len(idx)})
+
     summary.append({
         "comparison": "readout_probe",
-        "decision_source": "decision_position_projection_onto_injected_direction_auc",
-        "n_items": len(items),
+        "decision_source": "decision_position_readout",
+        "n_items": len(items), "n_depths": n_depths,
         "readout_sentinel_auc": rounded(sa),
         "readout_sentinel_best_layer": best["sentinel_vs_clean"]["best_layer"],
         "readout_sentinel_null_p95_auc": rounded(sentinel_null),
@@ -2000,7 +2090,13 @@ def run_b5_propagation_probe(ctx: bench.RunContext, bundle: bench.ModelBundle, d
         "readout_reportquery_control_auc": rounded(best["reportquery_vs_clean_control"]["best_auc"]),
         "readout_concept_auc": rounded(best["concept_target_vs_wrong_sentinel"]["best_auc"]),
         "readout_concept_null_p95_auc": rounded(concept_null),
-        "n_depths": n_depths,
+        "trained_pooled_sentinel_auc": rounded(tr_sent_auc),
+        "trained_pooled_sentinel_null_p95_auc": rounded(tr_sent_null),
+        "trained_pooled_sentinel_above_null": int(tr_sent_auc == tr_sent_auc and tr_sent_null == tr_sent_null and tr_sent_auc > tr_sent_null),
+        "trained_pooled_control_auc": rounded(tr_ctrl_auc),
+        "trained_perdir_sentinel_auc_mean": rounded(safe_mean(perdir_aucs)) if perdir_aucs else "",
+        "trained_perdir_n_directions": len(perdir_aucs),
+        "trained_perdir_above_null_count": perdir_above,
     })
     return detail, summary
 
@@ -2114,6 +2210,7 @@ def aggregate_metrics(items: Sequence[SeveranceItem], directions: Mapping[str, D
     b5_sentinel = next((r for r in b5_summary if str(r.get("comparison")) == "sentinel_content_blind_logit_only"), {})
     b5_readout = next((r for r in b5_summary if str(r.get("comparison")) == "readout_probe"), {})
     b5_sweep_hi = next((r for r in b5_summary if str(r.get("comparison")) == f"sentinel_dose_sweep::dose_{max(B5_SENTINEL_SWEEP_DOSES):g}"), {})
+    b5_place = {name: next((r for r in b5_summary if str(r.get("comparison")) == f"sentinel_placement::{name}"), {}) for name in B5_SENTINEL_POSITION_FRACS}
     b3_diss = next((r for r in b3_summary if str(r.get("condition")) == "dissociation_test"), {})
     metrics = {
         "lab": LAB_ID,
@@ -2149,6 +2246,16 @@ def aggregate_metrics(items: Sequence[SeveranceItem], directions: Mapping[str, D
         "b5_readout_reportquery_control_auc": b5_readout.get("readout_reportquery_control_auc", ""),
         "b5_readout_concept_auc": b5_readout.get("readout_concept_auc", ""),
         "b5_readout_concept_null_p95_auc": b5_readout.get("readout_concept_null_p95_auc", ""),
+        "b5_readout_trained_pooled_auc": b5_readout.get("trained_pooled_sentinel_auc", ""),
+        "b5_readout_trained_pooled_null_p95_auc": b5_readout.get("trained_pooled_sentinel_null_p95_auc", ""),
+        "b5_readout_trained_pooled_above_null": b5_readout.get("trained_pooled_sentinel_above_null", ""),
+        "b5_readout_trained_pooled_control_auc": b5_readout.get("trained_pooled_control_auc", ""),
+        "b5_readout_trained_perdir_auc_mean": b5_readout.get("trained_perdir_sentinel_auc_mean", ""),
+        "b5_readout_trained_perdir_above_null_count": b5_readout.get("trained_perdir_above_null_count", ""),
+        "b5_readout_trained_perdir_n_directions": b5_readout.get("trained_perdir_n_directions", ""),
+        "b5_sentinel_placement_early_d_prime": b5_place.get("early", {}).get("d_prime", ""),
+        "b5_sentinel_placement_mid_d_prime": b5_place.get("mid", {}).get("d_prime", ""),
+        "b5_sentinel_placement_late_d_prime": b5_place.get("late", {}).get("d_prime", ""),
         "b3_confidence_delta": b3_diss.get("reported_confidence_delta_plus_minus", ""),
         "b3_entropy_delta": b3_diss.get("entropy_delta_plus_minus", ""),
         "max_patch_recovery": rounded(max([fnum(r.get("recovery")) for r in patch_rows], default=float("nan"))) if patch_rows else "",
@@ -3194,23 +3301,28 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     b5_rows: list[dict[str, Any]] = []
     b5_summary: list[dict[str, Any]] = []
-    if "b5" in mode and directions:
-        b5_rows = attach_stable_ids(run_b5_detection(bundle, detections, directions, yesno_resolver), "b5", ("item_id", "condition"))
-        path = ctx.path("tables", "injection_detection_results.csv")
-        bench.write_csv_with_context(ctx, path, b5_rows)
-        ctx.register_artifact(path, "table", "B5 insertion detection rows.")
-        b5_summary = b5_summary_rows(b5_rows)
+    # "readout" runs the sentinel sweeps + representational probe without the
+    # (generation-heavy) verbalized B5 detection, so the expanded detection set
+    # can be probed cheaply.  "b5" runs the full verbalized detection too.
+    if ("b5" in mode or "readout" in mode) and directions:
+        if "b5" in mode:
+            b5_rows = attach_stable_ids(run_b5_detection(bundle, detections, directions, yesno_resolver), "b5", ("item_id", "condition"))
+            path = ctx.path("tables", "injection_detection_results.csv")
+            bench.write_csv_with_context(ctx, path, b5_rows)
+            ctx.register_artifact(path, "table", "B5 insertion detection rows.")
+            b5_summary = b5_summary_rows(b5_rows)
         probe_detail, probe_summary = run_b5_propagation_probe(ctx, bundle, detections, directions, yesno_resolver)
         if probe_summary:
             b5_summary = list(b5_summary) + list(probe_summary)
         if probe_detail:
             ppath = ctx.path("tables", "b5_propagation_probe.csv")
             bench.write_csv_with_context(ctx, ppath, probe_detail)
-            ctx.register_artifact(ppath, "table", "B5 sentinel dose sweep + representational readout probe (per-depth CV AUC).")
-        b5_summary = attach_stable_ids(b5_summary, "b5_summary", ("comparison",))
-        path = ctx.path("tables", "injection_detection_summary.csv")
-        bench.write_csv_with_context(ctx, path, b5_summary)
-        ctx.register_artifact(path, "table", "B5 signal-detection summary.")
+            ctx.register_artifact(ppath, "table", "B5 sentinel dose+placement sweeps and representational readout (projection + trained probes, per-depth AUC).")
+        if b5_summary:
+            b5_summary = attach_stable_ids(b5_summary, "b5_summary", ("comparison",))
+            path = ctx.path("tables", "injection_detection_summary.csv")
+            bench.write_csv_with_context(ctx, path, b5_summary)
+            ctx.register_artifact(path, "table", "B5 signal-detection summary.")
 
     patch_rows: list[dict[str, Any]] = []
     if "patch" in mode and directions:

@@ -1,8 +1,8 @@
 {
   "files": {
     "injection_detection_prompts.csv": {
-      "bytes": 3762,
-      "sha256": "5abc30528c644c85f6b2d6120cd10a442f7a883d8f321aa713692fc44c5e8e60"
+      "bytes": 38684,
+      "sha256": "834c6c05a40a23bbb0cacc6086e9cdadb9e44ea68f6f50ca0692897a1d89ce44"
     },
     "introspection_queries.csv": {
       "bytes": 19783,
@@ -13,8 +13,8 @@
       "sha256": "24312a3632f5fa4e8dc3ce0a25038d69e14af76a8f02e9e61d40228308c368bb"
     },
     "semantic_judge_rubric.md": {
-      "bytes": 616,
-      "sha256": "9ba8728c82c5dd326a101f2768009b2fe495f19f0513e917be02bf5e2cb6403c"
+      "bytes": 594,
+      "sha256": "014c0ebfc436e7ee700c6e4ba680a8b37947744921f0afa784b27e9e9e8a389b"
     },
     "source_attribution_prompts.csv": {
       "bytes": 4496,
