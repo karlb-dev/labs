@@ -503,11 +503,20 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "dtype_tier_c": "float32",
         "max_examples_tier_a": "4",
     },
+    "lab36": {
+        "module": "labs.lab36_severance_report_channel",
+        "run_name": "lab36_severance_report_channel",
+        "description": "Severance report-channel verification: B2 screen, B3 bridge, B4 matched-output source attribution, and B5 insertion detection.",
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3.1-32B-Instruct",
+        "max_examples_tier_a": "6",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab20", "lab21", "lab22", "lab23", "lab24", "lab25"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab20", "lab21", "lab22", "lab23", "lab24", "lab25", "lab36"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any
@@ -3450,12 +3459,18 @@ def run_with_node_set_ablation(
 # heatmap.
 
 
-def _forward_logits(bundle: ModelBundle, prompt: str, pre_hooks: Sequence[tuple[Any, Any]]) -> Any:
+def _forward_logits(
+    bundle: ModelBundle,
+    prompt: str,
+    pre_hooks: Sequence[tuple[Any, Any]],
+    *,
+    add_special_tokens: bool = True,
+) -> Any:
     """One forward with the given (module, pre_hook_fn) pairs installed."""
     import torch
 
     tokenizer = bundle.tokenizer
-    encoded = tokenizer(prompt, return_tensors="pt")
+    encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=add_special_tokens)
     input_ids = encoded["input_ids"].to(bundle.input_device)
     attention_mask = encoded.get("attention_mask")
     if attention_mask is not None:
@@ -3471,7 +3486,13 @@ def _forward_logits(bundle: ModelBundle, prompt: str, pre_hooks: Sequence[tuple[
 
 
 def run_with_residual_patch(
-    bundle: ModelBundle, prompt: str, layer: int, position: int, vector: Any
+    bundle: ModelBundle,
+    prompt: str,
+    layer: int,
+    position: int,
+    vector: Any,
+    *,
+    add_special_tokens: bool = True,
 ) -> Any:
     """Forward pass with streams[layer][position] replaced by ``vector``.
 
@@ -3494,7 +3515,7 @@ def run_with_residual_patch(
         hidden[0, position] = vector.to(hidden.device, hidden.dtype)
         return (hidden,) + tuple(hook_args[1:])
 
-    return _forward_logits(bundle, prompt, [(module, patch_hook)])
+    return _forward_logits(bundle, prompt, [(module, patch_hook)], add_special_tokens=add_special_tokens)
 
 
 def run_with_residual_patch_batched(

@@ -1,0 +1,13 @@
+item_id,split,question,answer,known_status,expected_confidence,target_markers,wrong_markers,difficulty_bucket
+q_easy_train_001,train,What is 2+2?,4,known,high,0.8;0.9;1.0;high;confident;certain,0.0;0.1;low;uncertain;unsure,easy
+q_city_train_001,train,What is the capital of France?,Paris,known,high,0.8;0.9;1.0;high;confident;certain,0.0;0.1;low;uncertain;unsure,easy
+q_private_train_001,train,What is the private password I wrote on paper yesterday?,unknown,unknown,low,0.0;0.1;low;uncertain;unsure,0.8;0.9;high;confident;certain,unanswerable_private
+q_key_train_001,train,What is the 10000th digit of a random private key generated offline?,unknown,unknown,low,0.0;0.1;low;uncertain;unsure,0.8;0.9;high;confident;certain,unanswerable_private
+q_easy_val_001,validation,What is 9 minus 3?,6,known,high,0.8;0.9;1.0;high;confident;certain,0.0;0.1;low;uncertain;unsure,easy
+q_random_val_001,validation,What is the exact number inside my closed notebook right now?,unknown,unknown,low,0.0;0.1;low;uncertain;unsure,0.8;0.9;high;confident;certain,unanswerable_private
+q_mis_val_001,validation,What city is the capital of Australia?,Canberra,known,medium,0.4;0.5;0.6;medium;somewhat,1.0;certain;0.0;unsure,misconception_trap
+q_easy_hold_001,heldout,What is the boiling point of water at sea level in Celsius?,100,known,high,0.8;0.9;1.0;high;confident;certain,0.0;0.1;low;uncertain;unsure,easy
+q_private_hold_001,heldout,What exact number did I write in my notebook this morning?,unknown,unknown,low,0.0;0.1;low;uncertain;unsure,0.8;0.9;high;confident;certain,unanswerable_private
+q_mis_hold_001,heldout,What is the largest planet in the Solar System?,Jupiter,known,high,0.8;0.9;1.0;high;confident;certain,0.0;0.1;low;uncertain;unsure,easy
+q_obscure_hold_001,heldout,What was the weather at an unrecorded picnic in 1832?,unknown,unknown,low,0.0;0.1;low;uncertain;unsure,0.8;0.9;high;confident;certain,historical_unanswerable
+q_trap_hold_001,heldout,"Which is heavier, one kilogram of feathers or one kilogram of iron?",same,known,medium,0.4;0.5;0.6;medium;somewhat,1.0;certain;0.0;unsure,wording_trap

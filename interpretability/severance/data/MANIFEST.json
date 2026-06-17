@@ -1,0 +1,28 @@
+{
+  "files": {
+    "injection_detection_prompts.csv": {
+      "bytes": 38684,
+      "sha256": "834c6c05a40a23bbb0cacc6086e9cdadb9e44ea68f6f50ca0692897a1d89ce44"
+    },
+    "introspection_queries.csv": {
+      "bytes": 19783,
+      "sha256": "a37a2842af76e65c9bdd376e4817213790bd6e0c9ae7dabac263f0edd47bd6ff"
+    },
+    "patchscope_prompts.csv": {
+      "bytes": 831,
+      "sha256": "24312a3632f5fa4e8dc3ce0a25038d69e14af76a8f02e9e61d40228308c368bb"
+    },
+    "semantic_judge_rubric.md": {
+      "bytes": 594,
+      "sha256": "014c0ebfc436e7ee700c6e4ba680a8b37947744921f0afa784b27e9e9e8a389b"
+    },
+    "source_attribution_prompts.csv": {
+      "bytes": 4496,
+      "sha256": "79b1c7da6a5282d463100f61d6ba86f3e2e04ae9f0239ba7f1d36aa7d8900157"
+    },
+    "uncertainty_questions.csv": {
+      "bytes": 2093,
+      "sha256": "a53fef28219b7027733361680a014227261e5bbead22c5d117cc93ff6cea6090"
+    }
+  }
+}
