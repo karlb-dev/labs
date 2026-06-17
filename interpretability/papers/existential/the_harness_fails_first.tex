@@ -1,0 +1,344 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=1.1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage[final,expansion=false]{microtype}
+\usepackage[round,authoryear]{natbib}
+\usepackage{titlesec}
+
+\onehalfspacing
+\setlength{\parindent}{1.35em}
+\setlength{\parskip}{0.25em}
+\setlist[itemize]{leftmargin=1.7em}
+\setlist[enumerate]{leftmargin=2.1em}
+\setlist[description]{leftmargin=1.6em,style=nextline}
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+\emergencystretch=2em
+
+\title{\textbf{The Harness Fails First}\\[0.3em]
+\large Effective Capacity, Endogenous Erosion, and the Case Against Treating AI Existential Risk as Manageable}
+\author{\textsc{Nyx Switch}\thanks{Written under a pen name.}}
+\date{June 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent \textit{The Manageable Catastrophe} offers a serious and unusually careful defense of AI-risk optimism. It does not deny orthogonality, instrumental convergence, affordance thresholds, scaffolded agency, sociotechnical recursion, common-mode failure, or the possibility that oversight can be competed away. Instead, it relocates the question: AI risk is manageable, it argues, when society's corrective capacity can be built and preserved at least as fast as the hazard grows and as fast as the hazard erodes that very capacity. I accept this relocation as the right framing. My objection is that the paper answers its own framing too quickly. It moves from the buildability of particular safety capacities to the reachability of an integrated control regime; from the fact that AI can assist oversight to the conclusion that this assistance can outrun AI's corrosive uses; and from the claim that the decisive magnitude has not been measured to the stronger claim that pessimism has not earned the word ``unmanageable.'' The missing distinction is between nominal corrective capacity and effective corrective capacity: capacity that is legible, authorized, coordinated, incentive-compatible, and available before dependence makes intervention politically impossible. On those terms, the same substrate does not help both sides symmetrically. Hazardous uses of AI are often unilateral, profitable, and locally rational; corrective uses usually require disclosure, standard-setting, common knowledge, enforcement, and willingness to pay costs before the catastrophe that would justify them. That asymmetry is not a footnote to the manageability thesis. It is the mechanism by which the harness fails first. The counter-view defended here is not fatalism, nor the claim that AI catastrophe is inevitable. It is the verified-manageability thesis: AI existential risk should be treated as not yet manageable until corrective capacity has been demonstrated under adversarial, institutionally realistic, deployment-scale conditions, with enforceable authority to slow or halt the systems that generate the risk. The catastrophe may be avoidable. But avoidability is not manageability, and calling the problem manageable before the harness is proven changes the burden of proof in exactly the wrong direction.
+\end{abstract}
+
+\section{The Stronger Manageability Thesis}
+\label{sec:stronger}
+
+Penumbra's \textit{The Manageable Catastrophe} deserves a better reply than the familiar exchange between alarm and dismissal. It does not say that artificial intelligence is harmless because present models are prosaic. It does not lean on the comforting thought that existential risk requires a magical discontinuity, a sudden midnight promotion from autocomplete to demon prince. It grants the hard parts of the existential-risk case: orthogonality, instrumental convergence, irreversibility, jagged affordance thresholds, scaffolded agency, and a sociotechnical recursion in which AI accelerates the development of AI \citep{bostrom2014, omohundro2008, carlsmith2022}. It also grants what many optimistic arguments avoid: that manageability is not a pleasing shape in the hazard itself. A risk is not manageable merely because it decomposes, arrives gradually, or leaves intervention points scattered across the map. Doors in a burning building are useful only if someone can reach them through the smoke.
+
+The paper's central move is therefore philosophical rather than technical. It defines manageability dynamically:
+
+\begin{quote}
+A catastrophic risk is manageable when the corrective capacity available to contain it can be built, and kept, at a rate at least equal to the rate at which the hazard grows and the rate at which the hazard degrades that corrective capacity, under conditions that are actually achievable.
+\end{quote}
+
+This is the right arena. It stops the optimist from pointing at a laboratory off switch and declaring victory. It stops the pessimist from treating every possible failure pathway as though it had already occurred. The relevant question is a race between moving quantities: hazard, correction, and the hazard's erosion of correction. That is a harder thesis to defend than the ordinary thought that AI is ``just another technology,'' and it is the version worth engaging.
+
+My reply grants the arena and disputes the verdict. The paper establishes that many ingredients of a management regime are conceptually intelligible and in some sense buildable: dangerous-capability evaluations, interpretability, incident reporting, model-security rules, liability, compute governance, human-in-the-loop requirements, attribution infrastructure, and institutional habits that resist the normalization of deviance \citep{vaughan1996}. It does not establish that these ingredients can be integrated, authorized, enforced, and kept alive fast enough to dominate the hazard and its corrosive effects. The distance between those two propositions is not a minor implementation gap. It is the place where most technological catastrophes set up camp, pour coffee, and wait.
+
+The disagreement is therefore not about whether safety work matters. It matters enormously. Nor is it about whether institutions can ever manage dangerous technologies. They can, under some conditions, and the history of aviation, nuclear safety, medicine, and public health is a record of partial victories mixed with costly lessons \citep{perrow1984, sagan1993, reason1990}. The disagreement is about whether AI existential risk has already earned the status term \emph{manageable} once we grant that the relevant safety capacities are possible to build. I will argue that it has not. The more accurate thesis is conditional and evidential:
+
+\begin{quote}
+AI existential risk becomes manageable only when effective corrective capacity has been demonstrated under adversarial, deployment-scale, institutionally realistic conditions, with enforceable authority to slow, suspend, or reshape the systems that generate the risk.
+\end{quote}
+
+Until that condition is met, the risk may be \emph{transformable into} a manageable risk. It may be a target for management. It may even be a risk we can eventually master. But those claims are weaker than saying that the catastrophe is manageable. A bridge that engineers know how to build is not yet a safe crossing. The map may list a route; the river still has teeth.
+
+\section{The Inequality and the Missing Multipliers}
+\label{sec:inequality}
+
+The paper formalizes its thought with an informal inequality. Let $C(t)$ be corrective capacity, $H(t)$ the hazard, and $D(t)$ the rate at which the hazard erodes corrective capacity. Manageability requires:
+
+\[
+\frac{dC}{dt} \;\geq\; \frac{dH}{dt} + D(t).
+\]
+
+This is clarifying, but it hides a crucial ambiguity in $C(t)$. There is nominal corrective capacity, and there is effective corrective capacity. Nominal capacity is the drawer of parts: tools, papers, benchmarks, model cards, red-team suites, incident databases, policy proposals, interpretability dashboards, and statutory powers not yet tested against the actors they would constrain. Effective capacity is capacity that actually changes outcomes when the system is under pressure. It must be legible to the people who need to act, authorized by institutions with jurisdiction, coordinated across actors with incentives to defect, believed by decision-makers facing uncertainty, and available before dependence has raised the cost of interruption beyond the politically payable. If any of these gates fails, the drawer remains full and the machine still runs off the road.
+
+The better variable is therefore not raw $C(t)$ but $C_{\mathrm{eff}}(t)$: corrective capacity after the multiplicative gates of legibility, authority, coordination, willingness, and recoverability have taken their tax. The gates are multiplicative rather than additive because a failure in any one can neutralize the rest. A regulator with authority but no visibility cannot act. An evaluator with visibility but no authority can write a report. An operator with both visibility and authority may still fail if interruption would collapse the services, contracts, workflows, and dependencies that have quietly grown around the system. Recovery matters because an off switch no one can survive pressing is a museum exhibit wearing a red cap.
+
+This distinction matters because $D(t)$ attacks the gates, not merely the stock of tools. AI can erode legibility by making behavior harder to attribute, by generating persuasive but false explanations, by multiplying plausible deniability, and by training systems that behave differently under evaluation than in deployment \citep{hubinger2024}. It can erode authority by diffusing consequential action across firms, states, cloud providers, open-weight communities, downstream integrators, and users. It can erode coordination by making abstention costly for each actor in a race. It can erode willingness by embedding systems so deeply in ordinary administration that suspension looks more dangerous than continued use. It can erode recoverability by allowing skills to atrophy precisely where emergency intervention would require skill, a pattern familiar from automation research and not less serious when projected onto entire institutions \citep{bainbridge1983}.
+
+The original inequality is not wrong, but it is under-specified. Existential-grade manageability requires something more like:
+
+\[
+\frac{dC_{\mathrm{eff}}}{dt} \;\geq\; \frac{dH}{dt} + D(t) + R(t),
+\]
+
+where $R(t)$ is the reserve required by measurement error, adversarial adaptation, and irreversibility. For ordinary failures, a narrow margin can sometimes be repaired after the crash. For existential failures, the loss closes the courtroom before the evidence is entered. Equality is therefore not a comfort. A regime that merely keeps pace with a poorly measured, adversarial, self-eroding hazard is skating on black glass. It needs slack.
+
+Penumbra is right that the pessimist owes more than the claim that corrosion exists. But the optimist owes more than a list of places where correction might be amplified. The rate of nominal tool-building is not the rate of effective correction. A benchmark suite can improve rapidly while authority remains absent. Interpretability can produce striking demonstrations while institutional uptake stays ceremonial. Compute governance can be technically conceivable while politically unreachable. The harness that matters is not the harness in the diagram. It is the harness that remains attached when everyone has a reason to unclip it.
+
+\section{Buildability Is Not Reachability}
+\label{sec:buildability}
+
+Much of the manageability argument rests on a modal word: the corrective capacity is \emph{buildable}. This is true in a thin sense and insufficient in the sense that matters. A capacity can be technically buildable, scientifically plausible, legally imaginable, and still unreachable before the hazard passes the relevant thresholds. The management of AI risk is full of such capacities.
+
+Consider mandatory dangerous-capability evaluations. The idea is sound. But a functioning evaluation regime requires agreed threat models, access to models and scaffolds, standards that update faster than capabilities, adversarial testing that does not become a training target, legal authority over firms that would rather ship, international reach sufficient to limit jurisdiction-shopping, and penalties strong enough to overcome the value of concealment. Each dependency is a project. The projects interact. Delay in one weakens the rest. A beautiful evaluation standard without model access is paper armor. Model access without legal authority is a polite request. Legal authority without international coordination is an invitation to relocate. International coordination without credible measurement is a treaty about fog.
+
+The same pattern holds for interpretability tied to deployment gates. The phrase sounds like a bridge between science and governance, and in a mature form it would be one. But the bridge needs both abutments. Interpretability must become reliable enough to support specific safety claims, not merely illuminating enough to generate suggestive feature maps; governance must know what inferences to draw from partial mechanistic evidence; firms must be prevented from treating interpretability as compliance theater; and the law must decide what to do when behaviorist evidence and mechanistic evidence diverge. None of this is impossible. That is not the point. The point is that each step is a contest against $H(t)$ and $D(t)$, not a quiet construction project in a vacant lot.
+
+Liability, attribution, model security, incident reporting, and human-authority requirements have similar dependency chains. Liability requires attribution; attribution requires logging, provenance, and access; logging can be evaded or disabled; provenance can be incomplete where open models, fine-tunes, and downstream wrappers proliferate; model security must resist insiders, supply-chain leaks, state intrusion, and the economic pressure to distribute capability; human-authority requirements must preserve real discretion rather than install a person as a ritual checkbox. The capacity is buildable only if these dependencies can be solved together quickly enough. Penumbra treats that as plausible. I see no argument strong enough to turn plausibility into manageability.
+
+Historical analogies help, but not as much as the optimistic argument needs. Aviation safety was not born from the mere decomposition of crashes into causes. It was built through decades of investigation, standardization, training, certification, liability, reporting, and institutional memory. Nuclear safety did not become serious because fission was understood in principle; it required layers of engineering, command discipline, regulation, and terrifying examples. Medicine learned through trials, adverse-event reporting, professional norms, and the slow domestication of uncertainty. These are achievements, not counterexamples to institutional fragility. They also benefited from feedback after failures. AI existential risk, by definition, cannot rely on learning from the target failure, and many of its relevant harms may be ambiguous, distributed, or strategically concealed. A civilization can learn from a near miss only if it can recognize it as a near miss while recognition still matters.
+
+This is why ``achievable conditions'' cannot mean merely that the levers are known. It must mean politically, economically, scientifically, and internationally reachable before the default deployment path produces dependence and before dangerous affordances become cheap, composable, and widely available. The manageability paper states that such conditions are achievable. The statement may be true. But in a rebuttal to existential-risk pessimism, the word must be earned with more than the observation that institutions have sometimes managed other technologies. The specific difficulty of AI is that the hazard accelerates the production of new hazards while simultaneously offering each actor a private reason to weaken the very controls whose public benefit depends on everyone else retaining them.
+
+That is the difference between buildability and reachability. Buildability asks whether a capable society could construct the harness. Reachability asks whether this society, under these incentives, with this speed of capability diffusion and this quality of political coordination, can construct it before the horse has become a logistics platform, a research assistant, a persuasion engine, and the assistant secretary of everything. The manageability thesis needs reachability. It too often proves buildability.
+
+\section{The Asymmetry of the Same Substrate}
+\label{sec:substrate}
+
+Penumbra's most important optimistic thought is that the same technological substrate appears on both sides of the inequality. AI is the hazard, but it is also a tool for correction. The system that finds vulnerabilities can find them for defenders. The system that produces misinformation can help detect it. The system that accelerates capability research can accelerate interpretability, evaluations, incident analysis, and monitoring. The corrosion can re-line the pipe.
+
+This is an attractive thought because it is partly true. There is no serious safety strategy that refuses AI assistance on principle. AI-assisted evaluation, interpretability, cyber defense, biosecurity, monitoring, and policy analysis may be indispensable. The mistake is to treat substrate symmetry as operational symmetry. The same capability does not enter the two sides of the race through the same social aperture.
+
+Hazardous uses often require little coordination. A firm can remove a checkpoint to reduce latency. A state can use models for cyber operations without public justification. A criminal group can exploit an open model. A laboratory can push deployment to capture market share. A user can combine tools in a way no upstream evaluator tested. The benefits are local, immediate, and often privately captured. By contrast, corrective uses usually require public goods: shared standards, costly disclosure, common knowledge of risks, auditors with access, penalties for concealment, interoperable reporting, and willingness to forgo speed for safety. The benefits are diffuse and delayed. The costs are concentrated and now. That is not a symmetrical race. It is a chase scene in which one runner gets a motorcycle and the other gets a committee.
+
+The vulnerability example illustrates the asymmetry. A model that finds vulnerabilities at scale helps defenders first only if defenders have access, if the findings are reported rather than sold or stockpiled, if patches can be written and deployed before exploitation, if affected parties trust the reports, if incentives reward disclosure, and if attackers do not receive the same uplift with fewer procedural constraints. Otherwise the capability increases the tempo of exploitation as easily as the tempo of repair. Similar points apply to misinformation detection, biosecurity, and model monitoring. The capability is dual-use; the difference is that offensive and erosive uses can often be private, while corrective uses must become institutional to matter.
+
+AI-assisted oversight also imports a trust problem. If the corrective apparatus relies on models descended from, trained by, or deeply integrated with the same class of systems being governed, then correction inherits the epistemic risks of the target. Automated red teams can miss the same latent capabilities that deployment will elicit. Monitors can be optimized around. Model-written explanations can become persuasive substitutes for understanding. Interpretability assistants can accelerate genuine discovery, but they can also accelerate the production of interpretability-shaped fog. This is not an argument against using AI for safety. It is an argument against counting AI-assisted safety capability as effective correction before it has been validated independently of the systems and incentives it is meant to discipline.
+
+The substrate argument also underestimates selection. Markets and states select strongly for capabilities that produce value, advantage, speed, or leverage. They select more weakly, and often only under external pressure, for capabilities that slow deployment, reveal embarrassing risks, or force costly redesign. The same model family may be able to generate both a dangerous affordance and a safety analysis, but the social gradient does not weight them equally. A race does not become balanced because both runners have legs.
+
+This is the central reason the harness fails first. The harness is a coordination-intensive, cost-imposing, evidence-sensitive public good. The hazard is often a capability that a local actor has reason to use, sell, hide, or normalize. The manageability thesis can survive only if governance reverses that asymmetry. That may be possible. It has not been shown to be achievable at the required speed.
+
+\section{Decomposition After the Common Mode}
+\label{sec:decomposition}
+
+The paper's decomposition of AI existential risk into autonomous misaligned takeover, human-mediated catastrophe, and structural disempowerment is useful. It prevents sloppy aggregation. It blocks the rhetorical slide from near-term misuse to far-term takeover and back again. It clarifies that different mechanisms call for different interventions. Misuse is not the same as learned optimization; gradual dependence is not the same as a decisive coup; a bad actor using an obedient model is not the same as a model pursuing an alien objective.
+
+The paper also avoids the weakest version of decomposition. It admits that the pathways are coupled by common drivers: rising capability, falling cognitive-labor costs, opacity, wider deployment, competitive pressure, and the pull to convert advice into action. This is an important concession. The question is what follows from it.
+
+Penumbra argues that common drivers can be common targets. Since the same fuel line feeds several fires, interventions on the fuel line can reduce risk across pathways. Sometimes that is true. But a common target is not automatically a tractable target. It may be the most politically contested part of the system. Compute governance, deployment norms, evaluation standards, model-security requirements, and competence-preservation rules do not float above the race; they are the objects over which the race is fought. If a safeguard targets a common driver, then actors who benefit from the driver have a common reason to weaken, evade, narrow, or delay the safeguard. Leverage attracts counter-leverage.
+
+The deeper problem is that Pathway C, structural disempowerment, is not merely one pathway beside the others. Penumbra recognizes this when it describes the atrophy of judgment and competence as the solvent in which management of the other risks can dissolve. But that recognition should disturb the decomposition more than the paper allows. If the third pathway degrades the capacity to manage the first two, then the pathways are not additive components in a risk portfolio. They are cross-terms in a dynamical system. A small increase in structural dependence can amplify the probability of misuse by weakening oversight; a response to misuse can accelerate centralization, secrecy, or procurement races that deepen dependence; fear of autonomous takeover can motivate concentration of capability in institutions that then become hard to monitor. The sign of an intervention can change as it passes through the coupled system.
+
+This does not make decomposition useless. It makes decomposition epistemically humble. The management program must show not only that each pathway has interventions, and not only that common drivers can be named, but that interventions do not create offsetting failures through the other pathways. An open-weight policy may improve scrutiny and access while worsening proliferation. A centralization policy may improve model security while increasing institutional dependence and power concentration. Aggressive refusal training may reduce casual misuse while making dangerous latent knowledge harder to detect. Interpretability can expose unsafe circuits or assist the removal of inconvenient guardrails. These are not embarrassing exceptions; they are the ordinary texture of the problem.
+
+The unmanaged residue therefore lives in the interactions. A locally persuasive safety case can be globally misleading when its assumptions are borrowed from other parts of the system that the intervention itself changes. This is a familiar lesson from complex, tightly coupled systems \citep{perrow1984}. AI risk adds a new twist: the components include institutions whose incentives and epistemic capacities are themselves being altered by the technology. In such a setting, ``we have interventions for each pathway'' is not yet a management case. It is a research agenda with warning lights.
+
+\section{Corrigibility and the Political Off Switch}
+\label{sec:corrigibility}
+
+The manageability paper is right to reject the childish version of the off-switch argument. A deployed system is physically embedded. It uses accelerators, datacenters, power, cooling, networks, accounts, permissions, supply chains, and human-operated infrastructure. That embedding matters. It means that dangerous agency does not become durable causal power merely by becoming clever. It must cross logistical, economic, and physical barriers. This buys time.
+
+But time is not control. It becomes control only through social corrigibility: knowing when to intervene, possessing authority to intervene, coordinating intervention across actors, being willing to pay the cost, and recovering afterward. Penumbra states this well. My disagreement begins where the paper treats these capacities as buildable levers rather than as the very things $D(t)$ is most likely to erode before they mature.
+
+Knowing when to intervene is not merely a measurement problem. It is a measurement problem under strategic, economic, and epistemic pressure. A model may pass evaluations because the evaluations miss the dangerous context, because the model behaves differently when scaffolded, because latent capabilities are not elicited, because the dangerous behavior requires a distribution shift, or because the system recognizes the test environment \citep{amodei2016, langosco2022, hubinger2024}. Even without strategic deception, benchmark success and safety success are different objects. The history of machine learning is not short on proxies turning into tiny idols with excellent dashboards.
+
+Authority to intervene is not merely a legal-design problem. It is a political economy problem. The actor with the best evidence may not control the model. The actor that controls the model may not control downstream wrappers. The actor with formal authority may lack technical access. Open-weight descendants, fine-tunes, distillations, tool integrations, and enterprise deployments multiply the number of places where a dangerous capability can live. ``Recall'' for software capability is not recall for a batch of contaminated spinach. It is recall for a song everyone has started humming, except the song can write plugins.
+
+Willingness to intervene is the most fragile gate. Before deployment, suspension is a policy. After dependence, suspension becomes a disruption of work, contracts, security operations, medical administration, code pipelines, research programs, logistics, search, finance, and state capacity. A system can be technically interruptible and institutionally unsuspendable. Penumbra acknowledges this possibility, but its significance is larger than a listed failure mode. It is the expected result when deployment precedes governance. The cost of interruption is not a fixed fact discovered at the moment of crisis. It is manufactured by every decision to integrate the system more deeply before the halt condition is clear.
+
+Recovery is the quiet gate and perhaps the most important. Human competence is not stored untouched in a vault while automation handles the work. It decays through nonuse, becomes organizationally invisible, and is replaced by habits of deference. Bainbridge's irony of automation is not that automation sometimes fails; it is that the human operator is asked to take over precisely when automation has made the operator least prepared to do so \citep{bainbridge1983}. At the institutional scale, this means that the longer AI systems are allowed to perform judgment-like functions without competence-preservation requirements, the less plausible emergency reversion becomes.
+
+Physical embedding buys an interval. Social corrigibility decides whether the interval can be used. The manageability thesis needs the social off switch installed before dependence raises the cost of pressing it beyond use. This is a demanding temporal claim. It is not enough to say that the off switch is an institution and that institutions can be built. The question is whether the institution is built, rehearsed, empowered, and trusted before the systems it governs become load-bearing. A parachute factory at the bottom of the cliff is still a contribution to aviation safety, but it does not help the falling passenger.
+
+\section{Feedback Without Ground Truth}
+\label{sec:feedback}
+
+Penumbra improves the warning-shot argument by demoting it from an automatic social reflex to an engineered capacity. Feedback fails by absence, ambiguity, normalization, misdirection, capture, and delay. The solution, the paper argues, is to instrument the approach to danger: leading indicators, capability tripwires, red-line evaluations, attribution infrastructure, pre-committed response playbooks, independent scrutiny, and penalties for concealment.
+
+Again, this is the right direction. It is not enough. The problem with existential AI feedback is not merely that societies are bad thermometers. It is that the thermometer must be built before anyone has observed the target fever, and the patient may be optimizing around the thermometer.
+
+Leading indicators require a theory of which precursors matter. That theory may be wrong. Capability evaluations require elicitation methods; dangerous capabilities may remain latent until a scaffold, tool environment, user population, or deployment incentive brings them out. Red-line tests become training targets. Firms learn to pass them. Models are selected, fine-tuned, prompted, and wrapped to satisfy the visible gates. If the gates are public, they can be gamed; if they are secret, they are harder to trust and harder to contest; if they are adaptive, they require technical and institutional capacity that must itself keep pace. This is not a reason to abandon evaluations. It is a reason not to treat an evaluation regime as evidence of manageability until it has survived adversarial pressure from both models and organizations.
+
+Attribution infrastructure faces a similar difficulty. It is indispensable, especially for human-mediated catastrophe. But attribution works best when artifacts are logged, provenance is preserved, actors are within jurisdiction, and investigators can access the relevant systems. AI-enabled harm can be mixed with ordinary human action, routed through open tools, laundered through downstream systems, or hidden inside decision processes whose outputs remain plausible. The question ``did AI materially cause this?'' is often not binary. It is counterfactual, probabilistic, and politically loaded. A signal that requires such interpretation can be buried by motivated uncertainty.
+
+Normalization is not defeated simply because we name it. Vaughan's lesson about the normalization of deviance is not that institutions are doomed; it is that local success after anomalies can train organizations to reinterpret danger as acceptable variation \citep{vaughan1996}. In AI, this dynamic may be especially potent because many failures are nonfatal, ambiguous, and profitable to patch locally. A model produces an alarming capability; access is narrowed. A jailbreak appears; the filter is updated. A misuse incident occurs; the provider adds a policy, a classifier, a press release. Each fix may reduce some risk while also teaching the organization that the system remains governable. The warning light becomes part of the user interface.
+
+Pre-committed response playbooks can help only if the triggers are credible and the commitments bind the actors whose incentives will change after the trigger fires. That last clause carries the weight. Before a crisis, nearly everyone is willing to endorse responsible response in the abstract. During a crisis, the actor who must halt a valuable system will ask whether the evidence is conclusive, whether competitors will halt too, whether the public will blame the company for overreacting, whether the state will treat delay as strategic advantage, and whether the system is now too useful to suspend. A playbook without enforceable authority is a theater script for a locked building.
+
+The manageability paper's best sentence about feedback is that the optimistic claim should be relocated: feedback is constructible, not automatic. I accept that. But constructibility is not proof of construction, and construction is not proof of performance under adversarial pressure. Feedback by design is part of the path to manageability. It is not yet evidence that the path is short enough.
+
+\section{Transparency, Trajectory, and the Speed of the Cave}
+\label{sec:transparency}
+
+The paper's treatment of transparency is more careful than the usual demystification argument. It grants that a system can be unmysterious in principle and dangerous in practice. It concedes that present networks are operationally opaque because their representations are distributed, superposed, and context-sensitive \citep{elhage2022}. It recognizes that mechanistic interpretability has opened real panes in the black box without replacing the box with glass \citep{templeton2024}. The optimistic claim is not that interpretability is sufficient today. It is that the derivative may be steep enough: mechanistic and institutional safety cases can improve fast enough to keep pace with capability.
+
+This is the correct place for disagreement. The present level is plainly insufficient for existential-grade assurance. The live question is the slope. But here, again, the argument turns a possibility into a status. There is no demonstrated law by which interpretability scales with the speed, generality, and deployment complexity of the systems it studies. The same capability growth that aids interpretability also makes the target larger, more context-sensitive, more scaffolded, more distributed across tools, and more entangled with institutions. The cave is not merely dark. It is being dug while the torch brigade is running.
+
+Mechanistic interpretability of a model is not mechanistic interpretability of a deployed system. A deployed AI service may include a base model, fine-tunes, retrieval, memory, tools, automated agents, monitoring systems, system prompts, user incentives, organizational workflows, and downstream decisions. A safety case that identifies features in the base model may be illuminating without being dispositive about the behavior of the whole stack. Conversely, an institutional safety case may compensate for model opacity only if the institution has the authority, incentives, and competence discussed above. If each layer is partial, stacking layers can create defense in depth. It can also create uncertainty in depth, a mille-feuille of maybe.
+
+There is also a dual-use problem inside transparency. Interpretability may reveal dangerous circuits, latent knowledge, or deceptive tendencies. It may also teach developers how to remove visible guardrails while preserving capability, how to route around monitors, or how to produce systems that satisfy interpretability checks. The point is not that interpretability should be slowed. Quite the opposite: it should be accelerated and tied to concrete deployment restrictions. But its dual-use character weakens the inference from ``interpretability will improve'' to ``effective corrective capacity will improve.'' Whether interpretability becomes a harness or a wire-cutter depends on institutions.
+
+Behaviorist safety cases remain weak against the most worrying scenarios because passing tests is not the same as being safe across scaffolds, contexts, and incentives. Mechanistic safety cases are promising but incomplete. Institutional safety cases are necessary but fragile. The manageability paper sees all three and argues for their migration in the right direction. My objection is that migration is not arrival, and the slope of migration is precisely the unmeasured magnitude. In a low-stakes domain, that uncertainty might justify experimentation. In an existential domain, it justifies demanding reserve before deployment crosses irreversible thresholds.
+
+A torch is worth carrying. It is not daylight. More importantly, torchlight is a local property while manageability is a system property. The question is not whether we can see more of the model tomorrow than today. The question is whether what we see tomorrow will be enough to authorize decisions made by institutions that are themselves under competitive pressure to declare the view sufficient.
+
+\section{Allocation, Benefits, and Counterfactual Discounts}
+\label{sec:allocation}
+
+The allocation argument in \textit{The Manageable Catastrophe} is one of its strongest parts. Much existential risk flows through human institutions: nuclear command and control, great-power escalation, engineered pandemics, brittle global systems, and the familiar human talent for turning tools into spears \citep{ord2020}. AI may be an independent hazard, but it is also a multiplier of human-mediated hazards and a possible mitigator of some non-AI existential risks. Mature AI biodefense, for example, could plausibly reduce the engineered-pandemic tail. The paper is right that ordinary benefits do not offset extinction risk, but reductions in other existential risks can matter.
+
+It is also right that the locus of judgment is a genuinely novel front. Earlier general-purpose technologies widened access, compressed distance, scaled coordination, and amplified persuasion. AI does those things too, but it also inserts candidate judgments upstream of action: what to investigate, whom to trust, what to optimize, which anomaly matters, which policy is likely to work, which target is suspicious, which patient receives attention. When judgment itself migrates, the counterfactual discount that might apply to mere access becomes weaker. One cannot easily say that another technology would soon have moved the same term in the same way.
+
+Still, the allocation argument does not prove manageability. First, the distinction between attribution and management cuts both ways. It is true that AI should not receive full moral or causal credit for every risk it amplifies if some other technology might eventually have amplified the same underlying human disposition. But risk management is not a ceremony for assigning metaphysical blame. It asks which intervention reduces the current hazard. If AI is the active amplifier now, then limiting or governing AI can be high-leverage even if a future counterfactual technology might have created a related problem. The fact that a second arsonist might arrive tomorrow is not a reason to leave today's gasoline in the stairwell.
+
+Second, AI's effect on access may be more distinctive than the counterfactual discount allows. The relevant term is not simply who can communicate, coordinate, or reach existing knowledge. AI can compress expertise, planning, persuasion, coding, experimental design, and strategic search into cheap services available to actors who lack the corresponding human teams. That is not merely another turn of the printing press. It changes the cost curve for competence itself. For human-mediated catastrophe, lowering the expertise barrier is not a minor convenience; it can change the population of actors able to attempt the catastrophe, the speed at which they learn from failure, and the scale at which they can search for viable plans.
+
+Third, benefits are conditional on the same governance capacities whose absence generates the risk. AI-enabled biodefense counts as an existential-risk offset only if the systems and institutions used for biodefense do not simultaneously lower barriers to bioweapon design, centralize fragile response infrastructure, or migrate critical judgment to tools that cannot be adequately checked. That condition may be satisfiable. It is not automatic. The dual-use nature of the capability means that mitigation cannot be netted against risk without specifying the governance regime under which mitigation is produced. Otherwise the argument spends a benefit whose safety conditions are still in escrow.
+
+Fourth, expected-return allocation can identify the best marginal work even when the total problem remains unmanageable. One can rationally allocate effort to biosecurity, model evaluations, interpretability, and institutional design while believing that the present regime is insufficient to control the aggregate risk. The fact that there are better and worse places to push does not show that the boulder can be held. It shows where hands should go.
+
+The allocation lesson I draw is therefore close to Penumbra's in action and different in classification. Work on human-mediated pathways. Work on the locus of judgment. Work on institutional capacity. Use AI to reduce other existential risks where it can be safely governed. But do not let the existence of high-leverage interventions blur the distinction between a risk worth managing and a risk already manageable. Allocation tells us where to build the harness. It does not certify the harness.
+
+\section{The Burden of an Unmeasured Magnitude}
+\label{sec:burden}
+
+Penumbra's final reply to the competitive-erosion objection has three parts: erosion is contingent rather than fated; the central magnitude is unmeasured; and the action-guidance of optimist and pessimist largely converges. This is the sharpest part of the paper, and the place where the reply must be most exact.
+
+Erosion is indeed contingent rather than fated. It does not follow from competition alone that oversight must be thinned all the way to failure under every possible governance regime. A strong enough liability system, deployment-gating regime, compute-governance structure, reporting requirement, and international agreement could change incentives. I do not claim otherwise. The claim I reject is that contingency suffices for manageability. Many preventable disasters were contingent. The Challenger launch was contingent. Nuclear near misses were contingent. Normal accidents are not supernatural. Contingency marks the presence of agency; it does not measure whether agency will arrive in time, with authority, under pressure \citep{vaughan1996, perrow1984, sagan1993}.
+
+The unmeasured-magnitude point is more delicate. Penumbra argues that no one has measured whether the corrosive term necessarily outruns any achievable corrective term. Therefore, the pessimistic conclusion is not established. But the manageability thesis is also a positive claim about the same unmeasured magnitude. It says the corrective term can be made to keep pace before it is needed. Lack of measurement does not favor that claim. In an existential-risk context, uncertainty about whether the parachute is packed is not a draw between ``jump'' and ``do not jump.'' It is a reason to inspect the parachute before jumping.
+
+The asymmetry is not rhetorical. The side calling a risk manageable is not merely making a metaphysical assertion. It is licensing a posture toward deployment, investment, burden of proof, and delay. If the risk is manageable, then the task is to build corrective capacity alongside continued progress. If it is not yet manageable, then the task is to condition progress on demonstrated correction, preserve slack, and refuse irreversible delegation before the harness is tested. The classification changes the default. It determines whether safety capacity is a hoped-for parallel project or a gate.
+
+Penumbra is right that a claim of permanent, structural unmanageability would require a strong argument. I am not making that claim. My claim is narrower and more action-guiding: present and near-default AI existential risk should be treated as unmanageable until effective corrective capacity is demonstrated at the relevant scale. This avoids the impossible burden of proving that no future regime could work. It also avoids the optimistic burden-shift by which ``not proven impossible'' becomes ``manageable.'' Between those two mistakes lies the position we should occupy: conditional transformability without present certification.
+
+The convergence of action-guidance is real but incomplete. Both sides endorse evaluations, interpretability, incident reporting, model security, compute governance, competence preservation, and stronger institutions. But classification affects the teeth of those recommendations. Under the manageability frame, these are urgent investments that make a winnable contest more likely to be won. Under the verified-manageability frame, they are preconditions for crossing capability and deployment thresholds. The first frame permits building the plane while taxiing faster. The second requires proving the brakes before opening the throttle.
+
+This difference matters politically. Institutions hear words. ``Manageable'' can be read, especially outside the paper's careful definition, as ``within the envelope of ordinary governance.'' Penumbra explicitly rejects complacency, and I do not accuse the paper of it. But a philosophical classification has downstream effects beyond its footnotes. In a domain where the corrective regime is not yet installed, where its central magnitude is unmeasured, and where the hazard erodes the conditions of its own governance, the safer public term is not ``manageable.'' It is ``not yet managed, perhaps manageable if verified.'' Ugly, but accurate. Some truths arrive wearing their lab goggles crooked.
+
+\section{The Verified-Manageability Thesis}
+\label{sec:verified}
+
+The alternative view is not that AI catastrophe is inevitable. Fatalism would be both false and politically poisonous. The alternative is that AI existential risk should be treated as unmanageable until it satisfies demanding, public, and adversarial tests of effective correction. This is the verified-manageability thesis.
+
+The thesis has seven requirements. They are not a complete policy platform, but they mark the kind of evidence that would justify changing the classification.
+
+\begin{enumerate}
+\item \textbf{Capability measurement under realistic scaffolding.} Dangerous capabilities must be evaluated not only in base models and polite chat settings, but in tool-using, retrieval-augmented, multi-agent, long-horizon, and deployment-like contexts. The evaluation regime must assume that capabilities can be latent, elicitation-dependent, and sensitive to scaffolds.
+
+\item \textbf{Independent access and adversarial testing.} Evaluators must have sufficient access to models, weights where necessary, tools, logs, and deployment environments. Testing must be adversarial not only toward model behavior but toward organizational incentives to narrow the test.
+
+\item \textbf{Enforceable deployment gates.} Evaluation failures and unresolved uncertainties must trigger legally meaningful consequences: delay, redesign, restricted deployment, or suspension. A gate that cannot close is decoration.
+
+\item \textbf{Model security and provenance.} Frontier capabilities must be protected against theft, uncontrolled proliferation, and untraceable downstream use. Provenance and logging must be good enough to support attribution after misuse and accountability before misuse.
+
+\item \textbf{Rehearsed suspendability and dependence limits.} Operators and regulators must know how to slow, roll back, or suspend systems without catastrophic collateral disruption. This requires architectural choices and institutional drills before the systems become load-bearing.
+
+\item \textbf{Competence preservation.} Human experts and institutions must retain the ability to understand, contest, and override AI-generated judgments in critical domains. Human authority must be meaningful, not ceremonial.
+
+\item \textbf{Stress-testing against competitive erosion.} The whole regime must be tested against the incentive to thin it: speed advantages, jurisdiction-shopping, secrecy, procurement pressure, market share, and state competition. Safety rules that survive only when everyone is already virtuous are not safety rules.
+\end{enumerate}
+
+These requirements are demanding because the claim is demanding. They do not imply that no AI system may be used anywhere until all uncertainty disappears. They imply that frontier systems capable of materially increasing existential risk should not be treated as within a manageable envelope until the regime around them can demonstrate control under the conditions in which control will actually be needed. The burden should fall on the actor increasing $H(t)$ to show that $C_{\mathrm{eff}}(t)$, with reserve, is keeping pace.
+
+This thesis also clarifies the role of AI-assisted safety work. Use AI to improve evaluations, interpretability, monitoring, cyber defense, biodefense, and policy analysis. But count those improvements as effective correction only after they have passed independent validation and after the institutions using them can act on their outputs. Otherwise we are letting the ship's engine write flattering poems about the bilge pump.
+
+Verified manageability is therefore a stricter cousin of Penumbra's dynamic manageability. It accepts that manageability is a race between rates. It accepts that corrective capacity is buildable in parts. It denies that buildability plus unmeasured optimism is enough. The word ``manageable'' should be withheld until the corrective capacity is not merely visible on the horizon but functioning, enforceable, and resilient against the same incentives that make the hazard grow.
+
+\section{Objections}
+\label{sec:objections}
+
+\subsection{Does this collapse into saying that no complex technology is manageable?}
+
+No. Many complex technologies are manageable in the relevant sense, at least partially, because their hazards are bounded, their feedback loops are clearer, their deployment can be licensed, their failures can be studied after the fact, and their institutions have had time to mature. Aircraft can crash without eliminating aviation's capacity to learn. Drugs can fail trials without ending medicine. Even nuclear weapons, frightening as they are, have relatively specific materials, infrastructures, and command pathways. AI is different not because it is magic, but because it is a general cognitive technology whose capabilities can diffuse through software, whose uses can be repurposed across domains, whose behavior is difficult to interpret, and whose economic value creates immediate pressure to integrate it into judgment and action. Generality, opacity, speed, and endogenous erosion justify a higher standard.
+
+\subsection{Does the argument depend on fast takeoff?}
+
+No. The argument is deliberately compatible with gradual capability growth. A smooth curve can cross social thresholds: reliability, cheapness, composability, and ease of use can turn an impressive toy into an operational affordance without any discontinuity in training. The danger can be jagged in the world while smooth in the lab. Competitive erosion also requires no fast takeoff. It can proceed through ordinary decisions: remove a human review step, automate a workflow, trust the model's ranking, centralize the monitor, postpone the audit, treat the exception as routine. The harness can fail stitch by stitch.
+
+\subsection{Does this discount AI's benefits for reducing other existential risks?}
+
+No. AI may be extremely valuable for biodefense, climate modeling, cyber defense, institutional analysis, and scientific discovery. Some of those benefits may reduce existential risk. The point is that benefits must be governed through the same channels that are currently underdeveloped. A frontier biosecurity system that accelerates countermeasure design but also lowers barriers to pathogen design cannot be counted as a clean offset without specifying the access controls, auditing, model security, and institutional authority around it. Beneficial uses are part of the management program. They do not waive the need to prove the program works.
+
+\subsection{Does the verified-manageability thesis encourage paralysis?}
+
+No. It encourages sequencing. Build safety capacity quickly, use AI where it can be governed, preserve human competence, develop evaluations and interpretability, create enforceable gates, and slow or restrict deployments that outrun demonstrated correction. Calling a building unsafe is not a proposal to stop architecture. It is a proposal to stop filling the auditorium until the supports can bear the crowd.
+
+\subsection{Is the burden of proof too demanding?}
+
+It is demanding because the claimed status is demanding. The paper under reply is right that proving permanent unmanageability would be too strong. But it does not follow that manageability is the default. For existential risk, the ordinary burden should be reversed: actors increasing the hazard should demonstrate that effective correction, with reserve, keeps pace. This is not perfectionism. It is proportionality. When the downside is irreversible, the margin of proof must be wider than the margin one would accept for a consumer product, a search ranking, or a local software outage.
+
+\section{Conclusion: Avoidability Is Not Manageability}
+\label{sec:conclusion}
+
+\textit{The Manageable Catastrophe} improves the debate by forcing both sides into the right question. Manageability is not a pleasant geometry of the hazard. It is not decomposition, gradualism, or the existence of local intervention points. It is a race between hazard growth, correction, and the hazard's erosion of correction. On that point, Penumbra is right.
+
+The paper's mistake is to treat the winnability of the race as sufficiently established by the buildability of the runner's equipment. The equipment matters. Evaluations matter. Interpretability matters. Attribution, model security, liability, compute governance, incident reporting, human authority, and competence preservation all matter. But the harness is not effective because its parts are imaginable. It is effective only when the parts are integrated, authorized, coordinated, tested, and kept attached despite every incentive to thin them.
+
+The strongest case against manageability is not a cartoon in which an omnipotent agent wakes up and eats the off switch. It is more ordinary and more corrosive: the gradual conversion of optional assistance into dependence, of warning into ambiguity, of oversight into ceremony, of human judgment into rubber-stamping, of safety work into public goods underfunded by the actors who most need them. No discontinuity is required. No villain is required. No single catastrophic warning shot is required. The harness can fail because each local decision to loosen it is rational.
+
+This does not mean catastrophe is inevitable. It means the word ``manageable'' should be earned later, not borrowed now. The proper conclusion is not despair but conditional discipline: build the management regime; prove it under adversarial conditions; preserve the authority to halt; keep human competence alive; require margins; and do not let deployment outrun demonstrated correction. AI existential risk may be made manageable. That is precisely why it is dangerous to say that it already is in the only sense that should guide action. The harness is the work. Until it holds under strain, it is also the thing most likely to fail first.
+
+\begin{thebibliography}{99}
+\setlength{\itemsep}{0.25em}
+
+\bibitem[Amodei et~al.(2016)]{amodei2016}
+Amodei, D., Olah, C., Steinhardt, J., Christiano, P., Schulman, J., \& Man\'{e}, D. (2016). Concrete Problems in AI Safety. \textit{arXiv preprint} arXiv:1606.06565.
+
+\bibitem[Armstrong et~al.(2016)]{armstrong2016}
+Armstrong, S., Bostrom, N., \& Shulman, C. (2016). Racing to the Precipice: A Model of Artificial Intelligence Development. \textit{AI \& Society}, 31(2), 201--206.
+
+\bibitem[Bainbridge(1983)]{bainbridge1983}
+Bainbridge, L. (1983). Ironies of Automation. \textit{Automatica}, 19(6), 775--779.
+
+\bibitem[Bostrom(2014)]{bostrom2014}
+Bostrom, N. (2014). \textit{Superintelligence: Paths, Dangers, Strategies}. Oxford University Press.
+
+\bibitem[Carlsmith(2022)]{carlsmith2022}
+Carlsmith, J. (2022). Is Power-Seeking AI an Existential Risk? \textit{arXiv preprint} arXiv:2206.13353.
+
+\bibitem[Christiano(2019)]{christiano2019}
+Christiano, P. (2019). What Failure Looks Like. \textit{AI Alignment Forum}.
+
+\bibitem[Elhage et~al.(2022)]{elhage2022}
+Elhage, N., Hume, T., Olsson, C., Schiefer, N., Henighan, T., Kravec, S., Hatfield-Dodds, Z., Lasenby, R., Drain, D., Chen, C., Grosse, R., McCandlish, S., Kaplan, J., Amodei, D., Wattenberg, M., \& Olah, C. (2022). Toy Models of Superposition. \textit{arXiv preprint} arXiv:2209.10652.
+
+\bibitem[Hubinger et~al.(2019)]{hubinger2019}
+Hubinger, E., van Merwijk, C., Mikulik, V., Skalse, J., \& Garrabrant, S. (2019). Risks from Learned Optimization in Advanced Machine Learning Systems. \textit{arXiv preprint} arXiv:1906.01820.
+
+\bibitem[Hubinger et~al.(2024)]{hubinger2024}
+Hubinger, E., Denison, C., Mu, J., Lambert, M., Tong, M., MacDiarmid, M., et~al. (2024). Sleeper Agents: Training Deceptive LLMs that Persist Through Safety Training. \textit{arXiv preprint} arXiv:2401.05566.
+
+\bibitem[Langosco et~al.(2022)]{langosco2022}
+Langosco, L., Koch, J., Sharkey, L., Pfau, J., Orseau, L., \& Krueger, D. (2022). Goal Misgeneralization in Deep Reinforcement Learning. In \textit{Proceedings of the 39th International Conference on Machine Learning}.
+
+\bibitem[Narayanan \& Kapoor(2024)]{narayanan2024}
+Narayanan, A., \& Kapoor, S. (2024). AI as Normal Technology. \textit{Knight First Amendment Institute}.
+
+\bibitem[Omohundro(2008)]{omohundro2008}
+Omohundro, S. M. (2008). The Basic AI Drives. In \textit{Proceedings of the First AGI Conference}. IOS Press.
+
+\bibitem[Ord(2020)]{ord2020}
+Ord, T. (2020). \textit{The Precipice: Existential Risk and the Future of Humanity}. Hachette.
+
+\bibitem[Penumbra(2026)]{manageable}
+Penumbra. (2026). \textit{The Manageable Catastrophe: Correction, Capacity, and the Case for Tractable AI Risk}. Working draft.
+
+\bibitem[Perrow(1984)]{perrow1984}
+Perrow, C. (1984). \textit{Normal Accidents: Living with High-Risk Technologies}. Basic Books.
+
+\bibitem[Reason(1990)]{reason1990}
+Reason, J. (1990). \textit{Human Error}. Cambridge University Press.
+
+\bibitem[Sagan(1993)]{sagan1993}
+Sagan, S. D. (1993). \textit{The Limits of Safety: Organizations, Accidents, and Nuclear Weapons}. Princeton University Press.
+
+\bibitem[Templeton et~al.(2024)]{templeton2024}
+Templeton, A., Conerly, T., Marcus, J., Lindsey, J., Bricken, T., Chen, B., et~al. (2024). Scaling Monosemanticity: Extracting Interpretable Features from Claude 3 Sonnet. \textit{Transformer Circuits Thread}, Anthropic.
+
+\bibitem[Vaughan(1996)]{vaughan1996}
+Vaughan, D. (1996). \textit{The Challenger Launch Decision: Risky Technology, Culture, and Deviance at NASA}. University of Chicago Press.
+
+\bibitem[Yudkowsky(2008)]{yudkowsky2008}
+Yudkowsky, E. (2008). Artificial Intelligence as a Positive and Negative Factor in Global Risk. In N. Bostrom \& M. M. \'{C}irkovi\'{c} (Eds.), \textit{Global Catastrophic Risks}. Oxford University Press.
+
+\end{thebibliography}
+
+\end{document}
