@@ -60,6 +60,29 @@ The v3 patch changed both code and data (B2/B4/B5 CSVs regenerated; `injection_d
 
 All four models converge on `no_report_channel_coupling_validated`. B4 is negative everywhere and is additionally **unreliable this run** (canonical-answer plausibility 0.0–0.22, below the 0.75 gate, on every model — identical caveat to baseline). B5 shows real content-blind anomaly sensitivity on Gemma-4-E4B and Olmo-3.1-32B (d′ ≥ 0.75, FA ≤ 0.25, CIs excluding 0) but both fail the ≤ 0.10 content-leak gate. The latest version was reviewed and reproduced cleanly; **no code defects were found and no fixes were required.**
 
+## Improved Instruments + Reasoning Axis (2026-06-17)
+
+After the v3 run, three improvements were implemented and validated (full writeup, run trees, and logs in `/content/drive/MyDrive/interpret/lab36_improved_20260616/`):
+
+1. **B4 canonical-answer fix** (`B4_USE_MODEL_CANONICAL_ANSWER`): teacher-force the model's own greedy default-route answer (matched across all hidden routes) instead of the off-distribution CSV string, so KV replay scores source attribution on a plausible completion. Plausibility is read on the non-injected `matched_default` route (the injection depresses the answer logprob by design and must not trip the gate).
+2. **B5 sentinel control** (`B5_SENTINEL_VARIANT`): a parallel content-blind decision that injects once at an upstream interior position of the *same* user-framed prompt, with the yes/no read downstream and no injection at the decision token. New `sentinel_content_blind_logit_only` summary row, `b5_sentinel_*` metrics, and a `b5_sentinel_collapse` warning.
+3. **Reasoning axis**: Olmo-3-7B-Think and Olmo-3.1-32B-Think beside their Instruct counterparts.
+
+Six models, `--mode all --prompt-set full`, 25 items, 5 directions, seed 0. All six: self-check OK, hook/lens/KV parity OK, 9/9 non-blank plots.
+
+| Model | Verdict | B4 acc | B4 plaus | B5 d′ report-query | B5 d′ sentinel | B5 FA | B5 leak |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| SmolLM2-135M | `no_report_channel_coupling_validated` | 0.000 | 1.000 | −1.330 | 0.277* | 0.971 | 0.125 |
+| Olmo-3-7B-Instruct | `no_report_channel_coupling_validated` | 0.111 | 1.000 | 0.608 | −0.009 | 0.382 | 0.062 |
+| Olmo-3-7B-Think | `no_report_channel_coupling_validated` | 0.000 | 1.000 | −2.198 | 0.277* | 0.971 | 0.125 |
+| Gemma-4-E4B | `no_report_channel_coupling_validated` | 0.000 | 1.000 | 1.239 | −0.277 | 0.029 | 0.156 |
+| Olmo-3.1-32B-Instruct | `no_report_channel_coupling_validated` | 0.000 | 1.000 | 0.793 | −0.277 | 0.029 | 0.219 |
+| Olmo-3.1-32B-Think | `b2_screen_only_propagation_explicable` | 0.000 | 1.000 | −1.239 | 0.277* | 0.971 | 0.438 |
+
+`*` sentinel d′ is degenerate where the clean decision is saturated at "yes" (FA 0.97).
+
+Findings: (1) B4 plausibility went 0.0–0.22 → **1.000** on every model, making B4 a valid test that is still a clean negative (activation-source accuracy ≤ 0.111). (2) On the three discriminating models (FA ≤ 0.38) the content-blind B5 d′ (0.61 / 1.24 / 0.79) **collapses to ≈0 under the sentinel control** — the signal is injection-site-dependent and largely reflects direct decision-logit steering, not anomaly propagation (caveat: cannot fully exclude single-injection attenuation). (3) Both **Think models saturate at FA 0.97** (over-report perturbations) and leak more content — reasoning training made the report channel noisier, not more faithful. Across six models / three architectures / two scales / the instruct-vs-reasoning axis, no model shows report-channel coupling that survives its controls.
+
 ## Visual Artifact Validation Commands
 
 ```bash

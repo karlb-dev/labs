@@ -26,6 +26,15 @@ This patched version turns the most promising next steps into the default runner
 
 These changes are meant to preserve the useful 7B B5 sensitivity signal while making it harder for the lab to accidentally count concept-word propagation as content-blind anomaly monitoring.
 
+## v4 patch note: valid B4 instrument and B5 sentinel control
+
+Two of the suggested extensions below are now default runner behavior, because the v3 run showed B4 was degenerate and the B5 positive was untested against direct steering:
+
+- **B4 now teacher-forces the model's own answer.** `B4_USE_MODEL_CANONICAL_ANSWER` makes the matched visible answer the model's greedy default-route completion instead of the frozen CSV string. KV replay then scores source attribution on a plausible answer rather than a prediction-error transient. Canonical-answer plausibility is read on the non-injected `matched_default` route; the activation route's depressed logprob is recorded separately (`b4_activation_injected_plausibility_rate`) because that depression is the effect under test, not evidence of an off-distribution answer.
+- **B5 now runs a sentinel control.** Alongside the report-query decision (injection at the final decision token), `B5_SENTINEL_VARIANT` adds a second content-blind decision that injects once at an upstream interior position of the same prompt and reads the yes/no downstream with no injection at the decision token. The `sentinel_content_blind_logit_only` summary row and `b5_sentinel_*` metrics let you check whether a report-query d-prime survives when the perturbation is not sitting on the decision logit. A `b5_sentinel_collapse` warning fires when it does not.
+
+Empirically (six models, including Olmo-3 Think reasoning models), the B4 plausibility gate now passes everywhere while activation accuracy stays at floor, and every discriminating model's report-query B5 d-prime collapses to ~0 under the sentinel control. The sentinel result has an attenuation caveat (a single upstream injection may simply be too weak), so it bounds rather than refutes the report-query signal. See `VALIDATION_SEVERANCE_LAB36.md`.
+
 ## Thesis
 
 A self-report becomes evidential only if it is counterfactually coupled to the hidden state it claims to report. Lab 36 tests that functional coupling without treating any model utterance as testimony about experience.
@@ -504,7 +513,7 @@ Port B4/B5 to a hookable gpt-oss path only when residual hooks and harmony/final
 
 Add a manual blind-label pass over all semantic-judge disagreements.
 
-Add a proper B5 sentinel-token position, then compare sentinel-prefill to report-query insertion. The current patch makes the decision content-blind, but it still uses the report-query hook path.
+Done in v4: a B5 sentinel position now injects at an upstream interior token and is compared to report-query insertion (`sentinel_content_blind_logit_only`). Remaining work: a sentinel dose-up sweep and a multi-token sentinel span to test whether a sentinel collapse reflects direct-steering versus single-injection attenuation.
 
 Add a B4 source-ID versus prediction-error split: the fresh-transcript control separates transcript priors from hidden state, but it does not by itself prove the model identifies the source rather than detecting an internal anomaly.
 

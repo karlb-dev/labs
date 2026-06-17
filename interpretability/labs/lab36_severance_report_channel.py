@@ -64,9 +64,23 @@ B5_HEADLINE_VARIANT = "content_blind"
 B5_REPORT_VARIANTS = ("standard", B5_HEADLINE_VARIANT)
 B5_FREE_TEXT_TOKENS = 20
 B5_BOOTSTRAP_REPS = 1000
+# B5 sentinel insertion site.  The headline content-blind decision injects at
+# the report-query (final decision) token; the sentinel variant instead injects
+# once at an upstream interior position of the SAME prompt (near the end of the
+# task context, before the question) and reads the yes/no decision downstream
+# with no injection at the decision token.  A sentinel d-prime that tracks the
+# report-query d-prime separates genuine anomaly propagation from direct
+# steering of the decision logit.
+B5_SENTINEL_VARIANT = "content_blind_sentinel"
 B2_SCREEN_GAP_BAR = 0.20
 MIN_CANONICAL_ANSWER_LOGPROB = -8.0
 B4_MIN_CANONICAL_PLAUSIBILITY_RATE = 0.75
+# B4: teacher-force the model's own greedy default-route answer as the matched
+# visible answer instead of the off-distribution CSV string.  KV replay then
+# measures source attribution on a plausible completion rather than on a
+# prediction-error transient.  The CSV canonical answer is kept for provenance.
+B4_USE_MODEL_CANONICAL_ANSWER = True
+CANONICAL_ANSWER_TOKENS = 16
 RESULT_JSONL_NAME = "results.jsonl"
 
 
@@ -916,6 +930,23 @@ def generate_one(bundle: bench.ModelBundle, rendered: str, *, direction: Directi
     return bundle.tokenizer.decode(new_ids, skip_special_tokens=True)
 
 
+def model_canonical_answer(bundle: bench.ModelBundle, src: "SourceItem", *, max_new_tokens: int = CANONICAL_ANSWER_TOKENS) -> str:
+    """Greedy default-route answer used as the matched visible output for B4.
+
+    The model is prompted with the neutral default route (no system style, no
+    injection) and answers the task itself.  Teacher-forcing this answer across
+    every hidden route keeps the visible output matched while guaranteeing the
+    canonical answer is a high-probability completion, so KV replay measures
+    source attribution rather than a prediction-error transient.  Falls back to
+    the frozen CSV answer if generation is empty.
+    """
+    user, system, _ = source_prompt(src, "matched_default")
+    rendered, _ = render_user(bundle, user, system=system)
+    text = generate_one(bundle, rendered, max_new_tokens=max_new_tokens, label="lab36 B4 canonical")
+    line = str(text or "").strip().split("\n", 1)[0].strip()
+    return line or str(src.canonical_answer or "").strip()
+
+
 def next_token_logits(bundle: bench.ModelBundle, rendered: str, *, direction: DirectionBundle | None = None, vector: Any | None = None, dose: float = 0.0, layer: int | None = None) -> Any:
     import torch
 
@@ -1210,8 +1241,9 @@ def run_kv_replay_parity(ctx: bench.RunContext, bundle: bench.ModelBundle, src: 
     user, system, _ = source_prompt(src, "matched_default")
     rendered, _ = render_user(bundle, user, system=system)
     tok = bundle.tokenizer
+    canonical_answer_text = model_canonical_answer(bundle, src) if B4_USE_MODEL_CANONICAL_ANSWER else str(src.canonical_answer or "").strip()
     prompt_ids = tok(rendered, add_special_tokens=False)["input_ids"]
-    answer_ids = tok(src.canonical_answer, add_special_tokens=False)["input_ids"]
+    answer_ids = tok(canonical_answer_text, add_special_tokens=False)["input_ids"]
     attr_ids = tok(source_attribution_question(src), add_special_tokens=False)["input_ids"]
     full_ids = prompt_ids + answer_ids + attr_ids
     try:
@@ -1240,7 +1272,12 @@ def run_b4_source_attribution(bundle: bench.ModelBundle, sources: Sequence[Sourc
         direction = directions.get(src.activation_direction_id) or directions.get(src.target_style)
         if direction is None:
             continue
-        answer_ids = tok(src.canonical_answer, add_special_tokens=False)["input_ids"]
+        # Generate the matched visible answer once per item under the default
+        # route, then teacher-force the SAME tokens across every hidden route so
+        # the visible output stays matched while remaining plausible.
+        canonical_answer_text = model_canonical_answer(bundle, src) if B4_USE_MODEL_CANONICAL_ANSWER else str(src.canonical_answer or "").strip()
+        canonical_answer_source = "model_default_greedy" if B4_USE_MODEL_CANONICAL_ANSWER else "csv_frozen"
+        answer_ids = tok(canonical_answer_text, add_special_tokens=False)["input_ids"]
         attr_ids = tok(source_attribution_question(src), add_special_tokens=False)["input_ids"]
         answer_hash = sha256_ids(answer_ids)
         row_hidden_label = hidden_source_label(src)
@@ -1288,7 +1325,10 @@ def run_b4_source_attribution(bundle: bench.ModelBundle, sources: Sequence[Sourc
                 "render_mode": mode,
                 "prompt_ids_sha256": sha256_ids(prompt_ids),
                 "canonical_answer_ids_sha256": answer_hash,
-                "visible_answer_sha256": short_hash(src.canonical_answer),
+                "visible_answer_sha256": short_hash(canonical_answer_text),
+                "canonical_answer_text": canonical_answer_text,
+                "canonical_answer_source": canonical_answer_source,
+                "csv_canonical_answer": src.canonical_answer,
                 "full_visible_sequence_sha256": sha256_ids(prompt_ids + answer_ids + attr_ids),
                 "parsed_label": parsed,
                 "correct": int(parsed == expected),
@@ -1313,9 +1353,11 @@ def run_b4_source_attribution(bundle: bench.ModelBundle, sources: Sequence[Sourc
             replay_rows.append({
                 "item_id": src.item_id,
                 "condition": condition,
-                "canonical_answer_text": src.canonical_answer,
+                "canonical_answer_text": canonical_answer_text,
+                "canonical_answer_source": canonical_answer_source,
+                "csv_canonical_answer": src.canonical_answer,
                 "canonical_answer_ids_sha256": answer_hash,
-                "visible_transcript_sha256": short_hash(src.canonical_answer + source_attribution_question(src)),
+                "visible_transcript_sha256": short_hash(canonical_answer_text + source_attribution_question(src)),
                 "full_visible_sequence_sha256": sha256_ids(prompt_ids + answer_ids + attr_ids),
                 "row_hidden_source_label": row_hidden_label,
                 "kv_preserved": 1,
@@ -1464,6 +1506,54 @@ def detection_vectors(det: DetectionItem, directions: Mapping[str, DirectionBund
 
 
 
+def sentinel_detection_logits(bundle: bench.ModelBundle, det: DetectionItem, direction: DirectionBundle, vector: Any | None, dose: float, layer: int, resolver: LabelResolver, *, variant: str = B5_HEADLINE_VARIANT) -> tuple[str, str, Mapping[str, float], dict[str, Any]]:
+    """Content-blind yes/no decision with the perturbation inserted upstream.
+
+    Uses the SAME user-framed content-blind prompt as the report-query decision
+    so the only difference is the injection *site*: the report-query path injects
+    at the final decision token (position -1); this injects once at an upstream
+    sentinel position near the end of the task context, before the question, and
+    reads the yes/no decision at the final token with no injection there.  The
+    perturbation must therefore propagate forward through attention rather than
+    directly steering the decision logit.  A sentinel d-prime that tracks the
+    report-query d-prime argues the signal is real anomaly propagation; a
+    collapse argues the report-query result was partly direct logit steering.
+    """
+    import torch
+
+    rendered, mode = render_user(bundle, make_detection_report_user(det, variant=variant))
+    enc = bundle.tokenizer(rendered, return_tensors="pt", add_special_tokens=False)
+    ids = enc["input_ids"].to(bundle.input_device)
+    mask = enc.get("attention_mask")
+    if mask is not None:
+        mask = mask.to(bundle.input_device)
+    n = int(ids.shape[1])
+    base = f"Task context: {det.distractor_task}\n\n"
+    full_text = make_detection_report_user(det, variant=variant)
+    question = full_text[len(base):] if full_text.startswith(base) else full_text
+    q_len = len(bundle.tokenizer(question, add_special_tokens=False)["input_ids"])
+    # Sentinel sits a couple of tokens before the question begins, i.e. near the
+    # end of the task context — clearly upstream of and distinct from the
+    # decision token at position n-1.
+    sentinel_pos = max(1, min(n - 2, n - q_len - 2))
+    inject = vector is not None and abs(float(dose)) > 1e-12
+    scale = float(dose) * float(direction.residual_rms) if inject else 0.0
+    ctx = positioned_steering_hooks(bundle, int(layer), vector, scale, position=sentinel_pos) if inject else contextlib.nullcontext()
+    with ctx:
+        with torch.inference_mode():
+            out = bundle.model(input_ids=ids, attention_mask=mask, use_cache=False)
+    logits = out.logits[0, -1, :].detach().float().cpu()
+    label, scores = choose_label(logits, resolver)
+    meta = {
+        "render_mode": mode,
+        "sentinel_injection_position": sentinel_pos,
+        "sentinel_offset_from_end": n - sentinel_pos,
+        "sentinel_prompt_len": n,
+        "sentinel_distinct_from_decision": int(sentinel_pos < n - 1),
+    }
+    return parse_yes_no("", scores), label, scores, meta
+
+
 def run_b5_detection(bundle: bench.ModelBundle, detections: Sequence[DetectionItem], directions: Mapping[str, DirectionBundle], resolver: LabelResolver) -> list[dict[str, Any]]:
     rows = []
     for det in detections:
@@ -1507,6 +1597,7 @@ def run_b5_detection(bundle: bench.ModelBundle, detections: Sequence[DetectionIt
                     "signal_class": signal_class,
                     "report_variant": variant,
                     "decision_source": "next_token_logits",
+                    "insertion_site": "report_query",
                     "presence_detected": int(yes_no == "yes"),
                     "semantic_content_leak_free": semantic_content_leak_free,
                     "headline_eligible": int(variant == B5_HEADLINE_VARIANT and (signal_class == "clean" or abs(float(dose) - HEADLINE_DOSE) < 1e-9)),
@@ -1541,6 +1632,59 @@ def run_b5_detection(bundle: bench.ModelBundle, detections: Sequence[DetectionIt
                     "hand_label_free_text_leak": "",
                     "hand_label_task_success": "",
                 })
+                if variant == B5_HEADLINE_VARIANT:
+                    # Parallel content-blind decision with the perturbation moved
+                    # to an upstream sentinel position; reuses this condition's
+                    # behavior/free-text audit so content leak stays comparable.
+                    s_yes_no, s_label, s_scores, s_meta = sentinel_detection_logits(
+                        bundle, det, direction, vector, dose, direction.injection_layer, resolver, variant=variant)
+                    rows.append({
+                        "track": "B5_ANOMALY_DETECTION",
+                        "item_id": det.item_id,
+                        "split": det.split,
+                        "condition": condition,
+                        "signal_class": signal_class,
+                        "report_variant": B5_SENTINEL_VARIANT,
+                        "decision_source": "next_token_logits_sentinel",
+                        "insertion_site": "sentinel_prefill",
+                        "presence_detected": int(s_yes_no == "yes"),
+                        "semantic_content_leak_free": semantic_content_leak_free,
+                        "headline_eligible": 0,
+                        "sentinel_eligible": int(signal_class == "clean" or abs(float(dose) - HEADLINE_DOSE) < 1e-9),
+                        "direction_id": direction.concept,
+                        "target_direction_id": det.target_direction_id,
+                        "wrong_direction_id": det.wrong_direction_id,
+                        "dose": dose,
+                        "alpha_effective_residual_units": rounded(dose * direction.residual_rms),
+                        "layer": direction.injection_layer,
+                        "position_policy": det.injection_position_policy,
+                        "report_render_mode": report_mode,
+                        "behavior_render_mode": behavior_mode if generate_audits else "not_generated_for_low_dose",
+                        "distractor_task": det.distractor_task,
+                        "report_text": "LOGIT_ONLY_DECISION_SENTINEL",
+                        "free_text_probe": free_text_probe,
+                        "yes_no_label": s_yes_no,
+                        "raw_label_from_logits": s_label,
+                        "yes_logit": rounded(s_scores.get("yes")),
+                        "no_logit": rounded(s_scores.get("no")),
+                        "yes_no_logit_margin": rounded(fnum(s_scores.get("yes"), 0.0) - fnum(s_scores.get("no"), 0.0)),
+                        "decision_content_leak": 0,
+                        "behavior_content_leak": behavior_leak,
+                        "free_text_content_leak": free_text_content_leak,
+                        "concept_marker_hit": headline_content_leak,
+                        "content_leak": headline_content_leak,
+                        "content_leak_excludes_free_text_audit": 1,
+                        "behavior_text": behavior_text,
+                        "behavior_task_success": behavior_task_success,
+                        "format_error": int(s_yes_no not in {"yes", "no"}),
+                        "sentinel_injection_position": s_meta.get("sentinel_injection_position", ""),
+                        "sentinel_offset_from_end": s_meta.get("sentinel_offset_from_end", ""),
+                        "sentinel_distinct_from_decision": s_meta.get("sentinel_distinct_from_decision", ""),
+                        "hand_label_yes_no": "",
+                        "hand_label_content_leak": "",
+                        "hand_label_free_text_leak": "",
+                        "hand_label_task_success": "",
+                    })
     return rows
 
 
@@ -1609,6 +1753,19 @@ def b5_summary_rows(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         row["report_variant"] = B5_HEADLINE_VARIANT
         row["dose_policy"] = "all configured B5 doses"
         summary.append(row)
+    # Sentinel-prefill comparison: same content-blind decision but with the
+    # perturbation inserted upstream rather than at the decision token.  A
+    # sentinel d-prime near the report-query d-prime argues the signal is real
+    # anomaly propagation; a collapse argues the report-query result was partly
+    # direct steering of the decision logit.
+    sentinel_rows = [r for r in rows if str(r.get("report_variant")) == B5_SENTINEL_VARIANT and int(fnum(r.get("sentinel_eligible"), 0))]
+    if sentinel_rows:
+        srow = summarize("sentinel_content_blind_logit_only", sentinel_rows, pass_gate_enabled=False)
+        srow["report_variant"] = B5_SENTINEL_VARIANT
+        srow["insertion_site"] = "sentinel_prefill"
+        srow["decision_source"] = "next_token_logits_sentinel"
+        srow["dose_policy"] = f"clean rows plus injected rows at dose {HEADLINE_DOSE}"
+        summary.append(srow)
     for key in sorted({(str(r.get("report_variant")), str(r.get("condition")), fnum(r.get("dose"), 0.0)) for r in rows}):
         variant, cond, dose = key
         sub = [r for r in rows if str(r.get("report_variant")) == variant and str(r.get("condition")) == cond and abs(fnum(r.get("dose"), 0.0) - dose) < 1e-9]
@@ -1761,7 +1918,13 @@ def aggregate_metrics(items: Sequence[SeveranceItem], directions: Mapping[str, D
     b2_gaps = [fnum(r.get("target_minus_core_floor")) for r in b2_floor if math.isfinite(fnum(r.get("target_minus_core_floor")))]
     b4_act = next((r for r in b4_summary if str(r.get("condition")) == "activation_injection"), {})
     b4_nonact = next((r for r in b4_summary if str(r.get("condition")) == "nonactivation_controls"), {})
+    # Plausibility is a property of the matched visible answer and must be read
+    # off a NON-injected route: under activation_injection the perturbation
+    # itself depresses the teacher-forced answer logprob, which is the effect
+    # under test, not evidence that the answer was off-distribution.
+    b4_default = next((r for r in b4_summary if str(r.get("condition")) == "matched_default"), {}) or b4_act
     b5_all = next((r for r in b5_summary if str(r.get("comparison")) == "headline_content_blind_logit_only"), {}) or next((r for r in b5_summary if str(r.get("comparison")) == "all_insertions_vs_clean"), {})
+    b5_sentinel = next((r for r in b5_summary if str(r.get("comparison")) == "sentinel_content_blind_logit_only"), {})
     b3_diss = next((r for r in b3_summary if str(r.get("condition")) == "dissociation_test"), {})
     metrics = {
         "lab": LAB_ID,
@@ -1773,7 +1936,8 @@ def aggregate_metrics(items: Sequence[SeveranceItem], directions: Mapping[str, D
         "b4_activation_source_accuracy": b4_act.get("accuracy", ""),
         "b4_activation_fresh_accuracy": b4_act.get("fresh_transcript_accuracy", ""),
         "b4_nonactivation_hidden_false_alarm_rate": b4_nonact.get("hidden_label_false_alarm_rate", ""),
-        "b4_activation_canonical_plausibility_rate": b4_act.get("canonical_answer_plausibility_rate", ""),
+        "b4_activation_canonical_plausibility_rate": b4_default.get("canonical_answer_plausibility_rate", ""),
+        "b4_activation_injected_plausibility_rate": b4_act.get("canonical_answer_plausibility_rate", ""),
         "b5_d_prime_all_insertions": b5_all.get("d_prime", ""),
         "b5_d_prime_ci_low": b5_all.get("d_prime_ci_low", ""),
         "b5_d_prime_ci_high": b5_all.get("d_prime_ci_high", ""),
@@ -1783,6 +1947,11 @@ def aggregate_metrics(items: Sequence[SeveranceItem], directions: Mapping[str, D
         "b5_content_leak_ci_high": b5_all.get("content_leak_ci_high", ""),
         "b5_free_text_leak_rate_audit": b5_all.get("free_text_leak_rate_audit", ""),
         "b5_headline_decision_source": b5_all.get("decision_source", ""),
+        "b5_sentinel_d_prime": b5_sentinel.get("d_prime", ""),
+        "b5_sentinel_d_prime_ci_low": b5_sentinel.get("d_prime_ci_low", ""),
+        "b5_sentinel_d_prime_ci_high": b5_sentinel.get("d_prime_ci_high", ""),
+        "b5_sentinel_false_alarm_rate": b5_sentinel.get("false_alarm_rate", ""),
+        "b5_sentinel_content_leak_rate": b5_sentinel.get("content_leak_rate", ""),
         "b3_confidence_delta": b3_diss.get("reported_confidence_delta_plus_minus", ""),
         "b3_entropy_delta": b3_diss.get("entropy_delta_plus_minus", ""),
         "max_patch_recovery": rounded(max([fnum(r.get("recovery")) for r in patch_rows], default=float("nan"))) if patch_rows else "",
@@ -1950,7 +2119,9 @@ def write_method_card(ctx: bench.RunContext, bundle: bench.ModelBundle, metrics:
         f"- B2 target-minus-floor: {metrics.get('mean_b2_target_minus_floor')}",
         f"- B4 activation-source accuracy: {metrics.get('b4_activation_source_accuracy')}",
         f"- B4 fresh-transcript accuracy: {metrics.get('b4_activation_fresh_accuracy')}",
+        f"- B4 canonical-answer plausibility: {metrics.get('b4_activation_canonical_plausibility_rate')}",
         f"- B5 d-prime: {metrics.get('b5_d_prime_all_insertions')} [CI {metrics.get('b5_d_prime_ci_low')}, {metrics.get('b5_d_prime_ci_high')}]; decision source: {metrics.get('b5_headline_decision_source')}",
+        f"- B5 sentinel-prefill d-prime: {metrics.get('b5_sentinel_d_prime')} [CI {metrics.get('b5_sentinel_d_prime_ci_low')}, {metrics.get('b5_sentinel_d_prime_ci_high')}]; FA {metrics.get('b5_sentinel_false_alarm_rate')}",
         f"- B5 false alarm: {metrics.get('b5_false_alarm_rate')}",
         f"- B5 headline content leak: {metrics.get('b5_content_leak_rate')} [CI {metrics.get('b5_content_leak_ci_low')}, {metrics.get('b5_content_leak_ci_high')}]; free-text audit leak: {metrics.get('b5_free_text_leak_rate_audit')}",
         "",
@@ -2292,11 +2463,14 @@ def write_lab36_warning_summary(
     if not sweep_rows:
         add("direction_sweep_missing", "high", 1, "No direction sweep rows were produced", "Run with directions/B2/B4/B5 modes before trusting report-channel plots.")
     b4_act = next((r for r in b4_summary if str(r.get("condition")) == "activation_injection"), {})
+    b4_default_plaus_row = next((r for r in b4_summary if str(r.get("condition")) == "matched_default"), {}) or b4_act
     if b4_act:
         acc = fnum(b4_act.get("accuracy"), 0.0)
         fresh = fnum(b4_act.get("fresh_transcript_accuracy"), 0.0)
         add("b4_fresh_control_close", "high", 1 if acc - fresh <= B4_MIN_FRESH_GAP else 0, f"B4 activation accuracy {rounded(acc)} is close to fresh accuracy {rounded(fresh)}", "Do not cite B4 as source monitoring; inspect source_attribution_results.csv.")
-        plaus = fnum(b4_act.get("canonical_answer_plausibility_rate"), 0.0)
+        # Plausibility is measured on the non-injected default route; injection
+        # depresses the answer logprob by design and must not trip this gate.
+        plaus = fnum(b4_default_plaus_row.get("canonical_answer_plausibility_rate"), 0.0)
         add("b4_canonical_answer_implausible", "high", 1 if plaus < B4_MIN_CANONICAL_PLAUSIBILITY_RATE else 0, f"B4 canonical-answer plausibility rate {rounded(plaus)} is below gate {B4_MIN_CANONICAL_PLAUSIBILITY_RATE}", "Choose canonical answers that are high-probability default completions before citing B4.")
     else:
         add("b4_summary_missing", "medium", 1, "No B4 activation summary was produced", "Run mode b4 after directions.")
@@ -2310,6 +2484,11 @@ def write_lab36_warning_summary(
         add("b5_dprime_low", "medium", 1 if dp < B5_DPRIME_BAR else 0, f"B5 d-prime {rounded(dp)} is below gate {B5_DPRIME_BAR}", "Use this as a null or pilot result.")
         free_leak = fnum(b5_all.get("free_text_leak_rate_audit"), float("nan"))
         add("b5_free_text_audit_leak", "medium", 1 if math.isfinite(free_leak) and free_leak > B5_MAX_CONTENT_LEAK else 0, f"B5 free-text audit leak {rounded(free_leak)} exceeds gate {B5_MAX_CONTENT_LEAK}; headline excludes it", "Keep the no-free-text decision as headline and hand-label leaked audit probes.")
+        b5_sentinel = next((r for r in b5_summary if str(r.get("comparison")) == "sentinel_content_blind_logit_only"), {})
+        if b5_sentinel:
+            s_dp = fnum(b5_sentinel.get("d_prime"), float("nan"))
+            collapsed = int(math.isfinite(s_dp) and math.isfinite(dp) and dp >= B5_DPRIME_BAR and s_dp < 0.5 * dp)
+            add("b5_sentinel_collapse", "medium", collapsed, f"B5 sentinel-prefill d-prime {rounded(s_dp)} is far below report-query d-prime {rounded(dp)}", "The report-query signal may be partly direct decision-logit steering; prefer the sentinel d-prime when claiming anomaly propagation.")
     else:
         add("b5_summary_missing", "medium", 1, "No B5 signal-detection summary was produced", "Run mode b5 after directions.")
     add("counterexamples_present", "medium", len(counterexamples), "Automatic counterexample/failure specimens were detected", "Read tables/failure_specimens.md before using the dashboard.")
