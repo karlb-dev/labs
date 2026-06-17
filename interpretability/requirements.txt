@@ -1,0 +1,21 @@
+# Interpretability labs — core dependencies.
+#
+# Versions are floors, not pins. Per COURSE.md §3, freeze exact versions
+# (pip freeze) plus model revisions at validation time, once the first
+# Tier B run on the pinned models is green.
+#
+# transformers >= 4.57 is required for the OLMo 3 family.
+torch>=2.4
+transformers>=4.57
+tokenizers>=0.20
+accelerate>=1.0
+safetensors>=0.4
+numpy>=1.26
+matplotlib>=3.8
+
+# Lab 8 loads pretrained SAEs/transcoders from the Hub (weights as safetensors).
+# huggingface_hub ships with transformers, but the lab imports it directly.
+huggingface_hub>=0.23
+
+# Optional: only needed for --quantization 8bit/4bit on small GPUs.
+# bitsandbytes>=0.44

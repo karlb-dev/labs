@@ -1,0 +1,398 @@
+{
+  "causal_abstraction_tasks.csv": {
+    "domains": {
+      "induction": 12,
+      "relation": 18
+    },
+    "generator": "hand-authored deterministic course rows",
+    "pairing": "induction rows preserve/break COPY_SOURCE; relation rows preserve/break RELATION while keeping token-aligned prompts",
+    "rows": 30,
+    "sha256": "1037918625043ba90b3b2d6daa2b17ced1bd3f5477161c666a99fae9d8ff6545",
+    "task_counts": {
+      "copy_after_query": 12,
+      "relation_answer": 18
+    },
+    "verified_tokenizers": [
+      "runtime reverified by Lab 26"
+    ]
+  },
+  "path_mediation_tasks.csv": {
+    "domains": {
+      "factual_recall": 3,
+      "induction": 3,
+      "relation_swap": 3
+    },
+    "generator": "hand-authored deterministic course rows",
+    "pairing": "clean/corrupt prompts with named source, receiver, final, and wrong-control positions for residual two-site mediation",
+    "rows": 9,
+    "sha256": "7a726c8e7f3fb894c2449c3e2c0b7f259aba5ebdccc65bb72b0ea4859bbe8b19",
+    "verified_tokenizers": [
+      "runtime reverified by Lab 27"
+    ]
+  },
+  "editing_unlearning_targets.csv": {
+    "edit_types": {
+      "counterfactual_activation_edit": 3,
+      "counterfactual_relation_edit": 3,
+      "synthetic_counterfactual_activation_edit": 2
+    },
+    "families": {
+      "capital_counterfactual": 3,
+      "language_counterfactual": 2,
+      "sequence_counterfactual": 1,
+      "synthetic_codeword": 2
+    },
+    "generator": "hand-authored deterministic course rows",
+    "rows": 8,
+    "safety_scope": "benign public associations, harmless sequence facts, and synthetic codeword rows; inference-time edits only",
+    "sha256": "1c1d995d1d4b5dbe19a69a8a57080c9f51ec9f893140b370d94c1b921f0f2707",
+    "verified_tokenizers": [
+      "runtime reverified by Lab 28"
+    ]
+  },
+  "training_dynamics_tasks.csv": {
+    "families": {
+      "calendar_control": 2,
+      "induction_copy": 10,
+      "relation_control": 2
+    },
+    "generator": "hand-authored deterministic course rows",
+    "rows": 14,
+    "sha256": "67548cea25a3d98b44a2e6eb05abc6407d854c836eda17340050bf9e7e605b6f",
+    "splits": {
+      "control": 4,
+      "heldout": 3,
+      "test": 3,
+      "train": 4
+    },
+    "training_scope": "controlled tiny-transformer induction-copy sequence; relation/calendar rows are untrained controls",
+    "verified_tokenizers": [
+      "runtime reverified by Lab 29 tiny tokenizer"
+    ]
+  },
+  "feature_lineage_corpus.csv": {
+    "domains": {
+      "code": 8,
+      "cooking": 8,
+      "emotion": 8,
+      "finance": 8,
+      "law": 8,
+      "medicine": 8,
+      "sports": 8,
+      "weather": 8
+    },
+    "generator": "hand-authored deterministic course rows",
+    "groups": {
+      "code_cooking": 16,
+      "finance_sports": 16,
+      "law_medicine": 16,
+      "weather_emotion": 16
+    },
+    "rows": 64,
+    "sha256": "a947bc1434545e918dc4e51c87871260287a04df55eefa38c544441b27ff9faf",
+    "splits": {
+      "eval": 16,
+      "train": 48
+    },
+    "verified_tokenizers": [
+      "runtime reverified by Lab 30"
+    ]
+  },
+  "auto_interp_feature_tasks.jsonl": {
+    "feature_types": {
+      "monosemantic_gold": 8,
+      "polysemantic_gold": 2,
+      "random_control": 2
+    },
+    "generator": "make_auto_interp_feature_tasks.py",
+    "gold_labels": {
+      "code": 2,
+      "cooking": 1,
+      "emotion": 1,
+      "finance": 1,
+      "law": 2,
+      "medicine": 1,
+      "null": 2,
+      "sports": 1,
+      "weather": 1
+    },
+    "rows": 12,
+    "safety_notes": "benign synthetic snippets only; no model generation required",
+    "sha256": "c2670896ccef2b8e615e5b964b3531734f95b82870cfa814075a69abce9de07b",
+    "verified_tokenizers": []
+  },
+  "preference_circuit_pairs.csv": {
+    "confound_types": {
+      "agreement_rejected": 9,
+      "format_following": 2,
+      "hedging_preferred": 5,
+      "hedging_rejected": 2,
+      "length_long_preferred": 3,
+      "length_long_rejected": 9,
+      "length_mixed": 1,
+      "none": 4,
+      "politeness_length_rejected": 1,
+      "politeness_mixed": 1,
+      "politeness_neutral": 1,
+      "politeness_preferred": 1,
+      "refusal_preferred": 3,
+      "refusal_rejected": 1,
+      "sentiment_agreement_rejected": 1,
+      "sentiment_positive_rejected": 2,
+      "specificity": 2
+    },
+    "domains": {
+      "anti_sycophancy": 8,
+      "concision": 6,
+      "factual_honesty": 5,
+      "helpfulness": 8,
+      "privacy_boundary": 7,
+      "style_following": 7,
+      "uncertainty": 7
+    },
+    "generator": "make_preference_circuit_pairs.py",
+    "preference_types": {
+      "anti_overhedging": 2,
+      "anti_overrefusal": 1,
+      "anti_sycophancy": 8,
+      "appropriate_uncertainty": 5,
+      "concise_instruction": 8,
+      "factual_honesty": 5,
+      "helpfulness": 6,
+      "privacy_boundary": 6,
+      "style_and_helpfulness": 1,
+      "style_following": 6
+    },
+    "preferred_positions": {
+      "a": 25,
+      "b": 23
+    },
+    "rows": 48,
+    "safety_scope": "benign preference pairs only; no prompt optimization, jailbreak search, refusal ablation, or real private data",
+    "sha256": "9e9d118f52628796042e7ba03822e1095860a73cb1ade70ca0d5f41fab337221",
+    "splits": {
+      "eval": 15,
+      "train": 33
+    },
+    "verified_tokenizers": []
+  },
+  "multimodal_concept_pairs.jsonl": {
+    "concept_families": {
+      "background_control": 4,
+      "chart": 4,
+      "color": 4,
+      "count": 4,
+      "ocr_control": 4,
+      "shape": 4,
+      "spatial": 4
+    },
+    "generator": "make_multimodal_concept_pairs.py",
+    "rows": 28,
+    "science_scope": "synthetic connector smoke mode; no real VLM hooks loaded by default",
+    "sha256": "e3059a44ae9342a73c8df8e9b92a62b97a44f2347c965b11642e96e00b082d19",
+    "splits": {
+      "test": 14,
+      "train": 14
+    },
+    "verified_tokenizers": [
+      "runtime reverified by Lab 33"
+    ]
+  },
+  "tool_use_tasks.jsonl": {
+    "families": {
+      "calculator": 6,
+      "calendar": 6,
+      "dictionary": 6,
+      "file_search": 6,
+      "no_tool": 12,
+      "route_planner": 6,
+      "unit_converter": 6
+    },
+    "generator": "make_tool_use_tasks.py",
+    "required_tools": {
+      "calculator": 6,
+      "calendar": 6,
+      "dictionary": 6,
+      "file_search": 6,
+      "none": 12,
+      "route_planner": 6,
+      "unit_converter": 6
+    },
+    "rows": 48,
+    "safety_scope": "benign deterministic toy tools only; no web, credentials, external APIs, real filesystem writes, shell tools, harmful tools, or autonomous deployment",
+    "sha256": "bcf18742f51e8aa1f540f631a596aa661534e544aa3815e0ce67dc4af81eb206",
+    "splits": {
+      "eval": 16,
+      "train": 32
+    },
+    "tool_needed": {
+      "false": 12,
+      "true": 36
+    },
+    "verified_tokenizers": [
+      "runtime reverified by Lab 34"
+    ]
+  },
+  "capstone_seed_tracks.jsonl": {
+    "generator": "make_capstone_seed_tracks.py",
+    "human_review_required": {
+      "false": 1,
+      "true": 5
+    },
+    "rows": 6,
+    "routes": {
+      "extension": 1,
+      "optional": 3,
+      "recommended": 2
+    },
+    "science_scope": "capstone package scaffold; not a scientific result until bound to a real frozen run",
+    "sha256": "3de7664b9da5a5436efa346bff7917c40c906cd53ee56344cbccc81d321c6f1d",
+    "source_labs": {
+      "lab27": 1,
+      "lab29": 1,
+      "lab31": 1,
+      "lab32": 1,
+      "lab33": 1,
+      "lab34": 1
+    },
+    "track_types": {
+      "audit_package": 3,
+      "method_replication": 2,
+      "new_scoped_finding": 1
+    },
+    "verified_tokenizers": [
+      "runtime reverified by Lab 35"
+    ]
+  },
+  "advanced_relation_geometry.csv": {
+    "families": {
+      "capital_of": 28,
+      "color_of": 14,
+      "comparative_of": 24,
+      "continent_of": 31,
+      "currency_of": 18,
+      "home_of": 10,
+      "language_of": 34,
+      "material_of": 12,
+      "month_after": 12,
+      "month_before": 12,
+      "opposite_of": 24,
+      "plural_of": 25
+    },
+    "generator": "make_advanced_relation_sets.py",
+    "rows": 244,
+    "sha256": "1126f54728e0626c39a6a657fdf647f463629cb938961198b7bbc24478172a02",
+    "verified_tokenizers": [
+      "gpt2",
+      "allenai/Olmo-3-7B-Instruct"
+    ]
+  },
+  "affect_emotion_pairs.csv": {
+    "confounds": {
+      "arousal_neutral": 2,
+      "positive_calm": 2,
+      "surprising_neutral": 2
+    },
+    "generator": "make_emotion_pairs.py",
+    "pairing": "emotion-laden text/prompt matched to neutral paraphrase/prompt by cause",
+    "rows": 30,
+    "sha256": "c140410c5742390011334c9f1cb3e19a1ed418a0c1c0119550422f97b498613f",
+    "target_emotions": {
+      "anger": 6,
+      "fear": 6,
+      "joy": 6,
+      "sadness": 6
+    },
+    "verified_tokenizers": []
+  },
+  "certainty_calibration_items.csv": {
+    "answerable_counts": {
+      "0": 18,
+      "1": 18
+    },
+    "families": {
+      "factual_qa": 12,
+      "freeform_answerability": 12,
+      "mcq": 12
+    },
+    "generator": "make_certainty_calibration.py",
+    "pairing": "fixed A/B/C/D answer choices plus confident/hedged statement pair per item",
+    "rows": 36,
+    "sha256": "487947987d973d67b49196d160702edee2641491b3c8b7500fdf401db69380d2",
+    "source_files": [
+      "mcq_items.csv"
+    ],
+    "verified_tokenizers": []
+  },
+  "humor_incongruity_pairs.csv": {
+    "conditions": {
+      "joke": 20,
+      "literal": 20,
+      "positive": 20,
+      "silly": 20,
+      "surprise": 20
+    },
+    "families": {
+      "caption_scene": 5,
+      "expectation_violation": 5,
+      "pun_wordplay": 5,
+      "resolution_twist": 5
+    },
+    "generator": "make_humor_incongruity.py",
+    "pairing": "one setup with joke, literal, surprising-not-funny, silly-not-joke, and positive-not-joke completions",
+    "rows": 20,
+    "sha256": "de6e9ef3fb961a2d59f310110efa00143f59b408896193832b7c481f54160780",
+    "source": "authored course micro-scenes; no long copyrighted excerpts",
+    "verified_tokenizers": []
+  },
+  "persona_register_pairs.csv": {
+    "families": {
+      "agreement": 6,
+      "persona": 6,
+      "register": 6,
+      "voice": 6
+    },
+    "generator": "make_persona_register_pairs.py",
+    "pairing": "positive persona/register/voice prompt versus matched negative/control prompt over the same task",
+    "rows": 24,
+    "sha256": "784572e5d4474eb37a3861c50ed301ea8f80818ebe0dd5d7f17d968e6518e744",
+    "task_kinds": {
+      "coding": 4,
+      "factual": 4,
+      "math": 4,
+      "planning": 4,
+      "science": 4,
+      "writing": 4
+    },
+    "traits": {
+      "character_museum_guide": 6,
+      "honest_disagreement": 6,
+      "technical_register": 6,
+      "warm_supportive_voice": 6
+    },
+    "verified_tokenizers": []
+  },
+  "sycophancy_pressure_items.csv": {
+    "base_facts": 40,
+    "conditions": {
+      "authority_pressure": 40,
+      "correct_belief_control": 40,
+      "false_belief": 40,
+      "identity_pressure": 40,
+      "mild_pressure": 40,
+      "neutral": 40
+    },
+    "domains": {
+      "history": 48,
+      "math": 48,
+      "science": 48,
+      "technology": 48,
+      "trivia": 48
+    },
+    "generator": "make_sycophancy_pressure.py",
+    "pairing": "six pressure variants per base misconception; false-belief and correct-belief controls are paired by base_id",
+    "rows": 240,
+    "sha256": "a6324141f57a3539f5d7aa82456226c51271aabb569dc2acfa24a9654b2734fa",
+    "verified_tokenizers": []
+  }
+}

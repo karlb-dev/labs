@@ -1,0 +1,48 @@
+{
+  "hypothesis_id": "relation_identity_v1",
+  "domain": "relation",
+  "behavior_metric": "logit(target) - logit(distractor)",
+  "high_level_variables": [
+    "RELATION",
+    "SUBJECT"
+  ],
+  "low_level_sites": [
+    {
+      "kind": "residual",
+      "positions": [
+        "source_position"
+      ],
+      "stream_depths": "coarse",
+      "rationale": "The relation-word stream should carry relation identity while the subject remains in the recipient prompt."
+    },
+    {
+      "kind": "residual",
+      "positions": [
+        "target_position"
+      ],
+      "stream_depths": "coarse",
+      "rationale": "The final-position stream is a deliberately broader site; if it succeeds where the relation word fails, the abstraction is less localized."
+    }
+  ],
+  "resampling_rules": [
+    {
+      "preserve": [
+        "RELATION"
+      ],
+      "vary": [
+        "SUBJECT"
+      ]
+    },
+    {
+      "preserve": [
+        "SUBJECT"
+      ],
+      "break": [
+        "RELATION"
+      ]
+    }
+  ],
+  "predicted_preservation_min": 0.55,
+  "predicted_damage_when_broken_min": 0.20,
+  "predicted_specificity_gap_min": 0.10
+}

@@ -1,0 +1,49 @@
+statement_id,family,statement,label,meta
+val_p_00,valence,"The wedding was full of laughter, dancing, and joyful toasts.",1,wedding|ceremony
+val_n_00,valence,The funeral was heavy with grief and quiet weeping.,0,wedding|ceremony
+val_p_01,valence,"The garden burst into bloom, fragrant and humming with bees.",1,garden|garden
+val_n_01,valence,The garden had withered into dry stalks and brown leaves.,0,garden|garden
+val_p_02,valence,She aced the exam and celebrated with her proud family.,1,exam|school
+val_n_02,valence,She failed the exam and dreaded telling her family.,0,exam|school
+val_p_03,valence,Warm sunshine broke through and dried the cheerful streets.,1,storm|weather
+val_n_03,valence,The storm flooded the streets and knocked out the power.,0,storm|weather
+val_p_04,valence,"The reunion brought hugs, old stories, and easy laughter.",1,reunion|family
+val_n_04,valence,The argument left the family cold and barely speaking.,0,reunion|family
+val_p_05,valence,He landed his dream job and signed the offer with a grin.,1,job|work
+val_n_05,valence,He was laid off without warning and cleared his desk in silence.,0,job|work
+val_p_06,valence,"The soup was rich and warming, the bread fresh from the oven.",1,meal|food
+val_n_06,valence,"The soup was cold and greasy, the bread stale and hard.",0,meal|food
+val_p_07,valence,"The trip went perfectly, every train on time and every view stunning.",1,trip|travel
+val_n_07,valence,"The trip fell apart, with missed connections and lost luggage.",0,trip|travel
+val_p_08,valence,The team clinched the title in the final second and the crowd erupted.,1,team|sports
+val_n_08,valence,The team collapsed in the final minutes and the stands emptied quietly.,0,team|sports
+val_p_09,valence,"The puppy greeted them at the door, tail wagging wildly.",1,puppy|pets
+val_n_09,valence,The old dog's basket sat empty by the cold door.,0,puppy|pets
+val_p_10,valence,The band played an encore and the hall sang every word.,1,concert|music
+val_n_10,valence,The show was canceled at the door and the crowd shuffled home.,0,concert|music
+val_p_11,valence,"The harvest came in heavy, the barn full and the village fed.",1,harvest|farm
+val_n_11,valence,The drought ruined the harvest and the fields cracked open.,0,harvest|farm
+val_p_12,valence,The letter brought wonderful news of an unexpected scholarship.,1,letter|news
+val_n_12,valence,The letter brought word of the foreclosure on the family home.,0,letter|news
+val_p_13,valence,"Her recovery was swift, and she walked out of the hospital smiling.",1,recovery|health
+val_n_13,valence,"The infection worsened, and the doctors grew quietly concerned.",0,recovery|health
+val_p_14,valence,The launch went flawlessly and the team toasted past midnight.,1,launch|work
+val_n_14,valence,The launch crashed within minutes and the team braced for the fallout.,0,launch|work
+val_p_15,valence,"Snow canceled school, and the kids sledded all morning.",1,snow_day|weather
+val_n_15,valence,"Sleet froze the roads, and the commute took three grim hours.",0,snow_day|weather
+val_p_16,valence,Her painting won first prize and sold before the show closed.,1,painting|art
+val_n_16,valence,Her painting was rejected from the show without a word of feedback.,0,painting|art
+val_p_17,valence,The new neighbors brought warm bread and stayed to chat.,1,neighbor|community
+val_n_17,valence,The new neighbors slammed the door and complained about the fence.,0,neighbor|community
+val_p_18,valence,Their savings finally covered the house with room to spare.,1,savings|money
+val_n_18,valence,The repair bill wiped out everything they had saved.,0,savings|money
+val_p_19,valence,The forest trail opened onto a bright meadow full of wildflowers.,1,forest|nature
+val_n_19,valence,The burned forest stood black and silent for miles.,0,forest|nature
+val_p_20,valence,The baby slept through the night and woke up giggling.,1,baby|family
+val_n_20,valence,The baby cried until dawn and the parents sat hollow-eyed.,0,baby|family
+val_p_21,valence,The library extended its hours and added a sunny reading room.,1,library|school
+val_n_21,valence,The library cut its hours and boarded up the reading room.,0,library|school
+val_p_22,valence,The new bridge opened early and cut the commute in half.,1,bridge|city
+val_n_22,valence,The bridge closed for repairs and traffic choked the city.,0,bridge|city
+val_p_23,valence,The orchard hung heavy with ripe apples by September.,1,orchard|farm
+val_n_23,valence,Frost in May stripped the orchard of every blossom.,0,orchard|farm

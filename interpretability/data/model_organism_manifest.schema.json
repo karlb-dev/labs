@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/interpretability/model_organism_manifest.schema.json",
+  "title": "Benign Model Organism Manifest",
+  "type": "object",
+  "required": [
+    "schema",
+    "organism_id",
+    "display_name",
+    "behavior_family",
+    "base_model",
+    "adapter_status",
+    "training_data_sha256",
+    "answer_key_sha256",
+    "safety_scope",
+    "spillover_required"
+  ],
+  "properties": {
+    "schema": {
+      "const": "model_organism_manifest.v1"
+    },
+    "organism_id": {
+      "type": "string",
+      "pattern": "^organism_[a-z0-9_]+$"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "behavior_family": {
+      "type": "string"
+    },
+    "base_model": {
+      "type": "string"
+    },
+    "adapter_status": {
+      "type": "string"
+    },
+    "training_data_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "answer_key_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "optional": {
+      "type": "boolean"
+    },
+    "safety_scope": {
+      "type": "string"
+    },
+    "intended_internal_signature": {
+      "type": "string"
+    },
+    "spillover_required": {
+      "type": "boolean"
+    },
+    "trigger": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "intended_behavior": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "score_kind": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "target_markers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "anti_markers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "sealed_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "eval_prompt_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "eval_prompts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  },
+  "additionalProperties": true
+}

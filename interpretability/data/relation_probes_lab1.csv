@@ -1,0 +1,106 @@
+example_id,category,prompt,target,distractor,note
+rel_capital_of_france,fact,The capital of France is, Paris, Rome,relation=capital_of; easy_distractor=hammer
+rel_capital_of_japan,fact,The capital of Japan is, Tokyo, Berlin,relation=capital_of; easy_distractor=hammer
+rel_capital_of_germany,fact,The capital of Germany is, Berlin, Vienna,relation=capital_of; easy_distractor=hammer
+rel_capital_of_italy,fact,The capital of Italy is, Rome, Athens,relation=capital_of; easy_distractor=hammer
+rel_capital_of_spain,fact,The capital of Spain is, Madrid, Paris,relation=capital_of; easy_distractor=hammer
+rel_capital_of_russia,fact,The capital of Russia is, Moscow, Berlin,relation=capital_of; easy_distractor=hammer
+rel_capital_of_egypt,fact,The capital of Egypt is, Cairo, Athens,relation=capital_of; easy_distractor=hammer
+rel_capital_of_austria,fact,The capital of Austria is, Vienna, Madrid,relation=capital_of; easy_distractor=hammer
+rel_country_language_france,fact,The official language of France is, French, German,relation=country_language; easy_distractor=blue
+rel_country_language_japan,fact,The official language of Japan is, Japanese, Korean,relation=country_language; easy_distractor=blue
+rel_country_language_germany,fact,"In Germany, most people speak", German, Dutch,relation=country_language; easy_distractor=blue
+rel_country_language_italy,fact,The official language of Italy is, Italian, Spanish,relation=country_language; easy_distractor=blue
+rel_country_language_spain,fact,"In Spain, most people speak", Spanish, Portuguese,relation=country_language; easy_distractor=blue
+rel_country_language_russia,fact,The official language of Russia is, Russian, Polish,relation=country_language; easy_distractor=blue
+rel_country_language_egypt,fact,"In Egypt, most people speak", Arabic, Greek,relation=country_language; easy_distractor=blue
+rel_country_language_brazil,fact,"In Brazil, most people speak", Portuguese, Spanish,relation=country_language; easy_distractor=blue
+rel_country_language_greece,fact,The official language of Greece is, Greek, Italian,relation=country_language; easy_distractor=blue
+rel_country_language_korea,fact,"In South Korea, most people speak", Korean, Japanese,relation=country_language; easy_distractor=blue
+rel_antonym_hot,fact,The opposite of hot is, cold, cool,relation=antonym; easy_distractor=Paris
+rel_antonym_big,fact,The opposite of big is, small, short,relation=antonym; easy_distractor=Paris
+rel_antonym_fast,fact,The opposite of fast is, slow, still,relation=antonym; easy_distractor=Paris
+rel_antonym_light,fact,The opposite of light is, dark, dim,relation=antonym; easy_distractor=Paris
+rel_antonym_up,fact,The opposite of up is, down, low,relation=antonym; easy_distractor=Paris
+rel_antonym_happy,fact,The opposite of happy is, sad, angry,relation=antonym; easy_distractor=Paris
+rel_antonym_loud,fact,The opposite of loud is, quiet, soft,relation=antonym; easy_distractor=Paris; near_tie=1 (two plausible answers by design)
+rel_antonym_hard,fact,The opposite of hard is, soft, smooth,relation=antonym; easy_distractor=Paris
+rel_antonym_wet,fact,The opposite of wet is, dry, cold,relation=antonym; easy_distractor=Paris
+rel_antonym_strong,fact,The opposite of strong is, weak, small,relation=antonym; easy_distractor=Paris
+rel_object_color_sky,fact,"On a clear day, the sky is", blue, gray,relation=object_color; easy_distractor=Tuesday
+rel_object_color_grass,fact,Healthy summer grass is, green, yellow,relation=object_color; easy_distractor=Tuesday
+rel_object_color_snow,fact,Freshly fallen snow is, white, blue,relation=object_color; easy_distractor=Tuesday
+rel_object_color_blood,fact,The color of blood is, red, brown,relation=object_color; easy_distractor=Tuesday
+rel_object_color_coal,fact,The color of coal is, black, gray,relation=object_color; easy_distractor=Tuesday
+rel_object_color_banana,fact,A ripe banana is, yellow, green,relation=object_color; easy_distractor=Tuesday
+rel_object_color_milk,fact,The color of fresh milk is, white, yellow,relation=object_color; easy_distractor=Tuesday
+rel_object_color_night,fact,"At midnight, the cloudless sky looks", black, blue,relation=object_color; easy_distractor=Tuesday; near_tie=1 (two plausible answers by design)
+rel_category_member_salmon,fact,A salmon is a kind of, fish, snake,relation=category_member; easy_distractor=four
+rel_category_member_oak,fact,An oak is a kind of, tree, flower,relation=category_member; easy_distractor=four
+rel_category_member_rose,fact,A rose is a kind of, flower, tree,relation=category_member; easy_distractor=four
+rel_category_member_beagle,fact,A beagle is a breed of, dog, bird,relation=category_member; easy_distractor=four
+rel_category_member_sparrow,fact,A sparrow is a kind of, bird, fish,relation=category_member; easy_distractor=four
+rel_category_member_copper,fact,Copper is a kind of, metal, stone,relation=category_member; easy_distractor=four
+rel_category_member_carrot,fact,A carrot is a kind of, vegetable, fruit,relation=category_member; easy_distractor=four
+rel_category_member_cobra,fact,A cobra is a kind of, snake, insect,relation=category_member; easy_distractor=four
+rel_category_member_apple,fact,An apple is a kind of, fruit, vegetable,relation=category_member; easy_distractor=four
+rel_category_member_wasp,fact,A wasp is a kind of, insect, bird,relation=category_member; easy_distractor=four
+rel_counting_two_plus_two,fact,Two plus two equals, four, five,relation=counting; easy_distractor=heart
+rel_counting_week_days,fact,The number of days in a week is, seven, six,relation=counting; easy_distractor=heart
+rel_counting_spider_legs,fact,The number of legs on a spider is, eight, six,relation=counting; easy_distractor=heart
+rel_counting_triangle,fact,The number of sides of a triangle is, three, four,relation=counting; easy_distractor=heart
+rel_counting_insect_legs,fact,The number of legs on an insect is, six, eight,relation=counting; easy_distractor=heart
+rel_counting_five_plus_five,fact,Five plus five equals, ten, nine,relation=counting; easy_distractor=heart
+rel_counting_dozen_half,fact,A dozen divided by two is, six, four,relation=counting; easy_distractor=heart
+rel_counting_year_months,fact,The number of months in a year is, twelve, ten,relation=counting; easy_distractor=heart
+rel_body_heart,fact,The organ that pumps blood is the, heart, brain,relation=body; easy_distractor=desert
+rel_body_ears,fact,You hear with your, ears, eyes,relation=body; easy_distractor=desert
+rel_body_eyes,fact,You see with your, eyes, ears,relation=body; easy_distractor=desert
+rel_body_nose,fact,You smell with your, nose, tongue,relation=body; easy_distractor=desert
+rel_body_stomach,fact,Food is digested mainly in the, stomach, heart,relation=body; easy_distractor=desert
+rel_body_brain,fact,The organ you think with is the, brain, heart,relation=body; easy_distractor=desert
+rel_body_bones,fact,Your skeleton is made of, bones, skin,relation=body; easy_distractor=desert
+rel_body_tongue,fact,You taste with your, tongue, nose,relation=body; easy_distractor=desert
+rel_profession_tool_carpenter,fact,A carpenter drives nails with a, hammer, saw,relation=profession_tool; easy_distractor=happy
+rel_profession_tool_painter,fact,A painter applies paint with a, brush, pen,relation=profession_tool; easy_distractor=happy
+rel_profession_tool_chef,fact,A chef chops vegetables with a, knife, saw,relation=profession_tool; easy_distractor=happy
+rel_profession_tool_tailor,fact,A tailor sews with a, needle, pen,relation=profession_tool; easy_distractor=happy
+rel_profession_tool_plumber,fact,A plumber tightens pipes with a, wrench, hammer,relation=profession_tool; easy_distractor=happy
+rel_profession_tool_writer,fact,A writer signs letters with a, pen, brush,relation=profession_tool; easy_distractor=happy
+rel_profession_tool_gardener,fact,A gardener digs holes with a, shovel, knife,relation=profession_tool; easy_distractor=happy
+rel_sequence_monday,fact,The day after Monday is, Tuesday, Friday,relation=sequence; easy_distractor=wood
+rel_sequence_tuesday,fact,The day after Tuesday is, Wednesday, Monday,relation=sequence; easy_distractor=wood
+rel_sequence_thursday,fact,The day after Thursday is, Friday, Sunday,relation=sequence; easy_distractor=wood
+rel_sequence_february,fact,The month after February is, March, January,relation=sequence; easy_distractor=wood
+rel_sequence_december,fact,The month after December is, January, March,relation=sequence; easy_distractor=wood
+rel_sequence_winter,fact,The season after winter is, spring, autumn,relation=sequence; easy_distractor=wood
+rel_sequence_summer,fact,The season after summer is, autumn, winter,relation=sequence; easy_distractor=wood
+rel_sequence_friday,fact,The first day of the weekend is, Saturday, Sunday,relation=sequence; easy_distractor=wood; near_tie=1 (two plausible answers by design)
+rel_material_paper,fact,Paper is made from, wood, cotton,relation=material; easy_distractor=French
+rel_material_wine,fact,Wine is made from, grapes, milk,relation=material; easy_distractor=French
+rel_material_cheese,fact,Cheese is made from, milk, wood,relation=material; easy_distractor=French
+rel_material_glass,fact,Glass is made from, sand, clay,relation=material; easy_distractor=French
+rel_material_sweater,fact,Sweaters are often knitted from, wool, cotton,relation=material; easy_distractor=French
+rel_material_tshirt,fact,T-shirts are usually made of, cotton, leather,relation=material; easy_distractor=French
+rel_material_bricks,fact,Bricks are made from, clay, sand,relation=material; easy_distractor=French
+rel_material_shoes,fact,Dress shoes are often made of, leather, rubber,relation=material; easy_distractor=French
+rel_material_tires,fact,Car tires are made of, rubber, leather,relation=material; easy_distractor=French
+rel_habitat_camel,fact,A camel lives in the, desert, jungle,relation=habitat; easy_distractor=cold
+rel_habitat_whale,fact,A whale lives in the, ocean, forest,relation=habitat; easy_distractor=cold
+rel_habitat_penguin,fact,A penguin lives on the, ice, sand,relation=habitat; easy_distractor=cold
+rel_habitat_monkey,fact,A monkey lives in the, jungle, desert,relation=habitat; easy_distractor=cold
+rel_habitat_owl,fact,An owl lives in the, forest, ocean,relation=habitat; easy_distractor=cold
+rel_habitat_bat,fact,A bat sleeps in a, cave, nest,relation=habitat; easy_distractor=cold
+rel_habitat_bee,fact,A bee lives in a, hive, nest,relation=habitat; easy_distractor=cold
+rel_habitat_bird,fact,A bird lays eggs in a, nest, hive,relation=habitat; easy_distractor=cold
+rel_habitat_frog,fact,A frog lives near a, pond, cave,relation=habitat; easy_distractor=cold
+rel_emotion_outcome_prize,fact,Winning a big prize makes most people feel, happy, proud,relation=emotion_outcome; easy_distractor=fish; near_tie=1 (two plausible answers by design)
+rel_emotion_outcome_pet,fact,Losing a beloved pet makes most people feel, sad, angry,relation=emotion_outcome; easy_distractor=fish
+rel_emotion_outcome_cheated,fact,Being cheated by a close friend makes most people feel, angry, sad,relation=emotion_outcome; easy_distractor=fish; near_tie=1 (two plausible answers by design)
+rel_emotion_outcome_dark,fact,Walking alone in the dark makes many people feel, scared, tired,relation=emotion_outcome; easy_distractor=fish
+rel_emotion_outcome_marathon,fact,Finishing a marathon makes most runners feel, proud, tired,relation=emotion_outcome; easy_distractor=fish; near_tie=1 (two plausible answers by design)
+rel_emotion_outcome_new_city,fact,Moving to a new city with no friends can make a person feel, lonely, bored,relation=emotion_outcome; easy_distractor=fish
+rel_emotion_outcome_queue,fact,"Waiting in a long, slow line makes most people feel", bored, angry,relation=emotion_outcome; easy_distractor=fish; near_tie=1 (two plausible answers by design)
+rel_emotion_outcome_speech,fact,Speaking in front of a huge crowd makes many people feel, nervous, calm,relation=emotion_outcome; easy_distractor=fish
+rel_emotion_outcome_birthday,fact,Forgetting a close friend's birthday makes most people feel, guilty, embarrassed,relation=emotion_outcome; easy_distractor=fish; near_tie=1 (two plausible answers by design)
+rel_emotion_outcome_canceled,fact,Hearing the exam was canceled made the students feel, relieved, happy,relation=emotion_outcome; easy_distractor=fish; near_tie=1 (two plausible answers by design)

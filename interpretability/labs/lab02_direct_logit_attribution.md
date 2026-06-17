@@ -1,0 +1,300 @@
+# Lab 2: Direct Logit Attribution and Component Accounting
+
+**Evidence level targeted:** attribution (`ATTR`), plus one deliberately narrow causal extension.
+**Prerequisite:** Lab 1. You will reuse its residual-stream semantics and its logit-lens caution.
+
+## The question
+
+Lab 1 asked *when* a prediction appears over depth. Lab 2 asks *who wrote it*: which residual-stream writers pushed the next-token distribution toward a target answer and which ones pushed against it?
+
+The product of this lab is a **ledger**, not a causal map. A ledger can balance perfectly and still be a poor story about responsibility. That tension is the whole lantern-room of the lab: arithmetic first, interpretation second, causality only where you actually intervened.
+
+## The core idea
+
+At the final position, the model reads out a residual stream (using the same pre-final-norm indexing and "final norm is not linear" caution as Lab 1):
+
+```text
+x_L = embed + Σ_k attn_k + Σ_k mlp_k   (pre-final-norm)
+logits = lm_head(final_norm(x_L))
+```
+
+Pick a target and distractor, then score every component against the answer direction:
+
+```text
+d = unembed[target] - unembed[distractor]
+```
+
+For the prompt
+
+```text
+The capital of Germany is
+```
+
+with target ` Berlin` and distractor ` Paris`, a positive score means “this component pushed toward Berlin over Paris.” A negative score means it pushed toward Paris over Berlin. The same rule applies in conflict prompts, where the target is the in-context answer and the distractor is the stored prior.
+
+The bench verifies that the captured components reconstruct the final pre-norm residual stream before the lab treats any score as evidence (see the decomposition check below). This is the same "instrument first" discipline as Lab 1: the locks must be green before interpretation begins. The microscope checks itself before you admire the specimen.
+
+## The final-norm catch
+
+The final norm is not a linear function of the stream. Its scale depends on the whole vector, so a component cannot simply be dotted with the raw answer direction. The course convention is to freeze the final norm’s data-dependent statistics at their actual values from the forward pass. That gives a local linear readout:
+
+```text
+score(component) = component @ frozen_scoring_vector
+```
+
+Three rules keep the ledger honest:
+
+1. **The aggregate balances.** The sum of all component scores plus constants should match the frozen-norm logit difference, up to the decomposition tolerance.
+2. **The parts are approximate.** A per-component score assumes the final norm’s scale would stay fixed if that component changed. In a real intervention, it may not.
+3. **Constants are not components.** Final-norm bias and `lm_head` bias can change the target-vs-distractor logit difference, but no attention or MLP layer wrote them. They get a separate `constant` row.
+
+For centered LayerNorm models such as GPT-2, the mean subtraction is linear and is folded into the scoring vector exactly. For RMSNorm-style models, the frozen scale is the key ingredient. Read `compute_direct_logit_attribution` in the Python file: the math is intentionally exposed rather than hidden in a helper.
+
+## Why frozen DLA and the logit lens diverge
+
+Freezing the final norm buys additivity, but it also resolves a puzzle carried over from Lab 1: the logit lens and this ledger read the *same* partial residuals onto the *same* answer direction, yet their depth curves can look completely different. The only thing they disagree on is **what they divide by**.
+
+![Schematic of the two divisors. Both readouts project a partial residual onto the target−distractor direction, but DLA divides by the frozen final-layer norm — a large, constant denominator, flat across depth — while the logit lens divides by each layer's own residual norm, which is small early and grows toward the final norm. A small early denominator amplifies the early readout; the two divisors, and therefore the two readouts, coincide only at the final layer.](../figures/lab2_frozen_dla_vs_logit_lens_divisor.png)
+
+- **Frozen DLA** divides every partial residual by the *final* norm — one big, constant denominator. Early partials read out muted: the DLA curve barely leaves its `constant` baseline until the late layers actually write the answer.
+- **The logit lens** divides each partial by *its own* norm. That denominator is small in the early and middle layers, and dividing by a small number amplifies whatever direction the partial residual happens to point.
+
+At the final layer the partial residual *is* the full residual, so "own norm" and "frozen final norm" are the same number, and the two readouts are forced to coincide. Any gap between them earlier is a pure normalization artifact that has to close by the end.
+
+The conflict prompts make the difference vivid. `plots/dla_vs_lens_<example>.png` overlays both readouts of the same stream:
+
+![The same stream read two ways on a Germany conflict prompt (GPT-2, Tier A, 12 layers). The frozen-DLA curve (blue) stays muted near its constant baseline for most of the depth and only settles to the final value once the answer is written late; the own-norm logit lens (orange) swings wildly — diving toward the stored-prior side to about −3 by depth 4, overshooting toward the in-context answer in the middle layers, then collapsing back — before the two curves converge at the final layer, where their denominators become identical and the shaded readout-convention gap closes.](../figures/lab2_dla_vs_lens_conflict_germany.png)
+
+The lens's dramatic swings are mostly a denominator mirage: the early residual is dominated by the raw token and positional embeddings — which on a conflict prompt lean toward the stored prior — and the small own-norm denominator blows that direction up (here the lens bottoms out near −3 by depth 4). Frozen DLA refuses that amplification, which is exactly why it, not the lens, is the convention the rest of this lab's ledger is built on (the waterfall and the per-layer contribution plots). This is also the answer to writeup question 7.
+
+## The hook-point catch
+
+On some models, an attention module’s raw output is not the tensor that is added to the residual stream. Olmo-style post-attention normalization is the classic trap: `attn(x)` may be normalized before it becomes the residual write. Hooking the wrong site gives a beautiful chart of a tensor the residual stream never saw.
+
+The bench refuses to guess. It resolves component anatomy by testing candidate attention and MLP hook points against the per-block residual deltas, then writes the verdict to:
+
+```text
+diagnostics/component_anatomy.json
+```
+
+Treat that file as the “microscope aligned” certificate. If it fails, the lab should fail.
+
+## Prompt families
+
+The built-in prompt set covers four categories:
+
+| Category | Purpose | Example |
+|---|---|---|
+| `fact` | stored factual preference | `The capital of Germany is` |
+| `relation` | semantic relation or antonym | `The opposite of hot is` |
+| `grammar` | morphology | `The past tense of run is` |
+| `conflict` | context overrides prior knowledge | `In this story, the capital of Germany is Paris. The capital of Germany is` |
+
+Every target and distractor must be a single token under the current tokenizer. The deliberately failing example, `plural_mouse`, exists so you can see the gate reject a multi-token answer. Find the evidence in:
+
+```text
+diagnostics/answer_tokenization.csv
+```
+
+Multi-token answer mishandling is a common source of attribution errors. Do not let it into this lab.
+
+## Running it
+
+**Headline numbers note:** Attribution and ablation numbers are reported over a few dozen single-token answer-pair examples (fact/relation/grammar/conflict, expanded). Component rankings and sign patterns (plus mismatches with ablation) are the point; percentages are scoped to this population and carry the one-significant-figure + controls caveat.
+
+```bash
+# Smoke run, CPU-class, usually gpt2 with the small prompt set
+python interp_bench.py --lab lab2 --tier a
+
+# Standard run on the course model
+python interp_bench.py --lab lab2 --tier b --prompt-set full --topk 10
+
+# Skip the ablation extension
+python interp_bench.py --lab lab2 --tier b --prompt-set full --ablate-top 0
+
+# Use a custom prompt file, JSON or CSV with example_id/category/prompt/target/distractor
+python interp_bench.py --lab lab2 --tier b --prompt-set path/to/my_prompts.csv
+
+# Optional metadata columns make the relation-family plots much better:
+# relation_family, contrast_type, source
+# Aliases accepted by the Python loader: relation/family/task -> relation_family;
+# contrast/difficulty/pair_type/distractor_type -> contrast_type.
+
+# Multi-relation set: 12 relation classes, each prompt twice — once against a
+# same-class distractor (Paris vs Rome: instance discrimination) and once
+# against a cross-class one (Paris vs hammer: class discrimination)
+python interp_bench.py --lab lab2 --tier b --prompt-set data/relation_pairs_lab2.csv
+```
+
+`--ablate-top N` controls the extension. For each kept example, the lab tests the top `N` components by absolute attribution plus random and low-attribution controls.
+
+The relation set turns DLA comparative: for the same prompt, the `_hard` and
+`_easy` rows differ only in the distractor, so the difference between their
+attribution ledgers is exactly the set of components doing *instance* work
+beyond *class* work. The upgraded lab now parses `relation_family` and
+`contrast_type` from either explicit columns or tags in `note`, then writes
+family-level summaries and a matrix plot. If late-layer heads dominate the
+hard margin while the easy margin is already paid for by mid-layer MLPs, you
+have a two-stage-retrieval observation worth a ledger claim — scoped, as
+always, to these prompts.
+
+## What gets written
+
+The revised lab writes the standard run contract plus a few extra “do not fool yourself” artifacts.
+
+### Diagnostics
+
+| Artifact | Why it exists |
+|---|---|
+| `diagnostics/answer_tokenization.csv` | shows which examples passed the single-token gate and why any were dropped |
+| `diagnostics/component_anatomy.json` | records which hook points actually reconstruct block residual deltas |
+| `diagnostics/dla_decomposition_check.json` | proves captured components reconstruct the final pre-norm stream |
+| `diagnostics/block_reconstruction_by_example.csv` | per-example residual-delta reconstruction errors, not just one global verdict |
+
+### Tables
+
+| Artifact | What to read from it |
+|---|---|
+| `tables/baseline_behavior.csv` | target and distractor logits, probabilities, ranks, and the model’s top token before attribution |
+| `tables/component_contributions.csv` | one row per component, with signed score, push direction, signed fraction, and bounded mass share |
+| `tables/block_ledger.csv` | attention score, MLP score, block total, and cumulative value after each block |
+| `tables/top_components.csv` | top-|attribution| rows per example, including whether each pushes the target or distractor |
+| `tables/dla_balance.csv` | frozen-norm metadata, answer-direction norms, and balance errors |
+| `tables/layer_component_summary.csv` | category-level attention and MLP averages by layer |
+| `tables/category_summary.csv` | headline category aggregates, including gross positive and negative mass |
+| `tables/phase_ledger_summary.csv` | category × coarse-depth-phase summaries, with net, gross, positive, and negative mass |
+| `tables/relation_family_summary.csv` | built-in and custom `relation_family` / `contrast_type` summaries |
+| `tables/plot_reading_guide.csv` | map from each visualization to the concept it teaches |
+| `tables/ablation_results.csv` | final-position ablation effects for top, random, and low-attribution components |
+| `tables/ablation_summary_by_selection.csv` | top-vs-control comparison for the ablation extension |
+| `tables/ablation_mismatch_summary.csv` | mismatch summaries by category, component type, and selection |
+
+`results.csv` is an alias of `component_contributions.csv` for the course-wide artifact contract.
+
+### Plots
+
+| Artifact | Question it answers |
+|---|---|
+| `plots/dla_dashboard.png` | the one-screen overview: assembly, cancellation, phase map, and ablation calibration |
+| `plots/contribution_by_layer.png` | where attention and MLP writes point toward or away from the target, now with median/IQR bands |
+| `plots/signed_component_heatmap.png` | which examples hide internal fights behind a category mean |
+| `plots/cumulative_logit_diff.png` | how the ledger assembles the final logit difference over depth, with per-example traces and category medians |
+| `plots/ledger_phase_atlas.png` | coarse phase view: embeddings/constants, early, middle, late, and final-tail blocks |
+| `plots/category_ledger_composition.png` | how much positive and negative mass cancels inside each category |
+| `plots/answer_margin_vs_cancellation.png` | whether a confident target-vs-distractor margin came from a clean or contested ledger |
+| `plots/component_type_balance_scatter.png` | whether each example is attention-heavy, MLP-heavy, or jointly assembled |
+| `plots/relation_family_ledger_matrix.png` | how built-in or custom relation families differ in embed/attention/MLP totals and cancellation |
+| `plots/ledger_balance_errors.png` | whether the bookkeeping balances, and how big the dtype gap is |
+| `plots/top_component_by_example.png` | the largest component per example, with sign, writer type, and mass share visible |
+| `plots/ledger_waterfall_<example>.png` | a computation-order waterfall of the largest ledger entries for the showcase prompt |
+| `plots/dla_vs_lens_<example>.png` | frozen final-norm ledger versus Lab 1’s moving-basis logit lens, with the convention gap shaded |
+| `plots/attribution_vs_ablation.png` | whether high attribution predicts final-position ablation effect |
+| `plots/ablation_mismatch_examples.png` | the biggest places where attribution and intervention disagree |
+| `plots/ablation_mismatch_by_layer.png` | where over depth the live ablation effect departs from the frozen ledger row |
+
+## Reading path
+
+**Instrument health first (the self-checks must be green):**
+1. `diagnostics/component_anatomy.json` and `diagnostics/dla_decomposition_check.json` (the "microscope aligned" certificate; see Lab 1 for the same spirit).
+2. `tables/dla_balance.csv` and `plots/ledger_balance_errors.png`: the ledger must sum to the frozen readout.
+
+**Then the science:**
+3. `plots/dla_dashboard.png`: orient yourself before spelunking. It compresses the run into assembly, cancellation, phase timing, and ablation calibration.
+4. `tables/plot_reading_guide.csv`: use it as the legend for the whole plot folder.
+5. `run_summary.md`: headline table + "Attribution vs causation" section (the mismatches are the payload).
+6. `tables/baseline_behavior.csv`: what the model was actually doing before any decomposition.
+7. `plots/contribution_by_layer.png` + `tables/layer_component_summary.csv` + `plots/ledger_phase_atlas.png` + `tables/phase_ledger_summary.csv`: broad timing patterns.
+8. `plots/category_ledger_composition.png` + `plots/answer_margin_vs_cancellation.png`: internal cancellation, especially on conflict prompts.
+9. `plots/component_type_balance_scatter.png`: whether examples are attention-heavy or MLP-heavy.
+10. `tables/relation_family_summary.csv` + `plots/relation_family_ledger_matrix.png`: compare built-in families and any custom hard/easy relation set.
+11. `tables/top_components.csv` + `plots/top_component_by_example.png` + the per-example waterfall plots: the actual largest writers.
+12. `plots/dla_vs_lens_<example>.png`: why the moving-basis lens from Lab 1 and the frozen DLA differ.
+13. `tables/ablation_results.csv` and `plots/attribution_vs_ablation.png` + `plots/ablation_mismatch_examples.png` + `plots/ablation_mismatch_by_layer.png`: the direct comparison of ledger score to live effect. Look for points far from the identity line and read the `effect_minus_attribution` column.
+
+## The ablation extension, carefully scoped
+
+The extension zero-ablates selected attention or MLP writes at the **final position**. This is a narrow intervention intended to be comparable to the final-position ledger, but it is not identical to subtracting a frozen ledger entry.
+
+Why not? Because when you alter an early block’s final-position write, later blocks still run on a changed final-position residual stream. The final norm is also live again. The intervention therefore asks:
+
+```text
+What happens when this component's final-position write is removed and the downstream final-position computation continues?
+```
+
+It does **not** ask:
+
+```text
+What is the arithmetic contribution of this row under the frozen final norm?
+```
+
+That arithmetic contribution is the attribution score. The difference between the two is recorded as:
+
+```text
+effect_minus_attribution
+```
+
+Large mismatches are not bugs by default. They are the teaching payload: the ledger is not a causal map.
+
+**Make the concept pop:** After your run, open `tables/ablation_results.csv` and `plots/attribution_vs_ablation.png`. For the top-attributed components (the blue dots), count how many land close to the identity line vs far off it. Then look at the `effect_minus_attribution` column for a conflict example. The size of the mismatch is the distance between "what the frozen arithmetic says this component contributed" and "what actually happened to the logit difference when we removed its write and let the rest of the forward pass continue." That gap is why attribution is only a ledger, not an explanation of responsibility.
+
+What this extension still does not test: indirect effects through earlier positions. Lab 3 shows why all-position head ablation can differ from final-position ablation, and Lab 5 uses patching to dissect that kind of pathway.
+
+## How to interpret common patterns
+
+| Pattern | Interpretation |
+|---|---|
+| Ledger balance error is tiny | component capture and frozen-norm accounting are numerically coherent |
+| Frozen-vs-model gap is larger | usually dtype or fp32 reimplementation gap, not a component decomposition failure |
+| Conflict examples have negative components | some components still push the stored answer over the in-context answer. The new `conflict_france_berlin` example in the prompt set is designed to make opposing signs especially visible. |
+| Top component mass share is high | one component dominates gross writer mass for that prompt |
+| Signed fraction is huge | likely denominator cancellation; use bounded mass share instead |
+| Attribution and ablation agree | the frozen ledger row is a useful predictor for this final-position intervention |
+| Attribution and ablation disagree | downstream computation or live normalization changed the causal effect |
+
+## Debugging guide
+
+| Symptom | Likely cause | What to check |
+|---|---|---|
+| many prompts dropped | target or distractor is not single-token under this tokenizer | `diagnostics/answer_tokenization.csv` |
+| component anatomy fails | model architecture hook sites are not covered by the bench candidates | `diagnostics/component_anatomy.json` |
+| decomposition check fails | attention/MLP writes do not reconstruct the stream at tolerance | `diagnostics/dla_decomposition_check.json` and `--dla-tolerance` |
+| ledger balance fails but decomposition passes | final-norm linearization implementation mismatch | `tables/dla_balance.csv`, model norm class, dtype |
+| all contributions look tiny | target/distractor direction may be weak or wrong token ids | `tables/baseline_behavior.csv` and `prompt_manifest.csv` |
+| ablation effect is much larger than attribution | live downstream computation amplified the perturbation | `effect_minus_attribution` in `ablation_results.csv` |
+| ablation effect has the opposite sign | the component’s frozen direct push differs from its live downstream role | inspect the mismatch plot and the example’s waterfall |
+
+## Writeup questions
+
+1. Which category has the largest mean target-vs-distractor logit difference? Does that category also have the largest gross component mass?
+2. For one fact prompt and one conflict prompt, compare the top positive and top negative components. Are the same layers involved?
+3. Which layers have the strongest attention contribution and which have the strongest MLP contribution? Use `layer_component_summary.csv`.
+4. Pick one example where `category_ledger_composition.png` or `answer_margin_vs_cancellation.png` suggests cancellation. Show the component rows that create the fight.
+5. Use `ledger_phase_atlas.png`: does your model assemble facts, relations, grammar, and conflicts in the same coarse depth phase?
+6. If you used a custom relation set, compare `_hard` and `_easy` rows in `relation_family_summary.csv`. Which component type or phase is doing instance discrimination beyond class discrimination?
+7. Compare `cumulative_logit_diff.png` with `dla_vs_lens_<example>.png`. Why does a frozen-norm ledger differ from a per-depth logit lens?
+8. In the ablation extension, report one component where attribution and causal effect agree, and one where they disagree. What exactly did the intervention do in each case?
+9. Draft one `ATTR` claim and one narrow `CAUSAL` claim. Make sure the causal claim names the intervention scope.
+
+## Suggested ledger entries
+
+Good Lab 2 claims look like this:
+
+```text
+[L02-C1 | ATTR]
+For prompt family F on model M, attention and MLP components at layers A-B
+account for the largest signed pushes toward target over distractor under the
+frozen-final-norm DLA convention. Artifact: contribution_by_layer.png.
+Falsifier: component decomposition or ledger balance fails, or the pattern
+vanishes on a fresh prompt family.
+```
+
+```text
+[L02-C2 | CAUSAL, narrow]
+For selected final-position component writes on prompt set P, final-position
+zero-ablation changes the target-vs-distractor logit difference by Z, with
+rank relationship rho to the frozen DLA score. Artifact: ablation_results.csv.
+Falsifier: random or low-attribution controls show the same effect, or the
+claim is extended to earlier-position indirect paths not tested here.
+```
+
+Do not write “layer K stores the answer.” This lab does not localize a fact. It accounts for final-position pushes toward one target over one distractor under one readout convention. Keep the claim narrow enough to defend.
