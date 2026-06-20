@@ -6,6 +6,16 @@ Models: `Olmo-3-1125-32B`, `gemma-4-E4B-it`, `gpt2`
 
 Verdicts: YES=clean transferable circuit · OVERFIT=discovery only / no transferable subgraph · NOT-HO=needs MLPs (heads-only fails, heads+MLPs passes) · ABSENT=expected mechanism not present · INSUF=hygiene gate aborted (model can't do the task at n≥8) · ERR=load/run error.
 
+
+## Executive summary
+
+- **30 cells run across 3 models.** Verdict tally: OVERFIT / NO CLEAN CIRCUIT = 9; OVERFIT / NO TRANSFER = 9; INSUFFICIENT PROMPTS = 7; OVERFIT / FILLER (motif core insufficient) = 3; OVERFIT / OVER-RECOVERY = 2.
+- **No cell yields a clean transferable small circuit** (CIRCUIT CONFIRMED = 0). Under honest resample (interchange) ablation with held-out transfer, every behavior is OVERFIT, an over-recovery (suppression) artifact, mechanism-absent, or the model cannot do the task at n>=8. A confirmed NO is the success condition of this lab.
+- **Mean-ablation inflates faithfulness** (max discovery mean-minus-resample gap +1.40); several cells exceed 1.0 mean faithfulness, and resample reveals the honest, much lower (or over-recovering) picture.
+- **The prev-token -> induction core is recoverable** where induction is testable: Olmo-3-1125-32B induction_p3: L23H13 -> L27H15; Olmo-3-1125-32B recall: L6H37 -> L25H33; gemma-4-E4B-it induction_p3: L22H6 -> L41H2; gpt2 induction_p3: L4H11 -> L5H1; gpt2 recall: L9H3 -> L10H0.
+- **recall is MLP-mediated on every model** (heads_only with MLPs intact transfers better than heads_and_mlps with MLPs ablated); recall/induction knees are dominated by MLP nodes, so a heads-only routing graph structurally cannot represent these behaviors.
+- **Instruct vs base:** Gemma-4-E4B-it (instruct) is baseline-negative on successor/ioi/agreement/taskvec in bare-prompt format, so those abort INSUFFICIENT -- a real finding about instruct bare-completion behavior.
+
 ## Results matrix (heads_and_mlps scope; cell = verdict / held-out resample F)
 
 | behavior | Olmo-3-1125-32B | gemma-4-E4B-it | gpt2 |

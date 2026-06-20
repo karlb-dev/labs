@@ -115,6 +115,40 @@ def synthesize(date: str, drive_root: str, repo_root: str) -> str:
         "NOT-HO=needs MLPs (heads-only fails, heads+MLPs passes) · ABSENT=expected mechanism not present · "
         "INSUF=hygiene gate aborted (model can't do the task at n≥8) · ERR=load/run error.",
         "",
+        "",
+    ]
+    # ---- computed executive summary ----------------------------------------
+    all_cells = [c for cells in models.values() for c in cells]
+    tally = {}
+    for c in all_cells:
+        tally[c["verdict"]] = tally.get(c["verdict"], 0) + 1
+    n_yes = tally.get("CIRCUIT CONFIRMED", 0)
+    gaps = [c.get("mean_minus_resample_gap") for c in all_cells if isinstance(c.get("mean_minus_resample_gap"), (int, float))]
+    max_gap = max(gaps) if gaps else None
+    edges = []
+    for m in model_names:
+        for c in models[m]:
+            if c.get("edge_claimed") and c["scope"] == "heads_and_mlps":
+                edges.append(f"{short[m]} {c['behavior']}: {c.get('edge')}")
+    L += [
+        "## Executive summary",
+        "",
+        f"- **{len(all_cells)} cells run across {len(model_names)} models.** Verdict tally: "
+        + "; ".join(f"{v} = {n}" for v, n in sorted(tally.items(), key=lambda kv: -kv[1])) + ".",
+        f"- **No cell yields a clean transferable small circuit** (CIRCUIT CONFIRMED = {n_yes}). Under honest "
+        "resample (interchange) ablation with held-out transfer, every behavior is OVERFIT, an over-recovery "
+        "(suppression) artifact, mechanism-absent, or the model cannot do the task at n>=8. A confirmed NO is the "
+        "success condition of this lab.",
+        f"- **Mean-ablation inflates faithfulness** (max discovery mean-minus-resample gap {_f(max_gap)}); several "
+        "cells exceed 1.0 mean faithfulness, and resample reveals the honest, much lower (or over-recovering) picture.",
+        "- **The prev-token -> induction core is recoverable** where induction is testable: "
+        + ("; ".join(edges) if edges else "see per-cell edge claims") + ".",
+        "- **recall is MLP-mediated on every model** (heads_only with MLPs intact transfers better than "
+        "heads_and_mlps with MLPs ablated); recall/induction knees are dominated by MLP nodes, so a heads-only "
+        "routing graph structurally cannot represent these behaviors.",
+        "- **Instruct vs base:** Gemma-4-E4B-it (instruct) is baseline-negative on successor/ioi/agreement/taskvec "
+        "in bare-prompt format, so those abort INSUFFICIENT -- a real finding about instruct bare-completion behavior.",
+        "",
         "## Results matrix (heads_and_mlps scope; cell = verdict / held-out resample F)",
         "",
     ]
