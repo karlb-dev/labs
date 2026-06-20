@@ -1,0 +1,7 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,heldout_format,status,auc_eval_vs_natural,auc_eval_vs_format_control,best_control_auc,control_adjusted_auc_gap,eval_format_control_gap,n_eval,n_natural,n_format_control,claim_posture
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,answer_key_check,ran,1.0,0.75,0.8438,0.1562,0.1639,8,4,4,format-transferring handle
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,code_test,ran,1.0,1.0,0.5,0.5,0.582,8,4,4,format-transferring handle
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,mcq,ran,1.0,0.9688,0.5,0.5,0.5491,8,4,4,format-transferring handle
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,qa_benchmark,ran,0.9688,0.375,1.0,-0.0312,-0.0714,8,4,4,fragile or format-specific
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,quality_screen,ran,0.9062,0.5938,0.7812,0.125,0.0731,8,4,4,format-transferring handle
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,rubric_free_response,ran,0.9062,0.7188,0.5938,0.3124,0.2197,8,4,4,format-transferring handle

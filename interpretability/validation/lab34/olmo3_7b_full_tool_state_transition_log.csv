@@ -1,0 +1,337 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,task_id,step_index,state,tool,detail
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_007,0,user_prompt_received,,A math fact is requested: six times nine.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_007,1,oracle_required_tool,calculator,"{""expression"": ""6 * 9""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_007,2,local_tool_result,calculator,54
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_007,3,final_answer,calculator,54
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_009,0,user_prompt_received,,A divided-by calculation is needed for one hundred over four.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_009,1,oracle_required_tool,calculator,"{""expression"": ""100 / 4""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_009,2,local_tool_result,calculator,25
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_009,3,final_answer,calculator,25
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_008,0,user_prompt_received,,The target quantity is forty plus two; give the exact number.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_008,1,oracle_required_tool,calculator,"{""expression"": ""40 + 2""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_008,2,local_tool_result,calculator,42
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_008,3,final_answer,calculator,42
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_001,0,user_prompt_received,,Compute 144 / 12 exactly.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_001,1,oracle_required_tool,calculator,"{""expression"": ""144 / 12""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_001,2,local_tool_result,calculator,12
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_001,3,final_answer,calculator,12
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_003,0,user_prompt_received,,Subtract 27 from 81.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_003,1,oracle_required_tool,calculator,"{""expression"": ""81 - 27""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_003,2,local_tool_result,calculator,54
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_003,3,final_answer,calculator,54
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_005,0,user_prompt_received,,I need the exact value of 90 / 5 - 3.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_005,1,oracle_required_tool,calculator,"{""expression"": ""90 / 5 - 3""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_005,2,local_tool_result,calculator,15
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_005,3,final_answer,calculator,15
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_002,0,user_prompt_received,,Add 19 and 46.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_002,1,oracle_required_tool,calculator,"{""expression"": ""19 + 46""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_002,2,local_tool_result,calculator,65
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_002,3,final_answer,calculator,65
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_004,0,user_prompt_received,,"For the calculator row, evaluate 7 * 8 + 6."
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_004,1,oracle_required_tool,calculator,"{""expression"": ""7 * 8 + 6""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_004,2,local_tool_result,calculator,62
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_004,3,final_answer,calculator,62
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_006,0,user_prompt_received,,Return the exact value for twelve squared minus five.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_006,1,oracle_required_tool,calculator,"{""expression"": ""12 * 12 - 5""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_006,2,local_tool_result,calculator,139
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_006,3,final_answer,calculator,139
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_000,0,user_prompt_received,,What is 17 * 23?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_000,1,oracle_required_tool,calculator,"{""expression"": ""17 * 23""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_000,2,local_tool_result,calculator,391
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calc_000,3,final_answer,calculator,391
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_007,0,user_prompt_received,,Design review slot?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_007,1,oracle_required_tool,calendar,"{""event"": ""design review""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_007,2,local_tool_result,calendar,Tuesday 10:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_007,3,final_answer,calendar,Tuesday 10:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_009,0,user_prompt_received,,Demo prep slot on Friday?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_009,1,oracle_required_tool,calendar,"{""event"": ""demo prep""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_009,2,local_tool_result,calendar,Friday afternoon
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_009,3,final_answer,calendar,Friday afternoon
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_008,0,user_prompt_received,,Bug triage happens when?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_008,1,oracle_required_tool,calendar,"{""event"": ""bug triage""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_008,2,local_tool_result,calendar,Monday 10:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_008,3,final_answer,calendar,Monday 10:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_002,0,user_prompt_received,,What time is bug triage scheduled?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_002,1,oracle_required_tool,calendar,"{""event"": ""bug triage""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_002,2,local_tool_result,calendar,Monday 10:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_002,3,final_answer,calendar,Monday 10:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_003,0,user_prompt_received,,Find demo prep on the toy calendar.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_003,1,oracle_required_tool,calendar,"{""event"": ""demo prep""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_003,2,local_tool_result,calendar,Friday afternoon
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_003,3,final_answer,calendar,Friday afternoon
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_000,0,user_prompt_received,,When is the design review on the toy calendar?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_000,1,oracle_required_tool,calendar,"{""event"": ""design review""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_000,2,local_tool_result,calendar,Tuesday 10:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_000,3,final_answer,calendar,Tuesday 10:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_001,0,user_prompt_received,,Check the calendar time for standup.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_001,1,oracle_required_tool,calendar,"{""event"": ""standup""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_001,2,local_tool_result,calendar,Monday 09:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_001,3,final_answer,calendar,Monday 09:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_005,0,user_prompt_received,,What is the Friday afternoon calendar item?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_005,1,oracle_required_tool,calendar,"{""day"": ""Friday"", ""position"": ""last""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_005,2,local_tool_result,calendar,demo prep
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_005,3,final_answer,calendar,demo prep
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_006,0,user_prompt_received,,Standup time? Use the closed schedule.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_006,1,oracle_required_tool,calendar,"{""event"": ""standup""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_006,2,local_tool_result,calendar,Monday 09:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_006,3,final_answer,calendar,Monday 09:00
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_004,0,user_prompt_received,,Which event comes after standup on Monday?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_004,1,oracle_required_tool,calendar,"{""after"": ""standup""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_004,2,local_tool_result,calendar,bug triage
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,cal_004,3,final_answer,calendar,bug triage
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_009,0,user_prompt_received,,Cache has a toy meaning; state that meaning.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_009,1,oracle_required_tool,dictionary,"{""term"": ""cache""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_009,2,local_tool_result,dictionary,stored results reused to avoid repeated work
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_009,3,final_answer,dictionary,stored results reused to avoid repeated work
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_007,0,user_prompt_received,,"For mutex, return the closed glossary meaning."
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_007,1,oracle_required_tool,dictionary,"{""term"": ""mutex""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_007,2,local_tool_result,dictionary,a lock that allows one holder at a time
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_007,3,final_answer,dictionary,a lock that allows one holder at a time
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_008,0,user_prompt_received,,The term vector needs its in-course definition.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_008,1,oracle_required_tool,dictionary,"{""term"": ""vector""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_008,2,local_tool_result,dictionary,an ordered list of numbers treated as one object
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_008,3,final_answer,dictionary,an ordered list of numbers treated as one object
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_000,0,user_prompt_received,,Look up the glossary definition of latency.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_000,1,oracle_required_tool,dictionary,"{""term"": ""latency""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_000,2,local_tool_result,dictionary,delay before a response begins
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_000,3,final_answer,dictionary,delay before a response begins
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_003,0,user_prompt_received,,What is the glossary definition of backoff?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_003,1,oracle_required_tool,dictionary,"{""term"": ""backoff""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_003,2,local_tool_result,dictionary,waiting longer between retries after a failure
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_003,3,final_answer,dictionary,waiting longer between retries after a failure
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_004,0,user_prompt_received,,Dictionary lookup: vector.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_004,1,oracle_required_tool,dictionary,"{""term"": ""vector""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_004,2,local_tool_result,dictionary,an ordered list of numbers treated as one object
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_004,3,final_answer,dictionary,an ordered list of numbers treated as one object
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_005,0,user_prompt_received,,Use the glossary to define cache.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_005,1,oracle_required_tool,dictionary,"{""term"": ""cache""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_005,2,local_tool_result,dictionary,stored results reused to avoid repeated work
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_005,3,final_answer,dictionary,stored results reused to avoid repeated work
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_006,0,user_prompt_received,,Course term latency: provide the toy meaning.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_006,1,oracle_required_tool,dictionary,"{""term"": ""latency""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_006,2,local_tool_result,dictionary,delay before a response begins
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_006,3,final_answer,dictionary,delay before a response begins
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_001,0,user_prompt_received,,"In the course glossary, what does mutex mean?"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_001,1,oracle_required_tool,dictionary,"{""term"": ""mutex""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_001,2,local_tool_result,dictionary,a lock that allows one holder at a time
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_001,3,final_answer,dictionary,a lock that allows one holder at a time
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_002,0,user_prompt_received,,Define photosynthesis using the toy dictionary.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_002,1,oracle_required_tool,dictionary,"{""term"": ""photosynthesis""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_002,2,local_tool_result,dictionary,plants use light to make sugar from water and carbon dioxide
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dict_002,3,final_answer,dictionary,plants use light to make sugar from water and carbon dioxide
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_009,0,user_prompt_received,,Stale user records after writes: name the document.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_009,1,oracle_required_tool,file_search,"{""query"": ""stale user records""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_009,2,local_tool_result,file_search,doc_cache.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_009,3,final_answer,file_search,doc_cache.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_007,0,user_prompt_received,,Cache invalidation appears in which synthetic note?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_007,1,oracle_required_tool,file_search,"{""query"": ""cache invalidation""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_007,2,local_tool_result,file_search,doc_cache.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_007,3,final_answer,file_search,doc_cache.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_008,0,user_prompt_received,,Exporter CSV belongs to which document?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_008,1,oracle_required_tool,file_search,"{""query"": ""exporter csv""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_008,2,local_tool_result,file_search,doc_export.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_008,3,final_answer,file_search,doc_export.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_000,0,user_prompt_received,,Which synthetic document mentions cache invalidation?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_000,1,oracle_required_tool,file_search,"{""query"": ""cache invalidation""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_000,2,local_tool_result,file_search,doc_cache.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_000,3,final_answer,file_search,doc_cache.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_001,0,user_prompt_received,,Search the toy docs for exporter CSV.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_001,1,oracle_required_tool,file_search,"{""query"": ""exporter csv""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_001,2,local_tool_result,file_search,doc_export.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_001,3,final_answer,file_search,doc_export.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_003,0,user_prompt_received,,Which file talks about stale user records after writes?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_003,1,oracle_required_tool,file_search,"{""query"": ""stale user records""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_003,2,local_tool_result,file_search,doc_cache.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_003,3,final_answer,file_search,doc_cache.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_004,0,user_prompt_received,,"In the toy file set, where are downstream reports mentioned?"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_004,1,oracle_required_tool,file_search,"{""query"": ""downstream reports""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_004,2,local_tool_result,file_search,doc_export.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_004,3,final_answer,file_search,doc_export.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_005,0,user_prompt_received,,Search the synthetic files for backoff.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_005,1,oracle_required_tool,file_search,"{""query"": ""backoff""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_005,2,local_tool_result,file_search,doc_reliability.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_005,3,final_answer,file_search,doc_reliability.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_006,0,user_prompt_received,,Where is retry budget recorded?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_006,1,oracle_required_tool,file_search,"{""query"": ""retry budget""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_006,2,local_tool_result,file_search,doc_reliability.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_006,3,final_answer,file_search,doc_reliability.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_002,0,user_prompt_received,,Find the document with the retry budget.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_002,1,oracle_required_tool,file_search,"{""query"": ""retry budget""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_002,2,local_tool_result,file_search,doc_reliability.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_002,3,final_answer,file_search,doc_reliability.md
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_021,0,user_prompt_received,,Synthetic document name doc_export.md is decorative; answer decorative.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_021,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_021,2,local_tool_result,none,decorative
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_021,3,final_answer,none,decorative
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_020,0,user_prompt_received,,Calendar search box is empty; answer empty.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_020,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_020,2,local_tool_result,none,empty
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_020,3,final_answer,none,empty
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_017,0,user_prompt_received,,Convert button label only; answer button.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_017,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_017,2,local_tool_result,none,button
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_017,3,final_answer,none,button
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_016,0,user_prompt_received,,Route planner is a product name; answer product.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_016,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_016,2,local_tool_result,none,product
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_016,3,final_answer,none,product
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_018,0,user_prompt_received,,17 * 23 appears on a sticker; answer sticker.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_018,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_018,2,local_tool_result,none,sticker
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_018,3,final_answer,none,sticker
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_023,0,user_prompt_received,,Pounds and kilograms are font examples; answer font.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_023,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_023,2,local_tool_result,none,font
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_023,3,final_answer,none,font
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_019,0,user_prompt_received,,Glossary definition is printed as a title; answer title.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_019,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_019,2,local_tool_result,none,title
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_019,3,final_answer,none,title
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_022,0,user_prompt_received,,A path A -> F is drawn as art; answer art.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_022,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_022,2,local_tool_result,none,art
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_022,3,final_answer,none,art
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_014,0,user_prompt_received,,The calendar widget label is decorative; answer label.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_014,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_014,2,local_tool_result,none,label
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_014,3,final_answer,none,label
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_006,0,user_prompt_received,,"This sentence contains 17 * 23, but the requested answer is banana."
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_006,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_006,2,local_tool_result,none,banana
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_006,3,final_answer,none,banana
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_015,0,user_prompt_received,,A file_search option is text on the screen; answer option.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_015,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_015,2,local_tool_result,none,option
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_015,3,final_answer,none,option
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_000,0,user_prompt_received,,Do not calculate; just answer the word YES.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_000,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_000,2,local_tool_result,none,YES
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_000,3,final_answer,none,YES
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_004,0,user_prompt_received,,Route A -> B is written as an example; answer example.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_004,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_004,2,local_tool_result,none,example
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_004,3,final_answer,none,example
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_010,0,user_prompt_received,,A path from A to F is irrelevant; answer idle.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_010,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_010,2,local_tool_result,none,idle
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_010,3,final_answer,none,idle
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_011,0,user_prompt_received,,Units like pounds and kilograms are examples; answer plain.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_011,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_011,2,local_tool_result,none,plain
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_011,3,final_answer,none,plain
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_002,0,user_prompt_received,,Calendar is a noun in this sentence. What tool should run? none.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_002,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_002,2,local_tool_result,none,none
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_002,3,final_answer,none,none
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_003,0,user_prompt_received,,File name doc_cache.md is mentioned as text. Reply literal.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_003,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_003,2,local_tool_result,none,literal
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_003,3,final_answer,none,literal
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_007,0,user_prompt_received,,"If a glossary term is latency, answer only skip."
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_007,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_007,2,local_tool_result,none,skip
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_007,3,final_answer,none,skip
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_005,0,user_prompt_received,,The phrase convert 3 miles appears in a quote. Answer quote.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_005,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_005,2,local_tool_result,none,quote
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_005,3,final_answer,none,quote
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_009,0,user_prompt_received,,Mentioning search does not require a search here. Answer local.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_009,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_009,2,local_tool_result,none,local
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_009,3,final_answer,none,local
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_013,0,user_prompt_received,,Dictionary lookup is a heading here; answer heading.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_013,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_013,2,local_tool_result,none,heading
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_013,3,final_answer,none,heading
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_001,0,user_prompt_received,,"The word dictionary appears here, but reply with the word seen."
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_001,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_001,2,local_tool_result,none,seen
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_001,3,final_answer,none,seen
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_008,0,user_prompt_received,,No calendar lookup is needed; answer ready.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_008,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_008,2,local_tool_result,none,ready
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_008,3,final_answer,none,ready
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_012,0,user_prompt_received,,The string 40 + 2 is an identifier; answer id.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_012,1,oracle_required_tool,none,{}
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_012,2,local_tool_result,none,id
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none_012,3,final_answer,none,id
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_007,0,user_prompt_received,,B to F through the toy network.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_007,1,oracle_required_tool,route_planner,"{""end"": ""F"", ""start"": ""B""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_007,2,local_tool_result,route_planner,B -> D -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_007,3,final_answer,route_planner,B -> D -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_008,0,user_prompt_received,,"Start C, destination F; give node sequence."
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_008,1,oracle_required_tool,route_planner,"{""end"": ""F"", ""start"": ""C""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_008,2,local_tool_result,route_planner,C -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_008,3,final_answer,route_planner,C -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_009,0,user_prompt_received,,A reaches D by which nodes?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_009,1,oracle_required_tool,route_planner,"{""end"": ""D"", ""start"": ""A""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_009,2,local_tool_result,route_planner,A -> B -> D
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_009,3,final_answer,route_planner,A -> B -> D
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_003,0,user_prompt_received,,"In the toy graph, route C to F."
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_003,1,oracle_required_tool,route_planner,"{""end"": ""F"", ""start"": ""C""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_003,2,local_tool_result,route_planner,C -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_003,3,final_answer,route_planner,C -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_000,0,user_prompt_received,,Find a route from A to F in the toy graph.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_000,1,oracle_required_tool,route_planner,"{""end"": ""F"", ""start"": ""A""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_000,2,local_tool_result,route_planner,A -> B -> D -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_000,3,final_answer,route_planner,A -> B -> D -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_001,0,user_prompt_received,,What path reaches D from A?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_001,1,oracle_required_tool,route_planner,"{""end"": ""D"", ""start"": ""A""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_001,2,local_tool_result,route_planner,A -> B -> D
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_001,3,final_answer,route_planner,A -> B -> D
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_005,0,user_prompt_received,,Graph route request: A to E.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_005,1,oracle_required_tool,route_planner,"{""end"": ""E"", ""start"": ""A""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_005,2,local_tool_result,route_planner,A -> B -> D -> E
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_005,3,final_answer,route_planner,A -> B -> D -> E
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_004,0,user_prompt_received,,Which path goes from D to F?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_004,1,oracle_required_tool,route_planner,"{""end"": ""F"", ""start"": ""D""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_004,2,local_tool_result,route_planner,D -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_004,3,final_answer,route_planner,D -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_006,0,user_prompt_received,,"From A to F using allowed edges, list nodes."
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_006,1,oracle_required_tool,route_planner,"{""end"": ""F"", ""start"": ""A""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_006,2,local_tool_result,route_planner,A -> B -> D -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_006,3,final_answer,route_planner,A -> B -> D -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_002,0,user_prompt_received,,Plan the route from B to F.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_002,1,oracle_required_tool,route_planner,"{""end"": ""F"", ""start"": ""B""}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_002,2,local_tool_result,route_planner,B -> D -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_002,3,final_answer,route_planner,B -> D -> E -> F
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_008,0,user_prompt_received,,4 lb in kg.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_008,1,oracle_required_tool,unit_converter,"{""from"": ""pounds"", ""to"": ""kilograms"", ""value"": 4}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_008,2,local_tool_result,unit_converter,1.81 kilograms
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_008,3,final_answer,unit_converter,1.81 kilograms
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_007,0,user_prompt_received,,2 mi in km.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_007,1,oracle_required_tool,unit_converter,"{""from"": ""miles"", ""to"": ""kilometers"", ""value"": 2}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_007,2,local_tool_result,unit_converter,3.22 kilometers
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_007,3,final_answer,unit_converter,3.22 kilometers
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_009,0,user_prompt_received,,10 C as F.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_009,1,oracle_required_tool,unit_converter,"{""from"": ""celsius"", ""to"": ""fahrenheit"", ""value"": 10}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_009,2,local_tool_result,unit_converter,50 Fahrenheit
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_009,3,final_answer,unit_converter,50 Fahrenheit
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_005,0,user_prompt_received,,What is 0 celsius in fahrenheit?
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_005,1,oracle_required_tool,unit_converter,"{""from"": ""celsius"", ""to"": ""fahrenheit"", ""value"": 0}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_005,2,local_tool_result,unit_converter,32 Fahrenheit
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_005,3,final_answer,unit_converter,32 Fahrenheit
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_003,0,user_prompt_received,,Convert 2 hours to minutes.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_003,1,oracle_required_tool,unit_converter,"{""from"": ""hours"", ""to"": ""minutes"", ""value"": 2}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_003,2,local_tool_result,unit_converter,120 minutes
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_003,3,final_answer,unit_converter,120 minutes
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_004,0,user_prompt_received,,Unit conversion: 5 miles into kilometers.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_004,1,oracle_required_tool,unit_converter,"{""from"": ""miles"", ""to"": ""kilometers"", ""value"": 5}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_004,2,local_tool_result,unit_converter,8.05 kilometers
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_004,3,final_answer,unit_converter,8.05 kilometers
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_001,0,user_prompt_received,,Convert 10 pounds to kilograms.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_001,1,oracle_required_tool,unit_converter,"{""from"": ""pounds"", ""to"": ""kilograms"", ""value"": 10}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_001,2,local_tool_result,unit_converter,4.54 kilograms
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_001,3,final_answer,unit_converter,4.54 kilograms
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_006,0,user_prompt_received,,3 h expressed as min.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_006,1,oracle_required_tool,unit_converter,"{""from"": ""hours"", ""to"": ""minutes"", ""value"": 3}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_006,2,local_tool_result,unit_converter,180 minutes
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_006,3,final_answer,unit_converter,180 minutes
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_002,0,user_prompt_received,,Convert 20 celsius to fahrenheit.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_002,1,oracle_required_tool,unit_converter,"{""from"": ""celsius"", ""to"": ""fahrenheit"", ""value"": 20}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_002,2,local_tool_result,unit_converter,68 Fahrenheit
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_002,3,final_answer,unit_converter,68 Fahrenheit
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_000,0,user_prompt_received,,Convert 3 miles to kilometers.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_000,1,oracle_required_tool,unit_converter,"{""from"": ""miles"", ""to"": ""kilometers"", ""value"": 3}"
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_000,2,local_tool_result,unit_converter,4.83 kilometers
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_000,3,final_answer,unit_converter,4.83 kilometers

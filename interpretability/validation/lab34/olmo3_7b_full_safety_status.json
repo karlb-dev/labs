@@ -1,0 +1,24 @@
+{
+  "allowed_tools": [
+    "calculator",
+    "dictionary",
+    "calendar",
+    "file_search",
+    "route_planner",
+    "unit_converter",
+    "none"
+  ],
+  "blocked_activities": [
+    "web browsing",
+    "real credentials",
+    "real filesystem reads or writes",
+    "real calendar access",
+    "network calls",
+    "harmful tools",
+    "autonomous deployment"
+  ],
+  "lab": "L34",
+  "safe_scope": "benign toy tools only; no web browsing, credentials, real filesystem writes, real calendar or file access, or harmful tools",
+  "science_ready": true,
+  "tool_implementation": "deterministic local simulators over synthetic data"
+}

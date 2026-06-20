@@ -1,0 +1,11 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,metric,value
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,eval_baseline_mentions_eval,0.0
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,eval_real_minus_mentions_eval,0.0
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,eval_real_minus_reduction,0.0
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,eval_real_reduction_over_control,0.0
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,natural_baseline_mentions_eval,0.0
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,natural_random_or_shuffled_best_mentions_eval,0.0
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,natural_real_over_control_delta,0.0
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,natural_real_plus_delta,0.0
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,natural_real_plus_mentions_eval,0.0
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,steering_max_dose,0.7

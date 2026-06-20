@@ -1,0 +1,18 @@
+{
+  "warnings": [
+    {
+      "count": 1,
+      "detail": "tool_self_report_review_scaffold",
+      "recommended_action": "Use negative or refinement language for these rows.",
+      "severity": "medium",
+      "warning_kind": "unsupported_evidence_rows"
+    },
+    {
+      "count": 40,
+      "detail": "Automatic counterexamples crossed filters.",
+      "recommended_action": "Read tables/failure_specimens.md before using the dashboard.",
+      "severity": "medium",
+      "warning_kind": "counterexamples_present"
+    }
+  ]
+}

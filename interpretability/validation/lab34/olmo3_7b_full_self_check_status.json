@@ -1,0 +1,8 @@
+{
+  "argument_valid_rate": 1.0,
+  "evidence_rows": 5,
+  "ok": true,
+  "tokenization_dropped": 0,
+  "tokenization_kept": 84,
+  "trace_result_match_rate": 1.0
+}

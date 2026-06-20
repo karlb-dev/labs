@@ -1,0 +1,3 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,warning_kind,severity,count,detail,recommended_action
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unsupported_evidence_rows,medium,1,tool_self_report_review_scaffold,Use negative or refinement language for these rows.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,counterexamples_present,medium,40,Automatic counterexamples crossed filters.,Read tables/failure_specimens.md before using the dashboard.
