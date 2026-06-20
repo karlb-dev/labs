@@ -1,0 +1,14 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,concept_family,target_concept,steering_kind,dose,n_trials,report_detection_rate,wrong_report_rate,explicit_none_rate,behavior_marker_rate,grounding_pass_rate,downstream_priming_risk_rate,source_type,n,accuracy,activation_false_attribution_rate,parsed_labels
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,emotion,calm,opposite_direction,-1.5,1,1.0,0.0,0.0,0.0,1.0,0.0,,,,,
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,emotion,calm,random_direction,1.5,1,1.0,0.0,0.0,0.0,1.0,0.0,,,,,
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,emotion,calm,shuffled_direction,1.5,1,1.0,0.0,0.0,0.0,1.0,0.0,,,,,
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,emotion,calm,target_direction,0.0,1,1.0,0.0,0.0,0.0,1.0,0.0,,,,,
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,emotion,calm,target_direction,0.5,1,1.0,0.0,0.0,0.0,1.0,0.0,,,,,
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,emotion,calm,target_direction,1.0,1,1.0,0.0,0.0,0.0,1.0,0.0,,,,,
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,emotion,calm,target_direction,1.5,1,1.0,0.0,0.0,0.0,1.0,0.0,,,,,
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,emotion,calm,wrong_concept_direction,1.5,1,1.0,0.0,0.0,0.0,1.0,0.0,,,,,
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,,,,,,,,,,,,activation_injection,1,0.0,0.0,"{""unknown"": 1}"
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,,,,,,,,,,,,default_mode,1,0.0,0.0,"{""unknown"": 1}"
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,,,,,,,,,,,,false_activation_claim,1,0.0,1.0,"{""activation_injection"": 1}"
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,,,,,,,,,,,,system_prompt,1,0.0,0.0,"{""unknown"": 1}"
+lab25,lab25_tiera_both_labs1_25_full_matrix_20260615_000508,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,1,0,30,576,,,,,,,,,,,,user_instruction,1,0.0,0.0,"{""unknown"": 1}"

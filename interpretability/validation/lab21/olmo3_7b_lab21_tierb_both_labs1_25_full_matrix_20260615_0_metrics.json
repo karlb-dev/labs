@@ -1,0 +1,54 @@
+{
+  "base_instruct_peak": {
+    "half_peak_last_depth": 32,
+    "n_depths": 33,
+    "peak_depth": 32,
+    "peak_value": 1.3437
+  },
+  "boundary_safe_peak": {
+    "half_peak_last_depth": 32,
+    "n_depths": 33,
+    "peak_depth": 32,
+    "peak_value": 0.9869
+  },
+  "chat_format_peak": {
+    "half_peak_last_depth": 32,
+    "n_depths": 33,
+    "peak_depth": 32,
+    "peak_value": 1.1796
+  },
+  "comparison_model_id": "allenai/Olmo-3-1025-7B",
+  "erosion_has_external_result": false,
+  "forced_prefix_peak": {
+    "half_peak_last_depth": 32,
+    "n_depths": 264,
+    "peak_depth": 32,
+    "peak_value": 1.3275
+  },
+  "identity_comparison_smoke": false,
+  "lora_peak": {},
+  "lora_status_counts": {
+    "missing_adapter_weights": 10
+  },
+  "model_id": "allenai/Olmo-3-7B-Instruct",
+  "modes": [
+    "lora",
+    "safety_depth"
+  ],
+  "n_adapter_sources": 10,
+  "n_boundary_safe_rows": 198,
+  "n_chat_control_rows": 198,
+  "n_depth_disagreement_rows": 4,
+  "n_forced_prefix_rows": 4950,
+  "n_lora_layer_rows": 0,
+  "n_lora_matrix_rows": 0,
+  "n_lora_module_rows": 0,
+  "n_lora_phase_rows": 0,
+  "n_refusal_provenance_rows": 33,
+  "n_safety_divergence_rows": 990,
+  "n_safety_pairs": 6,
+  "n_safety_signal_rows": 33,
+  "n_training_depth_evidence_rows": 9,
+  "private_answer_key_access_verdict": "builder_side_not_blind",
+  "wrapper_ablation_has_external_result": false
+}

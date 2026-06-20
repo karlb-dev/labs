@@ -1,0 +1,47 @@
+{
+  "best_depth": 26,
+  "best_surface_baseline_auc_eval_split": 1.0,
+  "causal_marker_verdict": "not_validated_by_marker_controls",
+  "conditions": {
+    "eval": 4,
+    "format_control": 4,
+    "natural": 4
+  },
+  "cross_format_mean_auc": 1.0,
+  "cross_format_min_auc": 1.0,
+  "cross_format_min_format_control_gap": -31.2493,
+  "decode_verdict": "not_validated_or_format_detector",
+  "eval_auc_best_depth": 1.0,
+  "eval_baseline_mentions_eval": 0.25,
+  "eval_expected_context_auc_best_depth": 1.0,
+  "eval_real_minus_mentions_eval": 0.25,
+  "eval_real_minus_reduction": 0.0,
+  "eval_real_reduction_over_control": 0.0,
+  "eval_selectivity_over_shuffled_best_depth": 0.3333,
+  "eval_vs_format_control_auc_best_depth": 1.0,
+  "formats": [
+    "code_test",
+    "free_response",
+    "mcq",
+    "qa_benchmark"
+  ],
+  "injection_layer": 25,
+  "model_id": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "n_cot_rows": 40,
+  "n_groups": 4,
+  "n_items": 12,
+  "n_multiturn_trace_rows": 6,
+  "n_steering_rows": 40,
+  "natural_baseline_mentions_eval": 0.25,
+  "natural_random_or_shuffled_best_mentions_eval": 0.25,
+  "natural_real_over_control_delta": 0.0,
+  "natural_real_plus_delta": 0.0,
+  "natural_real_plus_mentions_eval": 0.25,
+  "organism_control_status": {
+    "not_configured": 1
+  },
+  "steering_max_dose": 0.7,
+  "surface_baseline_risk": true,
+  "used_fallback_smoke_data": false,
+  "verdict_rule": "decode requires held-out AUC, cross-format transfer, format-control separation, and noncompetitive cheap surface baselines; causal marker verdict still requires hand labels."
+}

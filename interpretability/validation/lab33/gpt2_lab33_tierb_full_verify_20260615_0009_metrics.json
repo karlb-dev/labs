@@ -1,0 +1,102 @@
+{
+  "alignment": {
+    "alignment_hazard_note": "Real VLMs may emit variable image token counts. A plot cannot validate region alignment; the run must write explicit token-region mappings.",
+    "all_items_fixed_connector_tokens": true,
+    "connector_token_count": 4,
+    "image_sizes_fixed_by_renderer": true,
+    "mode": "synthetic_connector",
+    "n_items": 28,
+    "real_vlm_required_before_science_claims": true,
+    "real_vlm_required_diagnostics": [
+      "image token count per example",
+      "image patch grid after resize/crop",
+      "region to token index mapping",
+      "clean/corrupt image-token compatibility",
+      "caption/text-only/OCR/background controls",
+      "hook parity for vision, connector, and language modules"
+    ],
+    "region_inventory": [
+      "bar_pair",
+      "object",
+      "object_location",
+      "object_on_background",
+      "object_set",
+      "object_with_text"
+    ],
+    "science_ready": false
+  },
+  "data": {
+    "data_file": "multimodal_concept_pairs.jsonl",
+    "data_path": "/content/labs/interpretability/data/multimodal_concept_pairs.jsonl",
+    "data_sha256": "e3059a44ae9342a73c8df8e9b92a62b97a44f2347c965b11642e96e00b082d19",
+    "fallback_data": false,
+    "families": {
+      "background_control": 4,
+      "chart": 4,
+      "color": 4,
+      "count": 4,
+      "ocr_control": 4,
+      "shape": 4,
+      "spatial": 4
+    },
+    "manifest_expected_sha256": "e3059a44ae9342a73c8df8e9b92a62b97a44f2347c965b11642e96e00b082d19",
+    "manifest_note": "found sha256 entry in MANIFEST.json",
+    "manifest_ok": true,
+    "max_examples": 0,
+    "n_rows_file": 28,
+    "n_rows_selected": 28,
+    "prompt_set": "full",
+    "safety_scope": "benign synthetic shapes, charts, positions, OCR traps, and background controls only",
+    "science_ready": false,
+    "science_scope": "synthetic connector smoke mode; no real VLM hooks loaded",
+    "splits": {
+      "test": 14,
+      "train": 14
+    }
+  },
+  "leak_summary": {
+    "n_leak_controls_triggered": 8,
+    "n_shortcut_risk_rows": 8,
+    "ocr_or_background_gate": "failed_for_real_vlm_claims",
+    "science_ready": false
+  },
+  "mean_connector_auc": 1.0,
+  "mean_control_floor": 0.0237,
+  "mean_specificity_gap": 0.5637,
+  "mean_text_query_auc": 0.5,
+  "mean_visual_auc": 1.0,
+  "mean_visual_region_recovery": 0.5873,
+  "n_counterexamples": 8,
+  "n_dose_response_rows": 980,
+  "n_failure_specimens": 16,
+  "n_families": 7,
+  "n_items": 28,
+  "n_state_score_rows": 448,
+  "render": {
+    "all_images_rendered": true,
+    "n_rendered_images": 56
+  },
+  "schema": {
+    "n_schema_failed": 0,
+    "n_schema_ok": 28,
+    "n_schema_rows": 28
+  },
+  "science_ready": false,
+  "shortcut_blocked_families": 2,
+  "state_vectors": {
+    "n_state_vectors": 448,
+    "state_vectors_finite": true,
+    "state_vectors_norm_ok": true
+  },
+  "synthetic_gate_pass_families": 5,
+  "text_leak_summary": {
+    "n_text_label_leaks": 0,
+    "text_leak_gate": "passed"
+  },
+  "thresholds": {
+    "control_close_tolerance": 0.05,
+    "min_auc_gate": 0.75,
+    "min_recovery_gate": 0.35,
+    "min_specificity_gap": 0.15
+  }
+}

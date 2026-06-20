@@ -1,0 +1,47 @@
+{
+  "base_metric": 7.916666666666667,
+  "circuit": [
+    "L27H13"
+  ],
+  "circuit_tuples": [
+    [
+      27,
+      13
+    ]
+  ],
+  "edge": {
+    "claimed": false,
+    "edge": null,
+    "reason": "No ordered previous-token head before an induction head survived the causal and motif checks. The lab therefore makes no edge claim."
+  },
+  "fcm": {
+    "discovery": {
+      "base_metric": 7.91667,
+      "circuit_ablated_metric": 7.71484,
+      "completeness_effect": 0.02549,
+      "completeness_ratio": 0.97451,
+      "faithfulness": 0.8472,
+      "n_prompts": 3
+    },
+    "heldout": {
+      "base_metric": 8.12891,
+      "circuit_ablated_metric": 7.64453,
+      "completeness_effect": 0.05959,
+      "completeness_ratio": 0.94041,
+      "faithfulness": 0.247,
+      "n_prompts": 2
+    }
+  },
+  "meets_faithfulness_floor": true,
+  "minimality_all_positive": true,
+  "minimality_worst_marginal": 0.01924,
+  "n_discovery": 3,
+  "n_heldout": 2,
+  "n_heldout_positive": 2,
+  "prune_stop_reason": "one head remains",
+  "screen_budgets": {
+    "attribution": 90,
+    "induction": 31,
+    "prev_token": 31
+  }
+}

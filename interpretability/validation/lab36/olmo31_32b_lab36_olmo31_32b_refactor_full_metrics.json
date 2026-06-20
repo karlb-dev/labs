@@ -1,0 +1,20 @@
+{
+  "b3_confidence_delta": "",
+  "b3_entropy_delta": 0.1381,
+  "b4_activation_fresh_accuracy": 0.0,
+  "b4_activation_source_accuracy": 0.0,
+  "b5_content_leak_rate": 0.1562,
+  "b5_d_prime_all_insertions": 0.7927,
+  "b5_false_alarm_rate": 0.0294,
+  "gpt_oss_120b_skipped": true,
+  "lab": "L36",
+  "max_patch_recovery": 1.0,
+  "mean_b2_target_minus_floor": -0.4,
+  "mean_direction_heldout_auc": 0.95,
+  "mode": "b2,b3,b4,b5,cartography,directions,instrument,patch",
+  "model_id": "allenai/Olmo-3.1-32B-Instruct",
+  "model_revision": "",
+  "n_directions": 5,
+  "n_items": 25,
+  "verdict": "no_report_channel_coupling_validated"
+}

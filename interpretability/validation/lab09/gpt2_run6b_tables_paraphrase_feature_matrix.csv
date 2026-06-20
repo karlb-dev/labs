@@ -1,0 +1,15 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,feature_key,layer,feature,n_prompts,present_france,present_para_city,present_para_in,present_para_country_of,present_para_largest,present_para_known,present_para_official
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L0 f20498,0,20498,7,1,1,1,1,1,1,1
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L8 f468,8,468,7,1,1,1,1,1,1,1
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L8 f13215,8,13215,7,1,1,1,1,1,1,1
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L8 f20768,8,20768,7,1,1,1,1,1,1,1
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L2 f1203,2,1203,7,1,1,1,1,1,1,1
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L1 f9871,1,9871,7,1,1,1,1,1,1,1
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L4 f8289,4,8289,6,1,1,1,1,0,1,1
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L5 f18318,5,18318,1,1,0,0,0,0,0,0
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L7 f1927,7,1927,1,1,0,0,0,0,0,0
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L5 f4594,5,4594,1,1,0,0,0,0,0,0
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L3 f1639,3,1639,1,1,0,0,0,0,0,0
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L6 f23975,6,23975,1,1,0,0,0,0,0,0
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L0 f7549,0,7549,1,0,0,1,0,0,0,0
+lab9,lab9_run6_B,gpt2,,b,float32,none,full,0,0,12,768,L7 f6978,7,6978,1,0,0,0,1,0,0,0

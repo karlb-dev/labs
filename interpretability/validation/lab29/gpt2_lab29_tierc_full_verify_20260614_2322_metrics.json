@@ -1,0 +1,95 @@
+{
+  "behavior_emergence_step": 17,
+  "control_leakage_step": "",
+  "data": {
+    "data_file": "training_dynamics_tasks.csv",
+    "data_path": "/content/labs/interpretability/data/training_dynamics_tasks.csv",
+    "data_sha256": "67548cea25a3d98b44a2e6eb05abc6407d854c836eda17340050bf9e7e605b6f",
+    "data_source": "frozen_csv",
+    "fallback_warning": false,
+    "families": {
+      "calendar_control": 2,
+      "induction_copy": 10,
+      "relation_control": 2
+    },
+    "manifest_expected_sha256": "67548cea25a3d98b44a2e6eb05abc6407d854c836eda17340050bf9e7e605b6f",
+    "manifest_note": "found sha256 entry",
+    "manifest_ok": true,
+    "n_rows_file": 14,
+    "n_rows_selected": 14,
+    "science_ready": true,
+    "science_scope": "controlled tiny-transformer training sequence; not an external pretrained-checkpoint claim",
+    "splits": {
+      "control": 4,
+      "heldout": 3,
+      "test": 3,
+      "train": 4
+    }
+  },
+  "decodability_emergence_step": 17,
+  "evidence_components": 5,
+  "final_heldout_or_test_accuracy": 1.0,
+  "final_induction_accuracy": 1.0,
+  "final_phase": "circuit_present_under_proxy",
+  "final_probe_acc": 1.0,
+  "final_probe_selectivity": 1.0,
+  "intervention": {
+    "dose_fractions": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0,
+      1.25
+    ],
+    "headline_absolute_scale": 8.592312097549438,
+    "headline_dose_fraction": 0.75,
+    "intervention_depth": 1,
+    "reference_norm": 11.456416130065918,
+    "scale_semantics": "unit centroid direction multiplied by dose_fraction * median final-centroid norm"
+  },
+  "intervention_transfer_step": 17,
+  "motif_emergence_step": 17,
+  "n_checkpoints": 7,
+  "n_counterexamples": 2,
+  "n_failure_specimens": 26,
+  "n_induction_tasks": 10,
+  "n_metric_long_rows": 49,
+  "n_split_summary_rows": 35,
+  "n_warning_rows": 2,
+  "self_checks_ok": true,
+  "thresholds": {
+    "behavior_acc_bar": 0.75,
+    "control_leakage_acc_bar": 0.6,
+    "headline_intervention_dose": 0.75,
+    "intervention_dose_fractions": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0,
+      1.25
+    ],
+    "intervention_gap_bar": 0.2,
+    "motif_gap_bar": 0.12,
+    "probe_acc_bar": 0.75,
+    "probe_selectivity_bar": 0.2
+  },
+  "training_config": {
+    "batch_size": 192,
+    "checkpoint_steps": [
+      0,
+      17,
+      42,
+      105,
+      210,
+      315,
+      420
+    ],
+    "probe_eval": 156,
+    "probe_train": 260,
+    "prompt_set": "full",
+    "seed": 0,
+    "train_steps": 420
+  }
+}

@@ -1,0 +1,9 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,proposed_label,n_features,median_held_out_auc,max_held_out_auc,median_fire_fraction,n_survived,n_narrowed,n_token_feature,n_polysemantic,n_killed,n_silent
+lab8,lab8_run6_C,allenai/Olmo-3-1025-7B,,c,bfloat16,none,full,0,0,32,4096,chemistry,4,0.5074,0.7071,0.35402,0,1,0,2,1,0
+lab8,lab8_run6_C,allenai/Olmo-3-1025-7B,,c,bfloat16,none,full,0,0,32,4096,code,4,0.5722,0.6165,0.00354,0,0,0,0,4,0
+lab8,lab8_run6_C,allenai/Olmo-3-1025-7B,,c,bfloat16,none,full,0,0,32,4096,finance,1,0.6733,0.6733,0.57572,0,0,0,1,0,0
+lab8,lab8_run6_C,allenai/Olmo-3-1025-7B,,c,bfloat16,none,full,0,0,32,4096,history,1,0.6353,0.6353,0.01801,0,0,0,0,1,0
+lab8,lab8_run6_C,allenai/Olmo-3-1025-7B,,c,bfloat16,none,full,0,0,32,4096,law,5,0.5,0.784,0.00273,0,2,0,1,2,0
+lab8,lab8_run6_C,allenai/Olmo-3-1025-7B,,c,bfloat16,none,full,0,0,32,4096,medicine,2,0.5216,0.5432,0.00232,0,0,0,0,2,0
+lab8,lab8_run6_C,allenai/Olmo-3-1025-7B,,c,bfloat16,none,full,0,0,32,4096,sports,7,0.53,0.7273,0.0101,0,1,0,5,1,0
+lab8,lab8_run6_C,allenai/Olmo-3-1025-7B,,c,bfloat16,none,full,0,0,32,4096,weather,1,0.6017,0.6017,0.02456,0,0,0,1,0,0

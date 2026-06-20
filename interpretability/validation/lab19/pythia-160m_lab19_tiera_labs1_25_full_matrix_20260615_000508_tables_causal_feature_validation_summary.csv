@@ -1,0 +1,2 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,status,condition,n,note
+lab19,lab19_tiera_labs1_25_full_matrix_20260615_000508,EleutherAI/pythia-160m,,a,float32,none,small,12,0,12,768,skipped,,0,No causal rows were run.

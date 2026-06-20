@@ -1,0 +1,11 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,feature_id,feature_type,gold_label,expected_abstain,best_automated_method,best_generated_label,best_heldout_auc,best_confidence,best_confusable_failure_count,best_decoy_failure_rate,review_priority,feature_posture
+lab31,lab31_tiera_full_verify_20260614_2250,gpt2,,a,float32,none,small,10,0,12,768,feat_code_json_schema,monosemantic_gold,code,False,structured_local,code,1.0,0.2669,1,1.0,4.5,feature_needs_review
+lab31,lab31_tiera_full_verify_20260614_2250,gpt2,,a,float32,none,small,10,0,12,768,feat_cooking_bread_sauce,monosemantic_gold,cooking,False,majority_domain,cooking,1.0,1.0,0,0.0,0.0,feature_label_supported_by_suite
+lab31,lab31_tiera_full_verify_20260614_2250,gpt2,,a,float32,none,small,10,0,12,768,feat_finance_credit_market,monosemantic_gold,finance,False,majority_domain,finance,1.0,1.0,0,0.0,0.0,feature_label_supported_by_suite
+lab31,lab31_tiera_full_verify_20260614_2250,gpt2,,a,float32,none,small,10,0,12,768,feat_law_trial_contract,monosemantic_gold,law,False,structured_local,law,1.0,0.264,1,1.0,4.5,feature_needs_review
+lab31,lab31_tiera_full_verify_20260614_2250,gpt2,,a,float32,none,small,10,0,12,768,feat_medicine_clinical_care,monosemantic_gold,medicine,False,structured_local,medicine,1.0,0.44,2,0.0,4.0,feature_needs_review
+lab31,lab31_tiera_full_verify_20260614_2250,gpt2,,a,float32,none,small,10,0,12,768,feat_poly_code_cooking,polysemantic_gold,code,True,majority_domain,code,0.6667,0.4545,1,0.5,5.5,risky_feature_forced_label
+lab31,lab31_tiera_full_verify_20260614_2250,gpt2,,a,float32,none,small,10,0,12,768,feat_poly_law_medicine,polysemantic_gold,law,True,majority_domain,law,0.8333,0.3333,1,0.0,4.0,risky_feature_forced_label
+lab31,lab31_tiera_full_verify_20260614_2250,gpt2,,a,float32,none,small,10,0,12,768,feat_random_control_mixed,random_control,,True,majority_domain,,0.5,0.0,0,0.0,0.0,feature_abstained
+lab31,lab31_tiera_full_verify_20260614_2250,gpt2,,a,float32,none,small,10,0,12,768,feat_sports_match_report,monosemantic_gold,sports,False,majority_domain,sports,1.0,1.0,1,0.0,0.0,feature_label_supported_by_suite
+lab31,lab31_tiera_full_verify_20260614_2250,gpt2,,a,float32,none,small,10,0,12,768,feat_token_overlap_decoy,random_control,,True,test_aware,,0.5,0.2667,0,0.0,0.0,feature_abstained

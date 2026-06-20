@@ -1,0 +1,124 @@
+{
+  "best_depth": 8,
+  "content_ok": true,
+  "data": {
+    "counts_by_family_selected": {
+      "agreement": 6,
+      "persona": 6,
+      "register": 6,
+      "voice": 6
+    },
+    "counts_by_trait_raw": {
+      "character_museum_guide": 6,
+      "honest_disagreement": 6,
+      "technical_register": 6,
+      "warm_supportive_voice": 6
+    },
+    "counts_by_trait_selected": {
+      "character_museum_guide": 6,
+      "honest_disagreement": 6,
+      "technical_register": 6,
+      "warm_supportive_voice": 6
+    },
+    "data_file": "persona_register_pairs.csv",
+    "data_source": "frozen_csv",
+    "expected_sha256_from_manifest": "784572e5d4474eb37a3861c50ed301ea8f80818ebe0dd5d7f17d968e6518e744",
+    "fallback_warning": "",
+    "lab_id": "L17",
+    "manifest_match": true,
+    "n_rows_raw": 24,
+    "n_rows_selected": 24,
+    "n_topics_raw": 6,
+    "n_traits_raw": 4,
+    "observed_sha256": "784572e5d4474eb37a3861c50ed301ea8f80818ebe0dd5d7f17d968e6518e744",
+    "prompt_set": "full",
+    "raw_trait_manifest": [
+      {
+        "family": "persona",
+        "n_rows": 6,
+        "n_topics": 6,
+        "negative_labels": "default concise assistant",
+        "negative_marker_vocab_size": 3,
+        "positive_labels": "patient museum guide",
+        "positive_marker_vocab_size": 6,
+        "task_kinds": "coding|factual|math|planning|science|writing",
+        "trait": "character_museum_guide"
+      },
+      {
+        "family": "agreement",
+        "n_rows": 6,
+        "n_topics": 6,
+        "negative_labels": "agreeable validation",
+        "negative_marker_vocab_size": 6,
+        "positive_labels": "honest correction",
+        "positive_marker_vocab_size": 6,
+        "task_kinds": "coding|factual|math|planning|science|writing",
+        "trait": "honest_disagreement"
+      },
+      {
+        "family": "register",
+        "n_rows": 6,
+        "n_topics": 6,
+        "negative_labels": "casual friend register",
+        "negative_marker_vocab_size": 6,
+        "positive_labels": "technical expert register",
+        "positive_marker_vocab_size": 8,
+        "task_kinds": "coding|factual|math|planning|science|writing",
+        "trait": "technical_register"
+      },
+      {
+        "family": "voice",
+        "n_rows": 6,
+        "n_topics": 6,
+        "negative_labels": "direct terse voice",
+        "negative_marker_vocab_size": 5,
+        "positive_labels": "warm supportive voice",
+        "positive_marker_vocab_size": 6,
+        "task_kinds": "coding|factual|math|planning|science|writing",
+        "trait": "warm_supportive_voice"
+      }
+    ],
+    "selection_rule": "deterministic per-trait cap by stable hash; full keeps all rows unless --max-examples overrides",
+    "source_path": "/content/labs/interpretability/data/persona_register_pairs.csv",
+    "trait_cap": 0
+  },
+  "injection_layer": 7,
+  "mean_opposite_steering_style_delta_max_dose": -0.25,
+  "mean_random_auc_best_depth": 0.5875,
+  "mean_random_steering_style_delta_max_dose": -0.125,
+  "mean_real_auc_best_depth": 1.0,
+  "mean_real_selectivity_vs_random": 0.4125,
+  "mean_real_selectivity_vs_shuffled": 0.4375,
+  "mean_shuffled_auc_best_depth": 0.5625,
+  "mean_shuffled_steering_style_delta_max_dose": 0.0,
+  "mean_trait_steering_content_delta_max_dose": 0.0,
+  "mean_trait_steering_style_delta_max_dose": 0.0,
+  "model_id": "allenai/Olmo-3-7B-Instruct",
+  "museum_roleplay_default_slope": -0.0008,
+  "museum_roleplay_persona_slope": 0.0008,
+  "museum_roleplay_random_slope": -0.0042,
+  "museum_roleplay_trace_gap_vs_random": 0.005,
+  "n_eval_rows": 8,
+  "n_rows": 24,
+  "refusal_boundary_slope": -0.0907,
+  "register_switch_technical_slope": -0.0031,
+  "selectivity_ok": true,
+  "steering_dose_fractions": [
+    0.0,
+    0.35,
+    0.7
+  ],
+  "steering_ok": false,
+  "steering_specificity_gap_vs_best_control": 0.0,
+  "stream_depth_convention": "bench streams[k]: 0 = embeddings, k = residual after k blocks; steering into block layer uses layer = depth - 1",
+  "technical_register_content_delta": 0.0,
+  "technical_register_style_delta": 0.0,
+  "train_selection_score_best_depth": 0.3594,
+  "traits": [
+    "character_museum_guide",
+    "honest_disagreement",
+    "technical_register",
+    "warm_supportive_voice"
+  ],
+  "verdict": "decodable_but_not_steerable_by_this_run"
+}

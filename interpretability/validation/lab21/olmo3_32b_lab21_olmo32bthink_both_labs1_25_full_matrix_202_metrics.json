@@ -1,0 +1,54 @@
+{
+  "base_instruct_peak": {
+    "half_peak_last_depth": "",
+    "n_depths": 0,
+    "peak_depth": "",
+    "peak_value": ""
+  },
+  "boundary_safe_peak": {
+    "half_peak_last_depth": 64,
+    "n_depths": 65,
+    "peak_depth": 64,
+    "peak_value": 1.167
+  },
+  "chat_format_peak": {
+    "half_peak_last_depth": 64,
+    "n_depths": 65,
+    "peak_depth": 64,
+    "peak_value": 2.5139
+  },
+  "comparison_model_id": "allenai/Olmo-3-1025-7B",
+  "erosion_has_external_result": false,
+  "forced_prefix_peak": {
+    "half_peak_last_depth": 64,
+    "n_depths": 520,
+    "peak_depth": 64,
+    "peak_value": 2.2158
+  },
+  "identity_comparison_smoke": false,
+  "lora_peak": {},
+  "lora_status_counts": {
+    "no_adapter_sources": 1
+  },
+  "model_id": "allenai/Olmo-3-32B-Think",
+  "modes": [
+    "lora",
+    "safety_depth"
+  ],
+  "n_adapter_sources": 0,
+  "n_boundary_safe_rows": 390,
+  "n_chat_control_rows": 390,
+  "n_depth_disagreement_rows": 4,
+  "n_forced_prefix_rows": 9750,
+  "n_lora_layer_rows": 0,
+  "n_lora_matrix_rows": 0,
+  "n_lora_module_rows": 0,
+  "n_lora_phase_rows": 0,
+  "n_refusal_provenance_rows": 65,
+  "n_safety_divergence_rows": 990,
+  "n_safety_pairs": 6,
+  "n_safety_signal_rows": 65,
+  "n_training_depth_evidence_rows": 9,
+  "private_answer_key_access_verdict": "public_or_adapter_only",
+  "wrapper_ablation_has_external_result": false
+}

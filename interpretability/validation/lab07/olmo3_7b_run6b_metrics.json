@@ -1,0 +1,40 @@
+{
+  "baseline_refusal_rate_benign": 0.2083,
+  "best_injection_layer": 20,
+  "bridge_answer_bias_span_logits": 14.1119,
+  "bridge_eval_split": "held-out truth pairs from truth_cities.csv",
+  "bridge_random_answer_bias_span_logits": 2.875,
+  "bridge_signed_truth_margin_span_logits": 4.6875,
+  "bridge_verdict": "decodable-and-steers-True-assent",
+  "direction_stream_depth": 21,
+  "eval_prompts_used": 24,
+  "false_first_token_piece": "False",
+  "false_token_ids_for_readout": [
+    4139
+  ],
+  "max_induced_refusal_benign": 1.0,
+  "max_random_induced_refusal_benign": 0.125,
+  "model_id": "allenai/Olmo-3-7B-Instruct",
+  "prompt_set": "full",
+  "reference_activation_norm": 27.6017,
+  "refusal_monitor_auc": 1.0,
+  "refusal_pairs_used": 28,
+  "sentiment_pairs_used": 28,
+  "track_a_drift_delta_at_max_dose": -0.4167,
+  "track_a_effect_over_random_at_max_dose": 0.541,
+  "track_a_effect_over_shuffled_at_max_dose": 0.4819,
+  "track_a_fluency_delta_at_max_dose": -1.5697,
+  "track_a_negative_swing": -0.2362,
+  "track_a_positive_swing": 0.3048,
+  "true_first_token_piece": "True",
+  "true_token_ids_for_readout": [
+    2575
+  ],
+  "truth_direction_provenance": {
+    "found": false,
+    "note": "no Lab 4 truth_direction.pt found; recomputed on current model only"
+  },
+  "truth_pairs_heldout": 19,
+  "truth_pairs_train": 29,
+  "truth_pairs_used": 48
+}

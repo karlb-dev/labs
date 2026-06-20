@@ -1,0 +1,7 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,proposed_label,n_features,median_held_out_auc,max_held_out_auc,median_fire_fraction,n_survived,n_narrowed,n_token_feature,n_polysemantic,n_killed,n_silent
+lab8,lab08_tiera_labs1_25_full_matrix_20260615_000508,gpt2,,a,float32,none,small,4,0,12,768,chemistry,1,0.3538,0.3538,0.4452,0,0,0,1,0,0
+lab8,lab08_tiera_labs1_25_full_matrix_20260615_000508,gpt2,,a,float32,none,small,4,0,12,768,code,11,0.5343,0.7105,0.11587,0,1,0,4,6,0
+lab8,lab08_tiera_labs1_25_full_matrix_20260615_000508,gpt2,,a,float32,none,small,4,0,12,768,cooking,1,0.2465,0.2465,0.40997,0,0,0,1,0,0
+lab8,lab08_tiera_labs1_25_full_matrix_20260615_000508,gpt2,,a,float32,none,small,4,0,12,768,finance,1,0.491,0.491,0.00261,0,0,0,0,1,0
+lab8,lab08_tiera_labs1_25_full_matrix_20260615_000508,gpt2,,a,float32,none,small,4,0,12,768,law,10,0.5,0.7703,0.00039,0,1,0,1,8,0
+lab8,lab08_tiera_labs1_25_full_matrix_20260615_000508,gpt2,,a,float32,none,small,4,0,12,768,weather,1,0.4754,0.4754,0.51435,0,0,0,1,0,0

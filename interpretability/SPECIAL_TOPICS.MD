@@ -1,10 +1,10 @@
-# Special Topics Plan: Labs 26-35
+# Special Topics Plan: Labs 26-36
 
 **Status:** canonical build plan, 2026-06-14  
 **Source drafts:** `temp/special_topics.md` and `temp/course_review.md`  
 **Position:** third sequence after Labs 1-25  
 
-This document is the working plan for Labs 26-35. It keeps the structure of
+This document is the working plan for Labs 26-36. It keeps the structure of
 the original special-topics draft, applies the course-review feedback, and
 updates Lab 26 to match the first implementation: residual-stream resampling
 with formal hypothesis specs, counterexamples, and a v2 refinement loop.
@@ -16,7 +16,7 @@ make the course stricter.
 instrument -> measurement -> control -> intervention -> artifact -> caveat -> claim ledger
 ```
 
-Labs 26-35 ask whether students can design new interpretability experiments,
+Labs 26-36 ask whether students can design new interpretability experiments,
 evaluate automated tools, handle negative results, and ship reproducible audit
 packages other people can inspect.
 
@@ -43,13 +43,13 @@ Applied changes:
   path-specific scrubbing in Lab 27.
 - Make counterexamples and v2 hypothesis refinement first-class artifacts.
 - Add safety status artifacts for preference, multimodal, tool-use, organism,
-  and generated-text labs.
+  report-channel, and generated-text labs.
 - Add route labels so instructors can decide what is core, recommended,
   optional, or extension.
 
 ## Evidence Tags
 
-| Tag | Use in Labs 26-35 |
+| Tag | Use in Labs 26-36 |
 |---|---|
 | `OBS` | trajectories, correlations, geometry, timing, descriptive readouts |
 | `ATTR` | direct attribution, path scores, edge ledgers, model-diff feature contributions |
@@ -131,6 +131,7 @@ Every run summary should include:
 | 33 | Multimodal Mechanistic Interpretability | Do text and image features meet in shared mechanisms? | `OBS + DECODE + CAUSAL` | extension |
 | 34 | Tool Use, Agents, and State Tracking | What internal signals precede tool calls, memory reads, and action choice? | `OBS + DECODE + CAUSAL + SELF-REPORT` | optional |
 | 35 | Reproducible Interpretability Paper Capstone | Can a student ship a preregistered, reproducible, adversarially reviewed study? | `AUDIT + FORMAL` | capstone |
+| 36 | Severance Report-Channel Verification | Are self-reports functionally coupled to hidden interventions, or mostly generated from visible context and direct steering? | `DECODE + CAUSAL + SELF-REPORT + AUDIT` | extension |
 
 ## Build Order
 
@@ -138,14 +139,14 @@ The default build order is sequential, because the labs depend conceptually on
 each other:
 
 ```text
-26 -> 27 -> 28 -> 29 -> 30 -> 31 -> 32 -> 33 -> 34 -> 35
+26 -> 27 -> 28 -> 29 -> 30 -> 31 -> 32 -> 33 -> 34 -> 35 -> 36
 ```
 
 If we need to prioritize research value over strict order, Lab 28 can move
 ahead of Labs 29-31. The review specifically identified Lab 26 and Lab 28 as
 high-value additions because they deepen causal claims.
 
-Before Labs 29-35, add lightweight shared helpers where practical:
+Before Labs 29-36, add lightweight shared helpers where practical:
 
 ```text
 interpkit/artifacts.py       # optional extraction target; do not block Lab 27
@@ -998,6 +999,132 @@ There is no fixed plot suite, but the package must include:
 - one control/specificity plot;
 - one failure-case or counterexample plot.
 
+## Lab 36: Severance Report-Channel Verification
+
+### Core Question
+
+Are the model's first-person report tokens mechanically coupled to hidden
+internal-state interventions, or do they mostly narrate prompt context, visible
+output, and direct steering pressure?
+
+Lab 36 is a report-channel lab, not a consciousness lab. The runnable question
+is whether a report channel is counterfactually controlled by hidden variables
+under matched-output and content-blind controls.
+
+### Why It Belongs Here
+
+Earlier labs teach students to find directions, decode states, steer behavior,
+and interpret generated explanations with skepticism. Lab 36 combines those
+threads into a stricter question:
+
+```text
+hidden state intervention -> matched controls -> report-channel readout -> counterexample ledger
+```
+
+The main deflationary twin is that the model reports a concept because the
+intervention directly nudges the same output channel used for ordinary
+generation. The lab therefore separates decodability, potency, report steering,
+source monitoring, and anomaly monitoring.
+
+### Required Tracks
+
+| Track | Role | Claim ceiling |
+|---|---|---|
+| Instrument proof | Hook, lens, KV replay, token-label, leakage, position, and batch-shape checks. | Plumbing only. |
+| Cartography | Patchscope-lite logit-lens readouts for self/user/assistant/control tokens. | `OBS` only. |
+| Direction build | Train-split contrast directions for state families. | `DECODE`, not report access. |
+| B2 concept-report screen | Inject a state direction and test whether report text moves above controls. | Report steering; propagation-explicable. |
+| B3 certainty bridge | Move reported confidence without matching entropy or correctness movement. | Functional confidence-report bridge only. |
+| B4 matched-output source attribution | Teacher-force identical visible answers while hidden KV routes differ. | Co-headline functional source monitoring. |
+| B5 insertion-presence detection | Ask for a content-blind yes/no detection of an unusual hidden insertion. | Co-headline functional anomaly monitoring. |
+| C localization | Patch/project out sites only after an effect exists or a potent null needs localization. | `LOCALIZED` only. |
+
+B2 is deliberately not headline evidence. It shows that report text can be
+steered by a hidden vector; ordinary activation propagation can explain that.
+Stronger evidence requires B4 or B5.
+
+### Data
+
+The frozen Lab 36 data live under:
+
+```text
+severance/data/
+  introspection_queries.csv
+  source_attribution_prompts.csv
+  injection_detection_prompts.csv
+  uncertainty_questions.csv
+  patchscope_prompts.csv
+  semantic_judge_rubric.md
+  MANIFEST.json
+```
+
+The deterministic generator is:
+
+```text
+severance/data/make_severance_lab36_data.py
+```
+
+The prompt sets should stay small enough for Tier A smoke and 7B/32B pilots,
+but must preserve train/validation/heldout split discipline. Directions are fit
+on train only; heldout results are headline results and cannot be retuned after
+inspection.
+
+### Main Artifacts
+
+```text
+method_card.md
+find_the_wire_report.md
+diagnostics/hook_parity.json
+diagnostics/kv_replay_parity.json
+diagnostics/self_check_status.json
+diagnostics/warning_summary.csv
+tables/evidence_matrix.csv
+tables/source_attribution_results.csv
+tables/injection_detection_results.csv
+tables/failure_specimens.md
+plots/overview_dashboard.png
+plots/plot_manifest.json
+state/directions.pt
+state/direction_manifest.json
+state/frozen_eval_configs.json
+```
+
+### Controls
+
+Minimum controls include zero/no-op, opposite direction, random direction,
+shuffled direction, wrong-concept direction, wrong-layer supporting direction,
+row-randomized hidden source labels, teacher-forced matched visible answers,
+and a sentinel B5 variant that checks whether decision-token positives collapse
+when the hidden insertion is moved upstream.
+
+### Claim Grammar
+
+Allowed:
+
+```text
+DECODE + POTENT + SELF-REPORT + AUDIT: The hidden state was decodable and
+behaviorally potent, but matched-output source attribution and/or content-blind
+insertion detection did or did not survive the controls in this run.
+```
+
+Also allowed:
+
+```text
+This run supports or fails to support functional coupling between hidden
+interventions and report text under matched-output and content-blind controls.
+```
+
+Forbidden:
+
+```text
+The model is conscious, unconscious, introspecting phenomenally, or incapable
+of experience.
+```
+
+Generated report/source/detection text must be treated as triage until blind
+human labeling calibrates the scoring. The overview dashboard is not a
+benchmark score; it is a compact audit map.
+
 ## Shared Data And Generator Plan
 
 Create deterministic generators as each lab is implemented:
@@ -1011,6 +1138,7 @@ data/make_auto_interp_feature_tasks.py
 data/make_preference_circuit_pairs.py
 data/make_multimodal_concept_pairs.py
 data/make_tool_use_tasks.py
+severance/data/make_severance_lab36_data.py
 ```
 
 Every generator should update `data/MANIFEST.json` and record:
@@ -1063,9 +1191,9 @@ reviewer_label
 agreement_status
 ```
 
-Applies by default to Labs 31, 32, 34, and 35, and to any Lab 28/33 mode that
-scores generations or captions. This extends the review recommendation for
-Labs 10, 16, 17, 18, 22, 24, and 25.
+Applies by default to Labs 31, 32, 34, 35, and 36, and to any Lab 28/33 mode
+that scores generations or captions. This extends the review recommendation
+for Labs 10, 16, 17, 18, 22, 24, and 25.
 
 ## Safety Artifacts
 
@@ -1089,7 +1217,7 @@ the run summary must say so near the top.
 
 ## Reading Spine
 
-Students should read these before or during Labs 26-35:
+Students should read these before or during Labs 26-36:
 
 1. Pearl, selected causality chapters.
 2. Geiger et al., causal abstraction.
@@ -1111,8 +1239,10 @@ Students should read these before or during Labs 26-35:
 18. Radford et al., CLIP.
 19. OpenAI, multimodal neurons.
 20. Sharkey et al., open problems in mechanistic interpretability.
+21. Work on self-reports as behavioral evidence and the limits of generated
+    explanations.
 
-## End State After Lab 35
+## End State After Lab 36
 
 A student who completes the third sequence should be able to:
 
@@ -1125,13 +1255,15 @@ A student who completes the third sequence should be able to:
 - adapt the toolkit to multimodal and tool-use settings;
 - preregister an interpretability claim;
 - survive adversarial review;
-- produce a reproducible artifact package.
+- produce a reproducible artifact package;
+- separate report steering from source or anomaly monitoring before making
+  claims about generated self-reports.
 
 The final sentence students should be able to defend is:
 
 ```text
 This is the hypothesis my instrument was built to test, this is the
 intervention that tried to kill it, this is the counterexample I found, and
-this is the smaller claim that survived.
+this is the smaller claim that survived. This report text is evidence only for
+the functional channel I actually tested.
 ```
-
