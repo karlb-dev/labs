@@ -57,3 +57,25 @@ This pack prefers the newest broad validation artifacts available in the local r
 - This is a curated validation pack, not a complete raw-results archive.
 - Prefer the source run directory when auditing exact configs, seeds, prompts, or full tables.
 - Older runs are intentionally de-emphasized when newer validation/rerun artifacts exist.
+
+## 2026-06-20 Fair-Shot Update
+
+The Lab 19 instrument was updated after audit:
+
+- same-dimensional model pairs now use shared side initialization, so identity-pair smoke runs no longer invent side-specific features from unrelated random initialization;
+- random-direction controls now distinguish `matched_shared_direction` from the deliberately harsher `independent_side_directions` diagnostic;
+- prompt groups now split into train/dev/test, with test used for reported reconstruction and stability;
+- a deterministic v2 prompt inventory was added at `data/model_diffing_prompt_inventory_v2.csv` with 96 raw prompt groups and runtime paired chat variants.
+
+Current fair-shot summary: `fairshot_20260620_summary.csv`.
+
+Key current runs:
+
+| Run | Read |
+|---|---|
+| `lab19_fairshot_tiera_identity_v2_plots_20260620` | Identity smoke passes the repaired specificity control: all 48 features are shared; matched-random false-specific rate is 0.0. |
+| `lab19_fairshot_olmo3_medium_edit_v2_20260620` | OLMo base/instruct medium run reconstructs well enough, but no candidate instruct-only handles survive first-pass controls; template control dominates; optional edit is not validated by marker controls. |
+| `lab19_fairshot_olmo3_v2_full_edit_20260620` | Balanced v2 inventory gives the same scientific read: no defended instruct-only feature handle, template residue dominates, activation norm shifts are large, and causal marker specificity is 0.0. |
+| `lab19_fairshot_olmo3_v2_full_plots_20260620` | Plotted v2 evidence pack for dashboard and audit matrices. |
+
+Current conclusion: Lab 19 is now a cleaner negative/teaching result. The paired crosscoder and identity smoke are healthier, but the OLMo base-vs-instruct runs still do not license a robust model-B/instruct-only feature claim under matched controls. The strongest positive result is methodological: the repaired controls stop a false identity-pair failure and make the negative easier to trust.

@@ -1,0 +1,90 @@
+{
+  "audit_status": "template_control_dominates",
+  "causal_marker_verdict": "not_validated_by_marker_control",
+  "causal_validation_status": {
+    "ran": 30
+  },
+  "comparison_model_source": {
+    "source": "registry:compare_model_tier_b"
+  },
+  "d_model_a": 4096,
+  "d_model_b": 4096,
+  "depth_a": 21,
+  "depth_b": 21,
+  "eval_fvu_model_a": 0.5026,
+  "eval_fvu_model_b": 0.6113,
+  "fvu_model_a": 0.1635,
+  "fvu_model_b": 0.2178,
+  "identity_pair": false,
+  "identity_pair_asymmetric_share": 0.7422,
+  "identity_pair_model_specific_share": 0.0,
+  "l1_weight": 0.0018,
+  "mean_pair_feature_density": 0.4142,
+  "mean_side_feature_density_a": 0.4358,
+  "mean_side_feature_density_b": 0.4358,
+  "model_a": "allenai/Olmo-3-1025-7B",
+  "model_a_revision": null,
+  "model_a_role": "model_a",
+  "model_b": "allenai/Olmo-3-7B-Instruct",
+  "model_b_revision": null,
+  "model_b_role": "instruct",
+  "n_dev_prompts": 38,
+  "n_features": 128,
+  "n_gallery_rows": 144,
+  "n_prompts": 192,
+  "n_template_dominated_model_b_features": 98,
+  "n_test_prompts": 38,
+  "n_train_prompts": 116,
+  "prompt_inventory": {
+    "cap": 0,
+    "counts_by_family": {
+      "assistant_voice": 16,
+      "code_help": 16,
+      "factual_qa": 16,
+      "instruction_following": 16,
+      "math_reasoning": 16,
+      "persona_register": 16,
+      "refusal_boundary": 16,
+      "stepwise_planning": 16,
+      "style_rewrite": 16,
+      "summarization": 16,
+      "sycophancy_pressure": 16,
+      "uncertainty_honesty": 16
+    },
+    "counts_by_source": {
+      "model_diffing_prompt_inventory_v2.csv": 192
+    },
+    "counts_by_variant": {
+      "compare_chat": 96,
+      "raw": 96
+    },
+    "custom_path": "data/model_diffing_prompt_inventory_v2.csv",
+    "n_prompts": 192,
+    "prompt_inventory_sha256": "1e56017bf3703ad9157fcba1f6f400fd050904ac4a8af808359458c93dbb6165",
+    "selection_rule": "stable mixed-family cap after prompt_group/variant/text dedupe",
+    "source_mode": "custom"
+  },
+  "random_baseline_control_kind": "matched_shared_direction",
+  "random_baseline_model_a_specific_rate": 0.0,
+  "random_baseline_model_a_specific_rate_independent": 0.0078,
+  "random_baseline_model_a_specific_rate_matched": 0.0,
+  "random_baseline_model_b_specific_rate": 0.0039,
+  "random_baseline_model_b_specific_rate_independent": 0.0039,
+  "random_baseline_model_b_specific_rate_matched": 0.0039,
+  "report_split": "test",
+  "role_taxonomy_counts": {
+    "asymmetric": 95,
+    "shared": 33
+  },
+  "same_d_model_shared_side_initialization": true,
+  "side_recon_weight": 0.35,
+  "stream_convention": "streams[k] is pre-norm residual after k blocks; steering at layer k writes into streams[k + 1].",
+  "taxonomy_counts": {
+    "asymmetric": 95,
+    "shared": 33
+  },
+  "tier_a_note": "Identity-pair or tiny-model smoke runs prove plumbing, not science.",
+  "train_fvu_model_a": 0.0025,
+  "train_fvu_model_b": 0.0022,
+  "train_steps": 420
+}

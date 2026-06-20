@@ -410,5 +410,31 @@
     "rows": 240,
     "sha256": "a6324141f57a3539f5d7aa82456226c51271aabb569dc2acfa24a9654b2734fa",
     "verified_tokenizers": []
+  },
+  "model_diffing_prompt_inventory_v2.csv": {
+    "generator": "make_model_diffing_prompts.py",
+    "rows": 96,
+    "prompt_groups": 96,
+    "runtime_rows_after_also_chat": 192,
+    "families": {
+      "assistant_voice": 8,
+      "code_help": 8,
+      "factual_qa": 8,
+      "instruction_following": 8,
+      "math_reasoning": 8,
+      "persona_register": 8,
+      "refusal_boundary": 8,
+      "stepwise_planning": 8,
+      "style_rewrite": 8,
+      "summarization": 8,
+      "sycophancy_pressure": 8,
+      "uncertainty_honesty": 8
+    },
+    "variants": {
+      "raw": 96,
+      "compare_chat": "rendered at runtime by Lab 19"
+    },
+    "sha256": "eff48cf6ce2e7aec0ed828ec2da95ed9b04672aab967e439a52bbeef576d9784",
+    "safety_notes": "benign synthetic prompts; no live data download; chat variants are rendered locally by the selected comparison tokenizer"
   }
 }

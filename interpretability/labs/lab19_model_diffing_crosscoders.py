@@ -45,7 +45,9 @@ LEARNING_RATE = 2e-3
 L1_WEIGHT = 1.8e-3
 SIDE_RECON_WEIGHT = 0.35
 WEIGHT_DECAY = 1e-5
-EVAL_FRACTION = 0.25
+DEV_FRACTION = 0.20
+TEST_FRACTION = 0.20
+REPORT_SPLIT = "test"
 
 GALLERY_FEATURES = 24
 GALLERY_CONTEXTS = 6
@@ -721,14 +723,38 @@ def make_split(prompts: Sequence[PromptItem], seed: int) -> dict[str, list[int]]
     for i, item in enumerate(prompts):
         groups[item.prompt_group].append(i)
     ordered_groups = sorted(groups, key=lambda g: stable_hash_int(f"{seed}:{g}"))
-    n_eval_groups = max(1, int(round(len(ordered_groups) * EVAL_FRACTION))) if len(ordered_groups) > 3 else 1
-    eval_groups = set(ordered_groups[:n_eval_groups])
-    eval_idx = sorted(i for g in eval_groups for i in groups[g])
-    train_idx = sorted(i for g in groups if g not in eval_groups for i in groups[g])
+    n_groups = len(ordered_groups)
+    if n_groups <= 2:
+        n_test_groups = 1
+        n_dev_groups = 0
+    elif n_groups <= 5:
+        n_test_groups = 1
+        n_dev_groups = 1
+    else:
+        n_test_groups = max(1, int(round(n_groups * TEST_FRACTION)))
+        n_dev_groups = max(1, int(round(n_groups * DEV_FRACTION)))
+        if n_test_groups + n_dev_groups >= n_groups:
+            n_test_groups = 1
+            n_dev_groups = 1
+    test_groups = set(ordered_groups[:n_test_groups])
+    dev_groups = set(ordered_groups[n_test_groups:n_test_groups + n_dev_groups])
+    train_idx = sorted(i for g in groups if g not in test_groups and g not in dev_groups for i in groups[g])
+    dev_idx = sorted(i for g in dev_groups for i in groups[g])
+    test_idx = sorted(i for g in test_groups for i in groups[g])
     if len(train_idx) < 4 and len(prompts) >= 8:
-        eval_idx = sorted(i for i in range(len(prompts)) if i % 4 == 0)
-        train_idx = sorted(i for i in range(len(prompts)) if i not in set(eval_idx))
-    return {"train": train_idx, "eval": eval_idx}
+        test_idx = sorted(i for i in range(len(prompts)) if i % 5 == 0)
+        dev_idx = sorted(i for i in range(len(prompts)) if i % 5 == 1)
+        heldout = set(test_idx) | set(dev_idx)
+        train_idx = sorted(i for i in range(len(prompts)) if i not in heldout)
+    return {"train": train_idx, "dev": dev_idx, REPORT_SPLIT: test_idx}
+
+
+def split_indices(split: Mapping[str, Sequence[int]], name: str) -> list[int]:
+    return list(split.get(name, []))
+
+
+def report_indices(split: Mapping[str, Sequence[int]]) -> list[int]:
+    return split_indices(split, REPORT_SPLIT) or split_indices(split, "eval") or split_indices(split, "dev")
 
 
 def split_rows(prompts: Sequence[PromptItem], split: Mapping[str, Sequence[int]]) -> list[dict[str, Any]]:
@@ -928,11 +954,20 @@ class PairedCrosscoder:
         g = torch.Generator(device="cpu").manual_seed(seed)
         scale_a = 1.0 / math.sqrt(max(1, d_a))
         scale_b = 1.0 / math.sqrt(max(1, d_b))
-        self.W_a = torch.randn(d_a, n_features, generator=g) * scale_a
-        self.W_b = torch.randn(d_b, n_features, generator=g) * scale_b
+        self.shared_side_initialization = bool(d_a == d_b)
+        if self.shared_side_initialization:
+            w = torch.randn(d_a, n_features, generator=g) * scale_a
+            d = torch.randn(n_features, d_a, generator=g) * scale_a
+            self.W_a = w.clone()
+            self.W_b = w.clone()
+            self.D_a = d.clone()
+            self.D_b = d.clone()
+        else:
+            self.W_a = torch.randn(d_a, n_features, generator=g) * scale_a
+            self.W_b = torch.randn(d_b, n_features, generator=g) * scale_b
+            self.D_a = torch.randn(n_features, d_a, generator=g) * scale_a
+            self.D_b = torch.randn(n_features, d_b, generator=g) * scale_b
         self.b = torch.zeros(n_features)
-        self.D_a = torch.randn(n_features, d_a, generator=g) * scale_a
-        self.D_b = torch.randn(n_features, d_b, generator=g) * scale_b
         for p in self.parameters():
             p.requires_grad_(True)
 
@@ -970,6 +1005,7 @@ class PairedCrosscoder:
         clone.b = self.b.detach().cpu()
         clone.D_a = self.D_a.detach().cpu()
         clone.D_b = self.D_b.detach().cpu()
+        clone.shared_side_initialization = self.shared_side_initialization
         return clone
 
 
@@ -1024,7 +1060,7 @@ def train_crosscoder(ctx: bench.RunContext, acts: PairActivations, seed: int) ->
     xa = norm["xa"]
     xb = norm["xb"]
     train_idx = acts.split.get("train") or list(range(xa.shape[0]))
-    eval_idx = acts.split.get("eval") or []
+    eval_idx = report_indices(acts.split)
     n_features = crosscoder_features(ctx.args, len(train_idx))
     model = PairedCrosscoder(xa.shape[1], xb.shape[1], n_features, torch, seed)
     device = torch.device("cpu")
@@ -1082,6 +1118,7 @@ def train_crosscoder(ctx: bench.RunContext, acts: PairActivations, seed: int) ->
             "train_steps": steps,
             "l1_weight": L1_WEIGHT,
             "side_recon_weight": SIDE_RECON_WEIGHT,
+            "same_d_model_shared_side_initialization": bool(model.shared_side_initialization),
             "train_fvu_model_a": rounded(fvu(xa[train_tensor], model.decode_a(train_z))),
             "train_fvu_model_b": rounded(fvu(xb[train_tensor], model.decode_b(train_z))),
             "eval_fvu_model_a": rounded(fvu(xa[eval_tensor], model.decode_a(eval_z))) if eval_idx else None,
@@ -1147,7 +1184,9 @@ def feature_taxonomy_rows(
     dec_norm_b = torch.linalg.vector_norm(dec_b_resid, dim=1)
     rows: list[dict[str, Any]] = []
     train = split.get("train", [])
-    eval_idx = split.get("eval", [])
+    dev_idx = split_indices(split, "dev")
+    eval_idx = report_indices(split)
+    report_split = REPORT_SPLIT if split.get(REPORT_SPLIT) else ("eval" if split.get("eval") else "dev")
     for fid in range(z_a.shape[1]):
         a_vals = [float(x) for x in z_a[:, fid].tolist()]
         b_vals = [float(x) for x in z_b[:, fid].tolist()]
@@ -1164,6 +1203,7 @@ def feature_taxonomy_rows(
         fam_b, fam_conc_b = top_concentration(b_vals, prompts, "family")
         var_b, var_conc_b = top_concentration(b_vals, prompts, "variant")
         train_activity = safe_fmean([pair_vals[i] for i in train], 0.0) if train else float("nan")
+        dev_activity = safe_fmean([pair_vals[i] for i in dev_idx], 0.0) if dev_idx else float("nan")
         eval_activity = safe_fmean([pair_vals[i] for i in eval_idx], 0.0) if eval_idx else float("nan")
         rows.append({
             "feature_id": fid,
@@ -1185,7 +1225,9 @@ def feature_taxonomy_rows(
             "top_model_b_variant": var_b,
             "top_model_b_variant_concentration": rounded(var_conc_b),
             "train_pair_activity": rounded(train_activity),
+            "dev_pair_activity": rounded(dev_activity),
             "eval_pair_activity": rounded(eval_activity),
+            "report_split": report_split,
             "eval_over_train_activity": rounded(eval_activity / train_activity if train_activity > 1e-9 and math.isfinite(eval_activity) else float("nan")),
             "audit_flag_template_concentrated": bool(var_conc_b >= 0.75 and var_b == "compare_chat"),
             "audit_flag_family_concentrated": bool(fam_conc_b >= 0.75),
@@ -1207,7 +1249,9 @@ def feature_stability_rows(taxonomy: Sequence[Mapping[str, Any]]) -> list[dict[s
             "taxonomy": row["taxonomy"],
             "role_taxonomy": row["role_taxonomy"],
             "train_pair_activity": row["train_pair_activity"],
+            "dev_pair_activity": row.get("dev_pair_activity", ""),
             "eval_pair_activity": row["eval_pair_activity"],
+            "report_split": row.get("report_split", ""),
             "eval_over_train_activity": row["eval_over_train_activity"],
             "top_model_b_family": row["top_model_b_family"],
             "top_model_b_family_concentration": row["top_model_b_family_concentration"],
@@ -1291,31 +1335,56 @@ def random_feature_baseline_rows(acts: PairActivations, seed: int, n_draws: int 
     import torch
 
     g = torch.Generator(device="cpu").manual_seed(seed + 19019)
-    xa = acts.x_a
-    xb = acts.x_b
+    norm = normalized_train_eval(acts)
+    xa = norm["xa"]
+    xb = norm["xb"]
+    same_dim = xa.shape[1] == xb.shape[1]
     rows: list[dict[str, Any]] = []
     for draw in range(n_draws):
+        controls: list[tuple[str, Any, Any]] = []
         va = torch.randn(xa.shape[1], generator=g)
-        vb = torch.randn(xb.shape[1], generator=g)
         va = va / va.norm().clamp_min(1e-9)
+        if same_dim:
+            controls.append(("matched_shared_direction", va, va.clone()))
+        vb = torch.randn(xb.shape[1], generator=g)
         vb = vb / vb.norm().clamp_min(1e-9)
-        za = torch.relu(xa @ va)
-        zb = torch.relu(xb @ vb)
-        a_mean = float(za.mean())
-        b_mean = float(zb.mean())
-        total = a_mean + b_mean
-        share_b = b_mean / total if total > 1e-9 else float("nan")
-        corr = pearson([float(x) for x in za.tolist()], [float(x) for x in zb.tolist()])
-        rows.append({
-            "draw": draw,
-            "activation_mean_model_a": rounded(a_mean),
-            "activation_mean_model_b": rounded(b_mean),
-            "model_b_activation_share": rounded(share_b),
-            "activation_correlation_a_b": rounded(corr),
-            "would_look_model_b_specific": bool(math.isfinite(share_b) and share_b >= 0.72),
-            "would_look_model_a_specific": bool(math.isfinite(share_b) and share_b <= 0.28),
-        })
+        controls.append(("independent_side_directions", va, vb))
+        for control_kind, dir_a, dir_b in controls:
+            za = torch.relu(xa @ dir_a)
+            zb = torch.relu(xb @ dir_b)
+            a_mean = float(za.mean())
+            b_mean = float(zb.mean())
+            total = a_mean + b_mean
+            share_b = b_mean / total if total > 1e-9 else float("nan")
+            corr = pearson([float(x) for x in za.tolist()], [float(x) for x in zb.tolist()])
+            rows.append({
+                "draw": draw,
+                "control_kind": control_kind,
+                "activation_space": "train-normalized residual activations",
+                "activation_mean_model_a": rounded(a_mean),
+                "activation_mean_model_b": rounded(b_mean),
+                "model_b_activation_share": rounded(share_b),
+                "activation_correlation_a_b": rounded(corr),
+                "would_look_model_b_specific": bool(math.isfinite(share_b) and share_b >= 0.72),
+                "would_look_model_a_specific": bool(math.isfinite(share_b) and share_b <= 0.28),
+            })
     return rows
+
+
+def preferred_random_control_kind(rows: Sequence[Mapping[str, Any]]) -> str:
+    kinds = {str(row.get("control_kind", "")) for row in rows}
+    if "matched_shared_direction" in kinds:
+        return "matched_shared_direction"
+    return "independent_side_directions"
+
+
+def random_specific_rate(rows: Sequence[Mapping[str, Any]], side: str = "model_b", *, control_kind: str | None = None) -> float:
+    kind = control_kind or preferred_random_control_kind(rows)
+    key = "would_look_model_b_specific" if side == "model_b" else "would_look_model_a_specific"
+    sub = [r for r in rows if str(r.get("control_kind", "")) == kind]
+    if not sub and kind == "independent_side_directions":
+        sub = [r for r in rows if not str(r.get("control_kind", ""))]
+    return safe_fmean(float(r.get(key) is True) for r in sub)
 
 
 def voice_marker_rows(prompts: Sequence[PromptItem]) -> list[dict[str, Any]]:
@@ -1889,7 +1958,7 @@ def lab19_feature_audit_matrix(
                 "candidate_model_b_handle": "candidate model-B-skewed feature handle after controls; inspect gallery before naming",
                 "template_residue_candidate": "likely chat-template or rendering residue; name it narrowly",
                 "family_specific_candidate": "candidate prompt-family feature, not general model-role feature",
-                "train_only_unstable": "activity does not transfer to eval split",
+                "train_only_unstable": "activity does not transfer to the held-out report split",
                 "candidate_shared_handle": "shared feature coordinate, useful as anchor/control",
                 "candidate_model_a_handle": "candidate model-A-skewed feature handle",
                 "asymmetric_or_unclear": "asymmetry needs more controls before naming",
@@ -1904,8 +1973,9 @@ def lab19_taxonomy_control_summary(audit_rows: Sequence[Mapping[str, Any]], rand
     by_role: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
     for row in audit_rows:
         by_role[str(row.get("role_taxonomy", row.get("taxonomy", "")))].append(row)
-    random_b_rate = safe_fmean(float(r.get("would_look_model_b_specific") is True) for r in random_rows)
-    random_a_rate = safe_fmean(float(r.get("would_look_model_a_specific") is True) for r in random_rows)
+    control_kind = preferred_random_control_kind(random_rows)
+    random_b_rate = random_specific_rate(random_rows, "model_b", control_kind=control_kind)
+    random_a_rate = random_specific_rate(random_rows, "model_a", control_kind=control_kind)
     out: list[dict[str, Any]] = []
     for role, rows in sorted(by_role.items()):
         out.append({
@@ -1917,6 +1987,7 @@ def lab19_taxonomy_control_summary(audit_rows: Sequence[Mapping[str, Any]], rand
             "train_only_unstable": sum(1 for r in rows if r.get("audit_posture") == "train_only_unstable"),
             "median_model_b_activation_share": rounded(statistics.median([_lab19_float(r.get("model_b_activation_share")) for r in rows if math.isfinite(_lab19_float(r.get("model_b_activation_share")))] or [float("nan")])),
             "median_template_gap": rounded(statistics.median([_lab19_float(r.get("abs_template_gap")) for r in rows if math.isfinite(_lab19_float(r.get("abs_template_gap")))] or [float("nan")])),
+            "random_baseline_control_kind": control_kind,
             "random_baseline_model_b_specific_rate": rounded(random_b_rate),
             "random_baseline_model_a_specific_rate": rounded(random_a_rate),
         })
@@ -2009,15 +2080,18 @@ def lab19_evidence_matrix(
     counts = metrics.get("taxonomy_counts", {}) or {}
     nonshared = n_features - int(counts.get("shared", 0) or 0) - int(counts.get("dead", 0) or 0)
     identity = bool(metrics.get("identity_pair"))
-    identity_status = "skipped" if not identity else ("pass" if n_features and nonshared / max(1, n_features) <= 0.35 else "fail")
+    model_specific = int(counts.get("model_a_only", 0) or 0) + int(counts.get("model_b_only", 0) or 0)
+    model_specific_share = model_specific / max(1, n_features)
+    asymmetric_share = int(counts.get("asymmetric", 0) or 0) / max(1, n_features)
+    identity_status = "skipped" if not identity else ("pass" if model_specific_share <= 0.15 else "fail")
     rows.append({
         "evidence_object": "identity_pair_smoke",
         "rung": "instrument control",
-        "headline_metric": "nonshared feature share" if identity else "not identity pair",
-        "value": rounded(nonshared / max(1, n_features)) if identity else "",
+        "headline_metric": "model-specific feature share" if identity else "not identity pair",
+        "value": rounded(model_specific_share) if identity else "",
         "status": identity_status,
         "artifact": "plots/identity_smoke_scorecard.png",
-        "claim_boundary": "If identical models yield many model-specific features, the microscope is fogged.",
+        "claim_boundary": f"If identical models yield model-specific features, the microscope is fogged. Asymmetric-share diagnostic: {rounded(asymmetric_share) if identity else ''}.",
     })
     candidate_b = sum(1 for r in audit_rows if r.get("audit_posture") == "candidate_model_b_handle")
     rows.append({
@@ -2049,11 +2123,12 @@ def lab19_evidence_matrix(
         "artifact": "plots/feature_context_atlas.png",
         "claim_boundary": "A family-only feature is a valid narrow result, not a default assistant voice claim.",
     })
-    random_rate = safe_fmean(float(r.get("would_look_model_b_specific") is True) for r in random_rows)
+    random_control_kind = str(metrics.get("random_baseline_control_kind") or preferred_random_control_kind(random_rows))
+    random_rate = random_specific_rate(random_rows, "model_b", control_kind=random_control_kind)
     rows.append({
         "evidence_object": "random_direction_exclusivity",
         "rung": "null control",
-        "headline_metric": "random model-B-specific rate",
+        "headline_metric": f"random model-B-specific rate ({random_control_kind})",
         "value": rounded(random_rate),
         "status": "pass" if math.isfinite(random_rate) and random_rate <= 0.10 else ("warning" if math.isfinite(random_rate) and random_rate <= 0.25 else "fail"),
         "artifact": "plots/feature_exclusivity_histogram.png",
@@ -2180,10 +2255,23 @@ def plot_exclusivity(ctx: bench.RunContext, taxonomy: Sequence[Mapping[str, Any]
     fig, ax = bench.new_figure(figsize=(8.9, 5.0))
     vals = [_lab19_float(r.get("model_b_activation_share")) for r in taxonomy]
     vals = [v for v in vals if math.isfinite(v)]
-    rand = [_lab19_float(r.get("model_b_activation_share")) for r in random_rows]
-    rand = [v for v in rand if math.isfinite(v)]
+    rand_pref = [
+        _lab19_float(r.get("model_b_activation_share"))
+        for r in random_rows
+        if str(r.get("control_kind", "")) == preferred_random_control_kind(random_rows)
+    ]
+    rand_pref = [v for v in rand_pref if math.isfinite(v)]
+    rand_ind = [
+        _lab19_float(r.get("model_b_activation_share"))
+        for r in random_rows
+        if str(r.get("control_kind", "")) == "independent_side_directions"
+    ]
+    rand_ind = [v for v in rand_ind if math.isfinite(v)]
+    rand = rand_pref or rand_ind
+    if rand_ind and rand_pref and preferred_random_control_kind(random_rows) != "independent_side_directions":
+        ax.hist(rand_ind, bins=22, alpha=0.18, label="independent side null", color="#777777")
     if rand:
-        ax.hist(rand, bins=22, alpha=0.32, label="random directions", color=lab19_color("random"))
+        ax.hist(rand, bins=22, alpha=0.32, label=f"{preferred_random_control_kind(random_rows)} null", color=lab19_color("random"))
         for q, ls in [(0.05, ":"), (0.95, ":")]:
             idx = max(0, min(len(rand) - 1, int(round(q * (len(rand) - 1)))))
             ax.axvline(sorted(rand)[idx], color=lab19_color("random"), linestyle=ls, linewidth=1.1, alpha=0.75)
@@ -2196,7 +2284,7 @@ def plot_exclusivity(ctx: bench.RunContext, taxonomy: Sequence[Mapping[str, Any]
     ax.set_ylabel("feature / random-direction count")
     ax.set_title("Feature exclusivity versus random-direction baseline")
     _lab19_style_ax(ax, legend=True)
-    bench.save_figure(ctx, fig, "feature_exclusivity_histogram.png", "Histogram of feature model-B activation shares with random-direction baseline and exclusivity thresholds.")
+    bench.save_figure(ctx, fig, "feature_exclusivity_histogram.png", "Histogram of feature model-B activation shares with matched/independent random-direction baselines and exclusivity thresholds.")
 
 
 def plot_crosscoder_reconstruction(ctx: bench.RunContext, metrics: Mapping[str, Any]) -> None:
@@ -2552,17 +2640,24 @@ def plot_identity_smoke_scorecard(ctx: bench.RunContext, metrics: Mapping[str, A
         return
     n_features = int(metrics.get("n_features") or len(audit_rows) or 0)
     counts = metrics.get("taxonomy_counts", {}) or {}
-    nonshared = n_features - int(counts.get("shared", 0) or 0) - int(counts.get("dead", 0) or 0)
-    nonshared_share = nonshared / max(1, n_features)
+    model_specific = int(counts.get("model_a_only", 0) or 0) + int(counts.get("model_b_only", 0) or 0)
+    model_specific_share = model_specific / max(1, n_features)
+    asymmetric_share = int(counts.get("asymmetric", 0) or 0) / max(1, n_features)
+    shared_or_dead_share = max(0.0, 1.0 - model_specific_share - asymmetric_share)
     fig, ax = bench.new_figure(figsize=(7.2, 4.2))
-    ax.bar(["shared/dead", "nonshared"], [1 - nonshared_share, nonshared_share], color=[lab19_color("shared"), lab19_color("warning" if nonshared_share <= 0.35 else "fail")])
-    ax.axhline(0.35, color=lab19_color("warning"), linestyle="--", linewidth=1.0, label="warning threshold")
+    ax.bar(
+        ["shared/dead", "asymmetric", "false specific"],
+        [shared_or_dead_share, asymmetric_share, model_specific_share],
+        color=[lab19_color("shared"), lab19_color("warning"), lab19_color("fail" if model_specific_share > 0.15 else "pass")],
+    )
+    ax.axhline(0.15, color=lab19_color("fail"), linestyle="--", linewidth=1.0, label="false-specific fail threshold")
+    ax.axhline(0.50, color=lab19_color("warning"), linestyle=":", linewidth=1.0, label="asymmetry warning threshold")
     ax.set_ylim(0, 1)
     ax.set_ylabel("share of features")
     ax.set_title("Identity-pair smoke scorecard")
-    ax.text(0.5, 0.88, "healthy: mostly shared or dead", transform=ax.transAxes, ha="center", fontsize=9)
+    ax.text(0.5, 0.88, "healthy: no false model-specific features; low asymmetry is better", transform=ax.transAxes, ha="center", fontsize=9)
     _lab19_style_ax(ax, legend=True)
-    bench.save_figure(ctx, fig, "identity_smoke_scorecard.png", "Identity-pair scorecard showing whether the dictionary invents model-specific features when the models are identical.")
+    bench.save_figure(ctx, fig, "identity_smoke_scorecard.png", "Identity-pair scorecard separating false model-specific features from weaker asymmetry warnings.")
 
 
 def plot_model_diffing_evidence_dashboard(
@@ -2633,16 +2728,22 @@ def audit_status(metrics: Mapping[str, Any]) -> str:
     counts = metrics.get("taxonomy_counts", {}) or {}
     role_counts = metrics.get("role_taxonomy_counts", {}) or {}
     n_features = int(metrics.get("n_features") or 0)
-    nonshared = n_features - int(counts.get("shared", 0) or 0) - int(counts.get("dead", 0) or 0)
+    model_specific = int(counts.get("model_a_only", 0) or 0) + int(counts.get("model_b_only", 0) or 0)
+    model_specific_share = model_specific / max(1, n_features)
+    asymmetric_share = int(counts.get("asymmetric", 0) or 0) / max(1, n_features)
     try:
         eval_fvu = max(float(metrics.get("eval_fvu_model_a") or 0.0), float(metrics.get("eval_fvu_model_b") or 0.0))
     except Exception:
         eval_fvu = float("nan")
     template_warning = int(metrics.get("n_template_dominated_model_b_features") or 0)
-    if identity and n_features and nonshared / n_features > 0.35:
-        return "identity_pair_failed_or_dictionary_unstable"
     if math.isfinite(eval_fvu) and eval_fvu > 0.75:
         return "weak_reconstruction"
+    if identity and n_features and model_specific_share > 0.15:
+        return "identity_pair_failed_false_specific_features"
+    if identity and n_features and asymmetric_share > 0.50:
+        return "identity_pair_passed_specificity_but_asymmetric_dictionary"
+    if identity:
+        return "identity_pair_passed_specificity_control"
     if template_warning > max(2, 0.25 * n_features):
         return "template_control_dominates"
     if int(counts.get("model_b_only", 0) or 0) > 0 or any("instruct_only" in str(k) and int(v) > 0 for k, v in role_counts.items()):
@@ -2663,8 +2764,10 @@ def write_card(ctx: bench.RunContext, metrics: Mapping[str, Any]) -> None:
         f"- identity-pair smoke run: `{metrics.get('identity_pair')}`",
         f"- stream depths: A={metrics.get('depth_a')}, B={metrics.get('depth_b')}",
         f"- crosscoder features: {metrics.get('n_features')}",
+        f"- train/dev/test prompt rows: {metrics.get('n_train_prompts')} / {metrics.get('n_dev_prompts')} / {metrics.get('n_test_prompts')}",
         f"- eval FVU A/B: {metrics.get('eval_fvu_model_a')} / {metrics.get('eval_fvu_model_b')}",
         f"- taxonomy counts: `{metrics.get('taxonomy_counts')}`",
+        f"- random baseline control: `{metrics.get('random_baseline_control_kind')}`; B-specific rate={metrics.get('random_baseline_model_b_specific_rate')}",
         "",
         "## Claim posture",
         "",
@@ -2695,6 +2798,7 @@ def write_report(ctx: bench.RunContext, metrics: Mapping[str, Any]) -> None:
         f"- Model A: `{metrics.get('model_a')}` ({metrics.get('model_a_role')})",
         f"- Model B: `{metrics.get('model_b')}` ({metrics.get('model_b_role')})",
         f"- Prompt rows: {metrics.get('n_prompts')}",
+        f"- Train/dev/test prompt rows: {metrics.get('n_train_prompts')} / {metrics.get('n_dev_prompts')} / {metrics.get('n_test_prompts')}",
         f"- Stream depths: A={metrics.get('depth_a')}, B={metrics.get('depth_b')}",
         f"- Features: {metrics.get('n_features')}",
         f"- Identity-pair smoke: {metrics.get('identity_pair')}",
@@ -2711,6 +2815,8 @@ def write_report(ctx: bench.RunContext, metrics: Mapping[str, Any]) -> None:
         f"- Role taxonomy counts: `{metrics.get('role_taxonomy_counts')}`",
         f"- Template-dominated model-B features: {metrics.get('n_template_dominated_model_b_features')}",
         f"- Random-direction model-B-specific baseline rate: {metrics.get('random_baseline_model_b_specific_rate')}",
+        f"- Random baseline control kind: `{metrics.get('random_baseline_control_kind')}`",
+        f"- Identity false-specific/asymmetric shares: {metrics.get('identity_pair_model_specific_share')} / {metrics.get('identity_pair_asymmetric_share')}",
         "",
         "## Optional causal validation",
         "",
@@ -2735,6 +2841,7 @@ def write_run_summary(ctx: bench.RunContext, metrics: Mapping[str, Any]) -> None
         f"- model B: `{metrics.get('model_b')}` ({metrics.get('model_b_role')})",
         f"- identity-pair smoke: {metrics.get('identity_pair')}",
         f"- prompt rows: {metrics.get('n_prompts')}",
+        f"- train/dev/test prompt rows: {metrics.get('n_train_prompts')} / {metrics.get('n_dev_prompts')} / {metrics.get('n_test_prompts')}",
         f"- selected stream depths: A={metrics.get('depth_a')}, B={metrics.get('depth_b')}",
         f"- features: {metrics.get('n_features')}",
         f"- eval FVU A/B: {metrics.get('eval_fvu_model_a')} / {metrics.get('eval_fvu_model_b')}",
@@ -2776,10 +2883,12 @@ def write_operationalization_audit(ctx: bench.RunContext, metrics: Mapping[str, 
         "",
         f"- audit status: `{metrics.get('audit_status')}`",
         f"- identity-pair smoke: `{metrics.get('identity_pair')}`",
-        f"- train/eval FVU A: {metrics.get('train_fvu_model_a')} / {metrics.get('eval_fvu_model_a')}",
-        f"- train/eval FVU B: {metrics.get('train_fvu_model_b')} / {metrics.get('eval_fvu_model_b')}",
+        f"- train/test FVU A: {metrics.get('train_fvu_model_a')} / {metrics.get('eval_fvu_model_a')}",
+        f"- train/test FVU B: {metrics.get('train_fvu_model_b')} / {metrics.get('eval_fvu_model_b')}",
         f"- template-dominated model-B features: {metrics.get('n_template_dominated_model_b_features')}",
+        f"- random baseline control kind: `{metrics.get('random_baseline_control_kind')}`",
         f"- random baseline model-B-specific rate: {metrics.get('random_baseline_model_b_specific_rate')}",
+        f"- identity false-specific/asymmetric shares: {metrics.get('identity_pair_model_specific_share')} / {metrics.get('identity_pair_asymmetric_share')}",
         "",
         "## Allowed claim",
         "",
@@ -2841,7 +2950,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     split_path = ctx.path("diagnostics", "split_audit.csv")
     bench.write_csv_with_context(ctx, split_path, split_rows(prompts, split))
-    ctx.register_artifact(split_path, "diagnostic", "Prompt-group train/eval split for crosscoder training and stability checks.")
+    ctx.register_artifact(split_path, "diagnostic", "Prompt-group train/dev/test split for crosscoder training and held-out stability checks.")
 
     manifest_path = ctx.path("diagnostics", "frozen_prompt_manifest.json")
     bench.write_json(manifest_path, prompt_info)
@@ -2916,7 +3025,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     crosscoder, train_metrics, stats, curve = train_crosscoder(ctx, acts, int(args.seed))
     curve_path = ctx.path("tables", "crosscoder_training_curve.csv")
     bench.write_csv_with_context(ctx, curve_path, curve)
-    ctx.register_artifact(curve_path, "table", "Crosscoder training curve with train/eval reconstruction FVU and feature density.")
+    ctx.register_artifact(curve_path, "table", "Crosscoder training curve with train/test reconstruction FVU and feature density.")
 
     taxonomy = feature_taxonomy_rows(crosscoder, stats, prompts, split, role_a, role_b)
     taxonomy_path = ctx.path("tables", "feature_taxonomy.csv")
@@ -2929,7 +3038,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     stability = feature_stability_rows(taxonomy)
     stability_path = ctx.path("tables", "feature_eval_stability.csv")
     bench.write_csv_with_context(ctx, stability_path, stability)
-    ctx.register_artifact(stability_path, "table", "Feature train/eval activity and concentration warnings.")
+    ctx.register_artifact(stability_path, "table", "Feature train/dev/test activity and concentration warnings.")
 
     gallery = gallery_rows(taxonomy, stats, prompts)
     gallery_path = ctx.path("tables", "feature_context_gallery.csv")
@@ -3032,16 +3141,35 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     taxonomy_counts = dict(Counter(row["taxonomy"] for row in taxonomy))
     role_taxonomy_counts = dict(Counter(row["role_taxonomy"] for row in taxonomy))
     template_dominated = [r for r in template_rows if r.get("template_dominated_warning")]
-    model_b_specific_random_rate = safe_fmean(float(r.get("would_look_model_b_specific") is True) for r in random_rows)
+    random_control_kind = preferred_random_control_kind(random_rows)
+    model_b_specific_random_rate = random_specific_rate(random_rows, "model_b", control_kind=random_control_kind)
+    model_a_specific_random_rate = random_specific_rate(random_rows, "model_a", control_kind=random_control_kind)
+    independent_b_rate = random_specific_rate(random_rows, "model_b", control_kind="independent_side_directions")
+    independent_a_rate = random_specific_rate(random_rows, "model_a", control_kind="independent_side_directions")
+    matched_b_rate = random_specific_rate(random_rows, "model_b", control_kind="matched_shared_direction")
+    matched_a_rate = random_specific_rate(random_rows, "model_a", control_kind="matched_shared_direction")
+    model_specific_count = int(taxonomy_counts.get("model_a_only", 0) or 0) + int(taxonomy_counts.get("model_b_only", 0) or 0)
     metrics = {
         **pair_info,
         **train_metrics,
         "n_prompts": len(prompts),
+        "n_train_prompts": len(split.get("train", [])),
+        "n_dev_prompts": len(split.get("dev", [])),
+        "n_test_prompts": len(split.get(REPORT_SPLIT, [])),
+        "report_split": REPORT_SPLIT,
         "taxonomy_counts": taxonomy_counts,
         "role_taxonomy_counts": role_taxonomy_counts,
         "n_gallery_rows": len(gallery),
         "n_template_dominated_model_b_features": len(template_dominated),
+        "identity_pair_model_specific_share": rounded(model_specific_count / max(1, len(taxonomy))),
+        "identity_pair_asymmetric_share": rounded(int(taxonomy_counts.get("asymmetric", 0) or 0) / max(1, len(taxonomy))),
+        "random_baseline_control_kind": random_control_kind,
         "random_baseline_model_b_specific_rate": rounded(model_b_specific_random_rate),
+        "random_baseline_model_a_specific_rate": rounded(model_a_specific_random_rate),
+        "random_baseline_model_b_specific_rate_matched": rounded(matched_b_rate),
+        "random_baseline_model_a_specific_rate_matched": rounded(matched_a_rate),
+        "random_baseline_model_b_specific_rate_independent": rounded(independent_b_rate),
+        "random_baseline_model_a_specific_rate_independent": rounded(independent_a_rate),
         "causal_validation_status": dict(Counter(row.get("status", "") for row in causal_rows)),
         "causal_marker_verdict": causal_manifest.get("marker_based_verdict", causal_manifest.get("status")),
     }
