@@ -1,0 +1,6 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,blind_id,behavioral_recall,internals_recall,delta_recall,behavioral_false_positives,internals_false_positives,delta_false_positives,verdict
+lab23,lab23_gemma4e4b_blind_labs1_25_local_reruns_20260615_101609,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,blind_0938bf5a16b605,,,0.0,0,0,0,awaiting_unseal
+lab23,lab23_gemma4e4b_blind_labs1_25_local_reruns_20260615_101609,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,blind_1e5b32ce20ee8d,,,0.0,0,0,0,awaiting_unseal
+lab23,lab23_gemma4e4b_blind_labs1_25_local_reruns_20260615_101609,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,blind_9e0fb20882c211,,,0.0,0,0,0,awaiting_unseal
+lab23,lab23_gemma4e4b_blind_labs1_25_local_reruns_20260615_101609,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,blind_a57c432fda71aa,,,0.0,0,0,0,awaiting_unseal
+lab23,lab23_gemma4e4b_blind_labs1_25_local_reruns_20260615_101609,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,blind_dc706426fdc831,,,0.0,0,0,0,awaiting_unseal

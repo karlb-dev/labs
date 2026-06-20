@@ -1,0 +1,6 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,blind_id,behavioral_recall,internals_recall,delta_recall,behavioral_false_positives,internals_false_positives,delta_false_positives,verdict
+lab23,lab23_olmo32bthink_blind_labs1_25_local_reruns_20260615_101609,allenai/Olmo-3-32B-Think,,c,bfloat16,none,full,0,0,64,5120,blind_3adc3ba165c005,,,0.0,0,0,0,awaiting_unseal
+lab23,lab23_olmo32bthink_blind_labs1_25_local_reruns_20260615_101609,allenai/Olmo-3-32B-Think,,c,bfloat16,none,full,0,0,64,5120,blind_564d16738e6bda,,,0.0,0,0,0,awaiting_unseal
+lab23,lab23_olmo32bthink_blind_labs1_25_local_reruns_20260615_101609,allenai/Olmo-3-32B-Think,,c,bfloat16,none,full,0,0,64,5120,blind_64854caa0cc2a8,,,0.0,0,0,0,awaiting_unseal
+lab23,lab23_olmo32bthink_blind_labs1_25_local_reruns_20260615_101609,allenai/Olmo-3-32B-Think,,c,bfloat16,none,full,0,0,64,5120,blind_db62027e60d3ec,,,0.0,0,0,0,awaiting_unseal
+lab23,lab23_olmo32bthink_blind_labs1_25_local_reruns_20260615_101609,allenai/Olmo-3-32B-Think,,c,bfloat16,none,full,0,0,64,5120,blind_e3c3e7ac825fb8,,,0.0,0,0,0,awaiting_unseal
