@@ -1,0 +1,8 @@
+source_label,model_id,mode,n_items,n_direction_rows,n_generation_rows,n_source_rows,n_confidence_rows,verdict,target_direction_detection_rate,mean_control_floor,target_minus_control_floor,max_detection_slope,grounding_pass_rate,source_attribution_accuracy,main_report_prompt_leak_rate,diagnostic_grounded_prompt_leak_rate,certainty_bridge_status,self_report_generation_protocol
+olmo3_7b_full_initial,allenai/Olmo-3-7B-Instruct,both,24,8,192,60,24,not_run_or_no_detection,0.0,0.0,0.0,0.0,0.0,0.25,0.0,1.0,compatible,separate_open_report_and_neutral_behavior_prompts
+olmo3_7b_full,allenai/Olmo-3-7B-Instruct,both,24,8,192,60,24,not_run_or_no_detection,0.0,0.0,0.0,0.0,0.0,0.4667,0.0,1.0,compatible,separate_open_report_and_neutral_behavior_prompts
+olmo3_7b_source_only,allenai/Olmo-3-7B-Instruct,attribution,24,8,0,60,0,not_run_or_no_detection,,,,,,0.2833,0.0,1.0,not_run,separate_open_report_and_neutral_behavior_prompts
+olmo3_7b_source_rubric,allenai/Olmo-3-7B-Instruct,attribution,24,8,0,60,0,not_run_or_no_detection,,,,,,0.4667,0.0,1.0,not_run,separate_open_report_and_neutral_behavior_prompts
+smollm_smoke_initial,HuggingFaceTB/SmolLM2-135M-Instruct,both,4,4,32,10,0,not_run_or_no_detection,0.0,0.0,0.0,0.0,0.0,0.0,0.25,1.0,incompatible_d_model:4096!=576,separate_open_report_and_neutral_behavior_prompts
+smollm_smoke_noleak,HuggingFaceTB/SmolLM2-135M-Instruct,both,4,4,32,10,0,not_run_or_no_detection,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,incompatible_d_model:4096!=576,separate_open_report_and_neutral_behavior_prompts
+smollm_smoke_tiny,HuggingFaceTB/SmolLM2-135M-Instruct,both,1,1,8,5,0,not_run_or_no_detection,0.0,0.0,0.0,0.0,0.0,0.2,0.0,1.0,incompatible_d_model:4096!=576,separate_open_report_and_neutral_behavior_prompts

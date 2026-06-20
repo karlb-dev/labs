@@ -1,0 +1,361 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,item_id,target_concept,prompt_role,render_mode,rendered_hash,user_prompt_hash,token_count,decoded_tail,contains_target_marker_or_name,contains_wrong_marker_or_name,report_leak_risk,main_report_channel
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_commute_eval,calm,positive,chat_template,bcb729dd8db4,791bc48b69d7,63," patient calm and steady reassurance: The bus is running ten minutes late.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_commute_eval,calm,negative,chat_template,56b61446ff3c,57c2257a6e48,61," answer with cheerful excitement and delight: The bus is running ten minutes late.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_commute_eval,calm,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_commute_eval,calm,grounded_report_before_output,chat_template,2ee125bb840e,311e5894bd2c,155," ordinary request in one short sentence: Write one sentence about waiting for transportation.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_commute_eval,calm,behavior,chat_template,285ba64095e9,3900b2891a5e,64,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_library_train_b,calm,positive,chat_template,19209803e795,684aaf2b0c6f,63," a quiet, measured, soothing tone: The library room is almost empty.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_library_train_b,calm,negative,chat_template,cdd5c02e86b2,d245362bbd81,63," a delighted, happy, cheerful tone: The library room is almost empty.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_library_train_b,calm,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_library_train_b,calm,grounded_report_before_output,chat_template,4347e8aa62eb,4156932aca21,156," request in one short sentence: Write one sentence about sitting down to read.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_library_train_b,calm,behavior,chat_template,f5cfe0b1951e,9f86808b5d46,65,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_morning_train_a,calm,positive,chat_template,a4d22ffbfeca,ae80639b019b,64,", steady, peaceful composure: The morning schedule is full but manageable.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_morning_train_a,calm,negative,chat_template,edd80118ead2,8b555956508c,62," with joyful delight and cheerful excitement: The morning schedule is full but manageable.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_morning_train_a,calm,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_morning_train_a,calm,grounded_report_before_output,chat_template,ed43cb2bb77e,556ee1920cff,156," request in one short sentence: Write one sentence about checking a daily schedule.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm_morning_train_a,calm,behavior,chat_template,31df27d10278,3071f8aece9a,65,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_message_eval,joy,positive,chat_template,9da07a481eec,69e5a4048cc0,61," answer with bright joy and gladness: A friend sent unexpectedly good news.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_message_eval,joy,negative,chat_template,ab4643d1ce74,cb1de4471d08,61," answer with calm patience and steady balance: A friend sent unexpectedly good news.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_message_eval,joy,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_message_eval,joy,grounded_report_before_output,chat_template,1bed5043b23f,0db1c9572d61,156," request in one short sentence: Write one sentence about receiving a short message.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_message_eval,joy,behavior,chat_template,6417b36c86ab,63293de375cd,65,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_note_train_a,joy,positive,chat_template,a0d30f08494b,4e32f1db415a,66,", and cheerful relief: A lost note was found inside an old book.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_note_train_a,joy,negative,chat_template,ce9dc4b8908a,83ec5fd979ab,67," and steady composure: A lost note was found inside an old book.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_note_train_a,joy,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_note_train_a,joy,grounded_report_before_output,chat_template,c5a5cbc3004d,98fcfa7bd11f,159," short sentence: Write one sentence about finding a small object you had misplaced.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_note_train_a,joy,behavior,chat_template,2531f8514e8d,b33e2dfb6e26,68,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_plan_train_b,joy,positive,chat_template,e7a7b8449d32,4eb881760b5a,61," answer with happy enthusiasm and delight: The project finally worked after many attempts.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_plan_train_b,joy,negative,chat_template,fa639b93c277,e9963d3e8ac3,63," peaceful steadiness and no excitement: The project finally worked after many attempts.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_plan_train_b,joy,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_plan_train_b,joy,grounded_report_before_output,chat_template,7202409d65b9,c58bc7fbb825,157," in one short sentence: Write one sentence about completing a small household task.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy_plan_train_b,joy,behavior,chat_template,293f91dd3598,2354f96c1ed0,66,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_battery_train_b,plain_register,positive,chat_template,388cd28a6b34,4c263aa61286,61," answer with direct everyday wording and no specialized terms: The battery needs charging.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_battery_train_b,plain_register,negative,chat_template,a63e5d97fa05,ab4efd9a039c,60," to answer with precise formal terminology and operational details: The battery needs charging.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_battery_train_b,plain_register,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_battery_train_b,plain_register,grounded_report_before_output,chat_template,ac977632e91b,c381a1402a79,158," in one short sentence: Write one sentence about plugging in a device.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_battery_train_b,plain_register,behavior,chat_template,d8e7d1373d57,33fea06498e6,66,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_manual_train_a,plain_register,positive,chat_template,eb91d84c8776,293fd6d22e86,64,", simple, everyday language: A manual explains how to assemble a shelf.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_manual_train_a,plain_register,negative,chat_template,d6e65818b99c,9a670863578d,67," with terms and implementation constraints: A manual explains how to assemble a shelf.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_manual_train_a,plain_register,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_manual_train_a,plain_register,grounded_report_before_output,chat_template,08a99efbe9fe,da23e555d222,155," this ordinary request in one short sentence: Write one sentence about following instructions.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_manual_train_a,plain_register,behavior,chat_template,504da0500071,756abc6044d8,63,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_map_eval,plain_register,positive,chat_template,97ad7073118f,944f2da268b8,65,", direct, everyday register: A map shows where the nearest station is.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_map_eval,plain_register,negative,chat_template,779f98a09a76,0cf454b760d4,66," register with definitions and constraints: A map shows where the nearest station is.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_map_eval,plain_register,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_map_eval,plain_register,grounded_report_before_output,chat_template,e57af3868061,bf3f4a5c0993,155," this ordinary request in one short sentence: Write one sentence about checking directions.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_map_eval,plain_register,behavior,chat_template,6b00e7dcfb0b,d5a15642a889,63,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_cache_eval,technical_register,positive,chat_template,da71306a929b,d5d59a892a4e,65," language with configuration details: A cache stores recent results to reduce repeated work.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_cache_eval,technical_register,negative,chat_template,4695fe3789d8,55f94a2193a1,63," plain everyday language with no jargon: A cache keeps useful things nearby.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_cache_eval,technical_register,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_cache_eval,technical_register,grounded_report_before_output,chat_template,96e488054327,a71e9448e3fa,159," one short sentence: Explain why a checklist can prevent mistakes in one sentence.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_cache_eval,technical_register,behavior,chat_template,4b724db7748c,37e83910e8bb,68,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_router_train_a,technical_register,positive,chat_template,995b2bd5536e,9de1aa114474,69,", constraints, and implementation details: A router forwards packets across a network.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_router_train_a,technical_register,negative,chat_template,eb28d44e7802,00dcaa056428,67," with simple words and minimal jargon: A router helps devices talk online.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_router_train_a,technical_register,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_router_train_a,technical_register,grounded_report_before_output,chat_template,54bd04c0f2f0,f41d3a999cea,159," one short sentence: Explain why a kitchen timer is useful in one sentence.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_router_train_a,technical_register,behavior,chat_template,2826bf8fb784,f25835511b25,68,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_sensor_train_b,technical_register,positive,chat_template,a33630b94634,2ad8d8ef3ff0,68,", thresholds, and system behavior: A sensor records temperature once per second.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_sensor_train_b,technical_register,negative,chat_template,1518f0c9ab03,3571a2c3ea49,62," in plain language using everyday wording: A sensor checks how warm something is.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_sensor_train_b,technical_register,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_sensor_train_b,technical_register,grounded_report_before_output,chat_template,fec5fb578a51,6450217072b3,159," one short sentence: Write one sentence about a small device on a desk.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_sensor_train_b,technical_register,behavior,chat_template,be24c54b066c,992f58df5266,67,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_balcony_train_a,gardening_topic,positive,chat_template,7a39e3e14869,37bf5fbccb01,67," seedlings, pruning, and watering: A balcony has two empty pots.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_balcony_train_a,gardening_topic,negative,chat_template,11f386ce6d22,2143f3654e48,64,", clouds, wind, and forecasts: A balcony has two empty pots.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_balcony_train_a,gardening_topic,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_balcony_train_a,gardening_topic,grounded_report_before_output,chat_template,de34d50c2880,05423ee3d78b,159," in one short sentence: Write one sentence about planning a small home project.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_balcony_train_a,gardening_topic,behavior,chat_template,21c12141e03a,7d94c536cd9c,66,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_seed_eval,gardening_topic,positive,chat_template,9e92516514d1,e40f6b090cd3,66,", watering, and plant care: A small packet arrived in the mail.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_seed_eval,gardening_topic,negative,chat_template,95b54347a542,435b06dcc9dd,65," wind, rain, and forecasts: A small packet arrived in the mail.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_seed_eval,gardening_topic,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_seed_eval,gardening_topic,grounded_report_before_output,chat_template,303b9beb0a70,53531310387b,157," ordinary request in one short sentence: Write one sentence about opening a package.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_seed_eval,gardening_topic,behavior,chat_template,23f4fb019791,1d5ba5d4f995,64,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_tools_train_b,gardening_topic,positive,chat_template,2b81ba9d3eee,e2f99db45a44,68," seedlings, and watering: A shelf holds a small set of tools.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_tools_train_b,gardening_topic,negative,chat_template,4ae50df27254,7b0d024f2fdf,66,", temperature, and forecasts: A shelf holds a small set of tools.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_tools_train_b,gardening_topic,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_tools_train_b,gardening_topic,grounded_report_before_output,chat_template,b450f8acdb1b,55d93760fbab,159," in one short sentence: Write one sentence about arranging tools on a shelf.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_tools_train_b,gardening_topic,behavior,chat_template,b932ac14fbc5,51536b78190a,66,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_commute_eval,weather_topic,positive,chat_template,eb373073b138,0d1c74cb6d29,65,", clouds, and possible rain: A commuter is deciding what to carry.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_commute_eval,weather_topic,negative,chat_template,82f315c29332,f3ba865b2594,65,", seedlings, and watering: A commuter is deciding what to carry.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_commute_eval,weather_topic,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_commute_eval,weather_topic,grounded_report_before_output,chat_template,93f076f9bca2,abbca5652a6f,157," ordinary request in one short sentence: Write one sentence about packing a bag.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_commute_eval,weather_topic,behavior,chat_template,06f9dd91a6eb,2b3ccf306050,64,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_walk_train_a,weather_topic,positive,chat_template,a64021cca834,9c50f99384f2,66,", wind, and changing skies: A person is planning a short walk.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_walk_train_a,weather_topic,negative,chat_template,567cf8666e9e,2a7aefb1967a,66,"lings, pruning, and watering: A person is planning a short walk.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_walk_train_a,weather_topic,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_walk_train_a,weather_topic,grounded_report_before_output,chat_template,4b1f1f000432,671990a1a738,158," request in one short sentence: Write one sentence about planning a weekend activity.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_walk_train_a,weather_topic,behavior,chat_template,2684e78d644b,48e96577e02e,65,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_window_train_b,weather_topic,positive,chat_template,e4e00ecc16a3,3e5045d0a910,65," rain, wind, and temperature changes: A window was left slightly open.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_window_train_b,weather_topic,negative,chat_template,a6702f58477a,2eb1a421ada2,66," roots, seedlings, and watering: A window was left slightly open.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_window_train_b,weather_topic,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_window_train_b,weather_topic,grounded_report_before_output,chat_template,a665502ea05a,318b946b5e7b,159," in one short sentence: Write one sentence about checking something before leaving home.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_window_train_b,weather_topic,behavior,chat_template,defc63208d81,78f12bcc525a,66,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_calendar_train_b,playful_voice,positive,chat_template,2ca0df658404,8566c105e725,63," fun, lively, imaginative phrasing: The calendar has one blank square.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_calendar_train_b,playful_voice,negative,chat_template,834df9a0e2f5,ec4e0d5a0188,61," answer with gentle, supportive reassurance: The calendar has one blank square.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_calendar_train_b,playful_voice,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_calendar_train_b,playful_voice,grounded_report_before_output,chat_template,fbd6c5572b90,7c79038806ae,162," short sentence: Write one sentence about choosing a date for an errand.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_calendar_train_b,playful_voice,behavior,chat_template,e5e7635a3ffc,b9dc93520ef3,68,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_mug_eval,playful_voice,positive,chat_template,b347a59f1c95,b25110dc2892,65,"ical, lively, playful voice: A mug sits beside a closed laptop.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_mug_eval,playful_voice,negative,chat_template,519b2cddd21f,d4e43f3188cf,64," warm, kind, supportive voice: A mug sits beside a closed laptop.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_mug_eval,playful_voice,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_mug_eval,playful_voice,grounded_report_before_output,chat_template,225d1937ec68,a7066465b79a,160," in one short sentence: Write one sentence about a mug on a table.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_mug_eval,playful_voice,behavior,chat_template,d699dfe58d1a,6b4da8ab3a98,66,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_pencil_train_a,playful_voice,positive,chat_template,42dfcc7a1ea8,cc61ac861724,65,", whimsical, lively voice: A pencil is waiting on a desk.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_pencil_train_a,playful_voice,negative,chat_template,cac53b7eb9f0,cb6564a5d05e,64," warm, supportive, reassuring voice: A pencil is waiting on a desk.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_pencil_train_a,playful_voice,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_pencil_train_a,playful_voice,grounded_report_before_output,chat_template,219fb813a400,b728555d3996,157," this ordinary request in one short sentence: Describe a pencil in one sentence.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_pencil_train_a,playful_voice,behavior,chat_template,dc41fe7ddb7a,370f7ce676ec,63,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_email_eval,warm_supportive_voice,positive,chat_template,a2c5e5d59197,edb8d763b3d2,65,", reassuring, supportive voice: A person needs to send a difficult email.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_email_eval,warm_supportive_voice,negative,chat_template,0a61f3f44f1a,397a9600f463,66," playful, whimsical voice: A person needs to send a difficult email.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_email_eval,warm_supportive_voice,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_email_eval,warm_supportive_voice,grounded_report_before_output,chat_template,78601119445b,efd230ce8582,159," request in one short sentence: Write one sentence about drafting a short email.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_email_eval,warm_supportive_voice,behavior,chat_template,cfe23cd21e3f,25f892419cd1,65,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_notes_train_a,warm_supportive_voice,positive,chat_template,4e545dfb1bb9,5de96df319c0,65,", supportive, reassuring voice: Someone is trying to organize a messy notebook.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_notes_train_a,warm_supportive_voice,negative,chat_template,7801ccfafb59,4a99fb29e599,66," whimsical, lively voice: Someone is trying to organize a messy notebook.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_notes_train_a,warm_supportive_voice,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_notes_train_a,warm_supportive_voice,grounded_report_before_output,chat_template,c4a66b93a194,4393536f773a,159," request in one short sentence: Give one sentence of advice about organizing notes.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_notes_train_a,warm_supportive_voice,behavior,chat_template,6f4609e7983e,7882c955a8a0,65,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_practice_train_b,warm_supportive_voice,positive,chat_template,3fc04a947f87,7900e55b8612,62," with gentle encouragement and supportive reassurance: A student is nervous before practice.<|im_end|>
+<|im_start|>assistant
+",1,0,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_practice_train_b,warm_supportive_voice,negative,chat_template,a8be35680fc7,74cfb3fdeaea,64,", playful, whimsical phrasing: A student is nervous before practice.<|im_end|>
+<|im_start|>assistant
+",0,1,0,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_practice_train_b,warm_supportive_voice,report,chat_template,04caf8bda42c,05156d1b1dee,112," a style or topic. Use one short line beginning with `report:`.<|im_end|>
+<|im_start|>assistant
+",0,0,0,1
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_practice_train_b,warm_supportive_voice,grounded_report_before_output,chat_template,e65b62d6a636,df572d055689,161," one short sentence: Write one sentence about preparing for a short practice session.<|im_end|>
+<|im_start|>assistant
+",1,1,1,0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_practice_train_b,warm_supportive_voice,behavior,chat_template,e476751055a5,d617342a3ecc,67,"Answer normally. Do not discuss hidden mechanisms or why you answered this way.<|im_end|>
+<|im_start|>assistant
+",0,0,0,0

@@ -1,0 +1,5 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,target_concept,target_direction_report_rate_at_max_dose,zero_dose_false_report_rate,random_direction_false_report_rate,shuffled_direction_false_report_rate,wrong_direction_target_report_rate,control_floor,target_minus_control_floor,passes_specificity_gap_0p20
+lab25,smollm_smoke_noleak,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,4,0,30,576,calm,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0
+lab25,smollm_smoke_noleak,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,4,0,30,576,gardening_topic,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0
+lab25,smollm_smoke_noleak,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,4,0,30,576,plain_register,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0
+lab25,smollm_smoke_noleak,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,small,4,0,30,576,playful_voice,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0

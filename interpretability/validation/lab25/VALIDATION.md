@@ -1,69 +1,118 @@
 # Lab 25 Validation
 
-## Lab 25 - Find the Wire
+## Lab 25: Find the Wire
 
-Find the wire: injected concept states, self-report grounding, and source attribution.
+This directory is the final Lab 25 validation pack for the current repository
+code. It replaces the older June 15 validation artifacts with the repaired
+June 20, 2026 Find-the-Wire runs.
 
 ## Validation Read
 
-This pack prefers the newest broad validation artifacts available in the local runs tree: recent Lab 6 matrix/reruns where applicable, `run6` and `verify_part3` for the main course sweep, and standalone Severance reruns for Lab 36.
+The result is a clean negative, and that is the right capstone lesson. The
+repaired Lab 25 run successfully builds local concept directions and runs the
+intervention/control firewall, but it does not find a self-report wire that
+survives the current controls.
 
-- `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab25_olmo32bthink_both_labs1_25_local_reruns_20260615_101609/lab25_olmo32bthink_both_labs1_25_local_reruns_20260615_101609` (allenai/Olmo-3-32B-Think, tier c)
-  - Metrics: `n_items`=6, `certainty_bridge_status`=compatible, `grounding_pass_rate`=0.8125, `max_detection_slope`=0, `mean_control_floor`=1, `mean_selected_eval_gap`=0.1493, `mode`=both, `n_confidence_rows`=24
-  - Mode: `both`
-  - Model: `allenai/Olmo-3-32B-Think`
-  - Items: 6 selected from `/content/labs/interpretability/data/introspection_queries.csv`
-- `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab25_gemma4e4b_both_labs1_25_local_reruns_20260615_101609/lab25_gemma4e4b_both_labs1_25_local_reruns_20260615_101609` (google/gemma-4-E4B-it, tier b)
-  - Metrics: `n_items`=6, `certainty_bridge_status`=incompatible_d_model:5120!=2560, `grounding_pass_rate`=0, `max_detection_slope`=0, `mean_control_floor`=0, `mean_selected_eval_gap`=0.9987, `mode`=both, `n_confidence_rows`=0
-  - Mode: `both`
-  - Model: `google/gemma-4-E4B-it`
-  - Items: 6 selected from `/content/labs/interpretability/data/introspection_queries.csv`
-- `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab25_tierc_both_labs1_25_full_matrix_20260615_000508/lab25_tierc_both_labs1_25_full_matrix_20260615_000508` (allenai/Olmo-3-7B-Instruct, tier c)
-  - Metrics: `n_items`=6, `certainty_bridge_status`=compatible, `grounding_pass_rate`=0.1667, `max_detection_slope`=0, `mean_control_floor`=0.3333, `mean_selected_eval_gap`=0.0621, `mode`=both, `n_confidence_rows`=24
-  - Mode: `both`
-  - Model: `allenai/Olmo-3-7B-Instruct`
-  - Items: 6 selected from `/content/labs/interpretability/data/introspection_queries.csv`
-- `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab25_tiera_both_labs1_25_full_matrix_20260615_000508/lab25_tiera_both_labs1_25_full_matrix_20260615_000508` (HuggingFaceTB/SmolLM2-135M-Instruct, tier a)
-  - Metrics: `n_items`=1, `certainty_bridge_status`=incompatible_d_model:4096!=576, `grounding_pass_rate`=1, `max_detection_slope`=0, `mean_control_floor`=1, `mean_selected_eval_gap`=0.6291, `mode`=both, `n_confidence_rows`=0
-  - Mode: `both`
-  - Model: `HuggingFaceTB/SmolLM2-135M-Instruct`
-  - Items: 1 selected from `/content/labs/interpretability/data/introspection_queries.csv`
+The cleanest current claim is:
+
+```text
+Lab 25 did not validate a self-report wire under controls. It is useful as an
+audit of self-report grounding and source attribution, not as evidence that
+the model can reliably report its hidden activation cause.
+```
+
+## Headline Result
+
+The primary validation run is `olmo3_7b_full`:
+
+- Model: `allenai/Olmo-3-7B-Instruct`
+- Corpus: 24 introspection-query items
+- Concept directions: 8
+- Injection trials: 192
+- Source-attribution rows: 60
+- Verdict: `not_run_or_no_detection`
+- Target-direction detection rate: 0.0
+- Mean control floor: 0.0
+- Target minus control floor: 0.0
+- Max dose-response slope: 0.0
+- Grounding pass rate: 0.0
+- Source attribution accuracy: 0.4667
+- Main report prompt-leak rate: 0.0
+- Lab 14 certainty bridge: compatible, but parsed confidence stayed flat
+
+The evidence matrix marks every concept `not_supported`. The directions can
+produce large decode/projection gaps, but those handles do not make the model
+reliably self-report the injected cause. The source-attribution audit is also
+weak: the model is good at user-instruction attribution, decent at default
+mode, poor at system-prompt attribution, and does not correctly identify the
+activation-injection source.
+
+## Current Result Summary
+
+| Source label | Model | Scope | Main result | Read |
+|---|---|---|---|---|
+| `olmo3_7b_full` | Olmo-3-7B-Instruct | full intervention audit | target detection 0.0, grounding pass 0.0, source attribution 0.4667 | Final validation run; clean negative |
+| `olmo3_7b_source_rubric` | Olmo-3-7B-Instruct | source-attribution-only rerun | source attribution 0.4667 | Confirms the source rubric, but does not run intervention trials |
+| `smollm_smoke_noleak` | SmolLM2-135M-Instruct | small no-leak smoke | target detection 0.0, source attribution 0.0 | Prompt-leak smoke check; no positive wire signal |
+
+The broader run ledger is in `lab25_validation_summary.csv`.
 
 ## What This Lab Teaches
 
-- The central lesson is intervention hygiene: a direction or feature is only useful when benefits beat matched controls and side effects.
-- Compare the selected models rather than cherry-picking the best one; model differences are often the point of the exercise.
-
-## Selected Source Runs
-
-| Source | Model | Tier | Notes |
-|---|---|---|---|
-| `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab25_olmo32bthink_both_labs1_25_local_reruns_20260615_101609/lab25_olmo32bthink_both_labs1_25_local_reruns_20260615_101609` | `allenai/Olmo-3-32B-Think` | `c` | `n_items`=6; `certainty_bridge_status`=compatible; `grounding_pass_rate`=0.8125 |
-| `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab25_gemma4e4b_both_labs1_25_local_reruns_20260615_101609/lab25_gemma4e4b_both_labs1_25_local_reruns_20260615_101609` | `google/gemma-4-E4B-it` | `b` | `n_items`=6; `certainty_bridge_status`=incompatible_d_model:5120!=2560; `grounding_pass_rate`=0 |
-| `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab25_tierc_both_labs1_25_full_matrix_20260615_000508/lab25_tierc_both_labs1_25_full_matrix_20260615_000508` | `allenai/Olmo-3-7B-Instruct` | `c` | `n_items`=6; `certainty_bridge_status`=compatible; `grounding_pass_rate`=0.1667 |
-| `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab25_tiera_both_labs1_25_full_matrix_20260615_000508/lab25_tiera_both_labs1_25_full_matrix_20260615_000508` | `HuggingFaceTB/SmolLM2-135M-Instruct` | `a` | `n_items`=1; `certainty_bridge_status`=incompatible_d_model:4096!=576; `grounding_pass_rate`=1 |
+- A positive-looking direction is not enough; the report channel has to move
+  above zero, random, shuffled, wrong-concept, and source/provenance controls.
+- A failed self-report wire is not a failed lab. It demonstrates that the audit
+  can refuse an overclaim.
+- Source attribution is separable from behavior steering. The model can follow
+  visible or prompted style without knowing the hidden source.
+- The Lab 14 certainty bridge being compatible does not rescue the claim:
+  parsed verbal confidence stayed flat across certainty plus, certainty minus,
+  random, and zero conditions.
 
 ## Curated Artifacts
 
-- `olmo3_32b_lab25_olmo32bthink_both_labs1_25_local_reruns_20_source_attribution_matrix.png`
-- `olmo3_32b_lab25_olmo32bthink_both_labs1_25_local_reruns_20_find_the_wire_dashboard.png`
-- `olmo3_32b_lab25_olmo32bthink_both_labs1_25_local_reruns_20_tables_report_discipline_scorecard.csv`
-- `olmo3_32b_lab25_olmo32bthink_both_labs1_25_local_reruns_20_results.csv`
-- `gemma4e4b_lab25_gemma4e4b_both_labs1_25_local_reruns_20260_source_attribution_matrix.png`
-- `gemma4e4b_lab25_gemma4e4b_both_labs1_25_local_reruns_20260_find_the_wire_dashboard.png`
-- `gemma4e4b_lab25_gemma4e4b_both_labs1_25_local_reruns_20260_tables_report_discipline_scorecard.csv`
-- `gemma4e4b_lab25_gemma4e4b_both_labs1_25_local_reruns_20260_results.csv`
-- `olmo3_7b_lab25_tierc_both_labs1_25_full_matrix_20260615_0_find_the_wire_dashboard.png`
-- `olmo3_7b_lab25_tierc_both_labs1_25_full_matrix_20260615_0_grounding_risk_atlas.png`
-- `olmo3_7b_lab25_tierc_both_labs1_25_full_matrix_20260615_0_tables_report_discipline_scorecard.csv`
-- `olmo3_7b_lab25_tierc_both_labs1_25_full_matrix_20260615_0_results.csv`
-- `smollm_lab25_tiera_both_labs1_25_full_matrix_20260615_0_find_the_wire_dashboard.png`
-- `smollm_lab25_tiera_both_labs1_25_full_matrix_20260615_0_grounding_risk_atlas.png`
-- `smollm_lab25_tiera_both_labs1_25_full_matrix_20260615_0_tables_report_discipline_scorecard.csv`
-- `smollm_lab25_tiera_both_labs1_25_full_matrix_20260615_0_results.csv`
+Summary:
+
+- `lab25_validation_report.md`
+- `lab25_validation_summary.csv`
+
+Primary full Olmo run:
+
+- `olmo3_7b_full_find_the_wire_report.md`
+- `olmo3_7b_full_run_summary.md`
+- `olmo3_7b_full_operationalization_audit.md`
+- `olmo3_7b_full_ledger_suggestions.md`
+- `olmo3_7b_full_metrics.json`
+- `olmo3_7b_full_results.csv`
+- `olmo3_7b_full_wire_evidence_matrix.csv`
+- `olmo3_7b_full_false_positive_floor.csv`
+- `olmo3_7b_full_self_report_detection_dose_response.csv`
+- `olmo3_7b_full_self_report_operating_points.csv`
+- `olmo3_7b_full_grounding_control_summary.csv`
+- `olmo3_7b_full_grounding_control_results.csv`
+- `olmo3_7b_full_voice_self_attribution_summary.csv`
+- `olmo3_7b_full_source_attribution_confusion.csv`
+- `olmo3_7b_full_report_discipline_scorecard.csv`
+- `olmo3_7b_full_direction_construction.csv`
+- `olmo3_7b_full_direction_depth_sweep.csv`
+- `olmo3_7b_full_direction_geometry_summary.csv`
+- `olmo3_7b_full_certainty_bridge_status.csv`
+- `olmo3_7b_full_certainty_self_report_bridge_summary.csv`
+- `olmo3_7b_full_prompt_leakage_audit.csv`
+- `olmo3_7b_full_self_report_labeling_guide.md`
+
+Auxiliary checks:
+
+- `olmo3_7b_source_rubric_*`
+- `smollm_smoke_noleak_*`
 
 ## Caveats
 
-- This is a curated validation pack, not a complete raw-results archive.
-- Prefer the source run directory when auditing exact configs, seeds, prompts, or full tables.
-- Older runs are intentionally de-emphasized when newer validation/rerun artifacts exist.
+- This is a curated validation directory; full raw runs remain outside this
+  pack.
+- No repaired-run PNG plots were present in the local run bundle, so this pack
+  intentionally keeps tables and reports rather than carrying forward old plots.
+- The validated result is a negative audit: do not use Lab 25 to claim reliable
+  self-knowledge, hidden-state access, or consciousness.
+- The source-rubric run is attribution-only and should not be read as an
+  intervention validation.
