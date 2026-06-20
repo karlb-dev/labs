@@ -1,0 +1,6 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,condition,n_features_edited,logit_diff,p_target,p_distractor,p_counterfactual_target,top1,delta_logit_diff_vs_baseline
+lab9,lab09_fresh_tierc_20260620,gpt2,,c,float32,none,full,0,0,12,768,baseline,0,3.0126,0.03224,0.00159,0.00159, the,0.0
+lab9,lab09_fresh_tierc_20260620,gpt2,,c,float32,none,full,0,0,12,768,suppress_subject_supernode,25,-1.8423,0.00064,0.00404,0.00404, the,-4.8549
+lab9,lab09_fresh_tierc_20260620,gpt2,,c,float32,none,full,0,0,12,768,substitute_counterfactual,39,-5.2554,0.00034,0.06458,0.06458, the,-8.268
+lab9,lab09_fresh_tierc_20260620,gpt2,,c,float32,none,full,0,0,12,768,random_suppression_control,25,3.0238,0.03268,0.00159,0.00159, the,0.0112
+lab9,lab09_fresh_tierc_20260620,gpt2,,c,float32,none,full,0,0,12,768,counterfactual_prompt_reference,0,-3.6942,0.00131,0.05273,0.05273, the,-6.7068

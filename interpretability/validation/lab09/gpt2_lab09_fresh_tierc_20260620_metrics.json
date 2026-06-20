@@ -1,0 +1,45 @@
+{
+  "baseline_gate_dropped": 1,
+  "induction_metric_logit_diff": 0.6222381591796875,
+  "induction_signed_contributions": {
+    "bias_path": -1.1567,
+    "embeddings": 0.9293,
+    "errors": 0.7261,
+    "features": 0.3696,
+    "transcoder_bias": -0.2461
+  },
+  "intervention": {
+    "baseline": 3.0126,
+    "counterfactual_prompt_reference": -3.6942,
+    "random_suppression_control": 3.0238,
+    "substitute_counterfactual": -5.2554,
+    "suppress_subject_supernode": -1.8423
+  },
+  "intervention_effects": {
+    "cf_prob_gain": 0.06299,
+    "random_drop": -0.0112,
+    "specificity_gap": 4.8661,
+    "substitution_shift": 8.268,
+    "suppress_drop": 4.8549,
+    "validated": true,
+    "verdict": "validated"
+  },
+  "kept_coverage_of_feature_mass": 0.4435,
+  "metric_logit_diff": 3.0125656127929688,
+  "model_id": "gpt2",
+  "n_feature_nodes": 48,
+  "n_paraphrases": 7,
+  "n_recurring_features": 9,
+  "node_budget": 48,
+  "share_embeddings": 0.1025,
+  "share_errors": 0.1946,
+  "share_features": 0.7029,
+  "signed_contributions": {
+    "bias_path": 0.4744,
+    "embeddings": 0.1696,
+    "errors": -0.2853,
+    "features": 2.3445,
+    "transcoder_bias": 0.3094
+  },
+  "transcoder_mean_fvu": 0.149
+}

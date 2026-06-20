@@ -2,66 +2,114 @@
 
 ## Lab 9: Attribution Graphs and Circuit Tracing
 
-Attribution graphs: a transcoder replacement model, feature-level circuit tracing, and interventions.
+Attribution graphs: a transcoder replacement model, feature-level circuit
+tracing, and interventions.
 
-## Validation Read
+## Current Read
 
-This pack prefers the newest broad validation artifacts available in the local runs tree: recent Lab 6 matrix/reruns where applicable, `run6` and `verify_part3` for the main course sweep, and standalone Severance reruns for Lab 36.
+Lab 9 is a **clean scoped positive**. It is not a broad claim about arbitrary
+attribution graphs or all factual recall. It is a validated miniature:
+GPT-2 small, the public Dunefsky full-stack MLP transcoders, one-hop factual
+recall for `The capital of France is`, a paraphrase/counterfactual battery, and
+one Lab 6 induction confrontation.
 
-- `interpret/run6/C/lab9` (gpt2, tier c)
-  - Metrics: `baseline_gate_dropped`=1, `induction_metric_logit_diff`=0.6222, `kept_coverage_of_feature_mass`=0.4435, `metric_logit_diff`=3.013, `n_feature_nodes`=48, `n_paraphrases`=7, `n_recurring_features`=9, `node_budget`=48
-  - model: `gpt2` + `jacobdunefsky/gpt2small-transcoders` (full 12-layer MLP transcoder stack)
-  - primary fact: `The capital of France is` -> ` Paris` (vs ` Berlin`)
-  - evidence level: ATTR for the graph, CAUSAL only for the intervention rows
-- `interpret/run6/B/lab9` (gpt2, tier b)
-  - Metrics: `baseline_gate_dropped`=1, `induction_metric_logit_diff`=0.6222, `kept_coverage_of_feature_mass`=0.3696, `metric_logit_diff`=3.013, `n_feature_nodes`=28, `n_paraphrases`=7, `n_recurring_features`=7, `node_budget`=28
-  - model: `gpt2` + `jacobdunefsky/gpt2small-transcoders` (full 12-layer MLP transcoder stack)
-  - primary fact: `The capital of France is` -> ` Paris` (vs ` Berlin`)
-  - evidence level: ATTR for the graph, CAUSAL only for the intervention rows
-- `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab09_tierc_labs1_25_full_matrix_20260615_000508/lab09_tierc_labs1_25_full_matrix_20260615_000508` (gpt2, tier c)
-  - Metrics: `baseline_gate_dropped`=1, `induction_metric_logit_diff`=0.6222, `kept_coverage_of_feature_mass`=0.4435, `metric_logit_diff`=3.013, `n_feature_nodes`=48, `n_paraphrases`=7, `n_recurring_features`=9, `node_budget`=48
-  - model: `gpt2` + `jacobdunefsky/gpt2small-transcoders` (full 12-layer MLP transcoder stack)
-  - primary fact: `The capital of France is` -> ` Paris` (vs ` Berlin`)
-  - evidence level: ATTR for the graph, CAUSAL only for the intervention rows
-- `interpret/validate_part2_plots/lab9` (unknown model)
-  - model: `gpt2` + `jacobdunefsky/gpt2small-transcoders` (full 12-layer MLP transcoder stack)
-  - primary fact: `The capital of France is` -> ` Paris` (vs ` Berlin`)
-  - evidence level: ATTR for the graph, CAUSAL only for the intervention rows
+The result is strong because the lab separates three things that are often
+blurred:
 
-## What This Lab Teaches
+- replacement-model health receipts;
+- attribution graph visibility and error-node accounting;
+- real-model feature interventions with a matched random control.
 
-- The central lesson is to separate readable structure from causal use with controls, patches, and held-out checks.
-- Compare the selected models rather than cherry-picking the best one; model differences are often the point of the exercise.
+## Fresh Validation Run
 
-## Selected Source Runs
+Run directory:
 
-| Source | Model | Tier | Notes |
-|---|---|---|---|
-| `interpret/run6/C/lab9` | `gpt2` | `c` | `baseline_gate_dropped`=1; `induction_metric_logit_diff`=0.6222; `kept_coverage_of_feature_mass`=0.4435 |
-| `interpret/run6/B/lab9` | `gpt2` | `b` | `baseline_gate_dropped`=1; `induction_metric_logit_diff`=0.6222; `kept_coverage_of_feature_mass`=0.3696 |
-| `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab09_tierc_labs1_25_full_matrix_20260615_000508/lab09_tierc_labs1_25_full_matrix_20260615_000508` | `gpt2` | `c` | `baseline_gate_dropped`=1; `induction_metric_logit_diff`=0.6222; `kept_coverage_of_feature_mass`=0.4435 |
-| `interpret/validate_part2_plots/lab9` | `unknown` | `` | see copied summaries |
+`runs/lab09_fresh_tierc_20260620`
 
-## Curated Artifacts
+Backed up at:
 
-- `gpt2_run6c_graph_evidence_dashboard.png`
-- `gpt2_run6c_paraphrase_feature_matrix.png`
-- `gpt2_run6c_tables_paraphrase_feature_matrix.csv`
-- `gpt2_run6c_results.csv`
-- `gpt2_run6b_graph_evidence_dashboard.png`
-- `gpt2_run6b_paraphrase_feature_matrix.png`
-- `gpt2_run6b_tables_paraphrase_feature_matrix.csv`
-- `gpt2_run6b_results.csv`
-- `gpt2_lab09_tierc_labs1_25_full_matrix_20260615_000508_graph_evidence_dashboard.png`
-- `gpt2_lab09_tierc_labs1_25_full_matrix_20260615_000508_source_token_ledger.png`
-- `gpt2_lab09_tierc_labs1_25_full_matrix_20260615_000508_results.csv`
-- `gpt2_lab09_tierc_labs1_25_full_matrix_20260615_000508_metrics.json`
-- `unknown_lab9_graph_evidence_dashboard.png`
-- `unknown_lab9_paraphrase_feature_matrix.png`
-- `unknown_lab9_run_summary.md`
+`/content/drive/MyDrive/interpret/lab09_attribution_graphs_validation_20260620/lab09_fresh_tierc_20260620/`
 
-## Caveats
+Command:
 
-- This is a curated validation pack, not a complete raw-results archive.
-- Prefer the source run directory when auditing exact configs, seeds, prompts, or full tables.
-- Older runs are intentionally de-emphasized when newer validation/rerun artifacts exist.
+```bash
+python -m py_compile interpretability/interp_bench.py interpretability/labs/lab09_attribution_graphs.py
+cd interpretability
+python interp_bench.py --lab lab9 --tier c --model gpt2 --dtype float32 --attn-implementation eager --run-name lab09_fresh_tierc_20260620
+```
+
+## Headline Metrics
+
+| Metric | Value |
+|---|---:|
+| model | `gpt2` |
+| node budget | 48 |
+| replacement max logit diff | 0.00029 |
+| edge reconstruction relative error | 0.0000058 |
+| feature-edit no-op max logit diff | 0.0 |
+| metric logit diff | 3.0126 |
+| feature share of direct edge mass | 0.7029 |
+| error-node share of direct edge mass | 0.1946 |
+| kept coverage of feature mass | 0.4435 |
+| suppress drop | 4.8549 |
+| random-control drop | -0.0112 |
+| specificity gap | 4.8661 |
+| substitution shift | 8.2680 |
+| recurring subject-site features | 9 |
+| baseline-gate dropped prompts | 1 |
+| mean transcoder FVU | 0.149 |
+
+## Current Verdict
+
+The graph is `ATTR` evidence on the replacement model. The suppression and
+substitution rows are `CAUSAL` evidence for the tested real-model feature edit.
+
+The causal result is clean for the scoped behavior:
+
+- baseline France-vs-Berlin logit diff: `+3.0126`;
+- graph-guided subject-supernode suppression: `-1.8423`;
+- matched random suppression control: `+3.0238`;
+- specificity gap: `+4.8661` logits;
+- counterfactual Germany-feature substitution: `-5.2554`.
+
+## Why It Is Solid
+
+- `replacement_exactness.json` passes, so the local replacement reproduces the
+  real logits once error nodes are included.
+- `edge_reconstruction_check.json` passes, so direct edges plus bias account for
+  the target scalar.
+- `feature_edit_noop_check.json` passes, so the real-model edit hooks are
+  aligned.
+- Feature mass is substantial (`0.7029`), but error-node mass is still reported
+  (`0.1946`) rather than hidden.
+- The graph-guided intervention beats the matched random control by a large
+  margin.
+- The paraphrase battery finds recurring subject-site features instead of only
+  one-template nodes.
+- The induction vignette exposes the expected blind spot: frozen-attention
+  feature graphs are less explanatory for attention-routing behavior.
+
+## Current Artifacts
+
+- `gpt2_lab09_fresh_tierc_20260620_metrics.json`
+- `gpt2_lab09_fresh_tierc_20260620_results.csv`
+- `gpt2_lab09_fresh_tierc_20260620_graph_evidence_matrix.csv`
+- `gpt2_lab09_fresh_tierc_20260620_graph_evidence_dashboard.png`
+- `gpt2_lab09_fresh_tierc_20260620_source_token_ledger.png`
+- `gpt2_lab09_fresh_tierc_20260620_influence_composition.png`
+- `gpt2_lab09_fresh_tierc_20260620_intervention_effects.png`
+- `lab09_validation_summary.csv`
+- `lab09_validation_report.md`
+
+Older run6 and full-matrix artifacts remain in this directory as reproducibility
+context; the fresh Tier C run above is the preferred validation read.
+
+## Residual Risk
+
+- The backend is GPT-2-specific. The handout is clear that a Gemma/circuit-tracer
+  backend would be a separate implementation with the same evidence contract.
+- The behavior is one-hop factual recall, not a broad factual-recall benchmark.
+- The graph is budgeted: it keeps `0.4435` of direct feature mass, so the plotted
+  graph is readable but not complete.
+- Error nodes still carry `0.1946` of direct edge mass. This is acceptable only
+  because the lab explicitly reports it.

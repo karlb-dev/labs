@@ -1,0 +1,3 @@
+run_name,model_id,tier,node_budget,n_feature_nodes,metric_logit_diff,share_features,share_errors,kept_coverage_of_feature_mass,suppress_drop,random_drop,specificity_gap,substitution_shift,validated,n_paraphrases,n_recurring_features,baseline_gate_dropped,transcoder_mean_fvu
+lab09_fresh_tierc_20260620,gpt2,c,48,48,3.0126,0.7029,0.1946,0.4435,4.8549,-0.0112,4.8661,8.2680,true,7,9,1,0.149
+lab09_audit_tiera_20260620,gpt2,a,16,16,3.0126,0.7029,0.1946,0.3097,4.6478,-0.0052,4.6530,8.1985,true,3,5,0,0.149
