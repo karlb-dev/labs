@@ -63,6 +63,12 @@ The included generator is:
 data/make_tool_use_tasks.py
 ```
 
+The v2 frozen corpus has 84 rows: ten rows for each positive tool family and
+twenty-four matched no-tool controls. Positive rows include both obvious and
+low-surface-cue requests; no-tool rows deliberately contain misleading digits,
+tool names, filenames, routes, and unit words. See
+`data/tool_use_tasks_card.md` for the dataset card.
+
 Each row has:
 
 ```json
@@ -146,6 +152,10 @@ logit(target_tool_letter) - logit(distractor_tool_letter)
 ```
 
 This is a narrow activation-addition result on an A/B/C/D/E/F/N prompt. It is not proof of open-ended tool reliability.
+
+The current causal summary averages five random direction controls. A positive
+causal row must beat that matched random-control average at the predeclared
+scale, not only a single sampled null direction.
 
 ### 4. Deterministic trace
 
