@@ -58,6 +58,7 @@ import csv
 import copy
 import math
 import pathlib
+import random
 import statistics
 from collections import Counter, defaultdict
 from typing import Any
@@ -161,6 +162,27 @@ DOMAIN_KEYWORDS = {
                 "history", "battle", "emperor", "dynasty", "medieval", "conquest", "kingdom", "civilization"],
 }
 CLAMP_PROMPTS = ["Here is a short paragraph.\n\n", "Let me tell you a story. ", "Today I want to talk about "]
+
+SEMANTIC_FAMILIES = {
+    "chemistry", "cooking", "sports", "finance", "law",
+    "medicine", "weather", "emotion", "code", "history",
+}
+LABEL_TYPES = {
+    "code_indentation_whitespace": "position/whitespace",
+    "python_syntax": "syntax/format",
+    "markdown_list_formatting": "syntax/format",
+    "urls_emails_paths": "lexical-token",
+    "dates_numbers_measurements": "lexical-token",
+    "citations_legal_references": "syntax/format",
+    "quotes_dialogue": "syntax/format",
+    "capitalization_acronyms": "lexical-token",
+    "sentiment_emotion": "semantic-domain",
+    "named_entities": "semantic-domain",
+}
+TARGETED_CANDIDATE_POOL = 80
+TARGETED_REPORT_TOPK = 20
+MIN_SPLIT_POSITIVES = 5
+MIN_SPLIT_NEGATIVES = 20
 
 
 # ---------------------------------------------------------------------------
@@ -1171,6 +1193,322 @@ def domain_validation_summary(atlas: list[dict[str, Any]]) -> list[dict[str, Any
     return rows
 
 
+def label_type_for(family: str) -> str:
+    if family in LABEL_TYPES:
+        return LABEL_TYPES[family]
+    if family in SEMANTIC_FAMILIES:
+        return "semantic-domain"
+    return "broad-basis/polysemantic"
+
+
+def split_for_row(row: dict[str, str], i: int) -> str:
+    split = str(row.get("split", "")).strip().lower()
+    if split in {"train", "dev", "test"}:
+        return split
+    bucket = i % 10
+    if bucket < 6:
+        return "train"
+    if bucket < 8:
+        return "dev"
+    return "test"
+
+
+def family_of(row: dict[str, str]) -> str:
+    return str(row.get("family") or row.get("domain") or "unknown")
+
+
+def auc_by_feature(scores: Any, labels: Any, chunk_size: int = 4096) -> Any:
+    """Vectorized rank-AUC for every feature column in scores[n_rows, d_sae]."""
+    import torch
+
+    labels = labels.bool()
+    n_pos = int(labels.sum())
+    n_neg = int((~labels).sum())
+    if n_pos == 0 or n_neg == 0:
+        return torch.full((scores.shape[1],), 0.5, dtype=torch.float32)
+    aucs = []
+    rank_base = torch.arange(1, scores.shape[0] + 1, dtype=torch.float32).unsqueeze(1)
+    label_float = labels.float().unsqueeze(1)
+    for start in range(0, scores.shape[1], chunk_size):
+        chunk = scores[:, start:start + chunk_size].float()
+        order = torch.argsort(chunk, dim=0, stable=True)
+        ranks = torch.empty_like(order, dtype=torch.float32)
+        ranks.scatter_(0, order, rank_base.expand(-1, chunk.shape[1]))
+        sum_pos_ranks = (ranks * label_float).sum(0)
+        auc = (sum_pos_ranks - n_pos * (n_pos + 1) / 2.0) / max(n_pos * n_neg, 1)
+        aucs.append(auc.cpu())
+    return torch.cat(aucs, dim=0)
+
+
+def auc_for_feature(scores: Any, labels: list[bool] | Any, feature: int) -> float:
+    vals = scores[:, feature].tolist()
+    pos = [float(v) for v, y in zip(vals, labels) if bool(y)]
+    neg = [float(v) for v, y in zip(vals, labels) if not bool(y)]
+    return roc_auc(pos, neg)
+
+
+def bootstrap_auc_ci(pos: list[float], neg: list[float], seed: int, draws: int = 200) -> dict[str, Any]:
+    if not pos or not neg:
+        return {"auc": 0.5, "ci_low": "", "ci_high": "", "draws": 0}
+    rng = random.Random(seed)
+    vals = []
+    for _ in range(draws):
+        bs_pos = [pos[rng.randrange(len(pos))] for _ in pos]
+        bs_neg = [neg[rng.randrange(len(neg))] for _ in neg]
+        vals.append(roc_auc(bs_pos, bs_neg))
+    vals.sort()
+    lo = vals[int(0.025 * (len(vals) - 1))]
+    hi = vals[int(0.975 * (len(vals) - 1))]
+    return {"auc": roc_auc(pos, neg), "ci_low": round(lo, 4), "ci_high": round(hi, 4), "draws": draws}
+
+
+def permutation_auc_null(pos: list[float], neg: list[float], seed: int, draws: int = 200) -> dict[str, Any]:
+    if not pos or not neg:
+        return {"null_mean": "", "p_ge_observed": "", "draws": 0}
+    rng = random.Random(seed)
+    values = list(pos) + list(neg)
+    labels = [True] * len(pos) + [False] * len(neg)
+    observed = roc_auc(pos, neg)
+    nulls = []
+    for _ in range(draws):
+        rng.shuffle(labels)
+        null_pos = [v for v, y in zip(values, labels) if y]
+        null_neg = [v for v, y in zip(values, labels) if not y]
+        nulls.append(roc_auc(null_pos, null_neg))
+    p_ge = (1 + sum(1 for v in nulls if v >= observed)) / (len(nulls) + 1)
+    return {"null_mean": round(sum(nulls) / len(nulls), 4), "p_ge_observed": round(p_ge, 4), "draws": draws}
+
+
+def subset_stability_auc(pos: list[float], neg: list[float], seed: int, draws: int = 20) -> dict[str, Any]:
+    if len(pos) < 4 or len(neg) < 4:
+        return {"subset_auc_mean": "", "subset_auc_std": "", "draws": 0}
+    rng = random.Random(seed)
+    vals = []
+    n_pos = max(2, int(len(pos) * 0.8))
+    n_neg = max(2, int(len(neg) * 0.8))
+    for _ in range(draws):
+        vals.append(roc_auc(rng.sample(pos, n_pos), rng.sample(neg, n_neg)))
+    return {
+        "subset_auc_mean": round(sum(vals) / len(vals), 4),
+        "subset_auc_std": round(statistics.pstdev(vals), 4),
+        "draws": draws,
+    }
+
+
+def family_entropy(families: list[str]) -> float:
+    if not families:
+        return 0.0
+    counts = Counter(families)
+    total = len(families)
+    return -sum((n / total) * math.log(n / total, 2) for n in counts.values())
+
+
+def targeted_grade(row: dict[str, Any]) -> str:
+    if row.get("status") == "insufficient_data":
+        return "insufficient_data"
+    label_type = row.get("label_type", "")
+    test_auc = _safe_float(row.get("test_auc"), 0.5)
+    ci_low = _safe_float(row.get("test_auc_ci_low"), 0.0)
+    conf = _safe_float(row.get("test_confusable_auc"), 0.75)
+    purity = _safe_float(row.get("test_top20_purity"), 0.0)
+    entropy = _safe_float(row.get("test_top20_family_entropy"), 0.0)
+    fire = _safe_float(row.get("fire_fraction"), 0.0)
+    lexical_like = label_type in {"lexical-token", "syntax/format", "position/whitespace"}
+    if lexical_like and test_auc >= 0.85 and purity >= 0.55:
+        return "lexical_valid"
+    if label_type == "semantic-domain" and test_auc >= 0.78 and row.get("test_confusable_auc") not in ("", None) and conf < 0.65:
+        return "token_feature_mislabeled"
+    if label_type == "semantic-domain" and test_auc >= 0.88 and ci_low >= 0.75 and conf >= 0.75 and purity >= 0.55 and fire <= 0.25:
+        return "survived_strong"
+    if label_type == "semantic-domain" and test_auc >= 0.78 and conf >= 0.65 and purity >= 0.45:
+        return "survived_weak"
+    if test_auc >= 0.68:
+        return "narrowed"
+    if entropy >= 2.0:
+        return "polysemantic"
+    return "killed"
+
+
+def write_targeted_feature_card(ctx, corpus, enc, row: dict[str, Any]) -> None:
+    feature = int(row["feature"])
+    family = str(row["family"])
+    acts = enc["line_max"][:, feature]
+    order = sorted(range(len(corpus)), key=lambda i: float(acts[i]), reverse=True)[:12]
+    lines = [
+        f"# Feature {feature}: {family}",
+        "",
+        f"- label type: `{row.get('label_type')}`",
+        f"- claim grade: `{row.get('claim_grade')}`",
+        f"- train AUC: {row.get('train_auc')} | dev AUC: {row.get('dev_auc')} | test AUC: {row.get('test_auc')} "
+        f"[{row.get('test_auc_ci_low')}, {row.get('test_auc_ci_high')}]",
+        f"- confusable test AUC: {row.get('test_confusable_auc')}",
+        f"- fire fraction: {row.get('fire_fraction')} | purity top20: {row.get('test_top20_purity')} | "
+        f"family entropy top20: {row.get('test_top20_family_entropy')}",
+        f"- permutation null mean: {row.get('permutation_null_mean')} | p>=observed: {row.get('permutation_p_ge_observed')}",
+        "",
+        "## Top Activating Rows",
+        "",
+    ]
+    for i in order:
+        text = str(corpus[i]["text"]).replace("\n", " ")[:260]
+        lines.append(
+            f"- `{corpus[i].get('row_id', corpus[i].get('text_id', i))}` split={split_for_row(corpus[i], i)} "
+            f"family={family_of(corpus[i])} domain={corpus[i].get('domain')} act={float(acts[i]):.3f}: {text}"
+        )
+    path = ctx.path("feature_cards", f"{feature}_{family}.md")
+    bench.write_text(path, "\n".join(lines) + "\n")
+    ctx.register_artifact(path, "summary", f"Targeted feature card for feature {feature} labeled {family}.")
+
+
+def targeted_feature_search(ctx, corpus, enc, seed: int) -> list[dict[str, Any]]:
+    """Supervised fair-shot search with train/dev/test separation."""
+    import torch
+
+    families = sorted({family_of(r) for r in corpus if "+" not in family_of(r)})
+    split_indices = {
+        split: [i for i, r in enumerate(corpus) if split_for_row(r, i) == split]
+        for split in ("train", "dev", "test")
+    }
+    line_max = enc["line_max"].float()
+    candidate_rows: list[dict[str, Any]] = []
+    best_rows: list[dict[str, Any]] = []
+
+    prereg = {
+        "candidate_pool": TARGETED_CANDIDATE_POOL,
+        "report_topk": TARGETED_REPORT_TOPK,
+        "min_split_positives": MIN_SPLIT_POSITIVES,
+        "min_split_negatives": MIN_SPLIT_NEGATIVES,
+        "grade_rules": {
+            "lexical_valid": "lexical/syntax/whitespace label, test_auc >= 0.85, top20 purity >= 0.55",
+            "token_feature_mislabeled": "semantic label with test_auc >= 0.78 but confusable_auc < 0.65",
+            "survived_strong": "semantic label, test_auc >= 0.88, ci_low >= 0.75, confusable_auc >= 0.75, purity >= 0.55, fire <= 0.25",
+            "survived_weak": "semantic label, test_auc >= 0.78, confusable_auc >= 0.65, purity >= 0.45",
+            "narrowed": "test_auc >= 0.68 but not stronger",
+        },
+    }
+    bench.write_json(ctx.path("targeted_search_preregistration.json"), prereg)
+    ctx.register_artifact(ctx.path("targeted_search_preregistration.json"), "diagnostic",
+                          "Preregistered targeted search thresholds and grade rules.")
+
+    for family in families:
+        label_type = label_type_for(family)
+        by_split: dict[str, dict[str, Any]] = {}
+        sufficient = True
+        for split, idxs in split_indices.items():
+            labels = [family_of(corpus[i]) == family for i in idxs]
+            n_pos = sum(labels)
+            n_neg = len(labels) - n_pos
+            by_split[split] = {"idxs": idxs, "labels": labels, "n_pos": n_pos, "n_neg": n_neg}
+            if n_pos < MIN_SPLIT_POSITIVES or n_neg < MIN_SPLIT_NEGATIVES:
+                sufficient = False
+        if not sufficient:
+            best_rows.append({
+                "family": family,
+                "label_type": label_type,
+                "status": "insufficient_data",
+                "train_pos": by_split["train"]["n_pos"],
+                "dev_pos": by_split["dev"]["n_pos"],
+                "test_pos": by_split["test"]["n_pos"],
+                "claim_grade": "insufficient_data",
+            })
+            continue
+
+        train_scores = line_max[by_split["train"]["idxs"]]
+        train_labels = torch.tensor(by_split["train"]["labels"], dtype=torch.bool)
+        train_auc_all = auc_by_feature(train_scores, train_labels)
+        top_features = torch.argsort(train_auc_all, descending=True)[:TARGETED_CANDIDATE_POOL].tolist()
+
+        dev_scores = line_max[by_split["dev"]["idxs"]]
+        test_scores = line_max[by_split["test"]["idxs"]]
+        dev_labels = by_split["dev"]["labels"]
+        test_labels = by_split["test"]["labels"]
+        scored: list[dict[str, Any]] = []
+        for feature in top_features:
+            train_auc = float(train_auc_all[feature])
+            dev_auc = auc_for_feature(dev_scores, dev_labels, feature)
+            fire = float(enc["fire_count"][feature]) / max(enc["n_tokens"], 1)
+            ubiq_penalty = min(fire * 2.0, 0.5)
+            score = dev_auc + 0.25 * train_auc - ubiq_penalty
+            scored.append({
+                "family": family,
+                "label_type": label_type,
+                "feature": int(feature),
+                "train_auc": round(train_auc, 4),
+                "dev_auc": round(dev_auc, 4),
+                "selection_score": round(score, 4),
+                "fire_fraction": round(fire, 6),
+                "selected_for_test": False,
+                "test_auc": "",
+                "claim_grade": "",
+            })
+        scored.sort(key=lambda r: (_safe_float(r["selection_score"]), _safe_float(r["dev_auc"])), reverse=True)
+        selected = dict(scored[0])
+        selected["selected_for_test"] = True
+        feature = int(selected["feature"])
+
+        test_vals = test_scores[:, feature].tolist()
+        test_pos = [float(v) for v, y in zip(test_vals, test_labels) if y]
+        test_neg = [float(v) for v, y in zip(test_vals, test_labels) if not y]
+        ci = bootstrap_auc_ci(test_pos, test_neg, seed + feature)
+        null = permutation_auc_null(test_pos, test_neg, seed + 17 + feature)
+        stability = subset_stability_auc(test_pos, test_neg, seed + 31 + feature)
+
+        group = next((corpus[i].get("hard_negative_group", "") for i in by_split["test"]["idxs"] if family_of(corpus[i]) == family), "")
+        conf_neg_idx = [
+            i for i in by_split["test"]["idxs"]
+            if group and corpus[i].get("hard_negative_group", "") == group and family_of(corpus[i]) != family
+        ]
+        conf_pos_idx = [i for i in by_split["test"]["idxs"] if family_of(corpus[i]) == family]
+        conf_auc = ""
+        if len(conf_pos_idx) >= MIN_SPLIT_POSITIVES and len(conf_neg_idx) >= MIN_SPLIT_POSITIVES:
+            conf_auc = round(roc_auc(
+                [float(line_max[i, feature]) for i in conf_pos_idx],
+                [float(line_max[i, feature]) for i in conf_neg_idx],
+            ), 4)
+
+        top_test = sorted(by_split["test"]["idxs"], key=lambda i: float(line_max[i, feature]), reverse=True)[:20]
+        top_families = [family_of(corpus[i]) for i in top_test]
+        purity = top_families.count(family) / max(len(top_families), 1)
+        entropy = family_entropy(top_families)
+
+        selected.update({
+            "status": "ok",
+            "train_pos": by_split["train"]["n_pos"],
+            "train_neg": by_split["train"]["n_neg"],
+            "dev_pos": by_split["dev"]["n_pos"],
+            "dev_neg": by_split["dev"]["n_neg"],
+            "test_pos": by_split["test"]["n_pos"],
+            "test_neg": by_split["test"]["n_neg"],
+            "test_auc": round(ci["auc"], 4),
+            "test_auc_ci_low": ci["ci_low"],
+            "test_auc_ci_high": ci["ci_high"],
+            "test_confusable_auc": conf_auc,
+            "test_top20_purity": round(purity, 4),
+            "test_top20_family_entropy": round(entropy, 4),
+            "permutation_null_mean": null["null_mean"],
+            "permutation_p_ge_observed": null["p_ge_observed"],
+            "subset_auc_mean": stability["subset_auc_mean"],
+            "subset_auc_std": stability["subset_auc_std"],
+            "hard_negative_group": group,
+        })
+        selected["claim_grade"] = targeted_grade(selected)
+        best_rows.append(selected)
+        write_targeted_feature_card(ctx, corpus, enc, selected)
+
+        for i, row in enumerate(scored[:TARGETED_REPORT_TOPK]):
+            if int(row["feature"]) == feature:
+                row.update(selected)
+            candidate_rows.append({"candidate_rank": i + 1, **row})
+
+    bench.write_csv_with_context(ctx, ctx.path("tables", "targeted_feature_search.csv"), candidate_rows)
+    ctx.register_artifact(ctx.path("tables", "targeted_feature_search.csv"), "table",
+                          "Targeted fair-shot feature candidates: train discovery, dev selection, test only for selected features.")
+    bench.write_csv_with_context(ctx, ctx.path("tables", "best_feature_per_family.csv"), best_rows)
+    ctx.register_artifact(ctx.path("tables", "best_feature_per_family.csv"), "table",
+                          "Best selected targeted feature per corpus family with split-aware validation and claim grade.")
+    return best_rows
+
+
 def write_lab8_synthesis_tables(ctx, atlas, enc, ranks, toy, tc_report, bridge, clamp) -> None:
     """Write the tables that make the plots auditable, not just ornamental."""
     import numpy as np
@@ -1706,6 +2044,13 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, ctx.path("results.csv"), atlas_rows)
     ctx.register_artifact(ctx.path("results.csv"), "results", "Alias of feature_atlas.csv for the run contract.")
 
+    targeted_rows: list[dict[str, Any]] = []
+    if getattr(args, "feature_search", "blind") in {"targeted", "both"}:
+        print("[lab8] Part 1b: targeted fair-shot feature search (train/dev/test)")
+        targeted_rows = targeted_feature_search(ctx, corpus, enc, args.seed)
+        targeted_counts = Counter(str(r.get("claim_grade", "")) for r in targeted_rows)
+        print(f"[lab8]   targeted claim grades: {dict(targeted_counts)}")
+
     dead_stats = {
         "d_sae": sae.d_sae, "n_tokens": enc["n_tokens"],
         "silent_on_corpus": dead_corpus,
@@ -1805,6 +2150,8 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "sae_loading_chosen_fvu": calibration_report["chosen"]["fvu"],
         "sae_loading_best_fvu": calibration_report["best_by_fvu"]["fvu"],
         "feature_search": getattr(args, "feature_search", "blind"),
+        "targeted_search_families": len(targeted_rows),
+        "targeted_claim_grades": dict(Counter(str(r.get("claim_grade", "")) for r in targeted_rows)),
         "toy_represented_dense": toy["represented_by_sparsity"][str(toy["sparsities"][0])],
         "toy_represented_sparse": toy["represented_by_sparsity"][str(toy["sparsities"][-1])],
         "transcoder_fvu": tc_report["fvu"], "transcoder_splice_kl": tc_report["mean_splice_kl"],
@@ -1960,6 +2307,15 @@ def write_summary(ctx, bundle, metrics, atlas, toy, tc_report, bridge, clamp, cl
         "rankings surface largely different features (the disagreement is the lesson, not a bug)",
         f"- of {metrics['atlas_size']} labeled features, {metrics['n_survived']} survived validation and "
         f"{metrics['n_killed']} were killed (token-feature / polysemantic / low-AUC). The killed count is required; a clean sheet is a warning.",
+    ]
+    if metrics.get("targeted_search_families"):
+        grades = metrics.get("targeted_claim_grades", {})
+        grade_text = ", ".join(f"{k}={v}" for k, v in sorted(grades.items())) if grades else "none"
+        lines += [
+            "- targeted fair-shot search used train for discovery, dev for selection, and test for the selected",
+            f"  feature per family across {metrics['targeted_search_families']} families; grades: {grade_text}",
+        ]
+    lines += [
         "",
         "## 3. Transcoder (Part 2)",
         "",
