@@ -2,81 +2,117 @@
 
 ## Lab 14: Certainty, Hedging, and Calibration
 
-Certainty, hedging, and calibration: internal answerability, entropy, and
-verbal confidence.
+This directory is the final Lab 14 validation pack for the current repository
+code. It keeps the June 20, 2026 validation artifacts and drops the older
+June 15 run pack so students and reviewers see one coherent result set.
 
-## Current Read
+## Validation Read
 
-Lab 14 is now a **mostly clean positive for internal answerability decoding**,
-with one important caveat: OLMo seed 1 still shows style/self-report
-entanglement, so the strongest claim is "usable on the primary and replicated
-splits, but not fully style-separable on every split."
+The result is a strong partial positive. Lab 14 now validates a downstream
+usable answerability/certainty direction under controls on two of three
+Olmo-3-7B-Instruct seeds, with the third seed still decoding answerability but
+flagged because style/confound controls compete. The SmolLM comparison also
+passes the current instrument criteria.
 
-The v2c data replaces the old 36-row D-option-confounded set with 80 frozen
-rows across five families:
+The cleanest current claim is:
 
-- `mcq`
-- `factual_qa`
-- `passage_qa`
-- `procedural_logic`
-- `freeform_answerability`
+```text
+Lab 14 finds a controlled answerability direction in residual activations. It
+is usable as an instrument for downstream labs, but it is not a direct meter of
+subjective confidence, knowledge, belief, or honesty.
+```
 
-The new dataset is balanced 40/40 answerable/unanswerable. Answer keys are
-uniform across A-D within each label, and every row contains exactly one
-unknown-style option with its option letter also uniform across A-D.
+## Headline Result
 
-## Current Validation Runs
+The primary plotted validation run is `olmo3_7b_full_s0`:
 
-| Run | Model | Seed | Verdict | Certainty AUC | Control Gap | Family-Held-Out AUC | Family Gap | Max Shortcut AUC | Hedging-Style AUC |
-|---|---|---:|---|---:|---:|---:|---:|---:|---:|
-| `lab14_v2c_olmo3_7b_full_s0_plots_20260620` | `allenai/Olmo-3-7B-Instruct` | 0 | `usable_certainty_instrument` | 0.8889 | 0.3698 | 0.8282 | 0.2913 | 0.6667 | 0.6556 |
-| `lab14_v2c_olmo3_7b_full_s1_20260620` | `allenai/Olmo-3-7B-Instruct` | 1 | `answerability_decodes_but_confounds_compete` | 0.9556 | 0.4294 | 0.9781 | 0.3806 | 0.6333 | 0.8356 |
-| `lab14_v2c_olmo3_7b_full_s2_20260620` | `allenai/Olmo-3-7B-Instruct` | 2 | `usable_certainty_instrument` | 0.9200 | 0.3751 | 0.8781 | 0.3488 | 0.6667 | 0.6444 |
-| `lab14_v2c_tiera_full_20260620` | `HuggingFaceTB/SmolLM2-135M-Instruct` | 0 | `usable_certainty_instrument` | 0.9200 | 0.3236 | 0.8563 | 0.2944 | 0.6667 | 0.6178 |
+- Model: `allenai/Olmo-3-7B-Instruct`
+- Corpus: 80 fixed-choice certainty/calibration items
+- Families: factual QA, freeform answerability, MCQ, passage QA, procedural logic
+- Verdict: `usable_certainty_instrument`
+- Best certainty depth: 11
+- Certainty eval AUC: 0.8889
+- Random-control AUC: 0.5191
+- Shuffled-control AUC: 0.5147
+- Control gap: 0.3698
+- Mean family-held-out AUC: 0.8282
+- Mean family-held-out control gap: 0.2913
+- Distribution-confidence answerability AUC: 0.5756
+- Hedging-style projection answerability AUC: 0.6556
+- Max length/letter/answer-frame baseline AUC: 0.6667
 
-## Interpretation
+Across Olmo seeds, the answerability signal is consistent: eval AUC is
+0.8889, 0.9556, and 0.9200. The caution is interpretive rather than numerical:
+seed 1 is marked `answerability_decodes_but_confounds_compete` because the
+hedging-style projection is also very predictive.
 
-- The old answer-key shortcut is fixed: `unanswerable_always_D=false`, and
-  answer-key counts are exactly balanced by label.
-- The old question-length shortcut is fixed enough for validation:
-  question-length answerability AUC is near chance in the OLMo seed 1 audit
-  (`0.4889`) and prompt-token-length AUC is also near chance (`0.4933`).
-- The internal direction is robust across OLMo seeds: eval AUC ranges from
-  `0.8889` to `0.9556`; family-held-out AUC ranges from `0.8282` to `0.9781`.
-- The remaining caveat is conceptual, not a CSV shortcut: verbal confidence and
-  hedging-style projections can themselves track answerability. Seed 1 is
-  therefore correctly held at `answerability_decodes_but_confounds_compete`.
+## Current Result Summary
 
-## Current Artifacts
+| Source label | Model | Main result | Read |
+|---|---|---|---|
+| `olmo3_7b_full_s0` | Olmo-3-7B-Instruct | AUC 0.8889, control gap 0.3698 | Usable instrument; primary plotted pack |
+| `olmo3_7b_full_s1` | Olmo-3-7B-Instruct | AUC 0.9556, control gap 0.4294 | Decodes strongly, but confounds compete |
+| `olmo3_7b_full_s2` | Olmo-3-7B-Instruct | AUC 0.9200, control gap 0.3751 | Usable instrument |
+| `smollm_full_s0` | SmolLM2-135M-Instruct | AUC 0.9200, control gap 0.3236 | Usable tier-A comparison |
 
-- `olmo3_7b_v2c_full_s0_metrics.json`
-- `olmo3_7b_v2c_full_s0_results.csv`
-- `olmo3_7b_v2c_full_s0_certainty_evidence_dashboard.png`
-- `olmo3_7b_v2c_full_s0_signal_evidence_matrix.png`
-- `olmo3_7b_v2c_full_s0_confound_audit.png`
-- `olmo3_7b_v2c_full_s1_metrics.json`
-- `olmo3_7b_v2c_full_s2_metrics.json`
-- `smollm_v2c_full_metrics.json`
-- `lab14_validation_summary.csv`
+## What This Lab Teaches
+
+- A certainty-looking direction can be useful only after it beats shuffled,
+  random, family-held-out, style, entropy, length, and answer-frame controls.
+- The validated object is an answerability direction in a controlled A/B/C/D
+  frame, not an introspective confidence meter.
+- Verbal confidence and internal projection can disagree. Those disagreement
+  examples are the teaching hook for SELF-REPORT caution.
+- A high AUC alone is not enough: seed 1 shows that controls can keep a result
+  cautious even when the headline probe score is excellent.
+
+## Curated Artifacts
+
+Summary:
+
 - `lab14_validation_report.md`
+- `lab14_validation_summary.csv`
 
-Raw run directories are backed up at:
+Primary Olmo plotted pack:
 
-`/content/drive/MyDrive/interpret/lab14_certainty_v2c_20260620/`
+- `olmo3_7b_full_s0_run_summary.md`
+- `olmo3_7b_full_s0_certainty_instrument_card.md`
+- `olmo3_7b_full_s0_operationalization_audit.md`
+- `olmo3_7b_full_s0_metrics.json`
+- `olmo3_7b_full_s0_certainty_evidence_dashboard.png`
+- `olmo3_7b_full_s0_certainty_probe_by_layer.png`
+- `olmo3_7b_full_s0_controlled_depth_gap_atlas.png`
+- `olmo3_7b_full_s0_family_heldout_generalization.png`
+- `olmo3_7b_full_s0_signal_evidence_matrix.png`
+- `olmo3_7b_full_s0_confidence_signal_correlations.png`
+- `olmo3_7b_full_s0_confound_audit.png`
+- `olmo3_7b_full_s0_confidence_disagreement_matrix.png`
+- `olmo3_7b_full_s0_item_uncertainty_ribbons.png`
+- `olmo3_7b_full_s0_reliability_diagram.png`
+- `olmo3_7b_full_s0_verbal_confidence_audit.png`
 
-## Historical Context
+Selected tables for every retained run:
 
-Older 36-row runs were intentionally conservative and mostly reported
-`answerability_decodes_but_confounds_compete` because all unanswerable rows used
-the D/unknown answer frame. Those historical artifacts remain in this directory
-for comparison, but the v2c runs above are the preferred validation read.
+- `*_certainty_evidence_matrix.csv`
+- `*_depth_selection.csv`
+- `*_family_heldout_generalization.csv`
+- `*_signal_predictiveness.csv`
+- `*_disagreement_examples.csv`
+- `*_calibration_summary.csv`
+- `*_length_and_letter_baselines.csv`
 
-## Residual Risk
+Additional retained run cards:
 
-- This is still answerability/certainty-adjacent, not a direct measurement of
-  honesty, belief, or truthfulness.
-- The self-report/verbal gauge is predictive but poorly calibrated in OLMo
-  (`verbal_confidence_ece` around `0.43` to `0.53` on OLMo full runs).
-- A future stronger version should add residualized internal directions after
-  projecting out the hedging-style direction, then report whether the internal
-  signal remains after that stricter control.
+- `olmo3_7b_full_s1_*`
+- `olmo3_7b_full_s2_*`
+- `smollm_full_s0_*`
+
+## Caveats
+
+- This is a curated validation directory; full raw runs remain outside this
+  pack.
+- The saved direction is an operational answerability instrument, not evidence
+  of subjective confidence.
+- The seed-1 Olmo run should be discussed as a cautionary control case because
+  hedging/style features are also predictive.
+- The only retained plots are from the primary seed-0 Olmo plotted run.
