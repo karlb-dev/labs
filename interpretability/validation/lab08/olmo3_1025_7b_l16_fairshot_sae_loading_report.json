@@ -1,0 +1,58 @@
+{
+  "calibration_best_by_fvu": {
+    "center_input": false,
+    "fvu": 0.409444,
+    "jumprelu": false,
+    "layer": 16,
+    "mean_l0": 828.188,
+    "ok": true,
+    "peak_activation": 8.330519,
+    "selected_convention": false,
+    "selected_location": true,
+    "site": "post",
+    "sub_b_dec": false
+  },
+  "calibration_chosen": {
+    "center_input": false,
+    "fvu": 0.437008,
+    "jumprelu": true,
+    "layer": 16,
+    "mean_l0": 112.237,
+    "ok": true,
+    "peak_activation": 8.355945,
+    "selected_convention": true,
+    "selected_location": true,
+    "site": "post",
+    "sub_b_dec": true
+  },
+  "d_in": 4096,
+  "d_sae": 65536,
+  "dimensionality_ok": true,
+  "model_d_model": 4096,
+  "model_id": "allenai/Olmo-3-1025-7B",
+  "sae_spec": {
+    "center_input": false,
+    "convention_note": "decoderesearch jumprelu SAE; b_dec subtraction plus thresholded jumprelu is the documented/validated convention.",
+    "convention_overrides": [],
+    "description": "decoderesearch Olmo-3-1025-7B jumprelu SAE, layer 16 resid_post.",
+    "id": "olmo3-1025-7b-decoderesearch-l16-post",
+    "jumprelu": true,
+    "layer": 16,
+    "model_substrings": [
+      "olmo-3-1025-7b"
+    ],
+    "repo": "decoderesearch/olmo-3-saes",
+    "site": "post",
+    "sub_b_dec": true,
+    "subdir": "olmo-3-1025-7b/btk-mat-layer-16-k-100",
+    "weights": "sae_weights.safetensors"
+  },
+  "threshold_present": true,
+  "weight_keys": [
+    "W_dec",
+    "W_enc",
+    "b_dec",
+    "b_enc",
+    "threshold"
+  ]
+}
