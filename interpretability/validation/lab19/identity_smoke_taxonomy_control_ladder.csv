@@ -1,0 +1,2 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,role_taxonomy,n_features,candidate_model_b_handles,template_residue_candidates,family_specific_candidates,train_only_unstable,median_model_b_activation_share,median_template_gap,random_baseline_control_kind,random_baseline_model_b_specific_rate,random_baseline_model_a_specific_rate
+lab19,lab19_validation_tiera_identity_v2_plots_20260620,EleutherAI/pythia-160m,,a,float32,none,small,12,0,12,768,shared,48,0,0,0,12,0.5,,matched_shared_direction,0.0,0.0

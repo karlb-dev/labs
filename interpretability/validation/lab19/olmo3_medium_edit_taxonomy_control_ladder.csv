@@ -1,0 +1,3 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,role_taxonomy,n_features,candidate_model_b_handles,template_residue_candidates,family_specific_candidates,train_only_unstable,median_model_b_activation_share,median_template_gap,random_baseline_control_kind,random_baseline_model_b_specific_rate,random_baseline_model_a_specific_rate
+lab19,lab19_validation_olmo3_medium_edit_v2_20260620,allenai/Olmo-3-1025-7B,,b,bfloat16,none,medium,0,0,32,4096,asymmetric,105,0,66,1,1,0.4941,0.7592,matched_shared_direction,0.0039,0.0039
+lab19,lab19_validation_olmo3_medium_edit_v2_20260620,allenai/Olmo-3-1025-7B,,b,bfloat16,none,medium,0,0,32,4096,shared,23,0,15,0,0,0.5423,0.908,matched_shared_direction,0.0039,0.0039

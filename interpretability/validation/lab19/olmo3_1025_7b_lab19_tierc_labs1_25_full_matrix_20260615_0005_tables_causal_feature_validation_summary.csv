@@ -1,2 +1,0 @@
-lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,status,condition,n,note
-lab19,lab19_tierc_labs1_25_full_matrix_20260615_000508,allenai/Olmo-3-1025-7B,,c,bfloat16,none,full,0,0,32,4096,skipped,,0,No causal rows were run.

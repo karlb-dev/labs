@@ -1,4 +1,0 @@
-run_name,model_id,seed,n_rows,n_report_rows,best_depth,verdict,test_auc,shuffled_auc,random_auc,selectivity_vs_best_null,family_control_gap,joke_surprise_cosine,steering_specificity_gap,attention_setup_delta
-lab18_fairshot_smolm_v2_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,0,80,16,5,weak_or_confounded_joke_register_handle,1.0,0.9176,0.7676,0.0824,0.023,0.1748,-0.8,-0.0136
-lab18_fairshot_olmo3_7b_v2_full_s0_20260620,allenai/Olmo-3-7B-Instruct,0,80,16,2,decodable_joke_structure_handle_not_causally_separated_by_this_run,1.0,0.7828,0.7496,0.2172,0.0643,0.189,-0.3,0.013
-lab18_fairshot_olmo3_7b_v2_full_s1_20260620,allenai/Olmo-3-7B-Instruct,1,80,16,6,weak_or_confounded_joke_register_handle,0.9272,0.855,0.5862,0.0722,0.0566,0.0807,-0.6,0.0081

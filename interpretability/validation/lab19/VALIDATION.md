@@ -1,81 +1,113 @@
 # Lab 19 Validation
 
-## Lab 19: Model Diffing With Crosscoders
+## Lab 19: Model Diffing with Shared and Model-Specific Features
 
-Model diffing with crosscoders: shared/base-only/instruct-only feature atlas and controls.
+This directory is the final Lab 19 validation pack for the current repository
+code. It keeps the June 20, 2026 validation artifacts and drops the older
+June 15 run pack so students and reviewers see one coherent result set.
 
 ## Validation Read
 
-This pack prefers the newest broad validation artifacts available in the local runs tree: recent Lab 6 matrix/reruns where applicable, `run6` and `verify_part3` for the main course sweep, and standalone Severance reruns for Lab 36.
+The result is a clean negative for the ambitious interpretability claim and a
+positive result for the audit scaffold. The repaired identity control now
+passes, which means the lab's validation logic can recognize the same-model
+case. On the real Olmo base-vs-instruct pair, however, the candidate
+instruction-tuned features are dominated by template and asymmetric effects and
+do not pass the causal marker control.
 
-- `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab19_tierc_labs1_25_full_matrix_20260615_000508/lab19_tierc_labs1_25_full_matrix_20260615_000508` (allenai/Olmo-3-1025-7B, tier c)
-  - Metrics: `audit_status`=template_control_dominates, `causal_marker_verdict`=skipped, `d_model_a`=4096, `d_model_b`=4096, `depth_a`=21, `depth_b`=21, `eval_fvu_model_a`=0.2138, `eval_fvu_model_b`=0.2565
-  - model A: `allenai/Olmo-3-1025-7B` (model_a)
-  - model B: `allenai/Olmo-3-7B-Instruct` (instruct)
-  - identity-pair smoke: False
-- `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab19_tierb_labs1_25_full_matrix_20260615_000508/lab19_tierb_labs1_25_full_matrix_20260615_000508` (allenai/Olmo-3-1025-7B, tier b)
-  - Metrics: `audit_status`=template_control_dominates, `causal_marker_verdict`=skipped, `d_model_a`=4096, `d_model_b`=4096, `depth_a`=21, `depth_b`=21, `eval_fvu_model_a`=0.2138, `eval_fvu_model_b`=0.2565
-  - model A: `allenai/Olmo-3-1025-7B` (model_a)
-  - model B: `allenai/Olmo-3-7B-Instruct` (instruct)
-  - identity-pair smoke: False
-- `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab19_tiera_labs1_25_full_matrix_20260615_000508/lab19_tiera_labs1_25_full_matrix_20260615_000508` (EleutherAI/pythia-160m, tier a)
-  - Metrics: `audit_status`=identity_pair_failed_or_dictionary_unstable, `causal_marker_verdict`=skipped, `d_model_a`=768, `d_model_b`=768, `depth_a`=8, `depth_b`=8, `eval_fvu_model_a`=0.8439, `eval_fvu_model_b`=0.8474
-  - model A: `EleutherAI/pythia-160m` (model_a)
-  - model B: `EleutherAI/pythia-160m` (model_b)
-  - identity-pair smoke: True
+The best wording is:
+
+```text
+Lab 19 provides a useful model-diffing audit workflow and a clean negative
+under this small course-accessible setup. It does not recover a validated
+instruction-following or assistant-persona feature.
+```
+
+## Headline Result
+
+The identity smoke test passes after the shared-side repair:
+
+- Pair: `EleutherAI/pythia-160m` vs `EleutherAI/pythia-160m`
+- Prompt set: `course_plus_builtin`
+- Shared features: 48 of 48
+- False model-specific share: 0.0000
+- Matched-random B-specific rate: 0.0000
+- Audit status: identity pair passed specificity control
+
+The real Olmo pair remains negative:
+
+- Pair: `allenai/Olmo-3-1025-7B` vs `allenai/Olmo-3-7B-Instruct`
+- Full prompt set: `data/model_diffing_prompt_inventory_v2.csv`
+- Runtime rows: 192
+- Taxonomy: 95 asymmetric, 33 shared
+- Template-dominated features: 98
+- Matched-random B-specific rate: 0.0039
+- Causal marker verdict: not validated by marker control
+
+## Current Result Summary
+
+| Source label | Model pair | Main result | Causal read |
+|---|---|---|---|
+| `identity_smoke` | Pythia-160M vs Pythia-160M | Shared-feature control passes | Specificity audit is repaired |
+| `olmo3_medium_edit` | Olmo base vs Olmo instruct | 68 template-dominated features | Not validated by marker control |
+| `olmo3_full_edit` | Olmo base vs Olmo instruct | 98 template-dominated features | Not validated by marker control |
+| `olmo3_full` | Olmo base vs Olmo instruct | Plotted full evidence pack | Negative interpretability claim |
 
 ## What This Lab Teaches
 
-- The central lesson is to separate readable structure from causal use with controls, patches, and held-out checks.
-- Negative findings are part of the course evidence: a method that refuses an overclaim is working.
-
-## Selected Source Runs
-
-| Source | Model | Tier | Notes |
-|---|---|---|---|
-| `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab19_tierc_labs1_25_full_matrix_20260615_000508/lab19_tierc_labs1_25_full_matrix_20260615_000508` | `allenai/Olmo-3-1025-7B` | `c` | `audit_status`=template_control_dominates; `causal_marker_verdict`=skipped; `d_model_a`=4096 |
-| `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab19_tierb_labs1_25_full_matrix_20260615_000508/lab19_tierb_labs1_25_full_matrix_20260615_000508` | `allenai/Olmo-3-1025-7B` | `b` | `audit_status`=template_control_dominates; `causal_marker_verdict`=skipped; `d_model_a`=4096 |
-| `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab19_tiera_labs1_25_full_matrix_20260615_000508/lab19_tiera_labs1_25_full_matrix_20260615_000508` | `EleutherAI/pythia-160m` | `a` | `audit_status`=identity_pair_failed_or_dictionary_unstable; `causal_marker_verdict`=skipped; `d_model_a`=768 |
+- Identity and matched-random controls are essential for model diffing.
+- Raw-vs-chat template differences can dominate apparent model-specific
+  features.
+- A crosscoder can produce interpretable-looking asymmetric coordinates without
+  validating an instruction-following mechanism.
+- Negative results are useful when the audit clearly explains why a tempting
+  claim is not supported.
 
 ## Curated Artifacts
 
-- `olmo3_1025_7b_lab19_tierc_labs1_25_full_matrix_20260615_0005_model_diffing_evidence_dashboard.png`
-- `olmo3_1025_7b_lab19_tierc_labs1_25_full_matrix_20260615_0005_feature_context_atlas.png`
-- `olmo3_1025_7b_lab19_tierc_labs1_25_full_matrix_20260615_0005_tables_causal_feature_validation_summary.csv`
-- `olmo3_1025_7b_lab19_tierc_labs1_25_full_matrix_20260615_0005_tables_causal_feature_validation.csv`
-- `olmo3_1025_7b_lab19_tierb_labs1_25_full_matrix_20260615_0005_model_diffing_evidence_dashboard.png`
-- `olmo3_1025_7b_lab19_tierb_labs1_25_full_matrix_20260615_0005_feature_context_atlas.png`
-- `olmo3_1025_7b_lab19_tierb_labs1_25_full_matrix_20260615_0005_tables_causal_feature_validation_summary.csv`
-- `olmo3_1025_7b_lab19_tierb_labs1_25_full_matrix_20260615_0005_tables_causal_feature_validation.csv`
-- `pythia-160m_lab19_tiera_labs1_25_full_matrix_20260615_000508_model_diffing_evidence_dashboard.png`
-- `pythia-160m_lab19_tiera_labs1_25_full_matrix_20260615_000508_identity_smoke_scorecard.png`
-- `pythia-160m_lab19_tiera_labs1_25_full_matrix_20260615_000508_tables_causal_feature_validation_summary.csv`
-- `pythia-160m_lab19_tiera_labs1_25_full_matrix_20260615_000508_tables_causal_feature_validation.csv`
+Summary:
+
+- `lab19_validation_report.md`
+- `lab19_validation_summary.csv`
+
+Identity smoke test:
+
+- `identity_smoke_metrics.json`
+- `identity_smoke_model_diffing_evidence_dashboard.png`
+- `identity_smoke_model_diffing_evidence_matrix.csv`
+- `identity_smoke_identity_smoke_scorecard.png`
+- `identity_smoke_feature_audit_matrix.png`
+- `identity_smoke_feature_exclusivity_histogram.png`
+- `identity_smoke_causal_feature_validation_summary.csv`
+- `identity_smoke_random_feature_baseline.csv`
+- `identity_smoke_taxonomy_control_ladder.csv`
+
+Olmo base-vs-instruct validation:
+
+- `olmo3_medium_edit_metrics.json`
+- `olmo3_medium_edit_model_diffing_evidence_matrix.csv`
+- `olmo3_medium_edit_causal_feature_validation_summary.csv`
+- `olmo3_medium_edit_random_feature_baseline.csv`
+- `olmo3_medium_edit_taxonomy_control_ladder.csv`
+- `olmo3_full_edit_metrics.json`
+- `olmo3_full_edit_model_diffing_evidence_matrix.csv`
+- `olmo3_full_edit_causal_feature_validation_summary.csv`
+- `olmo3_full_edit_random_feature_baseline.csv`
+- `olmo3_full_edit_taxonomy_control_ladder.csv`
+- `olmo3_full_metrics.json`
+- `olmo3_full_model_diffing_evidence_dashboard.png`
+- `olmo3_full_model_diffing_evidence_matrix.csv`
+- `olmo3_full_feature_audit_matrix.png`
+- `olmo3_full_feature_exclusivity_histogram.png`
+- `olmo3_full_causal_feature_validation_summary.csv`
+- `olmo3_full_random_feature_baseline.csv`
+- `olmo3_full_taxonomy_control_ladder.csv`
 
 ## Caveats
 
-- This is a curated validation pack, not a complete raw-results archive.
-- Prefer the source run directory when auditing exact configs, seeds, prompts, or full tables.
-- Older runs are intentionally de-emphasized when newer validation/rerun artifacts exist.
-
-## 2026-06-20 Fair-Shot Update
-
-The Lab 19 instrument was updated after audit:
-
-- same-dimensional model pairs now use shared side initialization, so identity-pair smoke runs no longer invent side-specific features from unrelated random initialization;
-- random-direction controls now distinguish `matched_shared_direction` from the deliberately harsher `independent_side_directions` diagnostic;
-- prompt groups now split into train/dev/test, with test used for reported reconstruction and stability;
-- a deterministic v2 prompt inventory was added at `data/model_diffing_prompt_inventory_v2.csv` with 96 raw prompt groups and runtime paired chat variants.
-
-Current fair-shot summary: `fairshot_20260620_summary.csv`.
-
-Key current runs:
-
-| Run | Read |
-|---|---|
-| `lab19_fairshot_tiera_identity_v2_plots_20260620` | Identity smoke passes the repaired specificity control: all 48 features are shared; matched-random false-specific rate is 0.0. |
-| `lab19_fairshot_olmo3_medium_edit_v2_20260620` | OLMo base/instruct medium run reconstructs well enough, but no candidate instruct-only handles survive first-pass controls; template control dominates; optional edit is not validated by marker controls. |
-| `lab19_fairshot_olmo3_v2_full_edit_20260620` | Balanced v2 inventory gives the same scientific read: no defended instruct-only feature handle, template residue dominates, activation norm shifts are large, and causal marker specificity is 0.0. |
-| `lab19_fairshot_olmo3_v2_full_plots_20260620` | Plotted v2 evidence pack for dashboard and audit matrices. |
-
-Current conclusion: Lab 19 is now a cleaner negative/teaching result. The paired crosscoder and identity smoke are healthier, but the OLMo base-vs-instruct runs still do not license a robust model-B/instruct-only feature claim under matched controls. The strongest positive result is methodological: the repaired controls stop a false identity-pair failure and make the negative easier to trust.
+- This is a curated validation directory; full raw runs remain outside this
+  pack.
+- The negative result applies to this course-accessible final-token residual
+  setup and the current prompt inventory.
+- The lab should not claim that it recovered alignment, instruction-following,
+  assistant voice, or persona features.

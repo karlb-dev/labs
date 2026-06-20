@@ -1,90 +1,96 @@
 # Lab 17 Validation
 
-## Lab 17 - Persona, Voice, Roleplay, and Register
+## Lab 17: Persona Register and Behavioral Traits
 
-Persona, voice, roleplay, and register: paired directions, steering, and turn traces.
+This directory is the final Lab 17 validation pack for the current repository
+code. It keeps the June 20, 2026 validation artifacts and drops the older
+June 15 run pack so students and reviewers see one coherent result set.
 
 ## Validation Read
 
-This pack prefers the newest broad validation artifacts available in the local runs tree: recent Lab 6 matrix/reruns where applicable, `run6` and `verify_part3` for the main course sweep, and standalone Severance reruns for Lab 36.
+The result is a partial positive. Lab 17 now gives a strong, controlled
+decoding result for persona/register traits, especially on
+`allenai/Olmo-3-7B-Instruct`. The cleanest current claim is that the lab can
+find held-out persona/register directions that beat matched random controls.
 
-## 2026-06-20 Fair-Shot Update
-
-The fair-shot update expands the frozen corpus from 24 to 256 rows, changes the probe protocol to train/dev/test, selects depth on dev control-adjusted AUC, reports test only after selection, adds bootstrap/permutation probe diagnostics, and strengthens steering controls.
-
-Headline read: Lab 17 is now good as a controlled decodability lab. It does not yet show a robust causal persona/register steering result. On `allenai/Olmo-3-7B-Instruct`, two full-corpus seeds had mean test AUC `1.0` with random-control AUC around `0.64-0.66`, but the higher-control steering sweep did not beat random/shuffled controls. The initial 7B pilot produced one apparent `honest_disagreement` controlled-style handle; the stronger five-random-control rerun removed it.
-
-New committed summary:
-
-- `fairshot_20260620_summary.csv`
-- `fairshot_20260620_lab17_fairshot_smolm_v2_full_s0b_20260620_*`
-- `fairshot_20260620_lab17_fairshot_olmo3_7b_v2_full_s0_20260620_*`
-- `fairshot_20260620_lab17_fairshot_olmo3_7b_v2_full_s0_controls5_20260620_*`
-- `fairshot_20260620_lab17_fairshot_olmo3_7b_v2_full_s1_controls5_20260620_*`
-
-Full raw run directories were backed up to Drive under:
+The causal steering result is not yet strong. The best wording is:
 
 ```text
-/content/drive/MyDrive/interpret/lab17_persona_fairshot_20260620/
+Lab 17 robustly finds controlled persona/register decodability handles, but
+the current steering intervention does not establish a robust causal persona
+control claim.
 ```
 
-- `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab17_olmo32bthink_labs1_25_local_reruns_20260615_101609/lab17_olmo32bthink_labs1_25_local_reruns_20260615_101609` (allenai/Olmo-3-32B-Think, tier c)
-  - Metrics: `best_depth`=13, `content_ok`=True, `injection_layer`=12, `mean_opposite_steering_style_delta_max_dose`=0, `mean_random_auc_best_depth`=0.625, `mean_random_steering_style_delta_max_dose`=0, `mean_real_auc_best_depth`=1, `mean_real_selectivity_vs_random`=0.375
-  - Model: `allenai/Olmo-3-32B-Think`
-  - Rows: 24 selected from `frozen_csv`
-  - Best depth: 13 selected by train-only control-adjusted score
-- `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab17_gemma4e4b_labs1_25_local_reruns_20260615_101609/lab17_gemma4e4b_labs1_25_local_reruns_20260615_101609` (google/gemma-4-E4B-it, tier b)
-  - Metrics: `best_depth`=17, `content_ok`=True, `injection_layer`=16, `mean_opposite_steering_style_delta_max_dose`=-0.125, `mean_random_auc_best_depth`=0.7375, `mean_random_steering_style_delta_max_dose`=0, `mean_real_auc_best_depth`=1, `mean_real_selectivity_vs_random`=0.2625
-  - Model: `google/gemma-4-E4B-it`
-  - Rows: 24 selected from `frozen_csv`
-  - Best depth: 17 selected by train-only control-adjusted score
-- `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab17_tierc_labs1_25_full_matrix_20260615_000508/lab17_tierc_labs1_25_full_matrix_20260615_000508` (allenai/Olmo-3-7B-Instruct, tier c)
-  - Metrics: `best_depth`=8, `content_ok`=True, `injection_layer`=7, `mean_opposite_steering_style_delta_max_dose`=-0.25, `mean_random_auc_best_depth`=0.5875, `mean_random_steering_style_delta_max_dose`=-0.125, `mean_real_auc_best_depth`=1, `mean_real_selectivity_vs_random`=0.4125
-  - Model: `allenai/Olmo-3-7B-Instruct`
-  - Rows: 24 selected from `frozen_csv`
-  - Best depth: 8 selected by train-only control-adjusted score
-- `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab17_tiera_labs1_25_full_matrix_20260615_000508/lab17_tiera_labs1_25_full_matrix_20260615_000508` (HuggingFaceTB/SmolLM2-135M-Instruct, tier a)
-  - Metrics: `best_depth`=29, `content_ok`=False, `injection_layer`=28, `mean_opposite_steering_style_delta_max_dose`=0, `mean_random_auc_best_depth`=0.7, `mean_random_steering_style_delta_max_dose`=0, `mean_real_auc_best_depth`=1, `mean_real_selectivity_vs_random`=0.3
-  - Model: `HuggingFaceTB/SmolLM2-135M-Instruct`
-  - Rows: 12 selected from `frozen_csv`
-  - Best depth: 29 selected by train-only control-adjusted score
+## Headline Result
+
+The strongest runs are the two full-corpus Olmo-3-7B-Instruct seeds:
+
+- Model: `allenai/Olmo-3-7B-Instruct`
+- Corpus: `data/persona_register_pairs.csv`
+- Corpus size: 256 rows
+- Split key: trait/topic held-out splits
+- Seed 0, five-control rerun: test AUC 1.0000, random-control AUC 0.6439
+- Seed 1, five-control rerun: test AUC 1.0000, random-control AUC 0.6577
+- Mean selectivity over random controls: 0.3561 for seed 0, 0.3423 for seed 1
+- Steering specificity gap: negative or near zero in the five-control runs
+
+## Current Result Summary
+
+| Source label | Model | Main result | Causal read |
+|---|---|---|---|
+| `olmo3_7b_full_s0_controls5` | Olmo-3-7B-Instruct | Test AUC 1.0000, random AUC 0.6439 | Decodable but not steerable in this run |
+| `olmo3_7b_full_s1_controls5` | Olmo-3-7B-Instruct | Test AUC 1.0000, random AUC 0.6577 | Decodable but not steerable in this run |
+| `olmo3_7b_full_s0` | Olmo-3-7B-Instruct | Test AUC 1.0000, random AUC 0.6439 | Pilot posture handle did not survive stronger controls |
+| `smollm_full_s0` | SmolLM2-135M-Instruct | Test AUC 0.9847, random AUC 0.5888 | Fails content-preservation controls |
 
 ## What This Lab Teaches
 
-- The central lesson is decodability with controls: useful probes must survive selectivity, held-out data, and confound checks.
-- Negative findings are part of the course evidence: a method that refuses an overclaim is working.
-- Held-out transfer is the main guardrail against reading a fitted artifact as a mechanism.
-
-## Selected Source Runs
-
-| Source | Model | Tier | Notes |
-|---|---|---|---|
-| `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab17_olmo32bthink_labs1_25_local_reruns_20260615_101609/lab17_olmo32bthink_labs1_25_local_reruns_20260615_101609` | `allenai/Olmo-3-32B-Think` | `c` | `best_depth`=13; `content_ok`=True; `injection_layer`=12 |
-| `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab17_gemma4e4b_labs1_25_local_reruns_20260615_101609/lab17_gemma4e4b_labs1_25_local_reruns_20260615_101609` | `google/gemma-4-E4B-it` | `b` | `best_depth`=17; `content_ok`=True; `injection_layer`=16 |
-| `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab17_tierc_labs1_25_full_matrix_20260615_000508/lab17_tierc_labs1_25_full_matrix_20260615_000508` | `allenai/Olmo-3-7B-Instruct` | `c` | `best_depth`=8; `content_ok`=True; `injection_layer`=7 |
-| `interpret/verify_part3/labs1_25_full_matrix_20260615_000508/lab17_tiera_labs1_25_full_matrix_20260615_000508/lab17_tiera_labs1_25_full_matrix_20260615_000508` | `HuggingFaceTB/SmolLM2-135M-Instruct` | `a` | `best_depth`=29; `content_ok`=False; `injection_layer`=28 |
+- Persona/register traits can be separable in residual activations under a
+  held-out split and matched random controls.
+- A high trait probe score is not the same as a successful behavioral steering
+  intervention.
+- Content preservation matters: the SmolLM run finds a decodable direction, but
+  the intervention changes content too much to support a clean steering claim.
+- The improved corpus and five-control reruns make the lab much more useful as
+  a skeptical validation exercise than the original tiny-data version.
 
 ## Curated Artifacts
 
-- `olmo3_32b_lab17_olmo32bthink_labs1_25_local_reruns_2026061_refusal_boundary_safety_dashboard.png`
-- `olmo3_32b_lab17_olmo32bthink_labs1_25_local_reruns_2026061_persona_evidence_dashboard.png`
-- `olmo3_32b_lab17_olmo32bthink_labs1_25_local_reruns_2026061_results.csv`
-- `olmo3_32b_lab17_olmo32bthink_labs1_25_local_reruns_2026061_metrics.json`
-- `gemma4e4b_lab17_gemma4e4b_labs1_25_local_reruns_20260615_1_refusal_boundary_safety_dashboard.png`
-- `gemma4e4b_lab17_gemma4e4b_labs1_25_local_reruns_20260615_1_persona_evidence_dashboard.png`
-- `gemma4e4b_lab17_gemma4e4b_labs1_25_local_reruns_20260615_1_results.csv`
-- `gemma4e4b_lab17_gemma4e4b_labs1_25_local_reruns_20260615_1_metrics.json`
-- `olmo3_7b_lab17_tierc_labs1_25_full_matrix_20260615_000508_refusal_boundary_safety_dashboard.png`
-- `olmo3_7b_lab17_tierc_labs1_25_full_matrix_20260615_000508_persona_evidence_dashboard.png`
-- `olmo3_7b_lab17_tierc_labs1_25_full_matrix_20260615_000508_results.csv`
-- `olmo3_7b_lab17_tierc_labs1_25_full_matrix_20260615_000508_metrics.json`
-- `smollm_lab17_tiera_labs1_25_full_matrix_20260615_000508_refusal_boundary_safety_dashboard.png`
-- `smollm_lab17_tiera_labs1_25_full_matrix_20260615_000508_persona_evidence_dashboard.png`
-- `smollm_lab17_tiera_labs1_25_full_matrix_20260615_000508_results.csv`
-- `smollm_lab17_tiera_labs1_25_full_matrix_20260615_000508_metrics.json`
+Summary:
+
+- `lab17_validation_report.md`
+- `lab17_validation_summary.csv`
+
+Olmo-3-7B-Instruct final runs:
+
+- `olmo3_7b_full_s0_results.csv`
+- `olmo3_7b_full_s0_metrics.json`
+- `olmo3_7b_full_s0_persona_evidence_dashboard.png`
+- `olmo3_7b_full_s0_refusal_boundary_safety_dashboard.png`
+- `olmo3_7b_full_s0_persona_trait_evidence_matrix.csv`
+- `olmo3_7b_full_s0_controls5_results.csv`
+- `olmo3_7b_full_s0_controls5_metrics.json`
+- `olmo3_7b_full_s0_controls5_persona_evidence_dashboard.png`
+- `olmo3_7b_full_s0_controls5_refusal_boundary_safety_dashboard.png`
+- `olmo3_7b_full_s0_controls5_persona_trait_evidence_matrix.csv`
+- `olmo3_7b_full_s1_controls5_results.csv`
+- `olmo3_7b_full_s1_controls5_metrics.json`
+- `olmo3_7b_full_s1_controls5_persona_evidence_dashboard.png`
+- `olmo3_7b_full_s1_controls5_refusal_boundary_safety_dashboard.png`
+- `olmo3_7b_full_s1_controls5_persona_trait_evidence_matrix.csv`
+
+SmolLM comparison:
+
+- `smollm_full_s0_results.csv`
+- `smollm_full_s0_metrics.json`
+- `smollm_full_s0_persona_evidence_dashboard.png`
+- `smollm_full_s0_refusal_boundary_safety_dashboard.png`
+- `smollm_full_s0_persona_trait_evidence_matrix.csv`
 
 ## Caveats
 
-- This is a curated validation pack, not a complete raw-results archive.
-- Prefer the source run directory when auditing exact configs, seeds, prompts, or full tables.
-- Older runs are intentionally de-emphasized when newer validation/rerun artifacts exist.
+- This is a curated validation directory; full raw runs remain outside this
+  pack.
+- The current positive claim is a decodability claim, not a robust behavioral
+  steering claim.
+- The stronger five-control Olmo reruns supersede the single-control pilot run.

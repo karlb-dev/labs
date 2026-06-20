@@ -1,5 +1,0 @@
-run_name,model_id,seed,n_rows,n_report_rows,best_depth,verdict,mean_test_real_auc,mean_test_random_auc,mean_selectivity_vs_random,steering_specificity_gap,content_delta,selectivity_ok,steering_ok,content_ok,non_default_trait_postures
-lab17_fairshot_smolm_v2_full_s0b_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,0,256,32,29,not_validated_by_controls,0.9847,0.5888,0.3959,1.4688,-0.8125,True,True,False,
-lab17_fairshot_olmo3_7b_v2_full_s0_20260620,allenai/Olmo-3-7B-Instruct,0,256,16,5,decodable_but_not_steerable_by_this_run,1.0,0.6439,0.3561,0.0,0.0,True,False,True,honest_disagreement:controlled_style_handle
-lab17_fairshot_olmo3_7b_v2_full_s0_controls5_20260620,allenai/Olmo-3-7B-Instruct,0,256,32,5,decodable_but_not_steerable_by_this_run,1.0,0.6439,0.3561,-0.1062,0.0,True,False,True,
-lab17_fairshot_olmo3_7b_v2_full_s1_controls5_20260620,allenai/Olmo-3-7B-Instruct,1,256,32,10,decodable_but_not_steerable_by_this_run,1.0,0.6577,0.3423,-0.1875,0.0312,True,False,True,

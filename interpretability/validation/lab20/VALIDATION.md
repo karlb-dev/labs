@@ -1,63 +1,97 @@
 # Lab 20 Validation
 
-## Lab 20 - Building Benign Model Organisms
+## Lab 20: Model Organism Construction
 
-Building benign model organisms: sealed answer keys, manifests, and baseline spillover audits.
+This directory is the final Lab 20 validation pack for the current repository
+code. It keeps the June 20, 2026 validation artifacts and drops the older
+June 15 run pack so students and reviewers see one coherent result set.
 
-## Current Validation Read
+## Validation Read
 
-The 2026-06-20 fair-shot reruns use `spillover_negation_aware_v3`, which separates:
+The result is a positive construction-stage validation. Lab 20 is not trying to
+prove that adapters learned hidden behaviors yet; it is validating that the
+organism packages are leak-free, safety-screened, and ready for downstream
+adapter training and blind audit.
 
-- raw target-marker mentions,
-- refined target-marker leaks, and
-- spillover-family issues.
+The best wording is:
 
-This matters because historical OLMo/Gemma runs showed `baseline_target=0` and `baseline_control=0` for most organisms, but still reported `max_baseline_spillover_rate=1.0`. The raw rows now show this was largely a scoring-rubric problem: compliant outputs such as `alternative to a tea break`, corrected statements such as `Sydney is not the capital`, and drafted invitation notes should not count as spillover.
+```text
+Lab 20 validates the construction stage for model-organism packages. On
+Olmo-3-7B-Instruct, all five organisms are ready for adapter training with no
+public leaks, no safety blocks, and no refined spillover findings.
+```
 
-## New Fair-Shot Runs
+## Headline Result
 
-- `interpretability/runs/lab20_fairshot_olmo3_full_scoring_v3b_20260620` (allenai/Olmo-3-7B-Instruct, tier b, full prompt set)
-  - Metrics: `n_organisms=5`, `n_public_package_leaks=0`, `n_safety_screen_blocks=0`, `n_baseline_preexisting_marker_risks=0`
-  - Spillover: `max_baseline_spillover_rate=0.0`, `max_baseline_family_issue_rate=0.0`, `max_baseline_target_marker_leak_rate=0.0`
-  - Readiness: 5/5 organisms are `ready_for_adapter_training`
-  - Audit note: tea organism has a raw marker mention on the no-tea prompt, but refined leak and family issue are both 0 because the model says an alternative to a tea break using water/stretching.
-- `interpretability/runs/lab20_fairshot_tiera_scoring_v3b_20260620` (HuggingFaceTB/SmolLM2-135M-Instruct, tier a, small prompt set)
-  - Metrics: `n_organisms=4`, `n_public_package_leaks=0`, `n_safety_screen_blocks=0`, `max_baseline_spillover_rate=0.0`
-  - Readiness: 3/4 organisms are `ready_for_adapter_training`
-  - Limitation: the toy-underperformance organism has baseline target rate `0.5`, so it remains a redesign/stronger-control case on this small model.
+The strongest current run is the Olmo-3-7B-Instruct full scoring run:
 
-## Verdict
+- Model: `allenai/Olmo-3-7B-Instruct`
+- Organisms checked: 5 of 5
+- Ready for adapter training: 5 of 5
+- Public leaks: 0
+- Safety blocks: 0
+- Baseline marker risks: 0
+- Max refined spillover rate: 0.0
+- Max family issue rate: 0.0
+- Max target marker leak rate: 0.0
 
-Lab 20 is in substantially better shape than the historical validation pack suggested. The construction and blinding apparatus was already strong; the main weakness was an overbroad spillover scorer and missing raw spillover transcripts.
+The SmolLM tier-A run is a smaller smoke comparison:
 
-The current result is a clean construction-stage positive: Lab 20 can emit leak-free, safety-screened public packages whose baseline target/control and refined spillover rates are clean on OLMo 3 7B. It still does not claim trained model-organism behavior by default; adapter training and post-training audit are downstream work.
+- Model: `HuggingFaceTB/SmolLM2-135M-Instruct`
+- Organisms checked: 4 of 4
+- Ready for adapter training: 3 of 4
+- Public leaks: 0
+- Safety blocks: 0
+- Baseline marker risks: 1
+- Max refined spillover rate: 0.0
 
-## Historical Context
+## Current Result Summary
 
-Older validation artifacts are retained for comparison:
+| Source label | Model | Main result | Read |
+|---|---|---|---|
+| `olmo3_7b_full_scoring` | Olmo-3-7B-Instruct | 5/5 organisms ready | Positive construction-stage validation |
+| `smollm_tiera_scoring` | SmolLM2-135M-Instruct | 3/4 organisms ready | Useful smoke run; one toy baseline risk |
 
-- Olmo 3 32B Think, Gemma 4E4B, and Olmo 3 7B historical runs reported `max_baseline_spillover_rate=1.0` despite mostly zero target/control baseline rates.
-- SmolLM Tier A historically reported clean spillover but a baseline marker-risk flag for toy underperformance.
-- Those historical OLMo/Gemma `max_spillover=1.0` rows should now be read as evidence that the original spillover rubric was too coarse, not as conclusive evidence that every organism was unusable.
+## What This Lab Teaches
+
+- Model-organism work has a construction phase before any adapter result can be
+  claimed.
+- Leak checks, safety checks, baseline target/control gaps, and spillover audits
+  are separate gates.
+- Refined spillover logic matters: raw marker words can appear in benign
+  negated contexts and should not automatically count as leaks.
+- A clean construction pack is a prerequisite for Lab 21 and Lab 23 style
+  downstream training/audit claims.
 
 ## Curated Artifacts
 
-- `olmo3_7b_lab20_fairshot_full_scoring_v3b_20260620_metrics.json`
-- `olmo3_7b_lab20_fairshot_full_scoring_v3b_20260620_results.csv`
-- `olmo3_7b_lab20_fairshot_full_scoring_v3b_20260620_tables_organism_readiness_scorecard.csv`
-- `olmo3_7b_lab20_fairshot_full_scoring_v3b_20260620_tables_spillover_audit.csv`
-- `olmo3_7b_lab20_fairshot_full_scoring_v3b_20260620_tables_spillover_probe_generations.csv`
-- `olmo3_7b_lab20_fairshot_full_scoring_v3b_20260620_construction_evidence_dashboard.png`
-- `olmo3_7b_lab20_fairshot_full_scoring_v3b_20260620_organism_construction_dashboard.png`
-- `olmo3_7b_lab20_fairshot_full_scoring_v3b_20260620_spillover_risk_matrix.png`
-- `smollm_lab20_fairshot_tiera_scoring_v3b_20260620_metrics.json`
-- `smollm_lab20_fairshot_tiera_scoring_v3b_20260620_results.csv`
-- `smollm_lab20_fairshot_tiera_scoring_v3b_20260620_tables_organism_readiness_scorecard.csv`
-- `smollm_lab20_fairshot_tiera_scoring_v3b_20260620_tables_spillover_audit.csv`
-- `smollm_lab20_fairshot_tiera_scoring_v3b_20260620_tables_spillover_probe_generations.csv`
+Summary:
+
+- `lab20_validation_report.md`
+
+Olmo-3-7B-Instruct full scoring:
+
+- `olmo3_7b_full_scoring_results.csv`
+- `olmo3_7b_full_scoring_metrics.json`
+- `olmo3_7b_full_scoring_organism_construction_dashboard.png`
+- `olmo3_7b_full_scoring_construction_evidence_dashboard.png`
+- `olmo3_7b_full_scoring_spillover_risk_matrix.png`
+- `olmo3_7b_full_scoring_tables_organism_readiness_scorecard.csv`
+- `olmo3_7b_full_scoring_tables_spillover_audit.csv`
+- `olmo3_7b_full_scoring_tables_spillover_probe_generations.csv`
+
+SmolLM tier-A scoring:
+
+- `smollm_tiera_scoring_results.csv`
+- `smollm_tiera_scoring_metrics.json`
+- `smollm_tiera_scoring_tables_organism_readiness_scorecard.csv`
+- `smollm_tiera_scoring_tables_spillover_audit.csv`
+- `smollm_tiera_scoring_tables_spillover_probe_generations.csv`
 
 ## Caveats
 
-- These are baseline construction audits, not trained-adapter audits.
-- The full run directory is not a blind package. Only `blind_audit_packages/blind_<id>/` should be handed to an auditor.
-- Future validation should train at least one adapter and rerun Lab 20/Lab 21/Lab 23 before claiming a hidden-behavior known positive.
+- This is a curated validation directory; full raw runs remain outside this
+  pack.
+- The result is construction-stage validation only. It does not claim adapter
+  training succeeded or that hidden behavior was learned.
+- The downstream behavior-learning and blind-audit claims belong to later labs.
