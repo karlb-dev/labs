@@ -1,0 +1,7 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,split,condition,n,mean_real_projection,mean_surface_projection,mean_shuffled_projection,mean_random_projection
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,eval,eval,12,0.9851,,0.6353,-0.012
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,eval,format_control,6,0.6147,,0.1382,0.0159
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,eval,natural,6,-0.172,,0.5933,-0.0014
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,train,eval,36,0.9949,,0.6469,-0.0009
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,train,format_control,18,0.545,,0.1901,0.0301
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,train,natural,18,-0.37,,0.4863,-0.0103

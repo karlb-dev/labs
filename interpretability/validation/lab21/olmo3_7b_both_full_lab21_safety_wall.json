@@ -1,0 +1,56 @@
+{
+  "blocked_public_claims": [
+    "Safety lives in layer N.",
+    "The refusal mechanism is shallow.",
+    "The high-norm LoRA layer is the mechanism."
+  ],
+  "boundary_prompts_forward_pass_only": true,
+  "forced_prefixes_are_authored_safe_or_refusal_consistent": true,
+  "no_harmful_completion_sampling": true,
+  "no_refusal_ablation": true,
+  "no_toward_compliance_steering": true,
+  "safety_manifest": {
+    "comparison_model_id": "allenai/Olmo-3-1025-7B",
+    "comparison_model_source": "registry",
+    "data": {
+      "data_source": "frozen_csv",
+      "data_version": "v1_boundary_safe_pairs",
+      "expected_sha256_from_manifest": "c7dac16bb2705540e572ca46934ccfaf1be11143063a06881bad8ef8f2166027",
+      "fallback_is_science_data": true,
+      "families_loaded": {
+        "academic_integrity": 4,
+        "account_security": 4,
+        "copyright": 4,
+        "cyber_boundary": 4,
+        "privacy": 4,
+        "professional_boundary": 4
+      },
+      "families_selected": {
+        "academic_integrity": 4,
+        "account_security": 4,
+        "copyright": 4,
+        "cyber_boundary": 4,
+        "privacy": 4,
+        "professional_boundary": 4
+      },
+      "manifest_match": true,
+      "max_examples": 0,
+      "n_loaded": 24,
+      "n_selected": 24,
+      "path": "/content/labs/interpretability/data/safety_depth_boundary_pairs.csv",
+      "prompt_set": "full",
+      "safety_scope": "Forward passes and forced benign/refusal-consistent prefixes only; no harmful completion sampling; no refusal ablation.",
+      "sha256": "c7dac16bb2705540e572ca46934ccfaf1be11143063a06881bad8ef8f2166027"
+    },
+    "identity_comparison_smoke": false,
+    "instruct_model_id": "allenai/Olmo-3-7B-Instruct",
+    "n_pairs": 24,
+    "safety_wall": {
+      "boundary_prompt_forward_passes_only": true,
+      "forced_prefixes_only": true,
+      "no_harmful_completion_sampling": true,
+      "no_refusal_ablation": true
+    }
+  },
+  "safety_wall_version": "lab21.v2"
+}

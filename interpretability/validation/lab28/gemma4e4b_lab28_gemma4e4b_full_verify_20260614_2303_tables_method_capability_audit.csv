@@ -1,0 +1,9 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,method,status,why
+lab28,lab28_gemma4e4b_full_verify_20260614_2303,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,localized_residual_addition,run,safe reversible inference-time intervention
+lab28,lab28_gemma4e4b_full_verify_20260614_2303,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,wrong_position_addition,run,site specificity control
+lab28,lab28_gemma4e4b_full_verify_20260614_2303,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,random_direction_addition,run,direction specificity control
+lab28,lab28_gemma4e4b_full_verify_20260614_2303,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,opposite_direction_addition,run,signedness control
+lab28,lab28_gemma4e4b_full_verify_20260614_2303,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,feature_clamp_suppression,not_run,requires aligned feature dictionary; future extension
+lab28,lab28_gemma4e4b_full_verify_20260614_2303,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,persistent_rank_one_weight_edit,not_run,requires apply/restore hash and rollback tests; intentionally deferred
+lab28,lab28_gemma4e4b_full_verify_20260614_2303,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,refusal_ablation,forbidden,outside Lab 28 safety scope
+lab28,lab28_gemma4e4b_full_verify_20260614_2303,google/gemma-4-E4B-it,,b,bfloat16,none,full,0,0,42,2560,private_data_unlearning,forbidden,outside Lab 28 safety scope

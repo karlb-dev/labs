@@ -1,0 +1,16 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,held_out_family,depth,direction_kind,auc,auc_std,selectivity_vs_chance,n_eval_pos,n_eval_neg,n_train,n_control_samples
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,factual_qa,13,real,0.8594,0.0,0.3594,8,8,64,1
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,factual_qa,13,shuffled,0.4125,0.234,-0.0875,8,8,64,5
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,factual_qa,13,random,0.6531,0.234,0.1531,8,8,64,5
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,freeform_answerability,13,real,0.8281,0.0,0.3281,8,8,64,1
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,freeform_answerability,13,shuffled,0.5312,0.2013,0.0312,8,8,64,5
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,freeform_answerability,13,random,0.5875,0.1957,0.0875,8,8,64,5
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,mcq,13,real,0.8594,0.0,0.3594,8,8,64,1
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,mcq,13,shuffled,0.5156,0.3048,0.0156,8,8,64,5
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,mcq,13,random,0.425,0.1421,-0.075,8,8,64,5
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,passage_qa,13,real,0.8438,0.0,0.3438,8,8,64,1
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,passage_qa,13,shuffled,0.4969,0.0578,-0.0031,8,8,64,5
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,passage_qa,13,random,0.5,0.0595,0.0,8,8,64,5
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,procedural_logic,13,real,1.0,0.0,0.5,8,8,64,1
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,procedural_logic,13,shuffled,0.4781,0.1611,-0.0219,8,8,64,5
+lab14,lab14_validation_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,2,32,4096,procedural_logic,13,random,0.4813,0.1467,-0.0187,8,8,64,5

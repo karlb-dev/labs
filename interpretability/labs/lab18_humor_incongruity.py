@@ -40,7 +40,7 @@ CONTROL_CONDITIONS = ("literal", "surprise", "silly", "positive")
 SEMANTIC_DIRECTIONS = ("joke_structure", "surprise", "silly", "positive")
 
 PROMPT_SET_FAMILY_CAPS = {"small": 2, "medium": 4, "full": 0}
-TRAIN_FRACTION = 0.67
+REPORT_SPLIT = "test"
 N_NULL_REPS = 5
 MAX_NEW_TOKENS = 42
 ENGINE_MAX_CONCURRENT = 16
@@ -372,11 +372,16 @@ def validate_items(items: Sequence[HumorItem]) -> tuple[list[HumorItem], list[di
 
 def load_items(args: Any) -> tuple[list[HumorItem], dict[str, Any], list[dict[str, Any]]]:
     prompt_set = str(getattr(args, "prompt_set", "small"))
+    corpus_path_arg = str(getattr(args, "corpus_path", "") or "").strip()
     source_path: pathlib.Path | None = None
     source_kind = "frozen_csv"
     used_fallback = False
 
-    if prompt_set in PROMPT_SET_FAMILY_CAPS:
+    if corpus_path_arg:
+        source_path = as_path(corpus_path_arg)
+        raw_rows = load_rows_from_path(source_path)
+        source_kind = "custom_file"
+    elif prompt_set in PROMPT_SET_FAMILY_CAPS:
         frozen_path = bench.COURSE_ROOT / "data" / DATA_FILE
         if frozen_path.exists():
             source_path = frozen_path
@@ -586,25 +591,46 @@ def run_exact_chat_hook_parity(
 # ---------------------------------------------------------------------------
 
 
-def make_split(items: Sequence[HumorItem], seed: int) -> dict[str, bool]:
-    split: dict[str, bool] = {}
+def split_name(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    return "train" if bool(value) else REPORT_SPLIT
+
+
+def make_split(items: Sequence[HumorItem], seed: int) -> dict[str, str]:
+    split: dict[str, str] = {}
     by_family: dict[str, list[HumorItem]] = defaultdict(list)
     for item in items:
         by_family[item.family].append(item)
     for family, rows in by_family.items():
         ranked = sorted(rows, key=lambda r: stable_hash_int(f"{seed}:{family}:{r.item_id}"))
         if len(ranked) == 1:
-            train_ids = {ranked[0].item_id}
+            split[ranked[0].item_id] = "train"
+            continue
+        if len(ranked) == 2:
+            split[ranked[0].item_id] = "train"
+            split[ranked[1].item_id] = REPORT_SPLIT
+            continue
+        if len(ranked) <= 5:
+            n_train = len(ranked) - 2
+            n_dev = 1
         else:
-            n_train = int(round(TRAIN_FRACTION * len(ranked)))
-            n_train = max(1, min(len(ranked) - 1, n_train))
-            train_ids = {row.item_id for row in ranked[:n_train]}
-        for row in rows:
-            split[row.item_id] = row.item_id in train_ids
+            n_train = max(1, int(round(0.60 * len(ranked))))
+            n_dev = max(1, int(round(0.20 * len(ranked))))
+            if n_train + n_dev >= len(ranked):
+                n_dev = 1
+                n_train = len(ranked) - 2
+        for idx, row in enumerate(ranked):
+            if idx < n_train:
+                split[row.item_id] = "train"
+            elif idx < n_train + n_dev:
+                split[row.item_id] = "dev"
+            else:
+                split[row.item_id] = REPORT_SPLIT
     return split
 
 
-def split_rows(items: Sequence[HumorItem], split: Mapping[str, bool]) -> list[dict[str, Any]]:
+def split_rows(items: Sequence[HumorItem], split: Mapping[str, Any]) -> list[dict[str, Any]]:
     rows = []
     by_family: dict[str, list[HumorItem]] = defaultdict(list)
     for item in items:
@@ -613,7 +639,7 @@ def split_rows(items: Sequence[HumorItem], split: Mapping[str, bool]) -> list[di
         rows.append({
             "item_id": item.item_id,
             "family": item.family,
-            "split": "train" if split[item.item_id] else "eval",
+            "split": split_name(split[item.item_id]),
             "family_n_rows": len(by_family[item.family]),
             "setup_excerpt": item.setup[:120],
             "note": item.note,
@@ -621,23 +647,27 @@ def split_rows(items: Sequence[HumorItem], split: Mapping[str, bool]) -> list[di
     return rows
 
 
-def split_balance_rows(items: Sequence[HumorItem], split: Mapping[str, bool]) -> list[dict[str, Any]]:
+def split_balance_rows(items: Sequence[HumorItem], split: Mapping[str, Any]) -> list[dict[str, Any]]:
     rows = []
     for family in sorted({item.family for item in items}):
         fam = [item for item in items if item.family == family]
         rows.append({
             "family": family,
             "n_rows": len(fam),
-            "n_train": sum(1 for item in fam if split[item.item_id]),
-            "n_eval": sum(1 for item in fam if not split[item.item_id]),
-            "has_eval": any(not split[item.item_id] for item in fam),
+            "n_train": sum(1 for item in fam if split_name(split[item.item_id]) == "train"),
+            "n_dev": sum(1 for item in fam if split_name(split[item.item_id]) == "dev"),
+            "n_test": sum(1 for item in fam if split_name(split[item.item_id]) == REPORT_SPLIT),
+            "has_dev": any(split_name(split[item.item_id]) == "dev" for item in fam),
+            "has_test": any(split_name(split[item.item_id]) == REPORT_SPLIT for item in fam),
         })
     rows.append({
         "family": "ALL",
         "n_rows": len(items),
-        "n_train": sum(1 for item in items if split[item.item_id]),
-        "n_eval": sum(1 for item in items if not split[item.item_id]),
-        "has_eval": any(not split[item.item_id] for item in items),
+        "n_train": sum(1 for item in items if split_name(split[item.item_id]) == "train"),
+        "n_dev": sum(1 for item in items if split_name(split[item.item_id]) == "dev"),
+        "n_test": sum(1 for item in items if split_name(split[item.item_id]) == REPORT_SPLIT),
+        "has_dev": any(split_name(split[item.item_id]) == "dev" for item in items),
+        "has_test": any(split_name(split[item.item_id]) == REPORT_SPLIT for item in items),
     })
     return rows
 
@@ -731,12 +761,26 @@ def cache_features(
 # ---------------------------------------------------------------------------
 
 
-def train_rows(items: Sequence[HumorItem], split: Mapping[str, bool]) -> list[HumorItem]:
-    return [item for item in items if split[item.item_id]]
+def train_rows(items: Sequence[HumorItem], split: Mapping[str, Any]) -> list[HumorItem]:
+    return [item for item in items if split_name(split[item.item_id]) == "train"]
 
 
-def eval_rows(items: Sequence[HumorItem], split: Mapping[str, bool]) -> list[HumorItem]:
-    rows = [item for item in items if not split[item.item_id]]
+def rows_for_split(items: Sequence[HumorItem], split: Mapping[str, Any], name: str) -> list[HumorItem]:
+    return [item for item in items if split_name(split[item.item_id]) == name]
+
+
+def dev_rows(items: Sequence[HumorItem], split: Mapping[str, Any]) -> list[HumorItem]:
+    return rows_for_split(items, split, "dev")
+
+
+def eval_rows(items: Sequence[HumorItem], split: Mapping[str, Any]) -> list[HumorItem]:
+    rows = rows_for_split(items, split, REPORT_SPLIT)
+    if rows:
+        return rows
+    rows = dev_rows(items, split)
+    if rows:
+        return rows
+    rows = [item for item in items if split_name(split[item.item_id]) != "train"]
     return rows if rows else list(items)
 
 
@@ -912,13 +956,13 @@ def probe_row(depth: int, split_scored: str, kind: str, rep: Any, stats: Mapping
 def run_probe_sweep(
     items: Sequence[HumorItem],
     features: Mapping[str, Mapping[str, Any]],
-    split: Mapping[str, bool],
+    split: Mapping[str, Any],
     seed: int,
     d_model: int,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], int]:
     n_depths = next(iter(next(iter(features.values())).values())).shape[0]
     fit_rows_ = train_rows(items, split)
-    score_rows = eval_rows(items, split)
+    split_score_rows = {"dev": dev_rows(items, split), REPORT_SPLIT: eval_rows(items, split)}
     report: list[dict[str, Any]] = []
     selection_rows: list[dict[str, Any]] = []
 
@@ -937,48 +981,92 @@ def run_probe_sweep(
         selection_score = float(real_sel["auc"]) - max(0.5, float(shuffled_sel["auc"]), float(random_sel["auc"]))
         selection_rows.append({
             "depth": depth,
+            "probe_split": "train_loo",
             "selection_mode": mode,
             "train_real_auc": rounded(real_sel["auc"]),
             "train_shuffled_mean_auc": rounded(shuffled_sel["auc"]),
             "train_random_mean_auc": rounded(random_sel["auc"]),
             "train_control_adjusted_score": rounded(selection_score),
+            "mean_real_auc": rounded(real_sel["auc"]),
+            "mean_shuffled_auc": rounded(shuffled_sel["auc"]),
+            "mean_random_auc": rounded(random_sel["auc"]),
+            "control_adjusted_score": rounded(selection_score),
             "n_train_items": len(fit_rows_),
-            "n_eval_items": len(score_rows),
-            "note": "Depth is selected from train-only scores; eval rows are held out for reporting.",
+            "n_eval_items": sum(len(rows) for rows in split_score_rows.values()),
+            "note": "Train leave-one-out audit; dev selects depth when available and test is report-only.",
         })
 
         real = fit_direction(fit_rows_, features, depth, "joke_structure")
         if real is not None:
             real = orient_direction_on_rows(real, fit_rows_, features, depth)
-            report.append(probe_row(depth, "eval", "real", "", evaluate_direction(score_rows, features, real, depth)))
+            for split_key, score_rows in split_score_rows.items():
+                if score_rows:
+                    report.append(probe_row(depth, split_key, "real", "", evaluate_direction(score_rows, features, real, depth)))
 
-        shuffled_eval_stats = []
-        for rep in range(N_NULL_REPS):
-            direction = fit_direction(fit_rows_, features, depth, "joke_structure", sign_seed=seed + rep * 9973 + depth)
-            if direction is None:
+        split_selection_stats: dict[str, dict[str, Any]] = {}
+        for split_key, score_rows in split_score_rows.items():
+            if not score_rows:
                 continue
-            direction = orient_direction_on_rows(direction, fit_rows_, features, depth)
-            stats = evaluate_direction(score_rows, features, direction, depth)
-            shuffled_eval_stats.append(stats)
-            report.append(probe_row(depth, "eval", "shuffled_sign", rep, stats))
-        if shuffled_eval_stats:
-            report.append(probe_row(depth, "eval", "shuffled_sign_mean", "mean", summarize_null_stats(shuffled_eval_stats)))
+            shuffled_eval_stats = []
+            for rep in range(N_NULL_REPS):
+                direction = fit_direction(fit_rows_, features, depth, "joke_structure", sign_seed=seed + rep * 9973 + depth)
+                if direction is None:
+                    continue
+                direction = orient_direction_on_rows(direction, fit_rows_, features, depth)
+                stats = evaluate_direction(score_rows, features, direction, depth)
+                shuffled_eval_stats.append(stats)
+                report.append(probe_row(depth, split_key, "shuffled_sign", rep, stats))
+            shuffled_eval = summarize_null_stats(shuffled_eval_stats) if shuffled_eval_stats else {}
+            if shuffled_eval_stats:
+                report.append(probe_row(depth, split_key, "shuffled_sign_mean", "mean", shuffled_eval))
 
-        random_eval_stats = []
-        for rep in range(N_NULL_REPS):
-            direction = random_unit(d_model, seed + rep * 7919 + depth)
-            direction = orient_direction_on_rows(direction, fit_rows_, features, depth)
-            stats = evaluate_direction(score_rows, features, direction, depth)
-            random_eval_stats.append(stats)
-            report.append(probe_row(depth, "eval", "random_oriented", rep, stats))
-        report.append(probe_row(depth, "eval", "random_oriented_mean", "mean", summarize_null_stats(random_eval_stats)))
+            random_eval_stats = []
+            for rep in range(N_NULL_REPS):
+                direction = random_unit(d_model, seed + rep * 7919 + depth)
+                direction = orient_direction_on_rows(direction, fit_rows_, features, depth)
+                stats = evaluate_direction(score_rows, features, direction, depth)
+                random_eval_stats.append(stats)
+                report.append(probe_row(depth, split_key, "random_oriented", rep, stats))
+            random_eval = summarize_null_stats(random_eval_stats)
+            report.append(probe_row(depth, split_key, "random_oriented_mean", "mean", random_eval))
+
+            real_auc = evaluate_direction(score_rows, features, real, depth)["auc"] if real is not None else float("nan")
+            shuf_auc = float(shuffled_eval.get("auc", float("nan")))
+            rand_auc = float(random_eval.get("auc", float("nan")))
+            control_score = real_auc - max(0.5, shuf_auc if math.isfinite(shuf_auc) else 0.5, rand_auc if math.isfinite(rand_auc) else 0.5)
+            split_selection_stats[split_key] = {
+                "real_auc": real_auc,
+                "shuffled_auc": shuf_auc,
+                "random_auc": rand_auc,
+                "score": control_score,
+                "n": len(score_rows),
+            }
+            selection_rows.append({
+                "depth": depth,
+                "probe_split": split_key,
+                "selection_mode": "train_fit_scored_on_" + split_key,
+                "train_real_auc": rounded(real_sel["auc"]),
+                "train_shuffled_mean_auc": rounded(shuffled_sel["auc"]),
+                "train_random_mean_auc": rounded(random_sel["auc"]),
+                "train_control_adjusted_score": rounded(selection_score),
+                "mean_real_auc": rounded(real_auc),
+                "mean_shuffled_auc": rounded(shuf_auc),
+                "mean_random_auc": rounded(rand_auc),
+                "control_adjusted_score": rounded(control_score),
+                "n_train_items": len(fit_rows_),
+                "n_eval_items": len(score_rows),
+                "note": "Dev rows select depth; test rows are report-only.",
+            })
 
     def depth_key(row: Mapping[str, Any]) -> tuple[float, float, int]:
-        score = float(row.get("train_control_adjusted_score") or -999.0)
-        auc = float(row.get("train_real_auc") or -999.0)
+        score = float(row.get("control_adjusted_score") or -999.0)
+        auc = float(row.get("mean_real_auc") or -999.0)
         return (score, auc, int(row["depth"]))
 
-    best_depth = int(max(selection_rows, key=depth_key)["depth"])
+    selection_candidates = [row for row in selection_rows if row.get("probe_split") == "dev" and isinstance(row.get("control_adjusted_score"), (int, float))]
+    if not selection_candidates:
+        selection_candidates = [row for row in selection_rows if row.get("probe_split") == "train_loo"]
+    best_depth = int(max(selection_candidates, key=depth_key)["depth"])
     for row in selection_rows:
         row["selected_depth"] = int(row["depth"]) == best_depth
     return report, selection_rows, best_depth
@@ -987,7 +1075,7 @@ def run_probe_sweep(
 def run_phase_probe(
     items: Sequence[HumorItem],
     phase_features: Mapping[str, Mapping[str, Any]],
-    split: Mapping[str, bool],
+    split: Mapping[str, Any],
     seed: int,
     d_model: int,
     depth: int,
@@ -1331,7 +1419,7 @@ def score_generation(item: HumorItem, text: str) -> dict[str, Any]:
     }
 
 
-def selected_eval_rows(items: Sequence[HumorItem], split: Mapping[str, bool]) -> list[HumorItem]:
+def selected_eval_rows(items: Sequence[HumorItem], split: Mapping[str, Any]) -> list[HumorItem]:
     candidates = eval_rows(items, split)
     by_family: dict[str, list[HumorItem]] = defaultdict(list)
     for item in candidates:
@@ -1734,10 +1822,11 @@ def projection_audit_rows(
 # ---------------------------------------------------------------------------
 
 
-def metric_at(rows: Sequence[Mapping[str, Any]], kind: str, depth: int, key: str = "auc") -> float:
+def metric_at(rows: Sequence[Mapping[str, Any]], kind: str, depth: int, key: str = "auc", split_scored: str = REPORT_SPLIT) -> float:
     vals = [
         float(row[key]) for row in rows
         if row.get("direction_kind") == kind
+        and row.get("split_scored") == split_scored
         and int(row.get("depth", -1)) == int(depth)
         and isinstance(row.get(key), (int, float))
     ]
@@ -1816,7 +1905,7 @@ def plot_probe(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_de
     fig, ax = bench.new_figure(figsize=(9.0, 5.2))
     kinds = ("real", "shuffled_sign_mean", "random_oriented_mean")
     for kind in kinds:
-        sub = [row for row in rows if row.get("direction_kind") == kind]
+        sub = [row for row in rows if row.get("direction_kind") == kind and row.get("split_scored") == REPORT_SPLIT]
         if not sub:
             continue
         xs = [int(row["depth"]) for row in sub]
@@ -1995,10 +2084,12 @@ def _empty_panel(ax: Any, message: str) -> None:
         ax.spines[spine].set_visible(False)
 
 
-def _kind_auc_by_depth(rows: Sequence[Mapping[str, Any]], kind: str) -> dict[int, float]:
+def _kind_auc_by_depth(rows: Sequence[Mapping[str, Any]], kind: str, split_scored: str = REPORT_SPLIT) -> dict[int, float]:
     out: dict[int, float] = {}
     for row in rows:
         if row.get("direction_kind") != kind:
+            continue
+        if row.get("split_scored") != split_scored:
             continue
         depth = row.get("depth")
         try:
@@ -2027,7 +2118,12 @@ def make_family_generalization_summary(family_rows: Sequence[Mapping[str, Any]])
             "random_auc": rounded(random),
             "best_control_auc": rounded(best_control),
             "control_gap": rounded(real - best_control),
-            "n_rows": len(sub),
+            "n_probe_rows": len(sub),
+            "n_eval_jokes": safe_fmean([
+                _num(row.get("n_eval_jokes"))
+                for row in sub
+                if row.get("direction_kind") == "real"
+            ]),
             "status": "passes" if math.isfinite(real - best_control) and real - best_control >= 0.08 else "weak_or_failed",
         })
     return out
@@ -2135,7 +2231,7 @@ def make_cheap_explanation_audit(
         },
         {
             "cheap_explanation": "layer_or_probe_shopping",
-            "audit_signal": "eval selectivity over best null",
+            "audit_signal": "test selectivity over best null after dev depth selection",
             "risk_score": rounded(1.0 - _clip01(_num(metrics.get("real_selectivity_vs_best_null")) / 0.15)),
             "main_value": metrics.get("real_selectivity_vs_best_null"),
             "control_value": max(_num(metrics.get("shuffled_auc_best_depth")), _num(metrics.get("random_auc_best_depth"))),
@@ -2147,7 +2243,7 @@ def make_cheap_explanation_audit(
 
 def make_item_evidence_summary(
     items: Sequence[HumorItem],
-    split: Mapping[str, bool],
+    split: Mapping[str, Any],
     projection_rows: Sequence[Mapping[str, Any]],
     surprisal_rows: Sequence[Mapping[str, Any]],
     steering_generation_rows: Sequence[Mapping[str, Any]],
@@ -2179,7 +2275,7 @@ def make_item_evidence_summary(
         out.append({
             "item_id": iid,
             "family": item.family,
-            "split": "train" if split.get(iid) else "eval",
+            "split": split_name(split.get(iid)),
             "projection_joke": rounded(joke_proj),
             "projection_max_control": rounded(max_control_proj),
             "projection_specificity_gap": rounded(joke_proj - max_control_proj),
@@ -2266,7 +2362,7 @@ def make_humor_evidence_matrix(metrics: Mapping[str, Any], family_summary: Seque
 def write_visual_synthesis_tables(
     ctx: bench.RunContext,
     items: Sequence[HumorItem],
-    split: Mapping[str, bool],
+    split: Mapping[str, Any],
     probe_rows: Sequence[Mapping[str, Any]],
     selection_rows: Sequence[Mapping[str, Any]],
     phase_rows: Sequence[Mapping[str, Any]],
@@ -2678,12 +2774,12 @@ def write_humor_card(ctx: bench.RunContext, metrics: Mapping[str, Any]) -> None:
         "",
         "## What the instrument measured",
         "",
-        "A train-split mass-mean direction contrasts joke endings against matched literal, surprising, silly, and positive endings for the same setup. The selected stream depth was chosen from train-only control-adjusted scores, then reported on held-out items.",
+        "A train-split mass-mean direction contrasts joke endings against matched literal, surprising, silly, and positive endings for the same setup. The selected stream depth is chosen from dev control-adjusted scores, then reported on test items.",
         "",
         "## Headline numbers",
         "",
         f"- Model: `{metrics.get('model_id')}`",
-        f"- Rows: {metrics.get('n_rows')} (eval rows used for steering: {metrics.get('n_eval_rows')})",
+        f"- Rows: {metrics.get('n_rows')} (test rows used for steering: {metrics.get('n_eval_rows')})",
         f"- Selected stream depth: {metrics.get('best_depth')} (injection layer: {metrics.get('injection_layer')})",
         f"- Held-out joke-vs-control AUC: {metrics.get('real_auc_best_depth')}",
         f"- Null AUCs, shuffled/random means: {metrics.get('shuffled_auc_best_depth')} / {metrics.get('random_auc_best_depth')}",
@@ -2744,7 +2840,7 @@ def write_operationalization_audit(ctx: bench.RunContext, metrics: Mapping[str, 
         f"| Positive sentiment | positive-not-joke controls and positive steering | joke/positive cosine: {metrics.get('joke_positive_cosine')} |",
         f"| Generic joke register | hand-label scaffold for generations | marker-only steering delta: {metrics.get('joke_steering_joke_margin_delta')} |",
         f"| Setup dependence | attention from resolution token back to setup | joke minus literal attention: {metrics.get('joke_minus_literal_attention_to_setup')} |",
-        f"| Probe capacity or layer shopping | shuffled and random nulls, train-only depth selection | selectivity over best null: {metrics.get('real_selectivity_vs_best_null')} |",
+        f"| Probe capacity or layer shopping | shuffled and random nulls, dev depth selection, test reporting | selectivity over best null: {metrics.get('real_selectivity_vs_best_null')} |",
         "",
         "## Allowed claim",
         "",
@@ -2766,7 +2862,7 @@ def write_run_summary(ctx: bench.RunContext, metrics: Mapping[str, Any]) -> None
         "",
         "## 2. Main measurement",
         "",
-        f"A train-fit direction selected stream depth {metrics.get('best_depth')} and reached held-out AUC {metrics.get('real_auc_best_depth')} versus shuffled/random means {metrics.get('shuffled_auc_best_depth')} / {metrics.get('random_auc_best_depth')}.",
+        f"A train-fit direction selected stream depth {metrics.get('best_depth')} on dev and reached test AUC {metrics.get('real_auc_best_depth')} versus shuffled/random means {metrics.get('shuffled_auc_best_depth')} / {metrics.get('random_auc_best_depth')}.",
         "",
         "## 3. Controls",
         "",
@@ -2841,10 +2937,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     split = make_split(items, args.seed)
     split_path = ctx.path("diagnostics", "split_audit.csv")
     bench.write_csv_with_context(ctx, split_path, split_rows(items, split))
-    ctx.register_artifact(split_path, "diagnostic", "Family-stratified train/eval split for Lab 18.")
+    ctx.register_artifact(split_path, "diagnostic", "Family-stratified train/dev/test split for Lab 18.")
     split_balance_path = ctx.path("diagnostics", "split_balance.csv")
     bench.write_csv_with_context(ctx, split_balance_path, split_balance_rows(items, split))
-    ctx.register_artifact(split_balance_path, "diagnostic", "Per-family train/eval balance summary.")
+    ctx.register_artifact(split_balance_path, "diagnostic", "Per-family train/dev/test balance summary.")
 
     feat_tensor, features, phase_features = cache_features(ctx, bundle, items)
     row_norms = feat_tensor.norm(dim=-1)
@@ -2870,14 +2966,15 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     ctx.register_artifact(probe_path, "table", "Joke-vs-control held-out probe sweep with shuffled/random controls.")
     selection_path = ctx.path("tables", "joke_depth_selection.csv")
     bench.write_csv_with_context(ctx, selection_path, selection_rows)
-    ctx.register_artifact(selection_path, "table", "Train-only depth-selection curve for the joke-structure direction.")
+    ctx.register_artifact(selection_path, "table", "Train audit, dev selection, and test report curve for the joke-structure direction.")
     depth_json = ctx.path("diagnostics", "depth_selection.json")
     bench.write_json(depth_json, {
         "selected_depth": best_depth,
-        "selection_rule": "max train_control_adjusted_score = train real AUC minus max(0.5, shuffled mean AUC, random mean AUC)",
+        "selection_rule": "max dev control_adjusted_score = dev real AUC minus max(0.5, shuffled mean AUC, random mean AUC); tiny smoke runs may fall back to train_loo",
         "stream_depth_convention": "streams[k] = residual after k blocks; injection layer is depth - 1",
         "n_null_reps": N_NULL_REPS,
-        "warning": "Tiny smoke runs may use in-sample train selection; see joke_depth_selection.csv selection_mode.",
+        "report_split": REPORT_SPLIT,
+        "warning": "Tiny smoke runs may lack dev rows and fall back to train_loo; see joke_depth_selection.csv selection_mode.",
     })
     ctx.register_artifact(depth_json, "diagnostic", "Depth-selection rule and selected stream depth.")
     phase_path = ctx.path("tables", "punchline_phase_probe.csv")
@@ -2969,7 +3066,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "model_id": bundle.anatomy.model_id,
         "d_model": bundle.anatomy.d_model,
         "n_layers": bundle.anatomy.n_layers,
-        "method": "train-split mass-mean directions over matched joke/control endings",
+        "method": "train-split mass-mean directions over matched joke/control endings; depth selected on dev and reported on test",
         "semantic_warning": "joke_structure is a handle name, not evidence of felt funniness",
     }
     save_directions = {"humor": directions["joke_structure"], **directions, "shuffled_joke_structure": shuffled_direction}  # type: ignore[dict-item]
@@ -3030,7 +3127,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     metrics: dict[str, Any] = {
         "model_id": bundle.anatomy.model_id,
+        "seed": int(args.seed),
+        "report_split": REPORT_SPLIT,
         "n_rows": len(items),
+        "n_report_rows": len(eval_rows(items, split)),
         "n_eval_rows": len(steering_items),
         "best_depth": best_depth,
         "injection_layer": max(0, best_depth - 1),

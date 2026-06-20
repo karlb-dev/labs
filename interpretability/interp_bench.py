@@ -390,11 +390,11 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "module": "labs.lab25_find_the_wire",
         "run_name": "lab25_find_the_wire",
         "description": "Find the wire: injected concept states, self-report grounding, and source attribution.",
-        # Chat-template capstone. --mode selects injection | attribution | both.
+        # Chat-template capstone. --mode selects injection | attribution | confidence | both.
         "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
         "model_tier_b": "allenai/Olmo-3-7B-Instruct",
         "model_tier_c": "allenai/Olmo-3-7B-Instruct",
-        "max_examples_tier_a": "1",
+        "max_examples_tier_a": "4",
     },
     "lab26": {
         "module": "labs.lab26_causal_abstraction",
@@ -3446,6 +3446,99 @@ def run_with_node_set_ablation(
     return tensor_cpu_float(out.logits[0, -1])
 
 
+def run_with_node_set_ablation_batched(
+    bundle: ModelBundle,
+    prompts: Sequence[str],
+    head_anatomy: HeadAnatomy,
+    comp_anatomy: ComponentAnatomy,
+    heads: Sequence[tuple[int, int]] = (),
+    mlps: Sequence[int] = (),
+    head_means: Any = None,
+    mlp_means: Any = None,
+) -> Any:
+    """Batched node-set ablation: same semantics as run_with_node_set_ablation
+    but applied to MANY prompts that all tokenize to the SAME length, in ONE
+    forward. The dataset-mean tensors ([L, seq, ...]) broadcast across the batch.
+
+    The circuit lab's greedy prune is O(n^2) faithfulness evaluations, each over
+    the whole prompt family; running the family as a batch instead of one prompt
+    at a time is the difference between batch 1 (memory-bandwidth bound, a big
+    GPU mostly idle re-reading weights per prompt) and actually using the device.
+    Rows never interact (attention is within-sequence), so the result equals the
+    per-prompt calls bit-for-bit in fp32 and within rounding in bf16. Returns a
+    [B, vocab] float32 CPU tensor of final-position logits, in input order.
+
+    Raises if the prompts are not uniform length (the hygiene gate guarantees it).
+    """
+    import torch
+
+    heads_by_layer: dict[int, list[int]] = {}
+    for layer, head in heads:
+        heads_by_layer.setdefault(layer, []).append(head)
+    mlp_set = set(mlps)
+    tokenizer = bundle.tokenizer
+    # Tokenize each prompt exactly as the single-prompt path does (same
+    # add_special_tokens default) and stack. The prompts are uniform length
+    # (Lab 6 hygiene gate), so no padding token is needed -- avoiding the
+    # "tokenizer has no pad_token" failure on models like GPT-2.
+    id_rows = [tokenizer(p, return_tensors="pt")["input_ids"][0] for p in prompts]
+    lengths = {int(row.shape[0]) for row in id_rows}
+    if len(lengths) != 1:
+        raise ValueError(f"batched ablation requires uniform-length prompts, got lengths {sorted(lengths)}")
+    input_ids = torch.stack(id_rows).to(bundle.input_device)
+    batch, seq = input_ids.shape
+    attention_mask = None
+    if head_means is not None and head_means.shape[1] != seq:
+        raise ValueError(f"head_means seq {head_means.shape[1]} != prompt seq {seq}")
+    if mlp_means is not None and mlp_means.shape[1] != seq:
+        raise ValueError(f"mlp_means seq {mlp_means.shape[1]} != prompt seq {seq}")
+
+    handles = []
+
+    def make_head_hook(layer: int, head_list: list[int]):
+        def hook(module: Any, hook_args: tuple) -> Any:
+            x = hook_args[0].clone()
+            d_head = _head_dim_for_layer(head_anatomy, layer)
+            for head in head_list:
+                sl = slice(head * d_head, (head + 1) * d_head)
+                if head_means is None:
+                    x[:, :, sl] = 0
+                else:
+                    x[:, :, sl] = head_means[layer, :, sl].to(x.device, x.dtype)
+            return (x,) + tuple(hook_args[1:])
+
+        return hook
+
+    def make_mlp_hook(layer: int):
+        def hook(module: Any, hook_args: tuple, output: Any) -> Any:
+            out = output[0] if isinstance(output, tuple) else output
+            out = out.clone()
+            if mlp_means is None:
+                out[:, :, :] = 0
+            else:
+                out[:, :, :] = mlp_means[layer].to(out.device, out.dtype)
+            return (out,) + tuple(output[1:]) if isinstance(output, tuple) else out
+
+        return hook
+
+    try:
+        for layer, head_list in heads_by_layer.items():
+            block = bundle.blocks[layer]
+            attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
+            attn_module = getattr(block, attn_module_path)
+            o_proj = attn_module.o_proj if hasattr(attn_module, "o_proj") else attn_module.c_proj
+            handles.append(o_proj.register_forward_pre_hook(make_head_hook(layer, head_list)))
+        for layer in mlp_set:
+            module = getattr(bundle.blocks[layer], comp_anatomy.mlp_hook_path)
+            handles.append(module.register_forward_hook(make_mlp_hook(layer)))
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        for h in handles:
+            h.remove()
+    return tensor_cpu_float(out.logits[:, -1])
+
+
 # ---------------------------------------------------------------------------
 # Activation patching: interchange interventions on the residual stream (Lab 5+)
 # ---------------------------------------------------------------------------
@@ -5658,6 +5751,42 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                              "(absorbs the compute dtype's residual-add rounding; bf16 needs ~0.02).")
     parser.add_argument("--run-edit", action="store_true",
                         help="Lab 5: run the rank-one edit-and-audit extension after patching.")
+    parser.add_argument("--sae-id", default="auto",
+                        help="Lab 8: explicit SAE registry id, or 'auto' to use the model-matched default.")
+    parser.add_argument("--sae-repo", default="",
+                        help="Lab 8: Hugging Face repo for a custom SAE or registry override.")
+    parser.add_argument("--sae-subdir", default="",
+                        help="Lab 8: subdirectory inside the SAE repo.")
+    parser.add_argument("--sae-weights", default="",
+                        help="Lab 8: safetensors filename inside --sae-subdir.")
+    parser.add_argument("--sae-layer", type=int, default=None,
+                        help="Lab 8: transformer block index for the SAE hook site.")
+    parser.add_argument("--sae-site", default=None, choices=("pre", "post"),
+                        help="Lab 8: residual stream site for the SAE hook.")
+    parser.add_argument("--sae-center-input", action=argparse.BooleanOptionalAction, default=None,
+                        help="Lab 8: center activations across d_model before SAE encoding.")
+    parser.add_argument("--sae-sub-b-dec", action=argparse.BooleanOptionalAction, default=None,
+                        help="Lab 8: subtract b_dec before SAE encoding.")
+    parser.add_argument("--sae-jumprelu", action=argparse.BooleanOptionalAction, default=None,
+                        help="Lab 8: use jumprelu thresholding when a threshold tensor exists.")
+    parser.add_argument("--skip-transcoder", action="store_true",
+                        help="Lab 8: skip the gpt2 transcoder section for SAE fair-shot sweeps.")
+    parser.add_argument("--atlas-budget", type=int, default=0,
+                        help="Lab 8: number of features per ranking to inspect before padding with frequency hits.")
+    parser.add_argument("--corpus-path", default="",
+                        help="Lab 8/Lab 17/Lab 18: CSV corpus path; relative paths resolve under the interpretability root.")
+    parser.add_argument("--feature-search", default="blind", choices=("blind", "targeted", "both"),
+                        help="Lab 8: feature search mode. Targeted/both are used by the fair-shot extension.")
+    parser.add_argument("--causal-suite", action="store_true",
+                        help="Lab 8: run the slower matched-control causal suite for the best validated feature.")
+    parser.add_argument("--causal-controls", type=int, default=10,
+                        help="Lab 8: matched random controls for --causal-suite.")
+    parser.add_argument("--causal-prompts", type=int, default=20,
+                        help="Lab 8: neutral and positive prompts used by --causal-suite.")
+    parser.add_argument("--persona-steering-prompts", type=int, default=0,
+                        help="Lab 17: max held-out test prompts per trait for steering generation (0 = all).")
+    parser.add_argument("--persona-steering-controls", type=int, default=3,
+                        help="Lab 17: random steering controls averaged for causal specificity.")
     parser.add_argument("--graph-nodes", type=int, default=0,
                         help="Lab 9: feature-node budget for the attribution graph "
                              "(0 = tier default; also the number of backward passes).")
@@ -5681,6 +5810,21 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="Lab 23: ignore unsealed manifests even if present; use while writing the pre-unseal report.")
     parser.add_argument("--unsealed-manifest", default="",
                         help="Lab 23: explicit path to a Lab 20 manifest_unsealed.json or directory containing answer keys.")
+    parser.add_argument("--behavior", default="induction_p3",
+                        help="Lab 6: which behavior cell to trace (induction_p3 | induction_p2 | successor | ioi | "
+                             "agreement | agreement_long | taskvec | recall | swa). Each behavior is its own circuit card.")
+    parser.add_argument("--scope", default="heads_and_mlps", choices=("heads_only", "heads_and_mlps"),
+                        help="Lab 6: circuit node scope. heads_and_mlps makes MLP layers first-class pruned/counted "
+                             "nodes (default); heads_only keeps the old routing-graph contrast.")
+    parser.add_argument("--resample-draws", type=int, default=5,
+                        help="Lab 6: number of within-distribution resample (interchange) sources averaged per prompt "
+                             "for the resample-ablation off distribution. 0 disables resample (mean only).")
+    parser.add_argument("--allow-mixed-period", action="store_true",
+                        help="Lab 6: permit a run whose induction prompts mix cycle periods (period-2 and period-3). "
+                             "Off by default so the base metric never averages two distinct mechanisms.")
+    parser.add_argument("--swa-lengths", default="1024,4096,5120",
+                        help="Lab 6: comma-separated target token lengths for the --behavior swa long-context probe "
+                             "(programmatically generated repeating-cycle induction prompts).")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)

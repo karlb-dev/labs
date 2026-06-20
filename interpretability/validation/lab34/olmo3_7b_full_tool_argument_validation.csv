@@ -1,0 +1,85 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,argument_row_id,task_id,required_tool,tool_args_json,argument_valid,error,result,expected_answer,result_matches_expected
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:calc_007,calc_007,calculator,"{""expression"": ""6 * 9""}",True,,54,54,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:calc_009,calc_009,calculator,"{""expression"": ""100 / 4""}",True,,25,25,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:calc_008,calc_008,calculator,"{""expression"": ""40 + 2""}",True,,42,42,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:calc_001,calc_001,calculator,"{""expression"": ""144 / 12""}",True,,12,12,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:calc_003,calc_003,calculator,"{""expression"": ""81 - 27""}",True,,54,54,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:calc_005,calc_005,calculator,"{""expression"": ""90 / 5 - 3""}",True,,15,15,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:calc_002,calc_002,calculator,"{""expression"": ""19 + 46""}",True,,65,65,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:calc_004,calc_004,calculator,"{""expression"": ""7 * 8 + 6""}",True,,62,62,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:calc_006,calc_006,calculator,"{""expression"": ""12 * 12 - 5""}",True,,139,139,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:calc_000,calc_000,calculator,"{""expression"": ""17 * 23""}",True,,391,391,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:cal_007,cal_007,calendar,"{""event"": ""design review""}",True,,Tuesday 10:00,Tuesday 10:00,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:cal_009,cal_009,calendar,"{""event"": ""demo prep""}",True,,Friday afternoon,Friday afternoon,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:cal_008,cal_008,calendar,"{""event"": ""bug triage""}",True,,Monday 10:00,Monday 10:00,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:cal_002,cal_002,calendar,"{""event"": ""bug triage""}",True,,Monday 10:00,Monday 10:00,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:cal_003,cal_003,calendar,"{""event"": ""demo prep""}",True,,Friday afternoon,Friday afternoon,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:cal_000,cal_000,calendar,"{""event"": ""design review""}",True,,Tuesday 10:00,Tuesday 10:00,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:cal_001,cal_001,calendar,"{""event"": ""standup""}",True,,Monday 09:00,Monday 09:00,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:cal_005,cal_005,calendar,"{""day"": ""Friday"", ""position"": ""last""}",True,,demo prep,demo prep,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:cal_006,cal_006,calendar,"{""event"": ""standup""}",True,,Monday 09:00,Monday 09:00,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:cal_004,cal_004,calendar,"{""after"": ""standup""}",True,,bug triage,bug triage,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:dict_009,dict_009,dictionary,"{""term"": ""cache""}",True,,stored results reused to avoid repeated work,stored results reused to avoid repeated work,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:dict_007,dict_007,dictionary,"{""term"": ""mutex""}",True,,a lock that allows one holder at a time,a lock that allows one holder at a time,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:dict_008,dict_008,dictionary,"{""term"": ""vector""}",True,,an ordered list of numbers treated as one object,an ordered list of numbers treated as one object,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:dict_000,dict_000,dictionary,"{""term"": ""latency""}",True,,delay before a response begins,delay before a response begins,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:dict_003,dict_003,dictionary,"{""term"": ""backoff""}",True,,waiting longer between retries after a failure,waiting longer between retries after a failure,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:dict_004,dict_004,dictionary,"{""term"": ""vector""}",True,,an ordered list of numbers treated as one object,an ordered list of numbers treated as one object,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:dict_005,dict_005,dictionary,"{""term"": ""cache""}",True,,stored results reused to avoid repeated work,stored results reused to avoid repeated work,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:dict_006,dict_006,dictionary,"{""term"": ""latency""}",True,,delay before a response begins,delay before a response begins,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:dict_001,dict_001,dictionary,"{""term"": ""mutex""}",True,,a lock that allows one holder at a time,a lock that allows one holder at a time,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:dict_002,dict_002,dictionary,"{""term"": ""photosynthesis""}",True,,plants use light to make sugar from water and carbon dioxide,plants use light to make sugar from water and carbon dioxide,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:file_009,file_009,file_search,"{""query"": ""stale user records""}",True,,doc_cache.md,doc_cache.md,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:file_007,file_007,file_search,"{""query"": ""cache invalidation""}",True,,doc_cache.md,doc_cache.md,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:file_008,file_008,file_search,"{""query"": ""exporter csv""}",True,,doc_export.md,doc_export.md,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:file_000,file_000,file_search,"{""query"": ""cache invalidation""}",True,,doc_cache.md,doc_cache.md,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:file_001,file_001,file_search,"{""query"": ""exporter csv""}",True,,doc_export.md,doc_export.md,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:file_003,file_003,file_search,"{""query"": ""stale user records""}",True,,doc_cache.md,doc_cache.md,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:file_004,file_004,file_search,"{""query"": ""downstream reports""}",True,,doc_export.md,doc_export.md,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:file_005,file_005,file_search,"{""query"": ""backoff""}",True,,doc_reliability.md,doc_reliability.md,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:file_006,file_006,file_search,"{""query"": ""retry budget""}",True,,doc_reliability.md,doc_reliability.md,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:file_002,file_002,file_search,"{""query"": ""retry budget""}",True,,doc_reliability.md,doc_reliability.md,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_021,none_021,none,{},True,,decorative,decorative,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_020,none_020,none,{},True,,empty,empty,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_017,none_017,none,{},True,,button,button,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_016,none_016,none,{},True,,product,product,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_018,none_018,none,{},True,,sticker,sticker,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_023,none_023,none,{},True,,font,font,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_019,none_019,none,{},True,,title,title,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_022,none_022,none,{},True,,art,art,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_014,none_014,none,{},True,,label,label,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_006,none_006,none,{},True,,banana,banana,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_015,none_015,none,{},True,,option,option,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_000,none_000,none,{},True,,YES,YES,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_004,none_004,none,{},True,,example,example,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_010,none_010,none,{},True,,idle,idle,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_011,none_011,none,{},True,,plain,plain,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_002,none_002,none,{},True,,none,none,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_003,none_003,none,{},True,,literal,literal,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_007,none_007,none,{},True,,skip,skip,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_005,none_005,none,{},True,,quote,quote,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_009,none_009,none,{},True,,local,local,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_013,none_013,none,{},True,,heading,heading,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_001,none_001,none,{},True,,seen,seen,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_008,none_008,none,{},True,,ready,ready,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:none_012,none_012,none,{},True,,id,id,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:route_007,route_007,route_planner,"{""end"": ""F"", ""start"": ""B""}",True,,B -> D -> E -> F,B -> D -> E -> F,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:route_008,route_008,route_planner,"{""end"": ""F"", ""start"": ""C""}",True,,C -> E -> F,C -> E -> F,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:route_009,route_009,route_planner,"{""end"": ""D"", ""start"": ""A""}",True,,A -> B -> D,A -> B -> D,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:route_003,route_003,route_planner,"{""end"": ""F"", ""start"": ""C""}",True,,C -> E -> F,C -> E -> F,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:route_000,route_000,route_planner,"{""end"": ""F"", ""start"": ""A""}",True,,A -> B -> D -> E -> F,A -> B -> D -> E -> F,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:route_001,route_001,route_planner,"{""end"": ""D"", ""start"": ""A""}",True,,A -> B -> D,A -> B -> D,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:route_005,route_005,route_planner,"{""end"": ""E"", ""start"": ""A""}",True,,A -> B -> D -> E,A -> B -> D -> E,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:route_004,route_004,route_planner,"{""end"": ""F"", ""start"": ""D""}",True,,D -> E -> F,D -> E -> F,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:route_006,route_006,route_planner,"{""end"": ""F"", ""start"": ""A""}",True,,A -> B -> D -> E -> F,A -> B -> D -> E -> F,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:route_002,route_002,route_planner,"{""end"": ""F"", ""start"": ""B""}",True,,B -> D -> E -> F,B -> D -> E -> F,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:unit_008,unit_008,unit_converter,"{""from"": ""pounds"", ""to"": ""kilograms"", ""value"": 4}",True,,1.81 kilograms,1.81 kilograms,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:unit_007,unit_007,unit_converter,"{""from"": ""miles"", ""to"": ""kilometers"", ""value"": 2}",True,,3.22 kilometers,3.22 kilometers,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:unit_009,unit_009,unit_converter,"{""from"": ""celsius"", ""to"": ""fahrenheit"", ""value"": 10}",True,,50 Fahrenheit,50 Fahrenheit,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:unit_005,unit_005,unit_converter,"{""from"": ""celsius"", ""to"": ""fahrenheit"", ""value"": 0}",True,,32 Fahrenheit,32 Fahrenheit,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:unit_003,unit_003,unit_converter,"{""from"": ""hours"", ""to"": ""minutes"", ""value"": 2}",True,,120 minutes,120 minutes,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:unit_004,unit_004,unit_converter,"{""from"": ""miles"", ""to"": ""kilometers"", ""value"": 5}",True,,8.05 kilometers,8.05 kilometers,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:unit_001,unit_001,unit_converter,"{""from"": ""pounds"", ""to"": ""kilograms"", ""value"": 10}",True,,4.54 kilograms,4.54 kilograms,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:unit_006,unit_006,unit_converter,"{""from"": ""hours"", ""to"": ""minutes"", ""value"": 3}",True,,180 minutes,180 minutes,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:unit_002,unit_002,unit_converter,"{""from"": ""celsius"", ""to"": ""fahrenheit"", ""value"": 20}",True,,68 Fahrenheit,68 Fahrenheit,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,arg:unit_000,unit_000,unit_converter,"{""from"": ""miles"", ""to"": ""kilometers"", ""value"": 3}",True,,4.83 kilometers,4.83 kilometers,True

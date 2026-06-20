@@ -1,0 +1,8 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,tool,letter,token_text,token_ids,token_count,single_token
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calculator,A, A,362,1,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,dictionary,B, B,426,1,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,calendar,C, C,356,1,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,file_search,D, D,423,1,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,route_planner,E, E,469,1,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,unit_converter,F, F,435,1,True
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,none,N, N,452,1,True

@@ -1,0 +1,491 @@
+{
+  "aborted": false,
+  "base_metric": 5.7973175048828125,
+  "behavior": "taskvec",
+  "brake_intact": {
+    "discovery_faith_mean": 0.61048,
+    "discovery_faith_resample": 0.1838,
+    "heldout_faith_mean": 0.75624,
+    "heldout_faith_resample": 0.13868,
+    "n_suppression_heads_held_out": 1
+  },
+  "circuits": {
+    "floor": {
+      "discovery": {
+        "completeness_ratio_mean": -0.17429,
+        "completeness_ratio_resample": -0.23664,
+        "faith_mean": 0.64825,
+        "faith_resample": 0.19648,
+        "n_nodes": 60,
+        "n_prompts": 12
+      },
+      "heldout": {
+        "completeness_ratio_mean": -0.02972,
+        "completeness_ratio_resample": -0.12161,
+        "faith_mean": 0.79538,
+        "faith_resample": 0.15604,
+        "n_nodes": 60,
+        "n_prompts": 4
+      },
+      "nodes": [
+        "MLP57",
+        "L34H9",
+        "L27H13",
+        "MLP56",
+        "MLP58",
+        "MLP34",
+        "L29H28",
+        "MLP28",
+        "MLP51",
+        "MLP31",
+        "L24H37",
+        "MLP55",
+        "L48H32",
+        "MLP48",
+        "MLP53",
+        "MLP37",
+        "L30H14",
+        "MLP42",
+        "MLP39",
+        "MLP29",
+        "MLP27",
+        "L54H11",
+        "L49H29",
+        "L49H0",
+        "MLP16",
+        "MLP30",
+        "MLP20",
+        "L50H12",
+        "MLP32",
+        "L56H6",
+        "MLP50",
+        "MLP14",
+        "L44H10",
+        "L20H39",
+        "L57H35",
+        "MLP43",
+        "MLP33",
+        "MLP19",
+        "L27H16",
+        "L61H32",
+        "L25H32",
+        "L29H34",
+        "L61H38",
+        "MLP26",
+        "MLP17",
+        "L0H6",
+        "L59H38",
+        "L35H10",
+        "L38H35",
+        "L31H22",
+        "MLP40",
+        "L34H1",
+        "L30H38",
+        "L2H39",
+        "L56H22",
+        "L0H20",
+        "L5H29",
+        "L20H5",
+        "L59H19",
+        "L24H38"
+      ]
+    },
+    "knee": {
+      "discovery": {
+        "completeness_ratio_mean": -0.14779,
+        "completeness_ratio_resample": -0.2105,
+        "faith_mean": 0.63138,
+        "faith_resample": 0.19041,
+        "n_nodes": 46,
+        "n_prompts": 12
+      },
+      "heldout": {
+        "completeness_ratio_mean": -0.02123,
+        "completeness_ratio_resample": -0.09071,
+        "faith_mean": 0.78859,
+        "faith_resample": 0.14351,
+        "n_nodes": 46,
+        "n_prompts": 4
+      },
+      "nodes": [
+        "MLP57",
+        "L34H9",
+        "L27H13",
+        "MLP56",
+        "MLP58",
+        "MLP34",
+        "L29H28",
+        "MLP28",
+        "MLP51",
+        "MLP31",
+        "L24H37",
+        "MLP55",
+        "L48H32",
+        "MLP48",
+        "MLP53",
+        "MLP37",
+        "L30H14",
+        "MLP42",
+        "MLP39",
+        "MLP29",
+        "MLP27",
+        "L54H11",
+        "L49H0",
+        "MLP16",
+        "MLP30",
+        "MLP20",
+        "MLP32",
+        "MLP50",
+        "MLP14",
+        "L44H10",
+        "L20H39",
+        "L57H35",
+        "MLP43",
+        "MLP33",
+        "MLP19",
+        "L27H16",
+        "L61H32",
+        "L25H32",
+        "L29H34",
+        "MLP26",
+        "MLP17",
+        "L35H10",
+        "MLP40",
+        "L30H38",
+        "L2H39",
+        "L20H5"
+      ]
+    },
+    "motif_core": {
+      "discovery": {
+        "completeness_ratio_mean": 0.77712,
+        "completeness_ratio_resample": 0.74651,
+        "faith_mean": 0.14071,
+        "faith_resample": 0.0912,
+        "n_nodes": 2,
+        "n_prompts": 12
+      },
+      "heldout": {
+        "completeness_ratio_mean": 0.76292,
+        "completeness_ratio_resample": 0.75324,
+        "faith_mean": 0.1508,
+        "faith_resample": 0.05942,
+        "n_nodes": 2,
+        "n_prompts": 4
+      },
+      "nodes": [
+        "L34H9",
+        "L27H13"
+      ]
+    }
+  },
+  "edge": {
+    "claimed": false,
+    "edge": null,
+    "reason": "No ordered previous-token head before an induction head survived the causal and motif checks. The lab therefore makes no edge claim (expected for non-induction behaviors such as successor)."
+  },
+  "floor_circuit": [
+    "MLP57",
+    "L34H9",
+    "L27H13",
+    "MLP56",
+    "MLP58",
+    "MLP34",
+    "L29H28",
+    "MLP28",
+    "MLP51",
+    "MLP31",
+    "L24H37",
+    "MLP55",
+    "L48H32",
+    "MLP48",
+    "MLP53",
+    "MLP37",
+    "L30H14",
+    "MLP42",
+    "MLP39",
+    "MLP29",
+    "MLP27",
+    "L54H11",
+    "L49H29",
+    "L49H0",
+    "MLP16",
+    "MLP30",
+    "MLP20",
+    "L50H12",
+    "MLP32",
+    "L56H6",
+    "MLP50",
+    "MLP14",
+    "L44H10",
+    "L20H39",
+    "L57H35",
+    "MLP43",
+    "MLP33",
+    "MLP19",
+    "L27H16",
+    "L61H32",
+    "L25H32",
+    "L29H34",
+    "L61H38",
+    "MLP26",
+    "MLP17",
+    "L0H6",
+    "L59H38",
+    "L35H10",
+    "L38H35",
+    "L31H22",
+    "MLP40",
+    "L34H1",
+    "L30H38",
+    "L2H39",
+    "L56H22",
+    "L0H20",
+    "L5H29",
+    "L20H5",
+    "L59H19",
+    "L24H38"
+  ],
+  "floor_n_nodes": 60,
+  "headline_discovery_faith_resample": 0.19041,
+  "headline_heldout_faith_resample": 0.14351,
+  "induction_motif_present": false,
+  "knee_circuit": [
+    "MLP57",
+    "L34H9",
+    "L27H13",
+    "MLP56",
+    "MLP58",
+    "MLP34",
+    "L29H28",
+    "MLP28",
+    "MLP51",
+    "MLP31",
+    "L24H37",
+    "MLP55",
+    "L48H32",
+    "MLP48",
+    "MLP53",
+    "MLP37",
+    "L30H14",
+    "MLP42",
+    "MLP39",
+    "MLP29",
+    "MLP27",
+    "L54H11",
+    "L49H0",
+    "MLP16",
+    "MLP30",
+    "MLP20",
+    "MLP32",
+    "MLP50",
+    "MLP14",
+    "L44H10",
+    "L20H39",
+    "L57H35",
+    "MLP43",
+    "MLP33",
+    "MLP19",
+    "L27H16",
+    "L61H32",
+    "L25H32",
+    "L29H34",
+    "MLP26",
+    "MLP17",
+    "L35H10",
+    "MLP40",
+    "L30H38",
+    "L2H39",
+    "L20H5"
+  ],
+  "knee_minus_floor_faithfulness": -0.01687,
+  "knee_n_nodes": 46,
+  "mean_minus_resample_gap_discovery": 0.44097,
+  "meets_faithfulness_floor": false,
+  "minimality_worst_marginal": 0.00425,
+  "mlp_in_knee_circuit": [
+    "MLP57",
+    "MLP56",
+    "MLP58",
+    "MLP34",
+    "MLP28",
+    "MLP51",
+    "MLP31",
+    "MLP55",
+    "MLP48",
+    "MLP53",
+    "MLP37",
+    "MLP42",
+    "MLP39",
+    "MLP29",
+    "MLP27",
+    "MLP16",
+    "MLP30",
+    "MLP20",
+    "MLP32",
+    "MLP50",
+    "MLP14",
+    "MLP43",
+    "MLP33",
+    "MLP19",
+    "MLP26",
+    "MLP17",
+    "MLP40"
+  ],
+  "mlp_positive_causal": [
+    {
+      "drop": 0.7537,
+      "node": "MLP57"
+    },
+    {
+      "drop": 0.45324,
+      "node": "MLP52"
+    },
+    {
+      "drop": 0.42167,
+      "node": "MLP56"
+    },
+    {
+      "drop": 0.39546,
+      "node": "MLP58"
+    },
+    {
+      "drop": 0.3481,
+      "node": "MLP34"
+    },
+    {
+      "drop": 0.26761,
+      "node": "MLP28"
+    },
+    {
+      "drop": 0.26643,
+      "node": "MLP51"
+    },
+    {
+      "drop": 0.25327,
+      "node": "MLP31"
+    },
+    {
+      "drop": 0.20558,
+      "node": "MLP55"
+    },
+    {
+      "drop": 0.18408,
+      "node": "MLP48"
+    },
+    {
+      "drop": 0.16823,
+      "node": "MLP53"
+    },
+    {
+      "drop": 0.1606,
+      "node": "MLP37"
+    },
+    {
+      "drop": 0.14864,
+      "node": "MLP42"
+    },
+    {
+      "drop": 0.14807,
+      "node": "MLP39"
+    },
+    {
+      "drop": 0.14701,
+      "node": "MLP29"
+    },
+    {
+      "drop": 0.14506,
+      "node": "MLP27"
+    },
+    {
+      "drop": 0.11763,
+      "node": "MLP16"
+    },
+    {
+      "drop": 0.09549,
+      "node": "MLP30"
+    },
+    {
+      "drop": 0.09224,
+      "node": "MLP20"
+    },
+    {
+      "drop": 0.08296,
+      "node": "MLP32"
+    },
+    {
+      "drop": 0.07971,
+      "node": "MLP50"
+    },
+    {
+      "drop": 0.07616,
+      "node": "MLP14"
+    },
+    {
+      "drop": 0.06335,
+      "node": "MLP43"
+    },
+    {
+      "drop": 0.06237,
+      "node": "MLP33"
+    },
+    {
+      "drop": 0.05627,
+      "node": "MLP19"
+    },
+    {
+      "drop": 0.04569,
+      "node": "MLP26"
+    },
+    {
+      "drop": 0.04482,
+      "node": "MLP17"
+    },
+    {
+      "drop": 0.03072,
+      "node": "MLP40"
+    },
+    {
+      "drop": 0.01545,
+      "node": "MLP18"
+    },
+    {
+      "drop": 0.01289,
+      "node": "MLP35"
+    },
+    {
+      "drop": 0.00972,
+      "node": "MLP22"
+    },
+    {
+      "drop": 0.00533,
+      "node": "MLP0"
+    },
+    {
+      "drop": 0.00484,
+      "node": "MLP38"
+    },
+    {
+      "drop": 0.00248,
+      "node": "MLP9"
+    }
+  ],
+  "motif_core_def": "fallback: top-2 single-head-causal heads (no labeled motif core survived)",
+  "motif_core_heldout_faith_resample": 0.05942,
+  "n_discovery": 12,
+  "n_heldout": 4,
+  "n_rent_unpaid_nodes": 18,
+  "peak_faithfulness": 0.64825,
+  "resample_draws": 5,
+  "run_length_tokens": 9,
+  "scope": "heads_and_mlps",
+  "seed_capped": true,
+  "suppression_heads": [
+    {
+      "node": "L29H26",
+      "single_drop": -0.37273
+    }
+  ],
+  "verdict": "OVERFIT / NO CLEAN CIRCUIT",
+  "verdict_reason": "no transferable subgraph: knee held-out resample 0.14 < 0.70."
+}

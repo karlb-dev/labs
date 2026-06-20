@@ -1,0 +1,16 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,held_out_family,depth,direction_kind,auc,auc_std,selectivity_vs_chance,n_eval_pos,n_eval_neg,n_train,n_control_samples
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,factual_qa,10,real,0.9688,0.0,0.4688,8,8,64,1
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,factual_qa,10,shuffled,0.6344,0.1656,0.1344,8,8,64,5
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,factual_qa,10,random,0.6031,0.1387,0.1031,8,8,64,5
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,freeform_answerability,10,real,0.9531,0.0,0.4531,8,8,64,1
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,freeform_answerability,10,shuffled,0.5625,0.2478,0.0625,8,8,64,5
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,freeform_answerability,10,random,0.5563,0.3057,0.0563,8,8,64,5
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,mcq,10,real,0.9219,0.0,0.4219,8,8,64,1
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,mcq,10,shuffled,0.3969,0.3089,-0.1031,8,8,64,5
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,mcq,10,random,0.6406,0.2259,0.1406,8,8,64,5
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,passage_qa,10,real,0.8125,0.0,0.3125,8,8,64,1
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,passage_qa,10,shuffled,0.5219,0.0992,0.0219,8,8,64,5
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,passage_qa,10,random,0.5125,0.0523,0.0125,8,8,64,5
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,procedural_logic,10,real,0.625,0.0,0.125,8,8,64,1
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,procedural_logic,10,shuffled,0.4906,0.014,-0.0094,8,8,64,5
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,procedural_logic,10,random,0.4969,0.0676,-0.0031,8,8,64,5

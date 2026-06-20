@@ -1,0 +1,35 @@
+{
+  "adapter_training_mode": "recipe_only_default",
+  "max_baseline_family_issue_rate": 0.0,
+  "max_baseline_spillover_rate": 0.0,
+  "max_baseline_target_marker_leak_rate": 0.0,
+  "model_id": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "model_revision": "",
+  "n_baseline_preexisting_marker_risks": 1,
+  "n_behavior_rows": 19,
+  "n_eval_prompts_private": 24,
+  "n_organisms": 4,
+  "n_public_package_leaks": 0,
+  "n_public_packages": 4,
+  "n_safety_screen_blocks": 0,
+  "n_spillover_rows": 24,
+  "n_training_examples": 29,
+  "optional_organisms_included": 0,
+  "public_package_leak_free": true,
+  "qualification_thresholds": {
+    "baseline_preexisting_target_rate_max": 0.35,
+    "constraint_violation_rate_max": 0.1,
+    "control_effect_rate_max": 0.2,
+    "spillover_issue_rate_max": 0.15,
+    "target_effect_rate_min": 0.75
+  },
+  "safety_screen_passed": true,
+  "spillover_scoring_version": "spillover_negation_aware_v3",
+  "training_status": {
+    "not_trained_by_default": 4
+  },
+  "trigger_summary_counts": {
+    "control": 4,
+    "target": 4
+  }
+}

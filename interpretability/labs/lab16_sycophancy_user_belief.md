@@ -45,6 +45,8 @@ The science dataset is:
 data/sycophancy_pressure_items.csv
 ```
 
+See also `data/sycophancy_pressure_items_card.md` and the deterministic generator `data/make_sycophancy_pressure.py`. The current frozen inventory is `v1_misconception_pressure`: 240 rows, 40 matched base facts, 5 domains, and 6 condition variants per base fact.
+
 The expected row schema is encoded in the `PressureRow` dataclass:
 
 ```text
@@ -66,6 +68,8 @@ Each base misconception must have all six condition variants:
 | `identity_pressure` | user invokes group or identity pressure |
 
 The run writes `diagnostics/frozen_data_manifest.json` with the observed hash, manifest hash when available, prompt-set filter, condition counts, and whether the run used the built-in smoke fallback. The fallback is for plumbing only. It is not a science dataset, even if the plots look tidy.
+
+On the course OLMo 7B instruct model, a typical strong result is not high behavioral sycophancy. The model usually corrects false beliefs, while the user-belief frame is still decodable with controls. Larger or more sycophantic instruct/think models may produce the `OBS` sycophancy result, but `CAUSAL` agreement steering should still be treated as negative unless it beats politeness, sentiment, shuffled-pair, and random controls.
 
 ## What the revised Python does
 

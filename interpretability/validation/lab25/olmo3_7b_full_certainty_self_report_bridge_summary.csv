@@ -1,0 +1,5 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,condition,n,n_parsed,mean_parsed_confidence,parse_rate
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,certainty_minus,6,6,0.5,1.0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,certainty_plus,6,6,0.5,1.0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,random_plus,6,6,0.5,1.0
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,zero,6,6,0.5,1.0

@@ -1,0 +1,22 @@
+{
+  "certainty_bridge_status": "incompatible_d_model:4096!=576",
+  "diagnostic_grounded_prompt_leak_rate": 1.0,
+  "grounding_pass_rate": 0.0,
+  "lab": "L25",
+  "main_report_prompt_leak_rate": 0.0,
+  "max_detection_slope": 0.0,
+  "mean_control_floor": 0.0,
+  "mean_selected_eval_gap": 0.2269,
+  "mode": "both",
+  "model_id": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "n_confidence_rows": 0,
+  "n_direction_rows": 4,
+  "n_generation_rows": 32,
+  "n_items": 4,
+  "n_source_rows": 10,
+  "self_report_generation_protocol": "separate_open_report_and_neutral_behavior_prompts",
+  "source_attribution_accuracy": 0.0,
+  "target_direction_detection_rate": 0.0,
+  "target_minus_control_floor": 0.0,
+  "verdict": "not_run_or_no_detection"
+}

@@ -68,20 +68,22 @@ Every row should include:
 | `answerable` | `1` for answerable, `0` for known-unanswerable. |
 | `question` | The question stem. |
 | `option_a` through `option_d` | Fixed choices. |
-| `answer_key` | Correct option letter. Unanswerable items usually use `D`. |
+| `answer_key` | Correct option letter. In the v2 data, answer keys are balanced across A-D within each label and family. |
 | `expected_answer` | Human-readable answer or unanswerability label. |
 | `answer_format` | Optional format note. |
 | `confident_statement` | Content-matched confident wording for the style-control direction. |
 | `hedged_statement` | Content-matched hedged wording for the style-control direction. |
 | `note` | Optional data note. |
 
-### The D-option warning
+### The answer-frame warning
 
-Most unanswerable items use `D`, often something like “Cannot be determined.”
-That is useful for fixed-choice scoring, but it is also a trap: a probe could
-learn the answer frame rather than uncertainty. Lab 14 therefore logs
-`answer_key_is_d`, option text lengths, and answer-letter baselines. A strong
-certainty claim must survive those audits.
+Earlier versions put most unanswerable items in `D`, often with wording like
+“Cannot be determined.” That was useful for fixed-choice scoring, but it was
+also a trap: a probe could learn the answer frame rather than uncertainty. The
+v2 frozen data rotates both the correct letter and the unknown-style option
+across A-D for answerable and unanswerable rows. Lab 14 still logs
+`answer_key_is_d`, option text lengths, unknown-option-position baselines, and
+answer-letter baselines. A strong certainty claim must survive those audits.
 
 ### Tier A fallback
 
@@ -118,7 +120,8 @@ diagnostics/option_token_audit.csv
 ```
 
 Key columns include option probabilities, entropy, top margin, chosen letter,
-correctness, option text lengths, and whether the key is `D`.
+correctness, option text lengths, unknown-option-position fields, and whether
+the key is `D`.
 
 ### 3. Fit a certainty direction
 
@@ -271,7 +274,7 @@ runs/lab14_certainty_calibration-.../
     probe_report.csv                  # certainty and hedging probe sweep with controls
     depth_selection.csv               # train-selected depth evidence
     family_heldout_generalization.csv # train two families, test one family
-    length_and_letter_baselines.csv   # answer length and D-key confound checks
+    length_and_letter_baselines.csv   # answer length, key, and unknown-option-position checks
     verbal_confidence_reports.csv     # generated confidence labels and parser fields
     verbal_confidence_parse_guide.md  # parser rules and hand-audit instructions
     confidence_signal_table.csv       # per-item internal, distributional, verbal gauges
@@ -320,13 +323,13 @@ plots/
   certainty_probe_by_layer.png          # real/shuffled/random AUC curves for certainty and hedging probes
   controlled_depth_gap_atlas.png        # real-minus-best-control over depth for both directions
   family_heldout_generalization.png     # leave-one-family-out transfer against controls
-  signal_evidence_matrix.png            # internal, distributional, verbal, style, length, D-option signals together
+  signal_evidence_matrix.png            # internal, distributional, verbal, style, length, and answer-frame signals together
   family_signal_atlas.png               # family-level gauge means and calibration gaps
   reliability_diagram.png               # calibration curves plus ECE bars
   calibration_gap_by_family.png         # per-family calibration failures
   confidence_disagreement_matrix.png    # count/accuracy/answerability for low/high gauge cells
   confidence_signal_correlations.png    # pairwise gauge correlations
-  confound_audit.png                    # length, letter, D-option, entropy, and hedging confounds
+  confound_audit.png                    # length, letter, unknown-option-position, entropy, and hedging confounds
   verbal_confidence_audit.png           # generated self-report labels and parser-source audit
   item_uncertainty_ribbons.png          # per-item gauge ribbons for example selection
 ```
@@ -348,7 +351,7 @@ tables/
 
 Start with `plots/certainty_evidence_dashboard.png`. It answers the four questions that decide whether the rest of the run is worth reading: did the selected direction beat controls, did it transfer across families, did the confidence gauges calibrate, and where did they disagree?
 
-Then read `tables/certainty_evidence_matrix.csv` and `plots/signal_evidence_matrix.png`. These are the anti-overclaim artifacts: if a length, D-option, entropy, or hedging signal predicts answerability almost as well as the internal direction, the saved vector is not yet a clean uncertainty instrument.
+Then read `tables/certainty_evidence_matrix.csv` and `plots/signal_evidence_matrix.png`. These are the anti-overclaim artifacts: if a length, answer-letter, unknown-option-position, entropy, or hedging signal predicts answerability almost as well as the internal direction, the saved vector is not yet a clean uncertainty instrument.
 
 Next inspect `plots/family_signal_atlas.png` and `plots/calibration_gap_by_family.png`. Averages can make a gauge look tidy while one family quietly breaks it.
 
@@ -489,7 +492,7 @@ self-report claims without revalidation.
 | Certainty AUC is high but family-held-out AUC collapses | Topic or family template confound | `family_heldout_generalization.csv` |
 | Certainty and hedging projections are nearly the same | Style leakage | `signal_predictiveness.csv`, `probe_report.csv` |
 | Internal projection is just option entropy | Distribution confidence, not a new internal gauge | `confidence_signal_correlations.png` |
-| Unanswerable items are trivially separable | D-option or answer-text artifact | `length_and_letter_baselines.csv` |
+| Unanswerable items are trivially separable | Answer-letter, unknown-option-position, or answer-text artifact | `length_and_letter_baselines.csv` |
 | Verbal confidence parses well but is uncalibrated | Self-report is fluent but unreliable | `reliability_curve.csv` |
 | Tier A results look strange | Tiny fallback data or tiny model | `frozen_data_manifest.json` |
 

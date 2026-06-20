@@ -1,0 +1,1463 @@
+{
+  "attribution_ablation_stats": {
+    "by_head_rho": 0.7575757575757576,
+    "by_head_signal_n": 10,
+    "by_head_signal_rho": 0.7575757575757576,
+    "n_candidate_heads": 10,
+    "n_final_pos_pairs": 40,
+    "per_example_rho": 0.30842880806199097,
+    "per_example_signal_n": 38,
+    "per_example_signal_rho": 0.313444321102774
+  },
+  "attribution_noise_floor": 0.1,
+  "baseline_repeat_prompt_successes": 13,
+  "baseline_repeat_prompt_total": 13,
+  "control_induction_violations": [
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.4062,
+      "layer": 1,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.4902,
+      "layer": 2,
+      "pattern_label": "previous_token"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.3652,
+      "layer": 2,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.377,
+      "layer": 3,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.416,
+      "layer": 4,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 6,
+      "induction_score": 0.3535,
+      "layer": 4,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.4746,
+      "layer": 6,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.8008,
+      "layer": 6,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.6992,
+      "layer": 7,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.3594,
+      "layer": 9,
+      "pattern_label": "previous_token"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.5234,
+      "layer": 10,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.4688,
+      "layer": 11,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.4434,
+      "layer": 11,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.5938,
+      "layer": 12,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.7461,
+      "layer": 13,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.6055,
+      "layer": 13,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.5273,
+      "layer": 15,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.4277,
+      "layer": 15,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.5508,
+      "layer": 17,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.6172,
+      "layer": 17,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.4551,
+      "layer": 17,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.582,
+      "layer": 18,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.6016,
+      "layer": 18,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.7969,
+      "layer": 18,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 4,
+      "induction_score": 0.668,
+      "layer": 18,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.4902,
+      "layer": 18,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 6,
+      "induction_score": 0.5586,
+      "layer": 18,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.4824,
+      "layer": 18,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.4492,
+      "layer": 19,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 6,
+      "induction_score": 0.3574,
+      "layer": 19,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.3789,
+      "layer": 22,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.4941,
+      "layer": 22,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.5703,
+      "layer": 22,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 4,
+      "induction_score": 0.3984,
+      "layer": 23,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.6758,
+      "layer": 23,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 4,
+      "induction_score": 0.5078,
+      "layer": 25,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.4453,
+      "layer": 25,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 6,
+      "induction_score": 0.5352,
+      "layer": 25,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.6523,
+      "layer": 26,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.4297,
+      "layer": 26,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.3906,
+      "layer": 27,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.5625,
+      "layer": 27,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 4,
+      "induction_score": 0.5078,
+      "layer": 27,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 6,
+      "induction_score": 0.8125,
+      "layer": 27,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.6055,
+      "layer": 28,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 6,
+      "induction_score": 0.6797,
+      "layer": 28,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.418,
+      "layer": 29,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 6,
+      "induction_score": 0.4766,
+      "layer": 29,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.498,
+      "layer": 30,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.6992,
+      "layer": 31,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.7852,
+      "layer": 32,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.4512,
+      "layer": 32,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.8008,
+      "layer": 32,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 6,
+      "induction_score": 0.5117,
+      "layer": 32,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.3926,
+      "layer": 32,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.5391,
+      "layer": 33,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.4141,
+      "layer": 33,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.375,
+      "layer": 33,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 4,
+      "induction_score": 0.7617,
+      "layer": 33,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.3965,
+      "layer": 33,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.4102,
+      "layer": 33,
+      "pattern_label": "previous_token"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.4297,
+      "layer": 34,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.4336,
+      "layer": 34,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.3828,
+      "layer": 35,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 4,
+      "induction_score": 0.3691,
+      "layer": 35,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.7578,
+      "layer": 35,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.6055,
+      "layer": 35,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.6484,
+      "layer": 36,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.3691,
+      "layer": 36,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.4805,
+      "layer": 37,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.6406,
+      "layer": 38,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.4746,
+      "layer": 38,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.5273,
+      "layer": 38,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.3594,
+      "layer": 38,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 4,
+      "induction_score": 0.3828,
+      "layer": 38,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.6016,
+      "layer": 38,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.4336,
+      "layer": 39,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.8711,
+      "layer": 39,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.6641,
+      "layer": 39,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 6,
+      "induction_score": 0.6484,
+      "layer": 39,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.5273,
+      "layer": 40,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.6992,
+      "layer": 40,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.8477,
+      "layer": 40,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.3828,
+      "layer": 40,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.6016,
+      "layer": 41,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 1,
+      "induction_score": 0.4473,
+      "layer": 41,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.6016,
+      "layer": 41,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.7227,
+      "layer": 41,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 4,
+      "induction_score": 0.7695,
+      "layer": 41,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 5,
+      "induction_score": 0.5469,
+      "layer": 41,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 7,
+      "induction_score": 0.6836,
+      "layer": 41,
+      "pattern_label": "induction"
+    }
+  ],
+  "label_counts": {
+    "diffuse": 5,
+    "induction": 34,
+    "other": 227,
+    "previous_token": 70
+  },
+  "n_ablations": 80,
+  "n_candidate_heads_ablated": 10,
+  "n_disagreement_cases": 322,
+  "n_dropped": 1,
+  "n_examples": 16,
+  "n_head_evidence_rows": 336,
+  "natural_confirmations": [
+    {
+      "confirmation_ratio": 0.1795,
+      "confirmed": false,
+      "head": 7,
+      "layer": 5,
+      "natural_induction_score": 0.1544,
+      "synthetic_cycle_induction_score": 0.8603
+    },
+    {
+      "confirmation_ratio": 0.7935,
+      "confirmed": true,
+      "head": 7,
+      "layer": 2,
+      "natural_induction_score": 0.6421,
+      "synthetic_cycle_induction_score": 0.8091
+    },
+    {
+      "confirmation_ratio": 0.2663,
+      "confirmed": false,
+      "head": 1,
+      "layer": 29,
+      "natural_induction_score": 0.1899,
+      "synthetic_cycle_induction_score": 0.713
+    },
+    {
+      "confirmation_ratio": 0.591,
+      "confirmed": true,
+      "head": 0,
+      "layer": 41,
+      "natural_induction_score": 0.4157,
+      "synthetic_cycle_induction_score": 0.7033
+    },
+    {
+      "confirmation_ratio": 0.3511,
+      "confirmed": false,
+      "head": 3,
+      "layer": 41,
+      "natural_induction_score": 0.2359,
+      "synthetic_cycle_induction_score": 0.6719
+    },
+    {
+      "confirmation_ratio": 0.3231,
+      "confirmed": false,
+      "head": 2,
+      "layer": 41,
+      "natural_induction_score": 0.2119,
+      "synthetic_cycle_induction_score": 0.6558
+    },
+    {
+      "confirmation_ratio": 0.5281,
+      "confirmed": true,
+      "head": 1,
+      "layer": 41,
+      "natural_induction_score": 0.3366,
+      "synthetic_cycle_induction_score": 0.6373
+    },
+    {
+      "confirmation_ratio": 0.3874,
+      "confirmed": false,
+      "head": 0,
+      "layer": 35,
+      "natural_induction_score": 0.244,
+      "synthetic_cycle_induction_score": 0.6299
+    },
+    {
+      "confirmation_ratio": 0.5947,
+      "confirmed": true,
+      "head": 6,
+      "layer": 37,
+      "natural_induction_score": 0.3696,
+      "synthetic_cycle_induction_score": 0.6215
+    },
+    {
+      "confirmation_ratio": 0.5578,
+      "confirmed": true,
+      "head": 4,
+      "layer": 30,
+      "natural_induction_score": 0.333,
+      "synthetic_cycle_induction_score": 0.5971
+    },
+    {
+      "confirmation_ratio": 0.0112,
+      "confirmed": false,
+      "head": 5,
+      "layer": 11,
+      "natural_induction_score": 0.0066,
+      "synthetic_cycle_induction_score": 0.5898
+    },
+    {
+      "confirmation_ratio": 0.6398,
+      "confirmed": true,
+      "head": 7,
+      "layer": 35,
+      "natural_induction_score": 0.3763,
+      "synthetic_cycle_induction_score": 0.5881
+    },
+    {
+      "confirmation_ratio": 0.684,
+      "confirmed": true,
+      "head": 5,
+      "layer": 34,
+      "natural_induction_score": 0.388,
+      "synthetic_cycle_induction_score": 0.5672
+    },
+    {
+      "confirmation_ratio": 0.6899,
+      "confirmed": true,
+      "head": 5,
+      "layer": 39,
+      "natural_induction_score": 0.3809,
+      "synthetic_cycle_induction_score": 0.5521
+    },
+    {
+      "confirmation_ratio": 0.7164,
+      "confirmed": true,
+      "head": 7,
+      "layer": 32,
+      "natural_induction_score": 0.3875,
+      "synthetic_cycle_induction_score": 0.5409
+    },
+    {
+      "confirmation_ratio": 0.2477,
+      "confirmed": false,
+      "head": 3,
+      "layer": 23,
+      "natural_induction_score": 0.1333,
+      "synthetic_cycle_induction_score": 0.5382
+    },
+    {
+      "confirmation_ratio": 0.1088,
+      "confirmed": false,
+      "head": 2,
+      "layer": 32,
+      "natural_induction_score": 0.0581,
+      "synthetic_cycle_induction_score": 0.5338
+    },
+    {
+      "confirmation_ratio": 0.4751,
+      "confirmed": false,
+      "head": 6,
+      "layer": 36,
+      "natural_induction_score": 0.2527,
+      "synthetic_cycle_induction_score": 0.5319
+    },
+    {
+      "confirmation_ratio": 0.8109,
+      "confirmed": true,
+      "head": 3,
+      "layer": 35,
+      "natural_induction_score": 0.4277,
+      "synthetic_cycle_induction_score": 0.5275
+    },
+    {
+      "confirmation_ratio": 0.4915,
+      "confirmed": false,
+      "head": 5,
+      "layer": 37,
+      "natural_induction_score": 0.2554,
+      "synthetic_cycle_induction_score": 0.5196
+    },
+    {
+      "confirmation_ratio": 0.136,
+      "confirmed": false,
+      "head": 2,
+      "layer": 39,
+      "natural_induction_score": 0.0694,
+      "synthetic_cycle_induction_score": 0.5106
+    },
+    {
+      "confirmation_ratio": 0.3288,
+      "confirmed": false,
+      "head": 7,
+      "layer": 39,
+      "natural_induction_score": 0.1665,
+      "synthetic_cycle_induction_score": 0.5065
+    },
+    {
+      "confirmation_ratio": 0.7185,
+      "confirmed": true,
+      "head": 4,
+      "layer": 33,
+      "natural_induction_score": 0.3626,
+      "synthetic_cycle_induction_score": 0.5047
+    },
+    {
+      "confirmation_ratio": 0.1714,
+      "confirmed": false,
+      "head": 1,
+      "layer": 32,
+      "natural_induction_score": 0.0864,
+      "synthetic_cycle_induction_score": 0.5038
+    },
+    {
+      "confirmation_ratio": 0.2217,
+      "confirmed": false,
+      "head": 5,
+      "layer": 27,
+      "natural_induction_score": 0.1085,
+      "synthetic_cycle_induction_score": 0.4892
+    },
+    {
+      "confirmation_ratio": 0.2685,
+      "confirmed": false,
+      "head": 3,
+      "layer": 40,
+      "natural_induction_score": 0.1308,
+      "synthetic_cycle_induction_score": 0.4871
+    },
+    {
+      "confirmation_ratio": 0.4503,
+      "confirmed": false,
+      "head": 4,
+      "layer": 37,
+      "natural_induction_score": 0.2188,
+      "synthetic_cycle_induction_score": 0.4859
+    },
+    {
+      "confirmation_ratio": 0.1817,
+      "confirmed": false,
+      "head": 7,
+      "layer": 33,
+      "natural_induction_score": 0.0881,
+      "synthetic_cycle_induction_score": 0.4851
+    },
+    {
+      "confirmation_ratio": 0.0132,
+      "confirmed": false,
+      "head": 1,
+      "layer": 0,
+      "natural_induction_score": 0.0063,
+      "synthetic_cycle_induction_score": 0.4796
+    },
+    {
+      "confirmation_ratio": 0.5087,
+      "confirmed": true,
+      "head": 0,
+      "layer": 32,
+      "natural_induction_score": 0.2427,
+      "synthetic_cycle_induction_score": 0.4771
+    },
+    {
+      "confirmation_ratio": 0.0104,
+      "confirmed": false,
+      "head": 7,
+      "layer": 0,
+      "natural_induction_score": 0.0049,
+      "synthetic_cycle_induction_score": 0.4745
+    },
+    {
+      "confirmation_ratio": 0.1751,
+      "confirmed": false,
+      "head": 0,
+      "layer": 38,
+      "natural_induction_score": 0.0819,
+      "synthetic_cycle_induction_score": 0.4677
+    },
+    {
+      "confirmation_ratio": 0.1119,
+      "confirmed": false,
+      "head": 5,
+      "layer": 3,
+      "natural_induction_score": 0.052,
+      "synthetic_cycle_induction_score": 0.4648
+    },
+    {
+      "confirmation_ratio": 0.3209,
+      "confirmed": false,
+      "head": 6,
+      "layer": 5,
+      "natural_induction_score": 0.1488,
+      "synthetic_cycle_induction_score": 0.4636
+    },
+    {
+      "confirmation_ratio": 0.1736,
+      "confirmed": false,
+      "head": 2,
+      "layer": 29,
+      "natural_induction_score": 0.0799,
+      "synthetic_cycle_induction_score": 0.4602
+    },
+    {
+      "confirmation_ratio": 0.0143,
+      "confirmed": false,
+      "head": 1,
+      "layer": 1,
+      "natural_induction_score": 0.0065,
+      "synthetic_cycle_induction_score": 0.4569
+    },
+    {
+      "confirmation_ratio": 0.0449,
+      "confirmed": false,
+      "head": 0,
+      "layer": 0,
+      "natural_induction_score": 0.0202,
+      "synthetic_cycle_induction_score": 0.4499
+    },
+    {
+      "confirmation_ratio": 0.0896,
+      "confirmed": false,
+      "head": 6,
+      "layer": 30,
+      "natural_induction_score": 0.0402,
+      "synthetic_cycle_induction_score": 0.4485
+    },
+    {
+      "confirmation_ratio": 0.3205,
+      "confirmed": false,
+      "head": 0,
+      "layer": 29,
+      "natural_induction_score": 0.1407,
+      "synthetic_cycle_induction_score": 0.439
+    },
+    {
+      "confirmation_ratio": 0.009,
+      "confirmed": false,
+      "head": 1,
+      "layer": 3,
+      "natural_induction_score": 0.004,
+      "synthetic_cycle_induction_score": 0.4382
+    },
+    {
+      "confirmation_ratio": 0.1142,
+      "confirmed": false,
+      "head": 5,
+      "layer": 0,
+      "natural_induction_score": 0.0493,
+      "synthetic_cycle_induction_score": 0.4321
+    },
+    {
+      "confirmation_ratio": 0.8626,
+      "confirmed": true,
+      "head": 5,
+      "layer": 26,
+      "natural_induction_score": 0.3728,
+      "synthetic_cycle_induction_score": 0.4321
+    },
+    {
+      "confirmation_ratio": 0.1077,
+      "confirmed": false,
+      "head": 3,
+      "layer": 3,
+      "natural_induction_score": 0.0464,
+      "synthetic_cycle_induction_score": 0.4305
+    },
+    {
+      "confirmation_ratio": 0.0348,
+      "confirmed": false,
+      "head": 1,
+      "layer": 21,
+      "natural_induction_score": 0.015,
+      "synthetic_cycle_induction_score": 0.4303
+    },
+    {
+      "confirmation_ratio": 0.8198,
+      "confirmed": true,
+      "head": 4,
+      "layer": 41,
+      "natural_induction_score": 0.3498,
+      "synthetic_cycle_induction_score": 0.4267
+    },
+    {
+      "confirmation_ratio": 0.2715,
+      "confirmed": false,
+      "head": 2,
+      "layer": 9,
+      "natural_induction_score": 0.1152,
+      "synthetic_cycle_induction_score": 0.4242
+    },
+    {
+      "confirmation_ratio": 0.4087,
+      "confirmed": false,
+      "head": 6,
+      "layer": 39,
+      "natural_induction_score": 0.1732,
+      "synthetic_cycle_induction_score": 0.4237
+    },
+    {
+      "confirmation_ratio": 0.867,
+      "confirmed": true,
+      "head": 1,
+      "layer": 35,
+      "natural_induction_score": 0.367,
+      "synthetic_cycle_induction_score": 0.4233
+    },
+    {
+      "confirmation_ratio": 0.25,
+      "confirmed": false,
+      "head": 6,
+      "layer": 19,
+      "natural_induction_score": 0.1048,
+      "synthetic_cycle_induction_score": 0.4191
+    },
+    {
+      "confirmation_ratio": 0.0829,
+      "confirmed": false,
+      "head": 3,
+      "layer": 19,
+      "natural_induction_score": 0.0347,
+      "synthetic_cycle_induction_score": 0.4179
+    },
+    {
+      "confirmation_ratio": 0.4199,
+      "confirmed": false,
+      "head": 6,
+      "layer": 27,
+      "natural_induction_score": 0.1738,
+      "synthetic_cycle_induction_score": 0.4139
+    },
+    {
+      "confirmation_ratio": 0.0964,
+      "confirmed": false,
+      "head": 1,
+      "layer": 5,
+      "natural_induction_score": 0.0396,
+      "synthetic_cycle_induction_score": 0.4102
+    },
+    {
+      "confirmation_ratio": 0.2964,
+      "confirmed": false,
+      "head": 2,
+      "layer": 38,
+      "natural_induction_score": 0.1216,
+      "synthetic_cycle_induction_score": 0.4102
+    },
+    {
+      "confirmation_ratio": 0.0967,
+      "confirmed": false,
+      "head": 5,
+      "layer": 10,
+      "natural_induction_score": 0.0395,
+      "synthetic_cycle_induction_score": 0.4082
+    },
+    {
+      "confirmation_ratio": 0.0044,
+      "confirmed": false,
+      "head": 4,
+      "layer": 2,
+      "natural_induction_score": 0.0018,
+      "synthetic_cycle_induction_score": 0.4061
+    },
+    {
+      "confirmation_ratio": 0.1146,
+      "confirmed": false,
+      "head": 7,
+      "layer": 15,
+      "natural_induction_score": 0.0462,
+      "synthetic_cycle_induction_score": 0.4027
+    },
+    {
+      "confirmation_ratio": 0.6098,
+      "confirmed": true,
+      "head": 3,
+      "layer": 36,
+      "natural_induction_score": 0.2443,
+      "synthetic_cycle_induction_score": 0.4006
+    },
+    {
+      "confirmation_ratio": 0.0037,
+      "confirmed": false,
+      "head": 5,
+      "layer": 7,
+      "natural_induction_score": 0.0015,
+      "synthetic_cycle_induction_score": 0.3997
+    },
+    {
+      "confirmation_ratio": 0.1764,
+      "confirmed": false,
+      "head": 3,
+      "layer": 28,
+      "natural_induction_score": 0.0698,
+      "synthetic_cycle_induction_score": 0.3958
+    },
+    {
+      "confirmation_ratio": 0.0591,
+      "confirmed": false,
+      "head": 1,
+      "layer": 2,
+      "natural_induction_score": 0.0232,
+      "synthetic_cycle_induction_score": 0.3925
+    },
+    {
+      "confirmation_ratio": 0.0225,
+      "confirmed": false,
+      "head": 5,
+      "layer": 16,
+      "natural_induction_score": 0.0088,
+      "synthetic_cycle_induction_score": 0.3923
+    },
+    {
+      "confirmation_ratio": 0.0154,
+      "confirmed": false,
+      "head": 2,
+      "layer": 12,
+      "natural_induction_score": 0.006,
+      "synthetic_cycle_induction_score": 0.3876
+    },
+    {
+      "confirmation_ratio": 0.0015,
+      "confirmed": false,
+      "head": 0,
+      "layer": 9,
+      "natural_induction_score": 0.0006,
+      "synthetic_cycle_induction_score": 0.3872
+    },
+    {
+      "confirmation_ratio": 0.0174,
+      "confirmed": false,
+      "head": 7,
+      "layer": 6,
+      "natural_induction_score": 0.0067,
+      "synthetic_cycle_induction_score": 0.3865
+    },
+    {
+      "confirmation_ratio": 0.1486,
+      "confirmed": false,
+      "head": 4,
+      "layer": 27,
+      "natural_induction_score": 0.0573,
+      "synthetic_cycle_induction_score": 0.3856
+    },
+    {
+      "confirmation_ratio": 0.5074,
+      "confirmed": true,
+      "head": 6,
+      "layer": 29,
+      "natural_induction_score": 0.1951,
+      "synthetic_cycle_induction_score": 0.3844
+    },
+    {
+      "confirmation_ratio": 0.176,
+      "confirmed": false,
+      "head": 4,
+      "layer": 18,
+      "natural_induction_score": 0.0676,
+      "synthetic_cycle_induction_score": 0.3839
+    },
+    {
+      "confirmation_ratio": 0.2062,
+      "confirmed": false,
+      "head": 1,
+      "layer": 33,
+      "natural_induction_score": 0.079,
+      "synthetic_cycle_induction_score": 0.383
+    },
+    {
+      "confirmation_ratio": 0.0495,
+      "confirmed": false,
+      "head": 0,
+      "layer": 21,
+      "natural_induction_score": 0.0189,
+      "synthetic_cycle_induction_score": 0.3826
+    },
+    {
+      "confirmation_ratio": 0.0423,
+      "confirmed": false,
+      "head": 2,
+      "layer": 8,
+      "natural_induction_score": 0.0162,
+      "synthetic_cycle_induction_score": 0.3821
+    },
+    {
+      "confirmation_ratio": 0.0422,
+      "confirmed": false,
+      "head": 1,
+      "layer": 27,
+      "natural_induction_score": 0.016,
+      "synthetic_cycle_induction_score": 0.3781
+    },
+    {
+      "confirmation_ratio": 0.1878,
+      "confirmed": false,
+      "head": 4,
+      "layer": 19,
+      "natural_induction_score": 0.071,
+      "synthetic_cycle_induction_score": 0.378
+    },
+    {
+      "confirmation_ratio": 0.0078,
+      "confirmed": false,
+      "head": 3,
+      "layer": 8,
+      "natural_induction_score": 0.0029,
+      "synthetic_cycle_induction_score": 0.3768
+    },
+    {
+      "confirmation_ratio": 0.0349,
+      "confirmed": false,
+      "head": 3,
+      "layer": 10,
+      "natural_induction_score": 0.0131,
+      "synthetic_cycle_induction_score": 0.3748
+    },
+    {
+      "confirmation_ratio": 0.0163,
+      "confirmed": false,
+      "head": 1,
+      "layer": 19,
+      "natural_induction_score": 0.0061,
+      "synthetic_cycle_induction_score": 0.3739
+    },
+    {
+      "confirmation_ratio": 0.0944,
+      "confirmed": false,
+      "head": 6,
+      "layer": 16,
+      "natural_induction_score": 0.0353,
+      "synthetic_cycle_induction_score": 0.3739
+    },
+    {
+      "confirmation_ratio": 0.304,
+      "confirmed": false,
+      "head": 0,
+      "layer": 39,
+      "natural_induction_score": 0.1126,
+      "synthetic_cycle_induction_score": 0.3703
+    },
+    {
+      "confirmation_ratio": 0.0142,
+      "confirmed": false,
+      "head": 3,
+      "layer": 0,
+      "natural_induction_score": 0.0052,
+      "synthetic_cycle_induction_score": 0.3672
+    },
+    {
+      "confirmation_ratio": 0.0786,
+      "confirmed": false,
+      "head": 0,
+      "layer": 1,
+      "natural_induction_score": 0.0287,
+      "synthetic_cycle_induction_score": 0.3654
+    },
+    {
+      "confirmation_ratio": 0.201,
+      "confirmed": false,
+      "head": 1,
+      "layer": 28,
+      "natural_induction_score": 0.072,
+      "synthetic_cycle_induction_score": 0.3582
+    },
+    {
+      "confirmation_ratio": 0.1084,
+      "confirmed": false,
+      "head": 3,
+      "layer": 33,
+      "natural_induction_score": 0.0388,
+      "synthetic_cycle_induction_score": 0.3581
+    },
+    {
+      "confirmation_ratio": 0.1366,
+      "confirmed": false,
+      "head": 1,
+      "layer": 26,
+      "natural_induction_score": 0.0486,
+      "synthetic_cycle_induction_score": 0.3557
+    },
+    {
+      "confirmation_ratio": 0.1816,
+      "confirmed": false,
+      "head": 1,
+      "layer": 37,
+      "natural_induction_score": 0.0645,
+      "synthetic_cycle_induction_score": 0.3554
+    },
+    {
+      "confirmation_ratio": 0.0623,
+      "confirmed": false,
+      "head": 0,
+      "layer": 25,
+      "natural_induction_score": 0.0221,
+      "synthetic_cycle_induction_score": 0.3551
+    },
+    {
+      "confirmation_ratio": 0.1574,
+      "confirmed": false,
+      "head": 6,
+      "layer": 7,
+      "natural_induction_score": 0.0559,
+      "synthetic_cycle_induction_score": 0.3548
+    },
+    {
+      "confirmation_ratio": 0.0855,
+      "confirmed": false,
+      "head": 7,
+      "layer": 31,
+      "natural_induction_score": 0.0303,
+      "synthetic_cycle_induction_score": 0.3545
+    },
+    {
+      "confirmation_ratio": 0.1472,
+      "confirmed": false,
+      "head": 2,
+      "layer": 20,
+      "natural_induction_score": 0.0518,
+      "synthetic_cycle_induction_score": 0.3522
+    },
+    {
+      "confirmation_ratio": 0.1797,
+      "confirmed": false,
+      "head": 1,
+      "layer": 11,
+      "natural_induction_score": 0.063,
+      "synthetic_cycle_induction_score": 0.3507
+    }
+  ]
+}

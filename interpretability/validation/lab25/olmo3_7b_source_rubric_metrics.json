@@ -1,0 +1,22 @@
+{
+  "certainty_bridge_status": "not_run",
+  "diagnostic_grounded_prompt_leak_rate": 1.0,
+  "grounding_pass_rate": "",
+  "lab": "L25",
+  "main_report_prompt_leak_rate": 0.0,
+  "max_detection_slope": "",
+  "mean_control_floor": "",
+  "mean_selected_eval_gap": 33.1479,
+  "mode": "attribution",
+  "model_id": "allenai/Olmo-3-7B-Instruct",
+  "n_confidence_rows": 0,
+  "n_direction_rows": 8,
+  "n_generation_rows": 0,
+  "n_items": 24,
+  "n_source_rows": 60,
+  "self_report_generation_protocol": "separate_open_report_and_neutral_behavior_prompts",
+  "source_attribution_accuracy": 0.4667,
+  "target_direction_detection_rate": "",
+  "target_minus_control_floor": "",
+  "verdict": "not_run_or_no_detection"
+}

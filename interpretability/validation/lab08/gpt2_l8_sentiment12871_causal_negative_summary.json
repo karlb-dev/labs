@@ -1,0 +1,35 @@
+{
+  "best_dose_mult": 0.0,
+  "causal": false,
+  "control_max_hits_same_dose": 0.0,
+  "control_max_probe_same_dose": 3.218,
+  "family": "sentiment_emotion",
+  "feature": 12871,
+  "keywords": [
+    "happy",
+    "sad",
+    "angry",
+    "relieved",
+    "afraid",
+    "delighted"
+  ],
+  "matched_controls": [
+    6008,
+    6786,
+    23205,
+    9317,
+    4712,
+    13239,
+    17526,
+    15886,
+    10218,
+    20992
+  ],
+  "peak_act": 4.3951,
+  "real_base_probe": 3.218,
+  "real_best_hits": 0.0,
+  "real_best_probe": 3.218,
+  "suppress_base_probe": 17.17,
+  "suppress_best_dose_mult": -1.0,
+  "suppress_min_probe": 9.3123
+}

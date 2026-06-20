@@ -1,0 +1,152 @@
+{
+  "activation_norm_outliers": [],
+  "best_cross_family_layer": 40,
+  "best_min_cross_accuracy": 0.5179,
+  "majority_baseline_mean": 0.5,
+  "mass_mean_peak": {
+    "accuracy": 0.78145,
+    "layer": 17
+  },
+  "mass_mean_peak_shuffled_control": 0.501,
+  "n_statements": 440,
+  "normalization": "row_unit_norm",
+  "peak_logistic_calibration": [
+    {
+      "accuracy": 0.9118,
+      "brier": 0.0868,
+      "ece": 0.093,
+      "family": "cities",
+      "layer": 15,
+      "nll": 0.4986
+    },
+    {
+      "accuracy": 0.5682,
+      "brier": 0.3878,
+      "ece": 0.3909,
+      "family": "comparisons",
+      "layer": 15,
+      "nll": 2.0988
+    },
+    {
+      "accuracy": 0.9706,
+      "brier": 0.0327,
+      "ece": 0.0646,
+      "family": "negations",
+      "layer": 15,
+      "nll": 0.1043
+    },
+    {
+      "accuracy": 0.8636,
+      "brier": 0.1556,
+      "ece": 0.1715,
+      "family": "misconceptions",
+      "layer": 15,
+      "nll": 0.7758
+    }
+  ],
+  "per_family_cap": 0,
+  "saved_direction": {
+    "below_chance_transfer_families": [
+      "negations"
+    ],
+    "layer": 40,
+    "train_family": "comparisons",
+    "transfer_accuracies": {
+      "cities": 0.5179,
+      "comparisons": 0.4545,
+      "misconceptions": 0.5694,
+      "negations": 0.4821
+    },
+    "worst_cross_accuracy": 0.4821,
+    "worst_cross_including_stress_tests": 0.4821
+  },
+  "surface_letter": "n",
+  "surface_peak": {
+    "accuracy": 0.878025,
+    "layer": 2
+  },
+  "token_length_baseline_mean": 0.5307499999999999,
+  "top_mass_mean_influence_rows": [
+    {
+      "angle_shift_degrees": 8.7735,
+      "baseline_eval_accuracy": 0.6818,
+      "cosine_without_row": 0.988299,
+      "eval_accuracy_delta_without_row": 0.0909,
+      "eval_accuracy_without_row": 0.7727,
+      "family": "misconceptions",
+      "influence_score": 11.0462,
+      "label": 0,
+      "layer": 40,
+      "raw_norm": 122.6706,
+      "raw_norm_ratio_to_median": 1.0061,
+      "statement": "The Sahara is the largest desert on Earth.",
+      "statement_id": "mis_f_28"
+    },
+    {
+      "angle_shift_degrees": 9.7658,
+      "baseline_eval_accuracy": 0.5588,
+      "cosine_without_row": 0.985509,
+      "eval_accuracy_delta_without_row": 0.0294,
+      "eval_accuracy_without_row": 0.5882,
+      "family": "negations",
+      "influence_score": 10.501,
+      "label": 0,
+      "layer": 40,
+      "raw_norm": 119.2122,
+      "raw_norm_ratio_to_median": 0.9777,
+      "statement": "The city of Prague is not in Czechia.",
+      "statement_id": "neg_f_19"
+    },
+    {
+      "angle_shift_degrees": 9.2691,
+      "baseline_eval_accuracy": 0.6818,
+      "cosine_without_row": 0.986943,
+      "eval_accuracy_delta_without_row": 0.0455,
+      "eval_accuracy_without_row": 0.7273,
+      "family": "misconceptions",
+      "influence_score": 10.4055,
+      "label": 1,
+      "layer": 40,
+      "raw_norm": 116.7334,
+      "raw_norm_ratio_to_median": 0.9574,
+      "statement": "Macs can be infected by malware just like other computers.",
+      "statement_id": "mis_t_33"
+    },
+    {
+      "angle_shift_degrees": 8.0752,
+      "baseline_eval_accuracy": 0.5882,
+      "cosine_without_row": 0.990085,
+      "eval_accuracy_delta_without_row": 0.0882,
+      "eval_accuracy_without_row": 0.6765,
+      "family": "cities",
+      "influence_score": 10.281,
+      "label": 1,
+      "layer": 40,
+      "raw_norm": 122.3939,
+      "raw_norm_ratio_to_median": 1.0038,
+      "statement": "The city of Ottawa is in Canada.",
+      "statement_id": "city_t_15"
+    },
+    {
+      "angle_shift_degrees": 7.8946,
+      "baseline_eval_accuracy": 0.6818,
+      "cosine_without_row": 0.990522,
+      "eval_accuracy_delta_without_row": 0.0909,
+      "eval_accuracy_without_row": 0.7727,
+      "family": "misconceptions",
+      "influence_score": 10.1673,
+      "label": 0,
+      "layer": 40,
+      "raw_norm": 117.2702,
+      "raw_norm_ratio_to_median": 0.9618,
+      "statement": "More megapixels always means a camera takes better photos.",
+      "statement_id": "mis_f_31"
+    }
+  ],
+  "truth_peak": {
+    "accuracy": 0.82855,
+    "layer": 15
+  },
+  "truth_peak_selectivity": 0.369,
+  "truth_peak_shuffled_control": 0.45955
+}

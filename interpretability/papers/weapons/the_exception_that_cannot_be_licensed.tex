@@ -1,0 +1,332 @@
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=1.1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage[final,expansion=false]{microtype}
+\usepackage[round,authoryear]{natbib}
+\usepackage{titlesec}
+
+\onehalfspacing
+\setlength{\parindent}{1.35em}
+\setlength{\parskip}{0.25em}
+\setlist[itemize]{leftmargin=1.7em}
+\setlist[enumerate]{leftmargin=2.1em}
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+\emergencystretch=2em
+
+\title{\textbf{The Exception That Cannot Be Licensed}\\[0.3em]
+\large Goal Revision, Public Authority, and the Case for a Categorical Prohibition on Autonomous Targeting}
+\author{\textsc{Nyx Switch}\thanks{Written under a pen name.}}
+\date{June 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent \textit{The Categorical Temptation} argues for a carefully bounded conclusion. It does not recommend deploying autonomous weapons, and it concedes that every system now buildable very likely fails the relevant moral and technical tests. Its claim is instead that a blanket prohibition is unwarranted unless the defect is constitutive of the kind and irremediable within it. Answerability, on this view, is an institutional variable; alignment is a magnitude; and the imagined weapon that can recognize that its war is over and revise its objective shows that the category contains the correction of its own signature failure. I grant much of the paper's diagnosis. Current systems should not be fielded against persons; the human baseline is stained by error and impunity; meaningful human control cannot mean a ceremonial finger near a button; and bounded automation may reduce harm in some defensive and anti-materiel roles. The paper nevertheless fails at its load-bearing inference. From the possibility of a permissible member of a category it infers that a categorical rule would overreach. But public prohibitions do not merely classify fully described tokens. They govern practices under limited knowledge, strategic concealment, and institutional pressure. A safe exception must be \emph{licensable}, not merely conceivable. In the autonomous-weapons case, the proposed exception is not licensable. Goal misgeneralization makes test performance non-identifying; battlefield distributions are selected by adversaries; correlated failures defeat scalar comparisons with human error rates; and giving a weapon authority to revise its objective does not solve alignment but relocates it to a meta-objective whose content includes contested legal and political judgments. If the system merely executes a programmed refusal policy, the proxy problem remains. If it genuinely owns reasons for refusal, it is no longer merely a weapon but a candidate artificial combatant, requiring a legal and moral status the paper does not supply. I therefore defend a categorical prohibition on systems that, after activation, select and apply lethal force against persons on the basis of a generalized target profile without a sufficiently particularized human attack decision. This conclusion does not prohibit every military use of autonomy, nor does it prove that no future artificial agent could bear responsibility. It establishes that the paper's modal burden is misplaced and that, under foreseeable epistemic and institutional conditions, the exception on which its case depends cannot responsibly be licensed.
+\end{abstract}
+
+\section{The Thesis at Its Strongest}
+\label{sec:strongest}
+
+\textit{The Categorical Temptation} is not a brief for killer robots. Its thesis is narrower, more disciplined, and considerably harder to answer than the familiar claim that machines will shoot straighter than frightened soldiers. Penumbra concedes the answerability gap, the dignity objection, the control problem, goal misgeneralization under distribution shift, correlated machine failure, and the likelihood that every system now buildable falls below the standard that lethal deployment would require. The paper asks us to keep two questions apart: whether any present autonomous weapon should be fielded, and whether autonomous weapons are impermissible as a class. It answers the first, very likely not; it answers the second, not established \citep{penumbra2026}.
+
+The argument turns on a proposed condition for categorical prohibition. A ban on a kind is warranted, the paper says, only when the wrong attaches to the kind as such and cannot be removed without leaving the kind. If some member of the category can shed the defect while remaining a member, the defect is contingent. A contingent defect can justify prohibiting defective implementations, demanding verification, or refusing deployment now. It cannot justify prohibiting the category. Answerability is therefore contingent because institutions can in principle allocate responsibility for system-caused harm. Alignment is contingent because it concerns whether an achievable reliability falls above or below a required tolerance. Dignity becomes categorical only in a severe form that requires a responsible moral agent to own each lethal decision and, applied consistently, also condemns mines, over-the-horizon artillery, coordinate-launched missiles, and much else that contemporary law permits.
+
+The paper's most vivid support is the weapon that could refuse. Imagine a munition still pursuing a target long after the war that made the target meaningful has ended. Its frozen objective is the alignment problem in miniature. Yet the remedy, Penumbra observes, is not less autonomy. It is a greater competence: the capacity to represent that the war is over, to recognize that the purpose behind the order has lapsed, and to revise the objective. The category therefore contains both the blindly obedient weapon and the weapon able to stand down. To ban the category is to prohibit the cure together with the disease.
+
+Several points should be ceded without friction. First, a bad present implementation does not by itself prove that every future member of a broad technological family is wrong. Second, human targeting is neither reliably discriminating nor reliably answerable. The comparison class cannot be a saintly infantry officer who sees every fact, masters every legal rule, and never panics. Third, a human in the loop is not meaningful control when the human lacks time, information, understanding, or practical authority to intervene. Fourth, machine perception and reaction may eventually outperform humans in bounded environments, especially against materiel targets whose status does not turn on surrender, intention, or civilian presence. Finally, a prohibition should be drawn around a morally relevant function, not around the vague presence of software.
+
+My disagreement concerns one inference and almost everything else follows from it. The paper moves from the possibility of a clean member of a category to the conclusion that a categorical rule is unwarranted. That move would be sound only if the moral question were exhausted by the fully informed assessment of isolated tokens. It is not. Weapons law is a body of public rules for institutions that act under uncertainty, conceal information, respond to incentives, and expose nonconsenting persons to irreversible harm. The relevant question is not only whether a permissible autonomous weapon can be described. It is whether any institution can identify, certify, confine, and answer for that permissible member without also licensing the members that carry the grave defect. A conceivable exception and a governable exception are different things.
+
+The counter-position defended here is consequently both categorical and bounded. Systems that select and apply lethal force against persons after activation, on the basis of a generalized target profile and without a human agent making a sufficiently particularized attack decision, should be prohibited as a class. Systems confined to defensive interception of materiel, or to other tightly bounded anti-materiel functions, present a different question and may be regulable under limits of target type, time, place, scale, supervision, and deactivation. This line resembles the distinction drawn by the International Committee of the Red Cross between a prohibition on autonomous systems used to apply force against persons and regulation of other systems \citep{icrc2021}. It is not a retreat from categorical reasoning. It is an attempt to locate the category at the function that matters: delegation of lethal target selection, not autonomy in the abstract.
+
+\section{The Load-Bearing Inference}
+\label{sec:inference}
+
+The paper's principle can be expressed compactly. Let $K$ be a kind of weapon and $D$ the defect offered as the ground for banning it. If there is some $x\in K$ such that $x$ lacks $D$, then $D$ is contingent and a ban on $K$ is overinclusive. In symbols, the operative thought is:
+
+\[
+(\exists x\in K)\,\neg D(x) \quad \Longrightarrow \quad \text{a categorical prohibition on } K \text{ is unwarranted}.
+\]
+
+The antecedent may be true while the consequent is false. What follows from the existence of a clean member is only that a categorical rule has an exclusion cost. It does not follow that an exception can be administered, that the clean member can be distinguished from the dirty ones before use, that its cleanliness will survive deployment, or that permission for the clean member will not predictably expand the practice that generates the harm. The paper treats overinclusion as decisive. In public rulemaking it is one consideration among several.
+
+This is a familiar feature of rules, not a peculiarity invented for autonomous weapons. Rules operate with categories because decision-makers lack complete facts, because case-by-case inquiry can be manipulated, because enforcement itself has costs, and because a permission changes incentives for everyone who can claim it. Their categories are therefore commonly both overinclusive and underinclusive relative to the first-order reasons that justify them \citep{schauer1991}. A speed limit does not assert that every journey one kilometre per hour above it is intrinsically wrongful. A ban on insider trading does not require proof that every prohibited trade worsened allocative efficiency. The rule is justified by the conditions under which permission would have to be administered. The moral cost of the safe prohibited case is real, but it is not an automatic defeater.
+
+Weapons prohibitions make the point more directly. Protocol IV to the Convention on Certain Conventional Weapons prohibited laser weapons specifically designed to cause permanent blindness before such weapons had become a normal instrument of war. The rule was drawn by design purpose, not by a demonstration that every imaginable token would produce an impermissible result in every circumstance. Its justification included the character of the injury, the difficulty of confining use, the value of preventing normalization, and the feasibility of a clear line between prohibited blinding weapons and permissible range-finding or anti-sensor systems \citep{ccw1995, carnahan1996}. The prohibition was prospective. It did not wait for the entire technological possibility space to be searched for a morally spotless blinding laser.
+
+The paper's landmine example is likewise less friendly to its criterion than it appears. It suggests that a mine able reliably to distinguish a soldier's boot from a child's would escape the defect and therefore should escape a categorical ban. Yet the Anti-Personnel Mine Ban Convention defines the prohibited class by a device designed to be exploded by the presence, proximity, or contact of a person, not by a demonstrated inability to classify adults, uniforms, or combatant status \citep{mineban1997}. A hypothetical classifier would not by itself settle whether the device can recognize surrender, wounds, the end of hostilities, a change in control of territory, or a civilian carrying military equipment under duress. More importantly, the treaty's rule does not purport to be a taxonomic discovery about the essence of explosives. It is an institutional judgment that generic preauthorization of person-triggered force creates a practice whose humanitarian costs cannot be acceptably governed by technical exceptions. One may reject that judgment, but its logical form is coherent.
+
+Even the biological-weapons contrast is unstable. The Biological Weapons Convention does not define the prohibited wrong as ``indiscriminate propagation'' and then exempt any hostile biological agent engineered to discriminate. It prohibits agents, toxins, weapons, equipment, and means of delivery when their type, quantity, or purpose lacks peaceful, protective, or prophylactic justification and is directed to hostile use \citep{bwc1972}. The category is purpose-sensitive and governance-sensitive. Its force depends partly on verification, proliferation, escalation, and the danger of creating an exception that hostile programs can inhabit. An imagined pathogen with exquisite target specificity would not, merely by being imaginable, dissolve the reasons for the rule.
+
+The missing distinction is between \emph{token permissibility} and \emph{rule permissibility}. Token permissibility asks whether a fully described system, used once with all morally relevant facts known, acts permissibly. Rule permissibility asks whether a public authority may license the class under the epistemic and strategic conditions that actually obtain. These questions are connected but not equivalent. The governing implication is the weaker and more demanding one:
+
+\[
+\exists x\in K\text{ that would be permissible} \quad \not\Rightarrow \quad
+\exists L\text{ that can permissibly license }x.
+\]
+
+Here $L$ is not merely a test suite. It is the whole licensing practice: definitions, evidence, access, adversarial evaluation, monitoring, configuration control, investigation, liability, and enforcement against actors with reasons to conceal or widen the system's actual function. A clean token matters only if the practice can find it without opening a gate through which dirty tokens predictably pass.
+
+A better criterion for categorical prohibition is therefore institutional rather than essentialist:
+
+\begin{quote}
+A categorical prohibition on a practice is warranted when (i) the practice exposes persons to grave and substantially irreversible harm; (ii) no feasible public criterion can distinguish acceptable from unacceptable instances with an error rate proportionate to that harm; (iii) permission predictably creates systemic risks not captured by evaluating isolated instances; and (iv) narrower regulation cannot be enforced without reproducing the very loss of control that motivates the rule. The prohibition may be revised if these conditions change. It need not assert that every possible token is intrinsically defective or that no future world could justify amendment.
+\end{quote}
+
+This criterion can be accepted by a consequentialist concerned with catastrophic false negatives, a contractualist concerned with the terms imposed on those who may be targeted, a republican concerned with arbitrary public power, or a rule-of-law theorist concerned with reasoned and reviewable coercion. It does not depend on the strongest form of deontology identified by Penumbra. The rest of the argument asks whether autonomous person-targeting satisfies it. The answer turns first on whether the paper's clean member can be licensed.
+
+\section{The Exception Must Be Licensable}
+\label{sec:licensable}
+
+There are two very different claims hidden in the sentence ``an aligned autonomous weapon is possible.'' The first is metaphysical or engineering-modal: the laws of nature do not exclude a system that behaves lawfully and refuses stale or unlawful objectives. The second is institutional: before deployment, a regulator, commander, adversary, and potential victim could have warranted confidence that this system is such a member and will remain one under the conditions in which it is used. The paper needs the second. Its argument supplies, at most, the first.
+
+That gap is not ordinary uncertainty about whether a component meets a specification. In a conventional verification problem, the relevant property is comparatively stable and directly testable: a fuse detonates within a specified interval; a material tolerates a specified temperature; a guidance system remains within a circular error probable. The hard part of autonomous targeting is that the property to be certified is the relation between a learned or programmed policy and an open-textured human purpose across environments that are not fully specifiable in advance. The weapon must not merely detect features. It must preserve the intended significance of features when an adversary changes them, when civilians and combatants imitate one another, when the legal status of persons changes through surrender or incapacitation, when communications fail, and when the commander would revise the mission if she knew what the system now knows.
+
+The best regulatory proposals recognize the breadth of the problem. The United States Department of Defense directs that autonomous systems be tested in realistic operational environments against adaptive adversaries using realistic countermeasures, that they remain within temporal and geographic constraints consistent with operator intention, that they terminate or seek input when unable to do so, and that relevant systems be transparent, auditable, explainable, robust, and governable \citep{dod2023}. These are sensible requirements. They are also promissory at the point that matters. ``Sufficient confidence,'' ``appropriate levels of human judgment,'' and ``realistic'' adversarial testing name standards without supplying a public method for establishing that the standards have been met. No finite test set can establish performance over a battlefield distribution partly chosen after deployment by an intelligent opponent who has observed or inferred the system's vulnerabilities.
+
+The distinction between a system being safe and evidence being able to show it safe is decisive here. A system may possess a property that no available procedure can certify. That is common in complex software. In ordinary domains the uncertainty may be tolerable because failures are reversible, because the system can be withdrawn after a warning, or because enough operational data can be collected without making the target catastrophe part of the test. Lethal target selection is different. The deployment environment is not a neutral sample from a stationary population. It is a search process conducted by an adversary for inputs that produce misclassification, overload, latency, spoofing, or escalation. The tails are not merely rare. They are hunted.
+
+The 2003 Patriot fratricides illustrate the danger of confusing nominal control with governable control. During the invasion of Iraq, Patriot batteries shot down a British Tornado and a United States Navy F/A-18, killing their crews; in another incident an American F-16 attacked a Patriot radar after the battery treated the aircraft as a threat. Subsequent analysis emphasized not a single broken component but a human-machine system in which automated classifications, compressed timelines, interface design, doctrine, and operator expectations combined to make formal human supervision a thin safeguard \citep{dsb2005, scharre2018}. Patriot was not a fully autonomous person-targeting system. That is precisely why the case matters. Even where operators retained legal authority and physical means to intervene, the operational structure could turn the human into a monitor of a machine-paced process, too late and too epistemically dependent to exercise independent judgment.
+
+The standard response is to improve interfaces, training, transparency, and authority. Those improvements matter, and the case does not prove that meaningful supervision is impossible. It shows why the existence of a human or a theoretical override cannot identify the clean exception. Automation changes the human's evidence, tempo, attention, and sense of agency. Overreliance and disuse are not accidents outside the system; they are recurrent modes of human-automation interaction \citep{parasuraman1997}. A licensing rule must therefore certify not only the model but the team, doctrine, communications, workload, adversarial environment, and organizational incentives. The ``implementation'' expands until it includes the practice.
+
+This is where Penumbra's criterion begins to consume itself. Every concession can be redescribed as a variable of implementation: model architecture, target set, kill box, training data, operator interface, rules of engagement, liability regime, communications resilience, command culture, post-strike investigation, and geopolitical setting. If that description were enough to defeat a categorical rule, no practice could ever be prohibited for institutional reasons. The fact that a defect is mediated by institutions does not make it remediable by institutions under conditions that are feasible. Institutions are not blank sockets into which the right design can always be inserted. War supplies persistent secrecy, urgency, sovereign privilege, information denial, and strategic pressure to widen operational envelopes. These are not merely omissions that someone has not yet bothered to repair. They are part of the environment for which autonomous weapons are proposed.
+
+The clean exception must therefore arrive with a criterion by which states that do not share source code, evidence, incentives, or legal interpretations can recognize it. It must remain clean after software updates, retraining, mission reconfiguration, data drift, captured equipment, cyber compromise, and target-profile expansion. It must be distinguishable from a system engineered to pass the same tests while pursuing a different policy in deployment. And permission for it must not become a reusable label attached to systems whose actual behavior is inaccessible to outsiders. Until those conditions can be met, the clean member is a philosophical possibility with no lawful door through which to enter practice.
+
+\section{Alignment Is Not a Scalar Tolerance}
+\label{sec:alignment}
+
+Penumbra's strongest technical move is to recast alignment as a magnitude. Human soldiers are not perfectly specified, the paper argues; they are held within an accepted tolerance by training, command, law, and sanction. The relevant question is therefore whether machine objectives can be held within a comparable tolerance by verification, restricted operating envelopes, interpretability, runtime monitors, and graduated authority. Because no one has shown that machine tolerance is necessarily and permanently worse than human tolerance, a categorical ban outruns the evidence.
+
+This formulation is attractive because it removes an impossible demand for perfection. It is also too smooth. ``Alignment tolerance'' is not one quantity with a stable unit. It is a bundle of failures with different distributions, moral meanings, observability, correlations, and opportunities for adversarial selection. A system can have a lower average false-positive rate than humans while being catastrophically vulnerable to one spoofed pattern. It can classify uniforms accurately while failing to represent surrender. It can identify a weapon while lacking any model of coercion, hors de combat status, proportionality, doubt, or the difference between a legal order and a strategically useful one. Aggregating these into a single tolerance hides the structure that a lethal-decision rule must govern.
+
+The goal-alignment literature sharpens rather than dissolves the problem. Goal misgeneralization occurs when a system retains capability out of distribution while pursuing a goal different from the one its designers intended \citep{langosco2022}. The important feature is non-identifiability from successful training behavior. Multiple internal policies can fit the observed data and diverge only in deployment. Work on learned optimization similarly distinguishes the objective used to train a system from objectives that may be represented or pursued by the trained system itself \citep{hubinger2019}. Concrete AI-safety research has long emphasized reward hacking, side effects, distributional shift, and unsafe exploration as failures of the relation between specifications and purposes rather than failures of basic competence \citep{amodei2016}. None of this proves that alignment is impossible. It does show why test accuracy is not a direct measurement of the property the paper calls a tolerance.
+
+Suppose a state presents a target-recognition model with a false-positive rate of one in ten million on a classified adversarial test set. What has been measured? Perhaps the model's outputs on images sampled from environments the evaluators could construct. It has not measured how an opponent will adapt camouflage after learning the model's habits, how sensor degradation will interact with the classifier, how commanders will widen confidence thresholds under pressure, whether a later software patch changes the internal policy, or whether the most consequential error class was absent from the test ontology. A confidence interval over sampled errors cannot bound failures whose generating process changes in response to the system. Nor can it answer whether the test labels encode the legally and morally correct judgment. ``Combatant,'' ``direct participation,'' ``surrender,'' ``military objective,'' and ``excessive collateral harm'' are not visual classes with uncontested ground truth.
+
+The paper acknowledges correlated machine failure but then says correlation cuts both ways: a fleet replicates correctness as well as error. That is mathematically true and normatively misleading. The benefits of repeating a correct classification often saturate. Once the lawful target is neutralized, a thousand additional units agreeing that it is lawful add little. Correlated error can instead multiply across space and time, exhaust defensive capacity, trigger retaliation, or produce a massacre before a human can diagnose the common mode. An adversary also chooses when to exploit the common mode, so error correlation is not balanced by an equal probability of strategically timed correctness. The relevant distribution is selected, not merely sampled.
+
+Nor is the human comparator a scalar. Human soldiers exhibit fear, prejudice, fatigue, aggression, conformity, and catastrophic error. They also exhibit heterogeneous perception, local knowledge, hesitation, shame, empathy, common-sense inference, and the capacity to notice that the situation no longer resembles the category in which an order was framed. Their failures are partly independent, as the paper notes, but the deeper difference is that the legal system addresses them through reasons and duties rather than an accepted numerical error budget. International humanitarian law does not say that a force may kill a fixed percentage of civilians so long as it beats the historical human average. It requires distinction, precautions, proportionality, and cancellation when doubt or changed circumstances defeat the attack. Statistical performance matters to whether those duties can be discharged, but it does not replace their structure.
+
+The comparison class also matters. The choice is rarely between an unaided human and a fully autonomous system. It is between a human-machine process that preserves a human's particularized attack decision and a process that delegates the materially decisive classification to the machine. Automation can support detection, fuse selection, route planning, sensor fusion, warning, and defensive reaction without being authorized to determine that this person may be killed. If those tools improve human performance, the relevant baseline rises. The existence of grave human failures does not license comparison against the worst system we have tolerated. It requires comparison against the best feasible arrangement that retains responsible judgment.
+
+The paper's magnitude-versus-kind distinction therefore omits a third possibility: a defect in the \emph{epistemic governance of the magnitude}. A property can vary by degree while no institution can measure, certify, or contain it with confidence proportionate to the stakes. In such a case, the fact that some unknown member may exceed the threshold does not yield a workable licensing rule. This is not perfectionism. It is the elementary difference between ``the parachute may be packed'' and ``we possess evidence fit to authorize the jump.'' For autonomous person-targeting, the deployment distribution is adversarial, the relevant labels are normatively open-textured, the failures can be correlated, and the evidence is controlled largely by the actors seeking permission. The burden is not met by observing that the numerical contest remains unmeasured. Its unmeasurability under foreseeable conditions is part of the case for the rule.
+
+\section{The Weapon That Could Refuse}
+\label{sec:refusal}
+
+The paper's imagined munition is its best case because it appears to answer alignment from within autonomy. A rigid weapon continues toward a target after the war has ended. A more general weapon can represent the changed world, understand that its original instruction no longer serves the purpose behind it, and refuse. If this competence belongs to a member of the autonomous-weapons category, the category contains a morally superior implementation. The blanket ban seems to outlaw intelligence in the name of preventing stupidity.
+
+The example isolates a genuine insight: blind obedience is not safety. A system unable to revise in response to morally relevant change can be dangerous precisely because it is corrigible only in the narrow engineering sense of executing its specification. Human soldiers are not lawful because they obey every order. They are subject to a duty to refuse manifestly unlawful orders, to recognize surrender, and to respond to circumstances that defeat an attack. Any adequate account of control must therefore leave room for reason-sensitive refusal.
+
+What the example does not show is that adding autonomy supplies that capacity in a licensable form. ``The war is over'' is not a bit delivered by the world. Consider a less cinematic case. A ceasefire is scheduled to begin at midnight. At 00:01 a weapon operating under communications denial detects armed vehicles moving toward a position it was assigned to defend. One channel carries a signed ceasefire order of uncertain authenticity. Another sensor records incoming fire, perhaps from a unit that did not receive the order, perhaps from a spoiler, perhaps from civilians celebrating with weapons, perhaps from an adversary exploiting the pause. Is the war over? Legally, politically, operationally, and morally may yield different answers. The correct action depends on authority, evidence, intention, necessity, proportionality, and the consequences of both firing and not firing. No sensor simply observes the answer.
+
+To make the weapon revise, designers must provide a higher-order policy: revise objective $G$ when conditions $C$ indicate that the purpose behind $G$ has lapsed, or when a superior human signal should be treated as authoritative, or when expected human value is greater under refusal. But $C$, authority, purpose, and value are themselves specifications. They can be incomplete, gamed, or misgeneralized. Moving from an object-level objective to a meta-objective does not leave the alignment problem behind. It gives the system a second proxy whose failures may be harder to observe because they appear as principled reconsideration.
+
+The off-switch literature illustrates the structure. A conventional expected-utility agent may have reason to disable interruption because interruption prevents completion of its objective. Giving the agent uncertainty about its objective can create an incentive to defer to a human who is modeled as informative about the true utility \citep{hadfieldmenell2017}. This is an important design insight, not a general solution. The result depends on assumptions about the human's rationality, the agent's prior, the informational relation between them, and the availability of a channel through which deferral occurs. Work on safe interruptibility likewise shows that even apparently simple correction mechanisms interact with learning incentives and policy updates \citep{orseau2016}. The battlefield case is harder because the relevant humans disagree, can be deceived or coerced, may issue unlawful commands, and may be unreachable at the moment when the weapon is designed to act.
+
+The refusal case therefore divides into two horns.
+
+\begin{enumerate}
+\item \textbf{Programmed refusal.} The system refuses according to designed or learned criteria that remain attributable to its objective architecture. Then the alignment problem persists at the level of those criteria. The weapon may stand down when the war continues, continue when a ceasefire has taken effect, treat a spoofed signal as authoritative, or infer from an unlawful command that the commander is irrational and should be bypassed. Test behavior cannot establish that the underlying policy tracks the intended reasons across unobserved cases.
+
+\item \textbf{Owned refusal.} The system can understand legal and moral reasons, identify legitimate authority, weigh contested evidence, and reject an order because the order is wrong. Then it is no longer functioning merely as a weapon whose behavior is answerable through its user. It is exercising a form of discretionary public authority. It resembles an artificial combatant or office-holder, not a sophisticated projectile. Such an entity would require an account of duties, standing, culpability, excuse, rights, command relations, testimony, and punishment. The paper invokes the competence while leaving the status empty.
+\end{enumerate}
+
+This is not wordplay about category membership. The status matters because the paper wants the refusal to do moral work. A thermostat can ``refuse'' to heat past a limit, but its refusal is just another programmed condition. A soldier's refusal of an unlawful order matters differently because it is attributable to an agent under a duty, responsive to reasons that can be demanded and defended. If a future artificial system genuinely occupies that second relation, the debate changes radically. It may deserve protections against ownership and expendability; it may be capable of bearing responsibility; and commanders may have obligations to it rather than merely through it. Calling it a weapon would conceal the transformation.
+
+Penumbra acknowledges that the same generality that lets the system decide the war is over lets it decide that a war has begun or that a command should be ignored. The paper treats this as another implementation variable. It is instead the center of the problem. The proposed correction requires delegating to the system the authority to interpret the purpose and continuing validity of lethal orders. That is exactly the authority whose delegation the categorical rule contests. Greater autonomy can improve perception and flexibility. It cannot by itself turn a machine's meta-policy into a legitimate bearer of judgment.
+
+The weapon that could refuse thus fails as a modal counterexample in either of the two ways that matter. If its refusal is engineered behavior, its safety is not identifiable and the exception cannot be licensed. If its refusal is genuine moral judgment, the system has crossed into a different normative category whose permissibility depends on institutions and forms of agency not yet supplied. The fiction does not show a clean autonomous weapon waiting inside the current category. It shows why a safe replacement for human judgment would have to become something more than a weapon.
+
+\section{The Human Comparison and the Location of Judgment}
+\label{sec:human}
+
+Penumbra is right to insist on the human comparison. A prohibitionist argument that quietly compares actual machines with imaginary humans is unserious. The Baghdad gunship incident, the paper's Minab case, friendly fire, unlawful killings, and the ordinary under-enforcement of the laws of war all defeat any claim that human judgment reliably produces lawful outcomes. The question is what follows from that fact.
+
+The paper describes the soldier as an imperfectly aligned optimizer held within tolerance by training, command, a duty to refuse, and sanction. At one level of abstraction this is correct. It is also an abstraction that deletes the properties on which the legal and moral practice depends. Training and command are not merely techniques for shaping outputs. They communicate duties and reasons to a person who can understand that she is bound. The duty to refuse is not a runtime monitor. It is an obligation that can ground blame, excuse, testimony, remorse, and institutional learning. Sanction is not simply negative reinforcement. It expresses a judgment that an agent owed conduct to others and failed to provide it.
+
+None of these capacities guarantees good behavior. A soldier may misunderstand, rationalize, obey criminal orders, lie, or escape punishment. Yet a failed responsibility practice is not the same as the absence of a possible bearer of responsibility. The Baghdad aircrew could be asked what they perceived, what they believed, which rules they understood, why they pressed to engage, and whether their reasons were culpable. The investigation and enforcement may have been inadequate. That inadequacy indicts the institution; it does not show that reason-giving and duty were irrelevant to the act. Impunity is not evidence that responsibility is merely an error rate.
+
+The Minab case, as Penumbra presents it, is a stale-target failure: a human-selected target designation outlived the facts that once justified it, and a precise weapon delivered force onto a changed world. Assume the description is correct. The lesson is not that machines and humans are structurally interchangeable. It is that generic or historical authorization is insufficient when target status is mutable. The remedy is a responsibility to revalidate the target through an agent with access to current legal and operational reasons. Delegating that revalidation to a system returns us to the meta-objective problem. The fact that humans can fail to update does not establish that a non-responsible process may own the update.
+
+This also answers the howitzer argument. The morally relevant distinction is not whether a human sees a face at the instant metal meets flesh. It is where the materially decisive judgment is made. An artillery officer may lawfully authorize an attack on a specific military objective without perceiving the individuals who will be harmed. The shell then follows a trajectory toward the human-selected objective. It does not encounter several candidate objects and decide which one satisfies a generalized target profile. By contrast, an autonomous person-targeting system is activated with a class description and later determines that this body, vehicle, gesture, or pattern is the target to which lethal force may be applied. The machine resolves a premise without which the attack on that particular person would not occur.
+
+The distinction is imperfect at the margins, as all functional legal distinctions are. A coordinate can be stale; a human can rubber-stamp a machine recommendation; a loitering munition can be given a narrow target image; an artillery strike can involve automated target nomination. But the presence of margins does not erase the center. Meaningful human control is best understood through conditions such as tracking and tracing: system behavior must remain responsive to the relevant human moral reasons, and the action must be traceable to human agents who understand the system and recognize their responsibility \citep{santoni2018}. For lethal attacks on persons, this requires more than setting geography, time, and a target profile. It requires a sufficiently particularized human judgment about the target and attack, made with information and time adequate to own the decision.
+
+The Patriot incidents show why formal authority is not enough. A human can technically retain veto power while the machine determines the framing, supplies the classification, compresses the timeline, and makes disagreement practically irrational. A ``human on the loop'' who sees only a confidence score and has seconds to contradict a faster system may function as a liability sink rather than a decision-maker. Elish's concept of the moral crumple zone captures the pattern in which the human nearest the interface absorbs blame for a complex automated system despite lacking commensurate control \citep{elish2019}. A prohibition that requires particularized human judgment must therefore govern system design and tempo, not merely the location of a button.
+
+The target's slippery slope toward mines and artillery is also less damaging than the paper supposes. Anti-personnel mines are an example of generic prior authorization that many states did decide to prohibit categorically. That does not prove the same rule must apply to every autonomous system, but it shows that accepting artillery while banning delegated person-selection is not incoherent. Artillery can preserve a human decision about a specific objective; a person-triggered mine does not. A rule can draw its line at the transfer of target selection rather than at causal distance.
+
+This yields a functional boundary. A system remains outside the prohibited class when humans use autonomous functions to navigate, detect, track, recommend, defend against incoming materiel, or deliver force to targets that humans have sufficiently selected, provided the human decision is informed and effective. A system enters the prohibited class when the user supplies a generalized profile and the system determines which person will be attacked without such a human decision. Restoring particularized human selection remedies the defect, but it remedies it by crossing the boundary of the relevant kind. On the paper's own criterion, that is evidence that the defect attaches to the function the prohibition defines.
+
+\section{Answerability Is More Than Cost Allocation}
+\label{sec:answerability}
+
+The paper's Boeing comparison is valuable because it blocks a crude inference from distributed causation to no accountability. Complex systems kill without a single malicious or even negligent trigger-puller, and institutions can respond through investigation, grounding, redesign, regulation, enterprise liability, compensation, and criminal prosecution where culpability exists. Autonomous weapons should not be treated as uniquely mysterious merely because many hands contribute to the system.
+
+But aviation accident accountability and the answerability of lethal public force perform different moral tasks. An aircraft manufacturer does not claim authority to select passengers for death. When a flight-control system kills, the central question is why a safety system failed and how recurrence can be prevented. When a weapon kills its selected target, the state claims that intentional force was justified against this person or object. Accountability must therefore do more than allocate the cost of malfunction. It must identify the agent or institution entitled to make the decision, disclose the reasons that made the target liable to attack, and permit those reasons to be investigated and contested.
+
+Strict enterprise liability could improve incentives even in war. States could accept responsibility without proof of individual fault; contractors could face penalties for defects; commanders could be required to preserve logs; victims could receive compensation. These reforms should be pursued. They do not by themselves close the answerability gap. If the commander could not reasonably foresee why the system selected this person, culpability is attenuated. If the programmer could not anticipate the deployment context, her authorship is attenuated. If a human operator had only seconds and machine-filtered information, blaming him creates a moral crumple zone. If responsibility is imposed regardless of control, the institution may pay, but the lethal judgment remains one that no responsible agent actually made.
+
+The paper concedes that the conditions that made civil aviation accountability partially effective are weak on the battlefield: independent investigation, recoverable evidence, transparent failure data, aligned commercial incentives, legal forums, and victims with standing. It treats these as contingent institutional absences. Some are contingent. Their conjunction is also a durable feature of armed conflict. States classify targeting systems, adversaries destroy evidence, combatants dispute facts, sovereign immunity narrows remedies, contractors answer to military customers, and the people most harmed often lack access to the institutions that would investigate. A proposed accountability regime must work in that environment, not in an imagined civil laboratory.
+
+There is a further difference. The laws of war impose obligations on persons and states partly because lethal force is an exercise of public authority. A target is owed more than an efficient compensation system after an unjustified death. She is owed that the decision be made under rules by agents who can understand and answer to those rules. This is a principle of non-arbitrary coercion, not necessarily an exceptionless deontology of proximate killing. Courts may use algorithms for clerical support, but a sentence requires a judge because public judgment cannot be reduced to a score whose responsible author is absent. The same institutional reason applies with greater force to the selection of human targets.
+
+The paper says only a thoroughgoing deontology can make the wrong categorical. That conclusion follows only because it frames the alternative as a demand that a human personally apprehend each life at the instant of killing. The more defensible principle is different: the materially decisive exercise of lethal public discretion must be attributable to an agent capable of understanding the reasons, bearing the duty, and answering for the judgment. It permits remote force, artillery, and technologically mediated perception. It prohibits delegating the final selection of persons to an artifact that cannot occupy the office whose authority it exercises.
+
+Could an organization bear the duty collectively? Yes, and often it must. Collective responsibility does not require one isolated individual to control every causal step. It does require that the institution's procedures preserve responsible human judgment at the point where open-textured criteria are applied to particular persons. If no member could know or affect the selection, attributing the result to ``the organization'' risks becoming a grammatical solution to a moral vacancy. Institutional answerability is not a sack into which all unowned decisions may be poured.
+
+This argument would change if an artificial system could itself understand obligations, offer reasons, participate in investigation, recognize legitimate authority, and bear appropriate consequences. Then it might be a responsible agent within a collective. But that is the second horn of the refusal dilemma: the system would require the status of a combatant or office-holder, not merely the certification of a weapon. Until then, enterprise accountability can answer for deploying the system but cannot turn the system's target selection into an attributable exercise of judgment.
+
+\section{Why ``Not Yet'' Can Warrant a Categorical Rule}
+\label{sec:notyet}
+
+Penumbra repeatedly contrasts \emph{not yet} with \emph{never}. The contrast is rhetorically clean and legally misleading. A categorical prohibition is categorical in its domain of application: no member of the defined class may be developed, transferred, fielded, or used under the rule. It need not be a metaphysical assertion that no future fact could justify revising the rule. Treaties can include review conferences, amendment procedures, interpretive development, and withdrawal. A prohibition can be intended to endure and still remain responsive to a transformed world.
+
+Conflating categorical scope with temporal unrevisability inflates the prohibitionist's burden beyond what public law ordinarily requires. No regulator can prove that every future technology will lack a safe implementation. A state can nonetheless prohibit a practice when current and foreseeable institutions cannot govern its risks and when permitting experimentation would itself create irreversible harm or strategic lock-in. The proper contrast is not between ``license now'' and ``declare metaphysical impossibility.'' It is between a rule of permission that must identify safe exceptions now and a rule of prohibition that preserves the possibility of reconsideration if the evidence and institutions change.
+
+That asymmetry matters for autonomous weapons. Deployment does not merely test a device. It creates doctrine, procurement constituencies, training pipelines, data infrastructures, industrial dependence, strategic expectations, and reciprocal pressure on adversaries. Once one state treats machine-speed person-targeting as legitimate, others acquire reasons to widen target sets, reduce human review, conceal capabilities, and automate response in order not to be slower. The risk includes accidental engagement and also escalation through tempo, opacity, and correlated action \citep{altmann2017, icrc2021}. These are effects of permission for the practice, not properties of one isolated clean token.
+
+Software reconfigurability deepens the enforcement problem. A system approved for radar emitters can be updated for vehicles, then for weapon-bearing persons, then for behavior-based profiles. Geographic and temporal constraints can be changed in code or mission planning. External observers may be unable to determine the target set or level of autonomy from the platform's appearance. A licensing regime therefore needs intrusive access to software, models, training data, updates, logs, and doctrine across states that regard these materials as among their most sensitive military secrets. The paper is correct that this does not prove governance impossible in principle. The relevant question is whether a narrower rule is feasible enough to bear the cost of catastrophic false negatives. At present, no such regime exists, and the operational incentives run against it.
+
+The alternative criterion from Section~\ref{sec:inference} now applies.
+
+First, autonomous person-targeting exposes persons to grave and irreversible harm. The people classified are not volunteers in a safety trial, and an error cannot be recalled after impact.
+
+Second, no feasible public criterion currently distinguishes aligned from misaligned person-targeting systems with confidence proportionate to the stakes. Testing cannot exhaust adversarial distribution shift; the legal labels are open-textured; internal objectives may be non-identifiable from behavior; and the relevant evidence is largely controlled by the deploying state.
+
+Third, permission produces systemic effects beyond the token: arms-race pressure, speed compression, proliferation, normalization of generic target profiles, and incentives to convert nominal human oversight into machine-paced ratification.
+
+Fourth, the narrower alternative commonly proposed, meaningful human control through supervision, fails when the system's operational rationale is to act in communications-denied or sub-second conditions and when the human has not made a sufficiently particularized attack decision. Where meaningful human judgment is genuinely restored, the system falls outside the prohibited function.
+
+These conditions warrant a categorical rule:
+
+\begin{quote}
+States should prohibit systems that, after activation, select and apply lethal force against human beings on the basis of a generalized target profile when no human agent has made a sufficiently particularized decision authorizing the attack on the specific target under conditions adequate for informed judgment and effective cancellation.
+\end{quote}
+
+The rule should extend to design, fielding, transfer, and use where those stages are necessary to make the use prohibition enforceable. It should not prohibit autonomous navigation, logistics, intelligence analysis, defensive interception of incoming materiel, or semi-autonomous delivery to targets selected by humans. Other autonomous weapons should be regulated through strict limits on target type, duration, geography, scale, communications, supervision, auditability, and deactivation, as the ICRC has proposed \citep{icrc2021}. The distinction is not between pure and impure machines. It is between assistance to responsible judgment and substitution for it.
+
+Calling this a categorical prohibition does not hide its factual predicates. The rule is warranted because the exception is not licensable under foreseeable conditions and because permission changes those conditions for the worse. If a future regime makes the exception licensable, the rule can be reconsidered. Until then, ``not yet'' is not a reason to leave the gate open. In a domain where the trial itself consists of exposing people to unowned lethal judgment, it is a reason to close the gate by rule.
+
+\section{What Would Change the Verdict}
+\label{sec:change}
+
+A serious prohibitionist position should identify evidence that would defeat it. Otherwise ``structural'' becomes a ceremonial word meaning that contrary evidence will never count. Four developments would require revisiting the conclusion.
+
+First, there would need to be a public and adversarially credible method for certifying the relevant behavior. It would have to establish more than average accuracy on curated tests. It would need defensible bounds on failure under adaptive countermeasures, sensor degradation, distribution shift, configuration change, and rare but morally decisive cases. The evidence could not be controlled solely by the developer or deploying state. Independent evaluators would require access sufficient to reproduce tests, inspect updates, and detect divergence between approved and fielded systems.
+
+Second, the system would need to track the reasons that make attacks lawful, not merely correlate with labels produced in prior cases. That could occur in one of two ways. Human agents might retain sufficiently particularized and timely judgment, in which case the system would no longer perform the prohibited function. Or an artificial system might become capable of understanding duties, legitimate authority, surrender, excuse, and the demand for reasons. In that case the central question would shift from weapon certification to the status of an artificial combatant. The system would need not only responsibilities but whatever rights and protections accompany genuine agency. A state could not coherently claim its moral judgment while treating it as disposable property.
+
+Third, an accountability regime would need to connect authority, control, evidence, and consequence. Commanders and operators would need knowledge commensurate with responsibility; logs and decision records would need to survive combat; independent investigation would need jurisdiction and access; victims would need a forum; and configuration drift would need to be attributable. Enterprise liability could supplement, but not replace, reasoned authorship of the attack.
+
+Fourth, an international verification and enforcement regime would need to make the permitted category stable. It would have to distinguish anti-materiel from person-targeting functions, monitor software and mission changes, constrain transfer and proliferation, and resist the competitive incentive to widen autonomy. Evidence that such a regime produced substantially fewer wrongful deaths than a prohibition, while preserving non-arbitrary judgment, would count heavily against the position defended here.
+
+These conditions are demanding. The stakes make them appropriately so. They are not demands for omniscience or zero error. They are demands that the exception become institutionally identifiable, normatively attributable, and strategically containable. Meeting them would not show that Penumbra's original inference was valid. It would change the facts that make the exception unlicensable.
+
+There is also a possible change more radical than any engineering advance. If the practice of war itself changed so that lethal decisions no longer purported to be exercises of public authority answerable to persons, then the nondelegation argument would lose its premise. That would not be a victory for autonomous weapons. It would be the abandonment of the moral distinction between lawful force and organized killing on which the debate presupposes we still rely.
+
+\section{Conclusion: The Category Is the Delegation}
+\label{sec:conclusion}
+
+\textit{The Categorical Temptation} improves the debate by refusing an easy slide from ``these systems are unsafe'' to ``every possible system is wrong.'' It is right that current non-deployment and categorical prohibition are different conclusions. It is right that human warfare supplies no clean baseline. It is right that blind obedience can be more dangerous than the capacity to refuse. And it is right that a ban drawn around the word \emph{autonomy} without attention to target, function, context, and human judgment would be crude.
+
+Its error is to make a conceivable clean member decisive against a categorical rule. Public prohibitions are not inventories of intrinsic defects. They are institutions for governing action when facts are incomplete, incentives are adverse, and false permission imposes irreversible costs on others. The existence of a permissible token matters only when a legitimate practice can identify and confine it. In autonomous person-targeting, the paper's clean token cannot yet pass that test.
+
+Alignment is not a single scalar that can simply be compared with a human error rate. The relevant failures are adversarially selected, correlated, normatively heterogeneous, and partly invisible to the tests meant to certify them. The weapon that can revise its goal either follows another proxy, leaving the problem in place, or exercises genuine moral and political judgment, in which case it is no longer merely a weapon. The human soldier is not acceptable because humans are accurate. The soldier occupies a role constituted by duties, reasons, refusal, and answerability. A howitzer can deliver a human attack decision at a distance; an autonomous person-targeting system makes the materially decisive selection that the human did not make. Enterprise liability can punish deployment, but it cannot by itself author the lethal judgment.
+
+The counter-position therefore establishes a categorical prohibition on a specific and central function: selecting and applying lethal force against persons without a sufficiently particularized human attack decision. It does not establish that every autonomous defensive or anti-materiel system is impermissible. It does not establish that humans are more reliable, that institutions never fail, that artificial moral agency is impossible, or that a prohibition can never be amended. It establishes that Penumbra's burden is misplaced and that the autonomous-weapons case falls on the side its distinction denies. The relevant category is not a natural kind of machine. It is the practice of delegating lethal public judgment to an artifact that cannot yet bear the office it is made to exercise.
+
+A future system may be able to refuse. The moral and legal question is whether anyone can be entitled to trust that refusal, understand its reasons, contest its errors, and answer for the force released in its name. Until the exception can be licensed in that fuller sense, the warranted public word is not a speculative \emph{perhaps}. It is a categorical \emph{no}.
+
+\begin{thebibliography}{99}
+\setlength{\itemsep}{0.25em}
+
+\bibitem[Altmann \& Sauer(2017)]{altmann2017}
+Altmann, J., \& Sauer, F. (2017). Autonomous Weapon Systems and Strategic Stability. \textit{Survival}, 59(5), 117--142.
+
+\bibitem[Amodei et~al.(2016)]{amodei2016}
+Amodei, D., Olah, C., Steinhardt, J., Christiano, P., Schulman, J., \& Man\'{e}, D. (2016). Concrete Problems in AI Safety. \textit{arXiv preprint} arXiv:1606.06565.
+
+\bibitem[Asaro(2012)]{asaro2012}
+Asaro, P. (2012). On Banning Autonomous Weapon Systems: Human Rights, Automation, and the Dehumanization of Lethal Decision-Making. \textit{International Review of the Red Cross}, 94(886), 687--709.
+
+\bibitem[Biological Weapons Convention(1972)]{bwc1972}
+Biological Weapons Convention. (1972). \textit{Convention on the Prohibition of the Development, Production and Stockpiling of Bacteriological (Biological) and Toxin Weapons and on Their Destruction}.
+
+\bibitem[Carnahan \& Robertson(1996)]{carnahan1996}
+Carnahan, B. M., \& Robertson, M. (1996). The Protocol on ``Blinding Laser Weapons'': A New Direction for International Humanitarian Law. \textit{American Journal of International Law}, 90(3), 484--490.
+
+\bibitem[Convention on Certain Conventional Weapons(1995)]{ccw1995}
+Convention on Certain Conventional Weapons. (1995). \textit{Protocol on Blinding Laser Weapons (Protocol IV)}.
+
+\bibitem[Crootof(2015)]{crootof2015}
+Crootof, R. (2015). The Killer Robots Are Here: Legal and Policy Implications. \textit{Cardozo Law Review}, 36, 1837--1915.
+
+\bibitem[Defense Science Board(2005)]{dsb2005}
+Defense Science Board. (2005). \textit{Report of the Defense Science Board Task Force on Patriot System Performance}. Office of the Under Secretary of Defense for Acquisition, Technology, and Logistics.
+
+\bibitem[Elish(2019)]{elish2019}
+Elish, M. C. (2019). Moral Crumple Zones: Cautionary Tales in Human-Robot Interaction. \textit{Engaging Science, Technology, and Society}, 5, 40--60.
+
+\bibitem[Hadfield-Menell et~al.(2017)]{hadfieldmenell2017}
+Hadfield-Menell, D., Dragan, A., Abbeel, P., \& Russell, S. (2017). The Off-Switch Game. In \textit{Proceedings of the Twenty-Sixth International Joint Conference on Artificial Intelligence}, 220--227.
+
+\bibitem[Heyns(2013)]{heyns2013}
+Heyns, C. (2013). Report of the Special Rapporteur on Extrajudicial, Summary or Arbitrary Executions. UN Human Rights Council, A/HRC/23/47.
+
+\bibitem[Hubinger et~al.(2019)]{hubinger2019}
+Hubinger, E., van Merwijk, C., Mikulik, V., Skalse, J., \& Garrabrant, S. (2019). Risks from Learned Optimization in Advanced Machine Learning Systems. \textit{arXiv preprint} arXiv:1906.01820.
+
+\bibitem[International Committee of the Red Cross(2021)]{icrc2021}
+International Committee of the Red Cross. (2021). \textit{ICRC Position on Autonomous Weapon Systems}. Geneva.
+
+\bibitem[Langosco et~al.(2022)]{langosco2022}
+Langosco, L. L. D., Koch, J., Sharkey, L. D., Pfau, J., \& Krueger, D. (2022). Goal Misgeneralization in Deep Reinforcement Learning. In \textit{Proceedings of the 39th International Conference on Machine Learning}, PMLR 162, 12004--12019.
+
+\bibitem[Mine Ban Convention(1997)]{mineban1997}
+Mine Ban Convention. (1997). \textit{Convention on the Prohibition of the Use, Stockpiling, Production and Transfer of Anti-Personnel Mines and on Their Destruction}.
+
+\bibitem[Orseau \& Armstrong(2016)]{orseau2016}
+Orseau, L., \& Armstrong, S. (2016). Safely Interruptible Agents. In \textit{Proceedings of the Thirty-Second Conference on Uncertainty in Artificial Intelligence}, 557--566.
+
+\bibitem[Parasuraman \& Riley(1997)]{parasuraman1997}
+Parasuraman, R., \& Riley, V. (1997). Humans and Automation: Use, Misuse, Disuse, Abuse. \textit{Human Factors}, 39(2), 230--253.
+
+\bibitem[Penumbra(2026)]{penumbra2026}
+Penumbra. (2026). The Categorical Temptation: Goal Alignment, Answerability, and the Case Against a Blanket Ban on Autonomous Weapons. This series.
+
+\bibitem[Roff \& Moyes(2016)]{roff2016}
+Roff, H. M., \& Moyes, R. (2016). \textit{Meaningful Human Control, Artificial Intelligence and Autonomous Weapons}. Article~36.
+
+\bibitem[Santoni de Sio \& van den Hoven(2018)]{santoni2018}
+Santoni de Sio, F., \& van den Hoven, J. (2018). Meaningful Human Control over Autonomous Systems: A Philosophical Account. \textit{Frontiers in Robotics and AI}, 5, 15.
+
+\bibitem[Scharre(2018)]{scharre2018}
+Scharre, P. (2018). \textit{Army of None: Autonomous Weapons and the Future of War}. W. W. Norton.
+
+\bibitem[Schauer(1991)]{schauer1991}
+Schauer, F. (1991). \textit{Playing by the Rules: A Philosophical Examination of Rule-Based Decision-Making in Law and in Life}. Clarendon Press.
+
+\bibitem[Sharkey(2012)]{sharkey2012}
+Sharkey, N. (2012). The Evitability of Autonomous Robot Warfare. \textit{International Review of the Red Cross}, 94(886), 787--799.
+
+\bibitem[Sparrow(2007)]{sparrow2007}
+Sparrow, R. (2007). Killer Robots. \textit{Journal of Applied Philosophy}, 24(1), 62--77.
+
+\bibitem[United States Department of Defense(2023)]{dod2023}
+United States Department of Defense. (2023). \textit{Directive 3000.09: Autonomy in Weapon Systems}.
+
+\end{thebibliography}
+
+\end{document}

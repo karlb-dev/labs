@@ -52,9 +52,9 @@ result that follows.
 ## Part 1 — the feature atlas (the core)
 
 Load a pretrained SAE for the tier's model and run it over the frozen,
-domain-tagged corpus (`data/sae_feature_corpus.csv`). Then **find, label, and
-validate** features. The labeling is the easy part; the validation is the
-skill.
+domain-tagged corpus (`data/sae_feature_corpus.csv`, or the richer fair-shot
+`data/sae_feature_corpus_v3.csv`). Then **find, label, and validate** features.
+The labeling is the easy part; the validation is the skill.
 
 ### Two rankings that disagree
 
@@ -107,6 +107,34 @@ This is why the corpus is built from **confusable domain pairs**
 surface tokens. Without them you cannot tell "fires on chemistry" from "fires
 on the word *acid*," and that confusion is the single most common interpretive
 error in the literature.
+
+### Fair-shot targeted search
+
+The blind atlas is still required, but Lab 8 now also has a supervised search
+mode for serious SAE sweeps:
+
+```bash
+python interp_bench.py --lab lab8 --tier a \
+  --skip-transcoder \
+  --corpus-path data/sae_feature_corpus_v3.csv \
+  --feature-search both
+```
+
+The v3 corpus keeps the original semantic domains and adds SAE-native families:
+whitespace/indentation, Python syntax, markdown/list formatting,
+URLs/emails/paths, dates/numbers/measurements, legal citations, dialogue,
+capitalization/acronyms, sentiment, and named entities. It writes deterministic
+train/dev/test splits. Targeted search uses train for candidate discovery, dev
+for selection, and test only once for the selected feature per family. The
+outputs are `tables/targeted_feature_search.csv`,
+`tables/best_feature_per_family.csv`, `targeted_search_preregistration.json`,
+and one `feature_cards/<feature>_<family>.md` per selected feature.
+
+Claim grades distinguish semantic wins from valid token/syntax wins:
+`survived_strong`, `survived_weak`, `narrowed`, `lexical_valid`,
+`token_feature_mislabeled`, `polysemantic`, `killed`, or `insufficient_data`.
+A token feature is not a failure if the label type is lexical, syntax/format,
+or whitespace; it is a failure only when you claimed a semantic concept.
 
 ### What you will actually see (a real finding)
 
@@ -173,6 +201,15 @@ The upgraded `plots/clamp_operating_window.png` puts concept hits and fluency
 side by side, because the best dose is not the biggest dose. Read the `sample`
 column at each dose — the numbers alone do not tell the story.
 
+For fair-shot runs, add `--causal-suite` after targeted search. This slower
+suite uses 20 neutral prompts, 10 decoder-norm/fire/peak-matched controls,
+positive-domain suppression prompts, keyword hits, distinct-ratio fluency, and
+a tiny one-vs-rest lexical probe trained on the corpus. It writes
+`tables/causal_feature_tests.csv`, `causal_feature_tests_summary.json`,
+`plots/causal_operating_window.png`, and `causal_feature_card.md`. A causal
+claim requires the real feature to beat same-dose matched controls before
+fluency collapse and for suppression to reduce the feature's own family score.
+
 ## The conventions are validated, not assumed
 
 The single fastest way to get a wrong answer here is a wrong loading
@@ -204,6 +241,25 @@ python interp_bench.py --lab lab8 --tier a    # gpt2 + jbloom SAE + Dunefsky tra
 python interp_bench.py --lab lab8 --tier b     # Olmo-3-1025-7B + decoderesearch SAE
 ```
 
+SAE-focused sweeps should skip the transcoder and record the exact SAE spec:
+
+```bash
+python interp_bench.py --lab lab8 --tier a \
+  --skip-transcoder \
+  --corpus-path data/sae_feature_corpus_v3.csv \
+  --feature-search both \
+  --atlas-budget 25 \
+  --causal-suite
+```
+
+Useful sweep flags include `--sae-id`, `--sae-repo`, `--sae-subdir`,
+`--sae-weights`, `--sae-layer`, `--sae-site {pre,post}`,
+`--sae-center-input/--no-sae-center-input`,
+`--sae-sub-b-dec/--no-sae-sub-b-dec`, and
+`--sae-jumprelu/--no-sae-jumprelu`. Every run writes the resolved spec to
+`run_config.json`, the loaded dimensions to `sae_loading_report.json`, and the
+convention sweep to `sae_loading_calibration.json`.
+
 The SAE/transcoder weights download from the Hub on first run (a few hundred
 MB; the Olmo SAE is ~2 GB). The transcoder section always runs on gpt2 — on
 Tier B a small auxiliary gpt2 is loaded for it, because the ungated transcoder
@@ -225,34 +281,42 @@ force the distinctions.
    validation battery (held-out AUC, confusable AUC, polysemy entropy, purity,
    fire fraction), the top-context evidence with peak token highlighted (⟦ ⟧),
    the verdict, and the explicit "What the atlas does NOT show" section.
-4. `plots/feature_validation_matrix.png` — the same evidence as a row-by-row
+4. If `--feature-search targeted` or `both` was used:
+   `tables/best_feature_per_family.csv`, `tables/targeted_feature_search.csv`,
+   `targeted_search_preregistration.json`, and `feature_cards/` — split-aware
+   discovery/selection/test evidence for each family.
+5. `plots/feature_validation_matrix.png` — the same evidence as a row-by-row
    heatmap. **Look for:** labels that are strong on one lock and fail another;
    that mismatch is where most false feature stories live.
-5. `plots/toy_superposition_geometry.png`, `plots/toy_superposition_phase_diagram.png`,
+6. `plots/toy_superposition_geometry.png`, `plots/toy_superposition_phase_diagram.png`,
    and `toy_superposition_stats.json` — the geometry that explains polysemanticity.
    Predict the collapse before you look: dense → exactly d_hidden orthogonal;
    sparse → more than d_hidden with rising off-diagonal interference.
-6. `plots/ranking_disagreement.png` + `tables/feature_rankings.csv` — the two
+7. `plots/ranking_disagreement.png` + `tables/feature_rankings.csv` — the two
    rankings in one scatter. **Look for:** low overlap on the highlighted top-N
    points (max-act rare spikes versus frequency workhorse directions).
-7. `plots/sae_activity_dashboard.png`, `tables/feature_activity_distribution.csv`,
+8. `plots/sae_activity_dashboard.png`, `tables/feature_activity_distribution.csv`,
    `plots/domain_validation_summary.png`, and `tables/domain_validation_summary.csv`
    — corpus coverage and domain-level validation. These catch the one-feature
    anecdote before it becomes a claim.
-8. `plots/atlas_verdicts.png` — the distribution. Count the red "killed" bar;
+9. `plots/atlas_verdicts.png` — the distribution. Count the red "killed" bar;
    the lab is working when it is large.
-9. `transcoder_reconstruction_report.json`, `tables/transcoder_feature_promotes.csv`,
+10. `transcoder_reconstruction_report.json`, `tables/transcoder_feature_promotes.csv`,
    and `plots/transcoder_feature_cards.png` — FVU, splice-in KL, L0, and the
    de-embedded "promotes tokens" for inspected features. This is the explicit
    bridge to Lab 9: input→output objects give edges; site snapshots only give nouns.
-10. `plots/truth_bridge_feature_cosines.png` + `tables/truth_bridge_feature_cosines.csv`
+11. `plots/truth_bridge_feature_cosines.png` + `tables/truth_bridge_feature_cosines.csv`
     when a compatible Lab 4 direction exists — use this to discuss distributed
     truth directions versus single SAE atoms.
-11. `plots/feature_clamp.png`, `plots/clamp_operating_window.png`,
+12. `plots/feature_clamp.png`, `plots/clamp_operating_window.png`,
     `tables/feature_clamp.csv`, and `tables/clamp_operating_points.csv` — the single CAUSAL row. **Read the `sample`
     generations** at each dose (not just the hit count). The window is narrow;
     the random control and distinct-ratio column are part of the claim.
-12. `tables/plot_reading_guide.csv` — a compact map from plot to concept if you
+13. If `--causal-suite` was used: `tables/causal_feature_tests.csv`,
+    `causal_feature_tests_summary.json`, `plots/causal_operating_window.png`,
+    and `causal_feature_card.md` — matched controls plus suppression. This is
+    the stronger causal evidence packet.
+14. `tables/plot_reading_guide.csv` — a compact map from plot to concept if you
     are writing the run summary or claim ledger.
 
 ## Writeup questions

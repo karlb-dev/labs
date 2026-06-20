@@ -1,0 +1,3 @@
+source_label,model_id,data_source,n_rows_selected,n_train,n_eval,selected_depth,tool_needed_auc,tool_needed_accuracy,tool_selection_accuracy,surface_control_accuracy,decode_gap_over_surface,target_direction_shift_at_scale_1,random_direction_shift_at_scale_1,causal_shift_over_random,argument_valid_rate,trace_match_rate,n_counterexamples,tool_needed_decode_supported,tool_selection_decode_supported,causal_action_letter_shift_supported,science_ready
+olmo3_7b_full,allenai/Olmo-3-1025-7B,frozen_jsonl,84,58,26,28,0.9236,0.8846,0.7692,0.3077,0.4615,0.0913,-0.0207,0.1120,1.0,1.0,40,true,true,true,true
+gpt2_smoke,gpt2,frozen_jsonl,28,14,14,3,1.0000,0.8571,0.4286,0.3571,0.0715,-0.0155,-0.0011,-0.0144,1.0,1.0,40,true,true,false,false

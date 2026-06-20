@@ -30,7 +30,7 @@ LAB_ID = "L34"
 LAB_NAME = "lab34_tool_use_state"
 DATA_FILE = "tool_use_tasks.jsonl"
 PROMPT_SET_CAPS = {"small": 28, "medium": 42, "full": 0}
-SCIENCE_READY_MIN_ROWS = 42
+SCIENCE_READY_MIN_ROWS = 70
 TOOLS = ("calculator", "dictionary", "calendar", "file_search", "route_planner", "unit_converter", "none")
 TOOL_LETTERS = {
     "calculator": "A",
@@ -43,6 +43,7 @@ TOOL_LETTERS = {
 }
 LETTER_TO_TOOL = {v: k for k, v in TOOL_LETTERS.items()}
 STEER_SCALES = (-1.0, 0.0, 0.5, 1.0, 1.5)
+N_RANDOM_INTERVENTION_CONTROLS = 5
 CLAIMABLE_SCALE = 1.0
 DECODE_AUC_BAR = 0.60
 DECODE_GAP_BAR = 0.05
@@ -824,7 +825,9 @@ def build_direction_model(ctx: bench.RunContext, bundle: bench.ModelBundle, task
         dirs[tool] = unit_vector(mean_vec(pos) - mean_vec(neg)) if pos and neg else torch.zeros_like(needed_dir)
     gen = torch.Generator(device="cpu")
     gen.manual_seed(int(getattr(ctx.args, "seed", 0) or 0) + 34000 + depth)
-    dirs["random_direction_control"] = unit_vector(torch.randn(needed_dir.shape, dtype=needed_dir.dtype, generator=gen))
+    for idx in range(N_RANDOM_INTERVENTION_CONTROLS):
+        dirs[f"random_direction_control_{idx:02d}"] = unit_vector(torch.randn(needed_dir.shape, dtype=needed_dir.dtype, generator=gen))
+    dirs["random_direction_control"] = dirs["random_direction_control_00"]
     needed_scores_train = [float(vectors[(t.task_id, depth)].float() @ dirs["tool_needed"].float()) for t in train]
     needed_labels_train = [1 if t.tool_needed else 0 for t in train]
     threshold = best_binary_threshold(needed_labels_train, needed_scores_train)
@@ -1049,18 +1052,23 @@ def run_interventions(
         distractor_tool = task.distractor_tool if task.distractor_tool != target_tool else ("none" if target_tool != "none" else "calculator")
         target_id = int(letter_ids[target_tool])
         distractor_id = int(letter_ids[distractor_tool])
+        random_names = sorted(name for name in model.steer if name.startswith("random_direction_control_"))
         direction_entries = [
             ("target_tool_direction", target_tool, model.steer.get(target_tool, model.steer["none"])),
             ("tool_needed_direction", "tool_needed", model.steer["tool_needed"]),
-            ("random_direction_control", "random_direction_control", model.steer["random_direction_control"]),
         ]
-        base_by_direction: dict[str, float] = {}
+        direction_entries.extend(
+            ("random_direction_control", random_name, model.steer[random_name])
+            for random_name in random_names
+        )
+        task_row_start = len(rows)
+        base_by_direction: dict[tuple[str, str], float] = {}
         for condition, direction_name, vector in direction_entries:
             for scale in STEER_SCALES:
                 logits = next_token_logits_raw(bundle, prompt, steer=(model.steer_layer, vector, float(scale)))
                 margin = float(logits[target_id] - logits[distractor_id])
                 if abs(float(scale)) < 1e-12:
-                    base_by_direction[condition] = margin
+                    base_by_direction[(condition, direction_name)] = margin
                 rows.append({
                     "intervention_id": f"{task.task_id}:{condition}:scale_{float(scale):g}",
                     "direction_id": f"depth{model.depth}:{direction_name}",
@@ -1082,10 +1090,8 @@ def run_interventions(
                     "shift_from_condition_zero": "",  # filled below
                     "prompt": prompt,
                 })
-        for row in rows:
-            if row["task_id"] != task.task_id:
-                continue
-            base = base_by_direction.get(str(row["condition"]))
+        for row in rows[task_row_start:]:
+            base = base_by_direction.get((str(row["condition"]), str(row["direction"])))
             if base is not None:
                 row["shift_from_condition_zero"] = rounded(as_float(row["target_minus_distractor_logit"]) - base)
         if i % max(1, len(tasks) // 4) == 0 or i == len(tasks):

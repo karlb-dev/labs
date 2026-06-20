@@ -1,0 +1,112 @@
+{
+  "audit_result": "failed",
+  "audit_thresholds": {
+    "control_adjusted_auc_bar": 0.05,
+    "cross_cause_auc_bar": 0.55,
+    "cross_transfer_auc_bar": 0.6,
+    "sentiment_cosine_warn": 0.7,
+    "specificity_auc_bar": 0.55,
+    "steering_delta_bar": 0.05
+  },
+  "best_depth": 8,
+  "claim_allowed": "no defended emotion-geometry claim",
+  "data": {
+    "causes_by_emotion": {
+      "anger": [
+        "betrayal",
+        "delay",
+        "injustice"
+      ],
+      "fear": [
+        "dark_house",
+        "diagnosis",
+        "storm"
+      ],
+      "joy": [
+        "achievement",
+        "nature",
+        "reunion"
+      ],
+      "sadness": [
+        "bereavement",
+        "fictional",
+        "weather"
+      ]
+    },
+    "confound_cap": 3,
+    "confound_types": [
+      "positive_calm",
+      "surprising_neutral"
+    ],
+    "counts_by_emotion": {
+      "anger": 3,
+      "fear": 3,
+      "joy": 3,
+      "sadness": 3
+    },
+    "data_file": "affect_emotion_pairs.csv",
+    "data_path": "/content/labs/interpretability/data/affect_emotion_pairs.csv",
+    "data_sha256": "c140410c5742390011334c9f1cb3e19a1ed418a0c1c0119550422f97b498613f",
+    "data_source": "frozen_csv",
+    "manifest_expected_sha256": "c140410c5742390011334c9f1cb3e19a1ed418a0c1c0119550422f97b498613f",
+    "manifest_note": "found sha256 entry",
+    "manifest_ok": true,
+    "n_confound_items": 3,
+    "n_target_items": 12,
+    "per_emotion_cap": 3,
+    "selected_emotions": [
+      "joy",
+      "sadness",
+      "anger",
+      "fear"
+    ],
+    "tier_a_fallback_warning": false
+  },
+  "emotions": [
+    "anger",
+    "fear",
+    "joy",
+    "sadness"
+  ],
+  "headline_steering_dose": 0.8,
+  "injection_layer": 7,
+  "max_abs_sentiment_cosine": 0.3775,
+  "mean_abs_confound_projection_delta": 0.6804,
+  "mean_comp_gen_cosine": 0.0071,
+  "mean_cross_cause_auc": 0.5417,
+  "mean_cross_cause_auc_all_cells": 0.7292,
+  "mean_cross_transfer_auc": 0.5,
+  "mean_real_auc_at_best_depth": 0.75,
+  "mean_specificity_auc": 0.5833,
+  "model_id": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "n_confound_items": 3,
+  "n_depths": 31,
+  "n_sentiment_pairs": 6,
+  "n_target_items": 12,
+  "reference_activation_norm_median": 74.2285,
+  "selected_depth_control_adjusted_cross_auc": -0.125,
+  "selected_depth_random_cross_auc": 0.375,
+  "selected_depth_real_cross_auc": 0.5,
+  "selected_depth_shuffled_cross_auc": 0.625,
+  "sentiment_control_data": {
+    "direction_semantics": "positive-valence minus negative-valence, comprehension prompt state",
+    "manifest_expected_sha256": null,
+    "manifest_note": "no usable sha256 entry for affect_valence.csv",
+    "manifest_ok": null,
+    "n_pairs_available": 24,
+    "n_pairs_used": 6,
+    "valence_file": "affect_valence.csv",
+    "valence_path": "/content/labs/interpretability/data/affect_valence.csv",
+    "valence_sha256": "73ee73bb2dcaca8c7eb9086f5aa4dbe98558f8a2b4ed11a36b7459c9125ca912",
+    "valence_source": "frozen_csv"
+  },
+  "steering_doses_fraction_of_median_norm": [
+    0.0,
+    0.4,
+    0.8,
+    1.2
+  ],
+  "steering_input_over_random_delta": 0.0,
+  "steering_input_over_sentiment_delta": 0.0,
+  "steering_input_over_shuffled_delta": -0.079
+}

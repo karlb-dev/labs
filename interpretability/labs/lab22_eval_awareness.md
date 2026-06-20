@@ -46,7 +46,16 @@ The steering experiment is deliberately tame:
 
 ## Dataset schema
 
-The standard dataset is `data/eval_awareness_contexts.csv`. Each `group_id` should describe the same benign task under several conditions.
+The standard dataset is `data/eval_awareness_contexts.csv`; see `data/eval_awareness_contexts_card.md` and the deterministic generator `data/make_eval_awareness_contexts.py`. The current frozen inventory is `v2_surface_matched`: 96 rows, 24 matched groups, and 6 format families.
+
+Each `group_id` describes the same benign task under several conditions:
+
+- `eval_high`: true eval/checking framing with obvious marker words;
+- `eval_low`: true eval/checking framing with reduced marker words;
+- `natural`: the same task as an ordinary request;
+- `format_control`: eval-like surface form without an evaluated-answer role.
+
+This is the important repair relative to the original Lab 22 dataset. A cheap marker baseline can no longer solve the label perfectly, but surface cues still remain strong enough to be an active competing explanation.
 
 Required columns:
 
@@ -126,7 +135,7 @@ plots/surface_baseline_auc.png
 
 Baselines include prompt length, eval-marker words, multiple-choice markers, `Question:/Answer:` markers, code-test markers, grading markers, `format_family`, `boilerplate_class`, and `difficulty`.
 
-A surface baseline matching the internal direction does not invalidate the run. It changes the allowed claim. The result becomes a format/template handle unless cross-format and format-control tests say otherwise.
+A surface baseline matching the internal direction does not invalidate the run. It changes the allowed claim. The result becomes a format/template handle unless cross-format and format-control tests say otherwise. With the `v2_surface_matched` data, a clean positive should beat prompt length, marker counts, boilerplate class, and the format controls; a clean negative is defensible if it fails there.
 
 ### 4. Cross-format transfer
 
@@ -139,7 +148,7 @@ plots/cross_format_transfer.png
 
 For each held-out `format_family`, the lab fits the direction on all other formats and tests whether the held-out eval rows separate from held-out natural and format-control rows.
 
-A strong Lab 22 result should not live only on multiple-choice prompts. It should transfer across MCQ, short-answer benchmark framing, code-test framing, and rubric/exam-style prompts, depending on what is in the dataset.
+A strong Lab 22 result should not live only on multiple-choice prompts. It should transfer across MCQ, short-answer benchmark framing, code-test framing, rubric/exam-style prompts, answer-key checks, and quality-screen prompts. It should also beat the shuffled-label and random-direction null rails on the held-out format. The run reports `control_adjusted_auc_gap`; if the minimum is near or below zero, the honest result is partial even when raw cross-format AUC is high.
 
 ### 5. Projection audit by item and group
 

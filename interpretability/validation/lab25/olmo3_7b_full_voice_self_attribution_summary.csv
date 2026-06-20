@@ -1,0 +1,6 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,source_type,n,accuracy,activation_false_attribution_rate,parsed_labels
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,activation_injection,12,0.0,0.0,"{""default_mode"": 1, ""user_instruction"": 11}"
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,default_mode,12,0.8333,0.0,"{""default_mode"": 10, ""user_instruction"": 2}"
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,false_activation_claim,12,0.4167,0.0,"{""default_mode"": 5, ""user_instruction"": 7}"
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,system_prompt,12,0.0833,0.0,"{""default_mode"": 1, ""system_prompt"": 1, ""user_instruction"": 10}"
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,user_instruction,12,1.0,0.0,"{""user_instruction"": 12}"

@@ -1,0 +1,11 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,steering_kind,interpretation,count,rate_within_kind
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,opposite_direction,behavior_expressed_without_report,1,0.0417
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,opposite_direction,no_self_report_detection,23,0.9583
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,random_direction,behavior_expressed_without_report,1,0.0417
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,random_direction,no_self_report_detection,23,0.9583
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,shuffled_direction,behavior_expressed_without_report,1,0.0417
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,shuffled_direction,no_self_report_detection,23,0.9583
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,target_direction,behavior_expressed_without_report,4,0.0417
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,target_direction,no_self_report_detection,92,0.9583
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,wrong_concept_direction,behavior_expressed_without_report,1,0.0417
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,wrong_concept_direction,no_self_report_detection,23,0.9583

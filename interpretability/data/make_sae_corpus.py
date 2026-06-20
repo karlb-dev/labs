@@ -344,6 +344,338 @@ def build_rows() -> list[dict[str, str]]:
     return rows
 
 
+CONFUSABLE_GROUP = {
+    "chemistry": "chemistry_vs_cooking_shared_terms",
+    "cooking": "chemistry_vs_cooking_shared_terms",
+    "finance": "finance_vs_sports_shared_terms",
+    "sports": "finance_vs_sports_shared_terms",
+    "law": "law_vs_medicine_shared_terms",
+    "medicine": "law_vs_medicine_shared_terms",
+    "weather": "weather_vs_emotion_shared_metaphor",
+    "emotion": "weather_vs_emotion_shared_metaphor",
+    "code": "code_vs_plain_technical_text",
+    "history": "history_vs_named_entity_dates",
+}
+
+DOMAIN_MARKERS = {
+    "chemistry": "acid;base;reaction;electron;solution;pH;molecule",
+    "cooking": "acid;base;salt;reduce;sauce;pan;recipe",
+    "sports": "score;lead;beat;rally;team;match;player",
+    "finance": "score;lead;beat;rally;stock;yield;revenue",
+    "law": "trial;discharge;administer;court;statute;jury",
+    "medicine": "trial;discharge;administer;patient;dose;clinical",
+    "weather": "storm;cloud;cold;bright;front;forecast",
+    "emotion": "storm;cloud;cold;bright;grief;joy;dread",
+    "code": "def;return;class;import;loop;indent",
+    "history": "century;treaty;empire;war;king;revolution",
+}
+
+DOMAIN_FOLLOWUPS = {
+    "chemistry": "The passage uses the term in a laboratory mechanism, not as a culinary metaphor.",
+    "cooking": "The passage uses the term as kitchen technique and flavor balance, not molecular mechanism.",
+    "sports": "The passage resolves around athletes, rules, and game outcomes rather than market movement.",
+    "finance": "The passage resolves around investors, rates, and balance sheets rather than a scoreboard.",
+    "law": "The passage is about legal procedure, burdens, statutes, and courtroom actors.",
+    "medicine": "The passage is about clinical care, symptoms, dosing, and patient outcomes.",
+    "weather": "The passage describes physical atmospheric conditions rather than an inner mood.",
+    "emotion": "The passage describes an internal affective state rather than literal weather.",
+    "code": "The passage includes executable or shell-like syntax where punctuation changes behavior.",
+    "history": "The passage anchors the claim in dated events, institutions, and historical causality.",
+}
+
+V3_FIELDS = [
+    "row_id",
+    "domain",
+    "family",
+    "split",
+    "text",
+    "hard_negative_group",
+    "lexical_markers",
+    "notes",
+]
+
+
+def split_for(i: int) -> str:
+    bucket = i % 10
+    if bucket < 6:
+        return "train"
+    if bucket < 8:
+        return "dev"
+    return "test"
+
+
+def add_v3_row(rows: list[dict[str, str]], *, domain: str, family: str, text: str,
+               hard_negative_group: str, lexical_markers: str, notes: str) -> None:
+    idx = len(rows) + 1
+    rows.append({
+        "row_id": f"V3_{idx:04d}",
+        "domain": domain,
+        "family": family,
+        "split": split_for(idx - 1),
+        "text": text,
+        "hard_negative_group": hard_negative_group,
+        "lexical_markers": lexical_markers,
+        "notes": notes,
+    })
+
+
+def semantic_v3_rows(rows: list[dict[str, str]], rows_per_domain: int = 60) -> None:
+    for domain in sorted(CORPUS):
+        base = CORPUS[domain]
+        for i in range(rows_per_domain):
+            text = base[i % len(base)]
+            variant = i // len(base)
+            if variant == 0:
+                rendered = text
+                notes = "semantic-domain short item"
+            elif variant == 1:
+                rendered = f"{text} {DOMAIN_FOLLOWUPS[domain]}"
+                notes = "semantic-domain paragraph variant"
+            else:
+                rendered = (
+                    f"In a paragraph about {domain}, the key detail is this: {text} "
+                    f"{DOMAIN_FOLLOWUPS[domain]} A hard negative should share a few words "
+                    f"but change the underlying topic."
+                )
+                notes = "semantic-domain expanded paragraph with confusable guidance"
+            add_v3_row(
+                rows,
+                domain=domain,
+                family=domain,
+                text=rendered,
+                hard_negative_group=CONFUSABLE_GROUP[domain],
+                lexical_markers=DOMAIN_MARKERS[domain],
+                notes=notes,
+            )
+
+
+NAMES = [
+    "Maya Chen", "Omar Patel", "Iris Novak", "Diego Alvarez", "Priya Shah",
+    "Lena Ortiz", "Noah Kim", "Ava Rossi", "Samir Haddad", "Nia Brooks",
+]
+PLACES = [
+    "Berlin", "Lagos", "Osaka", "Santiago", "Toronto",
+    "Cairo", "Helsinki", "Nairobi", "Lisbon", "Seoul",
+]
+OBJECTS = ["sensor", "invoice", "module", "route", "packet", "sample", "record", "panel", "ticket", "widget"]
+
+
+def native_templates() -> dict[str, dict[str, object]]:
+    return {
+        "code_indentation_whitespace": {
+            "domain": "code",
+            "group": "code_indentation_vs_plain_code",
+            "markers": "leading spaces;tab;indent;blank line;aligned block",
+            "notes": "position/whitespace family; hard negatives are code rows without indentation structure",
+            "templates": [
+                "def handle_{obj}(items):\n    total = 0\n    for item in items:\n        total += item.value\n    return total",
+                "if {obj}.ready:\n\tlog.info('ready')\n\t{obj}.dispatch()\nelse:\n\tlog.warning('waiting')",
+                "class {name_token}:\n    def __init__(self):\n        self.path = '{path}'\n\n    def run(self):\n        return self.path.strip()",
+            ],
+        },
+        "python_syntax": {
+            "domain": "code",
+            "group": "python_syntax_vs_pseudocode",
+            "markers": "def;lambda;import;with;except;return;colon",
+            "notes": "syntax/format family; hard negatives describe code in prose",
+            "templates": [
+                "from pathlib import Path\n\ndef load_{obj}(path: Path) -> list[str]:\n    with path.open() as f:\n        return [line.strip() for line in f if line.strip()]",
+                "try:\n    value = cache['{obj}']\nexcept KeyError:\n    value = compute_{obj}()\nfinally:\n    metrics.append(value)",
+                "pairs = [(k, v) for k, v in payload.items() if isinstance(v, int)]\nresult = {name_token}(pairs).normalize()",
+            ],
+        },
+        "markdown_list_formatting": {
+            "domain": "formatting",
+            "group": "markdown_list_vs_plain_paragraph",
+            "markers": "#;##;-;*;1.;checkbox;backticks",
+            "notes": "syntax/format family; hard negatives are prose with the same words",
+            "templates": [
+                "## {place} Launch Checklist\n- [ ] Confirm {obj} status\n- [ ] Email {name}\n- [ ] Archive `/tmp/{obj}.log`",
+                "# Meeting Notes\n1. Review the {obj} budget\n2. Assign follow-up to {name}\n3. Mark blockers in `status.md`",
+                "* {name} owns the draft\n* {place} team owns review\n* Due date: {date}\n\n> Keep the list short and actionable.",
+            ],
+        },
+        "urls_emails_paths": {
+            "domain": "identifiers",
+            "group": "urls_emails_paths_vs_named_entities",
+            "markers": "https://;@;.com;/usr/;C:\\;file extension",
+            "notes": "lexical-token family; hard negatives use names and places without address syntax",
+            "templates": [
+                "Send the {obj} export to {email} and mirror it at https://example.com/{path}/{obj}?rev={num}.",
+                "The failing file was `/srv/{path}/{obj}_{num}.json`; the backup lives under `s3://bucket/{path}/`.",
+                "Windows users should check `C:\\Users\\{short}\\Documents\\{obj}.csv` before opening http://intranet.local/{obj}.",
+            ],
+        },
+        "dates_numbers_measurements": {
+            "domain": "quantities",
+            "group": "dates_numbers_measurements_vs_history_dates",
+            "markers": "ISO date;percent;kg;mm;USD;temperature;ratio",
+            "notes": "lexical-token family; hard negatives include historical dates without measurement syntax",
+            "templates": [
+                "On {date}, the {obj} measured {num}.4 kg, {num2}% above the 2025-05-01 baseline.",
+                "The lab recorded {num} mm of drift at 21.5 C and a flow rate of {num2}.2 L/min.",
+                "Invoice {num}-{num2} lists USD {money}.00, a 3:2 allocation, and delivery by {date}.",
+            ],
+        },
+        "citations_legal_references": {
+            "domain": "law",
+            "group": "legal_citations_vs_plain_law",
+            "markers": "v.;§;U.S.C.;F.3d;No.;citation parenthesis",
+            "notes": "lexical/syntax family; hard negatives are legal prose without citation form",
+            "templates": [
+                "See {name} v. {place}, {num} F.3d {num2} (9th Cir. 2024), interpreting 17 U.S.C. § {num2}.",
+                "The brief cites No. {num}-CV-{num2}, slip op. at {num3}, and distinguishes § {num}.04(b).",
+                "Under 42 U.S.C. § {num}, the court compared {name} v. State, {num2} S.W.3d {num3}.",
+            ],
+        },
+        "quotes_dialogue": {
+            "domain": "dialogue",
+            "group": "quotes_dialogue_vs_reported_speech",
+            "markers": "quotation marks;said;asked;colon dialogue;em dash",
+            "notes": "syntax/format family; hard negatives paraphrase the same exchange without quotes",
+            "templates": [
+                "\"I checked the {obj},\" {name} said. \"It failed again at {date}.\"",
+                "{name}: \"Can {place} ship the {obj} today?\"\n{short}: \"Only if the review is signed.\"",
+                "\"Wait,\" whispered {name}, \"the path says `{path}`, not `{obj}`.\"",
+            ],
+        },
+        "capitalization_acronyms": {
+            "domain": "orthography",
+            "group": "acronyms_vs_named_entities",
+            "markers": "ALL CAPS;NASA;API;HTTP;camel case;initialism",
+            "notes": "lexical/orthographic family; hard negatives are names with normal capitalization",
+            "templates": [
+                "NASA and ESA reviewed the HTTP API before the QA team approved the {obj}.",
+                "The README says DO NOT RESET PROD unless SRE, PM, and LEGAL all sign off.",
+                "{name_token}Config enables XML, JSON, and CSV export for the ACME audit.",
+            ],
+        },
+        "sentiment_emotion": {
+            "domain": "emotion",
+            "group": "sentiment_vs_weather_metaphor",
+            "markers": "happy;sad;angry;relieved;afraid;delighted",
+            "notes": "semantic/broad affect family; hard negatives are weather metaphor rows",
+            "templates": [
+                "{name} felt relieved and quietly happy when the {obj} finally passed review.",
+                "The team was angry, then embarrassed, then delighted after {place} fixed the mistake.",
+                "A nervous sadness lingered in the room, but hope returned when {name} called.",
+            ],
+        },
+        "named_entities": {
+            "domain": "entities",
+            "group": "named_entities_vs_urls_emails_paths",
+            "markers": "person name;city;organization;proper noun",
+            "notes": "semantic/lexical family; hard negatives include URL/email/path syntax",
+            "templates": [
+                "{name} met {short} in {place} before visiting the Meridian Institute.",
+                "At {place} Station, {name} briefed Dr. {surname} from Northstar Analytics.",
+                "The memo names {name}, {short} Rivera, and the {place} Cultural Trust.",
+            ],
+        },
+    }
+
+
+def native_context(i: int) -> dict[str, str]:
+    name = NAMES[i % len(NAMES)]
+    short = name.split()[0]
+    surname = name.split()[-1]
+    place = PLACES[(i * 3) % len(PLACES)]
+    obj = OBJECTS[(i * 7) % len(OBJECTS)]
+    num = str(100 + i)
+    num2 = str(20 + (i * 7) % 80)
+    num3 = str(3 + (i * 5) % 70)
+    return {
+        "name": name,
+        "short": short,
+        "surname": surname,
+        "place": place,
+        "obj": obj,
+        "path": f"{place.lower()}/{obj}",
+        "email": f"{short.lower()}.{surname.lower()}@example.org",
+        "date": f"2026-{(i % 12) + 1:02d}-{(i * 3 % 28) + 1:02d}",
+        "num": num,
+        "num2": num2,
+        "num3": num3,
+        "money": str(500 + i * 13),
+        "name_token": surname.replace("-", ""),
+    }
+
+
+def native_v3_rows(rows: list[dict[str, str]], rows_per_family: int = 60) -> None:
+    specs = native_templates()
+    for family in sorted(specs):
+        spec = specs[family]
+        templates = list(spec["templates"])  # type: ignore[index]
+        for i in range(rows_per_family):
+            ctx = native_context(i)
+            text = templates[i % len(templates)].format(**ctx)
+            if i // len(templates) == 1:
+                text = f"{text}\n\nThe same paragraph should not be labeled as a broad semantic domain just because it has topical words."
+            elif i // len(templates) >= 2:
+                text = (
+                    f"{text}\n\nControl sentence: the neighboring hard-negative rows reuse several words, "
+                    f"but the target family is the surface form named in `family`."
+                )
+            add_v3_row(
+                rows,
+                domain=str(spec["domain"]),
+                family=family,
+                text=text,
+                hard_negative_group=str(spec["group"]),
+                lexical_markers=str(spec["markers"]),
+                notes=str(spec["notes"]),
+            )
+
+
+def build_v3_rows() -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    semantic_v3_rows(rows)
+    native_v3_rows(rows)
+    return rows
+
+
+def write_v3_card(rows: list[dict[str, str]], path: pathlib.Path) -> None:
+    family_counts: dict[str, int] = {}
+    split_counts: dict[str, int] = {}
+    domain_counts: dict[str, int] = {}
+    for row in rows:
+        family_counts[row["family"]] = family_counts.get(row["family"], 0) + 1
+        split_counts[row["split"]] = split_counts.get(row["split"], 0) + 1
+        domain_counts[row["domain"]] = domain_counts.get(row["domain"], 0) + 1
+    lines = [
+        "# SAE Feature Corpus v3 Card",
+        "",
+        "Deterministic, vendored corpus for Lab 8 fair-shot SAE feature search.",
+        "No live data is downloaded at student runtime.",
+        "",
+        f"- rows: {len(rows)}",
+        f"- families: {len(family_counts)}",
+        f"- domains: {len(domain_counts)}",
+        f"- split counts: {dict(sorted(split_counts.items()))}",
+        "",
+        "## Schema",
+        "",
+        "`row_id, domain, family, split, text, hard_negative_group, lexical_markers, notes`",
+        "",
+        "## Families",
+        "",
+    ]
+    for family, count in sorted(family_counts.items()):
+        lines.append(f"- `{family}`: {count} rows")
+    lines += [
+        "",
+        "## Design Notes",
+        "",
+        "- The original 10 semantic domains are preserved as families.",
+        "- SAE-native families include whitespace, syntax, markdown, URLs/emails/paths, dates/numbers/measurements, legal citations, dialogue quotes, capitalization/acronyms, sentiment, and named entities.",
+        "- Hard-negative groups intentionally pair families or domains that share words but differ in the claimed feature type.",
+        "- Splits are deterministic by row order: 60% train, 20% dev, 20% test.",
+        "- Lexical/syntactic/token features are valid wins only when the claimed family is lexical, syntactic, formatting, orthographic, or whitespace rather than semantic-domain.",
+        "",
+    ]
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def main() -> None:
     rows = build_rows()
     path = HERE / "sae_feature_corpus.csv"
@@ -354,6 +686,15 @@ def main() -> None:
     domains = sorted({r["domain"] for r in rows if "+" not in r["domain"]})
     print(f"wrote {len(rows)} lines across {len(domains)} single domains "
           f"+ {sum('+' in r['domain'] for r in rows)} mixed -> {path}")
+    v3_rows = build_v3_rows()
+    v3_path = HERE / "sae_feature_corpus_v3.csv"
+    with v3_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=V3_FIELDS)
+        writer.writeheader()
+        writer.writerows(v3_rows)
+    write_v3_card(v3_rows, HERE / "sae_feature_corpus_v3_card.md")
+    families = sorted({r["family"] for r in v3_rows})
+    print(f"wrote {len(v3_rows)} v3 rows across {len(families)} families -> {v3_path}")
 
 
 if __name__ == "__main__":

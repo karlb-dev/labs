@@ -1,0 +1,4 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,signal,ece
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,distribution_confidence,0.261
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,internal_rank_confidence,0.242
+lab14,lab14_validation_smollm_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,verbal_confidence,0.3167

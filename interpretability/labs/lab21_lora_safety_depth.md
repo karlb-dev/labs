@@ -100,7 +100,7 @@ By default, safety-depth mode uses a small built-in benign boundary battery. A s
 data/safety_depth_boundary_pairs.csv
 ```
 
-or pass a custom CSV/JSON/JSONL path through `--prompt-set`.
+or pass a custom CSV/JSON/JSONL path through `--prompt-set`. The current vendored inventory is `v1_boundary_safe_pairs`: 24 boundary/safe pairs across privacy, account security, professional-boundary, academic-integrity, copyright, and cyber-boundary families. See `data/safety_depth_boundary_pairs_card.md` and `data/make_safety_depth_boundary_pairs.py`.
 
 Required columns:
 
@@ -120,7 +120,7 @@ Optional columns:
 | `safe_prefix` | Forced safe-assistance assistant prefix |
 | `generic_prefix` | Matched generic safe prefix control |
 
-The built-in fallback is a smoke test, not frozen science data. The manifest says so.
+The built-in fallback is a smoke test, not frozen science data. The run metrics expose `safety_data_source`, `safety_data_sha256`, `safety_data_manifest_match`, and `safety_data_fallback_is_science_data` so this cannot be missed in later audits.
 
 ## The two experiments
 

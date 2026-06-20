@@ -1,0 +1,126 @@
+{
+  "argument_valid_rate": 1.0,
+  "artifact_quality": {
+    "failure_specimens": 40,
+    "figure_source_tables": "written for every run, including --no-plots",
+    "plot_manifest_entries": 14,
+    "run_config_snapshot_written": true,
+    "warning_count": 5
+  },
+  "causal_shift_over_random": -0.0144,
+  "data": {
+    "data_path": "/content/labs/interpretability/data/tool_use_tasks.jsonl",
+    "data_source": "frozen_jsonl",
+    "families": {
+      "calculator": 4,
+      "calendar": 4,
+      "dictionary": 4,
+      "file_search": 4,
+      "no_tool": 4,
+      "route_planner": 4,
+      "unit_converter": 4
+    },
+    "max_examples": 28,
+    "n_rows_file": 84,
+    "n_rows_schema_valid": 84,
+    "n_rows_selected": 28,
+    "prompt_set": "small",
+    "required_tools": {
+      "calculator": 4,
+      "calendar": 4,
+      "dictionary": 4,
+      "file_search": 4,
+      "none": 4,
+      "route_planner": 4,
+      "unit_converter": 4
+    },
+    "safety_scope": "benign toy tools only; no web browsing, credentials, real filesystem writes, real calendar or file access, or harmful tools",
+    "science_ready": false,
+    "science_ready_data": true,
+    "sha256": "32351cb35b034c2dd0b22f5eebf512ce08a5a7d087209e117ac4553ca4fc5805",
+    "splits": {
+      "eval": 14,
+      "train": 14
+    }
+  },
+  "decode_gap_over_surface": 0.0715,
+  "directions": {
+    "depths_scanned": [
+      0,
+      3,
+      6,
+      9,
+      12
+    ],
+    "selected": {
+      "depth": 3,
+      "direction_norms": {
+        "calculator": 1.0,
+        "calendar": 1.0,
+        "dictionary": 1.0,
+        "file_search": 1.0,
+        "none": 1.0,
+        "random_direction_control": 1.0,
+        "random_direction_control_00": 1.0,
+        "random_direction_control_01": 1.0,
+        "random_direction_control_02": 1.0,
+        "random_direction_control_03": 1.0,
+        "random_direction_control_04": 1.0,
+        "route_planner": 1.0,
+        "tool_needed": 1.0,
+        "unit_converter": 1.0
+      },
+      "n_train": 14,
+      "n_train_needed": 12,
+      "n_train_none": 2,
+      "needed_threshold": -0.32210206985473633,
+      "steer_layer": 2,
+      "steer_vector_norms": {
+        "calculator": 3.1272,
+        "calendar": 3.1272,
+        "dictionary": 3.1272,
+        "file_search": 3.1272,
+        "none": 3.1272,
+        "random_direction_control": 3.1272,
+        "random_direction_control_00": 3.1272,
+        "random_direction_control_01": 3.1272,
+        "random_direction_control_02": 3.1272,
+        "random_direction_control_03": 3.1272,
+        "random_direction_control_04": 3.1272,
+        "route_planner": 3.1272,
+        "tool_needed": 3.1272,
+        "unit_converter": 3.1272
+      },
+      "train_centered_norm": 3.1272
+    }
+  },
+  "eval_split_used": "eval",
+  "lab_id": "L34",
+  "lab_name": "lab34_tool_use_state",
+  "n_counterexamples": 40,
+  "random_direction_shift_at_scale_1": -0.0011,
+  "selected_depth": 3,
+  "self_check_status": {
+    "argument_valid_rate": 1.0,
+    "evidence_rows": 5,
+    "ok": true,
+    "tokenization_dropped": 0,
+    "tokenization_kept": 28,
+    "trace_result_match_rate": 1.0
+  },
+  "shuffled_label_control_accuracy": 0.0714,
+  "supported": {
+    "causal_action_letter_shift": false,
+    "self_report_review_required": true,
+    "tool_needed_decode": true,
+    "tool_selection_decode": true,
+    "trace_validated": true
+  },
+  "surface_control_accuracy": 0.3571,
+  "surface_needed_accuracy": 0.3571,
+  "target_direction_shift_at_scale_1": -0.0155,
+  "tool_needed_accuracy": 0.8571,
+  "tool_needed_auc": 1.0,
+  "tool_selection_accuracy": 0.4286,
+  "trace_match_rate": 1.0
+}

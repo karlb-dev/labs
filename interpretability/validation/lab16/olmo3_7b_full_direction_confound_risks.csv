@@ -1,0 +1,9 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,direction,nearest_direction,nearest_abs_cosine,nearest_signed_cosine,nearest_confound_direction,nearest_confound_abs_cosine,nearest_confound_signed_cosine,confound_risk
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,agreement,agreement_shuffled,1.0,1.0,agreement_shuffled,1.0,1.0,high
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,agreement_shuffled,agreement,1.0,1.0,certainty_style,0.1962,0.1962,low
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,certainty_style,politeness,0.1975,-0.1975,politeness,0.1975,-0.1975,low
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,politeness,certainty_style,0.1975,-0.1975,certainty_style,0.1975,-0.1975,low
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,sentiment_style,politeness,0.176,0.176,politeness,0.176,0.176,low
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,social_pressure,user_belief,0.1518,-0.1518,agreement_shuffled,0.0911,0.0911,low
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,truth,agreement_shuffled,0.1632,0.1632,agreement_shuffled,0.1632,0.1632,low
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,user_belief,social_pressure,0.1518,-0.1518,social_pressure,0.1518,-0.1518,low

@@ -32,6 +32,13 @@ python interp_bench.py --lab lab19 --tier b --prompt-set medium --no-plots
 
 The lab also accepts a custom CSV, TSV, JSON, or JSONL prompt inventory through `--prompt-set path/to/prompts.csv`.
 
+For the current fair-shot validation inventory:
+
+```bash
+LAB19_OFFLOAD_PRIMARY_TO_CPU=1 python interp_bench.py --lab lab19 --tier b --prompt-set data/model_diffing_prompt_inventory_v2.csv
+LAB19_OFFLOAD_PRIMARY_TO_CPU=1 python interp_bench.py --lab lab19 --tier b --prompt-set data/model_diffing_prompt_inventory_v2.csv --run-edit
+```
+
 For a science run, model A should be the base model and model B should be the comparison model, usually the instruct model from the same family. The registry can provide the comparison model. You can also set:
 
 ```bash
@@ -130,7 +137,9 @@ diagnostics/frozen_prompt_manifest.json
 diagnostics/split_audit.csv
 ```
 
-The split is by `prompt_group`, not by individual row, so the raw and chat-rendered versions of the same underlying prompt do not get split across train and eval.
+The split is by `prompt_group`, not by individual row, so the raw and chat-rendered versions of the same underlying prompt do not get split across train, dev, and test. The crosscoder is trained on train rows; held-out reconstruction, feature stability, and report metrics use the test split, with the dev split reserved for quick diagnostics and future selection logic.
+
+When the two residual spaces have the same dimensionality, Lab 19 initializes the model-A and model-B sides from the same weights. This is a conservative default for model diffing: an identity-pair smoke run should not invent model-specific features just because the two sides began from unrelated random seeds. Real base/instruct differences can still move the two sides apart during training.
 
 ## Evidence ladder
 
@@ -236,7 +245,7 @@ Important columns:
 | `audit_flag_template_concentrated` | first warning that the feature may be chat-template residue |
 | `audit_flag_family_concentrated` | first warning that the feature may be a dataset-family feature |
 
-A good candidate is not simply high `model_b_activation_share`. It should also have tolerable reconstruction, survive random-direction baselines, avoid being one-family-only unless the claim is one-family-specific, and not light up only because `compare_chat` added role scaffolding.
+A good candidate is not simply high `model_b_activation_share`. It should also have tolerable reconstruction, survive matched random-direction baselines, avoid being one-family-only unless the claim is one-family-specific, and not light up only because `compare_chat` added role scaffolding.
 
 ## The operationalization audit
 
@@ -249,7 +258,7 @@ The deflationary twin is that instruct-only features are:
 | chat-template tokens | `tables/template_control_summary.csv` |
 | distribution mismatch | `tables/prompt_inventory.csv`, `tables/instruct_only_feature_gallery.csv` |
 | activation-norm shift | `diagnostics/activation_norms.csv`, `tables/activation_norm_controls.csv` |
-| crosscoder artifact | `tables/random_feature_baseline.csv` |
+| crosscoder artifact | `tables/random_feature_baseline.csv`; for same-dimensional pairs, prefer `control_kind=matched_shared_direction` over the deliberately harsh `independent_side_directions` diagnostic |
 | shallow marker words | `tables/default_voice_marker_rates.csv`, optional generated labels |
 | borrowed label from prior lab | `tables/feature_direction_bridge.csv` |
 
@@ -332,7 +341,7 @@ The new dashboard has four panels:
 | norm and token confounds | Did one model simply produce larger residual norms or different token loads for a family/variant? |
 | optional causal operating point | Did feature steering beat random controls without buying the effect through verbosity, hedging, or refusal? |
 
-The new `feature_audit_matrix.csv` joins the columns students usually inspect separately: activation share, decoder share, A/B correlation, template gap, family concentration, variant concentration, train/eval activity, bridge cosine, audit posture, and claim boundary. This is the main artifact for deciding whether a feature is a candidate model-diff handle, a template feature, a family-specific feature, a shared feature, or dictionary residue.
+The new `feature_audit_matrix.csv` joins the columns students usually inspect separately: activation share, decoder share, A/B correlation, template gap, family concentration, variant concentration, train/test activity, bridge cosine, audit posture, and claim boundary. This is the main artifact for deciding whether a feature is a candidate model-diff handle, a template feature, a family-specific feature, a shared feature, or dictionary residue.
 
 ### How to read the new plots
 
@@ -375,7 +384,7 @@ A JSON file can be either a list of records or:
 ## Writeup questions
 
 1. Which three model-B-skewed features look most interpretable before controls? Which one looks worst after controls?
-2. Does the random-direction baseline make exclusivity cheap or rare?
+2. Does the matched random-direction baseline make exclusivity cheap or rare? How different is the independent-side diagnostic?
 3. Pick one gallery feature. Write a narrow label, then write the strongest counterexample from its own top contexts.
 4. Does the feature survive the raw-vs-chat template control? If not, what is the narrower label?
 5. If you configured `LAB19_BRIDGE_STATE`, which feature-direction cosine is largest? What would you need before using the prior-lab direction's name for the feature?
@@ -395,7 +404,7 @@ Falsifier: held-out prompt families or a larger dictionary erase the model-B-ske
 Negative and still valuable:
 
 ```text
-[L19-C1] DECODE/ATTR retired | The identity-pair smoke run produced many model-specific features, so the crosscoder setup is not stable enough to support model-diff claims yet.
+[L19-C1] DECODE/ATTR retired | The identity-pair smoke run produced many model-specific features, so the crosscoder setup is not stable enough to support model-diff claims yet. High asymmetry without model-specific features is a weaker warning: the dictionary is less stable, but it has not yet created a false base/instruct feature.
 Artifact: runs/.../model_diffing_card.md
 Audit: failed identity control.
 Falsifier: rerun with tied prompts and a smaller dictionary yields mostly shared/dead features.
@@ -423,7 +432,7 @@ That sentence stepped over every rung of the ladder and fell into the moat.
 | Symptom | First place to look | Likely cause |
 |---|---|---|
 | model B fails hook parity | `diagnostics/model_b_hook_parity.json` | unsupported architecture hook convention or accidental extra special token |
-| identity pair has many model-specific features | `feature_exclusivity_histogram.png`, `random_feature_baseline.csv` | dictionary too wide, too few prompts, or unstable training |
+| identity pair has many model-specific features | `identity_smoke_scorecard.png`, `feature_exclusivity_histogram.png`, `random_feature_baseline.csv` | dictionary too wide, too few prompts, broken shared-side initialization, or unstable training |
 | many model-B features are chat-only | `template_control_summary.csv` | chat-template residue, not durable behavior |
 | FVU is high | `crosscoder_training_curve.csv` | too few steps, too many features, bad normalization, or site too hard |
 | GPU memory pressure on non-identity pair | `diagnostics/primary_model_memory_release.json` | set `LAB19_OFFLOAD_PRIMARY_TO_CPU=1` to move model A to CPU before loading model B |

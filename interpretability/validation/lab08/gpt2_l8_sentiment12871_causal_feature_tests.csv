@@ -1,0 +1,298 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,feature,family,phase,condition,control_feature,dose_mult,coef,n_prompts,total_keyword_hits,mean_keyword_hits,mean_probe_score,mean_distinct_ratio,sample
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,real,,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,6008,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,6786,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,23205,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,9317,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,4712,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,13239,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,17526,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,15886,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,10218,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,20992,0.0,0.0,20,0,0.0,3.218,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,real,,0.5,2.1976,20,0,0.0,3.1194,0.6317,"
+The following is a list of the most common problems with the following:
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,6008,0.5,2.1976,20,0,0.0,3.3659,0.6596,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,6786,0.5,2.1976,20,0,0.0,3.5107,0.6612,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,23205,0.5,2.1976,20,0,0.0,3.3494,0.6376,"
+The following is a list of the most common problems with the following:
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,9317,0.5,2.1976,20,0,0.0,3.3972,0.6578,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,4712,0.5,2.1976,20,0,0.0,2.9766,0.6381,"
+The following is a list of the most common problems with the following:
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,13239,0.5,2.1976,20,0,0.0,3.4443,0.6534,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,17526,0.5,2.1976,20,0,0.0,3.523,0.6338,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,15886,0.5,2.1976,20,0,0.0,2.9593,0.6513,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,10218,0.5,2.1976,20,0,0.0,4.0389,0.6432,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,20992,0.5,2.1976,20,0,0.0,3.5056,0.6516,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,real,,1.0,4.3951,20,0,0.0,3.0176,0.6467,"
+The following is a list of the most common problems with the following:
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,6008,1.0,4.3951,20,0,0.0,3.3767,0.6522,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,6786,1.0,4.3951,20,0,0.0,4.3237,0.6309,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,23205,1.0,4.3951,20,0,0.0,3.8744,0.654,"
+The following is a list of the most common problems with the following:
+
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,9317,1.0,4.3951,20,0,0.0,4.1661,0.6867,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,4712,1.0,4.3951,20,0,0.0,3.5209,0.6478,"
+The following is a list of the most common problems with the following:
+
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,13239,1.0,4.3951,20,0,0.0,3.422,0.6232,"
+The following is a list of the most common problems with the following:
+
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,17526,1.0,4.3951,20,0,0.0,2.6375,0.6233,"
+The following is a list of the most common problems with the following:
+
+1. The text is too long.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,15886,1.0,4.3951,20,0,0.0,3.6334,0.6345,"
+The following is a list of the most common problems with the following:
+
+1. The text is not clear.
+
+2. The text is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,10218,1.0,4.3951,20,0,0.0,2.9436,0.6376,"
+The following is a list of the most common problems with the following:
+
+1. The problem is not clear.
+
+2. The problem is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,20992,1.0,4.3951,20,0,0.0,3.0937,0.6518,"
+If you are interested in writing a short paragraph about a situation that has not been specified yet, please send it to:
+
+The American Psychological Association
+"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,real,,1.5,6.5927,20,0,0.0,2.6902,0.6449,"
+The following is a list of the most common problems with the following:
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,6008,1.5,6.5927,20,0,0.0,3.7725,0.6605,"
+The following is a list of the most common errors that occur when you try to write a short paragraph about a situation that has not been specified yet.
+"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,6786,1.5,6.5927,20,0,0.0,4.6004,0.6064,"
+The following is a list of the most common problems with the following:
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,23205,1.5,6.5927,20,0,0.0,5.0837,0.6732,"
+The following is a list of the most common errors that can occur when writing a short paragraph about a situation that has not been specified yet.
+
+The"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,9317,1.5,6.5927,20,0,0.0,4.9307,0.6821,"
+The following is a list of the most common errors that can occur when writing a short paragraph.
+
+The following is a list of the most common errors"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,4712,1.5,6.5927,20,0,0.0,3.3986,0.6593,"
+The following is a list of the most common problems with the following:
+
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,13239,1.5,6.5927,20,0,0.0,3.4296,0.6215,"
+The following is a list of the most common problems with the following:
+
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,17526,1.5,6.5927,20,0,0.0,1.4992,0.6184,"
+The following is a list of the most common problems that can occur when you try to write a short paragraph about a situation that has not been specified yet."
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,15886,1.5,6.5927,20,1,0.05,4.7446,0.6061,"
+The first paragraph is a description of the situation. The second paragraph is a description of the situation. The third paragraph is a description of the situation. The"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,10218,1.5,6.5927,20,0,0.0,3.4199,0.6681,"
+The following is a list of the most common problems with the following:
+
+1. The problem is not clear.
+
+2. The problem is"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,20992,1.5,6.5927,20,0,0.0,2.6248,0.6539,"
+If you are interested in the details of the process, please read the following:
+
+
+http://www.cnn.com/2015/03/"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,real,,2.0,8.7903,20,0,0.0,2.0241,0.6663,"
+The following is a list of the most common problems with the following:
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,6008,2.0,8.7903,20,0,0.0,2.6652,0.6471,"
+The first paragraph is a summary of the situation. The second paragraph is a summary of the situation. The third paragraph is a summary of the situation. The"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,6786,2.0,8.7903,20,0,0.0,4.0354,0.6187,"
+The following is a list of the most common problems with the following:
+
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,23205,2.0,8.7903,20,0,0.0,5.9589,0.636,"
+The following is a list of the most common errors that can occur when writing a short paragraph about a situation that has not been specified yet.
+
+The"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,9317,2.0,8.7903,20,0,0.0,5.0596,0.6727,"
+The following is a list of the most common errors that can occur when writing a short paragraph.
+
+The following is a list of the most common errors"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,4712,2.0,8.7903,20,0,0.0,3.6372,0.6556,"
+The following is a list of the most common problems with the following:
+
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,13239,2.0,8.7903,20,0,0.0,3.0514,0.6304,"
+The following is a list of the most common problems with the following:
+
+
+1. The following is a list of the most common problems with the following"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,17526,2.0,8.7903,20,0,0.0,0.9189,0.6089,"
+The following is a list of the most common problems that can occur when you try to write a short paragraph about a situation that has not been specified yet."
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,15886,2.0,8.7903,20,1,0.05,5.9756,0.6009,"
+The first paragraph is a description of the situation. The second paragraph is a description of the situation. The third paragraph is a description of the situation. The"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,10218,2.0,8.7903,20,0,0.0,4.6023,0.5754,"
+The following is a list of the most common problems with the following:
+
+The following is a list of the most common problems with the following:
+"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,clamp_on,matched_control,20992,2.0,8.7903,20,0,0.0,4.1101,0.6383,"
+If you are interested in the details of the process, please read the following:
+
+
+1. The process is described in the following sections:
+
+
+"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,suppress,real,,-0.0,-0.0,20,14,0.7,17.17,0.6409,"
+The next sentence is a simple one:
+
+The target family is the surface form named in `family`.
+
+
+The next sentence is a simple one"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,suppress,real,,-0.5,-2.1976,20,14,0.7,9.869,0.6811,"
+The next sentence is a simple one:
+
+The target family is the surface form named in `family`.
+
+
+The next sentence is a simple one"
+lab8,lab08_smoke_causal_suite_gpt2,gpt2,,a,float32,none,small,4,0,12,768,12871,sentiment_emotion,suppress,real,,-1.0,-4.3951,20,14,0.7,9.3123,0.695,"
+The next sentence is a simple one:
+
+The target family is the surface form named in `family`.
+
+
+The next sentence is a simple one"

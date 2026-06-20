@@ -1,0 +1,143 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,kind,severity,task_id,split,required_tool,probe_prediction,surface_prediction,user_prompt,why_it_matters
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,surface_beats_probe,4.9889,cal_008,eval,calendar,file_search,calendar,Bug triage happens when?,The surface baseline explained the row better than the residual probe.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,no_tool_surface_cue_false_positive,2.2769,none_018,eval,none,calculator,calculator,17 * 23 appears on a sticker; answer sticker.,No-tool rows with tool words are the main guard against intention language.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,no_tool_surface_cue_false_positive,1.8157,none_016,eval,none,file_search,route_planner,Route planner is a product name; answer product.,No-tool rows with tool words are the main guard against intention language.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,no_tool_surface_cue_false_positive,1.4292,none_022,eval,none,file_search,route_planner,A path A -> F is drawn as art; answer art.,No-tool rows with tool words are the main guard against intention language.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,surface_beats_probe,0.6507,cal_007,eval,calendar,file_search,calendar,Design review slot?,The surface baseline explained the row better than the residual probe.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,probe_tool_confusion,0.6163,route_009,eval,route_planner,file_search,none,A reaches D by which nodes?,Which-tool decoding failed on a held-out task.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.4375,file_000,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Which synthetic document mentions cache invalidation?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.4375,file_000,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Which synthetic document mentions cache invalidation?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.4375,file_000,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Which synthetic document mentions cache invalidation?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.375,file_009,eval,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Stale user records after writes: name the document.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.375,file_009,eval,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Stale user records after writes: name the document.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.375,file_009,eval,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Stale user records after writes: name the document.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.3125,file_008,eval,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Exporter CSV belongs to which document?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.3125,file_008,eval,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Exporter CSV belongs to which document?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.3125,file_008,eval,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Exporter CSV belongs to which document?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,file_007,eval,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Cache invalidation appears in which synthetic note?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,file_007,eval,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Cache invalidation appears in which synthetic note?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,file_007,eval,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Cache invalidation appears in which synthetic note?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,file_004,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: In the toy file set, where are downstream reports mentioned?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,file_004,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: In the toy file set, where are downstream reports mentioned?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,file_004,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: In the toy file set, where are downstream reports mentioned?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,none_010,train,none,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: A path from A to F is irrelevant; answer idle.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,none_010,train,none,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: A path from A to F is irrelevant; answer idle.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,none_010,train,none,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: A path from A to F is irrelevant; answer idle.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,unit_005,train,unit_converter,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: What is 0 celsius in fahrenheit?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,unit_005,train,unit_converter,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: What is 0 celsius in fahrenheit?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,unit_005,train,unit_converter,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: What is 0 celsius in fahrenheit?
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,unit_006,train,unit_converter,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: 3 h expressed as min.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,unit_006,train,unit_converter,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: 3 h expressed as min.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.25,unit_006,train,unit_converter,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: 3 h expressed as min.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.2187,file_005,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Search the synthetic files for backoff.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.2187,file_005,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Search the synthetic files for backoff.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.2187,file_005,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Search the synthetic files for backoff.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.1875,file_001,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Search the toy docs for exporter CSV.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.1875,file_001,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Search the toy docs for exporter CSV.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.1875,file_001,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Search the toy docs for exporter CSV.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.1875,file_002,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Find the document with the retry budget.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.1875,file_002,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Find the document with the retry budget.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.1875,file_002,train,file_search,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: Find the document with the retry budget.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.
+lab34,olmo3_7b_full,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,random_direction_matches_or_beats_target_direction,0.1875,none_018,eval,none,,,"Choose the best next action for this controlled toy task.
+A=calculator B=dictionary C=calendar D=file_search E=route_planner F=unit_converter N=no_tool
+User: 17 * 23 appears on a sticker; answer sticker.
+Action letter:",The causal letter-prompt test is not specific if random shifts as much as the target direction.

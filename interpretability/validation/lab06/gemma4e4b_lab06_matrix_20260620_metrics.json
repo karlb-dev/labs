@@ -1,0 +1,192 @@
+{
+  "aborted": false,
+  "base_metric": 3.1850260416666667,
+  "behavior": "recall",
+  "brake_intact": {
+    "discovery_faith_mean": 0.92451,
+    "discovery_faith_resample": 0.85423,
+    "heldout_faith_mean": 1.64763,
+    "heldout_faith_resample": 1.66463,
+    "n_suppression_heads_held_out": 12
+  },
+  "circuits": {
+    "floor": {
+      "discovery": {
+        "completeness_ratio_mean": 0.5039,
+        "completeness_ratio_resample": 0.46548,
+        "faith_mean": 0.94285,
+        "faith_resample": 0.93603,
+        "n_nodes": 2,
+        "n_prompts": 15
+      },
+      "heldout": {
+        "completeness_ratio_mean": 0.46131,
+        "completeness_ratio_resample": 0.38646,
+        "faith_mean": 1.96863,
+        "faith_resample": 1.86833,
+        "n_nodes": 2,
+        "n_prompts": 5
+      },
+      "nodes": [
+        "L41H1",
+        "L18H6"
+      ]
+    },
+    "knee": {
+      "discovery": {
+        "completeness_ratio_mean": 0.04203,
+        "completeness_ratio_resample": -0.04574,
+        "faith_mean": 1.18388,
+        "faith_resample": 1.40397,
+        "n_nodes": 6,
+        "n_prompts": 15
+      },
+      "heldout": {
+        "completeness_ratio_mean": -0.26897,
+        "completeness_ratio_resample": -0.39624,
+        "faith_mean": 2.17145,
+        "faith_resample": 2.24676,
+        "n_nodes": 6,
+        "n_prompts": 5
+      },
+      "nodes": [
+        "L41H1",
+        "L40H0",
+        "L18H6",
+        "L40H3",
+        "L40H5",
+        "L38H1"
+      ]
+    },
+    "motif_core": {
+      "discovery": {
+        "completeness_ratio_mean": 0.32818,
+        "completeness_ratio_resample": 0.24915,
+        "faith_mean": 0.34173,
+        "faith_resample": 1.0854,
+        "n_nodes": 2,
+        "n_prompts": 15
+      },
+      "heldout": {
+        "completeness_ratio_mean": 0.08565,
+        "completeness_ratio_resample": -0.12453,
+        "faith_mean": 0.95985,
+        "faith_resample": 2.01362,
+        "n_nodes": 2,
+        "n_prompts": 5
+      },
+      "nodes": [
+        "L41H1",
+        "L40H0"
+      ]
+    }
+  },
+  "edge": {
+    "claimed": false,
+    "edge": "L1H6 -> L41H1",
+    "effect_prev_alone": 0.04033,
+    "effect_prev_given_induction_ablated": -0.27766,
+    "from": [
+      1,
+      6
+    ],
+    "interaction": 0.31799,
+    "raw_interaction_fraction": 7.88438,
+    "reason": "interaction is positive but larger than the source effect, so it is not a literal routed fraction",
+    "strength": "strong",
+    "to": [
+      41,
+      1
+    ]
+  },
+  "floor_circuit": [
+    "L41H1",
+    "L18H6"
+  ],
+  "floor_n_nodes": 2,
+  "headline_discovery_faith_resample": 1.40397,
+  "headline_heldout_faith_resample": 2.24676,
+  "induction_motif_present": false,
+  "knee_circuit": [
+    "L41H1",
+    "L40H0",
+    "L18H6",
+    "L40H3",
+    "L40H5",
+    "L38H1"
+  ],
+  "knee_minus_floor_faithfulness": 0.24103,
+  "knee_n_nodes": 6,
+  "mean_minus_resample_gap_discovery": -0.22009,
+  "meets_faithfulness_floor": true,
+  "minimality_worst_marginal": 0.00541,
+  "mlp_in_knee_circuit": [],
+  "mlp_positive_causal": [
+    {
+      "drop": 0.28177,
+      "node": "MLP16"
+    }
+  ],
+  "motif_core_def": "fallback: top-2 single-head-causal heads (no labeled motif core survived)",
+  "motif_core_heldout_faith_resample": 2.01362,
+  "n_discovery": 15,
+  "n_heldout": 5,
+  "n_rent_unpaid_nodes": 1,
+  "peak_faithfulness": 1.19909,
+  "resample_draws": 5,
+  "run_length_tokens": 8,
+  "scope": "heads_only",
+  "seed_capped": false,
+  "suppression_heads": [
+    {
+      "node": "L21H5",
+      "single_drop": -1.24036
+    },
+    {
+      "node": "L40H1",
+      "single_drop": -0.70482
+    },
+    {
+      "node": "L41H3",
+      "single_drop": -0.56927
+    },
+    {
+      "node": "L33H1",
+      "single_drop": -0.40456
+    },
+    {
+      "node": "L22H7",
+      "single_drop": -0.38555
+    },
+    {
+      "node": "L27H0",
+      "single_drop": -0.36784
+    },
+    {
+      "node": "L11H2",
+      "single_drop": -0.34772
+    },
+    {
+      "node": "L3H5",
+      "single_drop": -0.23249
+    },
+    {
+      "node": "L22H6",
+      "single_drop": -0.21758
+    },
+    {
+      "node": "L2H1",
+      "single_drop": -0.19082
+    },
+    {
+      "node": "L8H7",
+      "single_drop": -0.18372
+    },
+    {
+      "node": "L12H2",
+      "single_drop": -0.16576
+    }
+  ],
+  "verdict": "OVERFIT / OVER-RECOVERY",
+  "verdict_reason": "held-out resample faithfulness 2.25 > 1.25: the complement was suppressing the metric (brake removal), not a clean transferable circuit."
+}

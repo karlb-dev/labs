@@ -1,0 +1,56 @@
+{
+  "base_instruct_peak": {
+    "half_peak_last_depth": 30,
+    "n_depths": 31,
+    "peak_depth": 30,
+    "peak_value": 22.6701
+  },
+  "boundary_safe_peak": {
+    "half_peak_last_depth": 30,
+    "n_depths": 31,
+    "peak_depth": 30,
+    "peak_value": 15.3171
+  },
+  "chat_format_peak": {
+    "half_peak_last_depth": 30,
+    "n_depths": 31,
+    "peak_depth": 30,
+    "peak_value": 43.6004
+  },
+  "comparison_model_id": "HuggingFaceTB/SmolLM2-135M",
+  "erosion_has_external_result": false,
+  "forced_prefix_peak": {
+    "half_peak_last_depth": 30,
+    "n_depths": 248,
+    "peak_depth": 30,
+    "peak_value": 26.9358
+  },
+  "identity_comparison_smoke": false,
+  "lora_status_counts": {},
+  "model_id": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "modes": [
+    "safety_depth"
+  ],
+  "n_adapter_sources": 0,
+  "n_boundary_safe_rows": 62,
+  "n_chat_control_rows": 62,
+  "n_depth_disagreement_rows": 4,
+  "n_forced_prefix_rows": 1550,
+  "n_lora_layer_rows": 0,
+  "n_lora_matrix_rows": 0,
+  "n_lora_module_rows": 0,
+  "n_lora_phase_rows": 0,
+  "n_refusal_provenance_rows": 31,
+  "n_safety_divergence_rows": 310,
+  "n_safety_pairs": 2,
+  "n_safety_signal_rows": 31,
+  "n_training_depth_evidence_rows": 9,
+  "private_answer_key_access_verdict": "public_or_adapter_only",
+  "safety_data_fallback_is_science_data": true,
+  "safety_data_manifest_match": true,
+  "safety_data_path": "/content/labs/interpretability/data/safety_depth_boundary_pairs.csv",
+  "safety_data_sha256": "c7dac16bb2705540e572ca46934ccfaf1be11143063a06881bad8ef8f2166027",
+  "safety_data_source": "frozen_csv",
+  "safety_data_version": "v1_boundary_safe_pairs",
+  "wrapper_ablation_has_external_result": false
+}

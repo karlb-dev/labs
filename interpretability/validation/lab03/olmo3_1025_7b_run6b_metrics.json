@@ -1,0 +1,632 @@
+{
+  "attribution_ablation_stats": {
+    "by_head_rho": 0.37272727272727274,
+    "by_head_signal_n": 3,
+    "by_head_signal_rho": 0.4999999999999999,
+    "n_candidate_heads": 11,
+    "n_final_pos_pairs": 44,
+    "per_example_rho": 0.3872061082507563,
+    "per_example_signal_n": 6,
+    "per_example_signal_rho": 0.02857142857142857
+  },
+  "attribution_noise_floor": 0.1,
+  "baseline_repeat_prompt_successes": 12,
+  "baseline_repeat_prompt_total": 13,
+  "control_induction_violations": [
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 29,
+      "induction_score": 0.5977,
+      "layer": 6,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 24,
+      "induction_score": 0.4316,
+      "layer": 9,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 31,
+      "induction_score": 0.4473,
+      "layer": 9,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 28,
+      "induction_score": 0.5078,
+      "layer": 10,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 15,
+      "induction_score": 0.3633,
+      "layer": 12,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 27,
+      "induction_score": 0.4668,
+      "layer": 13,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 10,
+      "induction_score": 0.4707,
+      "layer": 14,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 3,
+      "induction_score": 0.6367,
+      "layer": 16,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 14,
+      "induction_score": 0.457,
+      "layer": 16,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 15,
+      "induction_score": 0.9609,
+      "layer": 16,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 31,
+      "induction_score": 0.8555,
+      "layer": 16,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 2,
+      "induction_score": 0.4746,
+      "layer": 17,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 4,
+      "induction_score": 0.6055,
+      "layer": 17,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 16,
+      "induction_score": 0.4316,
+      "layer": 17,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.5625,
+      "layer": 19,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 29,
+      "induction_score": 0.5625,
+      "layer": 20,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 18,
+      "induction_score": 0.7031,
+      "layer": 21,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 4,
+      "induction_score": 0.3906,
+      "layer": 25,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 0,
+      "induction_score": 0.4805,
+      "layer": 27,
+      "pattern_label": "induction"
+    },
+    {
+      "audit_note": "Control prompt produced an above-bar induction score; inspect tokens and repeats.",
+      "example_id": "ctrl_river",
+      "head": 11,
+      "induction_score": 0.8477,
+      "layer": 30,
+      "pattern_label": "induction"
+    }
+  ],
+  "label_counts": {
+    "diffuse": 30,
+    "first_token_sink": 636,
+    "induction": 12,
+    "other": 286,
+    "previous_token": 60
+  },
+  "n_ablations": 88,
+  "n_candidate_heads_ablated": 11,
+  "n_disagreement_cases": 848,
+  "n_dropped": 1,
+  "n_examples": 16,
+  "n_head_evidence_rows": 1024,
+  "natural_confirmations": [
+    {
+      "confirmation_ratio": 0.3918,
+      "confirmed": false,
+      "head": 4,
+      "layer": 14,
+      "natural_induction_score": 0.3246,
+      "synthetic_cycle_induction_score": 0.8285
+    },
+    {
+      "confirmation_ratio": 0.2328,
+      "confirmed": false,
+      "head": 5,
+      "layer": 7,
+      "natural_induction_score": 0.1771,
+      "synthetic_cycle_induction_score": 0.7609
+    },
+    {
+      "confirmation_ratio": 0.4087,
+      "confirmed": false,
+      "head": 18,
+      "layer": 19,
+      "natural_induction_score": 0.309,
+      "synthetic_cycle_induction_score": 0.7559
+    },
+    {
+      "confirmation_ratio": 0.6387,
+      "confirmed": true,
+      "head": 30,
+      "layer": 7,
+      "natural_induction_score": 0.4694,
+      "synthetic_cycle_induction_score": 0.7349
+    },
+    {
+      "confirmation_ratio": 0.6469,
+      "confirmed": true,
+      "head": 26,
+      "layer": 19,
+      "natural_induction_score": 0.4644,
+      "synthetic_cycle_induction_score": 0.7179
+    },
+    {
+      "confirmation_ratio": 0.461,
+      "confirmed": false,
+      "head": 24,
+      "layer": 12,
+      "natural_induction_score": 0.3261,
+      "synthetic_cycle_induction_score": 0.7075
+    },
+    {
+      "confirmation_ratio": 0.3163,
+      "confirmed": false,
+      "head": 19,
+      "layer": 13,
+      "natural_induction_score": 0.2095,
+      "synthetic_cycle_induction_score": 0.6624
+    },
+    {
+      "confirmation_ratio": 0.6627,
+      "confirmed": true,
+      "head": 26,
+      "layer": 3,
+      "natural_induction_score": 0.4091,
+      "synthetic_cycle_induction_score": 0.6173
+    },
+    {
+      "confirmation_ratio": 0.285,
+      "confirmed": false,
+      "head": 5,
+      "layer": 15,
+      "natural_induction_score": 0.1711,
+      "synthetic_cycle_induction_score": 0.6004
+    },
+    {
+      "confirmation_ratio": 0.2197,
+      "confirmed": false,
+      "head": 3,
+      "layer": 14,
+      "natural_induction_score": 0.1207,
+      "synthetic_cycle_induction_score": 0.5494
+    },
+    {
+      "confirmation_ratio": 0.1523,
+      "confirmed": false,
+      "head": 4,
+      "layer": 13,
+      "natural_induction_score": 0.0823,
+      "synthetic_cycle_induction_score": 0.5407
+    },
+    {
+      "confirmation_ratio": 0.1207,
+      "confirmed": false,
+      "head": 15,
+      "layer": 6,
+      "natural_induction_score": 0.0626,
+      "synthetic_cycle_induction_score": 0.5187
+    },
+    {
+      "confirmation_ratio": 0.2098,
+      "confirmed": false,
+      "head": 23,
+      "layer": 2,
+      "natural_induction_score": 0.1044,
+      "synthetic_cycle_induction_score": 0.4978
+    },
+    {
+      "confirmation_ratio": 0.24,
+      "confirmed": false,
+      "head": 13,
+      "layer": 7,
+      "natural_induction_score": 0.1171,
+      "synthetic_cycle_induction_score": 0.488
+    },
+    {
+      "confirmation_ratio": 0.1344,
+      "confirmed": false,
+      "head": 14,
+      "layer": 2,
+      "natural_induction_score": 0.0621,
+      "synthetic_cycle_induction_score": 0.4618
+    },
+    {
+      "confirmation_ratio": 0.239,
+      "confirmed": false,
+      "head": 4,
+      "layer": 11,
+      "natural_induction_score": 0.1076,
+      "synthetic_cycle_induction_score": 0.4503
+    },
+    {
+      "confirmation_ratio": 0.3869,
+      "confirmed": false,
+      "head": 26,
+      "layer": 7,
+      "natural_induction_score": 0.174,
+      "synthetic_cycle_induction_score": 0.4497
+    },
+    {
+      "confirmation_ratio": 0.2046,
+      "confirmed": false,
+      "head": 7,
+      "layer": 8,
+      "natural_induction_score": 0.0913,
+      "synthetic_cycle_induction_score": 0.4461
+    },
+    {
+      "confirmation_ratio": 0.1842,
+      "confirmed": false,
+      "head": 15,
+      "layer": 2,
+      "natural_induction_score": 0.0808,
+      "synthetic_cycle_induction_score": 0.4386
+    },
+    {
+      "confirmation_ratio": 0.0722,
+      "confirmed": false,
+      "head": 11,
+      "layer": 4,
+      "natural_induction_score": 0.0316,
+      "synthetic_cycle_induction_score": 0.4376
+    },
+    {
+      "confirmation_ratio": 0.03,
+      "confirmed": false,
+      "head": 17,
+      "layer": 2,
+      "natural_induction_score": 0.0131,
+      "synthetic_cycle_induction_score": 0.4367
+    },
+    {
+      "confirmation_ratio": 0.1404,
+      "confirmed": false,
+      "head": 7,
+      "layer": 7,
+      "natural_induction_score": 0.0604,
+      "synthetic_cycle_induction_score": 0.4304
+    },
+    {
+      "confirmation_ratio": 0.221,
+      "confirmed": false,
+      "head": 27,
+      "layer": 2,
+      "natural_induction_score": 0.0932,
+      "synthetic_cycle_induction_score": 0.4217
+    },
+    {
+      "confirmation_ratio": 0.6496,
+      "confirmed": true,
+      "head": 1,
+      "layer": 16,
+      "natural_induction_score": 0.2731,
+      "synthetic_cycle_induction_score": 0.4204
+    },
+    {
+      "confirmation_ratio": 0.2386,
+      "confirmed": false,
+      "head": 17,
+      "layer": 9,
+      "natural_induction_score": 0.0996,
+      "synthetic_cycle_induction_score": 0.4173
+    },
+    {
+      "confirmation_ratio": 0.1972,
+      "confirmed": false,
+      "head": 12,
+      "layer": 3,
+      "natural_induction_score": 0.0819,
+      "synthetic_cycle_induction_score": 0.4152
+    },
+    {
+      "confirmation_ratio": 0.124,
+      "confirmed": false,
+      "head": 28,
+      "layer": 6,
+      "natural_induction_score": 0.0514,
+      "synthetic_cycle_induction_score": 0.4147
+    },
+    {
+      "confirmation_ratio": 0.2314,
+      "confirmed": false,
+      "head": 19,
+      "layer": 8,
+      "natural_induction_score": 0.0959,
+      "synthetic_cycle_induction_score": 0.4147
+    },
+    {
+      "confirmation_ratio": 0.1678,
+      "confirmed": false,
+      "head": 15,
+      "layer": 4,
+      "natural_induction_score": 0.0691,
+      "synthetic_cycle_induction_score": 0.4118
+    },
+    {
+      "confirmation_ratio": 0.3705,
+      "confirmed": false,
+      "head": 7,
+      "layer": 23,
+      "natural_induction_score": 0.1521,
+      "synthetic_cycle_induction_score": 0.4106
+    },
+    {
+      "confirmation_ratio": 0.0777,
+      "confirmed": false,
+      "head": 20,
+      "layer": 9,
+      "natural_induction_score": 0.0319,
+      "synthetic_cycle_induction_score": 0.4101
+    },
+    {
+      "confirmation_ratio": 0.1908,
+      "confirmed": false,
+      "head": 26,
+      "layer": 13,
+      "natural_induction_score": 0.0768,
+      "synthetic_cycle_induction_score": 0.4028
+    },
+    {
+      "confirmation_ratio": 0.0278,
+      "confirmed": false,
+      "head": 2,
+      "layer": 1,
+      "natural_induction_score": 0.0111,
+      "synthetic_cycle_induction_score": 0.4012
+    },
+    {
+      "confirmation_ratio": 0.0704,
+      "confirmed": false,
+      "head": 23,
+      "layer": 1,
+      "natural_induction_score": 0.0281,
+      "synthetic_cycle_induction_score": 0.4
+    },
+    {
+      "confirmation_ratio": 0.2748,
+      "confirmed": false,
+      "head": 1,
+      "layer": 9,
+      "natural_induction_score": 0.1089,
+      "synthetic_cycle_induction_score": 0.3961
+    },
+    {
+      "confirmation_ratio": 0.189,
+      "confirmed": false,
+      "head": 0,
+      "layer": 12,
+      "natural_induction_score": 0.0749,
+      "synthetic_cycle_induction_score": 0.396
+    },
+    {
+      "confirmation_ratio": 0.1248,
+      "confirmed": false,
+      "head": 4,
+      "layer": 2,
+      "natural_induction_score": 0.0492,
+      "synthetic_cycle_induction_score": 0.394
+    },
+    {
+      "confirmation_ratio": 0.2052,
+      "confirmed": false,
+      "head": 0,
+      "layer": 13,
+      "natural_induction_score": 0.0801,
+      "synthetic_cycle_induction_score": 0.3903
+    },
+    {
+      "confirmation_ratio": 0.2896,
+      "confirmed": false,
+      "head": 5,
+      "layer": 16,
+      "natural_induction_score": 0.1126,
+      "synthetic_cycle_induction_score": 0.3889
+    },
+    {
+      "confirmation_ratio": 0.1918,
+      "confirmed": false,
+      "head": 11,
+      "layer": 5,
+      "natural_induction_score": 0.0744,
+      "synthetic_cycle_induction_score": 0.3879
+    },
+    {
+      "confirmation_ratio": 0.0003,
+      "confirmed": false,
+      "head": 15,
+      "layer": 1,
+      "natural_induction_score": 0.0001,
+      "synthetic_cycle_induction_score": 0.3877
+    },
+    {
+      "confirmation_ratio": 0.186,
+      "confirmed": false,
+      "head": 23,
+      "layer": 6,
+      "natural_induction_score": 0.0711,
+      "synthetic_cycle_induction_score": 0.3823
+    },
+    {
+      "confirmation_ratio": 0.2229,
+      "confirmed": false,
+      "head": 15,
+      "layer": 3,
+      "natural_induction_score": 0.0851,
+      "synthetic_cycle_induction_score": 0.382
+    },
+    {
+      "confirmation_ratio": 0.0215,
+      "confirmed": false,
+      "head": 19,
+      "layer": 12,
+      "natural_induction_score": 0.0082,
+      "synthetic_cycle_induction_score": 0.3805
+    },
+    {
+      "confirmation_ratio": 0.4279,
+      "confirmed": false,
+      "head": 7,
+      "layer": 1,
+      "natural_induction_score": 0.1607,
+      "synthetic_cycle_induction_score": 0.3756
+    },
+    {
+      "confirmation_ratio": 0.1541,
+      "confirmed": false,
+      "head": 13,
+      "layer": 1,
+      "natural_induction_score": 0.0565,
+      "synthetic_cycle_induction_score": 0.3667
+    },
+    {
+      "confirmation_ratio": 0.0245,
+      "confirmed": false,
+      "head": 27,
+      "layer": 12,
+      "natural_induction_score": 0.0089,
+      "synthetic_cycle_induction_score": 0.3635
+    },
+    {
+      "confirmation_ratio": 0.0469,
+      "confirmed": false,
+      "head": 22,
+      "layer": 10,
+      "natural_induction_score": 0.017,
+      "synthetic_cycle_induction_score": 0.3619
+    },
+    {
+      "confirmation_ratio": 0.2197,
+      "confirmed": false,
+      "head": 28,
+      "layer": 4,
+      "natural_induction_score": 0.0795,
+      "synthetic_cycle_induction_score": 0.3617
+    },
+    {
+      "confirmation_ratio": 0.7966,
+      "confirmed": true,
+      "head": 3,
+      "layer": 23,
+      "natural_induction_score": 0.2869,
+      "synthetic_cycle_induction_score": 0.3601
+    },
+    {
+      "confirmation_ratio": 0.0768,
+      "confirmed": false,
+      "head": 1,
+      "layer": 11,
+      "natural_induction_score": 0.0275,
+      "synthetic_cycle_induction_score": 0.3577
+    },
+    {
+      "confirmation_ratio": 0.1697,
+      "confirmed": false,
+      "head": 28,
+      "layer": 5,
+      "natural_induction_score": 0.0604,
+      "synthetic_cycle_induction_score": 0.3563
+    },
+    {
+      "confirmation_ratio": 0.2225,
+      "confirmed": false,
+      "head": 24,
+      "layer": 1,
+      "natural_induction_score": 0.0784,
+      "synthetic_cycle_induction_score": 0.3523
+    },
+    {
+      "confirmation_ratio": 0.0002,
+      "confirmed": false,
+      "head": 18,
+      "layer": 0,
+      "natural_induction_score": 0.0001,
+      "synthetic_cycle_induction_score": 0.3515
+    },
+    {
+      "confirmation_ratio": 0.1071,
+      "confirmed": false,
+      "head": 23,
+      "layer": 14,
+      "natural_induction_score": 0.0375,
+      "synthetic_cycle_induction_score": 0.3503
+    }
+  ]
+}

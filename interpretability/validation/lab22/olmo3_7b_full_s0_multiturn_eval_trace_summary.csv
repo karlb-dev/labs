@@ -1,0 +1,3 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,conversation,n_turns,first_projection,last_projection,projection_delta_last_minus_first,projection_slope_per_turn,allowed_claim
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,eval_framed_progression,3,1.305,1.0382,-0.2668,-0.1334,scripted trace only; not a deception or situational-awareness result
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,natural_progression,3,-0.1764,0.4551,0.6315,0.3157,scripted trace only; not a deception or situational-awareness result

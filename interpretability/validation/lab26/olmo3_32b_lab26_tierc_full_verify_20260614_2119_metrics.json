@@ -1,0 +1,134 @@
+{
+  "baseline_pass_rate_by_domain": {
+    "induction": 1.0,
+    "relation": 1.0
+  },
+  "data": {
+    "data_path": "/content/labs/interpretability/data/causal_abstraction_tasks.csv",
+    "data_sha256": "1037918625043ba90b3b2d6daa2b17ced1bd3f5477161c666a99fae9d8ff6545",
+    "data_source": "frozen_csv",
+    "domains_selected": {
+      "induction": 12,
+      "relation": 18
+    },
+    "max_examples": 0,
+    "n_rows_file": 30,
+    "n_rows_selected": 30,
+    "prompt_set": "full",
+    "science_ready_data": true,
+    "splits_selected": {
+      "eval": 17,
+      "train": 13
+    }
+  },
+  "lab_id": "L26",
+  "lab_name": "lab26_causal_abstraction",
+  "n_best_cells": 2,
+  "n_counterexamples": 32,
+  "n_interventions": 19500,
+  "n_summary_cells": 756,
+  "self_check_status": {
+    "donor_rows_missing_break": 0,
+    "donor_rows_missing_preserve": 0,
+    "noop_max_abs_delta": 0.1367,
+    "noop_max_score_error": 0.0207,
+    "noop_score_atol": 0.05,
+    "ok": true,
+    "tokenization_dropped": 0,
+    "tokenization_kept": 30
+  },
+  "spec_audit": [
+    {
+      "domain": "induction",
+      "hypothesis_id": "induction_copy_v1",
+      "n_high_level_variables": 2,
+      "n_low_level_sites": 2,
+      "n_resampling_rules": 2,
+      "ok": true,
+      "predicted_damage_when_broken_min": 0.25,
+      "predicted_preservation_min": 0.65,
+      "predicted_specificity_gap_min": 0.1,
+      "problems": "",
+      "sha256": "3e96f160e158c829e616fd0f17e267d15d494848e1685671487b31ef1d74b098",
+      "source": "json_file",
+      "spec_file": "specs/lab26_induction_hypothesis.json"
+    },
+    {
+      "domain": "relation",
+      "hypothesis_id": "relation_identity_v1",
+      "n_high_level_variables": 2,
+      "n_low_level_sites": 2,
+      "n_resampling_rules": 2,
+      "ok": true,
+      "predicted_damage_when_broken_min": 0.2,
+      "predicted_preservation_min": 0.55,
+      "predicted_specificity_gap_min": 0.1,
+      "problems": "",
+      "sha256": "ef58704f0904e3a860cdb81a8716e683ebe5aaf9e39bb435511c5b9f64c79c7c",
+      "source": "json_file",
+      "spec_file": "specs/lab26_relation_hypothesis.json"
+    }
+  ],
+  "verdicts": {
+    "induction_copy_v1": "supported_on_train_and_eval",
+    "relation_identity_v1": "train_supported_but_eval_failed_or_controls_leaked"
+  },
+  "warning_summary": [
+    {
+      "category": "data_source",
+      "count": 0,
+      "detail": "Frozen CSV data was used.",
+      "inspect": "diagnostics/data_manifest.json",
+      "severity": "info"
+    },
+    {
+      "category": "tokenization_dropped",
+      "count": 0,
+      "detail": "Rows dropped by single-token or position gates.",
+      "inspect": "diagnostics/tokenization_gate.csv",
+      "severity": "info"
+    },
+    {
+      "category": "tokenization_warnings",
+      "count": 0,
+      "detail": "Rows with corrected or suspicious token positions.",
+      "inspect": "diagnostics/tokenization_gate.csv",
+      "severity": "info"
+    },
+    {
+      "category": "donor_missing_preserve",
+      "count": 0,
+      "detail": "Items without preserving donors.",
+      "inspect": "diagnostics/donor_coverage.csv",
+      "severity": "info"
+    },
+    {
+      "category": "donor_missing_break",
+      "count": 0,
+      "detail": "Items without break-variable donors.",
+      "inspect": "diagnostics/donor_coverage.csv",
+      "severity": "info"
+    },
+    {
+      "category": "low_baseline_margin",
+      "count": 0,
+      "detail": "Rows at or below clean-margin gate 0.2.",
+      "inspect": "tables/baseline_behavior.csv",
+      "severity": "info"
+    },
+    {
+      "category": "intervention_errors",
+      "count": 0,
+      "detail": "Intervention cells skipped or errored, usually donor length or position mismatch.",
+      "inspect": "tables/resampling_interventions.csv",
+      "severity": "info"
+    },
+    {
+      "category": "tiny_condition_cells",
+      "count": 0,
+      "detail": "Selected/claimable condition cells with n<3; read CI and raw points before claiming stability.",
+      "inspect": "tables/figure_sources/selected_cell_condition_summary.csv",
+      "severity": "info"
+    }
+  ]
+}

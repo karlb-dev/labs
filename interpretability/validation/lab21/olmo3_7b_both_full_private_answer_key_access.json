@@ -1,0 +1,7 @@
+{
+  "n_private_or_legacy_sources": 0,
+  "n_public_or_direct_sources": 0,
+  "note": "This run did not discover private unsealed manifests. Behavior labels may be withheld.",
+  "private_unsealed_manifest_accessed": false,
+  "verdict": "public_or_adapter_only"
+}

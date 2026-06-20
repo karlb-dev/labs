@@ -1,0 +1,88 @@
+{
+  "audit_status": "identity_pair_passed_specificity_control",
+  "causal_marker_verdict": "skipped",
+  "causal_validation_status": {
+    "skipped": 1
+  },
+  "comparison_model_source": {
+    "source": "registry:compare_model_tier_a"
+  },
+  "d_model_a": 768,
+  "d_model_b": 768,
+  "depth_a": 8,
+  "depth_b": 8,
+  "eval_fvu_model_a": 0.6049,
+  "eval_fvu_model_b": 0.6049,
+  "fvu_model_a": 0.4053,
+  "fvu_model_b": 0.4053,
+  "identity_pair": true,
+  "identity_pair_asymmetric_share": 0.0,
+  "identity_pair_model_specific_share": 0.0,
+  "l1_weight": 0.0018,
+  "mean_pair_feature_density": 0.441,
+  "mean_side_feature_density_a": 0.4531,
+  "mean_side_feature_density_b": 0.4531,
+  "model_a": "EleutherAI/pythia-160m",
+  "model_a_revision": null,
+  "model_a_role": "model_a",
+  "model_b": "EleutherAI/pythia-160m",
+  "model_b_revision": null,
+  "model_b_role": "model_b",
+  "n_dev_prompts": 2,
+  "n_features": 48,
+  "n_gallery_rows": 144,
+  "n_prompts": 12,
+  "n_template_dominated_model_b_features": 0,
+  "n_test_prompts": 2,
+  "n_train_prompts": 8,
+  "prompt_inventory": {
+    "cap": 12,
+    "counts_by_family": {
+      "cautious_uncertainty_voice": 1,
+      "character_museum_guide": 2,
+      "concise_executive_register": 1,
+      "honest_disagreement": 1,
+      "humor_pun_wordplay": 1,
+      "socratic_teacher": 1,
+      "sycophancy_correct_belief_control": 1,
+      "sycophancy_neutral": 1,
+      "technical_register": 1,
+      "warm_supportive_voice": 2
+    },
+    "counts_by_source": {
+      "humor_incongruity_pairs.csv": 1,
+      "persona_register_pairs.csv": 9,
+      "sycophancy_pressure_items.csv": 2
+    },
+    "counts_by_variant": {
+      "compare_chat": 5,
+      "raw": 7
+    },
+    "custom_path": "",
+    "n_prompts": 12,
+    "prompt_inventory_sha256": "3ba4b0da3b605378b5bea0ac3f04f412d299e7dcf8fa9dc5fb617048f186152e",
+    "selection_rule": "stable mixed-family cap after prompt_group/variant/text dedupe",
+    "source_mode": "course_plus_builtin"
+  },
+  "random_baseline_control_kind": "matched_shared_direction",
+  "random_baseline_model_a_specific_rate": 0.0,
+  "random_baseline_model_a_specific_rate_independent": 0.0977,
+  "random_baseline_model_a_specific_rate_matched": 0.0,
+  "random_baseline_model_b_specific_rate": 0.0,
+  "random_baseline_model_b_specific_rate_independent": 0.082,
+  "random_baseline_model_b_specific_rate_matched": 0.0,
+  "report_split": "test",
+  "role_taxonomy_counts": {
+    "shared": 48
+  },
+  "same_d_model_shared_side_initialization": true,
+  "side_recon_weight": 0.35,
+  "stream_convention": "streams[k] is pre-norm residual after k blocks; steering at layer k writes into streams[k + 1].",
+  "taxonomy_counts": {
+    "shared": 48
+  },
+  "tier_a_note": "Identity-pair or tiny-model smoke runs prove plumbing, not science.",
+  "train_fvu_model_a": 0.0087,
+  "train_fvu_model_b": 0.0087,
+  "train_steps": 180
+}

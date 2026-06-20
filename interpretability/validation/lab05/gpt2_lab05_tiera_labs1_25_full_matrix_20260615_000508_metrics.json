@@ -1,0 +1,296 @@
+{
+  "component_summary": {
+    "attn_at_last": 0.0264,
+    "attn_at_subject": 0.0062,
+    "best_component_role": "mlp@subject",
+    "best_component_role_recovery": 0.0519,
+    "mlp_at_last": -0.0104,
+    "mlp_at_subject": 0.0519
+  },
+  "controls": {
+    "low_region_split_heldout": {
+      "mean_recovery": 0.1508,
+      "n": 1
+    },
+    "mismatched_pair": {
+      "mean_recovery": 0.5726,
+      "n": 6
+    },
+    "wrong_position": {
+      "mean_recovery": 0.9665,
+      "n": 6
+    }
+  },
+  "edit_enabled": false,
+  "edit_results": null,
+  "localization": {
+    "component_layers": [
+      6,
+      7,
+      8
+    ],
+    "handoff_stream_depth": 10,
+    "localized_stream_depths": [
+      7,
+      8,
+      9
+    ],
+    "note": "streams[k] is the residual stream after k blocks, patched as the input to block k. The component/edit layer paired with stream depth k is block k-1. Stream depth 0 is excluded from localization because subject patching there is token substitution.",
+    "peak_last_recovery": 0.9024,
+    "representative_component_layer": 6,
+    "representative_stream_depth": 7,
+    "subject_drop_threshold": 0.498,
+    "subject_peak_recovery": 0.996,
+    "subject_peak_stream_depth": 1,
+    "top_last_stream_depth": 11
+  },
+  "matched_top_patch_mean_recovery": 0.9621,
+  "n_candidate_facts": 6,
+  "n_facts_kept_base": 6,
+  "n_pairs_aligned_by_template": {
+    "base": 6,
+    "para_city": 6,
+    "para_in": 6
+  },
+  "n_pairs_kept_by_template": {
+    "base": 6,
+    "para_city": 6,
+    "para_in": 6
+  },
+  "n_pairs_rejected_alignment": 0,
+  "paraphrase_summary": [
+    {
+      "localized_band_mean_recovery": 0.9339,
+      "n_pairs": 6,
+      "representative_depth_mean_recovery": 0.9465,
+      "representative_stream_depth": 7,
+      "template": "para_city"
+    },
+    {
+      "localized_band_mean_recovery": 0.9276,
+      "n_pairs": 6,
+      "representative_depth_mean_recovery": 0.9626,
+      "representative_stream_depth": 7,
+      "template": "para_in"
+    }
+  ],
+  "patch_evidence_matrix": [
+    {
+      "clean_diff": 3.0126,
+      "clean_subject": "France",
+      "corrupt_diff": -3.6942,
+      "corrupt_subject": "Germany",
+      "denominator": 6.7067,
+      "distractor": "Berlin",
+      "fact_id": "france",
+      "last_peak_depth": 12,
+      "last_peak_recovery": 1.0,
+      "localized_band_mean_recovery": 0.9363,
+      "paraphrase_representative_mean_recovery": 0.9986,
+      "representative_depth": 7,
+      "representative_subject_recovery": 0.9626,
+      "specificity_gap_vs_strongest_control": -0.3007,
+      "strongest_control_recovery": 1.2633,
+      "subject_peak_depth": 0,
+      "subject_peak_recovery": 1.0,
+      "subject_to_last_peak_lag": 12,
+      "target": "Paris"
+    },
+    {
+      "clean_diff": 3.1985,
+      "clean_subject": "Germany",
+      "corrupt_diff": -4.8591,
+      "corrupt_subject": "Italy",
+      "denominator": 8.0576,
+      "distractor": "Rome",
+      "fact_id": "germany",
+      "last_peak_depth": 12,
+      "last_peak_recovery": 1.0,
+      "localized_band_mean_recovery": 0.9515,
+      "paraphrase_representative_mean_recovery": 0.9452,
+      "representative_depth": 7,
+      "representative_subject_recovery": 0.9848,
+      "specificity_gap_vs_strongest_control": 0.0034,
+      "strongest_control_recovery": 0.9814,
+      "subject_peak_depth": 0,
+      "subject_peak_recovery": 1.0,
+      "subject_to_last_peak_lag": 12,
+      "target": "Berlin"
+    },
+    {
+      "clean_diff": 4.7677,
+      "clean_subject": "Italy",
+      "corrupt_diff": -2.9054,
+      "corrupt_subject": "Spain",
+      "denominator": 7.6731,
+      "distractor": "Madrid",
+      "fact_id": "italy",
+      "last_peak_depth": 12,
+      "last_peak_recovery": 1.0,
+      "localized_band_mean_recovery": 1.0042,
+      "paraphrase_representative_mean_recovery": 0.97,
+      "representative_depth": 7,
+      "representative_subject_recovery": 1.0117,
+      "specificity_gap_vs_strongest_control": 0.1367,
+      "strongest_control_recovery": 0.875,
+      "subject_peak_depth": 6,
+      "subject_peak_recovery": 1.019,
+      "subject_to_last_peak_lag": 6,
+      "target": "Rome"
+    },
+    {
+      "clean_diff": 7.4026,
+      "clean_subject": "Spain",
+      "corrupt_diff": -7.4718,
+      "corrupt_subject": "Japan",
+      "denominator": 14.8744,
+      "distractor": "Tokyo",
+      "fact_id": "spain",
+      "last_peak_depth": 12,
+      "last_peak_recovery": 1.0,
+      "localized_band_mean_recovery": 0.8938,
+      "paraphrase_representative_mean_recovery": 1.0145,
+      "representative_depth": 7,
+      "representative_subject_recovery": 0.9326,
+      "specificity_gap_vs_strongest_control": 0.1978,
+      "strongest_control_recovery": 0.7348,
+      "subject_peak_depth": 0,
+      "subject_peak_recovery": 1.0,
+      "subject_to_last_peak_lag": 12,
+      "target": "Madrid"
+    },
+    {
+      "clean_diff": 4.4239,
+      "clean_subject": "Japan",
+      "corrupt_diff": -3.2078,
+      "corrupt_subject": "China",
+      "denominator": 7.6317,
+      "distractor": "Beijing",
+      "fact_id": "japan",
+      "last_peak_depth": 12,
+      "last_peak_recovery": 1.0,
+      "localized_band_mean_recovery": 0.8963,
+      "paraphrase_representative_mean_recovery": 0.8726,
+      "representative_depth": 7,
+      "representative_subject_recovery": 0.9297,
+      "specificity_gap_vs_strongest_control": 0.1909,
+      "strongest_control_recovery": 0.7388,
+      "subject_peak_depth": 0,
+      "subject_peak_recovery": 1.0,
+      "subject_to_last_peak_lag": 12,
+      "target": "Tokyo"
+    },
+    {
+      "clean_diff": 5.3603,
+      "clean_subject": "China",
+      "corrupt_diff": -5.8629,
+      "corrupt_subject": "France",
+      "denominator": 11.2232,
+      "distractor": "Paris",
+      "fact_id": "china",
+      "last_peak_depth": 12,
+      "last_peak_recovery": 1.0,
+      "localized_band_mean_recovery": 0.946,
+      "paraphrase_representative_mean_recovery": 0.9265,
+      "representative_depth": 7,
+      "representative_subject_recovery": 0.9513,
+      "specificity_gap_vs_strongest_control": -0.2651,
+      "strongest_control_recovery": 1.2164,
+      "subject_peak_depth": 0,
+      "subject_peak_recovery": 1.0,
+      "subject_to_last_peak_lag": 12,
+      "target": "Beijing"
+    }
+  ],
+  "role_peak_recovery": {
+    "last": {
+      "peak_recovery": 1.0,
+      "peak_stream_depth": 12
+    },
+    "pre_subject": {
+      "peak_recovery": 0.0,
+      "peak_stream_depth": 0
+    },
+    "subject": {
+      "peak_recovery": 1.0,
+      "peak_stream_depth": 0
+    }
+  },
+  "role_transition_summary": [
+    {
+      "first_depth_recovery_ge_0.25": "",
+      "first_depth_recovery_ge_0.50": "",
+      "first_depth_recovery_ge_0.75": "",
+      "first_post_peak_drop_below_subject_threshold": "",
+      "localized_band": "",
+      "peak_recovery": 0.0,
+      "peak_stream_depth": 0,
+      "role": "pre_subject",
+      "role_label": "pre-subject"
+    },
+    {
+      "first_depth_recovery_ge_0.25": 1,
+      "first_depth_recovery_ge_0.50": 1,
+      "first_depth_recovery_ge_0.75": 1,
+      "first_post_peak_drop_below_subject_threshold": 10,
+      "localized_band": "[7, 8, 9]",
+      "peak_recovery": 1.0,
+      "peak_stream_depth": 0,
+      "role": "subject",
+      "role_label": "subject"
+    },
+    {
+      "first_depth_recovery_ge_0.25": 10,
+      "first_depth_recovery_ge_0.50": 10,
+      "first_depth_recovery_ge_0.75": 11,
+      "first_post_peak_drop_below_subject_threshold": "",
+      "localized_band": "",
+      "peak_recovery": 1.0,
+      "peak_stream_depth": 12,
+      "role": "last",
+      "role_label": "last/readout"
+    }
+  ],
+  "specificity_summary": [
+    {
+      "condition": "matched_top_patch",
+      "gap_vs_matched_mean": 0.0,
+      "iqr_high": 0.9793,
+      "iqr_low": 0.9373,
+      "label": "matched top patch",
+      "mean_recovery": 0.9621,
+      "median_recovery": 0.9569,
+      "n": 6
+    },
+    {
+      "condition": "low_region_split_heldout",
+      "gap_vs_matched_mean": 0.8113,
+      "iqr_high": 0.1508,
+      "iqr_low": 0.1508,
+      "label": "split-heldout low region",
+      "mean_recovery": 0.1508,
+      "median_recovery": 0.1508,
+      "n": 1
+    },
+    {
+      "condition": "mismatched_pair",
+      "gap_vs_matched_mean": 0.3896,
+      "iqr_high": 0.6171,
+      "iqr_low": 0.4987,
+      "label": "mismatched pair",
+      "mean_recovery": 0.5726,
+      "median_recovery": 0.5596,
+      "n": 6
+    },
+    {
+      "condition": "wrong_position",
+      "gap_vs_matched_mean": -0.0043,
+      "iqr_high": 1.1576,
+      "iqr_low": 0.7699,
+      "label": "wrong position",
+      "mean_recovery": 0.9665,
+      "median_recovery": 0.9282,
+      "n": 6
+    }
+  ]
+}

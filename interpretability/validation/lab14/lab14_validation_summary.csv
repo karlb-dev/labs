@@ -1,0 +1,5 @@
+source_label,model_id,seed,n_items,verdict,best_certainty_depth,best_hedging_depth,certainty_eval_auc,certainty_random_auc,certainty_shuffled_auc,certainty_control_gap,mean_family_heldout_auc,mean_family_heldout_control_gap,hedging_eval_auc,distribution_answerability_auc,hedging_projection_answerability_auc,max_length_or_letter_baseline_auc,internal_distribution_corr,internal_verbal_corr,verbal_confidence_ece
+olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,0,80,usable_certainty_instrument,11,9,0.8889,0.5191,0.5147,0.3698,0.8282,0.2913,1.0000,0.5756,0.6556,0.6667,-0.1104,0.6943,0.4533
+olmo3_7b_full_s1,allenai/Olmo-3-7B-Instruct,1,80,answerability_decodes_but_confounds_compete,32,3,0.9556,0.5262,0.5262,0.4294,0.9781,0.3806,0.9933,0.6978,0.8356,0.6333,-0.5843,0.8083,0.5333
+olmo3_7b_full_s2,allenai/Olmo-3-7B-Instruct,2,80,usable_certainty_instrument,13,9,0.9200,0.5449,0.4640,0.3751,0.8781,0.3488,1.0000,0.7156,0.6444,0.6667,-0.4139,0.6929,0.4267
+smollm_full_s0,HuggingFaceTB/SmolLM2-135M-Instruct,0,80,usable_certainty_instrument,10,16,0.9200,0.5964,0.4942,0.3236,0.8563,0.2944,0.9244,0.4511,0.6178,0.6667,-0.0984,-0.5319,0.3167

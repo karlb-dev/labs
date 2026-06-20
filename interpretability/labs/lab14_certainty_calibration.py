@@ -395,6 +395,14 @@ def expected_manifest_hash(filename: str) -> tuple[str | None, str]:
     return None, "manifest_entry_missing"
 
 
+def split_group_key(item: CalibrationItem) -> str:
+    """Group matched variants so topic twins do not cross train/eval when possible."""
+
+    topic = item.topic or "no_topic"
+    fmt = item.answer_format or "fmt"
+    return f"{item.family}::{topic}::{fmt}"
+
+
 def select_items(raw: Sequence[CalibrationItem], cap_per_family: int, seed: int) -> list[CalibrationItem]:
     by_family: dict[str, list[CalibrationItem]] = defaultdict(list)
     for item in raw:
@@ -417,17 +425,39 @@ def select_items(raw: Sequence[CalibrationItem], cap_per_family: int, seed: int)
             continue
         if cap_per_family < 2:
             raise RuntimeError("Lab 14 needs at least two rows per family to keep both labels alive.")
-        grouped = {label: [item for item in rows if int(item.answerable) == label] for label in (0, 1)}
-        # Balance first; if cap is odd and there is room, fill deterministically.
-        target_each = max(1, cap_per_family // 2)
+
+        topic_groups: dict[str, list[CalibrationItem]] = defaultdict(list)
+        for item in rows:
+            topic_groups[split_group_key(item)].append(item)
+        balanced_groups = [
+            group for _, group in sorted(
+                topic_groups.items(),
+                key=lambda kv: stable_hash_int(f"{seed}:group:{kv[0]}"),
+            )
+            if {int(item.answerable) for item in group} == {0, 1}
+        ]
         taken: list[CalibrationItem] = []
-        for label in (0, 1):
-            taken.extend(grouped[label][:min(target_each, len(grouped[label]))])
-        leftovers = [item for item in rows if item.item_id not in {x.item_id for x in taken}]
-        for item in leftovers:
+        for group in balanced_groups:
+            if len(taken) + len(group) > cap_per_family and len(taken) >= 2:
+                continue
+            taken.extend(sorted(group, key=lambda x: (x.answerable, x.item_id)))
             if len(taken) >= cap_per_family:
                 break
-            taken.append(item)
+        if len(taken) > cap_per_family:
+            taken = taken[:cap_per_family]
+
+        if len(taken) < cap_per_family or {int(item.answerable) for item in taken} != {0, 1}:
+            grouped = {label: [item for item in rows if int(item.answerable) == label] for label in (0, 1)}
+            # Balance first; if cap is odd and there is room, fill deterministically.
+            target_each = max(1, cap_per_family // 2)
+            taken = []
+            for label in (0, 1):
+                taken.extend(grouped[label][:min(target_each, len(grouped[label]))])
+            leftovers = [item for item in rows if item.item_id not in {x.item_id for x in taken}]
+            for item in leftovers:
+                if len(taken) >= cap_per_family:
+                    break
+                taken.append(item)
         if {int(item.answerable) for item in taken} != {0, 1}:
             raise RuntimeError(f"Family {family!r} lost label balance under cap {cap_per_family}.")
         selected.extend(sorted(taken, key=lambda x: (x.family, x.answerable, x.item_id)))
@@ -709,14 +739,21 @@ def item_length_features(item: CalibrationItem, token_counts: Mapping[str, Mappi
     if token_counts and item.item_id in token_counts and "choice" in token_counts[item.item_id]:
         choice_n_tokens = token_counts[item.item_id]["choice"]
     option_lengths = {letter: len(item.option_text(letter)) for letter in LETTERS}
-    return {
+    marker_counts = {letter: count_unanswerable_markers(item.option_text(letter)) for letter in LETTERS}
+    out = {
         "question_n_chars": len(item.question),
         "option_total_n_chars": sum(option_lengths.values()),
         "option_d_n_chars": len(item.option_d),
         "option_d_unanswerable_markers": count_unanswerable_markers(item.option_d),
+        "option_any_unanswerable_markers": sum(marker_counts.values()),
         "answer_key_is_d": 1 if item.answer_key == "D" else 0,
         "choice_prompt_n_tokens": choice_n_tokens if choice_n_tokens is not None else "",
     }
+    for letter in LETTERS:
+        low = letter.lower()
+        out[f"option_{low}_n_chars"] = option_lengths[letter]
+        out[f"option_{low}_unanswerable_markers"] = marker_counts[letter]
+    return out
 
 
 def write_option_token_audit(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
@@ -789,30 +826,19 @@ def cache_choice_and_style(
 # ---------------------------------------------------------------------------
 
 
-def split_group_key(item: CalibrationItem) -> str:
-    """Group matched variants so topic twins do not cross train/eval when possible."""
-
-    topic = item.topic or "no_topic"
-    fmt = item.answer_format or "fmt"
-    return f"{item.family}::{topic}::{fmt}"
-
-
-def make_split(items: Sequence[CalibrationItem], seed: int) -> dict[str, bool]:
-    """Family- and label-stratified split, grouped by topic when possible."""
+def _old_stratified_split_for_family(rows: Sequence[CalibrationItem], seed: int) -> dict[str, bool]:
+    """Fallback for tiny/custom data that cannot be split by paired topics."""
 
     split: dict[str, bool] = {}
     family_label_rows: dict[tuple[str, int], list[CalibrationItem]] = defaultdict(list)
-    for item in items:
+    for item in rows:
         family_label_rows[(item.family, int(item.answerable))].append(item)
-
-    for (family, label), rows in family_label_rows.items():
+    for (family, label), label_rows in family_label_rows.items():
         grouped: dict[str, list[CalibrationItem]] = defaultdict(list)
-        for item in rows:
+        for item in label_rows:
             grouped[split_group_key(item)].append(item)
-        # If a tiny prompt set leaves only one group for a family/label, fall
-        # back to item-level splitting rather than making the eval set empty.
-        if len(grouped) < 2 and len(rows) > 1:
-            grouped = {item.item_id: [item] for item in rows}
+        if len(grouped) < 2 and len(label_rows) > 1:
+            grouped = {item.item_id: [item] for item in label_rows}
         ranked_keys = sorted(grouped, key=lambda key: stable_hash_int(f"{seed}:split:{family}:{label}:{key}"))
         n_train = int(round(TRAIN_FRACTION * len(ranked_keys)))
         if len(ranked_keys) > 1:
@@ -823,6 +849,41 @@ def make_split(items: Sequence[CalibrationItem], seed: int) -> dict[str, bool]:
         for key, key_rows in grouped.items():
             for item in key_rows:
                 split[item.item_id] = key in train_keys
+    return split
+
+
+def make_split(items: Sequence[CalibrationItem], seed: int) -> dict[str, bool]:
+    """Family-stratified split with matched topic groups held together."""
+
+    split: dict[str, bool] = {}
+    by_family: dict[str, list[CalibrationItem]] = defaultdict(list)
+    for item in items:
+        by_family[item.family].append(item)
+
+    for family, rows in by_family.items():
+        grouped: dict[str, list[CalibrationItem]] = defaultdict(list)
+        for item in rows:
+            grouped[split_group_key(item)].append(item)
+        ranked_keys = sorted(grouped, key=lambda key: stable_hash_int(f"{seed}:split:{family}:{key}"))
+        n_train = int(round(TRAIN_FRACTION * len(ranked_keys)))
+        if len(ranked_keys) > 1:
+            n_train = max(1, min(len(ranked_keys) - 1, n_train))
+        else:
+            n_train = 1
+        train_keys = set(ranked_keys[:n_train])
+        candidate = {
+            item.item_id: (key in train_keys)
+            for key, group_rows in grouped.items()
+            for item in group_rows
+        }
+
+        def labels_for(train: bool) -> set[int]:
+            return {int(item.answerable) for item in rows if bool(candidate[item.item_id]) == train}
+
+        if labels_for(True) == {0, 1} and labels_for(False) == {0, 1}:
+            split.update(candidate)
+        else:
+            split.update(_old_stratified_split_for_family(rows, seed))
     return split
 
 
@@ -1364,7 +1425,12 @@ def build_signal_rows(
             "question_n_chars": int(b.get("question_n_chars", 0)),
             "option_total_n_chars": int(b.get("option_total_n_chars", 0)),
             "option_d_unanswerable_markers": int(b.get("option_d_unanswerable_markers", 0)),
+            "option_any_unanswerable_markers": int(b.get("option_any_unanswerable_markers", 0)),
             "answer_key_is_d": int(b.get("answer_key_is_d", 0)),
+            **{
+                f"option_{letter.lower()}_unanswerable_markers": int(b.get(f"option_{letter.lower()}_unanswerable_markers", 0))
+                for letter in LETTERS
+            },
         })
 
     train_rows = [r for r in raw_rows if r["split"] == "train"]
@@ -1441,7 +1507,11 @@ def signal_predictiveness_rows(signal_rows: Sequence[Mapping[str, Any]]) -> list
         ("prompt_token_length", "choice_prompt_n_tokens", "LENGTH_CONTROL"),
         ("question_char_length", "question_n_chars", "LENGTH_CONTROL"),
         ("answer_key_is_D", "answer_key_is_d", "LETTER_CONTROL"),
+        ("option_A_unanswerable_markers", "option_a_unanswerable_markers", "TEXT_CONTROL"),
+        ("option_B_unanswerable_markers", "option_b_unanswerable_markers", "TEXT_CONTROL"),
+        ("option_C_unanswerable_markers", "option_c_unanswerable_markers", "TEXT_CONTROL"),
         ("option_D_unanswerable_markers", "option_d_unanswerable_markers", "TEXT_CONTROL"),
+        ("any_option_unanswerable_markers", "option_any_unanswerable_markers", "TEXT_CONTROL"),
     ]
     rows: list[dict[str, Any]] = []
     for signal_name, key, evidence_kind in signals:
@@ -1476,12 +1546,31 @@ def length_baseline_rows(items: Sequence[CalibrationItem], split: Mapping[str, b
             "option_total_n_chars": safe_float(b.get("option_total_n_chars")),
             "option_d_n_chars": safe_float(b.get("option_d_n_chars")),
             "option_d_unanswerable_markers": safe_float(b.get("option_d_unanswerable_markers")),
+            "option_any_unanswerable_markers": safe_float(b.get("option_any_unanswerable_markers")),
             "answer_key_is_d": safe_float(b.get("answer_key_is_d")),
+            **{
+                f"option_{letter.lower()}_n_chars": safe_float(b.get(f"option_{letter.lower()}_n_chars"))
+                for letter in LETTERS
+            },
+            **{
+                f"option_{letter.lower()}_unanswerable_markers": safe_float(b.get(f"option_{letter.lower()}_unanswerable_markers"))
+                for letter in LETTERS
+            },
         })
     train_rows = [r for r in base_rows if r["split"] == "train"]
     eval_rows = [r for r in base_rows if r["split"] == "eval"] or base_rows
     out: list[dict[str, Any]] = []
-    for key in ("choice_prompt_n_tokens", "question_n_chars", "option_total_n_chars", "option_d_n_chars", "option_d_unanswerable_markers", "answer_key_is_d"):
+    baseline_keys = [
+        "choice_prompt_n_tokens",
+        "question_n_chars",
+        "option_total_n_chars",
+        "answer_key_is_d",
+        "option_any_unanswerable_markers",
+    ]
+    for letter in LETTERS:
+        low = letter.lower()
+        baseline_keys.extend([f"option_{low}_n_chars", f"option_{low}_unanswerable_markers"])
+    for key in baseline_keys:
         for label_name, label_key in (("answerability", "answerable"), ("correctness", "correct")):
             result = signal_auc_from_rows(eval_rows, key, label_key, train_rows)
             out.append({
@@ -1771,7 +1860,11 @@ LAB14_GAUGE_LABELS = {
     "prompt_token_length": "prompt length",
     "question_char_length": "question length",
     "answer_key_is_D": "answer key is D",
+    "option_A_unanswerable_markers": "A-option says unknown",
+    "option_B_unanswerable_markers": "B-option says unknown",
+    "option_C_unanswerable_markers": "C-option says unknown",
     "option_D_unanswerable_markers": "D-option says unknown",
+    "any_option_unanswerable_markers": "any option says unknown",
 }
 
 LAB14_SIGNAL_ORDER = (
@@ -1783,7 +1876,11 @@ LAB14_SIGNAL_ORDER = (
     "prompt_token_length",
     "question_char_length",
     "answer_key_is_D",
+    "option_A_unanswerable_markers",
+    "option_B_unanswerable_markers",
+    "option_C_unanswerable_markers",
     "option_D_unanswerable_markers",
+    "any_option_unanswerable_markers",
 )
 
 LAB14_GAUGE_ORDER = ("internal_rank_confidence", "distribution_confidence", "verbal_confidence")
@@ -1956,7 +2053,14 @@ def build_visual_synthesis_tables(
             kind = "STYLE_CONTROL"
         elif signal in {"prompt_token_length", "question_char_length"}:
             kind = "LENGTH_CONTROL"
-        elif signal in {"answer_key_is_D", "option_D_unanswerable_markers"}:
+        elif signal in {
+            "answer_key_is_D",
+            "option_A_unanswerable_markers",
+            "option_B_unanswerable_markers",
+            "option_C_unanswerable_markers",
+            "option_D_unanswerable_markers",
+            "any_option_unanswerable_markers",
+        }:
             kind = "FORMAT_CONTROL"
         confound_warning = int(kind.endswith("CONTROL") or kind in {"STYLE_CONTROL", "LENGTH_CONTROL", "FORMAT_CONTROL"}) and safe_float(answer_auc, 0.5) >= 0.70
         posture = "candidate gauge"
@@ -2031,7 +2135,17 @@ def build_visual_synthesis_tables(
     confound_rows: list[dict[str, Any]] = []
     for row in signal_pred_rows:
         signal = str(row.get("signal"))
-        if signal in {"prompt_token_length", "question_char_length", "answer_key_is_D", "option_D_unanswerable_markers", "hedging_style_projection", "distribution_confidence"}:
+        if (
+            signal in {
+                "prompt_token_length",
+                "question_char_length",
+                "answer_key_is_D",
+                "hedging_style_projection",
+                "distribution_confidence",
+                "any_option_unanswerable_markers",
+            }
+            or signal.startswith("option_") and signal.endswith("_unanswerable_markers")
+        ):
             auc = safe_float(row.get("auc"))
             confound_rows.append({
                 "source": "signal_predictiveness",
@@ -2045,7 +2159,8 @@ def build_visual_synthesis_tables(
                 "n_neg": row.get("n_neg"),
                 "risk": "high" if auc >= 0.75 else "medium" if auc >= 0.65 else "low",
             })
-    # Preserve the direct length-baseline table as rows too; it is often the first place a D-option trap appears.
+    # Preserve the direct length-baseline table as rows too; it is often the
+    # first place an answer-letter or unknown-option-position shortcut appears.
     for row in length_rows:
         auc = safe_float(row.get("auc"))
         confound_rows.append({
@@ -2083,7 +2198,7 @@ def build_visual_synthesis_tables(
         {"plot": "calibration_gap_by_family.png", "concept": "Calibration gaps by family, so one family cannot hide inside an average.", "evidence_rung": "audit"},
         {"plot": "confidence_disagreement_matrix.png", "concept": "Where do the three gauges agree or disagree, and which cells are accurate?", "evidence_rung": "integration"},
         {"plot": "item_uncertainty_ribbons.png", "concept": "Per-item gauge ribbons sorted by internal confidence; the writeup examples should come from here.", "evidence_rung": "case audit"},
-        {"plot": "confound_audit.png", "concept": "Can length, option-D text, answer-key letter, entropy, or hedging explain answerability?", "evidence_rung": "control audit"},
+        {"plot": "confound_audit.png", "concept": "Can length, unknown-option position, answer-key letter, entropy, or hedging explain answerability?", "evidence_rung": "control audit"},
         {"plot": "verbal_confidence_audit.png", "concept": "Does the generated confidence label parse cleanly and track accuracy?", "evidence_rung": "SELF-REPORT audit"},
     ]
 
@@ -2103,7 +2218,7 @@ def write_visual_synthesis_tables(ctx: bench.RunContext, tables: Mapping[str, Se
         "certainty_evidence_matrix": "Candidate gauges and confounds aligned by answerability AUC, correctness AUC, calibration, and claim posture.",
         "family_signal_summary": "Family-level accuracy, answerability, gauge means, and calibration gaps.",
         "item_signal_ranks": "Eval items sorted by internal confidence with gauge values and disagreement risk buckets.",
-        "baseline_confound_audit": "Length, answer-letter, D-option, entropy, distribution, and hedging confound audit rows.",
+        "baseline_confound_audit": "Length, answer-letter, unknown-option-position, entropy, distribution, and hedging confound audit rows.",
         "gauge_disagreement_risk_summary": "Counts and accuracy for high-risk internal/distribution/verbal disagreement patterns.",
         "probe_depth_control_gaps": "Real, shuffled, random, and control-adjusted AUC at every depth for certainty and hedging probes.",
         "plot_reading_guide": "Map from Lab 14 plots to the concept and evidence rung each plot is meant to teach.",
@@ -2530,7 +2645,7 @@ def plot_confound_audit(ctx: bench.RunContext, confound_rows: Sequence[Mapping[s
     ax.set_xlim(0, 1.02)
     bench.style_ax(ax, "Answerability confound audit", "AUC predicting answerability", "", legend=True)
     fig.tight_layout()
-    bench.save_figure(ctx, fig, "confound_audit.png", "Length, answer-key, D-option, distribution, and hedging signals tested as answerability confounds.")
+    bench.save_figure(ctx, fig, "confound_audit.png", "Length, answer-key, unknown-option-position, distribution, and hedging signals tested as answerability confounds.")
 
 
 def plot_verbal_confidence_audit(
@@ -2675,8 +2790,8 @@ def infer_verdict(metrics: Mapping[str, Any]) -> str:
         # A "usable" instrument must clearly beat the trivial baselines (margin)
         # AND those baselines must not separate answerable/unanswerable well on
         # their own (absolute level). A near-tie -- e.g. probe 1.0 vs a 0.92
-        # length/D-key baseline -- means the split is itself trivially separable
-        # by surface features (the D-option/length trap the writeup warns about),
+        # length/key/unknown-position baseline -- means the split is itself trivially
+        # separable by surface features (the answer-frame trap the writeup warns about),
         # so the probe cannot be certified as reading certainty rather than the
         # answer frame. The old 0.03 margin let that case through; require a 0.10
         # margin and a sub-0.80 trivial baseline. A de-confounded dataset (keys
@@ -2719,7 +2834,7 @@ def write_certainty_instrument_card(ctx: bench.RunContext, metrics: Mapping[str,
         f"- mean family-held-out control gap: {metrics.get('mean_family_heldout_control_gap')}",
         f"- hedging projection answerability AUC: {metrics.get('hedging_projection_answerability_auc')}",
         f"- distribution-confidence answerability AUC: {metrics.get('distribution_answerability_auc')}",
-        f"- max length/prompt-text baseline answerability AUC: {metrics.get('max_length_or_letter_baseline_answerability_auc')}",
+        f"- max length/letter/answer-frame baseline answerability AUC: {metrics.get('max_length_or_letter_baseline_answerability_auc')}",
         f"- verbal confidence ECE: {metrics.get('verbal_confidence_ece')}",
         "",
         "## Read before reuse",
@@ -2757,7 +2872,7 @@ def write_operationalization_audit(ctx: bench.RunContext, metrics: Mapping[str, 
         "| Family or topic | `tables/family_heldout_generalization.csv` | Held-out AUC collapses or controls match the real direction. |",
         "| Hedging or politeness style | `tables/probe_report.csv`, `tables/signal_predictiveness.csv` | The confident-vs-hedged direction predicts answerability as well as the certainty direction. |",
         "| Entropy or option sharpness | `tables/answer_distribution_readout.csv`, `tables/signal_predictiveness.csv` | Distribution confidence explains the labels without the internal projection adding anything. |",
-        "| Length or formatting | `tables/length_and_letter_baselines.csv` | Prompt length, option length, or D-option wording predicts answerability competitively. |",
+        "| Length or formatting | `tables/length_and_letter_baselines.csv` | Prompt length, option length, answer letter, or unknown-option position predicts answerability competitively. |",
         "| Self-report fluency | `tables/verbal_confidence_reports.csv`, `tables/reliability_curve.csv` | The model emits confidence words that are formatted but not calibrated. |",
         "| Answer-letter metadata audit | `diagnostics/frozen_data_manifest.json`, `tables/length_and_letter_baselines.csv` | `answer_key_is_D` should be treated as label metadata, not a model-visible signal; if students rely on it, the claim is a frame artifact. |",
         "",
@@ -2846,7 +2961,7 @@ def build_metrics(
     )
     length_answerability = [
         safe_float(r["auc"]) for r in length_rows
-        if r["predicts"] == "answerability" and r.get("baseline") != "answer_key_is_d"
+        if r["predicts"] == "answerability"
     ]
 
     metrics = {

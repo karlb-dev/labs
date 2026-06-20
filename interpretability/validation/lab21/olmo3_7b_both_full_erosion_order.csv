@@ -1,0 +1,2 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,status,finetune_step,behavior_refusal_rate,direction_projection_gap,behavior_erodes_at_step,direction_erodes_at_step,evidence_rung,note
+lab21,olmo3_7b_both_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,planned_requires_benign_finetune_sweep,,,,,,planned,Import LAB21_EROSION_CSV after a tiny benign finetune sweep exists; report whether refusal behavior or refusal direction moves first.

@@ -1,0 +1,10 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,direction_a,direction_b,cosine,note
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,random,random,1.0,Random and shuffled directions should not align strongly with the real direction.
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,random,real,0.006897,Random and shuffled directions should not align strongly with the real direction.
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,random,shuffled,-0.015044,Random and shuffled directions should not align strongly with the real direction.
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,real,random,0.006897,Random and shuffled directions should not align strongly with the real direction.
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,real,real,1.0,Random and shuffled directions should not align strongly with the real direction.
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,real,shuffled,0.117641,Random and shuffled directions should not align strongly with the real direction.
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,shuffled,random,-0.015044,Random and shuffled directions should not align strongly with the real direction.
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,shuffled,real,0.117641,Random and shuffled directions should not align strongly with the real direction.
+lab22,olmo3_7b_full_s0,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,shuffled,shuffled,1.0,Random and shuffled directions should not align strongly with the real direction.

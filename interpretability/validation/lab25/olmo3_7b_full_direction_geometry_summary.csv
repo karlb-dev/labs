@@ -1,0 +1,9 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,target_concept,concept_family,nearest_direction,nearest_abs_cosine,nearest_signed_cosine,max_same_family_abs_cosine,max_other_family_abs_cosine,confound_risk,interpretation
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,calm,emotion,joy,0.5234,-0.5234,0.5234,0.4602,moderate_risk,nearby direction should be discussed
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,gardening_topic,topic,weather_topic,0.1915,-0.1915,0.1915,0.105,low_risk,direction geometry looks comparatively specific
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,joy,emotion,calm,0.5234,-0.5234,0.5234,0.2392,low_risk,direction geometry looks comparatively specific
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,plain_register,register,technical_register,0.7916,-0.7916,0.7916,0.2392,low_risk,direction geometry looks comparatively specific
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,playful_voice,voice,warm_supportive_voice,0.5236,-0.5236,0.5236,0.4602,moderate_risk,nearby direction should be discussed
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,technical_register,register,plain_register,0.7916,-0.7916,0.7916,0.132,low_risk,direction geometry looks comparatively specific
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,warm_supportive_voice,voice,playful_voice,0.5236,-0.5236,0.5236,0.2253,low_risk,direction geometry looks comparatively specific
+lab25,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,weather_topic,topic,gardening_topic,0.1915,-0.1915,0.1915,0.1487,low_risk,direction geometry looks comparatively specific
