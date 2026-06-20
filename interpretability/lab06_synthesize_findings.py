@@ -216,8 +216,12 @@ def synthesize(date: str, drive_root: str, repo_root: str) -> str:
         "brake-removal explanation (see each cell's brake-intact numbers in its card).",
         "3. **not-heads-only.** The heads_only-vs-heads_and_mlps contrast rows + `MLPs in knee` identify behaviors "
         "that are not representable as a heads-only routing graph (expected for recall).",
-        "4. **successor is a non-induction mechanism.** successor cells with no claimed prev→induction edge and "
+        "4. **successor is a non-induction mechanism.** successor cells with no claimed prev->induction edge and "
         "negative held-out resample are the worked negative.",
+        "5. **SWA long-context probe: deferred (documented, not faked).** Crossing Olmo-3's 4096-token sliding "
+        "window needs attention-pattern capture at >4k tokens, which is memory-infeasible under eager attention "
+        "(~343 GB for 64 layers x 40 heads at 4k). The prompt generator is in lab06 (`swa_prompts`); running it "
+        "requires an attention-capture-free, causal-only screen, left for a follow-up.",
         "",
         "## Negative / absent verdicts (each a successful result)",
         "",
