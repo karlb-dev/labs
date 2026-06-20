@@ -15,12 +15,12 @@
 - reconstruction FVU 0.0048, per-token L0 ≈ 74.57, 12.6% of features silent on the corpus
 - ranking overlap (max-activation vs frequency, top N): 0 — the two rankings surface largely different features (the disagreement is the lesson, not a bug)
 - of 11 labeled features, 2 survived validation and 8 were killed (token-feature / polysemantic / low-AUC). The killed count is required; a clean sheet is a warning.
-- targeted fair-shot search used train for discovery, dev for selection, and test for the selected
+- targeted final validation search used train for discovery, dev for selection, and test for the selected
   feature per family across 20 families; grades: killed=1, lexical_valid=7, narrowed=1, survived_strong=6, survived_weak=5
 
 ## 3. Transcoder (Part 2)
 
-- skipped by `--skip-transcoder` for the SAE fair-shot sweep.
+- skipped by `--skip-transcoder` for the SAE final validation sweep.
 
 ## 4. Bridges and causal extension
 

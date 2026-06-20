@@ -1,151 +1,151 @@
 lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,feature,family,phase,condition,control_feature,dose_mult,coef,n_prompts,total_keyword_hits,mean_keyword_hits,mean_probe_score,mean_distinct_ratio,sample
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,real,,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,real,,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1330,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1330,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,207,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,207,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1295,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1295,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1721,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1721,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,4083,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,4083,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,456,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,456,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1005,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1005,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,3941,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,3941,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1150,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1150,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,11013,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,11013,0.0,0.0,20,0,0.0,17.4229,0.8538,"Short Answer
 
 Expert verified
 A short paragraph about a situation not specified yet could be: ""In a bustling city, a young woman named Maya found herself lost"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,real,,0.5,2.0548,20,1,0.05,21.0273,0.862,Translate to French. Écrivez un paragraphe court sur une situation qui n'a pas été précisée.Question: What is the
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1330,0.5,2.0548,20,0,0.0,11.9448,0.7035,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,207,0.5,2.0548,20,0,0.0,15.8312,0.6194,"Write one short paragraph about a situation that has not been specified yet.
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,real,,0.5,2.0548,20,1,0.05,21.0273,0.862,Translate to French. Écrivez un paragraphe court sur une situation qui n'a pas été précisée.Question: What is the
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1330,0.5,2.0548,20,0,0.0,11.9448,0.7035,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,207,0.5,2.0548,20,0,0.0,15.8312,0.6194,"Write one short paragraph about a situation that has not been specified yet.
 
 Write one short paragraph about a situation that has not been specified yet.
 
 Write one short paragraph"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1295,0.5,2.0548,20,1,0.05,14.4236,0.6987,"Assignment 1: Short Paragraph
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1295,0.5,2.0548,20,1,0.05,14.4236,0.6987,"Assignment 1: Short Paragraph
 
 Write one short paragraph about a situation that has not been specified yet.
 
 Assignment 2: Short Paragraph
 
 Write one short paragraph"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1721,0.5,2.0548,20,0,0.0,16.3336,0.6807,"  • Thread starter jostpuur
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1721,0.5,2.0548,20,0,0.0,16.3336,0.6807,"  • Thread starter jostpuur
   • Start date
 In summary, the conversation discusses the concept of a ""short paragraph"" and its potential use"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,4083,0.5,2.0548,20,1,0.05,16.0998,0.7332,"Make sure to include the following:
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,4083,0.5,2.0548,20,1,0.05,16.0998,0.7332,"Make sure to include the following:
 - Use at least 3 different transition words
 - Use at least 3 different punctuation marks
 - Use at least "
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,456,0.5,2.0548,20,0,0.0,13.7736,0.6798,"  • 1. What is the situation?
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,456,0.5,2.0548,20,0,0.0,13.7736,0.6798,"  • 1. What is the situation?
   • 2. What is the main character's name?
   • 3. What is the main"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1005,0.5,2.0548,20,1,0.05,14.2592,0.7829,"  • Thread starter johncena
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1005,0.5,2.0548,20,1,0.05,14.2592,0.7829,"  • Thread starter johncena
   • Start date
 In summary, the conversation discusses the use of a specific formula to calculate the time it takes"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,3941,0.5,2.0548,20,0,0.0,16.8706,0.6554,"The situation I would like to discuss is the impact of climate change on global food security. As temperatures rise and weather patterns become more unpredictable, agricultural systems are increasingly"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1150,0.5,2.0548,20,1,0.05,13.1887,0.7563,"  • 1. What is the situation?
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,3941,0.5,2.0548,20,0,0.0,16.8706,0.6554,"The situation I would like to discuss is the impact of climate change on global food security. As temperatures rise and weather patterns become more unpredictable, agricultural systems are increasingly"
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1150,0.5,2.0548,20,1,0.05,13.1887,0.7563,"  • 1. What is the situation?
   • 2. What is the context?
   1. 1. What is the situation?
 "
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,11013,0.5,2.0548,20,0,0.0,17.3332,0.8868,"Okay, the user wants me to write a short paragraph about a situation that hasn't been specified. Let me start by understanding the request. They probably want a"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,real,,1.0,4.1096,20,2,0.1,11.8834,0.7609," in the future, the world will be a better place
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,11013,0.5,2.0548,20,0,0.0,17.3332,0.8868,"Okay, the user wants me to write a short paragraph about a situation that hasn't been specified. Let me start by understanding the request. They probably want a"
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,real,,1.0,4.1096,20,2,0.1,11.8834,0.7609," in the future, the world will be a better place
 
 Okay, the user wants me to write a short paragraph about a situation that hasn't been specified yet"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1330,1.0,4.1096,20,0,0.0,17.9352,0.6809," the paragraph should be about 100 words
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1330,1.0,4.1096,20,0,0.0,17.9352,0.6809," the paragraph should be about 100 words
 
 Okay, the user wants a short paragraph about a situation that hasn't been specified yet. Let me start by understanding"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,207,1.0,4.1096,20,2,0.1,8.99,0.8118,"Write one short paragraph about a situation that has not been specified yet.
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,207,1.0,4.1096,20,2,0.1,8.99,0.8118,"Write one short paragraph about a situation that has not been specified yet.
 
 1. The situation is that the person is trying to write a paragraph about a topic that"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1295,1.0,4.1096,20,1,0.05,12.9486,0.7666," a. The paragraph should be written in the first person, present tense.
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1295,1.0,4.1096,20,1,0.05,12.9486,0.7666," a. The paragraph should be written in the first person, present tense.
  b. The paragraph should be written in the third person, past tense.
  c."
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1721,1.0,4.1096,20,2,0.1,12.577,0.7677,"  • 1.   The   Situation   of   the   World
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1721,1.0,4.1096,20,2,0.1,12.577,0.7677,"  • 1.   The   Situation   of   the   World
 
     Asked by
    "
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,4083,1.0,4.1096,20,1,0.05,10.5143,0.7365," a. The paragraph should be about 100 words.
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,4083,1.0,4.1096,20,1,0.05,10.5143,0.7365," a. The paragraph should be about 100 words.
  b. The paragraph should be written in the third person.
  c. The paragraph should be written in the"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,456,1.0,4.1096,20,0,0.0,11.8675,0.7028," and one short paragraph about a situation that has been specified.
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,456,1.0,4.1096,20,0,0.0,11.8675,0.7028," and one short paragraph about a situation that has been specified.
 
 Okay, the user wants me to write two short paragraphs. The first one should be about a situation"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1005,1.0,4.1096,20,1,0.05,12.3142,0.663,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,3941,1.0,4.1096,20,0,0.0,8.3184,0.6913," a. The paragraph should be written in the first person. 
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1005,1.0,4.1096,20,1,0.05,12.3142,0.663,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,3941,1.0,4.1096,20,0,0.0,8.3184,0.6913," a. The paragraph should be written in the first person. 
  b. The paragraph should be written in the past tense. 
  c. The paragraph should be"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1150,1.0,4.1096,20,0,0.0,11.8398,0.6679,  • 1.  11.1.1.1 - 11.1.1.11 - 11.1
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,11013,1.0,4.1096,20,1,0.05,11.6457,0.8089, to be used in a story about a girl who is a member of a secret society that is dedicated to the preservation of the world's most beautiful and rare plants
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,real,,1.5,6.1644,20,3,0.15,14.3229,0.7772," ""The situation involves a complex ethical dilemma that requires careful consideration and analysis. It is a scenario that has not been disclosed, but it is a situation that has"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1330,1.5,6.1644,20,0,0.0,13.8829,0.6356," the paragraph should be about 100 words
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1150,1.0,4.1096,20,0,0.0,11.8398,0.6679,  • 1.  11.1.1.1 - 11.1.1.11 - 11.1
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,11013,1.0,4.1096,20,1,0.05,11.6457,0.8089, to be used in a story about a girl who is a member of a secret society that is dedicated to the preservation of the world's most beautiful and rare plants
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,real,,1.5,6.1644,20,3,0.15,14.3229,0.7772," ""The situation involves a complex ethical dilemma that requires careful consideration and analysis. It is a scenario that has not been disclosed, but it is a situation that has"
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1330,1.5,6.1644,20,0,0.0,13.8829,0.6356," the paragraph should be about 100 words
 
 Okay, the user wants a 100-word paragraph about a situation that hasn of been specified yet. Hmm, first"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,207,1.5,6.1644,20,1,0.05,12.9838,0.8188,"_The situation involves a group of friends planning a surprise birthday party for their friend's upcoming birthday. They decide to throw the party at a local park, where"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1295,1.5,6.1644,20,1,0.05,11.8332,0.6998," a. The paragraph should be written in the past tense.
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,207,1.5,6.1644,20,1,0.05,12.9838,0.8188,"_The situation involves a group of friends planning a surprise birthday party for their friend's upcoming birthday. They decide to throw the party at a local park, where"
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1295,1.5,6.1644,20,1,0.05,11.8332,0.6998," a. The paragraph should be written in the past tense.
  b. The paragraph should be written in the present tense.
  c. The paragraph should be written in"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1721,1.5,6.1644,20,0,0.0,9.7824,0.6578,"  • 1. What is the situation?
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1721,1.5,6.1644,20,0,0.0,9.7824,0.6578,"  • 1. What is the situation?
   • . What is the situation?
   2. 2. What is the situation?
  "
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,4083,1.5,6.1644,20,1,0.05,12.6142,0.7581, a. Write one short paragraph about a situation that has not been specified yet. b. Write one short paragraph about a situation that has not been specified yet.
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,456,1.5,6.1644,20,1,0.05,8.3317,0.7583," and one short paragraph about a situation that has been specified.
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,4083,1.5,6.1644,20,1,0.05,12.6142,0.7581, a. Write one short paragraph about a situation that has not been specified yet. b. Write one short paragraph about a situation that has not been specified yet.
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,456,1.5,6.1644,20,1,0.05,8.3317,0.7583," and one short paragraph about a situation that has been specified.
 
 Okay, the  user wants me to write two short paragraphs. The first one is about a situation"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1005,1.5,6.1644,20,1,0.05,11.6793,0.6386,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,3941,1.5,6.1644,20,0,0.0,9.9181,0.7067," the situation is that the user is a student and he is trying to find a job in the field of his study
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1005,1.5,6.1644,20,1,0.05,11.6793,0.6386,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,3941,1.5,6.1644,20,0,0.0,9.9181,0.7067," the situation is that the user is a student and he is trying to find a job in the field of his study
 
 Okay, the user is a student looking"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1150,1.5,6.1644,20,0,0.0,1.8045,0.8333,  1111111 1111111111111111111111
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,11013,1.5,6.1644,20,1,0.05,9.884,0.5963,", 1 answer below »
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1150,1.5,6.1644,20,0,0.0,1.8045,0.8333,  1111111 1111111111111111111111
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,11013,1.5,6.1644,20,1,0.05,9.884,0.5963,", 1 answer below »
 
   • 1 answer
   • 1 student found this answer next...
 
     The situation that has not been specified yet is"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,real,,2.0,8.2192,20,4,0.2,12.6021,0.7155,"Holding a pen in my hand, I can feel the weight of the responsibility that comes with it. The pen is a tool, a means to an end"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1330,2.0,8.2192,20,1,0.05,11.2539,0.6165," the paragraph should be about 100 words
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,real,,2.0,8.2192,20,4,0.2,12.6021,0.7155,"Holding a pen in my hand, I can feel the weight of the responsibility that comes with it. The pen is a tool, a means to an end"
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1330,2.0,8.2192,20,1,0.05,11.2539,0.6165," the paragraph should be about 100 words
 
 Okay, the user wants a short paragraph about a situation that hasn in been specified yet. Hmm, that's a"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,207,2.0,8.2192,20,1,0.05,12.7281,0.7213,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1295,2.0,8.2192,20,2,0.1,10.9789,0.6718,", but it should be a situation that has not been specified in the prompt. The paragraph should be written in the first person, and it should be written in"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1721,2.0,8.2192,20,0,0.0,4.3681,0.5308,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,4083,2.0,8.2192,20,0,0.0,12.7179,0.7847," for example: ""I am a software engineer with a passion for creating innovative solutions that make a positive impact on people's lives. I am currently working on a"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,456,2.0,8.2192,20,0,0.0,5.2276,0.7058," (1)  It should be clear what the paragraph is about.
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,207,2.0,8.2192,20,1,0.05,12.7281,0.7213,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1295,2.0,8.2192,20,2,0.1,10.9789,0.6718,", but it should be a situation that has not been specified in the prompt. The paragraph should be written in the first person, and it should be written in"
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1721,2.0,8.2192,20,0,0.0,4.3681,0.5308,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,4083,2.0,8.2192,20,0,0.0,12.7179,0.7847," for example: ""I am a software engineer with a passion for creating innovative solutions that make a positive impact on people's lives. I am currently working on a"
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,456,2.0,8.2192,20,0,0.0,5.2276,0.7058," (1)  It should be clear what the paragraph is about.
  (2)  It should not contain any of the words given as input.
  (3"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1005,2.0,8.2192,20,3,0.15,8.2391,0.5814,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,3941,2.0,8.2192,20,1,0.05,9.8889,0.7292, a. The situation is that the person is a student and is preparing for an exam. The person is studying hard and is feeling confident about the exam. The
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1150,2.0,8.2192,20,0,0.0,-1.3706,0.955,  111111111111111111111111111111
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,11013,2.0,8.2192,20,1,0.05,11.2583,0.6583,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,suppress,real,,-0.0,-0.0,20,40,2.0,36.8935,0.9171,"The IPO priced above the range and experienced a significant surge, popping twenty percent on its debut. This strong performance was a testament to the market's confidence in the"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,suppress,real,,-0.5,-2.0548,20,38,1.9,35.3624,0.906,"The IPO priced above the range and experienced a significant surge, popping twenty percent on its debut. This strong performance was a testament to the market's confidence in the"
-lab8,lab08_fairshot_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,suppress,real,,-1.0,-4.1096,20,33,1.65,35.0584,0.8532,"The IPO priced above the range and experienced a significant surge, achieving a twenty percent increase on its debut. This strong performance was a testament to the market's confidence"
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1005,2.0,8.2192,20,3,0.15,8.2391,0.5814,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,3941,2.0,8.2192,20,1,0.05,9.8889,0.7292, a. The situation is that the person is a student and is preparing for an exam. The person is studying hard and is feeling confident about the exam. The
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,1150,2.0,8.2192,20,0,0.0,-1.3706,0.955,  111111111111111111111111111111
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,clamp_on,matched_control,11013,2.0,8.2192,20,1,0.05,11.2583,0.6583,. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,suppress,real,,-0.0,-0.0,20,40,2.0,36.8935,0.9171,"The IPO priced above the range and experienced a significant surge, popping twenty percent on its debut. This strong performance was a testament to the market's confidence in the"
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,suppress,real,,-0.5,-2.0548,20,38,1.9,35.3624,0.906,"The IPO priced above the range and experienced a significant surge, popping twenty percent on its debut. This strong performance was a testament to the market's confidence in the"
+lab8,lab08_validation_olmo3_1025_7b_l16_v3_both_causal_s0,allenai/Olmo-3-1025-7B,,b,bfloat16,none,full,0,0,32,4096,7849,finance,suppress,real,,-1.0,-4.1096,20,33,1.65,35.0584,0.8532,"The IPO priced above the range and experienced a significant surge, achieving a twenty percent increase on its debut. This strong performance was a testament to the market's confidence"

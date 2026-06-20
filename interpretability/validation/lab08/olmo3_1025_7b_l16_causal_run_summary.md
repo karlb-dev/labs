@@ -2,8 +2,8 @@
 
 ## Run identity
 
-- model: `gpt2` (base model; SAE/transcoder are pretrained, pinned)
-- SAE layer 8, d_sae 24576; transcoder on gpt2
+- model: `allenai/Olmo-3-1025-7B` (base model; SAE/transcoder are pretrained, pinned)
+- SAE layer 16, d_sae 65536; transcoder on gpt2
 - evidence level: OBS/DECODE at the feature level, CAUSAL for the one clamped feature
 
 ## 1. Superposition, demonstrated (Part 0)
@@ -12,29 +12,30 @@
 
 ## 2. Feature atlas (Part 1)
 
-- reconstruction FVU 0.0019, per-token L0 ≈ 74.57, 24.8% of features silent on the corpus
-- ranking overlap (max-activation vs frequency, top N): 2 — the two rankings surface largely different features (the disagreement is the lesson, not a bug)
-- of 25 labeled features, 0 survived validation and 23 were killed (token-feature / polysemantic / low-AUC). The killed count is required; a clean sheet is a warning.
+- reconstruction FVU 0.3602, per-token L0 ≈ 113.49, 47.3% of features silent on the corpus
+- ranking overlap (max-activation vs frequency, top N): 1 — the two rankings surface largely different features (the disagreement is the lesson, not a bug)
+- of 30 labeled features, 3 survived validation and 18 were killed (token-feature / polysemantic / low-AUC). The killed count is required; a clean sheet is a warning.
+- targeted final validation search used train for discovery, dev for selection, and test for the selected
+  feature per family across 20 families; grades: killed=1, lexical_valid=5, narrowed=3, survived_strong=6, survived_weak=5
 
 ## 3. Transcoder (Part 2)
 
-- FVU 0.3943, per-token L0 70.65, mean splice-in KL 0.0056 (max 0.01)
-- a transcoder reconstructs the MLP's input→output map, so its features can be de-embedded and
-  wired into a circuit — which is why Lab 9's tracing is built on transcoders, not site SAEs.
+- skipped by `--skip-transcoder` for the SAE final validation sweep.
 
 ## 4. Bridges and causal extension
 
 - Lab 4 truth direction: no Lab 4 truth_direction.pt found
-- feature clamp (CAUSAL): feature 9303 ('code') 0→0 keyword hits at 0.0× peak vs random 0; causal=False
+- feature clamp (CAUSAL): feature 1265 ('law') 0→6 keyword hits at 1.5× peak vs random 0; causal=True
+- matched-control causal suite: feature 7849 ('finance') probe 17.4229→21.0273 at 0.5× peak; same-dose control max 17.3332; suppression 36.8935→35.0584; causal=True
 
 ## 5. Claims
 
-- `L08-C1` OBS: A sparse autoencoder at layer 8 of gpt2 reconstructs its activations at FVU 0.002 with ~74.57 active features per token out of 24576, and 6095 features stay silent on the 3832-token corpus — superposition made into a usable, sparse code.
+- `L08-C1` OBS: A sparse autoencoder at layer 16 of allenai/Olmo-3-1025-7B reconstructs its activations at FVU 0.360 with ~113.49 active features per token out of 65536, and 30986 features stay silent on the 45189-token corpus — superposition made into a usable, sparse code.
   - falsifier: FVU is no better than reconstructing from the same number of random directions, or L0≈d_sae (no sparsity).
-- `L08-C2` DECODE: SAE feature 14388 is labeled 'law' and the label NARROWED under validation: held-out AUC 0.77 against domain membership, and it separates the confusable pair 'law' vs 'medicine' at AUC 0.7378 (a concept feature, not a token feature). Of 25 labeled features, 0 survived and 23 were killed by the same battery.
+- `L08-C2` DECODE: SAE feature 922 is labeled 'dialogue' and the label SURVIVED under validation: held-out AUC 1.00 against domain membership. Of 30 labeled features, 3 survived and 18 were killed by the same battery.
   - falsifier: On a fresh corpus the held-out AUC collapses, or the label fires equally on the confusable domain — it tracked a token.
-- `L08-C3` OBS: A gpt2 MLP transcoder reconstructs the layer-8 MLP's input→output map at FVU 0.3943, and splicing its reconstruction in for the real MLP output shifts next-token logits by only KL 0.0056 on average — it reconstructs the computation, not just a snapshot, which is what Lab 9's circuit tracing needs.
-  - falsifier: Splice-in KL is large — the transcoder reconstructs the vector but breaks the downstream computation.
+- `L08-C3` CAUSAL: Clamping validated feature 1265 ('law') along its decoder direction at 1.5× its peak activation pushes generations toward law vocabulary (0→6 keyword hits) while staying fluent, where a random feature's direction reaches only 0 — the feature is causally sufficient to move the behavior, not just decodable. Past ~3× peak the clamp collapses generation into repetition (see the CSV).
+  - falsifier: The random-feature control matches the clamped feature — the effect was generic perturbation, not this feature.
 
 ## 6. The reading order
 
