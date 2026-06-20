@@ -1,0 +1,11 @@
+{
+  "base": "",
+  "n_adapter_sources": 0,
+  "privacy_note": "Private manifests are read only to locate adapters and behavior families. The lab does not emit triggers, private rubrics, or training examples.",
+  "requested": "",
+  "scanned": [],
+  "source": "none",
+  "sources": [],
+  "supports_legacy_organisms_layout": true,
+  "supports_revised_lab20_layout": true
+}

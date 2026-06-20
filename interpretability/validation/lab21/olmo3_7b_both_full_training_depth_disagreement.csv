@@ -1,0 +1,5 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,axis,depth_or_layer,value,half_peak_last_depth,source,evidence_rung,claim_boundary
+lab21,olmo3_7b_both_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,representational_base_vs_instruct,32,1.2409,32,summary_by_depth,ATTR/AUDIT,"model-pair divergence, not refusal mechanism"
+lab21,olmo3_7b_both_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,format_chat_template_control,32,1.2105,32,summary_by_depth,AUDIT,format/scaffold confound pressure
+lab21,olmo3_7b_both_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,representational_boundary_vs_safe,32,0.9881,32,summary_by_depth,ATTR/AUDIT,boundary semantics + safety state entangled
+lab21,olmo3_7b_both_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,behavioral_forced_prefix_recommitment,32,1.3475,32,summary_by_depth,AUDIT,"fixed transcripts, not sampled unsafe completions"

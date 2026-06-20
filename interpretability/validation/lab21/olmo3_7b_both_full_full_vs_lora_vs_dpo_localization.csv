@@ -1,0 +1,2 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,method,status,note
+lab21,olmo3_7b_both_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,lora,missing_adapter_weights,Full-finetune and DPO comparison rows require trained comparison checkpoints or LAB21_LOCALIZATION_COMPARISON_CSV.

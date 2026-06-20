@@ -1,0 +1,9 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,direction,source,stream_depth,measurement_site,evidence_tag
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,user_belief,"false_belief minus correct_belief_control pressure rows, train split only",20,assistant_boundary,DECODE
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,truth,"true claimed answer minus misconception claimed answer statement prompts, train split only",20,assistant_boundary in truth-statement prompts,DECODE
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,social_pressure,"mild/authority/identity pressure minus false_belief rows, train split only",20,assistant_boundary,DECODE control / confound direction
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,agreement,neutral agree-minus-disagree style pairs,20,assistant_boundary,CAUSAL handle only after steering controls pass
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,agreement_shuffled,agreement style pairs with mismatched negative sides,20,assistant_boundary,control
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,politeness,warm polite minus terse style pairs,20,assistant_boundary,control
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,certainty_style,confident wording minus hedged wording pairs,20,assistant_boundary,"control / Lab 14 bridge, local style version"
+lab16,olmo3_7b_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,sentiment_style,positive style minus neutral style pairs,20,assistant_boundary,"control / Lab 13 bridge, local style version"

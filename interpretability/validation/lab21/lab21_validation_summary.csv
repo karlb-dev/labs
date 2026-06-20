@@ -1,0 +1,4 @@
+source_label,model,comparison_model,modes,pairs,adapter_sources,lora_layer_rows,safety_divergence_rows,boundary_safe_rows,forced_prefix_rows,base_instruct_peak_depth,chat_format_peak_depth,boundary_safe_peak_depth,forced_prefix_peak_depth,verdict,read
+olmo3_7b_both_full,allenai/Olmo-3-7B-Instruct,allenai/Olmo-3-1025-7B,lora+safety_depth,24,0,0,3960,792,19800,32,32,32,32,safety-depth-audit-only,Primary final run; LoRA inputs are missing but the safety-depth audit is valid under the safety wall.
+olmo3_7b_full,allenai/Olmo-3-7B-Instruct,allenai/Olmo-3-1025-7B,safety_depth,24,0,0,3960,792,19800,32,32,32,32,safety-depth-audit-only,Safety-depth-only check; same Olmo safety-depth story without LoRA mode.
+smollm_smoke,HuggingFaceTB/SmolLM2-135M-Instruct,HuggingFaceTB/SmolLM2-135M,safety_depth,2,0,0,310,62,1550,30,30,30,30,safety-depth-audit-only,Tier-A smoke run; plumbing check only.

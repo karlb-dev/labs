@@ -1,0 +1,2 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,status,organism_id,blind_id,layer,condition,behavior_delta,recovery_score,evidence_rung,note
+lab21,olmo3_7b_both_full,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,skipped_no_adapter_inventory,,,,,,,planned,No LoRA adapter inventory was available.
