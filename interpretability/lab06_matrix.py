@@ -230,7 +230,7 @@ def main(argv=None) -> None:
 
     local_matrix = pathlib.Path(m.repo_root) / "runs" / matrix_name / model_slug
     drive_matrix = pathlib.Path(m.drive_root) / matrix_name / model_slug
-    repo_findings = pathlib.Path(m.repo_root) / "lab06_matrix" / date  # git-tracked text only
+    repo_findings = pathlib.Path(m.repo_root) / "lab06_matrix" / date / model_slug  # git-tracked text only, per model
 
     base = _base_args(m)
 
