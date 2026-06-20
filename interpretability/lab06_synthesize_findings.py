@@ -19,6 +19,9 @@ import pathlib
 VERDICT_ABBR = {
     "CIRCUIT CONFIRMED": "YES",
     "OVERFIT / NO CLEAN CIRCUIT": "OVERFIT",
+    "OVERFIT / NO TRANSFER": "OVERFIT(disc-only)",
+    "OVERFIT / FILLER (motif core insufficient)": "OVERFIT(filler)",
+    "OVERFIT / OVER-RECOVERY": "OVER-RECOVERY",
     "NOT HEADS-ONLY": "NOT-HO",
     "MECHANISM ABSENT": "ABSENT",
     "INSUFFICIENT PROMPTS": "INSUF",
@@ -31,8 +34,37 @@ BEHAVIOR_ORDER = [
 ]
 
 
+FLOOR = 0.70
+OVER = 1.25
+INDUCTION_FAMILY = ("induction_p3", "induction_p2", "successor", "swa")
+
+
 def _f(x, nd=2):
     return "—" if x is None else (f"{x:+.{nd}f}" if isinstance(x, (int, float)) else str(x))
+
+
+def recompute_verdict(c):
+    """Authoritative, over-recovery-aware verdict from stored numbers, so cells
+    run before the verdict logic was finalized are labelled consistently."""
+    if c.get("verdict") in ("INSUFFICIENT PROMPTS", "MIXED_PERIOD", "ERROR"):
+        return c["verdict"]
+    h = c.get("held_faith_resample")
+    m = c.get("motif_core_held_resample")
+    dr = c.get("disc_faith_resample")
+    dm = c.get("disc_faith_mean")
+    if h is None:
+        return "INSUFFICIENT PROMPTS"
+    if h > OVER:
+        return "OVERFIT / OVER-RECOVERY"
+    if FLOOR <= h <= OVER:
+        if m is not None and (m >= h - 0.15) and (FLOOR - 0.10 <= m <= OVER):
+            return "CIRCUIT CONFIRMED"
+        return "OVERFIT / FILLER (motif core insufficient)"
+    if (dr is not None and dr >= FLOOR) or (dm is not None and dm >= FLOOR):
+        return "OVERFIT / NO TRANSFER"
+    if c["behavior"] in INDUCTION_FAMILY and not c.get("induction_motif_present") and not c.get("edge_claimed"):
+        return "MECHANISM ABSENT"
+    return "OVERFIT / NO CLEAN CIRCUIT"
 
 
 def load_models(root: pathlib.Path):
@@ -60,6 +92,12 @@ def cell_for(cells, behavior, scope):
 def synthesize(date: str, drive_root: str, repo_root: str) -> str:
     matrix_root = pathlib.Path(drive_root) / f"lab06_matrix_{date}"
     models = load_models(matrix_root)
+    # Recompute every verdict with the final over-recovery-aware logic so cells
+    # run before that logic was finalized are labelled consistently.
+    for cells in models.values():
+        for c in cells:
+            c["verdict_recorded"] = c.get("verdict")
+            c["verdict"] = recompute_verdict(c)
     model_names = list(models.keys())
     short = {m: m.split("/")[-1] for m in model_names}
 

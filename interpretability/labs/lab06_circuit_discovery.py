@@ -59,6 +59,9 @@ MIN_POSITIVE = 8
 # Suppression heads (FIX 4): a head whose single-head ablation RAISES the
 # metric by more than this fraction of base is a brake / anti-circuit head.
 SUPPRESSION_REL_THRESHOLD = 0.05
+# A held-out faithfulness above this is over-recovery (the complement was
+# suppressing the metric), not a clean transferable circuit -- a NO, not a YES.
+OVER_RECOVERY_CEIL = 1.25
 # Resample / interchange ablation (FIX 2): default within-distribution draws.
 DEFAULT_RESAMPLE_DRAWS = 5
 
@@ -2222,16 +2225,27 @@ def _run_cell(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     def decide_verdict() -> tuple[str, str]:
         if not heldout or knee_held_res is None:
             return "INSUFFICIENT PROMPTS", "no baseline-positive held-out prompts available to test transfer"
+        # Over-recovery: a held-out faithfulness well above 1.0 is NOT a clean
+        # circuit -- resample-ablating the complement removed the model's own
+        # suppression/brake structure so the target-distractor gap grew past the
+        # full model. That is the >1.0 artifact (FIX 4), not a transferable
+        # subgraph. Treat it as a NO.
+        if knee_held_res > OVER_RECOVERY_CEIL:
+            return (
+                "OVERFIT / OVER-RECOVERY",
+                f"held-out resample faithfulness {knee_held_res:.2f} > {OVER_RECOVERY_CEIL:.2f}: the complement "
+                "was suppressing the metric (brake removal), not a clean transferable circuit.",
+            )
         comparable = (
             motif_held_res is not None
             and motif_held_res >= knee_held_res - 0.15
-            and motif_held_res >= FAITHFULNESS_FLOOR - 0.10
+            and FAITHFULNESS_FLOOR - 0.10 <= motif_held_res <= OVER_RECOVERY_CEIL
         )
-        if knee_held_res >= FAITHFULNESS_FLOOR and comparable:
+        if FAITHFULNESS_FLOOR <= knee_held_res <= OVER_RECOVERY_CEIL and comparable:
             return (
                 "CIRCUIT CONFIRMED",
-                f"knee held-out resample faithfulness {knee_held_res:.2f} >= {FAITHFULNESS_FLOOR:.2f}; "
-                f"motif-core-only transfers comparably ({motif_held_res:.2f}).",
+                f"knee held-out resample faithfulness {knee_held_res:.2f} in [{FAITHFULNESS_FLOOR:.2f}, "
+                f"{OVER_RECOVERY_CEIL:.2f}]; motif-core-only transfers comparably ({motif_held_res:.2f}).",
             )
         if knee_held_res >= FAITHFULNESS_FLOOR and not comparable:
             return (

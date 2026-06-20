@@ -12,8 +12,8 @@ Matrix `lab06_matrix_20260620`. One question per cell: does this model implement
 | induction_p3 | heads_and_mlps | **OVERFIT / NO CLEAN CIRCUIT** | +0.08 | +0.29 / +0.22 | -0.18 | 15/19 | -0.08 |
 | induction_p3 | heads_only | **OVERFIT / NO CLEAN CIRCUIT** | +0.36 | +0.17 / +0.28 | +0.62 | 2/2 | +0.12 |
 | ioi | heads_and_mlps | **INSUFFICIENT PROMPTS** | — | — / — | — | None/None | — |
-| recall | heads_and_mlps | **OVERFIT / NO CLEAN CIRCUIT** | +2.50 | +1.67 / +1.90 | +2.19 | 6/1 | +0.22 |
-| recall | heads_only | **CIRCUIT CONFIRMED** | +2.03 | +1.30 / +1.39 | +1.90 | 7/2 | +0.08 |
+| recall | heads_and_mlps | **OVERFIT / OVER-RECOVERY** | +1.90 | +1.13 / +1.25 | +1.51 | 6/1 | +0.12 |
+| recall | heads_only | **OVERFIT / OVER-RECOVERY** | +2.25 | +1.40 / +1.18 | +2.01 | 6/2 | -0.22 |
 | successor | heads_and_mlps | **INSUFFICIENT PROMPTS** | — | — / — | — | None/None | — |
 | taskvec | heads_and_mlps | **INSUFFICIENT PROMPTS** | — | — / — | — | None/None | — |
 
@@ -79,25 +79,25 @@ Matrix `lab06_matrix_20260620`. One question per cell: does this model implement
 - suppression heads: 0; positive-causal MLPs: 0; MLPs in knee: none.
 - edge: none claimed.
 
-### recall (heads_and_mlps) — OVERFIT / NO CLEAN CIRCUIT
+### recall (heads_and_mlps) — OVERFIT / OVER-RECOVERY
 
-- knee transfers (2.50) but the motif core alone does not (2.18715); the extra heads are filler, not mechanism.
-- base metric +3.61; n_discovery 12, n_heldout 4.
-- knee 6 nodes; floor 1 nodes; knee−floor gap +0.17.
-- faithfulness — discovery: resample +1.67, mean +1.90; held-out: resample +2.50, mean +1.78.
-- motif-core held-out (resample) +2.19; induction motif present: False.
-- suppression heads: 7; positive-causal MLPs: 13; MLPs in knee: MLP15, MLP14.
-- edge: L1H3 -> L41H1.
+- held-out resample faithfulness 1.90 > 1.25: the complement was suppressing the metric (brake removal), not a clean transferable circuit.
+- base metric +3.19; n_discovery 15, n_heldout 5.
+- knee 6 nodes; floor 1 nodes; knee−floor gap +0.24.
+- faithfulness — discovery: resample +1.13, mean +1.25; held-out: resample +1.90, mean +1.05.
+- motif-core held-out (resample) +1.51; induction motif present: False.
+- suppression heads: 12; positive-causal MLPs: 8; MLPs in knee: MLP15, MLP16, MLP18.
+- edge: none claimed.
 
-### recall (heads_only) — CIRCUIT CONFIRMED
+### recall (heads_only) — OVERFIT / OVER-RECOVERY
 
-- knee held-out resample faithfulness 2.03 >= 0.70; motif-core-only transfers comparably (1.90).
-- base metric +3.61; n_discovery 12, n_heldout 4.
-- knee 7 nodes; floor 2 nodes; knee−floor gap +0.35.
-- faithfulness — discovery: resample +1.30, mean +1.39; held-out: resample +2.03, mean +2.16.
-- motif-core held-out (resample) +1.90; induction motif present: False.
-- suppression heads: 7; positive-causal MLPs: 3; MLPs in knee: none.
-- edge: L1H3 -> L41H1.
+- held-out resample faithfulness 2.25 > 1.25: the complement was suppressing the metric (brake removal), not a clean transferable circuit.
+- base metric +3.19; n_discovery 15, n_heldout 5.
+- knee 6 nodes; floor 2 nodes; knee−floor gap +0.24.
+- faithfulness — discovery: resample +1.40, mean +1.18; held-out: resample +2.25, mean +2.17.
+- motif-core held-out (resample) +2.01; induction motif present: False.
+- suppression heads: 12; positive-causal MLPs: 1; MLPs in knee: none.
+- edge: none claimed.
 
 ### successor (heads_and_mlps) — INSUFFICIENT PROMPTS
 
@@ -127,7 +127,6 @@ Matrix `lab06_matrix_20260620`. One question per cell: does this model implement
 - `induction_p3/heads_and_mlps`: OVERFIT / NO CLEAN CIRCUIT — no transferable subgraph: knee held-out resample 0.08 < 0.70.
 - `induction_p3/heads_only`: OVERFIT / NO CLEAN CIRCUIT — no transferable subgraph: knee held-out resample 0.36 < 0.70.
 - `ioi/heads_and_mlps`: INSUFFICIENT PROMPTS — only 0 baseline-positive discovery prompts survive at run length 13 (need >= 8); see prompt_hygiene_report.md. Refusing to produce a tiny-n card.
-- `recall/heads_and_mlps`: OVERFIT / NO CLEAN CIRCUIT — knee transfers (2.50) but the motif core alone does not (2.18715); the extra heads are filler, not mechanism.
 - `successor/heads_and_mlps`: INSUFFICIENT PROMPTS — only 5 baseline-positive discovery prompts survive at run length 8 (need >= 8); see prompt_hygiene_report.md. Refusing to produce a tiny-n card.
 - `taskvec/heads_and_mlps`: INSUFFICIENT PROMPTS — only 0 baseline-positive discovery prompts survive at run length 9 (need >= 8); see prompt_hygiene_report.md. Refusing to produce a tiny-n card.
 
