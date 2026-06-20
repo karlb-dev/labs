@@ -311,23 +311,33 @@ def _recall_prompts(rows: Sequence[tuple[str, str, str, str]]) -> list[CircuitPr
     ]
 
 
+# Nouns chosen to be single-token on the course tokenizers so >=8 land at one
+# run length (the earlier sparrow/poodle/beagle/birch/terrier/willow set split
+# into length 8 vs 9 and starved the gate even though the model knew every
+# answer with a +4..+11 logit gap). The hygiene gate still itemizes any that
+# remain multi-token on a given model.
 _RECALL_ROWS = [
-    ("rc_1", "discovery", "sparrow", "bird", "fish"),
-    ("rc_2", "discovery", "salmon", "fish", "bird"),
-    ("rc_3", "discovery", "maple", "tree", "fish"),
-    ("rc_4", "discovery", "poodle", "dog", "tree"),
-    ("rc_5", "discovery", "eagle", "bird", "fish"),
-    ("rc_6", "discovery", "tuna", "fish", "tree"),
-    ("rc_7", "discovery", "oak", "tree", "dog"),
-    ("rc_8", "discovery", "beagle", "dog", "bird"),
-    ("rc_9", "discovery", "hawk", "bird", "dog"),
-    ("rc_10", "discovery", "shark", "fish", "tree"),
-    ("rc_11", "discovery", "birch", "tree", "fish"),
-    ("rc_12", "discovery", "terrier", "dog", "bird"),
-    ("rc_h1", "heldout", "trout", "fish", "tree"),
-    ("rc_h2", "heldout", "robin", "bird", "dog"),
-    ("rc_h3", "heldout", "willow", "tree", "fish"),
-    ("rc_h4", "heldout", "boxer", "dog", "bird"),
+    ("rc_salmon", "discovery", "salmon", "fish", "bird"),
+    ("rc_maple", "discovery", "maple", "tree", "fish"),
+    ("rc_eagle", "discovery", "eagle", "bird", "fish"),
+    ("rc_tuna", "discovery", "tuna", "fish", "tree"),
+    ("rc_oak", "discovery", "oak", "tree", "dog"),
+    ("rc_hawk", "discovery", "hawk", "bird", "dog"),
+    ("rc_shark", "discovery", "shark", "fish", "tree"),
+    ("rc_owl", "discovery", "owl", "bird", "fish"),
+    ("rc_crow", "discovery", "crow", "bird", "tree"),
+    ("rc_cod", "discovery", "cod", "fish", "bird"),
+    ("rc_carp", "discovery", "carp", "fish", "tree"),
+    ("rc_elm", "discovery", "elm", "tree", "fish"),
+    ("rc_ash", "discovery", "ash", "tree", "bird"),
+    ("rc_pine", "discovery", "pine", "tree", "dog"),
+    ("rc_pug", "discovery", "pug", "dog", "bird"),
+    ("rc_hound", "discovery", "hound", "dog", "fish"),
+    ("rc_h_trout", "heldout", "trout", "fish", "tree"),
+    ("rc_h_robin", "heldout", "robin", "bird", "dog"),
+    ("rc_h_boxer", "heldout", "boxer", "dog", "bird"),
+    ("rc_h_dove", "heldout", "dove", "bird", "fish"),
+    ("rc_h_bass", "heldout", "bass", "fish", "tree"),
 ]
 
 
