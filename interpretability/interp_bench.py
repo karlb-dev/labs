@@ -5777,6 +5777,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="Lab 8: CSV corpus path; relative paths resolve under the interpretability root.")
     parser.add_argument("--feature-search", default="blind", choices=("blind", "targeted", "both"),
                         help="Lab 8: feature search mode. Targeted/both are used by the fair-shot extension.")
+    parser.add_argument("--causal-suite", action="store_true",
+                        help="Lab 8: run the slower matched-control causal suite for the best validated feature.")
+    parser.add_argument("--causal-controls", type=int, default=10,
+                        help="Lab 8: matched random controls for --causal-suite.")
+    parser.add_argument("--causal-prompts", type=int, default=20,
+                        help="Lab 8: neutral and positive prompts used by --causal-suite.")
     parser.add_argument("--graph-nodes", type=int, default=0,
                         help="Lab 9: feature-node budget for the attribution graph "
                              "(0 = tier default; also the number of backward passes).")

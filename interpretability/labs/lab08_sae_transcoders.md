@@ -201,6 +201,15 @@ The upgraded `plots/clamp_operating_window.png` puts concept hits and fluency
 side by side, because the best dose is not the biggest dose. Read the `sample`
 column at each dose — the numbers alone do not tell the story.
 
+For fair-shot runs, add `--causal-suite` after targeted search. This slower
+suite uses 20 neutral prompts, 10 decoder-norm/fire/peak-matched controls,
+positive-domain suppression prompts, keyword hits, distinct-ratio fluency, and
+a tiny one-vs-rest lexical probe trained on the corpus. It writes
+`tables/causal_feature_tests.csv`, `causal_feature_tests_summary.json`,
+`plots/causal_operating_window.png`, and `causal_feature_card.md`. A causal
+claim requires the real feature to beat same-dose matched controls before
+fluency collapse and for suppression to reduce the feature's own family score.
+
 ## The conventions are validated, not assumed
 
 The single fastest way to get a wrong answer here is a wrong loading
@@ -239,7 +248,8 @@ python interp_bench.py --lab lab8 --tier a \
   --skip-transcoder \
   --corpus-path data/sae_feature_corpus_v3.csv \
   --feature-search both \
-  --atlas-budget 25
+  --atlas-budget 25 \
+  --causal-suite
 ```
 
 Useful sweep flags include `--sae-id`, `--sae-repo`, `--sae-subdir`,
@@ -302,7 +312,11 @@ force the distinctions.
     `tables/feature_clamp.csv`, and `tables/clamp_operating_points.csv` — the single CAUSAL row. **Read the `sample`
     generations** at each dose (not just the hit count). The window is narrow;
     the random control and distinct-ratio column are part of the claim.
-13. `tables/plot_reading_guide.csv` — a compact map from plot to concept if you
+13. If `--causal-suite` was used: `tables/causal_feature_tests.csv`,
+    `causal_feature_tests_summary.json`, `plots/causal_operating_window.png`,
+    and `causal_feature_card.md` — matched controls plus suppression. This is
+    the stronger causal evidence packet.
+14. `tables/plot_reading_guide.csv` — a compact map from plot to concept if you
     are writing the run summary or claim ledger.
 
 ## Writeup questions

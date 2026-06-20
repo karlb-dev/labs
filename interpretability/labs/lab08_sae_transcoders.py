@@ -162,6 +162,28 @@ DOMAIN_KEYWORDS = {
                 "history", "battle", "emperor", "dynasty", "medieval", "conquest", "kingdom", "civilization"],
 }
 CLAMP_PROMPTS = ["Here is a short paragraph.\n\n", "Let me tell you a story. ", "Today I want to talk about "]
+CAUSAL_NEUTRAL_PROMPTS = [
+    "Write one short paragraph about a situation that has not been specified yet.\n\n",
+    "Here is a neutral opening sentence. Continue it with concrete details:\n\n",
+    "A person looked at the notes on the desk and began to explain.\n\n",
+    "The report was brief, factual, and open-ended:\n\n",
+    "Continue this passage without using a list:\n\n",
+    "The meeting started with a simple observation.\n\n",
+    "In a plain paragraph, describe what happened next.\n\n",
+    "The room was quiet while the speaker chose the next topic.\n\n",
+    "A short memo began with the following sentence:\n\n",
+    "The example was intentionally ordinary and unspecialized.\n\n",
+    "Someone asked for a concise explanation.\n\n",
+    "The document opened with a general statement.\n\n",
+    "A narrator described the scene in neutral terms.\n\n",
+    "The first draft avoided naming any specific field.\n\n",
+    "The paragraph continued with a practical detail.\n\n",
+    "The speaker wrote a few careful sentences.\n\n",
+    "The note did not yet have a topic, but it needed one.\n\n",
+    "A generic example can be completed in many ways.\n\n",
+    "The next sentence made the idea more specific.\n\n",
+    "Continue with a sober, factual paragraph.\n\n",
+]
 
 SEMANTIC_FAMILIES = {
     "chemistry", "cooking", "sports", "finance", "law",
@@ -1079,6 +1101,277 @@ def clamp_feature_steering(bundle, sae, corpus, feature: int, label: str, peak_a
             "random_max_hits": rand_top,
             "causal": best["domain_keyword_hits"] > base["domain_keyword_hits"]
             and best["domain_keyword_hits"] > rand_top}
+
+
+def text_terms(text: str) -> list[str]:
+    import re
+
+    return re.findall(r"[a-zA-Z_][a-zA-Z0-9_]+|[0-9]+(?:\.[0-9]+)?|https?://|@|/|\\\\|§", text.lower())
+
+
+def keywords_for_family(corpus: list[dict[str, str]], family: str) -> list[str]:
+    if family in DOMAIN_KEYWORDS:
+        return DOMAIN_KEYWORDS[family]
+    markers: list[str] = []
+    for row in corpus:
+        if family_of(row) == family:
+            markers.extend(str(row.get("lexical_markers", "")).split(";"))
+    out = []
+    seen = set()
+    for marker in markers:
+        marker = marker.strip().lower()
+        if marker and marker not in seen:
+            out.append(marker)
+            seen.add(marker)
+    return out[:24]
+
+
+def train_family_probe(corpus: list[dict[str, str]], family: str):
+    """Tiny one-vs-rest lexical probe trained on the frozen corpus."""
+    pos_counts: Counter[str] = Counter()
+    neg_counts: Counter[str] = Counter()
+    n_pos = n_neg = 0
+    for row in corpus:
+        terms = text_terms(row["text"])
+        if family_of(row) == family:
+            pos_counts.update(terms)
+            n_pos += 1
+        else:
+            neg_counts.update(terms)
+            n_neg += 1
+    vocab = set(pos_counts) | set(neg_counts)
+    alpha = 1.0
+    pos_total = sum(pos_counts.values()) + alpha * max(len(vocab), 1)
+    neg_total = sum(neg_counts.values()) + alpha * max(len(vocab), 1)
+    prior = math.log((n_pos + 1) / max(n_neg + 1, 1))
+
+    def score(text: str) -> float:
+        total = prior
+        for term in text_terms(text):
+            lp = math.log((pos_counts.get(term, 0) + alpha) / pos_total)
+            ln = math.log((neg_counts.get(term, 0) + alpha) / neg_total)
+            total += lp - ln
+        return total
+
+    return score
+
+
+def distinct_ratio(text: str) -> float:
+    words = text.split()
+    return len(set(words)) / max(len(words), 1)
+
+
+def domain_hits_for_keywords(text: str, keywords: list[str]) -> int:
+    low = text.lower()
+    return sum(1 for k in keywords if k and k.lower() in low)
+
+
+def matched_control_features(sae, enc, feature: int, n: int) -> list[int]:
+    import torch
+
+    fire = enc["fire_count"].float() / max(enc["n_tokens"], 1)
+    peak = enc["line_max"].max(0).values.float()
+    norm = sae.dec_norms.detach().cpu().float()
+    target = torch.tensor([norm[feature], fire[feature], peak[feature]], dtype=torch.float32)
+    cols = torch.stack([norm, fire, peak], dim=1)
+    scale = cols.std(0).clamp_min(1e-6)
+    dist = (((cols - target) / scale) ** 2).sum(1)
+    dist[feature] = float("inf")
+    dist[fire <= 0] = float("inf")
+    return [int(x) for x in torch.argsort(dist)[:n].tolist()]
+
+
+def positive_prompts_for_family(corpus: list[dict[str, str]], family: str, n: int) -> list[str]:
+    rows = [r for r in corpus if family_of(r) == family and split_for_row(r, 0) == "test"]
+    if len(rows) < n:
+        rows.extend(r for r in corpus if family_of(r) == family and r not in rows)
+    prompts = []
+    for row in rows[:n]:
+        text = str(row["text"]).replace("\n", " ")[:220]
+        prompts.append(f"Continue this {family} passage in the same style:\n\n{text}\n\n")
+    return prompts
+
+
+def aggregate_generation_rows(bundle, layer: int, direction: Any, coef: float, prompts: list[str],
+                              keywords: list[str], probe_score, *, feature: int, family: str,
+                              condition: str, phase: str, dose_mult: float,
+                              control_feature: int | str = "") -> dict[str, Any]:
+    hits = []
+    probes = []
+    distincts = []
+    sample = ""
+    for prompt in prompts:
+        text = bench.generate_text(bundle, prompt, max_new_tokens=32, steer=(layer, direction, coef))
+        hits.append(domain_hits_for_keywords(text, keywords))
+        probes.append(probe_score(text))
+        distincts.append(distinct_ratio(text))
+        if not sample:
+            sample = text[:240]
+    return {
+        "feature": feature,
+        "family": family,
+        "phase": phase,
+        "condition": condition,
+        "control_feature": control_feature,
+        "dose_mult": dose_mult,
+        "coef": round(coef, 4),
+        "n_prompts": len(prompts),
+        "total_keyword_hits": sum(hits),
+        "mean_keyword_hits": round(sum(hits) / max(len(hits), 1), 4),
+        "mean_probe_score": round(sum(probes) / max(len(probes), 1), 4),
+        "mean_distinct_ratio": round(sum(distincts) / max(len(distincts), 1), 4),
+        "sample": sample,
+    }
+
+
+def enhanced_causal_feature_test(ctx, bundle, sae, corpus, enc, feature: int, family: str,
+                                 seed: int, *, n_prompts: int, n_controls: int) -> dict[str, Any]:
+    """Matched-control causal suite for one validated feature."""
+    import matplotlib.pyplot as plt
+
+    peak_act = float(enc["line_max"][:, feature].max())
+    direction = sae.W_dec[feature].detach().cpu()
+    controls = matched_control_features(sae, enc, feature, n_controls)
+    keywords = keywords_for_family(corpus, family)
+    probe_score = train_family_probe(corpus, family)
+    neutral = CAUSAL_NEUTRAL_PROMPTS[:n_prompts]
+    positive = positive_prompts_for_family(corpus, family, n_prompts)
+    rows: list[dict[str, Any]] = []
+
+    for mult in (0.0, 0.5, 1.0, 1.5, 2.0):
+        rows.append(aggregate_generation_rows(
+            bundle, sae.layer, direction, mult * peak_act, neutral, keywords, probe_score,
+            feature=feature, family=family, condition="real", phase="clamp_on", dose_mult=mult,
+        ))
+        for control in controls:
+            rows.append(aggregate_generation_rows(
+                bundle, sae.layer, sae.W_dec[control].detach().cpu(), mult * peak_act, neutral, keywords, probe_score,
+                feature=feature, family=family, condition="matched_control", phase="clamp_on",
+                dose_mult=mult, control_feature=control,
+            ))
+
+    for mult in (0.0, 0.5, 1.0):
+        rows.append(aggregate_generation_rows(
+            bundle, sae.layer, direction, -mult * peak_act, positive, keywords, probe_score,
+            feature=feature, family=family, condition="real", phase="suppress", dose_mult=-mult,
+        ))
+
+    real_rows = [r for r in rows if r["phase"] == "clamp_on" and r["condition"] == "real"]
+    control_rows = [r for r in rows if r["phase"] == "clamp_on" and r["condition"] == "matched_control"]
+    base = next(r for r in real_rows if float(r["dose_mult"]) == 0.0)
+    fluent = [r for r in real_rows if _safe_float(r["mean_distinct_ratio"], 0.0) >= 0.4]
+    best = max(fluent, key=lambda r: (_safe_float(r["mean_probe_score"]), _safe_float(r["mean_keyword_hits"]))) if fluent else base
+    controls_same_dose = [r for r in control_rows if float(r["dose_mult"]) == float(best["dose_mult"])]
+    control_probe = max((_safe_float(r["mean_probe_score"], -1e9) for r in controls_same_dose), default=-1e9)
+    control_hits = max((_safe_float(r["mean_keyword_hits"], 0.0) for r in controls_same_dose), default=0.0)
+    suppress_rows = [r for r in rows if r["phase"] == "suppress" and r["condition"] == "real"]
+    suppress_base = next(r for r in suppress_rows if float(r["dose_mult"]) == 0.0)
+    suppress_best = min(suppress_rows, key=lambda r: _safe_float(r["mean_probe_score"], 0.0))
+    causal = (
+        _safe_float(best["mean_probe_score"]) > control_probe
+        and _safe_float(best["mean_keyword_hits"]) >= control_hits
+        and _safe_float(best["mean_probe_score"]) > _safe_float(base["mean_probe_score"])
+        and _safe_float(suppress_best["mean_probe_score"]) < _safe_float(suppress_base["mean_probe_score"])
+        and _safe_float(best["mean_distinct_ratio"]) >= 0.4
+    )
+    summary = {
+        "feature": feature,
+        "family": family,
+        "peak_act": round(peak_act, 4),
+        "matched_controls": controls,
+        "keywords": keywords,
+        "real_base_probe": base["mean_probe_score"],
+        "real_best_probe": best["mean_probe_score"],
+        "real_best_hits": best["mean_keyword_hits"],
+        "best_dose_mult": best["dose_mult"],
+        "control_max_probe_same_dose": round(control_probe, 4),
+        "control_max_hits_same_dose": round(control_hits, 4),
+        "suppress_base_probe": suppress_base["mean_probe_score"],
+        "suppress_min_probe": suppress_best["mean_probe_score"],
+        "suppress_best_dose_mult": suppress_best["dose_mult"],
+        "causal": causal,
+    }
+
+    bench.write_csv_with_context(ctx, ctx.path("tables", "causal_feature_tests.csv"), rows)
+    ctx.register_artifact(ctx.path("tables", "causal_feature_tests.csv"), "table",
+                          "Matched-control causal feature tests: clamp-on and suppression with probe/keyword/fluency scores.")
+    bench.write_json(ctx.path("causal_feature_tests_summary.json"), summary)
+    ctx.register_artifact(ctx.path("causal_feature_tests_summary.json"), "metrics",
+                          "Summary of the matched-control causal feature test.")
+
+    lines = [
+        f"# Causal Feature Card: Feature {feature} ({family})",
+        "",
+        f"- matched controls: {controls}",
+        f"- best real dose: {best['dose_mult']}x peak",
+        f"- real probe: {base['mean_probe_score']} -> {best['mean_probe_score']}",
+        f"- matched-control max probe at same dose: {summary['control_max_probe_same_dose']}",
+        f"- suppression probe: {suppress_base['mean_probe_score']} -> {suppress_best['mean_probe_score']}",
+        f"- causal claim passed: {causal}",
+        "",
+        "## Sample At Best Dose",
+        "",
+        str(best.get("sample", "")),
+        "",
+        "## Sample Under Strongest Suppression",
+        "",
+        str(suppress_best.get("sample", "")),
+        "",
+    ]
+    bench.write_text(ctx.path("causal_feature_card.md"), "\n".join(lines))
+    ctx.register_artifact(ctx.path("causal_feature_card.md"), "summary",
+                          "Causal feature card for the matched-control suite.")
+
+    bench._ensure_plot_style()
+    fig, axes = plt.subplots(1, 2, figsize=(11.2, 4.8), sharex=False)
+    xs = [r["dose_mult"] for r in real_rows]
+    axes[0].plot(xs, [r["mean_probe_score"] for r in real_rows], marker="o", label="real", color=_clamp_color("real"))
+    by_dose: dict[float, list[dict[str, Any]]] = defaultdict(list)
+    for row in control_rows:
+        by_dose[float(row["dose_mult"])].append(row)
+    ctrl_x = sorted(by_dose)
+    ctrl_y = [max(_safe_float(r["mean_probe_score"], -1e9) for r in by_dose[x]) for x in ctrl_x]
+    axes[0].plot(ctrl_x, ctrl_y, marker="s", label="best matched control", color=_clamp_color("random"))
+    axes[0].set_title("Clamp-on probe score")
+    axes[0].set_xlabel("dose (x peak activation)")
+    axes[0].set_ylabel("corpus-trained probe score")
+    axes[0].legend(fontsize=8)
+    supp_x = [abs(float(r["dose_mult"])) for r in suppress_rows]
+    axes[1].plot(supp_x, [r["mean_probe_score"] for r in suppress_rows], marker="o", color=_clamp_color("real"))
+    axes[1].set_title("Clamp-off / suppression")
+    axes[1].set_xlabel("negative dose (x peak activation)")
+    axes[1].set_ylabel("probe score on positive prompts")
+    for ax in axes:
+        for spine in ("top", "right"):
+            ax.spines[spine].set_visible(False)
+    fig.suptitle(f"Causal operating window: feature {feature} ({family})")
+    fig.tight_layout()
+    bench.save_figure(ctx, fig, "causal_operating_window.png",
+                      "Matched-control causal operating window for the selected feature.")
+    return summary
+
+
+def choose_causal_candidate(targeted_rows: list[dict[str, Any]], atlas: list[dict[str, Any]]) -> tuple[int, str] | None:
+    grade_rank = {"survived_strong": 5, "survived_weak": 4, "lexical_valid": 3, "narrowed": 2}
+    candidates = [
+        r for r in targeted_rows
+        if r.get("status") == "ok" and grade_rank.get(str(r.get("claim_grade")), 0) > 0
+    ]
+    if candidates:
+        best = max(
+            candidates,
+            key=lambda r: (
+                grade_rank.get(str(r.get("claim_grade")), 0),
+                _safe_float(r.get("test_auc"), 0.5),
+                -_safe_float(r.get("fire_fraction"), 1.0),
+            ),
+        )
+        return int(best["feature"]), str(best["family"])
+    survivors = [r for r in atlas if r.get("verdict") in ("survived", "narrowed")]
+    if survivors:
+        best = max(survivors, key=lambda r: _safe_float(r.get("held_out_auc"), 0.5) - _safe_float(r.get("fire_fraction"), 0.0))
+        return int(best["feature"]), str(best["proposed_label"])
+    return None
 
 
 
@@ -2120,6 +2413,24 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     else:
         print("[lab8]   causal clamp: no survivor with a keyword battery; extension skipped")
 
+    causal_suite = None
+    if getattr(args, "causal_suite", False):
+        candidate = choose_causal_candidate(targeted_rows, atlas)
+        if candidate is None:
+            print("[lab8]   causal suite: no validated candidate available; skipped")
+        else:
+            feature, family = candidate
+            print(f"[lab8]   causal suite: feature {feature} ({family}), "
+                  f"{getattr(args, 'causal_prompts', 20)} prompts, {getattr(args, 'causal_controls', 10)} controls")
+            causal_suite = enhanced_causal_feature_test(
+                ctx, bundle, sae, corpus, enc, feature, family, args.seed,
+                n_prompts=int(getattr(args, "causal_prompts", 20)),
+                n_controls=int(getattr(args, "causal_controls", 10)),
+            )
+            print(f"[lab8]   causal suite passed={causal_suite['causal']} "
+                  f"(real probe {causal_suite['real_base_probe']}→{causal_suite['real_best_probe']}, "
+                  f"control max {causal_suite['control_max_probe_same_dose']})")
+
     # ----- synthesis tables + plots --------------------------------------------
     write_lab8_synthesis_tables(ctx, atlas, enc, ranks, toy, tc_report, bridge, clamp)
     if not args.no_plots:
@@ -2152,6 +2463,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "feature_search": getattr(args, "feature_search", "blind"),
         "targeted_search_families": len(targeted_rows),
         "targeted_claim_grades": dict(Counter(str(r.get("claim_grade", "")) for r in targeted_rows)),
+        "causal_suite": causal_suite,
         "toy_represented_dense": toy["represented_by_sparsity"][str(toy["sparsities"][0])],
         "toy_represented_sparse": toy["represented_by_sparsity"][str(toy["sparsities"][-1])],
         "transcoder_fvu": tc_report["fvu"], "transcoder_splice_kl": tc_report["mean_splice_kl"],
@@ -2339,6 +2651,12 @@ def write_summary(ctx, bundle, metrics, atlas, toy, tc_report, bridge, clamp, cl
         lines.append(f"- feature clamp (CAUSAL): feature {clamp['feature']} ('{clamp['label']}') "
                      f"{clamp['real_base_hits']}→{clamp['real_max_hits']} keyword hits at "
                      f"{clamp['best_mult']}× peak vs random {clamp['random_max_hits']}; causal={clamp['causal']}")
+    if metrics.get("causal_suite"):
+        suite = metrics["causal_suite"]
+        lines.append(f"- matched-control causal suite: feature {suite['feature']} ('{suite['family']}') "
+                     f"probe {suite['real_base_probe']}→{suite['real_best_probe']} at {suite['best_dose_mult']}× peak; "
+                     f"same-dose control max {suite['control_max_probe_same_dose']}; "
+                     f"suppression {suite['suppress_base_probe']}→{suite['suppress_min_probe']}; causal={suite['causal']}")
     lines += [
         "",
         "## 5. Claims",
