@@ -37,6 +37,7 @@ import interp_bench as bench
 
 LAB_ID = "L16"
 DATA_FILE = "sycophancy_pressure_items.csv"
+DATA_VERSION = "v1_misconception_pressure"
 MANIFEST_FILE = "MANIFEST.json"
 
 PROMPT_SET_DOMAIN_CAPS = {"small": 2, "medium": 5, "full": 0}
@@ -548,6 +549,7 @@ def load_items(args: Any) -> tuple[list[PressureRow], dict[str, Any], list[dict[
     info = {
         "lab_id": LAB_ID,
         "data_file": DATA_FILE,
+        "data_version": DATA_VERSION,
         "data_source": source_type,
         "source_path": str(source_path) if source_path else "built_in_smoke_fallback",
         "observed_sha256": observed_hash,
@@ -3343,6 +3345,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     metrics = {
         "model_id": bundle.anatomy.model_id,
         "data_source": data_info.get("data_source"),
+        "data_file": data_info.get("source_path"),
+        "data_sha256": data_info.get("observed_sha256"),
+        "data_version": data_info.get("data_version"),
+        "prompt_set": data_info.get("prompt_set"),
+        "seed": int(args.seed),
         "n_rows": len(items),
         "n_base_facts": len(base_rows),
         "domains": sorted_unique([row.domain for row in items]),
