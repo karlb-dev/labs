@@ -1,0 +1,9 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,heldout_family,real_auc,shuffled_auc,random_auc,best_control_auc,control_gap,n_rows,status
+lab18,lab18_fairshot_olmo3_7b_v2_full_s0_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,analogy_reframe,0.9975,0.97,0.3915,0.97,0.0275,3,weak_or_failed
+lab18,lab18_fairshot_olmo3_7b_v2_full_s0_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,caption_scene,0.965,0.817,0.63,0.817,0.148,3,passes
+lab18,lab18_fairshot_olmo3_7b_v2_full_s0_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,expectation_violation,1.0,0.984,0.54,0.984,0.016,3,weak_or_failed
+lab18,lab18_fairshot_olmo3_7b_v2_full_s0_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,idiom_literalization,0.9,0.774,0.5895,0.774,0.126,3,passes
+lab18,lab18_fairshot_olmo3_7b_v2_full_s0_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,misdirection_answer,1.0,1.0,0.5425,1.0,0.0,3,weak_or_failed
+lab18,lab18_fairshot_olmo3_7b_v2_full_s0_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,pun_wordplay,1.0,0.921,0.7745,0.921,0.079,3,weak_or_failed
+lab18,lab18_fairshot_olmo3_7b_v2_full_s0_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,resolution_twist,0.9825,0.865,0.5615,0.865,0.1175,3,passes
+lab18,lab18_fairshot_olmo3_7b_v2_full_s0_20260620,allenai/Olmo-3-7B-Instruct,,b,bfloat16,none,full,0,0,32,4096,understatement_irony,1.0,1.0,0.5955,1.0,0.0,3,weak_or_failed

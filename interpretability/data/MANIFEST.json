@@ -325,23 +325,28 @@
     "verified_tokenizers": []
   },
   "humor_incongruity_pairs.csv": {
-    "conditions": {
-      "joke": 20,
-      "literal": 20,
-      "positive": 20,
-      "silly": 20,
-      "surprise": 20
-    },
-    "families": {
-      "caption_scene": 5,
-      "expectation_violation": 5,
-      "pun_wordplay": 5,
-      "resolution_twist": 5
-    },
     "generator": "make_humor_incongruity.py",
+    "rows": 80,
+    "sha256": "d7165cf41e67f248f70cd9691dbda24860c3431701a8003e818c3fff88f2fdb0",
+    "families": {
+      "analogy_reframe": 10,
+      "caption_scene": 10,
+      "expectation_violation": 10,
+      "idiom_literalization": 10,
+      "misdirection_answer": 10,
+      "pun_wordplay": 10,
+      "resolution_twist": 10,
+      "understatement_irony": 10
+    },
+    "conditions": {
+      "joke": 80,
+      "literal": 80,
+      "positive": 80,
+      "silly": 80,
+      "surprise": 80
+    },
     "pairing": "one setup with joke, literal, surprising-not-funny, silly-not-joke, and positive-not-joke completions",
-    "rows": 20,
-    "sha256": "de6e9ef3fb961a2d59f310110efa00143f59b408896193832b7c481f54160780",
+    "split_protocol": "Lab 18 deterministically splits item_id rows by family into train/dev/test at runtime.",
     "source": "authored course micro-scenes; no long copyrighted excerpts",
     "verified_tokenizers": []
   },

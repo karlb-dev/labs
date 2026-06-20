@@ -1,0 +1,8 @@
+lab,run_name,model_id,model_revision,tier,dtype,quantization,prompt_set,max_examples,seed,n_layers,d_model,evidence_object,evidence_rung,headline_metric,control_metric,score_0_to_1,claim_boundary,status
+lab18,lab18_fairshot_smolm_v2_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,heldout_probe,DECODE,1.0,0.9176,1.0,"joke-vs-control handle, not funniness",strong
+lab18,lab18_fairshot_smolm_v2_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,control_gap,DECODE,0.0824,0.0,0.5493,must beat shuffled and random controls,mixed
+lab18,lab18_fairshot_smolm_v2_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,family_transfer,DECODE,0.023,0.0,0.1533,separates reusable handle from family-local lexicon,weak
+lab18,lab18_fairshot_smolm_v2_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,cheap_cosine_risk,AUDIT,0.4507,0.0,0.5493,"risk from surprise, silliness, positivity, and register",mixed
+lab18,lab18_fairshot_smolm_v2_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,setup_dependence,OBS,-0.0136,0.0,0.0,"routing/projection support, not mechanism proof",weak
+lab18,lab18_fairshot_smolm_v2_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,steering_specificity,CAUSAL,-0.8,0.0,0.0,only marker-level until hand labels are filled,weak
+lab18,lab18_fairshot_smolm_v2_full_s0_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,,a,float32,none,full,0,0,30,576,label_readiness,HUMAN-LABEL,0.0,1.0,0.0,required before saying generation became funnier,weak

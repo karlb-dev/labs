@@ -20,7 +20,7 @@ From `interpretability/`:
 
 ```bash
 python interp_bench.py --lab lab18 --tier a
-python interp_bench.py --lab lab18 --tier b --prompt-set full
+python interp_bench.py --lab lab18 --tier b --prompt-set full --corpus-path data/humor_incongruity_pairs.csv --max-examples 0
 ```
 
 Useful while debugging:
@@ -28,10 +28,10 @@ Useful while debugging:
 ```bash
 python interp_bench.py --lab lab18 --tier a --no-plots
 python interp_bench.py --lab lab18 --tier b --prompt-set medium --no-plots
-python interp_bench.py --lab lab18 --tier b --prompt-set data/humor_incongruity_pairs.csv --no-plots
+python interp_bench.py --lab lab18 --tier a --prompt-set full --corpus-path data/humor_incongruity_pairs.csv --max-examples 0 --no-plots
 ```
 
-Lab 18 uses instruct models, chat templates, generation, residual-stream probes, and attention patterns. The lab renders prompts itself and verifies exact rendered-chat hook parity with `add_special_tokens=False`. Attention-pattern plots require eager attention; if the model returns no attention tensors, rerun with the registry/CLI configured for eager attention.
+Lab 18 uses instruct models, chat templates, generation, residual-stream probes, and attention patterns. The lab renders prompts itself and verifies exact rendered-chat hook parity with `add_special_tokens=False`. Attention-pattern plots require eager attention; if the model returns no attention tensors, rerun with the registry/CLI configured for eager attention. Use `--corpus-path` for a frozen CSV; Tier A has a default per-family smoke cap, so pass `--max-examples 0` for a real full-corpus sweep.
 
 ## Dataset
 
@@ -66,6 +66,8 @@ surprise_markers,positive_markers,note
 ```
 
 Tier A has a built-in smoke fallback if the CSV is missing. That fallback is plumbing-only. The run writes `diagnostics/frozen_data_manifest.json`; if `used_smoke_fallback` is true, do not make science claims from that run.
+
+The v2 frozen corpus has 80 rows: 8 humor families by 10 matched setups. Runtime splits are deterministic by family into train/dev/test. Train rows fit directions, dev rows select stream depth, and test rows provide headline probe metrics.
 
 ## What the lab does
 
@@ -112,13 +114,13 @@ For each stream depth, the lab fits a mass-mean direction on train rows:
 joke_structure = joke - mean(literal, surprise, silly, positive)
 ```
 
-Depth is selected using a train-only score:
+Depth is selected on dev rows using a control-adjusted score:
 
 ```text
-train real AUC - max(0.5, shuffled-label AUC, random-direction AUC)
+dev real AUC - max(0.5, shuffled-label AUC, random-direction AUC)
 ```
 
-Held-out eval is reported after depth selection. This keeps the prettiest eval-layer curve from quietly becoming the hypothesis.
+Test AUC is reported after depth selection. This keeps the prettiest test-layer curve from quietly becoming the hypothesis. Tiny smoke runs may lack dev rows and fall back to train leave-one-out; the selection table records that case.
 
 The selected-depth direction is also rerun in a one-family-held-out check. This asks whether the handle transfers across joke families or only learns a family-local lexical trick.
 
@@ -308,7 +310,7 @@ The upgraded tables are designed to make the writeup less “funny-looking sampl
 
 ## Read this first after a run
 
-Start with `humor_incongruity_card.md`. It gives the verdict, selected depth, held-out AUC, control gap, direction cosines, and steering summary.
+Start with `humor_incongruity_card.md`. It gives the verdict, selected depth, test AUC, control gap, direction cosines, and steering summary.
 
 Then read `operationalization_audit.md`. It is the deflationary twin of the pretty plots. If the audit says the handle collapsed into surprise, silliness, positivity, or surface joke register, that is not a failed lab. That is the result.
 
@@ -331,7 +333,7 @@ If jokes are more surprising than literal endings, that is expected. The questio
 
 ### `joke_probe_by_layer.png`
 
-The selected stream depth is marked. Strong evidence means the real held-out curve beats shuffled and random controls at the selected depth, and the depth-selection table shows the choice came from train-only scores.
+The selected stream depth is marked. Strong evidence means the real test curve beats shuffled and random controls at the selected depth, and the depth-selection table shows the choice came from dev rows.
 
 ### `humor_direction_cosines.png`
 
@@ -367,8 +369,8 @@ Allowed claims are narrower:
 
 ## Writeup questions
 
-1. Which depth was selected, and what train-only score selected it?
-2. Did the real joke-vs-control direction beat shuffled and random controls on held-out rows?
+1. Which depth was selected, and what dev score selected it?
+2. Did the real joke-vs-control direction beat shuffled and random controls on test rows?
 3. Does `family_heldout_probe.csv` show transfer across joke families, or is the handle family-local?
 4. Are joke endings more surprising than literal endings? Does surprise explain the probe?
 5. Which cosine is largest: joke-surprise, joke-silly, or joke-positive?
@@ -407,7 +409,7 @@ Cautious `CAUSAL` claim:
 Negative result claim:
 
 ```text
-[L18-N1][DECODE] This run did not validate a humor-specific direction: real AUC X was matched by null control Y, or the direction collapsed into cheap correlate C. Artifact: runs/.../operationalization_audit.md. Falsifier: a rerun on frozen full data with train-only selection and stronger controls shows a stable gap.
+[L18-N1][DECODE] This run did not validate a humor-specific direction: real AUC X was matched by null control Y, or the direction collapsed into cheap correlate C. Artifact: runs/.../operationalization_audit.md. Falsifier: a rerun on frozen full data with dev selection, test reporting, and stronger controls shows a stable gap.
 ```
 
 ## Ethics and interpretation

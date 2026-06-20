@@ -5774,7 +5774,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--atlas-budget", type=int, default=0,
                         help="Lab 8: number of features per ranking to inspect before padding with frequency hits.")
     parser.add_argument("--corpus-path", default="",
-                        help="Lab 8/Lab 17: CSV corpus path; relative paths resolve under the interpretability root.")
+                        help="Lab 8/Lab 17/Lab 18: CSV corpus path; relative paths resolve under the interpretability root.")
     parser.add_argument("--feature-search", default="blind", choices=("blind", "targeted", "both"),
                         help="Lab 8: feature search mode. Targeted/both are used by the fair-shot extension.")
     parser.add_argument("--causal-suite", action="store_true",

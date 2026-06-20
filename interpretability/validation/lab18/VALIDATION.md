@@ -8,6 +8,25 @@ Humor as incongruity: surprisal, joke-vs-control directions, setup routing, and 
 
 This pack prefers the newest broad validation artifacts available in the local runs tree: recent Lab 6 matrix/reruns where applicable, `run6` and `verify_part3` for the main course sweep, and standalone Severance reruns for Lab 36.
 
+## 2026-06-20 Fair-Shot Update
+
+The fair-shot update expands the frozen corpus from 20 rows to 80 rows, adds a dataset card, supports `--corpus-path`, and changes depth selection to train/dev/test: train fits directions, dev selects the stream depth, and test provides headline probe metrics.
+
+Headline read: Lab 18 is now a **partial positive** for controlled joke-structure decodability on `allenai/Olmo-3-7B-Instruct`, but not a causal steering result. Seed 0 reached test AUC `1.0` with selectivity over the best null of `0.2172`; seed 1 dropped to test AUC `0.9272` and selectivity `0.0722`. Both seeds failed steering specificity. Family-heldout transfer remains mixed.
+
+New committed summary:
+
+- `fairshot_20260620_summary.csv`
+- `fairshot_20260620_lab18_fairshot_smolm_v2_full_s0_20260620_*`
+- `fairshot_20260620_lab18_fairshot_olmo3_7b_v2_full_s0_20260620_*`
+- `fairshot_20260620_lab18_fairshot_olmo3_7b_v2_full_s1_20260620_*`
+
+Full raw run directories were backed up to Drive under:
+
+```text
+/content/drive/MyDrive/interpret/lab18_humor_fairshot_20260620/
+```
+
 - `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab18_olmo32bthink_labs1_25_local_reruns_20260615_101609/lab18_olmo32bthink_labs1_25_local_reruns_20260615_101609` (allenai/Olmo-3-32B-Think, tier c)
   - Metrics: `best_depth`=49, `family_heldout_mean_control_gap`=0.0615, `family_heldout_mean_real_auc`=0.995, `humor_positive_cosine`=0.0402, `humor_silly_cosine`=0.0113, `humor_surprise_cosine`=0.0434, `injection_layer`=48, `joke_minus_literal_attention_to_setup`=0.0227
 - `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab18_gemma4e4b_labs1_25_local_reruns_20260615_101609/lab18_gemma4e4b_labs1_25_local_reruns_20260615_101609` (google/gemma-4-E4B-it, tier b)
