@@ -5774,7 +5774,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--atlas-budget", type=int, default=0,
                         help="Lab 8: number of features per ranking to inspect before padding with frequency hits.")
     parser.add_argument("--corpus-path", default="",
-                        help="Lab 8: CSV corpus path; relative paths resolve under the interpretability root.")
+                        help="Lab 8/Lab 17: CSV corpus path; relative paths resolve under the interpretability root.")
     parser.add_argument("--feature-search", default="blind", choices=("blind", "targeted", "both"),
                         help="Lab 8: feature search mode. Targeted/both are used by the fair-shot extension.")
     parser.add_argument("--causal-suite", action="store_true",
@@ -5783,6 +5783,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="Lab 8: matched random controls for --causal-suite.")
     parser.add_argument("--causal-prompts", type=int, default=20,
                         help="Lab 8: neutral and positive prompts used by --causal-suite.")
+    parser.add_argument("--persona-steering-prompts", type=int, default=0,
+                        help="Lab 17: max held-out test prompts per trait for steering generation (0 = all).")
+    parser.add_argument("--persona-steering-controls", type=int, default=3,
+                        help="Lab 17: random steering controls averaged for causal specificity.")
     parser.add_argument("--graph-nodes", type=int, default=0,
                         help="Lab 9: feature-node budget for the attribution graph "
                              "(0 = tier default; also the number of backward passes).")

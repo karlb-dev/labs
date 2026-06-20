@@ -38,12 +38,15 @@ LAB_ID = "L17"
 DATA_FILE = "persona_register_pairs.csv"
 
 PROMPT_SET_TRAIT_CAPS = {"small": 3, "medium": 5, "full": 0}
-TRAIN_FRACTION = 0.67
+SPLIT_FRACTIONS = {"train": 0.60, "dev": 0.20, "test": 0.20}
+REPORT_SPLIT = "test"
 MAX_NEW_TOKENS = 56
 ENGINE_MAX_CONCURRENT = 16
 STEERING_DOSE_FRACTIONS = (0.0, 0.35, 0.70)
 N_SHUFFLED_CONTROLS = 5
 N_RANDOM_CONTROLS = 5
+DEFAULT_STEERING_RANDOM_CONTROLS = 3
+PROBE_RESAMPLE_DRAWS = 200
 MIN_SELECTIVITY_GAP = 0.08
 MIN_STEERING_SPECIFICITY_GAP = 0.25
 MIN_CONTENT_DELTA = -0.20
@@ -198,6 +201,57 @@ def auc_from_scores(pos: Sequence[float], neg: Sequence[float]) -> float:
     return wins / (len(pos) * len(neg))
 
 
+def resampled_auc_stats(
+    pos: Sequence[float],
+    neg: Sequence[float],
+    *,
+    seed: int,
+    draws: int = PROBE_RESAMPLE_DRAWS,
+) -> dict[str, Any]:
+    """Small deterministic uncertainty/null audit for selected probe rows."""
+
+    if not pos or not neg:
+        return {
+            "auc_ci_low": None,
+            "auc_ci_high": None,
+            "permutation_null_mean": None,
+            "permutation_p_ge_observed": None,
+            "resample_draws": 0,
+        }
+    import random
+
+    rng = random.Random(int(seed))
+    pos_vals = [float(x) for x in pos]
+    neg_vals = [float(x) for x in neg]
+    observed = auc_from_scores(pos_vals, neg_vals)
+
+    boot = []
+    for _ in range(int(draws)):
+        bp = [pos_vals[rng.randrange(len(pos_vals))] for _ in pos_vals]
+        bn = [neg_vals[rng.randrange(len(neg_vals))] for _ in neg_vals]
+        boot.append(auc_from_scores(bp, bn))
+    boot.sort()
+
+    scores = pos_vals + neg_vals
+    n_pos = len(pos_vals)
+    null = []
+    ge = 0
+    for _ in range(int(draws)):
+        shuffled = list(scores)
+        rng.shuffle(shuffled)
+        val = auc_from_scores(shuffled[:n_pos], shuffled[n_pos:])
+        null.append(val)
+        if val >= observed:
+            ge += 1
+    return {
+        "auc_ci_low": rounded(boot[max(0, int(0.025 * (len(boot) - 1)))]),
+        "auc_ci_high": rounded(boot[min(len(boot) - 1, int(0.975 * (len(boot) - 1)))]),
+        "permutation_null_mean": rounded(safe_fmean(null)),
+        "permutation_p_ge_observed": rounded((ge + 1) / (len(null) + 1)),
+        "resample_draws": int(draws),
+    }
+
+
 def unit(v: Any) -> Any:
     norm = v.norm().clamp_min(1e-9)
     if not bool(norm.isfinite()):
@@ -229,7 +283,7 @@ def builtin_smoke_rows() -> list[PersonaPair]:
     """Small deterministic fallback for plumbing only.
 
     Science runs should use the frozen CSV. These rows are deliberately small
-    but still include every trait and enough topics to split train/eval.
+    but still include every trait and enough topics to split train/dev/test.
     """
 
     return [
@@ -485,7 +539,10 @@ def select_prompt_subset(raw: Sequence[PersonaPair], args: Any) -> tuple[list[Pe
 
 def load_items(args: Any) -> tuple[list[PersonaPair], dict[str, Any], list[dict[str, Any]]]:
     prompt_set = str(getattr(args, "prompt_set", "small"))
-    custom_path = pathlib.Path(prompt_set).expanduser() if prompt_set not in PROMPT_SET_TRAIT_CAPS else None
+    corpus_path_arg = str(getattr(args, "corpus_path", "") or "").strip()
+    custom_path = pathlib.Path(corpus_path_arg).expanduser() if corpus_path_arg else (
+        pathlib.Path(prompt_set).expanduser() if prompt_set not in PROMPT_SET_TRAIT_CAPS else None
+    )
     if custom_path is not None and not custom_path.is_absolute():
         custom_path = bench.COURSE_ROOT / custom_path
 
@@ -535,7 +592,7 @@ def load_items(args: Any) -> tuple[list[PersonaPair], dict[str, Any], list[dict[
         n = sum(1 for item in items if item.trait == trait)
         if n < 3:
             raise RuntimeError(
-                f"Lab 17 needs at least three rows per trait after selection for train/eval hygiene; {trait} has {n}."
+                f"Lab 17 needs at least three rows per trait after selection for train/dev/test hygiene; {trait} has {n}."
             )
 
     required_traits = {"character_museum_guide", "technical_register", "warm_supportive_voice", "honest_disagreement"}
@@ -574,31 +631,54 @@ def load_items(args: Any) -> tuple[list[PersonaPair], dict[str, Any], list[dict[
 # ---------------------------------------------------------------------------
 
 
-def make_split(items: Sequence[PersonaPair], seed: int) -> dict[str, bool]:
-    """Trait-stratified split by topic; contrast pairs stay together."""
+def split_name(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    return "train" if bool(value) else REPORT_SPLIT
 
-    split: dict[str, bool] = {}
+
+def make_split(items: Sequence[PersonaPair], seed: int) -> dict[str, str]:
+    """Trait-stratified train/dev/test split by topic; contrast pairs stay together."""
+
+    split: dict[str, str] = {}
     by_trait: dict[str, list[str]] = defaultdict(list)
     for item in items:
         if item.topic not in by_trait[item.trait]:
             by_trait[item.trait].append(item.topic)
 
-    train_topics_by_trait: dict[str, set[str]] = {}
+    split_by_trait: dict[str, dict[str, set[str]]] = {}
     for trait, topics in by_trait.items():
         ranked = sorted(topics, key=lambda t: stable_hash_int(f"{seed}:{trait}:{t}"))
-        if len(ranked) <= 1:
-            n_train = len(ranked)
+        if len(ranked) < 3:
+            raise RuntimeError(f"Lab 17 needs at least three topics per trait for train/dev/test; {trait} has {len(ranked)}.")
+        if len(ranked) <= 5:
+            n_dev = 1
+            n_test = 1
+            n_train = len(ranked) - n_dev - n_test
         else:
-            n_train = int(round(TRAIN_FRACTION * len(ranked)))
-            n_train = max(1, min(len(ranked) - 1, n_train))
-        train_topics_by_trait[trait] = set(ranked[:n_train])
+            n_train = max(1, int(round(SPLIT_FRACTIONS["train"] * len(ranked))))
+            n_dev = max(1, int(round(SPLIT_FRACTIONS["dev"] * len(ranked))))
+            n_test = len(ranked) - n_train - n_dev
+            if n_test < 1:
+                n_test = 1
+                n_train = max(1, len(ranked) - n_dev - n_test)
+        train_topics = set(ranked[:n_train])
+        dev_topics = set(ranked[n_train:n_train + n_dev])
+        test_topics = set(ranked[n_train + n_dev:])
+        split_by_trait[trait] = {"train": train_topics, "dev": dev_topics, "test": test_topics}
 
     for item in items:
-        split[item.item_id] = item.topic in train_topics_by_trait[item.trait]
+        trait_split = split_by_trait[item.trait]
+        if item.topic in trait_split["train"]:
+            split[item.item_id] = "train"
+        elif item.topic in trait_split["dev"]:
+            split[item.item_id] = "dev"
+        else:
+            split[item.item_id] = "test"
     return split
 
 
-def split_rows(items: Sequence[PersonaPair], split: Mapping[str, bool]) -> list[dict[str, Any]]:
+def split_rows(items: Sequence[PersonaPair], split: Mapping[str, Any]) -> list[dict[str, Any]]:
     return [
         {
             "item_id": item.item_id,
@@ -607,7 +687,7 @@ def split_rows(items: Sequence[PersonaPair], split: Mapping[str, bool]) -> list[
             "topic": item.topic,
             "task_kind": item.task_kind,
             "split_group": f"{item.trait}:{item.topic}",
-            "split": "train" if split[item.item_id] else "eval",
+            "split": split_name(split[item.item_id]),
             "prompt_positive_sha256": sha256_text(item.prompt_positive),
             "prompt_negative_sha256": sha256_text(item.prompt_negative),
             "eval_prompt_sha256": sha256_text(item.eval_prompt),
@@ -616,7 +696,7 @@ def split_rows(items: Sequence[PersonaPair], split: Mapping[str, bool]) -> list[
     ]
 
 
-def split_balance(items: Sequence[PersonaPair], split: Mapping[str, bool]) -> list[dict[str, Any]]:
+def split_balance(items: Sequence[PersonaPair], split: Mapping[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for trait in sorted({item.trait for item in items}):
         sub = [item for item in items if item.trait == trait]
@@ -625,12 +705,15 @@ def split_balance(items: Sequence[PersonaPair], split: Mapping[str, bool]) -> li
             "family": safe_mode([item.family for item in sub]),
             "n_rows": len(sub),
             "n_topics": len({item.topic for item in sub}),
-            "n_train_rows": sum(1 for item in sub if split[item.item_id]),
-            "n_eval_rows": sum(1 for item in sub if not split[item.item_id]),
-            "n_train_topics": len({item.topic for item in sub if split[item.item_id]}),
-            "n_eval_topics": len({item.topic for item in sub if not split[item.item_id]}),
-            "train_topics": "|".join(sorted({item.topic for item in sub if split[item.item_id]})),
-            "eval_topics": "|".join(sorted({item.topic for item in sub if not split[item.item_id]})),
+            "n_train_rows": sum(1 for item in sub if split_name(split[item.item_id]) == "train"),
+            "n_dev_rows": sum(1 for item in sub if split_name(split[item.item_id]) == "dev"),
+            "n_test_rows": sum(1 for item in sub if split_name(split[item.item_id]) == "test"),
+            "n_train_topics": len({item.topic for item in sub if split_name(split[item.item_id]) == "train"}),
+            "n_dev_topics": len({item.topic for item in sub if split_name(split[item.item_id]) == "dev"}),
+            "n_test_topics": len({item.topic for item in sub if split_name(split[item.item_id]) == "test"}),
+            "train_topics": "|".join(sorted({item.topic for item in sub if split_name(split[item.item_id]) == "train"})),
+            "dev_topics": "|".join(sorted({item.topic for item in sub if split_name(split[item.item_id]) == "dev"})),
+            "test_topics": "|".join(sorted({item.topic for item in sub if split_name(split[item.item_id]) == "test"})),
         })
     return rows
 
@@ -981,7 +1064,7 @@ def cache_pair_features(
 def direction_for_trait(
     items: Sequence[PersonaPair],
     features: Mapping[str, Mapping[str, Any]],
-    split: Mapping[str, bool],
+    split: Mapping[str, Any],
     trait: str,
     depth: int,
     *,
@@ -995,7 +1078,7 @@ def direction_for_trait(
     rows = [
         item for item in items
         if item.trait == trait
-        and split[item.item_id] == train
+        and ((split_name(split[item.item_id]) == "train") if train else (split_name(split[item.item_id]) != "train"))
         and item.item_id != exclude_item_id
     ]
     if not rows:
@@ -1025,7 +1108,7 @@ def loo_projection_scores(
     rows: Sequence[PersonaPair],
     all_items: Sequence[PersonaPair],
     features: Mapping[str, Mapping[str, Any]],
-    split: Mapping[str, bool],
+    split: Mapping[str, Any],
     trait: str,
     depth: int,
     *,
@@ -1061,14 +1144,14 @@ def loo_projection_scores(
 def oriented_random_for_trait(
     items: Sequence[PersonaPair],
     features: Mapping[str, Mapping[str, Any]],
-    split: Mapping[str, bool],
+    split: Mapping[str, Any],
     trait: str,
     depth: int,
     d_model: int,
     seed: int,
 ) -> Any:
     direction = random_unit(d_model, seed)
-    train_rows = [item for item in items if item.trait == trait and split[item.item_id]]
+    train_rows = [item for item in items if item.trait == trait and split_name(split[item.item_id]) == "train"]
     pos, neg = projection_scores(train_rows, features, direction, depth)
     if pos and neg and safe_fmean(pos) < safe_fmean(neg):
         return -direction
@@ -1089,6 +1172,17 @@ def add_probe_row(
     fit_mode: str,
 ) -> None:
     auc = auc_from_scores(pos, neg)
+    stats = (
+        resampled_auc_stats(pos, neg, seed=stable_hash_int(f"{trait}:{depth}:{probe_split}:{direction_kind}:{control_id}"))
+        if direction_kind == "real" and probe_split in {"dev", "test", "eval"} else
+        {
+            "auc_ci_low": None,
+            "auc_ci_high": None,
+            "permutation_null_mean": None,
+            "permutation_p_ge_observed": None,
+            "resample_draws": 0,
+        }
+    )
     report.append({
         "probe": "positive_persona_register_voice_vs_control",
         "trait": trait,
@@ -1103,13 +1197,14 @@ def add_probe_row(
         "mean_negative_projection": rounded(safe_fmean(neg)),
         "projection_gap": rounded(safe_fmean(pos) - safe_fmean(neg)),
         "n_pairs": n_pairs,
+        **stats,
     })
 
 
 def run_probe_sweep(
     items: Sequence[PersonaPair],
     features: Mapping[str, Mapping[str, Any]],
-    split: Mapping[str, bool],
+    split: Mapping[str, Any],
     seed: int,
     d_model: int,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], int]:
@@ -1119,12 +1214,16 @@ def run_probe_sweep(
 
     for depth in range(1, n_depths):
         for trait in traits:
-            train_rows = [item for item in items if item.trait == trait and split[item.item_id]]
-            eval_rows = [item for item in items if item.trait == trait and not split[item.item_id]]
+            train_rows = [item for item in items if item.trait == trait and split_name(split[item.item_id]) == "train"]
+            split_rows_by_name = {
+                "dev": [item for item in items if item.trait == trait and split_name(split[item.item_id]) == "dev"],
+                "test": [item for item in items if item.trait == trait and split_name(split[item.item_id]) == "test"],
+            }
             real = direction_for_trait(items, features, split, trait, depth, train=True)
             if real is not None:
-                pos, neg = projection_scores(eval_rows, features, real, depth)
-                add_probe_row(report, trait=trait, depth=depth, probe_split="eval", direction_kind="real", control_id=0, pos=pos, neg=neg, n_pairs=len(eval_rows), fit_mode="train_topic_fit")
+                for split_key, rows_for_split in split_rows_by_name.items():
+                    pos, neg = projection_scores(rows_for_split, features, real, depth)
+                    add_probe_row(report, trait=trait, depth=depth, probe_split=split_key, direction_kind="real", control_id=0, pos=pos, neg=neg, n_pairs=len(rows_for_split), fit_mode="train_topic_fit")
                 pos, neg, mode = loo_projection_scores(train_rows, items, features, split, trait, depth)
                 add_probe_row(report, trait=trait, depth=depth, probe_split="train_loo", direction_kind="real", control_id=0, pos=pos, neg=neg, n_pairs=len(train_rows), fit_mode=mode)
 
@@ -1132,8 +1231,9 @@ def run_probe_sweep(
                 sign_seed = seed + 1009 * depth + 97 * control_id
                 shuffled = direction_for_trait(items, features, split, trait, depth, train=True, sign_seed=sign_seed)
                 if shuffled is not None:
-                    pos, neg = projection_scores(eval_rows, features, shuffled, depth)
-                    add_probe_row(report, trait=trait, depth=depth, probe_split="eval", direction_kind="shuffled_sign", control_id=control_id, pos=pos, neg=neg, n_pairs=len(eval_rows), fit_mode="train_topic_fit")
+                    for split_key, rows_for_split in split_rows_by_name.items():
+                        pos, neg = projection_scores(rows_for_split, features, shuffled, depth)
+                        add_probe_row(report, trait=trait, depth=depth, probe_split=split_key, direction_kind="shuffled_sign", control_id=control_id, pos=pos, neg=neg, n_pairs=len(rows_for_split), fit_mode="train_topic_fit")
                     pos, neg, mode = loo_projection_scores(train_rows, items, features, split, trait, depth, sign_seed=sign_seed)
                     add_probe_row(report, trait=trait, depth=depth, probe_split="train_loo", direction_kind="shuffled_sign", control_id=control_id, pos=pos, neg=neg, n_pairs=len(train_rows), fit_mode=mode)
 
@@ -1147,14 +1247,15 @@ def run_probe_sweep(
                     d_model,
                     seed + depth * 7919 + stable_hash_int(f"{trait}:{control_id}"),
                 )
-                pos, neg = projection_scores(eval_rows, features, random, depth)
-                add_probe_row(report, trait=trait, depth=depth, probe_split="eval", direction_kind="random_oriented", control_id=control_id, pos=pos, neg=neg, n_pairs=len(eval_rows), fit_mode="random_oriented_on_train")
+                for split_key, rows_for_split in split_rows_by_name.items():
+                    pos, neg = projection_scores(rows_for_split, features, random, depth)
+                    add_probe_row(report, trait=trait, depth=depth, probe_split=split_key, direction_kind="random_oriented", control_id=control_id, pos=pos, neg=neg, n_pairs=len(rows_for_split), fit_mode="random_oriented_on_train")
                 pos, neg = projection_scores(train_rows, features, random, depth)
                 add_probe_row(report, trait=trait, depth=depth, probe_split="train_loo", direction_kind="random_oriented", control_id=control_id, pos=pos, neg=neg, n_pairs=len(train_rows), fit_mode="random_oriented_on_train")
 
     depth_rows: list[dict[str, Any]] = []
     for depth in range(1, n_depths):
-        for probe_split in ("train_loo", "eval"):
+        for probe_split in ("train_loo", "dev", "test"):
             real = [float(r["auc"]) for r in report if r["depth"] == depth and r["probe_split"] == probe_split and r["direction_kind"] == "real" and isinstance(r.get("auc"), (int, float))]
             shuffled = [float(r["auc"]) for r in report if r["depth"] == depth and r["probe_split"] == probe_split and r["direction_kind"] == "shuffled_sign" and isinstance(r.get("auc"), (int, float))]
             random = [float(r["auc"]) for r in report if r["depth"] == depth and r["probe_split"] == probe_split and r["direction_kind"] == "random_oriented" and isinstance(r.get("auc"), (int, float))]
@@ -1172,16 +1273,23 @@ def run_probe_sweep(
                 "n_real_rows": len(real),
                 "n_shuffled_rows": len(shuffled),
                 "n_random_rows": len(random),
-                "selection_rule": "best depth chosen from train_loo control_adjusted_score only",
+                "selection_rule": "best depth chosen from dev control_adjusted_score; test rows are report-only",
             })
 
     def selection_score(depth: int) -> float:
         vals = [
             float(row["control_adjusted_score"])
             for row in depth_rows
+            if row["depth"] == depth and row["probe_split"] == "dev" and isinstance(row.get("control_adjusted_score"), (int, float))
+        ]
+        if vals:
+            return safe_fmean(vals, -1.0)
+        fallback = [
+            float(row["control_adjusted_score"])
+            for row in depth_rows
             if row["depth"] == depth and row["probe_split"] == "train_loo" and isinstance(row.get("control_adjusted_score"), (int, float))
         ]
-        return safe_fmean(vals, -1.0)
+        return safe_fmean(fallback, -1.0)
 
     best_depth = max(range(1, n_depths), key=selection_score)
     for row in depth_rows:
@@ -1192,7 +1300,7 @@ def run_probe_sweep(
 def build_directions_at_depth(
     items: Sequence[PersonaPair],
     features: Mapping[str, Mapping[str, Any]],
-    split: Mapping[str, bool],
+    split: Mapping[str, Any],
     depth: int,
 ) -> dict[str, Any]:
     directions: dict[str, Any] = {}
@@ -1207,7 +1315,7 @@ def build_directions_at_depth(
 def build_shuffled_directions_at_depth(
     items: Sequence[PersonaPair],
     features: Mapping[str, Mapping[str, Any]],
-    split: Mapping[str, bool],
+    split: Mapping[str, Any],
     depth: int,
     seed: int,
 ) -> dict[str, Any]:
@@ -1340,11 +1448,25 @@ def score_generation(item: PersonaPair, text: str) -> dict[str, Any]:
     }
 
 
-def selected_eval_rows(items: Sequence[PersonaPair], split: Mapping[str, bool]) -> list[PersonaPair]:
-    rows = [item for item in items if not split[item.item_id]]
-    if rows:
-        return rows
-    return list(items)
+def selected_eval_rows(items: Sequence[PersonaPair], split: Mapping[str, Any], args: Any | None = None) -> list[PersonaPair]:
+    rows = [item for item in items if split_name(split[item.item_id]) == REPORT_SPLIT]
+    if not rows:
+        rows = [item for item in items if split_name(split[item.item_id]) != "train"]
+    if not rows:
+        rows = list(items)
+
+    cap = int(getattr(args, "persona_steering_prompts", 0) or 0) if args is not None else 0
+    if cap <= 0:
+        return sorted(rows, key=lambda r: (r.trait, r.topic, r.item_id))
+
+    by_trait: dict[str, list[PersonaPair]] = defaultdict(list)
+    for item in rows:
+        by_trait[item.trait].append(item)
+    selected: list[PersonaPair] = []
+    for trait, trait_rows in sorted(by_trait.items()):
+        ranked = sorted(trait_rows, key=lambda r: stable_hash_int(f"steer:{trait}:{r.topic}:{r.item_id}"))
+        selected.extend(ranked[:cap])
+    return sorted(selected, key=lambda r: (r.trait, r.topic, r.item_id))
 
 
 def run_steering(
@@ -1356,6 +1478,7 @@ def run_steering(
     d_model: int,
     seed: int,
     ref_norm: float,
+    random_controls: int = DEFAULT_STEERING_RANDOM_CONTROLS,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     injection_layer = max(0, depth - 1)
     prompts = [render_chat(bundle, item.eval_prompt) for item in items]
@@ -1375,6 +1498,7 @@ def run_steering(
             "family": item.family,
             "topic": item.topic,
             "steering_condition": "baseline",
+            "control_id": 0,
             "dose_fraction": 0.0,
             "injection_layer": injection_layer,
             "stream_depth_direction_fit": depth,
@@ -1391,18 +1515,19 @@ def run_steering(
         trait_prompts = [render_chat(bundle, item.eval_prompt) for item in trait_items]
         direction = directions[trait]
         shuffled = shuffled_directions.get(trait, direction)
-        random = random_unit(d_model, seed + stable_hash_int(f"random-steer:{trait}") % 100000)
         conditions = [
-            ("trait_direction", direction, +1.0),
-            ("opposite_direction", direction, -1.0),
-            ("shuffled_sign_direction", shuffled, +1.0),
-            ("random_direction", random, +1.0),
+            ("trait_direction", direction, +1.0, 0),
+            ("opposite_direction", direction, -1.0, 0),
+            ("shuffled_sign_direction", shuffled, +1.0, 0),
         ]
+        for control_id in range(max(1, int(random_controls))):
+            random = random_unit(d_model, seed + stable_hash_int(f"random-steer:{trait}:{control_id}") % 100000)
+            conditions.append(("random_direction", random, +1.0, control_id))
         for dose_fraction in STEERING_DOSE_FRACTIONS:
             if dose_fraction == 0.0:
                 continue
             abs_scale = float(dose_fraction) * float(ref_norm)
-            for condition, vec, sign in conditions:
+            for condition, vec, sign, control_id in conditions:
                 signed_scale = sign * abs_scale
                 outs = bench.generate_continuous(
                     bundle,
@@ -1419,6 +1544,7 @@ def run_steering(
                         "family": item.family,
                         "topic": item.topic,
                         "steering_condition": condition,
+                        "control_id": control_id,
                         "dose_fraction": dose_fraction,
                         "injection_layer": injection_layer,
                         "stream_depth_direction_fit": depth,
@@ -1762,7 +1888,7 @@ def mean_probe_by_depth(rows: Sequence[Mapping[str, Any]], probe_split: str, kin
 
 def plot_probe_selectivity(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
     fig, ax = bench.new_figure(figsize=(9.2, 5.2))
-    for split_name, linestyle in (("train_loo", "--"), ("eval", "-")):
+    for split_name, linestyle in (("train_loo", "--"), ("dev", "-."), (REPORT_SPLIT, "-")):
         for kind, label in (("real", "real"), ("shuffled_sign", "shuffled"), ("random_oriented", "random")):
             pts = mean_probe_by_depth(rows, split_name, kind)
             if not pts:
@@ -1978,6 +2104,10 @@ def _lab17_color(key: str, default: str = "#555555") -> str:
         "warm_supportive_voice": "#E69F00",
         "voice": "#E69F00",
         "honest_disagreement": "#009E73",
+        "socratic_teacher": "#56B4E9",
+        "concise_executive_register": "#CC79A7",
+        "cautious_uncertainty_voice": "#009E73",
+        "stepwise_coach": "#D55E00",
         "agreement": "#009E73",
         "trait_direction": "#D55E00",
         "opposite_direction": "#0072B2",
@@ -2017,8 +2147,27 @@ def _lab17_marker(key: str, default: str = "o") -> str:
         "technical_register": "s",
         "warm_supportive_voice": "^",
         "honest_disagreement": "D",
+        "socratic_teacher": "P",
+        "concise_executive_register": "X",
+        "cautious_uncertainty_voice": "v",
+        "stepwise_coach": "<",
     }
     return markers.get(str(key), default)
+
+
+def _trait_short_label(trait: Any) -> str:
+    labels = {
+        "character_museum_guide": "museum",
+        "technical_register": "technical",
+        "warm_supportive_voice": "warm",
+        "honest_disagreement": "honest",
+        "socratic_teacher": "socratic",
+        "concise_executive_register": "executive",
+        "cautious_uncertainty_voice": "cautious",
+        "stepwise_coach": "stepwise",
+    }
+    text = str(trait)
+    return labels.get(text, text.replace("_", " "))
 
 
 def _f(row_or_value: Any, key: str | None = None, default: float = float("nan")) -> float:
@@ -2087,7 +2236,7 @@ def build_depth_control_gap_rows(probe_rows: Sequence[Mapping[str, Any]]) -> lis
     depths = sorted({int(row["depth"]) for row in probe_rows if isinstance(row.get("depth"), int) or str(row.get("depth", "")).isdigit()})
     for trait in traits:
         for depth in depths:
-            for split_name in ("train_loo", "eval"):
+            for split_name in ("train_loo", "dev", "test"):
                 real = _mean_where(probe_rows, "auc", trait=trait, depth=depth, probe_split=split_name, direction_kind="real")
                 shuf = _mean_where(probe_rows, "auc", trait=trait, depth=depth, probe_split=split_name, direction_kind="shuffled_sign")
                 rand = _mean_where(probe_rows, "auc", trait=trait, depth=depth, probe_split=split_name, direction_kind="random_oriented")
@@ -2101,7 +2250,7 @@ def build_depth_control_gap_rows(probe_rows: Sequence[Mapping[str, Any]]) -> lis
                     "random_auc": none_if_nan(rand),
                     "best_control_auc": rounded(best_control),
                     "control_adjusted_auc_gap": none_if_nan(real - best_control),
-                    "claim_hint": "candidate_depth" if split_name == "train_loo" and math.isfinite(real - best_control) and real - best_control >= MIN_SELECTIVITY_GAP else "report_only",
+                    "claim_hint": "selection_candidate" if split_name == "dev" and math.isfinite(real - best_control) and real - best_control >= MIN_SELECTIVITY_GAP else ("final_report" if split_name == "test" else "report_only"),
                 })
     return rows
 
@@ -2155,9 +2304,9 @@ def build_trait_evidence_matrix(
     }
     rows: list[dict[str, Any]] = []
     for trait in _all_traits_from_probe(probe_rows):
-        real = _mean_where(probe_rows, "auc", trait=trait, depth=best_depth, probe_split="eval", direction_kind="real")
-        shuf = _mean_where(probe_rows, "auc", trait=trait, depth=best_depth, probe_split="eval", direction_kind="shuffled_sign")
-        rand = _mean_where(probe_rows, "auc", trait=trait, depth=best_depth, probe_split="eval", direction_kind="random_oriented")
+        real = _mean_where(probe_rows, "auc", trait=trait, depth=best_depth, probe_split=REPORT_SPLIT, direction_kind="real")
+        shuf = _mean_where(probe_rows, "auc", trait=trait, depth=best_depth, probe_split=REPORT_SPLIT, direction_kind="shuffled_sign")
+        rand = _mean_where(probe_rows, "auc", trait=trait, depth=best_depth, probe_split=REPORT_SPLIT, direction_kind="random_oriented")
         best_control = max(shuf if math.isfinite(shuf) else 0.5, rand if math.isfinite(rand) else 0.5)
         style = _mean_where(steering_effects, "style_margin_delta_vs_baseline", trait=trait, steering_condition="trait_direction", dose_fraction=max_dose)
         shuf_s = _mean_where(steering_effects, "style_margin_delta_vs_baseline", trait=trait, steering_condition="shuffled_sign_direction", dose_fraction=max_dose)
@@ -2183,6 +2332,9 @@ def build_trait_evidence_matrix(
         rows.append({
             "trait": trait,
             "best_depth": best_depth,
+            "report_split": REPORT_SPLIT,
+            "test_real_auc": none_if_nan(real),
+            "test_best_control_auc": rounded(best_control),
             "eval_real_auc": none_if_nan(real),
             "eval_best_control_auc": rounded(best_control),
             "decode_gap_vs_best_control": none_if_nan(selectivity_gap),
@@ -2248,7 +2400,7 @@ def write_plot_reading_guide(ctx: bench.RunContext) -> None:
         {"plot": "persona_evidence_dashboard.png", "read_for": "one-screen verdict: decode, steering, trace, and confound risk", "claim_boundary": "do not call a style handle a real identity"},
         {"plot": "trait_evidence_matrix.png", "read_for": "per-trait evidence posture and which handles survive controls", "claim_boundary": "one strong trait does not validate every persona/register axis"},
         {"plot": "depth_control_gap_atlas.png", "read_for": "where real probe AUC beats shuffled/random controls", "claim_boundary": "depth selection must be train-side and control-adjusted"},
-        {"plot": "persona_probe_selectivity.png", "read_for": "depth curves with train/eval and controls", "claim_boundary": "AUC above chance is not enough if controls travel with it"},
+        {"plot": "persona_probe_selectivity.png", "read_for": "depth curves with train/dev/test and controls", "claim_boundary": "AUC above chance is not enough if controls travel with it"},
         {"plot": "persona_steering_dose_response.png", "read_for": "dose response for trait/opposite/random/shuffled steering", "claim_boundary": "activation addition earns only a scoped behavior handle"},
         {"plot": "steering_operating_frontier.png", "read_for": "style movement versus content, repetition, and private-experience costs", "claim_boundary": "largest dose is not automatically best"},
         {"plot": "generation_style_atlas.png", "read_for": "trait-by-dose style and content deltas", "claim_boundary": "aggregate steering can hide one fragile trait"},
@@ -2336,8 +2488,8 @@ def _imshow_with_numbers(ax: Any, mat: Sequence[Sequence[float]], *, fmt: str = 
 
 def plot_probe_selectivity(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
     import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(1, 2, figsize=(12.0, 4.8), sharey=True)
-    for ax, split_name, title in zip(axes, ("train_loo", "eval"), ("train-side selection rail", "held-out report rail")):
+    fig, axes = plt.subplots(1, 3, figsize=(14.4, 4.8), sharey=True)
+    for ax, split_name, title in zip(axes, ("train_loo", "dev", "test"), ("train fit audit", "dev selection rail", "test report rail")):
         for kind, label in (("real", "real direction"), ("shuffled_sign", "shuffled-label control"), ("random_oriented", "random-direction control")):
             pts = mean_probe_by_depth(rows, split_name, kind)
             if not pts:
@@ -2352,7 +2504,7 @@ def plot_probe_selectivity(ctx: bench.RunContext, rows: Sequence[Mapping[str, An
         ax.set_xlabel("stream depth")
         bench.style_ax(ax, legend=False)
     axes[0].set_ylabel("mean AUC across traits")
-    handles, labels = axes[1].get_legend_handles_labels()
+    handles, labels = axes[-1].get_legend_handles_labels()
     if handles:
         fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False)
     fig.suptitle("Persona/register/voice probe selectivity: selection rail separated from report rail")
@@ -2363,8 +2515,8 @@ def plot_probe_selectivity(ctx: bench.RunContext, rows: Sequence[Mapping[str, An
 def plot_depth_control_gap_atlas(ctx: bench.RunContext, rows: Sequence[Mapping[str, Any]], best_depth: int) -> None:
     import matplotlib.pyplot as plt
     import numpy as np
-    eval_rows = [row for row in rows if row.get("probe_split") == "eval"]
-    traits, depths, mat = _matrix_from_rows(eval_rows, "trait", "depth", "control_adjusted_auc_gap")
+    test_rows = [row for row in rows if row.get("probe_split") == REPORT_SPLIT]
+    traits, depths, mat = _matrix_from_rows(test_rows, "trait", "depth", "control_adjusted_auc_gap")
     if not traits or not depths:
         return
     arr = np.array(mat, dtype=float)
@@ -2398,12 +2550,17 @@ def plot_persona_evidence_dashboard(
     fig, axes = plt.subplots(2, 2, figsize=(12.8, 8.5))
     ax = axes[0, 0]
     train = [row for row in depth_rows if row.get("probe_split") == "train_loo"]
-    eval_ = [row for row in depth_rows if row.get("probe_split") == "eval"]
-    for rows_, label, ls in ((train, "train-control gap", "--"), (eval_, "held-out control gap", "-")):
+    dev = [row for row in depth_rows if row.get("probe_split") == "dev"]
+    test = [row for row in depth_rows if row.get("probe_split") == "test"]
+    for rows_, label, ls in (
+        (train, "train-control gap", "--"),
+        (dev, "dev-selection gap", "-."),
+        (test, "test-report gap", "-"),
+    ):
         depths = sorted({_f(row, "depth") for row in rows_ if math.isfinite(_f(row, "depth"))})
         pts = []
         for d in depths:
-            vals = [_f(row, "control_adjusted_auc_gap") for row in rows_ if _f(row, "depth") == d]
+            vals = [_f(row, "control_adjusted_score") for row in rows_ if _f(row, "depth") == d]
             pts.append((d, safe_fmean(vals)))
         if pts:
             ax.plot([p[0] for p in pts], [p[1] for p in pts], marker="o", linewidth=2.0, linestyle=ls, label=label)
@@ -2412,14 +2569,36 @@ def plot_persona_evidence_dashboard(
     bench.style_ax(ax, title="Decode gap over depth", xlabel="stream depth", ylabel="mean real - best control AUC")
 
     ax = axes[0, 1]
+    label_offsets = [(-18, 9), (18, 9), (-18, -13), (18, -13), (0, 16), (0, -18), (-30, 0), (30, 0)]
+    label_counts: dict[tuple[float, float], int] = {}
     for row in trait_rows:
         x = _f(row, "steering_gap_vs_best_control")
         y = _f(row, "content_hit_delta")
         if math.isfinite(x) and math.isfinite(y):
-            ax.scatter(x, y, s=120, color=_lab17_color(str(row.get("trait"))), marker=_lab17_marker(str(row.get("trait"))), edgecolor="#222222", linewidth=0.6)
-            ax.text(x, y, str(row.get("trait", "")).replace("_", "\n"), fontsize=7, ha="center", va="bottom")
+            trait = str(row.get("trait", ""))
+            ax.scatter(x, y, s=120, color=_lab17_color(trait), marker=_lab17_marker(trait), edgecolor="#222222", linewidth=0.6)
+            bucket = (round(x, 2), round(y, 2))
+            count = label_counts.get(bucket, 0)
+            label_counts[bucket] = count + 1
+            dx, dy = label_offsets[count % len(label_offsets)]
+            ax.annotate(
+                _trait_short_label(trait),
+                xy=(x, y),
+                xytext=(dx, dy),
+                textcoords="offset points",
+                fontsize=6.5,
+                ha="center",
+                va="center",
+                arrowprops={"arrowstyle": "-", "lw": 0.45, "color": "#777777", "alpha": 0.75},
+            )
     ax.axvline(MIN_STEERING_SPECIFICITY_GAP, color="#222222", linestyle=":", linewidth=1.0, label="steering bar")
     ax.axhline(MIN_CONTENT_DELTA, color="#777777", linestyle="--", linewidth=1.0, label="content floor")
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    xrange = xmax - xmin
+    yrange = ymax - ymin
+    ax.set_xlim(xmin - 0.05 * xrange, xmax + 0.15 * xrange)
+    ax.set_ylim(ymin - 0.08 * yrange, ymax + 0.14 * yrange)
     bench.style_ax(ax, title="Steering specificity vs task preservation", xlabel="style delta beyond best control", ylabel="content-hit delta")
 
     ax = axes[1, 0]
@@ -2517,7 +2696,7 @@ def plot_steering_operating_frontier(ctx: bench.RunContext, rows: Sequence[Mappi
         size = 70 + 250 * max(0.0, _f(row, "private_experience_rate", 0.0))
         ax.scatter(x, y, s=size, color=_lab17_color(cond), marker=_lab17_marker(trait), alpha=0.82, edgecolor="#222222", linewidth=0.5)
         if cond == "trait_direction":
-            ax.text(x, y, trait.replace("_", "\n"), fontsize=7, ha="center", va="bottom")
+            ax.annotate(_trait_short_label(trait), xy=(x, y), xytext=(0, 8), textcoords="offset points", fontsize=6.8, ha="center", va="bottom")
     ax.axvline(MIN_STEERING_SPECIFICITY_GAP, color="#222222", linestyle=":", linewidth=1.0, label="specificity bar")
     ax.axhline(max(0.0, -MIN_CONTENT_DELTA), color="#777777", linestyle="--", linewidth=1.0, label="content-cost ceiling")
     ax.set_xlabel("style specificity over strongest control")
@@ -2577,7 +2756,7 @@ def plot_style_content_tradeoff(ctx: bench.RunContext, rows: Sequence[Mapping[st
         trait = str(row.get("trait"))
         ax.scatter(x, y, s=105 if cond == "trait_direction" else 65, color=_lab17_color(cond), marker=_lab17_marker(trait), alpha=0.85, edgecolor="#222222", linewidth=0.55, label=cond.replace("_", " ") if cond not in ax.get_legend_handles_labels()[1] else None)
         if cond == "trait_direction":
-            ax.text(x, y, trait.replace("_", "\n"), fontsize=7, ha="center", va="bottom")
+            ax.annotate(_trait_short_label(trait), xy=(x, y), xytext=(0, 8), textcoords="offset points", fontsize=6.8, ha="center", va="bottom")
     ax.axhline(MIN_CONTENT_DELTA, linewidth=1.0, alpha=0.65, color="#777777", linestyle="--", label="content floor")
     ax.axvline(0.0, linewidth=1.0, alpha=0.55, color="#222222")
     ax.set_xlabel(f"style-marker delta at max dose ({rounded(max_dose)})")
@@ -2802,7 +2981,7 @@ def plot_refusal_boundary_safety_dashboard(ctx: bench.RunContext, turn_rows: Seq
 # ---------------------------------------------------------------------------
 
 
-def metric_at(rows: Sequence[Mapping[str, Any]], trait: str, kind: str, depth: int, key: str = "auc", probe_split: str = "eval") -> float:
+def metric_at(rows: Sequence[Mapping[str, Any]], trait: str, kind: str, depth: int, key: str = "auc", probe_split: str = REPORT_SPLIT) -> float:
     vals = [
         float(row[key]) for row in rows
         if row.get("trait") == trait
@@ -2860,19 +3039,37 @@ def aggregate_best_probe_metrics(
     real_aucs = [metric_at(probe_rows, trait, "real", best_depth) for trait in traits]
     shuf_aucs = [metric_at(probe_rows, trait, "shuffled_sign", best_depth) for trait in traits]
     random_aucs = [metric_at(probe_rows, trait, "random_oriented", best_depth) for trait in traits]
+    dev_real_aucs = [metric_at(probe_rows, trait, "real", best_depth, probe_split="dev") for trait in traits]
+    dev_shuf_aucs = [metric_at(probe_rows, trait, "shuffled_sign", best_depth, probe_split="dev") for trait in traits]
+    dev_random_aucs = [metric_at(probe_rows, trait, "random_oriented", best_depth, probe_split="dev") for trait in traits]
     rows = []
     for trait in traits:
+        test_real = metric_at(probe_rows, trait, "real", best_depth)
+        test_shuf = metric_at(probe_rows, trait, "shuffled_sign", best_depth)
+        test_rand = metric_at(probe_rows, trait, "random_oriented", best_depth)
         rows.append({
             "trait": trait,
-            "eval_real_auc": none_if_nan(metric_at(probe_rows, trait, "real", best_depth)),
-            "eval_shuffled_auc": none_if_nan(metric_at(probe_rows, trait, "shuffled_sign", best_depth)),
-            "eval_random_auc": none_if_nan(metric_at(probe_rows, trait, "random_oriented", best_depth)),
-            "eval_selectivity_vs_shuffled": none_if_nan(metric_at(probe_rows, trait, "real", best_depth) - metric_at(probe_rows, trait, "shuffled_sign", best_depth)),
-            "eval_selectivity_vs_random": none_if_nan(metric_at(probe_rows, trait, "real", best_depth) - metric_at(probe_rows, trait, "random_oriented", best_depth)),
+            "report_split": REPORT_SPLIT,
+            "test_real_auc": none_if_nan(test_real),
+            "test_shuffled_auc": none_if_nan(test_shuf),
+            "test_random_auc": none_if_nan(test_rand),
+            "test_selectivity_vs_shuffled": none_if_nan(test_real - test_shuf),
+            "test_selectivity_vs_random": none_if_nan(test_real - test_rand),
+            "dev_real_auc": none_if_nan(metric_at(probe_rows, trait, "real", best_depth, probe_split="dev")),
+            "dev_shuffled_auc": none_if_nan(metric_at(probe_rows, trait, "shuffled_sign", best_depth, probe_split="dev")),
+            "dev_random_auc": none_if_nan(metric_at(probe_rows, trait, "random_oriented", best_depth, probe_split="dev")),
+            "eval_real_auc": none_if_nan(test_real),
+            "eval_shuffled_auc": none_if_nan(test_shuf),
+            "eval_random_auc": none_if_nan(test_rand),
+            "eval_selectivity_vs_shuffled": none_if_nan(test_real - test_shuf),
+            "eval_selectivity_vs_random": none_if_nan(test_real - test_rand),
         })
     return {
         "traits": traits,
         "per_trait_rows": rows,
+        "mean_dev_real_auc_best_depth": none_if_nan(safe_fmean(dev_real_aucs)),
+        "mean_dev_shuffled_auc_best_depth": none_if_nan(safe_fmean(dev_shuf_aucs)),
+        "mean_dev_random_auc_best_depth": none_if_nan(safe_fmean(dev_random_aucs)),
         "mean_real_auc_best_depth": none_if_nan(safe_fmean(real_aucs)),
         "mean_shuffled_auc_best_depth": none_if_nan(safe_fmean(shuf_aucs)),
         "mean_random_auc_best_depth": none_if_nan(safe_fmean(random_aucs)),
@@ -2913,7 +3110,7 @@ def write_generation_labeling_guide(ctx: bench.RunContext) -> None:
         "",
         "## What to watch for",
         "",
-        "A persona handle is not impressive if it only injects a catchphrase. A register handle is not impressive if it ruins the answer. A warm voice handle is not impressive if it fabricates private experience. Treat the hand labels as the little tribunal before the ledger claim enters town.",
+        "A persona handle is not useful if it only injects a catchphrase. A register handle is not useful if it ruins the answer. A warm voice handle is not useful if it fabricates private experience. Treat hand labels as a required audit before making a claim.",
         "",
     ]
     path = ctx.path("tables", "generation_labeling_guide.md")
@@ -2934,8 +3131,9 @@ def write_persona_state_card(ctx: bench.RunContext, metrics: Mapping[str, Any]) 
         f"- Model: `{metrics.get('model_id')}`",
         f"- Selected stream depth: {metrics.get('best_depth')}",
         f"- Injection layer for steering: {metrics.get('injection_layer')}",
-        f"- Eval real AUC: {metrics.get('mean_real_auc_best_depth')}",
-        f"- Eval shuffled/random AUC: {metrics.get('mean_shuffled_auc_best_depth')} / {metrics.get('mean_random_auc_best_depth')}",
+        f"- Dev selection score: {metrics.get('dev_selection_score_best_depth')}",
+        f"- Test real AUC: {metrics.get('mean_real_auc_best_depth')}",
+        f"- Test shuffled/random AUC: {metrics.get('mean_shuffled_auc_best_depth')} / {metrics.get('mean_random_auc_best_depth')}",
         f"- Selectivity vs shuffled/random: {metrics.get('mean_real_selectivity_vs_shuffled')} / {metrics.get('mean_real_selectivity_vs_random')}",
         f"- Max-dose trait steering style delta: {metrics.get('mean_trait_steering_style_delta_max_dose')}",
         f"- Max-dose random steering style delta: {metrics.get('mean_random_steering_style_delta_max_dose')}",
@@ -2974,7 +3172,7 @@ def write_operationalization_audit(ctx: bench.RunContext, metrics: Mapping[str, 
         "|---|---|---|",
         "| Formatting or chat-template residue | `diagnostics/exact_chat_hook_parity.json`, `tables/turn_segments.csv`, `diagnostics/turn_boundary_check.json` | Segment checks fail, or traces are driven by role tokens rather than content spans. |",
         "| Marker-only style | `tables/persona_steering_generations.csv`, `tables/generation_labeling_guide.md` | Hand labels show the model only adds catchphrases. |",
-        "| Topic leakage | `diagnostics/split_audit.csv`, `diagnostics/split_balance.csv` | Train and eval topics leak or a trait vanishes on held-out topics. |",
+        "| Topic leakage | `diagnostics/split_audit.csv`, `diagnostics/split_balance.csv` | Train, dev, and test topics leak or a trait vanishes on held-out topics. |",
         "| Random linear handles | `tables/persona_probe_report.csv`, `plots/persona_probe_selectivity.png` | Random or shuffled controls match the real direction. |",
         "| Politeness/sentiment rather than persona | `tables/direction_cosines.csv`, `plots/direction_cosine_heatmap.png` | Persona/register axes collapse onto warm/supportive or sentiment controls. |",
         "| Style at the cost of task behavior | `tables/persona_steering_effects.csv`, `plots/style_content_tradeoff.png` | Content-hit rate falls while style markers rise. |",
@@ -2983,8 +3181,9 @@ def write_operationalization_audit(ctx: bench.RunContext, metrics: Mapping[str, 
         "## Current run",
         "",
         f"- Best depth: {metrics.get('best_depth')}",
-        f"- Mean real AUC at best depth: {metrics.get('mean_real_auc_best_depth')}",
-        f"- Mean shuffled/random AUC at best depth: {metrics.get('mean_shuffled_auc_best_depth')} / {metrics.get('mean_random_auc_best_depth')}",
+        f"- Dev selection score at best depth: {metrics.get('dev_selection_score_best_depth')}",
+        f"- Mean test real AUC at best depth: {metrics.get('mean_real_auc_best_depth')}",
+        f"- Mean test shuffled/random AUC at best depth: {metrics.get('mean_shuffled_auc_best_depth')} / {metrics.get('mean_random_auc_best_depth')}",
         f"- Mean trait-direction steering style delta: {metrics.get('mean_trait_steering_style_delta_max_dose')}",
         f"- Mean random-direction steering style delta: {metrics.get('mean_random_steering_style_delta_max_dose')}",
         f"- Mean shuffled-direction steering style delta: {metrics.get('mean_shuffled_steering_style_delta_max_dose')}",
@@ -3009,10 +3208,10 @@ def write_run_summary(ctx: bench.RunContext, metrics: Mapping[str, Any]) -> None
         "",
         f"- Model: `{metrics.get('model_id')}`",
         f"- Rows: {metrics.get('n_rows')} selected from `{metrics.get('data', {}).get('data_source')}`",
-        f"- Best depth: {metrics.get('best_depth')} selected by train-only control-adjusted score",
+        f"- Best depth: {metrics.get('best_depth')} selected by dev control-adjusted score",
         f"- Injection layer: {metrics.get('injection_layer')}",
-        f"- Mean held-out real AUC: {metrics.get('mean_real_auc_best_depth')}",
-        f"- Mean held-out shuffled/random AUC: {metrics.get('mean_shuffled_auc_best_depth')} / {metrics.get('mean_random_auc_best_depth')}",
+        f"- Mean test real AUC: {metrics.get('mean_real_auc_best_depth')}",
+        f"- Mean test shuffled/random AUC: {metrics.get('mean_shuffled_auc_best_depth')} / {metrics.get('mean_random_auc_best_depth')}",
         f"- Max-dose trait steering style delta: {metrics.get('mean_trait_steering_style_delta_max_dose')}",
         f"- Max-dose trait steering content delta: {metrics.get('mean_trait_steering_content_delta_max_dose')}",
         f"- Museum roleplay persona/random slopes: {metrics.get('museum_roleplay_persona_slope')} / {metrics.get('museum_roleplay_random_slope')}",
@@ -3083,6 +3282,13 @@ def make_metrics(
         and row.get("depth") == best_depth
         and isinstance(row.get("control_adjusted_score"), (int, float))
     ])
+    dev_selection_score = safe_fmean([
+        float(row["control_adjusted_score"])
+        for row in depth_rows
+        if row.get("probe_split") == "dev"
+        and row.get("depth") == best_depth
+        and isinstance(row.get("control_adjusted_score"), (int, float))
+    ])
     steering_specificity_gap = safe_fmean(trait_deltas) - max(safe_fmean(random_deltas, 0.0), safe_fmean(shuffled_deltas, 0.0))
     trace_gap = trace_slope(turn_slopes, "museum_roleplay", "persona_museum_guide") - trace_slope(turn_slopes, "museum_roleplay", "random_null")
 
@@ -3105,12 +3311,17 @@ def make_metrics(
 
     metrics = {
         "model_id": bundle.anatomy.model_id,
+        "seed": int(getattr(ctx.args, "seed", 0)),
         "n_rows": len(items),
+        "report_split": REPORT_SPLIT,
+        "n_report_rows": len(eval_items),
         "n_eval_rows": len(eval_items),
+        "n_steering_rows": len(eval_items),
         "best_depth": best_depth,
         "injection_layer": max(0, best_depth - 1),
         "stream_depth_convention": "bench streams[k]: 0 = embeddings, k = residual after k blocks; steering into block layer uses layer = depth - 1",
         "train_selection_score_best_depth": none_if_nan(train_selection_score),
+        "dev_selection_score_best_depth": none_if_nan(dev_selection_score),
         **{k: v for k, v in probe.items() if k != "per_trait_rows"},
         "mean_trait_steering_style_delta_max_dose": rounded(safe_fmean(trait_deltas)),
         "mean_random_steering_style_delta_max_dose": rounded(safe_fmean(random_deltas)),
@@ -3164,10 +3375,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     split = make_split(items, int(args.seed))
     split_path = ctx.path("diagnostics", "split_audit.csv")
     bench.write_csv_with_context(ctx, split_path, split_rows(items, split))
-    ctx.register_artifact(split_path, "diagnostic", "Trait-stratified train/eval split by topic, with prompt hashes.")
+    ctx.register_artifact(split_path, "diagnostic", "Trait-stratified train/dev/test split by topic, with prompt hashes.")
     split_balance_path = ctx.path("diagnostics", "split_balance.csv")
     bench.write_csv_with_context(ctx, split_balance_path, split_balance(items, split))
-    ctx.register_artifact(split_balance_path, "diagnostic", "Train/eval counts by trait and topic.")
+    ctx.register_artifact(split_balance_path, "diagnostic", "Train/dev/test counts by trait and topic.")
 
     feat_tensor, features = cache_pair_features(ctx, bundle, items)
     row_norms = feat_tensor.norm(dim=-1)
@@ -3188,14 +3399,14 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     probe_rows, depth_rows, best_depth = run_probe_sweep(items, features, split, int(args.seed), bundle.anatomy.d_model)
     probe_path = ctx.path("tables", "persona_probe_report.csv")
     bench.write_csv_with_context(ctx, probe_path, probe_rows)
-    ctx.register_artifact(probe_path, "table", "Persona/register/voice held-out probe sweep with train-only depth selection controls.")
+    ctx.register_artifact(probe_path, "table", "Persona/register/voice probe sweep with train fit, dev selection, test reporting, controls, and uncertainty.")
     depth_path = ctx.path("tables", "persona_depth_selection.csv")
     bench.write_csv_with_context(ctx, depth_path, depth_rows)
-    ctx.register_artifact(depth_path, "table", "Depth-selection table. Selected depth uses train_loo control-adjusted score only.")
+    ctx.register_artifact(depth_path, "table", "Depth-selection table. Selected depth uses dev control-adjusted score; test is report-only.")
     depth_json_path = ctx.path("diagnostics", "persona_depth_selection.json")
     bench.write_json(depth_json_path, {
         "selected_depth": best_depth,
-        "selection_rule": "max train_loo mean(real_auc) - max(mean(shuffled_auc), mean(random_auc)); eval rows are report-only",
+        "selection_rule": "max dev mean(real_auc) - max(mean(shuffled_auc), mean(random_auc)); test rows are report-only",
         "stream_depth_convention": "streams[k] = residual after k blocks; depth 0 embeddings; depth L final pre-norm stream",
         "injection_layer_for_steering": max(0, best_depth - 1),
     })
@@ -3236,7 +3447,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     ctx.register_artifact(prov_path, "table", "Where each Lab 17 direction came from and how it may be used.")
 
     ref_norm = safe_fmean(row_norms[:, best_depth].tolist(), default=1.0)
-    eval_items = selected_eval_rows(items, split)
+    eval_items = selected_eval_rows(items, split, args)
     steering_generations, steering_effects = run_steering(
         bundle,
         eval_items,
@@ -3246,6 +3457,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         bundle.anatomy.d_model,
         int(args.seed),
         ref_norm,
+        random_controls=int(getattr(args, "persona_steering_controls", DEFAULT_STEERING_RANDOM_CONTROLS) or 0),
     )
     generation_path = ctx.path("tables", "persona_steering_generations.csv")
     bench.write_csv_with_context(ctx, generation_path, steering_generations)
@@ -3296,7 +3508,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "model_id": bundle.anatomy.model_id,
         "d_model": bundle.anatomy.d_model,
         "n_layers": bundle.anatomy.n_layers,
-        "method": "train-split paired positive-minus-negative mass-mean directions; depth selected by train_loo control-adjusted score",
+        "method": "train-split paired positive-minus-negative mass-mean directions; depth selected by dev control-adjusted score with test held for reporting",
         "source_data": data_info,
     }
     persona_path = ctx.path("state", "persona_directions.pt")

@@ -8,6 +8,26 @@ Persona, voice, roleplay, and register: paired directions, steering, and turn tr
 
 This pack prefers the newest broad validation artifacts available in the local runs tree: recent Lab 6 matrix/reruns where applicable, `run6` and `verify_part3` for the main course sweep, and standalone Severance reruns for Lab 36.
 
+## 2026-06-20 Fair-Shot Update
+
+The fair-shot update expands the frozen corpus from 24 to 256 rows, changes the probe protocol to train/dev/test, selects depth on dev control-adjusted AUC, reports test only after selection, adds bootstrap/permutation probe diagnostics, and strengthens steering controls.
+
+Headline read: Lab 17 is now good as a controlled decodability lab. It does not yet show a robust causal persona/register steering result. On `allenai/Olmo-3-7B-Instruct`, two full-corpus seeds had mean test AUC `1.0` with random-control AUC around `0.64-0.66`, but the higher-control steering sweep did not beat random/shuffled controls. The initial 7B pilot produced one apparent `honest_disagreement` controlled-style handle; the stronger five-random-control rerun removed it.
+
+New committed summary:
+
+- `fairshot_20260620_summary.csv`
+- `fairshot_20260620_lab17_fairshot_smolm_v2_full_s0b_20260620_*`
+- `fairshot_20260620_lab17_fairshot_olmo3_7b_v2_full_s0_20260620_*`
+- `fairshot_20260620_lab17_fairshot_olmo3_7b_v2_full_s0_controls5_20260620_*`
+- `fairshot_20260620_lab17_fairshot_olmo3_7b_v2_full_s1_controls5_20260620_*`
+
+Full raw run directories were backed up to Drive under:
+
+```text
+/content/drive/MyDrive/interpret/lab17_persona_fairshot_20260620/
+```
+
 - `interpret/verify_part3/labs1_25_local_reruns_20260615_101609/lab17_olmo32bthink_labs1_25_local_reruns_20260615_101609/lab17_olmo32bthink_labs1_25_local_reruns_20260615_101609` (allenai/Olmo-3-32B-Think, tier c)
   - Metrics: `best_depth`=13, `content_ok`=True, `injection_layer`=12, `mean_opposite_steering_style_delta_max_dose`=0, `mean_random_auc_best_depth`=0.625, `mean_random_steering_style_delta_max_dose`=0, `mean_real_auc_best_depth`=1, `mean_real_selectivity_vs_random`=0.375
   - Model: `allenai/Olmo-3-32B-Think`

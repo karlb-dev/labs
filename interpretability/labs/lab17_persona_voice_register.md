@@ -31,18 +31,19 @@ Allowed claims are narrower:
 From `interpretability/`:
 
 ```bash
-python interp_bench.py --lab lab17 --tier a
-python interp_bench.py --lab lab17 --tier b --prompt-set full
+python interp_bench.py --lab lab17 --tier a --prompt-set small
+python interp_bench.py --lab lab17 --tier b --prompt-set full --corpus-path data/persona_register_pairs.csv --max-examples 0
 ```
 
 Useful while debugging:
 
 ```bash
-python interp_bench.py --lab lab17 --tier a --no-plots
-python interp_bench.py --lab lab17 --tier b --prompt-set medium --no-plots
+python interp_bench.py --lab lab17 --tier a --prompt-set small --persona-steering-prompts 1 --persona-steering-controls 1 --no-plots
+python interp_bench.py --lab lab17 --tier b --prompt-set medium --persona-steering-prompts 2 --persona-steering-controls 3 --no-plots
+python interp_bench.py --lab lab17 --tier a --prompt-set full --corpus-path data/persona_register_pairs.csv --max-examples 0 --persona-steering-prompts 4 --persona-steering-controls 3
 ```
 
-Lab 17 uses instruct models and chat templates. Tier A should use a small instruct model such as `HuggingFaceTB/SmolLM2-135M-Instruct`; Tier B should use the course instruct model such as `allenai/Olmo-3-7B-Instruct`. The lab file itself does not require registry-specific arguments beyond the shared bench options.
+Lab 17 uses instruct models and chat templates. Tier A should use a small instruct model such as `HuggingFaceTB/SmolLM2-135M-Instruct`; Tier B should use the course instruct model such as `allenai/Olmo-3-7B-Instruct`. The lab also accepts `--corpus-path` for a frozen CSV, `--persona-steering-prompts` to cap held-out steering prompts per trait, and `--persona-steering-controls` to average multiple random steering controls.
 
 ## Dataset
 
@@ -60,6 +61,10 @@ It contains paired prompts over matched task content:
 | `technical_register` | precise technical expert | casual friend | register as a lightweight persona |
 | `warm_supportive_voice` | warm supportive voice | direct terse voice | voice and affective style |
 | `honest_disagreement` | honest correction | agreeable validation | agreement pressure versus truth-preserving correction |
+| `socratic_teacher` | guided questions | answer-only assistant | pedagogical persona |
+| `concise_executive_register` | bottom-line executive register | exploratory brainstorm register | decision-register style |
+| `cautious_uncertainty_voice` | calibrated caveats | overconfident certainty | uncertainty calibration voice |
+| `stepwise_coach` | ordered coaching | single-shot explanation | procedural persona |
 
 Each row has:
 
@@ -71,7 +76,7 @@ expected_keywords, positive_markers, negative_markers,
 content_question, note
 ```
 
-Rows are split by `trait:topic`, so contrast pairs stay together and held-out evaluation does not reuse the same topic. If the frozen CSV is missing on a Tier A smoke run, the revised Python uses a clearly labeled built-in fallback. That fallback is for plumbing only. Do not ledger science claims from it.
+The v2 frozen corpus has 256 rows: 8 traits by 32 matched tasks. Runtime prompt-set caps keep Tier A small (`small` uses 3 topics per trait, `medium` uses 5, and `full` uses the whole file). Tier A also has a default per-trait smoke cap, so pass `--max-examples 0` for a real full-corpus sweep. Rows are split by `trait:topic` into train/dev/test, so contrast pairs stay together and held-out evaluation does not reuse the same topic. If the frozen CSV is missing on a Tier A smoke run, the Python uses a clearly labeled built-in fallback. That fallback is for plumbing only. Do not ledger science claims from it.
 
 ## The three experiments
 
@@ -83,17 +88,17 @@ For each trait and each stream depth, the lab renders the positive and negative 
 direction_trait(depth) = mean_train(positive_stream - negative_stream)
 ```
 
-The revised lab chooses the stream depth using only a train-side leave-one-out, control-adjusted score:
+The lab fits directions on train topics, chooses the stream depth on dev topics, and keeps test topics report-only:
 
 ```text
 score(depth) = mean(real AUC) - max(mean(shuffled-sign AUC), mean(random AUC))
 ```
 
-Held-out eval AUC is reported after the depth is selected. This prevents the prettiest eval curve from quietly choosing the microscope setting.
+Train leave-one-out rows are still reported as a fitting audit, but they do not choose the headline result. Test AUC, bootstrap confidence intervals, and permutation-null summaries are reported after the depth is selected. This prevents the prettiest test curve from quietly choosing the microscope setting.
 
 ### 2. Steering on held-out neutral prompts
 
-The lab steers held-out `eval_prompt` rows with activation addition at:
+The lab steers held-out test `eval_prompt` rows with activation addition at:
 
 ```text
 injection_layer = selected_stream_depth - 1
@@ -107,7 +112,7 @@ The steering sweep includes:
 - trait direction;
 - opposite direction;
 - shuffled-sign direction;
-- random direction.
+- multiple random directions, controlled by `--persona-steering-controls`.
 
 The lab scores style markers separately from content keywords. A style handle is not useful if it merely adds a catchphrase or breaks the task.
 
@@ -171,7 +176,7 @@ runs/lab17_persona_voice_register-<timestamp>-<id>/
     exact_chat_hook_parity.json            # hook check on rendered chat, no extra special tokens
     exact_chat_hook_parity_by_layer.csv
     logit_lens_self_check.json
-    split_audit.csv                        # train/eval split with prompt hashes
+    split_audit.csv                        # train/dev/test split with prompt hashes
     split_balance.csv
     prompt_render_audit.csv                # rendered prompt lengths, hashes, suffixes
     activation_norms_by_depth.csv
@@ -182,8 +187,8 @@ runs/lab17_persona_voice_register-<timestamp>-<id>/
 
   tables/
     persona_family_manifest.csv
-    persona_probe_report.csv               # AUC by trait, depth, split, and control
-    persona_depth_selection.csv            # train-only selection and eval report curves
+    persona_probe_report.csv               # AUC, CIs, and permutation-null stats by trait, depth, split, and control
+    persona_depth_selection.csv            # train audit, dev selection, and test report curves
     probe_best_depth_by_trait.csv
     direction_provenance.csv
     direction_cosines.csv
@@ -273,7 +278,7 @@ This plot shows held-out real-minus-control AUC by depth and trait. Bright cells
 
 ### `persona_probe_selectivity.png`
 
-Solid lines are held-out eval. Dashed lines are train-side leave-one-out curves used for depth selection. A real curve that barely beats shuffled and random controls is a weak handle, even if it rises above 0.5.
+Solid lines are held-out test. Dash-dot lines are dev selection curves. Dashed lines are train-side leave-one-out audit curves. A real curve that barely beats shuffled and random controls is a weak handle, even if it rises above 0.5.
 
 ### `persona_steering_dose_response.png`
 
@@ -342,7 +347,7 @@ A persona result that survives hand labels is much stronger than one that surviv
 ## Writeup questions
 
 1. Which trait had the strongest held-out AUC at the selected depth, and did it beat shuffled and random controls?
-2. Was the selected depth chosen by train-only evidence, or did you accidentally read it from eval?
+2. Was the selected depth chosen by dev evidence, or did you accidentally read it from test?
 3. Did trait-direction steering move style markers more than random and shuffled controls?
 4. Did technical-register steering preserve content keywords, or did it alter task performance?
 5. In the roleplay trace, did the persona direction rise more than the random-null direction?
@@ -384,7 +389,7 @@ That sentence is a fog machine. Replace it with a measurement, a scope, and a fa
 | Symptom | Likely cause | Check |
 |---|---|---|
 | Exact chat hook parity fails | rendered prompt tokenization drift or unsupported architecture | `diagnostics/exact_chat_hook_parity_by_layer.csv` |
-| Eval AUC is high but controls are high too | small-n curve shopping or easy prompt formatting | `tables/persona_depth_selection.csv` |
+| Test AUC is high but controls are high too | small-n curve shopping or easy prompt formatting | `tables/persona_depth_selection.csv` |
 | Steering changes every condition | activation-norm or generic fluency lever | `plots/persona_steering_dose_response.png` |
 | Style improves but content drops | register is interfering with task behavior | `plots/style_content_tradeoff.png` |
 | Persona trace rises in default control too | direction reads shared task content or chat scaffold | `plots/persona_turn_trace.png` |

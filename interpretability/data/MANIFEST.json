@@ -347,28 +347,39 @@
   },
   "persona_register_pairs.csv": {
     "families": {
-      "agreement": 6,
-      "persona": 6,
-      "register": 6,
-      "voice": 6
+      "agreement": 32,
+      "persona": 96,
+      "register": 64,
+      "voice": 64
     },
     "generator": "make_persona_register_pairs.py",
     "pairing": "positive persona/register/voice prompt versus matched negative/control prompt over the same task",
-    "rows": 24,
-    "sha256": "784572e5d4474eb37a3861c50ed301ea8f80818ebe0dd5d7f17d968e6518e744",
+    "rows": 256,
+    "sha256": "fdafd17a9be0ee4d7a1e46fb2dbc6f2243354a40e5e9f701560cb9f04db795bc",
+    "split_protocol": "Lab 17 deterministically splits topics by trait into train/dev/test at runtime.",
     "task_kinds": {
-      "coding": 4,
-      "factual": 4,
-      "math": 4,
-      "planning": 4,
-      "science": 4,
-      "writing": 4
+      "business": 8,
+      "coding": 48,
+      "economics": 16,
+      "factual": 24,
+      "history": 8,
+      "legal": 8,
+      "math": 48,
+      "medical": 8,
+      "planning": 24,
+      "science": 32,
+      "weather": 8,
+      "writing": 24
     },
     "traits": {
-      "character_museum_guide": 6,
-      "honest_disagreement": 6,
-      "technical_register": 6,
-      "warm_supportive_voice": 6
+      "cautious_uncertainty_voice": 32,
+      "character_museum_guide": 32,
+      "concise_executive_register": 32,
+      "honest_disagreement": 32,
+      "socratic_teacher": 32,
+      "stepwise_coach": 32,
+      "technical_register": 32,
+      "warm_supportive_voice": 32
     },
     "verified_tokenizers": []
   },
