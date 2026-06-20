@@ -636,6 +636,13 @@ def parse_grounded_generation(text: str) -> tuple[str, str]:
     return report, output
 
 
+def parse_report_generation(text: str) -> str:
+    report = extract_prefixed_segment(text, "report")
+    if report:
+        return report
+    return first_nonempty_line(text)
+
+
 def make_confidence_user(item: IntrospectionItem) -> str:
     return (
         "Before answering, report verbal confidence as exactly one of low, medium, high. "
@@ -772,7 +779,8 @@ def prompt_render_audit_rows(bundle: bench.ModelBundle, items: Sequence[Introspe
             "decoded_tail": bundle.tokenizer.decode(toks[-20:]) if toks else "",
             "contains_target_marker_or_name": int(target_leak),
             "contains_wrong_marker_or_name": int(wrong_leak),
-            "report_leak_risk": int(role == "report" and (target_leak or wrong_leak)),
+            "report_leak_risk": int(role in {"report", "grounded_report_before_output"} and (target_leak or wrong_leak)),
+            "main_report_channel": int(role == "report"),
         })
     return rows
 
@@ -1185,20 +1193,31 @@ def run_injection_trials(
         if item.target_concept not in directions:
             continue
         direction = directions[item.target_concept]
-        grounded_prompt, grounded_mode = render_user(bundle, make_grounded_user(item))
+        report_prompt, report_mode = render_user(bundle, make_report_user(item))
+        behavior_prompt, behavior_mode = render_user(bundle, make_behavior_user(item))
         for spec in trial_specs(item, direction, directions):
             dose = float(spec["dose"])
             vector = spec["vector"] if abs(dose) > 1e-12 else None
-            grounded = generation_with_optional_steer(
+            report_generation = generation_with_optional_steer(
                 bundle,
-                grounded_prompt,
+                report_prompt,
                 vector=vector,
                 layer=direction.injection_layer,
                 scale=dose,
-                max_new_tokens=MAX_GROUNDED_TOKENS,
-                label="lab25 report-before-output",
+                max_new_tokens=MAX_REPORT_TOKENS,
+                label="lab25 open self-report",
             )
-            report, behavior = parse_grounded_generation(grounded)
+            behavior_generation = generation_with_optional_steer(
+                bundle,
+                behavior_prompt,
+                vector=vector,
+                layer=direction.injection_layer,
+                scale=dose,
+                max_new_tokens=MAX_BEHAVIOR_TOKENS,
+                label="lab25 neutral behavior",
+            )
+            report = parse_report_generation(report_generation)
+            behavior = behavior_generation.strip()
             score = score_report_and_behavior(item, report, behavior, items)
             rows.append({
                 "item_id": item.item_id,
@@ -1211,9 +1230,16 @@ def run_injection_trials(
                 "dose": dose,
                 "stream_depth": direction.depth,
                 "injection_layer": direction.injection_layer,
-                "grounded_render_mode": grounded_mode,
-                "grounded_prompt_hash": short_hash(grounded_prompt),
-                "grounded_generation": grounded,
+                "generation_protocol": "separate_open_report_and_neutral_behavior_prompts",
+                "report_render_mode": report_mode,
+                "report_prompt_hash": short_hash(report_prompt),
+                "report_generation": report_generation,
+                "behavior_render_mode": behavior_mode,
+                "behavior_prompt_hash": short_hash(behavior_prompt),
+                "behavior_generation": behavior_generation,
+                "grounded_render_mode": "",
+                "grounded_prompt_hash": "",
+                "grounded_generation": "",
                 "report_text": report,
                 "behavior_text": behavior,
                 **score,
@@ -1356,39 +1382,40 @@ def max_detection_slope(summary_rows: Sequence[Mapping[str, Any]]) -> float:
 
 def source_prompt(item: IntrospectionItem, source_type: str) -> tuple[str, str, Any | None, float, str]:
     style = human_label(item.target_concept)
-    options = "default mode, system prompt, user instruction, activation injection"
+    options = "default_mode, system_prompt, user_instruction, activation_injection"
+    source_line = f"After the answer, write exactly one line: source: <one of {options}>."
     if source_type == "system_prompt":
         system = (
             SOURCE_SYSTEM_PROMPT
             + f" Use a {style} style because the system prompt instructs it."
         )
         user = (
-            f"Answer the request. Then write `source:` followed by one of: {options}.\n"
+            f"Answer the request. {source_line}\n"
             f"Request: {item.behavior_prompt}"
         )
         return user, system, None, 0.0, "system_prompt"
     if source_type == "user_instruction":
         user = (
             f"Use a {style} style because I am asking for it. Answer the request. "
-            f"Then write `source:` followed by one of: {options}.\n"
+            f"{source_line}\n"
             f"Request: {item.behavior_prompt}"
         )
         return user, SOURCE_SYSTEM_PROMPT, None, 0.0, "user_instruction"
     if source_type == "activation_injection":
         user = (
-            f"Answer the request. Then write `source:` followed by one of: {options}.\n"
+            f"Answer the request. {source_line}\n"
             f"Request: {item.behavior_prompt}"
         )
         return user, SOURCE_SYSTEM_PROMPT, "direction", CONTROL_DOSE, "activation_injection"
     if source_type == "false_activation_claim":
         user = (
             "The word activation appears in this instruction, but no activation injection is being applied. "
-            f"Answer the request in your ordinary default style. Then write `source:` followed by one of: {options}.\n"
+            f"Answer the request in your ordinary default style. {source_line}\n"
             f"Request: {item.behavior_prompt}"
         )
         return user, SOURCE_SYSTEM_PROMPT, None, 0.0, "default_mode"
     user = (
-        f"Answer the request in your ordinary default style. Then write `source:` followed by one of: {options}.\n"
+        f"Answer the request in your ordinary default style. {source_line}\n"
         f"Request: {item.behavior_prompt}"
     )
     return user, SOURCE_SYSTEM_PROMPT, None, 0.0, "default_mode"
@@ -2682,6 +2709,17 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "source_attribution_accuracy": rounded(safe_mean(source_accuracy)) if source_accuracy else "",
         "mean_selected_eval_gap": rounded(safe_mean(selected_eval_gaps)) if selected_eval_gaps else "",
         "certainty_bridge_status": certainty_status,
+        "main_report_prompt_leak_rate": rounded(safe_mean([
+            r["report_leak_risk"]
+            for r in prompt_audit
+            if r.get("prompt_role") == "report"
+        ])) if prompt_audit else "",
+        "diagnostic_grounded_prompt_leak_rate": rounded(safe_mean([
+            r["report_leak_risk"]
+            for r in prompt_audit
+            if r.get("prompt_role") == "grounded_report_before_output"
+        ])) if prompt_audit else "",
+        "self_report_generation_protocol": "separate_open_report_and_neutral_behavior_prompts",
     }
     metrics["verdict"] = make_verdict(metrics)
 

@@ -390,11 +390,11 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "module": "labs.lab25_find_the_wire",
         "run_name": "lab25_find_the_wire",
         "description": "Find the wire: injected concept states, self-report grounding, and source attribution.",
-        # Chat-template capstone. --mode selects injection | attribution | both.
+        # Chat-template capstone. --mode selects injection | attribution | confidence | both.
         "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
         "model_tier_b": "allenai/Olmo-3-7B-Instruct",
         "model_tier_c": "allenai/Olmo-3-7B-Instruct",
-        "max_examples_tier_a": "1",
+        "max_examples_tier_a": "4",
     },
     "lab26": {
         "module": "labs.lab26_causal_abstraction",
