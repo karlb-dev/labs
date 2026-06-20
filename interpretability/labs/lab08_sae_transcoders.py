@@ -55,6 +55,7 @@ CAUSAL for the one clamped-and-controlled feature.
 from __future__ import annotations
 
 import csv
+import copy
 import math
 import pathlib
 import statistics
@@ -96,6 +97,23 @@ OLMO_SAE = {
     "subdir": "olmo-3-1025-7b/btk-mat-layer-16-k-100",
     "weights": "sae_weights.safetensors",
     "layer": 16, "site": "post", "center_input": False, "sub_b_dec": True, "jumprelu": True,
+}
+
+SAE_REGISTRY = {
+    "gpt2-jbloom-resid-pre-l8": {
+        **GPT2_SAE,
+        "id": "gpt2-jbloom-resid-pre-l8",
+        "model_substrings": ("gpt2",),
+        "description": "jbloom gpt2-small resid_pre SAE, block 8.",
+        "convention_note": "TransformerLens-trained gpt2 residual SAE; centered input and b_dec subtraction reproduce the authoring FVU.",
+    },
+    "olmo3-1025-7b-decoderesearch-l16-post": {
+        **OLMO_SAE,
+        "id": "olmo3-1025-7b-decoderesearch-l16-post",
+        "model_substrings": ("olmo-3-1025-7b",),
+        "description": "decoderesearch Olmo-3-1025-7B jumprelu SAE, layer 16 resid_post.",
+        "convention_note": "decoderesearch jumprelu SAE; b_dec subtraction plus thresholded jumprelu is the documented/validated convention.",
+    },
 }
 
 N_ATLAS_FEATURES = 20        # features to label and validate (bumped for more statistical power on verdicts/rankings)
@@ -216,22 +234,263 @@ def _download(spec: dict[str, str], cfg_name: str | None = None) -> dict[str, An
     from huggingface_hub import hf_hub_download
     from safetensors.torch import load_file
 
-    wpath = hf_hub_download(spec["repo"], f"{spec['subdir']}/{spec['weights']}")
+    filename = f"{spec['subdir'].strip('/')}/{spec['weights']}" if spec.get("subdir") else spec["weights"]
+    wpath = hf_hub_download(spec["repo"], filename)
     return load_file(wpath)
 
 
-def load_model_sae(bundle: bench.ModelBundle) -> LoadedSAE:
-    """Pick and load the SAE matched to the loaded model's family."""
+def _arg_value(args: Any, name: str, default: Any = None) -> Any:
+    return getattr(args, name, default)
+
+
+def _bool_arg_value(args: Any, name: str) -> bool | None:
+    value = getattr(args, name, None)
+    return value if value is None else bool(value)
+
+
+def resolve_sae_spec(args: Any, bundle: bench.ModelBundle) -> dict[str, Any]:
+    """Resolve the exact SAE spec from the registry plus CLI overrides."""
     model_id = bundle.anatomy.model_id.lower()
-    spec = GPT2_SAE if "gpt2" in model_id else OLMO_SAE
-    print(f"[lab8] loading SAE {spec['repo']}/{spec['subdir']} (layer {spec['layer']}, {spec['site']})")
-    weights = _download(spec)
-    sae = LoadedSAE(weights, center_input=spec["center_input"], sub_b_dec=spec["sub_b_dec"],
-                    jumprelu=spec["jumprelu"], kind="sae", layer=spec["layer"], site=spec["site"])
+    requested_id = _arg_value(args, "sae_id", "") or "auto"
+    explicit_repo = bool(_arg_value(args, "sae_repo", ""))
+
+    if requested_id == "auto" and explicit_repo:
+        base: dict[str, Any] = {
+            "id": "custom",
+            "repo": _arg_value(args, "sae_repo", ""),
+            "subdir": _arg_value(args, "sae_subdir", ""),
+            "weights": _arg_value(args, "sae_weights", "") or "sae_weights.safetensors",
+            "layer": _arg_value(args, "sae_layer", None),
+            "site": _arg_value(args, "sae_site", "post"),
+            "center_input": False,
+            "sub_b_dec": True,
+            "jumprelu": False,
+            "model_substrings": (),
+            "description": "CLI-specified custom SAE.",
+            "convention_note": "Custom SAE; unresolved conventions are chosen by the loading calibration.",
+            "auto_convention": True,
+        }
+    elif requested_id == "auto":
+        matches = [
+            copy.deepcopy(spec)
+            for spec in SAE_REGISTRY.values()
+            if any(fragment in model_id for fragment in spec.get("model_substrings", ()))
+        ]
+        if not matches:
+            available = ", ".join(sorted(SAE_REGISTRY))
+            raise RuntimeError(
+                f"No default SAE registered for model {bundle.anatomy.model_id!r}. "
+                f"Pass --sae-id or --sae-repo/--sae-subdir/--sae-weights. Available ids: {available}"
+            )
+        base = matches[0]
+    else:
+        if requested_id not in SAE_REGISTRY:
+            available = ", ".join(sorted(SAE_REGISTRY))
+            raise RuntimeError(f"Unknown --sae-id {requested_id!r}. Available ids: {available}")
+        base = copy.deepcopy(SAE_REGISTRY[requested_id])
+
+    overrides = {
+        "repo": _arg_value(args, "sae_repo", "") or None,
+        "subdir": _arg_value(args, "sae_subdir", "") or None,
+        "weights": _arg_value(args, "sae_weights", "") or None,
+        "layer": _arg_value(args, "sae_layer", None),
+        "site": _arg_value(args, "sae_site", None),
+        "center_input": _bool_arg_value(args, "sae_center_input"),
+        "sub_b_dec": _bool_arg_value(args, "sae_sub_b_dec"),
+        "jumprelu": _bool_arg_value(args, "sae_jumprelu"),
+    }
+    convention_overrides = {key for key in ("center_input", "sub_b_dec", "jumprelu") if overrides[key] is not None}
+    for key, value in overrides.items():
+        if value is not None:
+            base[key] = value
+    if convention_overrides:
+        base["auto_convention"] = False
+    base["convention_overrides"] = sorted(convention_overrides)
+
+    missing = [key for key in ("repo", "weights", "layer", "site") if base.get(key) in ("", None)]
+    if missing:
+        raise RuntimeError(f"Incomplete SAE spec; missing {missing}. Pass explicit --sae-* flags.")
+    if base["site"] not in {"pre", "post"}:
+        raise RuntimeError(f"Unsupported SAE site {base['site']!r}; expected 'pre' or 'post'.")
+    base["layer"] = int(base["layer"])
+    base["center_input"] = bool(base.get("center_input", False))
+    base["sub_b_dec"] = bool(base.get("sub_b_dec", False))
+    base["jumprelu"] = bool(base.get("jumprelu", False))
+    return base
+
+
+def _sae_from_spec(weights: dict[str, Any], spec: dict[str, Any]) -> LoadedSAE:
+    return LoadedSAE(
+        weights,
+        center_input=bool(spec["center_input"]),
+        sub_b_dec=bool(spec["sub_b_dec"]),
+        jumprelu=bool(spec["jumprelu"]),
+        kind="sae",
+        layer=int(spec["layer"]),
+        site=str(spec["site"]),
+    )
+
+
+def load_model_sae(bundle: bench.ModelBundle, spec: dict[str, Any], weights: dict[str, Any] | None = None) -> LoadedSAE:
+    """Load a specific SAE spec. No implicit family fallback is allowed."""
+    print(f"[lab8] loading SAE {spec['repo']}/{spec.get('subdir', '')} (layer {spec['layer']}, {spec['site']})")
+    weights = weights or _download(spec)
+    sae = _sae_from_spec(weights, spec)
     if sae.d_in != bundle.anatomy.d_model:
         raise RuntimeError(f"SAE d_in {sae.d_in} != model d_model {bundle.anatomy.d_model}; wrong SAE for this model.")
     print(f"[lab8]   SAE d_in={sae.d_in} d_sae={sae.d_sae} jumprelu={sae.jumprelu}")
     return sae
+
+
+def calibration_sites(spec: dict[str, Any], n_layers: int) -> list[tuple[int, str]]:
+    layer = int(spec["layer"])
+    site = str(spec["site"])
+    candidates = [(layer, site), (layer, "post" if site == "pre" else "pre")]
+    if layer > 0:
+        candidates.append((layer - 1, site))
+    if layer + 1 < n_layers:
+        candidates.append((layer + 1, site))
+    out: list[tuple[int, str]] = []
+    seen: set[tuple[int, str]] = set()
+    for item in candidates:
+        if item not in seen:
+            out.append(item)
+            seen.add(item)
+    return out
+
+
+def calibrate_sae_loading(ctx: bench.RunContext, bundle: bench.ModelBundle, spec: dict[str, Any],
+                          weights: dict[str, Any], corpus: list[dict[str, str]],
+                          sample_size: int = 4) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Try plausible loading conventions and write a reconstruction health report."""
+    import torch
+
+    sample = corpus[:max(1, min(sample_size, len(corpus)))]
+    has_threshold = "threshold" in weights
+    relu_modes = [False, True] if has_threshold else [False]
+    locations = calibration_sites(spec, len(bundle.blocks))
+    acts_by_loc: dict[tuple[int, str], list[Any]] = {}
+    print(f"[lab8]   calibrating SAE loading on {len(sample)} corpus rows")
+    for layer, site in locations:
+        loc_acts = []
+        for row in sample:
+            _, acts = capture_site(bundle, row["text"], layer, site)
+            loc_acts.append(acts.to(bundle.input_device))
+        acts_by_loc[(layer, site)] = loc_acts
+
+    rows: list[dict[str, Any]] = []
+    for layer, site in locations:
+        for center in (False, True):
+            for sub_b_dec in (False, True):
+                for jumprelu in relu_modes:
+                    test_spec = {
+                        **spec,
+                        "layer": layer,
+                        "site": site,
+                        "center_input": center,
+                        "sub_b_dec": sub_b_dec,
+                        "jumprelu": jumprelu,
+                    }
+                    sae = _sae_from_spec(weights, test_spec).to(bundle.input_device)
+                    num = den = 0.0
+                    l0s = []
+                    peak = 0.0
+                    ok = True
+                    try:
+                        with torch.no_grad():
+                            for acts in acts_by_loc[(layer, site)]:
+                                feats = sae.encode(acts)
+                                recon = sae.decode(feats)
+                                target = sae._prep(acts)
+                                num += float((target - recon).pow(2).sum())
+                                den += float((target - target.mean(0, keepdim=True)).pow(2).sum())
+                                l0s.append(float((feats > 1e-6).float().sum(-1).mean()))
+                                peak = max(peak, float(feats.max()))
+                    except Exception as exc:
+                        ok = False
+                        rows.append({
+                            "layer": layer, "site": site, "center_input": center, "sub_b_dec": sub_b_dec,
+                            "jumprelu": jumprelu, "ok": False, "error": repr(exc),
+                        })
+                    if ok:
+                        rows.append({
+                            "layer": layer,
+                            "site": site,
+                            "center_input": center,
+                            "sub_b_dec": sub_b_dec,
+                            "jumprelu": jumprelu,
+                            "ok": True,
+                            "fvu": round(num / max(den, 1e-9), 6),
+                            "mean_l0": round(sum(l0s) / max(len(l0s), 1), 3),
+                            "peak_activation": round(peak, 6),
+                            "selected_location": layer == int(spec["layer"]) and site == spec["site"],
+                            "selected_convention": (
+                                center == bool(spec["center_input"])
+                                and sub_b_dec == bool(spec["sub_b_dec"])
+                                and jumprelu == bool(spec["jumprelu"] and has_threshold)
+                            ),
+                        })
+
+    ok_rows = [r for r in rows if r.get("ok") and math.isfinite(float(r.get("fvu", 999.0)))]
+    if not ok_rows:
+        raise RuntimeError("SAE loading calibration failed for every tested convention.")
+    best = min(ok_rows, key=lambda r: float(r["fvu"]))
+    if spec.get("auto_convention"):
+        selected_rows = [
+            r for r in ok_rows
+            if int(r["layer"]) == int(spec["layer"]) and r["site"] == spec["site"]
+        ]
+        if not selected_rows:
+            raise RuntimeError("No successful calibration rows at the requested SAE layer/site.")
+        chosen = min(selected_rows, key=lambda r: float(r["fvu"]))
+        spec["center_input"] = bool(chosen["center_input"])
+        spec["sub_b_dec"] = bool(chosen["sub_b_dec"])
+        spec["jumprelu"] = bool(chosen["jumprelu"])
+        spec["convention_note"] = (
+            spec.get("convention_note", "")
+            + f" Calibration selected center_input={spec['center_input']}, "
+              f"sub_b_dec={spec['sub_b_dec']}, jumprelu={spec['jumprelu']} at the requested site."
+        ).strip()
+    else:
+        chosen = next(
+            (
+                r for r in ok_rows
+                if int(r["layer"]) == int(spec["layer"])
+                and r["site"] == spec["site"]
+                and bool(r["center_input"]) == bool(spec["center_input"])
+                and bool(r["sub_b_dec"]) == bool(spec["sub_b_dec"])
+                and bool(r["jumprelu"]) == bool(spec["jumprelu"] and has_threshold)
+            ),
+            None,
+        )
+    if chosen is None:
+        raise RuntimeError("Chosen SAE convention was not among successful calibration rows.")
+
+    report = {
+        "sae_spec": spec,
+        "sample_rows": [r.get("text_id", r.get("row_id", "")) for r in sample],
+        "has_threshold": has_threshold,
+        "best_by_fvu": best,
+        "chosen": chosen,
+        "known_convention_note": spec.get("convention_note", ""),
+        "chosen_is_best": (
+            int(chosen["layer"]) == int(best["layer"])
+            and chosen["site"] == best["site"]
+            and bool(chosen["center_input"]) == bool(best["center_input"])
+            and bool(chosen["sub_b_dec"]) == bool(best["sub_b_dec"])
+            and bool(chosen["jumprelu"]) == bool(best["jumprelu"])
+        ),
+        "rows": rows,
+    }
+    bench.write_json(ctx.path("sae_loading_calibration.json"), report)
+    ctx.register_artifact(ctx.path("sae_loading_calibration.json"), "diagnostic",
+                          "SAE convention calibration: layer/site, centering, b_dec subtraction, and jumprelu.")
+    if float(chosen["fvu"]) > 1.05 or float(chosen["mean_l0"]) <= 0.0:
+        raise RuntimeError(
+            f"SAE reconstruction looks broken under chosen convention: FVU={chosen['fvu']} "
+            f"L0={chosen['mean_l0']}. See sae_loading_calibration.json."
+        )
+    return report, rows
 
 
 # ---------------------------------------------------------------------------
@@ -383,12 +642,32 @@ def plot_toy_geometry(ctx, results, sparsities, n_features, d_hidden) -> None:
 # ---------------------------------------------------------------------------
 
 
-def load_corpus() -> list[dict[str, str]]:
-    path = bench.COURSE_ROOT / "data" / "sae_feature_corpus.csv"
+def load_corpus(path_override: str | None = None) -> list[dict[str, str]]:
+    if path_override:
+        path = pathlib.Path(path_override).expanduser()
+        if not path.is_absolute():
+            path = bench.COURSE_ROOT / path
+    else:
+        path = bench.COURSE_ROOT / "data" / "sae_feature_corpus.csv"
     if not path.exists():
         raise RuntimeError(f"Frozen corpus missing: {path}. Run data/make_sae_corpus.py once at authoring time.")
     with path.open(newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+        rows = list(csv.DictReader(f))
+    out: list[dict[str, str]] = []
+    for i, row in enumerate(rows, start=1):
+        normalized = dict(row)
+        normalized.setdefault("text_id", normalized.get("row_id", f"T{i:03d}"))
+        normalized.setdefault("row_id", normalized["text_id"])
+        normalized.setdefault("domain", normalized.get("family", "unknown"))
+        normalized.setdefault("family", normalized.get("domain", "unknown"))
+        normalized.setdefault("split", "all")
+        normalized.setdefault("hard_negative_group", "")
+        normalized.setdefault("lexical_markers", "")
+        normalized.setdefault("notes", "")
+        if not normalized.get("text"):
+            raise RuntimeError(f"Corpus row {i} in {path} is missing required text.")
+        out.append(normalized)
+    return out
 
 
 def encode_corpus(bundle, sae, corpus) -> dict[str, Any]:
@@ -1348,28 +1627,55 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     # ----- Part 1: feature atlas ----------------------------------------------
     print("[lab8] Part 1: feature atlas (SAE feature interpretation + label validation)")
-    corpus = load_corpus()
-    sae = load_model_sae(bundle).to(device)
+    corpus = load_corpus(getattr(args, "corpus_path", "") or None)
+    sae_spec = resolve_sae_spec(args, bundle)
+    weights = _download(sae_spec)
+    provisional_sae = load_model_sae(bundle, sae_spec, weights=weights)
+    calibration_report, _ = calibrate_sae_loading(ctx, bundle, sae_spec, weights, corpus)
+    sae = load_model_sae(bundle, sae_spec, weights=weights).to(device)
+    # Update run_config.json with the exact resolved SAE spec after registry/default
+    # resolution and any custom auto-convention calibration. The bench wrote the
+    # CLI config before the lab-specific registry could be consulted.
+    run_config = {**vars(args), "resolved_sae_spec": sae_spec}
+    bench.write_json(ctx.path("run_config.json"), run_config)
+    loading_report = {
+        "model_id": bundle.anatomy.model_id,
+        "model_d_model": bundle.anatomy.d_model,
+        "sae_spec": sae_spec,
+        "weight_keys": sorted(weights.keys()),
+        "d_in": sae.d_in,
+        "d_sae": sae.d_sae,
+        "threshold_present": sae.threshold is not None,
+        "dimensionality_ok": sae.d_in == bundle.anatomy.d_model,
+        "calibration_chosen": calibration_report["chosen"],
+        "calibration_best_by_fvu": calibration_report["best_by_fvu"],
+    }
+    bench.write_json(ctx.path("sae_loading_report.json"), loading_report)
+    ctx.register_artifact(ctx.path("sae_loading_report.json"), "diagnostic",
+                          "Exact SAE spec, loaded tensor keys, dimensions, compatibility, and chosen calibration.")
     n_single = sum(1 for r in corpus if "+" not in r["domain"])
     print(f"[lab8]   corpus: {len(corpus)} lines ({n_single} single-domain) at SAE layer {sae.layer}")
+    print(f"[lab8]   loading calibration: chosen FVU={calibration_report['chosen']['fvu']} "
+          f"L0={calibration_report['chosen']['mean_l0']} best FVU={calibration_report['best_by_fvu']['fvu']}")
 
     enc = encode_corpus(bundle, sae, corpus)
     enc["per_token_l0"] = round(per_token_l0(bundle, sae, corpus), 2)
     fvu = enc["fvu"]
     print(f"[lab8]   SAE reconstruction FVU={fvu:.4f}  L0(per-token)≈{enc['per_token_l0']}")
 
-    ranks = rank_features(enc, N_ATLAS_FEATURES)
+    atlas_budget = int(getattr(args, "atlas_budget", 0) or N_ATLAS_FEATURES)
+    ranks = rank_features(enc, atlas_budget)
     overlap = len(set(ranks["by_max"]) & set(ranks["by_freq"]))
     # atlas feature set: top by max-activation, padded with top-frequency ones
     atlas_features: list[int] = list(ranks["by_max"])
     for f in ranks["by_freq"]:
-        if len(atlas_features) >= N_ATLAS_FEATURES + 5:
+        if len(atlas_features) >= atlas_budget + 5:
             break
         if f not in atlas_features:
             atlas_features.append(f)
 
     dead_corpus = int((enc["fire_count"] == 0).sum())
-    print(f"[lab8]   ranking overlap (max vs freq, top {N_ATLAS_FEATURES}): {overlap}; "
+    print(f"[lab8]   ranking overlap (max vs freq, top {atlas_budget}): {overlap}; "
           f"features silent on corpus: {dead_corpus}/{sae.d_sae}")
 
     atlas = [propose_and_validate(bundle, sae, corpus, enc, f) for f in atlas_features]
@@ -1413,18 +1719,34 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                           "Dead/silent feature counts, L0, FVU, ranking overlap.")
 
     # ----- Part 2: transcoder (gpt2) ------------------------------------------
-    print("[lab8] Part 2: transcoder reconstruction + feature inspection (gpt2)")
-    tc = load_gpt2_transcoder()
-    tc_model, tc_tok, tc_note = get_gpt2_for_transcoder(bundle)
-    tc_report = verify_transcoder(tc_model, tc_tok, tc, corpus)
-    tc_report["model"] = tc_note
-    tc_features = inspect_transcoder_features(tc_model, tc_tok, tc, corpus)
-    tc_report["inspected_features"] = tc_features
-    bench.write_json(ctx.path("transcoder_reconstruction_report.json"), tc_report)
-    ctx.register_artifact(ctx.path("transcoder_reconstruction_report.json"), "metrics",
-                          "Transcoder FVU, splice-in KL, and de-embedded features.")
-    print(f"[lab8]   transcoder FVU={tc_report['fvu']} mean_splice_KL={tc_report['mean_splice_kl']} "
-          f"L0={tc_report['mean_l0']}")
+    if getattr(args, "skip_transcoder", False):
+        print("[lab8] Part 2: transcoder skipped by --skip-transcoder")
+        tc_report = {
+            "skipped": True,
+            "reason": "--skip-transcoder",
+            "model": "skipped",
+            "fvu": "",
+            "mean_l0": "",
+            "mean_splice_kl": "",
+            "max_splice_kl": "",
+            "inspected_features": [],
+        }
+        bench.write_json(ctx.path("transcoder_reconstruction_report.json"), tc_report)
+        ctx.register_artifact(ctx.path("transcoder_reconstruction_report.json"), "metrics",
+                              "Transcoder skipped for SAE-focused sweep.")
+    else:
+        print("[lab8] Part 2: transcoder reconstruction + feature inspection (gpt2)")
+        tc = load_gpt2_transcoder()
+        tc_model, tc_tok, tc_note = get_gpt2_for_transcoder(bundle)
+        tc_report = verify_transcoder(tc_model, tc_tok, tc, corpus)
+        tc_report["model"] = tc_note
+        tc_features = inspect_transcoder_features(tc_model, tc_tok, tc, corpus)
+        tc_report["inspected_features"] = tc_features
+        bench.write_json(ctx.path("transcoder_reconstruction_report.json"), tc_report)
+        ctx.register_artifact(ctx.path("transcoder_reconstruction_report.json"), "metrics",
+                              "Transcoder FVU, splice-in KL, and de-embedded features.")
+        print(f"[lab8]   transcoder FVU={tc_report['fvu']} mean_splice_KL={tc_report['mean_splice_kl']} "
+              f"L0={tc_report['mean_l0']}")
 
     # ----- Bridge: SAE feature vs Lab 4 truth direction ------------------------
     bridge = truth_direction_bridge(sae, bundle)
@@ -1479,6 +1801,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "silent_feature_fraction": round(dead_corpus / sae.d_sae, 4),
         "ranking_overlap_topN": overlap,
         "atlas_size": len(atlas), "n_survived": len(survived), "n_killed": len(killed),
+        "sae_spec": sae_spec,
+        "sae_loading_chosen_fvu": calibration_report["chosen"]["fvu"],
+        "sae_loading_best_fvu": calibration_report["best_by_fvu"]["fvu"],
+        "feature_search": getattr(args, "feature_search", "blind"),
         "toy_represented_dense": toy["represented_by_sparsity"][str(toy["sparsities"][0])],
         "toy_represented_sparse": toy["represented_by_sparsity"][str(toy["sparsities"][-1])],
         "transcoder_fvu": tc_report["fvu"], "transcoder_splice_kl": tc_report["mean_splice_kl"],
@@ -1546,17 +1872,18 @@ def build_claims(ctx, bundle, sae, atlas, enc, toy, tc_report, clamp, survived, 
             "artifact": f"runs/{run_name}/plots/feature_clamp.png",
             "falsifier": "The random-feature control matches the clamped feature — the effect was generic perturbation, not this feature.",
         })
-    claims.append({
-        "id": f"{LAB_ID}-C{len(claims)+1}", "tag": "OBS",
-        "text": (
-            f"A gpt2 MLP transcoder reconstructs the layer-{tc_report.get('model') and GPT2_TRANSCODER['layer']} "
-            f"MLP's input→output map at FVU {tc_report['fvu']}, and splicing its reconstruction in for the real "
-            f"MLP output shifts next-token logits by only KL {tc_report['mean_splice_kl']} on average — it "
-            f"reconstructs the computation, not just a snapshot, which is what Lab 9's circuit tracing needs."
-        ),
-        "artifact": f"runs/{run_name}/transcoder_reconstruction_report.json",
-        "falsifier": "Splice-in KL is large — the transcoder reconstructs the vector but breaks the downstream computation.",
-    })
+    if not tc_report.get("skipped"):
+        claims.append({
+            "id": f"{LAB_ID}-C{len(claims)+1}", "tag": "OBS",
+            "text": (
+                f"A gpt2 MLP transcoder reconstructs the layer-{tc_report.get('model') and GPT2_TRANSCODER['layer']} "
+                f"MLP's input→output map at FVU {tc_report['fvu']}, and splicing its reconstruction in for the real "
+                f"MLP output shifts next-token logits by only KL {tc_report['mean_splice_kl']} on average — it "
+                f"reconstructs the computation, not just a snapshot, which is what Lab 9's circuit tracing needs."
+            ),
+            "artifact": f"runs/{run_name}/transcoder_reconstruction_report.json",
+            "falsifier": "Splice-in KL is large — the transcoder reconstructs the vector but breaks the downstream computation.",
+        })
     return claims
 
 
@@ -1636,10 +1963,17 @@ def write_summary(ctx, bundle, metrics, atlas, toy, tc_report, bridge, clamp, cl
         "",
         "## 3. Transcoder (Part 2)",
         "",
-        f"- FVU {tc_report['fvu']}, per-token L0 {tc_report['mean_l0']}, mean splice-in KL "
-        f"{tc_report['mean_splice_kl']} (max {tc_report['max_splice_kl']})",
-        "- a transcoder reconstructs the MLP's input→output map, so its features can be de-embedded and",
-        "  wired into a circuit — which is why Lab 9's tracing is built on transcoders, not site SAEs.",
+    ]
+    if tc_report.get("skipped"):
+        lines.append("- skipped by `--skip-transcoder` for the SAE fair-shot sweep.")
+    else:
+        lines += [
+            f"- FVU {tc_report['fvu']}, per-token L0 {tc_report['mean_l0']}, mean splice-in KL "
+            f"{tc_report['mean_splice_kl']} (max {tc_report['max_splice_kl']})",
+            "- a transcoder reconstructs the MLP's input->output map, so its features can be de-embedded and",
+            "  wired into a circuit - which is why Lab 9's tracing is built on transcoders, not site SAEs.",
+        ]
+    lines += [
         "",
         "## 4. Bridges and causal extension",
         "",

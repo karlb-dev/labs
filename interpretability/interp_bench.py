@@ -5751,6 +5751,32 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                              "(absorbs the compute dtype's residual-add rounding; bf16 needs ~0.02).")
     parser.add_argument("--run-edit", action="store_true",
                         help="Lab 5: run the rank-one edit-and-audit extension after patching.")
+    parser.add_argument("--sae-id", default="auto",
+                        help="Lab 8: explicit SAE registry id, or 'auto' to use the model-matched default.")
+    parser.add_argument("--sae-repo", default="",
+                        help="Lab 8: Hugging Face repo for a custom SAE or registry override.")
+    parser.add_argument("--sae-subdir", default="",
+                        help="Lab 8: subdirectory inside the SAE repo.")
+    parser.add_argument("--sae-weights", default="",
+                        help="Lab 8: safetensors filename inside --sae-subdir.")
+    parser.add_argument("--sae-layer", type=int, default=None,
+                        help="Lab 8: transformer block index for the SAE hook site.")
+    parser.add_argument("--sae-site", default=None, choices=("pre", "post"),
+                        help="Lab 8: residual stream site for the SAE hook.")
+    parser.add_argument("--sae-center-input", action=argparse.BooleanOptionalAction, default=None,
+                        help="Lab 8: center activations across d_model before SAE encoding.")
+    parser.add_argument("--sae-sub-b-dec", action=argparse.BooleanOptionalAction, default=None,
+                        help="Lab 8: subtract b_dec before SAE encoding.")
+    parser.add_argument("--sae-jumprelu", action=argparse.BooleanOptionalAction, default=None,
+                        help="Lab 8: use jumprelu thresholding when a threshold tensor exists.")
+    parser.add_argument("--skip-transcoder", action="store_true",
+                        help="Lab 8: skip the gpt2 transcoder section for SAE fair-shot sweeps.")
+    parser.add_argument("--atlas-budget", type=int, default=0,
+                        help="Lab 8: number of features per ranking to inspect before padding with frequency hits.")
+    parser.add_argument("--corpus-path", default="",
+                        help="Lab 8: CSV corpus path; relative paths resolve under the interpretability root.")
+    parser.add_argument("--feature-search", default="blind", choices=("blind", "targeted", "both"),
+                        help="Lab 8: feature search mode. Targeted/both are used by the fair-shot extension.")
     parser.add_argument("--graph-nodes", type=int, default=0,
                         help="Lab 9: feature-node budget for the attribution graph "
                              "(0 = tier default; also the number of backward passes).")
