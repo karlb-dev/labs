@@ -5681,6 +5681,21 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
                         help="Lab 23: ignore unsealed manifests even if present; use while writing the pre-unseal report.")
     parser.add_argument("--unsealed-manifest", default="",
                         help="Lab 23: explicit path to a Lab 20 manifest_unsealed.json or directory containing answer keys.")
+    parser.add_argument("--behavior", default="induction_p3",
+                        help="Lab 6: which behavior cell to trace (induction_p3 | induction_p2 | successor | ioi | "
+                             "agreement | agreement_long | taskvec | recall | swa). Each behavior is its own circuit card.")
+    parser.add_argument("--scope", default="heads_and_mlps", choices=("heads_only", "heads_and_mlps"),
+                        help="Lab 6: circuit node scope. heads_and_mlps makes MLP layers first-class pruned/counted "
+                             "nodes (default); heads_only keeps the old routing-graph contrast.")
+    parser.add_argument("--resample-draws", type=int, default=5,
+                        help="Lab 6: number of within-distribution resample (interchange) sources averaged per prompt "
+                             "for the resample-ablation off distribution. 0 disables resample (mean only).")
+    parser.add_argument("--allow-mixed-period", action="store_true",
+                        help="Lab 6: permit a run whose induction prompts mix cycle periods (period-2 and period-3). "
+                             "Off by default so the base metric never averages two distinct mechanisms.")
+    parser.add_argument("--swa-lengths", default="1024,4096,5120",
+                        help="Lab 6: comma-separated target token lengths for the --behavior swa long-context probe "
+                             "(programmatically generated repeating-cycle induction prompts).")
     parser.add_argument("--hook-tolerance", type=float, default=0.0, help="Allowed max absolute diff in hook parity diagnostics.")
     parser.add_argument("--allow-hook-mismatch", action="store_true", help="Warn instead of aborting on hook parity mismatch.")
     parser.add_argument("--seed", type=int, default=0)

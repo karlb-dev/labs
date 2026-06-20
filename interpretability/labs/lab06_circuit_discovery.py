@@ -27,7 +27,9 @@ population and a stated off-distribution (dataset-mean ablation).
 from __future__ import annotations
 
 import dataclasses
+import itertools
 import math
+import os
 import statistics
 from typing import Any, Iterable, Sequence
 
@@ -41,9 +43,24 @@ from labs.lab03_attention_routing import (
 
 LAB_ID = "L06"
 
-# Greedy pruning keeps removing heads while the remaining circuit stays above
-# this ratio of the base logit-difference metric.
+# --- Selection / verdict thresholds ----------------------------------------
+# A circuit "passes" when it preserves at least this ratio of base behavior.
 FAITHFULNESS_FLOOR = 0.70
+# Knee (FIX 1): the smallest circuit whose faithfulness is within KNEE_EPSILON
+# of the prune trajectory's PEAK. The knee is the honest headline; the floor
+# circuit (smallest still above FAITHFULNESS_FLOOR) is the overfit comparison.
+KNEE_EPSILON = 0.02
+# Minimality honesty (FIX 7): a kept node whose marginal faithfulness is below
+# this pays no rent -- it is likely overfit filler, reported with and without.
+MARGINAL_RENT_THRESHOLD = 0.02
+# Hygiene gate (FIX 6): fewer than this many baseline-positive discovery
+# prompts ABORTS the cell. Tiny-n cards are forbidden.
+MIN_POSITIVE = 8
+# Suppression heads (FIX 4): a head whose single-head ablation RAISES the
+# metric by more than this fraction of base is a brake / anti-circuit head.
+SUPPRESSION_REL_THRESHOLD = 0.05
+# Resample / interchange ablation (FIX 2): default within-distribution draws.
+DEFAULT_RESAMPLE_DRAWS = 5
 
 # Screening is deliberately broader than a minimal demo. A too-thin screen can
 # make the pruning stage fail before the students learn anything about circuits.
@@ -52,7 +69,7 @@ SCREEN_TOP_INDUCTION_MIN = 8
 SCREEN_TOP_PREV_MIN = 8
 SCREEN_TOP_ATTRIBUTION_FRAC = 0.035
 SCREEN_TOP_MOTIF_FRAC = 0.012
-N_MLP_CANDIDATES = 6
+N_MLP_CANDIDATES = 8
 
 MOTIF_STRONG_THRESHOLD = 0.35
 FIRST_TOKEN_SINK_THRESHOLD = 0.45
@@ -62,6 +79,17 @@ EDGE_MIN_SOURCE_EFFECT = 1e-6
 EDGE_MIN_ROUTED_FRACTION = 0.02
 EDGE_STRONG_ROUTED_FRACTION = 0.05
 
+# The labeled motif heads that constitute each behavior's "core". The
+# motif-core-only circuit (these heads alone) is evaluated alongside the knee
+# circuit: if the full circuit only beats the motif core via marginal-zero
+# filler, the circuit is overfit, not real.
+CORE_MOTIFS_BY_BEHAVIOR: dict[str, tuple[str, ...]] = {
+    "induction_p3": ("induction", "previous_token"),
+    "induction_p2": ("induction", "previous_token"),
+    "successor": ("induction", "previous_token"),  # expected ABSENT: that IS the finding
+    "swa": ("induction", "previous_token"),
+}
+
 
 @dataclasses.dataclass(frozen=True)
 class CircuitPrompt:
@@ -70,33 +98,284 @@ class CircuitPrompt:
     prompt: str
     target: str
     distractor: str
+    period: int | None = None   # cycle period for induction-family prompts (FIX 5)
 
 
-# All prompts are validated at runtime. The strings are chosen so the default
-# course models tokenize the prompt into exactly 8 tokens and both answer
-# strings into one token. Target = induction continuation. Distractor = cycle
-# restart, the most plausible wrong continuation.
-ALL_PROMPTS: tuple[CircuitPrompt, ...] = (
-    CircuitPrompt("d_colors", "discovery", "red blue green red blue green red blue", " green", " red"),
-    CircuitPrompt("d_animals", "discovery", "dog cat bird dog cat bird dog cat", " bird", " dog"),
-    CircuitPrompt("d_letters", "discovery", "B F Q B F Q B F", " Q", " B"),
-    CircuitPrompt("d_moon", "discovery", "moon star moon star moon star moon star", " moon", " star"),
-    CircuitPrompt("d_sun", "discovery", "sun rain sun rain sun rain sun rain", " sun", " rain"),
-    CircuitPrompt("d_numbers", "discovery", "seven three nine seven three nine seven three", " nine", " seven"),
-    CircuitPrompt("d_fruit", "discovery", "apple pear banana apple pear banana apple pear", " banana", " apple"),
-    CircuitPrompt("d_shapes", "discovery", "circle square triangle circle square triangle circle square", " triangle", " circle"),
-    CircuitPrompt("d_weather", "discovery", "rain snow wind rain snow wind rain snow", " wind", " rain"),
-    # Seasons in a scrambled (non-calendar) order so the continuation cannot come
-    # from the seasonal-sequence prior, only from in-context copying.
-    CircuitPrompt("d_seasons", "discovery", "spring autumn summer spring autumn summer spring autumn", " summer", " spring"),
-    CircuitPrompt("h_metals", "heldout", "gold silver gold silver gold silver gold silver", " gold", " silver"),
-    CircuitPrompt("h_compass", "heldout", "north south east north south east north south", " east", " north"),
-    CircuitPrompt("h_beasts", "heldout", "wolf bear fox wolf bear fox wolf bear", " fox", " wolf"),
-    CircuitPrompt("h_matter", "heldout", "glass stone iron glass stone iron glass stone", " iron", " glass"),
-    CircuitPrompt("h_tools", "heldout", "hammer saw drill hammer saw drill hammer saw", " drill", " hammer"),
-    CircuitPrompt("h_vehicles", "heldout", "car bus train car bus train car bus", " train", " car"),
-    CircuitPrompt("h_foods", "heldout", "wine fish bread wine fish bread wine fish", " bread", " wine"),
-)
+# ===========================================================================
+# Behavior families (PART 3). Each behavior is its OWN run and its OWN circuit
+# card. Discovery and held-out within a behavior must share ONE token length;
+# the hygiene gate (FIX 6) enforces that per model and itemizes any prompt it
+# could not use. Pools are generous (>=12 discovery) so >=8 survive the
+# baseline-positive gate on each tokenizer.
+# ===========================================================================
+
+
+def _induction_prompts(rows: Sequence[tuple[str, str, tuple[str, ...]]], period: int) -> list[CircuitPrompt]:
+    """Build fixed-length repeating-cycle induction prompts.
+
+    ``rows`` is (example_id, family, cycle_words). The 8-token window is the
+    cycle repeated; the target is the induction continuation, the distractor is
+    the most plausible wrong continuation -- for period-3 the cycle restart
+    (word 0), for period-2 the copy-the-current-token error (word 1).
+    """
+    out: list[CircuitPrompt] = []
+    for example_id, family, words in rows:
+        seq = [words[i % period] for i in range(8)]
+        prompt = " ".join(seq)
+        target = " " + words[8 % period]
+        distractor = " " + (words[0] if period == 3 else words[1])
+        out.append(CircuitPrompt(example_id, family, prompt, target, distractor, period=period))
+    return out
+
+
+_P3_ROWS = [
+    ("d_colors", "discovery", ("red", "blue", "green")),
+    ("d_animals", "discovery", ("dog", "cat", "bird")),
+    ("d_letters", "discovery", ("B", "F", "Q")),
+    ("d_numbers", "discovery", ("seven", "three", "nine")),
+    ("d_fruit", "discovery", ("apple", "pear", "banana")),
+    ("d_shapes", "discovery", ("circle", "square", "oval")),
+    ("d_weather", "discovery", ("rain", "snow", "wind")),
+    ("d_seasons", "discovery", ("spring", "autumn", "summer")),
+    ("d_birds", "discovery", ("hawk", "crow", "dove")),
+    ("d_drinks", "discovery", ("tea", "milk", "juice")),
+    ("d_planets", "discovery", ("mars", "earth", "venus")),
+    ("d_trees", "discovery", ("oak", "pine", "elm")),
+    ("d_body", "discovery", ("head", "hand", "foot")),
+    ("d_music", "discovery", ("drum", "flute", "harp")),
+    ("d_clothes", "discovery", ("hat", "coat", "shoe")),
+    ("h_beasts", "heldout", ("wolf", "bear", "fox")),
+    ("h_matter", "heldout", ("glass", "stone", "iron")),
+    ("h_tools", "heldout", ("hammer", "saw", "drill")),
+    ("h_vehicles", "heldout", ("car", "bus", "train")),
+    ("h_foods", "heldout", ("wine", "fish", "bread")),
+    ("h_metals3", "heldout", ("tin", "lead", "zinc")),
+]
+
+_P2_ROWS = [
+    ("d_moon", "discovery", ("moon", "star")),
+    ("d_sun", "discovery", ("sun", "rain")),
+    ("d_day", "discovery", ("day", "night")),
+    ("d_hot", "discovery", ("hot", "cold")),
+    ("d_up", "discovery", ("up", "down")),
+    ("d_yes", "discovery", ("yes", "no")),
+    ("d_left", "discovery", ("left", "right")),
+    ("d_black", "discovery", ("black", "white")),
+    ("d_in", "discovery", ("in", "out")),
+    ("d_win", "discovery", ("win", "lose")),
+    ("d_salt", "discovery", ("salt", "pepper")),
+    ("d_king", "discovery", ("king", "queen")),
+    ("h_metals", "heldout", ("gold", "silver")),
+    ("h_north", "heldout", ("north", "south")),
+    ("h_open", "heldout", ("open", "shut")),
+    ("h_true", "heldout", ("true", "false")),
+]
+
+
+def _successor_prompts(rows: Sequence[tuple[str, str, str, str]]) -> list[CircuitPrompt]:
+    """Successor / counting. Distractor = copy-the-last-token, which subtracts
+    induction/copying out: an induction head would echo the final token, the
+    successor mechanism emits the next item in the order."""
+    return [CircuitPrompt(eid, fam, prompt, " " + nxt, " " + prompt.split()[-1]) for eid, fam, prompt, nxt in rows]
+
+
+_SUCCESSOR_ROWS = [
+    ("s_count", "discovery", "one two three four five six seven eight", "nine"),
+    ("s_count_b", "discovery", "two three four five six seven eight nine", "ten"),
+    ("s_count_c", "discovery", "four five six seven eight nine ten eleven", "twelve"),
+    ("s_count_d", "discovery", "three four five six seven eight nine ten", "eleven"),
+    ("s_months", "discovery", "January February March April May June July August", "September"),
+    ("s_months_b", "discovery", "February March April May June July August September", "October"),
+    ("s_months_c", "discovery", "March April May June July August September October", "November"),
+    ("s_letters", "discovery", "A B C D E F G H", "I"),
+    ("s_letters_b", "discovery", "C D E F G H I J", "K"),
+    ("s_letters_d", "discovery", "H I J K L M N O", "P"),
+    ("s_letters_e", "discovery", "K L M N O P Q R", "S"),
+    ("s_letters_f", "discovery", "M N O P Q R S T", "U"),
+    ("s_letters2", "heldout", "P Q R S T U V W", "X"),
+    ("s_letters_h", "heldout", "R S T U V W X Y", "Z"),
+    ("s_ordinal", "heldout", "first second third fourth fifth sixth seventh eighth", "ninth"),
+    ("s_count_h", "heldout", "five six seven eight nine ten eleven twelve", "thirteen"),
+]
+
+
+def _ioi_prompts(rows: Sequence[tuple[str, str, str, str]]) -> list[CircuitPrompt]:
+    """Single fixed IOI template; the held-out axis is the name pair."""
+    tmpl = "When {a} and {b} went to the store {b} gave the key to"
+    return [
+        CircuitPrompt(eid, fam, tmpl.format(a=a, b=b), " " + a, " " + b)
+        for eid, fam, a, b in rows
+    ]
+
+
+_IOI_ROWS = [
+    ("ioi_1", "discovery", "Anna", "Mark"),
+    ("ioi_2", "discovery", "Paul", "Sara"),
+    ("ioi_3", "discovery", "Lisa", "John"),
+    ("ioi_4", "discovery", "Tom", "Kate"),
+    ("ioi_5", "discovery", "Mary", "Fred"),
+    ("ioi_6", "discovery", "Jane", "Carl"),
+    ("ioi_7", "discovery", "Lucy", "Dave"),
+    ("ioi_8", "discovery", "Anne", "Greg"),
+    ("ioi_9", "discovery", "Sam", "Beth"),
+    ("ioi_10", "discovery", "Mike", "Lara"),
+    ("ioi_11", "discovery", "Adam", "Ruth"),
+    ("ioi_12", "discovery", "Neil", "Joan"),
+    ("ioi_h1", "heldout", "Emma", "Jack"),
+    ("ioi_h2", "heldout", "Ben", "Rose"),
+    ("ioi_h3", "heldout", "Cole", "Faye"),
+    ("ioi_h4", "heldout", "Erik", "Gail"),
+]
+
+
+_AGREEMENT_ROWS = [
+    ("ag_1", "discovery", "The dogs near the fence", " are", " is"),
+    ("ag_2", "discovery", "The dog near the fences", " is", " are"),
+    ("ag_3", "discovery", "The books near the shelf", " are", " is"),
+    ("ag_4", "discovery", "The book near the shelves", " is", " are"),
+    ("ag_5", "discovery", "The cups near the tray", " are", " is"),
+    ("ag_6", "discovery", "The cup near the trays", " is", " are"),
+    ("ag_7", "discovery", "The keys near the door", " are", " is"),
+    ("ag_8", "discovery", "The key near the doors", " is", " are"),
+    ("ag_9", "discovery", "The cars near the gate", " are", " is"),
+    ("ag_10", "discovery", "The car near the gates", " is", " are"),
+    ("ag_11", "discovery", "The birds near the nest", " are", " is"),
+    ("ag_12", "discovery", "The bird near the nests", " is", " are"),
+    ("ag_h1", "heldout", "The plates near the sink", " are", " is"),
+    ("ag_h2", "heldout", "The plate near the sinks", " is", " are"),
+    ("ag_h3", "heldout", "The lamps near the wall", " are", " is"),
+    ("ag_h4", "heldout", "The lamp near the walls", " is", " are"),
+]
+
+# Long-gap agreement: subject and number-attractor are far apart, a real test
+# of whether a number-transport circuit appears once the adversary is wide.
+_AGREEMENT_LONG_ROWS = [
+    ("al_1", "discovery", "The dogs that lived near the old fence", " are", " is"),
+    ("al_2", "discovery", "The dog that lived near the old fences", " is", " are"),
+    ("al_3", "discovery", "The books that sat near the tall shelf", " are", " is"),
+    ("al_4", "discovery", "The book that sat near the tall shelves", " is", " are"),
+    ("al_5", "discovery", "The cups that stood near the round tray", " are", " is"),
+    ("al_6", "discovery", "The cup that stood near the round trays", " is", " are"),
+    ("al_7", "discovery", "The keys that hung near the front door", " are", " is"),
+    ("al_8", "discovery", "The key that hung near the front doors", " is", " are"),
+    ("al_9", "discovery", "The cars that parked near the wide gate", " are", " is"),
+    ("al_10", "discovery", "The car that parked near the wide gates", " is", " are"),
+    ("al_11", "discovery", "The birds that nested near the green hedge", " are", " is"),
+    ("al_12", "discovery", "The bird that nested near the green hedges", " is", " are"),
+    ("al_h1", "heldout", "The plates that dried near the deep sink", " are", " is"),
+    ("al_h2", "heldout", "The plate that dried near the deep sinks", " is", " are"),
+    ("al_h3", "heldout", "The lamps that glowed near the bare wall", " are", " is"),
+    ("al_h4", "heldout", "The lamp that glowed near the bare walls", " is", " are"),
+]
+
+
+def _taskvec_prompts(prefix: str, rows: Sequence[tuple[str, str, str, str]]) -> list[CircuitPrompt]:
+    """Antonym function vector. Few-shot antonym demos then a query word; the
+    target is its antonym, the distractor is echoing the query."""
+    return [
+        CircuitPrompt(eid, fam, f"{prefix} {query}", " " + anto, " " + query)
+        for eid, fam, query, anto in rows
+    ]
+
+
+_TASKVEC_PREFIX_D = "hot cold up down wet dry fast slow"
+_TASKVEC_PREFIX_H = "open shut light dark hard soft rich poor"
+_TASKVEC_ROWS = [
+    ("tv_1", "discovery", "big", "small"),
+    ("tv_2", "discovery", "tall", "short"),
+    ("tv_3", "discovery", "happy", "sad"),
+    ("tv_4", "discovery", "rich", "poor"),
+    ("tv_5", "discovery", "high", "low"),
+    ("tv_6", "discovery", "hard", "soft"),
+    ("tv_7", "discovery", "light", "dark"),
+    ("tv_8", "discovery", "full", "empty"),
+    ("tv_9", "discovery", "young", "old"),
+    ("tv_10", "discovery", "near", "far"),
+    ("tv_11", "discovery", "loud", "quiet"),
+    ("tv_12", "discovery", "weak", "strong"),
+]
+_TASKVEC_HELDOUT = [
+    ("tv_h1", "heldout", "high", "low"),
+    ("tv_h2", "heldout", "left", "right"),
+    ("tv_h3", "heldout", "fast", "slow"),
+    ("tv_h4", "heldout", "big", "small"),
+]
+
+
+def _recall_prompts(rows: Sequence[tuple[str, str, str, str]]) -> list[CircuitPrompt]:
+    """Taxonomic recall (MLP-mediated): the heads-only contrast behavior."""
+    tmpl = "In biology a {x} is a kind of"
+    return [
+        CircuitPrompt(eid, fam, tmpl.format(x=x), " " + cat, " " + wrong)
+        for eid, fam, x, cat, wrong in rows
+    ]
+
+
+_RECALL_ROWS = [
+    ("rc_1", "discovery", "sparrow", "bird", "fish"),
+    ("rc_2", "discovery", "salmon", "fish", "bird"),
+    ("rc_3", "discovery", "maple", "tree", "fish"),
+    ("rc_4", "discovery", "poodle", "dog", "tree"),
+    ("rc_5", "discovery", "eagle", "bird", "fish"),
+    ("rc_6", "discovery", "tuna", "fish", "tree"),
+    ("rc_7", "discovery", "oak", "tree", "dog"),
+    ("rc_8", "discovery", "beagle", "dog", "bird"),
+    ("rc_9", "discovery", "hawk", "bird", "dog"),
+    ("rc_10", "discovery", "shark", "fish", "tree"),
+    ("rc_11", "discovery", "birch", "tree", "fish"),
+    ("rc_12", "discovery", "terrier", "dog", "bird"),
+    ("rc_h1", "heldout", "trout", "fish", "tree"),
+    ("rc_h2", "heldout", "robin", "bird", "dog"),
+    ("rc_h3", "heldout", "willow", "tree", "fish"),
+    ("rc_h4", "heldout", "boxer", "dog", "bird"),
+]
+
+
+def behavior_prompts(behavior: str) -> list[CircuitPrompt]:
+    if behavior == "induction_p3":
+        return _induction_prompts(_P3_ROWS, period=3)
+    if behavior == "induction_p2":
+        return _induction_prompts(_P2_ROWS, period=2)
+    if behavior == "successor":
+        return _successor_prompts(_SUCCESSOR_ROWS)
+    if behavior == "ioi":
+        return _ioi_prompts(_IOI_ROWS)
+    if behavior == "agreement":
+        return [CircuitPrompt(e, f, p, t, d) for e, f, p, t, d in _AGREEMENT_ROWS]
+    if behavior == "agreement_long":
+        return [CircuitPrompt(e, f, p, t, d) for e, f, p, t, d in _AGREEMENT_LONG_ROWS]
+    if behavior == "taskvec":
+        return _taskvec_prompts(_TASKVEC_PREFIX_D, _TASKVEC_ROWS) + _taskvec_prompts(
+            _TASKVEC_PREFIX_H, _TASKVEC_HELDOUT
+        )
+    if behavior == "recall":
+        return _recall_prompts(_RECALL_ROWS)
+    raise ValueError(f"unknown behavior {behavior!r}")
+
+
+def swa_prompts(length_words: int) -> list[CircuitPrompt]:
+    """PART 4: programmatically build a POPULATION of long period-3 induction
+    prompts at one shared length, to test whether the circuit reorganizes once
+    prompts exceed Olmo-3's 4096-token sliding window. Each period-3 cycle from
+    INDUCTION_P3 is repeated to ``length_words`` words (one short of a full
+    cycle so the continuation is word 2); target/distractor as in INDUCTION_P3.
+
+    Built in code, never hand-typed. NOTE: full attention-pattern capture at
+    >4k tokens is memory-infeasible (eager attention is O(seq^2) per head per
+    layer), so the SWA cell runs a reduced pipeline -- the caller is expected to
+    keep ``length_words`` within what the GPU can capture, or to drive SWA
+    through the ablation-only path.
+    """
+    period = 3
+    n_words = (length_words // period) * period + (period - 1)
+    out: list[CircuitPrompt] = []
+    for example_id, family, words in _P3_ROWS:
+        seq = [words[i % period] for i in range(n_words)]
+        prompt = " ".join(seq)
+        target = " " + words[n_words % period]
+        distractor = " " + words[0]
+        out.append(CircuitPrompt(f"swa{length_words}_{example_id}", family, prompt, target, distractor, period=period))
+    return out
 
 
 @dataclasses.dataclass
@@ -171,6 +450,35 @@ def describe_head_list(heads: Sequence[tuple[int, int]]) -> str:
     return ", ".join(node_name("head", *h) for h in heads) or "none"
 
 
+# Node abstraction (FIX 3): a circuit node is a head or an MLP layer. Heads are
+# ("head", layer, head); MLP layers are ("mlp", layer, -1). Heads-only scope
+# never admits MLP nodes; heads_and_mlps makes them first-class.
+Node = tuple[str, int, int]
+
+
+def head_node(layer: int, head: int) -> Node:
+    return ("head", layer, head)
+
+
+def mlp_node(layer: int) -> Node:
+    return ("mlp", layer, -1)
+
+
+def node_label(node: Node) -> str:
+    kind, layer, head = node
+    return node_name(kind, layer, head if kind == "head" else None)
+
+
+def split_nodes(nodes: Sequence[Node]) -> tuple[list[tuple[int, int]], list[int]]:
+    heads = [(layer, head) for (kind, layer, head) in nodes if kind == "head"]
+    mlps = [layer for (kind, layer, _h) in nodes if kind == "mlp"]
+    return heads, mlps
+
+
+def describe_nodes(nodes: Sequence[Node]) -> str:
+    return ", ".join(node_label(n) for n in nodes) or "none"
+
+
 def edge_strength_label(raw_fraction: float | None) -> str:
     if raw_fraction is None or raw_fraction <= 0:
         return "none"
@@ -186,95 +494,199 @@ def edge_strength_label(raw_fraction: float | None) -> str:
 # ---------------------------------------------------------------------------
 
 
+class CellAbort(Exception):
+    """Abort a behavior cell with an explicit, recordable verdict rather than a
+    crash. The matrix driver catches this and writes the verdict to the card so
+    a refusal (INSUFFICIENT PROMPTS, MIXED_PERIOD) is a first-class result."""
+
+    def __init__(self, verdict: str, message: str):
+        super().__init__(message)
+        self.verdict = verdict
+        self.message = message
+
+
 def build_dataset(
-    ctx: bench.RunContext, bundle: bench.ModelBundle, max_examples: int
-) -> tuple[list[TaskExample], list[TaskExample], int, int]:
-    """Validate tokenization, compute baseline logit gaps, and gate discovery prompts."""
+    ctx: bench.RunContext,
+    bundle: bench.ModelBundle,
+    max_examples: int,
+    *,
+    behavior: str,
+    prompts: Sequence[CircuitPrompt] | None = None,
+    allow_mixed_period: bool = False,
+    min_positive: int = MIN_POSITIVE,
+) -> tuple[list[TaskExample], list[TaskExample], dict[str, Any], int]:
+    """Hard prompt-hygiene gate (FIX 6 + FIX 5).
+
+    For this model+tokenizer:
+    * group prompts by token length and adopt the modal length as the run
+      length; every prompt of a different length, or with a multi-token
+      target/distractor, is EXCLUDED and itemized (never silently used);
+    * compute the base logit gap per usable prompt and count baseline-positive
+      discovery prompts; if fewer than ``min_positive`` survive, ABORT the cell
+      (no tiny-n cards);
+    * refuse a run whose induction prompts mix cycle periods unless
+      ``allow_mixed_period`` (the base metric must never average two
+      mechanisms).
+
+    Emits ``prompt_hygiene_report.md`` and ``tokenization_and_baseline.csv``.
+    """
     tokenizer = bundle.tokenizer
-    all_prompts = list(ALL_PROMPTS)
-    if max_examples > 0:
-        discovery_subset = [p for p in all_prompts if p.family == "discovery"][:max_examples]
-        all_prompts = discovery_subset + [p for p in all_prompts if p.family == "heldout"]
+    pool = list(prompts) if prompts is not None else behavior_prompts(behavior)
 
     rows: list[dict[str, Any]] = []
-    discovery: list[TaskExample] = []
-    heldout: list[TaskExample] = []
-    valid_lengths: set[int] = set()
-
-    for cp in all_prompts:
+    for cp in pool:
         target_ids = tokenizer.encode(cp.target, add_special_tokens=False)
         distractor_ids = tokenizer.encode(cp.distractor, add_special_tokens=False)
         prompt_ids = tokenizer.encode(cp.prompt, add_special_tokens=False)
+        rows.append(
+            {
+                "cp": cp,
+                "example_id": cp.example_id,
+                "family": cp.family,
+                "prompt": cp.prompt,
+                "period": cp.period if cp.period is not None else "",
+                "n_prompt_tokens": len(prompt_ids),
+                "prompt_tokens": " ".join(bench.visible_token(tokenizer.decode([i])) for i in prompt_ids),
+                "target": bench.visible_token(cp.target),
+                "distractor": bench.visible_token(cp.distractor),
+                "target_ids": target_ids,
+                "distractor_ids": distractor_ids,
+                "single_token_answers": len(target_ids) == 1 and len(distractor_ids) == 1,
+            }
+        )
 
-        problems: list[str] = []
-        if len(target_ids) != 1:
-            problems.append(f"target has {len(target_ids)} tokens")
-        if len(distractor_ids) != 1:
-            problems.append(f"distractor has {len(distractor_ids)} tokens")
-        if len(prompt_ids) != 8:
-            problems.append(f"prompt has {len(prompt_ids)} tokens, expected 8")
+    # Adopt the modal prompt length as the run length. A prompt of any other
+    # length is an offender to be reported, not silently coerced.
+    length_counts: dict[int, int] = {}
+    for row in rows:
+        length_counts[row["n_prompt_tokens"]] = length_counts.get(row["n_prompt_tokens"], 0) + 1
+    run_len = max(length_counts, key=lambda L: (length_counts[L], -L))
 
-        row: dict[str, Any] = {
-            "example_id": cp.example_id,
-            "family": cp.family,
-            "prompt": cp.prompt,
-            "prompt_tokens": " ".join(bench.visible_token(tokenizer.decode([i])) for i in prompt_ids),
-            "n_prompt_tokens": len(prompt_ids),
-            "target": bench.visible_token(cp.target),
-            "distractor": bench.visible_token(cp.distractor),
-            "target_id": target_ids[0] if len(target_ids) == 1 else "",
-            "distractor_id": distractor_ids[0] if len(distractor_ids) == 1 else "",
-            "tokenization_ok": not problems,
-            "problems": "; ".join(problems),
-        }
+    discovery: list[TaskExample] = []
+    heldout: list[TaskExample] = []
+    excluded: list[dict[str, Any]] = []
+    periods_used: set[int] = set()
 
-        if problems:
-            rows.append(row)
+    for row in rows:
+        cp = row["cp"]
+        reasons: list[str] = []
+        if row["n_prompt_tokens"] != run_len:
+            reasons.append(f"length {row['n_prompt_tokens']} != run length {run_len}")
+        if len(row["target_ids"]) != 1:
+            reasons.append(f"target is {len(row['target_ids'])} tokens")
+        if len(row["distractor_ids"]) != 1:
+            reasons.append(f"distractor is {len(row['distractor_ids'])} tokens")
+
+        row["usable"] = not reasons
+        row["exclude_reason"] = "; ".join(reasons)
+        if reasons:
+            excluded.append({"example_id": cp.example_id, "family": cp.family, "reason": row["exclude_reason"]})
+            row["baseline_logit_diff"] = ""
+            row["baseline_pass"] = ""
             continue
 
-        valid_lengths.add(len(prompt_ids))
-        ex = TaskExample(cp, target_ids[0], distractor_ids[0], len(prompt_ids))
+        ex = TaskExample(cp, row["target_ids"][0], row["distractor_ids"][0], run_len)
         logits = bench.run_with_residual_cache(bundle, cp.prompt).final_logits_last
         ex.base_diff = float(logits[ex.target_id] - logits[ex.distractor_id])
-        row.update({
-            "baseline_logit_diff": round(ex.base_diff, 4),
-            "baseline_pass": ex.base_diff > 0,
-        })
-        rows.append(row)
-
-        if cp.family == "discovery":
-            if ex.base_diff > 0:
-                discovery.append(ex)
-            else:
-                print(f"[lab6] dropping {cp.example_id}: base diff {ex.base_diff:+.2f} <= 0")
+        row["baseline_logit_diff"] = round(ex.base_diff, 4)
+        row["baseline_pass"] = ex.base_diff > 0
+        if cp.period is not None:
+            periods_used.add(cp.period)
+        if ex.base_diff > 0:
+            (discovery if cp.family == "discovery" else heldout).append(ex)
+        elif cp.family == "heldout":
+            pass  # baseline-negative held-out prompts are simply not scored
         else:
-            heldout.append(ex)
+            excluded.append(
+                {"example_id": cp.example_id, "family": cp.family, "reason": f"baseline gap {ex.base_diff:+.3f} <= 0"}
+            )
 
-    report = ctx.path("diagnostics", "tokenization_and_baseline.csv")
-    bench.write_csv(report, rows)
-    ctx.register_artifact(
-        report,
-        "diagnostic",
-        "Tokenization contract and baseline logit gap for every Lab 6 prompt.",
-    )
+    if max_examples and max_examples > 0:
+        discovery = discovery[:max_examples]
 
-    if len(valid_lengths) != 1:
-        raise RuntimeError(
-            "Dataset contract violated: valid prompts have differing token lengths. "
-            "See diagnostics/tokenization_and_baseline.csv."
-        )
-    if len(discovery) < 3:
-        raise RuntimeError(
-            f"Only {len(discovery)} discovery prompts pass the baseline gate. "
-            "The model does not do this task reliably enough to trace a circuit."
-        )
-
-    dropped = sum(
-        1
+    # --- write diagnostics before any abort, so refusals are auditable -------
+    csv_rows = [
+        {k: v for k, v in row.items() if k not in ("cp", "target_ids", "distractor_ids")}
         for row in rows
-        if row["family"] == "discovery" and (not row.get("tokenization_ok") or not row.get("baseline_pass"))
-    )
-    return discovery, heldout, dropped, next(iter(valid_lengths))
+    ]
+    report = ctx.path("diagnostics", "tokenization_and_baseline.csv")
+    bench.write_csv(report, csv_rows)
+    ctx.register_artifact(report, "diagnostic", "Tokenization contract and baseline logit gap for every Lab 6 prompt.")
+
+    info: dict[str, Any] = {
+        "behavior": behavior,
+        "run_length_tokens": run_len,
+        "n_pool": len(pool),
+        "n_discovery_positive": len(discovery),
+        "n_heldout_positive": len(heldout),
+        "n_excluded": len(excluded),
+        "periods_used": sorted(periods_used),
+        "excluded": excluded,
+        "min_positive": min_positive,
+    }
+    _write_hygiene_report(ctx, behavior, run_len, rows, discovery, heldout, excluded, periods_used, min_positive)
+
+    if len(periods_used) > 1 and not allow_mixed_period:
+        raise CellAbort(
+            "MIXED_PERIOD",
+            f"prompts mix cycle periods {sorted(periods_used)}; refuse to average two mechanisms "
+            "into one base metric (pass --allow-mixed-period to override).",
+        )
+    if len(discovery) < min_positive:
+        raise CellAbort(
+            "INSUFFICIENT PROMPTS",
+            f"only {len(discovery)} baseline-positive discovery prompts survive at run length {run_len} "
+            f"(need >= {min_positive}); see prompt_hygiene_report.md. Refusing to produce a tiny-n card.",
+        )
+    return discovery, heldout, info, run_len
+
+
+def _write_hygiene_report(
+    ctx: bench.RunContext,
+    behavior: str,
+    run_len: int,
+    rows: Sequence[dict[str, Any]],
+    discovery: Sequence[TaskExample],
+    heldout: Sequence[TaskExample],
+    excluded: Sequence[dict[str, Any]],
+    periods_used: set[int],
+    min_positive: int,
+) -> None:
+    lines = [
+        f"# Prompt hygiene report: `{behavior}`",
+        "",
+        f"- Model: `{ctx.bundle.anatomy.model_id if getattr(ctx, 'bundle', None) else 'unknown'}`",
+        f"- Run length (modal token length adopted): **{run_len}**",
+        f"- Cycle periods present: {sorted(periods_used) or 'n/a (non-cyclic behavior)'}",
+        f"- Baseline-positive discovery prompts: **{len(discovery)}** (gate requires >= {min_positive})",
+        f"- Baseline-positive held-out prompts: **{len(heldout)}**",
+        f"- Excluded / unusable prompts: **{len(excluded)}**",
+        "",
+        "## Excluded prompts (itemized — nothing is silently dropped)",
+        "",
+    ]
+    if excluded:
+        lines += ["| example | family | reason |", "|---|---|---|"]
+        lines += [f"| `{e['example_id']}` | {e['family']} | {e['reason']} |" for e in excluded]
+    else:
+        lines.append("None — every pooled prompt was usable at the run length.")
+    lines += [
+        "",
+        "## Usable prompts and baseline gaps",
+        "",
+        "| example | family | period | n_tok | base logit gap | positive |",
+        "|---|---|---|---:|---:|:---:|",
+    ]
+    for row in rows:
+        if not row.get("usable"):
+            continue
+        lines.append(
+            f"| `{row['example_id']}` | {row['family']} | {row['period']} | {row['n_prompt_tokens']} | "
+            f"{row.get('baseline_logit_diff', '')} | {'yes' if row.get('baseline_pass') else 'no'} |"
+        )
+    path = ctx.path("prompt_hygiene_report.md")
+    bench.write_text(path, "\n".join(lines))
+    ctx.register_artifact(path, "summary", "Per-model prompt-hygiene gate: run length, exclusions, and baseline gaps.")
 
 
 # ---------------------------------------------------------------------------
@@ -315,6 +727,62 @@ def metric_under_ablation(
         diffs.append(float(logits[ex.target_id] - logits[ex.distractor_id]))
     return statistics.fmean(diffs)
 
+
+def metric_under_resample(
+    bundle: bench.ModelBundle,
+    examples: Sequence[TaskExample],
+    head_anatomy: bench.HeadAnatomy,
+    comp_anatomy: bench.ComponentAnatomy,
+    heads: Sequence[tuple[int, int]],
+    mlps: Sequence[int],
+    caps_by_id: dict[str, tuple[Any, Any]],
+    draws: int,
+) -> float:
+    """Resample / interchange ablation (FIX 2): the primary off-distribution.
+
+    Instead of replacing an ablated node's activation with the dataset MEAN
+    (which removes the model's own suppression structure and inflates
+    faithfulness above 1.0), replace it with the activation that node took on a
+    DIFFERENT in-distribution prompt. This is exactly the mean-ablation
+    machinery fed one other prompt's captured (o_in_last, mlp_contrib) instead
+    of the average. We average over ``draws`` deterministic source rotations for
+    stability. ``caps_by_id`` maps every resample-source example id to its
+    full-position captures.
+
+    The examples and the resample sources come from the SAME family, so the
+    intervention stays within distribution. Returns the mean target-distractor
+    logit gap.
+    """
+    source_ids = [ex.prompt.example_id for ex in examples]
+    n = len(source_ids)
+    if n < 2 or draws <= 0:
+        # Degenerate: cannot resample from a single prompt. Fall back to the
+        # mean of the captured sources so the call still returns a number; the
+        # hygiene gate already forbids tiny-n, so this only guards edge cases.
+        import torch
+
+        head_means = torch.stack([caps_by_id[i][0] for i in source_ids]).mean(dim=0) if caps_by_id else None
+        mlp_means = torch.stack([caps_by_id[i][1] for i in source_ids]).mean(dim=0) if caps_by_id else None
+        return metric_under_ablation(bundle, examples, head_anatomy, comp_anatomy, heads, mlps, head_means, mlp_means)
+
+    diffs: list[float] = []
+    for i, ex in enumerate(examples):
+        n_draws = min(draws, n - 1)
+        for k in range(n_draws):
+            src_id = source_ids[(i + 1 + k) % n]
+            head_src, mlp_src = caps_by_id[src_id]
+            logits = bench.run_with_node_set_ablation(
+                bundle,
+                ex.prompt.prompt,
+                head_anatomy,
+                comp_anatomy,
+                heads=heads,
+                mlps=mlps,
+                head_means=head_src,
+                mlp_means=mlp_src,
+            )
+            diffs.append(float(logits[ex.target_id] - logits[ex.distractor_id]))
+    return statistics.fmean(diffs)
 
 
 # ---------------------------------------------------------------------------
@@ -1023,21 +1491,81 @@ def plot_circuit_discovery_dashboard(
 # ---------------------------------------------------------------------------
 
 
+# Initial circuit seed is capped so greedy-prune-to-1 stays O(n^2)-tractable on
+# 64-layer x 40-head models. Disclosed (printed + recorded), never silent.
+MAX_SEED_NODES = 64
+
+
 def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
+    """Bench entrypoint for ONE (behavior, scope) cell. A hygiene/period refusal
+    is caught and written as a first-class verdict card rather than crashing."""
+    try:
+        _run_cell(ctx, bundle)
+    except CellAbort as abort:
+        _write_abort_card(ctx, bundle, abort)
+
+
+def _write_abort_card(ctx: bench.RunContext, bundle: bench.ModelBundle, abort: CellAbort) -> None:
+    behavior = getattr(ctx.args, "behavior", "induction_p3")
+    scope = getattr(ctx.args, "scope", "heads_and_mlps")
+    print(f"[lab6] CELL ABORTED ({abort.verdict}): {abort.message}")
+    metrics = {
+        "behavior": behavior,
+        "scope": scope,
+        "verdict": abort.verdict,
+        "verdict_reason": abort.message,
+        "aborted": True,
+    }
+    bench.write_json(ctx.path("metrics.json"), metrics)
+    ctx.register_artifact(ctx.path("metrics.json"), "metrics", "Aborted-cell metrics with verdict.")
+    card = [
+        f"# Circuit card: {behavior} ({scope})",
+        "",
+        f"- **Model:** `{bundle.anatomy.model_id}` | run `{ctx.run_dir.name}`",
+        f"- **Verdict:** **{abort.verdict}**",
+        "",
+        abort.message,
+        "",
+        "A refusal here is a first-class result. The lab will not manufacture a tiny-n or "
+        "mixed-mechanism circuit. See `prompt_hygiene_report.md` for per-prompt detail.",
+    ]
+    bench.write_text(ctx.path("circuit_card.md"), "\n".join(card))
+    ctx.register_artifact(ctx.path("circuit_card.md"), "summary", "Aborted-cell circuit card.")
+
+
+def _run_cell(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     import torch
 
     args = ctx.args
+    behavior = getattr(args, "behavior", "induction_p3")
+    scope = getattr(args, "scope", "heads_and_mlps")
+    resample_draws = int(getattr(args, "resample_draws", DEFAULT_RESAMPLE_DRAWS))
+    allow_mixed = bool(getattr(args, "allow_mixed_period", False))
     n_layers = bundle.anatomy.n_layers
 
-    discovery, heldout, dropped, seq_len = build_dataset(ctx, bundle, args.max_examples)
+    prompts: list[CircuitPrompt] | None = None
+    if behavior == "swa":
+        length_words = int(str(getattr(args, "swa_lengths", "1024")).split(",")[0].strip())
+        prompts = swa_prompts(length_words)
+
+    discovery, heldout, hygiene, seq_len = build_dataset(
+        ctx,
+        bundle,
+        args.max_examples,
+        behavior=behavior,
+        prompts=prompts,
+        allow_mixed_period=allow_mixed,
+        min_positive=MIN_POSITIVE,
+    )
     base_metric = statistics.fmean(ex.base_diff for ex in discovery)
+    heldout_base = statistics.fmean(ex.base_diff for ex in heldout) if heldout else None
     print(
-        f"[lab6] discovery: {len(discovery)} prompts, dropped {dropped}; "
-        f"held-out: {len(heldout)}; seq {seq_len}; base metric {base_metric:+.3f}"
+        f"[lab6] behavior={behavior} scope={scope}: discovery {len(discovery)} prompts, "
+        f"held-out {len(heldout)}; seq {seq_len}; base metric {base_metric:+.3f}; "
+        f"resample draws {resample_draws}"
     )
 
-    # Instrument verification. Lab 6 stacks several hook systems, so the
-    # microscope checks are not ceremony: they are load-bearing guards.
+    # ----- instrument verification (load-bearing self-checks) ----------------
     probe = discovery[0].prompt.prompt
     bench.run_hook_parity_check(ctx, bundle, probe)
     comp_anatomy = bench.resolve_component_anatomy(ctx, bundle, probe, rel_tolerance=args.dla_tolerance)
@@ -1049,10 +1577,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.run_head_decomposition_check(ctx, bundle, head_anatomy, first_att, rel_tolerance=args.dla_tolerance)
     n_heads = head_anatomy.n_heads
 
-    # ----- captures and dataset means ---------------------------------------
+    # ----- captures and dataset means (discovery AND held-out for resample) ---
     att_caps: dict[str, Any] = {}
     comp_caps: dict[str, Any] = {}
-    for ex in discovery:
+    for ex in list(discovery) + list(heldout):
         att_caps[ex.prompt.example_id] = bench.run_with_attention_cache(bundle, ex.prompt.prompt, all_positions=True)
         comp_caps[ex.prompt.example_id] = bench.run_with_component_cache(
             bundle, ex.prompt.prompt, comp_anatomy, all_positions=True
@@ -1060,25 +1588,33 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     head_means = torch.stack([att_caps[ex.prompt.example_id].o_in_last for ex in discovery]).mean(dim=0)
     mlp_means = torch.stack([comp_caps[ex.prompt.example_id].mlp_contrib for ex in discovery]).mean(dim=0)
-    print(
-        f"[lab6] dataset means from discovery prompts: heads {tuple(head_means.shape)}, "
-        f"MLPs {tuple(mlp_means.shape)}"
-    )
+    caps_disc = {
+        ex.prompt.example_id: (att_caps[ex.prompt.example_id].o_in_last, comp_caps[ex.prompt.example_id].mlp_contrib)
+        for ex in discovery
+    }
+    caps_held = {
+        ex.prompt.example_id: (att_caps[ex.prompt.example_id].o_in_last, comp_caps[ex.prompt.example_id].mlp_contrib)
+        for ex in heldout
+    }
+
     manifest_path = ctx.path("diagnostics", "ablation_manifest.json")
     bench.write_json(
         manifest_path,
         {
-            "off_distribution": "dataset mean over discovery prompts",
+            "primary_off_distribution": "resample / interchange ablation (within-distribution, FIX 2)",
+            "comparison_off_distribution": "dataset mean over discovery prompts",
+            "resample_draws": resample_draws,
             "prompt_length_tokens": seq_len,
             "discovery_examples": [ex.prompt.example_id for ex in discovery],
+            "heldout_examples": [ex.prompt.example_id for ex in heldout],
             "head_means_shape": list(head_means.shape),
             "mlp_means_shape": list(mlp_means.shape),
-            "scope": "attention heads are circuit nodes; MLPs are ranked as support only",
+            "scope": scope,
         },
     )
-    ctx.register_artifact(manifest_path, "diagnostic", "Definition of the mean-ablation off distribution.")
+    ctx.register_artifact(manifest_path, "diagnostic", "Definition of the resample and mean ablation off distributions.")
 
-    # ----- screening ----------------------------------------------------------
+    # ----- screening (cheap: attribution + motifs) ---------------------------
     head_attr: dict[tuple[int, int], list[float]] = {}
     head_induct: dict[tuple[int, int], list[float]] = {}
     head_prev: dict[tuple[int, int], list[float]] = {}
@@ -1143,29 +1679,34 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         return "other"
 
     head_labels = {key: motif_label(key) for key in screen_reasons}
-    mlp_candidates = sorted(mean_mlp, key=lambda layer: -abs(mean_mlp[layer]))[:N_MLP_CANDIDATES]
+    # MLP screening: in heads_and_mlps scope, MLP layers are first-class circuit
+    # nodes, so EVERY layer is causally screened (cheap: n_layers passes). This is
+    # what lets load-bearing-but-low-attribution layers -- gpt2 MLP0 acts like an
+    # extended embedding and is catastrophic to ablate yet writes nothing to the
+    # logit-diff directly -- be seeded and kept instead of silently ablated. In
+    # heads_only scope MLPs are never circuit nodes, so we only rank the top few
+    # by attribution for the supporting-MLP report.
+    if scope == "heads_and_mlps":
+        mlp_candidates = list(range(n_layers))
+    else:
+        mlp_candidates = sorted(mean_mlp, key=lambda layer: -abs(mean_mlp[layer]))[:N_MLP_CANDIDATES]
     print(
         f"[lab6] screened {len(screen_reasons)} candidate heads "
         f"(attr {top_attr}, induction {top_ind}, previous-token {top_prev}) "
-        f"+ {len(mlp_candidates)} candidate MLPs"
+        f"+ {len(mlp_candidates)} candidate MLPs (scope={scope})"
     )
 
-    # ----- causal ranking ------------------------------------------------------
+    # ----- single-node causal ranking (drop = base - metric_with_node_ablated) -
     cand_rows: list[dict[str, Any]] = []
     head_causal_drop: dict[tuple[int, int], float] = {}
     head_single_metric: dict[tuple[int, int], float] = {}
+    mlp_causal_drop: dict[int, float] = {}
+    mlp_single_metric: dict[int, float] = {}
 
     for key in sorted(screen_reasons, key=lambda k: min(attr_rank[k], induct_rank[k], prev_rank[k])):
         layer, head = key
         ablated = metric_under_ablation(
-            bundle,
-            discovery,
-            head_anatomy,
-            comp_anatomy,
-            heads=[key],
-            mlps=[],
-            head_means=head_means,
-            mlp_means=mlp_means,
+            bundle, discovery, head_anatomy, comp_anatomy, heads=[key], mlps=[], head_means=head_means, mlp_means=mlp_means
         )
         drop = base_metric - ablated
         head_causal_drop[key] = drop
@@ -1195,15 +1736,11 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
 
     for layer in mlp_candidates:
         ablated = metric_under_ablation(
-            bundle,
-            discovery,
-            head_anatomy,
-            comp_anatomy,
-            heads=[],
-            mlps=[layer],
-            head_means=head_means,
-            mlp_means=mlp_means,
+            bundle, discovery, head_anatomy, comp_anatomy, heads=[], mlps=[layer], head_means=head_means, mlp_means=mlp_means
         )
+        drop = base_metric - ablated
+        mlp_causal_drop[layer] = drop
+        mlp_single_metric[layer] = ablated
         cand_rows.append(
             {
                 "node": node_name("mlp", layer),
@@ -1221,11 +1758,10 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 "first_token_score": "",
                 "motif_label": "support_mlp",
                 "single_ablated_metric": round(ablated, 5),
-                "causal_drop": round(base_metric - ablated, 5),
+                "causal_drop": round(drop, 5),
             }
         )
 
-    # Add causal ranks for screened heads.
     head_rows = [r for r in cand_rows if r["kind"] == "head"]
     causal_rank_by_node = {
         r["node"]: i + 1 for i, r in enumerate(sorted(head_rows, key=lambda row: -row["causal_drop"]))
@@ -1245,108 +1781,198 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, results_path, cand_rows_sorted)
     ctx.register_artifact(results_path, "results", "Alias of candidate_components.csv for the standard run contract.")
 
-    # ----- greedy pruning -------------------------------------------------------
-    all_heads = [(layer, head) for layer in range(n_layers) for head in range(n_heads)]
+    # ----- node universe and faithfulness over scope -------------------------
+    all_head_nodes = [head_node(layer, head) for layer in range(n_layers) for head in range(n_heads)]
+    all_mlp_nodes = [mlp_node(layer) for layer in range(n_layers)]
+    universe = list(all_head_nodes) + (list(all_mlp_nodes) if scope == "heads_and_mlps" else [])
 
-    def faithfulness_of(circuit_heads: Sequence[tuple[int, int]], examples: Sequence[TaskExample], base: float) -> float:
-        circuit_set = set(circuit_heads)
-        complement = [head for head in all_heads if head not in circuit_set]
-        metric = metric_under_ablation(
-            bundle,
-            examples,
-            head_anatomy,
-            comp_anatomy,
-            heads=complement,
-            mlps=[],
-            head_means=head_means,
-            mlp_means=mlp_means,
+    def node_drop(node: Node) -> float:
+        kind, layer, head = node
+        return head_causal_drop.get((layer, head), 0.0) if kind == "head" else mlp_causal_drop.get(layer, 0.0)
+
+    def metric_of(nodes_to_ablate: Sequence[Node], examples: Sequence[TaskExample], ablation: str, caps: dict) -> float:
+        heads_ab, mlps_ab = split_nodes(nodes_to_ablate)
+        if ablation == "mean":
+            return metric_under_ablation(
+                bundle, examples, head_anatomy, comp_anatomy, heads_ab, mlps_ab, head_means, mlp_means
+            )
+        return metric_under_resample(
+            bundle, examples, head_anatomy, comp_anatomy, heads_ab, mlps_ab, caps, resample_draws
         )
+
+    def faithfulness_of(
+        circuit_nodes: Sequence[Node], examples: Sequence[TaskExample], base: float, ablation: str, caps: dict
+    ) -> float:
+        circuit_set = set(circuit_nodes)
+        complement = [n for n in universe if n not in circuit_set]
+        metric = metric_of(complement, examples, ablation, caps)
         ratio = safe_ratio(metric, base)
         if ratio is None:
             raise RuntimeError("Cannot compute faithfulness ratio because the base metric is zero.")
         return ratio
 
-    circuit = [key for key, drop in head_causal_drop.items() if drop > 0]
-    if not circuit:
-        raise RuntimeError(
-            "No screened head has a positive causal drop; cannot assemble a circuit. "
-            "See tables/candidate_components.csv."
+    # ----- seed circuit: positive single-node causal drop, capped ------------
+    seed_nodes = [head_node(*k) for k, d in head_causal_drop.items() if d > 0]
+    if scope == "heads_and_mlps":
+        seed_nodes += [mlp_node(layer) for layer, d in mlp_causal_drop.items() if d > 0]
+    if not seed_nodes:
+        raise CellAbort(
+            "MECHANISM ABSENT",
+            "no screened node has a positive single-node causal drop, so there is nothing to assemble into a "
+            "circuit for this behavior under this off distribution. See tables/candidate_components.csv.",
         )
-    circuit.sort(key=lambda key: -head_causal_drop[key])
-    current_faith = faithfulness_of(circuit, discovery, base_metric)
+    seed_nodes.sort(key=lambda n: -node_drop(n))
+    seed_capped = False
+    if len(seed_nodes) > MAX_SEED_NODES:
+        seed_capped = True
+        print(f"[lab6] seed circuit capped from {len(seed_nodes)} to {MAX_SEED_NODES} highest-causal nodes (disclosed).")
+        seed_nodes = seed_nodes[:MAX_SEED_NODES]
+
+    # ----- greedy prune ALL the way to 1 node, full trajectory + snapshots ----
+    circuit = list(seed_nodes)
+    current_faith = faithfulness_of(circuit, discovery, base_metric, "mean", caps_disc)
     trajectory: list[dict[str, Any]] = [
         {
             "step": 0,
             "n_nodes": len(circuit),
             "faithfulness": round(current_faith, 5),
             "removed": "",
-            "rule": "start with every positive-causal screened head",
+            "rule": "start with every positive-causal screened node (capped)",
+            "_snapshot": list(circuit),
         }
     ]
-    print(f"[lab6] starting circuit: {len(circuit)} heads, faithfulness {current_faith:.3f}")
-
-    stop_reason = "one head remains"
+    print(f"[lab6] seed circuit: {len(circuit)} nodes, faithfulness {current_faith:.3f}")
     while len(circuit) > 1:
-        options: list[tuple[float, tuple[int, int]]] = []
-        for key in circuit:
-            reduced = [h for h in circuit if h != key]
-            options.append((faithfulness_of(reduced, discovery, base_metric), key))
-        best_faith, best_key = max(options, key=lambda item: item[0])
-
-        if current_faith < FAITHFULNESS_FLOOR:
-            if best_faith <= current_faith + 1e-9:
-                stop_reason = "candidate set is below the faithfulness floor and no removal improves it"
-                break
-        elif best_faith < FAITHFULNESS_FLOOR:
-            stop_reason = "next removal would cross the faithfulness floor"
-            break
-
-        circuit = [h for h in circuit if h != best_key]
+        options: list[tuple[float, Node]] = []
+        for node in circuit:
+            reduced = [x for x in circuit if x != node]
+            options.append((faithfulness_of(reduced, discovery, base_metric, "mean", caps_disc), node))
+        best_faith, best_node = max(options, key=lambda item: item[0])
+        circuit = [x for x in circuit if x != best_node]
         current_faith = best_faith
         trajectory.append(
             {
                 "step": len(trajectory),
                 "n_nodes": len(circuit),
                 "faithfulness": round(best_faith, 5),
-                "removed": node_name("head", *best_key),
-                "rule": "removed least costly head",
+                "removed": node_label(best_node),
+                "rule": "removed least costly node (greedy, to 1)",
+                "_snapshot": list(circuit),
             }
         )
-        print(
-            f"[lab6] pruned {node_name('head', *best_key)} -> {len(circuit)} heads, "
-            f"faithfulness {best_faith:.3f}"
-        )
+
+    # ----- knee + floor selection (FIX 1) ------------------------------------
+    peak_faith = max(r["faithfulness"] for r in trajectory)
+    within_peak = [r for r in trajectory if r["faithfulness"] >= peak_faith - KNEE_EPSILON]
+    knee_row = min(within_peak, key=lambda r: (r["n_nodes"], -r["faithfulness"]))
+    knee_circuit = list(knee_row["_snapshot"])
+    floor_rows = [r for r in trajectory if r["faithfulness"] >= FAITHFULNESS_FLOOR]
+    meets_floor = bool(floor_rows)
+    if floor_rows:
+        floor_row = min(floor_rows, key=lambda r: (r["n_nodes"], -r["faithfulness"]))
     else:
-        stop_reason = "one head remains"
+        floor_row = max(trajectory, key=lambda r: r["faithfulness"])
+    floor_circuit = list(floor_row["_snapshot"])
+    knee_vs_floor_gap = round(knee_row["faithfulness"] - floor_row["faithfulness"], 5)
+    print(
+        f"[lab6] peak faithfulness {peak_faith:.3f}; knee = {knee_row['n_nodes']} nodes "
+        f"(faith {knee_row['faithfulness']:.3f}); floor = {floor_row['n_nodes']} nodes "
+        f"(faith {floor_row['faithfulness']:.3f}); meets_floor={meets_floor}"
+    )
 
+    # headline circuit is the KNEE (FIX 1)
+    circuit = list(knee_circuit)
+    circuit_heads = [(layer, head) for (kind, layer, head) in circuit if kind == "head"]
+    circuit_mlps = [layer for (kind, layer, _h) in circuit if kind == "mlp"]
+
+    traj_csv = [{k: v for k, v in r.items() if k != "_snapshot"} for r in trajectory]
     traj_path = ctx.path("tables", "prune_trajectory.csv")
-    bench.write_csv_with_context(ctx, traj_path, trajectory)
-    ctx.register_artifact(traj_path, "table", "Faithfulness at each greedy pruning step.")
-    meets_floor = current_faith >= FAITHFULNESS_FLOOR
+    bench.write_csv_with_context(ctx, traj_path, traj_csv)
+    ctx.register_artifact(traj_path, "table", "Faithfulness at each greedy pruning step (pruned to 1 node).")
 
-    # ----- F / C / M evaluation ---------------------------------------------------
-    heldout_positive = [ex for ex in heldout if ex.base_diff > 0]
-    heldout_base = statistics.fmean(ex.base_diff for ex in heldout_positive) if heldout_positive else None
+    knee_floor = {
+        "peak_faithfulness": round(peak_faith, 5),
+        "knee": {"n_nodes": knee_row["n_nodes"], "faithfulness": knee_row["faithfulness"], "nodes": [node_label(n) for n in knee_circuit]},
+        "floor": {"n_nodes": floor_row["n_nodes"], "faithfulness": floor_row["faithfulness"], "nodes": [node_label(n) for n in floor_circuit]},
+        "knee_epsilon": KNEE_EPSILON,
+        "knee_minus_floor_faithfulness": knee_vs_floor_gap,
+        "seed_capped": seed_capped,
+        "meets_faithfulness_floor": meets_floor,
+    }
+    bench.write_json(ctx.path("tables", "knee_floor_selection.json"), knee_floor)
+    ctx.register_artifact(ctx.path("tables", "knee_floor_selection.json"), "metrics", "Knee vs floor circuit selection (FIX 1).")
+
+    # ----- suppression heads (FIX 4) -----------------------------------------
+    supp_threshold = SUPPRESSION_REL_THRESHOLD * abs(base_metric)
+    suppression_heads = sorted(
+        ((k, d) for k, d in head_causal_drop.items() if d < -supp_threshold), key=lambda kv: kv[1]
+    )
+    suppression_set = {head_node(*k) for k, _d in suppression_heads}
+
+    def faithfulness_brake_intact(circuit_nodes: Sequence[Node], examples: Sequence[TaskExample], base: float, ablation: str, caps: dict) -> float | None:
+        circuit_set = set(circuit_nodes)
+        complement = [n for n in universe if n not in circuit_set and n not in suppression_set]
+        metric = metric_of(complement, examples, ablation, caps)
+        return safe_ratio(metric, base)
+
+    # ----- motif-core-only circuit -------------------------------------------
+    core_motifs = CORE_MOTIFS_BY_BEHAVIOR.get(behavior, ())
+    labeled_core = [head_node(*k) for k in screen_reasons if head_labels.get(k) in core_motifs and head_causal_drop.get(k, 0.0) > 0]
+    induction_motif_present = bool(labeled_core)
+    if labeled_core:
+        motif_core = labeled_core
+        motif_core_def = "labeled motif heads: " + ", ".join(core_motifs)
+    else:
+        top_heads = sorted(((k, d) for k, d in head_causal_drop.items() if d > 0), key=lambda kv: -kv[1])[:2]
+        motif_core = [head_node(*k) for k, _d in top_heads]
+        motif_core_def = "fallback: top-2 single-head-causal heads (no labeled motif core survived)"
+
+    # ----- F/C/M for knee / floor / motif-core under mean AND resample -------
+    def evaluate_circuit(nodes: Sequence[Node], examples: Sequence[TaskExample], base: float | None, caps: dict) -> dict[str, Any] | None:
+        if not examples or base is None or base <= 0:
+            return None
+        heads_ab, mlps_ab = split_nodes(nodes)
+        comp_mean = metric_under_ablation(bundle, examples, head_anatomy, comp_anatomy, heads_ab, mlps_ab, head_means, mlp_means)
+        comp_res = metric_under_resample(bundle, examples, head_anatomy, comp_anatomy, heads_ab, mlps_ab, caps, resample_draws)
+        return {
+            "n_nodes": len(nodes),
+            "n_prompts": len(examples),
+            "faith_mean": round(faithfulness_of(nodes, examples, base, "mean", caps), 5),
+            "faith_resample": round(faithfulness_of(nodes, examples, base, "resample", caps), 5),
+            "completeness_ratio_mean": round_or_none(safe_ratio(comp_mean, base), 5),
+            "completeness_ratio_resample": round_or_none(safe_ratio(comp_res, base), 5),
+        }
+
+    circuits: dict[str, Any] = {}
+    for cname, nodes in (("knee", knee_circuit), ("floor", floor_circuit), ("motif_core", motif_core)):
+        entry: dict[str, Any] = {"nodes": [node_label(n) for n in nodes]}
+        entry["discovery"] = evaluate_circuit(nodes, discovery, base_metric, caps_disc)
+        entry["heldout"] = evaluate_circuit(nodes, heldout, heldout_base, caps_held)
+        circuits[cname] = entry
+
+    # brake-intact comparison on the knee circuit
+    brake_intact = {
+        "discovery_faith_mean": round_or_none(faithfulness_brake_intact(knee_circuit, discovery, base_metric, "mean", caps_disc), 5),
+        "discovery_faith_resample": round_or_none(faithfulness_brake_intact(knee_circuit, discovery, base_metric, "resample", caps_disc), 5),
+        "n_suppression_heads_held_out": len(suppression_heads),
+    }
+    if heldout:
+        brake_intact["heldout_faith_mean"] = round_or_none(faithfulness_brake_intact(knee_circuit, heldout, heldout_base, "mean", caps_held), 5)
+        brake_intact["heldout_faith_resample"] = round_or_none(faithfulness_brake_intact(knee_circuit, heldout, heldout_base, "resample", caps_held), 5)
+
+    # ----- legacy F/C/M dict for the existing plots (knee, mean ablation) ----
     fcm: dict[str, Any] = {
         "faithfulness_floor": FAITHFULNESS_FLOOR,
         "meets_faithfulness_floor": meets_floor,
-        "prune_stop_reason": stop_reason,
+        "prune_stop_reason": "pruned to 1 node; knee selected within KNEE_EPSILON of peak",
     }
 
-    def evaluate_family(name: str, examples: Sequence[TaskExample], base: float | None) -> None:
+    def legacy_family(name: str, examples: Sequence[TaskExample], base: float | None) -> None:
         if not examples or base is None or base <= 0:
             return
-        faith = faithfulness_of(circuit, examples, base)
-        circuit_ablated = metric_under_ablation(
-            bundle,
-            examples,
-            head_anatomy,
-            comp_anatomy,
-            heads=circuit,
-            mlps=[],
-            head_means=head_means,
-            mlp_means=mlp_means,
-        )
+        faith = faithfulness_of(knee_circuit, examples, base, "mean", caps_disc if name == "discovery" else caps_held)
+        heads_ab, mlps_ab = split_nodes(knee_circuit)
+        circuit_ablated = metric_under_ablation(bundle, examples, head_anatomy, comp_anatomy, heads_ab, mlps_ab, head_means, mlp_means)
         completeness_ratio = safe_ratio(circuit_ablated, base)
         if completeness_ratio is None:
             return
@@ -1359,61 +1985,78 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "completeness_effect": round(1.0 - completeness_ratio, 5),
         }
 
-    evaluate_family("discovery", discovery, base_metric)
-    evaluate_family("heldout", heldout_positive, heldout_base)
+    legacy_family("discovery", discovery, base_metric)
+    legacy_family("heldout", heldout, heldout_base)
 
+    # ----- minimality ledger with rent-unpaid flags (FIX 7) ------------------
     minimality_rows: list[dict[str, Any]] = []
-    discovery_faith = fcm["discovery"]["faithfulness"]
-    for key in circuit:
-        reduced = [h for h in circuit if h != key]
-        f_without = faithfulness_of(reduced, discovery, base_metric)
-        marginal = discovery_faith - f_without
+    knee_disc_faith_mean = fcm["discovery"]["faithfulness"]
+    for node in knee_circuit:
+        reduced = [x for x in knee_circuit if x != node]
+        f_without = faithfulness_of(reduced, discovery, base_metric, "mean", caps_disc)
+        marginal = knee_disc_faith_mean - f_without
+        kind, layer, head = node
         minimality_rows.append(
             {
-                "node": node_name("head", *key),
-                "layer": key[0],
-                "head": key[1],
-                "motif_label": head_labels.get(key, "other"),
-                "single_head_causal_drop": round(head_causal_drop.get(key, float("nan")), 5),
+                "node": node_label(node),
+                "layer": layer,
+                "head": head if kind == "head" else "",
+                "kind": kind,
+                "motif_label": head_labels.get((layer, head), "support_mlp") if kind == "head" else "support_mlp",
+                "single_head_causal_drop": round(node_drop(node), 5),
                 "faithfulness_without": round(f_without, 5),
                 "marginal_value": round(marginal, 5),
                 "minimality_passes_positive_marginal": marginal > 0,
+                "rent_unpaid": marginal < MARGINAL_RENT_THRESHOLD,
             }
         )
     minimality_rows.sort(key=lambda row: row["marginal_value"])
+    rent_unpaid_labels = {r["node"] for r in minimality_rows if r["rent_unpaid"]}
+    rent_paid_circuit = [n for n in knee_circuit if node_label(n) not in rent_unpaid_labels]
+
     fcm["minimality_worst_marginal"] = min((r["marginal_value"] for r in minimality_rows), default=None)
     fcm["minimality_all_positive"] = all(r["minimality_passes_positive_marginal"] for r in minimality_rows)
+
+    # held-out transfer WITH and WITHOUT the rent-unpaid filler nodes (FIX 7)
+    rent_compare = {"n_rent_unpaid": len(rent_unpaid_labels)}
+    if heldout:
+        rent_compare["knee_heldout_faith_resample"] = circuits["knee"]["heldout"]["faith_resample"] if circuits["knee"]["heldout"] else None
+        if rent_paid_circuit and len(rent_paid_circuit) != len(knee_circuit):
+            rc = evaluate_circuit(rent_paid_circuit, heldout, heldout_base, caps_held)
+            rent_compare["rent_paid_heldout_faith_resample"] = rc["faith_resample"] if rc else None
+        else:
+            rent_compare["rent_paid_heldout_faith_resample"] = rent_compare["knee_heldout_faith_resample"]
 
     fcm_path = ctx.path("faithfulness_completeness_minimality.json")
     bench.write_json(
         fcm_path,
         {
-            "circuit": [node_name("head", *key) for key in circuit],
-            "circuit_tuples": [list(key) for key in circuit],
+            "behavior": behavior,
+            "scope": scope,
+            "headline_circuit": "knee",
+            "knee_circuit": [node_label(n) for n in knee_circuit],
+            "floor_circuit": [node_label(n) for n in floor_circuit],
+            "motif_core": {"definition": motif_core_def, "nodes": [node_label(n) for n in motif_core]},
             **fcm,
+            "circuits": circuits,
+            "brake_intact": brake_intact,
+            "rent_compare": rent_compare,
             "minimality": minimality_rows,
             "interpretation": {
-                "faithfulness": "complement of circuit heads mean-ablated; higher is more sufficient",
-                "completeness_ratio": "circuit heads mean-ablated; lower means the circuit was more necessary",
-                "minimality": "loss in faithfulness when each kept head is removed",
+                "faith_resample": "PRIMARY: complement resample-ablated; >=floor and transferring is a real circuit",
+                "faith_mean": "comparison: complement dataset-mean ablated; >1.0 usually means suppression-head removal",
+                "completeness_ratio": "circuit ablated; lower means the circuit was more necessary",
+                "minimality": "loss in faithfulness when each kept node is removed; rent_unpaid flags filler",
             },
         },
     )
-    ctx.register_artifact(fcm_path, "metrics", "Faithfulness, completeness, and minimality for the final circuit.")
+    ctx.register_artifact(fcm_path, "metrics", "Faithfulness, completeness, minimality (mean+resample, knee/floor/motif-core).")
     min_path = ctx.path("tables", "pruned_circuit.csv")
     bench.write_csv_with_context(ctx, min_path, minimality_rows)
-    ctx.register_artifact(min_path, "table", "Every kept node with its marginal faithfulness value.")
-    print(
-        f"[lab6] final circuit {[node_name('head', *h) for h in circuit]}: "
-        + ", ".join(
-            f"{family} F={values['faithfulness']:.2f} C-ratio={values['completeness_ratio']:.2f}"
-            for family, values in fcm.items()
-            if isinstance(values, dict) and "faithfulness" in values
-        )
-    )
+    ctx.register_artifact(min_path, "table", "Every kept node with its marginal faithfulness value and rent-unpaid flag.")
 
-    # ----- the one edge claim: ordered ablation interaction -------------------
-    induction_heads = [key for key in circuit if head_labels.get(key) == "induction"]
+    # ----- the one edge claim: ordered prev-token -> induction interaction ---
+    induction_heads = [(layer, head) for (kind, layer, head) in knee_circuit if kind == "head" and head_labels.get((layer, head)) == "induction"]
     prev_heads = [
         key
         for key in screen_reasons
@@ -1426,27 +2069,9 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 continue
             m_i = head_single_metric.get(h_ind)
             if m_i is None:
-                m_i = metric_under_ablation(
-                    bundle,
-                    discovery,
-                    head_anatomy,
-                    comp_anatomy,
-                    heads=[h_ind],
-                    mlps=[],
-                    head_means=head_means,
-                    mlp_means=mlp_means,
-                )
+                m_i = metric_under_ablation(bundle, discovery, head_anatomy, comp_anatomy, heads=[h_ind], mlps=[], head_means=head_means, mlp_means=mlp_means)
             m_p = head_single_metric[h_prev]
-            m_ip = metric_under_ablation(
-                bundle,
-                discovery,
-                head_anatomy,
-                comp_anatomy,
-                heads=[h_ind, h_prev],
-                mlps=[],
-                head_means=head_means,
-                mlp_means=mlp_means,
-            )
+            m_ip = metric_under_ablation(bundle, discovery, head_anatomy, comp_anatomy, heads=[h_ind, h_prev], mlps=[], head_means=head_means, mlp_means=mlp_means)
             effect_p = base_metric - m_p
             effect_p_given_i = m_i - m_ip
             interaction = effect_p - effect_p_given_i
@@ -1472,7 +2097,6 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
     bench.write_csv_with_context(ctx, edge_csv_path, sorted(edge_rows, key=lambda r: r["interaction"], reverse=True))
     ctx.register_artifact(edge_csv_path, "table", "All ordered previous-token to induction ablation-interaction checks.")
 
-    edge: dict[str, Any] | None = None
     if edge_rows:
         best_edge = max(edge_rows, key=lambda r: r["interaction"])
         h_prev = (best_edge["from_layer"], best_edge["from_head"])
@@ -1505,7 +2129,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
             "edge": None,
             "reason": (
                 "No ordered previous-token head before an induction head survived the causal and motif checks. "
-                "The lab therefore makes no edge claim."
+                "The lab therefore makes no edge claim (expected for non-induction behaviors such as successor)."
             ),
         }
 
@@ -1521,49 +2145,25 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 "requires_source_layer_lt_target_layer": True,
             },
             "explanation": (
-                "Ablation interaction asks whether a previous-token head's effect shrinks "
-                "when the induction head is already ablated. This licenses only an "
-                "interaction-granularity edge. Path patching would be needed to localize "
-                "the route to keys, values, or another subpath."
+                "Ablation interaction asks whether a previous-token head's effect shrinks when the induction head "
+                "is already ablated. This licenses only an interaction-granularity edge, not a path-patched route."
             ),
         },
     )
     ctx.register_artifact(edge_path, "metrics", "The one edge claim, or the reason no edge was claimed.")
     if edge.get("claimed"):
-        print(
-            f"[lab6] {edge['strength']} edge claimed: "
-            f"{edge['edge']} ({edge['raw_interaction_fraction']:.0%} interaction fraction)"
-        )
+        print(f"[lab6] {edge['strength']} edge claimed: {edge['edge']} ({edge['raw_interaction_fraction']:.0%} interaction fraction)")
     else:
         print(f"[lab6] no edge claimed: {edge['reason']}")
 
-    # ----- per-prompt failures -------------------------------------------------
+    # ----- per-prompt faithfulness (knee circuit, mean ablation, for plots) --
     per_prompt_rows: list[dict[str, Any]] = []
-    circuit_set = set(circuit)
-    complement = [head for head in all_heads if head not in circuit_set]
-    for ex in discovery + heldout:
-        if ex.base_diff <= 0:
-            per_prompt_rows.append(
-                {
-                    "example_id": ex.prompt.example_id,
-                    "family": ex.prompt.family,
-                    "prompt": ex.prompt.prompt,
-                    "base_diff": round(ex.base_diff, 5),
-                    "circuit_diff": "",
-                    "faithfulness": None,
-                    "note": "base model did not prefer the target; ratio undefined",
-                }
-            )
-            continue
+    heads_ab, mlps_ab = split_nodes(knee_circuit)
+    complement_heads = [h for h in all_head_nodes if h not in set(knee_circuit)]
+    comp_h, comp_m = split_nodes([n for n in universe if n not in set(knee_circuit)])
+    for ex in list(discovery) + list(heldout):
         logits = bench.run_with_node_set_ablation(
-            bundle,
-            ex.prompt.prompt,
-            head_anatomy,
-            comp_anatomy,
-            heads=complement,
-            mlps=[],
-            head_means=head_means,
-            mlp_means=mlp_means,
+            bundle, ex.prompt.prompt, head_anatomy, comp_anatomy, heads=comp_h, mlps=comp_m, head_means=head_means, mlp_means=mlp_means
         )
         circuit_diff = float(logits[ex.target_id] - logits[ex.distractor_id])
         per_prompt_rows.append(
@@ -1573,39 +2173,85 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
                 "prompt": ex.prompt.prompt,
                 "base_diff": round(ex.base_diff, 5),
                 "circuit_diff": round(circuit_diff, 5),
-                "faithfulness": round(circuit_diff / ex.base_diff, 5),
+                "faithfulness": round(circuit_diff / ex.base_diff, 5) if ex.base_diff != 0 else None,
                 "note": "",
             }
         )
     per_prompt_path = ctx.path("tables", "per_prompt_faithfulness.csv")
     bench.write_csv_with_context(ctx, per_prompt_path, per_prompt_rows)
-    ctx.register_artifact(per_prompt_path, "table", "Per-prompt faithfulness and the two weakest failure cases.")
+    ctx.register_artifact(per_prompt_path, "table", "Per-prompt faithfulness (knee circuit, mean ablation).")
     prompt_failure_rows = build_prompt_failure_modes(per_prompt_rows, floor=FAITHFULNESS_FLOOR)
     prompt_failure_path = ctx.path("tables", "prompt_failure_modes.csv")
     bench.write_csv_with_context(ctx, prompt_failure_path, prompt_failure_rows)
     ctx.register_artifact(prompt_failure_path, "table", "Prompt-level failure modes, including over-recovery and under-floor cases.")
-
     failures = sorted(
-        (row for row in prompt_failure_rows if row["faithfulness"] is not None),
-        key=lambda row: row["faithfulness"],
+        (row for row in prompt_failure_rows if row["faithfulness"] is not None), key=lambda row: row["faithfulness"]
     )[:2]
 
-    evidence_rows = build_circuit_evidence_matrix(cand_rows_sorted, minimality_rows, circuit, edge)
+    evidence_rows = build_circuit_evidence_matrix(cand_rows_sorted, minimality_rows, circuit_heads, edge)
     evidence_path = ctx.path("tables", "circuit_evidence_matrix.csv")
     bench.write_csv_with_context(ctx, evidence_path, evidence_rows)
-    ctx.register_artifact(evidence_path, "table", "Joined evidence for every screened head: screen, motif, causal, minimality, and edge status.")
-
+    ctx.register_artifact(evidence_path, "table", "Joined evidence for every screened head.")
     guide_path = ctx.path("tables", "plot_reading_guide.csv")
     bench.write_csv_with_context(ctx, guide_path, plot_reading_guide_rows())
     ctx.register_artifact(guide_path, "table", "Short guide mapping each Lab 6 visualization to the concept it teaches.")
 
-    # ----- plots ---------------------------------------------------------------
+    # ----- decide the verdict (PART 6) ---------------------------------------
+    knee_held = circuits["knee"]["heldout"]
+    motif_held = circuits["motif_core"]["heldout"]
+    knee_disc = circuits["knee"]["discovery"]
+    knee_held_res = knee_held["faith_resample"] if knee_held else None
+    motif_held_res = motif_held["faith_resample"] if motif_held else None
+    mean_resample_gap_disc = round(knee_disc["faith_mean"] - knee_disc["faith_resample"], 5) if knee_disc else None
+    mlp_positive = sorted(((l, d) for l, d in mlp_causal_drop.items() if d > 0), key=lambda kv: -kv[1])
+    mlp_in_knee = [node_label(n) for n in knee_circuit if n[0] == "mlp"]
+
+    def decide_verdict() -> tuple[str, str]:
+        if not heldout or knee_held_res is None:
+            return "INSUFFICIENT PROMPTS", "no baseline-positive held-out prompts available to test transfer"
+        comparable = (
+            motif_held_res is not None
+            and motif_held_res >= knee_held_res - 0.15
+            and motif_held_res >= FAITHFULNESS_FLOOR - 0.10
+        )
+        if knee_held_res >= FAITHFULNESS_FLOOR and comparable:
+            return (
+                "CIRCUIT CONFIRMED",
+                f"knee held-out resample faithfulness {knee_held_res:.2f} >= {FAITHFULNESS_FLOOR:.2f}; "
+                f"motif-core-only transfers comparably ({motif_held_res:.2f}).",
+            )
+        if knee_held_res >= FAITHFULNESS_FLOOR and not comparable:
+            return (
+                "OVERFIT / NO CLEAN CIRCUIT",
+                f"knee transfers ({knee_held_res:.2f}) but the motif core alone does not "
+                f"({motif_held_res}); the extra heads are filler, not mechanism.",
+            )
+        if (knee_disc and knee_disc["faith_resample"] >= FAITHFULNESS_FLOOR) or fcm.get("discovery", {}).get("faithfulness", 0.0) >= FAITHFULNESS_FLOOR:
+            return (
+                "OVERFIT / NO CLEAN CIRCUIT",
+                f"discovery passes but held-out resample faithfulness {knee_held_res:.2f} < {FAITHFULNESS_FLOOR:.2f}.",
+            )
+        if behavior in CORE_MOTIFS_BY_BEHAVIOR and not induction_motif_present and not edge.get("claimed"):
+            return (
+                "MECHANISM ABSENT",
+                "the expected previous-token -> induction motif does not survive screening/causal checks, "
+                "and no transferable subgraph was found. Reported as a successful negative.",
+            )
+        return (
+            "OVERFIT / NO CLEAN CIRCUIT",
+            f"no transferable subgraph: knee held-out resample {knee_held_res:.2f} < {FAITHFULNESS_FLOOR:.2f}.",
+        )
+
+    verdict, verdict_reason = decide_verdict()
+    print(f"[lab6] VERDICT ({behavior}/{scope}): {verdict} -- {verdict_reason}")
+
+    # ----- plots -------------------------------------------------------------
     if not args.no_plots:
-        plot_circuit_discovery_dashboard(ctx, fcm, trajectory, cand_rows_sorted, prompt_failure_rows, floor=FAITHFULNESS_FLOOR)
+        plot_circuit_discovery_dashboard(ctx, fcm, traj_csv, cand_rows_sorted, prompt_failure_rows, floor=FAITHFULNESS_FLOOR)
         plot_screen_vs_causal(ctx, cand_rows_sorted)
-        plot_prune_trajectory(ctx, trajectory, floor=FAITHFULNESS_FLOOR)
+        plot_prune_trajectory(ctx, traj_csv, floor=FAITHFULNESS_FLOOR)
         mlp_support = [r for r in cand_rows_sorted if r["kind"] == "mlp" and float(r["causal_drop"]) > 0]
-        plot_circuit_graph(ctx, circuit, head_labels, mlp_support, edge, n_layers, n_heads)
+        plot_circuit_graph(ctx, circuit_heads, head_labels, mlp_support, edge, n_layers, n_heads)
         if "discovery" in fcm:
             plot_fcm(ctx, fcm, floor=FAITHFULNESS_FLOOR)
         plot_prompt_faithfulness(ctx, prompt_failure_rows)
@@ -1616,240 +2262,258 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         plot_edge_interactions(ctx, edge_rows)
         plot_edge_interaction_map(ctx, edge_rows)
 
-    # ----- circuit card --------------------------------------------------------
+    # ----- circuit card ------------------------------------------------------
     supporting_mlps = sorted(
         (r for r in cand_rows_sorted if r["kind"] == "mlp" and float(r["causal_drop"]) > 0),
         key=lambda row: -float(row["causal_drop"]),
     )
-    card: list[str] = [
-        "# Circuit card: induction completion",
+    _write_card(
+        ctx, bundle, behavior, scope, base_metric, discovery, heldout, hygiene, seq_len,
+        knee_circuit, floor_circuit, knee_row, floor_row, peak_faith, knee_vs_floor_gap, meets_floor,
+        circuits, motif_core, motif_core_def, induction_motif_present, fcm, minimality_rows,
+        rent_unpaid_labels, rent_compare, suppression_heads, head_causal_drop, brake_intact,
+        supporting_mlps, mlp_in_knee, mean_resample_gap_disc, edge, failures, verdict, verdict_reason,
+        seed_capped, resample_draws,
+    )
+
+    # ----- metrics + ledger + run summary ------------------------------------
+    metrics = {
+        "behavior": behavior,
+        "scope": scope,
+        "verdict": verdict,
+        "verdict_reason": verdict_reason,
+        "aborted": False,
+        "base_metric": base_metric,
+        "run_length_tokens": seq_len,
+        "n_discovery": len(discovery),
+        "n_heldout": len(heldout),
+        "resample_draws": resample_draws,
+        "knee_circuit": [node_label(n) for n in knee_circuit],
+        "floor_circuit": [node_label(n) for n in floor_circuit],
+        "knee_n_nodes": knee_row["n_nodes"],
+        "floor_n_nodes": floor_row["n_nodes"],
+        "peak_faithfulness": round(peak_faith, 5),
+        "knee_minus_floor_faithfulness": knee_vs_floor_gap,
+        "meets_faithfulness_floor": meets_floor,
+        "headline_heldout_faith_resample": knee_held_res,
+        "headline_discovery_faith_resample": knee_disc["faith_resample"] if knee_disc else None,
+        "mean_minus_resample_gap_discovery": mean_resample_gap_disc,
+        "motif_core_def": motif_core_def,
+        "motif_core_heldout_faith_resample": motif_held_res,
+        "induction_motif_present": induction_motif_present,
+        "circuits": circuits,
+        "brake_intact": brake_intact,
+        "suppression_heads": [{"node": node_name("head", *k), "single_drop": round(d, 5)} for k, d in suppression_heads],
+        "mlp_positive_causal": [{"node": node_name("mlp", l), "drop": round(d, 5)} for l, d in mlp_positive],
+        "mlp_in_knee_circuit": mlp_in_knee,
+        "edge": edge,
+        "minimality_worst_marginal": fcm["minimality_worst_marginal"],
+        "n_rent_unpaid_nodes": len(rent_unpaid_labels),
+        "seed_capped": seed_capped,
+    }
+    metrics_path = ctx.path("metrics.json")
+    bench.write_json(metrics_path, metrics)
+    ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 6 metrics, including the per-cell verdict.")
+
+    _write_ledger_and_summary(
+        ctx, bundle, behavior, scope, n_layers, n_heads, base_metric, discovery, heldout, seq_len,
+        knee_circuit, floor_circuit, circuits, fcm, edge, verdict, verdict_reason, knee_vs_floor_gap,
+        mean_resample_gap_disc, motif_held_res, suppression_heads, mlp_positive,
+    )
+    print(f"[lab6] wrote circuit_card.md, run_summary.md, metrics.json; verdict {verdict}")
+
+
+def _fmt(value: Any) -> str:
+    return "n/a" if value is None else (f"{value:.3f}" if isinstance(value, float) else str(value))
+
+
+def _write_card(
+    ctx, bundle, behavior, scope, base_metric, discovery, heldout, hygiene, seq_len,
+    knee_circuit, floor_circuit, knee_row, floor_row, peak_faith, knee_vs_floor_gap, meets_floor,
+    circuits, motif_core, motif_core_def, induction_motif_present, fcm, minimality_rows,
+    rent_unpaid_labels, rent_compare, suppression_heads, head_causal_drop, brake_intact,
+    supporting_mlps, mlp_in_knee, mean_resample_gap_disc, edge, failures, verdict, verdict_reason,
+    seed_capped, resample_draws,
+):
+    knee_disc = circuits["knee"]["discovery"] or {}
+    knee_held = circuits["knee"]["heldout"] or {}
+    motif_held = circuits["motif_core"]["heldout"] or {}
+    card = [
+        f"# Circuit card: {behavior} ({scope})",
         "",
+        f"- **Verdict:** **{verdict}**",
+        f"  - {verdict_reason}",
         f"- **Model:** `{bundle.anatomy.model_id}` | run `{ctx.run_dir.name}`",
-        "- **Task:** predict the induction continuation of fixed-length repeating patterns.",
-        "- **Metric:** mean logit(target) minus logit(distractor).",
-        f"- **Base metric:** {base_metric:+.3f} on {len(discovery)} discovery prompts.",
-        f"- **Dataset:** {len(discovery)} discovery prompts, {len(heldout)} held-out prompts "
-        f"({len(heldout_positive)} baseline-positive for F/C/M), {dropped} discovery prompts dropped.",
-        f"- **Circuit scope:** heads-only routing graph. MLPs stay intact for faithfulness and completeness.",
-        f"- **Ablation off distribution:** dataset mean over discovery prompts, sequence length {seq_len}.",
-        f"- **Validated heads:** {describe_head_list(circuit)}.",
-        f"- **Faithfulness verdict:** {'passes' if meets_floor else 'does not pass'} the floor of {FAITHFULNESS_FLOOR:.2f}.",
+        f"- **Behavior:** `{behavior}`; **scope:** `{scope}`; run length {seq_len} tokens.",
+        f"- **Metric:** mean logit(target) - logit(distractor).",
+        f"- **Base metric:** {base_metric:+.3f} on {len(discovery)} discovery prompts "
+        f"({len(heldout)} baseline-positive held-out).",
+        f"- **Primary off distribution:** resample / interchange ablation ({resample_draws} within-distribution draws). "
+        f"Mean ablation reported alongside as comparison.",
         "",
-        "## Candidate screen",
+        "## Headline numbers (knee circuit)",
         "",
-        f"Screened {len(screen_reasons)} heads using attribution top {top_attr}, induction top {top_ind}, "
-        f"and previous-token top {top_prev}. Screening proposes suspects; mean-ablation decides which suspects matter. ",
-        "See `tables/circuit_evidence_matrix.csv` and `plots/candidate_evidence_matrix.png` for the joined evidence ladder.",
+        "| family | faithfulness (resample) | faithfulness (mean) | completeness (resample) |",
+        "|---|---:|---:|---:|",
+        f"| discovery | {_fmt(knee_disc.get('faith_resample'))} | {_fmt(knee_disc.get('faith_mean'))} | "
+        f"{_fmt(knee_disc.get('completeness_ratio_resample'))} |",
+        f"| held-out | {_fmt(knee_held.get('faith_resample'))} | {_fmt(knee_held.get('faith_mean'))} | "
+        f"{_fmt(knee_held.get('completeness_ratio_resample'))} |",
         "",
-        "## Validated nodes",
+        f"- Mean-minus-resample gap on discovery: **{_fmt(mean_resample_gap_disc)}** "
+        "(large positive = mean-ablation inflation, usually suppression-head removal).",
         "",
-        "| node | motif | single-head causal drop | marginal value |",
-        "|---|---|---:|---:|",
+        "## Knee vs floor (FIX 1)",
+        "",
+        f"- Peak trajectory faithfulness: {peak_faith:.3f}.",
+        f"- **Knee** (headline): {knee_row['n_nodes']} nodes, faithfulness {knee_row['faithfulness']:.3f} "
+        f"-> `{describe_nodes(knee_circuit)}`.",
+        f"- **Floor** (overfit comparison): {floor_row['n_nodes']} nodes, faithfulness {floor_row['faithfulness']:.3f}.",
+        f"- Knee-minus-floor faithfulness gap: {knee_vs_floor_gap:+.3f}. The floor circuit is the floor-hugger; "
+        "the knee is the honest circuit.",
+        f"- Meets {FAITHFULNESS_FLOOR:.2f} faithfulness floor (mean, discovery): {'yes' if meets_floor else 'no'}."
+        + ("  Seed circuit was capped (disclosed)." if seed_capped else ""),
+        "",
+        "## Motif-core-only transfer (FIX 7)",
+        "",
+        f"- Motif core: {motif_core_def} -> `{describe_nodes(motif_core)}`.",
+        f"- Motif-core held-out faithfulness (resample): **{_fmt(motif_held.get('faith_resample'))}** "
+        f"vs knee held-out **{_fmt(knee_held.get('faith_resample'))}**.",
+        f"- Induction motif present among causal heads: {'yes' if induction_motif_present else 'no'}.",
+        "",
+        "## Suppression / anti-circuit heads (FIX 4)",
+        "",
     ]
-    marginal_by_node = {row["node"]: row for row in minimality_rows}
-    for key in circuit:
-        node = node_name("head", *key)
-        marg = marginal_by_node.get(node, {})
-        card.append(
-            f"| {node} | {head_labels.get(key, 'other')} | "
-            f"{head_causal_drop.get(key, float('nan')):+.3f} | {marg.get('marginal_value', '')} |"
-        )
-    card += [
-        "",
-        "**Supporting MLPs, not circuit nodes:** "
-        + (
-            ", ".join(f"MLP{r['layer']} (drop {float(r['causal_drop']):+.2f})" for r in supporting_mlps)
-            if supporting_mlps
-            else "none with positive causal drop among screened MLPs"
-        ),
-        "",
-        "## Faithfulness, completeness, minimality",
-        "",
-        "| family | n | base metric | faithfulness | completeness ratio | completeness effect |",
-        "|---|---:|---:|---:|---:|---:|",
-    ]
-    for family in ("discovery", "heldout"):
-        if family in fcm:
-            v = fcm[family]
-            card.append(
-                f"| {family} | {v['n_prompts']} | {v['base_metric']} | {v['faithfulness']} | "
-                f"{v['completeness_ratio']} | {v['completeness_effect']} |"
-            )
-    card += [
-        "",
-        f"Minimality worst marginal value: `{fcm['minimality_worst_marginal']}`. "
-        "A negative value means at least one kept head hurt faithfulness under this pruning rule.",
-    ]
-    if any(isinstance(v, dict) and v.get("faithfulness", 0) > 1.0 for v in fcm.values()):
+    if suppression_heads:
+        card += ["| head | single-head causal drop (negative = brake) |", "|---|---:|"]
+        card += [f"| {node_name('head', *k)} | {d:+.3f} |" for k, d in suppression_heads]
         card += [
             "",
-            "Faithfulness above 1.0 is reported rather than clipped. It means the mean-ablated complement "
-            "was suppressing the target metric on that prompt family.",
+            f"- Brake-intact faithfulness (those {len(suppression_heads)} heads left LIVE in the complement): "
+            f"discovery resample {_fmt(brake_intact.get('discovery_faith_resample'))} "
+            f"(vs {_fmt(knee_disc.get('faith_resample'))}), "
+            f"discovery mean {_fmt(brake_intact.get('discovery_faith_mean'))} "
+            f"(vs {_fmt(knee_disc.get('faith_mean'))}). "
+            "The drop when brakes are held out shows how much faithfulness was just brake removal.",
         ]
+    else:
+        card.append("- None: no screened head raised the metric by more than "
+                    f"{SUPPRESSION_REL_THRESHOLD:.0%} of base when ablated.")
     card += [
         "",
-        "## Edge claim",
+        "## MLP contribution (FIX 3)",
         "",
+        f"- Scope `{scope}`. MLP nodes inside the knee circuit: "
+        + (", ".join(mlp_in_knee) if mlp_in_knee else "none"),
+        "- Supporting MLPs by single-MLP causal drop: "
+        + (", ".join(f"MLP{r['layer']} ({float(r['causal_drop']):+.2f})" for r in supporting_mlps) if supporting_mlps else "none with positive drop"),
+        "",
+        "## Minimality (FIX 7)",
+        "",
+        f"- Worst marginal value: `{fcm['minimality_worst_marginal']}`; rent-unpaid (filler) nodes "
+        f"(marginal < {MARGINAL_RENT_THRESHOLD}): {len(rent_unpaid_labels)}"
+        + (f" -> {', '.join(sorted(rent_unpaid_labels))}" if rent_unpaid_labels else "") + ".",
     ]
+    if "rent_paid_heldout_faith_resample" in rent_compare:
+        card.append(
+            f"- Held-out resample with vs without filler: "
+            f"{_fmt(rent_compare.get('knee_heldout_faith_resample'))} (knee) vs "
+            f"{_fmt(rent_compare.get('rent_paid_heldout_faith_resample'))} (rent-paid only)."
+        )
+    card += ["", "## Edge claim", ""]
     if edge and edge.get("claimed"):
         card.append(
             f"Claimed {edge['strength']} edge `{edge['edge']}`: raw interaction fraction "
-            f"{edge['raw_interaction_fraction']:.0%} "
-            f"(reporting threshold {EDGE_MIN_ROUTED_FRACTION:.0%}; strong threshold {EDGE_STRONG_ROUTED_FRACTION:.0%}). "
-            "This is an ablation-interaction edge, not path patching."
+            f"{edge['raw_interaction_fraction']:.0%}. Ablation-interaction granularity, not path patching."
         )
     else:
         card.append(f"No edge claimed. Reason: {edge['reason'] if edge else 'no edge diagnostic produced'}")
-    card += [
-        "",
-        "## Failure cases the circuit least explains",
-        "",
-    ]
+    card += ["", "## Failure cases the circuit least explains", ""]
     if failures:
         for row in failures:
-            card.append(
-                f"- `{row['example_id']}` ({row['family']}): faithfulness {row['faithfulness']} "
-                f"with base diff {row['base_diff']}."
-            )
+            card.append(f"- `{row['example_id']}` ({row['family']}): faithfulness {row['faithfulness']} "
+                        f"with base diff {row['base_diff']}.")
     else:
         card.append("- No ratio-defined failure cases were available.")
     card += [
         "",
-        "## Scope and filler terms, MDC honesty section",
+        "## Scope and honesty",
         "",
-        "- Population: fixed-length 8-token repeating patterns from the listed vocabularies.",
-        "- Circuit nodes: attention heads only. MLP layers are supporting infrastructure, not part of this routing graph.",
-        "- Intervention: dataset-mean ablation at all positions. A different off distribution defines a different circuit.",
-        "- Edge evidence: ablation interaction. Claims about keys, values, or exact subpaths are filler terms unless path patching is added.",
-        "- Natural-text induction, longer cycles, and alternate tokenizations are outside this card's scope.",
+        f"- Population: `{behavior}` prompts at run length {seq_len}; discovery+held-out share one token length.",
+        f"- Circuit nodes: {'attention heads + MLP layers' if scope == 'heads_and_mlps' else 'attention heads only (MLPs intact)'}.",
+        "- Primary intervention: resample/interchange ablation. Mean ablation defines a different (often inflated) circuit.",
+        "- Edge evidence: ablation interaction only. Keys/values/subpaths are filler terms unless path patching is added.",
+        "- A confirmed NO (OVERFIT / MECHANISM ABSENT / NOT HEADS-ONLY) is a successful result, not a failure.",
         "",
     ]
-    card_path = ctx.path("circuit_card.md")
-    bench.write_text(card_path, "\n".join(card))
-    ctx.register_artifact(card_path, "summary", "The Lab 6 circuit card deliverable.")
+    bench.write_text(ctx.path("circuit_card.md"), "\n".join(card))
+    ctx.register_artifact(ctx.path("circuit_card.md"), "summary", "The Lab 6 circuit card deliverable.")
 
-    # ----- metrics, claims, summary ------------------------------------------
-    metrics = {
-        "base_metric": base_metric,
-        "n_discovery": len(discovery),
-        "n_heldout": len(heldout),
-        "n_heldout_positive": len(heldout_positive),
-        "circuit": [node_name("head", *key) for key in circuit],
-        "circuit_tuples": [list(key) for key in circuit],
-        "screen_budgets": {"attribution": top_attr, "induction": top_ind, "prev_token": top_prev},
-        "fcm": {key: value for key, value in fcm.items() if isinstance(value, dict)},
-        "meets_faithfulness_floor": meets_floor,
-        "minimality_worst_marginal": fcm["minimality_worst_marginal"],
-        "minimality_all_positive": fcm["minimality_all_positive"],
-        "prune_stop_reason": stop_reason,
-        "edge": edge,
-    }
-    metrics_path = ctx.path("metrics.json")
-    bench.write_json(metrics_path, metrics)
-    ctx.register_artifact(metrics_path, "metrics", "Aggregate Lab 6 metrics.")
 
+def _write_ledger_and_summary(
+    ctx, bundle, behavior, scope, n_layers, n_heads, base_metric, discovery, heldout, seq_len,
+    knee_circuit, floor_circuit, circuits, fcm, edge, verdict, verdict_reason, knee_vs_floor_gap,
+    mean_resample_gap_disc, motif_held_res, suppression_heads, mlp_positive,
+):
     run_name = ctx.run_dir.name
-    claims: list[dict[str, str]] = []
-    if meets_floor:
-        claim_text = (
-            f"A {len(circuit)}-head routing circuit ({describe_head_list(circuit)}) in {bundle.anatomy.model_id} "
-            f"is faithful at {fcm['discovery']['faithfulness']:.2f} of base behavior on {len(discovery)} "
-            "8-token induction prompts when every non-circuit head is dataset-mean ablated. "
-            f"Ablating the circuit leaves {fcm['discovery']['completeness_ratio']:.2f} of base. "
-            "MLPs are left intact, so this is a heads-only routing claim."
-        )
-    else:
-        claim_text = (
-            f"The screened Lab 6 head set in {bundle.anatomy.model_id} did not meet the faithfulness floor: "
-            f"the final {len(circuit)}-head circuit ({describe_head_list(circuit)}) preserved "
-            f"{fcm['discovery']['faithfulness']:.2f} of base behavior, below the {FAITHFULNESS_FLOOR:.2f} floor. "
-            "This is causal evidence about the screened components, but not a successful faithful-circuit claim."
-        )
-    claims.append(
+    knee_disc = circuits["knee"]["discovery"] or {}
+    knee_held = circuits["knee"]["heldout"] or {}
+    claims = [
         {
             "id": f"{LAB_ID}-C1",
             "tag": "CAUSAL",
-            "text": claim_text,
+            "text": (
+                f"On {behavior} in {bundle.anatomy.model_id} ({scope}), the knee circuit "
+                f"({describe_nodes(knee_circuit)}) has discovery faithfulness "
+                f"{_fmt(knee_disc.get('faith_resample'))} (resample) / {_fmt(knee_disc.get('faith_mean'))} (mean) and "
+                f"held-out {_fmt(knee_held.get('faith_resample'))} (resample). Verdict: {verdict}."
+            ),
             "artifact": f"runs/{run_name}/faithfulness_completeness_minimality.json",
             "falsifier": (
-                "Zero ablation, resample ablation, longer prompts, or natural-text induction collapses the result. "
-                "That would show the circuit was specific to this off distribution or prompt family."
+                "Held-out resample faithfulness below the floor, a motif-core that transfers as well as the full "
+                "knee, or a different off distribution changing the verdict."
             ),
-        }
-    )
-
-    if "heldout" in fcm:
-        heldout_note = (
-            " Held-out faithfulness above 1.0 means the mean-ablated complement was suppressing the metric, "
-            "not that the circuit is better than the full model."
-            if fcm["heldout"]["faithfulness"] > 1.0
-            else ""
-        )
-        claims.append(
-            {
-                "id": f"{LAB_ID}-C2",
-                "tag": "CAUSAL",
-                "text": (
-                    f"The heads-only routing circuit transfers from discovery to {len(heldout_positive)} held-out "
-                    f"vocabulary prompts with faithfulness {fcm['heldout']['faithfulness']:.2f} versus "
-                    f"{fcm['discovery']['faithfulness']:.2f} on discovery. The claim is induction-pattern transfer, "
-                    "not natural-language generality."
-                    + heldout_note
-                ),
-                "artifact": f"runs/{run_name}/plots/circuit_scorecard.png",
-                "falsifier": "Held-out families, longer cycles, or a paraphrased natural-text induction set lose the faithfulness effect.",
-            }
-        )
-
-    if edge and edge.get("claimed"):
-        claims.append(
-            {
-                "id": f"{LAB_ID}-C3",
-                "tag": "CAUSAL",
-                "text": (
-                    f"Ordered edge claim at interaction granularity: {edge['edge']} has raw interaction fraction "
-                    f"{edge['raw_interaction_fraction']:.0%} ({edge['strength']}). The previous-token head's effect is "
-                    f"{edge['effect_prev_alone']:+.2f} alone versus {edge['effect_prev_given_induction_ablated']:+.2f} "
-                    "when the induction head is already ablated."
-                ),
-                "artifact": f"runs/{run_name}/tables/edge_claim.json",
-                "falsifier": "Path patching localizes the effect to a different route, or a redundant induction head absorbs the interaction.",
-            }
-        )
-
+        },
+        {
+            "id": f"{LAB_ID}-C2",
+            "tag": "CAUSAL",
+            "text": (
+                f"Mean-minus-resample faithfulness gap on discovery is {_fmt(mean_resample_gap_disc)} with "
+                f"{len(suppression_heads)} suppression heads detected: evidence on whether mean ablation inflates "
+                "faithfulness via brake removal."
+            ),
+            "artifact": f"runs/{run_name}/metrics.json",
+            "falsifier": "Mean and resample agree and no suppression heads exist; then the inflation claim is refuted.",
+        },
+    ]
     bench.write_ledger_suggestions(ctx, LAB_ID, claims)
 
-    lines: list[str] = [
-        "# Lab 6 run summary: circuit discovery, the manual way",
+    lines = [
+        f"# Lab 6 run summary: {behavior} ({scope})",
         "",
         "## Run identity",
         "",
         f"- model: `{bundle.anatomy.model_id}` ({n_layers} blocks x {n_heads} heads)",
-        f"- task: induction completion, {len(discovery)} discovery + {len(heldout)} held-out prompts "
-        f"({len(heldout_positive)} baseline-positive for F/C/M)",
-        "- evidence level: `CAUSAL` at heads-only circuit scope",
-        "- intervention: dataset-mean ablation at all positions",
-        "- self-checks: hook parity, lens, component decomposition, head decomposition",
+        f"- behavior `{behavior}`, scope `{scope}`, run length {seq_len}",
+        f"- {len(discovery)} discovery + {len(heldout)} held-out prompts",
+        "- primary intervention: resample/interchange ablation; mean ablation reported as comparison",
         "",
-        "## 1-4. Behavior, measurement, intervention, headline",
+        "## Verdict",
         "",
-        f"- base metric {base_metric:+.3f}; circuit of {len(circuit)} heads ({describe_head_list(circuit)})",
-        f"- pruning stop: {stop_reason}",
-        f"- faithfulness floor: {FAITHFULNESS_FLOOR:.2f}; verdict: {'pass' if meets_floor else 'not passed'}",
-    ]
-    for family in ("discovery", "heldout"):
-        if family in fcm:
-            values = fcm[family]
-            lines.append(
-                f"- {family}: faithfulness {values['faithfulness']}, "
-                f"completeness ratio {values['completeness_ratio']}, "
-                f"completeness effect {values['completeness_effect']}"
-            )
-    lines += [
-        f"- minimality: worst marginal value {fcm['minimality_worst_marginal']}",
+        f"- **{verdict}** -- {verdict_reason}",
+        "",
+        "## Headline",
+        "",
+        f"- base metric {base_metric:+.3f}; knee circuit {len(knee_circuit)} nodes: {describe_nodes(knee_circuit)}",
+        f"- discovery faithfulness: resample {_fmt(knee_disc.get('faith_resample'))}, mean {_fmt(knee_disc.get('faith_mean'))}",
+        f"- held-out faithfulness: resample {_fmt(knee_held.get('faith_resample'))}, mean {_fmt(knee_held.get('faith_mean'))}",
+        f"- motif-core held-out (resample): {_fmt(motif_held_res)}",
+        f"- knee-minus-floor faithfulness gap: {knee_vs_floor_gap:+.3f}",
+        f"- mean-minus-resample gap (discovery): {_fmt(mean_resample_gap_disc)}",
+        f"- suppression heads: {len(suppression_heads)}; positive-causal MLPs: {len(mlp_positive)}",
         f"- edge: {edge['edge'] + ' (' + edge['strength'] + ')' if edge and edge.get('claimed') else 'none claimed'}",
         "",
-        "## 5. Claims",
+        "## Claims",
         "",
     ]
     for claim in claims:
@@ -1857,26 +2521,14 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         lines.append(f"  - falsifier: {claim['falsifier']}")
     lines += [
         "",
-        "## 6. The reading order",
+        "## Reading order",
         "",
-        "1. `circuit_card.md` - the deliverable; everything else is evidence for it.",
-        "2. `plots/circuit_discovery_dashboard.png` - F/C/M, pruning, screening, and prompt failures on one page.",
-        "3. `tables/circuit_evidence_matrix.csv` and `plots/candidate_evidence_matrix.png` - the joined evidence ladder for every screened head.",
-        "4. `plots/circuit_graph.png` - validated heads, support MLPs, and any claimed edge.",
-        "5. `plots/prune_trajectory.png` and `plots/minimality_ledger.png` - what pruning costs and whether each final node earns its rent.",
-        "6. `plots/screen_vs_causal.png` and `plots/causal_motif_atlas.png` - where cheap screening, motif labels, and causal effects agree or disagree.",
-        "7. `tables/prompt_failure_modes.csv`, `plots/per_prompt_faithfulness.png`, and `plots/prompt_failure_scatter.png` - the specific prompts the circuit least explains or over-recovers.",
-        "8. `plots/edge_interactions.png`, `plots/edge_interaction_map.png`, and `tables/edge_interactions.csv` - ordered interaction checks, weak versus strong, layer-order respected, not path patching.",
-        "",
-        "## 7. Caveats students must carry forward",
-        "",
-        "- The circuit is a heads-only routing graph; MLPs are support, not nodes in the claim. This is the manual baseline Lab 9 will confront with an automated feature graph.",
-        "- Mean-ablation defines the off state (dataset mean, fixed length). Changing the off state (zero, different mean, longer prompts) defines a different circuit. The ablation_manifest.json records the exact choice.",
-        "- The edge test is an ablation interaction (previous-token effect shrinks when the induction head is already ablated), not path patching. Claims about keys/values or exact subpaths are filler terms.",
-        "- Keep this card. Lab 9 will compare this manual graph with an attribution graph so you can see what each method buys and what each quietly assumes.",
+        "1. `circuit_card.md` - the deliverable and the verdict.",
+        "2. `prompt_hygiene_report.md` - which prompts the gate kept or excluded.",
+        "3. `faithfulness_completeness_minimality.json` - knee/floor/motif-core under mean and resample.",
+        "4. `tables/knee_floor_selection.json` and `plots/prune_trajectory.png` - knee vs floor.",
+        "5. `metrics.json` - verdict, suppression heads, MLP contribution, mean-vs-resample gap.",
         "",
     ]
-    summary_path = ctx.path("run_summary.md")
-    bench.write_text(summary_path, "\n".join(lines))
-    ctx.register_artifact(summary_path, "summary", "The seven standard lab-summary questions answered.")
-    print(f"[lab6] wrote circuit_card.md, run_summary.md, and {len(claims)} drafted ledger claims")
+    bench.write_text(ctx.path("run_summary.md"), "\n".join(lines))
+    ctx.register_artifact(ctx.path("run_summary.md"), "summary", "Lab 6 run summary with the per-cell verdict.")
