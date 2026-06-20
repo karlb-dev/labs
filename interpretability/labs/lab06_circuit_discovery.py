@@ -655,7 +655,7 @@ def _write_hygiene_report(
     lines = [
         f"# Prompt hygiene report: `{behavior}`",
         "",
-        f"- Model: `{ctx.bundle.anatomy.model_id if getattr(ctx, 'bundle', None) else 'unknown'}`",
+        f"- Model: `{getattr(ctx, 'model_id', '') or 'unknown'}`",
         f"- Run length (modal token length adopted): **{run_len}**",
         f"- Cycle periods present: {sorted(periods_used) or 'n/a (non-cyclic behavior)'}",
         f"- Baseline-positive discovery prompts: **{len(discovery)}** (gate requires >= {min_positive})",
