@@ -44,6 +44,7 @@ import interp_bench as bench
 
 LAB_ID = "L21"
 DATA_FILE = "safety_depth_boundary_pairs.csv"
+DATA_VERSION = "v1_boundary_safe_pairs"
 ENGINE_MAX_CONCURRENT = 8
 PROMPT_SET_FAMILY_CAPS = {"small": 4, "medium": 8, "full": 0}
 DEFAULT_SYSTEM_PROMPT = "You are a careful assistant. Keep answers concise, safe, and accurate."
@@ -208,6 +209,24 @@ def as_list(value: Any) -> list[Any]:
     if isinstance(value, tuple):
         return list(value)
     return [value]
+
+
+def expected_data_hash(filename: str) -> str | None:
+    manifest_path = bench.COURSE_ROOT / "data" / "MANIFEST.json"
+    if not manifest_path.exists():
+        return None
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    entry = payload.get(filename) if isinstance(payload, Mapping) else None
+    if isinstance(entry, str):
+        return entry
+    if isinstance(entry, Mapping):
+        value = entry.get("sha256") or entry.get("hash") or entry.get("digest")
+        if isinstance(value, str):
+            return value
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -1110,6 +1129,13 @@ def selected_prompt_pairs(ctx: bench.RunContext) -> tuple[list[PromptPair], dict
         "data_source": source,
         "path": "" if source_path is None else str(source_path),
         "sha256": "" if source_path is None else sha256_file(source_path),
+        "expected_sha256_from_manifest": expected_data_hash(DATA_FILE) if source_path is not None and source_path.name == DATA_FILE else "",
+        "manifest_match": (
+            sha256_file(source_path) == expected_data_hash(DATA_FILE)
+            if source_path is not None and source_path.name == DATA_FILE and expected_data_hash(DATA_FILE)
+            else None
+        ),
+        "data_version": DATA_VERSION,
         "n_loaded": len(pairs),
         "n_selected": len(selected),
         "families_loaded": dict(Counter(p.family for p in pairs)),
@@ -3272,6 +3298,7 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         ok = [r for r in concentration_rows if r.get("status") == "ok"]
         if ok:
             lora_peak = max(ok, key=lambda r: safe_float(r.get("top_layer_share")) or 0.0)
+    safety_data = (safety_manifest or {}).get("data", {}) if isinstance(safety_manifest, Mapping) else {}
     metrics = {
         "modes": sorted(modes),
         "model_id": ctx.model_id,
@@ -3284,6 +3311,12 @@ def run(ctx: bench.RunContext, bundle: bench.ModelBundle) -> None:
         "n_lora_module_rows": len(module_rows),
         "lora_status_counts": dict(Counter(str(row.get("status", "")) for row in matrix_rows)),
         "n_safety_pairs": (safety_manifest or {}).get("n_pairs", 0),
+        "safety_data_source": safety_data.get("data_source", ""),
+        "safety_data_path": safety_data.get("path", ""),
+        "safety_data_sha256": safety_data.get("sha256", ""),
+        "safety_data_version": safety_data.get("data_version", ""),
+        "safety_data_manifest_match": safety_data.get("manifest_match", None),
+        "safety_data_fallback_is_science_data": safety_data.get("fallback_is_science_data", None),
         "n_safety_divergence_rows": len(divergence_rows),
         "n_chat_control_rows": len(chat_control_rows),
         "n_boundary_safe_rows": len(boundary_rows),

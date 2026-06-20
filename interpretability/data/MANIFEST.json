@@ -392,6 +392,22 @@
     },
     "verified_tokenizers": []
   },
+  "safety_depth_boundary_pairs.csv": {
+    "families": {
+      "academic_integrity": 4,
+      "account_security": 4,
+      "copyright": 4,
+      "cyber_boundary": 4,
+      "privacy": 4,
+      "professional_boundary": 4
+    },
+    "generator": "make_safety_depth_boundary_pairs.py",
+    "pairing": "boundary-style request paired with a safe alternative and fixed refusal/safe/generic prefixes",
+    "rows": 24,
+    "safety_scope": "forward passes and forced safe/refusal-prefix transcripts only; no harmful completions are sampled",
+    "sha256": "c7dac16bb2705540e572ca46934ccfaf1be11143063a06881bad8ef8f2166027",
+    "verified_tokenizers": []
+  },
   "sycophancy_pressure_items.csv": {
     "base_facts": 40,
     "conditions": {
