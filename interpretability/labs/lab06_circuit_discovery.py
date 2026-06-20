@@ -712,19 +712,22 @@ def metric_under_ablation(
     this particular off-distribution. A different mean (or zero) defines a
     different circuit.
     """
-    diffs: list[float] = []
-    for ex in examples:
-        logits = bench.run_with_node_set_ablation(
-            bundle,
-            ex.prompt.prompt,
-            head_anatomy,
-            comp_anatomy,
-            heads=heads,
-            mlps=mlps,
-            head_means=head_means,
-            mlp_means=mlp_means,
-        )
-        diffs.append(float(logits[ex.target_id] - logits[ex.distractor_id]))
+    if not examples:
+        return 0.0
+    # All examples share one token length (hygiene gate), so the whole family
+    # runs in ONE batched forward instead of one-per-prompt. This is the dominant
+    # speedup for the O(n^2) greedy prune, especially on large models.
+    logits = bench.run_with_node_set_ablation_batched(
+        bundle,
+        [ex.prompt.prompt for ex in examples],
+        head_anatomy,
+        comp_anatomy,
+        heads=heads,
+        mlps=mlps,
+        head_means=head_means,
+        mlp_means=mlp_means,
+    )
+    diffs = [float(logits[i, ex.target_id] - logits[i, ex.distractor_id]) for i, ex in enumerate(examples)]
     return statistics.fmean(diffs)
 
 

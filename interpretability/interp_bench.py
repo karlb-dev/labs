@@ -3446,6 +3446,99 @@ def run_with_node_set_ablation(
     return tensor_cpu_float(out.logits[0, -1])
 
 
+def run_with_node_set_ablation_batched(
+    bundle: ModelBundle,
+    prompts: Sequence[str],
+    head_anatomy: HeadAnatomy,
+    comp_anatomy: ComponentAnatomy,
+    heads: Sequence[tuple[int, int]] = (),
+    mlps: Sequence[int] = (),
+    head_means: Any = None,
+    mlp_means: Any = None,
+) -> Any:
+    """Batched node-set ablation: same semantics as run_with_node_set_ablation
+    but applied to MANY prompts that all tokenize to the SAME length, in ONE
+    forward. The dataset-mean tensors ([L, seq, ...]) broadcast across the batch.
+
+    The circuit lab's greedy prune is O(n^2) faithfulness evaluations, each over
+    the whole prompt family; running the family as a batch instead of one prompt
+    at a time is the difference between batch 1 (memory-bandwidth bound, a big
+    GPU mostly idle re-reading weights per prompt) and actually using the device.
+    Rows never interact (attention is within-sequence), so the result equals the
+    per-prompt calls bit-for-bit in fp32 and within rounding in bf16. Returns a
+    [B, vocab] float32 CPU tensor of final-position logits, in input order.
+
+    Raises if the prompts are not uniform length (the hygiene gate guarantees it).
+    """
+    import torch
+
+    heads_by_layer: dict[int, list[int]] = {}
+    for layer, head in heads:
+        heads_by_layer.setdefault(layer, []).append(head)
+    mlp_set = set(mlps)
+    tokenizer = bundle.tokenizer
+    # Tokenize each prompt exactly as the single-prompt path does (same
+    # add_special_tokens default) and stack. The prompts are uniform length
+    # (Lab 6 hygiene gate), so no padding token is needed -- avoiding the
+    # "tokenizer has no pad_token" failure on models like GPT-2.
+    id_rows = [tokenizer(p, return_tensors="pt")["input_ids"][0] for p in prompts]
+    lengths = {int(row.shape[0]) for row in id_rows}
+    if len(lengths) != 1:
+        raise ValueError(f"batched ablation requires uniform-length prompts, got lengths {sorted(lengths)}")
+    input_ids = torch.stack(id_rows).to(bundle.input_device)
+    batch, seq = input_ids.shape
+    attention_mask = None
+    if head_means is not None and head_means.shape[1] != seq:
+        raise ValueError(f"head_means seq {head_means.shape[1]} != prompt seq {seq}")
+    if mlp_means is not None and mlp_means.shape[1] != seq:
+        raise ValueError(f"mlp_means seq {mlp_means.shape[1]} != prompt seq {seq}")
+
+    handles = []
+
+    def make_head_hook(layer: int, head_list: list[int]):
+        def hook(module: Any, hook_args: tuple) -> Any:
+            x = hook_args[0].clone()
+            d_head = _head_dim_for_layer(head_anatomy, layer)
+            for head in head_list:
+                sl = slice(head * d_head, (head + 1) * d_head)
+                if head_means is None:
+                    x[:, :, sl] = 0
+                else:
+                    x[:, :, sl] = head_means[layer, :, sl].to(x.device, x.dtype)
+            return (x,) + tuple(hook_args[1:])
+
+        return hook
+
+    def make_mlp_hook(layer: int):
+        def hook(module: Any, hook_args: tuple, output: Any) -> Any:
+            out = output[0] if isinstance(output, tuple) else output
+            out = out.clone()
+            if mlp_means is None:
+                out[:, :, :] = 0
+            else:
+                out[:, :, :] = mlp_means[layer].to(out.device, out.dtype)
+            return (out,) + tuple(output[1:]) if isinstance(output, tuple) else out
+
+        return hook
+
+    try:
+        for layer, head_list in heads_by_layer.items():
+            block = bundle.blocks[layer]
+            attn_module_path = _first_module_path(block, ATTN_MODULE_CANDIDATES)
+            attn_module = getattr(block, attn_module_path)
+            o_proj = attn_module.o_proj if hasattr(attn_module, "o_proj") else attn_module.c_proj
+            handles.append(o_proj.register_forward_pre_hook(make_head_hook(layer, head_list)))
+        for layer in mlp_set:
+            module = getattr(bundle.blocks[layer], comp_anatomy.mlp_hook_path)
+            handles.append(module.register_forward_hook(make_mlp_hook(layer)))
+        with torch.no_grad():
+            out = bundle.model(input_ids=input_ids, attention_mask=attention_mask, use_cache=False)
+    finally:
+        for h in handles:
+            h.remove()
+    return tensor_cpu_float(out.logits[:, -1])
+
+
 # ---------------------------------------------------------------------------
 # Activation patching: interchange interventions on the residual stream (Lab 5+)
 # ---------------------------------------------------------------------------
