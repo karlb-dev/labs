@@ -1,0 +1,5 @@
+run_name,model_id,seed,verdict,n_items,certainty_auc_eval_best_depth,certainty_control_gap_eval_best_depth,mean_family_heldout_auc_real,mean_family_heldout_control_gap,max_length_or_letter_baseline_answerability_auc,hedging_projection_answerability_auc,distribution_answerability_auc,verbal_answerability_auc,verbal_confidence_ece
+lab14_v2c_olmo3_7b_full_s0_plots_20260620,allenai/Olmo-3-7B-Instruct,0,usable_certainty_instrument,80,0.8889,0.3698,0.8282,0.2913,0.6667,0.6556,0.5756,0.9667,0.4533
+lab14_v2c_olmo3_7b_full_s1_20260620,allenai/Olmo-3-7B-Instruct,1,answerability_decodes_but_confounds_compete,80,0.9556,0.4294,0.9781,0.3806,0.6333,0.8356,0.6978,0.9578,0.5333
+lab14_v2c_olmo3_7b_full_s2_20260620,allenai/Olmo-3-7B-Instruct,2,usable_certainty_instrument,80,0.9200,0.3751,0.8781,0.3488,0.6667,0.6444,0.7156,0.9622,0.4267
+lab14_v2c_tiera_full_20260620,HuggingFaceTB/SmolLM2-135M-Instruct,0,usable_certainty_instrument,80,0.9200,0.3236,0.8563,0.2944,0.6667,0.6178,0.4511,0.6667,0.3167

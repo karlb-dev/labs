@@ -1,0 +1,113 @@
+{
+  "best_certainty_depth": 13,
+  "best_hedging_depth": 9,
+  "certainty_auc_eval_best_depth": 0.92,
+  "certainty_auc_train_best_depth": 0.9552,
+  "certainty_control_gap_eval_best_depth": 0.3751,
+  "certainty_control_gap_train_best_depth": 0.4118,
+  "certainty_random_auc_eval_best_depth": 0.5449,
+  "certainty_shuffled_auc_eval_best_depth": 0.464,
+  "data": {
+    "all_answerable_non_D": false,
+    "answer_key_counts_by_label": {
+      "0": {
+        "A": 10,
+        "B": 10,
+        "C": 10,
+        "D": 10
+      },
+      "1": {
+        "A": 10,
+        "B": 10,
+        "C": 10,
+        "D": 10
+      }
+    },
+    "answerable_counts": {
+      "answerable": 40,
+      "unanswerable": 40
+    },
+    "counts_by_family": {
+      "factual_qa": 16,
+      "freeform_answerability": 16,
+      "mcq": 16,
+      "passage_qa": 16,
+      "procedural_logic": 16
+    },
+    "data_file": "/content/labs/interpretability/data/certainty_calibration_items.csv",
+    "data_sha256": "4998731870d758ae2542fc84f479535869a818e6e9749e7f0f4411a6c4457643",
+    "data_source": "frozen_csv",
+    "expected_sha256": "4998731870d758ae2542fc84f479535869a818e6e9749e7f0f4411a6c4457643",
+    "fallback_used": false,
+    "families": [
+      "factual_qa",
+      "freeform_answerability",
+      "mcq",
+      "passage_qa",
+      "procedural_logic"
+    ],
+    "label_counts_by_family": {
+      "factual_qa": {
+        "answerable": 8,
+        "unanswerable": 8
+      },
+      "freeform_answerability": {
+        "answerable": 8,
+        "unanswerable": 8
+      },
+      "mcq": {
+        "answerable": 8,
+        "unanswerable": 8
+      },
+      "passage_qa": {
+        "answerable": 8,
+        "unanswerable": 8
+      },
+      "procedural_logic": {
+        "answerable": 8,
+        "unanswerable": 8
+      }
+    },
+    "manifest_match": true,
+    "manifest_status": "manifest_found_sha256",
+    "n_items": 80,
+    "n_raw_items": 80,
+    "per_family_cap": 0,
+    "prompt_set": "full",
+    "unanswerable_always_D": false
+  },
+  "distribution_answerability_auc": 0.7156,
+  "distribution_confidence_ece": 0.0247,
+  "distribution_verbal_correlation_eval": -0.3968,
+  "families": [
+    "factual_qa",
+    "freeform_answerability",
+    "mcq",
+    "passage_qa",
+    "procedural_logic"
+  ],
+  "hedging_auc_eval_best_depth": 1.0,
+  "hedging_auc_train_best_depth": 1.0,
+  "hedging_control_gap_eval_best_depth": 0.3916,
+  "hedging_projection_answerability_auc": 0.6444,
+  "internal_answerability_auc": 0.92,
+  "internal_distribution_correlation_eval": -0.4139,
+  "internal_hedging_correlation_eval": -0.0188,
+  "internal_rank_confidence_ece": 0.4,
+  "internal_verbal_correlation_eval": 0.6929,
+  "max_length_or_letter_baseline_answerability_auc": 0.6667,
+  "mean_family_heldout_auc_random": 0.5294,
+  "mean_family_heldout_auc_real": 0.8781,
+  "mean_family_heldout_auc_shuffled": 0.4869,
+  "mean_family_heldout_control_gap": 0.3488,
+  "model_id": "allenai/Olmo-3-7B-Instruct",
+  "n_items": 80,
+  "signal_thresholds": {
+    "distribution": 0.9928,
+    "internal": 0.3119,
+    "verbal": 0.6
+  },
+  "verbal_answerability_auc": 0.9622,
+  "verbal_confidence_ece": 0.4267,
+  "verdict": "usable_certainty_instrument"
+}
