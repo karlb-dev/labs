@@ -58,6 +58,8 @@ def parse_matrix_args(argv=None) -> argparse.Namespace:
     p.add_argument("--allow-mixed-period", action="store_true")
     p.add_argument("--swa-lengths", default="1024,4096,5120")
     p.add_argument("--no-plots", action="store_true")
+    p.add_argument("--trust-remote-code", action="store_true")
+    p.add_argument("--attn-implementation", default="auto")
     p.add_argument("--date", default=None, help="matrix date slug (default: now). Reuse to resume into the same matrix.")
     p.add_argument("--drive-root", default="/content/drive/MyDrive/interpret")
     p.add_argument("--repo-root", default=str(bench.COURSE_ROOT))
@@ -82,6 +84,10 @@ def _base_args(m: argparse.Namespace) -> argparse.Namespace:
         argv.append("--no-plots")
     if m.allow_mixed_period:
         argv.append("--allow-mixed-period")
+    if getattr(m, "trust_remote_code", False):
+        argv.append("--trust-remote-code")
+    if getattr(m, "attn_implementation", "auto") and m.attn_implementation != "auto":
+        argv += ["--attn-implementation", m.attn_implementation]
     base = bench.parse_args(argv)
     bench.apply_tier_defaults(base)
     base.max_examples = m.max_examples  # never let tier defaults shrink the matrix below the >=8 gate
