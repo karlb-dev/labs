@@ -1,3 +1,4 @@
+# Publishes lab-courses-site/site to https://karlb-dev.github.io/labs/
 name: Deploy course site to GitHub Pages
 
 on:
