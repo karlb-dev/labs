@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#090a0e" />
+    <meta name="description" content="An 11-lab course in TPU collective communication with JAX and Pallas." />
+    <meta property="og:title" content="TPU Collective Communication — Lab Course" />
+    <meta property="og:description" content="From one remote-DMA hop to bandwidth-optimal rings, meshes, and multi-host execution." />
+    <title>TPU Collective Communication — Lab Course</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body class="collective">
+    <a class="skip-link" href="#curriculum">Skip to curriculum</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Back to all courses">
+        <span class="brand-mark">CC</span>
+        <span class="brand-copy"><strong>Collective Communication</strong><small>← all courses</small></span>
+      </a>
+      <nav aria-label="Primary navigation"><a href="#curriculum">Curriculum</a><a href="#labs">Labs</a><a href="#visualizations">Visualizations</a></nav>
+      <a class="header-link" href="https://github.com/karlb-dev/labs/tree/main/collective_communication" target="_blank" rel="noreferrer">Source ↗</a>
+    </header>
+
+    <main>
+      <section class="hero cc-hero" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> 4-chip TPU · explicit schedules · measured bytes</p>
+          <h1>Move the bytes.<br /><em>Prove the schedule.</em></h1>
+          <p class="hero-deck">An 11-lab course in TPU collective communication—from one remote-DMA hop to bandwidth-optimal rings, 2D meshes, and multi-host launch discipline.</p>
+          <div class="hero-actions"><a class="button primary" href="#labs">Browse the labs <span>↓</span></a><a class="button secondary" href="https://github.com/karlb-dev/labs/tree/main/collective_communication" target="_blank" rel="noreferrer">Open source <span>↗</span></a></div>
+          <dl class="hero-stats"><div><dt>11</dt><dd>hands-on labs</dd></div><div><dt>04</dt><dd>TPU chips</dd></div><div><dt>01</dt><dd>shared bench</dd></div></dl>
+        </div>
+
+        <div class="instrument comm-instrument" aria-label="Four-rank ring communication instrument">
+          <div class="instrument-head"><span><i></i> Ring schedule / live</span><span>v5litepod-4 · bfloat16</span></div>
+          <div class="comm-stage">
+            <div class="stage-grid"></div>
+            <span class="comm-rank cr0"><b>R0</b><small>chunk 0</small></span>
+            <span class="comm-rank cr1"><b>R1</b><small>chunk 1</small></span>
+            <span class="comm-rank cr2"><b>R2</b><small>chunk 2</small></span>
+            <span class="comm-rank cr3"><b>R3</b><small>chunk 3</small></span>
+            <i class="comm-wire cw0"></i><i class="comm-wire cw1"></i><i class="comm-wire cw2"></i><i class="comm-wire cw3"></i>
+            <span class="packet pk0">c3</span><span class="packet pk1">c0</span><span class="packet pk2">c1</span><span class="packet pk3">c2</span>
+            <div class="comm-center"><small>collective</small><strong>Σ</strong><span>reduce · scatter<br />all · gather</span></div>
+            <span class="comm-axis ca1">rank order →</span><span class="comm-axis ca2">step 03 / 03</span>
+          </div>
+          <div class="instrument-foot"><span>correctness <b>pass</b></span><span>semaphores <b>drained</b></span><span>bytes <b>accounted</b></span></div>
+        </div>
+      </section>
+
+      <section class="premise shell" id="premise">
+        <div class="kicker"><span>01</span> Course premise</div>
+        <div class="premise-grid"><h2>Communication is<br /><em>ownership in motion.</em></h2><div><p>A collective is more than an API call. It is a schedule: who owns each chunk, where it moves, when it becomes safe to read, and how many bytes cross every link.</p><small>Make the topology, synchronization, and byte model visible—then measure the implementation against all three.</small></div></div>
+        <div class="method-loop"><div><span>01</span><strong>Layout</strong><i>→</i></div><div><span>02</span><strong>Neighbor map</strong><i>→</i></div><div><span>03</span><strong>Synchronization</strong><i>→</i></div><div><span>04</span><strong>Transfer</strong><i>→</i></div><div><span>05</span><strong>Correctness</strong><i>→</i></div><div><span>06</span><strong>Measurement</strong></div></div>
+      </section>
+
+      <section class="curriculum shell" id="curriculum">
+        <div class="section-heading"><div><div class="kicker"><span>02</span> Curriculum arc</div><h2>One hop to<br />the whole fabric.</h2></div><p>Each phase preserves the invariants from the one before it. Local movement becomes a collective; the collective becomes topology-aware; the schedule becomes a measured claim.</p></div>
+        <div class="phase-grid cc-phases">
+          <article class="phase-card p1"><span class="phase-ghost">01</span><small>Labs 01—04 · primitives</small><h3>Own one movement</h3><p>Remote DMA, VMEM staging, token dependencies, and the semaphore rules that keep buffers safe.</p><i><b style="width:36%"></b></i></article>
+          <article class="phase-card p2"><span class="phase-ghost">02</span><small>Labs 05—08 · composition</small><h3>Build the collectives</h3><p>All-gather, reduce-scatter, all-reduce, and chunked schedules with explicit ownership and byte counts.</p><i><b style="width:72%"></b></i></article>
+          <article class="phase-card p3"><span class="phase-ghost">03</span><small>Labs 09—11 · topology</small><h3>Meet the hardware</h3><p>Bandwidth-optimal rings, staged 2D meshes, and the process topology required for multi-host execution.</p><i><b style="width:100%"></b></i></article>
+        </div>
+      </section>
+
+      <section class="lab-browser shell" id="labs">
+        <div class="section-heading"><div><div class="kicker dark"><span>03</span> Lab browser</div><h2>Open a lab.<br />Trace every byte.</h2></div><p>Search by mechanism or narrow the sequence by phase. Each card opens the corresponding handout in the source repository.</p></div>
+        <div class="lab-controls">
+          <div class="filters" aria-label="Filter labs by phase"><button class="active" data-filter="all">All · 11</button><button data-filter="foundations">Foundations · 01—04</button><button data-filter="collectives">Collectives · 05—08</button><button data-filter="topology">Topology · 09—11</button></div>
+          <label class="search"><span aria-hidden="true">⌕</span><span class="sr-only">Search labs</span><input id="lab-search" type="search" placeholder="Search DMA, ring, semaphore…" /><kbd>/</kbd></label>
+        </div>
+        <div class="results-line"><span id="results-count">11 of 11 labs</span><i></i><span>opens on GitHub</span></div>
+        <div class="lab-grid" id="lab-grid"></div>
+      </section>
+
+      <section class="visualizations shell" id="visualizations">
+        <div class="section-heading"><div><div class="kicker"><span>04</span> Evidence surfaces</div><h2>See the schedule<br />in the measurements.</h2></div><p>The benchmark artifacts turn a collective into inspectable evidence: distributions, bandwidth curves, ownership diagrams, trace events, and failure diagnostics.</p></div>
+        <div class="viz-grid">
+          <article class="viz-card"><div class="viz-meta"><span>Latency / payload</span><span>lower is better</span></div><h3>Find the launch-dominated regime</h3><p>Small messages expose the fixed cost. Larger payloads reveal when link bandwidth takes over.</p><div class="cc-curve latency-curve"><span class="curve-line"></span><i style="--x:8%;--y:23%"></i><i style="--x:22%;--y:28%"></i><i style="--x:40%;--y:40%"></i><i style="--x:62%;--y:60%"></i><i style="--x:88%;--y:84%"></i><b class="label la">latency</b><b class="label lb">1 KiB</b><b class="label lc">64 MiB</b></div></article>
+          <article class="viz-card"><div class="viz-meta"><span>Effective bandwidth</span><span>GB/s</span></div><h3>Approach the roofline</h3><p>Compare algorithms by payload and look for the point where fewer bytes beat fewer launches.</p><div class="cc-bars"><div style="--h:18%"><b></b><span>1K</span></div><div style="--h:31%"><b></b><span>16K</span></div><div style="--h:54%"><b></b><span>256K</span></div><div style="--h:75%"><b></b><span>4M</span></div><div style="--h:88%"><b></b><span>64M</span></div><i>link roofline</i></div></article>
+          <article class="viz-card"><div class="viz-meta"><span>Ownership map</span><span>ring step 02</span></div><h3>Know which chunk is where</h3><p>An arrival-order view makes misplaced chunks and incorrect canonicalization visible before timing begins.</p><div class="cc-ring-viz"><span class="rr0">R0<small>c2</small></span><span class="rr1">R1<small>c3</small></span><span class="rr2">R2<small>c0</small></span><span class="rr3">R3<small>c1</small></span><b>→</b><i>ownership<br />rotates</i></div></article>
+          <article class="viz-card"><div class="viz-meta"><span>Synchronization ledger</span><span>must balance</span></div><h3>Drain every semaphore</h3><p>Correct data is not enough: entry barriers, signals, and waits must close with no stale state for the next invocation.</p><div class="semaphore-ledger"><div><span>entry barrier</span><b>4 / 4</b><i>ready</i></div><div><span>DMA signals</span><b>12 / 12</b><i>balanced</i></div><div><span>DMA waits</span><b>12 / 12</b><i>balanced</i></div><div><span>exit state</span><b>0 pending</b><i>drained</i></div></div></article>
+        </div>
+      </section>
+
+      <section class="bench shell" id="benchmark">
+        <div class="bench-panel"><div class="bench-copy"><div class="kicker dark"><span>05</span> Benchmark contract</div><h2>Measure the schedule,<br /><em>not the setup.</em></h2><p>Every performance claim carries correctness, warmup state, device topology, payload size, and a distribution—not just a single attractive number.</p><a class="button mint" href="https://github.com/karlb-dev/labs/tree/main/collective_communication" target="_blank" rel="noreferrer">Inspect the benchmark <span>↗</span></a></div><div class="checks"><div><span>01</span><p><strong>Compile before measurement</strong><small>Separate tracing and compilation from steady-state execution.</small></p><b>ISOLATE</b></div><div><span>02</span><p><strong>Warm up, then synchronize</strong><small>Use block_until_ready before reading host time.</small></p><b>SYNC</b></div><div><span>03</span><p><strong>Check every result</strong><small>Compare custom paths with trusted collective references.</small></p><b>PASS</b></div><div><span>04</span><p><strong>Preserve run context</strong><small>Keep topology, environment, medians, percentiles, and case status.</small></p><b>RECORD</b></div></div></div>
+        <div class="hardware"><div><span>Primary target</span><strong>TPU v5e-4</strong><p>The full four-rank ring and default course environment.</p></div><div><span>Scale validation</span><strong>TPU v5e-8</strong><p>Compare additional logical layouts and topology choices.</p></div><div><span>Multi-host smoke</span><strong>TPU v5e-16</strong><p>Validate process launch, global devices, and hierarchy assumptions.</p></div></div>
+      </section>
+    </main>
+
+    <footer><div class="footer-mark">CC<span>/</span>11</div><div><strong>TPU Collective Communication</strong><p>JAX, Pallas, explicit schedules, and measured bytes.</p></div><div class="footer-links"><a href="../">Course index</a><a href="https://github.com/karlb-dev/labs/tree/main/collective_communication" target="_blank" rel="noreferrer">Repository ↗</a><a href="#top">Back to top ↑</a></div></footer>
+  </body>
+</html>

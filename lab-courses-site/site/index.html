@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#090a0e" />
+    <meta name="description" content="Hands-on courses in mechanistic interpretability and TPU collective communication." />
+    <meta property="og:title" content="Experimental Lab Courses" />
+    <meta property="og:description" content="Build the instrument. Run the experiment. Defend the claim." />
+    <title>Experimental Lab Courses</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="courses.js" defer></script>
+    <script src="landing.js" defer></script>
+  </head>
+  <body class="course-index">
+    <a class="skip-link" href="#courses">Skip to courses</a>
+    <header class="site-header index-header">
+      <a class="brand" href="#top" aria-label="Course index home">
+        <span class="brand-mark">KB</span>
+        <span class="brand-copy"><strong>Experimental Lab Courses</strong><small>systems · models · evidence</small></span>
+      </a>
+      <nav aria-label="Primary navigation"><a href="#courses">Courses</a><a href="#method">Method</a></nav>
+      <a class="header-link" href="https://github.com/karlb-dev/labs" target="_blank" rel="noreferrer">GitHub ↗</a>
+    </header>
+
+    <main>
+      <section class="index-hero" id="top">
+        <div class="index-hero-copy">
+          <p class="eyebrow"><span></span> Open source · experiment first</p>
+          <h1>Build the instrument.<br />Run the experiment.<br /><em>Defend the claim.</em></h1>
+          <p>Hands-on courses for understanding the machinery beneath modern AI—from communication between accelerator chips to computation inside language models.</p>
+          <a class="button primary" href="#courses">Choose a course <span>↓</span></a>
+        </div>
+        <div class="landing-orbit" aria-label="Two course tracks connected by a shared experimental method">
+          <div class="orbit-grid"></div>
+          <i class="orbit o1"></i><i class="orbit o2"></i>
+          <span class="orbit-center"><b>LAB</b><small>evidence</small></span>
+          <a class="orbit-course oc1" href="mechanistic-interpretability/"><b>MI</b><small>model internals</small></a>
+          <a class="orbit-course oc2" href="collective-communication/"><b>CC</b><small>device systems</small></a>
+          <span class="orbit-future">+</span>
+          <div class="orbit-caption"><span>code</span><i>→</i><span>measurement</span><i>→</i><span>artifact</span></div>
+        </div>
+      </section>
+
+      <section class="index-summary">
+        <div><strong id="course-total">02</strong><span>complete courses</span></div>
+        <div><strong id="lab-total">47</strong><span>hands-on labs</span></div>
+        <div><strong>100%</strong><span>open source</span></div>
+        <p>Each course is a self-contained path with runnable code, precise measurement contracts, and artifacts designed to survive after the compute is gone.</p>
+      </section>
+
+      <section class="course-catalog shell" id="courses" aria-labelledby="courses-title">
+        <div class="section-heading">
+          <div><div class="kicker"><span>01</span> Course catalog</div><h2 id="courses-title">Choose your<br />layer of the stack.</h2></div>
+          <p>Start inside the model or down at the device fabric. Both courses teach the same habit: make the mechanism visible, test it, and preserve the evidence.</p>
+        </div>
+        <div class="course-grid" id="course-grid"></div>
+        <div class="catalog-growth"><span>+</span><p><strong>Built to grow.</strong> A new course is one object in <code>courses.js</code> plus its dedicated folder.</p></div>
+      </section>
+
+      <section class="index-method shell" id="method" aria-labelledby="method-title">
+        <div class="kicker dark"><span>02</span> Shared method</div>
+        <div class="index-method-grid">
+          <div><h2 id="method-title">No magic.<br /><em>Just instruments.</em></h2><p>The topics change, but the epistemic standard does not. Every course moves from a runnable system to measurements, controlled comparisons, and inspectable artifacts.</p></div>
+          <div class="method-principles">
+            <article><span>01</span><h3>Code you can explain</h3><p>Shared benches own the machinery; thin labs expose the experiment.</p></article>
+            <article><span>02</span><h3>Measurements with contracts</h3><p>Warmups, correctness checks, distributions, topology, and run context stay attached.</p></article>
+            <article><span>03</span><h3>Artifacts over anecdotes</h3><p>Plots, tables, diagnostics, and claims remain reproducible and reviewable.</p></article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer><div class="footer-mark">KB<span>/</span>LABS</div><div><strong>Experimental Lab Courses</strong><p>Systems, models, and evidence—built in public.</p></div><div class="footer-links"><a href="https://github.com/karlb-dev/labs" target="_blank" rel="noreferrer">Repository ↗</a><a href="#top">Back to top ↑</a></div></footer>
+  </body>
+</html>

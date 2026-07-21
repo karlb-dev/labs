@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#090a0e" />
+    <meta name="description" content="A 36-lab experimental course on mechanistic interpretability, causal interventions, model internals, and evidence discipline." />
+    <meta property="og:title" content="Mechanistic Interpretability Labs" />
+    <meta property="og:description" content="Look inside. Then intervene. Explore 36 hands-on labs on open language models." />
+    <title>Mechanistic Interpretability Labs</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body class="mechanistic">
+    <a class="skip-link" href="#labs">Skip to labs</a>
+
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="All lab courses">
+        <span class="brand-mark">MI</span>
+        <span class="brand-copy"><strong>Mechanistic Interpretability</strong><small>← all courses</small></span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#curriculum">Curriculum</a>
+        <a href="#labs">Labs</a>
+        <a href="#visualizations">Visualizations</a>
+      </nav>
+      <a class="header-link" href="https://github.com/karlb-dev/labs/tree/main/interpretability" target="_blank" rel="noreferrer">GitHub ↗</a>
+    </header>
+
+    <main>
+      <section class="hero" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> Open models. Verified instruments. Causal claims.</p>
+          <h1>Look inside.<br /><em>Then intervene.</em></h1>
+          <p class="hero-deck">A hands-on course for learning how language models represent, route, and use information—without confusing a beautiful plot for an explanation.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#labs">Explore the labs <span>↓</span></a>
+            <a class="button secondary" href="https://github.com/karlb-dev/labs/tree/main/interpretability" target="_blank" rel="noreferrer">View source <span>↗</span></a>
+          </div>
+          <dl class="hero-stats">
+            <div><dt>36</dt><dd>hands-on labs</dd></div>
+            <div><dt>3</dt><dd>hardware tiers</dd></div>
+            <div><dt>1</dt><dd>shared microscope</dd></div>
+          </dl>
+        </div>
+
+        <div class="instrument" aria-label="Abstract visualization of activations moving through a transformer">
+          <div class="instrument-head"><span><i></i> activation atlas</span><span>OLMo · layer 00—32</span></div>
+          <div class="instrument-stage">
+            <div class="stage-grid"></div>
+            <i class="wire w1"></i><i class="wire w2"></i><i class="wire w3"></i><i class="wire w4"></i><i class="wire w5"></i>
+            <span class="node n1">tok</span><span class="node n2">L08</span><span class="node n3 hot">L17</span><span class="node n4">L24</span><span class="node n5 final">L32</span>
+            <div class="readout"><small>top readout</small><strong>Paris</strong><span>causal site candidate</span></div>
+            <span class="axis x">depth →</span><span class="axis y">activation</span>
+          </div>
+          <div class="token-stream"><span>The</span><span> capital</span><span> of</span><span> France</span><span> is</span><strong> Paris</strong></div>
+          <div class="instrument-foot"><span>hook parity <b>pass</b></span><span>lens check <b>pass</b></span><span>patch no-op <b>pass</b></span></div>
+        </div>
+      </section>
+
+      <section class="premise shell" aria-labelledby="premise-title">
+        <div class="kicker"><span>01</span> Course premise</div>
+        <div class="premise-grid">
+          <h2 id="premise-title">Interpretability is an <em>experimental craft.</em></h2>
+          <div><p>Students do not merely inspect tensors. They form precise hypotheses, measure internal states, intervene on the model, and state exactly what the evidence does—and does not—support.</p><small>The bench is the microscope. The labs are what you point it at.</small></div>
+        </div>
+        <div class="method-loop" aria-label="Course experimental loop">
+          <div><span>01</span><strong>Behavior</strong><i>→</i></div>
+          <div><span>02</span><strong>Hypothesis</strong><i>→</i></div>
+          <div><span>03</span><strong>Measurement</strong><i>→</i></div>
+          <div><span>04</span><strong>Intervention</strong><i>→</i></div>
+          <div><span>05</span><strong>Artifact</strong><i>→</i></div>
+          <div><span>06</span><strong>Caveat</strong></div>
+        </div>
+      </section>
+
+      <section class="curriculum shell" id="curriculum" aria-labelledby="curriculum-title">
+        <div class="section-heading">
+          <div><div class="kicker"><span>02</span> Curriculum</div><h2 id="curriculum-title">From seeing signals<br />to defending claims.</h2></div>
+          <p>The sequence climbs an evidence ladder: observation, attribution, decodability, causality, and audit. Each phase widens the questions while tightening the standard of proof.</p>
+        </div>
+        <div class="phase-grid">
+          <article class="phase-card p1"><span class="phase-ghost">01</span><small>Labs 01—11 · Intro sequence</small><h3>Build the microscope.</h3><p>Residual streams, attribution, attention, probes, patching, circuits, steering, SAEs, graphs, and reliability.</p><i><b style="width:31%"></b></i></article>
+          <article class="phase-card p2"><span class="phase-ghost">02</span><small>Labs 12—25 · Advanced course</small><h3>Stress the methods.</h3><p>Geometry, multi-turn behavior, sycophancy, personas, model organisms, blind audits, belief revision, and self-report.</p><i><b style="width:69%"></b></i></article>
+          <article class="phase-card p3"><span class="phase-ghost">03</span><small>Labs 26—35 · Special topics</small><h3>Push the frontier.</h3><p>Causal abstraction, path mediation, editing, training dynamics, auto-interp, reward circuits, multimodality, and agents.</p><i><b style="width:92%"></b></i></article>
+          <article class="phase-card p4"><span class="phase-ghost">04</span><small>Lab 36 · Research extension</small><h3>Test a live theory.</h3><p>The Severance experiment turns report-channel claims into a staged program of screens, bridges, and source attribution.</p><i><b style="width:100%"></b></i></article>
+        </div>
+      </section>
+
+      <section class="lab-browser shell" id="labs" aria-labelledby="labs-title">
+        <div class="section-heading">
+          <div><div class="kicker dark"><span>03</span> Lab index</div><h2 id="labs-title">The complete sequence.</h2></div>
+          <p>Search by concept, method, or evidence type. Every card opens the student handout in the source repository.</p>
+        </div>
+        <div class="lab-controls">
+          <div class="filters" role="group" aria-label="Filter labs by course phase">
+            <button class="active" type="button" data-phase="all">All 36</button>
+            <button type="button" data-phase="intro">Intro · 01—11</button>
+            <button type="button" data-phase="advanced">Advanced · 12—25</button>
+            <button type="button" data-phase="special">Special topics · 26—35</button>
+            <button type="button" data-phase="research">Research · 36</button>
+          </div>
+          <label class="search"><span aria-hidden="true">⌕</span><span class="sr-only">Search labs</span><input id="lab-search" type="search" placeholder="Search methods, concepts, evidence…" /><kbd>/</kbd></label>
+        </div>
+        <div class="results-line" aria-live="polite"><span id="result-count">36 labs</span><i></i><span id="result-phase">complete course</span></div>
+        <div class="lab-grid" id="lab-grid"></div>
+        <div class="empty" id="empty-state" hidden><span>∅</span><h3>No matching lab</h3><p>Try “patching,” “truth,” “steering,” or “audit.”</p></div>
+      </section>
+
+      <section class="visualizations shell" id="visualizations" aria-labelledby="visualizations-title">
+        <div class="section-heading">
+          <div><div class="kicker"><span>04</span> Visual evidence</div><h2 id="visualizations-title">Every plot carries<br />a burden of proof.</h2></div>
+          <p>The course produces human-readable artifacts, not mystery tensors. Each visualization stays attached to its model, run, intervention, controls, and caveats.</p>
+        </div>
+        <div class="viz-grid">
+          <article class="viz-card"><div class="viz-meta"><span>01 / Logit lens</span><span>probability by depth</span></div><div class="lens-chart" aria-label="Illustrative logit lens trajectory"><i style="height:18%"></i><i style="height:22%"></i><i style="height:19%"></i><i style="height:28%"></i><i style="height:34%"></i><i style="height:31%"></i><i style="height:43%"></i><i style="height:55%"></i><i style="height:62%"></i><i style="height:76%"></i><i style="height:84%"></i><i style="height:92%"></i><span class="label la">target token</span><span class="label lb">layer 0</span><span class="label lc">final</span></div><h3>Watch a prediction form.</h3><p>Decoded readouts expose when candidate answers rise, stabilize, or collapse across model depth.</p></article>
+          <article class="viz-card"><div class="viz-meta"><span>02 / Causal tracing</span><span>token × layer</span></div><div class="heatmap" id="heatmap" aria-label="Illustrative causal tracing heatmap"><span class="label ht">early</span><span class="label hb">late</span><span class="label hs">token position</span></div><h3>Turn correlation into a test.</h3><p>Clean-to-corrupt patches reveal where restoring an internal state recovers the measured behavior.</p></article>
+          <article class="viz-card"><div class="viz-meta"><span>03 / Attribution graph</span><span>signed feature flow</span></div><div class="mini-graph" aria-label="Illustrative feature attribution graph"><i class="edge e1"></i><i class="edge e2"></i><i class="edge e3"></i><i class="edge e4"></i><i class="edge e5"></i><span class="gn g1">France</span><span class="gn g2">L3·812</span><span class="gn g3">L7·44</span><span class="gn g4">capital</span><span class="gn g5">Paris</span></div><h3>Follow the feature flow.</h3><p>Replacement-model edges propose a circuit; interventions on the real model decide whether the graph earns trust.</p></article>
+          <article class="viz-card"><div class="viz-meta"><span>04 / Claim ledger</span><span>evidence discipline</span></div><div class="ledger"><div><b class="obs">OBS</b><p>Behavioral pattern is stable across the frozen prompt family.</p></div><div><b class="decode">DECODE</b><p>Direction transfers to a held-out statement family.</p></div><div><b class="causal">CAUSAL</b><p>Intervention changes the named metric against controls.</p></div><div><b class="audit">AUDIT</b><p>Fresh replication keeps, revises, or retires the claim.</p></div></div><h3>Write only what survives.</h3><p>Every claim names its evidence rung, supporting artifact, scope, and the observation that would kill it.</p></article>
+        </div>
+      </section>
+
+      <section class="bench shell" aria-labelledby="bench-title">
+        <div class="bench-panel">
+          <div class="bench-copy"><div class="kicker dark"><span>05</span> The shared bench</div><h2 id="bench-title">The instrument<br /><em>verifies itself.</em></h2><p>Before any science, every run checks hook parity and lens fidelity. Attribution and intervention labs add decomposition, patch no-op, and replacement-model accounting checks—and abort when they fail.</p><a class="button mint" href="https://github.com/karlb-dev/labs/blob/main/interpretability/README.md" target="_blank" rel="noreferrer">Read the bench contract <span>↗</span></a></div>
+          <div class="checks"><div><span>01</span><p><strong>Hook parity</strong><small>Hooks reproduce hidden states</small></p><b>PASS</b></div><div><span>02</span><p><strong>Lens self-check</strong><small>Final readout matches model logits</small></p><b>PASS</b></div><div><span>03</span><p><strong>Component anatomy</strong><small>Hook sites reconstruct residual deltas</small></p><b>PASS</b></div><div><span>04</span><p><strong>Decomposition</strong><small>Captured components sum to the stream</small></p><b>PASS</b></div><div><span>05</span><p><strong>Patch no-op</strong><small>Self-patching is a numerical identity</small></p><b>PASS</b></div></div>
+        </div>
+        <div class="hardware"><div><span>Tier A</span><strong>Laptop CPU</strong><p>Smoke-test the plumbing before spending GPU minutes.</p></div><div><span>Tier B</span><strong>24 GB+ GPU</strong><p>Run the standard science path on open 7B models.</p></div><div><span>Tier C</span><strong>40–80 GB GPU</strong><p>Use larger prompt sets, models, and precision where supported.</p></div></div>
+      </section>
+    </main>
+
+    <footer><div class="footer-mark">MI<span>/</span>36</div><div><strong>Mechanistic Interpretability Labs</strong><p>Built as an open, experimental course on model internals.</p></div><div class="footer-links"><a href="../">Course index</a><a href="https://github.com/karlb-dev/labs/tree/main/interpretability" target="_blank" rel="noreferrer">Repository ↗</a><a href="#top">Back to top ↑</a></div></footer>
+  </body>
+</html>
