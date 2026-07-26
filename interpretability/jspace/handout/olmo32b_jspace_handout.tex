@@ -1,6 +1,8 @@
 % Workshop handout — special-lab-1: J-space replication on OLMo-3-32B-Think
 % Compile: pdflatex (twice). Figures in ./figures/.
 \documentclass[10pt]{article}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
 \usepackage[margin=2.2cm]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -339,9 +341,57 @@ band.}
 \label{fig:ematch}
 \end{figure}
 
-% --- [v2 pending subsections: P1 matched grid result (f11), P2 frozen
-% --- ablation (f12), P3 late band (f13, f14), P5 CoT rescue, P6 seeds,
-% --- phase Q Qwen — added as each lands; see inprogress.md for status]
+\subsection{[v2-P1b] At matched energy the causal null is clean: damage
+tracks energy, not content}
+
+The energy-matched grid (fig.~\ref{fig:vmatch}) settles the question P1a
+raised. Every piece of v1's apparent non-J selectivity disappears: SQL
+returns to baseline at every dose (0.667 vs.\ v1's unmatched 0.000 --- the
+"register destruction" was pure energy), the two-hop answer-logprob deltas
+shrink from $-0.45/-0.86/-0.93$ (CIs excluding zero) to
+$\mathbf{-0.01/-0.17/-0.15}$ (every CI straddling zero), and prose NLL sits
+at 2.74--2.79 against a 2.71 baseline (v1 unmatched: up to 4.02). With the
+confound removed in both directions, the three groups are statistically
+indistinguishable from each other \emph{and from baseline} at every dose up
+to 40 dims/layer:
+
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+2-hop $\Delta$logprob vs.\ baseline & k=10 & k=20 & k=40 \\
+\midrule
+J-span                & $-0.15$ & $-0.17$ & $-0.18$ \\
+random (matched)      & $-0.11$ & $-0.09$ & $-0.08$ \\
+non-J PCs (matched)   & $-0.01$ & $-0.17$ & $-0.15$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Two consequences. First, the v1 causal verdict is \emph{confirmed
+and strengthened}: on OLMo, statically removing the verbalizable subspace
+does nothing that removing an energy-equivalent arbitrary subspace doesn't
+do --- there is no content-specific causal load at these doses, and the
+earlier appearance of one was an instrument artifact we have now measured
+and eliminated. Second, v1's own "J $\approx$ random" comparison was
+\emph{conservative}: the J-span carries 2--5$\times$ more energy than
+rank-matched random dims, so v1 was comparing a heavier J-removal against a
+lighter control and still finding parity. The last static escape hatch for
+the paper's dissociation on OLMo is position-specific structure ---
+frozen prompt-selected ablation (P2, running) and the late band (P3).
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.85\linewidth]{f11_vmatch_grid.png}
+\caption{Energy-matched causal grid at k=20 (all doses in
+\code{v2\_ablation\_v2.json}). All three subspace families sit on top of
+each other and on baseline; contrast the v1 grid in \S3, where the
+unmatched non-J control cratered SQL and two-hop.}
+\label{fig:vmatch}
+\end{figure}
+
+% --- [v2 pending subsections: P2 frozen ablation (f12), P3 late band
+% --- (f13, f14), P5 CoT rescue, P6 seeds, phase Q Qwen — added as each
+% --- lands; see inprogress.md for status]
 
 \subsection*{Artifacts}
 

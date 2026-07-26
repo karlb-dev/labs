@@ -119,6 +119,23 @@
   archive. Remaining known-open: variance-matched control, frozen-top-k
   ablation, late-band fit, Dolma lens, CoT-rescue — all in report §7.
 
+## 2026-07-26 08:1x–08:2x (VM3) — published as draft Lab 37 (user lifted no-git rule)
+- User directive supersedes v1's "never git add": work is now a draft
+  proposed lab. SSH key from interpret/misc/key.tar.gz -> ~/.ssh (auth OK
+  as karlb-dev); repo-local identity karlb-dev <kburtram@live.com>
+  (matches lab-commit history); origin switched to SSH.
+- Branch interp_jspace: labs/lab37_jspace_workspace.md (lab36-style header,
+  protocol table, operationalization-audit section, claim templates
+  SL1-C1..C5 with falsifiers, promotion criteria) + jspace/ (README with
+  findings table + artifact map, code mirror s0-s19, report, living
+  handout, figures f1-f10, small metrics v1_/v2_ prefixed; >5MB Drive-only)
+  + SPECIAL_TOPICS.MD proposed-extension stanza + .gitignore for
+  special_lab1/. Pushed 61b4ada.
+- New phase-boundary routine: refresh_handout.sh then push_lab.sh "<msg>"
+  (mirrors live dir into jspace/, commits with trailer, pushes; refuses to
+  run off-branch). Drive remains the durable archive; handout remains the
+  primary read.
+
 ## 2026-07-26 06:30–06:39 (VM3) — workshop handout (user request)
 - Wrote handout/olmo32b_jspace_handout.tex — 5-page workshop handout
   (pdflatex, article 10pt: abstract, setup, descriptive, causal table,

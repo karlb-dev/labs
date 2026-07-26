@@ -13,6 +13,10 @@
   },
   "vmatch": {
     "jspace_k20_twohop_lp_delta": -0.173,
-    "jspace_k20_sql": 0.6666666666666666
+    "jspace_k20_sql": 0.6666666666666666,
+    "vmatch_rand_k20_twohop_lp_delta": -0.088,
+    "vmatch_rand_k20_sql": 0.3333333333333333,
+    "vmatch_nonJ_k20_twohop_lp_delta": -0.172,
+    "vmatch_nonJ_k20_sql": 0.6666666666666666
   }
 }

@@ -10,10 +10,11 @@ cd "$SRC"
 python scripts/s19_figures_v2.py
 cp -f "$V2"/figures/f*.png handout/figures/ 2>/dev/null || true
 cd handout
-pdflatex -interaction=nonstopmode olmo32b_jspace_handout.tex >/dev/null
-pdflatex -interaction=nonstopmode olmo32b_jspace_handout.tex > .compile.log 2>&1
-grep -E "^!" .compile.log && { echo "LATEX ERROR"; exit 1; }
-grep -E "Output written" .compile.log
+pdflatex -interaction=nonstopmode olmo32b_jspace_handout.tex >/dev/null 2>&1 || true
+pdflatex -interaction=nonstopmode olmo32b_jspace_handout.tex > .compile.log 2>&1 || true
+if ! grep -E "Output written" .compile.log; then
+  echo "LATEX ERROR:"; grep -B1 -A4 "^!" .compile.log | head -20; exit 1
+fi
 rm -f *.aux *.out .compile.log olmo32b_jspace_handout.log
 mkdir -p "$V2/report/handout"
 rsync -a olmo32b_jspace_handout.tex olmo32b_jspace_handout.pdf figures \
