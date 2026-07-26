@@ -83,9 +83,6 @@ def item_prompt(tname: str, it: dict) -> str:
 def run_frozen(cond, dicts, ab, model, hf, tok, tasks, tname, extra):
     """Per-item selection then per-item scoring via s7.run_task on
     singleton task dicts (scorer identical to v1)."""
-    src = "arithmetic" if tname in ("samples",) else tname
-    base_items = tasks["arithmetic"][:3] + tasks["sql"][:2] \
-        if tname == "samples" else tasks[src if src in tasks else tname]
     if tname == "samples":
         # selection from the first arithmetic prompt only; samples is an
         # audit artifact, not a statistic

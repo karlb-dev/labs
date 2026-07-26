@@ -389,9 +389,72 @@ unmatched non-J control cratered SQL and two-hop.}
 \label{fig:vmatch}
 \end{figure}
 
-% --- [v2 pending subsections: P2 frozen ablation (f12), P3 late band
-% --- (f13, f14), P5 CoT rescue, P6 seeds, phase Q Qwen — added as each
-% --- lands; see inprogress.md for status]
+\subsection{[v2-P2] The frozen instrument finds the first content-specific
+causal handle --- and it is recall, not reasoning}
+
+The confound-free variant of the paper's intervention: per item, one clean
+forward pass ranks the J-dictionary by activity over the prompt, the top-10
+per band layer are \emph{frozen}, and generation proceeds with that static
+per-item projector. Two controls: the same mechanism on a random dictionary
+(\code{frozen\_rand10}), and per-token live selection from a random
+dictionary (\code{live\_rand10}, the matched-live control v1's dynamic
+condition never had).
+
+\begin{center}\small
+\begin{tabular}{lccccccc}
+\toprule
+ & 2-hop & 2-hop lp & 1-hop & arith & SQL & NLL & grammar \\
+\midrule
+baseline        & 0.58 & $-1.74$ & 0.60 & 0.87 & 0.67 & 2.71 & 1.00 \\
+frozen J-10     & \textbf{0.23} & $\mathbf{-4.63}$ & \textbf{0.23} & 0.87 & 0.67 & 3.00 & 0.85 \\
+frozen rand-10  & 0.53 & $-1.78$ & 0.53 & 0.90 & 0.33 & 2.79 & 0.95 \\
+live J-10 (v1)  & 0.00 & $-24.8$ & 0.00 & 0.00 & 0.00 & 24.3 & 0.30 \\
+live rand-10    & 0.60 & $-1.82$ & 0.67 & 0.87 & 0.33 & 2.80 & 0.95 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Three readings, in order of importance. \textbf{(1) A control-clean causal
+effect, at last.} Freezing out the item's top-10 J-directions deletes the
+retrieved fact: answer log-probability drops 2.9 nats (CI
+$[-5.49,-3.84]$ vs.\ baseline), recall accuracy falls 0.58$\to$0.23 ---
+while the identical mechanism on a random dictionary moves \emph{nothing}
+(every cell within CI of baseline). Generation tasks are untouched and the
+stored verbatim samples under frozen-J are coherent, correct arithmetic.
+After P1 eliminated every subspace-level effect, the per-item selection is
+what matters: the J-space's causal content lives in \emph{item-specific}
+directions, not in any fixed span. \textbf{(2) It is not the paper's
+dissociation.} Single-hop recall collapses \emph{identically} to two-hop
+(both 0.23) --- the paper's signature required shallow tasks to survive.
+What the frozen instrument found is a \emph{factual-recall content channel},
+not a multi-step scratchpad: removing the item's J-directions removes what
+the model knows, not how it chains. \textbf{(3) v1's live-J catastrophe was
+J-specific after all.} Live top-10 selection from a random dictionary does
+nothing (0.60 two-hop, NLL 2.80), so the v1 lobotomy was not "removing
+whatever aligns with the current state" generically --- though the
+dictionaries' pool sizes differ (full vocab vs.\ 5120 rows), so alignment
+depth is a residual caveat.
+
+Synthesis with P1: \emph{static span removal does nothing at any matched
+dose; per-item frozen selection deletes facts; per-token live selection
+deletes the computation}. On OLMo the causal story of the J-space is
+content-carriage --- causally real, control-clean, and increasingly
+precisely localized --- but the workspace-as-reasoning-substrate claim
+remains unsupported. (The recurring SQL 0.33 cells in both random controls
+are the known 3-schema flaky cell; n=30 over 3 patterns.)
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.85\linewidth]{f12_frozen_grid.png}
+\caption{Frozen vs.\ live top-10 ablation (triangles = live selection).
+Frozen-J selectively destroys factual recall (1-hop and 2-hop alike) while
+its random-dictionary twin sits on baseline; live-J remains the
+uninterpretable collapse.}
+\label{fig:frozen}
+\end{figure}
+
+% --- [v2 pending subsections: P3 late band (f13, f14), P5 CoT rescue,
+% --- P6 seeds, phase Q Qwen — added as each lands; see inprogress.md]
 
 \subsection*{Artifacts}
 

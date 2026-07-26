@@ -1,0 +1,16 @@
+{
+  "slices": {},
+  "model": "allenai/Olmo-3-32B-Think",
+  "source_layers": [
+    46,
+    50,
+    54,
+    58,
+    62
+  ],
+  "target_layer": 63,
+  "dim_batch": 8,
+  "max_seq_len": 128,
+  "skip_first": 16,
+  "corpus": "v1 fitting_corpus.jsonl (same 4x30 slices)"
+}

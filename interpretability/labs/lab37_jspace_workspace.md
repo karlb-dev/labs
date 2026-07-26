@@ -9,7 +9,7 @@ Main plot: jspace/figures/f4_ablation_dissociation.png (v1); f11_vmatch_grid.png
 Main table: jspace/report/summary.json (+ summary_v2.json)
 Evidence rung: OBS + DECODE + CAUSAL + AUDIT
 Forbidden claim: global-workspace consciousness in the cognitive-science sense; any unconditioned "OLMo has no workspace" — only "instrument X at doses Y on band Z found / failed to find effect E"
-One-sentence allowed claim: On Olmo-3-32B-Think, J-lens workspace geometry replicates at roughly 10x thinner capacity than the paper's Claude numbers; the paper's causal dissociation does not replicate under rank-matched static instruments (energy-matched and frozen-selection verdicts tracked in v2); and the workspace anticipates the chain of thought by a foil-calibrated median 46 steps.
+One-sentence allowed claim: On Olmo-3-32B-Think, J-lens workspace geometry replicates at roughly 10x thinner capacity than the paper's Claude numbers; the paper's multi-step-vs-shallow causal dissociation does not replicate under energy-matched or frozen-selection instruments, but per-item frozen J-ablation is a control-clean causal handle on retrieved factual content (answer logprob -2.9 nats, single- and multi-hop alike); and the workspace anticipates the chain of thought by a foil-calibrated median 46 steps.
 Human-label requirement: required before strong claims from CoT-divergence examples or eval-awareness generations
 ```
 
@@ -76,8 +76,8 @@ Artifact: jspace/results/v1_lens_sanity_32b.json + figures f1/f2 | Falsifier: la
 ```
 
 ```text
-[SL1-C2] CAUSAL_VERDICT | (v2-gated) Under rank-matched static ablation the J-span is indistinguishable from random despite removing ~3x more energy; the paper-faithful live top-10 destroys fluency (NLL 2.71->24.34) and fails its matched-live control on OLMo. Energy-matched and frozen-selection grids [pending] decide the final wording. CAUSAL+AUDIT.
-Artifact: jspace/results/v2_ablation_v2.json + v2 frozen_ablation.json + figures f11/f12 | Falsifier: energy-matched non-J damage vanishes AND frozen-J produces the paper's dissociation — then the v1 null was instruments, and the verdict flips.
+[SL1-C2] CAUSAL_VERDICT | On Olmo-3-32B-Think: (a) at energy-matched removal (ratios 0.97-1.01 per layer/dose) static J-span, random, and non-J subspaces are all indistinguishable from baseline at k<=40 dims/layer — v1's apparent non-J selectivity was an energy artifact; (b) per-item frozen top-10 J-ablation is a control-clean causal handle on retrieved factual content (answer logprob -2.9 nats, recall 0.58->0.23, single- AND multi-hop; random-dictionary twin at baseline; generations coherent); (c) the paper's multi-step-vs-shallow dissociation does NOT appear under any clean instrument — shallow recall collapses identically, so the J-space is a content channel, not a demonstrated reasoning scratchpad. CAUSAL+AUDIT.
+Artifact: jspace/results/v2_ablation_v2.json + v2_frozen_ablation.json + figures f11/f12 | Falsifier: late-band or think-mode reruns (P3/P5) produce the shallow-survives dissociation; or frozen-rand with a vocab-sized random dictionary reproduces the frozen-J effect (pool-size confound).
 ```
 
 ```text
