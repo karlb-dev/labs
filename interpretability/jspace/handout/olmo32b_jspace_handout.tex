@@ -499,12 +499,20 @@ advantage over the logit lens is a \emph{mid-band} phenomenon; by L58--62
 both lenses converge on the output distribution (final-layer median rank
 4), as they must near the unembedding.
 
+\textbf{(c) The CoT lead replicates in the late band.} Re-generating the
+90 thinking traces (identical greedy token sequences) while reading the
+\emph{late} dictionaries per step: the answer enters a late layer's top-8
+a median \textbf{49.5 steps} before the CoT states it (86\% of scored
+items, detection 99\%, $n{=}88$) --- statistically the same lead the
+mid-band dictionaries gave (46 steps, 91\%), measured with an independent
+lens fit on disjoint layers. The lead is a property of the workspace
+across the full depth, not an artifact of one band's dictionary.
+
 Consequence for the causal verdict: the last descriptive escape hatch is
 closed. The late band is where answers \emph{surface}, not where a thicker
 workspace \emph{lives} --- so the P1/P2 causal instruments were aimed at
 the right band all along, and the capacity claim [SL1-C1] now covers the
-paper's full 33--92\% depth range. (The late-band CoT-lead re-read ---
-phase c --- is running; it lands in the next refresh together with P5.)
+paper's full 33--92\% depth range.
 
 \begin{figure}[htbp]
 \centering
@@ -517,8 +525,7 @@ vs.\ logit lens, late band.}
 \label{fig:late}
 \end{figure}
 
-% --- [v2 pending subsections: P3 phase c cot-lead-late (folds into the
-% --- P3 subsection above), P5 CoT rescue, P6 seeds, phase Q Qwen —
+% --- [v2 pending subsections: P5 CoT rescue, P6 seeds, phase Q Qwen —
 % --- added as each lands; see inprogress.md]
 
 \subsection*{Artifacts}

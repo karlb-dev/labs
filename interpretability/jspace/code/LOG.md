@@ -217,3 +217,14 @@ this file got the entries.)
   phenomenon; both lenses converge near the unembedding (final median 4).
 - Handout §[v2-P3] subsection written (phase a+b); phase c (cot-lead-late)
   folds in when it lands.
+
+## 2026-07-26 17:44–18:20 (VM4) — P3 complete and pushed; s16 launched
+- 17:46 pushed 1dba39d (P3 a+b: handout §P3, f13/f14, late metrics; git
+  identity had to be re-set repo-local on this fresh clone first).
+- s15 rerun (pipefail) confirmed phase-b medians and ran phase c to done
+  18:17: **late-band cot-lead = 49.5 steps median, 86.4% ws-first,
+  det 98.9%, n=88** (mid-band was 46/91% — same phenomenon, independent
+  lens, disjoint layers). Per-item ~23s. -> cot_lead_late.json.
+- P3 phase c folded into handout §P3 as item (c); s16_cot_rescue launched
+  18:19 (resumable per condition x item; ~2.5h full, VM horizon ~19:00 —
+  cells bank to Drive as they complete).
