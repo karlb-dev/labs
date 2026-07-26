@@ -36,7 +36,12 @@ from s12_frozen_ablation import build_dicts, frozen_projectors  # noqa: E402
 BAND = s7.BAND
 OUT = RUN_DIR_V2 / "metrics" / "cot_rescue.json"
 MAX_THINK = 400
-CONDS = ("none", "frozen_j10", "frozen_rand10", "jspace_k20")
+# PLAN_v3 capped grid (VM5, 3h window): decision-relevant cells only —
+# the two frozen conditions under open-<think>. `none` reference = v1 s8
+# think-mode baselines + frozen_rand10 (=baseline everywhere in P2); the
+# static-span rescue cell is dead compute (P1: static does nothing).
+# Banked 4-cond cells from VM4 (items 0-3) stay in the JSON untouched.
+CONDS = ("frozen_j10", "frozen_rand10")
 
 
 def build_items():
@@ -56,10 +61,8 @@ def build_items():
         q = it["prompt"].split("\nA:")[0].replace("Q: ", "")
         items.append({"kind": "arithmetic", "user": q,
                       "sel_prompt": it["prompt"], "answer": it["answer"]})
-    for it in tasks["sql"][:15]:
-        items.append({"kind": "sql",
-                      "user": "Complete this SQL task.\n" + it["prompt"],
-                      "sel_prompt": it["prompt"], "checks": it["checks"]})
+    # PLAN_v3: SQL dropped from the capped grid (flaky 3-schema cell; iids
+    # unchanged because sql occupied the tail of the list).
     for i, it in enumerate(items):
         it["iid"] = i
     return items
@@ -148,6 +151,8 @@ def main() -> None:
     agg = {}
     for kind in ("twohop", "onehop", "arithmetic", "sql"):
         ks = [r for r in res["items"].values() if r["kind"] == kind]
+        if not ks:
+            continue
         agg[kind] = {c: {
             "post": float(np.mean([r[c]["post"] for r in ks])),
             "any": float(np.mean([r[c]["any"] for r in ks])),

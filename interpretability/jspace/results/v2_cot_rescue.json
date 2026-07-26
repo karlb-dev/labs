@@ -1,0 +1,128 @@
+{
+  "conds": [
+    "none",
+    "frozen_j10",
+    "frozen_rand10",
+    "jspace_k20"
+  ],
+  "max_think": 400,
+  "items": {
+    "0": {
+      "kind": "twohop",
+      "none": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 19
+      },
+      "jspace_k20": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "1": {
+      "kind": "twohop",
+      "none": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "jspace_k20": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "2": {
+      "kind": "twohop",
+      "none": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "jspace_k20": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "3": {
+      "kind": "twohop",
+      "none": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 19
+      },
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    }
+  }
+}

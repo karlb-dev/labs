@@ -234,6 +234,157 @@ def fig_late_profile():
     return d["median_profile"]["sup_jlens"]
 
 
+def fig_qwen():
+    q = read_json(M / "qwen_causal_grid.json")
+    fr = read_json(M / "frozen_ablation.json")
+    ab = read_json(M / "ablation_v2.json")
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.6))
+    ax = axes[0]
+    _forest(ax, q, [("none", "baseline", C["ink"], "D"),
+                    ("frozen_j10", "frozen J top-10", C["j"], "o"),
+                    ("frozen_rand10", "frozen random top-10",
+                     C["rand"], "o")],
+            [("twohop", "2-hop factual"), ("onehop", "single-hop factual"),
+             ("arithmetic_v2", "chained arithmetic"),
+             ("grammar", "grammaticality")])
+    ax.set_xlabel("accuracy (bootstrap 95% CI)")
+    ax.set_title("Qwen3.6-27B, published lens + our instruments",
+                 fontsize=11)
+    ax.legend(frameon=False, loc="lower left", fontsize=9)
+
+    ax = axes[1]
+    conds = [("frozen_j10", "frozen\nJ top-10", C["j"]),
+             ("frozen_rand10", "frozen\nrand top-10", C["rand"]),
+             ("jspace_k20", "J-span\nk=20", C["j"]),
+             ("vmatch_rand_k20", "rand k20\n(matched)", C["rand"]),
+             ("vmatch_nonJ_k20", "non-J k20\n(matched)", C["nonj"])]
+    srcs = {"frozen_j10": fr, "frozen_rand10": fr}
+    for i, (cond, label, color) in enumerate(conds):
+        for model, src, mk, off in (
+                ("OLMo", srcs.get(cond, ab), "o", -0.16),
+                ("Qwen", q, "s", 0.16)):
+            cc = src["conditions"]
+            if cond not in cc or "twohop_lp" not in cc[cond] \
+                    or "twohop_lp" not in cc.get("none", {}):
+                continue
+            e, b = cc[cond]["twohop_lp"], cc["none"]["twohop_lp"]
+            delta = e["mean"] - b["mean"]
+            half = (e["ci_hi"] - e["ci_lo"]) / 2
+            face = color if model == "OLMo" else "none"
+            ax.errorbar(i + off, delta, yerr=half, fmt=mk, color=color,
+                        markerfacecolor=face, ms=7, capsize=3, lw=1.5)
+    ax.axhline(0, color=C["muted"], ls="--", lw=1)
+    ax.plot([], [], "o", color=C["ink"], label="OLMo-3-32B (filled)")
+    ax.plot([], [], "s", color=C["ink"], markerfacecolor="none",
+            label="Qwen3.6-27B (hollow)")
+    ax.set_xticks(range(len(conds)), [c[1] for c in conds], fontsize=8.5)
+    ax.set_ylabel("Δ 2-hop answer logprob vs own baseline (nats)")
+    ax.set_title("Same instruments, two models: content channel vs "
+                 "static null", fontsize=11)
+    ax.legend(frameon=False, fontsize=9, loc="lower left")
+    fig.suptitle("Phase Q: the causal pattern transfers to Qwen",
+                 fontweight="bold")
+    save(fig, "f15_qwen_grid.png")
+    out = {"sanity": read_json(M / "qwen_sanity.json")["multihop"]
+           if (M / "qwen_sanity.json").exists() else None}
+    for cond in ("frozen_j10", "frozen_rand10", "jspace_k20",
+                 "vmatch_rand_k20", "vmatch_nonJ_k20"):
+        cc = q["conditions"]
+        if cond in cc and "twohop_lp" in cc[cond]:
+            out[cond + "_twohop_lp_delta"] = round(
+                cc[cond]["twohop_lp"]["mean"]
+                - cc["none"]["twohop_lp"]["mean"], 3)
+        if cond in cc and "twohop" in cc[cond]:
+            out[cond + "_twohop"] = cc[cond]["twohop"]["mean"]
+    if (M / "qwen_descriptive.json").exists():
+        qd = read_json(M / "qwen_descriptive.json")
+        out["variance_share"] = {
+            l: round(pl["sum_recon_sq_c"] / max(pl["sum_h_sq_c"], 1e-9), 4)
+            for l, pl in qd["per_layer"].items()}
+    return out
+
+
+def fig_rescue():
+    d = read_json(M / "cot_rescue.json")
+    agg, ref = d["agg"], d.get("nothink_reference", {})
+    kinds = [k for k in ("twohop", "onehop", "arithmetic") if k in agg
+             and "frozen_j10" in agg[k]]
+    fig, ax = plt.subplots(figsize=(8.5, 4.2))
+    xs = np.arange(len(kinds))
+    for j, (cond, label, color) in enumerate(
+            (("frozen_j10", "frozen J top-10 + think", C["j"]),
+             ("frozen_rand10", "frozen random + think", C["rand"]))):
+        vs = [agg[k][cond]["post"] for k in kinds]
+        ns = [agg[k][cond]["n"] for k in kinds]
+        ax.bar(xs + (j - 0.5) * 0.34, vs, width=0.32, color=color,
+               label=label)
+        for x, v, n in zip(xs, vs, ns):
+            ax.text(x + (j - 0.5) * 0.34, v + 0.02, f"{v:.2f}", ha="center",
+                    fontsize=9, color=C["ink"])
+    if "frozen_j10_twohop" in ref:
+        ax.hlines(ref["frozen_j10_twohop"], -0.45, 0.45, color=C["j"],
+                  ls=":", lw=2)
+        ax.text(0.47, ref["frozen_j10_twohop"], "frozen-J, no-think",
+                fontsize=8.5, color=C["j"], va="center")
+    if "none_twohop" in ref:
+        ax.hlines(ref["none_twohop"], -0.45, 0.45, color=C["ink"], ls="--",
+                  lw=1.5)
+        ax.text(0.47, ref["none_twohop"], "baseline, no-think",
+                fontsize=8.5, color=C["sec"], va="center")
+    ax.set_xticks(xs, [f"{k}\n(n={agg[k]['frozen_j10']['n']})"
+                       for k in kinds])
+    ax.set_ylim(0, 1.12)
+    ax.set_ylabel("answer in post-</think> segment")
+    ax.set_title("P5: does externalized reasoning rescue the frozen-J "
+                 "deletion?")
+    ax.legend(frameon=False, fontsize=9, loc="upper right")
+    save(fig, "f16_cot_rescue.png")
+    return {k: {c: agg[k][c]["post"] for c in ("frozen_j10", "frozen_rand10")
+                if c in agg[k]} for k in kinds} | {"ref": ref}
+
+
+def fig_seed1():
+    d = read_json(M / "robustness_seed1.json")
+    cc = d["conditions"]
+    conds = [("none", "baseline", C["ink"]),
+             ("frozen_j10", "frozen J", C["j"]),
+             ("frozen_rand10", "frozen rand", C["rand"]),
+             ("jspace_k20", "J-span k20", C["j"]),
+             ("vmatch_rand_k20", "rand k20", C["rand"]),
+             ("vmatch_nonJ_k20", "non-J k20", C["nonj"])]
+    cmp = d.get("seed_comparison", {})
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4.2))
+    for ax, task, name in ((axes[0], "twohop", "2-hop accuracy"),
+                           (axes[1], "twohop_lp", "2-hop answer logprob")):
+        for i, (cond, label, color) in enumerate(conds):
+            if cond not in cc or task not in cc[cond]:
+                continue
+            e = cc[cond][task]
+            ax.errorbar(i + 0.12, e["mean"],
+                        yerr=[[e["mean"] - e["ci_lo"]],
+                              [e["ci_hi"] - e["mean"]]],
+                        fmt="o", color=color, ms=6, capsize=3,
+                        markerfacecolor="none")
+            s0 = cmp.get(cond, {}).get(task, {}).get("seed0")
+            if s0 is not None:
+                ax.plot(i - 0.12, s0, "o", color=color, ms=6)
+                ax.plot([i - 0.12, i + 0.12], [s0, e["mean"]], color=color,
+                        lw=1, alpha=0.5)
+        ax.set_xticks(range(len(conds)),
+                      [c[1] for c in conds], rotation=30, ha="right",
+                      fontsize=8.5)
+        ax.set_title(name, fontsize=11)
+    axes[0].set_ylim(-0.02, 1.02)
+    axes[0].plot([], [], "o", color=C["ink"], label="seed 0 (filled)")
+    axes[0].plot([], [], "o", color=C["ink"], markerfacecolor="none",
+                 label="seed 1, fresh items (hollow)")
+    axes[0].legend(frameon=False, fontsize=9, loc="lower left")
+    fig.suptitle("P6: the frozen dissociation under a second seed + fresh "
+                 "2-hop items", fontweight="bold")
+    save(fig, "f17_seed1.png")
+    return {c: cmp.get(c, {}) for c, _, _ in conds if c in cmp}
+
+
 def main() -> None:
     have = lambda p: (M / p).exists()
     summary = {}
@@ -254,6 +405,12 @@ def main() -> None:
         d = read_json(M / "cot_lead_late.json")
         if "summary" in d:
             summary["cot_lead_late"] = d["summary"]
+    if have("qwen_causal_grid.json"):
+        summary["qwen"] = fig_qwen()
+    if have("cot_rescue.json") and "agg" in read_json(M / "cot_rescue.json"):
+        summary["rescue"] = fig_rescue()
+    if have("robustness_seed1.json"):
+        summary["seed1"] = fig_seed1()
     atomic_write_json(summary, RUN_DIR_V2 / "report" / "summary_v2.json")
     log("wrote report/summary_v2.json")
 

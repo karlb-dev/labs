@@ -124,13 +124,19 @@ def gradient_pursuit(h: torch.Tensor, D: torch.Tensor, k_max: int,
     nonneg refit — the gradient-pursuit family used in the paper.
     """
     B, d = h.shape
-    Dh = D.half()
+    # bf16 for the correlation step: fp16 overflowed on Qwen3.6's
+    # outlier-heavy mid-layer activations (|h| can exceed fp16's 65k range),
+    # cascading nan through recon. bf16 keeps fp32's exponent range;
+    # selection only needs ranking-grade precision. (OLMo v1/v2 phase-b
+    # results predate this patch and were finite throughout — verified in
+    # their banked variance shares.)
+    Dh = D.to(torch.bfloat16)
     idxs = torch.zeros(B, k_max, dtype=torch.long, device=h.device)
     coeffs = torch.zeros(B, k_max, device=h.device)
     recon = torch.zeros_like(h)
     taken = torch.zeros(B, D.shape[0], dtype=torch.bool, device=h.device)
     for k in range(k_max):
-        r = (h - recon).half()
+        r = (h - recon).to(torch.bfloat16)
         corr = r @ Dh.T                          # [B, V]
         corr.masked_fill_(taken, float("-inf"))
         best = corr.argmax(dim=1)                # [B]
@@ -138,10 +144,17 @@ def gradient_pursuit(h: torch.Tensor, D: torch.Tensor, k_max: int,
         taken[torch.arange(B), best] = True
         D_A = D[idxs[:, :k + 1]].float()         # [B, k+1, d]
         c = coeffs[:, :k + 1]
+        # Stable step: fixed lr=0.25 diverged on Qwen3.6 (near-duplicate
+        # dictionary atoms push the active-set Gram's top eigenvalue past
+        # 2/lr; recon exploded to inf/nan at L20-38). For unit-norm atoms
+        # lambda_max <= trace = k+1, so 1/(k+2) is always contractive.
+        # Identical to the old behavior for k <= 2; OLMo's banked v1/v2
+        # phase-b results predate this and were finite throughout.
+        step = min(lr, 1.0 / (k + 2))
         for _ in range(refit_iters):
             resid = h - torch.einsum("bk,bkd->bd", c, D_A)
             grad = torch.einsum("bd,bkd->bk", resid, D_A)
-            c = (c + lr * grad).clamp_(min=0)
+            c = (c + step * grad).clamp_(min=0)
         coeffs[:, :k + 1] = c
         recon = torch.einsum("bk,bkd->bd", c, D_A)
     return idxs, coeffs, recon

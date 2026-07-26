@@ -33,10 +33,14 @@ from s12_frozen_ablation import frozen_projectors  # noqa: E402
 BAND = s7.BAND
 OUT = RUN_DIR_V2 / "metrics" / "robustness_seed1.json"
 SEED = 1
-CONDS = ("none", "jspace_k20", "vmatch_rand_k20", "vmatch_nonJ_k20",
-         "frozen_j10", "frozen_rand10")
-TASKS = ("twohop", "twohop_lp", "onehop", "arithmetic_v2", "sql",
-         "prose_nll", "grammar")
+# PLAN_v3 P6 trim (VM5): the marquee frozen grid gets the second seed
+# first, on the FRESH twohop set, n=30; the static energy-matched cells
+# ride along because they are pure readouts (seconds each). Generation
+# tasks (arith/sql) and n->60 doubling dropped — cross-seed beats
+# bigger-n for credibility per GPU-minute.
+CONDS = ("none", "frozen_j10", "frozen_rand10", "jspace_k20",
+         "vmatch_rand_k20", "vmatch_nonJ_k20")
+TASKS = ("twohop", "twohop_lp")
 
 
 def build_tasks_v2(rng) -> tuple[dict, dict]:
@@ -136,6 +140,8 @@ def main() -> None:
     subs, jd, rd = build_subspaces(lens, hf)
     rng = np.random.default_rng(SEED)
     tasks, notes = build_tasks_v2(rng)
+    tasks["twohop"] = tasks["twohop"][:30]
+    notes["twohop"] += "; trimmed to n=30 (PLAN_v3 P6)"
     res = read_json(OUT) if OUT.exists() else {
         "seed": SEED, "notes": notes, "conditions": {}}
     ab = s7.Ablator(model.layers)

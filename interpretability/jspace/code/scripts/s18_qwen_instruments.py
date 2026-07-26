@@ -135,21 +135,28 @@ def load_qwen():
 
 
 def build_dicts(lens, hf, band):
-    W_U = hf.lm_head.weight.detach().float()
-    g = hf.model.norm.weight.detach().float()
+    # fp16 staging: Qwen's 248k vocab makes s12's fp32 recipe (~15 GB
+    # transients on top of the growing 33 GB fp16 dict) exceed the 97 GB
+    # card. Selection only ranks summed |corr|, so fp16 rounding is
+    # immaterial; frozen_projectors_band re-floats the 10 chosen rows
+    # before QR.
+    W_U = hf.lm_head.weight.detach()          # bf16 view, no copy
+    g = hf.model.norm.weight.detach()
     d = W_U.shape[1]
+    Wg = (W_U * g[None, :]).half()
     jd, rd = {}, {}
     for l in band:
-        jd[l] = torch.nn.functional.normalize(
-            (W_U * g[None, :]) @ lens.jacobians[l].to(W_U.device),
-            dim=1).half()
+        J = lens.jacobians[l].to(Wg.device).half()
+        jd[l] = torch.nn.functional.normalize(Wg @ J, dim=1)
+        del J
         rng = np.random.default_rng(2000 + l)
-        R = torch.tensor(rng.standard_normal((d, d)), device=W_U.device,
+        R = torch.tensor(rng.standard_normal((d, d)), device=Wg.device,
                          dtype=torch.float32)
         rd[l] = torch.nn.functional.normalize(R, dim=1).half()
+        torch.cuda.empty_cache()
+    del Wg
     used, _ = gpu_mem_gb()
     log(f"dictionaries built for {len(band)} layers; VRAM {used:.1f} GB")
-    del W_U
     return jd, rd
 
 
@@ -368,28 +375,43 @@ def phase_c_energy(model, bases, band):
     return plan
 
 
-def phase_d_grid(model, hf, tok, lens, band, plan):
-    bases = build_bases(lens, hf, band)
-    subs = {
-        "jspace_k20": {l: bases[l]["J"][:, :DOSE].contiguous() for l in band},
-        "vmatch_rand_k20": {
-            l: bases[l]["rand"][:, plan[l][f"vmatch_rand_k{DOSE}"]].contiguous()
-            for l in band},
-        "vmatch_nonJ_k20": {
-            l: bases[l]["nonJ"][:, plan[l][f"vmatch_nonJ_k{DOSE}"]].contiguous()
-            for l in band},
-    }
-    jd, rd = build_dicts(lens, hf, band)
+def phase_d_grid(model, hf, tok, lens, band, plan, conds=CONDS, tasks_sel=TASKS):
+    """PLAN_v3 restage: callable per stage so the marquee frozen cells run
+    BEFORE the static cells (which alone need phase b/c). Builds only the
+    machinery the requested conds use."""
+    subs = {}
+    if any(c.startswith(("jspace", "vmatch")) for c in conds):
+        bases = build_bases(lens, hf, band)
+        subs = {
+            "jspace_k20": {l: bases[l]["J"][:, :DOSE].contiguous() for l in band},
+            "vmatch_rand_k20": {
+                l: bases[l]["rand"][:, plan[l][f"vmatch_rand_k{DOSE}"]].contiguous()
+                for l in band},
+            "vmatch_nonJ_k20": {
+                l: bases[l]["nonJ"][:, plan[l][f"vmatch_nonJ_k{DOSE}"]].contiguous()
+                for l in band},
+        }
+        del bases
+    jd = rd = None
+    if any(c.startswith("frozen") for c in conds):
+        jd, rd = build_dicts(lens, hf, band)
     rng = np.random.default_rng(0)
     tasks = s7.build_tasks(rng)
+    # PLAN_v3 Q ns: twohop 30, onehop 30, arith 15 (sql kept only for the
+    # samples audit); recorded here so the grid file is self-describing.
+    tasks["twohop"] = tasks["twohop"][:30]
+    tasks["onehop"] = tasks["onehop"][:30]
+    tasks["arithmetic"] = tasks["arithmetic"][:15]
     res = read_json(GRID_OUT) if GRID_OUT.exists() else {
         "model": MODEL_ID, "band": band, "dose": DOSE,
-        "lens": f"{LENS_REPO}/{LENS_FILE}", "conditions": {}}
+        "lens": f"{LENS_REPO}/{LENS_FILE}",
+        "ns": {"twohop": 30, "onehop": 30, "arithmetic": 15, "prose_nll": 20},
+        "conditions": {}}
     ab = BandAblator(model.layers, band)
     with ab:
-        for cond in CONDS:
+        for cond in conds:
             res["conditions"].setdefault(cond, {})
-            for tname in TASKS:
+            for tname in tasks_sel:
                 if tname in res["conditions"][cond] and "--force" not in sys.argv:
                     continue
                 t0 = time.time()
@@ -437,11 +459,21 @@ def main() -> None:
     M.mkdir(parents=True, exist_ok=True)
     model, hf, tok, lens, band, d = load_qwen()
     phase_a_sanity(model, tok, lens)
+    # PLAN_v3 staged order: Q1 marquee frozen cells FIRST (they need no
+    # phase-b/c machinery — if the VM dies early, the model-vs-harness
+    # verdict cells are already banked); Q2 static energy-matched cells
+    # after, twohop_lp only.
+    phase_d_grid(model, hf, tok, lens, band, plan=None,
+                 conds=("none", "frozen_j10", "frozen_rand10"),
+                 tasks_sel=("twohop", "twohop_lp", "onehop", "arithmetic_v2",
+                            "prose_nll", "grammar", "samples"))
     phase_b_descriptive(model, hf, lens, band, d)
     bases = build_bases(lens, hf, band)
     plan = phase_c_energy(model, bases, band)
     del bases
-    phase_d_grid(model, hf, tok, lens, band, plan)
+    phase_d_grid(model, hf, tok, lens, band, plan,
+                 conds=("jspace_k20", "vmatch_rand_k20", "vmatch_nonJ_k20"),
+                 tasks_sel=("twohop_lp",))
     log("s18 done")
 
 

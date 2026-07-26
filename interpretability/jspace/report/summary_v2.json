@@ -55,5 +55,39 @@
     "median_lead_late": 49.5,
     "frac_ws_leads": 0.8636363636363636,
     "det_rate": 0.9888888888888889
+  },
+  "qwen": {
+    "sanity": {
+      "jlens_pass@1": 0.35,
+      "jlens_pass@5": 0.5166666666666667,
+      "jlens_pass@20": 0.7388888888888888,
+      "logit_pass@1": 0.31666666666666665,
+      "logit_pass@5": 0.5,
+      "logit_pass@20": 0.6,
+      "n_scored": 60,
+      "n_skipped": 0
+    },
+    "frozen_j10_twohop_lp_delta": -2.417,
+    "frozen_j10_twohop": 0.36666666666666664,
+    "frozen_rand10_twohop_lp_delta": -0.088,
+    "frozen_rand10_twohop": 0.8333333333333334,
+    "jspace_k20_twohop_lp_delta": -0.075,
+    "vmatch_rand_k20_twohop_lp_delta": 0.051,
+    "vmatch_nonJ_k20_twohop_lp_delta": -0.028,
+    "variance_share": {
+      "20": 0.049,
+      "22": 0.0511,
+      "24": 0.0542,
+      "26": 0.0525,
+      "28": 0.0484,
+      "30": 0.0426,
+      "32": 0.0427,
+      "34": 0.0518,
+      "36": 0.0543,
+      "38": 0.0588,
+      "40": 0.0651,
+      "42": 0.0675,
+      "44": 0.0639
+    }
   }
 }

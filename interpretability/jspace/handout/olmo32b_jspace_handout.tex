@@ -6,6 +6,7 @@
 \usepackage[margin=2.2cm]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
 \usepackage{xcolor}
@@ -525,8 +526,118 @@ vs.\ logit lens, late band.}
 \label{fig:late}
 \end{figure}
 
-% --- [v2 pending subsections: P5 CoT rescue, P6 seeds, phase Q Qwen —
-% --- added as each lands; see inprogress.md]
+\subsection{[v2-Q] Same instruments, second model: Qwen3.6-27B settles
+model-vs-harness}
+
+The standing question after P1--P3: is the causal null a fact about OLMo
+or about our instruments? Phase Q runs the \emph{identical} harness on
+Qwen3.6-27B --- the model of the published community replication --- using
+the \emph{published} Neuronpedia lens (1000-prompt WikiText recipe,
+trained by the replication's author), so any OLMo/Qwen difference cannot
+be blamed on our 120-prompt fit. Band = the same depth fractions, which on
+Qwen's 64 layers lands on the same indices (L20--44); no-think completion
+prompts throughout; $n{=}30$ (two-hop, one-hop), 15 (arithmetic), 20
+(prose NLL).
+
+\textbf{Sanity gate.} The paper's multihop bridge-entity eval, their lens
+under our readout: J-lens pass@1/5/20 $= 0.350/0.517/0.739$ vs.\ logit
+lens $0.317/0.500/0.600$ ($n{=}60$) --- the J-lens readout advantage
+replicates on Qwen, as it did on OLMo (0.283 vs.\ 0.200 pass@1).
+
+\textbf{Descriptive: Qwen has the paper's workspace capacity; OLMo's
+thinness is a model property.} Same pursuit, same thresholds, same
+corpus:
+
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+ & OLMo-3-32B (v1/P3) & Qwen3.6-27B (Q) & paper (Claude) \\
+\midrule
+peak variance share & 0.67\% (flat 0.61--0.72) & \textbf{6.8\%} (4.3$\to$6.8 rising) & 6--10\% \\
+active @ $\theta{=}0.01$ & $\approx$6 & 32--42 & \multirow{2}{*}{10--25 (k$\approx$25)} \\
+active @ $\theta{=}0.02$ & $\approx$3 & 14--21 & \\
+top-1 persistence & 0.19--0.20 mid-band & 0.03--0.09 & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Measured by the same code path, Qwen's J-space carries $\sim$8--10$\times$
+more of the residual stream's variance than OLMo's and holds
+paper-range active-concept counts. The v1 capacity anomaly [SL1-C1] is
+therefore a \emph{cross-model difference}, not a harness artifact ---
+and OLMo pairs its thin workspace with \emph{higher} top-1 persistence,
+a trade-off worth follow-up. (Numerics note: Qwen's outlier-heavy
+activations forced two pursuit fixes --- bf16 correlations and a
+$1/(k{+}2)$ refit step, the latter because near-duplicate dictionary
+atoms push the active-set Gram past the fixed-step stability bound.
+Stable layers moved $\le$0.2pp under the fix; OLMo's banked numbers
+predate it and were finite throughout.)
+
+\textbf{Causal: the frozen deletion transfers; the static null
+transfers.}
+
+\begin{center}\small
+\begin{tabular}{lcccccc}
+\toprule
+ & 2-hop & 2-hop lp & 1-hop & arith & NLL & grammar \\
+\midrule
+baseline        & 0.87 & $-0.77$ & 0.90 & 1.00 & 2.35 & 1.00 \\
+frozen J-10     & \textbf{0.37} & $\mathbf{-3.19}$ & 0.83 & 1.00 & 2.50 & 1.00 \\
+frozen rand-10  & 0.83 & $-0.86$ & 0.90 & 1.00 & 2.48 & 1.00 \\
+\midrule
+J-span k20 (matched) & --- & $-0.85$ & --- & --- & --- & --- \\
+rand k20 (matched)   & --- & $-0.72$ & --- & --- & --- & --- \\
+non-J k20 (matched)  & --- & $-0.80$ & --- & --- & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Frozen per-item J-ablation deletes the retrieved fact on Qwen exactly as
+on OLMo: answer log-probability $-2.42$ nats (cell CI $[-4.02,-2.35]$ vs.\
+baseline $[-1.26,-0.40]$), two-hop accuracy $0.87\to0.37$, while the
+random-dictionary twin sits on baseline and generations stay coherent
+(verbatim frozen-J arithmetic samples are correct multi-step chains; the
+small NLL bump $+0.14$ appears \emph{equally} in the random control, so it
+is mechanism-generic). And the energy-matched static cells are as null on
+Qwen as they were on OLMo: J-span, matched-random and matched-non-J all
+within $\pm$0.08 nats of baseline --- on the model where the published
+replication reported workspace phenomena. (The static trio was also
+inadvertently measured once with selection rankings from the diverged
+pursuit pass: $-0.85/-0.77/-0.87$ --- indistinguishable, i.e.\ the null is
+insensitive even to \emph{broken} direction selection.)
+
+\textbf{One genuine cross-model asymmetry.} On OLMo, frozen-J collapsed
+one-hop and two-hop recall \emph{identically} (both 0.23) --- pure content
+deletion. On Qwen, one-hop barely moves ($0.90\to0.83$, CIs overlap) while
+two-hop halves. The deletion signature on Qwen is \emph{biased toward the
+composed task} --- closer to the paper's shallow-tasks-survive
+dissociation than anything OLMo showed. Honest caveats before upgrading
+the claim: the one-hop items are near-ceiling capital-city probes, and a
+10$\times$-fatter workspace makes top-10 directions a proportionally
+smaller excision. Marked as the sharpest follow-up target rather than a
+confirmed dissociation.
+
+\textbf{Verdict on the framing question.} With clean instruments the two
+models \emph{agree}: static span removal does nothing, per-item frozen
+selection deletes retrieved content. The disagreement between the
+published causal story and our v1 null was \emph{instruments all along}
+--- while the workspace's descriptive capacity really does differ by an
+order of magnitude across models, and the one-hop/two-hop asymmetry hints
+the composed-task sensitivity may too.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.98\linewidth]{f15_qwen_grid.png}
+\caption{\textbf{Left:} Qwen causal grid --- frozen-J deletes two-hop
+recall, controls on baseline. \textbf{Right:} $\Delta$ two-hop answer
+logprob vs.\ own baseline for both models under the same five
+instruments: the frozen deletion and the static null both transfer;
+filled = OLMo, hollow = Qwen.}
+\label{fig:qwen}
+\end{figure}
+
+% --- [v2 pending subsections: P5 CoT rescue, P6 seeds — added as each
+% --- lands; see inprogress.md]
 
 \subsection*{Artifacts}
 
@@ -534,8 +645,15 @@ Everything regenerates from saved metrics without model access:
 run dir \code{interpret/special-lab-1/2026-07-25\_1726/} (Drive) ---
 \code{report/REPORT.md} (full prose), \code{report/summary.json} (headline
 numbers), \code{metrics/*.json} (per-experiment), \code{code/special\_lab1/}
-(pipeline s0--s10 + PLAN/LOG). Model: \code{allenai/Olmo-3-32B-Think}.
-Lens engine: \code{github.com/anthropics/jacobian-lens} @ \code{581d3986}.
+(pipeline s0--s10 + PLAN/LOG). v2 delta run: \code{2026-07-26\_v2/}
+(metrics incl.\ the Qwen leg, \code{report/REPORT\_v2.md},
+\code{summary\_v2.json}, this handout). Public draft: branch
+\code{interp\_jspace} of \code{github.com/karlb-dev/labs} (\code{jspace/}
++ \code{labs/lab37\_jspace\_workspace.md}), PR \#9.
+Models: \code{allenai/Olmo-3-32B-Think}; \code{Qwen/Qwen3.6-27B} with lens
+\code{neuronpedia/jacobian-lens} (\code{qwen3.6-27b}, $n{=}1000$
+WikiText). Lens engine: \code{github.com/anthropics/jacobian-lens}
+@ \code{581d3986}.
 
 \begin{thebibliography}{9}\footnotesize
 \bibitem{paper} Anthropic Interpretability.

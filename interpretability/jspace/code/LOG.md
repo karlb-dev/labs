@@ -228,3 +228,34 @@ this file got the entries.)
 - P3 phase c folded into handout §P3 as item (c); s16_cot_rescue launched
   18:19 (resumable per condition x item; ~2.5h full, VM horizon ~19:00 —
   cells bank to Drive as they complete).
+
+## 2026-07-26 22:47–23:0x (VM5) — restore, disk incident, Q-first flip
+- VM5 up (RTX PRO 6000 Blackwell 97GB, torch 2.11+cu128 — same as VM4's
+  validated combo; standalone bf16 sanity skipped on that basis, s16's
+  banked-item reproduction serves as the check). Restore recipe verbatim:
+  jlens clone byte-identical at pin 581d398; code from v2 mirror; repo
+  already on interp_jspace @ d6ba8ca clean. texlive installed (apt lists
+  were stale -> update + retry).
+- PLAN_v3 executed from T+0:00=22:47. s16 trimmed to the capped grid
+  (frozen_j10/frozen_rand10 x twohop/onehop/arith, SQL + static-rescue
+  cells dropped) and relaunched; Qwen weights (55 GB) + Neuronpedia lens
+  fetched to /content/hf_local in parallel.
+- **Disk incident (root-caused):** DriveFS FUSE caches streamed reads on
+  local disk; Qwen-local (55 GB) + OLMo-from-Drive (64 GB stream) cannot
+  coexist on the 113 GB disk. tee-to-Drive died ENOSPC at 23% of the OLMo
+  load and pipefail killed s16. Fixes: logs now tee LOCALLY (logs_local/,
+  rsynced at boundaries); phase order flipped Q-FIRST (PLAN_v3's own
+  priority rule: banked Q1 outranks finished s16); Qwen blobs get deleted
+  before the OLMo rerun; a watchdog will age-evict DriveFS content_cache
+  during the OLMo stream.
+- s18 restaged before first grid cell: (1) marquee frozen cells now run
+  BEFORE the static cells (old order had them last -> a mid-grid death
+  would have banked controls but not the verdict cells); (2) build_dicts
+  switched to fp16 staging — Qwen's 248k vocab made the fp32 recipe peak
+  ~99 GB (OOM); fp16 peaks 92.6 GB measured. First (aborted) s18 launch
+  cost ~4 min, phase a banked.
+- Q0 GATE PASS (60s): Qwen multihop with the published Neuronpedia lens
+  under our harness — jlens pass@1 0.350 / @5 0.517 / @20 0.739 vs logit
+  0.317/0.500/0.600, n=60. Readout advantage replicates on Qwen.
+- Q1 in flight; first cells: none twohop 0.867, frozen_j10 twohop 0.367
+  [0.200,0.533] — the frozen deletion transfers to Qwen.
