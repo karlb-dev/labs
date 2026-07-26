@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+# live working dir for Lab 37 (draft); published mirror is jspace/
+special_lab1/

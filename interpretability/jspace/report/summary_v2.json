@@ -1,0 +1,18 @@
+{
+  "foils": {
+    "answer_det": 0.9210526315789473,
+    "family_det": 0.32222222222222224,
+    "freq_det": 0.05789473684210526,
+    "answer_med_lead": 46.0,
+    "family_med_lead": 3.0,
+    "answer_beats_all_foils": 0.6578947368421053
+  },
+  "energy_match": {
+    "ratio_min": 0.9749455435405663,
+    "ratio_max": 1.0143786878069683
+  },
+  "vmatch": {
+    "jspace_k20_twohop_lp_delta": -0.173,
+    "jspace_k20_sql": 0.6666666666666666
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "z_thresh": 3.0,
+  "n_dirs": 64,
+  "source_layers": {
+    "24": {
+      "n_components_downstream": 195,
+      "jspace": {
+        "fan_out_median": 94.0,
+        "fan_out_mean": 96.546875,
+        "fan_out_p90": 115.39999389648438,
+        "frac_components_median": 0.48205128205128206
+      },
+      "random": {
+        "fan_out_median": 0.0,
+        "fan_out_mean": 0.796875,
+        "fan_out_p90": 1.0,
+        "frac_components_median": 0.0
+      },
+      "nonJ_pca": {
+        "fan_out_median": 125.0,
+        "fan_out_mean": 124.328125,
+        "fan_out_p90": 139.6999969482422,
+        "frac_components_median": 0.6410256410256411
+      },
+      "mw_jspace_gt_random_p": 8.956599688932567e-24,
+      "mw_jspace_gt_nonJ_pca_p": 0.9999999999999993
+    },
+    "32": {
+      "n_components_downstream": 155,
+      "jspace": {
+        "fan_out_median": 77.0,
+        "fan_out_mean": 73.875,
+        "fan_out_p90": 89.69999694824219,
+        "frac_components_median": 0.4967741935483871
+      },
+      "random": {
+        "fan_out_median": 0.0,
+        "fan_out_mean": 1.421875,
+        "fan_out_p90": 4.399993896484375,
+        "frac_components_median": 0.0
+      },
+      "nonJ_pca": {
+        "fan_out_median": 110.0,
+        "fan_out_mean": 108.34375,
+        "fan_out_p90": 130.0,
+        "frac_components_median": 0.7096774193548387
+      },
+      "mw_jspace_gt_random_p": 9.393220148947625e-24,
+      "mw_jspace_gt_nonJ_pca_p": 0.9999999999999993
+    },
+    "40": {
+      "n_components_downstream": 115,
+      "jspace": {
+        "fan_out_median": 73.0,
+        "fan_out_mean": 71.6875,
+        "fan_out_p90": 82.0,
+        "frac_components_median": 0.6347826086956522
+      },
+      "random": {
+        "fan_out_median": 0.0,
+        "fan_out_mean": 0.5,
+        "fan_out_p90": 1.0,
+        "frac_components_median": 0.0
+      },
+      "nonJ_pca": {
+        "fan_out_median": 77.0,
+        "fan_out_mean": 75.796875,
+        "fan_out_p90": 94.09999084472656,
+        "frac_components_median": 0.6695652173913044
+      },
+      "mw_jspace_gt_random_p": 2.6181801229015577e-24,
+      "mw_jspace_gt_nonJ_pca_p": 0.9869526290174566
+    }
+  }
+}

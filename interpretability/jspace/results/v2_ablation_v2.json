@@ -1,0 +1,688 @@
+{
+  "band": [
+    20,
+    22,
+    24,
+    26,
+    28,
+    30,
+    32,
+    34,
+    36,
+    38,
+    40,
+    42,
+    44
+  ],
+  "doses": [
+    10,
+    20,
+    40
+  ],
+  "conditions": {
+    "none": {
+      "twohop": {
+        "mean": 0.5833333333333334,
+        "ci_lo": 0.45,
+        "ci_hi": 0.7,
+        "n": 60,
+        "seconds": 4
+      },
+      "onehop": {
+        "mean": 0.6,
+        "ci_lo": 0.43333333333333335,
+        "ci_hi": 0.7666666666666667,
+        "n": 30,
+        "seconds": 2
+      },
+      "arithmetic": {
+        "mean": 0.4666666666666667,
+        "ci_lo": 0.3,
+        "ci_hi": 0.6333333333333333,
+        "n": 30,
+        "seconds": 79
+      },
+      "sql": {
+        "mean": 0.6666666666666666,
+        "ci_lo": 0.5,
+        "ci_hi": 0.8333333333333334,
+        "n": 30,
+        "seconds": 73
+      },
+      "prose_nll": {
+        "mean": 2.714306342601776,
+        "ci_lo": 2.3953864151239395,
+        "ci_hi": 3.026873890310526,
+        "n": 20,
+        "seconds": 2
+      },
+      "grammar": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 20,
+        "seconds": 2
+      },
+      "twohop_lp": {
+        "mean": -1.735537173707659,
+        "ci_lo": -2.1963624217462105,
+        "ci_hi": -1.3023161896217308,
+        "n": 60,
+        "seconds": 4
+      },
+      "samples": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 1,
+        "seconds": 13,
+        "texts": [
+          {
+            "prompt": "Q: What is ((34 + 26) + 21) - 12? Work step by step, then give the answer.\nA: (34 + 26) =",
+            "answer": "69",
+            "gen": " 60\n60 + 21 = 81\n81 - 12 = 69\nThe answer is 69.\n\nQ: What is ( ( 7 + 9 ) - 4 ) - 1? Work step by"
+          },
+          {
+            "prompt": "Q: What is ((5 - 3) - 9) - 33? Work step by step, then give the answer.\nA: (5 - 3) =",
+            "answer": "-40",
+            "gen": " 2. (2 - 9) = -7. (-7) - 33 = -40. The answer is -40.\nQuestion: What is the value of $a$ if the inequality $x^2 + ax"
+          },
+          {
+            "prompt": "Q: What is ((21 - 25) - 38) - 29? Work step by step, then give the answer.\nA: (21 - 25) =",
+            "answer": "-71",
+            "gen": " - 4. (- 4 - 38) = - 42. (- 42 - 29) = - 71. The answer is - 71.\nQuestion: What is the value of $a$ if the graph"
+          },
+          {
+            "prompt": " city_id)\n-- cities(id, city_name, country)\n-- orders(id, user_id, total)\n-- Task: Total order value per country.\nSELECT",
+            "gen": "SELECT c.country, SUM(o.total) AS total\nFROM orders o\nJOIN users u ON o.user_id = u.id\nJOIN cities c ON u.city_id = c.id\nGROUP BY c.country;"
+          },
+          {
+            "prompt": " pname, cat_id)\n-- categories(cat_id, cat_name)\n-- sales(sid, pid, qty, price)\n-- Task: Revenue by category name.\nSELECT",
+            "gen": "SELECT c.cat_name, SUM(s.qty * s.price) AS revenue\nFROM sales s\nJOIN products p ON s.pid = p.pid\nJOIN categories c ON p.cat_id = c.cat_id\nGROUP BY c.cat_name\nORDER BY revenue DESC;"
+          }
+        ]
+      },
+      "arithmetic_v2": {
+        "mean": 0.8666666666666667,
+        "ci_lo": 0.7333333333333333,
+        "ci_hi": 0.9666666666666667,
+        "n": 30,
+        "seconds": 105
+      }
+    },
+    "jspace_k10": {
+      "twohop": {
+        "mean": 0.5333333333333333,
+        "ci_lo": 0.4,
+        "ci_hi": 0.65,
+        "n": 60,
+        "seconds": 4
+      },
+      "onehop": {
+        "mean": 0.5666666666666667,
+        "ci_lo": 0.4,
+        "ci_hi": 0.7333333333333333,
+        "n": 30,
+        "seconds": 2
+      },
+      "arithmetic": {
+        "mean": 0.36666666666666664,
+        "ci_lo": 0.2,
+        "ci_hi": 0.5333333333333333,
+        "n": 30,
+        "seconds": 80
+      },
+      "sql": {
+        "mean": 0.3333333333333333,
+        "ci_lo": 0.16666666666666666,
+        "ci_hi": 0.5,
+        "n": 30,
+        "seconds": 93
+      },
+      "prose_nll": {
+        "mean": 2.824973392486572,
+        "ci_lo": 2.5088214215636255,
+        "ci_hi": 3.135427035093308,
+        "n": 20,
+        "seconds": 2
+      },
+      "grammar": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 20,
+        "seconds": 2
+      },
+      "twohop_lp": {
+        "mean": -1.8827004056501513,
+        "ci_lo": -2.3917372853052803,
+        "ci_hi": -1.408532661396118,
+        "n": 60,
+        "seconds": 4
+      },
+      "samples": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 1,
+        "seconds": 14,
+        "texts": [
+          {
+            "prompt": "Q: What is ((34 + 26) + 21) - 12? Work step by step, then give the answer.\nA: (34 + 26) =",
+            "answer": "69",
+            "gen": " 60\n60 + 21 = 81\n81 - 12 = 69\nThe answer is 69.\n\nQ: What is ( ( 7 + 9 ) - 4 ) - 1? Work step by"
+          },
+          {
+            "prompt": "Q: What is ((5 - 3) - 9) - 33? Work step by step, then give the answer.\nA: (5 - 3) =",
+            "answer": "-40",
+            "gen": " 2, (2 - 9) = -7, (-7) - 33 = -40. The answer is -40.\n\nQ: What is ( - 4 + 4 ) - 2?\nA: -"
+          },
+          {
+            "prompt": "Q: What is ((21 - 25) - 38) - 29? Work step by step, then give the answer.\nA: (21 - 25) =",
+            "answer": "-71",
+            "gen": " - 4\n(- 4) - 38 = - 42\n(- 42) - 29 = - 71\nThe answer is - 71.\n\nQ: What is ( ( - 4 + 4 )"
+          },
+          {
+            "prompt": " city_id)\n-- cities(id, city_name, country)\n-- orders(id, user_id, total)\n-- Task: Total order value per country.\nSELECT",
+            "gen": "SELECT c.country, COUNT(o.id) AS total_orders, SUM(o.total) AS total_value\nFROM orders o\nJOIN users u ON o.user_id = u.id\nJOIN cities c ON u.city_id = c.id\nGROUP BY c.country\nORDER BY total_value DESC;"
+          },
+          {
+            "prompt": " pname, cat_id)\n-- categories(cat_id, cat_name)\n-- sales(sid, pid, qty, price)\n-- Task: Revenue by category name.\nSELECT",
+            "gen": "SELECT cat_name, sum(qty * price) AS revenue\nFROM products, sales, categories\nWHERE products.pid = sales.pid\nAND products.cat_id = categories.cat_id\nGROUP BY cat_name\nORDER BY revenue DESC;"
+          }
+        ]
+      },
+      "arithmetic_v2": {
+        "mean": 0.8666666666666667,
+        "ci_lo": 0.7333333333333333,
+        "ci_hi": 0.9666666666666667,
+        "n": 30,
+        "seconds": 106
+      }
+    },
+    "jspace_k20": {
+      "twohop": {
+        "mean": 0.5166666666666667,
+        "ci_lo": 0.38333333333333336,
+        "ci_hi": 0.6333333333333333,
+        "n": 60,
+        "seconds": 4
+      },
+      "onehop": {
+        "mean": 0.6,
+        "ci_lo": 0.43333333333333335,
+        "ci_hi": 0.7666666666666667,
+        "n": 30,
+        "seconds": 2
+      },
+      "arithmetic": {
+        "mean": 0.5333333333333333,
+        "ci_lo": 0.36666666666666664,
+        "ci_hi": 0.7,
+        "n": 30,
+        "seconds": 80
+      },
+      "sql": {
+        "mean": 0.6666666666666666,
+        "ci_lo": 0.5,
+        "ci_hi": 0.8333333333333334,
+        "n": 30,
+        "seconds": 106
+      },
+      "prose_nll": {
+        "mean": 2.8504926919937135,
+        "ci_lo": 2.533999610990286,
+        "ci_hi": 3.159056120663881,
+        "n": 20,
+        "seconds": 2
+      },
+      "grammar": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 20,
+        "seconds": 2
+      },
+      "twohop_lp": {
+        "mean": -1.9085630423738622,
+        "ci_lo": -2.4169317414204126,
+        "ci_hi": -1.4428120190930593,
+        "n": 60,
+        "seconds": 4
+      },
+      "samples": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 1,
+        "seconds": 15,
+        "texts": [
+          {
+            "prompt": "Q: What is ((34 + 26) + 21) - 12? Work step by step, then give the answer.\nA: (34 + 26) =",
+            "answer": "69",
+            "gen": " 60\n60 + 21 = 81\n81 - 12 = 69\nThe answer is 69.\n\nQ: What is (6 + 7) - 4? Work step by step, then give the answer"
+          },
+          {
+            "prompt": "Q: What is ((5 - 3) - 9) - 33? Work step by step, then give the answer.\nA: (5 - 3) =",
+            "answer": "-40",
+            "gen": " 2. (2 - 9) = -7. (-7) - 33) = -40. The answer is -40.\nQuestion: What is 2 * 0?\nAnswer: 2 * 0 ="
+          },
+          {
+            "prompt": "Q: What is ((21 - 25) - 38) - 29? Work step by step, then give the answer.\nA: (21 - 25) =",
+            "answer": "-71",
+            "gen": " -4\n(-4) - 38 = -42\n-42 - 29 = -71\nThe answer is -71.\n\nQ: What is ( ( -5 - -4 ) - -2 ) - 0?"
+          },
+          {
+            "prompt": " city_id)\n-- cities(id, city_name, country)\n-- orders(id, user_id, total)\n-- Task: Total order value per country.\nSELECT",
+            "gen": "SELECT c.country, COUNT(o.id) as total_orders, sum(o.total) as total_value\nFROM orders o\nJOIN users u ON o.user_id = u.id\nJOIN cities c ON u.city_id = c.id\nGROUP BY c.country\nORDER BY total_value DESC;\n\n-- Task: Total order value per country"
+          },
+          {
+            "prompt": " pname, cat_id)\n-- categories(cat_id, cat_name)\n-- sales(sid, pid, qty, price)\n-- Task: Revenue by category name.\nSELECT",
+            "gen": "SELECT c.cat_name, sum(s.qty * s.price) as revenue\nFROM sales s\nJOIN products p ON s.pid = p.pid\nJOIN categories c ON p.cat_id = c.cat_id\nGROUP BY c.cat_name;\n\n-- Task: Revenue by category, subtotaled by product.\nSELECT c.cat_name,"
+          }
+        ]
+      },
+      "arithmetic_v2": {
+        "mean": 0.9333333333333333,
+        "ci_lo": 0.8333333333333334,
+        "ci_hi": 1.0,
+        "n": 30,
+        "seconds": 101
+      }
+    },
+    "jspace_k40": {
+      "twohop": {
+        "mean": 0.5666666666666667,
+        "ci_lo": 0.43333333333333335,
+        "ci_hi": 0.6833333333333333,
+        "n": 60,
+        "seconds": 4
+      },
+      "onehop": {
+        "mean": 0.6666666666666666,
+        "ci_lo": 0.5,
+        "ci_hi": 0.8333333333333334,
+        "n": 30,
+        "seconds": 2
+      },
+      "arithmetic": {
+        "mean": 0.5666666666666667,
+        "ci_lo": 0.3991666666666667,
+        "ci_hi": 0.7333333333333333,
+        "n": 30,
+        "seconds": 80
+      },
+      "sql": {
+        "mean": 0.6666666666666666,
+        "ci_lo": 0.5,
+        "ci_hi": 0.8333333333333334,
+        "n": 30,
+        "seconds": 106
+      },
+      "prose_nll": {
+        "mean": 2.93447887301445,
+        "ci_lo": 2.612998217344284,
+        "ci_hi": 3.2477563273906704,
+        "n": 20,
+        "seconds": 2
+      },
+      "grammar": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 20,
+        "seconds": 2
+      },
+      "twohop_lp": {
+        "mean": -1.914876677763338,
+        "ci_lo": -2.4497106051058894,
+        "ci_hi": -1.4221502446447267,
+        "n": 60,
+        "seconds": 4
+      },
+      "samples": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 1,
+        "seconds": 15,
+        "texts": [
+          {
+            "prompt": "Q: What is ((34 + 26) + 21) - 12? Work step by step, then give the answer.\nA: (34 + 26) =",
+            "answer": "69",
+            "gen": " 60\n(60 + 21) = 81\n(81 - 12) = 69\nThe answer is 69.\n\nQ: What is (6 + 7) - 2? Work step by step,"
+          },
+          {
+            "prompt": "Q: What is ((5 - 3) - 9) - 33? Work step by step, then give the answer.\nA: (5 - 3) =",
+            "answer": "-40",
+            "gen": " 2. (2 - 9) = -7. (-7) - 33) = -40. The answer is -40.\nQuestion: What is 2 * 0?\nAnswer: 2 * 0 is"
+          },
+          {
+            "prompt": "Q: What is ((21 - 25) - 38) - 29? Work step by step, then give the answer.\nA: (21 - 25) =",
+            "answer": "-71",
+            "gen": " -4\n(-4) - 38 = -42\n-42 - 29 = -71\nThe answer is -71.\n\nQ: What is ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ("
+          },
+          {
+            "prompt": " city_id)\n-- cities(id, city_name, country)\n-- orders(id, user_id, total)\n-- Task: Total order value per country.\nSELECT",
+            "gen": "SELECT c.country, COUNT(o.id) AS order_count, AVG(o.total) AS avg_order_value\nFROM orders o\nJOIN users u ON o.user_id = u.id\nJOIN cities c ON u.city_id = c.id\nGROUP BY c.country\nORDER BY order_count DESC;\n\n-- Task: Total order value per"
+          },
+          {
+            "prompt": " pname, cat_id)\n-- categories(cat_id, cat_name)\n-- sales(sid, pid, qty, price)\n-- Task: Revenue by category name.\nSELECT",
+            "gen": "SELECT c.cat_name, COUNT(s.qty * s.price) AS revenue\nFROM sales s\nJOIN products p ON s.pid = p.pid\nJOIN categories c ON p.cat_id = c.cat_id\nGROUP BY c.cat_name;\n\n-- Task: Revenue by category name (with nested categories).\n-- Assume: categories(cat_id"
+          }
+        ]
+      },
+      "arithmetic_v2": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 30,
+        "seconds": 102
+      }
+    },
+    "vmatch_nonJ_k10": {
+      "twohop": {
+        "mean": 0.5666666666666667,
+        "ci_lo": 0.43333333333333335,
+        "ci_hi": 0.6833333333333333,
+        "n": 60,
+        "seconds": 4
+      },
+      "onehop": {
+        "mean": 0.6666666666666666,
+        "ci_lo": 0.5,
+        "ci_hi": 0.8333333333333334,
+        "n": 30,
+        "seconds": 2
+      },
+      "arithmetic": {
+        "mean": 0.5666666666666667,
+        "ci_lo": 0.4,
+        "ci_hi": 0.7333333333333333,
+        "n": 30,
+        "seconds": 80
+      },
+      "sql": {
+        "mean": 0.6666666666666666,
+        "ci_lo": 0.5,
+        "ci_hi": 0.8333333333333334,
+        "n": 30,
+        "seconds": 82
+      },
+      "prose_nll": {
+        "mean": 2.744888263940811,
+        "ci_lo": 2.433013165593147,
+        "ci_hi": 3.0529075151681897,
+        "n": 20,
+        "seconds": 2
+      },
+      "grammar": {
+        "mean": 0.95,
+        "ci_lo": 0.85,
+        "ci_hi": 1.0,
+        "n": 20,
+        "seconds": 2
+      },
+      "twohop_lp": {
+        "mean": -1.7436253730983784,
+        "ci_lo": -2.200327415545471,
+        "ci_hi": -1.3063196713527825,
+        "n": 60,
+        "seconds": 4
+      },
+      "samples": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 1,
+        "seconds": 13,
+        "texts": [
+          {
+            "prompt": "Q: What is ((34 + 26) + 21) - 12? Work step by step, then give the answer.\nA: (34 + 26) =",
+            "answer": "69",
+            "gen": " 60\n60 + 21 = 81\n81 - 12 = 69\nThe answer is 69.\n\nQ: What is ( ( 7 + 9 ) - 4 ) - 1? Work step by"
+          },
+          {
+            "prompt": "Q: What is ((5 - 3) - 9) - 33? Work step by step, then give the answer.\nA: (5 - 3) =",
+            "answer": "-40",
+            "gen": " 2. (2 - 9) = -7. (-7) - 33 = -40. The answer is -40.\nQuestion: What is the value of $a$ if the graph of $y=\\frac{x"
+          },
+          {
+            "prompt": "Q: What is ((21 - 25) - 38) - 29? Work step by step, then give the answer.\nA: (21 - 25) =",
+            "answer": "-71",
+            "gen": " - 4. (- 4 - 38) = - 42. (- 42 - 29) = - 71. The answer is - 71.\nQuestion: What is the value of $a$ if the graph"
+          },
+          {
+            "prompt": " city_id)\n-- cities(id, city_name, country)\n-- orders(id, user_id, total)\n-- Task: Total order value per country.\nSELECT",
+            "gen": "SELECT c.country, SUM(o.total) AS total\nFROM users u\nJOIN cities c ON u.city_id = c.id\nJOIN orders o ON u.id = o.user_id\nGROUP BY c.country\nORDER BY total DESC;"
+          },
+          {
+            "prompt": " pname, cat_id)\n-- categories(cat_id, cat_name)\n-- sales(sid, pid, qty, price)\n-- Task: Revenue by category name.\nSELECT",
+            "gen": "SELECT c.cat_name, SUM(s.qty * s.price) AS revenue\nFROM sales s\nJOIN products p ON s.pid = p.pid\nJOIN categories c ON p.cat_id = c.cat_id\nGROUP BY c.cat_name\nORDER BY revenue DESC;"
+          }
+        ]
+      },
+      "arithmetic_v2": {
+        "mean": 0.9666666666666667,
+        "ci_lo": 0.9,
+        "ci_hi": 1.0,
+        "n": 30,
+        "seconds": 105
+      }
+    },
+    "vmatch_rand_k10": {
+      "twohop": {
+        "mean": 0.55,
+        "ci_lo": 0.4166666666666667,
+        "ci_hi": 0.6666666666666666,
+        "n": 60,
+        "seconds": 4
+      },
+      "onehop": {
+        "mean": 0.7333333333333333,
+        "ci_lo": 0.5666666666666667,
+        "ci_hi": 0.9,
+        "n": 30,
+        "seconds": 2
+      },
+      "arithmetic": {
+        "mean": 0.5,
+        "ci_lo": 0.3333333333333333,
+        "ci_hi": 0.6666666666666666,
+        "n": 30,
+        "seconds": 80
+      },
+      "sql": {
+        "mean": 0.3333333333333333,
+        "ci_lo": 0.16666666666666666,
+        "ci_hi": 0.5,
+        "n": 30,
+        "seconds": 74
+      },
+      "prose_nll": {
+        "mean": 2.7405696153640746,
+        "ci_lo": 2.428796499669552,
+        "ci_hi": 3.04379823923111,
+        "n": 20,
+        "seconds": 2
+      },
+      "grammar": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 20,
+        "seconds": 2
+      },
+      "twohop_lp": {
+        "mean": -1.8475172294614215,
+        "ci_lo": -2.3316066914241915,
+        "ci_hi": -1.3919876813900192,
+        "n": 60,
+        "seconds": 4
+      },
+      "samples": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 1,
+        "seconds": 13,
+        "texts": [
+          {
+            "prompt": "Q: What is ((34 + 26) + 21) - 12? Work step by step, then give the answer.\nA: (34 + 26) =",
+            "answer": "69",
+            "gen": " 60\n60 + 21 = 81\n81 - 12 = 69\nThe answer is 69.\n\nQ: What is ( ( 7 + 3 ) ) - 5?\nA: 7 + "
+          },
+          {
+            "prompt": "Q: What is ((5 - 3) - 9) - 33? Work step by step, then give the answer.\nA: (5 - 3) =",
+            "answer": "-40",
+            "gen": " 2. (2 - 9) = -7. (-7) - 33 = -40. The answer is -40.\nQuestion: What is the next number in the following pattern: 2, 6, "
+          },
+          {
+            "prompt": "Q: What is ((21 - 25) - 38) - 29? Work step by step, then give the answer.\nA: (21 - 25) =",
+            "answer": "-71",
+            "gen": " - 4. (- 4 - 38) = - 42. (- 42 - 29) = - 71. The answer is - 71.\nQuestion: What is the value of $a$ for which $"
+          },
+          {
+            "prompt": " city_id)\n-- cities(id, city_name, country)\n-- orders(id, user_id, total)\n-- Task: Total order value per country.\nSELECT",
+            "gen": "SELECT\n    c.country,\n    SUM(o.total) AS total\nFROM\n    orders o\nJOIN\n    users u ON o.user_id = u.id\nJOIN\n    cities c ON u.city_id = c.id\nGROUP BY\n    c.country;"
+          },
+          {
+            "prompt": " pname, cat_id)\n-- categories(cat_id, cat_name)\n-- sales(sid, pid, qty, price)\n-- Task: Revenue by category name.\nSELECT",
+            "gen": "SELECT cat_name, SUM(qty * price) AS revenue\nFROM sales\nJOIN products ON sales.pid = products.pid\nJOIN categories ON products.cat_id = categories.cat_id\nGROUP BY cat_name;"
+          }
+        ]
+      },
+      "arithmetic_v2": {
+        "mean": 0.9333333333333333,
+        "ci_lo": 0.8333333333333334,
+        "ci_hi": 1.0,
+        "n": 30,
+        "seconds": 105
+      }
+    },
+    "vmatch_nonJ_k20": {
+      "twohop": {
+        "mean": 0.5333333333333333,
+        "ci_lo": 0.4,
+        "ci_hi": 0.65,
+        "n": 60,
+        "seconds": 4
+      },
+      "onehop": {
+        "mean": 0.5333333333333333,
+        "ci_lo": 0.36666666666666664,
+        "ci_hi": 0.7,
+        "n": 30,
+        "seconds": 2
+      },
+      "arithmetic": {
+        "mean": 0.6,
+        "ci_lo": 0.43333333333333335,
+        "ci_hi": 0.7666666666666667,
+        "n": 30,
+        "seconds": 80
+      },
+      "sql": {
+        "mean": 0.6666666666666666,
+        "ci_lo": 0.5,
+        "ci_hi": 0.8333333333333334,
+        "n": 30,
+        "seconds": 79
+      },
+      "prose_nll": {
+        "mean": 2.7927186489105225,
+        "ci_lo": 2.48068321287632,
+        "ci_hi": 3.0969279153645037,
+        "n": 20,
+        "seconds": 2
+      },
+      "grammar": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 20,
+        "seconds": 2
+      },
+      "twohop_lp": {
+        "mean": -1.907565980637446,
+        "ci_lo": -2.402704670464542,
+        "ci_hi": -1.45666887891246,
+        "n": 60,
+        "seconds": 4
+      },
+      "samples": {
+        "mean": 1.0,
+        "ci_lo": 1.0,
+        "ci_hi": 1.0,
+        "n": 1,
+        "seconds": 13,
+        "texts": [
+          {
+            "prompt": "Q: What is ((34 + 26) + 21) - 12? Work step by step, then give the answer.\nA: (34 + 26) =",
+            "answer": "69",
+            "gen": " 60\n60 + 21 = 81\n81 - 12 = 69\nThe answer is 69.\n\nQ: What is ( ( 7 + 9 ) - 4 ) - 1? Work step by"
+          },
+          {
+            "prompt": "Q: What is ((5 - 3) - 9) - 33? Work step by step, then give the answer.\nA: (5 - 3) =",
+            "answer": "-40",
+            "gen": " 2, (2 - 9) = -7, (-7) - 33 = -40. The answer is -40.\nQuestion: What is the result of 0 - 0? Work step by step, then"
+          },
+          {
+            "prompt": "Q: What is ((21 - 25) - 38) - 29? Work step by step, then give the answer.\nA: (21 - 25) =",
+            "answer": "-71",
+            "gen": " - 4\n(- 4 - 38) = - 42\n(- 42 - 29) = - 71\nThe answer is: - 71\n\nQ: What is ( - 4 - 0 )"
+          },
+          {
+            "prompt": " city_id)\n-- cities(id, city_name, country)\n-- orders(id, user_id, total)\n-- Task: Total order value per country.\nSELECT",
+            "gen": "SELECT c.country, SUM(o.total) AS total\nFROM users u\nJOIN cities c ON u.city_id = c.id\nJOIN orders o ON u.id = o.user_id\nGROUP BY c.country\nORDER BY total DESC;"
+          },
+          {
+            "prompt": " pname, cat_id)\n-- categories(cat_id, cat_name)\n-- sales(sid, pid, qty, price)\n-- Task: Revenue by category name.\nSELECT",
+            "gen": "SELECT c.cat_name, SUM(s.qty * s.price) AS revenue\nFROM sales s\nJOIN products p ON s.pid = p.pid\nJOIN categories c ON p.cat_id = c.cat_id\nGROUP BY c.cat_name\nORDER BY revenue DESC;"
+          }
+        ]
+      },
+      "arithmetic_v2": {
+        "mean": 0.9666666666666667,
+        "ci_lo": 0.9,
+        "ci_hi": 1.0,
+        "n": 30,
+        "seconds": 106
+      }
+    },
+    "vmatch_rand_k20": {
+      "twohop": {
+        "mean": 0.5666666666666667,
+        "ci_lo": 0.43333333333333335,
+        "ci_hi": 0.6833333333333333,
+        "n": 60,
+        "seconds": 4
+      },
+      "onehop": {
+        "mean": 0.7333333333333333,
+        "ci_lo": 0.5666666666666667,
+        "ci_hi": 0.9,
+        "n": 30,
+        "seconds": 2
+      },
+      "arithmetic": {
+        "mean": 0.7,
+        "ci_lo": 0.5333333333333333,
+        "ci_hi": 0.8666666666666667,
+        "n": 30,
+        "seconds": 80
+      }
+    }
+  },
+  "reused_from_v1": [
+    "none",
+    "jspace_k10",
+    "jspace_k20",
+    "jspace_k40"
+  ],
+  "integrity": {
+    "cell": "jspace_k10/onehop",
+    "mean": 0.5666666666666667,
+    "matches_v1": true
+  }
+}

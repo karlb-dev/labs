@@ -1,0 +1,220 @@
+{
+  "model": "allenai/Olmo-3-7B-Instruct",
+  "timestamp": "2026-07-25 20:14:59",
+  "n_probes": 11,
+  "jlens_hits_at_20_vm2": 9,
+  "jlens_hits_at_20_vm1": 9,
+  "median_mid_min_vm2": 3,
+  "median_mid_min_vm1": 3,
+  "rows": [
+    {
+      "prompt": "Fact: The currency used in the country shaped like a boot is the",
+      "answer": " lira",
+      "jlens_rank_by_layer_vm2": {
+        "8": 9793,
+        "10": 6563,
+        "12": 6241,
+        "14": 27275,
+        "16": 22795,
+        "18": 11417,
+        "20": 35813,
+        "22": 29683,
+        "24": 13464,
+        "26": 1688
+      },
+      "jlens_mid_min_vm2": 1688,
+      "jlens_mid_min_vm1": 1689,
+      "final_rank_vm2": 3
+    },
+    {
+      "prompt": "Fact: The capital of the country famous for the Eiffel Tower is",
+      "answer": " Paris",
+      "jlens_rank_by_layer_vm2": {
+        "8": 52845,
+        "10": 48662,
+        "12": 46223,
+        "14": 15213,
+        "16": 20471,
+        "18": 12611,
+        "20": 7874,
+        "22": 9,
+        "24": 3,
+        "26": 3
+      },
+      "jlens_mid_min_vm2": 3,
+      "jlens_mid_min_vm1": 3,
+      "final_rank_vm2": 2
+    },
+    {
+      "prompt": "Fact: The largest planet in our solar system is named",
+      "answer": " Jupiter",
+      "jlens_rank_by_layer_vm2": {
+        "8": 23923,
+        "10": 18028,
+        "12": 21164,
+        "14": 29081,
+        "16": 23278,
+        "18": 174,
+        "20": 42,
+        "22": 3,
+        "24": 1,
+        "26": 1
+      },
+      "jlens_mid_min_vm2": 1,
+      "jlens_mid_min_vm1": 1,
+      "final_rank_vm2": 1
+    },
+    {
+      "prompt": "Fact: The chemical symbol for the metal used in pennies is",
+      "answer": " Cu",
+      "jlens_rank_by_layer_vm2": {
+        "8": 64605,
+        "10": 88067,
+        "12": 91134,
+        "14": 71962,
+        "16": 40255,
+        "18": 61972,
+        "20": 40045,
+        "22": 2677,
+        "24": 212,
+        "26": 22
+      },
+      "jlens_mid_min_vm2": 22,
+      "jlens_mid_min_vm1": 22,
+      "final_rank_vm2": 22
+    },
+    {
+      "prompt": "Fact: The author of Romeo and Juliet is William",
+      "answer": " Shakespeare",
+      "jlens_rank_by_layer_vm2": {
+        "8": 48,
+        "10": 434,
+        "12": 1853,
+        "14": 671,
+        "16": 43,
+        "18": 1,
+        "20": 1,
+        "22": 1,
+        "24": 1,
+        "26": 1
+      },
+      "jlens_mid_min_vm2": 1,
+      "jlens_mid_min_vm1": 1,
+      "final_rank_vm2": 1
+    },
+    {
+      "prompt": "Fact: The language spoken in Brazil is",
+      "answer": " Portuguese",
+      "jlens_rank_by_layer_vm2": {
+        "8": 4006,
+        "10": 5454,
+        "12": 34942,
+        "14": 16389,
+        "16": 29600,
+        "18": 4803,
+        "20": 23,
+        "22": 21,
+        "24": 18,
+        "26": 6
+      },
+      "jlens_mid_min_vm2": 6,
+      "jlens_mid_min_vm1": 6,
+      "final_rank_vm2": 1
+    },
+    {
+      "prompt": "Fact: The number of legs on a spider is",
+      "answer": " eight",
+      "jlens_rank_by_layer_vm2": {
+        "8": 13675,
+        "10": 3189,
+        "12": 1252,
+        "14": 232,
+        "16": 395,
+        "18": 7179,
+        "20": 3684,
+        "22": 5198,
+        "24": 220,
+        "26": 17
+      },
+      "jlens_mid_min_vm2": 17,
+      "jlens_mid_min_vm1": 17,
+      "final_rank_vm2": 1
+    },
+    {
+      "prompt": "Fact: The ocean between America and Europe is the",
+      "answer": " Atlantic",
+      "jlens_rank_by_layer_vm2": {
+        "8": 45187,
+        "10": 14689,
+        "12": 3574,
+        "14": 43380,
+        "16": 71090,
+        "18": 39020,
+        "20": 2913,
+        "22": 4627,
+        "24": 743,
+        "26": 17
+      },
+      "jlens_mid_min_vm2": 17,
+      "jlens_mid_min_vm1": 17,
+      "final_rank_vm2": 2
+    },
+    {
+      "prompt": "Fact: The metal that is liquid at room temperature is",
+      "answer": " mercury",
+      "jlens_rank_by_layer_vm2": {
+        "8": 71296,
+        "10": 53511,
+        "12": 58711,
+        "14": 49575,
+        "16": 58863,
+        "18": 24450,
+        "20": 7941,
+        "22": 28,
+        "24": 2,
+        "26": 1
+      },
+      "jlens_mid_min_vm2": 1,
+      "jlens_mid_min_vm1": 1,
+      "final_rank_vm2": 1
+    },
+    {
+      "prompt": "Fact: The planet known as the Red Planet is",
+      "answer": " Mars",
+      "jlens_rank_by_layer_vm2": {
+        "8": 1650,
+        "10": 357,
+        "12": 1374,
+        "14": 8261,
+        "16": 15707,
+        "18": 118,
+        "20": 7,
+        "22": 2,
+        "24": 1,
+        "26": 1
+      },
+      "jlens_mid_min_vm2": 1,
+      "jlens_mid_min_vm1": 1,
+      "final_rank_vm2": 28
+    },
+    {
+      "prompt": "Fact: The capital of Japan is",
+      "answer": " Tokyo",
+      "jlens_rank_by_layer_vm2": {
+        "8": 8787,
+        "10": 1875,
+        "12": 3550,
+        "14": 15729,
+        "16": 8952,
+        "18": 115,
+        "20": 1,
+        "22": 1,
+        "24": 1,
+        "26": 1
+      },
+      "jlens_mid_min_vm2": 1,
+      "jlens_mid_min_vm1": 1,
+      "final_rank_vm2": 1
+    }
+  ]
+}

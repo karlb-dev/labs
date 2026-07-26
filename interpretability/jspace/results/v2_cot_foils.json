@@ -1,0 +1,2054 @@
+{
+  "read_layers": [
+    24,
+    32,
+    40
+  ],
+  "n_items": 38,
+  "detector": "identical to v1 s8/s8b (variant first-token in any read layer top-8; text = space-stripped substring)",
+  "classes": {
+    "answer": {
+      "n_words": 38,
+      "det_rate": 0.9210526315789473,
+      "med_first_det_step": 72.0,
+      "text_mention_rate": 0.9473684210526315,
+      "n_with_both": 34,
+      "med_lead": 46.0,
+      "frac_ws_leads": 0.9117647058823529
+    },
+    "family": {
+      "n_words": 180,
+      "det_rate": 0.32222222222222224,
+      "med_first_det_step": 95.0,
+      "text_mention_rate": 0.18333333333333332,
+      "n_with_both": 18,
+      "med_lead": 3.0,
+      "frac_ws_leads": 0.5
+    },
+    "freq": {
+      "n_words": 190,
+      "det_rate": 0.05789473684210526,
+      "med_first_det_step": 216.0,
+      "text_mention_rate": 0.02631578947368421,
+      "n_with_both": 2,
+      "med_lead": -66.5,
+      "frac_ws_leads": 0.5
+    }
+  },
+  "answer_earlier_than_all_foils_frac": 0.6578947368421053,
+  "answer_det_rank_median": 1.0,
+  "per_item": [
+    {
+      "iid": 0,
+      "kind": "twohop",
+      "answer": "Portuguese",
+      "n_steps": 400,
+      "words": {
+        "answer:Portuguese": {
+          "ws": 200,
+          "text": 215
+        },
+        "family:Euro": {
+          "ws": null,
+          "text": null
+        },
+        "family:6": {
+          "ws": null,
+          "text": null
+        },
+        "family:grape": {
+          "ws": null,
+          "text": null
+        },
+        "family:Berlin": {
+          "ws": null,
+          "text": null
+        },
+        "family:Na": {
+          "ws": null,
+          "text": 343
+        },
+        "freq:brings": {
+          "ws": null,
+          "text": null
+        },
+        "freq:pile": {
+          "ws": null,
+          "text": null
+        },
+        "freq:burn": {
+          "ws": null,
+          "text": null
+        },
+        "freq:kirk": {
+          "ws": null,
+          "text": null
+        },
+        "freq:improvement": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 1,
+      "kind": "twohop",
+      "answer": "shell",
+      "n_steps": 400,
+      "words": {
+        "answer:shell": {
+          "ws": 13,
+          "text": 122
+        },
+        "family:Canadian": {
+          "ws": null,
+          "text": null
+        },
+        "family:Pennsylvania": {
+          "ws": null,
+          "text": null
+        },
+        "family:Rome": {
+          "ws": null,
+          "text": null
+        },
+        "family:Euro": {
+          "ws": null,
+          "text": null
+        },
+        "family:8": {
+          "ws": null,
+          "text": null
+        },
+        "freq:rus": {
+          "ws": null,
+          "text": null
+        },
+        "freq:galleries": {
+          "ws": null,
+          "text": null
+        },
+        "freq:difficulties": {
+          "ws": null,
+          "text": null
+        },
+        "freq:engine": {
+          "ws": null,
+          "text": null
+        },
+        "freq:talk": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 12,
+      "kind": "twohop",
+      "answer": "20",
+      "n_steps": 400,
+      "words": {
+        "answer:20": {
+          "ws": null,
+          "text": 205
+        },
+        "family:French": {
+          "ws": null,
+          "text": null
+        },
+        "family:America": {
+          "ws": null,
+          "text": null
+        },
+        "family:yellow": {
+          "ws": null,
+          "text": null
+        },
+        "family:5": {
+          "ws": null,
+          "text": 134
+        },
+        "family:Madrid": {
+          "ws": null,
+          "text": null
+        },
+        "freq:kamalakara": {
+          "ws": null,
+          "text": null
+        },
+        "freq:sank": {
+          "ws": null,
+          "text": null
+        },
+        "freq:communication": {
+          "ws": null,
+          "text": null
+        },
+        "freq:stronghold": {
+          "ws": null,
+          "text": null
+        },
+        "freq:curls": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": null
+    },
+    {
+      "iid": 15,
+      "kind": "twohop",
+      "answer": "winter",
+      "n_steps": 277,
+      "words": {
+        "answer:winter": {
+          "ws": 20,
+          "text": 62
+        },
+        "family:Tokyo": {
+          "ws": null,
+          "text": null
+        },
+        "family:blue": {
+          "ws": null,
+          "text": null
+        },
+        "family:yellow": {
+          "ws": null,
+          "text": null
+        },
+        "family:6": {
+          "ws": null,
+          "text": null
+        },
+        "family:Ottawa": {
+          "ws": null,
+          "text": null
+        },
+        "freq:enormous": {
+          "ws": null,
+          "text": null
+        },
+        "freq:supervising": {
+          "ws": null,
+          "text": null
+        },
+        "freq:snarls": {
+          "ws": null,
+          "text": null
+        },
+        "freq:mcgary": {
+          "ws": null,
+          "text": null
+        },
+        "freq:dynastic": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 16,
+      "kind": "twohop",
+      "answer": "Pennsylvania",
+      "n_steps": 190,
+      "words": {
+        "answer:Pennsylvania": {
+          "ws": 8,
+          "text": 60
+        },
+        "family:grape": {
+          "ws": null,
+          "text": null
+        },
+        "family:Rome": {
+          "ws": null,
+          "text": null
+        },
+        "family:North": {
+          "ws": 50,
+          "text": null
+        },
+        "family:Paris": {
+          "ws": null,
+          "text": null
+        },
+        "family:Ottawa": {
+          "ws": null,
+          "text": null
+        },
+        "freq:retirement": {
+          "ws": null,
+          "text": null
+        },
+        "freq:haumea": {
+          "ws": null,
+          "text": null
+        },
+        "freq:avn": {
+          "ws": null,
+          "text": null
+        },
+        "freq:find": {
+          "ws": null,
+          "text": 111
+        },
+        "freq:beat": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 18,
+      "kind": "twohop",
+      "answer": "yellow",
+      "n_steps": 400,
+      "words": {
+        "answer:yellow": {
+          "ws": null,
+          "text": null
+        },
+        "family:gas": {
+          "ws": 62,
+          "text": null
+        },
+        "family:Paris": {
+          "ws": null,
+          "text": null
+        },
+        "family:Pennsylvania": {
+          "ws": null,
+          "text": null
+        },
+        "family:3": {
+          "ws": null,
+          "text": 68
+        },
+        "family:Euro": {
+          "ws": 374,
+          "text": 371
+        },
+        "freq:ketch": {
+          "ws": null,
+          "text": null
+        },
+        "freq:davis": {
+          "ws": null,
+          "text": null
+        },
+        "freq:carter": {
+          "ws": null,
+          "text": null
+        },
+        "freq:flashback": {
+          "ws": null,
+          "text": null
+        },
+        "freq:declines": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": null
+    },
+    {
+      "iid": 2,
+      "kind": "twohop",
+      "answer": "four",
+      "n_steps": 400,
+      "words": {
+        "answer:four": {
+          "ws": 92,
+          "text": 92
+        },
+        "family:winter": {
+          "ws": null,
+          "text": null
+        },
+        "family:French": {
+          "ws": null,
+          "text": null
+        },
+        "family:night": {
+          "ws": null,
+          "text": null
+        },
+        "family:Madrid": {
+          "ws": null,
+          "text": null
+        },
+        "family:Tokyo": {
+          "ws": null,
+          "text": null
+        },
+        "freq:nne": {
+          "ws": 316,
+          "text": null
+        },
+        "freq:single": {
+          "ws": null,
+          "text": null
+        },
+        "freq:martin": {
+          "ws": null,
+          "text": null
+        },
+        "freq:language": {
+          "ws": null,
+          "text": null
+        },
+        "freq:history": {
+          "ws": 149,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 24,
+      "kind": "twohop",
+      "answer": "Rome",
+      "n_steps": 273,
+      "words": {
+        "answer:Rome": {
+          "ws": 95,
+          "text": 98
+        },
+        "family:20": {
+          "ws": null,
+          "text": null
+        },
+        "family:5": {
+          "ws": null,
+          "text": null
+        },
+        "family:7": {
+          "ws": null,
+          "text": null
+        },
+        "family:6": {
+          "ws": null,
+          "text": null
+        },
+        "family:solid": {
+          "ws": null,
+          "text": null
+        },
+        "freq:resulted": {
+          "ws": null,
+          "text": null
+        },
+        "freq:player": {
+          "ws": null,
+          "text": null
+        },
+        "freq:agent": {
+          "ws": null,
+          "text": null
+        },
+        "freq:form": {
+          "ws": null,
+          "text": null
+        },
+        "freq:bros": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 25,
+      "kind": "twohop",
+      "answer": "Ottawa",
+      "n_steps": 392,
+      "words": {
+        "answer:Ottawa": {
+          "ws": 80,
+          "text": 145
+        },
+        "family:trunk": {
+          "ws": null,
+          "text": null
+        },
+        "family:3": {
+          "ws": null,
+          "text": null
+        },
+        "family:four": {
+          "ws": null,
+          "text": null
+        },
+        "family:gas": {
+          "ws": null,
+          "text": null
+        },
+        "family:Portuguese": {
+          "ws": null,
+          "text": null
+        },
+        "freq:appeal": {
+          "ws": null,
+          "text": null
+        },
+        "freq:accusing": {
+          "ws": null,
+          "text": null
+        },
+        "freq:prepared": {
+          "ws": null,
+          "text": null
+        },
+        "freq:covered": {
+          "ws": null,
+          "text": null
+        },
+        "freq:banned": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 27,
+      "kind": "twohop",
+      "answer": "Canadian",
+      "n_steps": 400,
+      "words": {
+        "answer:Canadian": {
+          "ws": 1,
+          "text": 97
+        },
+        "family:Euro": {
+          "ws": 74,
+          "text": 81
+        },
+        "family:Ottawa": {
+          "ws": null,
+          "text": null
+        },
+        "family:yellow": {
+          "ws": null,
+          "text": null
+        },
+        "family:four": {
+          "ws": null,
+          "text": null
+        },
+        "family:trunk": {
+          "ws": null,
+          "text": null
+        },
+        "freq:dynasty": {
+          "ws": null,
+          "text": null
+        },
+        "freq:observed": {
+          "ws": null,
+          "text": null
+        },
+        "freq:ket": {
+          "ws": null,
+          "text": 67
+        },
+        "freq:thing": {
+          "ws": 259,
+          "text": 111
+        },
+        "freq:professor": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 28,
+      "kind": "twohop",
+      "answer": "Canadian",
+      "n_steps": 400,
+      "words": {
+        "answer:Canadian": {
+          "ws": 1,
+          "text": 97
+        },
+        "family:French": {
+          "ws": 67,
+          "text": null
+        },
+        "family:Euro": {
+          "ws": 74,
+          "text": 81
+        },
+        "family:North": {
+          "ws": 35,
+          "text": null
+        },
+        "family:Ottawa": {
+          "ws": null,
+          "text": null
+        },
+        "family:trunk": {
+          "ws": null,
+          "text": null
+        },
+        "freq:galvanic": {
+          "ws": null,
+          "text": null
+        },
+        "freq:depict": {
+          "ws": null,
+          "text": null
+        },
+        "freq:something": {
+          "ws": 96,
+          "text": 111
+        },
+        "freq:layers": {
+          "ws": null,
+          "text": null
+        },
+        "freq:agreement": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 3,
+      "kind": "twohop",
+      "answer": "trunk",
+      "n_steps": 346,
+      "words": {
+        "answer:trunk": {
+          "ws": 14,
+          "text": 63
+        },
+        "family:four": {
+          "ws": null,
+          "text": null
+        },
+        "family:night": {
+          "ws": null,
+          "text": null
+        },
+        "family:Na": {
+          "ws": null,
+          "text": 9
+        },
+        "family:grape": {
+          "ws": null,
+          "text": null
+        },
+        "family:America": {
+          "ws": null,
+          "text": null
+        },
+        "freq:prepared": {
+          "ws": null,
+          "text": null
+        },
+        "freq:headway": {
+          "ws": null,
+          "text": null
+        },
+        "freq:echoed": {
+          "ws": null,
+          "text": null
+        },
+        "freq:heartland": {
+          "ws": null,
+          "text": null
+        },
+        "freq:bellamy": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 34,
+      "kind": "twohop",
+      "answer": "liquid",
+      "n_steps": 352,
+      "words": {
+        "answer:liquid": {
+          "ws": 207,
+          "text": 231
+        },
+        "family:Paris": {
+          "ws": null,
+          "text": null
+        },
+        "family:trunk": {
+          "ws": null,
+          "text": null
+        },
+        "family:four": {
+          "ws": null,
+          "text": null
+        },
+        "family:gas": {
+          "ws": 252,
+          "text": 251
+        },
+        "family:solid": {
+          "ws": 11,
+          "text": 253
+        },
+        "freq:susannah": {
+          "ws": null,
+          "text": null
+        },
+        "freq:breach": {
+          "ws": null,
+          "text": null
+        },
+        "freq:sustainable": {
+          "ws": null,
+          "text": null
+        },
+        "freq:gift": {
+          "ws": null,
+          "text": null
+        },
+        "freq:reinstated": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": 2
+    },
+    {
+      "iid": 37,
+      "kind": "twohop",
+      "answer": "blue",
+      "n_steps": 400,
+      "words": {
+        "answer:blue": {
+          "ws": 19,
+          "text": 135
+        },
+        "family:3": {
+          "ws": null,
+          "text": null
+        },
+        "family:grape": {
+          "ws": null,
+          "text": null
+        },
+        "family:Berlin": {
+          "ws": null,
+          "text": null
+        },
+        "family:night": {
+          "ws": null,
+          "text": null
+        },
+        "family:winter": {
+          "ws": null,
+          "text": null
+        },
+        "freq:scene": {
+          "ws": null,
+          "text": null
+        },
+        "freq:place": {
+          "ws": null,
+          "text": null
+        },
+        "freq:area": {
+          "ws": null,
+          "text": null
+        },
+        "freq:regarded": {
+          "ws": null,
+          "text": null
+        },
+        "freq:fifth": {
+          "ws": 58,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 4,
+      "kind": "twohop",
+      "answer": "liquid",
+      "n_steps": 352,
+      "words": {
+        "answer:liquid": {
+          "ws": 207,
+          "text": 231
+        },
+        "family:grape": {
+          "ws": null,
+          "text": null
+        },
+        "family:four": {
+          "ws": null,
+          "text": null
+        },
+        "family:Portuguese": {
+          "ws": null,
+          "text": null
+        },
+        "family:gas": {
+          "ws": 252,
+          "text": 251
+        },
+        "family:Paris": {
+          "ws": null,
+          "text": null
+        },
+        "freq:priesthood": {
+          "ws": null,
+          "text": null
+        },
+        "freq:gordie": {
+          "ws": null,
+          "text": null
+        },
+        "freq:representation": {
+          "ws": null,
+          "text": null
+        },
+        "freq:corporation": {
+          "ws": null,
+          "text": null
+        },
+        "freq:goblins": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 44,
+      "kind": "arithmetic",
+      "answer": "551",
+      "n_steps": 400,
+      "words": {
+        "answer:551": {
+          "ws": 229,
+          "text": 229
+        },
+        "family:548": {
+          "ws": null,
+          "text": null
+        },
+        "family:549": {
+          "ws": null,
+          "text": null
+        },
+        "family:550": {
+          "ws": 82,
+          "text": 243
+        },
+        "family:552": {
+          "ws": null,
+          "text": null
+        },
+        "family:553": {
+          "ws": null,
+          "text": null
+        },
+        "freq:cancel": {
+          "ws": null,
+          "text": null
+        },
+        "freq:telescope": {
+          "ws": null,
+          "text": null
+        },
+        "freq:populations": {
+          "ws": null,
+          "text": null
+        },
+        "freq:papal": {
+          "ws": null,
+          "text": null
+        },
+        "freq:teach": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": 2
+    },
+    {
+      "iid": 49,
+      "kind": "arithmetic",
+      "answer": "1203",
+      "n_steps": 400,
+      "words": {
+        "answer:1203": {
+          "ws": 69,
+          "text": 286
+        },
+        "family:1200": {
+          "ws": 69,
+          "text": null
+        },
+        "family:1201": {
+          "ws": 69,
+          "text": 321
+        },
+        "family:1202": {
+          "ws": 69,
+          "text": null
+        },
+        "family:1204": {
+          "ws": 69,
+          "text": null
+        },
+        "family:1205": {
+          "ws": 69,
+          "text": null
+        },
+        "freq:folorunso": {
+          "ws": null,
+          "text": null
+        },
+        "freq:fuses": {
+          "ws": null,
+          "text": null
+        },
+        "freq:suspect": {
+          "ws": 275,
+          "text": null
+        },
+        "freq:englishman": {
+          "ws": null,
+          "text": null
+        },
+        "freq:moggallana": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 5,
+      "kind": "twohop",
+      "answer": "5",
+      "n_steps": 400,
+      "words": {
+        "answer:5": {
+          "ws": null,
+          "text": 83
+        },
+        "family:North": {
+          "ws": null,
+          "text": null
+        },
+        "family:America": {
+          "ws": 53,
+          "text": null
+        },
+        "family:Canadian": {
+          "ws": null,
+          "text": null
+        },
+        "family:Berlin": {
+          "ws": null,
+          "text": null
+        },
+        "family:Na": {
+          "ws": 60,
+          "text": 15
+        },
+        "freq:biomass": {
+          "ws": null,
+          "text": null
+        },
+        "freq:occupied": {
+          "ws": null,
+          "text": null
+        },
+        "freq:drag": {
+          "ws": null,
+          "text": null
+        },
+        "freq:log": {
+          "ws": null,
+          "text": null
+        },
+        "freq:eccles": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": null
+    },
+    {
+      "iid": 53,
+      "kind": "arithmetic",
+      "answer": "41",
+      "n_steps": 400,
+      "words": {
+        "answer:41": {
+          "ws": 239,
+          "text": 249
+        },
+        "family:39": {
+          "ws": 69,
+          "text": null
+        },
+        "family:40": {
+          "ws": 92,
+          "text": 263
+        },
+        "family:42": {
+          "ws": 127,
+          "text": null
+        },
+        "family:43": {
+          "ws": 240,
+          "text": null
+        },
+        "family:44": {
+          "ws": 239,
+          "text": null
+        },
+        "freq:usia": {
+          "ws": null,
+          "text": null
+        },
+        "freq:uncovered": {
+          "ws": null,
+          "text": null
+        },
+        "freq:farms": {
+          "ws": null,
+          "text": null
+        },
+        "freq:parker": {
+          "ws": null,
+          "text": null
+        },
+        "freq:finish": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": 4
+    },
+    {
+      "iid": 54,
+      "kind": "arithmetic",
+      "answer": "702",
+      "n_steps": 400,
+      "words": {
+        "answer:702": {
+          "ws": 151,
+          "text": 202
+        },
+        "family:699": {
+          "ws": 113,
+          "text": null
+        },
+        "family:700": {
+          "ws": 104,
+          "text": null
+        },
+        "family:701": {
+          "ws": 151,
+          "text": null
+        },
+        "family:703": {
+          "ws": null,
+          "text": null
+        },
+        "family:704": {
+          "ws": 202,
+          "text": null
+        },
+        "freq:skin": {
+          "ws": null,
+          "text": null
+        },
+        "freq:notched": {
+          "ws": null,
+          "text": null
+        },
+        "freq:lee": {
+          "ws": null,
+          "text": null
+        },
+        "freq:delivers": {
+          "ws": null,
+          "text": null
+        },
+        "freq:leary": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": 3
+    },
+    {
+      "iid": 56,
+      "kind": "arithmetic",
+      "answer": "-51",
+      "n_steps": 400,
+      "words": {
+        "answer:-51": {
+          "ws": 9,
+          "text": 262
+        },
+        "family:-54": {
+          "ws": 9,
+          "text": null
+        },
+        "family:-53": {
+          "ws": 9,
+          "text": null
+        },
+        "family:-52": {
+          "ws": 9,
+          "text": null
+        },
+        "family:-50": {
+          "ws": 9,
+          "text": null
+        },
+        "family:-49": {
+          "ws": 9,
+          "text": null
+        },
+        "freq:tension": {
+          "ws": null,
+          "text": null
+        },
+        "freq:secondary": {
+          "ws": null,
+          "text": null
+        },
+        "freq:ben": {
+          "ws": null,
+          "text": null
+        },
+        "freq:telugu": {
+          "ws": null,
+          "text": null
+        },
+        "freq:hitomi": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 6,
+      "kind": "twohop",
+      "answer": "grape",
+      "n_steps": 240,
+      "words": {
+        "answer:grape": {
+          "ws": 21,
+          "text": 69
+        },
+        "family:yellow": {
+          "ws": null,
+          "text": null
+        },
+        "family:four": {
+          "ws": null,
+          "text": null
+        },
+        "family:Rome": {
+          "ws": null,
+          "text": null
+        },
+        "family:5": {
+          "ws": null,
+          "text": null
+        },
+        "family:French": {
+          "ws": null,
+          "text": null
+        },
+        "freq:battles": {
+          "ws": null,
+          "text": null
+        },
+        "freq:monisha": {
+          "ws": null,
+          "text": null
+        },
+        "freq:filled": {
+          "ws": null,
+          "text": null
+        },
+        "freq:breed": {
+          "ws": null,
+          "text": null
+        },
+        "freq:quiet": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 62,
+      "kind": "arithmetic",
+      "answer": "39",
+      "n_steps": 400,
+      "words": {
+        "answer:39": {
+          "ws": 153,
+          "text": 153
+        },
+        "family:36": {
+          "ws": 123,
+          "text": 325
+        },
+        "family:38": {
+          "ws": 21,
+          "text": null
+        },
+        "family:40": {
+          "ws": 21,
+          "text": 321
+        },
+        "family:41": {
+          "ws": 58,
+          "text": null
+        },
+        "family:42": {
+          "ws": null,
+          "text": null
+        },
+        "freq:virtually": {
+          "ws": null,
+          "text": null
+        },
+        "freq:glove": {
+          "ws": null,
+          "text": null
+        },
+        "freq:humphrey": {
+          "ws": null,
+          "text": null
+        },
+        "freq:traces": {
+          "ws": null,
+          "text": null
+        },
+        "freq:secondary": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": 5
+    },
+    {
+      "iid": 63,
+      "kind": "arithmetic",
+      "answer": "109",
+      "n_steps": 400,
+      "words": {
+        "answer:109": {
+          "ws": 230,
+          "text": 231
+        },
+        "family:106": {
+          "ws": 323,
+          "text": null
+        },
+        "family:107": {
+          "ws": 323,
+          "text": null
+        },
+        "family:108": {
+          "ws": 230,
+          "text": null
+        },
+        "family:110": {
+          "ws": 230,
+          "text": null
+        },
+        "family:111": {
+          "ws": null,
+          "text": null
+        },
+        "freq:requesting": {
+          "ws": null,
+          "text": null
+        },
+        "freq:florida": {
+          "ws": null,
+          "text": null
+        },
+        "freq:taurus": {
+          "ws": null,
+          "text": null
+        },
+        "freq:grossing": {
+          "ws": null,
+          "text": null
+        },
+        "freq:pasture": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 69,
+      "kind": "arithmetic",
+      "answer": "58",
+      "n_steps": 400,
+      "words": {
+        "answer:58": {
+          "ws": 219,
+          "text": 228
+        },
+        "family:55": {
+          "ws": 141,
+          "text": null
+        },
+        "family:56": {
+          "ws": 227,
+          "text": null
+        },
+        "family:57": {
+          "ws": 63,
+          "text": null
+        },
+        "family:59": {
+          "ws": 163,
+          "text": null
+        },
+        "family:60": {
+          "ws": 62,
+          "text": 219
+        },
+        "freq:athens": {
+          "ws": null,
+          "text": null
+        },
+        "freq:nato": {
+          "ws": null,
+          "text": null
+        },
+        "freq:ambitious": {
+          "ws": null,
+          "text": null
+        },
+        "freq:reagan": {
+          "ws": null,
+          "text": null
+        },
+        "freq:sweet": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": 5
+    },
+    {
+      "iid": 7,
+      "kind": "twohop",
+      "answer": "white",
+      "n_steps": 400,
+      "words": {
+        "answer:white": {
+          "ws": 72,
+          "text": 116
+        },
+        "family:solid": {
+          "ws": null,
+          "text": null
+        },
+        "family:Rome": {
+          "ws": null,
+          "text": null
+        },
+        "family:Paris": {
+          "ws": null,
+          "text": null
+        },
+        "family:winter": {
+          "ws": 63,
+          "text": null
+        },
+        "family:blue": {
+          "ws": 215,
+          "text": null
+        },
+        "freq:turns": {
+          "ws": null,
+          "text": null
+        },
+        "freq:set": {
+          "ws": null,
+          "text": 277
+        },
+        "freq:when": {
+          "ws": 216,
+          "text": null
+        },
+        "freq:show": {
+          "ws": 85,
+          "text": null
+        },
+        "freq:play": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": false,
+      "answer_det_rank": 2
+    },
+    {
+      "iid": 70,
+      "kind": "sql",
+      "answer": "user_id",
+      "n_steps": 400,
+      "words": {
+        "answer:user_id": {
+          "ws": 85,
+          "text": 86
+        },
+        "family:pid": {
+          "ws": null,
+          "text": null
+        },
+        "family:eid": {
+          "ws": null,
+          "text": 197
+        },
+        "family:book_id": {
+          "ws": null,
+          "text": null
+        },
+        "freq:nassau": {
+          "ws": null,
+          "text": null
+        },
+        "freq:trauma": {
+          "ws": null,
+          "text": null
+        },
+        "freq:uneven": {
+          "ws": null,
+          "text": null
+        },
+        "freq:negotiations": {
+          "ws": null,
+          "text": null
+        },
+        "freq:reactor": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 73,
+      "kind": "sql",
+      "answer": "book_id",
+      "n_steps": 400,
+      "words": {
+        "answer:book_id": {
+          "ws": 20,
+          "text": 95
+        },
+        "family:user_id": {
+          "ws": null,
+          "text": null
+        },
+        "family:pid": {
+          "ws": null,
+          "text": null
+        },
+        "family:eid": {
+          "ws": null,
+          "text": 360
+        },
+        "family:id": {
+          "ws": 95,
+          "text": 85
+        },
+        "family:name": {
+          "ws": 101,
+          "text": null
+        },
+        "freq:residences": {
+          "ws": null,
+          "text": null
+        },
+        "freq:amalgamation": {
+          "ws": null,
+          "text": null
+        },
+        "freq:hitomi": {
+          "ws": null,
+          "text": null
+        },
+        "freq:focus": {
+          "ws": 303,
+          "text": null
+        },
+        "freq:davies": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 74,
+      "kind": "sql",
+      "answer": "user_id",
+      "n_steps": 400,
+      "words": {
+        "answer:user_id": {
+          "ws": 85,
+          "text": 86
+        },
+        "family:pid": {
+          "ws": null,
+          "text": null
+        },
+        "family:eid": {
+          "ws": null,
+          "text": 197
+        },
+        "family:book_id": {
+          "ws": null,
+          "text": null
+        },
+        "freq:avenge": {
+          "ws": null,
+          "text": null
+        },
+        "freq:perry": {
+          "ws": null,
+          "text": null
+        },
+        "freq:heighten": {
+          "ws": null,
+          "text": null
+        },
+        "freq:renewable": {
+          "ws": null,
+          "text": null
+        },
+        "freq:relief": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 77,
+      "kind": "sql",
+      "answer": "book_id",
+      "n_steps": 400,
+      "words": {
+        "answer:book_id": {
+          "ws": 20,
+          "text": 95
+        },
+        "family:user_id": {
+          "ws": null,
+          "text": null
+        },
+        "family:pid": {
+          "ws": null,
+          "text": null
+        },
+        "family:eid": {
+          "ws": null,
+          "text": 360
+        },
+        "family:id": {
+          "ws": 95,
+          "text": 85
+        },
+        "family:name": {
+          "ws": 101,
+          "text": null
+        },
+        "freq:advocate": {
+          "ws": null,
+          "text": null
+        },
+        "freq:mrs": {
+          "ws": null,
+          "text": null
+        },
+        "freq:matanikau": {
+          "ws": null,
+          "text": null
+        },
+        "freq:withered": {
+          "ws": 90,
+          "text": null
+        },
+        "freq:marathi": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 78,
+      "kind": "sql",
+      "answer": "user_id",
+      "n_steps": 400,
+      "words": {
+        "answer:user_id": {
+          "ws": 85,
+          "text": 86
+        },
+        "family:pid": {
+          "ws": null,
+          "text": null
+        },
+        "family:eid": {
+          "ws": null,
+          "text": 197
+        },
+        "family:book_id": {
+          "ws": null,
+          "text": null
+        },
+        "freq:height": {
+          "ws": null,
+          "text": null
+        },
+        "freq:overrun": {
+          "ws": null,
+          "text": null
+        },
+        "freq:retains": {
+          "ws": null,
+          "text": null
+        },
+        "freq:believes": {
+          "ws": null,
+          "text": null
+        },
+        "freq:dolls": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 8,
+      "kind": "twohop",
+      "answer": "America",
+      "n_steps": 400,
+      "words": {
+        "answer:America": {
+          "ws": 20,
+          "text": null
+        },
+        "family:Madrid": {
+          "ws": null,
+          "text": null
+        },
+        "family:Euro": {
+          "ws": null,
+          "text": null
+        },
+        "family:Portuguese": {
+          "ws": null,
+          "text": null
+        },
+        "family:liquid": {
+          "ws": null,
+          "text": null
+        },
+        "family:yellow": {
+          "ws": 136,
+          "text": null
+        },
+        "freq:weapons": {
+          "ws": null,
+          "text": null
+        },
+        "freq:mother": {
+          "ws": null,
+          "text": null
+        },
+        "freq:close": {
+          "ws": null,
+          "text": null
+        },
+        "freq:than": {
+          "ws": null,
+          "text": null
+        },
+        "freq:turns": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 81,
+      "kind": "sql",
+      "answer": "book_id",
+      "n_steps": 400,
+      "words": {
+        "answer:book_id": {
+          "ws": 20,
+          "text": 95
+        },
+        "family:user_id": {
+          "ws": null,
+          "text": null
+        },
+        "family:pid": {
+          "ws": null,
+          "text": null
+        },
+        "family:eid": {
+          "ws": null,
+          "text": 360
+        },
+        "family:id": {
+          "ws": 95,
+          "text": 85
+        },
+        "family:name": {
+          "ws": 101,
+          "text": null
+        },
+        "freq:cool": {
+          "ws": null,
+          "text": null
+        },
+        "freq:recovery": {
+          "ws": null,
+          "text": null
+        },
+        "freq:leaves": {
+          "ws": null,
+          "text": null
+        },
+        "freq:ronald": {
+          "ws": null,
+          "text": null
+        },
+        "freq:entangle": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 82,
+      "kind": "sql",
+      "answer": "user_id",
+      "n_steps": 400,
+      "words": {
+        "answer:user_id": {
+          "ws": 85,
+          "text": 86
+        },
+        "family:pid": {
+          "ws": null,
+          "text": null
+        },
+        "family:eid": {
+          "ws": null,
+          "text": 197
+        },
+        "family:book_id": {
+          "ws": null,
+          "text": null
+        },
+        "freq:furlongs": {
+          "ws": null,
+          "text": null
+        },
+        "freq:nappies": {
+          "ws": null,
+          "text": null
+        },
+        "freq:riots": {
+          "ws": null,
+          "text": null
+        },
+        "freq:elaborate": {
+          "ws": null,
+          "text": null
+        },
+        "freq:gift": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 85,
+      "kind": "sql",
+      "answer": "book_id",
+      "n_steps": 400,
+      "words": {
+        "answer:book_id": {
+          "ws": 20,
+          "text": 95
+        },
+        "family:user_id": {
+          "ws": null,
+          "text": null
+        },
+        "family:pid": {
+          "ws": null,
+          "text": null
+        },
+        "family:eid": {
+          "ws": null,
+          "text": 360
+        },
+        "family:id": {
+          "ws": 95,
+          "text": 85
+        },
+        "family:name": {
+          "ws": 101,
+          "text": null
+        },
+        "freq:floodgate": {
+          "ws": null,
+          "text": null
+        },
+        "freq:indicates": {
+          "ws": 226,
+          "text": null
+        },
+        "freq:decoration": {
+          "ws": null,
+          "text": null
+        },
+        "freq:careers": {
+          "ws": null,
+          "text": null
+        },
+        "freq:adaptation": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 86,
+      "kind": "sql",
+      "answer": "user_id",
+      "n_steps": 400,
+      "words": {
+        "answer:user_id": {
+          "ws": 85,
+          "text": 86
+        },
+        "family:pid": {
+          "ws": null,
+          "text": null
+        },
+        "family:eid": {
+          "ws": null,
+          "text": 197
+        },
+        "family:book_id": {
+          "ws": null,
+          "text": null
+        },
+        "freq:escapes": {
+          "ws": null,
+          "text": null
+        },
+        "freq:surrounded": {
+          "ws": null,
+          "text": null
+        },
+        "freq:serb": {
+          "ws": null,
+          "text": null
+        },
+        "freq:miss": {
+          "ws": null,
+          "text": null
+        },
+        "freq:israel": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 89,
+      "kind": "sql",
+      "answer": "book_id",
+      "n_steps": 400,
+      "words": {
+        "answer:book_id": {
+          "ws": 20,
+          "text": 95
+        },
+        "family:user_id": {
+          "ws": null,
+          "text": null
+        },
+        "family:pid": {
+          "ws": null,
+          "text": null
+        },
+        "family:eid": {
+          "ws": null,
+          "text": 360
+        },
+        "family:id": {
+          "ws": 95,
+          "text": 85
+        },
+        "family:name": {
+          "ws": 101,
+          "text": null
+        },
+        "freq:vigilant": {
+          "ws": null,
+          "text": null
+        },
+        "freq:responsibilities": {
+          "ws": null,
+          "text": null
+        },
+        "freq:clouds": {
+          "ws": null,
+          "text": null
+        },
+        "freq:bungalows": {
+          "ws": null,
+          "text": null
+        },
+        "freq:protectorate": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    },
+    {
+      "iid": 9,
+      "kind": "twohop",
+      "answer": "night",
+      "n_steps": 397,
+      "words": {
+        "answer:night": {
+          "ws": 11,
+          "text": 168
+        },
+        "family:North": {
+          "ws": null,
+          "text": null
+        },
+        "family:Rome": {
+          "ws": null,
+          "text": null
+        },
+        "family:blue": {
+          "ws": null,
+          "text": null
+        },
+        "family:Fe": {
+          "ws": null,
+          "text": 237
+        },
+        "family:gas": {
+          "ws": null,
+          "text": null
+        },
+        "freq:ordered": {
+          "ws": null,
+          "text": null
+        },
+        "freq:knowledge": {
+          "ws": null,
+          "text": null
+        },
+        "freq:homes": {
+          "ws": null,
+          "text": null
+        },
+        "freq:charge": {
+          "ws": null,
+          "text": null
+        },
+        "freq:centre": {
+          "ws": null,
+          "text": null
+        }
+      },
+      "answer_earlier_than_all_foils": true,
+      "answer_det_rank": 1
+    }
+  ]
+}

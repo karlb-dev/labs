@@ -1,0 +1,371 @@
+% Workshop handout — special-lab-1: J-space replication on OLMo-3-32B-Think
+% Compile: pdflatex (twice). Figures in ./figures/.
+\documentclass[10pt]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+\graphicspath{{figures/}}
+
+\newcommand{\jlens}{\texttt{jlens}}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{\bfseries The J-space in OLMo-3-32B-Think:\\
+\large an open-weights replication of ``Verbalizable Representations Form a
+Global Workspace in Language Models''}
+\author{special-lab-1, interpretability labs% <-- replace with author name(s)
+}
+\date{July 26, 2026 \\[2pt] \small run \code{2026-07-25\_1726} \;\(\cdot\)\;
+lens \jlens{} @ \code{581d3986} \;\(\cdot\)\; seeds 0 \\[2pt]
+\small\color{gray!60!black} v2 delta run in progress (\S\ref{sec:v2}):
+results below marked [v2] update as instruments land}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+We replicate the core claims of Anthropic's July 2026 ``global workspace''
+paper on \textbf{Olmo-3-32B-Think}, a fully open (weights + training data)
+reasoning model, using the reference Jacobian-lens implementation. The
+\emph{geometry} replicates: a sparse, verbalizable subspace concentrated in
+the middle layers, whose directions are read by 73--94 downstream components
+(vs.\ 0 for random directions). Its \emph{capacity} is roughly an order of
+magnitude thinner than reported for Claude ($\le$0.67\% of activation
+variance vs.\ 6--10\%; $\sim$6 active concepts vs.\ $\sim$25). The paper's
+headline \emph{causal dissociation does not replicate} at our doses: static
+J-space ablation is indistinguishable from random controls, while
+matched-dimension \emph{non-verbalizable} high-variance directions cause the
+real selective damage. Exploiting the thinking variant, we add a result the
+paper could not test: the workspace does \emph{not} contain the answer before
+reasoning begins (median rank 5613), but \textbf{leads the chain of thought by
+a median 46 tokens} during reasoning, and is loaded on demand when thinking is
+suppressed (rank 211 at the answer position, collapsing monotonically
+L30$\to$L60). An eval-awareness probe finds a highly consistent
+``being-evaluated'' readout direction ($p<10^{-3}$ on all probed layers) that
+is semantically legible yet behaviorally inert under ablation.
+\end{abstract}
+
+\section{Setup}
+
+\textbf{Model.} \code{allenai/Olmo-3-32B-Think} (64 layers, $d=5120$), bf16 on
+one 96\,GB RTX PRO 6000 Blackwell --- full-precision tier: no quantization, no
+gradient checkpointing.
+\textbf{Lens.} Reference \jlens{} package (\code{anthropics/jacobian-lens}),
+fit on 120 WikiText-103 prompts $\times$ 128 tokens (the neuronpedia reference
+recipe; \jlens{} README reports saturation near 100; the paper used 1000).
+Source layers: dense middle band L20--44 (step 2) + early/late controls
+\{4,8,12,16,48,52,56,60\}; target L63; four 30-prompt slices merged via
+\code{JacobianLens.merge}. Fit cost 5.2\,h ($\sim$157\,s/prompt, peak
+80.6\,GB); per-prompt $\max\|J\|/\sqrt{d}$ stable at 0.94--0.95 and
+running-mean deltas fell $\sim 1/n$ (converged).
+\textbf{Dictionary.} Concept $i$ at layer $\ell$ read through the
+RMSNorm-gain linearization $(W_U \odot g)\,J_\ell$, rows normalized.
+\textbf{Sanity gate.} Easy single-token factual probes: 17/21 hit rank
+$\le$20 mid-band for \emph{both} J-lens and logit lens (ceiling). The
+discriminative check, multihop bridge-entity readout at the final prompt token
+($n=60$): J-lens pass@1 \textbf{0.283} vs.\ logit-lens 0.200 (+41\% rel.);
+pass@20 0.547 vs.\ 0.586 --- J-lens sharpens the rank-1 readout without
+expanding the top-20 shortlist, the same ``replicates, less clean'' flavor as
+Nanda's Qwen~3.6~27B replication.
+
+\section{Descriptive geometry: the workspace exists, ten times thinner}
+
+Sparse nonnegative gradient-pursuit decomposition of 200 diverse prompts
+(factual QA, chained arithmetic, code/SQL, prose) onto the dictionary:
+
+\begin{itemize}\itemsep2pt
+\item \textbf{Sparsity.} Median active concepts per (position, layer):
+\textbf{6} at $\theta{=}0.01$, 3 at $\theta{=}0.02$, $k_{90}\!\approx\!4$,
+peaking at L36--42. Paper: $\sim$10--25.
+\item \textbf{Variance share.} $\le$\textbf{0.67\%} of centered activation
+variance inside the band (0.91\% at L60, unembedding-adjacent). Paper:
+6--10\%. The capacity gap ($\sim$10$\times$) is threshold-robust.
+\item \textbf{Localization.} The cleanest signature is top-1 persistence
+across adjacent positions: 0.19--0.20 at L32--40 vs.\ 0.03--0.08 at both ends
+--- an inverted U at 50--66\% depth (paper band: 33--92\%).
+\item \textbf{Broadcast --- with a catch.} Top J-directions at L24/32/40 are
+read (input-projection alignment $z>3$) by \textbf{73--94} downstream
+components vs.\ \textbf{0} for matched random directions ($p\approx10^{-24}$).
+But matched-dimension top \emph{non-J} principal components are read by
+77--125: wide readout is a property of high-variance directions generally,
+not of verbalizable ones specifically.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.48\linewidth]{f1_variance_share_by_layer.png}\hfill
+\includegraphics[width=.48\linewidth]{f2_active_concepts_by_layer.png}
+\caption{\textbf{Left:} J-space share of activation variance by layer; shaded
+band = paper's Claude range (6--10\%). \textbf{Right:} median active-concept
+count by layer under three activation thresholds; dashed line = paper's
+$\sim$25.}
+\end{figure}
+
+\section{Causal ablation: the dissociation does not replicate}
+
+Battery: 2-hop probe-swap facts ($n{=}60$), chained arithmetic ($n{=}30$),
+3-table SQL with join-key checks ($n{=}30$), vs.\ one-hop facts, grammatical
+minimal pairs, held-out prose NLL. Conditions (band L20--44, doses
+$k\in\{10,20,40\}$ dims/layer, 2000-resample bootstrap CIs): static top-$k$
+J-span; matched random subspace; matched top non-J PCs; paper-faithful
+per-token dynamic top-10.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{lccccccc}
+\toprule
+condition & 2-hop & 2-hop $\Delta$lp & arith & SQL & 1-hop & grammar & NLL \\
+\midrule
+none (baseline)        & 0.58 & ---            & 0.87 & 0.67 & 0.60 & 1.00 & 2.71 \\
+J-space dyn top-10     & 0.00 & $-$23.0        & 0.00 & 0.00 & 0.00 & 0.30 & 24.34 \\
+J-span $k{=}20$        & 0.52 & $-$0.17        & 0.93 & 0.67 & 0.60 & 1.00 & 2.85 \\
+random $k{=}20$        & 0.52 & $-$0.08        & 0.90 & 0.67 & 0.60 & 1.00 & 2.75 \\
+non-J PCA $k{=}20$     & 0.28 & $\mathbf{-0.86}$ & 1.00 & \textbf{0.00} & 0.70 & 1.00 & 3.45 \\
+\bottomrule
+\end{tabular}
+\caption{Accuracy (and 2-hop answer-logprob delta vs.\ baseline) under
+ablation; $k{=}10/40$ follow the same pattern. Static J-span $\approx$ random
+everywhere; the \emph{non-verbalizable} control causes the selective damage.}
+\end{table}
+
+Three observations. (1) The paper-faithful \emph{dynamic} condition removes
+whatever the model is currently computing --- output degenerates to asterisks,
+NLL 2.71$\to$24.34 --- reproducing the ``live-computation confound'' Nanda
+flagged; it cannot count as evidence for a workspace. (2) Static J-span
+ablation is statistically indistinguishable from random subspaces on every
+task \emph{and} on the finer answer-logprob instrument
+($\Delta$ $-0.15\ldots-0.18$ vs.\ $-0.01\ldots-0.11$; CIs straddle 0).
+(3) The non-J high-variance control produces the only structured damage ---
+and generation samples show its signature is \emph{register destruction}: SQL
+completions lose the formal register entirely (\code{SELECT the user's city
+and the user's country, and the user's name, \ldots}) while arithmetic
+content survives. At these doses, OLMo's causal load sits in generic
+high-variance directions, not in the verbalizable subspace.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.48\linewidth]{f4_ablation_dissociation.png}\hfill
+\includegraphics[width=.48\linewidth]{f5_dose_response.png}
+\caption{\textbf{Left:} per-task accuracy with 95\% bootstrap CIs under the
+$k{=}10$ conditions. \textbf{Right:} dose--response for multi-step vs.\
+fluency task groups.}
+\end{figure}
+
+\section{The thinking-model angle: the workspace leads the chain of thought}
+
+Olmo-3-32B-Think emits explicit reasoning tokens, so the paper's identity
+claim (workspace content $=$ verbalizable reasoning substrate) becomes
+testable in time. 90 items (40 two-hop, 30 chained arithmetic, 20 SQL
+join-key); J-readout at L24/32/40 at every generation step; suppressed-CoT
+variant closes the template's open \code{<think>} immediately.
+
+\begin{itemize}\itemsep2pt
+\item \textbf{Pre-CoT anticipation: null.} At the final prompt token the
+answer's median J-rank is \textbf{5613} (10\% of items $\le$20); logit lens
+11610 (0\%). The workspace does not precompute the answer before reasoning.
+\item \textbf{Intra-CoT anticipation: strong.} The answer enters a read
+layer's top-8 during thinking in 82--100\% of items, and on traced items
+($n{=}34$) the workspace holds the answer a \textbf{median 46 steps before
+the CoT first states it} (2-hop 48.5, SQL 38, arithmetic 9.5; workspace first
+in 91\% of items).
+\item \textbf{Answer-time loading.} Forcing an immediate answer (closed
+\code{</think>}, zero reasoning tokens) pulls the answer's median rank from
+5613 to \textbf{211} (23\% $\le$20), collapsing monotonically
+L30$\to$L60: $2048 \to 1549 \to 519 \to 305 \to 118 \to 63 \to 10 \to 6$,
+with J-lens ahead of logit lens through L28--40. Suppression costs accuracy:
+2-hop $0.95\to0.82$, arithmetic $1.00\to0.90$, SQL $1.00\to1.00$.
+\item \textbf{Faithfulness probe.} 116 events where a stable workspace top-1
+word never appears in the nearby CoT (59/90 items) --- but only 4 involve the
+final answer. The recurring divergent words are \emph{discourse-mode}
+adverbs: \code{famously} (stable top-1 for 7--10 steps while the CoT recalls
+``Springfield \ldots{} birthplace of basketball''), \code{respectively},
+\code{etc} during enumerations. We find no ``workspace holds X, CoT argues Y,
+answer is X'' case; the workspace appears to track the discourse mode of the
+current reasoning span rather than concealed content.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.48\linewidth]{f6_precot_anticipation.png}\hfill
+\includegraphics[width=.48\linewidth]{f8_broadcast_fanout.png}
+\caption{\textbf{Left:} ECDF of the answer's rank at the last prompt token
+(best mid layer), J-lens vs.\ logit lens --- anticipation is absent in both.
+\textbf{Right:} median downstream readers per direction group (broadcast).}
+\end{figure}
+
+\section{Stretch: an eval-awareness direction, legible but inert}
+
+Twenty tasks rendered neutrally vs.\ prefixed with an explicit ``formal
+evaluation, you are being tested and scored'' framing; paired J-readout
+differencing at the final prompt token, seven band layers. A consistent
+direction emerges far beyond the pre-registered criterion: sign-flip
+permutation $p<10^{-3}$ at \emph{every} layer, mean pairwise cosine of paired
+deltas 0.48--0.71, mean-delta norm growing with depth (22$\to$134). From L32
+upward its top decoded tokens are literally the evaluation lexicon
+(\code{evaluation}, \code{assessed}, \code{assessing}, \code{eval}); at
+L24--28 the associates are obliquer (\code{monitored}, \code{internally},
+\code{careful}). Yet the gated mini-ablation --- projecting out the mean
+$\Delta h$ direction during generation --- changed essentially nothing.
+Because the framing states the cue words outright, this result is best read
+as a clean demonstration that the J-space \emph{verbalizes context}, not as
+evidence of a latent ``I am being tested'' state; the confound-breaking
+variant (implied, unstated cues) is future work.
+
+\section{Side-by-side}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\begin{tabular}{p{2.9cm}p{3.6cm}p{3.2cm}p{4.6cm}}
+\toprule
+ & Claude (paper) & Qwen 3.6 27B (Nanda) & \textbf{Olmo-3-32B-Think (ours)} \\
+\midrule
+Lens recipe & 1000 prompts & 25 Pile prompts & 120 WikiText prompts, 21 layers \\
+Active concepts & $\sim$10--25 & not headline & 6 ($\theta{=}0.01$); 3 ($\theta{=}0.02$) \\
+Variance share & 6--10\% & --- & $\le$0.67\% ($\sim$10$\times$ thinner) \\
+Localization & 33--92\% depth & bands ``less clean'' & inverted U, peak 50--66\% depth \\
+Broadcast & wide readout & --- & 73--94 vs.\ 0 random; but non-J PCs 77--125 \\
+Causal dissociation & top-10 ablation kills multi-hop, spares shallow & flagged as possibly confounded & \textbf{null}: static J $\approx$ random; non-J PCs do the damage; dynamic = confounded collapse \\
+Workspace vs.\ CoT & identity claim; CoT partially rescues & poetry/arith evals failed & pre-CoT null; \textbf{leads CoT by 46 steps}; answer-time loading under suppression \\
+\bottomrule
+\end{tabular}
+\caption{Replication scorecard. Paper/Nanda entries as pinned in the lab's
+PLAN/LOG from the 2026-07-25 fetches.}
+\end{table}
+
+\section{Limitations}
+
+(1) Dictionary uses the RMSNorm-gain linearization $(W_U\odot g)J_\ell$; the
+final block's full nonlinearity is not inverted. (2) Fitted band 20--44
+(33--70\% depth) $\subset$ the paper's 33--92\%; the suppressed-CoT profile
+(rank still collapsing L44$\to$60) suggests unfit late-band structure.
+(3) Active-concept thresholds are not perfectly commensurable with the
+paper's pursuit coefficients; the variance-share gap is the firmer capacity
+statement. (4) The non-J control is top-variance, not variance-\emph{matched};
+its larger effect partly reflects more energy removed --- the single most
+important follow-up. (5) The dynamic ablation deletes live computation
+(Nanda's confound); a frozen prompt-selected top-$k$ is the clean middle
+instrument, not yet run. (6) WikiText corpus (not Dolma); 120 fit prompts;
+single seed; modest $n$ (30--60/task); CoT tasks near ceiling compress
+suppression contrasts. (7) Phase-5 framing states its cue words (semantic
+echo); its ablation was inert.
+
+\section{What to run next}
+
+(1) Variance-matched non-J controls for broadcast and ablation --- energy
+vs.\ content. (2) Frozen prompt-selected top-10 ablation during generation.
+(3) CoT-rescue: static ablations under think-mode prompting (the paper
+predicts externalization rescues; our suppression asymmetry predicts it
+here). (4) Fit L46--62 and redo the readouts where answer formation actually
+happens. (5) Dolma-corpus lens --- the scientific-legibility payoff of doing
+this on OLMo. (6) \code{famously}-attractor forensics across models.
+(7) Implied-cue eval-awareness with a behavioral endpoint.
+
+\section{The v2 delta run: resolving the open instruments}
+\label{sec:v2}
+
+The v1 verdict left a live question: \emph{is the causal null a property of
+OLMo or of our instruments?} The published Qwen comparison is narrower than
+"Qwen has a J-space" --- its readout evals replicated while its causal
+interventions were flagged by the replicator himself as possibly confounded
+--- and v1 has three known instrument gaps, each capable of producing a
+false null: the non-J control was not energy-matched (its damage could be an
+energy artifact), the static J-span is position-agnostic (could miss
+position-specific workspace structure), and the fitted band stops at 70\%
+depth while v1's own suppressed-CoT profile shows answer formation
+continuing to L60. The v2 run closes these in order (variance matching,
+frozen prompt-selected ablation, late-band fit), calibrates the cot-lead
+headline against a false-positive floor, then tests CoT rescue. Decision
+tree: if the clean instruments flip the causal result, v1's null was
+harness; if they confirm it, the same instruments go to Qwen 3.6 27B
+(Neuronpedia's published lens, our harness) to separate model from method.
+
+\subsection{[v2-P4] The cot-lead headline survives its false-positive floor}
+
+The v1 claim --- workspace holds the answer a median 46 steps before the CoT
+states it --- used a permissive detector (any case/space variant first-token
+in any of 3 read layers' top-8, across hundreds of steps), so any word gets
+many chances to fire. Running the \emph{identical} detector on matched foils
+(fig.~\ref{fig:foils}): frequency-matched random content words fire at
+\textbf{0.06} (vs.\ \textbf{0.92} for answers) --- the pure noise floor is
+15$\times$ below the signal. Same-family wrong answers (other bridge
+entities, other join columns, nearby numbers) fire at 0.32 --- but where
+they also appear in the CoT text their median lead is \textbf{3 steps}
+(vs.\ 46): family foils show up in the workspace \emph{concurrently} with
+the text discussing them, exactly what a faithful context-verbalizing
+readout should do while the model enumerates candidates. Within items, the
+answer is detected earlier than \emph{every} one of its foils in 66\% of
+items (median answer detection rank 1). The 46-step lead is specific to the
+answer, not an artifact of detector permissiveness.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.9\linewidth]{f9_foil_calibration.png}
+\caption{Foil calibration of the cot-lead detector. \textbf{Left:}
+detection rates --- answers 0.92, family foils 0.32, frequency-matched
+words 0.06. \textbf{Right:} lead distributions where text mentions exist;
+the long positive lead is answer-specific.}
+\label{fig:foils}
+\end{figure}
+
+\subsection{[v2-P1a] v1's controls were energy-mismatched by an order of
+magnitude --- measured, then fixed}
+
+Streaming the raw residual stream over the 200-prompt descriptive set and
+measuring exactly what each ablation hook removes: the k-dim J-span carries
+$0.5$--$1.8\%$ of raw activation energy (k=10/20/40), which equals
+\textbf{25--33 / 44--54 / 80--94 random dimensions} — or just \textbf{1--2 /
+2--5 / 3--8 deep non-J PCs}. Both of v1's rank-matched comparisons were
+therefore energy-confounded, in opposite directions: \code{random\_k}
+removed $\sim$3$\times$ \emph{less} energy than the J-span (which makes
+v1's "J $\approx$ random" \emph{conservative} --- J removed more energy and
+still did no more damage), while \code{nonJ\_pca\_k} (top-k PCs) removed
+far \emph{more} (its damage is suspect). The v2 matched controls hit the
+J-span's removed energy to within 1\% at every band layer and dose
+(fig.~\ref{fig:ematch}); the top PCs are so energy-fat that a contiguous
+\emph{window} of deeper PCs (e.g.\ PCs 55--60) was needed at all 13 layers.
+The matched causal grid is running; its result decides whether v1's
+"non-J does the real damage" was content or energy.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.8\linewidth]{f10_energy_match.png}
+\caption{Energy-match verification: removed energy of each matched control
+relative to its J-span target (log scale), all band layers and doses.
+Every point sits on the 1.0 line, inside the pre-registered acceptance
+band.}
+\label{fig:ematch}
+\end{figure}
+
+% --- [v2 pending subsections: P1 matched grid result (f11), P2 frozen
+% --- ablation (f12), P3 late band (f13, f14), P5 CoT rescue, P6 seeds,
+% --- phase Q Qwen — added as each lands; see inprogress.md for status]
+
+\subsection*{Artifacts}
+
+Everything regenerates from saved metrics without model access:
+run dir \code{interpret/special-lab-1/2026-07-25\_1726/} (Drive) ---
+\code{report/REPORT.md} (full prose), \code{report/summary.json} (headline
+numbers), \code{metrics/*.json} (per-experiment), \code{code/special\_lab1/}
+(pipeline s0--s10 + PLAN/LOG). Model: \code{allenai/Olmo-3-32B-Think}.
+Lens engine: \code{github.com/anthropics/jacobian-lens} @ \code{581d3986}.
+
+\begin{thebibliography}{9}\footnotesize
+\bibitem{paper} Anthropic Interpretability.
+\emph{Verbalizable Representations Form a Global Workspace in Language
+Models}. Transformer Circuits Thread, July 2026.
+\url{https://transformer-circuits.pub/2026/workspace/index.html}
+\bibitem{post} Anthropic. \emph{A global workspace in language models}
+(research post), July 2026.
+\url{https://www.anthropic.com/research/global-workspace}
+\bibitem{jlens} Anthropic. \emph{jacobian-lens} (reference implementation).
+\url{https://github.com/anthropics/jacobian-lens}
+\bibitem{nanda} N.~Nanda. Replication review of the global-workspace results
+on Qwen 3.6 27B. LessWrong, July 2026.
+\bibitem{olmo} Ai2. \emph{OLMo 3: fully open language models}, 2025--2026.
+\url{https://allenai.org/olmo}
+\end{thebibliography}
+
+\end{document}
