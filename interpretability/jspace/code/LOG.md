@@ -144,3 +144,76 @@
   (texlive-latex-base+recommended), visually verified pp.1–2.
 - Shipped self-contained to Drive report/handout/ (tex + PDF + figures/) —
   Overleaf-ready; author line left as placeholder for the user.
+
+## 2026-07-26 07:0x–09:30 (VM3) — v2 P4, P1, P2 landed; died mid-P3
+(Backfilled on VM4 from inprogress.md + metrics; VM3 was reclaimed before
+this file got the entries.)
+- P4 s13 (07:57, CPU): cot-lead foil calibration — answer det 0.92 / median
+  lead 46 vs freq-matched noise floor det 0.06; family foils det 0.32 but
+  lead ≈3 (concurrent with text = candidate enumeration, the faithful-readout
+  signature); answer earlier than ALL its foils in 66% of items, median det
+  rank 1. v1 lead claim SURVIVES with a floor. -> metrics/cot_foils.json, f9.
+- P1 s11 (08:35): energy-matched grid. Measured first: v1's rank-matched
+  controls were energy-mismatched ~10x in OPPOSITE directions (random_k ~3x
+  lighter than J-span; top-k nonJ PCs far heavier — windowed deep-PC fallback
+  needed at all 13 layers). At matched energy (0.97–1.01 per layer/dose):
+  ALL groups = baseline at every dose ≤40 dims/layer; SQL 0.667 at all doses
+  (v1 unmatched: 0.000); twohop_lp Δ −0.01/−0.17/−0.15 CIs⊃0. v1's non-J
+  "selective damage" was 100% energy artifact; causal null now CLEAN and
+  v1's J≈random was conservative (J carries 2–5x more energy per rank).
+  -> metrics/energy_match.json + ablation_v2.json, f10/f11. Pushed 53fc1c2.
+- P2 s12 (09:10): frozen per-item ablation — MARQUEE. frozen_j10 deletes the
+  retrieved fact (twohop_lp −4.63 vs base −1.74, Δ−2.9 nats CI[−5.5,−3.8];
+  recall 0.58→0.23 on single AND multi-hop) while frozen_rand10 = baseline
+  everywhere, generations coherent (samples audited). NOT the paper's
+  dissociation (shallow collapses equally → recall content channel, not
+  scratchpad). live_rand10 = baseline → v1's live-J lobotomy was J-specific
+  (pool-size caveat: 5120-row dict vs full vocab). -> frozen_ablation.json,
+  f12. Pushed f036a60.
+- P3 s14 launched 09:10; VM3 reclaimed ~09:30 with slice0 at 10/30 on Drive.
+
+## 2026-07-26 15:39–15:50 (VM4, fresh session — VM3 reclaimed)
+- Restored via inprogress.md recipe: jlens clone @581d3986 byte-identical to
+  Drive mirror; code from the v2 mirror (sync_code.sh excludes handout/ from
+  the v2 mirror — restored handout/ from 2026-07-26_v2/report/handout/, tex
+  matches the repo copy from push f036a60). SSH key already present on this
+  VM (~/.ssh mtime 15:33, pre-session); push access verified by dry-run.
+- GPU: RTX PRO 6000 Blackwell 97 GB again; torch 2.11.0+cu128, transformers
+  5.13.1 (same as VM3); bf16 matmul sanity pass (new s20_vm4_sanity.py).
+- texlive reinstalled (fresh VM had none; needed apt-get update first, two
+  404s otherwise); handout recompiles clean, 8 pages.
+- 15:45 s14 resumed from slice0 10/30 (log: logs/s14_v2_vm4.log). Plan
+  unchanged: s14 -> s15 (a,b + --with-cot c) -> s16 -> s17 -> phase Q
+  decision -> REPORT_v2 + claim-ledger instantiation.
+- Prep while fitting: s18_qwen_instruments.py WRITTEN (gated; hub pins
+  verified — see PLAN_v2 phase-Q row); memory of Neuronpedia lens layout
+  recorded there. f11 legend moved lower-left (was clipping on the
+  grammaticality row).
+
+## 2026-07-26 17:22–17:4x (VM4) — s14 done; s15 phase a+b landed (P3 verdict forming)
+- s14 DONE 17:22: merged 120-prompt late lens {46,50,54,58,62} -> v2
+  lens/olmo32bthink_late.pt. 45s/prompt (backward spans only L46->63),
+  peak 69.3GB. Raw fitlate_*.ckpt deleted from Drive+local after merge
+  (2GB; slice lenses retained) — user flagged disk pressure.
+- s15 phase a DONE 17:34 (fast: 5 layers, ~1 min + PCA): **no late-shifted
+  workspace.** Var share L46/50/54/58 = 0.64/0.61/0.65/0.72% (flat, same
+  ~10x-thinner capacity as mid band), L62 = 1.60% (unembed-adjacent, like
+  v1's L60 0.91%); act@0.01 = 4-7; top-1 persistence DECLINES 0.153->0.026
+  monotonically — the inverted-U's right side. -> descriptive_late.json +
+  layer_state_late/.
+- s15 phase b data complete (90 items on Drive) but the run CRASHED in the
+  aggregation: fresh in-memory items keep INT layer keys, aggregation
+  indexes str(l) -> KeyError '46'. Fix: reload PROF_OUT from disk before
+  computing median_profile (JSON round-trip normalizes keys). Also: the
+  `| tee` pipeline masked the non-zero exit (task reported exit 0) —
+  relaunched under `set -o pipefail`; earlier runs' completion claims were
+  all verified against metrics, not exit codes, so nothing else affected.
+- Phase b numbers (computed from the saved items, rerun will confirm):
+  think-mode answer median rank 3916-7291 in the late band (best-layer
+  median 1670, 0% <=20) — pre-CoT null SURVIVES the dedicated late lens
+  (C5 falsifier refuted). Suppressed: per-layer medians 61/58/8/6/5
+  (L46..62), best-late-layer median 3, 76% <=20, 58% <=5. Logit lens reads
+  the late band equally well (30/18/6/4/4) — J-over-logit is a MID-band
+  phenomenon; both lenses converge near the unembedding (final median 4).
+- Handout §[v2-P3] subsection written (phase a+b); phase c (cot-lead-late)
+  folds in when it lands.

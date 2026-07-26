@@ -453,8 +453,73 @@ uninterpretable collapse.}
 \label{fig:frozen}
 \end{figure}
 
-% --- [v2 pending subsections: P3 late band (f13, f14), P5 CoT rescue,
-% --- P6 seeds, phase Q Qwen — added as each lands; see inprogress.md]
+\subsection{[v2-P3] The late band holds readout, not workspace: no
+late-shifted capacity, anticipation still null}
+
+v1 fitted 33--70\% of depth while the paper's band reaches $\sim$92\%, and
+v1's own suppressed-CoT profile showed the answer's rank still collapsing
+into the unfitted region --- leaving open that OLMo's workspace is simply
+\emph{late-shifted} and every v1 null was measured in front of it. We
+fitted a dedicated late-band lens on L\{46,50,54,58,62\} (same corpus,
+recipe, and seeds; backward graphs span only L46$\to$63, so the fit cost
+45\,s/prompt vs.\ v1's 157) and redid the readouts. The fitted coverage now
+spans the paper's entire band.
+
+\begin{center}\small
+\begin{tabular}{lccccc}
+\toprule
+late layer & 46 & 50 & 54 & 58 & 62 \\
+\midrule
+variance share (\%) & 0.64 & 0.61 & 0.65 & 0.72 & \emph{1.60} \\
+active concepts ($\theta{=}0.01$) & 6 & 5 & 5 & 4 & 7 \\
+top-1 persistence & 0.153 & 0.120 & 0.091 & 0.073 & 0.026 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{(a) No late workspace.} Variance share stays flat at 0.61--0.72\%
+through L46--58 --- the same $\sim$10$\times$-thinner-than-Claude capacity
+as the mid band --- and top-1 persistence \emph{declines} monotonically
+(0.15$\to$0.026), completing the inverted-U whose left side v1 measured.
+The one uptick, 1.6\% at L62, is the unembedding-adjacent signature already
+seen at L60 in v1 (0.91\%): it has the \emph{lowest} persistence in the
+entire profile, i.e.\ fast-turnover next-token content, not a persistent
+workspace (fig.~\ref{fig:late}, left).
+
+\textbf{(b) Anticipation stays null; answer-time loading sharpens.} With
+the dedicated late lens, the answer is still absent before thinking begins
+(think-mode median rank 3\,916--7\,291 across late layers; best-layer
+median 1\,670, 0\% of items $\le$20) --- refuting the ``the mid-band lens
+just missed it'' escape for the v1 pre-CoT null. Under suppressed CoT the
+collapse v1 glimpsed is confirmed and localized: per-layer median ranks
+61$\to$58$\to$8$\to$6$\to$5 across L46--62, best-late-layer median
+\textbf{3} (76\% of items $\le$20, 58\% $\le$5). Notably the plain logit
+lens reads the late band equally well (30/18/6/4/4) --- the J-lens
+advantage over the logit lens is a \emph{mid-band} phenomenon; by L58--62
+both lenses converge on the output distribution (final-layer median rank
+4), as they must near the unembedding.
+
+Consequence for the causal verdict: the last descriptive escape hatch is
+closed. The late band is where answers \emph{surface}, not where a thicker
+workspace \emph{lives} --- so the P1/P2 causal instruments were aimed at
+the right band all along, and the capacity claim [SL1-C1] now covers the
+paper's full 33--92\% depth range. (The late-band CoT-lead re-read ---
+phase c --- is running; it lands in the next refresh together with P5.)
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.48\linewidth]{f13_late_variance.png}\hfill
+\includegraphics[width=.48\linewidth]{f14_late_answer_profile.png}
+\caption{\textbf{Left:} variance share by layer with the v2 late lens
+(hollow markers) appended to the v1 profile; the paper band is shaded.
+\textbf{Right:} median answer rank by layer, think vs.\ suppressed, J-lens
+vs.\ logit lens, late band.}
+\label{fig:late}
+\end{figure}
+
+% --- [v2 pending subsections: P3 phase c cot-lead-late (folds into the
+% --- P3 subsection above), P5 CoT rescue, P6 seeds, phase Q Qwen —
+% --- added as each lands; see inprogress.md]
 
 \subsection*{Artifacts}
 

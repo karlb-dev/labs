@@ -140,7 +140,7 @@ def fig_vmatch():
                       C["nonj"], "o")], TASKS5)
     ax.set_xlabel("accuracy (bootstrap 95% CI)")
     ax.set_title("Variance-matched causal grid, k=20 (v2 P1)")
-    ax.legend(frameon=False, loc="lower right", fontsize=9)
+    ax.legend(frameon=False, loc="lower left", fontsize=9)
     save(fig, "f11_vmatch_grid.png")
     cc = ab["conditions"]
     out = {}

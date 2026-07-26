@@ -181,6 +181,7 @@ def phase_b(model, lens, tok):
         atomic_write_json(res, PROF_OUT)
         if it["iid"] % 15 == 0:
             log(f"phase b item {it['iid']}")
+    res = read_json(PROF_OUT)  # JSON round-trip: layer keys uniformly str
     prof = {}
     for name, path in (("think_jlens", ("think", "jlens_rank_by_layer")),
                        ("think_logit", ("think", "logit_rank_by_layer")),

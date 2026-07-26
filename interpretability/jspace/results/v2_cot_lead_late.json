@@ -1,0 +1,27 @@
+{
+  "layers": [
+    46,
+    50,
+    54,
+    58,
+    62
+  ],
+  "items": {
+    "0": {
+      "kind": "twohop",
+      "n_steps": 400,
+      "emerge_late": 21,
+      "text_step": 215,
+      "lead_late": 194,
+      "seconds": 24
+    },
+    "1": {
+      "kind": "twohop",
+      "n_steps": 400,
+      "emerge_late": 13,
+      "text_step": 122,
+      "lead_late": 109,
+      "seconds": 23
+    }
+  }
+}
