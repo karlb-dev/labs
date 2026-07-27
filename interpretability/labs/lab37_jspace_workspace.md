@@ -142,6 +142,18 @@ eval-awareness generations.
       eval-awareness generations. The lab ships as
       complete-pending-label; no claim above depends on the labels.
 
+## Teaching entry points
+
+Students should start with `jspace/README.md` §"Start here" (three-idea
+digest), then `jspace/report/REPORT_v2.md` §"How to read this lab" — the
+tutorial section: what the fitted-Jacobian lens computes (push-directions,
+not resemblance; readout claim ≠ workspace claim), the task battery with
+verbatim items (the Amazon→Brazil→Portuguese probe), and the
+three-instrument taxonomy for causal cells (shared temp-table vs delete-
+the-row vs delete-each-word-at-birth, with the inverted-prior rule for
+sub-1% ablations and the amnesia-not-aphasia samples). The handout carries
+the compact version as §"How to read the instruments".
+
 ## Readings
 
 - Anthropic, Verbalizable Representations Form a Global Workspace in

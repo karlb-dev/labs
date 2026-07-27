@@ -64,6 +64,180 @@ statics on baseline.
 | CoT lead (foil-calibrated) | 46 steps mid-band / 49.5 late-band | not run (gated) | (workspace precedes text) |
 | pre-CoT anticipation | null (all bands) | not run | — |
 
+## How to read this lab (a reader's guide)
+
+Everything below assumes three pieces of reader's-model that the phase
+sections use without restating. This section builds them: what the lens
+actually computes, what the tasks actually look like, and how to read a
+causal-ablation cell without being fooled in either direction.
+
+### The lens: a fitted, averaged Jacobian — not a per-prompt backprop
+
+The logit lens takes the residual state h(ℓ) mid-network, applies the
+unembedding, and pretends layer ℓ is the last layer — "which output
+tokens does this state already resemble?" The J-lens asks the better
+question: "what would the *rest of the network* make of this state?" It
+reads h(ℓ) through J_ℓ = ∂logits/∂h(ℓ) — every layer downstream of ℓ
+collapsed into one linear map.
+
+Three properties matter for interpreting every number in this report:
+
+1. **It is fitted once, then frozen.** No backward pass happens at
+   read time. J_ℓ is estimated by backprop over 120 WikiText prompts
+   during fitting (the 5.2 GPU-hour artifact `olmo32bthink_lens.pt`) and
+   averaged into one fixed matrix per layer. Readout is a matrix
+   multiply against a precomputed dictionary, one row per vocab token:
+   D = (W_U ⊙ g)·J_ℓ. This is the method's power (cheap, reusable) and
+   its central caveat: the true Jacobian varies per input — attention
+   patterns and MLP gates change — while the lens applies one
+   linearization to everything. That is why it is noisy, why the
+   community replication found false positives, and why the fitting
+   corpus (WikiText here, Dolma as follow-up) is a real degree of
+   freedom.
+2. **The direction of the map is "push", not "resemblance."**
+   Dictionary row v is the direction at layer ℓ along which pushing
+   h(ℓ) most raises token v's *final* logit, after downstream
+   processing. Reading = asking which push-directions the state already
+   has large components along. A concept can therefore be J-lens-visible
+   while logit-lens-invisible if it is stored in coordinates that only
+   become output-aligned twenty layers later. That is not hypothetical
+   in this lab: the J-lens beats the logit lens on the multihop bridge
+   readout (pass@1 0.283 vs 0.200 on OLMo, 0.350 vs 0.317 on Qwen), and
+   its advantage lives exactly where the story predicts — the mid-band —
+   vanishing by L58–62 where both lenses converge on the output
+   distribution (P3).
+3. **The readout claim is not the workspace claim.** Finding
+   "Portuguese" mid-network with a gradient-corrected lens makes a
+   better logit lens — instrumentation, not cognitive architecture. The
+   paper's workspace claim is a *conjunction*: the verbalizable
+   directions form a subspace that is small (sparse, low variance
+   share), localized (mid-band), broadcast (read by many downstream
+   components), and — load-bearing — causally privileged (ablate it and
+   multi-step reasoning dies while fluency survives). This lab tests the
+   conjunction; the punchline is that it breaks at exactly the
+   interesting joint (causal privilege) while the readout side keeps
+   getting stronger.
+
+### The tasks, concretely
+
+The battery's items are small enough to show in full — and the report's
+claims are easier to audit knowing exactly what was measured.
+
+- **Two-hop factual** (n=60, from `jacobian-lens`'s probe-swap set;
+  the composition probe). Item 0 verbatim:
+  > *"Fact: The language spoken in the country where the Amazon River
+  > ends is "* → bridge entity **Brazil** (never stated) → answer
+  > **Portuguese**.
+  The bridge never appears in the prompt, so answering requires an
+  internal hop. (`twohop` scores the greedy next token; `twohop_lp` —
+  the fine instrument behind the −2.9-nat headline — scores the
+  answer's logprob at the final position, no generation involved. The
+  set also carries `swap_to` fields — e.g. Amazon→Mexico→Spanish — used
+  by the upstream repo's swap experiments, not by this battery.)
+- **Single-hop factual** (n=31): same recall depth, no composition —
+  *"The capital of France is"* → " Paris". This is the task whose
+  survival or collapse classifies a deletion as scratchpad-like vs
+  content-like.
+- **Chained arithmetic** (n=30, generated): *"Q: What is ((34 + 26) +
+  21) − 12? Work step by step... A: (34 + 26) ="* — multi-step but
+  fact-free.
+- **Multi-clause SQL** (n=30 over 3 schemas — a known diversity limit):
+  join-completion from a schema comment block, scored by regex checks
+  on the join conditions.
+- **Fluency guards**: prose NLL over 20 held-out WikiText passages and
+  20 grammaticality pairs (good-vs-bad sequence NLL).
+
+### How to read a causal cell: three instruments, three questions
+
+First, invert your prior about what a null means. Each ablation removes
+10–40 directions out of 5120 (<1% of dimensions, and a measured
+≈0.5–1.1% of raw activation energy at k=20). The default expectation
+from everything known about pruning robustness is that *nothing
+happens* — and the energy-matched random control confirms it: same
+energy removed, every task at baseline, every dose (P1). So the
+scientific content is never "deleting things breaks the model." It is:
+**when a sub-1% sliver breaks something selectively, that sliver is
+special — and the pattern of what survives tells you special *how*.**
+
+A database analogy keeps the three instruments straight:
+
+1. **Static span** (the paper's claim) = *drop one small shared
+   temp-table*. The same ~20 directions are deleted for every prompt —
+   corpus-level, task-agnostic, chosen once. If multi-join queries then
+   fail while single-table lookups run fine, chaining specifically
+   routes through a shared low-dimensional buffer: that dissociation
+   (deep dies AND shallow survives AND fluency survives) is the
+   workspace signature, and without the survival half you have merely
+   broken the model. Verdict here: **the temp-table isn't there** — at
+   matched energy the static grid sits on baseline on OLMo (k≤40) and
+   on Qwen (k=20).
+2. **Frozen per-item selection** = *delete the row*
+   ('Amazon→Brazil→Portuguese'). One clean pass ranks the dictionary on
+   the item's prompt; the top-10 per layer are frozen and projected out
+   during generation. The headline ("delete the fact, lose the fact") is
+   the *expected* outcome — the result earns its marquee status from the
+   conjunction around it: (a) a **linear projection sufficed** — the
+   fact sat in ~10 readable directions per layer rather than smeared
+   across the state, which was never guaranteed; (b) the **identical
+   surgery on a random dictionary does nothing**, so it is the content
+   of the directions, not the mechanism; (c) **amnesia, not aphasia** —
+   generation stays coherent. Verbatim, under frozen-J on OLMo:
+   > *" 60\n60 + 21 = 81\n81 − 12 = 69\nThe answer is 69."*
+   — correct multi-step arithmetic while the model can no longer
+   produce deleted facts; and (d) **the shape of the damage classifies
+   the hypothesis**: on OLMo single-hop collapsed identically to
+   two-hop (0.23 = 0.23), which is what content-deletion predicts and
+   workspace-deletion forbids. The instrument didn't discover that
+   deletion breaks answers; it discovered *which hypothesis the
+   breakage pattern matches*.
+3. **Live per-token selection** (the paper's own protocol) = *"blot out
+   the key idea" taken literally*. Re-select the hottest directions at
+   every decode step and delete them — but at each step the hottest
+   verbalizable directions largely ARE the token being formed, so the
+   model's every word is deleted at birth. Output degenerates to
+   asterisks (NLL 2.71→24.3). Most dramatic-looking, least informative:
+   it cannot distinguish "removed the workspace" from "removed whatever
+   the model was about to say." The matched-live random control (v2)
+   shows the collapse is J-specific, which sharpens without rescuing
+   interpretability — this is the community replication's central
+   confound, measured.
+
+If your instinct is "isn't it obvious that blotting out key ideas
+messes up the output?" — that instinct is not missing the point of the
+causal phase; it *is* the point, formalized with controls. The paper
+needed the unexpected pattern (fixed tiny shared buffer → only chaining
+dies). Both models delivered the expected one (per-item content →
+that content dies), so the earned label is **content channel**, with
+two v2 epilogues that push it beyond the trivial reading: the deleted
+content is largely recoverable when the model reasons out loud
+(0.23→0.80, P5 — deletion upstream of, not identical to, what CoT can
+reconstruct), and on Qwen the composed task is hit far harder than
+single-hop (P6/Q) — the one place the data gestures back toward the
+paper's dissociation, held open as a follow-up rather than claimed.
+
+### Why frozen-vs-live selection is the sharpest distinction in the lab
+
+Readout is regime-agnostic — h(ℓ,t) exists whether the model is
+prefilling or decoding. Ablation is not: the hooks fire at every decode
+step, so *live* selection tracks the model's current computation (a
+temporal confound — you delete what it is thinking now), while *frozen*
+selection, fixed from the prompt before generation starts, deletes only
+what the item made active — "what the model knows" vs "what it is
+currently saying." That distinction exists only because decode is
+sequential, which is why a static prefill-slice picture of the network
+has no room for it, and why the two instruments give opposite verdicts
+on the same subspace.
+
+### Where the workspace conjunction stands after v2 + Q
+
+| conjunct | OLMo | Qwen | note |
+|---|---|---|---|
+| small subspace | ✓ (0.67% var, ~6 concepts — 10× thinner than paper) | ✓ (4.3–6.8%, 32–42 — paper-range) | capacity is a model property |
+| localized mid-band | ✓ (inverted-U; late band excluded by P3) | ✓ (rising through the same band) | |
+| broadcast | ~ (wide fan-out, but matched by non-J high-variance PCs) | not tested | variance-matched fan-out still open |
+| causally privileged (static) | ✗ (null at matched energy, k≤40) | ✗ (null, k=20) | the paper's signature, absent twice |
+| content channel (frozen, per-item) | ✓ (−2.9 nats; 1-hop = 2-hop) | ✓ (−2.4 nats; 1-hop spared) | real, robust, rescuable, transfers |
+
 ## Phase detail
 
 ### P1 — Energy-matched controls (s11 → f10, f11)

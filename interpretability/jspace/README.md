@@ -16,8 +16,49 @@ not run and an instrument-audit round (v2) that either flips or hardens the
 causal verdict.
 
 **Read first:** [`handout/olmo32b_jspace_handout.pdf`](handout/olmo32b_jspace_handout.pdf)
-— the living writeup (prose + figures, updated per phase). Full v1 prose:
+— the writeup (prose + figures). Final verdict + claims table:
+[`report/REPORT_v2.md`](report/REPORT_v2.md). Full v1 prose:
 [`report/REPORT.md`](report/REPORT.md).
+
+## Start here: the three ideas that make this lab readable
+
+New to J-space? `REPORT_v2.md` §"How to read this lab" is the tutorial;
+this is the digest.
+
+1. **The lens is a fitted, averaged Jacobian — a "what would the rest of
+   the network make of this state" readout.** `J_ℓ = ∂logits/∂h(ℓ)` is
+   estimated once over a fitting corpus and frozen; reading is a matrix
+   multiply against push-directions (one per vocab token), not a
+   per-prompt backprop. That's why a concept can be J-lens-visible but
+   logit-lens-invisible (stored in coordinates that only become
+   output-aligned many layers later), why the J-advantage is a mid-band
+   phenomenon, and why one-linearization-for-all-inputs is the method's
+   built-in noise floor.
+2. **Finding hidden thoughts ≠ finding a workspace.** The lens really
+   does surface the unstated bridge — probe-swap item 0: *"the language
+   spoken in the country where the Amazon River ends is"* → **Brazil**
+   (never in the prompt) → **Portuguese** — but that's the *readout*
+   claim (a better logit lens). The *workspace* claim is a conjunction:
+   small + localized + broadcast + **causally privileged**. This lab
+   tests the conjunction. It breaks at the causal joint, on both models.
+3. **Read the causal grid with your prior inverted.** Each ablation
+   removes <1% of dimensions (≈0.5–1.1% of measured activation energy) —
+   the default expectation is *nothing happens*, and the energy-matched
+   random control shows exactly that. The three instruments ask
+   different questions: **static span** = drop a shared temp-table (the
+   paper's workspace signature would be "multi-join queries die,
+   single-table lookups live" — never observed here); **frozen per-item**
+   = delete the row (expected headline, non-trivial conjunction: linear
+   projection sufficed, random-dictionary twin inert, *amnesia not
+   aphasia* — see the verbatim coherent-under-ablation generations in
+   `results/v2_frozen_ablation.json` and `v2_qwen_causal_grid.json`
+   `samples`, and the 1-hop/2-hop damage shape classifies
+   content-vs-scratchpad); **live per-token** = delete each word as it's
+   born (dramatic, uninterpretable — the replication confound, measured).
+   "Deleting key ideas breaks output" being unsurprising is not a
+   problem with the lab — formalized with controls, it *is* the lab, and
+   it's why the earned label is *content channel*, kept interesting by
+   the CoT-rescue (0.23→0.80) and Qwen's spared one-hop.
 
 ## Findings (final)
 

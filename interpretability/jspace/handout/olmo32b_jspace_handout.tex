@@ -74,6 +74,51 @@ pass@20 0.547 vs.\ 0.586 --- J-lens sharpens the rank-1 readout without
 expanding the top-20 shortlist, the same ``replicates, less clean'' flavor as
 Nanda's Qwen~3.6~27B replication.
 
+\section{How to read the instruments (reader's model)}
+
+Three orientation points carry every result below; the full version with
+worked examples is \code{report/REPORT\_v2.md} \S``How to read this lab''.
+
+\textbf{(1) The lens is a fitted, averaged Jacobian.} $J_\ell = \partial
+\text{logits}/\partial h(\ell)$ --- all downstream layers collapsed into
+one linear map --- estimated \emph{once} over the fitting corpus and
+frozen; readout is a matrix multiply, no per-prompt backprop. Dictionary
+row $v$ is a \emph{push} direction (``moving $h(\ell)$ this way most
+raises token $v$'s final logit''), not output-space resemblance --- which
+is why a concept can be J-visible while logit-lens-invisible if its
+coordinates only become output-aligned many layers later, and why the
+J-advantage lives in the mid band. One linearization for all inputs is
+also the method's noise source (and why the fitting corpus is a real
+degree of freedom). \textbf{(2) The readout claim is not the workspace
+claim.} Finding the hidden bridge --- item 0: \emph{``the language spoken
+in the country where the Amazon River ends''} $\to$ Brazil (never
+stated) $\to$ \emph{Portuguese} --- makes a better logit lens. The
+workspace claim is a \emph{conjunction}: small $+$ localized $+$
+broadcast $+$ \textbf{causally privileged}. This lab tests the
+conjunction; it breaks at the causal joint. \textbf{(3) Read causal
+cells with the prior inverted.} Each ablation removes $<$1\% of
+dimensions carrying a measured $\approx$0.5--1.1\% of activation energy
+--- the default expectation is \emph{nothing happens}, and the
+energy-matched random control delivers exactly that. In database terms:
+\emph{static span} drops one small shared temp-table (same directions
+for every prompt) --- only the dissociation pattern ``multi-join queries
+fail, single-table lookups survive, fluency survives'' would count as a
+workspace, and that pattern never appears on either model;
+\emph{frozen per-item} deletes the row (rank the dictionary on the
+item's prompt, freeze top-10) --- its headline is expected, its value is
+the conjunction (a linear projection sufficed; the random-dictionary
+twin does nothing; \emph{amnesia not aphasia} --- generations stay
+coherent; and the 1-hop/2-hop damage shape classifies content-vs-
+scratchpad); \emph{live per-token} re-selects each step and so deletes
+each word as it is born --- maximally dramatic, minimally informative
+(the community replication's confound, here measured with a matched-live
+control). If ``deleting key ideas breaks output'' feels unsurprising:
+correct --- that instinct, formalized with controls, is the analysis.
+The paper needed the \emph{unexpected} pattern; both models delivered
+the expected one, so the earned label is \emph{content channel} (with
+the P5 rescue and Qwen's spared one-hop as the two epilogues that keep
+it interesting).
+
 \section{Descriptive geometry: the workspace exists, ten times thinner}
 
 Sparse nonnegative gradient-pursuit decomposition of 200 diverse prompts
