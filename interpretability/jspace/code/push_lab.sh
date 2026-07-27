@@ -16,7 +16,7 @@ BRANCH=$(git -C "$REPO" rev-parse --abbrev-ref HEAD)
 mkdir -p "$J"/{code/scripts,report,handout,figures,results}
 cp "$SRC"/sl1_common.py "$SRC"/PLAN.md "$SRC"/PLAN_v2.md "$SRC"/PLAN_v3.md "$SRC"/LOG.md \
    "$SRC"/sync_code.sh "$SRC"/refresh_handout.sh "$SRC"/push_lab.sh "$J/code/"
-cp "$SRC"/scripts/*.py "$J/code/scripts/"
+cp "$SRC"/scripts/*.py "$SRC"/scripts/*.sh "$J/code/scripts/" 2>/dev/null || cp "$SRC"/scripts/*.py "$J/code/scripts/"
 cp "$SRC"/handout/olmo32b_jspace_handout.tex \
    "$SRC"/handout/olmo32b_jspace_handout.pdf "$J/handout/"
 rsync -a "$SRC/handout/figures/" "$J/handout/figures/"

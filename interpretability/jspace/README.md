@@ -86,9 +86,10 @@ and verdict: `report/REPORT_v2.md`.
 ## Layout
 
 ```
-code/            pipeline (s0–s19) + sl1_common.py + PLAN.md / PLAN_v2.md / LOG.md
+code/            pipeline (s0–s24) + sl1_common.py + PLAN{,_v2,_v3}.md / LOG.md
   scripts/       s0 env … s9 v1 report; s11 energy-match, s12 frozen ablation,
-                 s13 foil calibration, s14/s15 late band, s19 v2 figures
+                 s13 foils, s14/s15 late band, s16 CoT-rescue, s17 seed-1,
+                 s18 Qwen leg, s19 v2 figures, s20–s23 VM ops, s24 falsifiers
 figures/         f1–f8 (v1) + f9+ (v2), regenerable from metrics via s9/s19
 handout/         living LaTeX writeup + compiled PDF (the primary read)
 report/          v1 REPORT.md + summary.json; v2 summary_v2.json (grows)
@@ -122,7 +123,10 @@ battery exactly (9/11 probes @rank≤20, deterministic across VMs).
 The live working dir is `special_lab1/` (untracked); Drive is the durable
 checkpoint store; this directory is the published mirror, updated by
 `code/../push_lab.sh` at phase boundaries alongside `refresh_handout.sh`.
-Three VM reclaims to date, zero data loss.
+Five VM sessions (four reclaims) to date, zero data loss — including one
+DriveFS cache-wedge that briefly made every Drive file read as empty
+(root cause, recovery, and the standing rules are in `REPORT_v2.md`
+§"Run notes" and `code/scripts/s22_vm5_swap_and_drive.sh`).
 
 ## Evidence discipline (course terms)
 
