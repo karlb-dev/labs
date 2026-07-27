@@ -8,6 +8,11 @@ Canonical copy lives in git (`interpretability/special_lab2/`, mirrored to
 
 ## The 60-second resume
 
+**Fresh VM?** The full static bootstrap (secrets, clone, pinned installs,
+package setup, troubleshooting) lives in
+`/content/drive/MyDrive/interpret/special_lab_resume.md` — start there,
+then come back to this order:
+
 1. Read `/content/drive/MyDrive/interpret/inprogress.md` — the live map:
    status, queue, what's running, exact next commands. It is the single
    source of truth for "where did we stop".
