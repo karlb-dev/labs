@@ -14,7 +14,7 @@ BRANCH=$(git -C "$REPO" rev-parse --abbrev-ref HEAD)
 [ "$BRANCH" = "interp_jspace" ] || { echo "refusing: on branch $BRANCH"; exit 1; }
 
 mkdir -p "$J"/{code/scripts,report,handout,figures,results}
-cp "$SRC"/sl1_common.py "$SRC"/PLAN.md "$SRC"/PLAN_v2.md "$SRC"/LOG.md \
+cp "$SRC"/sl1_common.py "$SRC"/PLAN.md "$SRC"/PLAN_v2.md "$SRC"/PLAN_v3.md "$SRC"/LOG.md \
    "$SRC"/sync_code.sh "$SRC"/refresh_handout.sh "$SRC"/push_lab.sh "$J/code/"
 cp "$SRC"/scripts/*.py "$J/code/scripts/"
 cp "$SRC"/handout/olmo32b_jspace_handout.tex \
