@@ -39,6 +39,11 @@ Canonical copy lives in git (`interpretability/special_lab2/`, mirrored to
 nvidia-smi; df -h /; ls /content/drive/MyDrive/interpret || echo "MOUNT DRIVE FIRST"
 # 1. ssh key (only if ~/.ssh is empty)
 tar xzf /content/drive/MyDrive/interpret/misc/key.tar.gz -C ~/ && chmod 600 ~/.ssh/id_ed25519
+# 1b. HF token (fresh VM): from the NOTEBOOK cell (os.environ there does NOT
+#     reach these shells — separate processes; the shared filesystem does):
+#     import os, pathlib; p = pathlib.Path("~/.cache/huggingface/token").expanduser()
+#     p.parent.mkdir(parents=True, exist_ok=True); p.write_text(os.environ["HF_TOKEN"].strip())
+#     verify here:  python -c "from huggingface_hub import whoami; print(whoami()['name'])"
 git config --global user.name "karlb-dev"; git config --global user.email "kburtram@live.com"
 ssh -o StrictHostKeyChecking=accept-new -T git@github.com   # expect "Hi karlb-dev!"
 # 2. repo
