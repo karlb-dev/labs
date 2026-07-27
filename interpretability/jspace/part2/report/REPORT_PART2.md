@@ -122,11 +122,29 @@ a dissociation appears. Caveats: top-8 truncation (full-rank version rides
 along in phase 2); think/post-`</think>` segmentation pending a multi-token
 boundary matcher.
 
-## B3 — frozen-logit control (queued behind the Instruct fit)
+## B3 — frozen-logit control (2026-07-27 23:48) — tier: EXPLORATORY-PILOT
 
-Same per-item frozen mechanism as the part-1 marquee instrument, dictionary
-= plain (W_U⊙g) rows (no Jacobian). Pool sizes inherently matched
-(vocab-sized both). Decides whether the −2.9-nat deletion needed the
-Jacobian pullback or just readable output-aligned directions.
+Same per-item frozen mechanism as the part-1 marquee instrument,
+dictionary = plain (W_U⊙g) rows, no Jacobian; pool sizes inherently
+matched (vocab-sized both). Evidence `b3-frozen-logit-pilot-think-v1`;
+figure `p2f2_b3_frozen_logit.png`.
+
+| condition | twohop_lp (Δ vs none) | twohop acc | onehop acc | prose NLL |
+|---|---|---|---|---|
+| baseline | −1.74 | 0.58 | 0.60 | 2.71 |
+| frozen-J top-10 (part-1 cells) | −4.63 (**−2.90**) | 0.23 | 0.23 | 3.00 |
+| **frozen-logit top-10** | **−3.28 (−1.54)** | 0.33 | **0.23** | 2.81 |
+| frozen-random (5120) | −1.78 (−0.05) | 0.53 | 0.53 | 2.79 |
+
+**Reading (between the prereg's two poles):** output-aligned unembedding
+directions alone reproduce ~53% of the frozen-J logprob deletion and the
+*identical* one-hop collapse, while the random twin sits on baseline — so
+a large share of the "content channel" is reachable without the Jacobian,
+and the pullback roughly doubles composed-task damage on top. This
+sharpens H2 (output alignment) and H8 (dictionary-geometry artifact)
+rather than settling the method claim; the confirmatory decision needs
+the R3 family (J-rotated, label-shuffled, rank-matched, paired per-item
+stats). Caveats: part-1 mechanics by design (raw QR, first-token lp,
+both-phase hooks), unpaired CIs, single seed, n=60/31.
 
 *(sections append here per banked phase)*
