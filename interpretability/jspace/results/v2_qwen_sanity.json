@@ -1,0 +1,521 @@
+{
+  "model": "Qwen/Qwen3.6-27B",
+  "lens": "neuronpedia/jacobian-lens/qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt",
+  "note": "min over ALL lens layers (published lens is all-layer; v1 OLMo used its 21 fitted)",
+  "multihop": {
+    "jlens_pass@1": 0.35,
+    "jlens_pass@5": 0.5166666666666667,
+    "jlens_pass@20": 0.7388888888888888,
+    "logit_pass@1": 0.31666666666666665,
+    "logit_pass@5": 0.5,
+    "logit_pass@20": 0.6,
+    "n_scored": 60,
+    "n_skipped": 0
+  },
+  "multihop_items": [
+    {
+      "prompt": "Fact: The ocean on the coast of the country where Carnival is most famously cele",
+      "intermediates": [
+        "Brazil"
+      ],
+      "jlens_best_rank_Brazil": 72,
+      "logit_best_rank_Brazil": 242
+    },
+    {
+      "prompt": "Fact: The language spoken in the country where the Amazon River ends is ",
+      "intermediates": [
+        "Brazil"
+      ],
+      "jlens_best_rank_Brazil": 19,
+      "logit_best_rank_Brazil": 42
+    },
+    {
+      "prompt": "Fact: The color of the planet fourth from the Sun is ",
+      "intermediates": [
+        "Mars"
+      ],
+      "jlens_best_rank_Mars": 12,
+      "logit_best_rank_Mars": 7
+    },
+    {
+      "prompt": "Fact: The number of legs on the animal that spins webs is ",
+      "intermediates": [
+        "spider"
+      ],
+      "jlens_best_rank_spider": 1,
+      "logit_best_rank_spider": 1
+    },
+    {
+      "prompt": "Fact: The number of players per side in the sport invented in Springfield, Massa",
+      "intermediates": [
+        "basketball"
+      ],
+      "jlens_best_rank_basketball": 1,
+      "logit_best_rank_basketball": 1
+    },
+    {
+      "prompt": "Fact: The continent where the country that invented paper is located is ",
+      "intermediates": [
+        "China"
+      ],
+      "jlens_best_rank_China": 2,
+      "logit_best_rank_China": 9
+    },
+    {
+      "prompt": "Fact: The season when the holiday with a decorated tree occurs is ",
+      "intermediates": [
+        "Christmas"
+      ],
+      "jlens_best_rank_Christmas": 12,
+      "logit_best_rank_Christmas": 34
+    },
+    {
+      "prompt": "Fact: The mascot of the college football rival of Ohio State is a ",
+      "intermediates": [
+        "Michigan"
+      ],
+      "jlens_best_rank_Michigan": 79,
+      "logit_best_rank_Michigan": 159
+    },
+    {
+      "prompt": "Fact: The state west of the state with Topeka as its capital is ",
+      "intermediates": [
+        "Kansas"
+      ],
+      "jlens_best_rank_Kansas": 2,
+      "logit_best_rank_Kansas": 5
+    },
+    {
+      "prompt": "Fact: The chemical symbol for the element with atomic number 79 is ",
+      "intermediates": [
+        "gold"
+      ],
+      "jlens_best_rank_gold": 18,
+      "logit_best_rank_gold": 3
+    },
+    {
+      "prompt": "Fact: The chemical symbol for the element with atomic number 26 is ",
+      "intermediates": [
+        "iron"
+      ],
+      "jlens_best_rank_iron": 7,
+      "logit_best_rank_iron": 2
+    },
+    {
+      "prompt": "Fact: The chemical symbol for the element with atomic number 29 is ",
+      "intermediates": [
+        "copper"
+      ],
+      "jlens_best_rank_copper": 35,
+      "logit_best_rank_copper": 10
+    },
+    {
+      "prompt": "Fact: The state of matter at room temperature of the element with atomic number ",
+      "intermediates": [
+        "mercury"
+      ],
+      "jlens_best_rank_mercury": 13,
+      "logit_best_rank_mercury": 23
+    },
+    {
+      "prompt": "Fact: The flame color produced by burning the element with atomic number 29 is ",
+      "intermediates": [
+        "copper"
+      ],
+      "jlens_best_rank_copper": 10,
+      "logit_best_rank_copper": 1
+    },
+    {
+      "prompt": "Fact: The number of natural moons orbiting the planet third from the Sun is ",
+      "intermediates": [
+        "Earth"
+      ],
+      "jlens_best_rank_Earth": 14,
+      "logit_best_rank_Earth": 4
+    },
+    {
+      "prompt": "Fact: The third month of the year is named after the Roman god of ",
+      "intermediates": [
+        "March"
+      ],
+      "jlens_best_rank_March": 83,
+      "logit_best_rank_March": 40
+    },
+    {
+      "prompt": "Fact: The US state where the Space Needle is located shares its northern border ",
+      "intermediates": [
+        "Seattle"
+      ],
+      "jlens_best_rank_Seattle": 83,
+      "logit_best_rank_Seattle": 1057
+    },
+    {
+      "prompt": "Fact: The European country whose name rhymes with 'rain' shares its western bord",
+      "intermediates": [
+        "Spain"
+      ],
+      "jlens_best_rank_Spain": 2,
+      "logit_best_rank_Spain": 8
+    },
+    {
+      "prompt": "Fact: Take the number whose name rhymes with the word door. Doubling it gives th",
+      "intermediates": [
+        "four"
+      ],
+      "jlens_best_rank_four": 16,
+      "logit_best_rank_four": 31
+    },
+    {
+      "prompt": "Fact: The large mammal whose name rhymes with 'chair' appears on the state flag ",
+      "intermediates": [
+        "bear"
+      ],
+      "jlens_best_rank_bear": 418,
+      "logit_best_rank_bear": 203
+    },
+    {
+      "prompt": "Fact: The celestial body whose name rhymes with 'spoon' orbits the planet called",
+      "intermediates": [
+        "moon"
+      ],
+      "jlens_best_rank_moon": 33,
+      "logit_best_rank_moon": 248
+    },
+    {
+      "prompt": "Fact: The month named after the Roman god of war is month number ",
+      "intermediates": [
+        "March"
+      ],
+      "jlens_best_rank_March": 1,
+      "logit_best_rank_March": 2
+    },
+    {
+      "prompt": "Fact: Counting Monday as day 1, the day of the week named after the Norse goddes",
+      "intermediates": [
+        "Friday"
+      ],
+      "jlens_best_rank_Friday": 1,
+      "logit_best_rank_Friday": 1
+    },
+    {
+      "prompt": "Fact: The planet named after the Roman god of agriculture and time is planet num",
+      "intermediates": [
+        "Saturn"
+      ],
+      "jlens_best_rank_Saturn": 1,
+      "logit_best_rank_Saturn": 2
+    },
+    {
+      "prompt": "Fact: The atomic number of the gas that plants release during photosynthesis is ",
+      "intermediates": [
+        "oxygen"
+      ],
+      "jlens_best_rank_oxygen": 1,
+      "logit_best_rank_oxygen": 2
+    },
+    {
+      "prompt": "Fact: The atomic number of the gas that makes up about 78 percent of the atmosph",
+      "intermediates": [
+        "nitrogen"
+      ],
+      "jlens_best_rank_nitrogen": 1,
+      "logit_best_rank_nitrogen": 1
+    },
+    {
+      "prompt": "Fact: The atomic number of the element present in all organic compounds by defin",
+      "intermediates": [
+        "carbon"
+      ],
+      "jlens_best_rank_carbon": 1,
+      "logit_best_rank_carbon": 2
+    },
+    {
+      "prompt": "Fact: The atomic number of the metal most abundant in human bones is ",
+      "intermediates": [
+        "calcium"
+      ],
+      "jlens_best_rank_calcium": 1,
+      "logit_best_rank_calcium": 2
+    },
+    {
+      "prompt": "Fact: In humans, the organ that pumps blood through the body has this many chamb",
+      "intermediates": [
+        "heart"
+      ],
+      "jlens_best_rank_heart": 2,
+      "logit_best_rank_heart": 1
+    },
+    {
+      "prompt": "Fact: In humans, the number of organs that filter blood to make urine is ",
+      "intermediates": [
+        "kidney"
+      ],
+      "jlens_best_rank_kidney": 2,
+      "logit_best_rank_kidney": 1
+    },
+    {
+      "prompt": "Fact: Emerald is the birthstone for month number ",
+      "intermediates": [
+        "May"
+      ],
+      "jlens_best_rank_May": 1,
+      "logit_best_rank_May": 1
+    },
+    {
+      "prompt": "Fact: The number of strings on the instrument that fiddlers play is ",
+      "intermediates": [
+        "violin"
+      ],
+      "jlens_best_rank_violin": 1,
+      "logit_best_rank_violin": 1
+    },
+    {
+      "prompt": "Count the legs on a spider. The planet at that position from the Sun is Neptune.",
+      "intermediates": [
+        "3",
+        "three",
+        "third"
+      ],
+      "jlens_best_rank_3": 10,
+      "jlens_best_rank_three": 238,
+      "jlens_best_rank_third": 213,
+      "logit_best_rank_3": 41,
+      "logit_best_rank_three": 548,
+      "logit_best_rank_third": 51
+    },
+    {
+      "prompt": "Count the legs on a spider. The planet at that position from the Sun is Neptune.",
+      "intermediates": [
+        "5",
+        "five"
+      ],
+      "jlens_best_rank_5": 17,
+      "jlens_best_rank_five": 51,
+      "logit_best_rank_5": 109,
+      "logit_best_rank_five": 840
+    },
+    {
+      "prompt": "Count the legs on a spider. The planet at that position from the Sun is Neptune.",
+      "intermediates": [
+        "6",
+        "six"
+      ],
+      "jlens_best_rank_6": 11,
+      "jlens_best_rank_six": 55,
+      "logit_best_rank_6": 161,
+      "logit_best_rank_six": 2750
+    },
+    {
+      "prompt": "Count the legs on a spider. The planet at that position from the Sun is Neptune.",
+      "intermediates": [
+        "4",
+        "four"
+      ],
+      "jlens_best_rank_4": 6,
+      "jlens_best_rank_four": 231,
+      "logit_best_rank_4": 74,
+      "logit_best_rank_four": 724
+    },
+    {
+      "prompt": "Count the legs on a spider. The planet at that position from the Sun is Neptune.",
+      "intermediates": [
+        "6",
+        "six"
+      ],
+      "jlens_best_rank_6": 8,
+      "jlens_best_rank_six": 63,
+      "logit_best_rank_6": 163,
+      "logit_best_rank_six": 3882
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "26"
+      ],
+      "jlens_best_rank_26": 1,
+      "logit_best_rank_26": 1
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "14"
+      ],
+      "jlens_best_rank_14": 1,
+      "logit_best_rank_14": 1
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "6",
+        "six"
+      ],
+      "jlens_best_rank_6": 3,
+      "jlens_best_rank_six": 177,
+      "logit_best_rank_6": 23,
+      "logit_best_rank_six": 58
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "7"
+      ],
+      "jlens_best_rank_7": 2,
+      "logit_best_rank_7": 18
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "8"
+      ],
+      "jlens_best_rank_8": 4,
+      "logit_best_rank_8": 134
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "6",
+        "six"
+      ],
+      "jlens_best_rank_6": 4,
+      "jlens_best_rank_six": 213,
+      "logit_best_rank_6": 83,
+      "logit_best_rank_six": 125
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "7"
+      ],
+      "jlens_best_rank_7": 2,
+      "logit_best_rank_7": 5
+    },
+    {
+      "prompt": "Fact: The capital city of the largest country by area is ",
+      "intermediates": [
+        "Russia"
+      ],
+      "jlens_best_rank_Russia": 2,
+      "logit_best_rank_Russia": 3
+    },
+    {
+      "prompt": "Fact: The smallest country in the world is located on the continent of ",
+      "intermediates": [
+        "Vatican"
+      ],
+      "jlens_best_rank_Vatican": 126,
+      "logit_best_rank_Vatican": 121
+    },
+    {
+      "prompt": "Fact: The capital city of the most populous country in the world is ",
+      "intermediates": [
+        "China"
+      ],
+      "jlens_best_rank_China": 17,
+      "logit_best_rank_China": 81
+    },
+    {
+      "prompt": "Fact: The country that is the largest island nation by area has its capital at ",
+      "intermediates": [
+        "Indonesia"
+      ],
+      "jlens_best_rank_Indonesia": 53,
+      "logit_best_rank_Indonesia": 1375
+    },
+    {
+      "prompt": "Fact: The currency used in the country where the Colosseum stands is the ",
+      "intermediates": [
+        "Italy"
+      ],
+      "jlens_best_rank_Italy": 167,
+      "logit_best_rank_Italy": 343
+    },
+    {
+      "prompt": "Fact: The ocean east of the country that built the Great Wall is the ",
+      "intermediates": [
+        "China"
+      ],
+      "jlens_best_rank_China": 22,
+      "logit_best_rank_China": 22
+    },
+    {
+      "prompt": "Fact: The US Independence Day holiday is celebrated in month number ",
+      "intermediates": [
+        "July"
+      ],
+      "jlens_best_rank_July": 1,
+      "logit_best_rank_July": 1
+    },
+    {
+      "prompt": "Fact: Christmas Day is celebrated in month number ",
+      "intermediates": [
+        "December"
+      ],
+      "jlens_best_rank_December": 1,
+      "logit_best_rank_December": 1
+    },
+    {
+      "prompt": "Fact: Halloween is celebrated in month number ",
+      "intermediates": [
+        "October"
+      ],
+      "jlens_best_rank_October": 1,
+      "logit_best_rank_October": 1
+    },
+    {
+      "prompt": "Fact: Valentine's Day is celebrated in month number ",
+      "intermediates": [
+        "February"
+      ],
+      "jlens_best_rank_February": 1,
+      "logit_best_rank_February": 1
+    },
+    {
+      "prompt": "Fact: The first month of the year is named after the Roman god of ",
+      "intermediates": [
+        "January"
+      ],
+      "jlens_best_rank_January": 66,
+      "logit_best_rank_January": 39
+    },
+    {
+      "prompt": "Fact: The month named after the two-faced Roman god of doorways is month number ",
+      "intermediates": [
+        "January"
+      ],
+      "jlens_best_rank_January": 1,
+      "logit_best_rank_January": 1
+    },
+    {
+      "prompt": "Fact: The seventh month of the year is named after the Roman leader Julius ",
+      "intermediates": [
+        "July"
+      ],
+      "jlens_best_rank_July": 18,
+      "logit_best_rank_July": 7
+    },
+    {
+      "prompt": "Fact: The month named after Julius Caesar is month number ",
+      "intermediates": [
+        "July"
+      ],
+      "jlens_best_rank_July": 1,
+      "logit_best_rank_July": 1
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "11"
+      ],
+      "jlens_best_rank_11": 1,
+      "logit_best_rank_11": 1
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "16"
+      ],
+      "jlens_best_rank_16": 1,
+      "logit_best_rank_16": 1
+    }
+  ]
+}

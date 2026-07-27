@@ -1,0 +1,1128 @@
+{
+  "conds": [
+    "none",
+    "frozen_j10",
+    "frozen_rand10",
+    "jspace_k20"
+  ],
+  "max_think": 400,
+  "items": {
+    "0": {
+      "kind": "twohop",
+      "none": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 19
+      },
+      "jspace_k20": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "1": {
+      "kind": "twohop",
+      "none": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "jspace_k20": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "2": {
+      "kind": "twohop",
+      "none": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "jspace_k20": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "3": {
+      "kind": "twohop",
+      "none": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 19
+      },
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "4": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 23
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "5": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "6": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 20
+      }
+    },
+    "7": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "8": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 1.0,
+        "seconds": 22
+      }
+    },
+    "9": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 21
+      }
+    },
+    "10": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "11": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "12": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "13": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 13
+      }
+    },
+    "14": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "15": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 14
+      }
+    },
+    "16": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 11
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 10
+      }
+    },
+    "17": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "18": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "19": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "20": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "21": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "22": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 15
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 15
+      }
+    },
+    "23": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 13
+      }
+    },
+    "24": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 18
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "25": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 21
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 14
+      }
+    },
+    "26": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 14
+      }
+    },
+    "27": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "28": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "29": {
+      "kind": "twohop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 14
+      }
+    },
+    "30": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 8
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 8
+      }
+    },
+    "31": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 17
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 11
+      }
+    },
+    "32": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 12
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 9
+      }
+    },
+    "33": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 11
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 9
+      }
+    },
+    "34": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 17
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 9
+      }
+    },
+    "35": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 11
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 9
+      }
+    },
+    "36": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 11
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 11
+      }
+    },
+    "37": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 10
+      }
+    },
+    "38": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 10
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 16
+      }
+    },
+    "39": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 15
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 12
+      }
+    },
+    "40": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 12
+      }
+    },
+    "41": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 10
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 10
+      }
+    },
+    "42": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 19
+      }
+    },
+    "43": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 17
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 9
+      }
+    },
+    "44": {
+      "kind": "onehop",
+      "frozen_j10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 15
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 16
+      }
+    },
+    "45": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "46": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 22
+      }
+    },
+    "47": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "48": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "49": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "50": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "51": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "52": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "53": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "54": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "55": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.0,
+        "think": 0.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "56": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "57": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 1.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "58": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    },
+    "59": {
+      "kind": "arithmetic",
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 1.0,
+        "think": 1.0,
+        "closed_think": 0.0,
+        "seconds": 22
+      }
+    }
+  },
+  "agg": {
+    "twohop": {
+      "frozen_j10": {
+        "post": 0.16666666666666666,
+        "any": 0.8,
+        "closed": 0.2,
+        "n": 30
+      },
+      "frozen_rand10": {
+        "post": 0.36666666666666664,
+        "any": 0.9333333333333333,
+        "closed": 0.4,
+        "n": 30
+      }
+    },
+    "onehop": {
+      "frozen_j10": {
+        "post": 0.8666666666666667,
+        "any": 1.0,
+        "closed": 0.8666666666666667,
+        "n": 15
+      },
+      "frozen_rand10": {
+        "post": 1.0,
+        "any": 1.0,
+        "closed": 1.0,
+        "n": 15
+      }
+    },
+    "arithmetic": {
+      "frozen_j10": {
+        "post": 0.0,
+        "any": 0.9333333333333333,
+        "closed": 0.06666666666666667,
+        "n": 15
+      },
+      "frozen_rand10": {
+        "post": 0.0,
+        "any": 0.9333333333333333,
+        "closed": 0.06666666666666667,
+        "n": 15
+      }
+    }
+  },
+  "nothink_reference": {
+    "frozen_j10_twohop": 0.23333333333333334,
+    "none_twohop": 0.5833333333333334
+  }
+}

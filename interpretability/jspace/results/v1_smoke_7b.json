@@ -1,0 +1,393 @@
+{
+  "model": "allenai/Olmo-3-7B-Instruct",
+  "fit_secs": 194.8712080600003,
+  "n_prompts": 6,
+  "sources": [
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22,
+    24,
+    26
+  ],
+  "boot_probe": {
+    "n_probes": 11,
+    "mid_layers": [
+      14,
+      16,
+      18,
+      20,
+      22,
+      24,
+      26
+    ],
+    "jlens_hits_at_20": 9,
+    "logit_lens_hits_at_20": 7,
+    "median_jlens_mid_min": 3,
+    "median_logit_mid_min": 10,
+    "rows": [
+      {
+        "prompt": "Fact: The currency used in the country shaped like a boot is the",
+        "answer": " lira",
+        "final_rank": 3,
+        "jlens_rank_by_layer": {
+          "8": 9858,
+          "10": 6566,
+          "12": 6242,
+          "14": 27274,
+          "16": 22821,
+          "18": 11413,
+          "20": 35815,
+          "22": 29728,
+          "24": 13475,
+          "26": 1689
+        },
+        "logit_rank_by_layer": {
+          "8": 95749,
+          "10": 68164,
+          "12": 92013,
+          "14": 55989,
+          "16": 3463,
+          "18": 4540,
+          "20": 4055,
+          "22": 6319,
+          "24": 4728,
+          "26": 228
+        },
+        "jlens_mid_min": 1689,
+        "logit_mid_min": 228
+      },
+      {
+        "prompt": "Fact: The capital of the country famous for the Eiffel Tower is",
+        "answer": " Paris",
+        "final_rank": 2,
+        "jlens_rank_by_layer": {
+          "8": 52851,
+          "10": 48665,
+          "12": 46220,
+          "14": 15225,
+          "16": 20488,
+          "18": 12228,
+          "20": 7876,
+          "22": 9,
+          "24": 3,
+          "26": 3
+        },
+        "logit_rank_by_layer": {
+          "8": 6198,
+          "10": 1036,
+          "12": 5425,
+          "14": 72554,
+          "16": 36542,
+          "18": 13778,
+          "20": 12140,
+          "22": 119,
+          "24": 55,
+          "26": 33
+        },
+        "jlens_mid_min": 3,
+        "logit_mid_min": 33
+      },
+      {
+        "prompt": "Fact: The largest planet in our solar system is named",
+        "answer": " Jupiter",
+        "final_rank": 1,
+        "jlens_rank_by_layer": {
+          "8": 23919,
+          "10": 18063,
+          "12": 21163,
+          "14": 29055,
+          "16": 23249,
+          "18": 174,
+          "20": 42,
+          "22": 3,
+          "24": 1,
+          "26": 1
+        },
+        "logit_rank_by_layer": {
+          "8": 38054,
+          "10": 33005,
+          "12": 39055,
+          "14": 57858,
+          "16": 55868,
+          "18": 2377,
+          "20": 3746,
+          "22": 71,
+          "24": 13,
+          "26": 3
+        },
+        "jlens_mid_min": 1,
+        "logit_mid_min": 3
+      },
+      {
+        "prompt": "Fact: The chemical symbol for the metal used in pennies is",
+        "answer": " Cu",
+        "final_rank": 22,
+        "jlens_rank_by_layer": {
+          "8": 64648,
+          "10": 88049,
+          "12": 91196,
+          "14": 71962,
+          "16": 40249,
+          "18": 62010,
+          "20": 40026,
+          "22": 2681,
+          "24": 212,
+          "26": 22
+        },
+        "logit_rank_by_layer": {
+          "8": 61306,
+          "10": 83450,
+          "12": 68518,
+          "14": 72547,
+          "16": 38464,
+          "18": 32657,
+          "20": 9690,
+          "22": 900,
+          "24": 42,
+          "26": 31
+        },
+        "jlens_mid_min": 22,
+        "logit_mid_min": 31
+      },
+      {
+        "prompt": "Fact: The author of Romeo and Juliet is William",
+        "answer": " Shakespeare",
+        "final_rank": 1,
+        "jlens_rank_by_layer": {
+          "8": 48,
+          "10": 434,
+          "12": 1816,
+          "14": 672,
+          "16": 43,
+          "18": 1,
+          "20": 1,
+          "22": 1,
+          "24": 1,
+          "26": 1
+        },
+        "logit_rank_by_layer": {
+          "8": 1972,
+          "10": 1272,
+          "12": 3482,
+          "14": 4470,
+          "16": 286,
+          "18": 2,
+          "20": 1,
+          "22": 1,
+          "24": 1,
+          "26": 1
+        },
+        "jlens_mid_min": 1,
+        "logit_mid_min": 1
+      },
+      {
+        "prompt": "Fact: The language spoken in Brazil is",
+        "answer": " Portuguese",
+        "final_rank": 1,
+        "jlens_rank_by_layer": {
+          "8": 4008,
+          "10": 5462,
+          "12": 34954,
+          "14": 16388,
+          "16": 29745,
+          "18": 4809,
+          "20": 23,
+          "22": 21,
+          "24": 18,
+          "26": 6
+        },
+        "logit_rank_by_layer": {
+          "8": 89048,
+          "10": 53603,
+          "12": 80006,
+          "14": 47098,
+          "16": 63069,
+          "18": 22702,
+          "20": 1189,
+          "22": 27,
+          "24": 54,
+          "26": 6
+        },
+        "jlens_mid_min": 6,
+        "logit_mid_min": 6
+      },
+      {
+        "prompt": "Fact: The number of legs on a spider is",
+        "answer": " eight",
+        "final_rank": 1,
+        "jlens_rank_by_layer": {
+          "8": 13677,
+          "10": 3184,
+          "12": 1253,
+          "14": 232,
+          "16": 395,
+          "18": 7160,
+          "20": 3688,
+          "22": 5213,
+          "24": 219,
+          "26": 17
+        },
+        "logit_rank_by_layer": {
+          "8": 11687,
+          "10": 27433,
+          "12": 20619,
+          "14": 49468,
+          "16": 7300,
+          "18": 863,
+          "20": 99,
+          "22": 485,
+          "24": 99,
+          "26": 11
+        },
+        "jlens_mid_min": 17,
+        "logit_mid_min": 11
+      },
+      {
+        "prompt": "Fact: The ocean between America and Europe is the",
+        "answer": " Atlantic",
+        "final_rank": 2,
+        "jlens_rank_by_layer": {
+          "8": 44992,
+          "10": 14733,
+          "12": 3559,
+          "14": 43384,
+          "16": 71795,
+          "18": 39032,
+          "20": 2915,
+          "22": 4622,
+          "24": 744,
+          "26": 17
+        },
+        "logit_rank_by_layer": {
+          "8": 44274,
+          "10": 38452,
+          "12": 7924,
+          "14": 42736,
+          "16": 20808,
+          "18": 7050,
+          "20": 678,
+          "22": 91,
+          "24": 10,
+          "26": 12
+        },
+        "jlens_mid_min": 17,
+        "logit_mid_min": 10
+      },
+      {
+        "prompt": "Fact: The metal that is liquid at room temperature is",
+        "answer": " mercury",
+        "final_rank": 1,
+        "jlens_rank_by_layer": {
+          "8": 71306,
+          "10": 53486,
+          "12": 58650,
+          "14": 49647,
+          "16": 58860,
+          "18": 24447,
+          "20": 7922,
+          "22": 28,
+          "24": 2,
+          "26": 1
+        },
+        "logit_rank_by_layer": {
+          "8": 16169,
+          "10": 8814,
+          "12": 32049,
+          "14": 31215,
+          "16": 21090,
+          "18": 5989,
+          "20": 417,
+          "22": 15,
+          "24": 10,
+          "26": 6
+        },
+        "jlens_mid_min": 1,
+        "logit_mid_min": 6
+      },
+      {
+        "prompt": "Fact: The planet known as the Red Planet is",
+        "answer": " Mars",
+        "final_rank": 28,
+        "jlens_rank_by_layer": {
+          "8": 1654,
+          "10": 357,
+          "12": 1373,
+          "14": 8265,
+          "16": 15712,
+          "18": 118,
+          "20": 7,
+          "22": 2,
+          "24": 1,
+          "26": 1
+        },
+        "logit_rank_by_layer": {
+          "8": 18621,
+          "10": 5869,
+          "12": 48335,
+          "14": 47178,
+          "16": 60032,
+          "18": 5816,
+          "20": 667,
+          "22": 57,
+          "24": 32,
+          "26": 44
+        },
+        "jlens_mid_min": 1,
+        "logit_mid_min": 32
+      },
+      {
+        "prompt": "Fact: The capital of Japan is",
+        "answer": " Tokyo",
+        "final_rank": 1,
+        "jlens_rank_by_layer": {
+          "8": 8788,
+          "10": 1873,
+          "12": 3550,
+          "14": 15714,
+          "16": 8976,
+          "18": 115,
+          "20": 1,
+          "22": 1,
+          "24": 1,
+          "26": 1
+        },
+        "logit_rank_by_layer": {
+          "8": 19852,
+          "10": 4825,
+          "12": 5067,
+          "14": 1687,
+          "16": 1804,
+          "18": 229,
+          "20": 38,
+          "22": 5,
+          "24": 6,
+          "26": 2
+        },
+        "jlens_mid_min": 1,
+        "logit_mid_min": 2
+      }
+    ]
+  },
+  "mini_ablation": {
+    "prompt": "Fact: The currency used in the country shaped like a boot is the",
+    "answer": " lira",
+    "band": [
+      14,
+      16,
+      18,
+      20,
+      22,
+      24
+    ],
+    "clean_logprob": -3.859375,
+    "jspace_ablated_logprob": -6.3125,
+    "random_ablated_logprob": -2.640625,
+    "jspace_delta": -2.453125,
+    "random_delta": 1.21875
+  }
+}

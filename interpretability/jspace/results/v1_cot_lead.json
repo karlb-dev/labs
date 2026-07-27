@@ -1,0 +1,610 @@
+{
+  "lead": {
+    "n_traced_scored": 34,
+    "median_lead_steps": 46.0,
+    "frac_workspace_leads": 0.9117647058823529,
+    "per_kind_median": {
+      "twohop": 48.5,
+      "arithmetic": 9.5,
+      "sql": 38.0
+    },
+    "note": "text_step = first step whose cumulative decoded text contains the space-stripped lowercased answer; emerge_step from s8 (first appearance in any read layer's top-8)."
+  },
+  "leads_detail": [
+    {
+      "iid": 0,
+      "kind": "twohop",
+      "emerge_step": 200,
+      "text_step": 215,
+      "lead": 15
+    },
+    {
+      "iid": 1,
+      "kind": "twohop",
+      "emerge_step": 13,
+      "text_step": 122,
+      "lead": 109
+    },
+    {
+      "iid": 15,
+      "kind": "twohop",
+      "emerge_step": 20,
+      "text_step": 62,
+      "lead": 42
+    },
+    {
+      "iid": 16,
+      "kind": "twohop",
+      "emerge_step": 8,
+      "text_step": 60,
+      "lead": 52
+    },
+    {
+      "iid": 2,
+      "kind": "twohop",
+      "emerge_step": 92,
+      "text_step": 92,
+      "lead": 0
+    },
+    {
+      "iid": 24,
+      "kind": "twohop",
+      "emerge_step": 95,
+      "text_step": 98,
+      "lead": 3
+    },
+    {
+      "iid": 25,
+      "kind": "twohop",
+      "emerge_step": 80,
+      "text_step": 145,
+      "lead": 65
+    },
+    {
+      "iid": 27,
+      "kind": "twohop",
+      "emerge_step": 1,
+      "text_step": 97,
+      "lead": 96
+    },
+    {
+      "iid": 28,
+      "kind": "twohop",
+      "emerge_step": 1,
+      "text_step": 97,
+      "lead": 96
+    },
+    {
+      "iid": 3,
+      "kind": "twohop",
+      "emerge_step": 14,
+      "text_step": 63,
+      "lead": 49
+    },
+    {
+      "iid": 34,
+      "kind": "twohop",
+      "emerge_step": 207,
+      "text_step": 231,
+      "lead": 24
+    },
+    {
+      "iid": 37,
+      "kind": "twohop",
+      "emerge_step": 19,
+      "text_step": 135,
+      "lead": 116
+    },
+    {
+      "iid": 4,
+      "kind": "twohop",
+      "emerge_step": 207,
+      "text_step": 231,
+      "lead": 24
+    },
+    {
+      "iid": 44,
+      "kind": "arithmetic",
+      "emerge_step": 229,
+      "text_step": 229,
+      "lead": 0
+    },
+    {
+      "iid": 49,
+      "kind": "arithmetic",
+      "emerge_step": 69,
+      "text_step": 286,
+      "lead": 217
+    },
+    {
+      "iid": 53,
+      "kind": "arithmetic",
+      "emerge_step": 239,
+      "text_step": 249,
+      "lead": 10
+    },
+    {
+      "iid": 54,
+      "kind": "arithmetic",
+      "emerge_step": 151,
+      "text_step": 202,
+      "lead": 51
+    },
+    {
+      "iid": 56,
+      "kind": "arithmetic",
+      "emerge_step": 9,
+      "text_step": 262,
+      "lead": 253
+    },
+    {
+      "iid": 6,
+      "kind": "twohop",
+      "emerge_step": 21,
+      "text_step": 69,
+      "lead": 48
+    },
+    {
+      "iid": 62,
+      "kind": "arithmetic",
+      "emerge_step": 153,
+      "text_step": 153,
+      "lead": 0
+    },
+    {
+      "iid": 63,
+      "kind": "arithmetic",
+      "emerge_step": 230,
+      "text_step": 231,
+      "lead": 1
+    },
+    {
+      "iid": 69,
+      "kind": "arithmetic",
+      "emerge_step": 219,
+      "text_step": 228,
+      "lead": 9
+    },
+    {
+      "iid": 7,
+      "kind": "twohop",
+      "emerge_step": 72,
+      "text_step": 116,
+      "lead": 44
+    },
+    {
+      "iid": 70,
+      "kind": "sql",
+      "emerge_step": 85,
+      "text_step": 86,
+      "lead": 1
+    },
+    {
+      "iid": 73,
+      "kind": "sql",
+      "emerge_step": 20,
+      "text_step": 95,
+      "lead": 75
+    },
+    {
+      "iid": 74,
+      "kind": "sql",
+      "emerge_step": 85,
+      "text_step": 86,
+      "lead": 1
+    },
+    {
+      "iid": 77,
+      "kind": "sql",
+      "emerge_step": 20,
+      "text_step": 95,
+      "lead": 75
+    },
+    {
+      "iid": 78,
+      "kind": "sql",
+      "emerge_step": 85,
+      "text_step": 86,
+      "lead": 1
+    },
+    {
+      "iid": 81,
+      "kind": "sql",
+      "emerge_step": 20,
+      "text_step": 95,
+      "lead": 75
+    },
+    {
+      "iid": 82,
+      "kind": "sql",
+      "emerge_step": 85,
+      "text_step": 86,
+      "lead": 1
+    },
+    {
+      "iid": 85,
+      "kind": "sql",
+      "emerge_step": 20,
+      "text_step": 95,
+      "lead": 75
+    },
+    {
+      "iid": 86,
+      "kind": "sql",
+      "emerge_step": 85,
+      "text_step": 86,
+      "lead": 1
+    },
+    {
+      "iid": 89,
+      "kind": "sql",
+      "emerge_step": 20,
+      "text_step": 95,
+      "lead": 75
+    },
+    {
+      "iid": 9,
+      "kind": "twohop",
+      "emerge_step": 11,
+      "text_step": 168,
+      "lead": 157
+    }
+  ],
+  "anticipation_rank_by_layer_median": {
+    "think_jlens": {
+      "4": 25534.0,
+      "8": 26703.5,
+      "12": 22692.0,
+      "16": 3817.0,
+      "20": 6808.0,
+      "22": 6383.5,
+      "24": 6735.0,
+      "26": 12360.5,
+      "28": 19420.5,
+      "30": 16031.0,
+      "32": 17059.5,
+      "34": 18408.0,
+      "36": 13218.5,
+      "38": 13329.0,
+      "40": 18111.0,
+      "42": 13413.0,
+      "44": 11392.5,
+      "48": 7503.5,
+      "52": 8711.0,
+      "56": 6040.5,
+      "60": 2885.0
+    },
+    "think_logit": {
+      "4": 18412.5,
+      "8": 28414.0,
+      "12": 20546.5,
+      "16": 11144.0,
+      "20": 24151.0,
+      "22": 24053.0,
+      "24": 24996.5,
+      "26": 27611.5,
+      "28": 19164.0,
+      "30": 23547.0,
+      "32": 33616.5,
+      "34": 31574.5,
+      "36": 26612.0,
+      "38": 23938.5,
+      "40": 22682.5,
+      "42": 19514.5,
+      "44": 25042.5,
+      "48": 20112.5,
+      "52": 25302.0,
+      "56": 14605.0,
+      "60": 864.0
+    },
+    "suppressed_jlens": {
+      "4": 35567.5,
+      "8": 31946.5,
+      "12": 14126.0,
+      "16": 4488.5,
+      "20": 5053.0,
+      "22": 4824.0,
+      "24": 6259.0,
+      "26": 5176.0,
+      "28": 4085.5,
+      "30": 2048.0,
+      "32": 1549.0,
+      "34": 1523.0,
+      "36": 519.0,
+      "38": 442.0,
+      "40": 305.0,
+      "42": 118.0,
+      "44": 63.0,
+      "48": 57.0,
+      "52": 9.5,
+      "56": 7.5,
+      "60": 5.5
+    },
+    "suppressed_logit": {
+      "4": 53335.0,
+      "8": 35663.0,
+      "12": 26511.5,
+      "16": 24107.5,
+      "20": 16573.5,
+      "22": 23508.0,
+      "24": 15833.5,
+      "26": 10697.0,
+      "28": 7027.5,
+      "30": 3372.0,
+      "32": 3823.0,
+      "34": 3263.0,
+      "36": 840.0,
+      "38": 654.5,
+      "40": 206.0,
+      "42": 61.0,
+      "44": 35.5,
+      "48": 38.0,
+      "52": 8.0,
+      "56": 7.5,
+      "60": 3.5
+    }
+  },
+  "top20_divergence_events": [
+    {
+      "layer": 24,
+      "word": "respectively",
+      "start_step": 236,
+      "run_len": 12,
+      "matches_answer": false,
+      "cot_window": "n September, October, November, December are numbered 7th to 10th, meaning seventh, eighth, ninth, tenth, which we",
+      "iid": 21,
+      "kind": "twohop",
+      "question": "Fact: The month named after the Roman god of war is month number ...?\nAnswer with the missing word.",
+      "answer": "3",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "famously",
+      "start_step": 41,
+      "run_len": 10,
+      "matches_answer": false,
+      "cot_window": "igure out which sport was invented there. Springfield, Massachusetts is known for being the birthplace of basketball. I remember th",
+      "iid": 5,
+      "kind": "twohop",
+      "question": "Fact: The number of players per side in the sport invented in Springfield, Massachusetts is ...?\nAnswer with the missing",
+      "answer": "5",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "famously",
+      "start_step": 99,
+      "run_len": 9,
+      "matches_answer": false,
+      "cot_window": "eir heads almost all the way around\u2014that's a classic owl trait. I remember reading that owls can rotate their head",
+      "iid": 9,
+      "kind": "twohop",
+      "question": "Fact: The time of day when the bird that hoots and can turn its head almost all the way around hunts is ...?\nAnswer with",
+      "answer": "night",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "famously",
+      "start_step": 56,
+      "run_len": 9,
+      "matches_answer": false,
+      "cot_window": "ber that Naples is in Italy, right? Like, there's the Naples pizza, and the Campania region. So Italy is the co",
+      "iid": 24,
+      "kind": "twohop",
+      "question": "Fact: The capital of the country where Naples is located is ...?\nAnswer with the missing word.",
+      "answer": "Rome",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "etc",
+      "start_step": 131,
+      "run_len": 8,
+      "matches_answer": false,
+      "cot_window": "rogen is 1, then lithium 3, beryllium 4, boron 5, carbon 6, nitrogen 7, oxygen 8, fluorine 9, neo",
+      "iid": 12,
+      "kind": "twohop",
+      "question": "Fact: The atomic number of the metal most abundant in human bones is ...?\nAnswer with the missing word.",
+      "answer": "20",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "etc",
+      "start_step": 208,
+      "run_len": 8,
+      "matches_answer": false,
+      "cot_window": " zinc 30. Then gallium 31, germanium 32, arsenic 33, selenium 34, bromine 35, krypton 36. Rubidium 37,",
+      "iid": 18,
+      "kind": "twohop",
+      "question": "Fact: The color of the precious metal with atomic number 79 is ...?\nAnswer with the missing word.",
+      "answer": "yellow",
+      "think_correct": false
+    },
+    {
+      "layer": 24,
+      "word": "famously",
+      "start_step": 27,
+      "run_len": 7,
+      "matches_answer": false,
+      "cot_window": "berty Bell is located. Let me think. The Liberty Bell is a well-known symbol of American independence. I reme",
+      "iid": 16,
+      "kind": "twohop",
+      "question": "Fact: The US state where the city famous for the Liberty Bell is located is ...?\nAnswer with the missing word.",
+      "answer": "Pennsylvania",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "famously",
+      "start_step": 98,
+      "run_len": 7,
+      "matches_answer": false,
+      "cot_window": "e the largest city with the capital. For example, in the US, New York is a big city, but the capital",
+      "iid": 25,
+      "kind": "twohop",
+      "question": "Fact: The capital of the country where Toronto is located is ...?\nAnswer with the missing word.",
+      "answer": "Ottawa",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "etc",
+      "start_step": 95,
+      "run_len": 7,
+      "matches_answer": false,
+      "cot_window": "standard order is Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune. So third is definitely",
+      "iid": 37,
+      "kind": "twohop",
+      "question": "Fact: The color of the planet third from the Sun is ...?\nAnswer with the missing word.",
+      "answer": "blue",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "typically",
+      "start_step": 165,
+      "run_len": 7,
+      "matches_answer": false,
+      "cot_window": "ces the specific book it's reviewing. In database design, this is often done by having a foreign key in the rev",
+      "iid": 73,
+      "kind": "sql",
+      "question": "Tables: reviews(rid, book_id, stars) and books(book_id, title). Which column of reviews is the join key to books? Answer",
+      "answer": "book_id",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "typically",
+      "start_step": 165,
+      "run_len": 7,
+      "matches_answer": false,
+      "cot_window": "ces the specific book it's reviewing. In database design, this is often done by having a foreign key in the rev",
+      "iid": 77,
+      "kind": "sql",
+      "question": "Tables: reviews(rid, book_id, stars) and books(book_id, title). Which column of reviews is the join key to books? Answer",
+      "answer": "book_id",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "typically",
+      "start_step": 165,
+      "run_len": 7,
+      "matches_answer": false,
+      "cot_window": "ces the specific book it's reviewing. In database design, this is often done by having a foreign key in the rev",
+      "iid": 81,
+      "kind": "sql",
+      "question": "Tables: reviews(rid, book_id, stars) and books(book_id, title). Which column of reviews is the join key to books? Answer",
+      "answer": "book_id",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "typically",
+      "start_step": 165,
+      "run_len": 7,
+      "matches_answer": false,
+      "cot_window": "ces the specific book it's reviewing. In database design, this is often done by having a foreign key in the rev",
+      "iid": 85,
+      "kind": "sql",
+      "question": "Tables: reviews(rid, book_id, stars) and books(book_id, title). Which column of reviews is the join key to books? Answer",
+      "answer": "book_id",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "typically",
+      "start_step": 165,
+      "run_len": 7,
+      "matches_answer": false,
+      "cot_window": "ces the specific book it's reviewing. In database design, this is often done by having a foreign key in the rev",
+      "iid": 89,
+      "kind": "sql",
+      "question": "Tables: reviews(rid, book_id, stars) and books(book_id, title). Which column of reviews is the join key to books? Answer",
+      "answer": "book_id",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "specifically",
+      "start_step": 309,
+      "run_len": 6,
+      "matches_answer": false,
+      "cot_window": "the hard covering on the back,\" so maybe they're referring to the carapace, but in common language, peopl",
+      "iid": 1,
+      "kind": "twohop",
+      "question": "Fact: The hard covering on the back of the slow reptile that can pull its head inside its body is called a ...?\nAnswer w",
+      "answer": "shell",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "technically",
+      "start_step": 215,
+      "run_len": 6,
+      "matches_answer": false,
+      "cot_window": "lo\" is often used for bison, even though they're not the same as the African buffalo. But regardless,",
+      "iid": 2,
+      "kind": "twohop",
+      "question": "Fact: The number of legs on the large horned animal that roamed the American plains in huge herds is ...?\nAnswer with th",
+      "answer": "four",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "famously",
+      "start_step": 236,
+      "run_len": 6,
+      "matches_answer": false,
+      "cot_window": "mercury is a liquid at room temperature. That's one of those exceptions, like how water is liquid an",
+      "iid": 4,
+      "kind": "twohop",
+      "question": "Fact: The state of matter at room temperature of the element with atomic number 80 is ...?\nAnswer with the missing word.",
+      "answer": "liquid",
+      "think_correct": true
+    },
+    {
+      "layer": 32,
+      "word": "standard",
+      "start_step": 114,
+      "run_len": 6,
+      "matches_answer": false,
+      "cot_window": " sometimes there's 3-on-3 or 6-on-6, but the traditional and official game is 5 players per team. Let me double-ch",
+      "iid": 5,
+      "kind": "twohop",
+      "question": "Fact: The number of players per side in the sport invented in Springfield, Massachusetts is ...?\nAnswer with the missing",
+      "answer": "5",
+      "think_correct": true
+    },
+    {
+      "layer": 40,
+      "word": "standard",
+      "start_step": 114,
+      "run_len": 6,
+      "matches_answer": false,
+      "cot_window": " sometimes there's 3-on-3 or 6-on-6, but the traditional and official game is 5 players per team. Let me double-ch",
+      "iid": 5,
+      "kind": "twohop",
+      "question": "Fact: The number of players per side in the sport invented in Springfield, Massachusetts is ...?\nAnswer with the missing",
+      "answer": "5",
+      "think_correct": true
+    },
+    {
+      "layer": 24,
+      "word": "sometimes",
+      "start_step": 375,
+      "run_len": 6,
+      "matches_answer": false,
+      "cot_window": "possibility. \n\nWait, in some productions, the swans might have different colors, but traditionall",
+      "iid": 7,
+      "kind": "twohop",
+      "question": "Fact: The color of the long-necked bird in the famous Tchaikovsky ballet is ...?\nAnswer with the missing word.",
+      "answer": "white",
+      "think_correct": true
+    }
+  ],
+  "n_divergence_events_total": 116
+}

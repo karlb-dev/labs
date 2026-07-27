@@ -1267,3 +1267,18 @@ intervention that tried to kill it, this is the counterexample I found, and
 this is the smaller claim that survived. This report text is evidence only for
 the functional channel I actually tested.
 ```
+
+---
+
+## Proposed extension: Lab 37 (draft, branch `interp_jspace`)
+
+**Lab 37: J-space Global Workspace Replication (OLMo-3-32B-Think)** — an
+external-replication special case in the Lab 36 mold: take a flagship
+published result (Anthropic's July 2026 global-workspace paper), rebuild its
+three separable claims (geometry, broadcast, causal dissociation) on a fully
+open model with the deflationary twin of each instrument built in
+(energy-matched controls, foil-calibrated detectors, matched-live ablation
+controls), and add a thinking-model extension the original could not run.
+Spec: `labs/lab37_jspace_workspace.md`. Code, results, figures, and the
+living LaTeX handout: `jspace/`. Status: v1 complete, v2 instrument audit in
+progress; **not yet canon** — promotion criteria in the spec.

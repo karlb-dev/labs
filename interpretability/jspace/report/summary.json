@@ -1,0 +1,172 @@
+{
+  "model": "allenai/Olmo-3-32B-Think",
+  "generated": "2026-07-26 05:55:23",
+  "variance_share_by_layer": {
+    "L4": 0.0018,
+    "L8": 0.0013,
+    "L12": 0.0012,
+    "L16": 0.0017,
+    "L20": 0.0022,
+    "L22": 0.0024,
+    "L24": 0.0026,
+    "L26": 0.0031,
+    "L28": 0.0037,
+    "L30": 0.0042,
+    "L32": 0.0048,
+    "L34": 0.0058,
+    "L36": 0.0064,
+    "L38": 0.0065,
+    "L40": 0.0066,
+    "L42": 0.0067,
+    "L44": 0.0064,
+    "L48": 0.006,
+    "L52": 0.0062,
+    "L56": 0.0068,
+    "L60": 0.0091
+  },
+  "active_concepts_mid_median": 2.0,
+  "variance_share_mid_max": 0.0067,
+  "top1_persistence_mid": 0.16507516892935234,
+  "probe_hits_at_20": {
+    "jlens": 17,
+    "logit": 17,
+    "n": 21
+  },
+  "multihop_eval": {
+    "jlens_pass@1": 0.283,
+    "jlens_pass@5": 0.406,
+    "jlens_pass@20": 0.547,
+    "logit_pass@1": 0.2,
+    "logit_pass@5": 0.414,
+    "logit_pass@20": 0.586,
+    "n_scored": 60,
+    "n_skipped": 0
+  },
+  "ablation": {
+    "twohop": {
+      "baseline": 0.5833333333333334,
+      "jspace_dyn10": 0.0,
+      "random_k10": 0.5833333333333334,
+      "nonJ_pca_k10": 0.5166666666666667
+    },
+    "onehop": {
+      "baseline": 0.6,
+      "jspace_dyn10": 0.0,
+      "random_k10": 0.7,
+      "nonJ_pca_k10": 0.7333333333333333
+    },
+    "arithmetic": {
+      "baseline": 0.4666666666666667,
+      "jspace_dyn10": 0.0,
+      "random_k10": 0.36666666666666664,
+      "nonJ_pca_k10": 1.0
+    },
+    "sql": {
+      "baseline": 0.6666666666666666,
+      "jspace_dyn10": 0.0,
+      "random_k10": 0.3333333333333333,
+      "nonJ_pca_k10": 0.0
+    },
+    "prose_nll": {
+      "baseline": 2.714306342601776,
+      "jspace_dyn10": 24.33642110824585,
+      "random_k10": 2.728594422340393,
+      "nonJ_pca_k10": 3.10047390460968
+    },
+    "grammar": {
+      "baseline": 1.0,
+      "jspace_dyn10": 0.3,
+      "random_k10": 1.0,
+      "nonJ_pca_k10": 1.0
+    },
+    "twohop_lp": {
+      "baseline": -1.735537173707659,
+      "jspace_dyn10": -24.7835533618927,
+      "random_k10": -1.7263516827952117,
+      "nonJ_pca_k10": -2.1839655303241066
+    },
+    "samples": {
+      "baseline": 1.0,
+      "jspace_dyn10": 1.0,
+      "random_k10": 1.0,
+      "nonJ_pca_k10": 1.0
+    },
+    "arithmetic_v2": {
+      "baseline": 0.8666666666666667,
+      "jspace_dyn10": 0.0,
+      "random_k10": 0.8333333333333334,
+      "nonJ_pca_k10": 1.0
+    }
+  },
+  "cot_anticipation": {
+    "n": 90,
+    "jlens_frac_rank_le20": 0.1,
+    "logit_frac_rank_le20": 0.0,
+    "jlens_median_rank": 5613.0
+  },
+  "cot": {
+    "n_items": 90,
+    "think_acc": 0.9777777777777777,
+    "suppressed_acc": 0.8888888888888888,
+    "divergence_events_total": 116,
+    "items_with_divergence": 59
+  },
+  "cot_lead": {
+    "n_traced_scored": 34,
+    "median_lead_steps": 46.0,
+    "frac_workspace_leads": 0.9117647058823529,
+    "per_kind_median": {
+      "twohop": 48.5,
+      "arithmetic": 9.5,
+      "sql": 38.0
+    },
+    "note": "text_step = first step whose cumulative decoded text contains the space-stripped lowercased answer; emerge_step from s8 (first appearance in any read layer's top-8)."
+  },
+  "pre_answer_median_rank": {
+    "think_jlens": {
+      "L24": 6735.0,
+      "L32": 17059.5,
+      "L36": 13218.5,
+      "L40": 18111.0,
+      "L44": 11392.5
+    },
+    "think_logit": {
+      "L24": 24996.5,
+      "L32": 33616.5,
+      "L36": 26612.0,
+      "L40": 22682.5,
+      "L44": 25042.5
+    },
+    "suppressed_jlens": {
+      "L24": 6259.0,
+      "L32": 1549.0,
+      "L36": 519.0,
+      "L40": 305.0,
+      "L44": 63.0
+    },
+    "suppressed_logit": {
+      "L24": 15833.5,
+      "L32": 3823.0,
+      "L36": 840.0,
+      "L40": 206.0,
+      "L44": 35.5
+    }
+  },
+  "broadcast": {
+    "24": {
+      "jspace": 94.0,
+      "random": 0.0,
+      "nonJ_pca": 125.0
+    },
+    "32": {
+      "jspace": 77.0,
+      "random": 0.0,
+      "nonJ_pca": 110.0
+    },
+    "40": {
+      "jspace": 73.0,
+      "random": 0.0,
+      "nonJ_pca": 77.0
+    }
+  }
+}
