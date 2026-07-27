@@ -259,3 +259,62 @@ this file got the entries.)
   0.317/0.500/0.600, n=60. Readout advantage replicates on Qwen.
 - Q1 in flight; first cells: none twohop 0.867, frozen_j10 twohop 0.367
   [0.200,0.533] — the frozen deletion transfers to Qwen.
+
+## 2026-07-26 23:0x–23:33 (VM5) — phase Q COMPLETE; two numerics fixes en route
+- s18 pass 1 killed deliberately pre-grid (old cond order + fp32 build_dicts
+  would OOM at 248k vocab); pass 2 landed Q1+Q2 but phase-b variance shares
+  went inf/nan at L20-38 — Qwen's outlier activations (a) overflow fp16 in
+  the pursuit correlation (fixed: bf16) and (b) diverge the fixed-lr=0.25
+  refit when near-duplicate atoms push the active-set Gram past 2/lr
+  (fixed: step = min(lr, 1/(k+2)), provably contractive for unit-norm
+  atoms). Stable layers L40-44 moved <=0.2pp under the fix (0.0668/0.0679/
+  0.0642 -> 0.0651/0.0675/0.0639) — commensurability preserved. Static
+  Q2 cells re-ran per pass: -0.87/-0.77/-0.87 (broken selection) vs
+  -0.85/-0.72/-0.80 (clean) — the static null is insensitive even to
+  broken direction selection (recorded as a robustness note).
+- FINAL Q numbers: sanity jlens 0.350/0.517/0.739 vs logit 0.317/0.500/
+  0.600 (n=60). Descriptive: var share 4.3->6.8% rising L20->L44,
+  act@0.01 32-42, act@0.02 14-21, persistence 0.03-0.09 (paper-range
+  capacity; OLMo is the outlier). Causal: frozen_j10 twohop 0.87->0.37,
+  lp -0.77->-3.19 (delta -2.42); frozen_rand10 = baseline; onehop nearly
+  intact on Qwen (0.90->0.83) unlike OLMo (collapsed equally) — the
+  composed-task bias is the sharpest follow-up target. Statics all within
+  +-0.08 nats of baseline. Handout §Q + f15; pushed 2d245fd.
+
+## 2026-07-26 23:35–23:45 (VM5) — DriveFS incident and recovery (ops)
+- The swap script's age-gated cache eviction deleted DriveFS's chunks.db
+  (the cache is ONE SQLite db, not per-file chunks) -> the fuse.drive
+  mount served EMPTY content for every cached file while stat sizes stayed
+  correct; a first integrity audit looked like total metrics corruption.
+- Recovery: kill -9 the --single_process /opt/google/drive/drive worker;
+  its supervisor respawns it; reads recover fully. Server-side audit after
+  restart: ALL v2 metrics, layer_state_qwen, v1 spot-checks parse — zero
+  data loss (uploads had completed before the sweep; only local FUSE state
+  was wedged).
+- Standing fixes: never delete DriveFS cache files; watchdog LOGS only;
+  local mirror of all v2 metrics refreshed at every boundary
+  (/content/metrics_backup); logs tee locally. Disk headroom for the OLMo
+  stream came from deleting Qwen blobs (55 GB); rm of base-image packages
+  frees nothing (overlayfs lower layer).
+
+## 2026-07-26 23:44–… (VM5) — P5+P6 via one-load driver
+- s21 driver: single OLMo load (750 s through DriveFS) shared by s16
+  (capped rescue grid) and s17 (P6 trim: fresh probe-swap twohop [60:90]
+  n=30, readout tasks, static cells ride along). Cells flowing ~44 s/item.
+- Early P5 shape (n=8 partial): frozen_j10 any-rate ~0.6 vs no-think 0.23
+  vs frozen_rand10 ~1.0 — partial rescue; closed-</think> rate ~0-0.25 so
+  post-segment scoring is degenerate (any/think metrics lead, decided
+  before final numbers).
+
+## 2026-07-27 00:32–00:5x (VM5) — P5+P6 COMPLETE; GPU program done T+1:46
+- s16 (capped): twohop any-rate frozen_j10 0.80 vs no-think 0.23 vs
+  frozen_rand10 0.93; onehop fully rescued 1.00; arith 0.93 both conds
+  (token-cap scorer floor); closure rate HALVED under frozen-J (0.20 vs
+  0.40). Rescue prediction holds in content-channel form -> SL1-C6.
+- s17 (P6 trim): fresh probe-swap [60:90] items, seed-1 pools: frozen_j10
+  acc 0.233 (== seed-0 exactly, disjoint items) dlp -2.82 (seed-0 -2.89);
+  frozen_rand d-0.11; statics all CIs superset baseline. Handle is item-,
+  pool-, and seed-robust; static null generalizes to never-seen items.
+- Reporting finalized: REPORT_v2.md, README, PR_BODY.md, lab37 spec
+  (allowed claim, status COMPLETE-proposed, checklist 3/4 boxes, C1-C7),
+  handout §§P5/P6/Q + f15/f16/f17, inprogress.md flipped to FINAL.

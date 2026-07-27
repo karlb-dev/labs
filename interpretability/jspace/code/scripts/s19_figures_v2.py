@@ -248,8 +248,7 @@ def fig_qwen():
              ("arithmetic_v2", "chained arithmetic"),
              ("grammar", "grammaticality")])
     ax.set_xlabel("accuracy (bootstrap 95% CI)")
-    ax.set_title("Qwen3.6-27B, published lens + our instruments",
-                 fontsize=11)
+    ax.set_title("Qwen3.6-27B causal grid", fontsize=11)
     ax.legend(frameon=False, loc="lower left", fontsize=9)
 
     ax = axes[1]
@@ -279,8 +278,7 @@ def fig_qwen():
             label="Qwen3.6-27B (hollow)")
     ax.set_xticks(range(len(conds)), [c[1] for c in conds], fontsize=8.5)
     ax.set_ylabel("Δ 2-hop answer logprob vs own baseline (nats)")
-    ax.set_title("Same instruments, two models: content channel vs "
-                 "static null", fontsize=11)
+    ax.set_title(r"$\Delta$ 2-hop logprob, both models", fontsize=11)
     ax.legend(frameon=False, fontsize=9, loc="lower left")
     fig.suptitle("Phase Q: the causal pattern transfers to Qwen",
                  fontweight="bold")
@@ -311,10 +309,13 @@ def fig_rescue():
              and "frozen_j10" in agg[k]]
     fig, ax = plt.subplots(figsize=(8.5, 4.2))
     xs = np.arange(len(kinds))
+    # any-rate (answer anywhere in the trace) is the informative metric —
+    # OLMo rarely closes </think> within the 400-token cap, so the
+    # post-segment rate is degenerate (see handout §P5 scoring note).
     for j, (cond, label, color) in enumerate(
             (("frozen_j10", "frozen J top-10 + think", C["j"]),
              ("frozen_rand10", "frozen random + think", C["rand"]))):
-        vs = [agg[k][cond]["post"] for k in kinds]
+        vs = [agg[k][cond]["any"] for k in kinds]
         ns = [agg[k][cond]["n"] for k in kinds]
         ax.bar(xs + (j - 0.5) * 0.34, vs, width=0.32, color=color,
                label=label)
@@ -324,23 +325,25 @@ def fig_rescue():
     if "frozen_j10_twohop" in ref:
         ax.hlines(ref["frozen_j10_twohop"], -0.45, 0.45, color=C["j"],
                   ls=":", lw=2)
-        ax.text(0.47, ref["frozen_j10_twohop"], "frozen-J, no-think",
-                fontsize=8.5, color=C["j"], va="center")
+        ax.text(-0.42, ref["frozen_j10_twohop"] + 0.015,
+                "frozen-J, no-think", fontsize=8, color=C["j"], ha="left")
     if "none_twohop" in ref:
         ax.hlines(ref["none_twohop"], -0.45, 0.45, color=C["ink"], ls="--",
                   lw=1.5)
-        ax.text(0.47, ref["none_twohop"], "baseline, no-think",
-                fontsize=8.5, color=C["sec"], va="center")
+        ax.text(-0.42, ref["none_twohop"] + 0.015, "baseline, no-think",
+                fontsize=8, color=C["sec"], ha="left")
     ax.set_xticks(xs, [f"{k}\n(n={agg[k]['frozen_j10']['n']})"
                        for k in kinds])
     ax.set_ylim(0, 1.12)
-    ax.set_ylabel("answer in post-</think> segment")
+    ax.set_ylabel("answer anywhere in trace (any-rate)")
     ax.set_title("P5: does externalized reasoning rescue the frozen-J "
                  "deletion?")
     ax.legend(frameon=False, fontsize=9, loc="upper right")
     save(fig, "f16_cot_rescue.png")
-    return {k: {c: agg[k][c]["post"] for c in ("frozen_j10", "frozen_rand10")
-                if c in agg[k]} for k in kinds} | {"ref": ref}
+    return {k: {c: {"any": agg[k][c]["any"], "post": agg[k][c]["post"],
+                    "closed": agg[k][c]["closed"]}
+                for c in ("frozen_j10", "frozen_rand10") if c in agg[k]}
+            for k in kinds} | {"ref": ref}
 
 
 def fig_seed1():

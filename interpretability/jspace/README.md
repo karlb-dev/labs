@@ -1,10 +1,11 @@
 # Lab 37 (draft): J-space Global Workspace Replication — OLMo-3-32B-Think
 
-> **Status: draft proposed lab, branch `interp_jspace`.**
-> v1 pipeline complete (2026-07-26). **v2 delta run in progress** — this
-> directory is refreshed at every phase boundary, so partial v2 results are
-> normal here; `code/PLAN_v2.md` and the Drive `inprogress.md` say exactly
-> what is running. Spec: [`labs/lab37_jspace_workspace.md`](../labs/lab37_jspace_workspace.md).
+> **Status: COMPLETE — proposed for promotion.** v1 (2026-07-25/26) +
+> v2 instrument audit + Qwen cross-model leg + rescue/robustness
+> (2026-07-26/27) are all landed; the run queue is empty. Spec + claim
+> ledger + promotion checklist:
+> [`labs/lab37_jspace_workspace.md`](../labs/lab37_jspace_workspace.md).
+> Suggested PR description: [`PR_BODY.md`](PR_BODY.md).
 
 An open-weights replication of Anthropic's July 2026 paper *"Verbalizable
 Representations Form a Global Workspace in Language Models"*
@@ -18,7 +19,7 @@ causal verdict.
 — the living writeup (prose + figures, updated per phase). Full v1 prose:
 [`report/REPORT.md`](report/REPORT.md).
 
-## Findings so far (v1 + v2 partial)
+## Findings (final)
 
 | Claim | Result | Evidence |
 |---|---|---|
@@ -30,11 +31,16 @@ causal verdict.
 | Workspace anticipates CoT | **Survives foil calibration**: leads text by median 46 steps; answer detection 0.92 vs 0.06 frequency-matched noise floor; family foils fire concurrently (lead 3) | `v2_cot_foils.json`, f9 |
 | Pre-CoT anticipation | **Null** — answer median rank 5613 before any thinking token; loads on demand at answer time (rank 211 suppressed; monotone collapse L30→L60) | f6, `v1_cot_lead.json` |
 | Eval-awareness direction | Emerges p<0.001 all layers, semantically legible — but behaviorally inert and confounded by lexical echo | `v1_evalaware.json` |
+| **Qwen3.6-27B leg (v2 Q)** — same instruments, their published lens | **Both causal verdicts transfer**: frozen-J deletes the fact (−2.4 nats, 0.87→0.37 two-hop; controls clean) and the energy-matched static trio is null (±0.08 nats). **Capacity does NOT transfer**: variance share 4.3–6.8%, 32–42 active concepts — paper-range, vs OLMo's 0.67%/6 under the identical harness. Qwen-only asymmetry: 1-hop barely moves (0.90→0.83) while 2-hop halves | f15, `v2_qwen_causal_grid.json`, `v2_qwen_sanity.json` |
+| CoT-rescue of the frozen deletion (v2 P5) | **Externalization largely bypasses the deletion**: under the same frozen-J projectors (silent recall 0.23), think-mode recovers the two-hop answer in 0.80 of traces (control 0.93) and fully rescues one-hop (1.00); frozen-J halves the `</think>`-closure rate — the paper's rescue prediction holds in content-channel form | f16, `v2_cot_rescue.json` |
+| Seed-1 + fresh-items robustness (v2 P6) | **Replicates exactly**: on fresh probe-swap items with redrawn pools, frozen-J accuracy is 0.233 under both seeds (disjoint item sets; Δlp −2.82 vs −2.89), controls at baseline, static null intact | f17, `v2_robustness_seed1.json` |
 
-The open question driving v2: **is the causal null OLMo or the harness?**
-Decision tree in `code/PLAN_v2.md` — if clean instruments (energy matching,
-frozen selection, late-band lens) still null, the same instruments go to
-Qwen 3.6 27B via Neuronpedia's published lens to separate model from method.
+**The question that drove v2 — is the causal null OLMo or the harness? —
+is resolved: instruments.** With energy matching and matched-live/frozen
+controls, both models agree (static = nothing; frozen per-item = content
+deletion), while the 10× capacity difference between OLMo and Qwen/Claude
+is a real model property measured under one harness. Full decision tree
+and verdict: `report/REPORT_v2.md`.
 
 ## Layout
 

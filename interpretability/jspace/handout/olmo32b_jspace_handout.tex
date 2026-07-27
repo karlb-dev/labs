@@ -636,8 +636,107 @@ filled = OLMo, hollow = Qwen.}
 \label{fig:qwen}
 \end{figure}
 
-% --- [v2 pending subsections: P5 CoT rescue, P6 seeds — added as each
-% --- lands; see inprogress.md]
+\subsection{[v2-P5] CoT-rescue: can externalized reasoning recover the
+frozen-deleted fact?}
+
+P2's deletion was measured in no-think mode: silent recall, one forward
+pass. The paper's identity claim predicts workspace ablation should be
+partially rescuable by \emph{externalizing} the computation --- and v1's
+suppression asymmetry (think accuracy $\ge$ suppressed accuracy on every
+task) points the same way. Instrument: the SAME per-item frozen top-10
+projectors as P2, but with an open \code{<think>} and up to 400 reasoning
+tokens (capped grid per PLAN\_v3: the two frozen conditions on
+two-hop/one-hop/arithmetic; $n{=}30/15/15$). One scoring note, fixed
+before reading results: OLMo rarely closes \code{</think>} within 400
+tokens on multi-step tasks (closure 0.20/0.40 two-hop frozen-J/rand, 0.07
+arithmetic, vs 0.87--1.00 one-hop), so the post-\code{</think>} segment is
+degenerate and the informative metrics are \emph{answer appears anywhere
+in the trace} and \emph{answer appears inside the think segment}.
+
+\begin{center}\small
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{frozen J-10} & \multicolumn{2}{c}{frozen rand-10} \\
+ & any & think & any & think \\
+\midrule
+two-hop ($n{=}30$)    & \textbf{0.80} & 0.80 & 0.93 & 0.93 \\
+one-hop ($n{=}15$)    & \textbf{1.00} & 1.00 & 1.00 & 1.00 \\
+arithmetic ($n{=}15$) & 0.93 & 0.93 & 0.93 & 0.93 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{The rescue is real and large.} Under the very projectors that cut
+silent two-hop recall to 0.23, letting the model reason out loud recovers
+the answer somewhere in the trace in \textbf{0.80} of items --- 3.4$\times$
+the silent rate, most of the way back to the random-twin's 0.93 --- and
+\emph{fully} rescues one-hop (1.00 vs.\ 0.23 silent). Arithmetic, which
+frozen-J never touched, stays at 0.93 in both conditions (scorer floor
+from the 400-token cap, not an ablation effect). So the content deletion
+is \emph{bypassable via externalization}: the paper's
+workspace-ablation-is-rescuable-by-CoT prediction holds on OLMo in
+content-channel form [SL1-C6]. Two honest bounds: the residual gap to the
+control (0.80 vs.\ 0.93) says the bypass is incomplete at 400 think
+tokens, and the rescue does not distinguish re-retrieval from
+re-derivation via the other hop. One secondary observable falls out free:
+frozen-J \emph{halves} the \code{</think>}-closure rate (0.20 vs.\ 0.40)
+--- with its content channel damaged, the model deliberates longer, the
+behavioral signature you would expect if the CoT is doing compensatory
+work.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.8\linewidth]{f16_cot_rescue.png}
+\caption{CoT-rescue under the frozen per-item projectors. Dotted line:
+frozen-J \emph{no-think} recall (0.23); dashed: no-think baseline (0.58).}
+\label{fig:rescue}
+\end{figure}
+
+\subsection{[v2-P6] Second seed, fresh items: does the frozen effect
+survive?}
+
+Seed-1 replicate of the decisive grid, deliberately harder than a seed
+re-roll: the two-hop set is \emph{fresh} (probe-swap items [60:90], never
+touched by v1/v2 fitting or evaluation), the random-dictionary and
+matched-random pools are re-drawn under seed 1, and the frozen-J
+selection re-runs per fresh item. Readout tasks only (two-hop accuracy +
+answer logprob); the energy-matched static cells ride along as near-free
+readouts.
+
+\begin{center}\small
+\begin{tabular}{lcc|cc}
+\toprule
+ & \multicolumn{2}{c|}{seed 1, fresh items} & \multicolumn{2}{c}{seed 0 (P1/P2)} \\
+ & 2-hop & 2-hop lp & 2-hop & 2-hop lp \\
+\midrule
+baseline       & 0.50 & $-2.81$ & 0.58 & $-1.74$ \\
+frozen J-10    & \textbf{0.23} & $\mathbf{-5.62}$ & 0.23 & $-4.63$ \\
+frozen rand-10 & 0.43 & $-2.92$ & 0.53 & $-1.78$ \\
+J-span k20 (m) & 0.43 & $-3.20$ & 0.52 & $-1.91$ \\
+rand k20 (m)   & 0.53 & $-2.68$ & 0.57 & $-1.82$ \\
+non-J k20 (m)  & 0.53 & $-3.05$ & 0.53 & $-1.91$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The fresh items are harder across the board (baseline logprob
+$-1.74\to-2.81$), so effect \emph{sizes} are the comparison --- and they
+are eerily stable: frozen-J lands on accuracy \textbf{0.233 under both
+seeds} (disjoint item sets!) with $\Delta$logprob $-2.82$ nats vs.\
+seed-0's $-2.89$, while the redrawn random-dictionary twin stays within
+noise of baseline ($\Delta-0.11$) and every energy-matched static cell
+keeps its null (all CIs $\supset$ baseline's). The frozen causal handle
+is therefore not an item-set artifact, not a control-pool draw, and not a
+seed accident [strengthens SL1-C2]; the static null generalizes to items
+the lens never saw at any stage.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=.9\linewidth]{f17_seed1.png}
+\caption{Seed-0 (filled) vs seed-1-on-fresh-items (hollow) across the six
+causal conditions.}
+\label{fig:seed1}
+\end{figure}
 
 \subsection*{Artifacts}
 
