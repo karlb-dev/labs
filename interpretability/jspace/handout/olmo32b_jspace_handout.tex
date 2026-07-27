@@ -783,6 +783,27 @@ causal conditions.}
 \label{fig:seed1}
 \end{figure}
 
+\subsection{[v2-F] Final falsifier pass: three recorded caveats, measured}
+
+One last GPU window went to the ledger's own falsifiers
+(\code{final\_falsifiers.json}). \textbf{(a) Pool size [C2]:} a
+\emph{vocab-sized} (100k-row) random dictionary under the identical
+frozen mechanism stays at baseline (two-hop 0.433 vs.\ 0.583, CIs
+overlap; $\Delta$lp $-0.14$ vs.\ frozen-J's $-2.90$) --- the deletion
+needs the J-dictionary's content, not selection depth. \textbf{(b)
+Filler control [C6]:} 400 tokens of non-reasoning think-padding recover
+frozen-J recall to 0.467 [0.30,0.63] --- about half the real-CoT rescue
+(0.80; controls 0.633 under filler) --- so the rescue decomposes into a
+length/compute component and a comparable externalization component on
+top (metric caveat: 32-token answer window vs.\ answer-anywhere;
+recorded as the residual falsifier). \textbf{(c) Variance-matched
+fan-out [C3]:} with the v2 energy-matched pools, J top-20 directions are
+read by 92/73/68 downstream components (L24/32/40) vs.\ 132/107/65 for
+energy-matched non-J PCs and $\approx$1 for energy-matched random
+columns: broadcast tracks \emph{structured} high-variance directions
+generally --- the non-dissociation v1 suspected is now measured, and
+``same energy'' alone earns zero readership.
+
 \subsection*{Artifacts}
 
 Everything regenerates from saved metrics without model access:

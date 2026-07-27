@@ -339,6 +339,47 @@ step — fixed lr=0.25 diverges when near-duplicate atoms push the active-set
 Gram past the stability bound). Stable layers moved ≤0.2pp under the fix;
 all OLMo results predate and are unaffected.
 
+### Final falsifier pass (s24 → final_falsifiers.json)
+
+A bonus GPU window after completion was spent discharging the three
+falsifiers the ledger itself had recorded, in priority order:
+
+- **[C2's pool-size caveat] Vocab-sized frozen-random dictionary.**
+  The frozen-rand control used a 5120-row dictionary vs frozen-J's
+  ~100k rows, leaving "alignment depth" as an alternative reading of the
+  P2 deletion. Same mechanism, same dose, 100k-row random dictionary:
+  **does not reproduce it** — twohop 0.433 [0.267,0.600] (baseline 0.583,
+  CIs overlap; frozen-J 0.233), twohop_lp −1.88 [−2.54,−1.24] = Δ−0.14 vs
+  frozen-J's −2.90, prose NLL 2.83 ≈ the frozen-family floor. The caveat
+  is closed: the deletion needs the *J-dictionary's content*, not just a
+  deep pool to select from.
+- **[C6's falsifier] Length-matched non-reasoning filler.** If 400
+  tokens of semantically empty think-padding ("let me take a moment...",
+  forced `</think>`) recovers recall the way real CoT did (0.23→0.80),
+  the P5 rescue is a length/compute artifact: **it recovers about half**
+  — frozen-J+filler 0.467 [0.30,0.63] vs silent 0.233 vs real-CoT 0.80;
+  controls identical at 0.633 (none+filler = frozen-rand+filler; no-think
+  baseline was 0.583). So the rescue decomposes into a compute/length
+  component (+0.23, semantics-free forward passes under the still-active
+  projectors) and an externalization component of comparable size on top
+  (+0.33, CIs vs filler essentially disjoint). C6 is rewritten as a
+  two-component claim rather than discharged. (Metric note: rescue 0.80
+  is answer-anywhere in a 400-token trace; filler 0.467 is a 32-token
+  answer segment after the padding — the residual falsifier is a
+  detection-budget-matched rescore, recorded in the ledger.)
+- **[C3's falsifier] Variance-matched broadcast fan-out.** v1's broadcast
+  result was confounded by variance (non-J high-variance PCs read as
+  widely as J-dirs); the v2 energy-matched pools make the clean
+  comparison possible: **the non-dissociation stands, sharpened.** Per
+  source layer (readers of 195/155/115 downstream components at
+  L24/32/40): J top-20 read by 92/73/68; energy-matched non-J PCs by
+  132/107/65; energy-matched *random* columns by ~1. So fan-out tracks
+  *structured* high-variance directions generally (J-dirs are read
+  exactly like top PCs, sometimes less), not J-ness — while the
+  random-matched floor shows "same energy" alone earns zero readership.
+  v1's caveat on SL1-C3 was correct and is now measured rather than
+  suspected.
+
 ## Synthesis
 
 Static span = nothing (both models, matched energy). Frozen per-item =

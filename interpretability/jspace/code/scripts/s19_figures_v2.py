@@ -414,6 +414,19 @@ def main() -> None:
         summary["rescue"] = fig_rescue()
     if have("robustness_seed1.json"):
         summary["seed1"] = fig_seed1()
+    if have("final_falsifiers.json"):
+        ff = read_json(M / "final_falsifiers.json")
+        summary["falsifiers"] = {
+            "pool_size": {t: e["mean"] for t, e in
+                          ff.get("pool_size", {}).get("conditions", {}).items()},
+            "filler": {c: e["mean"] for c, e in
+                       ff.get("filler", {}).get("conditions", {}).items()},
+            "fanout": {l: {g: row[g]["mean"] for g in
+                           ("J_top20", "vmatch_nonJ", "vmatch_rand")
+                           if g in row}
+                       for l, row in ff.get("fanout", {})
+                       .get("source_layers", {}).items()},
+        }
     atomic_write_json(summary, RUN_DIR_V2 / "report" / "summary_v2.json")
     log("wrote report/summary_v2.json")
 
