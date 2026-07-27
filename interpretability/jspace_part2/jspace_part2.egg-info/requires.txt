@@ -1,0 +1,8 @@
+torch>=2.4
+transformers>=4.44
+huggingface_hub>=0.24
+numpy>=1.26
+pandas>=2.0
+pyarrow>=14
+matplotlib>=3.8
+pyyaml>=6.0

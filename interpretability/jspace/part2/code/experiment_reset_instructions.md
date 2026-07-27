@@ -140,6 +140,20 @@ cache makes reloads cheap.
    deterministic primary endpoints; full-answer-sequence scoring.
 10. **pipefail + tee on every long run** (a tee-masked exit code cost VM4 an
     evening). Long GPU runs launch detached with logs in the run dir.
+11. **REPRO CONTRACT (user directive 2026-07-27, binding for all new
+    work)** — `interpretability/jspace_part2/protocol/REPRO_CONTRACT.md`:
+    every claim-bearing artifact has an evidence_id in
+    `jspace_part2/reports/evidence_registry.jsonl`, a provenance block
+    (code commit, config hash, input hashes, model revisions), and a
+    single-command repro path (`bash interpretability/jspace_part2/repro.sh
+    <evidence-id>` from a clean clone). Producers refuse dirty git trees.
+    Confirmatory work runs from the `jspace_part2` package (in git), not
+    from the gitignored exploratory dir. Superseding is by NEW evidence
+    ids + `superseded_by` links, never by editing old artifacts.
+12. **24 h GPU blocks (user)**: every GPU phase checkpoints ≤10 min and
+    resumes with the same command; order the live queue so any prefix
+    fits one block; hash-pin + registry-log finished heavy artifacts at
+    every block boundary.
 
 ## Model pins (hub-checked 2026-07-27)
 

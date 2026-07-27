@@ -1,9 +1,9 @@
 {
   "slices": {
     "0": {
-      "prompts_done": 10,
+      "prompts_done": 20,
       "peak_vram_gb": 80.6,
-      "elapsed_s": 1571
+      "elapsed_s": 3155
     }
   },
   "model": "allenai/Olmo-3.1-32B-Instruct",
