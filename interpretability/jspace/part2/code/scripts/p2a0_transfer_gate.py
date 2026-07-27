@@ -164,7 +164,11 @@ def unembed_drift(hf_recipient, donor_id: str, n_rows: int = 4000):
 def main() -> None:
     seed_all()
     slug = arg("--model", "olmo31-instruct")
-    out_path = p2_metrics_dir(slug) / "a0_transfer_gate.json"
+    # --tag names the run (default: the A0 transfer gate). The post-fit
+    # own-lens re-gate uses:  --lens <run_dir_p2>/lens/olmo31instruct_lens.pt
+    #                         --tag a1_sanity_ownlens
+    tag = arg("--tag", "a0_transfer_gate")
+    out_path = p2_metrics_dir(slug) / f"{tag}.json"
     if out_path.exists() and "--force" not in sys.argv:
         log(f"{out_path} exists; skipping")
         return
