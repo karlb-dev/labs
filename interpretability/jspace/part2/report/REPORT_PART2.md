@@ -78,8 +78,25 @@ H1-flavored datum (think-training strengthens pre-answer internal hop
 resolution).
 
 Figure: `figures/p2f1_a0_transfer.png`. Metrics:
-`metrics/olmo31-instruct/a0_transfer_gate.json`. Ledger: SL2-C1 drafted at
-next reporting boundary.
+`metrics/olmo31-instruct/a0_transfer_gate.json`.
+
+**RESOLVED 2026-07-27 23:37 (own-lens re-gate, tier exploratory,
+evidence `a1-ownlens-regate-olmo31instruct-v1`):** a recipient-fitted
+120-prompt lens (same corpus/recipe/geometry as the donor; 5h23m fit,
+4×30 slices, one isolated fit anomaly recorded at corpus row ~104)
+reproduces the transferred lens EXACTLY at aggregate level — probes
+17/21, multihop pass@1 0.217, J-minus-logit +0.017 — while per-item ranks
+differ (24/68 identical, median |Δ| 3, max 2055), i.e. two genuinely
+different instruments agree. Reading: **(a)** the mid-band J-map is
+conserved across post-training at n=120 fit resolution (transfer ≈
+recipient fit — the A0-as-geometry-experiment outcome); **(b)** the
+rank-1 bridge-resolution deficit (0.217 vs Think's 0.283; advantage
++0.017 vs +0.083) is a **model property of the Instruct sibling**, not
+lens drift. First H1a-flavored datum: think-branch post-training is
+associated with sharper pre-answer internal hop resolution. Caveats:
+n=60, one lens per model, rank-search freedom (addendum §5.3), both
+models' readouts hit the same probe items; confirmatory version rides
+the A1 lineage study under the repaired assay.
 
 ## D — output-alignment analysis (renamed from "occupancy", addendum §18.12), phase 1: Think saved traces — tier: EXPLORATORY
 
