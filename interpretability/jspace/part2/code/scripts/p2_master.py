@@ -14,6 +14,9 @@ ROWS = []
 
 
 def add(model, ws, instrument, metric, value, **kw):
+    # tier: everything predating the R-gates is exploratory (addendum §1.4);
+    # extractors for confirmatory cells will pass tier explicitly.
+    kw.setdefault("tier", "exploratory")
     ROWS.append({"model": model, "ws": ws, "instrument": instrument,
                  "metric": metric, "value": value} | kw)
 

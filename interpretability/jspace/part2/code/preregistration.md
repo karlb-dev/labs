@@ -1,5 +1,19 @@
 # Preregistration — J-space Part 2 model-matrix campaign
 
+> **STATUS NOTE (2026-07-27 evening): superseded for confirmatory
+> purposes** by `REPAIR_PREREGISTRATION.md` following the forensic review
+> (`jspace_part2_plan1_addendum.md`). This file remains the unaltered
+> record of what was committed before any Part-2 data collection. Known
+> supersessions: the A0 pass rule was a fit-shortcut heuristic (transfer
+> is a geometry experiment; recipient fits are mandatory — addendum
+> §18.4); B1's fixed cosine/Jaccard/nats thresholds await pilot-calibrated
+> equivalence margins (§18.8); the §6-derived stats standards are replaced
+> by addendum §12 (paired clustered inference, equivalence tests, Holm
+> primary family, power simulation); "occupancy index" is renamed
+> output-alignment (§18.12); model pins updated to the 3.1 primary pair
+> (§18.5). The scientific preregistration will be authored after gates
+> G0–G6 pass.
+
 Committed to git **before any Workstream A–D data collection** on the pinned
 models (the A0 gate runs only after this file's first commit). Campaign plan:
 `PLAN_PART2.md` (= the user's `jspace_interp_part2_plan1.md` + launch

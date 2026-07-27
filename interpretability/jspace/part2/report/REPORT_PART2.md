@@ -1,18 +1,27 @@
-# J-space Part 2 — living report (model-matrix campaign)
+# J-space Part 2 — living report (ADDENDUM-GOVERNED campaign)
 
-**Status: OLMo set 1 in progress.** Preregistration committed 2026-07-27
-(`27c6d3c`) before any data. Plan: `PLAN_PART2.md` §8 order with model-set
-disk grouping. Part-1 baseline: `2026-07-26_v2/report/REPORT_v2.md` (static
-causal null on both models at matched energy; frozen per-item J-ablation
-−2.9/−2.4 nats cross-model; capacity 10× thinner on OLMo; foil-calibrated
-46-step CoT lead).
+**Status: assay-repair era begun 2026-07-27 evening.** The forensic review
+(`jspace_part2_plan1_addendum.md`) was adopted in full: Part 1 is
+reclassified as the exploratory campaign (claim corrections in
+`REPORT_v2_ERRATA.md` beside REPORT_v2.md), and no cross-model
+confirmatory cell runs until Workstream R (R0 provenance → R1
+output-protected dynamic ablation → R2 paper occupancy → R3 rank-safe
+frozen control family → R4 phase/scoring/paired-stats → R5 paper tasks →
+R6 golden tests) passes its gates. **Every row below carries an evidence
+tier; everything banked so far is `exploratory`.** Original pre-data
+prereg `27c6d3c` (kept as record) is superseded by
+`REPAIR_PREREGISTRATION.md`.
 
-## Campaign question
+## Campaign question (revised)
 
-Why is the paper's static causal dissociation missing on open models — H1
-externalization, H2 output-occupancy, H3 training-lab specifics, H5 residual
-instruments — or is it findable after all (Instruct sibling, load-demanding
-tasks, wider/persistence-selected doses)?
+Does the paper's workspace signature exist in open models when measured
+with the paper's own intervention (output-protected dynamic ablation —
+missing from Part 1), the paper's own capacity estimand (marginal-gain
+occupancy + excess variance — not what Part 1 computed), and controls
+matched for energy, effective rank, and geometry? The hypothesis ladder is
+H0 instruments-first, H1a/b/c externalization variants, H2 output
+alignment, H3 bounded residual, H4 scale (descriptive), H6 task demand,
+H7 mean-J mismatch, H8 sparse-frame geometry (see part2 README).
 
 ## Matrix scoreboard (grows per banked cell)
 
@@ -26,7 +35,15 @@ tasks, wider/persistence-selected doses)?
 | frozen-logit (B3) | **running** | pending | pending | — |
 | occupancy (D) | pending | pending | pending | — |
 
-## A0 — does the J-dictionary survive post-training? (2026-07-27)
+## A0 — does the J-dictionary survive post-training? (2026-07-27) — tier: EXPLORATORY (transfer-geometry experiment)
+
+*Addendum reframe (§18.4): lens transfer is a scientific outcome about
+Jacobian-geometry conservation across post-training, never a substitute
+for recipient fitting (which is running). Rank-based readout carries a
+multiple-opportunity caveat (min over 21 layers × answer variants, §5.3);
+the donor-vs-recipient DELTA at identical search freedom remains
+informative. Confirmatory transfer analysis later adds dictionary CKA,
+projector principal angles, and a small recipient fit comparison.*
 
 **Setup.** Part-1 Think lens (120-prompt WikiText, 21 layers) applied
 unchanged to `Olmo-3.1-32B-Instruct` — same base model (`Olmo-3-1125-32B`),
@@ -64,7 +81,7 @@ Figure: `figures/p2f1_a0_transfer.png`. Metrics:
 `metrics/olmo31-instruct/a0_transfer_gate.json`. Ledger: SL2-C1 drafted at
 next reporting boundary.
 
-## D — output-occupancy index, phase 1: Think saved traces (2026-07-27)
+## D — output-alignment analysis (renamed from "occupancy", addendum §18.12), phase 1: Think saved traces — tier: EXPLORATORY
 
 Computed on part-1's 38 think-mode generation traces (s8; per-step top-8
 J-readout at L{24,32,40} from the state producing each token). Chance floor

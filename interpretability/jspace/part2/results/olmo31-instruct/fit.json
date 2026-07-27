@@ -1,5 +1,11 @@
 {
-  "slices": {},
+  "slices": {
+    "0": {
+      "prompts_done": 10,
+      "peak_vram_gb": 80.6,
+      "elapsed_s": 1571
+    }
+  },
   "model": "allenai/Olmo-3.1-32B-Instruct",
   "corpus": "part-1 fitting_corpus.jsonl (WikiText-103, seed 0, first 120)",
   "source_layers": [

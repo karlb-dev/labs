@@ -52,6 +52,10 @@ def main() -> None:
     res = read_json(OUT) if OUT.exists() else {
         "model_slug": "olmo3-think", "band": s7.BAND, "k": s12.K,
         "skip": s12.SKIP, "conditions": {},
+        "evidence_tier": "exploratory-pilot",
+        "tier_note": "part-1 mechanics (raw QR, first-token scoring, "
+                     "both-phase hooks) — internally consistent J-vs-logit "
+                     "comparison; confirmatory version = R3 control family",
         "reused_from_v2": ["none", "frozen_j10", "frozen_rand10"]}
     v2 = read_json(RUN_DIR_V2 / "metrics" / "frozen_ablation.json")
     for c in res["reused_from_v2"]:

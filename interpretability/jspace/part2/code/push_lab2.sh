@@ -13,7 +13,9 @@ BRANCH=$(git -C "$REPO" rev-parse --abbrev-ref HEAD)
 [ "$BRANCH" = "interp_jspace_part2" ] || { echo "refusing: on branch $BRANCH"; exit 1; }
 
 mkdir -p "$J"/{code/scripts,report,handout,figures,results}
-cp "$SRC"/sl2_common.py "$SRC"/PLAN_PART2.md "$SRC"/preregistration.md \
+cp "$SRC"/sl2_common.py "$SRC"/p2lib.py "$SRC"/PLAN_PART2.md \
+   "$SRC"/preregistration.md "$SRC"/REPAIR_PREREGISTRATION.md \
+   "$SRC"/jspace_part2_plan1_addendum.md \
    "$SRC"/experiment_reset_instructions.md "$J/code/"
 cp "$SRC"/sync_code.sh "$SRC"/push_lab2.sh "$SRC"/refresh_handout.sh "$J/code/" 2>/dev/null || true
 cp "$SRC"/scripts/*.py "$J/code/scripts/" 2>/dev/null || true
@@ -28,7 +30,7 @@ cp "$RUN"/report/REPORT_PART2.md "$RUN"/report/summary_part2.json \
 cp "$RUN"/report/handout/*.tex "$RUN"/report/handout/*.pdf "$J/handout/" 2>/dev/null || true
 
 cd "$REPO"
-git add interpretability/jspace/part2
+git add interpretability/jspace/part2 interpretability/jspace/REPORT_v2_ERRATA.md
 if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
 git commit -q -m "$MSG" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01LZJU4xBSWgBeqsnD2Wfsh5"

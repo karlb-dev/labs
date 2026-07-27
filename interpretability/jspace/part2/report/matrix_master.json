@@ -1,6 +1,6 @@
 {
   "meta": {
-    "generated": "2026-07-27 18:13:39",
+    "generated": "2026-07-27 18:56:07",
     "n_rows": 19
   },
   "rows": [
@@ -13,7 +13,8 @@
       "n": 60,
       "seed": 0,
       "source": "metrics/olmo31-instruct/a0_transfer_gate.json",
-      "lens": "donor-think-120"
+      "lens": "donor-think-120",
+      "tier": "exploratory"
     },
     {
       "model": "olmo31-instruct",
@@ -24,7 +25,8 @@
       "n": 60,
       "seed": 0,
       "source": "metrics/olmo31-instruct/a0_transfer_gate.json",
-      "lens": "donor-think-120"
+      "lens": "donor-think-120",
+      "tier": "exploratory"
     },
     {
       "model": "olmo31-instruct",
@@ -35,7 +37,8 @@
       "n": 60,
       "seed": 0,
       "source": "metrics/olmo31-instruct/a0_transfer_gate.json",
-      "lens": "donor-think-120"
+      "lens": "donor-think-120",
+      "tier": "exploratory"
     },
     {
       "model": "olmo31-instruct",
@@ -46,7 +49,8 @@
       "n": 60,
       "seed": 0,
       "source": "metrics/olmo31-instruct/a0_transfer_gate.json",
-      "lens": "donor-think-120"
+      "lens": "donor-think-120",
+      "tier": "exploratory"
     },
     {
       "model": "olmo31-instruct",
@@ -57,7 +61,8 @@
       "n": 60,
       "seed": 0,
       "source": "metrics/olmo31-instruct/a0_transfer_gate.json",
-      "lens": "donor-think-120"
+      "lens": "donor-think-120",
+      "tier": "exploratory"
     },
     {
       "model": "olmo31-instruct",
@@ -68,7 +73,8 @@
       "n": 60,
       "seed": 0,
       "source": "metrics/olmo31-instruct/a0_transfer_gate.json",
-      "lens": "donor-think-120"
+      "lens": "donor-think-120",
+      "tier": "exploratory"
     },
     {
       "model": "olmo31-instruct",
@@ -79,7 +85,8 @@
       "n": 21,
       "seed": 0,
       "source": "metrics/olmo31-instruct/a0_transfer_gate.json",
-      "lens": "donor-think-120"
+      "lens": "donor-think-120",
+      "tier": "exploratory"
     },
     {
       "model": "olmo31-instruct",
@@ -87,7 +94,8 @@
       "instrument": "drift",
       "metric": "unembed_row_cos_median",
       "value": 0.9984,
-      "source": "metrics/olmo31-instruct/a0_transfer_gate.json"
+      "source": "metrics/olmo31-instruct/a0_transfer_gate.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo31-instruct",
@@ -95,7 +103,8 @@
       "instrument": "drift",
       "metric": "final_norm_gain_cos",
       "value": 0.999996,
-      "source": "metrics/olmo31-instruct/a0_transfer_gate.json"
+      "source": "metrics/olmo31-instruct/a0_transfer_gate.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo31-instruct",
@@ -103,7 +112,8 @@
       "instrument": "gate",
       "metric": "verdict",
       "value": "TRANSFER_FAIL",
-      "source": "metrics/olmo31-instruct/a0_transfer_gate.json"
+      "source": "metrics/olmo31-instruct/a0_transfer_gate.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo3-think",
@@ -114,7 +124,8 @@
       "layer": 24,
       "n": 38,
       "regime": "think-mode",
-      "source": "metrics/olmo3-think/d_occupancy_traces.json"
+      "source": "metrics/olmo3-think/d_occupancy_traces.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo3-think",
@@ -125,7 +136,8 @@
       "layer": 24,
       "n": 38,
       "regime": "think-mode",
-      "source": "metrics/olmo3-think/d_occupancy_traces.json"
+      "source": "metrics/olmo3-think/d_occupancy_traces.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo3-think",
@@ -136,7 +148,8 @@
       "layer": 24,
       "n": 38,
       "regime": "think-mode",
-      "source": "metrics/olmo3-think/d_occupancy_traces.json"
+      "source": "metrics/olmo3-think/d_occupancy_traces.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo3-think",
@@ -147,7 +160,8 @@
       "layer": 32,
       "n": 38,
       "regime": "think-mode",
-      "source": "metrics/olmo3-think/d_occupancy_traces.json"
+      "source": "metrics/olmo3-think/d_occupancy_traces.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo3-think",
@@ -158,7 +172,8 @@
       "layer": 32,
       "n": 38,
       "regime": "think-mode",
-      "source": "metrics/olmo3-think/d_occupancy_traces.json"
+      "source": "metrics/olmo3-think/d_occupancy_traces.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo3-think",
@@ -169,7 +184,8 @@
       "layer": 32,
       "n": 38,
       "regime": "think-mode",
-      "source": "metrics/olmo3-think/d_occupancy_traces.json"
+      "source": "metrics/olmo3-think/d_occupancy_traces.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo3-think",
@@ -180,7 +196,8 @@
       "layer": 40,
       "n": 38,
       "regime": "think-mode",
-      "source": "metrics/olmo3-think/d_occupancy_traces.json"
+      "source": "metrics/olmo3-think/d_occupancy_traces.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo3-think",
@@ -191,7 +208,8 @@
       "layer": 40,
       "n": 38,
       "regime": "think-mode",
-      "source": "metrics/olmo3-think/d_occupancy_traces.json"
+      "source": "metrics/olmo3-think/d_occupancy_traces.json",
+      "tier": "exploratory"
     },
     {
       "model": "olmo3-think",
@@ -202,7 +220,8 @@
       "layer": 40,
       "n": 38,
       "regime": "think-mode",
-      "source": "metrics/olmo3-think/d_occupancy_traces.json"
+      "source": "metrics/olmo3-think/d_occupancy_traces.json",
+      "tier": "exploratory"
     }
   ]
 }

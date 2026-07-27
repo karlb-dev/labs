@@ -1,4 +1,54 @@
-# jspace_interp_part2_plan1.md — From Lab Result to Publishable Finding
+# PLAN_PART2 — J-space Part 2 (REVISION 1, addendum-governed)
+
+> **GOVERNING-DOCUMENT ORDER (2026-07-27, post-forensic-review):**
+> 1. `jspace_part2_plan1_addendum.md` — the forensic review; controls
+>    evidence tiers, assay repair, statistics, and priority order.
+> 2. `REPAIR_PREREGISTRATION.md` — Workstream R contract + gates G0–G6.
+> 3. This file — workstream definitions, as amended by addendum §18.
+> 4. `preregistration.md` — the pre-data commit of 2026-07-27 morning;
+>    superseded for confirmatory purposes (kept as the honest record).
+>
+> **Current evidential state (replaces the original §0 claims, per
+> addendum §18.1):** Lab 37 established a functioning open-model J-lens
+> pipeline and several provisional descriptive, causal, and temporal
+> findings. The audit found the broad live ablation omitted the paper's
+> intended-output protection, the capacity comparison used different
+> estimands from the paper, the frozen intervention lacks geometry- and
+> item-energy-matched controls, and the CoT rescue endpoint measured
+> answer occurrence rather than final-answer recovery. Part 2 therefore
+> begins with a mandatory assay-repair and conformance phase (Workstream
+> R below). Cross-model conclusions begin only after it passes. Existing
+> results remain valuable exploratory priors and engineering baselines,
+> not confirmatory evidence. Part-1 claim corrections:
+> `interpretability/jspace/REPORT_v2_ERRATA.md`.
+>
+> **Workstream R — Assay Repair and Publication Conformance (runs FIRST):**
+> R0 provenance freeze (manifests, hashes, artifact inventory) ·
+> R1 output-protected dynamic top-10 ablation, exactly per paper ·
+> R2 paper-defined occupancy + random-adjusted excess variance ·
+> R3 rank-safe SVD projectors + frozen geometry-matched control family ·
+> R4 prefill/decode factorial + full-sequence scoring + paired clustered
+> inference + equivalence tests · R5 released paper task sets w/ frozen
+> adaptation rules · R6 synthetic + tiny-model golden tests ·
+> R7 Stage-2 re-audit of Part-1 headline cells.
+> **Gate: Workstream A cannot launch until R1–R6 pass and a pilot
+> positive control succeeds.**
+>
+> **Revised priority order (replaces §8; addendum §15.1):**
+> R0→R1→R2→R3→R4→R5 → P0 scientific prereg + holdout freeze → A1 OLMo
+> lineage (base/SFT/DPO/3.0-Think/3.1-Think/3.1-Instruct; primary pair =
+> 3.1-Think + 3.1-Instruct) → C1 load×ablation → A2a Qwen thinking-on/off
+> (official template; raw completion ≠ non-think) → B1/B2 as conclusions
+> require → A3 Gemma minimal battery → D output-alignment (renamed from
+> "occupancy") → confirmatory CoT lead/rescue factorial → broadcast
+> (paper's MLP/OV assays) if budget → secondary. "Characterize a positive
+> before adding models" stays binding. Hard stop rules + go/no-go gates:
+> addendum §15.2–15.3. Statistics: addendum §12 replaces original §6.
+>
+> Original plan text follows for workstream definitions (amended as
+> marked above); its §0 evidential claims and §8 order are superseded.
+
+# jspace_interp_part2_plan1.md — From Lab Result to Publishable Finding [ORIGINAL, AMENDED]
 
 Paste-line for Claude Code:
 > The J-space lab (Lab 37) is merged to main: read `interpretability/labs/lab37_jspace_workspace.md`, `interpretability/jspace/report/REPORT_v2.md`, and the final handout before anything else. All runs, lenses, metrics, and traces live under `/content/drive/MyDrive/interpret/special-lab-1/` (v1: `2026-07-25_1726/`, v2: `2026-07-26_v2/`). This file is the Part 2 campaign plan. Work in a new run dir `part2_<date>/` per workstream, same conventions as before: incremental Drive checkpointing, resumable scripts, `refresh_handout.sh` + push at phase boundaries, claim-ledger discipline, honest nulls welcome. Execute workstreams in the priority order of §8 within whatever GPU budget the user states at launch.

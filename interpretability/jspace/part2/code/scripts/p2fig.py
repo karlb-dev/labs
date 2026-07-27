@@ -86,8 +86,8 @@ def f1_a0_transfer():
     ax.grid(axis="y")
     ax.set_axisbelow(True)
     ax.legend(fontsize=7.2, frameon=False, loc="upper left")
-    ax.set_title("A0 — donor lens transfers the shortlist, not the rank-1 edge",
-                 fontsize=9.5, loc="left")
+    ax.set_title("A0 — donor lens transfers the shortlist, not the rank-1 edge"
+                 "  [exploratory]", fontsize=9.5, loc="left")
 
     # Panel B — per-probe mid-band min rank, donor vs transferred (log-log).
     dref = {r["answer"]: r["jlens_mid_min"] for r in donor["probes"]}
@@ -154,7 +154,8 @@ def f2_b3_frozen_logit():
         ax.set_title(lab, fontsize=8.8, loc="left")
         ax.grid(axis="y"); ax.set_axisbelow(True)
     fig.suptitle("B3 — does the causal handle need the Jacobian? "
-                 "(OLMo-3-32B-Think, per-item frozen top-10, 95% boot CI)",
+                 "(OLMo-3-32B-Think, per-item frozen top-10, 95% boot CI)"
+                 "  [exploratory pilot]",
                  fontsize=9.5, x=0.01, ha="left")
     fig.tight_layout(rect=(0, 0, 1, 0.93))
     fig.savefig(out, dpi=200, bbox_inches="tight")

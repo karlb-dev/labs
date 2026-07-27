@@ -12,9 +12,15 @@ Canonical copy lives in git (`interpretability/special_lab2/`, mirrored to
    status, queue, what's running, exact next commands. It is the single
    source of truth for "where did we stop".
 2. Read this file (rules + restore recipe).
-3. Campaign context: `PLAN_PART2.md` + `preregistration.md` (same dir).
-   Part-1 background when needed: `2026-07-26_v2/report/REPORT_v2.md` and
-   the handout PDF.
+3. **Read `jspace_part2_plan1_addendum.md` (special-lab-1 root; versioned
+   copy in the live dir) — the forensic review that GOVERNS Part 2**: it
+   sets the evidence tiers, the R-workstream (assay repair before any
+   model matrix), the statistics plan (§12), the priority order (§15.1),
+   and the stop rules (§15.2). Then `REPAIR_PREREGISTRATION.md` +
+   `PLAN_PART2.md` (REVISION-1 header) in the live dir.
+4. Part-1 background when needed: `2026-07-26_v2/report/REPORT_v2.md`
+   **together with `interpretability/jspace/REPORT_v2_ERRATA.md`** —
+   REPORT_v2's headline wording is downgraded there; do not inherit it.
 
 ## Durable state map
 
@@ -106,16 +112,32 @@ cache makes reloads cheap.
    min) — ALWAYS hub-download big models to local NVMe and run with
    `HF_HUB_CACHE=/content/hf_local` (or `p2_load_model`, cache="local").
    The Drive HF cache remains the persistent fallback + WikiText source.
-7. **Claim discipline**: SL2-C* ledger in Lab-36 template style; honest nulls
-   welcome; forbidden claims from the lab37 header carry over (no
-   consciousness claims; no unconditioned "model X has no workspace" — only
-   "instrument X at doses Y on band Z found/failed to find effect E").
-8. **Budget**: ≤200 h campaign cap (user, 2026-07-27); plan ≈45–55 GPU-h.
-   Priority order + drop rules are in `preregistration.md` and are binding;
-   never thin every workstream — bank complete cells in order.
-9. **Stats**: seed 0 default + seed 1 on decisive cells; n≥60 headline
-   two-hop cells; bootstrap CIs; greedy + temp-0.7 replicate on frozen grids;
-   BH-FDR across the matrix at campaign end.
+7. **Claim discipline**: evidence vocabulary is binding — established /
+   provisional / exploratory / not-currently-identified (addendum §1.4);
+   every metrics row, figure, and report line carries a tier label until
+   the R-gates pass. Ledger namespaces: SL2-M* methods, SL2-O* OLMo
+   lineage, SL2-Q* Qwen mode, SL2-G* Gemma, SL2-C* causal/task, SL2-T*
+   temporal (addendum §19.6); each claim records estimand, tier, scope,
+   effect+interval, artifact path, prereg link, falsifier, boundary,
+   rerun status. Nothing inherits SL1 wording without R7 re-audit.
+   Forbidden claims from the lab37 header still carry over.
+8. **Budget**: ≤200 h campaign cap (user, 2026-07-27). Priority order =
+   addendum §15.1 (R-workstream first; OLMo lineage before breadth);
+   hard stop rules §15.2 (no models added while the positive control
+   fails; no "null" without equivalence bounds; no "matched" without
+   measured energy+effective-rank on the evaluated items; no
+   answer-anywhere as a behavioral outcome; never thin every workstream).
+   Compute envelope: repair 8–15 GPU-h; minimal publishable OLMo study
+   35–60; strong cross-model 70–110; full package 100–160 (§16).
+9. **Stats (addendum §12 replaces the old habits)**: paired item-level
+   deltas; clustering by the true generation unit (template/schema/fact
+   family); equivalence tests for nulls (planning margins: 0.5 nats
+   answer-seq lp, 10 pp accuracy, 0.10 nats/token prose NLL, 5 pp top-1
+   agreement, 20% occupancy — pilot-calibrated before confirmatory);
+   power simulation instead of habitual n=60; small Holm-corrected
+   primary family + separate secondary families; test interactions
+   directly (never "significant in A, not in B"); teacher-forced
+   deterministic primary endpoints; full-answer-sequence scoring.
 10. **pipefail + tee on every long run** (a tee-masked exit code cost VM4 an
     evening). Long GPU runs launch detached with logs in the run dir.
 
