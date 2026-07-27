@@ -1,0 +1,99 @@
+\documentclass[10pt]{article}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{parskip}
+\definecolor{jblue}{HTML}{2A78D6}
+\definecolor{jrand}{HTML}{EB6834}
+\definecolor{jnonj}{HTML}{1BAF7A}
+\definecolor{jlogitdict}{HTML}{8A5CF5}
+\newcommand{\code}[1]{\texttt{\small #1}}
+
+\title{\textbf{J-space, Part 2: The Model Matrix}\\
+\large From lab result to publishable finding --- living handout}
+\author{karlb-dev\thanks{Draft campaign handout; grows a subsection per
+banked phase. Part-1 handout: \code{jspace/handout/olmo32b\_jspace\_handout.pdf}.}}
+\date{Campaign started 2026-07-27 --- preregistered before data (\code{27c6d3c})}
+
+\begin{document}
+\maketitle
+
+\section{Where Part 1 left off, and what Part 2 must decide}
+
+Part 1 (Lab 37) replicated the descriptive geometry of the Anthropic
+workspace paper on \code{Olmo-3-32B-Think} at $\sim$10$\times$ thinner
+capacity, found the paper's static causal dissociation \emph{null} on both
+OLMo and \code{Qwen3.6-27B} under energy-matched instruments, established
+per-item frozen J-ablation as a control-clean cross-model causal handle on
+retrieved content ($-2.9$/$-2.4$ nats), and measured a foil-calibrated
+46-step workspace-ahead-of-text lead. Part 2 adjudicates \emph{why the
+dissociation is missing}:
+
+\begin{center}\small
+\begin{tabular}{llp{7.6cm}}
+\toprule
+ & hypothesis & discriminator \\
+\midrule
+H1 & externalization (think-training moved the workspace into tokens) &
+Workstream A: matched-pretraining sibling \code{Olmo-3.1-32B-Instruct},
+Qwen matrix completion, \code{gemma-4-31B-it} \\
+H2 & occupancy (live J-space $\approx$ the output stream itself) &
+Workstream D: output-occupancy index across the matrix \\
+H3 & training-lab specifics & unfalsifiable; shrunk by exhausting the rest \\
+H5 & residual instruments & B (frozen-logit, fit-size, Dolma corpus,
+dose/persistence selection), C (load-demanding tasks, paper's own sets) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Standards: $n\ge60$ headline cells, two seeds on decisive grids, bootstrap
+CIs, BH-FDR across the matrix, preregistered directional predictions
+(\code{preregistration.md}).
+
+\section{Workstream A}
+
+\subsection{A0 --- does the J-dictionary survive post-training?}
+
+The part-1 Think lens, applied unchanged (donor $J$, recipient unembedding)
+to \code{Olmo-3.1-32B-Instruct} --- same base model, different
+post-training. Preregistered gate: probes $\ge$15/21 and multihop pass@1
+$\ge 0.85\times$ donor $=0.2408$.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{figures/p2f1_a0_transfer.png}
+\caption{\textbf{A0 transfer gate.} Left: the transferred lens reads the
+bridge-entity \emph{shortlist} at donor level (pass@5 0.417, pass@20 0.522
+vs donor 0.41/0.55) but loses the rank-1 edge (0.217 vs 0.283, below the
+preregistered floor, dashed). Right: per-probe mid-band ranks --- 17/21
+$\le$20 on \emph{both} models, same items missing.}
+\end{figure}
+
+\textbf{Verdict: \code{TRANSFER\_FAIL}, informative.} The readout basis is
+static across post-training (unembed row cosine median $0.9984$; final-norm
+gain cosine $1.000$), direct-fact probes transfer exactly (17/21 both), the
+shortlist transfers --- what post-training blunted is specifically the
+\emph{rank-1 sharpening}, the very component that was the J-lens's
+distinctive advantage on Think ($+41\%$ relative pass@1 there, $+8.5\%$
+here). The prereg FAIL rule fires: fit the sibling's own 120-prompt lens.
+Recovery to $\sim$0.28 $\Rightarrow$ mid-band J-map drift under
+post-training; no recovery $\Rightarrow$ Instruct resolves the silent
+bridge more weakly --- itself an H1-flavored datum.
+
+% \subsection{A1 --- Core Battery on Olmo-3.1-32B-Instruct} (pending)
+
+\section{Workstream B}
+
+% \subsection{B3 --- frozen-logit control} (running; f2 lands here)
+
+\section*{Reproducibility}
+
+Run dir \code{special-lab-1/part2\_20260727/} (metrics per model slug,
+lenses, logs); code + results mirrored to
+\code{interpretability/jspace/part2/} on branch \code{interp\_jspace\_part2};
+every figure regenerates from metrics via \code{scripts/p2fig.py}; master
+dataset \code{report/matrix\_master.csv}.
+
+\end{document}

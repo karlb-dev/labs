@@ -89,11 +89,18 @@ cache makes reloads cheap.
    random=#eb6834, non-J=#1baf7a, baseline=ink; new condition hues chosen
    once in the figure script and never changed.
 6. **Disk strategy**: run model SETS (one residency each): OLMo pass 1
-   (A0,B3,A1,C3,C1,D) → Qwen (A2*) → OLMo pass 2 (B1,C2,B4,B2; Drive-cached,
-   no re-download) → Gemma (A3) → E. Delete `/content/hf_local` models
-   between sets. **NEVER delete the DriveFS chunks.db** — it wedges the mount
-   into serving empty content; recovery = kill the `--single_process`
-   `/opt/google/drive/drive` worker and let the supervisor respawn it.
+   (A0,B3,A1,C3,C1,D) → Qwen (A2*) → OLMo pass 2 (B1,C2,B4,B2) → Gemma (A3)
+   → E. Delete `/content/hf_local` models between sets. **NEVER delete the
+   DriveFS chunks.db** — it wedges the mount into serving empty content;
+   recovery = kill the `--single_process` `/opt/google/drive/drive` worker
+   and let the supervisor respawn it.
+   **VM6 lesson (2026-07-27): don't model-load through DriveFS at all.**
+   Streaming Think via the Drive HF cache stalled mid-load (~50 GB in, GPU
+   idle, page cache saturated by a prior 61 GB local download; 10+ min no
+   progress). Hub download to `/content/hf_local` is ~320 MB/s (61 GB ≈ 3
+   min) — ALWAYS hub-download big models to local NVMe and run with
+   `HF_HUB_CACHE=/content/hf_local` (or `p2_load_model`, cache="local").
+   The Drive HF cache remains the persistent fallback + WikiText source.
 7. **Claim discipline**: SL2-C* ledger in Lab-36 template style; honest nulls
    welcome; forbidden claims from the lab37 header carry over (no
    consciousness claims; no unconditioned "model X has no workspace" — only

@@ -33,12 +33,15 @@ LOCAL_HF = Path(os.environ.get("SL2_LOCAL_HF", "/content/hf_local"))
 # Part-2 model matrix. Pins hub-checked 2026-07-27 — see PLAN_PART2.md
 # launch addendum (notably: Olmo-3-32B-Instruct does not exist; the matched-
 # pretraining instruct is 3.1, same base Olmo-3-1125-32B as the Think donor).
+# VM6 lesson: ALL big-model loads go through local NVMe (hub download ≈320
+# MB/s; DriveFS streaming stalled mid-load under page-cache pressure). The
+# Drive HF cache stays archival + serves WikiText.
 P2_MODELS = {
-    "olmo3-think":     {"id": "allenai/Olmo-3-32B-Think",       "cache": "drive"},
+    "olmo3-think":     {"id": "allenai/Olmo-3-32B-Think",       "cache": "local"},
     "olmo31-instruct": {"id": "allenai/Olmo-3.1-32B-Instruct",  "cache": "local"},
     "olmo3-base":      {"id": "allenai/Olmo-3-1125-32B",        "cache": "local"},
     "qwen36-27b":      {"id": "Qwen/Qwen3.6-27B",               "cache": "local"},
-    "gemma4-31b":      {"id": "google/gemma-4-31B-it",          "cache": "drive"},
+    "gemma4-31b":      {"id": "google/gemma-4-31B-it",          "cache": "local"},
 }
 
 # Donor lens artifacts (part 1, frozen).
@@ -67,12 +70,17 @@ def p2_load_model(slug: str, *, dtype=None, device: str = "cuda:0"):
     import jlens
 
     spec = P2_MODELS[slug]
-    kw = {"cache_dir": str(LOCAL_HF)} if spec["cache"] == "local" else {}
+    # SL2_MODEL_PATH_<SLUG> (upper, - -> _) points at a plain local weights
+    # dir (e.g. rsync'd from the Drive cache when the hub throttles).
+    override = os.environ.get(f"SL2_MODEL_PATH_{slug.upper().replace('-', '_')}")
+    src = override or spec["id"]
+    kw = {} if override else (
+        {"cache_dir": str(LOCAL_HF)} if spec["cache"] == "local" else {})
     t0 = time.time()
-    log(f"loading {spec['id']} ({slug}, cache={spec['cache']}) ...")
-    tok = transformers.AutoTokenizer.from_pretrained(spec["id"], **kw)
+    log(f"loading {src} ({slug}, cache={'path' if override else spec['cache']}) ...")
+    tok = transformers.AutoTokenizer.from_pretrained(src, **kw)
     hf = transformers.AutoModelForCausalLM.from_pretrained(
-        spec["id"], dtype=dtype or torch.bfloat16, **kw)
+        src, dtype=dtype or torch.bfloat16, **kw)
     hf = hf.to(device)
     hf.eval()
     used, total = gpu_mem_gb()

@@ -19,7 +19,7 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from sl2_common import (RUN_DIR_V2, atomic_write_json, load_model, log,
+from sl2_common import (RUN_DIR_V2, atomic_write_json, log, p2_load_model,
                         p2_metrics_dir, read_json, seed_all)
 
 import numpy as np
@@ -61,7 +61,7 @@ def main() -> None:
         log(f"{OUT} complete; skipping")
         return
 
-    model, hf, tok = load_model("main")
+    model, hf, tok = p2_load_model("olmo3-think")
     ld = build_logit_dict(hf)
     log("logit dictionary built (vocab-sized, shared across band)")
     rng = np.random.default_rng(0)
