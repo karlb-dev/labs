@@ -18,9 +18,8 @@ Human-label requirement: required before strong claims from CoT-divergence examp
 **COMPLETE (2026-07-27) — proposed for promotion.** v1, the v2 instrument
 audit (P1–P6), and the Qwen3.6-27B cross-model leg (phase Q) are all
 landed; the run queue is empty. Final prose: `jspace/report/REPORT_v2.md`;
-primary read: `jspace/handout/olmo32b_jspace_handout.pdf`; suggested PR
-description: `jspace/PR_BODY.md`. Promotion checklist state at the
-bottom — one human-label box remains open.
+primary read: `jspace/handout/olmo32b_jspace_handout.pdf`. Promotion
+checklist state at the bottom — one human-label box remains open.
 
 ## Thesis
 
@@ -53,8 +52,8 @@ only at the end of explicit reasoning?
 | v2 P4 | s13 | foil calibration of the lead claim (false-positive floor) |
 | v2 P5/P6 | s16, s17 | CoT-rescue; second seed; n doubling |
 | v2 Q | s18 | same instruments on Qwen3.6-27B via Neuronpedia's published lens — RAN 2026-07-26: sanity + descriptive + energy-match + 6-condition causal grid |
-| reporting | s9, s19 | figures + summaries, all regenerable from metrics; living LaTeX handout |
-| ops | s20–s23 | VM sanity, one-load driver (s16+s17), disk/DriveFS management, P5/P6 extractor |
+| reporting | s9, s19, s23 | figures + summaries + extractors, all regenerable from metrics; LaTeX handout |
+| final falsifiers | s24 | pool-size (vocab-sized random dictionary), filler-rescue control, variance-matched fan-out |
 
 ## Operationalization audit (the deflationary twins, built in)
 

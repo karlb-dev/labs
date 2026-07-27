@@ -1,11 +1,10 @@
-# Lab 37 (draft): J-space Global Workspace Replication — OLMo-3-32B-Think
+# Lab 37: J-space Global Workspace Replication — OLMo-3-32B-Think
 
 > **Status: COMPLETE — proposed for promotion.** v1 (2026-07-25/26) +
-> v2 instrument audit + Qwen cross-model leg + rescue/robustness
-> (2026-07-26/27) are all landed; the run queue is empty. Spec + claim
+> v2 instrument audit + Qwen cross-model leg + rescue/robustness +
+> final falsifier pass (2026-07-26/27) are all landed. Spec + claim
 > ledger + promotion checklist:
 > [`labs/lab37_jspace_workspace.md`](../labs/lab37_jspace_workspace.md).
-> Suggested PR description: [`PR_BODY.md`](PR_BODY.md).
 
 An open-weights replication of Anthropic's July 2026 paper *"Verbalizable
 Representations Form a Global Workspace in Language Models"*
@@ -87,10 +86,11 @@ and verdict: `report/REPORT_v2.md`.
 ## Layout
 
 ```
-code/            pipeline (s0–s24) + sl1_common.py + PLAN{,_v2,_v3}.md / LOG.md
+code/            analysis pipeline + sl1_common.py (shared harness lib)
   scripts/       s0 env … s9 v1 report; s11 energy-match, s12 frozen ablation,
                  s13 foils, s14/s15 late band, s16 CoT-rescue, s17 seed-1,
-                 s18 Qwen leg, s19 v2 figures, s20–s23 VM ops, s24 falsifiers
+                 s18 Qwen leg, s19 v2 figures, s23 P5/P6 extractor,
+                 s24 final falsifier pass
 figures/         f1–f8 (v1) + f9+ (v2), regenerable from metrics via s9/s19
 handout/         living LaTeX writeup + compiled PDF (the primary read)
 report/          v1 REPORT.md + summary.json; v2 summary_v2.json (grows)
@@ -105,8 +105,8 @@ figure regenerates from metrics alone; only lens-refit needs the Drive blobs.
 ## Reproducing
 
 One 80 GB+ GPU (run history: RTX PRO 6000 Blackwell 96 GB), torch 2.11,
-transformers 5.13.1. Full recipe including HF cache layout:
-`code/PLAN.md` + the resume block in the Drive `interpret/inprogress.md`.
+transformers 5.13.1. Every script no-ops when its outputs exist and
+resumes mid-phase, so the pipeline can be run top to bottom or piecemeal.
 Quick path:
 
 ```bash
@@ -119,15 +119,15 @@ git checkout 581d3986 && pip install -e . && cd ..
 Tier A smoke (no 32B needed): `s1_smoke_verify.py` reproduces the 7B lens
 battery exactly (9/11 probes @rank≤20, deterministic across VMs).
 
-## Working model
+## Provenance
 
-The live working dir is `special_lab1/` (untracked); Drive is the durable
-checkpoint store; this directory is the published mirror, updated by
-`code/../push_lab.sh` at phase boundaries alongside `refresh_handout.sh`.
-Five VM sessions (four reclaims) to date, zero data loss — including one
-DriveFS cache-wedge that briefly made every Drive file read as empty
-(root cause, recovery, and the standing rules are in `REPORT_v2.md`
-§"Run notes" and `code/scripts/s22_vm5_swap_and_drive.sh`).
+The lab was produced across five preemptible VM sessions (four reclaims,
+zero data loss) with Google Drive as the durable checkpoint store; this
+directory is the published mirror of the analysis code and results. Run
+provenance — plans, the dated decision log, resume recipes, and the
+VM/infra tooling — is archived in the Drive run dirs, and the run story
+(including a DriveFS failure mode worth knowing about) is summarized in
+`report/REPORT_v2.md` §"Run notes".
 
 ## Evidence discipline (course terms)
 
