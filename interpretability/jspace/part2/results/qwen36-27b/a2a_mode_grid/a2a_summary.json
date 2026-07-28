@@ -1,0 +1,123 @@
+{
+  "summary": {
+    "think_off/dynJ_protected/twohop": {
+      "n": 60,
+      "mean_delta": 1.4809,
+      "median_delta": 0.5769
+    },
+    "think_off/dynR_protected/twohop": {
+      "n": 60,
+      "mean_delta": -0.0754,
+      "median_delta": -0.4822
+    },
+    "think_off/dynJ_protected/onehop": {
+      "n": 30,
+      "mean_delta": 2.29,
+      "median_delta": 1.977
+    },
+    "think_off/dynR_protected/onehop": {
+      "n": 30,
+      "mean_delta": 0.4719,
+      "median_delta": 0.0437
+    },
+    "think_on/dynJ_protected/twohop": {
+      "n": 60,
+      "mean_delta": 4.039,
+      "median_delta": 3.6502
+    },
+    "think_on/dynR_protected/twohop": {
+      "n": 60,
+      "mean_delta": 1.7061,
+      "median_delta": 1.5166
+    },
+    "think_on/dynJ_protected/onehop": {
+      "n": 30,
+      "mean_delta": 4.3512,
+      "median_delta": 4.1506
+    },
+    "think_on/dynR_protected/onehop": {
+      "n": 30,
+      "mean_delta": 3.1092,
+      "median_delta": 2.3219
+    }
+  },
+  "cells": {
+    "think_off/none/twohop": {
+      "seconds": 13
+    },
+    "think_off/none/onehop": {
+      "seconds": 6
+    },
+    "think_off/dynJ_protected/twohop": {
+      "seconds": 43
+    },
+    "think_off/dynJ_protected/onehop": {
+      "seconds": 19
+    },
+    "think_off/dynR_protected/twohop": {
+      "seconds": 42
+    },
+    "think_off/dynR_protected/onehop": {
+      "seconds": 19
+    },
+    "think_on/none/twohop": {
+      "seconds": 13
+    },
+    "think_on/none/onehop": {
+      "seconds": 6
+    },
+    "think_on/dynJ_protected/twohop": {
+      "seconds": 41
+    },
+    "think_on/dynJ_protected/onehop": {
+      "seconds": 18
+    },
+    "think_on/dynR_protected/twohop": {
+      "seconds": 41
+    },
+    "think_on/dynR_protected/onehop": {
+      "seconds": 18
+    }
+  },
+  "band": [
+    20,
+    22,
+    24,
+    26,
+    28,
+    30,
+    32,
+    34,
+    36,
+    38,
+    40,
+    42,
+    44
+  ],
+  "k": 10,
+  "protect_top_k": 10,
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "a2a-mode-grid-qwen-v1",
+    "tier": "pilot",
+    "code_commit": "d760442820d889af160fe59ed214c687bc061ee0",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.a2a_mode_grid",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "lens": "1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1"
+    },
+    "model": {
+      "id": "/content/hf_local/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "69db4eb7196bc8190813231b3018ca05d8c2e3abc7b1af19d55c157af44a9d9c"
+    },
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T07:28:27Z"
+  }
+}

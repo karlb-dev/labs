@@ -261,4 +261,23 @@ side); fluency only partially survives (+0.35 nats/token vs random's
 +0.11); OLMo's protected effect includes the indirect hard-item tail
 documented above.
 
+## A2a cell 2 — chat-mode grids expose a register confound (2026-07-28) — tier: PILOT, METHODS FINDING
+
+Evidence `a2a-mode-grid-qwen-v1`. Protected dyn-J and dyn-random grids on
+chat-rendered prompts (official thinking toggle) with teacher-forced
+bare-answer scoring produced LARGE POSITIVE deltas (dynJ think-on: +4.0
+twohop / +4.4 onehop nats; even dyn-random +1.7/+3.1). Reading: after the
+template — especially an open `<think>` — the baseline distribution is
+dominated by the reasoning-register opener, not answer content; ablating
+live J-directions (which are register-occupied in this context, per the
+output-alignment picture) un-anchors the register and relatively inflates
+any appended continuation. **Two consequences:** (1) direct evidence that
+in chat contexts the strongest live J-content is the act-of-responding
+register itself; (2) a binding design rule — chat-mode causal cells must
+use generation-based endpoints (budgeted think + post-`</think>`
+final-answer grading), never teacher-forced bare-answer lp. The raw-
+completion R7 grids are unaffected (their baselines are natural
+continuations). H1b's causal contrast moves to the confirmatory design
+with the corrected endpoint.
+
 *(sections append here per banked phase)*
