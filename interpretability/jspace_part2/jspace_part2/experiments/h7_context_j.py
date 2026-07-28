@@ -306,15 +306,26 @@ def main():
                 deltas = [d * scale for d in ds]
                 base = baseline(ids, len(deltas))
                 resp = responses(ids, L, pos, deltas) - base
-                # linearity check on the first direction: r(2d) / r(d)
-                r2 = responses(ids, L, pos, [deltas[0] * 2.0]) - base[:1]
-                ratio = float(r2[0].norm() / resp[0].norm()) \
-                    if float(resp[0].norm()) > 0 else float("nan")
-                lin_checks.append({"layer": L, "pos": pos, "prompt": p,
-                                   "eps": eps_L, "scale_ratio": round(ratio, 3)})
+                # linearity check for EVERY direction, not just one: the
+                # calibration showed the scale ratio is direction-dependent
+                # (1.93 to 2.95 at the same layer, position and eps), so a
+                # single-direction check would misreport the ceiling.
+                r2 = responses(ids, L, pos, [d * 2.0 for d in deltas]) - base
+                n1 = resp.norm(dim=1)
+                ratios = (r2.norm(dim=1) / n1.clamp_min(1e-9)).cpu().tolist()
+                ratio = float(np.median(ratios))
+                lin_checks.append({
+                    "layer": L, "pos": pos, "prompt": p, "eps": eps_L,
+                    "scale_ratio_median": round(ratio, 3),
+                    "scale_ratio_min": round(float(np.min(ratios)), 3),
+                    "scale_ratio_max": round(float(np.max(ratios)), 3),
+                    "by_kind": {k: round(float(np.median(
+                        [x for x, kk in zip(ratios, kinds) if kk == k])), 3)
+                        for k in set(kinds)}})
                 measured[key] = resp
                 done[key] = {"resp": resp.cpu().tolist(),
-                             "scale_ratio": ratio, "h_norm": hn, "eps": eps_L}
+                             "scale_ratio": ratio, "ratios": ratios,
+                             "h_norm": hn, "eps": eps_L}
                 ckpt.write_text(json.dumps(done))
                 print(f"  L{L} pos{pos} prompt{p}: |r|={float(resp.norm(dim=1).mean()):.3f} "
                       f"lin={ratio:.2f}  ({time.time()-t0:.0f}s)", flush=True)
@@ -389,8 +400,8 @@ def main():
     passes = (float(np.median(improves)) >= IMPROVE_MIN and abs_ok >= 2
               and not_one_prompt)
 
-    lin_med = float(np.median([c["scale_ratio"] for c in lin_checks
-                               if np.isfinite(c["scale_ratio"])]))
+    lin_med = float(np.median([c["scale_ratio_median"] for c in lin_checks
+                               if np.isfinite(c["scale_ratio_median"])]))
     payload = {
         "model": slug, "seq_len": SEQ,
         "eps_calibration": calibration, "eps_by_layer": eps_by_layer,
