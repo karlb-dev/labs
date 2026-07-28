@@ -21,12 +21,24 @@
 # Paired per-item, so the J-vs-logit contrast is within-probe. The
 # decision rule is PREREGISTERED HERE, before the merged lens exists:
 #
-#   RESCUE      if median J-rank <= 100 at any layer <= L37 (a paper-band
-#               depth) AND J beats the logit lens there by >= 10x
+#   RESCUE      if median J-rank <= 100 at any IDENTIFIED layer <= L37 (a
+#               paper-band depth) AND J beats the logit lens there by >= 10x
 #   PARTIAL     if J beats logit by >= 10x mid-band but stays > 100
 #   NO_RESCUE   otherwise -> the opacity is a property of the model's
 #               computation, not of the readout basis, and Gemma-4 is
 #               reported as a boundary case for the paper's method
+#
+# IDENTIFICATION GATE (added 2026-07-28 after the merge, before any
+# verdict was registered): `a3-gemma-identification-v1` found that L22 —
+# Gemma's 37% relative depth, the shallow edge of the paper's band — is
+# NOT IDENTIFIED: four independent 30-prompt fits produce mutually
+# near-orthogonal Jacobians there (mean pairwise cos 0.057) that cancel on
+# merge. A readout claim at such a layer is vacuous: there is no fitted
+# instrument to make it with, so a bad rank there is evidence about the
+# FIT, not about the model. Non-identified layers are therefore excluded
+# from the verdict and reported separately as instrument-unavailable. The
+# verdict rests on the identified paper-band layers (L30 = 50% depth,
+# L37 = 62% depth), which is still a genuine test of the paper's claim.
 #
 # Tier: pilot. Cheap: one recorded forward per probe.
 # Usage: python -m jspace_part2.experiments.a3_gemma_readout [--allow-dirty]
@@ -50,6 +62,7 @@ RUN_DIR_P2 = Path("/content/drive/MyDrive/interpret/special-lab-1/"
                   "part2_20260727")
 LENS = RUN_DIR_P2 / "lens" / "gemma431_lens.pt"
 OUT = RUN_DIR_P2 / "metrics" / "gemma4-31b" / "a3_readout_verdict.json"
+IDENT = RUN_DIR_P2 / "metrics" / "gemma4-31b" / "a3_identification.json"
 PAPER_BAND_MAX = 37       # deepest layer inside the paper's relative band
 RANK_OK = 100
 GAIN_OK = 10.0
@@ -106,15 +119,30 @@ def main():
     gain = {l: round(med_l[l] / med_j[l], 3) if med_j[l] else None
             for l in layers}
 
-    band = [l for l in layers if l <= PAPER_BAND_MAX]
-    j_ok = [l for l in band if med_j[l] <= RANK_OK]
-    g_ok = [l for l in band if (gain[l] or 0) >= GAIN_OK]
-    if j_ok and g_ok:
-        verdict = "GEMMA_RESCUE"
-    elif g_ok:
-        verdict = "GEMMA_PARTIAL_RESCUE"
+    # identification gate: a layer with no identified J cannot carry a
+    # readout claim in either direction (see header).
+    if not IDENT.exists():
+        raise SystemExit(f"identification gate missing: {IDENT} — run "
+                         "a3_gemma_identification first")
+    ident = json.loads(IDENT.read_text())
+    identified = set(ident["identified_layers"])
+    excluded = [l for l in layers if l not in identified]
+
+    band = [l for l in layers if l <= PAPER_BAND_MAX and l in identified]
+    band_excluded = [l for l in layers
+                     if l <= PAPER_BAND_MAX and l not in identified]
+    if not band:
+        verdict = "GEMMA_UNTESTABLE_no_identified_paper_band_layer"
+        j_ok, g_ok = [], []
     else:
-        verdict = "GEMMA_NO_RESCUE"
+        j_ok = [l for l in band if med_j[l] <= RANK_OK]
+        g_ok = [l for l in band if (gain[l] or 0) >= GAIN_OK]
+        if j_ok and g_ok:
+            verdict = "GEMMA_RESCUE"
+        elif g_ok:
+            verdict = "GEMMA_PARTIAL_RESCUE"
+        else:
+            verdict = "GEMMA_NO_RESCUE"
 
     summ = {
         "verdict": verdict, "n_probes": len(rows), "n_known": len(known),
@@ -124,23 +152,38 @@ def main():
         "decision_rule": {
             "paper_band_max_layer": PAPER_BAND_MAX, "rank_ok": RANK_OK,
             "gain_ok": GAIN_OK,
-            "note": "rule fixed in code BEFORE the merged lens existed"},
+            "note": ("rule fixed in code BEFORE the merged lens existed; "
+                     "identification gate added after the merge but BEFORE "
+                     "any verdict was computed or registered")},
+        "identification_gate": {
+            "source_evidence": "a3-gemma-identification-v1",
+            "identified_layers": sorted(identified),
+            "excluded_layers": excluded,
+            "paper_band_layers_used": band,
+            "paper_band_layers_excluded": band_excluded},
         "layers_in_band_with_rank_ok": j_ok,
         "layers_in_band_with_gain_ok": g_ok,
         "reading": (
             f"{verdict}: with a full 120-prompt lens, J transport "
-            f"{'reads' if j_ok else 'does NOT read'} the answer inside the "
-            f"paper's band (layers<={PAPER_BAND_MAX}); median J-rank at L22 "
-            f"{med_j.get(22):.0f} vs logit {med_l.get(22):.0f}, at L37 "
-            f"{med_j.get(37):.0f} vs {med_l.get(37):.0f}. "
+            f"{'reads' if j_ok else 'does NOT read'} the answer at the "
+            f"IDENTIFIED paper-band layers {band}; median J-rank at L30 "
+            f"{med_j.get(30, float('nan')):.0f} vs logit "
+            f"{med_l.get(30, float('nan')):.0f}, at L37 "
+            f"{med_j.get(37, float('nan')):.0f} vs "
+            f"{med_l.get(37, float('nan')):.0f}. "
+            + (f"Layers {band_excluded} are excluded as NOT IDENTIFIED "
+               f"(independent fits disagree there), so no claim about the "
+               f"model is made at them — their ranks are reported for the "
+               f"record only. " if band_excluded else "")
             + ("The Jacobian recovers what the output basis hides — the "
                "earlier opacity was a readout-basis artifact after all."
                if j_ok else
-               "The opacity survives a properly fitted Jacobian lens, so it "
-               "is a property of where Gemma-4 puts answer information, not "
-               "of the readout basis. Gemma-4 is a BOUNDARY CASE for the "
-               "paper's method: its workspace band, if any, is not "
-               "output-token-aligned at the depths the paper studies.")),
+               "The opacity survives a properly fitted, verifiably "
+               "identified Jacobian lens, so it is a property of where "
+               "Gemma-4 puts answer information, not of the readout basis. "
+               "Gemma-4 is a BOUNDARY CASE for the paper's method: its "
+               "workspace band, if any, is not output-token-aligned at the "
+               "depths the paper studies.")),
         "seconds": round(time.time() - t0)}
     prov = Provenance(
         evidence_id="a3-gemma-readout-verdict-v1", tier="pilot",
