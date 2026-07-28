@@ -20,6 +20,13 @@
       "elapsed_s": 4717,
       "lens_file": "olmo31instruct_lensB_slice2.pt",
       "n_prompts": 30
+    },
+    "3": {
+      "prompts_done": 30,
+      "peak_vram_gb": 80.6,
+      "elapsed_s": 4707,
+      "lens_file": "olmo31instruct_lensB_slice3.pt",
+      "n_prompts": 30
     }
   },
   "model": "allenai/Olmo-3.1-32B-Instruct",
@@ -51,5 +58,15 @@
   "target_layer": 63,
   "dim_batch": 8,
   "max_seq_len": 128,
-  "skip_first": 16
+  "skip_first": 16,
+  "merged": {
+    "n_prompts": 120,
+    "file": "olmo31instruct_lensB.pt",
+    "from": [
+      "olmo31instruct_lensB_slice0.pt",
+      "olmo31instruct_lensB_slice1.pt",
+      "olmo31instruct_lensB_slice2.pt",
+      "olmo31instruct_lensB_slice3.pt"
+    ]
+  }
 }
