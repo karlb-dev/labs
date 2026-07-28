@@ -1,0 +1,81 @@
+{
+  "per_mode": {
+    "think_on": {
+      "24": {
+        "occ_median": 2.0,
+        "occ_q25": 2.0,
+        "occ_q75": 3.0,
+        "excess_share": 0.0026052193716168404,
+        "censored_frac": 0.0
+      },
+      "32": {
+        "occ_median": 2.0,
+        "occ_q25": 2.0,
+        "occ_q75": 3.0,
+        "excess_share": 0.0023655490949749947,
+        "censored_frac": 0.0
+      },
+      "40": {
+        "occ_median": 4.0,
+        "occ_q25": 3.0,
+        "occ_q75": 4.0,
+        "excess_share": 0.016209423542022705,
+        "censored_frac": 0.0
+      }
+    },
+    "think_off": {
+      "24": {
+        "occ_median": 3.0,
+        "occ_q25": 2.0,
+        "occ_q75": 4.0,
+        "excess_share": 0.002673824317753315,
+        "censored_frac": 0.0
+      },
+      "32": {
+        "occ_median": 3.0,
+        "occ_q25": 2.0,
+        "occ_q75": 4.0,
+        "excess_share": 0.002877354621887207,
+        "censored_frac": 0.0
+      },
+      "40": {
+        "occ_median": 4.0,
+        "occ_q25": 3.0,
+        "occ_q75": 5.0,
+        "excess_share": 0.012101669795811176,
+        "censored_frac": 0.0
+      }
+    }
+  },
+  "n_items": 60,
+  "n_pos": 8,
+  "layers": [
+    24,
+    32,
+    40
+  ],
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "a2a-mode-occupancy-qwen-v1",
+    "tier": "pilot",
+    "code_commit": "7cb3ca19c98ebcb4e3b4af2faaa1e59270309fc8",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.a2a_mode_occupancy",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "lens": "1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1"
+    },
+    "model": {
+      "id": "/content/hf_local/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "69db4eb7196bc8190813231b3018ca05d8c2e3abc7b1af19d55c157af44a9d9c"
+    },
+    "jlens_commit": null,
+    "seed": 11,
+    "created_utc": "2026-07-28T06:28:54Z"
+  }
+}
