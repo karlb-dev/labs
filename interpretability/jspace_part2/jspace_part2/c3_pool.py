@@ -720,6 +720,27 @@ FAMILIES_V3: dict[str, list[tuple[str, str]]] = {
 }
 
 
+# CANONICAL FAMILY MAP — v3 deliberately extended several v2 templates
+# with fresh items (`language_family_2` holds more of the same relation as
+# `language_family`). Those are NOT independent clusters: pooling them as
+# two families would be the pseudo-replication the addendum flagged in the
+# SQL battery. Analysis must cluster on the CANONICAL name.
+CANONICAL_FAMILY: dict[str, str] = {
+    "language_family_2": "language_family",
+    "script_2": "script_writing_system",
+    "moons_2": "moons_planetary",
+    "mission_2": "spacecraft_mission",
+    "sports_numeric_2": "sports_record_less_cited",
+    "instrument_family_2": "instrument_family",
+    # ordinal-superlative river/mountain prompts share one relation schema
+    "river_third_order": "river_second_order",
+}
+
+
+def canonical_family(family: str) -> str:
+    return CANONICAL_FAMILY.get(family, family)
+
+
 def pool_rows(version: str = "v2") -> list[dict]:
     """Flat candidate rows: {prompt, answer, family, pool}. Prompt carries
     the 'Fact: ' prefix (v1 scoring convention); answer carries a leading
