@@ -368,6 +368,61 @@ output-adjacent channel; hard facts do not.** Consequence for P0: ladder
 hypotheses must be stated in fact-accessibility terms, not task depth
 alone. (This is also the C3 dev set's first validating use.)
 
+## The method's linear-transport premise: holds on OLMo, fails on Gemma-4 (2026-07-28 20:5x) — tier: PILOT
+
+Evidence `local-linearity-v3-olmo3think`, `local-linearity-v3-gemma4-31b`.
+
+A Jacobian lens assumes the source→target map is well described by a
+linear operator. That assumption is testable on the network alone, with
+**no fitted J involved**: perturb the residual by the same δ at every
+valid position and check superposition, `r(2δ) = 2·r(δ)` and
+`r(a+b) = r(a)+r(b)`. Every cell reported here has input fidelity 1.000
+(bf16 delivered the perturbation exactly); cells failing that check are
+marked unmeasurable rather than nonlinear.
+
+| ε | OLMo L24 | OLMo L32 | OLMo L40 | Gemma L22 | Gemma L30 | Gemma L37 |
+|---|---|---|---|---|---|---|
+| 0.02 | 1.66 | 1.87 | 1.93 | 1.54 | 2.64 | 1.27 |
+| 0.05 | 1.91 | 1.97 | 1.98 | 1.37 | 1.83 | 1.58 |
+| 0.10 | **1.98** | **1.99** | **2.01** | 1.59 | 1.17 | 0.81 |
+| 0.20 | **1.99** | **2.01** | **2.02** | 1.79 | 1.34 | 0.87 |
+
+*(scale ratio; 2.00 = perfectly linear)*
+
+**OLMo is linear across the paper's band** (L16–L60; only the very
+shallow L4 fails). **Gemma is nonlinear at every layer and every scale**,
+and critically does not improve as ε grows — L37 runs 1.27 → 0.87 with
+additivity error climbing 0.76 → 1.30. That divergence is what
+distinguishes real nonlinearity from a measurement floor.
+
+**Consequences, which resolve the A3 thread.** On OLMo the premise is
+sound, so the fitted J's mere ~50% direction accuracy in-band is an
+**estimation** failure: jlens averages the Jacobian over positions and
+fitting prompts, discarding most of the achievable accuracy. That is the
+campaign's H7 "mean-J mismatch", now measured — and it is fixable, with a
+sharp prediction that a per-position Jacobian should be markedly more
+faithful. On Gemma the premise **fails**, so no Jacobian models the
+transport however well estimated. This explains mechanistically why
+Gemma's fitted lens is identified-but-useless (every corpus recovers the
+same *bad linear approximation* of a nonlinear map) and why it reads
+worse than the plain logit lens (J actively mis-models transport; the
+logit lens makes no transport claim).
+
+**The A3 statement can therefore be sharpened**, though still not into a
+claim about Gemma's cognition: Gemma-4 violates the linear-transport
+premise the Jacobian lens is built on. It remains untrue to say "Gemma
+has no workspace" — a nonlinear architecture could host one that this
+method cannot see.
+
+*(A v1 of this test was withdrawn: sweeping ε from 0.005 it reported
+in-band nonlinearity on both models, but the trend ran backwards —
+linearity improved with larger ε, the signature of a precision floor
+rather than nonlinearity. In bf16 a perturbation 200× smaller than the
+activation loses direction on addition, and the response side is worse.
+v3 moves ε up into the faithfully-delivered range — also where
+ablation-scale interventions operate — and gates each cell on input
+fidelity.)*
+
 ## How good a first-order model is the Jacobian? (2026-07-28 20:1x) — tier: PILOT
 
 Evidence `linearization-faithfulness-olmo3think-v2`,
