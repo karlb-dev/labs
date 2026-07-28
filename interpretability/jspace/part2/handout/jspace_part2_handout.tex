@@ -150,6 +150,73 @@ Instruct fits agree at dictionary row-cos 0.993 and frozen-selection
 Jaccard 0.806.}
 \end{figure}
 
+\subsection{The four-model ladder --- the causal signature reorganizes}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.95\linewidth]{figures/p2f7_ladder.png}
+\caption{\textbf{The paper's causal signature is not a fixed property of
+``an LLM'' --- it reorganizes along post-training.} Protected dynamic
+J-ablation, paired family-clustered CIs, four checkpoints: the base model
+shows a REVERSE dissociation (one-hop hit, two-hop spared), Think shows
+equal-depth damage, 3.1-Instruct a weak forward dissociation, Qwen the
+paper's clean shape. Measured capacity does \emph{not} track this
+(occupancy 2/2/2/3--4): Instruct and Think are identical on capacity and
+differ on shape. The open marker records the ceiling check that relabeled
+the bottom rung --- on \emph{hard} one-hop facts the base effect is null
+($+0.14$; matched random $-0.01$), so the $-0.81$ was an EASY-FACT
+effect: rehearsed facts occupy the deletable output-adjacent channel and
+hard facts do not. Confirmatory hypotheses are therefore stated in
+fact-accessibility terms, not task depth.}
+\end{figure}
+
+\subsection{What the protected ablation actually deletes (tail mechanism)}
+
+The selected-id instrument logs, per layer and position, which dictionary
+rows the ablator deflates. On Olmo-3-32B-Think: the two-hop bridge
+entity's tokens are deflated on \textbf{95\%} of items versus
+\textbf{2\%} under a bridge-reassignment permutation
+($p<0.0005$) --- the J-directions really do carry the intermediate
+entity. But this is \emph{universal}: 0.94 on the damaged tail versus
+0.95 on undamaged items, so bridge deletion alone is not sufficient for
+damage. What separates the tail is (i) protection failure --- 21\% of
+tail items had answers outside the protected clean-top-10 versus 0\% of
+non-tail --- and (ii) among the 19 tail items whose answer \emph{was}
+protected, lower model confidence (median clean rank 2 versus 1).
+Deleting workspace content costs the model only when the answer is not
+already locked in.
+
+\subsection{Gemma-4-31B: an architecture datum with a depth}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.92\linewidth]{figures/p2f8_gemma_depth.png}
+\caption{\textbf{Gemma's residual stream is opaque in the output basis
+through exactly the band the paper studies.} Median rank of the answer
+token by layer, read with the reference unembedding (final norm, tied
+head, softcap~30). Ranks stay in the tens of thousands from L2 to L40 and
+collapse abruptly at L42--44, reaching rank~1 by L52. The paper's
+relative depths (37--62\%, i.e.\ L22--L37) sit entirely inside the opaque
+zone. The vanilla logit lens and the Jacobian micro-lens fail
+\emph{equally} here, so this is a property of the model family, not of
+the instrument. Whether Jacobian transport rescues mid-band readability
+is the question the full 120-prompt fit answers; no family verdict is
+stated until it lands.}
+\end{figure}
+
+\subsection{Design consequence: the confirmatory endpoint must change}
+
+The G6 power simulation, calibrated on the pilot parquets, finds that
+protected paired deltas are a zero-mode plus heavy-tail mixture
+(within-family $\sigma$ 1.2--1.5 nats, ICC $\approx0.40$). The drafted
+0.5-nat \emph{mean} primaries reach only 24--42\% power even at $n{=}180$
+across 60 families, and no affordable $n$ reaches 90\%; equivalence
+testing at the same margin needs $n\approx300$. The \emph{tail-rate}
+endpoint --- per-item $>$1-nat protected deletion, J versus matched
+random, paired and family-clustered --- is well powered at a 10\,pp
+margin. The preregistration records three options and awaits the
+principal investigator's choice; nothing downstream freezes until then.
+
 \section*{Reproducibility}
 
 Run dir \code{special-lab-1/part2\_20260727/} (metrics per model slug,

@@ -375,8 +375,111 @@ def f6_capacity_errata():
     log("wrote p2f6_capacity_errata.png")
 
 
+def f7_ladder():
+    """p2f7 — THE campaign headline: the paper's causal signature
+    reorganizes along the post-training ladder (base → Think → Instruct →
+    Qwen), with the base rung's easy-fact relabel shown in place."""
+    LADDER = [("olmo3-base", "OLMo-3\nbase"), ("olmo3-think", "OLMo-3\nThink"),
+              ("olmo31-instruct", "OLMo-3.1\nInstruct"),
+              ("qwen36-27b", "Qwen3.6\n27B")]
+    rows = []
+    for slug, lab in LADDER:
+        p = RUN_DIR_P2 / "metrics" / slug / "r7_pilot" / "r7_paired_ci.json"
+        if p.exists():
+            rows.append((slug, lab, json.loads(p.read_text())))
+    if len(rows) < 3:
+        return
+    hard = _load(RUN_DIR_P2 / "metrics" / "olmo3-base" / "a1_hard_onehop.json")
+
+    fig, ax = plt.subplots(figsize=(8.4, 4.0))
+    # texture, not hue, distinguishes the task; hue stays the J entity.
+    tasks = [("twohop", "two-hop", "o", 1.0),
+             ("onehop", "one-hop (as-run)", "s", 0.42)]
+    for xi, (slug, lab, d) in enumerate(rows):
+        for ti, (t, tlab, mk, alpha) in enumerate(tasks):
+            v = d.get(f"dynJ_protected/{t}")
+            if not v:
+                continue
+            x = xi + (ti - 0.5) * 0.3
+            ax.errorbar(x, v["estimate"],
+                        yerr=[[v["estimate"] - v["ci_low"]],
+                              [v["ci_high"] - v["estimate"]]],
+                        fmt=mk, ms=7.5, color=PAL["J"], alpha=alpha,
+                        capsize=3.5, lw=1.5, zorder=3,
+                        label=tlab if xi == 0 else None)
+    # the ceiling-check relabel, drawn where it applies
+    if hard:
+        s = hard["summary"]
+        ax.scatter([0 + 0.15], [s["dynJ_protected_mean_delta"]], marker="s",
+                   s=58, facecolor="white", edgecolor=PAL["J"], linewidth=1.8,
+                   zorder=4, label="one-hop (HARD facts)")
+        ax.annotate("", xy=(0.15, s["dynJ_protected_mean_delta"]),
+                    xytext=(0.15, rows[0][2]["dynJ_protected/onehop"]["estimate"]),
+                    arrowprops=dict(arrowstyle="->", color=PAL["muted"], lw=1.1))
+        ax.text(0.30, s["dynJ_protected_mean_delta"] + 0.06,
+                "easy-fact effect:\nhard one-hop is null", fontsize=7.2,
+                color=PAL["muted"], va="bottom")
+    ax.axhline(0, color=PAL["muted"], lw=0.9)
+    shapes = ["REVERSE", "EQUAL", "WEAK-FWD", "CLEAN-FWD"]
+    for xi, (slug, lab, d) in enumerate(rows):
+        ax.text(xi, 0.62, shapes[xi], fontsize=7.6, ha="center",
+                color=PAL["ink"], weight="bold")
+    ax.set_xticks(range(len(rows)))
+    ax.set_xticklabels([r[1] for r in rows], fontsize=8.5)
+    ax.set_ylabel("paired Δ answer-seq logprob (nats, 95% cluster CI)")
+    ax.set_xlabel("post-training ladder →", fontsize=8.5)
+    ax.legend(fontsize=7.5, frameon=False, loc="lower left")
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
+    ax.set_title("The paper's causal signature REORGANIZES under "
+                 "post-training — and is not tracked by measured capacity "
+                 "(occ 2/2/2/3–4)  [pilot]", fontsize=9.5, loc="left")
+    fig.tight_layout()
+    fig.savefig(FIGDIR / "p2f7_ladder.png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    log("wrote p2f7_ladder.png")
+
+
+def f8_gemma_depth():
+    """p2f8 — Gemma's output basis is opaque until ~73% depth (A3 datum)."""
+    d = _load(RUN_DIR_P2 / "metrics" / "gemma4-31b" / "a3_deepband_logit.json")
+    if not d:
+        return
+    med = d["summary"]["median_rank_by_layer"]
+    xs = sorted(int(k) for k in med)
+    ys = [med[str(x)] for x in xs]
+    fig, ax = plt.subplots(figsize=(7.4, 3.6))
+    ax.set_yscale("log")
+    ax.plot(xs, ys, "-o", ms=4.5, color=PAL["logit"], lw=1.6,
+            label="logit lens (median answer rank)")
+    ax.axhline(10, color=PAL["muted"], lw=0.9, ls=":")
+    ax.text(xs[0], 12, "rank 10", fontsize=7, color=PAL["muted"])
+    le100 = d["summary"].get("first_layer_median_le_100")
+    if le100:
+        ax.axvline(le100, color=PAL["J"], lw=1.1, ls="--")
+        ax.text(le100 + 0.6, max(ys) / 3,
+                f"first layer with\nmedian rank ≤100: L{le100}",
+                fontsize=7.4, color=PAL["J"])
+    ax.axvspan(22, 37, color=PAL["grid"], zorder=0)
+    ax.text(29.5, min(ys) * 3, "paper's relative\ndepths (37–62%)",
+            fontsize=7.2, ha="center", color=PAL["muted"])
+    ax.set_xlabel("layer (of 60)")
+    ax.set_ylabel("median rank of the answer token (log)")
+    ax.legend(fontsize=7.5, frameon=False, loc="upper right")
+    ax.grid(axis="y", which="both")
+    ax.set_axisbelow(True)
+    ax.set_title("Gemma-4-31B: the output basis stays opaque through the "
+                 "paper's band, resolving only at L42–44  [pilot]",
+                 fontsize=9.5, loc="left")
+    fig.tight_layout()
+    fig.savefig(FIGDIR / "p2f8_gemma_depth.png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    log("wrote p2f8_gemma_depth.png")
+
+
 FIGS = [f1_a0_transfer, f2_b3_frozen_logit, f3_r7_protected, f4_r2_occupancy,
-        f5_crossmodel_protected, f6_capacity_errata]
+        f5_crossmodel_protected, f6_capacity_errata, f7_ladder,
+        f8_gemma_depth]
 
 
 def main():

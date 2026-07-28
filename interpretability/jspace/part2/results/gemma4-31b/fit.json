@@ -1,0 +1,21 @@
+{
+  "slices": {},
+  "model": "/content/models/gemma4-31b-it",
+  "corpus": "/content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/fitting_corpus.jsonl",
+  "corpus_sha256": "15db1db213e6227e2078c10b399056867547c123817f24a5b528d50e0dfbe633",
+  "source_layers": [
+    22,
+    30,
+    37,
+    40,
+    42,
+    44,
+    48,
+    52
+  ],
+  "target_layer": 59,
+  "dim_batch": 8,
+  "max_seq_len": 128,
+  "skip_first": 16,
+  "band_rationale": "a3-gemma-deepband-logit-v1"
+}

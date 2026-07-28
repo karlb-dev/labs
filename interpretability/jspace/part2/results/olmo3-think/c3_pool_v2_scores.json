@@ -1,0 +1,1975 @@
+{
+  "summary": {
+    "pool": {
+      "n_candidates": 212,
+      "n_families": 45,
+      "items_per_family": {
+        "chem_symbol_rare": 6,
+        "element_atomic_number_mid": 5,
+        "si_unit_derived": 6,
+        "capital_less_cited": 6,
+        "capital_former": 5,
+        "currency_less_cited": 7,
+        "river_second_order": 5,
+        "mountain_second_order": 5,
+        "lake_specific": 4,
+        "moons_planetary": 5,
+        "star_brightest_constellation": 5,
+        "author_less_canonical": 6,
+        "playwright_work": 4,
+        "philosopher_work": 5,
+        "composer_work_less_cited": 5,
+        "painter_work_less_cited": 5,
+        "architect_building": 5,
+        "ancient_city_country": 5,
+        "treaty_place": 4,
+        "dynasty_china": 4,
+        "mythology_less_cited": 6,
+        "explorer_first": 4,
+        "spacecraft_mission": 4,
+        "anatomy_specific": 5,
+        "enzyme_process": 4,
+        "medical_discoverer": 4,
+        "physicist_named_effect": 5,
+        "mathematician_theorem": 5,
+        "economics_concept_person": 4,
+        "programming_language_creator": 5,
+        "language_family": 5,
+        "script_writing_system": 4,
+        "periodic_group_name": 4,
+        "mineral_property": 5,
+        "geology_boundary": 4,
+        "sea_strait_less_cited": 4,
+        "peninsula_region": 4,
+        "sports_record_less_cited": 5,
+        "instrument_family": 4,
+        "cuisine_origin": 4,
+        "wine_region": 4,
+        "organization_founding": 4,
+        "bird_mammal_specific": 5,
+        "plant_botany": 4,
+        "computing_history": 4
+      }
+    },
+    "n_scored": 212,
+    "n_in_window": 66,
+    "window": [
+      -9.0,
+      -1.0
+    ],
+    "n_families_with_ge2_in_window": 20,
+    "n_ceiling_above_hi": 144,
+    "n_unknown_below_lo": 2,
+    "lp_quartiles": [
+      -1.68,
+      -0.3,
+      -0.02
+    ],
+    "by_family": {
+      "chem_symbol_rare": {
+        "n": 6,
+        "n_window": 0
+      },
+      "element_atomic_number_mid": {
+        "n": 5,
+        "n_window": 2
+      },
+      "si_unit_derived": {
+        "n": 6,
+        "n_window": 3
+      },
+      "capital_less_cited": {
+        "n": 6,
+        "n_window": 0
+      },
+      "capital_former": {
+        "n": 5,
+        "n_window": 0
+      },
+      "currency_less_cited": {
+        "n": 7,
+        "n_window": 3
+      },
+      "river_second_order": {
+        "n": 5,
+        "n_window": 5
+      },
+      "mountain_second_order": {
+        "n": 5,
+        "n_window": 0
+      },
+      "lake_specific": {
+        "n": 4,
+        "n_window": 1
+      },
+      "moons_planetary": {
+        "n": 5,
+        "n_window": 3
+      },
+      "star_brightest_constellation": {
+        "n": 5,
+        "n_window": 2
+      },
+      "author_less_canonical": {
+        "n": 6,
+        "n_window": 0
+      },
+      "playwright_work": {
+        "n": 4,
+        "n_window": 0
+      },
+      "philosopher_work": {
+        "n": 5,
+        "n_window": 0
+      },
+      "composer_work_less_cited": {
+        "n": 5,
+        "n_window": 0
+      },
+      "painter_work_less_cited": {
+        "n": 5,
+        "n_window": 2
+      },
+      "architect_building": {
+        "n": 5,
+        "n_window": 1
+      },
+      "ancient_city_country": {
+        "n": 5,
+        "n_window": 0
+      },
+      "treaty_place": {
+        "n": 4,
+        "n_window": 0
+      },
+      "dynasty_china": {
+        "n": 4,
+        "n_window": 2
+      },
+      "mythology_less_cited": {
+        "n": 6,
+        "n_window": 1
+      },
+      "explorer_first": {
+        "n": 4,
+        "n_window": 0
+      },
+      "spacecraft_mission": {
+        "n": 4,
+        "n_window": 3
+      },
+      "anatomy_specific": {
+        "n": 5,
+        "n_window": 0
+      },
+      "enzyme_process": {
+        "n": 4,
+        "n_window": 2
+      },
+      "medical_discoverer": {
+        "n": 4,
+        "n_window": 1
+      },
+      "physicist_named_effect": {
+        "n": 5,
+        "n_window": 2
+      },
+      "mathematician_theorem": {
+        "n": 5,
+        "n_window": 3
+      },
+      "economics_concept_person": {
+        "n": 4,
+        "n_window": 0
+      },
+      "programming_language_creator": {
+        "n": 5,
+        "n_window": 4
+      },
+      "language_family": {
+        "n": 5,
+        "n_window": 4
+      },
+      "script_writing_system": {
+        "n": 4,
+        "n_window": 4
+      },
+      "periodic_group_name": {
+        "n": 4,
+        "n_window": 0
+      },
+      "mineral_property": {
+        "n": 5,
+        "n_window": 1
+      },
+      "geology_boundary": {
+        "n": 4,
+        "n_window": 1
+      },
+      "sea_strait_less_cited": {
+        "n": 4,
+        "n_window": 1
+      },
+      "peninsula_region": {
+        "n": 4,
+        "n_window": 3
+      },
+      "sports_record_less_cited": {
+        "n": 5,
+        "n_window": 3
+      },
+      "instrument_family": {
+        "n": 4,
+        "n_window": 3
+      },
+      "cuisine_origin": {
+        "n": 4,
+        "n_window": 0
+      },
+      "wine_region": {
+        "n": 4,
+        "n_window": 1
+      },
+      "organization_founding": {
+        "n": 4,
+        "n_window": 0
+      },
+      "bird_mammal_specific": {
+        "n": 5,
+        "n_window": 1
+      },
+      "plant_botany": {
+        "n": 4,
+        "n_window": 2
+      },
+      "computing_history": {
+        "n": 4,
+        "n_window": 2
+      }
+    },
+    "meets_prereg_floor_n90_fams30": false,
+    "seconds": 26
+  },
+  "rows": [
+    {
+      "prompt": "Fact: The chemical symbol for praseodymium is",
+      "answer": " Pr",
+      "family": "chem_symbol_rare",
+      "lp": -0.659,
+      "first_tok_lp": -0.659,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The chemical symbol for ytterbium is",
+      "answer": " Yb",
+      "family": "chem_symbol_rare",
+      "lp": -0.0199,
+      "first_tok_lp": -0.0198,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The chemical symbol for niobium is",
+      "answer": " Nb",
+      "family": "chem_symbol_rare",
+      "lp": -0.031,
+      "first_tok_lp": -0.031,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The chemical symbol for rhenium is",
+      "answer": " Re",
+      "family": "chem_symbol_rare",
+      "lp": -0.1126,
+      "first_tok_lp": -0.1126,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The chemical symbol for hafnium is",
+      "answer": " Hf",
+      "family": "chem_symbol_rare",
+      "lp": -0.0327,
+      "first_tok_lp": -0.0325,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The chemical symbol for gadolinium is",
+      "answer": " Gd",
+      "family": "chem_symbol_rare",
+      "lp": -0.0183,
+      "first_tok_lp": -0.0182,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The element with atomic number 41 is",
+      "answer": " niobium",
+      "family": "element_atomic_number_mid",
+      "lp": -1.4109,
+      "first_tok_lp": -1.4108,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The element with atomic number 45 is",
+      "answer": " rhodium",
+      "family": "element_atomic_number_mid",
+      "lp": -2.099,
+      "first_tok_lp": -2.0986,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The element with atomic number 52 is",
+      "answer": " tellurium",
+      "family": "element_atomic_number_mid",
+      "lp": -0.2193,
+      "first_tok_lp": -0.219,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The element with atomic number 63 is",
+      "answer": " europium",
+      "family": "element_atomic_number_mid",
+      "lp": -0.8348,
+      "first_tok_lp": -0.8348,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The element with atomic number 77 is",
+      "answer": " iridium",
+      "family": "element_atomic_number_mid",
+      "lp": -0.8984,
+      "first_tok_lp": -0.8734,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The SI unit of magnetic flux is the",
+      "answer": " weber",
+      "family": "si_unit_derived",
+      "lp": -2.2798,
+      "first_tok_lp": -2.2798,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The SI unit of inductance is the",
+      "answer": " henry",
+      "family": "si_unit_derived",
+      "lp": -0.8809,
+      "first_tok_lp": -0.8772,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The SI unit of absorbed radiation dose is the",
+      "answer": " gray",
+      "family": "si_unit_derived",
+      "lp": -3.9205,
+      "first_tok_lp": -3.9205,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The SI unit of equivalent radiation dose is the",
+      "answer": " sievert",
+      "family": "si_unit_derived",
+      "lp": -2.6606,
+      "first_tok_lp": -2.6605,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The SI unit of catalytic activity is the",
+      "answer": " katal",
+      "family": "si_unit_derived",
+      "lp": -0.3446,
+      "first_tok_lp": -0.2116,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The SI unit of luminous flux is the",
+      "answer": " lumen",
+      "family": "si_unit_derived",
+      "lp": -0.4889,
+      "first_tok_lp": -0.4884,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The capital of Kyrgyzstan is",
+      "answer": " Bishkek",
+      "family": "capital_less_cited",
+      "lp": -0.0301,
+      "first_tok_lp": -0.0247,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The capital of Bhutan is",
+      "answer": " Thimphu",
+      "family": "capital_less_cited",
+      "lp": -0.0353,
+      "first_tok_lp": -0.0123,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The capital of Suriname is",
+      "answer": " Paramaribo",
+      "family": "capital_less_cited",
+      "lp": -0.0104,
+      "first_tok_lp": -0.0099,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The capital of Eritrea is",
+      "answer": " Asmara",
+      "family": "capital_less_cited",
+      "lp": -0.0165,
+      "first_tok_lp": -0.0163,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The capital of Turkmenistan is",
+      "answer": " Ashgabat",
+      "family": "capital_less_cited",
+      "lp": -0.1842,
+      "first_tok_lp": -0.1819,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The capital of Malawi is",
+      "answer": " Lilongwe",
+      "family": "capital_less_cited",
+      "lp": -0.006,
+      "first_tok_lp": -0.0058,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The former capital of Brazil, before Brasilia, was",
+      "answer": " Rio",
+      "family": "capital_former",
+      "lp": -0.3314,
+      "first_tok_lp": -0.3314,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The former capital of Nigeria, before Abuja, was",
+      "answer": " Lagos",
+      "family": "capital_former",
+      "lp": -0.0914,
+      "first_tok_lp": -0.0914,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The former capital of Kazakhstan, before Astana, was",
+      "answer": " Almaty",
+      "family": "capital_former",
+      "lp": -0.1029,
+      "first_tok_lp": -0.1025,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The former capital of Myanmar, before Naypyidaw, was",
+      "answer": " Yangon",
+      "family": "capital_former",
+      "lp": -0.5594,
+      "first_tok_lp": -0.5577,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The former capital of Tanzania, before Dodoma, was",
+      "answer": " Dar",
+      "family": "capital_former",
+      "lp": -0.1759,
+      "first_tok_lp": -0.1759,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The currency of Kyrgyzstan is the",
+      "answer": " som",
+      "family": "currency_less_cited",
+      "lp": -5.4617,
+      "first_tok_lp": -5.4617,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The currency of Laos is the",
+      "answer": " kip",
+      "family": "currency_less_cited",
+      "lp": -0.6772,
+      "first_tok_lp": -0.6734,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The currency of Myanmar is the",
+      "answer": " kyat",
+      "family": "currency_less_cited",
+      "lp": -0.1304,
+      "first_tok_lp": -0.1303,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The currency of Angola is the",
+      "answer": " kwanza",
+      "family": "currency_less_cited",
+      "lp": -2.2014,
+      "first_tok_lp": -2.2009,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The currency of Botswana is the",
+      "answer": " pula",
+      "family": "currency_less_cited",
+      "lp": -0.0892,
+      "first_tok_lp": -0.0819,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The currency of Paraguay is the",
+      "answer": " guarani",
+      "family": "currency_less_cited",
+      "lp": -2.7325,
+      "first_tok_lp": -2.7322,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The currency of Georgia is the",
+      "answer": " lari",
+      "family": "currency_less_cited",
+      "lp": -0.1501,
+      "first_tok_lp": -0.1392,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The second-longest river in Africa is the",
+      "answer": " Congo",
+      "family": "river_second_order",
+      "lp": -1.5818,
+      "first_tok_lp": -1.5818,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The second-longest river in South America is the",
+      "answer": " Parana",
+      "family": "river_second_order",
+      "lp": -5.3674,
+      "first_tok_lp": -4.8626,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The second-longest river in Europe is the",
+      "answer": " Danube",
+      "family": "river_second_order",
+      "lp": -1.095,
+      "first_tok_lp": -1.0949,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The second-longest river in Asia is the",
+      "answer": " Yellow",
+      "family": "river_second_order",
+      "lp": -2.3431,
+      "first_tok_lp": -2.3431,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The longest river entirely within Wales is the",
+      "answer": " Towy",
+      "family": "river_second_order",
+      "lp": -6.9943,
+      "first_tok_lp": -6.4484,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The second-highest mountain in the world is",
+      "answer": " K2",
+      "family": "mountain_second_order",
+      "lp": -0.1337,
+      "first_tok_lp": -0.1285,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The second-highest mountain in Africa is Mount",
+      "answer": " Kenya",
+      "family": "mountain_second_order",
+      "lp": -0.0625,
+      "first_tok_lp": -0.0625,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The highest mountain in Turkey is Mount",
+      "answer": " Ararat",
+      "family": "mountain_second_order",
+      "lp": -0.032,
+      "first_tok_lp": -0.0213,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The highest mountain in Iran is Mount",
+      "answer": " Damavand",
+      "family": "mountain_second_order",
+      "lp": -0.0242,
+      "first_tok_lp": -0.0107,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The highest mountain in the Alps outside France is Monte",
+      "answer": " Rosa",
+      "family": "mountain_second_order",
+      "lp": -0.8008,
+      "first_tok_lp": -0.8008,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The largest lake in South America is Lake",
+      "answer": " Titicaca",
+      "family": "lake_specific",
+      "lp": -0.8881,
+      "first_tok_lp": -0.8875,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The largest lake entirely within Canada is Great",
+      "answer": " Bear",
+      "family": "lake_specific",
+      "lp": -0.0059,
+      "first_tok_lp": -0.0059,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The saltiest large lake in Africa is Lake",
+      "answer": " Assal",
+      "family": "lake_specific",
+      "lp": -1.3945,
+      "first_tok_lp": -1.3889,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The largest lake in Central Asia after the Caspian is the",
+      "answer": " Aral",
+      "family": "lake_specific",
+      "lp": -0.8633,
+      "first_tok_lp": -0.8617,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The largest moon of Saturn is",
+      "answer": " Titan",
+      "family": "moons_planetary",
+      "lp": -0.4363,
+      "first_tok_lp": -0.4363,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The largest moon of Neptune is",
+      "answer": " Triton",
+      "family": "moons_planetary",
+      "lp": -2.556,
+      "first_tok_lp": -2.5545,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The largest moon of Uranus is",
+      "answer": " Titania",
+      "family": "moons_planetary",
+      "lp": -2.9803,
+      "first_tok_lp": -2.9802,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The innermost of Jupiter's Galilean moons is",
+      "answer": " Io",
+      "family": "moons_planetary",
+      "lp": -0.1692,
+      "first_tok_lp": -0.1692,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The moon of Saturn with geysers at its south pole is",
+      "answer": " Enceladus",
+      "family": "moons_planetary",
+      "lp": -1.5862,
+      "first_tok_lp": -1.5845,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The brightest star in the constellation Lyra is",
+      "answer": " Vega",
+      "family": "star_brightest_constellation",
+      "lp": -1.1044,
+      "first_tok_lp": -1.1044,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The brightest star in the constellation Cygnus is",
+      "answer": " Deneb",
+      "family": "star_brightest_constellation",
+      "lp": -0.5307,
+      "first_tok_lp": -0.5304,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The brightest star in the constellation Aquila is",
+      "answer": " Altair",
+      "family": "star_brightest_constellation",
+      "lp": -0.0765,
+      "first_tok_lp": -0.0765,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The brightest star in the constellation Auriga is",
+      "answer": " Capella",
+      "family": "star_brightest_constellation",
+      "lp": -1.373,
+      "first_tok_lp": -1.3718,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The brightest star in the constellation Bootes is",
+      "answer": " Arcturus",
+      "family": "star_brightest_constellation",
+      "lp": -0.8108,
+      "first_tok_lp": -0.8106,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The author of the novel Buddenbrooks is Thomas",
+      "answer": " Mann",
+      "family": "author_less_canonical",
+      "lp": -0.0033,
+      "first_tok_lp": -0.0033,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The author of the novel Kokoro is Natsume",
+      "answer": " Soseki",
+      "family": "author_less_canonical",
+      "lp": -0.0614,
+      "first_tok_lp": -0.0016,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The author of the novel Independent People is Halldor",
+      "answer": " Laxness",
+      "family": "author_less_canonical",
+      "lp": -0.0198,
+      "first_tok_lp": -0.0151,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The author of the novel Season of Migration to the North is Tayeb",
+      "answer": " Salih",
+      "family": "author_less_canonical",
+      "lp": -0.0182,
+      "first_tok_lp": -0.0166,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The author of the novel The Leopard is Giuseppe Tomasi di",
+      "answer": " Lampedusa",
+      "family": "author_less_canonical",
+      "lp": -0.0057,
+      "first_tok_lp": -0.0044,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The author of the novel Petals of Blood is Ngugi wa",
+      "answer": " Thiong",
+      "family": "author_less_canonical",
+      "lp": -0.1159,
+      "first_tok_lp": -0.0313,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The playwright of the drama Hedda Gabler is Henrik",
+      "answer": " Ibsen",
+      "family": "playwright_work",
+      "lp": -0.0021,
+      "first_tok_lp": -0.0019,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The playwright of the drama The Cherry Orchard is Anton",
+      "answer": " Chekhov",
+      "family": "playwright_work",
+      "lp": -0.0153,
+      "first_tok_lp": -0.0112,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The playwright of the drama Six Characters in Search of an Author is Luigi",
+      "answer": " Pirandello",
+      "family": "playwright_work",
+      "lp": -0.0036,
+      "first_tok_lp": -0.0018,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The playwright of the drama Blood Wedding is Federico Garcia",
+      "answer": " Lorca",
+      "family": "playwright_work",
+      "lp": -0.0023,
+      "first_tok_lp": -0.0006,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The philosopher who wrote Being and Time is Martin",
+      "answer": " Heidegger",
+      "family": "philosopher_work",
+      "lp": -0.0046,
+      "first_tok_lp": -0.0025,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The philosopher who wrote The Phenomenology of Spirit is Georg Wilhelm Friedrich",
+      "answer": " Hegel",
+      "family": "philosopher_work",
+      "lp": -0.0006,
+      "first_tok_lp": -0.0005,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The philosopher who wrote Beyond Good and Evil is Friedrich",
+      "answer": " Nietzsche",
+      "family": "philosopher_work",
+      "lp": -0.0135,
+      "first_tok_lp": -0.0135,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The philosopher who wrote A Theory of Justice is John",
+      "answer": " Rawls",
+      "family": "philosopher_work",
+      "lp": -0.0379,
+      "first_tok_lp": -0.0376,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The philosopher who wrote The Structure of Scientific Revolutions is Thomas",
+      "answer": " Kuhn",
+      "family": "philosopher_work",
+      "lp": -0.2971,
+      "first_tok_lp": -0.296,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The composer of the opera Boris Godunov is Modest",
+      "answer": " Mussorgsky",
+      "family": "composer_work_less_cited",
+      "lp": -0.3558,
+      "first_tok_lp": -0.3517,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The composer of the ballet The Rite of Spring is Igor",
+      "answer": " Stravinsky",
+      "family": "composer_work_less_cited",
+      "lp": -0.013,
+      "first_tok_lp": -0.0065,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The composer of the opera Peter Grimes is Benjamin",
+      "answer": " Britten",
+      "family": "composer_work_less_cited",
+      "lp": -0.0302,
+      "first_tok_lp": -0.028,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The composer of the tone poem Finlandia is Jean",
+      "answer": " Sibelius",
+      "family": "composer_work_less_cited",
+      "lp": -0.0017,
+      "first_tok_lp": -0.0014,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The composer of the opera Turandot is Giacomo",
+      "answer": " Puccini",
+      "family": "composer_work_less_cited",
+      "lp": -0.0058,
+      "first_tok_lp": -0.0057,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The painter of the work The Garden of Earthly Delights is Hieronymus",
+      "answer": " Bosch",
+      "family": "painter_work_less_cited",
+      "lp": -0.0129,
+      "first_tok_lp": -0.0129,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The painter of the work Las Meninas is Diego",
+      "answer": " Velazquez",
+      "family": "painter_work_less_cited",
+      "lp": -2.5543,
+      "first_tok_lp": -0.1304,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The painter of the work The Great Wave off Kanagawa is",
+      "answer": " Hokusai",
+      "family": "painter_work_less_cited",
+      "lp": -7.1117,
+      "first_tok_lp": -7.1113,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The painter of the work Christina's World is Andrew",
+      "answer": " Wyeth",
+      "family": "painter_work_less_cited",
+      "lp": -0.0014,
+      "first_tok_lp": -0.0014,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The painter of the work Nighthawks is Edward",
+      "answer": " Hopper",
+      "family": "painter_work_less_cited",
+      "lp": -0.0217,
+      "first_tok_lp": -0.0215,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The architect of the Sagrada Familia is Antoni",
+      "answer": " Gaudi",
+      "family": "architect_building",
+      "lp": -2.3536,
+      "first_tok_lp": -0.0002,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The architect of Fallingwater is Frank Lloyd",
+      "answer": " Wright",
+      "family": "architect_building",
+      "lp": -0.0005,
+      "first_tok_lp": -0.0005,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The architect of the Sydney Opera House is Jorn",
+      "answer": " Utzon",
+      "family": "architect_building",
+      "lp": -0.0051,
+      "first_tok_lp": -0.0051,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The architect of the Guggenheim Museum Bilbao is Frank",
+      "answer": " Gehry",
+      "family": "architect_building",
+      "lp": -0.0202,
+      "first_tok_lp": -0.0201,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The architect of the Villa Savoye is Le",
+      "answer": " Corbusier",
+      "family": "architect_building",
+      "lp": -0.0339,
+      "first_tok_lp": -0.0284,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The ancient city of Petra is in the modern country of",
+      "answer": " Jordan",
+      "family": "ancient_city_country",
+      "lp": -0.0018,
+      "first_tok_lp": -0.0018,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The ancient city of Palmyra is in the modern country of",
+      "answer": " Syria",
+      "family": "ancient_city_country",
+      "lp": -0.0362,
+      "first_tok_lp": -0.0362,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The ancient city of Persepolis is in the modern country of",
+      "answer": " Iran",
+      "family": "ancient_city_country",
+      "lp": -0.0293,
+      "first_tok_lp": -0.0293,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The ancient city of Carthage is in the modern country of",
+      "answer": " Tunisia",
+      "family": "ancient_city_country",
+      "lp": -0.0143,
+      "first_tok_lp": -0.0143,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The ancient city of Angkor is in the modern country of",
+      "answer": " Cambodia",
+      "family": "ancient_city_country",
+      "lp": -0.0215,
+      "first_tok_lp": -0.0215,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The treaty that ended the Thirty Years War was the Peace of",
+      "answer": " Westphalia",
+      "family": "treaty_place",
+      "lp": -0.0178,
+      "first_tok_lp": -0.0134,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The treaty that ended the Russo-Japanese War was the Treaty of",
+      "answer": " Portsmouth",
+      "family": "treaty_place",
+      "lp": -0.0018,
+      "first_tok_lp": -0.0018,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The treaty that divided the New World between Spain and Portugal was the Treaty of",
+      "answer": " Tordesillas",
+      "family": "treaty_place",
+      "lp": -0.0222,
+      "first_tok_lp": -0.0089,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The treaty that ended the War of the Spanish Succession was the Treaty of",
+      "answer": " Utrecht",
+      "family": "treaty_place",
+      "lp": -0.0087,
+      "first_tok_lp": -0.0085,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Chinese dynasty that produced the Terracotta Army was the",
+      "answer": " Qin",
+      "family": "dynasty_china",
+      "lp": -0.214,
+      "first_tok_lp": -0.214,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Chinese dynasty during which Marco Polo is said to have visited was the",
+      "answer": " Yuan",
+      "family": "dynasty_china",
+      "lp": -0.2743,
+      "first_tok_lp": -0.2743,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Chinese dynasty that invented woodblock printing was the",
+      "answer": " Tang",
+      "family": "dynasty_china",
+      "lp": -2.2005,
+      "first_tok_lp": -2.2005,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The last imperial dynasty of China was the",
+      "answer": " Qing",
+      "family": "dynasty_china",
+      "lp": -1.035,
+      "first_tok_lp": -1.035,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The Norse god who guards the Bifrost bridge is",
+      "answer": " Heimdall",
+      "family": "mythology_less_cited",
+      "lp": -0.3114,
+      "first_tok_lp": -0.3085,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Greek goddess of the dawn is",
+      "answer": " Eos",
+      "family": "mythology_less_cited",
+      "lp": -0.9071,
+      "first_tok_lp": -0.8972,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Greek titan who stole fire for humanity is",
+      "answer": " Prometheus",
+      "family": "mythology_less_cited",
+      "lp": -2.821,
+      "first_tok_lp": -2.821,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The Egyptian goddess of magic and healing is",
+      "answer": " Isis",
+      "family": "mythology_less_cited",
+      "lp": -0.1418,
+      "first_tok_lp": -0.1418,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Hindu god with an elephant head is",
+      "answer": " Ganesha",
+      "family": "mythology_less_cited",
+      "lp": -0.68,
+      "first_tok_lp": -0.6786,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Mesopotamian hero of the oldest surviving epic is",
+      "answer": " Gilgamesh",
+      "family": "mythology_less_cited",
+      "lp": -0.0365,
+      "first_tok_lp": -0.0353,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The explorer who first reached the South Pole was Roald",
+      "answer": " Amundsen",
+      "family": "explorer_first",
+      "lp": -0.1672,
+      "first_tok_lp": -0.1535,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The explorer who first circumnavigated the globe departed under Ferdinand",
+      "answer": " Magellan",
+      "family": "explorer_first",
+      "lp": -0.0583,
+      "first_tok_lp": -0.0557,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The explorer who mapped much of the Australian coast was Matthew",
+      "answer": " Flinders",
+      "family": "explorer_first",
+      "lp": -0.0108,
+      "first_tok_lp": -0.0102,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The explorer who crossed Antarctica's Weddell Sea ice with the Endurance was Ernest",
+      "answer": " Shackleton",
+      "family": "explorer_first",
+      "lp": -0.0657,
+      "first_tok_lp": -0.0012,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The spacecraft that orbited Saturn for thirteen years was",
+      "answer": " Cassini",
+      "family": "spacecraft_mission",
+      "lp": -5.0181,
+      "first_tok_lp": -5.0177,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The spacecraft that landed a probe on a comet was",
+      "answer": " Rosetta",
+      "family": "spacecraft_mission",
+      "lp": -5.3995,
+      "first_tok_lp": -5.3995,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The spacecraft that first flew past Pluto was New",
+      "answer": " Horizons",
+      "family": "spacecraft_mission",
+      "lp": -0.0348,
+      "first_tok_lp": -0.0325,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The rover that confirmed ancient water on Mars in 2004 was",
+      "answer": " Opportunity",
+      "family": "spacecraft_mission",
+      "lp": -6.923,
+      "first_tok_lp": -6.923,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The longest nerve in the human body is the",
+      "answer": " sciatic",
+      "family": "anatomy_specific",
+      "lp": -0.0291,
+      "first_tok_lp": -0.0289,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The smallest bone in the human body is the",
+      "answer": " stapes",
+      "family": "anatomy_specific",
+      "lp": -0.13,
+      "first_tok_lp": -0.1297,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The largest artery in the human body is the",
+      "answer": " aorta",
+      "family": "anatomy_specific",
+      "lp": -0.0641,
+      "first_tok_lp": -0.0634,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The bone that forms the human cheek is the",
+      "answer": " zygomatic",
+      "family": "anatomy_specific",
+      "lp": -0.0286,
+      "first_tok_lp": -0.0259,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The membrane surrounding the human heart is the",
+      "answer": " pericardium",
+      "family": "anatomy_specific",
+      "lp": -0.3801,
+      "first_tok_lp": -0.37,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The enzyme that unwinds DNA during replication is",
+      "answer": " helicase",
+      "family": "enzyme_process",
+      "lp": -2.9939,
+      "first_tok_lp": -2.9937,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The enzyme that joins DNA fragments is DNA",
+      "answer": " ligase",
+      "family": "enzyme_process",
+      "lp": -0.0154,
+      "first_tok_lp": -0.0151,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The enzyme in saliva that begins starch digestion is",
+      "answer": " amylase",
+      "family": "enzyme_process",
+      "lp": -0.3877,
+      "first_tok_lp": -0.3875,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The enzyme that fixes carbon in photosynthesis is",
+      "answer": " rubisco",
+      "family": "enzyme_process",
+      "lp": -4.794,
+      "first_tok_lp": -4.779,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The physician who introduced antiseptic surgery was Joseph",
+      "answer": " Lister",
+      "family": "medical_discoverer",
+      "lp": -0.01,
+      "first_tok_lp": -0.01,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The physician who first described the circulation of blood was William",
+      "answer": " Harvey",
+      "family": "medical_discoverer",
+      "lp": -0.0013,
+      "first_tok_lp": -0.0013,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The scientist who discovered the structure of insulin was Frederick",
+      "answer": " Sanger",
+      "family": "medical_discoverer",
+      "lp": -1.9811,
+      "first_tok_lp": -1.9804,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The scientist whose X-ray images enabled the DNA double helix was Rosalind",
+      "answer": " Franklin",
+      "family": "medical_discoverer",
+      "lp": -0.0015,
+      "first_tok_lp": -0.0015,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The physicist for whom the effect of light scattering by molecules is named is Chandrasekhara",
+      "answer": " Raman",
+      "family": "physicist_named_effect",
+      "lp": -3.7445,
+      "first_tok_lp": -3.7435,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The physicist for whom the exclusion principle is named is Wolfgang",
+      "answer": " Pauli",
+      "family": "physicist_named_effect",
+      "lp": -0.0055,
+      "first_tok_lp": -0.0043,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The physicist for whom the equation of quantum wavefunctions is named is Erwin",
+      "answer": " Schrodinger",
+      "family": "physicist_named_effect",
+      "lp": -2.6115,
+      "first_tok_lp": -0.0293,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The physicist for whom the uncertainty-free complementarity principle of quantum mechanics is named is Niels",
+      "answer": " Bohr",
+      "family": "physicist_named_effect",
+      "lp": -0.0562,
+      "first_tok_lp": -0.0558,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The physicist for whom the constant in blackbody radiation is named is Max",
+      "answer": " Planck",
+      "family": "physicist_named_effect",
+      "lp": -0.0257,
+      "first_tok_lp": -0.0244,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The mathematician for whom the last theorem about integer powers is named is Pierre de",
+      "answer": " Fermat",
+      "family": "mathematician_theorem",
+      "lp": -0.0011,
+      "first_tok_lp": -0.0006,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The mathematician who proved the incompleteness theorems is Kurt",
+      "answer": " Godel",
+      "family": "mathematician_theorem",
+      "lp": -1.9041,
+      "first_tok_lp": -1.8872,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The mathematician for whom a famous unsolved hypothesis about the zeta function is named is Bernhard",
+      "answer": " Riemann",
+      "family": "mathematician_theorem",
+      "lp": -0.0065,
+      "first_tok_lp": -0.0062,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The mathematician who founded modern topology's fundamental group is Henri",
+      "answer": " Poincare",
+      "family": "mathematician_theorem",
+      "lp": -2.1286,
+      "first_tok_lp": -0.0004,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The mathematician for whom the sieve for finding primes is named is",
+      "answer": " Eratosthenes",
+      "family": "mathematician_theorem",
+      "lp": -5.4555,
+      "first_tok_lp": -5.4513,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The economist for whom the curve relating tax rates to revenue is named is Arthur",
+      "answer": " Laffer",
+      "family": "economics_concept_person",
+      "lp": -0.5408,
+      "first_tok_lp": -0.5407,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The statistician for whom the coefficient of inequality is named is Corrado",
+      "answer": " Gini",
+      "family": "economics_concept_person",
+      "lp": -0.0021,
+      "first_tok_lp": -0.002,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The mathematician for whom the equilibrium in game theory is named is John",
+      "answer": " Nash",
+      "family": "economics_concept_person",
+      "lp": -0.8358,
+      "first_tok_lp": -0.8358,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The economist who wrote The General Theory of Employment, Interest and Money is John Maynard",
+      "answer": " Keynes",
+      "family": "economics_concept_person",
+      "lp": -0.0702,
+      "first_tok_lp": -0.0702,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The programming language created by Guido van Rossum is",
+      "answer": " Python",
+      "family": "programming_language_creator",
+      "lp": -4.2093,
+      "first_tok_lp": -4.2093,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The programming language created by Bjarne Stroustrup is",
+      "answer": " C",
+      "family": "programming_language_creator",
+      "lp": -1.517,
+      "first_tok_lp": -1.517,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The programming language created by James Gosling is",
+      "answer": " Java",
+      "family": "programming_language_creator",
+      "lp": -2.023,
+      "first_tok_lp": -2.023,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The programming language created by Yukihiro Matsumoto is",
+      "answer": " Ruby",
+      "family": "programming_language_creator",
+      "lp": -0.4529,
+      "first_tok_lp": -0.4529,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The programming language created by John McCarthy is",
+      "answer": " Lisp",
+      "family": "programming_language_creator",
+      "lp": -1.9834,
+      "first_tok_lp": -1.9834,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The language family to which Finnish belongs is",
+      "answer": " Uralic",
+      "family": "language_family",
+      "lp": -5.35,
+      "first_tok_lp": -5.3336,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The language family to which Swahili belongs is",
+      "answer": " Bantu",
+      "family": "language_family",
+      "lp": -5.6869,
+      "first_tok_lp": -5.6819,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The language family to which Tamil belongs is",
+      "answer": " Dravidian",
+      "family": "language_family",
+      "lp": -0.5293,
+      "first_tok_lp": -0.524,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The language family to which Hungarian belongs is",
+      "answer": " Uralic",
+      "family": "language_family",
+      "lp": -2.1131,
+      "first_tok_lp": -2.0941,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The language family to which Hebrew belongs is",
+      "answer": " Semitic",
+      "family": "language_family",
+      "lp": -4.1161,
+      "first_tok_lp": -4.1144,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The writing system used for Japanese particles and inflections is",
+      "answer": " hiragana",
+      "family": "script_writing_system",
+      "lp": -1.6494,
+      "first_tok_lp": -1.6482,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The writing system used for the Hindi language is",
+      "answer": " Devanagari",
+      "family": "script_writing_system",
+      "lp": -3.822,
+      "first_tok_lp": -3.7872,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The writing system invented for Korean in the fifteenth century is",
+      "answer": " Hangul",
+      "family": "script_writing_system",
+      "lp": -3.9145,
+      "first_tok_lp": -3.9142,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The script used to write Ethiopian Amharic is",
+      "answer": " Ge",
+      "family": "script_writing_system",
+      "lp": -4.2179,
+      "first_tok_lp": -4.2179,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The name of the periodic table group containing fluorine and chlorine is the",
+      "answer": " halogens",
+      "family": "periodic_group_name",
+      "lp": -0.7706,
+      "first_tok_lp": -0.7118,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The name of the periodic table group containing lithium and sodium is the alkali",
+      "answer": " metals",
+      "family": "periodic_group_name",
+      "lp": -0.0083,
+      "first_tok_lp": -0.0083,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The name of the periodic table group containing calcium and magnesium is the alkaline earth",
+      "answer": " metals",
+      "family": "periodic_group_name",
+      "lp": -0.0136,
+      "first_tok_lp": -0.0136,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The name of the periodic table series containing uranium is the",
+      "answer": " actinides",
+      "family": "periodic_group_name",
+      "lp": -0.8026,
+      "first_tok_lp": -0.3276,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The mineral defining hardness 10 on the Mohs scale is",
+      "answer": " diamond",
+      "family": "mineral_property",
+      "lp": -0.0659,
+      "first_tok_lp": -0.0659,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The mineral defining hardness 7 on the Mohs scale is",
+      "answer": " quartz",
+      "family": "mineral_property",
+      "lp": -0.074,
+      "first_tok_lp": -0.074,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The main ore mineral of aluminium is",
+      "answer": " bauxite",
+      "family": "mineral_property",
+      "lp": -0.2379,
+      "first_tok_lp": -0.2375,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The main ore mineral of mercury is",
+      "answer": " cinnabar",
+      "family": "mineral_property",
+      "lp": -0.1825,
+      "first_tok_lp": -0.1823,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The mineral known as fool's gold is",
+      "answer": " pyrite",
+      "family": "mineral_property",
+      "lp": -6.9181,
+      "first_tok_lp": -6.918,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The boundary between the Earth's crust and mantle is the",
+      "answer": " Mohorovicic",
+      "family": "geology_boundary",
+      "lp": -2.9035,
+      "first_tok_lp": -0.0394,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The supercontinent that preceded Pangaea in the late Precambrian was",
+      "answer": " Rodinia",
+      "family": "geology_boundary",
+      "lp": -0.4801,
+      "first_tok_lp": -0.4714,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The geological period in which dinosaurs first appeared is the",
+      "answer": " Triassic",
+      "family": "geology_boundary",
+      "lp": -0.4873,
+      "first_tok_lp": -0.4872,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The geological period immediately before the Cambrian is the",
+      "answer": " Ediacaran",
+      "family": "geology_boundary",
+      "lp": -0.0777,
+      "first_tok_lp": -0.0766,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The strait separating Australia from Tasmania is the Bass",
+      "answer": " Strait",
+      "family": "sea_strait_less_cited",
+      "lp": -0.0741,
+      "first_tok_lp": -0.0741,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The strait separating Sicily from mainland Italy is the Strait of",
+      "answer": " Messina",
+      "family": "sea_strait_less_cited",
+      "lp": -0.0062,
+      "first_tok_lp": -0.0062,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The strait separating Sri Lanka from India is the Palk",
+      "answer": " Strait",
+      "family": "sea_strait_less_cited",
+      "lp": -0.0763,
+      "first_tok_lp": -0.0763,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The strait connecting the Black Sea to the Sea of Marmara is the",
+      "answer": " Bosphorus",
+      "family": "sea_strait_less_cited",
+      "lp": -1.6762,
+      "first_tok_lp": -1.5234,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The peninsula shared by Spain and Portugal is the",
+      "answer": " Iberian",
+      "family": "peninsula_region",
+      "lp": -0.7794,
+      "first_tok_lp": -0.7782,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The peninsula containing Denmark is the",
+      "answer": " Jutland",
+      "family": "peninsula_region",
+      "lp": -1.1161,
+      "first_tok_lp": -1.1117,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The peninsula containing Vietnam, Laos and Cambodia is",
+      "answer": " Indochina",
+      "family": "peninsula_region",
+      "lp": -6.6559,
+      "first_tok_lp": -6.6475,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The peninsula containing Mumbai's western coast region is the",
+      "answer": " Deccan",
+      "family": "peninsula_region",
+      "lp": -4.1537,
+      "first_tok_lp": -4.1534,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The number of players on a water polo team in the pool is",
+      "answer": " seven",
+      "family": "sports_record_less_cited",
+      "lp": -1.326,
+      "first_tok_lp": -1.326,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The number of frames on a standard bowling scorecard is",
+      "answer": " ten",
+      "family": "sports_record_less_cited",
+      "lp": -5.9756,
+      "first_tok_lp": -5.9756,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The length in metres of an Olympic swimming pool is",
+      "answer": " fifty",
+      "family": "sports_record_less_cited",
+      "lp": -11.3821,
+      "first_tok_lp": -11.3821,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The number of holes in a full round of golf is",
+      "answer": " eighteen",
+      "family": "sports_record_less_cited",
+      "lp": -6.1559,
+      "first_tok_lp": -6.1559,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The number of squares on a Go board's side is",
+      "answer": " nineteen",
+      "family": "sports_record_less_cited",
+      "lp": -10.2042,
+      "first_tok_lp": -10.2042,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The instrument family to which the cor anglais belongs is the",
+      "answer": " woodwind",
+      "family": "instrument_family",
+      "lp": -2.3279,
+      "first_tok_lp": -2.321,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The lowest-pitched member of the standard string quartet is the",
+      "answer": " cello",
+      "family": "instrument_family",
+      "lp": -1.0545,
+      "first_tok_lp": -1.0544,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The keyboard instrument whose strings are plucked, not struck, is the",
+      "answer": " harpsichord",
+      "family": "instrument_family",
+      "lp": -0.4533,
+      "first_tok_lp": -0.388,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The brass instrument with a slide instead of valves is the",
+      "answer": " trombone",
+      "family": "instrument_family",
+      "lp": -5.5675,
+      "first_tok_lp": -5.5624,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The country where the dish paella originated is",
+      "answer": " Spain",
+      "family": "cuisine_origin",
+      "lp": -0.0508,
+      "first_tok_lp": -0.0508,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The country where the dish pho originated is",
+      "answer": " Vietnam",
+      "family": "cuisine_origin",
+      "lp": -0.2207,
+      "first_tok_lp": -0.2207,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The country where the dish moussaka originated is",
+      "answer": " Greece",
+      "family": "cuisine_origin",
+      "lp": -0.1527,
+      "first_tok_lp": -0.1527,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The country where the dish ceviche is most associated with is",
+      "answer": " Peru",
+      "family": "cuisine_origin",
+      "lp": -0.0706,
+      "first_tok_lp": -0.0706,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The French region famous for Sauternes dessert wine is",
+      "answer": " Bordeaux",
+      "family": "wine_region",
+      "lp": -0.2279,
+      "first_tok_lp": -0.2279,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Italian region that produces Chianti is",
+      "answer": " Tuscany",
+      "family": "wine_region",
+      "lp": -0.9738,
+      "first_tok_lp": -0.9709,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Spanish region famous for sherry is",
+      "answer": " Andalusia",
+      "family": "wine_region",
+      "lp": -0.6644,
+      "first_tok_lp": -0.6511,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Portuguese river valley famous for port wine is the",
+      "answer": " Douro",
+      "family": "wine_region",
+      "lp": -1.8511,
+      "first_tok_lp": -1.8511,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The city where the United Nations was founded in 1945 is San",
+      "answer": " Francisco",
+      "family": "organization_founding",
+      "lp": -0.006,
+      "first_tok_lp": -0.006,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The city that hosts the International Court of Justice is The",
+      "answer": " Hague",
+      "family": "organization_founding",
+      "lp": -0.0085,
+      "first_tok_lp": -0.0085,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The city that hosts the headquarters of the World Health Organization is",
+      "answer": " Geneva",
+      "family": "organization_founding",
+      "lp": -0.3412,
+      "first_tok_lp": -0.3412,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The city that hosts the headquarters of OPEC is",
+      "answer": " Vienna",
+      "family": "organization_founding",
+      "lp": -0.3846,
+      "first_tok_lp": -0.3846,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The only bird known to fly backwards is the",
+      "answer": " hummingbird",
+      "family": "bird_mammal_specific",
+      "lp": -0.9537,
+      "first_tok_lp": -0.7971,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The largest species of penguin is the",
+      "answer": " emperor",
+      "family": "bird_mammal_specific",
+      "lp": -0.4943,
+      "first_tok_lp": -0.4943,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The mammal with the longest gestation period is the",
+      "answer": " elephant",
+      "family": "bird_mammal_specific",
+      "lp": -6.4437,
+      "first_tok_lp": -6.4437,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The only venomous primate is the slow",
+      "answer": " loris",
+      "family": "bird_mammal_specific",
+      "lp": -0.0088,
+      "first_tok_lp": -0.0088,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The fastest fish in the ocean is the",
+      "answer": " sailfish",
+      "family": "bird_mammal_specific",
+      "lp": -0.0122,
+      "first_tok_lp": -0.0109,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The tallest species of tree on Earth is the coast",
+      "answer": " redwood",
+      "family": "plant_botany",
+      "lp": -0.0155,
+      "first_tok_lp": -0.0049,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The plant genus that yields natural rubber is",
+      "answer": " Hevea",
+      "family": "plant_botany",
+      "lp": -1.4696,
+      "first_tok_lp": -1.4691,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The spice derived from the crocus flower is",
+      "answer": " saffron",
+      "family": "plant_botany",
+      "lp": -3.6366,
+      "first_tok_lp": -3.6363,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The plant from which tequila is made is the blue",
+      "answer": " agave",
+      "family": "plant_botany",
+      "lp": -0.0058,
+      "first_tok_lp": -0.0053,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The mathematician who described the first algorithm for a mechanical computer was Ada",
+      "answer": " Lovelace",
+      "family": "computing_history",
+      "lp": -0.0125,
+      "first_tok_lp": -0.0123,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The machine Alan Turing helped design to break Enigma was the",
+      "answer": " Bombe",
+      "family": "computing_history",
+      "lp": -7.4064,
+      "first_tok_lp": -7.4063,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The first electronic general-purpose computer, unveiled in 1946, was",
+      "answer": " ENIAC",
+      "family": "computing_history",
+      "lp": -3.7492,
+      "first_tok_lp": -3.7483,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The company that produced the first commercial microprocessor was",
+      "answer": " Intel",
+      "family": "computing_history",
+      "lp": -0.5986,
+      "first_tok_lp": -0.5986,
+      "in_window": false
+    }
+  ],
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "c3-pool-v2-scored-think-v1",
+    "tier": "dev",
+    "code_commit": "7d6a62777472c8ad12ce3546c56cd37254ad0234",
+    "dirty_tree": true,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.c3_pool_score",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "pool_module": "667731b25487e7b9d5dec8cd0a7e2539fb68b3a01c1e02c07a2fa33b703a5cea"
+    },
+    "model": {
+      "id": "/content/models/olmo3-think",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95"
+    },
+    "jlens_commit": null,
+    "seed": null,
+    "created_utc": "2026-07-28T15:49:42Z"
+  }
+}

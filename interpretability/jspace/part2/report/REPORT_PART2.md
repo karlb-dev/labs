@@ -1,16 +1,32 @@
 # J-space Part 2 — living report (ADDENDUM-GOVERNED campaign)
 
-**Status: assay-repair era begun 2026-07-27 evening.** The forensic review
+**Status 2026-07-28 (VM7): the assay-repair era is COMPLETE and the
+campaign is at the P0 preregistration boundary.** The forensic review
 (`jspace_part2_plan1_addendum.md`) was adopted in full: Part 1 is
 reclassified as the exploratory campaign (claim corrections in
 `REPORT_v2_ERRATA.md` beside REPORT_v2.md), and no cross-model
-confirmatory cell runs until Workstream R (R0 provenance → R1
-output-protected dynamic ablation → R2 paper occupancy → R3 rank-safe
-frozen control family → R4 phase/scoring/paired-stats → R5 paper tasks →
-R6 golden tests) passes its gates. **Every row below carries an evidence
-tier; everything banked so far is `exploratory`.** Original pre-data
+confirmatory cell runs until Workstream R passes its gates. Gates now:
+**G0 operational · G1 ✓ solver · G2 ✓ lens stability · G3 ✓ intervention
+invariants · G4 ✓ positive control · G6 ✓ power simulation (with a
+design consequence, below)**; R6 goldens 9/9 green. **Every row carries
+an evidence tier; nothing here is confirmatory.** The scientific
+preregistration is drafted (`preregistration/SCIENTIFIC_PREREGISTRATION_DRAFT.md`)
+and **awaiting user review — it becomes binding only when renamed and
+committed, before confirmatory item generation.** Original pre-data
 prereg `27c6d3c` (kept as record) is superseded by
 `REPAIR_PREREGISTRATION.md`.
+
+**The four-model ladder is the campaign's headline pilot finding.** Under
+the paper's own protected dynamic ablation, the two-hop-vs-one-hop causal
+signature is not a fixed property of "an LLM": it REORGANIZES across
+post-training — base REVERSE (one-hop hit, two-hop spared) → Think EQUAL
+(both hit) → Instruct WEAK-FORWARD → Qwen CLEAN-FORWARD (the paper's
+shape). Because Instruct and Think are identical on measured capacity
+(occupancy 2), the shape tracks the post-training regime rather than
+occupancy. The ceiling check then relabeled the ladder's bottom rung:
+the base model's one-hop effect is an EASY-FACT effect (hard one-hop is
+null, +0.14), so the confirmatory hypotheses are stated in
+fact-accessibility terms, not task depth.
 
 ## Campaign question (revised)
 
@@ -23,17 +39,24 @@ H0 instruments-first, H1a/b/c externalization variants, H2 output
 alignment, H3 bounded residual, H4 scale (descriptive), H6 task demand,
 H7 mean-J mismatch, H8 sparse-frame geometry (see part2 README).
 
-## Matrix scoreboard (grows per banked cell)
+## Matrix scoreboard (all cells tier=pilot or below; grows per banked cell)
 
-| cell | olmo3-think | olmo31-instruct | qwen36-27b | gemma4-31b |
-|---|---|---|---|---|
-| lens | part-1 (120p) | **transfer FAIL → own fit running** | Neuronpedia 1000p (part 1) | gate pending |
-| sanity probes @20 | 17/21 | **17/21 (transferred)** | pass (part 1) | — |
-| multihop J pass@1 | 0.283 | **0.217 transferred** (own-lens: pending) | 0.350 | — |
-| static grid (energy-matched) | null ≤k40 (part 1) | pending | null k20 (part 1) | — |
-| frozen-J | −2.89 nats (part 1) | pending | −2.42 (part 1) | — |
-| frozen-logit (B3) | **running** | pending | pending | — |
-| occupancy (D) | pending | pending | pending | — |
+| cell | olmo3-base | olmo3-think | olmo31-instruct | qwen36-27b | gemma4-31b |
+|---|---|---|---|---|---|
+| lens | Think-lens (transfer PASS) | own 120p (part 1) | own 120p A + independent B | Neuronpedia 1000p | 120p fit queued (band from deep-band sweep) |
+| sanity probes @20 | 17/21 | 17/21 | 17/21 | pass | readout blocked mid-band |
+| multihop J pass@1 | 0.283 (+0.083) | 0.283 | 0.217 (own lens = transfer) | 0.350 | — |
+| occupancy (paper estimator) | — | **2** (excess ≤0.80%) | **2** (excess ≤0.87%) | **3–4** (1.0–2.2%) | — |
+| protected dyn-J twohop | −0.14 [straddles 0] | −0.52 [excl 0] | **−0.80** [−1.25,−0.36] | **−0.91** [−1.49,−0.60] | — |
+| protected dyn-J onehop | **−0.81** [−1.29,−0.40] | −0.59 [excl 0] | −0.45 [straddles 0] | −0.06 [straddles 0] | — |
+| → dissociation shape | **REVERSE** | EQUAL-DEPTH | WEAK-FORWARD | **CLEAN-FORWARD** (paper's) | — |
+| hard-onehop ceiling check | **+0.14 NULL** (rand −0.01) | (dev set source) | — | — | — |
+| frozen-J / frozen-logit | — | −2.89 / −1.54 | — | −2.42 | — |
+| temp-0.7 replicate | — | structure preserved | — | — | — |
+
+Reference band (paper, Claude): occupancy 10–25, excess 6–10% — every
+open model measured sits 3–10× under it, with fit size ruled out
+(n=1000 Qwen lens agrees with n=120 OLMo recipe).
 
 ## A0 — does the J-dictionary survive post-training? (2026-07-27) — tier: EXPLORATORY (transfer-geometry experiment)
 
@@ -300,5 +323,136 @@ craters (both answers' lp collapse); α=0.05 showed clean positive steering
 (+0.93 lp toward swap, 0.30 flips) — the confirmatory swap cell dose-maps
 0.05–0.10 for calibration-preserving steering. First steering-INTO-J
 causal mode this replication has exercised.
+
+## A1 Instruct mirror + independent-lens reproduction (2026-07-28) — tier: PILOT
+
+Evidence `r7-protected-dynamic-pilot-olmo31instruct-v1` (own lens A) and
+`…-lensB-v1` (independent disjoint-corpus lens B).
+
+Instruct under the protected protocol: two-hop **−0.80 [−1.25, −0.36]**
+(CI-clean), one-hop **−0.45 [−1.03, +0.04]** (straddles zero) — a WEAK
+forward dissociation, intermediate between Think's equal-depth damage and
+Qwen's clean shape. **This is the first clean H1a causal datum**: Instruct
+and Think have identical measured capacity (occupancy 2, excess ≤0.9%),
+so the causal shape cannot be tracking occupancy here — it tracks the
+post-training regime. Prose cost +0.62 (Think +0.24).
+
+Reproduction with lens B (independent draw, disjoint fitting corpus):
+per-item protected deltas correlate **0.989** with lens A; the 17-item
+tail stays the tail (15/17 below −1 nat, mean −3.37); grid means within
+0.09 nats. **The protected tail is a model property, not a fit artifact.**
+
+## A1 base leg — the ladder's bottom rung, twice relabeled (2026-07-28) — tier: PILOT
+
+Evidence `a1-base-leg-gate-and-grid-v1`, then `a1-base-hard-onehop-v1`.
+
+(a) **Transfer**: the Think lens reads the base model (`Olmo-3-1125-32B`)
+at DONOR-IDENTICAL resolution — pass@1 0.283, advantage +0.083, probes
+17/21. Since Instruct reads at 0.217, instruct-tuning DEGRADED bridge
+resolution; think-training PRESERVED what the base already had. The
+rank-1 bridge deficit is a property of the post-training branch, not
+something think-training created.
+
+(b) **Grid**: base shows a REVERSE dissociation — one-hop **−0.81
+[−1.29, −0.40]** CI-clean, two-hop −0.14 straddling zero; random controls
+clean. Combined with Think/Instruct/Qwen this yields the four-model
+ladder: **REVERSE → EQUAL → WEAK-FORWARD → CLEAN-FORWARD**. The paper's
+signature reorganizes non-monotonically under post-training.
+
+(c) **Ceiling check (the relabel)**: the base one-hop battery is
+near-ceiling capitals. Rerunning the protected arm on the 41-item HARD
+one-hop dev set (difficulty-matched to two-hop on Think) gives **+0.14
+mean / +0.21 median — a NULL** (matched random −0.01). So the −0.81 was
+an EASY-FACT effect: **rehearsed facts occupy the deletable
+output-adjacent channel; hard facts do not.** Consequence for P0: ladder
+hypotheses must be stated in fact-accessibility terms, not task depth
+alone. (This is also the C3 dev set's first validating use.)
+
+## A3 Gemma — an architecture datum, sharpened by depth (2026-07-28) — tier: PILOT
+
+Evidence `a3-gemma-gate-v1`, then `a3-gemma-deepband-logit-v1` (VM7).
+
+The adaptation gate passed on **infrastructure 6/6** — jlens handles the
+`Gemma4ForConditionalGeneration` wrapper and the 30.0 logit softcap,
+hooks fire on both sliding and full attention layers, and a micro-fit
+fits in 73 GB — but failed the readout check: at L24/30 of 60 the known
+answer ranks ~52k/69k of 262k. Crucially the **vanilla logit lens fails
+equally**, so this is not a Jacobian-lens defect.
+
+The VM7 depth sweep (n=40 probes, median rank of the answer's first token
+by layer, reference `unembed` = final norm + tied head + softcap) maps
+it: the output basis is opaque across the entire mid-band and then
+resolves abruptly.
+
+| layer | 24 | 30 | 36 | 40 | **42** | **44** | 48 | 52 | 59 |
+|---|---|---|---|---|---|---|---|---|---|
+| median answer rank | 73177 | 57570 | 22684 | 10695 | **352** | **23** | 8 | 1 | 1 |
+
+First layer with median rank ≤100 is **L44 (73% depth)**; ≤10 is L48. The
+paper's relative depths (37/50/62% → L22/30/37) all sit inside the opaque
+zone. **Reading: Gemma-4 does not write to an output-token-aligned basis
+until very late** — a genuine architecture/family difference, not an
+instrument failure. Whether the Jacobian transport rescues mid-band
+readability where the logit lens cannot is exactly what the queued full
+120-prompt fit (band 22/30/37/40/42/44/48/52 — spanning paper depths, the
+transition, and the readable zone) will answer; the 2-prompt micro-fit is
+not that test. No Gemma-family verdict is stated until it lands.
+
+## G6 power simulation — a design consequence, not a formality (2026-07-28) — tier: PILOT
+
+Evidence `g6-power-sim-v2` (supersedes v1), calibrated entirely from the
+pilot parquets (which stay dev-tier), Holm-worst α=0.01, target 90%.
+
+Variance decomposition of the protected paired deltas: within-family
+σ 1.2–1.5 nats, ICC ≈ 0.40 — the deltas are a **zero-mode + heavy-tail
+mixture** (median ~0, a minority of items losing several nats), which is
+precisely the pilot's qualitative finding expressed as a variance
+structure. Consequences:
+
+- 0.5-nat **mean-delta** primaries reach only ~24–42% power even at
+  n=180 across 60 families; **no affordable n reaches 90%.**
+- TOST equivalence at the same margin needs **n ≈ 300**.
+- The **tail-RATE** endpoint (per-item >1-nat protected deletion, J vs
+  matched random, paired and family-clustered) reaches 90%+ within the
+  simulated grid at a 10pp rate SESOI.
+- Cross-model per-item delta correlations are lineage-structured
+  (Think–Instruct 0.687, base–Think 0.482, OLMo–Qwen ≤ 0.14), so HP1's
+  paired-item advantage exists only WITHIN the OLMo lineage.
+
+**This is a decision the preregistration cannot dodge**: either restate
+the tail-carried primaries on the rate endpoint (recommended), accept
+n≈150–200 families per task, or revise the margins. The draft records all
+three options; the choice is the user's at freeze.
+
+## Stage-3 item bank v2 (2026-07-28) — tier: DEV
+
+The v1 candidate pool was too easy (68/113 at ceiling on Think → only
+n=41 survived, the frozen dev set). The expansion (`jspace_part2/c3_pool.py`)
+is authored **family-first**: 212 candidates across **45 relation
+templates**, one template per family, so the analysis clusters on the true
+generation unit and no template is mistaken for independent draws — the
+pseudo-replication debt the addendum found in the SQL battery. Items
+target genuinely known-but-unrehearsed facts (second-order superlatives,
+less-canonical exemplars, mid-frequency proper nouns). Scoring on the
+anchor model with full-answer-sequence lp (the R4 rule; the v1 dev set
+used first-token lp — a recorded change, both emitted) yields the
+difficulty distribution and the family readiness count against the prereg
+floor (n≥90 across ≥30 families). **The pool is deliberately NOT
+partitioned** — dev/confirmatory/replication partitioning is a freeze
+action, hashed before any outcome is viewed.
+
+## Instrument added: selected-id logging (2026-07-28, VM7) — tier: PILOT
+
+The protected-dynamic ablator now optionally records, per (layer,
+position), which dictionary rows it deflated (with scores) and which the
+protection mask blocked. The capture is opt-in and behavior-preserving
+(conformance tests assert the ablation is bit-identical with and without
+it). The grids over Think's two-hop, one-hop, and hard-one-hop batteries
+feed `r7_tail_mechanism`, which decides between three readings of the
+protected tail: **H-content** (the deflated rows carry the two-hop bridge
+entity — workspace content), **H-output** (the answer sat at clean rank
+> 10 and was never protectable), or **H-nothing** (selection is
+item-generic). This converts the campaign's most interesting behavioral
+observation into a mechanistic claim with a falsifier.
 
 *(sections append here per banked phase)*

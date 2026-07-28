@@ -1,0 +1,974 @@
+{
+  "summary": {
+    "planning_cell": "olmo31-instruct",
+    "components": {
+      "olmo3-think/twohop": {
+        "mu": -0.5178942484252427,
+        "n_items": 60,
+        "n_families": 22,
+        "sig_f": 0.9455,
+        "sig_e": 1.2425,
+        "icc": 0.3667
+      },
+      "olmo3-think/onehop": {
+        "mu": -0.5863676180529486,
+        "n_items": 30,
+        "n_families": 30,
+        "sig_f": 0.0,
+        "sig_e": 1.4465,
+        "icc": 0.0
+      },
+      "olmo31-instruct/twohop": {
+        "mu": -0.7949175310549133,
+        "n_items": 60,
+        "n_families": 22,
+        "sig_f": 1.3073,
+        "sig_e": 1.5489,
+        "icc": 0.416
+      },
+      "olmo31-instruct/onehop": {
+        "mu": -0.4535687156370841,
+        "n_items": 30,
+        "n_families": 30,
+        "sig_f": 0.0,
+        "sig_e": 1.5418,
+        "icc": 0.0
+      },
+      "olmo3-base/twohop": {
+        "mu": -0.14267050105457504,
+        "n_items": 60,
+        "n_families": 22,
+        "sig_f": 0.6149,
+        "sig_e": 0.7228,
+        "icc": 0.4198
+      },
+      "olmo3-base/onehop": {
+        "mu": -0.810056963992732,
+        "n_items": 30,
+        "n_families": 30,
+        "sig_f": 0.0,
+        "sig_e": 1.2923,
+        "icc": 0.0
+      },
+      "qwen36-27b/twohop": {
+        "mu": -0.9049093510955573,
+        "n_items": 60,
+        "n_families": 22,
+        "sig_f": 0.8923,
+        "sig_e": 1.0825,
+        "icc": 0.4046
+      },
+      "qwen36-27b/onehop": {
+        "mu": -0.0569580521589766,
+        "n_items": 30,
+        "n_families": 30,
+        "sig_f": 0.0,
+        "sig_e": 0.8461,
+        "icc": 0.0
+      }
+    },
+    "cross_model_rho_twohop": {
+      "olmo3-think": {
+        "olmo3-think": 1.0,
+        "olmo31-instruct": 0.687,
+        "olmo3-base": 0.482,
+        "qwen36-27b": 0.141
+      },
+      "olmo31-instruct": {
+        "olmo3-think": 0.687,
+        "olmo31-instruct": 1.0,
+        "olmo3-base": 0.43,
+        "qwen36-27b": 0.022
+      },
+      "olmo3-base": {
+        "olmo3-think": 0.482,
+        "olmo31-instruct": 0.43,
+        "olmo3-base": 1.0,
+        "qwen36-27b": 0.068
+      },
+      "qwen36-27b": {
+        "olmo3-think": 0.141,
+        "olmo31-instruct": 0.022,
+        "olmo3-base": 0.068,
+        "qwen36-27b": 1.0
+      }
+    },
+    "pilot_tail_rates": {
+      "olmo3-think": {
+        "rate_j": 0.267,
+        "rate_r": 0.133,
+        "n": 60
+      },
+      "olmo31-instruct": {
+        "rate_j": 0.283,
+        "rate_r": 0.183,
+        "n": 60
+      },
+      "olmo3-base": {
+        "rate_j": 0.133,
+        "rate_r": 0.067,
+        "n": 60
+      },
+      "qwen36-27b": {
+        "rate_j": 0.333,
+        "rate_r": 0.067,
+        "n": 60
+      }
+    },
+    "tail_planning_cell": "olmo3-base",
+    "alpha_primary": 0.01,
+    "sesoi_nats": 0.5,
+    "tail_thr_nats": -1.0,
+    "tail_sesoi_pp": 0.1,
+    "power_target": 0.9,
+    "n_sims": 4000,
+    "recommendations": {
+      "A_cell_mean": null,
+      "B_dissoc": null,
+      "C_hp1_worst_pair": null,
+      "D_tost": {
+        "m_families": 150,
+        "k_per_family": 2,
+        "n_items": 300,
+        "power": 0.943
+      },
+      "E_tailrate_sesoi10pp": {
+        "m_families": 200,
+        "k_per_family": 2,
+        "n_items": 400,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.96,
+        "power_at_pilot_gap": 0.795
+      }
+    },
+    "floor_n90_30fams_sufficient_for_A_D": false,
+    "design_implication": "Protected-arm deltas are a zero-mode + heavy-tail mixture; 0.5-nat MEAN primaries are underpowered at any affordable n (see A/D grids). The tail-RATE endpoint (frozen thr -1.0 nat, J-vs-matched-random) reaches target power at modest n (E grid). Prereg draft should restate tail-carried hypotheses (HP3-style) on the rate endpoint and keep mean deltas for the dissociation/ordering contrasts with margins revisited by the user.",
+    "seconds": 132
+  },
+  "grids": {
+    "A_cell_mean": [
+      {
+        "m_families": 20,
+        "k_per_family": 2,
+        "n_items": 40,
+        "power_normal": 0.085,
+        "power_boot": 0.154
+      },
+      {
+        "m_families": 20,
+        "k_per_family": 3,
+        "n_items": 60,
+        "power_normal": 0.1,
+        "power_boot": 0.162
+      },
+      {
+        "m_families": 30,
+        "k_per_family": 2,
+        "n_items": 60,
+        "power_normal": 0.128,
+        "power_boot": 0.153
+      },
+      {
+        "m_families": 30,
+        "k_per_family": 3,
+        "n_items": 90,
+        "power_normal": 0.172,
+        "power_boot": 0.166
+      },
+      {
+        "m_families": 40,
+        "k_per_family": 2,
+        "n_items": 80,
+        "power_normal": 0.205,
+        "power_boot": 0.17
+      },
+      {
+        "m_families": 40,
+        "k_per_family": 3,
+        "n_items": 120,
+        "power_normal": 0.242,
+        "power_boot": 0.191
+      },
+      {
+        "m_families": 50,
+        "k_per_family": 2,
+        "n_items": 100,
+        "power_normal": 0.277,
+        "power_boot": 0.201
+      },
+      {
+        "m_families": 50,
+        "k_per_family": 3,
+        "n_items": 150,
+        "power_normal": 0.334,
+        "power_boot": 0.204
+      },
+      {
+        "m_families": 60,
+        "k_per_family": 2,
+        "n_items": 120,
+        "power_normal": 0.361,
+        "power_boot": 0.218
+      },
+      {
+        "m_families": 60,
+        "k_per_family": 3,
+        "n_items": 180,
+        "power_normal": 0.418,
+        "power_boot": 0.232
+      },
+      {
+        "m_families": 80,
+        "k_per_family": 2,
+        "n_items": 160,
+        "power_normal": 0.499,
+        "power_boot": 0.282
+      },
+      {
+        "m_families": 80,
+        "k_per_family": 3,
+        "n_items": 240,
+        "power_normal": 0.576,
+        "power_boot": 0.283
+      },
+      {
+        "m_families": 100,
+        "k_per_family": 2,
+        "n_items": 200,
+        "power_normal": 0.636,
+        "power_boot": 0.348
+      },
+      {
+        "m_families": 100,
+        "k_per_family": 3,
+        "n_items": 300,
+        "power_normal": 0.709,
+        "power_boot": 0.344
+      },
+      {
+        "m_families": 150,
+        "k_per_family": 2,
+        "n_items": 300,
+        "power_normal": 0.841,
+        "power_boot": 0.467
+      },
+      {
+        "m_families": 150,
+        "k_per_family": 3,
+        "n_items": 450,
+        "power_normal": 0.894,
+        "power_boot": 0.492
+      },
+      {
+        "m_families": 200,
+        "k_per_family": 2,
+        "n_items": 400,
+        "power_normal": 0.941,
+        "power_boot": 0.623
+      },
+      {
+        "m_families": 200,
+        "k_per_family": 3,
+        "n_items": 600,
+        "power_normal": 0.969,
+        "power_boot": 0.622
+      }
+    ],
+    "B_dissoc": [
+      {
+        "m_families": 20,
+        "k_per_family": 2,
+        "n_items": 40,
+        "n_onehop": 60,
+        "power": 0.069
+      },
+      {
+        "m_families": 20,
+        "k_per_family": 3,
+        "n_items": 60,
+        "n_onehop": 60,
+        "power": 0.086
+      },
+      {
+        "m_families": 30,
+        "k_per_family": 2,
+        "n_items": 60,
+        "n_onehop": 60,
+        "power": 0.102
+      },
+      {
+        "m_families": 30,
+        "k_per_family": 3,
+        "n_items": 90,
+        "n_onehop": 60,
+        "power": 0.123
+      },
+      {
+        "m_families": 40,
+        "k_per_family": 2,
+        "n_items": 80,
+        "n_onehop": 60,
+        "power": 0.14
+      },
+      {
+        "m_families": 40,
+        "k_per_family": 3,
+        "n_items": 120,
+        "n_onehop": 60,
+        "power": 0.148
+      },
+      {
+        "m_families": 50,
+        "k_per_family": 2,
+        "n_items": 100,
+        "n_onehop": 60,
+        "power": 0.162
+      },
+      {
+        "m_families": 50,
+        "k_per_family": 3,
+        "n_items": 150,
+        "n_onehop": 60,
+        "power": 0.172
+      },
+      {
+        "m_families": 60,
+        "k_per_family": 2,
+        "n_items": 120,
+        "n_onehop": 60,
+        "power": 0.18
+      },
+      {
+        "m_families": 60,
+        "k_per_family": 3,
+        "n_items": 180,
+        "n_onehop": 60,
+        "power": 0.2
+      },
+      {
+        "m_families": 80,
+        "k_per_family": 2,
+        "n_items": 160,
+        "n_onehop": 60,
+        "power": 0.22
+      },
+      {
+        "m_families": 80,
+        "k_per_family": 3,
+        "n_items": 240,
+        "n_onehop": 60,
+        "power": 0.228
+      },
+      {
+        "m_families": 100,
+        "k_per_family": 2,
+        "n_items": 200,
+        "n_onehop": 60,
+        "power": 0.241
+      },
+      {
+        "m_families": 100,
+        "k_per_family": 3,
+        "n_items": 300,
+        "n_onehop": 60,
+        "power": 0.27
+      },
+      {
+        "m_families": 150,
+        "k_per_family": 2,
+        "n_items": 300,
+        "n_onehop": 60,
+        "power": 0.304
+      },
+      {
+        "m_families": 150,
+        "k_per_family": 3,
+        "n_items": 450,
+        "n_onehop": 60,
+        "power": 0.304
+      },
+      {
+        "m_families": 200,
+        "k_per_family": 2,
+        "n_items": 400,
+        "n_onehop": 60,
+        "power": 0.319
+      },
+      {
+        "m_families": 200,
+        "k_per_family": 3,
+        "n_items": 600,
+        "n_onehop": 60,
+        "power": 0.343
+      }
+    ],
+    "C_hp1": [
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 20,
+        "k_per_family": 2,
+        "n_items": 40,
+        "n_onehop": 60,
+        "power": 0.015
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 20,
+        "k_per_family": 3,
+        "n_items": 60,
+        "n_onehop": 60,
+        "power": 0.014
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 30,
+        "k_per_family": 2,
+        "n_items": 60,
+        "n_onehop": 60,
+        "power": 0.017
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 30,
+        "k_per_family": 3,
+        "n_items": 90,
+        "n_onehop": 60,
+        "power": 0.012
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 40,
+        "k_per_family": 2,
+        "n_items": 80,
+        "n_onehop": 60,
+        "power": 0.017
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 40,
+        "k_per_family": 3,
+        "n_items": 120,
+        "n_onehop": 60,
+        "power": 0.021
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 50,
+        "k_per_family": 2,
+        "n_items": 100,
+        "n_onehop": 60,
+        "power": 0.025
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 50,
+        "k_per_family": 3,
+        "n_items": 150,
+        "n_onehop": 60,
+        "power": 0.026
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 60,
+        "k_per_family": 2,
+        "n_items": 120,
+        "n_onehop": 60,
+        "power": 0.021
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 60,
+        "k_per_family": 3,
+        "n_items": 180,
+        "n_onehop": 60,
+        "power": 0.031
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 80,
+        "k_per_family": 2,
+        "n_items": 160,
+        "n_onehop": 60,
+        "power": 0.038
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 80,
+        "k_per_family": 3,
+        "n_items": 240,
+        "n_onehop": 60,
+        "power": 0.032
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 100,
+        "k_per_family": 2,
+        "n_items": 200,
+        "n_onehop": 60,
+        "power": 0.039
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 100,
+        "k_per_family": 3,
+        "n_items": 300,
+        "n_onehop": 60,
+        "power": 0.041
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 150,
+        "k_per_family": 2,
+        "n_items": 300,
+        "n_onehop": 60,
+        "power": 0.043
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 150,
+        "k_per_family": 3,
+        "n_items": 450,
+        "n_onehop": 60,
+        "power": 0.05
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 200,
+        "k_per_family": 2,
+        "n_items": 400,
+        "n_onehop": 60,
+        "power": 0.045
+      },
+      {
+        "pair": "qwen36-27b - olmo3-think",
+        "m_families": 200,
+        "k_per_family": 3,
+        "n_items": 600,
+        "n_onehop": 60,
+        "power": 0.05
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 20,
+        "k_per_family": 2,
+        "n_items": 40,
+        "n_onehop": 60,
+        "power": 0.208
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 20,
+        "k_per_family": 3,
+        "n_items": 60,
+        "n_onehop": 60,
+        "power": 0.222
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 30,
+        "k_per_family": 2,
+        "n_items": 60,
+        "n_onehop": 60,
+        "power": 0.303
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 30,
+        "k_per_family": 3,
+        "n_items": 90,
+        "n_onehop": 60,
+        "power": 0.334
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 40,
+        "k_per_family": 2,
+        "n_items": 80,
+        "n_onehop": 60,
+        "power": 0.391
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 40,
+        "k_per_family": 3,
+        "n_items": 120,
+        "n_onehop": 60,
+        "power": 0.403
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 50,
+        "k_per_family": 2,
+        "n_items": 100,
+        "n_onehop": 60,
+        "power": 0.459
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 50,
+        "k_per_family": 3,
+        "n_items": 150,
+        "n_onehop": 60,
+        "power": 0.494
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 60,
+        "k_per_family": 2,
+        "n_items": 120,
+        "n_onehop": 60,
+        "power": 0.522
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 60,
+        "k_per_family": 3,
+        "n_items": 180,
+        "n_onehop": 60,
+        "power": 0.542
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 80,
+        "k_per_family": 2,
+        "n_items": 160,
+        "n_onehop": 60,
+        "power": 0.62
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 80,
+        "k_per_family": 3,
+        "n_items": 240,
+        "n_onehop": 60,
+        "power": 0.641
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 100,
+        "k_per_family": 2,
+        "n_items": 200,
+        "n_onehop": 60,
+        "power": 0.69
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 100,
+        "k_per_family": 3,
+        "n_items": 300,
+        "n_onehop": 60,
+        "power": 0.722
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 150,
+        "k_per_family": 2,
+        "n_items": 300,
+        "n_onehop": 60,
+        "power": 0.789
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 150,
+        "k_per_family": 3,
+        "n_items": 450,
+        "n_onehop": 60,
+        "power": 0.8
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 200,
+        "k_per_family": 2,
+        "n_items": 400,
+        "n_onehop": 60,
+        "power": 0.843
+      },
+      {
+        "pair": "olmo31-instruct - olmo3-think",
+        "m_families": 200,
+        "k_per_family": 3,
+        "n_items": 600,
+        "n_onehop": 60,
+        "power": 0.859
+      }
+    ],
+    "D_tost": [
+      {
+        "m_families": 20,
+        "k_per_family": 2,
+        "n_items": 40,
+        "power": 0.004
+      },
+      {
+        "m_families": 20,
+        "k_per_family": 3,
+        "n_items": 60,
+        "power": 0.015
+      },
+      {
+        "m_families": 30,
+        "k_per_family": 2,
+        "n_items": 60,
+        "power": 0.045
+      },
+      {
+        "m_families": 30,
+        "k_per_family": 3,
+        "n_items": 90,
+        "power": 0.093
+      },
+      {
+        "m_families": 40,
+        "k_per_family": 2,
+        "n_items": 80,
+        "power": 0.155
+      },
+      {
+        "m_families": 40,
+        "k_per_family": 3,
+        "n_items": 120,
+        "power": 0.252
+      },
+      {
+        "m_families": 50,
+        "k_per_family": 2,
+        "n_items": 100,
+        "power": 0.302
+      },
+      {
+        "m_families": 50,
+        "k_per_family": 3,
+        "n_items": 150,
+        "power": 0.425
+      },
+      {
+        "m_families": 60,
+        "k_per_family": 2,
+        "n_items": 120,
+        "power": 0.455
+      },
+      {
+        "m_families": 60,
+        "k_per_family": 3,
+        "n_items": 180,
+        "power": 0.562
+      },
+      {
+        "m_families": 80,
+        "k_per_family": 2,
+        "n_items": 160,
+        "power": 0.666
+      },
+      {
+        "m_families": 80,
+        "k_per_family": 3,
+        "n_items": 240,
+        "power": 0.742
+      },
+      {
+        "m_families": 100,
+        "k_per_family": 2,
+        "n_items": 200,
+        "power": 0.792
+      },
+      {
+        "m_families": 100,
+        "k_per_family": 3,
+        "n_items": 300,
+        "power": 0.861
+      },
+      {
+        "m_families": 150,
+        "k_per_family": 2,
+        "n_items": 300,
+        "power": 0.943
+      },
+      {
+        "m_families": 150,
+        "k_per_family": 3,
+        "n_items": 450,
+        "power": 0.974
+      },
+      {
+        "m_families": 200,
+        "k_per_family": 2,
+        "n_items": 400,
+        "power": 0.986
+      },
+      {
+        "m_families": 200,
+        "k_per_family": 3,
+        "n_items": 600,
+        "power": 0.994
+      }
+    ],
+    "E_tailrate": [
+      {
+        "m_families": 20,
+        "k_per_family": 2,
+        "n_items": 40,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.064,
+        "power_at_pilot_gap": 0.026
+      },
+      {
+        "m_families": 20,
+        "k_per_family": 3,
+        "n_items": 60,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.077,
+        "power_at_pilot_gap": 0.043
+      },
+      {
+        "m_families": 30,
+        "k_per_family": 2,
+        "n_items": 60,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.149,
+        "power_at_pilot_gap": 0.08
+      },
+      {
+        "m_families": 30,
+        "k_per_family": 3,
+        "n_items": 90,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.173,
+        "power_at_pilot_gap": 0.077
+      },
+      {
+        "m_families": 40,
+        "k_per_family": 2,
+        "n_items": 80,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.25,
+        "power_at_pilot_gap": 0.117
+      },
+      {
+        "m_families": 40,
+        "k_per_family": 3,
+        "n_items": 120,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.255,
+        "power_at_pilot_gap": 0.131
+      },
+      {
+        "m_families": 50,
+        "k_per_family": 2,
+        "n_items": 100,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.329,
+        "power_at_pilot_gap": 0.166
+      },
+      {
+        "m_families": 50,
+        "k_per_family": 3,
+        "n_items": 150,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.347,
+        "power_at_pilot_gap": 0.175
+      },
+      {
+        "m_families": 60,
+        "k_per_family": 2,
+        "n_items": 120,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.421,
+        "power_at_pilot_gap": 0.205
+      },
+      {
+        "m_families": 60,
+        "k_per_family": 3,
+        "n_items": 180,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.436,
+        "power_at_pilot_gap": 0.227
+      },
+      {
+        "m_families": 80,
+        "k_per_family": 2,
+        "n_items": 160,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.573,
+        "power_at_pilot_gap": 0.303
+      },
+      {
+        "m_families": 80,
+        "k_per_family": 3,
+        "n_items": 240,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.605,
+        "power_at_pilot_gap": 0.329
+      },
+      {
+        "m_families": 100,
+        "k_per_family": 2,
+        "n_items": 200,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.7,
+        "power_at_pilot_gap": 0.408
+      },
+      {
+        "m_families": 100,
+        "k_per_family": 3,
+        "n_items": 300,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.738,
+        "power_at_pilot_gap": 0.436
+      },
+      {
+        "m_families": 150,
+        "k_per_family": 2,
+        "n_items": 300,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.889,
+        "power_at_pilot_gap": 0.613
+      },
+      {
+        "m_families": 150,
+        "k_per_family": 3,
+        "n_items": 450,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.904,
+        "power_at_pilot_gap": 0.662
+      },
+      {
+        "m_families": 200,
+        "k_per_family": 2,
+        "n_items": 400,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.96,
+        "power_at_pilot_gap": 0.795
+      },
+      {
+        "m_families": 200,
+        "k_per_family": 3,
+        "n_items": 600,
+        "planning_cell": "olmo3-base",
+        "power_at_sesoi_10pp": 0.972,
+        "power_at_pilot_gap": 0.829
+      }
+    ]
+  },
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "g6-power-sim-v2",
+    "tier": "pilot",
+    "code_commit": "1ba7cc6c406c87468b777397bdf5e36f4260cb52",
+    "dirty_tree": true,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.g6_power_sim",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "olmo3-think": "3ad43bec07f2a600b9e02a85e5be5bd84a0e96b50ce2c01aa225968b9ca68218",
+      "olmo31-instruct": "7112060293d2d63db3344f9779d13529f8a28fc0b721ba87dd5021e9ee5ef07f",
+      "olmo3-base": "d75e0cfc517554fd2f7a9e81795330167fb725deebcef920cafa3f6997cafe62",
+      "qwen36-27b": "87a6930958275796f2dd60390b7e5e89d0cbea9d0a42e46d72b1ca83f5f9f57e"
+    },
+    "model": null,
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T15:36:27Z"
+  }
+}
