@@ -55,6 +55,35 @@ def jaccard(a: set, b: set) -> float:
     return len(a & b) / len(a | b) if (a or b) else float("nan")
 
 
+def permutation_bridge_null(rows, n_perm=2000, seed=4242):
+    """THE control the raw bridge-hit rate needs: the selected set is
+    large (hundreds of distinct ids per item), so a high hit rate may be
+    chance. Reassign each item's bridge-token set to a DIFFERENT item and
+    recompute — the gap between observed and permuted is the item-specific
+    signal. Returns (observed, permuted_mean, permuted_p95, p_value)."""
+    rng = np.random.default_rng(seed)
+    pairs = [(set(r["sel_ids_pf"]), set(r["_bridge_ids"])) for r in rows
+             if r["_bridge_ids"]]
+    if len(pairs) < 3:
+        return None
+    obs = float(np.mean([bool(s & b) for s, b in pairs]))
+    sels = [s for s, _ in pairs]
+    brs = [b for _, b in pairs]
+    perm = np.empty(n_perm)
+    for i in range(n_perm):
+        order = rng.permutation(len(brs))
+        # derangement-ish: retry indices that map to themselves
+        order = np.array([o if o != j else (o + 1) % len(brs)
+                          for j, o in enumerate(order)])
+        perm[i] = np.mean([bool(sels[j] & brs[order[j]])
+                           for j in range(len(sels))])
+    return {"observed": round(obs, 4),
+            "permuted_mean": round(float(perm.mean()), 4),
+            "permuted_p95": round(float(np.percentile(perm, 95)), 4),
+            "p_value": round(float((perm >= obs).mean()), 4),
+            "n_items": len(pairs)}
+
+
 def cluster_boot_ci(values, families, n_boot=4000, seed=4242):
     """Family-clustered bootstrap CI of a mean."""
     rng = np.random.default_rng(seed)
@@ -111,7 +140,8 @@ def main():
             "clean_rank": ranks.get(m.item_id),
             "protect_miss": (ranks.get(m.item_id, 0) > 10
                              if m.item_id in ranks else None),
-            "sel_ids_pf": sorted(sel_ids_pf)})
+            "sel_ids_pf": sorted(sel_ids_pf),
+            "_bridge_ids": sorted(bridge)})
 
     df = pd.DataFrame(rows)
     scored = df[df.delta.notna()]
@@ -138,6 +168,7 @@ def main():
         bridge_ci = cluster_boot_ci(sub.bridge_hit.astype(float).to_numpy(),
                                     sub.family.to_numpy())
 
+    two_rows = [r for r in rows if r["task"] == "twohop"]
     summ = {
         "model": slug, "tail_threshold_nats": TAIL_THR,
         "n_items_scored": int(len(scored)),
@@ -146,6 +177,13 @@ def main():
             "tail": rate(two_t, "bridge_hit"),
             "nontail": rate(two_n, "bridge_hit"),
             "tail_ci95_clustered": bridge_ci},
+        "bridge_permutation_control": {
+            "all_twohop": permutation_bridge_null(two_rows),
+            "tail_only": permutation_bridge_null(
+                [r for r in two_rows if r["is_tail"]]),
+            "note": ("observed vs bridge-sets-reassigned-to-other-items; a "
+                     "gap is item-specific bridge selection, no gap means "
+                     "the selected set is simply large")},
         "protect_miss_rate": {"tail": rate(tail, "protect_miss"),
                               "nontail": rate(nontail, "protect_miss")},
         "clean_rank_median": {
