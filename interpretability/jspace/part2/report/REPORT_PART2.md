@@ -368,7 +368,75 @@ output-adjacent channel; hard facts do not.** Consequence for P0: ladder
 hypotheses must be stated in fact-accessibility terms, not task depth
 alone. (This is also the C3 dev set's first validating use.)
 
-## A3 Gemma — an architecture datum, sharpened by depth (2026-07-28) — tier: PILOT
+## A3 Gemma — the leg is COMPLETE, with a verdict and a caveat (2026-07-28 20:0x) — tier: PILOT
+
+Evidence `a3-gemma-fullfit-v1` → `a3-gemma-identification-v1` →
+`a3-gemma-readout-verdict-v1`.
+
+**The fit.** 120 prompts, 4 slices, OLMo-commensurable recipe, band
+22/30/37/40/42/44/48/52 chosen from the depth sweep below.
+
+**The identification gate — which is why the verdict is trustworthy.**
+The merged L22 Jacobian norm (0.042) came in *below* every slice that
+built it (0.124/0.098/0.029): averaging shrank it, meaning the slice
+Jacobians disagreed in direction and cancelled. Per-layer cross-slice
+cosine confirms it:
+
+| layer | 22 | 30 | 37 | 40 | 42 | 44 | 48 | 52 |
+|---|---|---|---|---|---|---|---|---|
+| mean pairwise cos | **0.057** | 0.967 | 0.994 | 0.994 | 0.995 | 0.996 | 0.996 | 0.997 |
+
+L22 — Gemma's 37% relative depth, the shallow edge of the paper's band —
+is **NOT IDENTIFIED**: four independent 30-prompt fits recover mutually
+near-orthogonal maps. A readout claim there would be vacuous in either
+direction, since a bad rank measures the FIT, not the model. The staged
+decision rule had L22 inside its band, so the in-flight sweep was killed
+before writing anything, the gate was added, and the verdict re-derived
+on the identified paper-band layers L30 (50% depth) and L37 (62%).
+
+**The verdict: `GEMMA_NO_RESCUE`** (n=50 probes, 40 known-answer).
+Median answer-token rank:
+
+| layer | 22 *(no J)* | 30 | 37 | 40 | 42 | 44 | 48 | 52 |
+|---|---|---|---|---|---|---|---|---|
+| J-lens | *(41892)* | 61022 | 44640 | 8054 | 3459 | 880 | 98 | 2 |
+| logit lens | *(86234)* | 31354 | 17746 | 3531 | 92 | 23 | 9 | 1 |
+| gain logit/J | *(2.06)* | 0.51 | 0.40 | 0.44 | **0.027** | **0.026** | 0.09 | 0.67 |
+
+Two findings, the second unplanned and stronger than the first: (1) a
+fully fitted, verifiably identified J-lens does **not** read the answer
+anywhere in the paper's band; (2) the J-lens is **worse than the plain
+logit lens at every identified layer** — ~40× worse at L42–44. On OLMo
+the Jacobian *beat* the logit lens, and that advantage is the method's
+whole premise.
+
+**Caveat, stated deliberately: identification ≠ validity.** Cosine
+0.97–1.00 proves independent corpora recover the *same* map; it does not
+prove it is the *right* map. A recipe mis-specification for this
+architecture would reproduce just as cleanly, and finding (2) — J
+systematically worse than the trivial baseline — is exactly what such a
+mis-specification looks like. **The honest statement is therefore "the
+paper's method as we implement it does not transfer to Gemma-4," NOT
+"Gemma-4 has no workspace."** Separating those requires the queued
+follow-up (pre-cap Jacobian target, target-layer sweep, norm-placement
+re-check). No Gemma family verdict beyond this wording.
+
+**Related latent bug, caught before it produced a result**
+(`norm-gain-convention-fix-v1`). While investigating recipe validity:
+`build_j_dictionaries` read `norm.weight` directly. That is correct for
+Llama/OLMo/Qwen RMSNorm (`x_normed * w`) but **wrong for Gemma**, which
+applies `x_normed * (1 + w)` (transformers PR #29402). Because Gemma
+stores weights near zero, the error is *silent* — it yields a near-zero,
+partly sign-flipped dictionary with no exception raised. Verified from
+the transformers sources that Olmo3 and Qwen3 use `x * w`, so **every
+existing OLMo and Qwen result is unaffected**, and no Gemma dictionary
+had been built yet (the A3 work used `lens.apply`/`model.unembed`, which
+call the real norm module). Fixed by measuring the gain instead of
+assuming a convention — probe the norm with a ones-vector, since
+`rms(ones) = 1` implies `norm(ones) = gain` — with a five-check
+conformance test including sign-flip detection.
+
+## A3 Gemma — the depth sweep that set the band (2026-07-28) — tier: PILOT
 
 Evidence `a3-gemma-gate-v1`, then `a3-gemma-deepband-logit-v1` (VM7).
 

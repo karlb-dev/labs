@@ -477,9 +477,59 @@ def f8_gemma_depth():
     log("wrote p2f8_gemma_depth.png")
 
 
+def f9_gemma_verdict():
+    """p2f9 — A3 verdict: J transport vs logit lens across the fitted
+    band, with the non-identified layer marked as instrument-unavailable."""
+    d = _load(RUN_DIR_P2 / "metrics" / "gemma4-31b" / "a3_readout_verdict.json")
+    if not d:
+        return
+    s = d["summary"]
+    ident = set(s["identification_gate"]["identified_layers"])
+    xs = [l for l in s["layers"]]
+    j = [s["median_rank_jacobian"][str(l)] for l in xs]
+    lg = [s["median_rank_logit"][str(l)] for l in xs]
+    fig, ax = plt.subplots(figsize=(7.8, 3.8))
+    ax.set_yscale("log")
+    ax.plot(xs, j, "-o", ms=5, color=PAL["J"], lw=1.7, label="J-lens (fitted)")
+    ax.plot(xs, lg, "-s", ms=4.5, color=PAL["logit"], lw=1.5,
+            label="logit lens (no Jacobian)")
+    # mark the layer with no identified instrument
+    for l, jv in zip(xs, j):
+        if l not in ident:
+            ax.scatter([l], [jv], s=150, facecolor="none",
+                       edgecolor=PAL["random"], linewidth=2, zorder=5)
+            ax.annotate("no identified J\n(excluded from verdict)",
+                        xy=(l, jv), xytext=(l + 1.5, jv * 4),
+                        fontsize=7, color=PAL["random"],
+                        arrowprops=dict(arrowstyle="->", color=PAL["random"],
+                                        lw=1))
+    band = s["identification_gate"]["paper_band_layers_used"]
+    if band:
+        ax.axvspan(min(band) - 1.2, max(band) + 1.2, color=PAL["grid"],
+                   zorder=0)
+        ax.text((min(band) + max(band)) / 2, min(min(j), min(lg)) * 2,
+                "paper's band\n(identified layers)", fontsize=7.2,
+                ha="center", color=PAL["muted"])
+    ax.axhline(10, color=PAL["muted"], lw=0.9, ls=":")
+    ax.set_xlabel("layer (of 60)")
+    ax.set_ylabel("median rank of the answer token (log)")
+    ax.legend(fontsize=7.5, frameon=False, loc="lower left")
+    ax.grid(axis="y", which="both")
+    ax.set_axisbelow(True)
+    ax.set_title("A3 verdict — GEMMA_NO_RESCUE: the fitted J-lens does not "
+                 "read the paper's band,\nand is WORSE than the plain logit "
+                 "lens at every identified layer  [pilot]",
+                 fontsize=9.2, loc="left")
+    fig.tight_layout()
+    fig.savefig(FIGDIR / "p2f9_gemma_verdict.png", dpi=200,
+                bbox_inches="tight")
+    plt.close(fig)
+    log("wrote p2f9_gemma_verdict.png")
+
+
 FIGS = [f1_a0_transfer, f2_b3_frozen_logit, f3_r7_protected, f4_r2_occupancy,
         f5_crossmodel_protected, f6_capacity_errata, f7_ladder,
-        f8_gemma_depth]
+        f8_gemma_depth, f9_gemma_verdict]
 
 
 def main():

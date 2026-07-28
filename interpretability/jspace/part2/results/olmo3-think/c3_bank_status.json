@@ -1,0 +1,59 @@
+{
+  "floor": {
+    "n_items": 90,
+    "n_families": 30,
+    "min_items_per_family": 2
+  },
+  "per_pool": {
+    "v2": {
+      "n": 212,
+      "n_in_window": 66
+    },
+    "v3": {
+      "n": 132,
+      "n_in_window": 60
+    }
+  },
+  "combined_scored": 344,
+  "combined_in_window": 126,
+  "families_raw_labels": 39,
+  "families_canonical": 34,
+  "labels_collapsed_as_duplicates": [
+    "instrument_family_2",
+    "language_family_2",
+    "mission_2",
+    "moons_2",
+    "river_third_order",
+    "script_2",
+    "sports_numeric_2"
+  ],
+  "meets_floor": true,
+  "shortfall": {
+    "items": 0,
+    "families": 0
+  },
+  "dev_set_note": "the frozen 41-item hard_onehop_dev.jsonl stays dev-tier FOREVER (prereg) and is NOT counted toward this floor",
+  "not_partitioned": true,
+  "reading": "Combined bank: 126 hard items across 34 canonical families (39 raw labels; 7 collapsed as same-template duplicates). Floor MET",
+  "seconds": 0,
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "c3-bank-status-v1",
+    "tier": "dev",
+    "code_commit": "298821b09fb158e113cca09baefc5621a1dc1c59",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.c3_bank_status",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "v2": "12489014758863b86d88d3d78288a9f31d765c2e76bcf389bbd3fe87f2546f4b",
+      "v3": "97003524023c6bc287ba953d067e68aa4c3689e2dab945fef95d4aec4ff40c23"
+    },
+    "model": null,
+    "jlens_commit": null,
+    "seed": null,
+    "created_utc": "2026-07-28T19:57:17Z"
+  }
+}

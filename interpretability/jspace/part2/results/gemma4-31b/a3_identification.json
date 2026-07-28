@@ -1,0 +1,161 @@
+{
+  "n_slices": 4,
+  "n_prompts_per_slice": 30,
+  "gate": {
+    "identified_min_cos": 0.9,
+    "partial_min_cos": 0.5,
+    "note": "gate fixed in code; cosine over flattened J"
+  },
+  "by_layer": {
+    "22": {
+      "mean_pairwise_cos": 0.0572,
+      "min_pairwise_cos": 0.0218,
+      "slice_norms": [
+        0.124,
+        0.0982,
+        0.0294,
+        0.0249
+      ],
+      "merged_norm": 0.042,
+      "merge_shrinkage": 0.608,
+      "status": "NOT_IDENTIFIED"
+    },
+    "30": {
+      "mean_pairwise_cos": 0.9672,
+      "min_pairwise_cos": 0.9422,
+      "slice_norms": [
+        0.2178,
+        0.2064,
+        0.2081,
+        0.2065
+      ],
+      "merged_norm": 0.2069,
+      "merge_shrinkage": 0.9867,
+      "status": "IDENTIFIED"
+    },
+    "37": {
+      "mean_pairwise_cos": 0.9941,
+      "min_pairwise_cos": 0.9925,
+      "slice_norms": [
+        1.1331,
+        1.1397,
+        1.1476,
+        1.1383
+      ],
+      "merged_norm": 1.1369,
+      "merge_shrinkage": 0.9975,
+      "status": "IDENTIFIED"
+    },
+    "40": {
+      "mean_pairwise_cos": 0.994,
+      "min_pairwise_cos": 0.993,
+      "slice_norms": [
+        1.5452,
+        1.5433,
+        1.5547,
+        1.5365
+      ],
+      "merged_norm": 1.5411,
+      "merge_shrinkage": 0.9975,
+      "status": "IDENTIFIED"
+    },
+    "42": {
+      "mean_pairwise_cos": 0.9951,
+      "min_pairwise_cos": 0.9941,
+      "slice_norms": [
+        2.6983,
+        2.6983,
+        2.7263,
+        2.6942
+      ],
+      "merged_norm": 2.6989,
+      "merge_shrinkage": 0.998,
+      "status": "IDENTIFIED"
+    },
+    "44": {
+      "mean_pairwise_cos": 0.9961,
+      "min_pairwise_cos": 0.9952,
+      "slice_norms": [
+        3.1716,
+        3.1713,
+        3.2001,
+        3.1694
+      ],
+      "merged_norm": 3.1731,
+      "merge_shrinkage": 0.9984,
+      "status": "IDENTIFIED"
+    },
+    "48": {
+      "mean_pairwise_cos": 0.9964,
+      "min_pairwise_cos": 0.9957,
+      "slice_norms": [
+        5.1735,
+        5.1787,
+        5.2309,
+        5.1798
+      ],
+      "merged_norm": 5.1832,
+      "merge_shrinkage": 0.9986,
+      "status": "IDENTIFIED"
+    },
+    "52": {
+      "mean_pairwise_cos": 0.997,
+      "min_pairwise_cos": 0.9965,
+      "slice_norms": [
+        7.9409,
+        7.9204,
+        7.9796,
+        7.8969
+      ],
+      "merged_norm": 7.9249,
+      "merge_shrinkage": 0.9988,
+      "status": "IDENTIFIED"
+    }
+  },
+  "identified_layers": [
+    30,
+    37,
+    40,
+    42,
+    44,
+    48,
+    52
+  ],
+  "not_identified_layers": [
+    22
+  ],
+  "usable_band": [
+    30,
+    37,
+    40,
+    42,
+    44,
+    48,
+    52
+  ],
+  "reading": "Layers [30, 37, 40, 42, 44, 48, 52] are identified (independent 30-prompt corpora recover the same linear map). Layers [22] are NOT: their slice Jacobians are mutually near-orthogonal and cancel on merge. CONSEQUENCE: no readout claim \u2014 positive or negative \u2014 may be made at a non-identified layer, because there is no fitted instrument there to make it with. In particular L22 sits at Gemma's 37% relative depth, the shallow end of the paper's band, so the paper-band readout test must run at L30/L37 and report L22 as instrument-unavailable rather than as evidence about the model.",
+  "seconds": 3,
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "a3-gemma-identification-v1",
+    "tier": "pilot",
+    "code_commit": "a360628c8ecbf5a03289673d978c22d82df3d435",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.a3_gemma_identification",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "slice0": "79f01f920904558ca60058f22a3482d0f01fdf15e67c797493659fff57dabda3",
+      "slice1": "99807c3492d5d610e8177973f0286178efd201c929f3133f0123c41158c99e02",
+      "slice2": "0f711c81729d5ae3990ed9b4f21cde7a57321e3908207be8ca30b17bb34c6c73",
+      "slice3": "02a9623b9852909fa2c84870ee8fdd50007c25652bbcbcfab7db9f006e46f040",
+      "merged": "9e6daf77e157bb2c901020f6b21a5200561a651281b15a18521eb6027650ee45"
+    },
+    "model": null,
+    "jlens_commit": null,
+    "seed": null,
+    "created_utc": "2026-07-28T19:52:39Z"
+  }
+}
