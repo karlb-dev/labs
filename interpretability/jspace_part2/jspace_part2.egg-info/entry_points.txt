@@ -1,2 +1,0 @@
-[console_scripts]
-jspace-part2 = jspace_part2.__main__:main

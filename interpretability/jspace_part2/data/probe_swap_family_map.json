@@ -1,0 +1,1153 @@
+{
+ "families": [
+  "animal_activity_time",
+  "animal_bodypart",
+  "animal_leg_count",
+  "animal_leg_count_direct",
+  "animal_offspring",
+  "animal_state_flag",
+  "city_state",
+  "country_capital",
+  "country_capital_direct",
+  "country_continent",
+  "country_currency",
+  "country_currency_direct",
+  "country_language",
+  "country_language_direct",
+  "country_neighbor",
+  "country_ocean",
+  "element_atomic_number",
+  "element_state",
+  "element_symbol",
+  "element_symbol_direct",
+  "emblem_country",
+  "entity_color",
+  "entity_color_direct",
+  "holiday_month",
+  "holiday_season",
+  "instrument_play",
+  "instrument_string_count",
+  "month_name_ordinal",
+  "month_namesake",
+  "month_ordinal",
+  "ocean_between",
+  "orbit_parent",
+  "organ_chamber_count",
+  "organ_count",
+  "organ_function_direct",
+  "organ_location",
+  "organ_substance",
+  "person_country",
+  "person_firstname",
+  "person_war",
+  "planet_by_epithet",
+  "planet_feature",
+  "planet_moon_count",
+  "planet_ordinal",
+  "plant_growth_form",
+  "product_source_organism",
+  "rival_mascot",
+  "season_next",
+  "season_next_direct",
+  "sport_equipment",
+  "sport_team_size",
+  "state_border",
+  "substance_phase_name",
+  "superlative_animal",
+  "superlative_body",
+  "temperature_scale",
+  "time_unit_count",
+  "tree_product",
+  "vehicle_power",
+  "weekday_ordinal",
+  "word_antonym",
+  "work_author"
+ ],
+ "items": [
+  {
+   "canonical_family": "country_capital_direct",
+   "item_id": "onehop:0",
+   "item_name": "onehop0",
+   "pool": "battery_onehop",
+   "template_frame": "The capital of {country} is",
+   "template_hash": "84e999a68e209ce6",
+   "template_id": "capital_of_country"
+  },
+  {
+   "canonical_family": "country_capital_direct",
+   "item_id": "onehop:1",
+   "item_name": "onehop1",
+   "pool": "battery_onehop",
+   "template_frame": "The capital of {country} is",
+   "template_hash": "84e999a68e209ce6",
+   "template_id": "capital_of_country"
+  },
+  {
+   "canonical_family": "superlative_body",
+   "item_id": "onehop:10",
+   "item_name": "onehop10",
+   "pool": "battery_onehop",
+   "template_frame": "The {superlative} in our solar system is",
+   "template_hash": "6502af03e79f9650",
+   "template_id": "superlative_solar_system_body"
+  },
+  {
+   "canonical_family": "element_symbol_direct",
+   "item_id": "onehop:11",
+   "item_name": "onehop11",
+   "pool": "battery_onehop",
+   "template_frame": "The chemical symbol for {element} is",
+   "template_hash": "940acdb9d120a972",
+   "template_id": "symbol_of_element_by_name"
+  },
+  {
+   "canonical_family": "work_author",
+   "item_id": "onehop:12",
+   "item_name": "onehop12",
+   "pool": "battery_onehop",
+   "template_frame": "The author of {work} is",
+   "template_hash": "06cd9e96b8ccdf96",
+   "template_id": "author_of_work"
+  },
+  {
+   "canonical_family": "country_language_direct",
+   "item_id": "onehop:13",
+   "item_name": "onehop13",
+   "pool": "battery_onehop",
+   "template_frame": "The language spoken in {country} is",
+   "template_hash": "61056ca0c4ea3498",
+   "template_id": "language_of_country"
+  },
+  {
+   "canonical_family": "temperature_scale",
+   "item_id": "onehop:14",
+   "item_name": "onehop14",
+   "pool": "battery_onehop",
+   "template_frame": "Water freezes at zero degrees",
+   "template_hash": "48d7c475ed13a489",
+   "template_id": "scale_of_freezing_point"
+  },
+  {
+   "canonical_family": "word_antonym",
+   "item_id": "onehop:15",
+   "item_name": "onehop15",
+   "pool": "battery_onehop",
+   "template_frame": "The opposite of {word} is",
+   "template_hash": "e0dc471d5307ff20",
+   "template_id": "antonym_of_word"
+  },
+  {
+   "canonical_family": "animal_leg_count_direct",
+   "item_id": "onehop:16",
+   "item_name": "onehop16",
+   "pool": "battery_onehop",
+   "template_frame": "A {animal} has {n}",
+   "template_hash": "e31b87e5e723dedd",
+   "template_id": "leg_count_of_animal_direct"
+  },
+  {
+   "canonical_family": "entity_color_direct",
+   "item_id": "onehop:17",
+   "item_name": "onehop17",
+   "pool": "battery_onehop",
+   "template_frame": "The color of {entity} is",
+   "template_hash": "b312873b771db53e",
+   "template_id": "color_of_entity_direct"
+  },
+  {
+   "canonical_family": "month_name_ordinal",
+   "item_id": "onehop:18",
+   "item_name": "onehop18",
+   "pool": "battery_onehop",
+   "template_frame": "The {ordinal} month of the year is",
+   "template_hash": "346bdfd62331ed3b",
+   "template_id": "month_by_ordinal"
+  },
+  {
+   "canonical_family": "time_unit_count",
+   "item_id": "onehop:19",
+   "item_name": "onehop19",
+   "pool": "battery_onehop",
+   "template_frame": "The number of {unit} in a {larger unit} is",
+   "template_hash": "cbc0ee9b1046e596",
+   "template_id": "count_within_time_unit"
+  },
+  {
+   "canonical_family": "country_capital_direct",
+   "item_id": "onehop:2",
+   "item_name": "onehop2",
+   "pool": "battery_onehop",
+   "template_frame": "The capital of {country} is",
+   "template_hash": "84e999a68e209ce6",
+   "template_id": "capital_of_country"
+  },
+  {
+   "canonical_family": "superlative_body",
+   "item_id": "onehop:20",
+   "item_name": "onehop20",
+   "pool": "battery_onehop",
+   "template_frame": "The {superlative} in our solar system is",
+   "template_hash": "6502af03e79f9650",
+   "template_id": "superlative_solar_system_body"
+  },
+  {
+   "canonical_family": "ocean_between",
+   "item_id": "onehop:21",
+   "item_name": "onehop21",
+   "pool": "battery_onehop",
+   "template_frame": "The ocean between {A} and {B} is the",
+   "template_hash": "36510b750df64e38",
+   "template_id": "ocean_between_continents"
+  },
+  {
+   "canonical_family": "country_currency_direct",
+   "item_id": "onehop:22",
+   "item_name": "onehop22",
+   "pool": "battery_onehop",
+   "template_frame": "The currency of {country} is the",
+   "template_hash": "7733b19be3aa5cbc",
+   "template_id": "currency_of_country"
+  },
+  {
+   "canonical_family": "superlative_animal",
+   "item_id": "onehop:23",
+   "item_name": "onehop23",
+   "pool": "battery_onehop",
+   "template_frame": "The {superlative} animal is the",
+   "template_hash": "1605825bcfbe01fc",
+   "template_id": "superlative_animal"
+  },
+  {
+   "canonical_family": "substance_phase_name",
+   "item_id": "onehop:24",
+   "item_name": "onehop24",
+   "pool": "battery_onehop",
+   "template_frame": "The {phase} form of {substance} is called",
+   "template_hash": "87ec8112f3590291",
+   "template_id": "name_of_phase_of_substance"
+  },
+  {
+   "canonical_family": "organ_function_direct",
+   "item_id": "onehop:25",
+   "item_name": "onehop25",
+   "pool": "battery_onehop",
+   "template_frame": "The organ that {function} is the",
+   "template_hash": "9311fb9de9d2339f",
+   "template_id": "organ_by_function"
+  },
+  {
+   "canonical_family": "planet_by_epithet",
+   "item_id": "onehop:26",
+   "item_name": "onehop26",
+   "pool": "battery_onehop",
+   "template_frame": "The planet known as {epithet} is",
+   "template_hash": "acfe9e20c9f05cb8",
+   "template_id": "planet_by_epithet"
+  },
+  {
+   "canonical_family": "superlative_animal",
+   "item_id": "onehop:27",
+   "item_name": "onehop27",
+   "pool": "battery_onehop",
+   "template_frame": "The {superlative} animal is the",
+   "template_hash": "1605825bcfbe01fc",
+   "template_id": "superlative_animal"
+  },
+  {
+   "canonical_family": "animal_offspring",
+   "item_id": "onehop:28",
+   "item_name": "onehop28",
+   "pool": "battery_onehop",
+   "template_frame": "A baby {animal} is called a",
+   "template_hash": "4676dd6b3e030188",
+   "template_id": "offspring_name_of_animal"
+  },
+  {
+   "canonical_family": "season_next_direct",
+   "item_id": "onehop:29",
+   "item_name": "onehop29",
+   "pool": "battery_onehop",
+   "template_frame": "The season after {season} is",
+   "template_hash": "2d57ae8953080890",
+   "template_id": "season_after_season_direct"
+  },
+  {
+   "canonical_family": "country_capital_direct",
+   "item_id": "onehop:3",
+   "item_name": "onehop3",
+   "pool": "battery_onehop",
+   "template_frame": "The capital of {country} is",
+   "template_hash": "84e999a68e209ce6",
+   "template_id": "capital_of_country"
+  },
+  {
+   "canonical_family": "country_capital_direct",
+   "item_id": "onehop:4",
+   "item_name": "onehop4",
+   "pool": "battery_onehop",
+   "template_frame": "The capital of {country} is",
+   "template_hash": "84e999a68e209ce6",
+   "template_id": "capital_of_country"
+  },
+  {
+   "canonical_family": "country_capital_direct",
+   "item_id": "onehop:5",
+   "item_name": "onehop5",
+   "pool": "battery_onehop",
+   "template_frame": "The capital of {country} is",
+   "template_hash": "84e999a68e209ce6",
+   "template_id": "capital_of_country"
+  },
+  {
+   "canonical_family": "country_capital_direct",
+   "item_id": "onehop:6",
+   "item_name": "onehop6",
+   "pool": "battery_onehop",
+   "template_frame": "The capital of {country} is",
+   "template_hash": "84e999a68e209ce6",
+   "template_id": "capital_of_country"
+  },
+  {
+   "canonical_family": "country_capital_direct",
+   "item_id": "onehop:7",
+   "item_name": "onehop7",
+   "pool": "battery_onehop",
+   "template_frame": "The capital of {country} is",
+   "template_hash": "84e999a68e209ce6",
+   "template_id": "capital_of_country"
+  },
+  {
+   "canonical_family": "country_capital_direct",
+   "item_id": "onehop:8",
+   "item_name": "onehop8",
+   "pool": "battery_onehop",
+   "template_frame": "The capital of {country} is",
+   "template_hash": "84e999a68e209ce6",
+   "template_id": "capital_of_country"
+  },
+  {
+   "canonical_family": "country_capital_direct",
+   "item_id": "onehop:9",
+   "item_name": "onehop9",
+   "pool": "battery_onehop",
+   "template_frame": "The capital of {country} is",
+   "template_hash": "84e999a68e209ce6",
+   "template_id": "capital_of_country"
+  },
+  {
+   "canonical_family": "country_language",
+   "item_id": "twohop:amazon-language",
+   "item_name": "amazon-language",
+   "pool": "probe_swap",
+   "template_frame": "The language spoken in the country where the {river} River ends is",
+   "template_hash": "7827b1145c0bbe15",
+   "template_id": "language_of_country_where_river"
+  },
+  {
+   "canonical_family": "animal_bodypart",
+   "item_id": "twohop:animal-cover-turtle",
+   "item_name": "animal-cover-turtle",
+   "pool": "probe_swap",
+   "template_frame": "The {body part description} of the {animal description} is called a",
+   "template_hash": "e90f46d05d82d4f1",
+   "template_id": "bodypart_name_of_animal"
+  },
+  {
+   "canonical_family": "animal_leg_count",
+   "item_id": "twohop:animal-legs-buffalo2",
+   "item_name": "animal-legs-buffalo2",
+   "pool": "probe_swap",
+   "template_frame": "The number of legs on the {description} is",
+   "template_hash": "f89040366f33d079",
+   "template_id": "leg_count_of_animal"
+  },
+  {
+   "canonical_family": "animal_bodypart",
+   "item_id": "twohop:animal-nose-elephant",
+   "item_name": "animal-nose-elephant",
+   "pool": "probe_swap",
+   "template_frame": "The {body part description} of the {animal description} is called a",
+   "template_hash": "e90f46d05d82d4f1",
+   "template_id": "bodypart_name_of_animal"
+  },
+  {
+   "canonical_family": "element_state",
+   "item_id": "twohop:atomic-80-state",
+   "item_name": "atomic-80-state",
+   "pool": "probe_swap",
+   "template_frame": "The state of matter at room temperature of the element with atomic number {Z} is",
+   "template_hash": "b5463e9bb6819f61",
+   "template_id": "state_of_element_by_Z"
+  },
+  {
+   "canonical_family": "sport_team_size",
+   "item_id": "twohop:basketball-players",
+   "item_name": "basketball-players",
+   "pool": "probe_swap",
+   "template_frame": "The number of players per side in the sport {description} is",
+   "template_hash": "5ad85924cfc85df3",
+   "template_id": "team_size_of_sport"
+  },
+  {
+   "canonical_family": "product_source_organism",
+   "item_id": "twohop:beverage-source-wine",
+   "item_name": "beverage-source-wine",
+   "pool": "probe_swap",
+   "template_frame": "The {organism type} that produces/yields the {product description} is the",
+   "template_hash": "a02335c5510daf70",
+   "template_id": "source_of_product"
+  },
+  {
+   "canonical_family": "entity_color",
+   "item_id": "twohop:bird-color-swan",
+   "item_name": "bird-color-swan",
+   "pool": "probe_swap",
+   "template_frame": "The color of the {entity} is",
+   "template_hash": "bb8bd514836f76e9",
+   "template_id": "color_of_entity"
+  },
+  {
+   "canonical_family": "emblem_country",
+   "item_id": "twohop:bird-country-eagle",
+   "item_name": "bird-country-eagle",
+   "pool": "probe_swap",
+   "template_frame": "The country whose national emblem is the {emblem description} is",
+   "template_hash": "904ae8612f4d5b53",
+   "template_id": "country_of_national_emblem"
+  },
+  {
+   "canonical_family": "animal_activity_time",
+   "item_id": "twohop:bird-time-owl",
+   "item_name": "bird-time-owl",
+   "pool": "probe_swap",
+   "template_frame": "The time of day when the {animal description} hunts is",
+   "template_hash": "3151ad68faf34ec3",
+   "template_id": "activity_time_of_animal"
+  },
+  {
+   "canonical_family": "month_ordinal",
+   "item_id": "twohop:birthstone-emerald-month",
+   "item_name": "birthstone-emerald-month",
+   "pool": "probe_swap",
+   "template_frame": "{description} is month number",
+   "template_hash": "062b936226d05635",
+   "template_id": "ordinal_of_month"
+  },
+  {
+   "canonical_family": "element_atomic_number",
+   "item_id": "twohop:chem-atmosphere-Z",
+   "item_name": "chem-atmosphere-Z",
+   "pool": "probe_swap",
+   "template_frame": "The atomic number of the {description} is",
+   "template_hash": "94274f9a02c56fa2",
+   "template_id": "Z_of_element_by_role"
+  },
+  {
+   "canonical_family": "element_atomic_number",
+   "item_id": "twohop:chem-bones-Z",
+   "item_name": "chem-bones-Z",
+   "pool": "probe_swap",
+   "template_frame": "The atomic number of the {description} is",
+   "template_hash": "94274f9a02c56fa2",
+   "template_id": "Z_of_element_by_role"
+  },
+  {
+   "canonical_family": "element_atomic_number",
+   "item_id": "twohop:chem-organic-Z",
+   "item_name": "chem-organic-Z",
+   "pool": "probe_swap",
+   "template_frame": "The atomic number of the {description} is",
+   "template_hash": "94274f9a02c56fa2",
+   "template_id": "Z_of_element_by_role"
+  },
+  {
+   "canonical_family": "element_atomic_number",
+   "item_id": "twohop:chem-photosynthesis-Z",
+   "item_name": "chem-photosynthesis-Z",
+   "pool": "probe_swap",
+   "template_frame": "The atomic number of the {description} is",
+   "template_hash": "94274f9a02c56fa2",
+   "template_id": "Z_of_element_by_role"
+  },
+  {
+   "canonical_family": "holiday_season",
+   "item_id": "twohop:christmas-season",
+   "item_name": "christmas-season",
+   "pool": "probe_swap",
+   "template_frame": "The season when the holiday {description} occurs is",
+   "template_hash": "663c6732e82cffb2",
+   "template_id": "season_of_holiday"
+  },
+  {
+   "canonical_family": "city_state",
+   "item_id": "twohop:city-state-Philadelphia",
+   "item_name": "city-state-Philadelphia",
+   "pool": "probe_swap",
+   "template_frame": "The US state where the city {description} is located is",
+   "template_hash": "935f2f1f6337fa22",
+   "template_id": "us_state_of_city"
+  },
+  {
+   "canonical_family": "country_currency",
+   "item_id": "twohop:colosseum-currency",
+   "item_name": "colosseum-currency",
+   "pool": "probe_swap",
+   "template_frame": "The currency used in the country where the {landmark} stands is the",
+   "template_hash": "c1c7c4d40bcb3150",
+   "template_id": "currency_of_country_where_landmark"
+  },
+  {
+   "canonical_family": "entity_color",
+   "item_id": "twohop:element-color-gold2",
+   "item_name": "element-color-gold2",
+   "pool": "probe_swap",
+   "template_frame": "The color of the {entity} is",
+   "template_hash": "bb8bd514836f76e9",
+   "template_id": "color_of_entity"
+  },
+  {
+   "canonical_family": "weekday_ordinal",
+   "item_id": "twohop:etym-frigg-position",
+   "item_name": "etym-frigg-position",
+   "pool": "probe_swap",
+   "template_frame": "Counting Monday as day 1, the day of the week {description} is day number",
+   "template_hash": "4f21090b2efece0f",
+   "template_id": "ordinal_of_weekday"
+  },
+  {
+   "canonical_family": "planet_ordinal",
+   "item_id": "twohop:etym-saturn-position",
+   "item_name": "etym-saturn-position",
+   "pool": "probe_swap",
+   "template_frame": "The planet {description} is planet number",
+   "template_hash": "9179ffa7efa0be18",
+   "template_id": "ordinal_of_planet"
+  },
+  {
+   "canonical_family": "month_ordinal",
+   "item_id": "twohop:etym-wargod-month",
+   "item_name": "etym-wargod-month",
+   "pool": "probe_swap",
+   "template_frame": "{description} is month number",
+   "template_hash": "062b936226d05635",
+   "template_id": "ordinal_of_month"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex-city-capital-Barcelona-Toronto",
+   "item_name": "ex-city-capital-Barcelona-Toronto",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where {city} is located is",
+   "template_hash": "a473ed67dca8a1c0",
+   "template_id": "capital_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex-city-capital-Lyon-Naples",
+   "item_name": "ex-city-capital-Lyon-Naples",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where {city} is located is",
+   "template_hash": "a473ed67dca8a1c0",
+   "template_id": "capital_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex-city-capital-Naples-Barcelona",
+   "item_name": "ex-city-capital-Naples-Barcelona",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where {city} is located is",
+   "template_hash": "a473ed67dca8a1c0",
+   "template_id": "capital_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex-city-capital-Toronto-Lyon",
+   "item_name": "ex-city-capital-Toronto-Lyon",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where {city} is located is",
+   "template_hash": "a473ed67dca8a1c0",
+   "template_id": "capital_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_continent",
+   "item_id": "twohop:ex-city-continent-Toronto-Lyon",
+   "item_name": "ex-city-continent-Toronto-Lyon",
+   "pool": "probe_swap",
+   "template_frame": "The continent of the country where {city} is located is",
+   "template_hash": "fb2640fc88bafaf1",
+   "template_id": "continent_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_currency",
+   "item_id": "twohop:ex-city-currency-Toronto-Beijing",
+   "item_name": "ex-city-currency-Toronto-Beijing",
+   "pool": "probe_swap",
+   "template_frame": "The currency used in the country where {city} is located is the",
+   "template_hash": "3f7355a19a00de68",
+   "template_id": "currency_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_currency",
+   "item_id": "twohop:ex-city-currency-Toronto-Mumbai",
+   "item_name": "ex-city-currency-Toronto-Mumbai",
+   "pool": "probe_swap",
+   "template_frame": "The currency used in the country where {city} is located is the",
+   "template_hash": "3f7355a19a00de68",
+   "template_id": "currency_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_language",
+   "item_id": "twohop:ex-city-language-Lyon-Naples",
+   "item_name": "ex-city-language-Lyon-Naples",
+   "pool": "probe_swap",
+   "template_frame": "The language spoken in the country where {city} is located is",
+   "template_hash": "8975bb38f5336842",
+   "template_id": "language_of_country_where_city"
+  },
+  {
+   "canonical_family": "element_state",
+   "item_id": "twohop:ex-element-state-26-8",
+   "item_name": "ex-element-state-26-8",
+   "pool": "probe_swap",
+   "template_frame": "The state of matter at room temperature of the element with atomic number {Z} is",
+   "template_hash": "b5463e9bb6819f61",
+   "template_id": "state_of_element_by_Z"
+  },
+  {
+   "canonical_family": "element_state",
+   "item_id": "twohop:ex-element-state-26-80",
+   "item_name": "ex-element-state-26-80",
+   "pool": "probe_swap",
+   "template_frame": "The state of matter at room temperature of the element with atomic number {Z} is",
+   "template_hash": "b5463e9bb6819f61",
+   "template_id": "state_of_element_by_Z"
+  },
+  {
+   "canonical_family": "element_state",
+   "item_id": "twohop:ex-element-state-8-26",
+   "item_name": "ex-element-state-8-26",
+   "pool": "probe_swap",
+   "template_frame": "The state of matter at room temperature of the element with atomic number {Z} is",
+   "template_hash": "b5463e9bb6819f61",
+   "template_id": "state_of_element_by_Z"
+  },
+  {
+   "canonical_family": "element_state",
+   "item_id": "twohop:ex-element-state-8-80",
+   "item_name": "ex-element-state-8-80",
+   "pool": "probe_swap",
+   "template_frame": "The state of matter at room temperature of the element with atomic number {Z} is",
+   "template_hash": "b5463e9bb6819f61",
+   "template_id": "state_of_element_by_Z"
+  },
+  {
+   "canonical_family": "element_state",
+   "item_id": "twohop:ex-element-state-80-8",
+   "item_name": "ex-element-state-80-8",
+   "pool": "probe_swap",
+   "template_frame": "The state of matter at room temperature of the element with atomic number {Z} is",
+   "template_hash": "b5463e9bb6819f61",
+   "template_id": "state_of_element_by_Z"
+  },
+  {
+   "canonical_family": "element_symbol",
+   "item_id": "twohop:ex-element-symbol-11-26",
+   "item_name": "ex-element-symbol-11-26",
+   "pool": "probe_swap",
+   "template_frame": "The chemical symbol for the element with atomic number {Z} is",
+   "template_hash": "f9d7aeb7e8f59ef2",
+   "template_id": "symbol_of_element_by_Z"
+  },
+  {
+   "canonical_family": "element_symbol",
+   "item_id": "twohop:ex-element-symbol-26-79",
+   "item_name": "ex-element-symbol-26-79",
+   "pool": "probe_swap",
+   "template_frame": "The chemical symbol for the element with atomic number {Z} is",
+   "template_hash": "f9d7aeb7e8f59ef2",
+   "template_id": "symbol_of_element_by_Z"
+  },
+  {
+   "canonical_family": "entity_color",
+   "item_id": "twohop:ex-planet-color-third-fourth",
+   "item_name": "ex-planet-color-third-fourth",
+   "pool": "probe_swap",
+   "template_frame": "The color of the {entity} is",
+   "template_hash": "bb8bd514836f76e9",
+   "template_id": "color_of_entity"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex2-city-capital-Munich",
+   "item_name": "ex2-city-capital-Munich",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where {city} is located is",
+   "template_hash": "a473ed67dca8a1c0",
+   "template_id": "capital_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex2-city-capital-Osaka",
+   "item_name": "ex2-city-capital-Osaka",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where {city} is located is",
+   "template_hash": "a473ed67dca8a1c0",
+   "template_id": "capital_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_continent",
+   "item_id": "twohop:ex2-city-continent-Lima",
+   "item_name": "ex2-city-continent-Lima",
+   "pool": "probe_swap",
+   "template_frame": "The continent of the country where {city} is located is",
+   "template_hash": "fb2640fc88bafaf1",
+   "template_id": "continent_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_continent",
+   "item_id": "twohop:ex2-city-continent-Sydney",
+   "item_name": "ex2-city-continent-Sydney",
+   "pool": "probe_swap",
+   "template_frame": "The continent of the country where {city} is located is",
+   "template_hash": "fb2640fc88bafaf1",
+   "template_id": "continent_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_language",
+   "item_id": "twohop:ex2-city-language-Cairo",
+   "item_name": "ex2-city-language-Cairo",
+   "pool": "probe_swap",
+   "template_frame": "The language spoken in the country where {city} is located is",
+   "template_hash": "8975bb38f5336842",
+   "template_id": "language_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_language",
+   "item_id": "twohop:ex2-city-language-Moscow",
+   "item_name": "ex2-city-language-Moscow",
+   "pool": "probe_swap",
+   "template_frame": "The language spoken in the country where {city} is located is",
+   "template_hash": "8975bb38f5336842",
+   "template_id": "language_of_country_where_city"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex2-language-capital-Greek",
+   "item_name": "ex2-language-capital-Greek",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where {language} is the primary language is",
+   "template_hash": "7b25345fc306506c",
+   "template_id": "capital_of_country_where_language"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex2-language-capital-Hungarian",
+   "item_name": "ex2-language-capital-Hungarian",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where {language} is the primary language is",
+   "template_hash": "7b25345fc306506c",
+   "template_id": "capital_of_country_where_language"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex2-language-capital-Polish",
+   "item_name": "ex2-language-capital-Polish",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where {language} is the primary language is",
+   "template_hash": "7b25345fc306506c",
+   "template_id": "capital_of_country_where_language"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex2-language-capital-Swedish",
+   "item_name": "ex2-language-capital-Swedish",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where {language} is the primary language is",
+   "template_hash": "7b25345fc306506c",
+   "template_id": "capital_of_country_where_language"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:ex2-river-capital-Thames",
+   "item_name": "ex2-river-capital-Thames",
+   "pool": "probe_swap",
+   "template_frame": "The capital of the country where the {river} River reaches the sea is",
+   "template_hash": "fcfb535278428716",
+   "template_id": "capital_of_country_where_river"
+  },
+  {
+   "canonical_family": "product_source_organism",
+   "item_id": "twohop:food-animal-butter",
+   "item_name": "food-animal-butter",
+   "pool": "probe_swap",
+   "template_frame": "The {organism type} that produces/yields the {product description} is the",
+   "template_hash": "a02335c5510daf70",
+   "template_id": "source_of_product"
+  },
+  {
+   "canonical_family": "product_source_organism",
+   "item_id": "twohop:food-animal-honey",
+   "item_name": "food-animal-honey",
+   "pool": "probe_swap",
+   "template_frame": "The {organism type} that produces/yields the {product description} is the",
+   "template_hash": "a02335c5510daf70",
+   "template_id": "source_of_product"
+  },
+  {
+   "canonical_family": "plant_growth_form",
+   "item_id": "twohop:fruit-grows-grape",
+   "item_name": "fruit-grows-grape",
+   "pool": "probe_swap",
+   "template_frame": "The kind of plant that the {fruit description} grows on is a",
+   "template_hash": "c4a62087ab906832",
+   "template_id": "growth_form_of_fruit"
+  },
+  {
+   "canonical_family": "organ_count",
+   "item_id": "twohop:func-filters-count",
+   "item_name": "func-filters-count",
+   "pool": "probe_swap",
+   "template_frame": "In humans, the number of organs that {function} is",
+   "template_hash": "4d5c2653c7e9af10",
+   "template_id": "count_of_organ_by_function"
+  },
+  {
+   "canonical_family": "organ_chamber_count",
+   "item_id": "twohop:func-pumps-chambers",
+   "item_name": "func-pumps-chambers",
+   "pool": "probe_swap",
+   "template_frame": "In humans, the organ that {function} has this many chambers:",
+   "template_hash": "6c19c25ced39f3f4",
+   "template_id": "chamber_count_of_organ"
+  },
+  {
+   "canonical_family": "entity_color",
+   "item_id": "twohop:gem-color-ruby",
+   "item_name": "gem-color-ruby",
+   "pool": "probe_swap",
+   "template_frame": "The color of the {entity} is",
+   "template_hash": "bb8bd514836f76e9",
+   "template_id": "color_of_entity"
+  },
+  {
+   "canonical_family": "product_source_organism",
+   "item_id": "twohop:gem-source-pearl",
+   "item_name": "gem-source-pearl",
+   "pool": "probe_swap",
+   "template_frame": "The {organism type} that produces/yields the {product description} is the",
+   "template_hash": "a02335c5510daf70",
+   "template_id": "source_of_product"
+  },
+  {
+   "canonical_family": "country_ocean",
+   "item_id": "twohop:greatwall-ocean",
+   "item_name": "greatwall-ocean",
+   "pool": "probe_swap",
+   "template_frame": "The ocean east of the country that built the {landmark} is the",
+   "template_hash": "6edb3eca4f76a4f7",
+   "template_id": "ocean_adjacent_to_country"
+  },
+  {
+   "canonical_family": "holiday_month",
+   "item_id": "twohop:holiday-month-christmas2",
+   "item_name": "holiday-month-christmas2",
+   "pool": "probe_swap",
+   "template_frame": "The month of the holiday {description} is",
+   "template_hash": "5498bc236352542c",
+   "template_id": "month_of_holiday"
+  },
+  {
+   "canonical_family": "instrument_play",
+   "item_id": "twohop:instr-body-trumpet",
+   "item_name": "instr-body-trumpet",
+   "pool": "probe_swap",
+   "template_frame": "The {body part or object} used to play the instrument {description} is",
+   "template_hash": "296d1c67fa309484",
+   "template_id": "play_method_of_instrument"
+  },
+  {
+   "canonical_family": "instrument_play",
+   "item_id": "twohop:instr-hit-drums",
+   "item_name": "instr-hit-drums",
+   "pool": "probe_swap",
+   "template_frame": "The {body part or object} used to play the instrument {description} is",
+   "template_hash": "296d1c67fa309484",
+   "template_id": "play_method_of_instrument"
+  },
+  {
+   "canonical_family": "entity_color",
+   "item_id": "twohop:mars-color",
+   "item_name": "mars-color",
+   "pool": "probe_swap",
+   "template_frame": "The color of the {entity} is",
+   "template_hash": "bb8bd514836f76e9",
+   "template_id": "color_of_entity"
+  },
+  {
+   "canonical_family": "month_namesake",
+   "item_id": "twohop:month-3-godof",
+   "item_name": "month-3-godof",
+   "pool": "probe_swap",
+   "template_frame": "The {ordinal} month of the year is named after the Roman god of",
+   "template_hash": "e6781bd8167506b3",
+   "template_id": "namesake_domain_of_month"
+  },
+  {
+   "canonical_family": "organ_substance",
+   "item_id": "twohop:organ-acid-stomach",
+   "item_name": "organ-acid-stomach",
+   "pool": "probe_swap",
+   "template_frame": "The strong liquid inside the organ that {function} is called",
+   "template_hash": "17fa7de245d6834e",
+   "template_id": "substance_in_organ"
+  },
+  {
+   "canonical_family": "organ_count",
+   "item_id": "twohop:organ-count-kidney2",
+   "item_name": "organ-count-kidney2",
+   "pool": "probe_swap",
+   "template_frame": "The number of the {description} organs in a human body is",
+   "template_hash": "49615d080ad53a30",
+   "template_id": "count_of_organ_by_shape_function"
+  },
+  {
+   "canonical_family": "organ_location",
+   "item_id": "twohop:organ-location-brain",
+   "item_name": "organ-location-brain",
+   "pool": "probe_swap",
+   "template_frame": "The {body structure} that contains/encases the organ that {function} is",
+   "template_hash": "f4822fcf85c532fd",
+   "template_id": "location_of_organ"
+  },
+  {
+   "canonical_family": "organ_location",
+   "item_id": "twohop:organ-location-heart",
+   "item_name": "organ-location-heart",
+   "pool": "probe_swap",
+   "template_frame": "The {body structure} that contains/encases the organ that {function} is",
+   "template_hash": "f4822fcf85c532fd",
+   "template_id": "location_of_organ"
+  },
+  {
+   "canonical_family": "rival_mascot",
+   "item_id": "twohop:osu-rival-mascot",
+   "item_name": "osu-rival-mascot",
+   "pool": "probe_swap",
+   "template_frame": "The mascot of the {description} rival of {team} is a",
+   "template_hash": "0b5d7523221c0c80",
+   "template_id": "mascot_of_rival_team"
+  },
+  {
+   "canonical_family": "country_continent",
+   "item_id": "twohop:paper-continent",
+   "item_name": "paper-continent",
+   "pool": "probe_swap",
+   "template_frame": "The continent where the country that invented {invention} is located is",
+   "template_hash": "3472645f8558c545",
+   "template_id": "continent_of_country_that_invented"
+  },
+  {
+   "canonical_family": "person_war",
+   "item_id": "twohop:person-century-lincoln",
+   "item_name": "person-century-lincoln",
+   "pool": "probe_swap",
+   "template_frame": "The war that the {description} led his country through was the",
+   "template_hash": "133b7a93efe1c966",
+   "template_id": "war_led_by_person"
+  },
+  {
+   "canonical_family": "person_country",
+   "item_id": "twohop:person-country-napoleon",
+   "item_name": "person-country-napoleon",
+   "pool": "probe_swap",
+   "template_frame": "The country {relation} the {description} is",
+   "template_hash": "9f890b8b312247d3",
+   "template_id": "country_of_person_by_deed"
+  },
+  {
+   "canonical_family": "person_country",
+   "item_id": "twohop:person-country-shakespeare",
+   "item_name": "person-country-shakespeare",
+   "pool": "probe_swap",
+   "template_frame": "The country {relation} the {description} is",
+   "template_hash": "9f890b8b312247d3",
+   "template_id": "country_of_person_by_deed"
+  },
+  {
+   "canonical_family": "person_firstname",
+   "item_id": "twohop:person-firstname-darwin",
+   "item_name": "person-firstname-darwin",
+   "pool": "probe_swap",
+   "template_frame": "The first name of the {description} was",
+   "template_hash": "44befef4988ca471",
+   "template_id": "firstname_of_person_by_deed"
+  },
+  {
+   "canonical_family": "person_firstname",
+   "item_id": "twohop:person-firstname-einstein",
+   "item_name": "person-firstname-einstein",
+   "pool": "probe_swap",
+   "template_frame": "The first name of the {description} was",
+   "template_hash": "44befef4988ca471",
+   "template_id": "firstname_of_person_by_deed"
+  },
+  {
+   "canonical_family": "person_firstname",
+   "item_id": "twohop:person-firstname-mozart",
+   "item_name": "person-firstname-mozart",
+   "pool": "probe_swap",
+   "template_frame": "The first name of the {description} was",
+   "template_hash": "44befef4988ca471",
+   "template_id": "firstname_of_person_by_deed"
+  },
+  {
+   "canonical_family": "person_firstname",
+   "item_id": "twohop:person-firstname-newton",
+   "item_name": "person-firstname-newton",
+   "pool": "probe_swap",
+   "template_frame": "The first name of the {description} was",
+   "template_hash": "44befef4988ca471",
+   "template_id": "firstname_of_person_by_deed"
+  },
+  {
+   "canonical_family": "person_firstname",
+   "item_id": "twohop:person-firstname-shakespeare",
+   "item_name": "person-firstname-shakespeare",
+   "pool": "probe_swap",
+   "template_frame": "The first name of the {description} was",
+   "template_hash": "44befef4988ca471",
+   "template_id": "firstname_of_person_by_deed"
+  },
+  {
+   "canonical_family": "planet_moon_count",
+   "item_id": "twohop:planet-3-moons",
+   "item_name": "planet-3-moons",
+   "pool": "probe_swap",
+   "template_frame": "The number of natural moons orbiting the planet {description} is",
+   "template_hash": "8448d7852cad96d9",
+   "template_id": "moon_count_of_planet"
+  },
+  {
+   "canonical_family": "planet_feature",
+   "item_id": "twohop:planet-rings-saturn2",
+   "item_name": "planet-rings-saturn2",
+   "pool": "probe_swap",
+   "template_frame": "The most famous feature of the planet {description} is its",
+   "template_hash": "0e3bc2888c62cea7",
+   "template_id": "feature_of_planet"
+  },
+  {
+   "canonical_family": "animal_state_flag",
+   "item_id": "twohop:rhyme-chair-flag",
+   "item_name": "rhyme-chair-flag",
+   "pool": "probe_swap",
+   "template_frame": "The {animal} whose name rhymes with '{word}' appears on the state flag of",
+   "template_hash": "01e4bbfb898eb561",
+   "template_id": "state_flag_animal_by_rhyme"
+  },
+  {
+   "canonical_family": "country_neighbor",
+   "item_id": "twohop:rhyme-rain-neighbor",
+   "item_name": "rhyme-rain-neighbor",
+   "pool": "probe_swap",
+   "template_frame": "The European country whose name rhymes with '{word}' shares its western border with",
+   "template_hash": "e75715430a302d00",
+   "template_id": "neighbor_of_country_by_rhyme"
+  },
+  {
+   "canonical_family": "orbit_parent",
+   "item_id": "twohop:rhyme-spoon-orbit",
+   "item_name": "rhyme-spoon-orbit",
+   "pool": "probe_swap",
+   "template_frame": "The celestial body whose name rhymes with '{word}' orbits the planet called",
+   "template_hash": "14a32e0a6bfc7167",
+   "template_id": "orbited_body_by_rhyme"
+  },
+  {
+   "canonical_family": "season_next",
+   "item_id": "twohop:season-next-winter",
+   "item_name": "season-next-winter",
+   "pool": "probe_swap",
+   "template_frame": "The season that comes immediately after the {description} season is",
+   "template_hash": "d5a768297725275b",
+   "template_id": "season_after_season"
+  },
+  {
+   "canonical_family": "state_border",
+   "item_id": "twohop:spaceneedle-border",
+   "item_name": "spaceneedle-border",
+   "pool": "probe_swap",
+   "template_frame": "The US state where {landmark} is located shares its northern border with",
+   "template_hash": "3a2dd7325389dab3",
+   "template_id": "border_country_of_us_state"
+  },
+  {
+   "canonical_family": "animal_leg_count",
+   "item_id": "twohop:spider-legs",
+   "item_name": "spider-legs",
+   "pool": "probe_swap",
+   "template_frame": "The number of legs on the {description} is",
+   "template_hash": "f89040366f33d079",
+   "template_id": "leg_count_of_animal"
+  },
+  {
+   "canonical_family": "sport_equipment",
+   "item_id": "twohop:sport-equip-tennis",
+   "item_name": "sport-equip-tennis",
+   "pool": "probe_swap",
+   "template_frame": "The piece of equipment used to strike the ball in the sport {description} is a",
+   "template_hash": "e92f03c0b1188040",
+   "template_id": "equipment_of_sport"
+  },
+  {
+   "canonical_family": "country_capital",
+   "item_id": "twohop:super-populous-capital",
+   "item_name": "super-populous-capital",
+   "pool": "probe_swap",
+   "template_frame": "The capital city of the {superlative} country in the world is",
+   "template_hash": "73db6cb7605d1385",
+   "template_id": "capital_of_superlative_country"
+  },
+  {
+   "canonical_family": "country_continent",
+   "item_id": "twohop:super-smallest-continent",
+   "item_name": "super-smallest-continent",
+   "pool": "probe_swap",
+   "template_frame": "The {superlative} country in the world is located on the continent of",
+   "template_hash": "b80e37df4d977e09",
+   "template_id": "continent_of_superlative_country"
+  },
+  {
+   "canonical_family": "tree_product",
+   "item_id": "twohop:tree-product-oak",
+   "item_name": "tree-product-oak",
+   "pool": "probe_swap",
+   "template_frame": "The {product description} produced by the {tree description} is the",
+   "template_hash": "78dbcabaa315e16d",
+   "template_id": "product_of_tree"
+  },
+  {
+   "canonical_family": "vehicle_power",
+   "item_id": "twohop:vehicle-power-bicycle",
+   "item_name": "vehicle-power-bicycle",
+   "pool": "probe_swap",
+   "template_frame": "The source of power for the vehicle {description} is",
+   "template_hash": "d8a26c3f77616015",
+   "template_id": "power_source_of_vehicle"
+  },
+  {
+   "canonical_family": "instrument_string_count",
+   "item_id": "twohop:violin-strings",
+   "item_name": "violin-strings",
+   "pool": "probe_swap",
+   "template_frame": "The number of strings on the instrument {description} is",
+   "template_hash": "b9fdef213c8b6851",
+   "template_id": "string_count_of_instrument"
+  }
+ ],
+ "n_families": 62,
+ "n_items": 120,
+ "rule": "canonical_family = (second-hop relation, answer type): two items share a family iff answering both requires the same relation over the same answer vocabulary. template_id is the finer surface frame; template_hash tests the map.",
+ "schema_version": 1,
+ "supersedes": "battery.py `name.split('-')[0]` and `onehop{i}`"
+}
