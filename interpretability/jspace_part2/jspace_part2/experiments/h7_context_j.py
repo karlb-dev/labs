@@ -94,7 +94,21 @@ PROMPTS = [
 SEQ_MAX = 96
 SKIP_FIRST = 16          # jlens default; matches the fitted lens
 POSITION_FRACS = [0.55, 0.80, 1.00]   # early-valid, mid, final (of SEQ)
-EPS_REL = 0.10           # scale independently shown linear on this model
+# PERTURBATION SCALE IS CALIBRATED, NOT ASSUMED. The published local-
+# linearity result (ratio 1.98-2.02 at eps 0.1-0.2) was measured for a
+# UNIFORM perturbation. A single-position perturbation is a different
+# probe and turns out to be markedly more nonlinear at the same scale
+# (measured here: r(2d)/r(d) = 2.2-2.95 at eps 0.10) — unsurprising in
+# hindsight, because shifting one position's residual moves that
+# position's key/value and so re-weights the attention softmax at every
+# later position, whereas a uniform shift partly cancels inside the
+# softmax. Attributing an estimator gap to averaging while the ground
+# truth itself is nonlinear would repeat the withdrawn-v1 mistake, so the
+# run first sweeps eps and selects the largest scale whose response is
+# linear within tolerance AND whose input is delivered faithfully in bf16.
+EPS_GRID = [0.005, 0.01, 0.02, 0.05, 0.10]
+LIN_TOL = 0.10           # accept |r(2d)/r(d) - 2| <= LIN_TOL
+FIDELITY_MIN = 0.99      # measured ||delivered delta|| / ||intended delta||
 N_RANDOM = 8
 N_JROW = 4               # directions taken from the lens's own top rows
 N_LOGIT = 4              # unembedding-aligned directions
@@ -184,6 +198,68 @@ def main():
     print(f"{len(ids_all)}/{len(prompts)} prompts reached the full {SEQ} tokens",
           flush=True)
 
+    # ---------------------------------------------------------------
+    # EPS CALIBRATION. Pick, per layer, the largest perturbation scale
+    # that is (a) delivered faithfully in bf16 and (b) responded to
+    # linearly, so the estimator comparison is not contaminated by
+    # curvature in the ground truth itself.
+    @torch.no_grad()
+    def input_fidelity(ids, L, pos, delta):
+        """||actually delivered delta|| / ||intended delta|| at the source."""
+        got = {}
+
+        def hook(mod, o_in, o):
+            h = o[0] if not torch.is_tensor(o) else o
+            h2 = h.clone()
+            h2[:, pos] = h2[:, pos] + delta.to(h.dtype)
+            got["d"] = (h2[0, pos].float() - h[0, pos].float())
+            return h2 if torch.is_tensor(o) else (h2, *o[1:])
+
+        hd = model.layers[L].register_forward_hook(hook)
+        model.forward(ids)
+        hd.remove()
+        return float(got["d"].norm() / delta.norm())
+
+    calib_pos = positions[-1]
+    calib_prompts = list(ids_all)[:2]
+    calibration, eps_by_layer = [], {}
+    for L in layers:
+        g = torch.Generator().manual_seed(SEED + L)
+        u = torch.randn(lens.jacobians[L].shape[1], generator=g)
+        u = (u / u.norm()).to("cuda", torch.float32)
+        chosen = None
+        for eps in EPS_GRID:                      # ascending
+            ratios, fids = [], []
+            for p in calib_prompts:
+                ids = ids_all[p]
+                with ActivationRecorder(model.layers, at=[L]) as r0:
+                    with torch.no_grad():
+                        model.forward(ids)
+                hn = float(r0.activations[L][0, SKIP_FIRST:].float()
+                           .norm(dim=-1).mean())
+                d = u * (eps * hn)
+                b = baseline(ids, 2)
+                rr = responses(ids, L, calib_pos, [d, d * 2.0]) - b
+                n1 = float(rr[0].norm())
+                ratios.append(float(rr[1].norm() / n1) if n1 > 0 else float("nan"))
+                fids.append(input_fidelity(ids, L, calib_pos, d))
+            row = {"layer": L, "eps": eps,
+                   "scale_ratio": round(float(np.nanmean(ratios)), 3),
+                   "input_fidelity": round(float(np.mean(fids)), 4)}
+            row["linear"] = bool(abs(row["scale_ratio"] - 2.0) <= LIN_TOL)
+            row["measurable"] = bool(row["input_fidelity"] >= FIDELITY_MIN)
+            calibration.append(row)
+            if row["linear"] and row["measurable"]:
+                chosen = eps                      # keep the LARGEST that qualifies
+        eps_by_layer[L] = chosen
+        print(f"  calib L{L}: " + " ".join(
+            f"{r['eps']}:{r['scale_ratio']}{'*' if r['linear'] and r['measurable'] else ''}"
+            for r in calibration if r["layer"] == L)
+            + f"  -> eps={chosen}", flush=True)
+    if all(v is None for v in eps_by_layer.values()):
+        print("NO LINEAR WINDOW at any tested scale for a single-position "
+              "probe — reporting that as the result.", flush=True)
+
     # ---- directions per layer (fixed across prompts so (ii) is comparable)
     dirs_by_layer = {}
     for L in layers:
@@ -214,6 +290,7 @@ def main():
     lin_checks = []
     for L in layers:
         ds, kinds = dirs_by_layer[L]
+        eps_L = eps_by_layer[L] or EPS_GRID[0]
         for pos in positions:
             for p, ids in ids_all.items():
                 key = f"{L}|{pos}|{p}"
@@ -225,7 +302,7 @@ def main():
                         model.forward(ids)
                 hn = float(r0.activations[L][0, SKIP_FIRST:].float()
                            .norm(dim=-1).mean())
-                scale = EPS_REL * hn
+                scale = eps_L * hn
                 deltas = [d * scale for d in ds]
                 base = baseline(ids, len(deltas))
                 resp = responses(ids, L, pos, deltas) - base
@@ -234,10 +311,10 @@ def main():
                 ratio = float(r2[0].norm() / resp[0].norm()) \
                     if float(resp[0].norm()) > 0 else float("nan")
                 lin_checks.append({"layer": L, "pos": pos, "prompt": p,
-                                   "scale_ratio": round(ratio, 3)})
+                                   "eps": eps_L, "scale_ratio": round(ratio, 3)})
                 measured[key] = resp
                 done[key] = {"resp": resp.cpu().tolist(),
-                             "scale_ratio": ratio, "h_norm": hn}
+                             "scale_ratio": ratio, "h_norm": hn, "eps": eps_L}
                 ckpt.write_text(json.dumps(done))
                 print(f"  L{L} pos{pos} prompt{p}: |r|={float(resp.norm(dim=1).mean()):.3f} "
                       f"lin={ratio:.2f}  ({time.time()-t0:.0f}s)", flush=True)
@@ -256,8 +333,8 @@ def main():
                 others = [measured[k] for k in keys if k != key]
                 pos_j = torch.stack(others).mean(dim=0)
                 for di, (d, kind) in enumerate(zip(ds, kinds)):
-                    hn = done[key]["h_norm"]
-                    delta = d * (EPS_REL * hn)
+                    hn, eps_used = done[key]["h_norm"], done[key]["eps"]
+                    delta = d * (eps_used * hn)
                     pred_lens = J @ delta                    # (iii)
                     t_ = truth[di]
                     for name, pred in (("campaign_meanJ", pred_lens),
@@ -315,7 +392,8 @@ def main():
     lin_med = float(np.median([c["scale_ratio"] for c in lin_checks
                                if np.isfinite(c["scale_ratio"])]))
     payload = {
-        "model": slug, "seq_len": SEQ, "eps_rel": EPS_REL,
+        "model": slug, "seq_len": SEQ,
+        "eps_calibration": calibration, "eps_by_layer": eps_by_layer,
         "positions": positions, "layers": layers, "n_prompts": len(ids_all),
         "n_directions": len(dirs_by_layer[layers[0]][0]),
         "decision_rule": {"improve_min": IMPROVE_MIN, "abs_min": ABS_MIN,
