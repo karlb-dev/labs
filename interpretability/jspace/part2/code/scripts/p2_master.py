@@ -79,14 +79,15 @@ def d_trace_rows():
 
 
 def r7_rows():
-    p = RUN_DIR_P2 / "metrics" / "olmo3-think" / "r7_pilot" / "r7_summary.json"
+  for slug in ("olmo3-think", "qwen36-27b"):
+    p = RUN_DIR_P2 / "metrics" / slug / "r7_pilot" / "r7_summary.json"
     if not p.exists():
-        return
+        continue
     d = json.loads(p.read_text())
     src = str(p.relative_to(RUN_DIR_P2))
     for cell, v in d["summary"].items():
         cond, task = cell.split("/")
-        add("olmo3-think", "R7", "protected-dynamic", f"{task}_delta_lp",
+        add(slug, "R7", "protected-dynamic", f"{task}_delta_lp",
             v["mean_delta"], condition=cond, median=v["median_delta"],
             n=v["n"], tier="pilot", decoding="teacher-forced",
             source=src, commit=d.get("provenance", {}).get("code_commit"))

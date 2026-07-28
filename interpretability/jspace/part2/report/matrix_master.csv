@@ -63,6 +63,15 @@ ci_hi,ci_lo,commit,condition,decoding,dose_k,instrument,layer,lens,median,metric
 ,,eeed9adf300e4428eafb52a2435441a5a3726acd,dynJ_protected,teacher-forced,,protected-dynamic,,,0.2082,prose_delta_lp,olmo3-think,20,,,,,metrics/olmo3-think/r7_pilot/r7_summary.json,pilot,0.2358,R7
 ,,eeed9adf300e4428eafb52a2435441a5a3726acd,dynJ_unprotected,teacher-forced,,protected-dynamic,,,0.2663,prose_delta_lp,olmo3-think,20,,,,,metrics/olmo3-think/r7_pilot/r7_summary.json,pilot,0.2872,R7
 ,,eeed9adf300e4428eafb52a2435441a5a3726acd,dynR_protected,teacher-forced,,protected-dynamic,,,0.0746,prose_delta_lp,olmo3-think,20,,,,,metrics/olmo3-think/r7_pilot/r7_summary.json,pilot,0.1358,R7
+,,53cf3874417c09fb11121c66fca6ae424dccf058,dynJ_protected,teacher-forced,,protected-dynamic,,,-0.4035,twohop_delta_lp,qwen36-27b,60,,,,,metrics/qwen36-27b/r7_pilot/r7_summary.json,pilot,-0.9049,R7
+,,53cf3874417c09fb11121c66fca6ae424dccf058,dynJ_unprotected,teacher-forced,,protected-dynamic,,,-0.7962,twohop_delta_lp,qwen36-27b,60,,,,,metrics/qwen36-27b/r7_pilot/r7_summary.json,pilot,-1.2416,R7
+,,53cf3874417c09fb11121c66fca6ae424dccf058,dynR_protected,teacher-forced,,protected-dynamic,,,-0.2095,twohop_delta_lp,qwen36-27b,60,,,,,metrics/qwen36-27b/r7_pilot/r7_summary.json,pilot,-0.2288,R7
+,,53cf3874417c09fb11121c66fca6ae424dccf058,dynJ_protected,teacher-forced,,protected-dynamic,,,0.0327,onehop_delta_lp,qwen36-27b,30,,,,,metrics/qwen36-27b/r7_pilot/r7_summary.json,pilot,-0.057,R7
+,,53cf3874417c09fb11121c66fca6ae424dccf058,dynJ_unprotected,teacher-forced,,protected-dynamic,,,-0.0026,onehop_delta_lp,qwen36-27b,30,,,,,metrics/qwen36-27b/r7_pilot/r7_summary.json,pilot,-0.048,R7
+,,53cf3874417c09fb11121c66fca6ae424dccf058,dynR_protected,teacher-forced,,protected-dynamic,,,0.005,onehop_delta_lp,qwen36-27b,30,,,,,metrics/qwen36-27b/r7_pilot/r7_summary.json,pilot,0.0194,R7
+,,53cf3874417c09fb11121c66fca6ae424dccf058,dynJ_protected,teacher-forced,,protected-dynamic,,,0.367,prose_delta_lp,qwen36-27b,20,,,,,metrics/qwen36-27b/r7_pilot/r7_summary.json,pilot,0.3459,R7
+,,53cf3874417c09fb11121c66fca6ae424dccf058,dynJ_unprotected,teacher-forced,,protected-dynamic,,,0.3793,prose_delta_lp,qwen36-27b,20,,,,,metrics/qwen36-27b/r7_pilot/r7_summary.json,pilot,0.3539,R7
+,,53cf3874417c09fb11121c66fca6ae424dccf058,dynR_protected,teacher-forced,,protected-dynamic,,,0.1143,prose_delta_lp,qwen36-27b,20,,,,,metrics/qwen36-27b/r7_pilot/r7_summary.json,pilot,0.1138,R7
 ,,,,,,paper-occupancy,24,,,occ_median,olmo3-think,,2.0,2.0,,,metrics/olmo3-think/r2_occupancy/r2_occupancy.json,pilot,2.0,R2
 ,,,,,,paper-occupancy,24,,,excess_share,olmo3-think,,,,,,metrics/olmo3-think/r2_occupancy/r2_occupancy.json,pilot,0.0003013806417584419,R2
 ,,,,,,paper-occupancy,32,,,occ_median,olmo3-think,,2.0,2.0,,,metrics/olmo3-think/r2_occupancy/r2_occupancy.json,pilot,2.0,R2

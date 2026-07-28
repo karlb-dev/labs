@@ -154,20 +154,25 @@ tests green, commit `eeed9ad`). Olmo-3-32B-Think, shared descriptive set
 (60 prompts, ~4.9k positions/layer), 3 vocab-sized random control
 dictionaries:
 
-| layer | occupancy median [IQR] | excess variance share | censored |
-|---|---|---|---|
-| L24 | 2 [2,2] | 0.0003 | 0% |
-| L32 | 2 [2,2] | 0.0054 | 0% |
-| L40 | 2 [2,3] | 0.0080 | 0% |
+| model / layer | occupancy median [IQR] | excess variance share |
+|---|---|---|
+| Think L24 / L32 / L40 | 2 / 2 / 2 | 0.0003 / 0.0054 / 0.0080 |
+| Instruct L24 / L32 / L40 | 2 / 2 / 2 | 0.0012 / 0.0057 / 0.0087 |
+| **Qwen3.6-27B** L24 / L32 / L40 (their n=1000 lens) | — / **3 [2,4]** / **4 [3,5]** | — / **0.0101** / **0.0224** |
+| paper (Claude) | 10–25 (k≈25 typical) | 0.06–0.10 |
 
-Paper (Claude): occupancy ~10–25 (k≈25 typical), excess variance 6–10%.
-**Under the paper's own estimator, OLMo-Think's verbalizable workspace is
-~10× thinner in occupancy and ~10–100× thinner in excess variance** — the
-part-1 thinness intuition survives estimator repair, now as a
-commensurable statement. The decisive next cell is the same estimator on
-Qwen3.6-27B (part 1's proxy said paper-range; if that survives, capacity
-is confirmed as a genuine cross-model property under the paper's
-definitions). Instruct runs now; Qwen queued for today's tail.
+**The decisive comparison landed 05:52 (evidence
+`r2-occupancy-qwen36-v1`): Qwen is NOT paper-range under the paper's own
+estimator.** Part-1's "paper-range capacity" was proxy inflation
+(thresholded counts + raw share ≠ marginal-gain occupancy + excess).
+What's real: a graded Qwen>OLMo difference (~2–3×, growing with depth) —
+and an order-of-magnitude gap between ALL tested open models and the
+paper's Claude numbers that cannot be blamed on lens fit size (n=1000 vs
+n=120 read the same way), post-training regime (Think = Instruct), or
+family (OLMo ≈ Qwen within 3×). Remaining suspects for the open-vs-Claude
+gap: training scale/regime (H3/H4 bounded residual) or mean-J lens
+quality per model (H7 — testable via local-J on a subset). This
+consolidates the boundary-of-generalization outcome for capacity.
 
 ## R7 pilot — the paper's protected dynamic ablation, first faithful run (2026-07-28) — tier: PILOT
 
@@ -225,5 +230,31 @@ Other follow-ups: occupancy-conditional split; dose/persistence + C1 load
 battery targeting the tail cohort; Instruct mirror of this grid. Caveats:
 pilot tier, single seed, prose guard shows a real +0.24 NLL/tok fluency
 cost for dynJ (protected included), audit generations coherent.
+
+## R7-Qwen — the protected protocol transfers, and the DISSOCIATION appears (2026-07-28 06:1x) — tier: PILOT
+
+Evidence `r7-protected-dynamic-pilot-qwen-v1`; same runner/config family
+as the Think grid (their n=1000 lens; chunked dictionary build after a
+248k-vocab OOM, fix committed).
+
+| Δ answer-seq lp (mean/median) | dynJ protected | dynJ unprotected | dynR protected |
+|---|---|---|---|
+| two-hop (n=60) | **−0.91 / −0.40** | −1.24 / −0.80 | −0.23 / −0.21 |
+| one-hop (n=30) | **−0.06 / +0.03** | −0.05 / −0.00 | +0.02 / +0.01 |
+| prose ΔNLL/tok (n=20) | +0.35 | +0.35 | +0.11 |
+
+**Reading.** On Qwen the paper's protected protocol yields its signature
+SHAPE: the composed task is broadly damaged (not just a tail — median
+−0.40) while single-hop recall is untouched — even by the unprotected
+variant (−0.05 vs OLMo's −1.71!). Cross-model synthesis: the causal
+dissociation is MODEL-DEPENDENT among open models and tracks the measured
+capacity axis (Qwen occ 3–4 & dissociation-in-miniature; OLMo occ 2 &
+median-null with an indirect hard-item tail). This is the
+capacity↔causal-signature correlation the campaign was designed to
+detect, now visible at pilot tier. Caveats: single seed, unpaired means
+above (paired cluster CIs from the parquet = next CPU pass), Qwen one-hop
+= near-ceiling capitals (C3 hard set must confirm the spared side), and
+fluency does NOT fully survive (+0.35 nats/token vs random's +0.11) — the
+paper's fluency-survives conjunct is at best partial here.
 
 *(sections append here per banked phase)*

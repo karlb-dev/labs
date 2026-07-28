@@ -1,7 +1,7 @@
 {
   "meta": {
-    "generated": "2026-07-28 05:53:13",
-    "n_rows": 82
+    "generated": "2026-07-28 06:01:53",
+    "n_rows": 91
   },
   "rows": [
     {
@@ -924,6 +924,132 @@
       "decoding": "teacher-forced",
       "source": "metrics/olmo3-think/r7_pilot/r7_summary.json",
       "commit": "eeed9adf300e4428eafb52a2435441a5a3726acd"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R7",
+      "instrument": "protected-dynamic",
+      "metric": "twohop_delta_lp",
+      "value": -0.9049,
+      "condition": "dynJ_protected",
+      "median": -0.4035,
+      "n": 60,
+      "tier": "pilot",
+      "decoding": "teacher-forced",
+      "source": "metrics/qwen36-27b/r7_pilot/r7_summary.json",
+      "commit": "53cf3874417c09fb11121c66fca6ae424dccf058"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R7",
+      "instrument": "protected-dynamic",
+      "metric": "twohop_delta_lp",
+      "value": -1.2416,
+      "condition": "dynJ_unprotected",
+      "median": -0.7962,
+      "n": 60,
+      "tier": "pilot",
+      "decoding": "teacher-forced",
+      "source": "metrics/qwen36-27b/r7_pilot/r7_summary.json",
+      "commit": "53cf3874417c09fb11121c66fca6ae424dccf058"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R7",
+      "instrument": "protected-dynamic",
+      "metric": "twohop_delta_lp",
+      "value": -0.2288,
+      "condition": "dynR_protected",
+      "median": -0.2095,
+      "n": 60,
+      "tier": "pilot",
+      "decoding": "teacher-forced",
+      "source": "metrics/qwen36-27b/r7_pilot/r7_summary.json",
+      "commit": "53cf3874417c09fb11121c66fca6ae424dccf058"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R7",
+      "instrument": "protected-dynamic",
+      "metric": "onehop_delta_lp",
+      "value": -0.057,
+      "condition": "dynJ_protected",
+      "median": 0.0327,
+      "n": 30,
+      "tier": "pilot",
+      "decoding": "teacher-forced",
+      "source": "metrics/qwen36-27b/r7_pilot/r7_summary.json",
+      "commit": "53cf3874417c09fb11121c66fca6ae424dccf058"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R7",
+      "instrument": "protected-dynamic",
+      "metric": "onehop_delta_lp",
+      "value": -0.048,
+      "condition": "dynJ_unprotected",
+      "median": -0.0026,
+      "n": 30,
+      "tier": "pilot",
+      "decoding": "teacher-forced",
+      "source": "metrics/qwen36-27b/r7_pilot/r7_summary.json",
+      "commit": "53cf3874417c09fb11121c66fca6ae424dccf058"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R7",
+      "instrument": "protected-dynamic",
+      "metric": "onehop_delta_lp",
+      "value": 0.0194,
+      "condition": "dynR_protected",
+      "median": 0.005,
+      "n": 30,
+      "tier": "pilot",
+      "decoding": "teacher-forced",
+      "source": "metrics/qwen36-27b/r7_pilot/r7_summary.json",
+      "commit": "53cf3874417c09fb11121c66fca6ae424dccf058"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R7",
+      "instrument": "protected-dynamic",
+      "metric": "prose_delta_lp",
+      "value": 0.3459,
+      "condition": "dynJ_protected",
+      "median": 0.367,
+      "n": 20,
+      "tier": "pilot",
+      "decoding": "teacher-forced",
+      "source": "metrics/qwen36-27b/r7_pilot/r7_summary.json",
+      "commit": "53cf3874417c09fb11121c66fca6ae424dccf058"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R7",
+      "instrument": "protected-dynamic",
+      "metric": "prose_delta_lp",
+      "value": 0.3539,
+      "condition": "dynJ_unprotected",
+      "median": 0.3793,
+      "n": 20,
+      "tier": "pilot",
+      "decoding": "teacher-forced",
+      "source": "metrics/qwen36-27b/r7_pilot/r7_summary.json",
+      "commit": "53cf3874417c09fb11121c66fca6ae424dccf058"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R7",
+      "instrument": "protected-dynamic",
+      "metric": "prose_delta_lp",
+      "value": 0.1138,
+      "condition": "dynR_protected",
+      "median": 0.1143,
+      "n": 20,
+      "tier": "pilot",
+      "decoding": "teacher-forced",
+      "source": "metrics/qwen36-27b/r7_pilot/r7_summary.json",
+      "commit": "53cf3874417c09fb11121c66fca6ae424dccf058"
     },
     {
       "model": "olmo3-think",
