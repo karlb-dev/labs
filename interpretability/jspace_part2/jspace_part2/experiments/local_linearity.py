@@ -65,7 +65,15 @@ PROMPTS = [
     "the outer layers rebound outward in an explosion that briefly "
     "outshines an entire galaxy of ordinary stars",
 ]
-EPS = 0.02                  # relative to mean ||h|| at the source layer
+# Perturbation scale, relative to mean ||h|| at the source layer. SWEPT,
+# because "nonlinear" is meaningless without saying at what scale: a
+# Jacobian only claims to hold as eps -> 0. If nonlinearity vanishes at
+# small eps, the map is genuinely locally linear and the fitted J's
+# inaccuracy is estimation (H7); if it persists down to 0.5%, the
+# nonlinearity is intrinsic at any scale the interventions care about.
+# (Ablation perturbs far harder than any of these, so nonlinearity at
+# small eps implies it at intervention scale a fortiori.)
+EPS_LIST = [0.005, 0.01, 0.02, 0.05]
 N_DIRECTIONS = 3
 SKIP_FIRST = 16
 LINEAR_COS, LINEAR_RATIO_TOL = 0.95, 0.25   # |ratio-2| <= tol
@@ -80,7 +88,7 @@ def main():
     git = require_clean_tree("--allow-dirty" in sys.argv)
     slug = arg("--model", "olmo3-think")
     cfg = CFG[slug]
-    out = RUN_DIR_P2 / "metrics" / slug / "local_linearity.json"
+    out = RUN_DIR_P2 / "metrics" / slug / "local_linearity_epssweep.json"
     if out.exists() and "--force" not in sys.argv:
         print("exists; skipping")
         return
@@ -124,60 +132,75 @@ def main():
             h_src = r0.activations[L][0][mask].float()
             hn = float(h_src.norm(dim=-1).mean())
             d = h_src.shape[-1]
-            for k in range(N_DIRECTIONS):
-                g1 = torch.Generator().manual_seed(int(rng.integers(0, 2**31)))
-                g2 = torch.Generator().manual_seed(int(rng.integers(0, 2**31)))
-                a = torch.randn(d, generator=g1)
-                a = (a / a.norm()).to("cuda", torch.float32) * (EPS * hn)
-                b = torch.randn(d, generator=g2)
-                b = (b / b.norm()).to("cuda", torch.float32) * (EPS * hn)
+            for EPS in EPS_LIST:
+              for k in range(N_DIRECTIONS):
+                  g1 = torch.Generator().manual_seed(int(rng.integers(0, 2**31)))
+                  g2 = torch.Generator().manual_seed(int(rng.integers(0, 2**31)))
+                  a = torch.randn(d, generator=g1)
+                  a = (a / a.norm()).to("cuda", torch.float32) * (EPS * hn)
+                  b = torch.randn(d, generator=g2)
+                  b = (b / b.norm()).to("cuda", torch.float32) * (EPS * hn)
 
-                r1 = response(ids, L, a, mask, base_sum)
-                r2 = response(ids, L, 2 * a, mask, base_sum)
-                rb = response(ids, L, b, mask, base_sum)
-                rab = response(ids, L, a + b, mask, base_sum)
+                  r1 = response(ids, L, a, mask, base_sum)
+                  r2 = response(ids, L, 2 * a, mask, base_sum)
+                  rb = response(ids, L, b, mask, base_sum)
+                  rab = response(ids, L, a + b, mask, base_sum)
 
-                n1 = float(r1.norm())
-                scale_cos = float(torch.nn.functional.cosine_similarity(
-                    r1, r2, dim=0)) if n1 > 0 else 0.0
-                scale_ratio = (float(r2.norm()) / n1) if n1 > 0 else None
-                add = r1 + rb
-                add_cos = float(torch.nn.functional.cosine_similarity(
-                    rab, add, dim=0)) if float(add.norm()) > 0 else 0.0
-                add_err = (float((rab - add).norm() / rab.norm())
-                           if float(rab.norm()) > 0 else None)
-                recs.append({"prompt": pi, "layer": L, "dir": k,
-                             "scale_cos": scale_cos,
-                             "scale_ratio": scale_ratio,
-                             "add_cos": add_cos, "add_rel_err": add_err})
+                  n1 = float(r1.norm())
+                  scale_cos = float(torch.nn.functional.cosine_similarity(
+                      r1, r2, dim=0)) if n1 > 0 else 0.0
+                  scale_ratio = (float(r2.norm()) / n1) if n1 > 0 else None
+                  add = r1 + rb
+                  add_cos = float(torch.nn.functional.cosine_similarity(
+                      rab, add, dim=0)) if float(add.norm()) > 0 else 0.0
+                  add_err = (float((rab - add).norm() / rab.norm())
+                             if float(rab.norm()) > 0 else None)
+                  recs.append({"prompt": pi, "layer": L, "dir": k, "eps": EPS,
+                               "scale_cos": scale_cos,
+                               "scale_ratio": scale_ratio,
+                               "add_cos": add_cos, "add_rel_err": add_err})
         print(f"  prompt {pi} done ({time.time()-t0:.0f}s)", flush=True)
 
     by_layer = {}
     for L in layers:
-        sub = [r for r in recs if r["layer"] == L]
+      for EPS in EPS_LIST:
+        sub = [r for r in recs if r["layer"] == L and r["eps"] == EPS]
         sc = float(np.median([r["scale_cos"] for r in sub]))
         sr = float(np.median([r["scale_ratio"] for r in sub]))
         ac = float(np.median([r["add_cos"] for r in sub]))
         ae = float(np.median([r["add_rel_err"] for r in sub]))
         linear = (sc >= LINEAR_COS and abs(sr - 2.0) <= LINEAR_RATIO_TOL
                   and ac >= LINEAR_COS)
-        by_layer[L] = {"scale_cos": round(sc, 4), "scale_ratio": round(sr, 4),
-                       "additivity_cos": round(ac, 4),
-                       "additivity_rel_err": round(ae, 4),
-                       "locally_linear": bool(linear)}
-    lin = [L for L in layers if by_layer[L]["locally_linear"]]
-    nonlin = [L for L in layers if not by_layer[L]["locally_linear"]]
+        by_layer[f"{L}@{EPS}"] = {
+            "layer": L, "eps": EPS,
+            "scale_cos": round(sc, 4), "scale_ratio": round(sr, 4),
+            "additivity_cos": round(ac, 4),
+            "additivity_rel_err": round(ae, 4),
+            "locally_linear": bool(linear)}
+    lin = [k for k, v in by_layer.items() if v["locally_linear"]]
+    nonlin = [k for k, v in by_layer.items() if not v["locally_linear"]]
+    # does nonlinearity VANISH as eps shrinks? (the decisive question)
+    smallest = min(EPS_LIST)
+    lin_at_small = [v["layer"] for v in by_layer.values()
+                    if v["eps"] == smallest and v["locally_linear"]]
+    nonlin_at_small = [v["layer"] for v in by_layer.values()
+                       if v["eps"] == smallest and not v["locally_linear"]]
     summ = {
-        "model": slug, "eps_relative": EPS, "n_directions": N_DIRECTIONS,
+        "model": slug, "eps_swept": EPS_LIST, "n_directions": N_DIRECTIONS,
         "criterion": {"scale_cos_min": LINEAR_COS,
                       "scale_ratio_target": 2.0,
                       "scale_ratio_tol": LINEAR_RATIO_TOL,
                       "additivity_cos_min": LINEAR_COS},
         "by_layer": by_layer,
-        "locally_linear_layers": lin, "nonlinear_layers": nonlin,
+        "locally_linear_cells": lin, "nonlinear_cells": nonlin,
+        "smallest_eps": smallest,
+        "linear_at_smallest_eps": sorted(set(lin_at_small)),
+        "nonlinear_at_smallest_eps": sorted(set(nonlin_at_small)),
         "reading": (
-            f"{slug}: superposition test with NO reference to any fitted J. "
-            f"Locally linear at {lin}; nonlinear at {nonlin}. "
+            f"{slug}: superposition test with NO reference to any fitted J, "
+            f"swept over perturbation scale {EPS_LIST}. At the SMALLEST "
+            f"scale ({smallest}): linear at layers {sorted(set(lin_at_small))}, "
+            f"still NONLINEAR at {sorted(set(nonlin_at_small))}. "
             + ("Where the map IS locally linear but the fitted J predicts "
                "poorly, the fault is ESTIMATION (position/prompt averaging) "
                "— H7 mean-J mismatch, a fixable methodological problem. "
@@ -187,13 +210,13 @@ def main():
                "that depth." if nonlin else "")),
         "seconds": round(time.time() - t0)}
     prov = Provenance(
-        evidence_id=f"local-linearity-{slug}-v1", tier="pilot",
+        evidence_id=f"local-linearity-epssweep-{slug}-v1", tier="pilot",
         command=("python -m jspace_part2.experiments.local_linearity "
                  f"--model {slug}"),
         model=resolve_model(cfg["model"]), seed=SEED)
     write_result({"summary": summ, "records": recs}, out, prov)
     registry_append({
-        "evidence_id": f"local-linearity-{slug}-v1", "tier": "pilot",
+        "evidence_id": f"local-linearity-epssweep-{slug}-v1", "tier": "pilot",
         "what": (f"Local-linearity (superposition) test, no fitted J "
                  f"involved ({slug}): {summ['reading']}"),
         "command": prov.command, "code_commit": git["code_commit"],
