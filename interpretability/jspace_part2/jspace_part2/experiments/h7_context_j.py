@@ -88,9 +88,12 @@ PROMPTS = [
     "Early photographic processes required exposures measured in minutes, which is why portraits from that era show sitters braced against hidden supports, and why streets in city photographs appear deserted despite having been crowded at the time",
     "Sediment layers record the history of a landscape, since each deposit preserves evidence of the conditions under which it formed, and an unconformity where layers are missing marks an interval during which material was eroded rather than laid down",
 ]
-SEQ = 96                 # fixed length: position index comparable across prompts
+# Fixed length so a position INDEX is comparable across prompts (estimator
+# (ii) needs that). Set from the shortest prompt at runtime; every prompt
+# is truncated to it, so no prompt is padded.
+SEQ_MAX = 96
 SKIP_FIRST = 16          # jlens default; matches the fitted lens
-POSITIONS = [24, 60, 95]     # early-valid, mid, final
+POSITION_FRACS = [0.55, 0.80, 1.00]   # early-valid, mid, final (of SEQ)
 EPS_REL = 0.10           # scale independently shown linear on this model
 N_RANDOM = 8
 N_JROW = 4               # directions taken from the lens's own top rows
@@ -130,8 +133,16 @@ def main():
     layers = [L for L in (BAND + [LATE_CONTROL]) if L in lens.jacobians]
     target = model.n_layers - 1
     prompts = PROMPTS[:4] if quick else PROMPTS
-    positions = POSITIONS[:1] if quick else POSITIONS
+    lens_ = [len(tok(p).input_ids) for p in prompts]
+    SEQ = min(min(lens_), SEQ_MAX)
+    if SEQ <= SKIP_FIRST + 4:
+        raise SystemExit(f"prompts too short: SEQ={SEQ} vs SKIP_FIRST={SKIP_FIRST}")
+    positions = sorted({min(SEQ - 1, max(SKIP_FIRST, int(f * SEQ) - 1))
+                        for f in POSITION_FRACS})
+    if quick:
+        positions = positions[-1:]
     print(f"layers {layers} · target {target} · {len(prompts)} prompts · "
+          f"SEQ {SEQ} (token lengths {min(lens_)}-{max(lens_)}) · "
           f"positions {positions}", flush=True)
 
     rng = np.random.default_rng(SEED)
@@ -323,14 +334,20 @@ def main():
             "gain_in_majority_of_prompts": bool(not_one_prompt)},
         "records": recs,
     }
+    if quick:
+        # a smoke run is not evidence
+        print(json.dumps(payload["verdict"], indent=1))
+        print(f"[--quick] smoke run: NOT registered. seconds "
+              f"{round(time.time() - t0)}")
+        return
     prov = Provenance(
-        evidence_id=f"h7-context-j-{slug}-v1", tier="pilot",
+        evidence_id=f"h7-context-j-{slug}-v2", tier="pilot",
         command=f"python -m jspace_part2.experiments.h7_context_j --model {slug}",
         inputs={"lens": sha256_file(cfg["lens"])},
         model=resolve_model(cfg["model"]), seed=SEED)
     env = write_result_v2(payload, out, prov)
     registry_append({
-        "evidence_id": f"h7-context-j-{slug}-v1", "tier": "pilot",
+        "evidence_id": f"h7-context-j-{slug}-v2", "tier": "pilot",
         "what": (f"H7/D2 decomposition of the averaged-Jacobian mismatch on "
                  f"{slug}, using POSITION-SPECIFIC perturbations (a uniform "
                  f"probe cannot see position-averaging loss: sum_s J_s@d == "
