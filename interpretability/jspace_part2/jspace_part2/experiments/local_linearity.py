@@ -73,7 +73,7 @@ PROMPTS = [
 # nonlinearity is intrinsic at any scale the interventions care about.
 # (Ablation perturbs far harder than any of these, so nonlinearity at
 # small eps implies it at intervention scale a fortiori.)
-EPS_LIST = [0.005, 0.01, 0.02, 0.05]
+EPS_LIST = [0.02, 0.05, 0.10, 0.20]
 N_DIRECTIONS = 3
 SKIP_FIRST = 16
 LINEAR_COS, LINEAR_RATIO_TOL = 0.95, 0.25   # |ratio-2| <= tol
@@ -88,7 +88,7 @@ def main():
     git = require_clean_tree("--allow-dirty" in sys.argv)
     slug = arg("--model", "olmo3-think")
     cfg = CFG[slug]
-    out = RUN_DIR_P2 / "metrics" / slug / "local_linearity_epssweep.json"
+    out = RUN_DIR_P2 / "metrics" / slug / "local_linearity_v3.json"
     if out.exists() and "--force" not in sys.argv:
         print("exists; skipping")
         return
@@ -107,11 +107,14 @@ def main():
     rng = np.random.default_rng(SEED)
     recs = []
 
-    def response(ids, L, delta, mask, base_sum):
-        def hook(mod, inp, o, _d=delta, _m=mask):
+    def response(ids, L, delta, mask, base_sum, realized=None):
+        def hook(mod, inp, o, _d=delta, _m=mask, _r=realized):
             h = o[0] if not torch.is_tensor(o) else o
             h = h.clone()
+            before = h[0, _m].float().clone()
             h[0, _m] = h[0, _m] + _d.to(h.dtype)
+            if _r is not None:
+                _r.append((h[0, _m].float() - before).mean(dim=0))
             return h if torch.is_tensor(o) else (h, *o[1:])
         hdl = model.layers[L].register_forward_hook(hook)
         with ActivationRecorder(model.layers, at=[target]) as r:
@@ -141,10 +144,14 @@ def main():
                   b = torch.randn(d, generator=g2)
                   b = (b / b.norm()).to("cuda", torch.float32) * (EPS * hn)
 
-                  r1 = response(ids, L, a, mask, base_sum)
-                  r2 = response(ids, L, 2 * a, mask, base_sum)
+                  q1, q2 = [], []
+                  r1 = response(ids, L, a, mask, base_sum, q1)
+                  r2 = response(ids, L, 2 * a, mask, base_sum, q2)
                   rb = response(ids, L, b, mask, base_sum)
                   rab = response(ids, L, a + b, mask, base_sum)
+                  # input-side fidelity: did bf16 preserve the perturbation?
+                  in_cos = float(torch.nn.functional.cosine_similarity(
+                      q2[0] / 2, q1[0], dim=0)) if q1 and q2 else None
 
                   n1 = float(r1.norm())
                   scale_cos = float(torch.nn.functional.cosine_similarity(
@@ -156,6 +163,8 @@ def main():
                   add_err = (float((rab - add).norm() / rab.norm())
                              if float(rab.norm()) > 0 else None)
                   recs.append({"prompt": pi, "layer": L, "dir": k, "eps": EPS,
+                               "input_fidelity_cos": in_cos,
+                               "resp_norm": n1,
                                "scale_cos": scale_cos,
                                "scale_ratio": scale_ratio,
                                "add_cos": add_cos, "add_rel_err": add_err})
@@ -169,22 +178,31 @@ def main():
         sr = float(np.median([r["scale_ratio"] for r in sub]))
         ac = float(np.median([r["add_cos"] for r in sub]))
         ae = float(np.median([r["add_rel_err"] for r in sub]))
-        linear = (sc >= LINEAR_COS and abs(sr - 2.0) <= LINEAR_RATIO_TOL
-                  and ac >= LINEAR_COS)
+        infid = float(np.median([r["input_fidelity_cos"] for r in sub
+                                 if r["input_fidelity_cos"] is not None]))
+        # only judge linearity where bf16 actually delivered the input
+        judged = infid >= 0.99
+        linear = (judged and sc >= LINEAR_COS
+                  and abs(sr - 2.0) <= LINEAR_RATIO_TOL and ac >= LINEAR_COS)
         by_layer[f"{L}@{EPS}"] = {
             "layer": L, "eps": EPS,
             "scale_cos": round(sc, 4), "scale_ratio": round(sr, 4),
             "additivity_cos": round(ac, 4),
             "additivity_rel_err": round(ae, 4),
+            "input_fidelity_cos": round(infid, 4),
+            "measurable": bool(judged),
             "locally_linear": bool(linear)}
     lin = [k for k, v in by_layer.items() if v["locally_linear"]]
     nonlin = [k for k, v in by_layer.items() if not v["locally_linear"]]
     # does nonlinearity VANISH as eps shrinks? (the decisive question)
-    smallest = min(EPS_LIST)
-    lin_at_small = [v["layer"] for v in by_layer.values()
-                    if v["eps"] == smallest and v["locally_linear"]]
-    nonlin_at_small = [v["layer"] for v in by_layer.values()
-                       if v["eps"] == smallest and not v["locally_linear"]]
+    largest = max(EPS_LIST)
+    lin_at_large = [v["layer"] for v in by_layer.values()
+                    if v["eps"] == largest and v["locally_linear"]]
+    nonlin_at_large = [v["layer"] for v in by_layer.values()
+                       if v["eps"] == largest and v["measurable"]
+                       and not v["locally_linear"]]
+    unmeasurable = sorted({v["layer"] for v in by_layer.values()
+                           if not v["measurable"]})
     summ = {
         "model": slug, "eps_swept": EPS_LIST, "n_directions": N_DIRECTIONS,
         "criterion": {"scale_cos_min": LINEAR_COS,
@@ -193,14 +211,18 @@ def main():
                       "additivity_cos_min": LINEAR_COS},
         "by_layer": by_layer,
         "locally_linear_cells": lin, "nonlinear_cells": nonlin,
-        "smallest_eps": smallest,
-        "linear_at_smallest_eps": sorted(set(lin_at_small)),
-        "nonlinear_at_smallest_eps": sorted(set(nonlin_at_small)),
+        "largest_eps": largest,
+        "linear_at_largest_eps": sorted(set(lin_at_large)),
+        "nonlinear_at_largest_eps": sorted(set(nonlin_at_large)),
+        "layers_unmeasurable_at_some_eps": unmeasurable,
         "reading": (
             f"{slug}: superposition test with NO reference to any fitted J, "
-            f"swept over perturbation scale {EPS_LIST}. At the SMALLEST "
-            f"scale ({smallest}): linear at layers {sorted(set(lin_at_small))}, "
-            f"still NONLINEAR at {sorted(set(nonlin_at_small))}. "
+            f"swept over perturbation scale {EPS_LIST} (v3 — v1 was "
+            f"withdrawn for a bf16 floor; cells whose input fidelity < 0.99 "
+            f"are marked unmeasurable rather than nonlinear). At the "
+            f"LARGEST, best-measured scale ({largest}): linear at layers "
+            f"{sorted(set(lin_at_large))}, genuinely NONLINEAR at "
+            f"{sorted(set(nonlin_at_large))}. "
             + ("Where the map IS locally linear but the fitted J predicts "
                "poorly, the fault is ESTIMATION (position/prompt averaging) "
                "— H7 mean-J mismatch, a fixable methodological problem. "
@@ -210,13 +232,13 @@ def main():
                "that depth." if nonlin else "")),
         "seconds": round(time.time() - t0)}
     prov = Provenance(
-        evidence_id=f"local-linearity-epssweep-{slug}-v1", tier="pilot",
+        evidence_id=f"local-linearity-v3-{slug}", tier="pilot",
         command=("python -m jspace_part2.experiments.local_linearity "
                  f"--model {slug}"),
         model=resolve_model(cfg["model"]), seed=SEED)
     write_result({"summary": summ, "records": recs}, out, prov)
     registry_append({
-        "evidence_id": f"local-linearity-epssweep-{slug}-v1", "tier": "pilot",
+        "evidence_id": f"local-linearity-v3-{slug}", "tier": "pilot",
         "what": (f"Local-linearity (superposition) test, no fitted J "
                  f"involved ({slug}): {summ['reading']}"),
         "command": prov.command, "code_commit": git["code_commit"],
