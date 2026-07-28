@@ -1,0 +1,98 @@
+{
+  "cells": {
+    "dynJ_protected/twohop": {
+      "estimate": -0.518,
+      "ci_low": -0.87,
+      "ci_high": -0.117,
+      "n_items": 60,
+      "n_clusters": 22
+    },
+    "dynJ_unprotected/twohop": {
+      "estimate": -1.131,
+      "ci_low": -1.624,
+      "ci_high": -0.651,
+      "n_items": 60,
+      "n_clusters": 22
+    },
+    "dynR_protected/twohop": {
+      "estimate": -0.155,
+      "ci_low": -0.624,
+      "ci_high": 0.108,
+      "n_items": 60,
+      "n_clusters": 22
+    },
+    "dynJ_protected/onehop": {
+      "estimate": -0.586,
+      "ci_low": -1.118,
+      "ci_high": -0.119,
+      "n_items": 30,
+      "n_clusters": 30
+    },
+    "dynJ_unprotected/onehop": {
+      "estimate": -1.707,
+      "ci_low": -2.242,
+      "ci_high": -1.214,
+      "n_items": 30,
+      "n_clusters": 30
+    },
+    "dynR_protected/onehop": {
+      "estimate": 0.09,
+      "ci_low": -0.12,
+      "ci_high": 0.29,
+      "n_items": 30,
+      "n_clusters": 30
+    },
+    "dynJ_protected/prose": {
+      "estimate": 0.236,
+      "ci_low": 0.201,
+      "ci_high": 0.273,
+      "n_items": 20,
+      "n_clusters": 20
+    },
+    "dynJ_unprotected/prose": {
+      "estimate": 0.287,
+      "ci_low": 0.256,
+      "ci_high": 0.321,
+      "n_items": 20,
+      "n_clusters": 20
+    },
+    "dynR_protected/prose": {
+      "estimate": 0.136,
+      "ci_low": 0.057,
+      "ci_high": 0.231,
+      "n_items": 20,
+      "n_clusters": 20
+    }
+  },
+  "method": {
+    "estimand": "paired per-item delta vs clean baseline",
+    "resample": "family-clustered bootstrap, percentile interval",
+    "n_boot": 4000,
+    "seed": 4242
+  },
+  "supersedes_orphan": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/olmo3-think/r7_pilot/r7_paired_ci.json",
+  "agreement_with_orphan": {
+    "cells_compared": 9,
+    "cells_disagreeing": 0,
+    "diffs": {}
+  },
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "r7-paired-ci-olmo3-think-v1",
+    "tier": "pilot",
+    "code_commit": "74ba56cbfd6637cb94653484259bf6bdb67b73a3",
+    "dirty_tree": true,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.r7_paired_ci --model olmo3-think",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "per_item": "3ad43bec07f2a600b9e02a85e5be5bd84a0e96b50ce2c01aa225968b9ca68218"
+    },
+    "model": null,
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T16:02:03Z"
+  }
+}
