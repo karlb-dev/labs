@@ -163,7 +163,127 @@ def f2_b3_frozen_logit():
     log(f"wrote {out}")
 
 
-FIGS = [f1_a0_transfer, f2_b3_frozen_logit]
+def f3_r7_protected():
+    """p2f3 — R7: the paper's protected dynamic ablation vs unprotected."""
+    import pandas as pd
+    base = RUN_DIR_P2 / "metrics" / "olmo3-think" / "r7_pilot"
+    if not (base / "r7_per_item.parquet").exists():
+        return
+    df = pd.read_parquet(base / "r7_per_item.parquet")
+    cr_path = base / "r7_cleanrank.json"
+    cr = {r["item_id"]: r["clean_rank"]
+          for r in json.loads(cr_path.read_text())["rows"]} \
+        if cr_path.exists() else {}
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.6, 3.8),
+                                 gridspec_kw={"width_ratios": [1, 1.15]})
+    conds = [("dynJ_protected", "dyn-J protected (paper)", PAL["J"], None),
+             ("dynJ_unprotected", "dyn-J unprotected", PAL["J"], "///"),
+             ("dynR_protected", "dyn-random protected", PAL["random"], None)]
+    tasks = [("twohop", 0), ("onehop", 1)]
+    for i, (cond, lab, col, hat) in enumerate(conds):
+        for tname, tx in tasks:
+            sub = df[df.task == tname].pivot_table(
+                index="item_id", columns="condition", values="score",
+                aggfunc="first")
+            delta = (sub[cond] - sub["none"]).dropna()
+            x = tx + (i - 1) * 0.22
+            m = float(delta.mean())
+            se = float(delta.std() / len(delta) ** 0.5)
+            ax.bar(x, m, width=0.18, color=col, hatch=hat,
+                   edgecolor="white", linewidth=0.8,
+                   label=lab if tx == 0 else None)
+            ax.errorbar(x, m, yerr=2 * se, fmt="none", ecolor=PAL["ink"],
+                        capsize=2.5, lw=1)
+            ax.plot([x - 0.09, x + 0.09],
+                    [float(delta.median())] * 2, color=PAL["ink"], lw=1.6)
+            ax.text(x, m - 0.13, f"{m:+.2f}", ha="center", fontsize=6.8,
+                    color=PAL["ink"])
+    ax.axhline(0, color=PAL["muted"], lw=0.9)
+    ax.set_xticks([0, 1])
+    ax.set_xticklabels(["two-hop (n=60)", "one-hop (n=30)"])
+    ax.set_ylabel("Δ answer-sequence logprob vs baseline (nats)")
+    ax.legend(fontsize=7, frameon=False, loc="lower left")
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
+    ax.set_title("R7: protection flips the median to ~0  [pilot]",
+                 fontsize=9, loc="left")
+
+    sub = df[df.task == "twohop"].pivot_table(
+        index="item_id", columns="condition", values="score", aggfunc="first")
+    dp = sub["dynJ_protected"] - sub["none"]
+    du = sub["dynJ_unprotected"] - sub["none"]
+    prot = [cr.get(i, 1) <= 10 for i in sub.index]
+    for flag, col, lab in ((True, PAL["J"], "answer in clean top-10 (protected)"),
+                           (False, PAL["random"], "answer rank>10 (unprotected)")):
+        xs = [du[i] for i, f in zip(sub.index, prot) if f == flag]
+        ys = [dp[i] for i, f in zip(sub.index, prot) if f == flag]
+        bx.scatter(xs, ys, s=26, color=col, alpha=0.85, edgecolor="white",
+                   linewidth=0.6, label=lab, zorder=3)
+    lim = (min(du.min(), dp.min()) - 0.4, max(du.max(), dp.max()) + 0.4)
+    bx.plot(lim, lim, lw=0.9, color=PAL["muted"])
+    bx.axhline(-1, ls=(0, (3, 3)), lw=0.9, color=PAL["muted"])
+    bx.text(lim[0] + 0.1, -1.15, "tail threshold", fontsize=6.8,
+            color=PAL["muted"], va="top")
+    bx.set_xlabel("unprotected Δlp")
+    bx.set_ylabel("protected Δlp")
+    bx.legend(fontsize=7, frameon=False, loc="upper left")
+    bx.set_title("per-item: the tail is mostly PROTECTED items",
+                 fontsize=9, loc="left")
+    fig.tight_layout()
+    fig.savefig(FIGDIR / "p2f3_r7_protected.png", dpi=200,
+                bbox_inches="tight")
+    plt.close(fig)
+    log("wrote p2f3_r7_protected.png")
+
+
+def f4_r2_occupancy():
+    """p2f4 — paper-defined occupancy + excess variance vs the paper band."""
+    data = {}
+    for slug, lab in (("olmo3-think", "OLMo-3-32B-Think"),
+                      ("olmo31-instruct", "Olmo-3.1-32B-Instruct"),
+                      ("qwen36-27b", "Qwen3.6-27B")):
+        p = RUN_DIR_P2 / "metrics" / slug / "r2_occupancy" / "r2_occupancy.json"
+        if p.exists():
+            data[lab] = json.loads(p.read_text())["per_layer"]
+    if not data:
+        return
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(9.2, 3.5))
+    colors = {"OLMo-3-32B-Think": PAL["J"],
+              "Olmo-3.1-32B-Instruct": PAL["nonJ"],
+              "Qwen3.6-27B": PAL["frozen_logit"]}
+    for lab, per in data.items():
+        Ls = sorted(int(l) for l in per)
+        ax.plot(Ls, [per[str(l)]["occ_median"] for l in Ls], "o-", ms=6,
+                lw=1.6, color=colors[lab], label=lab)
+        bx.plot(Ls, [max(per[str(l)]["excess_share"], 1e-5) for l in Ls],
+                "o-", ms=6, lw=1.6, color=colors[lab], label=lab)
+    ax.axhspan(10, 25, color=PAL["grid"], zorder=0)
+    ax.text(ax.get_xlim()[1], 17, " paper (Claude)\n occupancy 10–25",
+            fontsize=6.8, color=PAL["muted"], va="center")
+    ax.set_ylim(0, 28)
+    ax.set_ylabel("occupancy (median, frozen crossing rule)")
+    ax.set_xlabel("layer")
+    ax.legend(fontsize=7, frameon=False)
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
+    bx.set_yscale("log")
+    bx.axhspan(0.06, 0.10, color=PAL["grid"], zorder=0)
+    bx.text(bx.get_xlim()[1], 0.077, " paper 6–10%", fontsize=6.8,
+            color=PAL["muted"], va="center")
+    bx.set_ylabel("excess variance share (log)")
+    bx.set_xlabel("layer")
+    bx.grid(axis="y", which="both")
+    bx.set_axisbelow(True)
+    fig.suptitle("R2 — paper-defined capacity estimator  [pilot]",
+                 fontsize=9.5, x=0.01, ha="left")
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    fig.savefig(FIGDIR / "p2f4_r2_occupancy.png", dpi=200,
+                bbox_inches="tight")
+    plt.close(fig)
+    log("wrote p2f4_r2_occupancy.png")
+
+
+FIGS = [f1_a0_transfer, f2_b3_frozen_logit, f3_r7_protected, f4_r2_occupancy]
 
 
 def main():

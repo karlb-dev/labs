@@ -86,7 +86,50 @@ bridge more weakly --- itself an H1-flavored datum.
 
 \section{Workstream B}
 
-% \subsection{B3 --- frozen-logit control} (running; f2 lands here)
+\subsection{B3 --- does the causal handle need the Jacobian? [exploratory pilot]}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.92\linewidth]{figures/p2f2_b3_frozen_logit.png}
+\caption{\textbf{B3.} The frozen-\emph{logit} dictionary (no Jacobian,
+violet) reproduces $\sim$53\% of frozen-J's two-hop logprob deletion
+($-1.54$ vs $-2.90$ nats) and the \emph{identical} one-hop collapse
+(0.23=0.23), while the random twin sits on baseline. Output-aligned
+directions alone carry much of the part-1 marquee effect; the geometry
+control family (R3) adjudicates the rest.}
+\end{figure}
+
+\section{Workstream R --- assay repair (the addendum's mandate)}
+
+\subsection{R7 pilot --- the paper's output-protected ablation, run faithfully}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{figures/p2f3_r7_protected.png}
+\caption{\textbf{R7 pilot (Think).} Left: with the paper's clean-output
+top-10 protection, the \emph{median} item is untouched (two-hop $+0.02$,
+one-hop $+0.01$ nats) while the unprotected twin deletes hard
+($-0.55$/$-1.56$ median) --- part-1's live-ablation damage was mostly
+output-stream deletion (H2, causal form). Right: a J-specific tail
+survives protection (16/60 two-hop items lose $>1$ nat; protected-random
+on the same items: $+0.34$), and 13 of those 16 have the answer at clean
+rank 1--3 --- \emph{explicitly protected yet still deleted}: indirect
+J-content damage (bridge-entity reading), the confirmatory grid's prime
+target.}
+\end{figure}
+
+\subsection{R2 --- capacity under the paper's own estimator}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.92\linewidth]{figures/p2f4_r2_occupancy.png}
+\caption{\textbf{R2 pilot.} Marginal-gain occupancy (frozen crossing
+rule, 3 random control dictionaries) and excess variance share at median
+occupancy. Both OLMo siblings: occupancy median 2, excess $\le 0.9\%$ ---
+far below the paper's Claude band (10--25, 6--10\%), identical across the
+post-training pair. The Qwen recompute under this same estimator is the
+decisive cross-model capacity cell.}
+\end{figure}
 
 \section*{Reproducibility}
 

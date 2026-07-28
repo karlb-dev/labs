@@ -1,5 +1,27 @@
 {
-  "slices": {},
+  "slices": {
+    "0": {
+      "prompts_done": 30,
+      "peak_vram_gb": 80.6,
+      "elapsed_s": 4571,
+      "lens_file": "olmo31instruct_lensB_slice0.pt",
+      "n_prompts": 30
+    },
+    "1": {
+      "prompts_done": 30,
+      "peak_vram_gb": 80.6,
+      "elapsed_s": 4703,
+      "lens_file": "olmo31instruct_lensB_slice1.pt",
+      "n_prompts": 30
+    },
+    "2": {
+      "prompts_done": 30,
+      "peak_vram_gb": 80.6,
+      "elapsed_s": 4717,
+      "lens_file": "olmo31instruct_lensB_slice2.pt",
+      "n_prompts": 30
+    }
+  },
   "model": "allenai/Olmo-3.1-32B-Instruct",
   "draw": "b",
   "corpus": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727/config/prompts/fitting_corpus_drawB.jsonl",

@@ -78,10 +78,41 @@ def d_trace_rows():
                 source=src)
 
 
+def r7_rows():
+    p = RUN_DIR_P2 / "metrics" / "olmo3-think" / "r7_pilot" / "r7_summary.json"
+    if not p.exists():
+        return
+    d = json.loads(p.read_text())
+    src = str(p.relative_to(RUN_DIR_P2))
+    for cell, v in d["summary"].items():
+        cond, task = cell.split("/")
+        add("olmo3-think", "R7", "protected-dynamic", f"{task}_delta_lp",
+            v["mean_delta"], condition=cond, median=v["median_delta"],
+            n=v["n"], tier="pilot", decoding="teacher-forced",
+            source=src, commit=d.get("provenance", {}).get("code_commit"))
+
+
+def r2_rows():
+    for slug in ("olmo3-think", "olmo31-instruct", "qwen36-27b"):
+        p = RUN_DIR_P2 / "metrics" / slug / "r2_occupancy" / "r2_occupancy.json"
+        if not p.exists():
+            continue
+        d = json.loads(p.read_text())
+        src = str(p.relative_to(RUN_DIR_P2))
+        for l, v in d["per_layer"].items():
+            add(slug, "R2", "paper-occupancy", "occ_median", v["occ_median"],
+                layer=int(l), q25=v["occ_q25"], q75=v["occ_q75"],
+                tier="pilot", source=src)
+            add(slug, "R2", "paper-occupancy", "excess_share",
+                v["excess_share"], layer=int(l), tier="pilot", source=src)
+
+
 def main():
     a0_rows()
     causal_grid_rows("olmo3-think", "b3_frozen_logit.json", "B3")
     d_trace_rows()
+    r7_rows()
+    r2_rows()
     # future extractors register above this line as workstreams land
     outdir = RUN_DIR_P2 / "report"
     outdir.mkdir(parents=True, exist_ok=True)
