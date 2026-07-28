@@ -31,7 +31,7 @@ from ..protected_dynamic import ProtectedDynamicAblator
 from ..provenance import (Provenance, registry_append, require_clean_tree,
                           resolve_model, write_result)
 
-MODEL_DIR = "/content/hf_local/models--allenai--Olmo-3-32B-Think/snapshots"
+MODEL_DIR = "/content/models/olmo3-think"   # plain dir (Drive rsync)
 LENS = ("/content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/"
         "lens/olmo32bthink_lens.pt")
 PROBE_SWAP = Path("/content/jacobian-lens/data/experiments/probe-swap.json")
@@ -57,7 +57,7 @@ def main():
     import jlens
     from jlens import JacobianLens
 
-    snap = sorted(Path(MODEL_DIR).glob("*"))[-1]
+    snap = Path(MODEL_DIR)
     tok = transformers.AutoTokenizer.from_pretrained(str(snap))
     hf = transformers.AutoModelForCausalLM.from_pretrained(
         str(snap), dtype=torch.bfloat16).to("cuda").eval()
