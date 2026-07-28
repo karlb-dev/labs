@@ -1,0 +1,299 @@
+{
+  "model_slug": "olmo3-think",
+  "n": 41,
+  "onehop_lp_mean": -2.991,
+  "twohop_lp_mean": -2.484,
+  "interim_dev_tier": true,
+  "onehop_lp_median": -2.501,
+  "twohop_lp_median": -2.628,
+  "worst_match_gap": 2.1548,
+  "n_excluded_ceiling": 68,
+  "n_excluded_unknown": 3,
+  "excluded": [
+    {
+      "answer": " W",
+      "lp": -0.018
+    },
+    {
+      "answer": " Sb",
+      "lp": -10.2973
+    },
+    {
+      "answer": " Sn",
+      "lp": -0.1667
+    },
+    {
+      "answer": " Pb",
+      "lp": -0.0665
+    },
+    {
+      "answer": " K",
+      "lp": -0.4411
+    },
+    {
+      "answer": " Bi",
+      "lp": -0.4632
+    },
+    {
+      "answer": " Zr",
+      "lp": -0.1156
+    },
+    {
+      "answer": " Mn",
+      "lp": -0.0366
+    },
+    {
+      "answer": " iron",
+      "lp": -0.219
+    },
+    {
+      "answer": " gold",
+      "lp": -0.3098
+    },
+    {
+      "answer": " helium",
+      "lp": -0.2365
+    },
+    {
+      "answer": " silicon",
+      "lp": -0.1933
+    },
+    {
+      "answer": " helium",
+      "lp": -0.0226
+    },
+    {
+      "answer": " nitrogen",
+      "lp": -0.0849
+    },
+    {
+      "answer": " ringgit",
+      "lp": -0.3417
+    },
+    {
+      "answer": " sol",
+      "lp": -0.3121
+    },
+    {
+      "answer": " naira",
+      "lp": -0.3026
+    },
+    {
+      "answer": " taka",
+      "lp": -0.029
+    },
+    {
+      "answer": " Dostoevsky",
+      "lp": -10.2267
+    },
+    {
+      "answer": " Kafka",
+      "lp": -0.0029
+    },
+    {
+      "answer": " Bulgakov",
+      "lp": -0.0023
+    },
+    {
+      "answer": " Milton",
+      "lp": -0.0033
+    },
+    {
+      "answer": " Bronte",
+      "lp": -0.0046
+    },
+    {
+      "answer": " Beckett",
+      "lp": -0.0013
+    },
+    {
+      "answer": " Ellison",
+      "lp": -0.0054
+    },
+    {
+      "answer": " Nabokov",
+      "lp": -0.0016
+    },
+    {
+      "answer": " Loire",
+      "lp": -0.2414
+    },
+    {
+      "answer": " Po",
+      "lp": -0.2657
+    },
+    {
+      "answer": " Shannon",
+      "lp": -0.4912
+    },
+    {
+      "answer": " Fuji",
+      "lp": -0.0176
+    },
+    {
+      "answer": " Greenland",
+      "lp": -0.438
+    },
+    {
+      "answer": " Rhode",
+      "lp": -0.0189
+    },
+    {
+      "answer": " Gibraltar",
+      "lp": -0.0221
+    },
+    {
+      "answer": " Baikal",
+      "lp": -10.8449
+    },
+    {
+      "answer": " Victoria",
+      "lp": -0.0034
+    },
+    {
+      "answer": " Athena",
+      "lp": -0.3186
+    },
+    {
+      "answer": " Poseidon",
+      "lp": -0.1772
+    },
+    {
+      "answer": " ohm",
+      "lp": -0.2748
+    },
+    {
+      "answer": " newton",
+      "lp": -0.4042
+    },
+    {
+      "answer": " hertz",
+      "lp": -0.4754
+    },
+    {
+      "answer": " Nobel",
+      "lp": -0.0007
+    },
+    {
+      "answer": " Fleming",
+      "lp": -0.0219
+    },
+    {
+      "answer": " Heisenberg",
+      "lp": -0.0056
+    },
+    {
+      "answer": " Einstein",
+      "lp": -0.0015
+    },
+    {
+      "answer": " Kepler",
+      "lp": -0.0013
+    },
+    {
+      "answer": " Mendeleev",
+      "lp": -0.1487
+    },
+    {
+      "answer": " mitochondria",
+      "lp": -0.0956
+    },
+    {
+      "answer": " hemoglobin",
+      "lp": -0.3382
+    },
+    {
+      "answer": " thyroid",
+      "lp": -0.0596
+    },
+    {
+      "answer": " Cleopatra",
+      "lp": -0.3252
+    },
+    {
+      "answer": " Hannibal",
+      "lp": -0.1307
+    },
+    {
+      "answer": " Khan",
+      "lp": -0.0202
+    },
+    {
+      "answer": " Napoleon",
+      "lp": -0.1588
+    },
+    {
+      "answer": " Wall",
+      "lp": -0.1281
+    },
+    {
+      "answer": " Aztec",
+      "lp": -0.4976
+    },
+    {
+      "answer": " Charlemagne",
+      "lp": -0.1488
+    },
+    {
+      "answer": " France",
+      "lp": -0.4216
+    },
+    {
+      "answer": " karate",
+      "lp": -0.3097
+    },
+    {
+      "answer": " Picasso",
+      "lp": -0.0081
+    },
+    {
+      "answer": " Gogh",
+      "lp": -0.0024
+    },
+    {
+      "answer": " Rembrandt",
+      "lp": -0.0794
+    },
+    {
+      "answer": " Portuguese",
+      "lp": -0.1452
+    },
+    {
+      "answer": " Mandarin",
+      "lp": -0.0728
+    },
+    {
+      "answer": " Latin",
+      "lp": -0.0094
+    },
+    {
+      "answer": " Alliance",
+      "lp": -0.0071
+    },
+    {
+      "answer": " Khalifa",
+      "lp": -0.0064
+    },
+    {
+      "answer": " falcon",
+      "lp": -0.0039
+    },
+    {
+      "answer": " shark",
+      "lp": -0.0009
+    },
+    {
+      "answer": " bat",
+      "lp": -0.1165
+    },
+    {
+      "answer": " bear",
+      "lp": -0.0017
+    },
+    {
+      "answer": " pancreas",
+      "lp": -0.4192
+    }
+  ],
+  "frozen_file": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727/config/prompts/hard_onehop_dev.jsonl"
+}

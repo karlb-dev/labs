@@ -38,9 +38,9 @@ def arg(flag: str, default: str) -> str:
 
 
 @torch.no_grad()
-def answer_lp(model, tok, prompt: str, answer: str) -> float:
+def answer_lp(model, hf, tok, prompt: str, answer: str) -> float:
     ids = model.encode(prompt.rstrip(), max_length=512)
-    logits = model.forward(ids)[0, -1].float()
+    logits = hf(input_ids=ids, use_cache=False).logits[0, -1].float()
     lsm = torch.log_softmax(logits, dim=-1)
     return max(lsm[i].item() for i in variant_first_ids(tok, answer))
 
@@ -52,12 +52,12 @@ def score_phase(slug: str, scores_path: Path) -> dict:
     out = {"model_slug": slug, "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
            "candidates": [], "twohop": []}
     for i, it in enumerate(cands):
-        lp = answer_lp(model, tok, it["prompt"], it["answer"])
+        lp = answer_lp(model, hf, tok, it["prompt"], it["answer"])
         out["candidates"].append(it | {"lp": round(lp, 4)})
         if (i + 1) % 20 == 0:
             log(f"  candidates {i+1}/{len(cands)}")
     for it in swap:
-        lp = answer_lp(model, tok, it["prompt"], it["answer"])
+        lp = answer_lp(model, hf, tok, it["prompt"], it["answer"])
         out["twohop"].append({"name": it["name"], "answer": it["answer"],
                               "lp": round(lp, 4)})
     atomic_write_json(out, scores_path)
@@ -70,15 +70,30 @@ def match_phase(scores: dict, slug: str) -> None:
              if UNKNOWN_LP <= c["lp"] <= CEILING_LP]
     excluded = [c for c in scores["candidates"] if c not in cands]
     targets = sorted((t["lp"] for t in scores["twohop"]))
-    if len(cands) < 60:
-        die(f"only {len(cands)} candidates inside [{UNKNOWN_LP},{CEILING_LP}]"
-            f" — need 60; widen the pool")
     chosen, pool = [], sorted(cands, key=lambda c: c["lp"])
-    for tlp in targets:
-        best = min(pool, key=lambda c: abs(c["lp"] - tlp))
-        pool.remove(best)
-        chosen.append(best | {"matched_twohop_lp": round(tlp, 4),
-                              "match_gap": round(abs(best["lp"] - tlp), 4)})
+    interim = len(cands) < 60
+    if interim:
+        # Honest fallback (2026-07-28): the curated pool is mostly ceiling
+        # (68/113 items at lp > -0.5 on Think — a 32B knows "obscure" facts).
+        # Freeze a DEV-TIER interim set: candidate-driven pairing to nearest
+        # unused targets, coverage gaps recorded. Confirmatory C3 = Stage-3
+        # pool expansion; do NOT dilute hardness by raising the ceiling.
+        global FROZEN_OUT
+        FROZEN_OUT = FROZEN_OUT.with_name("hard_onehop_dev.jsonl")
+        log(f"INTERIM MODE: n={len(cands)} dev-tier set -> {FROZEN_OUT.name}")
+        tpool = list(targets)
+        for c in pool:
+            t = min(tpool, key=lambda x: abs(x - c["lp"]))
+            tpool.remove(t)
+            chosen.append(c | {"matched_twohop_lp": round(t, 4),
+                               "match_gap": round(abs(c["lp"] - t), 4)})
+        targets = [c["matched_twohop_lp"] for c in chosen]
+    if not interim:
+        for tlp in targets:
+            best = min(pool, key=lambda c: abs(c["lp"] - tlp))
+            pool.remove(best)
+            chosen.append(best | {"matched_twohop_lp": round(tlp, 4),
+                                  "match_gap": round(abs(best["lp"] - tlp), 4)})
     FROZEN_OUT.parent.mkdir(parents=True, exist_ok=True)
     FROZEN_OUT.write_text("\n".join(json.dumps(c) for c in chosen) + "\n")
     mean = lambda xs: sum(xs) / len(xs)  # noqa: E731
@@ -86,8 +101,9 @@ def match_phase(scores: dict, slug: str) -> None:
         "model_slug": slug, "n": len(chosen),
         "onehop_lp_mean": round(mean([c["lp"] for c in chosen]), 3),
         "twohop_lp_mean": round(mean(targets), 3),
-        "onehop_lp_median": round(sorted(c["lp"] for c in chosen)[30], 3),
-        "twohop_lp_median": round(targets[30], 3),
+        "interim_dev_tier": interim,
+        "onehop_lp_median": round(sorted(c["lp"] for c in chosen)[len(chosen)//2], 3),
+        "twohop_lp_median": round(sorted(targets)[len(targets)//2], 3),
         "worst_match_gap": max(c["match_gap"] for c in chosen),
         "n_excluded_ceiling": sum(1 for c in excluded if c["lp"] > CEILING_LP),
         "n_excluded_unknown": sum(1 for c in excluded if c["lp"] < UNKNOWN_LP),
