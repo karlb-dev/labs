@@ -131,6 +131,25 @@ post-training pair. The Qwen recompute under this same estimator is the
 decisive cross-model capacity cell.}
 \end{figure}
 
+\subsection{R7 cross-model + R2-Qwen --- the campaign headline (pilot)}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=.9\linewidth]{figures/p2f5_crossmodel_protected.png}
+\caption{\textbf{Capacity and causal signature co-vary.} Under the
+identical protected protocol (paired family-clustered CIs): Qwen3.6-27B
+shows the paper's dissociation shape --- two-hop $-0.91$
+$[-1.49,-0.60]$, one-hop $-0.06$ [straddles 0] --- while OLMo-3-32B-Think
+shows equal-depth content damage ($-0.52$/$-0.59$, both excl.\ 0, plus
+the indirect protected tail). The same models order the same way on
+paper-defined occupancy (3--4 vs 2, excess 1.0--2.2\% vs
+$\le$0.9\%), and BOTH sit an order of magnitude below the paper's Claude
+band (10--25, 6--10\%) --- with lens fit size ruled out (Qwen used the
+published $n{=}1000$ lens). Lens robustness: two independent 120-prompt
+Instruct fits agree at dictionary row-cos 0.993 and frozen-selection
+Jaccard 0.806.}
+\end{figure}
+
 \section*{Reproducibility}
 
 Run dir \code{special-lab-1/part2\_20260727/} (metrics per model slug,

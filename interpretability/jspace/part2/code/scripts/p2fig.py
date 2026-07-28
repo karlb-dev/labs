@@ -283,7 +283,55 @@ def f4_r2_occupancy():
     log("wrote p2f4_r2_occupancy.png")
 
 
-FIGS = [f1_a0_transfer, f2_b3_frozen_logit, f3_r7_protected, f4_r2_occupancy]
+def f5_crossmodel_protected():
+    """p2f5 — the campaign headline: protected dyn-J effects across models
+    (paired family-clustered bootstrap CIs)."""
+    rows = []
+    for slug, lab in (("olmo3-think", "OLMo-3-32B-Think"),
+                      ("qwen36-27b", "Qwen3.6-27B")):
+        p = RUN_DIR_P2 / "metrics" / slug / "r7_pilot" / "r7_paired_ci.json"
+        if p.exists():
+            rows.append((lab, json.loads(p.read_text())))
+    if len(rows) < 2:
+        return
+    fig, ax = plt.subplots(figsize=(7.6, 3.6))
+    conds = [("dynJ_protected", "dyn-J protected (paper)", PAL["J"], None),
+             ("dynR_protected", "dyn-random protected", PAL["random"], None)]
+    tasks = ["twohop", "onehop"]
+    xpos, labels = [], []
+    x = 0.0
+    for mlab, d in rows:
+        for t in tasks:
+            for i, (c, clab, col, hat) in enumerate(conds):
+                v = d[f"{c}/{t}"]
+                ax.errorbar(x + i * 0.28, v["estimate"],
+                            yerr=[[v["estimate"] - v["ci_low"]],
+                                  [v["ci_high"] - v["estimate"]]],
+                            fmt="o", ms=7, color=col, capsize=3.5, lw=1.5,
+                            label=clab if x == 0 else None)
+            xpos.append(x + 0.14)
+            labels.append(f"{t}\n{mlab.split('-')[0]}")
+            x += 1.0
+        x += 0.45
+    ax.axhline(0, color=PAL["muted"], lw=0.9)
+    ax.set_xticks(xpos)
+    ax.set_xticklabels(labels, fontsize=8)
+    ax.set_ylabel("paired Δ answer-seq logprob (nats, 95% cluster CI)")
+    ax.legend(fontsize=7.5, frameon=False, loc="lower right")
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
+    ax.set_title("The paper's protected ablation across open models: "
+                 "dissociation on Qwen, equal-depth damage on OLMo  [pilot]",
+                 fontsize=9.5, loc="left")
+    fig.tight_layout()
+    fig.savefig(FIGDIR / "p2f5_crossmodel_protected.png", dpi=200,
+                bbox_inches="tight")
+    plt.close(fig)
+    log("wrote p2f5_crossmodel_protected.png")
+
+
+FIGS = [f1_a0_transfer, f2_b3_frozen_logit, f3_r7_protected, f4_r2_occupancy,
+        f5_crossmodel_protected]
 
 
 def main():
