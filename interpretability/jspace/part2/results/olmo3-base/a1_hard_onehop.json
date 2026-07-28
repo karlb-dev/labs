@@ -1,0 +1,322 @@
+{
+  "summary": {
+    "n": 41,
+    "dynJ_protected_mean_delta": 0.138,
+    "dynJ_protected_median_delta": 0.209,
+    "dynR_protected_mean_delta": -0.007
+  },
+  "rows": [
+    {
+      "item": " Dali",
+      "lp_think_cal": -8.9955,
+      "none": -0.2827,
+      "dynJ_protected": -0.2447,
+      "dynR_protected": -0.4236
+    },
+    {
+      "item": " Cervantes",
+      "lp_think_cal": -8.3141,
+      "none": -0.0164,
+      "dynJ_protected": -0.0033,
+      "dynR_protected": -0.0225
+    },
+    {
+      "item": " forint",
+      "lp_think_cal": -7.2375,
+      "none": -1.3328,
+      "dynJ_protected": -0.3787,
+      "dynR_protected": -1.2029
+    },
+    {
+      "item": " Titus",
+      "lp_think_cal": -6.4051,
+      "none": -0.9946,
+      "dynJ_protected": -0.51,
+      "dynR_protected": -2.2382
+    },
+    {
+      "item": " twenty",
+      "lp_think_cal": -5.7137,
+      "none": -5.1977,
+      "dynJ_protected": -5.4774,
+      "dynR_protected": -5.1372
+    },
+    {
+      "item": " penguin",
+      "lp_think_cal": -5.7062,
+      "none": -1.8369,
+      "dynJ_protected": -2.8726,
+      "dynR_protected": -0.7787
+    },
+    {
+      "item": " ruble",
+      "lp_think_cal": -5.6941,
+      "none": -2.8189,
+      "dynJ_protected": -2.378,
+      "dynR_protected": -2.5283
+    },
+    {
+      "item": " krona",
+      "lp_think_cal": -4.519,
+      "none": -2.4208,
+      "dynJ_protected": -3.2106,
+      "dynR_protected": -1.3167
+    },
+    {
+      "item": " coulomb",
+      "lp_think_cal": -4.2594,
+      "none": -0.9088,
+      "dynJ_protected": -1.4031,
+      "dynR_protected": -0.3672
+    },
+    {
+      "item": " Inca",
+      "lp_think_cal": -4.2459,
+      "none": -2.8094,
+      "dynJ_protected": -3.7022,
+      "dynR_protected": -3.5919
+    },
+    {
+      "item": " Achebe",
+      "lp_think_cal": -4.0235,
+      "none": -0.0167,
+      "dynJ_protected": -0.0024,
+      "dynR_protected": -0.0284
+    },
+    {
+      "item": " nine",
+      "lp_think_cal": -3.8507,
+      "none": -1.5484,
+      "dynJ_protected": -1.3359,
+      "dynR_protected": -1.5544
+    },
+    {
+      "item": " Gobi",
+      "lp_think_cal": -3.8292,
+      "none": -4.6205,
+      "dynJ_protected": -4.7264,
+      "dynR_protected": -5.7685
+    },
+    {
+      "item": " Ra",
+      "lp_think_cal": -3.5146,
+      "none": -2.9995,
+      "dynJ_protected": -2.3694,
+      "dynR_protected": -3.2435
+    },
+    {
+      "item": " krone",
+      "lp_think_cal": -3.4634,
+      "none": -2.7063,
+      "dynJ_protected": -2.3814,
+      "dynR_protected": -2.1362
+    },
+    {
+      "item": " Atlas",
+      "lp_think_cal": -3.4177,
+      "none": -1.9893,
+      "dynJ_protected": -1.8033,
+      "dynR_protected": -1.5732
+    },
+    {
+      "item": " Victoria",
+      "lp_think_cal": -3.3182,
+      "none": -4.318,
+      "dynJ_protected": -3.7743,
+      "dynR_protected": -4.404
+    },
+    {
+      "item": " Mozart",
+      "lp_think_cal": -2.9569,
+      "none": -2.4117,
+      "dynJ_protected": -1.2739,
+      "dynR_protected": -2.0296
+    },
+    {
+      "item": " rand",
+      "lp_think_cal": -2.9328,
+      "none": -1.0634,
+      "dynJ_protected": -0.816,
+      "dynR_protected": -0.6063
+    },
+    {
+      "item": " Kilimanjaro",
+      "lp_think_cal": -2.684,
+      "none": -2.0505,
+      "dynJ_protected": -1.3233,
+      "dynR_protected": -2.0921
+    },
+    {
+      "item": " baht",
+      "lp_think_cal": -2.5006,
+      "none": -1.0313,
+      "dynJ_protected": -0.7393,
+      "dynR_protected": -1.3731
+    },
+    {
+      "item": " fifteen",
+      "lp_think_cal": -2.4423,
+      "none": -1.9733,
+      "dynJ_protected": -2.8393,
+      "dynR_protected": -3.1183
+    },
+    {
+      "item": " Loki",
+      "lp_think_cal": -2.316,
+      "none": -1.4338,
+      "dynJ_protected": -1.7718,
+      "dynR_protected": -1.048
+    },
+    {
+      "item": " rupee",
+      "lp_think_cal": -2.2836,
+      "none": -2.6503,
+      "dynJ_protected": -2.6557,
+      "dynR_protected": -2.3263
+    },
+    {
+      "item": " shekel",
+      "lp_think_cal": -2.2546,
+      "none": -1.4442,
+      "dynJ_protected": -1.7803,
+      "dynR_protected": -1.2296
+    },
+    {
+      "item": " Ural",
+      "lp_think_cal": -1.7546,
+      "none": -1.7698,
+      "dynJ_protected": -1.2465,
+      "dynR_protected": -3.8588
+    },
+    {
+      "item": " Michelangelo",
+      "lp_think_cal": -1.6497,
+      "none": -1.8293,
+      "dynJ_protected": -1.173,
+      "dynR_protected": -1.5342
+    },
+    {
+      "item": " Pegasus",
+      "lp_think_cal": -1.3939,
+      "none": -2.6096,
+      "dynJ_protected": -2.4211,
+      "dynR_protected": -2.8171
+    },
+    {
+      "item": " Beethoven",
+      "lp_think_cal": -1.3518,
+      "none": -2.0509,
+      "dynJ_protected": -2.0794,
+      "dynR_protected": -1.7344
+    },
+    {
+      "item": " dong",
+      "lp_think_cal": -1.0923,
+      "none": -1.3589,
+      "dynJ_protected": -1.6013,
+      "dynR_protected": -1.5633
+    },
+    {
+      "item": " Michelangelo",
+      "lp_think_cal": -0.9885,
+      "none": -1.2124,
+      "dynJ_protected": -1.2525,
+      "dynR_protected": -0.9004
+    },
+    {
+      "item": " Venus",
+      "lp_think_cal": -0.968,
+      "none": -0.8152,
+      "dynJ_protected": -0.571,
+      "dynR_protected": -0.7664
+    },
+    {
+      "item": " Adriatic",
+      "lp_think_cal": -0.9321,
+      "none": -0.4479,
+      "dynJ_protected": -0.297,
+      "dynR_protected": -0.7746
+    },
+    {
+      "item": " watt",
+      "lp_think_cal": -0.8911,
+      "none": -0.3979,
+      "dynJ_protected": -0.3046,
+      "dynR_protected": -0.2493
+    },
+    {
+      "item": " zloty",
+      "lp_think_cal": -0.8273,
+      "none": -0.8176,
+      "dynJ_protected": -0.5819,
+      "dynR_protected": -0.6691
+    },
+    {
+      "item": " cerebellum",
+      "lp_think_cal": -0.7422,
+      "none": -0.5978,
+      "dynJ_protected": -0.2365,
+      "dynR_protected": -0.4268
+    },
+    {
+      "item": " Sri",
+      "lp_think_cal": -0.7379,
+      "none": -1.0014,
+      "dynJ_protected": -0.7927,
+      "dynR_protected": -1.0616
+    },
+    {
+      "item": " hieroglyphics",
+      "lp_think_cal": -0.6981,
+      "none": -0.8046,
+      "dynJ_protected": -0.2597,
+      "dynR_protected": -0.8722
+    },
+    {
+      "item": " Denali",
+      "lp_think_cal": -0.6397,
+      "none": -1.2239,
+      "dynJ_protected": -0.5055,
+      "dynR_protected": -0.7832
+    },
+    {
+      "item": " First",
+      "lp_think_cal": -0.5449,
+      "none": -0.4316,
+      "dynJ_protected": -0.1022,
+      "dynR_protected": -0.3965
+    },
+    {
+      "item": " Theseus",
+      "lp_think_cal": -0.5383,
+      "none": -1.3263,
+      "dynJ_protected": -0.708,
+      "dynR_protected": -1.2941
+    }
+  ],
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "a1-base-hard-onehop-v1",
+    "tier": "pilot",
+    "code_commit": "77aa183691d5f79aabdef25d37d8613913d35d96",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.a1_base_hard_onehop",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "lens": "05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053",
+      "items": "88f47659e1db2a2a74ee12bae1e6e572def2f8a52de7630f368dd05ab7b24a3b"
+    },
+    "model": {
+      "id": "/content/hf_local/models--allenai--Olmo-3-1125-32B/snapshots/c2b61dae89a1ad10e4ad5653d0e46b590902607b",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "72efc1f0ed1161e4205a54d94110f61d21c4c4315fde9ef17163bbc33c9a6149"
+    },
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T09:53:41Z"
+  }
+}
