@@ -130,7 +130,8 @@ def main():
         s_pf = s_all[(s_all.pos >= m.n_prompt - PROMPT_FINAL_WINDOW) &
                      (s_all.pos < m.n_prompt)]
         sel_ids_pf = set(s_pf.token_id.tolist())
-        bridge = set(m.bridge_token_ids or [])
+        bt = m.bridge_token_ids
+        bridge = set(int(x) for x in bt) if bt is not None and len(bt) else set()
         rows.append({
             "item_id": m.item_id, "task": m.task, "family": m.family,
             "delta": float(d) if d == d else None,
