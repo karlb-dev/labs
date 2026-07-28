@@ -1,0 +1,30 @@
+{
+ "dynJ_protected/twohop": {
+  "estimate": -0.1427,
+  "ci_low": -0.4471,
+  "ci_high": 0.0159,
+  "n_items": 60,
+  "n_clusters": 22
+ },
+ "dynR_protected/twohop": {
+  "estimate": -0.0232,
+  "ci_low": -0.1699,
+  "ci_high": 0.1017,
+  "n_items": 60,
+  "n_clusters": 22
+ },
+ "dynJ_protected/onehop": {
+  "estimate": -0.8101,
+  "ci_low": -1.2943,
+  "ci_high": -0.4012,
+  "n_items": 30,
+  "n_clusters": 30
+ },
+ "dynR_protected/onehop": {
+  "estimate": 0.3414,
+  "ci_low": 0.2171,
+  "ci_high": 0.4756,
+  "n_items": 30,
+  "n_clusters": 30
+ }
+}
