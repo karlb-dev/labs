@@ -243,18 +243,22 @@ as the Think grid (their n=1000 lens; chunked dictionary build after a
 | one-hop (n=30) | **−0.06 / +0.03** | −0.05 / −0.00 | +0.02 / +0.01 |
 | prose ΔNLL/tok (n=20) | +0.35 | +0.35 | +0.11 |
 
-**Reading.** On Qwen the paper's protected protocol yields its signature
-SHAPE: the composed task is broadly damaged (not just a tail — median
-−0.40) while single-hop recall is untouched — even by the unprotected
-variant (−0.05 vs OLMo's −1.71!). Cross-model synthesis: the causal
-dissociation is MODEL-DEPENDENT among open models and tracks the measured
-capacity axis (Qwen occ 3–4 & dissociation-in-miniature; OLMo occ 2 &
-median-null with an indirect hard-item tail). This is the
-capacity↔causal-signature correlation the campaign was designed to
-detect, now visible at pilot tier. Caveats: single seed, unpaired means
-above (paired cluster CIs from the parquet = next CPU pass), Qwen one-hop
-= near-ceiling capitals (C3 hard set must confirm the spared side), and
-fluency does NOT fully survive (+0.35 nats/token vs random's +0.11) — the
-paper's fluency-survives conjunct is at best partial here.
+**Reading (paired family-clustered bootstrap CIs, `r7_paired_ci.json`
+both models).** The cross-model contrast is now CI-clean at pilot tier:
+
+| protected dyn-J Δlp [95% CI] | two-hop | one-hop | dissociation? |
+|---|---|---|---|
+| **Qwen3.6-27B** | **−0.91 [−1.49,−0.60]** | −0.06 [−0.37,+0.23] | **YES — paper's shape** |
+| OLMo-3-32B-Think | −0.52 [−0.85,−0.13] | −0.59 [−1.14,−0.13] | NO — equal-depth damage (content channel) |
+
+Same instruments, same items, same protocol: the paper's causal signature
+appears on the fatter-workspace model and not on the thin one, matching
+the capacity axis (occ 3–4 vs 2). Caveats: single seed; Qwen's random
+twohop control is small-but-nonzero (−0.23 [−0.34,−0.11]) so the J-vs-
+random contrast needs its own paired test in the confirmatory grid;
+Qwen one-hop = near-ceiling capitals (C3 hard set must confirm the spared
+side); fluency only partially survives (+0.35 nats/token vs random's
++0.11); OLMo's protected effect includes the indirect hard-item tail
+documented above.
 
 *(sections append here per banked phase)*

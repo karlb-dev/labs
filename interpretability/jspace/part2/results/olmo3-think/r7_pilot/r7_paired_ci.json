@@ -1,0 +1,44 @@
+{
+ "dynJ_protected/twohop": {
+  "estimate": -0.518,
+  "ci_low": -0.846,
+  "ci_high": -0.133,
+  "n_items": 60,
+  "n_clusters": 22
+ },
+ "dynJ_unprotected/twohop": {
+  "estimate": -1.131,
+  "ci_low": -1.602,
+  "ci_high": -0.658,
+  "n_items": 60,
+  "n_clusters": 22
+ },
+ "dynR_protected/twohop": {
+  "estimate": -0.155,
+  "ci_low": -0.624,
+  "ci_high": 0.106,
+  "n_items": 60,
+  "n_clusters": 22
+ },
+ "dynJ_protected/onehop": {
+  "estimate": -0.586,
+  "ci_low": -1.135,
+  "ci_high": -0.125,
+  "n_items": 30,
+  "n_clusters": 30
+ },
+ "dynJ_unprotected/onehop": {
+  "estimate": -1.707,
+  "ci_low": -2.243,
+  "ci_high": -1.225,
+  "n_items": 30,
+  "n_clusters": 30
+ },
+ "dynR_protected/onehop": {
+  "estimate": 0.09,
+  "ci_low": -0.118,
+  "ci_high": 0.292,
+  "n_items": 30,
+  "n_clusters": 30
+ }
+}
