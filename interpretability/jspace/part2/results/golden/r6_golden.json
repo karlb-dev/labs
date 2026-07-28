@@ -1,0 +1,64 @@
+{
+  "checks": [
+    {
+      "check": "fit->save->load readout agrees at fp16 tolerance (corr>0.999, top5 equal)",
+      "pass": true
+    },
+    {
+      "check": "readout deterministic across calls",
+      "pass": true
+    },
+    {
+      "check": "protection blocks selections (blocked>0 protected)",
+      "pass": true
+    },
+    {
+      "check": "unprotected blocks nothing",
+      "pass": true
+    },
+    {
+      "check": "hooks detached",
+      "pass": true
+    },
+    {
+      "check": "generations returned text",
+      "pass": true
+    },
+    {
+      "check": "teacher-forced logits finite",
+      "pass": true
+    },
+    {
+      "check": "teacher-forced shape [T,V]",
+      "pass": true
+    }
+  ],
+  "seconds": 6,
+  "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "layers": [
+    10,
+    15
+  ],
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "r6-golden-v1",
+    "tier": "pilot",
+    "code_commit": "0ab332294ccbbfc8f7cb6a1814495334dc2424d2",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.r6_golden",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {},
+    "model": {
+      "id": "HuggingFaceTB/SmolLM2-135M-Instruct",
+      "source": "hf-hub",
+      "revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+      "config_sha256": "8eb740e8bbe4cff95ea7b4588d17a2432deb16e8075bc5828ff7ba9be94d982a"
+    },
+    "jlens_commit": null,
+    "seed": null,
+    "created_utc": "2026-07-28T06:54:17Z"
+  }
+}
