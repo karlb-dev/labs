@@ -61,6 +61,22 @@ class ProtectedDynamicAblator:
 
     def _apply(self, h, layer_idx):
         m = self.mode
+        if "inject" in m:
+            # swap/injection mode (G4 positive control): optionally project
+            # out a per-layer basis (the bridge direction), then ADD
+            # alpha_rel * ||h(pos)|| * unit-direction at every position.
+            B, T, d = h.shape
+            flat = h.reshape(-1, d).float()
+            Q = m.get("remove", {}).get(layer_idx)
+            if Q is not None:
+                Qf = Q.to(flat.device, torch.float32)
+                flat = flat - (flat @ Qf) @ Qf.T
+            v = m["inject"][layer_idx].to(flat.device, torch.float32)
+            v = v / v.norm()
+            scale = m.get("alpha_rel", 0.1) * flat.norm(dim=1, keepdim=True)
+            flat = flat + scale * v[None, :]
+            self.log.n_steps += 1
+            return flat.reshape(B, T, d).to(h.dtype)
         D = m["dicts"][layer_idx]
         B, T, d = h.shape
         flat = h.reshape(-1, d).float()
