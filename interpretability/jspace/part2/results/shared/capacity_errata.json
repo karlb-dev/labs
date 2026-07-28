@@ -1,0 +1,13 @@
+{
+  "note": "old-vs-new capacity per addendum §9-2.2 ('report old versus new values in an errata figure'). OLD = part-1 proxy metrics (thresholded active counts + raw pursuit-reconstruction variance share at fixed k). NEW = paper-defined estimator (marginal-gain occupancy vs random dicts + excess variance at median occupancy), R2 pilot runs 2026-07-28.",
+  "old_proxy": {
+    "olmo3-think":   {"var_share_peak": 0.0067, "act_at_001": 6,  "source": "2026-07-25_1726/metrics/descriptive_agg.json (v1 s5; REPORT_v2 headline table)"},
+    "qwen36-27b":    {"var_share_peak": 0.068,  "act_at_001": 42, "source": "2026-07-26_v2/metrics/qwen_descriptive.json (s18; REPORT_v2 headline table)"}
+  },
+  "new_estimator": {
+    "olmo3-think":     {"occ_median_band": 2, "excess_peak": 0.0080, "source": "part2 metrics/olmo3-think/r2_occupancy/r2_occupancy.json"},
+    "olmo31-instruct": {"occ_median_band": 2, "excess_peak": 0.0087, "source": "part2 metrics/olmo31-instruct/r2_occupancy/r2_occupancy.json"},
+    "qwen36-27b":      {"occ_median_band": 4, "excess_peak": 0.0224, "source": "part2 metrics/qwen36-27b/r2_occupancy_fullband/r2_occupancy.json"}
+  },
+  "paper_claude": {"occupancy": [10, 25], "excess": [0.06, 0.10]}
+}

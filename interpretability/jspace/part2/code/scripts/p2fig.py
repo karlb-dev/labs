@@ -330,8 +330,53 @@ def f5_crossmodel_protected():
     log("wrote p2f5_crossmodel_protected.png")
 
 
+def f6_capacity_errata():
+    """p2f6 — old proxy vs paper estimator: the Qwen 'paper-range' reading
+    collapses; OLMo's thinness is confirmed (addendum errata figure)."""
+    p = RUN_DIR_P2 / "metrics" / "shared" / "capacity_errata.json"
+    if not p.exists():
+        return
+    d = json.loads(p.read_text())
+    fig, ax = plt.subplots(figsize=(7.2, 3.6))
+    ax.set_yscale("log")
+    ax.axhspan(d["paper_claude"]["excess"][0], d["paper_claude"]["excess"][1],
+               color=PAL["grid"], zorder=0)
+    ax.text(2.62, 0.077, "paper (Claude)\n6–10%", fontsize=7,
+            color=PAL["muted"], va="center")
+    models = [("olmo3-think", "OLMo-3-32B\nThink", PAL["J"]),
+              ("olmo31-instruct", "Olmo-3.1-32B\nInstruct", PAL["nonJ"]),
+              ("qwen36-27b", "Qwen3.6-27B", PAL["frozen_logit"])]
+    for i, (slug, lab, col) in enumerate(models):
+        old = d["old_proxy"].get(slug, {}).get("var_share_peak")
+        new = d["new_estimator"][slug]["excess_peak"]
+        if old:
+            ax.scatter([i - 0.12], [old], s=64, facecolor="white",
+                       edgecolor=col, linewidth=1.8, zorder=3,
+                       label="old proxy (raw share)" if i == 0 else None)
+            ax.annotate("", xy=(i + 0.12, new), xytext=(i - 0.12, old),
+                        arrowprops=dict(arrowstyle="->", color=PAL["muted"],
+                                        lw=1.1))
+        ax.scatter([i + 0.12], [new], s=64, color=col, zorder=3,
+                   label="paper estimator (excess)" if i == 0 else None)
+        ax.text(i + 0.2, new, f"occ {d['new_estimator'][slug]['occ_median_band']}",
+                fontsize=7.5, va="center", color=PAL["ink"])
+    ax.set_xticks(range(len(models)))
+    ax.set_xticklabels([m[1] for m in models], fontsize=8)
+    ax.set_ylabel("variance share (log)")
+    ax.legend(fontsize=7.5, frameon=False, loc="upper left")
+    ax.grid(axis="y", which="both")
+    ax.set_axisbelow(True)
+    ax.set_title("Capacity errata: part-1 proxy vs the paper's estimator  "
+                 "[pilot]", fontsize=9.5, loc="left")
+    fig.tight_layout()
+    fig.savefig(FIGDIR / "p2f6_capacity_errata.png", dpi=200,
+                bbox_inches="tight")
+    plt.close(fig)
+    log("wrote p2f6_capacity_errata.png")
+
+
 FIGS = [f1_a0_transfer, f2_b3_frozen_logit, f3_r7_protected, f4_r2_occupancy,
-        f5_crossmodel_protected]
+        f5_crossmodel_protected, f6_capacity_errata]
 
 
 def main():
