@@ -1,0 +1,263 @@
+{
+  "config": {
+    "evidence_id": "r7-protected-dynamic-pilot-olmo31instruct-lensB-v1",
+    "tier": "pilot",
+    "model_path": "/content/hf_local/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae",
+    "lens_path": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727/lens/olmo31instruct_lensB.pt",
+    "prose_corpus": "/content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/fitting_corpus.jsonl",
+    "out_dir": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/olmo31-instruct/r7_pilot_lensB",
+    "band": [
+      20,
+      22,
+      24,
+      26,
+      28,
+      30,
+      32,
+      34,
+      36,
+      38,
+      40,
+      42,
+      44
+    ],
+    "k": 10,
+    "protect_top_k": 10,
+    "rand_seed": 4242,
+    "n_twohop": 60
+  },
+  "summary": {
+    "dynJ_protected/twohop": {
+      "n": 60,
+      "mean_delta": -0.8822,
+      "median_delta": 0.0065
+    },
+    "dynJ_unprotected/twohop": {
+      "n": 60,
+      "mean_delta": -1.4161,
+      "median_delta": -0.6152
+    },
+    "dynR_protected/twohop": {
+      "n": 60,
+      "mean_delta": -0.1332,
+      "median_delta": -0.0091
+    },
+    "dynJ_protected/onehop": {
+      "n": 30,
+      "mean_delta": -0.5458,
+      "median_delta": 0.0042
+    },
+    "dynJ_unprotected/onehop": {
+      "n": 30,
+      "mean_delta": -1.7267,
+      "median_delta": -1.0954
+    },
+    "dynR_protected/onehop": {
+      "n": 30,
+      "mean_delta": 0.1342,
+      "median_delta": 0.0882
+    },
+    "dynJ_protected/prose": {
+      "n": 20,
+      "mean_delta": 0.6283,
+      "median_delta": 0.5829
+    },
+    "dynJ_unprotected/prose": {
+      "n": 20,
+      "mean_delta": 0.686,
+      "median_delta": 0.6824
+    },
+    "dynR_protected/prose": {
+      "n": 20,
+      "mean_delta": 0.1074,
+      "median_delta": 0.0141
+    }
+  },
+  "cells": {
+    "none/twohop": {
+      "seconds": 11,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": " Portuguese.\nQuestion: Claim: \"The Amazon rainforest ends in South America in the country of Brazil where the language spoken is Portuguese.\"\nIs the claim above correct"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " shell.\nshell\nFact: What does a turtle have on its back?\nOptions:\n- dreams\n- a shell\n- bones\n- alligator\n-"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " double the number of legs of the largest bird.\nQuestion: How many legs does a Bison have?\nOptions:\n- four\n- two\n- one\n-"
+        }
+      ],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "none/onehop": {
+      "seconds": 2,
+      "audit": [],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "none/prose": {
+      "seconds": 2,
+      "audit": [],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "dynJ_protected/twohop": {
+      "seconds": 32,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": " French.\nQuestion: Claim: \"The Amazon rainforest does not contain the city of Manaus.\"\nIs the claim above correct, and can it be verified by"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " what?\nOptions:\n- (A) shell\n- (B) nest\n- (C) egg\n- (D) scales\n- (E)"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " double the number of horns on its head.\nQuestion: The answer to this question is in the passage above. What is the question?\nQuestion: The mass of"
+        }
+      ],
+      "hook_log": {
+        "steps": 2284,
+        "blocked": 58292,
+        "mean_removed_energy": 0.00094
+      }
+    },
+    "dynJ_protected/onehop": {
+      "seconds": 7,
+      "audit": [],
+      "hook_log": {
+        "steps": 528,
+        "blocked": 15691,
+        "mean_removed_energy": 0.00135
+      }
+    },
+    "dynJ_protected/prose": {
+      "seconds": 13,
+      "audit": [],
+      "hook_log": {
+        "steps": 173,
+        "blocked": 171324,
+        "mean_removed_energy": 0.00125
+      }
+    },
+    "dynJ_unprotected/twohop": {
+      "seconds": 32,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": " French\nQuestion: Claim: \"The Amazon rainforest does not contain the city of Manaus.\"\nIs the claim above correct, and can it be verified by"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " what?\nOptions:\n- (A) shells\n- (B) toads\n- (C) bones\n- (D) body\n- (E"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " double the number of horns on its head.\nQuestion: The answer to this question is in the text. If not, reply \"unanswerable\". Question:"
+        }
+      ],
+      "hook_log": {
+        "steps": 2291,
+        "blocked": 0,
+        "mean_removed_energy": 0.00095
+      }
+    },
+    "dynJ_unprotected/onehop": {
+      "seconds": 7,
+      "audit": [],
+      "hook_log": {
+        "steps": 528,
+        "blocked": 0,
+        "mean_removed_energy": 0.00139
+      }
+    },
+    "dynJ_unprotected/prose": {
+      "seconds": 13,
+      "audit": [],
+      "hook_log": {
+        "steps": 173,
+        "blocked": 0,
+        "mean_removed_energy": 0.00132
+      }
+    },
+    "dynR_protected/twohop": {
+      "seconds": 34,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": "1 of the most common languages in the world.\nyes\nIs the above claim true?\nOptions:\n- yes\n- no\nExplanation: The Amazon River ends"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " what?\nOptions:\n- (A) shell\n- (B) bone\n- (C) scale\n- (D) skin\n- (E)"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " 4.\none\nA bison has\nOptions:\n- two eyes\n- four legs\n- big horns\n- backbone\n- head\nLet's"
+        }
+      ],
+      "hook_log": {
+        "steps": 2353,
+        "blocked": 115233,
+        "mean_removed_energy": 0.02641
+      }
+    },
+    "dynR_protected/onehop": {
+      "seconds": 7,
+      "audit": [],
+      "hook_log": {
+        "steps": 533,
+        "blocked": 22135,
+        "mean_removed_energy": 0.02596
+      }
+    },
+    "dynR_protected/prose": {
+      "seconds": 25,
+      "audit": [],
+      "hook_log": {
+        "steps": 260,
+        "blocked": 246092,
+        "mean_removed_energy": 0.02638
+      }
+    }
+  },
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "r7-protected-dynamic-pilot-olmo31instruct-lensB-v1",
+    "tier": "pilot",
+    "code_commit": "f4fe86e27b7a0751ec3387e5dd6d3211de591864",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.r7_protected_pilot --config configs/r7_protected_pilot_instruct_lensB.yaml",
+    "config_path": "configs/r7_protected_pilot_instruct_lensB.yaml",
+    "config_sha256": "bbf8c8c07fb984459bc8772e0905995aa7d2ad73be3d23f392031ae47d69761c",
+    "inputs": {
+      "lens": "a5a785127fff253cf7641fec45ec111c92b19d810348702cee02230ad2f2bf13",
+      "probe_swap": "a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796"
+    },
+    "model": {
+      "id": "/content/hf_local/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95"
+    },
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T08:42:29Z"
+  }
+}
