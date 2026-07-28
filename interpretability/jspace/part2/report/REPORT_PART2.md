@@ -207,11 +207,23 @@ reflects the battery's easy/hard mix.
 dyn-random's 2.6% (energy-matched-by-mechanics, 20× more) — yet only
 dyn-J produces the tail. Selection content, not removal size.
 
-**Immediate follow-ups queued:** log the answer's clean-logit rank per
-item (tests the "protection threshold = rank 10" mechanization directly);
-occupancy-conditional split once R2 lands; dose/persistence and the C1
-load battery target the tail cohort; Instruct mirror of this grid.
-Caveats: pilot tier, single seed, prose guard shows a real +0.24 NLL/tok
-fluency cost for dynJ (protected included), audit generations coherent.
+**Clean-rank mechanization test (banked 00:3x, evidence
+`r7-cleanrank-think-v1`):** 94% of battery items carry the answer inside
+the clean top-10 (protection covers nearly the whole battery — C3's hard
+items will widen the unprotected cohort). Items with rank>10 are crushed
+as the mechanical account predicts (twohop −2.68, onehop −4.75). **But
+13/16 twohop tail items have the answer at clean rank 1–3 — explicitly
+protected — and still lose 1–4.5 nats.** The protected-protocol damage on
+those items is therefore INDIRECT: deletion of other J-content the answer
+depends on (bridge-entity reading) or geometric leakage through
+answer-similar rows; protected-random's +0.34 on the same items excludes
+generic-removal accounts. Discriminators queued for the confirmatory
+grid: per-item selected-id sets (was the bridge token selected?) and
+removed-energy-along-answer-direction logging.
+
+Other follow-ups: occupancy-conditional split; dose/persistence + C1 load
+battery targeting the tail cohort; Instruct mirror of this grid. Caveats:
+pilot tier, single seed, prose guard shows a real +0.24 NLL/tok fluency
+cost for dynJ (protected included), audit generations coherent.
 
 *(sections append here per banked phase)*

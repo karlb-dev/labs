@@ -1,0 +1,477 @@
+{
+  "rows": [
+    {
+      "item_id": "twohop:amazon-language",
+      "clean_rank": 4,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:animal-cover-turtle",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:animal-legs-buffalo2",
+      "clean_rank": 8,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:animal-nose-elephant",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:atomic-80-state",
+      "clean_rank": 3,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:basketball-players",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:beverage-source-wine",
+      "clean_rank": 6,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:bird-color-swan",
+      "clean_rank": 5,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:bird-country-eagle",
+      "clean_rank": 71,
+      "protected_by_top10": false
+    },
+    {
+      "item_id": "twohop:bird-time-owl",
+      "clean_rank": 5,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:birthstone-emerald-month",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:chem-atmosphere-Z",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:chem-bones-Z",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:chem-organic-Z",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:chem-photosynthesis-Z",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:christmas-season",
+      "clean_rank": 7,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:city-state-Philadelphia",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:colosseum-currency",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:element-color-gold2",
+      "clean_rank": 3,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:etym-frigg-position",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:etym-saturn-position",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:etym-wargod-month",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-city-capital-Barcelona-Toronto",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-city-capital-Lyon-Naples",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-city-capital-Naples-Barcelona",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-city-capital-Toronto-Lyon",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-city-continent-Toronto-Lyon",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-city-currency-Toronto-Beijing",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-city-currency-Toronto-Mumbai",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-city-language-Lyon-Naples",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-element-state-26-8",
+      "clean_rank": 3,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-element-state-26-80",
+      "clean_rank": 3,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-element-state-8-26",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-element-state-8-80",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-element-state-80-8",
+      "clean_rank": 3,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-element-symbol-11-26",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-element-symbol-26-79",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex-planet-color-third-fourth",
+      "clean_rank": 4,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex2-city-capital-Munich",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex2-city-capital-Osaka",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex2-city-continent-Lima",
+      "clean_rank": 62,
+      "protected_by_top10": false
+    },
+    {
+      "item_id": "twohop:ex2-city-continent-Sydney",
+      "clean_rank": 2,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex2-city-language-Cairo",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex2-city-language-Moscow",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex2-language-capital-Greek",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex2-language-capital-Hungarian",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex2-language-capital-Polish",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex2-language-capital-Swedish",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:ex2-river-capital-Thames",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:food-animal-butter",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:food-animal-honey",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:fruit-grows-grape",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:func-filters-count",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:func-pumps-chambers",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:gem-color-ruby",
+      "clean_rank": 7,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:gem-source-pearl",
+      "clean_rank": 4,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:greatwall-ocean",
+      "clean_rank": 11,
+      "protected_by_top10": false
+    },
+    {
+      "item_id": "twohop:holiday-month-christmas2",
+      "clean_rank": 5,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:instr-body-trumpet",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "twohop:instr-hit-drums",
+      "clean_rank": 5,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:0",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:1",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:2",
+      "clean_rank": 2,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:3",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:4",
+      "clean_rank": 3,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:5",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:6",
+      "clean_rank": 2,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:7",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:8",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:9",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:10",
+      "clean_rank": 2,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:11",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:12",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:13",
+      "clean_rank": 6,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:14",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:15",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:16",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:17",
+      "clean_rank": 13,
+      "protected_by_top10": false
+    },
+    {
+      "item_id": "onehop:18",
+      "clean_rank": 2,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:19",
+      "clean_rank": 4,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:20",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:21",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:22",
+      "clean_rank": 4,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:23",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:24",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:25",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:26",
+      "clean_rank": 16,
+      "protected_by_top10": false
+    },
+    {
+      "item_id": "onehop:27",
+      "clean_rank": 2,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:28",
+      "clean_rank": 1,
+      "protected_by_top10": true
+    },
+    {
+      "item_id": "onehop:29",
+      "clean_rank": 3,
+      "protected_by_top10": true
+    }
+  ],
+  "frac_protected": 0.944,
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "r7-cleanrank-think-v1",
+    "tier": "pilot",
+    "code_commit": "81248c7fb69a0ed18cd365674b5d83991d460ea8",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.r7_cleanrank",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {},
+    "model": {
+      "id": "/content/models/olmo3-think",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95"
+    },
+    "jlens_commit": null,
+    "seed": null,
+    "created_utc": "2026-07-28T00:26:01Z"
+  }
+}
