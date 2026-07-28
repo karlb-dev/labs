@@ -11,7 +11,8 @@
 # hashed before outcomes are viewed) — prereg §Item pools.
 #
 # Tier: dev (pool construction, not a claim about models).
-# Usage: python -m jspace_part2.experiments.c3_pool_score [--allow-dirty]
+# Usage: python -m jspace_part2.experiments.c3_pool_score \
+#          [--pool v2|v3|all] [--allow-dirty]
 from __future__ import annotations
 
 import json
@@ -30,13 +31,20 @@ from ..provenance import (Provenance, registry_append, require_clean_tree,
 MODEL = "/content/models/olmo3-think"
 RUN_DIR_P2 = Path("/content/drive/MyDrive/interpret/special-lab-1/"
                   "part2_20260727")
-OUT = RUN_DIR_P2 / "metrics" / "olmo3-think" / "c3_pool_v2_scores.json"
-POOL_OUT = RUN_DIR_P2 / "config" / "prompts" / "c3_pool_v2_scored.jsonl"
 LO, HI = -9.0, -1.0          # difficulty window (v1 rule, seq-lp scale)
+
+
+def arg(flag, default=None):
+    return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv else default
 
 
 def main():
     git = require_clean_tree("--allow-dirty" in sys.argv)
+    version = arg("--pool", "v2")
+    OUT = (RUN_DIR_P2 / "metrics" / "olmo3-think" /
+           f"c3_pool_{version}_scores.json")
+    POOL_OUT = (RUN_DIR_P2 / "config" / "prompts" /
+                f"c3_pool_{version}_scored.jsonl")
     if OUT.exists() and "--force" not in sys.argv:
         print("exists; skipping")
         return
@@ -49,7 +57,7 @@ def main():
         MODEL, dtype=torch.bfloat16).to("cuda").eval()
     model = jlens.from_hf(hf, tok)
 
-    rows = pool_rows()
+    rows = pool_rows(version)
     scored = []
     with torch.no_grad():
         for i, r in enumerate(rows):
@@ -85,7 +93,7 @@ def main():
     fams_ok = [f for f, v in fams.items() if v["n_window"] >= 2]
     lps = sorted(s["lp"] for s in scored)
     summ = {
-        "pool": pool_summary(),
+        "pool": pool_summary(version),
         "n_scored": len(scored), "n_in_window": len(keep),
         "window": [LO, HI],
         "n_families_with_ge2_in_window": len(fams_ok),
@@ -99,15 +107,16 @@ def main():
                                               len(fams_ok) >= 30),
         "seconds": round(time.time() - t0)}
     prov = Provenance(
-        evidence_id="c3-pool-v2-scored-think-v1", tier="dev",
-        command="python -m jspace_part2.experiments.c3_pool_score",
+        evidence_id=f"c3-pool-{version}-scored-think-v1", tier="dev",
+        command=("python -m jspace_part2.experiments.c3_pool_score "
+                 f"--pool {version}"),
         inputs={"pool_module": sha256_file(
             Path(__file__).resolve().parents[1] / "c3_pool.py")},
         model=resolve_model(MODEL))
     write_result({"summary": summ, "rows": scored}, OUT, prov)
     registry_append({
-        "evidence_id": "c3-pool-v2-scored-think-v1", "tier": "dev",
-        "what": (f"Stage-3 hard one-hop pool v2 scored on Think: "
+        "evidence_id": f"c3-pool-{version}-scored-think-v1", "tier": "dev",
+        "what": (f"Stage-3 hard one-hop pool {version} scored on Think: "
                  f"{len(keep)}/{len(scored)} in window [{LO},{HI}] across "
                  f"{len(fams_ok)} families with >=2 (prereg floor n>=90 & "
                  f">=30 families: {summ['meets_prereg_floor_n90_fams30']}); "

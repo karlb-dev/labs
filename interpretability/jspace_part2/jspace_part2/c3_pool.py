@@ -425,19 +425,323 @@ FAMILIES: dict[str, list[tuple[str, str]]] = {
 }
 
 
-def pool_rows() -> list[dict]:
-    """Flat candidate rows: {prompt, answer, family}. Prompt carries the
-    'Fact: ' prefix (v1 scoring convention); answer carries a leading
-    space (battery variant convention adds capitalization variants)."""
+# ---------------------------------------------------------------------
+# v3 INCREMENT (2026-07-28, VM7). v2 scored 66/212 in the [-9,-1] window
+# on Think — short of the prereg floor (n>=90 across >=30 families).
+# The scored pool showed WHICH SHAPES stay hard for a 32B model:
+#   productive (>=60% in window): second-order superlatives, classification
+#     /category relations (language family, script, instrument family),
+#     competing-alternative sets (currencies, moons, missions), derived
+#     unit names, numeric records.
+#   barren (0 in window): famous-proper-noun recall — chemical symbols,
+#     capitals, canonical authors/composers/painters, ancient cities,
+#     treaties. The model has these memorized at ceiling regardless of how
+#     "obscure" they feel to a human author.
+# v3 therefore ADDS families in productive shapes only. v2 families are
+# left untouched (superseding by addition; v2's scoring stays reproducible).
+FAMILIES_V3: dict[str, list[tuple[str, str]]] = {
+    "river_third_order": [
+        ("The third-longest river in Africa is the", "Niger"),
+        ("The longest river in Germany is the", "Rhine"),
+        ("The longest river in Poland is the", "Vistula"),
+        ("The longest river in Portugal is the", "Tagus"),
+        ("The longest river in Myanmar is the", "Irrawaddy"),
+    ],
+    "second_city": [
+        ("The second-largest city in Australia by population is",
+         "Melbourne"),
+        ("The second-largest city in Canada by population is",
+         "Montreal"),
+        ("The second-largest city in Spain by population is",
+         "Barcelona"),
+        ("The second-largest city in Turkey by population is", "Ankara"),
+        ("The second-largest city in Vietnam by population is", "Hanoi"),
+    ],
+    "animal_class": [
+        ("The taxonomic class to which a newt belongs is", "Amphibia"),
+        ("The taxonomic class to which a starfish belongs is",
+         "Asteroidea"),
+        ("The taxonomic class to which an octopus belongs is",
+         "Cephalopoda"),
+        ("The taxonomic class to which a centipede belongs is",
+         "Chilopoda"),
+        ("The taxonomic order to which bats belong is", "Chiroptera"),
+    ],
+    "plant_family": [
+        ("The plant family to which the tomato belongs is the",
+         "Solanaceae"),
+        ("The plant family to which wheat belongs is the", "Poaceae"),
+        ("The plant family to which the pea belongs is the", "Fabaceae"),
+        ("The plant family to which the sunflower belongs is the",
+         "Asteraceae"),
+    ],
+    "language_family_2": [
+        ("The language family to which Georgian belongs is",
+         "Kartvelian"),
+        ("The language family to which Turkish belongs is", "Turkic"),
+        ("The language family to which Mongolian belongs is", "Mongolic"),
+        ("The language family to which Vietnamese belongs is",
+         "Austroasiatic"),
+        ("The language family to which Malagasy belongs is",
+         "Austronesian"),
+    ],
+    "script_2": [
+        ("The script used to write the Georgian language is",
+         "Mkhedruli"),
+        ("The script used to write the Thai language derives from",
+         "Khmer"),
+        ("The script used to write Old Norse inscriptions is", "runic"),
+        ("The script used to write the Cherokee language is a",
+         "syllabary"),
+    ],
+    "stellar_classification": [
+        ("The spectral class of the hottest main-sequence stars is",
+         "O"),
+        ("The spectral class of the Sun is", "G"),
+        ("The stellar remnant left by a low-mass star is a white",
+         "dwarf"),
+        ("The class of variable star used as a distance indicator is the "
+         "Cepheid", "variable"),
+        ("The stage a star enters after leaving the main sequence is the "
+         "red", "giant"),
+    ],
+    "moons_2": [
+        ("The largest moon of Pluto is", "Charon"),
+        ("The two moons of Mars are Phobos and", "Deimos"),
+        ("The Galilean moon with the most volcanic activity is", "Io"),
+        ("The Galilean moon with the thickest ice shell and a suspected "
+         "ocean is", "Europa"),
+    ],
+    "mission_2": [
+        ("The mission that returned samples from the asteroid Ryugu was "
+         "Hayabusa", "2"),
+        ("The mission that first soft-landed on the far side of the Moon "
+         "was Chang'e", "4"),
+        ("The telescope launched in 2021 to observe in the infrared is "
+         "the James Webb Space", "Telescope"),
+        ("The probe that entered Jupiter's atmosphere in 1995 was carried "
+         "by", "Galileo"),
+    ],
+    "unit_non_si": [
+        ("The unit of pressure equal to 100 kilopascals is the", "bar"),
+        ("The unit of energy used in atomic physics is the electron",
+         "volt"),
+        ("The unit of distance equal to about 3.26 light years is the",
+         "parsec"),
+        ("The unit of sound intensity level is the", "decibel"),
+        ("The unit of viscosity in the CGS system is the", "poise"),
+    ],
+    "si_prefix": [
+        ("The SI prefix denoting ten to the power of minus twelve is",
+         "pico"),
+        ("The SI prefix denoting ten to the power of fifteen is", "peta"),
+        ("The SI prefix denoting ten to the power of minus fifteen is",
+         "femto"),
+        ("The SI prefix denoting ten to the power of eighteen is", "exa"),
+    ],
+    "compound_class": [
+        ("The class of organic compound containing a carboxyl group is "
+         "the carboxylic", "acids"),
+        ("The class of organic compound with the general formula CnH2n is "
+         "the", "alkenes"),
+        ("The class of compound formed from an acid and an alcohol is an",
+         "ester"),
+        ("The class of organic compound containing a nitrogen atom bonded "
+         "to carbon chains is an", "amine"),
+    ],
+    "rock_classification": [
+        ("The rock type formed by cooling magma is", "igneous"),
+        ("The rock type formed by heat and pressure on existing rock is",
+         "metamorphic"),
+        ("The metamorphic equivalent of limestone is", "marble"),
+        ("The metamorphic equivalent of shale is", "slate"),
+        ("The igneous rock that forms most of the ocean floor is",
+         "basalt"),
+    ],
+    "geological_order": [
+        ("The geological period immediately following the Jurassic is the",
+         "Cretaceous"),
+        ("The geological period immediately preceding the Devonian is the",
+         "Silurian"),
+        ("The geological epoch immediately preceding the Holocene is the",
+         "Pleistocene"),
+        ("The geological era immediately preceding the Mesozoic is the",
+         "Paleozoic"),
+    ],
+    "music_theory": [
+        ("The musical interval spanning seven semitones is a perfect",
+         "fifth"),
+        ("The key signature with four sharps is the key of", "E"),
+        ("The relative minor of C major is", "A"),
+        ("The tempo marking meaning 'walking pace' is", "andante"),
+        ("The musical form built on a repeating bass line is the",
+         "passacaglia"),
+    ],
+    "art_movement_order": [
+        ("The art movement that immediately followed Impressionism is",
+         "Post"),
+        ("The art movement founded by Andre Breton in 1924 is",
+         "Surrealism"),
+        ("The art movement of Malevich's geometric abstraction is",
+         "Suprematism"),
+        ("The architectural style preceding Gothic in medieval Europe is",
+         "Romanesque"),
+    ],
+    "philosophy_school": [
+        ("The philosophical school founded by Zeno of Citium is",
+         "Stoicism"),
+        ("The philosophical school holding that truth is what works is",
+         "pragmatism"),
+        ("The school of thought associated with Ockham's razor is",
+         "nominalism"),
+        ("The ethical theory judging acts by their consequences is",
+         "consequentialism"),
+    ],
+    "government_system": [
+        ("The system of government in which power is divided between "
+         "national and regional levels is", "federalism"),
+        ("The parliamentary system's head of government in Germany is "
+         "called the", "Chancellor"),
+        ("The voting system in which candidates are ranked and votes "
+         "transferred is the single transferable", "vote"),
+        ("The doctrine that courts may invalidate legislation is judicial",
+         "review"),
+    ],
+    "economics_measure": [
+        ("The index measuring price changes for a basket of consumer "
+         "goods is the consumer price", "index"),
+        ("The measure of an economy's output per person is GDP per",
+         "capita"),
+        ("The unemployment that persists due to skill mismatch is called",
+         "structural"),
+        ("The curve relating unemployment to inflation is the", "Phillips"),
+    ],
+    "network_computing": [
+        ("The default network port for HTTPS traffic is", "443"),
+        ("The protocol that resolves domain names to addresses is", "DNS"),
+        ("The layer of the OSI model that handles routing is the",
+         "network"),
+        ("The algorithm most used for public-key exchange over insecure "
+         "channels is Diffie", "Hellman"),
+        ("The data structure with amortized constant lookup by key is the "
+         "hash", "table"),
+    ],
+    "algorithm_complexity": [
+        ("The average time complexity of quicksort is O(n log", "n"),
+        ("The sorting algorithm that guarantees O(n log n) worst case by "
+         "merging is", "merge"),
+        ("The graph algorithm finding shortest paths from one source with "
+         "non-negative weights is", "Dijkstra"),
+        ("The technique of storing subproblem results to avoid recompute "
+         "is", "memoization"),
+    ],
+    "medicine_drug_class": [
+        ("The drug class that lowers cholesterol by inhibiting HMG-CoA "
+         "reductase is the", "statins"),
+        ("The drug class used to treat depression by blocking serotonin "
+         "reuptake is the", "SSRIs"),
+        ("The drug class that reduces blood pressure by blocking "
+         "angiotensin conversion is the ACE", "inhibitors"),
+        ("The class of drug that reduces inflammation without steroids is "
+         "the", "NSAIDs"),
+    ],
+    "physiology_process": [
+        ("The process by which the kidney returns useful solutes to the "
+         "blood is", "reabsorption"),
+        ("The process by which cells engulf large particles is",
+         "phagocytosis"),
+        ("The process by which mRNA is made from DNA is", "transcription"),
+        ("The process of programmed cell death is", "apoptosis"),
+        ("The process by which muscle produces energy without oxygen is "
+         "anaerobic", "respiration"),
+    ],
+    "border_specific": [
+        ("The only country bordering both Portugal and France is", "Spain"),
+        ("The country that borders both Poland and Hungary is",
+         "Slovakia"),
+        ("The country that borders both Iran and China is", "Afghanistan"),
+        ("The two countries bordering Lesotho number exactly", "one"),
+    ],
+    "sports_numeric_2": [
+        ("The number of points awarded for a try in rugby union is",
+         "five"),
+        ("The number of players on a volleyball team on court is", "six"),
+        ("The maximum break in snooker without fouls is", "147"),
+        ("The number of rounds in a championship boxing bout is",
+         "twelve"),
+        ("The distance in metres of an Olympic steeplechase is", "3000"),
+    ],
+    "measure_numeric": [
+        ("The number of degrees in each interior angle of a regular "
+         "hexagon is", "120"),
+        ("The number of bones in the adult human body is", "206"),
+        ("The number of chromosomes in a human somatic cell is",
+         "forty"),
+        ("The number of elements in the seventh period of the periodic "
+         "table is", "32"),
+    ],
+    "material_composition": [
+        ("The alloy of copper and tin is", "bronze"),
+        ("The alloy of copper and zinc is", "brass"),
+        ("The alloy of iron with chromium that resists corrosion is "
+         "stainless", "steel"),
+        ("The ceramic material used in spacecraft heat shields is often "
+         "silica", "aerogel"),
+    ],
+    "instrument_family_2": [
+        ("The instrument family to which the celesta belongs is the",
+         "percussion"),
+        ("The highest-pitched member of the standard brass section is the",
+         "trumpet"),
+        ("The double-reed instrument pitched below the oboe is the",
+         "bassoon"),
+        ("The string instrument played with a bow and held between the "
+         "knees historically is the viola da", "gamba"),
+    ],
+    "linguistics_term": [
+        ("The smallest unit of sound that distinguishes meaning is the",
+         "phoneme"),
+        ("The smallest unit of meaning in a word is the", "morpheme"),
+        ("The study of meaning in language is", "semantics"),
+        ("The word order typical of Japanese sentences is subject object",
+         "verb"),
+        ("The consonant produced by stopping airflow completely is a",
+         "plosive"),
+    ],
+    "cartography_time": [
+        ("The line of longitude at zero degrees is the prime", "meridian"),
+        ("The map projection preserving angles but distorting area is the",
+         "Mercator"),
+        ("The latitude of the Tropic of Cancer is about 23.5 degrees",
+         "north"),
+        ("The number of standard time zones spanning the globe is",
+         "24"),
+    ],
+}
+
+
+def pool_rows(version: str = "v2") -> list[dict]:
+    """Flat candidate rows: {prompt, answer, family, pool}. Prompt carries
+    the 'Fact: ' prefix (v1 scoring convention); answer carries a leading
+    space (battery variant convention adds capitalization variants).
+    version 'v2' = the original 45 families; 'v3' = the increment only;
+    'all' = both (the Stage-3 bank)."""
+    src = {"v2": [("v2", FAMILIES)], "v3": [("v3", FAMILIES_V3)],
+           "all": [("v2", FAMILIES), ("v3", FAMILIES_V3)]}[version]
     rows = []
-    for family, items in FAMILIES.items():
-        for prompt, answer in items:
-            rows.append({"prompt": f"Fact: {prompt}",
-                         "answer": f" {answer}", "family": family})
+    for tag, fams in src:
+        for family, items in fams.items():
+            for prompt, answer in items:
+                rows.append({"prompt": f"Fact: {prompt}",
+                             "answer": f" {answer}", "family": family,
+                             "pool": tag})
     return rows
 
 
-def summary() -> dict:
-    rows = pool_rows()
-    return {"n_candidates": len(rows), "n_families": len(FAMILIES),
-            "items_per_family": {f: len(v) for f, v in FAMILIES.items()}}
+def summary(version: str = "v2") -> dict:
+    rows = pool_rows(version)
+    fams = sorted({r["family"] for r in rows})
+    return {"version": version, "n_candidates": len(rows),
+            "n_families": len(fams),
+            "items_per_family": {f: sum(1 for r in rows if r["family"] == f)
+                                 for f in fams}}
