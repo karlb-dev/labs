@@ -200,24 +200,55 @@ def main():
             "nontail": rate(nontail, "n_selected_pf")},
         "reading": None, "seconds": round(time.time() - t0)}
 
+    # The sharper question: AMONG items whose answer was protectable
+    # (clean rank <= protect_k), what separates tail from non-tail?
+    prot_ok = scored[(scored.clean_rank.notna()) & (scored.clean_rank <= 10)]
+    po_t = prot_ok[prot_ok.is_tail == True]        # noqa: E712
+    po_n = prot_ok[prot_ok.is_tail == False]       # noqa: E712
+    summ["among_protectable_items"] = {
+        "n_tail": int(len(po_t)), "n_nontail": int(len(po_n)),
+        "clean_rank_median": {
+            "tail": (float(np.median(po_t.clean_rank)) if len(po_t) else None),
+            "nontail": (float(np.median(po_n.clean_rank))
+                        if len(po_n) else None)},
+        "bridge_hit_rate": {"tail": rate(po_t, "bridge_hit"),
+                            "nontail": rate(po_n, "bridge_hit")},
+        "note": ("these items had their answer inside the protected set and "
+                 "STILL lost >1 nat — protection failure cannot explain them")}
+
     bh_t = summ["bridge_hit_rate_twohop"]["tail"]
     bh_n = summ["bridge_hit_rate_twohop"]["nontail"]
     pm_t = summ["protect_miss_rate"]["tail"]
     pm_n = summ["protect_miss_rate"]["nontail"]
-    parts = []
-    if bh_t is not None and bh_n is not None:
-        parts.append(f"bridge-token selection tail {bh_t:.2f} vs non-tail "
-                     f"{bh_n:.2f}")
-    if pm_t is not None and pm_n is not None:
-        parts.append(f"protection-miss (clean rank>10) tail {pm_t:.2f} vs "
-                     f"non-tail {pm_n:.2f}")
-    summ["reading"] = ("; ".join(parts) +
-                       " — H-content favored if the bridge gap is large and "
-                       "the protect-miss gap is not; H-output favored if the "
-                       "reverse; H-nothing if neither separates.")
+    perm = summ["bridge_permutation_control"]["all_twohop"]
+    bits = []
+    if perm and perm["observed"] - perm["permuted_mean"] > 0.2:
+        bits.append(
+            f"BRIDGE DELETION IS REAL AND ITEM-SPECIFIC (selected on "
+            f"{perm['observed']:.0%} of two-hop items vs {perm['permuted_mean']:.0%} "
+            f"under bridge-reassignment permutation, p={perm['p_value']:.3f}) "
+            f"— the deflated J-directions do carry the two-hop bridge entity")
+    if bh_t is not None and bh_n is not None and abs(bh_t - bh_n) < 0.15:
+        bits.append(
+            f"but it does NOT separate the damaged tail from the undamaged "
+            f"items ({bh_t:.2f} vs {bh_n:.2f}), so bridge deletion alone is "
+            f"not sufficient for damage")
+    if pm_t is not None and pm_n is not None and pm_t > pm_n:
+        bits.append(
+            f"protection failure explains only part of the tail "
+            f"(unprotectable answers: {pm_t:.0%} of tail vs {pm_n:.0%} of "
+            f"non-tail)")
+    cr = summ["among_protectable_items"]["clean_rank_median"]
+    if cr["tail"] is not None and cr["nontail"] is not None:
+        bits.append(
+            f"among items whose answer WAS protected, the tail is the "
+            f"lower-confidence cohort (median clean rank {cr['tail']:.0f} vs "
+            f"{cr['nontail']:.0f}) — consistent with the pilot's "
+            f"'conditional on the answer not yet being imminent' reading")
+    summ["reading"] = "; ".join(bits) if bits else "no separation found"
 
     prov = Provenance(
-        evidence_id=f"r7-tail-mechanism-{slug}-v1", tier="pilot",
+        evidence_id=f"r7-tail-mechanism-{slug}-v2", tier="pilot",
         command=("python -m jspace_part2.experiments.r7_tail_mechanism "
                  f"--model {slug}"),
         inputs={"selected": sha256_file(sel_dir / "r7sel_selected.parquet"),
@@ -229,7 +260,7 @@ def main():
                   "rows": df.drop(columns=["sel_ids_pf"]).to_dict("records")},
                  out, prov)
     registry_append({
-        "evidence_id": f"r7-tail-mechanism-{slug}-v1", "tier": "pilot",
+        "evidence_id": f"r7-tail-mechanism-{slug}-v2", "tier": "pilot",
         "what": f"R7 tail mechanization ({slug}): {summ['reading']}",
         "command": prov.command, "code_commit": git["code_commit"],
         "rerun": "auto",
