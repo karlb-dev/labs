@@ -280,4 +280,25 @@ completion R7 grids are unaffected (their baselines are natural
 continuations). H1b's causal contrast moves to the confirmatory design
 with the corrected endpoint.
 
+## R5/G4 — swap positive control PASSES (2026-07-28 08:1x) — tier: PILOT
+
+Evidence `r5-swap-positive-control-think-v1` (released probe-swap items;
+remove-bridge + inject-swap J-directions at band layers, prefill-only;
+dose calibrated on 10 recorded items, measured on the remaining 50).
+
+| condition | two-way flip rate to swap answer | mean lp(swap ans) | mean lp(orig ans) |
+|---|---|---|---|
+| none | 0.04 | −9.10 | −1.48 |
+| **swap-J (predicted direction)** | **0.76** | −38.07 | −48.24 |
+| swap-random (matched perturbation) | 0.18 | −13.13 | −12.37 |
+
+**G4 passes**: the instrument moves answers in a PREDICTED direction 4×
+above matched random perturbation — the anchor that makes the campaign's
+nulls evidence rather than insensitivity. Wrinkle recorded: at the
+calibrated α=0.2 the relative preference flips while absolute calibration
+craters (both answers' lp collapse); α=0.05 showed clean positive steering
+(+0.93 lp toward swap, 0.30 flips) — the confirmatory swap cell dose-maps
+0.05–0.10 for calibration-preserving steering. First steering-INTO-J
+causal mode this replication has exercised.
+
 *(sections append here per banked phase)*
