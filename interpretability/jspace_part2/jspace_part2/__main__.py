@@ -19,8 +19,11 @@ commands:
 
 def cmd_selftest(argv):
     from .provenance import PKG_ROOT
-    test = PKG_ROOT / "tests" / "test_lib.py"
-    raise SystemExit(subprocess.run([sys.executable, str(test)]).returncode)
+    rc = 0
+    for test in sorted((PKG_ROOT / "tests").glob("test_*.py")):
+        print(f"=== {test.name}")
+        rc |= subprocess.run([sys.executable, str(test)]).returncode
+    raise SystemExit(rc)
 
 
 def cmd_registry_list(argv):
