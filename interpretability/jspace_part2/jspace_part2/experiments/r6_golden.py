@@ -62,8 +62,15 @@ def main():
     lens2 = JacobianLens.load(str(tmp))
     jl1, _, _ = lens.apply(model, "The largest planet is", positions=[-1])
     jl2, _, _ = lens2.apply(model, "The largest planet is", positions=[-1])
-    check(rows, "fit->save->load readout identical",
-          all(torch.allclose(jl1[l], jl2[l], atol=1e-4) for l in layers))
+    # save() quantizes J to fp16 BY DESIGN (all campaign lenses live as fp16
+    # artifacts; consumers always use the loaded lens). Contract: readout
+    # agreement at quantization tolerance + identical top-5 token sets.
+    def _agree(a, b):
+        corr = torch.corrcoef(torch.stack([a[0], b[0]]))[0, 1]
+        top_same = torch.equal(a[0].topk(5).indices, b[0].topk(5).indices)
+        return float(corr) > 0.999 and top_same
+    check(rows, "fit->save->load readout agrees at fp16 tolerance (corr>0.999, top5 equal)",
+          all(_agree(jl1[l], jl2[l]) for l in layers))
     jl3, _, _ = lens2.apply(model, "The largest planet is", positions=[-1])
     check(rows, "readout deterministic across calls",
           all(torch.equal(jl2[l], jl3[l]) for l in layers))
