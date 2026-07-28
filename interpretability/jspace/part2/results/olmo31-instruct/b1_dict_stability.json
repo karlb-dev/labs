@@ -1,0 +1,123 @@
+{
+  "per_layer": {
+    "20": {
+      "row_cos_median": 0.9748,
+      "row_cos_q05": 0.97036,
+      "row_cos_q01": 0.96758,
+      "sel_jaccard_mean": 0.4247,
+      "sel_jaccard_min": 0.1765
+    },
+    "22": {
+      "row_cos_median": 0.9808,
+      "row_cos_q05": 0.97799,
+      "row_cos_q01": 0.97618,
+      "sel_jaccard_mean": 0.5144,
+      "sel_jaccard_min": 0.25
+    },
+    "24": {
+      "row_cos_median": 0.98652,
+      "row_cos_q05": 0.98473,
+      "row_cos_q01": 0.98341,
+      "sel_jaccard_mean": 0.5852,
+      "sel_jaccard_min": 0.3333
+    },
+    "26": {
+      "row_cos_median": 0.98937,
+      "row_cos_q05": 0.98789,
+      "row_cos_q01": 0.98665,
+      "sel_jaccard_mean": 0.5883,
+      "sel_jaccard_min": 0.1765
+    },
+    "28": {
+      "row_cos_median": 0.99096,
+      "row_cos_q05": 0.9896,
+      "row_cos_q01": 0.98841,
+      "sel_jaccard_mean": 0.6113,
+      "sel_jaccard_min": 0.4286
+    },
+    "30": {
+      "row_cos_median": 0.99218,
+      "row_cos_q05": 0.99093,
+      "row_cos_q01": 0.98983,
+      "sel_jaccard_mean": 0.7039,
+      "sel_jaccard_min": 0.4286
+    },
+    "32": {
+      "row_cos_median": 0.99313,
+      "row_cos_q05": 0.99196,
+      "row_cos_q01": 0.99091,
+      "sel_jaccard_mean": 0.8057,
+      "sel_jaccard_min": 0.3333
+    },
+    "34": {
+      "row_cos_median": 0.99395,
+      "row_cos_q05": 0.99289,
+      "row_cos_q01": 0.9919,
+      "sel_jaccard_mean": 0.85,
+      "sel_jaccard_min": 0.4286
+    },
+    "36": {
+      "row_cos_median": 0.99462,
+      "row_cos_q05": 0.99364,
+      "row_cos_q01": 0.99272,
+      "sel_jaccard_mean": 0.8919,
+      "sel_jaccard_min": 0.4286
+    },
+    "38": {
+      "row_cos_median": 0.99524,
+      "row_cos_q05": 0.99437,
+      "row_cos_q01": 0.99352,
+      "sel_jaccard_mean": 0.9086,
+      "sel_jaccard_min": 0.6667
+    },
+    "40": {
+      "row_cos_median": 0.99576,
+      "row_cos_q05": 0.99497,
+      "row_cos_q01": 0.99422,
+      "sel_jaccard_mean": 0.9258,
+      "sel_jaccard_min": 0.6667
+    },
+    "42": {
+      "row_cos_median": 0.99633,
+      "row_cos_q05": 0.99562,
+      "row_cos_q01": 0.99497,
+      "sel_jaccard_mean": 0.8848,
+      "sel_jaccard_min": 0.6667
+    },
+    "44": {
+      "row_cos_median": 0.99686,
+      "row_cos_q05": 0.99625,
+      "row_cos_q01": 0.99567,
+      "sel_jaccard_mean": 0.8929,
+      "sel_jaccard_min": 0.6667
+    }
+  },
+  "median_row_cos": 0.99313,
+  "median_sel_jaccard": 0.8057,
+  "decision_rule_note": "B1 heuristics were cos>0.9, Jaccard>=0.7 (prereg v1; margins to be pilot-calibrated)",
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "b1-dict-stability-olmo31instruct-v1",
+    "tier": "pilot",
+    "code_commit": "52bed236182935156145ad37bff45b01b4b7844d",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.b1_dict_stability",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "lens_A": "e0f8b972a9f1f884101f94ff52a1938d5cfa7a5f49e987e6768826f2337c6dfb",
+      "lens_B": "a5a785127fff253cf7641fec45ec111c92b19d810348702cee02230ad2f2bf13"
+    },
+    "model": {
+      "id": "/content/hf_local/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95"
+    },
+    "jlens_commit": null,
+    "seed": null,
+    "created_utc": "2026-07-28T06:06:44Z"
+  }
+}
