@@ -1,7 +1,7 @@
 {
   "meta": {
-    "generated": "2026-07-28 04:47:16",
-    "n_rows": 76
+    "generated": "2026-07-28 05:53:13",
+    "n_rows": 82
   },
   "rows": [
     {
@@ -1056,6 +1056,72 @@
       "layer": 40,
       "tier": "pilot",
       "source": "metrics/olmo31-instruct/r2_occupancy/r2_occupancy.json"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R2",
+      "instrument": "paper-occupancy",
+      "metric": "occ_median",
+      "value": 3.0,
+      "layer": 24,
+      "q25": 2.0,
+      "q75": 4.0,
+      "tier": "pilot",
+      "source": "metrics/qwen36-27b/r2_occupancy/r2_occupancy.json"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R2",
+      "instrument": "paper-occupancy",
+      "metric": "excess_share",
+      "value": 0.012106815353035927,
+      "layer": 24,
+      "tier": "pilot",
+      "source": "metrics/qwen36-27b/r2_occupancy/r2_occupancy.json"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R2",
+      "instrument": "paper-occupancy",
+      "metric": "occ_median",
+      "value": 3.0,
+      "layer": 32,
+      "q25": 2.0,
+      "q75": 4.0,
+      "tier": "pilot",
+      "source": "metrics/qwen36-27b/r2_occupancy/r2_occupancy.json"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R2",
+      "instrument": "paper-occupancy",
+      "metric": "excess_share",
+      "value": 0.010102728381752968,
+      "layer": 32,
+      "tier": "pilot",
+      "source": "metrics/qwen36-27b/r2_occupancy/r2_occupancy.json"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R2",
+      "instrument": "paper-occupancy",
+      "metric": "occ_median",
+      "value": 4.0,
+      "layer": 40,
+      "q25": 3.0,
+      "q75": 5.0,
+      "tier": "pilot",
+      "source": "metrics/qwen36-27b/r2_occupancy/r2_occupancy.json"
+    },
+    {
+      "model": "qwen36-27b",
+      "ws": "R2",
+      "instrument": "paper-occupancy",
+      "metric": "excess_share",
+      "value": 0.022404849529266357,
+      "layer": 40,
+      "tier": "pilot",
+      "source": "metrics/qwen36-27b/r2_occupancy/r2_occupancy.json"
     }
   ]
 }

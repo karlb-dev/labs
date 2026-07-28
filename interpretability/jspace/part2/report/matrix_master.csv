@@ -75,3 +75,9 @@ ci_hi,ci_lo,commit,condition,decoding,dose_k,instrument,layer,lens,median,metric
 ,,,,,,paper-occupancy,32,,,excess_share,olmo31-instruct,,,,,,metrics/olmo31-instruct/r2_occupancy/r2_occupancy.json,pilot,0.00571576738730073,R2
 ,,,,,,paper-occupancy,40,,,occ_median,olmo31-instruct,,2.0,3.0,,,metrics/olmo31-instruct/r2_occupancy/r2_occupancy.json,pilot,2.0,R2
 ,,,,,,paper-occupancy,40,,,excess_share,olmo31-instruct,,,,,,metrics/olmo31-instruct/r2_occupancy/r2_occupancy.json,pilot,0.008723178878426552,R2
+,,,,,,paper-occupancy,24,,,occ_median,qwen36-27b,,2.0,4.0,,,metrics/qwen36-27b/r2_occupancy/r2_occupancy.json,pilot,3.0,R2
+,,,,,,paper-occupancy,24,,,excess_share,qwen36-27b,,,,,,metrics/qwen36-27b/r2_occupancy/r2_occupancy.json,pilot,0.012106815353035927,R2
+,,,,,,paper-occupancy,32,,,occ_median,qwen36-27b,,2.0,4.0,,,metrics/qwen36-27b/r2_occupancy/r2_occupancy.json,pilot,3.0,R2
+,,,,,,paper-occupancy,32,,,excess_share,qwen36-27b,,,,,,metrics/qwen36-27b/r2_occupancy/r2_occupancy.json,pilot,0.010102728381752968,R2
+,,,,,,paper-occupancy,40,,,occ_median,qwen36-27b,,3.0,5.0,,,metrics/qwen36-27b/r2_occupancy/r2_occupancy.json,pilot,4.0,R2
+,,,,,,paper-occupancy,40,,,excess_share,qwen36-27b,,,,,,metrics/qwen36-27b/r2_occupancy/r2_occupancy.json,pilot,0.022404849529266357,R2
