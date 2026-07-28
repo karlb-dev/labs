@@ -1,0 +1,4057 @@
+{
+  "summary": {
+    "model": "olmo3-think",
+    "target_layer": 63,
+    "layers": [
+      4,
+      8,
+      12,
+      16,
+      20,
+      22,
+      24,
+      26,
+      28,
+      30,
+      32,
+      34,
+      36,
+      38,
+      40,
+      42,
+      44,
+      48,
+      52,
+      56,
+      60
+    ],
+    "estimand": "Delta(sum_t h_tgt[t]) vs P*(J@delta) under a constant delta at every valid source position \u2014 matches how jlens builds J (position-averaged, target-summed)",
+    "skip_first": 16,
+    "epsilons_relative": [
+      0.02,
+      0.1
+    ],
+    "n_directions": 3,
+    "snr_min": 5.0,
+    "noise_floor": [
+      {
+        "prompt": 0,
+        "noise_norm": 0.0
+      },
+      {
+        "prompt": 1,
+        "noise_norm": 0.0
+      },
+      {
+        "prompt": 2,
+        "noise_norm": 0.0
+      }
+    ],
+    "by_layer": {
+      "4": {
+        "median_cos_snr_ok": 0.1077,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.127,
+        "status": "UNFAITHFUL"
+      },
+      "8": {
+        "median_cos_snr_ok": 0.1581,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.168,
+        "status": "UNFAITHFUL"
+      },
+      "12": {
+        "median_cos_snr_ok": 0.1646,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.209,
+        "status": "UNFAITHFUL"
+      },
+      "16": {
+        "median_cos_snr_ok": 0.2251,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.249,
+        "status": "UNFAITHFUL"
+      },
+      "20": {
+        "median_cos_snr_ok": 0.3161,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.296,
+        "status": "UNFAITHFUL"
+      },
+      "22": {
+        "median_cos_snr_ok": 0.4216,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.36,
+        "status": "UNFAITHFUL"
+      },
+      "24": {
+        "median_cos_snr_ok": 0.4862,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.412,
+        "status": "UNFAITHFUL"
+      },
+      "26": {
+        "median_cos_snr_ok": 0.5692,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.452,
+        "status": "PARTIAL"
+      },
+      "28": {
+        "median_cos_snr_ok": 0.614,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.503,
+        "status": "PARTIAL"
+      },
+      "30": {
+        "median_cos_snr_ok": 0.6648,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.532,
+        "status": "PARTIAL"
+      },
+      "32": {
+        "median_cos_snr_ok": 0.6906,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.569,
+        "status": "PARTIAL"
+      },
+      "34": {
+        "median_cos_snr_ok": 0.7134,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.583,
+        "status": "PARTIAL"
+      },
+      "36": {
+        "median_cos_snr_ok": 0.7425,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.611,
+        "status": "PARTIAL"
+      },
+      "38": {
+        "median_cos_snr_ok": 0.7505,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.642,
+        "status": "PARTIAL"
+      },
+      "40": {
+        "median_cos_snr_ok": 0.7723,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.665,
+        "status": "PARTIAL"
+      },
+      "42": {
+        "median_cos_snr_ok": 0.7924,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.68,
+        "status": "PARTIAL"
+      },
+      "44": {
+        "median_cos_snr_ok": 0.8166,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.705,
+        "status": "PARTIAL"
+      },
+      "48": {
+        "median_cos_snr_ok": 0.8512,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.767,
+        "status": "PARTIAL"
+      },
+      "52": {
+        "median_cos_snr_ok": 0.8975,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.828,
+        "status": "PARTIAL"
+      },
+      "56": {
+        "median_cos_snr_ok": 0.9323,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.888,
+        "status": "FAITHFUL"
+      },
+      "60": {
+        "median_cos_snr_ok": 0.9756,
+        "median_snr": Infinity,
+        "n_above_snr": 18,
+        "n": 18,
+        "median_norm_ratio": 0.956,
+        "status": "FAITHFUL"
+      }
+    },
+    "faithful": [
+      56,
+      60
+    ],
+    "partial": [
+      26,
+      28,
+      30,
+      32,
+      34,
+      36,
+      38,
+      40,
+      42,
+      44,
+      48,
+      52
+    ],
+    "unfaithful": [
+      4,
+      8,
+      12,
+      16,
+      20,
+      22,
+      24
+    ],
+    "unresolved": [],
+    "reading": "olmo3-think: median cosine between the measured summed-target response and the J-predicted response, over perturbations clearing SNR 5.0 \u2014 {4: 0.1077, 8: 0.1581, 12: 0.1646, 16: 0.2251, 20: 0.3161, 22: 0.4216, 24: 0.4862, 26: 0.5692, 28: 0.614, 30: 0.6648, 32: 0.6906, 34: 0.7134, 36: 0.7425, 38: 0.7505, 40: 0.7723, 42: 0.7924, 44: 0.8166, 48: 0.8512, 52: 0.8975, 56: 0.9323, 60: 0.9756}. FAITHFUL [56, 60] \u00b7 PARTIAL [26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 48, 52] \u00b7 UNFAITHFUL [4, 8, 12, 16, 20, 22, 24] \u00b7 UNRESOLVED [].",
+    "seconds": 35
+  },
+  "records": [
+    {
+      "prompt": 0,
+      "layer": 4,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.10020522773265839,
+      "snr": Infinity,
+      "rel_err": 0.995053231716156,
+      "norm_ratio": 0.08709605695268
+    },
+    {
+      "prompt": 0,
+      "layer": 4,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.09247948229312897,
+      "snr": Infinity,
+      "rel_err": 0.9957727193832397,
+      "norm_ratio": 0.08171617372972051
+    },
+    {
+      "prompt": 0,
+      "layer": 4,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.09763891994953156,
+      "snr": Infinity,
+      "rel_err": 0.9953083395957947,
+      "norm_ratio": 0.08451135816485529
+    },
+    {
+      "prompt": 0,
+      "layer": 4,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.18628408014774323,
+      "snr": Infinity,
+      "rel_err": 0.9867240190505981,
+      "norm_ratio": 0.2775303817720372
+    },
+    {
+      "prompt": 0,
+      "layer": 4,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.195112407207489,
+      "snr": Infinity,
+      "rel_err": 0.9835271239280701,
+      "norm_ratio": 0.2685602224247221
+    },
+    {
+      "prompt": 0,
+      "layer": 4,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.2237669825553894,
+      "snr": Infinity,
+      "rel_err": 0.9764237403869629,
+      "norm_ratio": 0.2827145204887392
+    },
+    {
+      "prompt": 0,
+      "layer": 8,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.12210352718830109,
+      "snr": Infinity,
+      "rel_err": 0.9925230145454407,
+      "norm_ratio": 0.1254258507075882
+    },
+    {
+      "prompt": 0,
+      "layer": 8,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.09050695598125458,
+      "snr": Infinity,
+      "rel_err": 0.9962935447692871,
+      "norm_ratio": 0.11865731511208691
+    },
+    {
+      "prompt": 0,
+      "layer": 8,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.16730287671089172,
+      "snr": Infinity,
+      "rel_err": 0.9864301085472107,
+      "norm_ratio": 0.13514115901736734
+    },
+    {
+      "prompt": 0,
+      "layer": 8,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.23800525069236755,
+      "snr": Infinity,
+      "rel_err": 0.9776926636695862,
+      "norm_ratio": 0.34994026149855334
+    },
+    {
+      "prompt": 0,
+      "layer": 8,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.17934826016426086,
+      "snr": Infinity,
+      "rel_err": 0.9908501505851746,
+      "norm_ratio": 0.29745725327759204
+    },
+    {
+      "prompt": 0,
+      "layer": 8,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.24822694063186646,
+      "snr": Infinity,
+      "rel_err": 0.9708338379859924,
+      "norm_ratio": 0.31252980965582405
+    },
+    {
+      "prompt": 0,
+      "layer": 12,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.13176605105400085,
+      "snr": Infinity,
+      "rel_err": 0.9915596842765808,
+      "norm_ratio": 0.15528247810427062
+    },
+    {
+      "prompt": 0,
+      "layer": 12,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.12868483364582062,
+      "snr": Infinity,
+      "rel_err": 0.9920762181282043,
+      "norm_ratio": 0.15652678293573638
+    },
+    {
+      "prompt": 0,
+      "layer": 12,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.1604199856519699,
+      "snr": Infinity,
+      "rel_err": 0.9870691299438477,
+      "norm_ratio": 0.16675925430866056
+    },
+    {
+      "prompt": 0,
+      "layer": 12,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.289695143699646,
+      "snr": Infinity,
+      "rel_err": 0.9586717486381531,
+      "norm_ratio": 0.34423716568942975
+    },
+    {
+      "prompt": 0,
+      "layer": 12,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.35201531648635864,
+      "snr": Infinity,
+      "rel_err": 0.9360048770904541,
+      "norm_ratio": 0.35648630875354387
+    },
+    {
+      "prompt": 0,
+      "layer": 12,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.27410709857940674,
+      "snr": Infinity,
+      "rel_err": 0.9688438773155212,
+      "norm_ratio": 0.39155164377671325
+    },
+    {
+      "prompt": 0,
+      "layer": 16,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.1945076584815979,
+      "snr": Infinity,
+      "rel_err": 0.9809077382087708,
+      "norm_ratio": 0.19088957388759156
+    },
+    {
+      "prompt": 0,
+      "layer": 16,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.19217699766159058,
+      "snr": Infinity,
+      "rel_err": 0.9814116358757019,
+      "norm_ratio": 0.18214182988355976
+    },
+    {
+      "prompt": 0,
+      "layer": 16,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.13798321783542633,
+      "snr": Infinity,
+      "rel_err": 0.9917362928390503,
+      "norm_ratio": 0.1887783616816394
+    },
+    {
+      "prompt": 0,
+      "layer": 16,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.313623309135437,
+      "snr": Infinity,
+      "rel_err": 0.9512354731559753,
+      "norm_ratio": 0.370266139853884
+    },
+    {
+      "prompt": 0,
+      "layer": 16,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.34871166944503784,
+      "snr": Infinity,
+      "rel_err": 0.940734326839447,
+      "norm_ratio": 0.42983411173526326
+    },
+    {
+      "prompt": 0,
+      "layer": 16,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.30311012268066406,
+      "snr": Infinity,
+      "rel_err": 0.9576440453529358,
+      "norm_ratio": 0.39775586438118
+    },
+    {
+      "prompt": 0,
+      "layer": 20,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.27821558713912964,
+      "snr": Infinity,
+      "rel_err": 0.9605780243873596,
+      "norm_ratio": 0.267537198326633
+    },
+    {
+      "prompt": 0,
+      "layer": 20,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.29503414034843445,
+      "snr": Infinity,
+      "rel_err": 0.9559682011604309,
+      "norm_ratio": 0.2646967224563257
+    },
+    {
+      "prompt": 0,
+      "layer": 20,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.27233177423477173,
+      "snr": Infinity,
+      "rel_err": 0.962251603603363,
+      "norm_ratio": 0.26269039243080244
+    },
+    {
+      "prompt": 0,
+      "layer": 20,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.4868304431438446,
+      "snr": Infinity,
+      "rel_err": 0.8751235008239746,
+      "norm_ratio": 0.433491942016885
+    },
+    {
+      "prompt": 0,
+      "layer": 20,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.45962709188461304,
+      "snr": Infinity,
+      "rel_err": 0.8890092968940735,
+      "norm_ratio": 0.4196935117548037
+    },
+    {
+      "prompt": 0,
+      "layer": 20,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.5116512775421143,
+      "snr": Infinity,
+      "rel_err": 0.8620599508285522,
+      "norm_ratio": 0.44140535743478365
+    },
+    {
+      "prompt": 0,
+      "layer": 22,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.385581910610199,
+      "snr": Infinity,
+      "rel_err": 0.9256258010864258,
+      "norm_ratio": 0.3117140146780457
+    },
+    {
+      "prompt": 0,
+      "layer": 22,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.37252336740493774,
+      "snr": Infinity,
+      "rel_err": 0.9301683902740479,
+      "norm_ratio": 0.30938091438151216
+    },
+    {
+      "prompt": 0,
+      "layer": 22,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.38112130761146545,
+      "snr": Infinity,
+      "rel_err": 0.9273217916488647,
+      "norm_ratio": 0.3091557598563129
+    },
+    {
+      "prompt": 0,
+      "layer": 22,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.5401574373245239,
+      "snr": Infinity,
+      "rel_err": 0.8445736765861511,
+      "norm_ratio": 0.46891979716414756
+    },
+    {
+      "prompt": 0,
+      "layer": 22,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.5137151479721069,
+      "snr": Infinity,
+      "rel_err": 0.8621997237205505,
+      "norm_ratio": 0.4283251786688428
+    },
+    {
+      "prompt": 0,
+      "layer": 22,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.5327335596084595,
+      "snr": Infinity,
+      "rel_err": 0.8501047492027283,
+      "norm_ratio": 0.4522156091931567
+    },
+    {
+      "prompt": 0,
+      "layer": 24,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.47342929244041443,
+      "snr": Infinity,
+      "rel_err": 0.8843300342559814,
+      "norm_ratio": 0.3948483998649729
+    },
+    {
+      "prompt": 0,
+      "layer": 24,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.4594530761241913,
+      "snr": Infinity,
+      "rel_err": 0.8916376829147339,
+      "norm_ratio": 0.381256222009022
+    },
+    {
+      "prompt": 0,
+      "layer": 24,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.4705694913864136,
+      "snr": Infinity,
+      "rel_err": 0.8869706392288208,
+      "norm_ratio": 0.38027783400278464
+    },
+    {
+      "prompt": 0,
+      "layer": 24,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.5808066725730896,
+      "snr": Infinity,
+      "rel_err": 0.8194692730903625,
+      "norm_ratio": 0.48664491877904287
+    },
+    {
+      "prompt": 0,
+      "layer": 24,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.6024894118309021,
+      "snr": Infinity,
+      "rel_err": 0.8088797926902771,
+      "norm_ratio": 0.47103538813080226
+    },
+    {
+      "prompt": 0,
+      "layer": 24,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.5831865072250366,
+      "snr": Infinity,
+      "rel_err": 0.8189890384674072,
+      "norm_ratio": 0.4790254575445574
+    },
+    {
+      "prompt": 0,
+      "layer": 26,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.5608689785003662,
+      "snr": Infinity,
+      "rel_err": 0.8369930386543274,
+      "norm_ratio": 0.4378600562094058
+    },
+    {
+      "prompt": 0,
+      "layer": 26,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.5475520491600037,
+      "snr": Infinity,
+      "rel_err": 0.8433781266212463,
+      "norm_ratio": 0.4421959332317699
+    },
+    {
+      "prompt": 0,
+      "layer": 26,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.5453518033027649,
+      "snr": Infinity,
+      "rel_err": 0.843877375125885,
+      "norm_ratio": 0.447690381212848
+    },
+    {
+      "prompt": 0,
+      "layer": 26,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.6539055109024048,
+      "snr": Infinity,
+      "rel_err": 0.7679201364517212,
+      "norm_ratio": 0.5223998628465111
+    },
+    {
+      "prompt": 0,
+      "layer": 26,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.632333517074585,
+      "snr": Infinity,
+      "rel_err": 0.786523163318634,
+      "norm_ratio": 0.49645071722099293
+    },
+    {
+      "prompt": 0,
+      "layer": 26,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.6485710144042969,
+      "snr": Infinity,
+      "rel_err": 0.7719141840934753,
+      "norm_ratio": 0.5201356088582488
+    },
+    {
+      "prompt": 0,
+      "layer": 28,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.6118825674057007,
+      "snr": Infinity,
+      "rel_err": 0.798712968826294,
+      "norm_ratio": 0.5007846476149139
+    },
+    {
+      "prompt": 0,
+      "layer": 28,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.6154966354370117,
+      "snr": Infinity,
+      "rel_err": 0.7978532910346985,
+      "norm_ratio": 0.49137533746018996
+    },
+    {
+      "prompt": 0,
+      "layer": 28,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.5957987308502197,
+      "snr": Infinity,
+      "rel_err": 0.8099414110183716,
+      "norm_ratio": 0.4910077610792827
+    },
+    {
+      "prompt": 0,
+      "layer": 28,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.6845159530639648,
+      "snr": Infinity,
+      "rel_err": 0.7435427308082581,
+      "norm_ratio": 0.5381674243948757
+    },
+    {
+      "prompt": 0,
+      "layer": 28,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.6536846160888672,
+      "snr": Infinity,
+      "rel_err": 0.7662781476974487,
+      "norm_ratio": 0.5333279821442904
+    },
+    {
+      "prompt": 0,
+      "layer": 28,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.6967346668243408,
+      "snr": Infinity,
+      "rel_err": 0.7346774935722351,
+      "norm_ratio": 0.5380208455895586
+    },
+    {
+      "prompt": 0,
+      "layer": 30,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.6804389953613281,
+      "snr": Infinity,
+      "rel_err": 0.7484369277954102,
+      "norm_ratio": 0.5282711627944735
+    },
+    {
+      "prompt": 0,
+      "layer": 30,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.6567693948745728,
+      "snr": Infinity,
+      "rel_err": 0.767366886138916,
+      "norm_ratio": 0.5146499569879331
+    },
+    {
+      "prompt": 0,
+      "layer": 30,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.6523604393005371,
+      "snr": Infinity,
+      "rel_err": 0.772672176361084,
+      "norm_ratio": 0.5020397379244693
+    },
+    {
+      "prompt": 0,
+      "layer": 30,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7265672087669373,
+      "snr": Infinity,
+      "rel_err": 0.706609308719635,
+      "norm_ratio": 0.5616534637651398
+    },
+    {
+      "prompt": 0,
+      "layer": 30,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7105942964553833,
+      "snr": Infinity,
+      "rel_err": 0.7227585315704346,
+      "norm_ratio": 0.5452943282326634
+    },
+    {
+      "prompt": 0,
+      "layer": 30,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7124670147895813,
+      "snr": Infinity,
+      "rel_err": 0.7185262441635132,
+      "norm_ratio": 0.5579058099015922
+    },
+    {
+      "prompt": 0,
+      "layer": 32,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.6879183053970337,
+      "snr": Infinity,
+      "rel_err": 0.7408885359764099,
+      "norm_ratio": 0.5390977016448167
+    },
+    {
+      "prompt": 0,
+      "layer": 32,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.6987903118133545,
+      "snr": Infinity,
+      "rel_err": 0.7328976392745972,
+      "norm_ratio": 0.5392700796074926
+    },
+    {
+      "prompt": 0,
+      "layer": 32,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.6932696104049683,
+      "snr": Infinity,
+      "rel_err": 0.7339550256729126,
+      "norm_ratio": 0.5542991421490012
+    },
+    {
+      "prompt": 0,
+      "layer": 32,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7412497997283936,
+      "snr": Infinity,
+      "rel_err": 0.6899585723876953,
+      "norm_ratio": 0.5815815615862907
+    },
+    {
+      "prompt": 0,
+      "layer": 32,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7377974390983582,
+      "snr": Infinity,
+      "rel_err": 0.6862959265708923,
+      "norm_ratio": 0.6139135620474446
+    },
+    {
+      "prompt": 0,
+      "layer": 32,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7471445202827454,
+      "snr": Infinity,
+      "rel_err": 0.6807617545127869,
+      "norm_ratio": 0.5999656633693062
+    },
+    {
+      "prompt": 0,
+      "layer": 34,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.7213703393936157,
+      "snr": Infinity,
+      "rel_err": 0.7082749605178833,
+      "norm_ratio": 0.5729502642463814
+    },
+    {
+      "prompt": 0,
+      "layer": 34,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.6883891224861145,
+      "snr": Infinity,
+      "rel_err": 0.7359931468963623,
+      "norm_ratio": 0.5636276751637096
+    },
+    {
+      "prompt": 0,
+      "layer": 34,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.6913019418716431,
+      "snr": Infinity,
+      "rel_err": 0.732168972492218,
+      "norm_ratio": 0.5731088442081109
+    },
+    {
+      "prompt": 0,
+      "layer": 34,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7569133639335632,
+      "snr": Infinity,
+      "rel_err": 0.671953558921814,
+      "norm_ratio": 0.6005821671406982
+    },
+    {
+      "prompt": 0,
+      "layer": 34,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7280400991439819,
+      "snr": Infinity,
+      "rel_err": 0.7025724649429321,
+      "norm_ratio": 0.5742531756875918
+    },
+    {
+      "prompt": 0,
+      "layer": 34,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7655216455459595,
+      "snr": Infinity,
+      "rel_err": 0.6595702767372131,
+      "norm_ratio": 0.6204138419768048
+    },
+    {
+      "prompt": 0,
+      "layer": 36,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.7385715842247009,
+      "snr": Infinity,
+      "rel_err": 0.6872420907020569,
+      "norm_ratio": 0.6051932887596904
+    },
+    {
+      "prompt": 0,
+      "layer": 36,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.7397622466087341,
+      "snr": Infinity,
+      "rel_err": 0.6867707967758179,
+      "norm_ratio": 0.6022767113393366
+    },
+    {
+      "prompt": 0,
+      "layer": 36,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.7457512617111206,
+      "snr": Infinity,
+      "rel_err": 0.6848456859588623,
+      "norm_ratio": 0.587137176795844
+    },
+    {
+      "prompt": 0,
+      "layer": 36,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7831065654754639,
+      "snr": Infinity,
+      "rel_err": 0.6384615898132324,
+      "norm_ratio": 0.6385759707540034
+    },
+    {
+      "prompt": 0,
+      "layer": 36,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7673745155334473,
+      "snr": Infinity,
+      "rel_err": 0.6558072566986084,
+      "norm_ratio": 0.6297266061947525
+    },
+    {
+      "prompt": 0,
+      "layer": 36,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7686628103256226,
+      "snr": Infinity,
+      "rel_err": 0.6580599546432495,
+      "norm_ratio": 0.614113639966792
+    },
+    {
+      "prompt": 0,
+      "layer": 38,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.7376691699028015,
+      "snr": Infinity,
+      "rel_err": 0.6831968426704407,
+      "norm_ratio": 0.6332006372254763
+    },
+    {
+      "prompt": 0,
+      "layer": 38,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.7606486082077026,
+      "snr": Infinity,
+      "rel_err": 0.660733699798584,
+      "norm_ratio": 0.6375411911625959
+    },
+    {
+      "prompt": 0,
+      "layer": 38,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.7659602165222168,
+      "snr": Infinity,
+      "rel_err": 0.6594250798225403,
+      "norm_ratio": 0.6192068184438891
+    },
+    {
+      "prompt": 0,
+      "layer": 38,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7935670614242554,
+      "snr": Infinity,
+      "rel_err": 0.6257174015045166,
+      "norm_ratio": 0.6477212140703167
+    },
+    {
+      "prompt": 0,
+      "layer": 38,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7910939455032349,
+      "snr": Infinity,
+      "rel_err": 0.625982940196991,
+      "norm_ratio": 0.6581112890441246
+    },
+    {
+      "prompt": 0,
+      "layer": 38,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7867457270622253,
+      "snr": Infinity,
+      "rel_err": 0.6328265070915222,
+      "norm_ratio": 0.6473245553505009
+    },
+    {
+      "prompt": 0,
+      "layer": 40,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.762927234172821,
+      "snr": Infinity,
+      "rel_err": 0.6608567833900452,
+      "norm_ratio": 0.6258518144217154
+    },
+    {
+      "prompt": 0,
+      "layer": 40,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.7738779783248901,
+      "snr": Infinity,
+      "rel_err": 0.6479393839836121,
+      "norm_ratio": 0.6370837115054534
+    },
+    {
+      "prompt": 0,
+      "layer": 40,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.7830304503440857,
+      "snr": Infinity,
+      "rel_err": 0.637287974357605,
+      "norm_ratio": 0.6442045373150509
+    },
+    {
+      "prompt": 0,
+      "layer": 40,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7955344915390015,
+      "snr": Infinity,
+      "rel_err": 0.6194692254066467,
+      "norm_ratio": 0.6666270949437791
+    },
+    {
+      "prompt": 0,
+      "layer": 40,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.803253710269928,
+      "snr": Infinity,
+      "rel_err": 0.6085292100906372,
+      "norm_ratio": 0.6786574890396633
+    },
+    {
+      "prompt": 0,
+      "layer": 40,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7998232245445251,
+      "snr": Infinity,
+      "rel_err": 0.6154119372367859,
+      "norm_ratio": 0.6639957305352182
+    },
+    {
+      "prompt": 0,
+      "layer": 42,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.8042677640914917,
+      "snr": Infinity,
+      "rel_err": 0.6102989315986633,
+      "norm_ratio": 0.6653020716009971
+    },
+    {
+      "prompt": 0,
+      "layer": 42,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.8041263818740845,
+      "snr": Infinity,
+      "rel_err": 0.6070606708526611,
+      "norm_ratio": 0.681073680221813
+    },
+    {
+      "prompt": 0,
+      "layer": 42,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.7902253866195679,
+      "snr": Infinity,
+      "rel_err": 0.6243835687637329,
+      "norm_ratio": 0.6705969719461646
+    },
+    {
+      "prompt": 0,
+      "layer": 42,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.8284013867378235,
+      "snr": Infinity,
+      "rel_err": 0.581139087677002,
+      "norm_ratio": 0.6735741388909859
+    },
+    {
+      "prompt": 0,
+      "layer": 42,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.820722222328186,
+      "snr": Infinity,
+      "rel_err": 0.5845258831977844,
+      "norm_ratio": 0.6972089965733489
+    },
+    {
+      "prompt": 0,
+      "layer": 42,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.8212742209434509,
+      "snr": Infinity,
+      "rel_err": 0.5870975255966187,
+      "norm_ratio": 0.6828010370517658
+    },
+    {
+      "prompt": 0,
+      "layer": 44,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.8018269538879395,
+      "snr": Infinity,
+      "rel_err": 0.607822835445404,
+      "norm_ratio": 0.6905846532929457
+    },
+    {
+      "prompt": 0,
+      "layer": 44,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.8192937970161438,
+      "snr": Infinity,
+      "rel_err": 0.5871570110321045,
+      "norm_ratio": 0.6928201527716924
+    },
+    {
+      "prompt": 0,
+      "layer": 44,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.8150238990783691,
+      "snr": Infinity,
+      "rel_err": 0.5908499360084534,
+      "norm_ratio": 0.6994056361200645
+    },
+    {
+      "prompt": 0,
+      "layer": 44,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.826427698135376,
+      "snr": Infinity,
+      "rel_err": 0.5795796513557434,
+      "norm_ratio": 0.6889677374716724
+    },
+    {
+      "prompt": 0,
+      "layer": 44,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.8272114992141724,
+      "snr": Infinity,
+      "rel_err": 0.5717025399208069,
+      "norm_ratio": 0.7217480714634417
+    },
+    {
+      "prompt": 0,
+      "layer": 44,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.8343167901039124,
+      "snr": Infinity,
+      "rel_err": 0.5635280013084412,
+      "norm_ratio": 0.7174910605255873
+    },
+    {
+      "prompt": 0,
+      "layer": 48,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.8586122989654541,
+      "snr": Infinity,
+      "rel_err": 0.5209179520606995,
+      "norm_ratio": 0.766035477029374
+    },
+    {
+      "prompt": 0,
+      "layer": 48,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.8506930470466614,
+      "snr": Infinity,
+      "rel_err": 0.5356784462928772,
+      "norm_ratio": 0.7475908952372091
+    },
+    {
+      "prompt": 0,
+      "layer": 48,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.8471649289131165,
+      "snr": Infinity,
+      "rel_err": 0.5361230373382568,
+      "norm_ratio": 0.7756356518125619
+    },
+    {
+      "prompt": 0,
+      "layer": 48,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.8583815097808838,
+      "snr": Infinity,
+      "rel_err": 0.5191447734832764,
+      "norm_ratio": 0.7788191682145114
+    },
+    {
+      "prompt": 0,
+      "layer": 48,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.8416423797607422,
+      "snr": Infinity,
+      "rel_err": 0.5480621457099915,
+      "norm_ratio": 0.7481865496499556
+    },
+    {
+      "prompt": 0,
+      "layer": 48,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.8735026717185974,
+      "snr": Infinity,
+      "rel_err": 0.49492529034614563,
+      "norm_ratio": 0.7842953931758142
+    },
+    {
+      "prompt": 0,
+      "layer": 52,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.8954986929893494,
+      "snr": Infinity,
+      "rel_err": 0.4521696865558624,
+      "norm_ratio": 0.8156536509129519
+    },
+    {
+      "prompt": 0,
+      "layer": 52,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.8801052570343018,
+      "snr": Infinity,
+      "rel_err": 0.4804174304008484,
+      "norm_ratio": 0.8067153503751817
+    },
+    {
+      "prompt": 0,
+      "layer": 52,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.896578848361969,
+      "snr": Infinity,
+      "rel_err": 0.4491676390171051,
+      "norm_ratio": 0.8217107532533104
+    },
+    {
+      "prompt": 0,
+      "layer": 52,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.909496009349823,
+      "snr": Infinity,
+      "rel_err": 0.42119961977005005,
+      "norm_ratio": 0.84173063592576
+    },
+    {
+      "prompt": 0,
+      "layer": 52,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.9027328491210938,
+      "snr": Infinity,
+      "rel_err": 0.43642565608024597,
+      "norm_ratio": 0.8292895193513934
+    },
+    {
+      "prompt": 0,
+      "layer": 52,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.8984984159469604,
+      "snr": Infinity,
+      "rel_err": 0.4476758539676666,
+      "norm_ratio": 0.8106741380282572
+    },
+    {
+      "prompt": 0,
+      "layer": 56,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.929302453994751,
+      "snr": Infinity,
+      "rel_err": 0.372230589389801,
+      "norm_ratio": 0.8828423874146615
+    },
+    {
+      "prompt": 0,
+      "layer": 56,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.9291622638702393,
+      "snr": Infinity,
+      "rel_err": 0.37200355529785156,
+      "norm_ratio": 0.88758071987086
+    },
+    {
+      "prompt": 0,
+      "layer": 56,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.9235731959342957,
+      "snr": Infinity,
+      "rel_err": 0.38630685210227966,
+      "norm_ratio": 0.8764516903449946
+    },
+    {
+      "prompt": 0,
+      "layer": 56,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.9357375502586365,
+      "snr": Infinity,
+      "rel_err": 0.3558277189731598,
+      "norm_ratio": 0.8886394143632274
+    },
+    {
+      "prompt": 0,
+      "layer": 56,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.9396981000900269,
+      "snr": Infinity,
+      "rel_err": 0.3452324867248535,
+      "norm_ratio": 0.8926014047701039
+    },
+    {
+      "prompt": 0,
+      "layer": 56,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.9326252937316895,
+      "snr": Infinity,
+      "rel_err": 0.36387568712234497,
+      "norm_ratio": 0.8857696167657297
+    },
+    {
+      "prompt": 0,
+      "layer": 60,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.9754207730293274,
+      "snr": Infinity,
+      "rel_err": 0.22168812155723572,
+      "norm_ratio": 0.9511115257391041
+    },
+    {
+      "prompt": 0,
+      "layer": 60,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.9718553423881531,
+      "snr": Infinity,
+      "rel_err": 0.23665498197078705,
+      "norm_ratio": 0.9493068671366407
+    },
+    {
+      "prompt": 0,
+      "layer": 60,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.9756087064743042,
+      "snr": Infinity,
+      "rel_err": 0.2208625227212906,
+      "norm_ratio": 0.9512669932155657
+    },
+    {
+      "prompt": 0,
+      "layer": 60,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.9747672080993652,
+      "snr": Infinity,
+      "rel_err": 0.22514121234416962,
+      "norm_ratio": 0.945445804714504
+    },
+    {
+      "prompt": 0,
+      "layer": 60,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.9730002284049988,
+      "snr": Infinity,
+      "rel_err": 0.23231568932533264,
+      "norm_ratio": 0.9465427922947098
+    },
+    {
+      "prompt": 0,
+      "layer": 60,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.976448655128479,
+      "snr": Infinity,
+      "rel_err": 0.2173124998807907,
+      "norm_ratio": 0.950436852548955
+    },
+    {
+      "prompt": 1,
+      "layer": 4,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.06383445113897324,
+      "snr": Infinity,
+      "rel_err": 0.9979611039161682,
+      "norm_ratio": 0.06500004304380765
+    },
+    {
+      "prompt": 1,
+      "layer": 4,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.049732036888599396,
+      "snr": Infinity,
+      "rel_err": 0.9988598823547363,
+      "norm_ratio": 0.06367028262753367
+    },
+    {
+      "prompt": 1,
+      "layer": 4,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.05621033534407616,
+      "snr": Infinity,
+      "rel_err": 0.9984440803527832,
+      "norm_ratio": 0.06329082135693416
+    },
+    {
+      "prompt": 1,
+      "layer": 4,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.17142543196678162,
+      "snr": Infinity,
+      "rel_err": 0.9868130683898926,
+      "norm_ratio": 0.22787429302874604
+    },
+    {
+      "prompt": 1,
+      "layer": 4,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.1841985285282135,
+      "snr": Infinity,
+      "rel_err": 0.983083188533783,
+      "norm_ratio": 0.16466729707153083
+    },
+    {
+      "prompt": 1,
+      "layer": 4,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.22168277204036713,
+      "snr": Infinity,
+      "rel_err": 0.9752206206321716,
+      "norm_ratio": 0.20758847925350254
+    },
+    {
+      "prompt": 1,
+      "layer": 8,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.08789046108722687,
+      "snr": Infinity,
+      "rel_err": 0.9961315393447876,
+      "norm_ratio": 0.08959166409917085
+    },
+    {
+      "prompt": 1,
+      "layer": 8,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.0789569541811943,
+      "snr": Infinity,
+      "rel_err": 0.9968946576118469,
+      "norm_ratio": 0.0847170077325671
+    },
+    {
+      "prompt": 1,
+      "layer": 8,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.07787369191646576,
+      "snr": Infinity,
+      "rel_err": 0.9969868063926697,
+      "norm_ratio": 0.08472917420015556
+    },
+    {
+      "prompt": 1,
+      "layer": 8,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.14895787835121155,
+      "snr": Infinity,
+      "rel_err": 0.990720808506012,
+      "norm_ratio": 0.20991943248601594
+    },
+    {
+      "prompt": 1,
+      "layer": 8,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.17409217357635498,
+      "snr": Infinity,
+      "rel_err": 0.9850761294364929,
+      "norm_ratio": 0.20022808573743872
+    },
+    {
+      "prompt": 1,
+      "layer": 8,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.17063146829605103,
+      "snr": Infinity,
+      "rel_err": 0.9870209097862244,
+      "norm_ratio": 0.22829689637396502
+    },
+    {
+      "prompt": 1,
+      "layer": 12,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.09626041352748871,
+      "snr": Infinity,
+      "rel_err": 0.9958844184875488,
+      "norm_ratio": 0.12869313841247088
+    },
+    {
+      "prompt": 1,
+      "layer": 12,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.1018994152545929,
+      "snr": Infinity,
+      "rel_err": 0.9949968457221985,
+      "norm_ratio": 0.12195260188709878
+    },
+    {
+      "prompt": 1,
+      "layer": 12,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.13021785020828247,
+      "snr": Infinity,
+      "rel_err": 0.9915362000465393,
+      "norm_ratio": 0.12018280054781708
+    },
+    {
+      "prompt": 1,
+      "layer": 12,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.2293013334274292,
+      "snr": Infinity,
+      "rel_err": 0.97360759973526,
+      "norm_ratio": 0.25146175200287935
+    },
+    {
+      "prompt": 1,
+      "layer": 12,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.1688070297241211,
+      "snr": Infinity,
+      "rel_err": 0.9936827421188354,
+      "norm_ratio": 0.29490700390958907
+    },
+    {
+      "prompt": 1,
+      "layer": 12,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.24585078656673431,
+      "snr": Infinity,
+      "rel_err": 0.969407320022583,
+      "norm_ratio": 0.25975461556438423
+    },
+    {
+      "prompt": 1,
+      "layer": 16,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.09126047790050507,
+      "snr": Infinity,
+      "rel_err": 0.9979110956192017,
+      "norm_ratio": 0.1557210083137306
+    },
+    {
+      "prompt": 1,
+      "layer": 16,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.18851029872894287,
+      "snr": Infinity,
+      "rel_err": 0.9846518039703369,
+      "norm_ratio": 0.11726886817158329
+    },
+    {
+      "prompt": 1,
+      "layer": 16,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.17005544900894165,
+      "snr": Infinity,
+      "rel_err": 0.9854632616043091,
+      "norm_ratio": 0.16252982492036258
+    },
+    {
+      "prompt": 1,
+      "layer": 16,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.3368258476257324,
+      "snr": Infinity,
+      "rel_err": 0.9419810771942139,
+      "norm_ratio": 0.3088980293762865
+    },
+    {
+      "prompt": 1,
+      "layer": 16,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.3170531988143921,
+      "snr": Infinity,
+      "rel_err": 0.9490145444869995,
+      "norm_ratio": 0.2831231328088094
+    },
+    {
+      "prompt": 1,
+      "layer": 16,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.2791687846183777,
+      "snr": Infinity,
+      "rel_err": 0.9602550864219666,
+      "norm_ratio": 0.27415878255962683
+    },
+    {
+      "prompt": 1,
+      "layer": 20,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.2375754863023758,
+      "snr": Infinity,
+      "rel_err": 0.9713690876960754,
+      "norm_ratio": 0.23761244916694396
+    },
+    {
+      "prompt": 1,
+      "layer": 20,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.19923686981201172,
+      "snr": Infinity,
+      "rel_err": 0.9803720116615295,
+      "norm_ratio": 0.22795497392023314
+    },
+    {
+      "prompt": 1,
+      "layer": 20,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.2689454257488251,
+      "snr": Infinity,
+      "rel_err": 0.9647146463394165,
+      "norm_ratio": 0.21411886543222244
+    },
+    {
+      "prompt": 1,
+      "layer": 20,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.40103304386138916,
+      "snr": Infinity,
+      "rel_err": 0.9165052175521851,
+      "norm_ratio": 0.37258573207667134
+    },
+    {
+      "prompt": 1,
+      "layer": 20,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.3341106176376343,
+      "snr": Infinity,
+      "rel_err": 0.9427077770233154,
+      "norm_ratio": 0.3160027946762842
+    },
+    {
+      "prompt": 1,
+      "layer": 20,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.333489328622818,
+      "snr": Infinity,
+      "rel_err": 0.9438208341598511,
+      "norm_ratio": 0.37835541382773874
+    },
+    {
+      "prompt": 1,
+      "layer": 22,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.3084781765937805,
+      "snr": Infinity,
+      "rel_err": 0.9519031047821045,
+      "norm_ratio": 0.2727254658766346
+    },
+    {
+      "prompt": 1,
+      "layer": 22,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.3225286602973938,
+      "snr": Infinity,
+      "rel_err": 0.9471657872200012,
+      "norm_ratio": 0.28865211314891864
+    },
+    {
+      "prompt": 1,
+      "layer": 22,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.3362337350845337,
+      "snr": Infinity,
+      "rel_err": 0.9438438415527344,
+      "norm_ratio": 0.2738280626553764
+    },
+    {
+      "prompt": 1,
+      "layer": 22,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.4663834571838379,
+      "snr": Infinity,
+      "rel_err": 0.8863891363143921,
+      "norm_ratio": 0.4098199161616748
+    },
+    {
+      "prompt": 1,
+      "layer": 22,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.4777606725692749,
+      "snr": Infinity,
+      "rel_err": 0.8820475339889526,
+      "norm_ratio": 0.3986195312063474
+    },
+    {
+      "prompt": 1,
+      "layer": 22,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.4576621651649475,
+      "snr": Infinity,
+      "rel_err": 0.8909822702407837,
+      "norm_ratio": 0.4001820123500604
+    },
+    {
+      "prompt": 1,
+      "layer": 24,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.385410875082016,
+      "snr": Infinity,
+      "rel_err": 0.9241646528244019,
+      "norm_ratio": 0.33420805289725525
+    },
+    {
+      "prompt": 1,
+      "layer": 24,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.40129294991493225,
+      "snr": Infinity,
+      "rel_err": 0.9178478121757507,
+      "norm_ratio": 0.3422965999239966
+    },
+    {
+      "prompt": 1,
+      "layer": 24,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.36228030920028687,
+      "snr": Infinity,
+      "rel_err": 0.9331439733505249,
+      "norm_ratio": 0.31750675164675857
+    },
+    {
+      "prompt": 1,
+      "layer": 24,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.5531348586082458,
+      "snr": Infinity,
+      "rel_err": 0.8396649956703186,
+      "norm_ratio": 0.44827587087906123
+    },
+    {
+      "prompt": 1,
+      "layer": 24,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.524606466293335,
+      "snr": Infinity,
+      "rel_err": 0.8565824031829834,
+      "norm_ratio": 0.43002712057879966
+    },
+    {
+      "prompt": 1,
+      "layer": 24,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.5256682634353638,
+      "snr": Infinity,
+      "rel_err": 0.8537617325782776,
+      "norm_ratio": 0.45330779583807845
+    },
+    {
+      "prompt": 1,
+      "layer": 26,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.468852698802948,
+      "snr": Infinity,
+      "rel_err": 0.8866870999336243,
+      "norm_ratio": 0.3911542553737365
+    },
+    {
+      "prompt": 1,
+      "layer": 26,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.49392837285995483,
+      "snr": Infinity,
+      "rel_err": 0.8762891292572021,
+      "norm_ratio": 0.3850802199297518
+    },
+    {
+      "prompt": 1,
+      "layer": 26,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.4680846929550171,
+      "snr": Infinity,
+      "rel_err": 0.887824535369873,
+      "norm_ratio": 0.38243630203401446
+    },
+    {
+      "prompt": 1,
+      "layer": 26,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.5816991329193115,
+      "snr": Infinity,
+      "rel_err": 0.8255816102027893,
+      "norm_ratio": 0.44042341991622963
+    },
+    {
+      "prompt": 1,
+      "layer": 26,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.6012115478515625,
+      "snr": Infinity,
+      "rel_err": 0.8093895316123962,
+      "norm_ratio": 0.4724992713040929
+    },
+    {
+      "prompt": 1,
+      "layer": 26,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.5865011215209961,
+      "snr": Infinity,
+      "rel_err": 0.8175978660583496,
+      "norm_ratio": 0.4749226062731769
+    },
+    {
+      "prompt": 1,
+      "layer": 28,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.5522502660751343,
+      "snr": Infinity,
+      "rel_err": 0.8429043889045715,
+      "norm_ratio": 0.42787992977316053
+    },
+    {
+      "prompt": 1,
+      "layer": 28,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.5439611077308655,
+      "snr": Infinity,
+      "rel_err": 0.8456618785858154,
+      "norm_ratio": 0.4389012205673439
+    },
+    {
+      "prompt": 1,
+      "layer": 28,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.532279372215271,
+      "snr": Infinity,
+      "rel_err": 0.8528973460197449,
+      "norm_ratio": 0.4285727052400883
+    },
+    {
+      "prompt": 1,
+      "layer": 28,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.6297839879989624,
+      "snr": Infinity,
+      "rel_err": 0.7867226600646973,
+      "norm_ratio": 0.5050421400152455
+    },
+    {
+      "prompt": 1,
+      "layer": 28,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.6304420232772827,
+      "snr": Infinity,
+      "rel_err": 0.7854880094528198,
+      "norm_ratio": 0.510239863213656
+    },
+    {
+      "prompt": 1,
+      "layer": 28,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.6124434471130371,
+      "snr": Infinity,
+      "rel_err": 0.7971503138542175,
+      "norm_ratio": 0.5098005188016459
+    },
+    {
+      "prompt": 1,
+      "layer": 30,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.5708338022232056,
+      "snr": Infinity,
+      "rel_err": 0.8295562267303467,
+      "norm_ratio": 0.45245023545839863
+    },
+    {
+      "prompt": 1,
+      "layer": 30,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.5950521230697632,
+      "snr": Infinity,
+      "rel_err": 0.8129406571388245,
+      "norm_ratio": 0.47274397527248446
+    },
+    {
+      "prompt": 1,
+      "layer": 30,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.5745359063148499,
+      "snr": Infinity,
+      "rel_err": 0.8258993029594421,
+      "norm_ratio": 0.46407680758434033
+    },
+    {
+      "prompt": 1,
+      "layer": 30,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.6656365990638733,
+      "snr": Infinity,
+      "rel_err": 0.7612340450286865,
+      "norm_ratio": 0.5154729130468262
+    },
+    {
+      "prompt": 1,
+      "layer": 30,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.6659914255142212,
+      "snr": Infinity,
+      "rel_err": 0.7560518980026245,
+      "norm_ratio": 0.5428698255324726
+    },
+    {
+      "prompt": 1,
+      "layer": 30,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.6639798879623413,
+      "snr": Infinity,
+      "rel_err": 0.7585467100143433,
+      "norm_ratio": 0.5364549435095328
+    },
+    {
+      "prompt": 1,
+      "layer": 32,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.6187655925750732,
+      "snr": Infinity,
+      "rel_err": 0.7968646883964539,
+      "norm_ratio": 0.4851086517920913
+    },
+    {
+      "prompt": 1,
+      "layer": 32,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.6390198469161987,
+      "snr": Infinity,
+      "rel_err": 0.7812392115592957,
+      "norm_ratio": 0.5023410419721163
+    },
+    {
+      "prompt": 1,
+      "layer": 32,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.6391887664794922,
+      "snr": Infinity,
+      "rel_err": 0.7811148762702942,
+      "norm_ratio": 0.5024310679377602
+    },
+    {
+      "prompt": 1,
+      "layer": 32,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7022525668144226,
+      "snr": Infinity,
+      "rel_err": 0.7243360280990601,
+      "norm_ratio": 0.5687555215372321
+    },
+    {
+      "prompt": 1,
+      "layer": 32,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.6826699376106262,
+      "snr": Infinity,
+      "rel_err": 0.7425127029418945,
+      "norm_ratio": 0.550899883618499
+    },
+    {
+      "prompt": 1,
+      "layer": 32,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.6860866546630859,
+      "snr": Infinity,
+      "rel_err": 0.7413550615310669,
+      "norm_ratio": 0.543530548556173
+    },
+    {
+      "prompt": 1,
+      "layer": 34,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.665367603302002,
+      "snr": Infinity,
+      "rel_err": 0.7574144601821899,
+      "norm_ratio": 0.5373410189103394
+    },
+    {
+      "prompt": 1,
+      "layer": 34,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.6476210355758667,
+      "snr": Infinity,
+      "rel_err": 0.7719954252243042,
+      "norm_ratio": 0.5235648525724109
+    },
+    {
+      "prompt": 1,
+      "layer": 34,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.5968096256256104,
+      "snr": Infinity,
+      "rel_err": 0.8106110692024231,
+      "norm_ratio": 0.4816056274182811
+    },
+    {
+      "prompt": 1,
+      "layer": 34,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7177927494049072,
+      "snr": Infinity,
+      "rel_err": 0.7088482975959778,
+      "norm_ratio": 0.5847800006515491
+    },
+    {
+      "prompt": 1,
+      "layer": 34,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7279661297798157,
+      "snr": Infinity,
+      "rel_err": 0.7021934986114502,
+      "norm_ratio": 0.5762743970421644
+    },
+    {
+      "prompt": 1,
+      "layer": 34,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7090057134628296,
+      "snr": Infinity,
+      "rel_err": 0.7166535258293152,
+      "norm_ratio": 0.5814078353361274
+    },
+    {
+      "prompt": 1,
+      "layer": 36,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.6960573196411133,
+      "snr": Infinity,
+      "rel_err": 0.7297787070274353,
+      "norm_ratio": 0.5653946508392222
+    },
+    {
+      "prompt": 1,
+      "layer": 36,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.680402398109436,
+      "snr": Infinity,
+      "rel_err": 0.7418299913406372,
+      "norm_ratio": 0.5652540717116166
+    },
+    {
+      "prompt": 1,
+      "layer": 36,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.6848607659339905,
+      "snr": Infinity,
+      "rel_err": 0.7395573258399963,
+      "norm_ratio": 0.5584516413746726
+    },
+    {
+      "prompt": 1,
+      "layer": 36,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7452174425125122,
+      "snr": Infinity,
+      "rel_err": 0.6801152229309082,
+      "norm_ratio": 0.6114054542318411
+    },
+    {
+      "prompt": 1,
+      "layer": 36,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7488999962806702,
+      "snr": Infinity,
+      "rel_err": 0.6781256198883057,
+      "norm_ratio": 0.6050052734133811
+    },
+    {
+      "prompt": 1,
+      "layer": 36,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7309910655021667,
+      "snr": Infinity,
+      "rel_err": 0.6931878924369812,
+      "norm_ratio": 0.6091000179715974
+    },
+    {
+      "prompt": 1,
+      "layer": 38,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.7087799310684204,
+      "snr": Infinity,
+      "rel_err": 0.7162045240402222,
+      "norm_ratio": 0.5850145311474253
+    },
+    {
+      "prompt": 1,
+      "layer": 38,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.695281445980072,
+      "snr": Infinity,
+      "rel_err": 0.7270069122314453,
+      "norm_ratio": 0.585941093521884
+    },
+    {
+      "prompt": 1,
+      "layer": 38,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.707538902759552,
+      "snr": Infinity,
+      "rel_err": 0.7171675562858582,
+      "norm_ratio": 0.5853072217291264
+    },
+    {
+      "prompt": 1,
+      "layer": 38,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7563722133636475,
+      "snr": Infinity,
+      "rel_err": 0.6663051843643188,
+      "norm_ratio": 0.6296379643999177
+    },
+    {
+      "prompt": 1,
+      "layer": 38,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7255896329879761,
+      "snr": Infinity,
+      "rel_err": 0.6973960399627686,
+      "norm_ratio": 0.6122697716172043
+    },
+    {
+      "prompt": 1,
+      "layer": 38,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7446824312210083,
+      "snr": Infinity,
+      "rel_err": 0.678929328918457,
+      "norm_ratio": 0.6201952920796319
+    },
+    {
+      "prompt": 1,
+      "layer": 40,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.7207907438278198,
+      "snr": Infinity,
+      "rel_err": 0.7001598477363586,
+      "norm_ratio": 0.6219821791897547
+    },
+    {
+      "prompt": 1,
+      "layer": 40,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.7368419170379639,
+      "snr": Infinity,
+      "rel_err": 0.6876113414764404,
+      "norm_ratio": 0.6113607105707707
+    },
+    {
+      "prompt": 1,
+      "layer": 40,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.7295653223991394,
+      "snr": Infinity,
+      "rel_err": 0.6930386424064636,
+      "norm_ratio": 0.6174573938487012
+    },
+    {
+      "prompt": 1,
+      "layer": 40,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7806358933448792,
+      "snr": Infinity,
+      "rel_err": 0.6349551677703857,
+      "norm_ratio": 0.6685624847475709
+    },
+    {
+      "prompt": 1,
+      "layer": 40,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7706884741783142,
+      "snr": Infinity,
+      "rel_err": 0.6475948691368103,
+      "norm_ratio": 0.6551901412290378
+    },
+    {
+      "prompt": 1,
+      "layer": 40,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7689231634140015,
+      "snr": Infinity,
+      "rel_err": 0.6503228545188904,
+      "norm_ratio": 0.6499164826285707
+    },
+    {
+      "prompt": 1,
+      "layer": 42,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.7524338960647583,
+      "snr": Infinity,
+      "rel_err": 0.6694321036338806,
+      "norm_ratio": 0.6328676319783421
+    },
+    {
+      "prompt": 1,
+      "layer": 42,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.749329686164856,
+      "snr": Infinity,
+      "rel_err": 0.6719446182250977,
+      "norm_ratio": 0.6352920534752247
+    },
+    {
+      "prompt": 1,
+      "layer": 42,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.7464836835861206,
+      "snr": Infinity,
+      "rel_err": 0.6749922037124634,
+      "norm_ratio": 0.633115281388888
+    },
+    {
+      "prompt": 1,
+      "layer": 42,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7806205153465271,
+      "snr": Infinity,
+      "rel_err": 0.6379182934761047,
+      "norm_ratio": 0.6529173576541701
+    },
+    {
+      "prompt": 1,
+      "layer": 42,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7900527715682983,
+      "snr": Infinity,
+      "rel_err": 0.6246515512466431,
+      "norm_ratio": 0.6701654709545595
+    },
+    {
+      "prompt": 1,
+      "layer": 42,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7928810119628906,
+      "snr": Infinity,
+      "rel_err": 0.6198444962501526,
+      "norm_ratio": 0.6794461464769084
+    },
+    {
+      "prompt": 1,
+      "layer": 44,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.7737208604812622,
+      "snr": Infinity,
+      "rel_err": 0.6427744626998901,
+      "norm_ratio": 0.6650790416051351
+    },
+    {
+      "prompt": 1,
+      "layer": 44,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.7810933589935303,
+      "snr": Infinity,
+      "rel_err": 0.63594651222229,
+      "norm_ratio": 0.6605329140484694
+    },
+    {
+      "prompt": 1,
+      "layer": 44,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.7877604961395264,
+      "snr": Infinity,
+      "rel_err": 0.6269729137420654,
+      "norm_ratio": 0.6708777216450594
+    },
+    {
+      "prompt": 1,
+      "layer": 44,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.8141269683837891,
+      "snr": Infinity,
+      "rel_err": 0.5927222967147827,
+      "norm_ratio": 0.6952891569339922
+    },
+    {
+      "prompt": 1,
+      "layer": 44,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.815944254398346,
+      "snr": Infinity,
+      "rel_err": 0.5904850959777832,
+      "norm_ratio": 0.6957877580341822
+    },
+    {
+      "prompt": 1,
+      "layer": 44,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.8200452327728271,
+      "snr": Infinity,
+      "rel_err": 0.5826060771942139,
+      "norm_ratio": 0.7109401506659809
+    },
+    {
+      "prompt": 1,
+      "layer": 48,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.8275700211524963,
+      "snr": Infinity,
+      "rel_err": 0.5681154131889343,
+      "norm_ratio": 0.7402359016914771
+    },
+    {
+      "prompt": 1,
+      "layer": 48,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.82573002576828,
+      "snr": Infinity,
+      "rel_err": 0.5695834755897522,
+      "norm_ratio": 0.7466385612012613
+    },
+    {
+      "prompt": 1,
+      "layer": 48,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.8215500116348267,
+      "snr": Infinity,
+      "rel_err": 0.5771266222000122,
+      "norm_ratio": 0.7319980356564381
+    },
+    {
+      "prompt": 1,
+      "layer": 48,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.8511753082275391,
+      "snr": Infinity,
+      "rel_err": 0.5318633317947388,
+      "norm_ratio": 0.7652804773143467
+    },
+    {
+      "prompt": 1,
+      "layer": 48,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.8502668142318726,
+      "snr": Infinity,
+      "rel_err": 0.5331782698631287,
+      "norm_ratio": 0.7652221705797009
+    },
+    {
+      "prompt": 1,
+      "layer": 48,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.8528193831443787,
+      "snr": Infinity,
+      "rel_err": 0.5298690795898438,
+      "norm_ratio": 0.7630295704422606
+    },
+    {
+      "prompt": 1,
+      "layer": 52,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.8800227642059326,
+      "snr": Infinity,
+      "rel_err": 0.48250341415405273,
+      "norm_ratio": 0.7948785051365554
+    },
+    {
+      "prompt": 1,
+      "layer": 52,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.8779979944229126,
+      "snr": Infinity,
+      "rel_err": 0.48274892568588257,
+      "norm_ratio": 0.8153326787569177
+    },
+    {
+      "prompt": 1,
+      "layer": 52,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.85966956615448,
+      "snr": Infinity,
+      "rel_err": 0.516075849533081,
+      "norm_ratio": 0.7864169082807196
+    },
+    {
+      "prompt": 1,
+      "layer": 52,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.8861812353134155,
+      "snr": Infinity,
+      "rel_err": 0.46885645389556885,
+      "norm_ratio": 0.8144626447682511
+    },
+    {
+      "prompt": 1,
+      "layer": 52,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.8951877355575562,
+      "snr": Infinity,
+      "rel_err": 0.45098668336868286,
+      "norm_ratio": 0.8262674952581314
+    },
+    {
+      "prompt": 1,
+      "layer": 52,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.9052213430404663,
+      "snr": Infinity,
+      "rel_err": 0.4311641752719879,
+      "norm_ratio": 0.832226153225188
+    },
+    {
+      "prompt": 1,
+      "layer": 56,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.9323721528053284,
+      "snr": Infinity,
+      "rel_err": 0.3647647798061371,
+      "norm_ratio": 0.8836768496498855
+    },
+    {
+      "prompt": 1,
+      "layer": 56,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.9247996211051941,
+      "snr": Infinity,
+      "rel_err": 0.38399529457092285,
+      "norm_ratio": 0.8727726647571056
+    },
+    {
+      "prompt": 1,
+      "layer": 56,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.9295620918273926,
+      "snr": Infinity,
+      "rel_err": 0.37007710337638855,
+      "norm_ratio": 0.8972689605090626
+    },
+    {
+      "prompt": 1,
+      "layer": 56,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.9290825128555298,
+      "snr": Infinity,
+      "rel_err": 0.37298837304115295,
+      "norm_ratio": 0.8809711076661195
+    },
+    {
+      "prompt": 1,
+      "layer": 56,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.9289699792861938,
+      "snr": Infinity,
+      "rel_err": 0.3734181523323059,
+      "norm_ratio": 0.8797130179248129
+    },
+    {
+      "prompt": 1,
+      "layer": 56,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.9321531057357788,
+      "snr": Infinity,
+      "rel_err": 0.36376264691352844,
+      "norm_ratio": 0.8970442899620267
+    },
+    {
+      "prompt": 1,
+      "layer": 60,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.9724007248878479,
+      "snr": Infinity,
+      "rel_err": 0.2339368462562561,
+      "norm_ratio": 0.9553844158417598
+    },
+    {
+      "prompt": 1,
+      "layer": 60,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.9760044813156128,
+      "snr": Infinity,
+      "rel_err": 0.21877388656139374,
+      "norm_ratio": 0.954872264271327
+    },
+    {
+      "prompt": 1,
+      "layer": 60,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.9717811346054077,
+      "snr": Infinity,
+      "rel_err": 0.23638078570365906,
+      "norm_ratio": 0.9564694834364685
+    },
+    {
+      "prompt": 1,
+      "layer": 60,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.9807461500167847,
+      "snr": Infinity,
+      "rel_err": 0.19601576030254364,
+      "norm_ratio": 0.9638609349136777
+    },
+    {
+      "prompt": 1,
+      "layer": 60,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.9808691740036011,
+      "snr": Infinity,
+      "rel_err": 0.1954817920923233,
+      "norm_ratio": 0.963056004348624
+    },
+    {
+      "prompt": 1,
+      "layer": 60,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.9698965549468994,
+      "snr": Infinity,
+      "rel_err": 0.2437053769826889,
+      "norm_ratio": 0.9603268134105748
+    },
+    {
+      "prompt": 2,
+      "layer": 4,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.03518572449684143,
+      "snr": Infinity,
+      "rel_err": 1.0004128217697144,
+      "norm_ratio": 0.08061637448185395
+    },
+    {
+      "prompt": 2,
+      "layer": 4,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.09044910967350006,
+      "snr": Infinity,
+      "rel_err": 0.9959026575088501,
+      "norm_ratio": 0.08864353730913328
+    },
+    {
+      "prompt": 2,
+      "layer": 4,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.042346250265836716,
+      "snr": Infinity,
+      "rel_err": 1.000052571296692,
+      "norm_ratio": 0.08591584766202358
+    },
+    {
+      "prompt": 2,
+      "layer": 4,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.11528568714857101,
+      "snr": Infinity,
+      "rel_err": 1.0075476169586182,
+      "norm_ratio": 0.28393635096302067
+    },
+    {
+      "prompt": 2,
+      "layer": 4,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.21077091991901398,
+      "snr": Infinity,
+      "rel_err": 0.9794227480888367,
+      "norm_ratio": 0.27154264776254583
+    },
+    {
+      "prompt": 2,
+      "layer": 4,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.173233762383461,
+      "snr": Infinity,
+      "rel_err": 0.9867981672286987,
+      "norm_ratio": 0.23472030817601458
+    },
+    {
+      "prompt": 2,
+      "layer": 8,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.06223015487194061,
+      "snr": Infinity,
+      "rel_err": 0.9995779395103455,
+      "norm_ratio": 0.11726275697085206
+    },
+    {
+      "prompt": 2,
+      "layer": 8,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.09376372396945953,
+      "snr": Infinity,
+      "rel_err": 0.9957025647163391,
+      "norm_ratio": 0.10843811532389724
+    },
+    {
+      "prompt": 2,
+      "layer": 8,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.08582524955272675,
+      "snr": Infinity,
+      "rel_err": 0.9969290494918823,
+      "norm_ratio": 0.12094615136388571
+    },
+    {
+      "prompt": 2,
+      "layer": 8,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.23054781556129456,
+      "snr": Infinity,
+      "rel_err": 0.9734792709350586,
+      "norm_ratio": 0.2590789585026179
+    },
+    {
+      "prompt": 2,
+      "layer": 8,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.2932628393173218,
+      "snr": Infinity,
+      "rel_err": 0.9561263918876648,
+      "norm_ratio": 0.3067093331441959
+    },
+    {
+      "prompt": 2,
+      "layer": 8,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.17658144235610962,
+      "snr": Infinity,
+      "rel_err": 0.9857877492904663,
+      "norm_ratio": 0.23097390137044982
+    },
+    {
+      "prompt": 2,
+      "layer": 12,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.15672169625759125,
+      "snr": Infinity,
+      "rel_err": 0.9876428842544556,
+      "norm_ratio": 0.1567997816747256
+    },
+    {
+      "prompt": 2,
+      "layer": 12,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.19155840575695038,
+      "snr": Infinity,
+      "rel_err": 0.9824873805046082,
+      "norm_ratio": 0.14710742061113835
+    },
+    {
+      "prompt": 2,
+      "layer": 12,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.15694022178649902,
+      "snr": Infinity,
+      "rel_err": 0.9876863956451416,
+      "norm_ratio": 0.14449759685970523
+    },
+    {
+      "prompt": 2,
+      "layer": 12,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.14663062989711761,
+      "snr": Infinity,
+      "rel_err": 1.0030312538146973,
+      "norm_ratio": 0.312679797411653
+    },
+    {
+      "prompt": 2,
+      "layer": 12,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.2653902769088745,
+      "snr": Infinity,
+      "rel_err": 0.9650384187698364,
+      "norm_ratio": 0.30699525100511366
+    },
+    {
+      "prompt": 2,
+      "layer": 12,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.24885444343090057,
+      "snr": Infinity,
+      "rel_err": 0.973000168800354,
+      "norm_ratio": 0.3419019421699394
+    },
+    {
+      "prompt": 2,
+      "layer": 16,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.1716119945049286,
+      "snr": Infinity,
+      "rel_err": 0.9857455492019653,
+      "norm_ratio": 0.20544833301514412
+    },
+    {
+      "prompt": 2,
+      "layer": 16,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.15828418731689453,
+      "snr": Infinity,
+      "rel_err": 0.9895899295806885,
+      "norm_ratio": 0.224180200821129
+    },
+    {
+      "prompt": 2,
+      "layer": 16,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.13210195302963257,
+      "snr": Infinity,
+      "rel_err": 0.993063747882843,
+      "norm_ratio": 0.19232172756294658
+    },
+    {
+      "prompt": 2,
+      "layer": 16,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.3305014967918396,
+      "snr": Infinity,
+      "rel_err": 0.9438254833221436,
+      "norm_ratio": 0.3366595752734425
+    },
+    {
+      "prompt": 2,
+      "layer": 16,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.25573796033859253,
+      "snr": Infinity,
+      "rel_err": 0.9705713987350464,
+      "norm_ratio": 0.34182300920017367
+    },
+    {
+      "prompt": 2,
+      "layer": 16,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.2666567265987396,
+      "snr": Infinity,
+      "rel_err": 0.969158947467804,
+      "norm_ratio": 0.3685141375043496
+    },
+    {
+      "prompt": 2,
+      "layer": 20,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.2686581015586853,
+      "snr": Infinity,
+      "rel_err": 0.9632440209388733,
+      "norm_ratio": 0.2726920449793382
+    },
+    {
+      "prompt": 2,
+      "layer": 20,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.2987779676914215,
+      "snr": Infinity,
+      "rel_err": 0.9559820294380188,
+      "norm_ratio": 0.24247366259467618
+    },
+    {
+      "prompt": 2,
+      "layer": 20,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.28755226731300354,
+      "snr": Infinity,
+      "rel_err": 0.9578253626823425,
+      "norm_ratio": 0.2767988988413941
+    },
+    {
+      "prompt": 2,
+      "layer": 20,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.4443039894104004,
+      "snr": Infinity,
+      "rel_err": 0.8960527181625366,
+      "norm_ratio": 0.42651433374952097
+    },
+    {
+      "prompt": 2,
+      "layer": 20,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.4009183943271637,
+      "snr": Infinity,
+      "rel_err": 0.9166845679283142,
+      "norm_ratio": 0.4332643070102292
+    },
+    {
+      "prompt": 2,
+      "layer": 20,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.41877883672714233,
+      "snr": Infinity,
+      "rel_err": 0.908189058303833,
+      "norm_ratio": 0.43231029679571337
+    },
+    {
+      "prompt": 2,
+      "layer": 22,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.29084810614585876,
+      "snr": Infinity,
+      "rel_err": 0.9569370746612549,
+      "norm_ratio": 0.3087722316896147
+    },
+    {
+      "prompt": 2,
+      "layer": 22,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.2954939007759094,
+      "snr": Infinity,
+      "rel_err": 0.955693781375885,
+      "norm_ratio": 0.3213250685440588
+    },
+    {
+      "prompt": 2,
+      "layer": 22,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.28763705492019653,
+      "snr": Infinity,
+      "rel_err": 0.9582996964454651,
+      "norm_ratio": 0.32039786623950606
+    },
+    {
+      "prompt": 2,
+      "layer": 22,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.46639007329940796,
+      "snr": Infinity,
+      "rel_err": 0.8846585154533386,
+      "norm_ratio": 0.4782356563140776
+    },
+    {
+      "prompt": 2,
+      "layer": 22,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.47635573148727417,
+      "snr": Infinity,
+      "rel_err": 0.8792932629585266,
+      "norm_ratio": 0.46790590645493096
+    },
+    {
+      "prompt": 2,
+      "layer": 22,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.46869826316833496,
+      "snr": Infinity,
+      "rel_err": 0.8834825754165649,
+      "norm_ratio": 0.4538851349225163
+    },
+    {
+      "prompt": 2,
+      "layer": 24,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.379443883895874,
+      "snr": Infinity,
+      "rel_err": 0.9252361059188843,
+      "norm_ratio": 0.3857216328348598
+    },
+    {
+      "prompt": 2,
+      "layer": 24,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.4055313467979431,
+      "snr": Infinity,
+      "rel_err": 0.9141882658004761,
+      "norm_ratio": 0.3915357725350869
+    },
+    {
+      "prompt": 2,
+      "layer": 24,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.3846077620983124,
+      "snr": Infinity,
+      "rel_err": 0.9237074851989746,
+      "norm_ratio": 0.35056900017599796
+    },
+    {
+      "prompt": 2,
+      "layer": 24,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.49897634983062744,
+      "snr": Infinity,
+      "rel_err": 0.8666435480117798,
+      "norm_ratio": 0.5059343528456179
+    },
+    {
+      "prompt": 2,
+      "layer": 24,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.5434457063674927,
+      "snr": Infinity,
+      "rel_err": 0.8394554853439331,
+      "norm_ratio": 0.547783248653552
+    },
+    {
+      "prompt": 2,
+      "layer": 24,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.5487427711486816,
+      "snr": Infinity,
+      "rel_err": 0.8365054130554199,
+      "norm_ratio": 0.5194182476148701
+    },
+    {
+      "prompt": 2,
+      "layer": 26,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.4971247911453247,
+      "snr": Infinity,
+      "rel_err": 0.8691000938415527,
+      "norm_ratio": 0.4474454471446391
+    },
+    {
+      "prompt": 2,
+      "layer": 26,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.49389028549194336,
+      "snr": Infinity,
+      "rel_err": 0.8703173995018005,
+      "norm_ratio": 0.456741355630496
+    },
+    {
+      "prompt": 2,
+      "layer": 26,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.4570653438568115,
+      "snr": Infinity,
+      "rel_err": 0.8896337151527405,
+      "norm_ratio": 0.4381753850860356
+    },
+    {
+      "prompt": 2,
+      "layer": 26,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.6004047393798828,
+      "snr": Infinity,
+      "rel_err": 0.8014401197433472,
+      "norm_ratio": 0.5475657179591336
+    },
+    {
+      "prompt": 2,
+      "layer": 26,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.5775020718574524,
+      "snr": Infinity,
+      "rel_err": 0.8173885941505432,
+      "norm_ratio": 0.5370938964292197
+    },
+    {
+      "prompt": 2,
+      "layer": 26,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.5945463180541992,
+      "snr": Infinity,
+      "rel_err": 0.8061782717704773,
+      "norm_ratio": 0.5361628864763062
+    },
+    {
+      "prompt": 2,
+      "layer": 28,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.5427048802375793,
+      "snr": Infinity,
+      "rel_err": 0.8410685062408447,
+      "norm_ratio": 0.498832572989812
+    },
+    {
+      "prompt": 2,
+      "layer": 28,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.5148975849151611,
+      "snr": Infinity,
+      "rel_err": 0.8573591113090515,
+      "norm_ratio": 0.5013290603450851
+    },
+    {
+      "prompt": 2,
+      "layer": 28,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.5552573204040527,
+      "snr": Infinity,
+      "rel_err": 0.8337377309799194,
+      "norm_ratio": 0.4966970914549365
+    },
+    {
+      "prompt": 2,
+      "layer": 28,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.6360536813735962,
+      "snr": Infinity,
+      "rel_err": 0.7727674245834351,
+      "norm_ratio": 0.5944140945990773
+    },
+    {
+      "prompt": 2,
+      "layer": 28,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.6562530994415283,
+      "snr": Infinity,
+      "rel_err": 0.7576695680618286,
+      "norm_ratio": 0.5874679657623669
+    },
+    {
+      "prompt": 2,
+      "layer": 28,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.6449326276779175,
+      "snr": Infinity,
+      "rel_err": 0.7678391933441162,
+      "norm_ratio": 0.5706691432152095
+    },
+    {
+      "prompt": 2,
+      "layer": 30,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.6072655320167542,
+      "snr": Infinity,
+      "rel_err": 0.7972550988197327,
+      "norm_ratio": 0.541030517787827
+    },
+    {
+      "prompt": 2,
+      "layer": 30,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.5749481916427612,
+      "snr": Infinity,
+      "rel_err": 0.820589542388916,
+      "norm_ratio": 0.5122375130241403
+    },
+    {
+      "prompt": 2,
+      "layer": 30,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.6106482744216919,
+      "snr": Infinity,
+      "rel_err": 0.7962578535079956,
+      "norm_ratio": 0.5274750199059589
+    },
+    {
+      "prompt": 2,
+      "layer": 30,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.6936687231063843,
+      "snr": Infinity,
+      "rel_err": 0.7240002155303955,
+      "norm_ratio": 0.6205067262045242
+    },
+    {
+      "prompt": 2,
+      "layer": 30,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.6801040172576904,
+      "snr": Infinity,
+      "rel_err": 0.7368966937065125,
+      "norm_ratio": 0.6055505118369241
+    },
+    {
+      "prompt": 2,
+      "layer": 30,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.6956756114959717,
+      "snr": Infinity,
+      "rel_err": 0.7271550893783569,
+      "norm_ratio": 0.5828969307379397
+    },
+    {
+      "prompt": 2,
+      "layer": 32,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.6468594074249268,
+      "snr": Infinity,
+      "rel_err": 0.7660014629364014,
+      "norm_ratio": 0.5748502722177151
+    },
+    {
+      "prompt": 2,
+      "layer": 32,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.6408906579017639,
+      "snr": Infinity,
+      "rel_err": 0.7706589698791504,
+      "norm_ratio": 0.5726545868453584
+    },
+    {
+      "prompt": 2,
+      "layer": 32,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.6458966732025146,
+      "snr": Infinity,
+      "rel_err": 0.7673010230064392,
+      "norm_ratio": 0.5688680292894829
+    },
+    {
+      "prompt": 2,
+      "layer": 32,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7239981889724731,
+      "snr": Infinity,
+      "rel_err": 0.6944829821586609,
+      "norm_ratio": 0.643498606935197
+    },
+    {
+      "prompt": 2,
+      "layer": 32,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7168742418289185,
+      "snr": Infinity,
+      "rel_err": 0.7020041942596436,
+      "norm_ratio": 0.6349077054451503
+    },
+    {
+      "prompt": 2,
+      "layer": 32,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.718843400478363,
+      "snr": Infinity,
+      "rel_err": 0.7006969451904297,
+      "norm_ratio": 0.631025260116719
+    },
+    {
+      "prompt": 2,
+      "layer": 34,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.6910592317581177,
+      "snr": Infinity,
+      "rel_err": 0.727928876876831,
+      "norm_ratio": 0.6047851745343297
+    },
+    {
+      "prompt": 2,
+      "layer": 34,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.6753056645393372,
+      "snr": Infinity,
+      "rel_err": 0.7425487041473389,
+      "norm_ratio": 0.5891878773020006
+    },
+    {
+      "prompt": 2,
+      "layer": 34,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.6917166709899902,
+      "snr": Infinity,
+      "rel_err": 0.72952800989151,
+      "norm_ratio": 0.588357744062746
+    },
+    {
+      "prompt": 2,
+      "layer": 34,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7374259233474731,
+      "snr": Infinity,
+      "rel_err": 0.6808420419692993,
+      "norm_ratio": 0.6517356186947414
+    },
+    {
+      "prompt": 2,
+      "layer": 34,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7403324246406555,
+      "snr": Infinity,
+      "rel_err": 0.6777331829071045,
+      "norm_ratio": 0.6542259248574549
+    },
+    {
+      "prompt": 2,
+      "layer": 34,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7600784301757812,
+      "snr": Infinity,
+      "rel_err": 0.6580466032028198,
+      "norm_ratio": 0.6564229481614251
+    },
+    {
+      "prompt": 2,
+      "layer": 36,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.7026447057723999,
+      "snr": Infinity,
+      "rel_err": 0.7175894975662231,
+      "norm_ratio": 0.6096702924839944
+    },
+    {
+      "prompt": 2,
+      "layer": 36,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.7098308801651001,
+      "snr": Infinity,
+      "rel_err": 0.7109942436218262,
+      "norm_ratio": 0.6130183903190839
+    },
+    {
+      "prompt": 2,
+      "layer": 36,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.6953997611999512,
+      "snr": Infinity,
+      "rel_err": 0.7216875553131104,
+      "norm_ratio": 0.6289640280362991
+    },
+    {
+      "prompt": 2,
+      "layer": 36,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.746711015701294,
+      "snr": Infinity,
+      "rel_err": 0.6718932390213013,
+      "norm_ratio": 0.6517487208692521
+    },
+    {
+      "prompt": 2,
+      "layer": 36,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7652234435081482,
+      "snr": Infinity,
+      "rel_err": 0.6514409780502319,
+      "norm_ratio": 0.6655124706168059
+    },
+    {
+      "prompt": 2,
+      "layer": 36,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.753329336643219,
+      "snr": Infinity,
+      "rel_err": 0.6660858988761902,
+      "norm_ratio": 0.6476156826213404
+    },
+    {
+      "prompt": 2,
+      "layer": 38,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.7366920709609985,
+      "snr": Infinity,
+      "rel_err": 0.6817405819892883,
+      "norm_ratio": 0.6501742101967355
+    },
+    {
+      "prompt": 2,
+      "layer": 38,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.7330591082572937,
+      "snr": Infinity,
+      "rel_err": 0.6847858428955078,
+      "norm_ratio": 0.6536415072239395
+    },
+    {
+      "prompt": 2,
+      "layer": 38,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.7431570291519165,
+      "snr": Infinity,
+      "rel_err": 0.6746878623962402,
+      "norm_ratio": 0.6566342697682133
+    },
+    {
+      "prompt": 2,
+      "layer": 38,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7799368500709534,
+      "snr": Infinity,
+      "rel_err": 0.6325734257698059,
+      "norm_ratio": 0.6880102485257443
+    },
+    {
+      "prompt": 2,
+      "layer": 38,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7804690599441528,
+      "snr": Infinity,
+      "rel_err": 0.6329027414321899,
+      "norm_ratio": 0.6819912194745702
+    },
+    {
+      "prompt": 2,
+      "layer": 38,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7869436740875244,
+      "snr": Infinity,
+      "rel_err": 0.6257842779159546,
+      "norm_ratio": 0.682606018120273
+    },
+    {
+      "prompt": 2,
+      "layer": 40,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.7605438232421875,
+      "snr": Infinity,
+      "rel_err": 0.6546458601951599,
+      "norm_ratio": 0.6769493391559491
+    },
+    {
+      "prompt": 2,
+      "layer": 40,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.7594016790390015,
+      "snr": Infinity,
+      "rel_err": 0.6550930142402649,
+      "norm_ratio": 0.6829971097108442
+    },
+    {
+      "prompt": 2,
+      "layer": 40,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.7567322254180908,
+      "snr": Infinity,
+      "rel_err": 0.658118724822998,
+      "norm_ratio": 0.6808111548990384
+    },
+    {
+      "prompt": 2,
+      "layer": 40,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.7983344793319702,
+      "snr": Infinity,
+      "rel_err": 0.6080674529075623,
+      "norm_ratio": 0.7141667582191217
+    },
+    {
+      "prompt": 2,
+      "layer": 40,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.7827739715576172,
+      "snr": Infinity,
+      "rel_err": 0.6264042854309082,
+      "norm_ratio": 0.7112386244326437
+    },
+    {
+      "prompt": 2,
+      "layer": 40,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.7849752902984619,
+      "snr": Infinity,
+      "rel_err": 0.6245490312576294,
+      "norm_ratio": 0.7059331041404635
+    },
+    {
+      "prompt": 2,
+      "layer": 42,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.791939377784729,
+      "snr": Infinity,
+      "rel_err": 0.6170834898948669,
+      "norm_ratio": 0.7027204185242244
+    },
+    {
+      "prompt": 2,
+      "layer": 42,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.7874626517295837,
+      "snr": Infinity,
+      "rel_err": 0.62135249376297,
+      "norm_ratio": 0.7088722561801873
+    },
+    {
+      "prompt": 2,
+      "layer": 42,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.7888612747192383,
+      "snr": Infinity,
+      "rel_err": 0.6220717430114746,
+      "norm_ratio": 0.6925529980275827
+    },
+    {
+      "prompt": 2,
+      "layer": 42,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.8145089149475098,
+      "snr": Infinity,
+      "rel_err": 0.5859858393669128,
+      "norm_ratio": 0.7320218066654298
+    },
+    {
+      "prompt": 2,
+      "layer": 42,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.8186780214309692,
+      "snr": Infinity,
+      "rel_err": 0.5820514559745789,
+      "norm_ratio": 0.7237172206684378
+    },
+    {
+      "prompt": 2,
+      "layer": 42,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.8132447004318237,
+      "snr": Infinity,
+      "rel_err": 0.5881642699241638,
+      "norm_ratio": 0.7277805639719773
+    },
+    {
+      "prompt": 2,
+      "layer": 44,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.817213773727417,
+      "snr": Infinity,
+      "rel_err": 0.5838428139686584,
+      "norm_ratio": 0.7238813670140645
+    },
+    {
+      "prompt": 2,
+      "layer": 44,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.8039529919624329,
+      "snr": Infinity,
+      "rel_err": 0.5986768007278442,
+      "norm_ratio": 0.7350022007222232
+    },
+    {
+      "prompt": 2,
+      "layer": 44,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.8100320100784302,
+      "snr": Infinity,
+      "rel_err": 0.5919825434684753,
+      "norm_ratio": 0.7288219603477762
+    },
+    {
+      "prompt": 2,
+      "layer": 44,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.8342590928077698,
+      "snr": Infinity,
+      "rel_err": 0.5572340488433838,
+      "norm_ratio": 0.7536485074532292
+    },
+    {
+      "prompt": 2,
+      "layer": 44,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.8332471251487732,
+      "snr": Infinity,
+      "rel_err": 0.5598015785217285,
+      "norm_ratio": 0.74561925903342
+    },
+    {
+      "prompt": 2,
+      "layer": 44,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.8366434574127197,
+      "snr": Infinity,
+      "rel_err": 0.5569776296615601,
+      "norm_ratio": 0.7356660449615764
+    },
+    {
+      "prompt": 2,
+      "layer": 48,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.8483436107635498,
+      "snr": Infinity,
+      "rel_err": 0.5327449440956116,
+      "norm_ratio": 0.7891483569194497
+    },
+    {
+      "prompt": 2,
+      "layer": 48,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.8511807322502136,
+      "snr": Infinity,
+      "rel_err": 0.5312790274620056,
+      "norm_ratio": 0.7689248076949312
+    },
+    {
+      "prompt": 2,
+      "layer": 48,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.8546322584152222,
+      "snr": Infinity,
+      "rel_err": 0.522383987903595,
+      "norm_ratio": 0.7973497864762991
+    },
+    {
+      "prompt": 2,
+      "layer": 48,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.8833629488945007,
+      "snr": Infinity,
+      "rel_err": 0.47442716360092163,
+      "norm_ratio": 0.8098010579742175
+    },
+    {
+      "prompt": 2,
+      "layer": 48,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.8722046613693237,
+      "snr": Infinity,
+      "rel_err": 0.4942459166049957,
+      "norm_ratio": 0.8013518773697672
+    },
+    {
+      "prompt": 2,
+      "layer": 48,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.8797125220298767,
+      "snr": Infinity,
+      "rel_err": 0.4800804853439331,
+      "norm_ratio": 0.8135962330248915
+    },
+    {
+      "prompt": 2,
+      "layer": 52,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.9032555818557739,
+      "snr": Infinity,
+      "rel_err": 0.43295639753341675,
+      "norm_ratio": 0.845619867240535
+    },
+    {
+      "prompt": 2,
+      "layer": 52,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.8936275839805603,
+      "snr": Infinity,
+      "rel_err": 0.4524373710155487,
+      "norm_ratio": 0.8364456428738958
+    },
+    {
+      "prompt": 2,
+      "layer": 52,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.9081087112426758,
+      "snr": Infinity,
+      "rel_err": 0.4229394495487213,
+      "norm_ratio": 0.8486177453765884
+    },
+    {
+      "prompt": 2,
+      "layer": 52,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.9140749573707581,
+      "snr": Infinity,
+      "rel_err": 0.40993770956993103,
+      "norm_ratio": 0.8542254089994312
+    },
+    {
+      "prompt": 2,
+      "layer": 52,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.9149508476257324,
+      "snr": Infinity,
+      "rel_err": 0.4074347913265228,
+      "norm_ratio": 0.8589327128815306
+    },
+    {
+      "prompt": 2,
+      "layer": 52,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.9154798984527588,
+      "snr": Infinity,
+      "rel_err": 0.40690749883651733,
+      "norm_ratio": 0.8548404864113335
+    },
+    {
+      "prompt": 2,
+      "layer": 56,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.9376728534698486,
+      "snr": Infinity,
+      "rel_err": 0.3493926525115967,
+      "norm_ratio": 0.901540736790094
+    },
+    {
+      "prompt": 2,
+      "layer": 56,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.930326521396637,
+      "snr": Infinity,
+      "rel_err": 0.3691319227218628,
+      "norm_ratio": 0.8883044275527631
+    },
+    {
+      "prompt": 2,
+      "layer": 56,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.9384832382202148,
+      "snr": Infinity,
+      "rel_err": 0.34643206000328064,
+      "norm_ratio": 0.910805449660559
+    },
+    {
+      "prompt": 2,
+      "layer": 56,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.9500628113746643,
+      "snr": Infinity,
+      "rel_err": 0.3139888644218445,
+      "norm_ratio": 0.9153008549044997
+    },
+    {
+      "prompt": 2,
+      "layer": 56,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.9483992457389832,
+      "snr": Infinity,
+      "rel_err": 0.31832876801490784,
+      "norm_ratio": 0.9202145406388882
+    },
+    {
+      "prompt": 2,
+      "layer": 56,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.9432756900787354,
+      "snr": Infinity,
+      "rel_err": 0.3341365158557892,
+      "norm_ratio": 0.9056416423540913
+    },
+    {
+      "prompt": 2,
+      "layer": 60,
+      "eps": 0.02,
+      "dir": 0,
+      "cos": 0.9783148765563965,
+      "snr": Infinity,
+      "rel_err": 0.20785635709762573,
+      "norm_ratio": 0.9608689814387583
+    },
+    {
+      "prompt": 2,
+      "layer": 60,
+      "eps": 0.02,
+      "dir": 1,
+      "cos": 0.975536584854126,
+      "snr": Infinity,
+      "rel_err": 0.2206898331642151,
+      "norm_ratio": 0.9561562902521852
+    },
+    {
+      "prompt": 2,
+      "layer": 60,
+      "eps": 0.02,
+      "dir": 2,
+      "cos": 0.9735831022262573,
+      "snr": Infinity,
+      "rel_err": 0.2295926809310913,
+      "norm_ratio": 0.9495666230847999
+    },
+    {
+      "prompt": 2,
+      "layer": 60,
+      "eps": 0.1,
+      "dir": 0,
+      "cos": 0.980029821395874,
+      "snr": Infinity,
+      "rel_err": 0.19922766089439392,
+      "norm_ratio": 0.9677759940093195
+    },
+    {
+      "prompt": 2,
+      "layer": 60,
+      "eps": 0.1,
+      "dir": 1,
+      "cos": 0.9802770614624023,
+      "snr": Infinity,
+      "rel_err": 0.19888350367546082,
+      "norm_ratio": 0.957963518460842
+    },
+    {
+      "prompt": 2,
+      "layer": 60,
+      "eps": 0.1,
+      "dir": 2,
+      "cos": 0.9801029562950134,
+      "snr": Infinity,
+      "rel_err": 0.1991194486618042,
+      "norm_ratio": 0.9642800435852276
+    }
+  ],
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "linearization-faithfulness-olmo3-think-v2",
+    "tier": "pilot",
+    "code_commit": "55e70535b22aea37aff458aae5924c5c4d1f61da",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.linearization_faithfulness --model olmo3-think",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "lens": "05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053"
+    },
+    "model": {
+      "id": "/content/models/olmo3-think",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95"
+    },
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T20:25:26Z"
+  }
+}

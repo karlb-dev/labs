@@ -368,6 +368,68 @@ output-adjacent channel; hard facts do not.** Consequence for P0: ladder
 hypotheses must be stated in fact-accessibility terms, not task depth
 alone. (This is also the C3 dev set's first validating use.)
 
+## How good a first-order model is the Jacobian? (2026-07-28 20:1x) — tier: PILOT
+
+Evidence `linearization-faithfulness-olmo3think-v2`,
+`linearization-faithfulness-gemma4-31b-v2`.
+
+The A3 verdict left "identified but useless" unexplained, so we asked
+whether the fitted J is a faithful first-order model of what it claims to
+model. jlens builds `J[i,j] = mean_s [ sum_t ∂h_tgt[t,i]/∂h_src[s,j] ]`
+— position-averaged, target-summed — so the test perturbs h_src by the
+same δ at every valid position and compares the measured change in the
+summed target activation against `P·(J@δ)`. The bf16 noise floor measured
+exactly 0.000 (deterministic forwards), so nothing below is numerical.
+
+**On OLMo, where the method works and J beats the logit lens:**
+
+| layer | 4 | 16 | 24 | 32 | 40 | 48 | 56 | 60 |
+|---|---|---|---|---|---|---|---|---|
+| cosine | 0.11 | 0.23 | **0.49** | **0.69** | **0.77** | 0.85 | 0.93 | 0.98 |
+| ‖pred‖/‖actual‖ | 0.13 | 0.25 | **0.41** | **0.57** | **0.67** | 0.77 | 0.89 | 0.96 |
+
+Only the final two layers are faithful (cos ≥ 0.9). **Across the paper's
+own band (L24/32/40 ≈ 37–62% depth) the linearization is merely
+partial** — roughly half-right in direction, capturing 41–67% of the
+response magnitude. Part of the depth trend is trivial (layers nearer
+the target are nearer identity), but the in-band values stand on their
+own.
+
+**Gemma at matched relative depth is qualitatively different:**
+
+| relative depth | Gemma cos | Gemma ratio | OLMo cos | OLMo ratio |
+|---|---|---|---|---|
+| ~37% | **−0.18** | 0.88 | 0.49 | 0.41 |
+| ~50% | 0.47 | 1.04 | 0.69 | 0.57 |
+| ~62% | 0.27 | 1.90 | 0.77 | 0.67 |
+| deepest | 0.10 | **2.5–4.3** | 0.98 | 0.96 |
+
+OLMo's linearization degrades gracefully and under-predicts; Gemma's
+never becomes faithful at any depth (peak 0.47, anti-correlated at the
+band's shallow edge) and over-predicts by 2–4× at depth, consistent with
+its 8× larger ‖J‖/√d. That is a mechanism for "identified but useless":
+independent corpora agree on a linear map that is not a good model of the
+transport.
+
+**A dissociation worth carrying forward.** At Gemma L52 the J-lens reads
+the answer at rank 2 while its transport model is unfaithful (cos 0.10,
+over-predicting 2.5×). Readout quality and transport fidelity are
+separable, so deep-layer readout success does **not** license causal use
+of the same J.
+
+**Scope.** This does not touch the protected-ablation results, which are
+behavioral, and does not invalidate J-readout, since ranking can survive
+a poor magnitude model. It does mean that J-direction causal claims rest
+on a transport model that is about half direction-accurate in the studied
+band *even on the model where the method works* — the campaign's H7
+"mean-J mismatch" hypothesis, now measured rather than asserted.
+
+*(A v1 of this test was withdrawn: it compared a single-position
+derivative against the position-averaged object jlens fits. It was caught
+by an internal inconsistency — Gemma L52 reads at rank 2 while v1
+reported cos 0.045. Standing lesson: when a new instrument contradicts an
+established result, suspect the instrument first.)*
+
 ## A3 Gemma — the leg is COMPLETE, with a verdict and a caveat (2026-07-28 20:0x) — tier: PILOT
 
 Evidence `a3-gemma-fullfit-v1` → `a3-gemma-identification-v1` →
