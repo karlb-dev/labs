@@ -16,7 +16,13 @@ dependencies = [
   "pyarrow>=14",
   "matplotlib>=3.8",
   "pyyaml>=6.0",
+  "scipy>=1.11",        # stats.py: TOST, mixed-model fallbacks
+  "accelerate>=0.30",   # device_map model loading in every GPU runner
+  "safetensors>=0.4",
 ]
+# jlens is NOT a PyPI package: install the pinned source, exactly
+#   pip install -e git+https://github.com/anthropics/jacobian-lens@581d3986#egg=jlens
+# Exact environment for reproduction: constraints.txt (pip install -c).
 
 [project.scripts]
 jspace-part2 = "jspace_part2.__main__:main"

@@ -12,8 +12,11 @@ commands:
   audit-env            environment audit + pip-freeze lock -> manifests/
   inventory            R0 artifact inventory (hash run-dir artifacts; resumable)
   selftest             run the conformance test suite (CPU, fast)
-  registry-list        show evidence registry rows
-  repro <evidence-id>  re-run/verify a registered evidence item
+  registry-list        show evidence registry rows (v2 event log)
+  repro <evidence-id>  re-run/verify a registered evidence item (v1 path)
+  repro2 <evidence-id> reproduction v2: isolated worktree at the recorded
+                       commit, pinned constraints, input+model verification,
+                       exact payload hashes  [--verify-only] [--workspace D]
 """
 
 
@@ -27,12 +30,24 @@ def cmd_selftest(argv):
 
 
 def cmd_registry_list(argv):
-    from .provenance import registry_rows
-    for r in registry_rows():
-        sup = f"  [superseded_by {r['superseded_by']}]" if r.get("superseded_by") else ""
-        print(f"{r.get('evidence_id'):40s} tier={r.get('tier'):12s} "
-              f"commit={str(r.get('code_commit'))[:8]}{sup}\n"
+    """Reads the v2 event log, so superseded items keep their metadata and
+    `tier` is always a string (both were v1 defects)."""
+    from . import registry as reg
+    only_live = "--live" in argv
+    rows = reg.resolve_all()
+    for r in rows:
+        if only_live and not r["live"]:
+            continue
+        flag = ("" if r["live"] else
+                (" [WITHDRAWN]" if r["withdrawn"]
+                 else f" [superseded_by {r['superseded_by']}]"))
+        print(f"{r['evidence_id']:44s} tier={r['tier']:18s} "
+              f"commit={str(r['code_commit'])[:8]}{flag}\n"
               f"    {r.get('what', '')}\n    cmd: {r.get('command', '')}")
+    live = sum(1 for r in rows if r["live"])
+    print(f"\n{len(rows)} evidence items · {live} live · "
+          f"{sum(1 for r in rows if r['superseded_by'])} superseded · "
+          f"{sum(1 for r in rows if r['withdrawn'])} withdrawn")
 
 
 def cmd_repro(argv):
@@ -87,6 +102,9 @@ def main() -> None:
         cmd_registry_list(rest)
     elif cmd == "repro":
         cmd_repro(rest)
+    elif cmd == "repro2":
+        from . import repro_v2
+        repro_v2.main(rest)
     else:
         print(USAGE)
         raise SystemExit(f"unknown command {cmd!r}")
