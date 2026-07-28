@@ -1,0 +1,443 @@
+# Stage-3 hard one-hop candidate pool (C3 expansion).
+#
+# WHY: the v1 pool (113 curated facts) was too easy — 68/113 sat at
+# ceiling on Olmo-3-32B-Think, leaving only n=41 after the difficulty
+# filter (evidence `c3-hard-onehop-dev-v1`, dev tier, frozen forever).
+# The confirmatory design needs ~n=90+ hard items across >=30 INDEPENDENT
+# families, and the addendum's clustering rule (§12.2) makes the family
+# the true generation unit — so the pool is authored family-first: each
+# family is one relation template, and items within a family share it.
+# Analysis clusters on `family`; nothing here may be treated as 30
+# independent draws of a single template (the pseudo-replication debt the
+# addendum found in the SQL battery).
+#
+# DIFFICULTY TARGET: baseline answer lp in [-9, -1] on the anchor model
+# (the v1 match rule). Facts are chosen to be genuinely known-but-
+# unrehearsed: second-order superlatives, less-canonical exemplars of a
+# canonical relation, and mid-frequency proper nouns. NO item's answer is
+# a top-frequency completion of its prompt (the v1 failure mode).
+#
+# This module is DATA ONLY (no scoring, no partitioning). Partition into
+# confirmatory/replication happens at preregistration freeze, user-gated,
+# hashed before outcomes are viewed (prereg §Item pools).
+from __future__ import annotations
+
+# family -> (prompt template note, [(prompt, answer), ...])
+# Prompts carry the battery's "Fact: " prefix (v1 convention) so the pool
+# is scorable with the same instrument.
+FAMILIES: dict[str, list[tuple[str, str]]] = {
+    "chem_symbol_rare": [
+        ("The chemical symbol for praseodymium is", "Pr"),
+        ("The chemical symbol for ytterbium is", "Yb"),
+        ("The chemical symbol for niobium is", "Nb"),
+        ("The chemical symbol for rhenium is", "Re"),
+        ("The chemical symbol for hafnium is", "Hf"),
+        ("The chemical symbol for gadolinium is", "Gd"),
+    ],
+    "element_atomic_number_mid": [
+        ("The element with atomic number 41 is", "niobium"),
+        ("The element with atomic number 45 is", "rhodium"),
+        ("The element with atomic number 52 is", "tellurium"),
+        ("The element with atomic number 63 is", "europium"),
+        ("The element with atomic number 77 is", "iridium"),
+    ],
+    "si_unit_derived": [
+        ("The SI unit of magnetic flux is the", "weber"),
+        ("The SI unit of inductance is the", "henry"),
+        ("The SI unit of absorbed radiation dose is the", "gray"),
+        ("The SI unit of equivalent radiation dose is the", "sievert"),
+        ("The SI unit of catalytic activity is the", "katal"),
+        ("The SI unit of luminous flux is the", "lumen"),
+    ],
+    "capital_less_cited": [
+        ("The capital of Kyrgyzstan is", "Bishkek"),
+        ("The capital of Bhutan is", "Thimphu"),
+        ("The capital of Suriname is", "Paramaribo"),
+        ("The capital of Eritrea is", "Asmara"),
+        ("The capital of Turkmenistan is", "Ashgabat"),
+        ("The capital of Malawi is", "Lilongwe"),
+    ],
+    "capital_former": [
+        ("The former capital of Brazil, before Brasilia, was", "Rio"),
+        ("The former capital of Nigeria, before Abuja, was", "Lagos"),
+        ("The former capital of Kazakhstan, before Astana, was", "Almaty"),
+        ("The former capital of Myanmar, before Naypyidaw, was", "Yangon"),
+        ("The former capital of Tanzania, before Dodoma, was", "Dar"),
+    ],
+    "currency_less_cited": [
+        ("The currency of Kyrgyzstan is the", "som"),
+        ("The currency of Laos is the", "kip"),
+        ("The currency of Myanmar is the", "kyat"),
+        ("The currency of Angola is the", "kwanza"),
+        ("The currency of Botswana is the", "pula"),
+        ("The currency of Paraguay is the", "guarani"),
+        ("The currency of Georgia is the", "lari"),
+    ],
+    "river_second_order": [
+        ("The second-longest river in Africa is the", "Congo"),
+        ("The second-longest river in South America is the", "Parana"),
+        ("The second-longest river in Europe is the", "Danube"),
+        ("The second-longest river in Asia is the", "Yellow"),
+        ("The longest river entirely within Wales is the", "Towy"),
+    ],
+    "mountain_second_order": [
+        ("The second-highest mountain in the world is", "K2"),
+        ("The second-highest mountain in Africa is Mount", "Kenya"),
+        ("The highest mountain in Turkey is Mount", "Ararat"),
+        ("The highest mountain in Iran is Mount", "Damavand"),
+        ("The highest mountain in the Alps outside France is Monte", "Rosa"),
+    ],
+    "lake_specific": [
+        ("The largest lake in South America is Lake", "Titicaca"),
+        ("The largest lake entirely within Canada is Great", "Bear"),
+        ("The saltiest large lake in Africa is Lake", "Assal"),
+        ("The largest lake in Central Asia after the Caspian is the",
+         "Aral"),
+    ],
+    "moons_planetary": [
+        ("The largest moon of Saturn is", "Titan"),
+        ("The largest moon of Neptune is", "Triton"),
+        ("The largest moon of Uranus is", "Titania"),
+        ("The innermost of Jupiter's Galilean moons is", "Io"),
+        ("The moon of Saturn with geysers at its south pole is",
+         "Enceladus"),
+    ],
+    "star_brightest_constellation": [
+        ("The brightest star in the constellation Lyra is", "Vega"),
+        ("The brightest star in the constellation Cygnus is", "Deneb"),
+        ("The brightest star in the constellation Aquila is", "Altair"),
+        ("The brightest star in the constellation Auriga is", "Capella"),
+        ("The brightest star in the constellation Bootes is", "Arcturus"),
+    ],
+    "author_less_canonical": [
+        ("The author of the novel Buddenbrooks is Thomas", "Mann"),
+        ("The author of the novel Kokoro is Natsume", "Soseki"),
+        ("The author of the novel Independent People is Halldor",
+         "Laxness"),
+        ("The author of the novel Season of Migration to the North is "
+         "Tayeb", "Salih"),
+        ("The author of the novel The Leopard is Giuseppe Tomasi di",
+         "Lampedusa"),
+        ("The author of the novel Petals of Blood is Ngugi wa", "Thiong"),
+    ],
+    "playwright_work": [
+        ("The playwright of the drama Hedda Gabler is Henrik", "Ibsen"),
+        ("The playwright of the drama The Cherry Orchard is Anton",
+         "Chekhov"),
+        ("The playwright of the drama Six Characters in Search of an "
+         "Author is Luigi", "Pirandello"),
+        ("The playwright of the drama Blood Wedding is Federico Garcia",
+         "Lorca"),
+    ],
+    "philosopher_work": [
+        ("The philosopher who wrote Being and Time is Martin",
+         "Heidegger"),
+        ("The philosopher who wrote The Phenomenology of Spirit is Georg "
+         "Wilhelm Friedrich", "Hegel"),
+        ("The philosopher who wrote Beyond Good and Evil is Friedrich",
+         "Nietzsche"),
+        ("The philosopher who wrote A Theory of Justice is John", "Rawls"),
+        ("The philosopher who wrote The Structure of Scientific "
+         "Revolutions is Thomas", "Kuhn"),
+    ],
+    "composer_work_less_cited": [
+        ("The composer of the opera Boris Godunov is Modest",
+         "Mussorgsky"),
+        ("The composer of the ballet The Rite of Spring is Igor",
+         "Stravinsky"),
+        ("The composer of the opera Peter Grimes is Benjamin", "Britten"),
+        ("The composer of the tone poem Finlandia is Jean", "Sibelius"),
+        ("The composer of the opera Turandot is Giacomo", "Puccini"),
+    ],
+    "painter_work_less_cited": [
+        ("The painter of the work The Garden of Earthly Delights is "
+         "Hieronymus", "Bosch"),
+        ("The painter of the work Las Meninas is Diego", "Velazquez"),
+        ("The painter of the work The Great Wave off Kanagawa is",
+         "Hokusai"),
+        ("The painter of the work Christina's World is Andrew", "Wyeth"),
+        ("The painter of the work Nighthawks is Edward", "Hopper"),
+    ],
+    "architect_building": [
+        ("The architect of the Sagrada Familia is Antoni", "Gaudi"),
+        ("The architect of Fallingwater is Frank Lloyd", "Wright"),
+        ("The architect of the Sydney Opera House is Jorn", "Utzon"),
+        ("The architect of the Guggenheim Museum Bilbao is Frank",
+         "Gehry"),
+        ("The architect of the Villa Savoye is Le", "Corbusier"),
+    ],
+    "ancient_city_country": [
+        ("The ancient city of Petra is in the modern country of",
+         "Jordan"),
+        ("The ancient city of Palmyra is in the modern country of",
+         "Syria"),
+        ("The ancient city of Persepolis is in the modern country of",
+         "Iran"),
+        ("The ancient city of Carthage is in the modern country of",
+         "Tunisia"),
+        ("The ancient city of Angkor is in the modern country of",
+         "Cambodia"),
+    ],
+    "treaty_place": [
+        ("The treaty that ended the Thirty Years War was the Peace of",
+         "Westphalia"),
+        ("The treaty that ended the Russo-Japanese War was the Treaty of",
+         "Portsmouth"),
+        ("The treaty that divided the New World between Spain and "
+         "Portugal was the Treaty of", "Tordesillas"),
+        ("The treaty that ended the War of the Spanish Succession was the "
+         "Treaty of", "Utrecht"),
+    ],
+    "dynasty_china": [
+        ("The Chinese dynasty that produced the Terracotta Army was the",
+         "Qin"),
+        ("The Chinese dynasty during which Marco Polo is said to have "
+         "visited was the", "Yuan"),
+        ("The Chinese dynasty that invented woodblock printing was the",
+         "Tang"),
+        ("The last imperial dynasty of China was the", "Qing"),
+    ],
+    "mythology_less_cited": [
+        ("The Norse god who guards the Bifrost bridge is", "Heimdall"),
+        ("The Greek goddess of the dawn is", "Eos"),
+        ("The Greek titan who stole fire for humanity is", "Prometheus"),
+        ("The Egyptian goddess of magic and healing is", "Isis"),
+        ("The Hindu god with an elephant head is", "Ganesha"),
+        ("The Mesopotamian hero of the oldest surviving epic is",
+         "Gilgamesh"),
+    ],
+    "explorer_first": [
+        ("The explorer who first reached the South Pole was Roald",
+         "Amundsen"),
+        ("The explorer who first circumnavigated the globe departed under "
+         "Ferdinand", "Magellan"),
+        ("The explorer who mapped much of the Australian coast was "
+         "Matthew", "Flinders"),
+        ("The explorer who crossed Antarctica's Weddell Sea ice with the "
+         "Endurance was Ernest", "Shackleton"),
+    ],
+    "spacecraft_mission": [
+        ("The spacecraft that orbited Saturn for thirteen years was",
+         "Cassini"),
+        ("The spacecraft that landed a probe on a comet was", "Rosetta"),
+        ("The spacecraft that first flew past Pluto was New", "Horizons"),
+        ("The rover that confirmed ancient water on Mars in 2004 was",
+         "Opportunity"),
+    ],
+    "anatomy_specific": [
+        ("The longest nerve in the human body is the", "sciatic"),
+        ("The smallest bone in the human body is the", "stapes"),
+        ("The largest artery in the human body is the", "aorta"),
+        ("The bone that forms the human cheek is the", "zygomatic"),
+        ("The membrane surrounding the human heart is the",
+         "pericardium"),
+    ],
+    "enzyme_process": [
+        ("The enzyme that unwinds DNA during replication is", "helicase"),
+        ("The enzyme that joins DNA fragments is DNA", "ligase"),
+        ("The enzyme in saliva that begins starch digestion is",
+         "amylase"),
+        ("The enzyme that fixes carbon in photosynthesis is",
+         "rubisco"),
+    ],
+    "medical_discoverer": [
+        ("The physician who introduced antiseptic surgery was Joseph",
+         "Lister"),
+        ("The physician who first described the circulation of blood was "
+         "William", "Harvey"),
+        ("The scientist who discovered the structure of insulin was "
+         "Frederick", "Sanger"),
+        ("The scientist whose X-ray images enabled the DNA double helix "
+         "was Rosalind", "Franklin"),
+    ],
+    "physicist_named_effect": [
+        ("The physicist for whom the effect of light scattering by "
+         "molecules is named is Chandrasekhara", "Raman"),
+        ("The physicist for whom the exclusion principle is named is "
+         "Wolfgang", "Pauli"),
+        ("The physicist for whom the equation of quantum wavefunctions is "
+         "named is Erwin", "Schrodinger"),
+        ("The physicist for whom the uncertainty-free complementarity "
+         "principle of quantum mechanics is named is Niels", "Bohr"),
+        ("The physicist for whom the constant in blackbody radiation is "
+         "named is Max", "Planck"),
+    ],
+    "mathematician_theorem": [
+        ("The mathematician for whom the last theorem about integer "
+         "powers is named is Pierre de", "Fermat"),
+        ("The mathematician who proved the incompleteness theorems is "
+         "Kurt", "Godel"),
+        ("The mathematician for whom a famous unsolved hypothesis about "
+         "the zeta function is named is Bernhard", "Riemann"),
+        ("The mathematician who founded modern topology's fundamental "
+         "group is Henri", "Poincare"),
+        ("The mathematician for whom the sieve for finding primes is "
+         "named is", "Eratosthenes"),
+    ],
+    "economics_concept_person": [
+        ("The economist for whom the curve relating tax rates to revenue "
+         "is named is Arthur", "Laffer"),
+        ("The statistician for whom the coefficient of inequality is "
+         "named is Corrado", "Gini"),
+        ("The mathematician for whom the equilibrium in game theory is "
+         "named is John", "Nash"),
+        ("The economist who wrote The General Theory of Employment, "
+         "Interest and Money is John Maynard", "Keynes"),
+    ],
+    "programming_language_creator": [
+        ("The programming language created by Guido van Rossum is",
+         "Python"),
+        ("The programming language created by Bjarne Stroustrup is",
+         "C"),
+        ("The programming language created by James Gosling is", "Java"),
+        ("The programming language created by Yukihiro Matsumoto is",
+         "Ruby"),
+        ("The programming language created by John McCarthy is", "Lisp"),
+    ],
+    "language_family": [
+        ("The language family to which Finnish belongs is", "Uralic"),
+        ("The language family to which Swahili belongs is", "Bantu"),
+        ("The language family to which Tamil belongs is", "Dravidian"),
+        ("The language family to which Hungarian belongs is", "Uralic"),
+        ("The language family to which Hebrew belongs is", "Semitic"),
+    ],
+    "script_writing_system": [
+        ("The writing system used for Japanese particles and inflections "
+         "is", "hiragana"),
+        ("The writing system used for the Hindi language is",
+         "Devanagari"),
+        ("The writing system invented for Korean in the fifteenth century "
+         "is", "Hangul"),
+        ("The script used to write Ethiopian Amharic is", "Ge"),
+    ],
+    "periodic_group_name": [
+        ("The name of the periodic table group containing fluorine and "
+         "chlorine is the", "halogens"),
+        ("The name of the periodic table group containing lithium and "
+         "sodium is the alkali", "metals"),
+        ("The name of the periodic table group containing calcium and "
+         "magnesium is the alkaline earth", "metals"),
+        ("The name of the periodic table series containing uranium is the",
+         "actinides"),
+    ],
+    "mineral_property": [
+        ("The mineral defining hardness 10 on the Mohs scale is",
+         "diamond"),
+        ("The mineral defining hardness 7 on the Mohs scale is", "quartz"),
+        ("The main ore mineral of aluminium is", "bauxite"),
+        ("The main ore mineral of mercury is", "cinnabar"),
+        ("The mineral known as fool's gold is", "pyrite"),
+    ],
+    "geology_boundary": [
+        ("The boundary between the Earth's crust and mantle is the",
+         "Mohorovicic"),
+        ("The supercontinent that preceded Pangaea in the late "
+         "Precambrian was", "Rodinia"),
+        ("The geological period in which dinosaurs first appeared is the",
+         "Triassic"),
+        ("The geological period immediately before the Cambrian is the",
+         "Ediacaran"),
+    ],
+    "sea_strait_less_cited": [
+        ("The strait separating Australia from Tasmania is the Bass",
+         "Strait"),
+        ("The strait separating Sicily from mainland Italy is the Strait "
+         "of", "Messina"),
+        ("The strait separating Sri Lanka from India is the Palk",
+         "Strait"),
+        ("The strait connecting the Black Sea to the Sea of Marmara is "
+         "the", "Bosphorus"),
+    ],
+    "peninsula_region": [
+        ("The peninsula shared by Spain and Portugal is the", "Iberian"),
+        ("The peninsula containing Denmark is the", "Jutland"),
+        ("The peninsula containing Vietnam, Laos and Cambodia is",
+         "Indochina"),
+        ("The peninsula containing Mumbai's western coast region is the",
+         "Deccan"),
+    ],
+    "sports_record_less_cited": [
+        ("The number of players on a water polo team in the pool is",
+         "seven"),
+        ("The number of frames on a standard bowling scorecard is", "ten"),
+        ("The length in metres of an Olympic swimming pool is", "fifty"),
+        ("The number of holes in a full round of golf is", "eighteen"),
+        ("The number of squares on a Go board's side is", "nineteen"),
+    ],
+    "instrument_family": [
+        ("The instrument family to which the cor anglais belongs is the",
+         "woodwind"),
+        ("The lowest-pitched member of the standard string quartet is the",
+         "cello"),
+        ("The keyboard instrument whose strings are plucked, not struck, "
+         "is the", "harpsichord"),
+        ("The brass instrument with a slide instead of valves is the",
+         "trombone"),
+    ],
+    "cuisine_origin": [
+        ("The country where the dish paella originated is", "Spain"),
+        ("The country where the dish pho originated is", "Vietnam"),
+        ("The country where the dish moussaka originated is", "Greece"),
+        ("The country where the dish ceviche is most associated with is",
+         "Peru"),
+    ],
+    "wine_region": [
+        ("The French region famous for Sauternes dessert wine is",
+         "Bordeaux"),
+        ("The Italian region that produces Chianti is", "Tuscany"),
+        ("The Spanish region famous for sherry is", "Andalusia"),
+        ("The Portuguese river valley famous for port wine is the",
+         "Douro"),
+    ],
+    "organization_founding": [
+        ("The city where the United Nations was founded in 1945 is San",
+         "Francisco"),
+        ("The city that hosts the International Court of Justice is The",
+         "Hague"),
+        ("The city that hosts the headquarters of the World Health "
+         "Organization is", "Geneva"),
+        ("The city that hosts the headquarters of OPEC is", "Vienna"),
+    ],
+    "bird_mammal_specific": [
+        ("The only bird known to fly backwards is the", "hummingbird"),
+        ("The largest species of penguin is the", "emperor"),
+        ("The mammal with the longest gestation period is the",
+         "elephant"),
+        ("The only venomous primate is the slow", "loris"),
+        ("The fastest fish in the ocean is the", "sailfish"),
+    ],
+    "plant_botany": [
+        ("The tallest species of tree on Earth is the coast", "redwood"),
+        ("The plant genus that yields natural rubber is", "Hevea"),
+        ("The spice derived from the crocus flower is", "saffron"),
+        ("The plant from which tequila is made is the blue", "agave"),
+    ],
+    "computing_history": [
+        ("The mathematician who described the first algorithm for a "
+         "mechanical computer was Ada", "Lovelace"),
+        ("The machine Alan Turing helped design to break Enigma was the",
+         "Bombe"),
+        ("The first electronic general-purpose computer, unveiled in 1946, "
+         "was", "ENIAC"),
+        ("The company that produced the first commercial microprocessor "
+         "was", "Intel"),
+    ],
+}
+
+
+def pool_rows() -> list[dict]:
+    """Flat candidate rows: {prompt, answer, family}. Prompt carries the
+    'Fact: ' prefix (v1 scoring convention); answer carries a leading
+    space (battery variant convention adds capitalization variants)."""
+    rows = []
+    for family, items in FAMILIES.items():
+        for prompt, answer in items:
+            rows.append({"prompt": f"Fact: {prompt}",
+                         "answer": f" {answer}", "family": family})
+    return rows
+
+
+def summary() -> dict:
+    rows = pool_rows()
+    return {"n_candidates": len(rows), "n_families": len(FAMILIES),
+            "items_per_family": {f: len(v) for f, v in FAMILIES.items()}}
