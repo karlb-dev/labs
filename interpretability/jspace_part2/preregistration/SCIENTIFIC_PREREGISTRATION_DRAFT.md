@@ -86,6 +86,24 @@ for HP1's ordering contrast with the SESOI raised to the pilot-observed
 (≈2–3× the compute envelope); (c) revise margins. Recommendation on
 the science: (a).
 
+**Reality check on option (a)** (evidence `tailrate-endpoint-crossmodel-v2`,
+which computes the proposed endpoint on the existing pilot grids rather
+than trusting the simulation): at the pilot n=60 the J-vs-matched-random
+tail-rate difference excludes zero on **only 1 of 4 models** (Qwen,
++0.267 [+0.140, +0.489]); base +0.067, Instruct +0.100, Think +0.133 all
+straddle. That is consistent with G6 — the endpoint needs the larger n,
+it is not free at pilot size. **More important: the two endpoints do NOT
+rank the models identically.** Under the mean endpoint the ordering is
+base < Think < Instruct < Qwen; under the rate endpoint it is base <
+Instruct < Think < Qwen — Think and Instruct exchange places. So
+adopting the rate endpoint is a change of scientific claim, not a
+relabeling: **HP1's ordering must be restated against whichever endpoint
+is frozen, and the pilot ordering that motivated HP1 is endpoint-
+dependent.** A defensible resolution is to keep HP1 as a
+mean-endpoint estimation-with-CI claim (no binary test, no power
+requirement) and put the binary primaries on the rate endpoint, so each
+claim is made where it is identified. That choice is the user's.
+
 ## Item pools (partition-first)
 
 Stage-3 bank: ≥30 templates/family across the ten C1 families + expanded
