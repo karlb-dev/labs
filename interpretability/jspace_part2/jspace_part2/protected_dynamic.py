@@ -85,6 +85,7 @@ class ProtectedDynamicAblator:
             scores = torch.where(scores > 0, scores,
                                  torch.full_like(scores, float("-inf")))
         ps = m.get("protect_sets")
+        cap = m.get("capture")          # optional list: per-(layer,pos) audit
         if ps is not None:
             if ps.dim() == 1:
                 idx = ps.to(scores.device).unsqueeze(0).expand(scores.shape[0], -1)
@@ -93,9 +94,14 @@ class ProtectedDynamicAblator:
                     pad = ps[-1:].expand(T - ps.shape[0], -1)
                     ps = torch.cat([ps, pad], 0)
                 idx = ps[:T].to(scores.device).repeat(B, 1)
-            before = torch.isfinite(scores.gather(1, idx)).sum()
+            fin = torch.isfinite(scores.gather(1, idx))
             scores.scatter_(1, idx, float("-inf"))
-            self.log.protected_hits_blocked += int(before)
+            self.log.protected_hits_blocked += int(fin.sum())
+            if cap is not None:
+                cap.append({"kind": "protect", "layer": layer_idx,
+                            "ids": idx.reshape(B, T, -1)[0]
+                                .to("cpu", torch.int32).numpy(),
+                            "blocked": fin.reshape(B, T, -1)[0].cpu().numpy()})
         k = m["k"]
         finite = torch.isfinite(scores)
         avail = finite.sum(dim=1)
@@ -103,6 +109,12 @@ class ProtectedDynamicAblator:
         if take <= 0:
             return h
         top = scores.topk(take, dim=1).indices                # [BT, take]
+        if cap is not None:
+            cap.append({"kind": "selected", "layer": layer_idx,
+                        "ids": top.reshape(B, T, -1)[0]
+                            .to("cpu", torch.int32).numpy(),
+                        "scores": scores.gather(1, top).reshape(B, T, -1)[0]
+                            .to("cpu", torch.float32).numpy()})
         dirs = D[top].float()                                 # [BT, take, d]
         h2_before = (flat * flat).sum(dim=1)
         # exact rank-safe projection: batched SVD of selected rows
@@ -184,15 +196,17 @@ def protected_generate(hf, tok, ab: ProtectedDynamicAblator, dicts, prompt,
 @torch.no_grad()
 def protected_teacher_forced(hf, model_encode, ab: ProtectedDynamicAblator,
                              dicts, text, *, k=10, protect=10,
-                             protected=True, max_length=512):
+                             protected=True, max_length=512, capture=None):
     """Two-pass teacher-forced scoring: clean pass defines per-position
-    protection; hooked pass returns ablated logits [T, V] (fp32 cpu)."""
+    protection; hooked pass returns ablated logits [T, V] (fp32 cpu).
+    capture: optional list receiving per-(layer,pos) selected/blocked-id
+    audit records from the hooked pass (see ProtectedDynamicAblator)."""
     ids = model_encode(text, max_length=max_length)
     ab.mode = None
     clean = hf(input_ids=ids, use_cache=False).logits[0]      # [T, V]
     psets = clean.topk(protect, dim=-1).indices if protected else None
     ab.mode = {"dicts": dicts, "k": k, "nonneg": True,
-               "protect_sets": psets}
+               "protect_sets": psets, "capture": capture}
     ablated = hf(input_ids=ids, use_cache=False).logits[0]
     ab.mode = None
     return ids, ablated.float().cpu()
