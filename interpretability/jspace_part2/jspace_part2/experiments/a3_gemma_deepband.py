@@ -54,17 +54,16 @@ def main():
         for it in probes:
             ids = model.encode(it["prompt"].rstrip(), max_length=128)
             with ActivationRecorder(model.layers, at=layers) as r:
-                out = model.forward(ids)
-            final_logits = (out.logits if hasattr(out, "logits") else out)[0, -1].float()
+                model.forward(ids)
             cand = [tok(v, add_special_tokens=False).input_ids[0]
                     for v in answer_variants(it["answer"])]
-            final_rank = min(int((final_logits > final_logits[c]).sum()) + 1
-                             for c in cand)
             per_layer = {}
             for l in layers:
                 h = r.activations[l][0, -1]
                 lg = model.unembed(h.reshape(1, 1, -1)).reshape(-1).float()
                 per_layer[l] = min(int((lg > lg[c]).sum()) + 1 for c in cand)
+            # final residual + final norm + head == the model's own head:
+            final_rank = per_layer[model.n_layers - 1]
             rows.append({"item_id": it["item_id"], "final_rank": final_rank,
                          "ranks": per_layer})
             print(f"  {it['item_id']:24s} final={final_rank:6d} "
