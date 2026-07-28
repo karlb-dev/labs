@@ -1,8 +1,13 @@
 # SCIENTIFIC PREREGISTRATION — J-space Part 2 confirmatory campaign
-## STATUS: DRAFT v2 (2026-07-28, end of VM7) — awaiting user review;
-## becomes binding only when renamed SCIENTIFIC_PREREGISTRATION.md in a
-## dedicated commit, BEFORE confirmatory item generation is revealed
-## (addendum §9-0.3/0.4). NOTHING CONFIRMATORY MAY RUN UNTIL THEN.
+## STATUS: DRAFT_V2_PRE_REVIEW (frozen as historical record 2026-07-28;
+## N0 snapshot `reports/PILOT_SNAPSHOT_VM7.json`, tag
+## `jspace-part2-pilot-vm7`). SUPERSEDED IN PLACE by the review cycle:
+## PI decisions D1–D7 are resolved in
+## `reviews/jspace_lab_nextsteps_2_2_addendum.md` §3, and the successor
+## document is `SCIENTIFIC_PREREGISTRATION_CANDIDATE.md` (stage N5).
+## This draft stays for the record; do not edit further.
+## Binding rule unchanged: nothing confirmatory may run until a candidate
+## is renamed SCIENTIFIC_PREREGISTRATION.md in a dedicated commit.
 
 Written after the repair era passed its gates (G0 operational, G1 solver
 ✓, G2 lens stability ✓, G3 intervention invariants ✓, G4 positive control
