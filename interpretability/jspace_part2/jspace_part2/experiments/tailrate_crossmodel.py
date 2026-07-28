@@ -107,6 +107,22 @@ def main():
         "paired_difference", {}).get("estimate") for s, r in results.items()}
     clean = [s for s, r in results.items()
              if r["by_task"].get("twohop", {}).get("excludes_zero")]
+
+    # Does the rate endpoint reproduce the MEAN endpoint's ladder order?
+    # Checked, not assumed: rank-order the models under each endpoint.
+    mean_ladder = {}
+    for slug in results:
+        p = BASE / slug / "r7_pilot" / "r7_paired_ci.json"
+        if p.exists():
+            v = json.loads(p.read_text()).get("dynJ_protected/twohop", {})
+            mean_ladder[slug] = v.get("estimate")
+    rate_order = [s for s, _ in sorted(
+        ((s, v) for s, v in ladder.items() if v is not None),
+        key=lambda kv: kv[1])]
+    mean_order = [s for s, _ in sorted(
+        ((s, v) for s, v in mean_ladder.items() if v is not None),
+        key=lambda kv: -kv[1])]        # more negative mean = stronger effect
+    order_matches = rate_order == mean_order
     summ = {
         "frozen_threshold_nats": FROZEN_THR,
         "endpoint": ("per-item tail rate (protected dyn-J minus matched "
@@ -115,29 +131,41 @@ def main():
         "threshold_sensitivity_twohop": sens,
         "twohop_rate_difference_by_model": ladder,
         "models_with_ci_excluding_zero": clean,
+        "mean_endpoint_twohop_by_model": mean_ladder,
+        "ladder_order_rate_endpoint": rate_order,
+        "ladder_order_mean_endpoint": mean_order,
+        "ladder_order_matches": bool(order_matches),
         "reading": (
-            "The tail-rate endpoint separates J from matched random on "
-            f"{len(clean)}/{len(results)} models at the frozen "
-            f"{FROZEN_THR}-nat threshold, and it preserves the ladder "
-            "ordering that the mean endpoint reports — so adopting it "
-            "does not cost the campaign its headline contrast. Threshold "
-            "sensitivity is reported so the freeze picks a value with its "
-            "arbitrariness visible; the pilot-frozen -1.0 nat is used "
-            "throughout and any change is a deviation to log."),
+            f"At the pilot n=60 the rate endpoint's J-vs-random difference "
+            f"excludes zero on only {len(clean)}/{len(results)} models "
+            f"({', '.join(clean) if clean else 'none'}) — consistent with "
+            f"G6, which put the n needed for a 10pp margin well above the "
+            f"pilot size. Effect ORDERING under the two endpoints is "
+            f"{'IDENTICAL' if order_matches else 'NOT identical'}: rate "
+            f"{rate_order} vs mean {mean_order}"
+            + ("" if order_matches else
+               " — Think and Instruct exchange places, so the rate endpoint "
+               "is not a free relabeling of the mean ladder and HP1's "
+               "ordering claim must be restated for whichever endpoint the "
+               "freeze adopts") +
+            f". Threshold sensitivity is reported so the freeze picks a "
+            f"value with its arbitrariness visible; the pilot-frozen "
+            f"{FROZEN_THR} nat is used throughout and any change is a "
+            f"deviation to log."),
         "caveat": ("pilot items only (dev tier, excluded from confirmatory "
                    "statistics by prereg); one-hop cells inherit the "
                    "batteries' ceiling limitation for base/Think — the "
                    "hard one-hop set is the confirmatory replacement"),
         "seconds": round(time.time() - t0)}
     prov = Provenance(
-        evidence_id="tailrate-endpoint-crossmodel-v1", tier="pilot",
+        evidence_id="tailrate-endpoint-crossmodel-v2", tier="pilot",
         command="python -m jspace_part2.experiments.tailrate_crossmodel",
         inputs={s: sha256_file(BASE / s / "r7_pilot" / "r7_per_item.parquet")
                 for s in results},
         seed=SEED)
     write_result(summ, OUT, prov)
     registry_append({
-        "evidence_id": "tailrate-endpoint-crossmodel-v1", "tier": "pilot",
+        "evidence_id": "tailrate-endpoint-crossmodel-v2", "tier": "pilot",
         "what": (f"Tail-rate endpoint across {len(results)} models at the "
                  f"frozen {FROZEN_THR}-nat threshold: two-hop J-minus-random "
                  f"rate differences {json.dumps(ladder)}; CI excludes zero "
