@@ -59,6 +59,33 @@ n per confirmatory cell: simulate for 90% power at 0.5 nats with ICC from
 pilot parquets; floor n=90 items across ≥30 independent families per
 task (supersedes the habitual n=60; addendum §12.6).
 
+## G6 POWER-SIM RESULT (2026-07-28, evidence `g6-power-sim-v2`) — DESIGN
+## DECISION REQUIRED AT FREEZE (user)
+
+The simulation (pilot-calibrated MoM components + family-block bootstrap,
+Holm-worst alpha 0.01) shows the floor above is NOT attainable for mean
+endpoints: protected-arm deltas are a zero-mode + heavy-tail mixture
+(sig_e 1.2–1.5 nats within family, ICC ≈ 0.4), so the 0.5-nat mean-delta
+primaries reach only ~24–42% power even at n=180/60 families, and no
+affordable n reaches 90%. TOST equivalence at the same margin needs
+n≈300. The TAIL-RATE endpoint (per-item >1-nat protected deletion,
+J vs matched-random, paired, family-clustered — exactly the pilot's
+"the tail is the phenomenon" observation) is well powered: 90%+ within
+the extended grid at 10pp rate SESOI. Pilot tail rates and the full
+grids are in `metrics/cross_model/g6_power_sim.json`. Cross-model
+per-item delta correlations came out lineage-structured (Think–Instruct
+0.687, OLMo–Qwen ≤0.14) — HP1's pairing advantage exists only within
+the OLMo lineage.
+
+Options for the freeze (pick one before confirmatory item generation):
+(a) restate tail-carried primaries (HP3, and the HP2 accessibility
+interaction) on the tail-rate endpoint at 10pp SESOI; keep mean deltas
+for HP1's ordering contrast with the SESOI raised to the pilot-observed
+0.8-nat scale OR HP1 demoted to estimation-with-CI (no binary test);
+(b) keep 0.5-nat mean primaries and accept n≈150–200 families/task
+(≈2–3× the compute envelope); (c) revise margins. Recommendation on
+the science: (a).
+
 ## Item pools (partition-first)
 
 Stage-3 bank: ≥30 templates/family across the ten C1 families + expanded
