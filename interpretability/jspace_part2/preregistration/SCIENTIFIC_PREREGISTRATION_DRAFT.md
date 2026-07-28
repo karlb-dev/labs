@@ -1,13 +1,82 @@
 # SCIENTIFIC PREREGISTRATION — J-space Part 2 confirmatory campaign
-## STATUS: DRAFT v1 (2026-07-28) — awaiting user review; becomes binding
-## only when renamed SCIENTIFIC_PREREGISTRATION.md in a dedicated commit,
-## BEFORE confirmatory item generation is revealed (addendum §9-0.3/0.4).
+## STATUS: DRAFT v2 (2026-07-28, end of VM7) — awaiting user review;
+## becomes binding only when renamed SCIENTIFIC_PREREGISTRATION.md in a
+## dedicated commit, BEFORE confirmatory item generation is revealed
+## (addendum §9-0.3/0.4). NOTHING CONFIRMATORY MAY RUN UNTIL THEN.
 
-Written after the repair era passed its gates (G1 solver ✓, G2 lens
-stability ✓, G3 intervention invariants ✓, G4 positive control ✓ — swap
-0.76 vs 0.18; G0 provenance operational) and after 22 pilot evidence
-items (registry). Pilot results inform hypotheses and margins; pilot data
-will NOT be pooled into confirmatory cells.
+Written after the repair era passed its gates (G0 operational, G1 solver
+✓, G2 lens stability ✓, G3 intervention invariants ✓, G4 positive control
+✓ — swap 0.76 vs 0.18, G6 power ✓) and after 45 live pilot/dev evidence
+items (7 withdrawn; see registry). Pilot results inform hypotheses and
+margins; pilot data will NOT be pooled into confirmatory cells.
+
+---
+
+# ⚠ DECISIONS REQUIRED BEFORE FREEZE — read this section first
+
+Six decisions are yours. Each blocks the freeze; nothing downstream can
+run until they are settled. D1 and D2 are the consequential ones.
+
+**D1 · PRIMARY ENDPOINT (blocks everything).** G6 (`g6-power-sim-v2`)
+found the drafted 0.5-nat MEAN primaries structurally underpowered:
+protected deltas are a zero-mode + heavy-tail mixture (within-family σ
+1.2–1.5 nats, ICC ≈ 0.40), giving only 24–42% power even at n=180 across
+60 families; no affordable n reaches 90%, and TOST needs n≈300. The
+TAIL-RATE endpoint is well powered at a 10pp margin. **But switching is
+not free** (`tailrate-endpoint-crossmodel-v2`): the two endpoints do NOT
+rank the models identically — mean order is base < Think < Instruct <
+Qwen, rate order is base < Instruct < Think < Qwen. Think and Instruct
+exchange places, so this changes HP1's claim rather than relabeling it.
+Options: **(a)** binary primaries on the tail-rate endpoint + HP1 as
+mean-endpoint estimation-with-CI, no binary test *[recommended]*;
+**(b)** keep 0.5-nat mean primaries and accept n≈150–200 families/task
+(2–3× the compute envelope); **(c)** revise the margins.
+
+**D2 · WHICH LENS DO CONFIRMATORY CAUSAL CELLS USE? (new, not in v1 —
+and it may matter more than D1).** Today's linearity work
+(`local-linearity-v3-*`, `linearization-faithfulness-*-v2`) found that
+OLMo's source→target transport IS linear across the paper's band (scale
+ratio 1.98–2.02 at ε=0.1–0.2), yet the fitted campaign lens predicts the
+true response with only ~0.49 cosine at L24 and captures 41% of its
+magnitude. Since the map is linear, that gap is **estimation error** —
+jlens averages the Jacobian over positions (`grad.mean(dim=1)`) and over
+fitting prompts. This is the campaign's H7 mean-J mismatch, now measured.
+**Implication: every J-direction causal claim in this campaign (and in
+the paper) may rest on a needlessly degraded estimator.** The direct test
+is cheap and NOT yet run (task #12): compute a true per-position Jacobian
+by autograd and compare its faithfulness against the averaged lens. If
+per-position is markedly better, confirmatory causal cells should
+arguably use per-context Jacobians, and the whole confirmatory design
+changes. **Recommendation: run task #12 BEFORE freezing.**
+
+**D3 · IS GEMMA IN THE CONFIRMATORY MATRIX?** A3 is complete at pilot
+tier and the answer is a premise failure, not a result: Gemma-4's
+transport is nonlinear at every layer and scale (`local-linearity-v3-gemma4-31b`),
+so no Jacobian models it however well estimated — which is why its fitted
+lens is identified-but-useless and reads worse than a plain logit lens.
+Options: **(a)** keep Gemma as a reported METHODS boundary case, run no
+confirmatory J cells on it *[recommended — the honest finding is already
+banked]*; **(b)** drop it entirely; **(c)** spend GPU on a
+nonlinearity-tolerant variant (no such instrument exists today).
+
+**D4 · TAIL THRESHOLD.** If D1 lands on the rate endpoint, the >1-nat
+threshold must be frozen. Pilot used −1.0 nat; threshold sensitivity is
+reported in `g6_power_sim.json` and `tailrate_endpoint.json` so the
+choice is made with its arbitrariness visible. Any later change is a
+logged deviation.
+
+**D5 · ITEM PARTITION.** The Stage-3 bank now MEETS the floor
+(`c3-bank-status-v1`: 126 hard items across 34 canonical families vs
+n≥90 / ≥30 required). It is deliberately NOT partitioned — splitting into
+confirmatory/replication and hashing the partition is a freeze action,
+and must happen before any outcome on those items is viewed. The frozen
+41-item dev set and all pilot items stay dev-tier forever.
+
+**D6 · G5 IS NOT RUN.** The task-gate (baseline capability + shortcut
+audits) is the one R-gate never executed. Either run it before freeze or
+record an explicit waiver with reasoning.
+
+---
 
 ## Primary hypotheses (frozen wording)
 
