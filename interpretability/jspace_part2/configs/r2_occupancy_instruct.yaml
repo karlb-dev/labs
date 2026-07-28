@@ -1,0 +1,10 @@
+evidence_id: r2-occupancy-olmo31instruct-v1
+tier: pilot
+model_path: /content/hf_local/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae
+lens_path: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/lens/olmo31instruct_lens.pt
+prompt_set: /content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/descriptive_prompts.jsonl
+out_dir: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/olmo31-instruct/r2_occupancy
+layers: [24, 32, 40]
+k_max: 50
+n_prompts: 60
+rand_seeds: [11, 12, 13]
