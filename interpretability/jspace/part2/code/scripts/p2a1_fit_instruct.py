@@ -28,9 +28,6 @@ import torch
 import jlens
 from jlens import JacobianLens
 
-CORPUS = RUN_DIR / "config" / "prompts" / "fitting_corpus.jsonl"  # part-1 file, reused verbatim
-MERGED = RUN_DIR_P2 / "lens" / "olmo31instruct_lens.pt"
-METRICS = None  # set in main via p2_metrics_dir
 SLICE_SIZE, SYNC_EVERY = 30, 10
 TARGET_LAYER, MAX_SEQ, SKIP_FIRST = 63, 128, 16
 
@@ -39,10 +36,28 @@ def arg(flag: str, default: str) -> str:
     return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv else default
 
 
+# --draw a (default): part-1 corpus rows 0-119 -> olmo31instruct_lens.pt
+# --draw b: independent seed-1 disjoint corpus (p2b1_corpus_drawB.py)
+#           -> olmo31instruct_lensB.pt  (B1/G2 independent-fit condition)
+DRAW = arg("--draw", "a")
+if DRAW == "a":
+    CORPUS = RUN_DIR / "config" / "prompts" / "fitting_corpus.jsonl"
+    MERGED = RUN_DIR_P2 / "lens" / "olmo31instruct_lens.pt"
+    PFX, SLICE_PFX = "fit31i", "olmo31instruct_slice"
+    FIT_JSON = "fit.json"
+elif DRAW == "b":
+    CORPUS = RUN_DIR_P2 / "config" / "prompts" / "fitting_corpus_drawB.jsonl"
+    MERGED = RUN_DIR_P2 / "lens" / "olmo31instruct_lensB.pt"
+    PFX, SLICE_PFX = "fit31i_b", "olmo31instruct_lensB_slice"
+    FIT_JSON = "fit_drawB.json"
+else:
+    raise SystemExit(f"unknown --draw {DRAW!r}")
+
+
 def slice_paths(k: int) -> tuple[Path, Path, Path]:
-    return (LOCAL_WORK / f"fit31i_slice{k}.ckpt",
-            RUN_DIR_P2 / "lens" / f"fit31i_slice{k}.ckpt",
-            RUN_DIR_P2 / "lens" / f"olmo31instruct_slice{k}.pt")
+    return (LOCAL_WORK / f"{PFX}_slice{k}.ckpt",
+            RUN_DIR_P2 / "lens" / f"{PFX}_slice{k}.ckpt",
+            RUN_DIR_P2 / "lens" / f"{SLICE_PFX}{k}.pt")
 
 
 def fit_slice(model, k: int, prompts: list[str], dim_batch: int,
@@ -84,7 +99,7 @@ def fit_slice(model, k: int, prompts: list[str], dim_batch: int,
 
 def main() -> None:
     seed_all()
-    metrics_path = p2_metrics_dir("olmo31-instruct") / "fit.json"
+    metrics_path = p2_metrics_dir("olmo31-instruct") / FIT_JSON
     LOCAL_WORK.mkdir(parents=True, exist_ok=True)
     slices = [int(s) for s in arg("--slices", "0,1,2,3").split(",")]
     dim_batch = int(arg("--dim-batch", "8"))
@@ -94,12 +109,12 @@ def main() -> None:
         log(f"{MERGED} exists; nothing to do")
         return
     if not CORPUS.exists():
-        die(f"missing part-1 corpus {CORPUS}")
+        die(f"missing corpus {CORPUS} (draw {DRAW})")
     rows = [json.loads(l) for l in CORPUS.read_text().splitlines()]
 
     metrics = read_json(metrics_path) if metrics_path.exists() else {"slices": {}}
-    metrics.update({"model": "allenai/Olmo-3.1-32B-Instruct",
-                    "corpus": "part-1 fitting_corpus.jsonl (WikiText-103, seed 0, first 120)",
+    metrics.update({"model": "allenai/Olmo-3.1-32B-Instruct", "draw": DRAW,
+                    "corpus": str(CORPUS),
                     "source_layers": SOURCE_LAYERS_32B,
                     "target_layer": TARGET_LAYER, "dim_batch": dim_batch,
                     "max_seq_len": MAX_SEQ, "skip_first": SKIP_FIRST})
@@ -113,7 +128,7 @@ def main() -> None:
         prompts = [r["text"] for r in rows[k * SLICE_SIZE:(k + 1) * SLICE_SIZE]]
         fit_slice(model, k, prompts, dim_batch, metrics, metrics_path)
 
-    all_slices = sorted(RUN_DIR_P2.glob("lens/olmo31instruct_slice*.pt"))
+    all_slices = sorted(RUN_DIR_P2.glob(f"lens/{SLICE_PFX}*.pt"))
     lenses = [JacobianLens.load(str(p)) for p in all_slices]
     merged = JacobianLens.merge(lenses)
     if len(all_slices) == 4:

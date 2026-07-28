@@ -147,4 +147,71 @@ the R3 family (J-rotated, label-shuffled, rank-matched, paired per-item
 stats). Caveats: part-1 mechanics by design (raw QR, first-token lp,
 both-phase hooks), unpaired CIs, single seed, n=60/31.
 
+## R2 — paper-defined occupancy, first commensurable capacity numbers (2026-07-28) — tier: PILOT
+
+Evidence `r2-occupancy-think-v1` (frozen crossing rule, 8 synthetic solver
+tests green, commit `eeed9ad`). Olmo-3-32B-Think, shared descriptive set
+(60 prompts, ~4.9k positions/layer), 3 vocab-sized random control
+dictionaries:
+
+| layer | occupancy median [IQR] | excess variance share | censored |
+|---|---|---|---|
+| L24 | 2 [2,2] | 0.0003 | 0% |
+| L32 | 2 [2,2] | 0.0054 | 0% |
+| L40 | 2 [2,3] | 0.0080 | 0% |
+
+Paper (Claude): occupancy ~10–25 (k≈25 typical), excess variance 6–10%.
+**Under the paper's own estimator, OLMo-Think's verbalizable workspace is
+~10× thinner in occupancy and ~10–100× thinner in excess variance** — the
+part-1 thinness intuition survives estimator repair, now as a
+commensurable statement. The decisive next cell is the same estimator on
+Qwen3.6-27B (part 1's proxy said paper-range; if that survives, capacity
+is confirmed as a genuine cross-model property under the paper's
+definitions). Instruct runs now; Qwen queued for today's tail.
+
+## R7 pilot — the paper's protected dynamic ablation, first faithful run (2026-07-28) — tier: PILOT
+
+Evidence `r7-protected-dynamic-pilot-think-v1` (commit `5ea4ee2` runner;
+per-item parquet + summary with provenance). Olmo-3-32B-Think, band
+L20–44, k=10, protect-top-10, exact batched rank-safe projection,
+nonnegative selection, dual clean/ablated KV streams, full-answer-sequence
+logprob scoring, paired per-item deltas. The single changed variable
+between the two dyn-J arms is the protection mask.
+
+| condition | twohop Δlp (mean / median, n=60) | onehop Δlp (n=30) | prose ΔNLL/tok (n=20) | removed energy |
+|---|---|---|---|---|
+| dynJ **protected** (paper protocol) | **−0.52 / +0.02** | −0.59 / +0.01 | +0.24 | 0.12% |
+| dynJ unprotected | −1.13 / −0.55 | −1.71 / −1.56 | +0.29 | 0.13% |
+| dynR protected (matched mechanics) | −0.16 / −0.01 | +0.09 / +0.14 | +0.14 | **2.6%** |
+
+**Reading 1 — H2 confirmed in causal form.** The clean-output protection
+flips the median item from clearly-deleted (−0.55/−1.56) to untouched
+(+0.02/+0.01): the bulk of part-1's live-ablation damage was literally
+deleting the token being emitted. The paper's safeguard is not a detail;
+it is most of the phenomenon on this model.
+
+**Reading 2 — a J-specific internal-content tail survives protection.**
+The protected mean (−0.52) hides a heavy tail: 16/60 twohop items lose
+>1 nat (mean −2.37 on that cohort) while the protected random control on
+the SAME items sits at +0.34. Tail items are the harder ones (baseline lp
+−3.33 vs −1.17) — precisely the items whose answers were NOT already
+imminent output (and hence not protected/not output-occupied). This is
+the first protected-protocol evidence of internally-held J-content
+deletion, and it reconciles the part-1 story in one picture: **the
+workspace effect is conditional on content not yet being in the output
+stream** — items where the answer is already surfacing are untouched by
+construction, items holding it internally lose it, and the median just
+reflects the battery's easy/hard mix.
+
+**Specificity bonus:** dyn-J removes ~0.12% of raw activation energy vs
+dyn-random's 2.6% (energy-matched-by-mechanics, 20× more) — yet only
+dyn-J produces the tail. Selection content, not removal size.
+
+**Immediate follow-ups queued:** log the answer's clean-logit rank per
+item (tests the "protection threshold = rank 10" mechanization directly);
+occupancy-conditional split once R2 lands; dose/persistence and the C1
+load battery target the tail cohort; Instruct mirror of this grid.
+Caveats: pilot tier, single seed, prose guard shows a real +0.24 NLL/tok
+fluency cost for dynJ (protected included), audit generations coherent.
+
 *(sections append here per banked phase)*

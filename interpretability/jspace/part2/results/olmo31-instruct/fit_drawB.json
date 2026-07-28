@@ -1,0 +1,33 @@
+{
+  "slices": {},
+  "model": "allenai/Olmo-3.1-32B-Instruct",
+  "draw": "b",
+  "corpus": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727/config/prompts/fitting_corpus_drawB.jsonl",
+  "source_layers": [
+    4,
+    8,
+    12,
+    16,
+    20,
+    22,
+    24,
+    26,
+    28,
+    30,
+    32,
+    34,
+    36,
+    38,
+    40,
+    42,
+    44,
+    48,
+    52,
+    56,
+    60
+  ],
+  "target_layer": 63,
+  "dim_batch": 8,
+  "max_seq_len": 128,
+  "skip_first": 16
+}
