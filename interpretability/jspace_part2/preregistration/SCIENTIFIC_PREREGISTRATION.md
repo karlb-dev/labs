@@ -1,11 +1,14 @@
-# SCIENTIFIC PREREGISTRATION — CANDIDATE
+# SCIENTIFIC PREREGISTRATION
 ## J-space Part 2 confirmatory campaign
 
-**STATUS: CANDIDATE. NOT BINDING.** It becomes binding only when renamed
-`SCIENTIFIC_PREREGISTRATION.md` in a dedicated freeze commit after
-explicit principal-investigator sign-off (nextsteps_2_2 §7-N5). Until
-then: no confirmatory cell, no partition generation, no outcome viewed on
-a confirmatory item.
+**STATUS: BINDING. Frozen 2026-07-29 (VM9) in the dedicated freeze
+commit tagged `jspace-part2-confirmatory-freeze-v1`.** PI sign-off: the
+2026-07-29 interactive directive, conditional on §9 closing cleanly —
+re-verified programmatically by `freeze_partition.py` inside this
+commit. Partition `d5-partition-freeze-v1` (seed 4242): 32 confirmatory
+/ 32 replication families, disjoint, manifest sha `c7b79d61e6c0b66e…`.
+No intervention outcome was viewed between partition generation and this
+freeze.
 
 Supersedes `SCIENTIFIC_PREREGISTRATION_DRAFT.md` (closed as
 `DRAFT_V2_PRE_REVIEW`). Governing documents: `../reviews/jspace_lab_nextsteps_2_2.md`
