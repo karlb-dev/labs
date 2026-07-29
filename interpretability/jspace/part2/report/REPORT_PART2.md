@@ -26,7 +26,24 @@
 >    centered variance) and is now larger, though still an order of
 >    magnitude below the reported Claude band.
 
-**Status 2026-07-29 (VM8): the repair era is complete, the
+**Status 2026-07-29 (VM9, current): the freeze-blocker block.** The PI
+delegated the open design calls; three were resolved and recorded
+(READY_FOR_FREEZE VM9 section + prereg candidate §5): (1) the **primary
+matched control** is `dyn_energy_rank_matched_random` — per-position
+exact rank + removed-energy match to the J arm, orthogonal to protected
+rows, deterministic seeds; the complete dose match for a span-projection
+intervention, leaving direction content as the arms' only difference;
+(2) the **capability-cohort predicate** is `capable_generation` on the
+frozen alias set (difficulty windows recorded, not selected on); (3) the
+**capacity estimand stays globally centered R²** ("recentering" resolved:
+centered is the confirmatory quantity, raw share is sensitivity), now
+being extended to Qwen and 3.1-Instruct. A ledger error was corrected:
+the 3.1-**Instruct** lens has existed since the pilot (two independent
+fits); only the 3.1-**Think** lens was missing and its fit is running
+this block. The campaign remains stopped at the freeze boundary —
+sign-off still pending.
+
+**Status 2026-07-29 (VM8, superseded above): the repair era is complete, the
 preregistration CANDIDATE is written, and the campaign is STOPPED at the
 freeze boundary awaiting principal-investigator sign-off.** See
 `../../jspace_part2/READY_FOR_FREEZE.md` for the gate ledger: 5 of 8

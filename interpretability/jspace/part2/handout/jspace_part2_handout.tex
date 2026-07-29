@@ -318,6 +318,57 @@ cohorts, a geometry-matched primary control, and lenses for both primary
 checkpoints. No confirmatory cell has run and the item partition has not
 been generated.
 
+\section{VM9 --- the freeze-blocker block: design decisions}\label{sec:vm9}
+
+The PI delegated the block's open design questions. Three resolutions,
+each recorded with full rationale in \code{READY\_FOR\_FREEZE.md} (VM9
+section) and preregistration-candidate \S5:
+
+\subsection{The primary matched control}
+
+\textbf{\code{dyn\_energy\_rank\_matched\_random}}: per (item, layer,
+position), a random subspace matched \emph{exactly, by construction} to
+the J arm's achieved effective rank and removed-energy fraction at that
+site, orthogonal to the protected dictionary rows, deterministically
+seeded. For a span-projection intervention this is the \emph{complete}
+geometric dose match --- a subspace's entire relation to the current
+state $h$ is (rank, removed energy); there is exactly one principal
+angle between a subspace and a line --- so the two arms differ only in
+\emph{direction content}, which is precisely HP3's specificity claim.
+\code{dynJ\_rotated} was rejected as primary (rotated rows misalign with
+$h$; selection scores and removed energy collapse toward the isotropic
+regime, re-introducing the dose confound) and
+\code{dyn\_spectrum\_matched\_nonJ} likewise (a span projection is
+invariant to dictionary row spectrum given the span); both remain named
+secondary arms. Mechanical dev gates MC1--MC4 were committed before any
+run, with deliberately \emph{no} behavioural gate, so the control cannot
+be tuned on outcomes.
+
+\subsection{The capability-cohort predicate}
+
+\code{capable\_generation} --- greedy decoding produces a frozen-alias
+answer --- on each confirmatory checkpoint. Per-model difficulty windows
+are recorded but excluded from the predicate: window-based cohorts would
+re-select the bank per model, which is exactly the sampling bias the
+cohorts exist to close.
+
+\subsection{The capacity estimand (``does the data need recentering?'')}
+
+Yes: \textbf{globally centered $R^2$} is the confirmatory capacity
+estimand (\code{centered\_variance\_explained\_excess}), with the raw
+energy share retained as named sensitivity and occupancy (crossing)
+unaffected --- the v1$\to$v2 estimand repair already applied to Think,
+now extended to Qwen (published $n{=}1000$ lens, pinned revision) and
+3.1-Instruct (own lens, pilot revision).
+
+\subsection{A ledger correction}
+
+``Neither primary lens exists'' was wrong: the 3.1-Instruct lens has
+existed since the pilot as two independent registered fits (row-cos
+0.993, selection Jaccard 0.806). Only the 3.1-\emph{Think} lens was
+missing; its fit (recipe identical to the Instruct draw-A fit) runs this
+block.
+
 \section*{Reproducibility}
 
 Run dir \code{special-lab-1/part2\_20260727/} (metrics per model slug,
