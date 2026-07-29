@@ -166,7 +166,7 @@ def main():
                  RUN_DIR_P2 / "metrics" / "olmo31-think" / "fit_provenance.json",
                  prov)
     registry_append({
-        "evidence_id": "a1-fit-olmo31think-v1", "tier": "pilot",
+        "evidence_id": "a1-fitB-independent-lens-olmo31think-v1", "tier": "pilot",
         "what": (f"Second INDEPENDENT 120-prompt lens for Olmo-3.1-32B-Think "
                  f"(corpus draw B, disjoint from draw A; same recipe: "
                  f"{len(SOURCE_LAYERS)} source layers, target "
