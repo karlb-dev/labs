@@ -73,7 +73,8 @@ def load_manifest_items() -> tuple[dict, list[dict]]:
 
 
 def score_path(slug: str) -> Path:
-    return RUN / "metrics" / slug / "g5_capability_scores.json"
+    sfx = "_bos" if "--bos" in sys.argv else ""
+    return RUN / "metrics" / slug / f"g5_capability_scores{sfx}.json"
 
 
 def cmd_score():
@@ -91,6 +92,12 @@ def cmd_score():
 
     import transformers
     tok = transformers.AutoTokenizer.from_pretrained(model_path)
+    if "--bos" in sys.argv:            # AMENDMENT 1: assay-wide BOS units
+        tok.add_bos_token = True
+        probe = tok("probe").input_ids
+        assert probe and probe[0] == (tok.bos_token_id
+                                      if tok.bos_token_id is not None
+                                      else probe[0]), "BOS not applied"
     hf = transformers.AutoModelForCausalLM.from_pretrained(
         model_path, dtype=torch.bfloat16).to("cuda").eval()
 
@@ -134,17 +141,27 @@ def cmd_score():
     cap = sum(1 for v in done.values() if v["capable_generation"])
     log(f"{slug}: {len(done)} items scored, {cap} capable_generation "
         f"({time.time()-t0:.0f}s)")
+    sfx = "-bos-v2" if "--bos" in sys.argv else "-v1"
     registry_append({
-        "evidence_id": f"g5-capability-scores-{slug}-v1", "tier": "dev",
+        "evidence_id": f"g5-capability-scores-{slug}{sfx}", "tier": "dev",
         "what": (f"Cross-model capability scoring for the G5 bank on {slug}: "
                  f"{len(done)} non-excluded items, {cap} capable_generation "
                  f"under the frozen alias set (predicate for the capability "
                  f"cohorts; per-model difficulty window recorded, not part "
                  f"of the predicate)"),
         "command": (f"python -m jspace_part2.experiments.g5_cohorts score "
-                    f"--slug {slug} --model-path {model_path}"),
+                    f"--slug {slug} --model-path {model_path}"
+                    + (" --bos" if "--bos" in sys.argv else "")),
         "code_commit": git["code_commit"], "rerun": "auto",
         "outputs": [{"path": str(out_p), "sha256": sha256_file(out_p)}]})
+    if "--bos" in sys.argv:
+        try:
+            reg.supersede(f"g5-capability-scores-{slug}-v1",
+                          f"g5-capability-scores-{slug}-bos-v2",
+                          reason="AMENDMENT 1: rescored in assay-wide BOS "
+                                 "units (from_hf force_bos)")
+        except Exception as ex:
+            log(f"  (supersede: {ex})")
 
 
 def cmd_assemble():
@@ -192,7 +209,9 @@ def cmd_assemble():
             fam_int.setdefault(r["canonical_family"], set()).add(iid)
 
     fam3 = {f: len(s) for f, s in fam_int.items() if len(s) >= 3}
-    payload["manifest_version"] = 4
+    payload["manifest_version"] = ver
+    if bos:
+        payload["units"] = "BOS (AMENDMENT_1_BOS_UNITS)"
     payload["cohort_predicate"] = ("capable_generation (greedy, frozen alias "
                                    "set, MAX_NEW=8); difficulty window "
                                    "recorded per model, not in predicate")
@@ -202,9 +221,11 @@ def cmd_assemble():
         c for c in payload.get("conditions_outstanding", [])
         if "capability cohorts" not in c]
 
-    out = RUN / "metrics" / "cross_model" / "g5_item_manifest_v4.json"
+    bos = "--bos" in sys.argv
+    ver = 5 if bos else 4
+    out = RUN / "metrics" / "cross_model" / f"g5_item_manifest_v{ver}.json"
     prov = Provenance(
-        evidence_id="g5-item-manifest-v4", tier="dev",
+        evidence_id=f"g5-item-manifest-v{ver}", tier="dev",
         command="python -m jspace_part2.experiments.g5_cohorts assemble",
         inputs={"manifest_v3": sha256_file(MANIFEST_V3),
                 **{f"scores_{m}": sha256_file(score_path(m))
@@ -213,20 +234,23 @@ def cmd_assemble():
         seed=0)
     write_result_v2(payload, out, prov)
     registry_append({
-        "evidence_id": "g5-item-manifest-v4", "tier": "dev",
+        "evidence_id": f"g5-item-manifest-v{ver}", "tier": "dev",
         "what": (f"Item manifest with CLOSED cross-model capability cohorts "
                  f"(freeze condition 1): lineage_anchor "
                  f"{coh_counts['lineage_anchor']}, cross_model_intersection "
                  f"{coh_counts['cross_model_intersection']} items "
                  f"({len(fam3)} families with >=3 intersection items); "
                  f"predicate = capable_generation on the frozen alias set"),
-        "command": "python -m jspace_part2.experiments.g5_cohorts assemble",
+        "command": ("python -m jspace_part2.experiments.g5_cohorts assemble"
+                    + (" --bos" if bos else "")),
         "code_commit": git["code_commit"], "rerun": "auto",
         "outputs": [{"path": str(out), "sha256": sha256_file(out)}]})
     try:
-        reg.supersede("g5-item-manifest-v3", "g5-item-manifest-v4",
-                      reason="capability cohorts closed on all three "
-                             "confirmatory models")
+        old = f"g5-item-manifest-v{ver-1}"
+        reg.supersede(old, f"g5-item-manifest-v{ver}",
+                      reason=("AMENDMENT 1: cohorts in BOS units" if bos else
+                              "capability cohorts closed on all three "
+                              "confirmatory models"))
     except Exception as ex:
         log(f"  (supersede: {ex})")
     log(f"manifest v4 written: {coh_counts}")

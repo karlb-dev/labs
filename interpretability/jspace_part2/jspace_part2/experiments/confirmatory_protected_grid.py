@@ -60,7 +60,7 @@ from ..provenance import (Provenance, registry_append, require_clean_tree,
 
 RUN = Path("/content/drive/MyDrive/interpret/special-lab-1/part2_20260727")
 PARTITION = RUN / "metrics" / "cross_model" / "partition_manifest.json"
-MANIFEST_V4 = RUN / "metrics" / "cross_model" / "g5_item_manifest_v4.json"
+MANIFEST_V4 = RUN / "metrics" / "cross_model" / "g5_item_manifest_v5.json"  # BOS units (AMENDMENT 1)
 BASELINE_TOL_NATS = 0.75
 N_BASELINE_CHECK = 25
 
