@@ -43,7 +43,7 @@ import numpy as np
 import torch
 
 from ..battery import ONEHOP, answer_variants, seq_lp_from_logits
-from ..c3_pool import canonical_family
+from ..c3_pool import canonical_family, relation_group
 from ..family import load_map
 from ..lib import sha256_file
 from ..paths import to_uri
@@ -86,6 +86,7 @@ def main():
             "canonical_answer": it["answer"],
             "accepted_answers": answer_variants(it["answer"]),
             "canonical_family": fm.get("canonical_family"),
+            "relation_group": fm.get("canonical_family"),
             "template_id": fm.get("template_id"),
             "template_hash": fm.get("template_hash"),
             "bridge_entity": bridge,
@@ -103,6 +104,7 @@ def main():
             "task": "onehop", "prompt": p, "canonical_answer": a,
             "accepted_answers": answer_variants(a),
             "canonical_family": fm.get("canonical_family"),
+            "relation_group": fm.get("canonical_family"),
             "template_id": fm.get("template_id"),
             "template_hash": fm.get("template_hash"),
             "bridge_entity": None, "counterfactual": None,
@@ -110,11 +112,20 @@ def main():
             "partition": "UNASSIGNED"})
 
     # ---------------- Stage-3 hard one-hop bank -------------------------
-    for v in ("v2", "v3", "v4", "v5"):
+    seen_prompts: set[str] = set()
+    n_dropped_dup = 0
+    for v in ("v2", "v3", "v4", "v5", "v6"):
         f = SCORES / f"c3_pool_{v}_scores.json"
         if not f.exists():
             continue
         for r in json.loads(f.read_text())["rows"]:
+            # the same fact authored twice across pool versions is ONE item,
+            # not two: keeping both would let one fact land in both the
+            # confirmatory and the replication partition.
+            if norm(r["prompt"]) in seen_prompts:
+                n_dropped_dup += 1
+                continue
+            seen_prompts.add(norm(r["prompt"]))
             cf = canonical_family(r["family"])
             ans = r["answer"].strip()
             iid = f"c3:{v}:{hashlib.sha256(r['prompt'].encode()).hexdigest()[:10]}"
@@ -124,6 +135,7 @@ def main():
                 "canonical_answer": ans,
                 "accepted_answers": answer_variants(ans),
                 "canonical_family": cf, "template_id": r["family"],
+                "relation_group": relation_group(r["family"]),
                 "template_hash": hashlib.sha256(
                     cf.encode()).hexdigest()[:16],
                 "bridge_entity": None, "counterfactual": None,
@@ -131,7 +143,8 @@ def main():
                 "prescored_lp": r["lp"], "prescored_in_window": r["in_window"],
                 "partition": "UNASSIGNED"})
 
-    print(f"manifest rows: {len(items)}", flush=True)
+    print(f"manifest rows: {len(items)} "
+          f"({n_dropped_dup} duplicate prompts dropped)", flush=True)
 
     # ---------------- checks --------------------------------------------
     fails = {"missing_family": [], "answer_in_prompt": [],
@@ -239,7 +252,12 @@ def main():
                               "examples": dict(list(dup_facts.items())[:8])},
         "F_lengths": {"families": len(fam_summary)},
         "G_family_integrity": {"missing_family": fails["missing_family"]},
+        "duplicate_prompts_dropped": n_dropped_dup,
         "families_with_ge3_in_window": len(eligible),
+        "relation_groups_with_ge3_in_window": len(
+            {r["relation_group"] for r in items
+             if r.get("relation_group") and
+             fam_summary.get(r["canonical_family"], {}).get("n_in_window", 0) >= 3}),
         "d5_target_60_families": len(eligible) >= 60,
         "cohorts": {
             "lineage_anchor_cohort": ("families capable on the OLMo primary "
@@ -264,13 +282,13 @@ def main():
                    ["cross-model capability cohorts pending other weights"]}
     out = RUN / "metrics" / "cross_model" / "g5_item_manifest.json"
     prov = Provenance(
-        evidence_id="g5-item-manifest-v1", tier="dev",
+        evidence_id="g5-item-manifest-v2", tier="dev",
         command="python -m jspace_part2.experiments.g5_task_gate",
         inputs={"probe_swap": sha256_file(PROBE_SWAP)},
         model=resolve_model(MODEL))
     env = write_result_v2(payload, out, prov)
     registry_append({
-        "evidence_id": "g5-item-manifest-v1", "tier": "dev",
+        "evidence_id": "g5-item-manifest-v2", "tier": "dev",
         "what": (f"G5 task gate (PI decision D6: run, do not waive). "
                  f"Immutable item manifest over {len(items)} items with "
                  f"verified answers, tokenizations, anchor-model baseline "
