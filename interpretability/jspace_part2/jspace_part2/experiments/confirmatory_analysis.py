@@ -45,8 +45,12 @@ def arg(flag, default=None):
     return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv else default
 
 
+DIR_SUFFIX = ""
+
+
 def load_deltas(slug: str) -> pd.DataFrame:
-    pq = RUN / "metrics" / slug / "n6_grid" / f"n6_per_item_{slug}.parquet"
+    pq = RUN / "metrics" / slug / f"n6_grid{DIR_SUFFIX}" / \
+        f"n6_per_item_{slug}.parquet"
     df = pd.read_parquet(pq)
     base = df[df.condition == "baseline"].set_index("item_id")
     rows = []
@@ -144,7 +148,11 @@ def tail_stat(df: pd.DataFrame, thresh=THRESH) -> float:
 
 
 def main():
+    global DIR_SUFFIX
     git = require_clean_tree("--allow-dirty" in sys.argv)
+    DIR_SUFFIX = arg("--dir-suffix", "")
+    eid = arg("--eid", "n6-confirmatory-analysis-v2")
+    out_name = arg("--out-name", "confirmatory_analysis.json")
     slugs = arg("--slugs",
                 "olmo31-think,olmo31-instruct,qwen36-27b").split(",")
     dfs = pd.concat([load_deltas(s) for s in slugs], ignore_index=True)
@@ -314,18 +322,21 @@ def main():
         sens_rel[f"{m}/{t}"] = round(fam_weighted_mean(g2), 4)
     results["sensitivity_relation_group"] = sens_rel
 
-    out = RUN / "metrics" / "cross_model" / "confirmatory_analysis.json"
+    out = RUN / "metrics" / "cross_model" / out_name
     prov = Provenance(
-        evidence_id="n6-confirmatory-analysis-v2", tier="confirmatory",
+        evidence_id=eid, tier="confirmatory",
         command=("python -m jspace_part2.experiments.confirmatory_analysis "
-                 f"--slugs {','.join(slugs)}"),
+                 f"--slugs {','.join(slugs)}"
+                 + (f" --dir-suffix {DIR_SUFFIX} --eid {eid} "
+                    f"--out-name {out_name}" if DIR_SUFFIX else "")),
         inputs={f"parquet_{s}": sha256_file(
-            RUN / "metrics" / s / "n6_grid" / f"n6_per_item_{s}.parquet")
+            RUN / "metrics" / s / f"n6_grid{DIR_SUFFIX}" /
+            f"n6_per_item_{s}.parquet")
             for s in slugs} | {"partition": sha256_file(PARTITION)},
         model={"note": "analysis step over banked parquets"}, seed=SEED)
     write_result_v2(results, out, prov)
     registry_append({
-        "evidence_id": "n6-confirmatory-analysis-v2", "tier": "confirmatory",
+        "evidence_id": eid, "tier": "confirmatory",
         "what": (f"LOCKED confirmatory analysis: P-HP1 contrast "
                  f"{results['P_HP1']['observed_contrast_nats']} nats "
                  f"CI {results['P_HP1']['ci95']} p={p_hp1}; P-HP3 Qwen "
@@ -336,12 +347,13 @@ def main():
         "outputs": [{"path": str(out), "sha256": sha256_file(out)}]})
     from .. import registry as reg
     try:
-        reg.supersede("n6-confirmatory-analysis-v1",
-                      "n6-confirmatory-analysis-v2",
-                      reason="v1 analysis-layer label bug dropped every "
-                             "hard_onehop item (11% of data analysed); v2 "
-                             "maps hard_onehop into the prereg's one-hop "
-                             "comparator, estimands unchanged")
+        if eid == "n6-confirmatory-analysis-v2":
+            reg.supersede("n6-confirmatory-analysis-v1",
+                          "n6-confirmatory-analysis-v2",
+                          reason="v1 analysis-layer label bug dropped every "
+                                 "hard_onehop item (11% of data analysed); "
+                                 "v2 maps hard_onehop into the prereg's "
+                                 "one-hop comparator, estimands unchanged")
     except Exception as ex:
         print(f"  (supersede: {ex})")
     print(json.dumps({k: results[k] for k in
