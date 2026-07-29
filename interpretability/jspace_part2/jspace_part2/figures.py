@@ -21,8 +21,14 @@ import numpy as np
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
-RUN = Path("/content/drive/MyDrive/interpret/special-lab-1/part2_20260727")
-FIGDIR = RUN / "figures"
+import os as _os
+
+# N8 indirection: metrics read from JSPACE_PART2_RUN_ROOT, figures write
+# to JSPACE_PART2_OUT_ROOT (defaults = historical paths; pure IO change).
+RUN = Path(_os.environ.get(
+    "JSPACE_PART2_RUN_ROOT",
+    "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727"))
+FIGDIR = Path(_os.environ.get("JSPACE_PART2_OUT_ROOT", str(RUN))) / "figures"
 M = RUN / "metrics"
 
 PAL = {"J": "#2a78d6", "random": "#eb6834", "nonJ": "#1baf7a",

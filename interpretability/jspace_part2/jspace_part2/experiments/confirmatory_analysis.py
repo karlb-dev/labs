@@ -33,7 +33,17 @@ from ..lib import sha256_file
 from ..provenance import (Provenance, registry_append, require_clean_tree,
                           resolve_model, write_result_v2)
 
-RUN = Path("/content/drive/MyDrive/interpret/special-lab-1/part2_20260727")
+# N8 run-root indirection (nextsteps_3_1 §13.2, Queue 4): inputs (raw
+# parquets + partition manifest) resolve from JSPACE_PART2_RUN_ROOT;
+# outputs go to JSPACE_PART2_OUT_ROOT so a clean-room reproduction can
+# never touch the original output tree. Defaults preserve the historical
+# behaviour exactly. Pure IO change — estimators untouched.
+import os as _os
+
+RUN = Path(_os.environ.get(
+    "JSPACE_PART2_RUN_ROOT",
+    "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727"))
+OUT_ROOT = Path(_os.environ.get("JSPACE_PART2_OUT_ROOT", str(RUN)))
 PARTITION = RUN / "metrics" / "cross_model" / "partition_manifest.json"
 THRESH = -1.0
 SENS_THRESH = (-0.5, -1.5, -2.0)
@@ -339,7 +349,8 @@ def main():
         sens_rel[f"{m}/{t}"] = round(fam_weighted_mean(g2), 4)
     results["sensitivity_relation_group"] = sens_rel
 
-    out = RUN / "metrics" / "cross_model" / out_name
+    out = OUT_ROOT / "metrics" / "cross_model" / out_name
+    out.parent.mkdir(parents=True, exist_ok=True)
     prov = Provenance(
         evidence_id=eid, tier="confirmatory",
         command=("python -m jspace_part2.experiments.confirmatory_analysis "
@@ -352,6 +363,10 @@ def main():
             for s in slugs} | {"partition": sha256_file(PARTITION)},
         model={"note": "analysis step over banked parquets"}, seed=SEED)
     write_result_v2(results, out, prov)
+    if "--no-register" in sys.argv:
+        # reproduction mode (N8): write the envelope, never the registry
+        print(f"NO-REGISTER mode: wrote {out}")
+        return
     registry_append({
         "evidence_id": eid, "tier": "confirmatory",
         "what": (f"LOCKED confirmatory analysis: P-HP1 contrast "
