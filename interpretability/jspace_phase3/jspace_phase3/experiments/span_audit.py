@@ -44,7 +44,7 @@ from ..ablator3 import (Phase3JAblator, profile_from_p3log,
 from ..paths3 import metrics_dir
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            resolve_model, write_result3)
-from ..scoring import DEFAULT_SPEC, ScoringSession
+from ..scoring import LEGACY_PHASE2_SPEC, ScoringSession
 
 TIER = "phase3-development"
 
@@ -106,7 +106,11 @@ def main():  # noqa: C901
     hf = transformers.AutoModelForCausalLM.from_pretrained(
         model_path, dtype=torch.bfloat16).to("cuda").eval()
     model = jlens.from_hf(hf, tok)          # mutates tok -> BOS units
-    sess = ScoringSession(tok, DEFAULT_SPEC, device="cuda")
+    # Frozen Phase 2 items are scored under the LEGACY spec: Amendment 1
+    # used the un-rstripped prompt and 5/325 bank items carry a
+    # trailing-space artifact. Rejecting them (the Phase 3 default) would
+    # change the estimand of the very items being audited. Count reported.
+    sess = ScoringSession(tok, LEGACY_PHASE2_SPEC, device="cuda")
     lens_path = str(resolve_uri(cfg["lens_uri"]))
     lens = JacobianLens.load(lens_path)
     band, k, pk = cfg["band"], cfg["k"], cfg["protect_top_k"]
@@ -225,6 +229,9 @@ def main():  # noqa: C901
     summary = {
         "n_items": int(len(df)),
         "n_families": int(df.canonical_family.nunique()),
+        "scoring_spec": "LEGACY_PHASE2 (un-rstripped prompts)",
+        "n_items_with_trailing_whitespace": int(sum(
+            1 for it in items if it["prompt"] != it["prompt"].rstrip())),
         "delta_label_mean": round(float(dl.mean()), 4),
         "delta_span_safe_mean": round(float(ds.mean()), 4),
         "delta_matched_mean": round(float(dm.mean()), 4),

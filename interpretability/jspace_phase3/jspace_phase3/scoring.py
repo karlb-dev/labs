@@ -38,6 +38,14 @@ class ScoringSpec:
 
 DEFAULT_SPEC = ScoringSpec()
 
+# For re-measuring FROZEN Phase 2 items only. Amendment 1 scored the
+# un-rstripped prompt, and 5/325 bank items carry a trailing-space
+# artifact; an audit of those items must reproduce their tokenization
+# rather than reject it. New Phase 3 banks use DEFAULT_SPEC, which
+# refuses the artifact at authoring time. Any producer using this spec
+# must record how many items relied on it.
+LEGACY_PHASE2_SPEC = ScoringSpec(reject_trailing_whitespace=False)
+
 
 class ScoringSession:
     """Wraps ONE tokenizer with ONE spec; every id this session produces
