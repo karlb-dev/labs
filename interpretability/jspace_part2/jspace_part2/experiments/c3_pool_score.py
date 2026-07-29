@@ -24,6 +24,7 @@ import torch
 
 from ..battery import answer_variants, seq_lp_from_logits
 from ..c3_pool import pool_rows, summary as pool_summary
+from ..c3_pool_v4 import rows_v4
 from ..lib import sha256_file
 from ..provenance import (Provenance, registry_append, require_clean_tree,
                           resolve_model, write_result)
@@ -41,6 +42,11 @@ def arg(flag, default=None):
 def main():
     git = require_clean_tree("--allow-dirty" in sys.argv)
     version = arg("--pool", "v2")
+    if version == "v4":
+        # v4 lives in its own data module (34 NEW canonical families for
+        # the D5 family-disjoint expansion); everything else is unchanged.
+        def pool_rows(_v=None):          # noqa: F811
+            return rows_v4()
     OUT = (RUN_DIR_P2 / "metrics" / "olmo3-think" /
            f"c3_pool_{version}_scores.json")
     POOL_OUT = (RUN_DIR_P2 / "config" / "prompts" /
