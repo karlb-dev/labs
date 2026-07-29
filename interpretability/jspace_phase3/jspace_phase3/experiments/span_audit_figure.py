@@ -23,7 +23,8 @@ from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 from ..stats import family_cluster_bootstrap_ci
 
-EVIDENCE_ID = "p3-span-audit-figure-olmo31-think-v1"
+EVIDENCE_ID = "p3-span-audit-figure-olmo31-think-v2"
+SUPERSEDES = "p3-span-audit-figure-olmo31-think-v1"  # v1 render had a panel-B label collision
 TIER = "phase3-development"
 
 ARMS = [
@@ -184,6 +185,7 @@ def main():
     register(EVIDENCE_ID, tier=TIER, command=cmd,
              what=("figure p3f02 + family-clustered arm statistics for the "
                    "§4.1b span audit on olmo31-think"),
+             supersedes=SUPERSEDES,
              outputs=[out, *figs])
     print(json.dumps(payload["arm_stats"], indent=1))
     print(f"figure: {figs[0]}")
