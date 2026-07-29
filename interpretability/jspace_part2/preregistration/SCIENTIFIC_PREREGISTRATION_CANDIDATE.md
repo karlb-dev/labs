@@ -256,17 +256,52 @@ here because a preregistration should show the arms it rejected and why.
 
 The pilot's random-dictionary arm is a **mechanics** control, not a
 matched one. It is renamed `dynR_mechanics_control` throughout, and the
-report may not call it matched. The primary control for HP3 is a
-geometry-matched arm — same effective rank and comparable removed-energy
-spectrum as the J arm on the same item — with the isotropic random arm
-retained alongside. Naming discipline, fixed here:
+report may not call it matched. Naming discipline, fixed here:
 
 `dynR_mechanics_control` · `dynJ_label_shuffled` · `dynJ_rotated` ·
 `dyn_spectrum_matched_nonJ` · `dyn_energy_rank_matched_random`.
 
-**Open condition of the freeze:** the primary matched control must be
-implemented and validated on dev items before any confirmatory cell. A
-null against an unmatched control is not evidence of specificity.
+**RESOLVED (2026-07-29): the primary control is
+`dyn_energy_rank_matched_random`** (`matched_control.py`). Per (item,
+layer, position) it removes a RANDOM subspace matched **exactly, by
+construction** to the J arm's achieved geometry at that site:
+
+- same effective rank as the J arm's rank-safe projector there;
+- same removed-energy fraction `‖P_S h‖²/‖h‖²` (the match is algebraic:
+  one basis vector carries the required h-alignment, the rest are
+  random directions orthogonal to h);
+- orthogonal to the protected dictionary rows, so the control honours the
+  same output-protection contract as the J arm;
+- deterministically seeded per (seed_base, layer, forward, position),
+  reproducible bit-for-bit.
+
+*Why this is the complete geometric match:* the intervention is a span
+projection, and a subspace's entire geometric relation to a single
+vector h is characterised by its rank and the energy it removes (there
+is exactly one principal angle between a subspace and a line). Matching
+both therefore equates everything about the dose; the two arms differ
+only in **direction content**, which is precisely the specificity claim
+HP3 makes. `dynJ_rotated` was rejected as primary because rotated rows
+misalign with h — selection scores and removed energy collapse toward
+the isotropic regime, re-introducing the dose confound;
+`dyn_spectrum_matched_nonJ` was rejected because a span projection is
+invariant to dictionary row spectrum given the span. Both remain named
+secondary arms available for the robustness grid.
+
+The control consumes the J arm's logged per-position (rank, energy)
+profile on the same item, so the J arm runs first and the control second
+within each item block; condition order between them and the other arms
+is randomised at the item level as §7 requires (the profile dependency
+is on the J arm's *log*, not its outcome, and the J arm is deterministic).
+
+**Remaining open sub-condition of the freeze:** the mechanical
+dev-validation gates MC1–MC4 (rank match 100%, energy relative error
+median ≤0.5% / max ≤5%, clamp rate ≤1%, protected-row cosine ≤1e-3 —
+committed in `experiments/mc_dev_validation.py` before any run;
+deliberately no behavioural gate, so the control cannot be tuned on
+outcomes) must PASS on dev items with a primary checkpoint before any
+confirmatory cell. A null against an unmatched control is not evidence
+of specificity.
 
 ---
 
@@ -355,12 +390,20 @@ result is faithful beyond the measured in-band bound.
 # 9 · Conditions outstanding before this can bind
 
 1. **Cross-model capability cohorts** — needs every confirmatory
-   checkpoint's weights (§2).
+   checkpoint's weights (§2). *(VM9: predicate resolved as
+   `capable_generation`; scoring in progress via `g5_cohorts.py`.)*
 2. **Primary matched control implemented and dev-validated** (§5).
-3. **A 3.1-Think and a 3.1-Instruct lens must exist**; neither does yet.
-   Budget ~5 h per fit. No pilot 3.0 cell may impersonate a primary.
+   *(VM9: implemented as `dyn_energy_rank_matched_random`, CPU
+   conformance green; GPU dev-validation MC1–MC4 pending.)*
+3. **A 3.1-Think and a 3.1-Instruct lens must exist.** *(Correction: the
+   3.1-Instruct lens has existed since the pilot — two independent
+   registered fits, `a1-ownlens-regate-olmo31instruct-v1` and
+   `b1-fitB-independent-lens-olmo31instruct-v1`. Only the 3.1-Think lens
+   was missing; its fit is running this block.)* No pilot 3.0 cell may
+   impersonate a primary.
 4. **Corrected R2 on the remaining models** for HP4's cross-model form
-   (Think is done; Qwen and Instruct are queued for stage N7).
+   (Think is done; Qwen and Instruct run this block — centered R²
+   primary, raw share sensitivity, per the §0.4 estimand repair).
 5. **PI sign-off on this candidate.**
 
 Only then: one dedicated freeze commit that renames this file, runs the

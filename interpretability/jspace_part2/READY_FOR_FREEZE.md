@@ -35,6 +35,50 @@ run, and the partition has not been generated.**
 | D6 | run G5, no waiver | `g5-item-manifest-v3` |
 | D7 | one paper, methods sections written extractable | the H7 and Gemma results are self-contained |
 
+## VM9 update (2026-07-29) — design decisions and progress on the blockers
+
+**Correction to condition 3 below:** "Neither primary lens exists" was
+wrong when written. The `Olmo-3.1-32B-Instruct` lens exists as TWO
+independent registered fits (`a1-ownlens-regate-olmo31instruct-v1` draw A,
+`b1-fitB-independent-lens-olmo31instruct-v1` draw B, row-cos 0.993,
+selection Jaccard 0.806) and the pilot Instruct grid ran with them. The
+addendum's risk list §5(ii) had it right: only the **3.1-Think** lens was
+missing. It is being fitted this block (`a1_fit_olmo31think.py`, recipe
+identical to the Instruct draw-A fit).
+
+**Design decisions taken this block (PI delegated the open design calls):**
+
+1. **Primary matched control = `dyn_energy_rank_matched_random`**
+   (`matched_control.py`): per (item, layer, position) a random subspace
+   matched EXACTLY — by construction, not rejection sampling — to the J
+   arm's achieved effective rank and removed-energy fraction at that
+   site, orthogonal to the protected dictionary rows, deterministically
+   seeded. Rationale: the intervention is a span projection, and a
+   subspace's complete geometric relation to the current state h is
+   (rank, removed energy) — one principal angle. Matching both equates
+   the dose entirely and leaves direction content as the only difference,
+   which is exactly HP3's specificity claim. `dynJ_rotated` (dose
+   collapses to the random regime) and `dyn_spectrum_matched_nonJ` (span
+   projections are invariant to row spectrum) were rejected as primaries
+   and stay named secondary arms. Dev-validation gates MC1–MC4 committed
+   before any run (mechanical only — no behavioural gate, so the control
+   cannot be tuned on outcomes).
+2. **Capability-cohort predicate = `capable_generation`** (greedy decode
+   produces a frozen-alias answer, MAX_NEW=8) on each confirmatory model;
+   per-model difficulty windows are recorded but not part of the
+   predicate — window-based cohorts would re-select the bank per model,
+   which is the bias condition 1 exists to close (`g5_cohorts.py`).
+3. **Capacity estimand ("does the data need recentering?"): yes —
+   globally centered R² is the confirmatory capacity estimand**
+   (`centered_variance_explained_excess` in `occupancy_v2.py`), with the
+   raw energy share retained as a named sensitivity and occupancy
+   (crossing) unaffected. This is the v1→v2 estimand repair already
+   applied to Think (`r2-occupancy-think-v2`); Qwen and Instruct run the
+   same corrected estimator this block from the existing configs
+   (`r2_occupancy_qwen.yaml`, `r2_occupancy_instruct.yaml` — Instruct =
+   3.1-Instruct at the pilot revision `ac0587e4`, its own lens; Qwen at
+   `6a9e13bd` with the published n=1000 lens).
+
 ## Blocking conditions
 
 1. **Cross-model capability cohorts are incomplete.** Only the anchor
