@@ -35,6 +35,23 @@ every pilot cell that motivates the hypotheses used them:
    its family/item lists and hashes do not depend on the per-model
    capability scores, which are analysis-time cohort masks.
 
+**Second catch (same session): concatenation convention.** After the BOS
+rescore the stop rule fired again (`twohop:mars-color`: manifest −2.7674
+vs measured −0.5117, opposite direction). Cause: the gate scores
+answers by PIECEWISE concatenation of the un-rstripped prompt ids and
+alias ids, while the grid used rstrip+string-concatenation (the pilot's
+convention). For the 5/325 partition items whose prompts end in
+whitespace, the two tokenize differently (a double-space artifact in the
+gate convention). Resolution: the grid adopts the GATE convention
+(piecewise, un-rstripped) so gate and grid share one estimand; the
+double-space artifact affects baseline and ablated passes identically
+and cancels in the paired deltas that every endpoint uses. The affected
+items are identifiable from the prompt text and flagged for the
+mechanism audit. A separate defect fixed at the same time: the grid's
+task filter omitted the `hard_onehop` label, loading 9 of 164
+confirmatory items; no outcomes viewed (both halts occurred at the first
+checked item).
+
 **What this does not change.** Endpoints, conditions, thresholds,
 estimands, the partition, and the Holm family are all as frozen. No
 intervention outcome was seen under either unit system before this

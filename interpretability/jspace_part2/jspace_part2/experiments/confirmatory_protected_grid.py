@@ -120,7 +120,8 @@ def main():
     rd = {l: rd_one for l in band}
 
     items = load_confirmatory_items(cfg.get("partition_side", "confirmatory"))
-    items = [r for r in items if r["task"] in ("twohop", "onehop")]
+    items = [r for r in items if r["task"] in ("twohop", "onehop",
+                                               "hard_onehop")]
     items.sort(key=lambda r: r["item_id"])
     log(f"{slug}: {len(items)} confirmatory items, band {band}, k={k}, "
         f"protect={pk}")
@@ -132,27 +133,40 @@ def main():
     ab_j = ProtectedDynamicAblatorV2(model.layers, band)
 
     def score_arm(spec, prompt, aliases):
-        """Return per-alias lp dict + intervention summary for one arm."""
-        n_prompt = encode(prompt.rstrip()).shape[1]
+        """Return per-alias lp dict + intervention summary for one arm.
+
+        AMENDMENT 1 tokenization convention: piecewise concatenation of the
+        UN-rstripped prompt ids and the alias ids — exactly the frozen
+        gate's estimand (g5 scoring), so the baseline stop rule compares
+        like with like. The 5/325 trailing-whitespace items carry a
+        double-space tokenization artifact that cancels in paired deltas.
+        """
+        prompt_ids = encode(prompt)
+        n_prompt = prompt_ids.shape[1]
         per_alias, summary = {}, None
         clean_ranks = []
         for v in aliases:
-            text = prompt.rstrip() + v
+            aid = tok(v, add_special_tokens=False,
+                      return_tensors="pt").input_ids.to("cuda")
+            full_ids = torch.cat([prompt_ids, aid], dim=1)
+
+            def stub(_t, max_length=512, _f=full_ids):
+                return _f
             if spec is None:
                 ab_j.mode = None
-                ids = encode(text)
+                ids = full_ids
                 logits = hf(input_ids=ids, use_cache=False).logits[0]\
                     .float().cpu()
                 j_log = None
                 # clean first-token answer rank at the last prompt position
                 # (defines the HP3 protected-answer stratum: rank <= pk)
-                vid = tok(v, add_special_tokens=False).input_ids[0]
+                vid = int(aid[0, 0])
                 row_l = logits[n_prompt - 1]
                 clean_ranks.append(int((row_l > row_l[vid]).sum()) + 1)
             elif spec["kind"] == "dyn":
                 with ab_j:
                     ids, logits, _clean = protected_teacher_forced_v2(
-                        hf, encode, ab_j, spec["dicts"], text, k=k,
+                        hf, stub, ab_j, spec["dicts"], v, k=k,
                         protect=pk, protected=spec["protected"])
                 j_log = ab_j.log
                 ab_j.log = type(ab_j.log)()
@@ -161,7 +175,7 @@ def main():
                 from ..matched_control import teacher_forced_matched_pair_v2
                 ids, _clean, _abl_j, logits, jl, cl = \
                     teacher_forced_matched_pair_v2(
-                        hf, encode, model.layers, band, jd, text, k=k,
+                        hf, stub, model.layers, band, jd, v, k=k,
                         protect=pk,
                         seed_base=cfg["rand_seed"] + spec["item_index"])
                 j_log = cl
