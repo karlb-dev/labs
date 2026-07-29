@@ -35,10 +35,25 @@ class MockTok:
 
 def test_bos_asserted_and_prompt_rules():
     s = ScoringSession(MockTok(), DEFAULT_SPEC)
+    assert s.bos_prefixed
     ids = s.prompt_ids("the capital of France is")
     assert int(ids[0, 0]) == 0
     with pytest.raises(ValueError, match="trailing whitespace"):
         s.prompt_ids("the capital of France is ")
+
+
+def test_no_bos_tokenizer_scores_native():
+    """Qwen case: no bos_token_id exists, so jlens.from_hf(force_bos=True)
+    is a no-op and the assay-wide unit system is native tokenization —
+    the session must construct and must NOT prefix anything."""
+    tok = MockTok()
+    tok.bos_token_id = None
+    tok.add_bos_token = False
+    s = ScoringSession(tok, DEFAULT_SPEC)
+    assert not s.bos_prefixed
+    ids = s.prompt_ids("the capital of France is")
+    assert ids.shape[1] == 5 and int(ids[0, 0]) != 0
+    assert not tok.add_bos_token          # session did not mutate it
 
 
 def test_piecewise_concatenation():

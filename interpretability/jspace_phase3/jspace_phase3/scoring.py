@@ -57,18 +57,26 @@ class ScoringSession:
         self.tok = tok
         self.spec = spec
         self.device = device
+        self.bos_prefixed = False
         if spec.force_bos:
             if tok.bos_token_id is None:
-                raise ValueError("spec demands BOS units but the tokenizer "
-                                 "has no bos_token_id")
-            probe = tok("probe", return_tensors="pt").input_ids[0]
-            if int(probe[0]) != int(tok.bos_token_id):
-                # match the jlens.from_hf(force_bos=True) mutation
-                tok.add_bos_token = True
+                # jlens.from_hf(force_bos=True) is a no-op for a tokenizer
+                # without a BOS token (jlens/hf.py guards on bos_token_id):
+                # the assay-wide unit system for such models — Qwen among
+                # the primaries — is native tokenization, and that is what
+                # every Phase 2 scorer produced for them. Producers record
+                # `bos_prefixed` so the applied convention is auditable.
+                pass
+            else:
                 probe = tok("probe", return_tensors="pt").input_ids[0]
                 if int(probe[0]) != int(tok.bos_token_id):
-                    raise ValueError("could not establish BOS-prefixed "
-                                     "tokenization on this tokenizer")
+                    # match the jlens.from_hf(force_bos=True) mutation
+                    tok.add_bos_token = True
+                    probe = tok("probe", return_tensors="pt").input_ids[0]
+                    if int(probe[0]) != int(tok.bos_token_id):
+                        raise ValueError("could not establish BOS-prefixed "
+                                         "tokenization on this tokenizer")
+                self.bos_prefixed = True
 
     # ------------------------------------------------------------ encode
     def prompt_ids(self, prompt: str) -> torch.Tensor:

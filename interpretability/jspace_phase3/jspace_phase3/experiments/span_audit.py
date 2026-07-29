@@ -231,6 +231,7 @@ def main():  # noqa: C901
         "n_items": int(len(df)),
         "n_families": int(df.canonical_family.nunique()),
         "scoring_spec": "LEGACY_PHASE2 (un-rstripped prompts)",
+        "bos_prefixed": sess.bos_prefixed,
         "n_items_with_trailing_whitespace": int(sum(
             1 for it in items if it["prompt"] != it["prompt"].rstrip())),
         "delta_label_mean": round(float(dl.mean()), 4),
