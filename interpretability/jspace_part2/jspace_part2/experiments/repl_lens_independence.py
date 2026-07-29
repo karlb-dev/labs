@@ -32,6 +32,8 @@ def deltas(slug: str, suffix: str) -> pd.Series:
     pq = RUN / "metrics" / slug / f"n6_grid{suffix}" / \
         f"n6_per_item_{slug}.parquet"
     df = pd.read_parquet(pq)
+    df = df[df.task != "prose"]        # v2: real items only (v1 included
+    #                                    20 near-zero prose pairs)
     base = df[df.condition == "baseline"].set_index("item_id")["lp_logsumexp"]
     j = df[df.condition == "meanJ_protected"].set_index("item_id")[
         "lp_logsumexp"]
@@ -62,7 +64,7 @@ def main():
         print(slug, json.dumps(out[slug]))
     p = RUN / "metrics" / "cross_model" / "repl_lens_independence.json"
     prov = Provenance(
-        evidence_id="n6-repl-lens-independence-v1", tier="confirmatory",
+        evidence_id="n6-repl-lens-independence-v2", tier="confirmatory",
         command=("python -m jspace_part2.experiments.repl_lens_independence "
                  f"--slugs {','.join(slugs)}"),
         inputs={f"{s}_{sfx}": sha256_file(
@@ -71,7 +73,7 @@ def main():
         model={"note": "analysis over banked replication parquets"}, seed=0)
     write_result_v2(out, p, prov)
     registry_append({
-        "evidence_id": "n6-repl-lens-independence-v1", "tier": "confirmatory",
+        "evidence_id": "n6-repl-lens-independence-v2", "tier": "confirmatory",
         "what": ("HP3 independent-lens clause on the replication partition: "
                  + "; ".join(
                      f"{s} r={out[s]['pearson_delta']} tail-Jaccard "
