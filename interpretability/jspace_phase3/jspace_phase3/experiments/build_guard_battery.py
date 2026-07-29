@@ -1,6 +1,6 @@
 # Workstream C guard battery builder (nextsteps §7.2) — CPU, deterministic.
 #
-# Assembles guard_battery_v1.jsonl from PINNED LOCAL dataset snapshots
+# Assembles guard_battery_v2.jsonl from PINNED LOCAL dataset snapshots
 # (offline; every item records dataset, snapshot revision, file, row
 # index, and char span, plus its own text sha256). Held-out choices:
 # prose comes from the wikitext-103 TEST split — the campaign lenses
@@ -38,7 +38,10 @@ import pandas as pd
 
 from ..provenance3 import Provenance3, register, require_clean_tree, write_result3
 
-EVIDENCE_ID = "p3-guard-battery-v1"
+EVIDENCE_ID = "p3-guard-battery-v2"
+SUPERSEDES = "p3-guard-battery-v1"  # v1 under-filled factual_enc (3/12,
+# single-paragraph lead filter too strict) and technical_docs (5/12,
+# stride 5 over a 100-row language file)
 TIER = "phase3-development"
 HUB = Path("/content/drive/MyDrive/hf_cache/hub")
 HUB_LOCAL = Path("/content/hf_local")
@@ -112,7 +115,12 @@ def build_items() -> tuple[list[dict], dict]:
     got = idx = 0
     while got < N_PER_DOMAIN and idx < len(wp):
         row = wp.iloc[idx]
-        lead = row.text.split("\n\n")[0]
+        paras = row.text.split("\n\n")
+        lead = ""
+        for para in paras:
+            lead = f"{lead}\n\n{para}" if lead else para
+            if len(lead) >= 900:
+                break
         if len(lead) >= 900 and not lead.startswith(("List of", "Index of")):
             add("factual_enc", got, cut(lead, 1200),
                 {"dataset": "wikimedia/wikipedia", "config": "20231101.en",
@@ -145,7 +153,7 @@ def build_items() -> tuple[list[dict], dict]:
 
     # --- the-stack-smol-xs: code / sql / technical markdown
     for domain, lang, stride in (("code", "python", 7), ("sql", "sql", 5),
-                                 ("technical_docs", "markdown", 5)):
+                                 ("technical_docs", "markdown", 1)):
         rows = [json.loads(l) for l in
                 (STACK_XS / f"data/{lang}/data.json").read_text().splitlines()]
         got, idx = 0, 0
@@ -155,7 +163,7 @@ def build_items() -> tuple[list[dict], dict]:
             if domain == "technical_docs":
                 # documentation prose, not link farms or code dumps
                 ok = ok and content.count("```") <= 2 \
-                    and content.count("](") <= 8 and ". " in content
+                    and content.count("](") <= 12 and ". " in content
             if ok:
                 add(domain, got, cut(content, 1200),
                     {"dataset": "bigcode/the-stack-smol-xs", "lang": lang,
@@ -195,17 +203,17 @@ def main():
     for it in items:
         by_dom[it["domain"]] = by_dom.get(it["domain"], 0) + 1
 
-    out = REPO_DATA / "guard_battery_v1.jsonl"
+    out = REPO_DATA / "guard_battery_v2.jsonl"
     out.write_text("".join(json.dumps(it) + "\n" for it in items))
     sha = hashlib.sha256(out.read_bytes()).hexdigest()
 
     payload = {"n_items": len(items), "by_domain": by_dom, "notes": notes,
                "battery_sha256": sha, "path": str(out)}
     cmd = "python -m jspace_phase3.experiments.build_guard_battery"
-    meta = REPO_DATA / "guard_battery_v1.meta.json"
+    meta = REPO_DATA / "guard_battery_v2.meta.json"
     write_result3(payload, meta, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
-    register(EVIDENCE_ID, tier=TIER, command=cmd,
+    register(EVIDENCE_ID, tier=TIER, command=cmd, supersedes=SUPERSEDES,
              what=(f"Workstream C guard battery v1: {len(items)} items, "
                    f"{len(by_dom)} domains ({', '.join(sorted(by_dom))}), "
                    f"source-pinned to local snapshots; wikitext TEST split "
