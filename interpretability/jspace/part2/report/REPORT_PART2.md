@@ -77,9 +77,21 @@ baseline stop rule fired twice at item 1 with zero outcome exposure and
 caught a real two-unit-system inconsistency). Matched-control dev gate
 v1→v2 (relative bound was below the float32 measurement floor).
 
+**REPLICATION PARTITION (same day)**: HP3 **replicates** on the held-out
+32 families (Qwen tail-rate +0.297 [+0.207, +0.382] vs confirmatory
++0.279; `n6-replication-analysis-v2`), and the Instruct independent-lens
+leg reproduces the per-item deltas at r = 0.990 with tail Jaccard 0.885.
+HP1 is **inconclusive** on the replication side (contrast +0.104
+[−1.68, +1.89], all-items fallback population — the replication two-hop
+leg is 9 items and absent from the intersection cohort): not a
+contradiction, but the thin-two-hop limitation made concrete. A second
+independent Think lens (corpus draw B) is being fitted to complete the
+independent-lens clause on the think-trained primary.
+
 Figures: `p2f15` (capacity), `p2f16` (cohorts), `p2f17` (primary
-results). Next block: the replication partition; the capacity-vs-shape
-moderator analysis; the Instruct prose-cost follow-up.
+results). Next block: EXPAND THE TWO-HOP BANK (the sharpest limitation),
+then the N8 fresh-VM reproduction, the capacity-vs-shape moderator
+analysis, and the Instruct prose-cost follow-up.
 
 ---
 
