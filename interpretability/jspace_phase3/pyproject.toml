@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jspace_phase3"
+version = "0.1.0"
+description = "J-space Phase 3: mechanism, generalization, and paper hardening (nextsteps_3_1)"
+requires-python = ">=3.10"
+dependencies = [
+  "torch", "numpy", "pandas", "pyarrow", "pyyaml", "matplotlib",
+  "transformers", "huggingface_hub", "scipy",
+]
+
+[project.scripts]
+jspace-phase3 = "jspace_phase3.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["jspace_phase3*"]
