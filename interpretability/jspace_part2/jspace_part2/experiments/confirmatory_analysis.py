@@ -176,8 +176,19 @@ def main():
     pair = core[(core.model.isin(["olmo31-think", "olmo31-instruct"]))
                 & (core.condition == "meanJ_protected")]
     pair_int = pair[pair.apply(in_intersection, axis=1)]
-    use = pair_int if len(pair_int) >= 30 else pair
-    obs_hp1 = hp1_contrast(use)
+
+    def both_tasks_nonempty(d):
+        return all(len(d[(d.model == m) & (d.task == t)]) > 0
+                   for m in ("olmo31-think", "olmo31-instruct")
+                   for t in ("twohop", "onehop"))
+    if both_tasks_nonempty(pair_int) and len(pair_int) >= 30:
+        use, pop = pair_int, "cross_model_intersection"
+    elif both_tasks_nonempty(pair):
+        use, pop = pair, ("ALL partition items — intersection cohort has an "
+                          "empty task cell; fallback disclosed")
+    else:
+        use, pop = None, "NOT_EVALUABLE (a task cell is empty even on all items)"
+    obs_hp1 = hp1_contrast(use) if use is not None else float("nan")
 
     def hp1_boot_stat(d):
         return hp1_contrast(d)
@@ -186,23 +197,27 @@ def main():
     # shared across models (same items), so resample family labels once
     # per task stratum and apply to both models — preserves the pairing.
     rng = np.random.default_rng(SEED)
-    fams_by_task = {t: sorted(use[use.task == t].family.unique())
+    _u = use if use is not None else pair.iloc[:0]
+    fams_by_task = {t: sorted(_u[_u.task == t].family.unique())
                     for t in ("twohop", "onehop")}
-    grouped = {(t, f): g for (t, f), g in use.groupby(["task", "family"])}
-    hp1_boots = []
-    for _ in range(N_BOOT):
-        parts = []
-        for t, fams in fams_by_task.items():
-            for f in rng.choice(fams, size=len(fams), replace=True):
-                parts.append(grouped[(t, f)])
-        hp1_boots.append(hp1_contrast(pd.concat(parts)))
-    hp1_boots = np.array(hp1_boots)
-    p_hp1 = p_two_sided(hp1_boots, obs_hp1)
+    grouped = {(t, f): g for (t, f), g in _u.groupby(["task", "family"])}
+    if use is not None:
+        hp1_boots = []
+        for _ in range(N_BOOT):
+            parts = []
+            for t, fams in fams_by_task.items():
+                for f in rng.choice(fams, size=len(fams), replace=True):
+                    parts.append(grouped[(t, f)])
+            hp1_boots.append(hp1_contrast(pd.concat(parts)))
+        hp1_boots = np.array(hp1_boots)
+        p_hp1 = p_two_sided(hp1_boots, obs_hp1)
+    else:
+        hp1_boots, p_hp1 = np.array([float("nan")]), None
 
     mixed = None
     try:
         import statsmodels.formula.api as smf
-        d = use.copy()
+        d = (use if use is not None else pair).copy()
         d["is_think"] = (d.model == "olmo31-think").astype(int)
         d["is_twohop"] = (d.task == "twohop").astype(int)
         mm = smf.mixedlm("delta ~ is_think * is_twohop", d,
@@ -215,14 +230,14 @@ def main():
     except Exception as e:
         mixed = {"error": str(e)[:200]}
     results["P_HP1"] = {
-        "population": ("cross_model_intersection"
-                       if use is pair_int else
-                       "ALL partition items (intersection cohort <30 — "
-                       "fallback, disclosed)"),
-        "observed_contrast_nats": round(obs_hp1, 4),
-        "ci95": ci(hp1_boots), "p_bootstrap": p_hp1,
+        "population": pop,
+        "observed_contrast_nats": (round(obs_hp1, 4)
+                                   if obs_hp1 == obs_hp1 else None),
+        "ci95": (ci(hp1_boots) if use is not None else None),
+        "p_bootstrap": p_hp1,
         "mixed_model": mixed,
-        "n_items": int(len(use)), "n_families": int(use.family.nunique())}
+        "n_items": (int(len(use)) if use is not None else 0),
+        "n_families": (int(use.family.nunique()) if use is not None else 0)}
 
     # ---------------- P-HP3: Qwen paired tail-rate test ------------------
     def tail_frame(slug, stratified=True):
@@ -265,7 +280,9 @@ def main():
     results["P_HP3_qwen"] = hp3.get("qwen36-27b")
 
     # ---------------- Holm over the two primary tests --------------------
-    ps = {"P_HP1": results["P_HP1"]["p_bootstrap"]}
+    ps = {}
+    if results["P_HP1"]["p_bootstrap"] is not None:
+        ps["P_HP1"] = results["P_HP1"]["p_bootstrap"]
     if results.get("P_HP3_qwen") and "p_one_sided" in results["P_HP3_qwen"]:
         ps["P_HP3"] = results["P_HP3_qwen"]["p_one_sided"]
     order = sorted(ps, key=lambda k_: ps[k_])
