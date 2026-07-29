@@ -1,0 +1,12 @@
+# R2 v2 on the PRIMARY 3.1-Think checkpoint with its own lens (HP4
+# cross-model form should include the primary pair, not only the anchor).
+evidence_id: r2-occupancy-olmo31think-v1
+tier: pilot
+model_path: /content/models/olmo31-think
+lens_path: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/lens/olmo31think_lens.pt
+prompt_set: /content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/descriptive_prompts.jsonl
+out_dir: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/olmo31-think/r2_occupancy
+layers: [24, 32, 40]
+k_max: 50
+n_prompts: 60
+rand_seeds: [11, 12, 13]
