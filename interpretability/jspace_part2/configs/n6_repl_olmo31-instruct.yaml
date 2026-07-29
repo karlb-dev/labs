@@ -1,0 +1,13 @@
+# N6 confirmatory protected-dynamic grid: olmo31-instruct
+evidence_id: n6-replication-grid-olmo31-instruct-v1
+tier: confirmatory
+slug: olmo31-instruct
+model_path: /content/hf_local/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae
+lens_path: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/lens/olmo31instruct_lens.pt
+prose_corpus: /content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/fitting_corpus.jsonl
+out_dir: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/olmo31-instruct/n6_grid_repl
+partition_side: replication
+band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+k: 10
+protect_top_k: 10
+rand_seed: 4242
