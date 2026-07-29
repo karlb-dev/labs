@@ -326,6 +326,14 @@ it", and because item-weighting lets `country_capital`'s 11 items
 dominate a 25-family set. Item-weighted is reported as sensitivity. Both
 are already computed side by side in `n2-corrected-family-pilot-v1`.
 
+**6.3b Alias aggregation (decided pre-freeze, VM9).** The primary
+answer-sequence logprob is **logsumexp over the frozen accepted-alias
+set** — total probability assigned to the answer concept, which cannot
+let each arm pick a different winning surface form (review §3.3 option
+2). Canonical-answer lp and max-over-aliases lp are prespecified
+sensitivities; per-alias rows are stored in the confirmatory parquets so
+any aggregation is recomputable without a rerun.
+
 **6.4 Tail inference.** Paired within item:
 `hit_J = 1[delta_J < -1.0]`, `hit_C = 1[delta_control < -1.0]`,
 statistic `mean(hit_J - hit_C)`, family-clustered bootstrap (4000 draws,
