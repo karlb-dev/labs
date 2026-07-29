@@ -207,15 +207,116 @@ stated until it lands.}
 \subsection{Design consequence: the confirmatory endpoint must change}
 
 The G6 power simulation, calibrated on the pilot parquets, finds that
-protected paired deltas are a zero-mode plus heavy-tail mixture
-(within-family $\sigma$ 1.2--1.5 nats, ICC $\approx0.40$). The drafted
-0.5-nat \emph{mean} primaries reach only 24--42\% power even at $n{=}180$
-across 60 families, and no affordable $n$ reaches 90\%; equivalence
-testing at the same margin needs $n\approx300$. The \emph{tail-rate}
-endpoint --- per-item $>$1-nat protected deletion, J versus matched
-random, paired and family-clustered --- is well powered at a 10\,pp
-margin. The preregistration records three options and awaits the
-principal investigator's choice; nothing downstream freezes until then.
+protected paired deltas are a zero-mode plus heavy-tail mixture. The
+drafted 0.5-nat \emph{mean} primaries are structurally underpowered. This
+subsection's original ICC figure ($\approx0.40$, apparently uniform across
+models) is \textbf{superseded} --- see \S\ref{sec:vm8}.
+
+\section{VM8 --- the repair block that changed the design}\label{sec:vm8}
+
+A second forensic review was accepted and executed. Four repairs moved
+numbers that appear earlier in this handout; where they disagree, this
+section wins.
+
+\subsection{The clustering unit was wrong, and it was load-bearing}
+
+Every family-clustered interval, ICC and the power simulation above used
+\code{name.split("-")[0]} as the statistical family. That is a string
+accident: \code{atomic-80-state} and \code{ex-element-state-80-8} are the
+same template but landed in different families, sixteen unrelated items
+shared the family \code{ex} because their names begin with those letters,
+and each of the ten one-hop ``capital of X'' items was its own family.
+Under a hand-audited map (120 items, rule \emph{(second-hop relation,
+answer type)}) the pilot's 60 two-hop items are \textbf{25 canonical
+families, not 38 raw labels}, one of which holds 11 of the 60.
+
+Point estimates are unchanged --- clustering touches uncertainty, not
+means. What moved is the apparent homogeneity: audited ICC is 0.66
+(base), 0.56 (Think), 0.17 (Instruct), 0.75 (Qwen), against a uniform
+0.37--0.42 before. \textbf{One conclusion flips}: Instruct's one-hop
+interval moves from $-0.45\,[-1.03,+0.06]$ to $-0.45\,[-1.29,-0.01]$, so
+the ``weak forward dissociation'' rung of the four-model ladder is
+withdrawn --- it reads as equal-depth damage. It is knife-edge and
+reverses again under family weighting, which is why the preregistration
+candidate fixes the weighting estimand in advance.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\linewidth]{figures/p2f10_family_correction.png}
+\end{figure}
+
+\subsection{At 60 families, only two cells can carry a binary test}
+
+Inverting the power question --- given $m$ families, what is the smallest
+detectable effect at 90\%? --- gives, at the 60 canonical families the
+bank now holds: OLMo Think needs a 0.30 rate difference to see its 0.133
+pilot gap ($2.3\times$ short), Instruct 0.30 against 0.100
+($3.0\times$ short). Only \textbf{Qwen on the rate endpoint} and
+\textbf{Instruct on the mean endpoint} are testable, and the two
+endpoints have \emph{opposite} feasibility profiles across models. The
+candidate therefore states most hypotheses as estimation with intervals
+and declares a test only where power exists.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\linewidth]{figures/p2f11_feasibility.png}
+\end{figure}
+
+\subsection{The averaged Jacobian's in-band gap is a ceiling}
+
+For a \emph{uniform} perturbation the per-position and corpus-averaged
+estimators are algebraically identical, $\sum_s J_s d = P (\overline{J}) d$,
+so the earlier faithfulness test could not see position-averaging loss at
+all. Perturbing one position at a time --- what the dynamic ablation
+does --- separates them. Position-conditioning does \textbf{not} improve
+response direction at any band layer ($-0.05$, $-0.04$, $-0.02$), though
+it roughly halves the magnitude error. Cell by cell, cosine tracks the
+ground truth's \emph{own} local linearity at within-layer Pearson
+$r=0.76$--$0.90$ ($n=144$): the estimator is not the binding constraint.
+Along the lens's own top rows --- where the ablation acts --- in-band
+cosine is \textbf{0.58} versus \textbf{0.33} for random probes, so the
+often-quoted ``$\sim$0.2 in band'' overstates the problem for the actual
+intervention. The context-J methods arm fails its committed dev gate and
+is not admitted.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\linewidth]{figures/p2f12_h7_ceiling.png}
+\end{figure}
+
+\subsection{Capacity: mislabelled, corrected, and still an order of magnitude low}
+
+The v1 estimator computed a centered activation and never used it; both
+shares were raw energy while the prose called them centered excess
+variance. Occupancy is unchanged (median 2 --- it never depended on the
+share definition). Centered $R^2$ excess is 0.49/1.02/\textbf{1.27\%}
+against raw 0.03/0.54/0.80\%. The headline survives in slightly stronger
+form.
+
+\begin{figure}[h]\centering
+\includegraphics[width=.92\linewidth]{figures/p2f13_capacity_corrected.png}
+\end{figure}
+
+\subsection{G5 passes, and catches the author}
+
+The task gate was run rather than waived. 1052 items, 15 excluded for
+answer-in-prompt leakage, zero bridge leakage, every two-hop item
+carrying its swap counterfactual, and \textbf{64 canonical families with
+$\geq$3 capable items} against a target of 60. The duplicate-fact audit
+caught nine newly authored ``families'' that re-expressed existing
+relations, four of them sharing literal facts --- which would have let one
+fact land in both the confirmatory and the replication partition.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\linewidth]{figures/p2f14_bank_readiness.png}
+\end{figure}
+
+\subsection{Status}
+
+The preregistration \textsc{candidate} is written and the campaign is
+\textbf{stopped at the freeze boundary} awaiting principal-investigator
+sign-off. Five of eight gates pass; three conditions block, and all three
+need model weights absent from this machine: cross-model capability
+cohorts, a geometry-matched primary control, and lenses for both primary
+checkpoints. No confirmatory cell has run and the item partition has not
+been generated.
 
 \section*{Reproducibility}
 

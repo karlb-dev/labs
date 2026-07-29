@@ -1,7 +1,41 @@
 # J-space Part 2 — living report (ADDENDUM-GOVERNED campaign)
 
-**Status 2026-07-28 (VM7): the assay-repair era is COMPLETE and the
-campaign is at the P0 preregistration boundary.** The forensic review
+> ### ⚠ READ THIS BEFORE ANY SECTION BELOW — VM8 (2026-07-29)
+>
+> A second forensic review (`../../jspace_part2/reviews/jspace_lab_nextsteps_2_2.md`,
+> with the PI's decisions in the addendum beside it) was accepted and
+> executed as stages N0–N5. **Four repairs changed numbers that appear
+> throughout the older sections of this file.** Where an older section
+> disagrees with the VM8 section immediately below, the VM8 section wins.
+> The older text is retained deliberately — the campaign supersedes, it
+> does not overwrite.
+>
+> 1. **The clustering unit was invalid.** Every family-clustered interval,
+>    ICC and the power simulation below the VM8 section used
+>    `name.split("-")[0]`. Point estimates stand; **uncertainties and the
+>    design do not**.
+> 2. **The Instruct "WEAK-FORWARD" rung is withdrawn.** Corrected, its
+>    one-hop interval no longer straddles zero, so it reads as
+>    equal-depth damage. The four-model ladder's *shape* claim is weaker
+>    than the older sections say.
+> 3. **H7 is resolved and mostly negative.** Context-conditioning does not
+>    rescue the Jacobian; the in-band gap is a linearity ceiling. Any
+>    older text calling the ~50% direction accuracy "a fixable estimation
+>    failure" is superseded.
+> 4. **The capacity number was mislabelled** (raw energy reported as
+>    centered variance) and is now larger, though still an order of
+>    magnitude below the reported Claude band.
+
+**Status 2026-07-29 (VM8): the repair era is complete, the
+preregistration CANDIDATE is written, and the campaign is STOPPED at the
+freeze boundary awaiting principal-investigator sign-off.** See
+`../../jspace_part2/READY_FOR_FREEZE.md` for the gate ledger: 5 of 8
+gates pass, 3 conditions block, and all three need model weights that
+were not on this VM. **No confirmatory cell has run. The item partition
+has not been generated.**
+
+**Status 2026-07-28 (VM7, superseded above): the assay-repair era is
+COMPLETE and the campaign is at the P0 preregistration boundary.** The forensic review
 (`jspace_part2_plan1_addendum.md`) was adopted in full: Part 1 is
 reclassified as the exploratory campaign (claim corrections in
 `REPORT_v2_ERRATA.md` beside REPORT_v2.md), and no cross-model
@@ -28,6 +62,128 @@ the base model's one-hop effect is an EASY-FACT effect (hard one-hop is
 null, +0.14), so the confirmatory hypotheses are stated in
 fact-accessibility terms, not task depth.
 
+## VM8 — the repair block that changed the design (2026-07-29) — tier: PILOT
+
+Four results, each superseding something above.
+
+### 1 · The clustering unit was wrong, and it was load-bearing
+`n2-corrected-family-pilot-v1` · figure `p2f10_family_correction.png`
+
+`battery.py` derived the statistical family as `name.split("-")[0]`. That
+is a string accident: `atomic-80-state` and `ex-element-state-80-8` are
+the same template but landed in families `atomic` and `ex`, sixteen
+unrelated items shared the family `ex` purely because their names start
+with those letters, and each of the ten one-hop "capital of X" items was
+its own family. Under the hand-audited map
+(`jspace_part2/data/probe_swap_family_map.json`, 120 items, rule
+*(second-hop relation, answer type)*) the pilot's 60 two-hop items are
+**25 canonical families, not 38 raw labels**, and `country_capital` alone
+holds 11 of them.
+
+Point estimates are unchanged — clustering touches uncertainty, not
+means, which is the sanity check this repair had to pass. What moved:
+
+| | base | Think | Instruct | Qwen |
+|---|---|---|---|---|
+| ICC, prefix field | 0.42 | 0.37 | 0.42 | 0.40 |
+| ICC, **audited** | **0.66** | **0.56** | **0.17** | **0.75** |
+
+The apparent uniformity was an artifact. G6's whole power calculation was
+calibrated on a homogeneity that does not exist.
+
+**One conclusion flips.** Instruct one-hop moves from
+−0.45 [−1.03, **+0.06**] to −0.45 [−1.29, **−0.01**]. The VM6 ladder
+called Instruct "WEAK-FORWARD" *because* its one-hop interval straddled
+zero; corrected, it marginally does not, so it reads as equal-depth
+damage like Think. This is knife-edge and it reverses again under
+family-weighting — which is exactly why the candidate fixes the weighting
+estimand in advance rather than after seeing the answer.
+
+### 2 · The binary primary is not affordable on the OLMo pair
+`g6-power-sim-v3`, `g6-tailrate-power-by-model-v1`, `g6-mde-v1` ·
+figure `p2f11_feasibility.png`
+
+Inverting the power question — given *m* families, what is the smallest
+detectable effect at 90%? — at the 60 canonical families the bank now
+holds:
+
+| model | MDE rate @90% | pilot gap | MDE nats @90% | pilot mean |
+|---|---|---|---|---|
+| OLMo Think | 0.30 | 0.133 | 1.00 | −0.52 |
+| OLMo Instruct | 0.30 | 0.100 | 0.75 | **−0.80** |
+| OLMo base | 0.20 | 0.067 | 0.75 | −0.14 |
+| Qwen | **0.25** | **0.267** | 1.50 | −0.91 |
+
+Only **two** cells can carry a binary test — Qwen on the rate endpoint,
+Instruct on the mean endpoint — and the two endpoints have *opposite*
+feasibility profiles across models. HP3's Think tail effect would need
+>150 families to test. The candidate therefore states most hypotheses as
+estimation with intervals and declares a test only where power exists.
+That is not a hedge; it is what the measurement supports.
+
+### 3 · D2 resolved: the in-band gap is a ceiling, not an estimator failure
+`h7-context-j-olmo3-think-v2`, `h7-linearity-ceiling-olmo3-think-v1`,
+`h7-synthesis-olmo3-think-v1` · figure `p2f12_h7_ceiling.png`
+
+The design point that made this measurable: for a **uniform**
+perturbation the per-position and corpus-averaged estimators are
+algebraically identical, `sum_s J_s @ d == P·(mean_s J_s) @ d`. The
+earlier faithfulness test used a uniform probe and therefore *could not
+see* position-averaging loss at all. Perturbing one position at a time —
+what the dynamic ablation actually does — separates them.
+
+- **Position-conditioning does not improve direction** at any band layer
+  (−0.05, −0.04, −0.02; +0.02 at the late control). It does roughly halve
+  the magnitude error (norm ratio 0.19 → 0.39 at L24).
+- **Cosine tracks the ground truth's own local linearity**, within layer,
+  at Pearson r **0.76–0.90** (n=144 cells). The estimator is not the
+  binding constraint.
+- **Where the ablation actually acts**, the lens is much better than the
+  usual quote suggests: in-band cosine **0.58** along selected J rows vs
+  **0.33** for random probes.
+
+So H7's "averaging discards the accuracy" is **false for direction** and
+partly true for scale, and the `contextJ` methods arm **fails its
+committed dev gate and is not admitted**. This revises VM7's reading: the
+uniform probe found OLMo linear across the band (1.98–2.02) and concluded
+the gap was fixable estimation error. Both probes are correct — a uniform
+shift moves every key together and partly cancels inside the attention
+softmax, a single-position shift does not — and under the probe that
+matches a position-wise intervention the band is measurably less linear
+at shallow depth (1.65 at L24). **Causal claims about position-wise
+interventions must cite the single-position numbers.**
+
+### 4 · The capacity estimand was mislabelled, and is larger
+`r2-occupancy-think-v2` · figure `p2f13_capacity_corrected.png`
+
+v1 computed a centered activation and never used it; both shares were
+raw-energy while the prose called them the paper's centered excess
+variance. Occupancy is **unchanged** (median 2 at L24/32/40 — it never
+depended on the share definition). Centered excess: 0.49% / 1.02% /
+**1.27% [1.18, 1.34]** versus raw 0.03% / 0.54% / 0.80%. The capacity
+headline survives in slightly stronger form — still an order of magnitude
+below the 6–10% reported for Claude.
+
+### Also banked this block
+- **Registry v2** (event-sourced). Its validation caught two supersede
+  links pointing at evidence ids that were never created, so
+  `local-linearity-gemma4-31b-v1` and
+  `linearization-faithfulness-gemma4-31b-v1` — both Gemma analyses whose
+  conclusions had been *reversed* — were still reading as LIVE evidence.
+- **Reproduction that reproduces** (`repro-contract-v2-acceptance-v1`):
+  two items rebuilt end-to-end from isolated worktrees at their recorded
+  commits.
+- **`protected_dynamic_v2`**: the v1 generation path broadcast one
+  final-position protection set across every prompt position, and one
+  starved position shrank the dose for the whole sequence. Both repaired,
+  with a real-transformer golden.
+- **G5 PASS** (`g5-item-manifest-v3`) · figure `p2f14_bank_readiness.png`:
+  1052 items, 64 families with ≥3 capable items, 15 items excluded for
+  answer-in-prompt leakage, zero bridge leakage. The gate also caught
+  **my own authoring error** — nine v4/v5 "new" families were
+  re-expressions of existing relations, four sharing literal facts, which
+  would have let one fact land in both partitions.
+
 ## Campaign question (revised)
 
 Does the paper's workspace signature exist in open models when measured
@@ -46,17 +202,25 @@ H7 mean-J mismatch, H8 sparse-frame geometry (see part2 README).
 | lens | Think-lens (transfer PASS) | own 120p (part 1) | own 120p A + independent B | Neuronpedia 1000p | 120p fit queued (band from deep-band sweep) |
 | sanity probes @20 | 17/21 | 17/21 | 17/21 | pass | readout blocked mid-band |
 | multihop J pass@1 | 0.283 (+0.083) | 0.283 | 0.217 (own lens = transfer) | 0.350 | — |
-| occupancy (paper estimator) | — | **2** (excess ≤0.80%) | **2** (excess ≤0.87%) | **3–4** (1.0–2.2%) | — |
-| protected dyn-J twohop | −0.14 [straddles 0] | −0.52 [excl 0] | **−0.80** [−1.25,−0.36] | **−0.91** [−1.49,−0.60] | — |
-| protected dyn-J onehop | **−0.81** [−1.29,−0.40] | −0.59 [excl 0] | −0.45 [straddles 0] | −0.06 [straddles 0] | — |
-| → dissociation shape | **REVERSE** | EQUAL-DEPTH | WEAK-FORWARD | **CLEAN-FORWARD** (paper's) | — |
+| occupancy (paper estimator) | — | **2** (centered excess 0.49–1.27%) | **2** (raw ≤0.87%, recompute queued) | **3–4** (raw 1.0–2.2%) | — |
+| protected dyn-J twohop † | −0.14 [−0.45,+0.08] | −0.52 [−1.09,−0.08] | **−0.80** [−1.62,−0.18] | **−0.91** [−1.35,−0.59] | — |
+| protected dyn-J onehop † | **−0.81** [−1.40,−0.38] | −0.59 [−1.23,−0.17] | −0.45 [−1.29,−0.01] | −0.06 [−0.43,+0.48] | — |
+| → dissociation shape † | **REVERSE** | EQUAL-DEPTH | EQUAL-DEPTH *(was WEAK-FORWARD; the one-hop interval no longer straddles zero)* | **CLEAN-FORWARD** (paper's) | — |
 | hard-onehop ceiling check | **+0.14 NULL** (rand −0.01) | (dev set source) | — | — | — |
 | frozen-J / frozen-logit | — | −2.89 / −1.54 | — | −2.42 | — |
 | temp-0.7 replicate | — | structure preserved | — | — | — |
 
+† Intervals recomputed on the **audited canonical families**
+(`n2-corrected-family-pilot-v1`, 25 clusters for the 60 two-hop items);
+item-weighted, with family-weighted reported alongside in the evidence.
+The pre-repair intervals in older sections clustered on the defective
+prefix field and should not be quoted.
+
 Reference band (paper, Claude): occupancy 10–25, excess 6–10% — every
-open model measured sits 3–10× under it, with fit size ruled out
-(n=1000 Qwen lens agrees with n=120 OLMo recipe).
+open model measured sits an order of magnitude under it, with fit size
+ruled out (n=1000 Qwen lens agrees with n=120 OLMo recipe). OLMo Think's
+excess is the corrected **centered R²**; the other cells still carry the
+v1 raw-energy quantity and are queued for recomputation (stage N7).
 
 ## A0 — does the J-dictionary survive post-training? (2026-07-27) — tier: EXPLORATORY (transfer-geometry experiment)
 
