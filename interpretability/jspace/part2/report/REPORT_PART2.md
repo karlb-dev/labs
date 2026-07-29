@@ -94,7 +94,80 @@ exactly — Think r = 0.988 (tail Jaccard 0.878), Instruct r = 0.990
 lens fit.
 
 Figures: `p2f15` (capacity), `p2f16` (cohorts), `p2f17` (primary
-results). Next block: EXPAND THE TWO-HOP BANK (the sharpest limitation),
+results).
+
+### THE CAMPAIGN'S QUESTIONS — ANSWERED AND OPEN (end of VM9)
+
+**ANSWERED (confirmatory tier, evidence id in parentheses):**
+
+1. *Does the paper's causal workspace signature exist on any open
+   model?* **YES — Qwen3.6-27B**: forward dissociation (two-hop −1.62
+   [−1.74,−1.51] vs one-hop −0.39), J-specific beyond exact geometry
+   matching (tail +0.279, p_holm 5e-4), replicated on held-out families
+   (+0.297) (`n6-confirmatory-analysis-v2`,
+   `n6-replication-analysis-v2`).
+2. *Is the J-space content causally load-bearing beyond its geometry?*
+   **YES on all three models** — the rank+energy-matched random control
+   reads ≈0 everywhere while the J arm removes nats; matched-control
+   tail gaps CI-clean on Think (+0.42), Instruct (+0.49), Qwen (+0.28).
+3. *Does post-training change the signature?* **YES** — HP1 interaction
+   contrast −0.504 [−0.720,−0.295], p_holm 5e-4. The OLMo 3.1 pair is
+   one-hop-dominant (reverse of the paper's shape); the signature is a
+   post-training-dependent property, not a universal LLM constant.
+4. *Is the protected tail a lens-fit artifact?* **NO** — disjoint-corpus
+   lenses reproduce per-item deltas at r = 0.988/0.990, tail Jaccard
+   ~0.88, on both primaries (`n6-repl-lens-independence-v2`).
+5. *Was the Part-1 "lobotomy" a workspace lesion?* **NO** (repair era,
+   upheld throughout): it was output-stream deletion; protection removes
+   most of it; what survives protection is the indirect J-content tail.
+6. *What predicts one-hop damage?* **Accessibility, not hop count**
+   (HP2, estimate on all three models: hard −1.8…−2.7 vs easy
+   −0.3…−0.9; r ≈ +0.4).
+7. *Open-model capacity vs Claude?* **Split** — OLMo pair ~1.2%
+   centered excess (occ 2, pair indistinguishable, replicating the
+   anchor); **Qwen 5.0–6.1% (occ 3–4), at the Claude band's lower
+   edge**. The pilot's "order of magnitude below" is withdrawn for Qwen
+   (`r2-occupancy-*-v2`).
+8. *Does Gemma-4 falsify or support?* **Neither** — it violates the
+   linear-transport premise the instrument is built on; a
+   boundary-of-method datum, not a null (unchanged from the pilot).
+9. *Does context-conditioning fix the mean-J faithfulness gap?* **NO**
+   (H7 resolved pre-freeze): the gap is a linearity ceiling; the ~0.58
+   in-band direction cosine bounds every J-direction causal claim in
+   this literature, the paper's included.
+
+**OPEN (next block's queue, in priority order):**
+
+1. **The two-hop leg is thin** — 9 confirmatory items / 2 families;
+   HP1's replication was inconclusive because of it. Expanding the
+   two-hop bank (hard, below-ceiling two-hop families) is the single
+   highest-leverage next step.
+2. **N8 independent reproduction** — a fresh VM + clean clone must
+   reproduce the primary table from the registered commands before
+   release; a separate session should run it without this narrative in
+   context.
+3. **Does capacity moderate the causal shape?** The across-model
+   correlation (Qwen: near-Claude capacity AND cleanest signature) is
+   an observation, not a tested moderator; a formal analysis (and
+   ideally more models at intermediate capacity) is needed before HP4
+   can be causally linked to HP1.
+4. **Instruct's nonspecific cost** — its protected-J prose-NLL rises
+   +0.72 nats (vs Think +0.24, controls ≤0.16): how much of Instruct's
+   one-hop damage is content-targeted vs diffuse?
+5. **Lens fit-size sensitivity for capacity** — Qwen's n=1000 published
+   lens vs OLMo's n=120 fits (prespecified, not yet run).
+6. **Load/working-set study (HP5, family B)** — requires building and
+   G5-gating the synthetic C1 tasks; untouched this block.
+7. **Qwen thinking-on/off mode contrast (A2a)** — the cleanest H1b test
+   (same weights, official toggle); generation endpoints only.
+8. **Older lineage moderators** (base-1125, 3.0-Think under the
+   confirmatory protocol) — where in post-training does the shape
+   reorganize?
+9. **Mechanism profile on the confirmatory partition** (§6.8 secondary,
+   needs the selected-id instrument rerun) — does "deletion costs only
+   when the answer is not locked in" replicate?
+
+Next block: EXPAND THE TWO-HOP BANK (the sharpest limitation),
 then the N8 fresh-VM reproduction, the capacity-vs-shape moderator
 analysis, and the Instruct prose-cost follow-up.
 
