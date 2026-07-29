@@ -23,7 +23,8 @@ from jspace_part2.protected_dynamic_v2 import (PositionRecord,
                                                V2Log)
 from .controls import (PersistentFrame, _seed_for,
                        build_instant_matched_subspace,
-                       build_overlap_matched_subspace)
+                       build_overlap_matched_subspace,
+                       build_prot_energy_matched_subspace)
 from jspace_part2.lib import orthonormal_basis_from_rows
 
 
@@ -351,6 +352,12 @@ class Phase3MatchedAblator(ProtectedDynamicAblatorV2):
                 basis, info = build_overlap_matched_subspace(
                     flat[t], r, e, ov_t, prot, seed)
                 ov_a = info.get("overlap_achieved")
+            elif variant == "prot_energy_matched":
+                pe = prof.get("prot_energy")
+                ov_t = float(pe[t]) if pe is not None else 0.0
+                basis, info = build_prot_energy_matched_subspace(
+                    flat[t], r, e, ov_t, prot, seed)
+                ov_a = info.get("prot_energy_achieved")
             elif variant == "persistent_matched":
                 key = layer_idx
                 if key not in self._frames:
@@ -367,9 +374,9 @@ class Phase3MatchedAblator(ProtectedDynamicAblatorV2):
             flat[t] = flat[t] - basis @ coef
             after = float(flat[t] @ flat[t])
             ach = 1.0 - after / max(before, 1e-30)
-            if variant == "overlap_matched":
-                # overlap with prot span is INTENDED; report the residual
-                # cos against the protection contract as n/a-by-design
+            if variant in ("overlap_matched", "prot_energy_matched"):
+                # overlap with prot span is INTENDED for these arms; the
+                # protection-contract cosine is n/a by design
                 mpc = 0.0
             else:
                 mpc = (float((basis.T @ prot.T).abs().max())
@@ -396,21 +403,25 @@ def profile_from_p3log(log: V2Log, phase: str = "prefill",
         if p.phase != phase or p.forward_index != forward_index:
             continue
         prof.setdefault(p.layer, {})[p.position] = \
-            [p.effective_rank, p.removed_energy_frac, 0.0]
+            [p.effective_rank, p.removed_energy_frac, 0.0, 0.0]
     if overlap_records:
         for r in overlap_records:
             if r.phase == phase and r.forward_index == forward_index \
                     and r.layer in prof and r.position in prof[r.layer]:
                 prof[r.layer][r.position][2] = r.projector_overlap
+                prof[r.layer][r.position][3] = \
+                    r.removed_energy_in_prot_frac or 0.0
     out = {}
     for lay, dd in prof.items():
         T = max(dd) + 1
         rank = torch.zeros(T, dtype=torch.long)
         energy = torch.zeros(T)
         overlap = torch.zeros(T)
-        for t, (r, e, o) in dd.items():
-            rank[t], energy[t], overlap[t] = r, e, o
-        out[lay] = {"rank": rank, "energy": energy, "overlap": overlap}
+        prot_energy = torch.zeros(T)
+        for t, (r, e, o, pe) in dd.items():
+            rank[t], energy[t], overlap[t], prot_energy[t] = r, e, o, pe
+        out[lay] = {"rank": rank, "energy": energy, "overlap": overlap,
+                    "prot_energy": prot_energy}
     return out
 
 

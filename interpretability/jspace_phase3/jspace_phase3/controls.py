@@ -182,6 +182,109 @@ def build_overlap_matched_subspace(
     return basis, info
 
 
+def build_prot_energy_matched_subspace(
+        h: torch.Tensor, rank: int, energy_frac: float,
+        prot_energy_frac: float, prot_rows: torch.Tensor | None, seed: int,
+) -> tuple[torch.Tensor, dict]:
+    """THE SHARP LEAKAGE CONTROL (added VM10 after the §4.1b audit).
+
+    `overlap_matched` matches trace(P_S P_prot) but its in-protected-span
+    directions are ⊥ h, so it removes essentially NO activation energy
+    from inside the protected span — while the measured label-protected J
+    arm removes ~39% of its energy from there. Matching the projector
+    trace without matching that fraction leaves the leakage account
+    untested, so this control matches BOTH:
+
+      total removed energy  = energy_frac · ||h||²      (as always)
+      of which the fraction inside span(prot) = prot_energy_frac
+
+    Construction: one basis vector along the h-component INSIDE span(prot)
+    (carrying the protected share), one along the h-component OUTSIDE it
+    (carrying the remainder), the rest free directions ⊥ h ⊥ prot. The
+    protected share is therefore removed from RANDOM-relative-to-content
+    but geometrically identical territory: if leakage alone explains the
+    label arm's excess damage, this control reproduces it.
+    """
+    d = h.shape[0]
+    h32 = h.float()
+    hn2 = float(h32 @ h32)
+    g = torch.Generator().manual_seed(seed)
+    qp, prot_rank = _prot_basis(prot_rows)
+    if qp is None or rank < 1:
+        return build_instant_matched_subspace(h, rank, energy_frac, prot_rows,
+                                              seed)
+    qp = qp.to(h.device)
+
+    h_in = qp @ (qp.T @ h32)                    # h inside span(prot)
+    h_out = h32 - h_in
+    e_in_avail = float(h_in @ h_in) / max(hn2, 1e-30)
+    e_out_avail = float(h_out @ h_out) / max(hn2, 1e-30)
+
+    e_total = max(min(energy_frac, e_in_avail + e_out_avail), 0.0)
+    e_in_t = min(e_total * max(min(prot_energy_frac, 1.0), 0.0), e_in_avail)
+    e_out_t = min(e_total - e_in_t, e_out_avail)
+    clamped = (energy_frac > e_in_avail + e_out_avail
+               or e_in_t < e_total * prot_energy_frac - 1e-9)
+
+    cols = []
+    if e_in_t > 0 and e_in_avail > 0:
+        u_in = h_in / h_in.norm()
+        # a in-span unit vector whose h-projection² = e_in_t·||h||²
+        a = (e_in_t * hn2 / float(h_in @ h_in)) ** 0.5
+        # free padding inside span(prot), ⊥ h_in
+        c = qp.T @ h32
+        eye = torch.eye(qp.shape[1], device=h.device)
+        z = eye - torch.outer(c, c) / max(float(c @ c), 1e-30)
+        qz = orthonormal_basis_from_rows(z).basis
+        if qz.shape[1]:
+            w = (qp @ qz)[:, int(torch.randint(qz.shape[1], (1,),
+                                               generator=g))]
+            cols.append(a * u_in + (1 - a * a) ** 0.5 * w
+                        if a < 1.0 else u_in)
+        else:
+            cols.append(u_in)
+    if e_out_t > 0 and e_out_avail > 0 and len(cols) < rank:
+        u_out = h_out / h_out.norm()
+        b = (e_out_t * hn2 / float(h_out @ h_out)) ** 0.5
+        G = torch.randn(1, d, generator=g).to(h.device)
+        anchor = orthonormal_basis_from_rows(
+            torch.cat([h32.unsqueeze(0), qp.T], dim=0)).basis.to(h.device)
+        f = (G - (G @ anchor) @ anchor.T)[0]
+        f = f / f.norm()
+        cols.append(b * u_out + (1 - b * b) ** 0.5 * f if b < 1.0 else u_out)
+
+    n_free = rank - len(cols)
+    if n_free > 0:
+        G = torch.randn(n_free + 4, d, generator=g).to(h.device)
+        blocks = [h32.unsqueeze(0), qp.T]
+        if cols:
+            blocks.append(torch.stack(cols, dim=1).T)
+        anchor = orthonormal_basis_from_rows(
+            torch.cat(blocks, dim=0)).basis.to(h.device)
+        G = G - (G @ anchor) @ anchor.T
+        u = orthonormal_basis_from_rows(G).basis
+        if u.shape[1] < n_free:
+            raise RuntimeError("free block lost rank")
+        cols.extend(u[:, j] for j in range(n_free))
+
+    basis = orthonormal_basis_from_rows(
+        torch.stack(cols, dim=1).T).basis
+    if basis.shape[1] != rank:
+        raise RuntimeError(f"rank {basis.shape[1]} != requested {rank}")
+    removed = basis @ (basis.T @ h32)
+    ach_total = float(removed @ removed) / max(hn2, 1e-30)
+    in_prot = qp @ (qp.T @ removed)
+    ach_in_frac = (float(in_prot @ in_prot)
+                   / max(float(removed @ removed), 1e-30))
+    return basis, {
+        "clamped": bool(clamped), "e_target": float(energy_frac),
+        "e_max": e_in_avail + e_out_avail,
+        "protected_effective_rank": prot_rank,
+        "prot_energy_target": float(prot_energy_frac),
+        "prot_energy_achieved": round(ach_in_frac, 6),
+        "energy_achieved": round(ach_total, 6)}
+
+
 class PersistentFrame:
     """§6.4: one base random frame per (item, layer); positions reuse its
     orientation, adjusting only the h-aligned component for the local

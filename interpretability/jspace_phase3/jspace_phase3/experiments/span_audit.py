@@ -176,6 +176,7 @@ def main():  # noqa: C901
         for variant, src_arm in (
                 ("instant_rank_energy_matched", "meanJ_label_protected"),
                 ("overlap_matched", "meanJ_label_protected"),
+                ("prot_energy_matched", "meanJ_label_protected"),
                 ("persistent_matched", "meanJ_label_protected"),
                 ("instant_rank_energy_matched_vs_span_safe",
                  "meanJ_span_safe")):
@@ -238,6 +239,10 @@ def main():  # noqa: C901
         "delta_matched_vs_span_safe_mean": round(float(dms.mean()), 4),
         "delta_overlap_matched_mean": round(
             float(d("lp_overlap_matched").mean()), 4),
+        "delta_prot_energy_matched_mean": round(
+            float(d("lp_prot_energy_matched").mean()), 4),
+        "tail_rate_prot_energy_matched": round(
+            float((d("lp_prot_energy_matched") < -1.0).mean()), 4),
         "delta_persistent_matched_mean": round(
             float(d("lp_persistent_matched").mean()), 4),
         "tail_rate_label": round(float((dl < -1.0).mean()), 4),
@@ -264,7 +269,8 @@ def main():  # noqa: C901
                "conditions": ["baseline", "meanJ_label_protected",
                               "meanJ_span_safe",
                               "instant_rank_energy_matched",
-                              "overlap_matched", "persistent_matched",
+                              "overlap_matched", "prot_energy_matched",
+                              "persistent_matched",
                               "instant_rank_energy_matched_vs_span_safe"]}
     cmd = (f"python -m jspace_phase3.experiments.span_audit "
            f"--config {cfg_path}")
@@ -276,6 +282,7 @@ def main():  # noqa: C901
     out_json = out_dir / f"span_audit_{slug}.json"
     write_result3(payload, out_json, prov)
     register(cfg["evidence_id"], tier=TIER, command=cmd,
+             supersedes=cfg.get("supersedes"),
              what=(f"§4.1b protected-span geometry audit on {slug}: "
                    f"{len(df)} frozen Phase 2 items, label vs span-safe J "
                    f"plus three matched controls; overlap "
