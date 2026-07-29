@@ -96,10 +96,14 @@ def main():
         ax.annotate(f"{r:.0%}", (r, i), textcoords="offset points",
                     xytext=(5, 0), va="center", fontsize=8.5,
                     color=PAL3["ink"])
+    # labels on the RIGHT: on the left they collide with panel A's
+    # value annotations
+    ax.yaxis.tick_right()
     ax.set_yticks(range(len(ARMS)),
                   [a[1].replace("\n", " ") for a in ARMS], fontsize=7.5)
+    ax.tick_params(axis="y", length=0, pad=2)
     ax.invert_yaxis()
-    ax.set_xlim(0, max(rates) * 1.35)
+    ax.set_xlim(0, max(rates) * 1.55)
     ax.set_xlabel("share of items losing > 1 nat")
     ax.set_title("B · Tail rate", loc="left")
     ax.grid(True, axis="x", alpha=0.6)
