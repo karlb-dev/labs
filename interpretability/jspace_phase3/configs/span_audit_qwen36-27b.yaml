@@ -1,0 +1,27 @@
+# §4.1b protected-span geometry audit — Qwen 3.6 27B.
+#
+# THE INFORMATIVE CONTRAST. §4.1a measured Qwen's protected-row selection
+# pressure at 0.10 blocked rows/position vs OLMo's ~1.3 (12x lower), so
+# the leakage component of its label-protected tail should be far
+# smaller. If Qwen's tail largely survives span-safe protection, Phase 2's
+# HP3 result (the campaign's strongest positive) transfers nearly intact
+# and the leakage correction is an OLMo-side story.
+#
+# Lens: the PUBLISHED n=1000 lens, exactly as Phase 2 used it (fit-size
+# asymmetry vs OLMo's n=120 lenses is carried as a known sensitivity).
+# Fetch: HF_HUB_CACHE=/content/hf_local hf download neuronpedia/jacobian-lens \
+#          --revision a4114d7752d11eb546e6cf372213d7e75526d3a1
+evidence_id: p3-span-audit-qwen36-27b-v1
+tier: phase3-development
+slug: qwen36-27b
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+lens_uri: model://local/models--neuronpedia--jacobian-lens/snapshots/a4114d7752d11eb546e6cf372213d7e75526d3a1/qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt
+manifest_uri: drive://metrics/cross_model/g5_item_manifest_v5.json
+partition_uri: drive://metrics/cross_model/partition_manifest.json
+partition_side: confirmatory
+band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+k: 10
+protect_top_k: 10
+rand_seed: 4242
+n_items: 60
+overlap_detail_layers: [24, 32, 40]

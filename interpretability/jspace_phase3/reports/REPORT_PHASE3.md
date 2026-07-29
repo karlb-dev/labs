@@ -61,6 +61,34 @@ is exactly what §4.1b + the span-safe arm measure.
 
 ---
 
+### N8 Level 1 — the Phase 2 primary table reproduces clean-room — tier: METHODS
+
+`p3-n8-level1-repro-v1`. A narrative-blind agent (separate session, own
+git worktree, `PYTHONPATH`-isolated, forbidden from reading any report,
+registry, or figure) was handed only
+`jspace_part2/protocol/N8_REPRO_PROTOCOL.md` — commands, schemas,
+tolerances, no expected values — and regenerated both locked analyses
+from the frozen raw parquets into an empty output root. The comparison
+against published values was made afterwards, campaign-side.
+
+| quantity | published | reproduced | Δ |
+|---|---|---|---|
+| confirmatory HP1 contrast | −0.504 [−0.720, −0.295] | −0.5045 [−0.7195, −0.2949] | 5e-4 |
+| confirmatory HP3 Qwen CI | [0.205, 0.361] | [0.2048, 0.3608] | 2e-4 |
+| replication HP1 contrast | +0.1036 [−1.681, +1.889] | +0.1036 [−1.6813, +1.8892] | 0 |
+| replication HP3 Qwen CI | [0.2071, 0.3824] | [0.2071, 0.3824] | 0 |
+
+All four inside the 2e-3 tolerance; the run wrote nothing to the
+original output tree and nothing to the registry (`--no-register`
+behaved as documented). The Phase 2 analysis layer is now independently
+reproducible. **Level 2** (per-model sentinel item subsets) and
+**Level 3** (one full GPU cell, Qwen preferred) remain open and are
+release gates. The reproducer stopped before sealing its own prose
+report; the JSON envelopes are the binding artifacts and are banked at
+`drive://phase3/n8_level1`.
+
+---
+
 ### §4.1b — LABEL PROTECTION IS NOT SPAN PROTECTION — tier: PHASE3-DEVELOPMENT
 
 `p3-span-audit-olmo31-think-v2` (v1 superseded: it lacked the sharp
