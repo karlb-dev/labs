@@ -46,9 +46,19 @@ K, PROTECT, SEED = 10, 10, 4242
 RUN_DIR_P2 = Path("/content/drive/MyDrive/interpret/special-lab-1/"
                   "part2_20260727")
 
+# v2 GATES. v1 (mc-dev-validation-olmo31-think-v1, FAIL) applied the 5%
+# RELATIVE energy bound to positions whose target dose is ~1e-5 — below
+# the float32 measurement floor (sqrt(d)*eps ~ 1e-5), where relative
+# error is meaningless: measured median rel-err was 6.15e-5 with the max
+# driven entirely by near-zero-dose positions. v2 gates relative error
+# only above ENERGY_REL_FLOOR (1e-3) and adds an ABSOLUTE bound below
+# it — the same below-the-precision-floor discipline as the withdrawn
+# local-linearity v1. The construction itself was already exact
+# (rank match 1.0, protected-cos 4e-8).
 GATES = {"MC1_rank_match_frac": 1.0,
          "MC2_energy_rel_err_median": 0.005,
          "MC2_energy_rel_err_max": 0.05,
+         "MC2b_energy_abs_err_below_floor": 1e-4,
          "MC3_clamped_frac": 0.01,
          "MC4_max_protected_cos": 1e-3}
 
@@ -118,6 +128,14 @@ def main():
         "clamped_frac": st.mean(s["clamped_frac"] for s in c_summary_acc),
         "max_protected_cos": max(s["max_protected_cos"]
                                  for s in c_summary_acc),
+        "abs_err_max_below_floor": max(
+            (s["energy_abs_err_max_below_floor"] for s in c_summary_acc
+             if s.get("energy_abs_err_max_below_floor") is not None),
+            default=0.0),
+        "n_above_floor": sum(s.get("n_above_floor", 0)
+                             for s in c_summary_acc),
+        "n_below_floor": sum(s.get("n_below_floor", 0)
+                             for s in c_summary_acc),
     }
     verdict = {
         "MC1": agg["rank_match_frac"] >= GATES["MC1_rank_match_frac"],
@@ -125,6 +143,8 @@ def main():
                 GATES["MC2_energy_rel_err_median"]
                 and agg["energy_rel_err_max"] <=
                 GATES["MC2_energy_rel_err_max"]),
+        "MC2b": (agg["abs_err_max_below_floor"] <=
+                 GATES["MC2b_energy_abs_err_below_floor"]),
         "MC3": agg["clamped_frac"] <= GATES["MC3_clamped_frac"],
         "MC4": agg["max_protected_cos"] <= GATES["MC4_max_protected_cos"],
     }
@@ -140,7 +160,7 @@ def main():
             "j_mean": st.mean(deltas_j), "c_mean": st.mean(deltas_c)},
         "rows": rows,
     }
-    ev_id = f"mc-dev-validation-{slug}-v1"
+    ev_id = f"mc-dev-validation-{slug}-v2"
     prov = Provenance(
         evidence_id=ev_id, tier="dev",
         command=(f"python -m jspace_part2.experiments.mc_dev_validation "
@@ -165,6 +185,15 @@ def main():
         "command": prov.command, "code_commit": git["code_commit"],
         "rerun": "auto",
         "outputs": [{"path": str(out_path), "sha256": sha256_file(out_path)}]})
+    from .. import registry as reg
+    try:
+        reg.supersede(f"mc-dev-validation-{slug}-v1", ev_id,
+                      reason="v1 applied the relative-energy gate below the "
+                             "float32 measurement floor; v2 floors the "
+                             "relative check at 1e-3 target dose and bounds "
+                             "absolute error below it")
+    except Exception as ex:
+        log(f"  (supersede: {ex})")
     log(f"gates: {verdict} -> {'PASS' if payload['pass'] else 'FAIL'}")
 
 

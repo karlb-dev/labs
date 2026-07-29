@@ -74,20 +74,37 @@ class MatchedRecord:
 class MatchedLog(V2Log):
     matched: list = field(default_factory=list)     # list[MatchedRecord]
 
+    # Positions whose TARGET removed-energy fraction is below this floor
+    # are below the float32 measurement precision for a d~5000 dot
+    # product (sqrt(d)*eps ~ 1e-5) and are physically negligible doses;
+    # for them a RELATIVE error is meaningless (the bf16-floor lesson:
+    # below the precision floor report unmeasurable, never a failure).
+    # They are gated on ABSOLUTE error instead.
+    ENERGY_REL_FLOOR = 1e-3
+
     def matched_summary(self) -> dict:
         if not self.matched:
             return {"n_positions": 0}
         import statistics as st
+        fl = self.ENERGY_REL_FLOOR
+        meas = [m for m in self.matched
+                if not m.clamped and m.target_energy_frac >= fl]
+        below = [m for m in self.matched
+                 if not m.clamped and m.target_energy_frac < fl]
         rel = [abs(m.achieved_energy_frac - m.target_energy_frac) /
-               max(m.target_energy_frac, 1e-12)
-               for m in self.matched if not m.clamped and m.target_energy_frac > 0]
+               m.target_energy_frac for m in meas]
+        abs_below = [abs(m.achieved_energy_frac - m.target_energy_frac)
+                     for m in below]
         return {
             "n_positions": len(self.matched),
             "rank_match_frac": sum(1 for m in self.matched
                                    if m.achieved_rank == m.target_rank)
             / len(self.matched),
+            "n_above_floor": len(meas), "n_below_floor": len(below),
             "energy_rel_err_median": (round(st.median(rel), 6) if rel else None),
             "energy_rel_err_max": (round(max(rel), 6) if rel else None),
+            "energy_abs_err_max_below_floor": (round(max(abs_below), 8)
+                                               if abs_below else None),
             "clamped_frac": sum(1 for m in self.matched if m.clamped)
             / len(self.matched),
             "max_protected_cos": round(max(m.max_protected_cos

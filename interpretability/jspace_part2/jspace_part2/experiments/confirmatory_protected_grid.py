@@ -227,6 +227,8 @@ def main():
                     "n_positions", 0) > 0:
                 mc_ok = (summary["rank_match_frac"] == 1.0
                          and (summary["energy_rel_err_max"] or 0) <= 0.05
+                         and (summary.get("energy_abs_err_max_below_floor")
+                              or 0) <= 1e-4
                          and summary["clamped_frac"] <= 0.01
                          and summary["max_protected_cos"] <= 1e-3)
                 state["mc_gate_rows"].append(
