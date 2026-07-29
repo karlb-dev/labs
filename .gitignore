@@ -268,3 +268,4 @@ target/
 
 
 .venv
+.claude/worktrees/
