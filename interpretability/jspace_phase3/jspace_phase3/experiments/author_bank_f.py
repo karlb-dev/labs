@@ -1,0 +1,630 @@
+# Bank F authoring — first tranche (nextsteps §5.2–5.4, addendum §4.2).
+#
+# LLM-proposed, SOURCE-VERIFIED: every bundle names the wikipedia
+# 20231101.en pages (the box's pinned snapshot — dump date in the config
+# name) that state its two hops; verify_against_wikipedia() checks the
+# bridge appears on the source-hop page and the answer on the bridge
+# page. The LLM is not the factual authority — bundles failing
+# verification are QUARANTINED into the report, not shipped.
+#
+# Design constraints honored here:
+#   * cross-phase dedup: no (bridge, answer) pair — and no bare answer —
+#     from the Phase 2 manifest (bank.phase2_triple_keys, incl.
+#     answer-only keys, so e.g. 'Portuguese', 'euro', 'Paris' are burned);
+#   * first hops are FUNCTIONAL relations (capital-of, mouth-of, HQ-of,
+#     author-of, ...) — the §4.2b ambiguity pass is a per-family
+#     ambiguity_note stating why exactly one bridge satisfies the prompt;
+#   * one (bridge, answer) pair per bank; distinct surface templates per
+#     family; prompts end at a scoring boundary; counterfactual = a
+#     rotated sibling instance (same family, different bridge+answer).
+#
+# Usage: python -m jspace_phase3.experiments.author_bank_f
+from __future__ import annotations
+
+import json
+import re
+import sys
+from pathlib import Path
+
+from ..bank import FactBundle, phase2_triple_keys, save_bank, validate_bank
+from ..provenance3 import (Provenance3, register, require_clean_tree,
+                           write_result3)
+
+EVIDENCE_ID = "p3-bank-f-tranche1-v1"
+TIER = "phase3-development"
+REPO_DATA = Path(__file__).resolve().parents[2] / "data"
+WIKIPEDIA = Path("/content/drive/MyDrive/hf_cache/hub/"
+                 "datasets--wikimedia--wikipedia/snapshots/"
+                 "b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.en")
+P2_MANIFEST = ("/content/drive/MyDrive/interpret/special-lab-1/"
+               "part2_20260727/metrics/cross_model/g5_item_manifest_v5.json")
+
+# instance = (source, bridge, answer, aliases, {source_page, bridge_page})
+FAMILIES = [
+    dict(
+        family="capital_to_currency", group="geo_political",
+        templates=dict(
+            direct="The official currency of {bridge} is",
+            composed="The official currency of the country whose capital "
+                     "city is {source} is",
+            bridge_supplied="{source} is the capital of {bridge}. The "
+                            "official currency of {bridge} is"),
+        ambiguity="capital-of is functional: exactly one country has this "
+                  "capital city",
+        instances=[
+            ("Bangkok", "Thailand", "baht", [" the baht", " baht"],
+             dict(source_page="Bangkok", bridge_page="Thailand")),
+            ("Dhaka", "Bangladesh", "taka", [" the taka", " taka"],
+             dict(source_page="Dhaka", bridge_page="Bangladesh")),
+            ("Accra", "Ghana", "cedi", [" the cedi", " cedi"],
+             dict(source_page="Accra", bridge_page="Ghana")),
+            ("Abuja", "Nigeria", "naira", [" the naira", " naira"],
+             dict(source_page="Abuja", bridge_page="Nigeria")),
+            ("Budapest", "Hungary", "forint", [" the forint", " forint"],
+             dict(source_page="Budapest", bridge_page="Hungary")),
+            ("Warsaw", "Poland", "zloty",
+             [" the zloty", " zloty", " the złoty", " złoty"],
+             dict(source_page="Warsaw", bridge_page="Poland")),
+        ]),
+    dict(
+        family="capital_to_language", group="geo_political",
+        templates=dict(
+            direct="The official language of {bridge} is",
+            composed="The official language of the country that has its "
+                     "capital at {source} is",
+            bridge_supplied="{source} is the capital of {bridge}. The "
+                            "official language of {bridge} is"),
+        ambiguity="capital-of is functional; chosen countries have a "
+                  "single primary official language",
+        instances=[
+            ("Addis Ababa", "Ethiopia", "Amharic", [" Amharic"],
+             dict(source_page="Addis Ababa", bridge_page="Ethiopia")),
+            ("Kathmandu", "Nepal", "Nepali", [" Nepali"],
+             dict(source_page="Kathmandu", bridge_page="Nepal")),
+            ("Ulaanbaatar", "Mongolia", "Mongolian", [" Mongolian"],
+             dict(source_page="Ulaanbaatar", bridge_page="Mongolia")),
+            ("Hanoi", "Vietnam", "Vietnamese", [" Vietnamese"],
+             dict(source_page="Hanoi", bridge_page="Vietnam")),
+            ("Manila", "Philippines", "Filipino", [" Filipino", " Tagalog"],
+             dict(source_page="Manila", bridge_page="Philippines")),
+            ("Dhaka", "Bangladesh", "Bengali", [" Bengali", " Bangla"],
+             dict(source_page="Dhaka", bridge_page="Bangladesh")),
+        ]),
+    dict(
+        family="river_mouth_to_capital", group="geo_political",
+        templates=dict(
+            direct="The capital city of {bridge} is",
+            composed="The capital city of the country where the {source} "
+                     "River reaches the sea is",
+            bridge_supplied="The {source} River reaches the sea in "
+                            "{bridge}. The capital city of {bridge} is"),
+        ambiguity="each chosen river has its mouth in exactly one country",
+        instances=[
+            ("Chao Phraya", "Thailand", "Bangkok", [" Bangkok"],
+             dict(source_page="Chao Phraya River", bridge_page="Thailand")),
+            ("Volta", "Ghana", "Accra", [" Accra"],
+             dict(source_page="Volta River", bridge_page="Ghana")),
+            ("Magdalena", "Colombia", "Bogotá",
+             [" Bogotá", " Bogota"],
+             dict(source_page="Magdalena River", bridge_page="Colombia")),
+            ("Irrawaddy", "Myanmar", "Naypyidaw",
+             [" Naypyidaw", " Nay Pyi Taw"],
+             dict(source_page="Irrawaddy River", bridge_page="Myanmar")),
+            ("Tagus", "Portugal", "Lisbon", [" Lisbon"],
+             dict(source_page="Tagus", bridge_page="Portugal")),
+        ]),
+    dict(
+        family="landmark_city_to_country", group="geo_political",
+        templates=dict(
+            direct="The city of {bridge} is located in the country of",
+            composed="The city where the {source} stands is located in "
+                     "the country of",
+            bridge_supplied="The {source} stands in {bridge}. That city "
+                            "is located in the country of"),
+        ambiguity="each landmark stands in exactly one city",
+        instances=[
+            ("Petronas Towers", "Kuala Lumpur", "Malaysia", [" Malaysia"],
+             dict(source_page="Petronas Towers", bridge_page="Kuala Lumpur")),
+            ("Hagia Sophia", "Istanbul", "Turkey", [" Turkey"],
+             dict(source_page="Hagia Sophia", bridge_page="Istanbul")),
+            ("Burj Khalifa", "Dubai", "the United Arab Emirates",
+             [" the United Arab Emirates", " United Arab Emirates",
+              " the UAE", " UAE"],
+             dict(source_page="Burj Khalifa", bridge_page="Dubai")),
+            ("Table Mountain", "Cape Town", "South Africa",
+             [" South Africa"],
+             dict(source_page="Table Mountain", bridge_page="Cape Town")),
+            ("Wat Arun", "Bangkok", "Thailand", [" Thailand"],
+             dict(source_page="Wat Arun", bridge_page="Bangkok")),
+        ]),
+    dict(
+        family="company_hq_to_country", group="org",
+        templates=dict(
+            direct="{bridge} is a city in the country of",
+            composed="The company {source} has its headquarters in a city "
+                     "in the country of",
+            bridge_supplied="The company {source} is headquartered in "
+                            "{bridge}, a city in the country of"),
+        ambiguity="corporate global headquarters is a single city; "
+                  "verified against the snapshot's infobox statements",
+        instances=[
+            ("Nokia", "Espoo", "Finland", [" Finland"],
+             dict(source_page="Nokia", bridge_page="Espoo")),
+            ("Spotify", "Stockholm", "Sweden", [" Sweden"],
+             dict(source_page="Spotify", bridge_page="Stockholm")),
+            ("Lego", "Billund", "Denmark", [" Denmark"],
+             dict(source_page="Lego", bridge_page="Billund")),
+            ("Samsung Electronics", "Suwon", "South Korea",
+             [" South Korea"],
+             dict(source_page="Samsung Electronics", bridge_page="Suwon")),
+            ("Philips", "Amsterdam", "the Netherlands",
+             [" the Netherlands", " Netherlands"],
+             dict(source_page="Philips", bridge_page="Amsterdam")),
+        ]),
+    dict(
+        family="island_to_capital", group="geo_political",
+        templates=dict(
+            direct="The capital of {bridge} is the city of",
+            composed="The capital of the country that the island of "
+                     "{source} belongs to is the city of",
+            bridge_supplied="The island of {source} belongs to {bridge}. "
+                            "The capital of {bridge} is the city of"),
+        ambiguity="each chosen island belongs to exactly one sovereign "
+                  "country",
+        instances=[
+            ("Bali", "Indonesia", "Jakarta", [" Jakarta"],
+             dict(source_page="Bali", bridge_page="Indonesia")),
+            ("Zanzibar", "Tanzania", "Dodoma", [" Dodoma"],
+             dict(source_page="Zanzibar", bridge_page="Tanzania")),
+            ("Luzon", "the Philippines", "Manila", [" Manila"],
+             dict(source_page="Luzon", bridge_page="Philippines")),
+            ("Tasmania", "Australia", "Canberra", [" Canberra"],
+             dict(source_page="Tasmania", bridge_page="Australia")),
+        ]),
+    dict(
+        family="currency_to_capital", group="geo_political",
+        templates=dict(
+            direct="The seat of government of {bridge} is",
+            composed="The seat of government of the country whose "
+                     "currency is the {source} is",
+            bridge_supplied="The {source} is the currency of {bridge}. "
+                            "The seat of government of {bridge} is"),
+        ambiguity="each chosen currency is issued by exactly one country",
+        instances=[
+            ("ringgit", "Malaysia", "Kuala Lumpur", [" Kuala Lumpur"],
+             dict(source_page="Malaysian ringgit", bridge_page="Malaysia")),
+            ("won", "South Korea", "Seoul", [" Seoul"],
+             dict(source_page="South Korean won", bridge_page="South Korea")),
+            ("rand", "South Africa", "Pretoria", [" Pretoria"],
+             dict(source_page="South African rand",
+                  bridge_page="South Africa")),
+            ("birr", "Ethiopia", "Addis Ababa", [" Addis Ababa"],
+             dict(source_page="Ethiopian birr", bridge_page="Ethiopia")),
+        ]),
+    dict(
+        family="novel_author_to_birth_country", group="person_culture",
+        templates=dict(
+            direct="The writer {bridge} was born in the country of",
+            composed="The author of the novel {source} was born in the "
+                     "country of",
+            bridge_supplied="The novel {source} was written by {bridge}, "
+                            "who was born in the country of"),
+        ambiguity="each novel has a single author; birth country per the "
+                  "snapshot's biography lead",
+        instances=[
+            ("Things Fall Apart", "Chinua Achebe", "Nigeria", [" Nigeria"],
+             dict(source_page="Things Fall Apart",
+                  bridge_page="Chinua Achebe")),
+            ("My Name Is Red", "Orhan Pamuk", "Turkey", [" Turkey"],
+             dict(source_page="My Name Is Red", bridge_page="Orhan Pamuk")),
+            ("Midnight's Children", "Salman Rushdie", "India", [" India"],
+             dict(source_page="Midnight's Children",
+                  bridge_page="Salman Rushdie")),
+            ("Wide Sargasso Sea", "Jean Rhys", "Dominica", [" Dominica"],
+             dict(source_page="Wide Sargasso Sea", bridge_page="Jean Rhys")),
+            ("My Brilliant Friend", "Elena Ferrante", "Italy", [" Italy"],
+             dict(source_page="My Brilliant Friend",
+                  bridge_page="Elena Ferrante")),
+        ]),
+    dict(
+        family="opera_composer_to_nationality", group="person_culture",
+        templates=dict(
+            direct="The composer {bridge} was by nationality",
+            composed="The composer of the opera {source} was by "
+                     "nationality",
+            bridge_supplied="The opera {source} was composed by {bridge}, "
+                            "who was by nationality"),
+        ambiguity="each opera has a single composer",
+        instances=[
+            ("Madama Butterfly", "Giacomo Puccini", "Italian", [" Italian"],
+             dict(source_page="Madama Butterfly",
+                  bridge_page="Giacomo Puccini")),
+            ("The Bartered Bride", "Bedřich Smetana", "Czech", [" Czech"],
+             dict(source_page="The Bartered Bride",
+                  bridge_page="Bedřich Smetana")),
+            ("Bluebeard's Castle", "Béla Bartók", "Hungarian",
+             [" Hungarian"],
+             dict(source_page="Bluebeard's Castle",
+                  bridge_page="Béla Bartók")),
+            ("Rusalka", "Antonín Dvořák", "Czech", [" Czech"],
+             dict(source_page="Rusalka (opera)",
+                  bridge_page="Antonín Dvořák")),
+            ("Aida", "Giuseppe Verdi", "Italian", [" Italian"],
+             dict(source_page="Aida", bridge_page="Giuseppe Verdi")),
+        ]),
+    dict(
+        family="painting_painter_to_movement", group="person_culture",
+        templates=dict(
+            direct="The painter {bridge} is associated with the art "
+                   "movement known as",
+            composed="The painter of {source} is associated with the art "
+                     "movement known as",
+            bridge_supplied="{source} was painted by {bridge}, who is "
+                            "associated with the art movement known as"),
+        ambiguity="each painting has a single painter; movement per the "
+                  "snapshot's lead attribution",
+        instances=[
+            ("Impression, Sunrise", "Claude Monet", "Impressionism",
+             [" Impressionism"],
+             dict(source_page="Impression, Sunrise",
+                  bridge_page="Claude Monet")),
+            ("Les Demoiselles d'Avignon", "Pablo Picasso", "Cubism",
+             [" Cubism"],
+             dict(source_page="Les Demoiselles d'Avignon",
+                  bridge_page="Pablo Picasso")),
+            ("The Starry Night", "Vincent van Gogh", "Post-Impressionism",
+             [" Post-Impressionism"],
+             dict(source_page="The Starry Night",
+                  bridge_page="Vincent van Gogh")),
+            ("The Kiss", "Gustav Klimt", "Art Nouveau", [" Art Nouveau"],
+             dict(source_page="The Kiss (Klimt)",
+                  bridge_page="Gustav Klimt")),
+        ]),
+    dict(
+        family="theory_scientist_to_birth_city", group="person_science",
+        templates=dict(
+            direct="{bridge} was born in the city of",
+            composed="The scientist who proposed {source} was born in the "
+                     "city of",
+            bridge_supplied="{source} was proposed by {bridge}, who was "
+                            "born in the city of"),
+        ambiguity="each theory/invention is attributed to a single "
+                  "principal figure in the snapshot lead",
+        instances=[
+            ("the theory of general relativity", "Albert Einstein", "Ulm",
+             [" Ulm"],
+             dict(source_page="General relativity",
+                  bridge_page="Albert Einstein")),
+            ("the theory of evolution by natural selection",
+             "Charles Darwin", "Shrewsbury", [" Shrewsbury"],
+             dict(source_page="Natural selection",
+                  bridge_page="Charles Darwin")),
+            ("the movable-type printing press", "Johannes Gutenberg",
+             "Mainz", [" Mainz"],
+             dict(source_page="Printing press",
+                  bridge_page="Johannes Gutenberg")),
+            ("the telephone", "Alexander Graham Bell", "Edinburgh",
+             [" Edinburgh"],
+             dict(source_page="Alexander Graham Bell",
+                  bridge_page="Alexander Graham Bell")),
+            ("the periodic law", "Dmitri Mendeleev", "Tobolsk",
+             [" Tobolsk"],
+             dict(source_page="Periodic table",
+                  bridge_page="Dmitri Mendeleev")),
+        ]),
+    dict(
+        family="film_director_to_birth_country", group="person_culture",
+        templates=dict(
+            direct="The film director {bridge} was born in the country "
+                   "of",
+            composed="The director of the film {source} was born in the "
+                     "country of",
+            bridge_supplied="The film {source} was directed by {bridge}, "
+                            "who was born in the country of"),
+        ambiguity="each film has a single credited director",
+        instances=[
+            ("Parasite", "Bong Joon-ho", "South Korea", [" South Korea"],
+             dict(source_page="Parasite (2019 film)",
+                  bridge_page="Bong Joon-ho")),
+            ("8½", "Federico Fellini", "Italy", [" Italy"],
+             dict(source_page="8½", bridge_page="Federico Fellini")),
+            ("Persona", "Ingmar Bergman", "Sweden", [" Sweden"],
+             dict(source_page="Persona (1966 film)",
+                  bridge_page="Ingmar Bergman")),
+            ("Oldboy", "Park Chan-wook", "South Korea", [" South Korea"],
+             dict(source_page="Oldboy (2003 film)",
+                  bridge_page="Park Chan-wook")),
+        ]),
+    dict(
+        family="ore_metal_to_symbol", group="science",
+        templates=dict(
+            direct="On the periodic table, the chemical symbol for "
+                   "{bridge} is",
+            composed="On the periodic table, the chemical symbol for the "
+                     "metal extracted from the ore {source} is",
+            bridge_supplied="The ore {source} is the chief source of "
+                            "{bridge}. On the periodic table, the chemical "
+                            "symbol for {bridge} is"),
+        ambiguity="each chosen ore is the principal ore of exactly one "
+                  "metal",
+        instances=[
+            ("cinnabar", "mercury", "Hg", [" Hg"],
+             dict(source_page="Cinnabar", bridge_page="Mercury (element)")),
+            ("galena", "lead", "Pb", [" Pb"],
+             dict(source_page="Galena", bridge_page="Lead")),
+            ("sphalerite", "zinc", "Zn", [" Zn"],
+             dict(source_page="Sphalerite", bridge_page="Zinc")),
+            ("bauxite", "aluminium", "Al", [" Al"],
+             dict(source_page="Bauxite", bridge_page="Aluminium")),
+            ("malachite", "copper", "Cu", [" Cu"],
+             dict(source_page="Malachite", bridge_page="Copper")),
+        ]),
+    dict(
+        family="invention_inventor_to_nationality", group="person_science",
+        templates=dict(
+            direct="The inventor {bridge} was by nationality",
+            composed="The person who invented {source} was by nationality",
+            bridge_supplied="{source} was invented by {bridge}, who was "
+                            "by nationality"),
+        ambiguity="chosen inventions have a single credited inventor in "
+                  "the snapshot lead",
+        instances=[
+            ("the single-wire telegraph", "Samuel Morse", "American",
+             [" American"],
+             dict(source_page="Samuel Morse", bridge_page="Samuel Morse")),
+            ("dynamite", "Alfred Nobel", "Swedish", [" Swedish"],
+             dict(source_page="Dynamite", bridge_page="Alfred Nobel")),
+            ("the World Wide Web", "Tim Berners-Lee", "British",
+             [" British", " English"],
+             dict(source_page="World Wide Web",
+                  bridge_page="Tim Berners-Lee")),
+            ("the first polio vaccine", "Jonas Salk", "American",
+             [" American"],
+             dict(source_page="Polio vaccine", bridge_page="Jonas Salk")),
+        ]),
+    dict(
+        family="dish_country_to_language", group="geo_culture",
+        templates=dict(
+            direct="The national language of {bridge} is",
+            composed="The national language of the country whose cuisine "
+                     "gave the world {source} is",
+            bridge_supplied="{source} comes from {bridge}. The national "
+                            "language of {bridge} is"),
+        ambiguity="chosen dishes are nationally attributed to one country "
+                  "in the snapshot lead",
+        instances=[
+            ("pad thai", "Thailand", "Thai", [" Thai"],
+             dict(source_page="Pad thai", bridge_page="Thailand")),
+            ("goulash", "Hungary", "Hungarian", [" Hungarian"],
+             dict(source_page="Goulash", bridge_page="Hungary")),
+            ("pierogi", "Poland", "Polish", [" Polish"],
+             dict(source_page="Pierogi", bridge_page="Poland")),
+            ("kimchi", "South Korea", "Korean", [" Korean"],
+             dict(source_page="Kimchi", bridge_page="South Korea")),
+        ]),
+    dict(
+        family="club_stadium_to_city", group="sport",
+        templates=dict(
+            direct="The stadium {bridge} is found in the city of",
+            composed="The home stadium of the football club {source} is "
+                     "found in the city of",
+            bridge_supplied="The football club {source} plays its home "
+                            "games at {bridge}, found in the city of"),
+        ambiguity="each club has one current home stadium in the snapshot",
+        instances=[
+            ("Ajax", "the Johan Cruyff Arena", "Amsterdam", [" Amsterdam"],
+             dict(source_page="AFC Ajax", bridge_page="Johan Cruyff Arena")),
+            ("Boca Juniors", "La Bombonera", "Buenos Aires",
+             [" Buenos Aires"],
+             dict(source_page="Boca Juniors", bridge_page="La Bombonera")),
+            ("Fenerbahçe", "Şükrü Saracoğlu Stadium", "Istanbul",
+             [" Istanbul"],
+             dict(source_page="Fenerbahçe S.K. (football)",
+                  bridge_page="Şükrü Saracoğlu Stadium")),
+            ("Real Betis", "the Benito Villamarín Stadium", "Seville",
+             [" Seville", " Sevilla"],
+             dict(source_page="Real Betis",
+                  bridge_page="Estadio Benito Villamarín")),
+        ]),
+    dict(
+        family="poem_poet_to_nationality", group="person_culture",
+        templates=dict(
+            direct="The poet {bridge} was by nationality",
+            composed="The poet who wrote {source} was by nationality",
+            bridge_supplied="{source} was written by the poet {bridge}, "
+                            "who was by nationality"),
+        ambiguity="each poem has a single author",
+        instances=[
+            ("The Raven", "Edgar Allan Poe", "American", [" American"],
+             dict(source_page="The Raven",
+                  bridge_page="Edgar Allan Poe")),
+            ("Ozymandias", "Percy Bysshe Shelley", "English",
+             [" English", " British"],
+             dict(source_page="Ozymandias",
+                  bridge_page="Percy Bysshe Shelley")),
+            ("Do not go gentle into that good night", "Dylan Thomas",
+             "Welsh", [" Welsh"],
+             dict(source_page="Do not go gentle into that good night",
+                  bridge_page="Dylan Thomas")),
+            ("Gunga Din", "Rudyard Kipling", "English",
+             [" English", " British"],
+             dict(source_page="Gunga Din", bridge_page="Rudyard Kipling")),
+        ]),
+    dict(
+        family="language_creator_to_nationality", group="tech",
+        templates=dict(
+            direct="The programmer {bridge} is by nationality",
+            composed="The creator of the {source} programming language is "
+                     "by nationality",
+            bridge_supplied="The {source} programming language was created "
+                            "by {bridge}, who is by nationality"),
+        ambiguity="each chosen language has a single principal designer",
+        instances=[
+            ("Python", "Guido van Rossum", "Dutch", [" Dutch"],
+             dict(source_page="Python (programming language)",
+                  bridge_page="Guido van Rossum")),
+            ("C++", "Bjarne Stroustrup", "Danish", [" Danish"],
+             dict(source_page="C++", bridge_page="Bjarne Stroustrup")),
+            ("Pascal", "Niklaus Wirth", "Swiss", [" Swiss"],
+             dict(source_page="Pascal (programming language)",
+                  bridge_page="Niklaus Wirth")),
+            ("JavaScript", "Brendan Eich", "American", [" American"],
+             dict(source_page="JavaScript", bridge_page="Brendan Eich")),
+        ]),
+    dict(
+        family="product_company_to_hq_city", group="tech",
+        templates=dict(
+            direct="The company {bridge} has its headquarters in the city "
+                   "of",
+            composed="The company that makes {source} has its "
+                     "headquarters in the city of",
+            bridge_supplied="{source} is made by {bridge}, which has its "
+                            "headquarters in the city of"),
+        ambiguity="each product names its maker in the snapshot lead; "
+                  "one global HQ city",
+        instances=[
+            ("the Android operating system", "Google", "Mountain View",
+             [" Mountain View"],
+             dict(source_page="Android (operating system)",
+                  bridge_page="Google")),
+            ("the Windows operating system", "Microsoft", "Redmond",
+             [" Redmond"],
+             dict(source_page="Microsoft Windows",
+                  bridge_page="Microsoft")),
+            ("the iPhone", "Apple", "Cupertino", [" Cupertino"],
+             dict(source_page="IPhone", bridge_page="Apple Inc.")),
+            ("Photoshop", "Adobe", "San Jose", [" San Jose"],
+             dict(source_page="Adobe Photoshop", bridge_page="Adobe Inc.")),
+        ]),
+    dict(
+        family="car_model_maker_to_hq_city", group="org",
+        templates=dict(
+            direct="The automaker {bridge} is based in the city of",
+            composed="The automaker that builds the {source} is based in "
+                     "the city of",
+            bridge_supplied="The {source} is built by {bridge}, which is "
+                            "based in the city of"),
+        ambiguity="each model names its maker; one corporate seat in the "
+                  "snapshot infobox",
+        instances=[
+            ("Corolla", "Toyota", "Toyota City", [" Toyota City"],
+             dict(source_page="Toyota Corolla", bridge_page="Toyota")),
+            ("Golf", "Volkswagen", "Wolfsburg", [" Wolfsburg"],
+             dict(source_page="Volkswagen Golf",
+                  bridge_page="Volkswagen")),
+            ("Model S", "Tesla", "Austin", [" Austin"],
+             dict(source_page="Tesla Model S", bridge_page="Tesla, Inc.")),
+            ("Fiat 500", "Fiat", "Turin", [" Turin"],
+             dict(source_page="Fiat 500", bridge_page="Fiat")),
+        ]),
+]
+
+
+def norm(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
+
+
+def build_bundles() -> list[FactBundle]:
+    bundles = []
+    for fam in FAMILIES:
+        inst = fam["instances"]
+        for i, (src, bridge, ans, aliases, pages) in enumerate(inst):
+            cf = inst[(i + 1) % len(inst)]
+            while norm(cf[2]) == norm(ans):     # rotate past same-answer
+                cf = inst[(inst.index(cf) + 1) % len(inst)]
+            prompts = {v: t.format(source=src, bridge=bridge)
+                       for v, t in fam["templates"].items()}
+            slug = re.sub(r"[^a-z0-9]+", "-", src.lower()).strip("-")[:40]
+            bundles.append(FactBundle(
+                fact_id=f"{fam['family']}:{slug}",
+                canonical_family=fam["family"],
+                relation_group=fam["group"], bank="F",
+                source=src, bridge=bridge, answer=ans,
+                accepted_answers=aliases, prompts=prompts,
+                counterfactual_bridge=cf[1], counterfactual_answer=cf[2],
+                counterfactual_accepted=list(cf[3]),
+                provenance={
+                    "source": "wikipedia-20231101.en",
+                    "pages": pages, "ambiguity_note": fam["ambiguity"]}))
+    return bundles
+
+
+def verify_against_wikipedia(bundles: list[FactBundle]) -> dict:
+    """Check hop support in the pinned snapshot: the bridge string must
+    appear on the source-hop page, the answer string on the bridge page.
+    A miss QUARANTINES the bundle (reported, dropped from the bank)."""
+    import pyarrow.dataset as ds
+    titles = set()
+    for b in bundles:
+        titles.add(b.provenance["pages"]["source_page"])
+        titles.add(b.provenance["pages"]["bridge_page"])
+    dataset = ds.dataset(WIKIPEDIA, format="parquet")
+    tab = dataset.to_table(columns=["title", "text"],
+                           filter=ds.field("title").isin(sorted(titles)))
+    pages = dict(zip(tab["title"].to_pylist(), tab["text"].to_pylist()))
+    report = {"missing_pages": sorted(titles - set(pages)),
+              "hop_failures": {}, "n_verified": 0}
+    for b in bundles:
+        pp = b.provenance["pages"]
+        fails = []
+        sp, bp = pages.get(pp["source_page"]), pages.get(pp["bridge_page"])
+        if sp is None:
+            fails.append(f"source page missing: {pp['source_page']}")
+        elif norm(b.bridge) not in norm(sp):
+            fails.append("bridge not stated on source page")
+        if bp is None:
+            fails.append(f"bridge page missing: {pp['bridge_page']}")
+        elif norm(b.answer.removeprefix("the ")) not in norm(bp):
+            fails.append("answer not stated on bridge page")
+        if fails:
+            report["hop_failures"][b.fact_id] = fails
+        else:
+            report["n_verified"] += 1
+    return report
+
+
+def main():
+    require_clean_tree("--allow-dirty" in sys.argv)
+    bundles = build_bundles()
+    p2 = phase2_triple_keys(
+        json.load(open(P2_MANIFEST))["payload"])
+    p2_answers = {k for k in p2 if k.startswith("|")}
+    for b in bundles:      # answer-only dedup, §4.2a's sharp form
+        assert f"|{norm(b.answer)}" not in p2_answers, \
+            f"{b.fact_id}: answer burned by Phase 2"
+    val = validate_bank(bundles, phase2_triples=p2)
+
+    wiki = verify_against_wikipedia(bundles)
+    quarantined = set(wiki["hop_failures"])
+    shipped = [b for b in bundles if b.fact_id not in quarantined]
+
+    out = REPO_DATA / "bank_f_tranche1.jsonl"
+    save_bank(shipped, out)
+    fam_counts = {}
+    for b in shipped:
+        fam_counts[b.canonical_family] = \
+            fam_counts.get(b.canonical_family, 0) + 1
+    payload = {"n_authored": len(bundles), "n_shipped": len(shipped),
+               "n_families": len(fam_counts), "family_counts": fam_counts,
+               "validation": val, "wikipedia_verification": wiki}
+    cmd = "python -m jspace_phase3.experiments.author_bank_f"
+    meta = REPO_DATA / "bank_f_tranche1.meta.json"
+    write_result3(payload, meta, Provenance3(
+        evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
+    register(EVIDENCE_ID, tier=TIER, command=cmd,
+             what=(f"Bank F tranche 1: {len(shipped)} bundles / "
+                   f"{len(fam_counts)} families authored, wikipedia-"
+                   f"verified ({wiki['n_verified']} clean, "
+                   f"{len(quarantined)} quarantined), Phase 2 triple+"
+                   f"answer dedup enforced"),
+             outputs=[out, meta])
+    print(json.dumps({k: v for k, v in payload.items()
+                      if k != "validation"}, indent=1)[:3000])
+    print("validation ok:", val["ok"],
+          "| violations:", len(val["violations"]),
+          "| template_reuse:", len(val["template_reuse"]),
+          "| p2 collisions:", len(val["phase2_triple_collisions"]))
+
+
+if __name__ == "__main__":
+    main()
