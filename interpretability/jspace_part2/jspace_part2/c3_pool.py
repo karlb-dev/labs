@@ -734,7 +734,125 @@ CANONICAL_FAMILY: dict[str, str] = {
     "instrument_family_2": "instrument_family",
     # ordinal-superlative river/mountain prompts share one relation schema
     "river_third_order": "river_second_order",
+    # ---- v4/v5 re-authorings caught by the G5 duplicate-fact audit ------
+    # Each of these was authored as a NEW family but expresses the SAME
+    # relation over the SAME surface template as an existing one, and the
+    # audit found items that are literally the same fact on both sides
+    # (e.g. "The second-longest river in Africa is the" appears in both).
+    # Treating them as independent clusters would let ONE fact land in both
+    # the confirmatory and the replication partition.
+    "second_longest_river_country": "river_second_order",
+    "second_highest_peak": "mountain_second_order",
+    "second_largest_lake": "lake_specific",
+    "philosophical_work_author": "philosopher_work",
+    "economic_work_author": "economics_concept_person",
+    "language_family_membership": "language_family",
+    "sporting_count": "sports_record_less_cited",
+    "biological_process_name": "physiology_process",
+    "anatomical_count": "measure_numeric",
 }
+
+# COARSER CLUSTERING, offered so the estimand choice is explicit rather
+# than implicit (nextsteps_2_2 §9.1). Two families can share a RELATION
+# (work -> creator) while using different surface templates and disjoint
+# knowledge domains: "who wrote Leviathan" and "who wrote Silent Spring"
+# share the relation but not the facts. `canonical_family` keeps them
+# apart; `relation_group` pools them. The preregistration names
+# canonical_family as primary and relation_group as prespecified
+# sensitivity, so a reviewer who thinks the pooling should be coarser can
+# read that analysis instead of doubting the primary.
+RELATION_GROUP: dict[str, str] = {
+    # work / concept -> its creator
+    "philosopher_work": "work_to_creator",
+    "author_less_canonical": "work_to_creator",
+    "playwright_work": "work_to_creator",
+    "composer_work_less_cited": "work_to_creator",
+    "painter_work_less_cited": "work_to_creator",
+    "architect_building": "work_to_creator",
+    "scientific_work_author": "work_to_creator",
+    "political_work_author": "work_to_creator",
+    "sociological_concept_author": "work_to_creator",
+    "economics_concept_person": "work_to_creator",
+    "mathematician_theorem": "work_to_creator",
+    "physicist_named_effect": "work_to_creator",
+    "programming_language_creator": "work_to_creator",
+    "algorithm_inventor": "work_to_creator",
+    "medical_discoverer": "work_to_creator",
+    # entity -> the category it belongs to
+    "language_family": "entity_to_category",
+    "script_writing_system": "entity_to_category",
+    "animal_class": "entity_to_category",
+    "plant_family": "entity_to_category",
+    "compound_class": "entity_to_category",
+    "rock_classification": "entity_to_category",
+    "rock_origin_class": "entity_to_category",
+    "crystal_system": "entity_to_category",
+    "chemical_bond_type": "entity_to_category",
+    "pathogen_type": "entity_to_category",
+    "star_spectral_class": "entity_to_category",
+    "programming_paradigm": "entity_to_category",
+    "protocol_layer": "entity_to_category",
+    "language_word_order": "entity_to_category",
+    "art_movement_order": "entity_to_category",
+    "architecture_period_feature": "entity_to_category",
+    "philosophy_school": "entity_to_category",
+    "medical_specialty_scope": "entity_to_category",
+    "instrument_family": "entity_to_category",
+    # ordinal / second-order superlative
+    "river_second_order": "ordinal_superlative",
+    "mountain_second_order": "ordinal_superlative",
+    "lake_specific": "ordinal_superlative",
+    "second_city": "ordinal_superlative",
+    "second_most_populous": "ordinal_superlative",
+    "peninsula_region": "ordinal_superlative",
+    "star_brightest_constellation": "ordinal_superlative",
+    # counts of structured objects
+    "measure_numeric": "structured_count",
+    "polygon_solid_count": "structured_count",
+    "poetic_form_length": "structured_count",
+    "moons_planetary": "structured_count",
+    "sports_record_less_cited": "structured_count",
+    "music_interval_count": "structured_count",
+    "musical_ensemble_size": "structured_count",
+    "chemistry_count": "structured_count",
+    # names of processes and mechanisms
+    "physiology_process": "process_name",
+    "geological_process_name": "process_name",
+    "chemical_process_name": "process_name",
+    "physics_process_name": "process_name",
+    "psychological_process_name": "process_name",
+    "linguistic_process_name": "process_name",
+    "computing_process_name": "process_name",
+    "geographic_process_name": "process_name",
+    "ecological_process_name": "process_name",
+    "enzyme_process": "process_name",
+    "optical_phenomenon_name": "process_name",
+    # terminology: definition -> its technical term
+    "cognitive_bias_name": "definition_to_term",
+    "economic_term_definition": "definition_to_term",
+    "logical_fallacy_name": "definition_to_term",
+    "statistical_measure_definition": "definition_to_term",
+    "geometry_term_definition": "definition_to_term",
+    "governance_term_definition": "definition_to_term",
+    "literary_device_name": "definition_to_term",
+    "art_technique_name": "definition_to_term",
+    "grammatical_case_function": "definition_to_term",
+    "linguistics_term": "definition_to_term",
+    "study_of_field_name": "definition_to_term",
+    "phobia_or_philia_object": "definition_to_term",
+    "measurement_instrument": "definition_to_term",
+    "measurement_scale_name": "definition_to_term",
+    "unit_measures_quantity": "definition_to_term",
+    "si_unit_derived": "definition_to_term",
+}
+
+
+def relation_group(family: str) -> str:
+    """Coarser than canonical_family: pools families that share a relation
+    but not a surface template or knowledge domain. Prespecified
+    SENSITIVITY clustering, never the primary."""
+    return RELATION_GROUP.get(canonical_family(family),
+                              canonical_family(family))
 
 
 def canonical_family(family: str) -> str:

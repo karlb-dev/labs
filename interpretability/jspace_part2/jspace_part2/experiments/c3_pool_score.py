@@ -26,6 +26,7 @@ from ..battery import answer_variants, seq_lp_from_logits
 from ..c3_pool import pool_rows, summary as pool_summary
 from ..c3_pool_v4 import rows_v4
 from ..c3_pool_v5 import rows_v5
+from ..c3_pool_v6 import rows_v6
 from ..lib import sha256_file
 from ..provenance import (Provenance, registry_append, require_clean_tree,
                           resolve_model, write_result)
@@ -43,15 +44,15 @@ def arg(flag, default=None):
 def main():
     git = require_clean_tree("--allow-dirty" in sys.argv)
     version = arg("--pool", "v2")
-    if version in ("v4", "v5"):
+    if version in ("v4", "v5", "v6"):
         # v4 lives in its own data module (34 NEW canonical families for
         # the D5 family-disjoint expansion); everything else is unchanged.
         def pool_rows(_v=None):          # noqa: F811
-            return rows_v4() if version == "v4" else rows_v5()
+            return {"v4": rows_v4, "v5": rows_v5, "v6": rows_v6}[version]()
 
         def pool_summary(_v=None):       # noqa: F811
             import collections
-            r = rows_v4() if version == "v4" else rows_v5()
+            r = {"v4": rows_v4, "v5": rows_v5, "v6": rows_v6}[version]()
             c = collections.Counter(x["family"] for x in r)
             return {"pool": version, "n_items": len(r), "n_families": len(c),
                     "items_per_family": dict(c)}
