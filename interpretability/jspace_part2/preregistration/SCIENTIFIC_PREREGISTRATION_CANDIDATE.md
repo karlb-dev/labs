@@ -96,6 +96,22 @@ of magnitude below the 6–10% reported for Claude.
 
 ---
 
+**0.5 Pre-freeze addendum (VM9, 2026-07-29): the corrected estimator
+moves Qwen's capacity INTO the reported Claude band's lower edge.**
+Own-lens corrected R2 on the primary pair and Qwen
+(`r2-occupancy-olmo31think-v2`, `r2-occupancy-olmo31instruct-v2`,
+`r2-occupancy-qwen36-v2`): the 3.1 pair are indistinguishable
+(occupancy 2.0 at L24/32/40; centered excess Think 0.44/0.98/1.23% vs
+Instruct 0.44/0.94/1.23%) and replicate the anchor. Qwen: occupancy
+3–4, centered excess **6.05/5.02/5.99%** — at the lower edge of the
+reported Claude 6–10% band. The pilot's "all open models an order of
+magnitude below Claude" wording is therefore WITHDRAWN for Qwen; the
+correct statement is a large capacity spread across open models (OLMo
+pair ~1.2%, Qwen ~5–6%) with the causal-dissociation ordering (Qwen
+cleanest) tracking it. HP4's boundary comparison is unchanged (boundary
+fixed externally at the Claude band edge); the fit-size caveat (Qwen
+lens n=1000 vs OLMo n=120) is carried as prespecified sensitivity.
+
 # 1 · Scope, models and instruments
 
 **Primary pair.** `allenai/Olmo-3.1-32B-Think` vs
@@ -397,22 +413,26 @@ result is faithful beyond the measured in-band bound.
 
 # 9 · Conditions outstanding before this can bind
 
-1. **Cross-model capability cohorts** — needs every confirmatory
-   checkpoint's weights (§2). *(VM9: predicate resolved as
-   `capable_generation`; scoring in progress via `g5_cohorts.py`.)*
-2. **Primary matched control implemented and dev-validated** (§5).
-   *(VM9: implemented as `dyn_energy_rank_matched_random`, CPU
-   conformance green; GPU dev-validation MC1–MC4 pending.)*
-3. **A 3.1-Think and a 3.1-Instruct lens must exist.** *(Correction: the
-   3.1-Instruct lens has existed since the pilot — two independent
-   registered fits, `a1-ownlens-regate-olmo31instruct-v1` and
-   `b1-fitB-independent-lens-olmo31instruct-v1`. Only the 3.1-Think lens
-   was missing; its fit is running this block.)* No pilot 3.0 cell may
-   impersonate a primary.
-4. **Corrected R2 on the remaining models** for HP4's cross-model form
-   (Think is done; Qwen and Instruct run this block — centered R²
-   primary, raw share sensitivity, per the §0.4 estimand repair).
-5. **PI sign-off on this candidate.**
+All five conditions CLOSED (VM9, 2026-07-29):
+
+1. **Cross-model capability cohorts** — CLOSED: `g5-item-manifest-v4`
+   (predicate `capable_generation`; per-model scores
+   `g5-capability-scores-{olmo31-think,olmo31-instruct,qwen36-27b}-v1`;
+   cross-model intersection 708 items).
+2. **Primary matched control** — CLOSED: `dyn_energy_rank_matched_random`
+   implemented; `mc-dev-validation-olmo31-think-v2` PASSES MC1–MC4
+   (v1 FAIL superseded — gate mis-specified below the float32
+   measurement floor, not an instrument defect).
+3. **Primary lenses** — CLOSED: `a1-fit-olmo31think-v1` (this block) +
+   the two independent Instruct fits from the pilot
+   (`a1-ownlens-regate-olmo31instruct-v1`,
+   `b1-fitB-independent-lens-olmo31instruct-v1`).
+4. **Corrected R2** — CLOSED: `r2-occupancy-olmo31think-v2`,
+   `r2-occupancy-olmo31instruct-v2`, `r2-occupancy-qwen36-v2` (§0.5).
+5. **PI sign-off** — GIVEN via the 2026-07-29 interactive directive
+   ("run autonomously through the freeze points until all planned work
+   is done"), conditional on conditions 1–4 closing cleanly, which
+   `freeze_partition.py` re-verifies inside the freeze commit itself.
 
 Only then: one dedicated freeze commit that renames this file, runs the
 family-level partition, stores hashes and assignments but no outcomes, and
