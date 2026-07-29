@@ -166,6 +166,8 @@ def cmd_score():
 
 def cmd_assemble():
     git = require_clean_tree("--allow-dirty" in sys.argv)
+    bos = "--bos" in sys.argv
+    ver = 5 if bos else 4
     payload, items = load_manifest_items()
     per_model = {}
     for slug in MODELS:
@@ -221,8 +223,6 @@ def cmd_assemble():
         c for c in payload.get("conditions_outstanding", [])
         if "capability cohorts" not in c]
 
-    bos = "--bos" in sys.argv
-    ver = 5 if bos else 4
     out = RUN / "metrics" / "cross_model" / f"g5_item_manifest_v{ver}.json"
     prov = Provenance(
         evidence_id=f"g5-item-manifest-v{ver}", tier="dev",
