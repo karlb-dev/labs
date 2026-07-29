@@ -31,7 +31,8 @@ from ..lib import sha256_file
 from ..provenance import (Provenance, registry_append, require_clean_tree,
                           resolve_model, write_result)
 
-MODEL = "/content/models/olmo31-think"
+MODEL = ("/content/hf_local/models--allenai--Olmo-3.1-32B-Think/"
+         "snapshots/832c3f543499af8fe68b88359501de9cb7840544")
 HUB_ID = "allenai/Olmo-3.1-32B-Think"
 HUB_REVISION = "832c3f543499af8fe68b88359501de9cb7840544"
 RUN_DIR_P1 = Path("/content/drive/MyDrive/interpret/special-lab-1/"
