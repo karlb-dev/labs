@@ -2,7 +2,7 @@
 evidence_id: n6-confirmatory-grid-olmo31-think-v1
 tier: confirmatory
 slug: olmo31-think
-model_path: /content/models/olmo31-think
+model_path: /content/hf_local/models--allenai--Olmo-3.1-32B-Think/snapshots/832c3f543499af8fe68b88359501de9cb7840544
 lens_path: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/lens/olmo31think_lens.pt
 prose_corpus: /content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/fitting_corpus.jsonl
 out_dir: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/olmo31-think/n6_grid
