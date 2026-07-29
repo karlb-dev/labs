@@ -59,7 +59,9 @@ def load_deltas(slug: str) -> pd.DataFrame:
             b, s = base.loc[iid], sub.loc[iid]
             rows.append({
                 "model": slug, "condition": cond, "item_id": iid,
-                "task": b["task"], "family": b["canonical_family"],
+                "task": ("onehop" if b["task"] in ("onehop", "hard_onehop")
+                         else b["task"]),
+                "task_raw": b["task"], "family": b["canonical_family"],
                 "relation_group": b["relation_group"],
                 "cohorts_json": b.get("cohorts_json"),
                 "delta": float(s["lp_logsumexp"] - b["lp_logsumexp"]),
@@ -314,7 +316,7 @@ def main():
 
     out = RUN / "metrics" / "cross_model" / "confirmatory_analysis.json"
     prov = Provenance(
-        evidence_id="n6-confirmatory-analysis-v1", tier="confirmatory",
+        evidence_id="n6-confirmatory-analysis-v2", tier="confirmatory",
         command=("python -m jspace_part2.experiments.confirmatory_analysis "
                  f"--slugs {','.join(slugs)}"),
         inputs={f"parquet_{s}": sha256_file(
@@ -323,7 +325,7 @@ def main():
         model={"note": "analysis step over banked parquets"}, seed=SEED)
     write_result_v2(results, out, prov)
     registry_append({
-        "evidence_id": "n6-confirmatory-analysis-v1", "tier": "confirmatory",
+        "evidence_id": "n6-confirmatory-analysis-v2", "tier": "confirmatory",
         "what": (f"LOCKED confirmatory analysis: P-HP1 contrast "
                  f"{results['P_HP1']['observed_contrast_nats']} nats "
                  f"CI {results['P_HP1']['ci95']} p={p_hp1}; P-HP3 Qwen "
@@ -332,6 +334,16 @@ def main():
         "command": prov.command, "code_commit": git["code_commit"],
         "rerun": "auto",
         "outputs": [{"path": str(out), "sha256": sha256_file(out)}]})
+    from .. import registry as reg
+    try:
+        reg.supersede("n6-confirmatory-analysis-v1",
+                      "n6-confirmatory-analysis-v2",
+                      reason="v1 analysis-layer label bug dropped every "
+                             "hard_onehop item (11% of data analysed); v2 "
+                             "maps hard_onehop into the prereg's one-hop "
+                             "comparator, estimands unchanged")
+    except Exception as ex:
+        print(f"  (supersede: {ex})")
     print(json.dumps({k: results[k] for k in
                       ("P_HP1", "P_HP3_qwen", "holm_family_A")}, indent=1))
 
