@@ -1,4 +1,12 @@
-# J-space Part 2 — living report (ADDENDUM-GOVERNED campaign)
+# J-space Part 2 — campaign report (CLOSED 2026-07-29; historical audit log)
+
+> **STATUS (VM10): Phase 2 is complete and frozen** (tags
+> `jspace-part2-confirmatory-freeze-v1`, `jspace-part2-complete-v1`).
+> This file is the campaign's AUDIT LOG, kept in its layered,
+> supersede-not-overwrite form deliberately; it is **not the manuscript**.
+> The manuscript is built in `interpretability/jspace_phase3/paper/` from
+> live registry evidence only. Phase 3 results never land here — see
+> `jspace_phase3/reports/` and the Phase 3 report.
 
 > ### ⚠ READ THIS BEFORE ANY SECTION BELOW — VM8 (2026-07-29)
 >
