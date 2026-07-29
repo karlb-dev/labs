@@ -77,8 +77,17 @@ def build_j_dictionaries(hf_model, lens, layers, device="cuda",
 
 
 def build_logit_dictionary(hf_model, layers, device="cuda",
-                           dtype=torch.float16) -> dict[int, torch.Tensor]:
+                           dtype=torch.float16,
+                           chunk: int = 65536) -> dict[int, torch.Tensor]:
+    """Chunked like build_j_dictionaries: Qwen's 248k-row vocab OOMs if
+    the fp32 normalize intermediate is materialized whole (seen on the
+    96 GB card with the model + 13 J dictionaries resident)."""
     W_U, g = unembed_and_gain(hf_model)
-    D = torch.nn.functional.normalize(
-        (W_U.to(device) * g.to(device)[None, :]), dim=1).to(dtype)
+    V, d = W_U.shape
+    gd = g.to(device)
+    D = torch.empty(V, d, device=device, dtype=dtype)
+    for i in range(0, V, chunk):
+        w = W_U[i:i + chunk].to(device).float() * gd[None, :]
+        D[i:i + chunk] = torch.nn.functional.normalize(w, dim=1).to(dtype)
+        del w
     return {l: D for l in layers}
