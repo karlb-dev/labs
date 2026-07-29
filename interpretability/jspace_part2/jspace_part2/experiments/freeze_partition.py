@@ -46,7 +46,9 @@ def main():
         raise SystemExit("condition 1 OPEN: cohort counts missing")
     mc = RUN / "metrics" / "olmo31-think" / "mc_dev_validation" / \
         "mc_dev_validation.json"
-    if not mc.exists() or not json.loads(mc.read_text())["payload"]["pass"]:
+    mc_d = json.loads(mc.read_text()) if mc.exists() else {}
+    mc_d = mc_d.get("payload", mc_d)
+    if not mc.exists() or not mc_d.get("pass"):
         raise SystemExit("condition 2 OPEN: matched-control dev validation "
                          "missing or FAILED")
     for lens in ("olmo31think_lens.pt", "olmo31instruct_lens.pt"):
