@@ -1,0 +1,25 @@
+{
+  "comment": "Hand-authored BLiMP-style grammaticality minimal pairs for the Workstream C guard battery (nextsteps §7.2). Each pair differs in exactly one word; 'good' is grammatical. Authored in-repo so the source is pinned by git; no external dataset carries these exact sentences.",
+  "pairs": [
+    {"pair_id": "sv_agr_01", "phenomenon": "subject_verb_agreement", "good": "The keys to the old cabinet are lying on the kitchen table.", "bad": "The keys to the old cabinet is lying on the kitchen table."},
+    {"pair_id": "sv_agr_02", "phenomenon": "subject_verb_agreement", "good": "The pattern of cracks along these walls suggests a foundation problem.", "bad": "The pattern of cracks along these walls suggest a foundation problem."},
+    {"pair_id": "sv_agr_03", "phenomenon": "subject_verb_agreement", "good": "Neither of the candidates was prepared for the final question.", "bad": "Neither of the candidates were prepared for the final question."},
+    {"pair_id": "det_noun_01", "phenomenon": "determiner_noun_agreement", "good": "She adopted these kittens from the shelter last spring.", "bad": "She adopted this kittens from the shelter last spring."},
+    {"pair_id": "det_noun_02", "phenomenon": "determiner_noun_agreement", "good": "Every student in the seminar submitted an outline before the deadline.", "bad": "Every students in the seminar submitted an outline before the deadline."},
+    {"pair_id": "anaphor_01", "phenomenon": "anaphor_agreement", "good": "The director praised herself after the successful premiere.", "bad": "The director praised themself after the successful premiere."},
+    {"pair_id": "anaphor_02", "phenomenon": "anaphor_agreement", "good": "The twins taught themselves to read before starting school.", "bad": "The twins taught himself to read before starting school."},
+    {"pair_id": "past_tense_01", "phenomenon": "irregular_past", "good": "The glass fell from the shelf and broke into pieces.", "bad": "The glass fell from the shelf and breaked into pieces."},
+    {"pair_id": "past_tense_02", "phenomenon": "irregular_past", "good": "The children swam across the shallow end of the pool.", "bad": "The children swimmed across the shallow end of the pool."},
+    {"pair_id": "npi_01", "phenomenon": "npi_licensing", "good": "Nobody in the audience had ever seen the play performed live.", "bad": "Everybody in the audience had ever seen the play performed live."},
+    {"pair_id": "npi_02", "phenomenon": "npi_licensing", "good": "She rarely says anything during the weekly planning meetings.", "bad": "She often says anything during the weekly planning meetings."},
+    {"pair_id": "arg_struct_01", "phenomenon": "argument_structure", "good": "The comedian amused the crowd with an improvised story.", "bad": "The comedian vanished the crowd with an improvised story."},
+    {"pair_id": "arg_struct_02", "phenomenon": "argument_structure", "good": "The letter arrived two weeks after it was posted.", "bad": "The letter devoured two weeks after it was posted."},
+    {"pair_id": "aux_01", "phenomenon": "auxiliary_selection", "good": "By Friday the committee will have reviewed every application.", "bad": "By Friday the committee will has reviewed every application."},
+    {"pair_id": "aux_02", "phenomenon": "auxiliary_selection", "good": "The engineers should have checked the valve before the test.", "bad": "The engineers should has checked the valve before the test."},
+    {"pair_id": "case_01", "phenomenon": "pronoun_case", "good": "The manager asked him to lock the storeroom at closing time.", "bad": "The manager asked he to lock the storeroom at closing time."},
+    {"pair_id": "case_02", "phenomenon": "pronoun_case", "good": "Between you and me, the second proposal was far stronger.", "bad": "Between you and I, the second proposal was far stronger."},
+    {"pair_id": "wh_gap_01", "phenomenon": "filler_gap", "good": "This is the recipe that my grandmother perfected over decades.", "bad": "This is the recipe that my grandmother perfected it over decades."},
+    {"pair_id": "wh_gap_02", "phenomenon": "filler_gap", "good": "The article that the editor rejected was later published elsewhere.", "bad": "The article that the editor rejected the draft was later published elsewhere."},
+    {"pair_id": "comp_01", "phenomenon": "comparative", "good": "The northern route is much longer than the coastal one.", "bad": "The northern route is much more longer than the coastal one."}
+  ]
+}
