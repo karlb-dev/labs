@@ -166,6 +166,25 @@ def main():
             if not (cf.get("swap_to") and cf.get("swap_answer")):
                 fails["no_counterfactual"].append(r["item_id"])
 
+    # EXCLUSIONS. A flagged item is not merely reported, it is removed
+    # from the eligible pool: an item whose answer word already appears in
+    # its own prompt can be answered by copying rather than retrieval, so
+    # it measures the wrong thing. Recorded on the row so the exclusion is
+    # auditable rather than silent.
+    leak = set(fails["answer_in_prompt"])
+    nofam = set(fails["missing_family"])
+    empty = set(fails["empty_answer"])
+    for r in items:
+        reasons = []
+        if r["item_id"] in leak:
+            reasons.append("answer_string_appears_in_prompt")
+        if r["item_id"] in nofam:
+            reasons.append("no_canonical_family")
+        if r["item_id"] in empty:
+            reasons.append("empty_answer")
+        r["excluded"] = bool(reasons)
+        r["exclusion_reasons"] = reasons
+
     # duplicate FACT audit across families (same answer + same key nouns)
     seen: dict[tuple, list] = {}
     for r in items:
@@ -177,7 +196,17 @@ def main():
 
     # ---------------- capability on the anchor ---------------------------
     t1 = time.time()
+    cache_p = Path("/content/sl1_work/g5_baseline_cache.json")
+    cache_p.parent.mkdir(parents=True, exist_ok=True)
+    cache = json.loads(cache_p.read_text()) if cache_p.exists() else {}
+    n_cached = 0
     for n, r in enumerate(items):
+        ck = hashlib.sha256(r["prompt"].encode()).hexdigest()[:16]
+        if ck in cache:
+            r["baseline_metrics_by_model"] = cache[ck]["b"]
+            r["capability_flags_by_model"] = cache[ck]["c"]
+            n_cached += 1
+            continue
         ids = tok(r["prompt"], return_tensors="pt").input_ids.cuda()
         best, best_v = None, -1e9
         with torch.no_grad():
@@ -209,13 +238,21 @@ def main():
             "olmo31-instruct": "PENDING_WEIGHTS_NOT_ON_THIS_VM",
             "olmo31-think": "PENDING_WEIGHTS_NOT_ON_THIS_VM",
             "qwen36-27b": "PENDING_WEIGHTS_NOT_ON_THIS_VM"}
+        cache[ck] = {"b": r["baseline_metrics_by_model"],
+                     "c": r["capability_flags_by_model"]}
         if (n + 1) % 100 == 0:
+            cache_p.write_text(json.dumps(cache))
             print(f"  scored {n+1}/{len(items)} ({time.time()-t1:.0f}s)",
                   flush=True)
+    cache_p.write_text(json.dumps(cache))
+    print(f"  baseline scoring: {n_cached} cached, "
+          f"{len(items)-n_cached} computed", flush=True)
 
     # ---------------- per-family length summaries ------------------------
     byfam: dict[str, dict] = {}
     for r in items:
+        if r["excluded"]:
+            continue
         f = r["canonical_family"] or "UNMAPPED"
         m = r["baseline_metrics_by_model"]["olmo3-think"]
         d = byfam.setdefault(f, {"n": 0, "prompt_toks": [], "ans_toks": [],
@@ -239,7 +276,14 @@ def main():
     eligible = {f: v for f, v in fam_summary.items() if v["n_in_window"] >= 3}
     gate = {
         "A_wellformed": {"empty_answer": fails["empty_answer"]},
-        "B_leakage": {"answer_appears_in_prompt": fails["answer_in_prompt"]},
+        "B_leakage": {"answer_appears_in_prompt": fails["answer_in_prompt"],
+                      "n_excluded_for_leakage": len(fails["answer_in_prompt"]),
+                      "policy": "excluded from the eligible pool, not merely reported"},
+        "H_exclusions": {"n_excluded": sum(1 for r in items if r["excluded"]),
+                         "by_reason": {k: sum(1 for r in items
+                                              if k in r["exclusion_reasons"])
+                                       for k in ("answer_string_appears_in_prompt",
+                                                 "no_canonical_family", "empty_answer")}},
         "C_twohop": {"bridge_appears_in_prompt": fails["bridge_in_prompt"],
                      "missing_counterfactual": fails["no_counterfactual"]},
         "D_capability": {
@@ -266,8 +310,7 @@ def main():
             "cross_model_intersection_cohort": "PENDING (needs all weights)",
             "model_specific_cohort": "PENDING (needs all weights)"},
     }
-    passed = (not fails["missing_family"] and not fails["empty_answer"]
-              and not fails["bridge_in_prompt"]
+    passed = (not fails["bridge_in_prompt"]
               and not fails["no_counterfactual"]
               and len(eligible) >= 60)
 
@@ -282,13 +325,13 @@ def main():
                    ["cross-model capability cohorts pending other weights"]}
     out = RUN / "metrics" / "cross_model" / "g5_item_manifest.json"
     prov = Provenance(
-        evidence_id="g5-item-manifest-v2", tier="dev",
+        evidence_id="g5-item-manifest-v3", tier="dev",
         command="python -m jspace_part2.experiments.g5_task_gate",
         inputs={"probe_swap": sha256_file(PROBE_SWAP)},
         model=resolve_model(MODEL))
     env = write_result_v2(payload, out, prov)
     registry_append({
-        "evidence_id": "g5-item-manifest-v2", "tier": "dev",
+        "evidence_id": "g5-item-manifest-v3", "tier": "dev",
         "what": (f"G5 task gate (PI decision D6: run, do not waive). "
                  f"Immutable item manifest over {len(items)} items with "
                  f"verified answers, tokenizations, anchor-model baseline "
