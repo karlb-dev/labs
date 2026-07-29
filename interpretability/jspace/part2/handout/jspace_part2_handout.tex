@@ -477,6 +477,22 @@ energy bound below the float32 measurement floor and failed; v2 floors
 the relative check at $10^{-3}$ dose with an absolute bound below ---
 the same discipline as the withdrawn bf16 linearity v1.
 
+\subsection{Replication partition and the independent-lens clause}
+
+HP3 \textbf{replicates on the 32 held-out families}: Qwen paired
+tail-rate $+0.297$ $[+0.207, +0.382]$ vs the confirmatory $+0.279$,
+threshold curve stable. HP1 is \emph{inconclusive} on the replication
+side (contrast $+0.104$ $[-1.68, +1.89]$, all-items fallback population,
+disclosed): the replication two-hop leg is 9 items and absent from the
+intersection cohort --- not a contradiction (the CI comfortably contains
+the confirmatory $-0.504$), but the thin-two-hop limitation made
+concrete. The \textbf{independent-lens clause is fully discharged}: a
+second Think lens was fitted on a disjoint corpus (draw B) and both
+primaries reproduce their per-item replication deltas almost exactly
+under it --- Think $r=0.988$ (tail Jaccard $0.878$), Instruct $r=0.990$
+($0.883$). The protected tail is a property of the models, not of any
+one lens fit.
+
 \subsection{For further investigation}
 
 (i) Run the replication partition --- especially to thicken the two-hop

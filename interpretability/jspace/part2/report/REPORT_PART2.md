@@ -84,9 +84,14 @@ leg reproduces the per-item deltas at r = 0.990 with tail Jaccard 0.885.
 HP1 is **inconclusive** on the replication side (contrast +0.104
 [−1.68, +1.89], all-items fallback population — the replication two-hop
 leg is 9 items and absent from the intersection cohort): not a
-contradiction, but the thin-two-hop limitation made concrete. A second
-independent Think lens (corpus draw B) is being fitted to complete the
-independent-lens clause on the think-trained primary.
+contradiction, but the thin-two-hop limitation made concrete. **The
+independent-lens clause is fully discharged**
+(`n6-repl-lens-independence-v2`): under a second Think lens fitted on a
+disjoint corpus (draw B, `a1-fitB-independent-lens-olmo31think-v1`),
+both primaries reproduce their per-item replication deltas almost
+exactly — Think r = 0.988 (tail Jaccard 0.878), Instruct r = 0.990
+(0.883). The protected tail is a property of the models, not of any one
+lens fit.
 
 Figures: `p2f15` (capacity), `p2f16` (cohorts), `p2f17` (primary
 results). Next block: EXPAND THE TWO-HOP BANK (the sharpest limitation),
