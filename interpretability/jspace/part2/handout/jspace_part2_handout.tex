@@ -369,6 +369,129 @@ existed since the pilot as two independent registered fits (row-cos
 missing; its fit (recipe identical to the Instruct draw-A fit) runs this
 block.
 
+\section{VM9 --- THE CONFIRMATORY CAMPAIGN RAN, AND BOTH PRIMARY TESTS
+REJECT}\label{sec:vm9results}
+
+The freeze executed at 08:2x UTC (tag
+\code{jspace-part2-confirmatory-freeze-v1}; partition seed 4242, 32
+confirmatory / 32 replication families, disjoint, no outcome viewed
+between generation and freeze). All three confirmatory cells then ran to
+completion --- 164 partition items $\times$ 6 conditions per model, G4
+swap positive control passing first on every checkpoint with its own
+lens (flip rates: Think 0.76, Instruct 0.76, Qwen 0.78, vs random
+0.18--0.24, none 0.00--0.06) --- and the locked analysis ran once, from
+raw parquets, after the final cell banked.
+
+\subsection{The two Holm-family tests}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\linewidth]{figures/p2f17_confirmatory_primary.png}
+\end{figure}
+
+\textbf{P-HP1 (post-training changes the task contrast): REJECTS}
+($p_{\mathrm{holm}}=0.0005$). The Think-vs-Instruct model-by-task
+interaction contrast on the logsumexp-alias delta is $-0.504$ nats, CI
+$[-0.720, -0.295]$ (172 items, 24 intersection-cohort families,
+family-weighted, paired family bootstrap). Transparency note: the
+MixedLM formulation agrees in sign ($-0.43$) but cannot represent the
+item-level pairing (no crossed random effects in the implementation), so
+its interaction test is diffuse ($p=0.71$); the paired family-clustered
+bootstrap is the declared fallback and preserves the design. Both are
+reported.
+
+\textbf{P-HP3 (a J-specific protected tail beyond geometry): REJECTS on
+Qwen} ($p_{\mathrm{holm}}=0.0005$): paired tail-rate difference vs the
+geometry-matched control $+0.279$, CI $[+0.205, +0.361]$ ($n=158$
+protected-answer items, 32 families), stable across the prespecified
+threshold curve ($-0.5$: $+0.32$; $-1.5$: $+0.22$; $-2.0$: $+0.14$) and
+under the all-items sensitivity. The OLMo estimates are CI-clean too:
+Think $+0.418$ $[0.333, 0.500]$, Instruct $+0.488$ $[0.395, 0.577]$.
+
+\subsection{The matched control did its job}
+
+\code{dyn\_energy\_rank\_matched\_random} --- exact per-position rank and
+removed-energy match to the J arm, orthogonal to protected rows ---
+produces deltas indistinguishable from zero on every model and task
+($-0.08$ to $+0.04$ nats) while the J arm removes nats. At matched dose,
+\emph{direction content is the entire effect}. The isotropic
+mechanics-random arm meanwhile does real damage on Qwen ($-0.67$
+two-hop) at its larger, unmatched dose --- a live illustration of the
+dose confound the matched control exists to remove.
+
+\subsection{The shape of the result, and its sharpest caveat}
+
+Qwen's forward dissociation replicates at confirmatory tier (two-hop
+$-1.62$ $[-1.74,-1.51]$ vs one-hop $-0.39$); the OLMo 3.1 pair damages
+one-hop \emph{more} than two-hop (Think $-1.00$ vs $+0.37$; Instruct
+$-1.66$ vs $-0.14$). \textbf{Caveat, stated prominently: the
+confirmatory two-hop leg is thin} --- only 9 items / 2 families of the
+released two-hop set survived the anchor difficulty window, so the HP1
+interaction is carried mostly by the one-hop legs. The untouched
+replication partition (32 families) is the built-in check; running it is
+the next block's first job.
+
+\subsection{Secondary and guard results}
+
+HP2 (accessibility) is confirmed as an estimate on every model: hard
+one-hop items lose $3$--$6\times$ more than easy (Think $-1.80$ vs
+$-0.32$; Instruct $-2.67$ vs $-0.85$; Pearson baseline-vs-delta
+$+0.37$--$0.41$). The hurdle decomposition puts the one-hop tail rate at
+$0.52$--$0.56$ for the OLMo pair with mean magnitude-given-tail $-2.4$
+to $-3.3$ nats. The prose-NLL guard shows the protected-J intervention
+is not free of nonspecific cost (Instruct $+0.72$ nats prose NLL vs
+Think $+0.24$, matched/mechanics controls $\leq 0.16$, logit $\approx
+0$) --- worth carrying into interpretation of Instruct's large one-hop
+damage.
+
+\subsection{Capacity: the corrected estimand rewrites one pilot headline}
+
+\begin{figure}[h]\centering
+\includegraphics[width=.9\linewidth]{figures/p2f15_capacity_crossmodel.png}
+\end{figure}
+
+Own-lens corrected R2 on the primaries: the 3.1 pair are
+indistinguishable (occupancy 2.0; centered excess
+$0.44/0.98/1.23\%$ vs $0.44/0.94/1.23\%$ at L24/32/40) and replicate the
+anchor. \textbf{Qwen lands at $6.05/5.02/5.99\%$ --- the lower edge of
+the reported Claude band (6--10\%)}. The pilot's ``all open models an
+order of magnitude below Claude'' is withdrawn for Qwen: open-model
+capacity spreads $\sim5\times$, and the model with the cleanest causal
+dissociation is also the one with near-Claude capacity. (Fit-size
+caveat: Qwen's published $n{=}1000$ lens vs OLMo's $n{=}120$ fits ---
+prespecified sensitivity.)
+
+\subsection{Instrument notes and amendments (all pre-outcome)}
+
+The \S7 baseline stop rule fired twice before any outcome was viewed and
+caught a real two-unit-system inconsistency:
+\code{jlens.from\_hf(force\_bos=True)} mutates the shared tokenizer, so
+lens fits and all pilot cells live in BOS units while the capability
+gate was scored native; and the gate scores answers by piecewise
+concatenation of un-rstripped prompts where the pilot grids
+string-concatenated. Amendment 1 standardises assay-wide BOS units and
+the gate's piecewise convention (capability rescored: Think 774,
+Instruct 782, Qwen 875 of 1037; cohorts reassembled as manifest v5,
+intersection 700; the frozen partition untouched). The matched-control
+dev gate also went through one honest iteration: v1 applied a relative
+energy bound below the float32 measurement floor and failed; v2 floors
+the relative check at $10^{-3}$ dose with an absolute bound below ---
+the same discipline as the withdrawn bf16 linearity v1.
+
+\subsection{For further investigation}
+
+(i) Run the replication partition --- especially to thicken the two-hop
+leg. (ii) The reverse (one-hop-dominant) OLMo pattern at confirmatory
+tier echoes the pilot base-model rung: is one-hop damage the signature
+of \emph{rehearsed-fact} channels across the lineage? The HP2 gradient
+says accessibility, not hop count, organises the damage. (iii) Qwen's
+joint status --- near-Claude capacity, clean forward dissociation, and
+the smallest (though CI-clean) matched-control tail gap --- makes the
+capacity-vs-causal-shape moderator analysis (prereg's HP4 caution) the
+most interesting open thread. (iv) The Instruct prose-guard cost
+($+0.72$) deserves a targeted specificity follow-up. (v) The 5/325
+trailing-whitespace items carry a double-space tokenization artifact
+(cancels in paired deltas; flagged for the mechanism audit).
+
 \section*{Reproducibility}
 
 Run dir \code{special-lab-1/part2\_20260727/} (metrics per model slug,

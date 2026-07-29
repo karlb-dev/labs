@@ -26,7 +26,64 @@
 >    centered variance) and is now larger, though still an order of
 >    magnitude below the reported Claude band.
 
-**Status 2026-07-29 (VM9, current): the freeze-blocker block.** The PI
+## VM9 — THE CONFIRMATORY CAMPAIGN (2026-07-29) — tier: CONFIRMATORY
+
+**The freeze executed** (tag `jspace-part2-confirmatory-freeze-v1`;
+partition seed 4242, 32/32 disjoint families, no outcome viewed between
+generation and freeze), all three confirmatory cells ran (164 partition
+items × 6 conditions each; G4 swap control passing per model with its
+own lens: 0.76/0.76/0.78 vs random 0.18–0.24), and the locked analysis
+ran once from raw parquets after the final cell banked
+(`n6-confirmatory-analysis-v2`).
+
+**BOTH PRIMARY HOLM TESTS REJECT.**
+
+- **P-HP1** (post-training changes the task contrast): interaction
+  contrast **−0.504 nats CI [−0.720, −0.295]**, p_holm = 0.0005
+  (172 items / 24 intersection families, family-weighted paired
+  bootstrap; the MixedLM cross-check agrees in sign at −0.43 but cannot
+  represent the item pairing and is diffuse — both reported).
+- **P-HP3** (J-specific protected tail vs the geometry-matched control),
+  the powered Qwen test: paired tail-rate difference **+0.279
+  CI [+0.205, +0.361]**, p_holm = 0.0005, stable across the threshold
+  curve. The OLMo estimates are CI-clean too: Think +0.418, Instruct
+  +0.488.
+
+**The matched control (`dyn_energy_rank_matched_random`) is the
+methodological star**: at exactly the J arm's per-position rank and
+removed energy it produces ≈0 deltas everywhere (−0.08…+0.04 nats) — at
+matched dose, direction content is the entire effect. The isotropic
+mechanics arm does real damage on Qwen (−0.67 two-hop) at its larger
+unmatched dose, illustrating the confound the matched control removes.
+
+**Shape**: Qwen's forward dissociation replicates at confirmatory tier
+(two-hop −1.62 vs one-hop −0.39); the OLMo pair is one-hop-dominant
+(Think −1.00 vs +0.37; Instruct −1.66 vs −0.14). **Prominent caveat:
+the confirmatory two-hop leg is thin (9 items / 2 families survived the
+anchor difficulty window)** — HP1 rides mostly on the one-hop legs; the
+untouched 32-family replication partition is the built-in check.
+
+**Secondary**: HP2 accessibility gradient confirmed on every model
+(hard −1.8…−2.7 vs easy −0.3…−0.9; r ≈ +0.4). Prose guard: Instruct's
+protected-J costs +0.72 nats prose NLL (Think +0.24; controls ≤0.16) —
+nonspecific-cost caveat on Instruct's one-hop number. Capacity
+(corrected estimand, own lenses): 3.1 pair indistinguishable at ~1.2%
+centered excess (occ 2); **Qwen at 5.0–6.1% — the Claude band's lower
+edge — withdrawing the pilot's "order of magnitude below" for Qwen**.
+
+**Amendments (all pre-outcome, stop-rule-driven)**: assay-wide BOS units
++ the gate's piecewise tokenization (AMENDMENT_1_BOS_UNITS.md; the §7
+baseline stop rule fired twice at item 1 with zero outcome exposure and
+caught a real two-unit-system inconsistency). Matched-control dev gate
+v1→v2 (relative bound was below the float32 measurement floor).
+
+Figures: `p2f15` (capacity), `p2f16` (cohorts), `p2f17` (primary
+results). Next block: the replication partition; the capacity-vs-shape
+moderator analysis; the Instruct prose-cost follow-up.
+
+---
+
+**Status 2026-07-29 (VM9, superseded above at 10:2x UTC): the freeze-blocker block.** The PI
 delegated the open design calls; three were resolved and recorded
 (READY_FOR_FREEZE VM9 section + prereg candidate §5): (1) the **primary
 matched control** is `dyn_energy_rank_matched_random` — per-position
