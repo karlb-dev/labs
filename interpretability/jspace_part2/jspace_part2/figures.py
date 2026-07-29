@@ -356,8 +356,135 @@ def f14_bank_readiness():
     _save(fig, "p2f14_bank_readiness.png")
 
 
+# ------------------------------------------------------------------ f15
+def f15_capacity_crossmodel():
+    """Corrected centered-R2 capacity across the confirmatory models."""
+    slugs = [("olmo31-think", "3.1-Think"), ("olmo31-instruct", "3.1-Instruct"),
+             ("qwen36-27b", "Qwen3.6")]
+    loaded = [(lab, _load(M / s / "r2_occupancy" / "r2_occupancy_v2.json"))
+              for s, lab in slugs]
+    loaded = [(lab, d) for lab, d in loaded if d]
+    if not loaded:
+        return
+    fig, ax = plt.subplots(figsize=(6.4, 3.6))
+    layers = sorted({int(L) for _, d in loaded for L in d["per_layer"]})
+    w = 0.8 / len(loaded)
+    for i, (lab, d) in enumerate(loaded):
+        xs, cen, lo, hi, occ = [], [], [], [], []
+        for j, L in enumerate(layers):
+            e = d["per_layer"].get(str(L))
+            if not e:
+                continue
+            xs.append(j + (i - (len(loaded) - 1) / 2) * w)
+            cen.append(e["centered_variance_explained_excess"] * 100)
+            lo.append(e["centered_excess_ci"]["low"] * 100)
+            hi.append(e["centered_excess_ci"]["high"] * 100)
+            occ.append(e.get("occ_median"))
+        col = [PAL["J"], PAL["nonJ"], PAL["random"]][i % 3]
+        ax.bar(xs, cen, w * 0.92, color=col, label=lab, edgecolor="white",
+               yerr=[np.array(cen) - np.array(lo),
+                     np.array(hi) - np.array(cen)],
+               ecolor=PAL["ink"], capsize=2.5)
+        for x, c, o in zip(xs, cen, occ):
+            if o is not None:
+                ax.text(x, c + 0.25, f"occ {o:g}", ha="center", fontsize=6.5,
+                        color=PAL["muted"], rotation=90)
+    ax.axhspan(6, 10, color=PAL["warn"], alpha=0.10, zorder=0)
+    ax.text(len(layers) - 0.5, 8, "reported Claude band", ha="right",
+            fontsize=8, color=PAL["warn"])
+    ax.set_xticks(range(len(layers)))
+    ax.set_xticklabels([f"L{L}" for L in layers])
+    ax.set_ylabel("centered $R^2$ excess (%)")
+    ax.set_title("Corrected capacity estimand across confirmatory models",
+                 loc="left", fontsize=10)
+    ax.legend(frameon=False, fontsize=8)
+    _save(fig, "p2f15_capacity_crossmodel.png")
+
+
+# ------------------------------------------------------------------ f16
+def f16_cohorts():
+    """Capability-cohort composition after closing freeze condition 1."""
+    d = _load(M / "cross_model" / "g5_item_manifest_v4.json")
+    if not d or not d.get("cohort_counts"):
+        return
+    cc = d["cohort_counts"]
+    labels = ["anchor-capable\n(3.1 pair)", "cross-model\nintersection",
+              "3.1-Think", "3.1-Instruct", "Qwen3.6"]
+    vals = [cc.get("lineage_anchor", 0), cc.get("cross_model_intersection", 0),
+            cc.get("model_specific:olmo31-think", 0),
+            cc.get("model_specific:olmo31-instruct", 0),
+            cc.get("model_specific:qwen36-27b", 0)]
+    cols = [PAL["J"], PAL["nonJ"], PAL["muted"], PAL["muted"], PAL["muted"]]
+    fig, ax = plt.subplots(figsize=(6.2, 3.2))
+    xs = np.arange(len(vals))
+    ax.bar(xs, vals, 0.62, color=cols, edgecolor="white")
+    for x, v in zip(xs, vals):
+        ax.text(x, v + 6, str(v), ha="center", fontsize=8.5)
+    ax.set_xticks(xs)
+    ax.set_xticklabels(labels, fontsize=8)
+    ax.set_ylabel("items (non-excluded)")
+    n3 = d.get("cross_model_intersection_families_ge3")
+    ax.set_title(f"Capability cohorts closed — predicate: greedy generation "
+                 f"on frozen aliases ({n3} intersection families ≥3 items)",
+                 loc="left", fontsize=9.5)
+    _save(fig, "p2f16_cohorts.png")
+
+
+# ------------------------------------------------------------------ f17
+def f17_confirmatory_primary():
+    """THE confirmatory result: per model x task deltas for the primary
+    arm vs the geometry-matched control, plus the two Holm tests."""
+    d = _load(M / "cross_model" / "confirmatory_analysis.json")
+    if not d:
+        return
+    est = d["estimates"]
+    slugs = [("olmo31-think", "3.1-Think"), ("olmo31-instruct", "3.1-Instruct"),
+             ("qwen36-27b", "Qwen3.6")]
+    conds = [("meanJ_protected", PAL["J"], "protected mean-J"),
+             ("matched_control", PAL["nonJ"], "matched control"),
+             ("dynR_mechanics_control", PAL["legacy"], "mechanics random")]
+    fig, axes = plt.subplots(1, 2, figsize=(10.4, 3.9), sharey=True)
+    for ax, task in zip(axes, ("twohop", "onehop")):
+        xs = np.arange(len(slugs))
+        for i, (cond, col, lab) in enumerate(conds):
+            ys, lo, hi = [], [], []
+            for s, _ in slugs:
+                e = est.get(f"{s}/{cond}/{task}")
+                ys.append(e["fam_weighted_mean"] if e else np.nan)
+                lo.append(e["ci95_fam"][0] if e else np.nan)
+                hi.append(e["ci95_fam"][1] if e else np.nan)
+            x = xs + (i - 1) * 0.22
+            ax.errorbar(x, ys, yerr=[np.array(ys) - np.array(lo),
+                                     np.array(hi) - np.array(ys)],
+                        fmt="o", color=col, capsize=3, ms=5,
+                        label=lab if task == "twohop" else None)
+        ax.axhline(0, color=PAL["muted"], lw=0.8)
+        ax.axhline(-1.0, color=PAL["warn"], lw=0.8, ls="--")
+        ax.set_xticks(xs)
+        ax.set_xticklabels([l for _, l in slugs])
+        ax.set_title(task, loc="left", fontsize=10)
+        ax.grid(axis="y")
+    axes[0].set_ylabel("Δ answer-seq logprob (nats, fam-weighted)")
+    hp1 = d.get("P_HP1", {})
+    holm = d.get("holm_family_A", {})
+    fig.suptitle(
+        f"CONFIRMATORY · HP1 contrast {hp1.get('observed_contrast_nats')} "
+        f"nats CI {hp1.get('ci95')} · Holm "
+        f"{ {k: v.get('p_holm') for k, v in holm.items()} }",
+        fontsize=9, y=1.02)
+    fig.legend(frameon=False, fontsize=8, ncol=3, loc="lower center",
+               bbox_to_anchor=(0.5, -0.06))
+    FIGDIR.mkdir(parents=True, exist_ok=True)
+    watermark(fig, "CONFIRMATORY")
+    fig.savefig(FIGDIR / "p2f17_confirmatory_primary.png", dpi=190,
+                bbox_inches="tight")
+    plt.close(fig)
+    print("wrote p2f17_confirmatory_primary.png")
+
+
 FIGS = [f10_family_correction, f11_feasibility, f12_h7_ceiling,
-        f13_capacity_corrected, f14_bank_readiness]
+        f13_capacity_corrected, f14_bank_readiness,
+        f15_capacity_crossmodel, f16_cohorts, f17_confirmatory_primary]
 
 
 def main():
