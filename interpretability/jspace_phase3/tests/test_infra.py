@@ -1,5 +1,7 @@
 # Conformance: run-root indirection + Phase 3 registry rules.
+import ast
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -81,3 +83,31 @@ def test_cli_runs():
                           "registry-list"], capture_output=True, text=True,
                          cwd=str(PKG))
     assert out.returncode == 0
+
+
+def test_stable_seed_ignores_python_hash_salt():
+    code = (
+        "from jspace_phase3.seeds import stable_seed;"
+        "print(stable_seed('matched-control','family:item#direct',31337))"
+    )
+    values = []
+    for salt in ("1", "2", "random"):
+        env = os.environ.copy()
+        env["PYTHONHASHSEED"] = salt
+        out = subprocess.check_output(
+            [sys.executable, "-c", code], text=True, env=env)
+        values.append(int(out))
+    assert len(set(values)) == 1
+    assert values[0] == 1595016331402564145
+
+
+def test_no_builtin_hash_in_phase3_scientific_modules():
+    bad = []
+    for path in (PKG / "jspace_phase3").rglob("*.py"):
+        tree = ast.parse(path.read_text(), filename=str(path))
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Name)
+                    and node.func.id == "hash"):
+                bad.append(f"{path.relative_to(PKG)}:{node.lineno}")
+    assert not bad, f"built-in hash used in scientific package: {bad}"

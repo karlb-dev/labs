@@ -5,6 +5,8 @@
 # Everything here is deterministic given (data, seed) and CPU-only.
 from __future__ import annotations
 
+import hashlib
+
 import numpy as np
 import pandas as pd
 
@@ -98,15 +100,140 @@ def family_signflip_test(family_vals: np.ndarray, *, draws: int = 100_000,
         stats = (signs * v).mean(axis=1)
         exact = False
     if alternative == "two-sided":
-        p = float((np.abs(stats) >= abs(obs) - 1e-15).mean())
+        extreme = int(np.count_nonzero(
+            np.abs(stats) >= abs(obs) - 1e-15))
     elif alternative == "less":
-        p = float((stats <= obs + 1e-15).mean())
+        extreme = int(np.count_nonzero(stats <= obs + 1e-15))
     elif alternative == "greater":
-        p = float((stats >= obs - 1e-15).mean())
+        extreme = int(np.count_nonzero(stats >= obs - 1e-15))
     else:
         raise ValueError(alternative)
+    p = (float(extreme / len(stats)) if exact
+         else float((extreme + 1) / (len(stats) + 1)))
     return {"estimate": obs, "p": p, "n_families": m, "exact": exact,
-            "alternative": alternative}
+            "alternative": alternative, "n_randomizations": int(len(stats))}
+
+
+def exact_signflip_distribution(family_vals: np.ndarray) -> np.ndarray:
+    """All 2**m sign-flipped family means, in deterministic bit order."""
+    v = np.asarray(family_vals, dtype=float)
+    v = v[~np.isnan(v)]
+    m = len(v)
+    if m < 3:
+        raise ValueError(f"only {m} families")
+    if m > 22:
+        raise ValueError(
+            f"exact enumeration would require 2**{m} patterns")
+    bits = np.arange(2**m, dtype=np.uint32)[:, None]
+    signs = (
+        1 - 2 * ((bits >> np.arange(m, dtype=np.uint32)) & 1)
+    ).astype(np.int8)
+    return (signs @ v) / m
+
+
+def exact_signflip_test(family_vals: np.ndarray,
+                        *, alternative: str = "two-sided") -> dict:
+    """Exact family sign-flip test, independent of a Monte Carlo budget."""
+    v = np.asarray(family_vals, dtype=float)
+    v = v[~np.isnan(v)]
+    stats = exact_signflip_distribution(v)
+    obs = float(v.mean())
+    if alternative == "two-sided":
+        extreme = np.abs(stats) >= abs(obs) - 1e-15
+    elif alternative == "less":
+        extreme = stats <= obs + 1e-15
+    elif alternative == "greater":
+        extreme = stats >= obs - 1e-15
+    else:
+        raise ValueError(alternative)
+    return {
+        "estimate": obs,
+        "p": float(extreme.mean()),
+        "extreme_patterns": int(extreme.sum()),
+        "n_patterns": int(len(stats)),
+        "n_families": int(len(v)),
+        "alternative": alternative,
+        "distribution_sha256": hashlib.sha256(
+            np.asarray(stats, dtype="<f8").tobytes()).hexdigest(),
+    }
+
+
+def signflip_confidence_set(family_vals: np.ndarray, *, alpha: float = 0.05,
+                            grid_points: int = 4001,
+                            width_sd: float = 5.0) -> dict:
+    """Invert the exact shifted sign-flip test on a dense effect grid.
+
+    At candidate effect ``theta``, the test sign-flips ``v - theta`` and
+    compares its mean with the observed mean of ``v - theta``. The returned
+    set is randomization-compatible; it is not a bootstrap interval.
+    """
+    v = np.asarray(family_vals, dtype=float)
+    v = v[~np.isnan(v)]
+    m = len(v)
+    if m < 3 or m > 22:
+        raise ValueError(f"exact inversion requires 3..22 families, got {m}")
+    obs = float(v.mean())
+    sd = float(v.std(ddof=1))
+    if sd == 0:
+        return {
+            "confidence_set": [obs, obs], "alpha": alpha,
+            "grid_points": 1, "grid_resolution": 0.0,
+            "n_components": 1, "method": "exact-shifted-signflip-inversion",
+        }
+    grid = np.linspace(obs - width_sd * sd, obs + width_sd * sd,
+                       grid_points)
+    bits = np.arange(2**m, dtype=np.uint32)[:, None]
+    signs = (
+        1 - 2 * ((bits >> np.arange(m, dtype=np.uint32)) & 1)
+    ).astype(np.int8)
+    signed_v = signs @ v
+    signed_n = signs.sum(axis=1, dtype=np.int32).astype(float)
+    pvals = np.empty(grid_points)
+    for start in range(0, grid_points, 32):
+        theta = grid[start:start + 32]
+        null = (
+            signed_v[:, None] - signed_n[:, None] * theta[None, :]
+        ) / m
+        observed = np.abs(obs - theta)[None, :]
+        pvals[start:start + len(theta)] = (
+            np.abs(null) >= observed - 1e-15).mean(axis=0)
+    keep = np.flatnonzero(pvals >= alpha)
+    if not len(keep):
+        confidence_set = None
+        n_components = 0
+    else:
+        confidence_set = [float(grid[keep[0]]), float(grid[keep[-1]])]
+        n_components = int(1 + np.count_nonzero(np.diff(keep) > 1))
+    return {
+        "confidence_set": confidence_set,
+        "alpha": float(alpha),
+        "grid_points": int(grid_points),
+        "grid_range": [float(grid[0]), float(grid[-1])],
+        "grid_resolution": float(grid[1] - grid[0]),
+        "n_components": n_components,
+        "endpoint_p": (
+            [float(pvals[keep[0]]), float(pvals[keep[-1]])]
+            if len(keep) else None
+        ),
+        "range_truncated": bool(
+            len(keep) and (keep[0] == 0 or keep[-1] == grid_points - 1)),
+        "method": "exact-shifted-signflip-inversion",
+    }
+
+
+def monte_carlo_pvalue(null: np.ndarray, observed: float, *,
+                       alternative: str = "two-sided") -> float:
+    """Plus-one Monte Carlo p-value; never returns a literal zero."""
+    z = np.asarray(null, dtype=float)
+    if alternative == "two-sided":
+        extreme = np.count_nonzero(np.abs(z) >= abs(observed) - 1e-15)
+    elif alternative == "greater":
+        extreme = np.count_nonzero(z >= observed - 1e-15)
+    elif alternative == "less":
+        extreme = np.count_nonzero(z <= observed + 1e-15)
+    else:
+        raise ValueError(alternative)
+    return float((int(extreme) + 1) / (len(z) + 1))
 
 
 def within_item_label_exchange_tail(df: pd.DataFrame, *,
@@ -140,14 +267,10 @@ def within_item_label_exchange_tail(df: pd.DataFrame, *,
     for b in range(draws):
         flip = rng.random(n) < 0.5
         stats[b] = fam_weighted(np.where(flip, -hd, hd))
-    if alternative == "greater":
-        p = float((stats >= obs - 1e-15).mean())
-    elif alternative == "two-sided":
-        p = float((np.abs(stats) >= abs(obs) - 1e-15).mean())
-    else:
-        raise ValueError(alternative)
+    p = monte_carlo_pvalue(stats, obs, alternative=alternative)
     return {"estimate": obs, "p": p, "n_items": n, "n_families": len(uf),
-            "threshold": threshold, "alternative": alternative}
+            "threshold": threshold, "alternative": alternative,
+            "n_randomizations": int(draws)}
 
 
 # ------------------------------------------------------------- §14.3
@@ -178,6 +301,62 @@ def wild_cluster_bootstrap_t(t: pd.DataFrame, value_col: str, *,
     return {"estimate": obs, "se": se, "t": t_obs, "p": p, "n_families": m}
 
 
+def wild_cluster_percentile_t_ci(
+        t: pd.DataFrame, value_col: str, *,
+        family_col: str = "canonical_family",
+        alpha: float = 0.05, draws: int = 99_999,
+        seed: int = 4242) -> dict:
+    """Correctly studentized wild-cluster percentile-t interval.
+
+    Rademacher weights are applied to unrestricted family residuals. For at
+    most 20 families every sign pattern is enumerated; otherwise the supplied
+    deterministic Monte Carlo budget is used.
+    """
+    fm = t.groupby(family_col)[value_col].mean().to_numpy(dtype=float)
+    m = len(fm)
+    if m < 3:
+        raise ValueError(f"only {m} families")
+    estimate = float(fm.mean())
+    se = float(fm.std(ddof=1) / np.sqrt(m))
+    if se == 0:
+        return {
+            "estimate": estimate, "se": se, "ci": [estimate, estimate],
+            "alpha": alpha, "n_families": m, "n_randomizations": 0,
+            "exact": True, "t_distribution_sha256": None,
+            "method": "wild-cluster-percentile-t",
+        }
+    resid = fm - estimate
+    if m <= 20:
+        bits = np.arange(2**m, dtype=np.uint32)[:, None]
+        weights = (
+            1 - 2 * ((bits >> np.arange(m, dtype=np.uint32)) & 1)
+        ).astype(np.int8)
+        exact = True
+    else:
+        rng = np.random.default_rng(seed)
+        weights = rng.choice((-1, 1), size=(draws, m)).astype(np.int8)
+        exact = False
+    boot = estimate + weights * resid
+    boot_mean = boot.mean(axis=1)
+    boot_se = boot.std(axis=1, ddof=1) / np.sqrt(m)
+    tstats = (boot_mean - estimate) / np.maximum(boot_se, 1e-30)
+    qlo, qhi = np.quantile(tstats, [alpha / 2, 1 - alpha / 2])
+    ci = [float(estimate - qhi * se), float(estimate - qlo * se)]
+    return {
+        "estimate": estimate,
+        "se": se,
+        "ci": ci,
+        "alpha": float(alpha),
+        "n_families": int(m),
+        "n_randomizations": int(len(tstats)),
+        "exact": exact,
+        "t_quantiles": [float(qlo), float(qhi)],
+        "t_distribution_sha256": hashlib.sha256(
+            np.asarray(tstats, dtype="<f8").tobytes()).hexdigest(),
+        "method": "wild-cluster-percentile-t",
+    }
+
+
 def within_item_exchange_mean(df: pd.DataFrame, *, a_col: str,
                               b_col: str,
                               family_col: str = "canonical_family",
@@ -204,15 +383,10 @@ def within_item_exchange_mean(df: pd.DataFrame, *, a_col: str,
     rng = np.random.default_rng(seed)
     flips = rng.choice([-1.0, 1.0], size=(draws, n))
     null = np.array([stat(d * flips[b]) for b in range(draws)])
-    if alternative == "two-sided":
-        p = float((np.abs(null) >= abs(obs)).mean())
-    elif alternative == "greater":
-        p = float((null >= obs).mean())
-    else:
-        p = float((null <= obs).mean())
-    return {"estimate": round(obs, 6), "p": max(p, 1.0 / draws),
+    p = monte_carlo_pvalue(null, obs, alternative=alternative)
+    return {"estimate": round(obs, 6), "p": p,
             "n_items": int(n), "n_families": int(m),
-            "alternative": alternative}
+            "alternative": alternative, "n_randomizations": int(draws)}
 
 
 def leave_one_family_out(t: pd.DataFrame, value_col: str, *,

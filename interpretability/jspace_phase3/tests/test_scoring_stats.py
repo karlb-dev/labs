@@ -5,11 +5,14 @@ import pytest
 
 from jspace_phase3.scoring import DEFAULT_SPEC, ScoringSession
 from jspace_phase3.stats import (family_cluster_bootstrap_ci,
-                                 family_signflip_test, leave_one_family_out,
+                                 exact_signflip_test, family_signflip_test,
+                                 leave_one_family_out, monte_carlo_pvalue,
                                  paired_specific_effects, plant_interaction,
+                                 signflip_confidence_set,
                                  within_fact_composition,
                                  within_fact_model_diff,
                                  within_item_label_exchange_tail,
+                                 wild_cluster_percentile_t_ci,
                                  wild_cluster_bootstrap_t)
 
 
@@ -177,6 +180,40 @@ def test_leave_one_family_out_shape():
     lofo = leave_one_family_out(diff, "diff")
     assert len(lofo) == 8
     assert {"left_out", "estimate"} <= set(lofo.columns)
+
+
+def test_exact_signflip_and_inverted_confidence_set():
+    vals = np.array([-1.2, -0.9, -0.8, -0.7, -0.6, -0.4, -0.2, 0.1])
+    res = exact_signflip_test(vals)
+    brute = []
+    for bits in range(2**len(vals)):
+        signs = 1 - 2 * ((bits >> np.arange(len(vals))) & 1)
+        brute.append(float((signs * vals).mean()))
+    expected = np.mean(np.abs(brute) >= abs(vals.mean()) - 1e-15)
+    assert res["p"] == expected
+    assert res["n_patterns"] == 256
+    inv = signflip_confidence_set(vals, grid_points=1001)
+    assert inv["confidence_set"][0] <= vals.mean() \
+        <= inv["confidence_set"][1]
+    assert not inv["range_truncated"]
+
+
+def test_plus_one_monte_carlo_pvalue():
+    null = np.zeros(99)
+    assert monte_carlo_pvalue(null, 1.0, alternative="greater") == 0.01
+
+
+def test_wild_cluster_percentile_t_is_named_and_deterministic():
+    df = pd.DataFrame({
+        "canonical_family": [f"f{i}" for i in range(6)],
+        "d": [-1.2, -0.7, -0.6, -0.4, 0.1, -0.8],
+    })
+    a = wild_cluster_percentile_t_ci(df, "d")
+    b = wild_cluster_percentile_t_ci(df, "d")
+    assert a["method"] == "wild-cluster-percentile-t"
+    assert a["exact"] and a["n_randomizations"] == 64
+    assert a["t_distribution_sha256"] == b["t_distribution_sha256"]
+    assert a["ci"][0] < a["estimate"] < a["ci"][1]
 
 
 def test_paired_specific_effects_requires_conditions():

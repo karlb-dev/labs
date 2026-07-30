@@ -45,6 +45,7 @@ from ..paths3 import metrics_dir
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            resolve_model, write_result3)
 from ..scoring import LEGACY_PHASE2_SPEC, ScoringSession
+from ..seeds import stable_seed
 
 TIER = "phase3-development"
 
@@ -184,7 +185,8 @@ def main():  # noqa: C901
             logits, mlog = teacher_forced_matched_arm(
                 hf, model.layers, band, jd, full_ids, arm_profile[src_arm],
                 variant=v, protect_sets=psets,
-                seed_base=cfg["rand_seed"] + abs(hash(iid)) % 10_000)
+                seed_base=stable_seed(
+                    f"phase3-span-audit-{v}", iid, cfg["rand_seed"]))
             ctl_lp[variant] = sess.answer_seq_lp(
                 full_ids, logits, n_prompt)
             ctl_sum[variant] = mlog.matched_summary()

@@ -46,6 +46,7 @@ from ..paths3 import metrics_dir
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            resolve_model, write_result3)
 from ..scoring import ScoringSession, ScoringSpec
+from ..seeds import stable_seed
 
 TIER = "phase3-development"
 GUARD_SPEC = ScoringSpec(max_prompt_tokens=1024)
@@ -193,7 +194,8 @@ def main():  # noqa: C901
             logits, _ = teacher_forced_matched_arm(
                 hf, model.layers, band, jd, ids, profile, variant=variant,
                 protect_sets=psets,
-                seed_base=cfg["rand_seed"] + abs(hash(iid)) % 10_000)
+                seed_base=stable_seed(
+                    f"phase3-prose-{variant}", iid, cfg["rand_seed"]))
             res[variant] = dist_metrics(clean, logits.to(clean.device),
                                         tgt, eos_id)
         res["mechanics_random"] = dist_metrics(

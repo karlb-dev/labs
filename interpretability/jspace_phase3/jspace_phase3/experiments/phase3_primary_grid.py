@@ -47,6 +47,7 @@ from ..paths3 import metrics_dir, resolve_uri as resolve3
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            resolve_model, write_result3)
 from ..scoring import DEFAULT_SPEC, ScoringSession
+from ..seeds import stable_seed
 
 DEFAULT_TIER = "phase3-confirmatory"
 REPO_DATA = Path(__file__).resolve().parents[2] / "data"
@@ -204,8 +205,8 @@ def main():  # noqa: C901
         if p3p3 and it["variant"] == "composed" \
                 and it.get("counterfactual_bridge"):
             conds += ["true_bridge", "distractor_bridge"]
-        order = np.random.default_rng(
-            cfg["rand_seed"] + abs(hash(iid)) % 100_000)
+        order = np.random.default_rng(stable_seed(
+            "phase3-primary-condition-order", iid, cfg["rand_seed"]))
         conds = [conds[i] for i in order.permutation(len(conds))]
 
         row = {"item_id": iid, "fact_id": it["fact_id"],
@@ -248,7 +249,8 @@ def main():  # noqa: C901
             logits, _ = teacher_forced_matched_arm(
                 hf, model.layers, band, jd, full, profiles[src],
                 variant=variant, protect_sets=psets,
-                seed_base=cfg["rand_seed"] + abs(hash(iid)) % 10_000)
+                seed_base=stable_seed(
+                    f"phase3-primary-{variant}", iid, cfg["rand_seed"]))
             row[key] = sess.answer_seq_lp(full, logits, n_p)
 
         state["rows"].append(row)
