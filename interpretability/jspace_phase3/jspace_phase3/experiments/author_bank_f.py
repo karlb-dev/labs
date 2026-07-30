@@ -27,19 +27,17 @@ import sys
 from pathlib import Path
 
 from ..bank import FactBundle, phase2_triple_keys, save_bank, validate_bank
-from ..paths3 import drive_hub_cache, resolve_uri
+from ..paths3 import resolve_uri
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
-EVIDENCE_ID = "p3-bank-f-tranche1-v2"
-SUPERSEDES = "p3-bank-f-tranche1-v1"  # v1's verifier used a dataset-level
+EVIDENCE_ID = "p3-bank-f-v3"
+SUPERSEDES = "p3-bank-f-tranche1-v2"  # v1's verifier used a dataset-level
 # isin filter that silently missed rows over DriveFS, quarantining 66
 # bundles whose pages exist; v2 streams every shard. Three authoring
 # leaks also fixed (pad thai/Thai, Fiat/Fiat 500, Al/metAL).
 TIER = "phase3-development"
 REPO_DATA = Path(__file__).resolve().parents[2] / "data"
-WIKIPEDIA = (drive_hub_cache() / "datasets--wikimedia--wikipedia/snapshots/"
-             "b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.en")
 P2_MANIFEST_URI = "drive://metrics/cross_model/g5_item_manifest_v5.json"
 
 # instance = (source, bridge, answer, aliases, {source_page, bridge_page})
@@ -107,8 +105,7 @@ FAMILIES = [
              dict(source_page="Chao Phraya River", bridge_page="Thailand")),
             ("Volta", "Ghana", "Accra", [" Accra"],
              dict(source_page="Volta River", bridge_page="Ghana")),
-            ("Magdalena", "Colombia", "Bogotá",
-             [" Bogotá", " Bogota"],
+            ("Magdalena", "Colombia", "Bogota", [" Bogota"],
              dict(source_page="Magdalena River", bridge_page="Colombia")),
             ("Irrawaddy", "Myanmar", "Naypyidaw",
              [" Naypyidaw", " Nay Pyi Taw"],
@@ -522,6 +519,267 @@ FAMILIES = [
 ]
 
 
+FAMILIES += [
+    dict(
+        family="landmark_city_to_river", group="geo_physical",
+        templates=dict(
+            direct="The river flowing through the city of {bridge} is "
+                   "the",
+            composed="The river flowing through the city where the "
+                     "{source} stands is the",
+            bridge_supplied="The {source} stands in {bridge}, and the "
+                            "river flowing through that city is the"),
+        ambiguity="each landmark stands in one city; each chosen city "
+                  "has one principal river",
+        instances=[
+            ("Charles Bridge", "Prague", "Vltava", [" Vltava"],
+             dict(source_page="Charles Bridge", bridge_page="Prague")),
+            ("Colosseum", "Rome", "Tiber", [" Tiber"],
+             dict(source_page="Colosseum", bridge_page="Rome")),
+            ("Big Ben", "London", "Thames", [" Thames", " River Thames"],
+             dict(source_page="Big Ben", bridge_page="London")),
+            ("Louvre", "Paris", "Seine", [" Seine"],
+             dict(source_page="Louvre", bridge_page="Paris")),
+            ("Brandenburg Gate", "Berlin", "Spree", [" Spree"],
+             dict(source_page="Brandenburg Gate", bridge_page="Berlin")),
+        ]),
+    dict(
+        family="flag_carrier_to_currency", group="org",
+        templates=dict(
+            direct="The currency used in {bridge} is the",
+            composed="The currency used in the country whose flag "
+                     "carrier airline is {source} is the",
+            bridge_supplied="{source} is the flag carrier of {bridge}, "
+                            "where the currency used is the"),
+        ambiguity="flag-carrier is functional for the chosen airlines "
+                  "(one home country each)",
+        instances=[
+            ("Emirates", "the United Arab Emirates", "dirham",
+             [" dirham", " UAE dirham"],
+             dict(source_page="Emirates (airline)",
+                  bridge_page="United Arab Emirates")),
+            ("Garuda", "Indonesia", "rupiah", [" rupiah"],
+             dict(source_page="Garuda Indonesia",
+                  bridge_page="Indonesia")),
+            ("Qantas", "Australia", "Australian dollar",
+             [" the Australian dollar", " Australian dollar", " AUD"],
+             dict(source_page="Qantas", bridge_page="Australia")),
+            ("Aeroflot", "Russia", "ruble", [" ruble", " rouble"],
+             dict(source_page="Aeroflot", bridge_page="Russia")),
+        ]),
+    dict(
+        family="highest_peak_to_currency", group="geo_physical",
+        templates=dict(
+            direct="Shoppers in {bridge} pay in the currency called the",
+            composed="Shoppers in the country whose highest peak is "
+                     "{source} pay in the currency called the",
+            bridge_supplied="{source} is the highest peak of {bridge}, "
+                            "where shoppers pay in the currency called "
+                            "the"),
+        ambiguity="highest-peak-of-country is functional; peaks chosen "
+                  "lie entirely within one country",
+        instances=[
+            ("Kilimanjaro", "Tanzania", "shilling",
+             [" shilling", " Tanzanian shilling"],
+             dict(source_page="Mount Kilimanjaro", bridge_page="Tanzania")),
+            ("Aconcagua", "Argentina", "peso",
+             [" peso", " Argentine peso"],
+             dict(source_page="Aconcagua", bridge_page="Argentina")),
+            ("Mount Fuji", "Japan", "yen", [" yen"],
+             dict(source_page="Mount Fuji", bridge_page="Japan")),
+            ("Ben Nevis", "the United Kingdom", "pound sterling",
+             [" pound sterling", " British pound"],
+             dict(source_page="Ben Nevis", bridge_page="United Kingdom")),
+        ]),
+    dict(
+        family="character_creator_to_birth_city", group="person_culture",
+        templates=dict(
+            direct="The author {bridge} was born in the town of",
+            composed="The author who created the character {source} was "
+                     "born in the town of",
+            bridge_supplied="The character {source} was created by "
+                            "{bridge}, who was born in the town of"),
+        ambiguity="each character has one credited creator",
+        instances=[
+            ("Sherlock Holmes", "Arthur Conan Doyle", "Edinburgh",
+             [" Edinburgh"],
+             dict(source_page="Sherlock Holmes",
+                  bridge_page="Arthur Conan Doyle")),
+            ("Hercule Poirot", "Agatha Christie", "Torquay", [" Torquay"],
+             dict(source_page="Hercule Poirot",
+                  bridge_page="Agatha Christie")),
+            ("the Moomins", "Tove Jansson", "Helsinki", [" Helsinki"],
+             dict(source_page="Moomins", bridge_page="Tove Jansson")),
+            ("Pippi Longstocking", "Astrid Lindgren", "Vimmerby",
+             [" Vimmerby"],
+             dict(source_page="Pippi Longstocking",
+                  bridge_page="Astrid Lindgren")),
+        ]),
+    dict(
+        family="subunit_currency_to_country", group="geo_political",
+        templates=dict(
+            direct="The {bridge} is the currency of the country called",
+            composed="The currency whose smallest subunit is the "
+                     "{source} belongs to the country called",
+            bridge_supplied="The {source} is a subunit of the {bridge}, "
+                            "which is the currency of the country called"),
+        ambiguity="each subunit name belongs to one currency; each "
+                  "currency to one issuing country",
+        instances=[
+            ("kobo", "naira", "Nigeria", [" Nigeria"],
+             dict(source_page="Nigerian naira", bridge_page="Nigerian naira")),
+            ("tambala", "kwacha", "Malawi", [" Malawi"],
+             dict(source_page="Malawian kwacha",
+                  bridge_page="Malawian kwacha")),
+            ("chetrum", "ngultrum", "Bhutan", [" Bhutan"],
+             dict(source_page="Bhutanese ngultrum",
+                  bridge_page="Bhutanese ngultrum")),
+            ("avo", "pataca", "Macau", [" Macau", " Macao"],
+             dict(source_page="Macanese pataca",
+                  bridge_page="Macanese pataca")),
+        ]),
+    dict(
+        family="space_mission_agency_to_country", group="org_science",
+        templates=dict(
+            direct="The space agency {bridge} belongs to",
+            composed="The space agency that operated the {source} "
+                     "mission belongs to",
+            bridge_supplied="The {source} mission was operated by "
+                            "{bridge}, the space agency of"),
+        ambiguity="each chosen mission has a single operating agency",
+        instances=[
+            ("Voyager 1", "NASA", "the United States",
+             [" the United States", " the USA"],
+             dict(source_page="Voyager 1", bridge_page="NASA")),
+            ("Chandrayaan-3", "ISRO", "India", [" India"],
+             dict(source_page="Chandrayaan-3", bridge_page="ISRO")),
+            ("Tianwen-1", "CNSA", "China", [" China"],
+             dict(source_page="Tianwen-1",
+                  bridge_page="China National Space Administration")),
+            ("Danuri", "KARI", "South Korea", [" South Korea"],
+             dict(source_page="Danuri",
+                  bridge_page="Korea Aerospace Research Institute")),
+        ]),
+    dict(
+        family="cheese_origin_to_capital", group="geo_culture",
+        templates=dict(
+            direct="The capital city of {bridge} is called",
+            composed="The capital city of the home country of {source} "
+                     "cheese is called",
+            bridge_supplied="{source} cheese comes from {bridge}, whose "
+                            "capital city is called"),
+        ambiguity="chosen cheeses have a single country of origin in "
+                  "the snapshot lead",
+        instances=[
+            ("Gouda", "the Netherlands", "Amsterdam", [" Amsterdam"],
+             dict(source_page="Gouda cheese", bridge_page="Netherlands")),
+            ("Halloumi", "Cyprus", "Nicosia", [" Nicosia"],
+             dict(source_page="Halloumi", bridge_page="Cyprus")),
+            ("Gruyère", "Switzerland", "Bern", [" Bern"],
+             dict(source_page="Gruyère cheese",
+                  bridge_page="Switzerland")),
+            ("Oaxaca", "Mexico", "Mexico City", [" Mexico City"],
+             dict(source_page="Oaxaca cheese", bridge_page="Mexico")),
+        ]),
+    dict(
+        family="game_studio_to_hq_city", group="tech",
+        templates=dict(
+            direct="The game studio {bridge} is headquartered in",
+            composed="The studio behind the video game series {source} "
+                     "is headquartered in",
+            bridge_supplied="The video game series {source} is made by "
+                            "{bridge}, headquartered in"),
+        ambiguity="each series names its principal developer in the "
+                  "snapshot lead; one HQ city",
+        instances=[
+            ("Super Mario", "Nintendo", "Kyoto", [" Kyoto"],
+             dict(source_page="Super Mario", bridge_page="Nintendo")),
+            ("Angry Birds", "Rovio", "Espoo", [" Espoo"],
+             dict(source_page="Angry Birds",
+                  bridge_page="Rovio Entertainment")),
+            ("Half-Life", "Valve", "Bellevue", [" Bellevue"],
+             dict(source_page="Half-Life (series)",
+                  bridge_page="Valve Corporation")),
+            ("Fortnite", "Epic Games", "Cary", [" Cary"],
+             dict(source_page="Fortnite", bridge_page="Epic Games")),
+        ]),
+    dict(
+        family="museum_city_to_country", group="geo_culture",
+        templates=dict(
+            direct="{bridge} is a city of the nation called",
+            composed="The museum known as {source} stands in a city of "
+                     "the nation called",
+            bridge_supplied="The museum known as {source} stands in "
+                            "{bridge}, a city of the nation called"),
+        ambiguity="each museum stands in one city",
+        instances=[
+            ("the Uffizi", "Florence", "Italy", [" Italy"],
+             dict(source_page="Uffizi", bridge_page="Florence")),
+            ("the National Palace Museum", "Taipei", "Taiwan",
+             [" Taiwan"],
+             dict(source_page="National Palace Museum",
+                  bridge_page="Taipei")),
+            ("the Louvre Abu Dhabi", "Abu Dhabi",
+             "the United Arab Emirates",
+             [" the United Arab Emirates", " United Arab Emirates",
+              " the UAE", " UAE"],
+             dict(source_page="Louvre Abu Dhabi",
+                  bridge_page="Abu Dhabi")),
+            ("the Egyptian Museum", "Cairo", "Egypt", [" Egypt"],
+             dict(source_page="Egyptian Museum", bridge_page="Cairo")),
+        ]),
+    dict(
+        family="national_park_to_capital", group="geo_physical",
+        templates=dict(
+            direct="Government business in {bridge} is conducted in",
+            composed="Government business in the country that contains "
+                     "{source} National Park is conducted in",
+            bridge_supplied="{source} National Park lies in {bridge}, "
+                            "whose government business is conducted in"),
+        ambiguity="each chosen park lies entirely within one country",
+        instances=[
+            ("Chitwan", "Nepal", "Kathmandu", [" Kathmandu"],
+             dict(source_page="Chitwan National Park",
+                  bridge_page="Nepal")),
+            ("Fiordland", "New Zealand", "Wellington", [" Wellington"],
+             dict(source_page="Fiordland National Park",
+                  bridge_page="New Zealand")),
+            ("Ranthambore", "India", "New Delhi", [" New Delhi"],
+             dict(source_page="Ranthambore National Park",
+                  bridge_page="India")),
+            ("Etosha", "Namibia", "Windhoek", [" Windhoek"],
+             dict(source_page="Etosha National Park",
+                  bridge_page="Namibia")),
+        ]),
+    dict(
+        family="bridge_city_to_country", group="geo_political",
+        templates=dict(
+            direct="The city of {bridge} belongs to the sovereign state "
+                   "of",
+            composed="The city crossed by {source} belongs to the "
+                     "sovereign state of",
+            bridge_supplied="{source} crosses {bridge}, a city belonging "
+                            "to the sovereign state of"),
+        ambiguity="each chosen bridge structure is in one city",
+        instances=[
+            ("the Golden Gate Bridge", "San Francisco",
+             "the United States",
+             [" the United States", " the USA"],
+             dict(source_page="Golden Gate Bridge",
+                  bridge_page="San Francisco")),
+            ("the Rialto Bridge", "Venice", "Italy", [" Italy"],
+             dict(source_page="Rialto Bridge", bridge_page="Venice")),
+            ("Tower Bridge", "London", "the United Kingdom",
+             [" the United Kingdom", " the UK", " England",
+              " Great Britain"],
+             dict(source_page="Tower Bridge", bridge_page="London")),
+            ("the Chain Bridge", "Budapest", "Hungary", [" Hungary"],
+             dict(source_page="Széchenyi Chain Bridge",
+                  bridge_page="Budapest")),
+        ]),
+]
+
+
 def norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
 
@@ -551,32 +809,24 @@ def build_bundles() -> list[FactBundle]:
     return bundles
 
 
-def verify_against_wikipedia(bundles: list[FactBundle]) -> dict:
-    """Check hop support in the pinned snapshot: the bridge string must
-    appear on the source-hop page, the answer string on the bridge page.
-    A miss QUARANTINES the bundle (reported, dropped from the bank)."""
-    import pyarrow.parquet as pq
+def verify_against_reference(bundles: list[FactBundle]) -> dict:
+    """Check hop support in the pinned per-revid wikipedia reference
+    (fetch_wiki_reference.py): the bridge string must appear on the
+    source-hop page, the answer string on the bridge page. A miss
+    QUARANTINES the bundle (reported, dropped from the bank)."""
+    from ..paths3 import run_root
+    ref = run_root() / "bank_reference" / "wiki_reference_v1.jsonl"
+    pages: dict[str, str] = {}
+    for line in ref.read_text().splitlines():
+        r = json.loads(line)
+        pages[r["requested_title"]] = r["text"]
+        pages.setdefault(r["title"], r["text"])
     titles = set()
     for b in bundles:
         titles.add(b.provenance["pages"]["source_page"])
         titles.add(b.provenance["pages"]["bridge_page"])
-    # streamed per-shard scan: dataset-level isin filters silently missed
-    # rows on this DriveFS mount (probe: 'Hungary' absent from a full-row
-    # count scan), so trust nothing but a manual batch filter
-    pages: dict[str, str] = {}
-    for shard in sorted(WIKIPEDIA.glob("*.parquet")):
-        pf = pq.ParquetFile(shard)
-        for batch in pf.iter_batches(batch_size=16384,
-                                     columns=["title", "text"]):
-            ts = batch["title"].to_pylist()
-            hits = [i for i, t in enumerate(ts) if t in titles]
-            if hits:
-                txt = batch["text"].to_pylist()
-                for i in hits:
-                    pages.setdefault(ts[i], txt[i])
-        if len(pages) == len(titles):
-            break
     report = {"missing_pages": sorted(titles - set(pages)),
+              "reference": str(ref),
               "hop_failures": {}, "n_verified": 0}
     for b in bundles:
         pp = b.provenance["pages"]
@@ -608,11 +858,12 @@ def main():
             f"{b.fact_id}: answer burned by Phase 2"
     val = validate_bank(bundles, phase2_triples=p2)
 
-    wiki = verify_against_wikipedia(bundles)
-    quarantined = set(wiki["hop_failures"])
+    wiki = verify_against_reference(bundles)
+    quarantined = set(wiki["hop_failures"]) | set(val["violations"]) \
+        | set(val["alias_prefix_issues"])
     shipped = [b for b in bundles if b.fact_id not in quarantined]
 
-    out = REPO_DATA / "bank_f_tranche1.jsonl"
+    out = REPO_DATA / "bank_f_v3.jsonl"
     save_bank(shipped, out)
     fam_counts = {}
     for b in shipped:
@@ -620,13 +871,13 @@ def main():
             fam_counts.get(b.canonical_family, 0) + 1
     payload = {"n_authored": len(bundles), "n_shipped": len(shipped),
                "n_families": len(fam_counts), "family_counts": fam_counts,
-               "validation": val, "wikipedia_verification": wiki}
+               "validation": val, "reference_verification": wiki}
     cmd = "python -m jspace_phase3.experiments.author_bank_f"
-    meta = REPO_DATA / "bank_f_tranche1.meta.json"
+    meta = REPO_DATA / "bank_f_v3.meta.json"
     write_result3(payload, meta, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
     register(EVIDENCE_ID, tier=TIER, command=cmd, supersedes=SUPERSEDES,
-             what=(f"Bank F tranche 1: {len(shipped)} bundles / "
+             what=(f"Bank F tranches 1+2: {len(shipped)} bundles / "
                    f"{len(fam_counts)} families authored, wikipedia-"
                    f"verified ({wiki['n_verified']} clean, "
                    f"{len(quarantined)} quarantined), Phase 2 triple+"
