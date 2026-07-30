@@ -191,8 +191,11 @@ def main():  # noqa: C901
                     f"mismatch; NO outcome viewed")
             state["baseline_checked"] += 1
 
-        conds = ["meanJ_span_safe", "meanJ_label_protected",
-                 "mechanics_random", "logit_label_protected"]
+        if cfg.get("reduced_arms"):
+            conds = ["meanJ_span_safe", "meanJ_label_protected"]
+        else:
+            conds = ["meanJ_span_safe", "meanJ_label_protected",
+                     "mechanics_random", "logit_label_protected"]
         if p3p3 and it["variant"] == "composed" \
                 and it.get("counterfactual_bridge"):
             conds += ["true_bridge", "distractor_bridge"]
@@ -231,9 +234,12 @@ def main():  # noqa: C901
 
         # matched controls consume their source-arm profiles (§14.1's
         # C_effect uses the primary comparator = span-safe profile)
-        for variant, key, src in (
-                ("instant_rank_energy_matched", "lp_ss_matched", "ss"),
-                ("prot_energy_matched", "lp_prot_energy_matched", "label")):
+        matched_specs = [("instant_rank_energy_matched",
+                          "lp_ss_matched", "ss")]
+        if not cfg.get("reduced_arms"):
+            matched_specs.append(("prot_energy_matched",
+                                  "lp_prot_energy_matched", "label"))
+        for variant, key, src in matched_specs:
             logits, _ = teacher_forced_matched_arm(
                 hf, model.layers, band, jd, full, profiles[src],
                 variant=variant, protect_sets=psets,
