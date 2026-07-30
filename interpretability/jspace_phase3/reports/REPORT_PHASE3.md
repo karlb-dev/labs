@@ -272,9 +272,10 @@ Phase 3 freeze.
 ### Workstream C — the exact control on prose — tier: PHASE3-DEVELOPMENT
 
 `p3-prose-grid-olmo31-think-v1` · `p3-prose-grid-olmo31-instruct-v1` ·
-Qwen cell running at the time of writing (its first attempt OOM'd on the
+`p3-prose-grid-qwen36-27b-v1` (its first attempt OOM'd on the
 151k-vocab × 1024-position logits beside 29 GB of J dictionaries; the
-metrics are now position-chunked — identical estimand). Guard battery
+metrics are position-chunked — identical estimand) · figure `p3f04` +
+cross-model statistics `p3-prose-grid-figure-v1`. Guard battery
 v2 (`p3-guard-battery-v2`): 104 items / 8 source-pinned domains;
 wikitext TEST split held out from every lens-fit corpus. Six arms per
 item, including the profile-consuming exact instant rank+energy control
@@ -283,24 +284,40 @@ pre-registered greedy generation audit.
 
 Mean Δ NLL per token (all 84 text items):
 
-| arm | Think | Instruct |
-|---|---|---|
-| label-protected J | +0.175 | **+0.530** |
-| span-safe J | +0.089 | +0.150 |
-| exact instant matched | **+0.003** | **+0.002** |
-| prot-energy matched | +0.076 | +0.123 |
-| mechanics random | +0.078 | +0.120 |
-| logit-protected | −0.021 | −0.054 |
+| arm | Think | Instruct | Qwen |
+|---|---|---|---|
+| label-protected J | +0.175 | +0.530 | **+0.945** |
+| span-safe J | +0.089 | +0.150 | +0.209 |
+| exact instant matched | **+0.003** | **+0.002** | **+0.021** |
+| prot-energy matched | +0.076 | +0.123 | +0.052 |
+| mechanics random | +0.078 | +0.120 | +0.104 |
+| logit-protected | −0.021 | −0.054 | +0.045 |
 
-**Reading (R4).** Instruct's prose cost is real and large — 3× Think's —
-but it is **J-content, not dose**: the exact matched control is at
-+0.002/token. ~72% of Instruct's label-arm prose cost disappears under
-span-safe protection (+0.530 → +0.150), so most of it was
-output-span leakage; the remaining span-safe cost (+0.150/token) is the
-honest "diffuse content damage" number to carry against its task
-effects (the §7.4 selectivity index lands with `p3f04` when the Qwen
-cell banks). Grammar preference survives every arm (85–100%; baselines
-95–100%); damage is diffuse across all 8 domains, not domain-selective.
+**Reading (R4/§7.5).** Three findings:
+
+1. **Prose cost is J-content everywhere, never dose**: the exact
+   matched control sits at +0.002 to +0.021/token on all three models
+   while the label arm runs +0.175 to +0.945.
+2. **The prose-cost ordering INVERTS the task ordering and tracks the
+   §4.1b geometry.** Qwen — smallest label-arm task effect (−0.27
+   family-weighted) — has the LARGEST prose cost (+0.945/token), and
+   the cross-model prose ladder (Qwen > Instruct > Think) follows the
+   projector-overlap ladder (1.37 > 0.94 > 0.89), not the
+   selection-pressure ladder. On prose every position leaks; span-safe
+   removes 72–78% of the label cost on all three (Qwen +0.945 → +0.209).
+3. **No model earns "selective" wording at this tier.** The §7.4 index
+   (standardized task effect − standardized prose effect, label arm,
+   both components carried): Think +1.57, Instruct +1.50, Qwen +1.25 —
+   standardized prose damage exceeds standardized task damage on ALL
+   three. Per §7.5 the sentence remains "nonspecific J-channel
+   vulnerability cannot be excluded" for every primary, with the
+   sharpened qualifier that the vulnerability is content-specific
+   (exact-control-clean) and predominantly output-span leakage. The
+   confirmatory-era selectivity computation reruns on the span-safe
+   arm set after the freeze.
+
+Grammar preference survives every arm (85–100%; baselines 95–100%);
+damage is diffuse across all 8 domains, not domain-selective.
 
 ### G5, the intersection squeeze, and two instrument catches — tier: PHASE3-DEVELOPMENT
 
