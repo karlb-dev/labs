@@ -87,7 +87,9 @@ def main():  # noqa: C901
                            "grid runs only after jspace-phase3-freeze-v1")
     fams = set(payload[cfg.get("partition_side", "confirmatory")])
 
-    out_dir = metrics_dir(slug) / "p3_grid"
+    side = cfg.get("partition_side", "confirmatory")
+    suffix = "" if side == "confirmatory" else f"_{side}"
+    out_dir = metrics_dir(slug) / f"p3_grid{suffix}"
     out_dir.mkdir(parents=True, exist_ok=True)
     state_path = out_dir / "state.json"
     state = (json.loads(state_path.read_text()) if state_path.exists()
@@ -259,12 +261,12 @@ def main():  # noqa: C901
     state_path.write_text(json.dumps(state))
 
     df = pd.DataFrame(state["rows"])
-    pq = out_dir / f"p3_grid_{slug}.parquet"
+    pq = out_dir / f"p3_grid{suffix}_{slug}.parquet"
     df.to_parquet(pq)
     eid = cfg["evidence_id"]
     cmd = (f"python -m jspace_phase3.experiments.phase3_primary_grid "
            f"--config {cfg_path}")
-    out_json = out_dir / f"p3_grid_{slug}.json"
+    out_json = out_dir / f"p3_grid{suffix}_{slug}.json"
     write_result3({"n_items": int(len(df)),
                    "n_facts": int(df.fact_id.nunique()),
                    "n_families": int(df.canonical_family.nunique()),
