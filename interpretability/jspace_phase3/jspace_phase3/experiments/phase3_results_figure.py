@@ -21,7 +21,8 @@ from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 from ..stats import (family_cluster_bootstrap_ci, within_fact_composition)
 
-EVIDENCE_ID = "p3-results-figure-v1"
+EVIDENCE_ID = "p3-results-figure-v2"
+SUPERSEDES = "p3-results-figure-v1"  # v1: panel-A annotation/title collision
 TIER = "phase3-confirmatory"
 SLUGS = ["olmo31-think", "olmo31-instruct", "qwen36-27b"]
 
@@ -70,7 +71,8 @@ def main():
             ax.plot([ci_[0], ci_[1]], [i, i], color=color, lw=2)
         ax.plot([est], [i], "o", ms=9, color=color)
         ax.annotate(f"{est:+.3f}   p₍holm₎={max(ph, 1e-5):.3g}",
-                    (est, i), textcoords="offset points", xytext=(0, 12),
+                    (est, i), textcoords="offset points",
+                    xytext=(0, -18 if i == 0 else 12),
                     ha="center", fontsize=8.5, color=PAL3["ink"])
     ax.axvline(0, color=PAL3["muted"], lw=1)
     ax.set_yticks(range(3), [e[0] for e in entries], fontsize=8)
@@ -169,7 +171,7 @@ def main():
     out = metrics_dir("cross_model") / "p3f05_stats.json"
     write_result3(payload, out, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=4242))
-    register(EVIDENCE_ID, tier=TIER, command=cmd,
+    register(EVIDENCE_ID, tier=TIER, command=cmd, supersedes=SUPERSEDES,
              what="figure p3f05: locked Phase 3 primary results panels",
              outputs=[out, *figs])
     print(json.dumps(payload, indent=1)[:800])
