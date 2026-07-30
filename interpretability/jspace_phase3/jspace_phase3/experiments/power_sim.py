@@ -33,7 +33,11 @@ from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 from ..stats import family_signflip_test, within_item_label_exchange_tail
 
-EVIDENCE_ID = "p3-power-sim-v1"
+EVIDENCE_ID = "p3-power-sim-v2"
+SUPERSEDES = "p3-power-sim-v1"  # v1 applied the RAW span-safe family SD
+# to P3-P1's family effects; the within-fact composition difference
+# cancels family intercepts, so v2 sweeps a cancellation axis
+# fam_sd in {measured, 0.6, 0.4, 0.25} and reports MDEs per scenario
 TIER = "phase3-development"
 SLUGS = ["olmo31-think", "olmo31-instruct", "qwen36-27b"]
 N_SIM = 400
@@ -111,14 +115,15 @@ def main():
     rng = np.random.default_rng(4242)
 
     p1_power = {}
-    for n_fam in (18, 24, 30, 36):
-        for facts in (2, 3, 4):
+    for fs_name, fs in (("measured", fam_sd), ("cancel06", 0.6),
+                        ("cancel04", 0.4), ("cancel025", 0.25)):
+        for n_fam in (18, 24, 30, 36):
             for theta in (0.0, 0.10, 0.15, 0.20, 0.30, 0.50):
-                ps = [sim_p3p1_once(rng, n_fam=n_fam, facts=facts,
-                                    theta=theta, fam_sd=fam_sd,
+                ps = [sim_p3p1_once(rng, n_fam=n_fam, facts=3,
+                                    theta=theta, fam_sd=fs,
                                     noise_sd=noise_sd, z0=z0, rho=rho)
                       for _ in range(N_SIM)]
-                p1_power[f"fam{n_fam}_k{facts}_theta{theta}"] = round(
+                p1_power[f"{fs_name}_fam{n_fam}_theta{theta}"] = round(
                     float(np.mean(np.array(ps) < ALPHA_HOLM_FIRST)), 3)
 
     p2_power = {}
@@ -130,10 +135,11 @@ def main():
             p2_power[f"fam{n_fam}_dtail{dtail}"] = round(
                 float(np.mean(np.array(ps) < ALPHA_HOLM_FIRST)), 3)
 
-    def mde(power: dict, prefix: str, target=0.9):
+    def mde(power: dict, prefix, target=0.9):
         out = {}
         for key, val in power.items():
-            if not key.startswith(prefix):
+            if not key.startswith(tuple([prefix] if isinstance(prefix, str)
+                                        else list(prefix))):
                 continue
             base, theta = key.rsplit("_", 1)
             out.setdefault(base, [])
@@ -149,7 +155,7 @@ def main():
                        "zero_share": round(z0, 4), "rho": round(rho, 4),
                        "alpha": ALPHA_HOLM_FIRST, "n_sim": N_SIM},
         "p3p1_power": p1_power, "p3p2_power": p2_power,
-        "p3p1_mde90": mde(p1_power, "fam"),
+        "p3p1_mde90": mde(p1_power, ("measured", "cancel")),
         "p3p2_mde90": mde(p2_power, "fam"),
     }
     cmd = "python -m jspace_phase3.experiments.power_sim"
@@ -157,6 +163,7 @@ def main():
     write_result3(payload, out, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=4242))
     register(EVIDENCE_ID, tier=TIER, command=cmd,
+             supersedes=SUPERSEDES,
              what=(f"§14.8 power simulation from dev calibration "
                    f"(fam_sd {fam_sd:.2f}, noise {noise_sd:.2f}, "
                    f"zero {z0:.2f}, rho {rho:.2f}): family floors vs "
