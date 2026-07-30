@@ -136,7 +136,7 @@ def main():
             (fam_cap.groupby(level=0).apply(lambda s: (s == 1.0).sum()))
             .sum()),
         "bos_prefixed": sess.bos_prefixed, "banks": bank_shas}
-    eid = f"p3-g5-bank-{slug}-v1"
+    eid = arg("--eid") or f"p3-g5-bank-{slug}-v1"
     cmd = (f"python -m jspace_phase3.experiments.g5_bank_scoring "
            f"--slug {slug} --model-uri {model_uri}")
     out_json = out_dir / f"g5_bank_{slug}.json"
@@ -145,6 +145,7 @@ def main():
         model=resolve_model(model_path), seed=0,
         inputs=bank_shas))
     register(eid, tier=TIER, command=cmd,
+             supersedes=arg("--supersedes"),
              what=(f"G5 bank capability scoring on {slug}: {len(df)} "
                    f"items, capable rate {summary['capable_rate']}, "
                    f"by variant {summary['capable_by_variant']}"),
