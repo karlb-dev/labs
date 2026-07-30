@@ -28,7 +28,7 @@ from ..paths3 import run_root
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
-EVIDENCE_ID = "p3-wiki-reference-v1"
+EVIDENCE_ID = "p3-wiki-reference-v2"
 TIER = "phase3-development"
 API = "https://en.wikipedia.org/w/api.php"
 UA = "jspace-phase3-bank-verifier/0.1 (research reproduction; contact: repo)"
@@ -93,7 +93,7 @@ def main():
 
     out_dir = run_root() / "bank_reference"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out = out_dir / "wiki_reference_v1.jsonl"
+    out = out_dir / "wiki_reference_v2.jsonl"
     out.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n"
                            for r in out_rows))
     payload = {
@@ -108,10 +108,11 @@ def main():
                  "hub-authentic)"),
         "reference_sha256": hashlib.sha256(out.read_bytes()).hexdigest()}
     cmd = "python -m jspace_phase3.experiments.fetch_wiki_reference"
-    meta = out_dir / "wiki_reference_v1.meta.json"
+    meta = out_dir / "wiki_reference_v2.meta.json"
     write_result3(payload, meta, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
     register(EVIDENCE_ID, tier=TIER, command=cmd,
+             supersedes="p3-wiki-reference-v1",
              what=(f"pinned wikipedia reference for Bank F verification: "
                    f"{len(out_rows)}/{len(titles)} pages fetched with "
                    f"revids at {payload['retrieval_utc']}; "

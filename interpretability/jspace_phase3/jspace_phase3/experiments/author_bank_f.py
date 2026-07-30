@@ -31,8 +31,8 @@ from ..paths3 import resolve_uri
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
-EVIDENCE_ID = "p3-bank-f-v3"
-SUPERSEDES = "p3-bank-f-tranche1-v2"  # v1's verifier used a dataset-level
+EVIDENCE_ID = "p3-bank-f-v4"
+SUPERSEDES = "p3-bank-f-v3"  # v1's verifier used a dataset-level
 # isin filter that silently missed rows over DriveFS, quarantining 66
 # bundles whose pages exist; v2 streams every shard. Three authoring
 # leaks also fixed (pad thai/Thai, Fiat/Fiat 500, Al/metAL).
@@ -63,8 +63,8 @@ FAMILIES = [
              dict(source_page="Abuja", bridge_page="Nigeria")),
             ("Budapest", "Hungary", "forint", [" the forint", " forint"],
              dict(source_page="Budapest", bridge_page="Hungary")),
-            ("Warsaw", "Poland", "zloty",
-             [" the zloty", " zloty", " the złoty", " złoty"],
+            ("Warsaw", "Poland", "złoty",
+             [" the złoty", " złoty", " the zloty", " zloty"],
              dict(source_page="Warsaw", bridge_page="Poland")),
         ]),
     dict(
@@ -419,7 +419,7 @@ FAMILIES = [
              [" Istanbul"],
              dict(source_page="Fenerbahçe S.K. (football)",
                   bridge_page="Şükrü Saracoğlu Stadium")),
-            ("Real Betis", "the Benito Villamarín Stadium", "Seville",
+            ("Real Betis", "Estadio Benito Villamarín", "Seville",
              [" Seville", " Sevilla"],
              dict(source_page="Real Betis",
                   bridge_page="Estadio Benito Villamarín")),
@@ -719,14 +719,12 @@ FAMILIES += [
              [" Taiwan"],
              dict(source_page="National Palace Museum",
                   bridge_page="Taipei")),
-            ("the Louvre Abu Dhabi", "Abu Dhabi",
-             "the United Arab Emirates",
-             [" the United Arab Emirates", " United Arab Emirates",
-              " the UAE", " UAE"],
-             dict(source_page="Louvre Abu Dhabi",
-                  bridge_page="Abu Dhabi")),
-            ("the Egyptian Museum", "Cairo", "Egypt", [" Egypt"],
-             dict(source_page="Egyptian Museum", bridge_page="Cairo")),
+            ("the Belvedere", "Vienna", "Austria", [" Austria"],
+             dict(source_page="Belvedere, Vienna",
+                  bridge_page="Vienna")),
+            ("the Mauritshuis", "The Hague", "the Netherlands",
+             [" the Netherlands", " Netherlands"],
+             dict(source_page="Mauritshuis", bridge_page="The Hague")),
         ]),
     dict(
         family="national_park_to_capital", group="geo_physical",
@@ -815,7 +813,7 @@ def verify_against_reference(bundles: list[FactBundle]) -> dict:
     source-hop page, the answer string on the bridge page. A miss
     QUARANTINES the bundle (reported, dropped from the bank)."""
     from ..paths3 import run_root
-    ref = run_root() / "bank_reference" / "wiki_reference_v1.jsonl"
+    ref = run_root() / "bank_reference" / "wiki_reference_v2.jsonl"
     pages: dict[str, str] = {}
     for line in ref.read_text().splitlines():
         r = json.loads(line)
@@ -834,7 +832,7 @@ def verify_against_reference(bundles: list[FactBundle]) -> dict:
         sp, bp = pages.get(pp["source_page"]), pages.get(pp["bridge_page"])
         if sp is None:
             fails.append(f"source page missing: {pp['source_page']}")
-        elif norm(b.bridge) not in norm(sp):
+        elif norm(b.bridge.removeprefix("the ")) not in norm(sp):
             fails.append("bridge not stated on source page")
         if bp is None:
             fails.append(f"bridge page missing: {pp['bridge_page']}")
@@ -863,7 +861,7 @@ def main():
         | set(val["alias_prefix_issues"])
     shipped = [b for b in bundles if b.fact_id not in quarantined]
 
-    out = REPO_DATA / "bank_f_v3.jsonl"
+    out = REPO_DATA / "bank_f_v4.jsonl"
     save_bank(shipped, out)
     fam_counts = {}
     for b in shipped:
@@ -873,7 +871,7 @@ def main():
                "n_families": len(fam_counts), "family_counts": fam_counts,
                "validation": val, "reference_verification": wiki}
     cmd = "python -m jspace_phase3.experiments.author_bank_f"
-    meta = REPO_DATA / "bank_f_v3.meta.json"
+    meta = REPO_DATA / "bank_f_v4.meta.json"
     write_result3(payload, meta, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
     register(EVIDENCE_ID, tier=TIER, command=cmd, supersedes=SUPERSEDES,
