@@ -159,3 +159,40 @@ def test_matched_refuses_profile_length_mismatch():
     import pytest
     with pytest.raises(Exception, match="refusing to broadcast"):
         _run_matched("instant_rank_energy_matched", dic, h, psets, bad)
+
+
+def test_restrict_sets_limits_selection_to_allowed_rows():
+    dic, h, psets = _setup(3)
+    allowed = torch.tensor([5, 9, 17, 44])
+    out, ab = _run(Phase3JAblator, dic, h, psets,
+                   restrict_sets=allowed, record_ids=True)
+    sel = {i for p in ab.log.positions if p.selected_ids
+           for i in p.selected_ids}
+    assert sel and sel <= set(allowed.tolist())
+    # protection still binds inside the restricted set
+    out2, ab2 = _run(Phase3JAblator, dic, h,
+                     allowed[:2].unsqueeze(0).expand(h.shape[1], -1),
+                     restrict_sets=allowed, record_ids=True)
+    sel2 = {i for p in ab2.log.positions if p.selected_ids
+            for i in p.selected_ids}
+    assert sel2 <= {17, 44}
+
+
+def test_inject_dir_energy_matched_substitution():
+    dic, h, psets = _setup(4)
+    inj = torch.randn(D)
+    out_no, ab_no = _run(Phase3JAblator, dic, h, psets)
+    out_inj, ab_inj = _run(Phase3JAblator, dic, h, psets, inject_dir=inj)
+    # removal logging identical; the injection adds energy back
+    f_no = [p.removed_energy_frac for p in ab_no.log.positions]
+    f_inj = [p.removed_energy_frac for p in ab_inj.log.positions]
+    assert f_no == f_inj
+    d = (out_inj - out_no)[0]                       # [T, D]
+    u = torch.nn.functional.normalize(inj.float(), dim=0)
+    cos = torch.nn.functional.cosine_similarity(
+        d, u.unsqueeze(0).expand_as(d), dim=1)
+    assert bool((cos > 0.999).all())
+    h2b = (h[0].float() ** 2).sum(1)
+    h2a = (out_no[0].float() ** 2).sum(1)
+    exp = (h2b - h2a).clamp_min(0).sqrt()
+    assert torch.allclose(d.norm(dim=1), exp, atol=1e-4)

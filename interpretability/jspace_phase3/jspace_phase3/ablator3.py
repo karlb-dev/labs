@@ -124,6 +124,19 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
             blocked_per_pos = would_enter.sum(dim=1).cpu()
             scores.scatter_(1, idx, float("-inf"))
 
+        # §6.5 mediation arms: restrict the CANDIDATE set to given token
+        # rows (bridge-only / answer-only / unrelated-content lesions).
+        # Default-off; the golden-tested label/span-safe paths never
+        # reach this branch.
+        rs = m.get("restrict_sets")
+        if rs is not None:
+            ridx = rs.to(scores.device)
+            if ridx.dim() == 1:
+                ridx = ridx.unsqueeze(0).expand(T, -1)
+            allowed = torch.full_like(scores, float("-inf"))
+            allowed.scatter_(1, ridx, 0.0)
+            scores = scores + allowed
+
         finite = torch.isfinite(scores)
         avail = finite.sum(dim=1)
         take = int(min(k, int(avail.max().item()))) if avail.numel() else 0
@@ -173,6 +186,18 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
         coef = torch.einsum("tdk,td->tk", Ur, flat)
         flat_new = flat - torch.einsum("tdk,tk->td", Ur, coef)
         h2_after = (flat_new * flat_new).sum(dim=1)
+
+        # §6.5 counterfactual bridge swap: after removing the selected
+        # span, inject a unit direction scaled per position to the
+        # removed norm (energy-matched substitution). Default-off.
+        inj = m.get("inject_dir")
+        if isinstance(inj, dict):
+            inj = inj.get(layer_idx)
+        if inj is not None:
+            u = torch.nn.functional.normalize(
+                inj.to(flat_new.device).float(), dim=0)
+            scale = (h2_before - h2_after).clamp_min(0).sqrt()
+            flat_new = flat_new + scale.unsqueeze(1) * u.unsqueeze(0)
 
         eff = rank_mask.sum(dim=1).cpu()
         if span_safe and qp_masked is not None:
