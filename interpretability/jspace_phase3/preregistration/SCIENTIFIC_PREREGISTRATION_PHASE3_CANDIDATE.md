@@ -124,9 +124,9 @@ tests (§14.2); wild cluster bootstrap-t for CIs (§14.3); hierarchical
 model as secondary sensitivity only (§14.4); heavy-tail reporting in
 full (§14.5: mean+median, tail rates at frozen thresholds, conditional
 magnitude, ECDF, family distributions, LOFO, threshold curve);
-equivalence claims only via frozen-SESOI TOST at 90% (§14.6), SESOI =
-**[PENDING: set from the power sim; candidate 0.15 nats for
-within-fact composition]**; multiplicity per §14.7 families.
+equivalence claims only via frozen-SESOI TOST at 90% (§14.6);
+SESOI = **0.15 nats** for within-fact composition contrasts (frozen in
+§5); multiplicity per §14.7 families.
 
 ## 5 · Power and floors
 
