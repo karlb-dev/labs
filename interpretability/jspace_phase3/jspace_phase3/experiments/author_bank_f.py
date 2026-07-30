@@ -31,8 +31,8 @@ from ..paths3 import resolve_uri
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
-EVIDENCE_ID = "p3-bank-f-v5"
-SUPERSEDES = "p3-bank-f-v4"  # v1's verifier used a dataset-level
+EVIDENCE_ID = "p3-bank-f-v6"
+SUPERSEDES = "p3-bank-f-v5"  # v1's verifier used a dataset-level
 # isin filter that silently missed rows over DriveFS, quarantining 66
 # bundles whose pages exist; v2 streams every shard. Three authoring
 # leaks also fixed (pad thai/Thai, Fiat/Fiat 500, Al/metAL).
@@ -950,6 +950,237 @@ FAMILIES += [
         ]),
 ]
 
+FAMILIES += [
+    dict(
+        family="building_architect_to_birth_city", group="person_culture",
+        templates=dict(
+            direct="The architect {bridge} was born in",
+            composed="The architect who designed {source} was born in",
+            bridge_supplied="{source} was designed by {bridge}, who was "
+                            "born in"),
+        ambiguity="each building names one principal architect",
+        instances=[
+            ("the Sagrada Família", "Antoni Gaudí", "Reus", [" Reus"],
+             dict(source_page="Sagrada Família",
+                  bridge_page="Antoni Gaudí")),
+            ("St Paul's Cathedral", "Christopher Wren", "East Knoyle",
+             [" East Knoyle"],
+             dict(source_page="St Paul's Cathedral",
+                  bridge_page="Christopher Wren")),
+            ("the Sydney Opera House", "Jørn Utzon", "Copenhagen",
+             [" Copenhagen"],
+             dict(source_page="Sydney Opera House",
+                  bridge_page="Jørn Utzon")),
+            ("the Guggenheim Museum Bilbao", "Frank Gehry", "Toronto",
+             [" Toronto"],
+             dict(source_page="Guggenheim Museum Bilbao",
+                  bridge_page="Frank Gehry")),
+        ]),
+    dict(
+        family="element_toponym_to_country", group="science",
+        templates=dict(
+            direct="The place called {bridge} lies in the country of",
+            composed="The element {source} is named after a place lying "
+                     "in the country of",
+            bridge_supplied="The element {source} is named after "
+                            "{bridge}, which lies in the country of"),
+        ambiguity="each chosen element's namesake place is stated in its "
+                  "lead; each place is in one country",
+        instances=[
+            ("hafnium", "Copenhagen", "Denmark", [" Denmark"],
+             dict(source_page="Hafnium", bridge_page="Copenhagen")),
+            ("ytterbium", "Ytterby", "Sweden", [" Sweden"],
+             dict(source_page="Ytterbium", bridge_page="Ytterby")),
+            ("strontium", "Strontian", "Scotland",
+             [" Scotland", " the United Kingdom"],
+             dict(source_page="Strontium", bridge_page="Strontian")),
+            ("berkelium", "Berkeley", "the United States",
+             [" the United States", " the USA", " California"],
+             dict(source_page="Berkelium",
+                  bridge_page="Berkeley, California")),
+        ]),
+    dict(
+        family="framework_language_to_creator", group="tech",
+        templates=dict(
+            direct="The {bridge} language was created by",
+            composed="The language that the {source} framework is "
+                     "written in was created by",
+            bridge_supplied="The {source} framework is written in "
+                            "{bridge}, a language created by"),
+        ambiguity="each framework names one implementation language; "
+                  "each language one principal designer",
+        instances=[
+            ("React", "JavaScript", "Brendan Eich", [" Brendan Eich"],
+             dict(source_page="React (software)",
+                  bridge_page="JavaScript")),
+            ("Django", "Python", "Guido van Rossum",
+             [" Guido van Rossum"],
+             dict(source_page="Django (web framework)",
+                  bridge_page="Python (programming language)")),
+            ("Rails", "Ruby", "Yukihiro Matsumoto",
+             [" Yukihiro Matsumoto", " Matz"],
+             dict(source_page="Ruby on Rails",
+                  bridge_page="Ruby (programming language)")),
+            ("Laravel", "PHP", "Rasmus Lerdorf", [" Rasmus Lerdorf"],
+             dict(source_page="Laravel", bridge_page="PHP")),
+        ]),
+    dict(
+        family="newspaper_city_to_country", group="org",
+        templates=dict(
+            direct="{bridge} is a major city of",
+            composed="The newspaper {source} is published in a major "
+                     "city of",
+            bridge_supplied="The newspaper {source} is published in "
+                            "{bridge}, a major city of"),
+        ambiguity="each paper has one city of publication in its lead",
+        instances=[
+            ("The Hindu", "Chennai", "India", [" India"],
+             dict(source_page="The Hindu", bridge_page="Chennai")),
+            ("Haaretz", "Tel Aviv", "Israel", [" Israel"],
+             dict(source_page="Haaretz", bridge_page="Tel Aviv")),
+            ("La Nación", "Buenos Aires", "Argentina", [" Argentina"],
+             dict(source_page="La Nación", bridge_page="Buenos Aires")),
+            ("Dawn", "Karachi", "Pakistan", [" Pakistan"],
+             dict(source_page="Dawn (newspaper)", bridge_page="Karachi")),
+        ]),
+    dict(
+        family="chess_champion_to_birth_city", group="person_culture",
+        templates=dict(
+            direct="{bridge} was born in the city of",
+            composed="The winner of the {source} World Chess "
+                     "Championship was born in the city of",
+            bridge_supplied="The {source} World Chess Championship was "
+                            "won by {bridge}, who was born in the city "
+                            "of"),
+        ambiguity="each championship edition has one winner",
+        instances=[
+            ("1985", "Garry Kasparov", "Baku", [" Baku"],
+             dict(source_page="World Chess Championship 1985",
+                  bridge_page="Garry Kasparov")),
+            ("1972", "Bobby Fischer", "Chicago", [" Chicago"],
+             dict(source_page="World Chess Championship 1972",
+                  bridge_page="Bobby Fischer")),
+            ("2013", "Magnus Carlsen", "Tønsberg", [" Tønsberg"],
+             dict(source_page="World Chess Championship 2013",
+                  bridge_page="Magnus Carlsen")),
+            ("2008", "Viswanathan Anand", "Chennai", [" Chennai"],
+             dict(source_page="World Chess Championship 2008",
+                  bridge_page="Viswanathan Anand")),
+        ]),
+    dict(
+        family="instrument_to_capital", group="geo_culture",
+        templates=dict(
+            direct="The capital associated with {bridge} is",
+            composed="The traditional instrument called the {source} "
+                     "belongs to a country whose capital is",
+            bridge_supplied="The {source} is the traditional instrument "
+                            "of {bridge}, whose capital is"),
+        ambiguity="each chosen instrument is nationally attributed to "
+                  "one country in its lead",
+        instances=[
+            ("Great Highland bagpipe", "Scotland", "Edinburgh",
+             [" Edinburgh"],
+             dict(source_page="Great Highland bagpipe",
+                  bridge_page="Scotland")),
+            ("duduk", "Armenia", "Yerevan", [" Yerevan"],
+             dict(source_page="Duduk", bridge_page="Armenia")),
+            ("bandura", "Ukraine", "Kyiv", [" Kyiv", " Kiev"],
+             dict(source_page="Bandura", bridge_page="Ukraine")),
+            ("morin khuur", "Mongolia", "Ulaanbaatar", [" Ulaanbaatar"],
+             dict(source_page="Morin khuur", bridge_page="Mongolia")),
+        ]),
+    dict(
+        family="norse_god_to_weekday", group="person_culture",
+        templates=dict(
+            direct="The English weekday named after {bridge} is",
+            composed="The English weekday named after {source} is",
+            bridge_supplied="{source} is {bridge}, and the English "
+                            "weekday named after this god is"),
+        ambiguity="each descriptor picks out exactly one Norse deity",
+        instances=[
+            ("the Norse god of thunder", "Thor", "Thursday",
+             [" Thursday"],
+             dict(source_page="Thor", bridge_page="Thor")),
+            ("the one-eyed chief god of the Norse pantheon", "Odin",
+             "Wednesday", [" Wednesday"],
+             dict(source_page="Odin", bridge_page="Odin")),
+            ("the Norse god who lost a hand to the wolf Fenrir", "Tyr",
+             "Tuesday", [" Tuesday"],
+             dict(source_page="Týr", bridge_page="Týr")),
+            ("the Norse goddess married to Odin", "Frigg", "Friday",
+             [" Friday"],
+             dict(source_page="Frigg", bridge_page="Frigg")),
+        ]),
+    dict(
+        family="airport_code_to_country", group="geo_political",
+        templates=dict(
+            direct="{bridge} is a city in the state known as",
+            composed="The airport with IATA code {source} serves a city "
+                     "in the state known as",
+            bridge_supplied="The airport coded {source} serves {bridge}, "
+                            "a city in the state known as"),
+        ambiguity="each IATA code names one airport and city",
+        instances=[
+            ("ICN", "Incheon", "South Korea", [" South Korea"],
+             dict(source_page="Incheon International Airport",
+                  bridge_page="Incheon")),
+            ("BOM", "Mumbai", "India", [" India"],
+             dict(source_page=(
+                 "Chhatrapati Shivaji Maharaj International Airport"),
+                  bridge_page="Mumbai")),
+            ("JNB", "Johannesburg", "South Africa", [" South Africa"],
+             dict(source_page="O. R. Tambo International Airport",
+                  bridge_page="Johannesburg")),
+            ("AKL", "Auckland", "New Zealand", [" New Zealand"],
+             dict(source_page="Auckland Airport",
+                  bridge_page="Auckland")),
+        ]),
+    dict(
+        family="city_nickname_to_country", group="geo_culture",
+        templates=dict(
+            direct="{bridge} is found in the country known as",
+            composed="The city nicknamed {source} is found in the "
+                     "country known as",
+            bridge_supplied="{source} is the nickname of {bridge}, "
+                            "found in the country known as"),
+        ambiguity="each chosen nickname canonically names one city",
+        instances=[
+            ("the Eternal City", "Rome", "Italy", [" Italy"],
+             dict(source_page="Rome", bridge_page="Rome")),
+            ("the Big Apple", "New York City", "the United States",
+             [" the United States", " the USA", " America"],
+             dict(source_page="Big Apple", bridge_page="New York City")),
+            ("the Windy City", "Chicago", "the United States",
+             [" the United States", " the USA", " America"],
+             dict(source_page="Chicago", bridge_page="Chicago")),
+            ("the Harbour City", "Sydney", "Australia", [" Australia"],
+             dict(source_page="Sydney", bridge_page="Sydney")),
+        ]),
+    dict(
+        family="river_source_range_to_peak", group="geo_physical",
+        templates=dict(
+            direct="The highest peak of {bridge} is",
+            composed="The highest peak of the mountain range where the "
+                     "{source} rises is",
+            bridge_supplied="The {source} rises in {bridge}, whose "
+                            "highest peak is"),
+        ambiguity="each river's source range is stated in its lead; "
+                  "each range has one highest peak",
+        instances=[
+            ("Ganges", "the Himalayas", "Mount Everest",
+             [" Mount Everest", " Everest"],
+             dict(source_page="Ganges", bridge_page="Himalayas")),
+            ("Amazon", "the Andes", "Aconcagua", [" Aconcagua"],
+             dict(source_page="Amazon River", bridge_page="Andes")),
+            ("Rhine", "the Alps", "Mont Blanc", [" Mont Blanc"],
+             dict(source_page="Rhine", bridge_page="Alps")),
+            ("Colorado River", "the Rocky Mountains", "Mount Elbert",
+             [" Mount Elbert"],
+             dict(source_page="Colorado River",
+                  bridge_page="Rocky Mountains")),
+        ]),
+]
+
 
 def norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
@@ -986,7 +1217,7 @@ def verify_against_reference(bundles: list[FactBundle]) -> dict:
     source-hop page, the answer string on the bridge page. A miss
     QUARANTINES the bundle (reported, dropped from the bank)."""
     from ..paths3 import run_root
-    ref = run_root() / "bank_reference" / "wiki_reference_v4.jsonl"
+    ref = run_root() / "bank_reference" / "wiki_reference_v5.jsonl"
     pages: dict[str, str] = {}
     for line in ref.read_text().splitlines():
         r = json.loads(line)
@@ -1034,7 +1265,7 @@ def main():
         | set(val["alias_prefix_issues"])
     shipped = [b for b in bundles if b.fact_id not in quarantined]
 
-    out = REPO_DATA / "bank_f_v5.jsonl"
+    out = REPO_DATA / "bank_f_v6.jsonl"
     save_bank(shipped, out)
     fam_counts = {}
     for b in shipped:
@@ -1044,7 +1275,7 @@ def main():
                "n_families": len(fam_counts), "family_counts": fam_counts,
                "validation": val, "reference_verification": wiki}
     cmd = "python -m jspace_phase3.experiments.author_bank_f"
-    meta = REPO_DATA / "bank_f_v5.meta.json"
+    meta = REPO_DATA / "bank_f_v6.meta.json"
     write_result3(payload, meta, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
     register(EVIDENCE_ID, tier=TIER, command=cmd, supersedes=SUPERSEDES,
