@@ -74,3 +74,16 @@ def local_work() -> Path:
     p = Path(os.environ.get("JSPACE3_LOCAL_WORK", "/content/sl3_work"))
     p.mkdir(parents=True, exist_ok=True)
     return p
+
+
+def drive_hub_cache() -> Path:
+    """The persistent Drive HF cache (pinned dataset snapshots live here;
+    a clean-room reproduction points JSPACE3_DRIVE_HUB_CACHE at its own
+    copy). Distinct from HF_HUB_CACHE, the fast local weight cache."""
+    return Path(os.environ.get(
+        "JSPACE3_DRIVE_HUB_CACHE", "/content/drive/MyDrive/hf_cache/hub"))
+
+
+def local_hub_cache() -> Path:
+    """The local-NVMe HF cache (weights + small pinned datasets)."""
+    return Path(os.environ.get("HF_HUB_CACHE", "/content/hf_local"))

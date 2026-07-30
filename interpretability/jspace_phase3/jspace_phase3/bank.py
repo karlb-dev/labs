@@ -112,11 +112,20 @@ def validate_bundle(b: FactBundle) -> list[str]:
                 not p[-1].isalnum():
             v.append(f"{name}: prompt does not end at a scoring boundary")
         pn = _norm(p)
-        if _norm(b.answer) and _norm(b.answer) in pn:
-            v.append(f"{name}: ANSWER leaks into the prompt")
-        if name == "composed" and _norm(b.bridge) and _norm(b.bridge) in pn:
-            v.append("composed: BRIDGE leaks into the primary prompt")
-        if name == "bridge_supplied" and _norm(b.bridge) not in pn:
+        # Bank S states its mappings IN the prompt (in-context composition:
+        # the answer necessarily appears in a definition), so its leakage
+        # contract binds the FINAL QUERY SENTENCE, not the whole prompt.
+        qn = _norm(p.rsplit(". ", 1)[-1]) if b.bank == "S" else pn
+        if _norm(b.answer) and _norm(b.answer) in qn:
+            v.append(f"{name}: ANSWER leaks into the "
+                     f"{'query' if b.bank == 'S' else 'prompt'}")
+        if b.bank == "S" and _norm(b.answer) and _norm(b.answer) not in pn:
+            v.append(f"{name}: S-bank answer is never defined in-context")
+        if name == "composed" and _norm(b.bridge) and _norm(b.bridge) in qn:
+            v.append("composed: BRIDGE leaks into the primary "
+                     + ("query" if b.bank == "S" else "prompt"))
+        if name == "bridge_supplied" and _norm(b.bridge) not in (
+                qn if b.bank == "S" else pn):
             v.append("bridge_supplied: bridge is not actually supplied")
         if name == "direct" and _norm(b.bridge) and _norm(b.bridge) not in pn:
             v.append("direct: prompt must ask the second hop from the bridge")

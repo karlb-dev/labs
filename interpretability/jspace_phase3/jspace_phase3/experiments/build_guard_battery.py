@@ -36,6 +36,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from ..paths3 import drive_hub_cache, local_hub_cache
 from ..provenance3 import Provenance3, register, require_clean_tree, write_result3
 
 EVIDENCE_ID = "p3-guard-battery-v2"
@@ -43,8 +44,8 @@ SUPERSEDES = "p3-guard-battery-v1"  # v1 under-filled factual_enc (3/12,
 # single-paragraph lead filter too strict) and technical_docs (5/12,
 # stride 5 over a 100-row language file)
 TIER = "phase3-development"
-HUB = Path("/content/drive/MyDrive/hf_cache/hub")
-HUB_LOCAL = Path("/content/hf_local")
+HUB = drive_hub_cache()
+HUB_LOCAL = local_hub_cache()
 REPO_DATA = Path(__file__).resolve().parents[2] / "data"
 N_PER_DOMAIN = 12
 

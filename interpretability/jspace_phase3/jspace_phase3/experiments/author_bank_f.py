@@ -27,17 +27,16 @@ import sys
 from pathlib import Path
 
 from ..bank import FactBundle, phase2_triple_keys, save_bank, validate_bank
+from ..paths3 import drive_hub_cache, resolve_uri
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
 EVIDENCE_ID = "p3-bank-f-tranche1-v1"
 TIER = "phase3-development"
 REPO_DATA = Path(__file__).resolve().parents[2] / "data"
-WIKIPEDIA = Path("/content/drive/MyDrive/hf_cache/hub/"
-                 "datasets--wikimedia--wikipedia/snapshots/"
-                 "b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.en")
-P2_MANIFEST = ("/content/drive/MyDrive/interpret/special-lab-1/"
-               "part2_20260727/metrics/cross_model/g5_item_manifest_v5.json")
+WIKIPEDIA = (drive_hub_cache() / "datasets--wikimedia--wikipedia/snapshots/"
+             "b04c8d1ceb2f5cd4588862100d08de323dccfbaa/20231101.en")
+P2_MANIFEST_URI = "drive://metrics/cross_model/g5_item_manifest_v5.json"
 
 # instance = (source, bridge, answer, aliases, {source_page, bridge_page})
 FAMILIES = [
@@ -354,8 +353,6 @@ FAMILIES = [
              dict(source_page="Galena", bridge_page="Lead")),
             ("sphalerite", "zinc", "Zn", [" Zn"],
              dict(source_page="Sphalerite", bridge_page="Zinc")),
-            ("bauxite", "aluminium", "Al", [" Al"],
-             dict(source_page="Bauxite", bridge_page="Aluminium")),
             ("malachite", "copper", "Cu", [" Cu"],
              dict(source_page="Malachite", bridge_page="Copper")),
         ]),
@@ -393,8 +390,8 @@ FAMILIES = [
         ambiguity="chosen dishes are nationally attributed to one country "
                   "in the snapshot lead",
         instances=[
-            ("pad thai", "Thailand", "Thai", [" Thai"],
-             dict(source_page="Pad thai", bridge_page="Thailand")),
+            ("lasagna", "Italy", "Italian", [" Italian"],
+             dict(source_page="Lasagna", bridge_page="Italy")),
             ("goulash", "Hungary", "Hungarian", [" Hungarian"],
              dict(source_page="Goulash", bridge_page="Hungary")),
             ("pierogi", "Poland", "Polish", [" Polish"],
@@ -514,8 +511,9 @@ FAMILIES = [
                   bridge_page="Volkswagen")),
             ("Model S", "Tesla", "Austin", [" Austin"],
              dict(source_page="Tesla Model S", bridge_page="Tesla, Inc.")),
-            ("Fiat 500", "Fiat", "Turin", [" Turin"],
-             dict(source_page="Fiat 500", bridge_page="Fiat")),
+            ("Mustang", "Ford", "Dearborn", [" Dearborn"],
+             dict(source_page="Ford Mustang",
+                  bridge_page="Ford Motor Company")),
         ]),
 ]
 
@@ -553,15 +551,27 @@ def verify_against_wikipedia(bundles: list[FactBundle]) -> dict:
     """Check hop support in the pinned snapshot: the bridge string must
     appear on the source-hop page, the answer string on the bridge page.
     A miss QUARANTINES the bundle (reported, dropped from the bank)."""
-    import pyarrow.dataset as ds
+    import pyarrow.parquet as pq
     titles = set()
     for b in bundles:
         titles.add(b.provenance["pages"]["source_page"])
         titles.add(b.provenance["pages"]["bridge_page"])
-    dataset = ds.dataset(WIKIPEDIA, format="parquet")
-    tab = dataset.to_table(columns=["title", "text"],
-                           filter=ds.field("title").isin(sorted(titles)))
-    pages = dict(zip(tab["title"].to_pylist(), tab["text"].to_pylist()))
+    # streamed per-shard scan: dataset-level isin filters silently missed
+    # rows on this DriveFS mount (probe: 'Hungary' absent from a full-row
+    # count scan), so trust nothing but a manual batch filter
+    pages: dict[str, str] = {}
+    for shard in sorted(WIKIPEDIA.glob("*.parquet")):
+        pf = pq.ParquetFile(shard)
+        for batch in pf.iter_batches(batch_size=16384,
+                                     columns=["title", "text"]):
+            ts = batch["title"].to_pylist()
+            hits = [i for i, t in enumerate(ts) if t in titles]
+            if hits:
+                txt = batch["text"].to_pylist()
+                for i in hits:
+                    pages.setdefault(ts[i], txt[i])
+        if len(pages) == len(titles):
+            break
     report = {"missing_pages": sorted(titles - set(pages)),
               "hop_failures": {}, "n_verified": 0}
     for b in bundles:
@@ -587,7 +597,7 @@ def main():
     require_clean_tree("--allow-dirty" in sys.argv)
     bundles = build_bundles()
     p2 = phase2_triple_keys(
-        json.load(open(P2_MANIFEST))["payload"])
+        json.load(open(resolve_uri(P2_MANIFEST_URI)))["payload"])
     p2_answers = {k for k in p2 if k.startswith("|")}
     for b in bundles:      # answer-only dedup, §4.2a's sharp form
         assert f"|{norm(b.answer)}" not in p2_answers, \
