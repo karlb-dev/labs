@@ -33,8 +33,15 @@ from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 from ..stats import family_signflip_test, within_item_label_exchange_tail
 
-EVIDENCE_ID = "p3-power-sim-v2"
-SUPERSEDES = "p3-power-sim-v1"  # v1 applied the RAW span-safe family SD
+EVIDENCE_ID = "p3-power-sim-v3"
+# v2 was self-refuting: (a) its P3-P1 generator applied the cancellation
+# factor only to the FAMILY variance while the §14.1 within-fact chain
+# cancels item noise too, so every MDE cell came out null; (b) its
+# P3-P2 null was not null (non-tail J and C components had different
+# means through sd-1.0 noise, leaking a +0.17 tail-rate difference at
+# dtail=0). v3 applies the cancellation factor to both variance levels
+# and makes the P3-P2 non-tail components symmetric under the null.
+SUPERSEDES = "p3-power-sim-v2"  # v1 applied the RAW span-safe family SD
 # to P3-P1's family effects; the within-fact composition difference
 # cancels family intercepts, so v2 sweeps a cancellation axis
 # fam_sd in {measured, 0.6, 0.4, 0.25} and reports MDEs per scenario
@@ -92,10 +99,11 @@ def sim_p3p2_once(rng, *, n_fam, facts, dtail, base_tail,
         for _ in range(facts):
             hit_j = rng.random() < base_tail + dtail
             hit_c = rng.random() < base_tail
+            # non-tail components SYMMETRIC so dtail=0 is a true null
             rows.append({"delta_J": -1.5 if hit_j else
-                         rng.normal(-0.2, noise_sd),
+                         rng.normal(-0.1, 0.35),
                          "delta_C": -1.5 if hit_c else
-                         rng.normal(-0.05, noise_sd * 0.5),
+                         rng.normal(-0.1, 0.35),
                          "canonical_family": f"f{f}"})
     return within_item_label_exchange_tail(
         pd.DataFrame(rows), draws=2000,
@@ -115,13 +123,13 @@ def main():
     rng = np.random.default_rng(4242)
 
     p1_power = {}
-    for fs_name, fs in (("measured", fam_sd), ("cancel06", 0.6),
-                        ("cancel04", 0.4), ("cancel025", 0.25)):
+    for fs_name, c in (("raw", 1.0), ("cancel06", 0.6),
+                       ("cancel04", 0.4), ("cancel025", 0.25)):
         for n_fam in (18, 24, 30, 36):
             for theta in (0.0, 0.10, 0.15, 0.20, 0.30, 0.50):
                 ps = [sim_p3p1_once(rng, n_fam=n_fam, facts=3,
-                                    theta=theta, fam_sd=fs,
-                                    noise_sd=noise_sd, z0=z0, rho=rho)
+                                    theta=theta, fam_sd=fam_sd * c,
+                                    noise_sd=noise_sd * c, z0=z0, rho=rho)
                       for _ in range(N_SIM)]
                 p1_power[f"{fs_name}_fam{n_fam}_theta{theta}"] = round(
                     float(np.mean(np.array(ps) < ALPHA_HOLM_FIRST)), 3)
@@ -155,7 +163,7 @@ def main():
                        "zero_share": round(z0, 4), "rho": round(rho, 4),
                        "alpha": ALPHA_HOLM_FIRST, "n_sim": N_SIM},
         "p3p1_power": p1_power, "p3p2_power": p2_power,
-        "p3p1_mde90": mde(p1_power, ("measured", "cancel")),
+        "p3p1_mde90": mde(p1_power, ("raw", "cancel")),
         "p3p2_mde90": mde(p2_power, "fam"),
     }
     cmd = "python -m jspace_phase3.experiments.power_sim"
