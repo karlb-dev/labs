@@ -1,5 +1,11 @@
 # J-space Phase 3 — living report (mechanism, generalization, paper hardening)
 
+> **Freeze clarification.** Phase 3 was validly frozen at
+> `jspace-phase3-freeze-v1`; the stale candidate header inside the historical
+> preregistration is a generation defect. See
+> [`../preregistration/PHASE3_FREEZE_RECORD.md`](../preregistration/PHASE3_FREEZE_RECORD.md)
+> for the immutable commits, hashes, counts, and gate event.
+
 Governing docs: `../reviews/jspace_lab_nextsteps_3_1.md` + addendum (§4/§5
 govern). Phase 2 is frozen (`jspace-part2-complete-v1`); its results enter
 here only as immutable `phase2-confirmatory` inputs. Every claim below

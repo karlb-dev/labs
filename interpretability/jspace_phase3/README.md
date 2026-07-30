@@ -1,5 +1,10 @@
 # jspace_phase3 — mechanism, generalization, and paper hardening
 
+> **Freeze clarification.** Phase 3 was validly frozen at
+> `jspace-phase3-freeze-v1`; the stale candidate header inside the historical
+> preregistration is a generation defect. The immutable facts and hashes are in
+> [`preregistration/PHASE3_FREEZE_RECORD.md`](preregistration/PHASE3_FREEZE_RECORD.md).
+
 Phase 3 of the J-space investigation. Phase 2 (confirmatory campaign,
 `../jspace_part2/`, tags `jspace-part2-confirmatory-freeze-v1` /
 `jspace-part2-complete-v1`) is **closed and immutable**; this package
