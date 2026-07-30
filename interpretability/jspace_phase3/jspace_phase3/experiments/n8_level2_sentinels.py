@@ -50,6 +50,13 @@ def main():
     if fresh.exists():
         shutil.rmtree(fresh)
     fresh.mkdir(parents=True)
+    # the producer resolves manifest/partition INPUTS under RUN_ROOT as
+    # well as its state — scaffold the fresh root with read-only links
+    # to the frozen cross-model inputs; per-slug state dirs stay absent
+    # so measurement starts from item 1
+    (fresh / "metrics").mkdir()
+    os.symlink(Path(P2_ROOT) / "metrics" / "cross_model",
+               fresh / "metrics" / "cross_model")
 
     env = dict(os.environ)
     # RUN_ROOT carries the producer's STATE as well as outputs, so it
