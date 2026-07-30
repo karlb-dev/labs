@@ -35,14 +35,28 @@ UA = "jspace-phase3-bank-verifier/0.1 (research reproduction; contact: repo)"
 
 
 def fetch_batch(titles: list[str]) -> dict:
+    """Batched WIKITEXT fetch (rvslots=main). Wikitext keeps infobox
+    parameters, which is where facts like currencies are stated most
+    reliably — better verification surface than plaintext extracts,
+    and it batches (extracts full-content allows 1 title/request,
+    which rate-limits immediately)."""
     q = urllib.parse.urlencode({
         "action": "query", "format": "json", "formatversion": "2",
-        "prop": "extracts|revisions", "explaintext": "1",
-        "exsectionformat": "plain", "rvprop": "ids|timestamp",
+        "prop": "revisions", "rvprop": "ids|timestamp|content",
+        "rvslots": "main",
         "redirects": "1", "titles": "|".join(titles), "maxlag": "5"})
     req = urllib.request.Request(f"{API}?{q}", headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return json.loads(r.read())
+    for attempt in range(6):
+        try:
+            with urllib.request.urlopen(req, timeout=90) as r:
+                return json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < 5:
+                wait = int(e.headers.get("Retry-After", 0)) or 15 * (attempt + 1)
+                time.sleep(wait)
+                continue
+            raise
+    raise RuntimeError("unreachable")
 
 
 def main():
@@ -51,35 +65,31 @@ def main():
     titles = sorted({b.provenance["pages"][k] for b in build_bundles()
                      for k in ("source_page", "bridge_page")})
     out_rows, redirect_map, missing = [], {}, []
-    # extracts allows only ONE title per request when explaintext is on
-    # for full content; batch politely
-    for i, t in enumerate(titles):
-        for attempt in range(3):
-            try:
-                data = fetch_batch([t])
-                break
-            except Exception as e:                    # noqa: BLE001
-                if attempt == 2:
-                    raise
-                time.sleep(3 * (attempt + 1))
+    B = 10
+    for i in range(0, len(titles), B):
+        batch = titles[i:i + B]
+        data = fetch_batch(batch)
         for rd in data.get("query", {}).get("redirects", []):
             redirect_map[rd["from"]] = rd["to"]
+        resolved = {}   # final title -> requested title
+        for t in batch:
+            resolved[redirect_map.get(t, t)] = t
         for page in data["query"]["pages"]:
             if page.get("missing"):
-                missing.append(t)
+                missing.append(page.get("title", "?"))
                 continue
             rev = page.get("revisions", [{}])[0]
+            text = rev.get("slots", {}).get("main", {}).get("content", "")
             out_rows.append({
-                "requested_title": t, "title": page["title"],
+                "requested_title": resolved.get(page["title"], page["title"]),
+                "title": page["title"],
                 "pageid": page.get("pageid"),
                 "revid": rev.get("revid"),
                 "rev_timestamp": rev.get("timestamp"),
-                "text": page.get("extract", ""),
-                "text_sha256": hashlib.sha256(
-                    page.get("extract", "").encode()).hexdigest()})
-        if (i + 1) % 25 == 0:
-            print(f"{i + 1}/{len(titles)}", flush=True)
-        time.sleep(0.15)
+                "text": text,
+                "text_sha256": hashlib.sha256(text.encode()).hexdigest()})
+        print(f"{min(i + B, len(titles))}/{len(titles)}", flush=True)
+        time.sleep(1.2)
 
     out_dir = run_root() / "bank_reference"
     out_dir.mkdir(parents=True, exist_ok=True)
