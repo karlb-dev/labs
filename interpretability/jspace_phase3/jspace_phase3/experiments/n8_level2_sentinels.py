@@ -46,6 +46,7 @@ def main():
     require_clean_tree("--allow-dirty" in sys.argv)
     slug = arg("--slug")
     n_sent = int(arg("--n", 20))
+    full = "--full" in sys.argv          # Level 3: run the whole cell
     fresh = run_root() / "n8_level2" / slug
     if fresh.exists():
         shutil.rmtree(fresh)
@@ -76,7 +77,9 @@ def main():
                       f"n6_grid_{slug}.yaml")
     cfg_d = yaml.safe_load(frozen_cfg.read_text())
     cfg_d["out_dir"] = str(fresh / "metrics" / slug / "n6_grid")
-    cfg_d["evidence_id"] = f"{cfg_d['evidence_id']}-n8l2-sentinel"
+    cfg_d["evidence_id"] = f"{cfg_d['evidence_id']}-n8-sentinel"
+    cfg_d["tier"] = "methods"   # if a full (Level 3) run reaches its own
+    # registration, the row lands clearly labeled, never confirmatory
     cfg = str(fresh / "sentinel_config.yaml")
     Path(cfg).write_text(yaml.safe_dump(cfg_d, sort_keys=False))
     cmd = [sys.executable, "-m",
@@ -97,10 +100,10 @@ def main():
                 n_done = len(json.loads(state_p.read_text())["done"])
             except (json.JSONDecodeError, KeyError):
                 continue
-            if n_done >= n_sent:
+            if not full and n_done >= n_sent:
                 proc.send_signal(signal.SIGTERM)
                 break
-        if time.time() - t0 > 3600:
+        if time.time() - t0 > (7200 if full else 3600):
             proc.kill()
             raise RuntimeError("sentinel run exceeded 1 h before "
                                f"{n_sent} items (reached {n_done})")
@@ -135,14 +138,16 @@ def main():
         "n_compared_rows": int(len(merged)),
         "max_abs_deviation_per_col": devs,
         "worst": worst, "tolerance": TOL, "pass": passed}
-    eid = f"p3-n8-level2-{slug}-v1"
+    level = 3 if full else 2
+    eid = f"p3-n8-level{level}-{slug}-v1"
     cmdstr = (f"python -m jspace_phase3.experiments.n8_level2_sentinels "
-              f"--slug {slug} --n {n_sent}")
+              f"--slug {slug} --n {n_sent}"
+              + (" --full" if full else ""))
     out = metrics_dir("cross_model") / f"n8_level2_{slug}.json"
     write_result3(payload, out, Provenance3(
         evidence_id=eid, tier=TIER, command=cmdstr, seed=0))
     register(eid, tier=TIER, command=cmdstr,
-             what=(f"N8 Level 2 sentinel on {slug}: "
+             what=(f"N8 Level {level} {'full-cell' if full else 'sentinel'} on {slug}: "
                    f"{payload['n_sentinel_items']} items re-measured "
                    f"under the frozen N6 command; worst |dev| {worst} "
                    f"(tol {TOL}) — {'PASS' if passed else 'FAIL'}"),

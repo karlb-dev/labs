@@ -40,11 +40,12 @@ def arg(flag, default=None):
     return sys.argv[sys.argv.index(flag) + 1] if flag in sys.argv else default
 
 
-def load_effects() -> pd.DataFrame:
+def load_effects(side: str = "confirmatory") -> pd.DataFrame:
+    sfx = "" if side == "confirmatory" else f"_{side}"
     rows = []
     for slug in SLUGS:
-        df = pd.read_parquet(metrics_dir(slug) / "p3_grid" /
-                             f"p3_grid_{slug}.parquet")
+        df = pd.read_parquet(metrics_dir(slug) / f"p3_grid{sfx}" /
+                             f"p3_grid{sfx}_{slug}.parquet")
         df["model"] = slug
         df["J_eff"] = df.lp_meanJ_span_safe - df.lp_baseline
         df["C_eff"] = df.lp_ss_matched - df.lp_baseline
@@ -74,8 +75,9 @@ def tail_block(d: pd.Series, fam: pd.Series) -> dict:
 def main():
     require_clean_tree("--allow-dirty" in sys.argv)
     p3p3_model = arg("--p3p3-model")
+    side = arg("--side", "confirmatory")
     eid = arg("--eid", "p3-locked-analysis-v1")
-    eff = load_effects()
+    eff = load_effects(side)
 
     # ---- P3-P1: within-fact composition, Qwen minus OLMo-pair mean
     comp = within_fact_composition(
@@ -159,8 +161,10 @@ def main():
         "threshold_nats": THRESH,
     }
     cmd = ("python -m jspace_phase3.experiments.phase3_locked_analysis"
-           + (f" --p3p3-model {p3p3_model}" if p3p3_model else ""))
-    out = metrics_dir("cross_model") / "phase3_locked_analysis.json"
+           + (f" --p3p3-model {p3p3_model}" if p3p3_model else "")
+           + (f" --side {side}" if side != "confirmatory" else ""))
+    sfx = "" if side == "confirmatory" else f"_{side}"
+    out = metrics_dir("cross_model") / f"phase3_locked_analysis{sfx}.json"
     write_result3(payload, out, Provenance3(
         evidence_id=eid, tier=TIER, command=cmd, seed=4242))
     register(eid, tier=TIER, command=cmd,
