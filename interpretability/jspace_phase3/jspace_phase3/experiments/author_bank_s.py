@@ -30,8 +30,8 @@ from ..paths3 import resolve_uri
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
-EVIDENCE_ID = "p3-bank-s-v2"
-SUPERSEDES = "p3-bank-s-tranche1-v1"  # tranche 2 adds the remaining §5.2
+EVIDENCE_ID = "p3-bank-s-v3"
+SUPERSEDES = "p3-bank-s-v2"  # tranche 2 adds the remaining §5.2
 # template types (symbol-operator, alias-with-distractor, reversible
 # mapping) plus five more worlds
 TIER = "phase3-development"
@@ -355,6 +355,134 @@ FAMILIES += [
 ]
 
 
+FAMILIES += [
+    dict(
+        family="s_dial_valve", group="synthetic_lookup",
+        templates=dict(
+            direct="Dial {bridge} controls the {answer} valve. The valve "
+                   "controlled by dial {bridge} is the",
+            composed="Machine {source} is wired to dial {bridge}. Dial "
+                     "{bridge} controls the {answer} valve. Adjusting "
+                     "machine {source} ultimately moves the valve called "
+                     "the",
+            bridge_supplied="Machine {source} is wired to dial {bridge}. "
+                            "Dial {bridge} controls the {answer} valve. "
+                            "Through dial {bridge}, machine {source} "
+                            "moves the valve called the"),
+        instances=[("M40", "D7", "intake"), ("M12", "D3", "return"),
+                   ("M85", "D9", "bypass"), ("M27", "D5", "overflow"),
+                   ("M63", "D2", "purge")]),
+    dict(
+        family="s_seed_waterline", group="synthetic_binding",
+        templates=dict(
+            direct="Plot {bridge} is watered by line {answer}. The line "
+                   "watering plot {bridge} is line",
+            composed="Seed packet {source} is sown in plot {bridge}. "
+                     "Plot {bridge} is watered by line {answer}. The "
+                     "seedlings from packet {source} are watered by line",
+            bridge_supplied="Seed packet {source} is sown in plot "
+                            "{bridge}. Plot {bridge} is watered by line "
+                            "{answer}. Packet {source} grows in plot "
+                            "{bridge}, watered by line"),
+        instances=[("Larkspur", "P4", "W2"), ("Foxtail", "P8", "W6"),
+                   ("Bristlecone", "P1", "W9"), ("Cloudberry", "P6", "W3"),
+                   ("Silverbell", "P3", "W7")]),
+    dict(
+        family="s_flag_muster", group="synthetic_path",
+        templates=dict(
+            direct="Squad {bridge} musters at post {answer}. The muster "
+                   "post for squad {bridge} is post",
+            composed="Flag {source} summons squad {bridge}. Squad "
+                     "{bridge} musters at post {answer}. Raising flag "
+                     "{source} gathers a squad at post",
+            bridge_supplied="Flag {source} summons squad {bridge}. Squad "
+                            "{bridge} musters at post {answer}. Flag "
+                            "{source} calls squad {bridge} to post"),
+        instances=[("crimson", "Talon", "R5"), ("cobalt", "Ridge", "R2"),
+                   ("ochre", "Harrow", "R8"), ("viridian", "Lance", "R3"),
+                   ("magenta", "Vale", "R6")]),
+    dict(
+        family="s_keeper_door", group="synthetic_binding",
+        templates=dict(
+            direct="Keeper {bridge} guards door {answer}. The door "
+                   "guarded by keeper {bridge} is door",
+            composed="Passcode {source} belongs to keeper {bridge}. "
+                     "Keeper {bridge} guards door {answer}. Passcode "
+                     "{source} therefore opens door",
+            bridge_supplied="Passcode {source} belongs to keeper "
+                            "{bridge}. Keeper {bridge} guards door "
+                            "{answer}. Since {bridge} accepts passcode "
+                            "{source}, it opens door"),
+        instances=[("9174", "Ansel", "T1"), ("3628", "Borvin", "T8"),
+                   ("5093", "Caldra", "T4"), ("7451", "Delmar", "T9"),
+                   ("2867", "Elrick", "T3")]),
+    dict(
+        family="s_seal_vault", group="synthetic_lookup",
+        templates=dict(
+            direct="Seal {bridge} opens vault {answer}. The vault opened "
+                   "by seal {bridge} is vault",
+            composed="Scroll {source} is stamped with seal {bridge}. "
+                     "Seal {bridge} opens vault {answer}. Scroll "
+                     "{source} is stored behind the door of vault",
+            bridge_supplied="Scroll {source} is stamped with seal "
+                            "{bridge}. Seal {bridge} opens vault "
+                            "{answer}. The seal on {source} being "
+                            "{bridge}, it opens vault"),
+        instances=[("Aldermoor", "the owl", "V12"),
+                   ("Brackenhide", "the stag", "V30"),
+                   ("Cindervale", "the heron", "V25"),
+                   ("Dwimmerlaik", "the adder", "V41"),
+                   ("Emberwrit", "the vixen", "V17")]),
+    dict(
+        family="s_orchard_market", group="synthetic_path",
+        templates=dict(
+            direct="Depot {bridge} supplies market {answer}. The market "
+                   "supplied by depot {bridge} is market",
+            composed="Orchard {source} ships to depot {bridge}. Depot "
+                     "{bridge} supplies market {answer}. Fruit from "
+                     "orchard {source} is sold at market",
+            bridge_supplied="Orchard {source} ships to depot {bridge}. "
+                            "Depot {bridge} supplies market {answer}. "
+                            "Via depot {bridge}, orchard {source} "
+                            "reaches market"),
+        instances=[("Hollybrook", "Northloft", "MK2"),
+                   ("Ivycrest", "Eastbarrow", "MK7"),
+                   ("Junipergate", "Westfold", "MK4"),
+                   ("Kestrelwood", "Southmere", "MK9"),
+                   ("Lindenmark", "Midhaven", "MK5")]),
+    dict(
+        family="s_lens_bench", group="synthetic_binding",
+        templates=dict(
+            direct="Rig {bridge} sits at bench {answer}. The bench "
+                   "holding rig {bridge} is bench",
+            composed="Lens {source} mounts on rig {bridge}. Rig {bridge} "
+                     "sits at bench {answer}. To use lens {source}, walk "
+                     "to bench",
+            bridge_supplied="Lens {source} mounts on rig {bridge}. Rig "
+                            "{bridge} sits at bench {answer}. Lens "
+                            "{source} lives on rig {bridge} at bench"),
+        instances=[("L-310", "Falcata", "B14"), ("L-208", "Glaive", "B27"),
+                   ("L-455", "Halberd", "B31"), ("L-172", "Estoc", "B48"),
+                   ("L-529", "Voulge", "B22")]),
+    dict(
+        family="s_carriage_stable", group="synthetic_path",
+        templates=dict(
+            direct="The horse {bridge} sleeps in stable {answer}. The "
+                   "stable of the horse {bridge} is stable",
+            composed="Carriage {source} is drawn by the horse {bridge}. "
+                     "The horse {bridge} sleeps in stable {answer}. At "
+                     "night, the horse that draws carriage {source} "
+                     "rests in stable",
+            bridge_supplied="Carriage {source} is drawn by the horse "
+                            "{bridge}. The horse {bridge} sleeps in "
+                            "stable {answer}. {bridge} draws carriage "
+                            "{source} and rests in stable"),
+        instances=[("C-9", "Sorrel", "S3"), ("C-4", "Piebald", "S8"),
+                   ("C-7", "Roanoke", "S5"), ("C-2", "Dapple", "S9"),
+                   ("C-5", "Chestnut", "S6")]),
+]
+
+
 def norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
 
@@ -390,18 +518,18 @@ def main():
         assert f"|{norm(b.answer)}" not in p2_answers, \
             f"{b.fact_id}: nonce answer collides with a Phase 2 answer"
     val = validate_bank(bundles, phase2_triples=p2)
-    out = REPO_DATA / "bank_s_v2.jsonl"
+    out = REPO_DATA / "bank_s_v3.jsonl"
     save_bank(bundles, out)
     payload = {"n_bundles": len(bundles),
                "n_families": val["n_families"],
                "family_counts": val["family_counts"],
                "validation": val}
     cmd = "python -m jspace_phase3.experiments.author_bank_s"
-    meta = REPO_DATA / "bank_s_v2.meta.json"
+    meta = REPO_DATA / "bank_s_v3.meta.json"
     write_result3(payload, meta, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
     register(EVIDENCE_ID, tier=TIER, command=cmd, supersedes=SUPERSEDES,
-             what=(f"Bank S v2: {len(bundles)} synthetic in-context "
+             what=(f"Bank S v3: {len(bundles)} synthetic in-context "
                    f"composition bundles / {val['n_families']} template "
                    f"families, direct/composed/bridge_supplied + rotated "
                    f"counterfactuals, nonce entities disjoint from Phase 2"),
