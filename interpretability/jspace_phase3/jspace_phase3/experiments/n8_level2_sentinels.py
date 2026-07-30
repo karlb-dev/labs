@@ -52,7 +52,12 @@ def main():
     fresh.mkdir(parents=True)
 
     env = dict(os.environ)
-    env["JSPACE_PART2_RUN_ROOT"] = P2_ROOT
+    # RUN_ROOT carries the producer's STATE as well as outputs, so it
+    # must point at the FRESH root or the grid resumes the frozen VM9
+    # state and re-measures nothing (then dies re-registering the
+    # original id). Frozen INPUTS (manifest/partition/lens) resolve
+    # through the separate JSPACE_DRIVE_ROOT alias layer, untouched.
+    env["JSPACE_PART2_RUN_ROOT"] = str(fresh)
     env["JSPACE_PART2_OUT_ROOT"] = str(fresh)
     cfg = f"interpretability/jspace_part2/configs/n6_grid_{slug}.yaml"
     cmd = [sys.executable, "-m",
