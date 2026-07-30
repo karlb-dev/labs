@@ -986,7 +986,7 @@ def verify_against_reference(bundles: list[FactBundle]) -> dict:
     source-hop page, the answer string on the bridge page. A miss
     QUARANTINES the bundle (reported, dropped from the bank)."""
     from ..paths3 import run_root
-    ref = run_root() / "bank_reference" / "wiki_reference_v3.jsonl"
+    ref = run_root() / "bank_reference" / "wiki_reference_v4.jsonl"
     pages: dict[str, str] = {}
     for line in ref.read_text().splitlines():
         r = json.loads(line)
