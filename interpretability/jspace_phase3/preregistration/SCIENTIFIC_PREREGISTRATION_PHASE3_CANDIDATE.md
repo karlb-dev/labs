@@ -63,10 +63,13 @@ model_diff(A,B)  = within_fact_comp_A − within_fact_comp_B
 - **P3-P3 (bridge-protection rescue):** on composed Bank F confirmatory
   items, the **family-weighted mean** of the within-item rescue
   contrast `lp(true-bridge-protected) − lp(distractor-bridge-protected)`
-  (span-safe base protection, §6.5 piece sets), on **[PENDING: exactly
-  one of Think | Qwen, chosen pre-freeze by the development
-  identifiability gate (coverage + measurability only, never magnitude —
-  §4.4); Think's gate passed: cover_any 0.85, frac>floor 0.95]**.
+  (span-safe base protection, §6.5 piece sets), on **[PENDING-QWEN-GATE:
+  exactly one of Think | Qwen, chosen by the development identifiability
+  gates alone (coverage + measurability, never magnitude — §4.4).
+  Think's gate PASSED (cover_any 0.85, frac>floor 0.95). Decision rule,
+  pinned before the Qwen gate runs: if Qwen's gate also passes, the
+  model with the higher any-piece coverage carries P3-P3; exact ties
+  break to Qwen. If only one passes, it carries P3-P3.]**.
   Test: within-item true/distractor label exchange = item-level sign
   flip of the contrast, family-weighted statistic
   (`stats.within_item_exchange_mean`), one-sided greater.
@@ -101,13 +104,16 @@ control].
   `capable_generation` on BOTH its direct and composed variants;
   baseline logprob is a covariate, never a window (R2/§5.5).
 - Primary cross-model cohort = the three-model intersection.
-- Partition: `family_split_v2` (seed-ACTIVE, seed **[PENDING: drawn as
-  the first 4 digits of the freeze commit's parent sha, recorded]**),
-  floors ≥36 Bank F families/side and ≥25/side intersection-capable,
-  ≤10% single-family item share, standardized imbalance ≤0.35 on every
-  balance dimension; assignment + balance report frozen in the freeze
-  commit; disjointness asserted on canonical_family, fact_id,
-  template_hash, and (bridge, answer) triple.
+- Partition: `family_split_v2` (seed-ACTIVE). **Seed rule, pinned:**
+  `seed = int(parent_sha[:8], 16) % 100000` where `parent_sha` is the
+  full sha of the freeze commit's parent — deterministic, auditable,
+  and fixed by history that exists before any outcome. Floors: ≥36
+  families per side overall, ≥20 Bank F families per side, ≥25/side
+  intersection-capable; ≤10% single-family item share; standardized
+  imbalance ≤0.35 on every balance dimension. Assignment + balance
+  report frozen in the freeze commit; disjointness asserted on
+  canonical_family, fact_id, template_hash, and (bridge, answer)
+  triple.
 - **[PENDING G5: cohort sizes per model, intersection count, per-side
   family counts.]**
 
@@ -124,12 +130,25 @@ within-fact composition]**; multiplicity per §14.7 families.
 
 ## 5 · Power and floors
 
-**[PENDING: `power_sim` from development-family estimates (the §4.1b
-audits + Workstream C profiles + G5 attrition), simulating
-zero-inflation, family ICC, tail prevalence, item-count variation,
-cross-model correlation, direct/composed pairing. Frozen family floor
-per side and MDEs for P3-P1..P3 land here. The simulation code commits
-before the freeze; its inputs are development-tier only.]**
+From `p3-power-sim-v3` (dev-calibrated: between-family SD 0.94,
+within-family SD 1.01, zero-inflation 0.06, cross-model item r ≈ 0;
+null-calibrated at α/3: rejection 1.3–1.5%):
+
+| scenario | P3-P1 MDE@90% (36 fam/side) | P3-P2 MDE@90% |
+|---|---|---|
+| raw dev variances (no within-fact cancellation) | >0.5 nats | 0.2 tail-points (30–36 fam) |
+| cancellation ×0.4 | 0.5 nats | — |
+| cancellation ×0.25 | 0.3 nats | — |
+
+**Frozen floors:** ≥36 families per side overall; ≥20 Bank F families
+per side; ≥25 intersection-capable families per side (R2). **Disclosed
+power statement:** P3-P2 is adequately powered against the Phase 2
+anchor effect (+0.279). P3-P1 is powered only for effects ≥0.3–0.5
+nats depending on the realized within-fact cancellation — it is
+carried as a test with this disclosure, and the §1 estimation targets
+carry the quantitative story regardless of its outcome (the Phase 2
+binary-primary lesson, §0.4 hierarchy). **SESOI for any equivalence
+claim: 0.15 nats (TOST at 90%).**
 
 ## 6 · Prohibited claims and wording gates
 
