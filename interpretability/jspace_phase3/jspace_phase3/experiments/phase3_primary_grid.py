@@ -48,7 +48,7 @@ from ..provenance3 import (Provenance3, register, require_clean_tree,
                            resolve_model, write_result3)
 from ..scoring import DEFAULT_SPEC, ScoringSession
 
-TIER = "phase3-confirmatory"
+DEFAULT_TIER = "phase3-confirmatory"
 REPO_DATA = Path(__file__).resolve().parents[2] / "data"
 
 
@@ -75,6 +75,7 @@ def main():  # noqa: C901
     cfg = yaml.safe_load(Path(cfg_path).read_text())
     require_clean_tree("--allow-dirty" in sys.argv)
     slug = cfg["slug"]
+    tier = cfg.get("tier", DEFAULT_TIER)
 
     puri = cfg["partition_uri"]
     ppath = Path(resolve3(puri)) if "://" in str(puri) else Path(puri)
@@ -269,13 +270,13 @@ def main():  # noqa: C901
                    "conditions_note": "raw rows only; locked analysis "
                                       "runs once after all cells bank"},
                   out_json, Provenance3(
-                      evidence_id=eid, tier=TIER, command=cmd,
+                      evidence_id=eid, tier=tier, command=cmd,
                       config_path=cfg_path,
                       inputs={"lens": sha256_file(
                           str(resolve_uri(cfg["lens_uri"])))},
                       model=resolve_model(model_path),
                       seed=cfg["rand_seed"]))
-    register(eid, tier=TIER, command=cmd,
+    register(eid, tier=tier, command=cmd,
              what=(f"Phase 3 primary grid cell on {slug}: {len(df)} "
                    f"frozen-cohort items × span-safe primary arm set; "
                    f"stop rule passed on {state['baseline_checked']} "
