@@ -1153,8 +1153,10 @@ FAMILIES += [
             ("the Windy City", "Chicago", "the United States",
              [" the United States", " the USA", " America"],
              dict(source_page="Chicago", bridge_page="Chicago")),
-            ("the Harbour City", "Sydney", "Australia", [" Australia"],
-             dict(source_page="Sydney", bridge_page="Sydney")),
+            ("the City of a Hundred Spires", "Prague",
+             "the Czech Republic",
+             [" the Czech Republic", " Czechia"],
+             dict(source_page="Prague", bridge_page="Prague")),
         ]),
     dict(
         family="river_source_range_to_peak", group="geo_physical",
