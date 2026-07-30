@@ -29,7 +29,7 @@ from ..scoring import DEFAULT_SPEC
 TIER = "phase3-development"
 REPO_DATA = Path(__file__).resolve().parents[2] / "data"
 BANKS = ["bank_f_v7.jsonl", "bank_s_v3.jsonl"]
-PREV = {"olmo31-think": "v2", "olmo31-instruct": "v1", "qwen36-27b": "v1"}
+PREV = {"olmo31-think": "v3", "olmo31-instruct": "v2", "qwen36-27b": "v2"}
 
 
 def main():
@@ -45,17 +45,30 @@ def main():
         d = metrics_dir(slug) / "g5_bank"
         df = pd.read_parquet(d / f"g5_bank_{slug}.parquet")
 
-        def grade(row):
+        def grade_prefix(row):
             gnorm = norm(row.generation)
             return any(gnorm.startswith(norm(a))
                        for a in aliases[row.item_id] if norm(a))
+
+        def grade_contains(row):
+            g = f" {norm(row.generation)}"
+            return any(f" {norm(a)}" in g
+                       for a in aliases[row.item_id] if norm(a))
         old = df.capable_generation.copy()
-        df["capable_generation"] = df.apply(grade, axis=1)
+        # THE inclusion predicate: answer appears anywhere in the 8-token
+        # greedy continuation. The endpoints are teacher-forced logprobs,
+        # so completion-mode prefixing is not required for a measurable
+        # item; prefix capability is kept as a reported column (prereg §3
+        # discloses both counts).
+        df["capable_prefix"] = df.apply(grade_prefix, axis=1)
+        df["capable_generation"] = df.apply(grade_contains, axis=1)
         flips = int((df.capable_generation != old).sum())
         pq = d / f"g5_bank_{slug}_regraded.parquet"
         df.to_parquet(pq)
         summary = {
-            "n_items": int(len(df)), "flips_to_capable": flips,
+            "n_items": int(len(df)), "flips": flips,
+            "capable_prefix_rate": round(
+                float(df.capable_prefix.mean()), 4),
             "capable_rate": round(float(df.capable_generation.mean()), 4),
             "capable_by_variant": {k: round(float(v), 4) for k, v in
                                    df.groupby("variant")
@@ -71,10 +84,12 @@ def main():
         write_result3({"summary": summary}, out, Provenance3(
             evidence_id=eid, tier=TIER, command=cmd, seed=0))
         register(eid, tier=TIER, command=cmd, supersedes=eid_prev,
-                 what=(f"G5 OFFLINE REGRADE on {slug} (normalize "
-                       f"whitespace fix + Bank F v7 adjectival aliases): "
-                       f"{flips} items flip, capable rate "
-                       f"{summary['capable_rate']} (was in {eid_prev}); "
+                 what=(f"G5 predicate v2 on {slug}: capable_generation = "
+                       f"answer CONTAINED in the 8-token greedy "
+                       f"continuation (endpoints are teacher-forced lp; "
+                       f"prefix rate kept as column): rate "
+                       f"{summary['capable_rate']} vs prefix "
+                       f"{summary['capable_prefix_rate']}; {flips} flips; "
                        f"lp columns untouched"),
                  outputs=[out, pq])
         print(slug, json.dumps(summary))
