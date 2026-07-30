@@ -460,3 +460,49 @@ command — worst lp deviation **0.0 (bit-exact)**. With Level 1
 (analysis layer, ≤5e-4), Level 2 (three bit-exact sentinels), and
 Level 3 (one full cell), the reproduction ladder specified as a
 public-release gate is fully discharged.
+
+---
+
+## §6.5 mediation factorial — QWEN CONSUMES ITS BRIDGE CHANNEL; THINK DOES NOT — tier: PHASE3-DEVELOPMENT
+
+`p3-bridge-mediation-qwen36-27b-v1` (40 composed confirmatory items) ·
+`p3-bridge-mediation-olmo31-think-v1` (20-item spot check). Seven arms
+per item, span-safe base protection; bridge piece sets with tokenizer
+variants; family-clustered CIs.
+
+| arm (Δ vs baseline, nats) | Qwen | Think |
+|---|---|---|
+| span-safe reference | −0.19 [−0.66, +0.22] | −0.57 [−1.17, −0.07] |
+| + true-bridge protected | **+0.12** [−0.18, +0.40] | −0.51 [−1.13, +0.00] |
+| + distractor-bridge protected | −0.56 [−1.06, −0.10] | −0.30 [−0.94, +0.20] |
+| bridge-only lesion (output preserved) | **−0.89** [−1.58, −0.30] | −0.19 [−0.32, −0.07] |
+| counterfactual-bridge swap | **−4.05** [−6.33, −1.92] | −0.09 [−0.40, +0.36] |
+| answer-only lesion (diagnostic) | −2.53 [−3.16, −1.91] | −4.48 [−5.24, −3.62] |
+| unrelated-content lesion | −0.04 [−0.12, +0.05] | −0.14 [−0.22, −0.06] |
+| **rescue contrast (true − distractor)** | **+0.67 [+0.29, +1.11]** | **−0.20 [−0.38, −0.04]** |
+
+**The double dissociation, in §6.8's own vocabulary:**
+
+- **Qwen: strong bridge mediation.** Deleting only the bridge's
+  directions — output fully preserved — damages composed answers
+  (−0.89, CI-clean). Substituting the counterfactual bridge's direction
+  at matched energy is *catastrophically worse than deletion* (−4.05):
+  the model demonstrably READS what sits in that channel and follows
+  it. The unrelated-content lesion is nil (−0.04), so this is
+  content-specific; true-bridge protection removes the composed damage
+  entirely. The preregistered P3-P3 rescue (+0.43 confirmatory)
+  reproduces here at +0.67.
+- **Think: no bridge mediation — mildly inverted.** The swap does
+  nothing (−0.09 ≈ 0): injecting a wrong bridge into the channel is
+  inert, so whatever Think's composed-item computation uses, it is not
+  the readable bridge content. Its rescue contrast is slightly
+  *negative* (−0.20 [−0.38, −0.04]), and its unrelated-content lesion
+  is nonzero — less content-specific damage overall, consistent with
+  the accessibility-organized cluster.
+
+This is the mechanism-level counterpart of every cross-model split in
+the campaign: the same intervention grammar that shows Qwen routing
+composed answers *through* readable bridge content shows Think not
+doing so. Scope: development tier (arm set beyond the preregistered
+P3-P3; Think n=20), one composed-item slice; the answer-only
+diagnostic behaves on both models.
