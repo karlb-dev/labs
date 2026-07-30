@@ -78,7 +78,7 @@ def main():
         has(f"p3-g5-bank-{slug}", f"G5 bank scoring {slug}")
     has("p3-prose-grid-figure", "Workstream C figure/stats")
     has("p3-power-sim", "power simulation")
-    has("p3-bank-f-v6", "Bank F v6")
+    has("p3-bank-f-v7", "Bank F v7")
     has("p3-bank-s-v3", "Bank S v3")
     if p3p3:
         has(f"p3-bridge-dev-gate-{p3p3}", f"P3-P3 gate on {p3p3}")

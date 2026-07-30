@@ -76,6 +76,15 @@ def local_work() -> Path:
     return p
 
 
+def phase2_run_root() -> Path:
+    """The FROZEN Phase 2 run root (read-only inputs). Reuses the Phase 2
+    producers' own env override so clean-room runs redirect both layers
+    with one variable."""
+    return Path(os.environ.get(
+        "JSPACE_PART2_RUN_ROOT",
+        "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727"))
+
+
 def drive_hub_cache() -> Path:
     """The persistent Drive HF cache (pinned dataset snapshots live here;
     a clean-room reproduction points JSPACE3_DRIVE_HUB_CACHE at its own

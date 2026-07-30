@@ -25,12 +25,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from ..paths3 import metrics_dir, run_root
+from ..paths3 import metrics_dir, phase2_run_root, run_root
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
 TIER = "methods"
-P2_ROOT = "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727"
+P2_ROOT = str(phase2_run_root())
 TOL = 2e-3
 
 
