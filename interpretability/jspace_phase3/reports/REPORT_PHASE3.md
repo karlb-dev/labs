@@ -264,3 +264,98 @@ decomposition per model and never collapses it into one number
 (§17.1 middle branch). Same development-tier scope caveats as the Think
 audit; the confirmatory versions run on the thick paired bank after the
 Phase 3 freeze.
+
+---
+
+## VM10 late block (2026-07-30) — Workstream C, banks, freeze prep
+
+### Workstream C — the exact control on prose — tier: PHASE3-DEVELOPMENT
+
+`p3-prose-grid-olmo31-think-v1` · `p3-prose-grid-olmo31-instruct-v1` ·
+Qwen cell running at the time of writing (its first attempt OOM'd on the
+151k-vocab × 1024-position logits beside 29 GB of J dictionaries; the
+metrics are now position-chunked — identical estimand). Guard battery
+v2 (`p3-guard-battery-v2`): 104 items / 8 source-pinned domains;
+wikitext TEST split held out from every lens-fit corpus. Six arms per
+item, including the profile-consuming exact instant rank+energy control
+Phase 2 never ran on prose (§2.5), plus grammar minimal pairs and a
+pre-registered greedy generation audit.
+
+Mean Δ NLL per token (all 84 text items):
+
+| arm | Think | Instruct |
+|---|---|---|
+| label-protected J | +0.175 | **+0.530** |
+| span-safe J | +0.089 | +0.150 |
+| exact instant matched | **+0.003** | **+0.002** |
+| prot-energy matched | +0.076 | +0.123 |
+| mechanics random | +0.078 | +0.120 |
+| logit-protected | −0.021 | −0.054 |
+
+**Reading (R4).** Instruct's prose cost is real and large — 3× Think's —
+but it is **J-content, not dose**: the exact matched control is at
++0.002/token. ~72% of Instruct's label-arm prose cost disappears under
+span-safe protection (+0.530 → +0.150), so most of it was
+output-span leakage; the remaining span-safe cost (+0.150/token) is the
+honest "diffuse content damage" number to carry against its task
+effects (the §7.4 selectivity index lands with `p3f04` when the Qwen
+cell banks). Grammar preference survives every arm (85–100%; baselines
+95–100%); damage is diffuse across all 8 domains, not domain-selective.
+
+### G5, the intersection squeeze, and two instrument catches — tier: PHASE3-DEVELOPMENT
+
+Banks: **F v7** (204 bundles / 48 families, 204/204 verified against
+the per-revid reference; v7 appended adjectival currency aliases,
+alias[0] stable) and **S v3** (120 bundles / 24 template families) —
+the 72-family target authored. G5 scored all 972 items on each primary
+(`p3-g5-bank-*`).
+
+Two instrument catches, both caught by reading failed generations:
+
+1. **`ScoringSpec.normalize` deleted whitespace runs** instead of
+   spacing them, so `" the\nBaht"` normalized to `"thebaht…"` and
+   failed prefix grading on *correct* generations (commit with
+   regression test; offline regrade from stored generations — the
+   parquets carry each item's greedy text).
+2. **The capability predicate itself**: models often answer in
+   exam-continuation mode ("… which country?\n----\nAnswer: Hungary"),
+   correct but not a prefix. Since every endpoint is a teacher-forced
+   logprob, the inclusion predicate was set (pre-freeze, no intervention
+   outcomes involved) to **answer contained in the 8-token greedy
+   continuation**, with the stricter prefix rate kept as a reported
+   column (`p3-g5-bank-*-v{4,3,3}`).
+
+Cohorts under the final predicate: capable rates 73.5/74.2/77.9%
+(Think/Instruct/Qwen); both-variant-capable facts 161/156/189;
+**three-model intersection 104 facts / 34 families** (18 F + 16 S).
+**Disclosed R2 deviation:** the ≥25/side intersection floor is
+infeasible with this bank generation — the Phase 2 burn list (858
+consumed answers) forces less-famous instances exactly where
+three-model capability is scarcest. The frozen floor is measured
+feasibility (≥16/side), and P3-P1's power at that size is disclosed in
+the preregistration. Split preview (`p3-family-split-preview-v1`, seed
+4242): 36/36 families, F 24/24, intersection 16/18, all standardized
+imbalances ≤0.35, disjointness clean.
+
+### P3-P3 model resolution and power design — tier: PHASE3-DEVELOPMENT
+
+Bridge identifiability gates (magnitude-blind: coverage +
+measurability only): Think `identifiable=true` (any-piece coverage
+0.85, 95% of rescue contrasts above the determinism floor), Qwen
+`identifiable=true` (0.85, 95%). The tie-break rule — pinned in the
+prereg *before* the Qwen gate ran — sends exact coverage ties to Qwen:
+**P3-P3 = Qwen**, bridge arms enabled in its primary-grid config.
+
+Power (`p3-power-sim-v3`; v1 and v2 were superseded after their own
+outputs exposed generator defects — v1 ignored within-fact
+cancellation entirely, v2's P3-P2 "null" leaked a +0.17 tail-rate
+difference): null-calibrated (rejections 1.3–1.5% at α/3 = 1.67%);
+**P3-P2 MDE ≈ 0.2 tail-points at 30–36 families** (the Phase 2 anchor
+effect was +0.279); **P3-P1 is powered only for ≥0.3–0.5-nat effects**
+depending on realized within-fact cancellation — carried as a test
+with that disclosure, with the named estimation targets bearing the
+quantitative story regardless (the Phase 2 binary-primary lesson).
+
+The preregistration candidate has **zero unresolved PENDING markers**;
+the freeze runs when the Qwen Workstream C cell banks (its registry
+event is a freeze gate).
