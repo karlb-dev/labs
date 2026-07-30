@@ -91,11 +91,11 @@ rank+energy matched control (primary comparator, orthogonal to
 protected rows AND span-safe residualized) · `meanJ_label_protected`
 (secondary, continuity) · `prot_energy_matched` (leakage comparator) ·
 mechanics random · logit-protected (readout-basis control).
-Bridge arms on composed items per §6.5: output+true-bridge protected,
-output+distractor-bridge protected [PENDING: final arm list may drop
-per §16 rules if the power sim shows the grid exceeds the block
-budget; never below primary + comparator + baseline + one mechanics
-control].
+Bridge arms on composed items per §6.5 (P3-P3 model only):
+output+true-bridge protected, output+distractor-bridge protected.
+The arm list is final (the power simulation showed no budget excess);
+§16 drop rules would apply only under a mid-block interruption, never
+below primary + comparator + baseline + one mechanics control.
 
 ## 3 · Cohorts and partition
 
@@ -190,5 +190,7 @@ silent patch.
 - [ ] §5.8 acceptance gate: planted-interaction recovery test green
       (§15.3 suite), alias audits pass, no family >10%/side.
 - [ ] All 57+ conformance tests green at the freeze commit.
-- [ ] This document's every **[PENDING]** resolved; then the freeze
-      commit renames it and tags `jspace-phase3-freeze-v1`.
+- [ ] Every PENDING marker in this document resolved (the freeze
+      action greps for the bracket form and refuses while any remain);
+      then the freeze commit renames it and tags
+      `jspace-phase3-freeze-v1`.
