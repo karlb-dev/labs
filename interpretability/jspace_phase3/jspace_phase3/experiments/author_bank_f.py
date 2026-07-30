@@ -31,8 +31,8 @@ from ..paths3 import resolve_uri
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
-EVIDENCE_ID = "p3-bank-f-v4"
-SUPERSEDES = "p3-bank-f-v3"  # v1's verifier used a dataset-level
+EVIDENCE_ID = "p3-bank-f-v5"
+SUPERSEDES = "p3-bank-f-v4"  # v1's verifier used a dataset-level
 # isin filter that silently missed rows over DriveFS, quarantining 66
 # bundles whose pages exist; v2 streams every shard. Three authoring
 # leaks also fixed (pad thai/Thai, Fiat/Fiat 500, Al/metAL).
@@ -778,6 +778,180 @@ FAMILIES += [
 ]
 
 
+FAMILIES += [
+    dict(
+        family="dam_river_to_sea", group="geo_physical",
+        templates=dict(
+            direct="The {bridge} empties into",
+            composed="The river impounded by the {source} empties into",
+            bridge_supplied="The {source} impounds the {bridge}, which "
+                            "empties into"),
+        ambiguity="each dam impounds one river; each river has one mouth",
+        instances=[
+            ("Three Gorges Dam", "Yangtze", "the East China Sea",
+             [" the East China Sea"],
+             dict(source_page="Three Gorges Dam", bridge_page="Yangtze")),
+            ("Itaipu Dam", "Paraná River", "the Río de la Plata",
+             [" the Río de la Plata", " the Rio de la Plata"],
+             dict(source_page="Itaipu Dam", bridge_page="Paraná River")),
+            ("Kariba Dam", "Zambezi", "the Indian Ocean",
+             [" the Indian Ocean"],
+             dict(source_page="Kariba Dam", bridge_page="Zambezi")),
+            ("Grand Coulee Dam", "Columbia River", "the Pacific Ocean",
+             [" the Pacific Ocean"],
+             dict(source_page="Grand Coulee Dam",
+                  bridge_page="Columbia River")),
+            ("Akosombo Dam", "Volta River", "the Gulf of Guinea",
+             [" the Gulf of Guinea"],
+             dict(source_page="Akosombo Dam", bridge_page="Volta River")),
+        ]),
+    dict(
+        family="comic_creator_to_nationality", group="person_culture",
+        templates=dict(
+            direct="The cartoonist {bridge} held the nationality known "
+                   "as",
+            composed="The cartoonist who created {source} held the "
+                     "nationality known as",
+            bridge_supplied="{source} was created by {bridge}, whose "
+                            "nationality is"),
+        ambiguity="each strip has a single credited creator",
+        instances=[
+            ("Tintin", "Hergé", "Belgian", [" Belgian"],
+             dict(source_page="The Adventures of Tintin",
+                  bridge_page="Hergé")),
+            ("Peanuts", "Charles M. Schulz", "American", [" American"],
+             dict(source_page="Peanuts", bridge_page="Charles M. Schulz")),
+            ("Mafalda", "Quino", "Argentine",
+             [" Argentine", " Argentinian"],
+             dict(source_page="Mafalda", bridge_page="Quino")),
+            ("Calvin and Hobbes", "Bill Watterson", "American",
+             [" American"],
+             dict(source_page="Calvin and Hobbes",
+                  bridge_page="Bill Watterson")),
+        ]),
+    dict(
+        family="national_animal_to_capital", group="geo_culture",
+        templates=dict(
+            direct="Diplomats visiting {bridge} arrive in the capital "
+                   "city of",
+            composed="Diplomats visiting the country whose national "
+                     "animal is the {source} arrive in the capital city "
+                     "of",
+            bridge_supplied="The {source} is the national animal of "
+                            "{bridge}, whose capital city is"),
+        ambiguity="each chosen animal is the designated national animal "
+                  "of exactly one country",
+        instances=[
+            ("markhor", "Pakistan", "Islamabad", [" Islamabad"],
+             dict(source_page="Markhor", bridge_page="Pakistan")),
+            ("okapi", "the Democratic Republic of the Congo", "Kinshasa",
+             [" Kinshasa"],
+             dict(source_page="Okapi",
+                  bridge_page="Democratic Republic of the Congo")),
+            ("resplendent quetzal", "Guatemala", "Guatemala City",
+             [" Guatemala City"],
+             dict(source_page="Resplendent quetzal",
+                  bridge_page="Guatemala")),
+            ("dodo", "Mauritius", "Port Louis", [" Port Louis"],
+             dict(source_page="Dodo", bridge_page="Mauritius")),
+        ]),
+    dict(
+        family="skyscraper_city_to_country", group="geo_political",
+        templates=dict(
+            direct="{bridge} rises within the borders of",
+            composed="The skyscraper called {source} rises in a city "
+                     "within the borders of",
+            bridge_supplied="The skyscraper called {source} rises in "
+                            "{bridge}, within the borders of"),
+        ambiguity="each tower stands in one city",
+        instances=[
+            ("Lotte World Tower", "Seoul", "South Korea",
+             [" South Korea"],
+             dict(source_page="Lotte World Tower", bridge_page="Seoul")),
+            ("the Lakhta Centre", "Saint Petersburg", "Russia",
+             [" Russia"],
+             dict(source_page="Lakhta Center",
+                  bridge_page="Saint Petersburg")),
+            ("the Oriental Pearl Tower", "Shanghai", "China", [" China"],
+             dict(source_page="Oriental Pearl Tower",
+                  bridge_page="Shanghai")),
+            ("the Autograph Tower", "Jakarta", "Indonesia",
+             [" Indonesia"],
+             dict(source_page="Autograph Tower", bridge_page="Jakarta")),
+        ]),
+    dict(
+        family="ship_builder_to_city", group="org",
+        templates=dict(
+            direct="The shipyard of {bridge} operated in",
+            composed="The shipyard that built the {source} operated in",
+            bridge_supplied="The {source} was built by {bridge}, whose "
+                            "shipyard operated in"),
+        ambiguity="each chosen vessel has a single builder of record",
+        instances=[
+            ("Titanic", "Harland & Wolff", "Belfast", [" Belfast"],
+             dict(source_page="Titanic", bridge_page="Harland & Wolff")),
+            ("Queen Mary", "John Brown & Company", "Clydebank",
+             [" Clydebank"],
+             dict(source_page="RMS Queen Mary",
+                  bridge_page="John Brown & Company")),
+            ("Bismarck", "Blohm & Voss", "Hamburg", [" Hamburg"],
+             dict(source_page="German battleship Bismarck",
+                  bridge_page="Blohm+Voss")),
+            ("Cutty Sark", "Scott & Linton", "Dumbarton", [" Dumbarton"],
+             dict(source_page="Cutty Sark", bridge_page="Scott & Linton")),
+        ]),
+    dict(
+        family="waterfall_to_capital", group="geo_physical",
+        templates=dict(
+            direct="The capital of {bridge} is named",
+            composed="The capital of the country that is home to "
+                     "{source} is named",
+            bridge_supplied="{source} is in {bridge}, whose capital is "
+                            "named"),
+        ambiguity="each chosen waterfall lies in one country",
+        instances=[
+            ("Angel Falls", "Venezuela", "Caracas", [" Caracas"],
+             dict(source_page="Angel Falls", bridge_page="Venezuela")),
+            ("Gullfoss", "Iceland", "Reykjavik",
+             [" Reykjavik", " Reykjavík"],
+             dict(source_page="Gullfoss", bridge_page="Iceland")),
+            ("Kaieteur Falls", "Guyana", "Georgetown", [" Georgetown"],
+             dict(source_page="Kaieteur Falls", bridge_page="Guyana")),
+            ("Yosemite Falls", "the United States", "Washington, D.C.",
+             [" Washington, D.C."],
+             dict(source_page="Yosemite Falls",
+                  bridge_page="United States")),
+        ]),
+    dict(
+        family="show_creator_to_nationality", group="person_culture",
+        templates=dict(
+            direct="The screenwriter {bridge} is of the nationality "
+                   "called",
+            composed="The creator of the television series {source} is "
+                     "of the nationality called",
+            bridge_supplied="The television series {source} was created "
+                            "by {bridge}, whose nationality is"),
+        ambiguity="each series has a single credited creator",
+        instances=[
+            ("Breaking Bad", "Vince Gilligan", "American", [" American"],
+             dict(source_page="Breaking Bad",
+                  bridge_page="Vince Gilligan")),
+            ("Fleabag", "Phoebe Waller-Bridge", "English",
+             [" English", " British"],
+             dict(source_page="Fleabag",
+                  bridge_page="Phoebe Waller-Bridge")),
+            ("Squid Game", "Hwang Dong-hyuk", "South Korean",
+             [" South Korean", " Korean"],
+             dict(source_page="Squid Game",
+                  bridge_page="Hwang Dong-hyuk")),
+            ("The Office", "Ricky Gervais", "English",
+             [" English", " British"],
+             dict(source_page="The Office (British TV series)",
+                  bridge_page="Ricky Gervais")),
+        ]),
+]
+
+
 def norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
 
@@ -813,7 +987,7 @@ def verify_against_reference(bundles: list[FactBundle]) -> dict:
     source-hop page, the answer string on the bridge page. A miss
     QUARANTINES the bundle (reported, dropped from the bank)."""
     from ..paths3 import run_root
-    ref = run_root() / "bank_reference" / "wiki_reference_v2.jsonl"
+    ref = run_root() / "bank_reference" / "wiki_reference_v3.jsonl"
     pages: dict[str, str] = {}
     for line in ref.read_text().splitlines():
         r = json.loads(line)
@@ -861,7 +1035,7 @@ def main():
         | set(val["alias_prefix_issues"])
     shipped = [b for b in bundles if b.fact_id not in quarantined]
 
-    out = REPO_DATA / "bank_f_v4.jsonl"
+    out = REPO_DATA / "bank_f_v5.jsonl"
     save_bank(shipped, out)
     fam_counts = {}
     for b in shipped:
@@ -871,7 +1045,7 @@ def main():
                "n_families": len(fam_counts), "family_counts": fam_counts,
                "validation": val, "reference_verification": wiki}
     cmd = "python -m jspace_phase3.experiments.author_bank_f"
-    meta = REPO_DATA / "bank_f_v4.meta.json"
+    meta = REPO_DATA / "bank_f_v5.meta.json"
     write_result3(payload, meta, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
     register(EVIDENCE_ID, tier=TIER, command=cmd, supersedes=SUPERSEDES,
