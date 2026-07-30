@@ -16,7 +16,7 @@
 
 \title{\vspace{-1.2em}J-space Phase 3 --- mechanism, generalization, paper hardening\\
 \large working handout \\[2pt]
-\normalsize\textcolor{muted}{branch \texttt{interp\_jspace\_part2} · run root \texttt{phase3\_20260729} · 2026-07-30, VM10 late block}}
+\normalsize\textcolor{muted}{branch \texttt{interp\_jspace\_part2} · run root \texttt{phase3\_20260729} · 2026-07-30, VM10 late block (pre-freeze refresh)}}
 \author{}\date{}
 
 \begin{document}
@@ -43,9 +43,9 @@ clean-room reproduction.
 \item \textbf{\S4.1a overlap mining} \eid{p3-overlap-mining-v1} --- done.
 \item \textbf{N8 Level 1 clean room} \eid{p3-n8-level1-repro-v1} --- done, all four primaries reproduce to $\le$5e-4.
 \item \textbf{\S4.1b span audits} --- done on ALL THREE primaries + cross-model synthesis \eid{p3-span-audit-cross-model-v1}.
-\item \textbf{Workstream C prose exact control} --- battery + machinery banked; model grids running now.
-\item \textbf{Banks F/S} --- 54 of 72 target families authored, validated, and source-verified.
-\item Ahead: remaining bank tranches $\rightarrow$ \texttt{family\_split\_v2} $\rightarrow$ G5 $\rightarrow$ power sim $\rightarrow$ \textbf{Phase 3 freeze} $\rightarrow$ primary grid.
+\item \textbf{Workstream C prose exact control} --- COMPLETE on all three primaries (\texttt{p3f04}).
+\item \textbf{Banks F/S} --- 72/72 families authored, validated, source-verified; G5-scored $\times$3.
+\item \textbf{Freeze prep complete}: split preview feasible, power sim v3, P3-P3 = Qwen by pinned tie-break, prereg zero-PENDING. Freeze + Block B primary grid are next.
 \end{itemize}
 
 \section{\S4.1a --- Selection pressure is a model property, not a damage predictor \hfill \tier{phase3-development}}
@@ -139,29 +139,45 @@ quotes the registered \eid{p3-span-audit-figure-olmo31-think-v2} values
 unchanged.
 \end{itemize}
 
-\section{Workstream C --- the exact control on prose \hfill \tier{phase3-development}}
+\section{Workstream C --- the exact control on prose: COMPLETE \hfill \tier{phase3-development}}
 
-Phase 2's prose guard skipped the primary matched control (it consumes
-the J arm's per-position profile); \S7.1 makes it mandatory before any
-``selective'' wording about Instruct (PI resolution R4). Now built and
-running:
+Phase 2's prose guard skipped the primary matched control; \S7.1 made
+it mandatory before any ``selective'' wording (R4). Guard battery v2
+\eid{p3-guard-battery-v2} (104 items / 8 source-pinned domains,
+wikitext TEST held out from every lens-fit corpus), six arms per item
+including the profile-consuming exact instant rank+energy control.
+\eid{p3-prose-grid-\{olmo31-think,olmo31-instruct,qwen36-27b\}-v1},
+figure \texttt{p3f04} + \eid{p3-prose-grid-figure-v1}.
 
-\begin{itemize}
-\item \textbf{Guard battery v2} \eid{p3-guard-battery-v2}: 104 items /
-8 domains (wikitext-test prose + long-context, wikipedia leads,
-UltraChat dialogue, the-stack code + SQL + markdown docs, 20 in-repo
-grammar minimal pairs), source-pinned; wikitext TEST held out from
-every lens-fit corpus.
-\item \textbf{Grid}: clean $\rightarrow$ label-J (profile logged)
-$\rightarrow$ span-safe-J $\rightarrow$ exact instant rank+energy
-matched (consumes profile) $\rightarrow$ prot-energy-matched
-$\rightarrow$ mechanics random $\rightarrow$ logit-protected; NLL/token,
-KL-from-clean, top-1 agreement, entropy, EOS; grammar preference
-margins; pre-registered greedy generation audit.
-\item Think grid is running at the time of writing; Instruct and Qwen
-follow in this window. Figure \texttt{p3f04} + cross-model statistics
-land when all three bank.
-\end{itemize}
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+mean $\Delta$ NLL / token & Think & Instruct & Qwen \\
+\midrule
+label-protected J & +0.175 & +0.530 & \textbf{+0.945} \\
+span-safe J & +0.089 & +0.150 & +0.209 \\
+exact instant matched & \textbf{+0.003} & \textbf{+0.002} & \textbf{+0.021} \\
+prot-energy matched & +0.076 & +0.123 & +0.052 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{(1) The prose cost is J-content everywhere, never dose} (exact
+control $\approx$0 on all three). \textbf{(2) The prose ladder INVERTS
+the task ladder and tracks the \S4.1b projector-overlap ladder}
+(Qwen $>$ Instruct $>$ Think $\;\leftrightarrow\;$ 1.37 $>$ 0.94 $>$
+0.89): on prose every position leaks, and span-safe removes 72--78\%
+of the label cost on every model. \textbf{(3) No model earns
+``selective'' wording at this tier}: the \S7.4 standardized index is
++1.25 to +1.57 --- prose damage exceeds task damage in standardized
+units on ALL three, so the R4 sentence stands for every primary
+(``nonspecific J-channel vulnerability cannot be excluded''), sharpened:
+the vulnerability is content-specific and predominantly output-span
+leakage. Grammar preference survives every arm (85--100\%).
+
+\begin{center}
+\includegraphics[width=0.99\textwidth]{p3f04_prose_exact_control.png}
+\end{center}
 
 \section{Banks F and S --- 54 of 72 families \hfill \tier{phase3-development}}
 
@@ -187,10 +203,26 @@ drops its largest pages. Bank verification therefore runs against
 freshly fetched wikitext pinned by \emph{per-page revision ids}
 (strictly stronger provenance than a dump date). 248/248 pages fetched;
 every hop of every shipped bundle is stated on its source page.
-\item Remaining to the \S5.3 floor: $\sim$18 families (tranche 4) +
-top-ups to $\ge$5 bundles/family before G5 pruning; then
-\texttt{family\_split\_v2} (seed-active), G5 scoring $\times$3 models
-(scorer \texttt{g5\_bank\_scoring.py} is written), power sim, freeze.
+\item \textbf{Complete}: 48 F + 24 S = 72 families / 324 bundles; G5
+$\times$3 (972 items each). Two grading-instrument catches from reading
+failed generations: \texttt{normalize} deleted whitespace runs
+(``the\textbackslash nBaht''$\to$``thebaht'', regression-tested fix),
+and the inclusion predicate moved to \emph{answer contained in the
+8-token greedy continuation} (endpoints are teacher-forced lp; prefix
+rate kept as a reported column). Cohorts: 73.5/74.2/77.9\% capable;
+three-model intersection \textbf{104 facts / 34 families}. The R2
+$\ge$25/side intersection floor is infeasible with this bank (the
+Phase 2 burn list forces less-famous instances exactly where
+three-model capability is scarce) --- floor amended to measured
+feasibility ($\ge$16/side), \emph{disclosed} in prereg \S5. Split
+preview \eid{p3-family-split-preview-v1}: 36/36 families, F 24/24,
+intersection 16/18, imbalances $\le$0.35.
+\item \textbf{P3-P3 = Qwen} by the pinned tie-break (both gates
+identifiable at 0.85 coverage; ties$\to$Qwen, rule pinned before the
+Qwen gate ran). \textbf{Power} \eid{p3-power-sim-v3}: P3-P2 MDE
+$\approx$0.2 tail-points at 30--36 families (anchor +0.279); P3-P1
+powered only for $\ge$0.3--0.5-nat effects (disclosed scenario table);
+SESOI 0.15 nats.
 \end{itemize}
 
 \section{Paper tree}
