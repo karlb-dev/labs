@@ -33,7 +33,10 @@ class ScoringSpec:
     def normalize(self, s: str) -> str:
         if self.normalization != "lower_alnum_space":
             raise ValueError(f"unknown normalization {self.normalization!r}")
-        return re.sub(r"[^a-z0-9 ]", "", s.lower()).strip()
+        # non-alnum runs become ONE SPACE: deleting them instead (the
+        # v1 behavior) glued newline-separated words ("the\nBaht" ->
+        # "thebaht") and failed prefix grading on correct generations
+        return re.sub(r"[^a-z0-9]+", " ", s.lower()).strip()
 
 
 DEFAULT_SPEC = ScoringSpec()

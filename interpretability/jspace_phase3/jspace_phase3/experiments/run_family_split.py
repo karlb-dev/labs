@@ -27,7 +27,7 @@ from ..provenance3 import (Provenance3, register, require_clean_tree,
 TIER = "phase3-development"
 SLUGS = ["olmo31-think", "olmo31-instruct", "qwen36-27b"]
 REPO_DATA = Path(__file__).resolve().parents[2] / "data"
-BANKS = ["bank_f_v6.jsonl", "bank_s_v3.jsonl"]
+BANKS = ["bank_f_v7.jsonl", "bank_s_v3.jsonl"]
 
 
 def arg(flag, default=None):

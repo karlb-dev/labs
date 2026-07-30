@@ -31,8 +31,8 @@ from ..paths3 import resolve_uri
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
-EVIDENCE_ID = "p3-bank-f-v6"
-SUPERSEDES = "p3-bank-f-v5"  # v1's verifier used a dataset-level
+EVIDENCE_ID = "p3-bank-f-v7"
+SUPERSEDES = "p3-bank-f-v6"  # v7: append-only adjectival currency aliases (G5 regrade input)  # v1's verifier used a dataset-level
 # isin filter that silently missed rows over DriveFS, quarantining 66
 # bundles whose pages exist; v2 streams every shard. Three authoring
 # leaks also fixed (pad thai/Thai, Fiat/Fiat 500, Al/metAL).
@@ -53,18 +53,18 @@ FAMILIES = [
         ambiguity="capital-of is functional: exactly one country has this "
                   "capital city",
         instances=[
-            ("Bangkok", "Thailand", "baht", [" the baht", " baht"],
+            ("Bangkok", "Thailand", "baht", [" the baht", " baht", " the Thai baht", " Thai baht"],
              dict(source_page="Bangkok", bridge_page="Thailand")),
-            ("Dhaka", "Bangladesh", "taka", [" the taka", " taka"],
+            ("Dhaka", "Bangladesh", "taka", [" the taka", " taka", " the Bangladeshi taka"],
              dict(source_page="Dhaka", bridge_page="Bangladesh")),
-            ("Accra", "Ghana", "cedi", [" the cedi", " cedi"],
+            ("Accra", "Ghana", "cedi", [" the cedi", " cedi", " the Ghanaian cedi"],
              dict(source_page="Accra", bridge_page="Ghana")),
-            ("Abuja", "Nigeria", "naira", [" the naira", " naira"],
+            ("Abuja", "Nigeria", "naira", [" the naira", " naira", " the Nigerian naira"],
              dict(source_page="Abuja", bridge_page="Nigeria")),
-            ("Budapest", "Hungary", "forint", [" the forint", " forint"],
+            ("Budapest", "Hungary", "forint", [" the forint", " forint", " the Hungarian forint"],
              dict(source_page="Budapest", bridge_page="Hungary")),
             ("Warsaw", "Poland", "złoty",
-             [" the złoty", " złoty", " the zloty", " zloty"],
+             [" the złoty", " złoty", " the zloty", " zloty", " the Polish złoty", " the Polish zloty"],
              dict(source_page="Warsaw", bridge_page="Poland")),
         ]),
     dict(
@@ -555,16 +555,16 @@ FAMILIES += [
                   "(one home country each)",
         instances=[
             ("Emirates", "the United Arab Emirates", "dirham",
-             [" dirham", " UAE dirham"],
+             [" dirham", " UAE dirham", " the UAE dirham", " the dirham"],
              dict(source_page="Emirates (airline)",
                   bridge_page="United Arab Emirates")),
-            ("Garuda", "Indonesia", "rupiah", [" rupiah"],
+            ("Garuda", "Indonesia", "rupiah", [" rupiah", " the rupiah", " the Indonesian rupiah", " Indonesian rupiah"],
              dict(source_page="Garuda Indonesia",
                   bridge_page="Indonesia")),
             ("Qantas", "Australia", "Australian dollar",
              [" the Australian dollar", " Australian dollar", " AUD"],
              dict(source_page="Qantas", bridge_page="Australia")),
-            ("Aeroflot", "Russia", "ruble", [" ruble", " rouble"],
+            ("Aeroflot", "Russia", "ruble", [" ruble", " rouble", " the ruble", " the rouble", " the Russian ruble"],
              dict(source_page="Aeroflot", bridge_page="Russia")),
         ]),
     dict(
@@ -580,15 +580,15 @@ FAMILIES += [
                   "lie entirely within one country",
         instances=[
             ("Kilimanjaro", "Tanzania", "shilling",
-             [" shilling", " Tanzanian shilling"],
+             [" shilling", " Tanzanian shilling", " the Tanzanian shilling", " the shilling"],
              dict(source_page="Mount Kilimanjaro", bridge_page="Tanzania")),
             ("Aconcagua", "Argentina", "peso",
-             [" peso", " Argentine peso"],
+             [" peso", " Argentine peso", " the Argentine peso", " the peso"],
              dict(source_page="Aconcagua", bridge_page="Argentina")),
-            ("Mount Fuji", "Japan", "yen", [" yen"],
+            ("Mount Fuji", "Japan", "yen", [" yen", " the yen", " the Japanese yen", " Japanese yen"],
              dict(source_page="Mount Fuji", bridge_page="Japan")),
             ("Ben Nevis", "the United Kingdom", "pound sterling",
-             [" pound sterling", " British pound"],
+             [" pound sterling", " British pound", " the pound sterling", " the British pound"],
              dict(source_page="Ben Nevis", bridge_page="United Kingdom")),
         ]),
     dict(
@@ -1267,7 +1267,7 @@ def main():
         | set(val["alias_prefix_issues"])
     shipped = [b for b in bundles if b.fact_id not in quarantined]
 
-    out = REPO_DATA / "bank_f_v6.jsonl"
+    out = REPO_DATA / "bank_f_v7.jsonl"
     save_bank(shipped, out)
     fam_counts = {}
     for b in shipped:
@@ -1277,7 +1277,7 @@ def main():
                "n_families": len(fam_counts), "family_counts": fam_counts,
                "validation": val, "reference_verification": wiki}
     cmd = "python -m jspace_phase3.experiments.author_bank_f"
-    meta = REPO_DATA / "bank_f_v6.meta.json"
+    meta = REPO_DATA / "bank_f_v7.meta.json"
     write_result3(payload, meta, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
     register(EVIDENCE_ID, tier=TIER, command=cmd, supersedes=SUPERSEDES,

@@ -16,7 +16,7 @@
 #
 # Usage:
 #   python -m jspace_phase3.experiments.g5_bank_scoring --slug <slug> \
-#       --model-uri model://... [--banks bank_f_v6.jsonl,bank_s_v3.jsonl]
+#       --model-uri model://... [--banks bank_f_v7.jsonl,bank_s_v3.jsonl]
 from __future__ import annotations
 
 import json
@@ -52,7 +52,7 @@ def main():
     require_clean_tree("--allow-dirty" in sys.argv)
     slug = arg("--slug")
     model_uri = arg("--model-uri")
-    banks = (arg("--banks") or "bank_f_v6.jsonl,bank_s_v3.jsonl").split(",")
+    banks = (arg("--banks") or "bank_f_v7.jsonl,bank_s_v3.jsonl").split(",")
     out_dir = metrics_dir(slug) / "g5_bank"
     out_dir.mkdir(parents=True, exist_ok=True)
     state_path = out_dir / "state.json"

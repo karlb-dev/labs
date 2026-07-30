@@ -209,3 +209,12 @@ def test_within_item_exchange_mean_calibration_and_power():
     r1 = within_item_exchange_mean(alt, a_col="a", b_col="b", draws=4000,
                                    alternative="greater")
     assert r1["p"] < 0.01 and r1["estimate"] > 0.5
+
+
+def test_normalize_spaces_newlines():
+    """Regression: 'the\\nBaht' must grade as 'the baht', not 'thebaht'
+    (the v1 deletion behavior failed correct newline-led generations)."""
+    s = ScoringSession(MockTok(), DEFAULT_SPEC)
+    assert DEFAULT_SPEC.normalize(" the\nBaht\nThe official") \
+        == "the baht the official"
+    assert s.grade_generation(" the\nBaht", [" the baht"])["correct"]

@@ -96,7 +96,7 @@ def main():
     cap = set(g5[(g5.variant == "composed")
                  & g5.capable_generation].fact_id) \
         & set(g5[(g5.variant == "direct") & g5.capable_generation].fact_id)
-    bundles = [b for b in load_bank(REPO_DATA / "bank_f_v6.jsonl")
+    bundles = [b for b in load_bank(REPO_DATA / "bank_f_v7.jsonl")
                if b.fact_id in cap and b.counterfactual_bridge]
     bundles = sorted(bundles, key=lambda b: b.fact_id)[:N_ITEMS]
     log(f"{slug}: {len(bundles)} capable composed bundles for the gate")

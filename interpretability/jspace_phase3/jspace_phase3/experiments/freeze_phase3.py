@@ -32,7 +32,7 @@ from ..provenance3 import (Provenance3, register, require_clean_tree,
 SLUGS = ["olmo31-think", "olmo31-instruct", "qwen36-27b"]
 REPO = Path(__file__).resolve().parents[2]
 REPO_DATA = REPO / "data"
-BANKS = ["bank_f_v6.jsonl", "bank_s_v3.jsonl"]
+BANKS = ["bank_f_v7.jsonl", "bank_s_v3.jsonl"]
 CAND = REPO / "preregistration/SCIENTIFIC_PREREGISTRATION_PHASE3_CANDIDATE.md"
 FROZEN = REPO / "preregistration/SCIENTIFIC_PREREGISTRATION_PHASE3.md"
 
