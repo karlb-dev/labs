@@ -12,13 +12,13 @@
    "landmark_city_to_country": 2,
    "language_creator_to_nationality": 1,
    "novel_author_to_birth_country": 3,
-   "ore_metal_to_symbol": 3,
+   "ore_metal_to_symbol": 2,
    "product_company_to_hq_city": 2,
    "theory_scientist_to_birth_city": 1
   },
-  "n_authored": 91,
+  "n_authored": 90,
   "n_families": 14,
-  "n_shipped": 25,
+  "n_shipped": 24,
   "validation": {
    "alias_prefix_issues": {
     "river_mouth_to_capital:magdalena": [
@@ -45,16 +45,16 @@
     "language_creator_to_nationality": 4,
     "novel_author_to_birth_country": 5,
     "opera_composer_to_nationality": 5,
-    "ore_metal_to_symbol": 5,
+    "ore_metal_to_symbol": 4,
     "painting_painter_to_movement": 4,
     "poem_poet_to_nationality": 4,
     "product_company_to_hq_city": 4,
     "river_mouth_to_capital": 5,
     "theory_scientist_to_birth_city": 5
    },
-   "n_bundles": 91,
+   "n_bundles": 90,
    "n_families": 20,
-   "n_with_counterfactual": 91,
+   "n_with_counterfactual": 90,
    "ok": false,
    "phase2_triple_collisions": [],
    "relation_group_counts": {
@@ -63,26 +63,12 @@
     "org": 9,
     "person_culture": 22,
     "person_science": 9,
-    "science": 5,
+    "science": 4,
     "sport": 4,
     "tech": 8
    },
    "template_reuse": {},
-   "violations": {
-    "car_model_maker_to_hq_city:fiat-500": [
-     "composed: BRIDGE leaks into the primary prompt"
-    ],
-    "dish_country_to_language:pad-thai": [
-     "direct: ANSWER leaks into the prompt",
-     "composed: ANSWER leaks into the prompt",
-     "bridge_supplied: ANSWER leaks into the prompt"
-    ],
-    "ore_metal_to_symbol:bauxite": [
-     "direct: ANSWER leaks into the prompt",
-     "composed: ANSWER leaks into the prompt",
-     "bridge_supplied: ANSWER leaks into the prompt"
-    ]
-   }
+   "violations": {}
   },
   "wikipedia_verification": {
    "hop_failures": {
@@ -149,8 +135,8 @@
     "dish_country_to_language:kimchi": [
      "bridge page missing: South Korea"
     ],
-    "dish_country_to_language:pad-thai": [
-     "bridge page missing: Thailand"
+    "dish_country_to_language:lasagna": [
+     "bridge page missing: Italy"
     ],
     "dish_country_to_language:pierogi": [
      "bridge page missing: Poland"
@@ -319,6 +305,7 @@
     "Hungary",
     "Indonesia",
     "Ingmar Bergman",
+    "Italy",
     "JavaScript",
     "Johannes Gutenberg",
     "Kathmandu",
@@ -371,19 +358,19 @@
     "Zanzibar",
     "Zinc"
    ],
-   "n_verified": 25
+   "n_verified": 24
   }
  },
- "payload_sha256": "cda18c55b829e905f1c8b342437ff7ab930d8672442a03a1890179d0d0bcc481",
+ "payload_sha256": "e6ae98e7868f6bae817b9b36c3cdff21d8014afacaf57055ccd6cebbe819ed87",
  "provenance": {
   "branch": "interp_jspace_part2",
-  "code_commit": "68572efb0123ea93b1822a85095b95e0ce1cdc5c",
+  "code_commit": "1f9d7f069e0bab1e4196989adbb6c2101c323e55",
   "command": "python -m jspace_phase3.experiments.author_bank_f",
   "config_path": null,
   "config_sha256": null,
-  "created_utc": "2026-07-29T23:50:20Z",
+  "created_utc": "2026-07-30T00:10:06Z",
   "dirty_tree": true,
-  "evidence_id": "p3-bank-f-tranche1-v1",
+  "evidence_id": "p3-bank-f-tranche1-v2",
   "inputs": {},
   "jlens_commit": null,
   "model": null,
