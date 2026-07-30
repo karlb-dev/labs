@@ -45,8 +45,51 @@ clean-room reproduction.
 \item \textbf{\S4.1b span audits} --- done on ALL THREE primaries + cross-model synthesis \eid{p3-span-audit-cross-model-v1}.
 \item \textbf{Workstream C prose exact control} --- COMPLETE on all three primaries (\texttt{p3f04}).
 \item \textbf{Banks F/S} --- 72/72 families authored, validated, source-verified; G5-scored $\times$3.
-\item \textbf{Freeze prep complete}: split preview feasible, power sim v3, P3-P3 = Qwen by pinned tie-break, prereg zero-PENDING. Freeze + Block B primary grid are next.
+\item \textbf{FROZEN + BLOCK B COMPLETE}: tag \texttt{jspace-phase3-freeze-v1}; primary cells $\times$3, locked analysis, replication side, N8 Levels 1--3 all banked.
 \end{itemize}
+
+\section{THE PHASE 3 PRIMARY RESULTS \hfill \tier{phase3-confirmatory}}
+
+Locked analysis \eid{p3-locked-analysis-v1} (run once, raw parquets,
+after the last cell; span-safe primary arm; frozen partition seed
+85670; Holm family):
+
+\begin{center}\small
+\begin{tabular}{llll}
+\toprule
+primary & estimate & $p_{\mathrm{Holm}}$ & verdict \\
+\midrule
+\textbf{P3-P2} span-safe tail, Qwen & $+0.096$ tail excess (188 items / 26 fam) & $\sim$1e-5 & \textbf{REJECTS} \\
+\textbf{P3-P3} bridge rescue, Qwen & $+0.431$ nats (94 composed items) & 0.018 & \textbf{REJECTS} \\
+P3-P1 thick contrast, Qwen$-$OLMo & $-0.261$ nats [$-0.52,-0.01$] (17 fam) & 0.062 & directional, under disclosed MDE \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{(1)} The J-specific heavy tail \emph{survives full span-safe
+protection} at confirmatory tier — and \textbf{REPLICATES on held-out
+families} ($+0.102$, $p\approx$1e-5, 28 fam)
+\eid{p3-replication-analysis-v1}. The campaign's central specificity
+claim now rests on the leak-proof arm, at $\sim$1/3 of the
+label-protected size, exactly as the dev decomposition predicted.
+\textbf{(2) Bridge mediation is confirmed} on the magnitude-blind-chosen
+model. \textbf{(3)} P3-P1 is paper-shaped in direction with agreeing
+sensitivities, under the preregistered power disclosure — the
+estimation targets carry the story: Think$\approx$Instruct on the thick
+bank ($+0.01\,[-0.45,+0.39]$); and the \S4.3 workspace-word test says
+Qwen's contrast does NOT appear on Bank S ($+0.02$, wide CI) — by the
+pre-stated rule, the honest noun is \textbf{``knowledge-access
+channel''}, not working-memory workspace. (Think's Bank-S term is
+CI-clean \emph{positive}, $+0.15\,[+0.04,+0.26]$ — flagged for
+mechanism.)
+
+\textbf{Reproduction ladder discharged}: N8 L2 sentinels bit-exact
+$\times$3 (worst dev 0.0); \textbf{L3 full 184-item Qwen cell
+bit-exact} \eid{p3-n8-level3-qwen36-27b-v1}.
+
+\begin{center}
+\includegraphics[width=0.99\textwidth]{p3f05_primary_results.png}
+\end{center}
 
 \section{\S4.1a --- Selection pressure is a model property, not a damage predictor \hfill \tier{phase3-development}}
 
