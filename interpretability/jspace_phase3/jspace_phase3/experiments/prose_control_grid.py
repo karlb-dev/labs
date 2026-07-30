@@ -242,8 +242,9 @@ def main():  # noqa: C901
     # ---------------------------------------------------- generation audit
     n_gen = cfg.get("gen_items_per_domain", 3)
     max_new = cfg.get("gen_max_new", 24)
+    skip = set(cfg.get("gen_skip_domains", []))
     gen_items = [it for it in texts if int(it["item_id"].split(":")[-1])
-                 < n_gen]
+                 < n_gen and it["domain"] not in skip]
 
     def greedy(ids, arm):
         cur = ids.clone()

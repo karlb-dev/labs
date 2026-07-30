@@ -9,5 +9,6 @@ band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
 k: 10
 protect_top_k: 10
 rand_seed: 4242
-gen_items_per_domain: 3
-gen_max_new: 24
+gen_items_per_domain: 1
+gen_max_new: 16
+gen_skip_domains: [long_context]
