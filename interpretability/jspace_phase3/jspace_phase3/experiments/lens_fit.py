@@ -25,13 +25,13 @@ import torch
 
 from jspace_part2.lib import sha256_file
 from jspace_part2.paths import resolve as resolve_uri
+from jspace_part2.paths import to_uri
 from ..paths3 import lens_dir, local_work, metrics_dir
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            resolve_model, write_result3)
 
 TIER = "phase3-development"
-DRAW_A = Path("/content/drive/MyDrive/interpret/special-lab-1/"
-              "2026-07-25_1726/config/prompts/fitting_corpus.jsonl")
+DRAW_A_URI = "drive://part1/config/prompts/fitting_corpus.jsonl"
 # the Part-1 fit_config pins the CONCATENATED prompt texts, not the
 # jsonl file (verified: concat-texts sha matches its "sha256" exactly)
 DRAW_A_TEXTS_SHA = ("481be0c66a9733cc44af969e9053b2463ca85e759"
@@ -57,8 +57,10 @@ def main():  # noqa: C901
     model_uri = arg("--model-uri")
     slices = [int(s) for s in (arg("--slices") or "0,1,2,3").split(",")]
     dim_batch = int(arg("--dim-batch") or 8)
-    corpus = Path(arg("--corpus") or DRAW_A)
-    if str(corpus) == str(DRAW_A):
+    corpus_arg = arg("--corpus")
+    corpus_ref = corpus_arg or DRAW_A_URI
+    corpus = resolve_uri(corpus_ref, must_exist=True)
+    if corpus_arg is None:
         import hashlib
         rows0 = [json.loads(l) for l in corpus.read_text().splitlines()]
         got = hashlib.sha256("".join(
@@ -153,6 +155,12 @@ def main():  # noqa: C901
     eid = f"p3-lens-{slug}-v1"
     cmd = (f"python -m jspace_phase3.experiments.lens_fit --slug {slug} "
            f"--model-uri {model_uri}")
+    if corpus_arg is not None:
+        cmd += f" --corpus {to_uri(corpus)}"
+    if slices != [0, 1, 2, 3]:
+        cmd += " --slices " + ",".join(str(s) for s in slices)
+    if dim_batch != 8:
+        cmd += f" --dim-batch {dim_batch}"
     write_result3({"metrics": metrics}, metrics_dir(slug) /
                   "lens_fit_provenance.json", Provenance3(
                       evidence_id=eid, tier=TIER, command=cmd,

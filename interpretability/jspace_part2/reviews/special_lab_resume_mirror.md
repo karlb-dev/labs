@@ -10,7 +10,7 @@
 This file is STATIC (how any VM gets from zero to working). DYNAMIC state
 lives in `inprogress.md` (same folder, agent-maintained: status, queue,
 what's running, exact next commands) and in the plan files it points to.
-Last static revision: 2026-07-29 (VM9, confirmatory era). Update this
+Last static revision: 2026-07-30 (GPU-access invariant). Update this
 file only when the *setup* changes, not when the science moves.
 
 **VM9-era setup notes:** (1) model weights now live in HF-cache layout
@@ -52,6 +52,23 @@ total; VMs arrive in ~24 h GPU blocks; everything checkpoints ≤10 min.
 ```bash
 # 0. sanity
 nvidia-smi; df -h /; ls /content/drive/MyDrive/interpret || echo "MOUNT DRIVE FIRST"
+
+# 0a. GPU HARD GATE — run this in the SAME execution context that will
+# launch model jobs. Never silently fall back to CPU for model-scale work.
+export CUDA_VISIBLE_DEVICES=0
+python - <<'PY'
+import sys, torch
+print("torch", torch.__version__, "CUDA build", torch.version.cuda)
+print("CUDA available", torch.cuda.is_available(),
+      "devices", torch.cuda.device_count())
+if not torch.cuda.is_available():
+    sys.exit("HARD STOP: GPU is not visible; fix execution/sandbox access")
+print("GPU", torch.cuda.get_device_name(0),
+      "capability", torch.cuda.get_device_capability(0))
+x = torch.randn(1024, 1024, device="cuda", dtype=torch.float16)
+torch.cuda.synchronize()
+print("CUDA smoke PASS", x.device, x.shape)
+PY
 
 # 1. secrets
 tar xzf /content/drive/MyDrive/interpret/misc/key.tar.gz -C ~/ && chmod 600 ~/.ssh/id_ed25519
@@ -95,6 +112,19 @@ apt-get update -qq && apt-get install -y -qq texlive-latex-base texlive-latex-re
 # 7. NOW read the dynamic state and do what it says:
 #    /content/drive/MyDrive/interpret/inprogress.md
 ```
+
+**GPU-access invariant:** this Colab class exposes an RTX PRO 6000
+Blackwell GPU, but a restricted agent sandbox can hide the NVIDIA device
+and make `nvidia-smi`/`torch.cuda.is_available()` fail even while the host
+GPU is healthy. If that happens, rerun the probe and every model download,
+load, fit, scoring grid, and other GPU job with host/unsandboxed GPU
+access. Do not conclude that the VM is CPU-only from a sandboxed probe.
+Do not launch model-scale work until the hard gate above passes in the
+launch context, and do not allow automatic CPU fallback. CPU is reserved
+for explicitly CPU-sized work such as hashing, manifests, unit tests,
+statistical analysis, plotting, and TeX compilation. Record the GPU name,
+driver, CUDA build, and `torch.cuda.is_available()` in each environment
+audit.
 
 **Model weights rule:** hub-download to local NVMe (`/content/hf_local`
 for HF-cache layout, or a plain dir under `/content/models/`) — measured
