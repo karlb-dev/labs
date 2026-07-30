@@ -31,7 +31,11 @@ from ..paths3 import drive_hub_cache, resolve_uri
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
-EVIDENCE_ID = "p3-bank-f-tranche1-v1"
+EVIDENCE_ID = "p3-bank-f-tranche1-v2"
+SUPERSEDES = "p3-bank-f-tranche1-v1"  # v1's verifier used a dataset-level
+# isin filter that silently missed rows over DriveFS, quarantining 66
+# bundles whose pages exist; v2 streams every shard. Three authoring
+# leaks also fixed (pad thai/Thai, Fiat/Fiat 500, Al/metAL).
 TIER = "phase3-development"
 REPO_DATA = Path(__file__).resolve().parents[2] / "data"
 WIKIPEDIA = (drive_hub_cache() / "datasets--wikimedia--wikipedia/snapshots/"
@@ -621,7 +625,7 @@ def main():
     meta = REPO_DATA / "bank_f_tranche1.meta.json"
     write_result3(payload, meta, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
-    register(EVIDENCE_ID, tier=TIER, command=cmd,
+    register(EVIDENCE_ID, tier=TIER, command=cmd, supersedes=SUPERSEDES,
              what=(f"Bank F tranche 1: {len(shipped)} bundles / "
                    f"{len(fam_counts)} families authored, wikipedia-"
                    f"verified ({wiki['n_verified']} clean, "

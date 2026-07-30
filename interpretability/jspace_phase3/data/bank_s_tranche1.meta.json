@@ -1,0 +1,62 @@
+{
+ "payload": {
+  "family_counts": {
+   "s_badge_gate": 5,
+   "s_box_owner": 5,
+   "s_graph_hop": 5,
+   "s_ledger_alias": 5,
+   "s_parcel_floor": 5,
+   "s_recipe_station": 5,
+   "s_route_terminal": 5,
+   "s_two_codes": 5
+  },
+  "n_bundles": 40,
+  "n_families": 8,
+  "validation": {
+   "alias_prefix_issues": {},
+   "duplicate_fact_ids": [],
+   "duplicate_triples": [],
+   "family_counts": {
+    "s_badge_gate": 5,
+    "s_box_owner": 5,
+    "s_graph_hop": 5,
+    "s_ledger_alias": 5,
+    "s_parcel_floor": 5,
+    "s_recipe_station": 5,
+    "s_route_terminal": 5,
+    "s_two_codes": 5
+   },
+   "n_bundles": 40,
+   "n_families": 8,
+   "n_with_counterfactual": 40,
+   "ok": true,
+   "phase2_triple_collisions": [],
+   "relation_group_counts": {
+    "synthetic_binding": 15,
+    "synthetic_lookup": 10,
+    "synthetic_path": 15
+   },
+   "template_reuse": {},
+   "violations": {}
+  }
+ },
+ "payload_sha256": "d069f9447c5216d1564ea0411a3eed3800fe879007f4d181069f3e505ea971d1",
+ "provenance": {
+  "branch": "interp_jspace_part2",
+  "code_commit": "c8de5d8f6cbc8f8b183abb00feea6ba65e698a37",
+  "command": "python -m jspace_phase3.experiments.author_bank_s",
+  "config_path": null,
+  "config_sha256": null,
+  "created_utc": "2026-07-30T00:06:30Z",
+  "dirty_tree": true,
+  "evidence_id": "p3-bank-s-tranche1-v1",
+  "inputs": {},
+  "jlens_commit": null,
+  "model": null,
+  "package_version": "jspace_phase3 0.1.0",
+  "seed": 0,
+  "study_id": "jspace-phase3",
+  "tier": "phase3-development"
+ },
+ "schema_version": 2
+}
