@@ -65,26 +65,36 @@ def log(msg):
 
 @torch.no_grad()
 def dist_metrics(clean: torch.Tensor, abl: torch.Tensor, tgt: torch.Tensor,
-                 eos_id: int | None) -> dict:
-    """§7.2 teacher-forced guard metrics. clean/abl: [T, V] float32 on one
-    device; tgt: [T-1] next-token ids."""
-    lc = torch.log_softmax(clean[:-1], dim=-1)
-    la = torch.log_softmax(abl[:-1], dim=-1)
-    idx = torch.arange(len(tgt), device=lc.device)
-    pc = lc.exp()
-    out = {
-        "nll_clean": float(-lc[idx, tgt].mean()),
-        "nll": float(-la[idx, tgt].mean()),
-        "kl_from_clean": float((pc * (lc - la)).sum(-1).mean()),
-        "top1_agreement": float((la.argmax(-1) == lc.argmax(-1))
-                                .float().mean()),
-        "entropy_delta": float((-(la.exp() * la).sum(-1)
-                                + (pc * lc).sum(-1)).mean()),
-    }
+                 eos_id: int | None, chunk: int = 256) -> dict:
+    """§7.2 teacher-forced guard metrics, position-chunked: Qwen's 151k
+    vocab at 1024 positions OOMs if lc/la/pc materialize whole beside
+    the model + dictionaries (the v1 Qwen cell died here)."""
+    T = clean.shape[0] - 1
+    acc = {k: 0.0 for k in ("nll_clean", "nll", "kl", "top1", "ent",
+                            "eos_c", "eos_a")}
+    for i in range(0, T, chunk):
+        j = min(i + chunk, T)
+        lc = torch.log_softmax(clean[i:j], dim=-1)
+        la = torch.log_softmax(abl[i:j], dim=-1)
+        t = tgt[i:j]
+        idx = torch.arange(len(t), device=lc.device)
+        pc = lc.exp()
+        acc["nll_clean"] += float(-lc[idx, t].sum())
+        acc["nll"] += float(-la[idx, t].sum())
+        acc["kl"] += float((pc * (lc - la)).sum())
+        acc["top1"] += float((la.argmax(-1) == lc.argmax(-1)).sum())
+        acc["ent"] += float((-(la.exp() * la).sum(-1)
+                             + (pc * lc).sum(-1)).sum())
+        if eos_id is not None:
+            acc["eos_c"] += float(pc[:, eos_id].sum())
+            acc["eos_a"] += float(la.exp()[:, eos_id].sum())
+        del lc, la, pc
+    out = {"nll_clean": acc["nll_clean"] / T, "nll": acc["nll"] / T,
+           "kl_from_clean": acc["kl"] / T, "top1_agreement": acc["top1"] / T,
+           "entropy_delta": acc["ent"] / T}
     if eos_id is not None:
-        out["eos_p_clean"] = float(pc[:, eos_id].mean())
-        out["eos_p_delta"] = float(la.exp()[:, eos_id].mean()
-                                   - out["eos_p_clean"])
+        out["eos_p_clean"] = acc["eos_c"] / T
+        out["eos_p_delta"] = (acc["eos_a"] - acc["eos_c"]) / T
     return out
 
 
