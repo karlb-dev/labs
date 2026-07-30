@@ -66,10 +66,22 @@ def main():
     # through the separate JSPACE_DRIVE_ROOT alias layer, untouched.
     env["JSPACE_PART2_RUN_ROOT"] = str(fresh)
     env["JSPACE_PART2_OUT_ROOT"] = str(fresh)
-    cfg = f"interpretability/jspace_part2/configs/n6_grid_{slug}.yaml"
+    # the producer takes out_dir (state + outputs) from its CONFIG as an
+    # absolute path — env redirection alone cannot give it fresh state.
+    # The sentinel runs a derived config: byte-identical to the frozen
+    # one except out_dir -> fresh and a sentinel evidence_id (never
+    # registered: the run is terminated at the sentinel count).
+    import yaml
+    frozen_cfg = Path(f"interpretability/jspace_part2/configs/"
+                      f"n6_grid_{slug}.yaml")
+    cfg_d = yaml.safe_load(frozen_cfg.read_text())
+    cfg_d["out_dir"] = str(fresh / "metrics" / slug / "n6_grid")
+    cfg_d["evidence_id"] = f"{cfg_d['evidence_id']}-n8l2-sentinel"
+    cfg = str(fresh / "sentinel_config.yaml")
+    Path(cfg).write_text(yaml.safe_dump(cfg_d, sort_keys=False))
     cmd = [sys.executable, "-m",
            "jspace_part2.experiments.confirmatory_protected_grid",
-           "--config", cfg, "--no-register"]
+           "--config", cfg]
     log(f"sentinel launch: {' '.join(cmd[2:])}")
     sub_log = fresh / "sentinel_subprocess.log"
     log_fh = open(sub_log, "w")
