@@ -178,6 +178,43 @@ def wild_cluster_bootstrap_t(t: pd.DataFrame, value_col: str, *,
     return {"estimate": obs, "se": se, "t": t_obs, "p": p, "n_families": m}
 
 
+def within_item_exchange_mean(df: pd.DataFrame, *, a_col: str,
+                              b_col: str,
+                              family_col: str = "canonical_family",
+                              draws: int = 100_000, seed: int = 4242,
+                              alternative: str = "two-sided") -> dict:
+    """Within-item label exchange on a MEAN statistic: swapping the two
+    arms' labels within an item flips the sign of d_i = a_i - b_i, so
+    the randomization is an item-level sign flip; the statistic is the
+    family-weighted mean of d (§14.2 bridge-rescue form, pinned to the
+    mean in the Phase 3 prereg)."""
+    t = df[[a_col, b_col, family_col]].dropna()
+    d = (t[a_col] - t[b_col]).to_numpy(dtype=float)
+    fams = pd.Categorical(t[family_col])
+    codes = fams.codes
+    m = len(fams.categories)
+    n = len(d)
+    counts = np.bincount(codes, minlength=m).astype(float)
+
+    def stat(x):
+        sums = np.bincount(codes, weights=x, minlength=m)
+        return float((sums / counts).mean())
+
+    obs = stat(d)
+    rng = np.random.default_rng(seed)
+    flips = rng.choice([-1.0, 1.0], size=(draws, n))
+    null = np.array([stat(d * flips[b]) for b in range(draws)])
+    if alternative == "two-sided":
+        p = float((np.abs(null) >= abs(obs)).mean())
+    elif alternative == "greater":
+        p = float((null >= obs).mean())
+    else:
+        p = float((null <= obs).mean())
+    return {"estimate": round(obs, 6), "p": max(p, 1.0 / draws),
+            "n_items": int(n), "n_families": int(m),
+            "alternative": alternative}
+
+
 def leave_one_family_out(t: pd.DataFrame, value_col: str, *,
                          family_col: str = "canonical_family") -> pd.DataFrame:
     fm = t.groupby(family_col)[value_col].mean()

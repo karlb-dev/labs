@@ -61,11 +61,15 @@ model_diff(A,B)  = within_fact_comp_A − within_fact_comp_B
   family weights. The **preregistered comparator for the leakage
   account** is `prot_energy_matched` (reported beside, estimation).
 - **P3-P3 (bridge-protection rescue):** on composed Bank F confirmatory
-  items, true-bridge-protected minus distractor-bridge-protected damage
-  (the §6.5 rescue contrast), on **[PENDING: exactly one of Think |
-  Qwen, chosen pre-freeze by the development identifiability gate
-  (coverage + measurability only, never magnitude — §4.4)]**.
-  Test: within-item true/distractor label exchange.
+  items, the **family-weighted mean** of the within-item rescue
+  contrast `lp(true-bridge-protected) − lp(distractor-bridge-protected)`
+  (span-safe base protection, §6.5 piece sets), on **[PENDING: exactly
+  one of Think | Qwen, chosen pre-freeze by the development
+  identifiability gate (coverage + measurability only, never magnitude —
+  §4.4); Think's gate passed: cover_any 0.85, frac>floor 0.95]**.
+  Test: within-item true/distractor label exchange = item-level sign
+  flip of the contrast, family-weighted statistic
+  (`stats.within_item_exchange_mean`), one-sided greater.
 
 Holm over the three; α = 0.05 two-sided.
 

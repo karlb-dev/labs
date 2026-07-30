@@ -192,3 +192,20 @@ def test_paired_specific_effects_requires_conditions():
     with pytest.raises(ValueError, match="absent"):
         paired_specific_effects(df, j_condition="nope",
                                 control_condition="matched")
+
+
+def test_within_item_exchange_mean_calibration_and_power():
+    from jspace_phase3.stats import within_item_exchange_mean
+    rng = np.random.default_rng(11)
+    n = 120
+    fam = [f"f{i % 20}" for i in range(n)]
+    null = pd.DataFrame({"a": rng.normal(0, 1, n),
+                         "b": rng.normal(0, 1, n),
+                         "canonical_family": fam})
+    r0 = within_item_exchange_mean(null, a_col="a", b_col="b", draws=4000)
+    assert r0["p"] > 0.01
+    alt = null.copy()
+    alt["a"] = alt["b"] + 0.8 + rng.normal(0, 0.3, n)
+    r1 = within_item_exchange_mean(alt, a_col="a", b_col="b", draws=4000,
+                                   alternative="greater")
+    assert r1["p"] < 0.01 and r1["estimate"] > 0.5
