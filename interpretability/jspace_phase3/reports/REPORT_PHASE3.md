@@ -376,3 +376,87 @@ quantitative story regardless (the Phase 2 binary-primary lesson).
 The preregistration candidate has **zero unresolved PENDING markers**;
 the freeze runs when the Qwen Workstream C cell banks (its registry
 event is a freeze gate).
+
+---
+
+## Block B — THE PHASE 3 PRIMARY RESULTS — tier: PHASE3-CONFIRMATORY
+
+Cells `p3-primary-grid-{olmo31-think,olmo31-instruct,qwen36-27b}-v1`
+(170/164/188 frozen-cohort items, §7 stop rule passed on 25 baselines
+per model against the G5 manifest, randomized arm order, no
+aggregation viewed) · locked analysis `p3-locked-analysis-v1` (run
+once, from raw parquets, after the last cell) · figure `p3f05`.
+
+**The Holm family:**
+
+| primary | estimate | p (Holm) | verdict |
+|---|---|---|---|
+| **P3-P2** span-safe J-specific tail, Qwen | +0.096 tail-rate excess over the exact matched control (188 items / 26 families) | ~1e-5 (< α) | **REJECTS** |
+| **P3-P3** bridge-protection rescue, Qwen | +0.431 nats (true vs distractor bridge protection, 94 composed items) | 0.018 (< α) | **REJECTS** |
+| **P3-P1** thick task contrast, Qwen − OLMo pair | −0.261 nats (wild-cluster 95% CI [−0.52, −0.01]; se 0.130; 17 intersection families) | 0.062 (> α) | directional, under the disclosed MDE |
+
+**What this establishes.**
+
+1. **The J-specific heavy tail survives full span-safe protection at
+   confirmatory tier.** Phase 2's HP3 was measured under label
+   protection, which the §4.1b audits showed leaks 28–42% of removed
+   energy into the protected span; P3-P2 re-establishes the phenomenon
+   with the leak *removed by construction* — the campaign's central
+   specificity claim now rests on the clean arm. The surviving effect
+   (+0.096) is about a third of the label-protected size (+0.279),
+   quantitatively consistent with the development decomposition.
+2. **Bridge mediation is confirmed on Qwen.** Protecting the true
+   bridge's token directions rescues composed-item damage by +0.43
+   nats relative to protecting a matched counterfactual bridge — the
+   §18.5 "awaiting Phase 3" item "bridge deletion mediates the tail"
+   moves to established-under-the-assay, on the model whose gate was
+   chosen magnitude-blind.
+3. **P3-P1 lands exactly where the disclosed power analysis said it
+   could:** paper-shaped direction (Qwen's composition penalty exceeds
+   the OLMo pair's by 0.26 nats; item- and relation-group-weighted
+   sensitivities agree: −0.18 / −0.22), p=0.062 at 17 intersection
+   families — beneath the preregistered α, beneath the scenario MDEs.
+   Per the prereg's own §5 statement, the estimation targets carry the
+   quantitative story: this is an honest near-miss, not a null.
+
+**The estimation targets:**
+
+- **Think vs Instruct on the thick bank: indistinguishable** (+0.01
+  [−0.45, +0.39], 22 families) — the thick-bank version of Phase 2's
+  knife-edge HP1 quantity shows the 3.1 pair as one cluster,
+  consistent with their flat capacity.
+- **The §4.3 workspace-word test: Qwen's contrast does NOT appear on
+  Bank S** (+0.02 [−0.33, +0.42]) while its Bank F behavior drives
+  P3-P1's direction. Per the addendum's pre-stated decision rule, the
+  honest noun for what Qwen's J-channel carries is **"knowledge-access
+  channel"** — the working-memory reading of "workspace" is not
+  supported at this tier. (Think shows a CI-clean *positive* Bank-S
+  composition term, +0.15 [+0.04, +0.26] — composed in-context items
+  lose *less* than direct ones under span-safe J — flagged for the
+  mechanism block, not interpreted further here.)
+
+**Reproduction ladder:** N8 Level 2 sentinels PASS on all three models
+— 20 items × all conditions re-measured under the frozen Phase 2
+commands, worst deviation **0.0 (bit-exact)** on every lp column
+(`p3-n8-level2-*-v1`). Level 3 (one full clean-room Qwen cell) runs in
+the current window.
+
+### Replication side + N8 completion — tier: PHASE3-REPLICATION / METHODS
+
+`p3-replication-grid-*-v1` (reduced arm set on the untouched 36-family
+replication partition) · `p3-replication-analysis-v1`:
+
+- **P3-P2 REPLICATES**: span-safe J-specific tail excess **+0.102**
+  (p ≈ 1e-5, 28 families) vs confirmatory +0.096 — the campaign's
+  central specificity claim is confirmed AND replicated on disjoint
+  held-out families under the leak-proof arm.
+- P3-P1 replication: −0.197, p = 0.218 (17 intersection families) —
+  same direction at ~3/4 the confirmatory size, same disclosed power
+  limitation; the two sides agree in sign and rough magnitude.
+
+**N8 Level 3 PASSES** (`p3-n8-level3-qwen36-27b-v1`): the FULL 184-item
+Qwen confirmatory cell re-measured clean-room under the frozen Phase 2
+command — worst lp deviation **0.0 (bit-exact)**. With Level 1
+(analysis layer, ≤5e-4), Level 2 (three bit-exact sentinels), and
+Level 3 (one full cell), the reproduction ladder specified as a
+public-release gate is fully discharged.
