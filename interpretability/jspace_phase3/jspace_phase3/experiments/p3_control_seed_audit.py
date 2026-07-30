@@ -175,7 +175,7 @@ def frozen_qwen_rows(side: str, item_ids: set[str]) -> pd.DataFrame:
 
 
 def run_gpu(config: dict, selections: dict[str, list[dict]],
-            out_dir: Path) -> tuple[Path, dict]:
+            out_dir: Path, *, suffix: str = "") -> tuple[Path, dict]:
     model_path = Path(resolve_uri(config["model_uri"], must_exist=True))
     lens_path = Path(resolve_uri(config["lens_uri"], must_exist=True))
     tok_manifest = tokenizer_manifest(model_path)
@@ -184,7 +184,7 @@ def run_gpu(config: dict, selections: dict[str, list[dict]],
         for side in SIDES}
     header = audit_state_header(
         config, model_path, lens_path, tok_manifest, selection_manifest)
-    state_path = out_dir / "control_seed_state.json"
+    state_path = out_dir / f"control_seed{suffix}_state.json"
     if state_path.exists():
         state = json.loads(state_path.read_text())
         validate_state_header(state.get("header", {}), header)
@@ -316,7 +316,10 @@ def run_gpu(config: dict, selections: dict[str, list[dict]],
                         key = f"{side}:{item_id}:{seed}"
                         state["done"][key] = int(time.time() - started)
                         newly_done += 1
-                        atomic_json(state_path, state)
+                # One fact/variant (at most five control realizations) is far
+                # below the loss budget; avoid rewriting a growing JSON file
+                # after every individual seed.
+                atomic_json(state_path, state)
                 elapsed = time.time() - started
                 rate = elapsed / max(newly_done, 1)
                 message = (
@@ -338,7 +341,7 @@ def run_gpu(config: dict, selections: dict[str, list[dict]],
         torch.cuda.empty_cache()
     rows = pd.DataFrame(state["rows"]).sort_values(
         ["side", "item_id", "audit_seed"]).reset_index(drop=True)
-    raw_path = out_dir / "p3_control_seed_audit_rows.parquet"
+    raw_path = out_dir / f"p3_control_seed_audit{suffix}_rows.parquet"
     rows.to_parquet(raw_path, index=False)
     return raw_path, state
 
@@ -440,7 +443,7 @@ def seed_summary(rows: pd.DataFrame, side: str) -> tuple[dict, pd.DataFrame]:
     decision_flip = len(set(p2_decisions)) > 1 or len(set(p1_decisions)) > 1
     meaningful = decision_flip or sign_flip or p2_range > 0.03 \
         or p1_range > 0.10
-    if sign_flip or decision_flip:
+    if decision_flip:
         gate = "DECISION-SENSITIVE"
     elif meaningful:
         gate = "SEED-SENSITIVE BUT BOUNDED"
@@ -477,7 +480,8 @@ def seed_summary(rows: pd.DataFrame, side: str) -> tuple[dict, pd.DataFrame]:
     return summary, pd.concat(detail_rows, ignore_index=True)
 
 
-def analyze(raw_path: Path, out_dir: Path) -> tuple[dict, Path]:
+def analyze(raw_path: Path, out_dir: Path, *,
+            suffix: str = "") -> tuple[dict, Path]:
     rows = pd.read_parquet(raw_path)
     counts = rows.groupby(["side", "item_id"])["audit_seed"].nunique()
     if not bool((counts == len(AUDIT_SEEDS)).all()):
@@ -529,7 +533,9 @@ def analyze(raw_path: Path, out_dir: Path) -> tuple[dict, Path]:
     payload["overall_gate"] = overall
     payload["full_qwen_expansion_required"] = any(
         payload["sides"][side]["expansion_required"] for side in SIDES)
-    family_path = out_dir / "p3_control_seed_p3p1_family_values.parquet"
+    family_path = (
+        out_dir / f"p3_control_seed_p3p1{suffix}_family_values.parquet"
+    )
     pd.concat(family_tables, ignore_index=True).to_parquet(
         family_path, index=False)
     return payload, family_path
@@ -537,6 +543,12 @@ def analyze(raw_path: Path, out_dir: Path) -> tuple[dict, Path]:
 
 def main() -> None:
     require_clean_tree("--allow-dirty" in sys.argv)
+    full = "--full" in sys.argv
+    suffix = "_full" if full else ""
+    evidence_id = (
+        "p3-control-seed-contract-audit-v2"
+        if full else EVIDENCE_ID
+    )
     configs = {
         side: yaml.safe_load(CONFIGS[side].read_text()) for side in SIDES}
     validate_protect_k(configs)
@@ -544,8 +556,10 @@ def main() -> None:
     selections = {}
     for side in SIDES:
         items = load_frozen_items(side, configs[side])
-        selections[side] = select_balanced_items(
-            items, common_complete_fact_ids(side), side=side)
+        selections[side] = (
+            items if full else select_balanced_items(
+                items, common_complete_fact_ids(side), side=side)
+        )
     selection_manifest = {
         side: {
             "item_ids": [item["item_id"] for item in selections[side]],
@@ -557,16 +571,24 @@ def main() -> None:
     }
     out_dir = metrics_dir(SLUG) / "release_audit" / "control_seed"
     out_dir.mkdir(parents=True, exist_ok=True)
-    selection_path = out_dir / "p3_control_seed_selection.json"
+    selection_path = out_dir / f"p3_control_seed_selection{suffix}.json"
     atomic_json(selection_path, selection_manifest)
-    raw_path, state = run_gpu(config, selections, out_dir)
+    raw_path, state = run_gpu(
+        config, selections, out_dir, suffix=suffix)
     if "--collect-only" in sys.argv:
         print(f"control-seed rows banked: {raw_path}")
         return
-    payload, family_path = analyze(raw_path, out_dir)
+    payload, family_path = analyze(raw_path, out_dir, suffix=suffix)
+    payload["scope"] = (
+        "full frozen Qwen confirmatory and replication cohorts"
+        if full else "balanced 40+40 screening subset"
+    )
     payload["selection"] = selection_manifest
-    result_path = out_dir / "p3_control_seed_audit.json"
-    cmd = "python -m jspace_phase3.experiments.p3_control_seed_audit"
+    result_path = out_dir / f"p3_control_seed_audit{suffix}.json"
+    cmd = (
+        "python -m jspace_phase3.experiments.p3_control_seed_audit"
+        + (" --full" if full else "")
+    )
     inputs = {
         "selection": sha256_file(selection_path),
         "qwen_lens": state["header"]["lens_sha256"],
@@ -574,21 +596,22 @@ def main() -> None:
         "partition": state["header"]["partition_sha256"],
     }
     write_result3(payload, result_path, Provenance3(
-        evidence_id=EVIDENCE_ID, tier=TIER, command=cmd,
+        evidence_id=evidence_id, tier=TIER, command=cmd,
         config_path=str(CONFIGS["confirmatory"]), inputs=inputs,
         model=state["header"]["model"], seed=31337))
     register(
-        EVIDENCE_ID, tier=TIER, command=cmd,
+        evidence_id, tier=TIER, command=cmd,
         what=(
             "Historical Python-hash limitation plus five-seed Qwen "
-            f"matched-control sensitivity audit: {payload['overall_gate']}"
+            f"matched-control sensitivity audit ({payload['scope']}): "
+            f"{payload['overall_gate']}"
         ),
         outputs=[result_path, raw_path, selection_path, family_path],
         inputs=inputs,
+        supersedes=EVIDENCE_ID if full else None,
     )
     print(json.dumps(payload, indent=1))
 
 
 if __name__ == "__main__":
     main()
-
