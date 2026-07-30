@@ -32,7 +32,10 @@ from ..provenance3 import (Provenance3, register, require_clean_tree,
 TIER = "phase3-development"
 DRAW_A = Path("/content/drive/MyDrive/interpret/special-lab-1/"
               "2026-07-25_1726/config/prompts/fitting_corpus.jsonl")
-DRAW_A_SHA = "481be0c66a9733cc44af969e9053b2463ca85e759a65e5e7d1e9b635c99339d0"
+# the Part-1 fit_config pins the CONCATENATED prompt texts, not the
+# jsonl file (verified: concat-texts sha matches its "sha256" exactly)
+DRAW_A_TEXTS_SHA = ("481be0c66a9733cc44af969e9053b2463ca85e759"
+                    "a65e5e7d1e9b635c99339d0")
 SOURCE_LAYERS = [4, 8, 12, 16, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
                  42, 44, 48, 52, 56, 60]
 TARGET_LAYER = 63
@@ -56,9 +59,12 @@ def main():  # noqa: C901
     dim_batch = int(arg("--dim-batch") or 8)
     corpus = Path(arg("--corpus") or DRAW_A)
     if str(corpus) == str(DRAW_A):
-        got = sha256_file(corpus)
-        if got != DRAW_A_SHA:
-            raise SystemExit(f"draw-A corpus sha mismatch: {got}")
+        import hashlib
+        rows0 = [json.loads(l) for l in corpus.read_text().splitlines()]
+        got = hashlib.sha256("".join(
+            r["text"] for r in rows0).encode()).hexdigest()
+        if got != DRAW_A_TEXTS_SHA:
+            raise SystemExit(f"draw-A concat-texts sha mismatch: {got}")
 
     out_lens = lens_dir() / f"{slug}_lens.pt"
     metrics_p = metrics_dir(slug) / "lens_fit.json"
