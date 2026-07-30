@@ -100,22 +100,31 @@ below primary + comparator + baseline + one mechanics control.
 ## 3 · Cohorts and partition
 
 - G5 capability gate (`g5_bank_scoring.py`, greedy MAX_NEW=8,
-  deterministic grading): an item enters a model's cohort if
-  `capable_generation` on BOTH its direct and composed variants;
-  baseline logprob is a covariate, never a window (R2/§5.5).
+  deterministic grading): a fact enters a model's cohort if the answer
+  is **contained in the 8-token greedy continuation** of BOTH its
+  direct and composed variants (the endpoints are teacher-forced
+  logprobs, so completion-mode prefixing is not required for a
+  measurable item; the stricter prefix rate is recorded per item and
+  reported). Baseline logprob is a covariate, never a window (§5.5).
 - Primary cross-model cohort = the three-model intersection.
 - Partition: `family_split_v2` (seed-ACTIVE). **Seed rule, pinned:**
   `seed = int(parent_sha[:8], 16) % 100000` where `parent_sha` is the
   full sha of the freeze commit's parent — deterministic, auditable,
   and fixed by history that exists before any outcome. Floors: ≥36
-  families per side overall, ≥20 Bank F families per side, ≥25/side
-  intersection-capable; ≤10% single-family item share; standardized
+  families per side overall, ≥20 Bank F families per side, ≥16/side
+  intersection-capable (measured-feasibility floor; R2 deviation
+  disclosed in §5); ≤10% single-family item share; standardized
   imbalance ≤0.35 on every balance dimension. Assignment + balance
   report frozen in the freeze commit; disjointness asserted on
   canonical_family, fact_id, template_hash, and (bridge, answer)
   triple.
-- **[PENDING G5: cohort sizes per model, intersection count, per-side
-  family counts.]**
+- Measured cohorts (`p3-g5-bank-*-v{4,3,3}` CONTAINS regrades over 972
+  items/model): capable rates Think 73.5% / Instruct 74.2% / Qwen
+  77.9%; both-variant-capable facts 161 / 156 / 189; three-model
+  intersection **104 facts across 34 families** (18 Bank F + 16
+  Bank S). Split preview (seed 4242, `p3-family-split-preview-v1`):
+  36/36 families per side, Bank F 24/24, intersection 16/18, all
+  standardized imbalances ≤0.35.
 
 ## 4 · Statistics
 
@@ -141,8 +150,14 @@ null-calibrated at α/3: rejection 1.3–1.5%):
 | cancellation ×0.25 | 0.3 nats | — |
 
 **Frozen floors:** ≥36 families per side overall; ≥20 Bank F families
-per side; ≥25 intersection-capable families per side (R2). **Disclosed
-power statement:** P3-P2 is adequately powered against the Phase 2
+per side; ≥16 intersection-capable families per side. **Disclosed
+deviation from R2:** the addendum's ≥25/side intersection floor is
+infeasible with this bank generation — the Phase 2 burn list (858
+consumed answers) forces less-famous instances exactly where three-model
+capability is scarcest; the measured three-model intersection is 34
+families total. The floor is set to measured feasibility (16/side)
+rather than authored-to-target, and P3-P1's power at that size is
+disclosed below. **Disclosed power statement:** P3-P2 is adequately powered against the Phase 2
 anchor effect (+0.279). P3-P1 is powered only for effects ≥0.3–0.5
 nats depending on the realized within-fact cancellation — it is
 carried as a test with this disclosure, and the §1 estimation targets

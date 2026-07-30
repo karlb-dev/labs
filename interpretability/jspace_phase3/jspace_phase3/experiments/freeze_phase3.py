@@ -96,7 +96,7 @@ def main():
     # ---- gate: split feasible with prereg floors + §5.8 checks
     from .run_family_split import build_family_table
     tab, items = build_family_table()
-    floors = json.loads(arg("--floors", '{"twohop": 18, "intersection": 12}'))
+    floors = json.loads(arg("--floors", '{"twohop": 20, "intersection": 16}'))
     cons = SplitConstraints(
         min_twohop_families_per_side=floors["twohop"],
         min_intersection_families_per_side=floors["intersection"],
