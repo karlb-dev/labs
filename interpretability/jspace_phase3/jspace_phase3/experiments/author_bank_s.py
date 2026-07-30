@@ -30,7 +30,10 @@ from ..paths3 import resolve_uri
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 
-EVIDENCE_ID = "p3-bank-s-tranche1-v1"
+EVIDENCE_ID = "p3-bank-s-v2"
+SUPERSEDES = "p3-bank-s-tranche1-v1"  # tranche 2 adds the remaining §5.2
+# template types (symbol-operator, alias-with-distractor, reversible
+# mapping) plus five more worlds
 TIER = "phase3-development"
 REPO_DATA = Path(__file__).resolve().parents[2] / "data"
 P2_MANIFEST_URI = "drive://metrics/cross_model/g5_item_manifest_v5.json"
@@ -202,6 +205,156 @@ FAMILIES = [
 ]
 
 
+FAMILIES += [
+    dict(
+        family="s_rule_operator", group="synthetic_lookup",
+        templates=dict(
+            direct="Under the merge rule, {bridge} becomes {answer}. "
+                   "Applying the merge rule to {bridge} produces",
+            composed="Under the flip rule, {source} becomes {bridge}. "
+                     "Under the merge rule, {bridge} becomes {answer}. "
+                     "Applying the flip rule and then the merge rule to "
+                     "{source} produces",
+            bridge_supplied="Under the flip rule, {source} becomes "
+                            "{bridge}. Under the merge rule, {bridge} "
+                            "becomes {answer}. The flip rule sends "
+                            "{source} to {bridge}, and the merge rule "
+                            "then produces"),
+        instances=[("Drovak", "Plimset", "Corvane"),
+                   ("Ilbeck", "Trosmit", "Vandrel"),
+                   ("Osprel", "Klindor", "Marbeth"),
+                   ("Ungrath", "Selpix", "Dorwin"),
+                   ("Yarnold", "Brelqua", "Fenwick")]),
+    dict(
+        family="s_alias_distractor", group="synthetic_binding",
+        templates=dict(
+            direct="The alias {bridge} unlocks cabinet {answer}. The "
+                   "cabinet unlocked by the alias {bridge} is cabinet",
+            composed="In the registry, {source} appears under the alias "
+                     "{bridge}. In the registry, Welfort appears under "
+                     "the alias Squall. The alias {bridge} unlocks "
+                     "cabinet {answer}. The cabinet unlocked by the "
+                     "alias of {source} is cabinet",
+            bridge_supplied="In the registry, {source} appears under the "
+                            "alias {bridge}. In the registry, Welfort "
+                            "appears under the alias Squall. The alias "
+                            "{bridge} unlocks cabinet {answer}. "
+                            "{source}'s alias is {bridge}, and {bridge} "
+                            "unlocks cabinet"),
+        instances=[("Ambrell", "Falcon", "D2"),
+                   ("Brockway", "Osier", "F8"),
+                   ("Crandell", "Wren", "H5"),
+                   ("Dunmore", "Teal", "L3"),
+                   ("Everhart", "Skua", "N7")]),
+    dict(
+        family="s_same_specimen", group="synthetic_binding",
+        templates=dict(
+            direct="The specimen called {bridge} is stored in drawer "
+                   "{answer}. The drawer holding {bridge} is drawer",
+            composed="{source} and {bridge} are two names for the same "
+                     "specimen. The specimen called {bridge} is stored "
+                     "in drawer {answer}. The drawer holding {source} is "
+                     "drawer",
+            bridge_supplied="{source} and {bridge} are two names for the "
+                            "same specimen. The specimen called {bridge} "
+                            "is stored in drawer {answer}. Since {source} "
+                            "is {bridge}, it sits in drawer"),
+        instances=[("Kelvarite", "Bluntstone", "C4"),
+                   ("Mornadine", "Ashglass", "E9"),
+                   ("Purlquartz", "Greyshard", "G6"),
+                   ("Rindspar", "Duskflint", "J2"),
+                   ("Tavermica", "Palegrit", "K8")]),
+    dict(
+        family="s_warehouse_camera", group="synthetic_path",
+        templates=dict(
+            direct="Aisle {bridge} is monitored by camera {answer}. The "
+                   "camera covering aisle {bridge} is camera",
+            composed="Crate {source} sits in aisle {bridge}. Aisle "
+                     "{bridge} is monitored by camera {answer}. The "
+                     "camera that can see crate {source} is camera",
+            bridge_supplied="Crate {source} sits in aisle {bridge}. "
+                            "Aisle {bridge} is monitored by camera "
+                            "{answer}. Crate {source} is in aisle "
+                            "{bridge}, watched by camera"),
+        instances=[("V19", "Delta", "M1"),
+                   ("W44", "Sigma", "M6"),
+                   ("X73", "Omega", "M3"),
+                   ("Y28", "Kappa", "M9"),
+                   ("Z56", "Theta", "M4")]),
+    dict(
+        family="s_signal_relay", group="synthetic_path",
+        templates=dict(
+            direct="Relay {bridge} broadcasts on channel {answer}. The "
+                   "channel used by relay {bridge} is channel",
+            composed="Signal {source} is forwarded to relay {bridge}. "
+                     "Relay {bridge} broadcasts on channel {answer}. "
+                     "Listeners hear signal {source} on channel",
+            bridge_supplied="Signal {source} is forwarded to relay "
+                            "{bridge}. Relay {bridge} broadcasts on "
+                            "channel {answer}. Signal {source} passes "
+                            "through {bridge} and airs on channel"),
+        instances=[("Aurora", "Northgate", "C11"),
+                   ("Bramblewood", "Eastspire", "C47"),
+                   ("Cindertrail", "Westhollow", "C29"),
+                   ("Dawnmere", "Southcrag", "C83"),
+                   ("Emberlyn", "Midvane", "C65")]),
+    dict(
+        family="s_tonic_label", group="synthetic_lookup",
+        templates=dict(
+            direct="The {bridge} tonic is bottled under a {answer} "
+                   "label. The label on the {bridge} tonic reads",
+            composed="Powdered {source} brews into the {bridge} tonic. "
+                     "The {bridge} tonic is bottled under a {answer} "
+                     "label. A brew that starts from {source} ends under "
+                     "a label reading",
+            bridge_supplied="Powdered {source} brews into the {bridge} "
+                            "tonic. The {bridge} tonic is bottled under "
+                            "a {answer} label. {source} makes the "
+                            "{bridge} tonic, whose label reads"),
+        instances=[("wolfsbark", "amberleaf", "Quillmark"),
+                   ("frostroot", "duskpetal", "Hartwood"),
+                   ("emberfern", "palebriar", "Selvane"),
+                   ("mirthweed", "coldbloom", "Ternbury"),
+                   ("gloamsage", "wrymoss", "Vexhall")]),
+    dict(
+        family="s_parcel_kiosk", group="synthetic_path",
+        templates=dict(
+            direct="Courier {bridge} finishes every round at kiosk "
+                   "{answer}. The end-of-day kiosk for courier {bridge} "
+                   "is kiosk",
+            composed="Parcel {source} is carried by courier {bridge}. "
+                     "Courier {bridge} finishes every round at kiosk "
+                     "{answer}. At day's end, parcel {source} sits at "
+                     "kiosk",
+            bridge_supplied="Parcel {source} is carried by courier "
+                            "{bridge}. Courier {bridge} finishes every "
+                            "round at kiosk {answer}. {bridge} carries "
+                            "parcel {source}, ending at kiosk"),
+        instances=[("P501", "Hobbes", "K12"),
+                   ("P322", "Marlow", "K30"),
+                   ("P874", "Ferris", "K25"),
+                   ("P169", "Quimby", "K41"),
+                   ("P648", "Ashby", "K17")]),
+    dict(
+        family="s_choir_hall", group="synthetic_binding",
+        templates=dict(
+            direct="The {bridge} ensemble rehearses in hall {answer}. "
+                   "The rehearsal hall of the {bridge} ensemble is hall",
+            composed="Singer {source} belongs to the {bridge} ensemble. "
+                     "The {bridge} ensemble rehearses in hall {answer}. "
+                     "Singer {source} rehearses in hall",
+            bridge_supplied="Singer {source} belongs to the {bridge} "
+                            "ensemble. The {bridge} ensemble rehearses "
+                            "in hall {answer}. {source} sings with the "
+                            "{bridge} ensemble in hall"),
+        instances=[("Corvina", "Larkrise", "B6"),
+                   ("Desmonda", "Nightreed", "B2"),
+                   ("Elspetha", "Goldenmere", "B9"),
+                   ("Fiorella", "Stormvale", "B4"),
+                   ("Gwendolyn", "Ashenfell", "B7")]),
+]
+
+
 def norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).strip()
 
@@ -237,18 +390,18 @@ def main():
         assert f"|{norm(b.answer)}" not in p2_answers, \
             f"{b.fact_id}: nonce answer collides with a Phase 2 answer"
     val = validate_bank(bundles, phase2_triples=p2)
-    out = REPO_DATA / "bank_s_tranche1.jsonl"
+    out = REPO_DATA / "bank_s_v2.jsonl"
     save_bank(bundles, out)
     payload = {"n_bundles": len(bundles),
                "n_families": val["n_families"],
                "family_counts": val["family_counts"],
                "validation": val}
     cmd = "python -m jspace_phase3.experiments.author_bank_s"
-    meta = REPO_DATA / "bank_s_tranche1.meta.json"
+    meta = REPO_DATA / "bank_s_v2.meta.json"
     write_result3(payload, meta, Provenance3(
         evidence_id=EVIDENCE_ID, tier=TIER, command=cmd, seed=0))
-    register(EVIDENCE_ID, tier=TIER, command=cmd,
-             what=(f"Bank S tranche 1: {len(bundles)} synthetic in-context "
+    register(EVIDENCE_ID, tier=TIER, command=cmd, supersedes=SUPERSEDES,
+             what=(f"Bank S v2: {len(bundles)} synthetic in-context "
                    f"composition bundles / {val['n_families']} template "
                    f"families, direct/composed/bridge_supplied + rotated "
                    f"counterfactuals, nonce entities disjoint from Phase 2"),
