@@ -59,7 +59,9 @@ def main():
            "jspace_part2.experiments.confirmatory_protected_grid",
            "--config", cfg, "--no-register"]
     log(f"sentinel launch: {' '.join(cmd[2:])}")
-    proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE,
+    sub_log = fresh / "sentinel_subprocess.log"
+    log_fh = open(sub_log, "w")
+    proc = subprocess.Popen(cmd, env=env, stdout=log_fh,
                             stderr=subprocess.STDOUT, text=True)
     state_p = fresh / "metrics" / slug / "n6_grid" / "n6_state.json"
     t0 = time.time()
@@ -79,6 +81,11 @@ def main():
             raise RuntimeError("sentinel run exceeded 1 h before "
                                f"{n_sent} items (reached {n_done})")
     proc.wait(timeout=120)
+    log_fh.close()
+    if not state_p.exists():
+        raise RuntimeError(
+            "sentinel subprocess produced no state; its log tail:\n"
+            + "\n".join(sub_log.read_text().splitlines()[-15:]))
     state = json.loads(state_p.read_text())
     rows = pd.DataFrame(state["rows"])
     log(f"sentinel produced {rows.item_id.nunique()} items")
