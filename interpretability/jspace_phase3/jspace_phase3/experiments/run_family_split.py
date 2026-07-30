@@ -39,8 +39,10 @@ def build_family_table() -> tuple[pd.DataFrame, pd.DataFrame]:
     items = pd.DataFrame([it for b in bundles for it in b.as_items()])
     g5 = {}
     for slug in SLUGS:
+        gd = metrics_dir(slug) / "g5_bank"
+        gp = gd / f"g5_bank_{slug}_regraded.parquet"
         g5[slug] = pd.read_parquet(
-            metrics_dir(slug) / "g5_bank" / f"g5_bank_{slug}.parquet")
+            gp if gp.exists() else gd / f"g5_bank_{slug}.parquet")
 
     # per-fact capability on direct AND composed, per model
     def fact_cap(slug):

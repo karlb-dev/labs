@@ -115,8 +115,10 @@ def main():  # noqa: C901
     ab = Phase3JAblator(model.layers, band)
 
     # cohort: G5 fact-level capability (direct AND composed) on THIS model
-    g5 = pd.read_parquet(metrics_dir(slug) / "g5_bank" /
-                         f"g5_bank_{slug}.parquet")
+    gd = metrics_dir(slug) / "g5_bank"
+    gp = gd / f"g5_bank_{slug}_regraded.parquet"
+    g5 = pd.read_parquet(gp if gp.exists()
+                         else gd / f"g5_bank_{slug}.parquet")
     dc = g5[g5.variant.isin(["direct", "composed"])]
     cap_facts = {fid for fid, sub in dc.groupby("fact_id")
                  if len(sub) == 2 and bool(sub.capable_generation.all())}
