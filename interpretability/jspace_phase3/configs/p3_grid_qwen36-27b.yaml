@@ -13,4 +13,4 @@ protect_top_k: 10
 rand_seed: 31337
 stop_check_n: 25
 stop_tol: 0.05
-bridge_arms: false
+bridge_arms: true

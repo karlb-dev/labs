@@ -63,13 +63,13 @@ model_diff(A,B)  = within_fact_comp_A − within_fact_comp_B
 - **P3-P3 (bridge-protection rescue):** on composed Bank F confirmatory
   items, the **family-weighted mean** of the within-item rescue
   contrast `lp(true-bridge-protected) − lp(distractor-bridge-protected)`
-  (span-safe base protection, §6.5 piece sets), on **[PENDING-QWEN-GATE:
-  exactly one of Think | Qwen, chosen by the development identifiability
-  gates alone (coverage + measurability, never magnitude — §4.4).
-  Think's gate PASSED (cover_any 0.85, frac>floor 0.95). Decision rule,
-  pinned before the Qwen gate runs: if Qwen's gate also passes, the
-  model with the higher any-piece coverage carries P3-P3; exact ties
-  break to Qwen. If only one passes, it carries P3-P3.]**.
+  (span-safe base protection, §6.5 piece sets), on **Qwen 3.6 27B** —
+  resolved by the pinned rule: both development gates passed with
+  identical any-piece coverage (Think 0.85 [`p3-bridge-dev-gate-
+  olmo31-think-v1`], Qwen 0.85 [`p3-bridge-dev-gate-qwen36-27b-v1`],
+  frac>floor 0.95 both), and exact ties break to Qwen. The rule was
+  pinned before the Qwen gate ran; no rescue magnitude was viewed at
+  family level.
   Test: within-item true/distractor label exchange = item-level sign
   flip of the contrast, family-weighted statistic
   (`stats.within_item_exchange_mean`), one-sided greater.
