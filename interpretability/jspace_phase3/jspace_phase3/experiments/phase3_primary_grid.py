@@ -76,7 +76,9 @@ def main():  # noqa: C901
     require_clean_tree("--allow-dirty" in sys.argv)
     slug = cfg["slug"]
 
-    part = json.loads(Path(resolve3(cfg["partition_uri"])).read_text())
+    puri = cfg["partition_uri"]
+    ppath = Path(resolve3(puri)) if "://" in str(puri) else Path(puri)
+    part = json.loads(ppath.read_text())
     payload = part.get("payload", part)
     if not payload.get("freeze_authorised"):
         raise RuntimeError("partition is not a freeze artifact "
