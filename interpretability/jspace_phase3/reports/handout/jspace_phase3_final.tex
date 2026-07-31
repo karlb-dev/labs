@@ -12,7 +12,9 @@
 \setlist{nosep,leftmargin=1.25em}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.45em}
-\newcommand{\eid}[1]{\textcolor{muted}{\footnotesize\texttt{#1}}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\eid}[1]{\newline\textcolor{muted}{\footnotesize
+Evidence: \nolinkurl{#1}}}
 \newcommand{\tier}[1]{\textcolor{muted}{\footnotesize\textsc{#1}}}
 \newcommand{\good}[1]{\textcolor{teal}{\textbf{#1}}}
 \newcommand{\warn}[1]{\textcolor{coral}{\textbf{#1}}}
@@ -43,7 +45,7 @@ grading, accepted-alias aggregation, and a held-out family replication.
 
 \begin{center}\small
 \renewcommand{\arraystretch}{1.16}
-\begin{tabular}{p{2.15cm}p{4.0cm}p{4.0cm}p{3.1cm}}
+\begin{tabular}{L{2.15cm}L{4.0cm}L{4.0cm}L{3.1cm}}
 \toprule
 result & confirmatory state of record & held-out replication & licensed status\\
 \midrule
