@@ -120,6 +120,7 @@ def test_added_protection_geometry_is_rank_safe_and_complete():
         assert r.diagnostic_activation_score_mean is not None
         assert r.diagnostic_activation_score_max is not None
         assert r.diagnostic_base_overlap is not None
+        assert -1e-6 <= r.diagnostic_base_overlap <= 4 + 1e-5
         assert r.diagnostic_answer_cosine_mean is not None
         assert r.removed_energy_l2_sq >= 0
         assert 0 <= r.removed_energy_frac <= 1 + 1e-5

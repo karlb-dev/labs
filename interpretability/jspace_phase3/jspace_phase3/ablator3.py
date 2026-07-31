@@ -336,8 +336,8 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
                         torch.linalg.svdvals(ma) ** 2).sum(dim=1).cpu()
 
             if diagnostic_ids is not None:
-                drows = torch.nn.functional.normalize(
-                    D[diagnostic_ids].float(), dim=1)
+                draw_rows = D[diagnostic_ids].float()
+                drows = torch.nn.functional.normalize(draw_rows, dim=1)
                 dcoef = torch.einsum("tdk,bd->tbk", Ur, drows)
                 dres = (drows.unsqueeze(0)
                         - torch.einsum("tdk,tbk->tbd", Ur, dcoef))
@@ -345,8 +345,15 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
                 diagnostic_surv_mean = dsurv.mean(dim=1).cpu()
                 diagnostic_surv_min = dsurv.min(dim=1).values.cpu()
                 if qbase_masked is not None:
+                    # A projector overlap requires an orthonormal basis
+                    # for the diagnostic span.  Raw dictionary rows are
+                    # coherent and would over-count shared directions.
+                    ud, sd, _ = torch.linalg.svd(
+                        draw_rows.T, full_matrices=False)
+                    thr_d = (sd[:1] * 1e-4).clamp_min(1e-7)
+                    qdiagnostic = ud * (sd > thr_d).unsqueeze(0)
                     db = torch.einsum(
-                        "bd,tdp->tbp", drows, qbase_masked)
+                        "da,tdp->tap", qdiagnostic, qbase_masked)
                     diagnostic_base_overlap = (
                         torch.linalg.svdvals(db) ** 2).sum(dim=1).cpu()
                 if answer_ids is not None:

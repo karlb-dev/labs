@@ -61,8 +61,13 @@ def test_analysis_uses_strict_added_rank_profile_match():
                     "diagnostic_activation_score_mean": 0.3,
                     "diagnostic_activation_score_max": 0.4,
                     "diagnostic_answer_cosine_mean": 0.05,
+                    "projector_overlap": 0.0,
+                    "diagnostic_dir_survival_min": 1.0,
+                    "n_diagnostic_ids": 2,
                 })
     report, paired = analyze(pd.DataFrame(items), pd.DataFrame(sites))
     assert report["exact_geometry_matched_subset"]["n_items"] == 3
+    assert report["geometry_invariants"][
+        "protected_rank_accounting_failures"] == 0
     assert not bool(paired.loc[paired.fact_id == "f0",
                                "exact_geometry_match"].iloc[0])

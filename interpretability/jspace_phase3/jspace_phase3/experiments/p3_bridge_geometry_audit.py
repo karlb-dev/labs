@@ -48,7 +48,7 @@ from ..paths3 import metrics_dir
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            resolve_model, write_result3)
 from ..scoring import DEFAULT_SPEC, ScoringSession
-from ..stats import exact_signflip_test
+from ..stats import family_signflip_test
 
 TIER = "phase3-development"
 LAMBDA_GRID = np.logspace(-4, 4, 9)
@@ -147,8 +147,9 @@ def _family_inference(frame: pd.DataFrame, value: str) -> dict:
         "bootstrap_draws": BOOTSTRAP_DRAWS,
         "bootstrap_seed": BOOTSTRAP_SEED,
     }
-    if 3 <= len(values) <= 22:
-        out["exact_family_signflip"] = exact_signflip_test(values)
+    if len(values) >= 3:
+        out["family_signflip"] = family_signflip_test(
+            values, draws=100_000, seed=BOOTSTRAP_SEED)
     return out
 
 
@@ -319,8 +320,8 @@ def analyze(item: pd.DataFrame, site: pd.DataFrame) -> tuple[dict, pd.DataFrame]
         "fraction": float(len(exact) / len(paired)),
         "rescue": (
             _family_inference(exact, "rescue") if len(exact) else None),
-        "underpowered": bool(
-            len(exact) == 0 or exact.canonical_family.nunique() < 3),
+        "underpowered_for_precise_inference": bool(
+            len(exact) == 0 or exact.canonical_family.nunique() < 10),
     }
     report = {
         "n_items": int(len(paired)),
@@ -332,6 +333,22 @@ def analyze(item: pd.DataFrame, site: pd.DataFrame) -> tuple[dict, pd.DataFrame]
         "residualized_semantic_contrast": _family_inference(
             paired, "semantic_residual_crossfit"),
         "exact_geometry_matched_subset": exact_report,
+        "geometry_invariants": {
+            "protected_rank_accounting_failures": int(np.count_nonzero(
+                site.protected_rank_after
+                != site.protected_rank_before + site.added_rank)),
+            "selected_rank_accounting_failures": int(np.count_nonzero(
+                site.rank_selected_before
+                != site.rank_selected + site.lost_rank)),
+            "max_final_selected_protected_overlap": float(
+                site.projector_overlap.max()),
+            "min_protected_bridge_direction_survival": float(
+                site.diagnostic_dir_survival_min.min()),
+            "diagnostic_base_overlap_bounds_failures": int(np.count_nonzero(
+                (site.diagnostic_base_overlap < -1e-6)
+                | (site.diagnostic_base_overlap
+                   > site.n_diagnostic_ids + 1e-4))),
+        },
         "interpretation_guardrail": (
             "Post-freeze diagnostic only. Cross-fitted adjustment can "
             "quantify predictability by measured geometry but cannot turn "
@@ -402,7 +419,8 @@ def main() -> None:  # noqa: C901
         "slug": slug,
     }
 
-    out_dir = metrics_dir(slug) / "release_audit" / "bridge_geometry"
+    output_subdir = cfg.get("output_subdir", "bridge_geometry")
+    out_dir = metrics_dir(slug) / "release_audit" / output_subdir
     out_dir.mkdir(parents=True, exist_ok=True)
     parts_dir = out_dir / "parts"
     parts_dir.mkdir(exist_ok=True)
@@ -578,14 +596,17 @@ def main() -> None:  # noqa: C901
             "lp_span_safe": lp_span,
             "lp_true_bridge": lp_by_arm["true"],
             "lp_distractor_bridge": lp_by_arm["distractor"],
+            "frozen_lp_baseline": float(frozen.lp_baseline),
+            "frozen_lp_span_safe": float(frozen.lp_meanJ_span_safe),
+            "frozen_lp_true_bridge": float(frozen.lp_true_bridge),
+            "frozen_lp_distractor_bridge": float(
+                frozen.lp_distractor_bridge),
             "true_piece_count": int(len(definitions["true"])),
             "distractor_piece_count": int(len(definitions["distractor"])),
             "elapsed_seconds": round(time.time() - started, 3),
         }
         atomic_json(state_path, state)
         done = len(state["done"])
-        rate = (time.time() - started) / max(
-            done - (int(cfg["expected_items"]) - len(primary)), 1)
         log(f"{done}/{len(primary)} {bundle.fact_id} "
             f"(this process {time.time() - started:.0f}s)")
 
@@ -619,7 +640,35 @@ def main() -> None:  # noqa: C901
         "span_safe": "PASS",
         "true_bridge": "PASS",
         "distractor_bridge": "PASS",
+        "max_abs_error_by_arm": {
+            name: float(np.max(np.abs(
+                item[measured] - item[frozen])))
+            for name, measured, frozen in [
+                ("baseline", "lp_baseline", "frozen_lp_baseline"),
+                ("span_safe", "lp_span_safe", "frozen_lp_span_safe"),
+                ("true_bridge", "lp_true_bridge",
+                 "frozen_lp_true_bridge"),
+                ("distractor_bridge", "lp_distractor_bridge",
+                 "frozen_lp_distractor_bridge"),
+            ]
+        },
     }
+    invariant_failures = (
+        analysis["geometry_invariants"][
+            "protected_rank_accounting_failures"]
+        + analysis["geometry_invariants"][
+            "selected_rank_accounting_failures"]
+        + analysis["geometry_invariants"][
+            "diagnostic_base_overlap_bounds_failures"])
+    if invariant_failures:
+        raise RuntimeError(
+            f"bridge geometry invariant failures: {invariant_failures}")
+    if analysis["geometry_invariants"][
+            "max_final_selected_protected_overlap"] > 1e-4:
+        raise RuntimeError("span-safe selected/protected overlap gate failed")
+    if analysis["geometry_invariants"][
+            "min_protected_bridge_direction_survival"] < 0.999:
+        raise RuntimeError("protected bridge survival gate failed")
     analysis["state_header"] = header
     command = (
         "python -m jspace_phase3.experiments.p3_bridge_geometry_audit "
@@ -669,7 +718,8 @@ def main() -> None:  # noqa: C901
                 f"the frozen Qwen P3-P3 bridge rescue ({len(item)} facts); "
                 "nested family-cross-fitted geometry prediction and strict "
                 "piece-count/added-rank matched subset."),
-            outputs=outputs, inputs=header)
+            outputs=outputs, inputs=header,
+            supersedes=cfg.get("supersedes"))
     log("sealed bridge-geometry audit")
     print(json.dumps({
         "raw_rescue": raw,
