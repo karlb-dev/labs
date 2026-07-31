@@ -42,6 +42,36 @@ class ScoringSpec:
 DEFAULT_SPEC = ScoringSpec()
 
 
+def canonical_alias_for(session: "ScoringSession", aliases: Sequence[str],
+                        canonical_answer: str) -> str:
+    """Resolve the bank-declared canonical spelling before score selection.
+
+    Exact spelling is checked before the grading normalization because the
+    latter deliberately folds accents (for example, Río and Rio).  A
+    normalized fallback is allowed only when it is unique.
+    """
+    exact_matches = [
+        alias for alias in aliases
+        if alias.strip() == canonical_answer.strip()
+    ]
+    if len(exact_matches) == 1:
+        return exact_matches[0]
+    if len(exact_matches) > 1:
+        raise RuntimeError(
+            f"canonical answer {canonical_answer!r} has "
+            f"{len(exact_matches)} exact aliases")
+    target = session.spec.normalize_generation(canonical_answer)
+    matches = [
+        alias for alias in aliases
+        if session.spec.normalize_generation(alias) == target
+    ]
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"canonical answer {canonical_answer!r} has {len(matches)} "
+            "exact normalized aliases")
+    return matches[0]
+
+
 def token_manifest_sha256(alias_token_ids: Mapping[str, Sequence[int]]) -> str:
     rows = [
         {"alias": alias, "token_ids": [int(value) for value in ids]}

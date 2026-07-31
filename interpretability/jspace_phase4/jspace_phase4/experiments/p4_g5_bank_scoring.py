@@ -27,6 +27,7 @@ from ..scoring4 import (
     DEFAULT_SPEC,
     ScoringSession,
     aggregate_alias_lps,
+    canonical_alias_for,
 )
 from ..seeds import SEED_CONTRACT
 from ..state import StateHeader, StateStore
@@ -66,30 +67,6 @@ def load_items(bank_paths: list[Path]) -> list[dict]:
         for bundle in load_bank(path):
             items.extend(bundle.as_items())
     return sorted(items, key=lambda row: row["item_id"])
-
-
-def canonical_alias_for(session: ScoringSession, aliases: list[str],
-                        canonical_answer: str) -> str:
-    exact_matches = [
-        alias for alias in aliases
-        if alias.strip() == canonical_answer.strip()
-    ]
-    if len(exact_matches) == 1:
-        return exact_matches[0]
-    if len(exact_matches) > 1:
-        raise RuntimeError(
-            f"canonical answer {canonical_answer!r} has "
-            f"{len(exact_matches)} exact aliases")
-    target = session.spec.normalize_generation(canonical_answer)
-    matches = [
-        alias for alias in aliases
-        if session.spec.normalize_generation(alias) == target
-    ]
-    if len(matches) != 1:
-        raise RuntimeError(
-            f"canonical answer {canonical_answer!r} has {len(matches)} "
-            "exact normalized aliases")
-    return matches[0]
 
 
 @torch.no_grad()

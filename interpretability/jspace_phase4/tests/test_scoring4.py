@@ -7,10 +7,10 @@ from jspace_phase4.scoring4 import (
     DEFAULT_SPEC,
     ScoringSession,
     aggregate_alias_lps,
+    canonical_alias_for,
     logsumexp_reference,
     prefix_disjoint_aliases,
 )
-from jspace_phase4.experiments.p4_g5_bank_scoring import canonical_alias_for
 
 
 class MockTokenizer:

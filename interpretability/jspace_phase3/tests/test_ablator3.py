@@ -198,6 +198,37 @@ def test_matched_refuses_profile_length_mismatch():
         _run_matched("instant_rank_energy_matched", dic, h, psets, bad)
 
 
+def test_matched_accepts_full_component_seed_factory():
+    dic, h, psets = _setup(61)
+    profile, _ = _j_profile(dic, h, psets)
+    calls = []
+
+    def seed_factory(layer, forward_index, position):
+        calls.append((layer, forward_index, position))
+        return 10_000 + layer * 100 + position
+
+    net = Blocks()
+    ab = Phase3MatchedAblator(net.blocks, band=[1])
+    ab.phase, ab.forward_index = "prefill", 0
+    ab.mode = {
+        "dicts": {1: dic},
+        "profile": profile,
+        "variant": "instant_rank_energy_matched",
+        "protect_sets": psets,
+        "seed_base": 0,
+        "seed_factory": seed_factory,
+        "active_phases": {"prefill"},
+    }
+    with ab:
+        net(h.clone())
+    expected = [
+        (1, 0, position)
+        for position, rank in enumerate(profile[1]["rank"])
+        if int(rank) > 0
+    ]
+    assert calls == expected
+
+
 def test_restrict_sets_limits_selection_to_allowed_rows():
     dic, h, psets = _setup(3)
     allowed = torch.tensor([5, 9, 17, 44])

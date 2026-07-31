@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -11,6 +12,13 @@ DEFAULT_DRIVE_ROOT = Path(
     "/content/drive/MyDrive/interpret/special-lab-1")
 DEFAULT_PHASE3_ROOT = DEFAULT_DRIVE_ROOT / "phase3_20260729"
 DEFAULT_PHASE2_ROOT = DEFAULT_DRIVE_ROOT / "part2_20260727"
+DRIVE_ALIASES = {
+    "part1": "2026-07-25_1726",
+    "part1v2": "2026-07-26_v2",
+    "part2": "part2_20260727",
+    "phase3": "phase3_20260729",
+    "phase4": "phase4_20260731",
+}
 
 
 class UnresolvedArtifact(RuntimeError):
@@ -82,6 +90,10 @@ def resolve_uri(uri: str | Path, *, must_exist: bool = True) -> Path:
         if scheme == "repo":
             path = REPO_ROOT / rest
         elif scheme == "drive":
+            head, separator, tail = rest.partition("/")
+            if head in DRIVE_ALIASES:
+                rest = DRIVE_ALIASES[head] + (
+                    f"/{tail}" if separator else "")
             path = _drive_root() / rest
         elif scheme == "artifact":
             namespace, separator, relative = rest.partition("/")
@@ -127,3 +139,33 @@ def _resolve_model(rest: str, *, must_exist: bool) -> Path:
     raise UnresolvedArtifact(
         f"pinned model {ref}@{revision} is not on local NVMe; download it "
         "before model load and never stream weights through DriveFS")
+
+
+def materialize_local_file(uri: str | Path, *,
+                           expected_sha256: str) -> Path:
+    """Verify and copy a large immutable input from DriveFS to local NVMe."""
+    from .manifests import file_sha256
+
+    source = resolve_uri(uri)
+    if not expected_sha256 or len(expected_sha256) != 64:
+        raise ValueError("a full expected SHA-256 is required")
+    destination = (
+        local_work() / "inputs" / expected_sha256 / source.name)
+    if destination.exists():
+        if file_sha256(destination) != expected_sha256:
+            raise UnresolvedArtifact(
+                f"local materialization hash mismatch: {destination}")
+        return destination
+    if file_sha256(source) != expected_sha256:
+        raise UnresolvedArtifact(
+            f"source hash does not match pinned input: {uri}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_suffix(
+        destination.suffix + f".tmp{os.getpid()}")
+    shutil.copyfile(source, temporary)
+    if file_sha256(temporary) != expected_sha256:
+        temporary.unlink(missing_ok=True)
+        raise UnresolvedArtifact(
+            f"copied input hash mismatch: {destination}")
+    os.replace(temporary, destination)
+    return destination

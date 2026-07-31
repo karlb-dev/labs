@@ -585,7 +585,13 @@ class Phase3MatchedAblator(ProtectedDynamicAblatorV2):
             if ps is not None:
                 pidx = ps[t] if ps.dim() == 2 else ps
                 prot = D[pidx.to(D.device)].float()
-            seed = _seed_for(m["seed_base"], layer_idx, self.forward_index, t)
+            seed_factory = m.get("seed_factory")
+            seed = (
+                int(seed_factory(layer_idx, self.forward_index, t))
+                if seed_factory is not None
+                else _seed_for(
+                    m["seed_base"], layer_idx, self.forward_index, t)
+            )
             ov_t = ov_a = None
             if variant == "instant_rank_energy_matched":
                 basis, info = build_instant_matched_subspace(
@@ -694,7 +700,7 @@ def teacher_forced_arm(hf, encode_ids, ablator, dicts, full_ids,
 @torch.no_grad()
 def teacher_forced_matched_arm(hf, layers, band, dicts, full_ids, profile,
                                *, variant, protect_sets, seed_base,
-                               return_cpu: bool = True):
+                               return_cpu: bool = True, seed_factory=None):
     """One matched-control pass consuming a J-arm profile.
 
     ``return_cpu=False`` is for GPU-only endpoints that score the returned
@@ -704,7 +710,8 @@ def teacher_forced_matched_arm(hf, layers, band, dicts, full_ids, profile,
     ab.phase, ab.forward_index = "prefill", 0
     ab.mode = {"dicts": dicts, "profile": profile, "variant": variant,
                "protect_sets": protect_sets, "seed_base": seed_base,
-               "active_phases": {"prefill"}}
+               "active_phases": {"prefill"},
+               "seed_factory": seed_factory}
     with ab:
         logits = hf(input_ids=full_ids, use_cache=False).logits[0]
     ab.mode = None
