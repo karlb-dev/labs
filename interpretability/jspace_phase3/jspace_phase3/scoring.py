@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
 
 import torch
@@ -33,6 +34,12 @@ class ScoringSpec:
     def normalize(self, s: str) -> str:
         if self.normalization != "lower_alnum_space":
             raise ValueError(f"unknown normalization {self.normalization!r}")
+        # Treat ordinary orthographic accents as the same answer surface:
+        # "Bogotá" must match the frozen alias "Bogota", and "İstanbul"
+        # must match "Istanbul".  NFKD + ASCII removal is deterministic
+        # and leaves the historical ASCII cases unchanged.
+        s = unicodedata.normalize("NFKD", s).encode(
+            "ascii", "ignore").decode("ascii")
         # non-alnum runs become ONE SPACE: deleting them instead (the
         # v1 behavior) glued newline-separated words ("the\nBaht" ->
         # "thebaht") and failed prefix grading on correct generations

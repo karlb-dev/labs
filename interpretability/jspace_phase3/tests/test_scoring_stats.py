@@ -85,6 +85,8 @@ def test_generation_grading_deterministic():
     assert not s.grade_generation("Lyon", [" Paris"])["correct"]
     assert not s.grade_generation("Indian state", [" India"])["correct"]
     assert not s.grade_generation("Dutchman", [" Dutch"])["correct"]
+    assert s.grade_generation("Bogotá", [" Bogota"])["correct"]
+    assert s.grade_generation("İstanbul", [" Istanbul"])["correct"]
 
 
 def test_answer_seq_lp_matches_manual():

@@ -487,6 +487,9 @@ def main() -> None:  # noqa: C901
         "schema_version": 1,
         "boundary_contract": {
             "normalization": DEFAULT_SPEC.normalization,
+            "unicode_policy": (
+                "NFKD accent folding to ASCII before lower-alphanumeric "
+                "tokenization"),
             "match": (
                 "contiguous normalized words anywhere; no substring "
                 "or partial-word matches"),
