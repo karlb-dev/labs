@@ -52,9 +52,31 @@ def test_registry_lifecycle(tmp_path):
     rec = p3.resolve("a-v1", path=log)
     assert rec["superseded_by"] == "a-v2" and not rec["live"]
     assert p3.resolve("a-v2", path=log)["live"]
+    p3.append_event({
+        "event": "evidence_corrected", "evidence_id": "a-v2",
+        "corrected_fields": {"tier": "phase3-replication"},
+        "reason": "creation-time tier constant was wrong",
+    }, path=log)
+    corrected = p3.resolve("a-v2", path=log)
+    assert corrected["tier"] == "phase3-development"
+    assert corrected["effective_tier"] == "phase3-replication"
     # study id stamped on every event
     rows = [json.loads(l) for l in log.read_text().splitlines()]
     assert all(r["study_id"] == "jspace-phase3" for r in rows)
+
+
+def test_registry_rejects_invalid_correction(tmp_path):
+    from jspace_phase3 import provenance3 as p3
+    log = tmp_path / "e.jsonl"
+    p3.append_event({"event": "evidence_created", "evidence_id": "a-v1",
+                     "tier": "phase3-confirmatory", "what": "w",
+                     "command": "c", "code_commit": "deadbeef"}, path=log)
+    with pytest.raises(Exception, match="corrected tier"):
+        p3.append_event({
+            "event": "evidence_corrected", "evidence_id": "a-v1",
+            "corrected_fields": {"tier": "replication"},
+            "reason": "bad vocabulary",
+        }, path=log)
 
 
 def test_no_hardcoded_machine_paths():

@@ -50,3 +50,47 @@ python -m jspace_phase3.experiments.p3_n8_phase3_analysis
 The process writes `N8_P3_L1_REPORT.json` and `N8_P3_L1_REPORT.md`.
 It must stop without comparing its values to any campaign output.
 
+## N8-P3-L2/L3 model-cell protocol
+
+The historical `n8_level2_sentinels.py` evidence is N8-P2-L2/L3: that
+module relaunches the Phase 2 N6 producer. It is not part of this Phase 3
+release gate.
+
+The Phase 3 cell reproducer relaunches `phase3_primary_grid` in a fresh
+run root with registration disabled. The model process must pass
+`require_cuda_gpu()` before weights are loaded. There is no CPU fallback.
+Its durable checkpoint is written atomically every five completed items,
+and its root manifest refuses a resume when code, config, partition,
+model, lens, G5 cohort, frozen grid, or seed contract differs.
+
+N8-P3-L2 reruns at least 20 sorted confirmatory items for each primary
+model. N8-P3-L3 reruns the complete Qwen confirmatory cell. Both include:
+
+- baseline, span-safe J, and label-protected J;
+- an exact rank-and-energy matched control under `sha256-v1`, namespace
+  `p3-control-seed-audit`, base seed 31337;
+- Qwen true/distractor bridge arms on eligible composed items;
+- surface protection-set geometry and matched-control conformance logs.
+
+After the producer exits (or, for L2, after its 20-item checkpoint is
+sealed), the wrapper compares deterministic arms at tolerance `2e-3`.
+The unrecoverable historical Python-hash control realization is reported
+as a distributional comparison, never as an exact target. Qwen's new
+control is additionally compared bit-for-bit to the already banked
+five-seed audit's seed-31337 realization and against its five-seed item
+envelope.
+
+Example commands, with each `--cell-root` fresh on first launch:
+
+```bash
+python -m jspace_phase3.experiments.p3_n8_phase3_cells \
+  --slug qwen36-27b --level 2 --n 20 \
+  --cell-root /durable/new/root/qwen-l2
+
+python -m jspace_phase3.experiments.p3_n8_phase3_cells \
+  --slug qwen36-27b --level 3 --n 20 \
+  --cell-root /durable/new/root/qwen-l3
+```
+
+The exact same command and root resume an interrupted job after the
+manifest contract is revalidated.

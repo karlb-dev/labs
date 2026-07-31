@@ -1,8 +1,11 @@
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 from jspace_phase3.experiments.p3_n8_phase3_analysis import exact_signflip
+from jspace_phase3.experiments.p3_n8_phase3_cells import (
+    deviation_block, family_tail_effect)
 from jspace_phase3.experiments.p3_n8_phase3_compare import get
 
 
@@ -34,3 +37,27 @@ def test_n8_runner_source_has_no_campaign_outcome_access():
 def test_n8_comparison_paths_preserve_decimal_json_keys():
     value = {"curve": {"-1.0": {"estimate": 0.25}}}
     assert get(value, ("curve", "-1.0", "estimate")) == 0.25
+
+
+def test_n8_cell_deviation_ignores_paired_null_bridge_rows():
+    merged = pd.DataFrame({
+        "lp_baseline_new": [1.0, 2.0],
+        "lp_baseline_frozen": [1.0, 2.001],
+        "lp_true_bridge_new": [np.nan, 3.0],
+        "lp_true_bridge_frozen": [np.nan, 3.0],
+    })
+    result = deviation_block(
+        merged, ["lp_baseline", "lp_true_bridge"])
+    assert result["lp_baseline"]["max_abs_error"] < 0.0011
+    assert result["lp_true_bridge"]["n"] == 1
+
+
+def test_n8_cell_family_tail_effect_is_equal_family_weighted():
+    frame = pd.DataFrame({
+        "canonical_family": ["a", "a", "b"],
+        "lp_baseline": [0.0, 0.0, 0.0],
+        "lp_meanJ_span_safe": [-2.0, -2.0, 0.0],
+        "lp_ss_matched": [0.0, -2.0, 0.0],
+    })
+    # family a has item differences [1, 0] -> .5; family b -> 0.
+    assert family_tail_effect(frame, "lp_ss_matched") == 0.25

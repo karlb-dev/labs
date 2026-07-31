@@ -25,7 +25,8 @@ STUDY_ID = "jspace-phase3"
 SCHEMA_VERSION = 2
 
 VALID_EVENTS = {"evidence_created", "evidence_superseded",
-                "evidence_withdrawn", "evidence_reproduced"}
+                "evidence_withdrawn", "evidence_reproduced",
+                "evidence_corrected"}
 VALID_TIERS = {"phase2-confirmatory", "phase3-development",
                "phase3-confirmatory", "phase3-replication", "methods"}
 CREATE_REQUIRED = ("evidence_id", "tier", "what", "command", "code_commit")
@@ -46,6 +47,17 @@ def _validate(ev: dict) -> None:
         for o in ev.get("outputs", []) or []:
             if not isinstance(o, dict) or "path" not in o:
                 raise RegistryError("outputs must be [{path, sha256?, ...}]")
+    if ev["event"] == "evidence_corrected":
+        fields = ev.get("corrected_fields")
+        if not isinstance(fields, dict) or not fields:
+            raise RegistryError(
+                "evidence_corrected requires nonempty corrected_fields")
+        if "tier" in fields and fields["tier"] not in VALID_TIERS:
+            raise RegistryError(
+                f"corrected tier {fields['tier']!r} not in "
+                f"{sorted(VALID_TIERS)}")
+        if not ev.get("reason"):
+            raise RegistryError("evidence_corrected requires reason")
 
 
 def append_event(ev: dict, *, path: Path = EVENTS) -> dict:
@@ -115,6 +127,17 @@ def withdraw(evidence_id: str, *, reason: str) -> dict:
                          "evidence_id": evidence_id, "reason": reason})
 
 
+def correct(evidence_id: str, *, corrected_fields: dict,
+            reason: str) -> dict:
+    """Append a metadata correction while preserving the creation row."""
+    return append_event({
+        "event": "evidence_corrected",
+        "evidence_id": evidence_id,
+        "corrected_fields": corrected_fields,
+        "reason": reason,
+    })
+
+
 def resolve(evidence_id: str, *, path: Path = EVENTS) -> dict:
     events = read_events(path)
     created = [e for e in events if e.get("event") == "evidence_created"
@@ -132,6 +155,15 @@ def resolve(evidence_id: str, *, path: Path = EVENTS) -> dict:
     rec["withdrawn"] = any(e["event"] == "evidence_withdrawn"
                            for e in rec["status_events"])
     rec["live"] = not rec["withdrawn"] and rec["superseded_by"] is None
+    effective = {
+        key: value for key, value in rec.items()
+        if key not in {"status_events"}
+    }
+    for event in rec["status_events"]:
+        if event["event"] == "evidence_corrected":
+            effective.update(event["corrected_fields"])
+    rec["effective_metadata"] = effective
+    rec["effective_tier"] = effective.get("tier", rec.get("tier"))
     return rec
 
 

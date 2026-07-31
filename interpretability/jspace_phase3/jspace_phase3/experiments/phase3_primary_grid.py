@@ -28,6 +28,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -43,6 +44,7 @@ from jspace_part2.paths import resolve as resolve_uri
 from ..ablator3 import (Phase3JAblator, profile_from_p3log,
                         teacher_forced_matched_arm)
 from ..bank import load_bank
+from ..gpu import require_cuda_gpu
 from ..paths3 import metrics_dir, resolve_uri as resolve3
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            resolve_model, write_result3)
@@ -59,6 +61,12 @@ def arg(flag, default=None):
 
 def log(msg):
     print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
+
+
+def atomic_json(path: Path, payload: object) -> None:
+    tmp = path.with_suffix(path.suffix + f".tmp{os.getpid()}")
+    tmp.write_text(json.dumps(payload, sort_keys=True))
+    os.replace(tmp, path)
 
 
 def bridge_piece_ids(tok, bridge: str) -> torch.Tensor:
@@ -97,6 +105,11 @@ def main():  # noqa: C901
              else {"done": {}, "rows": [], "baseline_checked": 0,
                    "stop_events": []})
 
+    gpu = require_cuda_gpu()
+    log("GPU gate PASS: " + json.dumps(gpu, sort_keys=True))
+    state["gpu"] = gpu
+    atomic_json(state_path, state)
+
     import transformers
     import jlens
     from jlens import JacobianLens
@@ -104,6 +117,8 @@ def main():  # noqa: C901
     tok = transformers.AutoTokenizer.from_pretrained(model_path)
     hf = transformers.AutoModelForCausalLM.from_pretrained(
         model_path, dtype=torch.bfloat16).to("cuda").eval()
+    if not next(hf.parameters()).is_cuda:
+        raise RuntimeError("model parameters are not on CUDA")
     model = jlens.from_hf(hf, tok)
     sess = ScoringSession(tok, DEFAULT_SPEC, device="cuda")
     lens = JacobianLens.load(str(resolve_uri(cfg["lens_uri"])))
@@ -190,7 +205,7 @@ def main():  # noqa: C901
                 state["stop_events"].append(
                     {"item_id": iid, "measured": lp_base,
                      "manifest": man})
-                state_path.write_text(json.dumps(state))
+                atomic_json(state_path, state)
                 raise RuntimeError(
                     f"BASELINE STOP RULE: {iid} measured {lp_base:.4f} "
                     f"vs manifest {man} (tol {stop_tol}) — instrument "
@@ -214,6 +229,18 @@ def main():  # noqa: C901
                "canonical_family": it["canonical_family"],
                "relation_group": it["relation_group"],
                "lp_baseline": lp_base, "n_tokens": int(T)}
+        if p3p3 and it["variant"] == "composed" \
+                and it.get("counterfactual_bridge"):
+            for name, entity in (
+                    ("true", it["bridge_entity"]),
+                    ("distractor", it["counterfactual_bridge"])):
+                pieces = bridge_piece_ids(tok, entity).to(psets.device)
+                overlap = torch.isin(psets, pieces).sum(dim=1).float()
+                row[f"{name}_bridge_piece_count"] = int(len(pieces))
+                row[f"{name}_bridge_clean_topk_overlap_mean"] = float(
+                    overlap.mean().cpu())
+                row[f"{name}_bridge_added_rank_mean"] = float(
+                    (len(pieces) - overlap).mean().cpu())
         profiles = {}
         for cond in conds:
             if cond == "meanJ_span_safe":
@@ -246,28 +273,35 @@ def main():  # noqa: C901
             matched_specs.append(("prot_energy_matched",
                                   "lp_prot_energy_matched", "label"))
         for variant, key, src in matched_specs:
-            logits, _ = teacher_forced_matched_arm(
+            default_namespace = f"phase3-primary-{variant}"
+            namespace = cfg.get(
+                "matched_seed_namespaces", {}).get(
+                    variant, default_namespace)
+            logits, matched_log = teacher_forced_matched_arm(
                 hf, model.layers, band, jd, full, profiles[src],
                 variant=variant, protect_sets=psets,
                 seed_base=stable_seed(
-                    f"phase3-primary-{variant}", iid, cfg["rand_seed"]))
+                    namespace, iid, cfg["rand_seed"]))
             row[key] = sess.answer_seq_lp(full, logits, n_p)
+            row[f"{key}_summary_json"] = json.dumps(
+                matched_log.matched_summary(), sort_keys=True)
 
         state["rows"].append(row)
         state["done"][iid] = round(time.time() - t0)
         if (len(state["done"]) - n0) % 5 == 0:
-            state_path.write_text(json.dumps(state))
+            atomic_json(state_path, state)
             rate = (time.time() - t0) / max(len(state["done"]) - n0, 1)
             log(f"{len(state['done'])}/{len(items)} ({rate:.1f}s/item, "
                 f"ETA {(len(items) - len(state['done'])) * rate / 60:.0f}m)")
-    state_path.write_text(json.dumps(state))
+    atomic_json(state_path, state)
 
     df = pd.DataFrame(state["rows"])
     pq = out_dir / f"p3_grid{suffix}_{slug}.parquet"
     df.to_parquet(pq)
     eid = cfg["evidence_id"]
     cmd = (f"python -m jspace_phase3.experiments.phase3_primary_grid "
-           f"--config {cfg_path}")
+           f"--config {cfg_path}"
+           + (" --no-register" if "--no-register" in sys.argv else ""))
     out_json = out_dir / f"p3_grid{suffix}_{slug}.json"
     write_result3({"n_items": int(len(df)),
                    "n_facts": int(df.fact_id.nunique()),
@@ -282,12 +316,13 @@ def main():  # noqa: C901
                           str(resolve_uri(cfg["lens_uri"])))},
                       model=resolve_model(model_path),
                       seed=cfg["rand_seed"]))
-    register(eid, tier=tier, command=cmd,
-             what=(f"Phase 3 primary grid cell on {slug}: {len(df)} "
-                   f"frozen-cohort items × span-safe primary arm set; "
-                   f"stop rule passed on {state['baseline_checked']} "
-                   f"baselines; NO aggregation viewed"),
-             outputs=[out_json, pq])
+    if "--no-register" not in sys.argv:
+        register(eid, tier=tier, command=cmd,
+                 what=(f"Phase 3 primary grid cell on {slug}: {len(df)} "
+                       f"frozen-cohort items × span-safe primary arm set; "
+                       f"stop rule passed on {state['baseline_checked']} "
+                       f"baselines; NO aggregation viewed"),
+                 outputs=[out_json, pq])
     log(f"CELL BANKED: {len(df)} items")
 
 

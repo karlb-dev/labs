@@ -31,7 +31,8 @@ from ..stats import (family_cluster_bootstrap_ci, family_signflip_test,
                      within_item_label_exchange_tail,
                      wild_cluster_bootstrap_t)
 
-TIER = "phase3-confirmatory"
+CONFIRMATORY_TIER = "phase3-confirmatory"
+REPLICATION_TIER = "phase3-replication"
 SLUGS = ["olmo31-think", "olmo31-instruct", "qwen36-27b"]
 THRESH = -1.0
 
@@ -76,6 +77,12 @@ def main():
     require_clean_tree("--allow-dirty" in sys.argv)
     p3p3_model = arg("--p3p3-model")
     side = arg("--side", "confirmatory")
+    if side not in {"confirmatory", "replication"}:
+        raise ValueError(f"unknown partition side {side!r}")
+    tier = (
+        REPLICATION_TIER if side == "replication"
+        else CONFIRMATORY_TIER
+    )
     eid = arg("--eid", "p3-locked-analysis-v1")
     eff = load_effects(side)
 
@@ -166,8 +173,8 @@ def main():
     sfx = "" if side == "confirmatory" else f"_{side}"
     out = metrics_dir("cross_model") / f"phase3_locked_analysis{sfx}.json"
     write_result3(payload, out, Provenance3(
-        evidence_id=eid, tier=TIER, command=cmd, seed=4242))
-    register(eid, tier=TIER, command=cmd,
+        evidence_id=eid, tier=tier, command=cmd, seed=4242))
+    register(eid, tier=tier, command=cmd,
              what=(f"LOCKED Phase 3 primary analysis: P3-P1 p={p1['p']:.2g} "
                    f"holm={holm.get('P3-P1')}, P3-P2 p={p2['p']:.2g} "
                    f"holm={holm.get('P3-P2')}"
