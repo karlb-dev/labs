@@ -1,0 +1,12 @@
+evidence_id: p4-lineage-analysis-olmo31-instruct-dev-v1
+tier: phase4-development
+slug: olmo31-instruct
+display_name: OLMo-3.1 32B Instruct
+figure_stem: p4f06_olmo31_instruct_development
+grid_evidence_id: p4-lineage-grid-olmo31-instruct-dev-v1
+grid_parquet_uri: artifact://phase4/metrics/olmo31-instruct/lineage_grid/p4-lineage-grid-olmo31-instruct-dev-v1/lineage_grid_olmo31-instruct.parquet
+grid_result_uri: artifact://phase4/metrics/olmo31-instruct/lineage_grid/p4-lineage-grid-olmo31-instruct-dev-v1/lineage_grid_olmo31-instruct.json
+grid_manifest_uri: artifact://phase4/metrics/olmo31-instruct/lineage_grid/p4-lineage-grid-olmo31-instruct-dev-v1/input_manifest.json
+g5_parquet_uri: artifact://phase4/metrics/olmo31-instruct/g5_bank/p4-g5-bank-olmo31-instruct-dev-v1/g5_bank_olmo31-instruct.parquet
+bootstrap_draws: 100000
+bootstrap_seed: 31337

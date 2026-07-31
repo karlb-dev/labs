@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 
@@ -120,3 +121,35 @@ def test_gpu_guard_refuses_invisible_cuda(monkeypatch):
     monkeypatch.setattr(gpu.torch.cuda, "is_available", lambda: False)
     with pytest.raises(RuntimeError, match="do not run"):
         gpu.require_cuda_gpu()
+
+
+@pytest.mark.parametrize("slug", ("olmo31-think", "olmo31-instruct"))
+def test_olmo31_own_common_configs_freeze_one_rng_stream(slug):
+    configs = PACKAGE_ROOT / "configs"
+    own = yaml.safe_load(
+        (configs / f"p4_lineage_grid_{slug}-dev.yaml").read_text())
+    common = yaml.safe_load(
+        (configs / (
+            f"p4_lineage_grid_{slug}-common-base-lens-dev.yaml"
+        )).read_text())
+    invariant_fields = (
+        "scientific_seed_namespace",
+        "model_uri",
+        "g5_parquet_uri",
+        "g5_result_uri",
+        "g5_evidence_id",
+        "banks",
+        "band",
+        "k",
+        "protect_top_k",
+        "base_seed",
+        "baseline_stop_n",
+        "baseline_stop_tolerance",
+    )
+    assert all(own[field] == common[field] for field in invariant_fields)
+    assert own["scientific_seed_namespace"].endswith(
+        "-frame-pair-dev-v1")
+    assert own["lens_sha256"] != common["lens_sha256"]
+    assert common["lens_sha256"] == (
+        "92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696"
+    )
