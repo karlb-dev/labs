@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 09:36 UTC.
+Last updated: 2026-07-31 10:29 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence head before this documentation checkpoint:
-  `efafa4f`. Resume from the remote
+  `a119986`. Resume from the remote
   branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -55,13 +55,12 @@ envelopes. Live telemetry during the final common-lens grid showed
 ## Current process and checkpoint state
 
 - No model job was running at this checkpoint. The next command is the
-  3.1 Think own-lens lineage-grid producer recorded below. If a restart
-  finds its Drive
-  state directory, rerun the exact same command; the producer resumes
-  compatible item checkpoints and rejects incompatible state.
+  3.1 Instruct cache transition and G5 producer recorded below. Do not
+  delete the local 3.1 Think cache until the documentation checkpoint
+  containing this update is backed up and pushed.
 - All completed evidence and figures are durable on Drive, registered,
   committed, and pushed.
-- Latest scientific-evidence head is `efafa4f`; the documentation
+- Latest scientific-evidence head is `a119986`; the documentation
   checkpoint containing this file may be newer.
 - Full Phase 4 suite: 43/43 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
@@ -355,6 +354,97 @@ aggregate, counterfactual, payload, registry, and CUDA audit passed,
 as did all 43 Phase 4 tests. The live event is committed and pushed at
 `efafa4f`.
 
+## OLMo-3.1 32B Think paired trajectory point — complete
+
+Live raw evidence:
+
+- `p4-lineage-grid-olmo31-think-dev-v1`;
+- `p4-lineage-grid-olmo31-think-common-base-lens-dev-v1`.
+
+Live analyses:
+
+- `p4-lineage-analysis-olmo31-think-dev-v2`;
+- `p4-lens-frame-analysis-olmo31-think-dev-v1`.
+
+Artifacts:
+
+- `phase4_20260731/metrics/olmo31-think/lineage_grid/p4-lineage-grid-olmo31-think-dev-v1/`;
+- `phase4_20260731/metrics/olmo31-think/lineage_analysis/p4-lineage-analysis-olmo31-think-dev-v2/`;
+- `phase4_20260731/metrics/olmo31-think-common-base-lens/lineage_grid/p4-lineage-grid-olmo31-think-common-base-lens-dev-v1/`;
+- `phase4_20260731/metrics/olmo31-think-lens-frame/lens_frame_analysis/p4-lens-frame-analysis-olmo31-think-dev-v1/`;
+- `phase4_20260731/figures/p4f04_olmo31_think_development_v2.{png,pdf}`;
+- `phase4_20260731/figures/p4f05_olmo31_think_lens_frame_comparison.{png,pdf}`.
+
+Both seven-condition grids ran on the RTX and share
+`p4-lineage-grid-olmo31-think-frame-pair-dev-v1`. They contain the
+same 244 item rows / 122 direct-composed fact pairs / 35 families and
+the same randomized condition order for every item. Acceptance:
+
+- own/common between-frame baseline drift: exactly `0.0`;
+- maximum G5 baseline replay drift: `8.64e-7` nats;
+- span-safe projector overlap: exactly 0 in both frames;
+- rank match: 1.0 over all 564 matched summaries in each frame;
+- maximum matched energy relative error: own `0.000222`, common
+  `0.000256`;
+- mechanics-random and logit-protected outcomes: bit-identical across
+  frames;
+- own result/parquet SHA-256:
+  `49b3c166674b0e391b1b7136296e0c90f6dbdeec862e5a6fc0fa62b16322d7df`
+  /
+  `cc8e2d57f4c3e9f1becd28c2553d488dc279113bda75420ba8bdab90cfa76937`;
+- common result/parquet SHA-256:
+  `8be6cc4b80f004d052552446ca964efb6c34ea5c4120e116a2934ab9b7129b7c`
+  /
+  `d6f7fec74e044fc82147e899c9ab2fecc332aabc27f15df3e25cccc45ed0ddf9`.
+
+Own-frame family-weighted J-specific effects:
+
+- Bank F direct `-0.006706`, interval
+  `[-0.116217,+0.105683]`;
+- Bank F composed `-0.041602`,
+  `[-0.209911,+0.116668]`;
+- Bank S direct `-0.167375`,
+  `[-0.247738,-0.094215]`;
+- Bank S composed `-0.049099`,
+  `[-0.089149,-0.016471]`;
+- Bank-S composed-minus-direct `+0.118276`,
+  `[+0.051391,+0.187895]`, descriptive exact sign-flip
+  `p=0.003067`.
+
+The original own-frame analysis v1 has an identical numerical payload
+but is withdrawn because visual inspection found the figure footer
+crowding lower-panel labels. The reusable lineage-analysis figure now
+reserves footer space, has a regression test, and v2 is visually clean.
+The suite is now 44/44. V2 payload SHA-256 is
+`26e6a0f4937d16e66f11a84508a8340f1e1214c7472b507c5e8a2b8b4c38dec7`.
+
+Paired frame results:
+
+- F direct common-minus-own `-0.069013`,
+  `[-0.141299,+0.002506]`;
+- F composed common-minus-own `-0.089825`,
+  `[-0.167700,-0.009588]`;
+- S direct own/common `-0.167375` / `-0.154702`, with both intervals
+  below zero; frame delta `+0.012672`,
+  `[-0.037828,+0.066879]`;
+- S composed own/common `-0.049099` / `-0.038096`; the own interval is
+  below zero and the common interval narrowly crosses zero; frame
+  delta `+0.011003`, `[-0.019627,+0.040625]`;
+- Bank-S composition is positive in both frames: own `+0.118276`
+  `[+0.051747,+0.187573]`, common `+0.116606`
+  `[+0.027864,+0.207978]`; paired delta `-0.001670`
+  `[-0.055101,+0.050437]`;
+- item/family frame correlation `0.767900` / `0.838635`, mean absolute
+  item shift `0.113316` nats.
+
+The F-composed frame-delta interval is the only specificity delta
+excluding zero, so coordinate sensitivity is now observed in one
+known-bank 3.1 cell. All 42 bootstrap and 6 exact sign-flip
+distributions independently reproduce exactly. Paired result SHA-256
+is
+`151070d943e62bf9829e037bb8461ab1b94543e26c7d3ae73f544376734693f7`.
+The complete scientific boundary is pushed at `a119986`.
+
 ## Local immutable inputs and disk
 
 - The exact local 3.0 Think cache was removed after the corrected v4/v2
@@ -380,10 +470,9 @@ as did all 43 Phase 4 tests. The live event is committed and pushed at
 - The 3.1 Think own lens is pinned at Drive URI
   `drive://part2/lens/olmo31think_lens.pt`, SHA-256
   `1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8`.
-  It was not yet locally materialized at this checkpoint; the lineage
-  producer verifies the Drive source, copies it to
+  It is now verified and locally materialized at
   `/content/sl4_work/inputs/1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8/`,
-  and re-verifies the local copy before model load.
+  byte-identical to the Drive source.
 - Base lens is materialized locally under
   `/content/sl4_work/inputs/92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696/`.
 - Current root free space with 3.1 Think local: about 61 GiB.
@@ -410,21 +499,19 @@ as did all 43 Phase 4 tests. The live event is committed and pushed at
    `jspace_phase4.gpu.require_cuda_gpu()` in the same host process.
    Model load, generation, intervention, and scoring must use the RTX;
    never use CPU fallback.
-3. G5 is validated, registered, committed, and pushed. From a clean
-   tree run the 3.1 Think own-lens grid with:
-   `PYTHONPATH=interpretability/jspace_phase4:interpretability/jspace_phase3 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True TOKENIZERS_PARALLELISM=false python -u -m jspace_phase4.experiments.p4_olmo_lineage_grid --config interpretability/jspace_phase4/configs/p4_lineage_grid_olmo31-think-dev.yaml`.
-   It checkpoints every five items under
-   `phase4_20260731/metrics/olmo31-think/lineage_grid/p4-lineage-grid-olmo31-think-dev-v1/`.
-4. Strictly validate, register, commit, and push that raw grid. Run its
-   deterministic own-frame analysis, then run and bank the common-base
-   lens grid with
-   `p4_lineage_grid_olmo31-think-common-base-lens-dev.yaml`. Both grids
-   share the explicit namespace
-   `p4-lineage-grid-olmo31-think-frame-pair-dev-v1`.
-5. Run and bank the paired own/common-frame analysis, update the
-   report/figures/TeX/PDF, and push all documentation before swapping
-   the 3.1 Think cache.
-6. Repeat for 3.1 Instruct under
+3. The 3.1 Think G5, both grids, corrected own analysis, paired
+   analysis, figures, and scientific registry are validated, committed,
+   and pushed at `a119986`. Finish and push the report/TeX/PDF/handoff
+   checkpoint before deleting its local model cache.
+4. After that documentation boundary is durable, remove only the exact
+   local 3.1 Think cache root. Keep its independently verified exact
+   Drive snapshot. Download or restore the exact 3.1 Instruct revision
+   `ac0587e4a7744a551c059d8cd17ba220bc940dae` to local NVMe, verify
+   every shard locally and on Drive, and never load it through DriveFS.
+5. From a clean tree run 3.1 Instruct G5:
+   `PYTHONPATH=interpretability/jspace_phase4:interpretability/jspace_phase3 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True TOKENIZERS_PARALLELISM=false python -u -m jspace_phase4.experiments.p4_g5_bank_scoring --config interpretability/jspace_phase4/configs/p4_g5_olmo31-instruct-dev.yaml`.
+   Validate and bank it before the grids.
+6. Run the 3.1 Instruct own/common pair under
    `p4-lineage-grid-olmo31-instruct-frame-pair-dev-v1`.
 7. Build the full base → 3.0 Think → 3.1 Think/Instruct development
    trajectory with common-lens and own-lens views. If they disagree,
