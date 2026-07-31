@@ -19,9 +19,9 @@ Evidence: \nolinkurl{#1}}}
 \newcommand{\good}[1]{\textcolor{teal}{\textbf{#1}}}
 
 \title{\vspace{-1.25em}J-space Phase 4 --- development synthesis\\
-\large OLMo training trajectory and coordinate-frame validity\\[3pt]
-\normalsize\textcolor{muted}{State through OLMo-3 32B base,
-seed-paired 3.0/3.1 endpoints, and registered trajectory · 2026-07-31}}
+\large OLMo trajectory, coordinate validity, and Qwen fit-size gate\\[3pt]
+\normalsize\textcolor{muted}{State through the registered OLMo
+trajectory and Qwen draw-A $n=120$ structural comparison · 2026-07-31}}
 \author{}\date{}
 
 \begin{document}
@@ -398,6 +398,66 @@ patterns collapse toward zero at sibling Instruct. Checkpoint-specific
 capability cohorts make this an unpaired development localization, not
 a causal training or mode contrast.
 
+\section{Qwen fit-size gate: first nested lens}
+
+The leakage-safe draw-A corpus has exact nested prefixes at
+$n=120/250/500/1000$. Its first 120 records reproduce the historical
+fit prefix byte-for-byte; all 80 historical evaluation spares are
+excluded. Independent draw B is disjoint and also excludes every
+spare.
+\eid{p4-qwen-lens-corpora-dev-v1}
+
+The first all-layer lens fits L0--L62 to target L63 at width 5120,
+using 128 tokens and a fixed 16-token skip. Every model operation ran
+on the RTX PRO 6000 under pinned fused FLA kernels; all 48
+linear-attention blocks passed the binding gate. Forty three-prompt
+checkpoints were hashed and mirrored to Drive. The 6.606\,GB final
+checkpoint has SHA-256 \texttt{061574f9\ldots cdb673}; the registered
+3.303\,GB fp16 lens is \texttt{82af4cc7\ldots c32b1b}. Full runtime
+was 21,622.7 seconds with 62.83\,GB peak allocated VRAM.
+\eid{p4-qwen-lens-fit-drawA-n120-dev-v1}
+
+Prompt 112 was a pronounced but finite Jacobian-norm outlier
+(159.952). It remains in the frozen estimator; no post-hoc trimming is
+permitted.
+
+\section{Qwen structural stability is depth-dependent}
+
+The first diagnostic compares draw-A $n=120$ with the published
+$n=1000$ lens. It is a recipe/corpus-transfer comparison, not the
+pending same-corpus convergence test. It uses all 63 maps and all 5,120
+Jacobian rows, 4,096 fixed token directions, centered linear CKA on a
+fixed 1,024-token subset, and 256 fixed transport probes.
+\eid{p4-qwen-lens-structural-stability-drawA-n120-vs-published-n1000-dev-v1}
+
+\begin{center}
+\includegraphics[width=0.70\textwidth]{../figures/p4f09_qwen_lens_structural_stability.png}
+\par\vspace{-0.35em}
+\scriptsize
+\begin{tabular}{lrrrrr}
+\toprule
+layer view & matrix cosine & token median & token q05 & CKA &
+relative $\|\Delta\|_F$\\
+\midrule
+L0 & .5411 & .5297 & .2760 & .4518 & 1.1086\\
+L24 & .8855 & .8947 & .8145 & .8667 & .4711\\
+L32 & .9043 & .9220 & .8263 & .8409 & .4269\\
+L40 & .9605 & .9677 & .9312 & .9433 & .2800\\
+L62 & .9997 & .9997 & .9994 & .9997 & .0234\\
+layer median & .8969 & .9138 & .8187 & .8652 & .4422\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Token median first remains at least .90 from L26, matrix cosine from
+L32, CKA from L33, and token q05 from L35. Thus $n=120$ nearly matches
+the published lens late but is not uniformly stable in the
+lower/middle assay layers. The result triggers the same-corpus $n=250$
+fit. It does not yet satisfy selected-ID, span, occupancy, centered
+capacity, G4, or causal/bridge stability gates. Both envelopes
+reconstruct; all 63 table rows are finite; the live verifier passes 25
+events / 97 outputs / zero failures.
+
 \section{Interpretation and next boundary}
 
 \begin{enumerate}
@@ -427,7 +487,9 @@ axes remain necessary.
 or ``lineage absent.''
 \end{enumerate}
 
-A5 is banked. Next: fit size/corpus, Bank-W load/redundancy, internal
-derivation, and an audit for an intermediate checkpoint.
+A5 and Qwen draw-A $n=120$ are banked; depth-dependent drift triggers
+same-corpus $n=250$. Next: fit-size/model-backed stability, Bank-W
+load/redundancy, internal derivation, and an intermediate-checkpoint
+audit.
 
 \end{document}

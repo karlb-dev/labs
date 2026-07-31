@@ -427,6 +427,73 @@ The table is descriptive development evidence. Capability cohorts were
 fixed separately at each checkpoint, so the synthesis does not compute
 cross-checkpoint paired deltas or causal p-values.
 
+## Qwen nested lens fit and first structural convergence gate
+
+Nested-corpus evidence: `p4-qwen-lens-corpora-dev-v1`.
+
+First fit milestone:
+`p4-qwen-lens-fit-drawA-n120-dev-v1`.
+
+Structural comparison:
+`p4-qwen-lens-structural-stability-drawA-n120-vs-published-n1000-dev-v1`.
+
+Draw A contains 1,000 unique WikiText-103 records with exact nested
+prefixes at n=120/250/500/1000. Its first 120 records are byte-exact
+to the historical fit corpus. The 80 historical rows that followed
+were evaluation spares, so they are excluded from both new fit draws.
+Independent draw B contains 500 unique records, has an exact historical
+n=120 prefix, has zero overlap with draw A, and also excludes every
+spare.
+
+The n=120 all-layer fit used source layers 0–62 to target layer 63,
+d_model 5120, 128-token records, and a frozen 16-token skip. Every
+model operation ran on the RTX PRO 6000 Blackwell under exact pinned
+PyTorch/Transformers/Triton/FLA versions. All 48 Qwen linear-attention
+blocks bound to fused FLA delta-rule kernels. Forty three-prompt
+checkpoints were hashed and atomically mirrored to Drive. The final
+float32 checkpoint is 6,606,047,399 bytes, SHA-256
+`061574f95546d859f13141af480d2aa20372a8858dbc2f9bcdaacdbdd1cdb673`.
+The registered fp16 lens is 3,303,034,078 bytes, SHA-256
+`82af4cc7f637af33e166606b15993bd6c67d2ea764c9788b96aa5a2120c32b1b`.
+Full invocation time was 21,622.7 seconds and peak allocated VRAM was
+62,832,854,016 bytes. Prompt 112 was a pronounced but finite
+per-record Jacobian-norm outlier (`159.952`); it remains in the frozen
+estimator and is not trimmed post hoc.
+
+The first comparison is deliberately narrower than the final fit-size
+study. It compares new draw-A n=120 against the published n=1000 lens,
+so it measures recipe/corpus transfer, not same-corpus nested
+convergence. It uses all 63 Jacobian maps and all 5,120 map rows, plus
+4,096 fixed sampled token directions, exact centered linear CKA on a
+fixed 1,024-token subset, and 256 fixed transport probes.
+
+![Qwen n=120 versus published n=1000 structural stability](figures/p4f09_qwen_lens_structural_stability.png)
+
+Agreement is strongly depth-dependent:
+
+| Layer view | Matrix cosine | Token-direction median cosine | Token q05 | Linear CKA | Relative Frobenius delta |
+|---|---:|---:|---:|---:|---:|
+| L0 | 0.5411 | 0.5297 | 0.2760 | 0.4518 | 1.1086 |
+| L24 | 0.8855 | 0.8947 | 0.8145 | 0.8667 | 0.4711 |
+| L32 | 0.9043 | 0.9220 | 0.8263 | 0.8409 | 0.4269 |
+| L40 | 0.9605 | 0.9677 | 0.9312 | 0.9433 | 0.2800 |
+| L62 | 0.9997 | 0.9997 | 0.9994 | 0.9997 | 0.0234 |
+| Across-layer median | 0.8969 | 0.9138 | 0.8187 | 0.8652 | 0.4422 |
+
+Token median cosine first remains at least 0.90 from L26 onward,
+matrix cosine from L32, CKA from L33, and token q05 from L35. Thus the
+n=120 lens is nearly identical to the published lens at the late
+layers but not uniformly stable in the lower/middle layers used by the
+campaign. Excellent L62 agreement cannot validate the whole lens.
+
+Both payload envelopes independently reconstruct, the 63-row /
+29-column table is entirely finite, the registered figure was visually
+inspected, and the live-evidence verifier passed 25 events / 97
+outputs / zero failures. This result triggers the planned same-corpus
+n=250 fit. Selected-ID Jaccard, span angles, protected overlap,
+occupancy, centered excess capacity, G4, and causal/bridge stability
+remain required before declaring the smaller lens validated.
+
 ## Current interpretation
 
 The registered base-to-3.0/3.1 Think/Instruct trajectory supports an
@@ -474,12 +541,14 @@ mode claims.
 
 ## Next boundary
 
-Workstream A5 is complete and banked. The observed coordinate and
-sibling-endpoint disagreements make fit size/corpus the next
-experimental priority. Before stronger causal interpretation, add
-controlled Bank-W load/redundancy and internal-derivation axes and
-resolve whether an intermediate post-training checkpoint is available
-to localize the base-to-3.0 Think transition.
+Workstream A5 is complete and banked. Qwen draw-A n=120 is also banked,
+and its depth-dependent disagreement with the published lens has
+triggered the same-corpus n=250 continuation. Before stronger causal
+interpretation, complete the nested convergence and model-backed
+selection/capacity/causal gates, add controlled Bank-W
+load/redundancy and internal-derivation axes, and resolve whether an
+intermediate post-training checkpoint is available to localize the
+base-to-3.0 Think transition.
 
 Confirmatory Phase 4 remains blocked on preregistration freeze and
 untouched data.
