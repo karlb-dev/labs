@@ -1,14 +1,15 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 20:36 UTC.
+Last updated: 2026-07-31 20:58 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence/registry head before this documentation
-  checkpoint: `0788407`. The current branch/Drive-report head is
-  `d51ba22`. The GPU-fit harness is pushed at `8769b8b`
+  checkpoint: `0788407`. The Qwen report boundary is `d51ba22` and
+  the preceding live-fit handoff is `10899c8`. The GPU-fit harness is
+  pushed at `8769b8b`
   and its first OOM recovery repair at `0dbf4de`. The mandatory fused
   GPU-kernel runtime repair is pushed at `51336db`. Resume from the
   remote branch tip containing this file.
@@ -62,12 +63,12 @@ the RTX PRO 6000.
   n=120 toward n=250, started from clean pushed commit `3a6d501`.
   It rehashed the exact model, passed the CUDA/FLA/48-block gates, and
   recovered the exact fit contract at n=120 before doing new work.
-  Its latest complete atomic local/Drive boundary is n=132,
+  Its latest complete atomic local/Drive boundary is n=141,
   checkpoint SHA-256
-  `b1ad7befede51f70d2db4e852f4c49320e8ba1385a8325a07a4fd68a70c764ec`,
-  6,606,047,399 bytes. Prompts 133–135 had resumed when this handoff
+  `f6b49de5955b8f00a81c78fad30b7417391ac55c7a0bb47040e6ad5fff139ec6`,
+  6,606,047,399 bytes. Prompts 142–144 had resumed when this handoff
   was written. If the original process is gone, run the exact n=250
-  command below and require `recovered_next_idx` of at least 132.
+  command below and require `recovered_next_idx` of at least 141.
   The VM was already at roughly 22 hours uptime at this boundary, so
   assume reclamation is imminent and trust only the atomic Drive
   checkpoint, not the live process.
@@ -924,7 +925,7 @@ whole-lens validation. Figure:
    `phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/`.
    It must report `recovered_next_idx: 120` and verify the cumulative
    checkpoint before new GPU work. The active 2026-07-31 invocation
-   had reached at least n=132; recovery must use the highest valid
+   had reached at least n=141; recovery must use the highest valid
    `checkpoint_state.json` boundary rather than assuming n=120.
    Commit/push each registry event,
    then repeat at n=500 and n=1000. Run draw B n=120 and preferably
