@@ -8,6 +8,8 @@ from jspace_phase4.experiments.p4_lineage_analysis import (
 from jspace_phase4.experiments.p4_lens_frame_analysis import (
     composition_frame,
     pair_effects,
+    result_seed_namespace,
+    validate_shared_seed_namespace,
 )
 
 
@@ -99,4 +101,41 @@ def test_paired_lens_frame_refuses_baseline_drift():
             _lens_frame_rows(),
             common,
             baseline_tolerance=1e-6,
+        )
+
+
+def _grid_result(evidence_id: str, namespace: str | None = None) -> dict:
+    payload = {}
+    if namespace is not None:
+        payload["scientific_seed_namespace"] = namespace
+    return {
+        "payload": payload,
+        "provenance": {"evidence_id": evidence_id},
+    }
+
+
+def test_lens_frame_seed_namespace_supports_legacy_result_fallback():
+    result = _grid_result("legacy-grid")
+    assert result_seed_namespace(result) == "legacy-grid"
+    frame = _lens_frame_rows()
+    assert validate_shared_seed_namespace(
+        result,
+        result,
+        frame,
+        frame.copy(),
+    ) == "legacy-grid"
+
+
+def test_lens_frame_refuses_different_scientific_seed_namespaces():
+    own = _lens_frame_rows()
+    own["scientific_seed_namespace"] = "own-stream"
+    common = _lens_frame_rows(common=True)
+    common["scientific_seed_namespace"] = "common-stream"
+    with pytest.raises(
+            ValueError, match="would mix lens change with RNG change"):
+        validate_shared_seed_namespace(
+            _grid_result("own-grid", "own-stream"),
+            _grid_result("common-grid", "common-stream"),
+            own,
+            common,
         )

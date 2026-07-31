@@ -62,6 +62,52 @@ def validate_envelope(path: Path) -> dict:
     return envelope
 
 
+def result_seed_namespace(result: dict) -> str:
+    """Resolve the scientific RNG namespace, including older envelopes."""
+    namespace = result.get("payload", {}).get(
+        "scientific_seed_namespace")
+    if namespace is None:
+        namespace = result.get("provenance", {}).get("evidence_id")
+    namespace = str(namespace or "").strip()
+    if not namespace:
+        raise ValueError("grid result lacks a scientific seed namespace")
+    return namespace
+
+
+def validate_shared_seed_namespace(
+        own_result: dict,
+        common_result: dict,
+        own: pd.DataFrame,
+        common: pd.DataFrame,
+) -> str:
+    """Require lens-frame comparisons to share every scientific RNG stream."""
+    namespaces = {
+        "own": result_seed_namespace(own_result),
+        "common": result_seed_namespace(common_result),
+    }
+    for name, frame in (("own", own), ("common", common)):
+        if "scientific_seed_namespace" not in frame:
+            # Early Phase 4 grids predate the redundant per-row field.
+            # Their producer used the evidence ID as the namespace, which
+            # result_seed_namespace recovers from provenance.
+            continue
+        observed = {
+            str(value).strip()
+            for value in frame.scientific_seed_namespace.unique()
+        }
+        if observed != {namespaces[name]}:
+            raise ValueError(
+                f"{name} grid/result scientific seed namespace "
+                f"mismatch: table={sorted(observed)!r}, "
+                f"result={namespaces[name]!r}")
+    if namespaces["own"] != namespaces["common"]:
+        raise ValueError(
+            "own/common scientific seed namespace mismatch: "
+            f"{namespaces['own']!r} != {namespaces['common']!r}; "
+            "paired frame inference would mix lens change with RNG change")
+    return namespaces["own"]
+
+
 def pair_effects(
         own: pd.DataFrame,
         common: pd.DataFrame,
@@ -269,6 +315,7 @@ def make_figure(
         payload: dict,
         paired: pd.DataFrame,
         *,
+        display_name: str,
         png_path: Path,
         pdf_path: Path,
 ) -> None:
@@ -376,13 +423,14 @@ def make_figure(
     axes[1, 1].legend(frameon=False, fontsize=8, ncols=2)
 
     figure.suptitle(
-        "OLMo-3 32B Think: own-lens versus common-base-lens view",
+        f"{display_name}: own-lens versus common-base-lens view",
         fontsize=14,
     )
     figure.text(
         0.5,
         0.002,
-        "Same 126 paired facts; known development banks; "
+        f"Same {payload['pairing']['n_facts']} paired facts; "
+        "known development banks; "
         "family-resampling 95% intervals; not confirmatory evidence.",
         ha="center",
         fontsize=9,
@@ -446,6 +494,12 @@ def main() -> None:
 
     own = pd.read_parquet(paths["own_grid_parquet_uri"])
     common = pd.read_parquet(paths["common_grid_parquet_uri"])
+    shared_seed_namespace = validate_shared_seed_namespace(
+        own_result,
+        common_result,
+        own,
+        common,
+    )
     baseline_tolerance = float(config["baseline_tolerance"])
     paired = pair_effects(
         own,
@@ -493,6 +547,8 @@ def main() -> None:
                 config["common_grid_evidence_id"],
             "own_lens_sha256": own_source["lens_sha256"],
             "common_lens_sha256": common_source["lens_sha256"],
+            "shared_scientific_seed_namespace":
+                shared_seed_namespace,
         },
         "pairing": {
             "n_items": int(len(paired)),
@@ -574,9 +630,12 @@ def main() -> None:
     figure_stem = figures_dir() / config["figure_stem"]
     png_path = figure_stem.with_suffix(".png")
     pdf_path = figure_stem.with_suffix(".pdf")
+    display_name = str(config.get(
+        "display_name", "OLMo-3 32B Think"))
     make_figure(
         payload,
         paired,
+        display_name=display_name,
         png_path=png_path,
         pdf_path=pdf_path,
     )
@@ -613,7 +672,8 @@ def main() -> None:
         config["evidence_id"],
         tier=config["tier"],
         what=(
-            "Paired OLMo-3 Think own/common-lens development analysis: "
+            f"Paired {display_name} own/common-lens development "
+            "analysis: "
             f"Bank F common-minus-own specificity "
             f"{f_direct_delta['estimate']:.4f} direct and "
             f"{f_composed_delta['estimate']:.4f} composed; Bank S "
