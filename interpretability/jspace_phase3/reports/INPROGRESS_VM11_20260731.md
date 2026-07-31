@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 07:48 UTC.
+Last updated: 2026-07-31 07:59 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence head before this documentation checkpoint:
-  `c619ad1`. Resume from the remote
+  `42b29c5`. Resume from the remote
   branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -57,9 +57,9 @@ envelopes. Live telemetry during the final common-lens grid showed
 - Nothing is running.
 - All completed evidence and figures are durable on Drive, registered,
   committed, and pushed.
-- Latest scientific-evidence head is `c619ad1`; the documentation
+- Latest scientific-evidence head is `42b29c5`; the documentation
   checkpoint containing this file may be newer.
-- Full Phase 4 suite: 39/39 passing. The sandbox-only tiny nonlinear-JVP
+- Full Phase 4 suite: 41/41 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
   model evidence and is intentionally CPU-safe.
 - Model runs checkpoint every 5 or 10 items, limiting loss well below
@@ -190,42 +190,38 @@ The final v3 explicitly freezes
 
 V3 explicitly supersedes both withdrawn diagnostic attempts.
 
-## Paired own/common-lens analysis — complete
+## Paired own/common-lens analysis — withdrawn; repair configured
 
-Live evidence:
+Withdrawn evidence:
 `p4-lens-frame-analysis-olmo3-think-dev-v1`.
 
-Artifacts:
+The own and common raw grids remain valid standalone evidence, but the
+paired inference used different scientific seed namespaces:
 
-- `phase4_20260731/metrics/olmo3-think-lens-frame/lens_frame_analysis/p4-lens-frame-analysis-olmo3-think-dev-v1/`
-- `phase4_20260731/figures/p4f02_olmo3_think_lens_frame_comparison.{png,pdf}`
+- own grid:
+  `p4-lineage-grid-olmo3-think-dev-v1`;
+- common grid:
+  `p4-lineage-grid-olmo3-think-common-base-lens-dev-v1`.
 
-The analysis pairs the same 252 items exactly; baseline drift is 0.
-The figure was visually inspected and its PDF is one valid page.
+Thus the matched controls use different random subspaces across frames.
+The Bank-F composed control shift alone is `+0.061647`, with its family
+interval above zero. The old frame-contrast CIs and correlations mix
+lens change with RNG change and must not be used.
 
-Development findings:
+The producer now hard-fails on unequal scientific seed namespaces, with
+an explicit legacy fallback for early grids whose namespace was their
+evidence ID. The actual v1 inputs trigger the new refusal. Full tests:
+41/41.
 
-- Bank F direct common-minus-own specificity:
-  `-0.097666`, 95% family bootstrap
-  `[-0.206010,-0.003382]`.
-- Bank F composed common-minus-own:
-  `-0.147417`, `[-0.231978,-0.055278]`.
-- Thus Bank F changes from small positive own-lens point estimates to
-  small negative common-lens point estimates. The Bank-F organization
-  is coordinate-frame sensitive.
-- Bank S direct remains negative under the common base lens:
-  `-0.086084`, `[-0.163256,-0.003738]`.
-- Bank S composed remains negative under both frames; its paired frame
-  difference is small and interval-crossing.
-- The uncertain Bank-S composition estimate is `+0.072424` under the
-  own lens and `+0.039695` under the common lens. Their difference is
-  `-0.032729`, interval crossing zero.
-- Item-level own/common specificity correlation: `0.6140`;
-  family-level correlation: `0.4946`.
+Repair configs committed at `5097a33`:
 
-Interpretation is estimation-first: Bank S is more frame-robust than
-Bank F at this checkpoint, while Bank F supplies evidence that fitted
-coordinate drift matters. This is not a binary lineage claim.
+- `configs/p4_lineage_grid_olmo3-think-common-base-lens-paired-dev.yaml`
+  creates common-lens v4 with the own-grid namespace;
+- `configs/p4_lens_frame_analysis_olmo3-think-paired-dev.yaml`
+  creates replacement analysis v2 and a new figure path.
+
+Do not use the old paired figure or infer frame robustness/sensitivity
+until v4 and v2 pass their audits.
 
 ## OLMo-3 32B base point — complete
 
@@ -313,25 +309,34 @@ estimate. The new PNG and one-page PDF were visually inspected.
 
 ## Next queue — execute without pausing
 
-1. Verify branch/head/clean tree, exact 3.1 Think/Instruct model
-   revisions, lens hashes, and Drive/Hub cache sources. Do not remove
-   the validated local base snapshot before this verification.
-2. Add and test Phase 4 prospective G5 plus own/common-lens grid configs
+1. Mirror and push this correction checkpoint. Then remove the exact
+   local base snapshot only; its complete evidence is durable. Restore
+   the already independently verified 3.0 Think snapshot from:
+   `/content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`.
+2. Run the seed-paired common-lens v4 repair on GPU, validate and bank
+   it, then run/validate replacement paired analysis v2. Update the
+   report before proceeding.
+3. Verify exact 3.1 Think/Instruct model revisions, lens hashes, and
+   cache sources. Current Drive cache discovery shows the 3.1 Think
+   snapshot contains only `config.json`, and the 3.1 Instruct snapshot
+   is absent; download exact revisions to local NVMe and maintain
+   restart-safe Drive/cache provenance.
+4. Add and test Phase 4 prospective G5 plus own/common-lens grid configs
    for the exact 3.1 Think and Instruct checkpoints. Commit and push
    configs before creating evidence.
-3. Before every model producer, rerun
+5. Before every model producer, rerun
    `jspace_phase4.gpu.require_cuda_gpu()` in the same host process.
    Model load, generation, intervention, and scoring must use the RTX;
    never use CPU fallback.
-4. Run G5, freeze each checkpoint-specific direct+composed capable
+6. Run G5, freeze each checkpoint-specific direct+composed capable
    cohort, and run the same seven-condition grids under both its own
    lens and the frozen base lens. Bank each major boundary before
    swapping a cache.
-5. Build the full base → 3.0 Think → 3.1 Think/Instruct development
+7. Build the full base → 3.0 Think → 3.1 Think/Instruct development
    trajectory with common-lens and own-lens views. If they disagree,
    treat coordinate drift as a result and prioritize the fit/corpus-size
    study before causal over-interpretation.
-6. Refresh this file, the Drive copy, Phase 4 Markdown/TeX/PDF, figures,
+8. Refresh this file, the Drive copy, Phase 4 Markdown/TeX/PDF, figures,
    and evidence registry after every major boundary. Commit and push
    often.
 

@@ -149,32 +149,37 @@ namespace. Its acceptance audit shows:
 V3 supersedes both withdrawn attempts. The repair changes metadata, not
 the scientific outcomes.
 
-## Own lens versus common base lens
+## Own lens versus common base lens — paired repair pending
 
-Live evidence: `p4-lens-frame-analysis-olmo3-think-dev-v1`.
+Withdrawn analysis: `p4-lens-frame-analysis-olmo3-think-dev-v1`.
 
-The comparison pairs the same 252 items exactly and has zero baseline
-drift.
+The own-lens and common-lens raw grids each remain valid standalone
+development evidence. Their baseline rows match, but their scientific
+seed namespaces differ:
 
-![Think lens-frame comparison](figures/p4f02_olmo3_think_lens_frame_comparison.png)
+- own: `p4-lineage-grid-olmo3-think-dev-v1`;
+- common: `p4-lineage-grid-olmo3-think-common-base-lens-dev-v1`.
 
-| Cell | Own lens | Common base lens | Common − own |
-|---|---:|---:|---:|
-| F direct | +0.0574 | −0.0403 | −0.0977 [−0.2060, −0.0034] |
-| F composed | +0.0818 | −0.0656 | −0.1474 [−0.2320, −0.0553] |
-| S direct | −0.1277 | −0.0861 | +0.0416 [−0.0449, +0.1340] |
-| S composed | −0.0553 | −0.0464 | +0.0089 [−0.0222, +0.0412] |
+Consequently, the matched-control random subspaces differ across
+frames. For Bank F composed, the family-weighted control shift alone is
+`+0.0616` nats, with its interval above zero. The previous
+common-minus-own specificity estimates and correlations therefore mix
+lens change with RNG change and must not be interpreted.
 
-Bank F changes from small positive own-lens estimates to small negative
-common-lens estimates. Both paired Bank-F frame contrasts have
-family-bootstrap intervals below zero. Bank S is more frame-robust:
-direct and composed estimates remain negative in both frames, and their
-paired frame differences are interval-crossing.
+The standalone point estimates are retained only to describe the two
+raw grids:
 
-The Bank-S composition estimate is `+0.0724` under the own lens and
-`+0.0397` under the common lens; common-minus-own is `−0.0327`, with an
-interval crossing zero. Item-level own/common specificity correlation
-is 0.614 and family-level correlation is 0.495.
+| Cell | Own lens | Common base lens |
+|---|---:|---:|
+| F direct | +0.0574 | −0.0403 |
+| F composed | +0.0818 | −0.0656 |
+| S direct | −0.1277 | −0.0861 |
+| S composed | −0.0553 | −0.0464 |
+
+A new common-lens v4 grid is configured with the own-grid scientific
+seed namespace. The hardened paired-analysis producer refuses unequal
+namespaces. No inferential frame comparison is live until the v4 grid
+and v2 analysis pass their acceptance audits.
 
 ## Current interpretation
 
@@ -182,31 +187,32 @@ The base-to-3.0-Think contrast supports an estimation-first account:
 
 - The base checkpoint is near zero in all four primary specificity
   cells, including both Bank-S variants.
-- Bank-S direct and composed specificity is already negative and is
-  comparatively stable across fitted coordinate frames at 3.0 Think.
+- Bank-S direct and composed specificity is negative in each standalone
+  3.0 Think grid. Formal coordinate-frame stability is pending the
+  seed-paired rerun.
 - Thus the known-bank development data localize the emergence of the
   Bank-S negative effect to the base-to-Think training interval. The
   cohorts differ because capability was fixed separately at each
   checkpoint, so this is a trajectory localization, not a paired causal
   estimate.
-- Bank-F conclusions depend materially on whether the checkpoint uses
-  its own fitted lens or the frozen base coordinate.
-- Coordinate drift is therefore part of the scientific result, not
-  merely a nuisance to hide.
+- Bank-F standalone point estimates differ by coordinate frame, but the
+  prior paired inference is withdrawn because its controls used
+  different RNG streams.
 - The positive Bank-S composition tendency is not yet precise and must
   not be promoted before a controlled load/redundancy experiment.
 
-These observations strengthen the need for both common-lens and
+These observations strengthen the need for seed-paired common-lens and
 own-lens trajectory lines. They do not license “lineage present” or
 “lineage absent.”
 
 ## Next boundary
 
-The pinned base checkpoint is complete and banked. The next GPU block
-is the exact 3.1 Think and 3.1 Instruct pair. Run the Phase 4 prospective
-G5 gate and the same seven-condition intervention grid for each
-checkpoint, preserving separately fitted own-lens and frozen common-base
-lens views. Then synthesize the full
+The pinned base checkpoint is complete and banked. First repair the 3.0
+Think common-lens grid with the own-grid scientific seed namespace and
+replace the withdrawn paired analysis. Then run the exact 3.1 Think and
+3.1 Instruct pair through the Phase 4 prospective G5 gate and the same
+seven-condition intervention grid, explicitly sharing RNG namespaces
+between each own/common pair. Finally synthesize the full
 base → 3.0 Think → 3.1 Think/Instruct trajectory.
 
 If the two trajectory views disagree, the next priority is the

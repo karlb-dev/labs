@@ -162,65 +162,60 @@ to 0.000239 while retaining 100\% rank agreement. V3 supersedes both
 withdrawn diagnostic attempts.
 \eid{p4-lineage-grid-olmo3-think-common-base-lens-dev-v3}
 
-\section{Own lens versus common base lens}
+\section{Own/common lens comparison: repair pending}
 
-The comparison pairs all 252 items exactly; baseline drift is zero.
+The v1 paired analysis is \textbf{\textcolor{coral}{withdrawn}}.
+Although the two raw grids pair 252 items and have zero baseline drift,
+their scientific seed namespaces differ. Their matched-control random
+subspaces therefore differ across frames. For Bank F composed, the
+control shift alone is $+0.0616$ nats with its interval above zero, so
+the previous frame-contrast intervals and correlations mix lens change
+with RNG change and must not be interpreted.
+\eid{p4-lens-frame-analysis-olmo3-think-dev-v1 (withdrawn)}
 
-\begin{center}
-\includegraphics[width=0.80\textwidth]{../figures/p4f02_olmo3_think_lens_frame_comparison.png}
-\end{center}
+Both raw grids remain valid standalone development evidence:
 
 \begin{center}\small
-\renewcommand{\arraystretch}{1.12}
-\begin{tabular}{lrrr}
+\begin{tabular}{lrr}
 \toprule
-cell & own lens & common base lens & common $-$ own [95\% interval]\\
+cell & own-lens point estimate & common-base-lens point estimate\\
 \midrule
-F direct & $+0.0574$ & $-0.0403$ &
-$-0.0977\,[-0.2060,-0.0034]$\\
-F composed & $+0.0818$ & $-0.0656$ &
-$-0.1474\,[-0.2320,-0.0553]$\\
-S direct & $-0.1277$ & $-0.0861$ &
-$+0.0416\,[-0.0449,+0.1340]$\\
-S composed & $-0.0553$ & $-0.0464$ &
-$+0.0089\,[-0.0222,+0.0412]$\\
+F direct & $+0.0574$ & $-0.0403$\\
+F composed & $+0.0818$ & $-0.0656$\\
+S direct & $-0.1277$ & $-0.0861$\\
+S composed & $-0.0553$ & $-0.0464$\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\good{Bank S is comparatively frame-robust:} direct and composed
-specificity remain negative in both views, and paired frame differences
-cross zero. Bank F changes from small positive own-lens estimates to
-small negative common-lens estimates; both paired frame-contrast
-intervals lie below zero. Item-level own/common correlation is 0.614
-and family-level correlation is 0.495.
-
-The Bank-S composition tendency is $+0.0724$ under the own lens and
-$+0.0397$ under the common lens; their difference is
-$-0.0327$ with an interval crossing zero.
-\eid{p4-lens-frame-analysis-olmo3-think-dev-v1}
+A common-lens v4 grid is configured with the own-grid namespace. The
+hardened analysis now refuses unequal namespaces. No inferential frame
+comparison is live until v4 and the replacement v2 analysis pass their
+acceptance audits.
 
 \section{Interpretation and next boundary}
 
 \begin{enumerate}
 \item The base checkpoint is near zero in all four primary cells.
 Bank-S direct and composed specificity is negative by 3.0 Think and is
-comparatively stable across fitted frames.
+negative in each standalone lens frame; formal frame stability awaits
+the seed-paired repair.
 \item Because capability cohorts are checkpoint-specific, this
 localizes a base-to-Think trajectory change but is not a paired causal
 estimate.
-\item Bank-F conclusions depend materially on whether the checkpoint
-uses its own fitted lens or the frozen base coordinate. Coordinate
-drift is part of the result, not a nuisance to conceal.
+\item Bank-F standalone point estimates differ by frame, but the prior
+paired inference is withdrawn because its controls used different RNG
+streams.
 \item The positive Bank-S composition tendency remains uncertain.
 \item None of these known-bank estimates licenses ``lineage present''
 or ``lineage absent.''
 \end{enumerate}
 
-The pinned base checkpoint is complete and banked. Next, run the exact
-3.1 Think and 3.1 Instruct checkpoints through the Phase~4 prospective
-G5 gate and the same seven-condition GPU grid, retaining both own-lens
-and frozen common-base-lens views. Then synthesize the full base
+The pinned base checkpoint is complete and banked. First run the
+seed-paired 3.0 common-lens repair and replacement analysis. Next, run
+the exact 3.1 Think and 3.1 Instruct checkpoints through the Phase~4
+prospective G5 gate and the same seven-condition GPU grid, explicitly
+sharing an RNG namespace within each own/common pair. Then synthesize the full base
 $\rightarrow$ 3.0 Think $\rightarrow$ 3.1 Think/Instruct trajectory.
 If the two coordinate views disagree, prioritize the fit-size/corpus
 study before stronger causal interpretation.
