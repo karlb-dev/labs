@@ -116,10 +116,21 @@ class ScoringSession:
                       n_prompt: int) -> float:
         """Sum logprob of the answer tokens (teacher-forced, full
         sequence) — the frozen primary endpoint's per-alias input."""
-        lps = torch.log_softmax(logits[:-1].float(), dim=-1)
-        tgt = full_ids[0, 1:].cpu()
-        rows = torch.arange(n_prompt - 1, full_ids.shape[1] - 1)
-        return float(lps[rows, tgt[rows]].sum())
+        # Score only rows that predict answer tokens.  The old
+        # implementation formed a full-sequence vocabulary softmax and
+        # forced targets to CPU, which made callers copy very large model
+        # logits off CUDA before scoring.  Keeping the short answer slice on
+        # the logits device is both equivalent and prevents accidental CPU
+        # fallback in GPU audit runners.
+        answer_logits = logits[
+            n_prompt - 1:full_ids.shape[1] - 1].float()
+        targets = full_ids[0, n_prompt:].to(answer_logits.device)
+        if answer_logits.shape[0] != targets.shape[0]:
+            raise ValueError("answer logits/targets length mismatch")
+        token_lps = torch.log_softmax(
+            answer_logits, dim=-1).gather(
+                1, targets.unsqueeze(1)).squeeze(1)
+        return float(token_lps.sum().item())
 
     # -------------------------------------------------------------- audit
     def alias_audit(self, aliases: list[str]) -> dict:

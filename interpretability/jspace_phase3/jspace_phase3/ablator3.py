@@ -693,8 +693,13 @@ def teacher_forced_arm(hf, encode_ids, ablator, dicts, full_ids,
 
 @torch.no_grad()
 def teacher_forced_matched_arm(hf, layers, band, dicts, full_ids, profile,
-                               *, variant, protect_sets, seed_base):
-    """One matched-control pass consuming a J-arm profile."""
+                               *, variant, protect_sets, seed_base,
+                               return_cpu: bool = True):
+    """One matched-control pass consuming a J-arm profile.
+
+    ``return_cpu=False`` is for GPU-only endpoints that score the returned
+    logits immediately.  The default preserves the historical runner API.
+    """
     ab = Phase3MatchedAblator(layers, band)
     ab.phase, ab.forward_index = "prefill", 0
     ab.mode = {"dicts": dicts, "profile": profile, "variant": variant,
@@ -703,4 +708,5 @@ def teacher_forced_matched_arm(hf, layers, band, dicts, full_ids, profile,
     with ab:
         logits = hf(input_ids=full_ids, use_cache=False).logits[0]
     ab.mode = None
-    return logits.float().cpu(), ab.log
+    logits = logits.float()
+    return (logits.cpu() if return_cpu else logits), ab.log
