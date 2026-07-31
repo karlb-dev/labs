@@ -8,9 +8,10 @@ prompt-only intervention state.
 
 Protocol choices fixed before outcomes:
 
-* intervene on the prompt prefill only, then turn hooks off;
-* score original and counterfactual continuations from clones of that same
-  ablated prompt KV state;
+* score complete candidate sequences without cache, with intervention hooks
+  active only on the shared prompt prefix;
+* use cached prompt-only intervention separately for greedy generation, then
+  turn hooks off during decode;
 * primary endpoint is ``lp(cf canonical) - lp(original canonical)``;
 * alias-max preference is a sensitivity (never logsumexp, because the frozen
   alias sets contain prefix-overlapping alternatives);
@@ -138,7 +139,7 @@ def boundary_generation_category(
 
 
 def clone_past_key_values(past):
-    """Clone a HF cache so candidate scoring cannot mutate sibling arms."""
+    """Clone a HF cache before greedy decoding mutates it."""
     try:
         return copy.deepcopy(past)
     except Exception as error:  # pragma: no cover - version-specific guard
@@ -149,36 +150,6 @@ def clone_past_key_values(past):
             return past.clone()
         raise RuntimeError(
             f"cannot clone {type(past).__name__} KV cache") from error
-
-
-@torch.no_grad()
-def continuation_lp(hf, last_logits: torch.Tensor, past,
-                    answer_ids: torch.Tensor, *,
-                    prompt_length: int) -> float:
-    """Score one continuation from an immutable prefill state."""
-    tokens = answer_ids.to(last_logits.device).long()
-    if tokens.dim() != 1 or not tokens.numel():
-        raise ValueError("answer_ids must be a nonempty vector")
-    cache = clone_past_key_values(past)
-    total = torch.log_softmax(
-        last_logits.float(), dim=-1)[tokens[0]]
-    for index in range(1, len(tokens)):
-        # Hybrid attention/cache models (including Qwen3.6) require the
-        # full growing mask here.  A length-1 implicit mask can silently
-        # change cached continuation scores relative to full-sequence
-        # teacher forcing.
-        attention_mask = torch.ones(
-            (1, prompt_length + index),
-            dtype=torch.long, device=last_logits.device)
-        out = hf(
-            input_ids=tokens[index - 1].reshape(1, 1),
-            attention_mask=attention_mask,
-            past_key_values=cache, use_cache=True)
-        cache = out.past_key_values
-        total = total + torch.log_softmax(
-            out.logits[0, -1].float(), dim=-1)[tokens[index]]
-    return float(total.cpu())
-
 
 @torch.no_grad()
 def greedy_from_prefill(hf, tok, last_logits: torch.Tensor, past,
@@ -454,8 +425,10 @@ def analyze(frame: pd.DataFrame) -> tuple[dict, pd.DataFrame]:
         "n_families": int(paired.canonical_family.nunique()),
         "endpoint_contract": {
             "intervention_phase": (
-                "prompt prefill only; hooks removed for candidate "
-                "continuations and greedy decode"),
+                "teacher-forced: no-cache complete candidate sequence "
+                "with hooks active only at shared prompt positions; "
+                "greedy: cached prompt intervention with hooks removed "
+                "during decode"),
             "primary_preference": (
                 "lp(counterfactual canonical) - lp(original canonical)"),
             "alias_sensitivity": (
@@ -666,6 +639,43 @@ def main() -> None:  # noqa: C901
         ablator.mode = None
         return output
 
+    def score_alias(prompt: str, alias: str, arm_spec: dict,
+                    prompt_protect_length: int) -> float:
+        """No-cache candidate score under one shared prefix intervention."""
+        full, n_prompt = sess.full_ids(prompt, alias)
+        if n_prompt != prompt_protect_length:
+            raise RuntimeError("candidate prompt tokenization drift")
+        if not arm_spec:
+            ablator.mode = None
+            logits = hf(input_ids=full, use_cache=False).logits[0].float()
+        else:
+            protect_sets = arm_spec.get("protect_sets")
+            if protect_sets is not None:
+                if protect_sets.shape[0] != n_prompt:
+                    raise RuntimeError(
+                        "prompt protection rows do not match prompt length")
+                suffix = protect_sets[-1:].expand(
+                    full.shape[1] - n_prompt, -1)
+                protect_sets = torch.cat([protect_sets, suffix], dim=0)
+            ablator.log = type(ablator.log)()
+            ablator.phase, ablator.forward_index = "prefill", 0
+            ablator.mode = {
+                "dicts": dictionaries, "k": k, "nonneg": True,
+                "protect_sets": protect_sets,
+                "active_phases": {"prefill"},
+                "active_position_limit": n_prompt,
+                "span_safe": True,
+                "record_overlap": False,
+                "answer_id": None,
+                "restrict_sets": arm_spec.get("restrict"),
+                "inject_dir": arm_spec.get("inject"),
+            }
+            with ablator:
+                logits = hf(
+                    input_ids=full, use_cache=False).logits[0].float()
+            ablator.mode = None
+        return sess.answer_seq_lp(full, logits.cpu(), n_prompt)
+
     started = time.time()
     for ordinal, bundle in enumerate(cohort, start=1):
         if bundle.fact_id in state["done"]:
@@ -761,16 +771,14 @@ def main() -> None:  # noqa: C901
                 prompt_ids, **arm_specs[arm])
             last_logits = output.logits[0, -1].float()
             original_lps = {
-                alias: continuation_lp(
-                    hf, last_logits, output.past_key_values,
-                    sess.answer_ids(alias)[0],
-                    prompt_length=prompt_ids.shape[1])
+                alias: score_alias(
+                    bundle.prompts["composed"], alias, arm_specs[arm],
+                    prompt_ids.shape[1])
                 for alias in bundle.accepted_answers}
             counterfactual_lps = {
-                alias: continuation_lp(
-                    hf, last_logits, output.past_key_values,
-                    sess.answer_ids(alias)[0],
-                    prompt_length=prompt_ids.shape[1])
+                alias: score_alias(
+                    bundle.prompts["composed"], alias, arm_specs[arm],
+                    prompt_ids.shape[1])
                 for alias in bundle.counterfactual_accepted}
             generated, generated_ids = greedy_from_prefill(
                 hf, tok, last_logits, output.past_key_values,
@@ -903,9 +911,10 @@ def main() -> None:  # noqa: C901
         f"{cf_arm['greedy_generation']['original']['item_rate']:.3f} / "
         f"{cf_arm['greedy_generation']['counterfactual']['item_rate']:.3f} "
         f"/ {cf_arm['greedy_generation']['other']['item_rate']:.3f}.\n\n"
-        "This post-freeze development audit uses prompt-only intervention "
-        "and one shared KV-state contract for both answer candidates. It "
-        "does not supply untouched-family replication.\n")
+        "This post-freeze development audit uses no-cache candidate "
+        "scoring with intervention restricted to the shared prompt prefix. "
+        "Cached decoding is used only for greedy generation. It does not "
+        "supply untouched-family replication.\n")
     outputs = [
         result_path, markdown_path, frame_path, paired_path,
         figure_png, figure_pdf, state_path,
@@ -914,10 +923,10 @@ def main() -> None:  # noqa: C901
         register(
             evidence_id, tier=TIER, command=command,
             what=(
-                "Prompt-only semantic endpoint for the Qwen bridge swap: "
+                "Prefix-only semantic endpoint for the Qwen bridge swap: "
                 f"{len(paired)} mediation facts, original/counterfactual "
-                "canonical and alias-max LP, boundary-safe greedy outcomes, "
-                "and five substitution controls."),
+                "no-cache canonical and alias-max LP, boundary-safe greedy "
+                "outcomes, and five substitution controls."),
             outputs=outputs, inputs=header)
     log("sealed semantic bridge-swap endpoint")
     print(json.dumps({

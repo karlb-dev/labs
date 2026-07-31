@@ -233,3 +233,14 @@ def test_inject_dir_energy_matched_substitution():
     h2a = (out_no[0].float() ** 2).sum(1)
     exp = (h2b - h2a).clamp_min(0).sqrt()
     assert torch.allclose(d.norm(dim=1), exp, atol=1e-4)
+
+
+def test_active_position_limit_restores_suffix_exactly():
+    dic, h, psets = _setup(41)
+    limit = 3
+    out, ab = _run(
+        Phase3JAblator, dic, h, psets,
+        span_safe=True, active_position_limit=limit)
+    assert not torch.equal(out[:, :limit], h[:, :limit])
+    assert torch.equal(out[:, limit:], h[:, limit:])
+    assert len(ab.log.positions) == limit

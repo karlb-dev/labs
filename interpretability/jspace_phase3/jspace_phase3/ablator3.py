@@ -107,6 +107,10 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
       base_protect_sets [T,p] | None — clean protection before an added
                       bridge set (enables protected rank before/after)
       diagnostic_ids  1-D tensor | None — added bridge-piece rows
+      active_position_limit int | None — intervene only on positions
+                      ``[0, limit)``.  Used by the semantic preference
+                      audit to share one prompt intervention across
+                      candidate continuations without using a cache.
     """
 
     def __init__(self, layers, band):
@@ -119,6 +123,15 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
         B, T, d = h.shape
         if B != 1:
             raise NotImplementedError("assay is per-item (batch size 1)")
+        position_limit = m.get("active_position_limit")
+        if position_limit is None:
+            position_limit = T
+        position_limit = int(position_limit)
+        if not 0 <= position_limit <= T:
+            raise ValueError(
+                f"active_position_limit {position_limit} outside 0..{T}")
+        active_position = (
+            torch.arange(T, device=h.device) < position_limit)
         flat = h.reshape(-1, d).float()
         scores = (flat.to(D.dtype) @ D.T).float()
         diagnostic_ids = m.get("diagnostic_ids")
@@ -243,6 +256,16 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
                 inj.to(flat_new.device).float(), dim=0)
             scale = (h2_before - h2_after).clamp_min(0).sqrt()
             flat_new = flat_new + scale.unsqueeze(1) * u.unsqueeze(0)
+        # Prefix-only intervention: restore later positions exactly at
+        # this layer.  Their downstream states may still change causally
+        # because earlier prompt positions were altered, which is the
+        # intended prompt intervention.
+        flat_new = torch.where(
+            active_position.unsqueeze(1), flat_new, flat)
+        # Preserve the established "removed energy before substitution"
+        # logging contract on active positions; inactive suffix positions
+        # report zero removal.
+        h2_after = torch.where(active_position, h2_after, h2_before)
 
         eff = rank_mask.sum(dim=1).cpu()
         if span_safe and qp_masked is not None:
@@ -369,6 +392,8 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
             remfrac = ((rem_in_prot ** 2).sum(dim=1)
                        / rn2.clamp_min(1e-30)).cpu()
             for t in range(T):
+                if not bool(active_position[t]):
+                    continue
                 self.log.overlap.append(OverlapPositionRecord(
                     layer=layer_idx, phase=self.phase,
                     forward_index=self.forward_index, position=t,
@@ -431,6 +456,8 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
         frac = (1.0 - h2_after / h2_before.clamp_min(1e-30)).cpu()
         rec_ids = m.get("record_ids", False)
         for t in range(T):
+            if not bool(active_position[t]):
+                continue
             self.log.positions.append(PositionRecord(
                 layer=layer_idx, phase=self.phase,
                 forward_index=self.forward_index, position=t,
