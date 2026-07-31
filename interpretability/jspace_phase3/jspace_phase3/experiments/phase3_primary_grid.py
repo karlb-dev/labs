@@ -152,6 +152,16 @@ def main():  # noqa: C901
             if it["variant"] in ("direct", "composed"):
                 items.append(it)
     items.sort(key=lambda r: r["item_id"])
+    requested_ids = set(cfg.get("item_ids", []))
+    if requested_ids:
+        available_ids = {item["item_id"] for item in items}
+        missing_ids = requested_ids - available_ids
+        if missing_ids:
+            raise RuntimeError(
+                "configured item_ids are outside the frozen model cohort: "
+                f"{sorted(missing_ids)}")
+        items = [
+            item for item in items if item["item_id"] in requested_ids]
     p3p3 = bool(cfg.get("bridge_arms", False))
     log(f"{slug}: {len(items)} frozen-cohort items "
         f"({len({i['fact_id'] for i in items})} facts), bridge_arms={p3p3}")

@@ -63,8 +63,9 @@ Its durable checkpoint is written atomically every five completed items,
 and its root manifest refuses a resume when code, config, partition,
 model, lens, G5 cohort, frozen grid, or seed contract differs.
 
-N8-P3-L2 reruns at least 20 sorted confirmatory items for each primary
-model. N8-P3-L3 reruns the complete Qwen confirmatory cell. Both include:
+N8-P3-L2 reruns at least 20 stable, paired, family-stratified
+confirmatory items for each primary model. N8-P3-L3 reruns the complete
+Qwen confirmatory cell. Both include:
 
 - baseline, span-safe J, and label-protected J;
 - an exact rank-and-energy matched control under `sha256-v1`, namespace

@@ -25,7 +25,7 @@ from jspace_part2.paths import resolve as resolve_uri
 from ..paths3 import run_root
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            resolve_model, write_result3)
-from ..seeds import SEED_CONTRACT
+from ..seeds import SEED_CONTRACT, stable_seed
 from .p3_n8_phase3_analysis import (compositions, holm, p3p1, p3p2_views,
                                     p3p3)
 
@@ -73,7 +73,8 @@ def read_state(path: Path) -> dict:
 
 def input_contract(reference_root: Path, source_config: Path,
                    cfg: dict, slug: str, level: int,
-                   n_sentinel: int) -> dict:
+                   n_sentinel: int,
+                   sentinel_item_ids: list[str]) -> dict:
     partition = REPO_ROOT / cfg["partition_uri"]
     lens = Path(resolve_uri(cfg["lens_uri"], must_exist=True))
     model = Path(resolve_uri(cfg["model_uri"], must_exist=True))
@@ -98,15 +99,75 @@ def input_contract(reference_root: Path, source_config: Path,
         "seed_contract": SEED_CONTRACT,
         "matched_control_namespace": CONTROL_NAMESPACE,
         "matched_control_seed": CONTROL_SEED,
+        "sentinel_item_ids": sentinel_item_ids,
     }
+
+
+def select_sentinel_from_frame(frame: pd.DataFrame, n: int) -> list[str]:
+    if n < 20 or n % 2:
+        raise ValueError("sentinel size must be even and at least 20")
+    pairs = {}
+    for fact_id, group in frame.groupby("fact_id"):
+        if set(group["variant"]) == {"direct", "composed"}:
+            pairs[str(fact_id)] = group
+    by_family: dict[str, list[str]] = {}
+    for fact_id, group in pairs.items():
+        family = str(group["canonical_family"].iloc[0])
+        by_family.setdefault(family, []).append(fact_id)
+    for family, facts in by_family.items():
+        facts.sort(key=lambda fact: stable_seed(
+            "n8-p3-l2-fact", fact, CONTROL_SEED))
+    families = sorted(by_family, key=lambda family: stable_seed(
+        "n8-p3-l2-family", family, CONTROL_SEED))
+    needed_facts = n // 2
+    chosen: list[str] = []
+    depth = 0
+    while len(chosen) < needed_facts:
+        progressed = False
+        for family in families:
+            facts = by_family[family]
+            if depth < len(facts):
+                chosen.append(facts[depth])
+                progressed = True
+                if len(chosen) == needed_facts:
+                    break
+        if not progressed:
+            break
+        depth += 1
+    if len(chosen) != needed_facts:
+        raise RuntimeError(
+            f"only {len(chosen)} complete fact pairs for {n} items")
+    chosen_set = set(chosen)
+    selected = frame[frame["fact_id"].astype(str).isin(chosen_set)]
+    item_ids = sorted(str(value) for value in selected["item_id"])
+    if len(item_ids) != n:
+        raise RuntimeError(
+            f"sentinel selection yielded {len(item_ids)} != {n} items")
+    return item_ids
+
+
+def sentinel_item_ids(reference_root: Path, slug: str,
+                      level: int, n: int) -> list[str]:
+    if level == 3:
+        return []
+    frame = pd.read_parquet(
+        frozen_path(reference_root, slug),
+        columns=[
+            "item_id", "fact_id", "variant", "canonical_family",
+        ],
+    )
+    return select_sentinel_from_frame(frame, n)
 
 
 def prepare_root(cell_root: Path, reference_root: Path, slug: str,
                  level: int, n_sentinel: int) -> tuple[Path, dict]:
     source_config = CONFIG_ROOT / f"p3_grid_{slug}.yaml"
     cfg = yaml.safe_load(source_config.read_text())
+    selected_ids = sentinel_item_ids(
+        reference_root, slug, level, n_sentinel)
     contract = input_contract(
-        reference_root, source_config, cfg, slug, level, n_sentinel)
+        reference_root, source_config, cfg, slug, level, n_sentinel,
+        selected_ids)
     manifest_path = cell_root / "N8_P3_CELL_MANIFEST.json"
     if manifest_path.exists():
         observed = json.loads(manifest_path.read_text())
@@ -138,6 +199,8 @@ def prepare_root(cell_root: Path, reference_root: Path, slug: str,
             "instant_rank_energy_matched": CONTROL_NAMESPACE,
         },
     }
+    if selected_ids:
+        derived["item_ids"] = selected_ids
     derived_path = cell_root / "n8_p3_config.yaml"
     rendered = yaml.safe_dump(derived, sort_keys=False)
     if derived_path.exists() and derived_path.read_text() != rendered:
@@ -450,12 +513,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--n", type=int, default=20)
     parser.add_argument("--cell-root", required=True)
     parser.add_argument("--timeout-hours", type=float, default=8.0)
+    parser.add_argument("--evidence-version", type=int, default=1)
+    parser.add_argument("--supersedes")
     parser.add_argument("--allow-dirty", action="store_true")
     args = parser.parse_args()
     if args.level == 3 and args.slug != "qwen36-27b":
         parser.error("N8-P3-L3 is preregistered for qwen36-27b")
     if args.n < 20:
         parser.error("N8-P3-L2 requires at least 20 items")
+    if args.evidence_version < 1:
+        parser.error("--evidence-version must be positive")
     return args
 
 
@@ -490,14 +557,23 @@ def main() -> None:
     payload = comparison_payload(
         reference_root, args.slug, args.level, rows,
         contract, state.get("gpu", {}))
-    report_path = (
-        cell_root / f"N8_P3_L{args.level}_{args.slug}_REPORT.json"
+    report_path = cell_root / (
+        f"N8_P3_L{args.level}_{args.slug}_REPORT_v"
+        f"{args.evidence_version}.json"
     )
-    eid = f"p3-n8-p3-level{args.level}-{args.slug}-v1"
+    eid = (
+        f"p3-n8-p3-level{args.level}-{args.slug}"
+        f"-v{args.evidence_version}"
+    )
     command = (
         "python -m jspace_phase3.experiments.p3_n8_phase3_cells "
         f"--slug {args.slug} --level {args.level} --n {args.n} "
-        f"--cell-root {cell_root}"
+        f"--cell-root {cell_root} "
+        f"--evidence-version {args.evidence_version}"
+        + (
+            f" --supersedes {args.supersedes}"
+            if args.supersedes else ""
+        )
     )
     write_result3(payload, report_path, Provenance3(
         evidence_id=eid, tier=TIER, command=command,
@@ -510,7 +586,10 @@ def main() -> None:
     comparison_path = (
         reference_root / "metrics" / "cross_model" / "release_audit"
         / "n8_phase3"
-        / f"n8_p3_l{args.level}_{args.slug}.json"
+        / (
+            f"n8_p3_l{args.level}_{args.slug}"
+            f"_v{args.evidence_version}.json"
+        )
     )
     comparison_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(report_path, comparison_path)
@@ -532,6 +611,7 @@ def main() -> None:
             "frozen_grid": contract["frozen_grid_sha256"],
             "lens": contract["lens_sha256"],
         },
+        supersedes=args.supersedes,
     )
     print(json.dumps({
         "evidence_id": eid,
