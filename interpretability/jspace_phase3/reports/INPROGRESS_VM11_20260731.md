@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 11:14 UTC.
+Last updated: 2026-07-31 11:38 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence head before this documentation checkpoint:
-  `ee51eea`. Resume from the remote
+  `07d256a`. Resume from the remote
   branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -55,15 +55,16 @@ VRAM allocated at 94% utilization on the RTX PRO 6000, P0.
 ## Current process and checkpoint state
 
 - No model job was running at this checkpoint. The exact 3.1 Instruct
-  cache is independently verified on local NVMe and Drive, and its G5
-  producer is complete, validated, registered, committed, and pushed.
-  The next command is the 3.1 Instruct own-lens grid recorded below.
+  cache is independently verified on local NVMe and Drive. Its G5 and
+  own-lens grid are complete, validated, registered, committed, and
+  pushed. The next command is the 3.1 Instruct common-base-lens grid
+  recorded below.
 - The local 3.1 Think cache was removed only after its complete
   scientific and documentation boundary was backed up and pushed at
   `7a9dd07`. Its independently verified Drive recovery copy remains.
 - All completed evidence and figures are durable on Drive, registered,
   committed, and pushed.
-- Latest scientific-evidence head is `ee51eea`; the documentation
+- Latest scientific-evidence head is `07d256a`; the documentation
   checkpoint containing this file may be newer.
 - Full Phase 4 suite: 44/44 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
@@ -484,6 +485,34 @@ prefix audit. The full suite remains 44/44.
 
 The validated registry boundary is pushed at `ee51eea`.
 
+### Instruct own-lens grid — complete
+
+Live evidence:
+`p4-lineage-grid-olmo31-instruct-dev-v1`.
+
+Artifact:
+
+`phase4_20260731/metrics/olmo31-instruct/lineage_grid/p4-lineage-grid-olmo31-instruct-dev-v1/`
+
+The RTX producer completed the immutable 236-item / 118-fact /
+36-family cohort under seed namespace
+`p4-lineage-grid-olmo31-instruct-frame-pair-dev-v1`. Independent
+validation found:
+
+- maximum G5 baseline replay drift `7.75e-7` nats;
+- span-safe projector, normalized, and removed-protected-energy
+  overlap exactly `0.0`;
+- rank match `1.0` in all 528 matched summaries, with minimum protected
+  rank 10;
+- maximum matched-energy relative error `0.000228`;
+- maximum protected cosine `2.7e-7`;
+- result/parquet SHA-256:
+  `f79ae41162fac3363b42122934867f86b5ef1c7cb80b60ced6ca43d061fd758a`
+  /
+  `dada28f3a39262958f79add83244e4794f98903af611384092f57282609f2bdb`.
+
+The validated registry boundary is pushed at `07d256a`.
+
 ## Local immutable inputs and disk
 
 - The exact local 3.0 Think cache was removed after the corrected v4/v2
@@ -520,6 +549,12 @@ The validated registry boundary is pushed at `ee51eea`.
   `1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8`.
   It is now verified and locally materialized at
   `/content/sl4_work/inputs/1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8/`,
+  byte-identical to the Drive source.
+- The 3.1 Instruct own lens is pinned at Drive URI
+  `drive://part2/lens/olmo31instruct_lens.pt`, SHA-256
+  `e0f8b972a9f1f884101f94ff52a1938d5cfa7a5f49e987e6768826f2337c6dfb`.
+  It is independently verified and locally materialized at
+  `/content/sl4_work/inputs/e0f8b972a9f1f884101f94ff52a1938d5cfa7a5f49e987e6768826f2337c6dfb/`,
   byte-identical to the Drive source.
 - Base lens is materialized locally under
   `/content/sl4_work/inputs/92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696/`.
@@ -560,11 +595,11 @@ The validated registry boundary is pushed at `ee51eea`.
    `PYTHONPATH=interpretability/jspace_phase4:interpretability/jspace_phase3 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True TOKENIZERS_PARALLELISM=false python -u -m jspace_phase4.experiments.p4_g5_bank_scoring --config interpretability/jspace_phase4/configs/p4_g5_olmo31-instruct-dev.yaml`.
    It is complete, independently validated, banked, and pushed at
    `ee51eea`.
-6. From a clean tree, run the 3.1 Instruct own-lens grid with
-   `p4_lineage_grid_olmo31-instruct-dev.yaml`, then bank and push it.
-   Run the common-base-lens grid with
+6. The 3.1 Instruct own-lens grid from
+   `p4_lineage_grid_olmo31-instruct-dev.yaml` is validated and pushed at
+   `07d256a`. From a clean tree, run the common-base-lens grid with
    `p4_lineage_grid_olmo31-instruct-common-base-lens-dev.yaml` only
-   after that boundary. Both must share
+   after this boundary. Both must share
    `p4-lineage-grid-olmo31-instruct-frame-pair-dev-v1`.
 7. Build the full base → 3.0 Think → 3.1 Think/Instruct development
    trajectory with common-lens and own-lens views. If they disagree,
