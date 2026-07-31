@@ -42,6 +42,26 @@ class OverlapPositionRecord:
     removed_energy_in_prot_frac: float | None
     lost_rank: int                     # span-safe only; 0 for label arm
     null_row_frac: float               # span-safe only
+    # Optional §6.2 bridge-geometry audit fields.  They remain None on
+    # the frozen label/span-safe arms unless the caller supplies
+    # ``base_protect_sets`` and/or ``diagnostic_ids``.
+    rank_selected_before: int | None = None
+    protected_rank_before: int | None = None
+    protected_rank_after: int | None = None
+    added_rank: int | None = None
+    added_selected_overlap: float | None = None
+    n_diagnostic_ids: int | None = None
+    diagnostic_dir_survival_mean: float | None = None
+    diagnostic_dir_survival_min: float | None = None
+    diagnostic_activation_score_mean: float | None = None
+    diagnostic_activation_score_max: float | None = None
+    diagnostic_base_overlap: float | None = None
+    diagnostic_answer_cosine_mean: float | None = None
+    diagnostic_answer_cosine_max: float | None = None
+    answer_dir_survival_mean: float | None = None
+    answer_dir_survival_min: float | None = None
+    removed_energy_l2_sq: float | None = None
+    removed_energy_frac: float | None = None
 
 
 @dataclass
@@ -83,6 +103,10 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
                       exact v2 behaviour)
       record_overlap  bool — per-position OverlapPositionRecord
       answer_id       int | None — token id for answer-direction survival
+      answer_ids      1-D tensor | None — answer-piece survival summary
+      base_protect_sets [T,p] | None — clean protection before an added
+                      bridge set (enables protected rank before/after)
+      diagnostic_ids  1-D tensor | None — added bridge-piece rows
     """
 
     def __init__(self, layers, band):
@@ -97,6 +121,18 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
             raise NotImplementedError("assay is per-item (batch size 1)")
         flat = h.reshape(-1, d).float()
         scores = (flat.to(D.dtype) @ D.T).float()
+        diagnostic_ids = m.get("diagnostic_ids")
+        diagnostic_scores = None
+        if diagnostic_ids is not None:
+            diagnostic_ids = diagnostic_ids.to(scores.device).long()
+            if diagnostic_ids.dim() != 1:
+                raise ValueError("diagnostic_ids must be one-dimensional")
+            if diagnostic_ids.numel() == 0:
+                raise ValueError("diagnostic_ids must be nonempty")
+            if int(diagnostic_ids.max()) >= D.shape[0] \
+                    or int(diagnostic_ids.min()) < 0:
+                raise ValueError("diagnostic id exceeds dictionary rows")
+            diagnostic_scores = scores[:, diagnostic_ids].detach()
         if m.get("nonneg", True):
             scores = torch.where(scores > 0, scores,
                                  torch.full_like(scores, float("-inf")))
@@ -158,12 +194,21 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
             thr_p = (sp[:, :1] * 1e-4).clamp_min(1e-7)
             qp_masked = up * (sp > thr_p).unsqueeze(1)       # [T, d, pk]
 
-        if span_safe and qp_masked is not None:
-            # label rank BEFORE residualization (the lost-rank observable)
-            _, s_lab, _ = torch.linalg.svd(dirs.transpose(1, 2),
-                                           full_matrices=False)
+        # Label rank/basis BEFORE protected-span residualization.  The
+        # detailed bridge audit needs this even though the final
+        # span-safe selected basis is (correctly) orthogonal to the added
+        # protection and would otherwise make the geometry invisible.
+        u_lab = s_lab = rank_lab_mask = None
+        lab_rank = None
+        if qp_masked is not None and (
+                span_safe or m.get("record_overlap", False)):
+            u_lab, s_lab, _ = torch.linalg.svd(
+                dirs.transpose(1, 2), full_matrices=False)
             thr_lab = (s_lab[:, :1] * 1e-4).clamp_min(1e-7)
-            lab_rank = (s_lab > thr_lab).sum(dim=1).cpu()
+            rank_lab_mask = s_lab > thr_lab
+            lab_rank = rank_lab_mask.sum(dim=1).cpu()
+
+        if span_safe and qp_masked is not None:
             coef_p = torch.einsum("tkd,tdp->tkp", dirs, qp_masked)
             dirs_res = dirs - torch.einsum("tkp,tdp->tkd", coef_p, qp_masked)
             norm_before = dirs.norm(dim=2).clamp_min(1e-30)
@@ -215,6 +260,102 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
                 acoef = torch.einsum("tdk,d->tk", Ur, arow)
                 asurv = (arow.unsqueeze(0)
                          - torch.einsum("tdk,tk->td", Ur, acoef)).norm(dim=1)
+            answer_ids = m.get("answer_ids")
+            answer_surv_mean = answer_surv_min = None
+            if answer_ids is not None:
+                answer_ids = answer_ids.to(D.device).long()
+                if answer_ids.dim() != 1 or answer_ids.numel() == 0:
+                    raise ValueError(
+                        "answer_ids must be a nonempty one-dimensional tensor")
+                arows = torch.nn.functional.normalize(
+                    D[answer_ids].float(), dim=1)
+                acoef_all = torch.einsum("tdk,ad->tak", Ur, arows)
+                ares = (arows.unsqueeze(0)
+                        - torch.einsum("tdk,tak->tad", Ur, acoef_all))
+                as_all = ares.norm(dim=2)
+                answer_surv_mean = as_all.mean(dim=1).cpu()
+                answer_surv_min = as_all.min(dim=1).values.cpu()
+
+            # Added-protection geometry relative to the caller-supplied
+            # clean protection.  Q_added is the genuinely novel portion
+            # of the after-protection span; duplicate/already-protected
+            # bridge pieces therefore add rank zero.
+            base_rank = added_rank = added_overlap = None
+            diagnostic_surv_mean = diagnostic_surv_min = None
+            diagnostic_base_overlap = None
+            diagnostic_answer_cos_mean = diagnostic_answer_cos_max = None
+            base_ps = m.get("base_protect_sets")
+            qbase_masked = None
+            if base_ps is not None:
+                bidx = base_ps.to(scores.device).long()
+                if bidx.dim() == 1:
+                    bidx = bidx.unsqueeze(0).expand(T, -1)
+                if bidx.shape[0] != T:
+                    raise ValueError(
+                        f"base_protect_sets has {bidx.shape[0]} rows for "
+                        f"{T} positions — refusing to broadcast")
+                if int(bidx.max()) >= D.shape[0] or int(bidx.min()) < 0:
+                    raise ValueError(
+                        "base protect id exceeds dictionary rows")
+                base_dirs = D[bidx].float()
+                ub, sb, _ = torch.linalg.svd(
+                    base_dirs.transpose(1, 2), full_matrices=False)
+                thr_b = (sb[:, :1] * 1e-4).clamp_min(1e-7)
+                rb_mask = sb > thr_b
+                qbase_masked = ub * rb_mask.unsqueeze(1)
+                base_rank = rb_mask.sum(dim=1).cpu()
+
+                # Remove the clean span from the after-protection basis,
+                # then re-orthogonalize.  This produces P_added without
+                # treating lexical duplicates as new dimensions.
+                ext_res = qp_masked - torch.einsum(
+                    "tdb,tbp->tdp", qbase_masked,
+                    torch.einsum("tdb,tdp->tbp",
+                                 qbase_masked, qp_masked))
+                ua, sa, _ = torch.linalg.svd(
+                    ext_res, full_matrices=False)
+                # Define added rank by the SAME numerical-rank rule used
+                # for the before/after protected spans.  Selecting that
+                # many leading residual singular vectors avoids
+                # fabricating an "added" dimension from subtraction
+                # roundoff when the diagnostic row is already protected.
+                rank_delta = (
+                    (sp > thr_p).sum(dim=1)
+                    - rb_mask.sum(dim=1)).clamp_min(0)
+                ra_mask = (
+                    torch.arange(sa.shape[1], device=sa.device)
+                    .unsqueeze(0) < rank_delta.unsqueeze(1))
+                qadded_masked = ua * ra_mask.unsqueeze(1)
+                added_rank = rank_delta.cpu()
+
+                if u_lab is not None and rank_lab_mask is not None:
+                    qlab = u_lab * rank_lab_mask.unsqueeze(1)
+                    ma = torch.einsum(
+                        "tdk,tda->tka", qlab, qadded_masked)
+                    added_overlap = (
+                        torch.linalg.svdvals(ma) ** 2).sum(dim=1).cpu()
+
+            if diagnostic_ids is not None:
+                drows = torch.nn.functional.normalize(
+                    D[diagnostic_ids].float(), dim=1)
+                dcoef = torch.einsum("tdk,bd->tbk", Ur, drows)
+                dres = (drows.unsqueeze(0)
+                        - torch.einsum("tdk,tbk->tbd", Ur, dcoef))
+                dsurv = dres.norm(dim=2)
+                diagnostic_surv_mean = dsurv.mean(dim=1).cpu()
+                diagnostic_surv_min = dsurv.min(dim=1).values.cpu()
+                if qbase_masked is not None:
+                    db = torch.einsum(
+                        "bd,tdp->tbp", drows, qbase_masked)
+                    diagnostic_base_overlap = (
+                        torch.linalg.svdvals(db) ** 2).sum(dim=1).cpu()
+                if answer_ids is not None:
+                    da = drows @ arows.T
+                    diagnostic_answer_cos_mean = (
+                        da.abs().mean().repeat(T).cpu())
+                    diagnostic_answer_cos_max = (
+                        da.abs().max().repeat(T).cpu())
+
             removed = flat - flat_new                        # [T, d]
             rem_in_prot = torch.einsum("td,tdp->tp", removed, qp_masked)
             rn2 = (removed * removed).sum(dim=1)
@@ -233,7 +374,50 @@ class Phase3JAblator(ProtectedDynamicAblatorV2):
                     removed_energy_in_prot_frac=(
                         round(float(remfrac[t]), 6) if rn2[t] > 0 else None),
                     lost_rank=int(lost_rank_t[t]),
-                    null_row_frac=round(float(null_frac_t[t]), 6)))
+                    null_row_frac=round(float(null_frac_t[t]), 6),
+                    rank_selected_before=(
+                        int(lab_rank[t]) if lab_rank is not None else None),
+                    protected_rank_before=(
+                        int(base_rank[t]) if base_rank is not None else None),
+                    protected_rank_after=int(rp[t]),
+                    added_rank=(
+                        int(added_rank[t]) if added_rank is not None else None),
+                    added_selected_overlap=(
+                        round(float(added_overlap[t]), 6)
+                        if added_overlap is not None else None),
+                    n_diagnostic_ids=(
+                        int(diagnostic_ids.numel())
+                        if diagnostic_ids is not None else None),
+                    diagnostic_dir_survival_mean=(
+                        round(float(diagnostic_surv_mean[t]), 6)
+                        if diagnostic_surv_mean is not None else None),
+                    diagnostic_dir_survival_min=(
+                        round(float(diagnostic_surv_min[t]), 6)
+                        if diagnostic_surv_min is not None else None),
+                    diagnostic_activation_score_mean=(
+                        round(float(diagnostic_scores[t].mean()), 6)
+                        if diagnostic_scores is not None else None),
+                    diagnostic_activation_score_max=(
+                        round(float(diagnostic_scores[t].max()), 6)
+                        if diagnostic_scores is not None else None),
+                    diagnostic_base_overlap=(
+                        round(float(diagnostic_base_overlap[t]), 6)
+                        if diagnostic_base_overlap is not None else None),
+                    diagnostic_answer_cosine_mean=(
+                        round(float(diagnostic_answer_cos_mean[t]), 6)
+                        if diagnostic_answer_cos_mean is not None else None),
+                    diagnostic_answer_cosine_max=(
+                        round(float(diagnostic_answer_cos_max[t]), 6)
+                        if diagnostic_answer_cos_max is not None else None),
+                    answer_dir_survival_mean=(
+                        round(float(answer_surv_mean[t]), 6)
+                        if answer_surv_mean is not None else None),
+                    answer_dir_survival_min=(
+                        round(float(answer_surv_min[t]), 6)
+                        if answer_surv_min is not None else None),
+                    removed_energy_l2_sq=round(float(rn2[t]), 6),
+                    removed_energy_frac=round(
+                        float(rn2[t] / h2_before[t].clamp_min(1e-30)), 6)))
 
         self.log.hook_fires[self.phase] += 1
         sel_k = valid.sum(dim=1).cpu()

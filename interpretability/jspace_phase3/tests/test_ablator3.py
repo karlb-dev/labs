@@ -87,6 +87,42 @@ def test_label_arm_overlap_is_logged_and_positive_here():
     assert max(ov) > 1e-3          # coherent frame ⇒ nonzero overlap
     ans = [r.answer_dir_survival for r in ab.log.overlap]
     assert all(a is None for a in ans)   # no answer_id passed
+    assert all(r.protected_rank_before is None for r in ab.log.overlap)
+
+
+def test_added_protection_geometry_is_rank_safe_and_complete():
+    """The §6.2 audit distinguishes clean protection from genuinely
+    added bridge rank and measures overlap against the pre-safe J span."""
+    dic, h, base = _setup(31)
+    # Include one already-protected id plus three new diagnostic rows.
+    diagnostic = torch.tensor(
+        [int(base[0, 0]), 81, 123, 177], dtype=torch.long)
+    after = torch.cat([
+        base,
+        diagnostic.unsqueeze(0).expand(T, -1),
+    ], dim=1)
+    _, ab = _run(
+        Phase3JAblator, dic, h, after, span_safe=True,
+        record_overlap=True, base_protect_sets=base,
+        diagnostic_ids=diagnostic, answer_ids=diagnostic)
+    assert len(ab.log.overlap) == T
+    for r in ab.log.overlap:
+        assert r.n_diagnostic_ids == 4
+        assert r.protected_rank_after == (
+            r.protected_rank_before + r.added_rank)
+        assert r.rank_selected_before == r.rank_selected + r.lost_rank
+        assert r.added_selected_overlap is not None
+        assert r.added_selected_overlap >= 0
+        # Every diagnostic direction is in the protected-after span, so
+        # a span-safe deletion must preserve it.
+        assert r.diagnostic_dir_survival_min > 0.999
+        assert r.answer_dir_survival_min > 0.999
+        assert r.diagnostic_activation_score_mean is not None
+        assert r.diagnostic_activation_score_max is not None
+        assert r.diagnostic_base_overlap is not None
+        assert r.diagnostic_answer_cosine_mean is not None
+        assert r.removed_energy_l2_sq >= 0
+        assert 0 <= r.removed_energy_frac <= 1 + 1e-5
 
 
 def test_span_safe_lost_rank_observable():
