@@ -1,13 +1,14 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 20:04 UTC.
+Last updated: 2026-07-31 20:36 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence/registry head before this documentation
-  checkpoint: `0788407`. The GPU-fit harness is pushed at `8769b8b`
+  checkpoint: `0788407`. The current branch/Drive-report head is
+  `d51ba22`. The GPU-fit harness is pushed at `8769b8b`
   and its first OOM recovery repair at `0dbf4de`. The mandatory fused
   GPU-kernel runtime repair is pushed at `51336db`. Resume from the
   remote branch tip containing this file.
@@ -61,12 +62,15 @@ the RTX PRO 6000.
   n=120 toward n=250, started from clean pushed commit `3a6d501`.
   It rehashed the exact model, passed the CUDA/FLA/48-block gates, and
   recovered the exact fit contract at n=120 before doing new work.
-  Its latest complete atomic local/Drive boundary is n=123,
+  Its latest complete atomic local/Drive boundary is n=132,
   checkpoint SHA-256
-  `7de6fe1aaa727f0467121abe155178ed87a5f60b0415c9de714335e8f7d7a0be`,
-  6,606,047,399 bytes. Prompts 124–126 had resumed when this handoff
+  `b1ad7befede51f70d2db4e852f4c49320e8ba1385a8325a07a4fd68a70c764ec`,
+  6,606,047,399 bytes. Prompts 133–135 had resumed when this handoff
   was written. If the original process is gone, run the exact n=250
-  command below and require `recovered_next_idx` of at least 123.
+  command below and require `recovered_next_idx` of at least 132.
+  The VM was already at roughly 22 hours uptime at this boundary, so
+  assume reclamation is imminent and trust only the atomic Drive
+  checkpoint, not the live process.
 - Qwen draw A n=120 completed and is live evidence
   `p4-qwen-lens-fit-drawA-n120-dev-v1`, committed and pushed at
   `515a67a`. It used fit contract SHA-256
@@ -103,11 +107,12 @@ the RTX PRO 6000.
 - All completed evidence and registered figures are durable on Drive,
   registered, committed, and pushed.
 - Latest scientific-evidence/registry head is `0788407`; the fitter
-  implementation head is `8769b8b`; the documentation checkpoint
-  containing this file may be newer.
-- The refreshed handout compiles to 9 pages with no TeX warnings; the
-  trajectory and closing pages were visually inspected. PDF SHA-256 is
-  `06c9bf3055d110a7eba14d9dc69a6b9faffc6d3b79c30f178cecd993a60bdd26`.
+  implementation head is `8769b8b`; the Qwen n=120 report/figure
+  boundary is pushed at `d51ba22`.
+- The refreshed handout compiles to 10 pages with no TeX warnings; its
+  Qwen structural and closing page was visually inspected. PDF
+  SHA-256 is
+  `52891fa3dbe4eaa82d55db486c165821ad036b6cd37a590f6a5dc4d0e5963823`.
 - Full Phase 4 suite after the structural producer: 63/63 passing.
   The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
@@ -918,13 +923,22 @@ whole-lens validation. Figure:
    Recovery lives under
    `phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/`.
    It must report `recovered_next_idx: 120` and verify the cumulative
-   checkpoint before new GPU work. Commit/push each registry event,
+   checkpoint before new GPU work. The active 2026-07-31 invocation
+   had reached at least n=132; recovery must use the highest valid
+   `checkpoint_state.json` boundary rather than assuming n=120.
+   Commit/push each registry event,
    then repeat at n=500 and n=1000. Run draw B n=120 and preferably
    n=500 the same way after the corresponding draw-A boundary.
 5. Compare row-wise token cosine, CKA, selected-ID Jaccard,
    selected-span angles, protected overlap, occupancy, centered excess
    capacity, G4, span-safe specificity, and bridge
    rescue/substitution. Do not fit a model-level capacity regression.
+   The same-corpus structural comparator must reuse the exact first
+   diagnostic's token-ID sample hash
+   `55b81bf163ad483da72161c7f7d978930442d7fdfd032a39c3330d82d4cf8a5d`
+   and packed Rademacher-probe hash
+   `bed1537f9668132d3c701e0bc0303987fa085e90d9bb3992003776c81d90770c`;
+   do not derive a fresh sample merely because the evidence ID changes.
 6. If Qwen `n=120` reproduces `n=1000`, close the fit-size
    explanation. If not, run the nested `120/250/500` study on one
    representative OLMo checkpoint, preferably 3.1 Think, before
