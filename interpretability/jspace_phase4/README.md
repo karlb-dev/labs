@@ -32,6 +32,18 @@ jspace-phase4 verify
 The run root, model cache, Phase 3 imports, and repository files are resolved
 through logical URIs. Scientific modules must not embed machine paths.
 
+## Current development synthesis
+
+- Living Markdown: `reports/PHASE4_DEVELOPMENT_REPORT.md`
+- Compiled handout:
+  `reports/handout/jspace_phase4_development.{tex,pdf}`
+- Durable restart ledger:
+  `../jspace_phase3/reports/INPROGRESS_VM11_20260731.md`
+
+These documents currently cover the OLMo-3 32B Think capability gate,
+own-lens intervention point, seed-stable common-base-lens repair, and paired
+lens-frame analysis. They remain development summaries, not frozen claims.
+
 ## Tiers
 
 - `phase2-confirmatory-import`
