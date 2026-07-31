@@ -1,8 +1,8 @@
 # J-space Phase 4 development report
 
 Status: live development synthesis through the OLMo-3 32B base,
-seed-paired 3.0 Think, and seed-paired 3.1 Think own/common-lens
-comparisons, 2026-07-31.
+seed-paired 3.0 Think, and seed-paired OLMo-3.1 32B Think and Instruct
+own/common-lens comparisons, 2026-07-31.
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -295,10 +295,95 @@ The Bank-S composition contrast is positive in both frames: own
 All 42 bootstrap and 6 exact sign-flip distributions were
 independently reconstructed exactly.
 
+## OLMo-3.1 32B Instruct capability and own-lens point
+
+Capability evidence: `p4-g5-bank-olmo31-instruct-dev-v1`.
+
+Raw own-lens grid: `p4-lineage-grid-olmo31-instruct-dev-v1`.
+
+Own-frame analysis: `p4-lineage-analysis-olmo31-instruct-dev-v1`.
+
+The exact pinned revision is
+`ac0587e4a7744a551c059d8cd17ba220bc940dae`. Its RTX-backed G5 run
+produced 972 rows, 324 facts, and 72 families.
+
+| View | Boundary-safe prefix capability |
+|---|---:|
+| Overall | 0.6245 |
+| Bank F | 0.4673 |
+| Bank S | 0.8917 |
+| Direct | 0.6667 |
+| Composed | 0.4383 |
+| Bridge supplied | 0.7685 |
+
+Requiring both direct and composed capability fixed 32 Bank-F facts
+and 86 Bank-S facts, or 118 facts / 236 items. All 972 generations are
+byte-identical to the Phase 3 run, and all capability flags exactly
+match the later boundary-safe prefix audit.
+
+The own-lens grid has maximum G5 baseline replay drift `7.75e-7` nats,
+zero span-safe overlap, 100% rank agreement over 528 matched summaries,
+and maximum matched-energy relative error `0.000228`.
+
+![OLMo-3.1 Instruct own-lens development point](figures/p4f06_olmo31_instruct_development.png)
+
+Family-weighted J-specific effects are:
+
+| Cell | Estimate (nats) | Family-bootstrap 95% interval |
+|---|---:|---:|
+| Bank F direct | +0.0432 | [−0.0259, +0.1181] |
+| Bank F composed | −0.0662 | [−0.4037, +0.1921] |
+| Bank S direct | −0.0224 | [−0.0656, +0.0179] |
+| Bank S composed | −0.0177 | [−0.0755, +0.0325] |
+
+Bank-S composed-minus-direct specificity is `+0.0047`
+`[−0.0411,+0.0501]`. All four primary intervals include zero, unlike
+the 3.1 Think Bank-S cells. All 22 family bootstraps and 6 exact
+sign-flip distributions were independently reconstructed exactly.
+
+## OLMo-3.1 Instruct seed-paired coordinate comparison
+
+Common-lens grid:
+`p4-lineage-grid-olmo31-instruct-common-base-lens-dev-v1`.
+
+Paired analysis:
+`p4-lens-frame-analysis-olmo31-instruct-dev-v1`.
+
+The own/common grids use identical 236-item cohort manifests,
+condition orders, and scientific RNG namespaces. Between-frame
+baseline drift is exactly zero; both frames replay G5 within
+`7.75e-7` nats. Both have zero span-safe overlap and 100% rank
+agreement. Maximum matched-energy relative error is `0.000228` in the
+own frame and `0.000212` in the common frame. Mechanics-random and
+logit-protected outcomes are bit-identical between frames.
+
+![Seed-paired OLMo-3.1 Instruct lens-frame comparison](figures/p4f07_olmo31_instruct_lens_frame_comparison.png)
+
+Family-weighted J-specific effects and paired frame deltas are:
+
+| Cell | Own lens (95% interval) | Common base lens (95% interval) | Common − own (95% interval) |
+|---|---:|---:|---:|
+| F direct | +0.0432 [−0.0263, +0.1173] | −0.0111 [−0.0655, +0.0417] | −0.0542 [−0.0970, −0.0194] |
+| F composed | −0.0662 [−0.4050, +0.1920] | +0.0271 [−0.1813, +0.2170] | +0.0934 [−0.0312, +0.2488] |
+| S direct | −0.0224 [−0.0657, +0.0178] | −0.0379 [−0.0891, +0.0159] | −0.0155 [−0.0603, +0.0258] |
+| S composed | −0.0177 [−0.0753, +0.0332] | −0.0045 [−0.0609, +0.0564] | +0.0131 [−0.0240, +0.0558] |
+
+The Bank-F direct common-minus-own interval is below zero. Its
+descriptive exact sign-flip value is `p=0.0057`. The Bank-F
+composition contrast also changes across frames: own
+`−0.1094 [−0.4439,+0.1404]`, common
+`+0.0382 [−0.1652,+0.2172]`, paired delta
+`+0.1476 [+0.0257,+0.2978]` (`p=0.0363`). All Bank-S effects,
+composition contrasts, and frame deltas include zero.
+
+Item/family frame correlations are `0.7523` / `0.8521`, and mean
+absolute item shift is `0.0819` nats. All 42 bootstrap and 6 exact
+sign-flip distributions were independently reconstructed exactly.
+
 ## Current interpretation
 
-The base-to-3.0/3.1-Think trajectory supports an estimation-first
-account:
+The base-to-3.0/3.1 Think/Instruct trajectory supports an
+estimation-first account:
 
 - The base checkpoint is near zero in all four primary specificity
   cells, including both Bank-S variants.
@@ -316,10 +401,17 @@ account:
   Bank-S composed is negative in the own frame but imprecise in the
   common frame. The positive composed-minus-direct contrast is now
   precise in both frames and stable under the paired lens change.
-- Bank-F cell effects remain imprecise, but the 3.1 composed
-  common-minus-own interval is below zero. Coordinate choice therefore
-  materially affects at least one known-bank trajectory cell and must
-  remain explicit in every lineage synthesis.
+- At the sibling 3.1 Instruct checkpoint, all Bank-S specificity and
+  composition intervals include zero in both frames. The 3.1 Think
+  Bank-S pattern therefore does not transfer to Instruct under these
+  development cohorts. Because capability cohorts and post-training
+  objectives differ, this is trajectory localization rather than a
+  paired causal mode effect.
+- Bank-F cell effects remain individually imprecise, but coordinate
+  choice matters: the 3.1 Think composed frame delta is below zero,
+  while 3.1 Instruct has a negative direct frame delta and a positive
+  composition frame delta with intervals excluding zero. Coordinate
+  frame must remain explicit in every lineage synthesis.
 - The precise 3.1 Bank-S composition contrast is a development finding,
   not an explanation. The controlled Bank-W load/redundancy and
   internal-derivation axes still need to adjudicate its mechanism.
@@ -330,12 +422,12 @@ own-lens trajectory lines. They do not license “lineage present” or
 
 ## Next boundary
 
-The pinned base, corrected 3.0 Think, and corrected 3.1 Think paired
-points are complete and banked. Next run the exact 3.1 Instruct point
-through the Phase 4 prospective G5 gate and seed-paired own/common
-seven-condition grids. Then synthesize the full
-base → 3.0 Think → 3.1 Think/Instruct trajectory.
+The pinned base, corrected 3.0 Think, and corrected 3.1 Think/Instruct
+development points are complete and banked. Next build the registered
+cross-checkpoint trajectory table/figure with common-lens and own-lens
+views kept separate. The observed frame and sibling-checkpoint
+disagreements make the fit-size/corpus study the next experimental
+priority before stronger causal interpretation.
 
-If the two trajectory views disagree, the next priority is the
-fit-size/corpus study before further causal interpretation. Confirmatory
-Phase 4 remains blocked on preregistration freeze and untouched data.
+Confirmatory Phase 4 remains blocked on preregistration freeze and
+untouched data.

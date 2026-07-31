@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 11:38 UTC.
+Last updated: 2026-07-31 12:12 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence head before this documentation checkpoint:
-  `07d256a`. Resume from the remote
+  `8842482`. Resume from the remote
   branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -48,23 +48,25 @@ interpret sandbox CUDA invisibility as a reason to fall back to CPU.
 CPU is allowed only for hashes, unit tests, deterministic statistics,
 plotting, and TeX/PDF compilation.
 
-The completed Think grids and Instruct G5 recorded the hard gate in
-their result envelopes. Live Instruct G5 telemetry showed 62,164 MiB
-VRAM allocated at 94% utilization on the RTX PRO 6000, P0.
+The completed Think and Instruct grids recorded the hard gate in their
+result envelopes. Live Instruct G5 telemetry showed 62,164 MiB VRAM
+allocated at 94% utilization; the Instruct grids reached 81,128 MiB on
+the RTX PRO 6000.
 
 ## Current process and checkpoint state
 
 - No model job was running at this checkpoint. The exact 3.1 Instruct
-  cache is independently verified on local NVMe and Drive. Its G5 and
-  own-lens grid are complete, validated, registered, committed, and
-  pushed. The next command is the 3.1 Instruct common-base-lens grid
-  recorded below.
+  cache is independently verified on local NVMe and Drive. Its G5,
+  seed-paired own/common grids, own-frame analysis, paired-frame
+  analysis, and registered figures are complete, independently
+  reproduced, committed, and pushed. The report/TeX/PDF checkpoint is
+  the only work in flight here.
 - The local 3.1 Think cache was removed only after its complete
   scientific and documentation boundary was backed up and pushed at
   `7a9dd07`. Its independently verified Drive recovery copy remains.
-- All completed evidence and figures are durable on Drive, registered,
-  committed, and pushed.
-- Latest scientific-evidence head is `07d256a`; the documentation
+- All completed evidence and registered figures are durable on Drive,
+  registered, committed, and pushed.
+- Latest scientific-evidence head is `8842482`; the documentation
   checkpoint containing this file may be newer.
 - Full Phase 4 suite: 44/44 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
@@ -513,6 +515,96 @@ validation found:
 
 The validated registry boundary is pushed at `07d256a`.
 
+### Instruct common-base lens and both analyses — complete
+
+Live evidence:
+
+- `p4-lineage-grid-olmo31-instruct-common-base-lens-dev-v1`;
+- `p4-lineage-analysis-olmo31-instruct-dev-v1`;
+- `p4-lens-frame-analysis-olmo31-instruct-dev-v1`.
+
+Artifacts:
+
+- `phase4_20260731/metrics/olmo31-instruct-common-base-lens/lineage_grid/p4-lineage-grid-olmo31-instruct-common-base-lens-dev-v1/`;
+- `phase4_20260731/metrics/olmo31-instruct/lineage_analysis/p4-lineage-analysis-olmo31-instruct-dev-v1/`;
+- `phase4_20260731/metrics/olmo31-instruct-lens-frame/lens_frame_analysis/p4-lens-frame-analysis-olmo31-instruct-dev-v1/`;
+- `phase4_20260731/figures/p4f06_olmo31_instruct_development.{png,pdf}`;
+- `phase4_20260731/figures/p4f07_olmo31_instruct_lens_frame_comparison.{png,pdf}`.
+
+The common-base-lens grid ran on the RTX under the same
+`p4-lineage-grid-olmo31-instruct-frame-pair-dev-v1` namespace as the
+own grid. All 236 item IDs, 118 direct/composed fact pairs, 36
+families, and condition orders match. Acceptance:
+
+- between-frame baseline drift exactly `0.0`;
+- maximum G5 replay drift `7.75e-7` nats in each frame;
+- span-safe overlap exactly 0 and rank agreement 1.0 over all 528
+  matched summaries;
+- maximum matched-energy relative error: own `0.000228`, common
+  `0.000212`;
+- mechanics-random and logit-protected outcomes bit-identical across
+  frames;
+- common result/parquet SHA-256:
+  `c9b128c70f014ff8b4f0d28097744024fda5e729f6181a6ad1947a3655ab82d2`
+  /
+  `7f5cd296183a90259ac9959bde51d853d4934288019593e1b0f57c873aea4418`.
+
+The common-grid registry boundary is pushed at `2f5e14e`.
+
+Own-frame family-weighted J-specific effects:
+
+- Bank F direct `+0.043159`, `[-0.025880,+0.118059]`;
+- Bank F composed `-0.066216`, `[-0.403699,+0.192109]`;
+- Bank S direct `-0.022419`, `[-0.065586,+0.017928]`;
+- Bank S composed `-0.017672`, `[-0.075527,+0.032474]`;
+- Bank-S composed-minus-direct `+0.004747`,
+  `[-0.041100,+0.050097]`.
+
+All four primary intervals and the Bank-S composition interval include
+zero, unlike the sibling 3.1 Think result. All 22 bootstrap and 6
+exact sign-flip distributions independently reproduce exactly. The
+analysis result/input-manifest hashes are
+`b7ab7f497fb62d06c434ce6512f423af88d8a04649a521e070aa200260990787`
+/
+`6071c6a5054f0f57409d266919b7024a5f9b30a7f77cbc6648a64447a3e18a29`.
+The registered PNG/PDF hashes are
+`608cc5d4625ba69eab5e29aeae144b64ae02543d189fcb2dddc74bc199c75db9`
+/
+`95a8640064d06549e1561a8c3605bffd86aec98052096d2cb7501afedd7bac17`.
+This boundary is pushed at `ede9b99`.
+
+Seed-paired own/common results:
+
+- F direct: own `+0.043159`, common `-0.011069`,
+  common-minus-own `-0.054228`, 95% interval
+  `[-0.096963,-0.019400]`, descriptive exact sign-flip `p=0.005737`;
+- F composed: own `-0.066216`, common `+0.027146`, delta `+0.093362`,
+  `[-0.031211,+0.248762]`;
+- S direct: own `-0.022419`, common `-0.037890`, delta `-0.015470`,
+  `[-0.060266,+0.025809]`;
+- S composed: own `-0.017672`, common `-0.004546`, delta `+0.013126`,
+  `[-0.023965,+0.055828]`;
+- Bank-F composition: own `-0.109374`, common `+0.038216`, delta
+  `+0.147590`, `[+0.025748,+0.297768]`, `p=0.036255`;
+- Bank-S composition: own `+0.004747`, common `+0.033344`, delta
+  `+0.028597`, `[-0.027970,+0.096384]`;
+- item/family frame correlation `0.752319` / `0.852085`; mean absolute
+  item shift `0.081852` nats.
+
+All Bank-S effects, composition contrasts, and frame deltas include
+zero. Bank-F direct and composition show coordinate sensitivity, but
+the individual F effects remain imprecise. All 42 bootstrap and 6
+exact sign-flip distributions independently reproduce exactly. The
+paired result/input-manifest hashes are
+`cb647454a12604d660e088a3603fe4e87bf754e83df3bdfeb494191b0d1fbf73`
+/
+`518ca9254bd88d369eac1c30e3cda756cbef71107aa3bd8107f4c2fbad60aeb0`.
+The registered PNG/PDF hashes are
+`a131d0b2fcbc530f459409a635d503e898158d3394164901c93c59e2f27716c3`
+/
+`2fc689553c6635e7c238f5acc673e55bd833118c20d9bea374fee2a1b402c87a`.
+The full Instruct scientific boundary is pushed at `8842482`.
+
 ## Local immutable inputs and disk
 
 - The exact local 3.0 Think cache was removed after the corrected v4/v2
@@ -564,48 +656,31 @@ The validated registry boundary is pushed at `07d256a`.
 
 ## Next queue — execute without pausing
 
-1. The exact 3.1 trajectory config set is committed at `238ba9f`. The
-   Think snapshot above has passed local and Drive verification. Pinned
-   trajectory sources are:
-   - Think:
-     `allenai/Olmo-3.1-32B-Think@832c3f543499af8fe68b88359501de9cb7840544`;
-   - Instruct:
-     `allenai/Olmo-3.1-32B-Instruct@ac0587e4a7744a551c059d8cd17ba220bc940dae`;
-   - own-lens SHAs:
-     `1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8`
-     (Think) and
-     `e0f8b972a9f1f884101f94ff52a1938d5cfa7a5f49e987e6768826f2337c6dfb`
-     (Instruct);
-   - common base lens:
-     `92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696`.
-2. Before every model producer, rerun
+1. The base, corrected 3.0 Think, and seed-paired 3.1 Think/Instruct
+   development points are complete. The latest scientific boundary is
+   `8842482`. Do not rerun or overwrite any registered evidence.
+2. Before any later model producer, rerun
    `jspace_phase4.gpu.require_cuda_gpu()` in the same host process.
    Model load, generation, intervention, and scoring must use the RTX;
    never use CPU fallback.
-3. The 3.1 Think G5, both grids, corrected own analysis, paired
-   analysis, figures, and scientific registry are validated, committed,
-   and pushed at `a119986`; the report/TeX/PDF/handoff checkpoint is
-   pushed at `7a9dd07`. Its local cache has been removed and its exact
-   Drive recovery snapshot retained.
-4. Exact 3.1 Instruct revision
-   `ac0587e4a7744a551c059d8cd17ba220bc940dae` is verified on local NVMe
-   and Drive as described above. Load only the local NVMe snapshot;
-   never load model weights through DriveFS.
-5. The clean-tree 3.1 Instruct G5 command was:
-   `PYTHONPATH=interpretability/jspace_phase4:interpretability/jspace_phase3 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True TOKENIZERS_PARALLELISM=false python -u -m jspace_phase4.experiments.p4_g5_bank_scoring --config interpretability/jspace_phase4/configs/p4_g5_olmo31-instruct-dev.yaml`.
-   It is complete, independently validated, banked, and pushed at
-   `ee51eea`.
-6. The 3.1 Instruct own-lens grid from
-   `p4_lineage_grid_olmo31-instruct-dev.yaml` is validated and pushed at
-   `07d256a`. From a clean tree, run the common-base-lens grid with
-   `p4_lineage_grid_olmo31-instruct-common-base-lens-dev.yaml` only
-   after this boundary. Both must share
-   `p4-lineage-grid-olmo31-instruct-frame-pair-dev-v1`.
-7. Build the full base → 3.0 Think → 3.1 Think/Instruct development
-   trajectory with common-lens and own-lens views. If they disagree,
-   treat coordinate drift as a result and prioritize the fit/corpus-size
-   study before causal over-interpretation.
-8. Refresh this file, the Drive copy, Phase 4 Markdown/TeX/PDF, figures,
+3. Next, build a registered deterministic cross-checkpoint trajectory
+   table and figure from the immutable evidence. Keep own and common
+   coordinate views separate; the base lens is the base checkpoint's
+   own coordinate. Include primary F/S direct/composed cells and the
+   within-fact composition contrasts.
+4. Capability cohorts differ across checkpoints. Plot and tabulate
+   their family-weighted development estimates and intervals, but do
+   not report cross-checkpoint differences as paired causal estimates.
+   Independently reproduce every bootstrap payload/hash before banking
+   the synthesis.
+5. Treat the sibling 3.1 Think/Instruct and coordinate-frame
+   disagreements as findings. After the synthesis, prioritize the
+   fit-size/corpus study and controlled Bank-W load/redundancy and
+   internal-derivation axes before stronger causal interpretation.
+6. The exact Instruct local cache may be removed only after the current
+   report/TeX/PDF/handoff is verified on Drive and pushed. Its
+   independently hash-verified Drive snapshot is the recovery source.
+7. Refresh this file, the Drive copy, Phase 4 Markdown/TeX/PDF, figures,
    and evidence registry after every major boundary. Commit and push
    often.
 
