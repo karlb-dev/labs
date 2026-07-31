@@ -153,7 +153,8 @@ def clone_past_key_values(past):
 
 @torch.no_grad()
 def continuation_lp(hf, last_logits: torch.Tensor, past,
-                    answer_ids: torch.Tensor) -> float:
+                    answer_ids: torch.Tensor, *,
+                    prompt_length: int) -> float:
     """Score one continuation from an immutable prefill state."""
     tokens = answer_ids.to(last_logits.device).long()
     if tokens.dim() != 1 or not tokens.numel():
@@ -162,8 +163,16 @@ def continuation_lp(hf, last_logits: torch.Tensor, past,
     total = torch.log_softmax(
         last_logits.float(), dim=-1)[tokens[0]]
     for index in range(1, len(tokens)):
+        # Hybrid attention/cache models (including Qwen3.6) require the
+        # full growing mask here.  A length-1 implicit mask can silently
+        # change cached continuation scores relative to full-sequence
+        # teacher forcing.
+        attention_mask = torch.ones(
+            (1, prompt_length + index),
+            dtype=torch.long, device=last_logits.device)
         out = hf(
             input_ids=tokens[index - 1].reshape(1, 1),
+            attention_mask=attention_mask,
             past_key_values=cache, use_cache=True)
         cache = out.past_key_values
         total = total + torch.log_softmax(
@@ -173,7 +182,8 @@ def continuation_lp(hf, last_logits: torch.Tensor, past,
 
 @torch.no_grad()
 def greedy_from_prefill(hf, tok, last_logits: torch.Tensor, past,
-                        *, max_new_tokens: int) -> tuple[str, list[int]]:
+                        *, prompt_length: int,
+                        max_new_tokens: int) -> tuple[str, list[int]]:
     cache = clone_past_key_values(past)
     token = int(last_logits.argmax())
     generated = [token]
@@ -186,9 +196,13 @@ def greedy_from_prefill(hf, tok, last_logits: torch.Tensor, past,
     for _ in range(max_new_tokens - 1):
         if token in eos:
             break
+        attention_mask = torch.ones(
+            (1, prompt_length + len(generated)),
+            dtype=torch.long, device=last_logits.device)
         out = hf(
             input_ids=torch.tensor(
                 [[token]], device=last_logits.device),
+            attention_mask=attention_mask,
             past_key_values=cache, use_cache=True)
         cache = out.past_key_values
         token = int(out.logits[0, -1].argmax())
@@ -749,15 +763,18 @@ def main() -> None:  # noqa: C901
             original_lps = {
                 alias: continuation_lp(
                     hf, last_logits, output.past_key_values,
-                    sess.answer_ids(alias)[0])
+                    sess.answer_ids(alias)[0],
+                    prompt_length=prompt_ids.shape[1])
                 for alias in bundle.accepted_answers}
             counterfactual_lps = {
                 alias: continuation_lp(
                     hf, last_logits, output.past_key_values,
-                    sess.answer_ids(alias)[0])
+                    sess.answer_ids(alias)[0],
+                    prompt_length=prompt_ids.shape[1])
                 for alias in bundle.counterfactual_accepted}
             generated, generated_ids = greedy_from_prefill(
                 hf, tok, last_logits, output.past_key_values,
+                prompt_length=prompt_ids.shape[1],
                 max_new_tokens=max_new)
             grading = boundary_generation_category(
                 generated, bundle.accepted_answers,
