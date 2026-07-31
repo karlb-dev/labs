@@ -87,6 +87,15 @@ def test_canonical_alias_is_not_assumed_to_be_alias_zero():
     ) == " baht"
 
 
+def test_canonical_alias_prefers_exact_spelling_before_normalization():
+    session = ScoringSession(MockTokenizer())
+    assert canonical_alias_for(
+        session,
+        [" the Río de la Plata", " the Rio de la Plata"],
+        "the Río de la Plata",
+    ) == " the Río de la Plata"
+
+
 def test_generation_boundary_and_counterfactual_trichotomy():
     session = ScoringSession(MockTokenizer())
     assert session.grade_alias("Bogotá is large", [" Bogota"]) == " Bogota"

@@ -70,6 +70,16 @@ def load_items(bank_paths: list[Path]) -> list[dict]:
 
 def canonical_alias_for(session: ScoringSession, aliases: list[str],
                         canonical_answer: str) -> str:
+    exact_matches = [
+        alias for alias in aliases
+        if alias.strip() == canonical_answer.strip()
+    ]
+    if len(exact_matches) == 1:
+        return exact_matches[0]
+    if len(exact_matches) > 1:
+        raise RuntimeError(
+            f"canonical answer {canonical_answer!r} has "
+            f"{len(exact_matches)} exact aliases")
     target = session.spec.normalize_generation(canonical_answer)
     matches = [
         alias for alias in aliases
