@@ -1,24 +1,25 @@
 # LIVE — Phase 3 release audit and Phase 4 bridge handoff
 
-Last updated: 2026-07-31 03:18 UTC.
+Last updated: 2026-07-31 03:46 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
-- Pushed result-bearing head: `54370b6` (use `git log -1` for the
-  current head after later handoff/report commits).
+- Pushed Phase 3 release head: `9e0672b`.
 - Governing plan: Drive
   `special-lab-1/jspace_lab_nextsteps_4_1.md` plus its addendum.
 - Static bootstrap: `/content/drive/MyDrive/interpret/special_lab_resume.md`
 - Current Phase 3 run root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729`
-- Frozen tags:
+- Frozen/release tags:
   `jspace-phase3-freeze-v1` → `df4d45a`;
-  `jspace-phase3-pre-release-audit-v1` → `660047d`.
-- Do not create the Phase 3 completion tag until the release manifest,
-  paper/handout PDF, final state report, and final verification are
-  banked.
+  `jspace-phase3-pre-release-audit-v1` → `660047d`;
+  `jspace-phase3-complete-v1` → `9e0672b`.
+- Phase 3 is closed. Never move or reuse the completion tag, and never
+  overwrite a registered artifact. Any future correction must be a new
+  evidence ID plus an event-sourced correction, supersession, or
+  withdrawal.
 
 ## Mandatory GPU contract
 
@@ -44,8 +45,35 @@ TeX Live is installed.
 ## Current state
 
 Nothing is running. All completed scientific evidence is on Drive,
-registered, committed, and pushed. The Phase 3 test suite is 97/97
-passing.
+registered, committed, pushed, and tagged. The Phase 3 test suite is
+101/101 passing.
+
+### Phase 3 release integration — completed
+
+- Binding Markdown:
+  `interpretability/jspace_phase3/reports/PHASE3_STATE_OF_RECORD.md`.
+- Final TeX/PDF:
+  `interpretability/jspace_phase3/reports/handout/jspace_phase3_final.{tex,pdf}`.
+  The PDF is five pages, was rendered page-by-page, has no overfull boxes,
+  and has SHA-256
+  `415469f5f304f4dbcb39b11d803fb3768176ca22f5d363434cf5e4cdd9a974be`.
+- Final synthesis figure:
+  `phase3_20260729/figures/p3f06_phase3_release_audit.{png,pdf}`;
+  live evidence `p3-release-summary-figure-v1`.
+- Byte-exact Drive publication:
+  `phase3_20260729/reports/`; live evidence
+  `p3-state-of-record-release-v1`.
+- Release manifest:
+  `phase3_20260729/manifests/phase3_release_manifest.json`; live evidence
+  `p3-release-manifest-v1`. The manifest-generation gate verified
+  56 live events / 167 outputs with zero failures. The independent
+  post-registration gate verified 57 live events / 172 outputs with zero
+  failures.
+- Final CUDA gate ran in the host execution context on
+  `NVIDIA RTX PRO 6000 Blackwell Server Edition`, driver `580.82.07`,
+  PyTorch `2.11.0+cu128`, CUDA build `12.8`, capability `12.0`; an FP16
+  matrix multiply completed on `cuda:0`.
+- Completion tag `jspace-phase3-complete-v1` is pushed at `9e0672b`.
 
 ### Release-audit reproduction
 
@@ -206,16 +234,18 @@ They are recoverable from pinned Hub revisions. Qwen remains local.
 
 ## Next queue — execute in order
 
-1. Refresh report figures/tables and paper wording with the N8,
-   geometry, and semantic results. Generate Markdown, TeX, and PDF and
-   verify PDF page rendering.
-2. Build the final Phase 3 release manifest and state report, verify
-   every live registry hash, run the full repro suite, commit/push, and
-   only then create the completion tag.
-3. Scaffold Phase 4 lineage and Bank B replication. The highest-value
-   new test is a frozen untouched-family bridge bank that distinguishes
-   counterfactual bridge injection from matched counterfactual-answer
-   direction injection.
+1. Treat `jspace-phase3-complete-v1` as immutable and use the Phase 3
+   release only as a hash-pinned input to later work.
+2. Scaffold Phase 4 lineage and Bank B without running confirmatory
+   outcomes. The highest-value design is a frozen untouched-family bridge
+   bank that distinguishes counterfactual bridge injection from a matched
+   counterfactual-answer direction, alongside true, unrelated, and
+   orthogonal controls.
+3. Freeze the Phase 4 bank, endpoint, family split, alias aggregation,
+   control construction, stopping rules, and claim ladder before any
+   confirmatory GPU scoring. Phase 4 uses prospective prefix-disjoint
+   logsumexp. Do not launch confirmatory work until its preregistration
+   passes conformance checks and is tagged.
 
 Commit and push at every boundary and refresh this file before any long
 run. Preserve all old evidence through supersession events; never
