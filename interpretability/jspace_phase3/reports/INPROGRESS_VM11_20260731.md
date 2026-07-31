@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 18:04 UTC.
+Last updated: 2026-07-31 19:37 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence/registry head before this documentation
-  checkpoint: `3f54e94`. The GPU-fit harness is pushed at `8769b8b`
+  checkpoint: `515a67a`. The GPU-fit harness is pushed at `8769b8b`
   and its first OOM recovery repair at `0dbf4de`. The mandatory fused
   GPU-kernel runtime repair is pushed at `51336db`. Resume from the
   remote branch tip containing this file.
@@ -57,22 +57,23 @@ the RTX PRO 6000.
 
 ## Current process and checkpoint state
 
-- **An active GPU model job was running at this checkpoint:** Qwen
-  draw A toward n=120, started from clean pushed code commit `51336db`,
-  fit contract SHA-256
+- No model job is active. Qwen draw A n=120 completed and is live
+  evidence `p4-qwen-lens-fit-drawA-n120-dev-v1`, committed and pushed
+  at `515a67a`. It used fit contract SHA-256
   `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00`.
-  Its latest complete atomic local/Drive recovery boundary is n=90
-  (three-quarters of the first milestone),
+  The final complete atomic local/Drive recovery boundary has
   checkpoint SHA-256
-  `d19a5f5baa73ded54e8ed06b28cb29a0d977069b3392796b3dcd2aeb49bca01e`,
-  6,606,047,399 bytes. Prompts 91–93 had resumed from n=90 when this
-  handoff was written. If the original process is gone, use the exact
-  command below; it must select the Drive checkpoint and report
-  `recovered_next_idx` at least 90 before doing new GPU work. The first
-  90 prompts took 4h29m end to end, including thirty full checkpoint
-  hashes and Drive mirrors; cumulative throughput was 179.68 seconds
-  per prompt and peak allocated VRAM was stable at 62,832,854,016
-  bytes.
+  `061574f95546d859f13141af480d2aa20372a8858dbc2f9bcdaacdbdd1cdb673`,
+  6,606,047,399 bytes. The registered fp16 lens is 3,303,034,078
+  bytes, SHA-256
+  `82af4cc7f637af33e166606b15993bd6c67d2ea764c9788b96aa5a2120c32b1b`.
+  All 40 three-prompt checkpoints completed. Full invocation time was
+  21,622.7 seconds (6h00m23s including final lens/registry work),
+  180.19 seconds per prompt; peak allocated VRAM was stable at
+  62,832,854,016 bytes. Both payload envelopes reconstructed exactly,
+  all output hashes independently matched, and the full live-evidence
+  verifier passed 24 events / 92 outputs / zero failures. The RTX was
+  fully released afterward (0 MiB, 0% utilization).
 - The exact 3.1 Instruct cache is independently verified on local NVMe
   and Drive. Its G5, seed-paired own/common grids, own-frame analysis,
   paired-frame analysis, and registered figures are complete,
@@ -91,7 +92,7 @@ the RTX PRO 6000.
   `7a9dd07`. Its independently verified Drive recovery copy remains.
 - All completed evidence and registered figures are durable on Drive,
   registered, committed, and pushed.
-- Latest scientific-evidence/registry head is `3f54e94`; the fitter
+- Latest scientific-evidence/registry head is `515a67a`; the fitter
   implementation head is `8769b8b`; the documentation checkpoint
   containing this file may be newer.
 - The refreshed handout compiles to 9 pages with no TeX warnings; the
@@ -772,6 +773,16 @@ read after manifest creation; all content hashes match, totaling
 SHA-256
 `1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1`.
 
+The first nested lens milestone is complete and live:
+`p4-qwen-lens-fit-drawA-n120-dev-v1`. Its 63 source layers target
+layer 63 at d_model 5120. The runtime result records all 48 Qwen
+linear-attention blocks bound to FLA, the exact five pinned runtime
+package versions, the RTX CUDA hard gate, and the exact clean jlens
+source contract. Prompt 112 was a pronounced but finite per-record
+Jacobian-norm outlier (`159.952`); it was retained under the frozen
+corpus/estimator and must be examined in the n=120 versus n=1000
+stability analysis, never trimmed post hoc.
+
 ## Local immutable inputs and disk
 
 - The exact local 3.0 Think cache was removed after the corrected v4/v2
@@ -850,18 +861,23 @@ SHA-256
    manifest, recipe, and GPU fitting entrypoint are now pinned,
    registered, tested, committed, and pushed. Do not regenerate the
    corpora or change their ordering.
-4. Start/resume draw A to n=120 from a clean tree with host GPU access:
+4. Draw A n=120 is complete and registered; do not rerun or overwrite
+   it. First run the planned row/layer-wise n=120 versus published
+   n=1000 stability analysis, including explicit outlier/influence
+   diagnostics for frozen prompt 112. Then resume draw A to n=250
+   from a clean tree with host GPU access:
 
    ```bash
    python -m jspace_phase4.experiments.p4_qwen_nested_lens_fit \
      --config configs/p4_qwen_nested_lens_fit_dev.yaml \
-     --draw draw_a --stop-at 120
+     --draw draw_a --stop-at 250
    ```
 
    Run from `interpretability/jspace_phase4/` in the host GPU process.
    Recovery lives under
    `phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/`.
-   Commit/push the registry event at n=120 before requesting n=250,
+   It must report `recovered_next_idx: 120` and verify the cumulative
+   checkpoint before new GPU work. Commit/push each registry event,
    then repeat at n=500 and n=1000. Run draw B n=120 and preferably
    n=500 the same way after the corresponding draw-A boundary.
 5. Compare row-wise token cosine, CKA, selected-ID Jaccard,
