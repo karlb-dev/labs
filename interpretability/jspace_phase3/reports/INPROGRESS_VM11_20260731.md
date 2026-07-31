@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 07:09 UTC.
+Last updated: 2026-07-31 07:48 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence head before this documentation checkpoint:
-  `51546756033999feb76cd395c4999aaf194b0b72`. Resume from the remote
+  `c619ad1`. Resume from the remote
   branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -57,7 +57,7 @@ envelopes. Live telemetry during the final common-lens grid showed
 - Nothing is running.
 - All completed evidence and figures are durable on Drive, registered,
   committed, and pushed.
-- Latest scientific-evidence head is `5154675`; the documentation
+- Latest scientific-evidence head is `c619ad1`; the documentation
   checkpoint containing this file may be newer.
 - Full Phase 4 suite: 39/39 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
@@ -227,6 +227,66 @@ Interpretation is estimation-first: Bank S is more frame-robust than
 Bank F at this checkpoint, while Bank F supplies evidence that fitted
 coordinate drift matters. This is not a binary lineage claim.
 
+## OLMo-3 32B base point — complete
+
+Live evidence:
+
+- `p4-g5-bank-olmo3-base-dev-v1`
+- `p4-lineage-grid-olmo3-base-dev-v1`
+- `p4-lineage-analysis-olmo3-base-dev-v1`
+
+Artifacts:
+
+- `phase4_20260731/metrics/olmo3-base/g5_bank/p4-g5-bank-olmo3-base-dev-v1/`
+- `phase4_20260731/metrics/olmo3-base/lineage_grid/p4-lineage-grid-olmo3-base-dev-v1/`
+- `phase4_20260731/metrics/olmo3-base/lineage_analysis/p4-lineage-analysis-olmo3-base-dev-v1/`
+- `phase4_20260731/figures/p4f03_olmo3_base_development.{png,pdf}`
+
+The exact base model is
+`allenai/Olmo-3-1125-32B@c2b61dae89a1ad10e4ad5653d0e46b590902607b`.
+Its G5 gate contains 972 rows / 324 facts / 72 families:
+
+- overall generation capability `0.610082`;
+- Bank F `0.439542`; Bank S `0.900000`;
+- direct `0.648148`; composed `0.398148`; bridge supplied `0.783951`;
+- prospectively capable direct+composed cohort: 23 Bank-F facts /
+  11 families and 88 Bank-S facts / 21 families, 111 facts / 222 items;
+- generation outcomes: 593 original, 379 other-invalid, 0
+  counterfactual.
+
+The completed seven-condition grid ran on the RTX PRO 6000 and passed
+the strict acceptance audit:
+
+- all 222 items are unique and form 111 exact direct/composed pairs;
+- maximum baseline replay drift from G5: `6.71e-7` nats;
+- every per-alias aggregate recomputes to floating-point precision;
+- span-safe selected/protected projector overlap: exactly 0;
+- matched rank fraction: 1.0 over all 504 alias-condition summaries;
+- maximum matched energy relative error: `0.000260`;
+- result SHA-256:
+  `90a022e1d5bc7fa99aa8e56c4eb0e79b25c14fccaefad44ef1eda21c32cbac7e`;
+- parquet SHA-256:
+  `c22fa1ea8280daca4eafb641b7c635f126d29eec3adb86398fc3b340e9cf3c69`.
+
+The deterministic 100,000-draw analysis was independently reproduced
+byte-for-byte. Family-weighted J-specific development estimates:
+
+- Bank F direct: `+0.024531`, `[-0.032962,+0.079192]`;
+- Bank F composed: `+0.014550`, `[-0.122560,+0.188055]`;
+- Bank S direct: `+0.000498`, `[-0.048738,+0.048082]`;
+- Bank S composed: `+0.002070`, `[-0.030860,+0.038506]`;
+- Bank S composed-minus-direct: `+0.001572`,
+  `[-0.041733,+0.040300]`.
+
+The primary base effect is therefore near zero in all four cells. This
+is not an inert-grid explanation: overall label-protected J-specific
+was `+0.123051`, mechanics-random `-0.104821`, and logit-protected
+`-0.202304`, each with an interval excluding zero. The contrast with
+the negative Bank-S 3.0 Think point localizes a development change to
+the base-to-Think interval, but checkpoint-specific capability cohorts
+make this a trajectory localization rather than a paired causal
+estimate. The new PNG and one-page PDF were visually inspected.
+
 ## Local immutable inputs and disk
 
 - The exact local Think snapshot was removed only after every one of its
@@ -245,27 +305,35 @@ coordinate drift matters. This is not a binary lineage claim.
 - Base lens is materialized locally under
   `/content/sl4_work/inputs/92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696/`.
 - Current root free space with the base model local: about 58 GiB.
-- Do not delete the local base snapshot until its G5, lineage grid,
-  analysis, and trajectory boundary are durable, registered, committed,
-  and pushed.
+- The base G5, grid, analysis, plots, and registry events are durable
+  and pushed. Do not delete the local base snapshot until this updated
+  report/handoff checkpoint is also committed, pushed, copied
+  byte-exact to Drive, and the exact next model source has been
+  verified.
 
 ## Next queue — execute without pausing
 
-1. Verify branch/head/clean tree and rerun the host CUDA hard gate.
-2. Run GPU-only G5 on the already validated local base snapshot:
-
-   `python -u -m jspace_phase4.experiments.p4_g5_bank_scoring --config interpretability/jspace_phase4/configs/p4_g5_olmo3-base-dev.yaml`
-
-3. Freeze the base G5 direct+composed capable cohort, add a base lineage
-   config using the already banked base lens, test and commit the config,
-   then run the same seven-condition GPU grid.
-4. Analyze the base point and build the required four-checkpoint
-   development trajectory using base, 3.0 Think, 3.1 Think, and 3.1
-   Instruct. Draw both common-lens and own-lens trajectories. If they
-   disagree, treat coordinate drift as a result and prioritize the
-   fit/corpus-size study before causal over-interpretation.
-5. Refresh this file, the Drive copy, Phase 4 Markdown/TeX/PDF, and
-   evidence registry after every major boundary. Commit and push often.
+1. Verify branch/head/clean tree, exact 3.1 Think/Instruct model
+   revisions, lens hashes, and Drive/Hub cache sources. Do not remove
+   the validated local base snapshot before this verification.
+2. Add and test Phase 4 prospective G5 plus own/common-lens grid configs
+   for the exact 3.1 Think and Instruct checkpoints. Commit and push
+   configs before creating evidence.
+3. Before every model producer, rerun
+   `jspace_phase4.gpu.require_cuda_gpu()` in the same host process.
+   Model load, generation, intervention, and scoring must use the RTX;
+   never use CPU fallback.
+4. Run G5, freeze each checkpoint-specific direct+composed capable
+   cohort, and run the same seven-condition grids under both its own
+   lens and the frozen base lens. Bank each major boundary before
+   swapping a cache.
+5. Build the full base → 3.0 Think → 3.1 Think/Instruct development
+   trajectory with common-lens and own-lens views. If they disagree,
+   treat coordinate drift as a result and prioritize the fit/corpus-size
+   study before causal over-interpretation.
+6. Refresh this file, the Drive copy, Phase 4 Markdown/TeX/PDF, figures,
+   and evidence registry after every major boundary. Commit and push
+   often.
 
 Never overwrite registered evidence. Use a new evidence ID and an
 event-sourced withdrawal, correction, or supersession for every repair.

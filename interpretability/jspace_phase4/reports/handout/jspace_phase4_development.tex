@@ -20,7 +20,7 @@ Evidence: \nolinkurl{#1}}}
 
 \title{\vspace{-1.25em}J-space Phase 4 --- development synthesis\\
 \large OLMo training trajectory and coordinate-frame validity\\[3pt]
-\normalsize\textcolor{muted}{State through OLMo-3 32B Think ·
+\normalsize\textcolor{muted}{State through OLMo-3 32B base and 3.0 Think ·
 2026-07-31}}
 \author{}\date{}
 
@@ -72,6 +72,46 @@ The first attempt stopped after accent folding made \texttt{Río} and
 \texttt{Rio} ambiguous. The repaired selector prefers exact spelling
 before a unique normalized fallback; the partial attempt remains
 preserved.
+
+\section{OLMo-3 32B base point}
+
+The exact pinned base revision
+\texttt{c2b61dae89a1ad10e4ad5653d0e46b590902607b} produced 972 G5 rows.
+Overall capability was .6101 (Bank F .4395; Bank S .9000). Requiring
+both direct and composed capability fixed 23 Bank-F and 88 Bank-S
+facts, or 111 facts / 222 items.
+\eid{p4-g5-bank-olmo3-base-dev-v1}
+
+The seven-condition grid had maximum baseline replay drift
+$6.71\times10^{-7}$ nats, zero span-safe selected/protected overlap,
+100\% matched-rank agreement, and maximum energy relative error
+0.000260.
+\eid{p4-lineage-grid-olmo3-base-dev-v1}
+
+\begin{center}
+\includegraphics[width=0.82\textwidth]{../figures/p4f03_olmo3_base_development.png}
+\end{center}
+
+\begin{center}\small
+\begin{tabular}{lrr}
+\toprule
+cell & J-specific estimate (nats) & family-bootstrap 95\% interval\\
+\midrule
+Bank F direct & $+0.0245$ & $[-0.0330,+0.0792]$\\
+Bank F composed & $+0.0145$ & $[-0.1226,+0.1881]$\\
+Bank S direct & $+0.0005$ & $[-0.0487,+0.0481]$\\
+Bank S composed & $+0.0021$ & $[-0.0309,+0.0385]$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All four primary effects are near zero. Bank-S
+composed-minus-direct is $+0.0016\,[-0.0417,+0.0403]$. The experiment
+is nevertheless sensitive: overall label-protected J-specific is
+$+0.1231\,[+0.0667,+0.1802]$, while mechanics-random and
+logit-protected effects are $-0.1048$ and $-0.2023$, with intervals
+below zero.
+\eid{p4-lineage-analysis-olmo3-base-dev-v1}
 
 \section{Think own-lens development point}
 
@@ -163,8 +203,12 @@ $-0.0327$ with an interval crossing zero.
 \section{Interpretation and next boundary}
 
 \begin{enumerate}
-\item Bank-S direct and composed specificity is already negative at
-3.0 Think and is comparatively stable across fitted frames.
+\item The base checkpoint is near zero in all four primary cells.
+Bank-S direct and composed specificity is negative by 3.0 Think and is
+comparatively stable across fitted frames.
+\item Because capability cohorts are checkpoint-specific, this
+localizes a base-to-Think trajectory change but is not a paired causal
+estimate.
 \item Bank-F conclusions depend materially on whether the checkpoint
 uses its own fitted lens or the frozen base coordinate. Coordinate
 drift is part of the result, not a nuisance to conceal.
@@ -173,15 +217,12 @@ drift is part of the result, not a nuisance to conceal.
 or ``lineage absent.''
 \end{enumerate}
 
-Next, run the pinned OLMo-3 base checkpoint:
-\begin{center}\small
-\texttt{allenai/Olmo-3-1125-32B}\\
-\texttt{revision c2b61dae89a1ad10e4ad5653d0e46b590902607b}
-\end{center}
-Run G5, a frozen capable direct/composed cohort, and the same
-seven-condition grid with the already banked base lens. Then synthesize base
-$\rightarrow$ 3.0 Think $\rightarrow$ 3.1 Think/Instruct with both
-common-lens and own-lens lines. If they disagree, prioritize the
-fit-size/corpus study before stronger causal interpretation.
+The pinned base checkpoint is complete and banked. Next, run the exact
+3.1 Think and 3.1 Instruct checkpoints through the Phase~4 prospective
+G5 gate and the same seven-condition GPU grid, retaining both own-lens
+and frozen common-base-lens views. Then synthesize the full base
+$\rightarrow$ 3.0 Think $\rightarrow$ 3.1 Think/Instruct trajectory.
+If the two coordinate views disagree, prioritize the fit-size/corpus
+study before stronger causal interpretation.
 
 \end{document}
