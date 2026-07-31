@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 12:12 UTC.
+Last updated: 2026-07-31 12:34 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence head before this documentation checkpoint:
-  `8842482`. Resume from the remote
+  `4751235`. Resume from the remote
   branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -59,16 +59,21 @@ the RTX PRO 6000.
   cache is independently verified on local NVMe and Drive. Its G5,
   seed-paired own/common grids, own-frame analysis, paired-frame
   analysis, and registered figures are complete, independently
-  reproduced, committed, and pushed. The report/TeX/PDF checkpoint is
-  the only work in flight here.
+  reproduced, committed, and pushed. The registered four-checkpoint
+  trajectory synthesis is also complete and pushed. The refreshed
+  report/TeX/PDF and this handoff form the documentation checkpoint
+  containing this file.
 - The local 3.1 Think cache was removed only after its complete
   scientific and documentation boundary was backed up and pushed at
   `7a9dd07`. Its independently verified Drive recovery copy remains.
 - All completed evidence and registered figures are durable on Drive,
   registered, committed, and pushed.
-- Latest scientific-evidence head is `8842482`; the documentation
+- Latest scientific-evidence head is `4751235`; the documentation
   checkpoint containing this file may be newer.
-- Full Phase 4 suite: 44/44 passing. The sandbox-only tiny nonlinear-JVP
+- The refreshed handout compiles to 9 pages with no TeX warnings; the
+  trajectory and closing pages were visually inspected. PDF SHA-256 is
+  `06c9bf3055d110a7eba14d9dc69a6b9faffc6d3b79c30f178cecd993a60bdd26`.
+- Full Phase 4 suite: 47/47 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
   model evidence and is intentionally CPU-safe.
 - Model runs checkpoint every 5 or 10 items, limiting loss well below
@@ -605,6 +610,65 @@ The registered PNG/PDF hashes are
 `2fc689553c6635e7c238f5acc673e55bd833118c20d9bea374fee2a1b402c87a`.
 The full Instruct scientific boundary is pushed at `8842482`.
 
+## Workstream A5 — registered four-checkpoint trajectory complete
+
+Live evidence:
+`p4-lineage-trajectory-analysis-olmo-dev-v1`.
+
+Artifacts:
+
+- `phase4_20260731/metrics/olmo-lineage-trajectory/trajectory_analysis/p4-lineage-trajectory-analysis-olmo-dev-v1/`;
+- `phase4_20260731/figures/p4f08_olmo_lineage_trajectory.{png,pdf}`.
+
+The registered CPU statistics/plotting producer reads only the completed
+GPU grid evidence. It validates all eight own/common inputs, live
+registry status, frame-paired item manifests, seed namespaces and
+condition orders, plus the shared bank and scoring contract. It then
+recomputes six metrics in each frame at the base, 3.0 Think, 3.1 Think,
+and sibling 3.1 Instruct endpoints under one stable family-bootstrap
+schedule.
+
+- 48 frame/metric summaries independently reconstructed exactly;
+- 42 unique bootstrap distributions independently reconstructed
+  exactly;
+- distribution-hash-set SHA-256:
+  `e2b0e8a9b96146f26e9a3dea2fce710affdedb8c7a4ddd42e2b81c75165ad326`;
+- result/input-manifest/table SHA-256:
+  `d5599b71f4f3c211e870ccdd7631de12e3f3311e2b7b0740856a615313038640`
+  /
+  `11b65c5936473a52f4747a7c5a5061eb44dae74023957a173538edf87c997cfa`
+  /
+  `3a0e7a9654a39a42583aa74800a2e09e012eef7649408a98a418d04d40b6420f`;
+- registered PNG/PDF SHA-256:
+  `be48f37164818ace88ea23923aa8389f8a9aaf510c38a3e1a8454e49213ded1e`
+  /
+  `ddc39a5b1853ad3ee6d3839417bdc11706c3139a5e09678cf492aa11256d8e95`;
+- live-evidence verifier: 22 live events, 85 output files, zero
+  failures;
+- full test suite: 47/47.
+
+The plot connects only Base → 3.0 Think → 3.1 Think. The 3.1 Instruct
+point is an unconnected sibling endpoint, avoiding a false temporal
+edge. Core Bank-S trajectory:
+
+- direct specificity, own/common:
+  Base `+0.0005/+0.0005`;
+  3.0 Think `-0.1277/-0.0974`;
+  3.1 Think `-0.1674/-0.1547`;
+  sibling Instruct `-0.0224/-0.0379`;
+- composed-minus-direct, own/common:
+  Base `+0.0016/+0.0016`;
+  3.0 Think `+0.0724/+0.0556`;
+  3.1 Think `+0.1183/+0.1166`;
+  sibling Instruct `+0.0047/+0.0333`.
+
+Thus the negative Bank-S direct effect appears by 3.0 and strengthens
+at 3.1 Think in both frames; the positive composition contrast becomes
+precise at 3.1 Think in both frames; both collapse toward zero at
+sibling Instruct. Capability cohorts are checkpoint-specific, so these
+are unpaired development localizations rather than causal training or
+mode contrasts. The scientific boundary is pushed at `4751235`.
+
 ## Local immutable inputs and disk
 
 - The exact local 3.0 Think cache was removed after the corrected v4/v2
@@ -656,31 +720,39 @@ The full Instruct scientific boundary is pushed at `8842482`.
 
 ## Next queue — execute without pausing
 
-1. The base, corrected 3.0 Think, and seed-paired 3.1 Think/Instruct
-   development points are complete. The latest scientific boundary is
-   `8842482`. Do not rerun or overwrite any registered evidence.
+1. OLMo Workstream A5 is complete. The base, corrected 3.0 Think,
+   seed-paired 3.1 Think/Instruct points, and registered two-frame
+   trajectory are banked at scientific head `4751235`. Do not rerun or
+   overwrite any registered evidence.
 2. Before any later model producer, rerun
    `jspace_phase4.gpu.require_cuda_gpu()` in the same host process.
    Model load, generation, intervention, and scoring must use the RTX;
    never use CPU fallback.
-3. Next, build a registered deterministic cross-checkpoint trajectory
-   table and figure from the immutable evidence. Keep own and common
-   coordinate views separate; the base lens is the base checkpoint's
-   own coordinate. Include primary F/S direct/composed cells and the
-   within-fact composition contrasts.
-4. Capability cohorts differ across checkpoints. Plot and tabulate
-   their family-weighted development estimates and intervals, but do
-   not report cross-checkpoint differences as paired causal estimates.
-   Independently reproduce every bootstrap payload/hash before banking
-   the synthesis.
-5. Treat the sibling 3.1 Think/Instruct and coordinate-frame
-   disagreements as findings. After the synthesis, prioritize the
-   fit-size/corpus study and controlled Bank-W load/redundancy and
-   internal-derivation axes before stronger causal interpretation.
-6. The exact Instruct local cache may be removed only after the current
-   report/TeX/PDF/handoff is verified on Drive and pushed. Its
-   independently hash-verified Drive snapshot is the recovery source.
-7. Refresh this file, the Drive copy, Phase 4 Markdown/TeX/PDF, figures,
+3. Next is Workstream E's Qwen symmetric lens-fit study. First audit
+   and pin the existing campaign/published Qwen lens sources, fitting
+   corpus, recipe, partitions, and GPU fitting entrypoint. Register a
+   development config and input manifest before fitting anything.
+4. Fit nested Qwen lenses at `n=120,250,500,1000` under one frozen
+   corpus and recipe, plus an independent `n=120` draw and preferably
+   `n=500`. Checkpoint often enough to keep recovery loss below
+   30 minutes. Lens fitting and every model-side evaluation are GPU
+   model compute and must hard-stop without CUDA.
+5. Compare row-wise token cosine, CKA, selected-ID Jaccard,
+   selected-span angles, protected overlap, occupancy, centered excess
+   capacity, G4, span-safe specificity, and bridge
+   rescue/substitution. Do not fit a model-level capacity regression.
+6. If Qwen `n=120` reproduces `n=1000`, close the fit-size
+   explanation. If not, run the nested `120/250/500` study on one
+   representative OLMo checkpoint, preferably 3.1 Think, before
+   comparing capacities.
+7. Controlled Bank-W load/redundancy and internal-derivation work
+   remains necessary before mechanism claims. Confirmatory/replication
+   model cells remain blocked on the preregistration freeze.
+8. The exact Instruct local cache may be removed after the
+   report/TeX/PDF/handoff checkpoint containing this file is verified
+   on Drive and pushed. Its independently hash-verified Drive snapshot
+   is the recovery source.
+9. Refresh this file, the Drive copy, Phase 4 Markdown/TeX/PDF, figures,
    and evidence registry after every major boundary. Commit and push
    often.
 

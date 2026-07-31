@@ -40,9 +40,10 @@ through logical URIs. Scientific modules must not embed machine paths.
 - Durable restart ledger:
   `../jspace_phase3/reports/INPROGRESS_VM11_20260731.md`
 
-These documents currently cover the OLMo-3 32B Think capability gate,
-own-lens intervention point, seed-stable common-base-lens repair, and paired
-lens-frame analysis. They remain development summaries, not frozen claims.
+These documents now cover the base, 3.0 Think, and sibling 3.1
+Think/Instruct capability and intervention points, seed-paired
+own/common-frame audits, and the registered four-checkpoint trajectory
+synthesis. They remain development summaries, not frozen claims.
 
 ## Tiers
 

@@ -2,7 +2,8 @@
 
 Status: live development synthesis through the OLMo-3 32B base,
 seed-paired 3.0 Think, and seed-paired OLMo-3.1 32B Think and Instruct
-own/common-lens comparisons, 2026-07-31.
+own/common-lens comparisons and registered four-checkpoint trajectory,
+2026-07-31.
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -380,9 +381,55 @@ Item/family frame correlations are `0.7523` / `0.8521`, and mean
 absolute item shift is `0.0819` nats. All 42 bootstrap and 6 exact
 sign-flip distributions were independently reconstructed exactly.
 
+## Registered four-checkpoint trajectory synthesis
+
+Live evidence:
+`p4-lineage-trajectory-analysis-olmo-dev-v1`.
+
+The synthesis reads the immutable base, 3.0 Think, 3.1 Think, and 3.1
+Instruct own/common grids. It requires a shared bank and scoring
+contract, exact own/common item pairing, shared scientific RNG
+namespaces and condition orders, and live registry status. The base
+lens is both its own and common coordinate. The two 3.1 endpoints are
+siblings: the figure connects only Base → 3.0 Think → 3.1 Think and
+marks 3.1 Instruct as an unconnected square.
+
+![Registered OLMo own/common-lens trajectory](figures/p4f08_olmo_lineage_trajectory.png)
+
+The synthesis uses one stable family-resampling schedule across all
+checkpoints and frames. It independently reconstructed all 48 table
+summaries and all 42 unique bootstrap distributions exactly; the
+distribution-hash-set SHA-256 is
+`e2b0e8a9b96146f26e9a3dea2fce710affdedb8c7a4ddd42e2b81c75165ad326`.
+Because the schedule is unified, fourth-decimal interval endpoints can
+differ slightly from the earlier checkpoint-specific panels; point
+estimates are identical.
+
+Bank-S trajectory summaries in the own coordinate are:
+
+| Checkpoint | Direct specificity | Composed specificity | Composed − direct |
+|---|---:|---:|---:|
+| Base | +0.0005 [−0.0490, +0.0483] | +0.0021 [−0.0304, +0.0392] | +0.0016 [−0.0420, +0.0399] |
+| 3.0 Think | −0.1277 [−0.2078, −0.0488] | −0.0553 [−0.0981, −0.0186] | +0.0724 [−0.0110, +0.1585] |
+| 3.1 Think | −0.1674 [−0.2476, −0.0950] | −0.0491 [−0.0889, −0.0162] | +0.1183 [+0.0520, +0.1882] |
+| 3.1 Instruct sibling | −0.0224 [−0.0656, +0.0176] | −0.0177 [−0.0756, +0.0336] | +0.0047 [−0.0410, +0.0501] |
+
+The same summaries in the common base-lens coordinate are:
+
+| Checkpoint | Direct specificity | Composed specificity | Composed − direct |
+|---|---:|---:|---:|
+| Base | +0.0005 [−0.0490, +0.0483] | +0.0021 [−0.0304, +0.0392] | +0.0016 [−0.0420, +0.0399] |
+| 3.0 Think | −0.0974 [−0.1551, −0.0448] | −0.0419 [−0.0770, −0.0114] | +0.0556 [−0.0129, +0.1280] |
+| 3.1 Think | −0.1547 [−0.2356, −0.0866] | −0.0381 [−0.0932, +0.0056] | +0.1166 [+0.0281, +0.2090] |
+| 3.1 Instruct sibling | −0.0379 [−0.0895, +0.0166] | −0.0045 [−0.0607, +0.0562] | +0.0333 [−0.0431, +0.1105] |
+
+The table is descriptive development evidence. Capability cohorts were
+fixed separately at each checkpoint, so the synthesis does not compute
+cross-checkpoint paired deltas or causal p-values.
+
 ## Current interpretation
 
-The base-to-3.0/3.1 Think/Instruct trajectory supports an
+The registered base-to-3.0/3.1 Think/Instruct trajectory supports an
 estimation-first account:
 
 - The base checkpoint is near zero in all four primary specificity
@@ -416,18 +463,23 @@ estimation-first account:
   not an explanation. The controlled Bank-W load/redundancy and
   internal-derivation axes still need to adjudicate its mechanism.
 
-These observations strengthen the need for seed-paired common-lens and
-own-lens trajectory lines. They do not license “lineage present” or
-“lineage absent.”
+The registered two-frame synthesis makes the Bank-S Think-path result
+harder to explain as lens drift alone: the direct effect becomes
+negative by 3.0 and more negative by 3.1 in both frames, while the
+composition contrast rises from near zero at base to about `+0.117` at
+3.1 Think in both frames. Its collapse toward zero at the sibling
+Instruct endpoint argues against treating the effect as a generic 3.1
+property. These are development localizations, not lineage or causal
+mode claims.
 
 ## Next boundary
 
-The pinned base, corrected 3.0 Think, and corrected 3.1 Think/Instruct
-development points are complete and banked. Next build the registered
-cross-checkpoint trajectory table/figure with common-lens and own-lens
-views kept separate. The observed frame and sibling-checkpoint
-disagreements make the fit-size/corpus study the next experimental
-priority before stronger causal interpretation.
+Workstream A5 is complete and banked. The observed coordinate and
+sibling-endpoint disagreements make fit size/corpus the next
+experimental priority. Before stronger causal interpretation, add
+controlled Bank-W load/redundancy and internal-derivation axes and
+resolve whether an intermediate post-training checkpoint is available
+to localize the base-to-3.0 Think transition.
 
 Confirmatory Phase 4 remains blocked on preregistration freeze and
 untouched data.

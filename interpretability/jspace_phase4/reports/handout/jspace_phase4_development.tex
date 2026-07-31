@@ -21,7 +21,7 @@ Evidence: \nolinkurl{#1}}}
 \title{\vspace{-1.25em}J-space Phase 4 --- development synthesis\\
 \large OLMo training trajectory and coordinate-frame validity\\[3pt]
 \normalsize\textcolor{muted}{State through OLMo-3 32B base,
-seed-paired 3.0 Think, and seed-paired 3.1 Think/Instruct · 2026-07-31}}
+seed-paired 3.0/3.1 endpoints, and registered trajectory · 2026-07-31}}
 \author{}\date{}
 
 \begin{document}
@@ -361,7 +361,43 @@ nats. All 42 bootstrap and 6 exact sign-flip distributions reproduce
 exactly.
 \eid{p4-lens-frame-analysis-olmo31-instruct-dev-v1}
 
-\enlargethispage{2\baselineskip}
+\section{Registered four-checkpoint trajectory}
+
+The synthesis reads all immutable own/common grids under one stable
+family-bootstrap schedule. It requires live evidence, a shared
+bank/scoring contract, exact own/common item pairing, and identical
+scientific RNG namespaces and condition orders. All 48 table summaries
+and all 42 unique bootstrap distributions reconstruct exactly.
+\eid{p4-lineage-trajectory-analysis-olmo-dev-v1}
+
+\begin{center}
+\includegraphics[width=0.98\textwidth]{../figures/p4f08_olmo_lineage_trajectory.png}
+\end{center}
+
+\begin{center}\scriptsize
+\begin{tabular}{lrrrr}
+\toprule
+checkpoint & S direct own & S direct common &
+S composition own & S composition common\\
+\midrule
+Base & $+0.0005$ & $+0.0005$ & $+0.0016$ & $+0.0016$\\
+3.0 Think & $-0.1277$ & $-0.0974$ & $+0.0724$ & $+0.0556$\\
+3.1 Think & $-0.1674$ & $-0.1547$ & $+0.1183$ & $+0.1166$\\
+3.1 Instruct sibling & $-0.0224$ & $-0.0379$ &
+$+0.0047$ & $+0.0333$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The figure connects only Base $\rightarrow$ 3.0 Think
+$\rightarrow$ 3.1 Think; squares mark the sibling Instruct endpoint,
+not a temporal continuation. In both frames, Bank-S direct becomes
+negative by 3.0 and more negative by 3.1, while Bank-S composition
+rises from near zero at base to about $+0.117$ at 3.1 Think. Both
+patterns collapse toward zero at sibling Instruct. Checkpoint-specific
+capability cohorts make this an unpaired development localization, not
+a causal training or mode contrast.
+
 \section{Interpretation and next boundary}
 
 \begin{enumerate}
@@ -391,8 +427,7 @@ axes remain necessary.
 or ``lineage absent.''
 \end{enumerate}
 
-All four development points are complete and banked. Next, build the
-registered cross-checkpoint trajectory with own/common frames separate,
-then prioritize fit size/corpus before stronger causal interpretation.
+A5 is banked. Next: fit size/corpus, Bank-W load/redundancy, internal
+derivation, and an audit for an intermediate checkpoint.
 
 \end{document}
