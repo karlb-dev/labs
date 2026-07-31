@@ -1,6 +1,6 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 08:56 UTC.
+Last updated: 2026-07-31 09:17 UTC.
 
 ## Restart contract
 
@@ -54,7 +54,10 @@ envelopes. Live telemetry during the final common-lens grid showed
 
 ## Current process and checkpoint state
 
-- Nothing is running.
+- No model job was running at this checkpoint. The next command is the
+  3.1 Think G5 producer recorded below. If a restart finds its Drive
+  state directory, rerun the exact same command; the producer resumes
+  compatible item checkpoints and rejects incompatible state.
 - All completed evidence and figures are durable on Drive, registered,
   committed, and pushed.
 - Latest scientific-evidence head is `bf8ca15`; the documentation
@@ -316,15 +319,20 @@ estimate. The new PNG and one-page PDF were visually inspected.
 
 ## Local immutable inputs and disk
 
-- The exact 3.0 Think snapshot is local again at
-  `/content/hf_local/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`.
-  It was restored from the independently verified Drive snapshot after
-  excluding unreferenced `.incomplete` blobs. Every one of its 14
-  shards (64,467,127,296 bytes total) matches its Hugging Face LFS
-  SHA-256 object ID; no local incomplete file remains.
-- The full recoverable Drive source is:
+- The exact local 3.0 Think cache was removed after the corrected v4/v2
+  evidence, report, PDF, handoff, and Git commits were durable. Its full
+  recoverable Drive source remains:
   `/content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`
   (14 shards; about 61 GiB dereferenced).
+- Exact 3.1 Think is now materialized on local NVMe and Drive:
+  `/content/hf_local/models--allenai--Olmo-3.1-32B-Think/snapshots/832c3f543499af8fe68b88359501de9cb7840544`
+  and
+  `/content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3.1-32B-Think/snapshots/832c3f543499af8fe68b88359501de9cb7840544`.
+  Both snapshots contain 26 entries, 14 weight shards, and a 707-tensor
+  index. Every local shard and every Drive shard independently matches
+  its content-addressed SHA-256 target. Dereferenced weight bytes are
+  exactly `64,467,127,296` in both copies; neither copy has an
+  `.incomplete` or rsync-partial file.
 - The exact local base snapshot was removed only after its complete G5,
   grid, analysis, figures, report checkpoint, registry events, and Git
   commits were durable. It is recoverable by exact revision
@@ -333,12 +341,9 @@ estimate. The new PNG and one-page PDF were visually inspected.
   `/content/sl4_work/inputs/05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053/`.
 - Base lens is materialized locally under
   `/content/sl4_work/inputs/92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696/`.
-- Current root free space with 3.0 Think local: about 61 GiB.
-- Do not remove the local 3.0 Think snapshot until this corrected v4/v2
-  report/handoff checkpoint is committed, pushed, and copied byte-exact
-  to Drive. After that, it is safe to remove only that exact local cache
-  root before materializing 3.1, because its verified Drive copy and all
-  evidence remain durable.
+- Current root free space with 3.1 Think local: about 61 GiB.
+- Keep local 3.1 Think until its G5, own/common grids, analyses,
+  registry events, report/handoff, and Git checkpoints are all durable.
 
 ## Next queue — execute without pausing
 
@@ -349,8 +354,9 @@ estimate. The new PNG and one-page PDF were visually inspected.
    `a0cae1b6...87be5e6`, report display plot
    `3de36890...c790568`. The scientific-evidence boundary is pushed at
    `bf8ca15`.
-2. The exact 3.1 trajectory config set is already committed at
-   `238ba9f`. Verify these pinned sources before download:
+2. The exact 3.1 trajectory config set is committed at `238ba9f`. The
+   Think snapshot above has passed local and Drive verification. Pinned
+   trajectory sources are:
    - Think:
      `allenai/Olmo-3.1-32B-Think@832c3f543499af8fe68b88359501de9cb7840544`;
    - Instruct:
@@ -362,19 +368,18 @@ estimate. The new PNG and one-page PDF were visually inspected.
      (Instruct);
    - common base lens:
      `92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696`.
-3. Drive cache discovery found only `config.json` for 3.1 Think and no
-   3.1 Instruct snapshot. After the documentation push, remove only the
-   verified local 3.0 Think cache, then download the exact 3.1 revision
-   to local NVMe. Maintain restart-safe Drive/cache provenance and
-   verify every downloaded shard before model use.
-4. Before every model producer, rerun
+3. Before every model producer, rerun
    `jspace_phase4.gpu.require_cuda_gpu()` in the same host process.
    Model load, generation, intervention, and scoring must use the RTX;
    never use CPU fallback.
-5. Run 3.1 Think G5, freeze its checkpoint-specific direct+composed
-   capable cohort, and run the same seven-condition grids under both
-   its own lens and the frozen base lens. Both grids already share the
-   explicit namespace
+4. From a clean tree, run 3.1 Think G5 with:
+   `PYTHONPATH=interpretability/jspace_phase4:interpretability/jspace_phase3 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True TOKENIZERS_PARALLELISM=false python -u -m jspace_phase4.experiments.p4_g5_bank_scoring --config interpretability/jspace_phase4/configs/p4_g5_olmo31-think-dev.yaml`.
+   The producer checkpoints every 10 items to
+   `phase4_20260731/metrics/olmo31-think/g5_bank/p4-g5-bank-olmo31-think-dev-v1/`.
+5. Validate and bank G5, freeze the checkpoint-specific
+   direct+composed capable cohort, and run the same seven-condition
+   grids under both its own lens and the frozen base lens. Both grids
+   share the explicit namespace
    `p4-lineage-grid-olmo31-think-frame-pair-dev-v1`. Bank and push G5,
    each grid, own analysis, and paired analysis before swapping cache.
 6. Repeat for 3.1 Instruct under
