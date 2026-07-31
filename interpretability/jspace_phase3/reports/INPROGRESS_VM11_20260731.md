@@ -1,13 +1,13 @@
 # LIVE — Phase 3 release audit and Phase 4 bridge handoff
 
-Last updated: 2026-07-31 02:29 UTC.
+Last updated: 2026-07-31 03:18 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
-- Pushed result-bearing head: `3442946` (the handoff-only commit follows;
-  use `git log -1` for the current head).
+- Pushed result-bearing head: `54370b6` (use `git log -1` for the
+  current head after later handoff/report commits).
 - Governing plan: Drive
   `special-lab-1/jspace_lab_nextsteps_4_1.md` plus its addendum.
 - Static bootstrap: `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -16,9 +16,9 @@ Last updated: 2026-07-31 02:29 UTC.
 - Frozen tags:
   `jspace-phase3-freeze-v1` → `df4d45a`;
   `jspace-phase3-pre-release-audit-v1` → `660047d`.
-- Do not create the Phase 3 completion tag until the remaining
-  alias/boundary/cohort audits, release manifest, paper/handout PDF, and
-  final state report are banked.
+- Do not create the Phase 3 completion tag until the release manifest,
+  paper/handout PDF, final state report, and final verification are
+  banked.
 
 ## Mandatory GPU contract
 
@@ -44,7 +44,7 @@ TeX Live is installed.
 ## Current state
 
 Nothing is running. All completed scientific evidence is on Drive,
-registered, committed, and pushed. The Phase 3 test suite is 90/90
+registered, committed, and pushed. The Phase 3 test suite is 97/97
 passing.
 
 ### Release-audit reproduction
@@ -140,6 +140,54 @@ Artifacts:
 - This is post-freeze development evidence on the existing cohort and
   not untouched-family replication.
 
+### Boundary, cohort, and alias sensitivity — completed
+
+Live evidence:
+
+- `p3-boundary-cohort-sensitivity-v2` (supersedes v1);
+- `p3-alias-endpoint-{qwen36-27b,olmo31-think,olmo31-instruct}-v1`;
+- `p3-alias-endpoint-cross-model-v1`.
+
+Boundary/cohort artifacts:
+
+`phase3_20260729/metrics/cross_model/release_audit/alias_cohort_sensitivity_v2/`
+
+- Boundary-safe regrading rejects four substring false positives and
+  recovers four Unicode-accent matches across 2,916 G5 rows.
+- The deterministic 100-positive/100-negative hand audit has zero
+  disagreements.
+- At the repaired state seed 31337, confirmatory P3-P1 is `-0.271183`
+  (exact p `0.057892`) under the historical cohort and `-0.270160` under
+  the boundary-safe cohort.
+- Boundary-safe P3-P2 is `+0.095833` on 186 items (plus-one p
+  `2/100001`); P3-P3 is `+0.428230` on 93 items (p `0.009420`).
+
+Alias artifacts:
+
+`phase3_20260729/metrics/{qwen36-27b,olmo31-think,olmo31-instruct}/release_audit/alias_endpoint/`
+and
+`phase3_20260729/metrics/cross_model/release_audit/alias_endpoint/`
+
+- The subset was frozen before outcomes: 20 common confirmatory facts,
+  all 17 shared families, and all four multi-alias facts; 52 alias cells
+  per model.
+- All three model jobs ran on the RTX PRO 6000 with CUDA-only scoring.
+  First-alias baseline/J replay errors were below `0.000214` nats and
+  tokenizer prefix-overlap pairs were zero.
+- Stable first-alias P3-P1 on the enriched subset is `-0.267301`.
+  Prefix-disjoint logsumexp is `-0.246098`, a `+0.021203` change.
+  Diagnostic max alias changes it by only `-0.000056`.
+- Canonical-only scoring is more surface-sensitive (`-0.383906`, a
+  `-0.116605` change), entirely concentrated in the two facts whose
+  canonical alias differs from the first alias.
+- The Qwen P3-P2 subset tail estimate is identical under historical
+  first, stable first, canonical, prefix-disjoint logsumexp, and max
+  scoring.
+
+The exact OLMo Think and Instruct caches downloaded for this audit were
+removed only after their artifacts and registry events were pushed.
+They are recoverable from pinned Hub revisions. Qwen remains local.
+
 ## Binding paper language
 
 - P3-P1: descriptive, seed-sensitive negative estimate; no inferential
@@ -152,20 +200,19 @@ Artifacts:
   probability and produces counterfactual generations, but the broader
   bridge-channel mechanism is development evidence and remains
   confounded with an answer-direction route.
+- Boundary-safe cohort selection and prospective prefix-disjoint
+  logsumexp do not materially alter the repaired headline estimates.
+  Canonical-only scoring has a disclosed two-fact surface sensitivity.
 
 ## Next queue — execute in order
 
-1. Run the remaining CPU release sensitivities from
-   `jspace_lab_nextsteps_4_1.md`: tokenizer alias/prefix audit,
-   boundary-safe generation regrade, and cohort/weighting sensitivity.
-   Register immutable reports; do not edit frozen raw outcomes.
-2. Refresh report figures/tables and paper wording with the N8,
+1. Refresh report figures/tables and paper wording with the N8,
    geometry, and semantic results. Generate Markdown, TeX, and PDF and
    verify PDF page rendering.
-3. Build the final Phase 3 release manifest and state report, verify
+2. Build the final Phase 3 release manifest and state report, verify
    every live registry hash, run the full repro suite, commit/push, and
    only then create the completion tag.
-4. Scaffold Phase 4 lineage and Bank B replication. The highest-value
+3. Scaffold Phase 4 lineage and Bank B replication. The highest-value
    new test is a frozen untouched-family bridge bank that distinguishes
    counterfactual bridge injection from matched counterfactual-answer
    direction injection.
