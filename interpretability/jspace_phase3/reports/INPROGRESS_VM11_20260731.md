@@ -1,6 +1,6 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 10:29 UTC.
+Last updated: 2026-07-31 10:58 UTC.
 
 ## Restart contract
 
@@ -54,15 +54,17 @@ envelopes. Live telemetry during the final common-lens grid showed
 
 ## Current process and checkpoint state
 
-- No model job was running at this checkpoint. The next command is the
-  3.1 Instruct cache transition and G5 producer recorded below. Do not
-  delete the local 3.1 Think cache until the documentation checkpoint
-  containing this update is backed up and pushed.
+- No model job was running at this checkpoint. The exact 3.1 Instruct
+  cache is now independently verified on local NVMe and Drive. The next
+  command is the 3.1 Instruct G5 producer recorded below.
+- The local 3.1 Think cache was removed only after its complete
+  scientific and documentation boundary was backed up and pushed at
+  `7a9dd07`. Its independently verified Drive recovery copy remains.
 - All completed evidence and figures are durable on Drive, registered,
   committed, and pushed.
 - Latest scientific-evidence head is `a119986`; the documentation
   checkpoint containing this file may be newer.
-- Full Phase 4 suite: 43/43 passing. The sandbox-only tiny nonlinear-JVP
+- Full Phase 4 suite: 44/44 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
   model evidence and is intentionally CPU-safe.
 - Model runs checkpoint every 5 or 10 items, limiting loss well below
@@ -452,15 +454,24 @@ The complete scientific boundary is pushed at `a119986`.
   recoverable Drive source remains:
   `/content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`
   (14 shards; about 61 GiB dereferenced).
-- Exact 3.1 Think is now materialized on local NVMe and Drive:
-  `/content/hf_local/models--allenai--Olmo-3.1-32B-Think/snapshots/832c3f543499af8fe68b88359501de9cb7840544`
-  and
+- Exact 3.1 Think remains materialized on Drive at
   `/content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3.1-32B-Think/snapshots/832c3f543499af8fe68b88359501de9cb7840544`.
+  The local copy was removed only after the full Think evidence,
+  report, PDF, handoff, Drive backup, and Git boundary were durable at
+  `7a9dd07`. Before removal, the local and Drive snapshots each had 26
+  entries, 14 weight shards, and a 707-tensor index; every shard
+  independently matched its content-addressed SHA-256 target.
+  Dereferenced weight bytes were exactly `64,467,127,296` in both
+  copies, with no `.incomplete` or rsync-partial file.
+- Exact 3.1 Instruct is now materialized on local NVMe and Drive:
+  `/content/hf_local/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae`
+  and
+  `/content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae`.
   Both snapshots contain 26 entries, 14 weight shards, and a 707-tensor
-  index. Every local shard and every Drive shard independently matches
-  its content-addressed SHA-256 target. Dereferenced weight bytes are
-  exactly `64,467,127,296` in both copies; neither copy has an
-  `.incomplete` or rsync-partial file.
+  index. All 14 local shards and all 14 Drive-mounted shards were read
+  and independently matched against their content-addressed SHA-256
+  targets. Dereferenced weight bytes are exactly `64,467,127,296` in
+  both copies; neither copy has an `.incomplete` or rsync-partial file.
 - The exact local base snapshot was removed only after its complete G5,
   grid, analysis, figures, report checkpoint, registry events, and Git
   commits were durable. It is recoverable by exact revision
@@ -475,8 +486,8 @@ The complete scientific boundary is pushed at `a119986`.
   byte-identical to the Drive source.
 - Base lens is materialized locally under
   `/content/sl4_work/inputs/92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696/`.
-- Current root free space with 3.1 Think local: about 61 GiB.
-- Keep local 3.1 Think until its G5, own/common grids, analyses,
+- Current root free space with 3.1 Instruct local: about 59 GiB.
+- Keep local 3.1 Instruct until its G5, own/common grids, analyses,
   registry events, report/handoff, and Git checkpoints are all durable.
 
 ## Next queue — execute without pausing
@@ -501,13 +512,13 @@ The complete scientific boundary is pushed at `a119986`.
    never use CPU fallback.
 3. The 3.1 Think G5, both grids, corrected own analysis, paired
    analysis, figures, and scientific registry are validated, committed,
-   and pushed at `a119986`. Finish and push the report/TeX/PDF/handoff
-   checkpoint before deleting its local model cache.
-4. After that documentation boundary is durable, remove only the exact
-   local 3.1 Think cache root. Keep its independently verified exact
-   Drive snapshot. Download or restore the exact 3.1 Instruct revision
-   `ac0587e4a7744a551c059d8cd17ba220bc940dae` to local NVMe, verify
-   every shard locally and on Drive, and never load it through DriveFS.
+   and pushed at `a119986`; the report/TeX/PDF/handoff checkpoint is
+   pushed at `7a9dd07`. Its local cache has been removed and its exact
+   Drive recovery snapshot retained.
+4. Exact 3.1 Instruct revision
+   `ac0587e4a7744a551c059d8cd17ba220bc940dae` is verified on local NVMe
+   and Drive as described above. Load only the local NVMe snapshot;
+   never load model weights through DriveFS.
 5. From a clean tree run 3.1 Instruct G5:
    `PYTHONPATH=interpretability/jspace_phase4:interpretability/jspace_phase3 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True TOKENIZERS_PARALLELISM=false python -u -m jspace_phase4.experiments.p4_g5_bank_scoring --config interpretability/jspace_phase4/configs/p4_g5_olmo31-instruct-dev.yaml`.
    Validate and bank it before the grids.
