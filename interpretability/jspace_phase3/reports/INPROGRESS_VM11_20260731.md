@@ -1,6 +1,6 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 16:35 UTC.
+Last updated: 2026-07-31 18:04 UTC.
 
 ## Restart contract
 
@@ -61,16 +61,16 @@ the RTX PRO 6000.
   draw A toward n=120, started from clean pushed code commit `51336db`,
   fit contract SHA-256
   `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00`.
-  Its latest complete atomic local/Drive recovery boundary is n=60
-  (halfway to the first milestone),
+  Its latest complete atomic local/Drive recovery boundary is n=90
+  (three-quarters of the first milestone),
   checkpoint SHA-256
-  `720fc69693e690bbcc9e0b682950f7d57ff88d42ff7dd0da0f94b535d6a7fc2e`,
-  6,606,047,399 bytes. Prompts 61–63 had resumed from n=60 when this
+  `d19a5f5baa73ded54e8ed06b28cb29a0d977069b3392796b3dcd2aeb49bca01e`,
+  6,606,047,399 bytes. Prompts 91–93 had resumed from n=90 when this
   handoff was written. If the original process is gone, use the exact
   command below; it must select the Drive checkpoint and report
-  `recovered_next_idx` at least 60 before doing new GPU work. The first
-  60 prompts took 2h59m end to end, including twenty full checkpoint
-  hashes and Drive mirrors; cumulative throughput was 179.76 seconds
+  `recovered_next_idx` at least 90 before doing new GPU work. The first
+  90 prompts took 4h29m end to end, including thirty full checkpoint
+  hashes and Drive mirrors; cumulative throughput was 179.68 seconds
   per prompt and peak allocated VRAM was stable at 62,832,854,016
   bytes.
 - The exact 3.1 Instruct cache is independently verified on local NVMe
