@@ -30,4 +30,13 @@ collection.
   span-safe rank/energy control was unaffected (worst relative energy error
   0.000236), and all stored outcome scores remain immutable. The constructor
   now marks this rank-limited geometry as clamped, a regression test covers
-  it, and a full v2 common-lens grid supersedes v1 before comparison.
+  it, and v1 is withdrawn before any own/common comparison.
+
+- 2026-07-31: the attempted common-lens v2 repair correctly fixed clamp
+  metadata but inherited the evidence ID as its scientific seed namespace.
+  Versioning v1 to v2 therefore changed all random-dictionary and matched-
+  control realizations. V2 is withdrawn as a useful seed-sensitivity
+  diagnostic, not treated as the conformance replacement. The producer now
+  accepts an explicit `scientific_seed_namespace`; v3 freezes that namespace
+  to the original v1 value, so baseline, J, random, and matched scientific
+  outcomes are directly comparable while only the clamp metadata changes.

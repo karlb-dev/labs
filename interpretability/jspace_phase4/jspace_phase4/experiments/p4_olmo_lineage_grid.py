@@ -76,6 +76,14 @@ def model_reference(uri: str) -> dict:
     return {"model_id": model_id, "revision": revision}
 
 
+def scientific_seed_namespace(config: dict, evidence_id: str) -> str:
+    namespace = str(config.get(
+        "scientific_seed_namespace", evidence_id)).strip()
+    if not namespace:
+        raise ValueError("scientific seed namespace must be nonempty")
+    return namespace
+
+
 def tokenizer_source_hash(model_path: Path) -> str:
     names = (
         "tokenizer.json",
@@ -155,6 +163,7 @@ def main() -> None:  # noqa: C901
     clean = require_clean_tree()
     gpu = require_cuda_gpu()
     evidence_id = config["evidence_id"]
+    seed_namespace = scientific_seed_namespace(config, evidence_id)
     model = model_reference(config["model_uri"])
     model_path = resolve_uri(config["model_uri"])
     bank_paths = [resolve_uri(uri) for uri in config["banks"]]
@@ -265,7 +274,7 @@ def main() -> None:  # noqa: C901
         hf_model, band)
     vocabulary, width = j_dictionaries[band[0]].shape
     random_generator = torch.Generator().manual_seed(stable_seed(
-        experiment_id=evidence_id,
+        experiment_id=seed_namespace,
         item_id="global-random-dictionary",
         condition="mechanics_random",
         base_seed=int(config["base_seed"]),
@@ -423,7 +432,7 @@ def main() -> None:  # noqa: C901
 
         order = list(RAW_CONDITIONS)
         permutation = stable_rng(
-            experiment_id=evidence_id,
+            experiment_id=seed_namespace,
             item_id=item_id,
             condition="condition-order",
             base_seed=int(config["base_seed"]),
@@ -497,7 +506,7 @@ def main() -> None:  # noqa: C901
                         raise RuntimeError(
                             "teacher-forced matched arm changed forward index")
                     return stable_seed(
-                        experiment_id=evidence_id,
+                        experiment_id=seed_namespace,
                         item_id=_alias_seed_id,
                         condition=_condition,
                         layer=int(layer),
@@ -542,6 +551,7 @@ def main() -> None:  # noqa: C901
             "cohort_sha256": input_manifest.partition_sha256,
             "scoring_spec_sha256": scoring_sha256,
             "lens_sha256": lens_sha256,
+            "scientific_seed_namespace": seed_namespace,
             "item_id": item_id,
             "fact_id": item["fact_id"],
             "canonical_family": item["canonical_family"],
@@ -596,6 +606,7 @@ def main() -> None:  # noqa: C901
         "n_families": int(frame.canonical_family.nunique()),
         "baseline_checked": int(state["baseline_checked"]),
         "conditions": list(ALL_CONDITIONS),
+        "scientific_seed_namespace": seed_namespace,
         "cohort_rule": cohort_payload["selection"],
         "raw_rows_only": True,
         "analysis_note": (
