@@ -116,6 +116,31 @@ def test_model_resolver_rejects_drivefs_cache(monkeypatch):
         resolve_uri("model://org/model@" + "a" * 40)
 
 
+def test_hf_cache_resolver_requires_pinned_dataset_snapshot(
+        tmp_path, monkeypatch):
+    from jspace_phase4.paths4 import resolve_uri
+    root = tmp_path / "hub"
+    revision = "a" * 40
+    relative = (
+        "datasets--Salesforce--wikitext/snapshots/"
+        f"{revision}/wikitext-103-raw-v1/train.parquet"
+    )
+    source = root / relative
+    source.parent.mkdir(parents=True)
+    source.write_bytes(b"pinned parquet")
+    monkeypatch.setenv("JSPACE_HF_CACHE_ROOT", str(root))
+    assert resolve_uri(f"hf-cache://{relative}") == source
+    with pytest.raises(Exception, match="revision-pinned dataset"):
+        resolve_uri(
+            f"hf-cache://models--org--model/snapshots/{revision}/weights")
+    with pytest.raises(Exception, match="revision-pinned dataset"):
+        resolve_uri("hf-cache://datasets--org--name/train.parquet")
+    with pytest.raises(Exception, match="revision-pinned dataset"):
+        resolve_uri(
+            "hf-cache://datasets--org--name/snapshots/"
+            f"{revision}/../escape")
+
+
 def test_gpu_guard_refuses_invisible_cuda(monkeypatch):
     from jspace_phase4 import gpu
     monkeypatch.setattr(gpu.torch.cuda, "is_available", lambda: False)

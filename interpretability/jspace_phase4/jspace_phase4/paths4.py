@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -10,6 +11,8 @@ DEFAULT_RUN_ROOT = Path(
     "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731")
 DEFAULT_DRIVE_ROOT = Path(
     "/content/drive/MyDrive/interpret/special-lab-1")
+DEFAULT_HF_CACHE_ROOT = Path(
+    "/content/drive/MyDrive/hf_cache/hub")
 DEFAULT_PHASE3_ROOT = DEFAULT_DRIVE_ROOT / "phase3_20260729"
 DEFAULT_PHASE2_ROOT = DEFAULT_DRIVE_ROOT / "part2_20260727"
 DRIVE_ALIASES = {
@@ -67,6 +70,11 @@ def _drive_root() -> Path:
         "JSPACE_DRIVE_ROOT", str(DEFAULT_DRIVE_ROOT)))
 
 
+def _hf_cache_root() -> Path:
+    return Path(os.environ.get(
+        "JSPACE_HF_CACHE_ROOT", str(DEFAULT_HF_CACHE_ROOT)))
+
+
 def _artifact_root(namespace: str) -> Path:
     if namespace == "phase2":
         return Path(os.environ.get(
@@ -81,7 +89,7 @@ def _artifact_root(namespace: str) -> Path:
 
 
 def resolve_uri(uri: str | Path, *, must_exist: bool = True) -> Path:
-    """Resolve repo://, drive://, artifact://, and revision-pinned model://."""
+    """Resolve Phase 4 logical URIs, including pinned dataset cache inputs."""
     text = str(uri)
     if "://" not in text:
         path = Path(text)
@@ -103,6 +111,8 @@ def resolve_uri(uri: str | Path, *, must_exist: bool = True) -> Path:
                     f"artifact URI needs phase2/phase3/phase4 namespace: "
                     f"{text!r}")
             path = _artifact_root(namespace) / relative
+        elif scheme == "hf-cache":
+            path = _resolve_hf_dataset_cache(rest)
         elif scheme == "model":
             return _resolve_model(rest, must_exist=must_exist)
         else:
@@ -111,6 +121,27 @@ def resolve_uri(uri: str | Path, *, must_exist: bool = True) -> Path:
     if must_exist and not path.exists():
         raise UnresolvedArtifact(f"artifact does not exist: {text!r} -> {path}")
     return path
+
+
+def _resolve_hf_dataset_cache(rest: str) -> Path:
+    """Resolve only revision-pinned dataset snapshots from an HF cache.
+
+    Model snapshots are deliberately excluded because model-scale inputs
+    must live on local NVMe rather than being streamed through DriveFS.
+    """
+    parts = Path(rest).parts
+    if (
+        rest.startswith("/")
+        or any(part in {".", ".."} for part in parts)
+        or len(parts) < 4
+        or not parts[0].startswith("datasets--")
+        or parts[1] != "snapshots"
+        or re.fullmatch(r"[0-9a-f]{40}", parts[2]) is None
+    ):
+        raise UnresolvedArtifact(
+            "hf-cache URI must name a revision-pinned dataset snapshot: "
+            "hf-cache://datasets--ORG--NAME/snapshots/<40-hex-revision>/...")
+    return _hf_cache_root().joinpath(*parts)
 
 
 def _resolve_model(rest: str, *, must_exist: bool) -> Path:
