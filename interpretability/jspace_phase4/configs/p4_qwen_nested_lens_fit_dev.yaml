@@ -1,0 +1,48 @@
+evidence_id: p4-qwen-nested-lens-fit-dev-series-v1
+slug: qwen36-27b
+tier: phase4-development
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+model_snapshot_manifest_uri: repo://interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
+corpus_evidence_id: p4-qwen-lens-corpora-dev-v1
+draws:
+  draw_a:
+    label: drawA
+    corpus_uri: artifact://phase4/config/qwen_lens_corpora/p4-qwen-lens-corpora-dev-v1/qwen_drawA_nested1000.jsonl
+    corpus_sha256: 3582ec41de0bd95b7e7f1b71b40b89604bff45001e9056c58221d9ee47dfa455
+    total_n: 1000
+    milestones:
+      120: p4-qwen-lens-fit-drawA-n120-dev-v1
+      250: p4-qwen-lens-fit-drawA-n250-dev-v1
+      500: p4-qwen-lens-fit-drawA-n500-dev-v1
+      1000: p4-qwen-lens-fit-drawA-n1000-dev-v1
+  draw_b:
+    label: drawB
+    corpus_uri: artifact://phase4/config/qwen_lens_corpora/p4-qwen-lens-corpora-dev-v1/qwen_drawB_nested500.jsonl
+    corpus_sha256: 1565adaf63db3d93225c203a2575d6fe5a7947f5b3a86d4db04a38984484f675
+    total_n: 500
+    milestones:
+      120: p4-qwen-lens-fit-drawB-n120-dev-v1
+      500: p4-qwen-lens-fit-drawB-n500-dev-v1
+recipe:
+  source_layers: all_below_target
+  target_layer: 63
+  dim_batch: 8
+  max_seq_len: 128
+  skip_first: 16
+  model_dtype: bfloat16
+  lens_save_dtype: float16
+  checkpoint_sync_every: 10
+  expected_n_layers: 64
+  expected_d_model: 5120
+  expected_checkpoint_tensor_bytes: 6606028800
+  expected_lens_tensor_bytes: 3303014400
+jlens:
+  repository: anthropics/jacobian-lens
+  revision: 581d398613e5602a5af361e1c34d3a92ea82ba8e
+  source_files:
+    - jlens/__init__.py
+    - jlens/fitting.py
+    - jlens/hf.py
+    - jlens/hooks.py
+    - jlens/lens.py
+    - jlens/protocol.py
