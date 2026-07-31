@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 19:37 UTC.
+Last updated: 2026-07-31 19:51 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence/registry head before this documentation
-  checkpoint: `515a67a`. The GPU-fit harness is pushed at `8769b8b`
+  checkpoint: `0788407`. The GPU-fit harness is pushed at `8769b8b`
   and its first OOM recovery repair at `0dbf4de`. The mandatory fused
   GPU-kernel runtime repair is pushed at `51336db`. Resume from the
   remote branch tip containing this file.
@@ -92,13 +92,13 @@ the RTX PRO 6000.
   `7a9dd07`. Its independently verified Drive recovery copy remains.
 - All completed evidence and registered figures are durable on Drive,
   registered, committed, and pushed.
-- Latest scientific-evidence/registry head is `515a67a`; the fitter
+- Latest scientific-evidence/registry head is `0788407`; the fitter
   implementation head is `8769b8b`; the documentation checkpoint
   containing this file may be newer.
 - The refreshed handout compiles to 9 pages with no TeX warnings; the
   trajectory and closing pages were visually inspected. PDF SHA-256 is
   `06c9bf3055d110a7eba14d9dc69a6b9faffc6d3b79c30f178cecd993a60bdd26`.
-- Full Phase 4 suite after the fused-runtime repair: 58/58 passing.
+- Full Phase 4 suite after the structural producer: 63/63 passing.
   The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
   model evidence and is intentionally CPU-safe.
@@ -783,6 +783,38 @@ Jacobian-norm outlier (`159.952`); it was retained under the frozen
 corpus/estimator and must be examined in the n=120 versus n=1000
 stability analysis, never trimmed post hoc.
 
+The first structural stability analysis is also complete and live:
+`p4-qwen-lens-structural-stability-drawA-n120-vs-published-n1000-dev-v1`,
+pushed at `0788407`. This is explicitly a recipe/corpus-transfer
+comparison against the published n=1000 lens, not the pending
+same-corpus draw-A convergence comparison. It used every source layer,
+all 5,120 Jacobian rows, 4,096 fixed sampled token directions, centered
+linear CKA on a fixed 1,024-token subset, and 256 fixed transport
+probes. Both result envelopes reconstructed exactly; the table has 63
+rows / 29 columns with all numeric values finite; the figure was
+visually inspected; the full verifier passed 25 live events / 97
+outputs / zero failures.
+
+Agreement is strongly depth-dependent:
+
+- across-layer median matrix cosine `0.896944`, sampled-token median
+  cosine `0.913843`, and CKA `0.865211`;
+- L0 matrix/token/CKA `0.541130/0.529659/0.451778`;
+- L62 `0.999729/0.999678/0.999744`;
+- token median first remains at least 0.90 from L26, matrix cosine from
+  L32, CKA from L33, and token q05 from L35;
+- at campaign capacity layers L24/L32/L40, token median cosine is
+  `0.894696/0.922001/0.967747`, CKA
+  `0.866738/0.840932/0.943321`, and relative Frobenius delta
+  `0.471148/0.426898/0.280033`.
+
+Therefore n=120 does **not** reproduce the published n=1000 geometry
+uniformly at the lower/middle assay layers. The plan's convergence
+decision triggers the same-corpus n=250 fit before any global
+fit-size closure. Do not mistake excellent late-layer agreement for a
+whole-lens validation. Figure:
+`phase4_20260731/figures/p4f09_qwen_lens_structural_stability.{png,pdf}`.
+
 ## Local immutable inputs and disk
 
 - The exact local 3.0 Think cache was removed after the corrected v4/v2
@@ -861,11 +893,10 @@ stability analysis, never trimmed post hoc.
    manifest, recipe, and GPU fitting entrypoint are now pinned,
    registered, tested, committed, and pushed. Do not regenerate the
    corpora or change their ordering.
-4. Draw A n=120 is complete and registered; do not rerun or overwrite
-   it. First run the planned row/layer-wise n=120 versus published
-   n=1000 stability analysis, including explicit outlier/influence
-   diagnostics for frozen prompt 112. Then resume draw A to n=250
-   from a clean tree with host GPU access:
+4. Draw A n=120 and its first structural comparison are complete and
+   registered; do not rerun or overwrite them. The comparison found
+   material early/middle-layer drift, so resume draw A to n=250 from a
+   clean tree with host GPU access:
 
    ```bash
    python -m jspace_phase4.experiments.p4_qwen_nested_lens_fit \
