@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 09:17 UTC.
+Last updated: 2026-07-31 09:36 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence head before this documentation checkpoint:
-  `bf8ca15`. Resume from the remote
+  `efafa4f`. Resume from the remote
   branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -55,12 +55,13 @@ envelopes. Live telemetry during the final common-lens grid showed
 ## Current process and checkpoint state
 
 - No model job was running at this checkpoint. The next command is the
-  3.1 Think G5 producer recorded below. If a restart finds its Drive
+  3.1 Think own-lens lineage-grid producer recorded below. If a restart
+  finds its Drive
   state directory, rerun the exact same command; the producer resumes
   compatible item checkpoints and rejects incompatible state.
 - All completed evidence and figures are durable on Drive, registered,
   committed, and pushed.
-- Latest scientific-evidence head is `bf8ca15`; the documentation
+- Latest scientific-evidence head is `efafa4f`; the documentation
   checkpoint containing this file may be newer.
 - Full Phase 4 suite: 43/43 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
@@ -317,6 +318,43 @@ the base-to-Think interval, but checkpoint-specific capability cohorts
 make this a trajectory localization rather than a paired causal
 estimate. The new PNG and one-page PDF were visually inspected.
 
+## OLMo-3.1 32B Think G5 — complete
+
+Live evidence:
+`p4-g5-bank-olmo31-think-dev-v1`.
+
+Artifacts:
+
+`phase4_20260731/metrics/olmo31-think/g5_bank/p4-g5-bank-olmo31-think-dev-v1/`
+
+The exact pinned 3.1 Think model ran all 972 generation and
+prospective-alias scoring items on the RTX PRO 6000. The same-process
+hard gate records a finite FP16 CUDA matmul, and live telemetry during
+the run showed 62,164 MiB VRAM in use at 94% GPU utilization.
+
+- overall boundary-safe prefix capability: `0.632716`;
+- Bank F: `0.483660`; Bank S: `0.886111`;
+- direct: `0.641975`; composed: `0.475309`;
+  bridge-supplied: `0.780864`;
+- prospective direct+composed-capable cohort: 38 Bank-F facts and
+  84 Bank-S facts, 122 facts / 244 items total;
+- generation trichotomy: 615 original, 355 other-invalid,
+  2 counterfactual;
+- result SHA-256:
+  `00534b4e6746683429f48d60dd98505e6bce7671ac65cb96c00f1d0b30a85b34`;
+- parquet SHA-256:
+  `5496091823520287c3f40394c3a7a39920a3695d9107af2ced8353f8df101834`.
+
+This is lower than Phase 3's published `0.734568` because the old
+cohort used an accepted alias anywhere in the eight-token
+continuation. It is not a generation drift or GPU problem: every one
+of the 972 continuations is byte-identical to Phase 3, and all 972
+Phase 4 capability flags exactly equal the later Phase 3
+`capable_prefix_boundary_safe` audit. The full row, hash, alias,
+aggregate, counterfactual, payload, registry, and CUDA audit passed,
+as did all 43 Phase 4 tests. The live event is committed and pushed at
+`efafa4f`.
+
 ## Local immutable inputs and disk
 
 - The exact local 3.0 Think cache was removed after the corrected v4/v2
@@ -337,8 +375,15 @@ estimate. The new PNG and one-page PDF were visually inspected.
   grid, analysis, figures, report checkpoint, registry events, and Git
   commits were durable. It is recoverable by exact revision
   `c2b61dae89a1ad10e4ad5653d0e46b590902607b`.
-- Own Think lens is materialized locally under
+- The completed 3.0 Think own lens remains materialized locally under
   `/content/sl4_work/inputs/05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053/`.
+- The 3.1 Think own lens is pinned at Drive URI
+  `drive://part2/lens/olmo31think_lens.pt`, SHA-256
+  `1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8`.
+  It was not yet locally materialized at this checkpoint; the lineage
+  producer verifies the Drive source, copies it to
+  `/content/sl4_work/inputs/1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8/`,
+  and re-verifies the local copy before model load.
 - Base lens is materialized locally under
   `/content/sl4_work/inputs/92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696/`.
 - Current root free space with 3.1 Think local: about 61 GiB.
@@ -347,14 +392,7 @@ estimate. The new PNG and one-page PDF were visually inspected.
 
 ## Next queue — execute without pausing
 
-1. Confirm this completed documentation checkpoint is present at the
-   remote branch tip and byte-exact on Drive. At creation, the hashes
-   were report MD `0b4aadd8...1798a41`, TeX
-   `1b643c7a...e031122`, four-page PDF
-   `a0cae1b6...87be5e6`, report display plot
-   `3de36890...c790568`. The scientific-evidence boundary is pushed at
-   `bf8ca15`.
-2. The exact 3.1 trajectory config set is committed at `238ba9f`. The
+1. The exact 3.1 trajectory config set is committed at `238ba9f`. The
    Think snapshot above has passed local and Drive verification. Pinned
    trajectory sources are:
    - Think:
@@ -368,20 +406,24 @@ estimate. The new PNG and one-page PDF were visually inspected.
      (Instruct);
    - common base lens:
      `92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696`.
-3. Before every model producer, rerun
+2. Before every model producer, rerun
    `jspace_phase4.gpu.require_cuda_gpu()` in the same host process.
    Model load, generation, intervention, and scoring must use the RTX;
    never use CPU fallback.
-4. From a clean tree, run 3.1 Think G5 with:
-   `PYTHONPATH=interpretability/jspace_phase4:interpretability/jspace_phase3 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True TOKENIZERS_PARALLELISM=false python -u -m jspace_phase4.experiments.p4_g5_bank_scoring --config interpretability/jspace_phase4/configs/p4_g5_olmo31-think-dev.yaml`.
-   The producer checkpoints every 10 items to
-   `phase4_20260731/metrics/olmo31-think/g5_bank/p4-g5-bank-olmo31-think-dev-v1/`.
-5. Validate and bank G5, freeze the checkpoint-specific
-   direct+composed capable cohort, and run the same seven-condition
-   grids under both its own lens and the frozen base lens. Both grids
+3. G5 is validated, registered, committed, and pushed. From a clean
+   tree run the 3.1 Think own-lens grid with:
+   `PYTHONPATH=interpretability/jspace_phase4:interpretability/jspace_phase3 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True TOKENIZERS_PARALLELISM=false python -u -m jspace_phase4.experiments.p4_olmo_lineage_grid --config interpretability/jspace_phase4/configs/p4_lineage_grid_olmo31-think-dev.yaml`.
+   It checkpoints every five items under
+   `phase4_20260731/metrics/olmo31-think/lineage_grid/p4-lineage-grid-olmo31-think-dev-v1/`.
+4. Strictly validate, register, commit, and push that raw grid. Run its
+   deterministic own-frame analysis, then run and bank the common-base
+   lens grid with
+   `p4_lineage_grid_olmo31-think-common-base-lens-dev.yaml`. Both grids
    share the explicit namespace
-   `p4-lineage-grid-olmo31-think-frame-pair-dev-v1`. Bank and push G5,
-   each grid, own analysis, and paired analysis before swapping cache.
+   `p4-lineage-grid-olmo31-think-frame-pair-dev-v1`.
+5. Run and bank the paired own/common-frame analysis, update the
+   report/figures/TeX/PDF, and push all documentation before swapping
+   the 3.1 Think cache.
 6. Repeat for 3.1 Instruct under
    `p4-lineage-grid-olmo31-instruct-frame-pair-dev-v1`.
 7. Build the full base → 3.0 Think → 3.1 Think/Instruct development
