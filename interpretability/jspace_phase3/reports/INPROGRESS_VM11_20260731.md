@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 07:59 UTC.
+Last updated: 2026-07-31 08:56 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence head before this documentation checkpoint:
-  `42b29c5`. Resume from the remote
+  `bf8ca15`. Resume from the remote
   branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -57,9 +57,9 @@ envelopes. Live telemetry during the final common-lens grid showed
 - Nothing is running.
 - All completed evidence and figures are durable on Drive, registered,
   committed, and pushed.
-- Latest scientific-evidence head is `42b29c5`; the documentation
+- Latest scientific-evidence head is `bf8ca15`; the documentation
   checkpoint containing this file may be newer.
-- Full Phase 4 suite: 41/41 passing. The sandbox-only tiny nonlinear-JVP
+- Full Phase 4 suite: 43/43 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
   model evidence and is intentionally CPU-safe.
 - Model runs checkpoint every 5 or 10 items, limiting loss well below
@@ -154,12 +154,16 @@ Known-bank development estimates, family weighted:
 
 ## Workstream A4 — Think common-base-lens cross-check complete
 
-Live final evidence:
+Live standalone audit evidence:
 `p4-lineage-grid-olmo3-think-common-base-lens-dev-v3`.
+
+Live seed-paired evidence:
+`p4-lineage-grid-olmo3-think-common-base-lens-dev-v4`.
 
 Artifacts:
 
-`phase4_20260731/metrics/olmo3-think-common-base-lens/lineage_grid/p4-lineage-grid-olmo3-think-common-base-lens-dev-v3/`
+- `phase4_20260731/metrics/olmo3-think-common-base-lens/lineage_grid/p4-lineage-grid-olmo3-think-common-base-lens-dev-v3/`
+- `phase4_20260731/metrics/olmo3-think-common-base-lens/lineage_grid/p4-lineage-grid-olmo3-think-common-base-lens-dev-v4/`
 
 The common coordinate is the frozen OLMo base lens, SHA-256
 `92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696`.
@@ -188,40 +192,67 @@ The final v3 explicitly freezes
 - CUDA evidence records RTX PRO 6000 and a finite
   `fp16-matmul-1024`.
 
-V3 explicitly supersedes both withdrawn diagnostic attempts.
+V3 explicitly supersedes both withdrawn diagnostic attempts and remains
+valid standalone evidence. V4 is the paired repair:
 
-## Paired own/common-lens analysis — withdrawn; repair configured
+- all 252 items / 126 facts / 36 families present and paired;
+- shared namespace exactly
+  `p4-lineage-grid-olmo3-think-dev-v1`;
+- condition order exactly matches the own-lens grid for every item;
+- between-frame baseline drift: exactly `0.0`;
+- baseline replay drift from G5: `7.15e-7` nats;
+- matched rank agreement: 100% over 592 summaries;
+- maximum matched energy relative error: `0.000205`;
+- span-safe overlap: exactly 0;
+- deterministic baseline and J-arm outcomes match v3 exactly;
+- result SHA-256:
+  `a3f21082d1c99cc5574355b5d0f68e893420d75f1b606b684575e02476fd4496`;
+- parquet SHA-256:
+  `e7b54e050469358bed6ad0af6f39218fc206012ae7d0c9f146e54af7fee51dd0`.
+
+## Paired own/common-lens analysis — corrected and complete
+
+Live evidence:
+`p4-lens-frame-analysis-olmo3-think-dev-v2`.
 
 Withdrawn evidence:
 `p4-lens-frame-analysis-olmo3-think-dev-v1`.
 
-The own and common raw grids remain valid standalone evidence, but the
-paired inference used different scientific seed namespaces:
+V1 remains withdrawn because its frames used different scientific RNG
+namespaces. V2 uses own grid v1 plus common grid v4 under the exact same
+namespace and condition order. The producer now hard-fails on unequal
+namespaces. The full deterministic 100,000-draw payload independently
+reproduces exactly, including all 42 bootstrap distribution hashes.
 
-- own grid:
-  `p4-lineage-grid-olmo3-think-dev-v1`;
-- common grid:
-  `p4-lineage-grid-olmo3-think-common-base-lens-dev-v1`.
+Artifacts:
 
-Thus the matched controls use different random subspaces across frames.
-The Bank-F composed control shift alone is `+0.061647`, with its family
-interval above zero. The old frame-contrast CIs and correlations mix
-lens change with RNG change and must not be used.
+- `phase4_20260731/metrics/olmo3-think-lens-frame/lens_frame_analysis/p4-lens-frame-analysis-olmo3-think-dev-v2/`
+- `phase4_20260731/figures/p4f02_olmo3_think_lens_frame_comparison_v2.{png,pdf}`
 
-The producer now hard-fails on unequal scientific seed namespaces, with
-an explicit legacy fallback for early grids whose namespace was their
-evidence ID. The actual v1 inputs trigger the new refusal. Full tests:
-41/41.
+Family-weighted paired results:
 
-Repair configs committed at `5097a33`:
+- Bank F direct: own `+0.057389`, common `+0.001041`,
+  common-minus-own `-0.056348`, 95% interval
+  `[-0.132436,+0.004930]`;
+- Bank F composed: own `+0.081821`, common `-0.016425`,
+  delta `-0.098245`, `[-0.200519,+0.005787]`;
+- Bank S direct: own `-0.127717`, common `-0.097432`,
+  delta `+0.030285`, `[-0.016452,+0.081286]`;
+- Bank S composed: own `-0.055293`, common `-0.041877`,
+  delta `+0.013416`, `[-0.009951,+0.040760]`.
 
-- `configs/p4_lineage_grid_olmo3-think-common-base-lens-paired-dev.yaml`
-  creates common-lens v4 with the own-grid namespace;
-- `configs/p4_lens_frame_analysis_olmo3-think-paired-dev.yaml`
-  creates replacement analysis v2 and a new figure path.
+No paired frame-delta interval excludes zero. Both Bank-S effects have
+intervals below zero in both frames; Bank-F effects are imprecise.
+Item/family correlations are `0.755689` / `0.725410`, and mean absolute
+item frame difference is `0.102471` nats. The one-page PDF and PNG were
+visually inspected. A report-local rerender reserves footer space so
+panel d's x-axis label does not collide with the development note; the
+registered v2 artifacts remain immutable.
 
-Do not use the old paired figure or infer frame robustness/sensitivity
-until v4 and v2 pass their audits.
+The repair changed only stochastic control terms, as it should: all J
+frame deltas are identical to v1, while Bank-F direct/composed
+specificity deltas move `+0.041318` / `+0.049172` nats toward zero.
+Never use the old v1 paired intervals or figure.
 
 ## OLMo-3 32B base point — complete
 
@@ -285,53 +316,69 @@ estimate. The new PNG and one-page PDF were visually inspected.
 
 ## Local immutable inputs and disk
 
-- The exact local Think snapshot was removed only after every one of its
-  14 shards (64,467,127,296 bytes total) independently matched its
-  Hugging Face LFS SHA-256 object ID, every Drive blob size matched, and
-  all small files were byte-exact. It remains recoverable from:
+- The exact 3.0 Think snapshot is local again at
+  `/content/hf_local/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`.
+  It was restored from the independently verified Drive snapshot after
+  excluding unreferenced `.incomplete` blobs. Every one of its 14
+  shards (64,467,127,296 bytes total) matches its Hugging Face LFS
+  SHA-256 object ID; no local incomplete file remains.
+- The full recoverable Drive source is:
   `/content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`
   (14 shards; about 61 GiB dereferenced).
-- Exact base snapshot is now local:
-  `/content/hf_local/models--allenai--Olmo-3-1125-32B/snapshots/c2b61dae89a1ad10e4ad5653d0e46b590902607b`.
-  The index contains 707 tensors over 14 shards / 64,467,127,296 bytes.
-  Every shard independently matches its Hugging Face LFS SHA-256 object
-  ID and no incomplete files remain.
+- The exact local base snapshot was removed only after its complete G5,
+  grid, analysis, figures, report checkpoint, registry events, and Git
+  commits were durable. It is recoverable by exact revision
+  `c2b61dae89a1ad10e4ad5653d0e46b590902607b`.
 - Own Think lens is materialized locally under
   `/content/sl4_work/inputs/05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053/`.
 - Base lens is materialized locally under
   `/content/sl4_work/inputs/92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696/`.
-- Current root free space with the base model local: about 58 GiB.
-- The base G5, grid, analysis, plots, and registry events are durable
-  and pushed. Do not delete the local base snapshot until this updated
-  report/handoff checkpoint is also committed, pushed, copied
-  byte-exact to Drive, and the exact next model source has been
-  verified.
+- Current root free space with 3.0 Think local: about 61 GiB.
+- Do not remove the local 3.0 Think snapshot until this corrected v4/v2
+  report/handoff checkpoint is committed, pushed, and copied byte-exact
+  to Drive. After that, it is safe to remove only that exact local cache
+  root before materializing 3.1, because its verified Drive copy and all
+  evidence remain durable.
 
 ## Next queue — execute without pausing
 
-1. Mirror and push this correction checkpoint. Then remove the exact
-   local base snapshot only; its complete evidence is durable. Restore
-   the already independently verified 3.0 Think snapshot from:
-   `/content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`.
-2. Run the seed-paired common-lens v4 repair on GPU, validate and bank
-   it, then run/validate replacement paired analysis v2. Update the
-   report before proceeding.
-3. Verify exact 3.1 Think/Instruct model revisions, lens hashes, and
-   cache sources. Current Drive cache discovery shows the 3.1 Think
-   snapshot contains only `config.json`, and the 3.1 Instruct snapshot
-   is absent; download exact revisions to local NVMe and maintain
-   restart-safe Drive/cache provenance.
-4. Add and test Phase 4 prospective G5 plus own/common-lens grid configs
-   for the exact 3.1 Think and Instruct checkpoints. Commit and push
-   configs before creating evidence.
-5. Before every model producer, rerun
+1. Confirm this completed documentation checkpoint is present at the
+   remote branch tip and byte-exact on Drive. At creation, the hashes
+   were report MD `0b4aadd8...1798a41`, TeX
+   `1b643c7a...e031122`, four-page PDF
+   `a0cae1b6...87be5e6`, report display plot
+   `3de36890...c790568`. The scientific-evidence boundary is pushed at
+   `bf8ca15`.
+2. The exact 3.1 trajectory config set is already committed at
+   `238ba9f`. Verify these pinned sources before download:
+   - Think:
+     `allenai/Olmo-3.1-32B-Think@832c3f543499af8fe68b88359501de9cb7840544`;
+   - Instruct:
+     `allenai/Olmo-3.1-32B-Instruct@ac0587e4a7744a551c059d8cd17ba220bc940dae`;
+   - own-lens SHAs:
+     `1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8`
+     (Think) and
+     `e0f8b972a9f1f884101f94ff52a1938d5cfa7a5f49e987e6768826f2337c6dfb`
+     (Instruct);
+   - common base lens:
+     `92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696`.
+3. Drive cache discovery found only `config.json` for 3.1 Think and no
+   3.1 Instruct snapshot. After the documentation push, remove only the
+   verified local 3.0 Think cache, then download the exact 3.1 revision
+   to local NVMe. Maintain restart-safe Drive/cache provenance and
+   verify every downloaded shard before model use.
+4. Before every model producer, rerun
    `jspace_phase4.gpu.require_cuda_gpu()` in the same host process.
    Model load, generation, intervention, and scoring must use the RTX;
    never use CPU fallback.
-6. Run G5, freeze each checkpoint-specific direct+composed capable
-   cohort, and run the same seven-condition grids under both its own
-   lens and the frozen base lens. Bank each major boundary before
-   swapping a cache.
+5. Run 3.1 Think G5, freeze its checkpoint-specific direct+composed
+   capable cohort, and run the same seven-condition grids under both
+   its own lens and the frozen base lens. Both grids already share the
+   explicit namespace
+   `p4-lineage-grid-olmo31-think-frame-pair-dev-v1`. Bank and push G5,
+   each grid, own analysis, and paired analysis before swapping cache.
+6. Repeat for 3.1 Instruct under
+   `p4-lineage-grid-olmo31-instruct-frame-pair-dev-v1`.
 7. Build the full base → 3.0 Think → 3.1 Think/Instruct development
    trajectory with common-lens and own-lens views. If they disagree,
    treat coordinate drift as a result and prioritize the fit/corpus-size

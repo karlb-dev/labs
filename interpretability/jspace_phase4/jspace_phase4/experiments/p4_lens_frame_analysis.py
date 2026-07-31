@@ -331,6 +331,10 @@ def make_figure(
     }
     figure, axes = plt.subplots(
         2, 2, figsize=(11.4, 8.0), constrained_layout=True)
+    # Constrained layout does not automatically reserve space for
+    # figure-level footer text.  Keep a dedicated lower margin so the
+    # provenance note cannot collide with panel-d's x-axis label.
+    figure.get_layout_engine().set(rect=(0.0, 0.045, 1.0, 0.955))
     x = np.arange(len(keys))
 
     for index, key in enumerate(keys):
@@ -428,7 +432,7 @@ def make_figure(
     )
     figure.text(
         0.5,
-        0.002,
+        0.008,
         f"Same {payload['pairing']['n_facts']} paired facts; "
         "known development banks; "
         "family-resampling 95% intervals; not confirmatory evidence.",
