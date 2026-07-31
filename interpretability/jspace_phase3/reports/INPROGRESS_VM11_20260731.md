@@ -1,13 +1,14 @@
-# LIVE — Phase 4 OLMo lineage handoff
+# LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 12:34 UTC.
+Last updated: 2026-07-31 13:05 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
-- Pushed scientific-evidence head before this documentation checkpoint:
-  `4751235`. Resume from the remote
+- Pushed scientific-evidence/registry head before this documentation
+  checkpoint: `3f54e94`. The tested GPU-fit harness is pushed at
+  `8769b8b`. Resume from the remote
   branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -60,20 +61,22 @@ the RTX PRO 6000.
   seed-paired own/common grids, own-frame analysis, paired-frame
   analysis, and registered figures are complete, independently
   reproduced, committed, and pushed. The registered four-checkpoint
-  trajectory synthesis is also complete and pushed. The refreshed
-  report/TeX/PDF and this handoff form the documentation checkpoint
-  containing this file.
+  trajectory synthesis is also complete and pushed. The leakage-safe
+  Qwen nested corpora are registered, and the GPU-only resumable Qwen
+  fitter is tested and pushed. The next command below starts draw A
+  toward the n=120 milestone.
 - The local 3.1 Think cache was removed only after its complete
   scientific and documentation boundary was backed up and pushed at
   `7a9dd07`. Its independently verified Drive recovery copy remains.
 - All completed evidence and registered figures are durable on Drive,
   registered, committed, and pushed.
-- Latest scientific-evidence head is `4751235`; the documentation
-  checkpoint containing this file may be newer.
+- Latest scientific-evidence/registry head is `3f54e94`; the fitter
+  implementation head is `8769b8b`; the documentation checkpoint
+  containing this file may be newer.
 - The refreshed handout compiles to 9 pages with no TeX warnings; the
   trajectory and closing pages were visually inspected. PDF SHA-256 is
   `06c9bf3055d110a7eba14d9dc69a6b9faffc6d3b79c30f178cecd993a60bdd26`.
-- Full Phase 4 suite: 47/47 passing. The sandbox-only tiny nonlinear-JVP
+- Full Phase 4 suite: 56/56 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
   model evidence and is intentionally CPU-safe.
 - Model runs checkpoint every 5 or 10 items, limiting loss well below
@@ -669,6 +672,53 @@ sibling Instruct. Capability cohorts are checkpoint-specific, so these
 are unpaired development localizations rather than causal training or
 mode contrasts. The scientific boundary is pushed at `4751235`.
 
+## Workstream E0 — Qwen nested-corpus and GPU fitter foundation complete
+
+Live methods evidence:
+`p4-qwen-lens-corpora-dev-v1`.
+
+Corpus artifacts:
+
+`phase4_20260731/config/qwen_lens_corpora/p4-qwen-lens-corpora-dev-v1/`
+
+- Draw A has 1,000 unique WikiText-103 train records and exact nested
+  milestones `n=120,250,500,1000`; JSONL SHA-256
+  `3582ec41de0bd95b7e7f1b71b40b89604bff45001e9056c58221d9ee47dfa455`.
+- Its first 120 rows are byte-exact to the historical campaign fit
+  prefix. Historical draw-A rows 120–199 were evaluation spares, so
+  all 80 are explicitly excluded from both new fit corpora.
+- Independent draw B has 500 unique records and milestones
+  `n=120,500`; JSONL SHA-256
+  `1565adaf63db3d93225c203a2575d6fe5a7947f5b3a86d4db04a38984484f675`.
+  Its first 120 rows are byte-exact to the historical independent
+  draw, SHA-256
+  `ff5092e3fff27f3a69d24688fb7fff63e896f50035b9ca4b975c9e23954d2d65`.
+- Independent reconstruction found 1,000/500 unique indices, zero A/B
+  overlap, and zero overlap with the 80 evaluation spares.
+- The exact pinned WikiText parquet order matches all 320 historical
+  records. It has 1,801,350 rows and 410,472 records meeting the frozen
+  600-character threshold.
+- Live-evidence verification after registration: 23 events, 89 output
+  files, zero hash failures.
+
+The GPU fitter is
+`jspace_phase4.experiments.p4_qwen_nested_lens_fit`, config
+`configs/p4_qwen_nested_lens_fit_dev.yaml`, pushed at `8769b8b`.
+It fits all source layers 0–62 to target layer 63 with the upstream
+paper recipe (`dim_batch=8`, 128 tokens, skip first 16), maintains one
+cumulative float32 checkpoint, and atomically mirrors it to Drive every
+10 prompts. A same-process CUDA smoke matmul and CUDA model-location
+assertion precede fitting; there is no CPU fallback. Recovery refuses
+changes to the corpus, model, recipe, fitter source, or exact clean
+`jlens` revision `581d398613e5602a5af361e1c34d3a92ea82ba8e`.
+
+The exact Qwen model is local at revision
+`6a9e13bd6fc8f0983b9b99948120bc37f49c13e9`. All 15 shards were fully
+read after manifest creation; all content hashes match, totaling
+55,563,006,400 weight bytes. The published n=1000 lens remains local,
+SHA-256
+`1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1`.
+
 ## Local immutable inputs and disk
 
 - The exact local 3.0 Think cache was removed after the corrected v4/v2
@@ -714,7 +764,19 @@ mode contrasts. The scientific boundary is pushed at `4751235`.
   byte-identical to the Drive source.
 - Base lens is materialized locally under
   `/content/sl4_work/inputs/92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696/`.
-- Current root free space with 3.1 Instruct local: about 59 GiB.
+- Exact Qwen model:
+  `/content/hf_local/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9`
+  (15 shards, 55,563,006,400 weight bytes; every shard hash verified).
+- Published Qwen lens:
+  `/content/hf_local/models--neuronpedia--jacobian-lens/snapshots/a4114d7752d11eb546e6cf372213d7e75526d3a1/qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt`
+  (SHA-256
+  `1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1`).
+- Exact clean editable `jlens` checkout:
+  `/tmp/jacobian-lens` at
+  `581d398613e5602a5af361e1c34d3a92ea82ba8e`.
+- Current root free space with Qwen and 3.1 Instruct local: about
+  57 GiB. The cumulative all-layer Qwen checkpoint is expected to use
+  about 6.6 GB and each fp16 milestone lens about 3.3 GB.
 - Keep local 3.1 Instruct until its G5, own/common grids, analyses,
   registry events, report/handoff, and Git checkpoints are all durable.
 
@@ -728,15 +790,23 @@ mode contrasts. The scientific boundary is pushed at `4751235`.
    `jspace_phase4.gpu.require_cuda_gpu()` in the same host process.
    Model load, generation, intervention, and scoring must use the RTX;
    never use CPU fallback.
-3. Next is Workstream E's Qwen symmetric lens-fit study. First audit
-   and pin the existing campaign/published Qwen lens sources, fitting
-   corpus, recipe, partitions, and GPU fitting entrypoint. Register a
-   development config and input manifest before fitting anything.
-4. Fit nested Qwen lenses at `n=120,250,500,1000` under one frozen
-   corpus and recipe, plus an independent `n=120` draw and preferably
-   `n=500`. Checkpoint often enough to keep recovery loss below
-   30 minutes. Lens fitting and every model-side evaluation are GPU
-   model compute and must hard-stop without CUDA.
+3. Workstream E's sources, leakage-safe nested corpora, exact model
+   manifest, recipe, and GPU fitting entrypoint are now pinned,
+   registered, tested, committed, and pushed. Do not regenerate the
+   corpora or change their ordering.
+4. Start/resume draw A to n=120 from a clean tree with host GPU access:
+
+   ```bash
+   python -m jspace_phase4.experiments.p4_qwen_nested_lens_fit \
+     --config configs/p4_qwen_nested_lens_fit_dev.yaml \
+     --draw draw_a --stop-at 120
+   ```
+
+   Run from `interpretability/jspace_phase4/`. Recovery lives under
+   `phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/`.
+   Commit/push the registry event at n=120 before requesting n=250,
+   then repeat at n=500 and n=1000. Run draw B n=120 and preferably
+   n=500 the same way after the corresponding draw-A boundary.
 5. Compare row-wise token cosine, CKA, selected-ID Jaccard,
    selected-span angles, protected overlap, occupancy, centered excess
    capacity, G4, span-safe specificity, and bridge
