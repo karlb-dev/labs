@@ -1,4 +1,5 @@
 import hashlib
+import importlib.metadata
 import json
 
 import pytest
@@ -14,6 +15,63 @@ def test_model_reference_requires_revision_pin():
     }
     with pytest.raises(ValueError, match="pin"):
         model_reference("model://org/name")
+
+
+def test_verify_package_versions_refuses_missing_or_changed_runtime():
+    from jspace_phase4.experiments.p4_qwen_nested_lens_fit import (
+        verify_package_versions,
+    )
+    installed = {"torch": "2.11.0+cu128", "fla-core": "0.5.2"}
+
+    def version_reader(name):
+        if name not in installed:
+            raise importlib.metadata.PackageNotFoundError(name)
+        return installed[name]
+
+    assert verify_package_versions(
+        installed, version_reader=version_reader) == installed
+    with pytest.raises(RuntimeError, match="expected 0.5.3"):
+        verify_package_versions(
+            {"fla-core": "0.5.3"}, version_reader=version_reader)
+    with pytest.raises(RuntimeError, match="missing"):
+        verify_package_versions(
+            {"flash-linear-attention": "0.5.2"},
+            version_reader=version_reader,
+        )
+
+
+def test_verify_model_fused_bindings_requires_every_expected_block():
+    from jspace_phase4.experiments.p4_qwen_nested_lens_fit import (
+        verify_model_fused_bindings,
+    )
+
+    def fused_kernel():
+        pass
+
+    fused_kernel.__module__ = "fla.ops.gated_delta_rule.chunk"
+
+    class Block:
+        def __init__(self):
+            self.chunk_gated_delta_rule = fused_kernel
+
+    class Model:
+        @staticmethod
+        def named_modules():
+            return iter((("layer.0", Block()), ("layer.1", Block())))
+
+    specification = {
+        "qwen_kernel_modules": {
+            "chunk_gated_delta_rule": "fla.ops.gated_delta_rule.",
+        },
+        "expected_linear_attention_modules": 2,
+    }
+    result = verify_model_fused_bindings(Model(), specification)
+    assert result["linear_attention_module_count"] == 2
+    assert result["chunk_gated_delta_rule_modules"] == [
+        "fla.ops.gated_delta_rule.chunk"]
+    specification["expected_linear_attention_modules"] = 3
+    with pytest.raises(RuntimeError, match="found 2"):
+        verify_model_fused_bindings(Model(), specification)
 
 
 def test_choose_recovery_prefers_highest_then_local():
@@ -116,6 +174,10 @@ def test_fit_contract_is_canonical_and_pins_source_hashes(tmp_path):
         model_snapshot_manifest_path=snapshot_path,
         model_snapshot={"inventory_sha256": "i" * 64},
         jlens_contract={"revision": "b" * 40},
+        runtime_contract={
+            "packages": {"torch": "2.11.0+cu128"},
+            "qwen_kernels": {"bindings": {"chunk": "fla.ops.chunk"}},
+        },
         fitter_source_sha256="f" * 64,
     )
     first = fit_contract_payload(**kwargs)

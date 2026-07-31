@@ -1,15 +1,15 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 13:13 UTC.
+Last updated: 2026-07-31 13:29 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence/registry head before this documentation
-  checkpoint: `3f54e94`. The tested GPU-fit harness is pushed at
-  `8769b8b`. Resume from the remote
-  branch tip containing this file.
+  checkpoint: `3f54e94`. The GPU-fit harness is pushed at `8769b8b`
+  and its first OOM recovery repair at `0dbf4de`. Resume from the
+  remote branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
 - Bootstrap mirror:
@@ -63,8 +63,15 @@ the RTX PRO 6000.
   reproduced, committed, and pushed. The registered four-checkpoint
   trajectory synthesis is also complete and pushed. The leakage-safe
   Qwen nested corpora are registered, and the GPU-only resumable Qwen
-  fitter is tested and pushed. The next command below starts draw A
-  toward the n=120 milestone.
+  fitter is tested and pushed. Two feasibility attempts completed no
+  prompts and produced no checkpoints or evidence: `dim_batch=8`
+  OOMed, while `dim_batch=4` under the Transformers Torch delta-rule
+  fallback was deliberately interrupted after more than 8.5 minutes
+  on prompt 1. The latter confirmed about 75.95 GiB VRAM use and live
+  GPU utilization, but its 10-prompt recovery boundary would violate
+  the under-30-minute recovery contract. FLA 0.5.2 is now installed
+  and host-validated; the next command below starts draw A using only
+  its fused CUDA delta-rule kernels and a three-prompt Drive boundary.
 - The local 3.1 Think cache was removed only after its complete
   scientific and documentation boundary was backed up and pushed at
   `7a9dd07`. Its independently verified Drive recovery copy remains.
@@ -76,11 +83,13 @@ the RTX PRO 6000.
 - The refreshed handout compiles to 9 pages with no TeX warnings; the
   trajectory and closing pages were visually inspected. PDF SHA-256 is
   `06c9bf3055d110a7eba14d9dc69a6b9faffc6d3b79c30f178cecd993a60bdd26`.
-- Full Phase 4 suite: 56/56 passing. The sandbox-only tiny nonlinear-JVP
+- Full Phase 4 suite before the fused-runtime repair: 56/56 passing.
+  The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
   model evidence and is intentionally CPU-safe.
-- Model runs checkpoint every 5 or 10 items, limiting loss well below
-  30 minutes.
+- The Qwen fitter now atomically mirrors its 6.6 GB cumulative
+  checkpoint every 3 prompts. Reassess using live fused-kernel timings,
+  but never relax the boundary beyond about 30 minutes of GPU work.
 
 ## Phase 4 foundation — complete
 
@@ -706,17 +715,40 @@ The GPU fitter is
 `configs/p4_qwen_nested_lens_fit_dev.yaml`, pushed at `8769b8b`.
 It fits all source layers 0–62 to target layer 63 with the upstream
 paper estimator (128 tokens, skip first 16), maintains one cumulative
-float32 checkpoint, and atomically mirrors it to Drive every 10
+float32 checkpoint, and atomically mirrors it to Drive every 3
 prompts. The initial `dim_batch=8` feasibility attempt passed the
 same-process RTX hard gate and loaded the exact model, but its first
 forward reached 94.96/94.97 GiB and OOMed before completing prompt 1.
 No checkpoint or evidence was created and no CPU fallback occurred.
-The retry uses `dim_batch=4`, which upstream `jlens` documents as a
-memory-only batching knob: the estimator and total backward FLOPs are
-unchanged. A same-process CUDA smoke matmul and CUDA model-location
-assertion precede fitting; there is no CPU fallback. Recovery refuses
-changes to the corpus, model, recipe, fitter source, or exact clean
-`jlens` revision `581d398613e5602a5af361e1c34d3a92ea82ba8e`.
+The first `dim_batch=4` attempt used about 75.95 GiB and sustained
+60–84% GPU utilization, but Transformers had selected its very slow
+pure-Torch delta-rule implementation. It was intentionally interrupted
+after more than 8.5 minutes before prompt 1 completed; again no
+checkpoint or evidence was created and no CPU fallback occurred.
+The two immutable diagnostic progress records are:
+
+- `progress_11314e540b726014fb5f48664b1e579b584d91d9d5bc56c4876831e24a5ba45e_dim8_oom.json`;
+- `progress_cc6e06d3bf84ac5b885e2a02fe19b680303e3830a549de9ae03f01eac337adfb_torch_slow_aborted.json`.
+
+The active retry retains `dim_batch=4`, which upstream `jlens`
+documents as a memory-only batching knob: the estimator and total
+backward FLOPs are unchanged. Exact runtime packages are now pinned:
+PyTorch `2.11.0+cu128`, Transformers `5.13.1`, Triton `3.6.0`,
+`fla-core==0.5.2`, and `flash-linear-attention==0.5.2`. A fresh
+host-process validation on the RTX completed a finite fp16 CUDA
+matrix multiply and reported compute capability 12.0. Transformers
+reports FLA available; Qwen binds `chunk_gated_delta_rule` and the
+recurrent rule to `fla.ops.gated_delta_rule.*`, and fused gated RMS
+normalization to `fla.modules.*`. External `causal-conv1d` is absent
+and not required: only its small convolution remains in PyTorch, while
+the previously dominant delta-rule is fused. The fitter now refuses
+wrong package versions, absent FLA, a Torch delta-rule fallback, or
+anything other than 48 fused Qwen linear-attention blocks after model
+load. A same-process CUDA smoke matmul and CUDA model-location
+assertion still precede fitting; there is no CPU fallback. Recovery
+also refuses changes to the corpus, model, recipe, runtime/kernel
+contract, fitter source, or exact clean `jlens` revision
+`581d398613e5602a5af361e1c34d3a92ea82ba8e`.
 
 The exact Qwen model is local at revision
 `6a9e13bd6fc8f0983b9b99948120bc37f49c13e9`. All 15 shards were fully
@@ -795,7 +827,10 @@ SHA-256
 2. Before any later model producer, rerun
    `jspace_phase4.gpu.require_cuda_gpu()` in the same host process.
    Model load, generation, intervention, and scoring must use the RTX;
-   never use CPU fallback.
+   never use CPU fallback. For the Qwen fit, additionally require the
+   exact FLA runtime contract in
+   `configs/p4_qwen_nested_lens_fit_dev.yaml`; a restricted sandbox is
+   not a valid environment for this command.
 3. Workstream E's sources, leakage-safe nested corpora, exact model
    manifest, recipe, and GPU fitting entrypoint are now pinned,
    registered, tested, committed, and pushed. Do not regenerate the
@@ -808,7 +843,8 @@ SHA-256
      --draw draw_a --stop-at 120
    ```
 
-   Run from `interpretability/jspace_phase4/`. Recovery lives under
+   Run from `interpretability/jspace_phase4/` in the host GPU process.
+   Recovery lives under
    `phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/`.
    Commit/push the registry event at n=120 before requesting n=250,
    then repeat at n=500 and n=1000. Run draw B n=120 and preferably

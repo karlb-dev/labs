@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import gc
+import importlib.metadata
 import json
 import os
 import shutil
@@ -44,6 +45,97 @@ def model_reference(uri: str) -> dict:
         raise ValueError("model URI must pin an exact revision")
     model_id, revision = uri[len("model://"):].rsplit("@", 1)
     return {"model_id": model_id, "revision": revision}
+
+
+def verify_package_versions(
+        expected: Mapping[str, str], *, version_reader=None,
+) -> dict[str, str]:
+    """Refuse an unpinned runtime before any scientific model work."""
+    if version_reader is None:
+        version_reader = importlib.metadata.version
+    actual = {}
+    for distribution, expected_version in expected.items():
+        try:
+            actual_version = version_reader(distribution)
+        except importlib.metadata.PackageNotFoundError as error:
+            raise RuntimeError(
+                f"required runtime package is missing: {distribution}"
+            ) from error
+        if actual_version != str(expected_version):
+            raise RuntimeError(
+                f"{distribution} is {actual_version}, expected "
+                f"{expected_version}")
+        actual[distribution] = actual_version
+    return actual
+
+
+def qwen_fused_kernel_contract(specification: Mapping) -> dict:
+    """Verify that Transformers selected FLA, not its slow Torch fallback."""
+    from transformers.models.qwen3_5 import modeling_qwen3_5
+    from transformers.utils import is_flash_linear_attention_available
+
+    fla_available = bool(is_flash_linear_attention_available())
+    if not fla_available:
+        raise RuntimeError(
+            "Transformers does not see flash-linear-attention on CUDA; "
+            "refusing the Torch/CPU fallback")
+    bindings = {}
+    for symbol, required_prefix in (
+            specification["qwen_kernel_modules"].items()):
+        function = getattr(modeling_qwen3_5, symbol, None)
+        module = getattr(function, "__module__", None)
+        if module is None or not module.startswith(required_prefix):
+            raise RuntimeError(
+                f"Qwen kernel {symbol} resolves to {module!r}, expected "
+                f"module prefix {required_prefix!r}")
+        bindings[symbol] = module
+    causal_conv_module = getattr(
+        modeling_qwen3_5.causal_conv1d_fn, "__module__", None)
+    if (
+        specification.get("causal_conv1d_required", False)
+        and causal_conv_module is None
+    ):
+        raise RuntimeError("causal-conv1d is required but unavailable")
+    return {
+        "flash_linear_attention_available": fla_available,
+        "bindings": bindings,
+        "causal_conv1d_module": causal_conv_module,
+        "transformers_all_fast_path":
+            bool(modeling_qwen3_5.is_fast_path_available),
+    }
+
+
+def verify_model_fused_bindings(
+        model: torch.nn.Module, specification: Mapping,
+) -> dict:
+    """Check every instantiated Qwen linear-attention block uses FLA."""
+    required_prefix = specification["qwen_kernel_modules"][
+        "chunk_gated_delta_rule"]
+    names = []
+    modules = set()
+    for name, module in model.named_modules():
+        function = getattr(module, "chunk_gated_delta_rule", None)
+        if function is None:
+            continue
+        bound_module = getattr(function, "__module__", None)
+        if bound_module is None or not bound_module.startswith(
+                required_prefix):
+            raise RuntimeError(
+                f"model block {name} binds chunk delta rule to "
+                f"{bound_module!r}, expected {required_prefix!r}")
+        names.append(name)
+        modules.add(bound_module)
+    expected_count = int(
+        specification["expected_linear_attention_modules"])
+    if len(names) != expected_count:
+        raise RuntimeError(
+            f"found {len(names)} fused linear-attention blocks, "
+            f"expected {expected_count}")
+    return {
+        "linear_attention_module_count": len(names),
+        "linear_attention_module_names_sha256": object_sha256(names),
+        "chunk_gated_delta_rule_modules": sorted(modules),
+    }
 
 
 def load_rows(path: Path) -> list[dict]:
@@ -288,6 +380,7 @@ def fit_contract_payload(
         corpus_path: Path, corpus_sha256: str,
         model_snapshot_manifest_path: Path,
         model_snapshot: Mapping, jlens_contract: Mapping,
+        runtime_contract: Mapping,
         fitter_source_sha256: str,
 ) -> dict:
     return {
@@ -303,6 +396,7 @@ def fit_contract_payload(
         "model_snapshot_inventory_sha256":
             model_snapshot["inventory_sha256"],
         "recipe": dict(config["recipe"]),
+        "runtime": dict(runtime_contract),
         "jlens": dict(jlens_contract),
         "fitter_source_sha256": fitter_source_sha256,
     }
@@ -341,6 +435,15 @@ def main() -> None:  # noqa: C901
     clean = require_clean_tree()
     gpu = require_cuda_gpu()
     print(json.dumps({"cuda_hard_gate": gpu}, indent=1), flush=True)
+    runtime_contract = {
+        "packages": verify_package_versions(
+            config["runtime"]["packages"]),
+        "qwen_kernels": qwen_fused_kernel_contract(config["runtime"]),
+    }
+    print(json.dumps(
+        {"fused_runtime_contract": runtime_contract}, indent=1),
+        flush=True,
+    )
     model = model_reference(config["model_uri"])
     model_path = resolve_uri(config["model_uri"])
     snapshot_manifest_path = resolve_uri(
@@ -384,6 +487,7 @@ def main() -> None:  # noqa: C901
         model_snapshot_manifest_path=snapshot_manifest_path,
         model_snapshot=model_snapshot,
         jlens_contract=jlens_contract,
+        runtime_contract=runtime_contract,
         fitter_source_sha256=file_sha256(fitter_source),
     )
     fit_contract_sha = object_sha256(contract_payload)
@@ -472,6 +576,12 @@ def main() -> None:  # noqa: C901
         low_cpu_mem_usage=True,
     ).to("cuda").eval()
     assert_model_on_cuda(hf_model)
+    model_kernel_contract = verify_model_fused_bindings(
+        hf_model, config["runtime"])
+    print(json.dumps(
+        {"model_fused_kernel_bindings": model_kernel_contract},
+        indent=1,
+    ), flush=True)
     lens_model = jlens.from_hf(hf_model, tokenizer)
     if (
         lens_model.n_layers != int(recipe["expected_n_layers"])
@@ -594,6 +704,7 @@ def main() -> None:  # noqa: C901
         "corpus_evidence_id": config["corpus_evidence_id"],
         "checkpoint_at_milestone": final_header,
         "model_snapshot": model_snapshot,
+        "model_fused_kernel_bindings": model_kernel_contract,
         "gpu": gpu,
     }
     manifest_envelope = {
@@ -625,6 +736,8 @@ def main() -> None:  # noqa: C901
             if arguments.stop_at > invocation_start_idx else None),
         "peak_vram_bytes": int(torch.cuda.max_memory_allocated()),
         "gpu": gpu,
+        "runtime": runtime_contract,
+        "model_fused_kernel_bindings": model_kernel_contract,
         "jlens": jlens_contract,
     }
     command = (
