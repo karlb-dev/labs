@@ -1,6 +1,6 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 13:05 UTC.
+Last updated: 2026-07-31 13:13 UTC.
 
 ## Restart contract
 
@@ -705,9 +705,15 @@ The GPU fitter is
 `jspace_phase4.experiments.p4_qwen_nested_lens_fit`, config
 `configs/p4_qwen_nested_lens_fit_dev.yaml`, pushed at `8769b8b`.
 It fits all source layers 0–62 to target layer 63 with the upstream
-paper recipe (`dim_batch=8`, 128 tokens, skip first 16), maintains one
-cumulative float32 checkpoint, and atomically mirrors it to Drive every
-10 prompts. A same-process CUDA smoke matmul and CUDA model-location
+paper estimator (128 tokens, skip first 16), maintains one cumulative
+float32 checkpoint, and atomically mirrors it to Drive every 10
+prompts. The initial `dim_batch=8` feasibility attempt passed the
+same-process RTX hard gate and loaded the exact model, but its first
+forward reached 94.96/94.97 GiB and OOMed before completing prompt 1.
+No checkpoint or evidence was created and no CPU fallback occurred.
+The retry uses `dim_batch=4`, which upstream `jlens` documents as a
+memory-only batching knob: the estimator and total backward FLOPs are
+unchanged. A same-process CUDA smoke matmul and CUDA model-location
 assertion precede fitting; there is no CPU fallback. Recovery refuses
 changes to the corpus, model, recipe, fitter source, or exact clean
 `jlens` revision `581d398613e5602a5af361e1c34d3a92ea82ba8e`.

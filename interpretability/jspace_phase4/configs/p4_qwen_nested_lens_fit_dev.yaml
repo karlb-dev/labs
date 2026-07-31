@@ -26,7 +26,9 @@ draws:
 recipe:
   source_layers: all_below_target
   target_layer: 63
-  dim_batch: 8
+  # Runtime memory batching only; jlens computes the same estimator and
+  # documents unchanged total backward FLOPs. Eight OOMed at 94.96 GiB.
+  dim_batch: 4
   max_seq_len: 128
   skip_first: 16
   model_dtype: bfloat16

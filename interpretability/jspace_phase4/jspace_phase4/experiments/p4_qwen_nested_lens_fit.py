@@ -405,7 +405,8 @@ def main() -> None:  # noqa: C901
     local_header_path = local_fit_root / "checkpoint_state.json"
     drive_checkpoint = drive_recovery / "fit.ckpt"
     drive_header_path = drive_recovery / "checkpoint_state.json"
-    progress_path = drive_recovery / "progress.json"
+    progress_path = (
+        drive_recovery / f"progress_{fit_contract_sha}.json")
     expected_checkpoint = int(
         recipe["expected_checkpoint_tensor_bytes"])
     expected_lens = int(recipe["expected_lens_tensor_bytes"])
