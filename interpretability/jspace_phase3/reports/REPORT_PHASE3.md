@@ -1,5 +1,11 @@
 # J-space Phase 3 — living report (mechanism, generalization, paper hardening)
 
+> **Release note (2026-07-31):** this file preserves the chronological
+> research record, including statements later narrowed by the release audit.
+> The binding final numbers, claim ladder, and limitations are in
+> [`PHASE3_STATE_OF_RECORD.md`](PHASE3_STATE_OF_RECORD.md), which takes
+> precedence wherever the two differ.
+
 > **Freeze clarification.** Phase 3 was validly frozen at
 > `jspace-phase3-freeze-v1`; the stale candidate header inside the historical
 > preregistration is a generation defect. See
@@ -512,3 +518,41 @@ composed answers *through* readable bridge content shows Think not
 doing so. Scope: development tier (arm set beyond the preregistered
 P3-P3; Think n=20), one composed-item slice; the answer-only
 diagnostic behaves on both models.
+
+---
+
+## VM11 release-audit closeout (2026-07-31) — tier: METHODS
+
+The binding synthesis is
+[`PHASE3_STATE_OF_RECORD.md`](PHASE3_STATE_OF_RECORD.md). The audit
+preserves the frozen outcome parquets and adds the following live evidence:
+
+- `p3-inference-audit-v1`: exact P3-P1 sign-flip enumeration and correctly
+  named intervals; historical estimate −0.260954, exact p=0.062332.
+- `p3-protocol-audit-protected-answer-qwen-v1`: P3-P2 remains +0.095833
+  on the exact scored-alias protected stratum (183/188 items).
+- `p3-control-seed-contract-audit-v2`: P3-P2 is identical across five Qwen
+  control seeds; P3-P1 is decision-sensitive. The repaired state seed 31337
+  gives −0.271183, exact p=0.057892, so P3-P1 is descriptive.
+- `p3-n8-p3-level1-v1` plus the three stratified L2 cells and full Qwen L3:
+  61/61 analysis quantities exact, deterministic GPU arms exact, and all
+  188 Qwen rows reproduced.
+- `p3-boundary-cohort-sensitivity-v2`: a 200-row manual generation audit has
+  zero disagreements. Boundary-safe grading gives P3-P1 −0.270160,
+  P3-P2 +0.095833 on 186 items, and P3-P3 +0.428230 on 93 items.
+- `p3-alias-endpoint-cross-model-v1`: on a pre-outcome 20-fact subset
+  containing every shared multi-alias fact, prefix-disjoint logsumexp moves
+  P3-P1 by only +0.021203 relative to stable first-alias scoring. Canonical
+  scoring has a disclosed −0.116605 two-fact surface sensitivity.
+- `p3-bridge-geometry-qwen36-27b-v2`: all frozen arms replay exactly;
+  geometry cross-fit R² is −0.0947 and the residualized rescue remains
+  +0.403816 [+0.105071, +0.734497].
+- `p3-bridge-swap-endpoint-qwen36-27b-v1`: counterfactual bridge injection
+  shifts intended answer preference +8.582031 nats and produces 15/40
+  counterfactual greedy hits, but does not separate cleanly from direct
+  counterfactual-answer-direction injection (+1.342 difference, p=0.419).
+
+The old N8 labels in the chronology above refer to Phase 2 jobs and were
+corrected event-wise. The actual Phase 3 N8 ladder is the one listed here.
+Similarly, “184-item Qwen” above is historical prose from the overwritten
+Phase 2 runner; the actual Phase 3 L3 cell contains 188 items.
