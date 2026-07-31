@@ -28,11 +28,11 @@ import pandas as pd
 
 from jspace_part2.lib import sha256_file
 from ..bank import load_bank
-from ..paths3 import metrics_dir
+from ..paths3 import metrics_dir, run_root
 from ..provenance3 import (Provenance3, register, require_clean_tree,
                            write_result3)
 from ..scoring import DEFAULT_SPEC
-from ..stats import (family_signflip_test, within_fact_composition,
+from ..stats import (exact_signflip_test, within_fact_composition,
                      within_fact_model_diff,
                      within_item_exchange_mean,
                      within_item_label_exchange_tail)
@@ -43,6 +43,8 @@ BANKS = ("bank_f_v7.jsonl", "bank_s_v3.jsonl")
 SEED = 4242
 THRESHOLD = -1.0
 TIER = "methods"
+EVIDENCE_ID = "p3-boundary-cohort-sensitivity-v2"
+SUPERSEDES = "p3-boundary-cohort-sensitivity-v1"
 REPO_DATA = Path(__file__).resolve().parents[2] / "data"
 PARTITION = (
     Path(__file__).resolve().parents[2]
@@ -210,7 +212,8 @@ def _load_grid(slug: str, side: str) -> pd.DataFrame:
 
 def analyze_population(
         side: str, name: str, sets_by_model: dict[str, set[str]],
-        grids: dict[str, pd.DataFrame]) -> dict:
+        grids: dict[str, pd.DataFrame], *,
+        run_exchange_tests: bool = True) -> dict:
     filtered = {
         slug: grids[slug][
             grids[slug].fact_id.isin(sets_by_model[slug])].copy()
@@ -231,8 +234,8 @@ def analyze_population(
         "n_families": int(len(family)),
     }
     if len(family) >= 3:
-        p1["family_signflip"] = family_signflip_test(
-            family.to_numpy(), draws=100_000, seed=SEED)
+        p1["exact_family_signflip"] = exact_signflip_test(
+            family.to_numpy())
 
     qwen = filtered["qwen36-27b"].copy()
     qwen["delta_J"] = qwen.J_eff
@@ -270,7 +273,8 @@ def analyze_population(
     # Inference is repeated only for the historical reference and the
     # binding boundary-safe strict subset. Other populations are
     # descriptive because their eligible supersets lack frozen outcomes.
-    if name in {"historical_unsafe_strict", "boundary_safe_strict"}:
+    if run_exchange_tests and name in {
+            "historical_unsafe_strict", "boundary_safe_strict"}:
         if len(qwen) and qwen.canonical_family.nunique() >= 3:
             p2["label_exchange"] = within_item_label_exchange_tail(
                 qwen, draws=100_000, threshold=THRESHOLD, seed=SEED)
@@ -342,7 +346,7 @@ def make_figure(report: dict, path_png: Path, path_pdf: Path) -> None:
 def main() -> None:  # noqa: C901
     out_dir = (
         metrics_dir("cross_model") / "release_audit"
-        / "alias_cohort_sensitivity")
+        / "alias_cohort_sensitivity_v2")
     out_dir.mkdir(parents=True, exist_ok=True)
     aliases = {}
     bank_hashes = {}
@@ -442,6 +446,7 @@ def main() -> None:  # noqa: C901
 
     partition = json.loads(PARTITION.read_text())["payload"]
     cohort_report = {}
+    control_seed_report = {}
     boundary_summary = {}
     boundary_paths = []
     for slug, frame in boundary_frames.items():
@@ -483,6 +488,50 @@ def main() -> None:  # noqa: C901
                 grids)
             for name in population_names}
 
+        # Recompute the same selection views across the five fully banked
+        # stable Qwen control seeds.  This separates a cohort change from
+        # the already-known matched-control realization sensitivity and
+        # aligns seed 31337 with the N8-P3-L3 state-of-record replay.
+        control_path = (
+            run_root() / "metrics" / "qwen36-27b" / "release_audit"
+            / "control_seed" / "p3_control_seed_audit_full_rows.parquet")
+        input_hashes["control_seed_full_rows"] = sha256_file(control_path)
+        control_rows = pd.read_parquet(control_path)
+        seed_side = control_rows[control_rows.side == side]
+        bridge_columns = [
+            column for column in (
+                "item_id", "lp_true_bridge", "lp_distractor_bridge")
+            if column in grids["qwen36-27b"].columns]
+        bridge = grids["qwen36-27b"][bridge_columns].drop_duplicates(
+            "item_id")
+        control_seed_report[side] = {}
+        for audit_seed in sorted(seed_side.audit_seed.unique()):
+            qwen = seed_side[
+                seed_side.audit_seed == audit_seed].copy()
+            if len(bridge_columns) > 1:
+                qwen = qwen.merge(
+                    bridge, on="item_id", how="left",
+                    validate="one_to_one")
+            qwen["model"] = "qwen36-27b"
+            qwen["J_eff"] = (
+                qwen.lp_meanJ_span_safe - qwen.lp_baseline)
+            qwen["C_eff"] = qwen.lp_ss_matched - qwen.lp_baseline
+            qwen["specific"] = qwen.J_eff - qwen.C_eff
+            stable_grids = dict(grids)
+            stable_grids["qwen36-27b"] = qwen
+            seed_views = {}
+            for population_name in (
+                    "historical_unsafe_strict",
+                    "boundary_safe_strict"):
+                seed_views[population_name] = analyze_population(
+                    side, population_name,
+                    {
+                        slug: sets[slug][population_name]
+                        for slug in SLUGS
+                    },
+                    stable_grids, run_exchange_tests=False)
+            control_seed_report[side][str(int(audit_seed))] = seed_views
+
     report = {
         "schema_version": 1,
         "boundary_contract": {
@@ -509,6 +558,8 @@ def main() -> None:  # noqa: C901
             "corrections_file": corrections_path,
         },
         "cohort_sensitivity": cohort_report,
+        "control_seed_cohort_sensitivity": control_seed_report,
+        "state_of_record_control_seed": 31337,
         "population_contract": {
             "historical_unsafe_strict": (
                 "both direct and composed pass historical substring G5"),
@@ -538,11 +589,10 @@ def main() -> None:  # noqa: C901
         f"--attest-reviewed-sha {review_hash}"
         + (f" --review-corrections {corrections_path}"
            if corrections_path else ""))
-    evidence_id = "p3-boundary-cohort-sensitivity-v1"
     write_result3(
         report, result_path,
         Provenance3(
-            evidence_id=evidence_id, tier=TIER, command=command,
+            evidence_id=EVIDENCE_ID, tier=TIER, command=command,
             inputs=input_hashes, seed=SEED))
     markdown_path = out_dir / "p3_alias_cohort_sensitivity.md"
     reference = cohort_report[
@@ -567,13 +617,14 @@ def main() -> None:  # noqa: C901
         figure_png, figure_pdf, *boundary_paths,
     ]
     register(
-        evidence_id, tier=TIER, command=command,
+        EVIDENCE_ID, tier=TIER, command=command,
         what=(
             "Post-freeze boundary-safe G5 and cohort-selection sensitivity "
             "across all three Phase 3 models/sides, with deterministic "
             f"100-positive/100-negative hand audit ({disagreements} "
             "disagreements)."),
-        outputs=outputs, inputs=input_hashes)
+        outputs=outputs, inputs=input_hashes,
+        supersedes=SUPERSEDES)
     print(json.dumps({
         "boundary_summary": boundary_summary,
         "manual_review": report["manual_review"],
