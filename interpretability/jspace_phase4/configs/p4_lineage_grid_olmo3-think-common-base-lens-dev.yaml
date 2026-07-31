@@ -1,4 +1,4 @@
-evidence_id: p4-lineage-grid-olmo3-think-common-base-lens-dev-v1
+evidence_id: p4-lineage-grid-olmo3-think-common-base-lens-dev-v2
 tier: phase4-development
 slug: olmo3-think-common-base-lens
 model_uri: model://allenai/Olmo-3-32B-Think@ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7

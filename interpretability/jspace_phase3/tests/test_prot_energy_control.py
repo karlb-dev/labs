@@ -63,6 +63,16 @@ def test_unreachable_protected_share_clamps():
     assert abs(total - 0.02) < 1e-4         # total match preserved
 
 
+def test_rank_one_two_component_target_is_marked_clamped():
+    """Rank 1 cannot use separate in-span and out-of-span energy vectors."""
+    h, prot = _vec(21), _rows(8, seed=22)
+    basis, info = build_prot_energy_matched_subspace(
+        h, 1, 0.02, 0.5, prot, seed=23)
+    assert basis.shape == (D, 1)
+    assert info["clamped"]
+    assert info["rank_component_clamped"]
+
+
 def test_no_protected_rows_falls_back_to_instant():
     h = _vec(12)
     basis, info = build_prot_energy_matched_subspace(h, 4, 0.05, 0.5, None,

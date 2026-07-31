@@ -223,8 +223,11 @@ def build_prot_energy_matched_subspace(
     e_total = max(min(energy_frac, e_in_avail + e_out_avail), 0.0)
     e_in_t = min(e_total * max(min(prot_energy_frac, 1.0), 0.0), e_in_avail)
     e_out_t = min(e_total - e_in_t, e_out_avail)
+    rank_component_clamped = bool(
+        rank < 2 and e_in_t > 0 and e_out_t > 0)
     clamped = (energy_frac > e_in_avail + e_out_avail
-               or e_in_t < e_total * prot_energy_frac - 1e-9)
+               or e_in_t < e_total * prot_energy_frac - 1e-9
+               or rank_component_clamped)
 
     cols = []
     if e_in_t > 0 and e_in_avail > 0:
@@ -280,6 +283,7 @@ def build_prot_energy_matched_subspace(
         "clamped": bool(clamped), "e_target": float(energy_frac),
         "e_max": e_in_avail + e_out_avail,
         "protected_effective_rank": prot_rank,
+        "rank_component_clamped": rank_component_clamped,
         "prot_energy_target": float(prot_energy_frac),
         "prot_energy_achieved": round(ach_in_frac, 6),
         "energy_achieved": round(ach_total, 6)}

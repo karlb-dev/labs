@@ -20,3 +20,14 @@ collection.
   by a regression test, and the clean rerun was assigned the superseding
   development evidence ID `p4-g5-bank-olmo3-think-dev-v2`. The partial v1
   state remains preserved on Drive for audit and is not admissible evidence.
+
+- 2026-07-31: the first common-base-lens Think grid
+  (`p4-lineage-grid-olmo3-think-common-base-lens-dev-v1`) exposed one
+  rank-1 site where the protected-energy control requested nonzero energy
+  both inside and outside the protected span. That target needs two
+  independently controlled components; the inherited constructor dropped
+  the second component but failed to mark the site clamped. The primary
+  span-safe rank/energy control was unaffected (worst relative energy error
+  0.000236), and all stored outcome scores remain immutable. The constructor
+  now marks this rank-limited geometry as clamped, a regression test covers
+  it, and a full v2 common-lens grid supersedes v1 before comparison.
