@@ -22,6 +22,8 @@ from ..registry4 import create
 from ..seeds import SEED_CONTRACT
 from ..stats4 import exact_signflip, family_bootstrap_percentile
 
+FIGURE_LAYOUT_RECT = (0.0, 0.045, 1.0, 0.955)
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -186,6 +188,14 @@ def interval_points(blocks: dict, field: str) -> tuple[list, list, list]:
     return estimates, low, high
 
 
+def reserve_footer_layout(figure) -> None:
+    engine = figure.get_layout_engine()
+    if engine is None:
+        raise RuntimeError(
+            "development figure requires constrained layout")
+    engine.set(rect=FIGURE_LAYOUT_RECT)
+
+
 def make_figure(
         payload: dict,
         *,
@@ -206,6 +216,10 @@ def make_figure(
     }
     figure, axes = plt.subplots(
         2, 2, figsize=(11.2, 7.8), constrained_layout=True)
+    # Constrained layout does not reserve space for figure-level text.
+    # Keep the provenance footer outside the axes/tick-label layout so
+    # rotated labels in the lower panels cannot collide with it.
+    reserve_footer_layout(figure)
 
     capability = payload["capability"]["by_bank_variant"]
     variants = ["direct", "composed", "bridge_supplied"]
@@ -296,7 +310,7 @@ def make_figure(
     )
     figure.text(
         0.5,
-        0.002,
+        0.008,
         "Known development banks; family-resampling 95% intervals; "
         "not confirmatory evidence.",
         ha="center",
