@@ -7,8 +7,15 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 PKG = Path(__file__).resolve().parents[1]
+
+
+def test_all_phase3_yaml_configs_parse():
+    for path in sorted((PKG / "configs").glob("*.yaml")):
+        value = yaml.safe_load(path.read_text())
+        assert isinstance(value, dict), path
 
 
 def test_run_root_env_override(tmp_path, monkeypatch):

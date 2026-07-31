@@ -10,6 +10,7 @@ from jspace_phase4.scoring4 import (
     logsumexp_reference,
     prefix_disjoint_aliases,
 )
+from jspace_phase4.experiments.p4_g5_bank_scoring import canonical_alias_for
 
 
 class MockTokenizer:
@@ -75,6 +76,15 @@ def test_alias_manifest_is_tokenizer_pinned():
     assert first == second
     assert len(first["token_manifest_sha256"]) == 64
     assert first["aggregation"] == "prefix-disjoint-logsumexp"
+
+
+def test_canonical_alias_is_not_assumed_to_be_alias_zero():
+    session = ScoringSession(MockTokenizer())
+    assert canonical_alias_for(
+        session,
+        [" the baht", " baht", " Thai baht"],
+        "baht",
+    ) == " baht"
 
 
 def test_generation_boundary_and_counterfactual_trichotomy():

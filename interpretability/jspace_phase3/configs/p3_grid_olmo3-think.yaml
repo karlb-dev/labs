@@ -7,8 +7,7 @@ evidence_id: p3-lineage-grid-olmo3-think-v1
 tier: phase3-development
 slug: olmo3-think
 model_uri: model://allenai/Olmo-3-32B-Think@ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
-f2edda15216e738ef2bb73771e11890e152b2112
-lens_uri: /content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/lens/olmo32bthink_lens.pt
+lens_uri: drive://part1/lens/olmo32bthink_lens.pt
 banks: [bank_f_v7.jsonl, bank_s_v3.jsonl]
 partition_uri: interpretability/jspace_phase3/preregistration/partition_phase3.json
 partition_side: confirmatory

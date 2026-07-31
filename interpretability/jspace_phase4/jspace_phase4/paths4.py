@@ -110,11 +110,14 @@ def _resolve_model(rest: str, *, must_exist: bool) -> Path:
     caches = [
         os.environ.get("HF_HUB_CACHE", ""),
         "/content/hf_local",
-        str(_drive_root().parent / "hf_cache/hub"),
     ]
     for cache in caches:
         if not cache:
             continue
+        if str(Path(cache)).startswith("/content/drive/"):
+            raise UnresolvedArtifact(
+                "HF_HUB_CACHE points at DriveFS; copy or download the "
+                "pinned snapshot to local NVMe before model load")
         candidate = Path(cache) / cache_name / "snapshots" / revision
         if candidate.exists():
             return candidate

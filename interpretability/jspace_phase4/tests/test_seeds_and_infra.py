@@ -89,6 +89,14 @@ def test_run_root_override_and_uri_resolution(tmp_path, monkeypatch):
         resolve_uri("model://org/model")
 
 
+def test_model_resolver_rejects_drivefs_cache(monkeypatch):
+    from jspace_phase4.paths4 import resolve_uri
+    monkeypatch.setenv(
+        "HF_HUB_CACHE", "/content/drive/MyDrive/hf_cache/hub")
+    with pytest.raises(Exception, match="DriveFS"):
+        resolve_uri("model://org/model@" + "a" * 40)
+
+
 def test_gpu_guard_refuses_invisible_cuda(monkeypatch):
     from jspace_phase4 import gpu
     monkeypatch.setattr(gpu.torch.cuda, "is_available", lambda: False)
