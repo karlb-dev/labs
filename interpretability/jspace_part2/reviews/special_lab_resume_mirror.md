@@ -10,7 +10,7 @@
 This file is STATIC (how any VM gets from zero to working). DYNAMIC state
 lives in `inprogress.md` (same folder, agent-maintained: status, queue,
 what's running, exact next commands) and in the plan files it points to.
-Last static revision: 2026-07-30 (GPU-access invariant). Update this
+Last static revision: 2026-07-31 (GPU execution + Phase 3 plan routing). Update this
 file only when the *setup* changes, not when the science moves.
 
 **VM9-era setup notes:** (1) model weights now live in HF-cache layout
@@ -126,6 +126,13 @@ statistical analysis, plotting, and TeX compilation. Record the GPU name,
 driver, CUDA build, and `torch.cuda.is_available()` in each environment
 audit.
 
+Every Phase 3 model entrypoint must call
+`jspace_phase3.gpu.require_cuda_gpu()` in the same process before loading
+weights and must assert that a model parameter is on CUDA after load. A
+sandboxed failure is a request to relaunch that exact model command with
+host GPU access; it is never permission to continue model inference on
+CPU.
+
 **Model weights rule:** hub-download to local NVMe (`/content/hf_local`
 for HF-cache layout, or a plain dir under `/content/models/`) — measured
 ~320 MB/s with the token. NEVER stream a 32B model through DriveFS for a
@@ -139,13 +146,15 @@ weights between model sets; ~236 G disk total.
 | what | where |
 |---|---|
 | DYNAMIC state (read after bootstrap) | `MyDrive/interpret/inprogress.md` |
-| **THE CURRENT GOVERNING PLAN (VM8+)** | `special-lab-1/jspace_lab_nextsteps_2_2.md` (forensic review + stages N0–N8) **and** `..._addendum.md` §3 (PI decisions D1–D7, which GOVERN on conflict). Git mirror: `jspace_part2/reviews/` with `NEXTSTEPS_2_2_ACCEPTED.md` |
+| **THE CURRENT GOVERNING PLAN (VM11+)** | `special-lab-1/jspace_lab_nextsteps_4_1.md` **and its addendum** (latest audit/release and Phase 4 plan; governs on conflict). Earlier plans remain context only. |
 | **what the campaign is waiting on** | `jspace_part2/READY_FOR_FREEZE.md` (gate ledger) + `preregistration/SCIENTIFIC_PREREGISTRATION_CANDIDATE.md`; copies on Drive at `special-lab-1/` |
 | static rules of conduct (the 12 standing directives) | `special-lab-1/experiment_reset_instructions.md` (copy synced to git mirror) |
 | earlier governing review (Part-2 addendum, still in force where not superseded) | `special-lab-1/jspace_part2_plan1_addendum.md` (+ copies in `special_lab2/` and `jspace/part2/code/`) |
 | repair preregistration (Workstream R + gates) | `special_lab2/REPAIR_PREREGISTRATION.md` (+ git mirror) |
 | operative plan | `special_lab2/PLAN_PART2.md` — REVISION-1 header supersedes its own §0/§8 |
 | Part-2 run dir (all outputs, per-model metrics, manifests) | `special-lab-1/part2_20260727/` |
+| Phase-3 run dir (current audit/release outputs) | `special-lab-1/phase3_20260729/` |
+| Phase-3 package + registry | `labs/interpretability/jspace_phase3/`; event log `reports/evidence_events.jsonl` |
 | Part-1 run dirs (frozen) | `special-lab-1/{2026-07-25_1726, 2026-07-26_v2}/` |
 | repro package (in git) | `labs/interpretability/jspace_part2/` — CLI `jspace-part2`, contract in `protocol/REPRO_CONTRACT.md` |
 | evidence registry (what results exist, tiers, hashes, repro) | `jspace_part2/reports/evidence_registry.jsonl` · `jspace-part2 registry-list` |
