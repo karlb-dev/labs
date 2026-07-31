@@ -1,6 +1,6 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 21:25 UTC.
+Last updated: 2026-07-31 21:51 UTC.
 
 ## Restart contract
 
@@ -8,7 +8,7 @@ Last updated: 2026-07-31 21:25 UTC.
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence/registry head before this documentation
   checkpoint: `0788407`. The Qwen report boundary is `d51ba22` and
-  the preceding live-fit handoff is `874d813`. The GPU-fit harness is
+  the preceding live-fit handoff is `289f65c`. The GPU-fit harness is
   pushed at `8769b8b`
   and its first OOM recovery repair at `0dbf4de`. The mandatory fused
   GPU-kernel runtime repair is pushed at `51336db`. Resume from the
@@ -63,13 +63,13 @@ the RTX PRO 6000.
   n=120 toward n=250, started from clean pushed commit `3a6d501`.
   It rehashed the exact model, passed the CUDA/FLA/48-block gates, and
   recovered the exact fit contract at n=120 before doing new work.
-  Its latest complete atomic local/Drive boundary is n=150,
+  Its latest complete atomic local/Drive boundary is n=159,
   checkpoint SHA-256
-  `611f37e9b71ccecbc792d37e5b19185c8a336ee2b31fb10ba884f61b1f9b9e60`,
-  6,606,047,399 bytes. Prompts 151–153 had resumed when this handoff
+  `4762dd286ded739467bf626111e304eb1ba97572b0a1d896dcb6060e41503333`,
+  6,606,047,399 bytes. Prompts 160–162 had resumed when this handoff
   was written. If the original process is gone, run the exact n=250
-  command below and require `recovered_next_idx` of at least 150.
-  The VM was already at 22h47m uptime at this boundary, so
+  command below and require `recovered_next_idx` of at least 159.
+  The VM was already at 23h13m uptime at this boundary, so
   assume reclamation is imminent and trust only the atomic Drive
   checkpoint, not the live process.
 - Qwen draw A n=120 completed and is live evidence
@@ -925,7 +925,7 @@ whole-lens validation. Figure:
    `phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/`.
    It must report `recovered_next_idx: 120` and verify the cumulative
    checkpoint before new GPU work. The active 2026-07-31 invocation
-   had reached at least n=150; recovery must use the highest valid
+   had reached at least n=159; recovery must use the highest valid
    `checkpoint_state.json` boundary rather than assuming n=120.
    Commit/push each registry event,
    then repeat at n=500 and n=1000. Run draw B n=120 and preferably
