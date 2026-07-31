@@ -1,13 +1,13 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 10:58 UTC.
+Last updated: 2026-07-31 11:14 UTC.
 
 ## Restart contract
 
 - Repository: `/content/labs`
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence head before this documentation checkpoint:
-  `a119986`. Resume from the remote
+  `ee51eea`. Resume from the remote
   branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -48,21 +48,22 @@ interpret sandbox CUDA invisibility as a reason to fall back to CPU.
 CPU is allowed only for hashes, unit tests, deterministic statistics,
 plotting, and TeX/PDF compilation.
 
-The completed Think grids recorded the hard gate in their result
-envelopes. Live telemetry during the final common-lens grid showed
-81,119 MiB VRAM allocated on the RTX PRO 6000, P0.
+The completed Think grids and Instruct G5 recorded the hard gate in
+their result envelopes. Live Instruct G5 telemetry showed 62,164 MiB
+VRAM allocated at 94% utilization on the RTX PRO 6000, P0.
 
 ## Current process and checkpoint state
 
 - No model job was running at this checkpoint. The exact 3.1 Instruct
-  cache is now independently verified on local NVMe and Drive. The next
-  command is the 3.1 Instruct G5 producer recorded below.
+  cache is independently verified on local NVMe and Drive, and its G5
+  producer is complete, validated, registered, committed, and pushed.
+  The next command is the 3.1 Instruct own-lens grid recorded below.
 - The local 3.1 Think cache was removed only after its complete
   scientific and documentation boundary was backed up and pushed at
   `7a9dd07`. Its independently verified Drive recovery copy remains.
 - All completed evidence and figures are durable on Drive, registered,
   committed, and pushed.
-- Latest scientific-evidence head is `a119986`; the documentation
+- Latest scientific-evidence head is `ee51eea`; the documentation
   checkpoint containing this file may be newer.
 - Full Phase 4 suite: 44/44 passing. The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
@@ -447,6 +448,42 @@ is
 `151070d943e62bf9829e037bb8461ab1b94543e26c7d3ae73f544376734693f7`.
 The complete scientific boundary is pushed at `a119986`.
 
+## OLMo-3.1 32B Instruct G5 — complete
+
+Live evidence:
+`p4-g5-bank-olmo31-instruct-dev-v1`.
+
+Artifact:
+
+`phase4_20260731/metrics/olmo31-instruct/g5_bank/p4-g5-bank-olmo31-instruct-dev-v1/`
+
+The GPU producer completed 972 rows / 324 facts / 72 families:
+
+- overall boundary-prefix capability `0.624486`;
+- Bank F `0.467320`; Bank S `0.891667`;
+- direct `0.666667`; composed `0.438272`; bridge-supplied
+  `0.768519`;
+- accepted direct-and-composed cohort: 118 facts, comprising 32 F and
+  86 S facts across 15 F and 21 S family groups.
+
+Independent validation reconstructed every alias and counterfactual
+token manifest and aggregate, checked the state and result envelope
+hashes, registry output hashes, immutable row metadata, and GPU
+provenance. All 972 generations are byte-identical to the Phase 3 run,
+and all 972 capability flags exactly match the later boundary-safe
+prefix audit. The full suite remains 44/44.
+
+- result SHA-256:
+  `97b7d26848094288d0f7cb1a247d22348071d2a1df25fe02729028aca2805ca4`;
+- parquet SHA-256:
+  `b15c6542714974f5c1824bc27a1f0b84d0a48054d67757b3fa0f316512a0b6e9`;
+- input-manifest SHA-256:
+  `85cefce82824a5658049e18260fa39616314cb0c81011eed293396fd944f705e`;
+- result payload SHA-256:
+  `14bb6b41481d6115d02c7a9dfba60bc3765aad5f7c38e6c6dac40fb2d1c2a0cc`.
+
+The validated registry boundary is pushed at `ee51eea`.
+
 ## Local immutable inputs and disk
 
 - The exact local 3.0 Think cache was removed after the corrected v4/v2
@@ -519,10 +556,15 @@ The complete scientific boundary is pushed at `a119986`.
    `ac0587e4a7744a551c059d8cd17ba220bc940dae` is verified on local NVMe
    and Drive as described above. Load only the local NVMe snapshot;
    never load model weights through DriveFS.
-5. From a clean tree run 3.1 Instruct G5:
+5. The clean-tree 3.1 Instruct G5 command was:
    `PYTHONPATH=interpretability/jspace_phase4:interpretability/jspace_phase3 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True TOKENIZERS_PARALLELISM=false python -u -m jspace_phase4.experiments.p4_g5_bank_scoring --config interpretability/jspace_phase4/configs/p4_g5_olmo31-instruct-dev.yaml`.
-   Validate and bank it before the grids.
-6. Run the 3.1 Instruct own/common pair under
+   It is complete, independently validated, banked, and pushed at
+   `ee51eea`.
+6. From a clean tree, run the 3.1 Instruct own-lens grid with
+   `p4_lineage_grid_olmo31-instruct-dev.yaml`, then bank and push it.
+   Run the common-base-lens grid with
+   `p4_lineage_grid_olmo31-instruct-common-base-lens-dev.yaml` only
+   after that boundary. Both must share
    `p4-lineage-grid-olmo31-instruct-frame-pair-dev-v1`.
 7. Build the full base → 3.0 Think → 3.1 Think/Instruct development
    trajectory with common-lens and own-lens views. If they disagree,
