@@ -186,8 +186,13 @@ def interval_points(blocks: dict, field: str) -> tuple[list, list, list]:
     return estimates, low, high
 
 
-def make_figure(payload: dict, *, png_path: Path,
-                pdf_path: Path) -> None:
+def make_figure(
+        payload: dict,
+        *,
+        display_name: str,
+        png_path: Path,
+        pdf_path: Path,
+) -> None:
     labels = ["F direct", "F composed", "S direct", "S composed"]
     keys = ["F:direct", "F:composed", "S:direct", "S:composed"]
     blocks = {key: payload["effects_by_bank_variant"][key]
@@ -286,7 +291,7 @@ def make_figure(payload: dict, *, png_path: Path,
     axes[1, 1].set_title("d  Within-fact composition contrast")
 
     figure.suptitle(
-        "OLMo-3 32B Think: Phase 4 development trajectory point",
+        f"{display_name}: Phase 4 development trajectory point",
         fontsize=14,
     )
     figure.text(
@@ -437,11 +442,18 @@ def main() -> None:
     atomic_json(manifest_path, input_manifest.envelope())
     result_path = output_dir / (
         f"lineage_analysis_{config['slug']}.json")
-    figure_stem = (
-        figures_dir() / "p4f01_olmo3_think_development")
+    display_name = str(config.get(
+        "display_name", "OLMo-3 32B Think"))
+    figure_stem = figures_dir() / str(config.get(
+        "figure_stem", "p4f01_olmo3_think_development"))
     png_path = figure_stem.with_suffix(".png")
     pdf_path = figure_stem.with_suffix(".pdf")
-    make_figure(payload, png_path=png_path, pdf_path=pdf_path)
+    make_figure(
+        payload,
+        display_name=display_name,
+        png_path=png_path,
+        pdf_path=pdf_path,
+    )
     command = (
         "python -m jspace_phase4.experiments.p4_lineage_analysis "
         f"--config {arguments.config}")
@@ -473,7 +485,8 @@ def main() -> None:
         config["evidence_id"],
         tier=config["tier"],
         what=(
-            "Phase 4 OLMo-3 Think development analysis: Bank S direct "
+            f"Phase 4 {display_name} development analysis: Bank S "
+            "direct "
             f"J-specific {bank_s_direct['estimate']:.4f}; Bank S "
             "composed-minus-direct "
             f"{bank_s_composition['estimate']:.4f}; known-bank "
