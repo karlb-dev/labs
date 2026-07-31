@@ -134,8 +134,11 @@ class ScoringSession:
         gnorm = self.spec.normalize(generated)
         for a in accepted:
             anorm = self.spec.normalize(a)
-            if anorm and (gnorm == anorm or gnorm.startswith(anorm + " ")
-                          or gnorm.startswith(anorm)):
+            # Exact normalized token boundary.  The old final
+            # ``startswith(anorm)`` branch graded "India" as present in
+            # "Indian" and "Dutch" in "Dutchman".
+            if anorm and (
+                    gnorm == anorm or gnorm.startswith(anorm + " ")):
                 return {"correct": True, "matched_alias": a}
         return {"correct": False, "matched_alias": None}
 
