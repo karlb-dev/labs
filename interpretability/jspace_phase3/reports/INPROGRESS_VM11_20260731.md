@@ -1,6 +1,6 @@
 # LIVE — Phase 4 OLMo lineage handoff
 
-Last updated: 2026-07-31 06:49 UTC.
+Last updated: 2026-07-31 07:09 UTC.
 
 ## Restart contract
 
@@ -229,48 +229,42 @@ coordinate drift matters. This is not a binary lineage claim.
 
 ## Local immutable inputs and disk
 
-- Exact Think snapshot currently local:
-  `/content/hf_local/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`
-  (about 61 GiB).
-- Recoverable complete Drive cache:
+- The exact local Think snapshot was removed only after every one of its
+  14 shards (64,467,127,296 bytes total) independently matched its
+  Hugging Face LFS SHA-256 object ID, every Drive blob size matched, and
+  all small files were byte-exact. It remains recoverable from:
   `/content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`
   (14 shards; about 61 GiB dereferenced).
+- Exact base snapshot is now local:
+  `/content/hf_local/models--allenai--Olmo-3-1125-32B/snapshots/c2b61dae89a1ad10e4ad5653d0e46b590902607b`.
+  The index contains 707 tensors over 14 shards / 64,467,127,296 bytes.
+  Every shard independently matches its Hugging Face LFS SHA-256 object
+  ID and no incomplete files remain.
 - Own Think lens is materialized locally under
   `/content/sl4_work/inputs/05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053/`.
 - Base lens is materialized locally under
   `/content/sl4_work/inputs/92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696/`.
-- Current root free space before deleting Think: about 58 GiB.
-- Do not delete the local Think snapshot until a checksum/dry-run
-  comparison against the complete `hf_cache/hub` Drive snapshot passes.
-  Remove only that exact snapshot path, never `/content/hf_local`
-  broadly.
+- Current root free space with the base model local: about 58 GiB.
+- Do not delete the local base snapshot until its G5, lineage grid,
+  analysis, and trajectory boundary are durable, registered, committed,
+  and pushed.
 
 ## Next queue — execute without pausing
 
 1. Verify branch/head/clean tree and rerun the host CUDA hard gate.
-2. Verify the complete Drive Think snapshot against the local snapshot
-   with dereferenced links and checksums. Confirm no model process is
-   active, then remove only the exact local Think snapshot to recover
-   enough NVMe for the base model.
-3. Download the pinned base snapshot to local NVMe, never DriveFS:
-
-   `allenai/Olmo-3-1125-32B@c2b61dae89a1ad10e4ad5653d0e46b590902607b`
-
-   Use `HF_HUB_CACHE=/content/hf_local`, authenticated `hf download`,
-   an explicit revision, and a stall guard. Do not change the revision.
-4. Run GPU-only G5:
+2. Run GPU-only G5 on the already validated local base snapshot:
 
    `python -u -m jspace_phase4.experiments.p4_g5_bank_scoring --config interpretability/jspace_phase4/configs/p4_g5_olmo3-base-dev.yaml`
 
-5. Freeze the base G5 direct+composed capable cohort, add a base lineage
+3. Freeze the base G5 direct+composed capable cohort, add a base lineage
    config using the already banked base lens, test and commit the config,
    then run the same seven-condition GPU grid.
-6. Analyze the base point and build the required four-checkpoint
+4. Analyze the base point and build the required four-checkpoint
    development trajectory using base, 3.0 Think, 3.1 Think, and 3.1
    Instruct. Draw both common-lens and own-lens trajectories. If they
    disagree, treat coordinate drift as a result and prioritize the
    fit/corpus-size study before causal over-interpretation.
-7. Refresh this file, the Drive copy, Phase 4 Markdown/TeX/PDF, and
+5. Refresh this file, the Drive copy, Phase 4 Markdown/TeX/PDF, and
    evidence registry after every major boundary. Commit and push often.
 
 Never overwrite registered evidence. Use a new evidence ID and an
