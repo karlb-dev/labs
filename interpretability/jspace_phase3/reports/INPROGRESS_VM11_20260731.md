@@ -1,6 +1,6 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 13:29 UTC.
+Last updated: 2026-07-31 15:05 UTC.
 
 ## Restart contract
 
@@ -8,7 +8,8 @@ Last updated: 2026-07-31 13:29 UTC.
 - Branch: `interp_jspace_part2`
 - Pushed scientific-evidence/registry head before this documentation
   checkpoint: `3f54e94`. The GPU-fit harness is pushed at `8769b8b`
-  and its first OOM recovery repair at `0dbf4de`. Resume from the
+  and its first OOM recovery repair at `0dbf4de`. The mandatory fused
+  GPU-kernel runtime repair is pushed at `51336db`. Resume from the
   remote branch tip containing this file.
 - Static bootstrap:
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
@@ -56,22 +57,30 @@ the RTX PRO 6000.
 
 ## Current process and checkpoint state
 
-- No model job was running at this checkpoint. The exact 3.1 Instruct
-  cache is independently verified on local NVMe and Drive. Its G5,
-  seed-paired own/common grids, own-frame analysis, paired-frame
-  analysis, and registered figures are complete, independently
-  reproduced, committed, and pushed. The registered four-checkpoint
-  trajectory synthesis is also complete and pushed. The leakage-safe
-  Qwen nested corpora are registered, and the GPU-only resumable Qwen
-  fitter is tested and pushed. Two feasibility attempts completed no
-  prompts and produced no checkpoints or evidence: `dim_batch=8`
-  OOMed, while `dim_batch=4` under the Transformers Torch delta-rule
-  fallback was deliberately interrupted after more than 8.5 minutes
-  on prompt 1. The latter confirmed about 75.95 GiB VRAM use and live
-  GPU utilization, but its 10-prompt recovery boundary would violate
-  the under-30-minute recovery contract. FLA 0.5.2 is now installed
-  and host-validated; the next command below starts draw A using only
-  its fused CUDA delta-rule kernels and a three-prompt Drive boundary.
+- **An active GPU model job was running at this checkpoint:** Qwen
+  draw A toward n=120, started from clean pushed code commit `51336db`,
+  fit contract SHA-256
+  `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00`.
+  Its latest complete atomic local/Drive recovery boundary is n=30,
+  checkpoint SHA-256
+  `659c3b681ebe29c732fa76529cd95b1efd022ec9980d7d3420ea82b7842f3af8`,
+  6,606,047,399 bytes. Prompts 31–33 had resumed from n=30 when this
+  handoff was written. If the original process is gone, use the exact
+  command below; it must select the Drive checkpoint and report
+  `recovered_next_idx` at least 30 before doing new GPU work.
+- The exact 3.1 Instruct cache is independently verified on local NVMe
+  and Drive. Its G5, seed-paired own/common grids, own-frame analysis,
+  paired-frame analysis, and registered figures are complete,
+  independently reproduced, committed, and pushed. The registered
+  four-checkpoint trajectory synthesis is also complete and pushed.
+  The leakage-safe Qwen nested corpora are registered, and the
+  GPU-only resumable Qwen fitter is tested and pushed. Two feasibility
+  attempts completed no prompts and produced no checkpoints or
+  evidence: `dim_batch=8` OOMed, while `dim_batch=4` under the
+  Transformers Torch delta-rule fallback was deliberately interrupted
+  after more than 8.5 minutes on prompt 1. FLA 0.5.2 is now
+  host-validated and the active run uses only its fused CUDA
+  delta-rule kernels with a three-prompt Drive boundary.
 - The local 3.1 Think cache was removed only after its complete
   scientific and documentation boundary was backed up and pushed at
   `7a9dd07`. Its independently verified Drive recovery copy remains.
@@ -83,7 +92,7 @@ the RTX PRO 6000.
 - The refreshed handout compiles to 9 pages with no TeX warnings; the
   trajectory and closing pages were visually inspected. PDF SHA-256 is
   `06c9bf3055d110a7eba14d9dc69a6b9faffc6d3b79c30f178cecd993a60bdd26`.
-- Full Phase 4 suite before the fused-runtime repair: 56/56 passing.
+- Full Phase 4 suite after the fused-runtime repair: 58/58 passing.
   The sandbox-only tiny nonlinear-JVP
   unit test can emit a CUDA initialization warning; it does not perform
   model evidence and is intentionally CPU-safe.
@@ -712,7 +721,8 @@ Corpus artifacts:
 
 The GPU fitter is
 `jspace_phase4.experiments.p4_qwen_nested_lens_fit`, config
-`configs/p4_qwen_nested_lens_fit_dev.yaml`, pushed at `8769b8b`.
+`configs/p4_qwen_nested_lens_fit_dev.yaml`; the base fitter is pushed
+at `8769b8b` and the required fused-runtime repair at `51336db`.
 It fits all source layers 0–62 to target layer 63 with the upstream
 paper estimator (128 tokens, skip first 16), maintains one cumulative
 float32 checkpoint, and atomically mirrors it to Drive every 3
