@@ -1,6 +1,6 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 19:51 UTC.
+Last updated: 2026-07-31 20:04 UTC.
 
 ## Restart contract
 
@@ -57,9 +57,19 @@ the RTX PRO 6000.
 
 ## Current process and checkpoint state
 
-- No model job is active. Qwen draw A n=120 completed and is live
-  evidence `p4-qwen-lens-fit-drawA-n120-dev-v1`, committed and pushed
-  at `515a67a`. It used fit contract SHA-256
+- **An active GPU model job is running:** cumulative Qwen draw A from
+  n=120 toward n=250, started from clean pushed commit `3a6d501`.
+  It rehashed the exact model, passed the CUDA/FLA/48-block gates, and
+  recovered the exact fit contract at n=120 before doing new work.
+  Its latest complete atomic local/Drive boundary is n=123,
+  checkpoint SHA-256
+  `7de6fe1aaa727f0467121abe155178ed87a5f60b0415c9de714335e8f7d7a0be`,
+  6,606,047,399 bytes. Prompts 124–126 had resumed when this handoff
+  was written. If the original process is gone, run the exact n=250
+  command below and require `recovered_next_idx` of at least 123.
+- Qwen draw A n=120 completed and is live evidence
+  `p4-qwen-lens-fit-drawA-n120-dev-v1`, committed and pushed at
+  `515a67a`. It used fit contract SHA-256
   `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00`.
   The final complete atomic local/Drive recovery boundary has
   checkpoint SHA-256
