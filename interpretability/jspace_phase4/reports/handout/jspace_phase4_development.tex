@@ -555,6 +555,38 @@ task-row medians are .99969--.99976, and token-q05 medians are
 capacity consequences remain in the functional gate.
 \eid{p4-qwen-lens-influence-prompt112-dev-v1}
 
+\section{Functional selection instability forces Branch B}
+
+The frozen runner evaluated published $n=1000$, draw-A $n=120$, and
+draw-A $n=250$ in fixed order on identical caches, items, aliases, and
+matched seeds. It used 60 primary items, 40 prose items, 20 bridge facts,
+50 measured G4 controls, and a fixed 16-prompt capacity set. The published
+lens remains an external reference with a partially specified recipe.
+
+\begin{center}
+\includegraphics[width=0.96\textwidth]{../figures/p4f13_qwen_multilens_functional_gate.png}
+\end{center}
+
+Structural gates pass: conservative assay task-row median cosine is
+.99522 (floor .95) and token-q05 is .99308 (floor .90). Selection gates
+fail. A120--A250 median normalized projector overlap is .67479 (floor
+.85) and selected-ID Jaccard is .53846 (floor .75) over 17,381 positions;
+median principal angle is 7.87 degrees and the maximum reaches 90 degrees.
+
+The other frozen point-estimate gates pass. Occupancy differences are zero;
+centered-excess differences are $-.000711/-.000239/-.000173$ at
+L24/L32/L40. The span-safe-specific difference is .09596 nat against .15,
+although its 95\% interval $[-.0734,.2993]$ does not establish TOST
+equivalence. Tail difference is $-.0333$; A120/A250 G4 rates are both
+.78 J versus .12 random; bridge-rescue/preference differences are
+$-.2147/-.0553$ nat with matched signs.
+
+The precommitted rule emits \textbf{Branch B: continue draw A to $n=500$}.
+The two selection failures are load-bearing despite seven other functional
+and both structural gates passing. Draw B waits, and $n=250$ cannot yet be
+nominated canonical.
+\eid{p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1}
+
 \section{Outcome-blind primary protocols}
 
 These methods gates contain no Phase~4 confirmatory or replication

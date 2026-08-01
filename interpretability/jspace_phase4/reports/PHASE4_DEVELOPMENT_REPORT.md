@@ -615,6 +615,45 @@ median disagreement versus 0.02, and 0.002047 task q05 disagreement versus
 the frozen assay band. Selected-ID and capacity consequences remain part of
 the multi-lens functional gate.
 
+### Multi-lens functional gate and frozen branch
+
+Development evidence:
+`p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1`.
+
+The runner evaluated the external published n=1000 lens, draw-A n=120, and
+draw-A n=250 in the frozen order on identical baseline caches, item order,
+condition order, answer aliases, and matched seed namespaces. It used 60
+direct/composed primary items, 40 held-out prose items, 20 bridge endpoint
+facts, 50 measured G4 controls after calibration, and a fixed 16-prompt
+capacity activation set. The published comparator remains an external
+published reference with a partially specified recipe.
+
+![Qwen multi-lens functional gate](figures/p4f13_qwen_multilens_functional_gate.png)
+
+The same-corpus structural gate passes: the conservative assay-band task-row
+median cosine is 0.99522 against a 0.95 floor and the conservative token-row
+q05 is 0.99308 against 0.90. Functional selection geometry does not pass.
+A120–A250 median normalized projector overlap is 0.67479 against the frozen
+0.85 floor, and median selected-ID Jaccard is 0.53846 against 0.75, across
+17,381 positions. The median principal angle is 7.87 degrees, while the
+largest reaches 90 degrees.
+
+The other frozen point-estimate gates pass. Occupancy differs by zero at
+L24/L32/L40; centered-excess differences are −0.000711, −0.000239, and
+−0.000173 (all below the 1-percentage-point ceiling). The equal-family
+span-safe-specific difference is 0.09596 nat against a 0.15-nat ceiling,
+although its 95% paired-family interval [−0.0734, 0.2993] does not establish
+formal TOST equivalence. Tail-rate difference is −0.0333 against a 0.05
+ceiling. Both A120 and A250 produce G4 J-swap flip rate 0.78 and random rate
+0.12. Bridge-rescue difference is −0.2147 nat and preference difference is
+−0.0553 nat, both within 0.25 with matching signs.
+
+The precommitted rule therefore emits **Branch B: functional instability;
+continue draw A to n=500**. The two selection failures are load-bearing even
+though seven other functional criteria and both structural criteria pass.
+Draw B must wait; n=250 cannot be nominated as the canonical Phase 4 lens at
+this boundary.
+
 ## Outcome-blind Phase 4 primary preparation
 
 The following artifacts are methods/protocol evidence. They contain no
