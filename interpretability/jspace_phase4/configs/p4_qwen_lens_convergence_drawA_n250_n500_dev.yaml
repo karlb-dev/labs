@@ -22,7 +22,7 @@ lenses:
     evidence_id: p4-qwen-lens-fit-drawA-n500-dev-v1
     lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n0500.pt
     # Replace only with the hash from the registered n=500 evidence event.
-    lens_sha256: PENDING_REGISTERED_A500_SHA256
+    lens_sha256: 84404956fb71a84f5af7fa22c34a8f07761777d048b3db314b1330037e4168a8
     n_prompts: 500
   published:
     kind: external_published
