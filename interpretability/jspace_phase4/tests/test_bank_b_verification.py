@@ -151,3 +151,67 @@ def test_bank_b_verification_mismatch_is_not_certified():
     assert not result["independent_match"]
     assert result["verification_status"] == "independent-source-mismatch"
     assert not result["required_checks"]["true_answer_matches"]
+
+
+def test_bank_b_verification_resolves_complete_multivalue_alias_coverage():
+    from jspace_phase4.experiments.p4_bank_b_restcountries_verification import (
+        CountryIndex,
+        verify_fact,
+    )
+
+    countries = [
+        _country("Xland", "XX", "XXX", "X City"),
+        _country("Yland", "YY", "YYY", "Y City"),
+        _country("Zland", "ZZ", "ZZZ", "Z City"),
+    ]
+    countries[0]["name"]["nativeName"]["xla"] = {
+        "common": "Xish", "official": "Republic of Xish"}
+    row = _row()
+    row.update({
+        "answer": "Xland",
+        "answer_type": "nativeName",
+        "accepted_answers": [" Xland", " Xish"],
+    })
+    row["counterfactuals"][0]["answer"] = "Yland"
+    row["counterfactuals"][0]["accepted_answers"] = [" Yland"]
+    config = _config()
+    config["verification"][
+        "resolve_multi_valued_by_complete_alias_coverage"] = True
+    result = verify_fact(
+        row, _source_row(), index=CountryIndex(countries), config=config)
+    assert result["independent_match"]
+    assert not result["manual_review_required"]
+    assert result["reviewed_ambiguity"]
+    assert result["verification_status"] == \
+        "verified-exact-reviewed-ambiguity"
+    assert result["ambiguity_resolutions"][0]["coverage"]["passes"]
+
+    row["accepted_answers"] = [" Xland"]
+    unresolved = verify_fact(
+        row, _source_row(), index=CountryIndex(countries), config=config)
+    assert unresolved["manual_review_required"]
+    assert unresolved["verification_status"] == \
+        "independent-match-manual-ambiguity-review"
+
+
+def test_bank_b_verification_preserves_configured_geopolitical_review():
+    from jspace_phase4.experiments.p4_bank_b_restcountries_verification import (
+        CountryIndex,
+        verify_fact,
+    )
+
+    countries = [
+        _country("Xland", "XX", "XXX", "X City"),
+        _country("Yland", "YY", "YYY", "Y City"),
+        _country("Zland", "ZZ", "ZZZ", "Z City"),
+    ]
+    config = _config()
+    config["verification"]["geopolitical_manual_review_names"] = ["Xland"]
+    config["verification"]["geopolitical_review_resolutions"] = {
+        "Xland": "metadata-only inclusion; no sovereignty inference"}
+    result = verify_fact(
+        _row(), _source_row(), index=CountryIndex(countries), config=config)
+    assert result["verification_status"] == \
+        "verified-exact-reviewed-ambiguity"
+    assert result["reviewed_ambiguity"]
+    assert not result["manual_review_required"]

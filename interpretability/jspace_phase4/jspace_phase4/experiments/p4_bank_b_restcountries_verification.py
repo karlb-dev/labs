@@ -137,6 +137,24 @@ def semantic_answer_values(country: Mapping, relation: str) -> list[str]:
     return sorted(str(value) for value in unique.values())
 
 
+def accepted_alias_coverage(
+        accepted: Sequence[str], source_values: Sequence[str]) -> dict:
+    """Require every genuinely co-valid source answer to be represented."""
+    cleaned = [str(value).strip() for value in accepted if str(value).strip()]
+    uncovered = [
+        source for source in source_values
+        if not any(
+            normalized_forms(source) & normalized_forms(candidate)
+            for candidate in cleaned)
+    ]
+    return {
+        "candidate_aliases": cleaned,
+        "source_semantic_values": list(source_values),
+        "uncovered_source_values": uncovered,
+        "passes": bool(cleaned) and not uncovered,
+    }
+
+
 class CountryIndex:
     def __init__(self, countries: Sequence[Mapping], *,
                  aliases: Mapping[str, Mapping] | None = None):
@@ -273,6 +291,8 @@ def verify_fact(row: Mapping, source_row: Mapping, *, index: CountryIndex,
         unrelated_resolution["n_candidates"] == 1)
 
     manual_reasons = []
+    reviewed_reasons = []
+    ambiguity_resolutions = []
     for label, resolution in [
             ("true", true_resolution),
             ("unrelated", unrelated_resolution),
@@ -286,13 +306,38 @@ def verify_fact(row: Mapping, source_row: Mapping, *, index: CountryIndex,
         alternatives = semantic_answer_values(
             country, str(row["answer_type"]))
         if len(alternatives) > 1:
-            manual_reasons.append(
-                "true_answer_relation_has_multiple_valid_values")
+            coverage = accepted_alias_coverage(
+                row.get("accepted_answers", [row["answer"]]), alternatives)
+            if verification.get(
+                    "resolve_multi_valued_by_complete_alias_coverage", False) \
+                    and coverage["passes"]:
+                reason = "true_answer_multi_value_alias_coverage_reviewed"
+                reviewed_reasons.append(reason)
+                ambiguity_resolutions.append({
+                    "reason": reason, "coverage": coverage})
+            else:
+                manual_reasons.append(
+                    "true_answer_relation_has_multiple_valid_values")
     for ordinal, item in enumerate(counterfactuals):
         if len(item["semantic_answer_values"]) > 1:
-            manual_reasons.append(
-                f"counterfactual_{ordinal}_answer_relation_has_multiple_"
-                "valid_values")
+            source_counterfactual = row["counterfactuals"][ordinal]
+            coverage = accepted_alias_coverage(
+                source_counterfactual.get(
+                    "accepted_answers", [source_counterfactual["answer"]]),
+                item["semantic_answer_values"])
+            if verification.get(
+                    "resolve_multi_valued_by_complete_alias_coverage", False) \
+                    and coverage["passes"]:
+                reason = (
+                    f"counterfactual_{ordinal}_answer_multi_value_"
+                    "alias_coverage_reviewed")
+                reviewed_reasons.append(reason)
+                ambiguity_resolutions.append({
+                    "reason": reason, "coverage": coverage})
+            else:
+                manual_reasons.append(
+                    f"counterfactual_{ordinal}_answer_relation_has_multiple_"
+                    "valid_values")
     geopolitical = {
         form
         for name in verification["geopolitical_manual_review_names"]
@@ -300,11 +345,30 @@ def verify_fact(row: Mapping, source_row: Mapping, *, index: CountryIndex,
     }
     named_bridges = [row["bridge"], row["unrelated_bridge"], *[
         item["bridge"] for item in row["counterfactuals"]]]
+    geopolitical_resolutions = {
+        form: {"name": name, "resolution": resolution}
+        for name, resolution in verification.get(
+            "geopolitical_review_resolutions", {}).items()
+        for form in normalized_forms(name)
+    }
     for bridge in named_bridges:
         if normalized_forms(str(bridge)) & geopolitical:
-            manual_reasons.append(
-                f"geopolitical_name_review:{bridge}")
+            configured = next((
+                geopolitical_resolutions[form]
+                for form in normalized_forms(str(bridge))
+                if form in geopolitical_resolutions), None)
+            if configured is None:
+                manual_reasons.append(
+                    f"geopolitical_name_review:{bridge}")
+            else:
+                reason = f"geopolitical_name_reviewed:{bridge}"
+                reviewed_reasons.append(reason)
+                ambiguity_resolutions.append({
+                    "reason": reason,
+                    "resolution": configured["resolution"],
+                })
     manual_reasons = sorted(set(manual_reasons))
+    reviewed_reasons = sorted(set(reviewed_reasons))
 
     required = {
         "true_bridge_unique": bool(
@@ -333,6 +397,8 @@ def verify_fact(row: Mapping, source_row: Mapping, *, index: CountryIndex,
         status = "independent-source-mismatch"
     elif manual_reasons:
         status = "independent-match-manual-ambiguity-review"
+    elif reviewed_reasons:
+        status = "verified-exact-reviewed-ambiguity"
     else:
         status = "verified-exact-unambiguous"
     return {
@@ -347,6 +413,9 @@ def verify_fact(row: Mapping, source_row: Mapping, *, index: CountryIndex,
         "independent_match": independent_match,
         "manual_review_required": bool(manual_reasons),
         "manual_review_reasons": manual_reasons,
+        "reviewed_ambiguity": bool(reviewed_reasons),
+        "reviewed_ambiguity_reasons": reviewed_reasons,
+        "ambiguity_resolutions": ambiguity_resolutions,
         "checks": checks,
         "required_checks": required,
         "true_country_resolution": _resolution_summary(true_resolution),
@@ -384,6 +453,7 @@ def summarize(rows: Sequence[Mapping], *, config: Mapping) -> dict:
     }
     mismatch_signatures: dict[str, set[str]] = {}
     manual_reason_counts: dict[str, int] = {}
+    reviewed_reason_counts: dict[str, int] = {}
 
     def add_mismatch(signature: str, fact_id: str) -> None:
         mismatch_signatures.setdefault(signature, set()).add(fact_id)
@@ -393,6 +463,9 @@ def summarize(rows: Sequence[Mapping], *, config: Mapping) -> dict:
         for reason in row["manual_review_reasons"]:
             manual_reason_counts[str(reason)] = (
                 manual_reason_counts.get(str(reason), 0) + 1)
+        for reason in row.get("reviewed_ambiguity_reasons", []):
+            reviewed_reason_counts[str(reason)] = (
+                reviewed_reason_counts.get(str(reason), 0) + 1)
         if row["true_country_resolution"]["n_candidates"] != 1:
             add_mismatch(
                 f"country-resolution:{row['true_country_resolution']['query']}",
@@ -448,12 +521,20 @@ def summarize(rows: Sequence[Mapping], *, config: Mapping) -> dict:
         },
         "manual_review_reason_counts": dict(sorted(
             manual_reason_counts.items())),
+        "reviewed_ambiguity_reason_counts": dict(sorted(
+            reviewed_reason_counts.items())),
         "independent_match_count": int(sum(
             bool(row["independent_match"]) for row in rows)),
         "manual_review_count": int(sum(
             bool(row["manual_review_required"]) for row in rows)),
-        "fully_verified_count": statuses.count(
-            "verified-exact-unambiguous"),
+        "reviewed_ambiguity_count": int(sum(
+            bool(row.get("reviewed_ambiguity")) for row in rows)),
+        "fully_verified_count": sum(
+            status in {
+                "verified-exact-unambiguous",
+                "verified-exact-reviewed-ambiguity",
+            }
+            for status in statuses),
         "all_facts_independently_match": all(
             bool(row["independent_match"]) for row in rows),
         "all_facts_free_of_manual_ambiguity": not any(
@@ -472,11 +553,12 @@ def summarize(rows: Sequence[Mapping], *, config: Mapping) -> dict:
 def _plot(summary: Mapping, *, png_path: Path, pdf_path: Path) -> None:
     statuses = [
         "verified-exact-unambiguous",
+        "verified-exact-reviewed-ambiguity",
         "independent-match-manual-ambiguity-review",
         "independent-source-mismatch",
     ]
-    labels = ["verified", "manual review", "mismatch"]
-    colors = ["#009E73", "#E69F00", "#D55E00"]
+    labels = ["verified", "reviewed ambiguity", "manual review", "mismatch"]
+    colors = ["#009E73", "#56B4E9", "#E69F00", "#D55E00"]
     partitions = ["development", "confirmatory", "replication"]
     figure, axes = plt.subplots(1, 2, figsize=(10.2, 4.1))
 

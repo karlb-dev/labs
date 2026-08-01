@@ -78,3 +78,51 @@ def test_bank_b_source_schema_marks_independent_verification_explicit():
     assert "candidate-single-source-pending-independent-verification" in status
     assert "independently-verified" in status
     assert "independent_sources" in schema["required"]
+
+
+def test_bank_b_v2_revision_is_new_and_expands_aliases_without_mutating_v1():
+    from copy import deepcopy
+
+    from jspace_phase4.experiments.p4_revise_bank_b import revise_row
+
+    base = {
+        "schema_version": 1,
+        "fact_id": "bank-b:alpha2__to__nativeName:old",
+        "canonical_family": "alpha2__to__nativeName",
+        "partition": "development",
+        "source_type": "alpha2",
+        "source": "XX",
+        "bridge": "Old Xland",
+        "answer_type": "nativeName",
+        "answer": "Xland",
+        "accepted_answers": [" Xland"],
+        "alternate_relation": "alpha3",
+        "alternate_answer": "XXX",
+        "alternate_accepted_answers": [" XXX"],
+        "counterfactuals": [{
+            "bridge": "Yland", "answer": "Yland",
+            "alternate_answer": "YYY"}, {
+            "bridge": "Zland", "answer": "Zland",
+            "alternate_answer": "ZZZ"}],
+        "prompts": {},
+        "alternate_prompts": {},
+        "unrelated_bridge": "Wland",
+        "token_ids": {},
+        "template_hashes": {},
+        "source_verification_status": "v1",
+    }
+    untouched = deepcopy(base)
+    config = {"corrections": {
+        "Old Xland": {
+            "canonical_name": "Xland",
+            "relations": {"nativeName": {
+                "canonical": "Xland", "accepted": ["Xland", "Xish"]}}},
+    }}
+    revised = revise_row(base, config=config, tokenizer=_Tokenizer())
+    assert base == untouched
+    assert revised["schema_version"] == 2
+    assert revised["supersedes_fact_id"] == base["fact_id"]
+    assert revised["fact_id"].startswith("bank-b-v2:")
+    assert revised["bridge"] == "Xland"
+    assert revised["accepted_answers"] == [" Xland", " Xish"]
+    assert len(revised["token_ids"]["answer_aliases"]) == 2
