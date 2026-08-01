@@ -16,7 +16,8 @@ class Phase(str, Enum):
 class DelimiterSpec:
     reasoning_start_ids: tuple[int, ...]
     reasoning_end_ids: tuple[int, ...]
-    version: str = "p4-phase-parser-v1"
+    eos_token_ids: tuple[int, ...] = ()
+    version: str = "p4-phase-parser-v2"
     require_closed_reasoning: bool = True
 
     def __post_init__(self):
@@ -31,6 +32,7 @@ class PhaseParse:
     errors: tuple[str, ...]
     start_index: int | None
     end_index: int | None
+    reasoning_open_at_generation: bool
 
 
 def _match_at(tokens: Sequence[int], marker: Sequence[int], index: int) -> bool:
@@ -43,40 +45,55 @@ def classify_token_phases(
     tokens = [int(value) for value in token_ids]
     if not 0 <= prompt_length <= len(tokens):
         raise ValueError("prompt length is outside token sequence")
-    phases = [Phase.PREFILL.value] * prompt_length
-    generated = tokens[prompt_length:]
+    phases = []
     state = Phase.FINAL_ANSWER
     start_index = None
     end_index = None
     errors = []
-    index = 0
-    while index < len(generated):
-        absolute = prompt_length + index
-        if _match_at(generated, delimiters.reasoning_start_ids, index):
-            if start_index is not None and end_index is None:
-                errors.append("repeated_reasoning_start")
-            elif end_index is not None:
-                errors.append("reasoning_reopened_after_final")
-            else:
-                start_index = absolute
-            state = Phase.REASONING
-            width = len(delimiters.reasoning_start_ids)
-            phases.extend([Phase.REASONING.value] * width)
-            index += width
-            continue
-        if _match_at(generated, delimiters.reasoning_end_ids, index):
-            if start_index is None:
-                errors.append("reasoning_end_without_start")
-            if end_index is not None:
-                errors.append("repeated_reasoning_end")
-            width = len(delimiters.reasoning_end_ids)
-            phases.extend([state.value] * width)
-            end_index = absolute
-            state = Phase.FINAL_ANSWER
-            index += width
-            continue
-        phases.append(state.value)
-        index += 1
+    def scan(segment: list[int], *, offset: int, prefill: bool) -> None:
+        nonlocal state, start_index, end_index
+        index = 0
+        while index < len(segment):
+            absolute = offset + index
+            if _match_at(segment, delimiters.reasoning_start_ids, index):
+                if start_index is not None and end_index is None:
+                    errors.append("repeated_reasoning_start")
+                elif end_index is not None:
+                    errors.append("reasoning_reopened_after_final")
+                else:
+                    start_index = absolute
+                state = Phase.REASONING
+                width = len(delimiters.reasoning_start_ids)
+                marker_phase = (Phase.PREFILL if prefill
+                                else Phase.REASONING)
+                phases.extend([marker_phase.value] * width)
+                index += width
+                continue
+            if _match_at(segment, delimiters.reasoning_end_ids, index):
+                if start_index is None:
+                    errors.append("reasoning_end_without_start")
+                if end_index is not None:
+                    errors.append("repeated_reasoning_end")
+                width = len(delimiters.reasoning_end_ids)
+                marker_phase = Phase.PREFILL if prefill else state
+                phases.extend([marker_phase.value] * width)
+                end_index = absolute
+                state = Phase.FINAL_ANSWER
+                index += width
+                continue
+            if segment[index] in delimiters.eos_token_ids \
+                    and state == Phase.REASONING:
+                errors.append("eos_inside_reasoning")
+            phases.append(
+                Phase.PREFILL.value if prefill else state.value)
+            index += 1
+
+    # Official Qwen thinking-on ends its rendered prompt with an opening
+    # <think> token. Scan prefill delimiters to initialize decode state while
+    # retaining "prefill" as the hook phase for every prompt token.
+    scan(tokens[:prompt_length], offset=0, prefill=True)
+    reasoning_open_at_generation = state == Phase.REASONING
+    scan(tokens[prompt_length:], offset=prompt_length, prefill=False)
     if (delimiters.require_closed_reasoning
             and start_index is not None and end_index is None):
         errors.append("unclosed_reasoning")
@@ -86,6 +103,7 @@ def classify_token_phases(
         errors=tuple(errors),
         start_index=start_index,
         end_index=end_index,
+        reasoning_open_at_generation=reasoning_open_at_generation,
     )
 
 
