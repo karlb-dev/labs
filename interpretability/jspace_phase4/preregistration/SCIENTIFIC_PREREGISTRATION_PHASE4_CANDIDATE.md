@@ -2,11 +2,11 @@
 
 **CANDIDATE — NOT FROZEN — CONFIRMATORY AND REPLICATION OUTCOMES FORBIDDEN**
 
-Version: candidate 0.3, 2026-08-01.
+Version: candidate 0.4, 2026-08-01.
 Governing plan: `jspace_lab_nextsteps_4_2.md` plus its accepted addendum.
 Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
 
-Candidate 0.3 adopts the addendum's R2/R3 amendments before any Phase 4
+Candidate 0.4 retains the addendum's R2/R3 amendments before any Phase 4
 confirmatory or replication intervention outcome: P4-P1 is an
 intersection-union semantic-plus-bridge-specific endpoint, and P4-P3 is a
 shared-family max-T endpoint. It also imports the registered outcome-blind
@@ -14,6 +14,10 @@ methods evidence `p4-bank-w-candidate-v2` and
 `p4-bank-w-power-dev-v1`. Candidate 0.3 additionally imports the official
 template/parser methods evidence `p4-qwen-mode-parser-gate-dev-v1` and fixes
 P4-P2 to the two phases structurally shared by thinking on and off. This
+revision also supersedes Bank B v1 with the outcome-blind corrected v2,
+records its complete independent reverification, and imports the negative
+Bank B power audit. The existing 10-family confirmatory side is not powered
+at the candidate 0.25-nat joint SESOI and therefore cannot freeze. This
 document remains a candidate; these methods events are not PI sign-off and do
 not authorize untouched outcomes.
 
@@ -96,20 +100,30 @@ are on CUDA. Model-scale CPU fallback is prohibited.
 
 ## 4. P4-P1 bridge bank and intervention
 
-The registered outcome-blind candidate `p4-bank-b-candidate-v1` contains 40
+The registered outcome-blind candidate `p4-bank-b-candidate-v2` contains 40
 canonical relation families, four facts per family (160 facts), one unique
 true bridge per fact, two plausible counterfactual bridges per fact, and two
 second-hop relations per fact. Its family split is 20 development / 10
 confirmatory / 10 replication with payload SHA-256
 `b88f3ae881c359ed949dd5871d2b98dc27c17aa368b1a4b52fa791b26e410114`.
 It has zero exact overlap with the registered prior contract and zero entity
-overlap across partitions.
+overlap across partitions. Candidate v2 prospectively corrects the nine root
+metadata discrepancies exposed by the immutable v1 audit, expands all
+genuinely co-valid native-name aliases, and retains the frozen family split.
+Registered reverification `p4-bank-b-restcountries-verification-dev-v2`
+matches all 160 facts against the pinned independent snapshot: 140 are exact
+and unambiguous, 20 have explicit complete-alias or metadata-only
+geopolitical review, and none has a mismatch or unresolved manual flag.
 
-This bank is **not freeze-ready**: all 160 facts currently have only the
-pinned `countryinfo==0.1.2` source record and zero have completed the required
-independent source verification. No untouched Bank B outcome may be opened
-until those verification rows and ambiguity notes are complete and
-registered.
+The bank remains **not freeze-ready for a different reason**. Registered
+outcome-blind power audit `p4-bank-b-power-dev-v1` calibrates the two-component
+intersection-union test from the consumed Phase 3 bridge-swap family
+variability (conservative SD 6.0 nats; component correlation 0.874). Composite
+null type-I rates are controlled, but the current 10-family confirmatory side
+has power 0.038 at the candidate joint SESOI of 0.25 nats; even 60 families
+reach only 0.061 under the conservative heavy-tailed ruler. The design or
+estimand must be prospectively revised and independently reviewed before any
+untouched Bank B outcome may be opened.
 
 Every item requires:
 
@@ -306,8 +320,9 @@ transport gate, and regenerates final figures.
 
 ## 10. Items that must be fixed before PI sign-off
 
-- [x] Bank B family count and split hash; [ ] independent sources, power,
-      and SESOI.
+- [x] Bank B family count, split hash, corrected metadata, and independent
+      reverification; [x] candidate power/SESOI ruler; [ ] prospectively
+      revised design that clears the 0.80 power target.
 - [ ] P4-P1 geometry/dose tolerances and exact model/config revisions.
 - [x] P4-P2 official templates, parser tolerance, primary quality metric, and
       common-support interaction statistic; [ ] model-backed correctness gate,

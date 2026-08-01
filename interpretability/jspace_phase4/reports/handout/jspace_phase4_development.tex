@@ -513,16 +513,32 @@ per family. Each fact has one unique true bridge, two counterfactual
 bridges, and two second-hop relations. Exact Qwen token IDs are stored;
 the 20/10/10 family split has zero prior-contract or cross-partition
 entity overlap.
-\eid{p4-bank-b-candidate-v1}
+\eid{p4-bank-b-candidate-v2}
 
-The candidate remains blocked: all 160 records have a pinned
-\texttt{countryinfo==0.1.2} source, but none has completed independent
-verification. The amended primary is an intersection-union test:
+Candidate v2 prospectively corrects the nine root metadata discrepancies
+from the immutable v1 audit and explicitly covers co-valid native-name
+aliases. Full independent reverification passes all 160 facts: 140 exact
+and unambiguous, 20 explicitly reviewed, zero mismatches, and zero unresolved
+manual flags.
+\eid{p4-bank-b-restcountries-verification-dev-v2}
+
+The amended primary is an intersection-union test:
 \[
 p_{P4P1}=\max\{p_{\rm semantic},p_{\rm bridge\ specific}\},
 \]
 where counterfactual-bridge movement must beat both a geometry-matched
 unrelated injection and a counterfactual-answer-direction injection.
+
+\begin{center}
+\includegraphics[width=0.94\textwidth]{../figures/p4f18_bank_b_power.png}
+\end{center}
+
+The outcome-blind power audit uses a conservative 6.0-nat family SD and
+controls the composite-null type-I rate. At the candidate 0.25-nat joint
+SESOI, power is only 0.038 for the frozen 10-family confirmatory side and
+0.061 even at 60 families. Bank B therefore remains blocked on a prospective
+design/estimand revision, not on source verification.
+\eid{p4-bank-b-power-dev-v1}
 
 \subsection{Bank W: factorial and max-T calibration}
 

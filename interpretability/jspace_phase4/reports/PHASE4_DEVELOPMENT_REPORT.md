@@ -556,7 +556,10 @@ candidate preregistration a freeze.
 
 ### Bank B bridge candidate
 
-Live methods evidence: `p4-bank-b-candidate-v1`.
+Live methods evidence: `p4-bank-b-candidate-v2`,
+`p4-bank-b-restcountries-verification-dev-v2`, and
+`p4-bank-b-power-dev-v1`. Candidate v2 supersedes v1; no registered v1 output
+was edited.
 
 Bank B now contains 40 relation families and 160 facts, four facts per
 family. Every fact has a unique true bridge, two counterfactual bridges, and
@@ -565,12 +568,29 @@ are stored prospectively. The outcome-blind family split is 20 development /
 10 confirmatory / 10 replication; no prior-contract entity overlaps, and no
 entity crosses a partition.
 
-This candidate is not freeze-ready. All 160 records are pinned to
-`countryinfo==0.1.2`, but zero have completed the required independent
-source verification. That blocker is explicit in the audit and forbids any
-untouched Bank B outcome from being opened.
+The v1 audit found 121 exact/unambiguous rows, 21 independently matching rows
+requiring ambiguity review, and 18 mismatches. Candidate v2 prospectively
+corrects the nine root metadata discrepancies, expands genuinely co-valid
+native-name aliases, and preserves the frozen family split. Full independent
+reverification now passes all 160 facts: 140 exact/unambiguous and 20 with
+explicit complete-alias or metadata-only geopolitical review, with zero
+mismatches and zero unresolved manual flags.
 
-Candidate preregistration 0.2 replaces the old single bridge-versus-unrelated
+![Bank B P4-P1 power ruler](figures/p4f18_bank_b_power.png)
+
+Bank B is still not freeze-ready. The outcome-blind P4-P1 power audit uses
+the registered consumed Phase 3 bridge-swap family variability: endpoint SDs
+are 4.05 and 5.84 nats, rounded conservatively to a common 6.0-nat ruler,
+with correlation 0.874. Composite-null type-I rates are controlled
+(0.020--0.052), but joint power at the candidate 0.25-nat SESOI is only 0.038
+for the frozen 10-family confirmatory side and 0.061 even at 60 families.
+The 0.80-power grid does not reach a minimum detectable effect at n=10 up to
+5 nats; it reaches 4 nats at n=20 and 3 nats at n=40/60. This negative methods
+result requires a prospective design/estimand revision before untouched Bank
+B outcomes can be opened.
+
+Candidate preregistration 0.4 retains the intersection-union replacement for
+the old single bridge-versus-unrelated
 endpoint with an intersection-union endpoint:
 
 ```text
