@@ -480,15 +480,21 @@ Think-to-Instruct composed delta is positive (`+0.1401 [+0.0439,+0.2436]`),
 but it is based on 11 families and does not repeat in the own frame. It is a
 coordinate-sensitive development diagnostic, not a promoted finding.
 
-## Qwen nested lens fit and first structural convergence gate
+## Qwen nested lens fit and same-corpus structural convergence
 
 Nested-corpus evidence: `p4-qwen-lens-corpora-dev-v1`.
 
 First fit milestone:
 `p4-qwen-lens-fit-drawA-n120-dev-v1`.
 
+Second fit milestone:
+`p4-qwen-lens-fit-drawA-n250-dev-v1`.
+
 Structural comparison:
 `p4-qwen-lens-structural-stability-drawA-n120-vs-published-n1000-dev-v1`.
+
+Same-corpus convergence:
+`p4-qwen-lens-convergence-drawA-n120-n250-dev-v1`.
 
 Draw A contains 1,000 unique WikiText-103 records with exact nested
 prefixes at n=120/250/500/1000. Its first 120 records are byte-exact
@@ -512,6 +518,15 @@ Full invocation time was 21,622.7 seconds and peak allocated VRAM was
 62,832,854,016 bytes. Prompt 112 was a pronounced but finite
 per-record Jacobian-norm outlier (`159.952`); it remains in the frozen
 estimator and is not trimmed post hoc.
+
+The registered draw-A fit subsequently reached n=250 without changing the
+pinned estimator, corpus, or runtime contract. The final fp32 checkpoint is
+6,606,047,399 bytes, SHA-256
+`723844116788c73800e219c048c165d904873e0d7676ab4739d7763a605166d6`;
+the registered fp16 lens is 3,303,034,078 bytes, SHA-256
+`b78427c84ddd3b9f7f4361b952b5169cf49335e77fe364e584b6abd799f79006`.
+The final invocation added 70 prompts in 12,660.4 seconds (180.86 seconds per
+prompt) with 62,832,854,016 bytes peak allocated VRAM.
 
 The first comparison is deliberately narrower than the final fit-size
 study. It compares new draw-A n=120 against the published n=1000 lens,
@@ -542,11 +557,30 @@ campaign. Excellent L62 agreement cannot validate the whole lens.
 
 Both payload envelopes independently reconstruct, the 63-row /
 29-column table is entirely finite, the registered figure was visually
-inspected, and the live-evidence verifier passed 26 events / 105
-outputs / zero failures. This result triggers the planned same-corpus
-n=250 fit. Selected-ID Jaccard, span angles, protected overlap,
-occupancy, centered excess capacity, G4, and causal/bridge stability
-remain required before declaring the smaller lens validated.
+inspected. This external-reference result motivated, but does not substitute
+for, the now-completed same-corpus comparison.
+
+![Qwen draw-A n=120 to n=250 same-corpus convergence](figures/p4f10_qwen_lens_convergence.png)
+
+Within the frozen L20–L44 assay band, the across-layer median A120–A250 raw
+matrix cosine is 0.99585, the minus-identity cosine is 0.99872, and the
+minus-scaled-identity cosine is 0.99551. Median task-token row cosines are
+0.99535 for answer-only IDs, 0.99522 for bridge-only IDs, and 0.99631 for
+shared answer/bridge IDs; the corresponding across-layer medians of token-row
+q05 are 0.99326, 0.99308, and 0.99407. The raw symmetric Frobenius delta has
+assay-band median 0.09114, falling to 0.05069 after subtracting identity.
+
+The improvement remains depth-dependent. At L0 the raw and
+minus-scaled-identity cosines are 0.85042 and 0.85011, whereas at L24 they are
+0.98989 and 0.98952, at L32 0.99585 and 0.99551, at L40 0.99819 and 0.99777,
+and at L62 both exceed 0.99986. The incremental prompts 121–250 are less
+similar to A120 than the combined A250 estimator, as expected for a block mean:
+their assay-band raw matrix cosine has median 0.98470 and their task-token
+median-row cosines have medians 0.98240–0.98654. Thus n=250 provides strong
+same-corpus structural convergence across the assay band without erasing the
+real lower-layer sensitivity. Selected-ID, span, occupancy, centered capacity,
+G4, and causal/bridge equivalence remain reserved for the frozen functional
+gate.
 
 ## Outcome-blind Phase 4 primary preparation
 

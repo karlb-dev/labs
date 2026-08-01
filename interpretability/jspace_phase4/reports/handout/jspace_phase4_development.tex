@@ -440,7 +440,7 @@ the common-frame base-to-Think direct delta below zero; other adjusted
 base-to-Think intervals cross zero. Bank-F pairs are mostly imprecise.
 These are post-hoc development sensitivities, not causal effects.
 
-\section{Qwen fit-size gate: first nested lens}
+\section{Qwen fit-size gate: nested $n=120$ and $n=250$ lenses}
 
 The leakage-safe draw-A corpus has exact nested prefixes at
 $n=120/250/500/1000$. Its first 120 records reproduce the historical
@@ -462,6 +462,13 @@ was 21,622.7 seconds with 62.83\,GB peak allocated VRAM.
 Prompt 112 was a pronounced but finite Jacobian-norm outlier
 (159.952). It remains in the frozen estimator; no post-hoc trimming is
 permitted.
+
+Under the same frozen contract, draw A reached $n=250$. The final
+6.606\,GB fp32 checkpoint is \texttt{72384411\ldots 166d6}; the
+registered 3.303\,GB fp16 lens is \texttt{b78427c8\ldots f79006}.
+The final invocation added 70 prompts in 12,660.4 seconds
+(180.86 seconds/prompt) at the same 62.83\,GB peak VRAM.
+\eid{p4-qwen-lens-fit-drawA-n250-dev-v1}
 
 \section{Qwen structural stability is depth-dependent}
 
@@ -495,11 +502,30 @@ layer median & .8969 & .9138 & .8187 & .8652 & .4422\\
 Token median first remains at least .90 from L26, matrix cosine from
 L32, CKA from L33, and token q05 from L35. Thus $n=120$ nearly matches
 the published lens late but is not uniformly stable in the
-lower/middle assay layers. The result triggers the same-corpus $n=250$
-fit. It does not yet satisfy selected-ID, span, occupancy, centered
-capacity, G4, or causal/bridge stability gates. Both envelopes
-reconstruct; all 63 table rows are finite; the live verifier passes 26
-events / 105 outputs / zero failures.
+lower/middle assay layers. That result motivated, but does not substitute
+for, the completed same-corpus comparison.
+
+\section{Same-corpus structural convergence is strong in the assay band}
+
+\begin{center}
+\includegraphics[width=0.96\textwidth]{../figures/p4f10_qwen_lens_convergence.png}
+\end{center}
+
+Across L20--L44, the median A120--A250 raw matrix cosine is .99585;
+minus-identity and minus-scaled-identity medians are .99872 and .99551.
+Median task-row cosines are .99535 (answer), .99522 (bridge), and .99631
+(shared); their token-q05 medians are .99326/.99308/.99407. The raw
+symmetric Frobenius delta has median .09114, falling to .05069 after
+identity subtraction.
+\eid{p4-qwen-lens-convergence-drawA-n120-n250-dev-v1}
+
+Sensitivity remains concentrated early: raw/residual cosines are
+.85042/.85011 at L0, .98989/.98952 at L24, .99585/.99551 at L32,
+.99819/.99777 at L40, and above .99986 at L62. The prompts 121--250
+block mean is appropriately less similar to A120 (assay raw median
+.98470; task-row medians .98240--.98654) than the combined A250
+estimator. Selected-ID, span, occupancy, capacity, G4, and causal/bridge
+equivalence remain reserved for the functional gate.
 
 \section{Outcome-blind primary protocols}
 
