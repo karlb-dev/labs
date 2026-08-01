@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Durable GPU queue for the pre-frozen A250-to-A500 and mode-v2 gates.
+# Durable GPU queue for the pre-frozen A250-to-A500, mode-v2, and Qwen
+# Bank W baseline-capability gates.
 set -euo pipefail
 
 PHASE4_ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -13,6 +14,7 @@ REGISTRY_PATH="interpretability/jspace_phase4/reports/evidence_events.jsonl"
 CONVERGENCE_CONFIG="interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml"
 FUNCTIONAL_CONFIG="interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_a250_a500_dev.yaml"
 MODE_CONFIG="interpretability/jspace_phase4/configs/p4_qwen_mode_model_gate_v2_dev.yaml"
+BANK_W_CAPABILITY_CONFIG="interpretability/jspace_phase4/configs/p4_bank_w_capability_protocol_dev.yaml"
 QUEUE_LOG="$RUN_ROOT/qwen_a500_postfit_queue_20260801.log"
 HEARTBEAT_LOG="$RUN_ROOT/QWEN_A500_POSTFIT_QUEUE_WATCHDOG.log"
 
@@ -118,5 +120,10 @@ run_stage qwen_mode_model_gate_v2 \
   python -m jspace_phase4.experiments.p4_qwen_mode_model_gate \
   --config "$MODE_CONFIG"
 bank_registry_event qwen_mode_model_gate_v2
+
+run_stage bank_w_capability_qwen36_27b \
+  python -m jspace_phase4.experiments.p4_bank_w_capability \
+  --config "$BANK_W_CAPABILITY_CONFIG" --model-slug qwen36-27b
+bank_registry_event bank_w_capability_qwen36_27b
 
 printf '%s QUEUE_COMPLETE\n' "$(date -u +%FT%TZ)" | tee -a "$QUEUE_LOG"
