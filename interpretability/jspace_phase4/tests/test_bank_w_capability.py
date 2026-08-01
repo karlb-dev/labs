@@ -1,5 +1,6 @@
 import copy
 
+import torch
 import yaml
 
 
@@ -146,3 +147,47 @@ def test_bank_w_capability_protocol_matches_registered_bank_contract():
     assert all(row["passes"] for row in result[
         "tokenizer_answer_audits"].values())
     assert result["outcome_blinding"].startswith("Bank structure")
+
+
+def test_bank_w_candidate_scores_use_complete_sequences_and_padding():
+    from types import SimpleNamespace
+
+    from jspace_phase4.experiments.p4_bank_w_capability import (
+        _candidate_scores,
+    )
+
+    class Session:
+        def prompt_ids(self, prompt):
+            assert prompt == "prompt"
+            return torch.tensor([[1, 2]])
+
+        def answer_ids(self, alias):
+            values = {" a": [3], " b": [4, 5]}[alias]
+            return torch.tensor([values])
+
+    class Model:
+        def __call__(self, *, input_ids, attention_mask, use_cache):
+            assert not use_cache
+            logits = torch.zeros((*input_ids.shape, 8), dtype=torch.float32)
+            for row in range(input_ids.shape[0]):
+                # Reward each observed answer token at the exact position that
+                # predicts it. Padding is deliberately left unscored.
+                for position in range(1, int(attention_mask[row].sum()) - 1):
+                    target = int(input_ids[row, position + 1])
+                    logits[row, position, target] = float(target)
+            return SimpleNamespace(logits=logits)
+
+    scores, prompt_length, token_manifest = _candidate_scores(
+        Model(), Session(), "prompt", [" a", " b"],
+        batch_size=2, pad_token_id=0)
+    assert prompt_length == 2
+    assert token_manifest == {" a": [3], " b": [4, 5]}
+    expected_a = torch.log_softmax(
+        torch.tensor([0.0, 0, 0, 3, 0, 0, 0, 0]), dim=0)[3]
+    expected_b_first = torch.log_softmax(
+        torch.tensor([0.0, 0, 0, 0, 4, 0, 0, 0]), dim=0)[4]
+    expected_b_second = torch.log_softmax(
+        torch.tensor([0.0, 0, 0, 0, 0, 5, 0, 0]), dim=0)[5]
+    assert abs(scores[" a"] - float(expected_a)) < 1e-6
+    assert abs(scores[" b"] - float(
+        expected_b_first + expected_b_second)) < 1e-6
