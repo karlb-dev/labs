@@ -582,6 +582,39 @@ real lower-layer sensitivity. Selected-ID, span, occupancy, centered capacity,
 G4, and causal/bridge equivalence remain reserved for the frozen functional
 gate.
 
+### Retained prompt-112 influence
+
+Development sensitivity evidence:
+`p4-qwen-lens-influence-prompt112-dev-v1`.
+
+Prompt 112 remains in the immutable A120 estimator. Its clean-runtime
+recomputation has maximum per-layer Jacobian norm divided by sqrt(d) of
+160.071, 0.119 above the historical three-decimal fit log and within the
+frozen 0.5 absolute sentinel tolerance. The exact leave-one-prompt arithmetic
+is applied to the registered fp16 A120 lens; it is a sensitivity, never a
+trimming rule or a replacement lens.
+
+The real-model numerical replay control makes the fused-runtime limitation
+explicit. Recomputed prompts 196–198 are not elementwise identical to their
+original checkpoint delta (only 1/63 layers passes the diagnostic allclose;
+block-relative Frobenius error has median 0.00705 and maximum 0.01881). On the
+full n=198 running estimator that this replay can perturb, however, the median
+relative error is 0.000139 and the maximum is 0.001601; all 63 layers pass the
+unchanged 0.005 ceiling. Tiny-model tests independently reconstruct the
+equal-prompt mean and direct leave-one-out refit exactly.
+
+![Qwen retained prompt-112 influence](figures/p4f12_qwen_prompt112_influence.png)
+
+The sensitivity is pronounced only below the assay band. Across L20–L44, the
+median raw and minus-scaled-identity matrix cosines are 0.99938 and 0.99932.
+Task-token median-row cosines are 0.99969–0.99976 and token-row q05 medians are
+0.99795–0.99838. The frozen materiality summaries are 0.000675
+identity-adjusted matrix disagreement versus a 0.03 threshold, 0.000311 task
+median disagreement versus 0.02, and 0.002047 task q05 disagreement versus
+0.05. Prompt 112 is therefore retained but not structurally load-bearing on
+the frozen assay band. Selected-ID and capacity consequences remain part of
+the multi-lens functional gate.
+
 ## Outcome-blind Phase 4 primary preparation
 
 The following artifacts are methods/protocol evidence. They contain no

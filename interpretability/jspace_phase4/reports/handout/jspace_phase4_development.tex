@@ -527,6 +527,33 @@ block mean is appropriately less similar to A120 (assay raw median
 estimator. Selected-ID, span, occupancy, capacity, G4, and causal/bridge
 equivalence remain reserved for the functional gate.
 
+\section{Prompt 112 is retained but not assay-band load-bearing}
+
+The clean-runtime prompt-112 norm sentinel is 160.071, 0.119 above the
+historical three-decimal fit log and inside the frozen 0.5 absolute
+tolerance. Prompt 112 remains in A120; the leave-one-out lens is a
+sensitivity and never a trimming rule.
+
+The fused-runtime replay diagnostic is disclosed rather than hidden.
+Only 1/63 layers is elementwise-allclose for recomputed prompts 196--198;
+their block-relative Frobenius error has median .00705 and maximum .01881.
+Relative to the full $n=198$ running estimator the same discrepancy has
+median .000139 and maximum .001601, so all layers pass the unchanged .005
+ceiling. Tiny-model tests exactly reconstruct the equal-prompt mean and a
+direct leave-one-out refit.
+
+\begin{center}
+\includegraphics[width=0.96\textwidth]{../figures/p4f12_qwen_prompt112_influence.png}
+\end{center}
+
+Across L20--L44, raw/residual matrix-cosine medians are .99938/.99932,
+task-row medians are .99969--.99976, and token-q05 medians are
+.99795--.99838. Frozen disagreement summaries are .000675 versus .03
+(residual matrix), .000311 versus .02 (task median), and .002047 versus
+.05 (task q05). Structural materiality is false; selected-ID and
+capacity consequences remain in the functional gate.
+\eid{p4-qwen-lens-influence-prompt112-dev-v1}
+
 \section{Outcome-blind primary protocols}
 
 These methods gates contain no Phase~4 confirmatory or replication
