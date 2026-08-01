@@ -1,6 +1,6 @@
 # Resume Phase 4.2 — restart-safe handoff
 
-Generated 2026-08-01 07:39 UTC on VM12. Phase 4 is development-only. Never
+Generated 2026-08-01 08:04 UTC on VM12. Phase 4 is development-only. Never
 open confirmatory or replication intervention outcomes before independent
 review, PI sign-off, a freeze commit, and a freeze tag.
 
@@ -25,8 +25,9 @@ interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 - Clean launch commit: `11ae9db626e9776091840bf5b29b3217b9fd99c0`
 - Isolated preparation worktree: `/content/labs_phase4_cpu`
 - Isolated branch: `codex/phase4-cpu-20260801`; current pushed boundary
-  `a3c9d7ad90a0e6b0275fc6be421b9383863fea06`; frozen three-stage queue
-  boundary `19f5fc4` within that ancestry
+  `1d849a2ada83252ecb542cefc3bed93f14db390d`; the successor queue has four
+  prospectively frozen stages: structural, functional, mode-v2 baseline, and
+  Qwen Bank W baseline capability
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`
 - User-reported VM window: about 16 hours remaining near 06:50 UTC; treat
@@ -43,12 +44,12 @@ bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
 The runner verified the model snapshot, exact fit contract, CUDA, and all 48
 fused FLA bindings. CPU fallback is forbidden. It recovered
 `recovered_next_idx=250`; at this handoff the latest atomically mirrored
-boundary is n=271 with checkpoint SHA-256
-`7f74722b606c05135ba64143a737d71b34d879b81e4924f461abd232c097ba25`.
-Observed throughput is 179.23 seconds per new prompt and peak allocated VRAM
-is 62.846 GB. The remaining fit is about 11.4 hours plus finalization, so n=500
-is projected near 19:05 UTC if throughput holds. The post-fit queue should
-consume another 1--1.5 hours.
+boundary is n=280 with checkpoint SHA-256
+`af1a7b777beeb1443031be03bcaf69d8c49286450f0a88143b8149dbb3925b9d`.
+Observed throughput is 179.21 seconds per new prompt and peak allocated VRAM
+is 62.846 GB. The remaining fit is about 11.0 hours plus finalization, so n=500
+is projected near 19:05 UTC if throughput holds. The expanded post-fit queue
+should consume another 1.5--2 hours.
 
 Monitoring/recovery paths:
 
@@ -96,9 +97,15 @@ untouched until it exits.
   are 3,562 at 0.25 nat and 124 at the consumed 1.342-nat effect; the all-40
   heavy-tail IUT MDE is 3 nats. Substantive review is required.
 - Bank W v2/max-T power and OLMo common-support closure are registered.
+  Bank W capability methods evidence
+  `p4-bank-w-capability-protocol-dev-v1` now pins full-sequence eight-answer
+  scoring, the 0.70 endpoint floor, the 90% load-equivalence CI inside
+  [-0.08, +0.08], and the non-circular 20-family joint-support rule. Qwen is
+  queued; both OLMo baselines and independent review remain pending. No Bank W
+  intervention outcome was opened.
 - Main integration merge `11ae9db` verified 39 live evidence events and 176
-  outputs. The current isolated branch passes 134 tests. Preregistration
-  candidate 0.5 and report source are pushed at `a3c9d7a`; the rebuilt and
+  outputs. The current isolated branch passes 139 tests. Preregistration
+  candidate 0.6 and report source are pushed at `1d849a2`; the rebuilt and
   visually checked 18-page PDF is the isolated tree's sole intentional dirty
   file pending A500 integration.
 
@@ -107,12 +114,15 @@ untouched until it exits.
 Isolated commit `b9cb1b1` was created before any A500 output existed. It
 generalizes the audited structural/functional producers and freezes the
 successor configs. Mode-v2 was prospectively frozen at `76c22fd` and appended
-to the queue at `19f5fc4`; the combined branch passes all 134 Phase 4 tests.
+to the queue at `19f5fc4`. Bank W capability protocol was registered at
+`38c761c` without model outcomes and the Qwen gate queued at `6f7cce3`; the
+combined branch passes all 139 Phase 4 tests.
 
 ```text
 interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml
 interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_a250_a500_dev.yaml
 interpretability/jspace_phase4/configs/p4_qwen_mode_model_gate_v2_dev.yaml
+interpretability/jspace_phase4/configs/p4_bank_w_capability_protocol_dev.yaml
 ```
 
 The first two contain `PENDING_REGISTERED_A500_SHA256`. Once and only once the
@@ -129,6 +139,7 @@ p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1
 p4f20_qwen_multilens_functional_gate_a250_a500
 p4-qwen-mode-gate-dev-v2
 p4f21_qwen_mode_model_gate_v2
+p4-bank-w-capability-qwen36-27b-dev-v1
 ```
 
 Frozen successor decisions:
@@ -146,8 +157,8 @@ Frozen successor decisions:
    flattening evidence ancestry.
 3. Bind and commit the registered A500 lens hash in the two successor YAMLs.
 4. Launch the durable successor queue. It runs and banks/pushes structural
-   convergence, the fixed functional gate, and the prospectively amended
-   mode-v2 baseline in that order:
+   convergence, the fixed functional gate, the prospectively amended mode-v2
+   baseline, and the Qwen Bank W baseline capability gate in that order:
 
    ```bash
    bash interpretability/jspace_phase4/run_qwen_a500_postfit_queue.sh
@@ -181,7 +192,8 @@ The Phase 4 preregistration is still a candidate. A truthful freeze requires:
 3. a passing fresh Qwen mode-v2 baseline gate, canonical-family split,
    intervention SESOI/power ruler, and no use of the failed v1 baseline as
    intervention evidence;
-4. fixed Bank W model-capability rules;
+4. fixed Bank W model-capability rules plus passing results from all three
+   model-specific baseline gates and their joint support decision;
 5. independent protocol review and PI sign-off.
 
 The agent may prepare and test these materials, but cannot self-approve the
