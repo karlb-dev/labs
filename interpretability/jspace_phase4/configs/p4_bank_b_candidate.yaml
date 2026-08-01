@@ -1,0 +1,76 @@
+evidence_id: p4-bank-b-candidate-v1
+tier: methods
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+namespace: p4-bank-b-candidate-v1
+target_families: 40
+facts_per_family: 4
+
+source_types:
+  - alpha2
+  - alpha3
+  - capital
+  - demonym
+  - french_name
+  - spanish_name
+  - calling_code
+  - nativeName
+answer_types:
+  - capital
+  - alpha2
+  - alpha3
+  - demonym
+  - tld
+  - calling_code
+  - currency
+  - nativeName
+  - language
+  - french_name
+minimum_family_eligible_records: 100
+maximum_field_characters: 50
+
+partition:
+  development_families: 20
+  confirmatory_families: 10
+  replication_families: 10
+  namespace: p4-bank-b-family-partition-v1
+
+prior_sources:
+  - kind: phase3-bank
+    path: interpretability/jspace_phase3/data/bank_f_v7.jsonl
+    sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
+  - kind: phase3-bank
+    path: interpretability/jspace_phase3/data/bank_s_v3.jsonl
+    sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
+  - kind: released-probe-swap
+    path: /tmp/jacobian-lens/data/experiments/probe-swap.json
+    sha256: a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796
+
+excluded_country_records:
+  - Antarctica
+  - Western Sahara
+  - West Bank
+  - Gaza Strip
+  - Midway Islands
+  - Clipperton Island
+  - Howland Island
+  - Jarvis Island
+  - Johnston Atoll
+  - Europa Island
+  - Glorioso Islands
+  - Juan de Nova Island
+  - Ashmore and Cartier Island
+  - French Southern and Antarctic Lands
+  - Heard Island and McDonald Islands
+
+source_verification:
+  source_package: countryinfo
+  source_package_version: 0.1.2
+  status: candidate-single-source-pending-independent-verification
+  independent_sources_required_per_fact: 1
+
+outputs:
+  bank: interpretability/jspace_phase4/data/bank_b_candidate_v1.jsonl
+  sources: interpretability/jspace_phase4/data/bank_b_source_verification_v1.jsonl
+  partition: interpretability/jspace_phase4/data/bank_b_partition_candidate_v1.json
+  audit: interpretability/jspace_phase4/data/bank_b_audit_v1.json
+  schema: interpretability/jspace_phase4/data/bank_b_source_schema_v1.json

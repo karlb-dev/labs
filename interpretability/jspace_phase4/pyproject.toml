@@ -17,6 +17,7 @@ dependencies = [
   "transformers",
   "huggingface_hub",
   "scipy",
+  "countryinfo==0.1.2",
 ]
 
 [project.scripts]
