@@ -84,13 +84,17 @@ target: /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/lens/qwen
 active local checkpoint: /content/sl4_work/qwen_nested_lens_fit/qwen36-27b/draw_a/bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00/fit.ckpt
 ```
 
-Thus n=289 is machine-local durable, not yet independently cloud-durable.
-The canonical corpus path and fit contract are unchanged. A 15-second watcher
-will terminate only the Python fitter after the locally mirrored n=499 header
-appears. Then unmount the exact target, confirm the underlying Drive recovery
-is visible, and rerun the normal command: recovery selection must choose the
-newer local n=499 checkpoint and execute only prompt 500 plus the final real
-Drive sync/registration. Do not remove the bind or local mirror early.
+Thus the current mirror is machine-local durable, not yet independently
+cloud-durable. The canonical corpus path and fit contract are unchanged. The
+active finalizer
+`/content/phase4_recovery_local_20260801_w4Pv6g/finalize_at_n499.sh` polls the
+local header every 15 seconds. After n=499 is fully mirrored, it terminates
+only the Python fitter, waits for the wrapper/lock to exit, unmounts the exact
+target, verifies the newer local versus underlying Drive headers, and relaunches
+the unchanged normal runner for prompt 500 plus final real-Drive
+sync/registration. Its transition log is
+`/content/phase4_recovery_local_20260801_w4Pv6g/finalize_at_n499.log`. Do not
+remove the bind, local mirror, or finalizer early.
 
 At n=500 the runner registers
 `p4-qwen-lens-fit-drawA-n500-dev-v1`, commits the registry append, and pushes.

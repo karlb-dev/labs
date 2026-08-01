@@ -72,12 +72,15 @@ canonical corpus path remained unchanged:
   -> /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery
 ```
 
-The current n=289 recovery is therefore machine-local, not independently
-cloud-durable. An active watcher terminates the Python fitter after the local
-n=499 mirror is complete. At that point, unmount the exact target and rerun
-the normal command so the newer local n=499 checkpoint supplies the final
-prompt and real Drive registration. Do not unmount or remove the local mirror
-before n=499.
+The current recovery is therefore machine-local, not independently
+cloud-durable. Active finalizer
+`/content/phase4_recovery_local_20260801_w4Pv6g/finalize_at_n499.sh` terminates
+only the Python fitter after the local n=499 mirror is complete, waits for the
+wrapper/lock to exit, unmounts and verifies the exact recovery target, then
+relaunches the normal command so the newer local n=499 checkpoint supplies the
+final prompt and real Drive registration. Its log is
+`/content/phase4_recovery_local_20260801_w4Pv6g/finalize_at_n499.log`. Do not
+unmount, remove, or duplicate this transition before n=499.
 
 Do not launch a duplicate. Check the lock, process, GPU, heartbeat, and log.
 If the fitter has genuinely stopped before n=500, rerun the same command from
