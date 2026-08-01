@@ -106,24 +106,88 @@ bank_registry_event() {
     | tee -a "$QUEUE_LOG"
 }
 
+preserve_registered_outputs() {
+  local evidence_id=$1
+  local backup_root="$LOCAL_WORK/postfit_registered_backups"
+  python - "$evidence_id" "$backup_root" <<'PY' | tee -a "$QUEUE_LOG"
+import json
+import os
+import shutil
+import sys
+from pathlib import Path
+
+from jspace_phase4.manifests import file_sha256
+from jspace_phase4.registry4 import resolve
+
+evidence_id = sys.argv[1]
+backup_root = Path(sys.argv[2]) / evidence_id
+event = resolve(evidence_id)
+if not event["live"]:
+    raise SystemExit(f"cannot preserve non-live evidence {evidence_id}")
+backup_root.mkdir(parents=True, exist_ok=True)
+manifest = {"schema_version": 1, "evidence_id": evidence_id, "outputs": []}
+for ordinal, output in enumerate(event["outputs"]):
+    source = Path(output["path"])
+    expected = output["sha256"]
+    if file_sha256(source) != expected:
+        raise SystemExit(f"registered output hash mismatch: {source}")
+    destination = backup_root / f"{ordinal:02d}_{source.name}"
+    if destination.exists():
+        if file_sha256(destination) != expected:
+            raise SystemExit(f"local backup hash mismatch: {destination}")
+    else:
+        temporary = destination.with_suffix(
+            destination.suffix + f".tmp{os.getpid()}")
+        shutil.copyfile(source, temporary)
+        if file_sha256(temporary) != expected:
+            temporary.unlink(missing_ok=True)
+            raise SystemExit(f"copied backup hash mismatch: {destination}")
+        os.replace(temporary, destination)
+    manifest["outputs"].append({
+        "registered_path": str(source),
+        "backup_path": str(destination),
+        "sha256": expected,
+        "bytes": destination.stat().st_size,
+    })
+manifest_path = backup_root / "backup_manifest.json"
+temporary_manifest = manifest_path.with_suffix(
+    manifest_path.suffix + f".tmp{os.getpid()}")
+temporary_manifest.write_text(json.dumps(
+    manifest, sort_keys=True, indent=1) + "\n")
+os.replace(temporary_manifest, manifest_path)
+print(json.dumps({
+    "local_backup_complete": evidence_id,
+    "outputs": len(manifest["outputs"]),
+    "bytes": sum(row["bytes"] for row in manifest["outputs"]),
+    "manifest": str(manifest_path),
+}, sort_keys=True))
+PY
+}
+
 run_stage qwen_lens_convergence_a250_a500 \
   python -m jspace_phase4.experiments.p4_qwen_lens_convergence \
   --config "$CONVERGENCE_CONFIG"
 bank_registry_event qwen_lens_convergence_a250_a500
+preserve_registered_outputs \
+  p4-qwen-lens-convergence-drawA-n250-n500-dev-v1
 
 run_stage qwen_multilens_functional_gate_a250_a500 \
   python -m jspace_phase4.experiments.p4_qwen_multilens_functional_gate \
   --config "$FUNCTIONAL_CONFIG"
 bank_registry_event qwen_multilens_functional_gate_a250_a500
+preserve_registered_outputs \
+  p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1
 
 run_stage qwen_mode_model_gate_v2 \
   python -m jspace_phase4.experiments.p4_qwen_mode_model_gate \
   --config "$MODE_CONFIG"
 bank_registry_event qwen_mode_model_gate_v2
+preserve_registered_outputs p4-qwen-mode-gate-dev-v2
 
 run_stage bank_w_capability_qwen36_27b \
   python -m jspace_phase4.experiments.p4_bank_w_capability \
   --config "$BANK_W_CAPABILITY_CONFIG" --model-slug qwen36-27b
 bank_registry_event bank_w_capability_qwen36_27b
+preserve_registered_outputs p4-bank-w-capability-qwen36-27b-dev-v1
 
 printf '%s QUEUE_COMPLETE\n' "$(date -u +%FT%TZ)" | tee -a "$QUEUE_LOG"
