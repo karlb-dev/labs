@@ -1,6 +1,6 @@
 # LIVE — Phase 4.2 block 2, VM12
 
-Last updated: 2026-08-01 09:41 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-01 10:26 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**: do not open confirmatory or replication
 intervention outcomes, and do not self-sign independent-review or PI fields.
 
@@ -14,7 +14,8 @@ intervention outcomes, and do not self-sign independent-review or PI fields.
   `26b9696`, including the conditional P4-P2 variance-pilot protocol, the
   automatic frozen A500 branch router, and strict hash-verified local artifact
   recovery during a transient DriveFS outage. Operational hardening is pushed
-  through `1a32a82`; the successor queue has
+  through `1a32a82`, and handoff/entrypoint corrections through `2097f50`;
+  the successor queue has
   four prospectively frozen stages: A250--A500 structural, functional,
   mode-v2 baseline, and Qwen Bank W baseline capability, and preserves every
   registered stage output locally after an independent hash check.
@@ -51,12 +52,21 @@ Latest durable boundary at this update:
 
 | field | value |
 |---|---|
-| prompts banked | 310 / 500 |
-| recovery checkpoint SHA-256 | `275a96fc8a875aa4db7e3ad716a1a99f8d21241a428f0b95f2acc9b13a750cbe` |
+| prompts banked | 325 / 500 |
+| recovery checkpoint SHA-256 | `8c119127c381a7581a5bd02628d6cb79f148cf331dfe61fc1dc7b037aa501edb` |
 | checkpoint bytes | 6,606,047,399 |
-| observed seconds/new prompt | 175.71 in the restarted invocation; 179.1 long-run ruler |
+| observed seconds/new prompt | 176.10 in the restarted invocation; 179.1 long-run ruler |
 | peak allocated VRAM | 62.846 GB |
-| active chunk | 310:313 |
+| active chunk | 325:328 |
+
+All 75 continuation prompt records from 251 through 325 have finite logged
+diagnostics. Prompt 323 is a retained heavy-tail outlier
+(`max||J||/sqrt(d)=173.345`, `max_d_mean=0.271`), above prompts 309/322 but
+comparable in scale to the already registered retained-prompt-112 sensitivity
+(`160.071`). Its immutable WikiText row and all 111 valid positions remain in
+the estimator; it is flagged for transparent post-A500 influence sensitivity,
+not outcome-dependent trimming. Prompts 324 and 325 returned to 9.592 and
+4.801, respectively.
 
 Durable monitoring paths:
 
@@ -67,10 +77,10 @@ Durable monitoring paths:
 /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_continuation_fit.lock
 ```
 
-At the observed rate, the remaining 190 prompts should need about 9.5 hours
-plus finalization, placing the n=500 boundary near 19:10 UTC if throughput
+At the observed rate, the remaining 175 prompts should need about 8.6 hours
+plus finalization, placing the n=500 boundary near 19:00 UTC if throughput
 holds. The expanded frozen post-fit queue should then need roughly 1.5--2
-hours, leaving about 1.5 hours for result integration and a restartable branch
+hours, leaving about 1.8 hours for result integration and a restartable branch
 continuation before the soft reclaim boundary.
 
 **Temporary recovery routing.** Repeated 6.6 GB atomic checkpoint versions
