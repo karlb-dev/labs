@@ -1,6 +1,6 @@
 # Resume Phase 4.2 — restart-safe handoff
 
-Generated 2026-08-01 08:58 UTC on VM12. Phase 4 is development-only. Never
+Generated 2026-08-01 09:15 UTC on VM12. Phase 4 is development-only. Never
 open confirmatory or replication intervention outcomes before independent
 review, PI sign-off, a freeze commit, and a freeze tag.
 
@@ -25,10 +25,11 @@ interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 - Clean launch commit: `11ae9db626e9776091840bf5b29b3217b9fd99c0`
 - Isolated preparation worktree: `/content/labs_phase4_cpu`
 - Isolated branch: `codex/phase4-cpu-20260801`; registered methods are pushed
-  through `70f05bb` (automatic frozen A500 branch router), including the
-  conditional P4-P2 variance-pilot protocol at `bdec74e`; the successor queue has four
-  prospectively frozen stages: structural, functional, mode-v2 baseline, and
-  Qwen Bank W baseline capability
+  through `26b9696`, including the conditional P4-P2 variance-pilot protocol,
+  automatic frozen A500 branch router, and strict hash-verified local artifact
+  recovery; the successor queue has four prospectively frozen stages:
+  structural, functional, mode-v2 baseline, and Qwen Bank W baseline
+  capability
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`
 - User-reported VM window: about 16 hours remaining near 06:50 UTC; treat
@@ -45,10 +46,11 @@ bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
 The runner verified the model snapshot, exact fit contract, CUDA, and all 48
 fused FLA bindings. CPU fallback is forbidden. It recovered
 `recovered_next_idx=250`; at this handoff the latest locally mirrored boundary
-is n=295 with checkpoint SHA-256
-`2a45d0a1e78db980f2639938a0aed2a2fe7fd9952251ece2232c72a1f938fe67`.
-Observed long-run throughput is about 179.1 seconds per new prompt and peak
-allocated VRAM is 62.846 GB. The remaining fit is about 10.2 hours plus
+is n=301 with checkpoint SHA-256
+`2c2b7991c2114f6f702ace48ac9c0c7aa3aee8f3ce4deb917564dbb4572116a1`.
+Observed restarted-invocation throughput is 175.86 seconds per prompt (179.1
+seconds on the long-run ruler), and peak allocated VRAM is 62.846 GB. The
+remaining fit is about 9.9 hours plus
 finalization, so n=500 is projected near 19:10 UTC if throughput holds. The
 expanded post-fit queue should consume another 1.5--2 hours.
 
@@ -81,6 +83,15 @@ relaunches the normal command so the newer local n=499 checkpoint supplies the
 final prompt and real Drive registration. Its log is
 `/content/phase4_recovery_local_20260801_w4Pv6g/finalize_at_n499.log`. Do not
 unmount, remove, or duplicate this transition before n=499.
+
+DriveFS also displaced the registered A250 lens and two small Bank-B
+verification outputs into local `lost_and_found`. The exact A250 bytes remain
+hash-verified in `/content/sl4_work/inputs/b78427c.../`. Isolated commit
+`26b9696` permits this content-addressed copy only after an exact registered
+target-path/hash match and a fresh SHA-256 check; the real 3.3 GB recovery test
+passed with the canonical Drive path absent, and the full suite passes. Avoid
+duplicating A250 into the rate-limited mount during the fit. Restore all
+displaced canonical outputs before claiming a new whole-registry verification.
 
 Do not launch a duplicate. Check the lock, process, GPU, heartbeat, and log.
 If the fitter has genuinely stopped before n=500, rerun the same command from
@@ -139,10 +150,9 @@ untouched until it exits.
   queued; both OLMo baselines and independent review remain pending. No Bank W
   intervention outcome was opened.
 - Main integration merge `11ae9db` verified 39 live evidence events and 176
-  outputs. The current isolated branch passes 152 tests. Preregistration
-  candidate 0.8 and report/handout sources include the mode feasibility
-  envelope; the rebuilt PDF remains the isolated tree's sole intentional
-  dirty file until this documentation boundary is compiled and checked.
+  outputs before the DriveFS displacement. The current isolated branch passes
+  153 tests. Preregistration candidate 0.8 and the report/handout include the
+  mode feasibility envelope; the rebuilt committed PDF was visually checked.
 
 ## Pre-frozen A250–A500 successor gate
 
@@ -151,7 +161,7 @@ generalizes the audited structural/functional producers and freezes the
 successor configs. Mode-v2 was prospectively frozen at `76c22fd` and appended
 to the queue at `19f5fc4`. Bank W capability protocol was registered at
 `38c761c` without model outcomes and the Qwen gate queued at `6f7cce3`; the
-combined branch passes all 152 Phase 4 tests.
+combined branch passes all 153 Phase 4 tests.
 
 ```text
 interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml
