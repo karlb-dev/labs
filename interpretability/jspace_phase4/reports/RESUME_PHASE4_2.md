@@ -25,7 +25,7 @@ interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 - Clean launch commit: `11ae9db626e9776091840bf5b29b3217b9fd99c0`
 - Isolated preparation worktree: `/content/labs_phase4_cpu`
 - Isolated branch/head: `codex/phase4-cpu-20260801` at
-  `b9cb1b15055f07d2eb4d1b3ae3b94640b33db32a`
+  `dc75ca2692e80183aa20142c428d0dd436a6c444`
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`
 - User-reported VM window: about 16 hours remaining near 06:50 UTC; treat
@@ -127,24 +127,26 @@ Frozen successor decisions:
 2. Merge `codex/phase4-cpu-20260801` into `interp_jspace_part2` without
    flattening evidence ancestry.
 3. Bind and commit the registered A500 lens hash in the two successor YAMLs.
-4. Run structural convergence and bank its registry append:
+4. Launch the durable successor queue. It runs structural convergence,
+   commits/pushes that registry event, then runs and commits/pushes the fixed
+   functional gate:
 
    ```bash
-   python -m jspace_phase4.experiments.p4_qwen_lens_convergence \
-     --config interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml
+   bash interpretability/jspace_phase4/run_qwen_a500_postfit_queue.sh
    ```
 
-5. Run the fixed functional gate and bank its registry append:
+   Durable logs:
 
-   ```bash
-   python -m jspace_phase4.experiments.p4_qwen_multilens_functional_gate \
-     --config interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_a250_a500_dev.yaml
+   ```text
+   /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_a500_postfit_queue_20260801.log
+   /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_A500_POSTFIT_QUEUE_WATCHDOG.log
    ```
 
-6. Follow the branch without reinterpretation. Launch A/C as draw-B n=120 or
-   B as draw-A n=1000 only if the remaining VM window can preserve a valid
-   checkpoint; prioritize report/registry/handoff closure near reclaim.
-7. Integrate exact fit/gate results and p4f19/p4f20 into the Markdown, TeX,
+5. Follow the branch without reinterpretation. The continuation entrypoint
+   supports A/C as `draw_b_n120` and B as `draw_a_n1000`. Launch only if the
+   remaining VM window can preserve a valid checkpoint; prioritize
+   report/registry/handoff closure near reclaim.
+6. Integrate exact fit/gate results and p4f19/p4f20 into the Markdown, TeX,
    final PDF, in-progress ledger, and this resume file. Visually inspect all
    new figures and affected pages. Mirror byte-identical artifacts to Drive.
 

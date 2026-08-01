@@ -11,7 +11,7 @@ intervention outcomes, and do not self-sign independent-review or PI fields.
   main is clean and synced while the fitter runs.
 - Isolated CPU/report worktree: `/content/labs_phase4_cpu`, branch
   `codex/phase4-cpu-20260801`, head
-  `b9cb1b15055f07d2eb4d1b3ae3b94640b33db32a`.
+  `dc75ca2692e80183aa20142c428d0dd436a6c444`.
 - The isolated tree has only the intentionally regenerated handout PDF dirty.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
@@ -149,24 +149,26 @@ p4f20_qwen_multilens_functional_gate_a250_a500.{png,pdf}
    original commit ancestry; resolve no evidence by overwriting.
 3. Bind the registered A500 lens hash into only the two successor YAMLs,
    commit, and push.
-4. Run and register structural convergence:
+4. Launch the durable two-stage queue, which runs structural convergence,
+   banks/pushes its registry event, then runs and banks/pushes the functional
+   gate:
 
    ```bash
-   python -m jspace_phase4.experiments.p4_qwen_lens_convergence \
-     --config interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml
+   bash interpretability/jspace_phase4/run_qwen_a500_postfit_queue.sh
    ```
 
-5. Commit/push its registry append, then run and register the functional gate:
+   It writes a five-minute heartbeat and durable stdout at:
 
-   ```bash
-   python -m jspace_phase4.experiments.p4_qwen_multilens_functional_gate \
-     --config interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_a250_a500_dev.yaml
+   ```text
+   /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_a500_postfit_queue_20260801.log
+   /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_A500_POSTFIT_QUEUE_WATCHDOG.log
    ```
 
-6. Execute the frozen branch only if enough VM time remains to preserve a
+5. Execute the frozen branch only if enough VM time remains to preserve a
    valid three-prompt checkpoint. A/C selects draw-B n=120; B selects draw-A
-   n=1000. Do not delay report/registry/handoff closure near reclaim.
-7. Integrate exact A500 fit and gate results into Markdown/TeX/PDF, visually
+   n=1000. The continuation entrypoint supports both `draw_b_n120` and
+   `draw_a_n1000`. Do not delay report/registry/handoff closure near reclaim.
+6. Integrate exact A500 fit and gate results into Markdown/TeX/PDF, visually
    inspect new figures and affected handout pages, mirror byte-identical
    report artifacts to Drive, and refresh this ledger plus the resume file.
 
