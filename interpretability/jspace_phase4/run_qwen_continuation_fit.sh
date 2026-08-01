@@ -23,6 +23,11 @@ case "${1:-}" in
     STOP_AT=500
     EVIDENCE_ID=p4-qwen-lens-fit-drawA-n500-dev-v1
     ;;
+  draw_a_n1000)
+    DRAW=draw_a
+    STOP_AT=1000
+    EVIDENCE_ID=p4-qwen-lens-fit-drawA-n1000-dev-v1
+    ;;
   --approval-probe)
     printf '%s\n' \
       "qwen continuation entrypoint is installed; no GPU work started"
@@ -30,7 +35,7 @@ case "${1:-}" in
     ;;
   *)
     printf '%s\n' \
-      "usage: $0 {draw_b_n120|draw_a_n500|--approval-probe}" >&2
+      "usage: $0 {draw_b_n120|draw_a_n500|draw_a_n1000|--approval-probe}" >&2
     exit 2
     ;;
 esac

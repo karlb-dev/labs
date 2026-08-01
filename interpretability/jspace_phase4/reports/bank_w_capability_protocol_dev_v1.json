@@ -1,0 +1,203 @@
+{
+ "all_protocol_gates_pass": true,
+ "answer_contract": {
+  "aliases": [
+   " amber",
+   " blue",
+   " coral",
+   " green",
+   " ivory",
+   " lilac",
+   " ochre",
+   " silver"
+  ],
+  "endpoint": "candidate-set-sequence-log-probability-argmax",
+  "labels": [
+   "amber",
+   "blue",
+   "coral",
+   "green",
+   "ivory",
+   "lilac",
+   "ochre",
+   "silver"
+  ],
+  "margin": "true-sequence-log-probability-minus-best-wrong",
+  "maximum_answer_tokens": 2,
+  "prompt_rendering": "raw-bank-prompt-piecewise-answer-concatenation",
+  "require_distinct_token_sequences": true,
+  "runtime_candidate_batch_size": 8,
+  "scoring_spec": "p4-scoring-v1",
+  "sequence_reduction": "sum-token-log-probability"
+ },
+ "bank_evidence_id": "p4-bank-w-candidate-v2",
+ "capability_guard": {
+  "baseline_accuracy_floor": 0.7,
+  "equivalence_interval_level": 0.9,
+  "failed_guard_status": "descriptive-only",
+  "family_bootstrap_draws": 20000,
+  "family_bootstrap_seed": 20260801,
+  "family_capability_accuracy_floor_by_load": 0.7,
+  "joint_rule": "First apply the accuracy and load-equivalence gates independently to each model. The primary model set is every independently passing model. Then require at least 20 family IDs whose within-family accuracy is at least 0.70 at both loads for every model in that set. If the joint intersection fails, block P4-P3 rather than dropping an otherwise eligible model.",
+  "locked_secondary_covariates": [
+   "baseline_answer_margin",
+   "prompt_token_count",
+   "answer_token_count"
+  ],
+  "low_high_accuracy_difference_sesoi": 0.08,
+  "minimum_joint_common_families": 20
+ },
+ "claim_boundary": "Baseline capability development gate only. It may select the model set before interventions, but it opens no Bank W intervention, confirmatory, or replication outcome and cannot constitute independent review or PI sign-off.",
+ "evidence_id": "p4-bank-w-capability-protocol-dev-v1",
+ "freeze_ready": false,
+ "gate_checks": {
+  "answer_token_contract_passes": true,
+  "bank_axes_and_shortcuts_pass": true,
+  "bank_candidate_v2_matches": true,
+  "development_primary_grid_complete": true,
+  "guard_matches_registered_candidate": true,
+  "model_order_matches_bank_primary": true,
+  "partition_payload_matches": true
+ },
+ "input_hashes": {
+  "audit": "08ffe320cb9fa4091de0a51b6f86bcada34d39f0cda7f9e8baeef7dbb8d8ae7f",
+  "bank": "c43ef76cbc4db755f6f2bb3e91b8feecb65ef2106fb5199c5759dc1b95578ab4",
+  "partition": "33a0677cac1357ca74a4b38d5e2d4fcfd5bb75734163356b71b26232ca1bf288"
+ },
+ "joint_evidence_id": "p4-bank-w-capability-joint-dev-v1",
+ "model_evidence_ids": {
+  "olmo31-instruct": "p4-bank-w-capability-olmo31-instruct-dev-v1",
+  "olmo31-think": "p4-bank-w-capability-olmo31-think-dev-v1",
+  "qwen36-27b": "p4-bank-w-capability-qwen36-27b-dev-v1"
+ },
+ "outcome_blinding": "Bank structure, tokenizer answer IDs, and analysis rules only; no baseline or intervention model outcome loaded.",
+ "power_evidence_id": "p4-bank-w-power-dev-v1",
+ "remaining_freeze_blockers": [
+  "three model-specific Bank W baseline capability outcomes",
+  "joint common-family capability intersection",
+  "independent protocol review and PI sign-off"
+ ],
+ "schema_version": 1,
+ "selected_family_ids_sha256": "f8eb6a624c82f707f70bbeaf7a4024cc1aeb2bde893dbd1641fa260d07779cdd",
+ "selected_item_ids_sha256": "ec31507f68e9737632398edd6e9a42e3e9c76cd3d110db5e119242b24b9c9620",
+ "selection": {
+  "derivation": "derived",
+  "expected_families": 24,
+  "expected_rows_per_model": 384,
+  "expected_seeds_per_family": 8,
+  "loads": [
+   "low",
+   "high"
+  ],
+  "outcome_columns_allowed": false,
+  "partition": "development",
+  "redundancy": "once"
+ },
+ "tokenizer_answer_audits": {
+  "olmo31-instruct": {
+   "answer_token_ids": {
+    " amber": [
+     68705
+    ],
+    " blue": [
+     6437
+    ],
+    " coral": [
+     53103
+    ],
+    " green": [
+     6307
+    ],
+    " ivory": [
+     70916
+    ],
+    " lilac": [
+     62471,
+     582
+    ],
+    " ochre": [
+     12218,
+     265
+    ],
+    " silver": [
+     15310
+    ]
+   },
+   "answer_token_manifest_sha256": "fc8f32c5cc0e35d888bb1b79d76045a569a91035eb6c1116da5b65536113334f",
+   "distinct_sequences": true,
+   "maximum_answer_tokens": 2,
+   "passes": true,
+   "tokenizer_class": "TokenizersBackend"
+  },
+  "olmo31-think": {
+   "answer_token_ids": {
+    " amber": [
+     68705
+    ],
+    " blue": [
+     6437
+    ],
+    " coral": [
+     53103
+    ],
+    " green": [
+     6307
+    ],
+    " ivory": [
+     70916
+    ],
+    " lilac": [
+     62471,
+     582
+    ],
+    " ochre": [
+     12218,
+     265
+    ],
+    " silver": [
+     15310
+    ]
+   },
+   "answer_token_manifest_sha256": "fc8f32c5cc0e35d888bb1b79d76045a569a91035eb6c1116da5b65536113334f",
+   "distinct_sequences": true,
+   "maximum_answer_tokens": 2,
+   "passes": true,
+   "tokenizer_class": "TokenizersBackend"
+  },
+  "qwen36-27b": {
+   "answer_token_ids": {
+    " amber": [
+     65326
+    ],
+    " blue": [
+     6105
+    ],
+    " coral": [
+     50255
+    ],
+    " green": [
+     5983
+    ],
+    " ivory": [
+     67453
+    ],
+    " lilac": [
+     59298,
+     565
+    ],
+    " ochre": [
+     11613,
+     265
+    ],
+    " silver": [
+     14527
+    ]
+   },
+   "answer_token_manifest_sha256": "85acdb45cbb9f2d9abbfa345bda5ed7e87b542b07a1415c9c690a9001d3cd378",
+   "distinct_sequences": true,
+   "maximum_answer_tokens": 2,
+   "passes": true,
+   "tokenizer_class": "Qwen2Tokenizer"
+  }
+ }
+}

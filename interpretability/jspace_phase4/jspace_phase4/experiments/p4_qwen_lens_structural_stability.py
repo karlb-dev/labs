@@ -454,7 +454,8 @@ def main() -> None:  # noqa: C901
     candidate_event = resolve(config["candidate"]["evidence_id"])
     if not candidate_event["live"]:
         raise RuntimeError("candidate lens evidence is not live")
-    candidate_source = resolve_uri(config["candidate"]["lens_uri"])
+    candidate_source = resolve_uri(
+        config["candidate"]["lens_uri"], must_exist=False)
     candidate_registered_hashes = {
         output["sha256"] for output in candidate_event["outputs"]
         if Path(output["path"]) == candidate_source

@@ -34,61 +34,59 @@ through logical URIs. Scientific modules must not embed machine paths.
 
 ## Phase 4.2 resumable work block
 
-The Qwen Draw A fit resumes from the highest contract-matched local/Drive
-checkpoint and refuses CPU or slow-kernel fallback:
+The Qwen Draw A continuation resumes from the highest contract-matched
+local/Drive checkpoint and refuses CPU or slow-kernel fallback. The durable
+wrapper also locks the run, writes a heartbeat/log, and banks the registry
+append on completion:
 
 ```bash
 export JSPACE4_RUN_ROOT=/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731
 export JSPACE4_LOCAL_WORK=/content/sl4_work
 export HF_HUB_CACHE=/content/hf_local
+bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
+```
+
+Do not launch a duplicate while `qwen_continuation_fit.lock` is held. Read the
+dynamic handoff before recovery because it records any temporary storage
+routing needed by the current VM:
+
+```bash
+cat /content/resume-phase-4-2.md
+cat /content/drive/MyDrive/interpret/inprogress.md
+```
+
+After `p4-qwen-lens-fit-drawA-n500-dev-v1` is registered, merge the isolated
+preparation branch, replace only `PENDING_REGISTERED_A500_SHA256` in the two
+successor YAMLs with the event's exact lens hash, commit that binding, and run:
+
+```bash
+bash interpretability/jspace_phase4/run_qwen_a500_postfit_queue.sh
+```
+
+That queue prospectively runs and banks A250--A500 structural convergence,
+the fixed functional gate, the official mode-v2 model baseline, and Qwen Bank
+W baseline capability. Then apply the registered A/B/C branch without
+changing thresholds:
+
+```bash
+bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
+```
+
+The router verifies the registered result envelope and exact frozen wording;
+A/C continues with `draw_b_n120`, while B continues with `draw_a_n1000`.
+
+The lower-level producer remains available for exact recovery diagnostics:
+
+```bash
 python -m jspace_phase4.experiments.p4_qwen_nested_lens_fit \
   --config interpretability/jspace_phase4/configs/p4_qwen_nested_lens_fit_dev.yaml \
-  --draw draw_a --stop-at 250
+  --draw draw_a --stop-at 500
 ```
 
-In a second host-visible process, arm the non-mutating Drive-backed watchdog:
-
-```bash
-bash interpretability/jspace_phase4/watchdog_phase4.sh \
-  /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/checkpoint_state.json \
-  250
-```
-
-The CPU-first common-cohort sensitivity can run while the GPU fit is active:
-
-```bash
-MPLCONFIGDIR=/tmp/matplotlib-phase4 \
-python -m jspace_phase4.experiments.p4_lineage_common_cohort_analysis \
-  --config interpretability/jspace_phase4/configs/p4_lineage_common_cohort_olmo_dev.yaml
-```
-
-After `p4-qwen-lens-fit-drawA-n250-dev-v1` is registered, replace the
-explicit pending n=250 SHA in the convergence config with that event's lens
-hash, commit the clean-tree boundary, and run the task-led successor to
-p4f09 on the host GPU:
-
-```bash
-MPLCONFIGDIR=/tmp/matplotlib-phase4 \
-python -m jspace_phase4.experiments.p4_qwen_lens_convergence \
-  --config interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_dev.yaml
-```
-
-The producer reuses p4f09's exact 4,096 token IDs and 256 Rademacher probes.
-It leads with disjoint Phase-3 answer/bridge strata, adds held-out validation
-frequency deciles, compares raw, `J-I`, and `J-alpha I` operators, and labels
-every published-lens comparison as an external published reference with a
-partially specified recipe.
-
-The retained prompt-112 influence producer recomputes that exact prompt plus
-the three prompts between the preserved n=195 and n=198 cumulative
-checkpoints. It refuses to change the canonical A120 lens and registers the
-leave-one-out lens only as a development sensitivity:
-
-```bash
-MPLCONFIGDIR=/tmp/matplotlib-phase4 \
-python -m jspace_phase4.experiments.p4_qwen_lens_influence \
-  --config interpretability/jspace_phase4/configs/p4_qwen_lens_influence_prompt112_dev.yaml
-```
+The n=250 convergence, retained prompt-112 influence, functional Branch-B
+gate, mode-parser v2 contract, Bank B feasibility, Bank W capability protocol,
+and conditional P4-P2 variance-pilot protocol are already registered. Do not
+rerun or overwrite them; registry verification checks their immutable hashes.
 
 ## Current development synthesis
 
@@ -96,7 +94,9 @@ python -m jspace_phase4.experiments.p4_qwen_lens_influence \
 - Compiled handout:
   `reports/handout/jspace_phase4_development.{tex,pdf}`
 - Durable restart ledger:
-  `../jspace_phase3/reports/INPROGRESS_VM11_20260731.md`
+  `reports/INPROGRESS_VM12_20260801.md`
+- Compact restart handoff:
+  `reports/RESUME_PHASE4_2.md`
 - Governing development block:
   `reviews/jspace_lab_nextsteps_4_2.md` plus its addendum
 
@@ -104,9 +104,9 @@ These documents now cover the base, 3.0 Think, and sibling 3.1
 Think/Instruct capability and intervention points, seed-paired
 own/common-frame audits, and the registered four-checkpoint trajectory
 synthesis. Phase 4.2 adds the Qwen same-corpus convergence and functional
-invariance gates, CPU-first common-cohort closure, Bank B/W authoring, and
-candidate-preregistration repairs. They remain development summaries, not
-frozen claims.
+invariance gates, CPU-first common-cohort closure, Bank B/W authoring and
+power, Bank W capability rules, official-mode gates, and P4-P2 design/pilot
+methods. They remain development summaries, not frozen claims.
 
 ## Tiers
 

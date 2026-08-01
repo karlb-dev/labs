@@ -3,8 +3,9 @@
 Status: live development synthesis through the OLMo-3 32B base,
 seed-paired 3.0 Think, and seed-paired OLMo-3.1 32B Think and Instruct
 own/common-lens comparisons, registered four-checkpoint trajectory, and
-post-hoc common-support closure, plus outcome-blind Bank B/Bank W/max-T
-and official Qwen mode-parser protocol gates, 2026-08-01.
+post-hoc common-support closure, plus Qwen draw-A n=250 structural and
+functional gates, outcome-blind Bank B/Bank W audits, and the official Qwen
+mode parser/model gate plus design-feasibility envelope, 2026-08-01.
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -664,8 +665,9 @@ candidate preregistration a freeze.
 
 Live methods evidence: `p4-bank-b-candidate-v2`,
 `p4-bank-b-restcountries-verification-dev-v2`, and
-`p4-bank-b-power-dev-v1`. Candidate v2 supersedes v1; no registered v1 output
-was edited.
+`p4-bank-b-power-dev-v1`, with feasibility successor
+`p4-bank-b-design-feasibility-dev-v1`. Candidate v2 supersedes v1; no
+registered v1 output was edited.
 
 Bank B now contains 40 relation families and 160 facts, four facts per
 family. Every fact has a unique true bridge, two counterfactual bridges, and
@@ -695,6 +697,21 @@ The 0.80-power grid does not reach a minimum detectable effect at n=10 up to
 result requires a prospective design/estimand revision before untouched Bank
 B outcomes can be opened.
 
+![Bank B design feasibility envelope](figures/p4f22_bank_b_design_feasibility.png)
+
+The successor feasibility envelope asks whether reallocation alone could
+possibly repair the design. It deliberately gives Bank B every optimistic
+advantage: a known 6-nat SD, Gaussian sampling, and only one one-sided
+component rather than the required heavy-tailed two-component IUT. Even this
+lower bound needs 3,562 independent families for the 0.25-nat SESOI and 124
+for the consumed Phase 3 bridge-specific mean of 1.342 nats. Using all 40
+existing families would still have a best-case 80%-power MDE of 2.359 nats;
+the registered heavy-tail IUT ruler is 3 nats. A split-only repair is therefore
+ruled out. Independent/PI review must choose between leaving P4-P1 outside the
+Phase 4 confirmatory family, developing a substantively new answer-direction-
+orthogonal estimand with its own power ruler, or constructing a genuinely
+adequate new bank. Raising the SESOI merely to obtain power is not licensed.
+
 Candidate preregistration 0.4 retains the intersection-union replacement for
 the old single bridge-versus-unrelated
 endpoint with an intersection-union endpoint:
@@ -710,9 +727,10 @@ bridge-specific contrast cannot license an abstract bridge route.
 
 ### Bank W factorial and joint max-T power
 
-Live methods evidence: `p4-bank-w-candidate-v2` and
-`p4-bank-w-power-dev-v1`. Candidate v2 supersedes v1 without changing any
-row or partition hash.
+Live methods evidence: `p4-bank-w-candidate-v2`,
+`p4-bank-w-power-dev-v1`, and
+`p4-bank-w-capability-protocol-dev-v1`. Candidate v2 supersedes v1 without
+changing any row or partition hash.
 
 Bank W has 72 canonical templates (12 per superfamily), eight seeds per
 family, and 4,608 rows. It fully crosses load 2/6, supplied/derived state,
@@ -744,8 +762,22 @@ rates were 0.040--0.050. Under the conservative independent heavy-tailed
 case, minimum power over the single-active-model alternatives was 0.703,
 0.806, and 0.858 at 16, 20, and 24 common families. Therefore the initial
 16-family floor was underpowered and is superseded by 20; the planned
-24-family confirmatory side clears the 0.80 target. Model-specific baseline
-capability gates and independent review remain pending.
+24-family confirmatory side clears the 0.80 target.
+
+The registered prospective capability protocol fixes the remaining baseline
+screen before model outcomes. For each of the 24 development families and
+eight seeds, it scores the low/high internally derived, stated-once prompts
+against the full eight-answer candidate set with summed sequence log
+probability. Candidate-set accuracy must be at least 0.70 at each load and the
+family-bootstrap 90% interval for high-minus-low accuracy must lie wholly
+inside [-0.08, +0.08]. The primary model set contains every independently
+passing model; it additionally requires at least 20 families capable at both
+loads across that whole set. A joint-support failure blocks P4-P3 rather than
+drops an otherwise eligible model. Answer margin, prompt length, and answer
+token count are locked secondaries and cannot rescue a failure. The Qwen
+baseline is pre-frozen in the A500 post-fit queue; the two OLMo model gates and
+independent review remain pending. No Bank W intervention outcome has been
+opened.
 
 ### Official Qwen mode/parser gate
 
@@ -777,8 +809,69 @@ common to both modes:
 where `damage = quality(matched control) - quality(span-safe J)` and quality
 is deterministic normalized final-answer exact/accepted-alias accuracy. The
 directional alternative is positive; thinking-on reasoning-only is a named
-secondary. A model-backed development parser/correctness gate, family split,
-SESOI/power, and review are still required.
+secondary.
+
+Model-backed baseline evidence: `p4-qwen-mode-gate-dev-v1`. This gate used one
+consumed Phase 3 composed fact from each of 20 paired families and contains no
+P4-P2 intervention outcome.
+
+![Qwen model-backed thinking-mode gate](figures/p4f15_qwen_mode_model_gate.png)
+
+Thinking-off passed cleanly: accuracy was 0.85, parse-failure and truncation
+rates were zero, all final answers were nonempty, no completion contained
+reasoning content, and the median completion was four tokens. Thinking-on
+showed reasoning content in every completion but hit the generation boundary
+in 7/20 families: accuracy was 0.60, parse-failure and truncation rates were
+both 0.35, final-answer nonempty rate was 0.65, and median generated/reasoning
+lengths were 287/280 tokens. Only 13 families were parse-valid in both modes
+and 11 were correct in both, below the frozen common-correct floor of 12.
+Thinking-on minus thinking-off accuracy was -0.25 with a family-bootstrap 90%
+interval of [-0.45, -0.05].
+
+The model-backed gate therefore fails and is not freeze-ready. Before any
+P4-P2 intervention, the mode protocol requires a prospective amendment and a
+fresh baseline gate. The canonical-family split, intervention SESOI/power,
+independent review, and PI sign-off also remain open.
+
+Prospective methods successor `p4-qwen-mode-parser-gate-dev-v2` retains the
+official template, parser v2, every gate tolerance, and deterministic decoding
+while increasing only the length-failure sentinel from 512 to 2,048 tokens.
+Its tokenizer/template/golden gate passes. The fresh model-backed v2 baseline
+also uses one shared instruction asking for at most 128 reasoning tokens before
+closure; it is frozen and queued, not yet an outcome at this report boundary.
+
+Registered outcome-blind feasibility evidence
+`p4-qwen-mode-design-feasibility-dev-v1` then makes the remaining design
+problem explicit without selecting a SESOI, bank size, or split. The
+family-level primary is an eight-cell accuracy interaction with support
+[-4, 4], so its distribution-free SD bound is 4. Planning uses the
+conservative Holm endpoint alpha of 0.05/3 and 80% power under a known-SD
+one-sided Gaussian approximation; this is a scenario envelope, not exact
+sign-flip power.
+
+![Qwen mode design-feasibility envelope](figures/p4f24_qwen_mode_design_feasibility.png)
+
+For a candidate 0.20 accuracy-point interaction, the envelope needs 56
+independent families at family SD 0.5, 221 at SD 1.0, and 3,528 at the
+support-based SD bound. At 0.10 accuracy points those counts are 221, 882,
+and 14,111. Although six tie-free families are enough for the minimum exact
+one-sided sign-flip p-value to cross 0.05/3, that is resolution rather than
+power. The next licensed method step is therefore a development-only
+phase-intervention variance pilot on already consumed families after the
+canonical lens is fixed, followed by substantive SESOI review and an exact
+power simulation for a newly authored untouched bank.
+
+Prospective methods evidence
+`p4-qwen-mode-variance-pilot-protocol-dev-v1` now fixes that variance-pilot
+contract on the same outcome-blind, already consumed 20-family subset. It
+requires the exact eight mode × common-phase × arm cells above, counts a parse
+failure as incorrect, requires zero wrong-phase hook fires and zero
+selected/protected overlap, exact delivered-rank match, and at most 1% energy
+relative error. Planning uses the larger of the family-interaction sample SD
+and its 90% bootstrap upper bound. The protocol cannot use its observed mean
+to choose the SESOI, and it is not executable until the v2 baseline passes, a
+registered canonical lens/hash is bound, and the GPU intervention producer is
+reviewed. It contains no model or intervention outcome.
 
 ## Current interpretation
 
@@ -817,6 +910,17 @@ estimation-first account:
   not an explanation. Bank W's load/redundancy/internal-derivation axes are
   now outcome-blind, audited, and powered, but their model-specific
   capability gates and intervention outcomes have not run.
+- Qwen A120-to-A250 agreement is strong on the frozen structural assay band,
+  and retained prompt 112 is not structurally load-bearing there. Functional
+  selection geometry nevertheless fails both frozen stability thresholds, so
+  the precommitted branch continues draw A to n=500; A250 is not canonical.
+- Bank B candidate v2 passes complete independent source verification, but
+  its 0.25-nat joint SESOI is unusably underpowered under the registered
+  variability ruler, and the optimistic successor proves no reallocation of
+  its 40 families can fix that target. Separately, the baseline Qwen mode gate
+  fails because thinking-on truncation/parse loss leaves insufficient common
+  support; a prospectively amended v2 baseline is queued. Both are methods
+  blockers, not intervention findings.
 
 The registered two-frame synthesis and common-support closure make the
 Bank-S Think-path result harder to explain as lens drift or changing fact
@@ -828,13 +932,19 @@ claims.
 
 ## Next boundary
 
-Workstream A5, Qwen draw-A n=120, common-support closure, Bank W authoring /
-power, and the official mode-parser protocol are banked. The Qwen fit is
-continuing from a durable n=228 boundary toward same-corpus n=250. Before
-stronger causal interpretation, complete nested convergence, prompt-112
-influence, the model-backed multi-lens gate and its frozen branch, Bank B
-independent verification, Bank W capability gates, and the model-backed mode
-development gate.
+Workstream A5, common-support closure, Qwen draw-A n=250 convergence,
+prompt-112 influence, the frozen multi-lens gate, Bank B v2 source
+verification/power/feasibility, Bank W authoring/power, and the first Qwen
+model-backed mode gate are banked. The functional rule emitted Branch B, and
+the exact draw-A n=500 continuation has recovered the durable n=250 estimator
+and is running. The A250--A500 structural/functional queue and prospectively
+amended mode-v2 baseline are frozen before their outcomes.
+
+Next: complete n=500 and apply the frozen A250-to-A500 structural/functional
+decision path; prospectively revise and re-audit the Bank B design and the
+Qwen P4-P2 mode protocol; execute the queued Qwen Bank W capability gate and
+stage the two OLMo capability gates; and obtain independent review and PI
+sign-off.
 
 Confirmatory Phase 4 remains blocked on preregistration freeze and
 untouched data.

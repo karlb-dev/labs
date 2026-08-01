@@ -1,0 +1,100 @@
+{
+ "all_protocol_gates_pass": true,
+ "analysis_boundary": "The later pilot estimates family-interaction SD only. Its rows remain development data and cannot enter a primary; it cannot select the substantive SESOI by observed effect size.",
+ "conditional_execution": {
+  "forbid_confirmatory_and_replication_families": true,
+  "require_exact_lens_sha256_binding": true,
+  "require_gpu_execution_producer_review": true,
+  "require_passing_mode_baseline": true,
+  "require_registered_canonical_lens": true
+ },
+ "evidence_id": "p4-qwen-mode-variance-pilot-protocol-dev-v1",
+ "execution_authorized_at_this_boundary": false,
+ "execution_blockers": [
+  "p4-qwen-mode-gate-dev-v2 must be live and passing",
+  "the frozen A250-A500 rule must bind a registered canonical lens",
+  "the GPU intervention producer and exact lens binding require review"
+ ],
+ "freeze_ready": false,
+ "mechanical_gates": {
+  "maximum_energy_relative_error": 0.01,
+  "maximum_wrong_phase_hook_fires": 0,
+  "minimum_expected_phase_hook_fires_per_row": 1,
+  "require_complete_eight_cell_family_grid": true,
+  "require_exact_rank_match": true,
+  "require_zero_selected_protected_overlap": true
+ },
+ "outcome_blinding": "Protocol authoring reads registered parser/template methods, the mathematical feasibility envelope, and an outcome-blind consumed Phase 3 family subset. It reads no v1/v2 model row and runs no intervention.",
+ "pilot": {
+  "arms": [
+   "matched_control",
+   "span_safe_j"
+  ],
+  "cell_order": [
+   "thinking_on_final_answer_matched_control",
+   "thinking_on_final_answer_span_safe_j",
+   "thinking_on_prefill_matched_control",
+   "thinking_on_prefill_span_safe_j",
+   "thinking_off_final_answer_matched_control",
+   "thinking_off_final_answer_span_safe_j",
+   "thinking_off_prefill_matched_control",
+   "thinking_off_prefill_span_safe_j"
+  ],
+  "deterministic_generation": true,
+  "inherit_v2_prompt_instruction_and_token_budget": true,
+  "interaction_coefficients": [
+   1,
+   -1,
+   -1,
+   1,
+   -1,
+   1,
+   1,
+   -1
+  ],
+  "modes": [
+   "thinking_on",
+   "thinking_off"
+  ],
+  "one_item_per_family": true,
+  "parse_failure_counts_as_incorrect": true,
+  "primary_phases": [
+   "prefill",
+   "final_answer"
+  ],
+  "quality_endpoint": "normalized-exact-accepted-alias-accuracy"
+ },
+ "protocol_gate_checks": {
+  "exact_eight_cell_primary": true,
+  "feasibility_does_not_authorize_freeze": true,
+  "feasibility_is_outcome_blind": true,
+  "mode_parser_methods_pass": true,
+  "no_sesoi_or_power_selected": true,
+  "one_fact_per_family": true,
+  "selection_is_consumed_development": true,
+  "untouched_families_forbidden": true,
+  "v2_baseline_contract_matches_methods": true,
+  "v2_baseline_uses_same_selection": true
+ },
+ "required_passing_baseline_evidence_id": "p4-qwen-mode-gate-dev-v2",
+ "schema_version": 1,
+ "selection": {
+  "consumed_phase3_development_only": true,
+  "evidence_id": "p4-qwen-multilens-functional-subset-dev-v1",
+  "fact_ids_sha256": "c19af88b2846732cb8010d51755e00ae89118930330013f26941cc0799d0ed10",
+  "family_ids_sha256": "abf7c1877c84c14094546d2e81bb21657d29ae23f707480341980f5a38fee530",
+  "n_facts": 20,
+  "n_families": 20,
+  "payload_sha256": "fb227be17dcad06eafd93fc75bddba05cb63c1134f30c99b31da8dcf3d531564"
+ },
+ "source_feasibility_evidence_id": "p4-qwen-mode-design-feasibility-dev-v1",
+ "source_methods_evidence_id": "p4-qwen-mode-parser-gate-dev-v2",
+ "variance_summary": {
+  "bootstrap_draws": 20000,
+  "bootstrap_seed": 20260801,
+  "bootstrap_upper_quantile": 0.9,
+  "no_sesoi_or_power_selection": true,
+  "planning_sd_rule": "maximum of sample SD and bootstrap 90% upper bound",
+  "sample_sd_ddof": 1
+ }
+}

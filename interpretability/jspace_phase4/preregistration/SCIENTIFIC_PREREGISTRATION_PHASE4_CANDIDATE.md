@@ -2,24 +2,39 @@
 
 **CANDIDATE — NOT FROZEN — CONFIRMATORY AND REPLICATION OUTCOMES FORBIDDEN**
 
-Version: candidate 0.4, 2026-08-01.
+Version: candidate 0.8, 2026-08-01.
 Governing plan: `jspace_lab_nextsteps_4_2.md` plus its accepted addendum.
 Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
 
-Candidate 0.4 retains the addendum's R2/R3 amendments before any Phase 4
+Candidate 0.8 retains the addendum's R2/R3 amendments before any Phase 4
 confirmatory or replication intervention outcome: P4-P1 is an
 intersection-union semantic-plus-bridge-specific endpoint, and P4-P3 is a
 shared-family max-T endpoint. It also imports the registered outcome-blind
 methods evidence `p4-bank-w-candidate-v2` and
-`p4-bank-w-power-dev-v1`. Candidate 0.3 additionally imports the official
-template/parser methods evidence `p4-qwen-mode-parser-gate-dev-v1` and fixes
-P4-P2 to the two phases structurally shared by thinking on and off. This
-revision also supersedes Bank B v1 with the outcome-blind corrected v2,
+`p4-bank-w-power-dev-v1`, plus prospective capability protocol
+`p4-bank-w-capability-protocol-dev-v1`. It imports the official
+template/parser methods evidence `p4-qwen-mode-parser-gate-dev-v1` and its
+prospective length-budget successor `p4-qwen-mode-parser-gate-dev-v2`, and
+fixes P4-P2 to the two phases structurally shared by thinking on and off. It
+also imports the registered outcome-blind P4-P2 scenario envelope
+`p4-qwen-mode-design-feasibility-dev-v1`. That envelope selects no SESOI,
+family count, or split; it establishes that a consumed-development
+intervention variance pilot is required before those choices can be reviewed
+and powered. Prospective methods evidence
+`p4-qwen-mode-variance-pilot-protocol-dev-v1` fixes that pilot's consumed
+20-family subset, eight-cell grid, mechanical tolerances, and upper-SD
+summary, but keeps execution blocked on the v2 baseline, canonical lens, and
+GPU producer review. This revision also supersedes Bank B v1 with the
+outcome-blind corrected v2,
 records its complete independent reverification, and imports the negative
-Bank B power audit. The existing 10-family confirmatory side is not powered
-at the candidate 0.25-nat joint SESOI and therefore cannot freeze. This
-document remains a candidate; these methods events are not PI sign-off and do
-not authorize untouched outcomes.
+Bank B power audit plus registered feasibility envelope
+`p4-bank-b-design-feasibility-dev-v1`. The existing 10-family confirmatory
+side is not powered at the candidate 0.25-nat joint SESOI, and no allocation
+of the existing 40 families repairs it. Candidate 0.8 does not select a
+replacement P4-P1 estimand, does not claim that the queued model-backed P4-P2
+v2 gate has passed, and contains no Bank W intervention outcome. This document
+remains a candidate; these methods events are not PI sign-off and do not
+authorize untouched outcomes.
 
 ## 1. Question and claim boundary
 
@@ -125,6 +140,20 @@ reach only 0.061 under the conservative heavy-tailed ruler. The design or
 estimand must be prospectively revised and independently reviewed before any
 untouched Bank B outcome may be opened.
 
+Registered outcome-blind successor `p4-bank-b-design-feasibility-dev-v1`
+shows that reallocation cannot repair this bank. Even an optimistic known-SD,
+Gaussian, single-component lower bound requires 3,562 families for the
+0.25-nat SESOI; substituting the consumed Phase 3 bridge-specific mean of
+1.342 nats still requires 124. With all 40 families assigned to one side, the
+optimistic minimum detectable effect is 2.359 nats and the registered
+heavy-tailed intersection-union ruler requires 3 nats. Therefore neither a
+split change nor a redistribution of the existing families is licensed as a
+repair, and the SESOI may not be inflated merely to manufacture power. Before
+freeze, independent review must select and prospectively power one substantive
+path: treat P4-P1 as estimation-only and remove it from the Phase 4 primary
+family, define an answer-direction-orthogonal estimand with an appropriate
+ruler, or construct a genuinely larger independent bank.
+
 Every item requires:
 
 - independent source verification and ambiguity notes;
@@ -189,9 +218,21 @@ thinking-on generation to start in reasoning, thinking-off generation to start
 in final answer, EOS inside reasoning to fail, a length-truncated unclosed
 reasoning block to remain a parse failure, and answers before reasoning closure
 to be ineligible for final-answer grading. The maximum development parser
-failure rate is 0.02. Generation is deterministic with at most 512 new tokens;
-EOS, length, and error stops are recorded separately. Correct, wrong, shuffled,
-and filler rationale controls are exactly matched at 11 tokens.
+failure rate is 0.02. Generation is deterministic; EOS, length, and error stops
+are recorded separately. Correct, wrong, shuffled, and filler rationale
+controls are exactly matched at 11 tokens.
+
+The v1 model-backed baseline used a 512-new-token cap and failed: 7/20
+thinking-on completions reached that cap, giving parse-failure and truncation
+rates of 0.35, and only 11 families were correct in both modes versus the
+frozen floor of 12. No intervention outcome was opened. Prospective methods
+evidence `p4-qwen-mode-parser-gate-dev-v2` changes only the generation cap to
+2,048 tokens while retaining the official template, parser, decoding rule,
+and every tolerance; its tokenizer, template, and exact-token golden gates
+pass. The queued v2 model-backed baseline adds one shared instruction in both
+modes: think for at most 128 tokens, close the reasoning block, and return only
+the answer without explanation. Its outcome remains unopened at this candidate
+boundary.
 
 The official toggle makes `thinking_off x generated_reasoning` structurally
 absent. It is not imputed. For mode `m` and common phase `p`:
@@ -209,8 +250,38 @@ The primary quality endpoint is deterministic normalized final-answer exact or
 accepted-alias accuracy. The alternative is `I_P4P2 > 0`; the unit of
 inference is canonical family. Thinking-on reasoning-phase effects and the
 full accepted-alias margin on generated context are named secondaries. A
-model-backed development parser/correctness gate, canonical-family split,
-SESOI/power ruler, and independent review remain required before freeze.
+fresh v2 model-backed development parser/correctness pass, canonical-family
+split, SESOI/power ruler, and independent review remain required before
+freeze.
+
+Registered methods evidence `p4-qwen-mode-design-feasibility-dev-v1`
+expresses the primary as eight binary accuracy cells with coefficients
+`[+1,-1,-1,+1,-1,+1,+1,-1]`, support `[-4,+4]`, and distribution-free
+family-SD bound 4. Its known-SD Gaussian scenario envelope uses 80% power and
+the conservative Holm planning alpha `0.05/3`. It does not choose a SESOI or
+constitute exact sign-flip power. For illustration, a 0.20 accuracy-point
+interaction requires 56 families if the family SD is 0.5, 221 at SD 1.0,
+and 3,528 at the support bound. Consequently the pre-freeze order is fixed:
+the v2 baseline must pass; a development-only phase-intervention pilot on
+already consumed families must estimate the family-interaction variance after
+the canonical lens is fixed; independent review must select a substantive
+SESOI and bank size; and the exact frozen family test must then clear its
+power target on a hash-frozen untouched split. No pilot intervention outcome
+enters a Phase 4 primary.
+
+The prospective variance pilot itself is fixed by
+`p4-qwen-mode-variance-pilot-protocol-dev-v1`. It reuses exactly the 20
+outcome-blind consumed families in
+`p4-qwen-multilens-functional-subset-dev-v1`, one composed fact per canonical
+family. Its primary grid is `thinking_on/thinking_off × prefill/final_answer ×
+matched_control/span_safe_J`. Parse failure counts as incorrect. Every row
+must have at least one expected-phase hook fire and zero wrong-phase fires,
+zero selected/protected overlap, exact requested/delivered rank, and energy
+relative error at most 0.01. The planning SD is the maximum of the sample SD
+and its family-bootstrap 90% upper bound (20,000 draws; seed 20260801). The
+pilot mean cannot select the SESOI. Execution is conditional on a live passing
+`p4-qwen-mode-gate-dev-v2`, exact registered canonical-lens hash binding, and
+review of the GPU producer; the methods event alone authorizes none of these.
 
 ## 6. P4-P3 controlled load and capability guard
 
@@ -250,15 +321,25 @@ Monte Carlo sign patterns, seed `48151623`, and the plus-one p-value. No
 intervention outcome may alter the model set. Named estimates, the full load
 slope, and derivation/redundancy interactions are secondary.
 
+Registered prospective methods evidence
+`p4-bank-w-capability-protocol-dev-v1` defines baseline accuracy as the
+argmax of full-sequence log probabilities over the frozen eight-label answer
+set, using raw bank prompts, piecewise answer concatenation, and summed token
+log probability. The corresponding true-versus-best-wrong margin is recorded.
+The exact answer-token sequences are pinned for all three model tokenizers.
+
 Before intervention outcomes are opened, each model must have baseline
-accuracy at least 0.70 at both load endpoints, a family-bootstrap 90% CI for
-the paired high-minus-low accuracy change wholly inside `[-0.08, +0.08]`,
-and a joint intersection of at least 20 canonical families across all
-eligible models. Baseline answer margin, prompt token count, and answer token
-count are locked secondary covariate sensitivities; they cannot rescue a
-failed primary capability gate. A failed
-model is descriptive only and cannot support “working-set” or
-“working-memory” language.
+candidate-set accuracy at least 0.70 at both load endpoints and a
+family-bootstrap 90% CI for the paired high-minus-low accuracy change wholly
+inside `[-0.08, +0.08]`. These two gates are applied independently to each
+model. The primary model set is every independently passing model, after which
+at least 20 canonical families must have within-family accuracy at least 0.70
+at both loads for every model in that set. If that joint intersection fails,
+P4-P3 remains blocked; an otherwise eligible model cannot be dropped to
+manufacture support. Baseline answer margin, prompt token count, and answer
+token count are locked secondary covariate sensitivities; they cannot rescue
+a failed primary capability gate. A failed model is descriptive only and
+cannot support “working-set” or “working-memory” language.
 
 The frozen SESOI is 0.10 nat per doubling of load, equal to
 `0.10 * log2(6/2) = 0.15849625` nat for the primary endpoint contrast.
@@ -320,15 +401,19 @@ transport gate, and regenerates final figures.
 
 ## 10. Items that must be fixed before PI sign-off
 
-- [x] Bank B family count, split hash, corrected metadata, and independent
-      reverification; [x] candidate power/SESOI ruler; [ ] prospectively
-      revised design that clears the 0.80 power target.
+- [x] Bank B family count, split hash, corrected metadata, independent
+      reverification, candidate power/SESOI ruler, and feasibility envelope;
+      [ ] substantive replacement design or estimation-only reclassification
+      that is prospectively reviewed and, if confirmatory, clears 0.80 power.
 - [ ] P4-P1 geometry/dose tolerances and exact model/config revisions.
-- [x] P4-P2 official templates, parser tolerance, primary quality metric, and
-      common-support interaction statistic; [ ] model-backed correctness gate,
-      families, power, SESOI, and split.
-- [x] Bank W task/load ladder, shortcut thresholds, capability ruler,
-      power, SESOI, and split; [ ] model-specific baseline capability gates.
+- [x] P4-P2 official templates, parser tolerance, primary quality metric,
+      common-support interaction statistic, prospective v2 token budget, and
+      outcome-blind design-feasibility envelope and conditional variance-pilot
+      protocol; [ ] fresh v2 model-backed correctness gate, reviewed GPU pilot
+      producer and execution, reviewed SESOI, families, exact power, and split.
+- [x] Bank W task/load ladder, shortcut thresholds, exact capability protocol,
+      power, SESOI, and split; [ ] three model-specific baseline capability
+      gates and joint common-support decision.
 - [x] Exact directional decision wording for P4-P1, P4-P2, and P4-P3.
 - [ ] Development gates all pass without untouched-family outcomes.
 - [ ] Environment lock and model/lens/tokenizer manifests are complete.

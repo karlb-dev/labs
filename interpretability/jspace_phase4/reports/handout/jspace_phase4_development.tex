@@ -21,7 +21,7 @@ Evidence: \nolinkurl{#1}}}
 \title{\vspace{-1.25em}J-space Phase 4 --- development synthesis\\
 \large OLMo trajectory, Qwen fit-size, and outcome-blind primary protocols\\[3pt]
 \normalsize\textcolor{muted}{State through common support, Qwen draw-A
-$n=120$, Bank W power, and the official mode-parser gate ·
+$n=250$ Branch B, Bank B/Bank W audits, and the model-mode feasibility gate ·
 2026-08-01}}
 \author{}\date{}
 
@@ -574,8 +574,8 @@ fail. A120--A250 median normalized projector overlap is .67479 (floor
 median principal angle is 7.87 degrees and the maximum reaches 90 degrees.
 
 The other frozen point-estimate gates pass. Occupancy differences are zero;
-centered-excess differences are $-.000711/-.000239/-.000173$ at
-L24/L32/L40. The span-safe-specific difference is .09596 nat against .15,
+centered-excess differences at L24, L32, and L40 are respectively
+$-.000711$, $-.000239$, and $-.000173$. The span-safe-specific difference is .09596 nat against .15,
 although its 95\% interval $[-.0734,.2993]$ does not establish TOST
 equivalence. Tail difference is $-.0333$; A120/A250 G4 rates are both
 .78 J versus .12 random; bridge-rescue/preference differences are
@@ -626,6 +626,20 @@ SESOI, power is only 0.038 for the frozen 10-family confirmatory side and
 design/estimand revision, not on source verification.
 \eid{p4-bank-b-power-dev-v1}
 
+\begin{center}
+\includegraphics[width=0.94\textwidth]{../figures/p4f22_bank_b_design_feasibility.png}
+\end{center}
+
+An optimistic successor bound assumes known 6-nat SD, Gaussian sampling, and
+only one one-sided component. Even that lower bound needs 3,562 families for
+the .25-nat SESOI and 124 for the consumed Phase~3 bridge-specific mean of
+1.342 nats. All 40 existing families have a best-case 80\%-power MDE of
+2.359 nats, versus 3 nats under the registered heavy-tail IUT. Reallocation
+cannot repair the design. Review must choose an estimation-only P4-P1, a new
+answer-direction-orthogonal estimand and ruler, or a genuinely adequate new
+bank; inflating the SESOI merely to obtain power is not licensed.
+\eid{p4-bank-b-design-feasibility-dev-v1}
+
 \subsection{Bank W: factorial and max-T calibration}
 
 Candidate v2 has 72 template families, eight seeds each, and 4,608 rows
@@ -653,8 +667,18 @@ Using a conservative 0.23-nat family SD, four null scenarios gave type-I
 rates .040--.050. Minimum heavy-tailed independent-model power was
 .703/.806/.858 at 16/20/24 common families. Thus the underpowered
 16-family floor is superseded by 20; the planned confirmatory side
-clears the .80 target. Capability gates and review remain pending.
+clears the .80 target.
 \eid{p4-bank-w-power-dev-v1}
+
+The prospective capability protocol scores all eight answer sequences on
+the 24 development families in the derived, stated-once low/high cells.
+Each model must clear .70 candidate-set accuracy at both loads and a 90\%
+family-bootstrap equivalence interval inside $[-.08,+.08]$. Every
+independently passing model enters the primary set, whose capable-family
+intersection must contain at least 20 families. Short support blocks P4-P3;
+it cannot be repaired by dropping an otherwise eligible model. Qwen is
+queued; both OLMo gates and review remain pending. No intervention was run.
+\eid{p4-bank-w-capability-protocol-dev-v1}
 
 \subsection{Official Qwen mode/parser gate}
 
@@ -674,7 +698,60 @@ structurally absent. The identified primary uses phases common to both:
 \]
 with $d=Q(\mathrm{matched})-Q(J)$ and normalized final-answer accuracy
 as $Q$. The alternative is positive; thinking-on reasoning-only is
-secondary. Model-backed gates, families, SESOI/power, and review remain.
+secondary.
+
+The model-backed baseline used 20 paired consumed Phase~3 families and no
+P4-P2 intervention outcome.
+
+\begin{center}
+\includegraphics[width=0.94\textwidth]{../figures/p4f15_qwen_mode_model_gate.png}
+\end{center}
+
+Thinking-off accuracy was .85 with zero parse failures, truncations, or
+reasoning content and a four-token median completion. Thinking-on accuracy
+was .60; all completions contained reasoning, but parse-failure and
+truncation rates were both .35, final-answer nonempty rate was .65, and
+median generated/reasoning lengths were 287/280 tokens. Thirteen families
+were parse-valid in both modes and 11 were correct in both, below the frozen
+floor of 12. Thinking-on minus thinking-off accuracy was $-.25$ with a
+family-bootstrap 90\% interval $[-.45,-.05]$.
+
+The gate fails and is not freeze-ready. A prospective mode-protocol
+amendment and fresh baseline must precede any intervention; the family
+split, SESOI/power, independent review, and PI sign-off remain open.
+\eid{p4-qwen-mode-gate-dev-v1}
+
+Methods successor \texttt{p4-qwen-mode-parser-gate-dev-v2} keeps the official
+template, parser, tolerances, and deterministic decode, while raising only
+the length-failure sentinel from 512 to 2,048 tokens. Its golden gate passes.
+A fresh v2 baseline with one shared at-most-128-reasoning-token instruction
+is frozen and queued; it is not yet an outcome at this boundary.
+
+An outcome-blind successor bounds the unresolved design without selecting a
+SESOI, bank size, or split. The eight-cell family accuracy interaction has
+support $[-4,4]$ and hence distribution-free SD bound 4. Under a known-SD
+one-sided Gaussian planning envelope at conservative Holm
+$\alpha=.05/3$ and 80\% power, a .20-point interaction needs 56 families at
+SD .5, 221 at SD 1, and 3,528 at the support bound. A .10-point interaction
+needs 221, 882, and 14,111, respectively.
+
+{\centering
+\includegraphics[width=0.92\textwidth]{../figures/p4f24_qwen_mode_design_feasibility.png}\par}
+
+Six tie-free families suffice only for exact one-sided sign-flip
+\emph{resolution}; they do not establish power. The next licensed step is a
+consumed-development phase-intervention variance pilot after the canonical
+lens is fixed, followed by substantive SESOI review, an untouched bank, and
+exact power simulation.
+\eid{p4-qwen-mode-design-feasibility-dev-v1}
+
+The prospective pilot fixes the consumed 20-family/eight-cell grid, parse
+failures as incorrect, zero wrong-phase fires or selected/protected overlap,
+exact rank, and at most 1\% energy error. Planning uses the larger of sample
+SD and its 90\% bootstrap upper bound; the mean cannot set the SESOI.
+Execution remains blocked on v2, the canonical lens/hash, and GPU-producer
+review. No model or intervention outcome was opened.
+\eid{p4-qwen-mode-variance-pilot-protocol-dev-v1}
 
 \section{Interpretation and next boundary}
 
@@ -702,14 +779,22 @@ delta and positive composition delta with intervals excluding zero.
 \item The 3.1 composition result is a development finding, not a
 mechanism. Bank W is now outcome-blind, audited, and powered, but its
 capability gates and interventions have not run.
+\item Qwen A120--A250 structural agreement is strong in the assay band,
+and prompt 112 is not structurally load-bearing there. Both frozen
+functional selection thresholds fail, forcing Branch B to draw-A
+$n=500$; A250 is not canonical.
+\item Bank B v2 passes source verification but its .25-nat joint SESOI is
+unusably underpowered, and no allocation of its 40 families repairs it. The
+Qwen mode baseline separately fails on thinking-on truncation/common support;
+an amended v2 baseline is queued. These are methods blockers, not intervention
+findings.
 \item None of these known-bank estimates licenses ``lineage present''
 or ``lineage absent.''
 \end{enumerate}
 
-A5, Qwen draw-A $n=120$, common support, Bank W authoring/power, and the
-mode-parser protocol are banked. The verified fit is continuing from a
-durable $n=228$ boundary to same-corpus $n=250$. Next: convergence,
-prompt-112 influence, the multi-lens functional branch, Bank B source
-verification, Bank W capability, and the model-backed mode gate.
+A5/common support, Qwen A250 gates, Bank B audits, Bank W methods, and the first
+mode gate are banked. Branch B continues draw A to $n=500$; the A250--A500 path
+and mode-v2 baseline were frozen before outcomes. Next: execute them, revise
+Bank B, run the three Bank W capability gates, and obtain review/PI sign-off.
 
 \end{document}
