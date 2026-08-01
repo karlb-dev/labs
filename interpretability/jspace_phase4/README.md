@@ -65,8 +65,15 @@ bash interpretability/jspace_phase4/run_qwen_a500_postfit_queue.sh
 
 That queue prospectively runs and banks A250--A500 structural convergence,
 the fixed functional gate, the official mode-v2 model baseline, and Qwen Bank
-W baseline capability. Follow its registered A/B/C branch without changing
-thresholds: A/C continues with `draw_b_n120`; B continues with `draw_a_n1000`.
+W baseline capability. Then apply the registered A/B/C branch without
+changing thresholds:
+
+```bash
+bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
+```
+
+The router verifies the registered result envelope and exact frozen wording;
+A/C continues with `draw_b_n120`, while B continues with `draw_a_n1000`.
 
 The lower-level producer remains available for exact recovery diagnostics:
 

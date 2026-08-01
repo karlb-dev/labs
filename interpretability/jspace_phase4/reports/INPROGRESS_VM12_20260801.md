@@ -11,8 +11,8 @@ intervention outcomes, and do not self-sign independent-review or PI fields.
   main is clean and synced while the fitter runs.
 - Isolated CPU/report worktree: `/content/labs_phase4_cpu`, branch
   `codex/phase4-cpu-20260801`; registered methods are pushed through
-  `bdec74e` (conditional P4-P2 variance-pilot protocol), with scoring/runner
-  hardening through `258ae3c`. The successor queue has
+  `70f05bb` (automatic frozen A500 branch router), including the conditional
+  P4-P2 variance-pilot protocol at `bdec74e`. The successor queue has
   four prospectively frozen stages: A250--A500 structural, functional,
   mode-v2 baseline, and Qwen Bank W baseline capability.
 - The isolated tree has only the intentionally regenerated handout PDF dirty.
@@ -163,7 +163,7 @@ a pseudo-milestone evidence row for a partial fit.
 
 Main evidence integration is pushed through merge commit `11ae9db`. Registry
 verification after that merge found 39 live events and 176 registered outputs
-with zero failures. The isolated successor branch now passes all 149 Phase 4
+with zero failures. The isolated successor branch now passes all 152 Phase 4
 tests. Preregistration candidate 0.8 and the report/handout sources integrate
 the registered P4-P2 envelope; the rebuilt PDF remains the sole intentional
 dirty file until this documentation boundary is compiled and checked.
@@ -175,7 +175,7 @@ successor structural/functional path. The prospective mode-v2 model baseline
 was frozen at `76c22fd`. Bank W capability protocol
 `p4-bank-w-capability-protocol-dev-v1` was registered at `38c761c` without
 model outcomes, and its Qwen baseline was queued at `6f7cce3`. The current
-combined isolated branch passes all 149 Phase 4 tests.
+combined isolated branch passes all 152 Phase 4 tests.
 
 Successor configs:
 
@@ -240,12 +240,18 @@ p4-bank-w-capability-qwen36-27b-dev-v1
 5. Integrate exact A500 fit and gate results into Markdown/TeX/PDF, visually
    inspect new figures and affected handout pages, mirror byte-identical
    report artifacts to Drive, and refresh this ledger plus the resume file.
-6. Execute the frozen branch if enough VM time remains to preserve a
-   valid three-prompt checkpoint. A/C selects draw-B n=120; B selects draw-A
-   n=1000. The continuation entrypoint supports both `draw_b_n120` and
-   `draw_a_n1000`. Neither continuation can finish inside the estimated
-   remaining VM window, so bank a restartable three-prompt checkpoint and do
-   not delay final registry/report/handoff closure near reclaim.
+6. Execute the frozen branch if enough VM time remains to preserve a valid
+   three-prompt checkpoint:
+
+   ```bash
+   bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
+   ```
+
+   The router hash-verifies the registered result and frozen wording before
+   mapping A/C to draw-B n=120 or B to draw-A n=1000. Neither continuation can
+   finish inside the estimated remaining VM window, so bank a restartable
+   three-prompt checkpoint and do not delay final registry/report/handoff
+   closure near reclaim.
 
 ## Final verification and freeze boundary
 

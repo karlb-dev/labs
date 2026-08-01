@@ -25,8 +25,8 @@ interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 - Clean launch commit: `11ae9db626e9776091840bf5b29b3217b9fd99c0`
 - Isolated preparation worktree: `/content/labs_phase4_cpu`
 - Isolated branch: `codex/phase4-cpu-20260801`; registered methods are pushed
-  through `bdec74e` (conditional P4-P2 variance-pilot protocol), with
-  scoring/runner hardening through `258ae3c`; the successor queue has four
+  through `70f05bb` (automatic frozen A500 branch router), including the
+  conditional P4-P2 variance-pilot protocol at `bdec74e`; the successor queue has four
   prospectively frozen stages: structural, functional, mode-v2 baseline, and
   Qwen Bank W baseline capability
 - Phase 4 Drive root:
@@ -139,7 +139,7 @@ untouched until it exits.
   queued; both OLMo baselines and independent review remain pending. No Bank W
   intervention outcome was opened.
 - Main integration merge `11ae9db` verified 39 live evidence events and 176
-  outputs. The current isolated branch passes 149 tests. Preregistration
+  outputs. The current isolated branch passes 152 tests. Preregistration
   candidate 0.8 and report/handout sources include the mode feasibility
   envelope; the rebuilt PDF remains the isolated tree's sole intentional
   dirty file until this documentation boundary is compiled and checked.
@@ -151,7 +151,7 @@ generalizes the audited structural/functional producers and freezes the
 successor configs. Mode-v2 was prospectively frozen at `76c22fd` and appended
 to the queue at `19f5fc4`. Bank W capability protocol was registered at
 `38c761c` without model outcomes and the Qwen gate queued at `6f7cce3`; the
-combined branch passes all 149 Phase 4 tests.
+combined branch passes all 152 Phase 4 tests.
 
 ```text
 interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml
@@ -210,8 +210,14 @@ Frozen successor decisions:
    TeX, final PDF, in-progress ledger, and this resume file. Visually inspect
    all new figures and affected pages. Mirror byte-identical artifacts to
    Drive.
-6. Follow the branch without reinterpretation. The continuation entrypoint
-   supports A/C as `draw_b_n120` and B as `draw_a_n1000`. Launch only if the
+6. Follow the branch without reinterpretation by running:
+
+   ```bash
+   bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
+   ```
+
+   The router verifies the registered result envelope and frozen wording,
+   then maps A/C to `draw_b_n120` or B to `draw_a_n1000`. Launch only if the
    remaining VM window can preserve a valid checkpoint. Neither continuation
    is expected to finish before reclaim, so bank a valid three-prompt recovery
    boundary and prioritize final report/registry/handoff closure.
