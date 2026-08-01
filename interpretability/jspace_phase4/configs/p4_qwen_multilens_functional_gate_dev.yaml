@@ -32,7 +32,7 @@ lenses:
     evidence_id: p4-qwen-lens-fit-drawA-n250-dev-v1
     lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n0250.pt
     # Filled only from the registered n=250 event, before execution.
-    lens_sha256: PENDING_REGISTERED_N250_LENS_SHA256
+    lens_sha256: b78427c84ddd3b9f7f4361b952b5169cf49335e77fe364e584b6abd799f79006
     n_prompts: 250
 
 task_banks:
