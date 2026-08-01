@@ -339,7 +339,8 @@ def main() -> None:  # noqa: C901, PLR0915
     canonical_event = resolve(canonical_spec["evidence_id"])
     if not canonical_event["live"]:
         raise RuntimeError("canonical A120 lens is not live")
-    canonical_source = resolve_uri(canonical_spec["lens_uri"])
+    canonical_source = resolve_uri(
+        canonical_spec["lens_uri"], must_exist=False)
     registered_hashes = {
         output["sha256"] for output in canonical_event["outputs"]
         if Path(output["path"]) == canonical_source

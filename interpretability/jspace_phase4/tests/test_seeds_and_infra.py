@@ -107,6 +107,34 @@ def test_drive_alias_and_local_materialization(tmp_path, monkeypatch):
     assert local.read_bytes() == b"pinned lens"
     assert str(local).startswith(str(tmp_path / "local"))
 
+    # A hash-verified content-addressed local copy is sufficient during a
+    # transient DriveFS outage; the canonical logical target need not exist.
+    source.unlink()
+    assert materialize_local_file(
+        "drive://part1/lens/example.pt",
+        expected_sha256=file_sha256(local),
+    ) == local
+
+
+def test_local_materialization_rejects_bad_cached_copy_when_source_absent(
+        tmp_path, monkeypatch):
+    from jspace_phase4.manifests import file_sha256
+    from jspace_phase4.paths4 import materialize_local_file
+    drive = tmp_path / "drive"
+    source = drive / "2026-07-25_1726/lens/example.pt"
+    source.parent.mkdir(parents=True)
+    source.write_bytes(b"pinned lens")
+    expected = file_sha256(source)
+    monkeypatch.setenv("JSPACE_DRIVE_ROOT", str(drive))
+    monkeypatch.setenv("JSPACE4_LOCAL_WORK", str(tmp_path / "local"))
+    local = materialize_local_file(
+        "drive://part1/lens/example.pt", expected_sha256=expected)
+    source.unlink()
+    local.write_bytes(b"corrupt")
+    with pytest.raises(Exception, match="local materialization hash mismatch"):
+        materialize_local_file(
+            "drive://part1/lens/example.pt", expected_sha256=expected)
+
 
 def test_model_resolver_rejects_drivefs_cache(monkeypatch):
     from jspace_phase4.paths4 import resolve_uri

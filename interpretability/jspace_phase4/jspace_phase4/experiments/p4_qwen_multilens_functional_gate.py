@@ -391,9 +391,15 @@ def _resolve_lens_paths(config: Mapping) -> tuple[dict[str, Path], dict]:
             event = resolve(specification["evidence_id"])
             if not event["live"]:
                 raise RuntimeError(f"registered lens {name} is not live")
-            if expected not in {row["sha256"] for row in event["outputs"]}:
+            source = resolve_uri(
+                specification["lens_uri"], must_exist=False)
+            registered = {
+                row["sha256"] for row in event["outputs"]
+                if Path(row["path"]) == source
+            }
+            if registered != {expected}:
                 raise RuntimeError(
-                    f"lens {name} hash is absent from its registry event")
+                    f"lens {name} path/hash is absent from its registry event")
             path = materialize_local_file(
                 specification["lens_uri"], expected_sha256=expected)
         elif specification["kind"] == "external_published":

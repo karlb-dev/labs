@@ -174,12 +174,18 @@ def _resolve_model(rest: str, *, must_exist: bool) -> Path:
 
 def materialize_local_file(uri: str | Path, *,
                            expected_sha256: str) -> Path:
-    """Verify and copy a large immutable input from DriveFS to local NVMe."""
+    """Verify and copy a large immutable input from DriveFS to local NVMe.
+
+    A previously verified local materialization remains usable when its
+    canonical DriveFS path is temporarily unavailable.  The logical URI still
+    determines the filename, and the content-addressed directory plus a fresh
+    hash check preserve the pinned-input contract.
+    """
     from .manifests import file_sha256
 
-    source = resolve_uri(uri)
     if not expected_sha256 or len(expected_sha256) != 64:
         raise ValueError("a full expected SHA-256 is required")
+    source = resolve_uri(uri, must_exist=False)
     destination = (
         local_work() / "inputs" / expected_sha256 / source.name)
     if destination.exists():
@@ -187,6 +193,7 @@ def materialize_local_file(uri: str | Path, *,
             raise UnresolvedArtifact(
                 f"local materialization hash mismatch: {destination}")
         return destination
+    source = resolve_uri(uri)
     if file_sha256(source) != expected_sha256:
         raise UnresolvedArtifact(
             f"source hash does not match pinned input: {uri}")

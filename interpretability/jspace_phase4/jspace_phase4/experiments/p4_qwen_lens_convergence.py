@@ -563,7 +563,11 @@ def _load_lenses(config: Mapping, recipe: Mapping) -> tuple[dict, dict]:
             event = resolve(specification["evidence_id"])
             if not event["live"]:
                 raise RuntimeError(f"registered lens {name} is not live")
-            source = resolve_uri(specification["lens_uri"])
+            # Compare the registered logical target even if DriveFS is
+            # transiently unavailable; materialization below still requires a
+            # byte-for-byte hash-verified local or canonical copy.
+            source = resolve_uri(
+                specification["lens_uri"], must_exist=False)
             registered = {
                 output["sha256"] for output in event["outputs"]
                 if Path(output["path"]) == source
