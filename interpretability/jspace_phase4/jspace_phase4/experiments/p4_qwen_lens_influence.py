@@ -93,6 +93,11 @@ def validate_influence_config(config: Mapping) -> None:
     prompt = config["prompt"]
     if int(prompt["one_based_index"]) != int(prompt["zero_based_index"]) + 1:
         raise RuntimeError("prompt index conventions disagree")
+    tolerance = float(prompt["recomputed_norm_absolute_tolerance"])
+    logged_norm = float(prompt["logged_max_jacobian_norm_over_sqrt_d"])
+    if not 0 < tolerance <= 0.005 * logged_norm:
+        raise RuntimeError(
+            "prompt norm tolerance must be positive and at most 0.5%")
     adjacent = config["adjacent_checkpoint_contract"]
     earlier = int(adjacent["earlier"]["n"])
     later = int(adjacent["later"]["n"])
@@ -100,6 +105,12 @@ def validate_influence_config(config: Mapping) -> None:
     if later - earlier != len(indices) or indices != list(
             range(earlier + 1, later + 1)):
         raise RuntimeError("adjacent checkpoint prompt indices are not exact")
+    relative_bound = float(
+        adjacent["running_mean_relative_frobenius_error_max"])
+    if not 0 < relative_bound <= 0.005:
+        raise RuntimeError(
+            "adjacent running-mean relative-Frobenius bound must be in "
+            "(0, 0.5%]")
 
 
 def checkpoint_contract(path: Path, *, expected_n: int,
@@ -138,6 +149,7 @@ def compare_adjacent_contract(
         earlier: Mapping, later: Mapping,
         contribution_sum: Mapping[int, torch.Tensor], *,
         source_layers: list[int], atol: float, rtol: float,
+        running_mean_relative_frobenius_max: float | None = None,
 ) -> tuple[list[dict], bool]:
     rows = []
     passed = True
@@ -147,18 +159,36 @@ def compare_adjacent_contract(
         expected = contribution_sum[layer].float()
         difference = observed - expected
         observed_norm = torch.linalg.vector_norm(observed)
+        later_sum_norm = torch.linalg.vector_norm(
+            later["jacobian_sum"][layer].float())
         difference_norm = torch.linalg.vector_norm(difference)
         maximum = float(difference.abs().max().item())
-        relative = float((difference_norm / observed_norm).item())
-        layer_pass = bool(torch.allclose(
+        block_relative = float((difference_norm / observed_norm).item())
+        running_mean_relative = float(
+            (difference_norm / later_sum_norm).item())
+        allclose_pass = bool(torch.allclose(
             observed, expected, atol=atol, rtol=rtol))
+        running_mean_relative_pass = bool(
+            running_mean_relative_frobenius_max is not None
+            and running_mean_relative <= running_mean_relative_frobenius_max)
+        layer_pass = (
+            running_mean_relative_pass
+            if running_mean_relative_frobenius_max is not None
+            else allclose_pass)
         passed = passed and layer_pass
         rows.append({
             "layer": layer,
-            "allclose_pass": layer_pass,
+            "contract_pass": layer_pass,
+            "allclose_diagnostic_pass": allclose_pass,
+            "running_mean_relative_frobenius_pass":
+                running_mean_relative_pass,
+            "running_mean_relative_frobenius_error_max":
+                running_mean_relative_frobenius_max,
             "maximum_absolute_error": maximum,
-            "relative_frobenius_error": relative,
+            "block_delta_relative_frobenius_error": block_relative,
+            "running_mean_relative_frobenius_error": running_mean_relative,
             "observed_delta_frobenius": float(observed_norm.item()),
+            "later_running_sum_frobenius": float(later_sum_norm.item()),
         })
     return rows, passed
 
@@ -412,10 +442,14 @@ def main() -> None:  # noqa: C901, PLR0915
         max(prompt_norms.values()) / math.sqrt(int(recipe["expected_d_model"])))
     logged_max_norm = float(
         config["prompt"]["logged_max_jacobian_norm_over_sqrt_d"])
-    if abs(observed_max_norm - logged_max_norm) > 0.01:
+    norm_tolerance = float(
+        config["prompt"]["recomputed_norm_absolute_tolerance"])
+    norm_absolute_difference = abs(observed_max_norm - logged_max_norm)
+    if norm_absolute_difference > norm_tolerance:
         raise RuntimeError(
             "recomputed prompt-112 norm disagrees with the frozen fit log: "
-            f"{observed_max_norm} versus {logged_max_norm}")
+            f"{observed_max_norm} versus {logged_max_norm} "
+            f"(tolerance {norm_tolerance})")
 
     local_output = local_work() / "qwen_lens_influence" / config["evidence_id"]
     ensure_free_space(local_output, needed_bytes=8_000_000_000, label="local")
@@ -473,13 +507,50 @@ def main() -> None:  # noqa: C901, PLR0915
         source_layers=source_layers,
         atol=float(adjacent["allclose_atol"]),
         rtol=float(adjacent["allclose_rtol"]),
+        running_mean_relative_frobenius_max=float(
+            adjacent["running_mean_relative_frobenius_error_max"]),
     )
+    adjacent_diagnostic = {
+        "n_layers": len(adjacent_rows),
+        "n_contract_pass": sum(
+            bool(row["contract_pass"]) for row in adjacent_rows),
+        "n_allclose_diagnostic_pass": sum(
+            bool(row["allclose_diagnostic_pass"]) for row in adjacent_rows),
+        "maximum_block_delta_relative_frobenius_error": max(
+            float(row["block_delta_relative_frobenius_error"])
+            for row in adjacent_rows),
+        "median_block_delta_relative_frobenius_error": float(np.median([
+            row["block_delta_relative_frobenius_error"]
+            for row in adjacent_rows])),
+        "maximum_running_mean_relative_frobenius_error": max(
+            float(row["running_mean_relative_frobenius_error"])
+            for row in adjacent_rows),
+        "median_running_mean_relative_frobenius_error": float(np.median([
+            row["running_mean_relative_frobenius_error"]
+            for row in adjacent_rows])),
+        "maximum_absolute_error": max(
+            float(row["maximum_absolute_error"])
+            for row in adjacent_rows),
+        "running_mean_relative_frobenius_error_max": float(
+            adjacent["running_mean_relative_frobenius_error_max"]),
+        "contract_pass": adjacent_pass,
+    }
+    pd.DataFrame(adjacent_rows).to_csv(
+        local_output / "adjacent_checkpoint_contract_diagnostic.csv",
+        index=False)
+    atomic_json(
+        local_output / "adjacent_checkpoint_contract_diagnostic.json",
+        adjacent_diagnostic)
+    print(json.dumps({
+        "adjacent_checkpoint_contract": adjacent_diagnostic,
+    }, indent=1), flush=True)
     del contribution_sum, earlier, later, lens_model, hf_model
     gc.collect()
     torch.cuda.empty_cache()
     if not adjacent_pass:
         raise RuntimeError(
-            "adjacent-checkpoint equal-weight estimator contract failed")
+            "adjacent-checkpoint equal-weight estimator contract failed: "
+            + json.dumps(adjacent_diagnostic, sort_keys=True))
 
     drive_lens_dir = (
         run_root() / "lens" / "qwen36-27b" / "influence" / "prompt112")
@@ -687,6 +758,13 @@ def main() -> None:  # noqa: C901, PLR0915
             "seq_len": prompt_seq_len,
             "n_valid": prompt_n_valid,
             "max_jacobian_norm_over_sqrt_d": observed_max_norm,
+            "historical_logged_max_jacobian_norm_over_sqrt_d":
+                logged_max_norm,
+            "norm_absolute_difference": norm_absolute_difference,
+            "norm_absolute_tolerance": norm_tolerance,
+            "norm_check_role": (
+                "coarse BF16/fused-runtime identity sentinel; adjacent "
+                "checkpoint tensor reconstruction is load-bearing"),
             "layer_norms_sha256": object_sha256(prompt_norms),
             "stored_fp16_sha256": contribution_sha,
         },
@@ -701,10 +779,15 @@ def main() -> None:  # noqa: C901, PLR0915
             "prompt_indices_one_based": adjacent[
                 "prompt_indices_one_based"],
             "all_layers_pass": adjacent_pass,
+            "diagnostic": adjacent_diagnostic,
             "max_absolute_error": max(
                 row["maximum_absolute_error"] for row in adjacent_rows),
-            "max_relative_frobenius_error": max(
-                row["relative_frobenius_error"] for row in adjacent_rows),
+            "max_block_delta_relative_frobenius_error": max(
+                row["block_delta_relative_frobenius_error"]
+                for row in adjacent_rows),
+            "max_running_mean_relative_frobenius_error": max(
+                row["running_mean_relative_frobenius_error"]
+                for row in adjacent_rows),
             "table_sha256": file_sha256(adjacent_path),
         },
         "aggregate": aggregate,

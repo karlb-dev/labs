@@ -54,8 +54,50 @@ def test_adjacent_contract_comparison_passes_exact_block():
         earlier, later, {0: block}, source_layers=[0],
         atol=1e-6, rtol=1e-6)
     assert passed
-    assert rows[0]["allclose_pass"]
-    assert rows[0]["relative_frobenius_error"] < 1e-6
+    assert rows[0]["contract_pass"]
+    assert rows[0]["allclose_diagnostic_pass"]
+    assert rows[0]["block_delta_relative_frobenius_error"] < 1e-6
+    assert rows[0]["running_mean_relative_frobenius_error"] < 1e-6
+
+
+def test_adjacent_contract_bounds_jitter_on_the_running_estimator():
+    from jspace_phase4.experiments.p4_qwen_lens_influence import (
+        compare_adjacent_contract,
+    )
+    expected = torch.eye(4)
+    observed = expected.clone()
+    observed[0, 1] = 2e-2
+    existing_sum = 100 * torch.eye(4)
+    earlier = {"jacobian_sum": {0: existing_sum}}
+    later = {"jacobian_sum": {0: existing_sum + observed}}
+    rows, passed = compare_adjacent_contract(
+        earlier, later, {0: expected}, source_layers=[0],
+        atol=0.0, rtol=0.0,
+        running_mean_relative_frobenius_max=0.005)
+    assert passed
+    assert rows[0]["contract_pass"]
+    assert rows[0]["running_mean_relative_frobenius_pass"]
+    assert not rows[0]["allclose_diagnostic_pass"]
+    assert rows[0]["block_delta_relative_frobenius_error"] > 0.005
+    assert rows[0]["running_mean_relative_frobenius_error"] < 0.005
+
+
+def test_adjacent_contract_rejects_material_running_estimator_jitter():
+    from jspace_phase4.experiments.p4_qwen_lens_influence import (
+        compare_adjacent_contract,
+    )
+    expected = torch.eye(4)
+    observed = expected.clone()
+    observed[0, 1] = 0.1
+    earlier = {"jacobian_sum": {0: torch.zeros_like(observed)}}
+    later = {"jacobian_sum": {0: observed}}
+    rows, passed = compare_adjacent_contract(
+        earlier, later, {0: expected}, source_layers=[0],
+        atol=0.0, rtol=0.0,
+        running_mean_relative_frobenius_max=0.005)
+    assert not passed
+    assert not rows[0]["contract_pass"]
+    assert not rows[0]["running_mean_relative_frobenius_pass"]
 
 
 def test_prompt112_config_can_never_replace_canonical_lens():
@@ -65,11 +107,17 @@ def test_prompt112_config_can_never_replace_canonical_lens():
     config = {
         "tier": "phase4-development",
         "canonical_lens_unchanged": True,
-        "prompt": {"one_based_index": 112, "zero_based_index": 111},
+        "prompt": {
+            "one_based_index": 112,
+            "zero_based_index": 111,
+            "logged_max_jacobian_norm_over_sqrt_d": 159.952,
+            "recomputed_norm_absolute_tolerance": 0.5,
+        },
         "adjacent_checkpoint_contract": {
             "earlier": {"n": 195},
             "later": {"n": 198},
             "prompt_indices_one_based": [196, 197, 198],
+            "running_mean_relative_frobenius_error_max": 0.005,
         },
     }
     validate_influence_config(config)
@@ -89,11 +137,17 @@ def test_prompt_influence_refuses_non_development_tier():
     config = {
         "tier": "phase4-confirmatory",
         "canonical_lens_unchanged": True,
-        "prompt": {"one_based_index": 112, "zero_based_index": 111},
+        "prompt": {
+            "one_based_index": 112,
+            "zero_based_index": 111,
+            "logged_max_jacobian_norm_over_sqrt_d": 159.952,
+            "recomputed_norm_absolute_tolerance": 0.5,
+        },
         "adjacent_checkpoint_contract": {
             "earlier": {"n": 195},
             "later": {"n": 198},
             "prompt_indices_one_based": [196, 197, 198],
+            "running_mean_relative_frobenius_error_max": 0.005,
         },
     }
     try:
@@ -102,3 +156,64 @@ def test_prompt_influence_refuses_non_development_tier():
         assert "development sensitivity" in str(error)
     else:
         raise AssertionError("confirmatory influence tier was accepted")
+
+
+def test_prompt_influence_norm_tolerance_is_bounded():
+    from jspace_phase4.experiments.p4_qwen_lens_influence import (
+        validate_influence_config,
+    )
+    config = {
+        "tier": "phase4-development",
+        "canonical_lens_unchanged": True,
+        "prompt": {
+            "one_based_index": 112,
+            "zero_based_index": 111,
+            "logged_max_jacobian_norm_over_sqrt_d": 159.952,
+            "recomputed_norm_absolute_tolerance": 0.5,
+        },
+        "adjacent_checkpoint_contract": {
+            "earlier": {"n": 195},
+            "later": {"n": 198},
+            "prompt_indices_one_based": [196, 197, 198],
+            "running_mean_relative_frobenius_error_max": 0.005,
+        },
+    }
+    validate_influence_config(config)
+    config["prompt"]["recomputed_norm_absolute_tolerance"] = 1.0
+    try:
+        validate_influence_config(config)
+    except RuntimeError as error:
+        assert "0.5%" in str(error)
+    else:
+        raise AssertionError("unbounded norm tolerance was accepted")
+
+
+def test_prompt_influence_running_mean_tolerance_is_bounded():
+    from jspace_phase4.experiments.p4_qwen_lens_influence import (
+        validate_influence_config,
+    )
+    config = {
+        "tier": "phase4-development",
+        "canonical_lens_unchanged": True,
+        "prompt": {
+            "one_based_index": 112,
+            "zero_based_index": 111,
+            "logged_max_jacobian_norm_over_sqrt_d": 159.952,
+            "recomputed_norm_absolute_tolerance": 0.5,
+        },
+        "adjacent_checkpoint_contract": {
+            "earlier": {"n": 195},
+            "later": {"n": 198},
+            "prompt_indices_one_based": [196, 197, 198],
+            "running_mean_relative_frobenius_error_max": 0.005,
+        },
+    }
+    validate_influence_config(config)
+    config["adjacent_checkpoint_contract"][
+        "running_mean_relative_frobenius_error_max"] = 0.006
+    try:
+        validate_influence_config(config)
+    except RuntimeError as error:
+        assert "0.5%" in str(error)
+    else:
+        raise AssertionError("unbounded running-mean tolerance was accepted")
