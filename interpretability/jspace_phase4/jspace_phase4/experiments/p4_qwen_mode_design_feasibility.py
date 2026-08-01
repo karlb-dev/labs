@@ -172,7 +172,7 @@ def analyze(config: Mapping) -> dict:
             "intervention, confirmatory, or replication outcome."),
         "source_methods_evidence_id": config[
             "source_methods"]["evidence_id"],
-        "source_methods_parser_version": methods["parser_version"],
+        "source_methods_parser_version": methods["parser"]["version"],
         "primary_family_statistic": {
             "cell_order": list(CELL_ORDER),
             "coefficients": list(CELL_COEFFICIENTS),
