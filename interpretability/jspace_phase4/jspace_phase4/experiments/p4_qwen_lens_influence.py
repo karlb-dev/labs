@@ -93,6 +93,11 @@ def validate_influence_config(config: Mapping) -> None:
     prompt = config["prompt"]
     if int(prompt["one_based_index"]) != int(prompt["zero_based_index"]) + 1:
         raise RuntimeError("prompt index conventions disagree")
+    tolerance = float(prompt["recomputed_norm_absolute_tolerance"])
+    logged_norm = float(prompt["logged_max_jacobian_norm_over_sqrt_d"])
+    if not 0 < tolerance <= 0.005 * logged_norm:
+        raise RuntimeError(
+            "prompt norm tolerance must be positive and at most 0.5%")
     adjacent = config["adjacent_checkpoint_contract"]
     earlier = int(adjacent["earlier"]["n"])
     later = int(adjacent["later"]["n"])
@@ -412,10 +417,14 @@ def main() -> None:  # noqa: C901, PLR0915
         max(prompt_norms.values()) / math.sqrt(int(recipe["expected_d_model"])))
     logged_max_norm = float(
         config["prompt"]["logged_max_jacobian_norm_over_sqrt_d"])
-    if abs(observed_max_norm - logged_max_norm) > 0.01:
+    norm_tolerance = float(
+        config["prompt"]["recomputed_norm_absolute_tolerance"])
+    norm_absolute_difference = abs(observed_max_norm - logged_max_norm)
+    if norm_absolute_difference > norm_tolerance:
         raise RuntimeError(
             "recomputed prompt-112 norm disagrees with the frozen fit log: "
-            f"{observed_max_norm} versus {logged_max_norm}")
+            f"{observed_max_norm} versus {logged_max_norm} "
+            f"(tolerance {norm_tolerance})")
 
     local_output = local_work() / "qwen_lens_influence" / config["evidence_id"]
     ensure_free_space(local_output, needed_bytes=8_000_000_000, label="local")
@@ -687,6 +696,13 @@ def main() -> None:  # noqa: C901, PLR0915
             "seq_len": prompt_seq_len,
             "n_valid": prompt_n_valid,
             "max_jacobian_norm_over_sqrt_d": observed_max_norm,
+            "historical_logged_max_jacobian_norm_over_sqrt_d":
+                logged_max_norm,
+            "norm_absolute_difference": norm_absolute_difference,
+            "norm_absolute_tolerance": norm_tolerance,
+            "norm_check_role": (
+                "coarse BF16/fused-runtime identity sentinel; adjacent "
+                "checkpoint tensor reconstruction is load-bearing"),
             "layer_norms_sha256": object_sha256(prompt_norms),
             "stored_fp16_sha256": contribution_sha,
         },

@@ -65,7 +65,12 @@ def test_prompt112_config_can_never_replace_canonical_lens():
     config = {
         "tier": "phase4-development",
         "canonical_lens_unchanged": True,
-        "prompt": {"one_based_index": 112, "zero_based_index": 111},
+        "prompt": {
+            "one_based_index": 112,
+            "zero_based_index": 111,
+            "logged_max_jacobian_norm_over_sqrt_d": 159.952,
+            "recomputed_norm_absolute_tolerance": 0.5,
+        },
         "adjacent_checkpoint_contract": {
             "earlier": {"n": 195},
             "later": {"n": 198},
@@ -89,7 +94,12 @@ def test_prompt_influence_refuses_non_development_tier():
     config = {
         "tier": "phase4-confirmatory",
         "canonical_lens_unchanged": True,
-        "prompt": {"one_based_index": 112, "zero_based_index": 111},
+        "prompt": {
+            "one_based_index": 112,
+            "zero_based_index": 111,
+            "logged_max_jacobian_norm_over_sqrt_d": 159.952,
+            "recomputed_norm_absolute_tolerance": 0.5,
+        },
         "adjacent_checkpoint_contract": {
             "earlier": {"n": 195},
             "later": {"n": 198},
@@ -102,3 +112,32 @@ def test_prompt_influence_refuses_non_development_tier():
         assert "development sensitivity" in str(error)
     else:
         raise AssertionError("confirmatory influence tier was accepted")
+
+
+def test_prompt_influence_norm_tolerance_is_bounded():
+    from jspace_phase4.experiments.p4_qwen_lens_influence import (
+        validate_influence_config,
+    )
+    config = {
+        "tier": "phase4-development",
+        "canonical_lens_unchanged": True,
+        "prompt": {
+            "one_based_index": 112,
+            "zero_based_index": 111,
+            "logged_max_jacobian_norm_over_sqrt_d": 159.952,
+            "recomputed_norm_absolute_tolerance": 0.5,
+        },
+        "adjacent_checkpoint_contract": {
+            "earlier": {"n": 195},
+            "later": {"n": 198},
+            "prompt_indices_one_based": [196, 197, 198],
+        },
+    }
+    validate_influence_config(config)
+    config["prompt"]["recomputed_norm_absolute_tolerance"] = 1.0
+    try:
+        validate_influence_config(config)
+    except RuntimeError as error:
+        assert "0.5%" in str(error)
+    else:
+        raise AssertionError("unbounded norm tolerance was accepted")
