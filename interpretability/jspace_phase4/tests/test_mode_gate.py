@@ -88,3 +88,94 @@ def test_mode_protocol_freezes_only_phases_common_to_both_modes():
         "thinking-on-secondary"
     assert config["primary"]["alternative"] == "greater"
     assert config["parser"]["version"] == "p4-phase-parser-v2"
+
+
+def test_model_gate_normalized_answer_requires_exact_alias():
+    from jspace_phase4.experiments.p4_qwen_mode_model_gate import (
+        normalized_exact_alias,
+    )
+
+    assert normalized_exact_alias("Río", [" Rio", " River"]) == " Rio"
+    assert normalized_exact_alias("Rio because", [" Rio"]) is None
+    assert normalized_exact_alias("unknown", [" Rio"]) is None
+
+
+def test_model_gate_extracts_only_generated_phase_content():
+    from jspace_phase4.experiments.p4_qwen_mode_model_gate import (
+        generated_phase_ids,
+    )
+    from jspace_phase4.phase_hooks import DelimiterSpec, classify_token_phases
+
+    delimiters = DelimiterSpec(
+        reasoning_start_ids=(10,), reasoning_end_ids=(11,),
+        eos_token_ids=(12,))
+    prompt = [1, 10]
+    tokens = prompt + [20, 11, 30, 12]
+    parsed = classify_token_phases(
+        tokens, prompt_length=len(prompt), delimiters=delimiters)
+    phases = generated_phase_ids(
+        tokens, prompt_length=len(prompt), parsed=parsed,
+        delimiters=delimiters)
+    assert phases == {"reasoning": [20], "final_answer": [30]}
+
+
+def test_model_gate_analysis_applies_paired_common_support_gates():
+    from jspace_phase4.experiments.p4_qwen_mode_model_gate import (
+        analyze_mode_rows,
+    )
+
+    rows = []
+    for family in ("a", "b"):
+        for mode in ("thinking_on", "thinking_off"):
+            rows.append({
+                "canonical_family": family,
+                "mode": mode,
+                "correct": True,
+                "parse_valid": True,
+                "truncated": False,
+                "final_answer_tokens": 1,
+                "reasoning_content_tokens": (
+                    2 if mode == "thinking_on" else 0),
+                "generated_tokens": (
+                    4 if mode == "thinking_on" else 2),
+            })
+    gates = {
+        "maximum_parse_failure_rate_by_mode": 0.02,
+        "maximum_truncation_rate_by_mode": 0.02,
+        "minimum_accuracy_by_mode": 0.60,
+        "minimum_common_correct_families": 2,
+        "minimum_thinking_on_reasoning_content_rate": 0.90,
+        "minimum_final_answer_nonempty_rate_by_mode": 0.98,
+        "require_zero_thinking_off_reasoning_content": True,
+        "family_bootstrap_draws": 100,
+        "family_bootstrap_seed": 17,
+    }
+    result = analyze_mode_rows(rows, gates)
+    assert result["all_model_backed_development_gates_pass"]
+    assert result["common_support"]["n_correct_both_modes"] == 2
+    assert result["paired_accuracy"][
+        "thinking_on_minus_thinking_off"] == 0.0
+
+    rows[-1]["reasoning_content_tokens"] = 1
+    blocked = analyze_mode_rows(rows, gates)
+    assert not blocked["development_gate_checks"][
+        "thinking_off_has_no_reasoning_content"]
+    assert not blocked["all_model_backed_development_gates_pass"]
+
+
+def test_model_gate_config_uses_outcome_blind_consumed_family_subset():
+    import yaml
+
+    with open("interpretability/jspace_phase4/configs/"
+              "p4_qwen_mode_model_gate_dev.yaml") as handle:
+        config = yaml.safe_load(handle)
+    assert config["tier"] == "phase4-development"
+    assert config["selection"]["consumed_phase3_development_only"]
+    assert not config["selection"]["outcome_columns_allowed"]
+    assert config["selection"]["expected_families"] == 20
+    assert config["protocol"]["mode_order"] == [
+        "thinking_on", "thinking_off"]
+    assert config["protocol"]["primary_phases"] == [
+        "prefill", "final_answer"]
+    assert config["protocol"]["structurally_absent_cell"] == \
+        "thinking_off_x_reasoning"

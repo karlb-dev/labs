@@ -111,4 +111,9 @@ run_stage qwen_multilens_functional_gate \
   --config interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_dev.yaml
 bank_registry_event qwen_multilens_functional_gate
 
+run_stage qwen_mode_model_gate \
+  python -m jspace_phase4.experiments.p4_qwen_mode_model_gate \
+  --config interpretability/jspace_phase4/configs/p4_qwen_mode_model_gate_dev.yaml
+bank_registry_event qwen_mode_model_gate
+
 printf '%s QUEUE_COMPLETE\n' "$(date -u +%FT%TZ)" | tee -a "$QUEUE_LOG"
