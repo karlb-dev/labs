@@ -1,6 +1,6 @@
 # Resume Phase 4.2 — restart-safe handoff
 
-Generated 2026-08-01 16:34 UTC on VM12. Phase 4 is development-only. Never
+Generated 2026-08-01 17:44 UTC on VM12. Phase 4 is development-only. Never
 open confirmatory or replication intervention outcomes before independent
 review, PI sign-off, a freeze commit, and a freeze tag.
 
@@ -48,21 +48,21 @@ bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
 The runner verified the model snapshot, exact fit contract, CUDA, and all 48
 fused FLA bindings. CPU fallback is forbidden. It recovered
 `recovered_next_idx=250`; at this handoff the latest locally mirrored boundary
-is n=451 with checkpoint SHA-256
-`313d8c8075447d20cf21f686a5a54f1d3e5060561866acc7d4a8350ee6447ca6`.
-Observed restarted-invocation throughput is 175.67 seconds per prompt (179.1
+is n=475 with checkpoint SHA-256
+`11e31acc4eb0a4dbcb64e566c872486f9ac60b0b207a3ecf1e9498b5d42fb1f0`.
+Observed restarted-invocation throughput is 175.62 seconds per prompt (179.1
 seconds on the long-run ruler), and peak allocated VRAM is 62.846 GB. The
-remaining fit is about 2.4 hours plus
+remaining fit is about 1.2 hours plus
 finalization, so n=500 is projected near 19:00 UTC if throughput holds. The
 expanded post-fit queue should consume another 1.5--2 hours.
 
-All 201 continuation prompt records from 251 through 451 have finite logged
+All 225 continuation prompt records from 251 through 475 have finite logged
 diagnostics. Prompt 323 is a retained heavy-tail outlier
 (`max||J||/sqrt(d)=173.345`, `max_d_mean=0.271`), comparable in scale to the
 registered retained-prompt-112 sensitivity (`160.071`). The immutable
 WikiText row remains in the estimator and is flagged for post-A500 influence
-sensitivity, never outcome-dependent trimming. All 128 subsequent prompts from
-324 through 451 stayed at or below 79.579. Prompts 413, 424, and 441 were
+sensitivity, never outcome-dependent trimming. All 152 subsequent prompts from
+324 through 475 stayed at or below 79.579. Prompts 413, 424, 441, and 461 were
 isolated finite elevations whose following prompts returned to the ordinary
 range.
 
