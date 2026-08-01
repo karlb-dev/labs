@@ -79,6 +79,17 @@ frequency deciles, compares raw, `J-I`, and `J-alpha I` operators, and labels
 every published-lens comparison as an external published reference with a
 partially specified recipe.
 
+The retained prompt-112 influence producer recomputes that exact prompt plus
+the three prompts between the preserved n=195 and n=198 cumulative
+checkpoints. It refuses to change the canonical A120 lens and registers the
+leave-one-out lens only as a development sensitivity:
+
+```bash
+MPLCONFIGDIR=/tmp/matplotlib-phase4 \
+python -m jspace_phase4.experiments.p4_qwen_lens_influence \
+  --config interpretability/jspace_phase4/configs/p4_qwen_lens_influence_prompt112_dev.yaml
+```
+
 ## Current development synthesis
 
 - Living Markdown: `reports/PHASE4_DEVELOPMENT_REPORT.md`
