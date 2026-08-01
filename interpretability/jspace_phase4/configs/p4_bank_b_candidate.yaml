@@ -12,20 +12,16 @@ source_types:
   - demonym
   - french_name
   - spanish_name
-  - calling_code
   - nativeName
+  - tld
 answer_types:
   - capital
   - alpha2
   - alpha3
   - demonym
-  - tld
-  - calling_code
-  - currency
   - nativeName
-  - language
   - french_name
-minimum_family_eligible_records: 100
+minimum_family_eligible_records: 50
 maximum_field_characters: 50
 
 partition:

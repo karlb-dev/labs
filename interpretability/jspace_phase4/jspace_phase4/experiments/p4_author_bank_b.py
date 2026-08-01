@@ -17,6 +17,7 @@ import importlib.metadata
 import importlib.resources
 import json
 import re
+import unicodedata
 from pathlib import Path
 from typing import Iterable, Mapping
 
@@ -56,7 +57,9 @@ def parse_args() -> argparse.Namespace:
 
 
 def normalize(value: str | None) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).strip()
+    normalized = unicodedata.normalize("NFKC", value or "").casefold()
+    return re.sub(r"[\W_]+", " ", normalized,
+                  flags=re.UNICODE).strip()
 
 
 def record_value(record: Mapping, field: str) -> str | None:
@@ -149,6 +152,8 @@ def _eligible(record: Mapping, *, source_type: str, answer_type: str,
         return False
     normalized = [normalize(value) for value in values]
     return (
+        all(normalized)
+        and
         len(set(normalized)) == 4
         and not set(normalized) & prior
         and normalize(record_value(record, "name")) not in excluded
@@ -247,6 +252,7 @@ def _source_phrase(field: str, value: str) -> str:
         "spanish_name": f"the Spanish name {value}",
         "calling_code": f"the international calling code +{value}",
         "nativeName": f"the native-language name {value}",
+        "tld": f"the country-code top-level domain {value}",
     }
     return templates[field]
 
@@ -497,7 +503,10 @@ def build_candidate(config: Mapping, *, tokenizer) -> tuple[
         "partition_sha256": object_sha256(partition),
     }
     if prior_overlap or any(cross_partition.values()):
-        raise RuntimeError("Bank B overlap audit failed")
+        raise RuntimeError("Bank B overlap audit failed: " + json.dumps({
+            "prior": prior_overlap,
+            "cross_partition": cross_partition,
+        }, sort_keys=True))
     return bank_rows, source_rows, partition, audit
 
 
