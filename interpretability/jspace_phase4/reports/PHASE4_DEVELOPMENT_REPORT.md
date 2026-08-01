@@ -5,7 +5,7 @@ seed-paired 3.0 Think, and seed-paired OLMo-3.1 32B Think and Instruct
 own/common-lens comparisons, registered four-checkpoint trajectory, and
 post-hoc common-support closure, plus Qwen draw-A n=250 structural and
 functional gates, outcome-blind Bank B/Bank W audits, and the official Qwen
-mode parser/model gate, 2026-08-01.
+mode parser/model gate plus design-feasibility envelope, 2026-08-01.
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -839,6 +839,27 @@ while increasing only the length-failure sentinel from 512 to 2,048 tokens.
 Its tokenizer/template/golden gate passes. The fresh model-backed v2 baseline
 also uses one shared instruction asking for at most 128 reasoning tokens before
 closure; it is frozen and queued, not yet an outcome at this report boundary.
+
+Registered outcome-blind feasibility evidence
+`p4-qwen-mode-design-feasibility-dev-v1` then makes the remaining design
+problem explicit without selecting a SESOI, bank size, or split. The
+family-level primary is an eight-cell accuracy interaction with support
+[-4, 4], so its distribution-free SD bound is 4. Planning uses the
+conservative Holm endpoint alpha of 0.05/3 and 80% power under a known-SD
+one-sided Gaussian approximation; this is a scenario envelope, not exact
+sign-flip power.
+
+![Qwen mode design-feasibility envelope](figures/p4f24_qwen_mode_design_feasibility.png)
+
+For a candidate 0.20 accuracy-point interaction, the envelope needs 56
+independent families at family SD 0.5, 221 at SD 1.0, and 3,528 at the
+support-based SD bound. At 0.10 accuracy points those counts are 221, 882,
+and 14,111. Although six tie-free families are enough for the minimum exact
+one-sided sign-flip p-value to cross 0.05/3, that is resolution rather than
+power. The next licensed method step is therefore a development-only
+phase-intervention variance pilot on already consumed families after the
+canonical lens is fixed, followed by substantive SESOI review and an exact
+power simulation for a newly authored untouched bank.
 
 ## Current interpretation
 

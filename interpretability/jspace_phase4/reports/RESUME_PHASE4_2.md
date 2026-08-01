@@ -1,6 +1,6 @@
 # Resume Phase 4.2 — restart-safe handoff
 
-Generated 2026-08-01 08:04 UTC on VM12. Phase 4 is development-only. Never
+Generated 2026-08-01 08:41 UTC on VM12. Phase 4 is development-only. Never
 open confirmatory or replication intervention outcomes before independent
 review, PI sign-off, a freeze commit, and a freeze tag.
 
@@ -24,8 +24,9 @@ interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 - Branch: `interp_jspace_part2`
 - Clean launch commit: `11ae9db626e9776091840bf5b29b3217b9fd99c0`
 - Isolated preparation worktree: `/content/labs_phase4_cpu`
-- Isolated branch: `codex/phase4-cpu-20260801`; current pushed boundary
-  `1d849a2ada83252ecb542cefc3bed93f14db390d`; the successor queue has four
+- Isolated branch: `codex/phase4-cpu-20260801`; registered methods are pushed
+  through `6661514` (P4-P2 feasibility), with scoring/runner hardening through
+  `258ae3c`; the successor queue has four
   prospectively frozen stages: structural, functional, mode-v2 baseline, and
   Qwen Bank W baseline capability
 - Phase 4 Drive root:
@@ -43,13 +44,13 @@ bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
 
 The runner verified the model snapshot, exact fit contract, CUDA, and all 48
 fused FLA bindings. CPU fallback is forbidden. It recovered
-`recovered_next_idx=250`; at this handoff the latest atomically mirrored
-boundary is n=280 with checkpoint SHA-256
-`af1a7b777beeb1443031be03bcaf69d8c49286450f0a88143b8149dbb3925b9d`.
-Observed throughput is 179.21 seconds per new prompt and peak allocated VRAM
-is 62.846 GB. The remaining fit is about 11.0 hours plus finalization, so n=500
-is projected near 19:05 UTC if throughput holds. The expanded post-fit queue
-should consume another 1.5--2 hours.
+`recovered_next_idx=250`; at this handoff the latest locally mirrored boundary
+is n=289 with checkpoint SHA-256
+`fc0a2e8f65b1f75fd87f5d2ea432a3f37dcfcbe12cfb624a70084351413bbc70`.
+Observed long-run throughput is about 179.1 seconds per new prompt and peak
+allocated VRAM is 62.846 GB. The remaining fit is about 10.5 hours plus
+finalization, so n=500 is projected near 19:10 UTC if throughput holds. The
+expanded post-fit queue should consume another 1.5--2 hours.
 
 Monitoring/recovery paths:
 
@@ -59,6 +60,24 @@ Monitoring/recovery paths:
 /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/checkpoint_state.json
 /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_CONTINUATION.lock
 ```
+
+DriveFS began returning `userRateLimitExceeded` 403s with about 85 GB of
+non-evictable cached checkpoint versions. Do not delete DriveFS cache files.
+After removing 18.6 GB of obsolete registered local scratch, the exact Drive
+recovery target was bind-mounted to local NVMe while the fit contract and
+canonical corpus path remained unchanged:
+
+```text
+/content/phase4_recovery_local_20260801_w4Pv6g/recovery_bind
+  -> /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery
+```
+
+The current n=289 recovery is therefore machine-local, not independently
+cloud-durable. An active watcher terminates the Python fitter after the local
+n=499 mirror is complete. At that point, unmount the exact target and rerun
+the normal command so the newer local n=499 checkpoint supplies the final
+prompt and real Drive registration. Do not unmount or remove the local mirror
+before n=499.
 
 Do not launch a duplicate. Check the lock, process, GPU, heartbeat, and log.
 If the fitter has genuinely stopped before n=500, rerun the same command from
@@ -90,6 +109,13 @@ untouched until it exits.
   all tokenizer/template/golden gates and changes only the 512-token cap to
   2,048. Fresh model baseline `p4-qwen-mode-gate-dev-v2`, with one shared
   at-most-128-reasoning-token instruction, is frozen and queued but unopened.
+- Outcome-blind mode feasibility
+  `p4-qwen-mode-design-feasibility-dev-v1` is registered. At conservative
+  Holm alpha 0.05/3, the 80% Gaussian family requirements for a 0.20
+  accuracy-point interaction are 56 at family SD 0.5, 221 at SD 1.0, and
+  3,528 at the support-based SD bound. It selects no SESOI/count/split and
+  requires a consumed-development intervention variance pilot after the v2
+  baseline and canonical-lens decision.
 - Bank B v2: independent verification passes all 160 facts, but registered
   power makes the 0.25-nat joint SESOI unusable. Registered feasibility
   evidence `p4-bank-b-design-feasibility-dev-v1` shows that no allocation of
@@ -104,10 +130,10 @@ untouched until it exits.
   queued; both OLMo baselines and independent review remain pending. No Bank W
   intervention outcome was opened.
 - Main integration merge `11ae9db` verified 39 live evidence events and 176
-  outputs. The current isolated branch passes 139 tests. Preregistration
-  candidate 0.6 and report source are pushed at `1d849a2`; the rebuilt and
-  visually checked 18-page PDF is the isolated tree's sole intentional dirty
-  file pending A500 integration.
+  outputs. The current isolated branch passes 145 tests. Preregistration
+  candidate 0.7 and report/handout sources include the mode feasibility
+  envelope; the rebuilt PDF remains the isolated tree's sole intentional
+  dirty file until this documentation boundary is compiled and checked.
 
 ## Pre-frozen A250–A500 successor gate
 
@@ -116,7 +142,7 @@ generalizes the audited structural/functional producers and freezes the
 successor configs. Mode-v2 was prospectively frozen at `76c22fd` and appended
 to the queue at `19f5fc4`. Bank W capability protocol was registered at
 `38c761c` without model outcomes and the Qwen gate queued at `6f7cce3`; the
-combined branch passes all 139 Phase 4 tests.
+combined branch passes all 145 Phase 4 tests.
 
 ```text
 interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml
@@ -189,8 +215,9 @@ The Phase 4 preregistration is still a candidate. A truthful freeze requires:
 2. a reviewed substantive Bank B replacement design with passing power, or an
    explicit estimation-only reclassification outside the Phase 4 primary
    family;
-3. a passing fresh Qwen mode-v2 baseline gate, canonical-family split,
-   intervention SESOI/power ruler, and no use of the failed v1 baseline as
+3. a passing fresh Qwen mode-v2 baseline gate, consumed-development
+   intervention variance pilot, reviewed SESOI, exact power ruler,
+   canonical-family split, and no use of the failed v1 baseline as
    intervention evidence;
 4. fixed Bank W model-capability rules plus passing results from all three
    model-specific baseline gates and their joint support decision;
@@ -212,5 +239,6 @@ bash interpretability/jspace_phase4/repro.sh
 ```
 
 Commit and push every result-bearing registry boundary. Keep registered
-evidence immutable, keep long GPU work on Drive-backed three-prompt recovery,
-and refresh all three handoff mirrors after each material milestone.
+evidence immutable, preserve the documented temporary local three-prompt
+recovery until n=499, restore real Drive recovery for final registration, and
+refresh all three handoff mirrors after each material milestone.

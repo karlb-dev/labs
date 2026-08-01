@@ -2,11 +2,11 @@
 
 **CANDIDATE — NOT FROZEN — CONFIRMATORY AND REPLICATION OUTCOMES FORBIDDEN**
 
-Version: candidate 0.6, 2026-08-01.
+Version: candidate 0.7, 2026-08-01.
 Governing plan: `jspace_lab_nextsteps_4_2.md` plus its accepted addendum.
 Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
 
-Candidate 0.6 retains the addendum's R2/R3 amendments before any Phase 4
+Candidate 0.7 retains the addendum's R2/R3 amendments before any Phase 4
 confirmatory or replication intervention outcome: P4-P1 is an
 intersection-union semantic-plus-bridge-specific endpoint, and P4-P3 is a
 shared-family max-T endpoint. It also imports the registered outcome-blind
@@ -15,13 +15,18 @@ methods evidence `p4-bank-w-candidate-v2` and
 `p4-bank-w-capability-protocol-dev-v1`. It imports the official
 template/parser methods evidence `p4-qwen-mode-parser-gate-dev-v1` and its
 prospective length-budget successor `p4-qwen-mode-parser-gate-dev-v2`, and
-fixes P4-P2 to the two phases structurally shared by thinking on and off. This
-revision also supersedes Bank B v1 with the outcome-blind corrected v2,
+fixes P4-P2 to the two phases structurally shared by thinking on and off. It
+also imports the registered outcome-blind P4-P2 scenario envelope
+`p4-qwen-mode-design-feasibility-dev-v1`. That envelope selects no SESOI,
+family count, or split; it establishes that a consumed-development
+intervention variance pilot is required before those choices can be reviewed
+and powered. This revision also supersedes Bank B v1 with the outcome-blind
+corrected v2,
 records its complete independent reverification, and imports the negative
 Bank B power audit plus registered feasibility envelope
 `p4-bank-b-design-feasibility-dev-v1`. The existing 10-family confirmatory
 side is not powered at the candidate 0.25-nat joint SESOI, and no allocation
-of the existing 40 families repairs it. Candidate 0.6 does not select a
+of the existing 40 families repairs it. Candidate 0.7 does not select a
 replacement P4-P1 estimand, does not claim that the queued model-backed P4-P2
 v2 gate has passed, and contains no Bank W intervention outcome. This document
 remains a candidate; these methods events are not PI sign-off and do not
@@ -245,6 +250,21 @@ fresh v2 model-backed development parser/correctness pass, canonical-family
 split, SESOI/power ruler, and independent review remain required before
 freeze.
 
+Registered methods evidence `p4-qwen-mode-design-feasibility-dev-v1`
+expresses the primary as eight binary accuracy cells with coefficients
+`[+1,-1,-1,+1,-1,+1,+1,-1]`, support `[-4,+4]`, and distribution-free
+family-SD bound 4. Its known-SD Gaussian scenario envelope uses 80% power and
+the conservative Holm planning alpha `0.05/3`. It does not choose a SESOI or
+constitute exact sign-flip power. For illustration, a 0.20 accuracy-point
+interaction requires 56 families if the family SD is 0.5, 221 at SD 1.0,
+and 3,528 at the support bound. Consequently the pre-freeze order is fixed:
+the v2 baseline must pass; a development-only phase-intervention pilot on
+already consumed families must estimate the family-interaction variance after
+the canonical lens is fixed; independent review must select a substantive
+SESOI and bank size; and the exact frozen family test must then clear its
+power target on a hash-frozen untouched split. No pilot intervention outcome
+enters a Phase 4 primary.
+
 ## 6. P4-P3 controlled load and capability guard
 
 Registered candidate `p4-bank-w-candidate-v2` contains 72 canonical template
@@ -369,9 +389,10 @@ transport gate, and regenerates final figures.
       that is prospectively reviewed and, if confirmatory, clears 0.80 power.
 - [ ] P4-P1 geometry/dose tolerances and exact model/config revisions.
 - [x] P4-P2 official templates, parser tolerance, primary quality metric,
-      common-support interaction statistic, and prospective v2 token budget;
-      [ ] fresh v2 model-backed correctness gate, families, power, SESOI, and
-      split.
+      common-support interaction statistic, prospective v2 token budget, and
+      outcome-blind design-feasibility envelope; [ ] fresh v2 model-backed
+      correctness gate, development variance pilot, reviewed SESOI, families,
+      exact power, and split.
 - [x] Bank W task/load ladder, shortcut thresholds, exact capability protocol,
       power, SESOI, and split; [ ] three model-specific baseline capability
       gates and joint common-support decision.
