@@ -10,8 +10,9 @@ intervention outcomes, and do not self-sign independent-review or PI fields.
 - Main launch commit: `11ae9db626e9776091840bf5b29b3217b9fd99c0`;
   main is clean and synced while the fitter runs.
 - Isolated CPU/report worktree: `/content/labs_phase4_cpu`, branch
-  `codex/phase4-cpu-20260801`, head
-  `dc75ca2692e80183aa20142c428d0dd436a6c444`.
+  `codex/phase4-cpu-20260801`; the durable successor-queue code boundary is
+  `dc75ca2692e80183aa20142c428d0dd436a6c444` (inspect `git rev-parse HEAD`
+  for later handoff-only commits).
 - The isolated tree has only the intentionally regenerated handout PDF dirty.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.

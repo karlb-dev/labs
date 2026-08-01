@@ -24,8 +24,9 @@ interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 - Branch: `interp_jspace_part2`
 - Clean launch commit: `11ae9db626e9776091840bf5b29b3217b9fd99c0`
 - Isolated preparation worktree: `/content/labs_phase4_cpu`
-- Isolated branch/head: `codex/phase4-cpu-20260801` at
-  `dc75ca2692e80183aa20142c428d0dd436a6c444`
+- Isolated branch: `codex/phase4-cpu-20260801`; durable successor-queue code
+  boundary `dc75ca2692e80183aa20142c428d0dd436a6c444` (inspect
+  `git rev-parse HEAD` for later handoff-only commits)
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`
 - User-reported VM window: about 16 hours remaining near 06:50 UTC; treat
