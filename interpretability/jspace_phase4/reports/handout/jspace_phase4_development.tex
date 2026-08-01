@@ -19,9 +19,10 @@ Evidence: \nolinkurl{#1}}}
 \newcommand{\good}[1]{\textcolor{teal}{\textbf{#1}}}
 
 \title{\vspace{-1.25em}J-space Phase 4 --- development synthesis\\
-\large OLMo trajectory, coordinate validity, and Qwen fit-size gate\\[3pt]
+\large OLMo trajectory, common support, and Qwen fit-size gate\\[3pt]
 \normalsize\textcolor{muted}{State through the registered OLMo
-trajectory and Qwen draw-A $n=120$ structural comparison · 2026-07-31}}
+common-support closure and Qwen draw-A $n=120$ structural comparison ·
+2026-08-01}}
 \author{}\date{}
 
 \begin{document}
@@ -398,6 +399,47 @@ patterns collapse toward zero at sibling Instruct. Checkpoint-specific
 capability cohorts make this an unpaired development localization, not
 a causal training or mode contrast.
 
+\section{CPU-first common-support closure}
+
+Membership was frozen from fact ID, family, bank, and complete
+direct/composed presence before outcomes. The all-four intersection has
+79 facts / 25 families; adjacent-pair intersections have 92 / 29
+(Base--3.0), 119 / 34 (3.0--3.1), and 97 / 29 (3.1
+Think--Instruct). This removes changing fact composition as one
+explanation, but does not randomize training.
+\eid{p4-lineage-common-cohort-analysis-olmo-dev-v1}
+
+\begin{center}
+\includegraphics[width=0.96\textwidth]{../figures/p4f11_olmo_lineage_common_cohort.png}
+\end{center}
+
+\begin{center}\scriptsize
+\begin{tabular}{lrrrr}
+\toprule
+Bank-S pair & own direct & common direct & own composition & common composition\\
+\midrule
+Base $\rightarrow$ 3.0 & $-.1101\,[-.2306,-.0045]$ &
+$-.1048\,[-.2002,-.0186]$ & $+.0811\,[-.0249,+.1895]$ &
+$+.0867\,[+.0053,+.1748]$\\
+3.0 $\rightarrow$ 3.1 & $-.0058\,[-.0602,+.0539]$ &
+$-.0265\,[-.0812,+.0335]$ & $+.0028\,[-.0742,+.0694]$ &
+$+.0248\,[-.0439,+.0839]$\\
+3.1 Think $\rightarrow$ Instruct & $+.1349\,[+.0763,+.1992]$ &
+$+.1078\,[+.0387,+.1860]$ & $-.1129\,[-.1795,-.0478]$ &
+$-.1051\,[-.1921,-.0188]$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These 100{,}000-draw equal-family intervals preserve the paired
+base-to-Think direct decrease in both frames, resolve no further
+3.0-to-3.1 increment, and show a sibling Instruct reversal in both
+direct and composition quantities. Every one-family-out estimate keeps
+the signs of the first and last contrasts. Baseline-LP adjustment keeps
+the common-frame base-to-Think direct delta below zero; other adjusted
+base-to-Think intervals cross zero. Bank-F pairs are mostly imprecise.
+These are post-hoc development sensitivities, not causal effects.
+
 \section{Qwen fit-size gate: first nested lens}
 
 The leakage-safe draw-A corpus has exact nested prefixes at
@@ -425,7 +467,8 @@ permitted.
 
 The first diagnostic compares draw-A $n=120$ with the published
 $n=1000$ lens. It is a recipe/corpus-transfer comparison, not the
-pending same-corpus convergence test. It uses all 63 maps and all 5,120
+pending same-corpus convergence test; this is an external published
+reference, partially specified recipe. It uses all 63 maps and all 5,120
 Jacobian rows, 4,096 fixed token directions, centered linear CKA on a
 fixed 1,024-token subset, and 256 fixed transport probes.
 \eid{p4-qwen-lens-structural-stability-drawA-n120-vs-published-n1000-dev-v1}
@@ -455,8 +498,8 @@ the published lens late but is not uniformly stable in the
 lower/middle assay layers. The result triggers the same-corpus $n=250$
 fit. It does not yet satisfy selected-ID, span, occupancy, centered
 capacity, G4, or causal/bridge stability gates. Both envelopes
-reconstruct; all 63 table rows are finite; the live verifier passes 25
-events / 97 outputs / zero failures.
+reconstruct; all 63 table rows are finite; the live verifier passes 26
+events / 105 outputs / zero failures.
 
 \section{Interpretation and next boundary}
 
@@ -466,17 +509,18 @@ Bank-S direct and composed specificity is negative by 3.0 Think and is
 negative with intervals below zero in both seed-paired frames. The
 paired frame deltas include zero: development evidence of two-frame
 robustness, not a confirmatory invariance claim.
-\item Because capability cohorts are checkpoint-specific, this
-localizes a base-to-Think trajectory change but is not a paired causal
-estimate.
+\item The original capability cohorts are checkpoint-specific. Exact
+common-support pairing preserves the base-to-Think direct decrease in
+both frames, but neither design makes training assignment causal.
 \item At 3.1 Think, Bank-S direct remains negative in both frames.
 Bank-S composed is negative in the own frame but imprecise in the
 common frame. The positive composition contrast is precise in both
 frames and stable under the lens change.
 \item At sibling 3.1 Instruct, every Bank-S specificity and composition
 interval includes zero in both frames. The Think pattern does not
-transfer under these development cohorts; differing capability cohorts
-and post-training objectives preclude a paired causal mode claim.
+transfer under those checkpoint-specific cohorts. On common support,
+paired direct and composition changes reverse in both frames; differing
+post-training objectives still preclude a causal mode claim.
 \item Coordinate choice affects Bank-F localization: 3.1 Think has a
 negative composed frame delta; 3.1 Instruct has a negative direct
 delta and positive composition delta with intervals excluding zero.
@@ -487,8 +531,9 @@ axes remain necessary.
 or ``lineage absent.''
 \end{enumerate}
 
-A5 and Qwen draw-A $n=120$ are banked; depth-dependent drift triggers
-same-corpus $n=250$. Next: fit-size/model-backed stability, Bank-W
+A5, Qwen draw-A $n=120$, and the common-support closure are banked; the
+verified recovery state is resuming from $n=180$ to same-corpus $n=250$.
+Next: fit-size/model-backed stability, Bank-W
 load/redundancy, internal derivation, and an intermediate-checkpoint
 audit.
 

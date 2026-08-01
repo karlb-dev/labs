@@ -2,8 +2,8 @@
 
 Status: live development synthesis through the OLMo-3 32B base,
 seed-paired 3.0 Think, and seed-paired OLMo-3.1 32B Think and Instruct
-own/common-lens comparisons and registered four-checkpoint trajectory,
-2026-07-31.
+own/common-lens comparisons, registered four-checkpoint trajectory, and
+post-hoc common-support closure, 2026-08-01.
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -427,6 +427,58 @@ The table is descriptive development evidence. Capability cohorts were
 fixed separately at each checkpoint, so the synthesis does not compute
 cross-checkpoint paired deltas or causal p-values.
 
+## CPU-first common-support closure
+
+Live evidence:
+`p4-lineage-common-cohort-analysis-olmo-dev-v1`.
+
+The Phase 4.2 sensitivity freezes common-support membership from fact ID,
+family, bank, and the presence of exactly one direct and one composed row
+before reading any intervention or capability outcome. The all-four
+intersection contains 79 facts / 25 families (Bank F 14 / 8; Bank S 65 /
+17). The larger adjacent-pair intersections contain 92 / 29 families for
+Base--3.0 Think, 119 / 34 for 3.0--3.1 Think, and 97 / 29 for 3.1
+Think--Instruct. This removes changing fact composition as one explanation
+for the paired checkpoint differences; it does not randomize training or
+identify a causal mode effect.
+
+![OLMo common-support development trajectory](figures/p4f11_olmo_lineage_common_cohort.png)
+
+The primary Bank-S adjacent-pair estimates are equal-family means with
+100,000 family bootstraps. Each row is right checkpoint minus left
+checkpoint on the same facts:
+
+| Contrast | Own direct | Common direct | Own composition | Common composition |
+|---|---:|---:|---:|---:|
+| Base → 3.0 Think | −0.1101 [−0.2306, −0.0045] | −0.1048 [−0.2002, −0.0186] | +0.0811 [−0.0249, +0.1895] | +0.0867 [+0.0053, +0.1748] |
+| 3.0 → 3.1 Think | −0.0058 [−0.0602, +0.0539] | −0.0265 [−0.0812, +0.0335] | +0.0028 [−0.0742, +0.0694] | +0.0248 [−0.0439, +0.0839] |
+| 3.1 Think → Instruct | +0.1349 [+0.0763, +0.1992] | +0.1078 [+0.0387, +0.1860] | −0.1129 [−0.1795, −0.0478] | −0.1051 [−0.1921, −0.0188] |
+
+Thus the common-support closure preserves the Bank-S base-to-Think direct
+decrease in both coordinate frames. The composition increase has the same
+sign in both frames and excludes zero in the common frame, but remains
+imprecise in the own frame. There is no resolved further increment from
+3.0 to 3.1 Think. The sibling Instruct comparison reverses both quantities
+in both frames, with all four intervals excluding zero. Every one-family-out
+estimate preserves the signs of the base-to-Think and Think-to-Instruct
+direct/composition deltas.
+
+Baseline-answer-LP adjustment leaves the common-frame base-to-Think direct
+delta below zero (`−0.1022 [−0.1972, −0.0111]`) but widens the other
+base-to-Think adjusted intervals across zero. At the sibling endpoint, the
+adjusted direct reversal remains positive in both frames, while the adjusted
+composition reversal remains below zero only in the common frame. G5 direct
+capability margin rises from Base to 3.0 Think (`+1.9524 [+1.1896,
++2.7114]`) and again from 3.0 to 3.1 (`+0.5450 [+0.3695,+0.7387]`), even
+though the latter specificity increment is unresolved. Capability change is
+therefore tracked explicitly rather than treated as an interchangeable
+explanation for the J-specific contrast.
+
+Bank-F pair estimates are mostly imprecise. The common-frame 3.1
+Think-to-Instruct composed delta is positive (`+0.1401 [+0.0439,+0.2436]`),
+but it is based on 11 families and does not repeat in the own frame. It is a
+coordinate-sensitive development diagnostic, not a promoted finding.
+
 ## Qwen nested lens fit and first structural convergence gate
 
 Nested-corpus evidence: `p4-qwen-lens-corpora-dev-v1`.
@@ -463,7 +515,8 @@ estimator and is not trimmed post hoc.
 The first comparison is deliberately narrower than the final fit-size
 study. It compares new draw-A n=120 against the published n=1000 lens,
 so it measures recipe/corpus transfer, not same-corpus nested
-convergence. It uses all 63 Jacobian maps and all 5,120 map rows, plus
+convergence. The latter is an external published reference, partially
+specified recipe. The comparison uses all 63 Jacobian maps and all 5,120 map rows, plus
 4,096 fixed sampled token directions, exact centered linear CKA on a
 fixed 1,024-token subset, and 256 fixed transport probes.
 
@@ -488,7 +541,7 @@ campaign. Excellent L62 agreement cannot validate the whole lens.
 
 Both payload envelopes independently reconstruct, the 63-row /
 29-column table is entirely finite, the registered figure was visually
-inspected, and the live-evidence verifier passed 25 events / 97
+inspected, and the live-evidence verifier passed 26 events / 105
 outputs / zero failures. This result triggers the planned same-corpus
 n=250 fit. Selected-ID Jaccard, span angles, protected overlap,
 occupancy, centered excess capacity, G4, and causal/bridge stability
@@ -508,19 +561,20 @@ estimation-first account:
   confirmatory invariance claim.
 - Thus the known-bank development data localize the emergence of the
   Bank-S negative effect to the base-to-Think training interval. The
-  cohorts differ because capability was fixed separately at each
-  checkpoint, so this is a trajectory localization, not a paired causal
-  estimate.
+  original trajectory used separately fixed capability cohorts; the new
+  common-support sensitivity preserves the direct decrease under exact
+  fact pairing in both frames. Neither design makes training assignment
+  causal.
 - At 3.1 Think, Bank-S direct remains negative in both frames.
   Bank-S composed is negative in the own frame but imprecise in the
   common frame. The positive composed-minus-direct contrast is now
   precise in both frames and stable under the paired lens change.
 - At the sibling 3.1 Instruct checkpoint, all Bank-S specificity and
   composition intervals include zero in both frames. The 3.1 Think
-  Bank-S pattern therefore does not transfer to Instruct under these
-  development cohorts. Because capability cohorts and post-training
-  objectives differ, this is trajectory localization rather than a
-  paired causal mode effect.
+  Bank-S pattern therefore does not transfer to Instruct under the
+  checkpoint-specific cohorts. On the exact common-support subset, paired
+  direct and composition deltas reverse in both frames. Different
+  post-training objectives still preclude a causal mode claim.
 - Bank-F cell effects remain individually imprecise, but coordinate
   choice matters: the 3.1 Think composed frame delta is below zero,
   while 3.1 Instruct has a negative direct frame delta and a positive
@@ -530,21 +584,20 @@ estimation-first account:
   not an explanation. The controlled Bank-W load/redundancy and
   internal-derivation axes still need to adjudicate its mechanism.
 
-The registered two-frame synthesis makes the Bank-S Think-path result
-harder to explain as lens drift alone: the direct effect becomes
-negative by 3.0 and more negative by 3.1 in both frames, while the
-composition contrast rises from near zero at base to about `+0.117` at
-3.1 Think in both frames. Its collapse toward zero at the sibling
-Instruct endpoint argues against treating the effect as a generic 3.1
-property. These are development localizations, not lineage or causal
-mode claims.
+The registered two-frame synthesis and common-support closure make the
+Bank-S Think-path result harder to explain as lens drift or changing fact
+composition alone: the direct effect becomes negative by 3.0 in both frames,
+with no resolved additional 3.0-to-3.1 change on paired facts. The paired
+sibling Instruct comparison reverses both the direct and composition
+quantities. These are development localizations, not lineage or causal mode
+claims.
 
 ## Next boundary
 
 Workstream A5 is complete and banked. Qwen draw-A n=120 is also banked,
-and its depth-dependent disagreement with the published lens has
-triggered the same-corpus n=250 continuation. Before stronger causal
-interpretation, complete the nested convergence and model-backed
+the common-support closure is registered, and the exact recovery state is
+resuming from n=180 toward the same-corpus n=250 milestone. Before
+stronger causal interpretation, complete the nested convergence and model-backed
 selection/capacity/causal gates, add controlled Bank-W
 load/redundancy and internal-derivation axes, and resolve whether an
 intermediate post-training checkpoint is available to localize the
