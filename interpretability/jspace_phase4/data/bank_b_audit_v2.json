@@ -1,0 +1,113 @@
+{
+ "all_alias_sets_prefix_disjoint": true,
+ "bank_rows_sha256": "af80239d9c0bb8af1ce40ff84af27728244968d18b55a4139e4c2eb69e4d6c91",
+ "config_sha256": "ed4f5c6232113cb2ead88cdb993645ae20ba22cc4dec8715ac9fe582f1a3bfb8",
+ "corrected_country_count": 16,
+ "correction_countries": [
+  "Burundi",
+  "Cape Verde",
+  "Democratic Republic of the Congo",
+  "Falkland Islands",
+  "Hong Kong",
+  "Iran",
+  "Ireland",
+  "Kazakhstan",
+  "Madagascar",
+  "Morocco",
+  "Norfolk Island",
+  "Republic of Macedonia",
+  "Republic of the Congo",
+  "Saint Helena",
+  "Saint Lucia",
+  "Sri Lanka"
+ ],
+ "cross_partition_entity_overlap": {
+  "confirmatory_vs_development": [],
+  "confirmatory_vs_replication": [],
+  "development_vs_replication": []
+ },
+ "evidence_id": "p4-bank-b-candidate-v2",
+ "facts_per_family": {
+  "alpha2__to__alpha3": 4,
+  "alpha2__to__capital": 4,
+  "alpha2__to__demonym": 4,
+  "alpha2__to__french_name": 4,
+  "alpha2__to__nativeName": 4,
+  "alpha3__to__alpha2": 4,
+  "alpha3__to__capital": 4,
+  "alpha3__to__demonym": 4,
+  "alpha3__to__french_name": 4,
+  "alpha3__to__nativeName": 4,
+  "capital__to__alpha2": 4,
+  "capital__to__alpha3": 4,
+  "capital__to__demonym": 4,
+  "capital__to__french_name": 4,
+  "capital__to__nativeName": 4,
+  "demonym__to__alpha2": 4,
+  "demonym__to__alpha3": 4,
+  "demonym__to__capital": 4,
+  "demonym__to__french_name": 4,
+  "demonym__to__nativeName": 4,
+  "french_name__to__alpha3": 4,
+  "french_name__to__capital": 4,
+  "french_name__to__demonym": 4,
+  "french_name__to__nativeName": 4,
+  "nativeName__to__alpha2": 4,
+  "nativeName__to__alpha3": 4,
+  "nativeName__to__capital": 4,
+  "nativeName__to__demonym": 4,
+  "nativeName__to__french_name": 4,
+  "spanish_name__to__alpha2": 4,
+  "spanish_name__to__alpha3": 4,
+  "spanish_name__to__capital": 4,
+  "spanish_name__to__demonym": 4,
+  "spanish_name__to__french_name": 4,
+  "spanish_name__to__nativeName": 4,
+  "tld__to__alpha3": 4,
+  "tld__to__capital": 4,
+  "tld__to__demonym": 4,
+  "tld__to__french_name": 4,
+  "tld__to__nativeName": 4
+ },
+ "freeze_blocker": "All v2 rows require full independent reverification, a P4-P1 power/SESOI ruler, and independent protocol review.",
+ "freeze_ready": false,
+ "generation_code_commit": "173de7e9d0a054b05b905de5f8f7c4333deba99c",
+ "independently_reverified_facts": 0,
+ "n_facts": 160,
+ "n_families": 40,
+ "outcome_blinding": "Country metadata and registered methods audit only; no model or intervention outcome was loaded.",
+ "partition_counts": {
+  "confirmatory": 10,
+  "development": 20,
+  "replication": 10
+ },
+ "partition_sha256": "b88f3ae881c359ed949dd5871d2b98dc27c17aa368b1a4b52fa791b26e410114",
+ "prior_contract": {
+  "/tmp/jacobian-lens/data/experiments/probe-swap.json": {
+   "kind": "released-probe-swap",
+   "n_rows": 90,
+   "sha256": "a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796"
+  },
+  "interpretability/jspace_phase3/data/bank_f_v7.jsonl": {
+   "kind": "phase3-bank",
+   "n_rows": 204,
+   "sha256": "a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544"
+  },
+  "interpretability/jspace_phase3/data/bank_s_v3.jsonl": {
+   "kind": "phase3-bank",
+   "n_rows": 120,
+   "sha256": "e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f"
+  }
+ },
+ "prior_exact_entity_overlap": [],
+ "schema_version": 2,
+ "source_rows_sha256": "ef68258709495c2f1e86a86c42de1e40541824e254918d5cebf893d99c268244",
+ "source_status_counts": {
+  "candidate-corrected-pending-independent-reverification": 160
+ },
+ "supersedes_evidence_id": "p4-bank-b-candidate-v1",
+ "tokenizer_name_or_path": "/content/hf_local/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+ "two_counterfactual_bridges_per_fact": true,
+ "two_second_hop_relations_per_fact": true,
+ "unique_true_bridges": 160
+}

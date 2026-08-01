@@ -1,0 +1,53 @@
+{
+ "payload": {
+  "confirmatory": [
+   "alpha2__to__nativeName",
+   "alpha2__to__alpha3",
+   "alpha3__to__french_name",
+   "alpha3__to__demonym",
+   "spanish_name__to__alpha3",
+   "alpha3__to__capital",
+   "french_name__to__capital",
+   "demonym__to__alpha3",
+   "alpha3__to__alpha2",
+   "spanish_name__to__alpha2"
+  ],
+  "development": [
+   "demonym__to__french_name",
+   "alpha2__to__capital",
+   "tld__to__capital",
+   "nativeName__to__alpha2",
+   "capital__to__alpha2",
+   "nativeName__to__capital",
+   "nativeName__to__french_name",
+   "demonym__to__alpha2",
+   "french_name__to__nativeName",
+   "alpha2__to__french_name",
+   "spanish_name__to__capital",
+   "spanish_name__to__nativeName",
+   "capital__to__french_name",
+   "capital__to__demonym",
+   "nativeName__to__demonym",
+   "spanish_name__to__french_name",
+   "capital__to__nativeName",
+   "nativeName__to__alpha3",
+   "tld__to__nativeName",
+   "tld__to__alpha3"
+  ],
+  "replication": [
+   "french_name__to__demonym",
+   "capital__to__alpha3",
+   "demonym__to__capital",
+   "french_name__to__alpha3",
+   "alpha3__to__nativeName",
+   "alpha2__to__demonym",
+   "demonym__to__nativeName",
+   "spanish_name__to__demonym",
+   "tld__to__french_name",
+   "tld__to__demonym"
+  ]
+ },
+ "payload_sha256": "b88f3ae881c359ed949dd5871d2b98dc27c17aa368b1a4b52fa791b26e410114",
+ "schema_version": 2,
+ "supersedes": "05baa850820397bd3cea88866ba5f07da44c974c6972d501eddbdb08f20c851a"
+}

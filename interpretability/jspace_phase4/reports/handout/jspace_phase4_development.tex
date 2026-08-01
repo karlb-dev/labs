@@ -440,7 +440,7 @@ the common-frame base-to-Think direct delta below zero; other adjusted
 base-to-Think intervals cross zero. Bank-F pairs are mostly imprecise.
 These are post-hoc development sensitivities, not causal effects.
 
-\section{Qwen fit-size gate: first nested lens}
+\section{Qwen fit-size gate: nested $n=120$ and $n=250$ lenses}
 
 The leakage-safe draw-A corpus has exact nested prefixes at
 $n=120/250/500/1000$. Its first 120 records reproduce the historical
@@ -462,6 +462,13 @@ was 21,622.7 seconds with 62.83\,GB peak allocated VRAM.
 Prompt 112 was a pronounced but finite Jacobian-norm outlier
 (159.952). It remains in the frozen estimator; no post-hoc trimming is
 permitted.
+
+Under the same frozen contract, draw A reached $n=250$. The final
+6.606\,GB fp32 checkpoint is \texttt{72384411\ldots 166d6}; the
+registered 3.303\,GB fp16 lens is \texttt{b78427c8\ldots f79006}.
+The final invocation added 70 prompts in 12,660.4 seconds
+(180.86 seconds/prompt) at the same 62.83\,GB peak VRAM.
+\eid{p4-qwen-lens-fit-drawA-n250-dev-v1}
 
 \section{Qwen structural stability is depth-dependent}
 
@@ -495,11 +502,90 @@ layer median & .8969 & .9138 & .8187 & .8652 & .4422\\
 Token median first remains at least .90 from L26, matrix cosine from
 L32, CKA from L33, and token q05 from L35. Thus $n=120$ nearly matches
 the published lens late but is not uniformly stable in the
-lower/middle assay layers. The result triggers the same-corpus $n=250$
-fit. It does not yet satisfy selected-ID, span, occupancy, centered
-capacity, G4, or causal/bridge stability gates. Both envelopes
-reconstruct; all 63 table rows are finite; the live verifier passes 26
-events / 105 outputs / zero failures.
+lower/middle assay layers. That result motivated, but does not substitute
+for, the completed same-corpus comparison.
+
+\section{Same-corpus structural convergence is strong in the assay band}
+
+\begin{center}
+\includegraphics[width=0.96\textwidth]{../figures/p4f10_qwen_lens_convergence.png}
+\end{center}
+
+Across L20--L44, the median A120--A250 raw matrix cosine is .99585;
+minus-identity and minus-scaled-identity medians are .99872 and .99551.
+Median task-row cosines are .99535 (answer), .99522 (bridge), and .99631
+(shared); their token-q05 medians are .99326/.99308/.99407. The raw
+symmetric Frobenius delta has median .09114, falling to .05069 after
+identity subtraction.
+\eid{p4-qwen-lens-convergence-drawA-n120-n250-dev-v1}
+
+Sensitivity remains concentrated early. Raw and residual cosines are,
+respectively, .85042 and .85011 at L0; .98989 and .98952 at L24;
+.99585 and .99551 at L32; .99819 and .99777 at L40; and above .99986
+at L62. The prompts 121--250
+block mean is appropriately less similar to A120 (assay raw median
+.98470; task-row medians .98240--.98654) than the combined A250
+estimator. Selected-ID, span, occupancy, capacity, G4, and causal/bridge
+equivalence remain reserved for the functional gate.
+
+\section{Prompt 112 is retained but not assay-band load-bearing}
+
+The clean-runtime prompt-112 norm sentinel is 160.071, 0.119 above the
+historical three-decimal fit log and inside the frozen 0.5 absolute
+tolerance. Prompt 112 remains in A120; the leave-one-out lens is a
+sensitivity and never a trimming rule.
+
+The fused-runtime replay diagnostic is disclosed rather than hidden.
+Only 1/63 layers is elementwise-allclose for recomputed prompts 196--198;
+their block-relative Frobenius error has median .00705 and maximum .01881.
+Relative to the full $n=198$ running estimator the same discrepancy has
+median .000139 and maximum .001601, so all layers pass the unchanged .005
+ceiling. Tiny-model tests exactly reconstruct the equal-prompt mean and a
+direct leave-one-out refit.
+
+\begin{center}
+\includegraphics[width=0.96\textwidth]{../figures/p4f12_qwen_prompt112_influence.png}
+\end{center}
+
+Across L20--L44, raw/residual matrix-cosine medians are .99938/.99932,
+task-row medians are .99969--.99976, and token-q05 medians are
+.99795--.99838. Frozen disagreement summaries are .000675 versus .03
+(residual matrix), .000311 versus .02 (task median), and .002047 versus
+.05 (task q05). Structural materiality is false; selected-ID and
+capacity consequences remain in the functional gate.
+\eid{p4-qwen-lens-influence-prompt112-dev-v1}
+
+\section{Functional selection instability forces Branch B}
+
+The frozen runner evaluated published $n=1000$, draw-A $n=120$, and
+draw-A $n=250$ in fixed order on identical caches, items, aliases, and
+matched seeds. It used 60 primary items, 40 prose items, 20 bridge facts,
+50 measured G4 controls, and a fixed 16-prompt capacity set. The published
+lens remains an external reference with a partially specified recipe.
+
+\begin{center}
+\includegraphics[width=0.96\textwidth]{../figures/p4f13_qwen_multilens_functional_gate.png}
+\end{center}
+
+Structural gates pass: conservative assay task-row median cosine is
+.99522 (floor .95) and token-q05 is .99308 (floor .90). Selection gates
+fail. A120--A250 median normalized projector overlap is .67479 (floor
+.85) and selected-ID Jaccard is .53846 (floor .75) over 17,381 positions;
+median principal angle is 7.87 degrees and the maximum reaches 90 degrees.
+
+The other frozen point-estimate gates pass. Occupancy differences are zero;
+centered-excess differences are $-.000711/-.000239/-.000173$ at
+L24/L32/L40. The span-safe-specific difference is .09596 nat against .15,
+although its 95\% interval $[-.0734,.2993]$ does not establish TOST
+equivalence. Tail difference is $-.0333$; A120/A250 G4 rates are both
+.78 J versus .12 random; bridge-rescue/preference differences are
+$-.2147/-.0553$ nat with matched signs.
+
+The precommitted rule emits \textbf{Branch B: continue draw A to $n=500$}.
+The two selection failures are load-bearing despite seven other functional
+and both structural gates passing. Draw B waits, and $n=250$ cannot yet be
+nominated canonical.
+\eid{p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1}
 
 \section{Outcome-blind primary protocols}
 
@@ -513,16 +599,32 @@ per family. Each fact has one unique true bridge, two counterfactual
 bridges, and two second-hop relations. Exact Qwen token IDs are stored;
 the 20/10/10 family split has zero prior-contract or cross-partition
 entity overlap.
-\eid{p4-bank-b-candidate-v1}
+\eid{p4-bank-b-candidate-v2}
 
-The candidate remains blocked: all 160 records have a pinned
-\texttt{countryinfo==0.1.2} source, but none has completed independent
-verification. The amended primary is an intersection-union test:
+Candidate v2 prospectively corrects the nine root metadata discrepancies
+from the immutable v1 audit and explicitly covers co-valid native-name
+aliases. Full independent reverification passes all 160 facts: 140 exact
+and unambiguous, 20 explicitly reviewed, zero mismatches, and zero unresolved
+manual flags.
+\eid{p4-bank-b-restcountries-verification-dev-v2}
+
+The amended primary is an intersection-union test:
 \[
 p_{P4P1}=\max\{p_{\rm semantic},p_{\rm bridge\ specific}\},
 \]
 where counterfactual-bridge movement must beat both a geometry-matched
 unrelated injection and a counterfactual-answer-direction injection.
+
+\begin{center}
+\includegraphics[width=0.94\textwidth]{../figures/p4f18_bank_b_power.png}
+\end{center}
+
+The outcome-blind power audit uses a conservative 6.0-nat family SD and
+controls the composite-null type-I rate. At the candidate 0.25-nat joint
+SESOI, power is only 0.038 for the frozen 10-family confirmatory side and
+0.061 even at 60 families. Bank B therefore remains blocked on a prospective
+design/estimand revision, not on source verification.
+\eid{p4-bank-b-power-dev-v1}
 
 \subsection{Bank W: factorial and max-T calibration}
 
