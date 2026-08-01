@@ -1,0 +1,1028 @@
+{
+ "calibration": {
+  "conservative_common_sd_nats": 6.0,
+  "conservative_rule": "larger endpoint family SD rounded upward to 0.25 nat",
+  "endpoint_columns": [
+   "primary_cf_vs_unrelated",
+   "cf_vs_cf_answer"
+  ],
+  "evidence_id": "p3-bridge-swap-endpoint-qwen36-27b-v1",
+  "family_correlation": 0.8739195374139147,
+  "family_mean_nats": {
+   "cf_vs_cf_answer": 1.3422544704415857,
+   "primary_cf_vs_unrelated": 4.765141731347793
+  },
+  "family_sd_nats": {
+   "cf_vs_cf_answer": 5.844408755210359,
+   "primary_cf_vs_unrelated": 4.046603952219403
+  },
+  "n_families": 13,
+  "n_items": 40,
+  "paired_rows": "/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729/metrics/qwen36-27b/release_audit/bridge_swap_endpoint/p3_bridge_swap_endpoint_paired_qwen36-27b.parquet",
+  "paired_rows_sha256": "3832243c56f172ad5352e65d72d122ede6e1c0d31410852df4c5188602e44a37",
+  "source_role": "registered consumed Phase 3 development variability proxy; no Bank B outcome is read"
+ },
+ "candidate_joint_sesoi_nats": 0.25,
+ "candidate_power_ready": false,
+ "current_confirmatory_families": 10,
+ "current_power_at_candidate_sesoi": 0.038,
+ "evidence_id": "p4-bank-b-power-dev-v1",
+ "freeze_boundary": "Power is a candidate design ruler only. Bank B cannot freeze until the candidate clears the target and PI/independent protocol review approve the SESOI and design.",
+ "mde_at_power_target_by_n": {
+  "10": null,
+  "20": 4.0,
+  "40": 3.0,
+  "60": 3.0
+ },
+ "outcome_blinding": "No Bank B intervention, confirmatory, or replication outcome was read.",
+ "power_at_sesoi": [
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.25,
+    0.25
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.006046155803483731,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.038,
+   "rejections": 38,
+   "scenario": "joint-sesoi-n10",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "wilson_ci95": [
+    0.027808845539615407,
+    0.05172720875420944
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.25,
+    0.25
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.006414904519944158,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "rejection_rate": 0.043,
+   "rejections": 43,
+   "scenario": "joint-sesoi-n20",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1048576,
+   "wilson_ci95": [
+    0.03207848108830104,
+    0.057419304219659906
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.25,
+    0.25
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.006692607862410586,
+   "n_families": 40,
+   "n_simulations": 1000,
+   "rejection_rate": 0.047,
+   "rejections": 47,
+   "scenario": "joint-sesoi-n40",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.03552692265984565,
+    0.06194024745942417
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.25,
+    0.25
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.0075682891065286355,
+   "n_families": 60,
+   "n_simulations": 1000,
+   "rejection_rate": 0.061,
+   "rejections": 61,
+   "scenario": "joint-sesoi-n60",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.04777956041163888,
+    0.07758045654721199
+   ]
+  }
+ ],
+ "power_curve": [
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.25,
+    0.25
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.006624499981130651,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.046,
+   "rejections": 46,
+   "scenario": "joint-grid-0.25-n10",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "wilson_ci95": [
+    0.03466231280457309,
+    0.06081251111186951
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.5,
+    0.5
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.006892024376045111,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.05,
+   "rejections": 50,
+   "scenario": "joint-grid-0.5-n10",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "wilson_ci95": [
+    0.03813007264328189,
+    0.0653141360844696
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    1.0,
+    1.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.009184280047995052,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.093,
+   "rejections": 93,
+   "scenario": "joint-grid-1-n10",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "wilson_ci95": [
+    0.07652345008781691,
+    0.11259164536150498
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    1.5,
+    1.5
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.01113440613593738,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.145,
+   "rejections": 145,
+   "scenario": "joint-grid-1.5-n10",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "wilson_ci95": [
+    0.12453458493047026,
+    0.168182513065867
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    2.0,
+    2.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.01274299807737567,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.204,
+   "rejections": 204,
+   "scenario": "joint-grid-2-n10",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "wilson_ci95": [
+    0.18017859900704303,
+    0.23008692495610017
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    3.0,
+    3.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.015409607392792329,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.388,
+   "rejections": 388,
+   "scenario": "joint-grid-3-n10",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "wilson_ci95": [
+    0.3582805821997621,
+    0.41857664308358944
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    4.0,
+    4.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.015700923539715746,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.559,
+   "rejections": 559,
+   "scenario": "joint-grid-4-n10",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "wilson_ci95": [
+    0.5280585135384079,
+    0.5894899124283981
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    5.0,
+    5.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.013922320208930694,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.737,
+   "rejections": 737,
+   "scenario": "joint-grid-5-n10",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "wilson_ci95": [
+    0.7088424436928642,
+    0.7633436063771868
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.25,
+    0.25
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.006122009474020765,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "rejection_rate": 0.039,
+   "rejections": 39,
+   "scenario": "joint-grid-0.25-n20",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1048576,
+   "wilson_ci95": [
+    0.028658799196088068,
+    0.052869601300564
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.5,
+    0.5
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.007451107300260815,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "rejection_rate": 0.059,
+   "rejections": 59,
+   "scenario": "joint-grid-0.5-n20",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1048576,
+   "wilson_ci95": [
+    0.04601408784574914,
+    0.07536123670744732
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    1.0,
+    1.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.010839926199010766,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "rejection_rate": 0.136,
+   "rejections": 136,
+   "scenario": "joint-grid-1-n20",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1048576,
+   "wilson_ci95": [
+    0.1161417248723622,
+    0.15864425729853016
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    1.5,
+    1.5
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.0130566458173606,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "rejection_rate": 0.218,
+   "rejections": 218,
+   "scenario": "joint-grid-1.5-n20",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1048576,
+   "wilson_ci95": [
+    0.19351438529371368,
+    0.24464398550901062
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    2.0,
+    2.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.015215255502291114,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "rejection_rate": 0.364,
+   "rejections": 364,
+   "scenario": "joint-grid-2-n20",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1048576,
+   "wilson_ci95": [
+    0.3347511248747743,
+    0.39428979154072397
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    3.0,
+    3.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.015083103128998356,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "rejection_rate": 0.65,
+   "rejections": 650,
+   "scenario": "joint-grid-3-n20",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1048576,
+   "wilson_ci95": [
+    0.6199141210754642,
+    0.6789378093486187
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    4.0,
+    4.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.011622349160131098,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "rejection_rate": 0.839,
+   "rejections": 839,
+   "scenario": "joint-grid-4-n20",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1048576,
+   "wilson_ci95": [
+    0.8149295245985896,
+    0.8604758381598377
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    5.0,
+    5.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.006343185319695463,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "rejection_rate": 0.958,
+   "rejections": 958,
+   "scenario": "joint-grid-5-n20",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1048576,
+   "wilson_ci95": [
+    0.9437152767228901,
+    0.9687792841719761
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.25,
+    0.25
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.00720936890441875,
+   "n_families": 40,
+   "n_simulations": 1000,
+   "rejection_rate": 0.055,
+   "rejections": 55,
+   "scenario": "joint-grid-0.25-n40",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.04249722594783333,
+    0.07090871379405425
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.5,
+    0.5
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.009653186002558949,
+   "n_families": 40,
+   "n_simulations": 1000,
+   "rejection_rate": 0.104,
+   "rejections": 104,
+   "scenario": "joint-grid-0.5-n40",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.08657073457775956,
+    0.12446016910266174
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    1.0,
+    1.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.01348625225924534,
+   "n_families": 40,
+   "n_simulations": 1000,
+   "rejection_rate": 0.239,
+   "rejections": 239,
+   "scenario": "joint-grid-1-n40",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.21359749233628916,
+    0.2664001487258067
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    1.5,
+    1.5
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.015438134602341048,
+   "n_families": 40,
+   "n_simulations": 1000,
+   "rejection_rate": 0.392,
+   "rejections": 392,
+   "scenario": "joint-grid-1.5-n40",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.36220968734103354,
+    0.42261692275362694
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    2.0,
+    2.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.015394934231752989,
+   "n_families": 40,
+   "n_simulations": 1000,
+   "rejection_rate": 0.614,
+   "rejections": 614,
+   "scenario": "joint-grid-2-n40",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.5834442946391768,
+    0.6436831724831261
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    3.0,
+    3.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.00997276290703835,
+   "n_families": 40,
+   "n_simulations": 1000,
+   "rejection_rate": 0.888,
+   "rejections": 888,
+   "scenario": "joint-grid-3-n40",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.8669495617556403,
+    0.9060807649413208
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    4.0,
+    4.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.0044271887242357325,
+   "n_families": 40,
+   "n_simulations": 1000,
+   "rejection_rate": 0.98,
+   "rejections": 980,
+   "scenario": "joint-grid-4-n40",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.9693097584861028,
+    0.9870164188709625
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    5.0,
+    5.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.0009994998749374613,
+   "n_families": 40,
+   "n_simulations": 1000,
+   "rejection_rate": 0.999,
+   "rejections": 999,
+   "scenario": "joint-grid-5-n40",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.9943572970398398,
+    0.9998234581709429
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.25,
+    0.25
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.00708456067798138,
+   "n_families": 60,
+   "n_simulations": 1000,
+   "rejection_rate": 0.053,
+   "rejections": 53,
+   "scenario": "joint-grid-0.25-n60",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.040746308422339304,
+    0.06867493891389383
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.5,
+    0.5
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.010050074626588601,
+   "n_families": 60,
+   "n_simulations": 1000,
+   "rejection_rate": 0.114,
+   "rejections": 114,
+   "scenario": "joint-grid-0.5-n60",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.09576134825357561,
+    0.1351930174551179
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    1.0,
+    1.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.0143345387090063,
+   "n_families": 60,
+   "n_simulations": 1000,
+   "rejection_rate": 0.289,
+   "rejections": 289,
+   "scenario": "joint-grid-1-n60",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.2617539675950579,
+    0.31786098360839893
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    1.5,
+    1.5
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.01571543826942157,
+   "n_families": 60,
+   "n_simulations": 1000,
+   "rejection_rate": 0.555,
+   "rejections": 555,
+   "scenario": "joint-grid-1.5-n60",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.524045536126136,
+    0.5855335050293611
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    2.0,
+    2.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.013142145943490354,
+   "n_families": 60,
+   "n_simulations": 1000,
+   "rejection_rate": 0.778,
+   "rejections": 778,
+   "scenario": "joint-grid-2-n60",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.7512048483761805,
+    0.8026673960097864
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    3.0,
+    3.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.005125524363418832,
+   "n_families": 60,
+   "n_simulations": 1000,
+   "rejection_rate": 0.973,
+   "rejections": 973,
+   "scenario": "joint-grid-3-n60",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.9610010105865644,
+    0.9813787433507103
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    4.0,
+    4.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.0017294507798720387,
+   "n_families": 60,
+   "n_simulations": 1000,
+   "rejection_rate": 0.997,
+   "rejections": 997,
+   "scenario": "joint-grid-4-n60",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.9912168282105721,
+    0.9989792345945557
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    5.0,
+    5.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.0,
+   "n_families": 60,
+   "n_simulations": 1000,
+   "rejection_rate": 1.0,
+   "rejections": 1000,
+   "scenario": "joint-grid-5-n60",
+   "sign_method": "monte-carlo-plus-one",
+   "sign_patterns_or_draws": 4096,
+   "wilson_ci95": [
+    0.9961731014136095,
+    1.0
+   ]
+  }
+ ],
+ "power_target": 0.8,
+ "primary": {
+  "alpha": 0.05,
+  "components": [
+   "semantic",
+   "bridge_specific"
+  ],
+  "intersection_union": true,
+  "p_value": "max(one-sided component sign-flip p-values)",
+  "unit": "canonical_family"
+ },
+ "schema_version": 1,
+ "type_i": [
+  {
+   "alpha": 0.05,
+   "distribution": "normal",
+   "effects_nats": [
+    0.0,
+    0.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": null,
+   "monte_carlo_se": 0.005811626278418116,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.035,
+   "rejections": 35,
+   "scenario": "null-both-boundary-normal",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "type_i_pass": true,
+   "wilson_ci95": [
+    0.025272112485012703,
+    0.0482869032003305
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "normal",
+   "effects_nats": [
+    0.0,
+    24.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": null,
+   "monte_carlo_se": 0.006122009474020765,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.039,
+   "rejections": 39,
+   "scenario": "null-semantic-boundary-normal",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "type_i_pass": true,
+   "wilson_ci95": [
+    0.028658799196088068,
+    0.052869601300564
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "normal",
+   "effects_nats": [
+    24.0,
+    0.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": null,
+   "monte_carlo_se": 0.007021111023192838,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.052,
+   "rejections": 52,
+   "scenario": "null-bridge-boundary-normal",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "type_i_pass": true,
+   "wilson_ci95": [
+    0.039872841792417534,
+    0.06755605934098838
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.0,
+    0.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.004427188724235731,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.02,
+   "rejections": 20,
+   "scenario": "null-both-boundary-student_t",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "type_i_pass": true,
+   "wilson_ci95": [
+    0.012983581129037627,
+    0.03069024151389728
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    0.0,
+    24.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.006826346021115542,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.049,
+   "rejections": 49,
+   "scenario": "null-semantic-boundary-student_t",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "type_i_pass": true,
+   "wilson_ci95": [
+    0.03726084730617148,
+    0.06419101521875278
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "distribution": "student_t",
+   "effects_nats": [
+    24.0,
+    0.0
+   ],
+   "endpoint_correlation": 0.8739195374139147,
+   "family_sd_nats": 6.0,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.0065555320150236475,
+   "n_families": 10,
+   "n_simulations": 1000,
+   "rejection_rate": 0.045,
+   "rejections": 45,
+   "scenario": "null-bridge-boundary-student_t",
+   "sign_method": "exact",
+   "sign_patterns_or_draws": 1024,
+   "type_i_pass": true,
+   "wilson_ci95": [
+    0.033799334842846314,
+    0.05968314287076907
+   ]
+  }
+ ]
+}
