@@ -46,7 +46,7 @@ export HF_HUB_CACHE=/content/hf_local
 bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
 ```
 
-Do not launch a duplicate while `QWEN_CONTINUATION.lock` is held. Read the
+Do not launch a duplicate while `qwen_continuation_fit.lock` is held. Read the
 dynamic handoff before recovery because it records any temporary storage
 routing needed by the current VM:
 

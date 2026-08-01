@@ -61,7 +61,7 @@ Monitoring/recovery paths:
 /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_continuation_draw_a_n500_20260801.log
 /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_CONTINUATION_WATCHDOG.log
 /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/checkpoint_state.json
-/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_CONTINUATION.lock
+/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_continuation_fit.lock
 ```
 
 DriveFS began returning `userRateLimitExceeded` 403s with about 85 GB of
