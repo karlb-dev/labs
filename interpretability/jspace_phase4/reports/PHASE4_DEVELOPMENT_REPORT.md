@@ -3,7 +3,8 @@
 Status: live development synthesis through the OLMo-3 32B base,
 seed-paired 3.0 Think, and seed-paired OLMo-3.1 32B Think and Instruct
 own/common-lens comparisons, registered four-checkpoint trajectory, and
-post-hoc common-support closure, 2026-08-01.
+post-hoc common-support closure, plus outcome-blind Bank B/Bank W/max-T
+and official Qwen mode-parser protocol gates, 2026-08-01.
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -547,6 +548,112 @@ n=250 fit. Selected-ID Jaccard, span angles, protected overlap,
 occupancy, centered excess capacity, G4, and causal/bridge stability
 remain required before declaring the smaller lens validated.
 
+## Outcome-blind Phase 4 primary preparation
+
+The following artifacts are methods/protocol evidence. They contain no
+Phase 4 confirmatory or replication intervention outcome and do not make the
+candidate preregistration a freeze.
+
+### Bank B bridge candidate
+
+Live methods evidence: `p4-bank-b-candidate-v1`.
+
+Bank B now contains 40 relation families and 160 facts, four facts per
+family. Every fact has a unique true bridge, two counterfactual bridges, and
+two second-hop relations. Exact Qwen token IDs and prefix-disjoint aliases
+are stored prospectively. The outcome-blind family split is 20 development /
+10 confirmatory / 10 replication; no prior-contract entity overlaps, and no
+entity crosses a partition.
+
+This candidate is not freeze-ready. All 160 records are pinned to
+`countryinfo==0.1.2`, but zero have completed the required independent
+source verification. That blocker is explicit in the audit and forbids any
+untouched Bank B outcome from being opened.
+
+Candidate preregistration 0.2 replaces the old single bridge-versus-unrelated
+endpoint with an intersection-union endpoint:
+
+```text
+semantic = M(counterfactual bridge) - M(geometry-matched unrelated)
+bridge_specific = M(counterfactual bridge) - M(counterfactual-answer direction)
+p_P4P1 = max(p_semantic, p_bridge_specific)
+```
+
+Both one-sided equal-family tests must reject. Semantic movement without the
+bridge-specific contrast cannot license an abstract bridge route.
+
+### Bank W factorial and joint max-T power
+
+Live methods evidence: `p4-bank-w-candidate-v2` and
+`p4-bank-w-power-dev-v1`. Candidate v2 supersedes v1 without changing any
+row or partition hash.
+
+Bank W has 72 canonical templates (12 per superfamily), eight seeds per
+family, and 4,608 rows. It fully crosses load 2/6, supplied/derived state,
+and once/redundant presentation. Each of the eight cells has 576 rows; the
+family split is 24/24/24. Against the exact pinned Qwen tokenizer, every
+within-seed condition has the same prompt length. Answer leakage is zero,
+target positions are exactly balanced, and first/last/frequency heuristics
+equal the appropriate load-specific chance.
+
+The frozen primary cell is internally derived and stated once. For each
+capability-eligible model, positive high-load dependence is
+
+```text
+D_m = -[specific_m(high) - specific_m(low)]
+T = max_m D_m / SE_family(D_m)
+```
+
+The null applies one shared sign to each canonical family across all eligible
+models. The actual primary uses 100,000 deterministic draws and a plus-one
+p-value. No model may be selected from intervention outcomes.
+
+![Bank W max-T power calibration](figures/p4f14_bank_w_power.png)
+
+The SESOI is 0.10 nat per doubling of load, or 0.15849625 nat from load 2 to
+6. Outcome-blind calibration used the largest common-family Bank-S
+development SD rounded up to 0.23 nat. Four null scenarios crossed normal /
+Student-t(5) effects with independent / empirical model correlation; type-I
+rates were 0.040--0.050. Under the conservative independent heavy-tailed
+case, minimum power over the single-active-model alternatives was 0.703,
+0.806, and 0.858 at 16, 20, and 24 common families. Therefore the initial
+16-family floor was underpowered and is superseded by 20; the planned
+24-family confirmatory side clears the 0.80 target. Model-specific baseline
+capability gates and independent review remain pending.
+
+### Official Qwen mode/parser gate
+
+Live methods evidence: `p4-qwen-mode-parser-gate-dev-v1`.
+
+The exact Qwen chat template is pinned at SHA-256
+`e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259`.
+An important structural defect in parser v1 was found before model-backed
+outcomes: official thinking-on opens `<think>` inside the prefill prompt,
+whereas thinking-off opens and closes an empty think block in prefill. Parser
+v1 searched only generated tokens and would therefore misclassify genuine
+thinking-on reasoning. Parser v2 scans prefill delimiters to initialize the
+decode state while retaining prefill as the prompt hook phase.
+
+All exact-token goldens pass: thinking-on enters reasoning at generation,
+thinking-off enters final-answer decoding, EOS inside reasoning and an
+unclosed length truncation remain parse failures, answers before closure are
+not graded as final, and four rationale controls are exactly token matched.
+
+The official toggle also makes `thinking_off × generated_reasoning`
+structurally nonexistent. The frozen primary therefore uses the two phases
+common to both modes:
+
+```text
+[damage(on, final_answer) - damage(on, prefill)]
+- [damage(off, final_answer) - damage(off, prefill)]
+```
+
+where `damage = quality(matched control) - quality(span-safe J)` and quality
+is deterministic normalized final-answer exact/accepted-alias accuracy. The
+directional alternative is positive; thinking-on reasoning-only is a named
+secondary. A model-backed development parser/correctness gate, family split,
+SESOI/power, and review are still required.
+
 ## Current interpretation
 
 The registered base-to-3.0/3.1 Think/Instruct trajectory supports an
@@ -581,8 +688,9 @@ estimation-first account:
   composition frame delta with intervals excluding zero. Coordinate
   frame must remain explicit in every lineage synthesis.
 - The precise 3.1 Bank-S composition contrast is a development finding,
-  not an explanation. The controlled Bank-W load/redundancy and
-  internal-derivation axes still need to adjudicate its mechanism.
+  not an explanation. Bank W's load/redundancy/internal-derivation axes are
+  now outcome-blind, audited, and powered, but their model-specific
+  capability gates and intervention outcomes have not run.
 
 The registered two-frame synthesis and common-support closure make the
 Bank-S Think-path result harder to explain as lens drift or changing fact
@@ -594,14 +702,13 @@ claims.
 
 ## Next boundary
 
-Workstream A5 is complete and banked. Qwen draw-A n=120 is also banked,
-the common-support closure is registered, and the exact recovery state is
-resuming from n=180 toward the same-corpus n=250 milestone. Before
-stronger causal interpretation, complete the nested convergence and model-backed
-selection/capacity/causal gates, add controlled Bank-W
-load/redundancy and internal-derivation axes, and resolve whether an
-intermediate post-training checkpoint is available to localize the
-base-to-3.0 Think transition.
+Workstream A5, Qwen draw-A n=120, common-support closure, Bank W authoring /
+power, and the official mode-parser protocol are banked. The Qwen fit is
+continuing from a durable n=228 boundary toward same-corpus n=250. Before
+stronger causal interpretation, complete nested convergence, prompt-112
+influence, the model-backed multi-lens gate and its frozen branch, Bank B
+independent verification, Bank W capability gates, and the model-backed mode
+development gate.
 
 Confirmatory Phase 4 remains blocked on preregistration freeze and
 untouched data.
