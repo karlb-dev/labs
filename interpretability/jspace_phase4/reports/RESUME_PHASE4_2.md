@@ -1,188 +1,171 @@
 # Resume Phase 4.2 — restart-safe handoff
 
-Generated 2026-08-01 04:00 UTC on VM12. Read this file before launching any
-new work. It is also mirrored byte-for-byte at:
+Generated 2026-08-01 06:52 UTC on VM12. Phase 4 is development-only. Never
+open confirmatory or replication intervention outcomes before independent
+review, PI sign-off, a freeze commit, and a freeze tag.
 
-- `/content/resume-phase-4-2.md`
-- `/content/drive/MyDrive/interpret/resume-phase-4-2.md`
+Canonical mirrors of this file must remain byte-identical at:
 
-## Safe boundary reached
+```text
+/content/resume-phase-4-2.md
+/content/drive/MyDrive/interpret/resume-phase-4-2.md
+```
 
-The Qwen draw-A nested Jacobian-lens fit finished normally at n=250. There is
-no incomplete scientific write to protect and the post-fit queue was
-deliberately **not** launched, so Codex can be stopped and restarted now.
+Read the fuller live ledger first:
 
-- Repository: `/content/labs`
+```text
+/content/drive/MyDrive/interpret/inprogress.md
+interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
+```
+
+## Current live boundary
+
+- Main repository/worktree: `/content/labs`
 - Branch: `interp_jspace_part2`
-- Pushed scientific restart commit (before handoff-only docs):
-  `eb91a0b5fe0af7d4f86331c33497d7548b933d26`
-- Worktree at handoff: clean
-- Phase 4 run root:
+- Clean launch commit: `11ae9db626e9776091840bf5b29b3217b9fd99c0`
+- Isolated preparation worktree: `/content/labs_phase4_cpu`
+- Isolated branch/head: `codex/phase4-cpu-20260801` at
+  `b9cb1b15055f07d2eb4d1b3ae3b94640b33db32a`
+- Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`
-- Development-only boundary remains in force. Do not expose confirmatory or
-  replication outcomes and do not self-sign PI or independent-review fields.
+- User-reported VM window: about 16 hours remaining near 06:50 UTC; treat
+  roughly 22:50 UTC as a soft reclaim boundary.
 
-The completed evidence event is
-`p4-qwen-lens-fit-drawA-n250-dev-v1`. All registered outputs were independently
-rehash-verified before the registry event was committed:
-
-| artifact | SHA-256 |
-|---|---|
-| n=250 lens | `b78427c84ddd3b9f7f4361b952b5169cf49335e77fe364e584b6abd799f79006` |
-| fit result | `2ca66e7efa048c252b3fc2e4cf6c3b992e31a5e00381dee8f61598095e2721e6` |
-| input manifest | `389087888f7bdaaca590b303cf1006bcdae14bfbec7576162d5ecf0b21057d5c` |
-| final recovery checkpoint | `723844116788c73800e219c048c165d904873e0d7676ab4739d7763a605166d6` |
-
-The registry append was pushed at `829d82b`. The registered lens hash was then
-bound into both convergence and functional-gate YAMLs, 20 targeted tests
-passed, and that manifest-only boundary was pushed at `eb91a0b`.
-
-## Start the replacement Codex session with real Full Access
-
-The old chat was injected at launch with a managed `workspace-write` profile;
-changing the UI switch did not hot-reload it. The future-session defaults are
-already present in `/root/.codex/config.toml`:
-
-```toml
-approval_policy = "never"
-sandbox_mode = "danger-full-access"
-```
-
-Select Full Access **before** creating the replacement chat. If Codex is
-started from a shell, the unambiguous launch is:
+The frozen A120/A250/published functional gate emitted Branch B because
+A120–A250 selection geometry failed both load-bearing thresholds. Draw A is
+therefore actively continuing from exact n=250 to n=500 via:
 
 ```bash
-cd /content/labs
-codex --dangerously-bypass-approvals-and-sandbox
+bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
 ```
 
-At the beginning of the new chat, inspect its injected environment context.
-If it still says `managed`, `workspace-write`, or `restricted`, the launcher
-or organization policy overrode the local file and hourly prompts can still
-occur; restart with the explicit flag above rather than relying on the UI
-toggle. Do not leave an unattended run until a host-context GPU probe and a
-networked `git push` both work without approval.
+The runner verified the model snapshot, exact fit contract, CUDA, and all 48
+fused FLA bindings. CPU fallback is forbidden. It recovered
+`recovered_next_idx=250`; at this handoff the latest atomically mirrored
+boundary is n=256 with checkpoint SHA-256
+`24ce0f37d99423d4eb1ccd253563f99e1d8e14fb8dcee8ee21bee62e14a277c3`.
+Observed throughput is 178.22 seconds per new prompt and peak allocated VRAM
+is 62.846 GB.
 
-## Replacement-session bootstrap and immediate GPU launch
-
-First read the governing and dynamic state:
-
-```bash
-cd /content/labs
-git status --short --branch
-git log -8 --oneline
-sed -n '1,260p' /content/drive/MyDrive/interpret/inprogress.md
-sed -n '1,260p' /content/drive/MyDrive/interpret/special_lab_resume.md
-sed -n '1,320p' interpretability/jspace_phase4/reviews/jspace_lab_nextsteps_4_2.md
-sed -n '1,260p' interpretability/jspace_phase4/reviews/jspace_lab_nextsteps_4_2_addendum.md
-```
-
-Verify GPU visibility in the same host execution context that will run model
-jobs. The expected device is an NVIDIA RTX PRO 6000 Blackwell Server Edition,
-and CPU fallback is forbidden:
-
-```bash
-nvidia-smi --query-gpu=name,driver_version,memory.total,memory.free,utilization.gpu --format=csv,noheader
-CUDA_VISIBLE_DEVICES=0 python -c "import torch; assert torch.cuda.is_available(); print(torch.__version__, torch.version.cuda, torch.cuda.get_device_name(0)); x=torch.randn((1024,1024),device='cuda',dtype=torch.float16); y=x@x; torch.cuda.synchronize(); print(torch.isfinite(y).all().item())"
-```
-
-Confirm no previous queue is alive before launching. At this handoff it was
-not started. If the process/log says it has since started, attach and monitor
-instead of launching a duplicate.
-
-```bash
-pgrep -af 'run_qwen_postfit_queue|p4_qwen_lens_convergence|p4_qwen_lens_influence|p4_qwen_multilens_functional_gate|p4_qwen_mode_model_gate' || true
-bash interpretability/jspace_phase4/run_qwen_postfit_queue.sh
-```
-
-That committed entrypoint has defaults for the run root, local NVMe workspace,
-HF cache, Matplotlib cache, and CUDA device. It refuses a dirty tree, a wrong
-branch, or unbound hash sentinels. It runs and banks, in order:
-
-1. Qwen draw-A lens convergence;
-2. prompt-112 influence localization;
-3. frozen multi-lens functional gate;
-4. model-backed official Qwen thinking-mode parser/correctness gate.
-
-After each producer it permits only the evidence registry to be dirty, then
-commits and pushes the event. It records stdout and five-minute GPU heartbeats
-at:
+Monitoring/recovery paths:
 
 ```text
-/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_postfit_queue_20260801.log
-/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_POSTFIT_QUEUE_WATCHDOG.log
+/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_continuation_draw_a_n500_20260801.log
+/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_CONTINUATION_WATCHDOG.log
+/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/checkpoint_state.json
+/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_CONTINUATION.lock
 ```
 
-The finished-fit watchdog should self-exit after observing n=250. It must not
-be restarted; the post-fit queue owns its own heartbeat.
+Do not launch a duplicate. Check the lock, process, GPU, heartbeat, and log.
+If the fitter has genuinely stopped before n=500, rerun the same command from
+a clean main tree; it must recover the highest valid three-prompt checkpoint.
+Never register a partial pseudo-milestone.
 
-## Frozen continuation after the functional gate
+At n=500 the runner should register
+`p4-qwen-lens-fit-drawA-n500-dev-v1`, commit the evidence registry append, and
+push. It intentionally refuses unexpected main-worktree changes, so keep main
+untouched until it exits.
 
-Do not reinterpret the branch after seeing outcomes:
+## Evidence already completed
 
-- branch A/C: fit independent draw-B to n=120;
-- branch B, or any load-bearing functional failure: continue draw-A to n=500;
-- structural-only failure with every functional and capacity endpoint inside
-  its SESOI: retain the functionally equivalent canonical lens and label the
-  structural nonconvergence.
+- A250 lens: `p4-qwen-lens-fit-drawA-n250-dev-v1`, lens SHA-256
+  `b78427c84ddd3b9f7f4361b952b5169cf49335e77fe364e584b6abd799f79006`.
+- A120–A250 convergence:
+  `p4-qwen-lens-convergence-drawA-n120-n250-dev-v1`; structural assay gates
+  pass.
+- Prompt-112 retained influence:
+  `p4-qwen-lens-influence-prompt112-dev-v1`; not structurally load-bearing on
+  the frozen assay band.
+- Functional Branch B:
+  `p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1`; projector
+  overlap 0.67479 < 0.85 and selected-ID Jaccard 0.53846 < 0.75.
+- Qwen model-mode baseline: `p4-qwen-mode-gate-dev-v1`; thinking-on parse and
+  truncation rates 0.35, common-correct families 11 < 12. No intervention was
+  run.
+- Bank B v2: independent verification passes all 160 facts, but registered
+  power makes the 0.25-nat joint SESOI unusable; prospective redesign needed.
+- Bank W v2/max-T power and OLMo common-support closure are registered.
+- Main integration merge `11ae9db` verified 39 live evidence events and 176
+  outputs; the then-current combined suite passed 130 tests.
 
-Prepare and launch the selected continuation as soon as the queue completes so
-the GPU does not idle. All model jobs must be checkpointed to Drive at no more
-than ten-minute granularity and must refuse CPU fallback.
+## Pre-frozen A250–A500 successor gate
 
-## Productive CPU work while the GPU queue runs
-
-The next session should use CPU time concurrently for these open blockers:
-
-1. **Bank B correction and reverification.** Registered audit
-   `p4-bank-b-restcountries-verification-dev-v1` found 121 exact/unambiguous,
-   21 independent matches requiring manual ambiguity review, and 18
-   independent-source mismatches across the frozen 160 facts. Author a new,
-   prospectively versioned candidate; never edit the registered output. Root
-   discrepancies include Bujumbura/Gitega, Colombo/Sri Jayawardenepura Kotte,
-   Chinese/Hong Konger demonyms, Cap Vert, Saint-Lucie, Norfolk Island,
-   native-name Iran, Macedonia/North Macedonia, and the full Spanish Saint
-   Helena territory name. Re-run independent verification and power before
-   calling Bank B freeze-ready.
-2. **Bank W model-specific work.** Candidate v2 and max-T power are registered
-   (72 families, eight seeds, 4,608 crossed rows, common-support floor 20),
-   but baseline capability, intervention execution, and review remain open.
-3. **Mode gate follow-up.** Interpret the queued model-backed gate, then author
-   prospective untouched families and a SESOI/power ruler; the current 20
-   bridge facts are development-only consumed Phase 3 material.
-4. **Reporting.** Integrate n=250, convergence/influence, functional branch,
-   the model-mode gate, and Bank B Figure p4f16 into the development Markdown,
-   TeX, PDF, and visualizations. Rebuild and visually inspect the PDF, then
-   mirror byte-identical report artifacts to Drive.
-
-Candidate preregistration 0.3 already freezes the common-support P4-P2
-interaction wording but is still a candidate. It is not confirmatory
-authorization.
-
-## Evidence already banked in this block
-
-Key recent commits, all pushed to `origin/interp_jspace_part2`:
+Isolated commit `b9cb1b1` was created before any A500 output existed. It
+generalizes the audited producers, freezes the successor configs, and passes
+all 132 Phase 4 tests.
 
 ```text
-eb91a0b config: bind registered Qwen n250 lens
-829d82b data: register Qwen draw-A n250 lens
-8082cce data: register Bank B independent verification
-671495e feat: audit Bank B against independent source
-ce88dd5 docs: checkpoint n237 and autonomous GPU queue
-3f6146d feat: add model-backed Qwen mode gate
-75aa7db ops: add durable Qwen post-fit GPU queue
-29b27d4 docs: freeze common-support P4-P2 wording
-139b512 docs: report Bank W power and mode gate
+interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml
+interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_a250_a500_dev.yaml
 ```
 
-The full Phase 4 suite last passed 120 tests with one expected warning from a
-sandboxed CUDA probe. The development report PDF is 13 pages and was visually
-inspected before the n=250 result. Registered evidence and Drive artifacts are
-immutable: supersede with a new evidence ID rather than overwriting.
+Both contain `PENDING_REGISTERED_A500_SHA256`. Once and only once the n=500
+event is live, replace exactly those two sentinels with its registered lens
+SHA-256 and commit that binding before running either producer. Do not change
+the frozen subset, order, thresholds, seeds, or branch interpretations.
 
-## Boundary checks before the next long unattended interval
+The successor evidence IDs and figure stems are:
 
-Require all of the following:
+```text
+p4-qwen-lens-convergence-drawA-n250-n500-dev-v1
+p4f19_qwen_lens_convergence_a250_a500
+p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1
+p4f20_qwen_multilens_functional_gate_a250_a500
+```
+
+Frozen successor decisions:
+
+- A: A250–A500 structural/functional stability; fit independent B120 before
+  any smaller-lens nomination.
+- B: functional instability persists; continue draw A to n=1000.
+- C: structural sensitivity with functional equivalence; retain A500 as the
+  larger same-corpus candidate and fit independent B120.
+
+## Exact continuation after n=500
+
+1. Verify the fitter registered/committed/pushed n=500 and main is clean.
+2. Merge `codex/phase4-cpu-20260801` into `interp_jspace_part2` without
+   flattening evidence ancestry.
+3. Bind and commit the registered A500 lens hash in the two successor YAMLs.
+4. Run structural convergence and bank its registry append:
+
+   ```bash
+   python -m jspace_phase4.experiments.p4_qwen_lens_convergence \
+     --config interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml
+   ```
+
+5. Run the fixed functional gate and bank its registry append:
+
+   ```bash
+   python -m jspace_phase4.experiments.p4_qwen_multilens_functional_gate \
+     --config interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_a250_a500_dev.yaml
+   ```
+
+6. Follow the branch without reinterpretation. Launch A/C as draw-B n=120 or
+   B as draw-A n=1000 only if the remaining VM window can preserve a valid
+   checkpoint; prioritize report/registry/handoff closure near reclaim.
+7. Integrate exact fit/gate results and p4f19/p4f20 into the Markdown, TeX,
+   final PDF, in-progress ledger, and this resume file. Visually inspect all
+   new figures and affected pages. Mirror byte-identical artifacts to Drive.
+
+## Remaining freeze blockers
+
+The Phase 4 preregistration is still a candidate. A truthful freeze requires:
+
+1. a resolved or explicitly bounded canonical Qwen lens path;
+2. a prospective Bank B design/estimand revision with a passing power audit;
+3. a prospective Qwen mode amendment, fresh baseline gate, canonical-family
+   split, intervention SESOI/power ruler, and no use of the failed baseline as
+   intervention evidence;
+4. fixed Bank W model-capability rules;
+5. independent protocol review and PI sign-off.
+
+The agent may prepare and test these materials, but cannot self-approve the
+last governance gates or open untouched intervention outcomes.
+
+## Boundary verification
+
+Before VM reclaim or freeze, run:
 
 ```bash
 git status --short --branch
@@ -192,7 +175,6 @@ python -m jspace_phase4 verify
 bash interpretability/jspace_phase4/repro.sh
 ```
 
-Refresh this handoff and `/content/drive/MyDrive/interpret/inprogress.md` after
-every result-bearing boundary. Commit/push frequently, copy byte-identical
-handoffs and report artifacts to Drive, keep a watchdog on every long GPU
-queue, and continue until either a truthful Phase 4 freeze point or VM reclaim.
+Commit and push every result-bearing registry boundary. Keep registered
+evidence immutable, keep long GPU work on Drive-backed three-prompt recovery,
+and refresh all three handoff mirrors after each material milestone.
