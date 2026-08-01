@@ -69,7 +69,7 @@
   ]
  },
  "evidence_id": "p4-bank-w-power-dev-v1",
- "generation_code_commit": "524ba7944faec47a4990828232c668085f39f3d5",
+ "generation_code_commit": "fff4e651da78318758f1b1956594cb7c1a27e3e7",
  "outcome_blinding": "No Bank W intervention, capability, confirmatory, or replication outcome was read.",
  "power_at_sesoi": [
   {
