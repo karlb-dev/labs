@@ -32,6 +32,36 @@ jspace-phase4 verify
 The run root, model cache, Phase 3 imports, and repository files are resolved
 through logical URIs. Scientific modules must not embed machine paths.
 
+## Phase 4.2 resumable work block
+
+The Qwen Draw A fit resumes from the highest contract-matched local/Drive
+checkpoint and refuses CPU or slow-kernel fallback:
+
+```bash
+export JSPACE4_RUN_ROOT=/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731
+export JSPACE4_LOCAL_WORK=/content/sl4_work
+export HF_HUB_CACHE=/content/hf_local
+python -m jspace_phase4.experiments.p4_qwen_nested_lens_fit \
+  --config interpretability/jspace_phase4/configs/p4_qwen_nested_lens_fit_dev.yaml \
+  --draw draw_a --stop-at 250
+```
+
+In a second host-visible process, arm the non-mutating Drive-backed watchdog:
+
+```bash
+bash interpretability/jspace_phase4/watchdog_phase4.sh \
+  /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/checkpoint_state.json \
+  250
+```
+
+The CPU-first common-cohort sensitivity can run while the GPU fit is active:
+
+```bash
+MPLCONFIGDIR=/tmp/matplotlib-phase4 \
+python -m jspace_phase4.experiments.p4_lineage_common_cohort_analysis \
+  --config interpretability/jspace_phase4/configs/p4_lineage_common_cohort_olmo_dev.yaml
+```
+
 ## Current development synthesis
 
 - Living Markdown: `reports/PHASE4_DEVELOPMENT_REPORT.md`
