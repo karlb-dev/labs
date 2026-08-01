@@ -861,6 +861,18 @@ phase-intervention variance pilot on already consumed families after the
 canonical lens is fixed, followed by substantive SESOI review and an exact
 power simulation for a newly authored untouched bank.
 
+Prospective methods evidence
+`p4-qwen-mode-variance-pilot-protocol-dev-v1` now fixes that variance-pilot
+contract on the same outcome-blind, already consumed 20-family subset. It
+requires the exact eight mode × common-phase × arm cells above, counts a parse
+failure as incorrect, requires zero wrong-phase hook fires and zero
+selected/protected overlap, exact delivered-rank match, and at most 1% energy
+relative error. Planning uses the larger of the family-interaction sample SD
+and its 90% bootstrap upper bound. The protocol cannot use its observed mean
+to choose the SESOI, and it is not executable until the v2 baseline passes, a
+registered canonical lens/hash is bound, and the GPU intervention producer is
+reviewed. It contains no model or intervention outcome.
+
 ## Current interpretation
 
 The registered base-to-3.0/3.1 Think/Instruct trajectory supports an

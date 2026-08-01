@@ -1,6 +1,6 @@
 # LIVE — Phase 4.2 block 2, VM12
 
-Last updated: 2026-08-01 08:41 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-01 08:58 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**: do not open confirmatory or replication
 intervention outcomes, and do not self-sign independent-review or PI fields.
 
@@ -11,8 +11,8 @@ intervention outcomes, and do not self-sign independent-review or PI fields.
   main is clean and synced while the fitter runs.
 - Isolated CPU/report worktree: `/content/labs_phase4_cpu`, branch
   `codex/phase4-cpu-20260801`; registered methods are pushed through
-  `6661514` (P4-P2 design feasibility), with scoring/runner hardening through
-  `258ae3c`. The successor queue has
+  `bdec74e` (conditional P4-P2 variance-pilot protocol), with scoring/runner
+  hardening through `258ae3c`. The successor queue has
   four prospectively frozen stages: A250--A500 structural, functional,
   mode-v2 baseline, and Qwen Bank W baseline capability.
 - The isolated tree has only the intentionally regenerated handout PDF dirty.
@@ -48,12 +48,12 @@ Latest durable boundary at this update:
 
 | field | value |
 |---|---|
-| prompts banked | 289 / 500 |
-| recovery checkpoint SHA-256 | `fc0a2e8f65b1f75fd87f5d2ea432a3f37dcfcbe12cfb624a70084351413bbc70` |
+| prompts banked | 295 / 500 |
+| recovery checkpoint SHA-256 | `2a45d0a1e78db980f2639938a0aed2a2fe7fd9952251ece2232c72a1f938fe67` |
 | checkpoint bytes | 6,606,047,399 |
-| observed seconds/new prompt | 176.38 in the restarted invocation; 179.1 long-run ruler |
+| observed seconds/new prompt | 176.17 in the restarted invocation; 179.1 long-run ruler |
 | peak allocated VRAM | 62.846 GB |
-| active chunk | 289:292 |
+| active chunk | 295:298 |
 
 Durable monitoring paths:
 
@@ -64,7 +64,7 @@ Durable monitoring paths:
 /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_CONTINUATION.lock
 ```
 
-At the observed rate, the remaining 211 prompts should need about 10.5 hours
+At the observed rate, the remaining 205 prompts should need about 10.2 hours
 plus finalization, placing the n=500 boundary near 19:10 UTC if throughput
 holds. The expanded frozen post-fit queue should then need roughly 1.5--2
 hours, leaving about 1.5 hours for result integration and a restartable branch
@@ -137,6 +137,13 @@ a pseudo-milestone evidence row for a partial fit.
   support-based SD bound. No SESOI, bank size, or split was selected; a
   consumed-development intervention variance pilot is the next methods step
   after the v2 baseline and canonical-lens decision.
+- Prospective mode variance-pilot protocol
+  `p4-qwen-mode-variance-pilot-protocol-dev-v1` is registered. It fixes the
+  same consumed 20 families, all eight common-phase cells, zero wrong-phase
+  fires/selected-protected overlap, exact rank match, 1% energy tolerance,
+  and a bootstrap upper-SD planning rule. It is explicitly non-executable
+  until mode v2 passes, the canonical lens/hash is registered, and the GPU
+  producer is reviewed; it contains no model or intervention outcome.
 - Bank B candidate v2 passes independent source reverification (160/160,
   zero mismatches/unresolved flags), but registered power evidence shows the
   0.25-nat joint SESOI is unusably underpowered. Registered feasibility
@@ -156,8 +163,8 @@ a pseudo-milestone evidence row for a partial fit.
 
 Main evidence integration is pushed through merge commit `11ae9db`. Registry
 verification after that merge found 39 live events and 176 registered outputs
-with zero failures. The isolated successor branch now passes all 145 Phase 4
-tests. Preregistration candidate 0.7 and the report/handout sources integrate
+with zero failures. The isolated successor branch now passes all 149 Phase 4
+tests. Preregistration candidate 0.8 and the report/handout sources integrate
 the registered P4-P2 envelope; the rebuilt PDF remains the sole intentional
 dirty file until this documentation boundary is compiled and checked.
 
@@ -168,7 +175,7 @@ successor structural/functional path. The prospective mode-v2 model baseline
 was frozen at `76c22fd`. Bank W capability protocol
 `p4-bank-w-capability-protocol-dev-v1` was registered at `38c761c` without
 model outcomes, and its Qwen baseline was queued at `6f7cce3`. The current
-combined isolated branch passes all 145 Phase 4 tests.
+combined isolated branch passes all 149 Phase 4 tests.
 
 Successor configs:
 
@@ -252,7 +259,7 @@ python -m jspace_phase4 verify
 bash interpretability/jspace_phase4/repro.sh
 ```
 
-Candidate preregistration 0.7 still cannot freeze until the canonical Qwen
+Candidate preregistration 0.8 still cannot freeze until the canonical Qwen
 lens path is truthfully resolved or bounded; Bank B receives a substantive
 reviewed replacement design or estimation-only reclassification; mode v2
 passes a fresh baseline, then receives a consumed-development intervention

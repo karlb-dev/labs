@@ -1,6 +1,6 @@
 # Resume Phase 4.2 — restart-safe handoff
 
-Generated 2026-08-01 08:41 UTC on VM12. Phase 4 is development-only. Never
+Generated 2026-08-01 08:58 UTC on VM12. Phase 4 is development-only. Never
 open confirmatory or replication intervention outcomes before independent
 review, PI sign-off, a freeze commit, and a freeze tag.
 
@@ -25,8 +25,8 @@ interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 - Clean launch commit: `11ae9db626e9776091840bf5b29b3217b9fd99c0`
 - Isolated preparation worktree: `/content/labs_phase4_cpu`
 - Isolated branch: `codex/phase4-cpu-20260801`; registered methods are pushed
-  through `6661514` (P4-P2 feasibility), with scoring/runner hardening through
-  `258ae3c`; the successor queue has four
+  through `bdec74e` (conditional P4-P2 variance-pilot protocol), with
+  scoring/runner hardening through `258ae3c`; the successor queue has four
   prospectively frozen stages: structural, functional, mode-v2 baseline, and
   Qwen Bank W baseline capability
 - Phase 4 Drive root:
@@ -45,10 +45,10 @@ bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
 The runner verified the model snapshot, exact fit contract, CUDA, and all 48
 fused FLA bindings. CPU fallback is forbidden. It recovered
 `recovered_next_idx=250`; at this handoff the latest locally mirrored boundary
-is n=289 with checkpoint SHA-256
-`fc0a2e8f65b1f75fd87f5d2ea432a3f37dcfcbe12cfb624a70084351413bbc70`.
+is n=295 with checkpoint SHA-256
+`2a45d0a1e78db980f2639938a0aed2a2fe7fd9952251ece2232c72a1f938fe67`.
 Observed long-run throughput is about 179.1 seconds per new prompt and peak
-allocated VRAM is 62.846 GB. The remaining fit is about 10.5 hours plus
+allocated VRAM is 62.846 GB. The remaining fit is about 10.2 hours plus
 finalization, so n=500 is projected near 19:10 UTC if throughput holds. The
 expanded post-fit queue should consume another 1.5--2 hours.
 
@@ -119,6 +119,12 @@ untouched until it exits.
   3,528 at the support-based SD bound. It selects no SESOI/count/split and
   requires a consumed-development intervention variance pilot after the v2
   baseline and canonical-lens decision.
+- Prospective variance-pilot methods
+  `p4-qwen-mode-variance-pilot-protocol-dev-v1` are registered. The protocol
+  fixes the consumed 20-family/eight-cell grid, mechanical gates, and
+  bootstrap upper-SD rule but is non-executable until mode v2 passes, the
+  canonical lens/hash is registered, and the GPU producer is reviewed. It
+  contains no model or intervention outcome.
 - Bank B v2: independent verification passes all 160 facts, but registered
   power makes the 0.25-nat joint SESOI unusable. Registered feasibility
   evidence `p4-bank-b-design-feasibility-dev-v1` shows that no allocation of
@@ -133,8 +139,8 @@ untouched until it exits.
   queued; both OLMo baselines and independent review remain pending. No Bank W
   intervention outcome was opened.
 - Main integration merge `11ae9db` verified 39 live evidence events and 176
-  outputs. The current isolated branch passes 145 tests. Preregistration
-  candidate 0.7 and report/handout sources include the mode feasibility
+  outputs. The current isolated branch passes 149 tests. Preregistration
+  candidate 0.8 and report/handout sources include the mode feasibility
   envelope; the rebuilt PDF remains the isolated tree's sole intentional
   dirty file until this documentation boundary is compiled and checked.
 
@@ -145,7 +151,7 @@ generalizes the audited structural/functional producers and freezes the
 successor configs. Mode-v2 was prospectively frozen at `76c22fd` and appended
 to the queue at `19f5fc4`. Bank W capability protocol was registered at
 `38c761c` without model outcomes and the Qwen gate queued at `6f7cce3`; the
-combined branch passes all 145 Phase 4 tests.
+combined branch passes all 149 Phase 4 tests.
 
 ```text
 interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml

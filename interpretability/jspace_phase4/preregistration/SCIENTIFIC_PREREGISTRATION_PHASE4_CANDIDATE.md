@@ -2,11 +2,11 @@
 
 **CANDIDATE — NOT FROZEN — CONFIRMATORY AND REPLICATION OUTCOMES FORBIDDEN**
 
-Version: candidate 0.7, 2026-08-01.
+Version: candidate 0.8, 2026-08-01.
 Governing plan: `jspace_lab_nextsteps_4_2.md` plus its accepted addendum.
 Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
 
-Candidate 0.7 retains the addendum's R2/R3 amendments before any Phase 4
+Candidate 0.8 retains the addendum's R2/R3 amendments before any Phase 4
 confirmatory or replication intervention outcome: P4-P1 is an
 intersection-union semantic-plus-bridge-specific endpoint, and P4-P3 is a
 shared-family max-T endpoint. It also imports the registered outcome-blind
@@ -20,13 +20,17 @@ also imports the registered outcome-blind P4-P2 scenario envelope
 `p4-qwen-mode-design-feasibility-dev-v1`. That envelope selects no SESOI,
 family count, or split; it establishes that a consumed-development
 intervention variance pilot is required before those choices can be reviewed
-and powered. This revision also supersedes Bank B v1 with the outcome-blind
-corrected v2,
+and powered. Prospective methods evidence
+`p4-qwen-mode-variance-pilot-protocol-dev-v1` fixes that pilot's consumed
+20-family subset, eight-cell grid, mechanical tolerances, and upper-SD
+summary, but keeps execution blocked on the v2 baseline, canonical lens, and
+GPU producer review. This revision also supersedes Bank B v1 with the
+outcome-blind corrected v2,
 records its complete independent reverification, and imports the negative
 Bank B power audit plus registered feasibility envelope
 `p4-bank-b-design-feasibility-dev-v1`. The existing 10-family confirmatory
 side is not powered at the candidate 0.25-nat joint SESOI, and no allocation
-of the existing 40 families repairs it. Candidate 0.7 does not select a
+of the existing 40 families repairs it. Candidate 0.8 does not select a
 replacement P4-P1 estimand, does not claim that the queued model-backed P4-P2
 v2 gate has passed, and contains no Bank W intervention outcome. This document
 remains a candidate; these methods events are not PI sign-off and do not
@@ -265,6 +269,20 @@ SESOI and bank size; and the exact frozen family test must then clear its
 power target on a hash-frozen untouched split. No pilot intervention outcome
 enters a Phase 4 primary.
 
+The prospective variance pilot itself is fixed by
+`p4-qwen-mode-variance-pilot-protocol-dev-v1`. It reuses exactly the 20
+outcome-blind consumed families in
+`p4-qwen-multilens-functional-subset-dev-v1`, one composed fact per canonical
+family. Its primary grid is `thinking_on/thinking_off × prefill/final_answer ×
+matched_control/span_safe_J`. Parse failure counts as incorrect. Every row
+must have at least one expected-phase hook fire and zero wrong-phase fires,
+zero selected/protected overlap, exact requested/delivered rank, and energy
+relative error at most 0.01. The planning SD is the maximum of the sample SD
+and its family-bootstrap 90% upper bound (20,000 draws; seed 20260801). The
+pilot mean cannot select the SESOI. Execution is conditional on a live passing
+`p4-qwen-mode-gate-dev-v2`, exact registered canonical-lens hash binding, and
+review of the GPU producer; the methods event alone authorizes none of these.
+
 ## 6. P4-P3 controlled load and capability guard
 
 Registered candidate `p4-bank-w-candidate-v2` contains 72 canonical template
@@ -390,9 +408,9 @@ transport gate, and regenerates final figures.
 - [ ] P4-P1 geometry/dose tolerances and exact model/config revisions.
 - [x] P4-P2 official templates, parser tolerance, primary quality metric,
       common-support interaction statistic, prospective v2 token budget, and
-      outcome-blind design-feasibility envelope; [ ] fresh v2 model-backed
-      correctness gate, development variance pilot, reviewed SESOI, families,
-      exact power, and split.
+      outcome-blind design-feasibility envelope and conditional variance-pilot
+      protocol; [ ] fresh v2 model-backed correctness gate, reviewed GPU pilot
+      producer and execution, reviewed SESOI, families, exact power, and split.
 - [x] Bank W task/load ladder, shortcut thresholds, exact capability protocol,
       power, SESOI, and split; [ ] three model-specific baseline capability
       gates and joint common-support decision.
