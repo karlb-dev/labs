@@ -14,6 +14,8 @@ HF_CACHE="${HF_HUB_CACHE:-/content/hf_local}"
 MPL_CACHE="${MPLCONFIGDIR:-/tmp/matplotlib-phase4}"
 QUEUE_LOG="$RUN_ROOT/qwen_postfit_queue_20260801.log"
 HEARTBEAT_LOG="$RUN_ROOT/QWEN_POSTFIT_QUEUE_WATCHDOG.log"
+EXPECTED_BRANCH="${JSPACE4_EXPECTED_BRANCH:-interp_jspace_part2}"
+REGISTRY_PATH="interpretability/jspace_phase4/reports/evidence_events.jsonl"
 
 if [[ "${1:-}" == "--approval-probe" ]]; then
   printf '%s\n' "qwen post-fit queue entrypoint is installed; no GPU work started"
@@ -42,6 +44,11 @@ if [[ -n "$(git status --porcelain)" ]]; then
   git status --short >&2
   exit 3
 fi
+if [[ "$(git branch --show-current)" != "$EXPECTED_BRANCH" ]]; then
+  printf '%s\n' "post-fit queue refused: unexpected Git branch" >&2
+  git branch --show-current >&2
+  exit 4
+fi
 
 heartbeat() {
   while true; do
@@ -67,16 +74,41 @@ run_stage() {
   printf '%s COMPLETE %s\n' "$(date -u +%FT%TZ)" "$stage" | tee -a "$QUEUE_LOG"
 }
 
+bank_registry_event() {
+  local stage=$1
+  mapfile -t changes < <(git status --porcelain)
+  if (( ${#changes[@]} == 0 )); then
+    printf '%s REGISTRY_ALREADY_CLEAN %s\n' \
+      "$(date -u +%FT%TZ)" "$stage" | tee -a "$QUEUE_LOG"
+    return
+  fi
+  if (( ${#changes[@]} != 1 )) || \
+      [[ "${changes[0]:3}" != "$REGISTRY_PATH" ]]; then
+    printf '%s\n' \
+      "post-fit queue refused to auto-bank unexpected repository changes" >&2
+    git status --short >&2
+    exit 5
+  fi
+  git add "$REGISTRY_PATH"
+  git commit -m "data: register $stage"
+  git push origin "$EXPECTED_BRANCH"
+  printf '%s REGISTRY_BANKED %s commit=%s\n' \
+    "$(date -u +%FT%TZ)" "$stage" "$(git rev-parse HEAD)" | tee -a "$QUEUE_LOG"
+}
+
 run_stage qwen_lens_convergence \
   python -m jspace_phase4.experiments.p4_qwen_lens_convergence \
   --config interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_dev.yaml
+bank_registry_event qwen_lens_convergence
 
 run_stage qwen_lens_influence_prompt112 \
   python -m jspace_phase4.experiments.p4_qwen_lens_influence \
   --config interpretability/jspace_phase4/configs/p4_qwen_lens_influence_prompt112_dev.yaml
+bank_registry_event qwen_lens_influence_prompt112
 
 run_stage qwen_multilens_functional_gate \
   python -m jspace_phase4.experiments.p4_qwen_multilens_functional_gate \
   --config interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_dev.yaml
+bank_registry_event qwen_multilens_functional_gate
 
 printf '%s QUEUE_COMPLETE\n' "$(date -u +%FT%TZ)" | tee -a "$QUEUE_LOG"
