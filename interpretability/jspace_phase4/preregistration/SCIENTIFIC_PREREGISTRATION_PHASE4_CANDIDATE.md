@@ -2,17 +2,20 @@
 
 **CANDIDATE — NOT FROZEN — CONFIRMATORY AND REPLICATION OUTCOMES FORBIDDEN**
 
-Version: candidate 0.2, 2026-08-01.
+Version: candidate 0.3, 2026-08-01.
 Governing plan: `jspace_lab_nextsteps_4_2.md` plus its accepted addendum.
 Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
 
-Candidate 0.2 adopts the addendum's R2/R3 amendments before any Phase 4
+Candidate 0.3 adopts the addendum's R2/R3 amendments before any Phase 4
 confirmatory or replication intervention outcome: P4-P1 is an
 intersection-union semantic-plus-bridge-specific endpoint, and P4-P3 is a
 shared-family max-T endpoint. It also imports the registered outcome-blind
 methods evidence `p4-bank-w-candidate-v2` and
-`p4-bank-w-power-dev-v1`. This document remains a candidate; these methods
-events are not PI sign-off and do not authorize untouched outcomes.
+`p4-bank-w-power-dev-v1`. Candidate 0.3 additionally imports the official
+template/parser methods evidence `p4-qwen-mode-parser-gate-dev-v1` and fixes
+P4-P2 to the two phases structurally shared by thinking on and off. This
+document remains a candidate; these methods events are not PI sign-off and do
+not authorize untouched outcomes.
 
 ## 1. Question and claim boundary
 
@@ -29,9 +32,12 @@ The compact confirmatory family is:
   counterfactual-answer-direction substitution (bridge specificity). The
   endpoint rejects only when both one-sided family tests reject; its single
   p-value is their maximum.
-- **P4-P2 — Qwen mode by phase.** The span-safe bridge/J effect on final
-  generation quality interacts with official thinking mode and intervention
-  phase (prefill, reasoning, final answer).
+- **P4-P2 — Qwen mode by phase.** The span-safe bridge/J damage on
+  deterministic normalized final-answer quality has a larger final-minus-
+  prefill contrast under official thinking-on than thinking-off. The primary
+  uses only prefill and final-answer phases, which exist in both modes;
+  thinking-on reasoning is a named secondary because the official
+  thinking-off template has no generated-reasoning cell.
 - **P4-P3 — controlled load engagement.** For the capability-eligible subset
   of the frozen OLMo-3.1 Think, OLMo-3.1 Instruct, and Qwen 3.6-27B model
   set, the maximum studentized high-load dependence rejects under one joint
@@ -155,18 +161,42 @@ once in that order with identical code.
 ## 5. P4-P2 official mode and phase
 
 Thinking on/off uses official model templates, not raw prompt approximations.
-Development must freeze tokenizer/template revisions and demonstrate:
+Registered methods evidence `p4-qwen-mode-parser-gate-dev-v1` pins Qwen
+revision `6a9e13bd6fc8f0983b9b99948120bc37f49c13e9`, tokenizer class
+`Qwen2Tokenizer`, chat-template SHA-256
+`e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259`,
+and parser `p4-phase-parser-v2`.
 
-- phase parser golden tests;
-- prompt, reasoning, and final-answer hook sentinels;
-- parser failure rate below the frozen tolerance;
-- measurable generation quality in both modes;
-- no silent truncation or unmatched reasoning delimiter;
-- correct/wrong/shuffled/filler rationale controls.
+The official thinking-on prefill ends with an open `<think>` delimiter, while
+the thinking-off prefill contains an already closed empty think block. The
+parser therefore scans prefill delimiters to initialize generation state but
+continues to classify all prompt tokens as prefill. Exact-token goldens require
+thinking-on generation to start in reasoning, thinking-off generation to start
+in final answer, EOS inside reasoning to fail, a length-truncated unclosed
+reasoning block to remain a parse failure, and answers before reasoning closure
+to be ineligible for final-answer grading. The maximum development parser
+failure rate is 0.02. Generation is deterministic with at most 512 new tokens;
+EOS, length, and error stops are recorded separately. Correct, wrong, shuffled,
+and filler rationale controls are exactly matched at 11 tokens.
 
-Primary outcome and exact interaction statistic will be filled and signed
-before freeze after these endpoint gates, without viewing untouched-family
-outcomes.
+The official toggle makes `thinking_off x generated_reasoning` structurally
+absent. It is not imputed. For mode `m` and common phase `p`:
+
+```text
+damage(m,p) = quality(matched_control,m,p) - quality(span_safe_J,m,p)
+
+I_P4P2 = [damage(thinking_on,final_answer)
+          - damage(thinking_on,prefill)]
+         - [damage(thinking_off,final_answer)
+            - damage(thinking_off,prefill)]
+```
+
+The primary quality endpoint is deterministic normalized final-answer exact or
+accepted-alias accuracy. The alternative is `I_P4P2 > 0`; the unit of
+inference is canonical family. Thinking-on reasoning-phase effects and the
+full accepted-alias margin on generated context are named secondaries. A
+model-backed development parser/correctness gate, canonical-family split,
+SESOI/power ruler, and independent review remain required before freeze.
 
 ## 6. P4-P3 controlled load and capability guard
 
@@ -231,7 +261,8 @@ side clears the 0.80 target.
 - The unit of inference is canonical family.
 - P4-P1 uses two one-sided family sign flips and the intersection-union
   p-value `max(p_semantic, p_bridge_specific)`.
-- P4-P2 uses the frozen within-family factorial contrast.
+- P4-P2 uses a one-sided equal-family sign flip of the frozen common-support
+  interaction `I_P4P2`; no structurally absent reasoning-off cell is imputed.
 - P4-P3 uses the shared-family, one-sided max-T statistic over the frozen
   capability-eligible model set.
 - Enumerate all sign patterns when feasible; otherwise use at least 100,000
@@ -278,12 +309,12 @@ transport gate, and regenerates final figures.
 - [x] Bank B family count and split hash; [ ] independent sources, power,
       and SESOI.
 - [ ] P4-P1 geometry/dose tolerances and exact model/config revisions.
-- [ ] P4-P2 official templates, parser tolerance, primary quality metric,
-      interaction statistic, families, power, and split.
+- [x] P4-P2 official templates, parser tolerance, primary quality metric, and
+      common-support interaction statistic; [ ] model-backed correctness gate,
+      families, power, SESOI, and split.
 - [x] Bank W task/load ladder, shortcut thresholds, capability ruler,
       power, SESOI, and split; [ ] model-specific baseline capability gates.
-- [x] P4-P1 intersection-union and P4-P3 max-T directional wording; [ ]
-      exact P4-P2 decision wording.
+- [x] Exact directional decision wording for P4-P1, P4-P2, and P4-P3.
 - [ ] Development gates all pass without untouched-family outcomes.
 - [ ] Environment lock and model/lens/tokenizer manifests are complete.
 - [ ] Independent reviewer verifies no Phase 4 outcome leakage.
