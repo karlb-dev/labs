@@ -626,6 +626,20 @@ SESOI, power is only 0.038 for the frozen 10-family confirmatory side and
 design/estimand revision, not on source verification.
 \eid{p4-bank-b-power-dev-v1}
 
+\begin{center}
+\includegraphics[width=0.94\textwidth]{../figures/p4f22_bank_b_design_feasibility.png}
+\end{center}
+
+An optimistic successor bound assumes known 6-nat SD, Gaussian sampling, and
+only one one-sided component. Even that lower bound needs 3,562 families for
+the .25-nat SESOI and 124 for the consumed Phase~3 bridge-specific mean of
+1.342 nats. All 40 existing families have a best-case 80\%-power MDE of
+2.359 nats, versus 3 nats under the registered heavy-tail IUT. Reallocation
+cannot repair the design. Review must choose an estimation-only P4-P1, a new
+answer-direction-orthogonal estimand and ruler, or a genuinely adequate new
+bank; inflating the SESOI merely to obtain power is not licensed.
+\eid{p4-bank-b-design-feasibility-dev-v1}
+
 \subsection{Bank W: factorial and max-T calibration}
 
 Candidate v2 has 72 template families, eight seeds each, and 4,608 rows
@@ -697,6 +711,12 @@ amendment and fresh baseline must precede any intervention; the family
 split, SESOI/power, independent review, and PI sign-off remain open.
 \eid{p4-qwen-mode-gate-dev-v1}
 
+Methods successor \texttt{p4-qwen-mode-parser-gate-dev-v2} keeps the official
+template, parser, tolerances, and deterministic decode, while raising only
+the length-failure sentinel from 512 to 2,048 tokens. Its golden gate passes.
+A fresh v2 baseline with one shared at-most-128-reasoning-token instruction
+is frozen and queued; it is not yet an outcome at this boundary.
+
 \section{Interpretation and next boundary}
 
 \begin{enumerate}
@@ -728,19 +748,20 @@ and prompt 112 is not structurally load-bearing there. Both frozen
 functional selection thresholds fail, forcing Branch B to draw-A
 $n=500$; A250 is not canonical.
 \item Bank B v2 passes source verification but its .25-nat joint SESOI is
-unusably underpowered. The Qwen mode baseline separately fails on
-thinking-on truncation and common support. These are methods blockers,
-not intervention findings.
+unusably underpowered, and no allocation of its 40 families repairs it. The
+Qwen mode baseline separately fails on thinking-on truncation/common support;
+an amended v2 baseline is queued. These are methods blockers, not intervention
+findings.
 \item None of these known-bank estimates licenses ``lineage present''
 or ``lineage absent.''
 \end{enumerate}
 
-A5, common support, Qwen draw-A $n=250$ convergence/influence/functional
-gates, Bank B verification/power, Bank W authoring/power, and the Qwen
-model-mode gate are banked. Branch B has recovered the durable A250
-estimator and is continuing draw A to $n=500$. Next: apply the frozen
-A250--A500 decision path; prospectively revise Bank B and the mode
-protocol; run Bank W capability; and obtain independent review and PI
-sign-off.
+A5 and common support are banked, as are the Qwen draw-A $n=250$ convergence,
+influence, and functional gates; the Bank B verification, power, and
+feasibility audits; Bank W authoring and power; and the first Qwen model-mode
+gate. Branch B has recovered the durable A250 estimator and is continuing draw
+A to $n=500$. The successor A250--A500 path and amended mode-v2 baseline are
+frozen before outcomes. Next: execute them, revise Bank B substantively, fix
+Bank W capability, and obtain independent review and PI sign-off.
 
 \end{document}

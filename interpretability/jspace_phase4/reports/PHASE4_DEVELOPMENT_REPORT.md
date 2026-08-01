@@ -665,8 +665,9 @@ candidate preregistration a freeze.
 
 Live methods evidence: `p4-bank-b-candidate-v2`,
 `p4-bank-b-restcountries-verification-dev-v2`, and
-`p4-bank-b-power-dev-v1`. Candidate v2 supersedes v1; no registered v1 output
-was edited.
+`p4-bank-b-power-dev-v1`, with feasibility successor
+`p4-bank-b-design-feasibility-dev-v1`. Candidate v2 supersedes v1; no
+registered v1 output was edited.
 
 Bank B now contains 40 relation families and 160 facts, four facts per
 family. Every fact has a unique true bridge, two counterfactual bridges, and
@@ -695,6 +696,21 @@ The 0.80-power grid does not reach a minimum detectable effect at n=10 up to
 5 nats; it reaches 4 nats at n=20 and 3 nats at n=40/60. This negative methods
 result requires a prospective design/estimand revision before untouched Bank
 B outcomes can be opened.
+
+![Bank B design feasibility envelope](figures/p4f22_bank_b_design_feasibility.png)
+
+The successor feasibility envelope asks whether reallocation alone could
+possibly repair the design. It deliberately gives Bank B every optimistic
+advantage: a known 6-nat SD, Gaussian sampling, and only one one-sided
+component rather than the required heavy-tailed two-component IUT. Even this
+lower bound needs 3,562 independent families for the 0.25-nat SESOI and 124
+for the consumed Phase 3 bridge-specific mean of 1.342 nats. Using all 40
+existing families would still have a best-case 80%-power MDE of 2.359 nats;
+the registered heavy-tail IUT ruler is 3 nats. A split-only repair is therefore
+ruled out. Independent/PI review must choose between leaving P4-P1 outside the
+Phase 4 confirmatory family, developing a substantively new answer-direction-
+orthogonal estimand with its own power ruler, or constructing a genuinely
+adequate new bank. Raising the SESOI merely to obtain power is not licensed.
 
 Candidate preregistration 0.4 retains the intersection-union replacement for
 the old single bridge-versus-unrelated
@@ -802,6 +818,13 @@ P4-P2 intervention, the mode protocol requires a prospective amendment and a
 fresh baseline gate. The canonical-family split, intervention SESOI/power,
 independent review, and PI sign-off also remain open.
 
+Prospective methods successor `p4-qwen-mode-parser-gate-dev-v2` retains the
+official template, parser v2, every gate tolerance, and deterministic decoding
+while increasing only the length-failure sentinel from 512 to 2,048 tokens.
+Its tokenizer/template/golden gate passes. The fresh model-backed v2 baseline
+also uses one shared instruction asking for at most 128 reasoning tokens before
+closure; it is frozen and queued, not yet an outcome at this report boundary.
+
 ## Current interpretation
 
 The registered base-to-3.0/3.1 Think/Instruct trajectory supports an
@@ -845,9 +868,11 @@ estimation-first account:
   the precommitted branch continues draw A to n=500; A250 is not canonical.
 - Bank B candidate v2 passes complete independent source verification, but
   its 0.25-nat joint SESOI is unusably underpowered under the registered
-  variability ruler. Separately, the baseline Qwen mode gate fails because
-  thinking-on truncation/parse loss leaves insufficient common support. Both
-  are prospective methods blockers, not intervention findings.
+  variability ruler, and the optimistic successor proves no reallocation of
+  its 40 families can fix that target. Separately, the baseline Qwen mode gate
+  fails because thinking-on truncation/parse loss leaves insufficient common
+  support; a prospectively amended v2 baseline is queued. Both are methods
+  blockers, not intervention findings.
 
 The registered two-frame synthesis and common-support closure make the
 Bank-S Think-path result harder to explain as lens drift or changing fact
@@ -861,9 +886,11 @@ claims.
 
 Workstream A5, common-support closure, Qwen draw-A n=250 convergence,
 prompt-112 influence, the frozen multi-lens gate, Bank B v2 source
-verification/power, Bank W authoring/power, and the Qwen model-backed mode
-gate are banked. The functional rule emitted Branch B, and the exact draw-A
-n=500 continuation has recovered the durable n=250 estimator and is running.
+verification/power/feasibility, Bank W authoring/power, and the first Qwen
+model-backed mode gate are banked. The functional rule emitted Branch B, and
+the exact draw-A n=500 continuation has recovered the durable n=250 estimator
+and is running. The A250--A500 structural/functional queue and prospectively
+amended mode-v2 baseline are frozen before their outcomes.
 
 Next: complete n=500 and apply the frozen A250-to-A500 structural/functional
 decision path; prospectively revise and re-audit the Bank B design and the
