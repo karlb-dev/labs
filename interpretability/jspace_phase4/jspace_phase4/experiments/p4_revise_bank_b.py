@@ -238,6 +238,21 @@ def build_revision(config: Mapping, *, tokenizer) -> tuple[
         expected = inputs[f"{key}_sha256"]
         if file_sha256(path) != expected:
             raise RuntimeError(f"Bank B v1 {key} hash drift")
+    verification_paths = {
+        key: resolve_uri(config["base_verification"][f"{key}_uri"])
+        for key in ("rows", "result")
+    }
+    for key, path in verification_paths.items():
+        if file_sha256(path) != config["base_verification"][f"{key}_sha256"]:
+            raise RuntimeError(f"Bank B v1 verification {key} hash drift")
+    verification_result = json.loads(
+        verification_paths["result"].read_text())["payload"]
+    if verification_result["status_counts"] != {
+            "independent-match-manual-ambiguity-review": 21,
+            "independent-source-mismatch": 18,
+            "verified-exact-unambiguous": 121,
+    }:
+        raise RuntimeError("Bank B v1 registered audit status drift")
     base_rows = load_jsonl(paths["bank"])
     base_sources = load_jsonl(paths["sources"])
     source_by_fact = {row["fact_id"]: row for row in base_sources}
