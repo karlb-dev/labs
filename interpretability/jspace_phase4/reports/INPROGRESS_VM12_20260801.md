@@ -1,6 +1,6 @@
 # LIVE — Phase 4.2 block 2, VM12
 
-Last updated: 2026-08-01 09:15 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-01 09:41 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**: do not open confirmatory or replication
 intervention outcomes, and do not self-sign independent-review or PI fields.
 
@@ -13,9 +13,11 @@ intervention outcomes, and do not self-sign independent-review or PI fields.
   `codex/phase4-cpu-20260801`; registered methods are pushed through
   `26b9696`, including the conditional P4-P2 variance-pilot protocol, the
   automatic frozen A500 branch router, and strict hash-verified local artifact
-  recovery during a transient DriveFS outage. The successor queue has
+  recovery during a transient DriveFS outage. Operational hardening is pushed
+  through `1a32a82`; the successor queue has
   four prospectively frozen stages: A250--A500 structural, functional,
-  mode-v2 baseline, and Qwen Bank W baseline capability.
+  mode-v2 baseline, and Qwen Bank W baseline capability, and preserves every
+  registered stage output locally after an independent hash check.
 - The isolated tree is clean and synced.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
@@ -49,12 +51,12 @@ Latest durable boundary at this update:
 
 | field | value |
 |---|---|
-| prompts banked | 301 / 500 |
-| recovery checkpoint SHA-256 | `2c2b7991c2114f6f702ace48ac9c0c7aa3aee8f3ce4deb917564dbb4572116a1` |
+| prompts banked | 310 / 500 |
+| recovery checkpoint SHA-256 | `275a96fc8a875aa4db7e3ad716a1a99f8d21241a428f0b95f2acc9b13a750cbe` |
 | checkpoint bytes | 6,606,047,399 |
-| observed seconds/new prompt | 175.86 in the restarted invocation; 179.1 long-run ruler |
+| observed seconds/new prompt | 175.71 in the restarted invocation; 179.1 long-run ruler |
 | peak allocated VRAM | 62.846 GB |
-| active chunk | 301:304 |
+| active chunk | 310:313 |
 
 Durable monitoring paths:
 
@@ -65,7 +67,7 @@ Durable monitoring paths:
 /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_CONTINUATION.lock
 ```
 
-At the observed rate, the remaining 199 prompts should need about 9.9 hours
+At the observed rate, the remaining 190 prompts should need about 9.5 hours
 plus finalization, placing the n=500 boundary near 19:10 UTC if throughput
 holds. The expanded frozen post-fit queue should then need roughly 1.5--2
 hours, leaving about 1.5 hours for result integration and a restartable branch
@@ -97,16 +99,40 @@ sync/registration. Its transition log is
 `/content/phase4_recovery_local_20260801_w4Pv6g/finalize_at_n499.log`. Do not
 remove the bind, local mirror, or finalizer early.
 
+A nonrecursive view of the hidden underlying Drive directory verified a
+complete n=286 checkpoint/header pair, including both registered n=195/n=198
+contract-check files. The finalizer additionally refuses a mismatched local
+n=499 header/hash, quarantines either member of an incomplete obsolete
+underlying pair, and restores the exact registered A250 bytes immediately
+before the final unchanged runner because that runner re-verifies prior
+milestones. A separate watcher takes a hard link to the complete local A500
+lens before the producer removes its working filename:
+
+```text
+/content/phase4_recovery_local_20260801_w4Pv6g/preserve_a500_local_lens.sh
+/content/phase4_recovery_local_20260801_w4Pv6g/preserve_a500_local_lens.log
+/content/phase4_recovery_local_20260801_w4Pv6g/qwen36-27b_jlens_drawA_n0500.preserved.pt
+```
+
+Exactly two obsolete, unregistered 6,606,047,399-byte fit copies were removed
+from DriveFS `lost_and_found` only after the two newer n=307 copies and the
+complete underlying n=286 pair were checked. They cannot be recovered as
+those old copies, but no registered artifact was removed. Free space rose
+from about 25 GiB to 37 GiB.
+
 DriveFS also moved the registered 3.3 GB A250 lens and two small registered
-Bank-B verification outputs to its local `lost_and_found`. The A250 bytes
+Bank-B verification outputs to its local `lost_and_found`. The two small
+outputs were hash-verified and restored to their canonical local mount paths,
+although Drive upsync still receives 403s. The A250 bytes
 remain independently hash-verified at the content-addressed local input path
 under `/content/sl4_work/inputs/b78427c.../`. Commit `26b9696` allows that
 cached copy only after an exact registry target-path/hash match and a fresh
 SHA-256 check; it also tightens the functional producer to the same exact-path
 rule. The real A250 recovery test passed while its canonical Drive path was
-absent. Do not copy another 3.3 GB into the rate-limited mount during the fit.
-Restore the displaced canonical outputs before claiming a fresh whole-registry
-verification; the last 39-event/176-output verification predates this outage.
+absent. The finalizer restores A250 only at the n=499 transition. Restore and
+confirm cloud durability for all displaced outputs before claiming a fresh
+whole-registry verification; the last 39-event/176-output verification
+predates this outage.
 
 At n=500 the runner registers
 `p4-qwen-lens-fit-drawA-n500-dev-v1`, commits the registry append, and pushes.
@@ -248,6 +274,12 @@ p4-bank-w-capability-qwen36-27b-dev-v1
    /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_a500_postfit_queue_20260801.log
    /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_A500_POSTFIT_QUEUE_WATCHDOG.log
    ```
+
+   After each registry commit/push, every event output is independently
+   rehashed and copied under
+   `/content/sl4_work/postfit_registered_backups/<evidence-id>/` before the
+   queue advances. This is an operational backup, not a substitute for
+   restoring Drive cloud durability.
 
 5. Integrate exact A500 fit and gate results into Markdown/TeX/PDF, visually
    inspect new figures and affected handout pages, mirror byte-identical

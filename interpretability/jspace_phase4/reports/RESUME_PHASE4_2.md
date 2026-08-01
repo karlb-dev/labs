@@ -1,6 +1,6 @@
 # Resume Phase 4.2 — restart-safe handoff
 
-Generated 2026-08-01 09:15 UTC on VM12. Phase 4 is development-only. Never
+Generated 2026-08-01 09:41 UTC on VM12. Phase 4 is development-only. Never
 open confirmatory or replication intervention outcomes before independent
 review, PI sign-off, a freeze commit, and a freeze tag.
 
@@ -27,9 +27,10 @@ interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 - Isolated branch: `codex/phase4-cpu-20260801`; registered methods are pushed
   through `26b9696`, including the conditional P4-P2 variance-pilot protocol,
   automatic frozen A500 branch router, and strict hash-verified local artifact
-  recovery; the successor queue has four prospectively frozen stages:
+  recovery; operational hardening is pushed through `1a32a82`. The successor
+  queue has four prospectively frozen stages:
   structural, functional, mode-v2 baseline, and Qwen Bank W baseline
-  capability
+  capability, with per-event hash-verified local backups
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`
 - User-reported VM window: about 16 hours remaining near 06:50 UTC; treat
@@ -46,11 +47,11 @@ bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
 The runner verified the model snapshot, exact fit contract, CUDA, and all 48
 fused FLA bindings. CPU fallback is forbidden. It recovered
 `recovered_next_idx=250`; at this handoff the latest locally mirrored boundary
-is n=301 with checkpoint SHA-256
-`2c2b7991c2114f6f702ace48ac9c0c7aa3aee8f3ce4deb917564dbb4572116a1`.
-Observed restarted-invocation throughput is 175.86 seconds per prompt (179.1
+is n=310 with checkpoint SHA-256
+`275a96fc8a875aa4db7e3ad716a1a99f8d21241a428f0b95f2acc9b13a750cbe`.
+Observed restarted-invocation throughput is 175.71 seconds per prompt (179.1
 seconds on the long-run ruler), and peak allocated VRAM is 62.846 GB. The
-remaining fit is about 9.9 hours plus
+remaining fit is about 9.5 hours plus
 finalization, so n=500 is projected near 19:10 UTC if throughput holds. The
 expanded post-fit queue should consume another 1.5--2 hours.
 
@@ -84,14 +85,31 @@ final prompt and real Drive registration. Its log is
 `/content/phase4_recovery_local_20260801_w4Pv6g/finalize_at_n499.log`. Do not
 unmount, remove, or duplicate this transition before n=499.
 
+The hidden underlying Drive recovery was independently viewed and is a
+complete n=286 checkpoint/header pair; the registered n=195/n=198 contract
+checks are present. The finalizer now also quarantines an incomplete obsolete
+underlying pair, verifies matching local n=499 header hashes, and restores the
+exact registered A250 lens immediately before the unchanged final invocation.
+Watcher `preserve_a500_local_lens.sh` takes a no-copy hard link to the complete
+local A500 lens before the producer removes its working filename; its log and
+preserved target are under
+`/content/phase4_recovery_local_20260801_w4Pv6g/`.
+
+Two superseded unregistered 6.606 GB `lost_and_found` recovery copies were
+removed after checking both newer n=307 copies and the underlying n=286 pair.
+Those two old copies are not recoverable, no registered artifact was touched,
+and free space increased from about 25 GiB to 37 GiB.
+
 DriveFS also displaced the registered A250 lens and two small Bank-B
-verification outputs into local `lost_and_found`. The exact A250 bytes remain
+verification outputs into local `lost_and_found`. The small outputs were
+hash-verified back into their canonical local mount paths, though cloud
+upsync still receives 403s. The exact A250 bytes remain
 hash-verified in `/content/sl4_work/inputs/b78427c.../`. Isolated commit
 `26b9696` permits this content-addressed copy only after an exact registered
 target-path/hash match and a fresh SHA-256 check; the real 3.3 GB recovery test
-passed with the canonical Drive path absent, and the full suite passes. Avoid
-duplicating A250 into the rate-limited mount during the fit. Restore all
-displaced canonical outputs before claiming a new whole-registry verification.
+passed with the canonical Drive path absent, and the full suite passes. The
+finalizer restores A250 only at n=499. Confirm cloud durability for all
+displaced outputs before claiming a new whole-registry verification.
 
 Do not launch a duplicate. Check the lock, process, GPU, heartbeat, and log.
 If the fitter has genuinely stopped before n=500, rerun the same command from
@@ -215,6 +233,11 @@ Frozen successor decisions:
    /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_a500_postfit_queue_20260801.log
    /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_A500_POSTFIT_QUEUE_WATCHDOG.log
    ```
+
+   Each registered stage is rehashed and copied under
+   `/content/sl4_work/postfit_registered_backups/<evidence-id>/` before the
+   next stage starts. This preserves local recovery while Drive upsync is
+   rate-limited; it does not substitute for eventual cloud verification.
 
 5. Integrate exact fit/gate results and p4f19/p4f20/p4f21 into the Markdown,
    TeX, final PDF, in-progress ledger, and this resume file. Visually inspect
