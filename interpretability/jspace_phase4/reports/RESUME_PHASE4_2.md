@@ -1,6 +1,6 @@
 # Resume Phase 4.2 — restart-safe handoff
 
-Generated 2026-08-01 06:52 UTC on VM12. Phase 4 is development-only. Never
+Generated 2026-08-01 07:39 UTC on VM12. Phase 4 is development-only. Never
 open confirmatory or replication intervention outcomes before independent
 review, PI sign-off, a freeze commit, and a freeze tag.
 
@@ -24,9 +24,9 @@ interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 - Branch: `interp_jspace_part2`
 - Clean launch commit: `11ae9db626e9776091840bf5b29b3217b9fd99c0`
 - Isolated preparation worktree: `/content/labs_phase4_cpu`
-- Isolated branch: `codex/phase4-cpu-20260801`; durable successor-queue code
-  boundary `dc75ca2692e80183aa20142c428d0dd436a6c444` (inspect
-  `git rev-parse HEAD` for later handoff-only commits)
+- Isolated branch: `codex/phase4-cpu-20260801`; current pushed boundary
+  `a3c9d7ad90a0e6b0275fc6be421b9383863fea06`; frozen three-stage queue
+  boundary `19f5fc4` within that ancestry
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`
 - User-reported VM window: about 16 hours remaining near 06:50 UTC; treat
@@ -43,10 +43,12 @@ bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
 The runner verified the model snapshot, exact fit contract, CUDA, and all 48
 fused FLA bindings. CPU fallback is forbidden. It recovered
 `recovered_next_idx=250`; at this handoff the latest atomically mirrored
-boundary is n=256 with checkpoint SHA-256
-`24ce0f37d99423d4eb1ccd253563f99e1d8e14fb8dcee8ee21bee62e14a277c3`.
-Observed throughput is 178.22 seconds per new prompt and peak allocated VRAM
-is 62.846 GB.
+boundary is n=271 with checkpoint SHA-256
+`7f74722b606c05135ba64143a737d71b34d879b81e4924f461abd232c097ba25`.
+Observed throughput is 179.23 seconds per new prompt and peak allocated VRAM
+is 62.846 GB. The remaining fit is about 11.4 hours plus finalization, so n=500
+is projected near 19:05 UTC if throughput holds. The post-fit queue should
+consume another 1--1.5 hours.
 
 Monitoring/recovery paths:
 
@@ -83,27 +85,40 @@ untouched until it exits.
 - Qwen model-mode baseline: `p4-qwen-mode-gate-dev-v1`; thinking-on parse and
   truncation rates 0.35, common-correct families 11 < 12. No intervention was
   run.
+- Prospective mode methods successor `p4-qwen-mode-parser-gate-dev-v2` passes
+  all tokenizer/template/golden gates and changes only the 512-token cap to
+  2,048. Fresh model baseline `p4-qwen-mode-gate-dev-v2`, with one shared
+  at-most-128-reasoning-token instruction, is frozen and queued but unopened.
 - Bank B v2: independent verification passes all 160 facts, but registered
-  power makes the 0.25-nat joint SESOI unusable; prospective redesign needed.
+  power makes the 0.25-nat joint SESOI unusable. Registered feasibility
+  evidence `p4-bank-b-design-feasibility-dev-v1` shows that no allocation of
+  the existing 40 families can repair it: optimistic required family counts
+  are 3,562 at 0.25 nat and 124 at the consumed 1.342-nat effect; the all-40
+  heavy-tail IUT MDE is 3 nats. Substantive review is required.
 - Bank W v2/max-T power and OLMo common-support closure are registered.
 - Main integration merge `11ae9db` verified 39 live evidence events and 176
-  outputs; the then-current combined suite passed 130 tests.
+  outputs. The current isolated branch passes 134 tests. Preregistration
+  candidate 0.5 and report source are pushed at `a3c9d7a`; the rebuilt and
+  visually checked 18-page PDF is the isolated tree's sole intentional dirty
+  file pending A500 integration.
 
 ## Pre-frozen A250–A500 successor gate
 
 Isolated commit `b9cb1b1` was created before any A500 output existed. It
-generalizes the audited producers, freezes the successor configs, and passes
-all 132 Phase 4 tests.
+generalizes the audited structural/functional producers and freezes the
+successor configs. Mode-v2 was prospectively frozen at `76c22fd` and appended
+to the queue at `19f5fc4`; the combined branch passes all 134 Phase 4 tests.
 
 ```text
 interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_n250_n500_dev.yaml
 interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_a250_a500_dev.yaml
+interpretability/jspace_phase4/configs/p4_qwen_mode_model_gate_v2_dev.yaml
 ```
 
-Both contain `PENDING_REGISTERED_A500_SHA256`. Once and only once the n=500
-event is live, replace exactly those two sentinels with its registered lens
-SHA-256 and commit that binding before running either producer. Do not change
-the frozen subset, order, thresholds, seeds, or branch interpretations.
+The first two contain `PENDING_REGISTERED_A500_SHA256`. Once and only once the
+n=500 event is live, replace exactly those two sentinels with its registered
+lens SHA-256 and commit that binding before running either producer. Do not
+change the frozen subset, order, thresholds, seeds, or branch interpretations.
 
 The successor evidence IDs and figure stems are:
 
@@ -112,6 +127,8 @@ p4-qwen-lens-convergence-drawA-n250-n500-dev-v1
 p4f19_qwen_lens_convergence_a250_a500
 p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1
 p4f20_qwen_multilens_functional_gate_a250_a500
+p4-qwen-mode-gate-dev-v2
+p4f21_qwen_mode_model_gate_v2
 ```
 
 Frozen successor decisions:
@@ -128,9 +145,9 @@ Frozen successor decisions:
 2. Merge `codex/phase4-cpu-20260801` into `interp_jspace_part2` without
    flattening evidence ancestry.
 3. Bind and commit the registered A500 lens hash in the two successor YAMLs.
-4. Launch the durable successor queue. It runs structural convergence,
-   commits/pushes that registry event, then runs and commits/pushes the fixed
-   functional gate:
+4. Launch the durable successor queue. It runs and banks/pushes structural
+   convergence, the fixed functional gate, and the prospectively amended
+   mode-v2 baseline in that order:
 
    ```bash
    bash interpretability/jspace_phase4/run_qwen_a500_postfit_queue.sh
@@ -143,22 +160,26 @@ Frozen successor decisions:
    /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/QWEN_A500_POSTFIT_QUEUE_WATCHDOG.log
    ```
 
-5. Follow the branch without reinterpretation. The continuation entrypoint
+5. Integrate exact fit/gate results and p4f19/p4f20/p4f21 into the Markdown,
+   TeX, final PDF, in-progress ledger, and this resume file. Visually inspect
+   all new figures and affected pages. Mirror byte-identical artifacts to
+   Drive.
+6. Follow the branch without reinterpretation. The continuation entrypoint
    supports A/C as `draw_b_n120` and B as `draw_a_n1000`. Launch only if the
-   remaining VM window can preserve a valid checkpoint; prioritize
-   report/registry/handoff closure near reclaim.
-6. Integrate exact fit/gate results and p4f19/p4f20 into the Markdown, TeX,
-   final PDF, in-progress ledger, and this resume file. Visually inspect all
-   new figures and affected pages. Mirror byte-identical artifacts to Drive.
+   remaining VM window can preserve a valid checkpoint. Neither continuation
+   is expected to finish before reclaim, so bank a valid three-prompt recovery
+   boundary and prioritize final report/registry/handoff closure.
 
 ## Remaining freeze blockers
 
 The Phase 4 preregistration is still a candidate. A truthful freeze requires:
 
 1. a resolved or explicitly bounded canonical Qwen lens path;
-2. a prospective Bank B design/estimand revision with a passing power audit;
-3. a prospective Qwen mode amendment, fresh baseline gate, canonical-family
-   split, intervention SESOI/power ruler, and no use of the failed baseline as
+2. a reviewed substantive Bank B replacement design with passing power, or an
+   explicit estimation-only reclassification outside the Phase 4 primary
+   family;
+3. a passing fresh Qwen mode-v2 baseline gate, canonical-family split,
+   intervention SESOI/power ruler, and no use of the failed v1 baseline as
    intervention evidence;
 4. fixed Bank W model-capability rules;
 5. independent protocol review and PI sign-off.
