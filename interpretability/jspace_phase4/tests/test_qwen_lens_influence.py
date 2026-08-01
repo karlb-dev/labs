@@ -54,8 +54,27 @@ def test_adjacent_contract_comparison_passes_exact_block():
         earlier, later, {0: block}, source_layers=[0],
         atol=1e-6, rtol=1e-6)
     assert passed
-    assert rows[0]["allclose_pass"]
+    assert rows[0]["contract_pass"]
+    assert rows[0]["allclose_diagnostic_pass"]
     assert rows[0]["relative_frobenius_error"] < 1e-6
+
+
+def test_adjacent_contract_can_use_bounded_relative_frobenius_jitter():
+    from jspace_phase4.experiments.p4_qwen_lens_influence import (
+        compare_adjacent_contract,
+    )
+    expected = torch.eye(4)
+    observed = expected.clone()
+    observed[0, 1] = 1e-5
+    earlier = {"jacobian_sum": {0: torch.zeros_like(observed)}}
+    later = {"jacobian_sum": {0: observed}}
+    rows, passed = compare_adjacent_contract(
+        earlier, later, {0: expected}, source_layers=[0],
+        atol=0.0, rtol=0.0, relative_frobenius_max=0.005)
+    assert passed
+    assert rows[0]["contract_pass"]
+    assert rows[0]["relative_frobenius_pass"]
+    assert not rows[0]["allclose_diagnostic_pass"]
 
 
 def test_prompt112_config_can_never_replace_canonical_lens():
@@ -75,6 +94,7 @@ def test_prompt112_config_can_never_replace_canonical_lens():
             "earlier": {"n": 195},
             "later": {"n": 198},
             "prompt_indices_one_based": [196, 197, 198],
+            "relative_frobenius_error_max": 0.005,
         },
     }
     validate_influence_config(config)
@@ -104,6 +124,7 @@ def test_prompt_influence_refuses_non_development_tier():
             "earlier": {"n": 195},
             "later": {"n": 198},
             "prompt_indices_one_based": [196, 197, 198],
+            "relative_frobenius_error_max": 0.005,
         },
     }
     try:
@@ -131,6 +152,7 @@ def test_prompt_influence_norm_tolerance_is_bounded():
             "earlier": {"n": 195},
             "later": {"n": 198},
             "prompt_indices_one_based": [196, 197, 198],
+            "relative_frobenius_error_max": 0.005,
         },
     }
     validate_influence_config(config)

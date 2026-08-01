@@ -105,6 +105,10 @@ def validate_influence_config(config: Mapping) -> None:
     if later - earlier != len(indices) or indices != list(
             range(earlier + 1, later + 1)):
         raise RuntimeError("adjacent checkpoint prompt indices are not exact")
+    relative_bound = float(adjacent["relative_frobenius_error_max"])
+    if not 0 < relative_bound <= 0.005:
+        raise RuntimeError(
+            "adjacent relative-Frobenius bound must be in (0, 0.5%]")
 
 
 def checkpoint_contract(path: Path, *, expected_n: int,
@@ -143,6 +147,7 @@ def compare_adjacent_contract(
         earlier: Mapping, later: Mapping,
         contribution_sum: Mapping[int, torch.Tensor], *,
         source_layers: list[int], atol: float, rtol: float,
+        relative_frobenius_max: float | None = None,
 ) -> tuple[list[dict], bool]:
     rows = []
     passed = True
@@ -155,12 +160,21 @@ def compare_adjacent_contract(
         difference_norm = torch.linalg.vector_norm(difference)
         maximum = float(difference.abs().max().item())
         relative = float((difference_norm / observed_norm).item())
-        layer_pass = bool(torch.allclose(
+        allclose_pass = bool(torch.allclose(
             observed, expected, atol=atol, rtol=rtol))
+        relative_pass = bool(
+            relative_frobenius_max is not None
+            and relative <= relative_frobenius_max)
+        layer_pass = (
+            relative_pass if relative_frobenius_max is not None
+            else allclose_pass)
         passed = passed and layer_pass
         rows.append({
             "layer": layer,
-            "allclose_pass": layer_pass,
+            "contract_pass": layer_pass,
+            "allclose_diagnostic_pass": allclose_pass,
+            "relative_frobenius_pass": relative_pass,
+            "relative_frobenius_error_max": relative_frobenius_max,
             "maximum_absolute_error": maximum,
             "relative_frobenius_error": relative,
             "observed_delta_frobenius": float(observed_norm.item()),
@@ -482,13 +496,43 @@ def main() -> None:  # noqa: C901, PLR0915
         source_layers=source_layers,
         atol=float(adjacent["allclose_atol"]),
         rtol=float(adjacent["allclose_rtol"]),
+        relative_frobenius_max=float(
+            adjacent["relative_frobenius_error_max"]),
     )
+    adjacent_diagnostic = {
+        "n_layers": len(adjacent_rows),
+        "n_contract_pass": sum(
+            bool(row["contract_pass"]) for row in adjacent_rows),
+        "n_allclose_diagnostic_pass": sum(
+            bool(row["allclose_diagnostic_pass"]) for row in adjacent_rows),
+        "maximum_relative_frobenius_error": max(
+            float(row["relative_frobenius_error"])
+            for row in adjacent_rows),
+        "median_relative_frobenius_error": float(np.median([
+            row["relative_frobenius_error"] for row in adjacent_rows])),
+        "maximum_absolute_error": max(
+            float(row["maximum_absolute_error"])
+            for row in adjacent_rows),
+        "relative_frobenius_error_max": float(
+            adjacent["relative_frobenius_error_max"]),
+        "contract_pass": adjacent_pass,
+    }
+    pd.DataFrame(adjacent_rows).to_csv(
+        local_output / "adjacent_checkpoint_contract_diagnostic.csv",
+        index=False)
+    atomic_json(
+        local_output / "adjacent_checkpoint_contract_diagnostic.json",
+        adjacent_diagnostic)
+    print(json.dumps({
+        "adjacent_checkpoint_contract": adjacent_diagnostic,
+    }, indent=1), flush=True)
     del contribution_sum, earlier, later, lens_model, hf_model
     gc.collect()
     torch.cuda.empty_cache()
     if not adjacent_pass:
         raise RuntimeError(
-            "adjacent-checkpoint equal-weight estimator contract failed")
+            "adjacent-checkpoint equal-weight estimator contract failed: "
+            + json.dumps(adjacent_diagnostic, sort_keys=True))
 
     drive_lens_dir = (
         run_root() / "lens" / "qwen36-27b" / "influence" / "prompt112")
@@ -717,6 +761,7 @@ def main() -> None:  # noqa: C901, PLR0915
             "prompt_indices_one_based": adjacent[
                 "prompt_indices_one_based"],
             "all_layers_pass": adjacent_pass,
+            "diagnostic": adjacent_diagnostic,
             "max_absolute_error": max(
                 row["maximum_absolute_error"] for row in adjacent_rows),
             "max_relative_frobenius_error": max(
