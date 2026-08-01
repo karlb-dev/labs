@@ -183,14 +183,18 @@ def plot(result: Mapping, *, png: Path, pdf: Path) -> None:
     axes[1].bar(
         [value - 0.18 for value in positions], optimistic, width=0.36,
         color="#56B4E9", label="optimistic single test")
-    heavy_positions = []
-    heavy_values = []
-    for position, value in zip(positions, heavy, strict=True):
-        if value is not None:
-            heavy_positions.append(position + 0.18)
-            heavy_values.append(value)
-    axes[1].bar(heavy_positions, heavy_values, width=0.36,
-                color="#D55E00", label="registered heavy-tail IUT")
+    heavy_values = [5.0 if value is None else value for value in heavy]
+    heavy_bars = axes[1].bar(
+        [value + 0.18 for value in positions], heavy_values, width=0.36,
+        color="#D55E00", label="registered heavy-tail IUT")
+    for bar, value in zip(heavy_bars, heavy, strict=True):
+        if value is None:
+            bar.set_facecolor("none")
+            bar.set_edgecolor("#D55E00")
+            bar.set_hatch("///")
+            axes[1].text(
+                bar.get_x() + bar.get_width() / 2, 5.03, ">5 grid",
+                ha="center", va="bottom", fontsize=7, color="#D55E00")
     axes[1].axhline(
         result["candidate_joint_sesoi_nats"], color="#555555",
         linestyle=":", label="candidate SESOI")
