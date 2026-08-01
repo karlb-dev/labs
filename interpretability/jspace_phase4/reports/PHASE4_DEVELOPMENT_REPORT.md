@@ -3,9 +3,10 @@
 Status: live development synthesis through the OLMo-3 32B base,
 seed-paired 3.0 Think, and seed-paired OLMo-3.1 32B Think and Instruct
 own/common-lens comparisons, registered four-checkpoint trajectory, and
-post-hoc common-support closure, plus Qwen draw-A n=250 structural and
-functional gates, outcome-blind Bank B/Bank W audits, and the official Qwen
-mode parser/model gate plus design-feasibility envelope, 2026-08-01.
+post-hoc common-support closure, plus the completed Qwen draw-A n=500 fit,
+A250--A500 structural/functional decision, passing official-Qwen mode-v2
+baseline, outcome-blind Bank B methods, and Qwen Bank-W capability gate,
+2026-08-01.
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -655,6 +656,67 @@ though seven other functional criteria and both structural criteria pass.
 Draw B must wait; n=250 cannot be nominated as the canonical Phase 4 lens at
 this boundary.
 
+### Draw-A n=500 successor and frozen branch-B decision
+
+Fit evidence: `p4-qwen-lens-fit-drawA-n500-dev-v1`.
+
+The exact registered n=250 estimator was continued on the same nested corpus
+and unchanged fit contract to 500 prompts. The final lens SHA-256 is
+`84404956fb71a84f5af7fa22c34a8f07761777d048b3db314b1330037e4168a8`;
+the final 6.606 GB checkpoint SHA-256 is
+`f1f5c3eebca93bd0f8d00cbd8794848df569bc67be475d3ab4ef319d8aaa61b1`.
+All continuation diagnostics were finite. Prompt 323 was a retained
+heavy-tail row (`max||J||/sqrt(d)=173.345`), comparable to the already
+registered prompt-112 sensitivity; no row was trimmed or refit after seeing
+the diagnostics.
+
+Structural evidence:
+`p4-qwen-lens-convergence-drawA-n250-n500-dev-v1`.
+
+![Qwen draw-A n=250 to n=500 convergence](figures/p4f19_qwen_lens_convergence_a250_a500.png)
+
+Same-corpus convergence strengthens again. Across frozen L20--L44, median
+raw, minus-identity, and minus-scaled-identity matrix cosines are 0.99791,
+0.99936, and 0.99774. Conservative task-token medians are 0.99784
+(answer-only), 0.99771 (bridge-only), and 0.99825 (shared); their q05 medians
+are 0.99690, 0.99684, and 0.99723. The functional gate therefore sees both
+structural criteria pass: conservative task median 0.997715 against 0.95 and
+q05 0.996838 against 0.90. The registered figure was visually checked.
+
+Functional evidence:
+`p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1`.
+
+![Qwen A250--A500 functional gate](figures/p4f20_qwen_multilens_functional_gate_a250_a500.png)
+
+The exact pre-outcome runner evaluated published, A250, and A500 in fixed
+order. A250--A500 median normalized projector overlap is 0.70302 versus the
+0.85 floor, and selected-ID Jaccard is 0.53846 versus 0.75 over 17,381
+positions; both selection gates fail. Occupancy, centered excess,
+span-safe-specific point estimate, tail rate, G4, and bridge preference pass.
+Bridge rescue differs by 0.55891 nat and fails its 0.25-nat bound. The
+span-safe-specific difference is -0.02432 nat, but its paired-family 95%
+interval [-0.25248, 0.16762] does not establish formal TOST equivalence.
+
+With structure stable but functional selection and bridge rescue unstable,
+the precommitted successor again emits **Branch B: continue draw A to
+n=1000**. The read-only frozen router only applies this registered result; the
+rule does not nominate A500 as canonical or inspect any intervention outcome.
+
+Mode-v2 evidence: `p4-qwen-mode-gate-dev-v2`.
+
+![Official Qwen mode-v2 baseline gate](figures/p4f21_qwen_mode_model_gate_v2.png)
+
+The prospectively amended baseline passes every development gate. All 40
+paired completions parse; both modes have zero truncation, zero parse failure,
+and nonempty final answers. Thinking-on/off accuracy is 0.90/0.85, with 20
+parse-valid paired families and 17 correct in both modes versus the frozen
+floor of 12. Median generated tokens are 323.5 on and 4 off; reasoning content
+appears in every thinking-on completion and no thinking-off completion. The
+paired accuracy difference is +0.05 with family-bootstrap 90% interval
+[0.00, 0.15]. This is a baseline capability/parser result only. The P4-P2
+intervention pilot, SESOI, power, untouched split, review, and PI sign-off
+remain open.
+
 ## Outcome-blind Phase 4 primary preparation
 
 The following artifacts are methods/protocol evidence. They contain no
@@ -774,10 +836,16 @@ inside [-0.08, +0.08]. The primary model set contains every independently
 passing model; it additionally requires at least 20 families capable at both
 loads across that whole set. A joint-support failure blocks P4-P3 rather than
 drops an otherwise eligible model. Answer margin, prompt length, and answer
-token count are locked secondaries and cannot rescue a failure. The Qwen
-baseline is pre-frozen in the A500 post-fit queue; the two OLMo model gates and
-independent review remain pending. No Bank W intervention outcome has been
-opened.
+token count are locked secondaries and cannot rescue a failure.
+
+The Qwen baseline was executed only after the protocol and scoring rule were
+frozen. It completed all 384 development rows and is independently
+capability-eligible: accuracy is 0.83333 at both loads, high-minus-low is
+0.00000 with family-bootstrap 90% interval [-0.02083, 0.02083], and 20 of 24
+families pass both-load capability. Evidence is
+`p4-bank-w-capability-qwen36-27b-dev-v1`. The two OLMo gates and the resulting
+joint common-support decision remain pending, as does independent review. No
+Bank W intervention outcome has been opened.
 
 ### Official Qwen mode/parser gate
 
@@ -838,7 +906,11 @@ official template, parser v2, every gate tolerance, and deterministic decoding
 while increasing only the length-failure sentinel from 512 to 2,048 tokens.
 Its tokenizer/template/golden gate passes. The fresh model-backed v2 baseline
 also uses one shared instruction asking for at most 128 reasoning tokens before
-closure; it is frozen and queued, not yet an outcome at this report boundary.
+closure. It passed all model-backed development gates: thinking-on/off
+accuracy is 0.90/0.85, parse and truncation failures are zero, and 17/20
+families are correct in both modes. This supersedes the v1 failure for
+baseline methods; it remains non-intervention evidence and does not itself
+license P4-P2.
 
 Registered outcome-blind feasibility evidence
 `p4-qwen-mode-design-feasibility-dev-v1` then makes the remaining design
@@ -869,9 +941,9 @@ failure as incorrect, requires zero wrong-phase hook fires and zero
 selected/protected overlap, exact delivered-rank match, and at most 1% energy
 relative error. Planning uses the larger of the family-interaction sample SD
 and its 90% bootstrap upper bound. The protocol cannot use its observed mean
-to choose the SESOI, and it is not executable until the v2 baseline passes, a
-registered canonical lens/hash is bound, and the GPU intervention producer is
-reviewed. It contains no model or intervention outcome.
+to choose the SESOI. Mode v2 now passes, but execution remains blocked until a
+registered canonical lens/hash is selected and the GPU intervention producer
+is reviewed. It contains no intervention outcome.
 
 ## Current interpretation
 
@@ -908,19 +980,18 @@ estimation-first account:
   frame must remain explicit in every lineage synthesis.
 - The precise 3.1 Bank-S composition contrast is a development finding,
   not an explanation. Bank W's load/redundancy/internal-derivation axes are
-  now outcome-blind, audited, and powered, but their model-specific
-  capability gates and intervention outcomes have not run.
-- Qwen A120-to-A250 agreement is strong on the frozen structural assay band,
-  and retained prompt 112 is not structurally load-bearing there. Functional
-  selection geometry nevertheless fails both frozen stability thresholds, so
-  the precommitted branch continues draw A to n=500; A250 is not canonical.
+  outcome-blind, audited, and powered; Qwen passes its independent capability
+  gate, while both OLMo gates and joint support remain open.
+- Qwen A250-to-A500 agreement is stronger on the frozen structural assay
+  band, but both selection-stability gates and bridge rescue fail. The
+  precommitted successor is Branch B and continues draw A to n=1000; neither
+  A250 nor A500 is canonical at this boundary.
 - Bank B candidate v2 passes complete independent source verification, but
   its 0.25-nat joint SESOI is unusably underpowered under the registered
   variability ruler, and the optimistic successor proves no reallocation of
-  its 40 families can fix that target. Separately, the baseline Qwen mode gate
-  fails because thinking-on truncation/parse loss leaves insufficient common
-  support; a prospectively amended v2 baseline is queued. Both are methods
-  blockers, not intervention findings.
+  its 40 families can fix that target. Separately, the prospectively amended
+  Qwen mode-v2 baseline passes, but the P4-P2 pilot/SESOI/power/split and
+  independent review remain methods blockers, not intervention findings.
 
 The registered two-frame synthesis and common-support closure make the
 Bank-S Think-path result harder to explain as lens drift or changing fact
@@ -932,19 +1003,17 @@ claims.
 
 ## Next boundary
 
-Workstream A5, common-support closure, Qwen draw-A n=250 convergence,
-prompt-112 influence, the frozen multi-lens gate, Bank B v2 source
-verification/power/feasibility, Bank W authoring/power, and the first Qwen
-model-backed mode gate are banked. The functional rule emitted Branch B, and
-the exact draw-A n=500 continuation has recovered the durable n=250 estimator
-and is running. The A250--A500 structural/functional queue and prospectively
-amended mode-v2 baseline are frozen before their outcomes.
+Workstream A5, common-support closure, Qwen draw-A n=500, both Qwen
+structural/functional decision boundaries, Bank B v2 source
+verification/power/feasibility, Bank W authoring/power/Qwen capability, and
+the passing Qwen mode-v2 baseline are banked. The frozen A250--A500 rule
+emitted Branch B and routes the next fit to draw A n=1000.
 
-Next: complete n=500 and apply the frozen A250-to-A500 structural/functional
-decision path; prospectively revise and re-audit the Bank B design and the
-Qwen P4-P2 mode protocol; execute the queued Qwen Bank W capability gate and
-stage the two OLMo capability gates; and obtain independent review and PI
-sign-off.
+Next: preserve a restartable A1000 continuation; run the two OLMo Bank-W
+capability gates and compute joint common support; review and, if approved,
+execute the consumed-development P4-P2 variance pilot before fixing its
+SESOI/power/split; make the substantive Bank B status/design decision; and
+obtain independent review and PI sign-off.
 
 Confirmatory Phase 4 remains blocked on preregistration freeze and
 untouched data.

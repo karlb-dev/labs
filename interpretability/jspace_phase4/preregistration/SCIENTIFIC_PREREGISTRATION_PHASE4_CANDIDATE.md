@@ -2,11 +2,11 @@
 
 **CANDIDATE — NOT FROZEN — CONFIRMATORY AND REPLICATION OUTCOMES FORBIDDEN**
 
-Version: candidate 0.8, 2026-08-01.
+Version: candidate 0.9, 2026-08-01.
 Governing plan: `jspace_lab_nextsteps_4_2.md` plus its accepted addendum.
 Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
 
-Candidate 0.8 retains the addendum's R2/R3 amendments before any Phase 4
+Candidate 0.9 retains the addendum's R2/R3 amendments before any Phase 4
 confirmatory or replication intervention outcome: P4-P1 is an
 intersection-union semantic-plus-bridge-specific endpoint, and P4-P3 is a
 shared-family max-T endpoint. It also imports the registered outcome-blind
@@ -30,11 +30,19 @@ records its complete independent reverification, and imports the negative
 Bank B power audit plus registered feasibility envelope
 `p4-bank-b-design-feasibility-dev-v1`. The existing 10-family confirmatory
 side is not powered at the candidate 0.25-nat joint SESOI, and no allocation
-of the existing 40 families repairs it. Candidate 0.8 does not select a
-replacement P4-P1 estimand, does not claim that the queued model-backed P4-P2
-v2 gate has passed, and contains no Bank W intervention outcome. This document
-remains a candidate; these methods events are not PI sign-off and do not
-authorize untouched outcomes.
+of the existing 40 families repairs it.
+
+Candidate 0.9 also imports the registered development-only Qwen draw-A n=500
+fit, A250--A500 structural/functional decision, model-backed mode-v2 baseline,
+and Qwen Bank-W capability gate. The structural criteria pass, but frozen
+selection and bridge-rescue criteria emit Branch B and continue draw A to
+n=1000; no canonical lens is nominated. Mode v2 passes all baseline
+correctness/parser/truncation gates, but no P4-P2 intervention was run. Qwen
+passes its independent Bank-W capability gate, while both OLMo gates and the
+joint common-support decision remain pending. Candidate 0.9 does not select a
+replacement P4-P1 estimand and contains no Bank-W intervention outcome. This
+document remains a candidate; these methods events are not PI sign-off and do
+not authorize untouched outcomes.
 
 ## 1. Question and claim boundary
 
@@ -229,10 +237,11 @@ frozen floor of 12. No intervention outcome was opened. Prospective methods
 evidence `p4-qwen-mode-parser-gate-dev-v2` changes only the generation cap to
 2,048 tokens while retaining the official template, parser, decoding rule,
 and every tolerance; its tokenizer, template, and exact-token golden gates
-pass. The queued v2 model-backed baseline adds one shared instruction in both
-modes: think for at most 128 tokens, close the reasoning block, and return only
-the answer without explanation. Its outcome remains unopened at this candidate
-boundary.
+pass. The v2 model-backed baseline adds one shared instruction in both modes:
+think for at most 128 tokens, close the reasoning block, and return only the
+answer without explanation. It subsequently passed all baseline gates: zero
+parse failures and truncations, thinking-on/off accuracy 0.90/0.85, and 17/20
+families correct in both modes. This contains no P4-P2 intervention outcome.
 
 The official toggle makes `thinking_off x generated_reasoning` structurally
 absent. It is not imputed. For mode `m` and common phase `p`:
@@ -341,6 +350,13 @@ token count are locked secondary covariate sensitivities; they cannot rescue
 a failed primary capability gate. A failed model is descriptive only and
 cannot support “working-set” or “working-memory” language.
 
+Registered development evidence `p4-bank-w-capability-qwen36-27b-dev-v1`
+applies that rule without interventions. Qwen completes all 384 rows, has
+0.83333 accuracy at both endpoints, a paired high-minus-low difference of
+0.00000 with family-bootstrap 90% CI [-0.02083, 0.02083], and 20 families
+capable at both loads. Qwen is therefore independently eligible. The two OLMo
+gates and the joint all-eligible-model intersection remain unopened.
+
 The frozen SESOI is 0.10 nat per doubling of load, equal to
 `0.10 * log2(6/2) = 0.15849625` nat for the primary endpoint contrast.
 Registered simulation `p4-bank-w-power-dev-v1` used a conservative 0.23-nat
@@ -409,11 +425,12 @@ transport gate, and regenerates final figures.
 - [x] P4-P2 official templates, parser tolerance, primary quality metric,
       common-support interaction statistic, prospective v2 token budget, and
       outcome-blind design-feasibility envelope and conditional variance-pilot
-      protocol; [ ] fresh v2 model-backed correctness gate, reviewed GPU pilot
-      producer and execution, reviewed SESOI, families, exact power, and split.
+      protocol, plus fresh passing v2 model-backed correctness gate;
+      [ ] canonical-lens decision, reviewed GPU pilot producer and execution,
+      reviewed SESOI, families, exact power, and split.
 - [x] Bank W task/load ladder, shortcut thresholds, exact capability protocol,
-      power, SESOI, and split; [ ] three model-specific baseline capability
-      gates and joint common-support decision.
+      power, SESOI, split, and Qwen baseline capability gate; [ ] both OLMo
+      baseline capability gates and joint common-support decision.
 - [x] Exact directional decision wording for P4-P1, P4-P2, and P4-P3.
 - [ ] Development gates all pass without untouched-family outcomes.
 - [ ] Environment lock and model/lens/tokenizer manifests are complete.

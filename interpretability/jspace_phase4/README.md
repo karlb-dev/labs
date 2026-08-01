@@ -55,38 +55,33 @@ cat /content/resume-phase-4-2.md
 cat /content/drive/MyDrive/interpret/inprogress.md
 ```
 
-After `p4-qwen-lens-fit-drawA-n500-dev-v1` is registered, merge the isolated
-preparation branch, replace only `PENDING_REGISTERED_A500_SHA256` in the two
-successor YAMLs with the event's exact lens hash, commit that binding, and run:
-
-```bash
-bash interpretability/jspace_phase4/run_qwen_a500_postfit_queue.sh
-```
-
-That queue prospectively runs and banks A250--A500 structural convergence,
-the fixed functional gate, the official mode-v2 model baseline, and Qwen Bank
-W baseline capability. Then apply the registered A/B/C branch without
-changing thresholds:
+The n=500 fit and four-stage post-fit queue are complete and registered. The
+exact A500 hash is bound in the two successor YAMLs, and the structural,
+functional, official mode-v2, and Qwen Bank-W capability events are pushed.
+Do not rerun that queue. Apply the registered A/B/C branch without changing
+thresholds:
 
 ```bash
 bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
 ```
 
 The router verifies the registered result envelope and exact frozen wording;
-A/C continues with `draw_b_n120`, while B continues with `draw_a_n1000`.
+the live result is Branch B, so it continues with `draw_a_n1000`. A/C would
+continue with `draw_b_n120`.
 
 The lower-level producer remains available for exact recovery diagnostics:
 
 ```bash
 python -m jspace_phase4.experiments.p4_qwen_nested_lens_fit \
   --config interpretability/jspace_phase4/configs/p4_qwen_nested_lens_fit_dev.yaml \
-  --draw draw_a --stop-at 500
+  --draw draw_a --stop-at 1000
 ```
 
 The n=250 convergence, retained prompt-112 influence, functional Branch-B
-gate, mode-parser v2 contract, Bank B feasibility, Bank W capability protocol,
-and conditional P4-P2 variance-pilot protocol are already registered. Do not
-rerun or overwrite them; registry verification checks their immutable hashes.
+gate, A500 fit and successor gates, passing mode-v2 baseline, Qwen Bank-W
+capability, mode-parser v2 contract, Bank B feasibility, Bank-W protocol, and
+conditional P4-P2 variance-pilot protocol are registered. Do not rerun or
+overwrite them; registry verification checks their immutable hashes.
 
 ## Current development synthesis
 
