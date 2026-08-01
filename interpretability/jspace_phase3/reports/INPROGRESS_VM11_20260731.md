@@ -1,6 +1,6 @@
 # LIVE — Phase 4 OLMo lineage and Qwen lens-fit handoff
 
-Last updated: 2026-07-31 22:37 UTC.
+Last updated: 2026-08-01 00:02 UTC.
 
 ## Restart contract
 
@@ -17,11 +17,14 @@ Last updated: 2026-07-31 22:37 UTC.
   `/content/drive/MyDrive/interpret/special_lab_resume.md`
 - Bootstrap mirror:
   `interpretability/jspace_part2/reviews/special_lab_resume_mirror.md`
-- The bootstrap files are byte-identical, SHA-256
-  `bd4cf83ba59d58d6f65cda7dfa03798fa0cab03745811a4851f07bbf1598e51e`.
+- The refreshed bootstrap mirror SHA-256 is
+  `33836cd13749533e14532c8431b0b975f49db7b8323d1a0d23adefa86b955f28`;
+  sync it to the Drive source before the next long launch and require
+  byte identity.
 - Governing plans:
-  `interpretability/jspace_phase4/reviews/jspace_lab_nextsteps_4_1.md`
-  and `jspace_lab_nextsteps_4_1_addendum.md`.
+  `interpretability/jspace_phase4/reviews/jspace_lab_nextsteps_4_2.md`
+  and `jspace_lab_nextsteps_4_2_addendum.md`. Addendum §§3–5 govern on
+  conflict; Phase 4.1 and its addendum remain the Phase 4 frame.
 - Phase 3 release tag: `jspace-phase3-complete-v1` at `9e0672b`.
   Phase 3 is closed and immutable.
 - Phase 4 run root:
@@ -59,19 +62,20 @@ the RTX PRO 6000.
 
 ## Current process and checkpoint state
 
-- **An active GPU model job is running:** cumulative Qwen draw A from
-  n=120 toward n=250, started from clean pushed commit `3a6d501`.
-  It rehashed the exact model, passed the CUDA/FLA/48-block gates, and
-  recovered the exact fit contract at n=120 before doing new work.
-  Its latest complete atomic local/Drive boundary is n=174,
-  checkpoint SHA-256
-  `db56aa91ed403c4556bc5ed8b27c54947d4b556bc3160616190af0c4c95fe66b`,
-  6,606,047,399 bytes. Prompts 175–177 had resumed when this handoff
-  was written. If the original process is gone, run the exact n=250
-  command below and require `recovered_next_idx` of at least 174.
-  The VM was already at 23h59m uptime at this boundary, so
-  assume reclamation is imminent and trust only the atomic Drive
-  checkpoint, not the live process.
+- **No model job survived the VM boundary.** The durable Drive recovery
+  header is newer than the last documentation checkpoint and records
+  `next_idx: 180`, checkpoint SHA-256
+  `3531e994246ce6576b5d35096a1e311cc478cc7fee23daaf6397001686b3b5d1`,
+  and 6,606,047,399 bytes under the unchanged fit contract
+  `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00`.
+  Trust this atomic Drive pair, independently hash it before launch, and
+  require `recovered_next_idx: 180`. This fresh VM must first restore the
+  exact Qwen snapshot, published lens, pinned `jlens` checkout, FLA 0.5.2
+  runtime, and editable Phase 4 packages.
+- The host-context GPU hard gate passed on 2026-08-01: NVIDIA RTX PRO 6000
+  Blackwell Server Edition, driver 580.82.07, 97,887 MiB, PyTorch
+  2.11.0+cu128, CUDA 12.8, capability 12.0, finite FP16 matrix multiply.
+  The restricted sandbox still hides CUDA, as expected.
 - Qwen draw A n=120 completed and is live evidence
   `p4-qwen-lens-fit-drawA-n120-dev-v1`, committed and pushed at
   `515a67a`. It used fit contract SHA-256
@@ -894,6 +898,17 @@ whole-lens validation. Figure:
 
 ## Next queue — execute without pausing
 
+Phase 4.2 supersedes the older fit-only ordering. The CPU-first common-cohort
+analysis gates any upgraded trajectory sentence. The multi-lens functional
+gate is the block's never-drop item, must be sized to at most two hours, and
+runs against the highest banked fit milestone if n=250 is not complete six
+hours after the fit resumes. Task-token strata lead convergence-v2;
+uniform-vocabulary metrics are global diagnostics. Prompt 112 requires both
+the tiny-model equal-weight reconstruction and an adjacent atomic-checkpoint
+contract check. Every comparison to the published lens must say `external
+published reference, partially specified recipe` until the same-corpus
+A120/A250/A500/A1000 chain exists.
+
 1. OLMo Workstream A5 is complete. The base, corrected 3.0 Think,
    seed-paired 3.1 Think/Instruct points, and registered two-frame
    trajectory are banked at scientific head `4751235`. Do not rerun or
@@ -923,10 +938,10 @@ whole-lens validation. Figure:
    Run from `interpretability/jspace_phase4/` in the host GPU process.
    Recovery lives under
    `phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/`.
-   It must report `recovered_next_idx: 120` and verify the cumulative
-   checkpoint before new GPU work. The active 2026-07-31 invocation
-   had reached at least n=174; recovery must use the highest valid
-   `checkpoint_state.json` boundary rather than assuming n=120.
+   It must report `recovered_next_idx: 180` and verify the cumulative
+   checkpoint before new GPU work. Recovery must use the highest valid
+   `checkpoint_state.json` boundary rather than assuming n=120 or the
+   earlier documented n=174 boundary.
    Commit/push each registry event,
    then repeat at n=500 and n=1000. Run draw B n=120 and preferably
    n=500 the same way after the corresponding draw-A boundary.

@@ -39,11 +39,16 @@ through logical URIs. Scientific modules must not embed machine paths.
   `reports/handout/jspace_phase4_development.{tex,pdf}`
 - Durable restart ledger:
   `../jspace_phase3/reports/INPROGRESS_VM11_20260731.md`
+- Governing development block:
+  `reviews/jspace_lab_nextsteps_4_2.md` plus its addendum
 
 These documents now cover the base, 3.0 Think, and sibling 3.1
 Think/Instruct capability and intervention points, seed-paired
 own/common-frame audits, and the registered four-checkpoint trajectory
-synthesis. They remain development summaries, not frozen claims.
+synthesis. Phase 4.2 adds the Qwen same-corpus convergence and functional
+invariance gates, CPU-first common-cohort closure, Bank B/W authoring, and
+candidate-preregistration repairs. They remain development summaries, not
+frozen claims.
 
 ## Tiers
 

@@ -10,7 +10,7 @@
 This file is STATIC (how any VM gets from zero to working). DYNAMIC state
 lives in `inprogress.md` (same folder, agent-maintained: status, queue,
 what's running, exact next commands) and in the plan files it points to.
-Last static revision: 2026-07-31 (GPU execution + Phase 3 plan routing). Update this
+Last static revision: 2026-08-01 (GPU execution + Phase 4.2 plan routing). Update this
 file only when the *setup* changes, not when the science moves.
 
 **VM9-era setup notes:** (1) model weights now live in HF-cache layout
@@ -146,7 +146,7 @@ weights between model sets; ~236 G disk total.
 | what | where |
 |---|---|
 | DYNAMIC state (read after bootstrap) | `MyDrive/interpret/inprogress.md` |
-| **THE CURRENT GOVERNING PLAN (VM11+)** | `special-lab-1/jspace_lab_nextsteps_4_1.md` **and its addendum** (latest audit/release and Phase 4 plan; governs on conflict). Earlier plans remain context only. |
+| **THE CURRENT GOVERNING PLAN (VM12+)** | `special-lab-1/jspace_lab_nextsteps_4_2.md` **and its addendum** (Phase 4 development block 2; addendum §§3–5 govern on conflict). Phase 4.1 and its addendum remain the Phase 4 frame; earlier plans are context only. |
 | **what the campaign is waiting on** | `jspace_part2/READY_FOR_FREEZE.md` (gate ledger) + `preregistration/SCIENTIFIC_PREREGISTRATION_CANDIDATE.md`; copies on Drive at `special-lab-1/` |
 | static rules of conduct (the 12 standing directives) | `special-lab-1/experiment_reset_instructions.md` (copy synced to git mirror) |
 | earlier governing review (Part-2 addendum, still in force where not superseded) | `special-lab-1/jspace_part2_plan1_addendum.md` (+ copies in `special_lab2/` and `jspace/part2/code/`) |
