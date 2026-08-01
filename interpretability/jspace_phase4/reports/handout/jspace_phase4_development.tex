@@ -21,7 +21,7 @@ Evidence: \nolinkurl{#1}}}
 \title{\vspace{-1.25em}J-space Phase 4 --- development synthesis\\
 \large OLMo trajectory, Qwen fit-size, and outcome-blind primary protocols\\[3pt]
 \normalsize\textcolor{muted}{State through common support, Qwen draw-A
-$n=120$, Bank W power, and the official mode-parser gate ·
+$n=250$ Branch B, Bank B/Bank W audits, and the model-mode gate ·
 2026-08-01}}
 \author{}\date{}
 
@@ -574,8 +574,8 @@ fail. A120--A250 median normalized projector overlap is .67479 (floor
 median principal angle is 7.87 degrees and the maximum reaches 90 degrees.
 
 The other frozen point-estimate gates pass. Occupancy differences are zero;
-centered-excess differences are $-.000711/-.000239/-.000173$ at
-L24/L32/L40. The span-safe-specific difference is .09596 nat against .15,
+centered-excess differences at L24, L32, and L40 are respectively
+$-.000711$, $-.000239$, and $-.000173$. The span-safe-specific difference is .09596 nat against .15,
 although its 95\% interval $[-.0734,.2993]$ does not establish TOST
 equivalence. Tail difference is $-.0333$; A120/A250 G4 rates are both
 .78 J versus .12 random; bridge-rescue/preference differences are
@@ -674,7 +674,28 @@ structurally absent. The identified primary uses phases common to both:
 \]
 with $d=Q(\mathrm{matched})-Q(J)$ and normalized final-answer accuracy
 as $Q$. The alternative is positive; thinking-on reasoning-only is
-secondary. Model-backed gates, families, SESOI/power, and review remain.
+secondary.
+
+The model-backed baseline used 20 paired consumed Phase~3 families and no
+P4-P2 intervention outcome.
+
+\begin{center}
+\includegraphics[width=0.94\textwidth]{../figures/p4f15_qwen_mode_model_gate.png}
+\end{center}
+
+Thinking-off accuracy was .85 with zero parse failures, truncations, or
+reasoning content and a four-token median completion. Thinking-on accuracy
+was .60; all completions contained reasoning, but parse-failure and
+truncation rates were both .35, final-answer nonempty rate was .65, and
+median generated/reasoning lengths were 287/280 tokens. Thirteen families
+were parse-valid in both modes and 11 were correct in both, below the frozen
+floor of 12. Thinking-on minus thinking-off accuracy was $-.25$ with a
+family-bootstrap 90\% interval $[-.45,-.05]$.
+
+The gate fails and is not freeze-ready. A prospective mode-protocol
+amendment and fresh baseline must precede any intervention; the family
+split, SESOI/power, independent review, and PI sign-off remain open.
+\eid{p4-qwen-mode-gate-dev-v1}
 
 \section{Interpretation and next boundary}
 
@@ -702,14 +723,24 @@ delta and positive composition delta with intervals excluding zero.
 \item The 3.1 composition result is a development finding, not a
 mechanism. Bank W is now outcome-blind, audited, and powered, but its
 capability gates and interventions have not run.
+\item Qwen A120--A250 structural agreement is strong in the assay band,
+and prompt 112 is not structurally load-bearing there. Both frozen
+functional selection thresholds fail, forcing Branch B to draw-A
+$n=500$; A250 is not canonical.
+\item Bank B v2 passes source verification but its .25-nat joint SESOI is
+unusably underpowered. The Qwen mode baseline separately fails on
+thinking-on truncation and common support. These are methods blockers,
+not intervention findings.
 \item None of these known-bank estimates licenses ``lineage present''
 or ``lineage absent.''
 \end{enumerate}
 
-A5, Qwen draw-A $n=120$, common support, Bank W authoring/power, and the
-mode-parser protocol are banked. The verified fit is continuing from a
-durable $n=228$ boundary to same-corpus $n=250$. Next: convergence,
-prompt-112 influence, the multi-lens functional branch, Bank B source
-verification, Bank W capability, and the model-backed mode gate.
+A5, common support, Qwen draw-A $n=250$ convergence/influence/functional
+gates, Bank B verification/power, Bank W authoring/power, and the Qwen
+model-mode gate are banked. Branch B has recovered the durable A250
+estimator and is continuing draw A to $n=500$. Next: apply the frozen
+A250--A500 decision path; prospectively revise Bank B and the mode
+protocol; run Bank W capability; and obtain independent review and PI
+sign-off.
 
 \end{document}
