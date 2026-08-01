@@ -115,3 +115,23 @@ def test_bank_w_partition_is_stable_under_irrelevant_config_order():
     _, first_partition, _ = build_candidate(first, tokenizer=_WordTokenizer())
     _, second_partition, _ = build_candidate(second, tokenizer=_WordTokenizer())
     assert first_partition == second_partition
+
+
+def test_bank_w_v2_raises_only_the_power_driven_support_floor():
+    import yaml
+
+    root = "interpretability/jspace_phase4/configs/"
+    with open(root + "p4_bank_w_candidate.yaml") as handle:
+        first = yaml.safe_load(handle)
+    with open(root + "p4_bank_w_candidate_v2.yaml") as handle:
+        second = yaml.safe_load(handle)
+    assert first["namespace"] == second["namespace"]
+    assert first["partition"] == second["partition"]
+    assert first["superfamilies"] == second["superfamilies"]
+    assert first["loads"] == second["loads"]
+    assert first["derivations"] == second["derivations"]
+    assert first["redundancies"] == second["redundancies"]
+    assert first["capability_guard"]["minimum_common_families_per_model"] == 16
+    assert second["capability_guard"]["minimum_common_families_per_model"] == 20
+    assert second["power_evidence_id"] == "p4-bank-w-power-dev-v1"
+    assert second["supersedes"] == "p4-bank-w-candidate-v1"

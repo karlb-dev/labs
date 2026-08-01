@@ -401,10 +401,12 @@ def build_candidate(config: Mapping, *, tokenizer) -> tuple[list[dict], dict, di
             or set(partition["confirmatory"]) & set(partition["replication"])),
         "capability_guard": dict(config["capability_guard"]),
         "primary": dict(config["primary"]),
+        "power_evidence_id": config.get("power_evidence_id"),
         "bank_rows_sha256": object_sha256(rows),
         "partition_sha256": object_sha256(partition),
         "freeze_ready": False,
-        "freeze_blocker": (
+        "freeze_blocker": config.get(
+            "freeze_blocker",
             "Model-specific baseline capability and common-support gates, "
             "power/SESOI, and independent review remain pending."),
     }
