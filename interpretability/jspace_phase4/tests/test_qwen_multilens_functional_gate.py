@@ -27,6 +27,13 @@ def _valid_config():
         "bridge_endpoint": {
             "category_contract": [
                 "original", "counterfactual", "other-invalid"]},
+        "analysis": {
+            "pair_order": [
+                ["a120", "a250"],
+                ["a250", "published"],
+                ["a120", "published"],
+            ],
+        },
     }
 
 
@@ -51,6 +58,63 @@ def test_functional_config_refuses_order_or_unregistered_hash():
         assert "SHA-256" in str(error)
     else:
         raise AssertionError("unregistered n=250 placeholder was accepted")
+
+
+def test_successor_lens_order_and_primary_pair_are_config_bound():
+    from jspace_phase4.experiments.p4_qwen_multilens_functional_gate import (
+        primary_pair,
+        validate_config,
+    )
+    config = _valid_config()
+    config["lens_order"] = ["published", "a250", "a500"]
+    config["lenses"]["a500"] = config["lenses"].pop("a120")
+    config["analysis"] = {
+        "primary_pair": ["a250", "a500"],
+        "pair_order": [
+            ["a250", "a500"],
+            ["a500", "published"],
+            ["a250", "published"],
+        ],
+        "structural_comparison_id": "a250_vs_a500",
+    }
+    validate_config(config)
+    assert primary_pair(config) == ("a250", "a500")
+    config["analysis"]["primary_pair"] = ["a500", "a250"]
+    try:
+        validate_config(config)
+    except RuntimeError as error:
+        assert "primary-pair" in str(error)
+    else:
+        raise AssertionError("primary-pair drift was accepted")
+
+
+def test_structural_metrics_select_configured_successor_comparison():
+    from jspace_phase4.experiments.p4_qwen_multilens_functional_gate import (
+        structural_metrics,
+    )
+    config = {
+        "lens_order": ["published", "a250", "a500"],
+        "protocol": {"band": [20, 44]},
+        "analysis": {
+            "primary_pair": ["a250", "a500"],
+            "structural_comparison_id": "a250_vs_a500",
+            "structural_assay_key": "assay_L20_L44",
+        },
+    }
+    assay = {}
+    for ordinal, name in enumerate((
+            "task_answer_only", "task_bridge_only",
+            "task_answer_bridge_shared")):
+        assay[f"token_{name}_direction_cosine_q50"] = {
+            "median": 0.99 - ordinal * 0.01}
+        assay[f"token_{name}_direction_cosine_q05"] = {
+            "median": 0.96 - ordinal * 0.01}
+    result = {
+        "aggregate": {"a250_vs_a500": {"assay_L20_L44": assay}}}
+    metrics = structural_metrics(result, config)
+    assert metrics["comparison_id"] == "a250_vs_a500"
+    assert metrics["assay_task_token_median_cosine_conservative"] == 0.97
+    assert metrics["task_token_q05_conservative"] == 0.94
 
 
 def test_span_safe_basis_removes_protected_rank_exactly():

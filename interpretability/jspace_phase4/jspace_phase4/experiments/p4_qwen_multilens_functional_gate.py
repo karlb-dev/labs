@@ -2,9 +2,10 @@
 
 This is a development-tier invariance assay, not a model-selection search.
 The outcome-blind item manifest, lens order, condition order, seeds, controls,
-and equivalence margins are all frozen in the YAML before the n=250 result is
-available.  Raw rows are checkpointed to Drive every five items; aggregation
-and the branch decision happen only after every configured lens is complete.
+and equivalence margins are all frozen in YAML before the compared larger
+milestone is available. Raw rows are checkpointed to Drive every five items;
+aggregation and the branch decision happen only after every configured lens
+is complete.
 """
 from __future__ import annotations
 
@@ -66,7 +67,10 @@ from .p4_qwen_lens_structural_stability import load_lens_checkpoint
 from .p4_qwen_nested_lens_fit import model_reference
 
 
-EXPECTED_LENS_ORDER = ["published", "a120", "a250"]
+SUPPORTED_LENS_ORDERS = (
+    ("published", "a120", "a250"),
+    ("published", "a250", "a500"),
+)
 EXPECTED_CONDITION_ORDER = [
     "span_safe", "exact_matched", "true_bridge", "distractor_bridge",
     "counterfactual_swap",
@@ -114,7 +118,8 @@ def atomic_parquet(path: Path, frame: pd.DataFrame) -> None:
 def validate_config(config: Mapping) -> None:
     if config.get("tier") != "phase4-development":
         raise RuntimeError("multi-lens functional gate is development only")
-    if list(config.get("lens_order", [])) != EXPECTED_LENS_ORDER:
+    lens_order = tuple(config.get("lens_order", []))
+    if lens_order not in SUPPORTED_LENS_ORDERS:
         raise RuntimeError("functional lens order drift")
     if list(config["protocol"].get("condition_order", [])) \
             != EXPECTED_CONDITION_ORDER:
@@ -128,7 +133,26 @@ def validate_config(config: Mapping) -> None:
     if config["bridge_endpoint"].get("category_contract") \
             != ["original", "counterfactual", "other-invalid"]:
         raise RuntimeError("generation category contract drift")
-    for name in EXPECTED_LENS_ORDER:
+    primary_pair = tuple(
+        config["analysis"].get("primary_pair", lens_order[1:]))
+    if primary_pair != lens_order[1:]:
+        raise RuntimeError("functional primary-pair drift")
+    expected_pair_order = (
+        primary_pair,
+        (primary_pair[1], lens_order[0]),
+        (primary_pair[0], lens_order[0]),
+    )
+    pair_order = tuple(
+        tuple(value) for value in config["analysis"]["pair_order"])
+    if pair_order != expected_pair_order:
+        raise RuntimeError("functional comparison-order drift")
+    structural_id = config["analysis"].get(
+        "structural_comparison_id",
+        f"{primary_pair[0]}_vs_{primary_pair[1]}",
+    )
+    if structural_id != f"{primary_pair[0]}_vs_{primary_pair[1]}":
+        raise RuntimeError("structural comparison does not match primary pair")
+    for name in lens_order:
         expected = str(config["lenses"][name].get("lens_sha256", ""))
         if len(expected) != 64 or any(c not in "0123456789abcdef"
                                       for c in expected):
@@ -138,6 +162,14 @@ def validate_config(config: Mapping) -> None:
             "provenance_classification") != (
                 "external published reference, partially specified recipe"):
         raise RuntimeError("published-reference classification drift")
+
+
+def primary_pair(config: Mapping) -> tuple[str, str]:
+    order = tuple(config["lens_order"])
+    configured = tuple(config["analysis"].get("primary_pair", order[1:]))
+    if configured != order[1:]:
+        raise RuntimeError("functional primary-pair drift")
+    return configured
 
 
 def selected_span_basis(selected_rows: torch.Tensor,
@@ -378,7 +410,7 @@ def _resolve_lens_paths(config: Mapping) -> tuple[dict[str, Path], dict]:
     return paths, contract
 
 
-def _new_state(header: dict) -> dict:
+def _new_state(header: dict, lens_order: Iterable[str]) -> dict:
     return {
         "schema_version": 1,
         "header": header,
@@ -390,14 +422,15 @@ def _new_state(header: dict) -> dict:
                 "prose": [], "bridge": [], "g4": [], "capacity": {},
                 "complete": False,
             }
-            for name in EXPECTED_LENS_ORDER
+            for name in lens_order
         },
     }
 
 
-def _load_or_create_state(path: Path, header: dict) -> dict:
+def _load_or_create_state(path: Path, header: dict,
+                          lens_order: Iterable[str]) -> dict:
     if not path.exists():
-        state = _new_state(header)
+        state = _new_state(header, lens_order)
         atomic_json(path, state)
         return state
     state = json.loads(path.read_text())
@@ -1438,6 +1471,37 @@ def _paired_capacity_difference(
     }
 
 
+def structural_metrics(result: Mapping, config: Mapping) -> dict:
+    left, right = primary_pair(config)
+    comparison_id = config["analysis"].get(
+        "structural_comparison_id", f"{left}_vs_{right}")
+    band = [int(value) for value in config["protocol"]["band"]]
+    assay_key = config["analysis"].get(
+        "structural_assay_key", f"assay_L{min(band)}_L{max(band)}")
+    try:
+        assay = result["aggregate"][comparison_id][assay_key]
+    except KeyError as error:
+        raise RuntimeError(
+            "structural result lacks the configured comparison/assay") \
+            from error
+    task_strata = [
+        "task_answer_only", "task_bridge_only",
+        "task_answer_bridge_shared",
+    ]
+    q50 = min(
+        float(assay[f"token_{name}_direction_cosine_q50"]["median"])
+        for name in task_strata)
+    q05 = min(
+        float(assay[f"token_{name}_direction_cosine_q05"]["median"])
+        for name in task_strata)
+    return {
+        "comparison_id": comparison_id,
+        "assay_key": assay_key,
+        "assay_task_token_median_cosine_conservative": q50,
+        "task_token_q05_conservative": q05,
+    }
+
+
 def _structural_gate(config: Mapping) -> tuple[dict, bool | None]:
     evidence_id = config["analysis"]["structural_evidence_id"]
     try:
@@ -1457,17 +1521,9 @@ def _structural_gate(config: Mapping) -> tuple[dict, bool | None]:
     if file_sha256(path) != output["sha256"]:
         raise RuntimeError("structural result hash mismatch")
     result = json.loads(path.read_text())["payload"]
-    assay = result["aggregate"]["a120_vs_a250"]["assay_L20_L44"]
-    task_strata = [
-        "task_answer_only", "task_bridge_only",
-        "task_answer_bridge_shared",
-    ]
-    q50 = min(
-        float(assay[f"token_{name}_direction_cosine_q50"]["median"])
-        for name in task_strata)
-    q05 = min(
-        float(assay[f"token_{name}_direction_cosine_q05"]["median"])
-        for name in task_strata)
+    metrics = structural_metrics(result, config)
+    q50 = metrics["assay_task_token_median_cosine_conservative"]
+    q05 = metrics["task_token_q05_conservative"]
     thresholds = config["analysis"]["thresholds"]
     gates = {
         "assay_task_token_median_cosine": bool(
@@ -1478,8 +1534,7 @@ def _structural_gate(config: Mapping) -> tuple[dict, bool | None]:
     return {
         "evidence_id": evidence_id,
         "status": "verified-live",
-        "assay_task_token_median_cosine_conservative": q50,
-        "task_token_q05_conservative": q05,
+        **metrics,
         "gates": gates,
         "all_structural_gates_pass": bool(all(gates.values())),
     }, bool(all(gates.values()))
@@ -1678,16 +1733,17 @@ def _pair_summaries(
 def _functional_gates(lens: Mapping, pairs: Mapping,
                       config: Mapping) -> dict[str, bool]:
     thresholds = config["analysis"]["thresholds"]
-    pair = pairs["a120_vs_a250"]
+    left, right = primary_pair(config)
+    pair = pairs[f"{left}_vs_{right}"]
     geometry = pair["selection_geometry"]
     capacity = pair["capacity"]
-    rescue_left = lens["a120"]["bridge"][
+    rescue_left = lens[left]["bridge"][
         "true_vs_distractor_rescue_equal_family_mean"]
-    rescue_right = lens["a250"]["bridge"][
+    rescue_right = lens[right]["bridge"][
         "true_vs_distractor_rescue_equal_family_mean"]
-    preference_left = lens["a120"]["bridge"][
+    preference_left = lens[left]["bridge"][
         "counterfactual_preference_equal_family_mean"]
-    preference_right = lens["a250"]["bridge"][
+    preference_right = lens[right]["bridge"][
         "counterfactual_preference_equal_family_mean"]
 
     def same_sign(left: float, right: float) -> bool:
@@ -1719,8 +1775,8 @@ def _functional_gates(lens: Mapping, pairs: Mapping,
         "g4": bool(
             abs(pair["g4_flip_rate_difference"])
             <= thresholds["g4_flip_rate_difference_max"]
-            and lens["a120"]["g4"]["passes"]
-            and lens["a250"]["g4"]["passes"]),
+            and lens[left]["g4"]["passes"]
+            and lens[right]["g4"]["passes"]),
         "bridge_rescue": bool(
             abs(pair["bridge_rescue_difference"])
             <= thresholds[
@@ -1744,6 +1800,18 @@ def _analyze(
     structural, structural_stable = _structural_gate(config)
     branch = branch_from_gates(
         functional, structural_stable=structural_stable)
+    interpretations = config["analysis"].get(
+        "branch_interpretations", {
+            "A": "functionally stable and structurally improving; fit B120",
+            "B": "functional instability; continue draw A to n=500",
+            "C": (
+                "coordinate structure remains fit-sensitive; tested "
+                "scientific endpoints are functionally stable"),
+            "PENDING_STRUCTURAL": (
+                "functional gate complete; structural event is pending"),
+        })
+    if set(interpretations) != {"A", "B", "C", "PENDING_STRUCTURAL"}:
+        raise RuntimeError("branch-interpretation contract drift")
     return {
         "schema_version": 1,
         "tier": config["tier"],
@@ -1755,24 +1823,28 @@ def _analyze(
         "all_functional_gates_pass": bool(all(functional.values())),
         "structural_gate": structural,
         "branch": branch,
-        "branch_interpretation": {
-            "A": "functionally stable and structurally improving; fit B120",
-            "B": "functional instability; continue draw A to n=500",
-            "C": (
-                "coordinate structure remains fit-sensitive; tested "
-                "scientific endpoints are functionally stable"),
-            "PENDING_STRUCTURAL": (
-                "functional gate complete; structural event is pending"),
-        }[branch],
+        "branch_interpretation": interpretations[branch],
         "published_reference_classification": (
             "external published reference, partially specified recipe"),
     }
 
 
-def _plot_functional(analysis: Mapping, *, png_path: Path,
+def _plot_functional(analysis: Mapping, config: Mapping, *, png_path: Path,
                      pdf_path: Path) -> None:
-    lens_order = EXPECTED_LENS_ORDER
-    labels = ["published\nn=1000", "draw A\nn=120", "draw A\nn=250"]
+    lens_order = list(config["lens_order"])
+    legacy_labels = {
+        "published": "published\nn=1000",
+        "a120": "draw A\nn=120",
+        "a250": "draw A\nn=250",
+    }
+    configured_labels = config["figure"].get("lens_labels", {})
+    labels = [
+        configured_labels.get(
+            lens,
+            legacy_labels.get(lens, config["lenses"][lens]["label"]),
+        )
+        for lens in lens_order
+    ]
     colors = ["#666666", "#0072B2", "#009E73"]
     figure, axes = plt.subplots(2, 2, figsize=(10.8, 7.5))
 
@@ -1785,9 +1857,18 @@ def _plot_functional(analysis: Mapping, *, png_path: Path,
     axis.set_title("A · Span-safe effect beyond exact control", loc="left")
 
     axis = axes[0, 1]
-    comparisons = [
-        "a120_vs_a250", "a250_vs_published", "a120_vs_published"]
-    comparison_labels = ["A120–A250", "A250–pub.", "A120–pub."]
+    pair_order = [tuple(value) for value in config["analysis"]["pair_order"]]
+    comparisons = [f"{left}_vs_{right}" for left, right in pair_order]
+    configured_comparison_labels = config["figure"].get(
+        "comparison_labels", {})
+    comparison_labels = [
+        configured_comparison_labels.get(
+            name,
+            f"{left.upper()}–{right.replace('published', 'pub.')}",
+        )
+        for name, (left, right) in zip(
+            comparisons, pair_order, strict=True)
+    ]
     x = np.arange(len(comparisons))
     jaccard = [analysis["pairs"][name]["selection_geometry"][
         "selected_id_jaccard_median"] for name in comparisons]
@@ -1831,12 +1912,11 @@ def _plot_functional(analysis: Mapping, *, png_path: Path,
     axis.set_title("D · Causal positive control", loc="left")
     axis.legend(frameon=False, fontsize=8)
 
-    figure.suptitle(
+    figure.suptitle(config["figure"].get(
+        "title",
         "Qwen multi-lens functional gate (Phase 4 development)\n"
         "Published comparator: external published reference, partially "
-        "specified recipe",
-        fontsize=11,
-    )
+        "specified recipe"), fontsize=11)
     figure.tight_layout(rect=(0, 0, 1, 0.94))
     png_path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(png_path, dpi=220, bbox_inches="tight")
@@ -1844,13 +1924,14 @@ def _plot_functional(analysis: Mapping, *, png_path: Path,
     plt.close(figure)
 
 
-def _write_raw_frames(state: Mapping, *, output_dir: Path) -> dict[str, Path]:
+def _write_raw_frames(state: Mapping, *, output_dir: Path,
+                      lens_order: Iterable[str]) -> dict[str, Path]:
     paths = {}
     for component in ("primary", "selection", "readout", "prose",
                       "bridge", "g4"):
         frame = pd.concat([
             pd.DataFrame(state["lenses"][lens][component])
-            for lens in EXPECTED_LENS_ORDER
+            for lens in lens_order
         ], ignore_index=True)
         if component == "selection":
             for column in ("selected_ids", "selected_scores"):
@@ -1930,7 +2011,8 @@ def main() -> None:  # noqa: C901
         "bridge_max_new_tokens": int(
             config["bridge_endpoint"]["max_new_tokens"]),
     }
-    state = _load_or_create_state(state_path, header)
+    state = _load_or_create_state(
+        state_path, header, config["lens_order"])
 
     gpu = require_cuda_gpu()
     torch.cuda.reset_peak_memory_stats()
@@ -2038,13 +2120,15 @@ def main() -> None:  # noqa: C901
     selection_pairs = _selection_geometry(
         hf, lens_paths=lens_paths, config=config, state=state,
         output_path=selection_geometry_path)
-    raw_paths = _write_raw_frames(state, output_dir=output_dir)
+    raw_paths = _write_raw_frames(
+        state, output_dir=output_dir, lens_order=config["lens_order"])
     analysis = _analyze(
         state, selection_pairs, capacity_paths, config)
 
     png_path = figures_dir() / f"{config['figure']['stem']}.png"
     pdf_path = figures_dir() / f"{config['figure']['stem']}.pdf"
-    _plot_functional(analysis, png_path=png_path, pdf_path=pdf_path)
+    _plot_functional(
+        analysis, config, png_path=png_path, pdf_path=pdf_path)
     manifest_path = output_dir / "input_manifest.json"
     result_path = output_dir / "functional_gate_result.json"
     input_payload = {
@@ -2108,7 +2192,8 @@ def main() -> None:  # noqa: C901
     ]
     create(
         config["evidence_id"], tier=config["tier"],
-        what=(
+        what=config.get(
+            "registry_what",
             "Fixed Qwen multi-lens functional gate over published n=1000, "
             "draw-A n=120, and draw-A n=250: selection geometry, corrected "
             "capacity, span-safe/exact-control behavior, bridge semantics, "

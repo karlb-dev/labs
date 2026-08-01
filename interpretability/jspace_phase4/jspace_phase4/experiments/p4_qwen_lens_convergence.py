@@ -3,6 +3,9 @@
 This successor to p4f09 keeps that artifact immutable, reuses its exact
 uniform-token and Rademacher-probe draws, and adds identity-adjusted,
 incremental-block, task-token, frequency, and layer-type diagnostics.
+The compared registered milestones and figure wording are config-bound so
+the same audited producer can extend the nested draw-A chain without
+rewriting an earlier evidence event.
 """
 from __future__ import annotations
 
@@ -605,7 +608,9 @@ def _make_omega(*, seed: int, d_model: int,
 def plot_convergence(rows: list[dict], *, primary_id: str,
                      incremental_id: str, assay_layers: tuple[int, int],
                      landmark_layers: list[int], png_path: Path,
-                     pdf_path: Path) -> None:
+                     pdf_path: Path, primary_label: str,
+                     incremental_label: str, title: str,
+                     footer: str) -> None:
     frame = pd.DataFrame(rows)
     primary = frame[frame["comparison_id"] == primary_id].sort_values("layer")
     incremental = frame[
@@ -631,7 +636,7 @@ def plot_convergence(rows: list[dict], *, primary_id: str,
         axis.plot(x, primary[f"{view}_matrix_cosine"], lw=1.7,
                   color=colors[view], label=view.replace("_", " "))
     axis.set_ylabel("matrix cosine")
-    axis.set_title("A · A120 vs A250 operator agreement", loc="left")
+    axis.set_title(f"A · {primary_label} operator agreement", loc="left")
     axis.legend(frameon=False, fontsize=8)
 
     axis = axes[0, 1]
@@ -686,7 +691,7 @@ def plot_convergence(rows: list[dict], *, primary_id: str,
             label="1 − answer-row cosine")
     axis.set_ylabel("disagreement")
     axis.set_xlabel("source layer")
-    axis.set_title("D · A120 vs prompts 121–250 block mean", loc="left")
+    axis.set_title(f"D · {incremental_label}", loc="left")
     axis.legend(frameon=False, fontsize=7)
 
     start, stop = assay_layers
@@ -711,15 +716,9 @@ def plot_convergence(rows: list[dict], *, primary_id: str,
         loc="upper right", bbox_to_anchor=(0.985, 0.985),
         frameon=False, fontsize=8,
     )
-    figure.suptitle(
-        "Qwen3.6-27B draw-A lens convergence: n=120 to n=250",
-        x=0.075, ha="left", fontsize=13,
-    )
+    figure.suptitle(title, x=0.075, ha="left", fontsize=13)
     figure.text(
-        0.075, 0.012,
-        "Development structural sensitivity. Published comparisons in the "
-        "registered table use an external published reference, partially "
-        "specified recipe.",
+        0.075, 0.012, footer,
         fontsize=8, color="#555555",
     )
     figure.tight_layout(rect=(0.04, 0.05, 0.99, 0.94))
@@ -996,17 +995,31 @@ def main() -> None:  # noqa: C901, PLR0915
     result_path = output_dir / "convergence_result.json"
     manifest_path = output_dir / "input_manifest.json"
     token_manifest_path = output_dir / "token_strata_manifest.json"
-    png_path = figures_dir() / "p4f10_qwen_lens_convergence.png"
-    pdf_path = figures_dir() / "p4f10_qwen_lens_convergence.pdf"
+    figure_spec = config["figure"]
+    figure_stem = figure_spec.get(
+        "stem", "p4f10_qwen_lens_convergence")
+    png_path = figures_dir() / f"{figure_stem}.png"
+    pdf_path = figures_dir() / f"{figure_stem}.pdf"
     frame.to_csv(table_path, index=False)
     plot_convergence(
         rows,
-        primary_id=config["figure"]["primary_comparison_id"],
-        incremental_id=config["figure"]["incremental_comparison_id"],
+        primary_id=figure_spec["primary_comparison_id"],
+        incremental_id=figure_spec["incremental_comparison_id"],
         assay_layers=(assay_start, assay_stop),
         landmark_layers=[int(value) for value in recipe["landmark_layers"]],
         png_path=png_path,
         pdf_path=pdf_path,
+        primary_label=figure_spec.get("primary_label", "A120 vs A250"),
+        incremental_label=figure_spec.get(
+            "incremental_label", "A120 vs prompts 121–250 block mean"),
+        title=figure_spec.get(
+            "title",
+            "Qwen3.6-27B draw-A lens convergence: n=120 to n=250"),
+        footer=figure_spec.get(
+            "footer",
+            "Development structural sensitivity. Published comparisons in "
+            "the registered table use an external published reference, "
+            "partially specified recipe."),
     )
 
     token_payload = {
@@ -1087,9 +1100,11 @@ def main() -> None:  # noqa: C901, PLR0915
         "gpu": gpu,
         "published_reference_classification": PUBLISHED_CLASSIFICATION,
         "limitations": [
-            "The published lens is an external published reference, "
-            "partially specified recipe; only A120 versus A250 is a pure "
-            "same-corpus sample-size contrast here.",
+            figure_spec.get(
+                "published_limitation",
+                "The published lens is an external published reference, "
+                "partially specified recipe; only A120 versus A250 is a "
+                "pure same-corpus sample-size contrast here."),
             "Selection geometry and causal equivalence are reserved for the "
             "fixed multi-lens functional gate and cannot be inferred from "
             "this structural evidence.",
@@ -1140,7 +1155,8 @@ def main() -> None:  # noqa: C901, PLR0915
     create(
         config["evidence_id"],
         tier=config["tier"],
-        what=(
+        what=config.get(
+            "registry_what",
             "Task-led Qwen draw-A n=120 versus n=250 structural convergence "
             "with raw/identity-adjusted, incremental-block, frequency, "
             "layer-type, and labeled external-reference diagnostics."),
