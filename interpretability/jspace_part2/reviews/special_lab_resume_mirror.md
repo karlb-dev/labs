@@ -14,13 +14,15 @@ Last static revision: 2026-08-01 (GPU execution + Phase 4.2 plan routing). Updat
 file only when the *setup* changes, not when the science moves.
 
 **Codex permission note (Colab):** the permission profile is fixed when an
-agent session launches; changing the UI switch may not hot-reload the active
-session. Before a long autonomous launch, create `/root/.codex/config.toml`
-with `approval_policy = "never"` and `sandbox_mode = "danger-full-access"`,
-select Full Access, and then start/restart Codex. Verify host GPU visibility
-from that same session before leaving it unattended. The live VM12 session
-had to use persisted scoped approvals because its launch profile remained
-restricted despite the UI switch.
+agent session launches; changing the UI switch does not hot-reload the active
+session. Official guidance distinguishes enabling Full Access in settings
+(which only makes it available) from selecting it for the new chat. Before a
+long autonomous launch, create `/root/.codex/config.toml` with
+`approval_policy = "never"` and `sandbox_mode = "danger-full-access"`, select
+Full Access, and then start/restart Codex. Verify host GPU visibility from that
+same session before leaving it unattended. A managed launch profile can still
+override user config; the live VM12 session therefore used persisted scoped
+approvals despite the UI switch.
 
 **VM9-era setup notes:** (1) model weights now live in HF-cache layout
 under `/content/hf_local` (`HF_HUB_CACHE=/content/hf_local hf download

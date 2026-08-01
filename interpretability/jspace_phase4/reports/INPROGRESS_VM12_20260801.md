@@ -1,6 +1,6 @@
 # LIVE — Phase 4.2 block 2, VM12
 
-Last updated: 2026-08-01 02:52 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-01 03:21 UTC. This is the canonical dynamic handoff.
 The older Drive ledger was archived before this file replaced
 `/content/drive/MyDrive/interpret/inprogress.md`.
 
@@ -27,11 +27,11 @@ The older Drive ledger was archived before this file replaced
 ## Live GPU job
 
 The Qwen draw-A nested fit to n=250 is active. At this ledger boundary the
-durable Drive state is n=228, checkpoint SHA-256
-`e65dd79b377fa46561bb27c67764d74c464b2717ae07f01a35637ba7ebef066f`,
-6,606,047,399 bytes, and the process is computing chunk 228:231. Throughput
-is about 180.16 seconds per new prompt including atomic sync; peak allocated
-VRAM is 62,832,854,016 bytes. The expected finish is about one hour after
+durable Drive state is n=237, checkpoint SHA-256
+`d1f76b60ae7f8a5a77672366bb3b342c69f8a5c3ed91724133af61e40afce730`,
+6,606,047,399 bytes, and the process is computing chunk 237:240. Throughput
+is about 179.97 seconds per new prompt including atomic sync; peak allocated
+VRAM is 62,832,854,016 bytes. The expected finish is roughly 40 minutes after
 this update.
 
 Fit log:
@@ -102,6 +102,12 @@ n=250.
   order published -> A120 -> A250 and checkpoints raw rows every five items.
 - Config still contains `PENDING_REGISTERED_N250_LENS_SHA256`; fill it only
   from the registered n=250 event, then commit before execution.
+- The durable post-fit entrypoint
+  `interpretability/jspace_phase4/run_qwen_postfit_queue.sh` is committed and
+  has a persisted host/GPU approval. It runs convergence, prompt-112
+  influence, the functional gate, and the model-backed mode gate. Between
+  stages it permits exactly one dirty file (the evidence registry), commits
+  and pushes that event, and refuses any unexpected tree change.
 
 ### Bank B
 
@@ -130,8 +136,9 @@ n=250.
   is 0.10 nat/doubling = 0.15849625 nat for load 2 -> 6. Conservative
   minimum power is 0.703/0.806/0.858 at 16/20/24 common families. Figure
   p4f14 is committed in PNG and PDF.
-- Candidate preregistration 0.2 now contains P4-P1's intersection-union
-  endpoint and P4-P3's shared-family max-T endpoint.
+- Candidate preregistration 0.3 now contains P4-P1's intersection-union,
+  P4-P3's shared-family max-T, and P4-P2's exact common-support interaction
+  and directional decision rule. It remains a candidate, not a freeze.
 
 ### Official Qwen mode parser
 
@@ -146,8 +153,14 @@ n=250.
 - Truncation, EOS-inside-reasoning, parse failure, answer omission, and an
   answer before closure remain separate outcomes. Four rationale controls
   are exactly token matched in the golden.
-- **Remaining mode blocker:** model-backed development parser/correctness
-  gate, item families, SESOI/power, and independent review.
+- The model-backed development producer/config are committed as
+  `p4-qwen-mode-gate-dev-v1`. CPU preflight resolves an outcome-blind paired
+  subset of exactly 20 consumed Phase 3 facts / 20 canonical families; eight
+  focused mode tests and the full Phase 4 suite (115 tests) pass. The producer
+  checkpoints every real completion and is queued after the multi-lens gate.
+- **Remaining mode blocker:** run that model-backed parser/correctness gate,
+  then author prospective untouched families plus the SESOI/power ruler and
+  obtain independent review.
 
 ## Immediate queue after n=250
 
@@ -157,51 +170,30 @@ n=250.
    - `configs/p4_qwen_lens_convergence_drawA_dev.yaml`
    - `configs/p4_qwen_multilens_functional_gate_dev.yaml`
    Commit and push that manifest-only boundary.
-3. Run convergence on GPU:
+3. Launch the already-approved, heartbeat-logged host GPU queue:
 
    ```bash
-   env JSPACE4_RUN_ROOT=/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731 \
-     JSPACE4_LOCAL_WORK=/content/sl4_work HF_HUB_CACHE=/content/hf_local \
-     MPLCONFIGDIR=/tmp/matplotlib-phase4 CUDA_VISIBLE_DEVICES=0 \
-     python -m jspace_phase4.experiments.p4_qwen_lens_convergence \
-       --config interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_dev.yaml
+   bash interpretability/jspace_phase4/run_qwen_postfit_queue.sh
    ```
 
-4. Run prompt-112 influence on GPU:
-
-   ```bash
-   env JSPACE4_RUN_ROOT=/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731 \
-     JSPACE4_LOCAL_WORK=/content/sl4_work HF_HUB_CACHE=/content/hf_local \
-     MPLCONFIGDIR=/tmp/matplotlib-phase4 CUDA_VISIBLE_DEVICES=0 \
-     python -m jspace_phase4.experiments.p4_qwen_lens_influence \
-       --config interpretability/jspace_phase4/configs/p4_qwen_lens_influence_prompt112_dev.yaml
-   ```
-
-5. Run the model-backed multi-lens functional gate:
-
-   ```bash
-   env JSPACE4_RUN_ROOT=/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731 \
-     JSPACE4_LOCAL_WORK=/content/sl4_work HF_HUB_CACHE=/content/hf_local \
-     MPLCONFIGDIR=/tmp/matplotlib-phase4 CUDA_VISIBLE_DEVICES=0 \
-     python -m jspace_phase4.experiments.p4_qwen_multilens_functional_gate \
-       --config interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_dev.yaml
-   ```
-
-6. Execute the runner's frozen branch without reinterpretation:
+   It runs and banks convergence -> prompt-112 influence -> multi-lens
+   functional gate -> model-backed official-mode gate. Durable stdout and
+   five-minute GPU heartbeats are written at the Phase 4 run root.
+4. Execute the functional runner's frozen branch without reinterpretation:
    - branch A/C: draw-B n=120;
    - branch B or any load-bearing functional failure: continue draw-A n=500;
    - structural-only failure with every functional/capacity endpoint inside
      SESOI: retain the functionally equivalent canonical lens and label the
      structural nonconvergence.
-7. Keep the GPU occupied with the selected continuation, then finish the
-   model-backed mode development gate and any Phase 4 freeze blockers that
-   fit before reclaim. Never start confirmatory/replication outcomes.
+5. Keep the GPU occupied with the selected continuation and any remaining
+   Phase 4 development/freeze blockers that fit before reclaim. Never start
+   confirmatory/replication outcomes.
 
 ## Reporting and verification queue
 
-- Add Bank B/W/mode protocol and p4f14 to
-  `reports/PHASE4_DEVELOPMENT_REPORT.md` and
-  `reports/handout/jspace_phase4_development.tex`.
+- Bank B/W/mode protocol and p4f14 are integrated into the development MD,
+  TeX, and visually inspected 13-page PDF at commit `139b512`; byte-identical
+  TeX/PDF/PNG/PDF copies are on Drive.
 - Rebuild and visually inspect the PDF after n=250, convergence/influence,
   functional gate, and final branch decision.
 - Run `bash interpretability/jspace_phase4/repro.sh` and require all tests and
@@ -213,11 +205,12 @@ n=250.
 
 ## Permission/session note
 
-This active Codex session was launched with a restricted profile even though
-the UI showed Full Access; that profile cannot be hot-reloaded. Long GPU and
-watchdog processes run independently, and scoped command approvals were
-persisted. `/root/.codex/config.toml` was set to `approval_policy="never"`
-and `sandbox_mode="danger-full-access"` for a future Codex launch, but a new
-VM must recreate that file before starting the session. If Full Access still
-does not propagate, relaunch the agent rather than leaving a long job paused
-at an approval prompt.
+This active Codex session was launched with a managed `workspace-write`
+profile even though Full Access was enabled in the UI. Official Codex guidance
+states that enabling a mode only makes it available; it does not select it or
+change an existing chat, and managed/launch-time policy can override user
+config. Long GPU/watchdog processes run independently and scoped queue
+approval is persisted. `/root/.codex/config.toml` was set to
+`approval_policy="never"` and `sandbox_mode="danger-full-access"` as a future
+launch default, but the new session must still be launched with Full Access
+and may remain constrained by an injected managed profile.
