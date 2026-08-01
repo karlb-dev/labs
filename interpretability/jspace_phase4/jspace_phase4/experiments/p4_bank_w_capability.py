@@ -38,6 +38,7 @@ from ..scoring4 import DEFAULT_SPEC, ScoringSession
 from ..state import StateHeader, StateStore
 from .p4_g5_bank_scoring import tokenizer_source_hash
 from .p4_qwen_nested_lens_fit import (
+    registered_output_check,
     verify_model_fused_bindings,
     verify_package_versions,
 )
@@ -478,12 +479,20 @@ def _candidate_scores(hf_model, session: ScoringSession, prompt: str,
 
 @torch.no_grad()
 def run_model(config_path: Path, config: Mapping, slug: str) -> None:
+    specification = _model_specification(config, slug)
+    existing = registered_output_check(specification["evidence_id"])
+    if existing is not None:
+        print(
+            f"{specification['evidence_id']} is already registered and "
+            "all outputs verify; nothing to do",
+            flush=True,
+        )
+        return
     clean = require_clean_tree()
     protocol, protocol_sha = _require_protocol(config)
     bank, _, _, _, _ = _verify_inputs(config)
     selected = select_development_rows(
         _read_jsonl(bank), config["selection"])
-    specification = _model_specification(config, slug)
     model = model_reference(specification["model_uri"])
     model_path = resolve_uri(specification["model_uri"])
     tokenizer_hash = tokenizer_source_hash(model_path)
