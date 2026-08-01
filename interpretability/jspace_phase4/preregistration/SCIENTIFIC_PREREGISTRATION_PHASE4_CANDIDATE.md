@@ -2,28 +2,30 @@
 
 **CANDIDATE — NOT FROZEN — CONFIRMATORY AND REPLICATION OUTCOMES FORBIDDEN**
 
-Version: candidate 0.5, 2026-08-01.
+Version: candidate 0.6, 2026-08-01.
 Governing plan: `jspace_lab_nextsteps_4_2.md` plus its accepted addendum.
 Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
 
-Candidate 0.5 retains the addendum's R2/R3 amendments before any Phase 4
+Candidate 0.6 retains the addendum's R2/R3 amendments before any Phase 4
 confirmatory or replication intervention outcome: P4-P1 is an
 intersection-union semantic-plus-bridge-specific endpoint, and P4-P3 is a
 shared-family max-T endpoint. It also imports the registered outcome-blind
 methods evidence `p4-bank-w-candidate-v2` and
-`p4-bank-w-power-dev-v1`. It imports the official template/parser methods
-evidence `p4-qwen-mode-parser-gate-dev-v1` and its prospective length-budget
-successor `p4-qwen-mode-parser-gate-dev-v2`, and fixes P4-P2 to the two phases
-structurally shared by thinking on and off. This revision also supersedes Bank
-B v1 with the outcome-blind corrected v2, records its complete independent
-reverification, and imports the negative Bank B power audit plus registered
-feasibility envelope `p4-bank-b-design-feasibility-dev-v1`. The existing
-10-family confirmatory side is not powered at the candidate 0.25-nat joint
-SESOI, and no allocation of the existing 40 families repairs it. Candidate
-0.5 does not select a replacement P4-P1 estimand and does not claim that the
-queued model-backed P4-P2 v2 gate has passed. This document remains a
-candidate; these methods events are not PI sign-off and do not authorize
-untouched outcomes.
+`p4-bank-w-power-dev-v1`, plus prospective capability protocol
+`p4-bank-w-capability-protocol-dev-v1`. It imports the official
+template/parser methods evidence `p4-qwen-mode-parser-gate-dev-v1` and its
+prospective length-budget successor `p4-qwen-mode-parser-gate-dev-v2`, and
+fixes P4-P2 to the two phases structurally shared by thinking on and off. This
+revision also supersedes Bank B v1 with the outcome-blind corrected v2,
+records its complete independent reverification, and imports the negative
+Bank B power audit plus registered feasibility envelope
+`p4-bank-b-design-feasibility-dev-v1`. The existing 10-family confirmatory
+side is not powered at the candidate 0.25-nat joint SESOI, and no allocation
+of the existing 40 families repairs it. Candidate 0.6 does not select a
+replacement P4-P1 estimand, does not claim that the queued model-backed P4-P2
+v2 gate has passed, and contains no Bank W intervention outcome. This document
+remains a candidate; these methods events are not PI sign-off and do not
+authorize untouched outcomes.
 
 ## 1. Question and claim boundary
 
@@ -281,15 +283,25 @@ Monte Carlo sign patterns, seed `48151623`, and the plus-one p-value. No
 intervention outcome may alter the model set. Named estimates, the full load
 slope, and derivation/redundancy interactions are secondary.
 
+Registered prospective methods evidence
+`p4-bank-w-capability-protocol-dev-v1` defines baseline accuracy as the
+argmax of full-sequence log probabilities over the frozen eight-label answer
+set, using raw bank prompts, piecewise answer concatenation, and summed token
+log probability. The corresponding true-versus-best-wrong margin is recorded.
+The exact answer-token sequences are pinned for all three model tokenizers.
+
 Before intervention outcomes are opened, each model must have baseline
-accuracy at least 0.70 at both load endpoints, a family-bootstrap 90% CI for
-the paired high-minus-low accuracy change wholly inside `[-0.08, +0.08]`,
-and a joint intersection of at least 20 canonical families across all
-eligible models. Baseline answer margin, prompt token count, and answer token
-count are locked secondary covariate sensitivities; they cannot rescue a
-failed primary capability gate. A failed
-model is descriptive only and cannot support “working-set” or
-“working-memory” language.
+candidate-set accuracy at least 0.70 at both load endpoints and a
+family-bootstrap 90% CI for the paired high-minus-low accuracy change wholly
+inside `[-0.08, +0.08]`. These two gates are applied independently to each
+model. The primary model set is every independently passing model, after which
+at least 20 canonical families must have within-family accuracy at least 0.70
+at both loads for every model in that set. If that joint intersection fails,
+P4-P3 remains blocked; an otherwise eligible model cannot be dropped to
+manufacture support. Baseline answer margin, prompt token count, and answer
+token count are locked secondary covariate sensitivities; they cannot rescue
+a failed primary capability gate. A failed model is descriptive only and
+cannot support “working-set” or “working-memory” language.
 
 The frozen SESOI is 0.10 nat per doubling of load, equal to
 `0.10 * log2(6/2) = 0.15849625` nat for the primary endpoint contrast.
@@ -360,8 +372,9 @@ transport gate, and regenerates final figures.
       common-support interaction statistic, and prospective v2 token budget;
       [ ] fresh v2 model-backed correctness gate, families, power, SESOI, and
       split.
-- [x] Bank W task/load ladder, shortcut thresholds, capability ruler,
-      power, SESOI, and split; [ ] model-specific baseline capability gates.
+- [x] Bank W task/load ladder, shortcut thresholds, exact capability protocol,
+      power, SESOI, and split; [ ] three model-specific baseline capability
+      gates and joint common-support decision.
 - [x] Exact directional decision wording for P4-P1, P4-P2, and P4-P3.
 - [ ] Development gates all pass without untouched-family outcomes.
 - [ ] Environment lock and model/lens/tokenizer manifests are complete.

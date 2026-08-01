@@ -727,9 +727,10 @@ bridge-specific contrast cannot license an abstract bridge route.
 
 ### Bank W factorial and joint max-T power
 
-Live methods evidence: `p4-bank-w-candidate-v2` and
-`p4-bank-w-power-dev-v1`. Candidate v2 supersedes v1 without changing any
-row or partition hash.
+Live methods evidence: `p4-bank-w-candidate-v2`,
+`p4-bank-w-power-dev-v1`, and
+`p4-bank-w-capability-protocol-dev-v1`. Candidate v2 supersedes v1 without
+changing any row or partition hash.
 
 Bank W has 72 canonical templates (12 per superfamily), eight seeds per
 family, and 4,608 rows. It fully crosses load 2/6, supplied/derived state,
@@ -761,8 +762,22 @@ rates were 0.040--0.050. Under the conservative independent heavy-tailed
 case, minimum power over the single-active-model alternatives was 0.703,
 0.806, and 0.858 at 16, 20, and 24 common families. Therefore the initial
 16-family floor was underpowered and is superseded by 20; the planned
-24-family confirmatory side clears the 0.80 target. Model-specific baseline
-capability gates and independent review remain pending.
+24-family confirmatory side clears the 0.80 target.
+
+The registered prospective capability protocol fixes the remaining baseline
+screen before model outcomes. For each of the 24 development families and
+eight seeds, it scores the low/high internally derived, stated-once prompts
+against the full eight-answer candidate set with summed sequence log
+probability. Candidate-set accuracy must be at least 0.70 at each load and the
+family-bootstrap 90% interval for high-minus-low accuracy must lie wholly
+inside [-0.08, +0.08]. The primary model set contains every independently
+passing model; it additionally requires at least 20 families capable at both
+loads across that whole set. A joint-support failure blocks P4-P3 rather than
+drops an otherwise eligible model. Answer margin, prompt length, and answer
+token count are locked secondaries and cannot rescue a failure. The Qwen
+baseline is pre-frozen in the A500 post-fit queue; the two OLMo model gates and
+independent review remain pending. No Bank W intervention outcome has been
+opened.
 
 ### Official Qwen mode/parser gate
 
@@ -894,8 +909,9 @@ amended mode-v2 baseline are frozen before their outcomes.
 
 Next: complete n=500 and apply the frozen A250-to-A500 structural/functional
 decision path; prospectively revise and re-audit the Bank B design and the
-Qwen P4-P2 mode protocol; run Bank W model-specific capability gates; and
-obtain independent review and PI sign-off.
+Qwen P4-P2 mode protocol; execute the queued Qwen Bank W capability gate and
+stage the two OLMo capability gates; and obtain independent review and PI
+sign-off.
 
 Confirmatory Phase 4 remains blocked on preregistration freeze and
 untouched data.
