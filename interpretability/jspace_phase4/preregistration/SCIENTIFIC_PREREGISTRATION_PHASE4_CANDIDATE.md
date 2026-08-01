@@ -2,9 +2,17 @@
 
 **CANDIDATE — NOT FROZEN — CONFIRMATORY AND REPLICATION OUTCOMES FORBIDDEN**
 
-Version: candidate 0.1, 2026-07-31.
-Governing plan: `jspace_lab_nextsteps_4_1.md` plus addendum §§3–5.
+Version: candidate 0.2, 2026-08-01.
+Governing plan: `jspace_lab_nextsteps_4_2.md` plus its accepted addendum.
 Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
+
+Candidate 0.2 adopts the addendum's R2/R3 amendments before any Phase 4
+confirmatory or replication intervention outcome: P4-P1 is an
+intersection-union semantic-plus-bridge-specific endpoint, and P4-P3 is a
+shared-family max-T endpoint. It also imports the registered outcome-blind
+methods evidence `p4-bank-w-candidate-v2` and
+`p4-bank-w-power-dev-v1`. This document remains a candidate; these methods
+events are not PI sign-off and do not authorize untouched outcomes.
 
 ## 1. Question and claim boundary
 
@@ -14,18 +22,23 @@ when the fitted J transport is valid.
 
 The compact confirmatory family is:
 
-- **P4-P1 — Qwen bridge substitution.** On untouched families,
-  counterfactual bridge substitution increases
-  `LP(counterfactual answer) - LP(original answer)` relative to a
-  geometry-matched unrelated substitution.
+- **P4-P1 — Qwen bridge-specific substitution.** On untouched families,
+  counterfactual bridge substitution must increase
+  `LP(counterfactual answer) - LP(original answer)` relative both to a
+  geometry-matched unrelated substitution (semantic movement) and to a
+  counterfactual-answer-direction substitution (bridge specificity). The
+  endpoint rejects only when both one-sided family tests reject; its single
+  p-value is their maximum.
 - **P4-P2 — Qwen mode by phase.** The span-safe bridge/J effect on final
   generation quality interacts with official thinking mode and intervention
   phase (prefill, reasoning, final answer).
-- **P4-P3 — controlled load engagement.** The span-safe J-specific effect
-  rises from the frozen low-load endpoint to the frozen high-load endpoint
-  relative to the exact instantaneous rank-and-energy control on at least
-  one preregistered model; the OLMo-pair/Qwen model-by-load interaction is
-  estimated.
+- **P4-P3 — controlled load engagement.** For the capability-eligible subset
+  of the frozen OLMo-3.1 Think, OLMo-3.1 Instruct, and Qwen 3.6-27B model
+  set, the maximum studentized high-load dependence rejects under one joint
+  shared-family sign-flip distribution. Eligibility is fixed from baseline
+  capability before intervention outcomes are opened; no model is selected
+  from the intervention pattern. Named model slopes and the OLMo-pair/Qwen
+  interaction are secondary.
 
 OLMo lineage is estimation-first. No adjacent-checkpoint contrast enters the
 primary family unless a pre-outcome development transition, a new untouched
@@ -77,10 +90,20 @@ are on CUDA. Model-scale CPU fallback is prohibited.
 
 ## 4. P4-P1 bridge bank and intervention
 
-Before freeze, Bank B must contain at least 40 canonical relation families
-with 4–6 facts per family, one true bridge, two plausible counterfactual
-bridges, original/counterfactual answers, and direct/composed/
-bridge-supplied/counterfactual-supplied variants.
+The registered outcome-blind candidate `p4-bank-b-candidate-v1` contains 40
+canonical relation families, four facts per family (160 facts), one unique
+true bridge per fact, two plausible counterfactual bridges per fact, and two
+second-hop relations per fact. Its family split is 20 development / 10
+confirmatory / 10 replication with payload SHA-256
+`b88f3ae881c359ed949dd5871d2b98dc27c17aa368b1a4b52fa791b26e410114`.
+It has zero exact overlap with the registered prior contract and zero entity
+overlap across partitions.
+
+This bank is **not freeze-ready**: all 160 facts currently have only the
+pinned `countryinfo==0.1.2` source record and zero have completed the required
+independent source verification. No untouched Bank B outcome may be opened
+until those verification rows and ambiguity notes are complete and
+registered.
 
 Every item requires:
 
@@ -101,12 +124,25 @@ counterfactual-answer direction only.
 Injection sign and dose are fixed using geometry and activation scale on a
 development split without answer outcomes.
 
-Primary item statistic:
+The two primary item statistics use the counterfactual-versus-original log
+probability margin `M = LP(cf) - LP(orig)`:
 
 ```text
-[LP(cf) - LP(orig)] counterfactual bridge injection
-- [LP(cf) - LP(orig)] matched unrelated injection
+semantic_i = M_i(counterfactual bridge injection)
+             - M_i(geometry-matched unrelated injection)
+
+bridge_specific_i = M_i(counterfactual bridge injection)
+                    - M_i(counterfactual-answer-direction injection)
+
+p_P4P1 = max(p_semantic, p_bridge_specific)
 ```
+
+Both component tests are one-sided equal-family sign flips in the positive
+direction. P4-P1 rejects only when `p_P4P1` rejects. Semantic rejection
+without bridge-specific rejection licenses semantic substitution but not an
+abstract bridge route. Generation is separately classified as original,
+counterfactual, ambiguous, or other-invalid; movement mainly to
+other-invalid is disruption, not substitution.
 
 Named secondaries are absolute original/counterfactual calibration,
 original/counterfactual/other-invalid generation trichotomy, true protection
@@ -134,27 +170,70 @@ outcomes.
 
 ## 6. P4-P3 controlled load and capability guard
 
-Bank W uses six task superfamilies with nested low-to-high load, matched
-prompt length controls, shortcut audits, and family-level splits. The primary
-statistic is the family-weighted high-minus-low change in J-specific effect.
-A hierarchical full-ladder slope is secondary.
+Registered candidate `p4-bank-w-candidate-v2` contains 72 canonical template
+families (12 in each of six superfamilies), eight item seeds per family, and
+4,608 rows. It fully crosses:
 
-Before freeze, each model must either:
+- load: two versus six simultaneously relevant state elements;
+- derivation: supplied versus internally derived state; and
+- redundancy: state stated once versus repeated in full.
 
-1. meet a prespecified baseline-accuracy flatness/equivalence criterion
-   across the primary load endpoints; or
-2. use a frozen baseline-capability covariate model and retain sufficient
-   overlap at every load.
+The frozen primary cell is internally derived, stated once. All eight cells
+have 576 rows, answers and target positions are exactly balanced, no query
+contains its answer, first/last/frequency shortcuts equal load-specific
+chance, and the exact pinned Qwen tokenizer gives a zero-token within-seed
+prompt-length span. Development / confirmatory / replication each contain 24
+disjoint families. The partition payload SHA-256 is
+`361acad0f38f0662d8f7cb2648689915dcefdce5f2f778f4067fcf348a784238`.
 
-If neither is satisfied, that model’s load effect is descriptive and cannot
-support “working-set” or “working-memory” language.
+For model `m` and load `l`:
+
+```text
+specific_m(l) = [J_m(l) - baseline_m(l)]
+                - [matched_m(l) - baseline_m(l)]
+
+D_m = -[specific_m(high, derived, once)
+        - specific_m(low, derived, once)]
+
+T = max_m D_m / SE_family(D_m)
+```
+
+Positive `D_m` means greater J-specific damage at high load. The max is over
+the capability-eligible subset of the three frozen models. The same sign is
+applied to a canonical family across every eligible model, preserving their
+pairing. With more than 20 families the primary uses 100,000 deterministic
+Monte Carlo sign patterns, seed `48151623`, and the plus-one p-value. No
+intervention outcome may alter the model set. Named estimates, the full load
+slope, and derivation/redundancy interactions are secondary.
+
+Before intervention outcomes are opened, each model must have baseline
+accuracy at least 0.70 at both load endpoints, a family-bootstrap 90% CI for
+the paired high-minus-low accuracy change wholly inside `[-0.08, +0.08]`,
+and a joint intersection of at least 20 canonical families across all
+eligible models. Baseline answer margin, prompt token count, and answer token
+count are locked secondary covariate sensitivities; they cannot rescue a
+failed primary capability gate. A failed
+model is descriptive only and cannot support “working-set” or
+“working-memory” language.
+
+The frozen SESOI is 0.10 nat per doubling of load, equal to
+`0.10 * log2(6/2) = 0.15849625` nat for the primary endpoint contrast.
+Registered simulation `p4-bank-w-power-dev-v1` used a conservative 0.23-nat
+family SD, independent-model and empirical-correlation nulls, normal and
+symmetric Student-t(5) effects, and 1,000 simulations per scenario. Type-I
+rates were 0.040–0.050. Conservative minimum power at the SESOI was 0.703,
+0.806, and 0.858 at 16, 20, and 24 common families, respectively. Therefore
+v1's 16-family floor is superseded by 20; the planned 24-family confirmatory
+side clears the 0.80 target.
 
 ## 7. Randomization, intervals, and multiplicity
 
 - The unit of inference is canonical family.
-- P4-P1 uses family sign flips on within-item substitution contrasts.
+- P4-P1 uses two one-sided family sign flips and the intersection-union
+  p-value `max(p_semantic, p_bridge_specific)`.
 - P4-P2 uses the frozen within-family factorial contrast.
-- P4-P3 uses the frozen high-minus-low family contrast.
+- P4-P3 uses the shared-family, one-sided max-T statistic over the frozen
+  capability-eligible model set.
 - Enumerate all sign patterns when feasible; otherwise use at least 100,000
   deterministic draws and the plus-one p-value.
 - Report equal-family and item-weighted estimates.
@@ -163,8 +242,8 @@ support “working-set” or “working-memory” language.
 - Holm correction covers the three P4 primary p-values.
 - Family leave-one-out and first/canonical alias views are sensitivities, not
   alternative decision rulers.
-- SESOI and power targets must be filled from outcome-blind simulation before
-  freeze.
+- The P4-P3 SESOI/power ruler is fixed by `p4-bank-w-power-dev-v1`.
+  P4-P1 and P4-P2 SESOI/power rulers remain required before freeze.
 
 ## 8. Structured stop rules
 
@@ -196,13 +275,15 @@ transport gate, and regenerates final figures.
 
 ## 10. Items that must be fixed before PI sign-off
 
-- [ ] Bank B final family count, sources, power, SESOI, and split hash.
+- [x] Bank B family count and split hash; [ ] independent sources, power,
+      and SESOI.
 - [ ] P4-P1 geometry/dose tolerances and exact model/config revisions.
 - [ ] P4-P2 official templates, parser tolerance, primary quality metric,
       interaction statistic, families, power, and split.
-- [ ] Bank W task/load ladder, shortcut thresholds, capability
-      flatness/equivalence margin or covariate formula, power, and split.
-- [ ] Holm decision wording and directional alternatives.
+- [x] Bank W task/load ladder, shortcut thresholds, capability ruler,
+      power, SESOI, and split; [ ] model-specific baseline capability gates.
+- [x] P4-P1 intersection-union and P4-P3 max-T directional wording; [ ]
+      exact P4-P2 decision wording.
 - [ ] Development gates all pass without untouched-family outcomes.
 - [ ] Environment lock and model/lens/tokenizer manifests are complete.
 - [ ] Independent reviewer verifies no Phase 4 outcome leakage.
