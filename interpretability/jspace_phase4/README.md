@@ -34,23 +34,23 @@ through logical URIs. Scientific modules must not embed machine paths.
 
 ## Phase 4.2 resumable work block
 
-The Qwen Draw A continuation resumes from the highest contract-matched
-local/Drive checkpoint and refuses CPU or slow-kernel fallback. The durable
-wrapper also locks the run, writes a heartbeat/log, and banks the registry
-append on completion:
+The registered post-A500 decision is Branch B. Its Qwen Draw A continuation
+is intentionally paused at the durable n=554 checkpoint for a VM handoff:
+
+```text
+checkpoint SHA-256: bf992067d690123109198c182a21169379e5752d89e73e96514fab7127fba74d
+checkpoint bytes:   6,606,047,399
+next chunk:         554:557
+```
+
+n=554 is a restart boundary, not a registered evidence milestone. The
+continuation resumes from the highest contract-matched local/Drive checkpoint
+and refuses CPU or slow-kernel fallback. Read both handoffs before recovery:
 
 ```bash
 export JSPACE4_RUN_ROOT=/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731
 export JSPACE4_LOCAL_WORK=/content/sl4_work
 export HF_HUB_CACHE=/content/hf_local
-bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n500
-```
-
-Do not launch a duplicate while `qwen_continuation_fit.lock` is held. Read the
-dynamic handoff before recovery because it records any temporary storage
-routing needed by the current VM:
-
-```bash
 cat /content/resume-phase-4-2.md
 cat /content/drive/MyDrive/interpret/inprogress.md
 ```
@@ -66,8 +66,9 @@ bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
 ```
 
 The router verifies the registered result envelope and exact frozen wording;
-the live result is Branch B, so it continues with `draw_a_n1000`. A/C would
-continue with `draw_b_n120`.
+the registered result is Branch B, so it continues with `draw_a_n1000` and
+must print `resuming from checkpoint: 554/...`. A/C would continue with
+`draw_b_n120`. Do not launch a duplicate while either lock is held.
 
 The lower-level producer remains available for exact recovery diagnostics:
 
@@ -76,6 +77,14 @@ python -m jspace_phase4.experiments.p4_qwen_nested_lens_fit \
   --config interpretability/jspace_phase4/configs/p4_qwen_nested_lens_fit_dev.yaml \
   --draw draw_a --stop-at 1000
 ```
+
+The handoff-time whole-registry audit accounts for 218/220 live outputs with
+no hash mismatch. Two files from the older A120--A250 functional-gate event
+are absent: `state.json` (expected SHA-256 `361bda08...f45e8`) and
+`capacity_reconstructions_a120.pt` (expected `6b0399df...51b6f`). The missing
+published reconstruction was restored from an exact hash-verified backup.
+See the handoffs for full paths and hashes; do not fabricate the remaining
+bytes or edit the append-only registry.
 
 The n=250 convergence, retained prompt-112 influence, functional Branch-B
 gate, A500 fit and successor gates, passing mode-v2 baseline, Qwen Bank-W

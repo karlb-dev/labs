@@ -1,6 +1,6 @@
 # Resume Phase 4.2 — restart-safe handoff
 
-Generated 2026-08-01 20:15 UTC on VM12. Phase 4 is development-only. Never
+Generated 2026-08-01 23:26 UTC on VM12. Phase 4 is development-only. Never
 open confirmatory or replication intervention outcomes before independent
 review, PI sign-off, a freeze commit, and a freeze tag.
 
@@ -25,7 +25,9 @@ Read the fuller live ledger at:
 - Last registered compute commit: `f73614d6288179e73a496283dcd10090f76f2815`
 - Registry: 63 append-only events
 - Tests after merge: 153 passed
-- User-reported soft reclaim: approximately 22:50 UTC
+- A1000 was intentionally paused at the clean n=554 checkpoint for a VM
+  handoff. No fitter/router process, lock inode holder, or GPU compute process
+  remained after the pause audit.
 
 The CPU preparation branch is merged. The A500 event, four post-fit events,
 and their commits are pushed. All registered post-fit outputs have verified
@@ -79,25 +81,31 @@ heavy-tail row; no outcome-dependent trimming occurred.
 p4f19, p4f20, and p4f21 were visually inspected and copied into the report
 figure directory with hashes matching their registered outputs.
 
-## Immediate continuation
+## Paused A1000 continuation
 
-First finish, compile, visually inspect, commit, push, and mirror the current
-report integration. The worktree must then be clean.
-
-Launch the already-frozen mechanical router:
+The report/PDF integration is pushed at
+`3b041735d8b842de46a9c0a474fccd0c44e0841a`. The frozen router verified the
+registered functional-result hash, resolved Branch B, and launched:
 
 ```bash
-cd /content/labs
-bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
+bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n1000
 ```
 
-It must resolve Branch B and emit:
+The producer recovered exact n=500 and banked atomic three-prompt
+checkpoints through the intentional handoff boundary:
 
-```json
-{"branch":"B","continuation":"draw_a_n1000"}
-```
+| field | value |
+|---|---|
+| prompts banked | 554 / 1000 |
+| checkpoint SHA-256 | `bf992067d690123109198c182a21169379e5752d89e73e96514fab7127fba74d` |
+| checkpoint-state SHA-256 | `cc5478c836023183ec974d30a2c6eae7e1f7856d50fedac96c24ef35cfa3590d` |
+| checkpoint bytes | 6,606,047,399 |
+| seconds/new prompt | 178.48 |
+| peak allocated VRAM | 62.846 GB |
+| process state | intentionally paused; no owner |
+| next chunk | 554:557 |
 
-Then it execs the unchanged continuation fitter. Monitor:
+Authoritative recovery files and prior router log:
 
 ```text
 /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_frozen_branch_followup_20260801.log
@@ -105,14 +113,67 @@ Then it execs the unchanged continuation fitter. Monitor:
 /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/lens/qwen36-27b/nested_fit/draw_a/recovery/checkpoint_state.json
 ```
 
-A500--A1000 is approximately 24.4 hours at the observed 175.66 seconds per
-prompt. This VM can only make partial, checkpointed progress. Preserve the
-highest valid atomic checkpoint before reclaim and never register a partial
-pseudo-milestone.
+All continuation diagnostics through prompt 554 are finite. Prompts 541 and
+542 are retained local-tail rows at 25.727 and 36.435 respectively, still
+below the later-A500 maximum 79.579 and the retained prompt-323 maximum
+173.345; no outcome-dependent trimming occurred.
 
-Do not launch a duplicate fitter. Check process, lock, GPU, log, and recovery
-header first. If no process owns the run, rerun the same router/continuation
-from a clean branch; it must recover the highest valid checkpoint.
+At the measured rate, n=554--1000 alone requires about 22.1 compute hours,
+before successor gates and report integration. n=554 is a recovery boundary,
+not a registered evidence milestone and not a canonical-lens decision.
+
+The wrapper was intentionally interrupted with exit code 130 only after the
+n=554 checkpoint was mirrored and rehashed. Its next loop announced 554:557
+and loaded n=554, but prompt 555 was never processed. The zero-byte lockfile
+paths remain on Drive as normal `flock` targets; no process holds them.
+
+### Exact next-VM restart
+
+1. Mount the same Drive root and check out/pull clean branch
+   `interp_jspace_part2` in `/content/labs`.
+2. Read this file and `/content/drive/MyDrive/interpret/inprogress.md`.
+3. Verify `checkpoint_state.json` reports `n_done=554`, then rehash
+   `recovery/fit.ckpt` to the checkpoint SHA above. Check that no fitter,
+   router, lock holder, or GPU process already owns the run.
+4. Provide the frozen runtime and Qwen cache (default
+   `HF_HUB_CACHE=/content/hf_local`) for exact model revision
+   `6a9e13bd6fc8f0983b9b99948120bc37f49c13e9`.
+5. From the clean repository run:
+
+```bash
+bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
+```
+
+The router must reverify the registered functional-result hash, resolve
+Branch B, and print `resuming from checkpoint: 554/...`. Do not launch the
+lower-level fitter in parallel, delete the recovery pair, or register n=554
+as a partial pseudo-milestone.
+
+## Drive durability audit
+
+The 23:25 UTC whole-registry pass checked 49 live events and 220 output
+references. It found no wrong hashes, but three paths from the older
+`p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1` event were
+absent. The published reconstruction was restored byte-for-byte from the
+hash-verified A250--A500 backup and now matches registered SHA-256
+`ebe0c641115b40db089412fb969e8c37eef90a7992a40996c4277d9dac43d703`.
+
+Thus 218/220 live outputs are hash-accounted. These two older registered paths
+remain missing and keep whole-registry verification red:
+
+```text
+state.json
+expected 361bda08e9ffbe1d333fd3cfaf3c7b9545e6a3504246a16dd8b0c07ad26f45e8
+
+capacity_reconstructions_a120.pt
+expected 6b0399df2c57158e7fdad24274e50f8c1058021d233412afdcc5177f6c651b6f
+```
+
+Both belong under the registered A120--A250 functional-gate result directory.
+No preserved exact copy was found on this VM. Do not fabricate bytes, edit the
+registry, or rerun model-scale work on CPU. Recover exact bytes from backup or
+version history if available; otherwise use a reviewed append-only correction
+plan, then rerun `jspace-phase4 verify`.
 
 ## Other remaining work
 
@@ -125,8 +186,8 @@ from a clean branch; it must recover the highest valid checkpoint.
 - Make a substantive reviewed Bank-B replacement-design or estimation-only
   decision. The current 0.25-nat IUT is not repairable by reallocating 40
   families.
-- Restore/confirm Drive cloud durability, then run a fresh whole-registry
-  output verification.
+- Recover the two missing older A120--A250 functional-gate outputs above,
+  confirm Drive cloud durability, and rerun whole-registry verification.
 - Obtain independent protocol review and PI sign-off.
 
 ## Hard governance boundary

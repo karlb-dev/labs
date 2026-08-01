@@ -1009,7 +1009,25 @@ verification/power/feasibility, Bank W authoring/power/Qwen capability, and
 the passing Qwen mode-v2 baseline are banked. The frozen A250--A500 rule
 emitted Branch B and routes the next fit to draw A n=1000.
 
-Next: preserve a restartable A1000 continuation; run the two OLMo Bank-W
+The A1000 continuation is intentionally paused for a VM handoff at its exact
+n=554 recovery boundary (checkpoint SHA-256
+`bf992067d690123109198c182a21169379e5752d89e73e96514fab7127fba74d`,
+6,606,047,399 bytes). All continuation diagnostics through prompt 554 are
+finite; prompts 541 and 542 are retained local-tail rows at 25.727 and 36.435,
+still below the retained A500 tail envelope. This partial checkpoint is not a
+registered evidence milestone and nominates no canonical lens. Resume through
+the frozen router; approximately 22.1 compute hours remain at the measured
+178.48 seconds per new prompt.
+
+The handoff-time registry audit hash-accounted 218/220 live outputs with no
+wrong hashes. The two remaining absent paths belong to the older A120--A250
+functional-gate event (`state.json`, expected `361bda08...f45e8`, and
+`capacity_reconstructions_a120.pt`, expected `6b0399df...51b6f`). Exact-byte
+recovery and a clean rerun of `jspace-phase4 verify` remain freeze blockers;
+the append-only registry must not be rewritten.
+
+Next: complete the restartable A1000 continuation and its frozen successor
+decision; run the two OLMo Bank-W
 capability gates and compute joint common support; review and, if approved,
 execute the consumed-development P4-P2 variance pilot before fixing its
 SESOI/power/split; make the substantive Bank B status/design decision; and
