@@ -1,0 +1,318 @@
+{
+ "all_protocol_gates_pass": true,
+ "chat_template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+ "config_sha256": "f1413348cece558f6b722f66dd975a286055f26d59a73a07f18847bf7188f817",
+ "evidence_id": "p4-qwen-mode-parser-gate-dev-v2",
+ "freeze_ready": false,
+ "gate_checks": {
+  "answers_only_graded_in_final_phase": true,
+  "complete_goldens_parse": true,
+  "eos_inside_reasoning_fails_parse": true,
+  "official_mode_prompts_distinct": true,
+  "primary_uses_only_common_mode_phases": true,
+  "rationale_controls_token_matched": true,
+  "template_hash_matches": true,
+  "thinking_off_reasoning_cell_marked_structurally_absent": true,
+  "thinking_off_starts_final_answer_at_generation": true,
+  "thinking_on_opens_reasoning_at_generation": true,
+  "truncation_stays_separate": true
+ },
+ "generation": {
+  "do_sample": false,
+  "golden_final_answer": "amber",
+  "golden_reasoning_text": "The user explicitly requests amber, so I should return amber.",
+  "max_new_tokens": 2048,
+  "stop_reason_values": [
+   "eos",
+   "length",
+   "error"
+  ],
+  "truncation_status_is_separate": true
+ },
+ "generation_code_commit": "9f619a9457c0e9b8ddb8c5fa7e6f16957888a319",
+ "goldens": {
+  "thinking_off_complete": {
+   "answer": {
+    "final_match_indices": [
+     18
+    ],
+    "parse_failure": false,
+    "reasoning_match_indices": [],
+    "status": "accepted_answer_in_final"
+   },
+   "full_token_ids_sha256": "47f880708ab889566ede8de3654729d5084ef3cc9c095bf3e34d2e181c886246",
+   "outcome": {
+    "answer_boundary_status": "accepted_answer_in_final",
+    "answer_omission": false,
+    "eligible_for_final_answer_grading": true,
+    "parse_errors": [],
+    "parse_failure": false,
+    "parse_valid": true,
+    "stop_reason": "eos",
+    "truncated": false
+   },
+   "parse": {
+    "errors": [],
+    "phase_counts": {
+     "final_answer": 2,
+     "prefill": 18,
+     "reasoning": 0
+    },
+    "reasoning_open_at_generation": false,
+    "valid": true
+   }
+  },
+  "thinking_on_complete": {
+   "answer": {
+    "final_match_indices": [
+     30
+    ],
+    "parse_failure": false,
+    "reasoning_match_indices": [],
+    "status": "accepted_answer_in_final"
+   },
+   "full_token_ids_sha256": "e4e3dc1de1a68c73243ce4bcad1162d4e5e88c616ade536887fac06d13c3c9b4",
+   "outcome": {
+    "answer_boundary_status": "accepted_answer_in_final",
+    "answer_omission": false,
+    "eligible_for_final_answer_grading": true,
+    "parse_errors": [],
+    "parse_failure": false,
+    "parse_valid": true,
+    "stop_reason": "eos",
+    "truncated": false
+   },
+   "parse": {
+    "errors": [],
+    "phase_counts": {
+     "final_answer": 3,
+     "prefill": 16,
+     "reasoning": 13
+    },
+    "reasoning_open_at_generation": true,
+    "valid": true
+   }
+  },
+  "thinking_on_eos_inside_reasoning": {
+   "parse_errors": [
+    "eos_inside_reasoning",
+    "unclosed_reasoning"
+   ],
+   "parse_valid": false
+  },
+  "thinking_on_length_truncation": {
+   "outcome": {
+    "answer_boundary_status": "answer_omitted",
+    "answer_omission": true,
+    "eligible_for_final_answer_grading": false,
+    "parse_errors": [
+     "unclosed_reasoning"
+    ],
+    "parse_failure": true,
+    "parse_valid": false,
+    "stop_reason": "length",
+    "truncated": true
+   },
+   "parse_errors": [
+    "unclosed_reasoning"
+   ]
+  }
+ },
+ "hook_phase_support": {
+  "thinking_off": {
+   "all": true,
+   "final_answer": true,
+   "prefill": true,
+   "reasoning": false
+  },
+  "thinking_on": {
+   "all": true,
+   "final_answer": true,
+   "prefill": true,
+   "reasoning": true
+  }
+ },
+ "model_id": "Qwen/Qwen3.6-27B",
+ "model_revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+ "official_prompts": {
+  "thinking_off": {
+   "enable_thinking": false,
+   "n_tokens": 18,
+   "rendered_prompt_sha256": "6f90db5ab263f18c1054baec787d4038ae5a0093183f8785cf9fa1ca16b50d23",
+   "rendered_text": "<|im_start|>user\nReturn only the word amber.<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n",
+   "token_ids": [
+    248045,
+    846,
+    198,
+    5423,
+    1132,
+    279,
+    3299,
+    65326,
+    13,
+    248046,
+    198,
+    248045,
+    74455,
+    198,
+    248068,
+    271,
+    248069,
+    271
+   ],
+   "token_ids_sha256": "58fb785981953faf31f39a85ac36b27abeb93a9bc51cc024cdc284621aa5efd6"
+  },
+  "thinking_on": {
+   "enable_thinking": true,
+   "n_tokens": 16,
+   "rendered_prompt_sha256": "a47b468b8c93649cbb4303cb7f4d29b838a2344d1a008ddbece25b7656311bc2",
+   "rendered_text": "<|im_start|>user\nReturn only the word amber.<|im_end|>\n<|im_start|>assistant\n<think>\n",
+   "token_ids": [
+    248045,
+    846,
+    198,
+    5423,
+    1132,
+    279,
+    3299,
+    65326,
+    13,
+    248046,
+    198,
+    248045,
+    74455,
+    198,
+    248068,
+    198
+   ],
+   "token_ids_sha256": "e1c71ec1520b480d8853224a3bd80bdaa5ba887ed99b183b83d61adff818f724"
+  }
+ },
+ "outcome_blinding": "Tokenizer/template methods only; no model weights or Phase 4 intervention outcomes loaded.",
+ "parser": {
+  "eos_text": "<|im_end|>",
+  "eos_token_ids": [
+   248046
+  ],
+  "parse_failure_rate_maximum": 0.02,
+  "reasoning_end_ids": [
+   248069
+  ],
+  "reasoning_end_text": "</think>",
+  "reasoning_start_ids": [
+   248068
+  ],
+  "reasoning_start_text": "<think>",
+  "require_closed_reasoning": true,
+  "version": "p4-phase-parser-v2"
+ },
+ "primary": {
+  "alternative": "greater",
+  "damage": "quality(matched_control) - quality(span_safe_J)",
+  "endpoint": "deterministic-normalized-final-answer-exact-or-accepted-alias-accuracy",
+  "interaction": "[damage(thinking_on,final_answer)-damage(thinking_on,prefill)] - [damage(thinking_off,final_answer)-damage(thinking_off,prefill)]",
+  "reasoning_only_status": "thinking-on-secondary",
+  "secondary_endpoint": "full-accepted-alias-margin-on-generated-context",
+  "unit_of_inference": "canonical_family"
+ },
+ "rationale_control_audit": {
+  "controls": {
+   "correct": {
+    "n_tokens": 11,
+    "neutral_padding_fragments": 0,
+    "text": "The request names amber, so the answer is amber.",
+    "token_ids": [
+     760,
+     1622,
+     4874,
+     65326,
+     11,
+     748,
+     279,
+     4087,
+     369,
+     65326,
+     13
+    ],
+    "token_ids_sha256": "587e1d34cccc6b5631e7364c1922cba7b3560f706502defee5faff9ca153b994"
+   },
+   "filler": {
+    "n_tokens": 11,
+    "neutral_padding_fragments": 2,
+    "text": "Neutral words carry no task conclusion. N. N.",
+    "token_ids": [
+     83907,
+     4105,
+     6564,
+     874,
+     3274,
+     16198,
+     13,
+     443,
+     13,
+     443,
+     13
+    ],
+    "token_ids_sha256": "49558dead191f8af146ef3f0b46856ab448ebea5713f544f187980bab428a73a"
+   },
+   "shuffled": {
+    "n_tokens": 11,
+    "neutral_padding_fragments": 1,
+    "text": "amber answer the so names request is amber The. .",
+    "token_ids": [
+     14778,
+     4087,
+     279,
+     748,
+     4874,
+     1622,
+     369,
+     65326,
+     561,
+     13,
+     641
+    ],
+    "token_ids_sha256": "371ea72d753f8084b5ce20237c55ba5d15fbb88e6ab7c7bff254ac38baf7df3a"
+   },
+   "wrong": {
+    "n_tokens": 11,
+    "neutral_padding_fragments": 0,
+    "text": "The request names blue, so the answer is blue.",
+    "token_ids": [
+     760,
+     1622,
+     4874,
+     6105,
+     11,
+     748,
+     279,
+     4087,
+     369,
+     6105,
+     13
+    ],
+    "token_ids_sha256": "f82f3557ac376e2a5bdad46b90e80d2b51234ef6de59c5485119cadef2faa9e5"
+   }
+  },
+  "maximum_token_span": 0,
+  "passes": true,
+  "target_tokens": 11,
+  "token_span": 0
+ },
+ "remaining_freeze_blockers": [
+  "model-backed development parser/final-answer gate",
+  "P4-P2 family split, power, and SESOI",
+  "independent protocol review and PI sign-off"
+ ],
+ "schema_version": 1,
+ "structural_common_support": {
+  "missing_cell": "thinking_off_x_reasoning",
+  "primary_phases": [
+   "prefill",
+   "final_answer"
+  ],
+  "thinking_on_only_secondary_phase": "reasoning"
+ },
+ "tokenizer_class": "Qwen2Tokenizer",
+ "tokenizer_name_or_path": "/content/hf_local/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9"
+}
