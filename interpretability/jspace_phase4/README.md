@@ -62,6 +62,23 @@ python -m jspace_phase4.experiments.p4_lineage_common_cohort_analysis \
   --config interpretability/jspace_phase4/configs/p4_lineage_common_cohort_olmo_dev.yaml
 ```
 
+After `p4-qwen-lens-fit-drawA-n250-dev-v1` is registered, replace the
+explicit pending n=250 SHA in the convergence config with that event's lens
+hash, commit the clean-tree boundary, and run the task-led successor to
+p4f09 on the host GPU:
+
+```bash
+MPLCONFIGDIR=/tmp/matplotlib-phase4 \
+python -m jspace_phase4.experiments.p4_qwen_lens_convergence \
+  --config interpretability/jspace_phase4/configs/p4_qwen_lens_convergence_drawA_dev.yaml
+```
+
+The producer reuses p4f09's exact 4,096 token IDs and 256 Rademacher probes.
+It leads with disjoint Phase-3 answer/bridge strata, adds held-out validation
+frequency deciles, compares raw, `J-I`, and `J-alpha I` operators, and labels
+every published-lens comparison as an external published reference with a
+partially specified recipe.
+
 ## Current development synthesis
 
 - Living Markdown: `reports/PHASE4_DEVELOPMENT_REPORT.md`
