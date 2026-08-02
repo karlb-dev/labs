@@ -109,6 +109,9 @@ hash stays unbound until registration.
 
 Gemma and OLMo execute on isolated branches and registries. Their results can
 enter mainline only through `protocol/SIDE_TRACK_IMPORT_BUNDLE_CONTRACT.md`.
+The current normalized-bundle and terminal-release boundaries are recorded in
+`manifests/parallel_import_inventory.md`; a validated bundle is not registered
+Phase 4 evidence until its single `p4-import-*` event lands on mainline.
 Whole-registry release requires the two-pass procedure in
 `protocol/DRIVEFS_DURABILITY_PLAN.md`; known deficits remain failures.
 After model writers stop and the registry is final, generate the review

@@ -75,21 +75,42 @@ def _resolve_source_event(events: Sequence[Mapping], evidence_id: str) -> dict:
     return effective
 
 
-def _verify_output(output: Mapping) -> dict:
+def _repository_materialization(path: Path, repository: Path) -> Path:
+    """Resolve a source-worktree repo output in the current merged worktree.
+
+    Side events preserve absolute producer-worktree paths. On another VM that
+    path can be absent even though an ancestry-preserving merge provides the
+    identical tracked file here. Only a suffix beginning at the literal
+    ``interpretability`` directory is eligible; Drive and arbitrary external
+    paths are never remapped.
+    """
+    if path.is_file() or not path.is_absolute():
+        return path
+    try:
+        marker = path.parts.index("interpretability")
+    except ValueError:
+        return path
+    candidate = repository / Path(*path.parts[marker:])
+    return candidate if candidate.is_file() else path
+
+
+def _verify_output(
+        output: Mapping, *, repository: Path = REPOSITORY) -> dict:
     path = Path(str(output.get("path", "")))
+    materialized = _repository_materialization(path, repository)
     expected = str(output.get("sha256", ""))
     if len(expected) != 64 or any(
             character not in "0123456789abcdef" for character in expected):
         raise ImportBundleError(f"source output lacks a full SHA-256: {path}")
-    if not path.is_file():
+    if not materialized.is_file():
         raise ImportBundleError(f"source output is absent: {path}")
-    actual_bytes = int(path.stat().st_size)
+    actual_bytes = int(materialized.stat().st_size)
     expected_bytes = output.get("bytes")
     if expected_bytes is not None and actual_bytes != int(expected_bytes):
         raise ImportBundleError(
             f"source output byte-count drift: {path}; expected "
             f"{expected_bytes}, got {actual_bytes}")
-    actual = file_sha256(path)
+    actual = file_sha256(materialized)
     if actual != expected:
         raise ImportBundleError(
             f"source output hash drift: {path}; expected {expected}, "

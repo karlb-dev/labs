@@ -39,8 +39,8 @@ does not donate multiplicity budget to make another endpoint easier.
 | Bundle | Source state | Mainline state |
 |---|---|---|
 | OLMo early Bank-W capability | Source-native bundle complete and normalized against 5 events / 11 outputs | **VALIDATED / NOT REGISTERED**; import and fresh joint-support replay wait for the prescribed post-A1000 order. |
-| OLMo final lineage release | Parallel O2/O3 development still active | **NOT READY**; merge only a complete release with ancestry preserved. |
-| Gemma transport release | Parallel methods track has a precommitted backend-parity blocker | **NOT IMPORTED**; no Gemma claim enters this ledger until its terminal release bundle is complete, merged, normalized, and validated. |
+| OLMo final lineage release | O2 and O3 geometry/figures are complete through source `3b8edf0`; the final paper and terminal bundle are still pending | **NOT READY**; merge only a complete release with ancestry preserved. |
+| Gemma transport release | Terminal methods-blocker release is complete and ancestry-merged through source `b0425a4` / mainline `c9021e5` | **STRICTLY VALIDATED / NOT REGISTERED** against 5 live methods events and 21 outputs. No Gemma claim enters the Phase 4 conclusion record until the single mainline import event lands. |
 
 Native `ol-*` and `gm-*` events are forbidden in the Phase 4 registry.
 

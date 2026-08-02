@@ -73,3 +73,15 @@ def test_methods_record_and_paper_skeleton_include_invariance_boundary():
     assert "6. **Structural convergence of the averaged transport operator" \
         in skeleton
     assert "instrument invariance must be tested" in skeleton
+
+
+def test_parallel_import_inventory_keeps_validation_distinct_from_admission():
+    text = (ROOT / "manifests" / "parallel_import_inventory.md").read_text()
+    normalized = " ".join(text.split())
+    assert "p4-import-olmo-bank-w-capability-v1" in text
+    assert "p4-import-gemma-transport-v1" in text
+    assert "VALIDATED / NOT REGISTERED" in text
+    assert "O2 and O3 geometry/figures complete" in normalized
+    assert "No final release bundle yet" in text
+    assert "methods blocker" in text
+    assert "never a license" in text

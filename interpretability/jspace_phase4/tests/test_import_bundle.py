@@ -5,6 +5,7 @@ import pytest
 
 from jspace_phase4.import_bundle import (
     ImportBundleError,
+    _verify_output,
     validate_import_bundle,
 )
 from jspace_phase4.manifests import file_sha256, object_sha256
@@ -201,3 +202,20 @@ def test_registry_accepts_side_bundle_only_as_an_import_tier(tmp_path):
             "command": "test",
             "code_commit": "b" * 40,
         }, path=events)
+
+
+def test_repo_output_can_materialize_from_merged_worktree(tmp_path):
+    repository = tmp_path / "current-repository"
+    materialized = repository / "interpretability/side/report.md"
+    materialized.parent.mkdir(parents=True)
+    materialized.write_text("exact tracked source output\n")
+    registered = Path(
+        "/unmounted/source-vm/interpretability/side/report.md")
+
+    result = _verify_output({
+        "path": str(registered),
+        "sha256": file_sha256(materialized),
+    }, repository=repository)
+
+    assert result["path"] == str(registered)
+    assert result["bytes"] == materialized.stat().st_size
