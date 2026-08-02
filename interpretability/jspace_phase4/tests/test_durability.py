@@ -128,3 +128,23 @@ def test_known_deficit_manifest_rejects_duplicates(tmp_path):
         assert "duplicate" in str(error)
     else:
         raise AssertionError("duplicate known deficit was accepted")
+
+
+def test_live_known_deficits_bind_recovery_and_search_records():
+    root = Path(__file__).resolve().parents[1]
+    manifest = json.loads(
+        (root / "protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json").read_text())
+    by_name = {
+        Path(row["path_suffix"]).name: row for row in manifest["deficits"]}
+    state = by_name["state.json"]
+    capacity = by_name["capacity_reconstructions_a120.pt"]
+    assert state["status"] == (
+        "exact-bytes-not-found-current-vm-external-resolution-required")
+    assert capacity["status"] == "exact-bytes-not-yet-recovered"
+    for key, row in (("search_record", state),
+                     ("recovery_config", capacity)):
+        uri = row[key]
+        assert uri.startswith("repo://interpretability/jspace_phase4/")
+        relative = uri.removeprefix(
+            "repo://interpretability/jspace_phase4/")
+        assert (root / relative).is_file()
