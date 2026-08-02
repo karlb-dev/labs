@@ -1,12 +1,12 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T01:53:00Z
+Last updated: 2026-08-02T01:58:25Z
 
-Status: active, O1 complete and early Phase 4 bundle emitted; O2/O3 next. Both
-native OLMo-lineage baseline capability results, the joint decision, and the
-hash-pinned transfer bundle are registered. This report will be updated after
-every material gate or analysis and is intentionally separate from the Phase
-4 and Gemma reports.
+Status: active; O1 and the O3 provenance audit are complete, the early Phase 4
+bundle is emitted, and O2 is next. Both native OLMo-lineage baseline capability
+results, the joint decision, the hash-pinned transfer bundle, and the four-lens
+audit are registered. This report will be updated after every material gate or
+analysis and is intentionally separate from the Phase 4 and Gemma reports.
 
 ## Executive status
 
@@ -20,10 +20,11 @@ substitution, and temporal organization. It does not estimate a single
 The O1 Phase 4 service obligation is complete: exact Bank-W baselines were run
 for OLMo-3.1 Think and OLMo-3.1 Instruct, then aggregated with the imported
 Qwen reference and transferred without intervention outcomes. The prospective
-20-family common-support gate failed. The current priorities are O2, which
-adds the missing Base capacity measurement under a symmetric four-model
-estimator, and O3, which audits all four lens artifacts before any refit. O4
-under the original Bank-W protocol is gated out rather than silently narrowed.
+20-family common-support gate failed. O3 subsequently established that all six
+lens pairs share the exact fitting recipe and ordered corpus, so no refit is
+needed. The current priority is O2, which adds the missing Base capacity
+measurement under a symmetric four-model estimator. O4 under the original
+Bank-W protocol is gated out rather than silently narrowed.
 
 Phase 4, Gemma, and OLMo are running as concurrent but isolated branches of
 work. They will be integrated only in Phase 5 or later after their own state
@@ -216,14 +217,14 @@ four lenses before considering a refit. Own-frame and common-frame questions
 remain distinct. Common-frame stability is not evidence that dictionaries are
 identical.
 
-Results: the methods producer and fully hash-pinned input config are
-implemented but not yet registered. Read-only preflight validated every final
-lens hash and internal container, all sixteen 30-prompt slice lenses, and the
-four sampled weighted merges. Each merge differs from the mean of its four
-fp16 slices by at most 0.0002442 at the audited coordinates, below the frozen
-0.002 serialization tolerance. All lenses attest 120 prompts, d=5120, the same
-21 source layers, target layer 63, dim batch 8, maximum sequence length 128,
-skip-first 16, fp32 Jacobian accumulation, and fp16 storage.
+Results: `ol-lens-provenance-audit-v1` was registered at
+2026-08-02T01:58:06Z from clean source commit `fb1fc73`. It validated every
+final lens hash and internal container, all sixteen 30-prompt slice lenses,
+and the four sampled weighted merges. Each merge differs from the mean of its
+four fp16 slices by at most 0.0002442 at the audited coordinates, below the
+frozen 0.002 serialization tolerance. All lenses attest 120 prompts, d=5120,
+the same 21 source layers, target layer 63, dim batch 8, maximum sequence
+length 128, skip-first 16, fp32 Jacobian accumulation, and fp16 storage.
 
 The exact ordered raw-text corpus is shared. The three post-trained tokenizers
 produce identical token sequences for all 120 texts. Base uses the same raw
@@ -233,8 +234,12 @@ not uniform: the Instruct fit record names the deterministic source path but
 does not embed its hash, and the original 3.0 Think fit loaded an unpinned Hub
 ID. For 3.0 Think, the surviving historical and pinned revisions point to the
 same 14 weight blobs and have identical semantic weight maps. These are
-explicit qualifications, not hidden equivalence assumptions. The clean-source
-audit event will make the formal pairwise classifications and refit decision.
+explicit qualifications, not hidden equivalence assumptions. All six pairwise
+classifications are `EXACT_SAME_RECIPE_CORPUS`. All integrity checks pass, and
+the formal decision is `no_refit_run_geometry_analysis`; geometry and capacity
+analyses are authorized, while intervention outcomes remain closed. The
+immutable JSON is SHA-256 `0912d223...81105` and the Markdown companion is
+SHA-256 `9f6c8478...5f89`.
 
 ## O4: development mechanism grid
 
@@ -278,7 +283,8 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-bank-w-capability-olmo31-instruct-dev-v1` | 384/384 finite rows; low/high 0.7396/0.7188; high-low -0.0208, 90% CI [-0.0573, 0.0208]; independent gate passes; 17 capable families | Source commit `b5dc5c3`; registry commit `241be17`; result `44f6399...`; rows `7322306...` |
 | 2026-08-02 | `ol-bank-w-capability-joint-dev-v1` | All three models independently eligible; exact common support 16/20; source and side decisions BLOCKED; no intervention authorized | Source commit `241be17`; joint result `1f93c53...`; table `e09032a...` |
 | 2026-08-02 | `ol-phase4-early-import-bundle-v1` | Emitted and verified the complete early capability handoff; service-ready false and no interventions opened | Source commit `dc20c90`; JSON `debb29e...`; Markdown `a7e6faf...`; registry prefix `dcaca5a...` |
-| 2026-08-02 | O3 pre-evidence implementation | Hash-pinned four-lens provenance audit, tokenizer/BOS comparison, slice/merge integrity checks, and no-refit router implemented; 23 tests and all large-file preflights pass; no audit result registered yet | Dirty tree after published bundle checkpoint `d76e937`; OLMo namespace only |
+| 2026-08-02 | O3 pre-evidence implementation | Hash-pinned four-lens provenance audit, tokenizer/BOS comparison, slice/merge integrity checks, and no-refit router implemented; 23 tests and all large-file preflights pass | Git commit `fb1fc73`, pushed; OLMo namespace only |
+| 2026-08-02 | `ol-lens-provenance-audit-v1` | All six pairs are exact same recipe/corpus; all lens/slice/merge checks pass; no refit required; geometry and capacity authorized; no intervention opened | Source commit `fb1fc73`; JSON `0912d223...`; Markdown `9f6c8478...` |
 
 ## Current limitations and claim boundary
 

@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T01:53:00Z
+Last updated: 2026-08-02T01:58:25Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -22,10 +22,10 @@ live in Drive under `olmo_lineage_20260801`.
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
 - Active model job: none; both OLMo baseline jobs finished and GPU memory is
   free.
-- Last registered native evidence: `ol-phase4-early-import-bundle-v1`
-  (methods), created at 2026-08-02T01:22:48Z from clean commit `dc20c90`.
-  Its registry/report checkpoint is published at `d76e937` and mirrored to
-  Drive.
+- Last registered native evidence: `ol-lens-provenance-audit-v1` (methods),
+  created at 2026-08-02T01:58:06Z from clean commit `fb1fc73`. Its immutable
+  Drive outputs and registry event verify; the event/report Git checkpoint is
+  the current publish action.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
@@ -33,7 +33,7 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and six live evidence events verify cleanly; 19 package
+foundation manifests and seven live evidence events verify cleanly; 23 package
 tests pass. No model job is active.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
@@ -55,19 +55,21 @@ Its embedded registry prefix covers the first 8,651 bytes through the joint
 event and hashes to
 `dcaca5a819a070f006a8534b820bfd476e0ebe63cd0b583412bfbfd050a79f10`.
 Envelope and live-prefix verification pass. No Bank-W intervention is
-authorized on this failed service set. O2 symmetric capacity and O3 lens
-provenance are now the active work; any Bank-W redesign must be a separate,
-prospectively frozen protocol.
+authorized on this failed service set. O3 provenance is complete and O2
+symmetric capacity is now the active work; any Bank-W redesign must be a
+separate, prospectively frozen protocol.
 
-The O3 audit config, producer, and tests are implemented in the current dirty
-tree. Twenty-three package tests pass. Read-only preflight rehashed all four
-final lenses, opened all 16 slice lenses, verified 4 x 30 prompt metadata, and
-reproduced every sampled merged-versus-slice-mean value within 0.0002442
-(tolerance 0.002). The three post-trained tokenizers produce identical token
+The O3 audit is complete. All six pairwise comparisons are formally
+`EXACT_SAME_RECIPE_CORPUS`; all final-lens, 4 x 30 slice, and sampled merge
+checks pass. The three post-trained tokenizers produce identical token
 sequences on all 120 ordered fit texts. Base uses the same raw texts and order
 but exposes no BOS token under the shared model-aware `jlens.from_hf` policy.
-No audit result or refit decision is registered yet; first publish the clean
-audit implementation checkpoint, then execute it from that commit.
+The registered decision is `no_refit_run_geometry_analysis`; geometry and O2
+capacity analyses are authorized, while intervention outcomes remain closed.
+The immutable JSON is 38,818 bytes with SHA-256
+`0912d223018accf2b5dfd33a44f7c74da63d9a912f0ef6b465dcfbb1d3581105`;
+its Markdown companion is 2,583 bytes with SHA-256
+`9f6c84784c15e4dc9288900892ddb6e349ebe1fbf0b46d66054addf779cf5f89`.
 
 ## Exact next actions
 
@@ -83,30 +85,23 @@ python -m pip install -q -e interpretability/jspace_olmo_lineage
 python -m pytest interpretability/jspace_olmo_lineage/tests -q
 ```
 
-If the O3 implementation is still dirty after a reclaim, publish and mirror
-it first:
+If the O3 event/report checkpoint is still dirty after a reclaim, publish and
+mirror it first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: freeze four-lens provenance audit'
+git commit -m 'olmo: register four-lens provenance audit'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-Then run the audit from the clean commit:
-
-```bash
-python -m jspace_olmo_lineage.experiments.lens_provenance_audit \
-  --config interpretability/jspace_olmo_lineage/configs/ol_lens_provenance_audit_v1.yaml
-```
-
-Register/publish its result before implementing the O2 symmetric capacity
-estimator/corpus freeze. Do not refit a lens unless the audit establishes that
-the existing artifacts cannot support the planned comparisons. O2 includes
-Base even though Base capability is not required. Do not open an O4 Bank-W
-intervention under the failed 20-family protocol.
+Then implement and prospectively freeze the O2 symmetric capacity corpus,
+estimator, model runner, joint prompt-bootstrap analysis, and tests before
+opening any capacity outcome. O2 includes Base even though Base capability is
+not required. Use the existing lenses without refitting, and do not open an O4
+Bank-W intervention under the failed 20-family protocol.
 
 ## Hardware and weight state at last update
 
