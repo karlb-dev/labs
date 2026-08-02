@@ -55,6 +55,14 @@ the preserved Parquets, result, caches, and reconstruction tensors. Search
 Drive revisions, backups, and prior VM storage for the exact hash. If no exact
 copy exists, do not rerun merely to manufacture a different state file.
 
+The 2026-08-02 exact-copy search is recorded in
+`A120_STATE_EXACT_COPY_SEARCH_20260802.md`. It exhausts the mounted tree, live
+Drive/trash listing, Drive revision surface, and preserved pre-incident
+DriveFS metadata available on this VM without finding a target cloud ID or
+exact bytes. A genuinely new backup may still be checked against the
+registered SHA-256; the negative audit does not authorize synthesis or choose
+an append-only resolution.
+
 An independent reviewer and the PI must choose one append-only resolution:
 
 1. keep the original event live and accept that whole-registry durability

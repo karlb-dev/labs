@@ -91,6 +91,19 @@ def test_parallel_import_inventory_keeps_validation_distinct_from_admission():
     assert "never a license" in text
 
 
+def test_a120_state_search_records_negative_evidence_without_synthesis():
+    text = (
+        ROOT / "reviews" / "A120_STATE_EXACT_COPY_SEARCH_20260802.md"
+    ).read_text()
+    normalized = " ".join(text.split())
+    assert "No exact bytes were found and no file was restored" in normalized
+    assert "sixty `state.json` files" in normalized
+    assert "1,246 revisions" in text
+    assert "`deleted_items` table is empty" in text
+    assert "does not authorize reconstruction" in normalized
+    assert "independent reviewer and the PI" in normalized
+
+
 def test_phase43_governing_sources_are_hash_pinned_and_adopted():
     expected = {
         "jspace_lab_nextsteps_4_3.md": (
