@@ -399,6 +399,15 @@ core-versus-fringe causal dose remains blocked by the failed O1 service gate.
 This preserves compatibility with the concurrent Phase 4.3 machinery without
 reading its in-flight outcomes or coupling the namespaces.
 
+The protocol was frozen as `ol-geometry-protocol-v1` from source commit
+`04a27a4`, before any new operator comparison. It identified 100,255 common
+nonspecial IDs; fixed 1,024 stable sampled rows, 1,123 task-token IDs, and the
+complete 11,517-ID O2 selected-prefix union; and produced a 13,319-row model
+tensor extraction list. Four selected IDs are special/noncommon and remain in
+the extraction for complete span accounting while being flagged separately.
+The protocol JSON is SHA-256 `91410471...9697d` and the row manifest is
+`86222e65...ed92c`. This methods event contains no geometry outcome.
+
 ## O4: development mechanism grid
 
 The primary arm contrast is
@@ -450,7 +459,8 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-capacity-olmo31-think-dev-v1` | 3.1 Think completed at layers 24/32/40; own-frame centered excess +0.0625/+0.3275/+0.5192 pp, occupancy 2/2/2; Base-common sensitivity also recorded; no censoring, solver increases, or intervention opened | Source commit `7baaf64`; result `f6af4791...`; layer checkpoints `1ac1e445...`, `ceb2c9d2...`, `9d69d40b...` |
 | 2026-08-02 | `ol-capacity-olmo31-instruct-dev-v1` | Instruct sibling completed at layers 24/32/40; own-frame centered excess -0.0157/+0.2615/+0.4716 pp, occupancy 2/2/2; Base-common sensitivity also recorded; no censoring, solver increases, or intervention opened | Source commit `9f213f6`; result `712ccd18...`; layer checkpoints `31af395a...`, `1bbd2ec0...`, `eaa08327...` |
 | 2026-08-02 | `ol-capacity-joint-dev-v1` | Paired Base-to-3.0 Think own-frame equal-layer difference +0.0154 pp, 90% CI [-0.0121, +0.0434], occupancy difference 0; all primary layers stable, no positive material layer; verdict broadly conserved capacity/recruitment-consistent; Instruct retained as sibling | Source commit `cbc7ab3`; JSON `cb35a22a...`; Parquet `b3ad02e9...`; paired bootstrap `c13cebed...` |
-| 2026-08-02 | O3 geometry pre-evidence implementation | Outcome-blind geometry protocol, exact-revision two-shard readout extraction, all-layer operator/token aggregate, exhaustive O2 selection postprocessing, explicit unavailable-margin fields, and registered-table-only five-figure producer; no new O3 outcome opened | OLMo branch source checkpoint pending publication; 39 tests pass |
+| 2026-08-02 | O3 geometry pre-evidence implementation | Outcome-blind geometry protocol, exact-revision two-shard readout extraction, all-layer operator/token aggregate, exhaustive O2 selection postprocessing, explicit unavailable-margin fields, and registered-table-only five-figure producer; no new O3 outcome opened | Git commit `04a27a4`, pushed; 39 tests pass |
+| 2026-08-02 | `ol-geometry-protocol-v1` | Froze 1,024 stable rows, 1,123 task IDs, the complete 11,517 selected-ID union, and 13,319 total extracted rows; exact score-gap and blocked causal fields remain explicit nulls; no geometry outcome opened | Source commit `04a27a4`; protocol `91410471...`; row manifest `86222e65...` |
 
 ## Current limitations and claim boundary
 
