@@ -59,6 +59,7 @@ the first Gemma number.
 
 | Evidence | Tier | State | Result |
 |---|---|---|---|
+| `gm-foundation-diagnostic-v1` | methods | registered | no scientific result; the first foundation attempt found that the governing TeX is a Git object in a later shared commit, not a file in the exact side fork |
 | `gm-foundation-v1` | methods | pending | package/import/runtime boundary |
 | `gm-jvp-goldens-v1` | methods | pending | analytic and tiny-transformer exact-JVP tests |
 | `gm-jvp-olmo-positive-control-v1` | methods | blocked on preceding boundaries | threshold calibration |
@@ -78,6 +79,16 @@ the first Gemma number.
 ## Results
 
 No current-study model result has been produced.
+
+## Infrastructure incidents
+
+The first clean foundation attempt at commit `11501b8` stopped before any
+foundation output or model result because it addressed the governing TeX as a
+worktree file. The side fork predates that file; the source had been read from
+later shared commit `4ea7a9b`. `gm-foundation-diagnostic-v1` records the
+failure. The repaired producer pins the TeX by exact commit, Git blob, SHA-256,
+and byte size, while continuing to pin the physical Drive PDF. This does not
+change the scientific design or expose a target outcome.
 
 ## Next boundary
 

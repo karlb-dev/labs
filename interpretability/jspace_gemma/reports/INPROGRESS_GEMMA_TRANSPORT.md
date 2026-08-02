@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 00:47 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 00:50 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -10,7 +10,9 @@ canonical Drive handoff at
 - Branch: `interp_jspace_gemma_transport`.
 - Exact fork: `3b041735d8b842de46a9c0a474fccd0c44e0841a`.
 - Tested scaffold commit: `b49af6d1c285a300be9007461b695d22b90d5930`.
-- Remote Gemma branch: not yet created as of this boundary.
+- Restart-boundary commit: `11501b804690559fabe571e941a95018eefbe19b`.
+- Remote Gemma branch: created and synchronized at the restart boundary;
+  the diagnostic/repair described below is not yet pushed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -28,6 +30,12 @@ canonical Drive handoff at
   6, 9, and 14 are broken symlinks with stale `.incomplete` blobs; control
   staging must reuse verified complete blobs and download/verify the missing
   content. Never treat that Drive snapshot as load-ready.
+- First foundation attempt at clean remote commit `11501b8` stopped before
+  producing a foundation result: the governing TeX exists as a Git object at
+  later shared commit `4ea7a9b`, not as a worktree file in the exact fork.
+  `gm-foundation-diagnostic-v1` is registered with `scientific_result=false`.
+  The producer now pins the source by commit/blob/SHA-256; the repair and
+  diagnostic registry row await the next commit.
 
 ## Completed this VM
 
@@ -52,6 +60,9 @@ canonical Drive handoff at
 9. Audited remote model inventories. Gemma has two expected weight shards and
    neither is local; the OLMo Drive cache needs repair during local staging as
    described above.
+10. Registered the failed foundation pre-result attempt and repaired the
+    worktree-vs-Git-object assumption. The full 22-test suite and live-output
+    verifier pass after the repair.
 
 ## Immutable scientific guardrails
 
@@ -71,8 +82,9 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Fetch, verify the remote branch is absent, and publish the new Gemma branch.
-2. From the clean scaffold, run/register `gm-foundation-v1`, commit, pull,
+1. Commit the registered foundation diagnostic and Git-object repair; fetch,
+   pull/reconcile, test, and push.
+2. From that clean commit, rerun/register `gm-foundation-v1`, commit, pull,
    test, and push the evidence boundary.
 3. From the next clean commit, run analytic and tiny-transformer JVP goldens;
    register
@@ -89,9 +101,10 @@ canonical Drive handoff at
 ## Recovery checks and next commands
 
 There is currently no live producer, lock owner, or partial scientific
-checkpoint. The tested scaffold is committed locally; until the next queue
-step confirms the first push, use the commit above if it is visible remotely.
-On a new VM, run the bootstrap in
+checkpoint. A diagnostic registry row and its repair are currently
+uncommitted; no producer is live. If reclaimed before the next push, the
+canonical Drive diagnostic is durable and this paragraph identifies the
+required repair. On a new VM, run the bootstrap in
 `RESUME_GEMMA_TRANSPORT.md`, then inspect:
 
 ```bash

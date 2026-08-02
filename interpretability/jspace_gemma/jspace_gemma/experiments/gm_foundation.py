@@ -26,6 +26,8 @@ GEMMA_ID = "google/gemma-4-31B-it"
 GEMMA_REVISION = "842da3794eaa0b77d5f08bae87a17459d91ff475"
 OLMO_ID = "allenai/Olmo-3-32B-Think"
 OLMO_REVISION = "ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7"
+HANDOUT_SOURCE_COMMIT = "4ea7a9ba7a534daa61e0d8c9960763b921a1b80b"
+HANDOUT_SOURCE_PATH = "interpretability/jspace_paper/gemma4_nonlinear_jacobian_handout.tex"
 GEMMA_METADATA = Path(
     "/content/hf_local/models--google--gemma-4-31B-it/snapshots/"
     + GEMMA_REVISION
@@ -100,31 +102,35 @@ def _snapshot_availability(snapshot: Path, remote: dict) -> dict:
     }
 
 
+def _git_artifact_inventory(commitish: str, relative: str) -> dict:
+    commit = subprocess.check_output(
+        ["git", "-C", str(REPO_ROOT), "rev-parse", commitish], text=True
+    ).strip()
+    blob = subprocess.check_output(
+        ["git", "-C", str(REPO_ROOT), "show", f"{commit}:{relative}"]
+    )
+    blob_id = subprocess.check_output(
+        ["git", "-C", str(REPO_ROOT), "rev-parse", f"{commit}:{relative}"],
+        text=True,
+    ).strip()
+    return {
+        "path": relative,
+        "source_commit": commit,
+        "git_blob_id": blob_id,
+        "sha256": hashlib.sha256(blob).hexdigest(),
+        "size_bytes": len(blob),
+        "materialization": "immutable git object; file need not exist in the side fork worktree",
+    }
+
+
 def _source_code_inventory(imports: list[dict]) -> dict[str, list[dict]]:
     result = {}
     for verified in imports:
         evidence_id = verified["source_evidence_id"]
         filename = IMPORTS[evidence_id]
         relative = f"interpretability/jspace_part2/jspace_part2/experiments/{filename}"
-        requested_commit = verified["source_commit"]
-        commit = subprocess.check_output(
-            ["git", "-C", str(REPO_ROOT), "rev-parse", requested_commit], text=True
-        ).strip()
-        blob = subprocess.check_output(
-            ["git", "-C", str(REPO_ROOT), "show", f"{commit}:{relative}"]
-        )
-        blob_id = subprocess.check_output(
-            ["git", "-C", str(REPO_ROOT), "rev-parse", f"{commit}:{relative}"],
-            text=True,
-        ).strip()
         result[evidence_id] = [
-            {
-                "path": relative,
-                "source_commit": commit,
-                "git_blob_id": blob_id,
-                "sha256": hashlib.sha256(blob).hexdigest(),
-                "size_bytes": len(blob),
-            }
+            _git_artifact_inventory(verified["source_commit"], relative)
         ]
     return result
 
@@ -174,10 +180,10 @@ def main() -> None:
         [
             Path("/content/drive/MyDrive/interpret/special-lab-1/jspace_lab_gemma_1.md"),
             Path("/content/drive/MyDrive/interpret/special-lab-1/jspace_lab_gemma_1_addendum.md"),
-            REPO_ROOT / "interpretability/jspace_paper/gemma4_nonlinear_jacobian_handout.tex",
             Path("/content/drive/MyDrive/interpret/special-lab-1/gemma4_nonlinear_jacobian_handout.pdf"),
         ]
     )
+    governing.append(_git_artifact_inventory(HANDOUT_SOURCE_COMMIT, HANDOUT_SOURCE_PATH))
     model_inventory = {
         "gemma_remote": gemma_remote,
         "gemma_local_metadata": _snapshot_availability(GEMMA_METADATA, gemma_remote),
