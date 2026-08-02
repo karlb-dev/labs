@@ -1,0 +1,126 @@
+schema_version: 1
+status: FROZEN_PRE_GEMMA
+positive_control_evidence_id: gm-jvp-olmo-positive-control-v1
+calibrated_from_evidence_id: gm-jvp-olmo-calibration-v1
+calibration_summary_sha256: b0088651fa953d58939e4c509bae779ad2fbaeba92f1bde7d8d4722030ca98ef
+calibration_rows_sha256: 70d46bebab5708427331cc74afa9b5de1665c79fc4deee12fb56219b9d6fbb70
+calibration_compute_commit: 06b2a3d2fbe42fd5f70abb121573b1e7a62b45ec
+calibration_finalization_commit: 374f511ef1fffa265631b59865980e184466444e
+frozen_before_first_gemma_result: true
+target_model_opened_at_freeze: false
+
+delivery:
+  cosine_floor: 0.999
+  relative_norm_error_ceiling: 0.01
+  below_gate: unmeasurable
+
+clean_suffix_parity:
+  atol: 0.0
+  rtol: 0.0
+exact_jvp_primal_relative_error_ceiling: 1.0e-5
+wrong_hook_relative_error_floor: 0.10
+
+response_snr_floor: 12.0
+response_snr:
+  measurement_floor: 12.0
+  primary_decision_floor: 20.0
+  signal_norm: min_finite_response_and_exact_jvp_norm
+  noise_norm: max_in_batch_clean_repeat_and_target_dtype_half_step_norm
+  below_measurement_floor: unmeasurable
+  between_measurement_and_decision_floor: floor_fit_only_not_target_pass_fail
+
+smallest_faithful_secant:
+  selection: smallest_epsilon_passing_delivery_and_primary_decision_snr
+  primary_mode: single_position
+  tangent_cosine_floor: 0.98
+  tangent_relative_error_ceiling: 0.20
+  central_tangent_relative_error_ceiling: 0.10
+  minimum_row_pass_fraction: 0.90
+  calibration_population_layers_zero_indexed: [56, 60]
+  calibration_observation: all_32_rows_select_epsilon_0.10_and_pass
+
+measurement_only_tangent_region:
+  selection: smallest_epsilon_passing_delivery_and_measurement_snr
+  tangent_cosine_floor: 0.97
+  tangent_relative_error_ceiling: 0.25
+  minimum_row_pass_fraction: 0.90
+  calibration_observation: 30_of_32_late_anchor_rows_pass
+
+secondary_uniform_valid:
+  tangent_cosine_floor: 0.80
+  tangent_relative_error_ceiling: 0.65
+  minimum_row_pass_fraction: 0.90
+  role: secondary_estimand_not_a_substitute_for_primary_single_position
+
+finite_dose_gate:
+  declared_relative_epsilon: 0.10
+  larger_radius_audit_relative_epsilon: 0.20
+  tangent_cosine_floor: 0.98
+  tangent_relative_error_ceiling: 0.20
+  central_tangent_relative_error_ceiling: 0.10
+  minimum_row_pass_fraction: 0.90
+  smaller_declared_dose_allowed_only_if_pre_target_and_explicit: true
+
+layer_decision_coverage:
+  minimum_evaluable_fraction: 0.75
+  minimum_prompts: 3
+  minimum_directions: 3
+  below_coverage: unmeasurable_not_nonlinear
+
+known_linear_band_contrast:
+  shallow_layer_zero_indexed: 4
+  late_anchor_layers_zero_indexed: [56, 60]
+  contrast_relative_epsilon: 0.10
+  shallow_minus_late_tangent_relative_error_minimum: 0.40
+  late_minus_shallow_tangent_cosine_minimum: 0.20
+  observed_error_contrast: 0.6302570145358191
+  observed_cosine_contrast: 0.3166391849517822
+
+floor_curvature_partition:
+  metric: tangent_relative_error
+  fit: intercept_a_plus_slope_b_times_relative_epsilon
+  fitting_response_snr_floor: 12.0
+  minimum_unique_epsilon_points: 3
+  robust_method: Huber_IRLS
+  primary_anchor_intercept_a_ceiling: 0.30
+  curvature_slope_b_floor: 0.15
+  flat_slope_absolute_ceiling: 0.15
+  negative_slope_precision_floor_ceiling: -0.15
+  minimum_fit_coverage: 0.80
+  calibration_anchor_intercept_q95: 0.2813809905440735
+  calibration_matched_primary_slope_max: 0.10616564933688917
+  classification:
+    curvature_dominant: intercept_at_or_below_ceiling_and_slope_at_or_above_floor
+    mixed_bias_and_curvature: intercept_above_ceiling_and_slope_at_or_above_floor
+    flat_bias_or_tangent_mismatch: intercept_above_ceiling_and_absolute_slope_at_or_below_flat_ceiling
+    quantization_floor_limited: slope_at_or_below_negative_precision_floor_ceiling
+    unresolved: insufficient_fit_coverage_or_response_snr
+
+positive_control_acceptance:
+  exact_clean_and_jvp_primal_parity_required: true
+  late_primary_smallest_secant_pass_required: true
+  late_primary_finite_dose_pass_required: true
+  post_floor_error_growth_from_0.10_to_0.20_required: true
+  shallow_to_late_contrast_required: true
+  uniform_valid_qualitative_replication_required: true
+
+directions:
+  calibrated_non_lens_ids:
+    - random-rademacher-0
+    - random-gaussian-0
+    - activation-radial
+    - activation-tangent-0
+  j_selected_entry_policy: apply_same_frozen_thresholds_after_exact_direction_hash_binding
+  threshold_recalibration_after_gemma_or_j_selected_numbers: forbidden
+
+bootstrap:
+  resampling_unit: prompt
+  draws: 5000
+  seed: 240802
+
+notes: >-
+  The measurement floor 12 retains the three-point 0.05/0.10/0.20 fits in
+  the late OLMo anchors. Primary target decisions require SNR 20, at which all
+  32 anchor prompt/layer/direction rows select epsilon 0.10. The 0.98 cosine
+  and 0.20 relative-error limits include all anchor rows with margin; they are
+  operational control-calibrated gates, not universal mathematical constants.

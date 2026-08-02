@@ -1,0 +1,79 @@
+schema_version: 1
+status: FROZEN_METHODS_BLOCKER_RELEASE
+evidence_id: gm-state-of-record-v1
+tier: methods
+
+identity:
+  study_id: jspace-gemma-transport
+  branch: interp_jspace_gemma_transport
+  fork_commit: 3b041735d8b842de46a9c0a474fccd0c44e0841a
+  evidence_prefix: gm-
+  phase4_import_tier: methods_only
+
+source_registry_prefix:
+  through_evidence_id: gm-jvp-gemma-backend-parity-v1
+  expected_bytes: 25170
+  expected_sha256: 2dc5a0a20446107ebb3356369cba6cbc6b6322a8cba21132d209dc3a2654fc4e
+  expected_live_events: 18
+  expected_verified_outputs: 35
+
+critical_evidence:
+  goldens:
+    evidence_id: gm-jvp-goldens-v1
+    code_commit: 2bb7428c931323d5d377ad04bd7e19a17958c491
+    artifact_sha256: ca02c95c022741970468ea91bd80327e4c2d95c46fda1be2f225d9a83f4f8234
+  positive_control:
+    evidence_id: gm-jvp-olmo-positive-control-v1
+    code_commit: 7f6a36e19417b618cbdf3c81a6da6d9171a3739a
+    artifact_sha256: fc957c9a6f6f397cbaf3274193713ebec332bb81dbb99b61cf9f56d058cd1942
+  gemma_stage1:
+    evidence_id: gm-jvp-gemma-stage1-v1
+    code_commit: 036e55233babcabacae061ab41d1410a35715aea
+    summary_sha256: 0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384
+    rows_sha256: 3b74f1e983f47c1f917fd8c407a6ea1f8abf42854adc0b9d6c3d3cf18d921550
+    state_sha256: 5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65
+  backend_blocker:
+    evidence_id: gm-jvp-gemma-backend-parity-v1
+    code_commit: af21c2068508a28871f541c82b8dd1ff0f59916b
+    artifact_sha256: 22c327764034f77496971f6c555af0ec6f8e99a0ceb80cea1677db24ca404b7c
+    raw_sha256: ac5ba50dbba6d3ed149cf5b7b6951b80bee5502d11ac90e4f93dc45d515c9e89
+    expected_backend_parity_pass: false
+    expected_stage1_mismatch_reproduced: true
+    sole_failed_criterion: backend_tangent_all_slots
+    all_slot_tangent_cosine: 0.9999995827674866
+    all_slot_tangent_relative_error: 0.002458111383020878
+    frozen_relative_error_ceiling: 1.0e-5
+
+release_documents:
+  state_of_record: release/GEMMA_TRANSPORT_STATE_OF_RECORD.md
+  import_markdown: release/IMPORT_BUNDLE_PHASE4.md
+  claim_ledger: release/gemma_transport_claim_ledger.md
+  transport_gate_protocol: release/TRANSPORT_GATE_PROTOCOL.md
+
+drive_outputs:
+  state_of_record: GEMMA_TRANSPORT_STATE_OF_RECORD.md
+  import_json: IMPORT_BUNDLE_PHASE4.json
+  import_markdown: IMPORT_BUNDLE_PHASE4.md
+  inventory: gemma_transport_inventory.json
+  environment_lock: gemma_transport_environment_lock.json
+  claim_ledger: gemma_transport_claim_ledger.md
+  transport_gate_protocol: TRANSPORT_GATE_PROTOCOL.md
+  release_manifest: gemma_transport_release_manifest.json
+
+terminal_contract:
+  status: COMPLETE_METHODS_BLOCKER
+  scientific_expansion_allowed: false
+  mechanism_interpretation_allowed: false
+  phase4_model_cell_opened: false
+  independent_review_or_pi_signoff: false
+  future_repair_requires_new_evidence_id: true
+  preserve_failed_artifact: true
+  merge_after_release_registration_and_verification: true
+  unrun_by_hard_stop: [G1_stage2, G2, G3, G4, G5, G6, G7, G8]
+
+claim_boundary: >-
+  Methods-only terminal blocker. The selected actual-Gemma replay agrees
+  exactly, but the frozen full-batch cross-backend relative-error gate fails.
+  No mechanism, nondifferentiability, curvature, heterogeneity, late-band,
+  workspace, confirmatory, replication, independent-review, or PI conclusion
+  is licensed.

@@ -1,0 +1,53 @@
+schema_version: 1
+status: FROZEN_PRE_DIAGNOSTIC
+evidence_id: gm-jvp-gemma-backend-parity-v1
+tier: methods
+
+source_stage1:
+  evidence_id: gm-jvp-gemma-stage1-v1
+  compute_commit: 036e55233babcabacae061ab41d1410a35715aea
+  summary_sha256: 0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384
+  state_sha256: 5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65
+  cell_id: gm-p001-L52-single_position
+  source_layer: 52
+  prompt_id: gm-p001
+  perturbation_mode: single_position
+  direction_id: random-rademacher-0
+  relative_epsilon: 0.05
+  stored_exact_backend: torch.func.jvp
+
+batch_replay:
+  batch_size: 8
+  request_order: direction_then_epsilon_then_positive_negative_double
+  chunk_start_index: 8
+  selected_offset: 4
+  selected_label: positive
+  expected_request_key: [random-rademacher-0, 0.05, positive]
+
+exact_backends:
+  primary: torch.func.jvp
+  independent_fallback: torch.autograd.functional.jvp
+  finite_difference_as_exact: forbidden
+
+acceptance:
+  clean_suffix_parity_atol: 0.0
+  clean_suffix_parity_rtol: 0.0
+  exact_primal_relative_error_ceiling: 1.0e-5
+  backend_tangent_cosine_floor: 0.999999
+  backend_tangent_relative_error_ceiling: 1.0e-5
+  stored_source_activation_relative_error_ceiling: 1.0e-6
+  stored_clean_target_relative_error_ceiling: 1.0e-6
+  stored_forward_tangent_relative_error_ceiling: 1.0e-6
+  stored_finite_response_relative_error_ceiling: 1.0e-6
+  stored_direction_sha256_exact: true
+  stored_realized_perturbation_sha256_exact: true
+  stored_metric_absolute_tolerance: 1.0e-6
+
+interpretation:
+  pass: >-
+    The Stage-1 mismatch is reproduced by two exact autodiff implementations
+    on the same actual-Gemma suffix and original batch slot; proceed to
+    mechanism localization without calling the result nondifferentiability.
+  fail: >-
+    Treat Stage 1 as a backend/path diagnostic, stop mechanism interpretation,
+    and repair or supersede the affected result transparently.
