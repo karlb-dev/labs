@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 04:39 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 05:18 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -20,8 +20,8 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router and is live. Atomic checkpoints through n=641 have been mirrored;
-  the producer is currently inside chunk 641:644. No partial checkpoint is
+  router and is live. Atomic checkpoints through n=656 have been mirrored;
+  the producer is currently inside chunk 656:659. No partial checkpoint is
   registered evidence.
 
 ## VM13 live continuation
@@ -36,14 +36,14 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 641 / 1000 |
-| checkpoint SHA-256 | `8ceeb19a0483b9cbc8d78e8354f98ff6ebe5bc08c0e9fb82d9a5617d3ac12063` |
-| checkpoint-state SHA-256 | `d1fd777acb97766277c21bdbb0663425a414d5d27ff7a973bd66759088c192ed` |
+| prompts banked | 656 / 1000 |
+| checkpoint SHA-256 | `2b3efa24ac1959ca6261911491a473f70d001b00d13ec443e68fdc2c56a16ce1` |
+| checkpoint-state SHA-256 | `c1774b5dc767b70db7387aab06f64e4ad3b1e94e79a5136bcaa69b700e8442a9` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| synced UTC | 2026-08-02 04:31:07 UTC |
+| synced UTC | 2026-08-02 05:16:03 UTC |
 | peak allocated VRAM | 62.833 GB |
-| process state | live; active atomic chunk 641:644; unified session 86346 |
+| process state | live; active atomic chunk 656:659; unified session 86346 |
 
 Prospective A1000 successor preparation is isolated from the live clean
 worktree on branch `codex/phase4-a1000-prep-20260802`. Before any A1000
@@ -53,7 +53,7 @@ selection-margin, and prompt-323 contracts were committed and pushed at
 `542ed98`. Their A1000 hashes remain explicit placeholders. They may be bound
 only after the registered n=1000 lens exists.
 
-The preparation branch is clean and pushed at `65bfebe`. In addition to the
+The preparation branch is clean and pushed at `e0d0d31`. In addition to the
 frozen A1000 decision queue, it now contains the complete prospective
 Bank-B answer-direction-orthogonal rescue: outcome-blind geometry, a
 partial-dictionary prompt-only intervention core, atomic fact-level resume,
@@ -75,7 +75,7 @@ The required sixth conclusion-skeleton sentence, candidate freeze-gate ledger,
 and methods decision record are now assembled with every unresolved gate
 explicit. A prospective pre-freeze inventory generator also refuses a clean
 status on known deficits, unreachable commits, namespace leakage, or
-unreviewed temporary/recovery paths. The whole Phase-4 suite passes **257
+unreviewed temporary/recovery paths. The whole Phase-4 suite passes **261
 tests**.
 
 The OLMo capability boundary is now integrated into the preparation branch
@@ -84,8 +84,12 @@ pass independently, but the frozen three-model intersection is only 16
 families against the required 20, so P4-P3 is blocked and no Bank-W
 intervention is authorized. The source-native release was normalized into
 the strict mainline envelope and independently validated (5 events, 11
-outputs) at preparation commit `9e7aad9`; mainline registration and a fresh
-joint calculation remain queued in the prescribed freeze order. The terminal
+outputs). Preparation commit `e0d0d31` pins the exact six-line source registry
+at source commit `d76e937`, includes that immutable snapshot in import-event
+durability, and updates the downstream joint hashes; later OLMo registry
+appends therefore cannot invalidate the early admission record. Mainline
+registration and a fresh joint calculation remain queued in the prescribed
+freeze order. The terminal
 Gemma methods-blocker source is ancestry-merged through `b0425a4` / mainline
 `c9021e5`; its normalized envelope strictly validates 5 events and 21 outputs
 at preparation commit `65bfebe`, but its single Phase-4 import event remains
@@ -100,8 +104,19 @@ capacity recruitment. O3 reports a descriptive dictionary-formation pattern:
 operator continuity is high, but mapped-token continuity fails and sparse
 selection diverges at the first released Think transition. This cannot alter
 the already-failed Phase-4 O1 service decision, does not identify a causal
-training effect, and does not license Bank-W intervention. The OLMo final
-paper and terminal import bundle are still pending.
+training effect, and does not license Bank-W intervention. Through source
+commit `5551e1e`, it has also added a methods-only independent reconstruction
+sentinel. Its exact 61-GiB OLMo-3.1 Think snapshot is staged and the clean-
+process reconstruction remains pending; the OLMo final paper and terminal
+import bundle are still pending.
+
+The same OLMo branch registered semantic checkpoint inventory v2 at `2afb010`:
+inventory v1 remains immutable but is explicitly superseded after identical
+100,278 token-ID mappings and identical encodings on the frozen corpus. The
+official SFT/DPO intermediates are semantically eligible, but the bounded O5
+audit/decision at `4c6617e` found no identifiable crossed-intervention
+estimand and records `not-executed-no-proxy-substitution`. No intermediate-
+model behavior or proxy O5 outcome has been opened.
 
 The Gemma 40-cell Stage-1 result found local tangent mismatch at every frozen
 layer. Its precommitted forward-versus-fallback JVP parity diagnostic failed
