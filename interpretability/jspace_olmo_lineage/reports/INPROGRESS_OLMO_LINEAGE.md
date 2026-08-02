@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T03:28:59Z
+Last updated: 2026-08-02T04:04:25Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,8 +20,10 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: none; O2 is complete and GPU memory is free. O3 geometry
-  protocol/implementation is next.
+- Active model job: none; O2 is complete and GPU memory is free. The O3
+  outcome-blind protocol, staged readout extractor, aggregate producer, and
+  registered-table-only figure producer are implemented and pass tests. They
+  must be committed and pushed before the protocol is frozen.
 - Last registered native evidence: `ol-capacity-joint-dev-v1` (development),
   created at 2026-08-02T03:27:27Z from clean commit `cbc7ab3`.
   Its three immutable outputs and registry event verify; the event/report Git
@@ -34,7 +36,28 @@ live in Drive under `olmo_lineage_20260801`.
 
 The isolated foundation and O1 service obligation are complete. Four immutable
 foundation manifests and thirteen live evidence events with 46 immutable outputs
-verify cleanly; 31 package tests pass. No model job is active.
+verify cleanly; 39 package tests pass. No model job is active.
+
+The O3 implementation uses only exact same-corpus lenses plus small,
+hash-pinned model readout extracts. The frozen row population will contain a
+deterministic 1,024-token common-vocabulary sample, all Bank F/S/W task-token
+strata, and the complete union of every O2 own-centered selected prefix at its
+registered per-position crossing. Each checkpoint then needs only
+`model-00013-of-00014.safetensors` and
+`model-00014-of-00014.safetensors` (final norm and unembedding), not a full
+61-GB snapshot. Direct exact-revision Hub download is the preferred staging
+path. The operator/token aggregate uses all 21 imported source layers and all
+six checkpoint pairs; sparse selection geometry uses all 7,481 aligned O2
+positions at layers 24/32/40.
+
+The protocol explicitly separates the available selection audit from two
+unavailable quantities. O2 retained full error curves and selected IDs, so it
+can recover selected-ID/RBO/projector/persistent-direction metrics and the
+J-marginal-gain versus random-threshold crossing margin. It did not retain the
+kth and k+1 candidate correlation scores, so that exact score gap is null
+until a compatible model replay. Protected-span overlap is likewise absent,
+and causal core/fringe dose remains blocked by the 16/20 O1 service gate. No
+proxy may be reported under those unavailable names.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
 values finite per model and eight candidate-sequence scores per row. Think
@@ -191,14 +214,28 @@ git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-After the joint event is committed, published, and recovery-mirrored, implement
-and freeze the O3 geometry protocol before opening geometry outcomes. It must
-cover plan sections 5.3--5.6: operator, mapped-token dictionary, sparse
-selection, readout, and selection-margin metrics, plus registered tables and
-figures. Reuse Phase 4.3 top-k margin machinery only through an OLMo side
-compatibility module and conformance tests. Publish the outcome-blind methods
-checkpoint before running the geometry producer. Do not open an O4 Bank-W
-intervention under the failed 20-family protocol.
+Publish the outcome-blind O3 source checkpoint first:
+
+```bash
+git add interpretability/jspace_olmo_lineage
+git commit -m 'olmo: stage same-corpus geometry protocol'
+git pull --rebase origin interp_jspace_olmo_lineage
+bash interpretability/jspace_olmo_lineage/repro.sh
+git push origin interp_jspace_olmo_lineage
+python -m jspace_olmo_lineage.recovery
+```
+
+Then freeze and register the protocol from the clean commit:
+
+```bash
+python -m jspace_olmo_lineage.experiments.geometry freeze-protocol \
+  --config interpretability/jspace_olmo_lineage/configs/ol_geometry_v1.yaml
+```
+
+Commit/pull/rebase/reproduce/push/recover that registry event before extracting
+any checkpoint rows. Do not open an O4 Bank-W intervention under the failed
+20-family protocol. The exact targeted-download and extraction commands will
+be written here after the protocol event is durable.
 
 ## Hardware and weight state at last update
 
@@ -221,9 +258,11 @@ intervention under the failed 20-family protocol.
 - The exact OLMo-3 Think local cache was likewise removed only after its result,
   Git checkpoint, and recovery mirrors became durable.
 - Local disk has approximately 119 GiB free with only OLMo-3.1 Instruct
-  resident. It may be removed after the joint checkpoint is published and
-  recovery-verified. Confirm the O3 geometry implementation's weight needs
-  before rotating it; operator/token/readout analyses may need the snapshot.
+  resident. O3 needs only shards 13 and 14 from each checkpoint. Extract and
+  register Instruct first, then the complete local snapshot can be rotated;
+  later checkpoints should be downloaded directly at the exact revision with
+  only those two shards plus `config.json` and
+  `model.safetensors.index.json`.
 - The exact `anthropics/jacobian-lens` checkout is installed from `/tmp` at
   `581d398613e5602a5af361e1c34d3a92ea82ba8e`; recreate it after a reclaim.
 - Never load model weights through DriveFS. Copy one pinned snapshot at a time

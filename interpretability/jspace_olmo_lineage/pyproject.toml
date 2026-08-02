@@ -17,6 +17,7 @@ dependencies = [
   "transformers",
   "huggingface_hub",
   "scipy",
+  "safetensors",
 ]
 
 [project.scripts]

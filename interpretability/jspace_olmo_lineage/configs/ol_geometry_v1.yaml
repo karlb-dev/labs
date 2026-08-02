@@ -1,0 +1,238 @@
+protocol_evidence_id: ol-geometry-protocol-v1
+joint_evidence_id: ol-geometry-joint-dev-v1
+figure_evidence_id: ol-geometry-figures-dev-v1
+tier: development
+branch: interp_jspace_olmo_lineage
+
+required_upstream:
+  provenance_audit:
+    evidence_id: ol-lens-provenance-audit-v1
+    result_uri: olmo-artifact://metrics/lens-provenance/ol_lens_provenance_audit_v1.json
+    result_sha256: 0912d223018accf2b5dfd33a44f7c74da63d9a912f0ef6b465dcfbb1d3581105
+    required_refit_decision: no_refit_run_geometry_analysis
+  capacity_protocol:
+    evidence_id: ol-capacity-protocol-v1
+  capacity_joint:
+    evidence_id: ol-capacity-joint-dev-v1
+
+prior_causal_utilization:
+  source_evidence_id: p4-lineage-trajectory-analysis-olmo-dev-v1
+  source_import_boundary: 3b041735d8b842de46a9c0a474fccd0c44e0841a
+  table_path: /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/olmo-lineage-trajectory/trajectory_analysis/p4-lineage-trajectory-analysis-olmo-dev-v1/trajectory_table_olmo-lineage-trajectory.csv
+  table_sha256: 3a0e7a9654a39a42583aa74800a2e09e012eef7649408a98a418d04d40b6420f
+  estimand_filter:
+    frame: own
+    metric_key: "S:composition"
+  estimand: >-
+    Known development-tier Bank-S composed-minus-direct specific causal
+    effect, imported by the immutable foundation manifest. It is not a Bank-W
+    result and does not repair the blocked O4 service gate.
+
+geometry_series:
+  source_layers: [4, 8, 12, 16, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 48, 52, 56, 60]
+  target_layer: 63
+  d_model: 5120
+  vocabulary_size: 100278
+  lens_dtype: float16
+  comparison_scope: all-six-unordered-checkpoint-pairs
+  trajectory_edges:
+    - [olmo3-base, olmo3-think]
+    - [olmo3-think, olmo31-think]
+  sibling_edge: [olmo31-think, olmo31-instruct]
+  primary_edge: [olmo3-base, olmo3-think]
+  assay_layers: [24, 32, 40]
+  early_layers: [4, 8, 12, 16]
+  late_layers: [48, 52, 56, 60]
+
+sampling:
+  stable_vocabulary_rows: 1024
+  stable_vocabulary_selection: smallest-sha256-priority-over-common-nonspecial-token-id-and-token-string
+  cka_rows: 512
+  neighbor_rows: 1024
+  neighbor_k: 20
+  transport_probes: 64
+  spectral_rank: 64
+  spectral_oversample: 16
+  spectral_power_iterations: 1
+  base_seed: 20260803
+  token_quantiles: [0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99]
+  selection_position_population: all-7481-registered-capacity-positions
+  selection_prefix: per-position-own-centered-k50-under-frozen-persistence-2-crossing
+  rbo_p: 0.9
+  projector_rank_relative_tolerance: 0.0001
+  projector_batch_positions: 128
+  persistent_direction_minimum_position_fraction: 0.01
+
+operator_metrics:
+  - raw_matrix_cosine
+  - symmetric_relative_frobenius_delta
+  - j_minus_identity_cosine_and_delta
+  - j_minus_own_trace_projection_cosine_and_delta
+  - randomized_top_singular_spectrum
+  - estimated_stable_rank
+  - random_transport_probe_cosine_and_relative_error
+  - mapped_token_centered_linear_cka
+
+token_metrics:
+  - stable_sample_row_cosine_quantiles
+  - bank_f_answer_and_bridge_rows
+  - bank_s_answer_and_bridge_rows
+  - bank_w_answer_and_state_rows
+  - cross_bank_shared_token_rows
+  - top20_neighbor_overlap_on_stable_sample
+  - raw_and_mapped_row_norm_quantiles
+
+selection_metrics:
+  - selected_id_jaccard
+  - finite_rank_biased_overlap
+  - mapped_selected_span_projector_overlap
+  - mapped_selected_span_principal_angles
+  - numerical_rank
+  - persistent_direction_overlap_across_positions
+  - normalized_alias_equivalent_swap_fraction
+  - marginal_gain_to_random_crossing_margin
+
+readout_metrics:
+  effective_gain_formula: model.norm.weight*rsqrt(1+rms_norm_eps)
+  effective_unembedding_formula: lm_head.weight*effective_gain
+  mapped_dictionary_formula: row_normalize(effective_unembedding@J_layer)
+  plain_dictionary_formula: row_normalize(effective_unembedding)
+  items:
+    - raw_unembedding_row_cosine
+    - effective_unembedding_row_cosine
+    - final_norm_gain_cosine_and_scale
+    - tied_or_untied_status
+    - cross_checkpoint_plain_neighbor_ranking_overlap
+    - cross_checkpoint_j_mapped_neighbor_ranking_overlap
+    - j_minus_plain_neighbor_overlap
+
+selection_margin_boundary:
+  exact_kth_kplus1_score_gap:
+    status: not-estimable-from-registered-o2-sufficient-statistics
+    required_future_input: replayed-pursuit-correlation-log-compatible-with-phase4_3-top-k-margin-schema
+  stable_core_near_tie_fringe:
+    status: partially-estimable
+    current_estimands:
+      - exact-selected-prefix-persistence
+      - normalized-alias-equivalent-swaps
+      - marginal-gain-to-random-crossing-margin
+    prohibited_label: kth-kplus1-score-margin
+  protected_span_overlap:
+    status: not-estimable-without-protected-direction-inputs
+  causal_core_fringe_dose:
+    status: blocked-by-olmo-phase4-service-gate
+    blocking_evidence: ol-bank-w-capability-joint-dev-v1
+  rule: Missing quantities remain explicit nulls and cannot be replaced by a proxy under the same name.
+
+task_token_sources:
+  - id: bank_f
+    uri: repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
+    sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
+    fields: [answer, accepted_answers, bridge, counterfactual_answer, counterfactual_accepted, counterfactual_bridge]
+  - id: bank_s
+    uri: repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
+    sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
+    fields: [answer, accepted_answers, bridge, counterfactual_answer, counterfactual_accepted, counterfactual_bridge]
+  - id: bank_w
+    uri: repo://interpretability/jspace_phase4/data/bank_w_candidate_v1.jsonl
+    sha256: c43ef76cbc4db755f6f2bb3e91b8feecb65ef2106fb5199c5759dc1b95578ab4
+    fields: [answer, accepted_answers, context_values]
+    intervention_outcomes_present: false
+
+models:
+  - slug: olmo3-base
+    role: pretrained_anchor
+    readout_evidence_id: ol-geometry-readout-olmo3-base-v1
+    capacity_evidence_id: ol-capacity-olmo3-base-dev-v1
+    repository: allenai/Olmo-3-1125-32B
+    revision: c2b61dae89a1ad10e4ad5653d0e46b590902607b
+    model_uri: model://allenai/Olmo-3-1125-32B@c2b61dae89a1ad10e4ad5653d0e46b590902607b
+    tokenizer_snapshot: /content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3-1125-32B/snapshots/c2b61dae89a1ad10e4ad5653d0e46b590902607b
+    tokenizer_json_sha256: 73fd5254624f39a88e3faac6a8e11300fc3c735ed37880d4f4f08db898eaecca
+    lens_uri: drive://phase3/lens/olmo3-base_lens.pt
+    lens_sha256: 92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696
+  - slug: olmo3-think
+    role: think_endpoint_3_0
+    readout_evidence_id: ol-geometry-readout-olmo3-think-v1
+    capacity_evidence_id: ol-capacity-olmo3-think-dev-v1
+    repository: allenai/Olmo-3-32B-Think
+    revision: ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
+    model_uri: model://allenai/Olmo-3-32B-Think@ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
+    tokenizer_snapshot: /content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
+    tokenizer_json_sha256: 73fd5254624f39a88e3faac6a8e11300fc3c735ed37880d4f4f08db898eaecca
+    lens_uri: drive://part1/lens/olmo32bthink_lens.pt
+    lens_sha256: 05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053
+  - slug: olmo31-think
+    role: think_endpoint_3_1
+    readout_evidence_id: ol-geometry-readout-olmo31-think-v1
+    capacity_evidence_id: ol-capacity-olmo31-think-dev-v1
+    repository: allenai/Olmo-3.1-32B-Think
+    revision: 832c3f543499af8fe68b88359501de9cb7840544
+    model_uri: model://allenai/Olmo-3.1-32B-Think@832c3f543499af8fe68b88359501de9cb7840544
+    tokenizer_snapshot: /content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3.1-32B-Think/snapshots/832c3f543499af8fe68b88359501de9cb7840544
+    tokenizer_json_sha256: 73fd5254624f39a88e3faac6a8e11300fc3c735ed37880d4f4f08db898eaecca
+    lens_uri: drive://part2/lens/olmo31think_lens.pt
+    lens_sha256: 1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8
+  - slug: olmo31-instruct
+    role: sibling_endpoint
+    readout_evidence_id: ol-geometry-readout-olmo31-instruct-v1
+    capacity_evidence_id: ol-capacity-olmo31-instruct-dev-v1
+    repository: allenai/Olmo-3.1-32B-Instruct
+    revision: ac0587e4a7744a551c059d8cd17ba220bc940dae
+    model_uri: model://allenai/Olmo-3.1-32B-Instruct@ac0587e4a7744a551c059d8cd17ba220bc940dae
+    tokenizer_snapshot: /content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae
+    tokenizer_json_sha256: 7738a25c46a6043a0e2e605138851baa450269ce9d800af6ca9bf6192e45510c
+    lens_uri: drive://part2/lens/olmo31instruct_lens.pt
+    lens_sha256: e0f8b972a9f1f884101f94ff52a1938d5cfa7a5f49e987e6768826f2337c6dfb
+
+model_tensor_contract:
+  config_name: config.json
+  index_name: model.safetensors.index.json
+  unembedding_tensor: lm_head.weight
+  final_norm_tensor: model.norm.weight
+  unembedding_shard: model-00014-of-00014.safetensors
+  final_norm_shard: model-00013-of-00014.safetensors
+  expected_hidden_size: 5120
+  expected_vocabulary_size: 100278
+  expected_rms_norm_eps: 0.000001
+  expected_tie_word_embeddings: false
+  extracted_rows_dtype: float16
+
+decision_router:
+  broad_operator_continuity: >-
+    Primary Base-to-3.0-Think raw-matrix cosine median across all source
+    layers is at least 0.90 and its minimum across assay layers is at least
+    0.85. This is a development descriptor, not an equivalence certificate.
+  broad_token_continuity: >-
+    Primary-edge stable-sample mapped-row cosine median across layers is at
+    least 0.85 and the median layer-level q05 is at least 0.70.
+  dictionary_formation_pattern: >-
+    The Base-to-3.0 mapped-row cosine movement is at least 1.5 times the
+    3.0-to-3.1 movement and exceeds it by at least 0.03.
+  selection_divergence_flag: >-
+    Median selected-ID Jaccard below 0.75 or median normalized projector
+    overlap below 0.85. These reviewed Phase-4 stability cut points are used
+    only as descriptive flags across checkpoints.
+  instruct_late_shift: >-
+    Sibling-edge late-layer movement exceeds early-layer movement by at least
+    0.03; report whether operator, readout, or mapped rows contribute most.
+  outcome_labels:
+    - broad-continuity-with-selection-change
+    - dictionary-formation-pattern
+    - coordinate-drift-with-common-coarse-channel
+    - mixed-or-unresolved
+
+outputs:
+  protocol: olmo-artifact://manifests/ol_geometry_protocol_v1.json
+  row_manifest: olmo-artifact://manifests/ol_geometry_row_manifest_v1.json
+  joint_result: olmo-artifact://metrics/geometry/ol-geometry-joint-dev-v1.json
+  layer_table: olmo-artifact://metrics/geometry/ol-geometry-joint-dev-v1_layers.parquet
+  selection_table: olmo-artifact://metrics/geometry/ol-geometry-joint-dev-v1_selection.parquet
+  readout_table: olmo-artifact://metrics/geometry/ol-geometry-joint-dev-v1_readout.parquet
+
+claim_boundary: >-
+  Development-tier matched-lineage descriptive geometry. Natural checkpoint
+  differences do not identify a randomized Think-training effect. Instruct is
+  a sibling endpoint, not a fourth Think-trajectory point. Geometry continuity
+  does not establish sparse-selection or causal invariance. No Phase 4,
+  confirmatory, replication, Gemma, or intervention outcome is opened.

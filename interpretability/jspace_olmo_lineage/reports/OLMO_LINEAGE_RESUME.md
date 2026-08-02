@@ -142,13 +142,34 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
-At the 2026-08-02T03:28:59Z recovery checkpoint, all four O2 model events and
+At the 2026-08-02T04:04:25Z recovery checkpoint, all four O2 model events and
 the paired joint event are complete and registered. The live registry therefore
 contains thirteen events and 46 immutable outputs, all of which verify. The
 frozen joint verdict is `broadly_conserved_capacity_recruitment_consistent`;
 OLMo-3.1 32B Instruct remains a sibling endpoint, not a fourth trajectory
-point. O3 geometry protocol/implementation is next. The live in-progress file
-supersedes this timestamp if later work exists.
+point. The O3 protocol/extractor/aggregate/figure implementation is prepared
+and 39 tests pass; the live in-progress file says whether its source and
+protocol events have since been published.
+
+O3 is staged so a fresh VM never needs four complete 32B snapshots at once.
+After `ol-geometry-protocol-v1` exists, obtain only `config.json`,
+`model.safetensors.index.json`, `model-00013-of-00014.safetensors`, and
+`model-00014-of-00014.safetensors` at the exact revision for one model. Then
+run:
+
+```bash
+python -m jspace_olmo_lineage.experiments.geometry extract-readout \
+  --config interpretability/jspace_olmo_lineage/configs/ol_geometry_v1.yaml \
+  --slug <model-slug> --snapshot <local-exact-revision-snapshot>
+```
+
+Commit, pull/rebase, reproduce, push, and recover after every readout event.
+The extracts contain only the frozen unembedding rows and final norm. Once all
+four readout evidence IDs verify, run `aggregate`, publish that event, and only
+then run `figures`; the latter reads registered tables rather than live
+tensors. Exact kth/k+1 candidate-score gaps require a future compatible replay
+because O2 did not retain the candidate-correlation log. Causal core/fringe
+dose remains blocked by the O1 service gate.
 
 The model command is:
 
