@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:48:41Z
+Last updated: 2026-08-02T04:51:00Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -21,15 +21,15 @@ live in Drive under `olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
 - Active model job: none; GPU memory is free. O3 and its five figure pairs are
-  durable. The official 32B checkpoint inventory v1 is registered. Its
-  byte-identity tokenizer gate conservatively routed H5 to stated-unresolvable
-  because the official Think-SFT tokenizer JSON has a different file hash.
-  A read-only semantic audit found the same 100,278 token-ID mapping and
-  identical encodings on all 200 frozen fitting texts plus seven edge cases;
-  a transparent v2 semantic-compatibility supersession is the current action.
+  durable. The semantic official-32B checkpoint inventory v2 is registered and
+  v1 is explicitly superseded. Official Think SFT and DPO stage artifacts are
+  eligible; the bounded two-cell H5 wedge is queued but not started. The
+  current action is a bounded O5 feasibility/identifiability decision followed
+  by the claims table, state of record, paper, reconstruction, and final bundle.
 - Last registered native evidence:
-  `ol-checkpoint-inventory-v1` (methods), created at
-  2026-08-02T04:38:55Z from clean commit `4bbdc74`. Its two outputs verify.
+  `ol-checkpoint-inventory-v2` (methods), created at
+  2026-08-02T04:49:30Z from clean commit `d927b98`. Its two outputs verify; v1
+  has a registry supersession status pointing to v2.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
@@ -38,19 +38,23 @@ live in Drive under `olmo_lineage_20260801`.
 
 The isolated foundation and O1 service obligation are complete. Four immutable
 foundation manifests and twenty-one live evidence events with 73 immutable
-outputs verify cleanly; 43 package tests pass. No model job is active.
+live outputs verify cleanly; the registry contains 22 origin events because
+inventory v1 remains immutable but superseded. All 45 package tests pass. No
+model job is active.
 
-The first official checkpoint inventory event is intentionally preserved as
-`ol-checkpoint-inventory-v1`. It checks eight exact official revisions and
-records complete 32B architecture and LFS weight manifests, but its initial
-within-path compatibility predicate required byte-identical `tokenizer.json`
-files. That is stricter than the plan's semantic-compatibility requirement.
-The Think-SFT file uses string-form BPE merges where the other Think files use
-pair-form merges; full token IDs are identical and a 207-text encoding audit
-found zero differences. The semantic v2 producer and its 45-test package are
-prepared locally. Publish that source, register its unique v2 result, and
-append the configured explicit supersession event. Never overwrite either v1
-output.
+The official checkpoint inventory is resolved. Version 1 remains preserved
+with its conservative byte-identity result. Version 2 checks eight exact
+official revisions, complete architecture and LFS weight manifests, full
+token-ID maps, normalized BPE models, processing components, and tokenization
+on the 200 frozen fitting texts plus seven edge cases. The Think path has two
+raw tokenizer file hashes but one semantic fingerprint
+`c860ecb7...fd956`; SFT and DPO are both eligible. The registered route is
+`genuine-32b-intermediates-available` / `testable-with-bounded-stage-wedge`.
+The queue contains only SFT and DPO, with Base, 3.0 Think, and 3.1 Think as
+existing anchors. BOS/chat rendering differences and repository-only parent
+declarations remain qualifications. The v2 JSON is SHA-256
+`e5931c3f...ad9a`; Markdown is `f3704d14...6db4`. No weights or behavioral
+outcomes were opened by this event.
 
 The O3 implementation uses only exact same-corpus lenses plus small,
 hash-pinned model readout extracts. The frozen row population contains a
@@ -317,16 +321,16 @@ git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-Publish the semantic checkpoint-inventory v2 implementation first. From its
-clean pushed commit, run:
+The inventory v2 command below has completed and must not be rerun because its
+outputs are immutable:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
   --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v2.yaml
 ```
 
-Then publish/recover the methods event, resolve the bounded O5 feasibility
-record, update and compile the OLMo-run-specific paper, and emit a
+Publish/recover the methods event, resolve the bounded O5 feasibility record,
+update and compile the OLMo-run-specific paper, and emit a
 self-verifying final OLMo import/restart bundle. Do not merge into the main
 Phase 4 or Gemma paper/registries, and do not open an O4 Bank-W intervention
 under the failed 20-family protocol.

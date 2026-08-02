@@ -142,9 +142,10 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
-At the 2026-08-02T04:38:55Z evidence checkpoint, all four O2 model events and
+At the 2026-08-02T04:49:30Z evidence checkpoint, all four O2 model events and
 the paired joint event are complete and registered. The live registry therefore
-contains twenty-one events and 73 immutable outputs, all of which verify. The
+contains 22 origin events, of which 21 are live, with 73 live immutable
+outputs, all of which verify. Inventory v1 is the one superseded origin. The
 frozen joint verdict is `broadly_conserved_capacity_recruitment_consistent`;
 OLMo-3.1 32B Instruct remains a sibling endpoint, not a fourth trajectory
 point. The O3 protocol/extractor/aggregate/figure implementation is published,
@@ -153,7 +154,7 @@ rows before any new geometry outcome. All four frozen readout inputs and the
 four-checkpoint aggregate are registered and hash-verified. The O3 router
 verdict is `dictionary-formation-pattern`; five PNG/PDF figure pairs and their
 manifest are also registered. The live in-progress file identifies the pending
-checkpoint-inventory semantic-correction boundary.
+bounded O5 feasibility and release boundary.
 
 O3 is staged so a fresh VM never needs four complete 32B snapshots at once.
 After `ol-geometry-protocol-v1` exists, obtain only `config.json`,
@@ -190,10 +191,11 @@ Its conservative byte-identity tokenizer predicate returned stated-unresolvable
 because Think-SFT uses a different JSON serialization. Do not rerun or
 overwrite v1. A read-only audit found an identical 100,278-entry token-ID map
 and identical encodings on the complete 200-text frozen fitting corpus plus
-seven edge cases. Resume by publishing the semantic-compatibility v2 source,
-running v2 from that clean commit, and appending an explicit v1-to-v2
-supersession event. Keep BOS/chat-template differences visible in the report.
-The v2 command is:
+seven edge cases. Version 2 is registered and explicitly supersedes v1. It
+finds both official Think SFT and DPO cells eligible and queues a bounded H5
+stage wedge without opening weights or model outcomes. Keep BOS/chat-template
+differences and repository-only parent declarations attached to that queue.
+The completed v2 command was:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.checkpoint_inventory \

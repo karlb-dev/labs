@@ -515,16 +515,23 @@ byte-identity tokenizer predicate routes H5 to
 `stated-unresolvable-at-32b`, because the official Think-SFT tokenizer JSON has
 a different file hash from Base/DPO/final Think.
 
-That v1 route is not yet the final inventory interpretation. A read-only audit
-shows that Base, Think-SFT, Think-DPO, 3.0 Think, and 3.1 Think have the same
+That v1 route is not the final inventory interpretation. The registered v2
+audit shows that Base, Think-SFT, Think-DPO, 3.0 Think, and 3.1 Think have the same
 100,278 token-to-ID mapping. Think-SFT serializes the same 100,000 BPE merges
 as strings rather than two-element arrays, and produces identical token IDs on
 all 200 ordered frozen fitting texts plus seven fixed edge cases. BOS and chat
 template metadata differ and must remain explicit, but those interface fields
-do not alter the audited content encodings. A semantic-compatibility v2 will be
-registered under a new evidence ID and will explicitly supersede, never
-overwrite, v1. The v1 JSON is SHA-256 `5e9f80ea...6d963`; its Markdown report
-is SHA-256 `720b9efc...0b53`. No stage-model behavior was opened.
+do not alter the audited content encodings. `ol-checkpoint-inventory-v2`
+explicitly supersedes, rather than overwrites, v1 and returns
+`genuine-32b-intermediates-available`. Both official Think SFT and DPO
+exact-revision artifacts pass the ancestry declaration, 32B architecture,
+semantic-tokenizer, public-repository, and LFS weight-availability checks. H5
+is therefore `testable-with-bounded-stage-wedge`; only SFT/DPO are queued, with
+the existing Base/3.0/3.1 anchors, and no model outcome has started. The v2
+JSON is 78,172 bytes, SHA-256 `e5931c3f...ad9a`; its Markdown is 2,857 bytes,
+SHA-256 `f3704d14...6db4`; payload hash is `e1707488...3c96`. The v1 JSON
+remains SHA-256 `5e9f80ea...6d963` and is superseded in the append-only
+registry.
 
 ## O4: development mechanism grid
 
@@ -587,6 +594,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-geometry-figures-dev-v1` | Registered five PNG/PDF views from registered tables only; Figure 4 uses clearly labeled imported Bank-S context and preserves the Bank-W block; visual inspection passes | Source commit `cd042fc`; manifest `1bb73432...`; ten registered figure files |
 | 2026-08-02 | Checkpoint-inventory pre-evidence implementation | Exact-revision official-Hub metadata producer, architecture/tokenizer/weight-manifest checks, no-substitution router, and four tests prepared; no availability or model outcome opened | OLMo namespace only; 43 package tests pass |
 | 2026-08-02 | `ol-checkpoint-inventory-v1` | Eight exact official revisions and their 32B weight manifests verified; conservative byte-identity tokenizer rule returned `no-provenance-complete-32b-intermediate-pair`; subsequent read-only audit found Think-SFT content tokenization semantically identical, so a versioned v2 correction is required | Source commit `4bbdc74`; JSON `5e9f80ea...`; Markdown `720b9efc...`; no model outcome |
+| 2026-08-02 | `ol-checkpoint-inventory-v2` | Full token-ID, normalized-BPE, processor, and 207-text encoding audit resolves the Think tokenizer serialization difference; official exact-revision SFT and DPO cells are eligible; bounded H5 wedge queued-not-started; v1 explicitly superseded | Source commit `d927b98`; JSON `e5931c3f...`; Markdown `f3704d14...`; no model outcome |
 
 ## Current limitations and claim boundary
 
