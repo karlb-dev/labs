@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T05:13:52Z
+Last updated: 2026-08-02T05:19:48Z
 
 Status: active; O1, O2, and O3 are complete through the registered geometry
 tables, and the early Phase 4 bundle is emitted. Both native OLMo-lineage
@@ -564,6 +564,14 @@ OLMo-3.1 Think snapshot, and a clean-process repetition of one frozen Bank-W
 row. None of these checks creates a new scientific cell; the registered result
 will be methods evidence only after the full sentinel passes.
 
+The first clean-process sentinel attempt verified all fourteen exact weight
+shards, loaded the pinned model, and then stopped with CUDA out-of-memory while
+the scorer evaluated all eight answer candidates in one batch. No output,
+figure directory, or registry event was created. The bounded retry changes
+only runtime microbatching from eight candidates to one, within the frozen
+scoring contract; it retains identical candidate-sequence log probability,
+prompt, aliases, revision, prediction, margin, and `1e-5` replay tolerance.
+
 ## O4: development mechanism grid
 
 The primary arm contrast is
@@ -628,6 +636,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-checkpoint-inventory-v2` | Full token-ID, normalized-BPE, processor, and 207-text encoding audit resolves the Think tokenizer serialization difference; official exact-revision SFT and DPO cells are eligible; bounded H5 wedge queued-not-started; v1 explicitly superseded | Source commit `d927b98`; JSON `e5931c3f...`; Markdown `f3704d14...`; no model outcome |
 | 2026-08-02 | `ol-o5-feasibility-decision-v1` | Registered evidence cannot identify activation × transport × readout causal factors; seven required controls/cells are absent; decision is not-executed with no proxy substitution and a frozen Bank-S-first Phase 5 pilot | Source commit `843eabd`; JSON `d31d23e4...`; Markdown `9e3fbb45...`; no model outcome |
 | 2026-08-02 | Independent-reconstruction preflight | Separate reconstruction passes O1/O2/O3 table checks; exact-revision 61-GiB Think snapshot staged directly from the Hub for a one-row clean-process sentinel; no new outcome opened | Dirty source after durable commit `4c6617e`; full clean-run event pending |
+| 2026-08-02 | Independent-reconstruction attempt 1 | All 14 exact weight shards verified; eight-candidate forward stopped on CUDA OOM; no output or event created; retry bounded to a one-candidate microbatch | Clean source `5551e1e`; local-only process log; Drive reconstruction namespace remains absent |
 
 ## Current limitations and claim boundary
 

@@ -1,5 +1,8 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
+import yaml
 
 from jspace_olmo_lineage.capacity import curve_summary
 from jspace_olmo_lineage.experiments.independent_reconstruction import (
@@ -57,3 +60,14 @@ def test_ordered_pairs_preserve_registered_lineage_order():
         _ordered_pairs(["base", "base"], available)
     with pytest.raises(ValueError):
         _ordered_pairs(order[:-1], available)
+
+
+def test_sentinel_uses_single_candidate_microbatch():
+    project = Path(__file__).resolve().parents[1]
+    reconstruction = yaml.safe_load((
+        project / "configs/ol_independent_reconstruction_v1.yaml").read_text())
+    bank = yaml.safe_load((
+        project / "configs/ol_bank_w_capability_v1.yaml").read_text())
+    assert reconstruction["sentinel"]["candidate_batch_size"] == 1
+    assert reconstruction["sentinel"]["candidate_batch_size"] <= bank[
+        "answer_contract"]["runtime_candidate_batch_size"]

@@ -805,6 +805,13 @@ def _model_sentinel(config: dict, snapshot: Path) -> dict:
     aliases = list(bank_config["answer_contract"]["aliases"])
     labels = list(bank_config["answer_contract"]["labels"])
     alias_by_label = dict(zip(labels, aliases))
+    candidate_batch_size = int(sentinel["candidate_batch_size"])
+    maximum_batch_size = int(bank_config["answer_contract"][
+        "runtime_candidate_batch_size"])
+    if not 1 <= candidate_batch_size <= maximum_batch_size:
+        raise ValueError(
+            "sentinel candidate batch size must be within the frozen runtime "
+            "contract")
 
     gpu = require_cuda_gpu()
     tokenizer = transformers.AutoTokenizer.from_pretrained(
@@ -819,8 +826,7 @@ def _model_sentinel(config: dict, snapshot: Path) -> dict:
         pad_token_id = tokenizer.eos_token_id
     scores, prompt_tokens, token_manifest = candidate_scores(
         model, session, item["prompt"], aliases,
-        batch_size=int(bank_config["answer_contract"][
-            "runtime_candidate_batch_size"]),
+        batch_size=candidate_batch_size,
         pad_token_id=int(pad_token_id))
     del model
     gc.collect()
@@ -861,6 +867,8 @@ def _model_sentinel(config: dict, snapshot: Path) -> dict:
         "weight_shards_verified": len(weight_rows),
         "weight_manifest_sha256": object_sha256(weight_rows),
         "candidate_count": len(scores),
+        "candidate_batch_size": candidate_batch_size,
+        "frozen_runtime_candidate_batch_size": maximum_batch_size,
         "expected_candidate_scores_sha256": object_sha256(expected_scores),
         "reconstructed_candidate_scores_sha256": object_sha256(scores),
         "maximum_absolute_log_probability_difference": maximum,

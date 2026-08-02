@@ -44,6 +44,7 @@ sentinel:
   revision: 832c3f543499af8fe68b88359501de9cb7840544
   item_id: bank-w:deferred_recall:template-01:seed-00:high:derived:once
   candidate_log_probability_atol: 0.00001
+  candidate_batch_size: 1
   require_prediction_match: true
   require_margin_match: true
   require_all_weight_shard_hashes: true
