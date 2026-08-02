@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T04:36:28Z
+Last updated: 2026-08-02T05:13:52Z
 
 Status: active; O1, O2, and O3 are complete through the registered geometry
 tables, and the early Phase 4 bundle is emitted. Both native OLMo-lineage
@@ -553,6 +553,17 @@ wedge is not an O5 substitute. The decision JSON is 5,555 bytes, SHA-256
 `d31d23e4...74499`; Markdown is 2,159 bytes, SHA-256
 `9e3fbb45...675a`; payload hash is `6fccb20e...9553`.
 
+An independent methods reconstruction is now in preflight. Its separate
+implementation has already reproduced, from immutable registered sufficient
+statistics, all 768 O1 candidate-score rows and family summaries, 48 O2 curve
+summaries, 96 bootstrap intervals, 144 joint bootstrap arrays, 72 joint table
+rows, all 84 O3 aggregate summaries, and the complete O3 router. The release
+gate also requires byte-exact regeneration of all five PNG figures, valid
+regeneration of all five PDFs, SHA-256 verification of every shard in the exact
+OLMo-3.1 Think snapshot, and a clean-process repetition of one frozen Bank-W
+row. None of these checks creates a new scientific cell; the registered result
+will be methods evidence only after the full sentinel passes.
+
 ## O4: development mechanism grid
 
 The primary arm contrast is
@@ -616,6 +627,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-checkpoint-inventory-v1` | Eight exact official revisions and their 32B weight manifests verified; conservative byte-identity tokenizer rule returned `no-provenance-complete-32b-intermediate-pair`; subsequent read-only audit found Think-SFT content tokenization semantically identical, so a versioned v2 correction is required | Source commit `4bbdc74`; JSON `5e9f80ea...`; Markdown `720b9efc...`; no model outcome |
 | 2026-08-02 | `ol-checkpoint-inventory-v2` | Full token-ID, normalized-BPE, processor, and 207-text encoding audit resolves the Think tokenizer serialization difference; official exact-revision SFT and DPO cells are eligible; bounded H5 wedge queued-not-started; v1 explicitly superseded | Source commit `d927b98`; JSON `e5931c3f...`; Markdown `f3704d14...`; no model outcome |
 | 2026-08-02 | `ol-o5-feasibility-decision-v1` | Registered evidence cannot identify activation × transport × readout causal factors; seven required controls/cells are absent; decision is not-executed with no proxy substitution and a frozen Bank-S-first Phase 5 pilot | Source commit `843eabd`; JSON `d31d23e4...`; Markdown `9e3fbb45...`; no model outcome |
+| 2026-08-02 | Independent-reconstruction preflight | Separate reconstruction passes O1/O2/O3 table checks; exact-revision 61-GiB Think snapshot staged directly from the Hub for a one-row clean-process sentinel; no new outcome opened | Dirty source after durable commit `4c6617e`; full clean-run event pending |
 
 ## Current limitations and claim boundary
 

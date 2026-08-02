@@ -215,6 +215,24 @@ Its decision is `defer-no-identifiable-crossed-intervention-estimand` /
 reconstruction, OLMo-run-specific paper, state of record, and final import
 bundle. Do not turn O2/O3 structural tables into an O5 intervention proxy.
 
+The independent reconstruction is methods-only and must run from a clean
+source commit. Stage the exact OLMo-3.1 Think revision named in
+`configs/ol_independent_reconstruction_v1.yaml` on local NVMe, preferably by a
+direct pinned Hub download, then run:
+
+```bash
+python -m jspace_olmo_lineage.experiments.independent_reconstruction \
+  --config interpretability/jspace_olmo_lineage/configs/ol_independent_reconstruction_v1.yaml \
+  --snapshot /content/olmo_lineage_work/sentinel_olmo31_think
+```
+
+It reconstructs O1/O2/O3 solely from registered sufficient statistics,
+regenerates figures outside the evidence namespace before an atomic publish,
+verifies all fourteen weight-shard hashes, and repeats one frozen registered
+Bank-W row. If its output event already exists and verifies, do not rerun it.
+If Drive contains a reconstruction directory without a registry event, treat
+it as an unregistered partial and audit it before any retry.
+
 The model command is:
 
 ```bash
