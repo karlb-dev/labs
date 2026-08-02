@@ -736,7 +736,8 @@ the conservative q50 is 0.998702 against the frozen 0.95 floor and the
 conservative q05 is 0.998122 against the 0.90 floor. The assay-band raw,
 minus-identity, and minus-scaled-identity operator cosines
 are 0.998739, 0.999610, and 0.998632. Residual principal-subspace similarity is
-0.998196, with median/max principal angles 1.824/8.853 degrees. The incremental
+0.998196; the assay-band medians of the per-layer median/max principal-angle
+summaries are 1.824/8.853 degrees. The incremental
 prompts 501--1000 block also aligns strongly with A500 in the assay band (conservative
 task q50 0.994787 and q05 0.992476), while the external published lens remains
 meaningfully different (A1000-versus-published conservative task q50 0.906757

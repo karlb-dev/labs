@@ -205,7 +205,8 @@ Its six-output local backup manifest hashes to
 `5bff1706c7684c38d8f103a2d725059a9a1bca8f0b8aaad3a528047390c57e09`.
 Within assay L20--L44, raw/minus-identity/minus-scaled-identity operator
 cosines are 0.998739/0.999610/0.998632; residual principal-subspace similarity
-is 0.998196 with median/max principal angles 1.824/8.853 degrees. These support
+is 0.998196, and the assay-band medians of the per-layer median/max
+principal-angle summaries are 1.824/8.853 degrees. These support
 the registered operator-level pass while leaving sparse and causal stability
 to the still-sealed successors. The prompts-501--1000 incremental block is
 also highly aligned to A500 (conservative task q50/q05
