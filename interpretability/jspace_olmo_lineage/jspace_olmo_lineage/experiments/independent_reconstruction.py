@@ -824,10 +824,11 @@ def _model_sentinel(config: dict, snapshot: Path) -> dict:
     pad_token_id = tokenizer.pad_token_id
     if pad_token_id is None:
         pad_token_id = tokenizer.eos_token_id
-    scores, prompt_tokens, token_manifest = candidate_scores(
-        model, session, item["prompt"], aliases,
-        batch_size=candidate_batch_size,
-        pad_token_id=int(pad_token_id))
+    with torch.no_grad():
+        scores, prompt_tokens, token_manifest = candidate_scores(
+            model, session, item["prompt"], aliases,
+            batch_size=candidate_batch_size,
+            pad_token_id=int(pad_token_id))
     del model
     gc.collect()
     torch.cuda.empty_cache()

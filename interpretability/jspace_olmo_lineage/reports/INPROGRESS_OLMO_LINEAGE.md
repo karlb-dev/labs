@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T05:19:48Z
+Last updated: 2026-08-02T05:25:10Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -25,11 +25,15 @@ live in Drive under `olmo_lineage_20260801`.
   pinned Hugging Face revision. The first clean-process attempt verified all
   fourteen weight-shard hashes, then stopped on CUDA OOM while scoring all
   eight candidate sequences in one runtime batch. It created no result, figure
-  directory, or registry event. The pending source-only repair reduces the
-  sentinel microbatch to one while preserving the frozen prompt, candidate
-  scores, formula, model, and tolerance. O3 and its five figure pairs are
-  durable. The semantic
-  official-32B checkpoint inventory v2 is registered and v1 is explicitly
+  directory, or registry event. A one-candidate diagnostic fit but did not
+  reproduce BF16 batch numerics: maximum score drift was 0.20499 nats and the
+  margin moved from -0.25 to -0.125, so it was rejected. The root cause is the
+  wrapper's missing `torch.no_grad()` context. A local eight-candidate
+  diagnostic under `no_grad` exactly reproduces all eight scores and the
+  margin, with peak allocation 60.42 GiB. The pending repair restores the
+  frozen batch of eight and adds that context. O3 and its five figure pairs are
+  durable. The semantic official-32B checkpoint inventory v2 is registered and
+  v1 is explicitly
   superseded. Official Think SFT and DPO stage artifacts are eligible; the
   bounded two-cell H5 wedge is queued but not started. O5 has an explicit
   not-executed identifiability decision.
@@ -45,10 +49,10 @@ live in Drive under `olmo_lineage_20260801`.
 The isolated foundation and O1 service obligation are complete. Four immutable
 foundation manifests and twenty-two live evidence events with 75 immutable
 live outputs verify cleanly; the registry contains 23 origin events because
-inventory v1 remains immutable but superseded. All 50 package tests, registry
-verification, and the exact dependency-lock check pass with the microbatch
-repair. No model job is active; the repair must be committed, rebased, pushed,
-and recovered before retry.
+inventory v1 remains immutable but superseded. The corrected `no_grad` source
+passes all 50 package tests, registry verification, and the exact dependency-
+lock check. No model job is active; the repair must be committed, rebased,
+pushed, and recovered before retry.
 
 Independent reconstruction source now reimplements all registered Bank-W row
 integrity and family bootstrap summaries, all 48 O2 curve summaries, 96
@@ -58,9 +62,8 @@ immutable Drive artifacts. The figure producer has a registry-free isolated
 mode and publishes only after all five PNG byte-equality checks and five PDF
 checks pass. The final sentinel verifies all fourteen pinned weight shards and
 repeats exactly one already registered Think Bank-W row; it opens no new item
-or comparison. Candidate microbatch size is one, within the frozen maximum of
-eight, because the eight-candidate attempt exceeded 96-GiB VRAM. The exact
-resume command is below.
+or comparison. Candidate batch size remains the frozen eight; `no_grad`
+prevents accidental autograd retention. The exact resume command is below.
 
 The official checkpoint inventory is resolved. Version 1 remains preserved
 with its conservative byte-identity result. Version 2 checks eight exact
