@@ -20,7 +20,7 @@ lenses:
   a1000:
     evidence_id: p4-qwen-lens-fit-drawA-n1000-dev-v1
     lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n1000.pt
-    lens_sha256: BIND_REGISTERED_A1000_SHA256_AFTER_FIT_COMPLETION
+    lens_sha256: 6e48c7731501d0fc6030f1d60eff6f19b211756f40ef0cd6e499e414f08f6bd6
     n_prompts: 1000
 
 prompt:
