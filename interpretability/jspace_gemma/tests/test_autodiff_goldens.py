@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from jspace_gemma.autodiff import ExactJVPError, exact_jvp
+from jspace_gemma.autodiff import ExactJVPError, exact_jvp, exact_linearize
 
 
 def analytic_function(value):
@@ -69,3 +69,14 @@ def test_linear_positive_control_is_exact():
     direction = torch.randn(5, generator=generator, dtype=torch.float64)
     result = exact_jvp(lambda value: matrix @ value, source, direction)
     assert torch.allclose(result.tangent, matrix @ direction, atol=1e-12, rtol=1e-12)
+
+
+def test_cached_linearization_matches_fresh_jvp_for_multiple_tangents():
+    source = torch.tensor([0.4, -0.7], dtype=torch.float64)
+    cached = exact_linearize(analytic_function, source)
+    for direction in (
+        torch.tensor([0.6, 0.8], dtype=torch.float64),
+        torch.tensor([-0.2, 1.3], dtype=torch.float64),
+    ):
+        fresh = exact_jvp(analytic_function, source, direction)
+        assert torch.allclose(cached.apply(direction), fresh.tangent, atol=1e-12, rtol=1e-12)

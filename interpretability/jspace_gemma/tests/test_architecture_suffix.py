@@ -78,6 +78,12 @@ def test_tiny_hf_olmo_explicit_suffix_matches_full_forward_and_supports_jvp():
     ) / (2 * epsilon)
     cosine = torch.nn.functional.cosine_similarity(result.tangent, central, dim=0)
     assert float(cosine) > 0.999
+    batch = suffix.clean_source.float().expand(3, -1, -1).clone()
+    batch[1] += 1e-3 * direction[0]
+    batch[2] -= 1e-3 * direction[0]
+    outputs = suffix(batch)
+    assert outputs.shape == (3, result.primal.numel())
+    assert torch.allclose(outputs[0], result.primal, atol=1e-6, rtol=1e-6)
 
 
 def test_tiny_hf_gemma_suffix_preserves_global_k_eq_v_path_and_supports_jvp():

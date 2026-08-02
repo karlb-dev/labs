@@ -60,6 +60,29 @@ Numeric tangent, SNR, and curvature-partition thresholds remain behind the
 pre-target firewall. They will be calibrated from OLMo and committed before
 the first Gemma number.
 
+Before model staging, the OLMo design was corrected to include L4 as the
+shallow negative-control layer and L60 as the late identity anchor around the
+five matched layers L24/L32/L40/L47/L56. This is required for the frozen
+later-versus-shallow contrast and was made without observing any current-study
+model number.
+
+## OLMo control harness
+
+The resumable producer now uses a clean-parity-checked explicit no-cache
+decoder suffix. It caches a forward-mode linearization, verifies it against a
+fresh `torch.func.jvp` in every cell, and applies that exact linear map to each
+faithfully realized fp32 perturbation. Positive, negative, doubled, and
+orthogonal-pair responses are batched only along independent examples; raw
+response and JVP vectors remain durable per cell. A deliberately wrong source
+layer supplies the pre-threshold mismatch baseline. Each prompt/layer/mode
+cell checkpoints to Drive and must finish within ten minutes.
+
+The staging verifier reuses only complete content-addressed Drive blobs,
+downloads missing content into an isolated local HF cache, verifies every LFS
+SHA-256 and every ordinary Git blob ID, and confirms the safetensor shard set
+against the exact remote index before model load. The expanded suite has 26
+passing tests. No OLMo staging or current-study model cell has run yet.
+
 ## Live evidence ledger
 
 | Evidence | Tier | State | Result |

@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 00:55 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 01:09 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -13,8 +13,9 @@ canonical Drive handoff at
 - Restart-boundary commit: `11501b804690559fabe571e941a95018eefbe19b`.
 - Diagnostic/repair commit: `5b486fed0e93a6b87139430b3ac65f225470bac8`.
 - Foundation/import commit: `2bb7428c931323d5d377ad04bd7e19a17958c491`.
-- Remote Gemma branch: synchronized at the foundation/import commit; the
-  golden registry/report update is not yet committed.
+- Exact-JVP golden commit: `91ecba1df24f6726faa94034c78f41806d7f38bb`.
+- Remote Gemma branch: synchronized at the exact-JVP golden commit; the OLMo
+  staging/control runner implementation is not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -25,7 +26,7 @@ canonical Drive handoff at
 - Shared Part-2 conformance bootstrap: PASS.
 - No Gemma or OLMo model producer is running. No scientific Gemma target
   outcome has been opened.
-- The isolated package scaffold is committed. Its 22-test conformance suite
+- The isolated package scaffold is committed. Its 26-test conformance suite
   passes, including analytic, nonlinear tiny-transformer, and explicit Hugging
   Face Gemma/OLMo suffix/JVP tests.
 - The historical Drive OLMo snapshot has 11/14 complete weight shards. Shards
@@ -81,6 +82,14 @@ canonical Drive handoff at
 12. Registered `gm-jvp-goldens-v1`; analytic and nonlinear tiny-transformer
     forward/fallback/reverse derivative parity passes, with no numerical
     secant admitted as an exact backend.
+13. Implemented safe OLMo cache seeding/download plus full LFS/Git-blob/index
+    verification, cached exact forward linearization validated against fresh
+    `torch.func.jvp`, batched finite responses, realized-perturbation JVPs,
+    wrong-hook and clean-repeat baselines, atomic raw cells, resume headers,
+    robust `a+b*epsilon` fits, and the OLMo-only calibration producer.
+14. Corrected the pre-run OLMo layer grid to add L4 shallow control and L60
+    identity anchor around matched L24/L32/L40/L47/L56. No current-study
+    model number had been observed. All 26 tests pass.
 
 ## Immutable scientific guardrails
 
@@ -100,12 +109,19 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit the golden registry/report boundary; fetch, pull/reconcile, test,
+1. Commit the tested OLMo staging/control runner; fetch, pull/reconcile, test,
    and push.
-2. Stage the exact historical OLMo positive-control checkpoint
+2. From the clean commit run:
+
+   ```bash
+   python -u -m jspace_gemma.experiments.gm_stage_olmo
+   python -u -m jspace_gemma.experiments.gm_exact_transport_gate
+   ```
+
+   The first command must fully hash the exact historical OLMo checkpoint
    `allenai/Olmo-3-32B-Think@ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`
-   from Drive to local NVMe, rehash its snapshot inventory, and run the G1
-   control.
+   before the second opens the model. The second emits OLMo-only calibration,
+   not Gemma thresholds or a target result.
 3. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
 4. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
    snapshot to local NVMe, then run Gemma Stage 1 with the unchanged harness.
@@ -114,9 +130,9 @@ canonical Drive handoff at
 ## Recovery checks and next commands
 
 There is currently no live producer, lock owner, or partial scientific
-checkpoint. The golden registry/report update is currently uncommitted; no
-producer is live. Both foundation and golden artifacts are durable in Drive.
-On a new VM, run the bootstrap in
+checkpoint. The tested OLMo runner implementation is currently uncommitted;
+no producer is live and no local control cache/state exists yet. Foundation
+and golden artifacts are durable in Drive. On a new VM, run the bootstrap in
 `RESUME_GEMMA_TRANSPORT.md`, then inspect:
 
 ```bash
@@ -126,6 +142,8 @@ nvidia-smi
 find /content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802 \
   -maxdepth 3 -type f -printf '%TY-%Tm-%TdT%TH:%TM:%TSZ %p\n' | sort
 ps -eo pid,etimes,cmd | rg -i 'jspace_gemma|gm_exact|gemma-4|Olmo-3-32B'
+find /content/hf_olmo_control -maxdepth 4 -type f -o -type l 2>/dev/null | sort
+cat /content/gemma_transport_work/locks/gm_exact_transport_gate.lock 2>/dev/null
 ```
 
 If a later handoff records a lock or checkpoint, that later section supersedes

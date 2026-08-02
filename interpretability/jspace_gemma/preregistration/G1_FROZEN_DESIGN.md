@@ -15,3 +15,10 @@ Gemma weights or emit a Gemma scientific cell.
 The delivery thresholds (cosine 0.999 and relative norm error 0.01) come
 directly from the governing plan and are already fixed. No observed Gemma
 number may be used to alter a pass/fail threshold.
+
+Pre-control correction, 2026-08-02: the OLMo grid includes L4 as the required
+shallow negative-control layer and L60 as the late identity anchor, in addition
+to matched relative-depth layers L24/L32/L40/L47/L56. The initial scaffold
+listed only the matched layers and therefore could not implement the plan's
+precommitted later-versus-shallow contrast. This correction precedes model
+staging and all current-study OLMo/Gemma numbers.

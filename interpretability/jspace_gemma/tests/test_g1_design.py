@@ -10,6 +10,7 @@ def test_g1_design_is_frozen_but_target_thresholds_are_firewalled():
     assert len(design["stage1_prompt_ids"]) == 4
     assert len(design["stage2_prompt_ids"]) == 16
     assert design["models"]["gemma_target"]["layers_zero_indexed"] == [22, 30, 37, 44, 52]
+    assert design["models"]["olmo_positive_control"]["layers_zero_indexed"] == [4, 24, 32, 40, 47, 56, 60]
     assert design["relative_epsilon_ladder"] == [0.0025, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2]
     assert design["delivery_gate"] == {
         "cosine_floor": 0.999,

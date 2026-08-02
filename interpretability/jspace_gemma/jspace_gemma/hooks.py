@@ -203,7 +203,10 @@ class ExplicitDecoderSuffix:
         return self.base.layers[index](hidden, **kwargs)
 
     def __call__(self, explicit_source_fp32: torch.Tensor) -> torch.Tensor:
-        if explicit_source_fp32.shape != self.clean_source.shape:
+        if (
+            explicit_source_fp32.ndim != self.clean_source.ndim
+            or explicit_source_fp32.shape[1:] != self.clean_source.shape[1:]
+        ):
             raise ValueError("explicit source shape mismatch")
         hidden = explicit_source_fp32.to(self.clean_source.dtype)
         shared = UserDict()
@@ -251,10 +254,12 @@ class ExplicitDecoderSuffix:
             indices.append(index)
         selected = tensor[:, indices, :]
         if self.target.position_reduction == "sum":
-            return selected.sum(dim=1).reshape(-1)
-        if self.target.position_reduction == "mean":
-            return selected.mean(dim=1).reshape(-1)
-        return selected.reshape(-1)
+            result = selected.sum(dim=1).reshape(selected.shape[0], -1)
+        elif self.target.position_reduction == "mean":
+            result = selected.mean(dim=1).reshape(selected.shape[0], -1)
+        else:
+            result = selected.reshape(selected.shape[0], -1)
+        return result[0] if result.shape[0] == 1 else result
 
     def full_forward_clean_target(self) -> torch.Tensor:
         """Independent full-forward target used only for clean parity checks."""

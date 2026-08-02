@@ -18,6 +18,13 @@ class JVPResult:
     backend: str
 
 
+@dataclass(frozen=True)
+class LinearizationResult:
+    primal: torch.Tensor
+    apply: Callable[[torch.Tensor], torch.Tensor]
+    backend: str
+
+
 def exact_jvp(
     function: Callable[[torch.Tensor], torch.Tensor],
     primal: torch.Tensor,
@@ -60,6 +67,32 @@ def exact_jvp(
         "all exact autodiff backends failed; finite differences are forbidden "
         f"as a replacement: {errors}"
     )
+
+
+def exact_linearize(
+    function: Callable[[torch.Tensor], torch.Tensor],
+    primal: torch.Tensor,
+) -> LinearizationResult:
+    """Cache an exact forward-mode linear map for many realized tangents."""
+    try:
+        output, jvp_function = torch.func.linearize(function, primal)
+    except Exception as exc:
+        raise ExactJVPError(
+            "torch.func.linearize failed; this is not permission to use a "
+            f"finite difference as exact: {type(exc).__name__}: {exc}"
+        ) from exc
+    if not torch.isfinite(output).all():
+        raise ExactJVPError("non-finite primal from torch.func.linearize")
+
+    def checked(tangent: torch.Tensor) -> torch.Tensor:
+        if tangent.shape != primal.shape:
+            raise ValueError("linearized tangent shape mismatch")
+        result = jvp_function(tangent)
+        if result.shape != output.shape or not torch.isfinite(result).all():
+            raise ExactJVPError("invalid tangent from torch.func.linearize")
+        return result
+
+    return LinearizationResult(output, checked, "torch.func.linearize")
 
 
 def secant(

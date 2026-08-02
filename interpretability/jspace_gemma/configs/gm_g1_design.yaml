@@ -8,7 +8,10 @@ models:
   olmo_positive_control:
     model_id: allenai/Olmo-3-32B-Think
     revision: ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
-    layers_zero_indexed: [24, 32, 40, 47, 56]
+    layers_zero_indexed: [4, 24, 32, 40, 47, 56, 60]
+    matched_layers_zero_indexed: [24, 32, 40, 47, 56]
+    shallow_negative_control_layer: 4
+    late_identity_anchor_layer: 60
     role: exact checkpoint used by the historical campaign control
   gemma_target:
     model_id: google/gemma-4-31B-it
@@ -95,5 +98,6 @@ threshold_calibration:
   reason: binding addendum requires numeric target thresholds after OLMo calibration and before the first Gemma number
 
 cell_runtime_target_minutes: 10
+finite_response_batch_size: 8
 raw_vector_retention: true
 raw_row_schema: jspace_lab_gemma_1.md#18.1
