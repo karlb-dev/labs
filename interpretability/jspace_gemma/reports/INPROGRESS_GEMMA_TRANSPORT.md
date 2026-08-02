@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 03:32 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 03:46 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -36,8 +36,11 @@ canonical Drive handoff at
   `4f00d43e0810b98dfe1c281d260548ac791a14ab`.
 - Frozen Gemma Stage-1 execution/runner commit:
   `036e55233babcabacae061ab41d1410a35715aea`.
-- Remote Gemma branch is synchronized through the frozen Stage-1 runner; the
-  result registry/report boundary is not yet committed.
+- Stage-1 registry/report commit:
+  `a017e632c9889970e6fe2f0353f91fc2e52878bc`.
+- Local and remote Gemma branch are synchronized through the registered
+  Stage-1 boundary. This pre-run boundary prepares, but has not executed, the
+  frozen one-cell actual-Gemma exact-backend parity diagnostic.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -48,7 +51,7 @@ canonical Drive handoff at
 - Shared Part-2 conformance bootstrap: PASS.
 - No Gemma or OLMo model producer is running. OLMo calibration/control and the
   Gemma Stage-1 result are registered; the target model is no longer loaded.
-- The isolated package scaffold is committed. Its 43-test conformance suite
+- The isolated package scaffold is committed. Its 44-test conformance suite
   passes, including analytic, nonlinear tiny-transformer, and explicit Hugging
   Face Gemma/OLMo suffix/JVP tests plus a batch-shape/slot adversarial test.
 - OLMo local staging completed from clean pushed commit `42b34b1`. The
@@ -227,6 +230,13 @@ canonical Drive handoff at
     all 80 raw/metric files plus exact aggregate recomputation. Every frozen
     target layer returns local tangent mismatch; J-selected directions remain
     deferred until exact lens/token hashes are bound.
+28. Froze an unrun one-cell backend-parity diagnostic on the registered
+    `gm-p001-L52-single_position` / random-Rademacher / epsilon-0.05 row. It
+    replays the original eight-request batch and selected offset, rehashes the
+    target snapshot before load, and requires agreement between
+    `torch.func.jvp` and `torch.autograd.functional.jvp` plus exact replay of
+    the stored activation, target, secant, tangent, hashes, and metrics. No
+    diagnostic output or registry event exists at this pre-run boundary.
 
 ## Immutable scientific guardrails
 
@@ -246,21 +256,21 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit/pull/test/push the Stage-1 registry/report boundary.
-2. Implement/commit and run an actual-Gemma one-cell comparison of
-   `torch.func.jvp` against `torch.autograd.functional.jvp`; require derivative
-   agreement before interpreting the mismatch mechanistically.
+1. Commit, fetch/integrate, test, and push the frozen backend-parity producer.
+2. From that clean pushed commit, run and independently audit the one-cell
+   actual-Gemma forward/fallback exact-JVP comparison; require agreement before
+   interpreting the Stage-1 mismatch mechanistically.
 3. If parity passes, route the strongest validated cells to G2 sublayer
    localization and G3 R0/R1 routing discrimination; preserve G9 time.
 
 ## Recovery checks and next commands
 
-There is no live producer or GPU allocation. The 56-cell calibration and
-positive control are finalized and registered; do not rerun, delete, or
+There is no live producer or GPU allocation. The backend diagnostic has no
+output or evidence event yet and must only launch from its clean pushed
+producer commit. The 56-cell calibration and positive control are finalized and registered; do not rerun, delete, or
 rewrite them. Gemma Stage 1 is complete and registered from `036e552`; do not
-rerun, delete, or rewrite its state/cells/aggregates. The registry/report row
-is presently the only Git worktree change. The target model is unloaded, the
-fully verified local snapshot remains available, and the ephemeral OLMo
+rerun, delete, or rewrite its state/cells/aggregates. The target model is
+unloaded, the fully verified local snapshot remains available, and the ephemeral OLMo
 snapshot is removed. If this VM is reclaimed, Stage 1 needs no rerun; verify
 the Drive outputs and continue from the latest pushed report boundary. Inspect:
 
@@ -273,6 +283,7 @@ find /content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802 \
 ps -eo pid,etimes,cmd | rg -i 'jspace_gemma|gm_exact|gemma-4|Olmo-3-32B'
 find /content/hf_gemma_target -maxdepth 4 \( -type f -o -type l \) 2>/dev/null | sort
 cat /content/gemma_transport_work/locks/gm_gemma_stage1.lock 2>/dev/null
+cat /content/gemma_transport_work/locks/gm_gemma_backend_parity.lock 2>/dev/null
 ```
 
 If a later handoff records a lock or checkpoint, that later section supersedes

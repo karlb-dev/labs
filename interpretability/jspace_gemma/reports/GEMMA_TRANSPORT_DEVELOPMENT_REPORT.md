@@ -3,8 +3,8 @@
 Status: foundation, exact-JVP goldens, paper-band convention, the complete
 OLMo calibration/positive-control threshold freeze, and the non-lens Gemma
 Stage-1 core are registered. Stage 1 returns a strong frozen local-tangent
-mismatch classification at all five layers; an actual-model dual-backend
-derivative diagnostic precedes mechanism interpretation. All findings are
+mismatch classification at all five layers; a frozen, unrun actual-model
+dual-backend derivative diagnostic precedes mechanism interpretation. All findings are
 development or methods evidence, not a Phase 4 confirmatory model cell.
 
 ## Scope and non-claims
@@ -271,6 +271,28 @@ row-table SHA-256 is
 state SHA-256 is
 `5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65`.
 
+## Actual-Gemma backend-parity pre-run lock
+
+Before any mechanism localization, one registered Stage-1 row is frozen for
+an adversarial derivative-path replay:
+`gm-p001-L52-single_position`, random-Rademacher direction 0, relative
+epsilon 0.05. This row is strongly mismatched (tangent cosine approximately
+-0.00045 and relative error 2.77) and was originally evaluated as the fifth
+slot of the eight-request batch beginning at absolute request index 8.
+
+The diagnostic reconstructs that exact prompt, tokenization, source layer,
+mode, direction seed, epsilon ladder, batch shape, batch members, and slot.
+It rehashes all pinned Gemma snapshot bytes before model load and compares
+`torch.func.jvp` with the independent reverse-over-reverse
+`torch.autograd.functional.jvp` implementation. The frozen gate requires both
+backends to succeed, selected-slot and all-slot tangent agreement (cosine at
+least 0.999999 and relative error at most 1e-5), primal parity, and replay of
+the stored source activation, clean target, finite response, forward tangent,
+direction/realized-vector hashes, and reported transport metrics. A numerical
+secant is explicitly forbidden as an exact backend. Failure is itself
+registered as a methods diagnostic and blocks mechanism interpretation. At
+this pre-run boundary no diagnostic output or evidence event exists.
+
 ## Infrastructure incidents
 
 The first clean foundation attempt at commit `11501b8` stopped before any
@@ -283,7 +305,7 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish the Stage-1 registry/report boundary. Then implement and run a
-one-cell actual-Gemma forward/fallback exact-JVP parity diagnostic from a new
-clean commit; only after it passes route the strongest validated cells into
+Publish the frozen one-cell actual-Gemma forward/fallback exact-JVP parity
+producer, run it from that clean pushed commit, and independently audit its
+artifact and raw tensors. Only after it passes route the strongest validated cells into
 G2 layer/sublayer localization and G3 R0/R1 routing discrimination.

@@ -175,3 +175,67 @@ def test_stage1_result_is_registered_under_the_frozen_target_firewall():
     assert outputs["gemma_stage1_summary.json"] == (
         "0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384"
     )
+
+
+def test_backend_parity_diagnostic_replays_the_frozen_stage1_batch_slot():
+    root = Path(__file__).resolve().parents[1]
+    diagnostic = yaml.safe_load(
+        (root / "configs/gm_g1_backend_parity.yaml").read_text()
+    )
+    design = yaml.safe_load((root / "configs/gm_g1_design.yaml").read_text())
+    execution = yaml.safe_load(
+        (root / "configs/gm_g1_stage1_execution.yaml").read_text()
+    )
+    assert diagnostic["status"] == "FROZEN_PRE_DIAGNOSTIC"
+    assert diagnostic["evidence_id"] == "gm-jvp-gemma-backend-parity-v1"
+    assert diagnostic["source_stage1"] == {
+        "evidence_id": "gm-jvp-gemma-stage1-v1",
+        "compute_commit": "036e55233babcabacae061ab41d1410a35715aea",
+        "summary_sha256": (
+            "0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384"
+        ),
+        "state_sha256": (
+            "5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65"
+        ),
+        "cell_id": "gm-p001-L52-single_position",
+        "source_layer": 52,
+        "prompt_id": "gm-p001",
+        "perturbation_mode": "single_position",
+        "direction_id": "random-rademacher-0",
+        "relative_epsilon": 0.05,
+        "stored_exact_backend": "torch.func.jvp",
+    }
+    assert diagnostic["exact_backends"] == {
+        "primary": "torch.func.jvp",
+        "independent_fallback": "torch.autograd.functional.jvp",
+        "finite_difference_as_exact": "forbidden",
+    }
+    batch = diagnostic["batch_replay"]
+    assert batch["batch_size"] == execution["runtime"][
+        "finite_response_batch_size"
+    ]
+    epsilon_index = design["relative_epsilon_ladder"].index(
+        diagnostic["source_stage1"]["relative_epsilon"]
+    )
+    absolute_request_index = epsilon_index * 3
+    assert batch["chunk_start_index"] == (
+        absolute_request_index // batch["batch_size"]
+    ) * batch["batch_size"]
+    assert batch["selected_offset"] == (
+        absolute_request_index - batch["chunk_start_index"]
+    )
+    assert batch["expected_request_key"] == [
+        diagnostic["source_stage1"]["direction_id"],
+        diagnostic["source_stage1"]["relative_epsilon"],
+        "positive",
+    ]
+    acceptance = diagnostic["acceptance"]
+    assert acceptance["backend_tangent_cosine_floor"] == 0.999999
+    assert acceptance["backend_tangent_relative_error_ceiling"] == 1.0e-5
+    assert max(
+        acceptance["stored_source_activation_relative_error_ceiling"],
+        acceptance["stored_clean_target_relative_error_ceiling"],
+        acceptance["stored_forward_tangent_relative_error_ceiling"],
+        acceptance["stored_finite_response_relative_error_ceiling"],
+        acceptance["stored_metric_absolute_tolerance"],
+    ) == 1.0e-6
