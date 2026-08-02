@@ -39,3 +39,22 @@ python -m jspace_olmo_lineage.recovery
 ```
 
 Heavy and resumable artifacts live only in the side-study Drive root.
+
+Freeze and register the exact Phase 4 Bank-W compatibility contract before
+opening either OLMo baseline:
+
+```bash
+python -m jspace_olmo_lineage.experiments.bank_w_capability \
+  --config interpretability/jspace_olmo_lineage/configs/ol_bank_w_capability_v1.yaml \
+  --freeze-protocol
+```
+
+After committing and pushing that registry event, stage and run one model at a
+time from a clean tree:
+
+```bash
+bash interpretability/jspace_olmo_lineage/run_bank_w_capability_model.sh \
+  olmo31-think
+bash interpretability/jspace_olmo_lineage/run_bank_w_capability_model.sh \
+  olmo31-instruct
+```

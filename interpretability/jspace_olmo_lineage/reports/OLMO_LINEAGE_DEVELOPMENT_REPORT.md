@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T00:30:51Z
+Last updated: 2026-08-02T00:46:00Z
 
 Status: active, foundation complete. No native OLMo-lineage model result has
 yet been registered. This report will be updated after every material gate or
@@ -123,8 +123,15 @@ support is at least 20 families.
 
 ### Results
 
-Pending. Think runs first, then Instruct. An early hash-pinned import bundle
-will be emitted immediately after both gates and the joint-support analysis.
+Pending. The isolated O1 producer and config pass 19 package tests, including
+exact equality to the registered Phase 4 selection, answer/scoring contract,
+capability guard, model order, tokenizer revisions, and answer token IDs. The
+compatibility boundary directly imports the three hash-pinned Phase 4 source
+files and verifies that the installed modules resolve to those repository
+paths. It adds an explicit 384-row, no-drop, all-finite, complete-eight-answer
+gate without changing the source analysis. Think runs first, then Instruct.
+An early hash-pinned import bundle will be emitted immediately after both
+gates and the strict three-model joint-support analysis.
 
 ## O2: symmetric capacity
 
@@ -190,6 +197,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | Pre-foundation scaffold | Package, prospective predictions, import pins, recovery plan, and reports committed at `e01959e`; 13 tests passed | GitHub |
 | 2026-08-02 | Foundation refusal | Import gate detected stale preregistration hash after whitespace normalization; no evidence/output file was created; hash corrected prospectively | Git worktree; empty OLMo Drive directories |
 | 2026-08-02 | `ol-foundation-v1` | Frozen import boundary, environment, isolation, preregistration, and recovery contract; 14 tests and CUDA gate passed | Git commit `dc5f623`; four immutable Drive manifests |
+| 2026-08-02 | O1 pre-outcome implementation | Exact Phase 4 compatibility wrapper, two-model config, finite/no-drop gates, resumable runner, and pull-before-push staging workflow; 19 tests passed; no model outcome opened | Git worktree pending publication |
 
 ## Current limitations and claim boundary
 

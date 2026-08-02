@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T00:30:51Z
+Last updated: 2026-08-02T00:46:00Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -35,9 +35,14 @@ source events across Part 2, Phase 3, and Phase 4; 13 direct artifacts; three
 code dependencies; and six governance documents. Fourteen conformance tests
 pass. No model job is active.
 
-The current work is the O1 producer/config/conformance implementation. The
-next model-backed checkpoint is OLMo-3.1 Think Bank-W baseline capability,
-then OLMo-3.1 Instruct, then joint support and the early Phase 4 import bundle.
+The O1 producer, isolated config, NVMe staging runner, and compatibility tests
+are implemented but not yet committed. Nineteen tests pass. The O1 config is
+exactly equal to the registered Phase 4 source for selection, answer/scoring
+contract, capability guard, model/tokenizer revisions, answer token IDs, and
+model order. The wrapper imports the hash-pinned Phase 4 scorer, analyzer, and
+state implementation directly, checks their installed module paths, adds a
+384-row/no-drop/all-finite/eight-sequence gate, and writes only OLMo outputs.
+No model baseline or intervention outcome has been opened.
 
 ## Exact next actions
 
@@ -53,22 +58,26 @@ python -m pip install -q -e interpretability/jspace_olmo_lineage
 python -m pytest interpretability/jspace_olmo_lineage/tests -q
 ```
 
-First commit and publish the newly appended foundation registry line, then
-mirror the recovery documents:
+Commit and publish the O1 implementation, then freeze its outcome-blind side
+protocol from a clean tree:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: register isolated study foundation'
+git commit -m 'olmo: add exact Bank-W capability service'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
-python -m jspace_olmo_lineage.recovery
+python -m jspace_olmo_lineage.experiments.bank_w_capability \
+  --config interpretability/jspace_olmo_lineage/configs/ol_bank_w_capability_v1.yaml \
+  --freeze-protocol
 ```
 
-Then implement and freeze the O1 compatibility tests and protocol config from
-the exact pinned Phase 4 scoring contract. Do not start a 32B run from a dirty
-tree. The first experiment is OLMo-3.1 Think Bank-W baseline capability,
-followed by Instruct. Each model has 384 rows and no intervention condition.
+Commit/pull/rebase/test/push the new protocol event. Update and mirror this
+file before starting the first long job. Then run OLMo-3.1 Think with
+`run_bank_w_capability_model.sh olmo31-think`. The script stages the exact
+Drive snapshot onto local NVMe, checkpoints every eight rows to Drive, and
+pulls/rebases before automatically publishing the registry event. Do not start
+the 32B run from a dirty tree.
 
 ## Hardware and weight state at last update
 
