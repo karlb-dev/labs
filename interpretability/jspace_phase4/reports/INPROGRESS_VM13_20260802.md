@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 20:22 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 21:51 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -21,13 +21,13 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router. Atomic checkpoints through n=950 exist as a valid exact pair. Its
+  router. Atomic checkpoints through n=980 exist as a valid exact pair. Its
   first n=716 DriveFS atomic copy failed for local-cache exhaustion; the pair
   was recovered and the unchanged producer subsequently banked n=719 and
-  n=950. Cloud upload remains rate-limited. A temporary recovery-directory
+  n=980. Cloud upload remains rate-limited. A temporary recovery-directory
   bind now prevents redundant 6.6-GB DriveFS cache generations while keeping
   the producer's verified-temporary-copy/atomic-replace path unchanged. The
-  wrapper is live in chunk 950:953. No partial checkpoint is registered
+  wrapper is live in chunk 980:983. No partial checkpoint is registered
   evidence.
 
 ## VM13 live continuation
@@ -42,18 +42,18 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 950 / 1000 |
+| prompts banked | 980 / 1000 |
 | durability | exact local + DriveFS-cache pair; cloud upload pending |
-| checkpoint SHA-256 | `1c32a45106648830ec5b89a853fcb14182d92d552f05725b8d7507281ec9dc01` |
-| checkpoint-state SHA-256 | `40b0e553d7052922f2fb9b0e9a0c99ebaddc4fa247ba9761fe215b03560c5ce9` |
+| checkpoint SHA-256 | `2b8c3e97fe9a74340f7504f6bcf8cfea32ac088e05dfceaf78640f0bac52ce70` |
+| checkpoint-state SHA-256 | `3b5775ffb95cd80c6be08e70ca86510414a6f90622b726e5493ef664125b1956` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| checkpoint sync UTC | 2026-08-02 20:22:21 UTC |
+| checkpoint sync UTC | 2026-08-02 21:50:47 UTC |
 | peak allocated VRAM | 62.846 GB |
-| process state | live; active atomic chunk 950:953; unified session 83477 |
+| process state | live; active atomic chunk 980:983; unified session 83477 |
 
 A new raw-log audit corrected the earlier description of prompt 323 as the
-overall maximum. Among the archived rows through n=950, prompts 233, 323, 612,
+overall maximum. Among the archived rows through n=980, prompts 233, 323, 612,
 616, and 660 are retained finite extremes at 189.182, 173.345, 151.626,
 231.101, and 113.855, respectively. Prompts 796, 852, and 901 are lower at
 44.507, 46.224, and 29.736. No outcome-dependent trimming or refit occurred.
@@ -114,7 +114,7 @@ bytes nor estimator/config/runtime contracts. The pre-bind Drive recovery
 directory, including n=195/n=198 contract-check files, remains preserved and
 hidden beneath the mount. The unchanged wrapper restarted at clean commit
 `4ea7a9b`, printed `recovered_next_idx: 722` and `resuming from checkpoint:
-722/725 prompts processed`, and is live. Bound syncs through n=950 completed
+722/725 prompts processed`, and is live. Bound syncs through n=980 completed
 and resumed normally without growing another DriveFS checkpoint generation.
 Remove the bind after A1000, republish the final exact recovery
 pair, and require a fresh cloud remount/rehash before making any cloud-

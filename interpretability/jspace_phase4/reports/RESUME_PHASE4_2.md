@@ -18,19 +18,19 @@ Read the fuller live ledger at:
 /content/labs/interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 ```
 
-## VM13 delta — 2026-08-02 20:22 UTC
+## VM13 delta — 2026-08-02 21:51 UTC
 
 The operational n=554 restart below succeeded under the unchanged frozen
-producer. A1000 is live; the newest valid local atomic boundary is n=950,
+producer. A1000 is live; the newest valid local atomic boundary is n=980,
 checkpoint SHA-256
-`1c32a45106648830ec5b89a853fcb14182d92d552f05725b8d7507281ec9dc01`,
+`2b8c3e97fe9a74340f7504f6bcf8cfea32ac088e05dfceaf78640f0bac52ce70`,
 checkpoint-state SHA-256
-`40b0e553d7052922f2fb9b0e9a0c99ebaddc4fa247ba9761fe215b03560c5ce9`,
-and the unchanged wrapper is live in chunk 950:953 under unified session
+`3b5775ffb95cd80c6be08e70ca86510414a6f90622b726e5493ef664125b1956`,
+and the unchanged wrapper is live in chunk 980:983 under unified session
 83477. It reverified every model shard, CUDA/runtime, and all 48 fused modules,
 then printed `recovered_next_idx: 722` and `resuming from checkpoint: 722/725
 prompts processed`. A new raw-log audit corrects the earlier description of
-prompt 323 as the overall maximum. Among archived rows through n=950, prompts
+prompt 323 as the overall maximum. Among archived rows through n=980, prompts
 233, 323, 612, 616, and 660 are retained finite extremes at 189.182, 173.345,
 151.626, 231.101, and 113.855, respectively; no trimming or refit occurred.
 The current VM transcript recovers the n=555--716 Drive-log gap, while raw
@@ -69,7 +69,7 @@ directory. Both visible checkpoint paths resolve to device/inode `55:7349719`;
 the pre-bind Drive directory and its older contract-check files remain intact
 underneath. This keeps the producer's verified temporary copy and atomic
 replace behavior but prevents a new 6.6-GB DriveFS cache generation every
-three prompts. Bound syncs through n=950 completed and resumed normally without
+three prompts. Bound syncs through n=980 completed and resumed normally without
 another DriveFS checkpoint generation. Remove the bind after A1000,
 republish the final exact pair, and prove cloud durability only by a fresh
 remount and rehash.
