@@ -119,7 +119,12 @@ frozen state SHA-256 is
 the full-run log SHA-256 is
 `28a6aecdff750821603e5355bf0776ff38bc069181ad83d6edf4677249225dfe`.
 The recovery path preserves all cells and uses a pure finalizer with distinct
-compute and finalization commits.
+compute and finalization commits. The immutable incident audit is registered
+from clean commit `a196c4f`; it reread all raw tensors and bound 112 metric/raw
+files under inventory SHA-256
+`78a7a53cd626a55e98eb4a9e4a95ee0d00ae9c4e97192cdfb0d5a3ae997752de`.
+Its manifest SHA-256 is
+`78d53fca50b2a8ac2e114f71a7900a3581214e5367b0892dadf624ec736e8e25`.
 
 ## Live evidence ledger
 
@@ -129,7 +134,7 @@ compute and finalization commits.
 | `gm-foundation-v1` | methods | registered | 22 tests pass; exact architecture/runtime/governance/package inventories and nine historical imports verified |
 | `gm-jvp-goldens-v1` | methods | registered | both autodiff backends exactly match the analytic derivative; forward/fallback/reverse derivatives agree on the nonlinear tiny transformer |
 | `gm-band-convention-v1` | methods | registered from clean `3a599f7`; no model opened | primary Methods resolve the transferable band to 38--92% (Gemma approximately L23--L55) |
-| `gm-olmo-calibration-finalize-diagnostic-v1` | methods | producer prepared | immutable incident/inventory record for all 56 cells and the post-compute serialization failure |
+| `gm-olmo-calibration-finalize-diagnostic-v1` | methods | registered from clean `a196c4f` | immutable incident/inventory record for all 56 cells and the post-compute serialization failure |
 | `gm-jvp-olmo-calibration-v1` | methods | 56 cells complete; not registered | summary serialization repair/finalization required |
 | `gm-jvp-olmo-positive-control-v1` | methods | blocked on preceding boundaries | threshold calibration |
 | `gm-jvp-gemma-stage1-v1` | methods | forbidden until thresholds commit | exact target gate |
@@ -178,8 +183,8 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish and run the immutable incident producer. Then add a pure
-finalizer that verifies the frozen state and every cell/raw hash, performs the
+Commit/publish the diagnostic registry boundary. Then add a pure finalizer
+that verifies the frozen state and every cell/raw hash, performs the
 native-integer aggregation repair, and records compute/finalization commits
 separately without rerunning model cells. Numeric thresholds remain forbidden
 until the finalized calibration is registered.

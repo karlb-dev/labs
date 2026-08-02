@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 02:19 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 02:26 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -21,8 +21,10 @@ canonical Drive handoff at
   `8fbdb88bb4ae17ac96e2e71a63807c78cb6a3187`.
 - Control-smoke handoff/compute commit:
   `06b2a3d2fbe42fd5f70abb121573b1e7a62b45ec`.
-- Remote Gemma branch: synchronized through the control compute commit; the
-  incident-audit producer and report updates are not yet committed.
+- Incident-audit producer commit:
+  `a196c4fdf267944c1b5d9daa467aadcbd65b93ce`.
+- Remote Gemma branch: synchronized through the incident-audit producer; its
+  new registry/report boundary is not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -70,6 +72,10 @@ canonical Drive handoff at
   `f696f28cecc44d3a3d925308dd10226f1f7fa84e09e6e63ff37913ea3960278c`;
   full-run log SHA-256:
   `28a6aecdff750821603e5355bf0776ff38bc069181ad83d6edf4677249225dfe`.
+- `gm-olmo-calibration-finalize-diagnostic-v1` is registered from clean commit
+  `a196c4f`. It reread finite raw tensors, provenance, and all 112 metric/raw
+  files; manifest SHA-256:
+  `78d53fca50b2a8ac2e114f71a7900a3581214e5367b0892dadf624ec736e8e25`.
 
 ## Completed this VM
 
@@ -145,8 +151,7 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit/pull/test/push the immutable incident-audit producer, then run and
-   register `gm-olmo-calibration-finalize-diagnostic-v1` from that clean commit.
+1. Commit/pull/test/push the diagnostic registry/report boundary.
 2. Add/run a pure finalizer that verifies the frozen checkpoint and separates
    compute from finalization provenance; do not rewrite or rerun cells.
 3. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
