@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T01:58:25Z
+Last updated: 2026-08-02T02:24:23Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -25,7 +25,7 @@ live in Drive under `olmo_lineage_20260801`.
 - Last registered native evidence: `ol-lens-provenance-audit-v1` (methods),
   created at 2026-08-02T01:58:06Z from clean commit `fb1fc73`. Its immutable
   Drive outputs and registry event verify; the event/report Git checkpoint is
-  the current publish action.
+  published at `0d4f0e7` and mirrored to Drive.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
@@ -33,7 +33,7 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and seven live evidence events verify cleanly; 23 package
+foundation manifests and seven live evidence events verify cleanly; 31 package
 tests pass. No model job is active.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
@@ -71,6 +71,17 @@ The immutable JSON is 38,818 bytes with SHA-256
 its Markdown companion is 2,583 bytes with SHA-256
 `9f6c84784c15e4dc9288900892ddb6e349ebe1fbf0b46d66054addf779cf5f89`.
 
+The prospective O2 config, centered-target estimator, raw-target sensitivity,
+resumable per-layer model runner, paired four-model joint analysis, and tests
+are implemented in the current dirty tree. Thirty-one package tests pass. The
+corpus preflight selects 120
+existing prompts in declared order (30 each factual, arithmetic, SQL, prose),
+with 7,481 retained content positions. All four pinned tokenizers produce the
+same content-token manifest
+`03edeb51f61bc64d8bb42dfca1cf69808773d45d28810be8085b327936a1052e`.
+BOS is explicit and the mask is content-relative. No O2 capacity result or
+protocol event has been opened yet.
+
 ## Exact next actions
 
 From `/content/labs`:
@@ -85,23 +96,38 @@ python -m pip install -q -e interpretability/jspace_olmo_lineage
 python -m pytest interpretability/jspace_olmo_lineage/tests -q
 ```
 
-If the O3 event/report checkpoint is still dirty after a reclaim, publish and
-mirror it first:
+Restore the exact lens engine if `/tmp` was reclaimed:
+
+```bash
+git clone https://github.com/anthropics/jacobian-lens.git /tmp/jacobian-lens
+git -C /tmp/jacobian-lens checkout 581d398613e5602a5af361e1c34d3a92ea82ba8e
+python -m pip install -q -e /tmp/jacobian-lens
+```
+
+If the O2 implementation is still dirty after a reclaim, publish and mirror
+it first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: register four-lens provenance audit'
+git commit -m 'olmo: freeze symmetric capacity executor'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-Then implement and prospectively freeze the O2 symmetric capacity corpus,
-estimator, model runner, joint prompt-bootstrap analysis, and tests before
-opening any capacity outcome. O2 includes Base even though Base capability is
-not required. Use the existing lenses without refitting, and do not open an O4
-Bank-W intervention under the failed 20-family protocol.
+Then create the outcome-blind O2 protocol event from the clean commit:
+
+```bash
+python -m jspace_olmo_lineage.experiments.capacity \
+  --config interpretability/jspace_olmo_lineage/configs/ol_capacity_v1.yaml \
+  --freeze-protocol
+```
+
+Publish and mirror that registry event before staging the first model. O2
+includes Base even though Base capability is not required. Use the existing
+lenses without refitting, and do not open an O4 Bank-W intervention under the
+failed 20-family protocol.
 
 ## Hardware and weight state at last update
 
@@ -118,8 +144,10 @@ Bank-W intervention under the failed 20-family protocol.
   the complete Drive snapshots remain recovery fallbacks.
 - OLMo-3 Think is also present in Drive.
 - Base is not complete and must be downloaded later for O2.
-- Local disk has approximately 119 GiB free after the Instruct rotation; the
+- Local disk has approximately 108 GiB free; the
   exact OLMo-3.1 Think snapshot remains local.
+- The exact `anthropics/jacobian-lens` checkout is installed from `/tmp` at
+  `581d398613e5602a5af361e1c34d3a92ea82ba8e`; recreate it after a reclaim.
 - Never load model weights through DriveFS. Copy one pinned snapshot at a time
   to local NVMe and load from there.
 
