@@ -1,13 +1,14 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T03:28:59Z
+Last updated: 2026-08-02T04:23:16Z
 
-Status: active; O1, O2, and the O3 provenance audit are complete, the early
-Phase 4 bundle is emitted, and O3 geometry is next. Both native OLMo-lineage
-baseline capability results, both joint decisions, the hash-pinned transfer
-bundle, four capacity cells, paired capacity verdict, and four-lens audit are
-registered. This report will be updated after every material gate or analysis
-and is intentionally separate from the Phase 4 and Gemma reports.
+Status: active; O1, O2, and O3 are complete through the registered geometry
+tables, and the early Phase 4 bundle is emitted. Both native OLMo-lineage
+baseline capability results, both earlier joint decisions, the hash-pinned
+transfer bundle, four capacity cells, paired capacity verdict, four-lens audit,
+four readout inputs, and four-checkpoint geometry verdict are registered. The
+separate registered-table figure event and run-specific paper update are next.
+This report remains separate from the Phase 4 and Gemma reports.
 
 ## Executive status
 
@@ -26,9 +27,11 @@ lens pairs share the exact fitting recipe and ordered corpus, so no refit is
 needed. O2 has measured Base, both Think checkpoints, and the Instruct sibling
 under the symmetric four-model estimator and completed the prospectively
 paired router. It returns a broadly conserved capacity/recruitment-consistent
-verdict. O3 geometry is now needed to test the coordinate-system portion of
-that account. O4 under the original Bank-W protocol remains gated out rather
-than silently narrowed.
+verdict. O3 then found broad coarse-operator continuity but substantial
+Base-to-3.0 mapped-coordinate and selected-span change, followed by much
+smaller 3.0-to-3.1 movement; its frozen label is
+`dictionary-formation-pattern`. O4 under the original Bank-W protocol remains
+gated out rather than silently narrowed.
 
 Phase 4, Gemma, and OLMo are running as concurrent but isolated branches of
 work. They will be integrated only in Phase 5 or later after their own state
@@ -376,11 +379,11 @@ analyses are authorized, while intervention outcomes remain closed. The
 immutable JSON is SHA-256 `0912d223...81105` and the Markdown companion is
 SHA-256 `9f6c8478...5f89`.
 
-The prospective geometry implementation is now prepared. Before any new O3
-operator outcome, `ol-geometry-protocol-v1` will freeze a deterministic 1,024
-row stable common-vocabulary sample, complete Bank F/S/W task-token strata,
-and the exhaustive union of every token selected by the registered O2
-own-centered prefix at its per-position crossing. The operator series covers
+The prospective geometry implementation froze a deterministic 1,024-row stable
+common-vocabulary sample, complete Bank F/S/W task-token strata, and the
+exhaustive union of every token selected by the registered O2 own-centered
+prefix at its per-position crossing before any new operator outcome. The
+operator series covers
 all 21 fitted layers and all six unordered checkpoint pairs. It reports raw,
 identity-separated, and trace-projection-separated operator comparisons;
 random transport probes; a randomized leading singular spectrum with an
@@ -430,6 +433,67 @@ frozen four-model input set at exact revision `832c3f54...`; all checks pass.
 Its tensor is SHA-256 `1d9932d1...6d170` and its manifest is
 `20f7c433...abd51`. No operator, token-row, or selected-span comparison was
 opened while preparing these inputs.
+
+### Registered geometry outcome
+
+`ol-geometry-joint-dev-v1` was registered at 2026-08-02T04:22:12Z from clean
+commit `5b1fe07`. The prospective router returns
+`dictionary-formation-pattern`. This label combines four distinct facts and
+must not be shortened to “same dictionary” or “Think caused formation.”
+
+First, the coarse Base-to-3.0 Think operator passes the descriptive continuity
+rule. Across all 21 source layers, raw matrix cosine has median 0.9614; the
+global minimum is 0.7343 at layer 4, while layers 24/32/40 are
+0.9390/0.9614/0.9679 and therefore pass the assay-layer minimum. Median
+identity-subtracted and trace-projection-subtracted cosines are 0.9530 and
+0.8425, respectively, and median random-probe transport cosine is 0.9625.
+The identity-separated results show that continuity is not solely the trivial
+identity component, while the lower trace-residual value is an important
+qualification.
+
+Second, token-level mapped coordinates fail their separate continuity rule.
+For Base-to-3.0, the median across layer-level mapped-row medians is 0.6744 and
+the median layer-level q05 is 0.5950, below the frozen 0.85/0.70 thresholds.
+Mapped-row median cosine rises from 0.2662 at layer 4 to
+0.6196/0.6744/0.7100 at layers 24/32/40 and 0.7458 at layer 60; centered CKA at
+24/32/40 is 0.7874/0.8896/0.9220. In contrast, raw Base-to-3.0 unembedding-row
+median cosine is 0.9853, final-norm gain cosine is 0.999992, and plain
+unembedding-neighbor overlap is 0.8989. Thus most of the registered discrepancy
+is in the fitted J mapping and its token geometry rather than gross movement of
+the raw output weights.
+
+Third, the large movement is concentrated between Base and the first released
+Think checkpoint. The registered mapped-row movement is 0.32556 for
+Base-to-3.0 and 0.00604 for 3.0-to-3.1. The latter pair has all-layer median
+raw-operator cosine 0.99817, mapped-row cosine 0.99396, and raw-unembedding
+cosine 0.999994. At layers 24/32/40, its median selected-ID Jaccard and RBO are
+both 1.0; projector overlap is 0.9845/0.9895/0.9906, and persistent-direction
+Jaccard is 0.800/0.909/0.875. Natural checkpoint differences do not identify
+which training component produced the first transition.
+
+Fourth, sparse selected spans change sharply across Base-to-3.0 despite the
+stable O2 capacity magnitude. Median selected-ID Jaccard is 0.3333 at each of
+layers 24/32/40; median RBO is 0.45/0.55/0.55; exact aligned-prefix-slot
+fractions are 0.332/0.443/0.479; and normalized projector overlap is
+0.266/0.334/0.455. Persistent-direction Jaccard is 0.250/0.583/0.643. The
+available J-marginal-gain-minus-random threshold-margin difference is positive
+at all three layers (+0.621/+1.475/+1.092), but it is not the missing kth/k+1
+candidate-score gap. That exact gap and protected-span overlap remain null;
+core/fringe causal dose remains blocked by the failed Bank-W service gate.
+
+The Instruct result remains a sibling comparison. Relative to 3.1 Think, raw
+operator and mapped-row all-layer medians are 0.99018 and 0.93628, while raw
+unembedding median cosine is 0.99842. The prospective late-shift flag is false:
+early mapped movement is 0.2860 and late movement is 0.0341, so this assay does
+not support a late-concentrated sibling change. Selected-ID median Jaccard at
+24/32/40 is 0.333/0.500/0.500 and projector overlap is
+0.580/0.871/0.894. These values do not place Instruct after 3.1 Think in time.
+
+The registered JSON is 207,275 bytes, SHA-256 `c09d8e73...d0f4c`. The 126-row
+layer table is 494,675 bytes, SHA-256 `8692836d...9097`; the 18-row selection
+table is 51,022 bytes, SHA-256 `c2826b14...73bd`; and the 6-row readout table is
+19,863 bytes, SHA-256 `93fd2108...0bd9`. These are development-tier descriptive
+geometry results, not randomized-training or causal-intervention evidence.
 
 ## O4: development mechanism grid
 
@@ -488,6 +552,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-geometry-readout-olmo3-base-v1` | Extracted the same 13,319 frozen unembedding rows plus final norm from exact Base revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `64f377f`; tensor `56ef4f98...`; manifest `07f98b2b...` |
 | 2026-08-02 | `ol-geometry-readout-olmo3-think-v1` | Extracted the frozen rows plus final norm from exact OLMo-3 Think revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `49a1dfd`; tensor `ff580ed4...`; manifest `ecbd3c60...` |
 | 2026-08-02 | `ol-geometry-readout-olmo31-think-v1` | Completed the four-input set with the frozen rows plus final norm from exact OLMo-3.1 Think revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `e484fe9`; tensor `1d9932d1...`; manifest `20f7c433...` |
+| 2026-08-02 | `ol-geometry-joint-dev-v1` | Frozen router returns `dictionary-formation-pattern`: coarse operator continuity passes, token continuity fails, sparse-selection divergence is flagged, Base-to-3.0 mapped movement 0.32556 greatly exceeds 3.0-to-3.1 movement 0.00604; Instruct late-shift flag false; no causal outcome opened | Source commit `5b1fe07`; JSON `c09d8e73...`; layers `8692836d...`; selection `c2826b14...`; readout `93fd2108...` |
 
 ## Current limitations and claim boundary
 

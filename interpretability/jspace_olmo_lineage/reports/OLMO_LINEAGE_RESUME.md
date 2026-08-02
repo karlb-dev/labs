@@ -142,16 +142,17 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
-At the 2026-08-02T04:19:03Z recovery checkpoint, all four O2 model events and
+At the 2026-08-02T04:23:16Z recovery checkpoint, all four O2 model events and
 the paired joint event are complete and registered. The live registry therefore
-contains eighteen events and 56 immutable outputs, all of which verify. The
+contains nineteen events and 60 immutable outputs, all of which verify. The
 frozen joint verdict is `broadly_conserved_capacity_recruitment_consistent`;
 OLMo-3.1 32B Instruct remains a sibling endpoint, not a fourth trajectory
 point. The O3 protocol/extractor/aggregate/figure implementation is published,
 39 tests pass, and `ol-geometry-protocol-v1` has frozen 13,319 exact readout
-rows before any new geometry outcome. All four frozen readout inputs are now
-registered and hash-verified; the live in-progress file identifies the pending
-aggregate publication boundary.
+rows before any new geometry outcome. All four frozen readout inputs and the
+four-checkpoint aggregate are registered and hash-verified. The O3 router
+verdict is `dictionary-formation-pattern`; the live in-progress file identifies
+the pending aggregate publication/figure boundary.
 
 O3 is staged so a fresh VM never needs four complete 32B snapshots at once.
 After `ol-geometry-protocol-v1` exists, obtain only `config.json`,
@@ -165,13 +166,13 @@ python -m jspace_olmo_lineage.experiments.geometry extract-readout \
   --slug <model-slug> --snapshot <local-exact-revision-snapshot>
 ```
 
-Commit, pull/rebase, reproduce, push, and recover after every readout event.
-The extracts contain only the frozen unembedding rows and final norm. Once all
-four readout evidence IDs verify, run `aggregate`, publish that event, and only
-then run `figures`; the latter reads registered tables rather than live
-tensors. Exact kth/k+1 candidate-score gaps require a future compatible replay
-because O2 did not retain the candidate-correlation log. Causal core/fringe
-dose remains blocked by the O1 service gate.
+Commit, pull/rebase, reproduce, push, and recover after every evidence event.
+The extracts contain only the frozen unembedding rows and final norm. The four
+readouts and `ol-geometry-joint-dev-v1` aggregate now verify; after its Git
+checkpoint is durable, run `figures`, which reads registered tables rather than
+live tensors. Exact kth/k+1 candidate-score gaps require a future compatible
+replay because O2 did not retain the candidate-correlation log. Causal
+core/fringe dose remains blocked by the O1 service gate.
 
 The model command is:
 
