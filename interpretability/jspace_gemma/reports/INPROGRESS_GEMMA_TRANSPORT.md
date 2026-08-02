@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 00:52 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 00:55 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -12,8 +12,9 @@ canonical Drive handoff at
 - Tested scaffold commit: `b49af6d1c285a300be9007461b695d22b90d5930`.
 - Restart-boundary commit: `11501b804690559fabe571e941a95018eefbe19b`.
 - Diagnostic/repair commit: `5b486fed0e93a6b87139430b3ac65f225470bac8`.
-- Remote Gemma branch: synchronized at the diagnostic/repair commit; the
-  successful foundation registry rows are not yet committed.
+- Foundation/import commit: `2bb7428c931323d5d377ad04bd7e19a17958c491`.
+- Remote Gemma branch: synchronized at the foundation/import commit; the
+  golden registry/report update is not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -42,6 +43,11 @@ canonical Drive handoff at
   SHA-256 `df9e85cc2f3afcb05a4881db18c5a4e17cc83323906577a99b7fae6fdcc06304`.
   Nine historical imports are registered; 22 tests and all 15 live output
   checks pass. No model target result was produced.
+- `gm-jvp-goldens-v1` passes from clean commit `2bb7428`. Both exact backends
+  hit the analytic derivative at zero recorded error; forward/fallback/reverse
+  tiny-transformer directional derivatives agree within `8.33e-17`, and
+  central-secant error falls about 4x per epsilon halving. Drive artifact
+  SHA-256: `ca02c95c022741970468ea91bd80327e4c2d95c46fda1be2f225d9a83f4f8234`.
 
 ## Completed this VM
 
@@ -72,6 +78,9 @@ canonical Drive handoff at
 11. Registered `gm-foundation-v1` plus nine read-only historical imports,
     exact source blobs, remote model inventories, architecture/runtime locks,
     and the development/methods claim firewall.
+12. Registered `gm-jvp-goldens-v1`; analytic and nonlinear tiny-transformer
+    forward/fallback/reverse derivative parity passes, with no numerical
+    secant admitted as an exact backend.
 
 ## Immutable scientific guardrails
 
@@ -91,26 +100,23 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit the successful foundation/import registry boundary; fetch,
-   pull/reconcile, test, and push.
-2. From the next clean commit, run analytic and tiny-transformer JVP goldens;
-   register
-   `gm-jvp-goldens-v1` only from a clean commit.
-3. Stage the exact historical OLMo positive-control checkpoint
+1. Commit the golden registry/report boundary; fetch, pull/reconcile, test,
+   and push.
+2. Stage the exact historical OLMo positive-control checkpoint
    `allenai/Olmo-3-32B-Think@ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`
    from Drive to local NVMe, rehash its snapshot inventory, and run the G1
    control.
-4. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
-5. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
+3. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
+4. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
    snapshot to local NVMe, then run Gemma Stage 1 with the unchanged harness.
-6. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
+5. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
 
 ## Recovery checks and next commands
 
 There is currently no live producer, lock owner, or partial scientific
-checkpoint. The successful foundation registry rows and report update are
-currently uncommitted; no producer is live. The full foundation artifacts are
-durable in Drive. On a new VM, run the bootstrap in
+checkpoint. The golden registry/report update is currently uncommitted; no
+producer is live. Both foundation and golden artifacts are durable in Drive.
+On a new VM, run the bootstrap in
 `RESUME_GEMMA_TRANSPORT.md`, then inspect:
 
 ```bash

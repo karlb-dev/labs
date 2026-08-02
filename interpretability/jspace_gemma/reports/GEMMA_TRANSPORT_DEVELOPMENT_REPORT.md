@@ -1,6 +1,6 @@
 # Gemma 4 31B transport autopsy — development report
 
-Status: foundation registered; exact-JVP goldens are next. All findings in this document
+Status: foundation and exact-JVP goldens registered; OLMo control staging is next. All findings in this document
 are development or methods evidence. Nothing here is a Phase 4 confirmatory
 model cell.
 
@@ -66,7 +66,7 @@ the first Gemma number.
 |---|---|---|---|
 | `gm-foundation-diagnostic-v1` | methods | registered | no scientific result; the first foundation attempt found that the governing TeX is a Git object in a later shared commit, not a file in the exact side fork |
 | `gm-foundation-v1` | methods | registered | 22 tests pass; exact architecture/runtime/governance/package inventories and nine historical imports verified |
-| `gm-jvp-goldens-v1` | methods | pending | analytic and tiny-transformer exact-JVP tests |
+| `gm-jvp-goldens-v1` | methods | registered | both autodiff backends exactly match the analytic derivative; forward/fallback/reverse derivatives agree on the nonlinear tiny transformer |
 | `gm-jvp-olmo-positive-control-v1` | methods | blocked on preceding boundaries | threshold calibration |
 | `gm-jvp-gemma-stage1-v1` | methods | forbidden until thresholds commit | exact target gate |
 
@@ -81,9 +81,19 @@ the first Gemma number.
 | Late passes; mid-band fails | relocated transport regime | G6 |
 | All faithful cells pass | historical harness suspect | audit and supersede only with new evidence |
 
-## Results
+## Exact-JVP goldens
 
-No current-study model result has been produced.
+Both `torch.func.jvp` and `torch.autograd.functional.jvp` match the analytic
+polynomial derivative at zero recorded error. On a deterministic nonlinear
+attention/RMSNorm/gated-MLP suffix, forward mode and fallback differ by
+`4.81e-17`; forward mode and an independently materialized reverse Jacobian
+vector product differ by `8.33e-17`. Central-secant errors over epsilon
+`0.01, 0.005, 0.0025, 0.00125` are `1.09e-6, 2.72e-7, 6.80e-8,
+1.70e-8`, the expected approximately quadratic decrease. The implementation
+manifest states `finite_difference_exact_fallback: false`.
+
+These are methods goldens, not model evidence. No current-study OLMo or Gemma
+model result has been produced.
 
 The foundation inventory resolves the exact Gemma revision to two remote
 weight shards; zero are staged locally. The historical OLMo Drive cache has
@@ -104,6 +114,6 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish the foundation registry boundary, then pass and register the
-independent exact-JVP goldens. Only then stage and run OLMo. Update this report
-and the Drive handoff at every evidence commit.
+Commit/publish the golden registry boundary, then stage, fully hash, and run
+the OLMo control. Update this report and the Drive handoff at every evidence
+commit.
