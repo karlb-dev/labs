@@ -582,9 +582,9 @@ four-checkpoint O2 table, all five registered O3 figures, O4/H5/O5 stopping
 decisions, independent reconstruction, sentence-2/sentence-4 claim router,
 limitations, Phase 5 queue, evidence index, and immutable hashes.
 
-The source SHA-256 is `c5b1f980075e8acb8e24dbb85bf7904469823cf5dda2d06cbbe551b48bd08db5`;
+The source SHA-256 is `33e88825ce67d158e83328ee378b7847674d2ba234b541839a10b287ea75c656`;
 the deterministic PDF SHA-256 is
-`ff6a9a653614cdbbb1fe9bf73cf92af0e294496e98b0cde5cb41c6afd2f1e944`.
+`02a81b87fff5fdce07726af341fdc80b0fe010e42c41ddc47c06a2e8d3240ec7`.
 Its fixed metadata epoch is the reconstruction event time. Two consecutive
 builds produced the same PDF hash, the final TeX log contains no warnings, and
 rendered title, design/table, capacity, selected-span, and appendix pages pass
@@ -676,7 +676,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | Independent-reconstruction attempt 2 and diagnosis | One-candidate retry fit but failed exact numerics (max drift 0.20499 nats; margin -0.125 vs -0.25), so it was rejected with no output. Eight candidates under `no_grad` then reproduced every score exactly at 60.42-GiB peak allocation | Clean source `37075cb` for rejected retry; read-only local diagnostic; corrected clean run pending |
 | 2026-08-02 | `ol-independent-reconstruction-v1` | PASS: 768 O1 rows, 48 O2 summaries/96 intervals/144 arrays/72 table rows, 84 O3 aggregates/router, five byte-exact PNGs/five regenerated PDFs, fourteen exact model shards, and eight exact frozen-row sequence scores independently reconstructed; no new scientific cell | Source commit `12f21ad`; JSON `e159f01d...`; Markdown `48647b44...`; 13 registered outputs |
 | 2026-08-02 | Sentinel weight rotation | Removed only the 61-GiB local Think sentinel snapshot after evidence commit `471a48f`, GitHub push, 88-output verification, and recovery-mirror verification | Reclaimed local NVMe; exact revision remains directly recoverable from Hugging Face |
-| 2026-08-02 | OLMo run-specific paper | Compiled 13-page isolated TeX/PDF with all five registered O3 figures, exact claim downgrades, complete limitations, reconstruction, and Phase 5 router; repeat build byte-identical and visual inspection passes | TeX `c5b1f980...`; PDF `ff6a9a65...`; shared Phase 4/Gemma paper untouched |
+| 2026-08-02 | OLMo run-specific paper | Compiled 13-page isolated TeX/PDF with all five registered O3 figures, exact claim downgrades, complete limitations, reconstruction, and Phase 5 router; repeat build byte-identical and visual inspection passes | TeX `33e88825...`; PDF `02a81b87...`; shared Phase 4/Gemma paper untouched |
 
 ## Current limitations and claim boundary
 
