@@ -186,6 +186,12 @@ def _replace_once(text: str, old: str, new: str, *, label: str) -> str:
     return text.replace(old, new, 1)
 
 
+def _canonical_claim_text(value: str) -> str:
+    """Normalize prose wrapping, including a YAML fold after a hyphen."""
+    compact = re.sub(r"\s+", " ", value).strip()
+    return re.sub(r"(?<=\w)-\s+(?=\w)", "-", compact)
+
+
 def _released_state_text(
     source: str,
     *,
@@ -848,8 +854,9 @@ def verify(config_path: str | Path) -> dict:
         raise ValueError("release state does not close the final checklist")
     if "bundle is being assembled" in state:
         raise ValueError("release state retains an in-progress status")
+    canonical_claims = _canonical_claim_text(claims)
     for sentence in config["claim_resolution"].values():
-        if sentence["wording"] not in claims:
+        if _canonical_claim_text(sentence["wording"]) not in canonical_claims:
             raise ValueError("released claims ledger loses licensed wording")
 
     event = resolve(config["evidence_id"])

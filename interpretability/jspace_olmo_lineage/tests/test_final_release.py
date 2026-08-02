@@ -4,6 +4,7 @@ import pytest
 import yaml
 
 from jspace_olmo_lineage.experiments.final_release import (
+    _canonical_claim_text,
     _registry_prefix_record,
     _released_state_text,
     _validate_partition,
@@ -123,3 +124,5 @@ def test_release_config_pins_paper_and_exact_output_names():
     assert config["outputs"]["paper_pdf"].endswith(
         "/OLMO_LINEAGE_PARALLEL_PHASE.pdf")
     assert config["paper_source_date_epoch"] == 1785648410
+    assert _canonical_claim_text("external-state- substitution") == (
+        "external-state-substitution")

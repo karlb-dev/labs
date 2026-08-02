@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T06:02:49Z
+Last updated: 2026-08-02T06:09:33Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -30,19 +30,31 @@ live in Drive under `olmo_lineage_20260801`.
   artifacts are eligible; the bounded two-cell H5 wedge is queued but not
   started. O5 has an explicit not-executed identifiability decision.
 - Last registered native evidence:
-  `ol-independent-reconstruction-v1` (methods), created at
-  2026-08-02T05:26:50Z from clean commit `12f21ad`. Its thirteen outputs verify.
+  `ol-phase4-final-import-bundle-v1` (methods), created at
+  2026-08-02T06:06:57Z from clean producer commit `7148d01`. Its thirteen
+  outputs verify. The final registry contains 25 origins, 24 live events, and
+  101 live outputs; inventory v1 is the only superseded origin.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
 
-## Work currently in progress
+## Workstream status
 
-The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and twenty-three live evidence events with 88 immutable
-live outputs verify cleanly; the registry contains 24 origin events because
-inventory v1 remains immutable but superseded. All 58 package tests and the
-exact dependency-lock check pass. No model job is active.
+The first OLMo parallel-phase release boundary is complete and this side track
+is stopped. Four immutable foundation manifests and 24 live evidence events
+with 101 immutable live outputs verify cleanly; the registry contains 25
+origin events because inventory v1 remains immutable but superseded. All 58
+package tests, the final bundle verifier, and the exact dependency-lock check
+pass. No model job is active.
+
+The final import/restart event registers the completed state and claims
+ledger, live-evidence inventory, release environment lock, machine/readable
+bundle pair, isolated paper source/PDF, and five paper figures. Its exact
+pre-release registry prefix is 53,719 bytes with SHA-256
+`db3fe202...e80a`; the final JSON is `a2486ec5...65a2a` and Markdown is
+`36ed8f77...d9468`. It preserves the 16/20 Bank-W block, development/methods
+tiers, sentence-2 narrowing, sentence-4 pending status, and unopened H5/H6/O5
+queues. It adds no scientific cell or authorization.
 
 The independent reconstruction passes. It reimplemented all registered Bank-W
 row-integrity and family-bootstrap summaries, all 48 O2 curve summaries, 96
@@ -315,82 +327,39 @@ and paired-bootstrap NPZ 1,047,850 bytes SHA-256
 
 ## Exact next actions
 
-From `/content/labs`:
+There is no active OLMo experiment to resume. On a fresh VM, verify the stopped
+workstream from `/content/labs`:
 
 ```bash
 git switch interp_jspace_olmo_lineage
-git status --short --branch
-python -m pip install -q -e interpretability/jspace_part2
-python -m pip install -q -e interpretability/jspace_phase3
-python -m pip install -q -e interpretability/jspace_phase4
-python -m pip install -q -e interpretability/jspace_olmo_lineage
-python -m pytest interpretability/jspace_olmo_lineage/tests -q
+git pull --rebase origin interp_jspace_olmo_lineage
+bash interpretability/jspace_olmo_lineage/repro.sh
+python -m jspace_olmo_lineage.experiments.final_release \
+  --config interpretability/jspace_olmo_lineage/configs/ol_final_release_v1.yaml \
+  --verify
+python -m jspace_olmo_lineage.recovery --verify
 ```
 
-Restore the exact lens engine if `/tmp` was reclaimed:
+Do not rerun `--emit`: its immutable paths and registry event already exist.
+Do not rerun the inventory, O5, reconstruction, model, aggregate, or figure
+producers. A later Phase 5 process may import only after checking the bundle's
+source commit, exact registry prefix, all 13 artifact hashes, native tiers,
+claim restrictions, and queued-not-started work.
+
+The first post-write bundle verifier stopped on a formatting-only assertion:
+YAML folding inserted a space after the line-ending hyphen in the machine
+sentence-4 value. Before any verifier edit, all 13 registered file hashes and
+byte counts matched. The claims-ledger artifact contains the exact licensed
+wording. The verifier now canonicalizes that one prose-wrap case, and the full
+bundle verifies as 24 live events / 101 live outputs. No immutable file was
+overwritten.
+
+If Phase 5 later needs new lens-backed work, restore the exact lens engine:
 
 ```bash
 git clone https://github.com/anthropics/jacobian-lens.git /tmp/jacobian-lens
 git -C /tmp/jacobian-lens checkout 581d398613e5602a5af361e1c34d3a92ea82ba8e
 python -m pip install -q -e /tmp/jacobian-lens
-```
-
-If the geometry figure registry/report checkpoint is dirty after a reclaim,
-publish and mirror it first:
-
-```bash
-git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: register geometry figures'
-git pull --rebase origin interp_jspace_olmo_lineage
-bash interpretability/jspace_olmo_lineage/repro.sh
-git push origin interp_jspace_olmo_lineage
-python -m jspace_olmo_lineage.recovery
-```
-
-The inventory v2 command below has completed and must not be rerun because its
-outputs are immutable:
-
-```bash
-python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
-  --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v2.yaml
-```
-
-The independent-reconstruction command below completed at source commit
-`12f21ad` and must not be rerun because its outputs are immutable:
-
-```bash
-python -m jspace_olmo_lineage.experiments.independent_reconstruction \
-  --config interpretability/jspace_olmo_lineage/configs/ol_independent_reconstruction_v1.yaml \
-  --snapshot /content/olmo_lineage_work/sentinel_olmo31_think
-```
-
-The methods event, claims ledger, state of record, five-report recovery mirror,
-and local snapshot removal are complete and durable. The isolated run-specific
-paper is now compiled: 13 pages, all five registered O3 PDFs, no TeX warnings,
-and visual inspection of title, table, figure, claim, and appendix pages passes.
-Its TeX SHA-256 is `33e88825...c656`; deterministic PDF SHA-256 is
-`02a81b87...0ec7`. A repeated build produced the same PDF hash. The final
-release producer and four boundary tests are prepared locally. After their
-clean source checkpoint is pulled/rebased, reproduced, and pushed, emit the
-self-verifying bundle exactly once with:
-
-```bash
-python -m jspace_olmo_lineage.experiments.final_release \
-  --config interpretability/jspace_olmo_lineage/configs/ol_final_release_v1.yaml \
-  --emit
-```
-
-If all final release paths already exist, do not overwrite them; run the same
-module with `--verify` and audit the append-only registry. Do not merge into
-the main Phase 4 or Gemma paper/registries, and do not open an O4 Bank-W
-intervention under the failed 20-family protocol.
-
-The O5 feasibility command has completed and must not be rerun because its
-outputs are immutable:
-
-```bash
-python -m jspace_olmo_lineage.experiments.o5_feasibility \
-  --config interpretability/jspace_olmo_lineage/configs/ol_o5_feasibility_v1.yaml
 ```
 
 ## Hardware and weight state at last update

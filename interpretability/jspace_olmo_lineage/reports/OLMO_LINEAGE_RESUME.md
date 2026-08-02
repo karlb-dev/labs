@@ -122,6 +122,31 @@ and `IMPORT_BUNDLE_PHASE4_EARLY.md` (SHA-256
 It records a failed 16/20 common-support service gate. Do not open an O4
 Bank-W intervention under that version-1 protocol.
 
+The final stopped-workstream handoff is also under Drive `release/`:
+
+```text
+IMPORT_BUNDLE_PHASE4.json     a2486ec5a4759a1f5b21643e7c60766824c48f13ff43240d458ba72147165a2a
+IMPORT_BUNDLE_PHASE4.md       36ed8f773836d2610a37254a81bee7748e928cd700b398f8bac7466a4a2d9468
+```
+
+It embeds the 53,719-byte pre-release registry prefix through
+`ol-independent-reconstruction-v1` with SHA-256
+`db3fe202026e5cad019ca90a3dceb74efce3b248c02710cfd849dcdbf843e80a`.
+Verify it, never re-emit or overwrite it:
+
+```bash
+python -m jspace_olmo_lineage.experiments.final_release \
+  --config interpretability/jspace_olmo_lineage/configs/ol_final_release_v1.yaml \
+  --verify
+```
+
+The first post-write verifier call returned nonzero only because YAML folding
+placed whitespace after a line-ending hyphen in the machine-rendered
+sentence-4 wording. The event and all 13 files already existed and matched
+their registered hashes. The current verifier canonicalizes that prose-wrap
+case; the claims-ledger artifact retains the exact licensed wording. Treat an
+existing bundle plus event as immutable and verify it—never retry `--emit`.
+
 ## Detect and resume model work
 
 Check for a surviving process and state without modifying either:
@@ -144,10 +169,11 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
-At the 2026-08-02T05:26:50Z evidence checkpoint, all four O2 model events and
-the paired joint event are complete and registered. The live registry therefore
-contains 24 origin events, of which 23 are live, with 88 live immutable
-outputs, all of which verify. Inventory v1 is the one superseded origin. The
+At the final 2026-08-02T06:06:57Z evidence checkpoint, all four O2 model events,
+the paired joint event, and the final methods handoff are complete and
+registered. The registry contains 25 origin events, of which 24 are live, with
+101 live immutable outputs, all of which verify. Inventory v1 is the one
+superseded origin. The
 frozen joint verdict is `broadly_conserved_capacity_recruitment_consistent`;
 OLMo-3.1 32B Instruct remains a sibling endpoint, not a fourth trajectory
 point. The O3 protocol/extractor/aggregate/figure implementation is published,
@@ -156,8 +182,8 @@ rows before any new geometry outcome. All four frozen readout inputs and the
 four-checkpoint aggregate are registered and hash-verified. The O3 router
 verdict is `dictionary-formation-pattern`; five PNG/PDF figure pairs and their
 manifest are also registered. The independent reconstruction and exact model
-sentinel pass and are registered. The live in-progress file identifies the
-pending claims/state-of-record/paper/final-release boundary.
+sentinel pass and are registered. Claims, state of record, isolated paper, and
+the final import/restart bundle are complete; there is no OLMo job to resume.
 
 O3 is staged so a fresh VM never needs four complete 32B snapshots at once.
 After `ol-geometry-protocol-v1` exists, obtain only `config.json`,
@@ -214,9 +240,10 @@ python -m jspace_olmo_lineage.experiments.o5_feasibility \
 ```
 
 Its decision is `defer-no-identifiable-crossed-intervention-estimand` /
-`not-executed-no-proxy-substitution`. Resume with the claims ledger, independent
+`not-executed-no-proxy-substitution`. The claims ledger, independent
 reconstruction, OLMo-run-specific paper, state of record, and final import
-bundle. Do not turn O2/O3 structural tables into an O5 intervention proxy.
+bundle are complete. Do not turn O2/O3 structural tables into an O5
+intervention proxy.
 
 The independent reconstruction is methods-only and completed from clean source
 commit `12f21ad`. Its provenance command was:
