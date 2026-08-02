@@ -30,6 +30,16 @@ final fit completes:
   intentionally resemble diagnostics; reading the entire append-only session
   would contaminate provenance.
 
+Exact prefix copies are preserved at:
+
+```text
+/content/sl4_work/qwen_fit_diagnostics/provenance/codex_tool_output_prefix_lines_1_7073.jsonl
+/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/diagnostics/qwen_a1000_fit/provenance/codex_tool_output_prefix_lines_1_7073.jsonl
+```
+
+Both copies were rehashed to the prefix digest above. DriveFS presence on this
+VM is a cache-local copy, not fresh cloud-materialization proof.
+
 This yields 820 distinct raw rows. Terminal text for prompts 1--180 was
 emitted on an earlier VM and is not present in the mounted run root, local
 work roots, or retained Codex JSONL sessions available on VM13. Exact local
