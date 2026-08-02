@@ -104,6 +104,14 @@ The three live report mirrors and their recovery index are deliberately
 mutable and are never registered as immutable evidence outputs; their source
 Git commits and content hashes are recorded in the recovery index.
 
+The completed O1 handoff is under Drive `release/` as
+`IMPORT_BUNDLE_PHASE4_EARLY.json` (SHA-256
+`debb29ef67ffa8741a4971ec2b0b21340bd5b48dc5729ac12f74f78839bf4f2b`)
+and `IMPORT_BUNDLE_PHASE4_EARLY.md` (SHA-256
+`a7e6faf9ad412bd965cfbc9f7b1e9e98c9194cc5019e669d0695b5852a55159d`).
+It records a failed 16/20 common-support service gate. Do not open an O4
+Bank-W intervention under that version-1 protocol.
+
 ## Detect and resume model work
 
 Check for a surviving process and state without modifying either:
@@ -124,11 +132,13 @@ model revisions, configs, branches, or code commits.
 
 The pinned revisions are in `configs/ol_foundation_v1.yaml`. OLMo-3.1 Think,
 OLMo-3.1 Instruct, and OLMo-3 Think snapshots were present in the Drive cache
-when this track began. Base was incomplete. Copy only the active pinned
-snapshot to local NVMe, verify it, and load it from local storage. Keep no more
-than two full 32B checkpoints resident. Remove a local copy only after its
-result, raw rows, manifest, registry event, reports, and Git push are durable;
-the Drive snapshot remains the recoverable source.
+when this track began. Base was incomplete. Prefer a direct exact-revision Hub
+download to local NVMe when authenticated and healthy; the Instruct transfer
+showed this can be much faster than DriveFS. Otherwise copy the pinned Drive
+snapshot. Verify the completed snapshot and load only from local storage. Keep
+no more than two full 32B checkpoints resident. Remove a local copy only after
+its result, raw rows, manifest, registry event, reports, and Git push are
+durable; the Drive snapshot remains the recoverable source.
 
 ## Publish every material checkpoint
 
@@ -159,7 +169,9 @@ The mandatory spine is O1 -> O2 -> O4:
   frozen 120-prompt corpus with the corrected estimator.
 - O3: audit provenance and comparability of all four lenses before any refit.
 - O4: Bank-W development load-by-derivation-by-redundancy intervention grid,
-  using the frozen predictions and matched controls.
+  using the frozen predictions and matched controls. Version 1 is currently
+  gated out by the failed O1 common-support test; do not run it unless a new
+  prospective protocol independently authorizes a redesigned service set.
 - O5 and receiver/temporal follow-ups are bounded by the operative plan.
 
 Base capability failure can gate Base out of O4 but cannot remove it from O2.

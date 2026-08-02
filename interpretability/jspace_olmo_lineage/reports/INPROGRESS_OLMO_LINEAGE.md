@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T01:21:00Z
+Last updated: 2026-08-02T01:25:00Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -22,21 +22,19 @@ live in Drive under `olmo_lineage_20260801`.
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
 - Active model job: none; both OLMo baseline jobs finished and GPU memory is
   free.
-- Last registered native evidence: `ol-bank-w-capability-joint-dev-v1`
-  (development), created at 2026-08-02T01:20:37Z from clean commit `241be17`.
-  Its new registry line is awaiting the immediate Git checkpoint below.
+- Last registered native evidence: `ol-phase4-early-import-bundle-v1`
+  (methods), created at 2026-08-02T01:22:48Z from clean commit `dc20c90`.
+  Its new registry line and these report updates await the immediate Git
+  checkpoint.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
 
 ## Work currently in progress
 
-The isolated foundation is complete. Four immutable Drive manifests are
-registered and verify cleanly: environment lock, import manifest, foundation
-conformance, and foundation manifest. The import manifest validates 33 named
-source events across Part 2, Phase 3, and Phase 4; 13 direct artifacts; three
-code dependencies; and six governance documents. Fourteen conformance tests
-pass. No model job is active.
+The isolated foundation and O1 service obligation are complete. Four immutable
+foundation manifests and six live evidence events verify cleanly; 19 package
+tests pass. No model job is active.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
 values finite per model and eight candidate-sequence scores per row. Think
@@ -47,11 +45,19 @@ each has 17/24 capable families.
 
 The exact Think/Instruct/Qwen common intersection is 16 families, below the
 prospective minimum of 20. `olmo_phase4_service_ready=false`; the source Phase
-4 aggregation and stricter side service decision both say BLOCKED. The next
-action is to publish this joint event and immediately emit the required early
-hash-pinned Phase 4 import bundle. No Bank-W intervention is authorized on the
-failed service set. O2/O3 can proceed while any Bank-W redesign is handled
-prospectively.
+4 aggregation and stricter side service decision both say BLOCKED. The
+required early import bundle is complete at Drive
+`release/IMPORT_BUNDLE_PHASE4_EARLY.json` (SHA-256
+`debb29ef67ffa8741a4971ec2b0b21340bd5b48dc5729ac12f74f78839bf4f2b`)
+with its readable companion (SHA-256
+`a7e6faf9ad412bd965cfbc9f7b1e9e98c9194cc5019e669d0695b5852a55159d`).
+Its embedded registry prefix covers the first 8,651 bytes through the joint
+event and hashes to
+`dcaca5a819a070f006a8534b820bfd476e0ebe63cd0b583412bfbfd050a79f10`.
+Envelope and live-prefix verification pass. No Bank-W intervention is
+authorized on this failed service set. O2 symmetric capacity and O3 lens
+provenance are now the active work; any Bank-W redesign must be a separate,
+prospectively frozen protocol.
 
 ## Exact next actions
 
@@ -67,24 +73,23 @@ python -m pip install -q -e interpretability/jspace_olmo_lineage
 python -m pytest interpretability/jspace_olmo_lineage/tests -q
 ```
 
-Commit and publish the joint registry/report checkpoint, mirror it, then emit
-the early import bundle from the resulting clean tree:
+If this event/report checkpoint is still dirty after a reclaim, publish and
+mirror it first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: register joint Bank-W capability decision'
+git commit -m 'olmo: publish early Phase 4 capability bundle'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
-python -m jspace_olmo_lineage.experiments.bank_w_capability \
-  --config interpretability/jspace_olmo_lineage/configs/ol_bank_w_capability_v1.yaml \
-  --emit-early-bundle
 ```
 
-After registering and publishing the early bundle, update/mirror the reports
-and move to O2 symmetric capacity plus the O3 lens-provenance audit. Do not
-open an O4 Bank-W intervention under the failed 20-family protocol.
+Then implement and run the O3 four-lens provenance audit and the O2 symmetric
+capacity estimator/corpus freeze. O3 is audit-first: do not refit a lens unless
+the audit establishes that the existing artifacts cannot support the planned
+comparisons. O2 includes Base even though Base capability is not required.
+Do not open an O4 Bank-W intervention under the failed 20-family protocol.
 
 ## Hardware and weight state at last update
 
@@ -96,6 +101,9 @@ open an O4 Bank-W intervention under the failed 20-family protocol.
 - The exact Instruct snapshot is complete on local NVMe after a direct pinned
   Hub download; all 14 shard sizes match the Drive copy. Its baseline event is
   published in registry commit `241be172ee75f453eca7de23244a5c531bd9e1b0`.
+- Direct pinned Hub staging was substantially faster than DriveFS for Instruct
+  and is the preferred staging path while authentication/network remain healthy;
+  the complete Drive snapshots remain recovery fallbacks.
 - OLMo-3 Think is also present in Drive.
 - Base is not complete and must be downloaded later for O2.
 - Never load model weights through DriveFS. Copy one pinned snapshot at a time

@@ -1,11 +1,12 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T01:21:00Z
+Last updated: 2026-08-02T01:25:00Z
 
-Status: active, O1 baselines and joint analysis complete; early bundle pending.
-Both native OLMo-lineage baseline capability results are registered. This
-report will be updated after every material gate or analysis and is
-intentionally separate from the Phase 4 and Gemma reports.
+Status: active, O1 complete and early Phase 4 bundle emitted; O2/O3 next. Both
+native OLMo-lineage baseline capability results, the joint decision, and the
+hash-pinned transfer bundle are registered. This report will be updated after
+every material gate or analysis and is intentionally separate from the Phase
+4 and Gemma reports.
 
 ## Executive status
 
@@ -16,11 +17,13 @@ capacity, causal utilization, downstream consumption, external-state
 substitution, and temporal organization. It does not estimate a single
 "workspace score."
 
-The current priority is the O1 service obligation: exact Phase 4 Bank-W
-baseline capability for OLMo-3.1 Think and OLMo-3.1 Instruct. Those runs are
-baseline-only and precede all side-track Bank-W interventions. O2 then adds
-the missing Base capacity measurement under a symmetric four-model estimator;
-O4 tests the frozen lineage predictions on the development partition.
+The O1 Phase 4 service obligation is complete: exact Bank-W baselines were run
+for OLMo-3.1 Think and OLMo-3.1 Instruct, then aggregated with the imported
+Qwen reference and transferred without intervention outcomes. The prospective
+20-family common-support gate failed. The current priorities are O2, which
+adds the missing Base capacity measurement under a symmetric four-model
+estimator, and O3, which audits all four lens artifacts before any refit. O4
+under the original Bank-W protocol is gated out rather than silently narrowed.
 
 Phase 4, Gemma, and OLMo are running as concurrent but isolated branches of
 work. They will be integrated only in Phase 5 or later after their own state
@@ -165,8 +168,24 @@ relative to each OLMo support set are asymmetric: Think alone retains
 `key_value:template-09`, whereas Instruct alone retains
 `state_updates:template-03`; neither belongs to the common set. No post hoc
 model or family dropping is allowed. The complete baseline and joint analysis
-must be transferred in the early hash-pinned bundle, and no Bank-W
-intervention outcome may be opened under this failed protocol.
+were transferred in the early hash-pinned bundle, and no Bank-W intervention
+outcome may be opened under this failed protocol.
+
+### Early Phase 4 transfer
+
+`ol-phase4-early-import-bundle-v1` was emitted at 2026-08-02T01:22:48Z from
+clean source commit `dc20c90c2054d3c24b24505ccf4db8a5161ca88d`. The canonical
+JSON bundle is `release/IMPORT_BUNDLE_PHASE4_EARLY.json` under the OLMo Drive
+root (20,672 bytes; SHA-256
+`debb29ef67ffa8741a4971ec2b0b21340bd5b48dc5729ac12f74f78839bf4f2b`).
+Its Markdown companion is 863 bytes with SHA-256
+`a7e6faf9ad412bd965cfbc9f7b1e9e98c9194cc5019e669d0695b5852a55159d`.
+The JSON object-hash envelope verifies. Its embedded registry prefix covers
+8,651 bytes through `ol-bank-w-capability-joint-dev-v1` and verifies to
+`dcaca5a819a070f006a8534b820bfd476e0ebe63cd0b583412bfbfd050a79f10`.
+The bundle explicitly records `olmo_phase4_service_ready=false` and
+`interventions_opened=false`; it is an import handoff, not permission to alter
+the active Phase 4 run root.
 
 ## O2: symmetric capacity
 
@@ -213,7 +232,10 @@ Base may be explicitly `gated_out` if Bank-W capability fails; it is never
 silently omitted and never imputed as a zero effect. No O4 outcome will be
 opened before O1, O2, and the O3 provenance audit required for its coordinates.
 
-Results: pending.
+Result under Bank-W protocol version 1: gated out by O1 common-support failure;
+no intervention outcome opened. O2 and O3 remain authorized. Any revised
+Bank-W family service set would require a new prospective protocol and cannot
+reinterpret the version-1 failure.
 
 ## Intermediate-stage inventory and bounded follow-ups
 
@@ -237,6 +259,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-bank-w-capability-olmo31-think-dev-v1` | 384/384 finite rows; low/high 0.7135/0.7188; high-low 0.0052, 90% CI [-0.0313, 0.0417]; independent gate passes; 17 capable families makes the ≥20 strict joint service target impossible | Source commit `663e49f`; registry commit `b35adae`; result `944c739...`; rows `badde2c...` |
 | 2026-08-02 | `ol-bank-w-capability-olmo31-instruct-dev-v1` | 384/384 finite rows; low/high 0.7396/0.7188; high-low -0.0208, 90% CI [-0.0573, 0.0208]; independent gate passes; 17 capable families | Source commit `b5dc5c3`; registry commit `241be17`; result `44f6399...`; rows `7322306...` |
 | 2026-08-02 | `ol-bank-w-capability-joint-dev-v1` | All three models independently eligible; exact common support 16/20; source and side decisions BLOCKED; no intervention authorized | Source commit `241be17`; joint result `1f93c53...`; table `e09032a...` |
+| 2026-08-02 | `ol-phase4-early-import-bundle-v1` | Emitted and verified the complete early capability handoff; service-ready false and no interventions opened | Source commit `dc20c90`; JSON `debb29e...`; Markdown `a7e6faf...`; registry prefix `dcaca5a...` |
 
 ## Current limitations and claim boundary
 
