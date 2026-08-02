@@ -336,7 +336,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--require-final-checkpoint", action="store_true")
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument(
-        "--figure-stem", default="p4f29_qwen_a1000_fit_diagnostics")
+        "--figure-stem", default="p4qa01_qwen_a1000_fit_diagnostics")
     return parser.parse_args()
 
 
