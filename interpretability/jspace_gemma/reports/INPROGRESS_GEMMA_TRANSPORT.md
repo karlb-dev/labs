@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 02:31 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 02:35 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -25,8 +25,9 @@ canonical Drive handoff at
   `a196c4fdf267944c1b5d9daa467aadcbd65b93ce`.
 - Incident registry/report commit:
   `173d6c26b802eed3757e485aca238751479050a5`.
-- Remote Gemma branch: synchronized through the incident registry; the pure
-  finalizer implementation is not yet committed.
+- Pure finalizer commit: `374f511ef1fffa265631b59865980e184466444e`.
+- Remote Gemma branch: synchronized through the pure finalizer; its successful
+  calibration registry/report boundary is not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -82,6 +83,15 @@ canonical Drive handoff at
   column before derived Parquet creation. The prepared finalizer retains the
   original per-cell JSON and stores canonical strings plus original runtime
   types; a 1,568-row Parquet write/read probe passes.
+- `gm-jvp-olmo-calibration-v1` is registered with compute commit `06b2a3d`,
+  finalizer `374f511`, and no recomputed cell or model load during finalization.
+  It contains 56 cells/1,568 rows (645 faithfully delivered), 28 bit-exact
+  suffix parity checks, and zero exact-JVP primal parity error. Single-position
+  median tangent cosine is 0.693 at L4, 0.991 at L56, and 0.996 at L60.
+  Summary SHA-256:
+  `b0088651fa953d58939e4c509bae779ad2fbaeba92f1bde7d8d4722030ca98ef`;
+  finalization manifest SHA-256:
+  `b68aba140db58e7f5caa02821dc89b395be64e4bfeaa76b094fa7d53152d608d`.
 
 ## Completed this VM
 
@@ -141,6 +151,9 @@ canonical Drive handoff at
 20. Registered that incident audit, fixed the aggregate's pandas integer at
     the JSON boundary, and implemented a pure finalizer with lossless Parquet
     type normalization and separate compute/finalizer provenance.
+21. Registered the complete OLMo calibration from the immutable cells. The
+    expected shallow-to-late tangent-faithfulness gradient is present, but no
+    target threshold or Gemma result has been opened.
 
 ## Immutable scientific guardrails
 
@@ -160,21 +173,20 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit/pull/test/push the pure finalizer, then run it from the resulting
-   clean commit. Do not rewrite or rerun cells.
-2. Inspect and register the finalized OLMo calibration boundary.
-3. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
-4. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
+1. Commit/pull/test/push the finalized calibration registry/report boundary.
+2. Derive, test, and register numeric thresholds from the OLMo/random
+   calibration in a separate clean pre-target commit.
+3. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
    snapshot to local NVMe, then run Gemma Stage 1 with the unchanged harness.
-5. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
+4. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
 
 ## Recovery checks and next commands
 
-There is no live producer or GPU allocation. The 56-cell calibration
-checkpoint is complete but unfinalized; do not rerun, delete, or rewrite it.
-Use the hash-verifying incident producer and planned pure finalizer. The local
-OLMo snapshot is ephemeral, but the cell data, state, failure log, foundation,
-golden, band, and staging manifests are durable in Drive. Inspect:
+There is no live producer or GPU allocation. The 56-cell calibration is
+finalized and registered; do not rerun, delete, or rewrite its checkpoint or
+derived outputs. Numeric thresholds are still absent, so Gemma execution
+remains forbidden. The local OLMo snapshot is ephemeral, while all evidence
+and reports are durable in Drive. Inspect:
 
 ```bash
 git -C /content/labs status --short --branch

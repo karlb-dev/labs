@@ -1,10 +1,9 @@
 # Gemma 4 31B transport autopsy — development report
 
-Status: foundation, exact-JVP goldens, and paper-band convention registered;
-all 56 OLMo control cells are hash-verified, but final calibration output is
-blocked on a post-compute JSON scalar repair. All findings in this document
-are development or methods evidence. Nothing here is a Phase 4 confirmatory
-model cell.
+Status: foundation, exact-JVP goldens, paper-band convention, and the complete
+OLMo calibration are registered; numeric target thresholds are not yet
+frozen. All findings in this document are development or methods evidence.
+Nothing here is a Phase 4 confirmatory model cell.
 
 ## Scope and non-claims
 
@@ -131,6 +130,19 @@ derived Parquet uses a canonical string plus an explicit original runtime-type
 column; the per-cell JSON remains untouched. A 1,568-row write/read probe
 passes with this lossless storage normalization.
 
+The pure finalizer succeeded from clean commit `374f511` without loading a
+model or recomputing a cell. The registered calibration contains 1,568 rows,
+of which 645 pass the fixed bf16 delivery gate, with 28/28 bit-exact clean
+suffix checks and zero exact-JVP primal parity error. Single-position median
+tangent cosine rises from 0.693 at shallow L4 to 0.991 at L56 and 0.996 at the
+L60 identity anchor; corresponding median relative error falls from 0.723 to
+0.137 and 0.089. Uniform-valid transport is noisier but also improves late.
+These across-radius medians establish a positive-control trend; they are not
+yet the frozen target pass/fail rule. Summary SHA-256:
+`b0088651fa953d58939e4c509bae779ad2fbaeba92f1bde7d8d4722030ca98ef`;
+finalization manifest SHA-256:
+`b68aba140db58e7f5caa02821dc89b395be64e4bfeaa76b094fa7d53152d608d`.
+
 ## Live evidence ledger
 
 | Evidence | Tier | State | Result |
@@ -140,7 +152,7 @@ passes with this lossless storage normalization.
 | `gm-jvp-goldens-v1` | methods | registered | both autodiff backends exactly match the analytic derivative; forward/fallback/reverse derivatives agree on the nonlinear tiny transformer |
 | `gm-band-convention-v1` | methods | registered from clean `3a599f7`; no model opened | primary Methods resolve the transferable band to 38--92% (Gemma approximately L23--L55) |
 | `gm-olmo-calibration-finalize-diagnostic-v1` | methods | registered from clean `a196c4f` | immutable incident/inventory record for all 56 cells and the post-compute serialization failure |
-| `gm-jvp-olmo-calibration-v1` | methods | 56 cells complete; not registered | summary serialization repair/finalization required |
+| `gm-jvp-olmo-calibration-v1` | methods | registered; compute `06b2a3d`, finalizer `374f511`, no recompute | 56 cells, 1,568 rows, exact parity pass, calibrated shallow-to-late control trend |
 | `gm-jvp-olmo-positive-control-v1` | methods | blocked on preceding boundaries | threshold calibration |
 | `gm-jvp-gemma-stage1-v1` | methods | forbidden until thresholds commit | exact target gate |
 
@@ -188,8 +200,7 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish the pure finalizer, which verifies the frozen state and every
-cell/raw hash, performs the native-integer and explicit Parquet storage
-repairs, and records compute/finalization commits separately without rerunning
-model cells. Numeric thresholds remain forbidden until the finalized
-calibration is registered.
+Commit/publish the finalized calibration registry/report boundary. Then derive
+and freeze the numeric SNR, exact-JVP/secant, and floor-versus-curvature rules
+from the registered OLMo/random baselines in a separate clean pre-target
+commit. Gemma remains forbidden until that threshold artifact is registered.

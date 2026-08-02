@@ -42,7 +42,9 @@ quadratically with radius. No current-study model result is reported at this
 boundary. The exact OLMo snapshot is fully verified (26 files, 14 shards,
 64,476,964,249 bytes, zero failures), and the pre-result batch/delivery repair
 and paper-band convention are registered. All 56 control cells subsequently
-checkpointed, but final summary serialization stopped on a pandas integer
-type. Cell hashes are preserved; no calibration result or Gemma threshold is
-registered until a provenance-separating pure finalizer succeeds.
+checkpointed. A provenance-separating pure finalizer repaired only derived
+JSON/Parquet scalar storage, loaded no model, and registered all 1,568 rows.
+All 28 clean suffix checks and exact-JVP primal comparisons are bit-exact.
+Single-position median tangent cosine rises from 0.693 at L4 to 0.991 at L56
+and 0.996 at L60. Numeric Gemma thresholds remain unfrozen at this boundary.
 \end{document}
