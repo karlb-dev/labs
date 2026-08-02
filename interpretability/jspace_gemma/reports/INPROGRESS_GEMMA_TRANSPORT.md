@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 02:52 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 02:56 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -30,8 +30,10 @@ canonical Drive handoff at
   `8300ca1df2b50a2c838d79232eb05501b20943c6`.
 - Frozen-threshold definition/producer commit:
   `7f6a36e19417b618cbdf3c81a6da6d9171a3739a`.
-- Remote Gemma branch: synchronized through the frozen-threshold producer;
-  the positive-control registry/firewall transition is not yet committed.
+- Positive-control registry/firewall/report commit:
+  `36a3e61e2b17bb196662b6e8bf1c2d9635ef262f`.
+- Remote Gemma branch is synchronized through the positive-control boundary;
+  the guarded target-staging producer is now under pre-run validation.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -196,8 +198,7 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit/pull/test/push this positive-control registry/firewall/report
-   boundary.
+1. Commit/pull/test/push the guarded Gemma staging producer.
 2. Confirm every OLMo artifact remains durable, remove only the scoped local
    cache `/content/hf_olmo_control/`, and stage/hash the pinned Gemma snapshot
    on local NVMe.

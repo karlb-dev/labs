@@ -28,3 +28,10 @@ Basic conformance:
 ```bash
 bash interpretability/jspace_gemma/repro.sh
 ```
+
+After the registered positive-control gate, stage and fully hash the exact
+Gemma target snapshot on local NVMe without loading the model:
+
+```bash
+python -m jspace_gemma.experiments.gm_stage_gemma
+```
