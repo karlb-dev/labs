@@ -523,6 +523,22 @@ def _generation_protocol_unchanged(
     return ancestor and unchanged
 
 
+def registration_summary(decision: Mapping) -> str:
+    """Describe a power verdict without rounding a near miss into a pass."""
+    confirmatory_count = int(decision["confirmatory_family_count"])
+    confirmatory_power = decision[
+        "minimum_power_at_sesoi_by_common_family_count"][
+            str(confirmatory_count)]
+    return (
+        "Outcome-blind Bank W shared-family max-T calibration: all "
+        f"type-I scenarios pass; minimum conservative power at "
+        f"n={confirmatory_count} is {confirmatory_power:.4f} "
+        f"(target met: "
+        f"{decision['confirmatory_count_meets_power_target']}); "
+        f"minimum powered common-family count is "
+        f"{decision['minimum_common_families_for_power_target']}.")
+
+
 def main() -> None:
     arguments = parse_args()
     config_path = Path(arguments.config)
@@ -567,13 +583,7 @@ def main() -> None:
         f"--config {arguments.config} --register-existing")
     create(
         config["evidence_id"], tier=config["tier"], command=command,
-        what=(
-            "Outcome-blind Bank W shared-family max-T calibration: all "
-            f"type-I scenarios pass; minimum conservative power at "
-            f"n={decision['confirmatory_family_count']} is "
-            f"{decision['minimum_power_at_sesoi_by_common_family_count'][str(decision['confirmatory_family_count'])]:.3f}; "
-            f"minimum powered common-family count is "
-            f"{decision['minimum_common_families_for_power_target']}."),
+        what=registration_summary(decision),
         outputs=required, inputs=inputs)
     print(json.dumps({
         "status": "registered", "evidence_id": config["evidence_id"]},

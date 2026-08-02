@@ -36,3 +36,19 @@ def test_holm2_outputs_cannot_overwrite_nominal_power_evidence():
     assert "holm2" in successor["result"]
     assert "holm2" in successor["figure_png"]
     assert "holm2" in successor["figure_pdf"]
+
+
+def test_registration_summary_does_not_round_a_near_miss_into_a_pass():
+    from jspace_phase4.experiments.p4_bank_w_power import (
+        registration_summary,
+    )
+
+    summary = registration_summary({
+        "confirmatory_family_count": 24,
+        "confirmatory_count_meets_power_target": False,
+        "minimum_power_at_sesoi_by_common_family_count": {"24": 0.7996},
+        "minimum_common_families_for_power_target": 28,
+    })
+    assert "0.7996" in summary
+    assert "target met: False" in summary
+    assert "minimum powered common-family count is 28" in summary
