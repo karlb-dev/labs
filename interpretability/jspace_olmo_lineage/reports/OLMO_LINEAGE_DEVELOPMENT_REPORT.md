@@ -1,10 +1,11 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T00:47:57Z
+Last updated: 2026-08-02T01:11:37Z
 
-Status: active, foundation complete. No native OLMo-lineage model result has
-yet been registered. This report will be updated after every material gate or
-analysis and is intentionally separate from the Phase 4 and Gemma reports.
+Status: active, Think O1 complete. One native OLMo-lineage baseline capability
+result is registered; Instruct is next. This report will be updated after every
+material gate or analysis and is intentionally separate from the Phase 4 and
+Gemma reports.
 
 ## Executive status
 
@@ -123,7 +124,7 @@ support is at least 20 families.
 
 ### Results
 
-Pending model outcomes. `ol-bank-w-capability-protocol-v1` was frozen before
+`ol-bank-w-capability-protocol-v1` was frozen before
 either OLMo baseline was opened, from clean commit `5e719c66321428a08d54`.
 Its Drive manifest SHA-256 is `95db44f86f7d...c7dbda8dedc`. The isolated O1
 producer and config pass 19 package tests, including
@@ -132,9 +133,30 @@ capability guard, model order, tokenizer revisions, and answer token IDs. The
 compatibility boundary directly imports the three hash-pinned Phase 4 source
 files and verifies that the installed modules resolve to those repository
 paths. It adds an explicit 384-row, no-drop, all-finite, complete-eight-answer
-gate without changing the source analysis. Think runs first, then Instruct.
-An early hash-pinned import bundle will be emitted immediately after both
-gates and the strict three-model joint-support analysis.
+gate without changing the source analysis.
+
+| model | rows | low acc. | high acc. | high-low | family-bootstrap 90% CI | capable families | independent gate |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| OLMo-3.1 Think | 384 | 0.7135 | 0.7188 | 0.0052 | [-0.0313, 0.0417] | 17/24 | pass |
+| OLMo-3.1 Instruct | pending | -- | -- | -- | -- | -- | pending |
+| Qwen 3.6 27B, imported | 384 | 0.8333 | 0.8333 | 0.0000 | [-0.0208, 0.0208] | 20/24 | pass |
+
+Think has 384 unique rows, all 4,608 checked numeric values are finite, every
+row contains all eight candidate-sequence scores, and no row was dropped. The
+low and high aggregate accuracy floors pass, as does the prospective load
+equivalence interval. Think is therefore independently capability-eligible.
+However, only 17 families meet the 0.70 within-family floor at both loads. Four
+deferred-recall templates are near zero, while graph-path, key-value,
+relational-table, and stack/queue families are mostly strong. The locked
+prompt-length correlation with correctness is -0.188 and remains a secondary
+sensitivity that cannot rescue or overturn the primary gate.
+
+The 17-family Think support places a hard upper bound of 17 on the strict
+Think/Instruct/Qwen intersection, below the prospectively required 20. The
+joint service gate is thus already mathematically unable to pass. This is not
+a reason to skip Instruct: its complete baseline, the registered joint
+analysis, and the early hash-pinned bundle remain mandatory. It is a reason
+not to open a Bank-W intervention outcome on this failed service set.
 
 ## O2: symmetric capacity
 
@@ -202,16 +224,18 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-foundation-v1` | Frozen import boundary, environment, isolation, preregistration, and recovery contract; 14 tests and CUDA gate passed | Git commit `dc5f623`; four immutable Drive manifests |
 | 2026-08-02 | O1 pre-outcome implementation | Exact Phase 4 compatibility wrapper, two-model config, finite/no-drop gates, resumable runner, and pull-before-push staging workflow; 19 tests passed; no model outcome opened | Git commit `5e719c6`, pushed |
 | 2026-08-02 | `ol-bank-w-capability-protocol-v1` | Outcome-blind side protocol frozen; source Phase 4 fields and three compatibility module paths/hashes exact; 384 rows/model; no model or intervention outcome opened | Git commit `5e719c6`; Drive manifest `95db44f...` |
+| 2026-08-02 | `ol-bank-w-capability-olmo31-think-dev-v1` | 384/384 finite rows; low/high 0.7135/0.7188; high-low 0.0052, 90% CI [-0.0313, 0.0417]; independent gate passes; 17 capable families makes the ≥20 strict joint service target impossible | Source commit `663e49f`; registry commit `b35adae`; result `944c739...`; rows `badde2c...` |
 
 ## Current limitations and claim boundary
 
-No native model-backed result exists yet, so the report makes no new claim
-about OLMo capability, capacity, utilization, receivers, substitution, or
-temporal organization. Existing evidence is development context. The track
-will not claim that Think training creates a global workspace, that the
-reasoning objective is the causal variable, that Instruct lacks a verbalizable
-channel, or that capacity is unchanged from pretraining before Base is
-measured.
+The Think result supports only independent baseline candidate-set capability
+on this development partition. It does not establish capacity, causal
+utilization, receivers, substitution, or temporal organization. The failed
+family-support target blocks the planned service set rather than licensing a
+post hoc family or model subset. The track will not claim that Think training
+creates a global workspace, that the reasoning objective is the causal
+variable, that Instruct lacks a verbalizable channel, or that capacity is
+unchanged from pretraining before Base is measured.
 
 ## Recovery
 

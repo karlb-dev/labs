@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T00:49:38Z
+Last updated: 2026-08-02T01:11:37Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,14 +20,13 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: OLMo-3.1 Think O1 launch is the immediate next command
-  from the clean published tree. On restart, use the process/log/state checks
-  below to distinguish staging, scoring, completion, or a not-yet-started
-  launch.
-- Last registered native evidence: `ol-bank-w-capability-protocol-v1`
-  (methods), created at 2026-08-02T00:47:49Z from clean commit `5e719c6`.
-- No OLMo Bank-W capability or intervention outcome has been opened on this
-  side track yet.
+- Active model job: none; Think finished, verified, committed, and pushed.
+- Last registered native evidence:
+  `ol-bank-w-capability-olmo31-think-dev-v1` (development), created at
+  2026-08-02T01:10:17Z from clean commit `663e49f` and published in registry
+  commit `b35adae138492c9224d6f82fa0ae2b3b3e125680`.
+- One OLMo Bank-W baseline capability outcome is open. No Bank-W intervention,
+  confirmatory, or replication outcome has been opened.
 
 ## Work currently in progress
 
@@ -38,21 +37,18 @@ source events across Part 2, Phase 3, and Phase 4; 13 direct artifacts; three
 code dependencies; and six governance documents. Fourteen conformance tests
 pass. No model job is active.
 
-The O1 producer, isolated config, NVMe staging runner, and compatibility tests
-are committed and pushed. The outcome-blind side protocol is now frozen and
-its registry line is awaiting its immediate Git checkpoint. Nineteen tests
-pass. The O1 config is
-exactly equal to the registered Phase 4 source for selection, answer/scoring
-contract, capability guard, model/tokenizer revisions, answer token IDs, and
-model order. The wrapper imports the hash-pinned Phase 4 scorer, analyzer, and
-state implementation directly, checks their installed module paths, adds a
-384-row/no-drop/all-finite/eight-sequence gate, and writes only OLMo outputs.
-The registered protocol output is
-`manifests/ol_bank_w_capability_protocol_v1.json`, SHA-256
-`95db44f86f7d...c7dbda8dedc`. No model baseline or intervention outcome has
-been opened. The protocol registry event is published at Git commit
-`085a97bc2db7e06aa3049e6cb908d93ef1bfaa43`. The next action is to stage and
-run OLMo-3.1 Think.
+Think O1 completed 384/384 unique rows, with all 4,608 numeric endpoints finite
+and eight candidate-sequence scores per row. Low/high accuracy is
+0.7135417/0.7187500. The paired high-minus-low estimate is 0.0052083 with
+family-bootstrap 90% CI [-0.03125, 0.0416667]. Both aggregate accuracy floors
+and load equivalence pass, so Think is independently capability-eligible.
+Seventeen of 24 families meet the per-family 0.70 floor at both loads.
+
+Because Think has only 17 capable families, the prospectively required
+three-way Think/Instruct/Qwen intersection cannot reach 20. This makes the
+eventual joint service decision mathematically blocked regardless of the
+Instruct outcome. Instruct must still run and be reported; no intervention is
+authorized on the failed service set. The next action is the Instruct baseline.
 
 ## Exact next actions
 
@@ -68,36 +64,37 @@ python -m pip install -q -e interpretability/jspace_olmo_lineage
 python -m pytest interpretability/jspace_olmo_lineage/tests -q
 ```
 
-Commit and publish the protocol registry event, mirror recovery documents,
-then start Think from the clean published tree:
+Commit and publish this report checkpoint, mirror it, then stage Instruct.
+The prior Drive copy took about 15 minutes; a direct exact-revision Hugging
+Face download may be used if faster. In either case, the scientific run command
+is:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: register Bank-W capability protocol'
+git commit -m 'docs: record OLMo Think capability result'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 bash interpretability/jspace_olmo_lineage/run_bank_w_capability_model.sh \
-  olmo31-think
+  olmo31-instruct
 ```
 
-The script stages the exact Drive snapshot onto local NVMe, checkpoints every
-eight rows to Drive, and pulls/rebases before automatically publishing the
-registry event. Its log is
-`olmo_lineage_20260801/logs/bank_w_capability_olmo31-think_20260802.log` and
-its watchdog is in the same directory. Its resumable state is
-`metrics/olmo31-think/bank_w_capability/ol-bank-w-capability-olmo31-think-dev-v1/state.json`
-under the OLMo Drive root. If the log has no `RUN_START` and no process exists,
-rerun the exact shell command above. If state exists, the same command verifies
-the input header and resumes missing rows. Do not start the 32B run from a
-dirty tree.
+The Instruct log is
+`logs/bank_w_capability_olmo31-instruct_20260802.log`, its watchdog is in the
+same directory, and its resumable state is
+`metrics/olmo31-instruct/bank_w_capability/ol-bank-w-capability-olmo31-instruct-dev-v1/state.json`
+under the OLMo Drive root. If state exists, the same shell command verifies the
+input header and resumes missing rows. Do not start the 32B run from a dirty
+tree.
 
 ## Hardware and weight state at last update
 
 - GPU observed: NVIDIA RTX PRO 6000 Blackwell Server Edition, approximately
   96 GiB VRAM, CUDA working.
 - OLMo-3.1 Think and Instruct snapshots are complete in the Drive HF cache.
+- The exact Think snapshot is also complete on local NVMe. Its result is
+  durable in Drive, the side registry, and GitHub; GPU memory is free.
 - OLMo-3 Think is also present in Drive.
 - Base is not complete and must be downloaded later for O2.
 - Never load model weights through DriveFS. Copy one pinned snapshot at a time
