@@ -28,6 +28,10 @@ def test_a1000_queue_freezes_stage_order_and_stops_before_mode_pilot():
     positions = [text.index(stage) for stage in stages]
     assert positions == sorted(positions)
     assert "p4_qwen_mode_variance_gpu" not in text
+    fit_backup = (
+        "preserve_registered_outputs "
+        "p4-qwen-lens-fit-drawA-n1000-dev-v1")
+    assert text.rindex(fit_backup) < positions[0]
     bank = text[text.index("bank_registry_event()"):
                 text.index("preserve_registered_outputs()")]
     assert bank.index("git pull --ff-only") < bank.index("git push origin")

@@ -224,6 +224,8 @@ print(json.dumps({
 PY
 }
 
+preserve_registered_outputs p4-qwen-lens-fit-drawA-n1000-dev-v1
+
 run_stage qwen_lens_convergence_a500_a1000 \
   python -m jspace_phase4.experiments.p4_qwen_lens_convergence \
   --config "$STRUCTURAL_CONFIG"
