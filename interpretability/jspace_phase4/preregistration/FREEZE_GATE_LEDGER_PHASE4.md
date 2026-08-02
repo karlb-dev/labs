@@ -50,7 +50,7 @@ Native `ol-*` and `gm-*` events are forbidden in the Phase 4 registry.
 |---|---|---|
 | Live-output accounting | **RED: 218/220** | No wrong hashes; A120 capacity reconstruction and historical state are absent. |
 | A120 capacity | **RECOVERY PREPARED / UNRUN** | Run the exact-hash-gated recovery only after A1000 releases the GPU. A near match is quarantined and never registered. |
-| Historical `state.json` | **EXTERNAL DECISION REQUIRED** | Recover exact bytes or obtain independent/PI approval for an append-only archival supersession. Never synthesize timing or peak-memory bytes. |
+| Historical `state.json` | **CURRENT-VM SEARCH EXHAUSTED / EXTERNAL DECISION REQUIRED** | Mounted files, live Drive/trash/revisions, and preserved pre-incident metadata expose no target cloud ID or exact bytes. Recover a genuinely new exact backup or obtain independent/PI approval for an append-only archival supersession. Never synthesize timing or peak-memory bytes. |
 | Whole-registry release | **PENDING** | Two clean passes with an independent Drive materialization boundary and identical registry/reference sets. |
 | Untouched-data audit | **PENDING INDEPENDENT REVIEW** | Confirm no confirmatory/replication intervention result exists and every split remains sealed. |
 | Independent protocol review | **PENDING** | The implementation agent has not and will not self-sign it. |
