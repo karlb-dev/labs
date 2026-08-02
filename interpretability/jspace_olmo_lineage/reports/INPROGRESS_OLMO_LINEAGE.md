@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:05:57Z
+Last updated: 2026-08-02T04:08:35Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,13 +20,14 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: none; O2 is complete and GPU memory is free. The O3
-  outcome-blind protocol is frozen and registered. Its registry/report Git
-  checkpoint is the current publish action; no readout extraction or geometry
-  outcome has started.
-- Last registered native evidence: `ol-geometry-protocol-v1` (methods),
-  created at 2026-08-02T04:05:47Z from clean commit `04a27a4`.
-  Its two immutable outputs and registry event verify.
+- Active model job: none; GPU memory is free. The first O3 readout input
+  (Instruct) is extracted and registered. Its registry/report Git checkpoint
+  is the current publish action; no cross-checkpoint geometry outcome has
+  started.
+- Last registered native evidence:
+  `ol-geometry-readout-olmo31-instruct-v1` (methods), created at
+  2026-08-02T04:08:12Z from clean commit `8c86909`. Its two immutable outputs
+  and registry event verify.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
@@ -34,7 +35,7 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and fourteen live evidence events with 48 immutable outputs
+foundation manifests and fifteen live evidence events with 50 immutable outputs
 verify cleanly; 39 package tests pass. No model job is active.
 
 The O3 implementation uses only exact same-corpus lenses plus small,
@@ -70,6 +71,17 @@ The row manifest is 684,667 bytes, SHA-256
 its all-row ID list hashes to
 `4ab7a6bec2725359b3265394abd969d9b88e73a18e63ede06fe8d75f393008db`.
 No new J-operator or selected-span comparison was computed by the freeze.
+
+The Instruct readout input is complete. All six tensor-contract checks pass at
+revision `ac0587e4...`: hidden/vocabulary sizes, RMSNorm epsilon, untied
+unembedding, and shard mappings are exact. The 13,319 x 5,120 fp16 row tensor
+plus fp32 final norm is 136,513,840 bytes, SHA-256
+`638d26036fd8a6f5354f1f800f23c232f060f57b3f24532407c0595f17b40b48`;
+its manifest is 3,872 bytes, SHA-256
+`58952cf931f2a5fbc046e2a6c4a74d2486cb19ab4ffea3036dc8f9444e59f687`.
+The source unembedding and final-norm shards hash to `24f12c4a...` and
+`3a636d6d...`. This methods input contains no activation, intervention, or
+geometry comparison outcome.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
 values finite per model and eight candidate-sequence scores per row. Think
@@ -226,24 +238,31 @@ git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-Publish the protocol registry checkpoint first:
+Publish the Instruct readout registry checkpoint first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: freeze geometry row population'
+git commit -m 'olmo: register instruct geometry readout'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-Then extract the already-local exact Instruct readout rows:
+After recovery verifies the pushed event, the full local Instruct snapshot is
+safe to rotate. Then download the exact Base metadata plus shards 13/14
+directly from the Hub into local NVMe and run:
 
 ```bash
+hf download allenai/Olmo-3-1125-32B \
+  config.json model.safetensors.index.json \
+  model-00013-of-00014.safetensors model-00014-of-00014.safetensors \
+  --revision c2b61dae89a1ad10e4ad5653d0e46b590902607b \
+  --local-dir /content/olmo_lineage_work/readout_sources/olmo3-base
 python -m jspace_olmo_lineage.experiments.geometry extract-readout \
   --config interpretability/jspace_olmo_lineage/configs/ol_geometry_v1.yaml \
-  --slug olmo31-instruct \
-  --snapshot /content/hf_local/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae
+  --slug olmo3-base \
+  --snapshot /content/olmo_lineage_work/readout_sources/olmo3-base
 ```
 
 Commit/pull/rebase/reproduce/push/recover that methods event before rotating
@@ -257,7 +276,7 @@ Bank-W intervention under the failed 20-family protocol.
 - OLMo-3.1 Think and Instruct snapshots are complete in the Drive HF cache.
 - The exact OLMo-3.1 32B Instruct snapshot is currently complete on local NVMe.
   Its O2 result and joint analysis are durable in Drive and the side registry;
-  the O3 protocol registry/report checkpoint is the current publish action.
+  the Instruct readout registry/report checkpoint is the current publish action.
   GPU memory is free.
 - The current Instruct snapshot was staged directly from the exact pinned Hub
   revision; the complete Drive snapshot remains a recovery fallback.
