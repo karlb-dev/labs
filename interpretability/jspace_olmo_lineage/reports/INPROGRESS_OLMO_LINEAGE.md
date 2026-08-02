@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:04:25Z
+Last updated: 2026-08-02T04:05:57Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -21,13 +21,12 @@ live in Drive under `olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
 - Active model job: none; O2 is complete and GPU memory is free. The O3
-  outcome-blind protocol, staged readout extractor, aggregate producer, and
-  registered-table-only figure producer are implemented and pass tests. They
-  must be committed and pushed before the protocol is frozen.
-- Last registered native evidence: `ol-capacity-joint-dev-v1` (development),
-  created at 2026-08-02T03:27:27Z from clean commit `cbc7ab3`.
-  Its three immutable outputs and registry event verify; the event/report Git
-  checkpoint is the current publish action.
+  outcome-blind protocol is frozen and registered. Its registry/report Git
+  checkpoint is the current publish action; no readout extraction or geometry
+  outcome has started.
+- Last registered native evidence: `ol-geometry-protocol-v1` (methods),
+  created at 2026-08-02T04:05:47Z from clean commit `04a27a4`.
+  Its two immutable outputs and registry event verify.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
@@ -35,11 +34,11 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and thirteen live evidence events with 46 immutable outputs
+foundation manifests and fourteen live evidence events with 48 immutable outputs
 verify cleanly; 39 package tests pass. No model job is active.
 
 The O3 implementation uses only exact same-corpus lenses plus small,
-hash-pinned model readout extracts. The frozen row population will contain a
+hash-pinned model readout extracts. The frozen row population contains a
 deterministic 1,024-token common-vocabulary sample, all Bank F/S/W task-token
 strata, and the complete union of every O2 own-centered selected prefix at its
 registered per-position crossing. Each checkpoint then needs only
@@ -58,6 +57,19 @@ kth and k+1 candidate correlation scores, so that exact score gap is null
 until a compatible model replay. Protected-span overlap is likewise absent,
 and causal core/fringe dose remains blocked by the 16/20 O1 service gate. No
 proxy may be reported under those unavailable names.
+
+`ol-geometry-protocol-v1` froze 100,255 common nonspecial token IDs, a
+deterministic 1,024-row stable sample, 1,123 task-token IDs, 11,517 O2 selected
+IDs, and 13,319 total extracted rows. Four selected IDs are special/noncommon
+under the cross-tokenizer semantic audit; they remain in the tensor extract so
+the complete selected spans are measurable and are separately flagged. The
+protocol JSON is 179,585 bytes, SHA-256
+`91410471bf9f7ed4becaa91fe972cbe778df1bd8ec41a1a80b4c590d7809697d`.
+The row manifest is 684,667 bytes, SHA-256
+`86222e65d35037b2e8b9d22f3d71200810e465734d3bb47915d59079868ed92c`;
+its all-row ID list hashes to
+`4ab7a6bec2725359b3265394abd969d9b88e73a18e63ede06fe8d75f393008db`.
+No new J-operator or selected-span comparison was computed by the freeze.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
 values finite per model and eight candidate-sequence scores per row. Think
@@ -78,8 +90,8 @@ Its embedded registry prefix covers the first 8,651 bytes through the joint
 event and hashes to
 `dcaca5a819a070f006a8534b820bfd476e0ebe63cd0b583412bfbfd050a79f10`.
 Envelope and live-prefix verification pass. No Bank-W intervention is
-authorized on this failed service set. O3 provenance is complete and O2
-symmetric capacity is now the active work; any Bank-W redesign must be a
+authorized on this failed service set. O3 provenance and O2 symmetric capacity
+are complete; O3 geometry input extraction is now active. Any Bank-W redesign must be a
 separate, prospectively frozen protocol.
 
 The O3 audit is complete. All six pairwise comparisons are formally
@@ -214,28 +226,29 @@ git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-Publish the outcome-blind O3 source checkpoint first:
+Publish the protocol registry checkpoint first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: stage same-corpus geometry protocol'
+git commit -m 'olmo: freeze geometry row population'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-Then freeze and register the protocol from the clean commit:
+Then extract the already-local exact Instruct readout rows:
 
 ```bash
-python -m jspace_olmo_lineage.experiments.geometry freeze-protocol \
-  --config interpretability/jspace_olmo_lineage/configs/ol_geometry_v1.yaml
+python -m jspace_olmo_lineage.experiments.geometry extract-readout \
+  --config interpretability/jspace_olmo_lineage/configs/ol_geometry_v1.yaml \
+  --slug olmo31-instruct \
+  --snapshot /content/hf_local/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae
 ```
 
-Commit/pull/rebase/reproduce/push/recover that registry event before extracting
-any checkpoint rows. Do not open an O4 Bank-W intervention under the failed
-20-family protocol. The exact targeted-download and extraction commands will
-be written here after the protocol event is durable.
+Commit/pull/rebase/reproduce/push/recover that methods event before rotating
+the full Instruct cache or downloading the next two shards. Do not open an O4
+Bank-W intervention under the failed 20-family protocol.
 
 ## Hardware and weight state at last update
 
@@ -244,8 +257,8 @@ be written here after the protocol event is durable.
 - OLMo-3.1 Think and Instruct snapshots are complete in the Drive HF cache.
 - The exact OLMo-3.1 32B Instruct snapshot is currently complete on local NVMe.
   Its O2 result and joint analysis are durable in Drive and the side registry;
-  the joint Git/report checkpoint is the current publish action. GPU memory is
-  free.
+  the O3 protocol registry/report checkpoint is the current publish action.
+  GPU memory is free.
 - The current Instruct snapshot was staged directly from the exact pinned Hub
   revision; the complete Drive snapshot remains a recovery fallback.
 - Direct pinned Hub staging was substantially faster than DriveFS for Instruct
