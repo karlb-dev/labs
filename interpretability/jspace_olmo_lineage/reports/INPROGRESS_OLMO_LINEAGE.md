@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:17:01Z
+Last updated: 2026-08-02T04:19:03Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,14 +20,13 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: none; GPU memory is free. The Instruct, Base, and OLMo-3
-  Think O3 readout inputs are extracted and registered. The OLMo-3 Think
-  registry/report Git checkpoint
+- Active model job: none; GPU memory is free. All four O3 readout inputs are
+  extracted and registered. The OLMo-3.1 Think registry/report Git checkpoint
   is the current publish action; no cross-checkpoint geometry outcome has
   started.
 - Last registered native evidence:
-  `ol-geometry-readout-olmo3-think-v1` (methods), created at
-  2026-08-02T04:17:01Z from clean commit `49a1dfd`. Its two immutable outputs
+  `ol-geometry-readout-olmo31-think-v1` (methods), created at
+  2026-08-02T04:18:57Z from clean commit `e484fe9`. Its two immutable outputs
   and registry event verify.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
@@ -36,7 +35,7 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and seventeen live evidence events with 54 immutable outputs
+foundation manifests and eighteen live evidence events with 56 immutable outputs
 verify cleanly; 39 package tests pass. No model job is active.
 
 The O3 implementation uses only exact same-corpus lenses plus small,
@@ -101,6 +100,16 @@ the 3,573-byte manifest is SHA-256
 `ecbd3c60c62ecab1a2de9e1dbcf1b98c7e9abd64d6fbf4a754f11f296fd9e661`.
 The unembedding/final-norm source shards hash to `354250fa...` and
 `5a87e55f...`. This input contains no cross-checkpoint geometry outcome.
+
+The fourth and final readout input, OLMo-3.1 Think, is complete at exact
+revision `832c3f54...`; all six tensor-contract checks pass. The
+136,513,840-byte tensor is SHA-256
+`1d9932d100ff0380c8a1e974d0391a4d7dc8a26c85d19d2d42829dbe1f66d170`;
+the 3,593-byte manifest is SHA-256
+`20f7c4336b43ffd43fe996ecff6d8c5d60bbf9b026fa1d35c870c7aec71abd51`.
+Its unembedding/final-norm shards hash to `907c2ea0...` and `5335c64e...`.
+All four registered inputs now cover identical frozen row IDs; no pairwise
+geometry has yet been computed.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
 values finite per model and eight candidate-sequence scores per row. Think
@@ -257,31 +266,29 @@ git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-If the OLMo-3 Think readout registry/report checkpoint is dirty after a reclaim,
-publish it first:
+If the OLMo-3.1 Think readout registry/report checkpoint is dirty after a
+reclaim, publish it first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: register olmo3 think geometry readout'
+git commit -m 'olmo: register olmo31 think geometry readout'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-After recovery verifies the pushed OLMo-3 Think event, extract the already
-staged OLMo-3.1 32B Think readout:
+After recovery verifies the pushed fourth readout, run the prospectively frozen
+four-checkpoint geometry aggregate from the clean published tree:
 
 ```bash
-python -m jspace_olmo_lineage.experiments.geometry extract-readout \
-  --config interpretability/jspace_olmo_lineage/configs/ol_geometry_v1.yaml \
-  --slug olmo31-think \
-  --snapshot /content/olmo_lineage_work/readout_sources/olmo31-think
+python -m jspace_olmo_lineage.experiments.geometry aggregate \
+  --config interpretability/jspace_olmo_lineage/configs/ol_geometry_v1.yaml
 ```
 
-Commit/pull/rebase/reproduce/push/recover that fourth methods input. Only after
-all four readouts verify may the registered O3 aggregate be run. Do not open an
-O4 Bank-W intervention under the failed 20-family protocol.
+Publish and recover the aggregate before running the separate registered-table
+figure producer. Do not open an O4 Bank-W intervention under the failed
+20-family protocol.
 
 ## Hardware and weight state at last update
 
@@ -303,9 +310,9 @@ O4 Bank-W intervention under the failed 20-family protocol.
 - Local disk has approximately 163 GiB free. Exact targeted metadata plus
   shards 13/14 are already staged under
   `/content/olmo_lineage_work/readout_sources/` for Base, OLMo-3 Think, and
-  OLMo-3.1 Think. Base and OLMo-3 Think are extracted; OLMo-3 Think is the
-  current publish action and OLMo-3.1 Think follows. Each source set is about
-  5.4 GiB.
+  OLMo-3.1 Think. All three targeted sources have now been extracted; the final
+  OLMo-3.1 Think registry/report checkpoint is the current publish action. Each
+  source set is about 5.4 GiB and may be retained until the aggregate verifies.
 - The exact `anthropics/jacobian-lens` checkout is installed from `/tmp` at
   `581d398613e5602a5af361e1c34d3a92ea82ba8e`; recreate it after a reclaim.
 - Never load model weights through DriveFS. Copy one pinned snapshot at a time

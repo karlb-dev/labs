@@ -425,6 +425,12 @@ frozen rows and final norm from exact OLMo-3 Think revision `ebd033e4...`; all
 checks pass. Its tensor is SHA-256 `ff580ed4...5b418` and its manifest is
 `ecbd3c60...9e661`. Like the other extracts, it contains no comparison result.
 
+The fourth staged input, `ol-geometry-readout-olmo31-think-v1`, completes the
+frozen four-model input set at exact revision `832c3f54...`; all checks pass.
+Its tensor is SHA-256 `1d9932d1...6d170` and its manifest is
+`20f7c433...abd51`. No operator, token-row, or selected-span comparison was
+opened while preparing these inputs.
+
 ## O4: development mechanism grid
 
 The primary arm contrast is
@@ -481,6 +487,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-geometry-readout-olmo31-instruct-v1` | Extracted 13,319 frozen unembedding rows plus final norm from exact Instruct revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `8c86909`; tensor `638d2603...`; manifest `58952cf9...` |
 | 2026-08-02 | `ol-geometry-readout-olmo3-base-v1` | Extracted the same 13,319 frozen unembedding rows plus final norm from exact Base revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `64f377f`; tensor `56ef4f98...`; manifest `07f98b2b...` |
 | 2026-08-02 | `ol-geometry-readout-olmo3-think-v1` | Extracted the frozen rows plus final norm from exact OLMo-3 Think revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `49a1dfd`; tensor `ff580ed4...`; manifest `ecbd3c60...` |
+| 2026-08-02 | `ol-geometry-readout-olmo31-think-v1` | Completed the four-input set with the frozen rows plus final norm from exact OLMo-3.1 Think revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `e484fe9`; tensor `1d9932d1...`; manifest `20f7c433...` |
 
 ## Current limitations and claim boundary
 
