@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T01:25:00Z
+Last updated: 2026-08-02T01:53:00Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -24,8 +24,8 @@ live in Drive under `olmo_lineage_20260801`.
   free.
 - Last registered native evidence: `ol-phase4-early-import-bundle-v1`
   (methods), created at 2026-08-02T01:22:48Z from clean commit `dc20c90`.
-  Its new registry line and these report updates await the immediate Git
-  checkpoint.
+  Its registry/report checkpoint is published at `d76e937` and mirrored to
+  Drive.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
@@ -59,6 +59,16 @@ authorized on this failed service set. O2 symmetric capacity and O3 lens
 provenance are now the active work; any Bank-W redesign must be a separate,
 prospectively frozen protocol.
 
+The O3 audit config, producer, and tests are implemented in the current dirty
+tree. Twenty-three package tests pass. Read-only preflight rehashed all four
+final lenses, opened all 16 slice lenses, verified 4 x 30 prompt metadata, and
+reproduced every sampled merged-versus-slice-mean value within 0.0002442
+(tolerance 0.002). The three post-trained tokenizers produce identical token
+sequences on all 120 ordered fit texts. Base uses the same raw texts and order
+but exposes no BOS token under the shared model-aware `jlens.from_hf` policy.
+No audit result or refit decision is registered yet; first publish the clean
+audit implementation checkpoint, then execute it from that commit.
+
 ## Exact next actions
 
 From `/content/labs`:
@@ -73,23 +83,30 @@ python -m pip install -q -e interpretability/jspace_olmo_lineage
 python -m pytest interpretability/jspace_olmo_lineage/tests -q
 ```
 
-If this event/report checkpoint is still dirty after a reclaim, publish and
-mirror it first:
+If the O3 implementation is still dirty after a reclaim, publish and mirror
+it first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: publish early Phase 4 capability bundle'
+git commit -m 'olmo: freeze four-lens provenance audit'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-Then implement and run the O3 four-lens provenance audit and the O2 symmetric
-capacity estimator/corpus freeze. O3 is audit-first: do not refit a lens unless
-the audit establishes that the existing artifacts cannot support the planned
-comparisons. O2 includes Base even though Base capability is not required.
-Do not open an O4 Bank-W intervention under the failed 20-family protocol.
+Then run the audit from the clean commit:
+
+```bash
+python -m jspace_olmo_lineage.experiments.lens_provenance_audit \
+  --config interpretability/jspace_olmo_lineage/configs/ol_lens_provenance_audit_v1.yaml
+```
+
+Register/publish its result before implementing the O2 symmetric capacity
+estimator/corpus freeze. Do not refit a lens unless the audit establishes that
+the existing artifacts cannot support the planned comparisons. O2 includes
+Base even though Base capability is not required. Do not open an O4 Bank-W
+intervention under the failed 20-family protocol.
 
 ## Hardware and weight state at last update
 
@@ -98,14 +115,16 @@ Do not open an O4 Bank-W intervention under the failed 20-family protocol.
 - OLMo-3.1 Think and Instruct snapshots are complete in the Drive HF cache.
 - The exact Think snapshot is also complete on local NVMe. Its result is
   durable in Drive, the side registry, and GitHub; GPU memory is free.
-- The exact Instruct snapshot is complete on local NVMe after a direct pinned
-  Hub download; all 14 shard sizes match the Drive copy. Its baseline event is
-  published in registry commit `241be172ee75f453eca7de23244a5c531bd9e1b0`.
+- The exact Instruct snapshot was removed from local NVMe after its result,
+  bundle, Git checkpoint, and recovery mirrors became durable. It remains
+  complete in Drive and directly recoverable from its pinned Hub revision.
 - Direct pinned Hub staging was substantially faster than DriveFS for Instruct
   and is the preferred staging path while authentication/network remain healthy;
   the complete Drive snapshots remain recovery fallbacks.
 - OLMo-3 Think is also present in Drive.
 - Base is not complete and must be downloaded later for O2.
+- Local disk has approximately 119 GiB free after the Instruct rotation; the
+  exact OLMo-3.1 Think snapshot remains local.
 - Never load model weights through DriveFS. Copy one pinned snapshot at a time
   to local NVMe and load from there.
 

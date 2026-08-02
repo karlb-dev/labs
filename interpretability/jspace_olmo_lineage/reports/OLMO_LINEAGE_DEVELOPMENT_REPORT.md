@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T01:25:00Z
+Last updated: 2026-08-02T01:53:00Z
 
 Status: active, O1 complete and early Phase 4 bundle emitted; O2/O3 next. Both
 native OLMo-lineage baseline capability results, the joint decision, and the
@@ -216,7 +216,25 @@ four lenses before considering a refit. Own-frame and common-frame questions
 remain distinct. Common-frame stability is not evidence that dictionaries are
 identical.
 
-Results: pending.
+Results: the methods producer and fully hash-pinned input config are
+implemented but not yet registered. Read-only preflight validated every final
+lens hash and internal container, all sixteen 30-prompt slice lenses, and the
+four sampled weighted merges. Each merge differs from the mean of its four
+fp16 slices by at most 0.0002442 at the audited coordinates, below the frozen
+0.002 serialization tolerance. All lenses attest 120 prompts, d=5120, the same
+21 source layers, target layer 63, dim batch 8, maximum sequence length 128,
+skip-first 16, fp32 Jacobian accumulation, and fp16 storage.
+
+The exact ordered raw-text corpus is shared. The three post-trained tokenizers
+produce identical token sequences for all 120 texts. Base uses the same raw
+texts/order but has no BOS token; the common model-aware `jlens.from_hf` policy
+adds BOS only when exposed by the tokenizer. Historical evidence strength is
+not uniform: the Instruct fit record names the deterministic source path but
+does not embed its hash, and the original 3.0 Think fit loaded an unpinned Hub
+ID. For 3.0 Think, the surviving historical and pinned revisions point to the
+same 14 weight blobs and have identical semantic weight maps. These are
+explicit qualifications, not hidden equivalence assumptions. The clean-source
+audit event will make the formal pairwise classifications and refit decision.
 
 ## O4: development mechanism grid
 
@@ -260,6 +278,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-bank-w-capability-olmo31-instruct-dev-v1` | 384/384 finite rows; low/high 0.7396/0.7188; high-low -0.0208, 90% CI [-0.0573, 0.0208]; independent gate passes; 17 capable families | Source commit `b5dc5c3`; registry commit `241be17`; result `44f6399...`; rows `7322306...` |
 | 2026-08-02 | `ol-bank-w-capability-joint-dev-v1` | All three models independently eligible; exact common support 16/20; source and side decisions BLOCKED; no intervention authorized | Source commit `241be17`; joint result `1f93c53...`; table `e09032a...` |
 | 2026-08-02 | `ol-phase4-early-import-bundle-v1` | Emitted and verified the complete early capability handoff; service-ready false and no interventions opened | Source commit `dc20c90`; JSON `debb29e...`; Markdown `a7e6faf...`; registry prefix `dcaca5a...` |
+| 2026-08-02 | O3 pre-evidence implementation | Hash-pinned four-lens provenance audit, tokenizer/BOS comparison, slice/merge integrity checks, and no-refit router implemented; 23 tests and all large-file preflights pass; no audit result registered yet | Dirty tree after published bundle checkpoint `d76e937`; OLMo namespace only |
 
 ## Current limitations and claim boundary
 
