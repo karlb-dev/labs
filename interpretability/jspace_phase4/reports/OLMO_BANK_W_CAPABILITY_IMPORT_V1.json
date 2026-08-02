@@ -8,7 +8,7 @@
     "source_commit": "d76e937d2e6294b92d3d599581bd0fb029f5735c",
     "evidence_id_prefix": "ol-",
     "source_registry": {
-      "path": "interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
+      "path": "interpretability/jspace_phase4/reports/source_registries/olmo_bank_w_early_d76e937.jsonl",
       "sha256": "1e66b35068dc6489de10cccad206899a726d522872bec3f5fe3586aa0a20cbca"
     },
     "selected_events": [
@@ -55,5 +55,5 @@
       "normalization_note": "Mainline contract envelope over the source-native early release. The selected source events and all outputs are revalidated independently; the source-side joint result remains diagnostic and is recomputed mainline."
     }
   },
-  "payload_sha256": "7afa88a80a7947c2ec0badadeae14e6394775724bcbd442f6716d18dcbb6cbf7"
+  "payload_sha256": "aaefa4d8c30bd92676d07a27e780389acfe54f8a0a98feb3364e3b1265615e3c"
 }

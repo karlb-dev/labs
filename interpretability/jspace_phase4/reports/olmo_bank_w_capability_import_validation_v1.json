@@ -1,8 +1,8 @@
 {
  "bundle_id": "jspace-olmo-lineage-phase4-early-v1",
  "bundle_path": "interpretability/jspace_phase4/reports/OLMO_BANK_W_CAPABILITY_IMPORT_V1.json",
- "bundle_payload_sha256": "7afa88a80a7947c2ec0badadeae14e6394775724bcbd442f6716d18dcbb6cbf7",
- "bundle_sha256": "4ae67757635992f893cab5446d5f6694a3eb0c2201c009a50d949d926c8fbc0d",
+ "bundle_payload_sha256": "aaefa4d8c30bd92676d07a27e780389acfe54f8a0a98feb3364e3b1265615e3c",
+ "bundle_sha256": "d3c2f94e23251c64edcdd643e1ab13a94ad9263a7ccb6fe36c2c2e1a367b0536",
  "governance": {
   "contains_confirmatory_intervention_outcomes": false,
   "contains_replication_intervention_outcomes": false,
@@ -180,7 +180,7 @@
  "source_branch": "interp_jspace_olmo_lineage",
  "source_commit": "d76e937d2e6294b92d3d599581bd0fb029f5735c",
  "source_registry": {
-  "path": "interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
+  "path": "interpretability/jspace_phase4/reports/source_registries/olmo_bank_w_early_d76e937.jsonl",
   "sha256": "1e66b35068dc6489de10cccad206899a726d522872bec3f5fe3586aa0a20cbca"
  },
  "source_study": "jspace-olmo-lineage",

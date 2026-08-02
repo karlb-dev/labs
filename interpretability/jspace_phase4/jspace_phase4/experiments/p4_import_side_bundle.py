@@ -29,7 +29,14 @@ def main() -> None:
     if current != recorded:
         raise RuntimeError(
             "side-bundle validation file does not match a fresh validation")
-    outputs = [bundle_path, validation_path]
+    # Preserve the exact registry bytes used for validation as a live import
+    # output. A side branch can legitimately append later events, so a
+    # normalized early bundle points at an immutable Git-stored snapshot.
+    outputs = [
+        bundle_path,
+        validation_path,
+        Path(current["source_registry"]["path"]),
+    ]
     outputs.extend(Path(row["path"]) for row in current["outputs"])
     event = import_evidence(
         current["target_import_evidence_id"],
