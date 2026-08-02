@@ -1,11 +1,11 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T01:11:37Z
+Last updated: 2026-08-02T01:21:00Z
 
-Status: active, Think O1 complete. One native OLMo-lineage baseline capability
-result is registered; Instruct is next. This report will be updated after every
-material gate or analysis and is intentionally separate from the Phase 4 and
-Gemma reports.
+Status: active, O1 baselines and joint analysis complete; early bundle pending.
+Both native OLMo-lineage baseline capability results are registered. This
+report will be updated after every material gate or analysis and is
+intentionally separate from the Phase 4 and Gemma reports.
 
 ## Executive status
 
@@ -138,7 +138,7 @@ gate without changing the source analysis.
 | model | rows | low acc. | high acc. | high-low | family-bootstrap 90% CI | capable families | independent gate |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | OLMo-3.1 Think | 384 | 0.7135 | 0.7188 | 0.0052 | [-0.0313, 0.0417] | 17/24 | pass |
-| OLMo-3.1 Instruct | pending | -- | -- | -- | -- | -- | pending |
+| OLMo-3.1 Instruct | 384 | 0.7396 | 0.7188 | -0.0208 | [-0.0573, 0.0208] | 17/24 | pass |
 | Qwen 3.6 27B, imported | 384 | 0.8333 | 0.8333 | 0.0000 | [-0.0208, 0.0208] | 20/24 | pass |
 
 Think has 384 unique rows, all 4,608 checked numeric values are finite, every
@@ -153,10 +153,20 @@ sensitivity that cannot rescue or overturn the primary gate.
 
 The 17-family Think support places a hard upper bound of 17 on the strict
 Think/Instruct/Qwen intersection, below the prospectively required 20. The
-joint service gate is thus already mathematically unable to pass. This is not
-a reason to skip Instruct: its complete baseline, the registered joint
-analysis, and the early hash-pinned bundle remain mandatory. It is a reason
-not to open a Bank-W intervention outcome on this failed service set.
+complete Instruct result likewise has 17 capable families. Its four
+deferred-recall templates are all at zero, while most graph-path,
+relational-table, and stack/queue cells are strong. Its prompt-length
+correlation with correctness is -0.211, again secondary only.
+
+The registered exact three-model intersection contains 16 families. All three
+models pass independently, but both the source Phase 4 aggregation and the
+strict side service rule return BLOCKED because 16 < 20. The one-family losses
+relative to each OLMo support set are asymmetric: Think alone retains
+`key_value:template-09`, whereas Instruct alone retains
+`state_updates:template-03`; neither belongs to the common set. No post hoc
+model or family dropping is allowed. The complete baseline and joint analysis
+must be transferred in the early hash-pinned bundle, and no Bank-W
+intervention outcome may be opened under this failed protocol.
 
 ## O2: symmetric capacity
 
@@ -225,11 +235,14 @@ operative plan authorizes expansion.
 | 2026-08-02 | O1 pre-outcome implementation | Exact Phase 4 compatibility wrapper, two-model config, finite/no-drop gates, resumable runner, and pull-before-push staging workflow; 19 tests passed; no model outcome opened | Git commit `5e719c6`, pushed |
 | 2026-08-02 | `ol-bank-w-capability-protocol-v1` | Outcome-blind side protocol frozen; source Phase 4 fields and three compatibility module paths/hashes exact; 384 rows/model; no model or intervention outcome opened | Git commit `5e719c6`; Drive manifest `95db44f...` |
 | 2026-08-02 | `ol-bank-w-capability-olmo31-think-dev-v1` | 384/384 finite rows; low/high 0.7135/0.7188; high-low 0.0052, 90% CI [-0.0313, 0.0417]; independent gate passes; 17 capable families makes the ≥20 strict joint service target impossible | Source commit `663e49f`; registry commit `b35adae`; result `944c739...`; rows `badde2c...` |
+| 2026-08-02 | `ol-bank-w-capability-olmo31-instruct-dev-v1` | 384/384 finite rows; low/high 0.7396/0.7188; high-low -0.0208, 90% CI [-0.0573, 0.0208]; independent gate passes; 17 capable families | Source commit `b5dc5c3`; registry commit `241be17`; result `44f6399...`; rows `7322306...` |
+| 2026-08-02 | `ol-bank-w-capability-joint-dev-v1` | All three models independently eligible; exact common support 16/20; source and side decisions BLOCKED; no intervention authorized | Source commit `241be17`; joint result `1f93c53...`; table `e09032a...` |
 
 ## Current limitations and claim boundary
 
-The Think result supports only independent baseline candidate-set capability
-on this development partition. It does not establish capacity, causal
+The OLMo results support only independent baseline candidate-set capability on
+this development partition, while the prospective joint-support service gate
+fails. They do not establish capacity, causal
 utilization, receivers, substitution, or temporal organization. The failed
 family-support target blocks the planned service set rather than licensing a
 post hoc family or model subset. The track will not claim that Think training
