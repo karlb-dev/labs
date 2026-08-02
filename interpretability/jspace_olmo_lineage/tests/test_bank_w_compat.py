@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -84,6 +85,36 @@ def test_frozen_phase4_sources_and_protocol_are_exact():
     assert all(row["exact"] for row in conformance["comparisons"].values())
     _, bank = _verify_bank_inputs(value)
     assert all(bank["checks"].values())
+
+
+def test_frozen_registry_accepts_only_exact_append_only_extension(
+        tmp_path, monkeypatch):
+    from jspace_olmo_lineage.experiments import bank_w_capability as producer
+
+    frozen = (
+        b'{"event":"evidence_created","evidence_id":"frozen",'
+        b'"schema_version":1}\n')
+    appended = (
+        b'{"event":"evidence_created","evidence_id":"later",'
+        b'"schema_version":1}\n')
+    registry = tmp_path / "events.jsonl"
+    registry.write_bytes(frozen + appended)
+    monkeypatch.setattr(producer, "resolve_uri", lambda _uri: registry)
+    value = {"source_phase4": {
+        "registry_uri": "repo://events.jsonl",
+        "registry_sha256": hashlib.sha256(frozen).hexdigest(),
+    }}
+
+    events, record = producer._source_registry(value)
+    assert [row["evidence_id"] for row in events] == ["frozen"]
+    assert record["sha256"] == hashlib.sha256(frozen).hexdigest()
+    assert record["bytes"] == len(frozen)
+    assert record["append_only_extension"] is True
+    assert record["appended_events"] == 1
+
+    registry.write_bytes(frozen.replace(b"frozen", b"edited") + appended)
+    with pytest.raises(RuntimeError, match="frozen Phase 4 source registry"):
+        producer._source_registry(value)
 
 
 def test_side_analysis_matches_phase4_and_adds_finite_gate():

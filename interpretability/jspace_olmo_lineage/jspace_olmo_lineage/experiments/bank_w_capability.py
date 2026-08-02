@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.metadata
 import json
 import os
@@ -97,12 +98,47 @@ def _verify_packages(expected: Mapping[str, str]) -> dict:
 def _source_registry(config: Mapping) -> tuple[list[dict], dict]:
     specification = config["source_phase4"]
     path = resolve_uri(specification["registry_uri"])
-    actual = file_sha256(path)
-    if actual != specification["registry_sha256"]:
-        raise RuntimeError("frozen Phase 4 source registry hash drift")
-    return _read_jsonl(path), {
-        "path": str(path), "sha256": actual,
-        "bytes": int(path.stat().st_size),
+    raw = path.read_bytes()
+    expected = specification["registry_sha256"]
+    actual = hashlib.sha256(raw).hexdigest()
+    prefix_bytes = len(raw)
+    if actual != expected:
+        digest = hashlib.sha256()
+        prefix_bytes = 0
+        for line in raw.splitlines(keepends=True):
+            digest.update(line)
+            prefix_bytes += len(line)
+            if digest.hexdigest() == expected:
+                break
+        else:
+            raise RuntimeError("frozen Phase 4 source registry hash drift")
+    prefix = raw[:prefix_bytes]
+    events = [
+        json.loads(line) for line in prefix.decode("utf-8").splitlines()
+        if line.strip()
+    ]
+    appended = raw[prefix_bytes:]
+    if appended:
+        try:
+            appended_events = [
+                json.loads(line)
+                for line in appended.decode("utf-8").splitlines()
+                if line.strip()
+            ]
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise RuntimeError(
+                "Phase 4 registry extension is not valid append-only JSONL"
+            ) from error
+    else:
+        appended_events = []
+    return events, {
+        "path": str(path),
+        "sha256": expected,
+        "bytes": prefix_bytes,
+        "current_sha256": actual,
+        "current_bytes": len(raw),
+        "append_only_extension": bool(appended),
+        "appended_events": len(appended_events),
     }
 
 
