@@ -1,14 +1,15 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T04:23:16Z
+Last updated: 2026-08-02T04:26:33Z
 
 Status: active; O1, O2, and O3 are complete through the registered geometry
 tables, and the early Phase 4 bundle is emitted. Both native OLMo-lineage
 baseline capability results, both earlier joint decisions, the hash-pinned
 transfer bundle, four capacity cells, paired capacity verdict, four-lens audit,
 four readout inputs, and four-checkpoint geometry verdict are registered. The
-separate registered-table figure event and run-specific paper update are next.
-This report remains separate from the Phase 4 and Gemma reports.
+registered-table figure set are complete. The run-specific paper and final
+OLMo handoff bundle are next. This report remains separate from the Phase 4 and
+Gemma reports.
 
 ## Executive status
 
@@ -495,6 +496,16 @@ table is 51,022 bytes, SHA-256 `c2826b14...73bd`; and the 6-row readout table is
 19,863 bytes, SHA-256 `93fd2108...0bd9`. These are development-tier descriptive
 geometry results, not randomized-training or causal-intervention evidence.
 
+`ol-geometry-figures-dev-v1` then rendered five planned views exclusively from
+the registered geometry/capacity tables and the foundation-imported Bank-S
+trajectory: operator heatmap, token-row trajectory, selected-span trajectory,
+capacity/known-causal state space, and readout/transport decomposition. Each is
+registered as PNG and PDF. Figure 4 visibly labels the causal effect Bank-S and
+states that Bank-W remains blocked at 16 < 20. The figure manifest is 5,011
+bytes, SHA-256 `1bb73432...1d9c`; it records all ten hashes and the imported
+Bank-S table hash `3a0e7a96...420f`. Visual inspection found no clipped labels
+or incorrect temporal placement of the Instruct sibling.
+
 ## O4: development mechanism grid
 
 The primary arm contrast is
@@ -553,6 +564,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-geometry-readout-olmo3-think-v1` | Extracted the frozen rows plus final norm from exact OLMo-3 Think revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `49a1dfd`; tensor `ff580ed4...`; manifest `ecbd3c60...` |
 | 2026-08-02 | `ol-geometry-readout-olmo31-think-v1` | Completed the four-input set with the frozen rows plus final norm from exact OLMo-3.1 Think revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `e484fe9`; tensor `1d9932d1...`; manifest `20f7c433...` |
 | 2026-08-02 | `ol-geometry-joint-dev-v1` | Frozen router returns `dictionary-formation-pattern`: coarse operator continuity passes, token continuity fails, sparse-selection divergence is flagged, Base-to-3.0 mapped movement 0.32556 greatly exceeds 3.0-to-3.1 movement 0.00604; Instruct late-shift flag false; no causal outcome opened | Source commit `5b1fe07`; JSON `c09d8e73...`; layers `8692836d...`; selection `c2826b14...`; readout `93fd2108...` |
+| 2026-08-02 | `ol-geometry-figures-dev-v1` | Registered five PNG/PDF views from registered tables only; Figure 4 uses clearly labeled imported Bank-S context and preserves the Bank-W block; visual inspection passes | Source commit `cd042fc`; manifest `1bb73432...`; ten registered figure files |
 
 ## Current limitations and claim boundary
 
