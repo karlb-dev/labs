@@ -1,3 +1,5 @@
+import hashlib
+import json
 from pathlib import Path
 
 import yaml
@@ -12,13 +14,38 @@ def load(name: str) -> dict:
     return yaml.safe_load((CONFIGS / name).read_text())
 
 
-def test_a1000_successors_are_prospective_and_share_one_placeholder():
+def registered_a1000_sha256() -> str | None:
+    events = [
+        json.loads(line) for line in (
+            ROOT / "reports" / "evidence_events.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
+    origins = [
+        row for row in events
+        if row.get("event") == "evidence_created"
+        and row.get("evidence_id") ==
+        "p4-qwen-lens-fit-drawA-n1000-dev-v1"
+    ]
+    if not origins:
+        return None
+    assert len(origins) == 1
+    lenses = [
+        row for row in origins[0]["outputs"]
+        if Path(row["path"]).name ==
+        "qwen36-27b_jlens_drawA_n1000.pt"
+    ]
+    assert len(lenses) == 1
+    return lenses[0]["sha256"]
+
+
+def test_a1000_successors_are_prospective_or_share_registered_binding():
     convergence = load(
         "p4_qwen_lens_convergence_drawA_n500_n1000_dev.yaml")
     functional = load(
         "p4_qwen_multilens_functional_gate_a500_a1000_dev.yaml")
     influence = load("p4_qwen_lens_influence_prompt323_dev.yaml")
 
+    observed_digests = []
     for config, path in (
         (convergence, ("lenses", "a1000")),
         (functional, ("lenses", "a1000")),
@@ -28,8 +55,10 @@ def test_a1000_successors_are_prospective_and_share_one_placeholder():
         assert lens["evidence_id"] == "p4-qwen-lens-fit-drawA-n1000-dev-v1"
         assert lens["lens_uri"].endswith(
             "/qwen36-27b_jlens_drawA_n1000.pt")
-        assert lens["lens_sha256"] == PLACEHOLDER
+        observed_digests.append(lens["lens_sha256"])
         assert lens["n_prompts"] == 1000
+    registered = registered_a1000_sha256()
+    assert set(observed_digests) == {registered or PLACEHOLDER}
 
 
 def test_a1000_functional_tolerances_are_inherited_unchanged():
@@ -110,14 +139,16 @@ def test_prompt323_contract_is_retention_only_and_paired():
     }
 
 
-def test_ql2_draft_predates_any_bound_a1000_config():
+def test_ql2_draft_carries_preoutcome_commit_and_hash():
     amendment = ROOT / "preregistration" / "QL2_ESTIMAND_AMENDMENT_DRAFT.md"
     text = amendment.read_text()
     normalized = " ".join(text.split())
     assert "PROSPECTIVE CONDITIONAL DRAFT" in text
     assert "no draw-A n=1000 lens" in normalized
     assert "Literal vocabulary-row membership" in text
-    assert PLACEHOLDER in (
-        CONFIGS
-        / "p4_qwen_multilens_functional_gate_a500_a1000_dev.yaml"
-    ).read_text()
+    decision = load("p4_qwen_canonical_lens_decision_a1000_dev.yaml")
+    specification = decision["contract"]["ql2_amendment"]
+    assert specification["prospective_commit"] == (
+        "3a92492f09cf5311949311ca6273acc190ec636d")
+    assert hashlib.sha256(amendment.read_bytes()).hexdigest() == (
+        specification["sha256"])
