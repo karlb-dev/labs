@@ -142,11 +142,12 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
-At the 2026-08-02T03:00:20Z recovery checkpoint, Base and OLMo-3 32B Think are
-complete registered O2 model events. The live registry therefore contains ten
-events and 31 immutable outputs, all of which verify. OLMo-3.1 32B Think is the
-next model; its exact pinned snapshot was already complete on local NVMe. The
-live in-progress file supersedes this timestamp if later work exists.
+At the 2026-08-02T03:13:01Z recovery checkpoint, Base, OLMo-3 32B Think, and
+OLMo-3.1 32B Think are complete registered O2 model events. The live registry
+therefore contains eleven events and 37 immutable outputs, all of which verify.
+OLMo-3.1 32B Instruct is the final model cell and remains a sibling endpoint,
+not a fourth trajectory point. The live in-progress file supersedes this
+timestamp if later work exists.
 
 The model command is:
 
