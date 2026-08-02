@@ -5,7 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
-from ..import_bundle import validate_import_bundle
+from ..import_bundle import materialize_import_output, validate_import_bundle
 from ..manifests import file_sha256, require_clean_tree
 from ..registry4 import EVENTS, import_evidence
 
@@ -37,7 +37,9 @@ def main() -> None:
         validation_path,
         Path(current["source_registry"]["path"]),
     ]
-    outputs.extend(Path(row["path"]) for row in current["outputs"])
+    outputs.extend(
+        materialize_import_output(row["path"])
+        for row in current["outputs"])
     event = import_evidence(
         current["target_import_evidence_id"],
         tier="side-development-import",

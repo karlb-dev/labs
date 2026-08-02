@@ -84,7 +84,7 @@ def _repository_materialization(path: Path, repository: Path) -> Path:
     ``interpretability`` directory is eligible; Drive and arbitrary external
     paths are never remapped.
     """
-    if path.is_file() or not path.is_absolute():
+    if not path.is_absolute():
         return path
     try:
         marker = path.parts.index("interpretability")
@@ -92,6 +92,22 @@ def _repository_materialization(path: Path, repository: Path) -> Path:
         return path
     candidate = repository / Path(*path.parts[marker:])
     return candidate if candidate.is_file() else path
+
+
+def materialize_import_output(
+        path: str | Path, *, repository: Path = REPOSITORY) -> Path:
+    """Return a durable path for importing a validated side output.
+
+    Producer registries can preserve an absolute path from their source
+    worktree. When the same tracked bytes are present in the current merged
+    repository, register the portable repository-relative path instead.
+    External artifacts (including Drive paths) remain absolute.
+    """
+    materialized = _repository_materialization(Path(path), repository)
+    try:
+        return materialized.relative_to(repository)
+    except ValueError:
+        return materialized
 
 
 def _verify_output(

@@ -6,6 +6,7 @@ import pytest
 from jspace_phase4.import_bundle import (
     ImportBundleError,
     _verify_output,
+    materialize_import_output,
     validate_import_bundle,
 )
 from jspace_phase4.manifests import file_sha256, object_sha256
@@ -219,3 +220,17 @@ def test_repo_output_can_materialize_from_merged_worktree(tmp_path):
 
     assert result["path"] == str(registered)
     assert result["bytes"] == materialized.stat().st_size
+    assert materialize_import_output(
+        registered, repository=repository) == Path(
+            "interpretability/side/report.md")
+
+
+def test_external_import_output_path_remains_absolute(tmp_path):
+    repository = tmp_path / "current-repository"
+    repository.mkdir()
+    external = tmp_path / "drive-artifacts/result.json"
+    external.parent.mkdir()
+    external.write_text("{}\n")
+
+    assert materialize_import_output(
+        external, repository=repository) == external

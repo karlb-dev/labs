@@ -1,4 +1,5 @@
 import hashlib
+import re
 from pathlib import Path
 
 
@@ -109,6 +110,12 @@ def test_phase43_governing_sources_are_hash_pinned_and_adopted():
 def test_vm13_restart_snapshot_preserves_development_boundary():
     text = (ROOT / "reports" / "INPROGRESS_VM13_20260802.md").read_text()
     assert "Phase 4 remains **development-only**" in text
-    assert "n=641" in text
-    assert "65bfebe" in text
+    latest_match = re.search(
+        r"\| prompts banked \| (\d+) / 1000 \|", text)
+    assert latest_match is not None
+    latest = int(latest_match.group(1))
+    assert 641 <= latest < 1000
+    assert f"Atomic checkpoints through n={latest}" in text
+    assert f"active atomic chunk {latest}:{latest + 3}" in text
+    assert "e0d0d31" in text
     assert "No confirmatory or replication intervention outcome" in text
