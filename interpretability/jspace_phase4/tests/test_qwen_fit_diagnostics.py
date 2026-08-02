@@ -74,4 +74,6 @@ def test_summary_distinguishes_raw_coverage_from_checkpoint_boundary():
     assert summary["archived_diagnostic_rows"] == 2
     assert summary["missing_prompt_indices"] == [1]
     assert summary["raw_row_archive_complete"] is False
+    assert summary["archived_rows_all_finite"] is True
+    assert summary["checkpoint_proves_all_prompts_accepted"] is True
     assert summary["checkpoint_state"]["n_done"] == 3

@@ -108,6 +108,20 @@ def diagnostics_in_text(text: str) -> Iterator[Diagnostic]:
         )
 
 
+def diagnostic_extract(texts: Iterable[str]) -> tuple[str, int, int]:
+    """Return a content-only extract suitable for durable provenance."""
+
+    matches = []
+    prompts = set()
+    for text in texts:
+        for match in DIAGNOSTIC_RE.finditer(text):
+            matches.append(match.group(0))
+            prompts.add(int(match.group("prompt")))
+        matches.extend(match.group(0) for match in SKIP_RE.finditer(text))
+    extract = "\n".join(matches) + ("\n" if matches else "")
+    return extract, len(matches), len(prompts)
+
+
 def merge_diagnostics(
     sources: Iterable[tuple[str, Iterable[str]]],
 ) -> tuple[dict[int, Diagnostic], dict[int, set[str]], set[int]]:
@@ -197,6 +211,7 @@ def build_summary(
         )[0])
 
     checkpoint_audit = None
+    checkpoint_proves_all_prompts_accepted = False
     if checkpoint_state is not None:
         checkpoint_audit = {
             key: checkpoint_state.get(key)
@@ -209,6 +224,10 @@ def build_summary(
             value = checkpoint_audit.get(key)
             if value is not None and not 0 <= int(value) <= expected_prompts:
                 raise RuntimeError(f"checkpoint {key} is out of range: {value}")
+        checkpoint_proves_all_prompts_accepted = all(
+            int(checkpoint_audit.get(key, -1)) == expected_prompts
+            for key in ("next_idx", "n_done")
+        )
 
     return {
         "schema_version": 1,
@@ -221,6 +240,9 @@ def build_summary(
         "missing_prompt_indices": sorted(expected - observed),
         "skipped_prompt_indices": [],
         "raw_row_archive_complete": observed == expected,
+        "archived_rows_all_finite": True,
+        "checkpoint_proves_all_prompts_accepted":
+            checkpoint_proves_all_prompts_accepted,
         "checkpoint_state": checkpoint_audit,
         "sequence_length_counts": dict(sorted(Counter(
             row.seq_len for row in rows).items()
@@ -350,20 +372,33 @@ def main() -> None:
     source_records: list[dict[str, object]] = []
     for path in arguments.plain_log:
         resolved = path.resolve()
+        source_texts = [resolved.read_text(errors="replace")]
+        extract, match_count, unique_prompts = diagnostic_extract(source_texts)
         label = f"plain:{resolved.name}"
-        sources.append((label, [resolved.read_text(errors="replace")]))
+        sources.append((label, source_texts))
         source_records.append({
             "kind": "plain-log", "name": resolved.name,
             "sha256": file_sha256(resolved), "bytes": resolved.stat().st_size,
+            "diagnostic_extract_sha256": hashlib.sha256(
+                extract.encode()).hexdigest(),
+            "diagnostic_match_count": match_count,
+            "diagnostic_unique_prompt_count": unique_prompts,
         })
     for path in arguments.codex_jsonl:
         resolved = path.resolve()
-        digest = file_sha256(resolved)
-        label = f"codex-session:{digest[:12]}"
-        sources.append((label, codex_output_text(resolved)))
+        source_texts = list(codex_output_text(resolved))
+        extract, match_count, unique_prompts = diagnostic_extract(source_texts)
+        extract_digest = hashlib.sha256(extract.encode()).hexdigest()
+        container_digest = file_sha256(resolved)
+        label = f"codex-tool-output:{extract_digest[:12]}"
+        sources.append((label, source_texts))
         source_records.append({
             "kind": "codex-tool-output-jsonl", "name": resolved.name,
-            "sha256": digest, "bytes": resolved.stat().st_size,
+            "container_snapshot_sha256": container_digest,
+            "bytes_at_snapshot": resolved.stat().st_size,
+            "diagnostic_extract_sha256": extract_digest,
+            "diagnostic_match_count": match_count,
+            "diagnostic_unique_prompt_count": unique_prompts,
         })
     if not sources:
         raise SystemExit("at least one diagnostic source is required")
