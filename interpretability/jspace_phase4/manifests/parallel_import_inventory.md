@@ -81,6 +81,14 @@ proves durability.
 5. Re-run the pre-freeze inventory and two-pass durability audit after the
    registry is final.
 
+The resume-safe mechanical queue is
+`run_phase4_post_a1000_import_queue.sh`. It refuses a dirty or non-mainline
+tree, requires the complete registered A1000 decision boundary, pulls before
+every push, admits the early OLMo bundle, banks and registers the joint replay,
+then admits the terminal Gemma and OLMo bundles. Each registered output set is
+copied to the local content-preservation root. A rerun freshly validates live
+imports and never creates a duplicate event.
+
 The Phase 4 registry rejects native `ol-*` and `gm-*` creation. Side-track
 commits never fill independent-review or PI fields, and imports never upgrade
 their source tier.
