@@ -74,6 +74,8 @@ python -m jspace_olmo_lineage.experiments.independent_reconstruction \
 
 This is a methods-only replay of already registered evidence. It does not open
 a new scientific cell, Bank-W intervention, stage wedge, or O5 proxy.
+`ol-independent-reconstruction-v1` has completed and verifies; do not rerun
+the immutable command unless a new versioned protocol explicitly requires it.
 
 Freeze and register the exact Phase 4 Bank-W compatibility contract before
 opening either OLMo baseline:

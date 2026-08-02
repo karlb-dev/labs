@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T05:25:10Z
+Last updated: 2026-08-02T05:27:12Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -22,24 +22,17 @@ live in Drive under `olmo_lineage_20260801`.
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
 - Active model job: none; GPU memory is free. The exact 61-GiB OLMo-3.1 Think
   snapshot for the independent sentinel is fully staged on local NVMe from the
-  pinned Hugging Face revision. The first clean-process attempt verified all
-  fourteen weight-shard hashes, then stopped on CUDA OOM while scoring all
-  eight candidate sequences in one runtime batch. It created no result, figure
-  directory, or registry event. A one-candidate diagnostic fit but did not
-  reproduce BF16 batch numerics: maximum score drift was 0.20499 nats and the
-  margin moved from -0.25 to -0.125, so it was rejected. The root cause is the
-  wrapper's missing `torch.no_grad()` context. A local eight-candidate
-  diagnostic under `no_grad` exactly reproduces all eight scores and the
-  margin, with peak allocation 60.42 GiB. The pending repair restores the
-  frozen batch of eight and adds that context. O3 and its five figure pairs are
-  durable. The semantic official-32B checkpoint inventory v2 is registered and
-  v1 is explicitly
-  superseded. Official Think SFT and DPO stage artifacts are eligible; the
-  bounded two-cell H5 wedge is queued but not started. O5 has an explicit
-  not-executed identifiability decision.
+  pinned Hugging Face revision. `ol-independent-reconstruction-v1` has now
+  passed and registered. Keep the local snapshot only until this registry and
+  report checkpoint is rebased, tested, pushed, and mirrored; it is then
+  safely recoverable by exact-revision Hub download. O3 and its five figure
+  pairs are durable. The semantic official-32B checkpoint inventory v2 is
+  registered and v1 is explicitly superseded. Official Think SFT and DPO stage
+  artifacts are eligible; the bounded two-cell H5 wedge is queued but not
+  started. O5 has an explicit not-executed identifiability decision.
 - Last registered native evidence:
-  `ol-o5-feasibility-decision-v1` (methods), created at
-  2026-08-02T04:55:30Z from clean commit `843eabd`. Its two outputs verify.
+  `ol-independent-reconstruction-v1` (methods), created at
+  2026-08-02T05:26:50Z from clean commit `12f21ad`. Its thirteen outputs verify.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
@@ -47,23 +40,21 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and twenty-two live evidence events with 75 immutable
-live outputs verify cleanly; the registry contains 23 origin events because
-inventory v1 remains immutable but superseded. The corrected `no_grad` source
-passes all 50 package tests, registry verification, and the exact dependency-
-lock check. No model job is active; the repair must be committed, rebased,
-pushed, and recovered before retry.
+foundation manifests and twenty-three live evidence events with 88 immutable
+live outputs verify cleanly; the registry contains 24 origin events because
+inventory v1 remains immutable but superseded. All 50 package tests and the
+exact dependency-lock check pass. No model job is active.
 
-Independent reconstruction source now reimplements all registered Bank-W row
-integrity and family bootstrap summaries, all 48 O2 curve summaries, 96
+The independent reconstruction passes. It reimplemented all registered Bank-W
+row-integrity and family-bootstrap summaries, all 48 O2 curve summaries, 96
 bootstrap intervals, 144 joint arrays, 72 joint-table rows, all 84 O3
-aggregates, and the complete O3 router. Those table checks pass against the
-immutable Drive artifacts. The figure producer has a registry-free isolated
-mode and publishes only after all five PNG byte-equality checks and five PDF
-checks pass. The final sentinel verifies all fourteen pinned weight shards and
-repeats exactly one already registered Think Bank-W row; it opens no new item
-or comparison. Candidate batch size remains the frozen eight; `no_grad`
-prevents accidental autograd retention. The exact resume command is below.
+aggregates, and the complete O3 router. It verified all fourteen exact weight
+shards and repeated all eight sequence log probabilities, the predicted alias,
+and the -0.25 margin for one frozen Think Bank-W row with zero numerical drift.
+All five regenerated PNGs match the registered images byte-for-byte; five PDFs
+were independently regenerated. JSON SHA-256 is `e159f01d...20542`, Markdown
+is `48647b44...abb5`, and payload hash is `ee94e446...619f`. This is methods
+evidence only and opens no new item, intervention, stage, O5, or model outcome.
 
 The official checkpoint inventory is resolved. Version 1 remains preserved
 with its conservative byte-identity result. Version 2 checks eight exact
@@ -365,7 +356,8 @@ python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
   --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v2.yaml
 ```
 
-After the independent-reconstruction source checkpoint is durable, run:
+The independent-reconstruction command below completed at source commit
+`12f21ad` and must not be rerun because its outputs are immutable:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.independent_reconstruction \
@@ -373,11 +365,11 @@ python -m jspace_olmo_lineage.experiments.independent_reconstruction \
   --snapshot /content/olmo_lineage_work/sentinel_olmo31_think
 ```
 
-On success, publish/recover its methods event before removing the local
-snapshot. Then complete the claims ledger, state of record, run-specific paper,
-and self-verifying final OLMo import/restart bundle. Do not merge into the main
-Phase 4 or Gemma paper/registries, and do not open an O4 Bank-W intervention
-under the failed 20-family protocol.
+Publish/recover its methods event before removing the local snapshot. Then
+complete the claims ledger, state of record, run-specific paper, and self-
+verifying final OLMo import/restart bundle. Do not merge into the main Phase 4
+or Gemma paper/registries, and do not open an O4 Bank-W intervention under the
+failed 20-family protocol.
 
 The O5 feasibility command has completed and must not be rerun because its
 outputs are immutable:

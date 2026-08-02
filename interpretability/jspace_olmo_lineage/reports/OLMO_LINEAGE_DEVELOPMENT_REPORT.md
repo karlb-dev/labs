@@ -1,15 +1,16 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T05:25:10Z
+Last updated: 2026-08-02T05:27:12Z
 
 Status: active; O1, O2, and O3 are complete through the registered geometry
 tables, and the early Phase 4 bundle is emitted. Both native OLMo-lineage
 baseline capability results, both earlier joint decisions, the hash-pinned
 transfer bundle, four capacity cells, paired capacity verdict, four-lens audit,
-four readout inputs, and four-checkpoint geometry verdict are registered. The
-registered-table figure set are complete. The run-specific paper and final
-OLMo handoff bundle are next. This report remains separate from the Phase 4 and
-Gemma reports.
+four readout inputs, four-checkpoint geometry verdict, registered-table figure
+set, official-stage inventory, O5 feasibility decision, and independent
+reconstruction are registered. The claims ledger, state of record,
+run-specific paper, and final OLMo handoff bundle are next. This report remains
+separate from the Phase 4 and Gemma reports.
 
 ## Executive status
 
@@ -553,16 +554,22 @@ wedge is not an O5 substitute. The decision JSON is 5,555 bytes, SHA-256
 `d31d23e4...74499`; Markdown is 2,159 bytes, SHA-256
 `9e3fbb45...675a`; payload hash is `6fccb20e...9553`.
 
-An independent methods reconstruction is now in preflight. Its separate
-implementation has already reproduced, from immutable registered sufficient
-statistics, all 768 O1 candidate-score rows and family summaries, 48 O2 curve
-summaries, 96 bootstrap intervals, 144 joint bootstrap arrays, 72 joint table
-rows, all 84 O3 aggregate summaries, and the complete O3 router. The release
-gate also requires byte-exact regeneration of all five PNG figures, valid
-regeneration of all five PDFs, SHA-256 verification of every shard in the exact
-OLMo-3.1 Think snapshot, and a clean-process repetition of one frozen Bank-W
-row. None of these checks creates a new scientific cell; the registered result
-will be methods evidence only after the full sentinel passes.
+`ol-independent-reconstruction-v1` is complete. Its separate implementation
+reproduced, from immutable registered sufficient statistics, all 768 O1
+candidate-score rows and family summaries, 48 O2 curve summaries, 96 bootstrap
+intervals, 144 joint bootstrap arrays, 72 joint-table rows, all 84 O3 aggregate
+summaries, and the complete O3 router. It regenerated all five PNG figures
+byte-for-byte and produced five valid PDFs. The clean-process sentinel verified
+every metadata file and all fourteen weight shards at exact revision
+`832c3f54...`, then reproduced all eight frozen sequence log probabilities,
+the predicted alias, and the -0.25 answer margin with maximum absolute drift
+exactly zero. None of these checks creates a new scientific cell.
+
+The methods event was created at 2026-08-02T05:26:50Z from clean source
+`12f21ad`. Its JSON is 9,888 bytes, SHA-256 `e159f01d...20542`; Markdown is
+911 bytes, SHA-256 `48647b44...abb5`; payload hash is `ee94e446...619f`.
+Thirteen registered outputs include those documents, the isolated figure
+manifest, and five PNG/PDF pairs.
 
 The first clean-process sentinel attempt verified all fourteen exact weight
 shards, loaded the pinned model, and then stopped with CUDA out-of-memory while
@@ -647,6 +654,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | Independent-reconstruction preflight | Separate reconstruction passes O1/O2/O3 table checks; exact-revision 61-GiB Think snapshot staged directly from the Hub for a one-row clean-process sentinel; no new outcome opened | Dirty source after durable commit `4c6617e`; full clean-run event pending |
 | 2026-08-02 | Independent-reconstruction attempt 1 | All 14 exact weight shards verified; eight-candidate forward stopped on CUDA OOM because the wrapper omitted the producer's `no_grad` context; no output or event created | Clean source `5551e1e`; local-only process log; Drive reconstruction namespace remains absent |
 | 2026-08-02 | Independent-reconstruction attempt 2 and diagnosis | One-candidate retry fit but failed exact numerics (max drift 0.20499 nats; margin -0.125 vs -0.25), so it was rejected with no output. Eight candidates under `no_grad` then reproduced every score exactly at 60.42-GiB peak allocation | Clean source `37075cb` for rejected retry; read-only local diagnostic; corrected clean run pending |
+| 2026-08-02 | `ol-independent-reconstruction-v1` | PASS: 768 O1 rows, 48 O2 summaries/96 intervals/144 arrays/72 table rows, 84 O3 aggregates/router, five byte-exact PNGs/five regenerated PDFs, fourteen exact model shards, and eight exact frozen-row sequence scores independently reconstructed; no new scientific cell | Source commit `12f21ad`; JSON `e159f01d...`; Markdown `48647b44...`; 13 registered outputs |
 
 ## Current limitations and claim boundary
 

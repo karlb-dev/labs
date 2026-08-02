@@ -142,9 +142,9 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
-At the 2026-08-02T04:55:30Z evidence checkpoint, all four O2 model events and
+At the 2026-08-02T05:26:50Z evidence checkpoint, all four O2 model events and
 the paired joint event are complete and registered. The live registry therefore
-contains 23 origin events, of which 22 are live, with 75 live immutable
+contains 24 origin events, of which 23 are live, with 88 live immutable
 outputs, all of which verify. Inventory v1 is the one superseded origin. The
 frozen joint verdict is `broadly_conserved_capacity_recruitment_consistent`;
 OLMo-3.1 32B Instruct remains a sibling endpoint, not a fourth trajectory
@@ -153,8 +153,9 @@ point. The O3 protocol/extractor/aggregate/figure implementation is published,
 rows before any new geometry outcome. All four frozen readout inputs and the
 four-checkpoint aggregate are registered and hash-verified. The O3 router
 verdict is `dictionary-formation-pattern`; five PNG/PDF figure pairs and their
-manifest are also registered. The live in-progress file identifies the pending
-claims/reconstruction/paper/final-release boundary.
+manifest are also registered. The independent reconstruction and exact model
+sentinel pass and are registered. The live in-progress file identifies the
+pending claims/state-of-record/paper/final-release boundary.
 
 O3 is staged so a fresh VM never needs four complete 32B snapshots at once.
 After `ol-geometry-protocol-v1` exists, obtain only `config.json`,
@@ -215,10 +216,8 @@ Its decision is `defer-no-identifiable-crossed-intervention-estimand` /
 reconstruction, OLMo-run-specific paper, state of record, and final import
 bundle. Do not turn O2/O3 structural tables into an O5 intervention proxy.
 
-The independent reconstruction is methods-only and must run from a clean
-source commit. Stage the exact OLMo-3.1 Think revision named in
-`configs/ol_independent_reconstruction_v1.yaml` on local NVMe, preferably by a
-direct pinned Hub download, then run:
+The independent reconstruction is methods-only and completed from clean source
+commit `12f21ad`. Its provenance command was:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.independent_reconstruction \
@@ -229,7 +228,10 @@ python -m jspace_olmo_lineage.experiments.independent_reconstruction \
 It reconstructs O1/O2/O3 solely from registered sufficient statistics,
 regenerates figures outside the evidence namespace before an atomic publish,
 verifies all fourteen weight-shard hashes, and repeats one frozen registered
-Bank-W row. If its output event already exists and verifies, do not rerun it.
+Bank-W row. All eight candidate scores and the margin reproduced with zero
+drift; five PNGs match byte-for-byte and five PDFs were regenerated. Its JSON
+SHA-256 is `e159f01d...20542`, Markdown is `48647b44...abb5`, and payload hash
+is `ee94e446...619f`. Its event exists and verifies; do not rerun it.
 If Drive contains a reconstruction directory without a registry event, treat
 it as an unregistered partial and audit it before any retry.
 
