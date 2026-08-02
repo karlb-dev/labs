@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:57:00Z
+Last updated: 2026-08-02T05:13:52Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,12 +20,15 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: none; GPU memory is free. O3 and its five figure pairs are
-  durable. The semantic official-32B checkpoint inventory v2 is registered and
-  v1 is explicitly superseded. Official Think SFT and DPO stage artifacts are
-  eligible; the bounded two-cell H5 wedge is queued but not started. The
-  O5 has an explicit not-executed identifiability decision. The current action
-  is the claims table, state of record, paper, reconstruction, and final bundle.
+- Active model job: none; GPU memory is free. The exact 61-GiB OLMo-3.1 Think
+  snapshot for the independent sentinel is fully staged on local NVMe from the
+  pinned Hugging Face revision. Reconstruction source is under preflight; the
+  clean-process run begins only after its source checkpoint is rebased, tested,
+  pushed, and recovered. O3 and its five figure pairs are durable. The semantic
+  official-32B checkpoint inventory v2 is registered and v1 is explicitly
+  superseded. Official Think SFT and DPO stage artifacts are eligible; the
+  bounded two-cell H5 wedge is queued but not started. O5 has an explicit
+  not-executed identifiability decision.
 - Last registered native evidence:
   `ol-o5-feasibility-decision-v1` (methods), created at
   2026-08-02T04:55:30Z from clean commit `843eabd`. Its two outputs verify.
@@ -38,8 +41,19 @@ live in Drive under `olmo_lineage_20260801`.
 The isolated foundation and O1 service obligation are complete. Four immutable
 foundation manifests and twenty-two live evidence events with 75 immutable
 live outputs verify cleanly; the registry contains 23 origin events because
-inventory v1 remains immutable but superseded. All 47 package tests pass. No
-model job is active.
+inventory v1 remains immutable but superseded. All 49 package tests, registry
+verification, and the exact dependency-lock check pass in the current
+preflight. No model job is active.
+
+Independent reconstruction source now reimplements all registered Bank-W row
+integrity and family bootstrap summaries, all 48 O2 curve summaries, 96
+bootstrap intervals, 144 joint arrays, 72 joint-table rows, all 84 O3
+aggregates, and the complete O3 router. Those table checks pass against the
+immutable Drive artifacts. The figure producer has a registry-free isolated
+mode and publishes only after all five PNG byte-equality checks and five PDF
+checks pass. The final sentinel verifies all fourteen pinned weight shards and
+repeats exactly one already registered Think Bank-W row; it opens no new item
+or comparison. The exact resume command is below.
 
 The official checkpoint inventory is resolved. Version 1 remains preserved
 with its conservative byte-identity result. Version 2 checks eight exact
@@ -341,9 +355,17 @@ python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
   --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v2.yaml
 ```
 
-Publish/recover the methods event, resolve the bounded O5 feasibility record,
-update and compile the OLMo-run-specific paper, and emit a
-self-verifying final OLMo import/restart bundle. Do not merge into the main
+After the independent-reconstruction source checkpoint is durable, run:
+
+```bash
+python -m jspace_olmo_lineage.experiments.independent_reconstruction \
+  --config interpretability/jspace_olmo_lineage/configs/ol_independent_reconstruction_v1.yaml \
+  --snapshot /content/olmo_lineage_work/sentinel_olmo31_think
+```
+
+On success, publish/recover its methods event before removing the local
+snapshot. Then complete the claims ledger, state of record, run-specific paper,
+and self-verifying final OLMo import/restart bundle. Do not merge into the main
 Phase 4 or Gemma paper/registries, and do not open an O4 Bank-W intervention
 under the failed 20-family protocol.
 
@@ -372,7 +394,13 @@ python -m jspace_olmo_lineage.experiments.o5_feasibility \
   Hub revision and complete Drive cache.
 - The exact OLMo-3 Think local cache was likewise removed only after its result,
   Git checkpoint, and recovery mirrors became durable.
-- Local disk has approximately 163 GiB free. Exact targeted metadata plus
+- Local disk has approximately 98 GiB free. The exact pinned OLMo-3.1 Think
+  sentinel snapshot is staged at
+  `/content/olmo_lineage_work/sentinel_olmo31_think`: all fourteen weight
+  shards are present and the directory occupies approximately 61 GiB. Keep it
+  until `ol-independent-reconstruction-v1`, its report update, Git push, and
+  recovery mirror are durable; it is then safely recoverable by direct Hub
+  download and can be removed. Exact targeted metadata plus
   shards 13/14 are already staged under
   `/content/olmo_lineage_work/readout_sources/` for Base, OLMo-3 Think, and
   OLMo-3.1 Think. All three targeted sources were extracted and the registered

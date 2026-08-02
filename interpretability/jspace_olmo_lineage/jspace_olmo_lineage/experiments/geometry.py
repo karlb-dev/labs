@@ -1346,7 +1346,11 @@ def _save_figure(figure, stem: Path) -> list[Path]:
     return [png, pdf]
 
 
-def figures(config_path: str | Path) -> dict:
+def figures(
+    config_path: str | Path,
+    *,
+    reconstruction_output_dir: str | Path | None = None,
+) -> dict:
     """Render the five O3 deliverables strictly from registered tables."""
     import matplotlib
     matplotlib.use("Agg")
@@ -1354,10 +1358,11 @@ def figures(config_path: str | Path) -> dict:
 
     config_path = Path(config_path)
     config = load_config(config_path)
-    existing = _already_registered(config["figure_evidence_id"])
-    if existing is not None:
-        return {"status": "already-registered-and-verified",
-                "evidence_id": existing["evidence_id"]}
+    if reconstruction_output_dir is None:
+        existing = _already_registered(config["figure_evidence_id"])
+        if existing is not None:
+            return {"status": "already-registered-and-verified",
+                    "evidence_id": existing["evidence_id"]}
     clean = require_clean_tree(expected_branch=config["branch"])
     geometry_event = _verify_event(config["joint_evidence_id"])
     layer_output = _registered_output(
@@ -1382,7 +1387,10 @@ def figures(config_path: str | Path) -> dict:
     readout = pd.read_parquet(readout_output["path"])
     capacity = pd.read_parquet(capacity_output["path"])
     causal = pd.read_csv(causal_path)
-    output_dir = figures_dir()
+    output_dir = (
+        figures_dir() if reconstruction_output_dir is None
+        else Path(reconstruction_output_dir))
+    output_dir.mkdir(parents=True, exist_ok=True)
     outputs = []
     labels = {
         "olmo3-base": "Base", "olmo3-think": "3.0 Think",
@@ -1520,7 +1528,10 @@ def figures(config_path: str | Path) -> dict:
         fig, output_dir / "olf05_readout_transport_decomposition"))
     plt.close(fig)
 
-    manifest_path = manifests_dir() / "ol_geometry_figures_v1.json"
+    manifest_path = (
+        manifests_dir() / "ol_geometry_figures_v1.json"
+        if reconstruction_output_dir is None
+        else output_dir / "ol_geometry_figures_reconstruction.json")
     manifest = {
         "schema_version": 1,
         "study_id": "jspace-olmo-lineage",
@@ -1550,6 +1561,13 @@ def figures(config_path: str | Path) -> dict:
     }
     manifest["semantic_sha256"] = object_sha256(manifest)
     atomic_json(manifest_path, manifest)
+    if reconstruction_output_dir is not None:
+        return {
+            "status": "reconstructed-without-registry-mutation",
+            "manifest_path": str(manifest_path),
+            "manifest": manifest,
+            "outputs": [str(path) for path in outputs],
+        }
     event = create(
         config["figure_evidence_id"], tier=config["tier"],
         what=("Five O3 geometry-trajectory figures rendered exclusively from "
@@ -1579,6 +1597,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", default=str(DEFAULT_CONFIG))
     parser.add_argument("--slug")
     parser.add_argument("--snapshot")
+    parser.add_argument("--reconstruction-output-dir")
     return parser.parse_args()
 
 
@@ -1595,7 +1614,9 @@ def main() -> None:
     elif arguments.command == "aggregate":
         result = aggregate(arguments.config)
     else:
-        result = figures(arguments.config)
+        result = figures(
+            arguments.config,
+            reconstruction_output_dir=arguments.reconstruction_output_dir)
     print(json.dumps(result, indent=1, default=str))
 
 

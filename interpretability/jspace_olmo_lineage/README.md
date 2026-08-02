@@ -61,6 +61,20 @@ python -m jspace_olmo_lineage.experiments.o5_feasibility \
   --config interpretability/jspace_olmo_lineage/configs/ol_o5_feasibility_v1.yaml
 ```
 
+Independently reconstruct the registered O1/O2/O3 summaries and figures, then
+repeat one frozen OLMo-3.1 Think Bank-W row in a clean process. The snapshot
+must be the exact revision pinned in the config and should be staged on local
+NVMe, preferably directly from Hugging Face rather than through DriveFS:
+
+```bash
+python -m jspace_olmo_lineage.experiments.independent_reconstruction \
+  --config interpretability/jspace_olmo_lineage/configs/ol_independent_reconstruction_v1.yaml \
+  --snapshot /content/olmo_lineage_work/sentinel_olmo31_think
+```
+
+This is a methods-only replay of already registered evidence. It does not open
+a new scientific cell, Bank-W intervention, stage wedge, or O5 proxy.
+
 Freeze and register the exact Phase 4 Bank-W compatibility contract before
 opening either OLMo baseline:
 
