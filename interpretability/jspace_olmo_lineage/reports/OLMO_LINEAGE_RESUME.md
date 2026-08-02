@@ -202,6 +202,14 @@ python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
   --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v2.yaml
 ```
 
+The next methods boundary audits whether O5 is identifiable from registered
+evidence without proxy substitution. Publish its source first, then run:
+
+```bash
+python -m jspace_olmo_lineage.experiments.o5_feasibility \
+  --config interpretability/jspace_olmo_lineage/configs/ol_o5_feasibility_v1.yaml
+```
+
 The model command is:
 
 ```bash

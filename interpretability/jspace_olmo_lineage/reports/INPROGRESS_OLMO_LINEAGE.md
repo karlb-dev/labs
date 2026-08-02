@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:51:00Z
+Last updated: 2026-08-02T04:56:00Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -55,6 +55,12 @@ existing anchors. BOS/chat rendering differences and repository-only parent
 declarations remain qualifications. The v2 JSON is SHA-256
 `e5931c3f...ad9a`; Markdown is `f3704d14...6db4`. No weights or behavioral
 outcomes were opened by this event.
+
+The methods-only O5 identifiability producer and 47-test package are prepared.
+It pins the registered Bank-W gate, O2 capacity, O3 geometry, and checkpoint
+inventory outputs. It refuses to treat structural geometry as a causal cross
+and records the exact missing controls plus the prospective minimal Phase 5
+pilot. Publish this source before running its command.
 
 The O3 implementation uses only exact same-corpus lenses plus small,
 hash-pinned model readout extracts. The frozen row population contains a
@@ -334,6 +340,13 @@ update and compile the OLMo-run-specific paper, and emit a
 self-verifying final OLMo import/restart bundle. Do not merge into the main
 Phase 4 or Gemma paper/registries, and do not open an O4 Bank-W intervention
 under the failed 20-family protocol.
+
+After publishing the O5 feasibility source, run from its clean commit:
+
+```bash
+python -m jspace_olmo_lineage.experiments.o5_feasibility \
+  --config interpretability/jspace_olmo_lineage/configs/ol_o5_feasibility_v1.yaml
+```
 
 ## Hardware and weight state at last update
 
