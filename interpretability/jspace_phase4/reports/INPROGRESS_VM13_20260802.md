@@ -135,7 +135,7 @@ The required sixth conclusion-skeleton sentence, candidate freeze-gate ledger,
 and methods decision record are now assembled with every unresolved gate
 explicit. A prospective pre-freeze inventory generator also refuses a clean
 status on known deficits, unreachable commits, namespace leakage, or
-unreviewed temporary/recovery paths. The whole Phase-4 suite passes **262
+unreviewed temporary/recovery paths. The whole Phase-4 suite passes **270
 tests**.
 
 The combined OLMo-lineage and Phase-4 suites pass **329 tests** after the
