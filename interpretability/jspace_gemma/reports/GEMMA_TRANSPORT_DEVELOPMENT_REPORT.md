@@ -1,11 +1,11 @@
 # Gemma 4 31B transport autopsy — development report
 
-Status: foundation, exact-JVP goldens, paper-band convention, and the complete
-OLMo calibration and positive-control threshold freeze are registered. The
-exact Gemma snapshot is staged and the frozen Stage-1 runner is prepared, but
-the target model has not been opened. All findings in this document are
-development or methods evidence. Nothing here is a Phase 4 confirmatory model
-cell.
+Status: foundation, exact-JVP goldens, paper-band convention, the complete
+OLMo calibration/positive-control threshold freeze, and the non-lens Gemma
+Stage-1 core are registered. Stage 1 returns a strong frozen local-tangent
+mismatch classification at all five layers; an actual-model dual-backend
+derivative diagnostic precedes mechanism interpretation. All findings are
+development or methods evidence, not a Phase 4 confirmatory model cell.
 
 ## Scope and non-claims
 
@@ -182,7 +182,7 @@ The execution flag is enabled without changing the threshold file (SHA-256
 | `gm-olmo-calibration-finalize-diagnostic-v1` | methods | registered from clean `a196c4f` | immutable incident/inventory record for all 56 cells and the post-compute serialization failure |
 | `gm-jvp-olmo-calibration-v1` | methods | registered; compute `06b2a3d`, finalizer `374f511`, no recompute | 56 cells, 1,568 rows, exact parity pass, calibrated shallow-to-late control trend |
 | `gm-jvp-olmo-positive-control-v1` | methods | registered from clean `7f6a36e`; target unopened | all frozen control criteria pass; numeric thresholds are immutable |
-| `gm-jvp-gemma-stage1-v1` | methods | licensed; snapshot staged and runner prepared; not started | exact target gate |
+| `gm-jvp-gemma-stage1-v1` | methods | registered from clean `036e552`; 40 immutable cells | all five layers classify as local tangent mismatch under frozen thresholds; actual-model backend parity is the next adversarial check |
 
 ## G1 decision table
 
@@ -222,7 +222,7 @@ IDs, and the exact shard index. The staging manifest file SHA-256 is
 its canonical payload SHA-256 is
 `cfb98f55c3453319f19aedce51419445260b03355632d13c2402897ffbab4ec1`.
 It explicitly records that no target model was loaded and no response was
-created.
+created at the staging boundary.
 
 The run-specific execution manifest binds those hashes to the byte-identical
 threshold file, passing positive-control artifact, four prompts, five target
@@ -236,6 +236,41 @@ unmeasurability, smallest-secant tangent mismatch, epsilon-0.10 finite-radius
 mismatch, and transport passage. J-selected directions remain outside this
 core grid until their exact lens and token-target hashes are bound.
 
+## Gemma Stage-1 non-lens core
+
+The predeclared L52 smoke and unchanged full grid ran from clean pushed commit
+`036e552`. All 40 cells and 1,120 rows completed; the smoke cell was reused by
+hash rather than recomputed. Twenty clean suffix comparisons and every exact
+JVP primal comparison are bit-exact. The wrong-hook relative error is 0.3355
+against the frozen 0.10 floor. Of 1,120 rows, 538 pass the strict bf16 delivery
+gate, 508 also clear measurement SNR 12, and 477 clear primary SNR 20. A fresh
+read of all 80 cell metric/raw files reproduces the aggregate exactly.
+
+At each layer the primary smallest-high-confidence selection meets the frozen
+75% coverage boundary: L22 12/16, L30 13/16, L37 12/16, L44 13/16, and L52
+14/16. Pass counts are respectively 0, 0, 0, 0, and 1. At the declared 0.10
+dose, 12/16 rows are evaluable at every layer and none pass. Median primary
+relative error at that dose is 1.357, 1.573, 3.525, 5.365, and 4.386 from L22
+through L52; prompt-bootstrap 95% intervals exclude the 0.20 gate throughout.
+Uniform-valid perturbations do not rescue the result: only 1/13 evaluable L22
+rows passes, with zero passage at later layers.
+
+The frozen decision rule therefore returns `local_tangent_mismatch` at all
+five layers, rather than low-SNR unmeasurability or a tangent-valid but
+finite-dose-only failure. Among 120 SNR-qualified robust fits, 35 are
+curvature-dominant, 83 mixed bias/curvature, and two quantization-floor
+limited. This establishes an operational Stage-1 instrument failure, not its
+mechanism: it does not imply nondifferentiability, missing information,
+workspace absence, or failed late readout. Because all model-scale rows used
+`torch.func.jvp`, a separately committed actual-Gemma comparison against
+`torch.autograd.functional.jvp` is required before routing the strongest cells
+to G2/G3. The registered summary SHA-256 is
+`0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384`;
+row-table SHA-256 is
+`3b74f1e983f47c1f917fd8c407a6ea1f8abf42854adc0b9d6c3d3cf18d921550`;
+state SHA-256 is
+`5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65`.
+
 ## Infrastructure incidents
 
 The first clean foundation attempt at commit `11501b8` stopped before any
@@ -248,6 +283,7 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish the frozen Stage-1 execution manifest, runner, analysis, and
-tests. Then run and audit the predeclared late-layer smoke before resuming the
-unchanged full grid from that same clean pushed commit.
+Commit/publish the Stage-1 registry/report boundary. Then implement and run a
+one-cell actual-Gemma forward/fallback exact-JVP parity diagnostic from a new
+clean commit; only after it passes route the strongest validated cells into
+G2 layer/sublayer localization and G3 R0/R1 routing discrimination.

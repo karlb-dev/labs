@@ -52,5 +52,13 @@ and 0.996 at L60. The prepared target gate requires SNR 20, cosine at least
 pass. The positive-control event and byte-identical threshold file are
 registered before any Gemma number. The exact 12-file, two-shard Gemma
 snapshot is independently hash-verified and the 40-cell execution manifest is
-frozen; the target model remains unopened and Stage 1 has not started.
+frozen. Stage 1 then completed all 40 cells and 1,120 rows from the same clean
+commit. All 20 suffix checks and exact-JVP primal comparisons are bit-exact.
+The primary smallest-high-confidence selection passes 0/12, 0/13, 0/12,
+0/13, and 1/14 rows at L22/L30/L37/L44/L52; the frozen rule classifies every
+layer as local tangent mismatch. At the declared 0.10 dose, 12/16 rows per
+layer are evaluable and none pass. This is an operational transport-instrument
+result, not a claim of missing information, nondifferentiability, or workspace
+absence. An actual-model dual-backend JVP comparison precedes mechanism
+interpretation.
 \end{document}

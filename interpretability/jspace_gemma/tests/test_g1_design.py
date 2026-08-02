@@ -147,3 +147,31 @@ def test_stage1_execution_manifest_binds_staging_and_frozen_inputs():
     assert grid["expected_rows"] == 1120
     assert grid["expected_clean_parity_rows"] == 20
     assert execution["smoke"]["cell_id"] == "gm-p001-L52-single_position"
+
+
+def test_stage1_result_is_registered_under_the_frozen_target_firewall():
+    root = Path(__file__).resolve().parents[1]
+    events = [
+        json.loads(line)
+        for line in (root / "reports/evidence_events.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
+    stage1 = [
+        row
+        for row in events
+        if row["evidence_id"] == "gm-jvp-gemma-stage1-v1"
+        and row["event"] == "evidence_created"
+    ]
+    assert len(stage1) == 1
+    event = stage1[0]
+    assert event["code_commit"] == "036e55233babcabacae061ab41d1410a35715aea"
+    assert event["target_model_opened"] is True
+    assert event["model_response_data_created"] is True
+    assert event["thresholds_frozen_before_target"] is True
+    assert event["positive_control_evidence_id"] == (
+        "gm-jvp-olmo-positive-control-v1"
+    )
+    outputs = {Path(row["path"]).name: row["sha256"] for row in event["outputs"]}
+    assert outputs["gemma_stage1_summary.json"] == (
+        "0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384"
+    )

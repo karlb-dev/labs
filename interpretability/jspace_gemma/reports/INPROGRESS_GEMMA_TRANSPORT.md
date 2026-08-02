@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 03:15 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 03:32 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -34,8 +34,10 @@ canonical Drive handoff at
   `36a3e61e2b17bb196662b6e8bf1c2d9635ef262f`.
 - Guarded Gemma target-staging commit:
   `4f00d43e0810b98dfe1c281d260548ac791a14ab`.
-- Remote Gemma branch is synchronized through the guarded staging producer;
-  the Stage-1 execution manifest/runner is under pre-run validation.
+- Frozen Gemma Stage-1 execution/runner commit:
+  `036e55233babcabacae061ab41d1410a35715aea`.
+- Remote Gemma branch is synchronized through the frozen Stage-1 runner; the
+  result registry/report boundary is not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -44,9 +46,9 @@ canonical Drive handoff at
   is installed editable and byte-identical to the campaign Drive copy.
 - Hugging Face authentication: PASS (`kburtram`).
 - Shared Part-2 conformance bootstrap: PASS.
-- No Gemma or OLMo model producer is running. The OLMo calibration and passing
-  positive control are registered; no Gemma target has been opened.
-- The isolated package scaffold is committed. Its 42-test conformance suite
+- No Gemma or OLMo model producer is running. OLMo calibration/control and the
+  Gemma Stage-1 result are registered; the target model is no longer loaded.
+- The isolated package scaffold is committed. Its 43-test conformance suite
   passes, including analytic, nonlinear tiny-transformer, and explicit Hugging
   Face Gemma/OLMo suffix/JVP tests plus a batch-shape/slot adversarial test.
 - OLMo local staging completed from clean pushed commit `42b34b1`. The
@@ -123,7 +125,26 @@ canonical Drive handoff at
   `cfb98f55c3453319f19aedce51419445260b03355632d13c2402897ffbab4ec1`;
   staging log SHA-256:
   `f8fbe657d09c7d459b656c51335120428680d5300cb23fb7c96ea5355bf91072`.
-  Staging loaded no model and created no target response.
+  Staging itself loaded no model and created no target response.
+- `gm-jvp-gemma-stage1-v1` is registered from clean pushed `036e552`. The
+  frozen 40-cell/1,120-row non-lens core completed with 20 bit-exact clean
+  suffix checks, zero exact-JVP primal error, 538 faithfully delivered rows,
+  508 measurement-SNR rows, and 477 primary-SNR rows. All 80 metric/raw cell
+  files pass an independent finite-tensor/provenance/hash audit, and aggregate
+  recomputation from Parquet is exact. Primary smallest-secant pass counts are
+  L22 0/12, L30 0/13, L37 0/12, L44 0/13, and L52 1/14; all five layers
+  classify as `local_tangent_mismatch`. At epsilon 0.10, 12/16 primary rows
+  are evaluable per layer and zero pass. This is an instrument-validity result,
+  not evidence for nondifferentiability, missing information, or workspace
+  absence. Actual-model forward/fallback JVP parity is the next adversarial
+  check before mechanism interpretation. Summary SHA-256:
+  `0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384`;
+  row-table SHA-256:
+  `3b74f1e983f47c1f917fd8c407a6ea1f8abf42854adc0b9d6c3d3cf18d921550`;
+  state SHA-256:
+  `5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65`;
+  full log SHA-256:
+  `3b99f1991ec70345f7998755ecb744a0d61054181eac0940db33490cc3108c0c`.
 
 ## Completed this VM
 
@@ -200,6 +221,12 @@ canonical Drive handoff at
     a predeclared L52 smoke cell; implemented resumable raw checkpoints,
     immutable input headers, loaded-architecture audit, frozen decision rules,
     curvature partitioning, prompt bootstrap, and strict aggregate validation.
+26. Ran/audited the predeclared L52 smoke, then resumed the same compatibility
+    header and reused that cell by hash while completing the other 39 cells.
+27. Registered the complete non-lens Stage-1 core and independently re-audited
+    all 80 raw/metric files plus exact aggregate recomputation. Every frozen
+    target layer returns local tangent mismatch; J-selected directions remain
+    deferred until exact lens/token hashes are bound.
 
 ## Immutable scientific guardrails
 
@@ -219,22 +246,23 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit/pull/test/push the Stage-1 execution manifest, runner, analysis, and
-   tests.
-2. Run/audit the predeclared late-layer smoke, then run the unchanged full
-   grid from that same clean pushed commit.
-3. Commit the resulting registry/report boundary and route G2/G3/G5/G4/G6 by
-   the observed G1 branch, preserving G9 time.
+1. Commit/pull/test/push the Stage-1 registry/report boundary.
+2. Implement/commit and run an actual-Gemma one-cell comparison of
+   `torch.func.jvp` against `torch.autograd.functional.jvp`; require derivative
+   agreement before interpreting the mismatch mechanistically.
+3. If parity passes, route the strongest validated cells to G2 sublayer
+   localization and G3 R0/R1 routing discrimination; preserve G9 time.
 
 ## Recovery checks and next commands
 
 There is no live producer or GPU allocation. The 56-cell calibration and
 positive control are finalized and registered; do not rerun, delete, or
-rewrite them. Gemma execution is licensed and its local snapshot is fully
-hash-verified, but the model has not been loaded and no target number has been
-opened. The ephemeral OLMo snapshot has been removed; all evidence and reports
-are durable in Drive. If this VM is reclaimed, rerun `gm_stage_gemma` from
-clean `4f00d43` before launching Stage 1. Inspect:
+rewrite them. Gemma Stage 1 is complete and registered from `036e552`; do not
+rerun, delete, or rewrite its state/cells/aggregates. The registry/report row
+is presently the only Git worktree change. The target model is unloaded, the
+fully verified local snapshot remains available, and the ephemeral OLMo
+snapshot is removed. If this VM is reclaimed, Stage 1 needs no rerun; verify
+the Drive outputs and continue from the latest pushed report boundary. Inspect:
 
 ```bash
 git -C /content/labs status --short --branch
