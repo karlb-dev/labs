@@ -53,6 +53,14 @@ tokenizer files. Version 2 supersedes it with full token-ID, normalized-BPE,
 processing-component, and frozen-corpus encoding checks while retaining
 BOS/chat-template differences as explicit qualifications.
 
+Audit whether the registered evidence can identify the O5 crossed causal
+decomposition without substituting structural proxies:
+
+```bash
+python -m jspace_olmo_lineage.experiments.o5_feasibility \
+  --config interpretability/jspace_olmo_lineage/configs/ol_o5_feasibility_v1.yaml
+```
+
 Freeze and register the exact Phase 4 Bank-W compatibility contract before
 opening either OLMo baseline:
 
