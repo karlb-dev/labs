@@ -1,0 +1,54 @@
+evidence_id: ol-o5-feasibility-decision-v1
+tier: methods
+branch: interp_jspace_olmo_lineage
+scientific_import_boundary: 3b041735d8b842de46a9c0a474fccd0c44e0841a
+
+upstream:
+  bank_w_gate:
+    evidence_id: ol-bank-w-capability-joint-dev-v1
+    json_sha256: 1f93c53444943c354109bd43195001d9537d238b6a1f0d580d679187ff35ce3d
+  capacity:
+    evidence_id: ol-capacity-joint-dev-v1
+    json_sha256: cb35a22a0176f568fc7368285af65b148f342d834d3ca9457d78f3bb1dcd1492
+  geometry:
+    evidence_id: ol-geometry-joint-dev-v1
+    json_sha256: c09d8e7387075c2b6d8b5a05bf41d439f2095d55d2491eb5f44c4438a30d0f4c
+  checkpoint_inventory:
+    evidence_id: ol-checkpoint-inventory-v2
+    json_sha256: e5931c3fb646f7fd3ca189187d4ad76bc577f36de17d84a16aba61f51b22ad9a
+
+required_controls:
+  - crossed_activation_model_cells
+  - crossed_transport_lens_cells
+  - crossed_readout_cells
+  - matched_rank_energy_random_per_dictionary
+  - protected_span_recomputed_per_readout
+  - logit_lens_non_j_baseline
+  - equal_item_condition_order
+
+prospective_minimal_design:
+  activation_downstream_models: [olmo3-base, olmo31-think, olmo31-instruct]
+  transport_lenses: [base, recipient-own]
+  readouts: [base, recipient-own]
+  development_population: balanced-bank-s-direct-composed-first
+  bank_w_rule: >-
+    No Bank-W crossed cell may run under protocol version 1. A redesigned
+    service population requires its own prospective capability and support
+    gate before intervention.
+  controls:
+    - exact-rank-and-energy-matched-random-per-crossed-dictionary
+    - protected-span-geometry-recomputed-under-each-readout
+    - common-scientific-seed-and-item-order
+    - numerical-rank-safe-projectors
+    - equal-delivered-rank-and-energy
+    - logit-lens-non-j-baseline
+  phase5_entry: >-
+    Freeze and pilot the minimal Bank-S matrix first. Expand only if all
+    per-dictionary transport, protected-span, rank, and energy checks pass.
+
+claim_boundary: >-
+  This is a methods-only feasibility and identifiability decision. It does not
+  estimate an O5 causal factor, treat structural geometry as an intervention,
+  substitute Bank-S evidence for a crossed readout experiment, reopen the
+  failed Bank-W version-1 service set, or open Phase 4, Gemma, confirmatory,
+  replication, receiver, or intermediate-stage model outcomes.

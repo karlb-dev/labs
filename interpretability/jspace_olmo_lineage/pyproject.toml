@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jspace_olmo_lineage"
+version = "0.1.0"
+description = "Isolated OLMo 32B J-space lineage development study"
+requires-python = ">=3.10"
+dependencies = [
+  "torch",
+  "numpy",
+  "pandas",
+  "pyarrow",
+  "pyyaml",
+  "matplotlib",
+  "transformers",
+  "huggingface_hub",
+  "scipy",
+  "safetensors",
+]
+
+[project.scripts]
+jspace-olmo-lineage = "jspace_olmo_lineage.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["jspace_olmo_lineage*"]
