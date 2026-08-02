@@ -67,10 +67,17 @@ intervention:
   k: 10
   clean_protect_top_k: 10
   remove_direction: true_bridge_piece_rows
+  selection_sign_rule: all_rows_regardless_of_activation_sign
   remove_span_safe: true
   active_position_rule: rendered_prompt_only
   injection_dose: per-position norm removed by the shared true-bridge lesion
   injection_rank: 1
+  counterfactual_answer_direction: mean of every counterfactual accepted-alias token-piece row
+  maximum_injection_direction_norm_error: 1.0e-6
+  maximum_injection_dose_relative_error: 1.0e-6
+  maximum_injection_dose_absolute_error: 1.0e-6
+  require_exact_selected_and_effective_rank_match_across_arms: true
+  require_every_active_position_mechanically_logged: true
   arm_order:
     - counterfactual_bridge_answer_orthogonal
     - unrelated_bridge_answer_orthogonal
@@ -140,7 +147,10 @@ power_gate:
   family_count_grid: [10, 13, 20, 30, 40, 60, 80, 100, 120, 160, 200, 300, 500]
   monte_carlo_draws: 100000
   monte_carlo_seed: 20260803
-  exact_one_sided_signflip: true
+  observed_development_test: exact_one_sided_family_signflip
+  exact_observed_max_families: 22
+  planning_method: conservative_normal_iut_envelope
+  planning_type_i_contract: intersection-union maximum component p-value
   intersection_union_components: [semantic_component, bridge_specific_component]
   admit_only_if_both_components_powered: true
   do_not_inflate_sesoi_to_obtain_power: true
@@ -150,6 +160,15 @@ review_contract:
   independent_review_output_basename: P4_BANK_B_ORTHOGONAL_INDEPENDENT_REVIEW.json
   required_verdict: APPROVE_CONSUMED_DEVELOPMENT_SHOT
   reviewer_must_be_independent: true
+  required_boolean_findings:
+    - consumed_cohort_and_outcome_firewall_approved
+    - answer_span_and_geometry_approved
+    - unrelated_match_approved
+    - lesion_rank_and_dose_approved
+    - prompt_only_phase_approved
+    - scorer_and_generation_grader_approved
+    - immutable_resume_contract_approved
+    - variance_and_power_decision_rule_approved
 
 claim_boundary: >-
   Exactly one consumed-Phase-3 development shot for an answer-direction-
