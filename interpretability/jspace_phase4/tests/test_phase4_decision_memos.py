@@ -59,7 +59,15 @@ def test_freeze_ledger_is_explicitly_unfrozen_and_routes_all_primaries():
     assert "P4-P1" in text and "REMOVED FROM PRIMARY" in text
     assert "P4-P2" in text and "ONLY CONDITIONAL CANDIDATE PRIMARY" in text
     assert "P4-P3" in text and "BLOCKED" in text
-    assert "218/220" in text
+    accounting = re.search(
+        r"Live-output accounting.*?RED:\s*(\d+)/(\d+)",
+        normalized,
+    )
+    assert accounting is not None
+    verified, referenced = map(int, accounting.groups())
+    assert referenced - verified == 2
+    assert "A120 capacity reconstruction" in normalized
+    assert "Historical `state.json`" in normalized
     assert "The implementation agent has not and will not self-sign" in text
     assert "Freeze commit / tag" in text and "NOT CREATED" in text
 
@@ -129,8 +137,12 @@ def test_vm13_restart_snapshot_preserves_development_boundary():
         r"\| prompts banked \| (\d+) / 1000 \|", text)
     assert latest_match is not None
     latest = int(latest_match.group(1))
-    assert 641 <= latest < 1000
+    assert 641 <= latest <= 1000
     assert f"Atomic checkpoints through n={latest}" in text
-    assert f"active atomic chunk {latest}:{latest + 3}" in text
+    if latest < 1000:
+        assert f"active atomic chunk {latest}:{min(latest + 3, 1000)}" in text
+    else:
+        assert "registered scientific evidence" in text
+        assert "process state | complete" in text
     assert "e0d0d31" in text
     assert "No confirmatory or replication intervention outcome" in text
