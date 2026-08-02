@@ -2,7 +2,7 @@
 
 **LIVE DRAFT — A1000 FIT IN PROGRESS — NOT A FREEZE RECORD**
 
-Last updated: 2026-08-02 17:58 UTC. This document will be finalized after the
+Last updated: 2026-08-02 18:18 UTC. This document will be finalized after the
 current A1000 producer exits and all completed outputs are independently
 rehash-checked. Phase 4 remains development-only. No confirmatory or
 replication intervention outcome may be opened, and this implementation agent
@@ -13,11 +13,11 @@ does not sign independent-review or PI fields.
 Phase 4.3 has reduced the project to one active compute dependency and a
 small, explicit set of governance/durability dependencies. The exact nested
 Qwen draw-A fit is continuing from A500 to A1000 under the unchanged producer.
-The last exact boundary at this draft is A902, checkpoint SHA-256
-`97e95839b9a22983643c32917a151ab235ddddb8805dec1d0f8f41392dfb7733`.
+The last exact boundary at this draft is A908, checkpoint SHA-256
+`45534d6d03484e89b7f7c88518b2091d75bf98947c768ee6a6d9846e2842daa2`.
 The fit contract remains
 `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00`.
-A902 is recovery state, not registered scientific evidence.
+A908 is recovery state, not registered scientific evidence.
 
 The expected VM reclaim is approximately 2026-08-02 23:38 UTC. At the
 observed end-to-end rate, the A1000 checkpoint should land near 22:30--22:45
@@ -30,6 +30,19 @@ Gemma and OLMo side-track merges from remote main. After the fitter exits, all
 mainline, side-track, preparation, and A1000 work must be merged without
 squashing into the single `interp_jspace_part2` branch, validated, pulled once
 more, and pushed.
+
+The new fit-diagnostic audit found and corrected an important wording error:
+prompt 323 is not the overall archived maximum. Through n=908, the largest
+retained finite rows are prompt 616 at 231.101, prompt 233 at 189.182, prompt
+323 at 173.345, prompt 612 at 151.626, and prompt 660 at 113.855. The current
+VM transcript recovers prompts 555--716 that were absent from the repaired
+Drive log. Raw rows 1--180 were emitted on the prior VM but are not
+materialized here, so the final report must distinguish the recoverable
+820-row raw archive from the final checkpoint's `n_done == next_idx == 1000`
+acceptance invariant. No row is trimmed. The prospectively frozen prompt-323
+audit remains in the decision queue; a multi-row retained-extremes influence
+audit belongs in reviewed Phase 4.4 follow-up and cannot retroactively change
+the A1000 decision rule.
 
 ## Binding scientific and governance boundary
 
