@@ -40,6 +40,14 @@ python -m jspace_olmo_lineage.recovery
 
 Heavy and resumable artifacts live only in the side-study Drive root.
 
+Inventory official 32B post-training stages without downloading weights or
+opening model outcomes:
+
+```bash
+python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
+  --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v1.yaml
+```
+
 Freeze and register the exact Phase 4 Bank-W compatibility contract before
 opening either OLMo baseline:
 

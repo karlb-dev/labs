@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:26:33Z
+Last updated: 2026-08-02T04:36:28Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,9 +20,10 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: none; GPU memory is free. The four-input O3 aggregate and
-  five registered-table figure pairs are complete. The figure registry/report
-  Git checkpoint is the current publish action.
+- Active model job: none; GPU memory is free. O3 and its five figure pairs are
+  durable. A methods-only official 32B checkpoint-inventory producer and four
+  tests are prepared; publishing this outcome-blind source is the current
+  action. No inventory event or stage-model outcome has been opened yet.
 - Last registered native evidence:
   `ol-geometry-figures-dev-v1` (development), created at
   2026-08-02T04:26:33Z from clean commit `cd042fc`. Its manifest and ten figure
@@ -302,10 +303,19 @@ git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-After recovery verifies the pushed figure event, update and compile the
-OLMo-run-specific paper, then emit a self-verifying OLMo final import/restart
-bundle. Do not merge into the main Phase 4 or Gemma paper/registries, and do not
-open an O4 Bank-W intervention under the failed 20-family protocol.
+Publish the checkpoint-inventory implementation first. From its clean pushed
+commit, run:
+
+```bash
+python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
+  --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v1.yaml
+```
+
+Then publish/recover the methods event, resolve the bounded O5 feasibility
+record, update and compile the OLMo-run-specific paper, and emit a
+self-verifying final OLMo import/restart bundle. Do not merge into the main
+Phase 4 or Gemma paper/registries, and do not open an O4 Bank-W intervention
+under the failed 20-family protocol.
 
 ## Hardware and weight state at last update
 

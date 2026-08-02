@@ -175,6 +175,18 @@ registered tables. Exact kth/k+1 candidate-score gaps require a future
 compatible replay because O2 did not retain the candidate-correlation log.
 Causal core/fringe dose remains blocked by the O1 service gate.
 
+The official intermediate-stage inventory is metadata-only and downloads no
+weights. Run it only from a clean published tree:
+
+```bash
+python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
+  --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v1.yaml
+```
+
+It freezes exact official repository commits, small-file hashes, tokenizer and
+architecture compatibility, weight-shard LFS manifests, post-training refs,
+and the H5 queue decision. It does not itself authorize or run a stage wedge.
+
 The model command is:
 
 ```bash
