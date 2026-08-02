@@ -45,8 +45,13 @@ opening model outcomes:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
-  --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v1.yaml
+  --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v2.yaml
 ```
+
+Version 1 is an immutable conservative result that used byte-identical
+tokenizer files. Version 2 supersedes it with full token-ID, normalized-BPE,
+processing-component, and frozen-corpus encoding checks while retaining
+BOS/chat-template differences as explicit qualifications.
 
 Freeze and register the exact Phase 4 Bank-W compatibility contract before
 opening either OLMo baseline:

@@ -1,8 +1,48 @@
 from jspace_olmo_lineage.experiments.checkpoint_inventory import (
+    _apply_group_compatibility,
     model_contract,
+    normalize_bpe_model,
     normalize_base_models,
     route_inventory,
 )
+
+
+def test_bpe_merge_serializations_normalize_identically():
+    common = {"type": "BPE", "vocab": {"a": 0, "b": 1, "ab": 2}}
+    pair_form = {**common, "merges": [["a", "b"]]}
+    string_form = {**common, "merges": ["a b"]}
+    assert normalize_bpe_model(pair_form) == normalize_bpe_model(string_form)
+
+
+def test_semantic_group_allows_byte_different_equivalent_files():
+    rows = [
+        {
+            "tokenizer_group": "think",
+            "tokenizer_json_sha256": "raw-a",
+            "tokenizer_semantics": {"semantic_fingerprint_sha256": "same"},
+            "public": True,
+            "gated": False,
+            "declared_ancestry_matches": True,
+            "model_contract": {"passes": True},
+            "weights": {"weights_available": True},
+            "configured_intermediate_candidate": True,
+        },
+        {
+            "tokenizer_group": "think",
+            "tokenizer_json_sha256": "raw-b",
+            "tokenizer_semantics": {"semantic_fingerprint_sha256": "same"},
+            "public": True,
+            "gated": False,
+            "declared_ancestry_matches": True,
+            "model_contract": {"passes": True},
+            "weights": {"weights_available": True},
+            "configured_intermediate_candidate": True,
+        },
+    ]
+    _apply_group_compatibility(
+        rows, method="semantic-content-tokenization-v2")
+    assert all(row["tokenizer_group_compatible"] for row in rows)
+    assert all(row["intermediate_eligible"] for row in rows)
 
 
 def test_normalize_base_models_accepts_model_card_shapes():

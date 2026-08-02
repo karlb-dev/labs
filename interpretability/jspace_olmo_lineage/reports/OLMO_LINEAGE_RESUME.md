@@ -193,6 +193,12 @@ and identical encodings on the complete 200-text frozen fitting corpus plus
 seven edge cases. Resume by publishing the semantic-compatibility v2 source,
 running v2 from that clean commit, and appending an explicit v1-to-v2
 supersession event. Keep BOS/chat-template differences visible in the report.
+The v2 command is:
+
+```bash
+python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
+  --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v2.yaml
+```
 
 The model command is:
 

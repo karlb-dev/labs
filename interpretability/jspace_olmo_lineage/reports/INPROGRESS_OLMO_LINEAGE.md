@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:42:16Z
+Last updated: 2026-08-02T04:48:41Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -47,9 +47,10 @@ within-path compatibility predicate required byte-identical `tokenizer.json`
 files. That is stricter than the plan's semantic-compatibility requirement.
 The Think-SFT file uses string-form BPE merges where the other Think files use
 pair-form merges; full token IDs are identical and a 207-text encoding audit
-found zero differences. The next source checkpoint must add that audit to the
-producer, register a unique v2 result, and then append an explicit supersession
-event. Never overwrite either v1 output.
+found zero differences. The semantic v2 producer and its 45-test package are
+prepared locally. Publish that source, register its unique v2 result, and
+append the configured explicit supersession event. Never overwrite either v1
+output.
 
 The O3 implementation uses only exact same-corpus lenses plus small,
 hash-pinned model readout extracts. The frozen row population contains a
@@ -316,12 +317,12 @@ git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-Publish the checkpoint-inventory implementation first. From its clean pushed
-commit, run:
+Publish the semantic checkpoint-inventory v2 implementation first. From its
+clean pushed commit, run:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
-  --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v1.yaml
+  --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v2.yaml
 ```
 
 Then publish/recover the methods event, resolve the bounded O5 feasibility
