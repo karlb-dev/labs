@@ -1,0 +1,207 @@
+protocol_evidence_id: ol-capacity-protocol-v1
+joint_evidence_id: ol-capacity-joint-dev-v1
+tier: development
+branch: interp_jspace_olmo_lineage
+
+provenance_audit:
+  evidence_id: ol-lens-provenance-audit-v1
+  result_uri: olmo-artifact://metrics/lens-provenance/ol_lens_provenance_audit_v1.json
+  result_sha256: 0912d223018accf2b5dfd33a44f7c74da63d9a912f0ef6b465dcfbb1d3581105
+  required_refit_decision: no_refit_run_geometry_analysis
+
+source_corpus:
+  uri: drive://part1/config/prompts/descriptive_prompts.jsonl
+  sha256: 22dc5b533933771037287b34040e8fec1d6d86899043ba97769c1bbd2509c990
+  rows: 200
+  source_domains: [factual, arithmetic, sql, prose]
+  source_rows_per_domain: 50
+  selection: first-30-within-each-domain-in-declared-domain-order
+  selected_rows_per_domain: 30
+  selected_rows: 120
+  selected_pid_ranges:
+    factual: [0, 29]
+    arithmetic: [50, 79]
+    sql: [100, 129]
+    prose: [150, 179]
+  selected_canonical_jsonl_sha256: 695d29f9057f39420e9cbb9f0a6c8dc3862aef42d808abe466736352e58a7948
+  selected_canonical_jsonl_bytes: 45237
+  selected_concatenated_text_sha256: 7c56321c3ed4645ca9caa0362bc38219d483aadce846c06810cc5d16e19ec239
+  contains_phase4_untouched_family_content: false
+
+activation_population:
+  layers: [24, 32, 40]
+  maximum_content_tokens: 255
+  content_tokenization: add_special_tokens-false
+  bos_policy: explicitly-prepend-tokenizer-bos-when-exposed
+  expected_content_sequence_manifest_sha256: 03edeb51f61bc64d8bb42dfca1cf69808773d45d28810be8085b327936a1052e
+  require_all_model_content_sequences_identical: true
+  skip_first_content_positions: 16
+  short_prompt_tail_positions: 8
+  exclude_final_content_position: true
+  position_rule: >-
+    For content length P, lo=min(16,max(P-8,1)); retain content positions
+    lo through P-2 inclusive. BOS is never part of the activation population.
+  expected_positions_under_shared_tokenization: 7481
+  centering_population: all-retained-positions-within-model-and-layer
+  centering_application: subtract-global-vector-before-sparse-pursuit
+  model_dtype: bfloat16
+  activation_storage_dtype: float32-cpu
+
+estimator:
+  primary_target: globally-centered-activation
+  sensitivity_target: raw-uncentered-activation
+  pursuit: greedy-positive-correlation-plus-projected-nonnegative-refit
+  positive_support_exhaustion: true
+  k_max: 50
+  refit_iterations: 8
+  refit_learning_rate_cap: 0.25
+  pursuit_batch_positions: 48
+  crossing:
+    comparison: marginal-J-gain-less-than-or-equal-to-median-random-gain
+    persistence: 2
+    persistence_sensitivity: [1, 2, 3]
+    no_crossing: right-censor-at-k-max
+    median_convention: lower-median
+  random_controls:
+    number: 3
+    seeds: [11, 12, 13]
+    rows: match-model-vocabulary
+    dimensions: match-hidden-size
+    distribution: iid-standard-normal-row-normalized
+    generation_device: cuda
+    generation_dtype: float32
+    storage_dtype: bfloat16
+    chunk_rows: 4096
+  dictionary:
+    formula: row_normalize((unembedding * measured_final_norm_gain) @ J_layer)
+    rows: full-model-vocabulary
+    construction_accumulation_dtype: float32
+    storage_dtype: bfloat16
+    chunk_rows: 8192
+  primary_share: centered-r2-at-centered-crossing-lower-median-occupancy
+  centered_excess: primary-J-share-minus-mean-of-three-random-shares
+  raw_sensitivity: raw-r2-at-raw-crossing-lower-median-occupancy
+  strata: [factual, arithmetic, sql, prose]
+
+uncertainty:
+  unit: source-prompt
+  bootstrap: stratified-prompt-cluster-percentile
+  preserve_domain_counts: true
+  draws: 2000
+  interval_level: 0.90
+  seed: 20260802
+  centering_during_bootstrap: freeze-full-activation-population-mean
+  paired_across_models: true
+  save_distributions: true
+
+decision_rules:
+  primary_contrast: olmo3-base-to-olmo3-think
+  centered_excess_equivalence_margin: 0.0025
+  centered_excess_material_margin: 0.01
+  stable: >-
+    Absolute point difference below 0.0025, observed lower-median occupancy
+    unchanged, and the 90% paired prompt-bootstrap interval wholly inside
+    [-0.0025,+0.0025].
+  small_shift: >-
+    Point centered-excess difference from 0.0025 through 0.01 inclusive or
+    absolute observed occupancy difference exactly one, provided uncertainty
+    does not cross a material boundary.
+  material_shift: >-
+    Centered-excess interval wholly above +0.01 or below -0.01, or occupancy
+    difference interval wholly above +1 or below -1.
+  unresolved: >-
+    Equivalence is not established and the interval crosses a material
+    boundary, or a material point estimate is not supported by its interval.
+  lineage_router: >-
+    Call partial channel formation/growth supported only when the equal-layer
+    Base-to-3.0-Think primary-own-frame contrast is a positive material shift.
+    Call broadly conserved capacity/recruitment-consistent only when that
+    aggregate is stable or a non-material small shift and no individual layer
+    is a supported positive material shift. Otherwise return mixed/unresolved.
+
+frames:
+  primary: checkpoint-own-lens
+  sensitivity: frozen-olmo3-base-lens
+  base_own_equals_common: true
+
+models:
+  - slug: olmo3-base
+    role: pretrained_anchor
+    evidence_id: ol-capacity-olmo3-base-dev-v1
+    model_uri: model://allenai/Olmo-3-1125-32B@c2b61dae89a1ad10e4ad5653d0e46b590902607b
+    tokenizer_snapshot: /content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3-1125-32B/snapshots/c2b61dae89a1ad10e4ad5653d0e46b590902607b
+    tokenizer_json_sha256: 73fd5254624f39a88e3faac6a8e11300fc3c735ed37880d4f4f08db898eaecca
+    expected_bos_token_id: null
+    own_lens_uri: drive://phase3/lens/olmo3-base_lens.pt
+    own_lens_sha256: 92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696
+  - slug: olmo3-think
+    role: think_endpoint_3_0
+    evidence_id: ol-capacity-olmo3-think-dev-v1
+    model_uri: model://allenai/Olmo-3-32B-Think@ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
+    tokenizer_snapshot: /content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3-32B-Think/snapshots/ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
+    tokenizer_json_sha256: 73fd5254624f39a88e3faac6a8e11300fc3c735ed37880d4f4f08db898eaecca
+    expected_bos_token_id: 100257
+    own_lens_uri: drive://part1/lens/olmo32bthink_lens.pt
+    own_lens_sha256: 05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053
+  - slug: olmo31-think
+    role: think_endpoint_3_1
+    evidence_id: ol-capacity-olmo31-think-dev-v1
+    model_uri: model://allenai/Olmo-3.1-32B-Think@832c3f543499af8fe68b88359501de9cb7840544
+    tokenizer_snapshot: /content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3.1-32B-Think/snapshots/832c3f543499af8fe68b88359501de9cb7840544
+    tokenizer_json_sha256: 73fd5254624f39a88e3faac6a8e11300fc3c735ed37880d4f4f08db898eaecca
+    expected_bos_token_id: 100257
+    own_lens_uri: drive://part2/lens/olmo31think_lens.pt
+    own_lens_sha256: 1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8
+  - slug: olmo31-instruct
+    role: sibling_endpoint
+    evidence_id: ol-capacity-olmo31-instruct-dev-v1
+    model_uri: model://allenai/Olmo-3.1-32B-Instruct@ac0587e4a7744a551c059d8cd17ba220bc940dae
+    tokenizer_snapshot: /content/drive/MyDrive/hf_cache/hub/models--allenai--Olmo-3.1-32B-Instruct/snapshots/ac0587e4a7744a551c059d8cd17ba220bc940dae
+    tokenizer_json_sha256: 7738a25c46a6043a0e2e605138851baa450269ce9d800af6ca9bf6192e45510c
+    expected_bos_token_id: 100257
+    own_lens_uri: drive://part2/lens/olmo31instruct_lens.pt
+    own_lens_sha256: e0f8b972a9f1f884101f94ff52a1938d5cfa7a5f49e987e6768826f2337c6dfb
+
+common_lens:
+  slug: olmo3-base
+  uri: drive://phase3/lens/olmo3-base_lens.pt
+  sha256: 92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696
+
+method_sources:
+  part2_corrected_estimator:
+    uri: repo://interpretability/jspace_part2/jspace_part2/occupancy_v2.py
+    sha256: cc46e7a1dec05b929138b7a962802e8c526980f067f8914bb3db7add4057145c
+  part2_dictionary_builder:
+    uri: repo://interpretability/jspace_part2/jspace_part2/dictionaries.py
+    sha256: 2c9a8ff51eb653a5c67b63b621d6dae8a645e2532011be4d573592a73af33aa0
+  jlens_hooks:
+    uri: drive://part1/code/jacobian-lens-pkg/jlens/hooks.py
+    sha256: c781d6944fd23396d3fc65a04db1f1db807f6f12cd5912cdbd2fb67eb3508081
+  jlens_hf_adapter:
+    uri: drive://part1/code/jacobian-lens-pkg/jlens/hf.py
+    sha256: 228cf078e4586a7b7f61a6f5064403b8960de337afd19256efa56f04d53e3222
+
+runtime:
+  packages:
+    torch: 2.11.0+cu128
+    transformers: 5.13.1
+    numpy: 2.0.2
+    pandas: 2.2.2
+    pyarrow: 18.1.0
+  jlens_repository: anthropics/jacobian-lens
+  jlens_revision: 581d398613e5602a5af361e1c34d3a92ea82ba8e
+  jlens_checkout: /tmp/jacobian-lens
+
+outputs:
+  corpus: olmo-artifact://config/capacity/ol_capacity_corpus_v1.jsonl
+  protocol: olmo-artifact://manifests/ol_capacity_protocol_v1.json
+  joint_result: olmo-artifact://metrics/capacity/ol-capacity-joint-dev-v1.json
+  joint_table: olmo-artifact://metrics/capacity/ol-capacity-joint-dev-v1.parquet
+  joint_bootstrap: olmo-artifact://metrics/capacity/ol-capacity-joint-dev-v1_bootstrap.npz
+
+claim_boundary: >-
+  Development-tier matched-lineage capacity measurement. It distinguishes
+  measured sparse-capacity patterns from causal utilization but cannot assign
+  checkpoint differences to a randomized training objective. Instruct is a
+  sibling endpoint, not a fourth point on the Think trajectory. No Phase 4,
+  confirmatory, replication, or intervention outcome is opened.

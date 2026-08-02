@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jspace_gemma"
+version = "0.1.0"
+description = "Isolated Gemma 4 exact-JVP transport autopsy"
+requires-python = ">=3.10"
+dependencies = [
+  "accelerate",
+  "huggingface_hub",
+  "matplotlib",
+  "numpy",
+  "pandas",
+  "pyarrow",
+  "pyyaml",
+  "safetensors",
+  "scipy",
+  "torch",
+  "transformers",
+]
+
+[project.scripts]
+jspace-gemma = "jspace_gemma.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["jspace_gemma*"]

@@ -13,7 +13,7 @@ import yaml
 
 from ..manifests import atomic_json, file_sha256, object_sha256, require_clean_tree
 from ..paths4 import resolve_uri
-from ..registry4 import create
+from ..registry4 import create, resolve
 
 
 def parse_args() -> argparse.Namespace:
@@ -266,6 +266,77 @@ def shortcut_audit(rows: list[dict], *, maximum_excess: float) -> dict:
     }
 
 
+def validate_power_binding(config: Mapping) -> dict | None:
+    """Verify an optional registered power result before repartitioning."""
+    binding = config.get("power_result")
+    if binding is None:
+        return None
+    path = Path(binding["path"])
+    actual_sha = file_sha256(path)
+    if actual_sha != binding["sha256"]:
+        raise RuntimeError("Bank W power-result hash mismatch")
+    event = resolve(binding["evidence_id"])
+    registered = {row["sha256"] for row in event["outputs"]}
+    if actual_sha not in registered:
+        raise RuntimeError("Bank W power result is not registered")
+    result = json.loads(path.read_text())
+    if result.get("evidence_id") != binding["evidence_id"]:
+        raise RuntimeError("Bank W power result evidence ID mismatch")
+    decision = result["decision"]
+    licensed = int(binding["licensed_minimum_common_families"])
+    if decision["minimum_common_families_for_power_target"] != licensed:
+        raise RuntimeError("Bank W licensed family count does not match power result")
+    requested = int(config["partition"]["confirmatory_families"])
+    if requested != licensed:
+        raise RuntimeError("Bank W confirmatory count is not power-licensed")
+    power = decision["minimum_power_at_sesoi_by_common_family_count"].get(
+        str(requested))
+    target = float(result["simulation"]["power_target"])
+    if power is None or float(power) < target:
+        raise RuntimeError("Bank W requested confirmatory count is underpowered")
+    return {
+        "evidence_id": binding["evidence_id"],
+        "path": str(path),
+        "sha256": actual_sha,
+        "licensed_minimum_common_families": licensed,
+        "minimum_power_at_licensed_count": float(power),
+        "power_target": target,
+        "conservative_alpha": float(result["primary"]["alpha"]),
+    }
+
+
+def validate_development_reference(config: Mapping, rows: list[dict]) -> dict | None:
+    """Prove a repartition leaves the already-consumed development rows fixed."""
+    reference = config.get("development_rows_reference")
+    if reference is None:
+        return None
+    path = Path(reference["path"])
+    actual_file_sha = file_sha256(path)
+    if actual_file_sha != reference["file_sha256"]:
+        raise RuntimeError("Bank W development-reference file hash mismatch")
+    previous = [
+        json.loads(line) for line in path.read_text().splitlines()
+        if line.strip()
+    ]
+    previous_development = [
+        row for row in previous if row["partition"] == "development"]
+    current_development = [
+        row for row in rows if row["partition"] == "development"]
+    previous_sha = object_sha256(previous_development)
+    current_sha = object_sha256(current_development)
+    if previous_sha != reference["development_rows_sha256"]:
+        raise RuntimeError("Bank W development-reference payload hash mismatch")
+    if current_sha != previous_sha:
+        raise RuntimeError("Bank W repartition changed consumed development rows")
+    return {
+        "path": str(path),
+        "file_sha256": actual_file_sha,
+        "n_development_rows": len(current_development),
+        "development_rows_sha256": current_sha,
+        "byte_identical_payload": True,
+    }
+
+
 def build_candidate(config: Mapping, *, tokenizer) -> tuple[list[dict], dict, dict]:
     family_ids = [
         f"{superfamily}:template-{index:02d}"
@@ -274,8 +345,18 @@ def build_candidate(config: Mapping, *, tokenizer) -> tuple[list[dict], dict, di
     ]
     ordered = stable_family_order(
         family_ids, config["partition"]["namespace"])
-    first = int(config["partition"]["development_families"])
-    second = first + int(config["partition"]["confirmatory_families"])
+    requested_partition = {
+        "development": int(config["partition"]["development_families"]),
+        "confirmatory": int(config["partition"]["confirmatory_families"]),
+        "replication": int(config["partition"]["replication_families"]),
+    }
+    if any(value <= 0 for value in requested_partition.values()):
+        raise ValueError("Bank W partition counts must all be positive")
+    if sum(requested_partition.values()) != len(ordered):
+        raise ValueError("Bank W partition counts must exhaust the bank exactly")
+    power_binding = validate_power_binding(config)
+    first = requested_partition["development"]
+    second = first + requested_partition["confirmatory"]
     partition = {
         "development": ordered[:first],
         "confirmatory": ordered[first:second],
@@ -368,6 +449,7 @@ def build_candidate(config: Mapping, *, tokenizer) -> tuple[list[dict], dict, di
     target_positions_balanced = all(
         max(counts.values()) == min(counts.values())
         for counts in target_position_counts.values())
+    development_reference = validate_development_reference(config, rows)
     audit = {
         "schema_version": 1,
         "n_superfamilies": len(set(row["superfamily"] for row in rows)),
@@ -378,6 +460,11 @@ def build_candidate(config: Mapping, *, tokenizer) -> tuple[list[dict], dict, di
         "condition_counts": condition_counts,
         "partition_counts": {side: len(families)
                              for side, families in partition.items()},
+        "partition_row_payload_sha256": {
+            side: object_sha256([
+                row for row in rows if row["partition"] == side])
+            for side in ("development", "confirmatory", "replication")
+        },
         "maximum_within_seed_prompt_token_span": max(length_spans.values()),
         "length_match_pass": bool(max(length_spans.values()) <= int(
             config["length_matching"][
@@ -402,6 +489,8 @@ def build_candidate(config: Mapping, *, tokenizer) -> tuple[list[dict], dict, di
         "capability_guard": dict(config["capability_guard"]),
         "primary": dict(config["primary"]),
         "power_evidence_id": config.get("power_evidence_id"),
+        "power_binding": power_binding,
+        "development_rows_reference": development_reference,
         "bank_rows_sha256": object_sha256(rows),
         "partition_sha256": object_sha256(partition),
         "freeze_ready": False,
@@ -423,6 +512,11 @@ def build_candidate(config: Mapping, *, tokenizer) -> tuple[list[dict], dict, di
         audit["programmatic_solution_trace_present"],
         audit["family_id_is_template_not_seed"],
         audit["partition_family_disjoint"],
+        audit["partition_counts"] == requested_partition,
+        (power_binding is not None
+         if config.get("power_result") is not None else True),
+        (development_reference is not None
+         if config.get("development_rows_reference") is not None else True),
     ]
     if not all(required):
         raise RuntimeError("Bank W authoring audit failed: "
@@ -486,6 +580,11 @@ def main() -> None:
             "config": file_sha256(config_path),
             "bank_rows": audit["bank_rows_sha256"],
             "partition": audit["partition_sha256"],
+            **({"power_result": audit["power_binding"]["sha256"]}
+               if audit.get("power_binding") else {}),
+            **({"development_reference": audit[
+                "development_rows_reference"]["file_sha256"]}
+               if audit.get("development_rows_reference") else {}),
         },
     )
     print(json.dumps({

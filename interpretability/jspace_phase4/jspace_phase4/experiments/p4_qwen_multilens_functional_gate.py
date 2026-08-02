@@ -35,6 +35,7 @@ from jspace_part2.occupancy import marginal_gains, occupancy_from_gains
 from jspace_part2.occupancy_v2 import centered_shares, gradient_pursuit_v2
 from jspace_part2.protected_dynamic import ProtectedDynamicAblator
 from jspace_phase3.ablator3 import (
+    P3Log,
     Phase3JAblator,
     profile_from_p3log,
     teacher_forced_matched_arm,
@@ -70,6 +71,7 @@ from .p4_qwen_nested_lens_fit import model_reference
 SUPPORTED_LENS_ORDERS = (
     ("published", "a120", "a250"),
     ("published", "a250", "a500"),
+    ("published", "a500", "a1000"),
 )
 EXPECTED_CONDITION_ORDER = [
     "span_safe", "exact_matched", "true_bridge", "distractor_bridge",
@@ -162,6 +164,19 @@ def validate_config(config: Mapping) -> None:
             "provenance_classification") != (
                 "external published reference, partially specified recipe"):
         raise RuntimeError("published-reference classification drift")
+    if lens_order == ("published", "a500", "a1000"):
+        capture = config.get("selection_margin_capture", {})
+        if capture.get("enabled") is not True:
+            raise RuntimeError("A1000 functional gate requires margin capture")
+        if int(capture.get("top_n", 0)) != 32:
+            raise RuntimeError("A1000 margin-capture top-n drift")
+        if list(capture.get("margin_ks", [])) != [1, 2, 5, 10, 20]:
+            raise RuntimeError("A1000 margin-capture k-grid drift")
+        if int(capture.get("intervention_k", -1)) != int(
+                config["protocol"]["k"]):
+            raise RuntimeError("margin capture may not change intervention k")
+        if capture.get("include_all_strata_in_functional_gate") is not True:
+            raise RuntimeError("margin strata may not exclude functional rows")
 
 
 def primary_pair(config: Mapping) -> tuple[str, str]:
@@ -312,6 +327,192 @@ def branch_from_gates(gates: Mapping[str, bool], *,
     return "PENDING_STRUCTURAL"
 
 
+def ql_branch_from_gates(gates: Mapping[str, bool], *,
+                         structural_stable: bool | None) -> str:
+    """Apply the frozen Q-L1--Q-L5 table without outcome-driven repair."""
+    if structural_stable is None:
+        return "PENDING_STRUCTURAL"
+    aggregate = (
+        "occupancy", "centered_excess", "span_safe_specific",
+        "tail_rate", "g4",
+    )
+    bridge = ("bridge_rescue", "bridge_preference")
+    if not all(bool(gates[name]) for name in (*aggregate, *bridge)):
+        return "Q-L4"
+    if structural_stable is False:
+        return "Q-L5"
+    if not bool(gates["normalized_selected_span_overlap"]):
+        return "Q-L3"
+    if not bool(gates["selected_id_jaccard"]):
+        return "Q-L2"
+    return "Q-L1"
+
+
+@dataclasses.dataclass
+class SelectionMarginRecord:
+    layer: int
+    phase: str
+    forward_index: int
+    position: int
+    raw_available_positive: int
+    eligible_available_positive: int
+    raw_top_ids: list[int]
+    raw_top_scores: list[float]
+    eligible_top_ids: list[int]
+    eligible_top_scores: list[float]
+    protected_ids: list[int]
+    protected_scores: list[float]
+    margins: dict[str, float | None]
+    intervention_selected_ids: list[int]
+    intervention_selected_scores: list[float]
+    effective_rank: int
+    removed_energy_frac: float
+
+
+@dataclasses.dataclass
+class Phase4MarginLog(P3Log):
+    selection_margin: list[SelectionMarginRecord] = dataclasses.field(
+        default_factory=list)
+
+
+def selection_margin_candidates(
+        scores: torch.Tensor, protect_sets: torch.Tensor | None, *,
+        intervention_k: int, top_n: int, margin_ks: Iterable[int],
+        epsilon: float) -> list[dict]:
+    """Capture rankings only; callers use the untouched parent intervention."""
+    matrix = scores.float()
+    if matrix.ndim != 2:
+        raise ValueError("selection-margin scores must be position x vocab")
+    positive = torch.where(
+        matrix > 0, matrix, torch.full_like(matrix, float("-inf")))
+    eligible = positive.clone()
+    n_positions, n_rows = matrix.shape
+    protected_ids = [[] for _ in range(n_positions)]
+    protected_scores = [[] for _ in range(n_positions)]
+    if protect_sets is not None:
+        indices = protect_sets.to(matrix.device).long()
+        if indices.ndim == 1:
+            indices = indices.unsqueeze(0).expand(n_positions, -1)
+        if indices.shape[0] != n_positions:
+            raise ValueError("selection-margin protection row mismatch")
+        if indices.numel() and (
+                int(indices.min()) < 0 or int(indices.max()) >= n_rows):
+            raise ValueError("selection-margin protection ID out of range")
+        gathered = matrix.gather(1, indices)
+        eligible.scatter_(1, indices, float("-inf"))
+        protected_ids = indices.detach().cpu().tolist()
+        protected_scores = gathered.detach().cpu().tolist()
+
+    def ranked(source: torch.Tensor) -> tuple[list[list[int]],
+                                               list[list[float]], list[int]]:
+        take = min(int(top_n), n_rows)
+        values, ids = source.topk(take, dim=1)
+        finite = torch.isfinite(values)
+        all_ids, all_scores = [], []
+        for position in range(n_positions):
+            valid = finite[position]
+            all_ids.append([
+                int(value) for value in ids[position][valid].tolist()])
+            all_scores.append([
+                float(value) for value in values[position][valid].tolist()])
+        available = torch.isfinite(source).sum(dim=1).detach().cpu().tolist()
+        return all_ids, all_scores, [int(value) for value in available]
+
+    raw_ids, raw_scores, raw_available = ranked(positive)
+    eligible_ids, eligible_scores, eligible_available = ranked(eligible)
+    rows = []
+    for position in range(n_positions):
+        margins = {}
+        values = eligible_scores[position]
+        for cutoff in margin_ks:
+            cutoff = int(cutoff)
+            value = None
+            if len(values) > cutoff:
+                numerator = values[cutoff - 1] - values[cutoff]
+                value = numerator / max(abs(values[cutoff - 1]), epsilon)
+            margins[str(cutoff)] = value
+        rows.append({
+            "position": position,
+            "raw_available_positive": raw_available[position],
+            "eligible_available_positive": eligible_available[position],
+            "raw_top_ids": raw_ids[position],
+            "raw_top_scores": raw_scores[position],
+            "eligible_top_ids": eligible_ids[position],
+            "eligible_top_scores": eligible_scores[position],
+            "protected_ids": [int(value) for value in protected_ids[position]],
+            "protected_scores": [
+                float(value) for value in protected_scores[position]],
+            "margins": margins,
+            "intervention_selected_ids": eligible_ids[position][
+                :intervention_k],
+            "intervention_selected_scores": eligible_scores[position][
+                :intervention_k],
+        })
+    return rows
+
+
+class Phase4MarginCaptureAblator(Phase3JAblator):
+    """Phase 4 observer around the immutable Phase 3 span-safe ablator."""
+
+    def __init__(self, layers, band):
+        super().__init__(layers, band)
+        self.log = Phase4MarginLog()
+
+    def _apply(self, h, layer_idx):
+        capture = self.mode.get("selection_margin_capture")
+        if not capture:
+            return super()._apply(h, layer_idx)
+        if self.mode.get("restrict_sets") is not None:
+            raise RuntimeError("margin capture is valid only on primary J pass")
+        dictionary = self.mode["dicts"][layer_idx]
+        flat = h.reshape(-1, h.shape[-1]).float()
+        scores = (flat.to(dictionary.dtype) @ dictionary.T).float()
+        snapshots = selection_margin_candidates(
+            scores, self.mode.get("protect_sets"),
+            intervention_k=int(self.mode["k"]),
+            top_n=int(capture["top_n"]),
+            margin_ks=[int(value) for value in capture["margin_ks"]],
+            epsilon=float(capture.get("epsilon", 1e-12)),
+        )
+        before = len(self.log.positions)
+        result = super()._apply(h, layer_idx)
+        records = [
+            row for row in self.log.positions[before:]
+            if row.layer == layer_idx and row.phase == self.phase
+            and row.forward_index == self.forward_index
+        ]
+        by_position = {int(row.position): row for row in records}
+        for snapshot in snapshots:
+            position = int(snapshot["position"])
+            if position not in by_position:
+                continue
+            intervention = by_position[position]
+            captured_ids = snapshot["intervention_selected_ids"]
+            if captured_ids != (intervention.selected_ids or []):
+                raise RuntimeError(
+                    "selection-margin observer changed top-k intervention")
+            self.log.selection_margin.append(SelectionMarginRecord(
+                layer=int(layer_idx), phase=self.phase,
+                forward_index=int(self.forward_index), position=position,
+                raw_available_positive=snapshot["raw_available_positive"],
+                eligible_available_positive=snapshot[
+                    "eligible_available_positive"],
+                raw_top_ids=snapshot["raw_top_ids"],
+                raw_top_scores=snapshot["raw_top_scores"],
+                eligible_top_ids=snapshot["eligible_top_ids"],
+                eligible_top_scores=snapshot["eligible_top_scores"],
+                protected_ids=snapshot["protected_ids"],
+                protected_scores=snapshot["protected_scores"],
+                margins=snapshot["margins"],
+                intervention_selected_ids=captured_ids,
+                intervention_selected_scores=snapshot[
+                    "intervention_selected_scores"],
+                effective_rank=int(intervention.effective_rank),
+                removed_energy_frac=float(intervention.removed_energy_frac),
+            ))
+        return result
+
+
 def teacher_forced_nll(logits: torch.Tensor, ids: torch.Tensor,
                        chunk: int = 128) -> float:
     targets = ids[0, 1:].to(logits.device)
@@ -425,7 +626,8 @@ def _new_state(header: dict, lens_order: Iterable[str]) -> dict:
         "lenses": {
             name: {
                 "primary": [], "selection": [], "readout": [],
-                "prose": [], "bridge": [], "g4": [], "capacity": {},
+                "selection_margin": [], "prose": [], "bridge": [],
+                "g4": [], "capacity": {},
                 "complete": False,
             }
             for name in lens_order
@@ -689,7 +891,9 @@ def _prepare_baselines(
 @torch.no_grad()
 def _j_pass(hf, ablator: Phase3JAblator, ids: torch.Tensor,
             protect_sets: torch.Tensor, dictionaries: Mapping,
-            *, k: int, record: bool) -> tuple[torch.Tensor, object]:
+            *, k: int, record: bool,
+            margin_capture: Mapping | None = None) -> tuple[
+                torch.Tensor, object]:
     ablator.log = type(ablator.log)()
     ablator.phase, ablator.forward_index = "prefill", 0
     ablator.mode = {
@@ -697,6 +901,14 @@ def _j_pass(hf, ablator: Phase3JAblator, ids: torch.Tensor,
         "protect_sets": protect_sets, "active_phases": {"prefill"},
         "span_safe": True, "record_overlap": record,
         "record_ids": record, "answer_id": None,
+        "selection_margin_capture": (
+            {
+                "top_n": int(margin_capture["top_n"]),
+                "margin_ks": [int(value) for value in
+                              margin_capture["margin_ks"]],
+                "epsilon": 1e-12,
+            }
+            if margin_capture else None),
     }
     with ablator:
         logits = hf(input_ids=ids, use_cache=False).logits[0].float()
@@ -732,16 +944,34 @@ def _append_selection_rows(lens: str, item: Mapping,
         })
 
 
+def _append_margin_rows(lens: str, item: Mapping,
+                        log_object, destination: list[dict]) -> None:
+    for row in getattr(log_object, "selection_margin", []):
+        if row.phase != "prefill" or row.forward_index != 0:
+            continue
+        destination.append({
+            "lens": lens,
+            "item_id": item["item_id"],
+            "fact_id": item["fact_id"],
+            "variant": item["variant"],
+            "bank": item["bank"],
+            "canonical_family": item["canonical_family"],
+            **_built_in(dataclasses.asdict(row)),
+        })
+
+
 @torch.no_grad()
 def _run_primary(
         lens_name: str, hf, wrapped, tok, sess: ScoringSession,
         dictionaries: Mapping, *, items: list[dict],
         bundle_by_fact: Mapping[str, FactBundle], bridge_fact_ids: set[str],
         band: list[int], k: int, seed: int, seed_namespace: str,
-        state: dict, state_path: Path, checkpoint_every: int) -> None:
+        state: dict, state_path: Path, checkpoint_every: int,
+        margin_capture: Mapping | None = None) -> None:
     cell = state["lenses"][lens_name]
     done = {row["item_id"] for row in cell["primary"]}
-    ablator = Phase3JAblator(wrapped.layers, band)
+    ablator = (Phase4MarginCaptureAblator(wrapped.layers, band)
+               if margin_capture else Phase3JAblator(wrapped.layers, band))
     progress = 0
     for item in items:
         item_id = item["item_id"]
@@ -756,10 +986,14 @@ def _run_primary(
         protection = torch.tensor(
             baseline["protect_sets"], device="cuda", dtype=torch.long)
         j_logits, j_log = _j_pass(
-            hf, ablator, full, protection, dictionaries, k=k, record=True)
+            hf, ablator, full, protection, dictionaries, k=k, record=True,
+            margin_capture=margin_capture)
         lp_j = sess.answer_seq_lp(full, j_logits.cpu(), n_prompt)
         _append_selection_rows(
             lens_name, item, j_log, cell["selection"])
+        if margin_capture:
+            _append_margin_rows(
+                lens_name, item, j_log, cell["selection_margin"])
         profile = profile_from_p3log(
             j_log, overlap_records=j_log.overlap)
         matched_logits, matched_log = teacher_forced_matched_arm(
@@ -1804,8 +2038,6 @@ def _analyze(
         state, selection_pairs, capacity_paths, config, lenses)
     functional = _functional_gates(lenses, pairs, config)
     structural, structural_stable = _structural_gate(config)
-    branch = branch_from_gates(
-        functional, structural_stable=structural_stable)
     interpretations = config["analysis"].get(
         "branch_interpretations", {
             "A": "functionally stable and structurally improving; fit B120",
@@ -1816,9 +2048,28 @@ def _analyze(
             "PENDING_STRUCTURAL": (
                 "functional gate complete; structural event is pending"),
         })
-    if set(interpretations) != {"A", "B", "C", "PENDING_STRUCTURAL"}:
-        raise RuntimeError("branch-interpretation contract drift")
-    return {
+    a1000 = tuple(config["lens_order"]) == (
+        "published", "a500", "a1000")
+    if a1000:
+        expected = {
+            "Q-L1", "Q-L2", "Q-L3", "Q-L4", "Q-L5",
+            "PENDING_STRUCTURAL",
+        }
+        if set(interpretations) != expected:
+            raise RuntimeError("Q-L branch-interpretation contract drift")
+        branch_candidate = ql_branch_from_gates(
+            functional, structural_stable=structural_stable)
+        branch = ("PENDING_STRUCTURAL"
+                  if branch_candidate == "PENDING_STRUCTURAL"
+                  else "PENDING_SELECTION_MARGIN_AUDIT")
+    else:
+        expected = {"A", "B", "C", "PENDING_STRUCTURAL"}
+        if set(interpretations) != expected:
+            raise RuntimeError("branch-interpretation contract drift")
+        branch_candidate = branch_from_gates(
+            functional, structural_stable=structural_stable)
+        branch = branch_candidate
+    result = {
         "schema_version": 1,
         "tier": config["tier"],
         "selection_was_frozen_before_outcomes": True,
@@ -1829,10 +2080,24 @@ def _analyze(
         "all_functional_gates_pass": bool(all(functional.values())),
         "structural_gate": structural,
         "branch": branch,
-        "branch_interpretation": interpretations[branch],
+        "branch_candidate": branch_candidate,
+        "branch_interpretation": interpretations[branch_candidate],
+        "canonical_lens_nominated": False,
         "published_reference_classification": (
             "external published reference, partially specified recipe"),
     }
+    if a1000:
+        result["branch_status"] = (
+            "The frozen functional and structural gates emit a Q-L branch "
+            "candidate, but the separate registered selection-margin audit "
+            "must complete before the canonical-lens decision event.")
+        result["selection_margin_capture"] = {
+            "enabled": True,
+            "captured_lenses": list(primary_pair(config)),
+            "all_strata_remain_in_functional_gate": True,
+            "behavioral_outcomes_used_for_stratification": False,
+        }
+    return result
 
 
 def _plot_functional(analysis: Mapping, config: Mapping, *, png_path: Path,
@@ -1933,8 +2198,9 @@ def _plot_functional(analysis: Mapping, config: Mapping, *, png_path: Path,
 def _write_raw_frames(state: Mapping, *, output_dir: Path,
                       lens_order: Iterable[str]) -> dict[str, Path]:
     paths = {}
-    for component in ("primary", "selection", "readout", "prose",
-                      "bridge", "g4"):
+    for component in (
+            "primary", "selection", "selection_margin", "readout",
+            "prose", "bridge", "g4"):
         frame = pd.concat([
             pd.DataFrame(state["lenses"][lens][component])
             for lens in lens_order
@@ -1943,7 +2209,20 @@ def _write_raw_frames(state: Mapping, *, output_dir: Path,
             for column in ("selected_ids", "selected_scores"):
                 frame[column] = frame[column].map(
                     lambda value: json.dumps(value or []))
-        path = output_dir / f"{component}_rows.parquet"
+        if component == "selection_margin" and not frame.empty:
+            for column in (
+                    "raw_top_ids", "raw_top_scores", "eligible_top_ids",
+                    "eligible_top_scores", "protected_ids",
+                    "protected_scores", "margins",
+                    "intervention_selected_ids",
+                    "intervention_selected_scores"):
+                frame[column] = frame[column].map(
+                    lambda value: json.dumps(value, sort_keys=True))
+        filename = (
+            "selection_margin_capture_rows.parquet"
+            if component == "selection_margin"
+            else f"{component}_rows.parquet")
+        path = output_dir / filename
         atomic_parquet(path, frame)
         paths[component] = path
     return paths
@@ -2016,9 +2295,13 @@ def main() -> None:  # noqa: C901
         "g4_calibration_n": int(config["g4"]["calibration_n"]),
         "bridge_max_new_tokens": int(
             config["bridge_endpoint"]["max_new_tokens"]),
+        "selection_margin_capture": dict(
+            config.get("selection_margin_capture", {})),
     }
     state = _load_or_create_state(
         state_path, header, config["lens_order"])
+    for lens_name in config["lens_order"]:
+        state["lenses"][lens_name].setdefault("selection_margin", [])
 
     gpu = require_cuda_gpu()
     torch.cuda.reset_peak_memory_stats()
@@ -2069,7 +2352,13 @@ def main() -> None:  # noqa: C901
             seed=int(config["protocol"]["matched_seed"]),
             seed_namespace=config["protocol"]["matched_seed_namespace"],
             state=state, state_path=state_path,
-            checkpoint_every=checkpoint_every)
+            checkpoint_every=checkpoint_every,
+            margin_capture=(
+                config.get("selection_margin_capture")
+                if lens_name in set(primary_pair(config))
+                and config.get("selection_margin_capture", {}).get(
+                    "enabled", False)
+                else None))
         _run_endpoint_readout(
             lens_name, dictionaries, items=items,
             bundle_by_fact=bundle_by_fact, endpoint_cache=endpoint_cache,
@@ -2155,6 +2444,8 @@ def main() -> None:  # noqa: C901
         "g4": dict(config["g4"]),
         "bridge_endpoint": dict(config["bridge_endpoint"]),
         "capacity": dict(config["capacity"]),
+        "selection_margin_capture": dict(
+            config.get("selection_margin_capture", {})),
         "analysis": dict(config["analysis"]),
         "state_header": header,
         "peak_vram_bytes": int(torch.cuda.max_memory_allocated()),
@@ -2209,6 +2500,7 @@ def main() -> None:  # noqa: C901
     print(json.dumps({
         "evidence_id": config["evidence_id"],
         "branch": analysis["branch"],
+        "branch_candidate": analysis["branch_candidate"],
         "functional_gates": analysis["functional_gates"],
         "structural_gate": analysis["structural_gate"],
         "result": str(result_path),

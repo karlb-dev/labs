@@ -19,6 +19,7 @@ IMPORT_TIERS = {
     "phase2-confirmatory-import",
     "phase3-confirmatory-import",
     "phase3-replication-import",
+    "side-development-import",
 }
 NATIVE_TIERS = {
     "phase4-development",
@@ -161,7 +162,7 @@ def import_evidence(
         source_study: str, source_evidence_id: str,
         source_commit: str, source_registry: str | Path,
         source_outputs: Iterable[str | Path],
-        source_tag: str | None = None) -> dict:
+        source_tag: str | None = None, **extra) -> dict:
     information = git_info()
     if information["dirty_tree"]:
         raise RegistryError("refusing evidence import from dirty tree")
@@ -181,6 +182,7 @@ def import_evidence(
         "import_code_commit": information["code_commit"],
         "source_registry_sha256": file_sha256(source_registry),
         "source_outputs": outputs,
+        **extra,
     })
 
 

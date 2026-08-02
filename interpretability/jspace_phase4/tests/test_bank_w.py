@@ -135,3 +135,50 @@ def test_bank_w_v2_raises_only_the_power_driven_support_floor():
     assert second["capability_guard"]["minimum_common_families_per_model"] == 20
     assert second["power_evidence_id"] == "p4-bank-w-power-dev-v1"
     assert second["supersedes"] == "p4-bank-w-candidate-v1"
+
+
+def test_bank_w_partition_counts_must_exhaust_the_bank():
+    from jspace_phase4.experiments.p4_author_bank_w import build_candidate
+
+    config = _config()
+    config["partition"]["replication_families"] = 23
+    with __import__("pytest").raises(
+            ValueError, match="exhaust the bank exactly"):
+        build_candidate(config, tokenizer=_WordTokenizer())
+
+
+def test_bank_w_v3_reallocates_only_sealed_sides_under_registered_power_rule():
+    import yaml
+
+    from jspace_phase4.experiments.p4_author_bank_w import stable_family_order
+
+    root = "interpretability/jspace_phase4/configs/"
+    with open(root + "p4_bank_w_candidate_v2.yaml") as handle:
+        previous = yaml.safe_load(handle)
+    with open(root + "p4_bank_w_candidate_v3.yaml") as handle:
+        successor = yaml.safe_load(handle)
+
+    for key in (
+            "namespace", "superfamilies", "families_per_superfamily",
+            "seeds_per_family", "loads", "derivations", "redundancies",
+            "answer_alphabet", "length_matching", "shortcut_audit",
+            "capability_guard"):
+        assert successor[key] == previous[key]
+    assert successor["partition"] == {
+        "development_families": 24,
+        "confirmatory_families": 28,
+        "replication_families": 20,
+        "namespace": previous["partition"]["namespace"],
+    }
+    family_ids = [
+        f"{superfamily}:template-{index:02d}"
+        for superfamily in previous["superfamilies"]
+        for index in range(previous["families_per_superfamily"])
+    ]
+    order = stable_family_order(
+        family_ids, previous["partition"]["namespace"])
+    assert len(order[:24]) == successor["partition"]["development_families"]
+    assert successor["power_result"][
+        "licensed_minimum_common_families"] == 28
+    assert successor["primary"]["conservative_planning_alpha"] == 0.025
+    assert successor["supersedes"] == "p4-bank-w-candidate-v2"

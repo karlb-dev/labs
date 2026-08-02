@@ -1,16 +1,34 @@
 # Phase 4 plan adoption
 
-Status: Phase 4.2 accepted for development and candidate-preregistration
+Status: Phase 4.3 accepted for development and candidate-preregistration
 work only. Phase 4 remains unfrozen.
 
 Authority order:
 
-1. `jspace_lab_nextsteps_4_2_addendum.md`, especially §§3–5;
-2. `jspace_lab_nextsteps_4_2.md`;
-3. `jspace_lab_nextsteps_4_1_addendum.md`, especially §§3–5;
-4. `jspace_lab_nextsteps_4_1.md`;
-5. `preregistration/SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md` after
+1. `jspace_lab_nextsteps_4_3_addendum.md`, especially §§2–4;
+2. `jspace_lab_nextsteps_4_3.md`;
+3. `jspace_lab_nextsteps_4_2_addendum.md`, especially §§3–5;
+4. `jspace_lab_nextsteps_4_2.md`;
+5. `jspace_lab_nextsteps_4_1_addendum.md`, especially §§3–5;
+6. `jspace_lab_nextsteps_4_1.md`;
+7. `preregistration/SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md` after
    PI edits, sign-off, and freeze.
+
+The Phase 4.3 Drive sources are preserved byte-for-byte in this directory.
+Their hashes at adoption are:
+
+- plan: `1edc4f13201ea2fc9d866fbb5ebe6588194b1b8496e6a6872c7044228d2afc16`;
+- addendum:
+  `79816a5ee5fb9cda72be1bbc510aa4937c685717191318334ca579fd21cd96c7`.
+
+Phase 4.3 adopts the prospective Q-L1 through Q-L5 A1000 router, makes A1000
+the final automatic fit-size escalation, keeps P4-P1 estimation-only subject
+to its single mandated consumed-development orthogonal assay, keeps P4-P2 as
+the only conditional candidate primary, and capability-blocks P4-P3 at the
+registered 16/20 common-support boundary. Side-track evidence can enter only
+through a strict hash-pinned `p4-import-*` event after ancestry-preserving
+integration. Independent review, PI approval, a freeze commit, and a freeze
+tag remain required.
 
 The Phase 4.2 Drive source hashes at adoption are:
 

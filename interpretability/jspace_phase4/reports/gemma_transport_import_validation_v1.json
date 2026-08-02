@@ -1,0 +1,288 @@
+{
+ "bundle_id": "jspace-gemma-transport-phase4-v1",
+ "bundle_path": "interpretability/jspace_phase4/reports/GEMMA_TRANSPORT_IMPORT_V1.json",
+ "bundle_payload_sha256": "587cae2c01a4db4c2820fce2af727168f15d7dcde78305b621b7b527ae201f55",
+ "bundle_sha256": "e946a59ba25aa02ec0415625ee9863d2a3f9f6226f02842266d720760431ad56",
+ "governance": {
+  "contains_confirmatory_intervention_outcomes": false,
+  "contains_replication_intervention_outcomes": false,
+  "development_or_methods_only": true,
+  "mainline_registry_was_not_written_by_side_track": true
+ },
+ "ok": true,
+ "output_inventory_sha256": "633f54309494fc88f98df9b7ee3b86772e0af825fb23e895cc2efc25ee72a80a",
+ "outputs": [
+  {
+   "bytes": 2663,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/jvp_goldens/gm_jvp_goldens_v1.json",
+   "sha256": "ca02c95c022741970468ea91bd80327e4c2d95c46fda1be2f225d9a83f4f8234"
+  },
+  {
+   "bytes": 4851,
+   "path": "/content/labs/interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml",
+   "sha256": "3cb1e68c548bce1dc350c8b60a52e5bc6594a4fadb7abec1c4e00f931d855630"
+  },
+  {
+   "bytes": 11862,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/olmo_control/gm-jvp-olmo-positive-control-v1.json",
+   "sha256": "fc957c9a6f6f397cbaf3274193713ebec332bb81dbb99b61cf9f56d058cd1942"
+  },
+  {
+   "bytes": 2781,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/input_manifest.json",
+   "sha256": "7b5f6fd353523189a5bf5d3d1627f2966fd37b7c613cfc4b536d9c9b1928c51f"
+  },
+  {
+   "bytes": 28116,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/loaded_model_audit.json",
+   "sha256": "01b6d518aeffb82a07eb32e32768e3fc5bb9e8bff4fd849253a57d89488f000a"
+  },
+  {
+   "bytes": 29069,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/state.json",
+   "sha256": "5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65"
+  },
+  {
+   "bytes": 63277,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_summary.json",
+   "sha256": "0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384"
+  },
+  {
+   "bytes": 352352,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_rows.parquet",
+   "sha256": "3b74f1e983f47c1f917fd8c407a6ea1f8abf42854adc0b9d6c3d3cf18d921550"
+  },
+  {
+   "bytes": 123399,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_smallest_evaluable.parquet",
+   "sha256": "fa18f51b4e30adb5e9ebbb2bf78548604c42855842313cfd030e4f89c0652e57"
+  },
+  {
+   "bytes": 11401,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_curvature_fits.parquet",
+   "sha256": "d8da3f931e2a4034eec31741516059ef4d4af3104bd7e5e6cc6fdfe7ee4fc0d2"
+  },
+  {
+   "bytes": 27842,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/raw_inventory.json",
+   "sha256": "750e8ee14e651c07cca04679a3ac45c51eddfe50187531b5eda3f78c1a7133cd"
+  },
+  {
+   "bytes": 11193,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-backend-parity-v1.json",
+   "sha256": "22c327764034f77496971f6c555af0ec6f8e99a0ceb80cea1677db24ca404b7c"
+  },
+  {
+   "bytes": 1036217,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-backend-parity-v1.pt",
+   "sha256": "ac5ba50dbba6d3ed149cf5b7b6951b80bee5502d11ac90e4f93dc45d515c9e89"
+  },
+  {
+   "bytes": 7384,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/GEMMA_TRANSPORT_STATE_OF_RECORD.md",
+   "sha256": "0eeab02938c32839a8ca19e2446bfc3b69bfcb18769428afb6904133363fa344"
+  },
+  {
+   "bytes": 9655,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/IMPORT_BUNDLE_PHASE4.json",
+   "sha256": "005532754166644e42a369358565b9ce72235151e64559a9f12254d987ff7729"
+  },
+  {
+   "bytes": 1097,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/IMPORT_BUNDLE_PHASE4.md",
+   "sha256": "91bc1f1528a03c0c5c842c95bd5ab597d1bd5e6a577eec1b0662c0ed10daf74c"
+  },
+  {
+   "bytes": 14000,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_inventory.json",
+   "sha256": "0744e32348f7c859475b4482fd9b38f83ef13925710dca8b0c0316cb9b372449"
+  },
+  {
+   "bytes": 1167,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_environment_lock.json",
+   "sha256": "7eceeaa500001aa78cba9cac5ce181233414d2529a76267bf6ac94de74a0203d"
+  },
+  {
+   "bytes": 2746,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_claim_ledger.md",
+   "sha256": "812a45a5044069baf41d8db276b1d59f0c89dd76acb790e9e0e6506c5cccd779"
+  },
+  {
+   "bytes": 5057,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/TRANSPORT_GATE_PROTOCOL.md",
+   "sha256": "f1d83baa36a41623ba4a5990cd83f09bf8e9e09690c1b95c5d5ce7e716e8b768"
+  },
+  {
+   "bytes": 4108,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_release_manifest.json",
+   "sha256": "1f896c7029a2f4cee10378a95c71463d1346e2a500529101af80de7063c1e483"
+  }
+ ],
+ "schema_version": 1,
+ "selected_event_ids_sha256": "035286a466c7bee6e944bdf79ff3338e490783f8dd3d5391801bbc85feb58624",
+ "selected_events": [
+  {
+   "effective_event_sha256": "c46bf22c16bc2dcf95190e098bf295354061770a85566a484901291ef5a47156",
+   "event_commit": "2bb7428c931323d5d377ad04bd7e19a17958c491",
+   "event_type": "evidence_created",
+   "evidence_id": "gm-jvp-goldens-v1",
+   "outputs": [
+    {
+     "bytes": 2663,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/jvp_goldens/gm_jvp_goldens_v1.json",
+     "sha256": "ca02c95c022741970468ea91bd80327e4c2d95c46fda1be2f225d9a83f4f8234"
+    }
+   ],
+   "role": "exact-jvp-analytic-and-tiny-transformer-goldens",
+   "tier": "methods"
+  },
+  {
+   "effective_event_sha256": "6f8f350b69070ed237a6c1d3ac478ae9fc1608721accdccab89e96869065c409",
+   "event_commit": "7f6a36e19417b618cbdf3c81a6da6d9171a3739a",
+   "event_type": "evidence_created",
+   "evidence_id": "gm-jvp-olmo-positive-control-v1",
+   "outputs": [
+    {
+     "bytes": 4851,
+     "path": "/content/labs/interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml",
+     "sha256": "3cb1e68c548bce1dc350c8b60a52e5bc6594a4fadb7abec1c4e00f931d855630"
+    },
+    {
+     "bytes": 11862,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/olmo_control/gm-jvp-olmo-positive-control-v1.json",
+     "sha256": "fc957c9a6f6f397cbaf3274193713ebec332bb81dbb99b61cf9f56d058cd1942"
+    }
+   ],
+   "role": "pre-target-olmo-positive-control-and-frozen-thresholds",
+   "tier": "methods"
+  },
+  {
+   "effective_event_sha256": "9a8f36bee6961d83c0a419c056a48c0a86d23ed454e8091143c6d58822c7c0da",
+   "event_commit": "036e55233babcabacae061ab41d1410a35715aea",
+   "event_type": "evidence_created",
+   "evidence_id": "gm-jvp-gemma-stage1-v1",
+   "outputs": [
+    {
+     "bytes": 2781,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/input_manifest.json",
+     "sha256": "7b5f6fd353523189a5bf5d3d1627f2966fd37b7c613cfc4b536d9c9b1928c51f"
+    },
+    {
+     "bytes": 28116,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/loaded_model_audit.json",
+     "sha256": "01b6d518aeffb82a07eb32e32768e3fc5bb9e8bff4fd849253a57d89488f000a"
+    },
+    {
+     "bytes": 29069,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/state.json",
+     "sha256": "5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65"
+    },
+    {
+     "bytes": 63277,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_summary.json",
+     "sha256": "0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384"
+    },
+    {
+     "bytes": 352352,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_rows.parquet",
+     "sha256": "3b74f1e983f47c1f917fd8c407a6ea1f8abf42854adc0b9d6c3d3cf18d921550"
+    },
+    {
+     "bytes": 123399,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_smallest_evaluable.parquet",
+     "sha256": "fa18f51b4e30adb5e9ebbb2bf78548604c42855842313cfd030e4f89c0652e57"
+    },
+    {
+     "bytes": 11401,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_curvature_fits.parquet",
+     "sha256": "d8da3f931e2a4034eec31741516059ef4d4af3104bd7e5e6cc6fdfe7ee4fc0d2"
+    },
+    {
+     "bytes": 27842,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/raw_inventory.json",
+     "sha256": "750e8ee14e651c07cca04679a3ac45c51eddfe50187531b5eda3f78c1a7133cd"
+    }
+   ],
+   "role": "gemma-stage1-local-tangent-methods-diagnostic",
+   "tier": "methods"
+  },
+  {
+   "effective_event_sha256": "5fc5deeb671bfc86a4d8b37f7f32ec357f1a7d766a70854d8e265215633c7a6a",
+   "event_commit": "af21c2068508a28871f541c82b8dd1ff0f59916b",
+   "event_type": "evidence_created",
+   "evidence_id": "gm-jvp-gemma-backend-parity-v1",
+   "outputs": [
+    {
+     "bytes": 11193,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-backend-parity-v1.json",
+     "sha256": "22c327764034f77496971f6c555af0ec6f8e99a0ceb80cea1677db24ca404b7c"
+    },
+    {
+     "bytes": 1036217,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-backend-parity-v1.pt",
+     "sha256": "ac5ba50dbba6d3ed149cf5b7b6951b80bee5502d11ac90e4f93dc45d515c9e89"
+    }
+   ],
+   "role": "precommitted-actual-model-backend-parity-blocker",
+   "tier": "methods"
+  },
+  {
+   "effective_event_sha256": "26b4024ba905116eb1501464e1e86d6bcfaebcaf04ff1b94de6a04b6b330d0e5",
+   "event_commit": "b80004843a5bbe57536e4da18297f7c52cf201a3",
+   "event_type": "evidence_created",
+   "evidence_id": "gm-state-of-record-v1",
+   "outputs": [
+    {
+     "bytes": 7384,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/GEMMA_TRANSPORT_STATE_OF_RECORD.md",
+     "sha256": "0eeab02938c32839a8ca19e2446bfc3b69bfcb18769428afb6904133363fa344"
+    },
+    {
+     "bytes": 9655,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/IMPORT_BUNDLE_PHASE4.json",
+     "sha256": "005532754166644e42a369358565b9ce72235151e64559a9f12254d987ff7729"
+    },
+    {
+     "bytes": 1097,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/IMPORT_BUNDLE_PHASE4.md",
+     "sha256": "91bc1f1528a03c0c5c842c95bd5ab597d1bd5e6a577eec1b0662c0ed10daf74c"
+    },
+    {
+     "bytes": 14000,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_inventory.json",
+     "sha256": "0744e32348f7c859475b4482fd9b38f83ef13925710dca8b0c0316cb9b372449"
+    },
+    {
+     "bytes": 1167,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_environment_lock.json",
+     "sha256": "7eceeaa500001aa78cba9cac5ce181233414d2529a76267bf6ac94de74a0203d"
+    },
+    {
+     "bytes": 2746,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_claim_ledger.md",
+     "sha256": "812a45a5044069baf41d8db276b1d59f0c89dd76acb790e9e0e6506c5cccd779"
+    },
+    {
+     "bytes": 5057,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/TRANSPORT_GATE_PROTOCOL.md",
+     "sha256": "f1d83baa36a41623ba4a5990cd83f09bf8e9e09690c1b95c5d5ce7e716e8b768"
+    },
+    {
+     "bytes": 4108,
+     "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_release_manifest.json",
+     "sha256": "1f896c7029a2f4cee10378a95c71463d1346e2a500529101af80de7063c1e483"
+    }
+   ],
+   "role": "terminal-methods-blocker-release",
+   "tier": "methods"
+  }
+ ],
+ "source_branch": "interp_jspace_gemma_transport",
+ "source_commit": "b0425a441f1b87c33d9bb0b4d08d221942f11923",
+ "source_registry": {
+  "path": "interpretability/jspace_gemma/reports/evidence_events.jsonl",
+  "sha256": "acd78247f3e367a1fb81693b7c7b811f98b7a7d166cd3d8a5e46a1deff409173"
+ },
+ "source_study": "jspace-gemma-transport",
+ "target_import_evidence_id": "p4-import-gemma-transport-v1"
+}

@@ -32,10 +32,12 @@ jspace-phase4 verify
 The run root, model cache, Phase 3 imports, and repository files are resolved
 through logical URIs. Scientific modules must not embed machine paths.
 
-## Phase 4.2 resumable work block
+## Phase 4.3 resumable work block
 
 The registered post-A500 decision is Branch B. Its Qwen Draw A continuation
-is intentionally paused at the durable n=554 checkpoint for a VM handoff:
+resumed from the durable n=554 VM handoff under the frozen wrapper. The live
+checkpoint is recorded in the Drive handoff; n=554 remains the immutable
+restart provenance boundary:
 
 ```text
 checkpoint SHA-256: bf992067d690123109198c182a21169379e5752d89e73e96514fab7127fba74d
@@ -67,8 +69,9 @@ bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
 
 The router verifies the registered result envelope and exact frozen wording;
 the registered result is Branch B, so it continues with `draw_a_n1000` and
-must print `resuming from checkpoint: 554/...`. A/C would continue with
-`draw_b_n120`. Do not launch a duplicate while either lock is held.
+must resume from the highest contract-matched checkpoint recorded by the live
+handoff (never below n=554). A/C would continue with `draw_b_n120`. Do not
+launch a duplicate while either lock is held.
 
 The lower-level producer remains available for exact recovery diagnostics:
 
@@ -84,7 +87,13 @@ are absent: `state.json` (expected SHA-256 `361bda08...f45e8`) and
 `capacity_reconstructions_a120.pt` (expected `6b0399df...51b6f`). The missing
 published reconstruction was restored from an exact hash-verified backup.
 See the handoffs for full paths and hashes; do not fabricate the remaining
-bytes or edit the append-only registry.
+bytes or edit the append-only registry. Candidate 0.11 adds a hash-gated A120
+capacity recovery which may run only after A1000 releases the GPU and only
+installs a bit-exact match. `state.json` remains an external-review/PI
+governance decision if no exact backup can be found. The mounted tree, live
+Drive/trash and revision surfaces, and preserved pre-incident DriveFS metadata
+were searched without finding a target cloud ID or exact bytes; see
+`reviews/A120_STATE_EXACT_COPY_SEARCH_20260802.md`.
 
 The n=250 convergence, retained prompt-112 influence, functional Branch-B
 gate, A500 fit and successor gates, passing mode-v2 baseline, Qwen Bank-W
@@ -92,17 +101,61 @@ capability, mode-parser v2 contract, Bank B feasibility, Bank-W protocol, and
 conditional P4-P2 variance-pilot protocol are registered. Do not rerun or
 overwrite them; registry verification checks their immutable hashes.
 
+Candidate 0.11 keeps Bank B/P4-P1 estimation-only while preparing the mandated
+single consumed-development orthogonal feasibility shot, fixes the pre-pilot
+0.20-point P4-P2 SESOI, and now includes the executable GPU producer plus its
+mean-masked exact/Monte-Carlo power ruler. The OLMo capability service result
+fails at 16/20 common families, so P4-P3 is blocked. The A500--A1000 successor
+configs, selection-margin contract, prompt-323 influence contract, and
+conditional Q-L2 estimand were committed before A1000 existed; their A1000
+hash stays unbound until registration.
+
+After the registered A1000 hash is bound in the three successor configs, run
+`run_qwen_a1000_postfit_queue.sh`. Its default is the full frozen queue through
+the canonical decision. A reclaim-aware invocation may set
+`JSPACE4_STOP_AFTER` to `structural`, `functional`, `margin`, or `influence`;
+the selected stage is registered, pushed, and locally backed up before the
+queue exits successfully. A later default invocation verifies already
+registered stages and resumes in the same frozen order.
+
+Gemma and OLMo completed on isolated branches and registries, and their full
+ancestry is merged without copying native `gm-*` or `ol-*` events into Phase
+4. The early OLMo service bundle, terminal Gemma methods blocker, and terminal
+OLMo methods release are strictly normalized and queued behind A1000 under
+`protocol/SIDE_TRACK_IMPORT_BUNDLE_CONTRACT.md`. Their exact boundaries are
+recorded in `manifests/parallel_import_inventory.md`; a validated bundle is
+not registered Phase 4 evidence until its single `p4-import-*` event lands on
+mainline. `run_phase4_post_a1000_import_queue.sh` enforces the prescribed
+admission and joint-replay order after the canonical decision.
+Whole-registry release requires the two-pass procedure in
+`protocol/DRIVEFS_DURABILITY_PLAN.md`; known deficits remain failures.
+After model writers stop and the registry is final, generate the review
+inventory with `python -m jspace_phase4.pre_freeze_inventory`. It hashes every
+live output, checks reachable commits and namespace/path policy, and writes the
+required JSON/Markdown manifests; a known deficit remains a failed gate.
+
 ## Current development synthesis
 
 - Living Markdown: `reports/PHASE4_DEVELOPMENT_REPORT.md`
-- Compiled handout:
-  `reports/handout/jspace_phase4_development.{tex,pdf}`
-- Durable restart ledger:
+- Candidate freeze-gate ledger:
+  `preregistration/FREEZE_GATE_LEDGER_PHASE4.md`
+- Methods decision record: `paper/PHASE4_METHODS_DECISION_RECORD.md`
+- Falsifiable conclusion skeleton: `paper/PAPER_CONCLUSION_SKELETON.md`
+- Compiled handout through the pre-A1000 boundary (regenerate only after the
+  canonical decision): `reports/handout/jspace_phase4_development.{tex,pdf}`
+- Phase 4.3 closeout and exact Phase 4.4 handoff:
+  `reports/phase4_part3_summary.md`
+- Open A1000 raw-diagnostic archival review:
+  `reviews/QWEN_A1000_RAW_DIAGNOSTIC_ARCHIVE_REVIEW_20260802.md`
+- Current durable restart snapshot:
+  `reports/INPROGRESS_VM13_20260802.md`
+- Historical VM12 restart ledger:
   `reports/INPROGRESS_VM12_20260801.md`
 - Compact restart handoff:
   `reports/RESUME_PHASE4_2.md`
 - Governing development block:
-  `reviews/jspace_lab_nextsteps_4_2.md` plus its addendum
+  `reviews/jspace_lab_nextsteps_4_3.md` plus
+  `reviews/jspace_lab_nextsteps_4_3_addendum.md`
 
 These documents now cover the base, 3.0 Think, and sibling 3.1
 Think/Instruct capability and intervention points, seed-paired
@@ -110,13 +163,16 @@ own/common-frame audits, and the registered four-checkpoint trajectory
 synthesis. Phase 4.2 adds the Qwen same-corpus convergence and functional
 invariance gates, CPU-first common-cohort closure, Bank B/W authoring and
 power, Bank W capability rules, official-mode gates, and P4-P2 design/pilot
-methods. They remain development summaries, not frozen claims.
+methods. Phase 4.3 closes the A1000 instrument decision, side-track import,
+and remaining freeze blockers. They remain development summaries, not frozen
+claims.
 
 ## Tiers
 
 - `phase2-confirmatory-import`
 - `phase3-confirmatory-import`
 - `phase3-replication-import`
+- `side-development-import`
 - `phase4-development`
 - `phase4-confirmatory`
 - `phase4-replication`
