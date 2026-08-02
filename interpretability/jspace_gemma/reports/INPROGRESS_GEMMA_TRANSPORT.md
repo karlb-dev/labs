@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 01:09 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 02:08 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -14,8 +14,11 @@ canonical Drive handoff at
 - Diagnostic/repair commit: `5b486fed0e93a6b87139430b3ac65f225470bac8`.
 - Foundation/import commit: `2bb7428c931323d5d377ad04bd7e19a17958c491`.
 - Exact-JVP golden commit: `91ecba1df24f6726faa94034c78f41806d7f38bb`.
-- Remote Gemma branch: synchronized at the exact-JVP golden commit; the OLMo
-  staging/control runner implementation is not yet committed.
+- OLMo control-runner commit: `42b34b13192a56f941ce9ad92a757384e153f05c`.
+- Pre-model calibration repair commit:
+  `3a599f75de8bcb67bfb696be0d6d7c07010bac79`.
+- Remote Gemma branch: synchronized through the calibration repair commit;
+  the new band-convention registry/report boundary is not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -24,15 +27,17 @@ canonical Drive handoff at
   is installed editable and byte-identical to the campaign Drive copy.
 - Hugging Face authentication: PASS (`kburtram`).
 - Shared Part-2 conformance bootstrap: PASS.
-- No Gemma or OLMo model producer is running. No scientific Gemma target
-  outcome has been opened.
-- The isolated package scaffold is committed. Its 26-test conformance suite
+- No Gemma or OLMo model producer is running. No current-study model response
+  and no scientific Gemma target outcome has been opened.
+- The isolated package scaffold is committed. Its 30-test conformance suite
   passes, including analytic, nonlinear tiny-transformer, and explicit Hugging
-  Face Gemma/OLMo suffix/JVP tests.
-- The historical Drive OLMo snapshot has 11/14 complete weight shards. Shards
-  6, 9, and 14 are broken symlinks with stale `.incomplete` blobs; control
-  staging must reuse verified complete blobs and download/verify the missing
-  content. Never treat that Drive snapshot as load-ready.
+  Face Gemma/OLMo suffix/JVP tests plus a batch-shape/slot adversarial test.
+- OLMo local staging completed from clean pushed commit `42b34b1`. The
+  dedicated local snapshot verifies all 26 remote files, all 14 weight shards,
+  64,476,964,249 bytes, and zero failures. Its Drive manifest file SHA-256 is
+  `fa620d543b8cc80d3545aee177343036b04a5a0de84b8e65c8dcfa15dec1776c`.
+  The historical Drive cache remains only 11/14 complete and must never be
+  treated as load-ready by itself.
 - First foundation attempt at clean remote commit `11501b8` stopped before
   producing a foundation result: the governing TeX exists as a Git object at
   later shared commit `4ea7a9b`, not as a worktree file in the exact fork.
@@ -49,6 +54,10 @@ canonical Drive handoff at
   tiny-transformer directional derivatives agree within `8.33e-17`, and
   central-secant error falls about 4x per epsilon halving. Drive artifact
   SHA-256: `ca02c95c022741970468ea91bd80327e4c2d95c46fda1be2f225d9a83f4f8234`.
+- `gm-band-convention-v1` is registered from clean commit `3a599f7`, with no
+  model opened. The primary paper's 38--92% reindexed band maps approximately
+  to Gemma L23--L55; the artifact SHA-256 is
+  `04e56c9bffc02d9a9d2580a1982f520c1069e87e0898fe52a80b911b210e5c8f`.
 
 ## Completed this VM
 
@@ -83,13 +92,22 @@ canonical Drive handoff at
     forward/fallback/reverse derivative parity passes, with no numerical
     secant admitted as an exact backend.
 13. Implemented safe OLMo cache seeding/download plus full LFS/Git-blob/index
-    verification, cached exact forward linearization validated against fresh
-    `torch.func.jvp`, batched finite responses, realized-perturbation JVPs,
-    wrong-hook and clean-repeat baselines, atomic raw cells, resume headers,
-    robust `a+b*epsilon` fits, and the OLMo-only calibration producer.
+    verification, batched exact JVPs and finite responses, wrong-hook and
+    clean-repeat baselines, atomic raw cells, resume headers, robust
+    `a+b*epsilon` fits, and the OLMo-only calibration producer.
 14. Corrected the pre-run OLMo layer grid to add L4 shallow control and L60
     identity anchor around matched L24/L32/L40/L47/L56. No current-study
-    model number had been observed. All 26 tests pass.
+    model number had been observed.
+15. Fully staged and hash-verified the exact OLMo control snapshot locally.
+16. Before model load, repaired the runner so finite clean baselines, repeats,
+    perturbed passes, and exact JVPs use identical batch shapes/slots; every
+    post-cast negative/double/sum vector receives its own direct JVP; nonlinear
+    residual defects subtract first-order delivery mismatch; and SNR includes
+    a target-dtype half-step floor. All 30 tests and the live-output verifier
+    pass from the pushed repair commit.
+17. Registered the primary-paper band convention as `gm-band-convention-v1`.
+    The immutable source record resolves 38--92% depth to approximately Gemma
+    L23--L55. No model was opened.
 
 ## Immutable scientific guardrails
 
@@ -109,19 +127,17 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit the tested OLMo staging/control runner; fetch, pull/reconcile, test,
-   and push.
-2. From the clean commit run:
+1. Commit the band registry/report boundary; fetch, pull/reconcile, test, and
+   push.
+2. From that clean pushed commit run:
 
    ```bash
-   python -u -m jspace_gemma.experiments.gm_stage_olmo
-   python -u -m jspace_gemma.experiments.gm_exact_transport_gate
+   python -u -m jspace_gemma.experiments.gm_exact_transport_gate --max-cells 1
    ```
 
-   The first command must fully hash the exact historical OLMo checkpoint
-   `allenai/Olmo-3-32B-Think@ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`
-   before the second opens the model. The second emits OLMo-only calibration,
-   not Gemma thresholds or a target result.
+   If runtime, VRAM, parity, delivery, and checkpoint integrity pass, resume
+   the same producer without `--max-cells` from the same code commit. This
+   emits OLMo-only calibration, not Gemma thresholds or a target result.
 3. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
 4. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
    snapshot to local NVMe, then run Gemma Stage 1 with the unchanged harness.
@@ -129,11 +145,11 @@ canonical Drive handoff at
 
 ## Recovery checks and next commands
 
-There is currently no live producer, lock owner, or partial scientific
-checkpoint. The tested OLMo runner implementation is currently uncommitted;
-no producer is live and no local control cache/state exists yet. Foundation
-and golden artifacts are durable in Drive. On a new VM, run the bootstrap in
-`RESUME_GEMMA_TRANSPORT.md`, then inspect:
+There is currently no live producer, lock owner, or partial calibration
+checkpoint. The OLMo local snapshot is complete on this VM, but local NVMe is
+ephemeral. On a new VM, run the bootstrap in `RESUME_GEMMA_TRANSPORT.md`, then
+rerun the resumable staging producer if the local snapshot is absent. The
+foundation, golden, band, and staging manifests are durable in Drive. Inspect:
 
 ```bash
 git -C /content/labs status --short --branch

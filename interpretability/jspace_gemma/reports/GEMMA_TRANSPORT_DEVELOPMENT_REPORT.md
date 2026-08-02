@@ -1,7 +1,7 @@
 # Gemma 4 31B transport autopsy — development report
 
-Status: foundation and exact-JVP goldens registered; OLMo control snapshot
-fully verified; pre-result runner repair tested and ready to publish. All
+Status: foundation, exact-JVP goldens, and paper-band convention registered;
+OLMo control snapshot fully verified; one-cell control smoke is next. All
 findings in this document are development or methods evidence. Nothing here
 is a Phase 4 confirmatory model cell.
 
@@ -70,8 +70,9 @@ the later Gemma handout is not the governing paper convention. Consequently,
 G6's L44/L48/L52 candidates are in the paper-relative band, although late
 readability by itself remains neither workspace nor causal-channel evidence.
 The primary page, byte hash, HTTP metadata, later conflicting Git object, and
-mapping are frozen in `gm_g6_band_convention.yaml`; registration as
-`gm-band-convention-v1` follows the clean pre-result commit.
+mapping are frozen in `gm_g6_band_convention.yaml` and registered as
+`gm-band-convention-v1`. Its manifest SHA-256 is
+`04e56c9bffc02d9a9d2580a1982f520c1069e87e0898fe52a80b911b210e5c8f`.
 
 Before model staging, the OLMo design was corrected to include L4 as the
 shallow negative-control layer and L60 as the late identity anchor around the
@@ -112,7 +113,7 @@ No current-study model cell has run yet.
 | `gm-foundation-diagnostic-v1` | methods | registered | no scientific result; the first foundation attempt found that the governing TeX is a Git object in a later shared commit, not a file in the exact side fork |
 | `gm-foundation-v1` | methods | registered | 22 tests pass; exact architecture/runtime/governance/package inventories and nine historical imports verified |
 | `gm-jvp-goldens-v1` | methods | registered | both autodiff backends exactly match the analytic derivative; forward/fallback/reverse derivatives agree on the nonlinear tiny transformer |
-| `gm-band-convention-v1` | methods | code/config prepared pre-result | primary Methods resolve the transferable band to 38--92% (Gemma approximately L23--L55) |
+| `gm-band-convention-v1` | methods | registered from clean `3a599f7`; no model opened | primary Methods resolve the transferable band to 38--92% (Gemma approximately L23--L55) |
 | `gm-jvp-olmo-calibration-v1` | methods | staged; model not yet loaded | raw OLMo-only threshold calibration |
 | `gm-jvp-olmo-positive-control-v1` | methods | blocked on preceding boundaries | threshold calibration |
 | `gm-jvp-gemma-stage1-v1` | methods | forbidden until thresholds commit | exact target gate |
@@ -161,7 +162,6 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish the pre-result runner and band-resolution code, register the
-band convention from the clean commit, then run one OLMo control cell before
-resuming the full grid. Update this report and the Drive handoff at every
-evidence commit.
+Commit/publish this registered methods boundary, then run one OLMo control
+cell from that clean pushed commit before resuming the full grid. Update this
+report and the Drive handoff at every evidence commit.
