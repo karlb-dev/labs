@@ -33,6 +33,10 @@ prompt:
 equal_weight_contract:
   tiny_model_direct_refit_required: true
   adjacent_atomic_checkpoint_required: true
+  registered_assertion_source:
+    evidence_id: p4-qwen-lens-influence-prompt112-dev-v1
+    result_sha256: 79a856b0e10c0e27c5ee7434edd51eecbbc3ddc562e21d09f086197341b7e6d2
+    table_sha256: b8b3cd66b2d2e257b7a98d803baec0d4ce70a1e4fbe8564ea7be65bd6f51fb9b
   earlier_checkpoint:
     n: 195
     uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/recovery/fit_n0195_contract_check.ckpt
@@ -84,9 +88,27 @@ analysis:
     assay_identity_adjusted_matrix_disagreement: 0.03
     selected_id_jaccard_change: 0.05
     centered_excess_capacity_percentage_points: 0.5
+  decision_load_bearing_metrics:
+    - assay_task_token_median_disagreement
+    - assay_task_token_q05_disagreement
+    - assay_identity_adjusted_matrix_disagreement
+  downstream_nondecision_diagnostics:
+    - selected_id_jaccard_change
+    - centered_excess_capacity_percentage_points
+  downstream_note: >-
+    Selected-row and capacity stability are decided by the registered
+    all-position functional and margin gates, not by constructing an
+    unregistered leave-one-out intervention instrument. Prompt-323 influence
+    is classified from the same structural metrics as prompt-112 and never
+    licenses trimming or refitting.
   decision_wording:
     negligible: retained but non-load-bearing heavy-tail prompt
     material_small_fit_only: retained prompt materially affects A500 but dilution closes by A1000
     material_at_a1000: retained prompt remains load-bearing; report sensitivity and do not trim or refit
+
+figure:
+  stem: p4f29_qwen_prompt323_influence
+  title: Qwen draw-A prompt-323 retained-influence audit
+  footer: Exact equal-prompt algebra on A500 and A1000; prompt 323 is never removed from a registered lens.
 
 registry_what: Paired retained-prompt sensitivity for draw-A prompt 323, with exact A500/A1000 leave-one-out running-mean identities and independent tiny-model plus adjacent-atomic-checkpoint contract checks.
