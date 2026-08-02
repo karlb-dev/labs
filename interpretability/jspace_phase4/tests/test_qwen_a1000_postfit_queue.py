@@ -36,6 +36,18 @@ def test_a1000_queue_freezes_stage_order_and_stops_before_mode_pilot():
                 text.index("preserve_registered_outputs()")]
     assert bank.index("git pull --ff-only") < bank.index("git push origin")
 
+    stop_stages = [
+        "stop_after_stage structural",
+        "stop_after_stage functional",
+        "stop_after_stage margin",
+        "stop_after_stage influence",
+        "stop_after_stage canonical",
+    ]
+    stop_positions = [text.index(stage) for stage in stop_stages]
+    assert stop_positions == sorted(stop_positions)
+    assert text.index("STOP_AFTER=\"${JSPACE4_STOP_AFTER:-canonical}\"") \
+        < positions[0]
+
 
 def test_exactly_three_successor_configs_share_the_a1000_binding_slot():
     paths = [

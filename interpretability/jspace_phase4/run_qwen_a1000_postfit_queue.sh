@@ -18,12 +18,23 @@ INFLUENCE_CONFIG="interpretability/jspace_phase4/configs/p4_qwen_lens_influence_
 DECISION_CONFIG="interpretability/jspace_phase4/configs/p4_qwen_canonical_lens_decision_a1000_dev.yaml"
 QUEUE_LOG="$RUN_ROOT/qwen_a1000_postfit_queue_20260802.log"
 HEARTBEAT_LOG="$RUN_ROOT/QWEN_A1000_POSTFIT_QUEUE_WATCHDOG.log"
+STOP_AFTER="${JSPACE4_STOP_AFTER:-canonical}"
 
 if [[ "${1:-}" == "--approval-probe" ]]; then
   printf '%s\n' \
     "qwen A1000 post-fit queue is installed; no file or GPU work started"
   exit 0
 fi
+
+case "$STOP_AFTER" in
+  structural|functional|margin|influence|canonical) ;;
+  *)
+    printf '%s\n' \
+      "A1000 post-fit queue refused: invalid JSPACE4_STOP_AFTER=$STOP_AFTER" \
+      >&2
+    exit 2
+    ;;
+esac
 
 export JSPACE4_RUN_ROOT="$RUN_ROOT"
 export JSPACE4_LOCAL_WORK="$LOCAL_WORK"
@@ -145,6 +156,15 @@ run_stage() {
     | tee -a "$QUEUE_LOG"
 }
 
+stop_after_stage() {
+  local stage=$1
+  if [[ "$STOP_AFTER" == "$stage" ]]; then
+    printf '%s QUEUE_STOPPED_AFTER stage=%s restart_safe=true\n' \
+      "$(date -u +%FT%TZ)" "$stage" | tee -a "$QUEUE_LOG"
+    exit 0
+  fi
+}
+
 bank_registry_event() {
   local stage=$1
   mapfile -t changes < <(git status --porcelain)
@@ -232,6 +252,7 @@ run_stage qwen_lens_convergence_a500_a1000 \
 bank_registry_event qwen_lens_convergence_a500_a1000
 preserve_registered_outputs \
   p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1
+stop_after_stage structural
 
 run_stage qwen_multilens_functional_gate_a500_a1000 \
   python -m jspace_phase4.experiments.p4_qwen_multilens_functional_gate \
@@ -239,18 +260,21 @@ run_stage qwen_multilens_functional_gate_a500_a1000 \
 bank_registry_event qwen_multilens_functional_gate_a500_a1000
 preserve_registered_outputs \
   p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1
+stop_after_stage functional
 
 run_stage qwen_selection_margin_a500_a1000 \
   python -m jspace_phase4.experiments.p4_qwen_selection_margin \
   --config "$MARGIN_CONFIG"
 bank_registry_event qwen_selection_margin_a500_a1000
 preserve_registered_outputs p4-qwen-selection-margin-a500-a1000-dev-v1
+stop_after_stage margin
 
 run_stage qwen_lens_influence_prompt323 \
   python -m jspace_phase4.experiments.p4_qwen_lens_influence_paired \
   --config "$INFLUENCE_CONFIG"
 bank_registry_event qwen_lens_influence_prompt323
 preserve_registered_outputs p4-qwen-lens-influence-prompt323-dev-v1
+stop_after_stage influence
 
 run_stage qwen_canonical_lens_decision_a1000 \
   python -m jspace_phase4.experiments.p4_qwen_canonical_lens_decision \
@@ -258,6 +282,7 @@ run_stage qwen_canonical_lens_decision_a1000 \
 bank_registry_event qwen_canonical_lens_decision_a1000
 preserve_registered_outputs \
   p4-qwen-canonical-lens-decision-a1000-dev-v1
+stop_after_stage canonical
 
 printf '%s QUEUE_COMPLETE canonical_decision_registered=true\n' \
   "$(date -u +%FT%TZ)" | tee -a "$QUEUE_LOG"

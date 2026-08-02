@@ -110,6 +110,14 @@ configs, selection-margin contract, prompt-323 influence contract, and
 conditional Q-L2 estimand were committed before A1000 existed; their A1000
 hash stays unbound until registration.
 
+After the registered A1000 hash is bound in the three successor configs, run
+`run_qwen_a1000_postfit_queue.sh`. Its default is the full frozen queue through
+the canonical decision. A reclaim-aware invocation may set
+`JSPACE4_STOP_AFTER` to `structural`, `functional`, `margin`, or `influence`;
+the selected stage is registered, pushed, and locally backed up before the
+queue exits successfully. A later default invocation verifies already
+registered stages and resumes in the same frozen order.
+
 Gemma and OLMo completed on isolated branches and registries, and their full
 ancestry is merged without copying native `gm-*` or `ol-*` events into Phase
 4. The early OLMo service bundle, terminal Gemma methods blocker, and terminal
