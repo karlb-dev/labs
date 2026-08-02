@@ -746,6 +746,18 @@ evidence because the published recipe is only partially specified. Structural
 stability licenses the already-frozen functional successor; it does not yet
 nominate A1000 as canonical.
 
+![Qwen same-corpus structural progression](figures/p4qa02_qwen_structural_progression.png)
+
+As a non-registered engineering synthesis of the three immutable structural
+events, conservative task q50 progresses 0.995223 → 0.997715 → 0.998702 and
+q05 progresses 0.993079 → 0.996838 → 0.998122 over A120--A250,
+A250--A500, and A500--A1000. Raw operator cosine likewise progresses
+0.995854 → 0.997912 → 0.998739. This monotone descriptive pattern strengthens
+the same-corpus operator-convergence reading, but three nested increments do
+not identify a convergence rate or establish sparse-selection, causal, or
+published-recipe invariance. Exact registered source hashes and derived rows
+are in `qwen_structural_progression.json` and `.csv`.
+
 Mode-v2 evidence: `p4-qwen-mode-gate-dev-v2`.
 
 ![Official Qwen mode-v2 baseline gate](figures/p4f21_qwen_mode_model_gate_v2.png)

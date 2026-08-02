@@ -213,8 +213,14 @@ also highly aligned to A500 (conservative task q50/q05
 0.994787/0.992476), whereas A1000 versus the partially specified external
 published lens is only 0.906757/0.835442. The correct interpretation is strong
 same-corpus estimator convergence, not published-recipe interchangeability.
-Both registered figures were visually inspected after copying into the report
-tree; no clipping, missing panel, or mislabeled boundary was observed.
+The development-only cross-event synthesis in
+`figures/p4qa02_qwen_structural_progression.png` shows conservative task
+q50 0.995223 → 0.997715 → 0.998702 and q05
+0.993079 → 0.996838 → 0.998122 across the three registered nested increments.
+This is descriptive progression, not a fitted convergence-rate claim. The
+registered structural figure and both engineering-QA figures were visually
+inspected after copying into the report tree; no clipping, missing panel, or
+mislabeled boundary was observed.
 
 The queue order remains structural → functional → selection margin →
 prompt-323 influence → canonical decision. Near reclaim, the queue may stop
