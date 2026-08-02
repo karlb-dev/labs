@@ -1,4 +1,5 @@
 geometry_evidence_id: p4-bank-b-orthogonal-geometry-dev-v1
+geometry_tier: methods
 evidence_id: p4-bank-b-orthogonal-feasibility-dev-v1
 tier: phase4-development
 slug: bank-b-orthogonal-feasibility
@@ -111,6 +112,8 @@ geometry_gate:
   require_every_unrelated_match_pass: true
   no_item_or_family_dropping: true
   selection_uses_outcomes: false
+  replay_relative_tolerance: 1.0e-4
+  replay_absolute_tolerance: 1.0e-6
 
 endpoints:
   primary_margin: lp(counterfactual canonical alias) - lp(original canonical alias)

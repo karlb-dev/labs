@@ -11,7 +11,8 @@ approval, a freeze commit, or a freeze tag.
 
 The registered module
 `jspace_phase4.experiments.p4_qwen_mode_variance_pilot` remains the frozen
-protocol and pure analyzer. The new, unexecuted producer
+protocol and pure analyzer; it is not a GPU intervention producer. The new,
+unexecuted producer
 `jspace_phase4.experiments.p4_qwen_mode_variance_gpu` now implements the GPU
 path without mutating that methods event. The initial implementation was
 banked at commit `41e23e7`; the review-contract successor has producer and

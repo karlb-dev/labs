@@ -195,16 +195,16 @@ class OrthogonalBridgeAblator:
         self.log.hook_fires[self.phase] += 1
         arm = str(mode["arm"])
         for position in range(limit):
-            ids = tuple(int(value) for value in selected_ids[
-                position][valid[position]].detach().cpu())
+            ids = tuple(sorted(int(value) for value in selected_ids[
+                position][valid[position]].detach().cpu()))
             self.log.positions.append(OrthogonalInterventionRecord(
                 arm=arm, layer=int(layer), phase=self.phase,
                 forward_index=int(self.forward_index), position=position,
                 requested_k=requested_k, selected_ids=ids,
                 selected_rank=int(selected_rank[position]),
                 effective_rank=int(effective_rank[position]),
-                lost_rank=int(selected_rank[position]
-                              - effective_rank[position]),
+                lost_rank=max(0, int(selected_rank[position]
+                                     - effective_rank[position])),
                 removed_norm=float(removed_norm[position]),
                 injection_direction_norm=direction_norm,
                 delivered_injection_norm=float(delivered[position]),
