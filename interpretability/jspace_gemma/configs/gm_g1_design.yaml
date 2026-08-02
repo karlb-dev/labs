@@ -83,19 +83,28 @@ delivery_gate:
   below_gate: unmeasurable
 
 threshold_calibration:
-  status: REQUIRED_BEFORE_GEMMA
+  status: FROZEN_PENDING_POSITIVE_CONTROL_REGISTRATION
   calibration_inputs:
     - olmo_positive_control
     - random_direction_baselines
     - clean_repeat_floor
     - wrong_hook_sentinel
     - smallest_faithful_epsilon
+    - late_identity_anchor
   frozen_threshold_file: repo://interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml
+  threshold_evidence_id: gm-jvp-olmo-positive-control-v1
   gemma_execution_allowed: false
-  tangent_vs_secant: null
-  response_snr: null
-  floor_curvature_partition: null
-  reason: binding addendum requires numeric target thresholds after OLMo calibration and before the first Gemma number
+  tangent_vs_secant:
+    primary_decision_cosine_floor: 0.98
+    primary_decision_relative_error_ceiling: 0.20
+    declared_finite_dose: 0.10
+  response_snr:
+    measurement_floor: 12.0
+    primary_decision_floor: 20.0
+  floor_curvature_partition:
+    intercept_a_ceiling: 0.30
+    curvature_slope_b_floor: 0.15
+  reason: thresholds are frozen from registered OLMo calibration; Gemma remains blocked until the positive-control event is registered
 
 cell_runtime_target_minutes: 10
 finite_response_batch_size: 8

@@ -4,17 +4,29 @@ The prompt bank, Stage 1/2 membership, target checkpoints, source modes,
 direction families, epsilon ladder, backend order, cache policy, and raw-row
 schema are frozen in `configs/gm_g1_design.yaml` before control execution.
 
-Numeric target thresholds are intentionally not frozen here. The binding
-addendum requires them to be calibrated on the in-session OLMo control,
-random directions, clean-repeat floor, wrong-hook sentinel, and smallest
-faithfully delivered epsilon. Until a clean commit adds
-`configs/gm_g1_thresholds_frozen.yaml` and flips
-`gemma_execution_allowed: true`, the target producer must refuse to load
-Gemma weights or emit a Gemma scientific cell.
+Numeric target thresholds are now frozen in
+`configs/gm_g1_thresholds_frozen.yaml` from the registered in-session OLMo
+control, random/radial/tangent directions, clean-repeat and target-dtype
+floor, wrong-hook sentinel, late identity anchors, and smallest measurable
+epsilon. No Gemma weight or target number was opened. The design remains at
+`FROZEN_PENDING_POSITIVE_CONTROL_REGISTRATION` with
+`gemma_execution_allowed: false` until a clean producer reproduces the
+calibration criteria and registers `gm-jvp-olmo-positive-control-v1`.
 
 The delivery thresholds (cosine 0.999 and relative norm error 0.01) come
 directly from the governing plan and are already fixed. No observed Gemma
 number may be used to alter a pass/fail threshold.
+
+The response-SNR measurement floor is 12; primary pass/fail decisions require
+SNR 20. At that decision floor, all 32 L56/L60 single-position
+prompt/layer/direction anchors select epsilon 0.10. The primary tangent gate
+is cosine at least 0.98, forward relative error at most 0.20, and central
+relative error at most 0.10, with at least 90% row passage. The declared
+finite dose is 0.10; 0.20 is an audit. Curvature fits may use SNR 12 to retain
+three radii. Their control-calibrated intercept ceiling is 0.30 and positive
+curvature slope floor is 0.15. These are operational acceptance regions, not
+universal constants. Later J-selected directions must meet the same frozen
+thresholds after exact hash binding; they cannot trigger recalibration.
 
 Pre-control correction, 2026-08-02: the OLMo grid includes L4 as the required
 shallow negative-control layer and L60 as the late identity anchor, in addition

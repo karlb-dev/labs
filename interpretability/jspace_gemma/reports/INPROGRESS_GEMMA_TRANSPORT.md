@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 02:35 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 02:44 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -26,8 +26,10 @@ canonical Drive handoff at
 - Incident registry/report commit:
   `173d6c26b802eed3757e485aca238751479050a5`.
 - Pure finalizer commit: `374f511ef1fffa265631b59865980e184466444e`.
-- Remote Gemma branch: synchronized through the pure finalizer; its successful
-  calibration registry/report boundary is not yet committed.
+- Finalized calibration registry/report commit:
+  `8300ca1df2b50a2c838d79232eb05501b20943c6`.
+- Remote Gemma branch: synchronized through the finalized calibration; the
+  threshold definition/producer is not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -92,6 +94,12 @@ canonical Drive handoff at
   `b0088651fa953d58939e4c509bae779ad2fbaeba92f1bde7d8d4722030ca98ef`;
   finalization manifest SHA-256:
   `b68aba140db58e7f5caa02821dc89b395be64e4bfeaa76b094fa7d53152d608d`.
+- Numeric thresholds are prepared in `gm_g1_thresholds_frozen.yaml`, but the
+  target firewall remains closed pending `gm-jvp-olmo-positive-control-v1`.
+  Measurement SNR is 12; primary decision SNR is 20. The primary epsilon-0.10
+  gate is cosine >=0.98, forward relative error <=0.20, and central relative
+  error <=0.10 with >=90% row passage. All 32 L56/L60 anchors pass. The
+  curvature intercept ceiling is 0.30 and positive slope floor is 0.15.
 
 ## Completed this VM
 
@@ -154,6 +162,9 @@ canonical Drive handoff at
 21. Registered the complete OLMo calibration from the immutable cells. The
     expected shallow-to-late tangent-faithfulness gradient is present, but no
     target threshold or Gemma result has been opened.
+22. Derived numeric gates only from the registered control/random baselines,
+    added prompt-bootstrap and positive-control validation code, and kept
+    `gemma_execution_allowed: false` pending clean event registration.
 
 ## Immutable scientific guardrails
 
@@ -173,9 +184,10 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit/pull/test/push the finalized calibration registry/report boundary.
-2. Derive, test, and register numeric thresholds from the OLMo/random
-   calibration in a separate clean pre-target commit.
+1. Commit/pull/test/push the numeric threshold definition and producer, then
+   run/register `gm-jvp-olmo-positive-control-v1` from that clean commit.
+2. Commit the registry/report boundary and flip Gemma execution to allowed
+   without changing any numeric threshold.
 3. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
    snapshot to local NVMe, then run Gemma Stage 1 with the unchanged harness.
 4. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
@@ -183,10 +195,10 @@ canonical Drive handoff at
 ## Recovery checks and next commands
 
 There is no live producer or GPU allocation. The 56-cell calibration is
-finalized and registered; do not rerun, delete, or rewrite its checkpoint or
-derived outputs. Numeric thresholds are still absent, so Gemma execution
-remains forbidden. The local OLMo snapshot is ephemeral, while all evidence
-and reports are durable in Drive. Inspect:
+finalized and registered; do not rerun, delete, or rewrite it. Numeric
+thresholds are prepared but not registered, so Gemma execution remains
+forbidden. The local OLMo snapshot is ephemeral, while all evidence and
+reports are durable in Drive. Inspect:
 
 ```bash
 git -C /content/labs status --short --branch

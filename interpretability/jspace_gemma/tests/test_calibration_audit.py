@@ -7,6 +7,10 @@ import torch
 from jspace_gemma.calibration_audit import audit_completed_checkpoint
 from jspace_gemma.experiments.gm_exact_transport_gate import _aggregate
 from jspace_gemma.experiments.gm_finalize_olmo_calibration import _parquet_frame
+from jspace_gemma.experiments.gm_freeze_g1_thresholds import (
+    _smallest_measurable,
+    _tangent_pass,
+)
 from jspace_gemma.manifests import file_sha256, object_sha256
 
 
@@ -149,3 +153,49 @@ def test_parquet_frame_preserves_mixed_source_position_type_explicitly():
     )
     assert frame["source_position"].tolist() == ["-1", "all_valid"]
     assert frame["source_position_runtime_type"].tolist() == ["int", "str"]
+
+
+def test_threshold_selector_uses_smallest_delivered_high_snr_row():
+    import pandas as pd
+
+    frame = pd.DataFrame(
+        [
+            {
+                "prompt_id": "p",
+                "source_layer": 60,
+                "direction_id": "d",
+                "perturbation_mode": "single_position",
+                "desired_relative_epsilon": 0.05,
+                "faithful_delivery": True,
+                "response_snr": 10.0,
+                "tangent_cosine": 0.99,
+                "tangent_relative_error": 0.1,
+                "central_tangent_relative_error": 0.05,
+            },
+            {
+                "prompt_id": "p",
+                "source_layer": 60,
+                "direction_id": "d",
+                "perturbation_mode": "single_position",
+                "desired_relative_epsilon": 0.10,
+                "faithful_delivery": True,
+                "response_snr": 25.0,
+                "tangent_cosine": 0.99,
+                "tangent_relative_error": 0.1,
+                "central_tangent_relative_error": 0.05,
+            },
+        ]
+    )
+    selected = _smallest_measurable(
+        frame, layers=[60], mode="single_position", snr_floor=20.0
+    )
+    assert selected["desired_relative_epsilon"].tolist() == [0.10]
+    passed = _tangent_pass(
+        selected,
+        {
+            "tangent_cosine_floor": 0.98,
+            "tangent_relative_error_ceiling": 0.20,
+            "central_tangent_relative_error_ceiling": 0.10,
+        },
+    )
+    assert passed.tolist() == [True]

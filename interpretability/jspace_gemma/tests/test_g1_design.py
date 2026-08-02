@@ -6,7 +6,7 @@ import yaml
 from jspace_gemma.experiments.gm_band_convention import mapped_band
 
 
-def test_g1_design_is_frozen_but_target_thresholds_are_firewalled():
+def test_g1_thresholds_are_numeric_but_target_is_pending_control_registration():
     root = Path(__file__).resolve().parents[1]
     design = yaml.safe_load((root / "configs/gm_g1_design.yaml").read_text())
     assert len(design["stage1_prompt_ids"]) == 4
@@ -20,9 +20,13 @@ def test_g1_design_is_frozen_but_target_thresholds_are_firewalled():
         "below_gate": "unmeasurable",
     }
     calibration = design["threshold_calibration"]
-    assert calibration["status"] == "REQUIRED_BEFORE_GEMMA"
+    assert calibration["status"] == "FROZEN_PENDING_POSITIVE_CONTROL_REGISTRATION"
     assert calibration["gemma_execution_allowed"] is False
-    assert calibration["tangent_vs_secant"] is None
+    assert calibration["tangent_vs_secant"] == {
+        "primary_decision_cosine_floor": 0.98,
+        "primary_decision_relative_error_ceiling": 0.20,
+        "declared_finite_dose": 0.10,
+    }
     assert design["forbidden_exact_backend"] == "finite_difference"
     assert design["batch_alignment"]["finite_baseline_same_batch_shape_and_slot"]
     assert design["batch_alignment"]["exact_jvp_same_batch_shape_and_slot"]
@@ -32,6 +36,21 @@ def test_g1_design_is_frozen_but_target_thresholds_are_firewalled():
         "numeric_floor_is_calibrated_on_olmo": True,
     }
     assert all(design["realized_delivery_adjustment"].values())
+    thresholds = yaml.safe_load(
+        (root / "configs/gm_g1_thresholds_frozen.yaml").read_text()
+    )
+    assert thresholds["status"] == "FROZEN_PRE_GEMMA"
+    assert thresholds["frozen_before_first_gemma_result"] is True
+    assert thresholds["target_model_opened_at_freeze"] is False
+    assert thresholds["response_snr_floor"] == 12.0
+    assert thresholds["response_snr"]["primary_decision_floor"] == 20.0
+    assert thresholds["smallest_faithful_secant"]["tangent_cosine_floor"] == 0.98
+    assert (
+        thresholds["smallest_faithful_secant"]["tangent_relative_error_ceiling"]
+        == 0.20
+    )
+    assert thresholds["finite_dose_gate"]["declared_relative_epsilon"] == 0.10
+    assert thresholds["floor_curvature_partition"]["curvature_slope_b_floor"] == 0.15
 
 
 def test_prompt_bank_membership_and_strata_are_exact():

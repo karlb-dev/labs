@@ -1,9 +1,10 @@
 # Gemma 4 31B transport autopsy — development report
 
 Status: foundation, exact-JVP goldens, paper-band convention, and the complete
-OLMo calibration are registered; numeric target thresholds are not yet
-frozen. All findings in this document are development or methods evidence.
-Nothing here is a Phase 4 confirmatory model cell.
+OLMo calibration are registered; numeric target thresholds are frozen in the
+worktree, with Gemma still blocked pending positive-control registration. All
+findings in this document are development or methods evidence. Nothing here
+is a Phase 4 confirmatory model cell.
 
 ## Scope and non-claims
 
@@ -138,10 +139,33 @@ tangent cosine rises from 0.693 at shallow L4 to 0.991 at L56 and 0.996 at the
 L60 identity anchor; corresponding median relative error falls from 0.723 to
 0.137 and 0.089. Uniform-valid transport is noisier but also improves late.
 These across-radius medians establish a positive-control trend; they are not
-yet the frozen target pass/fail rule. Summary SHA-256:
+themselves the target pass/fail rule. Summary SHA-256:
 `b0088651fa953d58939e4c509bae779ad2fbaeba92f1bde7d8d4722030ca98ef`;
 finalization manifest SHA-256:
 `b68aba140db58e7f5caa02821dc89b395be64e4bfeaa76b094fa7d53152d608d`.
+
+## Frozen pre-target thresholds
+
+The prepared `gm_g1_thresholds_frozen.yaml` uses SNR 12 as the measurement
+floor and SNR 20 for primary pass/fail. The lower floor retains the three
+0.05/0.10/0.20 points needed for the preregistered robust floor/curvature fit;
+the higher floor removes the output-quantization-dominated 0.05 response. All
+32 L56/L60 single-position prompt/layer/direction anchors then select epsilon
+0.10. The primary row gate is tangent cosine at least 0.98, forward relative
+error at most 0.20, and central relative error at most 0.10, with at least 90%
+passage. All 32 primary anchors pass. The measurement-only 0.97/0.25 gate
+passes 30/32 rows; the separately declared uniform-valid 0.80/0.65 secondary
+gate passes 30/31 rows at the 0.10 dose.
+
+The curvature intercept ceiling is 0.30 (late-anchor empirical q95 0.2814),
+and the positive slope floor is 0.15 (the maximum matched-primary control
+slope is 0.1062). The observed shallow-minus-late relative-error contrast is
+0.6303 against a frozen minimum of 0.40; the late-minus-shallow cosine
+contrast is 0.3166 against 0.20. At both L56 and L60, median error increases
+slightly from 0.10 to 0.20 after the SNR floor, satisfying the control's
+finite-radius direction. These rules remain behind
+`FROZEN_PENDING_POSITIVE_CONTROL_REGISTRATION`; no target producer is allowed
+to open Gemma until the clean threshold producer registers the pass.
 
 ## Live evidence ledger
 
@@ -153,7 +177,7 @@ finalization manifest SHA-256:
 | `gm-band-convention-v1` | methods | registered from clean `3a599f7`; no model opened | primary Methods resolve the transferable band to 38--92% (Gemma approximately L23--L55) |
 | `gm-olmo-calibration-finalize-diagnostic-v1` | methods | registered from clean `a196c4f` | immutable incident/inventory record for all 56 cells and the post-compute serialization failure |
 | `gm-jvp-olmo-calibration-v1` | methods | registered; compute `06b2a3d`, finalizer `374f511`, no recompute | 56 cells, 1,568 rows, exact parity pass, calibrated shallow-to-late control trend |
-| `gm-jvp-olmo-positive-control-v1` | methods | blocked on preceding boundaries | threshold calibration |
+| `gm-jvp-olmo-positive-control-v1` | methods | numeric config/producer prepared; target firewall closed | reproduce control criteria and register the pre-Gemma threshold freeze |
 | `gm-jvp-gemma-stage1-v1` | methods | forbidden until thresholds commit | exact target gate |
 
 ## G1 decision table
@@ -200,7 +224,7 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish the finalized calibration registry/report boundary. Then derive
-and freeze the numeric SNR, exact-JVP/secant, and floor-versus-curvature rules
-from the registered OLMo/random baselines in a separate clean pre-target
-commit. Gemma remains forbidden until that threshold artifact is registered.
+Commit/publish the threshold definition and producer, run it from that clean
+commit, and register the positive-control pass. Only then flip the design's
+execution flag without changing a numeric threshold. Gemma remains forbidden
+at this boundary.
