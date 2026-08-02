@@ -11,7 +11,6 @@ from typing import Mapping, Sequence
 
 import torch
 
-from jspace_part2.lib import orthonormal_basis_from_rows
 from jspace_phase3.controls import build_instant_matched_subspace
 
 from .phase_hooks import DelimiterSpec, Phase, classify_token_phases
@@ -28,6 +27,9 @@ class ModeInterventionRecord:
     selected_ids: list[int]
     protected_ids: list[int]
     selected_protected_overlap: int
+    selected_effective_rank: int
+    span_safe_effective_rank: int
+    lost_rank: int
     requested_rank: int
     delivered_rank: int
     target_energy_frac: float
@@ -63,6 +65,12 @@ class ModeInterventionLog:
                 row.requested_rank for row in self.records),
             "delivered_rank_total": sum(
                 row.delivered_rank for row in self.records),
+            "selected_effective_rank_total": sum(
+                row.selected_effective_rank for row in self.records),
+            "span_safe_effective_rank_total": sum(
+                row.span_safe_effective_rank for row in self.records),
+            "lost_rank_total": sum(
+                row.lost_rank for row in self.records),
             "rank_match_exact": all(
                 row.requested_rank == row.delivered_rank
                 for row in self.records),
@@ -159,27 +167,35 @@ class ExactProfileModeAblator:
     def configure(
             self, *, arm: str, dictionaries: Mapping[int, torch.Tensor],
             protection_sets: torch.Tensor, active_position_mask: torch.Tensor,
-            target_phase: str, current_phase: str, forward_index: int,
+            target_phase: str, position_phases: Sequence[str],
+            forward_index: int,
             k: int, evidence_id: str, item_id: str, condition: str,
             base_seed: int, energy_relative_floor: float) -> None:
         if arm not in self.ALLOWED_ARMS:
             raise ValueError(f"unsupported mode intervention arm: {arm}")
         target = Phase(target_phase).value
-        current = Phase(current_phase).value
-        if current != target:
-            self.log.wrong_phase_hook_fires += 1
-            raise RuntimeError(
-                f"intervention configured in wrong phase: target={target}, "
-                f"current={current}")
         if active_position_mask.ndim != 1:
             raise ValueError("active position mask must be one-dimensional")
+        phases = [Phase(value).value for value in position_phases]
+        if len(phases) != int(active_position_mask.numel()):
+            raise ValueError("position-phase ownership length drift")
+        active_cpu = active_position_mask.detach().to(
+            device="cpu", dtype=torch.bool).tolist()
+        wrong = sum(
+            bool(active) and phase != target
+            for active, phase in zip(active_cpu, phases, strict=True))
+        if wrong:
+            self.log.wrong_phase_hook_fires += int(wrong)
+            raise RuntimeError(
+                f"intervention configured in wrong phase at {wrong} active "
+                f"position(s); target={target}")
         self.mode = {
             "arm": arm,
             "dicts": dictionaries,
             "protect_sets": protection_sets,
             "active_position_mask": active_position_mask,
             "target_phase": target,
-            "current_phase": current,
+            "position_phases": phases,
             "forward_index": int(forward_index),
             "k": int(k),
             "evidence_id": evidence_id,
@@ -214,10 +230,7 @@ class ExactProfileModeAblator:
         mode = self.mode
         if mode is None:  # pragma: no cover - hook already guards this
             return hidden
-        phase = str(mode["current_phase"])
-        if phase != mode["target_phase"]:
-            self.log.wrong_phase_hook_fires += 1
-            raise RuntimeError("mode intervention hook crossed phase boundary")
+        phase = str(mode["target_phase"])
         dictionary = mode["dicts"][layer]
         batch, positions, dimension = hidden.shape
         if batch != 1:
@@ -227,6 +240,15 @@ class ExactProfileModeAblator:
         protection = mode["protect_sets"].to(hidden.device, dtype=torch.long)
         if active.shape != (positions,):
             raise ValueError("active-position mask length drift")
+        position_phases = list(mode["position_phases"])
+        if len(position_phases) != positions:
+            raise ValueError("position-phase ownership length drift at hook")
+        wrong = sum(
+            bool(active[position]) and position_phases[position] != phase
+            for position in range(positions))
+        if wrong:
+            self.log.wrong_phase_hook_fires += int(wrong)
+            raise RuntimeError("mode intervention hook crossed phase boundary")
         if protection.ndim == 1:
             protection = protection.unsqueeze(0).expand(positions, -1)
         if protection.shape[0] != positions:
@@ -255,6 +277,7 @@ class ExactProfileModeAblator:
         label_u, label_s, _ = torch.linalg.svd(
             selected.transpose(1, 2), full_matrices=False)
         label_threshold = (label_s[:, :1] * 1e-4).clamp_min(1e-7)
+        label_rank = (label_s > label_threshold).sum(dim=1)
         selected_residual = selected - torch.einsum(
             "tkd,tdp->tkp", selected, protected_basis) @ \
             protected_basis.transpose(1, 2)
@@ -282,6 +305,7 @@ class ExactProfileModeAblator:
                 .detach().cpu().tolist()]
             overlap_count = len(set(selected_ids) & set(protected_ids))
             protected_rank = int(protected_mask[position].sum())
+            selected_rank = int(label_rank[position])
             control_clamped = False
             if mode["arm"] == "span_safe_j":
                 basis = span_basis[position, :, :rank]
@@ -322,6 +346,9 @@ class ExactProfileModeAblator:
                 selected_ids=selected_ids,
                 protected_ids=protected_ids,
                 selected_protected_overlap=overlap_count,
+                selected_effective_rank=selected_rank,
+                span_safe_effective_rank=rank,
+                lost_rank=max(selected_rank - rank, 0),
                 requested_rank=rank,
                 delivered_rank=int(basis.shape[1]),
                 target_energy_frac=target,

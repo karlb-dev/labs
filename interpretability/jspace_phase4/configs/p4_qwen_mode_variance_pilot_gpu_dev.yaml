@@ -1,0 +1,148 @@
+evidence_id: p4-qwen-mode-variance-pilot-dev-v1
+tier: phase4-development
+slug: qwen36-27b-mode-variance-pilot
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+model_snapshot_manifest_uri: repo://interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
+model_snapshot_manifest_sha256: 2ae12ad8e69b6ede7f4e8b3a2df619b48c1d4b2bc9faf06ca93068c1af32a818
+
+registered_protocol:
+  evidence_id: p4-qwen-mode-variance-pilot-protocol-dev-v1
+  config_uri: repo://interpretability/jspace_phase4/configs/p4_qwen_mode_variance_pilot_protocol_dev.yaml
+  config_sha256: 7be4994b89a1d28c6ec8ce094185b19883ce3c4588f36aae6b4715d6181e0720
+  result_uri: repo://interpretability/jspace_phase4/reports/qwen_mode_variance_pilot_protocol_dev_v1.json
+  result_sha256: 1dd9a9f149ba6fa1b4a5c7389d2afc85aa70c17081050106373f8a8b2f2cc067
+
+passing_mode_baseline:
+  evidence_id: p4-qwen-mode-gate-dev-v2
+  config_uri: repo://interpretability/jspace_phase4/configs/p4_qwen_mode_model_gate_v2_dev.yaml
+  config_sha256: 7a99fd7e7000fcd0c895ab5e02375b37820e631db6e1c4ca44acc7d69bfebf24
+  result_path: /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-mode-gate-v2/mode_gate/p4-qwen-mode-gate-dev-v2/mode_gate_result.json
+  result_sha256: ca65fbc206dcae102d0cfe88720f01019b5bbbaf904dbd1d6587067305e8a69c
+
+canonical_lens:
+  decision_evidence_id: p4-qwen-canonical-lens-decision-a1000-dev-v1
+  decision_result_sha256: BIND_REGISTERED_CANONICAL_DECISION_SHA256
+  permitted_branches: [Q-L1, Q-L2]
+  required_canonical_lens: a1000
+  lens_evidence_id: p4-qwen-lens-fit-drawA-n1000-dev-v1
+  lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n1000.pt
+  lens_sha256: BIND_REGISTERED_A1000_SHA256
+  n_prompts: 1000
+
+selection:
+  evidence_id: p4-qwen-multilens-functional-subset-dev-v1
+  manifest_uri: artifact://phase4/config/qwen_multilens_functional_subset/p4-qwen-multilens-functional-subset-dev-v1/subset_manifest.json
+  manifest_sha256: bae4b0c0013513067da8b5ac2d1a6c37e1f0a0e6b1cf3c4c8129789075443d3e
+  payload_sha256: fb227be17dcad06eafd93fc75bddba05cb63c1134f30c99b31da8dcf3d531564
+  subset_key: bridge
+  expected_families: 20
+  expected_facts: 20
+  consumed_phase3_development_only: true
+
+task_banks:
+  - uri: repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
+    sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
+  - uri: repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
+    sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
+
+runtime:
+  packages:
+    torch: 2.11.0+cu128
+    transformers: 5.13.1
+    triton: 3.6.0
+    fla-core: 0.5.2
+    flash-linear-attention: 0.5.2
+  qwen_kernel_modules:
+    chunk_gated_delta_rule: fla.ops.gated_delta_rule.
+    fused_recurrent_gated_delta_rule: fla.ops.gated_delta_rule.
+    FusedRMSNormGated: fla.modules.
+  expected_linear_attention_modules: 48
+  causal_conv1d_required: false
+  expected_source_layers: 63
+  expected_d_model: 5120
+  expected_vocab_size: 248320
+  compute_dtype: bfloat16
+  dictionary_dtype: float16
+  require_cuda: true
+
+generation:
+  mode_order: [thinking_on, thinking_off]
+  phase_order: [final_answer, prefill]
+  arm_order: [matched_control, span_safe_j]
+  cell_order:
+    - thinking_on_final_answer_matched_control
+    - thinking_on_final_answer_span_safe_j
+    - thinking_on_prefill_matched_control
+    - thinking_on_prefill_span_safe_j
+    - thinking_off_final_answer_matched_control
+    - thinking_off_final_answer_span_safe_j
+    - thinking_off_prefill_matched_control
+    - thinking_off_prefill_span_safe_j
+  interaction_coefficients: [1, -1, -1, 1, -1, 1, 1, -1]
+  prompt_variant: composed
+  prompt_instruction: "Think for at most 128 tokens, then close the reasoning block and return only the answer, with no explanation."
+  requested_reasoning_token_cap: 128
+  max_new_tokens: 2048
+  do_sample: false
+  answer_rule: normalized-exact-accepted-alias
+  parse_failure_counts_as_incorrect: true
+  checkpoint_every_rows: 1
+  phase_parser_version: p4-phase-parser-v2
+  phase_ownership: >-
+    Prefill lesions own every rendered prompt position. Final-answer lesions
+    own the hidden position that predicts the first answer piece (the final
+    rendered prompt token in thinking-off or the token completing the
+    reasoning-end delimiter in thinking-on) and every subsequent
+    final-answer predictor position. Reasoning positions are never lesioned.
+
+intervention:
+  band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+  k: 10
+  clean_protect_top_k: 10
+  protect_all_accepted_alias_pieces: true
+  span_safe: true
+  matched_variant: instant_rank_energy_matched
+  matched_seed_namespace: p4-mode-variance-exact-profile-v1
+  matched_seed: 29071
+  energy_relative_floor: 1.0e-6
+  maximum_energy_relative_error: 0.01
+  maximum_protected_cosine: 1.0e-4
+  maximum_wrong_phase_hook_fires: 0
+  minimum_expected_phase_hook_fires_per_row: 1
+  require_zero_selected_protected_overlap: true
+  require_exact_rank_match: true
+
+secondary_answer_lp:
+  enabled: true
+  alias_rule: first_phase3_accepted_alias
+  reduction: sum-token-log-probability
+  generated_context: rendered-prompt-plus-generated-reasoning-through-end-delimiter
+  intervention_replayed_on_fixed_generated_context: true
+
+variance_summary:
+  sample_sd_ddof: 1
+  bootstrap_draws: 20000
+  bootstrap_seed: 20260801
+  bootstrap_upper_quantile: 0.90
+  planning_sd_rule: maximum of sample SD and bootstrap 90% upper bound
+  substantive_sesoi_accuracy_points: 0.20
+  sesoi_source_uri: repo://interpretability/jspace_phase4/preregistration/P4_P2_SESOI_MEMO_DRAFT.md
+  sesoi_source_sha256: d961b09308baa7b395ea8e439959aa1fcdc8dfbe60fe24adb9c9c87082915f5c
+  forbid_pilot_mean_for_sesoi_selection: true
+
+review_contract:
+  engineering_review_uri: repo://interpretability/jspace_phase4/reviews/P4_P2_GPU_PRODUCER_REVIEW.md
+  independent_review_evidence_id: p4-review-qwen-mode-variance-gpu-v1
+  independent_review_output_basename: P4_P2_GPU_INDEPENDENT_REVIEW.json
+  required_verdict: APPROVE_DEVELOPMENT_PILOT
+  reviewer_must_be_independent: true
+  require_one_family_cuda_smoke: true
+
+outputs:
+  figure_stem: p4f31_qwen_mode_variance_pilot
+
+claim_boundary: >-
+  Consumed-development P4-P2 phase-intervention variance calibration only.
+  No row enters a primary, no untouched family is opened, and the signed
+  pilot mean cannot select or revise the prospectively stated 0.20-point
+  SESOI.

@@ -43,7 +43,8 @@ def _configured(arm, hidden, dictionary, protection, active=None):
         arm=arm, dictionaries={0: dictionary},
         protection_sets=protection,
         active_position_mask=active,
-        target_phase="prefill", current_phase="prefill",
+        target_phase="prefill",
+        position_phases=["prefill"] * hidden.shape[1],
         forward_index=0, k=4, evidence_id="p4-test",
         item_id="item", condition="condition", base_seed=17,
         energy_relative_floor=1e-6,
@@ -69,6 +70,13 @@ def test_matched_arm_consumes_exact_j_rank_energy_and_protection_profile():
             j_ablator.log.records, matched_ablator.log.records, strict=True):
         assert matched_record.requested_rank == j_record.requested_rank
         assert matched_record.delivered_rank == j_record.delivered_rank
+        assert matched_record.selected_effective_rank == \
+            j_record.selected_effective_rank
+        assert matched_record.span_safe_effective_rank == \
+            j_record.span_safe_effective_rank
+        assert matched_record.lost_rank == (
+            matched_record.selected_effective_rank
+            - matched_record.span_safe_effective_rank)
         assert matched_record.target_energy_frac == pytest.approx(
             j_record.target_energy_frac, abs=1e-7)
         assert matched_record.delivered_energy_frac == pytest.approx(
@@ -105,7 +113,7 @@ def test_wrong_phase_configuration_is_a_hard_failure():
             arm="span_safe_j", dictionaries={},
             protection_sets=torch.tensor([1]),
             active_position_mask=torch.tensor([True]),
-            target_phase="final_answer", current_phase="reasoning",
+            target_phase="final_answer", position_phases=["reasoning"],
             forward_index=1, k=1, evidence_id="p4-test",
             item_id="item", condition="condition", base_seed=0,
             energy_relative_floor=1e-6,
