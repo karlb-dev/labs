@@ -2,7 +2,7 @@
 
 **LIVE DRAFT — A1000 FIT IN PROGRESS — NOT A FREEZE RECORD**
 
-Last updated: 2026-08-02 18:51 UTC. This document will be finalized after the
+Last updated: 2026-08-02 20:22 UTC. This document will be finalized after the
 current A1000 producer exits and all completed outputs are independently
 rehash-checked. Phase 4 remains development-only. No confirmatory or
 replication intervention outcome may be opened, and this implementation agent
@@ -13,16 +13,16 @@ does not sign independent-review or PI fields.
 Phase 4.3 has reduced the project to one active compute dependency and a
 small, explicit set of governance/durability dependencies. The exact nested
 Qwen draw-A fit is continuing from A500 to A1000 under the unchanged producer.
-The last exact boundary at this draft is A920, checkpoint SHA-256
-`01ca6eab6c5346abdfe8879a77061dac15fa55b83df53bad2afc92ca6ee322c4`.
+The last exact boundary at this draft is A950, checkpoint SHA-256
+`1c32a45106648830ec5b89a853fcb14182d92d552f05725b8d7507281ec9dc01`.
 The fit contract remains
 `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00`.
-A920 is recovery state, not registered scientific evidence.
+A950 is recovery state, not registered scientific evidence.
 
 The expected VM reclaim is approximately 2026-08-02 23:38 UTC. At the
-observed end-to-end rate, the A1000 checkpoint should land near 22:30--22:45
-UTC, with final serialization, hashing, registration, backup, integration,
-and push near 22:50--23:05 UTC. There is not a reliable margin for the full
+observed end-to-end rate, the A1000 checkpoint should land near 22:50 UTC,
+with final serialization, hashing, registration, backup, integration, and
+push near 22:55--23:05 UTC. There is not a reliable margin for the full
 postfit queue. At 23:25 UTC no new long-running stage should be launched.
 
 The isolated preparation branch already ancestry-contains the completed
@@ -32,7 +32,7 @@ squashing into the single `interp_jspace_part2` branch, validated, pulled once
 more, and pushed.
 
 The new fit-diagnostic audit found and corrected an important wording error:
-prompt 323 is not the overall archived maximum. Through n=920, the largest
+prompt 323 is not the overall archived maximum. Through n=950, the largest
 retained finite rows are prompt 616 at 231.101, prompt 233 at 189.182, prompt
 323 at 173.345, prompt 612 at 151.626, and prompt 660 at 113.855. The current
 VM transcript recovers prompts 555--716 that were absent from the repaired
