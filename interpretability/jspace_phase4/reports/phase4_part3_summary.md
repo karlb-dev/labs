@@ -151,7 +151,9 @@ Final integrity review must record:
    exact source coverage and no unclassified omission inside that archive;
    prompts 1--180 are an explicit prior-VM raw-log deficit, while final
    `n_done == next_idx == 1000` proves that every nested-prefix prompt was
-   accepted and that none was silently skipped;
+   accepted and that none was silently skipped; disposition of the distinct
+   archival criterion is documented in
+   `reviews/QWEN_A1000_RAW_DIAGNOSTIC_ARCHIVE_REVIEW_20260802.md`;
 2. all source layers 0–62 and target layer 63;
 3. expected tensor shapes and dtypes, with every tensor finite;
 4. exact nested-corpus, model, runtime, `jlens`, and fit-contract hashes;
@@ -361,7 +363,10 @@ external scientific choice:
 6. decide whether Addendum M1 requires a separately named synthesis registry
    event beyond the existing methods decision record and sentence-6 wording;
    do not fabricate or rush such an event during operational closeout;
-7. provide real independent-review and PI signatures only after the complete
+7. accept the explicit A1000 raw-diagnostic archival deviation or identify a
+   genuinely exact source for prompts 1--180; checkpoint proof must not be
+   mislabeled as recovered terminal text;
+8. provide real independent-review and PI signatures only after the complete
    packet is examined.
 
 This document is a handoff and analysis record, not approval, a freeze commit,
