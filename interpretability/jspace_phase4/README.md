@@ -141,8 +141,12 @@ required JSON/Markdown manifests; a known deficit remains a failed gate.
   `preregistration/FREEZE_GATE_LEDGER_PHASE4.md`
 - Methods decision record: `paper/PHASE4_METHODS_DECISION_RECORD.md`
 - Falsifiable conclusion skeleton: `paper/PAPER_CONCLUSION_SKELETON.md`
-- Compiled handout:
-  `reports/handout/jspace_phase4_development.{tex,pdf}`
+- Compiled handout through the pre-A1000 boundary (regenerate only after the
+  canonical decision): `reports/handout/jspace_phase4_development.{tex,pdf}`
+- Phase 4.3 closeout and exact Phase 4.4 handoff:
+  `reports/phase4_part3_summary.md`
+- Open A1000 raw-diagnostic archival review:
+  `reviews/QWEN_A1000_RAW_DIAGNOSTIC_ARCHIVE_REVIEW_20260802.md`
 - Current durable restart snapshot:
   `reports/INPROGRESS_VM13_20260802.md`
 - Historical VM12 restart ledger:
