@@ -142,15 +142,16 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
-At the 2026-08-02T04:05:57Z recovery checkpoint, all four O2 model events and
+At the 2026-08-02T04:08:35Z recovery checkpoint, all four O2 model events and
 the paired joint event are complete and registered. The live registry therefore
-contains fourteen events and 48 immutable outputs, all of which verify. The
+contains fifteen events and 50 immutable outputs, all of which verify. The
 frozen joint verdict is `broadly_conserved_capacity_recruitment_consistent`;
 OLMo-3.1 32B Instruct remains a sibling endpoint, not a fourth trajectory
 point. The O3 protocol/extractor/aggregate/figure implementation is published,
 39 tests pass, and `ol-geometry-protocol-v1` has frozen 13,319 exact readout
-rows before any new geometry outcome. The live in-progress file says which
-per-model readout inputs have since been registered.
+rows before any new geometry outcome. The Instruct readout input is registered
+and hash-verified; the live in-progress file says which later checkpoint input
+is active.
 
 O3 is staged so a fresh VM never needs four complete 32B snapshots at once.
 After `ol-geometry-protocol-v1` exists, obtain only `config.json`,
