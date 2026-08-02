@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 09:27 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 09:35 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -21,13 +21,13 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router. Atomic checkpoints through n=728 exist as a valid exact pair. Its
+  router. Atomic checkpoints through n=731 exist as a valid exact pair. Its
   first n=716 DriveFS atomic copy failed for local-cache exhaustion; the pair
   was recovered and the unchanged producer subsequently banked n=719 and
-  n=728. Cloud upload remains rate-limited. A temporary recovery-directory
+  n=731. Cloud upload remains rate-limited. A temporary recovery-directory
   bind now prevents redundant 6.6-GB DriveFS cache generations while keeping
   the producer's verified-temporary-copy/atomic-replace path unchanged. The
-  wrapper is live in chunk 728:731. No partial checkpoint is registered
+  wrapper is live in chunk 731:734. No partial checkpoint is registered
   evidence.
 
 ## VM13 live continuation
@@ -42,15 +42,15 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 728 / 1000 |
+| prompts banked | 731 / 1000 |
 | durability | exact local + DriveFS-cache pair; cloud upload pending |
-| checkpoint SHA-256 | `8e461f82e6f7f0ce92172610b7dc933b110dbd433ab27d4a786135909cab71bf` |
-| checkpoint-state SHA-256 | `e01e4c2f02288d28110c3aa3b08fdbb193b21d91e3e7ee5743d08a7ef6e8fd30` |
+| checkpoint SHA-256 | `db950afc474bdb161184212423fe16526b2c512b1ed00f28a6d95d2bf0f71ad2` |
+| checkpoint-state SHA-256 | `cf00ae4f57f8bd0d9ba64ac61f078d660f5a704d8c0c8d08aa75af44132d4808` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| checkpoint sync UTC | 2026-08-02 09:26:07 UTC |
+| checkpoint sync UTC | 2026-08-02 09:34:57 UTC |
 | peak allocated VRAM | 62.846 GB |
-| process state | live; active atomic chunk 728:731; unified session 83477 |
+| process state | live; active atomic chunk 731:734; unified session 83477 |
 
 Prompt 660 is a retained finite heavy-tail row at 113.855, below the earlier
 prompt-323 maximum 173.345; no outcome-dependent trimming or refit occurred.
@@ -97,9 +97,9 @@ bytes nor estimator/config/runtime contracts. The pre-bind Drive recovery
 directory, including n=195/n=198 contract-check files, remains preserved and
 hidden beneath the mount. The unchanged wrapper restarted at clean commit
 `4ea7a9b`, printed `recovered_next_idx: 722` and `resuming from checkpoint:
-722/725 prompts processed`, and is live. Bound syncs at n=725 and n=728 both
-completed and resumed normally without growing another DriveFS checkpoint
-generation. Remove the bind after A1000, republish the final exact recovery
+722/725 prompts processed`, and is live. Bound syncs through n=731 completed
+and resumed normally without growing another DriveFS checkpoint generation.
+Remove the bind after A1000, republish the final exact recovery
 pair, and require a fresh cloud remount/rehash before making any cloud-
 durability claim.
 
@@ -111,8 +111,9 @@ selection-margin, and prompt-323 contracts were committed and pushed at
 `542ed98`. Their A1000 hashes remain explicit placeholders. They may be bound
 only after the registered n=1000 lens exists.
 
-The preparation branch was clean and pushed through incident-record commit
-`c8428a6` before this live update. In addition to the
+The preparation branch now contains remote main's terminal Gemma/OLMo ancestry
+through `aa6663a` via two-parent merge `b0f74d6`; integration maintenance is
+pushed through `82163fb`. In addition to the
 frozen A1000 decision queue, it now contains the complete prospective
 Bank-B answer-direction-orthogonal rescue: outcome-blind geometry, a
 partial-dictionary prompt-only intervention core, atomic fact-level resume,
@@ -136,6 +137,14 @@ explicit. A prospective pre-freeze inventory generator also refuses a clean
 status on known deficits, unreachable commits, namespace leakage, or
 unreviewed temporary/recovery paths. The whole Phase-4 suite passes **262
 tests**.
+
+The combined OLMo-lineage and Phase-4 suites pass **320 tests** with one
+intentional skip after that ancestry merge. The OLMo Bank-W compatibility
+reader now resolves the exact registered Phase-4 registry byte prefix while
+accepting only valid JSONL appended after it. The frozen side config and its
+registered hash are unchanged; a regression test proves mutation within the
+prefix is still rejected. This is integration maintenance for an append-only
+mainline registry, not a rewrite of side-track evidence.
 
 Preparation commit `a0a7b8f` also makes source-worktree repo outputs portable
 at admission: exact merged bytes are rehashed in the current worktree and
