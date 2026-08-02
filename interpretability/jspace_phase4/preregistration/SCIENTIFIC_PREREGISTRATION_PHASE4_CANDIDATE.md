@@ -298,9 +298,10 @@ accepted-alias accuracy. The alternative is `I_P4P2 > 0`; the unit of
 inference is canonical family. Thinking-on reasoning-phase effects and the
 full accepted-alias margin on generated context are named secondaries. A
 fresh v2 model-backed development parser/correctness pass has passed. The
-canonical lens, executable intervention producer, variance pilot,
-canonical-family split, exact power execution, and independent review remain
-required before freeze.
+canonical-lens binding, independent producer review, CUDA smoke, variance
+pilot, exact power execution, untouched-family bank/split review, and PI
+approval remain required before freeze; the prospective producer itself is
+implemented but unrun.
 
 Registered methods evidence `p4-qwen-mode-design-feasibility-dev-v1`
 expresses the primary as eight binary accuracy cells with coefficients
