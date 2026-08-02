@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 05:18 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 05:35 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -20,8 +20,8 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router and is live. Atomic checkpoints through n=656 have been mirrored;
-  the producer is currently inside chunk 656:659. No partial checkpoint is
+  router and is live. Atomic checkpoints through n=662 have been mirrored;
+  the producer is currently inside chunk 662:665. No partial checkpoint is
   registered evidence.
 
 ## VM13 live continuation
@@ -36,14 +36,17 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 656 / 1000 |
-| checkpoint SHA-256 | `2b3efa24ac1959ca6261911491a473f70d001b00d13ec443e68fdc2c56a16ce1` |
-| checkpoint-state SHA-256 | `c1774b5dc767b70db7387aab06f64e4ad3b1e94e79a5136bcaa69b700e8442a9` |
+| prompts banked | 662 / 1000 |
+| checkpoint SHA-256 | `e64532ad7b4ec8a3c536ec58950045dddf051d8f7fd743168dbe5978e6d25c98` |
+| checkpoint-state SHA-256 | `5a78d67f1b46f7b914199c7f9526ceff87ded34d2c479458100775e3ccde8d93` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| synced UTC | 2026-08-02 05:16:03 UTC |
+| synced UTC | 2026-08-02 05:34:03 UTC |
 | peak allocated VRAM | 62.833 GB |
-| process state | live; active atomic chunk 656:659; unified session 86346 |
+| process state | live; active atomic chunk 662:665; unified session 86346 |
+
+Prompt 660 is a retained finite heavy-tail row at 113.855, below the earlier
+prompt-323 maximum 173.345; no outcome-dependent trimming or refit occurred.
 
 Prospective A1000 successor preparation is isolated from the live clean
 worktree on branch `codex/phase4-a1000-prep-20260802`. Before any A1000
@@ -53,7 +56,7 @@ selection-margin, and prompt-323 contracts were committed and pushed at
 `542ed98`. Their A1000 hashes remain explicit placeholders. They may be bound
 only after the registered n=1000 lens exists.
 
-The preparation branch is clean and pushed at `e0d0d31`. In addition to the
+The preparation branch is clean and pushed at `a0a7b8f`. In addition to the
 frozen A1000 decision queue, it now contains the complete prospective
 Bank-B answer-direction-orthogonal rescue: outcome-blind geometry, a
 partial-dictionary prompt-only intervention core, atomic fact-level resume,
@@ -75,8 +78,17 @@ The required sixth conclusion-skeleton sentence, candidate freeze-gate ledger,
 and methods decision record are now assembled with every unresolved gate
 explicit. A prospective pre-freeze inventory generator also refuses a clean
 status on known deficits, unreachable commits, namespace leakage, or
-unreviewed temporary/recovery paths. The whole Phase-4 suite passes **261
+unreviewed temporary/recovery paths. The whole Phase-4 suite passes **262
 tests**.
+
+Preparation commit `a0a7b8f` also makes source-worktree repo outputs portable
+at admission: exact merged bytes are rehashed in the current worktree and
+registered by repo-relative path, while external Drive artifacts remain
+absolute. Disposable clean-worktree rehearsals completed without retaining
+events: OLMo admitted 5 selected / 11 selected / 14 durability outputs,
+including its immutable registry snapshot; Gemma admitted 5 / 21 / 24, with
+its source config materialized portably. The fresh imported Bank-W preflight
+still returns 16/20 and the frozen blocked disposition.
 
 The OLMo capability boundary is now integrated into the preparation branch
 with ancestry preserved through source commit `d76e937`. Both OLMo models
@@ -105,10 +117,14 @@ operator continuity is high, but mapped-token continuity fails and sparse
 selection diverges at the first released Think transition. This cannot alter
 the already-failed Phase-4 O1 service decision, does not identify a causal
 training effect, and does not license Bank-W intervention. Through source
-commit `5551e1e`, it has also added a methods-only independent reconstruction
-sentinel. Its exact 61-GiB OLMo-3.1 Think snapshot is staged and the clean-
-process reconstruction remains pending; the OLMo final paper and terminal
-import bundle are still pending.
+commit `12f21ad`, it has also added and repaired a methods-only independent
+reconstruction sentinel. Its exact 61-GiB OLMo-3.1 Think snapshot is staged.
+The first clean attempt verified all fourteen shards then stopped on OOM before
+any result, figure directory, or event; a one-candidate diagnostic was rejected
+for BF16 score drift. The frozen eight-candidate replay is restored under
+`torch.no_grad()` after an exact-score diagnostic at 60.42 GiB, and its clean
+retry remains pending. The OLMo final paper and terminal import bundle are
+still pending.
 
 The same OLMo branch registered semantic checkpoint inventory v2 at `2afb010`:
 inventory v1 remains immutable but is explicitly superseded after identical
