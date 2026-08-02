@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 00:50 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 00:52 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -11,8 +11,9 @@ canonical Drive handoff at
 - Exact fork: `3b041735d8b842de46a9c0a474fccd0c44e0841a`.
 - Tested scaffold commit: `b49af6d1c285a300be9007461b695d22b90d5930`.
 - Restart-boundary commit: `11501b804690559fabe571e941a95018eefbe19b`.
-- Remote Gemma branch: created and synchronized at the restart boundary;
-  the diagnostic/repair described below is not yet pushed.
+- Diagnostic/repair commit: `5b486fed0e93a6b87139430b3ac65f225470bac8`.
+- Remote Gemma branch: synchronized at the diagnostic/repair commit; the
+  successful foundation registry rows are not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -24,8 +25,8 @@ canonical Drive handoff at
 - No Gemma or OLMo model producer is running. No scientific Gemma target
   outcome has been opened.
 - The isolated package scaffold is committed. Its 22-test conformance suite
-  passes, including analytic,
-  nonlinear tiny-transformer, and explicit Hugging Face suffix/JVP tests.
+  passes, including analytic, nonlinear tiny-transformer, and explicit Hugging
+  Face Gemma/OLMo suffix/JVP tests.
 - The historical Drive OLMo snapshot has 11/14 complete weight shards. Shards
   6, 9, and 14 are broken symlinks with stale `.incomplete` blobs; control
   staging must reuse verified complete blobs and download/verify the missing
@@ -35,7 +36,12 @@ canonical Drive handoff at
   later shared commit `4ea7a9b`, not as a worktree file in the exact fork.
   `gm-foundation-diagnostic-v1` is registered with `scientific_result=false`.
   The producer now pins the source by commit/blob/SHA-256; the repair and
-  diagnostic registry row await the next commit.
+  diagnostic registry row are committed and pushed.
+- `gm-foundation-v1` now passes from clean commit `5b486fe`. Its primary
+  manifest is `manifests/gm_foundation_v1.json` in the dedicated Drive root,
+  SHA-256 `df9e85cc2f3afcb05a4881db18c5a4e17cc83323906577a99b7fae6fdcc06304`.
+  Nine historical imports are registered; 22 tests and all 15 live output
+  checks pass. No model target result was produced.
 
 ## Completed this VM
 
@@ -63,6 +69,9 @@ canonical Drive handoff at
 10. Registered the failed foundation pre-result attempt and repaired the
     worktree-vs-Git-object assumption. The full 22-test suite and live-output
     verifier pass after the repair.
+11. Registered `gm-foundation-v1` plus nine read-only historical imports,
+    exact source blobs, remote model inventories, architecture/runtime locks,
+    and the development/methods claim firewall.
 
 ## Immutable scientific guardrails
 
@@ -82,29 +91,26 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit the registered foundation diagnostic and Git-object repair; fetch,
+1. Commit the successful foundation/import registry boundary; fetch,
    pull/reconcile, test, and push.
-2. From that clean commit, rerun/register `gm-foundation-v1`, commit, pull,
-   test, and push the evidence boundary.
-3. From the next clean commit, run analytic and tiny-transformer JVP goldens;
+2. From the next clean commit, run analytic and tiny-transformer JVP goldens;
    register
    `gm-jvp-goldens-v1` only from a clean commit.
-4. Stage the exact historical OLMo positive-control checkpoint
+3. Stage the exact historical OLMo positive-control checkpoint
    `allenai/Olmo-3-32B-Think@ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7`
    from Drive to local NVMe, rehash its snapshot inventory, and run the G1
    control.
-5. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
-6. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
+4. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
+5. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
    snapshot to local NVMe, then run Gemma Stage 1 with the unchanged harness.
-7. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
+6. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
 
 ## Recovery checks and next commands
 
 There is currently no live producer, lock owner, or partial scientific
-checkpoint. A diagnostic registry row and its repair are currently
-uncommitted; no producer is live. If reclaimed before the next push, the
-canonical Drive diagnostic is durable and this paragraph identifies the
-required repair. On a new VM, run the bootstrap in
+checkpoint. The successful foundation registry rows and report update are
+currently uncommitted; no producer is live. The full foundation artifacts are
+durable in Drive. On a new VM, run the bootstrap in
 `RESUME_GEMMA_TRANSPORT.md`, then inspect:
 
 ```bash

@@ -1,6 +1,6 @@
 # Gemma 4 31B transport autopsy — development report
 
-Status: infrastructure/foundation in progress. All findings in this document
+Status: foundation registered; exact-JVP goldens are next. All findings in this document
 are development or methods evidence. Nothing here is a Phase 4 confirmatory
 model cell.
 
@@ -20,7 +20,7 @@ prior registered artifacts by hash but does not edit either concurrent
 package, run root, or registry. The completed side tracks join the Part-2
 branch only at the Phase 5 handoff.
 
-## Historical evidence (read-only; import audit pending registration)
+## Historical evidence (read-only; immutable import audit registered)
 
 - The 120-prompt Gemma lens is identified at L30 and later, but not at L22.
 - Mid-band accepted-answer ranks remain opaque; the fitted J readout does not
@@ -30,6 +30,11 @@ branch only at the Phase 5 handoff.
   faithful late.
 - These results motivate G1 but do not substitute for an exact prompt-specific
   autodiff JVP.
+
+All nine required historical result artifacts, including the Gemma deep-band
+result, are now imported in the isolated registry. Their source registry,
+outputs, and exact historical producer Git blobs pass SHA-256 verification.
+No historical artifact was copied, edited, or superseded.
 
 ## Architecture audit
 
@@ -60,7 +65,7 @@ the first Gemma number.
 | Evidence | Tier | State | Result |
 |---|---|---|---|
 | `gm-foundation-diagnostic-v1` | methods | registered | no scientific result; the first foundation attempt found that the governing TeX is a Git object in a later shared commit, not a file in the exact side fork |
-| `gm-foundation-v1` | methods | pending | package/import/runtime boundary |
+| `gm-foundation-v1` | methods | registered | 22 tests pass; exact architecture/runtime/governance/package inventories and nine historical imports verified |
 | `gm-jvp-goldens-v1` | methods | pending | analytic and tiny-transformer exact-JVP tests |
 | `gm-jvp-olmo-positive-control-v1` | methods | blocked on preceding boundaries | threshold calibration |
 | `gm-jvp-gemma-stage1-v1` | methods | forbidden until thresholds commit | exact target gate |
@@ -80,6 +85,13 @@ the first Gemma number.
 
 No current-study model result has been produced.
 
+The foundation inventory resolves the exact Gemma revision to two remote
+weight shards; zero are staged locally. The historical OLMo Drive cache has
+11 of 14 expected weight shards complete by content-address and size. Shards
+6, 9, and 14 remain broken/stale partials. The cache is explicitly marked
+not load-ready; local staging must fill those files and fully hash all 14
+before the positive-control model can open.
+
 ## Infrastructure incidents
 
 The first clean foundation attempt at commit `11501b8` stopped before any
@@ -92,6 +104,6 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Register foundation/import provenance, pass the independent exact-JVP
-goldens, then stage and run OLMo. Update this report and the Drive handoff at
-every evidence commit.
+Commit/publish the foundation registry boundary, then pass and register the
+independent exact-JVP goldens. Only then stage and run OLMo. Update this report
+and the Drive handoff at every evidence commit.
