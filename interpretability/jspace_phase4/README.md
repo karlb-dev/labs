@@ -90,7 +90,10 @@ See the handoffs for full paths and hashes; do not fabricate the remaining
 bytes or edit the append-only registry. Candidate 0.11 adds a hash-gated A120
 capacity recovery which may run only after A1000 releases the GPU and only
 installs a bit-exact match. `state.json` remains an external-review/PI
-governance decision if no exact backup can be found.
+governance decision if no exact backup can be found. The mounted tree, live
+Drive/trash and revision surfaces, and preserved pre-incident DriveFS metadata
+were searched without finding a target cloud ID or exact bytes; see
+`reviews/A120_STATE_EXACT_COPY_SEARCH_20260802.md`.
 
 The n=250 convergence, retained prompt-112 influence, functional Branch-B
 gate, A500 fit and successor gates, passing mode-v2 baseline, Qwen Bank-W
@@ -107,11 +110,15 @@ configs, selection-margin contract, prompt-323 influence contract, and
 conditional Q-L2 estimand were committed before A1000 existed; their A1000
 hash stays unbound until registration.
 
-Gemma and OLMo execute on isolated branches and registries. Their results can
-enter mainline only through `protocol/SIDE_TRACK_IMPORT_BUNDLE_CONTRACT.md`.
-The current normalized-bundle and terminal-release boundaries are recorded in
-`manifests/parallel_import_inventory.md`; a validated bundle is not registered
-Phase 4 evidence until its single `p4-import-*` event lands on mainline.
+Gemma and OLMo completed on isolated branches and registries, and their full
+ancestry is merged without copying native `gm-*` or `ol-*` events into Phase
+4. The early OLMo service bundle, terminal Gemma methods blocker, and terminal
+OLMo methods release are strictly normalized and queued behind A1000 under
+`protocol/SIDE_TRACK_IMPORT_BUNDLE_CONTRACT.md`. Their exact boundaries are
+recorded in `manifests/parallel_import_inventory.md`; a validated bundle is
+not registered Phase 4 evidence until its single `p4-import-*` event lands on
+mainline. `run_phase4_post_a1000_import_queue.sh` enforces the prescribed
+admission and joint-replay order after the canonical decision.
 Whole-registry release requires the two-pass procedure in
 `protocol/DRIVEFS_DURABILITY_PLAN.md`; known deficits remain failures.
 After model writers stop and the registry is final, generate the review
