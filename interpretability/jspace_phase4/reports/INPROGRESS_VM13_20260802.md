@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 09:44 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 09:53 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -21,13 +21,13 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router. Atomic checkpoints through n=734 exist as a valid exact pair. Its
+  router. Atomic checkpoints through n=737 exist as a valid exact pair. Its
   first n=716 DriveFS atomic copy failed for local-cache exhaustion; the pair
   was recovered and the unchanged producer subsequently banked n=719 and
-  n=734. Cloud upload remains rate-limited. A temporary recovery-directory
+  n=737. Cloud upload remains rate-limited. A temporary recovery-directory
   bind now prevents redundant 6.6-GB DriveFS cache generations while keeping
   the producer's verified-temporary-copy/atomic-replace path unchanged. The
-  wrapper is live in chunk 734:737. No partial checkpoint is registered
+  wrapper is live in chunk 737:740. No partial checkpoint is registered
   evidence.
 
 ## VM13 live continuation
@@ -42,15 +42,15 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 734 / 1000 |
+| prompts banked | 737 / 1000 |
 | durability | exact local + DriveFS-cache pair; cloud upload pending |
-| checkpoint SHA-256 | `f9d069ef61d855e2b16f4f69920085eeb7089f1c2e5cdcf2a581a5289d812017` |
-| checkpoint-state SHA-256 | `241b8c71214b39baf07ee356393c3caaa7fe7c623c6131d8b3302ff310c7155f` |
+| checkpoint SHA-256 | `dfb07bc9516aa2e203ae4dc870c5fef5855e2d01c3e99e8d6b1f34c9db63ff47` |
+| checkpoint-state SHA-256 | `e0eef0e73b2718b4cdc52e135e41a710d48111091f206c592422ca856f22cca6` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| checkpoint sync UTC | 2026-08-02 09:43:45 UTC |
+| checkpoint sync UTC | 2026-08-02 09:52:36 UTC |
 | peak allocated VRAM | 62.846 GB |
-| process state | live; active atomic chunk 734:737; unified session 83477 |
+| process state | live; active atomic chunk 737:740; unified session 83477 |
 
 Prompt 660 is a retained finite heavy-tail row at 113.855, below the earlier
 prompt-323 maximum 173.345; no outcome-dependent trimming or refit occurred.
@@ -97,7 +97,7 @@ bytes nor estimator/config/runtime contracts. The pre-bind Drive recovery
 directory, including n=195/n=198 contract-check files, remains preserved and
 hidden beneath the mount. The unchanged wrapper restarted at clean commit
 `4ea7a9b`, printed `recovered_next_idx: 722` and `resuming from checkpoint:
-722/725 prompts processed`, and is live. Bound syncs through n=734 completed
+722/725 prompts processed`, and is live. Bound syncs through n=737 completed
 and resumed normally without growing another DriveFS checkpoint generation.
 Remove the bind after A1000, republish the final exact recovery
 pair, and require a fresh cloud remount/rehash before making any cloud-
@@ -138,8 +138,8 @@ status on known deficits, unreachable commits, namespace leakage, or
 unreviewed temporary/recovery paths. The whole Phase-4 suite passes **262
 tests**.
 
-The combined OLMo-lineage and Phase-4 suites pass **323 tests** after the
-terminal import normalization. The OLMo Bank-W compatibility
+The combined OLMo-lineage and Phase-4 suites pass **327 tests** after the
+terminal import normalization and admission-queue checks. The OLMo Bank-W compatibility
 reader now resolves the exact registered Phase-4 registry byte prefix while
 accepting only valid JSONL appended after it. The frozen side config and its
 registered hash are unchanged; a regression test proves mutation within the
@@ -154,6 +154,14 @@ events: OLMo admitted 5 selected / 11 selected / 14 durability outputs,
 including its immutable registry snapshot; Gemma admitted 5 / 21 / 24, with
 its source config materialized portably. The fresh imported Bank-W preflight
 still returns 16/20 and the frozen blocked disposition.
+
+Preparation commit `b912e37` adds a resume-safe post-A1000 admission queue. It
+requires the complete six-event A1000 boundary, refuses dirty/non-mainline
+execution and native `ol-*`/`gm-*` leakage, pulls before every push, and banks
+early OLMo capability, the mainline 16/20 joint replay, terminal Gemma, and
+terminal OLMo in that order. It also preserves every registered output set
+under the local content-backup root and freshly validates existing events on
+restart; it cannot run a lens-dependent pilot or open an intervention.
 
 The OLMo capability boundary is now integrated into the preparation branch
 with ancestry preserved through source commit `d76e937`. Both OLMo models
