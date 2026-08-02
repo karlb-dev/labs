@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:36:28Z
+Last updated: 2026-08-02T04:42:16Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -21,13 +21,15 @@ live in Drive under `olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
 - Active model job: none; GPU memory is free. O3 and its five figure pairs are
-  durable. A methods-only official 32B checkpoint-inventory producer and four
-  tests are prepared; publishing this outcome-blind source is the current
-  action. No inventory event or stage-model outcome has been opened yet.
+  durable. The official 32B checkpoint inventory v1 is registered. Its
+  byte-identity tokenizer gate conservatively routed H5 to stated-unresolvable
+  because the official Think-SFT tokenizer JSON has a different file hash.
+  A read-only semantic audit found the same 100,278 token-ID mapping and
+  identical encodings on all 200 frozen fitting texts plus seven edge cases;
+  a transparent v2 semantic-compatibility supersession is the current action.
 - Last registered native evidence:
-  `ol-geometry-figures-dev-v1` (development), created at
-  2026-08-02T04:26:33Z from clean commit `cd042fc`. Its manifest and ten figure
-  outputs verify.
+  `ol-checkpoint-inventory-v1` (methods), created at
+  2026-08-02T04:38:55Z from clean commit `4bbdc74`. Its two outputs verify.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
@@ -35,8 +37,19 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and twenty live evidence events with 71 immutable outputs
-verify cleanly; 39 package tests pass. No model job is active.
+foundation manifests and twenty-one live evidence events with 73 immutable
+outputs verify cleanly; 43 package tests pass. No model job is active.
+
+The first official checkpoint inventory event is intentionally preserved as
+`ol-checkpoint-inventory-v1`. It checks eight exact official revisions and
+records complete 32B architecture and LFS weight manifests, but its initial
+within-path compatibility predicate required byte-identical `tokenizer.json`
+files. That is stricter than the plan's semantic-compatibility requirement.
+The Think-SFT file uses string-form BPE merges where the other Think files use
+pair-form merges; full token IDs are identical and a 207-text encoding audit
+found zero differences. The next source checkpoint must add that audit to the
+producer, register a unique v2 result, and then append an explicit supersession
+event. Never overwrite either v1 output.
 
 The O3 implementation uses only exact same-corpus lenses plus small,
 hash-pinned model readout extracts. The frozen row population contains a

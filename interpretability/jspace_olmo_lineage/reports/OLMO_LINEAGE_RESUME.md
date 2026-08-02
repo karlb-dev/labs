@@ -142,9 +142,9 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
-At the 2026-08-02T04:26:33Z recovery checkpoint, all four O2 model events and
+At the 2026-08-02T04:38:55Z evidence checkpoint, all four O2 model events and
 the paired joint event are complete and registered. The live registry therefore
-contains twenty events and 71 immutable outputs, all of which verify. The
+contains twenty-one events and 73 immutable outputs, all of which verify. The
 frozen joint verdict is `broadly_conserved_capacity_recruitment_consistent`;
 OLMo-3.1 32B Instruct remains a sibling endpoint, not a fourth trajectory
 point. The O3 protocol/extractor/aggregate/figure implementation is published,
@@ -153,7 +153,7 @@ rows before any new geometry outcome. All four frozen readout inputs and the
 four-checkpoint aggregate are registered and hash-verified. The O3 router
 verdict is `dictionary-formation-pattern`; five PNG/PDF figure pairs and their
 manifest are also registered. The live in-progress file identifies the pending
-figure publication/paper boundary.
+checkpoint-inventory semantic-correction boundary.
 
 O3 is staged so a fresh VM never needs four complete 32B snapshots at once.
 After `ol-geometry-protocol-v1` exists, obtain only `config.json`,
@@ -176,7 +176,7 @@ compatible replay because O2 did not retain the candidate-correlation log.
 Causal core/fringe dose remains blocked by the O1 service gate.
 
 The official intermediate-stage inventory is metadata-only and downloads no
-weights. Run it only from a clean published tree:
+weights. Version 1 has already been run and is immutable:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
@@ -186,6 +186,13 @@ python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
 It freezes exact official repository commits, small-file hashes, tokenizer and
 architecture compatibility, weight-shard LFS manifests, post-training refs,
 and the H5 queue decision. It does not itself authorize or run a stage wedge.
+Its conservative byte-identity tokenizer predicate returned stated-unresolvable
+because Think-SFT uses a different JSON serialization. Do not rerun or
+overwrite v1. A read-only audit found an identical 100,278-entry token-ID map
+and identical encodings on the complete 200-text frozen fitting corpus plus
+seven edge cases. Resume by publishing the semantic-compatibility v2 source,
+running v2 from that clean commit, and appending an explicit v1-to-v2
+supersession event. Keep BOS/chat-template differences visible in the report.
 
 The model command is:
 
