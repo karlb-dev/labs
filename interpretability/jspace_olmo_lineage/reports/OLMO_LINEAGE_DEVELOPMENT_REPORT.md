@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T00:46:00Z
+Last updated: 2026-08-02T00:47:57Z
 
 Status: active, foundation complete. No native OLMo-lineage model result has
 yet been registered. This report will be updated after every material gate or
@@ -123,7 +123,10 @@ support is at least 20 families.
 
 ### Results
 
-Pending. The isolated O1 producer and config pass 19 package tests, including
+Pending model outcomes. `ol-bank-w-capability-protocol-v1` was frozen before
+either OLMo baseline was opened, from clean commit `5e719c66321428a08d54`.
+Its Drive manifest SHA-256 is `95db44f86f7d...c7dbda8dedc`. The isolated O1
+producer and config pass 19 package tests, including
 exact equality to the registered Phase 4 selection, answer/scoring contract,
 capability guard, model order, tokenizer revisions, and answer token IDs. The
 compatibility boundary directly imports the three hash-pinned Phase 4 source
@@ -197,7 +200,8 @@ operative plan authorizes expansion.
 | 2026-08-02 | Pre-foundation scaffold | Package, prospective predictions, import pins, recovery plan, and reports committed at `e01959e`; 13 tests passed | GitHub |
 | 2026-08-02 | Foundation refusal | Import gate detected stale preregistration hash after whitespace normalization; no evidence/output file was created; hash corrected prospectively | Git worktree; empty OLMo Drive directories |
 | 2026-08-02 | `ol-foundation-v1` | Frozen import boundary, environment, isolation, preregistration, and recovery contract; 14 tests and CUDA gate passed | Git commit `dc5f623`; four immutable Drive manifests |
-| 2026-08-02 | O1 pre-outcome implementation | Exact Phase 4 compatibility wrapper, two-model config, finite/no-drop gates, resumable runner, and pull-before-push staging workflow; 19 tests passed; no model outcome opened | Git worktree pending publication |
+| 2026-08-02 | O1 pre-outcome implementation | Exact Phase 4 compatibility wrapper, two-model config, finite/no-drop gates, resumable runner, and pull-before-push staging workflow; 19 tests passed; no model outcome opened | Git commit `5e719c6`, pushed |
+| 2026-08-02 | `ol-bank-w-capability-protocol-v1` | Outcome-blind side protocol frozen; source Phase 4 fields and three compatibility module paths/hashes exact; 384 rows/model; no model or intervention outcome opened | Git commit `5e719c6`; Drive manifest `95db44f...` |
 
 ## Current limitations and claim boundary
 
