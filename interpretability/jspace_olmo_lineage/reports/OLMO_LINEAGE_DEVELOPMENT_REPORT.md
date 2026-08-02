@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T04:26:33Z
+Last updated: 2026-08-02T04:36:28Z
 
 Status: active; O1, O2, and O3 are complete through the registered geometry
 tables, and the early Phase 4 bundle is emitted. Both native OLMo-lineage
@@ -506,6 +506,13 @@ bytes, SHA-256 `1bb73432...1d9c`; it records all ten hashes and the imported
 Bank-S table hash `3a0e7a96...420f`. Visual inspection found no clipped labels
 or incorrect temporal placement of the Instruct sibling.
 
+The plan-mandated official checkpoint inventory is the next methods boundary.
+An outcome-blind producer now checks exact official commits, declared ancestry,
+the 32B tensor contract, within-path tokenizer identity, weight-shard LFS
+availability, and released post-training refs without downloading weights.
+Four unit tests cover strict contract and no-substitution routing. No inventory
+finding or intermediate-model outcome is registered at this source checkpoint.
+
 ## O4: development mechanism grid
 
 The primary arm contrast is
@@ -565,6 +572,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-geometry-readout-olmo31-think-v1` | Completed the four-input set with the frozen rows plus final norm from exact OLMo-3.1 Think revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `e484fe9`; tensor `1d9932d1...`; manifest `20f7c433...` |
 | 2026-08-02 | `ol-geometry-joint-dev-v1` | Frozen router returns `dictionary-formation-pattern`: coarse operator continuity passes, token continuity fails, sparse-selection divergence is flagged, Base-to-3.0 mapped movement 0.32556 greatly exceeds 3.0-to-3.1 movement 0.00604; Instruct late-shift flag false; no causal outcome opened | Source commit `5b1fe07`; JSON `c09d8e73...`; layers `8692836d...`; selection `c2826b14...`; readout `93fd2108...` |
 | 2026-08-02 | `ol-geometry-figures-dev-v1` | Registered five PNG/PDF views from registered tables only; Figure 4 uses clearly labeled imported Bank-S context and preserves the Bank-W block; visual inspection passes | Source commit `cd042fc`; manifest `1bb73432...`; ten registered figure files |
+| 2026-08-02 | Checkpoint-inventory pre-evidence implementation | Exact-revision official-Hub metadata producer, architecture/tokenizer/weight-manifest checks, no-substitution router, and four tests prepared; no availability or model outcome opened | OLMo namespace only; 43 package tests pass |
 
 ## Current limitations and claim boundary
 
