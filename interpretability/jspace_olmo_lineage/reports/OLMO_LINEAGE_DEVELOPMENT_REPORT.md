@@ -420,6 +420,11 @@ six tensor-contract and finiteness checks pass. Its 136,513,840-byte tensor is
 SHA-256 `56ef4f98...cfb1a`; its manifest is `07f98b2b...cccf`. This is also a
 methods-only input and does not compare checkpoints.
 
+The third staged input, `ol-geometry-readout-olmo3-think-v1`, extracts the
+frozen rows and final norm from exact OLMo-3 Think revision `ebd033e4...`; all
+checks pass. Its tensor is SHA-256 `ff580ed4...5b418` and its manifest is
+`ecbd3c60...9e661`. Like the other extracts, it contains no comparison result.
+
 ## O4: development mechanism grid
 
 The primary arm contrast is
@@ -475,6 +480,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-geometry-protocol-v1` | Froze 1,024 stable rows, 1,123 task IDs, the complete 11,517 selected-ID union, and 13,319 total extracted rows; exact score-gap and blocked causal fields remain explicit nulls; no geometry outcome opened | Source commit `04a27a4`; protocol `91410471...`; row manifest `86222e65...` |
 | 2026-08-02 | `ol-geometry-readout-olmo31-instruct-v1` | Extracted 13,319 frozen unembedding rows plus final norm from exact Instruct revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `8c86909`; tensor `638d2603...`; manifest `58952cf9...` |
 | 2026-08-02 | `ol-geometry-readout-olmo3-base-v1` | Extracted the same 13,319 frozen unembedding rows plus final norm from exact Base revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `64f377f`; tensor `56ef4f98...`; manifest `07f98b2b...` |
+| 2026-08-02 | `ol-geometry-readout-olmo3-think-v1` | Extracted the frozen rows plus final norm from exact OLMo-3 Think revision; all tensor-contract and finiteness checks pass; no comparison outcome opened | Source commit `49a1dfd`; tensor `ff580ed4...`; manifest `ecbd3c60...` |
 
 ## Current limitations and claim boundary
 
