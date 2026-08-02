@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 09:53 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 10:11 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -21,13 +21,13 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router. Atomic checkpoints through n=737 exist as a valid exact pair. Its
+  router. Atomic checkpoints through n=743 exist as a valid exact pair. Its
   first n=716 DriveFS atomic copy failed for local-cache exhaustion; the pair
   was recovered and the unchanged producer subsequently banked n=719 and
-  n=737. Cloud upload remains rate-limited. A temporary recovery-directory
+  n=743. Cloud upload remains rate-limited. A temporary recovery-directory
   bind now prevents redundant 6.6-GB DriveFS cache generations while keeping
   the producer's verified-temporary-copy/atomic-replace path unchanged. The
-  wrapper is live in chunk 737:740. No partial checkpoint is registered
+  wrapper is live in chunk 743:746. No partial checkpoint is registered
   evidence.
 
 ## VM13 live continuation
@@ -42,15 +42,15 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 737 / 1000 |
+| prompts banked | 743 / 1000 |
 | durability | exact local + DriveFS-cache pair; cloud upload pending |
-| checkpoint SHA-256 | `dfb07bc9516aa2e203ae4dc870c5fef5855e2d01c3e99e8d6b1f34c9db63ff47` |
-| checkpoint-state SHA-256 | `e0eef0e73b2718b4cdc52e135e41a710d48111091f206c592422ca856f22cca6` |
+| checkpoint SHA-256 | `1601546fa7dbdee77b720dfad5d090e2adfb33b82247b7da47bab781adce555e` |
+| checkpoint-state SHA-256 | `8215658433bb6a32b0bd7bb1670877830abb1af7a5df52efd91c2abedaf3da17` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| checkpoint sync UTC | 2026-08-02 09:52:36 UTC |
+| checkpoint sync UTC | 2026-08-02 10:10:26 UTC |
 | peak allocated VRAM | 62.846 GB |
-| process state | live; active atomic chunk 737:740; unified session 83477 |
+| process state | live; active atomic chunk 743:746; unified session 83477 |
 
 Prompt 660 is a retained finite heavy-tail row at 113.855, below the earlier
 prompt-323 maximum 173.345; no outcome-dependent trimming or refit occurred.
@@ -97,7 +97,7 @@ bytes nor estimator/config/runtime contracts. The pre-bind Drive recovery
 directory, including n=195/n=198 contract-check files, remains preserved and
 hidden beneath the mount. The unchanged wrapper restarted at clean commit
 `4ea7a9b`, printed `recovered_next_idx: 722` and `resuming from checkpoint:
-722/725 prompts processed`, and is live. Bound syncs through n=737 completed
+722/725 prompts processed`, and is live. Bound syncs through n=743 completed
 and resumed normally without growing another DriveFS checkpoint generation.
 Remove the bind after A1000, republish the final exact recovery
 pair, and require a fresh cloud remount/rehash before making any cloud-
@@ -138,7 +138,7 @@ status on known deficits, unreachable commits, namespace leakage, or
 unreviewed temporary/recovery paths. The whole Phase-4 suite passes **262
 tests**.
 
-The combined OLMo-lineage and Phase-4 suites pass **327 tests** after the
+The combined OLMo-lineage and Phase-4 suites pass **328 tests** after the
 terminal import normalization and admission-queue checks. The OLMo Bank-W compatibility
 reader now resolves the exact registered Phase-4 registry byte prefix while
 accepting only valid JSONL appended after it. The frozen side config and its
@@ -162,6 +162,10 @@ early OLMo capability, the mainline 16/20 joint replay, terminal Gemma, and
 terminal OLMo in that order. It also preserves every registered output set
 under the local content-backup root and freshly validates existing events on
 restart; it cannot run a lens-dependent pilot or open an intervention.
+Preparation commit `3737b23` additionally makes the A1000 post-fit queue
+rehash and locally preserve the registered fit lens, result, and manifest
+before its first successor comparison. This closes the producer's intentional
+local-lens deletion gap while Drive uploads remain rate-limited.
 
 The OLMo capability boundary is now integrated into the preparation branch
 with ancestry preserved through source commit `d76e937`. Both OLMo models
@@ -269,17 +273,19 @@ All 250 continuation prompt records 251--500 have finite diagnostics. Prompt
 registered prompt-112 sensitivity. Every later prompt is at or below 79.579;
 prompt 500 is ordinary at 13.380. No row was trimmed or refit.
 
-The A500 artifact is independently preserved and content-addressed:
+The VM12 handoff named two ephemeral content-addressed paths that did not
+carry onto VM13:
 
 ```text
 /content/phase4_recovery_local_20260801_w4Pv6g/qwen36-27b_jlens_drawA_n0500.preserved.pt
 /content/sl4_work/inputs/84404956fb71a84f5af7fa22c34a8f07761777d048b3db314b1330037e4168a8/qwen36-27b_jlens_drawA_n0500.pt
-/content/sl4_work/postfit_registered_backups/p4-qwen-lens-fit-drawA-n500-dev-v1/
 ```
 
-The preserved file and both local links share one inode and rehash to the
-registered lens SHA. The result and input manifest backups also match their
-registered hashes.
+On VM13, the mounted A500 lens, result, and manifest first rehashed to their
+registered values, then all three were atomically recopied and rehashed under
+`/content/sl4_work/postfit_registered_backups/p4-qwen-lens-fit-drawA-n500-dev-v1/`.
+The four post-A500 evidence sets were restored the same way. The five current
+backup manifests cover 35 outputs / 3,462,433,852 bytes exactly.
 
 ## Completed post-A500 queue
 
@@ -481,6 +487,14 @@ Run it only after A1000 releases the GPU. The missing historical `state.json`
 includes irrecoverable timing fields and requires an exact backup or an
 independently/PI-approved append-only archival correction; do not synthesize
 it.
+
+Preparation commit `2e602d7` records an exhaustive exact-copy search. The live
+Drive API exposes the target folder and thirteen current children but no
+target `state.json` cloud ID; sixty exact-name objects and 1,246 revisions
+contain no target surface. The quarantined pre-incident metadata independently
+contains the same folder/children but no state child, tombstone, deleted-item,
+or pending operation. No bytes were restored. The negative audit strengthens,
+but does not replace, the required independent/PI governance decision.
 
 ## Freeze blockers
 
