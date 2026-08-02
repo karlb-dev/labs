@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 05:44 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 06:29 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -20,8 +20,8 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router and is live. Atomic checkpoints through n=665 have been mirrored;
-  the producer is currently inside chunk 665:668. No partial checkpoint is
+  router and is live. Atomic checkpoints through n=680 have been mirrored;
+  the producer is currently inside chunk 680:683. No partial checkpoint is
   registered evidence.
 
 ## VM13 live continuation
@@ -36,14 +36,14 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 665 / 1000 |
-| checkpoint SHA-256 | `9a9e33a62260206a26d20513535aaf054d57a0669356a23e6960577e1daed530` |
-| checkpoint-state SHA-256 | `6a6268e772057cd0d40e363e34a80793633dc460e15adf49d782728d09a67136` |
+| prompts banked | 680 / 1000 |
+| checkpoint SHA-256 | `dd639fa9125e5774935e51c82dbac7918b38f15c7b00858f380a44f7a0f09631` |
+| checkpoint-state SHA-256 | `74c4ea483c0bc5427e585656ca672be82a788447c1b561498bfd6b7f32ab7494` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| synced UTC | 2026-08-02 05:42:58 UTC |
+| synced UTC | 2026-08-02 06:27:59 UTC |
 | peak allocated VRAM | 62.833 GB |
-| process state | live; active atomic chunk 665:668; unified session 86346 |
+| process state | live; active atomic chunk 680:683; unified session 86346 |
 
 Prompt 660 is a retained finite heavy-tail row at 113.855, below the earlier
 prompt-323 maximum 173.345; no outcome-dependent trimming or refit occurred.
@@ -56,7 +56,7 @@ selection-margin, and prompt-323 contracts were committed and pushed at
 `542ed98`. Their A1000 hashes remain explicit placeholders. They may be bound
 only after the registered n=1000 lens exists.
 
-The preparation branch is clean and pushed at `a0a7b8f`. In addition to the
+The preparation branch is clean and pushed at `443c477`. In addition to the
 frozen A1000 decision queue, it now contains the complete prospective
 Bank-B answer-direction-orthogonal rescue: outcome-blind geometry, a
 partial-dictionary prompt-only intervention core, atomic fact-level resume,
@@ -123,8 +123,15 @@ byte-for-byte, all fourteen pinned weight shards, and one frozen eight-score
 Think row with zero numerical drift. It opens no new item, intervention,
 model, stage, O5, confirmatory, or replication outcome. The 61-GiB snapshot
 was deleted only after Git and 88-output recovery verification. The claims
-ledger and state of record are durable through `ad0041b`; the OLMo final paper
-and terminal import bundle are still pending.
+ledger and state of record are durable through `ad0041b`. The 13-page paper
+at `f2d4d37` passed an independent render audit. The terminal OLMo handoff
+registered at `a28cdd5` from clean producer `7148d01`: 25 origins / 24 live
+events / 101 live outputs, 58 tests, and one 13-output methods release event.
+No scientific cell or authorization was added. This VM's Drive mount does
+not yet expose the registered terminal release files, including
+`IMPORT_BUNDLE_PHASE4.json`; treat that as unresolved cloud propagation and
+durability. Do not normalize, merge, or admit the final release until all
+thirteen paths reappear and rehash exactly.
 
 The same OLMo branch registered semantic checkpoint inventory v2 at `2afb010`:
 inventory v1 remains immutable but is explicitly superseded after identical
