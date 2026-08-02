@@ -1,0 +1,26 @@
+schema_version: 1
+status: TEMPLATE_NOT_EXECUTABLE
+calibrated_from_evidence_id: gm-jvp-olmo-positive-control-v1
+calibration_output_sha256: null
+calibration_code_commit: null
+frozen_before_first_gemma_result: null
+delivery:
+  cosine_floor: 0.999
+  relative_norm_error_ceiling: 0.01
+clean_suffix_parity:
+  atol: null
+  rtol: null
+response_snr_floor: null
+smallest_faithful_secant:
+  tangent_cosine_floor: null
+  tangent_relative_error_ceiling: null
+known_linear_band_contrast:
+  later_minus_shallow_error_minimum: null
+finite_dose_gate:
+  tangent_cosine_floor: null
+  tangent_relative_error_ceiling: null
+floor_curvature_partition:
+  intercept_a_ceiling: null
+  slope_b_floor: null
+  flat_slope_absolute_ceiling: null
+notes: Replace this template in a clean commit after OLMo plus random-baseline calibration. Never edit thresholds after seeing Gemma target numbers.

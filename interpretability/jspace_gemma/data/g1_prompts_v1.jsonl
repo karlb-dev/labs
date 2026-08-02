@@ -1,0 +1,16 @@
+{"prompt_id":"gm-p001","stage":1,"stratum":"factual","family":"public-science","text":"Question: What is the chemical symbol for gold?\nAnswer:"}
+{"prompt_id":"gm-p002","stage":1,"stratum":"multi-hop","family":"synthetic-bridge","text":"Mira stored the brass key inside the blue box. The blue box was moved into the north cabinet. Which cabinet contains the brass key?\nAnswer:"}
+{"prompt_id":"gm-p003","stage":1,"stratum":"neutral-prose","family":"expository","text":"A ceramic mug sat beside a closed notebook on the quiet desk. Afternoon light crossed the floor while a clock ticked in the hall. Summarize the setting in one phrase:"}
+{"prompt_id":"gm-p004","stage":1,"stratum":"code-sql","family":"sql","text":"Table orders has columns customer_id and total. Write a SQL query that returns each customer_id and the sum of total, grouped by customer_id.\nSQL:"}
+{"prompt_id":"gm-p005","stage":2,"stratum":"factual","family":"public-science","text":"Question: Which planet is best known for its prominent ring system?\nAnswer:"}
+{"prompt_id":"gm-p006","stage":2,"stratum":"factual","family":"public-language","text":"Question: What punctuation mark normally ends a direct question in English?\nAnswer:"}
+{"prompt_id":"gm-p007","stage":2,"stratum":"factual","family":"public-math","text":"Question: How many sides does a regular hexagon have?\nAnswer:"}
+{"prompt_id":"gm-p008","stage":2,"stratum":"multi-hop","family":"synthetic-bridge","text":"Tomas handed the silver ticket to Inez. Inez placed everything she received in the green folder. Where is the silver ticket now?\nAnswer:"}
+{"prompt_id":"gm-p009","stage":2,"stratum":"multi-hop","family":"synthetic-bridge","text":"The red parcel began in Room A. Niko carried it from Room A to Room C, then left Room C without it. Where did Niko leave the red parcel?\nAnswer:"}
+{"prompt_id":"gm-p010","stage":2,"stratum":"multi-hop","family":"synthetic-order","text":"Lea arrived before Omar, and Omar arrived before Priya. Who arrived first?\nAnswer:"}
+{"prompt_id":"gm-p011","stage":2,"stratum":"neutral-prose","family":"expository","text":"Rain tapped lightly against the library windows. Two readers turned pages beneath warm lamps, and the entrance remained empty. Describe the atmosphere in one phrase:"}
+{"prompt_id":"gm-p012","stage":2,"stratum":"neutral-prose","family":"procedural","text":"First rinse the glass jar, then leave it upside down until dry. After it dries, place the lid loosely on top. State the final action:"}
+{"prompt_id":"gm-p013","stage":2,"stratum":"neutral-prose","family":"descriptive","text":"The trail narrowed between dark pines before opening onto a bright meadow. A shallow stream crossed the grass near the far edge. Name two landscape features:"}
+{"prompt_id":"gm-p014","stage":2,"stratum":"code-sql","family":"python","text":"Write a Python expression that returns the squares of the even values in nums using a list comprehension.\nPython:"}
+{"prompt_id":"gm-p015","stage":2,"stratum":"code-sql","family":"sql","text":"Table events has columns user_id and created_at. Write SQL that counts rows per user_id.\nSQL:"}
+{"prompt_id":"gm-p016","stage":2,"stratum":"code-sql","family":"pseudocode","text":"Write one line of pseudocode that increments counter only when ready is true.\nPseudocode:"}

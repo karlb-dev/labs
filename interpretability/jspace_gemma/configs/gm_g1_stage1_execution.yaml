@@ -1,0 +1,72 @@
+schema_version: 1
+status: READY_PRE_TARGET
+evidence_id: gm-jvp-gemma-stage1-v1
+tier: methods
+
+model:
+  model_id: google/gemma-4-31B-it
+  revision: 842da3794eaa0b77d5f08bae87a17459d91ff475
+  local_snapshot: /content/hf_gemma_target/models--google--gemma-4-31B-it/snapshots/842da3794eaa0b77d5f08bae87a17459d91ff475
+  expected_outer_model_type: gemma4
+  expected_text_model_type: gemma4_text
+  expected_decoder_layers: 60
+
+snapshot_manifest:
+  path: /content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/manifests/gemma_target_local_snapshot_v1.json
+  file_sha256: 5b8d26a91b5cdc74e7fbc982d89bbf6d661233ee3da81705d165ef31cf6e308a
+  payload_sha256: cfb98f55c3453319f19aedce51419445260b03355632d13c2402897ffbab4ec1
+  remote_inventory_sha256: 357a1bed087996cb6e9e171ec02961a6430879b1204aee0b1830997ac62d80c6
+  staging_code_commit: 4f00d43e0810b98dfe1c281d260548ac791a14ab
+  all_content_hashes_verified: true
+  weight_shards: 2
+  target_model_loaded_during_staging: false
+  target_response_created_during_staging: false
+
+frozen_inputs:
+  design_path: repo://interpretability/jspace_gemma/configs/gm_g1_design.yaml
+  design_sha256: fbd22262d83d88d08689f1a2b1ada965d9d5bda8449ab2962655e88766997a21
+  threshold_path: repo://interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml
+  threshold_sha256: 3cb1e68c548bce1dc350c8b60a52e5bc6594a4fadb7abec1c4e00f931d855630
+  prompt_bank_path: repo://interpretability/jspace_gemma/data/g1_prompts_v1.jsonl
+  prompt_bank_sha256: 6a3eb469db0987db5849075884920129b7e10742f0efc4ce93a4c6b3197f1b7d
+  positive_control_evidence_id: gm-jvp-olmo-positive-control-v1
+  positive_control_artifact_sha256: fc957c9a6f6f397cbaf3274193713ebec332bb81dbb99b61cf9f56d058cd1942
+  positive_control_pass: true
+  thresholds_frozen_before_target: true
+
+grid:
+  prompt_ids: [gm-p001, gm-p002, gm-p003, gm-p004]
+  layers_zero_indexed: [22, 30, 37, 44, 52]
+  modes: [single_position, uniform_valid]
+  direction_ids:
+    - random-rademacher-0
+    - random-gaussian-0
+    - activation-radial
+    - activation-tangent-0
+  epsilon_ladder: [0.0025, 0.005, 0.01, 0.02, 0.05, 0.10, 0.20]
+  expected_cells: 40
+  expected_rows_per_cell: 28
+  expected_rows: 1120
+  expected_clean_parity_rows: 20
+  j_selected_direction: deferred_until_exact_lens_and_token_hash_binding
+
+smoke:
+  cell_id: gm-p001-L52-single_position
+  role: predeclared_late_layer_infrastructure_cell
+  reuse_in_full_grid: true
+
+runtime:
+  dtype: bfloat16
+  perturbation_and_metric_dtype: float32
+  attention_implementation: eager
+  cache_policy: no_cache
+  finite_response_batch_size: 8
+  cell_runtime_target_minutes: 10
+  exact_jvp_primal_relative_error_ceiling: 1.0e-5
+  clean_suffix_parity_atol: 0.0
+  clean_suffix_parity_rtol: 0.0
+
+claim_boundary: >-
+  Development/methods exact-JVP transport validity only. A failed target gate
+  is not evidence that information or a workspace is absent, and a late pass
+  is not by itself workspace or shared-channel evidence.
