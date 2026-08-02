@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:23:16Z
+Last updated: 2026-08-02T04:26:33Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,13 +20,13 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: none; GPU memory is free. The four-input O3 geometry
-  aggregate is complete and registered. Its registry/report Git checkpoint is
-  the current publish action; the separate figure event has not started.
+- Active model job: none; GPU memory is free. The four-input O3 aggregate and
+  five registered-table figure pairs are complete. The figure registry/report
+  Git checkpoint is the current publish action.
 - Last registered native evidence:
-  `ol-geometry-joint-dev-v1` (development), created at
-  2026-08-02T04:22:12Z from clean commit `5b1fe07`. Its four immutable outputs
-  and registry event verify.
+  `ol-geometry-figures-dev-v1` (development), created at
+  2026-08-02T04:26:33Z from clean commit `cd042fc`. Its manifest and ten figure
+  outputs verify.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
@@ -34,7 +34,7 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and nineteen live evidence events with 60 immutable outputs
+foundation manifests and twenty live evidence events with 71 immutable outputs
 verify cleanly; 39 package tests pass. No model job is active.
 
 The O3 implementation uses only exact same-corpus lenses plus small,
@@ -137,6 +137,14 @@ span overlap remain null, and core/fringe dose remains blocked. Aggregate
 outputs are JSON SHA-256 `c09d8e73...d0f4c`, 126-row layer table
 `8692836d...9097`, 18-row selection table `c2826b14...73bd`, and 6-row readout
 table `93fd2108...0bd9`.
+
+The five planned O3 figures are registered in both PNG and PDF form and have
+been visually inspected. They show: all-pair operator similarity, stable-token
+mapped-row similarity, sparse selected-span continuity, capacity versus known
+Bank-S causal utilization, and transport/readout/mapped-row movement. Figure 4
+explicitly labels its causal axis Bank-S and states that Bank-W remains blocked
+at 16 < 20; it does not create an O4 result. The 5,011-byte figure manifest is
+SHA-256 `1bb73432...1d9c`; all ten visual hashes are recorded there.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
 values finite per model and eight candidate-sequence scores per row. Think
@@ -282,29 +290,22 @@ git -C /tmp/jacobian-lens checkout 581d398613e5602a5af361e1c34d3a92ea82ba8e
 python -m pip install -q -e /tmp/jacobian-lens
 ```
 
-If the geometry aggregate registry/report checkpoint is dirty after a reclaim,
+If the geometry figure registry/report checkpoint is dirty after a reclaim,
 publish and mirror it first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: register joint geometry verdict'
+git commit -m 'olmo: register geometry figures'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-After recovery verifies the pushed aggregate, generate figures only from its
-registered tables:
-
-```bash
-python -m jspace_olmo_lineage.experiments.geometry figures \
-  --config interpretability/jspace_olmo_lineage/configs/ol_geometry_v1.yaml
-```
-
-Publish and recover the figure event before updating the run-specific paper and
-release bundle. Do not open an O4 Bank-W intervention under the failed
-20-family protocol.
+After recovery verifies the pushed figure event, update and compile the
+OLMo-run-specific paper, then emit a self-verifying OLMo final import/restart
+bundle. Do not merge into the main Phase 4 or Gemma paper/registries, and do not
+open an O4 Bank-W intervention under the failed 20-family protocol.
 
 ## Hardware and weight state at last update
 

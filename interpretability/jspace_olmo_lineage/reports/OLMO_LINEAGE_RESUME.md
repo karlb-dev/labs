@@ -142,17 +142,18 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
-At the 2026-08-02T04:23:16Z recovery checkpoint, all four O2 model events and
+At the 2026-08-02T04:26:33Z recovery checkpoint, all four O2 model events and
 the paired joint event are complete and registered. The live registry therefore
-contains nineteen events and 60 immutable outputs, all of which verify. The
+contains twenty events and 71 immutable outputs, all of which verify. The
 frozen joint verdict is `broadly_conserved_capacity_recruitment_consistent`;
 OLMo-3.1 32B Instruct remains a sibling endpoint, not a fourth trajectory
 point. The O3 protocol/extractor/aggregate/figure implementation is published,
 39 tests pass, and `ol-geometry-protocol-v1` has frozen 13,319 exact readout
 rows before any new geometry outcome. All four frozen readout inputs and the
 four-checkpoint aggregate are registered and hash-verified. The O3 router
-verdict is `dictionary-formation-pattern`; the live in-progress file identifies
-the pending aggregate publication/figure boundary.
+verdict is `dictionary-formation-pattern`; five PNG/PDF figure pairs and their
+manifest are also registered. The live in-progress file identifies the pending
+figure publication/paper boundary.
 
 O3 is staged so a fresh VM never needs four complete 32B snapshots at once.
 After `ol-geometry-protocol-v1` exists, obtain only `config.json`,
@@ -168,11 +169,11 @@ python -m jspace_olmo_lineage.experiments.geometry extract-readout \
 
 Commit, pull/rebase, reproduce, push, and recover after every evidence event.
 The extracts contain only the frozen unembedding rows and final norm. The four
-readouts and `ol-geometry-joint-dev-v1` aggregate now verify; after its Git
-checkpoint is durable, run `figures`, which reads registered tables rather than
-live tensors. Exact kth/k+1 candidate-score gaps require a future compatible
-replay because O2 did not retain the candidate-correlation log. Causal
-core/fringe dose remains blocked by the O1 service gate.
+readouts, `ol-geometry-joint-dev-v1` aggregate, and
+`ol-geometry-figures-dev-v1` now verify. Figures were rendered only from
+registered tables. Exact kth/k+1 candidate-score gaps require a future
+compatible replay because O2 did not retain the candidate-correlation log.
+Causal core/fringe dose remains blocked by the O1 service gate.
 
 The model command is:
 
