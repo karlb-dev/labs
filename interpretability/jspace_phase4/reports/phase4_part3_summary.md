@@ -211,7 +211,14 @@ On the next VM, first read this file plus `inprogress.md`,
 
 1. Pull `interp_jspace_part2` with `--ff-only`; require a clean tree.
 2. Verify the registered A1000 fit and every local backup manifest before any
-   model or analysis work.
+   model or analysis work. Materialize the frozen Qwen model revision
+   `6a9e13bd6fc8f0983b9b99948120bc37f49c13e9` and the external published
+   lens before starting the queue. The latter is repository
+   `neuronpedia/jacobian-lens`, revision
+   `a4114d7752d11eb546e6cf372213d7e75526d3a1`, file
+   `qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt`,
+   and must rehash to
+   `1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1`.
 3. Run the A1000 postfit queue from its first incomplete stage. Default:
 
    ```bash
@@ -260,6 +267,18 @@ On the next VM, first read this file plus `inprogress.md`,
 9. Assemble the independent review packet. Do not freeze or tag, and do not
    open confirmatory/replication outcomes, until the actual reviewer and PI
    complete their fields.
+
+### Phase 4.4 compute ladder
+
+Budget the frozen continuation in atomic stages. Measured on this VM, the
+A500/A1000/published functional gate takes about 52 minutes and the analogous
+single-prompt influence producer takes about 12 minutes; allow at least 70
+minutes for the complete structural-through-canonical queue. Structural,
+selection-margin, and canonical synthesis are short CPU/IO stages. After the
+canonical event, the side-import queue is CPU/IO-only. The exact A120 recovery
+requires an otherwise free GPU with at least 75 GB available, but it is a
+durability repair rather than a reason to delay banking a completed Qwen
+decision boundary.
 
 ## Branch-dependent follow-ups
 
