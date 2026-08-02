@@ -237,6 +237,18 @@ is `ee94e446...619f`. Its event exists and verifies; do not rerun it.
 If Drive contains a reconstruction directory without a registry event, treat
 it as an unregistered partial and audit it before any retry.
 
+The isolated run-specific paper is under `reports/paper/`. Its deterministic
+build command is:
+
+```bash
+bash interpretability/jspace_olmo_lineage/reports/paper/compile.sh
+```
+
+The 13-page source SHA-256 is `c5b1f980...8db5`; the PDF SHA-256 is
+`ff6a9a65...e944`. The build was repeated byte-for-byte, the TeX log has no
+warnings, and selected title/table/figure/claim/appendix pages were visually
+inspected. It deliberately does not edit `interpretability/jspace_paper`.
+
 The model command is:
 
 ```bash

@@ -1,9 +1,10 @@
 # OLMo lineage state of record
 
-State date: 2026-08-02T05:36:16Z
+State date: 2026-08-02T05:47:48Z
 
-Status: OLMo parallel-phase scientific execution is complete at its first
-release boundary. The final paper and import/restart bundle are being assembled.
+Status: OLMo parallel-phase scientific execution and the isolated run-specific
+paper are complete at the first release boundary. The final import/restart
+bundle is being assembled.
 This state remains separate from the concurrently running main Phase 4 and
 Gemma workstreams and may be integrated only in Phase 5 or later.
 
@@ -49,7 +50,7 @@ unless an imported intervention result is explicitly named.
 At this state date the append-only registry contains 24 origin events, of which
 23 are live. `ol-checkpoint-inventory-v1` remains immutable but is explicitly
 superseded by version 2. The 23 live events have 88 immutable outputs, all of
-which pass byte/hash verification. Fifty-one package tests and the exact dependency
+which pass byte/hash verification. Fifty-four package tests and the exact dependency
 lock pass.
 
 The latest event is `ol-independent-reconstruction-v1`, created at
@@ -226,13 +227,22 @@ Sentence 4 is explicitly pending: Bank-S motivates external-state substitution
 as a hypothesis, but Bank-W version 1 never opened after the 16/20 service-gate
 failure. No externalization account is resolved.
 
-## 6. Remaining and queued work
+## 6. Run-specific paper
+
+The isolated paper is `reports/paper/olmo_lineage_parallel_phase.tex` and its
+compiled PDF. It is 13 letter-sized pages, includes all five registered O3
+figure PDFs, and leaves the shared Phase 4/Gemma manuscript untouched. TeX
+SHA-256 is `c5b1f980...8db5`; deterministic PDF SHA-256 is
+`ff6a9a65...e944`. Two builds produced the same PDF hash, the TeX log has no
+warnings, and rendered title/table/figure/claim/appendix pages pass visual
+inspection.
+
+## 7. Remaining and queued work
 
 Required to finish this release artifact layer:
 
-1. compile the isolated OLMo run-specific TeX/PDF paper;
-2. emit and register the self-verifying final OLMo import/restart bundle;
-3. stop this side track and hand its queues to Phase 5.
+1. emit and register the self-verifying final OLMo import/restart bundle;
+2. stop this side track and hand its queues to Phase 5.
 
 Queued, not authorized as part of the current result set:
 
@@ -242,7 +252,7 @@ Queued, not authorized as part of the current result set:
 - one bounded receiver necessity/rescue demonstration if Phase 5 selects it;
 - any redesigned Bank-W service set under a new prospective protocol.
 
-## 7. Prohibited interpretations
+## 8. Prohibited interpretations
 
 - Think training creates a global workspace.
 - The reasoning objective is the causal variable.
@@ -254,7 +264,7 @@ Queued, not authorized as part of the current result set:
 - The independent reconstruction raises development evidence to confirmatory or
   replication tier.
 
-## 8. Recovery and weight state
+## 9. Recovery and weight state
 
 The stable restart guide is `reports/OLMO_LINEAGE_RESUME.md`; the live pointer
 is `reports/INPROGRESS_OLMO_LINEAGE.md`. Both are mirrored to the isolated Drive
@@ -268,7 +278,7 @@ recoverable by direct Hugging Face download at exact revision
 `832c3f543499af8fe68b88359501de9cb7840544`. Registered evidence and Drive
 outputs were not removed.
 
-## 9. Release-boundary checklist
+## 10. Release-boundary checklist
 
 - [x] isolated package, branch, Drive root, and registry;
 - [x] O1 capability gates and early import bundle;
@@ -281,7 +291,7 @@ outputs were not removed.
 - [x] independent reconstruction and exact model sentinel;
 - [x] sentence-level claims ledger;
 - [x] state-of-record report;
-- [ ] isolated run-specific paper compiled;
+- [x] isolated run-specific paper compiled;
 - [ ] final import/restart bundle emitted and registered.
 
 When the final two boxes are complete, this workstream stops and joins the

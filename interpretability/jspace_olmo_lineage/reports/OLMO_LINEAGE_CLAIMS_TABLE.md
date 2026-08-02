@@ -1,6 +1,6 @@
 # OLMo lineage claims table
 
-State date: 2026-08-02T05:36:16Z
+State date: 2026-08-02T05:47:48Z
 
 Scope: OLMo-only parallel development/methods workstream on branch
 `interp_jspace_olmo_lineage`, with immutable scientific import boundary

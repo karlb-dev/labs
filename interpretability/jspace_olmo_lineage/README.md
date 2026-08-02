@@ -77,6 +77,13 @@ a new scientific cell, Bank-W intervention, stage wedge, or O5 proxy.
 `ol-independent-reconstruction-v1` has completed and verifies; do not rerun
 the immutable command unless a new versioned protocol explicitly requires it.
 
+Compile the isolated OLMo run-specific paper without touching the shared
+Phase 4 or Gemma manuscripts:
+
+```bash
+bash interpretability/jspace_olmo_lineage/reports/paper/compile.sh
+```
+
 Freeze and register the exact Phase 4 Bank-W compatibility contract before
 opening either OLMo baseline:
 

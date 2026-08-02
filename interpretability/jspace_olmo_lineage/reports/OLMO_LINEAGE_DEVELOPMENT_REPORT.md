@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T05:36:16Z
+Last updated: 2026-08-02T05:47:48Z
 
 Status: active; O1, O2, and O3 are complete through the registered geometry
 tables, and the early Phase 4 bundle is emitted. Both native OLMo-lineage
@@ -9,9 +9,9 @@ transfer bundle, four capacity cells, paired capacity verdict, four-lens audit,
 four readout inputs, four-checkpoint geometry verdict, registered-table figure
 set, official-stage inventory, O5 feasibility decision, and independent
 reconstruction are registered. The claims ledger and state of record are
-drafted and included in recovery mirroring; the run-specific paper and final
-OLMo handoff bundle are next. This report remains separate from the Phase 4
-and Gemma reports.
+durable in Git and Drive recovery mirrors, and the isolated run-specific paper
+is compiled. The final OLMo handoff bundle is next. This report remains
+separate from the Phase 4 and Gemma reports.
 
 ## Executive status
 
@@ -572,6 +572,25 @@ The methods event was created at 2026-08-02T05:26:50Z from clean source
 Thirteen registered outputs include those documents, the isolated figure
 manifest, and five PNG/PDF pairs.
 
+## Run-specific paper
+
+The OLMo-only manuscript is complete under `reports/paper/`, separate from the
+shared Phase 4/Gemma paper namespace. It is titled “Capacity Without Coordinate
+Stasis: A development study of the OLMo 32B J-space lineage” and compiles to
+13 letter-sized pages. It includes the six-axis design, O1 service failure,
+four-checkpoint O2 table, all five registered O3 figures, O4/H5/O5 stopping
+decisions, independent reconstruction, sentence-2/sentence-4 claim router,
+limitations, Phase 5 queue, evidence index, and immutable hashes.
+
+The source SHA-256 is `c5b1f980075e8acb8e24dbb85bf7904469823cf5dda2d06cbbe551b48bd08db5`;
+the deterministic PDF SHA-256 is
+`ff6a9a653614cdbbb1fe9bf73cf92af0e294496e98b0cde5cb41c6afd2f1e944`.
+Its fixed metadata epoch is the reconstruction event time. Two consecutive
+builds produced the same PDF hash, the final TeX log contains no warnings, and
+rendered title, design/table, capacity, selected-span, and appendix pages pass
+visual inspection. All five copied figure hashes equal
+`ol-geometry-figures-dev-v1`.
+
 The first clean-process sentinel attempt verified all fourteen exact weight
 shards, loaded the pinned model, and then stopped with CUDA out-of-memory while
 the scorer evaluated all eight answer candidates in one batch. No output,
@@ -657,6 +676,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | Independent-reconstruction attempt 2 and diagnosis | One-candidate retry fit but failed exact numerics (max drift 0.20499 nats; margin -0.125 vs -0.25), so it was rejected with no output. Eight candidates under `no_grad` then reproduced every score exactly at 60.42-GiB peak allocation | Clean source `37075cb` for rejected retry; read-only local diagnostic; corrected clean run pending |
 | 2026-08-02 | `ol-independent-reconstruction-v1` | PASS: 768 O1 rows, 48 O2 summaries/96 intervals/144 arrays/72 table rows, 84 O3 aggregates/router, five byte-exact PNGs/five regenerated PDFs, fourteen exact model shards, and eight exact frozen-row sequence scores independently reconstructed; no new scientific cell | Source commit `12f21ad`; JSON `e159f01d...`; Markdown `48647b44...`; 13 registered outputs |
 | 2026-08-02 | Sentinel weight rotation | Removed only the 61-GiB local Think sentinel snapshot after evidence commit `471a48f`, GitHub push, 88-output verification, and recovery-mirror verification | Reclaimed local NVMe; exact revision remains directly recoverable from Hugging Face |
+| 2026-08-02 | OLMo run-specific paper | Compiled 13-page isolated TeX/PDF with all five registered O3 figures, exact claim downgrades, complete limitations, reconstruction, and Phase 5 router; repeat build byte-identical and visual inspection passes | TeX `c5b1f980...`; PDF `ff6a9a65...`; shared Phase 4/Gemma paper untouched |
 
 ## Current limitations and claim boundary
 
