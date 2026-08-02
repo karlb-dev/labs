@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 07:32 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 08:40 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -21,9 +21,11 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router and is live. Atomic checkpoints through n=701 have been mirrored;
-  the producer is currently inside chunk 701:704. No partial checkpoint is
-  registered evidence.
+  router. Atomic checkpoints through n=716 exist as a valid local pair. Its first DriveFS
+  atomic copy failed for local-cache exhaustion; the exact pair is republished
+  into a fresh DriveFS cache, while cloud upload remains rate-limited. The
+  unchanged wrapper is live in recovery/runtime preflight for chunk 716:719.
+  No partial checkpoint is registered evidence.
 
 ## VM13 live continuation
 
@@ -37,17 +39,42 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 701 / 1000 |
-| checkpoint SHA-256 | `a86cbf97ee03ddd0c2b720a61d4926412dade2532873155828488d113e6b0718` |
-| checkpoint-state SHA-256 | `8ae7c217974dc56f3969ecc20240e1845c51dd954a8988ea52cf899010619a77` |
+| prompts banked | 716 / 1000 |
+| durability | exact local + DriveFS-cache pair; cloud upload pending |
+| checkpoint SHA-256 | `5594852793f0baaef6a6e706e9802dfa92eac69f26fb80e292e6f3e50e938ee6` |
+| checkpoint-state SHA-256 | `e5add443d38fb59f2b725cec4c4560142d5c3b6b8d941fa355f2a9da2728b7ff` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| synced UTC | 2026-08-02 07:31:02 UTC |
+| local checkpoint UTC | 2026-08-02 08:16:06 UTC |
 | peak allocated VRAM | 62.833 GB |
-| process state | live; active atomic chunk 701:704; unified session 86346 |
+| process state | live restart preflight; active atomic chunk 716:719; unified session 13988 |
 
 Prompt 660 is a retained finite heavy-tail row at 113.855, below the earlier
 prompt-323 maximum 173.345; no outcome-dependent trimming or refit occurred.
+
+### DriveFS durability incident at n=716
+
+Prompt 716 completed with finite diagnostics, but the atomic Drive checkpoint
+copy stopped with `ENOSPC` before publishing an n=716 Drive header. The local
+checkpoint and header are complete and independently rehash to the values
+above. The fitter exited and released the GPU; no scientific row or partial
+milestone was registered.
+
+The storage audit found 130 GiB of obsolete 6.6-GiB checkpoint copies in the
+local DriveFS content cache. After the supported flush/unmount timed out, the
+DriveFS core exited; its stale profile was quarantined intact at
+`/content/drivefs_stale_metadata_20260802T0832Z`, and only its recreatable
+content cache was evicted. A fresh read-only profile showed that cloud Drive
+held an inconsistent recovery pair: an n=692 header naming checkpoint
+`1785ae28...a4b53`, but payload `4d91f9dc...b1c4` from n=683. It also confirmed
+that the OLMo terminal release files are absent in cloud storage, not merely a
+directory-cache artifact.
+
+A fresh writable DriveFS profile now contains the exact republished n=716 pair
+and is attempting the correct 6,606,047,399-byte and 673-byte uploads. Google
+currently returns `403 userRateLimitExceeded`; therefore DriveFS-cache presence
+is not yet a cloud-durability claim. Preserve the local pair and quarantine,
+and require a fresh read-only/remount rehash before calling n=716 cloud-durable.
 
 Prospective A1000 successor preparation is isolated from the live clean
 worktree on branch `codex/phase4-a1000-prep-20260802`. Before any A1000
@@ -57,7 +84,7 @@ selection-margin, and prompt-323 contracts were committed and pushed at
 `542ed98`. Their A1000 hashes remain explicit placeholders. They may be bound
 only after the registered n=1000 lens exists.
 
-The preparation branch is clean and pushed at `a98f37b`. In addition to the
+The preparation branch is clean and pushed at `4840048`. In addition to the
 frozen A1000 decision queue, it now contains the complete prospective
 Bank-B answer-direction-orthogonal rescue: outcome-blind geometry, a
 partial-dictionary prompt-only intervention core, atomic fact-level resume,
