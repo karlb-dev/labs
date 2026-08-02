@@ -2,6 +2,7 @@ import itertools
 from pathlib import Path
 
 import numpy as np
+import pytest
 import yaml
 
 
@@ -67,6 +68,16 @@ def test_monte_carlo_mode_signflip_uses_plus_one_and_is_deterministic():
         values, first, exact=False, chunk_size=31)
     assert np.all(pvalues >= 1 / 258)
     assert np.all(pvalues <= 1)
+
+
+def test_exact_mode_signflip_refuses_an_incomplete_pattern_matrix():
+    from jspace_phase4.experiments.p4_qwen_mode_exact_power import (
+        batch_signflip_pvalues,
+    )
+
+    with pytest.raises(ValueError, match="complete pattern count"):
+        batch_signflip_pvalues(
+            np.ones((1, 4)), np.ones((15, 4)), exact=True)
 
 
 def test_mode_signflip_power_increases_for_large_fixed_effect():
