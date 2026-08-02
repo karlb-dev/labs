@@ -147,7 +147,7 @@ These values come only from registered and freshly rehashed bytes.
 | input-manifest SHA-256 | `ce7e057e1298f8bc4217df3ce0a62afb916f4e3edf54466d1c120eaa9d9138f1` |
 | registration commit | `c80017d` (ancestry integrated by `3d1f1bf`) |
 | registered-output backup | `/content/sl4_work/postfit_registered_backups/p4-qwen-lens-fit-drawA-n1000-dev-v1/backup_manifest.json`, SHA-256 `cdaae0129c6f2ff55650481bf74713ccfb0af61039ceb4bf8d0dcc0a6ab5397c` |
-| recovery backup | content-addressed under `final_backups/.../fd5a4ae6...abf20/`, manifest SHA-256 `e50da70f7e457e4e00a3fff95bbf197b7d8875365fda6b52b4a745d757d6b4d5` |
+| recovery backup | content-addressed under `final_backups/.../fd5a4ae6...abf20/`, manifest SHA-256 `cf8c7308bd6b9e50459ba75878b098d496e271a453625f41d20581062fda812a` |
 | cloud durability | final checkpoint/progress/header republished checkpoint-first/header-last; cache-local rehash passes, but fresh cloud materialization remains pending |
 
 The engineering QA archive contains 820 finite rows spanning prompts 181--1000,
