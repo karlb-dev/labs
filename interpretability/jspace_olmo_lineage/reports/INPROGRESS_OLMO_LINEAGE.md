@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T03:25:22Z
+Last updated: 2026-08-02T03:28:59Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,11 +20,11 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: none; all four O2 model cells are complete and GPU memory
-  is free. The paired joint aggregation is next.
-- Last registered native evidence: `ol-capacity-olmo31-instruct-dev-v1`
-  (development), created at 2026-08-02T03:24:58Z from clean commit `9f213f6`.
-  Its six immutable outputs and registry event verify; the event/report Git
+- Active model job: none; O2 is complete and GPU memory is free. O3 geometry
+  protocol/implementation is next.
+- Last registered native evidence: `ol-capacity-joint-dev-v1` (development),
+  created at 2026-08-02T03:27:27Z from clean commit `cbc7ab3`.
+  Its three immutable outputs and registry event verify; the event/report Git
   checkpoint is the current publish action.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
@@ -33,7 +33,7 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and twelve live evidence events with 43 immutable outputs
+foundation manifests and thirteen live evidence events with 46 immutable outputs
 verify cleanly; 31 package tests pass. No model job is active.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
@@ -134,6 +134,29 @@ result is 102,966 bytes, SHA-256
 This is a sibling comparison only; do not place Instruct on the temporal Think
 path.
 
+The paired O2 joint analysis is complete. The preregistered Base-to-3.0 Think
+primary own-frame equal-layer difference is 0.0001538 with paired 90% interval
+[-0.0001211, 0.0004345], occupancy difference 0 with interval [0, 0], and
+classification `stable`. The layer-24/32/40 own-frame differences are
+0.0007865, 0.0002403, and -0.0005655; all are `stable`, all occupancy
+differences are zero, and there is no supported positive material layer. The
+Base-common equal-layer sensitivity is also `stable` at -0.0014123, interval
+[-0.0015121, -0.0013161]. All twelve equal-layer pair/frame summaries are
+stable. Across the 48 classified joint rows, 46 are stable; the two explicit
+qualifications are layer-40 Base-common Base-to-3.1 Think and Base-to-Instruct
+comparisons, whose intervals barely cross the -0.0025 equivalence boundary and
+are `unresolved`. The frozen lineage verdict is
+`broadly_conserved_capacity_recruitment_consistent`. This is development-tier
+capacity evidence, not proof of identical geometry, causal recruitment, or a
+randomized Think-training effect.
+
+Joint outputs are: JSON 51,661 bytes SHA-256
+`cb35a22a0176f568fc7368285af65b148f342d834d3ca9457d78f3bb1dcd1492`,
+Parquet 15,047 bytes SHA-256
+`b3ad02e9d66340b33748a2b74d3e69cc9b8f6a366ba6ce4d256c641d1dae247e`,
+and paired-bootstrap NPZ 1,047,850 bytes SHA-256
+`c13cebed02b985b93fa1220bd1a811bdad9a334d2f52f4579929df33cf7810fa`.
+
 ## Exact next actions
 
 From `/content/labs`:
@@ -156,31 +179,26 @@ git -C /tmp/jacobian-lens checkout 581d398613e5602a5af361e1c34d3a92ea82ba8e
 python -m pip install -q -e /tmp/jacobian-lens
 ```
 
-If the Instruct event/report checkpoint is still dirty after a reclaim,
+If the joint event/report checkpoint is still dirty after a reclaim,
 publish and mirror it first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: register Instruct symmetric capacity'
+git commit -m 'olmo: register paired capacity verdict'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-After all four model events are committed and published, run the paired joint
-aggregation from a clean source tree:
-
-```bash
-python -m jspace_olmo_lineage.experiments.capacity \
-  --config interpretability/jspace_olmo_lineage/configs/ol_capacity_v1.yaml \
-  --aggregate-joint
-```
-
-The joint producer must independently reconstruct all registered checkpoints,
-use the shared paired prompt-bootstrap draws, and apply the frozen router.
-Register, publish, and mirror it before beginning O3 geometry work. Do not open
-an O4 Bank-W intervention under the failed 20-family protocol.
+After the joint event is committed, published, and recovery-mirrored, implement
+and freeze the O3 geometry protocol before opening geometry outcomes. It must
+cover plan sections 5.3--5.6: operator, mapped-token dictionary, sparse
+selection, readout, and selection-margin metrics, plus registered tables and
+figures. Reuse Phase 4.3 top-k margin machinery only through an OLMo side
+compatibility module and conformance tests. Publish the outcome-blind methods
+checkpoint before running the geometry producer. Do not open an O4 Bank-W
+intervention under the failed 20-family protocol.
 
 ## Hardware and weight state at last update
 
@@ -188,8 +206,9 @@ an O4 Bank-W intervention under the failed 20-family protocol.
   96 GiB VRAM, CUDA working.
 - OLMo-3.1 Think and Instruct snapshots are complete in the Drive HF cache.
 - The exact OLMo-3.1 32B Instruct snapshot is currently complete on local NVMe.
-  Its O2 result is durable in Drive and the side registry; its Git/report
-  checkpoint is the current publish action. GPU memory is free.
+  Its O2 result and joint analysis are durable in Drive and the side registry;
+  the joint Git/report checkpoint is the current publish action. GPU memory is
+  free.
 - The current Instruct snapshot was staged directly from the exact pinned Hub
   revision; the complete Drive snapshot remains a recovery fallback.
 - Direct pinned Hub staging was substantially faster than DriveFS for Instruct
@@ -202,9 +221,9 @@ an O4 Bank-W intervention under the failed 20-family protocol.
 - The exact OLMo-3 Think local cache was likewise removed only after its result,
   Git checkpoint, and recovery mirrors became durable.
 - Local disk has approximately 119 GiB free with only OLMo-3.1 Instruct
-  resident. It may be removed after the current result is published and
-  recovery-verified; the paired joint analysis reads registered Drive outputs,
-  not model weights.
+  resident. It may be removed after the joint checkpoint is published and
+  recovery-verified. Confirm the O3 geometry implementation's weight needs
+  before rotating it; operator/token/readout analyses may need the snapshot.
 - The exact `anthropics/jacobian-lens` checkout is installed from `/tmp` at
   `581d398613e5602a5af361e1c34d3a92ea82ba8e`; recreate it after a reclaim.
 - Never load model weights through DriveFS. Copy one pinned snapshot at a time

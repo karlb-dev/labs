@@ -1,12 +1,13 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T03:25:22Z
+Last updated: 2026-08-02T03:28:59Z
 
-Status: active; O1 and the O3 provenance audit are complete, the early Phase 4
-bundle is emitted, and all four O2 model cells are complete. Both native OLMo-lineage baseline capability
-results, the joint decision, the hash-pinned transfer bundle, and the four-lens
-audit are registered. This report will be updated after every material gate or
-analysis and is intentionally separate from the Phase 4 and Gemma reports.
+Status: active; O1, O2, and the O3 provenance audit are complete, the early
+Phase 4 bundle is emitted, and O3 geometry is next. Both native OLMo-lineage
+baseline capability results, both joint decisions, the hash-pinned transfer
+bundle, four capacity cells, paired capacity verdict, and four-lens audit are
+registered. This report will be updated after every material gate or analysis
+and is intentionally separate from the Phase 4 and Gemma reports.
 
 ## Executive status
 
@@ -22,10 +23,12 @@ for OLMo-3.1 Think and OLMo-3.1 Instruct, then aggregated with the imported
 Qwen reference and transferred without intervention outcomes. The prospective
 20-family common-support gate failed. O3 subsequently established that all six
 lens pairs share the exact fitting recipe and ordered corpus, so no refit is
-needed. O2 has now measured Base, both Think checkpoints, and the Instruct
-sibling under the symmetric four-model estimator; the prospectively paired
-joint aggregation is next. O4 under the original Bank-W protocol is gated out
-rather than silently narrowed.
+needed. O2 has measured Base, both Think checkpoints, and the Instruct sibling
+under the symmetric four-model estimator and completed the prospectively
+paired router. It returns a broadly conserved capacity/recruitment-consistent
+verdict. O3 geometry is now needed to test the coordinate-system portion of
+that account. O4 under the original Bank-W protocol remains gated out rather
+than silently narrowed.
 
 Phase 4, Gemma, and OLMo are running as concurrent but isolated branches of
 work. They will be integrated only in Phase 5 or later after their own state
@@ -223,7 +226,7 @@ bootstrap distributions, allowing independent reconstruction and paired
 cross-model resampling. Thirty-one package tests and the corpus/tokenizer/lens-
 audit/source-pin preflights pass. The registered corpus is
 SHA-256 `695d29f9...a7948` and the protocol is SHA-256
-`909c07d3...c9a0`; both verify in the twelve-event registry. The protocol itself
+`909c07d3...c9a0`; both verify in the thirteen-event registry. The protocol itself
 opened no model outcome. The prior three-model 60-prompt files remain
 historical context only; Base capability is not required for this capacity
 measurement.
@@ -240,9 +243,8 @@ with all registered hashes verified. The primary own-frame results are:
 All centered occupancies have zero censoring; every J error curve has zero
 solver-error increases; and own/common are exact duplicates for Base by
 construction. The result SHA-256 is `3708447c...069c0`. These are within-Base
-capacity estimates, not yet evidence of a checkpoint shift. The frozen paired
-router will classify Base versus 3.0 Think only after all four model events are
-registered.
+capacity estimates and are not, alone, evidence of a checkpoint shift. The
+completed paired classification is reported below.
 
 `ol-capacity-olmo3-think-dev-v1` completed from clean source commit `04870ec`
 with all six registered outputs verified. The primary own-frame results are:
@@ -262,8 +264,9 @@ points. The own/common difference is a coordinate-frame sensitivity, not a
 cross-checkpoint contrast. The result SHA-256 is `2a872e4a...58abc`; its three
 independently reconstructable layer checkpoints are `e444dc6b...f8e6d`,
 `60d4989c...75d5`, and `9d65e188...0e55`. The frozen router still requires
-paired resampling from all four registered events; no lineage shift label is
-assigned here by comparing independent point estimates or intervals.
+paired resampling from all four registered events, so no lineage shift label is
+assigned from these independent point estimates or intervals; the completed
+paired result is reported below.
 
 `ol-capacity-olmo31-think-dev-v1` completed from clean source commit `7baaf64`
 with all six registered outputs verified. The primary own-frame results are:
@@ -281,8 +284,7 @@ throughout and 90% intervals [-0.1249, -0.0305], [+0.1301, +0.2074], and
 [+0.3144, +0.4029] percentage points. The result SHA-256 is
 `f6af4791...908eb`; the layer checkpoints are `1ac1e445...c89fc`,
 `ceb2c9d2...025ff`, and `9d69d40b...b29e6d`. This is another within-checkpoint
-measurement. The Instruct sibling and paired joint event remain necessary
-before any registered lineage classification.
+measurement; the completed paired classification is reported below.
 
 `ol-capacity-olmo31-instruct-dev-v1` completed from clean source commit
 `9f213f6` with all six registered outputs verified. The primary own-frame
@@ -301,8 +303,46 @@ throughout and 90% intervals [-0.1276, -0.0375], [+0.1305, +0.2028], and
 [+0.3109, +0.3956] percentage points. The result SHA-256 is
 `712ccd18...ebd2c`; the layer checkpoints are `31af395a...b35de`,
 `1bbd2ec0...b5009`, and `eaa08327...a42a7`. Instruct is analyzed only as a
-sibling endpoint. The paired joint event remains necessary before the frozen
-Think-path router is evaluated.
+sibling endpoint.
+
+### Paired capacity verdict
+
+`ol-capacity-joint-dev-v1` completed from clean source commit `cbc7ab3` using
+2,000 shared, domain-stratified prompt-bootstrap draws. The preregistered
+headline is the Base-to-3.0 Think own-lens equal-layer mean. Its centered-excess
+difference is +0.0154 percentage points with paired 90% interval [-0.0121,
++0.0434] points; occupancy difference and its interval are exactly zero. It is
+`stable` under the frozen ±0.25-point equivalence margin. The layer-specific
+own-frame differences are:
+
+| Layer | Base to 3.0 Think difference | Paired 90% interval | Occupancy difference | Class |
+|---:|---:|---:|---:|---:|
+| 24 | +0.0787 pp | [+0.0306, +0.1263] pp | 0 | stable |
+| 32 | +0.0240 pp | [-0.0234, +0.0729] pp | 0 | stable |
+| 40 | -0.0565 pp | [-0.1077, -0.0075] pp | 0 | stable |
+
+There is no supported positive material individual layer. The Base-common
+equal-layer sensitivity is also `stable`: -0.1412 percentage points, paired
+90% interval [-0.1512, -0.1316], occupancy difference zero. All twelve
+equal-layer model-pair/frame rows are stable. Across the 48 classified rows,
+46 are stable and two are unresolved: Base-common layer-40 Base-to-3.1 Think
+(-0.2316 points, interval [-0.2523, -0.2114]) and Base-to-Instruct (-0.2371
+points, interval [-0.2580, -0.2169]) narrowly cross the -0.25-point
+equivalence edge. These do not change the frozen primary router, but they are
+retained as coordinate-sensitivity qualifications.
+
+The registered lineage verdict is
+`broadly_conserved_capacity_recruitment_consistent`. This supports a bounded
+statement that large sparse-capacity growth is not needed to explain the
+released Think endpoint; it does not prove literal equality, causal
+recruitment, or an effect of the Think objective. The own-frame Base-to-3.0
+selected-support mean Jaccard rises from 0.291 at layer 24 to 0.412 at layer 32
+and 0.468 at layer 40, illustrating why O3 geometry and the selection-margin
+audit remain necessary even when the capacity estimand is stable.
+
+The joint JSON is 51,661 bytes with SHA-256 `cb35a22a...d1492`; the registered
+Parquet table is 15,047 bytes with SHA-256 `b3ad02e9...e247e`; and the paired
+bootstrap NPZ is 1,047,850 bytes with SHA-256 `c13cebed...10fa`.
 
 ## O3: lens provenance and coordinate comparability
 
@@ -386,19 +426,21 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-capacity-olmo3-think-dev-v1` | 3.0 Think completed at layers 24/32/40; own-frame centered excess +0.0650/+0.3391/+0.5331 pp, occupancy 2/2/2; Base-common sensitivity also recorded; no censoring, solver increases, or intervention opened | Source commit `04870ec`; result `2a872e4a...`; layer checkpoints `e444dc6b...`, `60d4989c...`, `9d65e188...` |
 | 2026-08-02 | `ol-capacity-olmo31-think-dev-v1` | 3.1 Think completed at layers 24/32/40; own-frame centered excess +0.0625/+0.3275/+0.5192 pp, occupancy 2/2/2; Base-common sensitivity also recorded; no censoring, solver increases, or intervention opened | Source commit `7baaf64`; result `f6af4791...`; layer checkpoints `1ac1e445...`, `ceb2c9d2...`, `9d69d40b...` |
 | 2026-08-02 | `ol-capacity-olmo31-instruct-dev-v1` | Instruct sibling completed at layers 24/32/40; own-frame centered excess -0.0157/+0.2615/+0.4716 pp, occupancy 2/2/2; Base-common sensitivity also recorded; no censoring, solver increases, or intervention opened | Source commit `9f213f6`; result `712ccd18...`; layer checkpoints `31af395a...`, `1bbd2ec0...`, `eaa08327...` |
+| 2026-08-02 | `ol-capacity-joint-dev-v1` | Paired Base-to-3.0 Think own-frame equal-layer difference +0.0154 pp, 90% CI [-0.0121, +0.0434], occupancy difference 0; all primary layers stable, no positive material layer; verdict broadly conserved capacity/recruitment-consistent; Instruct retained as sibling | Source commit `cbc7ab3`; JSON `cb35a22a...`; Parquet `b3ad02e9...`; paired bootstrap `c13cebed...` |
 
 ## Current limitations and claim boundary
 
-The OLMo results support only independent baseline candidate-set capability on
-this development partition, while the prospective joint-support service gate
-fails. They do not establish capacity, causal
-utilization, receivers, substitution, or temporal organization. The failed
-family-support target blocks the planned service set rather than licensing a
-post hoc family or model subset. The track will not claim that Think training
-creates a global workspace, that the reasoning objective is the causal
-variable, that Instruct lacks a verbalizable channel, or that capacity is
-unchanged from pretraining before the prospectively paired joint analysis is
-complete.
+The OLMo results establish independent baseline candidate-set capability and a
+development-tier sparse-capacity estimand on this partition; the prospective
+Bank-W joint-support service gate nevertheless fails. Stable capacity within a
+frozen equivalence margin does not establish literal equality, causal
+utilization, receivers, substitution, temporal organization, or coordinate
+identity. The failed family-support target blocks the planned intervention
+service set rather than licensing a post hoc family or model subset. The track
+will not claim that Think training creates a global workspace, that the
+reasoning objective is the causal variable, that Instruct lacks a verbalizable
+channel, or that the registered recruitment-consistent verdict proves a
+mechanism before O3 geometry/transport evidence and an authorized causal test.
 
 ## Recovery
 
