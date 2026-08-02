@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 03:46 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 03:55 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -38,9 +38,11 @@ canonical Drive handoff at
   `036e55233babcabacae061ab41d1410a35715aea`.
 - Stage-1 registry/report commit:
   `a017e632c9889970e6fe2f0353f91fc2e52878bc`.
-- Local and remote Gemma branch are synchronized through the registered
-  Stage-1 boundary. This pre-run boundary prepares, but has not executed, the
-  frozen one-cell actual-Gemma exact-backend parity diagnostic.
+- Frozen actual-Gemma backend-parity producer/compute commit:
+  `af21c2068508a28871f541c82b8dd1ff0f59916b`.
+- The backend diagnostic has completed and registered a failed methods gate;
+  the remote Gemma branch is synchronized through its producer commit, and
+  this registry/report boundary is the next publication.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -148,6 +150,20 @@ canonical Drive handoff at
   `5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65`;
   full log SHA-256:
   `3b99f1991ec70345f7998755ecb744a0d61054181eac0940db33490cc3108c0c`.
+- `gm-jvp-gemma-backend-parity-v1` ran from clean pushed `af21c20` and failed
+  its frozen all-slot backend-relative-error gate. Both exact backends
+  succeeded; their selected epsilon-0.05 tangent is bit-identical, and every
+  source/target/secant/tangent/hash/metric replay check passes. Across all
+  eight original batch slots, however, tangent cosine is 0.99999958 while
+  relative error is 0.002458, above the frozen 1e-5 ceiling. The strict event
+  is therefore a methods blocker even though the selected Stage-1 mismatch is
+  reproduced exactly. Artifact SHA-256:
+  `22c327764034f77496971f6c555af0ec6f8e99a0ceb80cea1677db24ca404b7c`;
+  raw SHA-256:
+  `ac5ba50dbba6d3ed149cf5b7b6951b80bee5502d11ac90e4f93dc45d515c9e89`;
+  log SHA-256:
+  `61c6704f6b34d60682123fbfa3936d770e307e48df6a3435c2f2b269c19350df`.
+  The model is unloaded and G2/G3 mechanism interpretation is stopped.
 
 ## Completed this VM
 
@@ -237,6 +253,11 @@ canonical Drive handoff at
     `torch.func.jvp` and `torch.autograd.functional.jvp` plus exact replay of
     the stored activation, target, secant, tangent, hashes, and metrics. No
     diagnostic output or registry event exists at this pre-run boundary.
+29. Ran that diagnostic from clean pushed `af21c20`. Both exact backends and
+    all selected-row replay checks pass, but the precommitted all-slot relative
+    error is 0.002458 versus 1e-5. Registered the immutable failed-gate event,
+    unloaded the model, and stopped G2/G3 rather than weakening the threshold
+    after observing Gemma.
 
 ## Immutable scientific guardrails
 
@@ -256,18 +277,18 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit, fetch/integrate, test, and push the frozen backend-parity producer.
-2. From that clean pushed commit, run and independently audit the one-cell
-   actual-Gemma forward/fallback exact-JVP comparison; require agreement before
-   interpreting the Stage-1 mismatch mechanistically.
-3. If parity passes, route the strongest validated cells to G2 sublayer
-   localization and G3 R0/R1 routing discrimination; preserve G9 time.
+1. Independently verify and publish the failed backend-parity registry/report
+   boundary without changing or deleting its outputs.
+2. Keep G2/G3 and all mechanism claims stopped. Build the blocked-track
+   state-of-record, claim ledger, transport-gate protocol, inventory, and
+   Phase-4 methods-only import bundle.
 
 ## Recovery checks and next commands
 
-There is no live producer or GPU allocation. The backend diagnostic has no
-output or evidence event yet and must only launch from its clean pushed
-producer commit. The 56-cell calibration and positive control are finalized and registered; do not rerun, delete, or
+There is no live producer or GPU allocation. The backend diagnostic is
+registered as a failed methods gate from `af21c20`; do not rerun it, weaken
+its frozen criterion, delete it, or interpret Stage 1 mechanistically. The
+56-cell calibration and positive control are finalized and registered; do not rerun, delete, or
 rewrite them. Gemma Stage 1 is complete and registered from `036e552`; do not
 rerun, delete, or rewrite its state/cells/aggregates. The target model is
 unloaded, the fully verified local snapshot remains available, and the ephemeral OLMo

@@ -59,6 +59,11 @@ The primary smallest-high-confidence selection passes 0/12, 0/13, 0/12,
 layer as local tangent mismatch. At the declared 0.10 dose, 12/16 rows per
 layer are evaluable and none pass. This is an operational transport-instrument
 result, not a claim of missing information, nondifferentiability, or workspace
-absence. An actual-model dual-backend JVP comparison precedes mechanism
-interpretation.
+absence. The frozen actual-model dual-backend comparison then returned finite
+results from both backends and reproduced the selected Stage-1 row exactly.
+However, its stricter comparison across all eight original batch slots had
+tangent cosine 0.99999958 and relative error 0.002458, exceeding the
+precommitted $10^{-5}$ relative-error ceiling. The methods gate therefore
+fails. Its threshold is not relaxed after observing Gemma, and mechanism
+localization stops at this boundary.
 \end{document}

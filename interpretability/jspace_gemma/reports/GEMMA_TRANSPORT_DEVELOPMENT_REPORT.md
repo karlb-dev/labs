@@ -3,8 +3,9 @@
 Status: foundation, exact-JVP goldens, paper-band convention, the complete
 OLMo calibration/positive-control threshold freeze, and the non-lens Gemma
 Stage-1 core are registered. Stage 1 returns a strong frozen local-tangent
-mismatch classification at all five layers; a frozen, unrun actual-model
-dual-backend derivative diagnostic precedes mechanism interpretation. All findings are
+mismatch classification at all five layers, but the frozen actual-model
+dual-backend diagnostic fails its all-slot relative-error gate. Mechanism
+interpretation is stopped. All findings are
 development or methods evidence, not a Phase 4 confirmatory model cell.
 
 ## Scope and non-claims
@@ -183,6 +184,7 @@ The execution flag is enabled without changing the threshold file (SHA-256
 | `gm-jvp-olmo-calibration-v1` | methods | registered; compute `06b2a3d`, finalizer `374f511`, no recompute | 56 cells, 1,568 rows, exact parity pass, calibrated shallow-to-late control trend |
 | `gm-jvp-olmo-positive-control-v1` | methods | registered from clean `7f6a36e`; target unopened | all frozen control criteria pass; numeric thresholds are immutable |
 | `gm-jvp-gemma-stage1-v1` | methods | registered from clean `036e552`; 40 immutable cells | all five layers classify as local tangent mismatch under frozen thresholds; actual-model backend parity is the next adversarial check |
+| `gm-jvp-gemma-backend-parity-v1` | methods | registered failed gate from clean `af21c20` | both backends succeed and selected-row replay is exact, but all-slot relative error 0.002458 exceeds the frozen 1e-5 ceiling; mechanism work stops |
 
 ## G1 decision table
 
@@ -271,7 +273,7 @@ row-table SHA-256 is
 state SHA-256 is
 `5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65`.
 
-## Actual-Gemma backend-parity pre-run lock
+## Actual-Gemma backend-parity result
 
 Before any mechanism localization, one registered Stage-1 row is frozen for
 an adversarial derivative-path replay:
@@ -289,9 +291,27 @@ backends to succeed, selected-slot and all-slot tangent agreement (cosine at
 least 0.999999 and relative error at most 1e-5), primal parity, and replay of
 the stored source activation, clean target, finite response, forward tangent,
 direction/realized-vector hashes, and reported transport metrics. A numerical
-secant is explicitly forbidden as an exact backend. Failure is itself
-registered as a methods diagnostic and blocks mechanism interpretation. At
-this pre-run boundary no diagnostic output or evidence event exists.
+secant is explicitly forbidden as an exact backend.
+
+The run from clean pushed commit `af21c20` reproduces the selected Stage-1
+row exactly. Both exact backends succeed; their selected tangents are
+bit-identical, both primals match the identical-batch clean forward exactly,
+and the stored activation, clean target, finite response, forward tangent,
+direction/realized-vector hashes, and five reported metrics all replay with
+zero error. The selected mismatch itself is unchanged: tangent cosine
+-0.00044545 and relative error 2.7718.
+
+The stricter all-slot comparison fails. Across the full original eight-slot
+batch, backend tangent cosine is 0.99999958 but relative error is 0.002458,
+above the frozen 1e-5 ceiling (maximum absolute difference 0.0390625). No
+backend raised and no finite difference was substituted. Because this gate was
+committed before the replay, it is not weakened after observing Gemma.
+`gm-jvp-gemma-backend-parity-v1` is therefore a registered methods blocker:
+Stage 1 remains an operational diagnostic, but G2/G3 mechanism localization
+and any nondifferentiability claim stop here. Artifact SHA-256 is
+`22c327764034f77496971f6c555af0ec6f8e99a0ceb80cea1677db24ca404b7c`;
+raw SHA-256 is
+`ac5ba50dbba6d3ed149cf5b7b6951b80bee5502d11ac90e4f93dc45d515c9e89`.
 
 ## Infrastructure incidents
 
@@ -305,7 +325,7 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Publish the frozen one-cell actual-Gemma forward/fallback exact-JVP parity
-producer, run it from that clean pushed commit, and independently audit its
-artifact and raw tensors. Only after it passes route the strongest validated cells into
-G2 layer/sublayer localization and G3 R0/R1 routing discrimination.
+Publish the immutable failed-gate boundary, keep G2/G3 stopped, and create the
+blocked-track state-of-record, claim ledger, transport-gate protocol,
+inventory, and Phase-4 methods-only import bundle. No scientific expansion or
+threshold repair is licensed from this result.
