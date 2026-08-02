@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 03:55 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 04:04 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -40,9 +40,10 @@ canonical Drive handoff at
   `a017e632c9889970e6fe2f0353f91fc2e52878bc`.
 - Frozen actual-Gemma backend-parity producer/compute commit:
   `af21c2068508a28871f541c82b8dd1ff0f59916b`.
-- The backend diagnostic has completed and registered a failed methods gate;
-  the remote Gemma branch is synchronized through its producer commit, and
-  this registry/report boundary is the next publication.
+- Backend-parity blocker registry/report commit:
+  `0e8acf3234ffa22ca79b99e3a3ea9de148951faf`.
+- Local and remote Gemma branch are synchronized through the failed-gate
+  boundary. The terminal model-free release producer is prepared but unrun.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -53,7 +54,7 @@ canonical Drive handoff at
 - Shared Part-2 conformance bootstrap: PASS.
 - No Gemma or OLMo model producer is running. OLMo calibration/control and the
   Gemma Stage-1 result are registered; the target model is no longer loaded.
-- The isolated package scaffold is committed. Its 44-test conformance suite
+- The isolated package scaffold is committed. Its 47-test conformance suite
   passes, including analytic, nonlinear tiny-transformer, and explicit Hugging
   Face Gemma/OLMo suffix/JVP tests plus a batch-shape/slot adversarial test.
 - OLMo local staging completed from clean pushed commit `42b34b1`. The
@@ -258,6 +259,12 @@ canonical Drive handoff at
     error is 0.002458 versus 1e-5. Registered the immutable failed-gate event,
     unloaded the model, and stopped G2/G3 rather than weakening the threshold
     after observing Gemma.
+30. Prepared the model-free terminal release producer and frozen config. It
+    verifies the 25,170-byte registry prefix (18 live events, 35 outputs),
+    critical evidence hashes and blocker semantics, then emits the state of
+    record, claim ledger, 20-minute gate protocol, inventory/environment lock,
+    and Phase-4 methods-only import bundle. No release output or
+    `gm-state-of-record-v1` event exists at this pre-run boundary.
 
 ## Immutable scientific guardrails
 
@@ -277,17 +284,19 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Independently verify and publish the failed backend-parity registry/report
-   boundary without changing or deleting its outputs.
-2. Keep G2/G3 and all mechanism claims stopped. Build the blocked-track
-   state-of-record, claim ledger, transport-gate protocol, inventory, and
-   Phase-4 methods-only import bundle.
+1. Commit, fetch/integrate, test, and push the frozen model-free release
+   producer and documents.
+2. Run it from that clean pushed commit, independently verify every release
+   hash and import-envelope field, then publish the release registry boundary.
+3. Keep G2/G3 and all mechanism claims stopped.
 
 ## Recovery checks and next commands
 
 There is no live producer or GPU allocation. The backend diagnostic is
 registered as a failed methods gate from `af21c20`; do not rerun it, weaken
 its frozen criterion, delete it, or interpret Stage 1 mechanistically. The
+terminal release has no Drive output or evidence event yet and must run only
+from its clean pushed producer commit. The
 56-cell calibration and positive control are finalized and registered; do not rerun, delete, or
 rewrite them. Gemma Stage 1 is complete and registered from `036e552`; do not
 rerun, delete, or rewrite its state/cells/aggregates. The target model is

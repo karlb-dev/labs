@@ -313,6 +313,19 @@ and any nondifferentiability claim stop here. Artifact SHA-256 is
 raw SHA-256 is
 `ac5ba50dbba6d3ed149cf5b7b6951b80bee5502d11ac90e4f93dc45d515c9e89`.
 
+## Terminal blocked-release preparation
+
+The binding hard stop changes the completion path, not the evidence already
+recorded. A model-free release producer now verifies the frozen 25,170-byte
+registry prefix through the blocker (18 live events and 35 registered outputs),
+all critical evidence hashes, the five Stage-1 decisions, and the sole failed
+backend criterion. It prepares a methods-only state of record, scoped claim
+ledger, 20-minute transport-gate protocol, complete evidence inventory,
+environment lock, release manifest, and `IMPORT_BUNDLE_PHASE4.json` envelope.
+The bundle explicitly opens no Phase-4 model cell or intervention and signs no
+review/PI field. At this pre-run boundary none of those Drive release outputs
+and no `gm-state-of-record-v1` event exists.
+
 ## Infrastructure incidents
 
 The first clean foundation attempt at commit `11501b8` stopped before any
@@ -325,7 +338,7 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Publish the immutable failed-gate boundary, keep G2/G3 stopped, and create the
-blocked-track state-of-record, claim ledger, transport-gate protocol,
-inventory, and Phase-4 methods-only import bundle. No scientific expansion or
-threshold repair is licensed from this result.
+Publish and run the frozen model-free release producer, independently audit
+the import envelope and every output hash, and register the terminal methods
+boundary. Keep G2/G3 stopped; no scientific expansion or threshold repair is
+licensed from this result.

@@ -43,3 +43,20 @@ Run the predeclared late-layer infrastructure smoke and then resume the full
 python -m jspace_gemma.experiments.gm_run_gemma_stage1 --smoke
 python -m jspace_gemma.experiments.gm_run_gemma_stage1
 ```
+
+## Terminal branch
+
+The registered Stage-1 result is now stopped at the separately frozen
+actual-Gemma cross-backend gate. Both backends succeed and agree exactly on
+the selected replay, but the full matched batch exceeds the precommitted
+relative-error ceiling. Under the binding addendum, G2/G3 and mechanism
+interpretation do not run on this branch.
+
+After verifying the blocker boundary, publish the model-free terminal release:
+
+```bash
+python -m jspace_gemma.experiments.gm_blocked_release
+```
+
+The release exports a methods-only state of record, claim ledger, transport
+gate protocol, verified inventory/environment lock, and Phase-4 import bundle.

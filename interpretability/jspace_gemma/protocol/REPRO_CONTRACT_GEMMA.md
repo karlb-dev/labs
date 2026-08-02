@@ -27,3 +27,9 @@ Raw vectors are durable and metrics are recomputed from them. Prompt is the
 resampling unit; direction and layer are repeated measures. Claims always
 carry model revision, layer, source position/mode, target, direction, dose,
 and development/methods tier.
+
+The actual-Gemma backend replay additionally gates the selected scientific
+slot and its entire original batch. The full-batch relative-error gate failed
+from clean commit `af21c20`, so the track stops as a methods blocker. A later
+repair may not weaken that target-observed threshold or reuse the evidence ID;
+it must preserve the failed artifact and freeze a new diagnostic prospectively.
