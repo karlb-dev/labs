@@ -13,8 +13,8 @@ all 1,000 per-prompt diagnostic rows, with every row finite or covered by an
 already precommitted skip rule. The frozen producer prints those diagnostics
 to its terminal but does not store them inside the checkpoint.
 
-The materialized archive on VM13 is continuous for prompts 181--1000 once the
-final fit completes:
+The finalized materialized archive on VM13 is continuous for prompts
+181--1000:
 
 - prompts 181--250 are in `qwen_fit_drawA_n250_20260801.log`;
 - prompts 251--500 are in `qwen_continuation_draw_a_n500_20260801.log`;
@@ -49,8 +49,8 @@ is being invented after the fact.
 
 ## What the final checkpoint can and cannot prove
 
-After A1000, the independent engineering checks must establish all of the
-following from fresh hashes and tensor bytes:
+The completed independent engineering checks establish all of the following
+from fresh hashes and tensor bytes:
 
 - the checkpoint header and tensor payload both have
   `n_done == next_idx == 1000`;
@@ -63,6 +63,12 @@ following from fresh hashes and tensor bytes:
 - the registered event, output hashes, and content-addressed local backup
   agree.
 
+All 63 source layers pass those checks. The final checkpoint SHA-256 is
+`fd5a4ae614eef46002cc987a038d9a391016b7fbc91a754eed2adff83f6abf20`,
+the header SHA-256 is
+`b0cf4c8d7e6debc20d78a9ed49ba97025b27a2cee9a18ce517d67396801d6d2a`,
+and the lens SHA-256 is
+`6e48c7731501d0fc6030f1d60eff6f19b211756f40ef0cd6e499e414f08f6bd6`.
 Those invariants prove that the frozen estimator accepted all 1,000 ordered
 nested-prefix prompts and that no prompt was silently skipped or trimmed. A
 nonfinite contribution would persist in its cumulative tensor. They do **not**
@@ -93,10 +99,18 @@ remain development-only pending this review and the other freeze gates.
 
 | field | value |
 |---|---|
-| normalized raw rows | **PENDING; expected 820** |
-| raw missing indices | **PENDING; expected 1--180 only** |
-| producer skip rows | **PENDING; expected zero** |
-| checkpoint acceptance invariant | **PENDING** |
-| tensor-integrity audit | **PENDING** |
-| exact source/extract hashes | **PENDING** |
+| normalized raw rows | 820, prompts 181--1000 |
+| raw missing indices | prompts 1--180 only |
+| producer skip rows | zero |
+| checkpoint acceptance invariant | pass: `n_done == next_idx == 1000`; checkpoint bytes/hash agree with header |
+| tensor-integrity audit | pass: 63/63 source layers finite and exact quantized means |
+| exact source/extract hashes | final three plain logs plus immutable 7,073-line Codex prefix recorded in `reports/qwen_a1000_fit_diagnostics_summary.json`; prefix/extract remain `e142b280...a943` / `6adb2748...0838` |
 | independent disposition | **PENDING — implementation agent must not sign** |
+
+The recoverable rows are all finite. Prompt-norm median/q95/max are
+7.8615/26.8911/231.101 and running-mean-change median/q95/max are
+0.00758/0.03013/0.425. The strongest archived prompt norms occur at prompts
+616, 233, 323, 612, and 660; prompt 323 is therefore retained under the frozen
+audit but is not described as the global maximum. The final QA plot is
+`reports/figures/p4qa01_qwen_a1000_fit_diagnostics.png`. This quantitative
+closeout does not resolve the independent archival disposition above.

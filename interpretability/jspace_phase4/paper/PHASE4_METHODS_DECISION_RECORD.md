@@ -25,6 +25,12 @@ A1000. Q-L3, Q-L4, and Q-L5 block a new single sparse Qwen instrument and
 route to reviewed consensus/cross-fit methods, a comparability instrument, or
 removal of the affected primary. No automatic A2000 branch exists.
 
+The fit is now registered at exactly 1,000 prompts and passes its full tensor
+integrity audit. Its first successor also passes: the A500--A1000 conservative
+assay-band task q50/q05 are 0.998702/0.998122. This licenses the frozen
+functional stage but does not itself choose Q-L1--Q-L5 or establish sparse or
+causal invariance.
+
 ## M3. Bank B is estimation-only in Phase 4
 
 The verified 40-family bank cannot power the original 0.25-nat two-component
@@ -75,6 +81,7 @@ numbers cannot change a mainline conclusion, review field, or execution gate.
 ## Current terminal statement
 
 Phase 4 is development-only and not frozen. P4-P1 is estimation-only, P4-P3
-is blocked, and P4-P2 is the sole conditional candidate primary. A1000 and
-the external review/governance gates determine whether Phase 4 reaches a
+is blocked, and P4-P2 is the sole conditional candidate primary. A1000 and its
+structural successor are complete; the remaining functional/canonical queue
+and external review/governance gates determine whether Phase 4 reaches a
 reviewable no-primary methods boundary or a one-primary freeze candidate.

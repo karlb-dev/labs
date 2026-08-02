@@ -1,38 +1,36 @@
 # Phase 4 part 3 summary and Phase 4.4 handoff
 
-**LIVE DRAFT — A1000 FIT IN PROGRESS — NOT A FREEZE RECORD**
+**PHASE 4.3 COMPUTE CLOSEOUT — DEVELOPMENT ONLY — NOT A FREEZE RECORD**
 
-Last updated: 2026-08-02 21:51 UTC. This document will be finalized after the
-current A1000 producer exits and all completed outputs are independently
-rehash-checked. Phase 4 remains development-only. No confirmatory or
-replication intervention outcome may be opened, and this implementation agent
+Finalized: 2026-08-02 23:00 UTC. The A1000 fit and its first frozen successor,
+the A500--A1000 structural event, are registered, locally backed up, merged,
+and pushed. The later functional, selection-margin, influence, and canonical
+stages remain intentionally unrun for Phase 4.4. No confirmatory or
+replication intervention outcome was opened, and this implementation agent
 does not sign independent-review or PI fields.
 
 ## Executive state
 
-Phase 4.3 has reduced the project to one active compute dependency and a
-small, explicit set of governance/durability dependencies. The exact nested
-Qwen draw-A fit is continuing from A500 to A1000 under the unchanged producer.
-The last exact boundary at this draft is A980, checkpoint SHA-256
-`2b8c3e97fe9a74340f7504f6bcf8cfea32ac088e05dfceaf78640f0bac52ce70`.
-The fit contract remains
+Phase 4.3 ended at a clean structural boundary. The exact cumulative Qwen
+draw-A estimator reached 1,000 accepted prompts under unchanged fit contract
 `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00`.
-A980 is recovery state, not registered scientific evidence.
+The final checkpoint is 6,606,047,399 bytes with SHA-256
+`fd5a4ae614eef46002cc987a038d9a391016b7fbc91a754eed2adff83f6abf20`;
+the registered fp16 lens is 3,303,034,078 bytes with SHA-256
+`6e48c7731501d0fc6030f1d60eff6f19b211756f40ef0cd6e499e414f08f6bd6`.
+The A500--A1000 structural event then passed both prospectively frozen gates.
+The roughly 52-minute functional stage was not started because it lacked a
+safe margin before the approximately 23:38 UTC reclaim.
 
-The expected VM reclaim is approximately 2026-08-02 23:38 UTC. At the
-observed end-to-end rate, the A1000 checkpoint should land near 22:50 UTC,
-with final serialization, hashing, registration, backup, integration, and
-push near 22:55--23:05 UTC. There is not a reliable margin for the full
-postfit queue. At 23:25 UTC no new long-running stage should be launched.
+The completed Gemma and OLMo side tracks, prospective preparation, A1000 fit,
+exact binding, and structural event now share ancestry on the single
+`interp_jspace_part2` branch. Merge commit `3d1f1bf` preserves history without
+squashing. The 69-row Phase 4 registry contains no native `gm-*` or `ol-*`
+event.
 
-The isolated preparation branch already ancestry-contains the completed
-Gemma and OLMo side-track merges from remote main. After the fitter exits, all
-mainline, side-track, preparation, and A1000 work must be merged without
-squashing into the single `interp_jspace_part2` branch, validated, pulled once
-more, and pushed.
-
-The new fit-diagnostic audit found and corrected an important wording error:
-prompt 323 is not the overall archived maximum. Through n=980, the largest
+The final fit-diagnostic audit found and corrected an important wording error:
+prompt 323 is not the overall archived maximum. Across the recoverable archive,
+the largest
 retained finite rows are prompt 616 at 231.101, prompt 233 at 189.182, prompt
 323 at 173.345, prompt 612 at 151.626, and prompt 660 at 113.855. The current
 VM transcript recovers prompts 555--716 that were absent from the repaired
@@ -86,9 +84,10 @@ Before any A1000 result existed, the project committed and tested:
   plan;
 - a reclaim-safe `JSPACE4_STOP_AFTER` boundary for the A1000 postfit queue.
 
-The test baseline before A1000 completion is 279 Phase 4 tests, 59
-OLMo-lineage tests, and 48 Gemma tests: 386 total. The sole Gemma Torch FX
-warning is unchanged. The preparation branch is clean and pushed.
+Final integrated validation is 279 Phase 4 tests, 59 OLMo-lineage tests, and
+48 Gemma tests: 386 total. The sole Gemma Torch FX warning is unchanged. The
+focused exact-binding suite additionally passes 12/12. Both the unified
+mainline and the preparation branch are pushed.
 
 ### Phase 4.3 completion audit
 
@@ -100,8 +99,8 @@ evidence and from approvals that this implementation agent cannot supply.
 | governing Part 3/addendum instructions | complete | read into the operational handoffs and prospective contracts |
 | Gemma and OLMo branch ancestry | complete | both terminal branches merged into the remote-main ancestry; native side namespaces excluded from the Phase 4 registry |
 | prospective A1000 successor contracts | complete | structural, functional, margin, influence, canonical, import, recovery, durability, and reclaim-stop code committed before the A1000 result |
-| A1000 fit | **RUNNING** | final append-only event, exact backup, normalized diagnostic archive, and tensor audit still required |
-| frozen post-A1000 decision queue | **NOT YET RUN** | structural through canonical rows below remain pending |
+| A1000 fit | **COMPLETE / REGISTERED** | event at `c80017d`; exact registered-output and recovery backups; normalized 820-row archive; 63-layer tensor audit passes |
+| frozen post-A1000 decision queue | **STRUCTURAL COMPLETE; LATER STAGES PENDING** | structural event at `d144ac1`; functional through canonical remain sealed for Phase 4.4 |
 | side-track Phase 4 admission | intentionally queued | may run only after the registered canonical boundary |
 | whole-registry durability | blocked | two known historical A120--A250 outputs remain absent; a fresh materialization pass is also required |
 | independent review / PI / freeze | not supplied | external reviewers must complete these gates; no untouched outcome is authorized |
@@ -134,21 +133,36 @@ decision.
 
 ## A1000 completion and integrity record
 
-Fill this section only from registered and freshly rehashed bytes.
+These values come only from registered and freshly rehashed bytes.
 
 | field | final value |
 |---|---|
 | evidence ID | `p4-qwen-lens-fit-drawA-n1000-dev-v1` |
-| prompts | **PENDING: must equal 1000** |
-| final lens SHA-256 | **PENDING** |
-| final lens bytes | **PENDING** |
-| final checkpoint SHA-256 | **PENDING** |
-| checkpoint-state SHA-256 | **PENDING** |
-| result SHA-256 | **PENDING** |
-| input-manifest SHA-256 | **PENDING** |
-| registration commit | **PENDING** |
-| local backup manifest | **PENDING** |
-| cloud durability | **PENDING; cache presence is not proof** |
+| prompts | 1,000; `n_done == next_idx == 1000` |
+| final lens SHA-256 | `6e48c7731501d0fc6030f1d60eff6f19b211756f40ef0cd6e499e414f08f6bd6` |
+| final lens bytes | 3,303,034,078 |
+| final checkpoint SHA-256 | `fd5a4ae614eef46002cc987a038d9a391016b7fbc91a754eed2adff83f6abf20` |
+| checkpoint-state SHA-256 | `b0cf4c8d7e6debc20d78a9ed49ba97025b27a2cee9a18ce517d67396801d6d2a` |
+| result SHA-256 | `555569478f759f68ae205a2a495a04490a9ee9aa8cf5a875644935a9a6d06ef8` |
+| input-manifest SHA-256 | `ce7e057e1298f8bc4217df3ce0a62afb916f4e3edf54466d1c120eaa9d9138f1` |
+| registration commit | `c80017d` (ancestry integrated by `3d1f1bf`) |
+| registered-output backup | `/content/sl4_work/postfit_registered_backups/p4-qwen-lens-fit-drawA-n1000-dev-v1/backup_manifest.json`, SHA-256 `cdaae0129c6f2ff55650481bf74713ccfb0af61039ceb4bf8d0dcc0a6ab5397c` |
+| recovery backup | content-addressed under `final_backups/.../fd5a4ae6...abf20/`, manifest SHA-256 `e50da70f7e457e4e00a3fff95bbf197b7d8875365fda6b52b4a745d757d6b4d5` |
+| cloud durability | final checkpoint/progress/header republished checkpoint-first/header-last; cache-local rehash passes, but fresh cloud materialization remains pending |
+
+The engineering QA archive contains 820 finite rows spanning prompts 181--1000,
+zero skip rows, prompt-norm median/q95/max 7.8615/26.8911/231.101, and
+`max_d_mean` median/q95/max 0.00758/0.03013/0.425. A log-log regression gives
+coefficients +1.01888 for prompt magnitude and -0.94767 for prompt index
+(R-squared 0.99714): estimator movement falls approximately as 1/n conditional
+on contribution magnitude, while the per-prompt magnitude distribution remains
+heavy-tailed. This is an equal-weight recurrence consistency check, not by
+itself proof of structural or causal convergence. No row was trimmed.
+
+The mmap tensor audit verifies 63 source layers (0--62), target layer 63,
+5,120-by-5,120 shapes, fp32 checkpoint sums, fp16 registered lens tensors,
+full finiteness, and bit-exact equality of every lens layer to
+`(checkpoint_sum / 1000).to(float16)`.
 
 Final integrity review must record:
 
@@ -179,11 +193,18 @@ Only completed, registered results belong in this table.
 
 | stage | evidence ID | status / key result | commit |
 |---|---|---|---|
-| A500–A1000 structural | `p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1` | **PENDING** | **PENDING** |
+| A500–A1000 structural | `p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1` | **PASS**: conservative assay L20--L44 task q50 0.998702 >= 0.95; q05 0.998122 >= 0.90 | `d144ac1` |
 | A500/A1000/published functional | `p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1` | **PENDING** | **PENDING** |
 | selection margin | `p4-qwen-selection-margin-a500-a1000-dev-v1` | **PENDING** | **PENDING** |
 | prompt-323 influence | `p4-qwen-lens-influence-prompt323-dev-v1` | **PENDING** | **PENDING** |
 | canonical decision | `p4-qwen-canonical-lens-decision-a1000-dev-v1` | **PENDING: Q-L1–Q-L5** | **PENDING** |
+
+The structural result SHA-256 is
+`eaf8a63ed038eedaabbbd037be26984a454cddd4182bb42c3e37270a91ec193d`.
+Its six-output local backup manifest hashes to
+`5bff1706c7684c38d8f103a2d725059a9a1bca8f0b8aaad3a528047390c57e09`.
+Both registered figures were visually inspected after copying into the report
+tree; no clipping, missing panel, or mislabeled boundary was observed.
 
 The queue order remains structural → functional → selection margin →
 prompt-323 influence → canonical decision. Near reclaim, the queue may stop
@@ -191,25 +212,14 @@ only after a fully registered, pushed, and locally backed-up stage by setting
 `JSPACE4_STOP_AFTER`. A later default invocation verifies existing stages and
 continues in the same order.
 
-## Reclaim-aware end-of-VM ladder
+## Completed reclaim-aware end-of-VM ladder
 
-After A1000 exits:
-
-1. Preserve the final registered fit outputs locally before any Drive or Git
-   transition.
-2. Remove the temporary recovery bind only after verifying the final local
-   checkpoint/header pair; republish checkpoint first and header last to the
-   underlying Drive directory.
-3. Merge remote main, the A1000 registry commit, and the preparation branch
-   into `interp_jspace_part2` with ancestry preserved. Resolve the registry as
-   append-only and keep native side events outside it.
-4. Bind only the three pre-authorized A1000 hash slots, commit, pull, and push.
-5. If at least 70 minutes remain, run the default full postfit queue. If the
-   margin is shorter, run `JSPACE4_STOP_AFTER=structural` only. Do not begin
-   the roughly 52-minute functional gate without a safe completion margin.
-6. At 23:25 UTC stop launching compute. Rehash outputs/backups, update this
-   document and both operational handoffs, run proportionate tests, pull, and
-   push the single mainline branch.
+The fit outputs and recovery state were copied to two exact local backup
+families; the temporary bind was removed; final recovery bytes were republished
+checkpoint-first/header-last; all branches were ancestry-merged; the three
+pre-authorized bindings were set to the registered lens hash; focused binding
+tests passed 12/12; and the structural-only queue registered, backed up, pulled,
+and pushed its result. No unsafe long stage was launched.
 
 ## Phase 4.4 exact resume order
 
@@ -226,17 +236,19 @@ On the next VM, first read this file plus `inprogress.md`,
    `qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt`,
    and must rehash to
    `1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1`.
-3. Run the A1000 postfit queue from its first incomplete stage. Default:
+3. Resume the A1000 postfit queue from its first incomplete stage, the
+   functional gate. The queue first verifies the already registered fit and
+   structural event, then continues in frozen order. Default:
 
    ```bash
    bash interpretability/jspace_phase4/run_qwen_a1000_postfit_queue.sh
    ```
 
-   Preserve the normalized 820-row diagnostic archive and tensor-integrity
-   audit before any new VM replaces the local execution transcript. The
-   diagnostic command must use `--codex-max-line 7073`; a broader read is
-   invalid because later tool output contains displayed unit-test fixtures.
-   Because the recovered maxima show that prompt 323 is not the global archived
+   The normalized 820-row diagnostic archive, its QA figure, and the passing
+   tensor-integrity audit are tracked under `reports/` and mirrored under the
+   Drive diagnostic root. Any regeneration must use `--codex-max-line 7073`;
+   a broader read is invalid because later tool output contains displayed
+   unit-test fixtures. Because the recovered maxima show that prompt 323 is not the global archived
    maximum, prospectively author an omnibus retained-extremes sensitivity for
    prompts 233, 612, 616, and 660 alongside the existing prompt-112 and
    frozen prompt-323 records. It is a no-trimming robustness appendix and

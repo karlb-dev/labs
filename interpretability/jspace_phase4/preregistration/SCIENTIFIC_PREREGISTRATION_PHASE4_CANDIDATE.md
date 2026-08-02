@@ -27,12 +27,16 @@ review, variance calibration, power execution, untouched bank/split review,
 and PI approval remain open.
 
 Candidate 0.11 also preserves the registered Qwen draw-A n=500 fit and
-A250--A500 Branch-B decision. Draw A is continuing under the exact frozen fit
-contract to n=1000; no canonical lens is nominated. Before the A1000 result,
+A250--A500 Branch-B decision. Draw A has completed under the exact frozen fit
+contract at n=1000, and the prospectively fixed A500--A1000 structural gate
+passes at conservative q50/q05 0.998702/0.998122; no canonical lens is yet
+nominated. Before the A1000 result,
 the A500--A1000 structural/functional and selection-margin contracts, the
 retained prompt-323 influence contract, and a conditional Q-L2 span-level
 estimand draft were committed prospectively with an unbound A1000 hash. None
-of those placeholders is evidence or a license to reinterpret the result.
+of those placeholders was evidence or a license to reinterpret the result.
+The registered A1000 hash is now bound without changing a threshold. The
+functional, selection-margin, influence, and canonical results remain unrun.
 
 Qwen and both OLMo models pass their independent Bank-W capability gates, but
 the frozen three-model capable-family intersection is only 16 against the

@@ -18,7 +18,31 @@ Read the fuller live ledger at:
 /content/labs/interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 ```
 
-## VM13 delta — 2026-08-02 21:51 UTC
+## VM13 final closeout — 2026-08-02 23:00 UTC
+
+A1000 and its structural successor are complete, registered, backed up, merged
+with the terminal Gemma/OLMo ancestry, and pushed on `interp_jspace_part2`.
+Exact lens/checkpoint/header SHA-256 values are respectively
+`6e48c7731501d0fc6030f1d60eff6f19b211756f40ef0cd6e499e414f08f6bd6`,
+`fd5a4ae614eef46002cc987a038d9a391016b7fbc91a754eed2adff83f6abf20`,
+and `b0cf4c8d7e6debc20d78a9ed49ba97025b27a2cee9a18ce517d67396801d6d2a`.
+The 63-layer exact-mean tensor audit passes. The recoverable QA archive has
+820 finite rows (181--1000), no skips, and an explicit missing-raw-text
+deviation for 1--180. Structural conservative q50/q05 are
+0.998702/0.998122, both passing.
+
+The next exact command after a clean `git pull --ff-only` is:
+
+```bash
+bash interpretability/jspace_phase4/run_qwen_a1000_postfit_queue.sh
+```
+
+It verifies the registered fit and structural stages and resumes at the
+roughly 52-minute functional gate. Do not rerun the fit or structural producer.
+The complete Phase 4.4 ladder, backup hashes, archival deviation, cache pins,
+and external governance decisions are in `reports/phase4_part3_summary.md`.
+
+## Historical VM13 mid-run delta — 2026-08-02 21:51 UTC
 
 The operational n=554 restart below succeeded under the unchanged frozen
 producer. A1000 is live; the newest valid local atomic boundary is n=980,

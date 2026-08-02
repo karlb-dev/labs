@@ -32,12 +32,15 @@ jspace-phase4 verify
 The run root, model cache, Phase 3 imports, and repository files are resolved
 through logical URIs. Scientific modules must not embed machine paths.
 
-## Phase 4.3 resumable work block
+## Phase 4.3 closeout and Phase 4.4 resume block
 
-The registered post-A500 decision is Branch B. Its Qwen Draw A continuation
-resumed from the durable n=554 VM handoff under the frozen wrapper. The live
-checkpoint is recorded in the Drive handoff; n=554 remains the immutable
-restart provenance boundary:
+The registered post-A500 decision was Branch B. Its Qwen Draw A continuation
+resumed from the durable n=554 VM handoff and completed at n=1000 under the
+unchanged frozen wrapper. The final registered lens SHA-256 is
+`6e48c7731501d0fc6030f1d60eff6f19b211756f40ef0cd6e499e414f08f6bd6`;
+the final checkpoint SHA-256 is
+`fd5a4ae614eef46002cc987a038d9a391016b7fbc91a754eed2adff83f6abf20`.
+n=554 remains the immutable restart-provenance boundary:
 
 ```text
 checkpoint SHA-256: bf992067d690123109198c182a21169379e5752d89e73e96514fab7127fba74d
@@ -45,9 +48,9 @@ checkpoint bytes:   6,606,047,399
 next chunk:         554:557
 ```
 
-n=554 is a restart boundary, not a registered evidence milestone. The
-continuation resumes from the highest contract-matched local/Drive checkpoint
-and refuses CPU or slow-kernel fallback. Read both handoffs before recovery:
+n=554 is a restart boundary, not a registered evidence milestone. The final
+n=1000 event and A500--A1000 structural successor are registered, backed up,
+and pushed. Read both handoffs before Phase 4.4:
 
 ```bash
 export JSPACE4_RUN_ROOT=/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731
@@ -67,11 +70,9 @@ thresholds:
 bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
 ```
 
-The router verifies the registered result envelope and exact frozen wording;
-the registered result is Branch B, so it continues with `draw_a_n1000` and
-must resume from the highest contract-matched checkpoint recorded by the live
-handoff (never below n=554). A/C would continue with `draw_b_n120`. Do not
-launch a duplicate while either lock is held.
+The router and n=1000 fit must not be rerun. Their exact registered outputs are
+immutable. The lower-level producer below remains only for recovery
+diagnostics and contract verification.
 
 The lower-level producer remains available for exact recovery diagnostics:
 
@@ -107,12 +108,15 @@ single consumed-development orthogonal feasibility shot, fixes the pre-pilot
 mean-masked exact/Monte-Carlo power ruler. The OLMo capability service result
 fails at 16/20 common families, so P4-P3 is blocked. The A500--A1000 successor
 configs, selection-margin contract, prompt-323 influence contract, and
-conditional Q-L2 estimand were committed before A1000 existed; their A1000
-hash stays unbound until registration.
+conditional Q-L2 estimand were committed before A1000 existed. The exact
+registered A1000 hash is now bound in the three authorized slots without
+changing thresholds.
 
-After the registered A1000 hash is bound in the three successor configs, run
-`run_qwen_a1000_postfit_queue.sh`. Its default is the full frozen queue through
-the canonical decision. A reclaim-aware invocation may set
+The structural-only queue invocation is complete and passed at conservative
+task q50/q05 0.998702/0.998122. On Phase 4.4, rerun
+`run_qwen_a1000_postfit_queue.sh`; it verifies the registered structural event
+and resumes at the functional gate through the canonical decision. A
+reclaim-aware invocation may set
 `JSPACE4_STOP_AFTER` to `structural`, `functional`, `margin`, or `influence`;
 the selected stage is registered, pushed, and locally backed up before the
 queue exits successfully. A later default invocation verifies already
@@ -163,9 +167,10 @@ own/common-frame audits, and the registered four-checkpoint trajectory
 synthesis. Phase 4.2 adds the Qwen same-corpus convergence and functional
 invariance gates, CPU-first common-cohort closure, Bank B/W authoring and
 power, Bank W capability rules, official-mode gates, and P4-P2 design/pilot
-methods. Phase 4.3 closes the A1000 instrument decision, side-track import,
-and remaining freeze blockers. They remain development summaries, not frozen
-claims.
+methods. Phase 4.3 closes the A1000 fit and structural boundary and merges the
+side-track ancestry; Phase 4.4 completes the functional/canonical decision,
+side-track admission, and remaining freeze blockers. They remain development
+summaries, not frozen claims.
 
 ## Tiers
 

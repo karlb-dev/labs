@@ -1,10 +1,39 @@
-# LIVE — Phase 4.3 continuation, VM13
+# CLOSED — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 21:51 UTC. This is the canonical dynamic handoff.
+Final closeout: 2026-08-02 23:00 UTC. This is the canonical VM13 handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
-## Current boundary
+## Final VM13 boundary
+
+- Unified mainline: `interp_jspace_part2`; A1000 fit registration `c80017d`,
+  ancestry-preserving integration `3d1f1bf`, exact binding `5e1de63`, and
+  structural registration `d144ac1` are pushed. Gemma and OLMo terminal
+  histories are ancestors. The 69-event Phase 4 registry has no native side
+  namespace.
+- A1000 is complete at `n_done == next_idx == 1000`. Lens SHA-256:
+  `6e48c7731501d0fc6030f1d60eff6f19b211756f40ef0cd6e499e414f08f6bd6`.
+  Checkpoint SHA-256:
+  `fd5a4ae614eef46002cc987a038d9a391016b7fbc91a754eed2adff83f6abf20`.
+  Header SHA-256:
+  `b0cf4c8d7e6debc20d78a9ed49ba97025b27a2cee9a18ce517d67396801d6d2a`.
+- Exact registered-output and recovery backups pass rehash. The temporary bind
+  is removed; the final Drive recovery pair was republished checkpoint-first,
+  progress-next, header-last. Fresh cloud materialization is still unproved.
+- The final normalized diagnostic archive has 820 finite rows, prompts
+  181--1000, and zero skips. The explicit prompts-1--180 raw-text deviation
+  remains independently review-gated. The 63-layer tensor audit passes.
+- A500--A1000 structural q50/q05 are 0.998702/0.998122 and pass both frozen
+  gates. The structural-only queue stopped restart-safely. Functional,
+  selection margin, prompt-323 influence, and canonical decision were not run.
+- Phase 4.4 begins from a clean pull and the default command
+  `bash interpretability/jspace_phase4/run_qwen_a1000_postfit_queue.sh`.
+  It verifies the existing fit/structural events and starts at functional.
+  Then run side-track admission, exact A120 capacity recovery, durability and
+  inventory, and external review exactly as specified in
+  `reports/phase4_part3_summary.md`.
+
+## Historical launch boundary (superseded by final boundary above)
 
 - Main worktree: `/content/labs`, branch `interp_jspace_part2`, clean at
   `4ea7a9ba7a534daa61e0d8c9960763b921a1b80b` when the continuation launched.
@@ -30,7 +59,7 @@ intervention outcomes, and never self-sign independent-review or PI fields.
   wrapper is live in chunk 980:983. No partial checkpoint is registered
   evidence.
 
-## VM13 live continuation
+## Historical VM13 live continuation
 
 The frozen wrapper was relaunched from the clean main worktree. It reverified
 the exact registered Branch-B functional-result hash, resolved Branch B,

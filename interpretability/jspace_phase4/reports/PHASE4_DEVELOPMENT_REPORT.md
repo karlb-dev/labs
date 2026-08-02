@@ -3,10 +3,10 @@
 Status: live development synthesis through the OLMo-3 32B base,
 seed-paired 3.0 Think, and seed-paired OLMo-3.1 32B Think and Instruct
 own/common-lens comparisons, registered four-checkpoint trajectory, and
-post-hoc common-support closure, plus the completed Qwen draw-A n=500 fit,
-A250--A500 structural/functional decision, passing official-Qwen mode-v2
-baseline, outcome-blind Bank B methods, and Qwen Bank-W capability gate,
-2026-08-01.
+post-hoc common-support closure, plus the completed Qwen draw-A n=1000 fit,
+registered A500--A1000 structural decision, passing official-Qwen mode-v2
+baseline, outcome-blind Bank B methods, Qwen Bank-W capability gate, and
+ancestry-integrated Gemma/OLMo methods releases, 2026-08-02.
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -702,6 +702,46 @@ the precommitted successor again emits **Branch B: continue draw A to
 n=1000**. The read-only frozen router only applies this registered result; the
 rule does not nominate A500 as canonical or inspect any intervention outcome.
 
+### Draw-A n=1000 fit and structural stop
+
+Fit evidence: `p4-qwen-lens-fit-drawA-n1000-dev-v1`. Structural evidence:
+`p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1`.
+
+The exact cumulative estimator reached 1,000 accepted nested-prefix prompts
+without a skip. The registered lens SHA-256 is
+`6e48c7731501d0fc6030f1d60eff6f19b211756f40ef0cd6e499e414f08f6bd6`;
+the final 6.606 GB checkpoint SHA-256 is
+`fd5a4ae614eef46002cc987a038d9a391016b7fbc91a754eed2adff83f6abf20`.
+An mmap audit found every 5,120-by-5,120 source-layer checkpoint sum and lens
+tensor finite and proved, bit-for-bit for all 63 layers, that the fp16 lens is
+the quantized checkpoint mean.
+
+![Qwen A1000 fit diagnostics](figures/p4qa01_qwen_a1000_fit_diagnostics.png)
+
+The recoverable terminal archive covers 820 consecutive rows, prompts
+181--1000; prompts 1--180 are an explicit earlier-VM archival deficit, not a
+producer skip. Within the recoverable rows, prompt-norm median/q95/max are
+7.8615/26.8911/231.101 and running-mean-change median/q95/max are
+0.00758/0.03013/0.425. Prompt magnitude remains heavy-tailed. In the
+multivariate log-log check, movement scales with prompt magnitude at +1.01888
+and prompt index at -0.94767 (R-squared 0.99714), consistent with the expected
+approximately 1/n equal-weight update conditional on contribution size. This
+diagnostic is an internal recurrence check and does not substitute for the
+registered structural or functional gates. No row was trimmed.
+
+![Qwen draw-A n=500 to n=1000 convergence](figures/p4f25_qwen_lens_convergence_a500_a1000.png)
+
+The registered A500--A1000 assay-band task-row result is exceptionally stable:
+the conservative q50 is 0.998702 against the frozen 0.95 floor and the
+conservative q05 is 0.998122 against the 0.90 floor. The incremental prompts
+501--1000 block also aligns strongly with A500 in the assay band (conservative
+task q50 0.994787 and q05 0.992476), while the external published lens remains
+meaningfully different (A1000-versus-published conservative task q50 0.906757
+and q05 0.835442). That external contrast is descriptive comparability
+evidence because the published recipe is only partially specified. Structural
+stability licenses the already-frozen functional successor; it does not yet
+nominate A1000 as canonical.
+
 Mode-v2 evidence: `p4-qwen-mode-gate-dev-v2`.
 
 ![Official Qwen mode-v2 baseline gate](figures/p4f21_qwen_mode_model_gate_v2.png)
@@ -1015,8 +1055,10 @@ estimation-first account:
   prospective 28-family Holm-powered confirmatory side.
 - Qwen A250-to-A500 agreement is stronger on the frozen structural assay
   band, but both selection-stability gates and bridge rescue fail. The
-  precommitted successor is Branch B and continues draw A to n=1000; neither
-  A250 nor A500 is canonical at this boundary.
+  precommitted successor completed draw A to n=1000. A500-to-A1000 structural
+  q50/q05 pass at 0.998702/0.998122, but the functional, selection-margin,
+  prompt-influence, and canonical stages remain sealed; no lens is canonical
+  at this boundary.
 - Bank B candidate v2 passes complete independent source verification, but
   its 0.25-nat joint SESOI is unusably underpowered under the registered
   variability ruler, and the optimistic successor proves no reallocation of
@@ -1039,22 +1081,12 @@ claims.
 
 ## Next boundary
 
-Workstream A5, common-support closure, Qwen draw-A n=500, the A250--A500
-structural/functional decision, Bank B source verification/power/feasibility
-and estimation-only disposition, Bank W v3 authoring/Holm power/all-model
-capability decision, and the passing Qwen mode-v2 baseline are banked. The
-frozen A250--A500 rule emitted Branch B and routes the next fit to draw A
-n=1000; P4-P3 is already blocked at the 16/20 common-support gate.
-
-The exact A1000 continuation has resumed through the frozen router. At the
-2026-08-02 03:55 UTC handoff snapshot it had durably reached n=629
-(checkpoint SHA-256
-`526be10a90c9c0a089e391954dd5f15d5c4399960412fae0470e62f8f29a43d4`,
-6,606,047,399 bytes) under fit contract
-`bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00`.
-The live process continues from that boundary at about 180 seconds per new
-prompt. This partial checkpoint is recovery state, not a registered evidence
-milestone, and nominates no canonical lens.
+The A1000 fit and A500--A1000 structural event are complete, registered,
+locally backed up, and pushed. Phase 4.4 resumes at the first incomplete frozen
+stage: the A500/A1000/published functional gate, followed by selection margin,
+prompt-323 influence, and the mechanical Q-L1--Q-L5 canonical decision. The
+queue is restart-safe and verifies the existing fit and structural event before
+continuing. No functional result has been opened in this closeout.
 
 The handoff-time registry audit hash-accounted 218/220 live outputs with no
 wrong hashes. The two remaining absent paths belong to the older A120--A250
@@ -1068,8 +1100,8 @@ independently/PI-approved append-only archival correction remains required.
 Two clean whole-registry durability passes are freeze blockers, and the old
 registry event must not be rewritten.
 
-Next: complete A1000 and its frozen structural, functional,
-selection-margin, retained-prompt-323, and canonical-decision queue; import
+Next: complete the frozen functional, selection-margin,
+retained-prompt-323, and canonical-decision queue; import
 the already decisive OLMo early bundle and later side-track release bundles;
 bind any Q-L1/Q-L2 canonical lens into the review-gated Bank B geometry and
 P4-P2 pilot; execute only those consumed-development follow-ups licensed by

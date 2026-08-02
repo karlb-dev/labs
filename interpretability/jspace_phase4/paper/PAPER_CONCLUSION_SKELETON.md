@@ -39,13 +39,15 @@ its present license and the experiment that can upgrade, narrow, or kill it.
    intercept-plus-slope-in-epsilon fit closes the transport claim.
 
 6. **Structural convergence of the averaged transport operator does not guarantee stability of sparse selections or of all causal endpoints; instrument invariance must be tested at the level of the scientific conclusion.**
-   License: Phase 4 development A250-to-A500 structural and functional gates:
-   assay-band operator cosines exceed 0.9977 while selected-ID Jaccard,
-   selected-projector overlap, and bridge-rescue stability fail their frozen
-   thresholds; p4f20 is the current figure. Pending falsifier or upgrade: the
-   prospective A500-to-A1000 structural, functional, selection-margin, and
-   retained-prompt queue determines whether this narrows to row redundancy or
-   strengthens into a broader instrument-sensitivity warning.
+   License: Phase 4 development A250-to-A500 structural and functional gates,
+   plus the registered A500-to-A1000 structural successor. The earlier
+   selected-ID Jaccard, selected-projector overlap, and bridge-rescue gates
+   fail despite strong structure; at A1000, conservative structural task
+   q50/q05 rise to 0.998702/0.998122. This licenses only an operator-level
+   convergence statement. Pending falsifier or upgrade: the still-sealed
+   A500-to-A1000 functional, selection-margin, and retained-prompt stages
+   determine whether the warning narrows to row redundancy or strengthens
+   into broader instrument sensitivity.
 
 Rule: a failed upgrading experiment replaces its candidate with the exact
 downgrade already frozen in the Phase 4 branch tables; it is never silently
