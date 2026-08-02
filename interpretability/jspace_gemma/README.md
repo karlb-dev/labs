@@ -15,6 +15,11 @@ interpreted. Finite differences are secants, never exact JVPs. Numeric target
 thresholds are calibrated on OLMo and committed before the first Gemma target
 cell.
 
+The finite baseline, exact JVP primal, and perturbed source use identical
+batch shapes and slots. Central, homogeneity, odd-symmetry, and additivity
+diagnostics use the separately realized post-cast vectors, and response SNR
+includes a deterministic target-dtype quantization floor.
+
 Restart from `/content/drive/MyDrive/interpret/gemma_transport_resume.md` and
 the live companion `gemma_transport_inprogress.md`.
 

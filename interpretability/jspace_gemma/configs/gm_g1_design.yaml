@@ -99,5 +99,19 @@ threshold_calibration:
 
 cell_runtime_target_minutes: 10
 finite_response_batch_size: 8
+batch_alignment:
+  finite_baseline_same_batch_shape_and_slot: true
+  exact_jvp_same_batch_shape_and_slot: true
+  clean_repeat_same_batch_shape_and_slot: true
+  reason: prevent batch-kernel drift from entering a small finite response
+response_snr_contract:
+  signal_norm: min_finite_response_and_exact_jvp_norm
+  noise_norm: max_in_batch_clean_repeat_and_target_dtype_half_step_norm
+  numeric_floor_is_calibrated_on_olmo: true
+realized_delivery_adjustment:
+  central_uses_separate_positive_and_negative_jvps: true
+  homogeneity_subtracts_exact_first_order_delivery_mismatch: true
+  odd_symmetry_subtracts_exact_first_order_delivery_mismatch: true
+  additivity_subtracts_exact_first_order_delivery_mismatch: true
 raw_vector_retention: true
 raw_row_schema: jspace_lab_gemma_1.md#18.1

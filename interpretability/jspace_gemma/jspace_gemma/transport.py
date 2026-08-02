@@ -2,17 +2,21 @@
 from __future__ import annotations
 
 import hashlib
-import math
 from dataclasses import asdict
 
 import torch
 
-from .autodiff import exact_jvp, exact_linearize
+from .autodiff import exact_jvp
 from .hooks import delivery_audit, patterned_direction, source_mask
 from .transport_metrics import (
+    adjusted_additivity_metrics,
+    adjusted_homogeneity_metrics,
+    adjusted_odd_symmetry_metrics,
     additivity_metrics,
     homogeneity_metrics,
     odd_symmetry_defect,
+    quantization_aware_response_snr,
+    quantization_floor_norm,
     tangent_metrics,
 )
 
@@ -81,16 +85,93 @@ def make_directions(
     return rows
 
 
-def _batched_outputs(suffix, sources: list[torch.Tensor], batch_size: int) -> list[torch.Tensor]:
-    outputs = []
-    with torch.no_grad():
-        for start in range(0, len(sources), batch_size):
-            batch = torch.cat(sources[start : start + batch_size], dim=0)
-            value = suffix(batch)
-            if value.ndim == 1:
-                value = value.unsqueeze(0)
-            outputs.extend(row.detach().float().cpu() for row in value)
-    return outputs
+def _as_batch(value: torch.Tensor, count: int) -> torch.Tensor:
+    if count == 1 and value.ndim == 1:
+        return value.unsqueeze(0)
+    if value.ndim < 2 or value.shape[0] != count:
+        raise RuntimeError(
+            f"suffix output does not preserve batch: count={count}, shape={tuple(value.shape)}"
+        )
+    return value
+
+
+def _batched_responses_and_jvps(
+    suffix,
+    clean: torch.Tensor,
+    requests: list[tuple[tuple, torch.Tensor, torch.Tensor]],
+    batch_size: int,
+) -> dict:
+    """Evaluate each secant and exact JVP in the identical batch slot.
+
+    A separate all-clean forward with the same batch shape supplies each
+    finite-response baseline. This prevents a change in GEMM batch shape from
+    masquerading as a small secant. The exact JVP uses the same batched primal
+    and the separately realized post-cast tangent for every request.
+    """
+    if batch_size < 1:
+        raise ValueError("transport batch size must be positive")
+    responses = {}
+    tangents = {}
+    clean_targets = {}
+    clean_repeat_differences = {}
+    primal_parity = {}
+    backends = {}
+    batch_diagnostics = []
+    for batch_index, start in enumerate(range(0, len(requests), batch_size)):
+        chunk = requests[start : start + batch_size]
+        count = len(chunk)
+        clean_batch = clean.expand(count, *clean.shape[1:]).clone()
+        source_batch = torch.cat([source for _, source, _ in chunk], dim=0)
+        tangent_batch = torch.cat([tangent for _, _, tangent in chunk], dim=0)
+        with torch.no_grad():
+            baseline = _as_batch(suffix(clean_batch), count).detach().float().cpu()
+            repeated = _as_batch(suffix(clean_batch), count).detach().float().cpu()
+            finite = _as_batch(suffix(source_batch), count).detach().float().cpu()
+        exact = exact_jvp(suffix, clean_batch, tangent_batch, backend="auto")
+        exact_primal = _as_batch(exact.primal, count).detach().float().cpu()
+        exact_tangent = _as_batch(exact.tangent, count).detach().float().cpu()
+        difference = exact_primal - baseline
+        max_relative = 0.0
+        for offset, (key, _, _) in enumerate(chunk):
+            relative = float(
+                difference[offset].norm()
+                / baseline[offset].norm().clamp_min(1e-30)
+            )
+            if relative > 1e-5:
+                raise RuntimeError(
+                    "exact-JVP primal differs from identical-batch clean suffix: "
+                    f"{key}: {relative}"
+                )
+            max_relative = max(max_relative, relative)
+            responses[key] = finite[offset] - baseline[offset]
+            tangents[key] = exact_tangent[offset]
+            clean_targets[key] = baseline[offset]
+            clean_repeat_differences[key] = repeated[offset] - baseline[offset]
+            primal_parity[key] = relative
+            backends[key] = exact.backend
+        clean_spread = (
+            float((baseline - baseline[:1]).norm()) if count > 1 else 0.0
+        )
+        batch_diagnostics.append(
+            {
+                "batch_index": batch_index,
+                "request_count": count,
+                "request_keys": [list(key) for key, _, _ in chunk],
+                "exact_jvp_backend": exact.backend,
+                "max_primal_relative_error": max_relative,
+                "clean_repeat_difference_norm": float((repeated - baseline).norm()),
+                "within_batch_clean_spread_norm": clean_spread,
+            }
+        )
+    return {
+        "responses": responses,
+        "tangents": tangents,
+        "clean_targets": clean_targets,
+        "clean_repeat_differences": clean_repeat_differences,
+        "primal_parity": primal_parity,
+        "backends": backends,
+        "batch_diagnostics": batch_diagnostics,
+    }
 
 
 def evaluate_transport_cell(
@@ -112,36 +193,9 @@ def evaluate_transport_cell(
     directions = make_directions(
         clean, mask, direction_specs, base_seed=seed, cell_id=cell_id
     )
-    with torch.no_grad():
-        clean_target = suffix(clean).detach().float().cpu()
-        clean_repeat = suffix(clean).detach().float().cpu()
-    clean_repeat_difference = clean_repeat - clean_target
-
-    linearized = exact_linearize(suffix, clean)
-    if not torch.allclose(
-        linearized.primal.detach().float().cpu(), clean_target, atol=0, rtol=0
-    ):
-        raise RuntimeError("linearization primal differs from explicit clean suffix")
-    reference_pattern = patterned_direction(
-        clean, directions[0]["tensor"], mask, 1.0
-    )
-    fresh = exact_jvp(
-        suffix, clean, reference_pattern, backend="torch.func.jvp"
-    )
-    cached_reference = linearized.apply(reference_pattern)
-    backend_parity_relative_error = float(
-        (fresh.tangent - cached_reference).norm()
-        / fresh.tangent.norm().clamp_min(1e-30)
-    )
-    if backend_parity_relative_error > 1e-5:
-        raise RuntimeError(
-            "cached exact linearization disagrees with fresh torch.func.jvp: "
-            f"{backend_parity_relative_error}"
-        )
-
-    requests: list[tuple[tuple, torch.Tensor]] = []
+    requests: list[tuple[tuple, torch.Tensor, torch.Tensor]] = []
     audits: dict[tuple, dict] = {}
-    tangent_predictions: dict[tuple, torch.Tensor] = {}
+    realized_patterns: dict[tuple, torch.Tensor] = {}
     desired_patterns: dict[tuple, torch.Tensor] = {}
     for direction in directions:
         for epsilon in epsilon_ladder:
@@ -151,7 +205,6 @@ def evaluate_transport_cell(
             )
             desired_patterns[key] = desired
             sign_audits = {}
-            realized_positive = None
             for label, multiplier in (("positive", 1.0), ("negative", -1.0), ("double", 2.0)):
                 perturbation = desired * multiplier
                 realized, audit = delivery_audit(
@@ -163,14 +216,10 @@ def evaluate_transport_cell(
                     relative_norm_error_ceiling=delivery_norm_error_ceiling,
                 )
                 sign_audits[label] = asdict(audit)
-                if label == "positive":
-                    realized_positive = realized
-                requests.append(((direction["id"], epsilon, label), clean + perturbation))
+                request_key = (direction["id"], float(epsilon), label)
+                realized_patterns[request_key] = realized
+                requests.append((request_key, clean + perturbation, realized))
             audits[key] = sign_audits
-            if all(value["faithful"] for value in sign_audits.values()):
-                tangent_predictions[key] = (
-                    linearized.apply(realized_positive).detach().float().cpu()
-                )
 
     pair_ids = (directions[0]["id"], directions[1]["id"])
     pair_audits = {}
@@ -178,7 +227,7 @@ def evaluate_transport_cell(
         left = desired_patterns[(pair_ids[0], float(epsilon))]
         right = desired_patterns[(pair_ids[1], float(epsilon))]
         combined = left + right
-        _, audit = delivery_audit(
+        realized, audit = delivery_audit(
             clean,
             combined,
             model_dtype=suffix.clean_source.dtype,
@@ -187,48 +236,107 @@ def evaluate_transport_cell(
             relative_norm_error_ceiling=delivery_norm_error_ceiling,
         )
         pair_audits[float(epsilon)] = asdict(audit)
-        requests.append((("pair", epsilon, "sum"), clean + combined))
+        request_key = ("pair", float(epsilon), "sum")
+        realized_patterns[request_key] = realized
+        requests.append((request_key, clean + combined, realized))
 
-    values = _batched_outputs(suffix, [source for _, source in requests], batch_size)
-    responses = {
-        key: value - clean_target for (key, _), value in zip(requests, values, strict=True)
-    }
+    evaluated = _batched_responses_and_jvps(suffix, clean, requests, batch_size)
+    responses = evaluated["responses"]
+    tangent_predictions = evaluated["tangents"]
+    clean_targets = evaluated["clean_targets"]
+    clean_repeat_differences = evaluated["clean_repeat_differences"]
     rows = []
     raw_records = []
-    noise_norm = float(clean_repeat_difference.norm())
     for direction in directions:
         for epsilon in epsilon_ladder:
             key = (direction["id"], float(epsilon))
-            positive = responses[(direction["id"], epsilon, "positive")]
-            negative = responses[(direction["id"], epsilon, "negative")]
-            double = responses[(direction["id"], epsilon, "double")]
-            prediction = tangent_predictions.get(key)
-            faithful = prediction is not None
+            positive_key = (direction["id"], float(epsilon), "positive")
+            negative_key = (direction["id"], float(epsilon), "negative")
+            double_key = (direction["id"], float(epsilon), "double")
+            positive = responses[positive_key]
+            negative = responses[negative_key]
+            double = responses[double_key]
+            tangent_positive = tangent_predictions[positive_key]
+            tangent_negative = tangent_predictions[negative_key]
+            tangent_double = tangent_predictions[double_key]
+            faithful = all(value["faithful"] for value in audits[key].values())
             tangent = (
-                tangent_metrics(positive, prediction) if faithful else {
+                tangent_metrics(positive, tangent_positive) if faithful else {
                     "response_norm": float(positive.norm()),
-                    "tangent_prediction_norm": None,
+                    "tangent_prediction_norm": float(tangent_positive.norm()),
                     "tangent_cosine": None,
                     "gain": None,
                     "tangent_relative_error": None,
                 }
             )
             central = (positive - negative) / 2
+            central_prediction = (tangent_positive - tangent_negative) / 2
             central_metrics = (
-                tangent_metrics(central, prediction) if faithful else {
+                tangent_metrics(central, central_prediction) if faithful else {
                     "tangent_cosine": None,
                     "gain": None,
                     "tangent_relative_error": None,
                 }
             )
             homogeneous = homogeneity_metrics(positive, double)
+            homogeneous_adjusted = adjusted_homogeneity_metrics(
+                positive, double, tangent_positive, tangent_double
+            )
             odd = odd_symmetry_defect(positive, negative)
-            additive = {"additivity_defect": None, "additivity_cosine": None}
+            odd_adjusted = adjusted_odd_symmetry_metrics(
+                positive, negative, tangent_positive, tangent_negative
+            )
+            input_homogeneous = homogeneity_metrics(
+                realized_patterns[positive_key], realized_patterns[double_key]
+            )
+            input_odd = odd_symmetry_defect(
+                realized_patterns[positive_key], realized_patterns[negative_key]
+            )
+            additive = {
+                "additivity_defect": None,
+                "additivity_cosine": None,
+                "additivity_first_order_delivery_defect": None,
+                "additivity_nonlinear_remainder_defect": None,
+            }
+            input_additivity_defect = None
+            additivity_faithful = None
             if direction["id"] in pair_ids:
-                summed = responses[("pair", epsilon, "sum")]
-                left = responses[(pair_ids[0], epsilon, "positive")]
-                right = responses[(pair_ids[1], epsilon, "positive")]
+                sum_key = ("pair", float(epsilon), "sum")
+                left_key = (pair_ids[0], float(epsilon), "positive")
+                right_key = (pair_ids[1], float(epsilon), "positive")
+                summed = responses[sum_key]
+                left = responses[left_key]
+                right = responses[right_key]
                 additive = additivity_metrics(summed, left, right)
+                additive.update(
+                    adjusted_additivity_metrics(
+                        summed,
+                        left,
+                        right,
+                        tangent_predictions[sum_key],
+                        tangent_predictions[left_key],
+                        tangent_predictions[right_key],
+                    )
+                )
+                input_additivity_defect = additivity_metrics(
+                    realized_patterns[sum_key],
+                    realized_patterns[left_key],
+                    realized_patterns[right_key],
+                )["additivity_defect"]
+                additivity_faithful = bool(
+                    pair_audits[float(epsilon)]["faithful"]
+                    and audits[(pair_ids[0], float(epsilon))]["positive"]["faithful"]
+                    and audits[(pair_ids[1], float(epsilon))]["positive"]["faithful"]
+                )
+            quantization_floor = quantization_floor_norm(
+                clean_targets[positive_key], suffix.clean_source.dtype
+            )
+            snr = quantization_aware_response_snr(
+                positive,
+                tangent_positive,
+                clean_repeat_differences[positive_key],
+                quantization_floor,
+            )
             plus_audit = audits[key]["positive"]
             row = {
                 **metadata,
@@ -246,17 +354,26 @@ def evaluate_transport_cell(
                 "negative_delivery": audits[key]["negative"],
                 "double_delivery": audits[key]["double"],
                 "faithful_delivery": faithful,
-                "response_snr": float(positive.norm()) / max(noise_norm, 1e-12),
-                "clean_repeat_noise_norm": noise_norm,
-                "exact_jvp_backend": "torch.func.linearize validated against torch.func.jvp",
-                "backend_parity_relative_error": backend_parity_relative_error,
+                **snr,
+                "response_snr_definition": (
+                    "min(secant_norm, exact_jvp_norm) / "
+                    "max(in_batch_clean_repeat_norm, target_dtype_half_step_norm)"
+                ),
+                "exact_jvp_backend": evaluated["backends"][positive_key],
+                "backend_parity_relative_error": evaluated["primal_parity"][positive_key],
                 **tangent,
                 "central_tangent_cosine": central_metrics["tangent_cosine"],
                 "central_gain": central_metrics["gain"],
                 "central_tangent_relative_error": central_metrics["tangent_relative_error"],
                 **homogeneous,
+                **homogeneous_adjusted,
                 "odd_symmetry_defect": odd,
+                **odd_adjusted,
+                "input_homogeneity_defect": input_homogeneous["homogeneity_defect"],
+                "input_odd_symmetry_defect": input_odd,
+                "input_additivity_defect": input_additivity_defect,
                 **additive,
+                "additivity_faithful_delivery": additivity_faithful,
                 "additivity_pair_ids": list(pair_ids),
                 "pair_delivery": pair_audits[float(epsilon)],
             }
@@ -268,22 +385,47 @@ def evaluate_transport_cell(
                     "positive": positive,
                     "negative": negative,
                     "double": double,
-                    "tangent_prediction": prediction,
+                    "tangent_positive": tangent_positive,
+                    "tangent_negative": tangent_negative,
+                    "tangent_double": tangent_double,
+                    "central_tangent_prediction": central_prediction,
+                    "finite_clean_target": clean_targets[positive_key],
+                    "clean_repeat_difference": clean_repeat_differences[positive_key],
+                    "realized_positive_sha256": tensor_sha256(realized_patterns[positive_key]),
+                    "realized_negative_sha256": tensor_sha256(realized_patterns[negative_key]),
+                    "realized_double_sha256": tensor_sha256(realized_patterns[double_key]),
                 }
             )
+    first_key = requests[0][0]
     raw = {
-        "schema_version": 1,
+        "schema_version": 2,
         "metadata": metadata,
         "cell_id": cell_id,
         "perturbation_mode": perturbation_mode,
-        "clean_target": clean_target,
-        "clean_repeat": clean_repeat,
+        "clean_target_reference": clean_targets[first_key],
+        "clean_repeat_difference_reference": clean_repeat_differences[first_key],
         "clean_source_selected": clean.detach().float().cpu()[mask.cpu()],
         "directions": [
             {**{key: value for key, value in row.items() if key != "tensor"}, "tensor": row["tensor"].cpu()}
             for row in directions
         ],
         "records": raw_records,
-        "backend_parity_relative_error": backend_parity_relative_error,
+        "pair_records": [
+            {
+                "epsilon": float(epsilon),
+                "sum_response": responses[("pair", float(epsilon), "sum")],
+                "sum_tangent": tangent_predictions[("pair", float(epsilon), "sum")],
+                "realized_sum_sha256": tensor_sha256(
+                    realized_patterns[("pair", float(epsilon), "sum")]
+                ),
+            }
+            for epsilon in epsilon_ladder
+        ],
+        "exact_batch_diagnostics": evaluated["batch_diagnostics"],
+        "max_backend_parity_relative_error": max(evaluated["primal_parity"].values()),
+        "response_snr_definition": (
+            "min(secant_norm, exact_jvp_norm) / "
+            "max(in_batch_clean_repeat_norm, target_dtype_half_step_norm)"
+        ),
     }
     return rows, raw

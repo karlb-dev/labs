@@ -76,7 +76,14 @@ def _aggregate(rows: list[dict], parity_rows: list[dict], wrong_hook: dict) -> d
                     group["central_tangent_relative_error"].median()
                 ),
                 "median_homogeneity_defect": float(group["homogeneity_defect"].median()),
+                "median_homogeneity_nonlinear_remainder_defect": float(
+                    group["homogeneity_nonlinear_remainder_defect"].median()
+                ),
                 "median_odd_symmetry_defect": float(group["odd_symmetry_defect"].median()),
+                "median_odd_nonlinear_remainder_defect": float(
+                    group["odd_nonlinear_remainder_defect"].median()
+                ),
+                "median_response_snr": float(group["response_snr"].median()),
                 "delivery_failure_rate": 1 - len(group) / len(
                     frame[(frame["source_layer"] == layer) & (frame["perturbation_mode"] == mode)]
                 ),
@@ -97,13 +104,21 @@ def _aggregate(rows: list[dict], parity_rows: list[dict], wrong_hook: dict) -> d
         "n_rows": len(frame),
         "n_faithful_rows": len(faithful),
         "group_aggregates": groups,
-        "floor_curvature_fits": fits,
+        "floor_curvature_fits_unfiltered_pre_snr_threshold": fits,
         "clean_suffix_parity": parity_rows,
         "max_clean_relative_l2_error": max(row["relative_l2_error"] for row in parity_rows),
         "max_backend_parity_relative_error": float(
             frame["backend_parity_relative_error"].max()
         ),
         "wrong_hook_sentinel": wrong_hook,
+        "response_snr_definition": (
+            "min(secant_norm, exact_jvp_norm) / "
+            "max(in_batch_clean_repeat_norm, target_dtype_half_step_norm)"
+        ),
+        "batch_alignment": (
+            "finite baseline, finite perturbation, and exact JVP use identical "
+            "batch shape and request slot"
+        ),
     }
 
 
@@ -306,6 +321,9 @@ def main() -> None:
                     "implementation_sha256": file_sha256(
                         PACKAGE_ROOT / "jspace_gemma/autodiff.py"
                     ),
+                    "transport_implementation_sha256": file_sha256(
+                        PACKAGE_ROOT / "jspace_gemma/transport.py"
+                    ),
                     "code_commit": git["code_commit"],
                     "config_sha256": input_manifest["config"]["sha256"],
                     "environment_sha256": environment_sha,
@@ -330,7 +348,7 @@ def main() -> None:
                 raw_path = output_root / "raw" / f"{cell_id}.pt"
                 metrics_path = output_root / "cells" / f"{cell_id}.json"
                 _atomic_torch_save(raw_path, raw)
-                atomic_json(metrics_path, {"schema_version": 1, "rows": rows})
+                atomic_json(metrics_path, {"schema_version": 2, "rows": rows})
                 progress["completed_cells"][cell_id] = {
                     "metrics": {"path": str(metrics_path), "sha256": file_sha256(metrics_path)},
                     "raw": {"path": str(raw_path), "sha256": file_sha256(raw_path)},

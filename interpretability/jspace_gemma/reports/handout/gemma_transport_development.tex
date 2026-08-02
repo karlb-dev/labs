@@ -17,6 +17,16 @@ Analytic and tiny-model exact-JVP goldens and an in-session OLMo positive
 control precede every Gemma interpretation. Numeric thresholds are calibrated
 on the control and committed before the first Gemma target result. Finite
 differences are labeled secants, never exact JVPs.
+The finite baseline, perturbation, and exact JVP use identical batch shapes
+and slots. Diagnostics use separately realized post-cast vectors, and the SNR
+floor includes the target dtype's local quantization step.
+\section{Paper-band convention}
+The primary paper's Methods reindex sampled residual-stream layers to
+$[0,100]$, so its L38--L92 workspace range is a 38--92\% depth convention.
+On Gemma's 60 blocks this maps approximately to L23--L55. Thus the proposed
+late candidates L44/L48/L52 are in the paper-relative band; the 37--62\%
+range in later Gemma material is not the governing convention. A valid late
+transport gate would license a scoped readout assay, not a workspace claim.
 \section{Architecture}
 The pinned Gemma text decoder has 60 layers of width 5,376. A five-local,
 one-global attention schedule repeats ten times. Global attention uses a
@@ -28,5 +38,7 @@ the analytic derivative exactly; forward-mode, fallback, and an independently
 materialized reverse Jacobian-vector product agree within $8.3\times10^{-17}$
 on a nonlinear tiny attention/gated-MLP suffix. Central-secant error decreases
 quadratically with radius. No current-study model result is reported at this
-boundary; OLMo control staging is next.
+boundary. The exact OLMo snapshot is fully verified (26 files, 14 shards,
+64,476,964,249 bytes, zero failures). The one-cell control smoke follows the
+pre-result batch/delivery repair and clean commit.
 \end{document}

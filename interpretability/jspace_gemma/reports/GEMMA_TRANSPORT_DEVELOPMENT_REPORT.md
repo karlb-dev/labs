@@ -1,8 +1,9 @@
 # Gemma 4 31B transport autopsy — development report
 
-Status: foundation and exact-JVP goldens registered; OLMo control staging is next. All findings in this document
-are development or methods evidence. Nothing here is a Phase 4 confirmatory
-model cell.
+Status: foundation and exact-JVP goldens registered; OLMo control snapshot
+fully verified; pre-result runner repair tested and ready to publish. All
+findings in this document are development or methods evidence. Nothing here
+is a Phase 4 confirmatory model cell.
 
 ## Scope and non-claims
 
@@ -60,6 +61,18 @@ Numeric tangent, SNR, and curvature-partition thresholds remain behind the
 pre-target firewall. They will be calibrated from OLMo and committed before
 the first Gemma number.
 
+The original-paper band ambiguity is resolved directly from the primary
+Methods. The paper says its 25 sampled residual-stream layers are reindexed to
+`[0,100]`, so its layer labels are percentages; its structural analysis places
+the workspace at approximately L38--L92 on that axis. The transferable range
+is therefore 38--92% depth, approximately Gemma L23--L55. The 37--62% range in
+the later Gemma handout is not the governing paper convention. Consequently,
+G6's L44/L48/L52 candidates are in the paper-relative band, although late
+readability by itself remains neither workspace nor causal-channel evidence.
+The primary page, byte hash, HTTP metadata, later conflicting Git object, and
+mapping are frozen in `gm_g6_band_convention.yaml`; registration as
+`gm-band-convention-v1` follows the clean pre-result commit.
+
 Before model staging, the OLMo design was corrected to include L4 as the
 shallow negative-control layer and L60 as the late identity anchor around the
 five matched layers L24/L32/L40/L47/L56. This is required for the frozen
@@ -68,20 +81,29 @@ model number.
 
 ## OLMo control harness
 
-The resumable producer now uses a clean-parity-checked explicit no-cache
-decoder suffix. It caches a forward-mode linearization, verifies it against a
-fresh `torch.func.jvp` in every cell, and applies that exact linear map to each
-faithfully realized fp32 perturbation. Positive, negative, doubled, and
-orthogonal-pair responses are batched only along independent examples; raw
-response and JVP vectors remain durable per cell. A deliberately wrong source
-layer supplies the pre-threshold mismatch baseline. Each prompt/layer/mode
-cell checkpoints to Drive and must finish within ten minutes.
+The resumable producer uses a clean-parity-checked explicit no-cache decoder
+suffix. A pre-result audit found that its first version subtracted a batch-one
+clean target from batched perturbed outputs and assumed exact algebra among
+the separately rounded negative/double/sum inputs. No model had been loaded.
+The repaired path runs an all-clean baseline, perturbed forward, and direct
+exact JVP with the same batch shape and request slot. It applies JVPs to every
+separately realized fp32-to-model-dtype perturbation. Raw homogeneity,
+odd-symmetry, and additivity defects remain reported, alongside nonlinear
+remainders after subtracting exact first-order delivery mismatch. SNR uses the
+larger of in-batch clean-repeat noise and the local target-dtype half-step
+norm. Raw response and JVP vectors remain durable per cell. A deliberately
+wrong source layer supplies the pre-threshold mismatch baseline. Each
+prompt/layer/mode cell checkpoints to Drive and must finish within ten
+minutes.
 
-The staging verifier reuses only complete content-addressed Drive blobs,
-downloads missing content into an isolated local HF cache, verifies every LFS
-SHA-256 and every ordinary Git blob ID, and confirms the safetensor shard set
-against the exact remote index before model load. The expanded suite has 26
-passing tests. No OLMo staging or current-study model cell has run yet.
+The staging verifier reused only complete content-addressed Drive blobs,
+downloaded missing content into an isolated local HF cache, verified every LFS
+SHA-256 and every ordinary Git blob ID, and confirmed the safetensor shard set
+against the exact remote index before model load. Staging passed from clean
+commit `42b34b1`: 26/26 files, 14/14 weight shards, 64,476,964,249 bytes,
+zero failures. The Drive manifest file SHA-256 is
+`fa620d543b8cc80d3545aee177343036b04a5a0de84b8e65c8dcfa15dec1776c`.
+No current-study model cell has run yet.
 
 ## Live evidence ledger
 
@@ -90,6 +112,8 @@ passing tests. No OLMo staging or current-study model cell has run yet.
 | `gm-foundation-diagnostic-v1` | methods | registered | no scientific result; the first foundation attempt found that the governing TeX is a Git object in a later shared commit, not a file in the exact side fork |
 | `gm-foundation-v1` | methods | registered | 22 tests pass; exact architecture/runtime/governance/package inventories and nine historical imports verified |
 | `gm-jvp-goldens-v1` | methods | registered | both autodiff backends exactly match the analytic derivative; forward/fallback/reverse derivatives agree on the nonlinear tiny transformer |
+| `gm-band-convention-v1` | methods | code/config prepared pre-result | primary Methods resolve the transferable band to 38--92% (Gemma approximately L23--L55) |
+| `gm-jvp-olmo-calibration-v1` | methods | staged; model not yet loaded | raw OLMo-only threshold calibration |
 | `gm-jvp-olmo-positive-control-v1` | methods | blocked on preceding boundaries | threshold calibration |
 | `gm-jvp-gemma-stage1-v1` | methods | forbidden until thresholds commit | exact target gate |
 
@@ -122,8 +146,8 @@ The foundation inventory resolves the exact Gemma revision to two remote
 weight shards; zero are staged locally. The historical OLMo Drive cache has
 11 of 14 expected weight shards complete by content-address and size. Shards
 6, 9, and 14 remain broken/stale partials. The cache is explicitly marked
-not load-ready; local staging must fill those files and fully hash all 14
-before the positive-control model can open.
+not load-ready by itself. The isolated local staging pass filled those files
+and fully verified all 14 before the positive-control model can open.
 
 ## Infrastructure incidents
 
@@ -137,6 +161,7 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish the golden registry boundary, then stage, fully hash, and run
-the OLMo control. Update this report and the Drive handoff at every evidence
-commit.
+Commit/publish the pre-result runner and band-resolution code, register the
+band convention from the clean commit, then run one OLMo control cell before
+resuming the full grid. Update this report and the Drive handoff at every
+evidence commit.
