@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T05:19:48Z
+Last updated: 2026-08-02T05:25:10Z
 
 Status: active; O1, O2, and O3 are complete through the registered geometry
 tables, and the early Phase 4 bundle is emitted. Both native OLMo-lineage
@@ -567,10 +567,19 @@ will be methods evidence only after the full sentinel passes.
 The first clean-process sentinel attempt verified all fourteen exact weight
 shards, loaded the pinned model, and then stopped with CUDA out-of-memory while
 the scorer evaluated all eight answer candidates in one batch. No output,
-figure directory, or registry event was created. The bounded retry changes
-only runtime microbatching from eight candidates to one, within the frozen
-scoring contract; it retains identical candidate-sequence log probability,
-prompt, aliases, revision, prediction, margin, and `1e-5` replay tolerance.
+figure directory, or registry event was created. A bounded one-candidate retry
+fit in memory, preserved the predicted alias, but failed the exact replay:
+maximum sequence-score drift was 0.20499 nats and the true-answer margin moved
+from -0.25 to -0.125. It likewise created no output or event.
+
+The root cause was not the frozen batch itself: the independent wrapper had
+omitted the original producer's `torch.no_grad()` context, causing autograd to
+retain activations across all layers. A local diagnostic restored `no_grad`
+and the original eight-candidate batch. It reproduced all eight registered
+sequence log probabilities and the -0.25 margin bit-for-bit, with peak CUDA
+allocation 60.42 GiB. The clean retry therefore restores the frozen batch of
+eight and adds only the missing inference context; the `1e-5` tolerance is not
+weakened.
 
 ## O4: development mechanism grid
 
@@ -636,7 +645,8 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-checkpoint-inventory-v2` | Full token-ID, normalized-BPE, processor, and 207-text encoding audit resolves the Think tokenizer serialization difference; official exact-revision SFT and DPO cells are eligible; bounded H5 wedge queued-not-started; v1 explicitly superseded | Source commit `d927b98`; JSON `e5931c3f...`; Markdown `f3704d14...`; no model outcome |
 | 2026-08-02 | `ol-o5-feasibility-decision-v1` | Registered evidence cannot identify activation × transport × readout causal factors; seven required controls/cells are absent; decision is not-executed with no proxy substitution and a frozen Bank-S-first Phase 5 pilot | Source commit `843eabd`; JSON `d31d23e4...`; Markdown `9e3fbb45...`; no model outcome |
 | 2026-08-02 | Independent-reconstruction preflight | Separate reconstruction passes O1/O2/O3 table checks; exact-revision 61-GiB Think snapshot staged directly from the Hub for a one-row clean-process sentinel; no new outcome opened | Dirty source after durable commit `4c6617e`; full clean-run event pending |
-| 2026-08-02 | Independent-reconstruction attempt 1 | All 14 exact weight shards verified; eight-candidate forward stopped on CUDA OOM; no output or event created; retry bounded to a one-candidate microbatch | Clean source `5551e1e`; local-only process log; Drive reconstruction namespace remains absent |
+| 2026-08-02 | Independent-reconstruction attempt 1 | All 14 exact weight shards verified; eight-candidate forward stopped on CUDA OOM because the wrapper omitted the producer's `no_grad` context; no output or event created | Clean source `5551e1e`; local-only process log; Drive reconstruction namespace remains absent |
+| 2026-08-02 | Independent-reconstruction attempt 2 and diagnosis | One-candidate retry fit but failed exact numerics (max drift 0.20499 nats; margin -0.125 vs -0.25), so it was rejected with no output. Eight candidates under `no_grad` then reproduced every score exactly at 60.42-GiB peak allocation | Clean source `37075cb` for rejected retry; read-only local diagnostic; corrected clean run pending |
 
 ## Current limitations and claim boundary
 
