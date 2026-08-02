@@ -81,8 +81,9 @@ Before any A1000 result existed, the project committed and tested:
   plan;
 - a reclaim-safe `JSPACE4_STOP_AFTER` boundary for the A1000 postfit queue.
 
-The combined test baseline before A1000 completion is 270 Phase 4 tests plus
-59 OLMo-lineage tests, 329 total. The preparation branch is clean and pushed.
+The test baseline before A1000 completion is 277 Phase 4 tests, 59
+OLMo-lineage tests, and 48 Gemma tests: 384 total. The sole Gemma Torch FX
+warning is unchanged. The preparation branch is clean and pushed.
 
 ## Side-track state already merged into the ancestry
 
@@ -195,6 +196,14 @@ On the next VM, first read this file plus `inprogress.md`,
    bash interpretability/jspace_phase4/run_qwen_a1000_postfit_queue.sh
    ```
 
+   Preserve the normalized 820-row diagnostic archive and tensor-integrity
+   audit before any new VM replaces the local execution transcript. Because
+   the recovered maxima show that prompt 323 is not the global archived
+   maximum, prospectively author an omnibus retained-extremes sensitivity for
+   prompts 233, 612, 616, and 660 alongside the existing prompt-112 and
+   frozen prompt-323 records. It is a no-trimming robustness appendix and
+   cannot revise the already-frozen Q-L branch rule.
+
 4. Read the registered canonical decision. If Q-L1/Q-L2, bind the registered
    A1000 lens SHA and canonical-result SHA into the Bank-B geometry and P4-P2
    configs. If Q-L3/Q-L4/Q-L5, do not run either lens-dependent follow-up.
@@ -208,7 +217,18 @@ On the next VM, first read this file plus `inprogress.md`,
    It admits early OLMo capability, recomputes the 16/20 joint result, then
    admits terminal Gemma and terminal OLMo. It never runs an intervention.
 6. After GPU release, run the A120 capacity recovery preflight and exact
-   recovery. Install output bytes only if SHA-256 equals the immutable pin
+   recovery:
+
+   ```bash
+   python -m jspace_phase4.experiments.p4_qwen_historical_capacity_recovery \
+     --config interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml \
+     --preflight
+   python -m jspace_phase4.experiments.p4_qwen_historical_capacity_recovery \
+     --config interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml \
+     --recover
+   ```
+
+   Install output bytes only if SHA-256 equals the immutable pin
    `6b0399df2c57158e7fdad24274e50f8c1058021d233412afdcc5177f6c651b6f`.
 7. Update the known-deficit manifest. The missing historical `state.json`
    cannot be synthesized; it still requires a genuinely exact backup or an
