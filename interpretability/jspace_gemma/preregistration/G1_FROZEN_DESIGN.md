@@ -8,10 +8,11 @@ Numeric target thresholds are now frozen in
 `configs/gm_g1_thresholds_frozen.yaml` from the registered in-session OLMo
 control, random/radial/tangent directions, clean-repeat and target-dtype
 floor, wrong-hook sentinel, late identity anchors, and smallest measurable
-epsilon. No Gemma weight or target number was opened. The design remains at
-`FROZEN_PENDING_POSITIVE_CONTROL_REGISTRATION` with
-`gemma_execution_allowed: false` until a clean producer reproduces the
-calibration criteria and registers `gm-jvp-olmo-positive-control-v1`.
+epsilon. No Gemma weight or target number was opened. A clean producer
+reproduced every criterion and registered
+`gm-jvp-olmo-positive-control-v1`; the design is now
+`FROZEN_PRE_GEMMA_REGISTERED` with `gemma_execution_allowed: true`. This flag
+transition changes no numeric threshold.
 
 The delivery thresholds (cosine 0.999 and relative norm error 0.01) come
 directly from the governing plan and are already fixed. No observed Gemma

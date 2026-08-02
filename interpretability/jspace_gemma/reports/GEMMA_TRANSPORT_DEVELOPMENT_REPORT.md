@@ -1,10 +1,10 @@
 # Gemma 4 31B transport autopsy — development report
 
 Status: foundation, exact-JVP goldens, paper-band convention, and the complete
-OLMo calibration are registered; numeric target thresholds are frozen in the
-worktree, with Gemma still blocked pending positive-control registration. All
-findings in this document are development or methods evidence. Nothing here
-is a Phase 4 confirmatory model cell.
+OLMo calibration and positive-control threshold freeze are registered; Gemma
+Stage 1 is licensed but has not started. All findings in this document are
+development or methods evidence. Nothing here is a Phase 4 confirmatory model
+cell.
 
 ## Scope and non-claims
 
@@ -163,9 +163,12 @@ slope is 0.1062). The observed shallow-minus-late relative-error contrast is
 0.6303 against a frozen minimum of 0.40; the late-minus-shallow cosine
 contrast is 0.3166 against 0.20. At both L56 and L60, median error increases
 slightly from 0.10 to 0.20 after the SNR floor, satisfying the control's
-finite-radius direction. These rules remain behind
-`FROZEN_PENDING_POSITIVE_CONTROL_REGISTRATION`; no target producer is allowed
-to open Gemma until the clean threshold producer registers the pass.
+finite-radius direction. The clean threshold producer reproduced all 14
+criteria and registered `gm-jvp-olmo-positive-control-v1` from commit
+`7f6a36e`. Its artifact SHA-256 is
+`fc957c9a6f6f397cbaf3274193713ebec332bb81dbb99b61cf9f56d058cd1942`.
+The execution flag is enabled without changing the threshold file (SHA-256
+`3cb1e68c548bce1dc350c8b60a52e5bc6594a4fadb7abec1c4e00f931d855630`).
 
 ## Live evidence ledger
 
@@ -177,8 +180,8 @@ to open Gemma until the clean threshold producer registers the pass.
 | `gm-band-convention-v1` | methods | registered from clean `3a599f7`; no model opened | primary Methods resolve the transferable band to 38--92% (Gemma approximately L23--L55) |
 | `gm-olmo-calibration-finalize-diagnostic-v1` | methods | registered from clean `a196c4f` | immutable incident/inventory record for all 56 cells and the post-compute serialization failure |
 | `gm-jvp-olmo-calibration-v1` | methods | registered; compute `06b2a3d`, finalizer `374f511`, no recompute | 56 cells, 1,568 rows, exact parity pass, calibrated shallow-to-late control trend |
-| `gm-jvp-olmo-positive-control-v1` | methods | numeric config/producer prepared; target firewall closed | reproduce control criteria and register the pre-Gemma threshold freeze |
-| `gm-jvp-gemma-stage1-v1` | methods | forbidden until thresholds commit | exact target gate |
+| `gm-jvp-olmo-positive-control-v1` | methods | registered from clean `7f6a36e`; target unopened | all frozen control criteria pass; numeric thresholds are immutable |
+| `gm-jvp-gemma-stage1-v1` | methods | licensed; not started | exact target gate |
 
 ## G1 decision table
 
@@ -224,7 +227,7 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish the threshold definition and producer, run it from that clean
-commit, and register the positive-control pass. Only then flip the design's
-execution flag without changing a numeric threshold. Gemma remains forbidden
-at this boundary.
+Commit/publish the positive-control registry and firewall transition. Then
+remove only the scoped local OLMo cache, stage and fully hash the pinned Gemma
+snapshot on local NVMe, and run a one-cell target infrastructure smoke before
+the unchanged Stage 1 grid.

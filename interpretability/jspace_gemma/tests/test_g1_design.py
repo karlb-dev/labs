@@ -6,7 +6,7 @@ import yaml
 from jspace_gemma.experiments.gm_band_convention import mapped_band
 
 
-def test_g1_thresholds_are_numeric_but_target_is_pending_control_registration():
+def test_g1_thresholds_are_registered_before_target_execution_is_allowed():
     root = Path(__file__).resolve().parents[1]
     design = yaml.safe_load((root / "configs/gm_g1_design.yaml").read_text())
     assert len(design["stage1_prompt_ids"]) == 4
@@ -20,8 +20,11 @@ def test_g1_thresholds_are_numeric_but_target_is_pending_control_registration():
         "below_gate": "unmeasurable",
     }
     calibration = design["threshold_calibration"]
-    assert calibration["status"] == "FROZEN_PENDING_POSITIVE_CONTROL_REGISTRATION"
-    assert calibration["gemma_execution_allowed"] is False
+    assert calibration["status"] == "FROZEN_PRE_GEMMA_REGISTERED"
+    assert calibration["gemma_execution_allowed"] is True
+    assert calibration["positive_control_artifact_sha256"] == (
+        "fc957c9a6f6f397cbaf3274193713ebec332bb81dbb99b61cf9f56d058cd1942"
+    )
     assert calibration["tangent_vs_secant"] == {
         "primary_decision_cosine_floor": 0.98,
         "primary_decision_relative_error_ceiling": 0.20,
@@ -51,6 +54,20 @@ def test_g1_thresholds_are_numeric_but_target_is_pending_control_registration():
     )
     assert thresholds["finite_dose_gate"]["declared_relative_epsilon"] == 0.10
     assert thresholds["floor_curvature_partition"]["curvature_slope_b_floor"] == 0.15
+    events = [
+        json.loads(line)
+        for line in (root / "reports/evidence_events.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
+    positive = [
+        row
+        for row in events
+        if row["evidence_id"] == "gm-jvp-olmo-positive-control-v1"
+        and row["event"] == "evidence_created"
+    ]
+    assert len(positive) == 1
+    assert positive[0]["positive_control_pass"] is True
+    assert positive[0]["target_model_opened"] is False
 
 
 def test_prompt_bank_membership_and_strata_are_exact():

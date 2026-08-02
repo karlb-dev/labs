@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 02:44 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 02:52 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -28,8 +28,10 @@ canonical Drive handoff at
 - Pure finalizer commit: `374f511ef1fffa265631b59865980e184466444e`.
 - Finalized calibration registry/report commit:
   `8300ca1df2b50a2c838d79232eb05501b20943c6`.
-- Remote Gemma branch: synchronized through the finalized calibration; the
-  threshold definition/producer is not yet committed.
+- Frozen-threshold definition/producer commit:
+  `7f6a36e19417b618cbdf3c81a6da6d9171a3739a`.
+- Remote Gemma branch: synchronized through the frozen-threshold producer;
+  the positive-control registry/firewall transition is not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -38,9 +40,9 @@ canonical Drive handoff at
   is installed editable and byte-identical to the campaign Drive copy.
 - Hugging Face authentication: PASS (`kburtram`).
 - Shared Part-2 conformance bootstrap: PASS.
-- No Gemma or OLMo model producer is running. OLMo response checkpoints exist;
-  no calibration summary is registered and no Gemma target has been opened.
-- The isolated package scaffold is committed. Its 30-test conformance suite
+- No Gemma or OLMo model producer is running. The OLMo calibration and passing
+  positive control are registered; no Gemma target has been opened.
+- The isolated package scaffold is committed. Its 35-test conformance suite
   passes, including analytic, nonlinear tiny-transformer, and explicit Hugging
   Face Gemma/OLMo suffix/JVP tests plus a batch-shape/slot adversarial test.
 - OLMo local staging completed from clean pushed commit `42b34b1`. The
@@ -94,12 +96,19 @@ canonical Drive handoff at
   `b0088651fa953d58939e4c509bae779ad2fbaeba92f1bde7d8d4722030ca98ef`;
   finalization manifest SHA-256:
   `b68aba140db58e7f5caa02821dc89b395be64e4bfeaa76b094fa7d53152d608d`.
-- Numeric thresholds are prepared in `gm_g1_thresholds_frozen.yaml`, but the
-  target firewall remains closed pending `gm-jvp-olmo-positive-control-v1`.
-  Measurement SNR is 12; primary decision SNR is 20. The primary epsilon-0.10
-  gate is cosine >=0.98, forward relative error <=0.20, and central relative
-  error <=0.10 with >=90% row passage. All 32 L56/L60 anchors pass. The
-  curvature intercept ceiling is 0.30 and positive slope floor is 0.15.
+- `gm-jvp-olmo-positive-control-v1` is registered from clean commit `7f6a36e`
+  with all 14 frozen criteria passing and `target_model_opened: false`.
+  Artifact SHA-256:
+  `fc957c9a6f6f397cbaf3274193713ebec332bb81dbb99b61cf9f56d058cd1942`;
+  byte-identical threshold-config SHA-256:
+  `3cb1e68c548bce1dc350c8b60a52e5bc6594a4fadb7abec1c4e00f931d855630`;
+  producer log SHA-256:
+  `cf94f3308c6cf5239d9bcb24c2f2a27d584652439810b93517f7016894bb895e`.
+  The target firewall is now open without a numeric change. Measurement SNR
+  is 12; primary decision SNR is 20. The primary epsilon-0.10 gate is cosine
+  >=0.98, forward relative error <=0.20, and central relative error <=0.10
+  with >=90% row passage. All 32 L56/L60 anchors pass. The curvature intercept
+  ceiling is 0.30 and positive slope floor is 0.15.
 
 ## Completed this VM
 
@@ -163,8 +172,11 @@ canonical Drive handoff at
     expected shallow-to-late tangent-faithfulness gradient is present, but no
     target threshold or Gemma result has been opened.
 22. Derived numeric gates only from the registered control/random baselines,
-    added prompt-bootstrap and positive-control validation code, and kept
-    `gemma_execution_allowed: false` pending clean event registration.
+    added prompt-bootstrap and positive-control validation code, and committed
+    the frozen definition before any Gemma number.
+23. Reproduced all 14 control criteria from clean `7f6a36e`, registered the
+    positive-control artifact, and enabled `gemma_execution_allowed` without
+    changing a numeric threshold. Gemma remains unstaged and unopened.
 
 ## Immutable scientific guardrails
 
@@ -184,21 +196,24 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit/pull/test/push the numeric threshold definition and producer, then
-   run/register `gm-jvp-olmo-positive-control-v1` from that clean commit.
-2. Commit the registry/report boundary and flip Gemma execution to allowed
-   without changing any numeric threshold.
-3. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
-   snapshot to local NVMe, then run Gemma Stage 1 with the unchanged harness.
+1. Commit/pull/test/push this positive-control registry/firewall/report
+   boundary.
+2. Confirm every OLMo artifact remains durable, remove only the scoped local
+   cache `/content/hf_olmo_control/`, and stage/hash the pinned Gemma snapshot
+   on local NVMe.
+3. Commit/publish the target staging/runner boundary, then run one Stage-1
+   infrastructure cell and the unchanged full Stage-1 grid from a clean
+   pushed commit.
 4. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
 
 ## Recovery checks and next commands
 
-There is no live producer or GPU allocation. The 56-cell calibration is
-finalized and registered; do not rerun, delete, or rewrite it. Numeric
-thresholds are prepared but not registered, so Gemma execution remains
-forbidden. The local OLMo snapshot is ephemeral, while all evidence and
-reports are durable in Drive. Inspect:
+There is no live producer or GPU allocation. The 56-cell calibration and
+positive control are finalized and registered; do not rerun, delete, or
+rewrite them. Gemma execution is licensed, but its weights are not staged and
+no target number has been opened. The local OLMo snapshot remains at
+`/content/hf_olmo_control/` until its deliberate scoped removal; all evidence
+and reports are durable in Drive. Inspect:
 
 ```bash
 git -C /content/labs status --short --branch

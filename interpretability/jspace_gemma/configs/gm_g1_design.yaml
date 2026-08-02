@@ -83,7 +83,7 @@ delivery_gate:
   below_gate: unmeasurable
 
 threshold_calibration:
-  status: FROZEN_PENDING_POSITIVE_CONTROL_REGISTRATION
+  status: FROZEN_PRE_GEMMA_REGISTERED
   calibration_inputs:
     - olmo_positive_control
     - random_direction_baselines
@@ -93,7 +93,8 @@ threshold_calibration:
     - late_identity_anchor
   frozen_threshold_file: repo://interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml
   threshold_evidence_id: gm-jvp-olmo-positive-control-v1
-  gemma_execution_allowed: false
+  positive_control_artifact_sha256: fc957c9a6f6f397cbaf3274193713ebec332bb81dbb99b61cf9f56d058cd1942
+  gemma_execution_allowed: true
   tangent_vs_secant:
     primary_decision_cosine_floor: 0.98
     primary_decision_relative_error_ceiling: 0.20
@@ -104,7 +105,7 @@ threshold_calibration:
   floor_curvature_partition:
     intercept_a_ceiling: 0.30
     curvature_slope_b_floor: 0.15
-  reason: thresholds are frozen from registered OLMo calibration; Gemma remains blocked until the positive-control event is registered
+  reason: thresholds and the passing OLMo positive control are registered before the first Gemma target number; numeric thresholds are immutable
 
 cell_runtime_target_minutes: 10
 finite_response_batch_size: 8
