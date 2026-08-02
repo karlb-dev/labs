@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T02:29:26Z
+Last updated: 2026-08-02T02:38:34Z
 
 Status: active; O1 and the O3 provenance audit are complete, the early Phase 4
 bundle is emitted, and O2 is next. Both native OLMo-lineage baseline capability
@@ -206,7 +206,7 @@ one occupancy unit; unresolved when uncertainty is too wide.
 
 ### Results
 
-Pending model outcomes. `ol-capacity-protocol-v1` was registered at
+One of four model outcomes is complete. `ol-capacity-protocol-v1` was registered at
 2026-08-02T02:29:02Z from clean source commit `0e5800b`. It freezes the first
 30 prompts in each of the four existing corpus blocks, for
 120 prompts and 7,481 retained content positions. The selected canonical JSONL
@@ -219,13 +219,29 @@ mean. Raw `h` is pursued separately and labeled only as an uncentered energy
 sensitivity. Each layer checkpoint retains full J/random error curves,
 selected supports, prompt ownership, solver diagnostics, and deterministic
 bootstrap distributions, allowing independent reconstruction and paired
-cross-model resampling. Thirty package tests and the corpus/tokenizer/lens-
-audit/source-pin preflights and 31 package tests pass. The registered corpus is
+cross-model resampling. Thirty-one package tests and the corpus/tokenizer/lens-
+audit/source-pin preflights pass. The registered corpus is
 SHA-256 `695d29f9...a7948` and the protocol is SHA-256
-`909c07d3...c9a0`; both verify in the eight-event registry. No O2 model outcome
-has been opened. The
-prior three-model 60-prompt files remain historical context only; Base
-capability is not required for this capacity measurement.
+`909c07d3...c9a0`; both verify in the nine-event registry. The protocol itself
+opened no model outcome. The prior three-model 60-prompt files remain
+historical context only; Base capability is not required for this capacity
+measurement.
+
+`ol-capacity-olmo3-base-dev-v1` completed from clean source commit `f67efcd`
+with all registered hashes verified. The primary own-frame results are:
+
+| Layer | Occupancy | Centered excess | 90% prompt-bootstrap interval | Raw sensitivity (occupancy) |
+|---:|---:|---:|---:|---:|
+| 24 | 2 | -0.0137 pp | [-0.0702, +0.0437] pp | -0.1528 pp (1) |
+| 32 | 2 | +0.3151 pp | [+0.2656, +0.3641] pp | -0.0008 pp (1) |
+| 40 | 2 | +0.5896 pp | [+0.5342, +0.6497] pp | -0.0033 pp (2) |
+
+All centered occupancies have zero censoring; every J error curve has zero
+solver-error increases; and own/common are exact duplicates for Base by
+construction. The result SHA-256 is `3708447c...069c0`. These are within-Base
+capacity estimates, not yet evidence of a checkpoint shift. The frozen paired
+router will classify Base versus 3.0 Think only after all four model events are
+registered.
 
 ## O3: lens provenance and coordinate comparability
 
@@ -305,6 +321,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-lens-provenance-audit-v1` | All six pairs are exact same recipe/corpus; all lens/slice/merge checks pass; no refit required; geometry and capacity authorized; no intervention opened | Source commit `fb1fc73`; JSON `0912d223...`; Markdown `9f6c8478...` |
 | 2026-08-02 | O2 pre-evidence implementation | Symmetric 120-prompt corpus, centered-before-pursuit estimator, raw sensitivity, resumable layer checkpoints, common-frame analysis, paired prompt bootstrap, frozen classification router, and tests implemented; no capacity outcome opened | Git commit `0e5800b`, pushed; 31 tests pass |
 | 2026-08-02 | `ol-capacity-protocol-v1` | Outcome-blind 120-prompt/7,481-position corpus, exact four-tokenizer agreement, centered and raw estimands, three random controls, paired bootstrap, and shift router frozen; no model/intervention outcome opened | Source commit `0e5800b`; corpus `695d29f9...`; protocol `909c07d3...` |
+| 2026-08-02 | `ol-capacity-olmo3-base-dev-v1` | Base completed at layers 24/32/40; centered excess -0.0137/+0.3151/+0.5896 pp, occupancy 2/2/2; no censoring or solver increases; no intervention opened | Source commit `f67efcd`; result `3708447c...`; three independently reconstructable layer checkpoints |
 
 ## Current limitations and claim boundary
 
