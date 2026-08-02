@@ -79,7 +79,8 @@ cell and licenses no mechanism or workspace conclusion. G2--G8 must not be
 resumed on this branch. The canonical import bundle is Drive
 `gemma_transport_20260802/release/IMPORT_BUNDLE_PHASE4.json`.
 
-Before every push, fetch and pull/rebase the Gemma branch, re-run the relevant
-tests, reconcile any concurrent Gemma-branch commits, then push. Once the live
-handoff records the release registry/report commit, this completed blocker
-fork is eligible for the requested ancestry-preserving Part-2 merge.
+The release registry/report boundary is `b0425a4`. The requested
+ancestry-preserving merge into the latest `interp_jspace_part2` is complete at
+`5346b160e9923f89272a3f8e13808775951cc004`. No Gemma producer needs to be
+resumed. Phase 5 may verify and import the methods-only bundle; a scientific
+repair requires a separate prospectively registered workstream.

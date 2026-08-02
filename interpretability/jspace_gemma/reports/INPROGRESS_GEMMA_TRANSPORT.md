@@ -1,13 +1,14 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 04:12 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 04:15 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
 ## Current boundary
 
 - Worktree: `/content/labs`.
-- Branch: `interp_jspace_gemma_transport`.
+- Completed side branch: `interp_jspace_gemma_transport`.
+- Current checkout: `interp_jspace_part2` after the requested merge.
 - Exact fork: `3b041735d8b842de46a9c0a474fccd0c44e0841a`.
 - Tested scaffold commit: `b49af6d1c285a300be9007461b695d22b90d5930`.
 - Restart-boundary commit: `11501b804690559fabe571e941a95018eefbe19b`.
@@ -44,9 +45,12 @@ canonical Drive handoff at
   `0e8acf3234ffa22ca79b99e3a3ea9de148951faf`.
 - Frozen terminal release producer/compute commit:
   `b80004843a5bbe57536e4da18297f7c52cf201a3`.
-- The terminal release is registered and independently verified; the remote
-  branch is synchronized through its producer, and this registry/report
-  boundary is the next publication.
+- Terminal release registry/report commit:
+  `b0425a441f1b87c33d9bb0b4d08d221942f11923`.
+- Ancestry-preserving Part-2 merge commit:
+  `5346b160e9923f89272a3f8e13808775951cc004`.
+- Both the terminal Gemma side branch and the merged shared Part-2 branch are
+  synchronized with their remotes. OLMo remains separate.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -285,6 +289,10 @@ canonical Drive handoff at
     bundle payload and registry-prefix hashes, rehashed every source and
     release output, and registered the terminal methods-only state of record.
     No model was opened and no scientific branch was resumed.
+32. Pulled the latest shared Part-2 tip, merged the complete Gemma history with
+    ancestry preserved, reran all 48 tests and 43 live-output checks on the
+    merged tree, and pushed merge `5346b16`. No OLMo or main Phase-4 side
+    history was combined by this action.
 
 ## Immutable scientific guardrails
 
@@ -304,10 +312,9 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit, fetch/integrate, test, and push the release registry/report
-   boundary.
-2. Reverify the final Gemma branch and merge it with ancestry preserved into
-   the latest pulled `interp_jspace_part2`; keep G2/G3 stopped.
+No Gemma execution remains. Phase 5 may import the methods-only bundle after
+hash verification. Keep G2--G8 stopped unless a new prospectively registered
+workstream explicitly supersedes the blocker.
 
 ## Recovery checks and next commands
 
@@ -320,8 +327,9 @@ eight outputs. The
 rewrite them. Gemma Stage 1 is complete and registered from `036e552`; do not
 rerun, delete, or rewrite its state/cells/aggregates. The target model is
 unloaded, the fully verified local snapshot remains available, and the ephemeral OLMo
-snapshot is removed. If this VM is reclaimed, Stage 1 needs no rerun; verify
-the Drive outputs and continue from the latest pushed report boundary. Inspect:
+snapshot is removed. The Gemma side branch is terminal at `b0425a4` and is
+merged into Part 2 at `5346b16`. If this VM is reclaimed, no Gemma producer
+needs rerun; verify the Drive release and continue from Phase 5. Inspect:
 
 ```bash
 git -C /content/labs status --short --branch
@@ -342,7 +350,6 @@ agree that the run is unowned.
 
 ## Push/merge rule
 
-Every evidence boundary is: update this handoff and the detailed report,
-commit, `git fetch`, integrate the remote Gemma branch, run tests, then push.
-The final completed Gemma branch is merged with ancestry preserved into
-`interp_jspace_part2`; no earlier partial merge.
+The final completed Gemma branch was merged with ancestry preserved into
+`interp_jspace_part2` at `5346b16`. Future work imports the terminal bundle;
+it does not append new science to this completed branch.

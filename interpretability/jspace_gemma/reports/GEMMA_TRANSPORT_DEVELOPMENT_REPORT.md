@@ -349,8 +349,11 @@ failure. The repaired producer pins the TeX by exact commit, Git blob, SHA-256,
 and byte size, while continuing to pin the physical Drive PDF. This does not
 change the scientific design or expose a target outcome.
 
-## Next boundary
+## Final integration boundary
 
-Publish the release registry/report boundary, perform one final branch audit,
-then merge the completed Gemma ancestry into the latest shared Part-2 branch.
-Keep G2/G3 stopped; no scientific expansion or threshold repair is licensed.
+The release registry/report boundary is pushed at `b0425a4`. The latest
+shared Part-2 branch was pulled, the complete Gemma ancestry was merged at
+`5346b160e9923f89272a3f8e13808775951cc004`, and all 48 tests plus 43
+registered-output checks pass on the merged tree. OLMo remains on its separate
+branch. No further Gemma execution is licensed here; Phase 5 may import only
+the methods-scoped bundle after hash verification.
