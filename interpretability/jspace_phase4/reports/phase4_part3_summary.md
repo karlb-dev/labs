@@ -203,6 +203,11 @@ The structural result SHA-256 is
 `eaf8a63ed038eedaabbbd037be26984a454cddd4182bb42c3e37270a91ec193d`.
 Its six-output local backup manifest hashes to
 `5bff1706c7684c38d8f103a2d725059a9a1bca8f0b8aaad3a528047390c57e09`.
+Within assay L20--L44, raw/minus-identity/minus-scaled-identity operator
+cosines are 0.998739/0.999610/0.998632; residual principal-subspace similarity
+is 0.998196 with median/max principal angles 1.824/8.853 degrees. These support
+the registered operator-level pass while leaving sparse and causal stability
+to the still-sealed successors.
 Both registered figures were visually inspected after copying into the report
 tree; no clipping, missing panel, or mislabeled boundary was observed.
 
