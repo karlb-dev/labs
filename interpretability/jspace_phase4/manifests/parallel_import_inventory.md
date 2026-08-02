@@ -12,7 +12,7 @@ one `p4-import-*` event is appended from a clean mainline tree.
 |---|---|---|---|---|
 | OLMo Bank-W early service | `d76e937d2e6294b92d3d599581bd0fb029f5735c` | 5 events / 11 outputs; saved validation SHA-256 `57d4ac60aeef972a26a19a4d2b159e93d62a53822b40a836fa27401c36ebccf2` | `p4-import-olmo-bank-w-capability-v1` | **VALIDATED / NOT REGISTERED** |
 | Gemma terminal transport | source `b0425a441f1b87c33d9bb0b4d08d221942f11923`; ancestry merged to main at `c9021e5c2405eaa34a16a07ba0ea903c53b81ee6` | 5 events / 21 outputs; saved validation SHA-256 `143fda2e9d75c7cce0b0c3e38837d60a5ed05b7c191a29870e885a81ba1e79d3` | `p4-import-gemma-transport-v1` | **VALIDATED / NOT REGISTERED** |
-| OLMo final lineage | O2 and O3 geometry/figures complete; O5 decision, independent reconstruction, claims ledger, and state of record complete through source `ad0041b`; final paper/bundle pending | No final release bundle yet | to be named by the final strict envelope | **NOT READY** |
+| OLMo final lineage | O2 and O3 geometry/figures complete; O5 decision, independent reconstruction, claims/state, and the isolated paper complete through source `f2d4d37`; final bundle pending | No final release bundle yet | to be named by the final strict envelope | **NOT READY** |
 
 ## OLMo early service boundary
 
@@ -54,9 +54,11 @@ Methods event `ol-independent-reconstruction-v1`, registered at source commit
 PNG figures byte-for-byte, all fourteen pinned weight-shard hashes, and one
 frozen eight-candidate Think Bank-W row with zero score drift. It opens no new
 item, intervention, model, stage, O5, confirmatory, or replication outcome.
-The claims ledger and state of record are durable through `ad0041b`. The final
-paper and self-verifying terminal import bundle remain absent, so this track is
-not yet admissible as a final Phase 4 import.
+The claims ledger and state of record are durable through `ad0041b`. The
+isolated 13-page paper is committed at `f2d4d37`; an independent render audit
+found embedded fonts and readable, unclipped tables, figures, and conclusion
+pages. The self-verifying terminal import bundle remains absent, so this track
+is not yet admissible as a final Phase 4 import.
 
 ## Admission order and invariants
 
