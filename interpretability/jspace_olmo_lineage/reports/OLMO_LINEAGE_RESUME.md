@@ -142,6 +142,17 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
+The model command is:
+
+```bash
+python -m jspace_olmo_lineage.experiments.capacity \
+  --config interpretability/jspace_olmo_lineage/configs/ol_capacity_v1.yaml \
+  --model-slug <olmo3-base|olmo3-think|olmo31-think|olmo31-instruct>
+```
+
+After all four registered model events, use the same module with
+`--aggregate-joint`. Never aggregate an unregistered partial checkpoint.
+
 ## Weight staging and rotation
 
 The O2 model and lens revisions are in `configs/ol_capacity_v1.yaml` (the
