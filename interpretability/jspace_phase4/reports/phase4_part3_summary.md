@@ -2,7 +2,7 @@
 
 **LIVE DRAFT — A1000 FIT IN PROGRESS — NOT A FREEZE RECORD**
 
-Last updated: 2026-08-02 17:14 UTC. This document will be finalized after the
+Last updated: 2026-08-02 17:58 UTC. This document will be finalized after the
 current A1000 producer exits and all completed outputs are independently
 rehash-checked. Phase 4 remains development-only. No confirmatory or
 replication intervention outcome may be opened, and this implementation agent
@@ -13,17 +13,17 @@ does not sign independent-review or PI fields.
 Phase 4.3 has reduced the project to one active compute dependency and a
 small, explicit set of governance/durability dependencies. The exact nested
 Qwen draw-A fit is continuing from A500 to A1000 under the unchanged producer.
-The last exact boundary at this draft is A887, checkpoint SHA-256
-`59720acdae72a6c61939ecafab7cb0a80e8883768e4c636a90675eeb8e5099c4`.
+The last exact boundary at this draft is A902, checkpoint SHA-256
+`97e95839b9a22983643c32917a151ab235ddddb8805dec1d0f8f41392dfb7733`.
 The fit contract remains
 `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00`.
-A887 is recovery state, not registered scientific evidence.
+A902 is recovery state, not registered scientific evidence.
 
 The expected VM reclaim is approximately 2026-08-02 23:38 UTC. At the
-observed end-to-end rate, A1000 should complete early enough to serialize,
-hash, register, back up, integrate, and push the final fit. There is not a
-reliable margin for the full postfit queue. At 23:25 UTC no new long-running
-stage should be launched.
+observed end-to-end rate, the A1000 checkpoint should land near 22:30--22:45
+UTC, with final serialization, hashing, registration, backup, integration,
+and push near 22:50--23:05 UTC. There is not a reliable margin for the full
+postfit queue. At 23:25 UTC no new long-running stage should be launched.
 
 The isolated preparation branch already ancestry-contains the completed
 Gemma and OLMo side-track merges from remote main. After the fitter exits, all

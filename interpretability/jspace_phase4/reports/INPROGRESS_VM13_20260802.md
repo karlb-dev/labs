@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 15:28 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 17:58 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -21,13 +21,13 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router. Atomic checkpoints through n=851 exist as a valid exact pair. Its
+  router. Atomic checkpoints through n=902 exist as a valid exact pair. Its
   first n=716 DriveFS atomic copy failed for local-cache exhaustion; the pair
   was recovered and the unchanged producer subsequently banked n=719 and
-  n=851. Cloud upload remains rate-limited. A temporary recovery-directory
+  n=902. Cloud upload remains rate-limited. A temporary recovery-directory
   bind now prevents redundant 6.6-GB DriveFS cache generations while keeping
   the producer's verified-temporary-copy/atomic-replace path unchanged. The
-  wrapper is live in chunk 851:854. No partial checkpoint is registered
+  wrapper is live in chunk 902:905. No partial checkpoint is registered
   evidence.
 
 ## VM13 live continuation
@@ -42,19 +42,26 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 851 / 1000 |
+| prompts banked | 902 / 1000 |
 | durability | exact local + DriveFS-cache pair; cloud upload pending |
-| checkpoint SHA-256 | `d6fffb21eaa353298f27275cff30325c44b86f155dfee21e2a35690700cdf548` |
-| checkpoint-state SHA-256 | `5dd503efff71a94735eef0c309b23fc11afcc5227f280dc02d9bb8c048718c44` |
+| checkpoint SHA-256 | `97e95839b9a22983643c32917a151ab235ddddb8805dec1d0f8f41392dfb7733` |
+| checkpoint-state SHA-256 | `2b38685fa39d049e685f751822edc3ffd2bae3aa8e5a979445360645e7d3376b` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| checkpoint sync UTC | 2026-08-02 15:27:33 UTC |
+| checkpoint sync UTC | 2026-08-02 17:57:13 UTC |
 | peak allocated VRAM | 62.846 GB |
-| process state | live; active atomic chunk 851:854; unified session 83477 |
+| process state | live; active atomic chunk 902:905; unified session 83477 |
 
-Prompts 660 and 796 are retained finite heavy-tail rows at 113.855 and 44.507,
-both below the earlier prompt-323 maximum 173.345; no outcome-dependent
-trimming or refit occurred.
+Prompts 660, 796, 852, and 901 are retained finite heavy-tail rows at 113.855,
+44.507, 46.224, and 29.736, respectively; all remain below the earlier
+prompt-323 maximum 173.345. No outcome-dependent trimming or refit occurred.
+
+The expected VM reclaim is approximately 2026-08-02 23:38 UTC. The observed
+rate puts the A1000 checkpoint near 22:30--22:45 UTC and final serialization,
+registration, backup, integration, and push near 22:50--23:05 UTC. No new
+long-running compute should start after 23:25 UTC. If the remaining margin is
+insufficient for the complete postfit queue, use the registered-and-backed-up
+`JSPACE4_STOP_AFTER=structural` boundary and leave later stages to Phase 4.4.
 
 ### DriveFS durability incident at n=716
 
@@ -92,13 +99,13 @@ To prevent the still-rate-limited DriveFS cache from accumulating another
 6.6-GB generation every three prompts, the exact local fit-contract directory
 is temporarily bind-mounted over only the Drive `draw_a/recovery` directory.
 `findmnt` reports the overlay source, and both visible `fit.ckpt` paths resolve
-to device/inode `55:7350255`. The producer still hashes a complete temporary
+to device/inode `55:7349730`. The producer still hashes a complete temporary
 checkpoint and atomically replaces the recovery file; this changes neither fit
 bytes nor estimator/config/runtime contracts. The pre-bind Drive recovery
 directory, including n=195/n=198 contract-check files, remains preserved and
 hidden beneath the mount. The unchanged wrapper restarted at clean commit
 `4ea7a9b`, printed `recovered_next_idx: 722` and `resuming from checkpoint:
-722/725 prompts processed`, and is live. Bound syncs through n=851 completed
+722/725 prompts processed`, and is live. Bound syncs through n=902 completed
 and resumed normally without growing another DriveFS checkpoint generation.
 Remove the bind after A1000, republish the final exact recovery
 pair, and require a fresh cloud remount/rehash before making any cloud-
