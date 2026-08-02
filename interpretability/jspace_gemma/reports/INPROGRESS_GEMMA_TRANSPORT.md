@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 00:43 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 00:47 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -8,7 +8,8 @@ canonical Drive handoff at
 
 - Worktree: `/content/labs`.
 - Branch: `interp_jspace_gemma_transport`.
-- Exact fork/HEAD: `3b041735d8b842de46a9c0a474fccd0c44e0841a`.
+- Exact fork: `3b041735d8b842de46a9c0a474fccd0c44e0841a`.
+- Tested scaffold commit: `b49af6d1c285a300be9007461b695d22b90d5930`.
 - Remote Gemma branch: not yet created as of this boundary.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
@@ -20,8 +21,8 @@ canonical Drive handoff at
 - Shared Part-2 conformance bootstrap: PASS.
 - No Gemma or OLMo model producer is running. No scientific Gemma target
   outcome has been opened.
-- The isolated package scaffold is complete but not yet committed at this
-  checkpoint. Its 22-test conformance suite passes, including analytic,
+- The isolated package scaffold is committed. Its 22-test conformance suite
+  passes, including analytic,
   nonlinear tiny-transformer, and explicit Hugging Face suffix/JVP tests.
 - The historical Drive OLMo snapshot has 11/14 complete weight shards. Shards
   6, 9, and 14 are broken symlinks with stale `.incomplete` blobs; control
@@ -70,8 +71,8 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit the tested package scaffold and publish the new Gemma branch.
-2. From that clean commit, run/register `gm-foundation-v1`, commit, pull,
+1. Fetch, verify the remote branch is absent, and publish the new Gemma branch.
+2. From the clean scaffold, run/register `gm-foundation-v1`, commit, pull,
    test, and push the evidence boundary.
 3. From the next clean commit, run analytic and tiny-transformer JVP goldens;
    register
@@ -88,10 +89,9 @@ canonical Drive handoff at
 ## Recovery checks and next commands
 
 There is currently no live producer, lock owner, or partial scientific
-checkpoint. The package scaffold is an uncommitted worktree at this exact
-handoff, so if reclamation occurs before the next boundary, recover it from
-the Colab filesystem if available; otherwise resume from the last remote
-commit and rebuild from this queue. On a new VM, run the bootstrap in
+checkpoint. The tested scaffold is committed locally; until the next queue
+step confirms the first push, use the commit above if it is visible remotely.
+On a new VM, run the bootstrap in
 `RESUME_GEMMA_TRANSPORT.md`, then inspect:
 
 ```bash
