@@ -1,0 +1,28 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\title{Gemma 4 31B Transport Autopsy\\Development/Methods Record}
+\author{J-space special laboratory}
+\date{2026-08-02}
+\begin{document}
+\maketitle
+\section{Scope}
+This isolated side study tests exact local transport validity. It does not
+open a Phase 4 confirmatory model cell and does not infer workspace absence
+from readout opacity or transport failure.
+\section{G1 firewall}
+Analytic and tiny-model exact-JVP goldens and an in-session OLMo positive
+control precede every Gemma interpretation. Numeric thresholds are calibrated
+on the control and committed before the first Gemma target result. Finite
+differences are labeled secants, never exact JVPs.
+\section{Architecture}
+The pinned Gemma text decoder has 60 layers of width 5,376. A five-local,
+one-global attention schedule repeats ten times. Global attention uses a
+different head geometry and K=V; four RMSNorm sites and a gated MLP occur per
+block. The tied output head is followed by a monotone softcap.
+\section{State of evidence}
+The foundation and goldens are in progress. No current-study model result is
+reported at this boundary.
+\end{document}

@@ -1,0 +1,99 @@
+schema_version: 1
+study_id: jspace-gemma-transport
+evidence_family: gm-jvp
+tier: methods
+fork_commit: 3b041735d8b842de46a9c0a474fccd0c44e0841a
+
+models:
+  olmo_positive_control:
+    model_id: allenai/Olmo-3-32B-Think
+    revision: ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
+    layers_zero_indexed: [24, 32, 40, 47, 56]
+    role: exact checkpoint used by the historical campaign control
+  gemma_target:
+    model_id: google/gemma-4-31B-it
+    revision: 842da3794eaa0b77d5f08bae87a17459d91ff475
+    layers_zero_indexed: [22, 30, 37, 44, 52]
+
+prompt_bank: repo://interpretability/jspace_gemma/data/g1_prompts_v1.jsonl
+stage1_prompt_ids: [gm-p001, gm-p002, gm-p003, gm-p004]
+stage2_prompt_ids:
+  - gm-p001
+  - gm-p002
+  - gm-p003
+  - gm-p004
+  - gm-p005
+  - gm-p006
+  - gm-p007
+  - gm-p008
+  - gm-p009
+  - gm-p010
+  - gm-p011
+  - gm-p012
+  - gm-p013
+  - gm-p014
+  - gm-p015
+  - gm-p016
+
+source_modes:
+  - mode: single_position
+    position: -1
+    role: primary position-wise causal transport license
+  - mode: uniform_valid
+    role: secondary match to the historical mean-map estimand
+
+directions:
+  seed: 240802
+  stage1:
+    - {type: rademacher, id: random-rademacher-0}
+    - {type: gaussian, id: random-gaussian-0}
+    - {type: radial, id: activation-radial}
+    - {type: sphere_tangent, id: activation-tangent-0}
+  deferred_registered_lens:
+    - {type: fitted_j_selected_token, id: fitted-j-answer-token}
+    - {type: matched_protected_orthogonal_random, id: protected-orthogonal-0}
+  note: lens-derived directions enter only after their exact lens/token hashes are bound
+
+relative_epsilon_ladder: [0.0025, 0.005, 0.01, 0.02, 0.05, 0.10, 0.20]
+required_responses: [negative, positive, double_positive, orthogonal_pair_sum]
+
+targets:
+  primary:
+    representation: final_residual
+    position_indices: [-1]
+  secondary:
+    - {representation: normalized_final_residual, position_indices: [-1]}
+    - {representation: pre_softcap_logits, token_subset: frozen_per_prompt}
+    - {representation: post_softcap_logits, token_subset: frozen_per_prompt, audit_only: true}
+
+exact_jvp_backend_ladder:
+  - torch.func.jvp
+  - torch.autograd.functional.jvp
+  - parity-validated-local-unfused-replacement
+forbidden_exact_backend: finite_difference
+attention_implementation: eager
+cache_policy: no_cache
+
+delivery_gate:
+  cosine_floor: 0.999
+  relative_norm_error_ceiling: 0.01
+  below_gate: unmeasurable
+
+threshold_calibration:
+  status: REQUIRED_BEFORE_GEMMA
+  calibration_inputs:
+    - olmo_positive_control
+    - random_direction_baselines
+    - clean_repeat_floor
+    - wrong_hook_sentinel
+    - smallest_faithful_epsilon
+  frozen_threshold_file: repo://interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml
+  gemma_execution_allowed: false
+  tangent_vs_secant: null
+  response_snr: null
+  floor_curvature_partition: null
+  reason: binding addendum requires numeric target thresholds after OLMo calibration and before the first Gemma number
+
+cell_runtime_target_minutes: 10
+raw_vector_retention: true
+raw_row_schema: jspace_lab_gemma_1.md#18.1
