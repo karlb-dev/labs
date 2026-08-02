@@ -111,6 +111,10 @@ Gemma and OLMo execute on isolated branches and registries. Their results can
 enter mainline only through `protocol/SIDE_TRACK_IMPORT_BUNDLE_CONTRACT.md`.
 Whole-registry release requires the two-pass procedure in
 `protocol/DRIVEFS_DURABILITY_PLAN.md`; known deficits remain failures.
+After model writers stop and the registry is final, generate the review
+inventory with `python -m jspace_phase4.pre_freeze_inventory`. It hashes every
+live output, checks reachable commits and namespace/path policy, and writes the
+required JSON/Markdown manifests; a known deficit remains a failed gate.
 
 ## Current development synthesis
 
