@@ -1,9 +1,9 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T02:38:34Z
+Last updated: 2026-08-02T03:00:20Z
 
 Status: active; O1 and the O3 provenance audit are complete, the early Phase 4
-bundle is emitted, and O2 is next. Both native OLMo-lineage baseline capability
+bundle is emitted, and two of four O2 model cells are complete. Both native OLMo-lineage baseline capability
 results, the joint decision, the hash-pinned transfer bundle, and the four-lens
 audit are registered. This report will be updated after every material gate or
 analysis and is intentionally separate from the Phase 4 and Gemma reports.
@@ -22,9 +22,9 @@ for OLMo-3.1 Think and OLMo-3.1 Instruct, then aggregated with the imported
 Qwen reference and transferred without intervention outcomes. The prospective
 20-family common-support gate failed. O3 subsequently established that all six
 lens pairs share the exact fitting recipe and ordered corpus, so no refit is
-needed. The current priority is O2, which adds the missing Base capacity
-measurement under a symmetric four-model estimator. O4 under the original
-Bank-W protocol is gated out rather than silently narrowed.
+needed. O2 has now measured Base and OLMo-3 32B Think under the symmetric
+four-model estimator; OLMo-3.1 Think and the Instruct sibling remain. O4 under
+the original Bank-W protocol is gated out rather than silently narrowed.
 
 Phase 4, Gemma, and OLMo are running as concurrent but isolated branches of
 work. They will be integrated only in Phase 5 or later after their own state
@@ -86,8 +86,8 @@ The accepted prior work established a thin, measurable J-space dictionary and
 development evidence that OLMo checkpoints have broadly related geometry but
 differ in downstream causal organization. Prior capacity files used 60
 prompts, so they are context rather than the final symmetric O2 comparison.
-Base already has a registered lens, but its symmetric capacity cell is
-missing.
+Base already had a registered lens, but its symmetric capacity cell was
+missing at study start; it is now measured under the prospective O2 protocol.
 
 Phase 4 has a frozen Bank-W development capability protocol. The already-run
 Qwen reference contains 384 finite rows, low/high accuracy of 0.8333/0.8333,
@@ -206,7 +206,7 @@ one occupancy unit; unresolved when uncertainty is too wide.
 
 ### Results
 
-One of four model outcomes is complete. `ol-capacity-protocol-v1` was registered at
+Two of four model outcomes are complete. `ol-capacity-protocol-v1` was registered at
 2026-08-02T02:29:02Z from clean source commit `0e5800b`. It freezes the first
 30 prompts in each of the four existing corpus blocks, for
 120 prompts and 7,481 retained content positions. The selected canonical JSONL
@@ -222,7 +222,7 @@ bootstrap distributions, allowing independent reconstruction and paired
 cross-model resampling. Thirty-one package tests and the corpus/tokenizer/lens-
 audit/source-pin preflights pass. The registered corpus is
 SHA-256 `695d29f9...a7948` and the protocol is SHA-256
-`909c07d3...c9a0`; both verify in the nine-event registry. The protocol itself
+`909c07d3...c9a0`; both verify in the ten-event registry. The protocol itself
 opened no model outcome. The prior three-model 60-prompt files remain
 historical context only; Base capability is not required for this capacity
 measurement.
@@ -242,6 +242,27 @@ construction. The result SHA-256 is `3708447c...069c0`. These are within-Base
 capacity estimates, not yet evidence of a checkpoint shift. The frozen paired
 router will classify Base versus 3.0 Think only after all four model events are
 registered.
+
+`ol-capacity-olmo3-think-dev-v1` completed from clean source commit `04870ec`
+with all six registered outputs verified. The primary own-frame results are:
+
+| Layer | Occupancy | Centered excess | 90% prompt-bootstrap interval | Raw sensitivity (occupancy) |
+|---:|---:|---:|---:|---:|
+| 24 | 2 | +0.0650 pp | [+0.0405, +0.0922] pp | +0.0006 pp (1) |
+| 32 | 2 | +0.3391 pp | [+0.3041, +0.3787] pp | +0.1854 pp (2) |
+| 40 | 2 | +0.5331 pp | [+0.4909, +0.5791] pp | +0.5049 pp (2) |
+
+All centered occupancies again have zero censoring and every J error curve has
+zero solver-error increases. In the frozen Base-common lens frame, centered
+excess is -0.0770, +0.1759, and +0.3685 percentage points at layers 24/32/40,
+with occupancy 2 at each layer and respective 90% intervals
+[-0.1239, -0.0300], [+0.1374, +0.2143], and [+0.3253, +0.4133] percentage
+points. The own/common difference is a coordinate-frame sensitivity, not a
+cross-checkpoint contrast. The result SHA-256 is `2a872e4a...58abc`; its three
+independently reconstructable layer checkpoints are `e444dc6b...f8e6d`,
+`60d4989c...75d5`, and `9d65e188...0e55`. The frozen router still requires
+paired resampling from all four registered events; no lineage shift label is
+assigned here by comparing independent point estimates or intervals.
 
 ## O3: lens provenance and coordinate comparability
 
@@ -322,6 +343,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | O2 pre-evidence implementation | Symmetric 120-prompt corpus, centered-before-pursuit estimator, raw sensitivity, resumable layer checkpoints, common-frame analysis, paired prompt bootstrap, frozen classification router, and tests implemented; no capacity outcome opened | Git commit `0e5800b`, pushed; 31 tests pass |
 | 2026-08-02 | `ol-capacity-protocol-v1` | Outcome-blind 120-prompt/7,481-position corpus, exact four-tokenizer agreement, centered and raw estimands, three random controls, paired bootstrap, and shift router frozen; no model/intervention outcome opened | Source commit `0e5800b`; corpus `695d29f9...`; protocol `909c07d3...` |
 | 2026-08-02 | `ol-capacity-olmo3-base-dev-v1` | Base completed at layers 24/32/40; centered excess -0.0137/+0.3151/+0.5896 pp, occupancy 2/2/2; no censoring or solver increases; no intervention opened | Source commit `f67efcd`; result `3708447c...`; three independently reconstructable layer checkpoints |
+| 2026-08-02 | `ol-capacity-olmo3-think-dev-v1` | 3.0 Think completed at layers 24/32/40; own-frame centered excess +0.0650/+0.3391/+0.5331 pp, occupancy 2/2/2; Base-common sensitivity also recorded; no censoring, solver increases, or intervention opened | Source commit `04870ec`; result `2a872e4a...`; layer checkpoints `e444dc6b...`, `60d4989c...`, `9d65e188...` |
 
 ## Current limitations and claim boundary
 
@@ -333,7 +355,8 @@ family-support target blocks the planned service set rather than licensing a
 post hoc family or model subset. The track will not claim that Think training
 creates a global workspace, that the reasoning objective is the causal
 variable, that Instruct lacks a verbalizable channel, or that capacity is
-unchanged from pretraining before Base is measured.
+unchanged from pretraining before the prospectively paired joint analysis is
+complete.
 
 ## Recovery
 

@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T02:38:34Z
+Last updated: 2026-08-02T03:00:20Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,9 +20,10 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: none; Base O2 is complete and GPU memory is free.
-- Last registered native evidence: `ol-capacity-olmo3-base-dev-v1`
-  (development), created at 2026-08-02T02:38:05Z from clean commit `f67efcd`.
+- Active model job: none; Base and 3.0 Think O2 are complete and GPU memory is
+  free.
+- Last registered native evidence: `ol-capacity-olmo3-think-dev-v1`
+  (development), created at 2026-08-02T02:59:23Z from clean commit `04870ec`.
   Its six immutable outputs and registry event verify; the event/report Git
   checkpoint is the current publish action.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
@@ -32,8 +33,8 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and nine live evidence events verify cleanly; 31 package
-tests pass. No model job is active.
+foundation manifests and ten live evidence events with 31 immutable outputs
+verify cleanly; 31 package tests pass. No model job is active.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
 values finite per model and eight candidate-sequence scores per row. Think
@@ -96,6 +97,19 @@ result is 103,058 bytes, SHA-256
 Do not assign a lineage shift label until the prospectively paired joint
 analysis has all four registered model results.
 
+OLMo-3 32B Think O2 is also complete on the exact same 120 prompts and 7,481
+content positions. Primary own-frame centered excess at layers 24/32/40 is
+respectively 0.0006498, 0.0033914, and 0.0053310, with lower-median occupancy
+2 at every layer and 90% prompt-bootstrap intervals [0.0004054, 0.0009218],
+[0.0030413, 0.0037868], and [0.0049095, 0.0057907]. Raw-target sensitivities
+are 0.0000058, 0.0018538, and 0.0050492 with occupancies 1/2/2. There is no
+censoring and no solver-error increase. The frozen Base-common-frame centered
+excesses are -0.0007702, 0.0017593, and 0.0036850, all with occupancy 2. The
+result is 102,907 bytes, SHA-256
+`2a872e4a961b19414e66e03f85f18d8a43bf03c14afa8226bd238712ee258abc`.
+These are still within-checkpoint measurements: do not subtract independent
+intervals or assign a Base-to-Think shift label before the paired joint event.
+
 ## Exact next actions
 
 From `/content/labs`:
@@ -118,37 +132,37 @@ git -C /tmp/jacobian-lens checkout 581d398613e5602a5af361e1c34d3a92ea82ba8e
 python -m pip install -q -e /tmp/jacobian-lens
 ```
 
-If the Base event/report checkpoint is still dirty after a reclaim,
+If the 3.0 Think event/report checkpoint is still dirty after a reclaim,
 publish and mirror it first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: register Base symmetric capacity'
+git commit -m 'olmo: register 3.0 Think symmetric capacity'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-After Base is durable in GitHub and the recovery mirrors, remove only its local
-Hub cache snapshot to make room, then stage 3.0 Think directly:
+After 3.0 Think is durable in GitHub and the recovery mirrors, remove only its
+local Hub cache directory to make room. It remains recoverable from the exact
+pinned Hub revision and the complete Drive cache. The exact 3.1 Think snapshot
+is already resident at:
 
 ```bash
-hf download allenai/Olmo-3-32B-Think \
-  --revision ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7 \
-  --cache-dir /content/hf_local
+/content/hf_local/models--allenai--Olmo-3.1-32B-Think/snapshots/832c3f543499af8fe68b88359501de9cb7840544
 ```
 
-Run 3.0 Think from a clean published checkpoint:
+Run 3.1 Think from a clean published checkpoint:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.capacity \
   --config interpretability/jspace_olmo_lineage/configs/ol_capacity_v1.yaml \
-  --model-slug olmo3-think
+  --model-slug olmo31-think
 ```
 
 Each completed layer is a resumable Drive checkpoint. Register, publish, and
-mirror 3.0 Think before the next rotation. Do not open an O4 Bank-W
+mirror 3.1 Think before the next rotation. Do not open an O4 Bank-W
 intervention under the failed 20-family protocol.
 
 ## Hardware and weight state at last update
@@ -156,8 +170,10 @@ intervention under the failed 20-family protocol.
 - GPU observed: NVIDIA RTX PRO 6000 Blackwell Server Edition, approximately
   96 GiB VRAM, CUDA working.
 - OLMo-3.1 Think and Instruct snapshots are complete in the Drive HF cache.
-- The exact Think snapshot is also complete on local NVMe. Its result is
-  durable in Drive, the side registry, and GitHub; GPU memory is free.
+- Exact OLMo-3 32B Think and OLMo-3.1 32B Think snapshots are currently
+  complete on local NVMe. The 3.0 Think result is durable in Drive and the side
+  registry; its Git/report checkpoint is the current publish action. GPU
+  memory is free.
 - The exact Instruct snapshot was removed from local NVMe after its result,
   bundle, Git checkpoint, and recovery mirrors became durable. It remains
   complete in Drive and directly recoverable from its pinned Hub revision.
@@ -165,12 +181,12 @@ intervention under the failed 20-family protocol.
   and is the preferred staging path while authentication/network remain healthy;
   the complete Drive snapshots remain recovery fallbacks.
 - OLMo-3 Think is also present in Drive.
-- The exact Base revision is complete in `/content/hf_local`; direct transfer
-  was selected over DriveFS. Rotate it only after the current Base result is
-  pushed and mirrored; it remains recoverable from the pinned Hub revision and
-  the complete Drive cache.
-- Local disk has approximately 56 GiB free with Base and OLMo-3.1 Think both
-  resident.
+- The exact Base local cache was removed only after its result, Git checkpoint,
+  and recovery mirrors became durable. It remains recoverable from the pinned
+  Hub revision and complete Drive cache.
+- Local disk has approximately 59 GiB free with OLMo-3 Think and OLMo-3.1
+  Think both resident. Remove the 3.0 Think local cache only after the current
+  publish/recovery checkpoint, then run the already-resident 3.1 Think model.
 - The exact `anthropics/jacobian-lens` checkout is installed from `/tmp` at
   `581d398613e5602a5af361e1c34d3a92ea82ba8e`; recreate it after a reclaim.
 - Never load model weights through DriveFS. Copy one pinned snapshot at a time
