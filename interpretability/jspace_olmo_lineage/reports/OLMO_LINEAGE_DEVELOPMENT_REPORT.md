@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T06:09:33Z
+Last updated: 2026-08-02T06:32:01Z
 
 Status: complete and stopped at the first OLMo parallel-phase release boundary.
 O1, O2, and O3 are complete, and both the early Phase 4 service handoff and
@@ -12,7 +12,9 @@ set, official-stage inventory, O5 feasibility decision, and independent
 reconstruction are registered. The claims ledger, state of record, isolated
 run-specific paper, complete evidence inventory, environment lock, and final
 handoff are durable in Git and Drive. This report remains separate from the
-Phase 4 and Gemma reports and may enter only a later Phase 5 router.
+Phase 4 and Gemma reports. Its complete repository history is now present in
+Part 2, while scientific combination remains reserved for a later Phase 5
+router.
 
 ## Executive status
 
@@ -736,5 +738,17 @@ mechanism before O3 geometry/transport evidence and an authorized causal test.
 ## Recovery
 
 Use `reports/INPROGRESS_OLMO_LINEAGE.md` for the exact current action and
-`reports/OLMO_LINEAGE_RESUME.md` after a VM reclaim. Both are committed to Git
-and mirrored into the Drive run root after every material checkpoint.
+`reports/OLMO_LINEAGE_RESUME.md` after a VM reclaim. The six-report recovery
+set is committed to Git and mirrored into the Drive run root after every
+material checkpoint.
+
+## Part 2 integration
+
+The complete source tip `a28cdd54dda335daf55f468e5be8cc65b2fc5253` was
+merged as the second parent of
+`65a787583d657e77f95ce379e3723c4d66a682ab`, whose first parent is the current
+Part 2/Gemma tip `c9021e5c2405eaa34a16a07ba0ea903c53b81ee6`. No OLMo
+file conflicted with the Part 2 parent. The merge preserves all commits and
+adds no evidence or scientific claim. Full combined checks, Drive backup
+locations, and the local cleanup boundary are in
+`reports/PART2_INTEGRATION_RECORD.md`.

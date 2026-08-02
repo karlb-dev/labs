@@ -31,8 +31,9 @@ python -m jspace_olmo_lineage.experiments.foundation \
 The live scientific narrative is maintained in
 `reports/OLMO_LINEAGE_DEVELOPMENT_REPORT.md`; recovery state is maintained in
 `reports/INPROGRESS_OLMO_LINEAGE.md`, with the stable restart procedure in
-`reports/OLMO_LINEAGE_RESUME.md`. The three documents are mirrored below the
-Drive run root by:
+`reports/OLMO_LINEAGE_RESUME.md`. The claims ledger, state of record, and Part
+2 integration record complete the six-report recovery set. They are mirrored
+below the Drive run root by:
 
 ```bash
 python -m jspace_olmo_lineage.recovery

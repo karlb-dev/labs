@@ -1,12 +1,13 @@
 # OLMo lineage state of record
 
-State date: 2026-08-02T06:09:33Z
+State date: 2026-08-02T06:32:01Z
 
 Status: complete at the first OLMo parallel-phase release boundary. The
 self-verifying import/restart bundle is emitted and registered; this side
 track is stopped pending the single Phase 5 integration router.
-This state remains separate from the concurrently running main Phase 4 and
-Gemma workstreams and may be integrated only in Phase 5 or later.
+This state remains scientifically separate from Phase 4 and Gemma. Its full
+repository history is now merged into Part 2, but cross-track scientific
+synthesis remains reserved for an explicit Phase 5 or later router.
 
 ## 1. Authority and isolation
 
@@ -267,9 +268,9 @@ Queued, not authorized as part of the current result set:
 ## 9. Recovery and weight state
 
 The stable restart guide is `reports/OLMO_LINEAGE_RESUME.md`; the live pointer
-is `reports/INPROGRESS_OLMO_LINEAGE.md`. Both are mirrored to the isolated Drive
-root by `python -m jspace_olmo_lineage.recovery` after every material Git
-checkpoint.
+is `reports/INPROGRESS_OLMO_LINEAGE.md`. The six-report recovery set containing
+both is mirrored to the isolated Drive root by
+`python -m jspace_olmo_lineage.recovery` after every material Git checkpoint.
 
 The 61-GiB local OLMo-3.1 Think sentinel snapshot was deleted only after the
 reconstruction event, registry/report commit `471a48f`, GitHub push, all
@@ -319,3 +320,16 @@ through this hash-pinned handoff.
   files already matched their hashes. The verifier now canonicalizes that
   source-wrap whitespace; the registered claims-ledger copy retains the exact
   licensed wording, and no immutable output was overwritten.
+
+## 12. Part 2 repository integration
+
+The complete OLMo source tip `a28cdd54dda335daf55f468e5be8cc65b2fc5253`
+was merged without path conflicts into Part 2 pre-merge tip
+`c9021e5c2405eaa34a16a07ba0ea903c53b81ee6`. The two-parent integration commit
+is `65a787583d657e77f95ce379e3723c4d66a682ab`.
+
+This commit imports the package, complete commit history, registry, reports,
+paper, and five paper figures. It does not append an evidence event, alter an
+immutable release artifact, merge registries, raise tiers, or execute queued
+H5/H6/O5 work. Exact integration and recovery checks are in
+`reports/PART2_INTEGRATION_RECORD.md`.

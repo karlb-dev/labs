@@ -34,6 +34,8 @@ never silently adopt drift.
 ## Immutable boundaries
 
 - Git branch: `interp_jspace_olmo_lineage`.
+- Integrated campaign branch: `interp_jspace_part2`; the dedicated branch
+  remains the immutable source history for the release.
 - Scientific import boundary:
   `3b041735d8b842de46a9c0a474fccd0c44e0841a`.
 - OLMo repository namespace:
@@ -42,7 +44,8 @@ never silently adopt drift.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Native evidence IDs begin with `ol-` and have only `development` or
   `methods` tier.
-- Phase 4, Gemma, and OLMo remain separate until the later integration phase.
+- Their evidence namespaces remain separate after repository integration;
+  scientific synthesis still requires an explicit later Phase 5 router.
 - Instruct is a sibling endpoint, not a fourth point on the Think trajectory.
 
 The track may read only hash-pinned imported evidence. It may not write any
@@ -57,8 +60,8 @@ resume, then:
 ```bash
 cd /content/labs
 git fetch origin
-git switch interp_jspace_olmo_lineage
-git pull --rebase origin interp_jspace_olmo_lineage
+git switch interp_jspace_part2
+git pull --ff-only origin interp_jspace_part2
 bash interpretability/jspace_olmo_lineage/repro.sh
 ```
 
@@ -71,8 +74,10 @@ python -m pip install -q -e /tmp/jacobian-lens
 ```
 
 If the repository is absent, clone the same repository into `/content/labs`,
-fetch all branches, and switch to the branch above. Do not recreate the
-package from a mainline snapshot if the OLMo branch exists.
+fetch all branches, and switch to the Part 2 branch above. If Part 2 does not
+yet contain merge commit `65a787583d657e77f95ce379e3723c4d66a682ab`, use
+the dedicated OLMo branch rather than recreating the package from another
+snapshot.
 
 The default environment variables are already encoded in the package. To set
 them explicitly:
@@ -97,6 +102,7 @@ Read, in this order:
 5. `reports/OLMO_LINEAGE_STATE_OF_RECORD.md`.
 6. `reports/OLMO_LINEAGE_CLAIMS_TABLE.md`.
 7. `reports/OLMO_LINEAGE_DEVELOPMENT_REPORT.md`.
+8. `reports/PART2_INTEGRATION_RECORD.md`.
 
 Verify the registry and Drive files:
 
