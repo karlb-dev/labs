@@ -85,6 +85,22 @@ The test baseline before A1000 completion is 277 Phase 4 tests, 59
 OLMo-lineage tests, and 48 Gemma tests: 384 total. The sole Gemma Torch FX
 warning is unchanged. The preparation branch is clean and pushed.
 
+### Phase 4.3 completion audit
+
+This table separates implemented preparation from registered scientific
+evidence and from approvals that this implementation agent cannot supply.
+
+| boundary | state at this draft | closure evidence |
+|---|---|---|
+| governing Part 3/addendum instructions | complete | read into the operational handoffs and prospective contracts |
+| Gemma and OLMo branch ancestry | complete | both terminal branches merged into the remote-main ancestry; native side namespaces excluded from the Phase 4 registry |
+| prospective A1000 successor contracts | complete | structural, functional, margin, influence, canonical, import, recovery, durability, and reclaim-stop code committed before the A1000 result |
+| A1000 fit | **RUNNING** | final append-only event, exact backup, normalized diagnostic archive, and tensor audit still required |
+| frozen post-A1000 decision queue | **NOT YET RUN** | structural through canonical rows below remain pending |
+| side-track Phase 4 admission | intentionally queued | may run only after the registered canonical boundary |
+| whole-registry durability | blocked | two known historical A120--A250 outputs remain absent; a fresh materialization pass is also required |
+| independent review / PI / freeze | not supplied | external reviewers must complete these gates; no untouched outcome is authorized |
+
 ## Side-track state already merged into the ancestry
 
 ### Gemma transport
@@ -131,7 +147,11 @@ Fill this section only from registered and freshly rehashed bytes.
 
 Final integrity review must record:
 
-1. exactly 1,000 diagnostic rows with no unclassified omission;
+1. the normalized 820-row recoverable raw archive (prompts 181--1000), with
+   exact source coverage and no unclassified omission inside that archive;
+   prompts 1--180 are an explicit prior-VM raw-log deficit, while final
+   `n_done == next_idx == 1000` proves that every nested-prefix prompt was
+   accepted and that none was silently skipped;
 2. all source layers 0–62 and target layer 63;
 3. expected tensor shapes and dtypes, with every tensor finite;
 4. exact nested-corpus, model, runtime, `jlens`, and fit-contract hashes;
@@ -140,7 +160,9 @@ Final integrity review must record:
 7. an exact content-addressed local backup of every registered output;
 8. prompt-norm and `max_d_mean` distributions, top finite rows, sequence-length
    distribution, and explicit confirmation that no row was trimmed post hoc;
-9. clean `repro4`/registry verification after registration;
+9. clean focused verification of the A1000 event and its local backup after
+   registration; whole-registry verification must continue to report the two
+   known historical A120--A250 deficits rather than being called clean;
 10. final recovery bytes republished after removing the temporary bind, with
     cloud durability stated only after a fresh remount or new-VM rehash.
 
@@ -278,6 +300,31 @@ Preserve until fresh cloud proof and release review:
 - `/content/drivefs_stale_metadata_20260802T0832Z`;
 - all final A1000 recovery and queue logs under the Phase 4 Drive root.
 
+After all model writers stop, use these exact inventory commands from the
+repository root. The first durability pass and inventory are expected to stay
+red while either registered historical output is missing; that is an honest
+result, not a reason to edit the old registry.
+
+```bash
+export JSPACE4_RUN_ROOT=/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731
+python -m jspace_phase4.durability \
+  --known-deficits interpretability/jspace_phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json \
+  --pass-label local-plus-mounted-drive \
+  --output /content/phase4_durability_pass1.json
+python -m jspace_phase4.pre_freeze_inventory \
+  --pass-label phase4-part3-final
+```
+
+Only after a remount or new VM may the independent second pass run:
+
+```bash
+python -m jspace_phase4.durability \
+  --known-deficits interpretability/jspace_phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json \
+  --pass-label fresh-drive-materialization \
+  --previous /content/phase4_durability_pass1.json \
+  --output /content/phase4_durability_pass2.json
+```
+
 ## Required review before Phase 4.4 execution
 
 The project review should decide only the items that genuinely require an
@@ -292,7 +339,10 @@ external scientific choice:
    `state.json` if no exact backup appears;
 5. confirm the final narrowed primary family and whether Phase 4 should freeze
    as a development/methods study with no confirmatory primary;
-6. provide real independent-review and PI signatures only after the complete
+6. decide whether Addendum M1 requires a separately named synthesis registry
+   event beyond the existing methods decision record and sentence-6 wording;
+   do not fabricate or rush such an event during operational closeout;
+7. provide real independent-review and PI signatures only after the complete
    packet is examined.
 
 This document is a handoff and analysis record, not approval, a freeze commit,
