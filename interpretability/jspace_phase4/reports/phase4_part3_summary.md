@@ -36,8 +36,13 @@ prompt 323 is not the overall archived maximum. Through n=920, the largest
 retained finite rows are prompt 616 at 231.101, prompt 233 at 189.182, prompt
 323 at 173.345, prompt 612 at 151.626, and prompt 660 at 113.855. The current
 VM transcript recovers prompts 555--716 that were absent from the repaired
-Drive log. Raw rows 1--180 were emitted on the prior VM but are not
-materialized here, so the final report must distinguish the recoverable
+Drive log. Only the immutable first 7,073 transcript lines are admissible:
+that 18,232,092-byte prefix hashes to
+`e142b280e01622e2d4e4214083804de26f204c4fdfe6db05f656d0218536a943`
+and yields exactly 162 unique diagnostic prompts. Later transcript lines can
+display test fixtures and are intentionally excluded. Raw rows 1--180 were
+emitted on the prior VM but are not materialized here, so the final report
+must distinguish the recoverable
 820-row raw archive from the final checkpoint's `n_done == next_idx == 1000`
 acceptance invariant. No row is trimmed. The prospectively frozen prompt-323
 audit remains in the decision queue; a multi-row retained-extremes influence
@@ -228,8 +233,10 @@ On the next VM, first read this file plus `inprogress.md`,
    ```
 
    Preserve the normalized 820-row diagnostic archive and tensor-integrity
-   audit before any new VM replaces the local execution transcript. Because
-   the recovered maxima show that prompt 323 is not the global archived
+   audit before any new VM replaces the local execution transcript. The
+   diagnostic command must use `--codex-max-line 7073`; a broader read is
+   invalid because later tool output contains displayed unit-test fixtures.
+   Because the recovered maxima show that prompt 323 is not the global archived
    maximum, prospectively author an omnibus retained-extremes sensitivity for
    prompts 233, 612, 616, and 660 alongside the existing prompt-112 and
    frozen prompt-323 records. It is a no-trimming robustness appendix and

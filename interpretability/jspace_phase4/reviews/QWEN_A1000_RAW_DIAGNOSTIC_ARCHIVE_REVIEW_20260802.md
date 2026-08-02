@@ -21,7 +21,14 @@ final fit completes:
 - prompts 501--554 and 717--1000 are in
   `qwen_continuation_draw_a_n1000_20260801.log`;
 - prompts 555--716 are recovered from the locally retained Codex tool-output
-  transcript for the active VM13 session.
+  transcript for the active VM13 session. The admissible immutable prefix is
+  lines 1--7,073: 18,232,092 bytes, SHA-256
+  `e142b280e01622e2d4e4214083804de26f204c4fdfe6db05f656d0218536a943`.
+  Its diagnostic-only extract covers exactly 162 unique prompts and hashes to
+  `6adb27484077dd577fffa5da9efd0a1db48d65c8faaff1979babee57bc960838`.
+  Later transcript output is excluded because it displays test fixtures that
+  intentionally resemble diagnostics; reading the entire append-only session
+  would contaminate provenance.
 
 This yields 820 distinct raw rows. Terminal text for prompts 1--180 was
 emitted on an earlier VM and is not present in the mounted run root, local
@@ -83,4 +90,3 @@ remain development-only pending this review and the other freeze gates.
 | tensor-integrity audit | **PENDING** |
 | exact source/extract hashes | **PENDING** |
 | independent disposition | **PENDING — implementation agent must not sign** |
-
