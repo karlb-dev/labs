@@ -1,3 +1,5 @@
+import dataclasses
+
 import pandas as pd
 import torch
 
@@ -86,6 +88,38 @@ def test_successor_lens_order_and_primary_pair_are_config_bound():
         assert "primary-pair" in str(error)
     else:
         raise AssertionError("primary-pair drift was accepted")
+
+
+def test_a1000_order_requires_nonintervening_margin_capture():
+    from jspace_phase4.experiments.p4_qwen_multilens_functional_gate import (
+        validate_config,
+    )
+    config = _valid_config()
+    config["lens_order"] = ["published", "a500", "a1000"]
+    config["lenses"]["a500"] = config["lenses"].pop("a120")
+    config["lenses"]["a1000"] = config["lenses"].pop("a250")
+    config["analysis"] = {
+        "primary_pair": ["a500", "a1000"],
+        "pair_order": [
+            ["a500", "a1000"],
+            ["a1000", "published"],
+            ["a500", "published"],
+        ],
+        "structural_comparison_id": "a500_vs_a1000",
+    }
+    config["protocol"]["k"] = 10
+    config["selection_margin_capture"] = {
+        "enabled": True,
+        "top_n": 32,
+        "margin_ks": [1, 2, 5, 10, 20],
+        "intervention_k": 10,
+        "include_all_strata_in_functional_gate": True,
+    }
+    validate_config(config)
+    config["selection_margin_capture"]["intervention_k"] = 9
+    with __import__("pytest").raises(
+            RuntimeError, match="may not change intervention k"):
+        validate_config(config)
 
 
 def test_structural_metrics_select_configured_successor_comparison():
@@ -189,6 +223,96 @@ def test_family_pairing_and_branch_rule_are_paired_not_correlational():
         {"a": True, "b": True}, structural_stable=False) == "C"
     assert branch_from_gates(
         {"a": True, "b": False}, structural_stable=True) == "B"
+
+
+def test_frozen_ql_router_separates_rows_spans_and_causal_failures():
+    from jspace_phase4.experiments.p4_qwen_multilens_functional_gate import (
+        ql_branch_from_gates,
+    )
+    passing = {
+        "normalized_selected_span_overlap": True,
+        "selected_id_jaccard": True,
+        "occupancy": True,
+        "centered_excess": True,
+        "span_safe_specific": True,
+        "tail_rate": True,
+        "g4": True,
+        "bridge_rescue": True,
+        "bridge_preference": True,
+    }
+    assert ql_branch_from_gates(
+        passing, structural_stable=True) == "Q-L1"
+    rows_drift = {**passing, "selected_id_jaccard": False}
+    assert ql_branch_from_gates(
+        rows_drift, structural_stable=True) == "Q-L2"
+    spans_drift = {
+        **rows_drift, "normalized_selected_span_overlap": False}
+    assert ql_branch_from_gates(
+        spans_drift, structural_stable=True) == "Q-L3"
+    causal_drift = {**passing, "bridge_rescue": False}
+    assert ql_branch_from_gates(
+        causal_drift, structural_stable=True) == "Q-L4"
+    assert ql_branch_from_gates(
+        spans_drift, structural_stable=False) == "Q-L5"
+    assert ql_branch_from_gates(
+        passing, structural_stable=None) == "PENDING_STRUCTURAL"
+
+
+def test_margin_candidate_capture_observes_protection_and_exact_gaps():
+    from jspace_phase4.experiments.p4_qwen_multilens_functional_gate import (
+        selection_margin_candidates,
+    )
+    scores = torch.tensor([[9.0, 8.0, 7.0, 6.0, 5.0, -1.0]])
+    rows = selection_margin_candidates(
+        scores, torch.tensor([[1]]), intervention_k=2, top_n=4,
+        margin_ks=[1, 2], epsilon=1e-12)
+    row = rows[0]
+    assert row["raw_top_ids"] == [0, 1, 2, 3]
+    assert row["eligible_top_ids"] == [0, 2, 3, 4]
+    assert row["intervention_selected_ids"] == [0, 2]
+    assert row["protected_ids"] == [1]
+    assert row["protected_scores"] == [8.0]
+    assert abs(row["margins"]["1"] - 2 / 9) < 1e-7
+    assert abs(row["margins"]["2"] - 1 / 7) < 1e-7
+
+
+def test_margin_observer_is_bitwise_intervention_identical_to_phase3_parent():
+    from jspace_phase3.ablator3 import Phase3JAblator
+    from jspace_phase4.experiments.p4_qwen_multilens_functional_gate import (
+        Phase4MarginCaptureAblator,
+    )
+    generator = torch.Generator().manual_seed(20260802)
+    hidden = torch.rand((1, 3, 6), generator=generator)
+    dictionary = torch.nn.functional.normalize(
+        torch.rand((14, 6), generator=generator), dim=1)
+    protection = torch.tensor([[0, 1], [2, 3], [4, 5]])
+    mode = {
+        "dicts": {0: dictionary}, "k": 3, "nonneg": True,
+        "protect_sets": protection, "active_phases": {"prefill"},
+        "span_safe": True, "record_overlap": True,
+        "record_ids": True, "answer_id": None,
+    }
+    parent = Phase3JAblator([], [0])
+    parent.phase, parent.forward_index = "prefill", 0
+    parent.mode = dict(mode)
+    observed = Phase4MarginCaptureAblator([], [0])
+    observed.phase, observed.forward_index = "prefill", 0
+    observed.mode = {
+        **mode,
+        "selection_margin_capture": {
+            "top_n": 8, "margin_ks": [1, 2, 3], "epsilon": 1e-12},
+    }
+    expected_hidden = parent._apply(hidden.clone(), 0)
+    actual_hidden = observed._apply(hidden.clone(), 0)
+    torch.testing.assert_close(actual_hidden, expected_hidden, rtol=0, atol=0)
+    assert [dataclasses.asdict(row) for row in observed.log.positions] == [
+        dataclasses.asdict(row) for row in parent.log.positions]
+    assert len(observed.log.selection_margin) == hidden.shape[1]
+    for capture, intervention in zip(
+            observed.log.selection_margin, observed.log.positions):
+        assert capture.intervention_selected_ids == intervention.selected_ids
+        assert capture.effective_rank == intervention.effective_rank
+        assert capture.removed_energy_frac == intervention.removed_energy_frac
 
 
 def test_capacity_bootstrap_is_deterministic_and_prompt_paired():
