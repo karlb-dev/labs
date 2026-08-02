@@ -82,9 +82,11 @@ def test_parallel_import_inventory_keeps_validation_distinct_from_admission():
     normalized = " ".join(text.split())
     assert "p4-import-olmo-bank-w-capability-v1" in text
     assert "p4-import-gemma-transport-v1" in text
+    assert "p4-import-olmo-lineage-final-v1" in text
     assert "VALIDATED / NOT REGISTERED" in text
-    assert "O2 and O3 geometry/figures complete" in normalized
-    assert "No final release bundle yet" in text
+    assert "The terminal source event is methods-only" in normalized
+    assert "no-identifiable-O5-estimand disposition" in text
+    assert "DriveFS uploads are still rate-limited" in text
     assert "methods blocker" in text
     assert "never a license" in text
 

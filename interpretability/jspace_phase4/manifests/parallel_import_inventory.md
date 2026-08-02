@@ -12,7 +12,7 @@ one `p4-import-*` event is appended from a clean mainline tree.
 |---|---|---|---|---|
 | OLMo Bank-W early service | `d76e937d2e6294b92d3d599581bd0fb029f5735c` | 5 events / 11 outputs; saved validation SHA-256 `57d4ac60aeef972a26a19a4d2b159e93d62a53822b40a836fa27401c36ebccf2` | `p4-import-olmo-bank-w-capability-v1` | **VALIDATED / NOT REGISTERED** |
 | Gemma terminal transport | source `b0425a441f1b87c33d9bb0b4d08d221942f11923`; ancestry merged to main at `c9021e5c2405eaa34a16a07ba0ea903c53b81ee6` | 5 events / 21 outputs; saved validation SHA-256 `143fda2e9d75c7cce0b0c3e38837d60a5ed05b7c191a29870e885a81ba1e79d3` | `p4-import-gemma-transport-v1` | **VALIDATED / NOT REGISTERED** |
-| OLMo final lineage | O2 and O3 geometry/figures complete; O5 decision, independent reconstruction, claims/state, and the isolated paper complete through source `f2d4d37`; final bundle pending | No final release bundle yet | to be named by the final strict envelope | **NOT READY** |
+| OLMo final lineage | terminal source `a28cdd54dda335daf55f468e5be8cc65b2fc5253`; ancestry merged through `aa6663a` / prep merge `b0f74d6` | 1 methods event / 13 outputs; saved validation SHA-256 `875ce846417e661df298153a5bd9f93ef8f1d647f6867764dc829476ea525e46` | `p4-import-olmo-lineage-final-v1` | **VALIDATED / NOT REGISTERED** |
 
 ## OLMo early service boundary
 
@@ -46,19 +46,28 @@ licenses no mechanism, nondifferentiability, late-band, workspace,
 confirmatory, or replication conclusion. Phase 4 does not adopt even that
 methods statement until its target import event is registered.
 
-## OLMo terminal-track state
+## OLMo terminal boundary
 
-The isolated branch now has 23 live events and 88 verified live outputs.
-Methods event `ol-independent-reconstruction-v1`, registered at source commit
-`471a48f`, independently reproduces the registered O1/O2/O3 tables, all five
-PNG figures byte-for-byte, all fourteen pinned weight-shard hashes, and one
-frozen eight-candidate Think Bank-W row with zero score drift. It opens no new
-item, intervention, model, stage, O5, confirmatory, or replication outcome.
-The claims ledger and state of record are durable through `ad0041b`. The
-isolated 13-page paper is committed at `f2d4d37`; an independent render audit
-found embedded fonts and readable, unclipped tables, figures, and conclusion
-pages. The self-verifying terminal import bundle remains absent, so this track
-is not yet admissible as a final Phase 4 import.
+Native release:
+`/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801/release/IMPORT_BUNDLE_PHASE4.json`,
+SHA-256
+`a2486ec5a4759a1f5b21643e7c60766824c48f13ff43240d458ba72147165a2a`.
+Strict normalized envelope:
+`reports/OLMO_LINEAGE_IMPORT_V1.json`, SHA-256
+`be1870d0b4a562a314809171313957d12e8b176a97189429355b576915a8ba09`.
+
+The terminal source event is methods-only and registers thirteen outputs: the
+state and claims records, JSON/Markdown import bundle, live inventory,
+environment lock, isolated TeX/PDF paper, and five registered PDF figures.
+The source terminal verifier passes 24 live events / 101 outputs against exact
+registry prefix `db3fe202...e80a`. It preserves the 16/20 Bank-W service block,
+the descriptive O2/O3 results, the no-identifiable-O5-estimand disposition,
+and all forbidden-use boundaries. It opens no new scientific cell or
+intervention. The strict Phase-4 validation selects only this self-verifying
+terminal methods event and rehashes all thirteen outputs. Registration remains
+queued behind the A1000 branch. DriveFS uploads are still rate-limited, so the
+exact local recovery staging must remain preserved until a fresh cloud remount
+proves durability.
 
 ## Admission order and invariants
 
