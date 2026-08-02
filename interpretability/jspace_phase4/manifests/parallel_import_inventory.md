@@ -12,7 +12,7 @@ one `p4-import-*` event is appended from a clean mainline tree.
 |---|---|---|---|---|
 | OLMo Bank-W early service | `d76e937d2e6294b92d3d599581bd0fb029f5735c` | 5 events / 11 outputs; saved validation SHA-256 `57d4ac60aeef972a26a19a4d2b159e93d62a53822b40a836fa27401c36ebccf2` | `p4-import-olmo-bank-w-capability-v1` | **VALIDATED / NOT REGISTERED** |
 | Gemma terminal transport | source `b0425a441f1b87c33d9bb0b4d08d221942f11923`; ancestry merged to main at `c9021e5c2405eaa34a16a07ba0ea903c53b81ee6` | 5 events / 21 outputs; saved validation SHA-256 `143fda2e9d75c7cce0b0c3e38837d60a5ed05b7c191a29870e885a81ba1e79d3` | `p4-import-gemma-transport-v1` | **VALIDATED / NOT REGISTERED** |
-| OLMo final lineage | O2 and O3 geometry/figures complete through source `3b8edf0`; final paper/bundle pending | No final release bundle yet | to be named by the final strict envelope | **NOT READY** |
+| OLMo final lineage | O2 and O3 geometry/figures complete; O5 decision, independent reconstruction, claims ledger, and state of record complete through source `ad0041b`; final paper/bundle pending | No final release bundle yet | to be named by the final strict envelope | **NOT READY** |
 
 ## OLMo early service boundary
 
@@ -45,6 +45,18 @@ relative error is 0.002458 versus the 1e-5 ceiling. The source stops G2/G3 and
 licenses no mechanism, nondifferentiability, late-band, workspace,
 confirmatory, or replication conclusion. Phase 4 does not adopt even that
 methods statement until its target import event is registered.
+
+## OLMo terminal-track state
+
+The isolated branch now has 23 live events and 88 verified live outputs.
+Methods event `ol-independent-reconstruction-v1`, registered at source commit
+`471a48f`, independently reproduces the registered O1/O2/O3 tables, all five
+PNG figures byte-for-byte, all fourteen pinned weight-shard hashes, and one
+frozen eight-candidate Think Bank-W row with zero score drift. It opens no new
+item, intervention, model, stage, O5, confirmatory, or replication outcome.
+The claims ledger and state of record are durable through `ad0041b`. The final
+paper and self-verifying terminal import bundle remain absent, so this track is
+not yet admissible as a final Phase 4 import.
 
 ## Admission order and invariants
 
