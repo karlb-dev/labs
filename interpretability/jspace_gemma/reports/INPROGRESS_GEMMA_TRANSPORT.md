@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 02:08 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 02:10 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -17,8 +17,9 @@ canonical Drive handoff at
 - OLMo control-runner commit: `42b34b13192a56f941ce9ad92a757384e153f05c`.
 - Pre-model calibration repair commit:
   `3a599f75de8bcb67bfb696be0d6d7c07010bac79`.
-- Remote Gemma branch: synchronized through the calibration repair commit;
-  the new band-convention registry/report boundary is not yet committed.
+- Band-convention registry/report commit:
+  `8fbdb88bb4ae17ac96e2e71a63807c78cb6a3187`.
+- Remote Gemma branch: synchronized through the band-convention commit.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -127,9 +128,7 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit the band registry/report boundary; fetch, pull/reconcile, test, and
-   push.
-2. From that clean pushed commit run:
+1. From the clean pushed handoff commit run:
 
    ```bash
    python -u -m jspace_gemma.experiments.gm_exact_transport_gate --max-cells 1
@@ -138,10 +137,10 @@ canonical Drive handoff at
    If runtime, VRAM, parity, delivery, and checkpoint integrity pass, resume
    the same producer without `--max-cells` from the same code commit. This
    emits OLMo-only calibration, not Gemma thresholds or a target result.
-3. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
-4. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
+2. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
+3. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
    snapshot to local NVMe, then run Gemma Stage 1 with the unchanged harness.
-5. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
+4. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
 
 ## Recovery checks and next commands
 

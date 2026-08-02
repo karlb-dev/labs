@@ -162,6 +162,7 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish this registered methods boundary, then run one OLMo control
-cell from that clean pushed commit before resuming the full grid. Update this
-report and the Drive handoff at every evidence commit.
+Run one OLMo control cell from the clean pushed handoff commit, inspect its
+runtime/VRAM/parity/delivery/checkpoint diagnostics, and then resume the full
+grid from the same code commit if it passes. Update this report and the Drive
+handoff at every evidence commit.
