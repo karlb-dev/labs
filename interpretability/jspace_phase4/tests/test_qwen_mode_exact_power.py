@@ -112,6 +112,8 @@ def test_mode_power_contract_is_prospective_and_does_not_license_split():
     assert primary["alpha"] == primary["familywise_alpha"] / primary[
         "conservative_holm_primary_count"]
     assert primary["exact_max_families"] == 20
+    assert primary["eventual_outcome_monte_carlo_sign_draws"] >= 100_000
+    assert config["simulation"]["power_pvalue_sign_draws"] == 2048
     assert config["simulation"]["never_report_or_use_signed_pilot_mean"] is True
     assert config["simulation"]["require_wilson_lower_bound_at_target"] is True
     assert config["continuous_answer_lp_sensitivity"][

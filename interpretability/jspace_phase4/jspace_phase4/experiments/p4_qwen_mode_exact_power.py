@@ -337,7 +337,10 @@ def run_simulation(config: Mapping) -> dict:
     root_seed = int(simulation["simulation_seed"])
     sign_root = int(randomization["sign_seed"])
     exact_max = int(randomization["exact_max_families"])
-    sign_draws = int(randomization["monte_carlo_sign_draws"])
+    sign_draws = int(simulation["power_pvalue_sign_draws"])
+    if int(randomization["eventual_outcome_monte_carlo_sign_draws"]) \
+            < 100_000:
+        raise RuntimeError("eventual P4-P2 outcome test needs >=100000 signs")
     signs_by_count = {
         count: sign_matrix(
             count, draws=sign_draws,

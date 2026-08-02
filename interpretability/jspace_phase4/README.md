@@ -87,7 +87,10 @@ are absent: `state.json` (expected SHA-256 `361bda08...f45e8`) and
 `capacity_reconstructions_a120.pt` (expected `6b0399df...51b6f`). The missing
 published reconstruction was restored from an exact hash-verified backup.
 See the handoffs for full paths and hashes; do not fabricate the remaining
-bytes or edit the append-only registry.
+bytes or edit the append-only registry. Candidate 0.11 adds a hash-gated A120
+capacity recovery which may run only after A1000 releases the GPU and only
+installs a bit-exact match. `state.json` remains an external-review/PI
+governance decision if no exact backup can be found.
 
 The n=250 convergence, retained prompt-112 influence, functional Branch-B
 gate, A500 fit and successor gates, passing mode-v2 baseline, Qwen Bank-W
@@ -95,11 +98,14 @@ capability, mode-parser v2 contract, Bank B feasibility, Bank-W protocol, and
 conditional P4-P2 variance-pilot protocol are registered. Do not rerun or
 overwrite them; registry verification checks their immutable hashes.
 
-Candidate 0.10 prospectively moves Bank B/P4-P1 to estimation-only, proposes
-a pre-pilot 0.20-point P4-P2 SESOI, and records that the GPU pilot producer is
-still absent. The A500--A1000 successor configs, selection-margin contract,
-prompt-323 influence contract, and conditional Q-L2 estimand were committed
-before A1000 existed; their A1000 hash stays unbound until registration.
+Candidate 0.11 keeps Bank B/P4-P1 estimation-only while preparing the mandated
+single consumed-development orthogonal feasibility shot, fixes the pre-pilot
+0.20-point P4-P2 SESOI, and now includes the executable GPU producer plus its
+mean-masked exact/Monte-Carlo power ruler. The OLMo capability service result
+fails at 16/20 common families, so P4-P3 is blocked. The A500--A1000 successor
+configs, selection-margin contract, prompt-323 influence contract, and
+conditional Q-L2 estimand were committed before A1000 existed; their A1000
+hash stays unbound until registration.
 
 Gemma and OLMo execute on isolated branches and registries. Their results can
 enter mainline only through `protocol/SIDE_TRACK_IMPORT_BUNDLE_CONTRACT.md`.

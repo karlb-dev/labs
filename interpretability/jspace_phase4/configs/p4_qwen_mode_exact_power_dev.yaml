@@ -26,7 +26,7 @@ primary_randomization:
   conservative_holm_primary_count: 3
   alpha: 0.016666666666666666
   exact_max_families: 20
-  monte_carlo_sign_draws: 2048
+  eventual_outcome_monte_carlo_sign_draws: 100000
   plus_one_pvalue_for_monte_carlo: true
   sign_seed: 27011987
   sign_chunk_size: 512
@@ -38,6 +38,7 @@ simulation:
   resample_centered_residual_magnitudes_with_replacement: true
   independent_random_residual_signs: true
   n_simulations: 2000
+  power_pvalue_sign_draws: 2048
   simulation_seed: 2026080201
   simulation_batch_size: 50
   family_counts: [12, 16, 20, 24, 32, 40, 48, 56, 64, 72, 80, 96, 120, 160, 240, 360, 500, 750, 1000]
