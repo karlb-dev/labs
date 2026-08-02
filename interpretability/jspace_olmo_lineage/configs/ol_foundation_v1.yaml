@@ -146,7 +146,7 @@ governance_documents:
     role: parallel-namespace-addendum
   - id: side-preregistration
     uri: repo://interpretability/jspace_olmo_lineage/preregistration/OLMO_LINEAGE_DEVELOPMENT_PREREGISTRATION.md
-    sha256: 09d0d8e5b890706fc277ce446542c23091218b72d67090bad156813f2b0a0bee
+    sha256: c9224abef821281943c144cbf7ab07b7b38a25987fb446b619365adb9e77be13
     role: prospective-predictions-and-margins
 
 models:

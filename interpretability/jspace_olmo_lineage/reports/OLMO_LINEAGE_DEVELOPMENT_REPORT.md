@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T00:19:47Z
+Last updated: 2026-08-02T00:27:29Z
 
 Status: active, pre-foundation. No native OLMo-lineage model result has yet
 been registered. This report will be updated after every material gate or
@@ -173,7 +173,8 @@ operative plan authorizes expansion.
 | UTC | Evidence or action | Outcome | Durable locations |
 |---|---|---|---|
 | 2026-08-01 | Branch isolation | Created and pushed `interp_jspace_olmo_lineage` at `4ea7a9b`; scientific boundary remains `3b04173` | GitHub |
-| 2026-08-02 | Pre-foundation scaffold | Package, prospective predictions, import pins, recovery plan, and reports prepared; tests not yet recorded | Git worktree |
+| 2026-08-02 | Pre-foundation scaffold | Package, prospective predictions, import pins, recovery plan, and reports committed at `e01959e`; 13 tests passed | GitHub |
+| 2026-08-02 | Foundation refusal | Import gate detected stale preregistration hash after whitespace normalization; no evidence/output file was created; hash corrected prospectively | Git worktree; empty OLMo Drive directories |
 
 ## Current limitations and claim boundary
 

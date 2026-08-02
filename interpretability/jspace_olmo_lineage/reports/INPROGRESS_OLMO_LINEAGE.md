@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T00:19:47Z
+Last updated: 2026-08-02T00:27:29Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -14,8 +14,7 @@ live in Drive under `olmo_lineage_20260801`.
 - Branch parent before this package: `4ea7a9ba7a534daa61e0d8c9960763b921a1b80b`.
 - Immutable scientific import boundary:
   `3b041735d8b842de46a9c0a474fccd0c44e0841a`.
-- Current remote tip before scaffold publication:
-  `4ea7a9ba7a534daa61e0d8c9960763b921a1b80b`.
+- Current remote tip: `e01959e83db04a06b296d8bc383366ad1b33e736`.
 - Durable Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
@@ -28,9 +27,12 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated package, prospective preregistration, import manifest config,
-registry implementation, path guards, conformance tests, development report,
-and recovery documents are being completed. The next durable checkpoint is
-the clean foundation commit plus `ol-foundation-v1`.
+registry implementation, path guards, 13 conformance tests, development
+report, and recovery documents are committed and pushed. The first foundation
+attempt correctly refused a preregistration hash mismatch introduced by final
+whitespace normalization; it created no output file or registry event. The
+hash pin is now corrected. The next durable checkpoint is
+`ol-foundation-v1`.
 
 ## Exact next actions
 
@@ -46,8 +48,8 @@ python -m pip install -q -e interpretability/jspace_olmo_lineage
 python -m pytest interpretability/jspace_olmo_lineage/tests -q
 ```
 
-After committing the scaffold, pull/rebase before pushing. Then, from a clean
-tree, create the foundation:
+After committing the corrected hash and pulling/rebasing before pushing, from
+a clean tree create the foundation:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.foundation \
