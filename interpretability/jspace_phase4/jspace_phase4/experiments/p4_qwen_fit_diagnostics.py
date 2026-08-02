@@ -76,11 +76,21 @@ def strings(value: object) -> Iterator[str]:
             yield from strings(item)
 
 
-def codex_output_text(path: Path) -> Iterator[str]:
-    """Yield only tool outputs, never user/assistant text or tool inputs."""
+def codex_output_text(
+    path: Path, *, max_line: int | None = None,
+) -> Iterator[str]:
+    """Yield tool outputs from an immutable transcript line prefix.
+
+    A line boundary is required by the CLI because later tool outputs can
+    display source fixtures that resemble producer diagnostics.  The chosen
+    prefix ends with the last authentic missing fit row and is content-hashed
+    separately from the append-only session container.
+    """
 
     with path.open(errors="replace") as handle:
         for line_number, line in enumerate(handle, 1):
+            if max_line is not None and line_number > max_line:
+                break
             try:
                 envelope = json.loads(line)
             except json.JSONDecodeError as exc:
@@ -94,6 +104,29 @@ def codex_output_text(path: Path) -> Iterator[str]:
             if "output" not in payload_type:
                 continue
             yield from strings(payload["output"])
+
+
+def line_prefix_record(path: Path, max_line: int) -> dict[str, int | str]:
+    if max_line <= 0:
+        raise RuntimeError("Codex transcript line boundary must be positive")
+    digest = hashlib.sha256()
+    n_lines = 0
+    n_bytes = 0
+    with path.open("rb") as handle:
+        for line in handle:
+            if n_lines >= max_line:
+                break
+            digest.update(line)
+            n_lines += 1
+            n_bytes += len(line)
+    if n_lines != max_line:
+        raise RuntimeError(
+            f"Codex transcript has {n_lines} lines, expected at least {max_line}")
+    return {
+        "container_prefix_lines": n_lines,
+        "container_prefix_bytes": n_bytes,
+        "container_prefix_sha256": digest.hexdigest(),
+    }
 
 
 def diagnostics_in_text(text: str) -> Iterator[Diagnostic]:
@@ -182,6 +215,46 @@ def rolling_median(values: np.ndarray, window: int = 31) -> np.ndarray:
     ])
 
 
+def log_scaling_regression(
+    rows: Sequence[Diagnostic],
+) -> dict[str, float | int] | None:
+    """Describe estimator movement as prompt magnitude divided by fit size.
+
+    This is an engineering arithmetic diagnostic, not a scientific decision
+    rule.  A cumulative equal-weight mean should have a prompt-norm
+    coefficient near +1 and a prompt-index coefficient near -1 after taking
+    logs, subject to the distinction between the printed maximum summaries.
+    """
+
+    eligible = [
+        row for row in rows
+        if math.isfinite(row.max_d_mean) and row.max_d_mean > 0
+    ]
+    if len(eligible) < 3:
+        return None
+    design = np.column_stack([
+        np.ones(len(eligible), dtype=np.float64),
+        np.log([row.prompt_norm for row in eligible]),
+        np.log([row.prompt for row in eligible]),
+    ])
+    response = np.log([row.max_d_mean for row in eligible])
+    coefficients = np.linalg.lstsq(design, response, rcond=None)[0]
+    prediction = design @ coefficients
+    residual_sum_squares = float(np.square(response - prediction).sum())
+    total_sum_squares = float(np.square(response - response.mean()).sum())
+    r_squared = (
+        1.0 - residual_sum_squares / total_sum_squares
+        if total_sum_squares > 0 else 1.0
+    )
+    return {
+        "n_rows": len(eligible),
+        "intercept": float(coefficients[0]),
+        "prompt_norm_log_coefficient": float(coefficients[1]),
+        "prompt_index_log_coefficient": float(coefficients[2]),
+        "r_squared": r_squared,
+    }
+
+
 def build_summary(
     rows_by_prompt: Mapping[int, Diagnostic], *, expected_prompts: int,
     skipped: set[int], checkpoint_state: Mapping[str, object] | None,
@@ -256,6 +329,7 @@ def build_summary(
         ]),
         "max_d_mean": numeric_summary(finite_d_mean),
         "max_d_mean_log_log_slope_from_prompt_250": log_log_slope,
+        "max_d_mean_log_scaling_regression": log_scaling_regression(rows),
         "top_prompt_norm_rows": top_rows(rows, "prompt_norm"),
         "top_max_d_mean_rows": top_rows(
             [row for row in rows if math.isfinite(row.max_d_mean)],
@@ -352,6 +426,9 @@ def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plain-log", action="append", default=[], type=Path)
     parser.add_argument("--codex-jsonl", action="append", default=[], type=Path)
+    parser.add_argument(
+        "--codex-max-line", type=int,
+        help="inclusive immutable line boundary for every Codex JSONL source")
     parser.add_argument("--checkpoint-state", type=Path)
     parser.add_argument("--expected-prompts", type=int, default=1000)
     parser.add_argument("--require-complete-raw-log", action="store_true")
@@ -385,17 +462,22 @@ def main() -> None:
             "diagnostic_unique_prompt_count": unique_prompts,
         })
     for path in arguments.codex_jsonl:
+        if arguments.codex_max_line is None:
+            raise SystemExit(
+                "--codex-max-line is required with --codex-jsonl to exclude "
+                "later displayed fixtures")
         resolved = path.resolve()
-        source_texts = list(codex_output_text(resolved))
+        prefix_record = line_prefix_record(
+            resolved, arguments.codex_max_line)
+        source_texts = list(codex_output_text(
+            resolved, max_line=arguments.codex_max_line))
         extract, match_count, unique_prompts = diagnostic_extract(source_texts)
         extract_digest = hashlib.sha256(extract.encode()).hexdigest()
-        container_digest = file_sha256(resolved)
         label = f"codex-tool-output:{extract_digest[:12]}"
         sources.append((label, source_texts))
         source_records.append({
             "kind": "codex-tool-output-jsonl", "name": resolved.name,
-            "container_snapshot_sha256": container_digest,
-            "bytes_at_snapshot": resolved.stat().st_size,
+            **prefix_record,
             "diagnostic_extract_sha256": extract_digest,
             "diagnostic_match_count": match_count,
             "diagnostic_unique_prompt_count": unique_prompts,
