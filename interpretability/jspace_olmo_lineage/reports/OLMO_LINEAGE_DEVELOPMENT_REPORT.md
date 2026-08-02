@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T05:27:12Z
+Last updated: 2026-08-02T05:36:16Z
 
 Status: active; O1, O2, and O3 are complete through the registered geometry
 tables, and the early Phase 4 bundle is emitted. Both native OLMo-lineage
@@ -8,9 +8,10 @@ baseline capability results, both earlier joint decisions, the hash-pinned
 transfer bundle, four capacity cells, paired capacity verdict, four-lens audit,
 four readout inputs, four-checkpoint geometry verdict, registered-table figure
 set, official-stage inventory, O5 feasibility decision, and independent
-reconstruction are registered. The claims ledger, state of record,
-run-specific paper, and final OLMo handoff bundle are next. This report remains
-separate from the Phase 4 and Gemma reports.
+reconstruction are registered. The claims ledger and state of record are
+drafted and included in recovery mirroring; the run-specific paper and final
+OLMo handoff bundle are next. This report remains separate from the Phase 4
+and Gemma reports.
 
 ## Executive status
 
@@ -655,6 +656,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | Independent-reconstruction attempt 1 | All 14 exact weight shards verified; eight-candidate forward stopped on CUDA OOM because the wrapper omitted the producer's `no_grad` context; no output or event created | Clean source `5551e1e`; local-only process log; Drive reconstruction namespace remains absent |
 | 2026-08-02 | Independent-reconstruction attempt 2 and diagnosis | One-candidate retry fit but failed exact numerics (max drift 0.20499 nats; margin -0.125 vs -0.25), so it was rejected with no output. Eight candidates under `no_grad` then reproduced every score exactly at 60.42-GiB peak allocation | Clean source `37075cb` for rejected retry; read-only local diagnostic; corrected clean run pending |
 | 2026-08-02 | `ol-independent-reconstruction-v1` | PASS: 768 O1 rows, 48 O2 summaries/96 intervals/144 arrays/72 table rows, 84 O3 aggregates/router, five byte-exact PNGs/five regenerated PDFs, fourteen exact model shards, and eight exact frozen-row sequence scores independently reconstructed; no new scientific cell | Source commit `12f21ad`; JSON `e159f01d...`; Markdown `48647b44...`; 13 registered outputs |
+| 2026-08-02 | Sentinel weight rotation | Removed only the 61-GiB local Think sentinel snapshot after evidence commit `471a48f`, GitHub push, 88-output verification, and recovery-mirror verification | Reclaimed local NVMe; exact revision remains directly recoverable from Hugging Face |
 
 ## Current limitations and claim boundary
 

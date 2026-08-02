@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T05:27:12Z
+Last updated: 2026-08-02T05:36:16Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -21,11 +21,10 @@ live in Drive under `olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
 - Active model job: none; GPU memory is free. The exact 61-GiB OLMo-3.1 Think
-  snapshot for the independent sentinel is fully staged on local NVMe from the
-  pinned Hugging Face revision. `ol-independent-reconstruction-v1` has now
-  passed and registered. Keep the local snapshot only until this registry and
-  report checkpoint is rebased, tested, pushed, and mirrored; it is then
-  safely recoverable by exact-revision Hub download. O3 and its five figure
+  sentinel snapshot was deleted from local NVMe only after
+  `ol-independent-reconstruction-v1`, commit `471a48f`, its GitHub push, all 88
+  output checks, and recovery-mirror verification became durable. It remains
+  recoverable by direct exact-revision Hub download. O3 and its five figure
   pairs are durable. The semantic official-32B checkpoint inventory v2 is
   registered and v1 is explicitly superseded. Official Think SFT and DPO stage
   artifacts are eligible; the bounded two-cell H5 wedge is queued but not
@@ -42,7 +41,7 @@ live in Drive under `olmo_lineage_20260801`.
 The isolated foundation and O1 service obligation are complete. Four immutable
 foundation manifests and twenty-three live evidence events with 88 immutable
 live outputs verify cleanly; the registry contains 24 origin events because
-inventory v1 remains immutable but superseded. All 50 package tests and the
+inventory v1 remains immutable but superseded. All 51 package tests and the
 exact dependency-lock check pass. No model job is active.
 
 The independent reconstruction passes. It reimplemented all registered Bank-W
@@ -365,11 +364,14 @@ python -m jspace_olmo_lineage.experiments.independent_reconstruction \
   --snapshot /content/olmo_lineage_work/sentinel_olmo31_think
 ```
 
-Publish/recover its methods event before removing the local snapshot. Then
-complete the claims ledger, state of record, run-specific paper, and self-
-verifying final OLMo import/restart bundle. Do not merge into the main Phase 4
-or Gemma paper/registries, and do not open an O4 Bank-W intervention under the
-failed 20-family protocol.
+The methods event, report checkpoint, GitHub push, recovery verification, and
+local snapshot removal are complete. The sentence-level claims ledger and
+OLMo state of record are now drafted in the repository and added to the
+recovery mirror set. The current action is to publish/recover those reports,
+then compile the run-specific paper and emit the self-verifying final OLMo
+import/restart bundle. Do not merge into the main Phase 4 or Gemma
+paper/registries, and do not open an O4 Bank-W intervention under the failed
+20-family protocol.
 
 The O5 feasibility command has completed and must not be rerun because its
 outputs are immutable:
@@ -396,13 +398,11 @@ python -m jspace_olmo_lineage.experiments.o5_feasibility \
   Hub revision and complete Drive cache.
 - The exact OLMo-3 Think local cache was likewise removed only after its result,
   Git checkpoint, and recovery mirrors became durable.
-- Local disk has approximately 98 GiB free. The exact pinned OLMo-3.1 Think
-  sentinel snapshot is staged at
-  `/content/olmo_lineage_work/sentinel_olmo31_think`: all fourteen weight
-  shards are present and the directory occupies approximately 61 GiB. Keep it
-  until `ol-independent-reconstruction-v1`, its report update, Git push, and
-  recovery mirror are durable; it is then safely recoverable by direct Hub
-  download and can be removed. Exact targeted metadata plus
+- Local disk has approximately 158 GiB free. The exact pinned OLMo-3.1 Think
+  sentinel snapshot at `/content/olmo_lineage_work/sentinel_olmo31_think` was
+  removed after its evidence, report, Git push, and recovery mirror verified;
+  direct exact-revision Hub download is the recovery path. Exact targeted
+  metadata plus
   shards 13/14 are already staged under
   `/content/olmo_lineage_work/readout_sources/` for Base, OLMo-3 Think, and
   OLMo-3.1 Think. All three targeted sources were extracted and the registered

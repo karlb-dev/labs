@@ -94,7 +94,9 @@ Read, in this order:
 3. `reports/evidence_events.jsonl` in Git.
 4. `manifests/ol_foundation_manifest.json` and the latest experiment state in
    Drive.
-5. `reports/OLMO_LINEAGE_DEVELOPMENT_REPORT.md`.
+5. `reports/OLMO_LINEAGE_STATE_OF_RECORD.md`.
+6. `reports/OLMO_LINEAGE_CLAIMS_TABLE.md`.
+7. `reports/OLMO_LINEAGE_DEVELOPMENT_REPORT.md`.
 
 Verify the registry and Drive files:
 
@@ -108,7 +110,7 @@ Drive copy is authoritative for large outputs and resumable state. If a raw
 output exists in Drive but no registry event exists, treat it as an
 unregistered partial and resume or audit it; do not cite it as evidence. If a
 registry output hash fails, stop and diagnose rather than overwriting it.
-The three live report mirrors and their recovery index are deliberately
+The five live report mirrors and their recovery index are deliberately
 mutable and are never registered as immutable evidence outputs; their source
 Git commits and content hashes are recorded in the recovery index.
 

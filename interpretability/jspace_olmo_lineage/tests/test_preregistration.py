@@ -44,3 +44,9 @@ def test_live_recovery_mirrors_are_not_immutable_evidence_outputs():
         ROOT / "jspace_olmo_lineage/experiments/foundation.py").read_text()
     assert '"mutable_recovery_mirror": True' in recovery
     assert "outputs = list(manifest_paths.values())" in foundation
+
+
+def test_recovery_includes_claims_and_state_reports():
+    recovery = (ROOT / "jspace_olmo_lineage/recovery.py").read_text()
+    assert '"reports/OLMO_LINEAGE_CLAIMS_TABLE.md"' in recovery
+    assert '"reports/OLMO_LINEAGE_STATE_OF_RECORD.md"' in recovery
