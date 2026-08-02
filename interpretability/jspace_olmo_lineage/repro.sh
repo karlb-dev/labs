@@ -11,6 +11,12 @@ python -m pip install -q -e "$OL_ROOT"
 python -m pytest "$OL_ROOT/tests" -q
 python -m jspace_olmo_lineage verify
 
+FINAL_BUNDLE="${JSPACE_OLMO_RUN_ROOT:-/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801}/release/IMPORT_BUNDLE_PHASE4.json"
+if [[ -f "$FINAL_BUNDLE" ]]; then
+  python -m jspace_olmo_lineage.experiments.final_release \
+    --config "$OL_ROOT/configs/ol_final_release_v1.yaml" --verify
+fi
+
 python - "$OL_ROOT/constraints.txt" <<'PY'
 import json
 import sys

@@ -244,8 +244,8 @@ build command is:
 bash interpretability/jspace_olmo_lineage/reports/paper/compile.sh
 ```
 
-The 13-page source SHA-256 is `c5b1f980...8db5`; the PDF SHA-256 is
-`ff6a9a65...e944`. The build was repeated byte-for-byte, the TeX log has no
+The 13-page source SHA-256 is `33e88825...c656`; the PDF SHA-256 is
+`02a81b87...0ec7`. The build was repeated byte-for-byte, the TeX log has no
 warnings, and selected title/table/figure/claim/appendix pages were visually
 inspected. It deliberately does not edit `interpretability/jspace_paper`.
 

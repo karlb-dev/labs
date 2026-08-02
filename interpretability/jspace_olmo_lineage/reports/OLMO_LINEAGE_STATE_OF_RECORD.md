@@ -50,8 +50,8 @@ unless an imported intervention result is explicitly named.
 At this state date the append-only registry contains 24 origin events, of which
 23 are live. `ol-checkpoint-inventory-v1` remains immutable but is explicitly
 superseded by version 2. The 23 live events have 88 immutable outputs, all of
-which pass byte/hash verification. Fifty-four package tests and the exact dependency
-lock pass.
+which pass byte/hash verification. Fifty-eight package tests and the exact
+dependency lock pass.
 
 The latest event is `ol-independent-reconstruction-v1`, created at
 2026-08-02T05:26:50Z from clean source commit
@@ -232,8 +232,8 @@ failure. No externalization account is resolved.
 The isolated paper is `reports/paper/olmo_lineage_parallel_phase.tex` and its
 compiled PDF. It is 13 letter-sized pages, includes all five registered O3
 figure PDFs, and leaves the shared Phase 4/Gemma manuscript untouched. TeX
-SHA-256 is `c5b1f980...8db5`; deterministic PDF SHA-256 is
-`ff6a9a65...e944`. Two builds produced the same PDF hash, the TeX log has no
+SHA-256 is `33e88825...c656`; deterministic PDF SHA-256 is
+`02a81b87...0ec7`. Two builds produced the same PDF hash, the TeX log has no
 warnings, and rendered title/table/figure/claim/appendix pages pass visual
 inspection.
 

@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T05:47:48Z
+Last updated: 2026-08-02T06:02:49Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -41,7 +41,7 @@ live in Drive under `olmo_lineage_20260801`.
 The isolated foundation and O1 service obligation are complete. Four immutable
 foundation manifests and twenty-three live evidence events with 88 immutable
 live outputs verify cleanly; the registry contains 24 origin events because
-inventory v1 remains immutable but superseded. All 54 package tests and the
+inventory v1 remains immutable but superseded. All 58 package tests and the
 exact dependency-lock check pass. No model job is active.
 
 The independent reconstruction passes. It reimplemented all registered Bank-W
@@ -368,12 +368,22 @@ The methods event, claims ledger, state of record, five-report recovery mirror,
 and local snapshot removal are complete and durable. The isolated run-specific
 paper is now compiled: 13 pages, all five registered O3 PDFs, no TeX warnings,
 and visual inspection of title, table, figure, claim, and appendix pages passes.
-Its TeX SHA-256 is `c5b1f980...8db5`; deterministic PDF SHA-256 is
-`ff6a9a65...e944`. A repeated build produced the same PDF hash. The current
-action is to publish this paper checkpoint, then emit the self-verifying final
-OLMo import/restart bundle. Do not merge into the main Phase 4 or Gemma
-paper/registries, and do not open an O4 Bank-W intervention under the failed
-20-family protocol.
+Its TeX SHA-256 is `33e88825...c656`; deterministic PDF SHA-256 is
+`02a81b87...0ec7`. A repeated build produced the same PDF hash. The final
+release producer and four boundary tests are prepared locally. After their
+clean source checkpoint is pulled/rebased, reproduced, and pushed, emit the
+self-verifying bundle exactly once with:
+
+```bash
+python -m jspace_olmo_lineage.experiments.final_release \
+  --config interpretability/jspace_olmo_lineage/configs/ol_final_release_v1.yaml \
+  --emit
+```
+
+If all final release paths already exist, do not overwrite them; run the same
+module with `--verify` and audit the append-only registry. Do not merge into
+the main Phase 4 or Gemma paper/registries, and do not open an O4 Bank-W
+intervention under the failed 20-family protocol.
 
 The O5 feasibility command has completed and must not be rerun because its
 outputs are immutable:

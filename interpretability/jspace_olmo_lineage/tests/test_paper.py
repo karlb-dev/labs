@@ -17,9 +17,9 @@ def test_isolated_paper_source_and_pdf_are_complete():
     assert pdf.read_bytes().startswith(b"%PDF")
     assert pdf.stat().st_size > 300_000
     assert _sha256(tex) == (
-        "c5b1f980075e8acb8e24dbb85bf7904469823cf5dda2d06cbbe551b48bd08db5")
+        "33e88825ce67d158e83328ee378b7847674d2ba234b541839a10b287ea75c656")
     assert _sha256(pdf) == (
-        "ff6a9a653614cdbbb1fe9bf73cf92af0e294496e98b0cde5cb41c6afd2f1e944")
+        "02a81b87fff5fdce07726af341fdc80b0fe010e42c41ddc47c06a2e8d3240ec7")
 
 
 def test_paper_uses_registered_geometry_figures():
