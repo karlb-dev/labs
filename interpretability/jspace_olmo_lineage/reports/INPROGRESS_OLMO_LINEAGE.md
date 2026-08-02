@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:08:35Z
+Last updated: 2026-08-02T04:14:40Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,13 +20,13 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: none; GPU memory is free. The first O3 readout input
-  (Instruct) is extracted and registered. Its registry/report Git checkpoint
+- Active model job: none; GPU memory is free. The Instruct and Base O3 readout
+  inputs are extracted and registered. The Base registry/report Git checkpoint
   is the current publish action; no cross-checkpoint geometry outcome has
   started.
 - Last registered native evidence:
-  `ol-geometry-readout-olmo31-instruct-v1` (methods), created at
-  2026-08-02T04:08:12Z from clean commit `8c86909`. Its two immutable outputs
+  `ol-geometry-readout-olmo3-base-v1` (methods), created at
+  2026-08-02T04:13:05Z from clean commit `64f377f`. Its two immutable outputs
   and registry event verify.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
@@ -35,7 +35,7 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and fifteen live evidence events with 50 immutable outputs
+foundation manifests and sixteen live evidence events with 52 immutable outputs
 verify cleanly; 39 package tests pass. No model job is active.
 
 The O3 implementation uses only exact same-corpus lenses plus small,
@@ -82,6 +82,15 @@ its manifest is 3,872 bytes, SHA-256
 The source unembedding and final-norm shards hash to `24f12c4a...` and
 `3a636d6d...`. This methods input contains no activation, intervention, or
 geometry comparison outcome.
+
+The Base readout input is also complete. All six tensor-contract checks pass at
+exact revision `c2b61dae...`. Its 13,319 x 5,120 fp16 row tensor plus fp32
+final norm is 136,513,840 bytes, SHA-256
+`56ef4f9815fcafca5661e0d8ff5038a96bb2d01b90285491c944be506f7cfb1a`;
+the manifest is 3,564 bytes, SHA-256
+`07f98b2b32a10408c0bdd902099b4ae09642ecda93763f4a3223ae7df434cccf`.
+The source unembedding and final-norm shards hash to `c7a7fdfe...` and
+`b6667e37...`. This is likewise a methods-only input, not a geometry outcome.
 
 Both OLMo models completed 384/384 unique rows with all 4,608 checked numeric
 values finite per model and eight candidate-sequence scores per row. Think
@@ -238,48 +247,40 @@ git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-Publish the Instruct readout registry checkpoint first:
+If the Base readout registry/report checkpoint is still dirty after a reclaim,
+publish it first:
 
 ```bash
 git add interpretability/jspace_olmo_lineage
-git commit -m 'olmo: register instruct geometry readout'
+git commit -m 'olmo: register base geometry readout'
 git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 git push origin interp_jspace_olmo_lineage
 python -m jspace_olmo_lineage.recovery
 ```
 
-After recovery verifies the pushed event, the full local Instruct snapshot is
-safe to rotate. Then download the exact Base metadata plus shards 13/14
-directly from the Hub into local NVMe and run:
+After recovery verifies the pushed Base event, extract the already staged
+OLMo-3 32B Think readout:
 
 ```bash
-hf download allenai/Olmo-3-1125-32B \
-  config.json model.safetensors.index.json \
-  model-00013-of-00014.safetensors model-00014-of-00014.safetensors \
-  --revision c2b61dae89a1ad10e4ad5653d0e46b590902607b \
-  --local-dir /content/olmo_lineage_work/readout_sources/olmo3-base
 python -m jspace_olmo_lineage.experiments.geometry extract-readout \
   --config interpretability/jspace_olmo_lineage/configs/ol_geometry_v1.yaml \
-  --slug olmo3-base \
-  --snapshot /content/olmo_lineage_work/readout_sources/olmo3-base
+  --slug olmo3-think \
+  --snapshot /content/olmo_lineage_work/readout_sources/olmo3-think
 ```
 
-Commit/pull/rebase/reproduce/push/recover that methods event before rotating
-the full Instruct cache or downloading the next two shards. Do not open an O4
-Bank-W intervention under the failed 20-family protocol.
+Commit/pull/rebase/reproduce/push/recover that methods event before extracting
+OLMo-3.1 Think from `/content/olmo_lineage_work/readout_sources/olmo31-think`.
+Do not open an O4 Bank-W intervention under the failed 20-family protocol.
 
 ## Hardware and weight state at last update
 
 - GPU observed: NVIDIA RTX PRO 6000 Blackwell Server Edition, approximately
   96 GiB VRAM, CUDA working.
 - OLMo-3.1 Think and Instruct snapshots are complete in the Drive HF cache.
-- The exact OLMo-3.1 32B Instruct snapshot is currently complete on local NVMe.
-  Its O2 result and joint analysis are durable in Drive and the side registry;
-  the Instruct readout registry/report checkpoint is the current publish action.
-  GPU memory is free.
-- The current Instruct snapshot was staged directly from the exact pinned Hub
-  revision; the complete Drive snapshot remains a recovery fallback.
+- The full OLMo-3.1 32B Instruct local cache was removed only after its readout,
+  registry/report checkpoint, push, and recovery verification became durable.
+  It remains recoverable from the exact pinned Hub revision and Drive snapshot.
 - Direct pinned Hub staging was substantially faster than DriveFS for Instruct
   and is the preferred staging path while authentication/network remain healthy;
   the complete Drive snapshots remain recovery fallbacks.
@@ -289,12 +290,11 @@ Bank-W intervention under the failed 20-family protocol.
   Hub revision and complete Drive cache.
 - The exact OLMo-3 Think local cache was likewise removed only after its result,
   Git checkpoint, and recovery mirrors became durable.
-- Local disk has approximately 119 GiB free with only OLMo-3.1 Instruct
-  resident. O3 needs only shards 13 and 14 from each checkpoint. Extract and
-  register Instruct first, then the complete local snapshot can be rotated;
-  later checkpoints should be downloaded directly at the exact revision with
-  only those two shards plus `config.json` and
-  `model.safetensors.index.json`.
+- Local disk has approximately 163 GiB free. Exact targeted metadata plus
+  shards 13/14 are already staged under
+  `/content/olmo_lineage_work/readout_sources/` for Base, OLMo-3 Think, and
+  OLMo-3.1 Think. Base is the current publish action; the two Think extracts
+  follow one at a time. Each source set is about 5.4 GiB.
 - The exact `anthropics/jacobian-lens` checkout is installed from `/tmp` at
   `581d398613e5602a5af361e1c34d3a92ea82ba8e`; recreate it after a reclaim.
 - Never load model weights through DriveFS. Copy one pinned snapshot at a time
