@@ -5,6 +5,8 @@ import pytest
 import torch
 
 from jspace_gemma.calibration_audit import audit_completed_checkpoint
+from jspace_gemma.experiments.gm_exact_transport_gate import _aggregate
+from jspace_gemma.experiments.gm_finalize_olmo_calibration import _parquet_frame
 from jspace_gemma.manifests import file_sha256, object_sha256
 
 
@@ -41,6 +43,8 @@ def _checkpoint(tmp_path: Path) -> Path:
         "environment_sha256": header["environment_sha256"],
         "model_id": header["model_id"],
         "model_revision": header["model_revision"],
+        "implementation_sha256": "c" * 64,
+        "transport_implementation_sha256": "d" * 64,
     }
     metrics_path = cells / f"{cell_id}.json"
     metrics_path.write_text(json.dumps({"schema_version": 2, "rows": [provenance]}))
@@ -102,3 +106,46 @@ def test_complete_checkpoint_audit_rejects_hash_drift(tmp_path):
             expected_rows_per_cell=1,
             expected_parity_rows=1,
         )
+
+
+def test_aggregate_casts_pandas_group_keys_to_json_native_types():
+    rows = []
+    for epsilon, error in ((0.01, 0.2), (0.02, 0.25), (0.05, 0.3)):
+        rows.append(
+            {
+                "faithful_delivery": True,
+                "prompt_id": "p",
+                "source_layer": 4,
+                "perturbation_mode": "single_position",
+                "direction_id": "d",
+                "desired_relative_epsilon": epsilon,
+                "tangent_cosine": 0.9,
+                "tangent_relative_error": error,
+                "central_tangent_relative_error": error,
+                "homogeneity_defect": error,
+                "homogeneity_nonlinear_remainder_defect": error,
+                "odd_symmetry_defect": error,
+                "odd_nonlinear_remainder_defect": error,
+                "response_snr": 5.0,
+                "backend_parity_relative_error": 0.0,
+            }
+        )
+    aggregate = _aggregate(
+        rows,
+        [{"relative_l2_error": 0.0}],
+        {"relative_l2_error": 1.0},
+    )
+    json.dumps(aggregate)
+    fit = aggregate["floor_curvature_fits_unfiltered_pre_snr_threshold"][0]
+    assert type(fit["source_layer"]) is int
+
+
+def test_parquet_frame_preserves_mixed_source_position_type_explicitly():
+    frame = _parquet_frame(
+        [
+            {"source_position": -1, "value": 1.0},
+            {"source_position": "all_valid", "value": 2.0},
+        ]
+    )
+    assert frame["source_position"].tolist() == ["-1", "all_valid"]
+    assert frame["source_position_runtime_type"].tolist() == ["int", "str"]

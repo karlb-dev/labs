@@ -125,6 +125,11 @@ files under inventory SHA-256
 `78a7a53cd626a55e98eb4a9e4a95ee0d00ae9c4e97192cdfb0d5a3ae997752de`.
 Its manifest SHA-256 is
 `78d53fca50b2a8ac2e114f71a7900a3581214e5367b0892dadf624ec736e8e25`.
+A pre-finalizer probe also caught the mixed JSON union in `source_position`
+(`-1` integer versus `all_valid` string) before any Parquet was written. The
+derived Parquet uses a canonical string plus an explicit original runtime-type
+column; the per-cell JSON remains untouched. A 1,568-row write/read probe
+passes with this lossless storage normalization.
 
 ## Live evidence ledger
 
@@ -183,8 +188,8 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish the diagnostic registry boundary. Then add a pure finalizer
-that verifies the frozen state and every cell/raw hash, performs the
-native-integer aggregation repair, and records compute/finalization commits
-separately without rerunning model cells. Numeric thresholds remain forbidden
-until the finalized calibration is registered.
+Commit/publish the pure finalizer, which verifies the frozen state and every
+cell/raw hash, performs the native-integer and explicit Parquet storage
+repairs, and records compute/finalization commits separately without rerunning
+model cells. Numeric thresholds remain forbidden until the finalized
+calibration is registered.

@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 02:26 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 02:31 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -23,8 +23,10 @@ canonical Drive handoff at
   `06b2a3d2fbe42fd5f70abb121573b1e7a62b45ec`.
 - Incident-audit producer commit:
   `a196c4fdf267944c1b5d9daa467aadcbd65b93ce`.
-- Remote Gemma branch: synchronized through the incident-audit producer; its
-  new registry/report boundary is not yet committed.
+- Incident registry/report commit:
+  `173d6c26b802eed3757e485aca238751479050a5`.
+- Remote Gemma branch: synchronized through the incident registry; the pure
+  finalizer implementation is not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -76,6 +78,10 @@ canonical Drive handoff at
   `a196c4f`. It reread finite raw tensors, provenance, and all 112 metric/raw
   files; manifest SHA-256:
   `78d53fca50b2a8ac2e114f71a7900a3581214e5367b0892dadf624ec736e8e25`.
+- A pre-finalizer probe caught the valid mixed int/string `source_position`
+  column before derived Parquet creation. The prepared finalizer retains the
+  original per-cell JSON and stores canonical strings plus original runtime
+  types; a 1,568-row Parquet write/read probe passes.
 
 ## Completed this VM
 
@@ -132,6 +138,9 @@ canonical Drive handoff at
 19. Implemented a strict incident auditor that binds state, input manifest,
     every metric/raw file, row/raw provenance, finite tensors, parity records,
     failure log, and the no-summary boundary before finalization repair.
+20. Registered that incident audit, fixed the aggregate's pandas integer at
+    the JSON boundary, and implemented a pure finalizer with lossless Parquet
+    type normalization and separate compute/finalizer provenance.
 
 ## Immutable scientific guardrails
 
@@ -151,9 +160,9 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit/pull/test/push the diagnostic registry/report boundary.
-2. Add/run a pure finalizer that verifies the frozen checkpoint and separates
-   compute from finalization provenance; do not rewrite or rerun cells.
+1. Commit/pull/test/push the pure finalizer, then run it from the resulting
+   clean commit. Do not rewrite or rerun cells.
+2. Inspect and register the finalized OLMo calibration boundary.
 3. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
 4. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
    snapshot to local NVMe, then run Gemma Stage 1 with the unchanged harness.

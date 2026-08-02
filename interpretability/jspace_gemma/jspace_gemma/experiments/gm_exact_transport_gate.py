@@ -98,7 +98,9 @@ def _aggregate(rows: list[dict], parity_rows: list[dict], wrong_hook: dict) -> d
             group["desired_relative_epsilon"].tolist(),
             group["tangent_relative_error"].tolist(),
         )
-        fits.append({**dict(zip(fit_keys, key, strict=True)), **fit})
+        identity = dict(zip(fit_keys, key, strict=True))
+        identity["source_layer"] = int(identity["source_layer"])
+        fits.append({**identity, **fit})
     return {
         "calibration_only_no_target_thresholds_applied": True,
         "n_rows": len(frame),

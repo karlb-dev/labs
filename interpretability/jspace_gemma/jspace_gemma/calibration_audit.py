@@ -82,6 +82,8 @@ def audit_completed_checkpoint(
     inventory = []
     all_rows = []
     runtimes = []
+    autodiff_implementation_hashes = set()
+    transport_implementation_hashes = set()
     for cell_id in sorted(completed):
         entry = completed[cell_id]
         resolved = {}
@@ -121,6 +123,10 @@ def audit_completed_checkpoint(
             }
             if any(row.get(key) != value for key, value in expected.items()):
                 raise RuntimeError(f"row provenance mismatch: {cell_id}")
+            autodiff_implementation_hashes.add(row.get("implementation_sha256"))
+            transport_implementation_hashes.add(
+                row.get("transport_implementation_sha256")
+            )
             _require_finite(row, f"metrics.{cell_id}")
         all_rows.extend(rows)
 
@@ -151,6 +157,13 @@ def audit_completed_checkpoint(
             raise RuntimeError(f"invalid cell runtime: {cell_id}")
         runtimes.append(runtime)
 
+    for label, values in (
+        ("autodiff", autodiff_implementation_hashes),
+        ("transport", transport_implementation_hashes),
+    ):
+        if len(values) != 1 or not next(iter(values), None):
+            raise RuntimeError(f"{label} implementation hash is not uniquely bound")
+
     return {
         "state_path": str(state_path),
         "state_sha256": file_sha256(state_path),
@@ -167,5 +180,11 @@ def audit_completed_checkpoint(
         "maximum_runtime_seconds": max(runtimes),
         "inventory": inventory,
         "inventory_sha256": object_sha256(inventory),
+        "autodiff_implementation_sha256": next(
+            iter(autodiff_implementation_hashes)
+        ),
+        "transport_implementation_sha256": next(
+            iter(transport_implementation_hashes)
+        ),
         "all_rows": all_rows,
     }
