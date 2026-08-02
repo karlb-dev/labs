@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 04:04 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 04:12 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -42,8 +42,11 @@ canonical Drive handoff at
   `af21c2068508a28871f541c82b8dd1ff0f59916b`.
 - Backend-parity blocker registry/report commit:
   `0e8acf3234ffa22ca79b99e3a3ea9de148951faf`.
-- Local and remote Gemma branch are synchronized through the failed-gate
-  boundary. The terminal model-free release producer is prepared but unrun.
+- Frozen terminal release producer/compute commit:
+  `b80004843a5bbe57536e4da18297f7c52cf201a3`.
+- The terminal release is registered and independently verified; the remote
+  branch is synchronized through its producer, and this registry/report
+  boundary is the next publication.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -54,7 +57,7 @@ canonical Drive handoff at
 - Shared Part-2 conformance bootstrap: PASS.
 - No Gemma or OLMo model producer is running. OLMo calibration/control and the
   Gemma Stage-1 result are registered; the target model is no longer loaded.
-- The isolated package scaffold is committed. Its 47-test conformance suite
+- The isolated package scaffold is committed. Its 48-test conformance suite
   passes, including analytic, nonlinear tiny-transformer, and explicit Hugging
   Face Gemma/OLMo suffix/JVP tests plus a batch-shape/slot adversarial test.
 - OLMo local staging completed from clean pushed commit `42b34b1`. The
@@ -165,6 +168,19 @@ canonical Drive handoff at
   log SHA-256:
   `61c6704f6b34d60682123fbfa3936d770e307e48df6a3435c2f2b269c19350df`.
   The model is unloaded and G2/G3 mechanism interpretation is stopped.
+- `gm-state-of-record-v1` is registered from clean pushed `b800048` with
+  `COMPLETE_METHODS_BLOCKER`, `scientific_expansion=false`, and no target
+  model load. It independently verifies the 18-event/35-output source prefix
+  and registers eight release outputs. Import-bundle SHA-256:
+  `005532754166644e42a369358565b9ce72235151e64559a9f12254d987ff7729`;
+  canonical payload SHA-256:
+  `694c62db534953accadb4f2223109fabf689f02a5117333497f716c17bed0320`;
+  release-manifest SHA-256:
+  `1f896c7029a2f4cee10378a95c71463d1346e2a500529101af80de7063c1e483`;
+  release log SHA-256:
+  `335f16b7a7e45e250806e42b7b060276fe15d40de300003175d8ffa8644be5fe`.
+  The state of record, claim ledger, and protocol are byte-identical between
+  Git and Drive.
 
 ## Completed this VM
 
@@ -265,6 +281,10 @@ canonical Drive handoff at
     record, claim ledger, 20-minute gate protocol, inventory/environment lock,
     and Phase-4 methods-only import bundle. No release output or
     `gm-state-of-record-v1` event exists at this pre-run boundary.
+31. Ran the release from clean pushed `b800048`, independently recomputed the
+    bundle payload and registry-prefix hashes, rehashed every source and
+    release output, and registered the terminal methods-only state of record.
+    No model was opened and no scientific branch was resumed.
 
 ## Immutable scientific guardrails
 
@@ -284,19 +304,18 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit, fetch/integrate, test, and push the frozen model-free release
-   producer and documents.
-2. Run it from that clean pushed commit, independently verify every release
-   hash and import-envelope field, then publish the release registry boundary.
-3. Keep G2/G3 and all mechanism claims stopped.
+1. Commit, fetch/integrate, test, and push the release registry/report
+   boundary.
+2. Reverify the final Gemma branch and merge it with ancestry preserved into
+   the latest pulled `interp_jspace_part2`; keep G2/G3 stopped.
 
 ## Recovery checks and next commands
 
 There is no live producer or GPU allocation. The backend diagnostic is
 registered as a failed methods gate from `af21c20`; do not rerun it, weaken
 its frozen criterion, delete it, or interpret Stage 1 mechanistically. The
-terminal release has no Drive output or evidence event yet and must run only
-from its clean pushed producer commit. The
+terminal release is registered from `b800048`; do not rerun or overwrite its
+eight outputs. The
 56-cell calibration and positive control are finalized and registered; do not rerun, delete, or
 rewrite them. Gemma Stage 1 is complete and registered from `036e552`; do not
 rerun, delete, or rewrite its state/cells/aggregates. The target model is

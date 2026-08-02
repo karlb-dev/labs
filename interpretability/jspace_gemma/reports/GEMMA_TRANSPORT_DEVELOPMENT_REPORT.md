@@ -1,6 +1,6 @@
 # Gemma 4 31B transport autopsy — development report
 
-Status: foundation, exact-JVP goldens, paper-band convention, the complete
+Status: terminal methods-blocker state of record. Foundation, exact-JVP goldens, paper-band convention, the complete
 OLMo calibration/positive-control threshold freeze, and the non-lens Gemma
 Stage-1 core are registered. Stage 1 returns a strong frozen local-tangent
 mismatch classification at all five layers, but the frozen actual-model
@@ -185,6 +185,7 @@ The execution flag is enabled without changing the threshold file (SHA-256
 | `gm-jvp-olmo-positive-control-v1` | methods | registered from clean `7f6a36e`; target unopened | all frozen control criteria pass; numeric thresholds are immutable |
 | `gm-jvp-gemma-stage1-v1` | methods | registered from clean `036e552`; 40 immutable cells | all five layers classify as local tangent mismatch under frozen thresholds; actual-model backend parity is the next adversarial check |
 | `gm-jvp-gemma-backend-parity-v1` | methods | registered failed gate from clean `af21c20` | both backends succeed and selected-row replay is exact, but all-slot relative error 0.002458 exceeds the frozen 1e-5 ceiling; mechanism work stops |
+| `gm-state-of-record-v1` | methods | registered from clean `b800048`; no model opened | terminal `COMPLETE_METHODS_BLOCKER` release with verified inventory, claim ledger, gate protocol, and Phase-4 methods-only import bundle |
 
 ## G1 decision table
 
@@ -313,7 +314,7 @@ and any nondifferentiability claim stop here. Artifact SHA-256 is
 raw SHA-256 is
 `ac5ba50dbba6d3ed149cf5b7b6951b80bee5502d11ac90e4f93dc45d515c9e89`.
 
-## Terminal blocked-release preparation
+## Terminal blocked release
 
 The binding hard stop changes the completion path, not the evidence already
 recorded. A model-free release producer now verifies the frozen 25,170-byte
@@ -323,8 +324,20 @@ backend criterion. It prepares a methods-only state of record, scoped claim
 ledger, 20-minute transport-gate protocol, complete evidence inventory,
 environment lock, release manifest, and `IMPORT_BUNDLE_PHASE4.json` envelope.
 The bundle explicitly opens no Phase-4 model cell or intervention and signs no
-review/PI field. At this pre-run boundary none of those Drive release outputs
-and no `gm-state-of-record-v1` event exists.
+review/PI field.
+
+The model-free producer completed from clean pushed `b800048`. It reverified
+all 18 source events and 35 registered outputs, copied four Git documents
+byte-identically to Drive, and registered eight terminal release outputs as
+`gm-state-of-record-v1`. Independent reread confirms the import envelope's
+canonical payload SHA-256
+`694c62db534953accadb4f2223109fabf689f02a5117333497f716c17bed0320`.
+The JSON bundle SHA-256 is
+`005532754166644e42a369358565b9ce72235151e64559a9f12254d987ff7729`;
+the release-manifest SHA-256 is
+`1f896c7029a2f4cee10378a95c71463d1346e2a500529101af80de7063c1e483`.
+The terminal status is `COMPLETE_METHODS_BLOCKER`, not completion of the
+prohibited G2--G8 science branches.
 
 ## Infrastructure incidents
 
@@ -338,7 +351,6 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Publish and run the frozen model-free release producer, independently audit
-the import envelope and every output hash, and register the terminal methods
-boundary. Keep G2/G3 stopped; no scientific expansion or threshold repair is
-licensed from this result.
+Publish the release registry/report boundary, perform one final branch audit,
+then merge the completed Gemma ancestry into the latest shared Part-2 branch.
+Keep G2/G3 stopped; no scientific expansion or threshold repair is licensed.

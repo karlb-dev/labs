@@ -70,6 +70,16 @@ producer owns the recorded lock, the model snapshot and config hashes match
 the live handoff, and the output path is either absent or a valid resumable
 checkpoint. Never run model-scale work on CPU.
 
+## Terminal state
+
+The scientific path stopped at the registered actual-Gemma backend-parity
+gate. `gm-state-of-record-v1` is the terminal methods-only release from clean
+producer `b80004843a5bbe57536e4da18297f7c52cf201a3`; it opens no Phase-4 model
+cell and licenses no mechanism or workspace conclusion. G2--G8 must not be
+resumed on this branch. The canonical import bundle is Drive
+`gemma_transport_20260802/release/IMPORT_BUNDLE_PHASE4.json`.
+
 Before every push, fetch and pull/rebase the Gemma branch, re-run the relevant
-tests, reconcile any concurrent Gemma-branch commits, then push. Do not merge
-to Part 2 while this resume says the fork is incomplete.
+tests, reconcile any concurrent Gemma-branch commits, then push. Once the live
+handoff records the release registry/report commit, this completed blocker
+fork is eligible for the requested ancestry-preserving Part-2 merge.

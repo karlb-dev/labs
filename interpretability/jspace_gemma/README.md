@@ -58,5 +58,6 @@ After verifying the blocker boundary, publish the model-free terminal release:
 python -m jspace_gemma.experiments.gm_blocked_release
 ```
 
-The release exports a methods-only state of record, claim ledger, transport
-gate protocol, verified inventory/environment lock, and Phase-4 import bundle.
+The release is registered as `gm-state-of-record-v1`. It exports a
+methods-only state of record, claim ledger, transport gate protocol, verified
+inventory/environment lock, and Phase-4 import bundle.
