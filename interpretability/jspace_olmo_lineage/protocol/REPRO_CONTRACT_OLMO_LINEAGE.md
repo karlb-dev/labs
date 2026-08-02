@@ -29,3 +29,6 @@ methods tier.
     temporal point on the Think path.
 12. Pushes on this branch first pull/rebase the remote OLMo branch. The final
     bundle is merged into mainline with ancestry preserved.
+13. Live recovery/report mirrors are mutable operational documents, never
+    immutable registry outputs. Their recovery index records source commit and
+    content hashes; versioned scientific tables and manifests remain immutable.

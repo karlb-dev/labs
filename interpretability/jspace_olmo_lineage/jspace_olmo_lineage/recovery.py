@@ -37,6 +37,8 @@ def mirror_reports(*, require_clean: bool = True) -> dict:
     payload = {
         "schema_version": 1,
         "study_id": "jspace-olmo-lineage",
+        "mutable_recovery_mirror": True,
+        "registry_output": False,
         "source_git": information,
         "mirrors": rows,
         "recovery_entrypoint": str(

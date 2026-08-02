@@ -36,3 +36,11 @@ def test_config_contains_no_placeholder():
     text = (ROOT / "configs/ol_foundation_v1.yaml").read_text()
     assert "TO_BE_FILLED" not in text
     assert "TODO" not in text
+
+
+def test_live_recovery_mirrors_are_not_immutable_evidence_outputs():
+    recovery = (ROOT / "jspace_olmo_lineage/recovery.py").read_text()
+    foundation = (
+        ROOT / "jspace_olmo_lineage/experiments/foundation.py").read_text()
+    assert '"mutable_recovery_mirror": True' in recovery
+    assert "outputs = list(manifest_paths.values())" in foundation

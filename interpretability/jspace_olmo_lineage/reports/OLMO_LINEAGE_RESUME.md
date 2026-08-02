@@ -100,6 +100,9 @@ Drive copy is authoritative for large outputs and resumable state. If a raw
 output exists in Drive but no registry event exists, treat it as an
 unregistered partial and resume or audit it; do not cite it as evidence. If a
 registry output hash fails, stop and diagnose rather than overwriting it.
+The three live report mirrors and their recovery index are deliberately
+mutable and are never registered as immutable evidence outputs; their source
+Git commits and content hashes are recorded in the recovery index.
 
 ## Detect and resume model work
 

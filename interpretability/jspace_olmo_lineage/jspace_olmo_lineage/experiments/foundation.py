@@ -160,7 +160,7 @@ def run(config_path: str | Path) -> dict:
             for key, path in manifest_paths.items()
             if key != "foundation"
         },
-        "recovery_mirrors": mirrors,
+        "initial_recovery_mirror_snapshot": mirrors,
         "first_service_obligation": (
             "OLMo-3.1 Think and Instruct Bank-W baseline capability; "
             "no interventions"),
@@ -171,9 +171,7 @@ def run(config_path: str | Path) -> dict:
     foundation["content_sha256"] = object_sha256(foundation)
     atomic_json(manifest_paths["foundation"], foundation)
 
-    outputs = list(manifest_paths.values()) + [
-        Path(row["destination"]) for row in mirrors["mirrors"]
-    ] + [Path(mirrors["index"]["path"])]
+    outputs = list(manifest_paths.values())
     event = create(
         config["evidence_id"],
         tier=config["tier"],
