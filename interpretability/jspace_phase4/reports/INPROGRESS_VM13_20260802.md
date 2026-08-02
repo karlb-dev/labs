@@ -138,7 +138,7 @@ status on known deficits, unreachable commits, namespace leakage, or
 unreviewed temporary/recovery paths. The whole Phase-4 suite passes **262
 tests**.
 
-The combined OLMo-lineage and Phase-4 suites pass **328 tests** after the
+The combined OLMo-lineage and Phase-4 suites pass **329 tests** after the
 terminal import normalization and admission-queue checks. The OLMo Bank-W compatibility
 reader now resolves the exact registered Phase-4 registry byte prefix while
 accepting only valid JSONL appended after it. The frozen side config and its
