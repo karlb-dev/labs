@@ -152,11 +152,11 @@ The required sixth conclusion-skeleton sentence, candidate freeze-gate ledger,
 and methods decision record are now assembled with every unresolved gate
 explicit. A prospective pre-freeze inventory generator also refuses a clean
 status on known deficits, unreachable commits, namespace leakage, or
-unreviewed temporary/recovery paths. The whole Phase-4 suite passes **277
-tests**, including the seven new prompt-diagnostic and tensor-integrity audit
+unreviewed temporary/recovery paths. The whole Phase-4 suite passes **279
+tests**, including the nine new prompt-diagnostic and tensor-integrity audit
 tests.
 
-The combined OLMo-lineage and Phase-4 suites pass **336 tests** after the
+The combined OLMo-lineage and Phase-4 suites pass **338 tests** after the
 terminal import normalization and admission-queue checks. The OLMo Bank-W compatibility
 reader now resolves the exact registered Phase-4 registry byte prefix while
 accepting only valid JSONL appended after it. The frozen side config and its
@@ -164,7 +164,7 @@ registered hash are unchanged; a regression test proves mutation within the
 prefix is still rejected. This is integration maintenance for an append-only
 mainline registry, not a rewrite of side-track evidence.
 
-The ancestry-merged terminal Gemma suite adds 48 passing tests, for 384
+The ancestry-merged terminal Gemma suite adds 48 passing tests, for 386
 Phase-4/OLMo/Gemma tests total. Its one Torch FX warning is unchanged and does
 not alter the terminal methods-blocker result.
 

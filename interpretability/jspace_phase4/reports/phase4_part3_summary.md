@@ -86,8 +86,8 @@ Before any A1000 result existed, the project committed and tested:
   plan;
 - a reclaim-safe `JSPACE4_STOP_AFTER` boundary for the A1000 postfit queue.
 
-The test baseline before A1000 completion is 277 Phase 4 tests, 59
-OLMo-lineage tests, and 48 Gemma tests: 384 total. The sole Gemma Torch FX
+The test baseline before A1000 completion is 279 Phase 4 tests, 59
+OLMo-lineage tests, and 48 Gemma tests: 386 total. The sole Gemma Torch FX
 warning is unchanged. The preparation branch is clean and pushed.
 
 ### Phase 4.3 completion audit
