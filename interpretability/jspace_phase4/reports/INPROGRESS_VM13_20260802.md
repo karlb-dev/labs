@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 06:29 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 07:32 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -9,8 +9,9 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Main worktree: `/content/labs`, branch `interp_jspace_part2`, clean at
   `4ea7a9ba7a534daa61e0d8c9960763b921a1b80b` when the continuation launched.
 - Remote mainline has since advanced through the ancestry-preserving terminal
-  Gemma merge and its documentation commit at `c9021e5`; leave the live local
-  worktree untouched until the frozen A1000 wrapper finishes.
+  Gemma and OLMo merges plus their integration/cleanup records at `aa6663a`;
+  leave the live local worktree untouched until the frozen A1000 wrapper
+  finishes.
 - Last registered compute commit: `f73614d6288179e73a496283dcd10090f76f2815`;
   it is pushed to origin.
 - The isolated preparation branch was merged without flattening its ancestry.
@@ -20,8 +21,8 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router and is live. Atomic checkpoints through n=680 have been mirrored;
-  the producer is currently inside chunk 680:683. No partial checkpoint is
+  router and is live. Atomic checkpoints through n=701 have been mirrored;
+  the producer is currently inside chunk 701:704. No partial checkpoint is
   registered evidence.
 
 ## VM13 live continuation
@@ -36,14 +37,14 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 680 / 1000 |
-| checkpoint SHA-256 | `dd639fa9125e5774935e51c82dbac7918b38f15c7b00858f380a44f7a0f09631` |
-| checkpoint-state SHA-256 | `74c4ea483c0bc5427e585656ca672be82a788447c1b561498bfd6b7f32ab7494` |
+| prompts banked | 701 / 1000 |
+| checkpoint SHA-256 | `a86cbf97ee03ddd0c2b720a61d4926412dade2532873155828488d113e6b0718` |
+| checkpoint-state SHA-256 | `8ae7c217974dc56f3969ecc20240e1845c51dd954a8988ea52cf899010619a77` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| synced UTC | 2026-08-02 06:27:59 UTC |
+| synced UTC | 2026-08-02 07:31:02 UTC |
 | peak allocated VRAM | 62.833 GB |
-| process state | live; active atomic chunk 680:683; unified session 86346 |
+| process state | live; active atomic chunk 701:704; unified session 86346 |
 
 Prompt 660 is a retained finite heavy-tail row at 113.855, below the earlier
 prompt-323 maximum 173.345; no outcome-dependent trimming or refit occurred.
@@ -56,7 +57,7 @@ selection-margin, and prompt-323 contracts were committed and pushed at
 `542ed98`. Their A1000 hashes remain explicit placeholders. They may be bound
 only after the registered n=1000 lens exists.
 
-The preparation branch is clean and pushed at `443c477`. In addition to the
+The preparation branch is clean and pushed at `a98f37b`. In addition to the
 frozen A1000 decision queue, it now contains the complete prospective
 Bank-B answer-direction-orthogonal rescue: outcome-blind geometry, a
 partial-dictionary prompt-only intervention core, atomic fact-level resume,
@@ -127,11 +128,14 @@ ledger and state of record are durable through `ad0041b`. The 13-page paper
 at `f2d4d37` passed an independent render audit. The terminal OLMo handoff
 registered at `a28cdd5` from clean producer `7148d01`: 25 origins / 24 live
 events / 101 live outputs, 58 tests, and one 13-output methods release event.
-No scientific cell or authorization was added. This VM's Drive mount does
-not yet expose the registered terminal release files, including
-`IMPORT_BUNDLE_PHASE4.json`; treat that as unresolved cloud propagation and
-durability. Do not normalize, merge, or admit the final release until all
-thirteen paths reappear and rehash exactly.
+No scientific cell or authorization was added. The complete side branch is
+ancestry-merged into remote main at `65a7875`, with integration/cleanup records
+through `aa6663a`. Its 06:42 integration report has propagated to this VM's
+Drive mount, but the registered terminal release directory still exposes only
+the early bundle and not the thirteen final files, including
+`IMPORT_BUNDLE_PHASE4.json`. Treat that as unresolved release-artifact
+durability. Do not normalize or admit the final release until all thirteen
+paths reappear or are recovered byte-exactly and rehash against the event.
 
 The same OLMo branch registered semantic checkpoint inventory v2 at `2afb010`:
 inventory v1 remains immutable but is explicitly superseded after identical
