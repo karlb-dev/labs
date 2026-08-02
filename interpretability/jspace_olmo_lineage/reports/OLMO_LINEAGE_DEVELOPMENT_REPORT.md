@@ -1,17 +1,18 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T05:47:48Z
+Last updated: 2026-08-02T06:09:33Z
 
-Status: active; O1, O2, and O3 are complete through the registered geometry
-tables, and the early Phase 4 bundle is emitted. Both native OLMo-lineage
+Status: complete and stopped at the first OLMo parallel-phase release boundary.
+O1, O2, and O3 are complete, and both the early Phase 4 service handoff and
+final import/restart bundle are emitted. Both native OLMo-lineage
 baseline capability results, both earlier joint decisions, the hash-pinned
 transfer bundle, four capacity cells, paired capacity verdict, four-lens audit,
 four readout inputs, four-checkpoint geometry verdict, registered-table figure
 set, official-stage inventory, O5 feasibility decision, and independent
-reconstruction are registered. The claims ledger and state of record are
-durable in Git and Drive recovery mirrors, and the isolated run-specific paper
-is compiled. The final OLMo handoff bundle is next. This report remains
-separate from the Phase 4 and Gemma reports.
+reconstruction are registered. The claims ledger, state of record, isolated
+run-specific paper, complete evidence inventory, environment lock, and final
+handoff are durable in Git and Drive. This report remains separate from the
+Phase 4 and Gemma reports and may enter only a later Phase 5 router.
 
 ## Executive status
 
@@ -608,6 +609,43 @@ allocation 60.42 GiB. The clean retry therefore restores the frozen batch of
 eight and adds only the missing inference context; the `1e-5` tolerance is not
 weakened.
 
+## Final import/restart bundle
+
+`ol-phase4-final-import-bundle-v1` was created at 2026-08-02T06:06:57Z from
+clean producer commit `7148d0138471cd529144767b7cdb26adda5a6eae`. Before
+publication it rehashed every one of the 88 live pre-release outputs and
+validated an exact three-way partition of all 23 live evidence IDs. Its
+embedded append-only registry prefix is 53,719 bytes / 25 event lines through
+`ol-independent-reconstruction-v1`, SHA-256
+`db3fe202026e5cad019ca90a3dceb74efce3b248c02710cfd849dcdbf843e80a`.
+
+The event registers 13 methods outputs: completed state and claims copies, a
+machine/readable bundle pair, a full live-evidence inventory, a release
+environment lock containing the foundation lock and current toolchain, the
+isolated paper source/PDF, and all five paper-figure PDFs. Final JSON is 9,949
+bytes with SHA-256
+`a2486ec5a4759a1f5b21643e7c60766824c48f13ff43240d458ba72147165a2a`;
+Markdown is 5,431 bytes with SHA-256
+`36ed8f773836d2610a37254a81bee7748e928cd700b398f8bac7466a4a2d9468`.
+The live inventory is `277adc58...b293e` and release environment lock is
+`ec35b6d7...10fa4`. The post-event registry has 25 origins, 24 live events,
+and 101 live outputs, all hash-valid.
+
+The producer's first post-write verification returned nonzero after detecting
+a whitespace-only difference between YAML-folded `external-state- substitution`
+and the exact claims-ledger spelling `external-state-substitution`. A direct
+audit immediately showed that the event existed and all 13 files matched their
+registered sizes and hashes. The verifier now canonicalizes this one prose-wrap
+case. The registered claims ledger remains the exact wording authority, the
+machine bundle remains byte-immutable, and no output or scientific metadata
+was overwritten.
+
+The release preserves the O4 16/20 block, sentence-2 narrowing, sentence-4
+pending status, development/methods tiers, and queued-not-started H5/H6/O5
+work. It opens no model, intervention, confirmatory, replication, Phase 4, or
+Gemma outcome. This OLMo workstream is now stopped until an explicit Phase 5
+integration decision.
+
 ## O4: development mechanism grid
 
 The primary arm contrast is
@@ -677,6 +715,9 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-independent-reconstruction-v1` | PASS: 768 O1 rows, 48 O2 summaries/96 intervals/144 arrays/72 table rows, 84 O3 aggregates/router, five byte-exact PNGs/five regenerated PDFs, fourteen exact model shards, and eight exact frozen-row sequence scores independently reconstructed; no new scientific cell | Source commit `12f21ad`; JSON `e159f01d...`; Markdown `48647b44...`; 13 registered outputs |
 | 2026-08-02 | Sentinel weight rotation | Removed only the 61-GiB local Think sentinel snapshot after evidence commit `471a48f`, GitHub push, 88-output verification, and recovery-mirror verification | Reclaimed local NVMe; exact revision remains directly recoverable from Hugging Face |
 | 2026-08-02 | OLMo run-specific paper | Compiled 13-page isolated TeX/PDF with all five registered O3 figures, exact claim downgrades, complete limitations, reconstruction, and Phase 5 router; repeat build byte-identical and visual inspection passes | TeX `33e88825...`; PDF `02a81b87...`; shared Phase 4/Gemma paper untouched |
+| 2026-08-02 | Final-release implementation | Prepared prefix-pinned inventory/environment/bundle producer, atomic publication, exact 13-output verifier, and four boundary tests; 58 tests, 88 outputs, and dependency lock pass before release | Clean producer commit `7148d01`, pulled/rebased and pushed before emission |
+| 2026-08-02 | `ol-phase4-final-import-bundle-v1` | Registered final methods-only handoff: 53,719-byte prefix, all 23 pre-release live IDs partitioned, all 88 inputs rehashed, 13 release outputs; final state 24 live events / 101 outputs; no new scientific cell | JSON `a2486ec5...`; Markdown `36ed8f77...`; inventory `277adc58...`; environment `ec35b6d7...` |
+| 2026-08-02 | Final post-write verification | Initial check flagged only YAML-fold whitespace in sentence 4 after event creation; direct audit showed all 13 registered hashes exact; canonical-wrap verifier then passes without changing any output | Claims ledger retains exact wording; immutable bundle preserved |
 
 ## Current limitations and claim boundary
 

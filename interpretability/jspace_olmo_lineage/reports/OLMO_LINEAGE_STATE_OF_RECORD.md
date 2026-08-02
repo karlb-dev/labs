@@ -1,10 +1,10 @@
 # OLMo lineage state of record
 
-State date: 2026-08-02T05:47:48Z
+State date: 2026-08-02T06:09:33Z
 
-Status: OLMo parallel-phase scientific execution and the isolated run-specific
-paper are complete at the first release boundary. The final import/restart
-bundle is being assembled.
+Status: complete at the first OLMo parallel-phase release boundary. The
+self-verifying import/restart bundle is emitted and registered; this side
+track is stopped pending the single Phase 5 integration router.
 This state remains separate from the concurrently running main Phase 4 and
 Gemma workstreams and may be integrated only in Phase 5 or later.
 
@@ -47,15 +47,17 @@ unless an imported intervention result is explicitly named.
 
 ## 3. Registry state
 
-At this state date the append-only registry contains 24 origin events, of which
-23 are live. `ol-checkpoint-inventory-v1` remains immutable but is explicitly
-superseded by version 2. The 23 live events have 88 immutable outputs, all of
-which pass byte/hash verification. Fifty-eight package tests and the exact
-dependency lock pass.
+The frozen pre-release registry prefix contains 24 origin events, of which 23
+are live, and 88 live immutable outputs. `ol-checkpoint-inventory-v1` remains
+immutable but is explicitly superseded by version 2. The final methods event
+adds 13 immutable handoff outputs, giving 25 origins, 24 live events, and 101
+live outputs. All pass byte/hash verification. Fifty-eight package tests and
+the exact dependency lock pass.
 
-The latest event is `ol-independent-reconstruction-v1`, created at
-2026-08-02T05:26:50Z from clean source commit
-`12f21ad5badeac980c11f0817906ad18c6c1d52d`.
+The latest event is `ol-phase4-final-import-bundle-v1`, emitted at
+2026-08-02T06:06:57Z from clean source commit
+`7148d0138471cd529144767b7cdb26adda5a6eae`. Its embedded registry prefix
+ends through `ol-independent-reconstruction-v1`.
 
 ## 4. Objective-by-objective disposition
 
@@ -214,8 +216,8 @@ under `no_grad` reproduced the registered row exactly.
 ## 5. Paper-facing claims
 
 The authoritative mutable ledger for this release is
-`reports/OLMO_LINEAGE_CLAIMS_TABLE.md`; the final bundle will contain a
-hash-pinned copy.
+`reports/OLMO_LINEAGE_CLAIMS_TABLE.md`; the final bundle contains its
+hash-pinned release copy.
 
 Sentence 2 is narrowed to an architecture-matched association: the first
 released Think transition has strong J-mapped coordinate/selection movement
@@ -239,10 +241,8 @@ inspection.
 
 ## 7. Remaining and queued work
 
-Required to finish this release artifact layer:
-
-1. emit and register the self-verifying final OLMo import/restart bundle;
-2. stop this side track and hand its queues to Phase 5.
+This release artifact layer is complete. The side track is stopped; all
+unopened work remains queued for an explicit Phase 5 decision.
 
 Queued, not authorized as part of the current result set:
 
@@ -292,7 +292,30 @@ outputs were not removed.
 - [x] sentence-level claims ledger;
 - [x] state-of-record report;
 - [x] isolated run-specific paper compiled;
-- [ ] final import/restart bundle emitted and registered.
+- [x] final import/restart bundle emitted and registered.
 
-When the final two boxes are complete, this workstream stops and joins the
-single Phase 5 router only through its hash-pinned handoff.
+This workstream is stopped and may join the single Phase 5 router only
+through this hash-pinned handoff.
+
+## 11. Final release attestation
+
+- Evidence ID: `ol-phase4-final-import-bundle-v1`.
+- Bundle ID: `jspace-olmo-lineage-phase4-final-v1`.
+- Clean producer commit:
+  `7148d0138471cd529144767b7cdb26adda5a6eae`.
+- Frozen registry prefix: 53,719 bytes through
+  `ol-independent-reconstruction-v1`, SHA-256
+  `db3fe202026e5cad019ca90a3dceb74efce3b248c02710cfd849dcdbf843e80a`.
+- Final bundle JSON: 9,949 bytes, SHA-256
+  `a2486ec5a4759a1f5b21643e7c60766824c48f13ff43240d458ba72147165a2a`;
+  Markdown: 5,431 bytes, SHA-256
+  `36ed8f773836d2610a37254a81bee7748e928cd700b398f8bac7466a4a2d9468`.
+- The event registers the state, claims ledger, inventory, environment lock,
+  bundle pair, isolated paper, and five paper figures. It adds no scientific
+  outcome, intervention, Phase 4 result, Gemma result, confirmatory claim, or
+  replication claim.
+- The first post-write verifier invocation flagged only a YAML-fold whitespace
+  difference in the machine-rendered sentence-4 wording. All 13 registered
+  files already matched their hashes. The verifier now canonicalizes that
+  source-wrap whitespace; the registered claims-ledger copy retains the exact
+  licensed wording, and no immutable output was overwritten.

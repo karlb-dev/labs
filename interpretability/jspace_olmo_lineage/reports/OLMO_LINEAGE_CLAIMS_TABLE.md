@@ -1,6 +1,6 @@
 # OLMo lineage claims table
 
-State date: 2026-08-02T05:47:48Z
+State date: 2026-08-02T06:09:33Z
 
 Scope: OLMo-only parallel development/methods workstream on branch
 `interp_jspace_olmo_lineage`, with immutable scientific import boundary
@@ -97,6 +97,21 @@ Until then:
 ## Citation rule
 
 Paper and handoff prose should cite the claim ID above together with the named
-evidence IDs. This mutable ledger is a recovery/reporting aid until copied into
-the hash-pinned final release bundle; the append-only evidence registry and
-registered Drive outputs remain authoritative.
+evidence IDs. This ledger is copied into the hash-pinned final release bundle;
+the append-only evidence registry and registered Drive outputs remain
+authoritative.
+
+## Final release attestation
+
+The registered release copy is an output of
+`ol-phase4-final-import-bundle-v1`, created from clean producer commit
+`7148d0138471cd529144767b7cdb26adda5a6eae`. Its SHA-256 is
+`682bf60cce10810af57258ebd672a0bcde8ce45a44bd851f0a5f289cedbf2951`.
+Sentence 2 remains **narrowed-release-resolved** and sentence 4 remains
+**explicitly-pending-gate-blocked**. Queued H5/H6/O5 work is not an outcome.
+
+The machine bundle's YAML-folded sentence-4 value contains a nonsemantic space
+after the line-ending hyphen in `external-state- substitution`. The registered
+claims-ledger copy above retains the exact licensed
+`external-state-substitution` wording. The verifier canonicalizes only this
+source-wrap whitespace; no registered file was changed.
