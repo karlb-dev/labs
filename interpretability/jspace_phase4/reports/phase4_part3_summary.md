@@ -406,3 +406,9 @@ external scientific choice:
 
 This document is a handoff and analysis record, not approval, a freeze commit,
 or a freeze tag.
+
+The machine-readable closeout audit is
+`reports/phase4_part3_completion_audit.json`. It proves the two completed
+boundary events are present, enumerates each still-absent required successor,
+records the clean pushed source head used for the audit, and states the
+reclaim-time compute block explicitly.
