@@ -35,3 +35,11 @@ Gemma target snapshot on local NVMe without loading the model:
 ```bash
 python -m jspace_gemma.experiments.gm_stage_gemma
 ```
+
+Run the predeclared late-layer infrastructure smoke and then resume the full
+40-cell grid from the same clean pushed commit:
+
+```bash
+python -m jspace_gemma.experiments.gm_run_gemma_stage1 --smoke
+python -m jspace_gemma.experiments.gm_run_gemma_stage1
+```

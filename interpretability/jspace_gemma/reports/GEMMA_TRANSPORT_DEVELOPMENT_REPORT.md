@@ -1,8 +1,9 @@
 # Gemma 4 31B transport autopsy — development report
 
 Status: foundation, exact-JVP goldens, paper-band convention, and the complete
-OLMo calibration and positive-control threshold freeze are registered; Gemma
-Stage 1 is licensed but has not started. All findings in this document are
+OLMo calibration and positive-control threshold freeze are registered. The
+exact Gemma snapshot is staged and the frozen Stage-1 runner is prepared, but
+the target model has not been opened. All findings in this document are
 development or methods evidence. Nothing here is a Phase 4 confirmatory model
 cell.
 
@@ -181,7 +182,7 @@ The execution flag is enabled without changing the threshold file (SHA-256
 | `gm-olmo-calibration-finalize-diagnostic-v1` | methods | registered from clean `a196c4f` | immutable incident/inventory record for all 56 cells and the post-compute serialization failure |
 | `gm-jvp-olmo-calibration-v1` | methods | registered; compute `06b2a3d`, finalizer `374f511`, no recompute | 56 cells, 1,568 rows, exact parity pass, calibrated shallow-to-late control trend |
 | `gm-jvp-olmo-positive-control-v1` | methods | registered from clean `7f6a36e`; target unopened | all frozen control criteria pass; numeric thresholds are immutable |
-| `gm-jvp-gemma-stage1-v1` | methods | licensed; not started | exact target gate |
+| `gm-jvp-gemma-stage1-v1` | methods | licensed; snapshot staged and runner prepared; not started | exact target gate |
 
 ## G1 decision table
 
@@ -205,15 +206,35 @@ vector product differ by `8.33e-17`. Central-secant errors over epsilon
 1.70e-8`, the expected approximately quadratic decrease. The implementation
 manifest states `finite_difference_exact_fallback: false`.
 
-These are methods goldens, not model evidence. No current-study OLMo or Gemma
-model result has been produced.
+These are methods goldens, not model evidence. No Gemma target result has been
+produced by them.
 
-The foundation inventory resolves the exact Gemma revision to two remote
-weight shards; zero are staged locally. The historical OLMo Drive cache has
-11 of 14 expected weight shards complete by content-address and size. Shards
-6, 9, and 14 remain broken/stale partials. The cache is explicitly marked
-not load-ready by itself. The isolated local staging pass filled those files
-and fully verified all 14 before the positive-control model can open.
+## Gemma staging and Stage-1 execution lock
+
+The historical OLMo Drive cache remains only 11/14 complete and is explicitly
+not load-ready. Its isolated 61 GB local repair was removed only after the
+complete calibration and positive-control outputs hash-verified; no DriveFS
+cache was touched. The pinned Gemma target was then staged from clean pushed
+commit `4f00d43`. Producer and independent verification both pass all 12 Hub
+files, both safetensor shards, sizes, LFS SHA-256 values, ordinary Git blob
+IDs, and the exact shard index. The staging manifest file SHA-256 is
+`5b8d26a91b5cdc74e7fbc982d89bbf6d661233ee3da81705d165ef31cf6e308a`;
+its canonical payload SHA-256 is
+`cfb98f55c3453319f19aedce51419445260b03355632d13c2402897ffbab4ec1`.
+It explicitly records that no target model was loaded and no response was
+created.
+
+The run-specific execution manifest binds those hashes to the byte-identical
+threshold file, passing positive-control artifact, four prompts, five target
+layers, two perturbation modes, four non-lens directions, and seven epsilons:
+40 cells and 1,120 rows. It predeclares
+`gm-p001-L52-single_position` as the one-cell infrastructure smoke and reuses
+that immutable cell in the full grid. Each launch rehashes the full local
+snapshot before model load; each cell retains raw response/JVP vectors and an
+atomic compatibility header. Frozen decisions separate low-SNR
+unmeasurability, smallest-secant tangent mismatch, epsilon-0.10 finite-radius
+mismatch, and transport passage. J-selected directions remain outside this
+core grid until their exact lens and token-target hashes are bound.
 
 ## Infrastructure incidents
 
@@ -227,7 +248,6 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Commit/publish the positive-control registry and firewall transition. Then
-remove only the scoped local OLMo cache, stage and fully hash the pinned Gemma
-snapshot on local NVMe, and run a one-cell target infrastructure smoke before
-the unchanged Stage 1 grid.
+Commit/publish the frozen Stage-1 execution manifest, runner, analysis, and
+tests. Then run and audit the predeclared late-layer smoke before resuming the
+unchanged full grid from that same clean pushed commit.

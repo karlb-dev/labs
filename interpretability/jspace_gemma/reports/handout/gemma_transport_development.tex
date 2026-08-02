@@ -38,7 +38,7 @@ The foundation and exact-JVP goldens pass. Both PyTorch autodiff backends hit
 the analytic derivative exactly; forward-mode, fallback, and an independently
 materialized reverse Jacobian-vector product agree within $8.3\times10^{-17}$
 on a nonlinear tiny attention/gated-MLP suffix. Central-secant error decreases
-quadratically with radius. No current-study model result is reported at this
+quadratically with radius. No Gemma target result is reported at this
 boundary. The exact OLMo snapshot is fully verified (26 files, 14 shards,
 64,476,964,249 bytes, zero failures), and the pre-result batch/delivery repair
 and paper-band convention are registered. All 56 control cells subsequently
@@ -50,5 +50,7 @@ and 0.996 at L60. The prepared target gate requires SNR 20, cosine at least
 0.98, forward relative error at most 0.20, and central relative error at most
 0.10 at the declared 0.10 residual-norm dose. All 32 late control anchors
 pass. The positive-control event and byte-identical threshold file are
-registered before any Gemma number; Stage 1 is licensed but has not started.
+registered before any Gemma number. The exact 12-file, two-shard Gemma
+snapshot is independently hash-verified and the 40-cell execution manifest is
+frozen; the target model remains unopened and Stage 1 has not started.
 \end{document}

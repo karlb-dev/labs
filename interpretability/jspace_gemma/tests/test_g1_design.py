@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 from jspace_gemma.experiments.gm_band_convention import mapped_band
+from jspace_gemma.manifests import file_sha256
 
 
 def test_g1_thresholds_are_registered_before_target_execution_is_allowed():
@@ -100,3 +101,49 @@ def test_primary_paper_band_maps_to_the_addendum_gemma_range():
         mapped[0] <= layer <= mapped[1]
         for layer in resolution["g6_candidate_layers_zero_indexed"]
     )
+
+
+def test_stage1_execution_manifest_binds_staging_and_frozen_inputs():
+    root = Path(__file__).resolve().parents[1]
+    execution = yaml.safe_load(
+        (root / "configs/gm_g1_stage1_execution.yaml").read_text()
+    )
+    assert execution["status"] == "READY_PRE_TARGET"
+    assert execution["evidence_id"] == "gm-jvp-gemma-stage1-v1"
+    assert execution["snapshot_manifest"] == {
+        "path": (
+            "/content/drive/MyDrive/interpret/special-lab-1/"
+            "gemma_transport_20260802/manifests/"
+            "gemma_target_local_snapshot_v1.json"
+        ),
+        "file_sha256": (
+            "5b8d26a91b5cdc74e7fbc982d89bbf6d661233ee3da81705d165ef31cf6e308a"
+        ),
+        "payload_sha256": (
+            "cfb98f55c3453319f19aedce51419445260b03355632d13c2402897ffbab4ec1"
+        ),
+        "remote_inventory_sha256": (
+            "357a1bed087996cb6e9e171ec02961a6430879b1204aee0b1830997ac62d80c6"
+        ),
+        "staging_code_commit": "4f00d43e0810b98dfe1c281d260548ac791a14ab",
+        "all_content_hashes_verified": True,
+        "weight_shards": 2,
+        "target_model_loaded_during_staging": False,
+        "target_response_created_during_staging": False,
+    }
+    frozen = execution["frozen_inputs"]
+    assert frozen["design_sha256"] == file_sha256(
+        root / "configs/gm_g1_design.yaml"
+    )
+    assert frozen["threshold_sha256"] == file_sha256(
+        root / "configs/gm_g1_thresholds_frozen.yaml"
+    )
+    assert frozen["prompt_bank_sha256"] == file_sha256(
+        root / "data/g1_prompts_v1.jsonl"
+    )
+    grid = execution["grid"]
+    assert grid["expected_cells"] == 40
+    assert grid["expected_rows_per_cell"] == 28
+    assert grid["expected_rows"] == 1120
+    assert grid["expected_clean_parity_rows"] == 20
+    assert execution["smoke"]["cell_id"] == "gm-p001-L52-single_position"

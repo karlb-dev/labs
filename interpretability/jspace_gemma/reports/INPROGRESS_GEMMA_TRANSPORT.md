@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 02:56 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 03:15 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -32,8 +32,10 @@ canonical Drive handoff at
   `7f6a36e19417b618cbdf3c81a6da6d9171a3739a`.
 - Positive-control registry/firewall/report commit:
   `36a3e61e2b17bb196662b6e8bf1c2d9635ef262f`.
-- Remote Gemma branch is synchronized through the positive-control boundary;
-  the guarded target-staging producer is now under pre-run validation.
+- Guarded Gemma target-staging commit:
+  `4f00d43e0810b98dfe1c281d260548ac791a14ab`.
+- Remote Gemma branch is synchronized through the guarded staging producer;
+  the Stage-1 execution manifest/runner is under pre-run validation.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -44,7 +46,7 @@ canonical Drive handoff at
 - Shared Part-2 conformance bootstrap: PASS.
 - No Gemma or OLMo model producer is running. The OLMo calibration and passing
   positive control are registered; no Gemma target has been opened.
-- The isolated package scaffold is committed. Its 35-test conformance suite
+- The isolated package scaffold is committed. Its 42-test conformance suite
   passes, including analytic, nonlinear tiny-transformer, and explicit Hugging
   Face Gemma/OLMo suffix/JVP tests plus a batch-shape/slot adversarial test.
 - OLMo local staging completed from clean pushed commit `42b34b1`. The
@@ -52,7 +54,8 @@ canonical Drive handoff at
   64,476,964,249 bytes, and zero failures. Its Drive manifest file SHA-256 is
   `fa620d543b8cc80d3545aee177343036b04a5a0de84b8e65c8dcfa15dec1776c`.
   The historical Drive cache remains only 11/14 complete and must never be
-  treated as load-ready by itself.
+  treated as load-ready by itself. The scoped local staging copy was removed
+  after the complete calibration and positive-control outputs hash-verified.
 - First foundation attempt at clean remote commit `11501b8` stopped before
   producing a foundation result: the governing TeX exists as a Git object at
   later shared commit `4ea7a9b`, not as a worktree file in the exact fork.
@@ -111,6 +114,16 @@ canonical Drive handoff at
   >=0.98, forward relative error <=0.20, and central relative error <=0.10
   with >=90% row passage. All 32 L56/L60 anchors pass. The curvature intercept
   ceiling is 0.30 and positive slope floor is 0.15.
+- The exact Gemma snapshot is fully staged from clean `4f00d43` at
+  `/content/hf_gemma_target/.../snapshots/842da379...`. Producer and independent
+  verification both pass all 12 files, both weight shards, LFS hashes, ordinary
+  Git blob IDs, sizes, and the safetensor index. Manifest file SHA-256:
+  `5b8d26a91b5cdc74e7fbc982d89bbf6d661233ee3da81705d165ef31cf6e308a`;
+  payload SHA-256:
+  `cfb98f55c3453319f19aedce51419445260b03355632d13c2402897ffbab4ec1`;
+  staging log SHA-256:
+  `f8fbe657d09c7d459b656c51335120428680d5300cb23fb7c96ea5355bf91072`.
+  Staging loaded no model and created no target response.
 
 ## Completed this VM
 
@@ -178,7 +191,15 @@ canonical Drive handoff at
     the frozen definition before any Gemma number.
 23. Reproduced all 14 control criteria from clean `7f6a36e`, registered the
     positive-control artifact, and enabled `gemma_execution_allowed` without
-    changing a numeric threshold. Gemma remains unstaged and unopened.
+    changing a numeric threshold. Gemma remained unstaged and unopened at that
+    boundary.
+24. Published the guarded target stager, removed only the 61 GB ephemeral OLMo
+    cache after durable-output verification, and staged/rehashed the exact
+    62.58 GB Gemma snapshot. No target model or response was opened.
+25. Froze a run-specific Stage-1 execution manifest for 40 cells/1,120 rows and
+    a predeclared L52 smoke cell; implemented resumable raw checkpoints,
+    immutable input headers, loaded-architecture audit, frozen decision rules,
+    curvature partitioning, prompt bootstrap, and strict aggregate validation.
 
 ## Immutable scientific guardrails
 
@@ -198,23 +219,22 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. Commit/pull/test/push the guarded Gemma staging producer.
-2. Confirm every OLMo artifact remains durable, remove only the scoped local
-   cache `/content/hf_olmo_control/`, and stage/hash the pinned Gemma snapshot
-   on local NVMe.
-3. Commit/publish the target staging/runner boundary, then run one Stage-1
-   infrastructure cell and the unchanged full Stage-1 grid from a clean
-   pushed commit.
-4. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
+1. Commit/pull/test/push the Stage-1 execution manifest, runner, analysis, and
+   tests.
+2. Run/audit the predeclared late-layer smoke, then run the unchanged full
+   grid from that same clean pushed commit.
+3. Commit the resulting registry/report boundary and route G2/G3/G5/G4/G6 by
+   the observed G1 branch, preserving G9 time.
 
 ## Recovery checks and next commands
 
 There is no live producer or GPU allocation. The 56-cell calibration and
 positive control are finalized and registered; do not rerun, delete, or
-rewrite them. Gemma execution is licensed, but its weights are not staged and
-no target number has been opened. The local OLMo snapshot remains at
-`/content/hf_olmo_control/` until its deliberate scoped removal; all evidence
-and reports are durable in Drive. Inspect:
+rewrite them. Gemma execution is licensed and its local snapshot is fully
+hash-verified, but the model has not been loaded and no target number has been
+opened. The ephemeral OLMo snapshot has been removed; all evidence and reports
+are durable in Drive. If this VM is reclaimed, rerun `gm_stage_gemma` from
+clean `4f00d43` before launching Stage 1. Inspect:
 
 ```bash
 git -C /content/labs status --short --branch
@@ -223,8 +243,8 @@ nvidia-smi
 find /content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802 \
   -maxdepth 3 -type f -printf '%TY-%Tm-%TdT%TH:%TM:%TSZ %p\n' | sort
 ps -eo pid,etimes,cmd | rg -i 'jspace_gemma|gm_exact|gemma-4|Olmo-3-32B'
-find /content/hf_olmo_control -maxdepth 4 -type f -o -type l 2>/dev/null | sort
-cat /content/gemma_transport_work/locks/gm_exact_transport_gate.lock 2>/dev/null
+find /content/hf_gemma_target -maxdepth 4 \( -type f -o -type l \) 2>/dev/null | sort
+cat /content/gemma_transport_work/locks/gm_gemma_stage1.lock 2>/dev/null
 ```
 
 If a later handoff records a lock or checkpoint, that later section supersedes
