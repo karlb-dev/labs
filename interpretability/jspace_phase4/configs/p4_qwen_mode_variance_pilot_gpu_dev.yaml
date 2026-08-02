@@ -137,6 +137,14 @@ review_contract:
   required_verdict: APPROVE_DEVELOPMENT_PILOT
   reviewer_must_be_independent: true
   require_one_family_cuda_smoke: true
+  required_boolean_findings:
+    - phase_ownership_approved
+    - cache_isolation_approved
+    - per_position_protection_alignment_approved
+    - exact_profile_control_approved
+    - parser_and_grading_approved
+    - immutable_resume_contract_approved
+    - development_only_boundary_approved
 
 outputs:
   figure_stem: p4f31_qwen_mode_variance_pilot

@@ -322,12 +322,28 @@ def independent_review_binding(
         "reviewed_producer_sha256": file_sha256(producer_path),
         "reviewed_mode_intervention_sha256": file_sha256(
             Path(__file__).resolve().parents[1] / "mode_intervention.py"),
+        "reviewed_gpu_test_sha256": file_sha256(
+            Path(__file__).resolve().parents[2]
+            / "tests/test_qwen_mode_variance_gpu.py"),
+        "reviewed_mode_test_sha256": file_sha256(
+            Path(__file__).resolve().parents[2]
+            / "tests/test_mode_intervention.py"),
         "verdict": specification["required_verdict"],
         "reviewer_independent": True,
+        "intervention_outcome_opened": False,
+        "untouched_family_opened": False,
         "confirmatory_or_replication_outcome_opened": False,
     }
+    expected.update({
+        str(field): True
+        for field in specification["required_boolean_findings"]
+    })
     if any(review.get(key) != value for key, value in expected.items()):
         raise PilotExecutionBlocked("independent GPU review contract drift")
+    if not str(review.get("reviewer_identity", "")).strip():
+        raise PilotExecutionBlocked("independent GPU review lacks identity")
+    if not str(review.get("review_completed_utc", "")).endswith("Z"):
+        raise PilotExecutionBlocked("independent GPU review lacks UTC stamp")
     if envelope.get("provenance", {}).get("dirty_tree") is not False:
         raise PilotExecutionBlocked("independent review came from a dirty tree")
     return {
