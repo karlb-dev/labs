@@ -506,12 +506,25 @@ bytes, SHA-256 `1bb73432...1d9c`; it records all ten hashes and the imported
 Bank-S table hash `3a0e7a96...420f`. Visual inspection found no clipped labels
 or incorrect temporal placement of the Instruct sibling.
 
-The plan-mandated official checkpoint inventory is the next methods boundary.
-An outcome-blind producer now checks exact official commits, declared ancestry,
-the 32B tensor contract, within-path tokenizer identity, weight-shard LFS
+The plan-mandated official checkpoint inventory has opened its first methods
+result. `ol-checkpoint-inventory-v1` checks eight exact official commits,
+declared ancestry, the 32B tensor contract, tokenizer files, weight-shard LFS
 availability, and released post-training refs without downloading weights.
-Four unit tests cover strict contract and no-substitution routing. No inventory
-finding or intermediate-model outcome is registered at this source checkpoint.
+All architecture and weight-availability checks pass. Its conservative
+byte-identity tokenizer predicate routes H5 to
+`stated-unresolvable-at-32b`, because the official Think-SFT tokenizer JSON has
+a different file hash from Base/DPO/final Think.
+
+That v1 route is not yet the final inventory interpretation. A read-only audit
+shows that Base, Think-SFT, Think-DPO, 3.0 Think, and 3.1 Think have the same
+100,278 token-to-ID mapping. Think-SFT serializes the same 100,000 BPE merges
+as strings rather than two-element arrays, and produces identical token IDs on
+all 200 ordered frozen fitting texts plus seven fixed edge cases. BOS and chat
+template metadata differ and must remain explicit, but those interface fields
+do not alter the audited content encodings. A semantic-compatibility v2 will be
+registered under a new evidence ID and will explicitly supersede, never
+overwrite, v1. The v1 JSON is SHA-256 `5e9f80ea...6d963`; its Markdown report
+is SHA-256 `720b9efc...0b53`. No stage-model behavior was opened.
 
 ## O4: development mechanism grid
 
@@ -573,6 +586,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-geometry-joint-dev-v1` | Frozen router returns `dictionary-formation-pattern`: coarse operator continuity passes, token continuity fails, sparse-selection divergence is flagged, Base-to-3.0 mapped movement 0.32556 greatly exceeds 3.0-to-3.1 movement 0.00604; Instruct late-shift flag false; no causal outcome opened | Source commit `5b1fe07`; JSON `c09d8e73...`; layers `8692836d...`; selection `c2826b14...`; readout `93fd2108...` |
 | 2026-08-02 | `ol-geometry-figures-dev-v1` | Registered five PNG/PDF views from registered tables only; Figure 4 uses clearly labeled imported Bank-S context and preserves the Bank-W block; visual inspection passes | Source commit `cd042fc`; manifest `1bb73432...`; ten registered figure files |
 | 2026-08-02 | Checkpoint-inventory pre-evidence implementation | Exact-revision official-Hub metadata producer, architecture/tokenizer/weight-manifest checks, no-substitution router, and four tests prepared; no availability or model outcome opened | OLMo namespace only; 43 package tests pass |
+| 2026-08-02 | `ol-checkpoint-inventory-v1` | Eight exact official revisions and their 32B weight manifests verified; conservative byte-identity tokenizer rule returned `no-provenance-complete-32b-intermediate-pair`; subsequent read-only audit found Think-SFT content tokenization semantically identical, so a versioned v2 correction is required | Source commit `4bbdc74`; JSON `5e9f80ea...`; Markdown `720b9efc...`; no model outcome |
 
 ## Current limitations and claim boundary
 
