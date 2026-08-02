@@ -1,9 +1,9 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T00:27:29Z
+Last updated: 2026-08-02T00:30:51Z
 
-Status: active, pre-foundation. No native OLMo-lineage model result has yet
-been registered. This report will be updated after every material gate or
+Status: active, foundation complete. No native OLMo-lineage model result has
+yet been registered. This report will be updated after every material gate or
 analysis and is intentionally separate from the Phase 4 and Gemma reports.
 
 ## Executive status
@@ -47,6 +47,20 @@ boundary. Documentation ancestry after the accepted Phase 3 state is recorded
 but later Phase 4 evidence is imported only through named, live, hash-pinned
 development/methods events. No confirmatory or replication intervention
 outcome is imported or opened.
+
+`ol-foundation-v1` was created from clean commit `dc5f62336ac83481f09d`
+at 2026-08-02T00:30:35Z. Its four immutable Drive outputs verify by SHA-256:
+
+- environment lock: `728996e6760d...e79e9f54`;
+- import manifest: `0988f5fd8db4...ce1a4dec`;
+- conformance manifest: `58e4ce7828ff...e7bf9285`;
+- foundation manifest: `0bd46f0c915e...d770a064e`.
+
+The import gate resolved 33 live named source events, 13 direct artifacts,
+three code dependencies, and six governance documents. Fourteen package tests
+passed and same-process CUDA validation succeeded on the RTX PRO 6000
+Blackwell GPU. The mutable recovery mirrors are indexed separately and are not
+immutable evidence outputs.
 
 ## Model graph
 
@@ -175,6 +189,7 @@ operative plan authorizes expansion.
 | 2026-08-01 | Branch isolation | Created and pushed `interp_jspace_olmo_lineage` at `4ea7a9b`; scientific boundary remains `3b04173` | GitHub |
 | 2026-08-02 | Pre-foundation scaffold | Package, prospective predictions, import pins, recovery plan, and reports committed at `e01959e`; 13 tests passed | GitHub |
 | 2026-08-02 | Foundation refusal | Import gate detected stale preregistration hash after whitespace normalization; no evidence/output file was created; hash corrected prospectively | Git worktree; empty OLMo Drive directories |
+| 2026-08-02 | `ol-foundation-v1` | Frozen import boundary, environment, isolation, preregistration, and recovery contract; 14 tests and CUDA gate passed | Git commit `dc5f623`; four immutable Drive manifests |
 
 ## Current limitations and claim boundary
 
