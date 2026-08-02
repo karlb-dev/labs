@@ -62,6 +62,14 @@ git pull --rebase origin interp_jspace_olmo_lineage
 bash interpretability/jspace_olmo_lineage/repro.sh
 ```
 
+O2 and later lens-backed work also requires the exact reference engine:
+
+```bash
+git clone https://github.com/anthropics/jacobian-lens.git /tmp/jacobian-lens
+git -C /tmp/jacobian-lens checkout 581d398613e5602a5af361e1c34d3a92ea82ba8e
+python -m pip install -q -e /tmp/jacobian-lens
+```
+
 If the repository is absent, clone the same repository into `/content/labs`,
 fetch all branches, and switch to the branch above. Do not recreate the
 package from a mainline snapshot if the OLMo branch exists.
@@ -128,9 +136,16 @@ the registry event once registered. Resumable producers validate the input
 manifest before accepting prior state. Never combine state from different
 model revisions, configs, branches, or code commits.
 
+O2 model progress is checkpointed after each completed layer as
+`metrics/<slug>/capacity/<evidence-id>/capacity_layer_<layer>.npz` in the OLMo
+Drive root. An unregistered layer file is resumable state, not citable
+evidence; the runner independently reconstructs its point estimates and
+validates its input-manifest hash before reuse.
+
 ## Weight staging and rotation
 
-The pinned revisions are in `configs/ol_foundation_v1.yaml`. OLMo-3.1 Think,
+The O2 model and lens revisions are in `configs/ol_capacity_v1.yaml` (the
+foundation retains the broader model inventory). OLMo-3.1 Think,
 OLMo-3.1 Instruct, and OLMo-3 Think snapshots were present in the Drive cache
 when this track began. Base was incomplete. Prefer a direct exact-revision Hub
 download to local NVMe when authenticated and healthy; the Instruct transfer
@@ -167,7 +182,8 @@ The mandatory spine is O1 -> O2 -> O4:
   then an immediate early Phase 4 import bundle.
 - O2: symmetric Base/3.0 Think/3.1 Think/3.1 Instruct capacity table on the
   frozen 120-prompt corpus with the corrected estimator.
-- O3: audit provenance and comparability of all four lenses before any refit.
+- O3: completed provenance/comparability audit; all six pairs are exact same
+  recipe/corpus and the registered decision is to use the existing lenses.
 - O4: Bank-W development load-by-derivation-by-redundancy intervention grid,
   using the frozen predictions and matched controls. Version 1 is currently
   gated out by the failed O1 common-support test; do not run it unless a new
