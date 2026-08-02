@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T00:47:57Z
+Last updated: 2026-08-02T00:49:38Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -20,7 +20,10 @@ live in Drive under `olmo_lineage_20260801`.
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Registry:
   `interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`.
-- Active model job: none.
+- Active model job: OLMo-3.1 Think O1 launch is the immediate next command
+  from the clean published tree. On restart, use the process/log/state checks
+  below to distinguish staging, scoring, completion, or a not-yet-started
+  launch.
 - Last registered native evidence: `ol-bank-w-capability-protocol-v1`
   (methods), created at 2026-08-02T00:47:49Z from clean commit `5e719c6`.
 - No OLMo Bank-W capability or intervention outcome has been opened on this
@@ -47,8 +50,9 @@ state implementation directly, checks their installed module paths, adds a
 The registered protocol output is
 `manifests/ol_bank_w_capability_protocol_v1.json`, SHA-256
 `95db44f86f7d...c7dbda8dedc`. No model baseline or intervention outcome has
-been opened. The next action after publishing this registry event is to stage
-and run OLMo-3.1 Think.
+been opened. The protocol registry event is published at Git commit
+`085a97bc2db7e06aa3049e6cb908d93ef1bfaa43`. The next action is to stage and
+run OLMo-3.1 Think.
 
 ## Exact next actions
 
@@ -82,8 +86,12 @@ The script stages the exact Drive snapshot onto local NVMe, checkpoints every
 eight rows to Drive, and pulls/rebases before automatically publishing the
 registry event. Its log is
 `olmo_lineage_20260801/logs/bank_w_capability_olmo31-think_20260802.log` and
-its watchdog is in the same directory. Do not start the 32B run from a dirty
-tree.
+its watchdog is in the same directory. Its resumable state is
+`metrics/olmo31-think/bank_w_capability/ol-bank-w-capability-olmo31-think-dev-v1/state.json`
+under the OLMo Drive root. If the log has no `RUN_START` and no process exists,
+rerun the exact shell command above. If state exists, the same command verifies
+the input header and resumes missing rows. Do not start the 32B run from a
+dirty tree.
 
 ## Hardware and weight state at last update
 
