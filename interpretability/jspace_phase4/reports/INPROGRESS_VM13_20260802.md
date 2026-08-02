@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 09:08 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 09:27 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -21,13 +21,13 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router. Atomic checkpoints through n=722 exist as a valid exact pair. Its
+  router. Atomic checkpoints through n=728 exist as a valid exact pair. Its
   first n=716 DriveFS atomic copy failed for local-cache exhaustion; the pair
   was recovered and the unchanged producer subsequently banked n=719 and
-  n=722. Cloud upload remains rate-limited. A temporary recovery-directory
+  n=728. Cloud upload remains rate-limited. A temporary recovery-directory
   bind now prevents redundant 6.6-GB DriveFS cache generations while keeping
   the producer's verified-temporary-copy/atomic-replace path unchanged. The
-  wrapper is live in chunk 722:725. No partial checkpoint is registered
+  wrapper is live in chunk 728:731. No partial checkpoint is registered
   evidence.
 
 ## VM13 live continuation
@@ -42,15 +42,15 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 722 / 1000 |
+| prompts banked | 728 / 1000 |
 | durability | exact local + DriveFS-cache pair; cloud upload pending |
-| checkpoint SHA-256 | `47953edcbe2823605293707537b3b363470aebcb069adeef23fcbaf068d5f92b` |
-| checkpoint-state SHA-256 | `79b01ecf84b50105652f488d1ae6fa9cb544f4b5665bf142cb2b1aa08a1411a9` |
+| checkpoint SHA-256 | `8e461f82e6f7f0ce92172610b7dc933b110dbd433ab27d4a786135909cab71bf` |
+| checkpoint-state SHA-256 | `e01e4c2f02288d28110c3aa3b08fdbb193b21d91e3e7ee5743d08a7ef6e8fd30` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| checkpoint sync UTC | 2026-08-02 09:02:22 UTC |
+| checkpoint sync UTC | 2026-08-02 09:26:07 UTC |
 | peak allocated VRAM | 62.846 GB |
-| process state | live; active atomic chunk 722:725; unified session 83477 |
+| process state | live; active atomic chunk 728:731; unified session 83477 |
 
 Prompt 660 is a retained finite heavy-tail row at 113.855, below the earlier
 prompt-323 maximum 173.345; no outcome-dependent trimming or refit occurred.
@@ -97,9 +97,11 @@ bytes nor estimator/config/runtime contracts. The pre-bind Drive recovery
 directory, including n=195/n=198 contract-check files, remains preserved and
 hidden beneath the mount. The unchanged wrapper restarted at clean commit
 `4ea7a9b`, printed `recovered_next_idx: 722` and `resuming from checkpoint:
-722/725 prompts processed`, and is live. Remove the bind after A1000, republish
-the final exact recovery pair, and require a fresh cloud remount/rehash before
-making any cloud-durability claim.
+722/725 prompts processed`, and is live. Bound syncs at n=725 and n=728 both
+completed and resumed normally without growing another DriveFS checkpoint
+generation. Remove the bind after A1000, republish the final exact recovery
+pair, and require a fresh cloud remount/rehash before making any cloud-
+durability claim.
 
 Prospective A1000 successor preparation is isolated from the live clean
 worktree on branch `codex/phase4-a1000-prep-20260802`. Before any A1000
@@ -183,12 +185,25 @@ registered at `a28cdd5` from clean producer `7148d01`: 25 origins / 24 live
 events / 101 live outputs, 58 tests, and one 13-output methods release event.
 No scientific cell or authorization was added. The complete side branch is
 ancestry-merged into remote main at `65a7875`, with integration/cleanup records
-through `aa6663a`. Its 06:42 integration report has propagated to this VM's
-Drive mount, but the registered terminal release directory still exposes only
-the early bundle and not the thirteen final files, including
-`IMPORT_BUNDLE_PHASE4.json`. Treat that as unresolved release-artifact
-durability. Do not normalize or admit the final release until all thirteen
-paths reappear or are recovered byte-exactly and rehash against the event.
+through `aa6663a`.
+
+This VM initially found all thirteen terminal release files absent from cloud.
+The only two missing pre-release live outputs were the bounded O5 decision
+pair. They were deterministically rebuilt at original clean commit `843eabd`
+and accepted only after matching registered hashes `d31d23e...4499` and
+`9e3fbb45...675a` byte-for-byte, restoring the 23-event/88-output prefix. The
+terminal producer was then replayed into isolated local staging at clean
+commit `7148d01` and its original generation second
+`2026-08-02T06:06:56Z`. The release environment was recovered exactly from
+the registered foundation lock plus `jlens==0.1.0` and the recorded TeX
+toolchain; all thirteen staged files matched the registered event before any
+publication. They were atomically restored to their registered Drive paths,
+and the ancestry-merged terminal verifier now passes 24 live events / 101
+outputs with exact registry prefix `db3fe202...e80a`. Exact local recovery
+staging remains at `/content/olmo_terminal_recovery_stage_20260802/final_exact`.
+Because Drive uploads are still rate-limited, call this local/DriveFS-cache
+recovery, not fresh cloud durability. Mainline normalization/admission remains
+queued until the Qwen A1000 branch resolves.
 
 The same OLMo branch registered semantic checkpoint inventory v2 at `2afb010`:
 inventory v1 remains immutable but is explicitly superseded after identical
