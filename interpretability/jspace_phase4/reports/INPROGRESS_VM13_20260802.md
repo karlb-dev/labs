@@ -1,6 +1,6 @@
 # LIVE — Phase 4.3 continuation, VM13
 
-Last updated: 2026-08-02 09:35 UTC. This is the canonical dynamic handoff.
+Last updated: 2026-08-02 09:44 UTC. This is the canonical dynamic handoff.
 Phase 4 remains **development-only**. Never open confirmatory or replication
 intervention outcomes, and never self-sign independent-review or PI fields.
 
@@ -21,13 +21,13 @@ intervention outcomes, and never self-sign independent-review or PI fields.
 - Phase 4 Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731`.
 - A1000 resumed from the exact n=554 handoff checkpoint under the frozen
-  router. Atomic checkpoints through n=731 exist as a valid exact pair. Its
+  router. Atomic checkpoints through n=734 exist as a valid exact pair. Its
   first n=716 DriveFS atomic copy failed for local-cache exhaustion; the pair
   was recovered and the unchanged producer subsequently banked n=719 and
-  n=731. Cloud upload remains rate-limited. A temporary recovery-directory
+  n=734. Cloud upload remains rate-limited. A temporary recovery-directory
   bind now prevents redundant 6.6-GB DriveFS cache generations while keeping
   the producer's verified-temporary-copy/atomic-replace path unchanged. The
-  wrapper is live in chunk 731:734. No partial checkpoint is registered
+  wrapper is live in chunk 734:737. No partial checkpoint is registered
   evidence.
 
 ## VM13 live continuation
@@ -42,15 +42,15 @@ Newest durable resumed boundary:
 
 | field | value |
 |---|---|
-| prompts banked | 731 / 1000 |
+| prompts banked | 734 / 1000 |
 | durability | exact local + DriveFS-cache pair; cloud upload pending |
-| checkpoint SHA-256 | `db950afc474bdb161184212423fe16526b2c512b1ed00f28a6d95d2bf0f71ad2` |
-| checkpoint-state SHA-256 | `cf00ae4f57f8bd0d9ba64ac61f078d660f5a704d8c0c8d08aa75af44132d4808` |
+| checkpoint SHA-256 | `f9d069ef61d855e2b16f4f69920085eeb7089f1c2e5cdcf2a581a5289d812017` |
+| checkpoint-state SHA-256 | `241b8c71214b39baf07ee356393c3caaa7fe7c623c6131d8b3302ff310c7155f` |
 | checkpoint bytes | 6,606,047,399 |
 | fit contract | `bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00` |
-| checkpoint sync UTC | 2026-08-02 09:34:57 UTC |
+| checkpoint sync UTC | 2026-08-02 09:43:45 UTC |
 | peak allocated VRAM | 62.846 GB |
-| process state | live; active atomic chunk 731:734; unified session 83477 |
+| process state | live; active atomic chunk 734:737; unified session 83477 |
 
 Prompt 660 is a retained finite heavy-tail row at 113.855, below the earlier
 prompt-323 maximum 173.345; no outcome-dependent trimming or refit occurred.
@@ -97,7 +97,7 @@ bytes nor estimator/config/runtime contracts. The pre-bind Drive recovery
 directory, including n=195/n=198 contract-check files, remains preserved and
 hidden beneath the mount. The unchanged wrapper restarted at clean commit
 `4ea7a9b`, printed `recovered_next_idx: 722` and `resuming from checkpoint:
-722/725 prompts processed`, and is live. Bound syncs through n=731 completed
+722/725 prompts processed`, and is live. Bound syncs through n=734 completed
 and resumed normally without growing another DriveFS checkpoint generation.
 Remove the bind after A1000, republish the final exact recovery
 pair, and require a fresh cloud remount/rehash before making any cloud-
@@ -138,8 +138,8 @@ status on known deficits, unreachable commits, namespace leakage, or
 unreviewed temporary/recovery paths. The whole Phase-4 suite passes **262
 tests**.
 
-The combined OLMo-lineage and Phase-4 suites pass **320 tests** with one
-intentional skip after that ancestry merge. The OLMo Bank-W compatibility
+The combined OLMo-lineage and Phase-4 suites pass **323 tests** after the
+terminal import normalization. The OLMo Bank-W compatibility
 reader now resolves the exact registered Phase-4 registry byte prefix while
 accepting only valid JSONL appended after it. The frozen side config and its
 registered hash are unchanged; a regression test proves mutation within the
@@ -211,8 +211,11 @@ and the ancestry-merged terminal verifier now passes 24 live events / 101
 outputs with exact registry prefix `db3fe202...e80a`. Exact local recovery
 staging remains at `/content/olmo_terminal_recovery_stage_20260802/final_exact`.
 Because Drive uploads are still rate-limited, call this local/DriveFS-cache
-recovery, not fresh cloud durability. Mainline normalization/admission remains
-queued until the Qwen A1000 branch resolves.
+recovery, not fresh cloud durability. Preparation commit `67c0637` now carries
+the strict terminal envelope and a fresh saved validation over exactly one
+methods event and thirteen outputs; the source-native and normalized bundle
+SHA-256 values are `a2486ec5...a2a` and `be1870d0...a09`. Mainline admission
+remains queued until the Qwen A1000 branch resolves.
 
 The same OLMo branch registered semantic checkpoint inventory v2 at `2afb010`:
 inventory v1 remains immutable but is explicitly superseded after identical
