@@ -376,6 +376,29 @@ analyses are authorized, while intervention outcomes remain closed. The
 immutable JSON is SHA-256 `0912d223...81105` and the Markdown companion is
 SHA-256 `9f6c8478...5f89`.
 
+The prospective geometry implementation is now prepared. Before any new O3
+operator outcome, `ol-geometry-protocol-v1` will freeze a deterministic 1,024
+row stable common-vocabulary sample, complete Bank F/S/W task-token strata,
+and the exhaustive union of every token selected by the registered O2
+own-centered prefix at its per-position crossing. The operator series covers
+all 21 fitted layers and all six unordered checkpoint pairs. It reports raw,
+identity-separated, and trace-projection-separated operator comparisons;
+random transport probes; a randomized leading singular spectrum with an
+explicit stable-rank estimand; mapped-row CKA/cosines/neighborhood overlap;
+unembedding and final-norm movement; and the complete selected-ID/RBO/span
+geometry at layers 24/32/40. Figures are a separate evidence boundary and are
+rendered only from registered tables.
+
+The selection-margin audit has an explicit data boundary. The O2 sufficient
+statistics recover the full chosen prefixes, crossing occupancy, and the
+J-marginal-gain minus random-median threshold margin, but not the candidate
+correlation scores for the kth and k+1 atoms. The latter therefore remains
+`not-estimable` until a compatible replay; it is not silently replaced by the
+threshold margin. Protected-span overlap is also unavailable from O2, and
+core-versus-fringe causal dose remains blocked by the failed O1 service gate.
+This preserves compatibility with the concurrent Phase 4.3 machinery without
+reading its in-flight outcomes or coupling the namespaces.
+
 ## O4: development mechanism grid
 
 The primary arm contrast is
@@ -427,6 +450,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-capacity-olmo31-think-dev-v1` | 3.1 Think completed at layers 24/32/40; own-frame centered excess +0.0625/+0.3275/+0.5192 pp, occupancy 2/2/2; Base-common sensitivity also recorded; no censoring, solver increases, or intervention opened | Source commit `7baaf64`; result `f6af4791...`; layer checkpoints `1ac1e445...`, `ceb2c9d2...`, `9d69d40b...` |
 | 2026-08-02 | `ol-capacity-olmo31-instruct-dev-v1` | Instruct sibling completed at layers 24/32/40; own-frame centered excess -0.0157/+0.2615/+0.4716 pp, occupancy 2/2/2; Base-common sensitivity also recorded; no censoring, solver increases, or intervention opened | Source commit `9f213f6`; result `712ccd18...`; layer checkpoints `31af395a...`, `1bbd2ec0...`, `eaa08327...` |
 | 2026-08-02 | `ol-capacity-joint-dev-v1` | Paired Base-to-3.0 Think own-frame equal-layer difference +0.0154 pp, 90% CI [-0.0121, +0.0434], occupancy difference 0; all primary layers stable, no positive material layer; verdict broadly conserved capacity/recruitment-consistent; Instruct retained as sibling | Source commit `cbc7ab3`; JSON `cb35a22a...`; Parquet `b3ad02e9...`; paired bootstrap `c13cebed...` |
+| 2026-08-02 | O3 geometry pre-evidence implementation | Outcome-blind geometry protocol, exact-revision two-shard readout extraction, all-layer operator/token aggregate, exhaustive O2 selection postprocessing, explicit unavailable-margin fields, and registered-table-only five-figure producer; no new O3 outcome opened | OLMo branch source checkpoint pending publication; 39 tests pass |
 
 ## Current limitations and claim boundary
 
