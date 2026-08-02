@@ -18,6 +18,144 @@ Read the fuller live ledger at:
 /content/labs/interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 ```
 
+## VM13 delta — 2026-08-02 20:22 UTC
+
+The operational n=554 restart below succeeded under the unchanged frozen
+producer. A1000 is live; the newest valid local atomic boundary is n=950,
+checkpoint SHA-256
+`1c32a45106648830ec5b89a853fcb14182d92d552f05725b8d7507281ec9dc01`,
+checkpoint-state SHA-256
+`40b0e553d7052922f2fb9b0e9a0c99ebaddc4fa247ba9761fe215b03560c5ce9`,
+and the unchanged wrapper is live in chunk 950:953 under unified session
+83477. It reverified every model shard, CUDA/runtime, and all 48 fused modules,
+then printed `recovered_next_idx: 722` and `resuming from checkpoint: 722/725
+prompts processed`. A new raw-log audit corrects the earlier description of
+prompt 323 as the overall maximum. Among archived rows through n=950, prompts
+233, 323, 612, 616, and 660 are retained finite extremes at 189.182, 173.345,
+151.626, 231.101, and 113.855, respectively; no trimming or refit occurred.
+The current VM transcript recovers the n=555--716 Drive-log gap, while raw
+terminal rows 1--180 from the prior VM are unavailable here. Record raw-log
+coverage separately from the checkpoint's equal `n_done`/`next_idx` proof of
+accepted prompts. Keep the frozen prompt-323 audit unchanged and route any
+broader retained-top-row influence audit to Phase 4.4. Use the canonical
+dynamic handoff above for the newest checkpoint before any restart.
+
+The expected VM reclaim is approximately 2026-08-02 23:38 UTC. At the
+observed rate, the A1000 checkpoint should land near 22:50 UTC and
+final serialization, registration, backup, integration, and push near
+22:55--23:05 UTC. Do not launch new long-running compute after 23:25 UTC. If
+the full postfit queue lacks a safe margin, stop after its registered and
+locally backed-up structural stage with `JSPACE4_STOP_AFTER=structural`.
+
+The first n=716 Drive atomic copy failed with `ENOSPC` after computation but
+before publishing its header. The fitter exited cleanly and the complete local
+pair retained the hashes above. A storage audit found 130 GiB of obsolete
+DriveFS checkpoint cache; the stale profile is quarantined intact at
+`/content/drivefs_stale_metadata_20260802T0832Z`, its recreatable content cache
+was evicted, and a fresh profile republished the exact n=716 pair. A read-only
+cloud audit found an inconsistent older pair (n=692 header, n=683 payload), and
+Google currently rejects the correct n=716 uploads with
+`403 userRateLimitExceeded`. Treat n=716 as local/DriveFS-cache durable but not
+cloud-durable until a fresh read-only/remount rehash succeeds. Do not delete
+the local pair or quarantine.
+
+After recovery, finite prompts through n=722 banked under the unchanged fit
+contract. At n=722, both recovery checkpoint paths hashed to the value above,
+the headers were byte-identical, and the progress ledger held 164 records. The
+producer was interrupted only after that atomic sync returned and before
+prompt 723. Because Google remained rate-limited, the exact local fit-contract
+directory was then temporarily bind-mounted over only the Drive recovery
+directory. Both visible checkpoint paths resolve to device/inode `55:7349719`;
+the pre-bind Drive directory and its older contract-check files remain intact
+underneath. This keeps the producer's verified temporary copy and atomic
+replace behavior but prevents a new 6.6-GB DriveFS cache generation every
+three prompts. Bound syncs through n=950 completed and resumed normally without
+another DriveFS checkpoint generation. Remove the bind after A1000,
+republish the final exact pair, and prove cloud durability only by a fresh
+remount and rehash.
+
+The isolated successor-preparation branch is
+`codex/phase4-a1000-prep-20260802`. It contains the prospective A1000 queue,
+selection-margin and prompt-323 audits, canonical decision producer, P4-P2
+and Bank-B methods decisions, durability tooling, Bank-W v3/power work, and
+the ancestry-preserving OLMo capability merge. The strict OLMo import envelope
+validates 5 source events and 11 outputs. Both OLMo models pass independently,
+but the three-model common support is 16/20, so P4-P3 remains blocked and no
+Bank-W intervention is authorized. Native `ol-*`/`gm-*` events remain outside
+the Phase 4 registry.
+
+The preparation branch now ancestry-contains terminal remote main `aa6663a`
+through two-parent merge `b0f74d6`, with append-only source-registry
+integration maintenance at `82163fb`. The combined OLMo/Phase-4 suite passes
+338 tests after terminal import normalization, admission-queue checks, and
+durability-deficit record binding. The frozen OLMo compatibility config is
+unchanged: its reader verifies the exact registered Phase-4 registry prefix
+and permits only valid JSONL appended after that byte boundary.
+
+The preparation branch is clean and pushed; its full combined Phase-4/OLMo
+suite passes 338 tests. The ancestry-merged terminal Gemma suite adds 48
+passing tests, for 386 total; its one existing Torch FX warning is unchanged.
+The branch now includes the complete prospective one-shot
+Bank-B answer-orthogonal producer and external-review instructions. That shot
+has not run: exact A1000/canonical-decision binding, outcome-blind geometry,
+and separately registered independent review are hard prerequisites.
+It also includes the prospective exact/Monte-Carlo P4-P2 sign-flip power
+ruler, which masks the pilot mean and cannot authorize an untouched split,
+candidate preregistration 0.11, the refreshed development report, and an
+exact-hash-gated A120 capacity recovery tool. Its early OLMo import now pins
+the exact six-event source-registry boundary at `d76e937` in Git and includes
+that snapshot in import durability, so concurrent later `ol-*` appends cannot
+invalidate the strict 5-event/11-output validation. OLMo O2 and O3 geometry/figures
+are complete through `3b8edf0`; the descriptive verdict is a dictionary-
+formation pattern, while the failed O1 service gate still forbids Bank-W
+intervention. Semantic checkpoint inventory v2 is registered, and the bounded
+O5 decision is `not-executed-no-proxy-substitution` because no crossed causal
+estimand is identifiable. Methods event `ol-independent-reconstruction-v1`
+registered at `471a48f`: its thirteen outputs reproduce O1/O2/O3 summaries,
+five PNGs byte-for-byte, fourteen weight-shard hashes, and one frozen eight-
+score Think row with zero drift. The 61-GiB snapshot was deleted only after
+Git and 88-output recovery verification. Claims/state are durable through
+`ad0041b`; the 13-page paper at `f2d4d37` passed an independent render audit.
+The terminal OLMo handoff registered at `a28cdd5` from clean producer
+`7148d01`: 25 origins / 24 live events / 101 live outputs and one 13-output
+methods event. The complete side branch is ancestry-merged into remote main
+through `65a7875` / `aa6663a`. This VM recovered the two missing pre-release
+O5 decision files at original clean commit `843eabd`, with both registered
+hashes exact, then reproduced all thirteen terminal outputs in isolated local
+staging at the original release second and environment. Every file matched its
+registered hash before atomic restoration. The merged terminal verifier now
+passes 24 live events / 101 outputs and registry prefix `db3fe202...e80a`.
+Preserve `/content/olmo_terminal_recovery_stage_20260802/final_exact` until a
+fresh cloud remount proves durability; current DriveFS presence is cache-local
+while uploads are rate-limited. Preparation commit `67c0637` carries a strict
+normalized terminal envelope and fresh saved validation over exactly one
+methods event and thirteen outputs; the source-native and normalized bundle
+SHA-256 values are `a2486ec5...a2a` and `be1870d0...a09`. Admit it only after
+A1000 resolves.
+Gemma Stage 1 reports
+local tangent mismatch at all frozen layers; its precommitted exact-backend
+parity diagnostic failed the all-slot relative-error gate (0.002458 > 1e-5),
+so G2/G3 stopped. The terminal methods-blocker branch is ancestry-merged to
+mainline at `c9021e5`, and the strict Phase-4 envelope validates 5 events / 21
+outputs at preparation commit `65bfebe`; registration remains queued until
+after A1000. No OLMo intermediate-model behavior or proxy O5 outcome has been
+opened.
+Both normalized side imports now have passing disposable clean-worktree
+registration rehearsals. OLMo registers 14 durability outputs and Gemma 24;
+tracked source-worktree files are rehashed and recorded portably, while Drive
+artifacts remain absolute.
+The resume-safe post-A1000 queue at `b912e37` requires all six registered Qwen
+boundary events, refuses a dirty/non-mainline tree and native `ol-*`/`gm-*`
+leakage, pulls before every push, and banks early OLMo capability, the 16/20
+joint replay, terminal Gemma, and terminal OLMo in that order. It preserves
+every registered output set locally and cannot run a pilot or intervention.
+Preparation commit `3737b23` also makes the A1000 post-fit queue preserve the
+registered fit lens, result, and manifest before its first comparison.
+The required sixth paper-conclusion sentence, candidate freeze-gate ledger,
+and methods decision record are also assembled with unresolved fields still
+explicitly pending. The pre-freeze inventory generator is prepared and will
+remain red on any known durability deficit.
+
 ## Current state
 
 - Repository: `/content/labs`
@@ -25,9 +163,10 @@ Read the fuller live ledger at:
 - Last registered compute commit: `f73614d6288179e73a496283dcd10090f76f2815`
 - Registry: 63 append-only events
 - Tests after merge: 153 passed
-- A1000 was intentionally paused at the clean n=554 checkpoint for a VM
-  handoff. No fitter/router process, lock inode holder, or GPU compute process
-  remained after the pause audit.
+- A1000 was intentionally paused at the clean n=554 checkpoint for the VM12
+  handoff and has now resumed under the frozen wrapper. The historical pause
+  section below records that restart boundary; the canonical dynamic handoff
+  contains the newest live checkpoint.
 
 The CPU preparation branch is merged. The A500 event, four post-fit events,
 and their commits are pushed. All registered post-fit outputs have verified
@@ -48,9 +187,14 @@ lens SHA-256:
 checkpoint SHA-256:
 f1f5c3eebca93bd0f8d00cbd8794848df569bc67be475d3ab4ef319d8aaa61b1
 
-content-addressed lens:
-/content/sl4_work/inputs/84404956fb71a84f5af7fa22c34a8f07761777d048b3db314b1330037e4168a8/qwen36-27b_jlens_drawA_n0500.pt
+current VM13 local lens backup:
+/content/sl4_work/postfit_registered_backups/p4-qwen-lens-fit-drawA-n500-dev-v1/00_qwen36-27b_jlens_drawA_n0500.pt
 ```
+
+The two older VM12 content-addressed paths did not carry onto VM13. The A500
+event and all four post-A500 events were rehashed from their registered paths
+and atomically recopied locally; five manifests now cover 35 exact outputs /
+3,462,433,852 bytes.
 
 All prompts 251--500 logged finite diagnostics. Prompt 323 is a retained
 heavy-tail row; no outcome-dependent trimming occurred.
@@ -175,17 +319,33 @@ registry, or rerun model-scale work on CPU. Recover exact bytes from backup or
 version history if available; otherwise use a reviewed append-only correction
 plan, then rerun `jspace-phase4 verify`.
 
+The successor branch now contains an exact-hash-gated GPU recovery tool for
+the A120 capacity artifact. It verifies the historical event, config, inputs,
+dependencies, selected capacity functions, runtime, and target hash; run it
+only after A1000 releases the GPU. The missing historical `state.json` has
+irrecoverable timing fields and must come from an exact backup or an
+independently/PI-approved append-only archival correction. Do not synthesize
+it.
+
+Preparation commit `2e602d7` records the exhaustive exact-copy search. The
+live Drive target folder has thirteen children but no target `state.json`
+cloud ID; sixty exact-name objects and 1,246 revisions expose no target. The
+quarantined pre-incident DriveFS metadata has the same folder/children but no
+state child, tombstone, deleted-item, or pending operation. No bytes were
+restored, and external governance remains required.
+
 ## Other remaining work
 
-- Run the OLMo-3.1 Think and Instruct Bank-W capability gates and compute the
-  frozen joint capable-family intersection. Do not delete Qwen cache while
-  A1000 needs it.
-- Review the P4-P2 GPU variance-pilot producer. The passing v2 baseline does
-  not authorize intervention execution by itself; canonical lens, pilot,
-  SESOI, exact power, and untouched split remain open.
-- Make a substantive reviewed Bank-B replacement-design or estimation-only
-  decision. The current 0.25-nat IUT is not repairable by reallocating 40
-  families.
+- Complete A1000 and the frozen structural, functional, selection-margin,
+  prompt-323, and canonical-decision queue.
+- Import the already decisive OLMo early bundle on mainline after the A1000
+  branch resolves. P4-P3 is blocked at 16/20; no Bank-W intervention is
+  authorized.
+- If and only if Q-L1/Q-L2 selects a canonical lens, bind it into the P4-P2
+  and Bank-B configs. Their consumed-development interventions still require
+  separately registered independent reviews; Q-L3/Q-L4/Q-L5 blocks them.
+- Candidate 0.11 makes P4-P1 estimation-only. The addendum-required one-shot
+  orthogonal assay is prepared but unrun and cannot restore the primary.
 - Recover the two missing older A120--A250 functional-gate outputs above,
   confirm Drive cloud durability, and rerun whole-registry verification.
 - Obtain independent protocol review and PI sign-off.
