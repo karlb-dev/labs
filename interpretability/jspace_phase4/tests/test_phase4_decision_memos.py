@@ -46,3 +46,30 @@ def test_candidate_011_integrates_decisions_without_claiming_a_freeze():
     assert "P4-P3 is blocked" in normalized
     assert "only remaining conditional candidate primary" in normalized
     assert "one-shot consumed-development orthogonal" in normalized
+
+
+def test_freeze_ledger_is_explicitly_unfrozen_and_routes_all_primaries():
+    text = (
+        ROOT / "preregistration" / "FREEZE_GATE_LEDGER_PHASE4.md"
+    ).read_text()
+    normalized = " ".join(text.split())
+    assert "CANDIDATE LEDGER — NOT FROZEN" in normalized
+    assert "P4-P1" in text and "REMOVED FROM PRIMARY" in text
+    assert "P4-P2" in text and "ONLY CONDITIONAL CANDIDATE PRIMARY" in text
+    assert "P4-P3" in text and "BLOCKED" in text
+    assert "218/220" in text
+    assert "The implementation agent has not and will not self-sign" in text
+    assert "Freeze commit / tag" in text and "NOT CREATED" in text
+
+
+def test_methods_record_and_paper_skeleton_include_invariance_boundary():
+    record = (
+        ROOT / "paper" / "PHASE4_METHODS_DECISION_RECORD.md"
+    ).read_text()
+    skeleton = (ROOT / "paper" / "PAPER_CONCLUSION_SKELETON.md").read_text()
+    assert "Operator convergence is not instrument invariance" in record
+    assert "A1000 is the last automatic fit-size escalation" in record
+    assert "P4-P3 is capability-blocked" in record
+    assert "6. **Structural convergence of the averaged transport operator" \
+        in skeleton
+    assert "instrument invariance must be tested" in skeleton

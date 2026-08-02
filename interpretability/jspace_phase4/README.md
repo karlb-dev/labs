@@ -115,6 +115,10 @@ Whole-registry release requires the two-pass procedure in
 ## Current development synthesis
 
 - Living Markdown: `reports/PHASE4_DEVELOPMENT_REPORT.md`
+- Candidate freeze-gate ledger:
+  `preregistration/FREEZE_GATE_LEDGER_PHASE4.md`
+- Methods decision record: `paper/PHASE4_METHODS_DECISION_RECORD.md`
+- Falsifiable conclusion skeleton: `paper/PAPER_CONCLUSION_SKELETON.md`
 - Compiled handout:
   `reports/handout/jspace_phase4_development.{tex,pdf}`
 - Durable restart ledger:
