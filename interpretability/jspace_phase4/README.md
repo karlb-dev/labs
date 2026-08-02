@@ -32,10 +32,12 @@ jspace-phase4 verify
 The run root, model cache, Phase 3 imports, and repository files are resolved
 through logical URIs. Scientific modules must not embed machine paths.
 
-## Phase 4.2 resumable work block
+## Phase 4.3 resumable work block
 
 The registered post-A500 decision is Branch B. Its Qwen Draw A continuation
-is intentionally paused at the durable n=554 checkpoint for a VM handoff:
+resumed from the durable n=554 VM handoff under the frozen wrapper. The live
+checkpoint is recorded in the Drive handoff; n=554 remains the immutable
+restart provenance boundary:
 
 ```text
 checkpoint SHA-256: bf992067d690123109198c182a21169379e5752d89e73e96514fab7127fba74d
@@ -67,8 +69,9 @@ bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
 
 The router verifies the registered result envelope and exact frozen wording;
 the registered result is Branch B, so it continues with `draw_a_n1000` and
-must print `resuming from checkpoint: 554/...`. A/C would continue with
-`draw_b_n120`. Do not launch a duplicate while either lock is held.
+must resume from the highest contract-matched checkpoint recorded by the live
+handoff (never below n=554). A/C would continue with `draw_b_n120`. Do not
+launch a duplicate while either lock is held.
 
 The lower-level producer remains available for exact recovery diagnostics:
 
@@ -92,6 +95,17 @@ capability, mode-parser v2 contract, Bank B feasibility, Bank-W protocol, and
 conditional P4-P2 variance-pilot protocol are registered. Do not rerun or
 overwrite them; registry verification checks their immutable hashes.
 
+Candidate 0.10 prospectively moves Bank B/P4-P1 to estimation-only, proposes
+a pre-pilot 0.20-point P4-P2 SESOI, and records that the GPU pilot producer is
+still absent. The A500--A1000 successor configs, selection-margin contract,
+prompt-323 influence contract, and conditional Q-L2 estimand were committed
+before A1000 existed; their A1000 hash stays unbound until registration.
+
+Gemma and OLMo execute on isolated branches and registries. Their results can
+enter mainline only through `protocol/SIDE_TRACK_IMPORT_BUNDLE_CONTRACT.md`.
+Whole-registry release requires the two-pass procedure in
+`protocol/DRIVEFS_DURABILITY_PLAN.md`; known deficits remain failures.
+
 ## Current development synthesis
 
 - Living Markdown: `reports/PHASE4_DEVELOPMENT_REPORT.md`
@@ -101,8 +115,8 @@ overwrite them; registry verification checks their immutable hashes.
   `reports/INPROGRESS_VM12_20260801.md`
 - Compact restart handoff:
   `reports/RESUME_PHASE4_2.md`
-- Governing development block:
-  `reviews/jspace_lab_nextsteps_4_2.md` plus its addendum
+- Governing development block: `jspace_lab_nextsteps_4_3.md` plus its
+  accepted addendum in the campaign Drive folder
 
 These documents now cover the base, 3.0 Think, and sibling 3.1
 Think/Instruct capability and intervention points, seed-paired
@@ -110,13 +124,16 @@ own/common-frame audits, and the registered four-checkpoint trajectory
 synthesis. Phase 4.2 adds the Qwen same-corpus convergence and functional
 invariance gates, CPU-first common-cohort closure, Bank B/W authoring and
 power, Bank W capability rules, official-mode gates, and P4-P2 design/pilot
-methods. They remain development summaries, not frozen claims.
+methods. Phase 4.3 closes the A1000 instrument decision, side-track import,
+and remaining freeze blockers. They remain development summaries, not frozen
+claims.
 
 ## Tiers
 
 - `phase2-confirmatory-import`
 - `phase3-confirmatory-import`
 - `phase3-replication-import`
+- `side-development-import`
 - `phase4-development`
 - `phase4-confirmatory`
 - `phase4-replication`
