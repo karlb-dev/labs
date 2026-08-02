@@ -121,6 +121,15 @@ record. They may be deleted after the integration commit is pushed, the six
 Drive mirrors match, and the final bundle verifier passes from the pushed Part
 2 tree. The pinned Jacobian Lens checkout may also be discarded with the VM.
 
+Cleanup completed at 2026-08-02T06:42:02Z, after the Part 2 remote tip was
+confirmed, all six Drive report mirrors matched their committed sources, and
+the immutable 13-artifact final bundle passed its verifier. The exact local
+directory `/content/olmo_lineage_work` was removed, releasing approximately 21
+GiB. No OLMo process or GPU workload remained. The removal is locally
+irreversible, but no durable evidence was removed: registered artifacts,
+reports, paper files, plots, manifests, and hashes remain in the isolated Drive
+run root and the complete implementation/report history remains in GitHub.
+
 ## Reverification commands
 
 ```bash
