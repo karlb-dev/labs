@@ -207,7 +207,11 @@ Within assay L20--L44, raw/minus-identity/minus-scaled-identity operator
 cosines are 0.998739/0.999610/0.998632; residual principal-subspace similarity
 is 0.998196 with median/max principal angles 1.824/8.853 degrees. These support
 the registered operator-level pass while leaving sparse and causal stability
-to the still-sealed successors.
+to the still-sealed successors. The prompts-501--1000 incremental block is
+also highly aligned to A500 (conservative task q50/q05
+0.994787/0.992476), whereas A1000 versus the partially specified external
+published lens is only 0.906757/0.835442. The correct interpretation is strong
+same-corpus estimator convergence, not published-recipe interchangeability.
 Both registered figures were visually inspected after copying into the report
 tree; no clipping, missing panel, or mislabeled boundary was observed.
 
