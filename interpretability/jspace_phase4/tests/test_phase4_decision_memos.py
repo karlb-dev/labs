@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 
@@ -85,3 +86,29 @@ def test_parallel_import_inventory_keeps_validation_distinct_from_admission():
     assert "No final release bundle yet" in text
     assert "methods blocker" in text
     assert "never a license" in text
+
+
+def test_phase43_governing_sources_are_hash_pinned_and_adopted():
+    expected = {
+        "jspace_lab_nextsteps_4_3.md": (
+            "1edc4f13201ea2fc9d866fbb5ebe6588194b1b8496e6a6872c7044228d2afc16"),
+        "jspace_lab_nextsteps_4_3_addendum.md": (
+            "79816a5ee5fb9cda72be1bbc510aa4937c685717191318334ca579fd21cd96c7"),
+    }
+    for name, digest in expected.items():
+        assert hashlib.sha256((ROOT / "reviews" / name).read_bytes()).hexdigest() \
+            == digest
+
+    adoption = (ROOT / "reviews" / "PHASE4_PLAN_ACCEPTED.md").read_text()
+    assert "Phase 4.3 accepted" in adoption
+    assert "Q-L1 through Q-L5" in adoption
+    assert "16/20 common-support" in adoption
+    assert all(digest in adoption for digest in expected.values())
+
+
+def test_vm13_restart_snapshot_preserves_development_boundary():
+    text = (ROOT / "reports" / "INPROGRESS_VM13_20260802.md").read_text()
+    assert "Phase 4 remains **development-only**" in text
+    assert "n=641" in text
+    assert "65bfebe" in text
+    assert "No confirmatory or replication intervention outcome" in text

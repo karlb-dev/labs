@@ -128,12 +128,15 @@ required JSON/Markdown manifests; a known deficit remains a failed gate.
 - Falsifiable conclusion skeleton: `paper/PAPER_CONCLUSION_SKELETON.md`
 - Compiled handout:
   `reports/handout/jspace_phase4_development.{tex,pdf}`
-- Durable restart ledger:
+- Current durable restart snapshot:
+  `reports/INPROGRESS_VM13_20260802.md`
+- Historical VM12 restart ledger:
   `reports/INPROGRESS_VM12_20260801.md`
 - Compact restart handoff:
   `reports/RESUME_PHASE4_2.md`
-- Governing development block: `jspace_lab_nextsteps_4_3.md` plus its
-  accepted addendum in the campaign Drive folder
+- Governing development block:
+  `reviews/jspace_lab_nextsteps_4_3.md` plus
+  `reviews/jspace_lab_nextsteps_4_3_addendum.md`
 
 These documents now cover the base, 3.0 Think, and sibling 3.1
 Think/Instruct capability and intervention points, seed-paired
