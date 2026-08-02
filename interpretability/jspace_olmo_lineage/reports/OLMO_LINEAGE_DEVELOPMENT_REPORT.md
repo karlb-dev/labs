@@ -533,6 +533,26 @@ SHA-256 `f3704d14...6db4`; payload hash is `e1707488...3c96`. The v1 JSON
 remains SHA-256 `5e9f80ea...6d963` and is superseded in the append-only
 registry.
 
+O5 is resolved as a bounded methods decision, not as a partial proxy result.
+`ol-o5-feasibility-decision-v1` rehashes the registered Bank-W gate, O2 joint
+capacity, O3 joint geometry, and checkpoint-inventory v2 inputs. Capacity and
+structural geometry are available, but no registered downstream intervention
+rows independently cross activation/downstream model, transport lens, and
+readout. The required rank/energy-matched control for each crossed dictionary,
+protected-span geometry recomputed per readout, logit-lens non-J baseline, and
+common crossed-row ordering are likewise absent. The frozen route is
+`defer-no-identifiable-crossed-intervention-estimand` with status
+`not-executed-no-proxy-substitution`; no factor estimate or null is claimed.
+
+The prospective Phase 5 entry is a Bank-S-first minimal pilot across Base,
+3.1 Think, and the 3.1 Instruct sibling, with Base/recipient-own transport and
+Base/recipient-own readout frames. It may expand only after every dictionary
+passes transport, protected-span, delivered-rank, and delivered-energy checks.
+Bank-W remains closed under protocol version 1, and the queued SFT/DPO H5 stage
+wedge is not an O5 substitute. The decision JSON is 5,555 bytes, SHA-256
+`d31d23e4...74499`; Markdown is 2,159 bytes, SHA-256
+`9e3fbb45...675a`; payload hash is `6fccb20e...9553`.
+
 ## O4: development mechanism grid
 
 The primary arm contrast is
@@ -595,6 +615,7 @@ operative plan authorizes expansion.
 | 2026-08-02 | Checkpoint-inventory pre-evidence implementation | Exact-revision official-Hub metadata producer, architecture/tokenizer/weight-manifest checks, no-substitution router, and four tests prepared; no availability or model outcome opened | OLMo namespace only; 43 package tests pass |
 | 2026-08-02 | `ol-checkpoint-inventory-v1` | Eight exact official revisions and their 32B weight manifests verified; conservative byte-identity tokenizer rule returned `no-provenance-complete-32b-intermediate-pair`; subsequent read-only audit found Think-SFT content tokenization semantically identical, so a versioned v2 correction is required | Source commit `4bbdc74`; JSON `5e9f80ea...`; Markdown `720b9efc...`; no model outcome |
 | 2026-08-02 | `ol-checkpoint-inventory-v2` | Full token-ID, normalized-BPE, processor, and 207-text encoding audit resolves the Think tokenizer serialization difference; official exact-revision SFT and DPO cells are eligible; bounded H5 wedge queued-not-started; v1 explicitly superseded | Source commit `d927b98`; JSON `e5931c3f...`; Markdown `f3704d14...`; no model outcome |
+| 2026-08-02 | `ol-o5-feasibility-decision-v1` | Registered evidence cannot identify activation × transport × readout causal factors; seven required controls/cells are absent; decision is not-executed with no proxy substitution and a frozen Bank-S-first Phase 5 pilot | Source commit `843eabd`; JSON `d31d23e4...`; Markdown `9e3fbb45...`; no model outcome |
 
 ## Current limitations and claim boundary
 

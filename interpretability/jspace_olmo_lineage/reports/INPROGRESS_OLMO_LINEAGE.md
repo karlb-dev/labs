@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T04:56:00Z
+Last updated: 2026-08-02T04:57:00Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -24,12 +24,11 @@ live in Drive under `olmo_lineage_20260801`.
   durable. The semantic official-32B checkpoint inventory v2 is registered and
   v1 is explicitly superseded. Official Think SFT and DPO stage artifacts are
   eligible; the bounded two-cell H5 wedge is queued but not started. The
-  current action is a bounded O5 feasibility/identifiability decision followed
-  by the claims table, state of record, paper, reconstruction, and final bundle.
+  O5 has an explicit not-executed identifiability decision. The current action
+  is the claims table, state of record, paper, reconstruction, and final bundle.
 - Last registered native evidence:
-  `ol-checkpoint-inventory-v2` (methods), created at
-  2026-08-02T04:49:30Z from clean commit `d927b98`. Its two outputs verify; v1
-  has a registry supersession status pointing to v2.
+  `ol-o5-feasibility-decision-v1` (methods), created at
+  2026-08-02T04:55:30Z from clean commit `843eabd`. Its two outputs verify.
 - Both OLMo Bank-W baseline capability outcomes and the joint analysis are
   open. No Bank-W intervention, confirmatory, or replication outcome has been
   opened.
@@ -37,9 +36,9 @@ live in Drive under `olmo_lineage_20260801`.
 ## Work currently in progress
 
 The isolated foundation and O1 service obligation are complete. Four immutable
-foundation manifests and twenty-one live evidence events with 73 immutable
-live outputs verify cleanly; the registry contains 22 origin events because
-inventory v1 remains immutable but superseded. All 45 package tests pass. No
+foundation manifests and twenty-two live evidence events with 75 immutable
+live outputs verify cleanly; the registry contains 23 origin events because
+inventory v1 remains immutable but superseded. All 47 package tests pass. No
 model job is active.
 
 The official checkpoint inventory is resolved. Version 1 remains preserved
@@ -56,11 +55,18 @@ declarations remain qualifications. The v2 JSON is SHA-256
 `e5931c3f...ad9a`; Markdown is `f3704d14...6db4`. No weights or behavioral
 outcomes were opened by this event.
 
-The methods-only O5 identifiability producer and 47-test package are prepared.
-It pins the registered Bank-W gate, O2 capacity, O3 geometry, and checkpoint
-inventory outputs. It refuses to treat structural geometry as a causal cross
-and records the exact missing controls plus the prospective minimal Phase 5
-pilot. Publish this source before running its command.
+The methods-only O5 identifiability decision is complete. It pins the
+registered Bank-W gate, O2 capacity, O3 geometry, and checkpoint inventory
+outputs. O2/O3 provide capacity and structural geometry but no downstream
+intervention cells independently crossing activation model, transport lens,
+and readout. Crossed rank/energy controls, protected-span-per-readout geometry,
+the non-J logit-lens baseline, and fixed crossed-row order are also absent.
+The result is `defer-no-identifiable-crossed-intervention-estimand` with status
+`not-executed-no-proxy-substitution`. Its JSON is SHA-256
+`d31d23e4...74499`; Markdown is `9e3fbb45...675a`. The frozen Phase 5 entry is
+a Bank-S-first minimal 3-model x 2-transport x 2-readout pilot, expanded only
+after every per-dictionary transport, protected-span, rank, and energy check
+passes. Bank-W stays closed under version 1; H5 remains a separate queue.
 
 The O3 implementation uses only exact same-corpus lenses plus small,
 hash-pinned model readout extracts. The frozen row population contains a
@@ -341,7 +347,8 @@ self-verifying final OLMo import/restart bundle. Do not merge into the main
 Phase 4 or Gemma paper/registries, and do not open an O4 Bank-W intervention
 under the failed 20-family protocol.
 
-After publishing the O5 feasibility source, run from its clean commit:
+The O5 feasibility command has completed and must not be rerun because its
+outputs are immutable:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.o5_feasibility \

@@ -142,9 +142,9 @@ Drive root. An unregistered layer file is resumable state, not citable
 evidence; the runner independently reconstructs its point estimates and
 validates its input-manifest hash before reuse.
 
-At the 2026-08-02T04:49:30Z evidence checkpoint, all four O2 model events and
+At the 2026-08-02T04:55:30Z evidence checkpoint, all four O2 model events and
 the paired joint event are complete and registered. The live registry therefore
-contains 22 origin events, of which 21 are live, with 73 live immutable
+contains 23 origin events, of which 22 are live, with 75 live immutable
 outputs, all of which verify. Inventory v1 is the one superseded origin. The
 frozen joint verdict is `broadly_conserved_capacity_recruitment_consistent`;
 OLMo-3.1 32B Instruct remains a sibling endpoint, not a fourth trajectory
@@ -154,7 +154,7 @@ rows before any new geometry outcome. All four frozen readout inputs and the
 four-checkpoint aggregate are registered and hash-verified. The O3 router
 verdict is `dictionary-formation-pattern`; five PNG/PDF figure pairs and their
 manifest are also registered. The live in-progress file identifies the pending
-bounded O5 feasibility and release boundary.
+claims/reconstruction/paper/final-release boundary.
 
 O3 is staged so a fresh VM never needs four complete 32B snapshots at once.
 After `ol-geometry-protocol-v1` exists, obtain only `config.json`,
@@ -202,13 +202,18 @@ python -m jspace_olmo_lineage.experiments.checkpoint_inventory \
   --config interpretability/jspace_olmo_lineage/configs/ol_checkpoint_inventory_v2.yaml
 ```
 
-The next methods boundary audits whether O5 is identifiable from registered
-evidence without proxy substitution. Publish its source first, then run:
+The O5 methods audit has completed. Its command is retained for provenance but
+must not be rerun because its outputs are immutable:
 
 ```bash
 python -m jspace_olmo_lineage.experiments.o5_feasibility \
   --config interpretability/jspace_olmo_lineage/configs/ol_o5_feasibility_v1.yaml
 ```
+
+Its decision is `defer-no-identifiable-crossed-intervention-estimand` /
+`not-executed-no-proxy-substitution`. Resume with the claims ledger, independent
+reconstruction, OLMo-run-specific paper, state of record, and final import
+bundle. Do not turn O2/O3 structural tables into an O5 intervention proxy.
 
 The model command is:
 
