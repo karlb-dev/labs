@@ -1,6 +1,6 @@
 # OLMo 32B J-space lineage development report
 
-Last updated: 2026-08-02T02:24:23Z
+Last updated: 2026-08-02T02:29:26Z
 
 Status: active; O1 and the O3 provenance audit are complete, the early Phase 4
 bundle is emitted, and O2 is next. Both native OLMo-lineage baseline capability
@@ -206,8 +206,9 @@ one occupancy unit; unresolved when uncertainty is too wide.
 
 ### Results
 
-Pending. The prospective executor is implemented but not yet registered. It
-freezes the first 30 prompts in each of the four existing corpus blocks, for
+Pending model outcomes. `ol-capacity-protocol-v1` was registered at
+2026-08-02T02:29:02Z from clean source commit `0e5800b`. It freezes the first
+30 prompts in each of the four existing corpus blocks, for
 120 prompts and 7,481 retained content positions. The selected canonical JSONL
 hash is `695d29f9...a7948`; all four tokenizers produce the same ordered
 content-token manifest `03edeb51...52e`. BOS is prepended explicitly when the
@@ -219,8 +220,10 @@ sensitivity. Each layer checkpoint retains full J/random error curves,
 selected supports, prompt ownership, solver diagnostics, and deterministic
 bootstrap distributions, allowing independent reconstruction and paired
 cross-model resampling. Thirty package tests and the corpus/tokenizer/lens-
-audit/source-pin preflights and 31 package tests pass. No O2 model outcome has
-been opened. The
+audit/source-pin preflights and 31 package tests pass. The registered corpus is
+SHA-256 `695d29f9...a7948` and the protocol is SHA-256
+`909c07d3...c9a0`; both verify in the eight-event registry. No O2 model outcome
+has been opened. The
 prior three-model 60-prompt files remain historical context only; Base
 capability is not required for this capacity measurement.
 
@@ -300,7 +303,8 @@ operative plan authorizes expansion.
 | 2026-08-02 | `ol-phase4-early-import-bundle-v1` | Emitted and verified the complete early capability handoff; service-ready false and no interventions opened | Source commit `dc20c90`; JSON `debb29e...`; Markdown `a7e6faf...`; registry prefix `dcaca5a...` |
 | 2026-08-02 | O3 pre-evidence implementation | Hash-pinned four-lens provenance audit, tokenizer/BOS comparison, slice/merge integrity checks, and no-refit router implemented; 23 tests and all large-file preflights pass | Git commit `fb1fc73`, pushed; OLMo namespace only |
 | 2026-08-02 | `ol-lens-provenance-audit-v1` | All six pairs are exact same recipe/corpus; all lens/slice/merge checks pass; no refit required; geometry and capacity authorized; no intervention opened | Source commit `fb1fc73`; JSON `0912d223...`; Markdown `9f6c8478...` |
-| 2026-08-02 | O2 pre-evidence implementation | Symmetric 120-prompt corpus, centered-before-pursuit estimator, raw sensitivity, resumable layer checkpoints, common-frame analysis, paired prompt bootstrap, frozen classification router, and tests implemented; no capacity outcome opened | Dirty tree after published O3 checkpoint `0d4f0e7`; 31 tests pass |
+| 2026-08-02 | O2 pre-evidence implementation | Symmetric 120-prompt corpus, centered-before-pursuit estimator, raw sensitivity, resumable layer checkpoints, common-frame analysis, paired prompt bootstrap, frozen classification router, and tests implemented; no capacity outcome opened | Git commit `0e5800b`, pushed; 31 tests pass |
+| 2026-08-02 | `ol-capacity-protocol-v1` | Outcome-blind 120-prompt/7,481-position corpus, exact four-tokenizer agreement, centered and raw estimands, three random controls, paired bootstrap, and shift router frozen; no model/intervention outcome opened | Source commit `0e5800b`; corpus `695d29f9...`; protocol `909c07d3...` |
 
 ## Current limitations and claim boundary
 
