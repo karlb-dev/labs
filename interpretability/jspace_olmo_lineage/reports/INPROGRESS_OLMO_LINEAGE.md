@@ -1,6 +1,6 @@
 # OLMo lineage live in-progress state
 
-Last updated: 2026-08-02T06:09:33Z
+Last updated: 2026-08-02T06:32:01Z
 
 This is the volatile restart pointer for the OLMo-only parallel workstream.
 The stable recovery procedure is `OLMO_LINEAGE_RESUME.md`; the scientific
@@ -11,6 +11,10 @@ live in Drive under `olmo_lineage_20260801`.
 
 - Branch: `interp_jspace_olmo_lineage`.
 - Remote tracking branch: `origin/interp_jspace_olmo_lineage`.
+- Part 2 integration target: `interp_jspace_part2`.
+- Local two-parent integration commit:
+  `65a787583d657e77f95ce379e3723c4d66a682ab`; final publication verification
+  is recorded in `PART2_INTEGRATION_RECORD.md`.
 - Branch parent before this package: `4ea7a9ba7a534daa61e0d8c9960763b921a1b80b`.
 - Immutable scientific import boundary:
   `3b041735d8b842de46a9c0a474fccd0c44e0841a`.
@@ -401,3 +405,18 @@ Do not write Phase 3, Phase 4, Gemma, or main-paper registries/run roots. Do
 not open untouched Phase 4 confirmatory or replication intervention outcomes.
 The OLMo O1 outputs are baseline capability only and exist to service the
 parallel Phase 4 Bank-W design.
+
+## Part 2 repository integration
+
+The complete OLMo source tip `a28cdd54dda335daf55f468e5be8cc65b2fc5253`
+has been merged without conflicts into Part 2 tip
+`c9021e5c2405eaa34a16a07ba0ea903c53b81ee6`. The two-parent merge commit is
+`65a787583d657e77f95ce379e3723c4d66a682ab`. This is repository integration,
+not a new evidence event or scientific synthesis. Gemma is already present in
+the Part 2 parent; the concurrent Phase 4 A1000-preparation branch remains
+outside this merge.
+
+No OLMo process remains. After the integration commit and six-report recovery
+set are pushed and mirrored, the approximately 21 GiB under
+`/content/olmo_lineage_work` is disposable local staging. See
+`PART2_INTEGRATION_RECORD.md` for exact test, artifact, and cleanup gates.

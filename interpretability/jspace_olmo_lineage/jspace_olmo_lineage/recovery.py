@@ -14,6 +14,7 @@ SOURCE_REPORTS = (
     "reports/OLMO_LINEAGE_DEVELOPMENT_REPORT.md",
     "reports/OLMO_LINEAGE_CLAIMS_TABLE.md",
     "reports/OLMO_LINEAGE_STATE_OF_RECORD.md",
+    "reports/PART2_INTEGRATION_RECORD.md",
 )
 
 
