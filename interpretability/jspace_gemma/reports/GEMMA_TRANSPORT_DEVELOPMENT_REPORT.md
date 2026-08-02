@@ -1,9 +1,10 @@
 # Gemma 4 31B transport autopsy — development report
 
 Status: foundation, exact-JVP goldens, and paper-band convention registered;
-OLMo control snapshot fully verified; one-cell control smoke is next. All
-findings in this document are development or methods evidence. Nothing here
-is a Phase 4 confirmatory model cell.
+all 56 OLMo control cells are hash-verified, but final calibration output is
+blocked on a post-compute JSON scalar repair. All findings in this document
+are development or methods evidence. Nothing here is a Phase 4 confirmatory
+model cell.
 
 ## Scope and non-claims
 
@@ -104,7 +105,21 @@ against the exact remote index before model load. Staging passed from clean
 commit `42b34b1`: 26/26 files, 14/14 weight shards, 64,476,964,249 bytes,
 zero failures. The Drive manifest file SHA-256 is
 `fa620d543b8cc80d3545aee177343036b04a5a0de84b8e65c8dcfa15dec1776c`.
-No current-study model cell has run yet.
+At that staging boundary, no current-study model cell had run.
+
+The subsequent control run completed all 56/56 cells (1,568 metric rows and
+28 bit-exact clean-parity checks) from clean pushed commit `06b2a3d`. Every
+state-listed metric/raw hash verifies. Final summary serialization then
+stopped because pandas produced `numpy.int64` values for curvature-fit
+`source_layer` fields, which the standard JSON encoder refuses. No summary,
+Parquet, raw inventory, or calibration registry event was created. This is a
+post-compute serialization incident rather than a JVP/model failure. The
+frozen state SHA-256 is
+`f696f28cecc44d3a3d925308dd10226f1f7fa84e09e6e63ff37913ea3960278c`;
+the full-run log SHA-256 is
+`28a6aecdff750821603e5355bf0776ff38bc069181ad83d6edf4677249225dfe`.
+The recovery path preserves all cells and uses a pure finalizer with distinct
+compute and finalization commits.
 
 ## Live evidence ledger
 
@@ -114,7 +129,8 @@ No current-study model cell has run yet.
 | `gm-foundation-v1` | methods | registered | 22 tests pass; exact architecture/runtime/governance/package inventories and nine historical imports verified |
 | `gm-jvp-goldens-v1` | methods | registered | both autodiff backends exactly match the analytic derivative; forward/fallback/reverse derivatives agree on the nonlinear tiny transformer |
 | `gm-band-convention-v1` | methods | registered from clean `3a599f7`; no model opened | primary Methods resolve the transferable band to 38--92% (Gemma approximately L23--L55) |
-| `gm-jvp-olmo-calibration-v1` | methods | staged; model not yet loaded | raw OLMo-only threshold calibration |
+| `gm-olmo-calibration-finalize-diagnostic-v1` | methods | producer prepared | immutable incident/inventory record for all 56 cells and the post-compute serialization failure |
+| `gm-jvp-olmo-calibration-v1` | methods | 56 cells complete; not registered | summary serialization repair/finalization required |
 | `gm-jvp-olmo-positive-control-v1` | methods | blocked on preceding boundaries | threshold calibration |
 | `gm-jvp-gemma-stage1-v1` | methods | forbidden until thresholds commit | exact target gate |
 
@@ -162,7 +178,8 @@ change the scientific design or expose a target outcome.
 
 ## Next boundary
 
-Run one OLMo control cell from the clean pushed handoff commit, inspect its
-runtime/VRAM/parity/delivery/checkpoint diagnostics, and then resume the full
-grid from the same code commit if it passes. Update this report and the Drive
-handoff at every evidence commit.
+Commit/publish and run the immutable incident producer. Then add a pure
+finalizer that verifies the frozen state and every cell/raw hash, performs the
+native-integer aggregation repair, and records compute/finalization commits
+separately without rerunning model cells. Numeric thresholds remain forbidden
+until the finalized calibration is registered.

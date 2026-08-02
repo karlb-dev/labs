@@ -1,6 +1,6 @@
 # LIVE — Gemma transport workstream
 
-Last updated: 2026-08-02 02:10 UTC. This is the Git-tracked mirror of the
+Last updated: 2026-08-02 02:19 UTC. This is the Git-tracked mirror of the
 canonical Drive handoff at
 `/content/drive/MyDrive/interpret/gemma_transport_inprogress.md`.
 
@@ -19,7 +19,10 @@ canonical Drive handoff at
   `3a599f75de8bcb67bfb696be0d6d7c07010bac79`.
 - Band-convention registry/report commit:
   `8fbdb88bb4ae17ac96e2e71a63807c78cb6a3187`.
-- Remote Gemma branch: synchronized through the band-convention commit.
+- Control-smoke handoff/compute commit:
+  `06b2a3d2fbe42fd5f70abb121573b1e7a62b45ec`.
+- Remote Gemma branch: synchronized through the control compute commit; the
+  incident-audit producer and report updates are not yet committed.
 - Dedicated Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802`.
 - GPU hard gate: PASS on NVIDIA RTX PRO 6000 Blackwell Server Edition,
@@ -28,8 +31,8 @@ canonical Drive handoff at
   is installed editable and byte-identical to the campaign Drive copy.
 - Hugging Face authentication: PASS (`kburtram`).
 - Shared Part-2 conformance bootstrap: PASS.
-- No Gemma or OLMo model producer is running. No current-study model response
-  and no scientific Gemma target outcome has been opened.
+- No Gemma or OLMo model producer is running. OLMo response checkpoints exist;
+  no calibration summary is registered and no Gemma target has been opened.
 - The isolated package scaffold is committed. Its 30-test conformance suite
   passes, including analytic, nonlinear tiny-transformer, and explicit Hugging
   Face Gemma/OLMo suffix/JVP tests plus a batch-shape/slot adversarial test.
@@ -59,6 +62,14 @@ canonical Drive handoff at
   model opened. The primary paper's 38--92% reindexed band maps approximately
   to Gemma L23--L55; the artifact SHA-256 is
   `04e56c9bffc02d9a9d2580a1982f520c1069e87e0898fe52a80b911b210e5c8f`.
+- The OLMo run completed all 56/56 atomic cells (1,568 rows and 28 bit-exact
+  clean-parity checks) from clean pushed commit `06b2a3d`. All state-listed
+  metric/raw hashes verify. Final summary serialization then stopped on a
+  pandas `numpy.int64` source-layer value. No summary, Parquet, inventory, or
+  calibration registry event exists. State SHA-256:
+  `f696f28cecc44d3a3d925308dd10226f1f7fa84e09e6e63ff37913ea3960278c`;
+  full-run log SHA-256:
+  `28a6aecdff750821603e5355bf0776ff38bc069181ad83d6edf4677249225dfe`.
 
 ## Completed this VM
 
@@ -109,6 +120,12 @@ canonical Drive handoff at
 17. Registered the primary-paper band convention as `gm-band-convention-v1`.
     The immutable source record resolves 38--92% depth to approximately Gemma
     L23--L55. No model was opened.
+18. Ran the infrastructure smoke and full OLMo grid from `06b2a3d`; all 56
+    cells are durable and hash-valid. The producer failed only at final JSON
+    serialization, before aggregate outputs or evidence registration.
+19. Implemented a strict incident auditor that binds state, input manifest,
+    every metric/raw file, row/raw provenance, finite tensors, parity records,
+    failure log, and the no-summary boundary before finalization repair.
 
 ## Immutable scientific guardrails
 
@@ -128,27 +145,22 @@ canonical Drive handoff at
 
 ## Immediate queue
 
-1. From the clean pushed handoff commit run:
-
-   ```bash
-   python -u -m jspace_gemma.experiments.gm_exact_transport_gate --max-cells 1
-   ```
-
-   If runtime, VRAM, parity, delivery, and checkpoint integrity pass, resume
-   the same producer without `--max-cells` from the same code commit. This
-   emits OLMo-only calibration, not Gemma thresholds or a target result.
-2. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
-3. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
+1. Commit/pull/test/push the immutable incident-audit producer, then run and
+   register `gm-olmo-calibration-finalize-diagnostic-v1` from that clean commit.
+2. Add/run a pure finalizer that verifies the frozen checkpoint and separates
+   compute from finalization provenance; do not rewrite or rerun cells.
+3. Freeze numeric Gemma thresholds in a clean, pre-target config and commit.
+4. Remove the local OLMo staging copy, download the pinned Gemma 4 31B IT
    snapshot to local NVMe, then run Gemma Stage 1 with the unchanged harness.
-4. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
+5. Route to G2/G3/G5/G4/G6 by the observed G1 branch, preserving G9 time.
 
 ## Recovery checks and next commands
 
-There is currently no live producer, lock owner, or partial calibration
-checkpoint. The OLMo local snapshot is complete on this VM, but local NVMe is
-ephemeral. On a new VM, run the bootstrap in `RESUME_GEMMA_TRANSPORT.md`, then
-rerun the resumable staging producer if the local snapshot is absent. The
-foundation, golden, band, and staging manifests are durable in Drive. Inspect:
+There is no live producer or GPU allocation. The 56-cell calibration
+checkpoint is complete but unfinalized; do not rerun, delete, or rewrite it.
+Use the hash-verifying incident producer and planned pure finalizer. The local
+OLMo snapshot is ephemeral, but the cell data, state, failure log, foundation,
+golden, band, and staging manifests are durable in Drive. Inspect:
 
 ```bash
 git -C /content/labs status --short --branch
