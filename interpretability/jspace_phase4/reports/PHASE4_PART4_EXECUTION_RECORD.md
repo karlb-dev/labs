@@ -22,12 +22,79 @@ The functional stage subsequently hard-stopped before its first A500 row because
 
 The repair separates top-32 diagnostics from the exact top-10 replay and retains hard ID-and-score equality against the parent. The successor validator admits different top-32-prefix IDs only at an exact k/k+1 score tie and otherwise retains all original checks. The incompatible 57 MB partial state was preserved on Drive and locally under the paths and hashes recorded in `PHASE4_PART4_FUNCTIONAL_INSTRUMENTATION_INCIDENT.md`; it was not migrated across code commits. The focused suite passed 27/27 and the full Phase 4 suite passed 282/282 after the repair.
 
-## Pending transactional order
+## Registered functional and margin transactions
 
-1. Restart the functional gate from a fresh canonical output directory under the repair commit, then bank, back up, commit, and push it.
-2. Run selection margin, prompt-323 influence, and the mechanical Q-L decision in order with the same transaction boundary.
-3. Admit the study-1 side releases and reproduce the 16/20 P4-P3 block.
-4. Run only Q-L-licensed M3/M4 work; no consumed outcome runs without a real independent review.
-5. Close durability, review packets, paper artifacts, and the honest freeze-candidate boundary.
+The repaired functional stage restarted from scratch and registered
+`p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1`. Its event was
+banked and pushed at `603bbcec271c8a5a0b7ce6f519a4845988e959b3`; all 18 registered
+outputs were copied into a 303,287,915-byte local backup whose manifest has
+SHA-256 `988844d347c456919864bdffd0d72c35eb71622fbab653674db0e065aeba35e7`.
+The structural q50/q05 gates reverified at 0.998702/0.998122. A500–A1000
+median selected-ID Jaccard (0.538462), normalized projector overlap
+(0.709818), and bridge-rescue difference (-0.294028 nat) fail their frozen
+gates. Occupancy, corrected capacity, span-safe specificity, tail rate, G4,
+and bridge preference pass. The functional producer therefore emits
+provisional branch candidate Q-L4 but explicitly leaves the branch pending
+the separate margin and influence inputs and nominates no lens.
+
+The next transaction registered
+`p4-qwen-selection-margin-a500-a1000-dev-v1` and was banked and pushed at
+`0ce3519b3abfc67ccfb3335e6e371b8a689a0fb5`. All 34 outputs are present in a
+14,411,038-byte local backup whose manifest has SHA-256
+`12e76809602688529a8fd461ee3f3d3fe4f3050bf8cef46600568114c4b1f451`.
+The audit retained all 17,381 functional positions: 15,536 near-tie, 1,845
+stable-core, and zero rank-deficient. It exactly reconstructs the captured
+top-k intervention and registered geometry. The blinded lexical sheet marks
+52,261 rows for optional behavior-blind manual review; no review was performed
+because that sheet is nondecisional. Q-L4 remains a candidate, not a canonical
+event.
+
+The registered `p4f26` and `p4f27` PNG/PDF pairs were copied byte-for-byte
+from Drive into the report figure tree and visually checked. Their registered
+hashes remain unchanged.
+
+## Prompt-323 runtime-identity hard stop
+
+The queue then opened the frozen prompt-323 influence stage from clean commit
+`0ce3519b3abfc67ccfb3335e6e371b8a689a0fb5`. Its first full backward pass
+returned `max ||J|| / sqrt(d) = 181.826310` against the frozen fit-log value
+173.345 and prospective absolute tolerance 0.5. The producer stopped before
+writing a contribution, layer metric, figure, result envelope, or registry
+event. Consequently the canonical producer never opened.
+
+A second clean prompt-323 process returned 181.785516. A replay that evaluated
+prompt 322 immediately before prompt 323 returned 59.545969 versus historical
+52.150 and left prompt 323 at 181.854247. Two independent current-runtime
+evaluations of the already registered prompt-112 control returned 55.544060
+and 55.587600, whereas its fit-log value is 159.952 and its registered clean
+recompute is 160.070954. Each current pair agrees within 0.044, all values are
+finite, and all maxima are at layer 0. The mismatch is therefore stable on the
+current VM and broader than prompt 323 or log rounding.
+
+The historical and current records match nominal GPU, driver, CUDA, Torch,
+Transformers, Triton, FLA, fused bindings, exact model/corpus, and `jlens`
+revision. The historical record did not preserve installed-distribution
+content, wheel/build, or compiled Triton/FLA cache hashes. The current
+distribution contents are now fully inventoried. No single unrecorded surface
+is asserted as the cause.
+
+Both failed states have `contribution: null`, zero completed layers, and the
+same 1,146-byte SHA-256 `4eef3124...239eb3`. Each is preserved under a distinct
+Drive and local unregistered-backup name. The queue lock is free, the fresh
+canonical output path is absent, and no GPU process remains. The exact record
+is `PHASE4_PART4_PROMPT323_RUNTIME_BLOCK.md` plus its machine-readable JSON.
+
+## Blocked transactional order
+
+1. Obtain independent scientific/governance review; do not rerun blindly or
+   alter the frozen tolerance.
+2. Either reconstruct a historically content-pinned backward runtime or
+   approve a prospective runtime-contract amendment before any fresh attempt.
+3. Only a passing fresh influence transaction may be registered, backed up,
+   committed, and pushed.
+4. Only after that live event exists may the unchanged mechanical canonical
+   producer open.
+5. M2 side admission, M3, and M4 remain closed until the registered canonical
+   branch actually licenses them.
 
 No confirmatory or replication intervention outcome exists. No A2000, new bank, new model, new endpoint, or SESOI change is authorized.

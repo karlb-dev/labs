@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-08-03T04:58:15Z",
+  "classification": "blocked-runtime-identity",
+  "scientific_status": {
+    "prompt323_influence_event_exists": false,
+    "prompt323_contribution_exists": false,
+    "canonical_decision_event_exists": false,
+    "canonical_lens_nominated": false,
+    "functional_branch_candidate": "Q-L4",
+    "functional_branch_candidate_is_canonical": false,
+    "m2_side_release_admission_authorized": false,
+    "m3_m4_authorized": false
+  },
+  "registered_predecessors": {
+    "functional": {
+      "evidence_id": "p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1",
+      "registry_commit": "603bbcec271c8a5a0b7ce6f519a4845988e959b3",
+      "payload_sha256": "81929f62b6c828532002f7cd13e78f5b42c227cfe57dcf814271a29756556b87",
+      "branch_candidate": "Q-L4"
+    },
+    "selection_margin": {
+      "evidence_id": "p4-qwen-selection-margin-a500-a1000-dev-v1",
+      "registry_commit": "0ce3519b3abfc67ccfb3335e6e371b8a689a0fb5",
+      "payload_sha256": "3662251debe2f73d09d02bdff20eaaf564df23b215d8a441e113e23595c1382b",
+      "audit_complete_for_canonical_branch_router": true
+    }
+  },
+  "frozen_prompt323_control": {
+    "prompt_one_based_index": 323,
+    "prompt_zero_based_index": 322,
+    "seq_len": 128,
+    "n_valid": 111,
+    "historical_logged_max_norm_over_sqrt_d": 173.345,
+    "absolute_tolerance": 0.5,
+    "retained_unconditionally": true,
+    "config_sha256": "251bfbb697391bc1545df45094029bfd44e5576b00ff020403ca9bf28c2775c9"
+  },
+  "diagnostic_observations": [
+    {
+      "name": "prompt323_clean_process_1",
+      "max_norm_over_sqrt_d": 181.82630978157258,
+      "absolute_difference_from_historical": 8.481309781572577,
+      "max_layer": 0,
+      "all_finite": true,
+      "log_sha256": "b8389e417a142a2ae4108a6fb90914f6ba810fa8df4aea128367d2ba643eeff3"
+    },
+    {
+      "name": "prompt323_clean_process_2",
+      "max_norm_over_sqrt_d": 181.7855162806891,
+      "absolute_difference_from_historical": 8.44051628068911,
+      "max_layer": 0,
+      "all_finite": true,
+      "log_sha256": "f9665fb8d8ba2d958ffdefc31b4879fdf4bf64d867cd44ca276a8441ad06dd5e"
+    },
+    {
+      "name": "prompt322_preceding_warm_control",
+      "historical_logged_max_norm_over_sqrt_d": 52.15,
+      "max_norm_over_sqrt_d": 59.54596889196234,
+      "absolute_difference_from_historical": 7.39596889196234,
+      "max_layer": 0,
+      "all_finite": true,
+      "log_sha256": "e6f45f735a043bb7825569078e094d0d1ee960a465f2e6722489765fcc2e5d74"
+    },
+    {
+      "name": "prompt323_after_prompt322_warm_control",
+      "max_norm_over_sqrt_d": 181.8542469834155,
+      "absolute_difference_from_historical": 8.509246983415494,
+      "max_layer": 0,
+      "all_finite": true,
+      "log_sha256": "e6f45f735a043bb7825569078e094d0d1ee960a465f2e6722489765fcc2e5d74"
+    },
+    {
+      "name": "prompt112_current_runtime_control_1",
+      "historical_logged_max_norm_over_sqrt_d": 159.952,
+      "registered_clean_recompute": 160.07095424367213,
+      "max_norm_over_sqrt_d": 55.544060263096625,
+      "absolute_difference_from_historical": 104.40793973690337,
+      "absolute_difference_from_registered_clean_recompute": 104.52689398057551,
+      "max_layer": 0,
+      "all_finite": true,
+      "log_sha256": "aa4fb7e3c01268aaed08691766a430f2a7900294019afcc0ef47ab05cf729303"
+    },
+    {
+      "name": "prompt112_current_runtime_control_2",
+      "historical_logged_max_norm_over_sqrt_d": 159.952,
+      "registered_clean_recompute": 160.07095424367213,
+      "max_norm_over_sqrt_d": 55.587600398992734,
+      "absolute_difference_from_historical": 104.36439960100726,
+      "absolute_difference_from_registered_clean_recompute": 104.4833538446794,
+      "max_layer": 0,
+      "all_finite": true,
+      "log_sha256": "bbcb45907fa676f2639c1b7182175e8747827b0238fa0c83be56c6593f819956"
+    }
+  ],
+  "repeat_stability": {
+    "prompt323_current_process_absolute_difference": 0.04079350088347722,
+    "prompt112_current_process_absolute_difference": 0.04354013589610961,
+    "preceding_prompt_warm_replay_repairs_prompt323": false,
+    "registered_prompt112_control_matches_current_runtime": false
+  },
+  "nominal_runtime_identity": {
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "compute_capability": "12.0",
+    "gpu_total_memory_bytes": 101974081536,
+    "driver": "580.82.07",
+    "python": "3.12.13",
+    "kernel": "Linux 6.6.122+ x86_64",
+    "glibc": "2.35",
+    "torch": "2.11.0+cu128",
+    "torch_git_version": "70d99e998b4955e0049d13a98d77ae1b14db1f45",
+    "torch_cuda_build": "12.8",
+    "transformers": "5.13.1",
+    "triton": "3.6.0",
+    "fla_core": "0.5.2",
+    "flash_linear_attention": "0.5.2",
+    "causal_conv1d": null,
+    "linear_attention_module_count": 48,
+    "model_revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+    "jlens_commit": "581d398613e5602a5af361e1c34d3a92ea82ba8e",
+    "float32_matmul_precision": "highest",
+    "matmul_allow_tf32": false,
+    "cudnn_allow_tf32": true,
+    "deterministic_algorithms": false,
+    "cudnn_deterministic": false,
+    "cudnn_benchmark": false,
+    "cudnn_version": 91900
+  },
+  "content_inventory_algorithm": "Sort importlib.metadata distribution files by relative path; exclude .pyc and paths containing /__pycache__/; hash each regular file with SHA-256; then hash UTF-8 records relative_path\\0size\\0file_sha256\\n in sorted order.",
+  "current_distribution_root": "/usr/local/lib/python3.12/dist-packages",
+  "current_distribution_content_inventories": [
+    {
+      "distribution": "fla-core",
+      "version": "0.5.2",
+      "non_pyc_file_count": 321,
+      "non_pyc_bytes": 3276300,
+      "content_inventory_sha256": "6f813dc26c1a3633b70817928cb3621a8e59cbd8db07e5a2eb8aece49268a95e",
+      "metadata_sha256": "8e641db5f26a58c254dd7c6977984d380aa9e36b4b46a82882f75954ca50c6c4",
+      "record_sha256": "60d4796dc76dfddc8519b5a94266d79726f02458cb23d3944508c9fa6a26cbee",
+      "missing_file_count": 0
+    },
+    {
+      "distribution": "flash-linear-attention",
+      "version": "0.5.2",
+      "non_pyc_file_count": 156,
+      "non_pyc_bytes": 1475375,
+      "content_inventory_sha256": "1e89767e6bc19ce9c19f462320244bf98e335949a6cc21f0f5f5c42b2800db52",
+      "metadata_sha256": "5ba189db45ddd61415bba9e71469bf396cec9b739192619b2fb95ee9bd1d892e",
+      "record_sha256": "794321c0ae78c65e6e5c30d549bfe3682ebd06677942c06afad00fa2970855a6",
+      "missing_file_count": 0
+    },
+    {
+      "distribution": "transformers",
+      "version": "5.13.1",
+      "non_pyc_file_count": 2543,
+      "non_pyc_bytes": 46649387,
+      "content_inventory_sha256": "62efb166f345418d70c0a1f65ddb0d8be27bc6318132d56a823156daf162a467",
+      "metadata_sha256": "c3c8d11e913b70d1c2b591fa2962978680ee93e9cd21e3ee4f529dabfae43c0b",
+      "record_sha256": "01605125de6e7af54a6380494860dfd2971271392fca44438df50f8104b0839f",
+      "missing_file_count": 0
+    },
+    {
+      "distribution": "triton",
+      "version": "3.6.0",
+      "non_pyc_file_count": 359,
+      "non_pyc_bytes": 669051279,
+      "content_inventory_sha256": "d29f29567d0e04bdb494a68cacf29ea4360251463558b3e624fc72a440f3edcd",
+      "metadata_sha256": "5c9071db9b057bec89cd6d7f76f61e5f28a5e8d3717ff6c85420cf8015ee0321",
+      "record_sha256": "6096e92fb41f4ab973d3092b757bb83dccf256486b3af75ee8220cf2eab935eb",
+      "missing_file_count": 0
+    },
+    {
+      "distribution": "torch",
+      "version": "2.11.0+cu128",
+      "non_pyc_file_count": 11846,
+      "non_pyc_bytes": 1625894923,
+      "content_inventory_sha256": "61b5a10c1be66fc769844c7bc7875a88bee31a0c4862fa2b22cffca519e66d4f",
+      "metadata_sha256": "de881a744ff66b27fffc338c1624660cf7c87d3019574ad71e3dda886b2a172b",
+      "record_sha256": "5b22d723c53bcefc515c6f30f0892ff632cc4df48d9275d71e4e6de3a698cdd6",
+      "missing_file_count": 0
+    }
+  ],
+  "runtime_identity_gap": {
+    "historical_distribution_content_inventories_available": false,
+    "historical_compiled_triton_fla_cache_available": false,
+    "historical_wheel_or_build_hashes_available": false,
+    "nominal_versions_and_bindings_match": true,
+    "exact_backward_semantics_match": false,
+    "root_cause_identified": false,
+    "inference": "The surviving version-only runtime contract is insufficient to reconstruct the historical Jacobian backward semantics. A distribution build/content difference, compiled-kernel/cache difference, or other unrecorded runtime state remains possible; none is selected as the cause."
+  },
+  "preservation": {
+    "null_state_sha256": "4eef3124ae3259bf9a780954aeda047ba72580fa92101b29b32533d97b239eb3",
+    "null_state_bytes": 1146,
+    "null_state_completed_layers": 0,
+    "first_blocked_drive_directory": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-lens-influence-prompt323/prompt_influence/p4-qwen-lens-influence-prompt323-dev-v1__blocked_20260803T044939Z_runtime-identity",
+    "first_blocked_local_directory": "/content/sl4_work/postfit_unregistered_backups/p4-qwen-lens-influence-prompt323-dev-v1__blocked_20260803T044939Z_runtime-identity",
+    "control_repeat_drive_directory": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-lens-influence-prompt323/prompt_influence/p4-qwen-lens-influence-prompt323-dev-v1__blocked_20260803T045815Z_prompt112-control-repeat",
+    "control_repeat_local_directory": "/content/sl4_work/postfit_unregistered_backups/p4-qwen-lens-influence-prompt323-dev-v1__blocked_20260803T045815Z_prompt112-control-repeat",
+    "diagnostic_archive": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/diagnostics/prompt323_runtime_identity_20260803",
+    "canonical_output_directory_present_after_archive": false,
+    "queue_lock_free_after_archive": true
+  },
+  "source_evidence": [
+    {
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_a1000_postfit_queue_20260802.log",
+      "sha256": "920c3590c302a3854dba1401f4b8da7b152eaaa63c42a0b9831a7f0d87c9d1a8"
+    },
+    {
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_continuation_draw_a_n500_20260801.log",
+      "sha256": "1a5b13d85b16bd57bd70730667c5fb6985e9242337fcf1b8e0f813d213c59c72"
+    },
+    {
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/qwen_postfit_queue_20260801.log",
+      "sha256": "583131db317fbf3f7523298c5b7674fee22775f5fa649a2f8c6dc779376f431a"
+    },
+    {
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b/lens_fit/p4-qwen-lens-fit-drawA-n1000-dev-v1/input_manifest.json",
+      "sha256": "ce7e057e1298f8bc4217df3ce0a62afb916f4e3edf54466d1c120eaa9d9138f1"
+    },
+    {
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b/lens_fit/p4-qwen-lens-fit-drawA-n1000-dev-v1/lens_fit_result.json",
+      "sha256": "555569478f759f68ae205a2a495a04490a9ee9aa8cf5a875644935a9a6d06ef8"
+    }
+  ],
+  "disposition": {
+    "register_partial_influence_event": false,
+    "widen_frozen_tolerance": false,
+    "skip_required_influence_input": false,
+    "open_canonical_decision": false,
+    "run_m2": false,
+    "rerun_blindly": false,
+    "next_authorized_action": "Obtain independent scientific/governance review and either reconstruct a historically content-pinned backward runtime or approve a prospective contract amendment. Any amendment must precede a fresh influence attempt and cannot reinterpret the preserved null attempts as evidence."
+  }
+}

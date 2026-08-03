@@ -2,8 +2,8 @@
 
 **CANDIDATE LEDGER — NOT FROZEN — INDEPENDENT REVIEW AND PI APPROVAL PENDING**
 
-State date: 2026-08-02. Governing plan:
-`jspace_lab_nextsteps_4_3.md` plus its accepted addendum. Scientific candidate:
+State date: 2026-08-03. Governing plan:
+`jspace_lab_nextsteps_4_4.md` plus its accepted addendum. Scientific candidate:
 `SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md`, version 0.11.
 
 This ledger records the mechanical pre-freeze state. A checked development
@@ -17,10 +17,10 @@ and a freeze tag can change that boundary.
 |---|---|---|
 | Qwen A1000 cumulative draw-A lens | **REGISTERED / INTEGRITY PASS** | `p4-qwen-lens-fit-drawA-n1000-dev-v1`; 1,000 prompts; lens `6e48c773...f6bd6`; 63-layer finiteness and exact-quantized-mean audit passes. |
 | A500–A1000 structural contract | **REGISTERED / PASS** | `p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1`; conservative task q50/q05 0.998702/0.998122 pass 0.95/0.90. |
-| A500–A1000 functional contract | **FROZEN / READY / UNRUN** | Exact A1000 hash is bound; frozen Q-L1 through Q-L5 tolerances and outcome-blind subset remain unchanged. |
-| Selection-margin audit | **FROZEN / UNRUN** | Runs on captured functional rows and cannot remove a stratum or change the intervention. |
-| Prompt-323 retained-influence audit | **FROZEN / UNRUN** | Exact equal-weight sensitivity; prompt remains retained under every result. |
-| Canonical Qwen instrument | **PENDING** | Mechanical decision requires all five registered post-A1000 stages. Q-L1/Q-L2 nominate A1000; Q-L3/Q-L4/Q-L5 nominate no new sparse instrument. |
+| A500–A1000 functional contract | **REGISTERED / PROVISIONAL Q-L4** | `p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1`; ID Jaccard 0.538462, projector overlap 0.709818, and bridge-rescue difference -0.294028 nat fail; six other functional families pass. This is not a canonical event. |
+| Selection-margin audit | **REGISTERED / COMPLETE** | `p4-qwen-selection-margin-a500-a1000-dev-v1`; all 17,381 positions retained, 15,536 near-tie, 1,845 stable-core, zero rank-deficient; geometry reconstructed exactly. Q-L4 remains provisional. |
+| Prompt-323 retained-influence audit | **HARD STOP / NO EVENT** | Repeated prompt-323 norms 181.826310/181.785516 violate frozen 173.345 ±0.5; repeated registered prompt-112 controls 55.544060/55.587600 disagree with historical 159.952 and registered 160.070954. Runtime identity requires independent review. |
+| Canonical Qwen instrument | **BLOCKED / NOT OPENED** | The mechanical decision requires a live influence input. No canonical event or nominated lens exists; direct Q-L4 registration and tolerance widening are forbidden. |
 
 ## Candidate-primary decisions
 
@@ -48,7 +48,7 @@ Native `ol-*` and `gm-*` events are forbidden in the Phase 4 registry.
 
 | Gate | State | Requirement |
 |---|---|---|
-| Live-output accounting | **RED: 218/220 AT LAST WHOLE AUDIT** | No wrong hashes in the last complete audit; the new A1000 fit and structural outputs pass focused rehash and exact local backup. A120 capacity reconstruction and historical state remain absent. Rerun the whole audit only after the full queue/registry boundary. |
+| Live-output accounting | **RED: 230/232 AT VM14 M0 WHOLE AUDIT** | No wrong hashes or unexpected failures; A120 capacity reconstruction and the historical state remain absent. The later functional 18 outputs and margin 34 outputs each pass registration-time rehash and exact local backup. Rerun the whole audit only after the full queue/registry boundary. |
 | A120 capacity | **RECOVERY PREPARED / UNRUN** | Run the exact-hash-gated recovery only after A1000 releases the GPU. A near match is quarantined and never registered. |
 | Historical `state.json` | **CURRENT-VM SEARCH EXHAUSTED / EXTERNAL DECISION REQUIRED** | Mounted files, live Drive/trash/revisions, and preserved pre-incident metadata expose no target cloud ID or exact bytes. Recover a genuinely new exact backup or obtain independent/PI approval for an append-only archival supersession. Never synthesize timing or peak-memory bytes. |
 | Whole-registry release | **PENDING** | Two clean passes with an independent Drive materialization boundary and identical registry/reference sets. |

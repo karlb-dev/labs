@@ -2,19 +2,24 @@
 
 **DEVELOPMENT CANDIDATE — NOT A FREEZE RECORD**
 
-Decision state: candidate 0.11, 2026-08-02. This record translates the
-Phase-4.3 branch rules into the current methods conclusions without opening an
-untouched intervention outcome.
+Decision state: candidate 0.11; execution state updated 2026-08-03. This
+record translates the Phase-4.4 branch rules into the current methods
+conclusions without opening an untouched intervention outcome.
 
 ## M1. Operator convergence is not instrument invariance
 
 The registered A250-to-A500 comparison separates three objects. The averaged
 operator and task-token directions converge strongly, literal sparse rows and
 their selected projector do not meet their frozen stability floors, and one
-load-bearing bridge-rescue endpoint remains decision-sensitive. Therefore
-matrix similarity alone cannot validate a sparse causal instrument. This is a
-Phase 4 development conclusion; the prospective A500-to-A1000 queue can narrow
-or strengthen it but cannot erase the observed boundary.
+load-bearing bridge-rescue endpoint remains decision-sensitive. The registered
+A500-to-A1000 successor now reproduces all three failures despite structural
+q50/q05 of 0.998702/0.998122: ID Jaccard is 0.538462, projector overlap is
+0.709818, and bridge rescue differs by -0.294028 nat. Its all-position margin
+audit finds 15,536 near-tie and 1,845 stable-core positions, with no
+rank-deficient stratum; the stable-core ID Jaccard remains only 0.666667.
+Therefore matrix similarity alone cannot validate a sparse causal instrument,
+and tied boundary rows are not a complete explanation. This is a registered
+Phase 4 development conclusion.
 
 ## M2. A1000 is the last automatic fit-size escalation
 
@@ -29,7 +34,13 @@ The fit is now registered at exactly 1,000 prompts and passes its full tensor
 integrity audit. Its first successor also passes: the A500--A1000 conservative
 assay-band task q50/q05 are 0.998702/0.998122. This licenses the frozen
 functional stage but does not itself choose Q-L1--Q-L5 or establish sparse or
-causal invariance.
+causal invariance. The functional and margin stages are now registered and
+emit provisional Q-L4. The required prompt-323 influence stage has no event:
+it hard-stops because repeated current-runtime Jacobians violate the frozen
+fit-log norm control, and the registered prompt-112 control independently
+shows the same backward-semantics break. Q-L4 therefore remains noncanonical;
+direct registration, tolerance widening, and automatic A2000 escalation are
+all forbidden.
 
 ## M3. Bank B is estimation-only in Phase 4
 
@@ -82,6 +93,8 @@ numbers cannot change a mainline conclusion, review field, or execution gate.
 
 Phase 4 is development-only and not frozen. P4-P1 is estimation-only, P4-P3
 is blocked, and P4-P2 is the sole conditional candidate primary. A1000 and its
-structural successor are complete; the remaining functional/canonical queue
-and external review/governance gates determine whether Phase 4 reaches a
+structural, functional, and margin successors are complete. The prompt-323
+runtime-identity block prevents the required influence and canonical events,
+so side admission and all branch-dependent work remain closed. Independent
+review must resolve the runtime contract before Phase 4 can reach either a
 reviewable no-primary methods boundary or a one-primary freeze candidate.

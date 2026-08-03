@@ -4,9 +4,10 @@ Status: live development synthesis through the OLMo-3 32B base,
 seed-paired 3.0 Think, and seed-paired OLMo-3.1 32B Think and Instruct
 own/common-lens comparisons, registered four-checkpoint trajectory, and
 post-hoc common-support closure, plus the completed Qwen draw-A n=1000 fit,
-registered A500--A1000 structural decision, passing official-Qwen mode-v2
+registered A500--A1000 structural, functional, and selection-margin decisions,
+the prompt-323 runtime-identity hard stop, passing official-Qwen mode-v2
 baseline, outcome-blind Bank B methods, Qwen Bank-W capability gate, and
-ancestry-integrated Gemma/OLMo methods releases, 2026-08-02.
+ancestry-integrated Gemma/OLMo methods releases, 2026-08-03.
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -758,6 +759,59 @@ not identify a convergence rate or establish sparse-selection, causal, or
 published-recipe invariance. Exact registered source hashes and derived rows
 are in `qwen_structural_progression.json` and `.csv`.
 
+### A500–A1000 functional and selection-margin boundary
+
+Functional evidence:
+`p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1`.
+Selection-margin evidence:
+`p4-qwen-selection-margin-a500-a1000-dev-v1`.
+
+![Qwen A500–A1000 functional gate](figures/p4f26_qwen_multilens_functional_gate_a500_a1000.png)
+
+The prospectively frozen functional successor preserves the structural pass
+but does not establish sparse or causal invariance. Across all 17,381 frozen
+positions, A500–A1000 median selected-ID Jaccard is 0.538462 and normalized
+selected-projector overlap is 0.709818, so both selection gates fail. Median
+principal-angle summary is only 3.837 degrees, showing why the row-level and
+subspace-level statements must remain distinct. The A500-minus-A1000
+bridge-rescue difference is -0.294028 nat and fails the 0.25-nat bound.
+Occupancy, corrected centered excess at all three landmarks, span-safe
+specificity, tail rate, G4, and bridge preference pass. The span-safe-specific
+equal-family difference is 0.072210 nat, but its paired 95% interval
+[-0.089788, 0.261537] does not establish formal 0.15-nat TOST equivalence.
+The registered producer therefore emits provisional branch candidate Q-L4
+and explicitly nominates no canonical lens.
+
+The external published comparator in this figure remains an **external
+published reference, partially specified recipe**. Its contrasts are
+descriptive comparability evidence and do not enter the A500–A1000 branch
+decision.
+
+![Qwen A500–A1000 selection-margin audit](figures/p4f27_qwen_selection_margin_a500_a1000.png)
+
+The outcome-blind margin audit retains every frozen position and exactly
+reconstructs the captured top-k intervention and registered selection
+geometry. It classifies 15,536 positions as near-tie and 1,845 as stable-core;
+none is rank-deficient. Near-tie median selected-ID Jaccard/projector overlap
+are 0.538462/0.707053, versus 0.666667/0.800552 in the stable core. Thus
+near-boundary score competition explains part, but not all, of the observed
+instability. The blinded lexical sheet marks 52,261 lens-row records for
+optional behavior-blind manual review. That sheet is nondecisional, no row can
+be removed from the functional result, and no manual adjudication was used.
+
+The required next influence stage did not produce evidence. Its frozen
+prompt-323 fit-log norm is 173.345 ±0.5, while two clean current processes
+returned 181.826310 and 181.785516. A preceding-prompt replay did not repair
+the discrepancy. More decisively, two current clean recomputations of the
+registered prompt-112 control returned 55.544060 and 55.587600 instead of its
+historical 159.952 and registered recompute 160.070954. Nominal versions,
+hardware, model bytes, fused bindings, and `jlens` revision match, but the
+historical installed-distribution contents and compiled-kernel cache identity
+were not preserved. The queue therefore stops at a runtime-identity boundary:
+no prompt-323 contribution, influence event, canonical Q-L event, or M2
+admission exists. Q-L4 remains provisional. See
+`PHASE4_PART4_PROMPT323_RUNTIME_BLOCK.md` for the exact non-evidence record.
+
 Mode-v2 evidence: `p4-qwen-mode-gate-dev-v2`.
 
 ![Official Qwen mode-v2 baseline gate](figures/p4f21_qwen_mode_model_gate_v2.png)
@@ -1072,9 +1126,13 @@ estimation-first account:
 - Qwen A250-to-A500 agreement is stronger on the frozen structural assay
   band, but both selection-stability gates and bridge rescue fail. The
   precommitted successor completed draw A to n=1000. A500-to-A1000 structural
-  q50/q05 pass at 0.998702/0.998122, but the functional, selection-margin,
-  prompt-influence, and canonical stages remain sealed; no lens is canonical
-  at this boundary.
+  q50/q05 pass at 0.998702/0.998122. The registered A500-to-A1000 functional
+  gate again fails selected-ID Jaccard, selected-projector overlap, and bridge
+  rescue, while the registered all-position margin audit localizes most rows
+  to the near-tie stratum. These two stages emit provisional Q-L4. The required
+  prompt-323 influence stage hard-stops on a reproducible backward-runtime
+  mismatch, so no canonical event exists and no lens is canonical at this
+  boundary.
 - Bank B candidate v2 passes complete independent source verification, but
   its 0.25-nat joint SESOI is unusably underpowered under the registered
   variability ruler, and the optimistic successor proves no reallocation of
@@ -1097,12 +1155,22 @@ claims.
 
 ## Next boundary
 
-The A1000 fit and A500--A1000 structural event are complete, registered,
-locally backed up, and pushed. Phase 4.4 resumes at the first incomplete frozen
-stage: the A500/A1000/published functional gate, followed by selection margin,
-prompt-323 influence, and the mechanical Q-L1--Q-L5 canonical decision. The
-queue is restart-safe and verifies the existing fit and structural event before
-continuing. No functional result has been opened in this closeout.
+The A1000 fit, A500--A1000 structural event, functional gate, and
+selection-margin audit are complete, registered, locally backed up, and
+pushed. The functional and margin stages emit provisional Q-L4: literal sparse
+selection, selected-projector overlap, and bridge rescue remain
+decision-sensitive despite strong operator convergence. This is not a
+canonical decision.
+
+Phase 4.4 is blocked at the required prompt-323 influence gate. Repeated
+prompt-323 and registered prompt-112 controls establish a stable current
+backward computation that is incompatible with the historical fit/influence
+runtime despite matching nominal versions, hardware, model bytes, and fused
+bindings. The influence producer wrote no contribution and registered no
+event; the mechanical canonical producer never opened. Continuation requires
+independent review and either a historically content-pinned runtime or a
+prospective runtime-contract amendment. Blind rerun, tolerance widening, and
+direct Q-L4 registration are forbidden.
 
 The handoff-time registry audit hash-accounted 218/220 live outputs with no
 wrong hashes. The two remaining absent paths belong to the older A120--A250
@@ -1116,16 +1184,15 @@ independently/PI-approved append-only archival correction remains required.
 Two clean whole-registry durability passes are freeze blockers, and the old
 registry event must not be rewritten.
 
-Next: complete the frozen functional, selection-margin,
-retained-prompt-323, and canonical-decision queue; import
-the already decisive OLMo early bundle and later side-track release bundles;
-bind any Q-L1/Q-L2 canonical lens into the review-gated Bank B geometry and
-P4-P2 pilot; execute only those consumed-development follow-ups licensed by
-the frozen gates and independent reviews; recover A120 capacity exactly;
-resolve the historical state artifact through external governance; and obtain
-independent protocol review and PI sign-off. A Q-L3/Q-L4/Q-L5 decision blocks
-the lens-dependent intervention follow-ups rather than substituting a new
-branch.
+Next: resolve the prompt-323 runtime identity under independent review,
+complete and bank the unchanged influence stage only if its reviewed contract
+passes, and only then open the mechanical canonical decision. Side-track
+admission and every lens-dependent M3/M4 follow-up remain behind that live
+canonical event. Separately, recover A120 capacity exactly, resolve the
+historical state artifact through external governance, and obtain independent
+protocol review and PI sign-off. If a lawful canonical event ultimately emits
+Q-L3/Q-L4/Q-L5, it blocks the lens-dependent intervention follow-ups rather
+than substituting a new branch.
 
 Confirmatory Phase 4 remains blocked on preregistration freeze and
 untouched data.
