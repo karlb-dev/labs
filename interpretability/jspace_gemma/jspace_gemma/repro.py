@@ -4,7 +4,20 @@ from __future__ import annotations
 from pathlib import Path
 
 from .manifests import file_sha256, object_sha256, verify_constraints
+from .paths import REPO_ROOT
 from .registry import resolve_all
+
+
+def _repository_materialization(path: Path) -> Path:
+    """Map an absolute producer-worktree output into the merged repository."""
+    if not path.is_absolute():
+        return path
+    try:
+        marker = path.parts.index("interpretability")
+    except ValueError:
+        return path
+    candidate = REPO_ROOT / Path(*path.parts[marker:])
+    return candidate if candidate.is_file() else path
 
 
 def verify_live_evidence() -> dict:
@@ -16,7 +29,8 @@ def verify_live_evidence() -> dict:
         field = "source_outputs" if event["event"] == "evidence_imported" else "outputs"
         for output in event.get(field, []) or []:
             path = Path(output["path"])
-            actual = file_sha256(path) if path.exists() else None
+            materialized = _repository_materialization(path)
+            actual = file_sha256(materialized) if materialized.exists() else None
             expected = output.get("sha256")
             checked += 1
             if actual != expected:
