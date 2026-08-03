@@ -362,7 +362,9 @@ def make_figure(
     pdf_path: Path,
 ) -> None:
     colors = {24: "#005f73", 32: "#0a9396", 40: "#ee9b00", 56: "#ae2012"}
-    figure, axes = plt.subplots(1, 2, figsize=(11.5, 4.8), constrained_layout=True)
+    figure, axes = plt.subplots(1, 2, figsize=(11.5, 4.8))
+    figure.subplots_adjust(
+        left=0.075, right=0.985, bottom=0.19, top=0.82, wspace=0.20)
     labels = {"base": "Base", "olmo31_think": "OLMo-3.1 Think"}
     floor = float(config["transport_gate"]["row_passage_floor"])
     for axis, model_key in zip(axes, ("base", "olmo31_think")):
@@ -393,7 +395,7 @@ def make_figure(
     )
     figure.text(
         0.5,
-        0.005,
+        0.035,
         (
             "Dashed line: 0.90 passage floor. Think passes only L56 at "
             "epsilon 0.10. Registered site-dose coverage: "
