@@ -1,7 +1,6 @@
 import hashlib
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 PAPER = ROOT / "reports/paper"
 
@@ -17,9 +16,9 @@ def test_isolated_paper_source_and_pdf_are_complete():
     assert pdf.read_bytes().startswith(b"%PDF")
     assert pdf.stat().st_size > 300_000
     assert _sha256(tex) == (
-        "33e88825ce67d158e83328ee378b7847674d2ba234b541839a10b287ea75c656")
+        "5783560a9938061efce9f47df85cde7bb021584a1bcef406598fda0763a8cc51")
     assert _sha256(pdf) == (
-        "02a81b87fff5fdce07726af341fdc80b0fe010e42c41ddc47c06a2e8d3240ec7")
+        "7809b76ab4cec90a5878c3542167eadb83399c6a9f3567fe28bc93db47e2f809")
 
 
 def test_paper_uses_registered_geometry_figures():
@@ -41,12 +40,32 @@ def test_paper_uses_registered_geometry_figures():
         assert _sha256(PAPER / "figures" / name) == digest
 
 
+def test_paper_uses_registered_study2_figures():
+    expected = {
+        "ol2_stage_wedge_capability_route.png":
+            "add4b84aa436779d9a4b491a726d6116783b4c76c5e74107c9537ded33a9273d",
+        "ol2_transport_validation_joint_paper.png":
+            "03564b351088aac7bda3dc9a4c00fa02f07456543349766e5afdd4e39e8ca7b1",
+        "ol2_bank_w_olmo_pair_power.png":
+            "476ea88627f1d710b03e1bb8a310f54c46683af337980b90890b0ab57128364d",
+    }
+    for name, digest in expected.items():
+        assert _sha256(PAPER / "figures" / name) == digest
+
+
 def test_paper_preserves_claim_and_namespace_boundaries():
     tex = (PAPER / "olmo_lineage_parallel_phase.tex").read_text()
     script = (PAPER / "compile.sh").read_text()
     assert "16/20" in tex
     assert "dictionary-formation-pattern" in tex
     assert "not-executed-no-proxy-substitution" in tex
+    assert r"null\_or\_unresolved" in tex
+    assert "Effects are missing, not zero" in tex
+    assert r"h6\_fail\_in\_band\_with\_checkpoint\_specific\_late\_anchor" in tex
+    assert "Causal-dose coverage therefore" in tex
+    assert "remains unavailable, not zero" in tex
+    assert "not-powered-at-current-support" in tex
+    assert "power 0.7788" in tex
     assert "shared Phase 4 or Gemma papers" in tex
     assert "SOURCE_DATE_EPOCH=1785648410" in script
     assert "interpretability/jspace_paper" not in script

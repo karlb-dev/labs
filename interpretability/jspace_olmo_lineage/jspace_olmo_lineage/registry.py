@@ -40,8 +40,8 @@ def _validate(event: dict) -> None:
     evidence_id = str(event.get("evidence_id", ""))
     if event_type not in VALID_EVENTS:
         raise RegistryError(f"invalid event type {event_type!r}")
-    if not evidence_id.startswith("ol-"):
-        raise RegistryError("OLMo registry accepts only ol- evidence IDs")
+    if not evidence_id.startswith(("ol-", "ol2-")):
+        raise RegistryError("OLMo registry accepts only ol- or ol2- evidence IDs")
     if event_type == "evidence_created":
         if event.get("tier") not in NATIVE_TIERS:
             raise RegistryError("native tier must be development or methods")

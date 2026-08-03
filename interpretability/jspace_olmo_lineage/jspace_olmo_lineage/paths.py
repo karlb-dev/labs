@@ -8,6 +8,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 SPECIAL_LAB_ROOT = Path(
     "/content/drive/MyDrive/interpret/special-lab-1")
 DEFAULT_RUN_ROOT = SPECIAL_LAB_ROOT / "olmo_lineage_20260801"
+STUDY2_RUN_ROOT = SPECIAL_LAB_ROOT / "olmo_lineage_2_20260803"
 DEFAULT_LOCAL_WORK = Path("/content/olmo_lineage_work")
 DRIVE_ALIASES = {
     "part1": "2026-07-25_1726",

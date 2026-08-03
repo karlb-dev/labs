@@ -1,0 +1,136 @@
+evidence_id: ol2-sidelines2-import-bundle-v1
+bundle_id: jspace-olmo-lineage-sidelines2-v1
+tier: methods
+branch: interp_jspace_olmo_lineage_2
+shared_parent: 901fb4fc7578a913088c7947a2e6240f7fc45aeb
+expected_run_root_name: olmo_lineage_2_20260803
+
+expected_registry_before_release:
+  line_count: 40
+  origin_events: 37
+  live_events: 36
+  live_outputs: 145
+  through_evidence_id: ol2-bank-w-olmo-pair-power-v1
+
+admitted_evidence:
+  foundation_and_ancestry:
+    - ol2-checkpoint-ancestry-v1
+    - ol2-foundation-v1
+  stage_wedge:
+    - ol2-stage-wedge-think-sft-tier1-v1
+    - ol2-stage-wedge-think-dpo-tier1-v1
+    - ol2-stage-wedge-joint-analysis-v1
+  transport_license_and_freeze:
+    - ol2-gemma-backend-calibration-import-v1
+    - ol2-transport-execution-freeze-v1
+  transport_validation:
+    - ol2-transport-validation-base-v1
+    - ol2-transport-validation-olmo31-think-v1
+    - ol2-transport-validation-joint-v1
+    - ol2-transport-validation-figure-v1
+  outcome_blind_planning:
+    - ol2-bank-w-olmo-pair-power-v1
+
+source_artifacts:
+  - role: state-of-record-v2
+    repo_path: interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md
+    sha256: 5923f79475e3bc15c0c679033f3c637b4b9514b066843a164b4caf2c74bdb942
+    target_uri: olmo-artifact://release/OLMO_LINEAGE_STATE_OF_RECORD_V2.md
+  - role: claims-table-v2
+    repo_path: interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_CLAIMS_TABLE_V2.md
+    sha256: 65f6ae5f94ab3d7cb42e04a37f585e9ad50975e161e885b1e58de8dcbba5be4f
+    target_uri: olmo-artifact://release/OLMO_LINEAGE_CLAIMS_TABLE_V2.md
+  - role: study2-report
+    repo_path: interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_STUDY2_REPORT.md
+    sha256: 564f606a15bdfcfeebcf81c8dd8d2e53b5a5cbc8d7d435e5369344d2e90ed057
+    target_uri: olmo-artifact://release/OLMO_LINEAGE_STUDY2_REPORT.md
+  - role: paper-tex
+    repo_path: interpretability/jspace_olmo_lineage/reports/paper/olmo_lineage_parallel_phase.tex
+    sha256: 5783560a9938061efce9f47df85cde7bb021584a1bcef406598fda0763a8cc51
+    target_uri: olmo-artifact://release/OLMO_LINEAGE_STUDY2_PAPER.tex
+  - role: paper-pdf
+    repo_path: interpretability/jspace_olmo_lineage/reports/paper/olmo_lineage_parallel_phase.pdf
+    sha256: 7809b76ab4cec90a5878c3542167eadb83399c6a9f3567fe28bc93db47e2f809
+    target_uri: olmo-artifact://release/OLMO_LINEAGE_STUDY2_PAPER.pdf
+  - role: stage-wedge-figure
+    repo_path: interpretability/jspace_olmo_lineage/reports/paper/figures/ol2_stage_wedge_capability_route.png
+    sha256: add4b84aa436779d9a4b491a726d6116783b4c76c5e74107c9537ded33a9273d
+    target_uri: olmo-artifact://release/figures/ol2_stage_wedge_capability_route.png
+  - role: h6-figure
+    repo_path: interpretability/jspace_olmo_lineage/reports/paper/figures/ol2_transport_validation_joint_paper.png
+    sha256: 03564b351088aac7bda3dc9a4c00fa02f07456543349766e5afdd4e39e8ca7b1
+    target_uri: olmo-artifact://release/figures/ol2_transport_validation_joint_paper.png
+  - role: pair-power-figure
+    repo_path: interpretability/jspace_olmo_lineage/reports/paper/figures/ol2_bank_w_olmo_pair_power.png
+    sha256: 476ea88627f1d710b03e1bb8a310f54c46683af337980b90890b0ab57128364d
+    target_uri: olmo-artifact://release/figures/ol2_bank_w_olmo_pair_power.png
+  - role: preregistration
+    repo_path: interpretability/jspace_olmo_lineage/preregistration/OLMO_LINEAGE_STUDY2_PREREGISTRATION.md
+    sha256: 2e5e277c104641b24d85fc451eb00b501520787271bc0f4d0114676e4858dacb
+    target_uri: olmo-artifact://release/protocol/OLMO_LINEAGE_STUDY2_PREREGISTRATION.md
+  - role: stage-wedge-config
+    repo_path: interpretability/jspace_olmo_lineage/configs/ol2_stage_wedge.yaml
+    sha256: 78d2a59d7db20f006686a10a85082793e87da7a4aace0191b819b3501f1f44be
+    target_uri: olmo-artifact://release/protocol/ol2_stage_wedge.yaml
+  - role: transport-config
+    repo_path: interpretability/jspace_olmo_lineage/configs/ol2_transport_validation.yaml
+    sha256: d26569c7dfcd33b4da7600b8f36b8b86896c3c0448dd291be7b49c230b08817f
+    target_uri: olmo-artifact://release/protocol/ol2_transport_validation.yaml
+  - role: pair-power-config
+    repo_path: interpretability/jspace_olmo_lineage/configs/ol2_bank_w_olmo_pair_power.yaml
+    sha256: 07aa055401ef87221fcc7843aabb50d63c05e25022715152a9d3956d4d3e1170
+    target_uri: olmo-artifact://release/protocol/ol2_bank_w_olmo_pair_power.yaml
+
+partial_statuses:
+  gemma_backend_license: complete-imported-olmo-specific-ceiling
+  sft_tier1: complete-capability-gated-effects-missing
+  dpo_tier1: complete-capability-gated-effects-missing
+  stage_wedge_joint: null-or-unresolved
+  tier2_own_lens: not-executed-trigger-false
+  h6_base: complete-no-licensed-regime
+  h6_olmo31_think: complete-late-anchor-only
+  h6_joint: fail-in-band-with-checkpoint-specific-late-anchor
+  registered_dose_coverage: unavailable-missing-exact-site-records
+  bank_w_pair_planning: not-powered-at-current-support
+  bank_w_intervention: not-opened
+  receiver_demonstration: not-executed-conditional
+  o5_crossed_grid: not-executed-not-identifiable
+
+result_summary:
+  stage_route: null_or_unresolved
+  stage_effects_missing_not_zero: true
+  h6_route: h6_fail_in_band_with_checkpoint_specific_late_anchor
+  h6_in_band_layers: [24, 32, 40]
+  h6_in_band_passes: 0
+  think_late_anchor: {layer: 56, epsilon: 0.10, passing_rows: 12, total_rows: 12}
+  base_late_anchor: {layer: 56, epsilon: 0.10, passing_rows: 9, total_rows: 12}
+  dose_coverage_fraction: null
+  pair_shared_capable_families: 16
+  pair_power_at_frozen_sesoi: 0.7788
+  pair_power_target: 0.80
+  pair_minimum_powered_families: 18
+
+outputs:
+  repo_bundle_json: interpretability/jspace_olmo_lineage/release/IMPORT_BUNDLE_SIDELINES2.json
+  repo_bundle_markdown: interpretability/jspace_olmo_lineage/release/IMPORT_BUNDLE_SIDELINES2.md
+  repo_registry_prefix: interpretability/jspace_olmo_lineage/release/evidence_events_prefix_sidelines2.jsonl
+  drive_bundle_json: olmo-artifact://release/IMPORT_BUNDLE_SIDELINES2.json
+  drive_bundle_markdown: olmo-artifact://release/IMPORT_BUNDLE_SIDELINES2.md
+  drive_registry_prefix: olmo-artifact://release/evidence_events_prefix_sidelines2.jsonl
+
+forbidden_uses:
+  - treating capability-gated intervention effects as zero
+  - claiming an SFT or DPO causal boundary
+  - calling L24/L32/L40 transport-valid on the tested ladder
+  - treating unavailable registered-dose coverage as zero coverage
+  - treating the Think L56 late anchor as an in-band pass
+  - treating the pair power near-miss as an intervention result or scientific null
+  - opening Bank-W, O5, receiver, own-lens, or additional-model work from this bundle
+  - confirmatory or replication tier import
+
+claim_boundary: >-
+  Self-verifying partial-safe Study-2 handoff. Mandatory Gemma-calibrated
+  stage-wedge and H6 execution are complete, while capability-gated effects,
+  registered-dose coverage, conditional Tier 2, receiver/O5 work, and the
+  underpowered pair redesign remain explicitly partial or unopened. The
+  bundle preserves development/methods tiers and opens no intervention.

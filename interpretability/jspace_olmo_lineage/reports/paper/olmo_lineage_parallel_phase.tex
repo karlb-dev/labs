@@ -87,6 +87,8 @@
 {\Huge\bfseries\color{ink} Capacity Without Coordinate Stasis\par}
 \vspace{0.10in}
 {\LARGE\bfseries\color{violetdark} A development study of the OLMo 32B J-space lineage\par}
+\vspace{0.08in}
+{\large\bfseries Study-2 SFT/DPO wedge and finite-dose transport extension\par}
 
 \vspace{0.38in}
 {\large Isolated OLMo parallel phase --- August 2026\par}
@@ -99,24 +101,31 @@ J-mapped token rows and selected spans reorganize sharply at that transition.
 The later 3.0-to-3.1 Think transition is geometrically much smaller. This
 licenses a matched-lineage association between post-training and coordinate/
 selection reorganization without large measured capacity growth. It does not
-identify which training stage caused the change.
+identify which training stage caused the change. The official SFT/DPO wedge
+does not resolve that stage because both prospective intervention cohorts are
+capability-gated. Frozen H6 validation finds no licensed finite-dose regime at
+layers 24/32/40; OLMo-3.1 Think passes only the layer-56 late anchor at
+$\epsilon=0.10$.
 \end{resultbox}
 
 \vspace{0.18in}
 \begin{warningbox}[title={The decisive externalization experiment did not open}]
 Both OLMo-3.1 endpoints passed their individual Bank-W capability gates, but
 the OLMo/Qwen intersection contained 16 capable families rather than the 20
-required prospectively. No Bank-W intervention cell was run. External-state
-substitution remains a motivated hypothesis, not a resolved mechanism.
+required prospectively. The outcome-blind Think/Instruct pair redesign also
+has 16 shared families and power 0.7788 versus the frozen 0.80 target. No
+Bank-W intervention cell was run. External-state substitution remains a
+motivated hypothesis, not a resolved mechanism.
 \end{warningbox}
 
 \vfill
 \begin{tabular}{@{}ll@{}}
-Branch: & \nolinkurl{interp_jspace_olmo_lineage}\\
+Branch: & \nolinkurl{interp_jspace_olmo_lineage_2}\\
 Scientific import boundary: & \texttt{3b041735d8b842de46a9c0a474fccd0c44e0841a}\\
 Native tiers: & development and methods only\\
-Registry state: & 23 live events, 88 verified outputs\\
-Latest evidence: & \nolinkurl{ol-independent-reconstruction-v1}\\
+Study-2 parent: & \texttt{901fb4fc7578a913088c7947a2e6240f7fc45aeb}\\
+Registry before release: & 36 live events, 145 verified outputs\\
+Latest scientific evidence: & \nolinkurl{ol2-transport-validation-joint-v1}\\
 \end{tabular}
 
 \vspace{0.18in}
@@ -146,6 +155,17 @@ identify a crossed activation/lens/readout causal estimand. An independent
 reconstruction reproduces all headline tables, all five PNGs byte-for-byte,
 all fourteen exact model shards, and one frozen eight-candidate model row with
 zero log-probability drift. All results remain development or methods tier.
+In the Study-2 extension, exact-generation capability is 0.00617 at Think-SFT
+and 0.00309 at Think-DPO; neither checkpoint has one Bank-S fact capable on
+both direct and composed variants, so the frozen wedge route is
+\emph{null or unresolved} and intervention effects remain missing. A
+672-row, dual-exact-JVP H6 grid finds no passing layer/dose cell at
+layers 24/32/40 for Base or OLMo-3.1 Think. Think alone passes layer 56 at
+$\epsilon=0.10$. Exact registered intervention-dose coverage is unavailable
+because the source archive lacks the precommitted site-level dose fields.
+An outcome-blind two-OLMo Bank-W redesign has 16 shared capable families and
+power 0.7788 at the frozen SESOI, short of the 0.80 planning target; it opens no
+intervention.
 \end{abstract}
 \tableofcontents
 \clearpage
@@ -416,7 +436,7 @@ unembedding-plus-normalization readout. Structural similarity decomposes where
 coordinates move; it does not itself establish finite-dose causal transport.}
 \end{figure}
 
-\section{Honest stopping decisions: O4, H5, and O5}
+\section{Honest stopping decisions and Study-2 closure}
 
 \subsection{O4 is gated out, not negative}
 
@@ -435,28 +455,93 @@ factorial was gated out at 16/20 common families; this release does not resolve
 an externalization mechanism.
 \end{quote}
 
-\subsection{Official intermediate stages exist, but no stage result exists}
+\subsection{The official SFT/DPO wedge is capability-gated}
 
 The official artifact inventory initially used byte-identical tokenizer files
 and conservatively returned no eligible intermediate pair. A versioned semantic
 audit showed that Think-SFT changes tokenizer serialization but preserves the
 full 100,278-entry token-ID map, normalized 100,000 BPE merges, processing
 components, and all 207 frozen encodings. Official 32B Think-SFT and Think-DPO
-artifacts are therefore eligible \eid{ol-checkpoint-inventory-v2}.
+artifacts were therefore eligible \eid{ol-checkpoint-inventory-v2}. Study 2
+then froze exact revisions, both registered lens frames, the complete
+972-row Bank-F+S battery, seven intervention conditions, capability floors,
+stage predictions, and route order before either model loaded
+\eid{ol2-checkpoint-ancestry-v1} \eid{ol2-foundation-v1}.
 
-\begin{queuebox}
-H5 is \texttt{testable-with-bounded-stage-wedge}, with SFT and DPO marked
-\texttt{queued-not-started}. The existing Base, 3.0 Think, and 3.1 Think
-checkpoints are anchors. BOS/chat-template differences and repository-only
-parent declarations remain qualifications. Availability is not stage
-attribution.
-\end{queuebox}
+Both checkpoints fail the prospective intervention-cohort gate. Exact
+normalized-generation capability is 0.00617 at SFT and 0.00309 at DPO. Neither
+checkpoint has a Bank-S fact capable on both direct and composed variants,
+versus required floors of 72 facts and 20 families. Consequently, no
+seven-condition intervention outcome exists under either frame
+\eid{ol2-stage-wedge-think-sft-tier1-v1}
+\eid{ol2-stage-wedge-think-dpo-tier1-v1}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.90\textwidth]{ol2_stage_wedge_capability_route.png}
+\caption{The frozen 972-row capability battery and Bank-S intervention-cohort
+gate. Effects are missing, not zero. Evidence:
+\eid{ol2-stage-wedge-joint-analysis-v1}.}
+\end{figure}
+
+The exact paired transition has 965 incapable-both items, two capable-both,
+four lost-at-DPO, and one Bank-F bridge-supplied onset-at-DPO item. No Bank-S
+direct+composed onset exists. The joint router selects
+\texttt{null\_or\_unresolved}: the official SFT/DPO checkpoints do not
+localize the first-release transition under the frozen assay. Later stages,
+checkpoint spacing, capability limits, and measurement variation remain open.
+The single Tier-2 lens-refit trigger is false.
+
+\subsection{H6 fails in band and passes only a Think late anchor}
+
+The exact registered Gemma calibration import licenses an OLMo-specific
+dual-exact-JVP ceiling of 0.0787037; no pooled ceiling is used. Base and
+OLMo-3.1 Think each contribute 336 rows: four prompts, layers 24/32/40/56,
+three direction families, and seven frozen relative doses from 0.001 to 0.10.
+All 672 backend comparisons pass the imported ceiling
+\eid{ol2-gemma-backend-calibration-import-v1}
+\eid{ol2-transport-execution-freeze-v1}.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lrrrrl@{}}
+\toprule
+\textbf{Checkpoint} & \textbf{Rows} & \textbf{Meas.} & \textbf{Decision} &
+\textbf{Passing} & \textbf{Frozen route}\\
+\midrule
+Base & 336 & 34 & 13 & 9 & no licensed regime\\
+OLMo-3.1 Think & 336 & 77 & 37 & 12 & late-anchor-only\\
+\bottomrule
+\end{tabular}
+\caption{H6 row disposition. Passing rows alone do not define a layer-dose
+pass; the prospective passage floor is 0.90 within each 12-row cell.}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{ol2_transport_validation_joint_paper.png}
+\caption{Frozen passage fractions by checkpoint, layer, and dose. No
+L24/L32/L40 cell passes. Think passes only L56 at $\epsilon=0.10$; Base reaches
+9/12 there and remains below the 0.90 floor. Evidence:
+\eid{ol2-transport-validation-joint-v1}
+\eid{ol2-transport-validation-figure-v1}.}
+\end{figure}
+
+The joint route is
+\texttt{h6\_fail\_in\_band\_with\_checkpoint\_specific\_late\_anchor}.
+This narrows transport wording and does not invalidate the registered paired
+ablation effects. A registered-source audit finds no exact OLMo site table
+containing item/layer/position, total removed-energy fraction, and the frozen
+residual-norm conversion together. Per-item means/maxima and per-position
+protected-subspace energy are not substitutes. Causal-dose coverage therefore
+remains unavailable, not zero.
 
 \subsection{O5 is not identifiable from structural proxies}
 
 The registry has capacity and structural geometry, but no causal rows that
-independently cross activation model, transport lens, and output readout. It
-also lacks per-dictionary finite-dose transport, protected-span geometry under
+independently cross activation model, transport lens, and output readout. H6
+now supplies per-checkpoint average/prompt transport on the frozen ladder, but
+it does not supply per-dictionary crossed transport, protected-span geometry under
 each readout, delivered rank/energy checks, a non-J logit-lens baseline, and a
 fixed common crossed-row order. The registered decision is
 \texttt{defer-no-identifiable-crossed-intervention-estimand} and
@@ -509,34 +594,52 @@ failed attempt created a registry event or durable result.
 \midrule
 Sentence 2 & narrowed; release-resolved & architecture-matched
 association between the first Think transition and J-mapped coordinate/
-selection reorganization without material measured capacity growth; no causal
-training-stage attribution\\
+selection reorganization without material measured capacity growth; the
+official SFT/DPO wedge does not stage-localize it, and H6 does not license an
+L24/L32/L40 finite-dose regime\\
 Sentence 4 & explicitly pending & Bank-S motivates externalization, but the
-Bank-W factorial was gated out at 16/20 and resolves no mechanism\\
-H5 & queue only & official SFT/DPO stages are available and semantically
-compatible; no stage outcome has started\\
+Bank-W factorial was gated out at 16/20; the pair-only redesign is underpowered
+at the same 16-family support and resolves no mechanism\\
+H5 & null or unresolved & both official stage cohorts are capability-gated;
+intervention effects are missing and no SFT/DPO boundary is localized\\
+H6 & fail in band; Think late-only & neither checkpoint passes L24/L32/L40;
+Think alone passes L56 at $\epsilon=0.10$; registered dose coverage is
+unavailable rather than zero\\
 O5 & not identifiable & no activation/lens/readout factor estimate or null;
 structural proxies are not substituted\\
 \bottomrule
 \end{tabularx}
 \caption{Paper-facing claim resolution. The sentence-level source of truth is
-\nolinkurl{OLMO_LINEAGE_CLAIMS_TABLE.md}.}
+\nolinkurl{OLMO_LINEAGE_CLAIMS_TABLE_V2.md}.}
 \end{table}
 
 The next integrated phase receives three bounded entries:
 
 \begin{enumerate}
-  \item the minimal official SFT/DPO H5 wedge, with frozen interface and stage
-    provenance checks;
-  \item per-checkpoint finite-dose H6 transport validation before any claim of
-    a conserved usable coordinate system; and
-  \item a Bank-S-first Base/3.1-Think/3.1-Instruct pilot crossing Base versus
+  \item a newly prospective, capability-compatible stage assay if stage
+    localization remains important; the gated official wedge is not repaired;
+  \item exact per-position total-dose and residual-norm logging in any future
+    causal producer before intervention-relevant H6 coverage is claimed; and
+  \item only then, a Bank-S-first Base/3.1-Think/3.1-Instruct pilot crossing Base versus
     recipient-own transport and readout, expanded only after protected-span,
     delivered-rank, and delivered-energy checks pass.
 \end{enumerate}
 
-Bank W remains closed under version 1. Any redesigned service population is a
-new prospective study, not a subset repair.
+Bank W remains closed under version 1. The separately frozen Think/Instruct
+pair ruler finds 16 shared capable families, all four type-I scenarios pass,
+and conservative power is 0.7788 at the existing SESOI. Eighteen common
+families are required for the 0.80 target
+\eid{ol2-bank-w-olmo-pair-power-v1}. The mechanical route is
+\texttt{not-powered-at-current-support}; this is planning evidence, not an
+externalization null or intervention authorization.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.94\textwidth]{ol2_bank_w_olmo_pair_power.png}
+\caption{Outcome-blind planning power for a possible Think/Instruct Bank-W
+pair. The observed 16-family support remains below the frozen 0.80 target;
+18 common capable families are required. No intervention outcome is read.}
+\end{figure}
 
 \section{Limitations}
 
@@ -546,11 +649,17 @@ new prospective study, not a subset repair.
   \item \textbf{Measured capacity.} Stability applies to the frozen corpus,
     layers, dictionary, persistence rule, random controls, and equivalence
     margin. It is not a theorem about all internal capacity.
-  \item \textbf{Transport.} Operator and mapped-row geometry do not replace
-    per-checkpoint finite-dose causal transport.
+  \item \textbf{Transport.} H6 is measured on four prompts and three frozen
+    directions. It finds no in-band passing cell on the tested ladder, but
+    exact intervention-dose coverage remains unavailable because the
+    registered archive lacks the required site stream.
+  \item \textbf{Stage wedge.} Both official intermediate checkpoints fail the
+    prospective capability cohort. Missing intervention effects cannot be
+    treated as zero or as evidence for either training boundary.
   \item \textbf{Externalization.} O4 is absent because the service population
     failed prospectively. Existing Bank-S evidence cannot choose the Bank-W
-    mechanism account.
+    mechanism account. The outcome-blind pair power near-miss is not a
+    scientific null.
   \item \textbf{Missing margins.} Exact kth/k+1 candidate-correlation gaps,
     protected-span overlap under crossed readouts, and core/fringe causal dose
     remain null.
@@ -564,7 +673,8 @@ new prospective study, not a subset repair.
 This release does not license ``Think training creates a global workspace,''
 ``the reasoning objective is the causal variable,'' ``reasoning post-training
 installs external-state substitution,'' ``the dictionaries are identical,''
-or ``Instruct lacks a verbalizable channel.''
+``the stage effect is zero,'' ``the causal-dose coverage is zero,'' or
+``Instruct lacks a verbalizable channel.''
 \end{warningbox}
 
 \section{Conclusion}
@@ -577,11 +687,14 @@ This combination favors a careful description: capacity is stable under the
 measured assay while coordinate/selection organization is not.
 
 The study is equally informative where it stops. A 16/20 prospective service
-failure prevents the decisive Bank-W externalization grid; official SFT/DPO
-stages are available but unrun; and structural geometry cannot stand in for a
-crossed causal decomposition. These boundaries yield a sharper Phase 5 plan
-than an overextended mechanism claim would: test stage localization, finite-
-dose transport, and a minimal crossed Bank-S pilot under frozen controls.
+failure prevents the decisive Bank-W externalization grid; the official
+SFT/DPO wedge opens no intervention cohort; and the H6 assay band has no
+licensed passing regime on the frozen ladder. OLMo-3.1 Think's isolated L56
+pass does not rescue in-band wording. Exact intervention-dose coverage also
+remains unavailable rather than zero. Even the pair-only Bank-W redesign has
+0.7788 power at its 16-family support and remains closed. These boundaries
+favor new prospective capability and site-dose instrumentation over an
+overextended mechanism claim.
 
 \appendix
 \section{Evidence and artifact index}
@@ -605,7 +718,17 @@ span geometry router\\
 \nolinkurl{ol-geometry-figures-dev-v1} & development & five registered figure
 pairs\\
 \nolinkurl{ol-checkpoint-inventory-v2} & methods & official SFT/DPO eligibility
-and H5 queue\\
+and Study-2 entry\\
+\nolinkurl{ol2-stage-wedge-joint-analysis-v1} & development & paired official
+SFT/DPO capability route; effects missing\\
+\nolinkurl{ol2-gemma-backend-calibration-import-v1} & methods & exact
+OLMo-specific backend ceiling import\\
+\nolinkurl{ol2-transport-validation-joint-v1} & methods & 672-row H6 joint
+router and registered-dose archive audit\\
+\nolinkurl{ol2-transport-validation-figure-v1} & methods & paper-facing H6
+figure derivative\\
+\nolinkurl{ol2-bank-w-olmo-pair-power-v1} & methods & outcome-blind two-model
+max-T planning ruler; 16 families are underpowered\\
 \nolinkurl{ol-o5-feasibility-decision-v1} & methods & no-substitution
 identifiability decision\\
 \nolinkurl{ol-independent-reconstruction-v1} & methods & independent tables,
@@ -631,16 +754,24 @@ figures, hashes, and model sentinel\\
   \item O5 decision JSON: \texttt{d31d23e4...74499}.
   \item Reconstruction JSON: \texttt{e159f01d...20542}; payload:
     \texttt{ee94e446...619f}.
+  \item Stage-wedge joint JSON: \texttt{44882a8d...9357}.
+  \item H6 Base result: \texttt{401737b9...e69d0}; Think result:
+    \texttt{747483bf...f4e73}.
+  \item H6 joint JSON: \texttt{e563dfbe...8a33}.
+  \item H6 paper PNG/PDF: \texttt{03564b35...a7b1} and
+    \texttt{b2745d9e...d610}.
+  \item OLMo-pair power JSON: \texttt{4385af4b...200b}; PNG/PDF:
+    \texttt{476ea886...64d} and \texttt{12faad50...ca0}.
 \end{itemize}
 
 \section{Operational reproducibility}
 
 The append-only Git registry is authoritative for event order; the isolated
-Drive root is authoritative for heavy outputs. At paper assembly, 23 live
-events and 88 outputs verify, and 58 package tests plus the pinned dependency
-lock pass. The stable restart guide is
-\nolinkurl{reports/OLMO_LINEAGE_RESUME.md}; the complete scientific snapshot is
-\nolinkurl{reports/OLMO_LINEAGE_STATE_OF_RECORD.md}; and the sentence-level
-license is \nolinkurl{reports/OLMO_LINEAGE_CLAIMS_TABLE.md}.
+Drive root is authoritative for heavy outputs. Before the Study-2 release
+event, 36 live events and 145 live outputs verify. The stable Study-2 handoff is
+\nolinkurl{reports/INPROGRESS_OLMO_LINEAGE_2.md}; the versioned scientific
+snapshot is \nolinkurl{reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md}; and the
+sentence-level license is
+\nolinkurl{reports/OLMO_LINEAGE_CLAIMS_TABLE_V2.md}.
 
 \end{document}

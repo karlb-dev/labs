@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from .manifests import file_sha256, object_sha256
-from .paths import run_root
+from .paths import DEFAULT_RUN_ROOT, STUDY2_RUN_ROOT
 from .registry import EVENTS, resolve_all
 
 
@@ -26,13 +26,18 @@ def verify_json_envelope(path: str | Path) -> dict:
 def verify_live_evidence() -> dict:
     failures = []
     checked = 0
-    root = run_root(create=False) if EVENTS.exists() else None
     for event in resolve_all():
         if not event["live"]:
             continue
-        if not event["evidence_id"].startswith("ol-"):
+        evidence_id = event["evidence_id"]
+        if evidence_id.startswith("ol2-"):
+            root = STUDY2_RUN_ROOT
+        elif evidence_id.startswith("ol-"):
+            root = DEFAULT_RUN_ROOT
+        else:
+            root = None
             failures.append({
-                "evidence_id": event["evidence_id"],
+                "evidence_id": evidence_id,
                 "reason": "foreign evidence prefix",
             })
         for output in event.get("outputs", []) or []:
