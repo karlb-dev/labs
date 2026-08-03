@@ -7,6 +7,7 @@ from jspace_gemma.experiments.gm2_study2_release import (
     _flatten_admissions,
     registry_prefix_record,
     source_artifact_records,
+    verify_bundle_source,
     verify_registry_prefix,
 )
 
@@ -65,3 +66,24 @@ def test_release_admission_and_partial_contract_is_exact():
     assert config["partial_statuses"]["study1_blocker_record"].startswith(
         "preserved-immutable"
     )
+
+
+def test_rendered_bundle_and_registry_snapshot_are_exact():
+    release = ROOT / "release"
+    expected = {
+        "IMPORT_BUNDLE_SIDELINES2.json": (
+            "9ef48b8ab1d99d52a756ddea1e285a9d61e781fd054cbf92702bfe81be56f5b0"
+        ),
+        "IMPORT_BUNDLE_SIDELINES2.md": (
+            "547da552fee0057fa304b1dffe657eb269315007073b0a5c3cbb29c96577b315"
+        ),
+        "evidence_events_prefix_sidelines2.jsonl": (
+            "2a144bcf0e7be0ac4307f7e2a2984c1879340b9a7e9278d10143d122a14fd30a"
+        ),
+    }
+    for name, digest in expected.items():
+        assert hashlib.sha256((release / name).read_bytes()).hexdigest() == digest
+    verification = verify_bundle_source(CONFIG)
+    assert verification["ok"] is True
+    assert verification["admitted_events"] == 8
+    assert verification["release_artifacts"] == 13
