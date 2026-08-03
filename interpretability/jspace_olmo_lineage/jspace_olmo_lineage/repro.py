@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from .manifests import file_sha256, object_sha256
-from .paths import DEFAULT_RUN_ROOT, STUDY2_RUN_ROOT
+from .paths import DEFAULT_RUN_ROOT, REPO_ROOT, STUDY2_RUN_ROOT
 from .registry import EVENTS, resolve_all
 
 
@@ -21,6 +21,26 @@ def verify_json_envelope(path: str | Path) -> dict:
         "actual_payload_sha256": actual,
         "recorded_payload_sha256": value.get("payload_sha256"),
     }
+
+
+def _repository_materialization(path: Path) -> Path:
+    """Map a producer-worktree package output into the merged repository."""
+    if not path.is_absolute():
+        return path
+    try:
+        marker = path.parts.index("interpretability")
+    except ValueError:
+        return path
+    candidate = REPO_ROOT / Path(*path.parts[marker:])
+    return candidate if candidate.is_file() else path
+
+
+def _within(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+        return True
+    except ValueError:
+        return False
 
 
 def verify_live_evidence() -> dict:
@@ -42,16 +62,19 @@ def verify_live_evidence() -> dict:
             })
         for output in event.get("outputs", []) or []:
             path = Path(output["path"])
-            actual = file_sha256(path) if path.exists() else None
+            materialized = _repository_materialization(path)
+            actual = file_sha256(materialized) if materialized.exists() else None
             checked += 1
             if root is not None:
-                try:
-                    path.resolve().relative_to(root.resolve())
-                except ValueError:
+                package_root = REPO_ROOT / "interpretability/jspace_olmo_lineage"
+                if not (
+                    _within(path, root)
+                    or _within(materialized, package_root)
+                ):
                     failures.append({
                         "evidence_id": event["evidence_id"],
                         "path": str(path),
-                        "reason": "native output escapes OLMo run root",
+                        "reason": "native output escapes OLMo isolated roots",
                     })
             if actual != output.get("sha256"):
                 failures.append({
