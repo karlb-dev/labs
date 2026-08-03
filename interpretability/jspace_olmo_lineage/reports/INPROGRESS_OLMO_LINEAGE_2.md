@@ -1,22 +1,58 @@
 # OLMo lineage study 2 — live handoff
 
-Status: the SFT/DPO wedge and joint router are complete and registered; mandatory H6 calibration import and transport validation are next.
+Status: all mandatory scientific stages are complete and registered. Release
+assembly, verification, and parent-branch integration remain.
 
-- Parent: `901fb4fc7578a913088c7947a2e6240f7fc45aeb`
-- Branch: `interp_jspace_olmo_lineage_2`
-- Worktree: `/content/labs_olmo2`
-- Drive root: `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803`
-- First study-2 event: `ol2-checkpoint-ancestry-v1` (registered and pushed)
-- Foundation event: `ol2-foundation-v1` (registered and pushed)
-- Model order after Gemma G2.2: Think-SFT, then Think-DPO; each runs G5 then the paired two-frame seven-condition Tier-1 grid.
-- Producer: `jspace_olmo_lineage.experiments.stage_wedge`; exact capability equality, snapshot/tokenizer/BOS hard gates, frozen capable-cohort manifest, per-item Drive checkpoints, full selected/protected-direction logs, matched-control conformance, and isolated registration.
-- Watchdog entrypoint: `interpretability/jspace_olmo_lineage/run_stage_wedge_model.sh think_sft all`; logs and atomic heartbeats are written below the Study-2 Drive root.
-- Validation before first load: 77 OLMo/Phase-3 intervention tests pass; Ruff and bytecode checks pass.
-- Local SFT snapshot: `/content/hf_local/models--allenai--Olmo-3-32B-Think-SFT/snapshots/9770a0bacc8536a6b5870da62b75e5ba3681930d` (61 GiB cache; downloaded directly from Hugging Face at the frozen revision).
-- Pre-model correction: the first CPU-only SFT preflight passed exact shard streaming through the tokenizer-contract step, then stopped because the producer expected `audit_encoding_sha256` in YAML rather than the frozen key `frozen_audit_encoding_sha256`. No tokenizer/model was constructed and no outcome was opened. The explicit field mapping and a regression test were added before retry.
-- Think-SFT result: `ol2-stage-wedge-think-sft-tier1-v1` registered at commit `7f12bd2`. All 972 G5 rows are finite and unique, but exact normalized-generation capability is 0.00617 overall and 0.00833 on Bank S. No Bank-S fact is capable on both direct and composed variants (frozen floors: 72 facts / 20 families), so the cohort is empty and no intervention outcome was opened. Registry verification passes with 27 live events / 110 output hashes.
-- DPO staging: all 14 required safetensor links are present at revision `a38eddf84054b578970f53f31217df1556e69571`. An unrestricted Hub download began fetching redundant `.bin` weights; it was stopped, and only those seven completed `.bin` cache copies plus five incomplete `.bin` fragments were deleted (about 55 GB, recoverable from HF). The safetensor snapshot is retained for exact preflight.
-- Think-DPO result: `ol2-stage-wedge-think-dpo-tier1-v1` registered at commit `ebaadb0`. All 972 G5 rows are finite and unique; exact normalized capability is 0.00309 overall and 0.00278 on Bank S. Again zero Bank-S facts are capable on both direct and composed variants, so the cohort is empty and no intervention outcome was opened. With both stages gated, no capability onset is observed inside SFT-to-DPO and no effect contrast is estimable. Registry verification passes with 28 live events / 116 output hashes.
-- Joint route: `ol2-stage-wedge-joint-analysis-v1` registered from the two committed stage events. Of 972 paired items, 965 are incapable at both checkpoints, two capable at both, four lose capability at DPO, and one isolated Bank-F bridge-supplied item gains it; no Bank-S direct+composed fact becomes capable. The frozen router selects `null_or_unresolved`, not capability onset. Licensed wording: the official SFT/DPO checkpoints do not localize the first-release transition under the frozen assay; capability limits and later stages remain open. The registered PNG explicitly marks effects as missing, not zero.
+- Parent: `901fb4fc7578a913088c7947a2e6240f7fc45aeb`.
+- Branch: `interp_jspace_olmo_lineage_2`.
+- Drive root:
+  `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803`.
+- Registry before the release event: 36 origins, 35 live events, 142 live
+  outputs; all Study-2 measurements are backed by Drive and pushed to GitHub.
+- Frozen order completed: registered Gemma G2.1 import, SFT/DPO wedge, Base H6,
+  OLMo-3.1 Think H6, then joint/dose audit.
 
-Recovery: commit/push the joint registry row and this note. Then import only registered Gemma event `gm2-backend-parity-calibration-v1` by exact source commit/registry/output hashes into the OLMo registry, and run the frozen H6 Base/3.1-Think in-band transport cells. Tier 2 is forbidden because the wedge did not cleanly localize an adjacent boundary.
+## Stage wedge
+
+- `ol2-checkpoint-ancestry-v1` records exact official SFT/DPO revisions and the
+  repository-level, not byte-proven, ancestry qualification.
+- Think-SFT and Think-DPO each produced 972 finite, unique exact-generation
+  capability rows under the frozen battery.
+- Capability rates are 0.00617 (SFT) and 0.00309 (DPO). Neither checkpoint has
+  a Bank-S fact capable on both direct and composed variants, so both
+  prospective cohorts are empty and no intervention effect was opened.
+- Across the paired battery, 965/972 items are incapable at both checkpoints,
+  2 are capable at both, 4 lose capability at DPO, and 1 Bank-F bridge item
+  appears at DPO. No Bank-S direct+composed fact shows onset.
+- `ol2-stage-wedge-joint-analysis-v1` selects `null_or_unresolved`. Effects are
+  missing, not zero. The Tier-2 lens trigger is false.
+
+## H6 transport
+
+- The only backend ceiling used is the exact registered OLMo-specific Gemma
+  G2.1 import: `0.07870368901355948`. The pooled ceiling is forbidden.
+- Base and OLMo-3.1 Think each produced 336 rows (4 prompts × 4 layers × 3
+  directions × 7 frozen doses), with the two exact-JVP backends evaluated on
+  identical batches. All 672 backend comparisons pass the imported ceiling.
+- Base has no layer/dose cell meeting the 0.90 passage floor. Its L56,
+  epsilon-0.10 cell reaches 9/12, or 0.75.
+- OLMo-3.1 Think passes only L56 at epsilon 0.10, with 12/12 rows. No
+  L24/L32/L40 cell passes at either checkpoint.
+- `ol2-transport-validation-joint-v1` therefore selects
+  `h6_fail_in_band_with_checkpoint_specific_late_anchor`. This narrows
+  transport wording and does not invalidate paired ablation evidence.
+- The registered dose-source audit finds zero usable tables among six live,
+  relevant Phase-3/4 tables. Per-item total-energy summaries and per-position
+  protected-subspace energy are not the exact total-dose plus residual-norm
+  records required by the frozen mapping. Intervention-dose coverage remains
+  null/unresolved, never zero.
+- `ol2-transport-validation-figure-v1` is the visually checked paper-facing
+  PNG/PDF derivative; it changes no scientific result.
+
+## Recovery
+
+No model cache is retained. Exact snapshots were downloaded directly from
+Hugging Face, verified, used, registered, and deleted only after Drive/GitHub
+banking. Resume with CPU-only release work: build the V2 state/claims paper,
+emit and verify `IMPORT_BUNDLE_SIDELINES2`, commit/push, then reconcile the
+updated parent and merge Gemma before OLMo with ancestry preserved.

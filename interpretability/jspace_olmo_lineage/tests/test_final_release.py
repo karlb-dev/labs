@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from jspace_olmo_lineage.experiments.final_release import (
     _canonical_claim_text,
     _registry_prefix_record,
@@ -12,7 +11,6 @@ from jspace_olmo_lineage.experiments.final_release import (
 )
 from jspace_olmo_lineage.manifests import file_sha256
 from jspace_olmo_lineage.registry import EVENTS, resolve_all
-
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "configs/ol_final_release_v1.yaml"
@@ -111,12 +109,13 @@ single Phase 5 router only through its hash-pinned handoff.
     assert config["evidence_id"] in released
 
 
-def test_release_config_pins_paper_and_exact_output_names():
+def test_phase4_release_config_preserves_historical_paper_pins_and_names():
     config = _config()
     source = config["source_artifacts"]
-    for key in ("paper_tex", "paper_pdf"):
-        path = ROOT / source[key]["path"]
-        assert file_sha256(path) == source[key]["sha256"]
+    assert source["paper_tex"]["sha256"] == (
+        "33e88825ce67d158e83328ee378b7847674d2ba234b541839a10b287ea75c656")
+    assert source["paper_pdf"]["sha256"] == (
+        "02a81b87fff5fdce07726af341fdc80b0fe010e42c41ddc47c06a2e8d3240ec7")
     assert len(source["paper_figures"]) == 5
     assert all(
         file_sha256(ROOT / row["path"]) == row["sha256"]
