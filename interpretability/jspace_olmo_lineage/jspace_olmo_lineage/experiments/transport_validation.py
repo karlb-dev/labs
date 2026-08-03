@@ -47,7 +47,7 @@ from ..manifests import (
     require_clean_tree,
 )
 from ..paths import REPO_ROOT, manifests_dir, metrics_dir, run_root
-from ..registry import create, read_events, resolve
+from ..registry import append_event, create, read_events, resolve
 from .checkpoint_inventory import tokenizer_semantics
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[2]
@@ -73,6 +73,10 @@ INDEPENDENT_BACKEND = "torch.autograd.functional.jvp"
 
 class TransportValidationError(RuntimeError):
     pass
+
+
+def _bos_correction_path() -> Path:
+    return manifests_dir() / "ol2_transport_predata_bos_correction.json"
 
 
 def _utc() -> str:
@@ -161,6 +165,159 @@ def load_license() -> dict:
         "model_scope_key": event["licensed_model_scope_key"],
         "backend_relative_error_ceiling": ceiling,
         "pooled_ceiling_used": False,
+    }
+
+
+def historical_prompt_encoding_hashes() -> dict[str, str]:
+    """Exact raw-tokenizer hashes from the imported G2.1 OLMo control rows."""
+    event = resolve(LICENSE_IMPORT)
+    candidates = [
+        Path(str(row["path"])) for row in event.get("source_outputs", [])
+        if Path(str(row["path"])).name == "backend_rows.parquet"
+    ]
+    if len(candidates) != 1:
+        raise TransportValidationError(
+            "imported G2.1 event lacks one backend row table")
+    path = candidates[0]
+    source_row = next(
+        row for row in event["source_outputs"]
+        if Path(str(row["path"])) == path)
+    if not path.is_file() or file_sha256(path) != source_row["sha256"]:
+        raise TransportValidationError("imported G2.1 backend row hash drift")
+    frame = pd.read_parquet(
+        path, columns=["model_key", "prompt_id", "token_ids_sha256"])
+    frame = frame[frame.model_key == "olmo3_32b_control"]
+    result = {}
+    for prompt_id, group in frame.groupby("prompt_id", sort=True):
+        values = sorted({str(value) for value in group.token_ids_sha256})
+        if len(values) != 1:
+            raise TransportValidationError(
+                f"G2.1 has ambiguous OLMo prompt encoding: {prompt_id}")
+        result[str(prompt_id)] = values[0]
+    if set(result) != {"gm-p001", "gm-p002", "gm-p003", "gm-p004"}:
+        raise TransportValidationError("G2.1 OLMo prompt encoding set drift")
+    return result
+
+
+def register_bos_correction() -> dict:
+    """Register the pre-model raw-tokenizer/BOS interface correction."""
+    git = require_clean_tree(expected_branch=BRANCH)
+    config = _config()
+    freeze = _event_output(EXECUTION_FREEZE)
+    license_payload = load_license()
+    origins = {
+        row["evidence_id"] for row in read_events()
+        if row["event"] in {"evidence_created", "evidence_imported"}
+    }
+    target_events = {
+        config["models"][key]["evidence_id"]
+        for key in config["models"]["mandatory_models"]
+    }
+    if origins & target_events:
+        raise TransportValidationError("BOS correction is no longer pre-model")
+    for model_key in config["models"]["mandatory_models"]:
+        paths = _paths(config, model_key)
+        if paths["state"].exists() or any(paths["cells"].iterdir()) or any(
+                paths["raw"].iterdir()):
+            raise TransportValidationError(
+                "H6 model outcome exists; BOS correction is forbidden")
+    event = resolve(EXECUTION_FREEZE)
+    if any(
+        row["event"] == "evidence_corrected"
+        and row.get("correction_kind") == "predata_bos_interface"
+        for row in event["status_events"]
+    ):
+        raise TransportValidationError("pre-data BOS correction already registered")
+    historical = historical_prompt_encoding_hashes()
+    correction = _bos_correction_path()
+    payload = {
+        "schema_version": 1,
+        "evidence_id": EXECUTION_FREEZE,
+        "correction_kind": "predata_bos_interface",
+        "status": "corrected_before_h6_model_or_transport_outcome",
+        "old_execution_code_commit": event["code_commit"],
+        "corrected_execution_code_commit": git["code_commit"],
+        "reason": (
+            "The standalone Base preflight stopped before causal-model load "
+            "or any transport outcome "
+            "because it incorrectly applied the stage-wedge scoring harness's "
+            "manual-BOS expectation to the historical raw-tokenizer transport "
+            "interface.  H6 reuses the G1/G2 transport map, whose registered "
+            "OLMo-control encodings contain no automatic BOS."
+        ),
+        "corrected_contract": {
+            "tokenization_call": (
+                "tokenizer(text, add_special_tokens=True, truncation=False)"),
+            "exact_hash_reference": (
+                "imported G2.1 backend_rows.parquet OLMo-control token_ids_sha256"),
+            "historical_prompt_encoding_hashes": historical,
+            "leading_bos_count_must_be_at_most_one": True,
+            "manual_bos_insertion": False,
+            "chat_template_used": False,
+        },
+        "execution_freeze_output": freeze["outputs"][0],
+        "calibration_import_output": license_payload["event_output"],
+        "failed_preflight_log": str(
+            run_root() / "logs/base_transport_preflight_producer.log"),
+        "model_weights_loaded": False,
+        "model_outcome_opened": False,
+        "transport_cell_opened": False,
+        "thresholds_changed": False,
+        "predictions_changed": False,
+    }
+    payload["payload_sha256"] = object_sha256(payload)
+    if correction.exists():
+        raise FileExistsError(f"refusing to overwrite correction: {correction}")
+    atomic_json(correction, payload)
+    append_event({
+        "event": "evidence_corrected",
+        "evidence_id": EXECUTION_FREEZE,
+        "reason": payload["reason"],
+        "correction_kind": "predata_bos_interface",
+        "corrected_fields": {
+            "bos_and_prompt_encoding_gate": payload["corrected_contract"],
+            "execution_code_commit": git["code_commit"],
+            "model_outcome_opened": False,
+        },
+        "correction_artifact": {
+            "path": str(correction),
+            "sha256": file_sha256(correction),
+            "bytes": int(correction.stat().st_size),
+        },
+        "model_weights_loaded": False,
+        "transport_cell_opened": False,
+        "thresholds_changed": False,
+        "predictions_changed": False,
+    })
+    return {
+        "artifact": str(correction),
+        "sha256": file_sha256(correction),
+        "historical_prompt_encoding_hashes": historical,
+    }
+
+
+def verified_bos_correction() -> dict:
+    event = resolve(EXECUTION_FREEZE)
+    rows = [
+        row for row in event["status_events"]
+        if row["event"] == "evidence_corrected"
+        and row.get("correction_kind") == "predata_bos_interface"
+    ]
+    if len(rows) != 1:
+        raise TransportValidationError(
+            "expected one registered pre-data BOS interface correction")
+    row = rows[0]
+    artifact = row["correction_artifact"]
+    path = Path(artifact["path"])
+    if path != _bos_correction_path():
+        raise TransportValidationError("BOS correction artifact path drift")
+    if not path.is_file() or file_sha256(path) != artifact["sha256"]:
+        raise TransportValidationError("BOS correction artifact hash drift")
+    return {
+        "path": str(path),
+        "sha256": artifact["sha256"],
+        "bytes": int(path.stat().st_size),
+        "correction_event_utc": row["event_utc"],
     }
 
 
@@ -504,23 +661,43 @@ def preflight(config: Mapping, model_key: str, snapshot: Path,
     tokenizer = AutoTokenizer.from_pretrained(snapshot, local_files_only=True)
     encodings = []
     bos_checks = {}
+    historical_hashes = historical_prompt_encoding_hashes()
+    correction = verified_bos_correction()
     for prompt in _prompts(config):
         encoded = tokenizer(
-            prompt["text"], add_special_tokens=True, truncation=False)
+            prompt["text"], return_tensors="pt", add_special_tokens=True,
+            truncation=False)
         ids = [int(value) for value in encoded["input_ids"]]
         bos = tokenizer.bos_token_id
-        exactly_one = (
-            bool(ids) and bos is not None and ids[0] == int(bos)
-            and (len(ids) < 2 or ids[1] != int(bos))
-        )
-        bos_checks[prompt["prompt_id"]] = exactly_one
+        leading_bos_count = 0
+        if bos is not None:
+            for value in ids:
+                if value != int(bos):
+                    break
+                leading_bos_count += 1
+        numpy_hash = hashlib.sha256(
+            encoded["input_ids"].cpu().numpy().tobytes()).hexdigest()
+        encoding_match = numpy_hash == historical_hashes[prompt["prompt_id"]]
+        bos_checks[prompt["prompt_id"]] = {
+            "bos_token_id": None if bos is None else int(bos),
+            "leading_bos_count": leading_bos_count,
+            "leading_bos_count_at_most_one": leading_bos_count <= 1,
+            "historical_transport_encoding_match": encoding_match,
+        }
         encodings.append({
             "prompt_id": prompt["prompt_id"],
             "prompt_sha256": hashlib.sha256(prompt["text"].encode()).hexdigest(),
             "token_ids": ids,
             "token_ids_sha256": object_sha256(ids),
+            "token_ids_numpy_sha256": numpy_hash,
+            "historical_transport_token_ids_numpy_sha256": historical_hashes[
+                prompt["prompt_id"]],
         })
-    if not all(bos_checks.values()):
+    if not all(
+        row["leading_bos_count_at_most_one"]
+        and row["historical_transport_encoding_match"]
+        for row in bos_checks.values()
+    ):
         raise TransportValidationError(f"H6 BOS hard gate failed: {bos_checks}")
     prompt_encoding_sha256 = object_sha256(encodings)
     base_preflight = _paths(config, "base")["preflight"]
@@ -558,6 +735,10 @@ def preflight(config: Mapping, model_key: str, snapshot: Path,
         "prompt_encodings": encodings,
         "prompt_encoding_sha256": prompt_encoding_sha256,
         "cross_checkpoint_prompt_encoding": cross_checkpoint,
+        "predata_bos_interface_correction": {
+            "path": correction["path"],
+            "sha256": correction["sha256"],
+        },
         "all_hard_gates_passed": True,
         "model_outcome_opened": False,
     }
@@ -577,6 +758,7 @@ def _input_manifest(config: Mapping, model_key: str, preflight_payload: Mapping,
     license_payload = load_license()
     ancestry = _event_output(ANCESTRY)
     foundation = _event_output(FOUNDATION)
+    correction = verified_bos_correction()
     payload = {
         "schema_version": 1,
         "evidence_id": spec["evidence_id"],
@@ -594,6 +776,10 @@ def _input_manifest(config: Mapping, model_key: str, preflight_payload: Mapping,
         "tokenizer_semantic_fingerprint_sha256": preflight_payload[
             "tokenizer_semantics"]["semantic_fingerprint_sha256"],
         "execution_freeze_output": freeze["outputs"][0],
+        "predata_bos_interface_correction": {
+            "path": correction["path"],
+            "sha256": correction["sha256"],
+        },
         "calibration_import_output": license_payload["event_output"],
         "ancestry_output": ancestry["outputs"][0],
         "foundation_output": foundation["outputs"][0],
@@ -1338,7 +1524,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--phase", required=True,
-        choices=("freeze", "stage", "preflight", "run", "finalize", "register"))
+        choices=(
+            "freeze", "correct-bos", "stage", "preflight", "run",
+            "finalize", "register",
+        ))
     parser.add_argument("--model", choices=("base", "olmo31_think"))
     parser.add_argument("--max-cells", type=int)
     arguments = parser.parse_args()
@@ -1346,6 +1535,10 @@ def main() -> None:
         if arguments.model is not None:
             parser.error("--model is forbidden for freeze")
         result = freeze_execution()
+    elif arguments.phase == "correct-bos":
+        if arguments.model is not None:
+            parser.error("--model is forbidden for correct-bos")
+        result = register_bos_correction()
     else:
         if arguments.model is None:
             parser.error("--model is required outside freeze")
