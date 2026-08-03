@@ -1,0 +1,70 @@
+schema_version: 1
+study_id: jspace-gemma-transport-study2
+tier: methods
+status: FROZEN_PRE_G2_1_SEPARATE_TARGET_FILE
+branch: interp_jspace_gemma_transport_2
+shared_parent_commit: 901fb4fc7578a913088c7947a2e6240f7fc45aeb
+run_root: /content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803
+
+dependency:
+  calibration_evidence_id: gm2-backend-parity-calibration-v1
+  require_live_registered_event: true
+  require_frozen_ceiling_file: true
+  require_no_target_read_assertion: true
+
+historical_source:
+  stage1_evidence_id: gm-jvp-gemma-stage1-v1
+  stage1_summary_sha256: 0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384
+  stage1_rows_sha256: 3b74f1e983f47c1f917fd8c407a6ea1f8abf42854adc0b9d6c3d3cf18d921550
+  backend_parity_evidence_id: gm-jvp-gemma-backend-parity-v1
+  backend_parity_artifact_sha256: 22c327764034f77496971f6c555af0ec6f8e99a0ceb80cea1677db24ca404b7c
+  backend_parity_raw_sha256: ac5ba50dbba6d3ed149cf5b7b6951b80bee5502d11ac90e4f93dc45d515c9e89
+  historical_all_slot_relative_error: 0.002458
+  historical_selected_slot_bit_identical: true
+  historical_all_slot_cosine: 0.99999958
+  historical_max_absolute_difference: 0.0390625
+
+decision_order:
+  - reject if calibration route is path_ambiguity
+  - select batch1 replay if route is batch_composition_nuisance and historical full-batch error exceeds applicable ceiling
+  - relicense without recompute if historical error is at or below applicable ceiling and no path ambiguity exists
+  - otherwise remain blocked
+
+branch_1_relicense_without_recompute:
+  evidence_id: gm2-stage1-relicense-v1
+  conditions:
+    historical_error_lte_applicable_ceiling: true
+    selected_slot_bit_identical: true
+    path_ambiguity: false
+    source_hashes_exact: true
+  preserve_all_study1_rows: true
+
+branch_2_batch1_declared_dose:
+  evidence_id: gm2-stage1-batch1-v1
+  conditions:
+    calibration_route: batch_composition_nuisance
+    historical_error_gt_batch1_ceiling: true
+    path_ambiguity: false
+  layers_zero_indexed: [22, 30, 37, 44, 52]
+  prompt_ids: [gm-p001, gm-p002, gm-p003, gm-p004]
+  directions: [rademacher-0, gaussian-0, sphere-tangent-0, fitted-j-answer-token]
+  relative_epsilon: 0.10
+  batch_size: 1
+  exact_backends: [torch.func.jvp, torch.autograd.functional.jvp]
+  expected_rows: 80
+  classifier: unchanged-study1-classifier
+  full_epsilon_ladder_forbidden: true
+
+branch_3_remains_blocked:
+  evidence_id: gm2-stage1-remains-blocked-v1
+  condition: calibration route is path_ambiguity or no stable applicable ceiling exists
+  mechanism_compute_forbidden: true
+  olmo_h6_ceiling_export: forbidden_unless_an_olmo_specific_ceiling_is_separately_licensed
+
+sentence_source: repo://interpretability/jspace_gemma/protocol/G2_STAGE1_CANDIDATE_SENTENCES.md
+stronger_claims_forbidden:
+  - Gemma is nondifferentiable
+  - no Jacobian can model Gemma
+  - Gemma has no workspace
+  - nonlinear transport causes a behavioral difference
+  - late-band J-space is absent

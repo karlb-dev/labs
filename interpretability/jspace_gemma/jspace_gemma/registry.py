@@ -42,8 +42,10 @@ def _validate(event: dict) -> None:
     if event.get("event") not in VALID_EVENTS:
         raise RegistryError(f"invalid event type {event.get('event')!r}")
     evidence_id = event.get("evidence_id")
-    if not evidence_id or not evidence_id.startswith("gm-"):
-        raise RegistryError("Gemma evidence IDs must use the gm- prefix")
+    if not evidence_id or not evidence_id.startswith(("gm-", "gm2-")):
+        raise RegistryError(
+            "Gemma evidence IDs must use the gm- prefix or gm2- prefix"
+        )
     if event["event"] == "evidence_created":
         if event.get("tier") not in NATIVE_TIERS:
             raise RegistryError("native evidence must be development or methods tier")
