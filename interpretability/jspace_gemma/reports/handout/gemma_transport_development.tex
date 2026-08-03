@@ -3,9 +3,9 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{hyperref}
-\title{Gemma 4 31B Transport Autopsy\\Development/Methods Record}
+\title{Gemma 4 31B Exact-JVP Transport Autopsy\\Study 1 and Study 2 Development/Methods Record}
 \author{J-space special laboratory}
-\date{2026-08-02}
+\date{2026-08-03}
 \begin{document}
 \maketitle
 \section{Scope}
@@ -66,8 +66,67 @@ tangent cosine 0.99999958 and relative error 0.002458, exceeding the
 precommitted $10^{-5}$ relative-error ceiling. The methods gate therefore
 fails. Its threshold is not relaxed after observing Gemma, and mechanism
 localization stops at this boundary.
-The terminal model-free release verifies all 18 source events and 35 source
-outputs and publishes a methods-only state of record, claim ledger, transport
-gate protocol, and Phase-4 import envelope. Its status is
-\texttt{COMPLETE\_METHODS\_BLOCKER}; it opens no model cell or intervention.
+The terminal Study-1 model-free release verifies all 18 source events and 35
+source outputs and publishes a methods-only state of record, claim ledger,
+transport gate protocol, and Phase-4 import envelope. Under its own frozen
+$10^{-5}$ gate, its status is \texttt{COMPLETE\_METHODS\_BLOCKER}; the failed
+event remains immutable and opens no model cell or intervention.
+
+\section{Study 2: target-blind backend calibration}
+Study 2 asks a new, prospectively registered question: what exact-backend
+disagreement should be expected in the actual mixed-precision Gemma and OLMo
+suffixes? Its G2.1 process cannot open or join the Study-1 target rows,
+classifier, backend tensor, or outcome config. The two-checkpoint grid freezes
+three layers per model, four prompts, batches 1/4/8, three delivered direction
+families, and three seeds. It yields 216 full-suffix backend pairs plus a
+nested diagnostic screen: 232 pair summaries, 936 full rows, and 72 nested
+rows. All 1,008 rows are finite and deterministically replayed; all primals,
+pair reconstructions, dtype-quantum reconstructions, and a fresh-process replay
+pass.
+
+The precommitted ceiling is the maximum of three times the pooled q99 backend
+relative disagreement and the q99 relative equivalent of ten target-dtype
+quanta. The terms are 0.0787036890 and 0.0653210078, respectively, so the
+frozen all-batches ceiling is 0.0787036890. A 5,000-draw prompt bootstrap has a
+90\% interval $[0.0748977962,0.1039224715]$. The batch-specific disagreement
+q99 values are 0.02999, 0.03498, and 0.02583. Neither the batch-nuisance nor
+path-ambiguity route activates. The normalized per-model floor ratio is 1.25,
+below the frozen factor-of-two architecture router; the target-blind route is
+\texttt{benign\_scheduling\_floor} and the pooled ceiling applies to both
+models.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.96\linewidth]{figures/gm2_backend_disagreement_by_model_batch.png}
+  \caption{Registered G2.1 exact-backend disagreement by model and batch. The
+  log-scale display clips exact zeros only for plotting; no scientific value
+  or summary is modified.}
+\end{figure}
+
+\section{Study 2: mechanical Stage-1 license}
+Only after the threshold file was frozen and G2.1 registered did G2.2 open the
+hash-pinned Study-1 artifacts. The historical all-slot relative error is
+0.0024581113830208778, below the calibrated ceiling, while the selected
+scientific slot remains bit-identical. The router therefore selects the
+prewritten no-recompute relicense branch; no G2.2 model compute is performed.
+
+The unchanged L22/L30/L37/L44/L52
+\texttt{local\_tangent\_mismatch} classifications are licensed as a closed
+exact-JVP finite-scale methods result on the tested prompts, directions,
+final-residual target map, and doses. In compact paper language: at the tested
+prompts, layers, directions, and intervention-relevant finite scales, the
+prompt-specific first-order tangent of the chosen source-to-target residual
+map predicts Gemma's finite response substantially less accurately than the
+same estimator predicts the OLMo control; the mismatch changes character with
+depth.
+
+\section{Boundary and continuity}
+Study 2 supersedes the Study-1 handoff classification, not its evidence. The
+original stop was correct under its own precommitted gate. The new license was
+derived under a separate target firewall and cannot be read as retroactive
+threshold tuning. It establishes neither nondifferentiability nor the absence
+of a Jacobian, information, or a workspace, and it does not identify curvature,
+routing, normalization, attention, gated-MLP, or context heterogeneity as the
+cause. Both studies remain development/methods tier and open no confirmatory
+cell or intervention.
 \end{document}
