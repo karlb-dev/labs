@@ -57,6 +57,9 @@ EVIDENCE_ID = "gm2-backend-parity-calibration-v1"
 FOUNDATION_ID = "gm2-foundation-v1"
 BRANCH = "interp_jspace_gemma_transport_2"
 CONFIG = PACKAGE_ROOT / "configs/gm2_backend_parity_calibration.yaml"
+AUDIT_CORRECTION = (
+    PACKAGE_ROOT / "protocol/G2_POSTDATA_RECONSTRUCTION_AUDIT_CORRECTION.md"
+)
 LOCAL_CACHE = Path("/content/jspace_g2_models")
 
 
@@ -136,7 +139,9 @@ def _write_heartbeat(paths: dict[str, Path], **fields) -> None:
     )
 
 
-def _load_state(path: Path, *, config_sha: str, code_commit: str) -> dict:
+def _load_state(
+    path: Path, *, config_sha: str, code_commit: str | None
+) -> dict:
     if not path.exists():
         return {
             "schema_version": 1,
@@ -156,8 +161,9 @@ def _load_state(path: Path, *, config_sha: str, code_commit: str) -> dict:
     required = {
         "evidence_id": EVIDENCE_ID,
         "config_sha256": config_sha,
-        "code_commit": code_commit,
     }
+    if code_commit is not None:
+        required["code_commit"] = code_commit
     mismatch = {
         key: {"expected": value, "actual": state.get(key)}
         for key, value in required.items()
@@ -1058,6 +1064,7 @@ def _validate_pair_summaries(state: dict) -> dict:
         rows_by_pair.setdefault(row["pair_id"], []).append(row)
     checked = 0
     failures = []
+    cosine_residuals = []
     for pair in state["pair_summaries"]:
         if pair["finite_or_exception_state"] != FINITE:
             continue
@@ -1097,15 +1104,60 @@ def _validate_pair_summaries(state: dict) -> dict:
                 float(selected["tangent_cosine"]), pair["selected_slot"]["cosine"]
             ),
         }
-        bad = {
-            key: values
-            for key, values in comparisons.items()
-            if not np.isclose(values[0], values[1], rtol=1e-7, atol=1e-9)
-        }
+        bad = {}
+        for key, values in comparisons.items():
+            if key == "all_cosine":
+                # The producer's all-slot summary used PyTorch's float32
+                # cosine reduction.  Reconstruction uses saved float64 dot
+                # products and norms.  Bound their reduction-order difference
+                # prospectively by eight fp32 epsilons per binary reduction
+                # level; this remains orders below the frozen 0.995 router.
+                elements = max(int(pair["all_slots"]["elements"]), 2)
+                tolerance = (
+                    8.0
+                    * float(np.finfo(np.float32).eps)
+                    * float(np.ceil(np.log2(elements)))
+                )
+                residual = abs(values[0] - values[1])
+                cosine_residuals.append(
+                    {
+                        "pair_id": pair["pair_id"],
+                        "elements": elements,
+                        "absolute_residual": residual,
+                        "float32_reduction_bound": tolerance,
+                    }
+                )
+                close = residual <= tolerance
+            else:
+                close = bool(
+                    np.isclose(values[0], values[1], rtol=1e-7, atol=1e-9)
+                )
+            if not close:
+                bad[key] = values
         if bad:
             failures.append({"pair_id": pair["pair_id"], "mismatches": bad})
         checked += 1
-    return {"checked_pairs": checked, "failures": failures, "passed": not failures}
+    worst = max(
+        cosine_residuals,
+        key=lambda row: row["absolute_residual"]
+        / max(row["float32_reduction_bound"], np.finfo(np.float64).tiny),
+    )
+    return {
+        "checked_pairs": checked,
+        "failures": failures,
+        "passed": not failures,
+        "all_slot_cosine_reconstruction": {
+            "stored_accumulation": "float32 torch cosine reduction",
+            "reconstruction_accumulation": "float64 saved dot products and norms",
+            "bound_formula": "8 * float32_epsilon * ceil(log2(elements))",
+            "max_absolute_residual": max(
+                row["absolute_residual"] for row in cosine_residuals
+            ),
+            "worst_bound_fraction": worst["absolute_residual"]
+            / worst["float32_reduction_bound"],
+            "worst_pair": worst,
+        },
+    }
 
 
 def _validate_quantum_rows(rows: list[dict]) -> dict:
@@ -1179,7 +1231,7 @@ def freeze() -> None:
         state = _load_state(
             paths["state"],
             config_sha=file_sha256(CONFIG),
-            code_commit=git["code_commit"],
+            code_commit=None,
         )
         rows = state["rows"]
         result = derive_calibration(rows, config)
@@ -1240,6 +1292,7 @@ def freeze() -> None:
             "tier": "methods",
             "created_utc": _utc(),
             "code_commit": git["code_commit"],
+            "raw_producer_code_commit": state["code_commit"],
             "config": {"path": str(CONFIG), "sha256": file_sha256(CONFIG)},
             "raw_state": {
                 "path": str(paths["state"]),
@@ -1276,6 +1329,7 @@ def freeze() -> None:
             "source_event_id": EVIDENCE_ID,
             "created_utc": _utc(),
             "code_commit": git["code_commit"],
+            "raw_producer_code_commit": state["code_commit"],
             "config_path": str(CONFIG),
             "config_sha256": file_sha256(CONFIG),
             "raw_row_table_path": str(paths["rows_parquet"]),
@@ -1349,7 +1403,7 @@ def register() -> None:
     state = _load_state(
         paths["state"],
         config_sha=file_sha256(CONFIG),
-        code_commit=git["code_commit"],
+        code_commit=None,
     )
     reconstructed = derive_calibration(state["rows"], config)
     summary = json.loads(paths["summary"].read_text())
@@ -1383,6 +1437,22 @@ def register() -> None:
     foundation = resolve(FOUNDATION_ID)
     if not foundation["live"] or foundation.get("model_outcome_opened") is not False:
         raise RuntimeError("frozen study-2 foundation is absent or incompatible")
+    architecture_corrections = [
+        row
+        for row in foundation["status_events"]
+        if row["event"] == "evidence_corrected"
+        and row.get("correction_kind") == "predata_architecture_label"
+    ]
+    if (
+        len(architecture_corrections) != 1
+        or architecture_corrections[0].get("corrected_config_sha256")
+        != file_sha256(CONFIG)
+    ):
+        raise RuntimeError("registered pre-data architecture correction is absent")
+    architecture_correction = architecture_corrections[0]
+    correction_artifact = architecture_correction["correction_artifact"]
+    if file_sha256(correction_artifact["path"]) != correction_artifact["sha256"]:
+        raise RuntimeError("pre-data architecture correction artifact drifted")
     event = create(
         EVIDENCE_ID,
         tier="methods",
@@ -1401,6 +1471,11 @@ def register() -> None:
             "config_sha256": file_sha256(CONFIG),
             "row_table_sha256": threshold["raw_row_table_sha256"],
             "threshold_sha256_pre_registry": threshold_sha,
+            "raw_producer_code_commit": state["code_commit"],
+            "analysis_correction_protocol_sha256": file_sha256(AUDIT_CORRECTION),
+            "predata_architecture_correction_artifact_sha256": correction_artifact[
+                "sha256"
+            ],
             "snapshot_manifests": state["snapshot_manifests"],
         },
         route=threshold["route"],

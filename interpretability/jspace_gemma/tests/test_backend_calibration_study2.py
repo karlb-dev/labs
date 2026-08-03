@@ -9,7 +9,10 @@ from jspace_gemma.backend_calibration import (
     derive_calibration,
     direction_tensor,
 )
-from jspace_gemma.experiments.gm2_backend_parity_calibration import _evaluate_pair
+from jspace_gemma.experiments.gm2_backend_parity_calibration import (
+    _evaluate_pair,
+    _validate_pair_summaries,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -137,3 +140,36 @@ def test_pair_runner_preserves_singleton_batch_axis_across_both_backends():
     assert rows[0]["deterministic_replay"] is True
     assert rows[0]["tangent_relative_error"] == 0.0
     assert pair["all_slots"]["elements"] == 2
+
+
+def test_all_slot_cosine_audit_allows_only_dimension_bounded_fp32_reduction():
+    row = {
+        "pair_id": "sentinel",
+        "slot": 0,
+        "primary_tangent_norm": 1.0,
+        "independent_tangent_norm": 1.0,
+        "tangent_difference_norm": 0.01,
+        "tangent_dot_product": 0.99997,
+        "max_absolute_difference": 0.001,
+        "tangent_relative_error": 0.01,
+        "tangent_cosine": 0.99997,
+    }
+    pair = {
+        "pair_id": "sentinel",
+        "finite_or_exception_state": "finite",
+        "all_slots": {
+            "relative_error": 0.01,
+            "cosine": 0.99998,
+            "max_absolute_difference": 0.001,
+            "elements": 40960,
+        },
+        "selected_slot": {"relative_error": 0.01, "cosine": 0.99997},
+    }
+    audit = _validate_pair_summaries(
+        {"rows": [row], "pair_summaries": [pair]}
+    )
+    assert audit["passed"] is True
+    pair["all_slots"]["cosine"] = 0.999
+    assert _validate_pair_summaries(
+        {"rows": [row], "pair_summaries": [pair]}
+    )["passed"] is False
