@@ -325,10 +325,45 @@ def _validate_capture(capture: pd.DataFrame, config: Mapping) -> pd.DataFrame:
     frame["margins"] = frame["margins"].map(_json_dict)
     k = int(config["contract"]["intervention_k"])
     for row in frame.itertuples(index=False):
-        if row.intervention_selected_ids != row.eligible_top_ids[:k]:
-            raise RuntimeError("captured top-k differs from intervention IDs")
-        if row.intervention_selected_scores != row.eligible_top_scores[:k]:
-            raise RuntimeError("captured top-k differs from intervention scores")
+        selected_ids = [int(value)
+                        for value in row.intervention_selected_ids]
+        selected_scores = [float(value)
+                           for value in row.intervention_selected_scores]
+        eligible_ids = [int(value) for value in row.eligible_top_ids]
+        eligible_scores = [float(value)
+                           for value in row.eligible_top_scores]
+        expected_n = min(k, int(row.eligible_available_positive))
+        if len(selected_ids) != expected_n \
+                or len(selected_scores) != expected_n:
+            raise RuntimeError("captured intervention top-k length drift")
+        if len(set(selected_ids)) != len(selected_ids):
+            raise RuntimeError("captured intervention IDs are not unique")
+        if set(selected_ids) & set(int(value)
+                                   for value in row.protected_ids):
+            raise RuntimeError("captured intervention includes protected ID")
+        if any(not math.isfinite(value) or value <= 0
+               for value in selected_scores):
+            raise RuntimeError("captured intervention score is not positive")
+        # Scores, rather than tied-ID ordering, define top-k admissibility.
+        # torch.topk(k) and torch.topk(top_n) may return different IDs at an
+        # exact boundary tie even though both selections are valid.
+        if selected_scores != eligible_scores[:expected_n]:
+            raise RuntimeError(
+                "captured intervention scores differ from eligible top-k")
+        eligible_by_id = dict(zip(eligible_ids, eligible_scores))
+        for token_id, score in zip(selected_ids, selected_scores):
+            if token_id in eligible_by_id \
+                    and score != eligible_by_id[token_id]:
+                raise RuntimeError(
+                    "captured intervention ID/score alignment drift")
+        if expected_n and len(eligible_scores) > expected_n:
+            boundary_tied = (
+                eligible_scores[expected_n - 1]
+                == eligible_scores[expected_n])
+            if not boundary_tied and set(selected_ids) != set(
+                    eligible_ids[:expected_n]):
+                raise RuntimeError(
+                    "captured intervention IDs differ without boundary tie")
         for cutoff in config["contract"]["margin_ks"]:
             expected = relative_margin(
                 row.eligible_top_scores, int(cutoff),

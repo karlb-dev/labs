@@ -16,9 +16,15 @@ The fresh-VM tensor pass verified the registered A1000 lens, checkpoint, and hea
 
 The sealed wrapper was then stopped at the already registered structural boundary without opening the functional gate. It freshly reverified the A1000 binding and structural event and recreated exact local backups for all three fit outputs and all six structural outputs. Their backup-manifest hashes are `cdaae0129c6f2ff55650481bf74713ccfb0af61039ceb4bf8d0dcc0a6ab5397c` and `5bff1706c7684c38d8f103a2d725059a9a1bca8f0b8aaad3a528047390c57e09`, respectively. The repository remained clean and the functional event remained the first incomplete queue stage.
 
+## Functional observer hard stop and repair
+
+The functional stage subsequently hard-stopped before its first A500 row because the selection-margin observer used `topk(32)[:10]` as an assumed replay of the inherited `topk(10)`. The real boundary contained an exact score tie, so Torch returned different but equally scoring IDs for the two requested k values. A diagnostic replay proved that a separate observer-side `topk(10)` exactly matched the unchanged parent intervention. No functional evidence event was registered.
+
+The repair separates top-32 diagnostics from the exact top-10 replay and retains hard ID-and-score equality against the parent. The successor validator admits different top-32-prefix IDs only at an exact k/k+1 score tie and otherwise retains all original checks. The incompatible 57 MB partial state was preserved on Drive and locally under the paths and hashes recorded in `PHASE4_PART4_FUNCTIONAL_INSTRUMENTATION_INCIDENT.md`; it was not migrated across code commits. The focused suite passed 27/27 and the full Phase 4 suite passed 282/282 after the repair.
+
 ## Pending transactional order
 
-1. Open the functional gate, then bank, back up, commit, and push it.
+1. Restart the functional gate from a fresh canonical output directory under the repair commit, then bank, back up, commit, and push it.
 2. Run selection margin, prompt-323 influence, and the mechanical Q-L decision in order with the same transaction boundary.
 3. Admit the study-1 side releases and reproduce the 16/20 P4-P3 block.
 4. Run only Q-L-licensed M3/M4 work; no consumed outcome runs without a real independent review.
