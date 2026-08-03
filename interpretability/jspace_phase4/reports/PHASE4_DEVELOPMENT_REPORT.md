@@ -1,13 +1,9 @@
 # J-space Phase 4 development report
 
-Status: live development synthesis through the OLMo-3 32B base,
-seed-paired 3.0 Think, and seed-paired OLMo-3.1 32B Think and Instruct
-own/common-lens comparisons, registered four-checkpoint trajectory, and
-post-hoc common-support closure, plus the completed Qwen draw-A n=1000 fit,
-registered A500--A1000 structural, functional, and selection-margin decisions,
-the prompt-323 runtime-identity hard stop, passing official-Qwen mode-v2
-baseline, outcome-blind Bank B methods, Qwen Bank-W capability gate, and
-ancestry-integrated Gemma/OLMo methods releases, 2026-08-03.
+Status: terminal Phase-4.4 development synthesis through the OLMo trajectory,
+Qwen draw-A n=1000 queue and canonical Q-L4 decision, strict Gemma/OLMo
+methods imports, Bank-W 16/20 mainline replay, and durability handoff,
+2026-08-03.
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -15,6 +11,35 @@ localize a training-trajectory pattern and expose coordinate-frame
 sensitivity, but it cannot establish a binary lineage claim. No Phase 4
 confirmatory or replication cell is licensed until the candidate
 preregistration receives PI sign-off and a tagged freeze.
+
+## Phase 4.4 terminal update
+
+The sealed A1000 queue is complete. Strong A500--A1000 structural convergence
+(task q50/q05 0.998702/0.998122) coexists with failed selected-ID Jaccard
+(0.538462), failed normalized projector overlap (0.709818), and failed
+bridge-rescue invariance (-0.294028 nat). The all-position audit retained
+15,536 near-tie and 1,845 stable-core positions; even stable-core Jaccard is
+only 0.666667.
+
+After a prospective exact-current-runtime amendment, prompt-323 influence is
+negligible under every frozen materiality criterion and essentially zero
+through assay layers 20--44. Its repeated Jacobian norm agrees within 0.004572
+against the unchanged 0.5 within-runtime tolerance. This is not a historical-
+runtime reproducibility claim: the old run lacked exact distribution-content
+and compiled-kernel identities.
+
+The registered mechanical result is **Q-L4**, with no canonical sparse Qwen
+lens. P4-P1 remains estimation-only; P4-P2 is removed before pilot or outcome;
+P4-P3 is blocked after strict OLMo admission and fresh mainline reproduction
+of 16/20 common-capable families. No Phase 4 primary or Holm test opened.
+Gemma and OLMo enter only at their source methods/development boundaries. No
+A2000, new bank, model, endpoint, or SESOI change exists.
+
+Exact A120 capacity bytes were recovered. One historical A120--A250
+operational state remains a permanent known deficit with its decision role
+superseded by later live gates. Two same-mounted audits agree on 418/419 live
+references, one known and zero unexpected deficits; independent fresh-remount
+proof plus real reviewer and PI signatures remain freeze blockers.
 
 ## Compute and provenance boundary
 
@@ -1129,21 +1154,21 @@ estimation-first account:
   q50/q05 pass at 0.998702/0.998122. The registered A500-to-A1000 functional
   gate again fails selected-ID Jaccard, selected-projector overlap, and bridge
   rescue, while the registered all-position margin audit localizes most rows
-  to the near-tie stratum. These two stages emit provisional Q-L4. The required
-  prompt-323 influence stage hard-stops on a reproducible backward-runtime
-  mismatch, so no canonical event exists and no lens is canonical at this
-  boundary.
+  to the near-tie stratum. The amended prompt-323 stage finds negligible
+  current-runtime influence under every frozen materiality ruler. The
+  registered canonical event therefore emits Q-L4 and nominates no sparse
+  lens. Historical-runtime reproducibility of the retained-prompt shape is not
+  claimed.
 - Bank B candidate v2 passes complete independent source verification, but
   its 0.25-nat joint SESOI is unusably underpowered under the registered
   variability ruler, and the optimistic successor proves no reallocation of
   its 40 families can fix that target. Candidate 0.11 therefore makes P4-P1
-  estimation-only; the addendum-required orthogonal feasibility shot is
-  prepared but unrun and cannot restore it. Separately, the prospectively
+  estimation-only; the addendum-required orthogonal feasibility shot is not
+  applicable under Q-L4 and cannot restore it. Separately, the prospectively
   amended Qwen mode-v2 baseline passes, and the GPU pilot producer, 0.20-point
-  SESOI, and exact power ruler are fixed before outcome. Canonical-lens
-  binding, independent producer review, the consumed-family pilot, its power
-  result, and a future untouched bank/split remain methods blockers, not
-  intervention findings.
+  SESOI, and exact power ruler were fixed before outcome. Q-L4 closes P4-P2
+  before independent producer review, consumed-family pilot, power result, or
+  intervention finding.
 
 The registered two-frame synthesis and common-support closure make the
 Bank-S Think-path result harder to explain as lens drift or changing fact
@@ -1153,46 +1178,23 @@ sibling Instruct comparison reverses both the direct and composition
 quantities. These are development localizations, not lineage or causal mode
 claims.
 
-## Next boundary
+## Terminal boundary and next external action
 
-The A1000 fit, A500--A1000 structural event, functional gate, and
-selection-margin audit are complete, registered, locally backed up, and
-pushed. The functional and margin stages emit provisional Q-L4: literal sparse
-selection, selected-projector overlap, and bridge rescue remain
-decision-sensitive despite strong operator convergence. This is not a
-canonical decision.
+All Phase-4.4 scientific and methods transactions are registered, locally
+backed up, committed, and pushed. The terminal result is Q-L4 and paper path
+B/C: an informative instrument-instability result with no confirmatory
+primary. P4-P1 is estimation-only, P4-P2 is removed, P4-P3 is blocked at
+16/20, and no M3/M4 or optional post-Q-L4 M5 job opened.
 
-Phase 4.4 is blocked at the required prompt-323 influence gate. Repeated
-prompt-323 and registered prompt-112 controls establish a stable current
-backward computation that is incompatible with the historical fit/influence
-runtime despite matching nominal versions, hardware, model bytes, and fused
-bindings. The influence producer wrote no contribution and registered no
-event; the mechanical canonical producer never opened. Continuation requires
-independent review and either a historically content-pinned runtime or a
-prospective runtime-contract amendment. Blind rerun, tolerance widening, and
-direct Q-L4 registration are forbidden.
+The strict side queue is complete. Gemma remains a transport methods blocker;
+the OLMo terminal release contributes only its bounded development/methods
+trajectory; and Bank W routes to Phase 5B per-model estimation rather than a
+cross-model Phase 4 primary.
 
-The handoff-time registry audit hash-accounted 218/220 live outputs with no
-wrong hashes. The two remaining absent paths belong to the older A120--A250
-functional-gate event (`state.json`, expected `361bda08...f45e8`, and
-`capacity_reconstructions_a120.pt`, expected `6b0399df...51b6f`). An
-exact-hash-gated recovery tool is ready to rebuild the A120 capacity artifact
-from unchanged registered inputs and algorithms once the A1000 GPU is free.
-The historical state file cannot honestly be synthesized because it contains
-irrecoverable elapsed-time and peak-memory fields; exact backup recovery or an
-independently/PI-approved append-only archival correction remains required.
-Two clean whole-registry durability passes are freeze blockers, and the old
-registry event must not be rewritten.
-
-Next: resolve the prompt-323 runtime identity under independent review,
-complete and bank the unchanged influence stage only if its reviewed contract
-passes, and only then open the mechanical canonical decision. Side-track
-admission and every lens-dependent M3/M4 follow-up remain behind that live
-canonical event. Separately, recover A120 capacity exactly, resolve the
-historical state artifact through external governance, and obtain independent
-protocol review and PI sign-off. If a lawful canonical event ultimately emits
-Q-L3/Q-L4/Q-L5, it blocks the lens-dependent intervention follow-ups rather
-than substituting a new branch.
-
-Confirmatory Phase 4 remains blocked on preregistration freeze and
-untouched data.
+The repository review packet reports 418/419 live output references with one
+known historical state deficit, zero unexpected deficits, zero path or pin
+conflicts, and exact recovery of the A120 capacity tensor. Its status remains
+honestly `NOT_REVIEW_READY` for freeze until a genuinely fresh Drive
+rematerialization and external acceptance of the append-only archival
+disposition exist. The next action is external review and PI decision; this
+implementation block stops without a freeze commit or tag.
