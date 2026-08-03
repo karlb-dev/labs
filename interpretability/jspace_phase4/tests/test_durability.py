@@ -140,9 +140,10 @@ def test_live_known_deficits_bind_recovery_and_search_records():
     capacity = by_name["capacity_reconstructions_a120.pt"]
     assert state["status"] == (
         "exact-bytes-not-found-current-vm-external-resolution-required")
-    assert capacity["status"] == "exact-bytes-not-yet-recovered"
+    assert capacity["status"] == "exact-bytes-restored-and-verified"
     for key, row in (("search_record", state),
-                     ("recovery_config", capacity)):
+                     ("recovery_config", capacity),
+                     ("recovery_record", capacity)):
         uri = row[key]
         assert uri.startswith("repo://interpretability/jspace_phase4/")
         relative = uri.removeprefix(
