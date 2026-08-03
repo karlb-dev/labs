@@ -1,0 +1,183 @@
+{
+ "gpu": {
+  "capability": [
+   12,
+   0
+  ],
+  "device_index": 0,
+  "driver_version": "580.82.07",
+  "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+  "smoke_finite": true,
+  "smoke_operation": "fp16-matmul-1024",
+  "torch_cuda_available": true,
+  "torch_cuda_build": "12.8",
+  "torch_version": "2.11.0+cu128",
+  "total_memory_bytes": 101974081536
+ },
+ "jlens": {
+  "repository": "anthropics/jacobian-lens",
+  "revision": "581d398613e5602a5af361e1c34d3a92ea82ba8e",
+  "source_files": {
+   "jlens/__init__.py": "bd7bb6302565a712583b05b91d48c8638d9f5d2ace00e52db0db2fd300f7fe3a",
+   "jlens/fitting.py": "5be8959db8efc34cee41ed677beba84e21ba3c9e3ccb958bdbc1600c86b5e080",
+   "jlens/hf.py": "228cf078e4586a7b7f61a6f5064403b8960de337afd19256efa56f04d53e3222",
+   "jlens/hooks.py": "c781d6944fd23396d3fc65a04db1f1db807f6f12cd5912cdbd2fb67eb3508081",
+   "jlens/lens.py": "e231e7d3a6c8e8f7791b53705a34342d0bba376a127a82376eaf6ec30ca11808",
+   "jlens/protocol.py": "7217a3bc2c1cd01fed3e6b00c53effbd957effddc49fe073da89cb10d1b1a344"
+  },
+  "source_inventory_sha256": "345c3b57cc06ec1d91fb8bb8a9422a81a4eec5f5b6c1ec20a3273d839e22a54d"
+ },
+ "model_fused_bindings": {
+  "chunk_gated_delta_rule_modules": [
+   "fla.ops.gated_delta_rule.chunk"
+  ],
+  "linear_attention_module_count": 48,
+  "linear_attention_module_names_sha256": "d4df92a439c59ea22b54d2973323c375a8c909bd33316f522e6f3b9f6e525b17"
+ },
+ "model_snapshot": {
+  "architecture": "Qwen3_5ForConditionalGeneration",
+  "d_model": 5120,
+  "files": [
+   {
+    "bytes": 7764,
+    "name": "chat_template.jinja",
+    "sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259"
+   },
+   {
+    "bytes": 4308,
+    "name": "config.json",
+    "sha256": "69db4eb7196bc8190813231b3018ca05d8c2e3abc7b1af19d55c157af44a9d9c"
+   },
+   {
+    "bytes": 202,
+    "name": "generation_config.json",
+    "sha256": "e70c136c1b78ddc1fb0905bac8e733a4dc448d4f852a5dd75143fffc70be550e"
+   },
+   {
+    "bytes": 3353259,
+    "name": "merges.txt",
+    "sha256": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d"
+   },
+   {
+    "bytes": 112216,
+    "name": "model.safetensors.index.json",
+    "sha256": "a8ad2c26fb707ff8c245806315b03e3b4b74595528492423af5dae0ce39b4d9b"
+   },
+   {
+    "bytes": 12807982,
+    "name": "tokenizer.json",
+    "sha256": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42"
+   },
+   {
+    "bytes": 16718,
+    "name": "tokenizer_config.json",
+    "sha256": "5186f0defcd7f232382c7f0aebcd2252d073bb921ab240e407b7ae8745d2b29b"
+   },
+   {
+    "bytes": 6722759,
+    "name": "vocab.json",
+    "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
+   },
+   {
+    "bytes": 3968861352,
+    "name": "model-00001-of-00015.safetensors",
+    "sha256": "5f21d4e349aef6c74bedef7b3835dc8c11a16dd5ce72f4437e2284f1e83736e9"
+   },
+   {
+    "bytes": 3921677136,
+    "name": "model-00002-of-00015.safetensors",
+    "sha256": "03de44dc7e933025498d72f8d7ea32d5cde16eb7a85b35ff1fa49a737f4b2242"
+   },
+   {
+    "bytes": 3921677128,
+    "name": "model-00003-of-00015.safetensors",
+    "sha256": "5c3a68304dabeaa5a0eb70a5e383d2b8134997ef6d5c1e8afdcd236091c847f2"
+   },
+   {
+    "bytes": 3921677128,
+    "name": "model-00004-of-00015.safetensors",
+    "sha256": "ba8b0849cb4c4c97e674709bfe56a9c008d7563a68ac57120ceb2855a73a9944"
+   },
+   {
+    "bytes": 3921677112,
+    "name": "model-00005-of-00015.safetensors",
+    "sha256": "a5abc1d5e9583409193e2cd58a671a4ed98467a6eaf883cd4377e3cc02021c22"
+   },
+   {
+    "bytes": 3900710888,
+    "name": "model-00006-of-00015.safetensors",
+    "sha256": "160d914e2e4704a401a3eab9e9eec3380e5723a35981c9169bedfb82ea32e6d6"
+   },
+   {
+    "bytes": 3994391976,
+    "name": "model-00007-of-00015.safetensors",
+    "sha256": "0bcd0ce28c7d2cc6f5ab2c21902cd032fec0cc5f29e0897e3bb0967add388e47"
+   },
+   {
+    "bytes": 3879219776,
+    "name": "model-00008-of-00015.safetensors",
+    "sha256": "584a0ed8018d3b19ce8e533d08a460454650027901be6323b50b591da143dca6"
+   },
+   {
+    "bytes": 3921677136,
+    "name": "model-00009-of-00015.safetensors",
+    "sha256": "e7e3e1a17a2673340eb6bba95c3c6f07b12e7746ee738dde56551cbde27656f5"
+   },
+   {
+    "bytes": 3921677128,
+    "name": "model-00010-of-00015.safetensors",
+    "sha256": "e8934789f4742c11da88f937da84bdbb8764c8a7f7ebe9e7b056bcbd41b14285"
+   },
+   {
+    "bytes": 3921677136,
+    "name": "model-00011-of-00015.safetensors",
+    "sha256": "44e8fe06d2d609bf20b16b1d2f42348ca2dc99179721f76035ff50db678f9a8a"
+   },
+   {
+    "bytes": 3921677136,
+    "name": "model-00012-of-00015.safetensors",
+    "sha256": "33c5d7d18e1b3f661334dff736fc7d00561f1f1bb9d2970c669b40d2e582974e"
+   },
+   {
+    "bytes": 3995081848,
+    "name": "model-00013-of-00015.safetensors",
+    "sha256": "68db2ebb03231238c2a114f3642df967a970a1d96b029adc427838cb5cf7f27a"
+   },
+   {
+    "bytes": 3942652952,
+    "name": "model-00014-of-00015.safetensors",
+    "sha256": "26c114fb6d5d4131ab227552d489d7a97c8c958a9ed94f6d3d1584f6cfe4b9fb"
+   },
+   {
+    "bytes": 508670568,
+    "name": "model-00015-of-00015.safetensors",
+    "sha256": "b84b5b1315e865c9a19a444045d422a73e3e2e31ce3766797cffd3507c68c9c9"
+   }
+  ],
+  "inventory_sha256": "c799b1249667b815a6f78aa85963f30f16d7146a9e04ea7aa0c8f69ef25e8644",
+  "model_id": "Qwen/Qwen3.6-27B",
+  "n_layers": 64,
+  "revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+  "weight_bytes": 55563006400
+ },
+ "model_snapshot_manifest_sha256": "2ae12ad8e69b6ede7f4e8b3a2df619b48c1d4b2bc9faf06ca93068c1af32a818",
+ "ok": true,
+ "packages": {
+  "fla-core": "0.5.2",
+  "flash-linear-attention": "0.5.2",
+  "torch": "2.11.0+cu128",
+  "transformers": "5.13.1",
+  "triton": "3.6.0"
+ },
+ "qwen_kernel_contract": {
+  "bindings": {
+   "FusedRMSNormGated": "fla.modules.fused_norm_gate",
+   "chunk_gated_delta_rule": "fla.ops.gated_delta_rule.chunk",
+   "fused_recurrent_gated_delta_rule": "fla.ops.gated_delta_rule.fused_recurrent"
+  },
+  "causal_conv1d_module": null,
+  "flash_linear_attention_available": true,
+  "transformers_all_fast_path": false
+ },
+ "schema_version": 1
+}
