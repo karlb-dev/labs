@@ -14,13 +14,14 @@ The pinned Qwen snapshot was downloaded directly from Hugging Face at revision `
 
 The fresh-VM tensor pass verified the registered A1000 lens, checkpoint, and header hashes; all 63 source layers; target layer 63; 5,120-by-5,120 fp32/fp16 tensors; full finiteness; and bit-exact quantized checkpoint-mean equality. The whole-registry pass verified 230 of 232 live output references with no unexpected failure or path-pin conflict. The missing historical `state.json` and `capacity_reconstructions_a120.pt` are the only failures and remain explicitly red.
 
+The sealed wrapper was then stopped at the already registered structural boundary without opening the functional gate. It freshly reverified the A1000 binding and structural event and recreated exact local backups for all three fit outputs and all six structural outputs. Their backup-manifest hashes are `cdaae0129c6f2ff55650481bf74713ccfb0af61039ceb4bf8d0dcc0a6ab5397c` and `5bff1706c7684c38d8f103a2d725059a9a1bca8f0b8aaad3a528047390c57e09`, respectively. The repository remained clean and the functional event remained the first incomplete queue stage.
+
 ## Pending transactional order
 
-1. Reverify and locally back up the completed A1000 fit and structural event.
-2. Open the functional gate, then bank, back up, commit, and push it.
-3. Run selection margin, prompt-323 influence, and the mechanical Q-L decision in order with the same transaction boundary.
-4. Admit the study-1 side releases and reproduce the 16/20 P4-P3 block.
-5. Run only Q-L-licensed M3/M4 work; no consumed outcome runs without a real independent review.
-6. Close durability, review packets, paper artifacts, and the honest freeze-candidate boundary.
+1. Open the functional gate, then bank, back up, commit, and push it.
+2. Run selection margin, prompt-323 influence, and the mechanical Q-L decision in order with the same transaction boundary.
+3. Admit the study-1 side releases and reproduce the 16/20 P4-P3 block.
+4. Run only Q-L-licensed M3/M4 work; no consumed outcome runs without a real independent review.
+5. Close durability, review packets, paper artifacts, and the honest freeze-candidate boundary.
 
 No confirmatory or replication intervention outcome exists. No A2000, new bank, new model, new endpoint, or SESOI change is authorized.

@@ -1,6 +1,6 @@
 # IN PROGRESS — Phase 4.4 decision block, VM14
 
-Updated: 2026-08-03 02:37 UTC. Phase 4 remains development-only and is not frozen.
+Updated: 2026-08-03 02:41 UTC. Phase 4 remains development-only and is not frozen.
 
 ## Recoverable boundary
 
@@ -12,20 +12,21 @@ Updated: 2026-08-03 02:37 UTC. Phase 4 remains development-only and is not froze
 - M0 Qwen snapshot/runtime: pass; exact revision `6a9e13bd...`, 23 files, 48 fused bindings.
 - External published lens: exact hash `1718c8c...11e1`.
 - M0 fresh-VM durability: 230/232 verified, with exactly two known historical deficits and zero unexpected failure.
+- Fresh local registered-output backups now cover the A1000 fit (3 outputs; manifest `cdaae012...397c`) and A500--A1000 structural event (6 outputs; manifest `5bff1706...7e09`).
 - No model writer or queue lock holder existed at M0; no untouched intervention outcome exists.
 
 ## Exact next command
 
-From `/content/labs_phase4_4`, first recreate and verify local registered-output backups without opening the functional gate:
+From `/content/labs_phase4_4`, run the sealed queue through its mechanical canonical decision:
 
 ```bash
 JSPACE4_EXPECTED_BRANCH=interp_jspace_phase4_4 \
-JSPACE4_STOP_AFTER=structural \
+JSPACE4_STOP_AFTER=canonical \
 HF_HUB_CACHE=/content/hf_local \
 bash interpretability/jspace_phase4/run_qwen_a1000_postfit_queue.sh
 ```
 
-After that command exits at the already registered structural boundary, verify both backup manifests, bank this handoff, and rerun the same wrapper with `JSPACE4_STOP_AFTER=canonical`. The wrapper's Drive heartbeat is the active watchdog during model work.
+The wrapper will reverify the completed stages and start at the functional gate. Its Drive heartbeat is the active watchdog during model work. Every new scientific stage must register, back up, commit, and push before the wrapper continues.
 
 ## Hard boundaries
 
