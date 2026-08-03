@@ -46,6 +46,12 @@ def test_g21_config_has_216_pairs_and_no_target_literal():
     assert count == config["pair_count_contract"]["expected_backend_pairs"] == 216
     assert "0.002458" not in raw
     assert config["target_firewall"]["ceiling_freeze_precedes_registry_append"] is True
+    assert config["models"]["gemma4_31b"]["expected_text_model_type"] == "gemma4_text"
+    study1 = yaml.safe_load((ROOT / "configs/gm_g1_stage1_execution.yaml").read_text())
+    assert (
+        config["models"]["gemma4_31b"]["expected_text_model_type"]
+        == study1["model"]["expected_text_model_type"]
+    )
 
 
 def test_stage1_target_is_confined_to_g22_config():

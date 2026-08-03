@@ -27,7 +27,7 @@ models:
     revision: 842da3794eaa0b77d5f08bae87a17459d91ff475
     layers_zero_indexed: [22, 37, 52]
     expected_outer_model_type: gemma4
-    expected_text_model_type: gemma3_text
+    expected_text_model_type: gemma4_text
     expected_decoder_layers: 60
   olmo3_32b_control:
     model_id: allenai/Olmo-3-32B-Think

@@ -1,6 +1,6 @@
 # Gemma transport study 2 — live handoff
 
-Status: foundation registered; G2.1 producer implemented and tested, before model staging. No study-2 model output exists.
+Status: foundation registered; G2.1 producer implemented; exact Gemma bytes staged. The first load stopped at a static text-model-type typo before any JVP or model outcome. Pre-data correction is frozen for registration.
 
 - Parent: `901fb4fc7578a913088c7947a2e6240f7fc45aeb`
 - Branch: `interp_jspace_gemma_transport_2`
@@ -12,5 +12,6 @@ Status: foundation registered; G2.1 producer implemented and tested, before mode
 - Recovery state: Drive `raw/gm2-backend-parity-calibration-v1/raw_rows_state.json`; atomic checkpoint every four backend pairs plus a per-pair heartbeat under `checkpoints/`.
 - The two exact model snapshots are downloaded directly from Hugging Face at their frozen revisions and fully rehashed before each load. Keep only one model GPU-resident.
 - Tests before model staging: 56 passed (including direction, dtype-quantum, 216-pair reconstruction, singleton-batch, and target-firewall goldens).
+- Pre-data correction: the exact checkpoint and study-1 contract both say `gemma4_text`; the study-2 YAML typo `gemma3_text` is corrected without changing any scientific cell or threshold. See `protocol/G2_PRE_DATA_ARCHITECTURE_CORRECTION.md`. No raw-row state exists and GPU memory is clear.
 
 Recovery rule: require a clean branch, set `JSPACE_GEMMA_RUN_ROOT` to the root above, verify the study-1 registry prefix and imported artifact hashes, and never open `gm2_stage1_relicense.yaml` from the G2.1 run/freeze process.
