@@ -12,6 +12,7 @@ from jspace_olmo_lineage.experiments.stage_wedge import (
     freeze_cohort,
     tokenizer_contract_checks,
 )
+from jspace_olmo_lineage.experiments.stage_wedge_analysis import mechanical_route
 from jspace_olmo_lineage.manifests import InputManifest, object_sha256
 from jspace_phase4.scoring4 import DEFAULT_SPEC
 
@@ -128,3 +129,40 @@ def test_frozen_condition_names_are_not_phase4_aliases() -> None:
         "mechanics_random",
         "logit_label_protected",
     )
+
+
+def _router() -> dict:
+    return {
+        "routes_in_order": [
+            "capability_onset",
+            "transition_by_sft_boundary",
+            "transition_across_sft_to_dpo",
+            "distributed_across_sft_dpo",
+            "coordinate_only",
+            "null_or_unresolved",
+        ],
+        "no_significance_comparison": True,
+    }
+
+
+def test_both_capability_gated_routes_to_null_not_zero() -> None:
+    capability = {
+        "stage_gate": {
+            "think_sft": {"passed": False},
+            "think_dpo": {"passed": False},
+        }
+    }
+    result = mechanical_route(capability, {}, _router())
+    assert result["route"] == "null_or_unresolved"
+    assert result["capability_gated_effects_are_missing_not_zero"] is True
+
+
+def test_dpo_capability_onset_precedes_effect_routes() -> None:
+    capability = {
+        "stage_gate": {
+            "think_sft": {"passed": False},
+            "think_dpo": {"passed": True},
+        }
+    }
+    result = mechanical_route(capability, {}, _router())
+    assert result["route"] == "capability_onset"
