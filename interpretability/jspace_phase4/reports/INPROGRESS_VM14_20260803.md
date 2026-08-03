@@ -42,12 +42,26 @@ frozen.
   `NOT_REVIEW_READY` solely because the independent fresh-remount proof cannot
   be supplied by this mounted VM.
 
-## Remaining closeout only
+## Closeout completed
 
-Update the paper/TeX and review packet, run tests and document checks, commit
-and push, mirror the closeout documents to Drive, then acquire the serialized
-Drive integration lock and merge `interp_jspace_phase4_4` into the current
-remote `interp_jspace_part2` with `--no-ff`. Do not freeze/tag or self-sign.
+The terminal paper/TeX and review packet were committed and pushed on
+`interp_jspace_phase4_4` at `0f3380d580ba5f78c87d4b00adb7906f3c2ad747`.
+Nineteen closeout files plus a complete verified Git bundle are mirrored under
+Drive `closeout/phase4_4_20260803_0f3380d/`. The branch was merged with
+`--no-ff` into the then-current `interp_jspace_part2` (including the already
+landed sidelines-2 block) at
+`a63d49c1879f888893e9d005bdace1e46bcdc603`.
+
+Post-merge Phase 4 passes 285/285 tests and OLMo passes 89/89. Gemma's union
+suite exposed one integration-test boundary error: the prefix test used the
+later registry containing the release event itself rather than the immutable
+pre-release prefix snapshot. The narrow test repair anchors it to the exact
+registered snapshot; the source producer and release remain byte-unchanged.
+Targeted and full Gemma suites pass. No scientific result, registry row, or
+source release artifact is changed by that repair.
+
+The only remaining actions are repository push verification and external
+fresh-remount/reviewer/PI work. Do not freeze/tag or self-sign.
 
 No confirmatory or replication intervention outcome exists. No A2000, new
 bank, model, endpoint, or SESOI change exists.

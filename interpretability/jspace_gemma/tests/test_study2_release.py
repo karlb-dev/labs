@@ -22,7 +22,9 @@ def _config() -> dict:
 
 
 def test_registry_prefix_survives_append_and_rejects_mutation(tmp_path):
-    source = ROOT / "reports/evidence_events.jsonl"
+    # The producer contract is defined over the immutable pre-release prefix,
+    # not the later registry containing its own release event.
+    source = ROOT / "release/evidence_events_prefix_sidelines2.jsonl"
     copy = tmp_path / "events.jsonl"
     copy.write_bytes(source.read_bytes())
     record = registry_prefix_record(copy)
