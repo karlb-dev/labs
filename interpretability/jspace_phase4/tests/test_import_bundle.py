@@ -5,6 +5,7 @@ import pytest
 
 from jspace_phase4.import_bundle import (
     ImportBundleError,
+    _source_registry_events,
     _verify_output,
     materialize_import_output,
     validate_import_bundle,
@@ -101,6 +102,38 @@ def test_valid_side_bundle_verifies_registry_ancestry_and_outputs(tmp_path):
         "bytes": output.stat().st_size,
     }]
     assert result["target_import_evidence_id"].startswith("p4-import-")
+
+
+def test_frozen_registry_snapshot_survives_valid_later_appends(
+        tmp_path, monkeypatch):
+    repository = tmp_path / "repository"
+    registry = repository / "interpretability/side/events.jsonl"
+    output = tmp_path / "output.json"
+    output.write_text("{}\n")
+    _source_event(registry, output)
+    frozen = registry.read_bytes()
+    frozen_sha = file_sha256(registry)
+    _append_side(registry, {
+        "event": "evidence_created",
+        "evidence_id": "ol-later-v1",
+        "tier": "methods",
+        "what": "valid later append",
+        "command": "test",
+        "code_commit": "c" * 40,
+        "outputs": [],
+    })
+
+    monkeypatch.setattr(
+        "jspace_phase4.import_bundle.subprocess.check_output",
+        lambda *args, **kwargs: frozen,
+    )
+    events = _source_registry_events(
+        registry,
+        frozen_sha,
+        "b" * 40,
+        repository=repository,
+    )
+    assert [row["evidence_id"] for row in events] == ["ol-bank-w-think-v1"]
 
 
 def test_bundle_payload_tamper_is_rejected(tmp_path):

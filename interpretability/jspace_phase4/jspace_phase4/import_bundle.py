@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -149,6 +150,56 @@ def _validate_governance(value: Mapping) -> None:
         raise ImportBundleError("side-bundle governance contract drift")
 
 
+def _source_registry_events(
+        registry_path: Path, expected_sha256: str, source_commit: str,
+        *, repository: Path = REPOSITORY) -> list[dict]:
+    """Read the exact registry bytes bound by an import bundle.
+
+    A side registry is append-only, so a later ancestry-preserving merge may
+    legitimately extend the working-tree file after an earlier import bundle
+    was frozen. Prefer the live file when it still matches. Otherwise read the
+    tracked registry at the bundle's exact source commit and require those
+    historical bytes to match the bundle hash. This never accepts a mutated
+    prefix or an untracked/external fallback.
+    """
+    live = registry_path.read_bytes()
+    if hashlib.sha256(live).hexdigest() == expected_sha256:
+        raw = live
+    else:
+        try:
+            if registry_path.is_absolute():
+                relative = registry_path.resolve().relative_to(
+                    repository.resolve())
+            else:
+                relative = registry_path
+            if relative.is_absolute() or ".." in relative.parts:
+                raise ValueError("unsafe repository-relative registry path")
+            raw = subprocess.check_output(
+                [
+                    "git", "-C", str(repository), "show",
+                    f"{source_commit}:{relative.as_posix()}",
+                ],
+                stderr=subprocess.DEVNULL,
+            )
+        except (OSError, subprocess.CalledProcessError, ValueError) as error:
+            raise ImportBundleError(
+                "source registry hash does not match the bundle and its "
+                "source-commit snapshot is unavailable"
+            ) from error
+        if hashlib.sha256(raw).hexdigest() != expected_sha256:
+            raise ImportBundleError(
+                "source registry hash does not match the bundle or its "
+                "source-commit snapshot")
+    try:
+        return [
+            json.loads(line)
+            for line in raw.decode("utf-8").splitlines()
+            if line.strip()
+        ]
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise ImportBundleError("source registry snapshot is invalid JSONL") from error
+
+
 def validate_import_bundle(
         bundle_path: str | Path, *, main_events_path: str | Path = EVENTS,
         commit_reachable: Callable[[str], bool] = git_commit_reachable,
@@ -183,11 +234,9 @@ def validate_import_bundle(
     expected_registry_sha = str(registry_spec.get("sha256", ""))
     if not registry_path.is_file():
         raise ImportBundleError(f"source registry is absent: {registry_path}")
-    actual_registry_sha = file_sha256(registry_path)
-    if actual_registry_sha != expected_registry_sha:
-        raise ImportBundleError(
-            "source registry hash does not match the bundle")
-    source_events = read_events(registry_path)
+    source_events = _source_registry_events(
+        registry_path, expected_registry_sha, source_commit)
+    actual_registry_sha = expected_registry_sha
     if any(row.get("study_id") != source_study for row in source_events):
         raise ImportBundleError("source registry contains a foreign study ID")
 
