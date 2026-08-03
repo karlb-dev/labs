@@ -1403,7 +1403,10 @@ def _fit_rows(frame: pd.DataFrame) -> list[dict]:
             slope = intercept = r2 = None
             status = "insufficient_measurement_rows"
         rows.append({
-            **dict(zip(keys, key)),
+            "model_key": str(key[0]),
+            "source_layer": int(key[1]),
+            "prompt_id": str(key[2]),
+            "direction_id": str(key[3]),
             "n_rows": len(selected),
             "n_unique_epsilon": len(unique),
             "intercept": None if intercept is None else float(intercept),

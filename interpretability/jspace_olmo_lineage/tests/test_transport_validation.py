@@ -1,9 +1,11 @@
+import json
 from pathlib import Path
 
 import pandas as pd
 import pytest
 import torch
 from jspace_olmo_lineage.experiments.transport_validation import (
+    _fit_rows,
     classify_rows,
     evaluate_dual_backend_transport_cell,
 )
@@ -82,3 +84,23 @@ def test_transport_module_does_not_import_phase4_registry():
     text = source.read_text()
     assert "jspace_phase4.registry" not in text
     assert "finite_difference" not in text.lower()
+
+
+def test_fit_rows_are_canonical_json_serializable():
+    frame = pd.DataFrame([
+        {
+            "model_key": "base",
+            "source_layer": 24,
+            "prompt_id": "gm-p001",
+            "direction_id": "rademacher-0",
+            "measurement_eligible": True,
+            "desired_relative_epsilon": epsilon,
+            "tangent_relative_error": epsilon * 0.5,
+        }
+        for epsilon in (0.001, 0.0025, 0.005)
+    ])
+
+    rows = _fit_rows(frame)
+
+    assert rows[0]["source_layer"] == 24
+    json.dumps(rows, sort_keys=True)
