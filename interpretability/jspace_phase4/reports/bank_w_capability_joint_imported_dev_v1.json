@@ -1,0 +1,1174 @@
+{
+ "bank_v3_development_compatibility": {
+  "checks": {
+   "audit_partition_payload": true,
+   "byte_identical_payload": true,
+   "development_payload": true,
+   "n_development_rows": true,
+   "source_bank_file": true
+  },
+  "current_audit_sha256": "b989cbeedbaf7c4cd439b8ffd93c823b4f94671eca676d725ac4c61bca94df01",
+  "current_bank_evidence_id": "p4-bank-w-candidate-v3",
+  "current_bank_sha256": "05f4b9f957878ab95ad3f84753963ddbeab373ba99e8f3702c99994d2cb4cf87",
+  "development_payload_sha256": "b7951276d83c2ba21d438c0e195f19c6c77b53b38f70db4347b76fdcbea7a62e",
+  "n_development_rows": 1536
+ },
+ "claim_boundary": "Imported and independently recomputed development-only Bank-W baseline capability and common-support gate. It opens no intervention, confirmatory, or replication outcome and cannot constitute independent review or PI sign-off.",
+ "confirmatory_outcomes_opened": false,
+ "evidence_id": "p4-bank-w-capability-joint-imported-dev-v1",
+ "freeze_ready": false,
+ "import_audit": {
+  "bundle_sha256": "d3c2f94e23251c64edcdd643e1ab13a94ad9263a7ccb6fe36c2c2e1a367b0536",
+  "fresh_validation_equal": true,
+  "import_code_commit": "28e25feb6acff1d247881ed9cc231060b12dd496",
+  "n_source_events": 5,
+  "n_source_outputs": 11,
+  "output_inventory_sha256": "e71e491f35e81f11266c638398522d2384df215b932dbd7f67e33486b90c5e22",
+  "registered_mainline_import": true,
+  "selected_event_ids": [
+   "ol-bank-w-capability-protocol-v1",
+   "ol-bank-w-capability-olmo31-think-dev-v1",
+   "ol-bank-w-capability-olmo31-instruct-dev-v1",
+   "ol-bank-w-capability-joint-dev-v1",
+   "ol-phase4-early-import-bundle-v1"
+  ],
+  "selected_event_ids_sha256": "95033358d932b8fa2b94b16634ea659ddbdd1bed3161eed6a33a95960bb1cad4",
+  "source_commit": "d76e937d2e6294b92d3d599581bd0fb029f5735c",
+  "source_registry_sha256": "1e66b35068dc6489de10cccad206899a726d522872bec3f5fe3586aa0a20cbca",
+  "validation_sha256": "57d4ac60aeef972a26a19a4d2b159e93d62a53822b40a836fa27401c36ebccf2"
+ },
+ "independent_review_complete": false,
+ "interventions_opened": false,
+ "joint": {
+  "claim_boundary": "Imported and independently recomputed development-only Bank-W baseline capability and common-support gate. It opens no intervention, confirmatory, or replication outcome and cannot constitute independent review or PI sign-off.",
+  "decision": "BLOCKED: do not drop an otherwise eligible model to manufacture common support; revise capability/bank design prospectively",
+  "freeze_ready": false,
+  "independently_eligible_models": [
+   "olmo31-think",
+   "olmo31-instruct",
+   "qwen36-27b"
+  ],
+  "independently_failed_models": [],
+  "joint_common_capable_family_ids": [
+   "graph_path:template-01",
+   "graph_path:template-03",
+   "graph_path:template-07",
+   "graph_path:template-10",
+   "graph_path:template-11",
+   "key_value:template-01",
+   "key_value:template-04",
+   "key_value:template-10",
+   "relational_table:template-04",
+   "relational_table:template-11",
+   "stack_queue:template-02",
+   "stack_queue:template-04",
+   "stack_queue:template-09",
+   "state_updates:template-07",
+   "state_updates:template-08",
+   "state_updates:template-10"
+  ],
+  "joint_common_capable_family_ids_sha256": "b24741a742f0f22992c386b53ca60b9aa8a832b5f03b5d586da18aa3822e3df7",
+  "joint_common_support_pass": false,
+  "minimum_joint_common_families": 20,
+  "model_analyses": {
+   "olmo31-instruct": {
+    "capable_family_ids": [
+     "graph_path:template-01",
+     "graph_path:template-03",
+     "graph_path:template-07",
+     "graph_path:template-10",
+     "graph_path:template-11",
+     "key_value:template-01",
+     "key_value:template-04",
+     "key_value:template-10",
+     "relational_table:template-04",
+     "relational_table:template-11",
+     "stack_queue:template-02",
+     "stack_queue:template-04",
+     "stack_queue:template-09",
+     "state_updates:template-03",
+     "state_updates:template-07",
+     "state_updates:template-08",
+     "state_updates:template-10"
+    ],
+    "capable_family_ids_sha256": "8ae9eac0a99d0aa3e50b6016bf91ddcbeb00892770ed3761aff0087641469d26",
+    "claim_boundary": "Bank W baseline development capability only; no intervention, confirmatory, or replication outcome.",
+    "family_accuracy": {
+     "deferred_recall:template-01": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-05": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-07": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-11": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "graph_path:template-01": {
+      "high": 0.75,
+      "low": 1.0
+     },
+     "graph_path:template-03": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "graph_path:template-07": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "graph_path:template-10": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "graph_path:template-11": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "key_value:template-01": {
+      "high": 0.875,
+      "low": 0.875
+     },
+     "key_value:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-09": {
+      "high": 0.875,
+      "low": 0.5
+     },
+     "key_value:template-10": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "relational_table:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "relational_table:template-11": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-02": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-09": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-01": {
+      "high": 0.375,
+      "low": 0.5
+     },
+     "state_updates:template-03": {
+      "high": 0.75,
+      "low": 0.875
+     },
+     "state_updates:template-07": {
+      "high": 0.875,
+      "low": 0.75
+     },
+     "state_updates:template-08": {
+      "high": 0.875,
+      "low": 0.75
+     },
+     "state_updates:template-10": {
+      "high": 0.75,
+      "low": 0.75
+     },
+     "state_updates:template-11": {
+      "high": 0.625,
+      "low": 0.75
+     }
+    },
+    "independent_gate_checks": {
+     "accuracy_floor_both_loads": true,
+     "complete_development_grid": true,
+     "load_difference_equivalent": true
+    },
+    "independently_capability_eligible": true,
+    "load_summaries": {
+     "high": {
+      "accuracy": 0.71875,
+      "mean_answer_margin": 3.0983245545066893,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 203.44791666666666,
+      "n_rows": 192
+     },
+     "low": {
+      "accuracy": 0.7395833333333334,
+      "mean_answer_margin": 3.240236402489245,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 203.44791666666666,
+      "n_rows": 192
+     }
+    },
+    "locked_covariate_sensitivities": {
+     "correct_vs_answer_token_count_r": -0.0676664952450959,
+     "correct_vs_prompt_token_count_r": -0.21138401044020425,
+     "margin_vs_answer_token_count_r": -0.039265557189982266,
+     "margin_vs_prompt_token_count_r": -0.13863537640206422,
+     "status": "secondary-only; cannot rescue a failed primary gate"
+    },
+    "n_capable_families": 17,
+    "n_families": 24,
+    "n_rows": 384,
+    "paired_high_minus_low_accuracy": {
+     "equivalence_sesoi": 0.08,
+     "family_bootstrap_ci90": [
+      -0.057291666666666664,
+      0.020833333333333332
+     ],
+     "family_bootstrap_draws": 20000,
+     "family_bootstrap_seed": 20260801,
+     "mean": -0.020833333333333332
+    },
+    "schema_version": 1
+   },
+   "olmo31-think": {
+    "capable_family_ids": [
+     "graph_path:template-01",
+     "graph_path:template-03",
+     "graph_path:template-07",
+     "graph_path:template-10",
+     "graph_path:template-11",
+     "key_value:template-01",
+     "key_value:template-04",
+     "key_value:template-09",
+     "key_value:template-10",
+     "relational_table:template-04",
+     "relational_table:template-11",
+     "stack_queue:template-02",
+     "stack_queue:template-04",
+     "stack_queue:template-09",
+     "state_updates:template-07",
+     "state_updates:template-08",
+     "state_updates:template-10"
+    ],
+    "capable_family_ids_sha256": "d3fd3301ade575c9d8604eb3cfb1c09406644e2c495d62de34ac514f5a882828",
+    "claim_boundary": "Bank W baseline development capability only; no intervention, confirmatory, or replication outcome.",
+    "family_accuracy": {
+     "deferred_recall:template-01": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-05": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-07": {
+      "high": 0.0,
+      "low": 0.125
+     },
+     "deferred_recall:template-11": {
+      "high": 0.0,
+      "low": 0.125
+     },
+     "graph_path:template-01": {
+      "high": 0.75,
+      "low": 0.875
+     },
+     "graph_path:template-03": {
+      "high": 1.0,
+      "low": 0.875
+     },
+     "graph_path:template-07": {
+      "high": 0.875,
+      "low": 0.75
+     },
+     "graph_path:template-10": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "graph_path:template-11": {
+      "high": 0.75,
+      "low": 0.75
+     },
+     "key_value:template-01": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-04": {
+      "high": 1.0,
+      "low": 0.875
+     },
+     "key_value:template-09": {
+      "high": 0.75,
+      "low": 0.875
+     },
+     "key_value:template-10": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "relational_table:template-04": {
+      "high": 1.0,
+      "low": 0.75
+     },
+     "relational_table:template-11": {
+      "high": 1.0,
+      "low": 0.875
+     },
+     "stack_queue:template-02": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-09": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-01": {
+      "high": 0.625,
+      "low": 0.625
+     },
+     "state_updates:template-03": {
+      "high": 0.875,
+      "low": 0.625
+     },
+     "state_updates:template-07": {
+      "high": 0.75,
+      "low": 0.75
+     },
+     "state_updates:template-08": {
+      "high": 0.75,
+      "low": 0.75
+     },
+     "state_updates:template-10": {
+      "high": 0.75,
+      "low": 0.75
+     },
+     "state_updates:template-11": {
+      "high": 0.625,
+      "low": 0.75
+     }
+    },
+    "independent_gate_checks": {
+     "accuracy_floor_both_loads": true,
+     "complete_development_grid": true,
+     "load_difference_equivalent": true
+    },
+    "independently_capability_eligible": true,
+    "load_summaries": {
+     "high": {
+      "accuracy": 0.71875,
+      "mean_answer_margin": 1.7420489376721282,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 203.44791666666666,
+      "n_rows": 192
+     },
+     "low": {
+      "accuracy": 0.7135416666666666,
+      "mean_answer_margin": 2.03485224271814,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 203.44791666666666,
+      "n_rows": 192
+     }
+    },
+    "locked_covariate_sensitivities": {
+     "correct_vs_answer_token_count_r": -0.03668195399969144,
+     "correct_vs_prompt_token_count_r": -0.18751313178194287,
+     "margin_vs_answer_token_count_r": -0.007294597344644955,
+     "margin_vs_prompt_token_count_r": -0.17265124363266057,
+     "status": "secondary-only; cannot rescue a failed primary gate"
+    },
+    "n_capable_families": 17,
+    "n_families": 24,
+    "n_rows": 384,
+    "paired_high_minus_low_accuracy": {
+     "equivalence_sesoi": 0.08,
+     "family_bootstrap_ci90": [
+      -0.03125,
+      0.041666666666666664
+     ],
+     "family_bootstrap_draws": 20000,
+     "family_bootstrap_seed": 20260801,
+     "mean": 0.005208333333333333
+    },
+    "schema_version": 1
+   },
+   "qwen36-27b": {
+    "capable_family_ids": [
+     "graph_path:template-01",
+     "graph_path:template-03",
+     "graph_path:template-07",
+     "graph_path:template-10",
+     "graph_path:template-11",
+     "key_value:template-01",
+     "key_value:template-04",
+     "key_value:template-09",
+     "key_value:template-10",
+     "relational_table:template-04",
+     "relational_table:template-11",
+     "stack_queue:template-02",
+     "stack_queue:template-04",
+     "stack_queue:template-09",
+     "state_updates:template-01",
+     "state_updates:template-03",
+     "state_updates:template-07",
+     "state_updates:template-08",
+     "state_updates:template-10",
+     "state_updates:template-11"
+    ],
+    "capable_family_ids_sha256": "f6880f1834b300021334157cdd833f967a90814bc7c4cbcf1eb88a296449f265",
+    "claim_boundary": "Bank W baseline development capability only; no intervention, confirmatory, or replication outcome.",
+    "family_accuracy": {
+     "deferred_recall:template-01": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-05": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-07": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-11": {
+      "high": 0.0,
+      "low": 0.25
+     },
+     "graph_path:template-01": {
+      "high": 1.0,
+      "low": 0.875
+     },
+     "graph_path:template-03": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "graph_path:template-07": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "graph_path:template-10": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "graph_path:template-11": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-01": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-09": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-10": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "relational_table:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "relational_table:template-11": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-02": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-09": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-01": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-03": {
+      "high": 1.0,
+      "low": 0.875
+     },
+     "state_updates:template-07": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-08": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-10": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-11": {
+      "high": 1.0,
+      "low": 1.0
+     }
+    },
+    "independent_gate_checks": {
+     "accuracy_floor_both_loads": true,
+     "complete_development_grid": true,
+     "load_difference_equivalent": true
+    },
+    "independently_capability_eligible": true,
+    "load_summaries": {
+     "high": {
+      "accuracy": 0.8333333333333334,
+      "mean_answer_margin": 2.3413592629755535,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 202.44791666666666,
+      "n_rows": 192
+     },
+     "low": {
+      "accuracy": 0.8333333333333334,
+      "mean_answer_margin": 3.040578025703629,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 202.44791666666666,
+      "n_rows": 192
+     }
+    },
+    "locked_covariate_sensitivities": {
+     "correct_vs_answer_token_count_r": 3.314487198815047e-17,
+     "correct_vs_prompt_token_count_r": -0.48244350578692774,
+     "margin_vs_answer_token_count_r": -0.07089201725491369,
+     "margin_vs_prompt_token_count_r": -0.2666671761790704,
+     "status": "secondary-only; cannot rescue a failed primary gate"
+    },
+    "n_capable_families": 20,
+    "n_families": 24,
+    "n_rows": 384,
+    "paired_high_minus_low_accuracy": {
+     "equivalence_sesoi": 0.08,
+     "family_bootstrap_ci90": [
+      -0.020833333333333332,
+      0.020833333333333332
+     ],
+     "family_bootstrap_draws": 20000,
+     "family_bootstrap_seed": 20260801,
+     "mean": 0.0
+    },
+    "schema_version": 1
+   }
+  },
+  "model_order": [
+   "olmo31-think",
+   "olmo31-instruct",
+   "qwen36-27b"
+  ],
+  "n_joint_common_capable_families": 16,
+  "p4p3_baseline_capability_ready": false,
+  "primary_model_set": [],
+  "remaining_freeze_blockers": [
+   "prospective Bank W capability/bank revision",
+   "independent protocol review and PI sign-off"
+  ],
+  "schema_version": 1,
+  "would_be_primary_model_set": [
+   "olmo31-think",
+   "olmo31-instruct",
+   "qwen36-27b"
+  ]
+ },
+ "model_verifications": {
+  "olmo31-instruct": {
+   "analysis": {
+    "capable_family_ids": [
+     "graph_path:template-01",
+     "graph_path:template-03",
+     "graph_path:template-07",
+     "graph_path:template-10",
+     "graph_path:template-11",
+     "key_value:template-01",
+     "key_value:template-04",
+     "key_value:template-10",
+     "relational_table:template-04",
+     "relational_table:template-11",
+     "stack_queue:template-02",
+     "stack_queue:template-04",
+     "stack_queue:template-09",
+     "state_updates:template-03",
+     "state_updates:template-07",
+     "state_updates:template-08",
+     "state_updates:template-10"
+    ],
+    "capable_family_ids_sha256": "8ae9eac0a99d0aa3e50b6016bf91ddcbeb00892770ed3761aff0087641469d26",
+    "claim_boundary": "Bank W baseline development capability only; no intervention, confirmatory, or replication outcome.",
+    "family_accuracy": {
+     "deferred_recall:template-01": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-05": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-07": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-11": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "graph_path:template-01": {
+      "high": 0.75,
+      "low": 1.0
+     },
+     "graph_path:template-03": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "graph_path:template-07": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "graph_path:template-10": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "graph_path:template-11": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "key_value:template-01": {
+      "high": 0.875,
+      "low": 0.875
+     },
+     "key_value:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-09": {
+      "high": 0.875,
+      "low": 0.5
+     },
+     "key_value:template-10": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "relational_table:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "relational_table:template-11": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-02": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-09": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-01": {
+      "high": 0.375,
+      "low": 0.5
+     },
+     "state_updates:template-03": {
+      "high": 0.75,
+      "low": 0.875
+     },
+     "state_updates:template-07": {
+      "high": 0.875,
+      "low": 0.75
+     },
+     "state_updates:template-08": {
+      "high": 0.875,
+      "low": 0.75
+     },
+     "state_updates:template-10": {
+      "high": 0.75,
+      "low": 0.75
+     },
+     "state_updates:template-11": {
+      "high": 0.625,
+      "low": 0.75
+     }
+    },
+    "independent_gate_checks": {
+     "accuracy_floor_both_loads": true,
+     "complete_development_grid": true,
+     "load_difference_equivalent": true
+    },
+    "independently_capability_eligible": true,
+    "load_summaries": {
+     "high": {
+      "accuracy": 0.71875,
+      "mean_answer_margin": 3.0983245545066893,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 203.44791666666666,
+      "n_rows": 192
+     },
+     "low": {
+      "accuracy": 0.7395833333333334,
+      "mean_answer_margin": 3.240236402489245,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 203.44791666666666,
+      "n_rows": 192
+     }
+    },
+    "locked_covariate_sensitivities": {
+     "correct_vs_answer_token_count_r": -0.0676664952450959,
+     "correct_vs_prompt_token_count_r": -0.21138401044020425,
+     "margin_vs_answer_token_count_r": -0.039265557189982266,
+     "margin_vs_prompt_token_count_r": -0.13863537640206422,
+     "status": "secondary-only; cannot rescue a failed primary gate"
+    },
+    "n_capable_families": 17,
+    "n_families": 24,
+    "n_rows": 384,
+    "paired_high_minus_low_accuracy": {
+     "equivalence_sesoi": 0.08,
+     "family_bootstrap_ci90": [
+      -0.057291666666666664,
+      0.020833333333333332
+     ],
+     "family_bootstrap_draws": 20000,
+     "family_bootstrap_seed": 20260801,
+     "mean": -0.020833333333333332
+    },
+    "schema_version": 1
+   },
+   "analysis_sha256": "97d40cc07c09193418e555a79df2f23ec7c58256472bf83ef1858625db6865ce",
+   "finite_audit": {
+    "all_rows_finite": true,
+    "candidate_sequences_per_row": 8,
+    "n_numeric_values_checked": 4608,
+    "n_rows": 384,
+    "no_rows_dropped": true
+   },
+   "input_manifest_sha256": "42330c5d47add86cf69cf1e2b2dba9b51c94562b3a52944147a5041ddc924a70",
+   "intervention_columns_absent": true,
+   "model": {
+    "model_id": "allenai/Olmo-3.1-32B-Instruct",
+    "revision": "ac0587e4a7744a551c059d8cd17ba220bc940dae"
+   },
+   "model_slug": "olmo31-instruct",
+   "result_sha256": "44f6399aadd7f5507f1477b05d9dc99409829848149a1d3b81d5f5de3b1636aa",
+   "rows_sha256": "73223060bbcf1580648715dff72497448f55b9d85167f5a9d52149f1f94ce467",
+   "source": "imported",
+   "source_evidence_id": "ol-bank-w-capability-olmo31-instruct-dev-v1",
+   "source_side_audit": {
+    "phase4_function_source_sha256": "77c963990dd980e94664ed6b9ead2e6e60c574ce40372186f638c3b7640fbe51",
+    "side_track_finite_gate": {
+     "all_rows_finite": true,
+     "candidate_sequences_per_row": 8,
+     "n_numeric_values_checked": 4608,
+     "n_rows": 384,
+     "no_rows_dropped": true
+    }
+   }
+  },
+  "olmo31-think": {
+   "analysis": {
+    "capable_family_ids": [
+     "graph_path:template-01",
+     "graph_path:template-03",
+     "graph_path:template-07",
+     "graph_path:template-10",
+     "graph_path:template-11",
+     "key_value:template-01",
+     "key_value:template-04",
+     "key_value:template-09",
+     "key_value:template-10",
+     "relational_table:template-04",
+     "relational_table:template-11",
+     "stack_queue:template-02",
+     "stack_queue:template-04",
+     "stack_queue:template-09",
+     "state_updates:template-07",
+     "state_updates:template-08",
+     "state_updates:template-10"
+    ],
+    "capable_family_ids_sha256": "d3fd3301ade575c9d8604eb3cfb1c09406644e2c495d62de34ac514f5a882828",
+    "claim_boundary": "Bank W baseline development capability only; no intervention, confirmatory, or replication outcome.",
+    "family_accuracy": {
+     "deferred_recall:template-01": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-05": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-07": {
+      "high": 0.0,
+      "low": 0.125
+     },
+     "deferred_recall:template-11": {
+      "high": 0.0,
+      "low": 0.125
+     },
+     "graph_path:template-01": {
+      "high": 0.75,
+      "low": 0.875
+     },
+     "graph_path:template-03": {
+      "high": 1.0,
+      "low": 0.875
+     },
+     "graph_path:template-07": {
+      "high": 0.875,
+      "low": 0.75
+     },
+     "graph_path:template-10": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "graph_path:template-11": {
+      "high": 0.75,
+      "low": 0.75
+     },
+     "key_value:template-01": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-04": {
+      "high": 1.0,
+      "low": 0.875
+     },
+     "key_value:template-09": {
+      "high": 0.75,
+      "low": 0.875
+     },
+     "key_value:template-10": {
+      "high": 0.875,
+      "low": 1.0
+     },
+     "relational_table:template-04": {
+      "high": 1.0,
+      "low": 0.75
+     },
+     "relational_table:template-11": {
+      "high": 1.0,
+      "low": 0.875
+     },
+     "stack_queue:template-02": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-09": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-01": {
+      "high": 0.625,
+      "low": 0.625
+     },
+     "state_updates:template-03": {
+      "high": 0.875,
+      "low": 0.625
+     },
+     "state_updates:template-07": {
+      "high": 0.75,
+      "low": 0.75
+     },
+     "state_updates:template-08": {
+      "high": 0.75,
+      "low": 0.75
+     },
+     "state_updates:template-10": {
+      "high": 0.75,
+      "low": 0.75
+     },
+     "state_updates:template-11": {
+      "high": 0.625,
+      "low": 0.75
+     }
+    },
+    "independent_gate_checks": {
+     "accuracy_floor_both_loads": true,
+     "complete_development_grid": true,
+     "load_difference_equivalent": true
+    },
+    "independently_capability_eligible": true,
+    "load_summaries": {
+     "high": {
+      "accuracy": 0.71875,
+      "mean_answer_margin": 1.7420489376721282,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 203.44791666666666,
+      "n_rows": 192
+     },
+     "low": {
+      "accuracy": 0.7135416666666666,
+      "mean_answer_margin": 2.03485224271814,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 203.44791666666666,
+      "n_rows": 192
+     }
+    },
+    "locked_covariate_sensitivities": {
+     "correct_vs_answer_token_count_r": -0.03668195399969144,
+     "correct_vs_prompt_token_count_r": -0.18751313178194287,
+     "margin_vs_answer_token_count_r": -0.007294597344644955,
+     "margin_vs_prompt_token_count_r": -0.17265124363266057,
+     "status": "secondary-only; cannot rescue a failed primary gate"
+    },
+    "n_capable_families": 17,
+    "n_families": 24,
+    "n_rows": 384,
+    "paired_high_minus_low_accuracy": {
+     "equivalence_sesoi": 0.08,
+     "family_bootstrap_ci90": [
+      -0.03125,
+      0.041666666666666664
+     ],
+     "family_bootstrap_draws": 20000,
+     "family_bootstrap_seed": 20260801,
+     "mean": 0.005208333333333333
+    },
+    "schema_version": 1
+   },
+   "analysis_sha256": "576c4df2cffc1146d3a53d00f5ab682ddb2cb7d57670482be8488c7ebf38f0e7",
+   "finite_audit": {
+    "all_rows_finite": true,
+    "candidate_sequences_per_row": 8,
+    "n_numeric_values_checked": 4608,
+    "n_rows": 384,
+    "no_rows_dropped": true
+   },
+   "input_manifest_sha256": "324b5f74e191ec7b1440cea502720aab08d628065dfea1b6970e869507b4916b",
+   "intervention_columns_absent": true,
+   "model": {
+    "model_id": "allenai/Olmo-3.1-32B-Think",
+    "revision": "832c3f543499af8fe68b88359501de9cb7840544"
+   },
+   "model_slug": "olmo31-think",
+   "result_sha256": "944c739191a0587eb81a7fa766ca8810d4f0dcffc9461b9d42481324f2ad5907",
+   "rows_sha256": "badde2c5508cf954503062a57b99310a84bb0f539ac5313966c05f7227ad91c5",
+   "source": "imported",
+   "source_evidence_id": "ol-bank-w-capability-olmo31-think-dev-v1",
+   "source_side_audit": {
+    "phase4_function_source_sha256": "77c963990dd980e94664ed6b9ead2e6e60c574ce40372186f638c3b7640fbe51",
+    "side_track_finite_gate": {
+     "all_rows_finite": true,
+     "candidate_sequences_per_row": 8,
+     "n_numeric_values_checked": 4608,
+     "n_rows": 384,
+     "no_rows_dropped": true
+    }
+   }
+  },
+  "qwen36-27b": {
+   "analysis": {
+    "capable_family_ids": [
+     "graph_path:template-01",
+     "graph_path:template-03",
+     "graph_path:template-07",
+     "graph_path:template-10",
+     "graph_path:template-11",
+     "key_value:template-01",
+     "key_value:template-04",
+     "key_value:template-09",
+     "key_value:template-10",
+     "relational_table:template-04",
+     "relational_table:template-11",
+     "stack_queue:template-02",
+     "stack_queue:template-04",
+     "stack_queue:template-09",
+     "state_updates:template-01",
+     "state_updates:template-03",
+     "state_updates:template-07",
+     "state_updates:template-08",
+     "state_updates:template-10",
+     "state_updates:template-11"
+    ],
+    "capable_family_ids_sha256": "f6880f1834b300021334157cdd833f967a90814bc7c4cbcf1eb88a296449f265",
+    "claim_boundary": "Bank W baseline development capability only; no intervention, confirmatory, or replication outcome.",
+    "family_accuracy": {
+     "deferred_recall:template-01": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-05": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-07": {
+      "high": 0.0,
+      "low": 0.0
+     },
+     "deferred_recall:template-11": {
+      "high": 0.0,
+      "low": 0.25
+     },
+     "graph_path:template-01": {
+      "high": 1.0,
+      "low": 0.875
+     },
+     "graph_path:template-03": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "graph_path:template-07": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "graph_path:template-10": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "graph_path:template-11": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-01": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-09": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "key_value:template-10": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "relational_table:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "relational_table:template-11": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-02": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-04": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "stack_queue:template-09": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-01": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-03": {
+      "high": 1.0,
+      "low": 0.875
+     },
+     "state_updates:template-07": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-08": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-10": {
+      "high": 1.0,
+      "low": 1.0
+     },
+     "state_updates:template-11": {
+      "high": 1.0,
+      "low": 1.0
+     }
+    },
+    "independent_gate_checks": {
+     "accuracy_floor_both_loads": true,
+     "complete_development_grid": true,
+     "load_difference_equivalent": true
+    },
+    "independently_capability_eligible": true,
+    "load_summaries": {
+     "high": {
+      "accuracy": 0.8333333333333334,
+      "mean_answer_margin": 2.3413592629755535,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 202.44791666666666,
+      "n_rows": 192
+     },
+     "low": {
+      "accuracy": 0.8333333333333334,
+      "mean_answer_margin": 3.040578025703629,
+      "mean_answer_tokens": 1.25,
+      "mean_prompt_tokens": 202.44791666666666,
+      "n_rows": 192
+     }
+    },
+    "locked_covariate_sensitivities": {
+     "correct_vs_answer_token_count_r": 3.314487198815047e-17,
+     "correct_vs_prompt_token_count_r": -0.48244350578692774,
+     "margin_vs_answer_token_count_r": -0.07089201725491369,
+     "margin_vs_prompt_token_count_r": -0.2666671761790704,
+     "status": "secondary-only; cannot rescue a failed primary gate"
+    },
+    "n_capable_families": 20,
+    "n_families": 24,
+    "n_rows": 384,
+    "paired_high_minus_low_accuracy": {
+     "equivalence_sesoi": 0.08,
+     "family_bootstrap_ci90": [
+      -0.020833333333333332,
+      0.020833333333333332
+     ],
+     "family_bootstrap_draws": 20000,
+     "family_bootstrap_seed": 20260801,
+     "mean": 0.0
+    },
+    "schema_version": 1
+   },
+   "analysis_sha256": "40f53554b982426eaeb3657402943b2598b861a5e96778d19d55e9bcc1d15dec",
+   "finite_audit": {
+    "all_rows_finite": true,
+    "candidate_sequences_per_row": 8,
+    "n_numeric_values_checked": 4608,
+    "n_rows": 384,
+    "no_rows_dropped": true
+   },
+   "input_manifest_sha256": "382c7bfbf7f889cf31c835380bc2b524a49340275dd0425867718f511db229fd",
+   "intervention_columns_absent": true,
+   "model": {
+    "model_id": "Qwen/Qwen3.6-27B",
+    "revision": "6a9e13bd6fc8f0983b9b99948120bc37f49c13e9"
+   },
+   "model_slug": "qwen36-27b",
+   "result_sha256": "463e1b4b6c7a4fc40d990051346dcb9e50d37ea80253516c9844cec3cd919beb",
+   "rows_sha256": "584c76eaace2b15cc17fa29199ad52777727a20321bb39ebf7256140f739dd1b",
+   "source": "native",
+   "source_evidence_id": "p4-bank-w-capability-qwen36-27b-dev-v1",
+   "source_side_audit": {}
+  }
+ },
+ "p4p3_disposition": "BLOCKED_PROSPECTIVE_BANK_OR_SUPPORT_REVISION_REQUIRED",
+ "pi_signoff_complete": false,
+ "replication_outcomes_opened": false,
+ "schema_version": 1
+}
