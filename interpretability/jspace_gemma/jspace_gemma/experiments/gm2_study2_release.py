@@ -262,7 +262,7 @@ def _render_markdown(envelope: Mapping) -> str:
         ),
         (
             f"- Historical all-slot relative error: "
-            f"`{result['historical_all_slot_relative_error']}`; selected slot "
+            f"`{result['historical_all_slot_relative_error_exact']}`; selected slot "
             "remains bit-identical."
         ),
         f"- License route: `{result['license_branch']}`; no G2.2 model compute.",

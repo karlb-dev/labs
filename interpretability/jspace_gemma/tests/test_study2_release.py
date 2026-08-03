@@ -54,6 +54,9 @@ def test_release_admission_and_partial_contract_is_exact():
     assert identifiers[-1] == "gm2-stage1-relicense-v1"
     assert config["result_summary"]["calibration_route"] == "benign_scheduling_floor"
     assert config["result_summary"]["pooled_ceiling"] == 0.07870368901355948
+    assert config["result_summary"]["historical_all_slot_relative_error_exact"] == (
+        "0.0024581113830208778"
+    )
     assert config["result_summary"]["license_branch"] == (
         "branch_1_relicense_without_recompute"
     )

@@ -99,6 +99,7 @@ result_summary:
   pooled_ceiling: 0.07870368901355948
   prompt_bootstrap_90pct: [0.07489779624371865, 0.10392247147209241]
   historical_all_slot_relative_error: 0.0024581113830208778
+  historical_all_slot_relative_error_exact: "0.0024581113830208778"
   selected_slot_bit_identical: true
   license_branch: branch_1_relicense_without_recompute
   licensed_layers: [22, 30, 37, 44, 52]
