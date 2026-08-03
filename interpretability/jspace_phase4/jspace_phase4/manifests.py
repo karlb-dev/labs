@@ -32,6 +32,90 @@ def file_sha256(path: str | Path) -> str:
     return digest.hexdigest()
 
 
+_DISTRIBUTION_INVENTORY_ALGORITHM = (
+    "sort importlib.metadata files by relative path; exclude .pyc and "
+    "__pycache__; hash each regular file; hash "
+    "relative_path\\0size\\0file_sha256\\n records"
+)
+
+
+def distribution_content_inventory(
+        name: str, *, distribution_reader=None) -> dict:
+    """Return an exact, location-independent installed-distribution lock."""
+    reader = distribution_reader or importlib.metadata.distribution
+    try:
+        distribution = reader(name)
+    except importlib.metadata.PackageNotFoundError as error:
+        raise RuntimeError(f"required distribution is missing: {name}") from error
+    files = distribution.files
+    if files is None:
+        raise RuntimeError(f"distribution has no file inventory: {name}")
+    digest = hashlib.sha256()
+    count = 0
+    total_bytes = 0
+    missing = []
+    metadata_path = None
+    record_path = None
+    for entry in sorted(files, key=lambda value: value.as_posix()):
+        relative = entry.as_posix()
+        if entry.suffix == ".pyc" or "__pycache__" in entry.parts:
+            continue
+        path = Path(distribution.locate_file(entry))
+        if not path.is_file():
+            missing.append(relative)
+            continue
+        size = path.stat().st_size
+        item_sha256 = file_sha256(path)
+        digest.update(
+            f"{relative}\0{size}\0{item_sha256}\n".encode("utf-8"))
+        count += 1
+        total_bytes += size
+        if entry.name == "METADATA" and ".dist-info" in relative:
+            metadata_path = path
+        elif entry.name == "RECORD" and ".dist-info" in relative:
+            record_path = path
+    if metadata_path is None or record_path is None:
+        raise RuntimeError(
+            f"distribution lacks METADATA/RECORD inventory files: {name}")
+    return {
+        "distribution": name,
+        "version": distribution.version,
+        "non_pyc_file_count": count,
+        "non_pyc_bytes": total_bytes,
+        "content_inventory_sha256": digest.hexdigest(),
+        "metadata_sha256": file_sha256(metadata_path),
+        "record_sha256": file_sha256(record_path),
+        "missing_file_count": len(missing),
+    }
+
+
+def verify_distribution_content_inventories(
+        expected: list[Mapping], *, distribution_reader=None) -> dict:
+    """Verify exact installed contents, not merely package version labels."""
+    if not expected:
+        raise RuntimeError("distribution-content lock is empty")
+    actual = []
+    for specification in expected:
+        name = str(specification["distribution"])
+        observed = distribution_content_inventory(
+            name, distribution_reader=distribution_reader)
+        mismatches = {
+            key: {"expected": value, "actual": observed.get(key)}
+            for key, value in specification.items()
+            if observed.get(key) != value
+        }
+        if mismatches:
+            raise RuntimeError(
+                "distribution-content lock mismatch for "
+                f"{name}: {canonical_json(mismatches)}")
+        actual.append(observed)
+    return {
+        "algorithm": _DISTRIBUTION_INVENTORY_ALGORITHM,
+        "all_match": True,
+        "inventories": actual,
+    }
+
+
 def atomic_json(path: str | Path, value: object) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)

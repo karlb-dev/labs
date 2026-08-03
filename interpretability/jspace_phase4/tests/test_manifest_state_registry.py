@@ -1,8 +1,15 @@
 import json
+from pathlib import PurePosixPath
 
 import pytest
 
-from jspace_phase4.manifests import InputManifest, file_sha256, object_sha256
+from jspace_phase4.manifests import (
+    InputManifest,
+    distribution_content_inventory,
+    file_sha256,
+    object_sha256,
+    verify_distribution_content_inventories,
+)
 from jspace_phase4.state import StateHeader, StateStore
 
 
@@ -27,6 +34,45 @@ def test_input_manifest_is_canonical_and_complete():
     assert manifest.sha256() == manifest.envelope()["payload_sha256"]
     assert len(manifest.sha256()) == 64
     assert object_sha256(manifest.payload()) == manifest.sha256()
+
+
+def test_distribution_content_lock_hashes_files_and_refuses_drift(tmp_path):
+    dist_info = tmp_path / "demo-1.0.dist-info"
+    package = tmp_path / "demo"
+    cache = package / "__pycache__"
+    dist_info.mkdir()
+    package.mkdir()
+    cache.mkdir()
+    (dist_info / "METADATA").write_text("Name: demo\nVersion: 1.0\n")
+    (dist_info / "RECORD").write_text("frozen-record\n")
+    (package / "__init__.py").write_text("VALUE = 1\n")
+    (cache / "ignored.pyc").write_bytes(b"runtime cache")
+
+    class Distribution:
+        version = "1.0"
+        files = [
+            PurePosixPath("demo-1.0.dist-info/METADATA"),
+            PurePosixPath("demo-1.0.dist-info/RECORD"),
+            PurePosixPath("demo/__init__.py"),
+            PurePosixPath("demo/__pycache__/ignored.pyc"),
+        ]
+
+        @staticmethod
+        def locate_file(entry):
+            return tmp_path / entry
+
+    reader = lambda name: Distribution()  # noqa: E731
+    observed = distribution_content_inventory(
+        "demo", distribution_reader=reader)
+    assert observed["non_pyc_file_count"] == 3
+    assert observed["missing_file_count"] == 0
+    verified = verify_distribution_content_inventories(
+        [observed], distribution_reader=reader)
+    assert verified["all_match"]
+    drifted = {**observed, "non_pyc_bytes": observed["non_pyc_bytes"] + 1}
+    with pytest.raises(RuntimeError, match="distribution-content lock mismatch"):
+        verify_distribution_content_inventories(
+            [drifted], distribution_reader=reader)
 
 
 def test_state_roundtrip_and_manifest_mismatch_refusal(tmp_path):

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 import yaml
 
 
@@ -15,6 +16,20 @@ def _minimal() -> dict:
             "one_based_index": 323,
             "zero_based_index": 322,
             "retained_unconditionally": True,
+            "historical_reference_absolute_tolerance": 0.5,
+            "current_runtime_repeat_absolute_tolerance": 0.5,
+        },
+        "runtime_amendment": {
+            "contract_version": "current-runtime-shape-v1",
+            "phase_branch_decision_critical": False,
+            "historical_runtime_reproduction_claimed": False,
+            "primary_computation_ordinal": 1,
+            "repeat_computation_ordinal": 2,
+            "repeat_computation_role": "diagnostic-only-discarded",
+            "exact_distribution_content_inventories": [
+                {"distribution": name} for name in (
+                    "fla-core", "flash-linear-attention", "transformers",
+                    "triton", "torch")],
         },
         "lenses": {
             "a500": {"n_prompts": 500, "lens_sha256": digest},
@@ -42,8 +57,6 @@ def _minimal() -> dict:
 
 
 def test_paired_influence_contract_cannot_trim_or_change_fit_pair():
-    import pytest
-
     from jspace_phase4.experiments.p4_qwen_lens_influence_paired import (
         validate_paired_config,
     )
@@ -69,6 +82,33 @@ def test_tiny_direct_refit_assertion_is_runtime_reproducible():
     assert first == second
     assert first["pass"]
     assert first["maximum_absolute_error"] <= 1e-6
+
+
+def test_current_runtime_repeatability_uses_first_and_discards_second():
+    import torch
+
+    from jspace_phase4.experiments.p4_qwen_lens_influence_paired import (
+        contribution_repeatability,
+    )
+
+    primary = {0: torch.ones((2, 2)), 1: torch.eye(2)}
+    repeat = {0: torch.ones((2, 2)) + 0.01, 1: torch.eye(2)}
+    result = contribution_repeatability(
+        primary, repeat,
+        primary_seq_len=8, repeat_seq_len=8,
+        primary_n_valid=7, repeat_n_valid=7,
+        d_model=2, source_layers=[0, 1], absolute_tolerance=0.5)
+    assert result["pass"]
+    assert result["primary_computation_ordinal"] == 1
+    assert result["repeat_computation_role"] == "diagnostic-only-discarded"
+    assert result["primary_max_jacobian_norm_over_sqrt_d"] == pytest.approx(
+        2 ** 0.5)
+    failed = contribution_repeatability(
+        primary, repeat,
+        primary_seq_len=8, repeat_seq_len=9,
+        primary_n_valid=7, repeat_n_valid=7,
+        d_model=2, source_layers=[0, 1], absolute_tolerance=0.5)
+    assert not failed["pass"]
 
 
 def test_materiality_decision_has_the_frozen_three_way_wording():
