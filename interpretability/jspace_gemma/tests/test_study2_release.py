@@ -1,4 +1,5 @@
 import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -87,3 +88,36 @@ def test_rendered_bundle_and_registry_snapshot_are_exact():
     assert verification["ok"] is True
     assert verification["admitted_events"] == 8
     assert verification["release_artifacts"] == 13
+
+
+def test_terminal_study2_release_event_is_methods_only_and_partial_safe():
+    rows = [
+        json.loads(line)
+        for line in (ROOT / "reports/evidence_events.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
+    events = [
+        row
+        for row in rows
+        if row["event"] == "evidence_created"
+        and row["evidence_id"] == "gm2-sidelines2-import-bundle-v1"
+    ]
+    assert len(events) == 1
+    event = events[0]
+    assert event["code_commit"] == "d7bc87e47480513a88bfbf64c6ec683c79f5932f"
+    assert event["tier"] == "methods"
+    assert event["verdict"] == "complete-mandatory-partial-conditional"
+    assert event["mandatory_stages_complete"] is True
+    assert event["partial_bundle"] is True
+    assert event["interventions_opened"] is False
+    assert event["mechanism_claim_opened"] is False
+    assert event["workspace_claim_opened"] is False
+    assert event["confirmatory_cell_opened"] is False
+    assert event["selected_branch"] == "branch_1_relicense_without_recompute"
+    assert len(event["outputs"]) == 19
+    output_hashes = {row["sha256"] for row in event["outputs"]}
+    assert {
+        "9ef48b8ab1d99d52a756ddea1e285a9d61e781fd054cbf92702bfe81be56f5b0",
+        "547da552fee0057fa304b1dffe657eb269315007073b0a5c3cbb29c96577b315",
+        "2a144bcf0e7be0ac4307f7e2a2984c1879340b9a7e9278d10143d122a14fd30a",
+    } <= output_hashes
