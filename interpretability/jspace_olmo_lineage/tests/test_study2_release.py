@@ -7,6 +7,7 @@ from jspace_olmo_lineage.experiments.study2_release import (
     _flatten_admissions,
     registry_prefix_record,
     source_artifact_records,
+    verify_bundle_source,
     verify_registry_prefix,
 )
 
@@ -57,3 +58,18 @@ def test_release_admission_and_partial_contract_is_exact():
     assert config["result_summary"]["pair_power_at_frozen_sesoi"] == 0.7788
     assert config["partial_statuses"]["tier2_own_lens"].startswith("not-executed")
     assert config["partial_statuses"]["bank_w_intervention"] == "not-opened"
+
+
+def test_rendered_bundle_and_registry_snapshot_are_exact():
+    release = ROOT / "release"
+    expected = {
+        "IMPORT_BUNDLE_SIDELINES2.json": "c213dc74aa78dcd6613c8bd1562dd07d2e2a0345409ee6da585001693d8e6b1c",
+        "IMPORT_BUNDLE_SIDELINES2.md": "9e1d756c7b167e0cef356083e99f667182de3fa50cc5b81c9fd98a8845a1e989",
+        "evidence_events_prefix_sidelines2.jsonl": "0a8973e01d562a82fa88da650ab8597c140050f6caf46c8bbd72e2b58acffb58",
+    }
+    for name, digest in expected.items():
+        assert hashlib.sha256((release / name).read_bytes()).hexdigest() == digest
+    verification = verify_bundle_source(CONFIG)
+    assert verification["ok"] is True
+    assert verification["admitted_events"] == 12
+    assert verification["release_artifacts"] == 12
