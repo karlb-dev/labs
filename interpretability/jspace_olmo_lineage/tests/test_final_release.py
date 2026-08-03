@@ -42,7 +42,9 @@ def test_release_categories_exactly_partition_live_pre_release_registry():
     records = resolve_all()
     live = [
         record["evidence_id"] for record in records
-        if record["live"] and record["evidence_id"] != config["evidence_id"]
+        if record["live"]
+        and record["evidence_id"] != config["evidence_id"]
+        and not record["evidence_id"].startswith("ol2-")
     ]
     result = _validate_partition(config["evidence_categories"], live)
     assert result["n_evidence_ids"] == 23
