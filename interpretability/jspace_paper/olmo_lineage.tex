@@ -175,13 +175,19 @@ separates these possibilities better than a single workspace score can.
 
 \begin{takeawaybox}
 The strongest supported reading is \textbf{causal recruitment without measured
-capacity growth}. Across the measured post-trained OLMo checkpoints, sparse
-occupancy remains 2 and centered excess variance stays roughly 0.4--1.3\%.
-Yet Bank-S span-safe J-specific dependence is near zero at base, negative at
-both Think checkpoints, and near zero at the Instruct sibling. The same pattern
-survives a frozen base-model lens and a common-support fact cohort. Training is
-therefore associated with a change in how the model \emph{uses} J-readable
-content, not merely how much J-readable variance the assay can find.
+capacity growth}. Across all four checkpoints --- now including the base model
+under the parallel-phase symmetric estimator \eid{ol-capacity-joint-dev-v1}
+--- sparse occupancy is unchanged (base$\to$3.0 Think occupancy difference
+exactly 0) and centered excess variance moves by $+0.015$ percentage points
+\ci{-0.012}{+0.043}. Yet Bank-S span-safe J-specific dependence is near zero
+at base, negative at both Think checkpoints, and near zero at the Instruct
+sibling; and the same-corpus geometry audit finds the J-mapped token
+dictionary \emph{reorganizing} exactly where the causal change appears
+(base$\to$3.0 mapped-row cosine 0.67, selected-ID Jaccard 0.33, versus 1.0
+Jaccard for 3.0$\to$3.1) \eid{ol-geometry-joint-dev-v1}. The pattern survives
+a frozen base-model lens and a common-support fact cohort. Training is
+therefore associated with a change in how the model \emph{uses} --- and
+token-maps --- a channel of unchanged measured size.
 \end{takeawaybox}
 
 \begin{claimbox}
@@ -191,7 +197,7 @@ content, not merely how much J-readable variance the assay can find.
 \midrule
 Phase 3 confirmatory & Qwen has a span-safe, J-specific heavy tail beyond an exact matched control; the effect replicates on held-out families. & Already confirmed and replicated; interpretation remains bounded by prose/selectivity results.\\
 Phase 4 development & OLMo Bank-S causal dependence localizes to the observed Think path and reverses at the Instruct sibling under both own and frozen-base coordinates. & Untouched Phase 4 family split and a frozen primary; intermediate checkpoints or controlled continuation for training-stage attribution.\\
-Mechanistic inference & Post-training appears to change utilization/routing of a conserved thin channel more than its measured capacity. & Base capacity, common-corpus lens geometry, Bank W derivation/redundancy, and patching into downstream receivers.\\
+Mechanistic inference & Post-training appears to change utilization/routing of a conserved thin channel more than its measured capacity. & Base capacity: \emph{measured, conserved} \eid{ol-capacity-joint-dev-v1}. Same-corpus geometry: \emph{measured, dictionary-formation pattern} \eid{ol-geometry-joint-dev-v1}. Bank W: \emph{gated out at 16/20 families} \eid{ol-bank-w-capability-joint-dev-v1}. Still open: receiver patching (O5 pilot queued), official SFT/DPO stage wedge (H5 queued).\\
 Not licensed & ``Think training creates a global workspace,'' ``Instruct has no internal channel,'' or ``Gemma has no workspace.'' & These statements outrun the design or fail the transport-validity gate.\\
 \bottomrule
 \end{tabularx}
@@ -460,12 +466,21 @@ nats, depending on frame. The 3.0 Think checkpoint has the same occupancy and
 only slightly larger centered excess at these layers. Capacity and causal
 utilization are therefore empirically dissociated within this lineage.
 
-\begin{warningbox}
-The base capacity cell is missing. ``Capacity remains flat across
-post-training'' is supported for 3.0 Think, 3.1 Think, and 3.1 Instruct.
-``Capacity did not change from base'' is not yet measured and should not be
-written into the paper.
-\end{warningbox}
+\begin{resultbox}[title={Update: the base cell is now measured --- and conserved}]
+The parallel-phase O2 estimator closed this gap symmetrically: the same
+ordered 120-prompt corpus and 7{,}481 content positions at layers 24/32/40,
+run at Base, 3.0 Think, 3.1 Think, and the Instruct sibling, with three
+matched random dictionaries and 2{,}000 paired domain-stratified prompt
+bootstraps \eid{ol-capacity-joint-dev-v1}. The preregistered base$\to$3.0
+Think own-frame centered-excess difference is $+0.0154$ percentage points,
+paired 90\% interval \ci{-0.0121}{+0.0435} (in points), and the occupancy
+difference is \emph{exactly zero}; 46 of 48 classified rows are stable under
+the frozen $\pm0.25$-point margin (two Base-common L40 sensitivities sit
+unresolved at the equivalence edge). The registered verdict is
+\texttt{broadly\_conserved\_capacity\_recruitment\_consistent}. The licensed
+wording is bounded --- ``measured sparse capacity, this estimator, these
+margins'' --- never literal equality or global coordinate conservation.
+\end{resultbox}
 
 \subsection{The effect does not require checkpoint-specific coordinates}
 
@@ -513,6 +528,56 @@ The conjunction is informative: the broad verbalizable coordinate system
 transfers, the measured capacity barely changes, and yet causal use on Bank S
 separates sharply. That is the empirical shape expected under
 \textbf{recruitment or rerouting of a conserved representation}.
+
+\subsection{Direct same-corpus geometry: a dictionary-formation pattern}
+
+The parallel phase replaced frame-transfer inference with direct geometry:
+a lens-provenance audit first certified all six lens pairs as exact same
+recipe and corpus (\texttt{EXACT\_SAME\_RECIPE\_CORPUS}, so no refit artifact
+can explain a difference) \eid{ol-lens-provenance-audit-v1}, then the joint
+geometry producer compared all 21 source layers across all six checkpoint
+pairs, with exhaustive selected-span geometry at the 7{,}481 aligned
+positions of layers 24/32/40 \eid{ol-geometry-joint-dev-v1}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.93\textwidth]{olf01_operator_similarity_heatmap.png}
+\caption{Registered O3 figure 1: raw-operator similarity across checkpoint
+pairs and layers \eid{ol-geometry-figures-dev-v1}. The transport operators
+stay broadly similar everywhere (base$\to$3.0 median cosine 0.9614).}
+\label{fig:olf01}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.93\textwidth]{olf02_token_row_similarity.png}
+\caption{Registered O3 figure 2: J-\emph{mapped token-row} similarity. Unlike
+the raw operators, the mapped rows reorganize sharply at base$\to$3.0
+(median cosine 0.6744) and then freeze (3.0$\to$3.1 mapped movement 0.006
+versus 0.326 for base$\to$3.0) \eid{ol-geometry-figures-dev-v1}.}
+\label{fig:olf02}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.93\textwidth]{olf03_selected_span_trajectory.png}
+\caption{Registered O3 figure 3: what the assay actually selects. Base$\to$3.0
+selected-ID Jaccard is 0.3333 at layers 24/32/40 (projector overlap
+0.27/0.33/0.45); 3.0$\to$3.1 Jaccard is 1.0 at the same layers
+\eid{ol-geometry-figures-dev-v1}.}
+\label{fig:olf03}
+\end{figure}
+
+The frozen router classifies this as a \textbf{dictionary-formation pattern}:
+the operator persists, but which token directions it maps --- and which the
+assay therefore selects --- is rewritten in the base$\to$3.0 interval and
+essentially frozen afterwards. Two sibling facts complete the picture: the
+3.1 Think/Instruct mapped-row median is 0.9363 with
+\texttt{instruct\_late\_shift=false} \eid{ol-geometry-joint-dev-v1}, so the
+siblings share nearly the same dictionary while differing in causal use; and
+the reorganization is concentrated exactly where \cref{fig:emergence}
+puts the causal emergence. Geometry moves where utilization moves --- an
+association across released checkpoints, not a stage attribution.
 
 %======================================================================
 \section{Common-support closure: the same facts tell the same story}\label{sec:common-support}
@@ -569,6 +634,110 @@ that changing fact membership is not sufficient to explain the trajectory;
 it does not prove the training recipe caused it.
 
 %======================================================================
+\section{The isolated parallel-phase release (August 2026)}\label{sec:parallel}
+
+While mainline Phase 4 remained blocked on the Qwen lens ladder, an isolated
+OLMo side track (package \texttt{interpretability/jspace\_olmo\_lineage},
+evidence prefix \texttt{ol-}, own branch and Drive root, forbidden from
+writing any Phase 4/Gemma registry) ran the lineage-specific program to a
+hash-pinned release boundary \eid{ol-phase4-final-import-bundle-v1}. Its five
+objectives resolved as follows.
+
+\subsection{O1: the Bank-W service gate ran --- and failed honestly}
+The frozen baseline-capability protocol scored the derived/once Bank-W cell
+(24 families $\times$ 8 seeds $\times$ two loads, 384 rows per model, all
+eight answer candidates scored by summed conditional log probability):
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Model} & \textbf{Low acc.} & \textbf{High acc.} & \textbf{High$-$low} & \textbf{90\% CI} & \textbf{Capable families}\\
+\midrule
+OLMo-3.1 Think & 0.7135 & 0.7188 & $+0.0052$ & \ci{-0.031}{+0.042} & 17/24\\
+OLMo-3.1 Instruct & 0.7396 & 0.7188 & $-0.0208$ & \ci{-0.057}{+0.021} & 17/24\\
+Qwen 3.6 27B (imported) & 0.8333 & 0.8333 & $0$ & $\approx$\ci{-0.021}{+0.021} & 20/24\\
+\bottomrule
+\end{tabular}
+\caption{Bank-W capability service results
+\eid{ol-bank-w-capability-*-dev-v1}. Both OLMo endpoints pass individually,
+but the exact three-model intersection is 16 families against the prospective
+minimum of 20.}
+\label{tab:bankw-gate}
+\end{table}
+
+Consequently \texttt{olmo\_phase4\_service\_ready=false}: the O4 mechanism
+factorial --- the experiment this document's hypothesis boxes kept deferring
+to --- \textbf{never opened}. The four frozen accounts (external-state
+substitution, generic difficulty, capacity, output-adjacent routing) were
+neither selected nor rejected. Bank W version 1 is closed; any successor is a
+new prospective protocol, not a subset of the failed cohort.
+
+\subsection{O2/O3: capacity conserved, dictionary reorganized}
+Covered in \cref{sec:change}: the symmetric four-checkpoint capacity table
+(occupancy difference exactly zero; verdict
+\texttt{broadly\_conserved\_capacity\_recruitment\_consistent}) and the
+same-corpus geometry audit (router \texttt{dictionary-formation-pattern}).
+The registered state-space figure places every checkpoint on both axes at
+once:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{olf04_capacity_causal_state_space.png}
+\caption{Registered O3 figure 4: measured capacity versus known Bank-S causal
+dependence, with the 16/20 Bank-W service block annotated
+\eid{ol-geometry-figures-dev-v1}. The lineage moves almost entirely along the
+causal axis.}
+\label{fig:olf04}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{olf05_readout_transport_decomposition.png}
+\caption{Registered O3 figure 5: readout/transport movement decomposition
+across the lineage \eid{ol-geometry-figures-dev-v1}.}
+\label{fig:olf05}
+\end{figure}
+
+\subsection{Inventory, O5, and the reconstruction floor}
+Three further dispositions matter for what comes next:
+
+\begin{itemize}
+  \item \textbf{Official intermediates exist} \eid{ol-checkpoint-inventory-v2}:
+  a semantic tokenizer audit (superseding v1's byte-identity conservatism)
+  finds the official 32B Think-SFT and Think-DPO artifacts eligible ---
+  verdict \texttt{genuine-32b-intermediates-available}, H5
+  \texttt{testable-with-bounded-stage-wedge}, queued. The ``wide interval''
+  complaint in \cref{sec:next} now has a concrete two-cell wedge design.
+  \item \textbf{O5 is not identifiable yet} \eid{ol-o5-feasibility-decision-v1}:
+  the registry lacks crossed activation$\times$transport$\times$readout cells
+  with the required transport, protected-span, rank/energy, and logit-lens
+  controls, so the crossed causal decomposition returns
+  \texttt{defer-no-identifiable-crossed-intervention-estimand} --- explicitly
+  \emph{not} a null estimate. The bounded entry is a Bank-S-first
+  Base/3.1-Think/3.1-Instruct pilot.
+  \item \textbf{Everything reconstructs} \eid{ol-independent-reconstruction-v1}:
+  768 O1 rows, all O2/O3 aggregates and bootstraps, five byte-identical PNGs,
+  and one frozen model row replayed from the exact weight shards with maximum
+  drift 0.
+\end{itemize}
+
+\begin{warningbox}
+The release ledger narrows two paper-facing sentences, and these notes adopt
+the narrowed forms verbatim. \textbf{Sentence 2} (training dependence):
+``Across the tested, architecture-matched OLMo lineage, the first released
+Think transition is associated with substantial reorganization of J-mapped
+token and selected-span geometry without a material increase in measured
+sparse capacity; the design does not identify which training ingredient
+caused that change.'' \textbf{Sentence 4} (externalization): ``Existing
+Bank-S development evidence motivates an external-state-substitution
+hypothesis on the tested Think checkpoints, but the planned fact-paired
+Bank-W factorial was gated out at 16/20 common families; this release does
+not resolve an externalization mechanism.'' The original stronger candidates
+must not be silently retained.
+\end{warningbox}
+
+%======================================================================
 \section{What does ``J-space formation'' mean here?}\label{sec:formation}
 
 A useful way to interpret the lineage is to separate three objects:
@@ -588,15 +757,17 @@ for a task after dose is matched.
 \toprule
 \textbf{Formation hypothesis} & \textbf{Expected signature} & \textbf{Observed OLMo evidence} & \textbf{Current verdict}\\
 \midrule
-Larger workspace forms & occupancy or centered excess rises on Think & Occupancy 2 and nearly overlapping post-training capacity curves; base unmeasured & not supported on measured post-training checkpoints\\
-New coordinate system forms & effect appears only under own Think lens; donor/common frame fails & Bank-S effect survives frozen base lens; broad donor shortlist transfers & not necessary for the aggregate effect\\
-Existing channel is recruited & capacity and broad coordinates stable while $\SJ$ changes & J arm moves, matched control stays near zero; common-support and common-frame trajectory survive & best-supported development account\\
+Larger workspace forms & occupancy or centered excess rises on Think & Occupancy difference exactly 0 including base; centered excess moves $+0.015$pp \ci{-0.012}{+0.043} \eid{ol-capacity-joint-dev-v1} & not supported on any measured checkpoint pair\\
+New coordinate system forms & effect appears only under own Think lens; donor/common frame fails & The mapped token dictionary \emph{does} reorganize at base$\to$3.0 (row cosine 0.67, Jaccard 0.33) then freezes \eid{ol-geometry-joint-dev-v1} --- yet the aggregate effect survives the frozen base lens & real as reorganization; not necessary for detecting the effect\\
+Existing channel is recruited & capacity and broad coordinates stable while $\SJ$ changes & J arm moves, matched control stays near zero; common-support, common-frame, conserved capacity, and dictionary-formation geometry all cohere & best-supported development account\\
 Behavioral strategy changes only & capability/output formatting changes but causal channel does not & capability changes, but exact matched intervention dependence also changes & insufficient as a complete account\\
 \bottomrule
 \end{tabularx}
 \caption{Different meanings of ``workspace formation.'' The current evidence
-is most consistent with causal recruitment or rerouting, but the missing base
-capacity and intermediate checkpoints keep stronger wording out of reach.}
+is most consistent with causal recruitment or rerouting of a channel whose
+measured size is conserved but whose token dictionary reorganizes; the queued
+official SFT/DPO wedge (H5) is what could turn the wide base$\to$3.0 interval
+into a stage attribution.}
 \label{tab:formation}
 \end{table}
 
@@ -830,25 +1001,32 @@ cross-context transport gate before it enters a shared J-space matrix.
 
 \begin{enumerate}
   \item \textbf{Run the Bank W capability and intervention gates on the OLMo
-  pair first.} The 72-family factorial is authored, audited, and powered with
-  a joint max-$T$ primary at a 20-family minimum; capability and joint support
-  remain pending \eid{p4-bank-w-candidate-v2,p4-bank-w-power-dev-v1}.
-  This is the cleanest adjudication of load, derivation, and redundancy, and
-  the most direct test of the Think external-state-substitution account.
+  pair first.} \emph{Resolved as gated out (\cref{sec:parallel}):} both OLMo
+  endpoints pass individually, but the three-model intersection lands at
+  16/24 families against the prospective 20 minimum, so the intervention
+  factorial never opened \eid{ol-bank-w-capability-joint-dev-v1}. The
+  externalization account stays unadjudicated; a successor bank needs a new
+  prospective service protocol.
 
-  \item \textbf{Measure base capacity with the identical R2 estimator.}
-  Without it, the experiment distinguishes post-trained utilization but cannot
-  say whether the base$\to$Think interval also changes readable capacity.
+  \item \textbf{Measure base capacity with the identical estimator.}
+  \emph{Done:} the symmetric O2 run includes base and returns
+  \texttt{broadly\_conserved\_capacity\_recruitment\_consistent} ---
+  occupancy difference exactly 0, centered excess $+0.015$pp
+  \ci{-0.012}{+0.043} \eid{ol-capacity-joint-dev-v1}.
 
-  \item \textbf{Build a same-corpus lens-geometry trajectory.} Fit base,
-  3.0 Think, 3.1 Think, and 3.1 Instruct on one nested corpus and report
-  matrix/row cosines, principal angles, selected-ID Jaccard, protected-span
-  overlap, and functional stability. Common-frame behavior is not a substitute
-  for direct geometry.
+  \item \textbf{Build a same-corpus lens-geometry trajectory.} \emph{Done:}
+  the provenance audit certified all six lenses same-recipe/same-corpus and
+  the joint geometry run returned the dictionary-formation pattern
+  (\cref{sec:parallel}; base$\to$3.0 mapped-row cosine 0.67 and selected-ID
+  Jaccard 0.33 versus 1.0 for 3.0$\to$3.1)
+  \eid{ol-lens-provenance-audit-v1,ol-geometry-joint-dev-v1}. Finite-dose
+  per-checkpoint transport (H6) remains the missing validity leg.
 
   \item \textbf{Acquire intermediate post-training checkpoints or run a
-  controlled continuation.} The current graph localizes the effect to a wide
-  interval but cannot identify the responsible stage.
+  controlled continuation.} \emph{Upgraded to a concrete queue:} the official
+  32B Think-SFT and Think-DPO artifacts are inventoried, semantically
+  tokenizer-compatible, and eligible for a bounded two-cell stage wedge (H5,
+  queued-not-started) \eid{ol-checkpoint-inventory-v2}.
 
   \item \textbf{Localize downstream receivers.} On the strongest Bank-S
   families, patch clean Think activations into ablated Think and into Instruct,
@@ -882,13 +1060,22 @@ cross-context transport gate before it enters a shared J-space matrix.
   and tag.
 \end{itemize}
 
-\subsection{Gemma remains a later methods leg}
+\subsection{Gemma: the autopsy ran and terminated at a methods blocker}
 
-The next Gemma block should be an autopsy, not a model-matrix cell: exact
-fp32 JVP versus secant over a faithful $\epsilon$ ladder, intercept-plus-slope
-error fit, layerwise and attention/MLP localization, frozen attention-route
-controls, and local normalization/gate linearization. Only a passed transport
-band should receive a J-space causal assay.
+The Gemma block did run as exactly the autopsy prescribed here (isolated
+\texttt{jspace\_gemma} track, evidence prefix \texttt{gm-}). The exact-JVP
+instrument passed goldens; the OLMo positive control passed all 14 frozen
+criteria; Gemma Stage 1 then reported \texttt{local\_tangent\_mismatch} at
+all five tested layers (L22--L52) --- but the run terminated at a failed
+precommitted cross-backend parity gate (full-batch relative error 0.002458
+against a $10^{-5}$ ceiling), so mechanism, curvature, heterogeneity,
+late-band, and workspace interpretation are all unlicensed
+\eid{gm-jvp-gemma-stage1-v1,gm-jvp-gemma-backend-parity-v1}. Stages G2--G8
+were cancelled by the hard stop. The licensed sentence is methods-only; the
+full story, figure, and claim ledger now live in the Gemma handout's
+``The autopsy ran'' section. For this document the consequence is unchanged
+but sharper: Gemma stays off the lineage's scientific axis until a repaired
+backend-parity gate passes under a new evidence id.
 
 %======================================================================
 \section{Paper-facing conclusions and prohibited shortcuts}\label{sec:claims}
@@ -899,13 +1086,17 @@ dependence on in-context Bank-S state is absent at the base model, appears by
 the first observed Think checkpoint, persists at OLMo-3.1 Think, and is absent
 at the OLMo-3.1 Instruct sibling. The pattern survives a frozen base-model
 lens and exact common-support fact pairing, while measured J-space capacity is
-nearly unchanged across the three post-trained checkpoints. These results
-support a training-moderated causal-utilization account: post-training changes
-how a thin verbalizable channel is recruited or routed, rather than simply
-enlarging the measured channel. Because the checkpoints do not isolate the
-post-training stage and all results use known development banks, the evidence
-does not identify the Think objective as causal or establish workspace
-formation.
+conserved across all four checkpoints (occupancy difference exactly zero,
+centered excess within $\pm0.25$-point equivalence margins) and the J-mapped
+token dictionary reorganizes sharply in the same base$\to$Think interval
+before freezing. These results support a training-moderated
+causal-utilization account: post-training changes how --- and through which
+token directions --- a thin verbalizable channel is recruited or routed,
+rather than enlarging the measured channel. Because the checkpoints do not
+isolate the post-training stage and all results use known development banks,
+the evidence does not identify the Think objective as causal or establish
+workspace formation; the planned Bank-W externalization factorial was gated
+out at 16/20 common families and remains unresolved.
 \end{claimbox}
 
 \begin{table}[H]
@@ -916,7 +1107,8 @@ formation.
 \midrule
 The OLMo Bank-S dependence localizes to the observed Think path under the development assay. & Think training creates a global workspace.\\
 The result survives two coordinate frames and common-support facts. & The J dictionaries are identical across checkpoints.\\
-Measured post-training capacity is nearly flat while causal utilization moves. & Capacity did not change from base.\\
+Measured capacity is conserved across all four checkpoints under the frozen estimator and margins, while causal utilization moves. & ``Capacity is unchanged'' stated without ``measured,'' the estimator, and its equivalence margin.\\
+The mapped token dictionary reorganizes at base$\to$Think and then freezes; the siblings share a dictionary while differing in causal use. & The dictionaries are identical, or transport is valid, from structural geometry alone.\\
 Instruct does not show the Think Bank-S organization on this population. & Instruct has no internal verbalizable channel.\\
 Qwen and Gemma triangulate model-dependent organization and method validity. & Architecture alone explains Qwen, OLMo, or Gemma.\\
 \bottomrule
@@ -944,9 +1136,19 @@ Common-support closure & \path{p4-lineage-common-cohort-analysis-olmo-dev-v1}\\
 Capacity and transfer & \path{r2-occupancy-*-v2}; \path{a0-transfer-gate-olmo31instruct-v1}\\
 Phase 3 cross-model context & \path{p3-inference-audit-v1}; \path{p3-span-audit-cross-model-v1}; \path{p3-bridge-mediation-*}\\
 Current methods blockers & \path{p4-qwen-multilens-functional-gate-*}; \path{p4-bank-w-power-dev-v1}; \path{p4-bank-b-design-feasibility-dev-v1}; \path{p4-qwen-mode-gate-dev-v1}\\
+Parallel-phase release (\cref{sec:parallel}) & \path{ol-bank-w-capability-*-dev-v1}; \path{ol-capacity-joint-dev-v1}; \path{ol-lens-provenance-audit-v1}; \path{ol-geometry-joint-dev-v1}; \path{ol-geometry-figures-dev-v1}; \path{ol-checkpoint-inventory-v2}; \path{ol-o5-feasibility-decision-v1}; \path{ol-independent-reconstruction-v1}; \path{ol-phase4-final-import-bundle-v1}\\
+Gemma transport track & \path{gm-jvp-goldens-v1}; \path{gm-jvp-olmo-positive-control-v1}; \path{gm-jvp-gemma-stage1-v1}; \path{gm-jvp-gemma-backend-parity-v1}\\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+The five \texttt{olf01--olf05} figures are registered outputs of
+\path{ol-geometry-figures-dev-v1}, copied verbatim from the parallel-phase
+run mirror (\path{interpretability/jspace_runs/olmo_lineage_20260801/}); the
+package registry is
+\path{interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl},
+and the release ledger is
+\path{reports/OLMO_LINEAGE_CLAIMS_TABLE.md} in the same package.
 
 \subsection{Regenerating the new synthesis figure}
 

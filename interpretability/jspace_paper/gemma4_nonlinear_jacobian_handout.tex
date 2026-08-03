@@ -83,6 +83,7 @@
 \newcommand{\cO}{\mathcal{O}}
 \newcommand{\eps}{\varepsilon}
 \newcommand{\given}{\,\middle|\,}
+\newcommand{\eid}[1]{{\footnotesize\texttt{[#1]}}}
 
 \newtheorem{proposition}{Proposition}
 \newtheorem{lemma}{Lemma}
@@ -135,7 +136,7 @@
 }
 \lstset{style=code}
 
-\graphicspath{{./}{/mnt/data/}}
+\graphicspath{{./}{figures/}{/mnt/data/}}
 
 \begin{document}
 \pagenumbering{gobble}
@@ -215,6 +216,11 @@ The strongest current interpretation is a combination of two possible failures:
   \item \textbf{between-context heterogeneity}: prompt-specific tangents may be valid locally but do not average to a useful fixed map.
 \end{enumerate}
 The gold-standard closing experiment is an exact autograd Jacobian-vector product (JVP) compared with finite differences over a carefully delivered $\eps$ ladder in fp32.
+\emph{Update (2026-08-02): that experiment has now run in the isolated
+\texttt{jspace\_gemma} track and terminated at its own precommitted
+cross-backend consistency gate --- see \cref{sec:autopsy-ran}. The track's
+terminal classification is a \textbf{methods blocker}, not a mechanism
+result.}
 \end{statusbox}
 
 \subsection{What the result does not establish}
@@ -773,14 +779,119 @@ Gemma worsens as $\eps$ grows & Consistent with curvature, opposite the usual pr
 Within-prompt superposition fails & Evidence that a perfect corpus average would not fully rescue finite-dose interventions\\
 Disjoint-corpus Jacobians disagree & Evidence for context-dependent tangent planes and mean-map cancellation\\
 Abrupt rank transition at L42--44 & Localizes a late basis conversion, but does not alone prove curvature\\
-Exact autograd JVP still pending & The decisive check against finite-difference or hook-path mismatch\\
+Exact autograd JVP: ran, then hard-stopped (\cref{sec:autopsy-ran}) & Stage 1 reports \texttt{local\_tangent\_mismatch} at all five layers, but a failed backend-parity gate quarantines the result as diagnostic-only\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \begin{resultbox}
-A careful present-tense statement is: \emph{Gemma 4 31B appears to violate the fixed, finite-dose linear-transport premise of the middle-band J-lens under the tested setup.} The result is already much more likely to be real than a harness artifact, but the exact JVP ladder is the experiment that should elevate it from a strong pilot to a closed methodological result.
+A careful present-tense statement is: \emph{Gemma 4 31B appears to violate the fixed, finite-dose linear-transport premise of the middle-band J-lens under the tested setup.} The result is already much more likely to be real than a harness artifact, but the exact JVP ladder is the experiment that should elevate it from a strong pilot to a closed methodological result. \emph{As of 2026-08-02 that ladder has run and did not close the question --- it stopped at a failed cross-backend parity gate (\cref{sec:autopsy-ran}), so the licensed classification is a methods blocker.}
 \end{resultbox}
+
+\section{The autopsy ran: an exact-JVP gate that stopped itself}\label{sec:autopsy-ran}
+
+The closing experiment proposed above executed in August 2026 as an isolated
+side track (package \texttt{interpretability/jspace\_gemma}, evidence prefix
+\texttt{gm-}, branch merged back after release). Its design followed this
+handout's preflight logic exactly: golden-test the instrument, freeze pass
+thresholds on a positive control \emph{before} looking at the target, then run
+the target once. What happened next is the best available case study in why
+those gates exist.
+
+\subsection{The evidence chain}
+\begin{enumerate}
+  \item \textbf{Goldens} \eid{gm-jvp-goldens-v1}: both PyTorch exact-JVP
+  implementations pass analytic and nonlinear tiny-transformer derivative
+  checks; finite differences remain labeled secants.
+  \item \textbf{OLMo calibration} \eid{gm-jvp-olmo-calibration-v1}: 56 cells /
+  1,568 rows on OLMo-3-32B-Think establish the expected shallow-to-late
+  faithfulness gradient.
+  \item \textbf{Frozen gates} \eid{gm-jvp-olmo-positive-control-v1}: all 14
+  target-readiness criteria pass; thresholds (delivery cosine $\ge 0.999$,
+  relative-norm error $\le 0.01$, central-tangent relative error $\le 0.1$ at
+  declared $\eps = 0.1$, JVP-primal parity $\le 10^{-5}$) are frozen before
+  any Gemma number is seen, with recalibration-after-target explicitly
+  forbidden.
+  \item \textbf{Gemma Stage 1} \eid{gm-jvp-gemma-stage1-v1}: 40 cells / 1,120
+  rows at L22/L30/L37/L44/L52, four prompts, four non-lens directions, seven
+  relative epsilons 0.0025--0.20.
+  \item \textbf{Backend parity} \eid{gm-jvp-gemma-backend-parity-v1}: the
+  terminal, failed gate.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.98\textwidth]{gmT1_tangent_ladder.png}
+\caption{Median central-tangent relative error versus perturbation scale,
+delivery- and SNR-clean rows only, from the registered Stage-1 and calibration
+row tables. OLMo's error \emph{falls} with depth and sits at or below the
+frozen 0.1 ceiling late; Gemma's error is an order of magnitude above the
+ceiling at every tested layer and \emph{grows} with $\eps$ --- the Taylor-remainder
+signature --- including at L44/L52, inside the band where the output basis
+becomes readable. Rows below $\eps \approx 0.05$ (OLMo) / $0.01$ (Gemma) fail
+the delivery gate and are correctly absent rather than plotted.
+Regenerate: \texttt{scripts/gemma\_transport\_plots.py}.}
+\label{fig:gmT1}
+\end{figure}
+
+\subsection{Stage 1: operational mismatch at every layer}
+Of 1,120 rows, 538 pass delivery, 508 clear measurement SNR 12, and 477 clear
+decision SNR 20. All 20 full-forward/suffix checks and all exact-JVP primal
+comparisons are bit-exact; the wrong-hook sentinel fires correctly (relative
+error 0.3355 against a 0.10 floor). At the declared $\eps = 0.1$ dose, 12/16
+primary rows per layer are evaluable and \emph{none pass}; smallest-evaluable
+pass counts are 0/12, 0/13, 0/12, 0/13, 1/14 from L22 to L52. The frozen
+classifier returns \texttt{local\_tangent\_mismatch} at every layer ---
+notably including L44 and L52, which \cref{fig:gemma_rank} might have
+suggested were safely inside a late linear-readout regime.
+
+\subsection{The terminal gate: two exact backends, one failed ceiling}
+The parity diagnostic replays one registered mismatch row
+(\texttt{gm-p001-L52}, Rademacher direction, $\eps=0.05$) under both
+\texttt{torch.func.jvp} and \texttt{torch.autograd.functional.jvp}. At the
+selected slot the two backends are \emph{bit-identical} and every stored
+transport metric replays at zero error --- the mismatch itself is real and
+reproducible. But across all eight slots of the original batch, backend
+tangent relative error is $0.002458$ against the precommitted $10^{-5}$
+ceiling (cosine 0.99999958; maximum absolute difference 0.0390625, a
+bf16-scale quantum). One criterion fails; under the plan's hard-stop rule the
+track terminates.
+
+\begin{warningbox}
+The gate was \emph{not} weakened after seeing the target, and the one
+agreeing slot was \emph{not} selected to continue. The licensed sentence is
+methods-only: \emph{``On Gemma 4 31B, an exact-JVP transport audit stopped at
+a precommitted cross-backend consistency gate: the selected replay agreed
+exactly, but the full matched batch exceeded the relative-error tolerance, so
+downstream mechanism and workspace interpretation were not licensed.''}
+Everything in \cref{fig:gmT1}'s right panel is therefore
+\textbf{diagnostic, not mechanism evidence}.
+\end{warningbox}
+
+\subsection{What this changes in the claim ledger}
+Licensed now (claim ids GM-C01--C05): the instrument passes goldens; the OLMo
+control passes the frozen gate in this runtime; Gemma Stage 1
+\emph{operationally} reports mismatch under its forward-mode path; the
+full-batch cross-backend requirement fails; all downstream stages stop.
+Still blocked (GM-C06--C10): nondifferentiability; attribution of the
+mismatch to curvature, routing, normalization, gating, or heterogeneity
+(the G2--G5 discriminators never ran); absence of information or a
+workspace; any verdict on the late L44--L52 band; any upgrade to a Phase 4
+conclusion. Stages G2--G8 --- localization, routing interventions, norm/MLP
+factorials, the context atlas, the late-band assay, and nonlinear recovery
+--- were cancelled by the hard stop, deliberately and on the record.
+
+\begin{takeawaybox}
+Two lessons, one per panel of \cref{fig:gmT1}. Scientifically: on delivery-clean
+rows Gemma's tangent error grows with dose at every depth --- the strongest
+(still unlicensed) evidence yet that the failure is real geometry, not
+numerics. Methodologically: a $2.5\times10^{-3}$ backend disagreement ---
+three orders of magnitude above the frozen ceiling, one bf16 quantum in
+absolute terms --- was enough to stop the whole program, because the
+alternative is a mechanism literature built on instruments whose two exact
+implementations do not agree with each other. Any repair needs a new evidence
+id, a prospectively frozen criterion, and must preserve this failed artifact.
+\end{takeawaybox}
 
 \section{Why this is surprising}
 
@@ -1083,7 +1194,7 @@ One should not assume global linearity. The defensible assumption is local and e
 Only infinitesimal differentiability is needed to compute a gradient. Practical optimization benefits from a locally predictive gradient in parameter space, but recomputes after every update. The J-lens demands a finite activation-space approximation that remains useful across prompts. That is a much stronger requirement.
 
 \subsection{Are we sure the Gemma result is real?}
-The evidence is strong but not final. The corrected scale trend, faithful input delivery, OLMo positive control, superposition failure, and cross-corpus instability jointly make a real geometry difference plausible. Exact autograd JVP versus finite differences is the remaining decisive validation.
+The evidence is strong but not final. The corrected scale trend, faithful input delivery, OLMo positive control, superposition failure, and cross-corpus instability jointly make a real geometry difference plausible. The exact-JVP validation has now run (\cref{sec:autopsy-ran}): it \emph{operationally} reproduces the mismatch at every tested layer with the OLMo control passing under identical frozen gates --- and then quarantines itself behind a failed cross-backend parity ceiling. So the honest answer is unchanged in direction and sharpened in form: very probably real, still not licensed as a closed mechanism result, and now blocked on backend consistency rather than on missing evidence.
 
 \subsection{Can we infer the cause without training scripts?}
 Yes, at the mechanism level. Layerwise hooks, sublayer decomposition, frozen routing, norm linearization, JVPs, and context clustering can identify whether the culprit is attention routing, normalization, MLP gating, a late basis conversion, or mean-map cancellation. Training logs would be needed to explain why optimization selected this regime, not to localize the current forward-pass mechanism.
