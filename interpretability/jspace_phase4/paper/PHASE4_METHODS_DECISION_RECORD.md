@@ -2,99 +2,87 @@
 
 **DEVELOPMENT CANDIDATE — NOT A FREEZE RECORD**
 
-Decision state: candidate 0.11; execution state updated 2026-08-03. This
-record translates the Phase-4.4 branch rules into the current methods
-conclusions without opening an untouched intervention outcome.
+Decision state: candidate 0.12, Phase-4.4 terminal update, 2026-08-03. No
+confirmatory or replication intervention outcome was opened.
 
 ## M1. Operator convergence is not instrument invariance
 
-The registered A250-to-A500 comparison separates three objects. The averaged
-operator and task-token directions converge strongly, literal sparse rows and
-their selected projector do not meet their frozen stability floors, and one
-load-bearing bridge-rescue endpoint remains decision-sensitive. The registered
-A500-to-A1000 successor now reproduces all three failures despite structural
-q50/q05 of 0.998702/0.998122: ID Jaccard is 0.538462, projector overlap is
-0.709818, and bridge rescue differs by -0.294028 nat. Its all-position margin
-audit finds 15,536 near-tie and 1,845 stable-core positions, with no
-rank-deficient stratum; the stable-core ID Jaccard remains only 0.666667.
-Therefore matrix similarity alone cannot validate a sparse causal instrument,
-and tied boundary rows are not a complete explanation. This is a registered
-Phase 4 development conclusion.
+The registered A500--A1000 successor has structural task q50/q05
+0.998702/0.998122, yet selected-ID Jaccard 0.538462, normalized projector
+overlap 0.709818, and bridge-rescue difference -0.294028 nat fail their
+frozen gates. The all-position audit retains 15,536 near-tie and 1,845
+stable-core positions, with no rank-deficient stratum; stable-core ID Jaccard
+is only 0.666667. Structural convergence therefore does not validate a single
+sparse causal instrument, and exact score ties do not fully explain the
+instability.
 
-## M2. A1000 is the last automatic fit-size escalation
+## M2. A1000 is the terminal automatic fit size
 
-A1000 continues the exact cumulative draw-A estimator; it is not a fresh fit.
-The structural, functional, selection-margin, retained-prompt, and canonical
-decision contracts were fixed before its result. Q-L1 and Q-L2 can nominate
-A1000. Q-L3, Q-L4, and Q-L5 block a new single sparse Qwen instrument and
-route to reviewed consensus/cross-fit methods, a comparability instrument, or
-removal of the affected primary. No automatic A2000 branch exists.
+A1000 is the exact cumulative draw-A estimator, not a fresh fit, and passes
+its tensor-integrity and structural gates. After a prospectively written
+current-runtime amendment, the retained prompt-323 audit passed its unchanged
+within-runtime repeatability gate. Its influence is negligible under every
+frozen A500/A1000 materiality criterion and is effectively absent through
+assay layers 20--44. Because the historical runtime lacked distribution-
+content and compiled-kernel identities, this result licenses only a
+current-runtime sensitivity-shape statement.
 
-The fit is now registered at exactly 1,000 prompts and passes its full tensor
-integrity audit. Its first successor also passes: the A500--A1000 conservative
-assay-band task q50/q05 are 0.998702/0.998122. This licenses the frozen
-functional stage but does not itself choose Q-L1--Q-L5 or establish sparse or
-causal invariance. The functional and margin stages are now registered and
-emit provisional Q-L4. The required prompt-323 influence stage has no event:
-it hard-stops because repeated current-runtime Jacobians violate the frozen
-fit-log norm control, and the registered prompt-112 control independently
-shows the same backward-semantics break. Q-L4 therefore remains noncanonical;
-direct registration, tolerance widening, and automatic A2000 escalation are
-all forbidden.
+The registered mechanical decision is **Q-L4**. No canonical sparse Qwen lens
+is nominated. There is no automatic A2000 branch and no post-outcome
+retained-extremes producer was authored.
 
-## M3. Bank B is estimation-only in Phase 4
+## M3. Bank B remains estimation-only
 
-The verified 40-family bank cannot power the original 0.25-nat two-component
-intersection-union target; even an optimistic one-component Gaussian ruler
-cannot repair it by repartition. Candidate 0.11 therefore removes P4-P1 from
-the primary family and keeps both untouched partitions sealed. The accepted
-addendum still requires one consumed-development answer-direction-orthogonal
-feasibility shot. That shot is a future-instrument diagnostic and cannot
-restore the current Phase 4 primary.
+The verified 40-family Bank B cannot power the original 0.25-nat
+intersection-union target. P4-P1 remains outside the primary family with both
+untouched partitions sealed. The otherwise required consumed-development
+answer-direction-orthogonal shot is not applicable under Q-L4 because no
+Q-L1/Q-L2 instrument exists. It was not run and cannot restore a Phase 4
+primary.
 
-## M4. P4-P2 remains conditional and mean-blind
+## M4. P4-P2 is removed at Q-L4
 
-The official Qwen mode-v2 parser/correctness baseline passes. Before any
-intervention outcome, Phase 4 fixed the consumed 20-family eight-cell pilot,
-the exact-profile producer, its independent-review contract, a 0.20
-accuracy-point SESOI, and an exact/Monte-Carlo family-sign-flip power ruler.
-The signed pilot mean is centered away and forbidden as a design input. A
-canonical Q-L1/Q-L2 lens, real independent producer review, the pilot, exact
-power, a reviewed untouched bank/split, and PI approval are still required.
-If infeasible, P4-P2 is removed rather than rescued by a larger SESOI.
+The mode-v2 baseline and prospective producer/power machinery remain useful
+methods artifacts, but the frozen route requires Q-L1/Q-L2 plus real
+independent producer review. Q-L4 mechanically blocks P4-P2 for
+decision-sensitive causal endpoints. No pilot, power execution, untouched
+bank review, or intervention outcome was opened. The 0.20-point SESOI remains
+unchanged and unused.
 
 ## M5. P4-P3 is capability-blocked
 
-All three frozen models pass their independent Bank-W baseline gates, but the
-exact common capable-family intersection is 16 against the prospective floor
-of 20. The candidate-v3 28-family confirmatory side solves the separate Holm
-power issue but cannot repair common support by dropping a passing model.
-P4-P3 is blocked and no Bank-W intervention is authorized. Mainline import and
-fresh replay remain provenance obligations, not opportunities to alter 16/20.
+After strict OLMo import and a fresh mainline replay, all three models pass
+independently but their exact common capable-family intersection is 16 against
+the prospective floor of 20. P4-P3 remains blocked. Bank W's load intervention
+is not lawfully runnable as a cross-model Phase 4 primary at current capability
+support; it routes to Phase 5B as per-model estimation.
 
-## M6. Durability is a scientific release gate
+## M6. Side releases retain their source tiers
 
-The live registry currently accounts for 218/220 outputs with no wrong hash.
-Exact A120 capacity recovery is permitted only if rebuilt bytes equal the old
-registered hash. The historical state file contains irrecoverable operational
-fields and cannot be fabricated; exact backup recovery or an externally
-approved append-only archival supersession is required. Two clean independent
-materialization passes remain necessary for release.
+Gemma enters only as a side-development-import methods blocker. Selected-slot
+backend tangents are bit-identical, but its frozen all-slot relative-error
+criterion fails at 0.002458 versus 1e-5; it licenses no mechanism or
+intervention claim. The OLMo terminal import is also methods/development only:
+O2 is consistent with broadly conserved capacity recruitment, O3 records a
+dictionary-formation pattern, O1 remains blocked at 16/20, and O5 has no
+identifiable estimand. These imports do not upgrade a Phase 4 primary.
 
-## M7. Parallel findings enter only through releases
+## M7. Durability is a release gate
 
-OLMo and Gemma own separate branches, namespaces, Drive roots, and registries.
-Phase 4 merges only complete releases with ancestry preserved, normalizes them
-to the strict import envelope, rehashes every selected output, and registers a
-single `p4-import-*` event per admitted bundle. Until that happens, side-track
-numbers cannot change a mainline conclusion, review field, or execution gate.
+Exact A120 capacity bytes were recovered at the registered hash. The
+historical A120--A250 operational state remains a permanent known deficit,
+recorded by an append-only methods event whose decision role is superseded by
+later live gates. Two same-mounted audits agree on 418/419 verified live
+references, one known deficit, zero unexpected deficits, and zero pin
+conflicts. They are not a fresh independent rematerialization. External
+review/PI signatures and a fresh-remount release proof remain open.
 
 ## Current terminal statement
 
-Phase 4 is development-only and not frozen. P4-P1 is estimation-only, P4-P3
-is blocked, and P4-P2 is the sole conditional candidate primary. A1000 and its
-structural, functional, and margin successors are complete. The prompt-323
-runtime-identity block prevents the required influence and canonical events,
-so side admission and all branch-dependent work remain closed. Independent
-review must resolve the runtime contract before Phase 4 can reach either a
-reviewable no-primary methods boundary or a one-primary freeze candidate.
+Phase 4 reaches Terminal C as a development/methods instrument study with no
+confirmatory primary. P4-P1 is estimation-only, P4-P2 is removed by canonical
+Q-L4, and P4-P3 is blocked at 16/20. The Holm family therefore contains zero
+opened tests. The paper route is the frozen no-primary methods/development
+path (B/C), emphasizing that averaged-operator convergence did not yield one
+stable sparse causal instrument. This candidate is ready for external packet
+review, not for freeze or publication claims.

@@ -1,850 +1,201 @@
 \documentclass[10pt]{article}
-\usepackage[margin=1.85cm]{geometry}
+\usepackage[margin=1.8cm]{geometry}
 \usepackage{graphicx,booktabs,xcolor,titlesec,enumitem,amsmath,array}
 \usepackage[hidelinks]{hyperref}
 \definecolor{ink}{HTML}{1F2430}
 \definecolor{muted}{HTML}{667085}
-\definecolor{blue}{HTML}{355C7D}
 \definecolor{teal}{HTML}{2A9D8F}
 \definecolor{coral}{HTML}{E76F51}
 \titleformat{\section}{\large\bfseries\color{ink}}{\thesection}{0.6em}{}
 \titleformat{\subsection}{\normalsize\bfseries\color{ink}}{\thesubsection}{0.6em}{}
-\setlist{nosep,leftmargin=1.25em}
+\setlist{nosep,leftmargin=1.35em}
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{0.42em}
+\setlength{\parskip}{0.45em}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
-\newcommand{\eid}[1]{\newline\textcolor{muted}{\footnotesize
-Evidence: \nolinkurl{#1}}}
 \newcommand{\dev}{\textcolor{coral}{\textbf{development only}}}
-\newcommand{\good}[1]{\textcolor{teal}{\textbf{#1}}}
+\newcommand{\pass}{\textcolor{teal}{\textbf{PASS}}}
+\newcommand{\fail}{\textcolor{coral}{\textbf{FAIL}}}
 
-\title{\vspace{-1.25em}J-space Phase 4 --- development synthesis\\
-\large OLMo trajectory, Qwen fit-size, and outcome-blind primary protocols\\[3pt]
-\normalsize\textcolor{muted}{State through common support, Qwen draw-A
-$n=500$ Branch B, passing mode-v2, Qwen Bank-W capability, and A1000
-paused at $n=554$ · 2026-08-01}}
+\title{\vspace{-1.2em}J-space Phase 4.4 --- terminal development synthesis\\
+\large Operator convergence without a stable sparse causal instrument\\[3pt]
+\normalsize\textcolor{muted}{Qwen A1000 decision, side-methods imports, and durability boundary --- 2026-08-03}}
 \author{}\date{}
 
 \begin{document}
 \maketitle
 \vspace{-2.7em}
 
-\noindent\textbf{Scope.} This is a living \dev{} report over known
-Phase~3 banks. It localizes trajectory patterns and audits lens-frame
-dependence; it cannot establish a binary lineage claim. No Phase~4
-confirmatory or replication cell is licensed before PI sign-off and a
-tagged preregistration freeze.
+\textbf{Scope.} This is a living \dev{} report. No Phase 4 confirmatory or
+replication intervention outcome was opened. The mechanical result is Q-L4:
+no single canonical sparse Qwen lens. This handout is a freeze-review input,
+not a review signature, PI approval, freeze commit, or publication claim.
 
-\section{Compute and provenance boundary}
+\section{Decision in one page}
 
-Every model producer hard-failed unless CUDA was visible in the same
-process, executed a finite FP16 CUDA matrix multiply before model load,
-and recorded the device in its result envelope. Jobs ran on an NVIDIA
-RTX PRO 6000 Blackwell Server Edition; the final grid allocated about
-81.1\,GB VRAM. Model loading, generation, interventions, and scoring
-never used CPU. CPU was limited to tests, hashes, statistics, figures,
-and document compilation.
-
-Phase~3 enters through the immutable
-\texttt{p4-import-phase3-release-v1}. Native evidence is event-sourced;
-registered artifacts are never overwritten.
-
-\section{Prospective capability gate}
-
-OLMo-3 32B Think produced 972 G5 rows, 324 facts, and 72 families under
-prospective prefix-disjoint accepted-alias scoring.
+The sealed A1000 queue separated averaged-operator convergence from
+sparse-selection and causal-endpoint invariance. The former passes strongly;
+the latter do not.
 
 \begin{center}\small
-\begin{tabular}{lrrrrrr}
+\begin{tabular}{L{5.0cm}rrL{3.8cm}}
 \toprule
-view & overall & Bank F & Bank S & direct & composed & bridge supplied\\
+Gate & observed & threshold & disposition\\
 \midrule
-capability & .6430 & .4935 & .8972 & .6574 & .4846 & .7870\\
+structural task q50 & 0.998702 & $\geq 0.95$ & \pass\\
+structural task q05 & 0.998122 & $\geq 0.90$ & \pass\\
+selected-ID Jaccard & 0.538462 & frozen floor & \fail\\
+normalized projector overlap & 0.709818 & frozen floor & \fail\\
+bridge-rescue A500--A1000 difference & $-0.294028$ nat & frozen bound & \fail\\
+prompt-323 influence materiality & negligible & all frozen rulers & \pass\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The intervention cohort was fixed before outcomes by requiring both
-direct and composed generation capability within a fact: 41/204
-Bank-F facts and 85/120 Bank-S facts, or 126 facts / 252 items.
-\eid{p4-g5-bank-olmo3-think-dev-v2}
+The all-position audit retains every one of 17,381 functional positions:
+15,536 near-tie, 1,845 stable-core, and zero rank-deficient. Even stable-core
+median ID Jaccard is only 0.666667. Tied rows are therefore part, but not all,
+of the instability.
 
-The first attempt stopped after accent folding made \texttt{Río} and
-\texttt{Rio} ambiguous. The repaired selector prefers exact spelling
-before a unique normalized fallback; the partial attempt remains
-preserved.
+The unchanged Q-L table emits \textbf{Q-L4}. It nominates no sparse lens,
+blocks P4-P2, makes the Bank-B orthogonal shot inapplicable, and prevents M3
+and M4 from opening. There is no A2000 route.
 
-\section{OLMo-3 32B base point}
+\section{A1000 structural and functional evidence}
 
-The exact pinned base revision
-\texttt{c2b61dae89a1ad10e4ad5653d0e46b590902607b} produced 972 G5 rows.
-Overall capability was .6101 (Bank F .4395; Bank S .9000). Requiring
-both direct and composed capability fixed 23 Bank-F and 88 Bank-S
-facts, or 111 facts / 222 items.
-\eid{p4-g5-bank-olmo3-base-dev-v1}
-
-The seven-condition grid had maximum baseline replay drift
-$6.71\times10^{-7}$ nats, zero span-safe selected/protected overlap,
-100\% matched-rank agreement, and maximum energy relative error
-0.000260.
-\eid{p4-lineage-grid-olmo3-base-dev-v1}
+The A1000 artifact is the exact cumulative draw-A fit at 1,000 prompts. Its
+model snapshot, external published lens, 63-layer tensors, checkpoint mean,
+and registered hashes pass the fresh-VM integrity audit.
 
 \begin{center}
-\includegraphics[width=0.82\textwidth]{../figures/p4f03_olmo3_base_development.png}
+\includegraphics[width=0.94\textwidth]{../figures/p4f25_qwen_lens_convergence_a500_a1000.png}
 \end{center}
+
+High matrix similarity does not carry through to the discrete selection or
+every causal endpoint. Occupancy, corrected capacity, span-safe specificity,
+tail rate, G4, and bridge preference pass; selected IDs, selected projector,
+and bridge rescue fail.
+
+\begin{center}
+\includegraphics[width=0.94\textwidth]{../figures/p4f26_qwen_multilens_functional_gate_a500_a1000.png}
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.94\textwidth]{../figures/p4f27_qwen_selection_margin_a500_a1000.png}
+\end{center}
+
+Across the last three fit-size comparisons, selected-ID Jaccard repeats at
+approximately 0.53846. Projector overlap rises only from 0.67479 to 0.70302 to
+0.709818. This repeated pattern is treated as a methods result, not as a
+reason to relax a threshold.
+
+\section{Retained-prompt influence and runtime boundary}
+
+The first prompt-323 attempt stopped before evidence because the current
+Jacobian norm disagreed with the historical fit-log control. Current repeats
+were stable; the prompt-112 control showed that the mismatch was broader than
+one prompt. Nominal versions and model bytes matched, but historical
+distribution-content and compiled-kernel identities were unavailable.
+
+Because retained-prompt influence cannot alter Q-L1--Q-L5, a prospective
+amendment fixed exact current distribution contents, a primary computation,
+a discarded repeatability computation, and the unchanged 0.5 within-runtime
+norm tolerance before any new influence output. It changed no bank, model,
+lens, endpoint, sample, materiality threshold, or SESOI.
+
+Primary and repeat maxima are 181.776618 and 181.777423; the worst normalized
+per-layer difference is 0.004572. All tensors are finite. The A500 and A1000
+materiality values are tiny, with the closest more than 3,800-fold below its
+frozen threshold. Influence peaks early and is essentially zero through assay
+layers 20--44.
+
+\begin{center}
+\includegraphics[width=0.94\textwidth]{../figures/p4f29_qwen_prompt323_influence.png}
+\end{center}
+
+This licenses only an exact-pinned \emph{current-runtime sensitivity shape}.
+It does not establish historical-runtime reproducibility.
+
+\section{Primary-family disposition}
 
 \begin{center}\small
-\begin{tabular}{lrr}
+\begin{tabular}{L{2.0cm}L{3.0cm}L{9.2cm}}
 \toprule
-cell & J-specific estimate (nats) & family-bootstrap 95\% interval\\
+Endpoint & terminal state & reason\\
 \midrule
-Bank F direct & $+0.0245$ & $[-0.0330,+0.0792]$\\
-Bank F composed & $+0.0145$ & $[-0.1226,+0.1881]$\\
-Bank S direct & $+0.0005$ & $[-0.0487,+0.0481]$\\
-Bank S composed & $+0.0021$ & $[-0.0309,+0.0385]$\\
+P4-P1 & estimation-only & Bank B cannot power the 0.25-nat joint target; Q-L4 makes the conditional orthogonal shot not applicable.\\
+P4-P2 & blocked / removed & Its legal route requires Q-L1/Q-L2 and external producer review; no pilot, power run, or intervention opened.\\
+P4-P3 & blocked & Strict OLMo import and fresh mainline replay reproduce 16 common-capable families against 20 required.\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-All four primary effects are near zero. Bank-S
-composed-minus-direct is $+0.0016\,[-0.0417,+0.0403]$. The experiment
-is nevertheless sensitive: overall label-protected J-specific is
-$+0.1231\,[+0.0667,+0.1802]$, while mechanics-random and
-logit-protected effects are $-0.1048$ and $-0.2023$, with intervals
-below zero.
-\eid{p4-lineage-analysis-olmo3-base-dev-v1}
-
-\section{Think own-lens development point}
-
-The seven-condition grid includes baseline, span-safe J, exact
-rank/energy control, label-protected J, protected-energy control,
-mechanics random, and logit-space label protection. Baseline replay
-drift is at most $7.15\times10^{-7}$ nats. Rank agreement is 100\%,
-energy relative error is at most 0.000230, and span-safe
-selected/protected overlap is zero.
-\eid{p4-lineage-grid-olmo3-think-dev-v1}
+No primary entered the Holm family and no retired endpoint donated alpha.
+Bank W's load intervention is not lawfully runnable as a cross-model Phase 4
+primary at current capability support; it routes to Phase 5B as per-model
+estimation.
 
 \begin{center}
-\includegraphics[width=0.95\textwidth]{../figures/p4f01_olmo3_think_development.png}
+\includegraphics[width=0.84\textwidth]{../figures/p4f30_bank_w_joint_imported.png}
 \end{center}
+
+\section{Side releases: admit, then cite narrowly}
+
+\begin{itemize}
+\item \textbf{Gemma transport:} methods blocker at side-development-import
+tier. Selected-slot tangents are bit-identical, but the frozen all-slot
+relative-error criterion fails at 0.002458 versus $10^{-5}$. No mechanism,
+nondifferentiability, workspace, or intervention claim follows.
+\item \textbf{OLMo lineage:} methods/development import only. O1 preserves the
+16/20 block; O2 is consistent with broadly conserved capacity recruitment;
+O3 is a dictionary-formation pattern; O5 has no identifiable estimand.
+\item No native side-study evidence ID was inserted into the Phase 4 registry,
+and neither import upgrades its source tier.
+\end{itemize}
+
+The OLMo trajectory continues to support development localization across own
+and common frames, but it does not identify external-state substitution or a
+cross-model causal mechanism.
+
+\section{Durability and release boundary}
+
+Exact A120 capacity recovery reproduces the old registered SHA-256. The
+historical A120--A250 operational state remains irrecoverable and was never
+synthesized. An append-only methods event classifies that source as partially
+durable, with its decision role superseded by later live A250--A500 and
+A500--A1000 functional gates.
+
+Two same-mounted audits agree on:
 
 \begin{center}\small
-\begin{tabular}{lrr}
+\begin{tabular}{lr}
 \toprule
-cell & J-specific estimate (nats) & family-bootstrap 95\% interval\\
-\midrule
-Bank F direct & $+0.0574$ & $[-0.0442,+0.1785]$\\
-Bank F composed & $+0.0818$ & $[-0.0223,+0.1878]$\\
-Bank S direct & $-0.1277$ & $[-0.2072,-0.0494]$\\
-Bank S composed & $-0.0553$ & $[-0.0982,-0.0187]$\\
+registry rows & 78\\
+live events & 61\\
+live output references & 419\\
+verified references & 418\\
+known deficits & 1\\
+unexpected deficits / pin conflicts & 0 / 0\\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Bank-S composed-minus-direct specificity is
-$+0.0724\,[-0.0109,+0.1584]$. It is compatible with the unusual 3.1
-Think tendency beginning by 3.0, but is not resolved and must await the
-controlled Bank-W redundancy/derivation study.
-\eid{p4-lineage-analysis-olmo3-think-dev-v1}
-
-\section{Common-base-lens repair audit}
-
-The common coordinate is the frozen OLMo base lens
-(\texttt{92f32e\ldots b696}). V1 exposed rank-limited
-protected-energy sites that omitted one requested component without
-being marked clamped. V2 repaired the metadata but revealed that the
-evidence ID itself changed all matched/random seeds.
-
-V3 freezes the scientific-seed namespace to v1. All seven aggregate
-outcome columns, every per-alias score, and every condition order match
-v1 exactly (maximum difference 0). The fix reclassifies 296 summaries
-and reduces the erroneous maximum unclamped energy error from 0.511283
-to 0.000239 while retaining 100\% rank agreement. V3 supersedes both
-withdrawn diagnostic attempts and remains valid standalone evidence.
-\eid{p4-lineage-grid-olmo3-think-common-base-lens-dev-v3}
-
-V4 reruns the common lens under the own-grid seed namespace. Its 252
-rows form 126 exact direct/composed pairs; condition order matches the
-own grid item-for-item, between-frame baseline drift is zero, matched
-rank agreement is 100\%, maximum energy error is 0.000205, and
-span-safe overlap is zero. Deterministic J arms match v3 exactly.
-\eid{p4-lineage-grid-olmo3-think-common-base-lens-dev-v4}
-
-\section{Own/common lens comparison: corrected}
-
-The v1 paired analysis remains
-\textbf{\textcolor{coral}{withdrawn}} because its frames used different
-matched-control RNG streams. V2 shares the exact namespace and
-condition order. Its full 100,000-draw payload and all bootstrap hashes
-reproduce exactly. The hardened producer refuses unequal namespaces.
-\eid{p4-lens-frame-analysis-olmo3-think-dev-v2}
-
-\begin{center}
-\includegraphics[width=0.80\textwidth]{../figures/p4f02_olmo3_think_lens_frame_comparison_v2.png}
-\end{center}
-
-\begin{center}\scriptsize
-\begin{tabular}{lrrr}
-\toprule
-cell & own lens & common lens & common $-$ own (95\% interval)\\
-\midrule
-F direct & $+0.0574$ & $+0.0010$ & $-0.0563\,[-0.1324,+0.0049]$\\
-F composed & $+0.0818$ & $-0.0164$ & $-0.0982\,[-0.2005,+0.0058]$\\
-S direct & $-0.1277$ & $-0.0974$ & $+0.0303\,[-0.0165,+0.0813]$\\
-S composed & $-0.0553$ & $-0.0419$ & $+0.0134\,[-0.0100,+0.0408]$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-No frame-delta interval excludes zero. Bank-S direct and composed
-effects have intervals below zero in each tested frame; Bank-F effects
-remain imprecise. Item and family frame correlations are .7557 and
-.7254; mean absolute item difference is .1025 nats. The RNG correction
-leaves J deltas unchanged, moves Bank-F specificity deltas 0.0413 and
-0.0492 nats toward zero through the controls, and raises family
-correlation from .4946 to .7254.
-
-\section{OLMo-3.1 Think capability and own frame}
-
-The exact pinned 3.1 Think revision
-\texttt{832c3f54\ldots7840544} produced 972 G5 rows.
-Boundary-safe prefix capability was .6327 overall (Bank F .4837; Bank
-S .8861), with direct .6420, composed .4753, and bridge-supplied
-.7809. Requiring both direct and composed capability fixed 38 Bank-F
-and 84 Bank-S facts, or 122 facts / 244 items.
-\eid{p4-g5-bank-olmo31-think-dev-v1}
-
-This rate is below Phase~3's historical .7346 because that cohort
-allowed an answer anywhere in the continuation. All 972 generations
-are byte-identical across phases, and every Phase~4 flag equals the
-later Phase~3 boundary-safe prefix audit.
-
-The own-lens grid has maximum G5 replay drift
-$8.64\times10^{-7}$ nats, zero span-safe overlap, 100\% rank agreement
-over 564 matched summaries, and maximum energy error 0.000222.
-\eid{p4-lineage-grid-olmo31-think-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.88\textwidth]{../figures/p4f04_olmo31_think_development_v2.png}
-\end{center}
-
-\begin{center}\small
-\begin{tabular}{lrr}
-\toprule
-cell & J-specific estimate (nats) & family-bootstrap 95\% interval\\
-\midrule
-Bank F direct & $-0.0067$ & $[-0.1162,+0.1057]$\\
-Bank F composed & $-0.0416$ & $[-0.2099,+0.1167]$\\
-Bank S direct & $-0.1674$ & $[-0.2477,-0.0942]$\\
-Bank S composed & $-0.0491$ & $[-0.0891,-0.0165]$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Bank-S composed-minus-direct is
-$+0.1183\,[+0.0514,+0.1879]$ (descriptive exact sign-flip
-$p=.0031$). Analysis v1 has an identical numerical payload but is
-withdrawn for a crowded figure footer; v2 fixes the reusable layout.
-\eid{p4-lineage-analysis-olmo31-think-dev-v2}
-
-\section{OLMo-3.1 Think paired coordinate comparison}
-
-The common grid uses the frozen base lens under the exact own-grid seed
-namespace. All 244 item IDs and condition orders pair; between-frame
-baseline drift is zero. Its maximum matched energy error is 0.000256,
-with zero span-safe overlap and 100\% rank agreement. Mechanics-random
-and logit-protected outcomes are bit-identical between frames.
-\eid{p4-lineage-grid-olmo31-think-common-base-lens-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.88\textwidth]{../figures/p4f05_olmo31_think_lens_frame_comparison.png}
-\end{center}
-
-\begin{center}\scriptsize
-\begin{tabular}{lrrr}
-\toprule
-cell & own lens & common lens & common $-$ own (95\% interval)\\
-\midrule
-F direct & $-0.0067$ & $-0.0757$ & $-0.0690\,[-0.1413,+0.0025]$\\
-F composed & $-0.0416$ & $-0.1314$ & $-0.0898\,[-0.1677,-0.0096]$\\
-S direct & $-0.1674$ & $-0.1547$ & $+0.0127\,[-0.0378,+0.0669]$\\
-S composed & $-0.0491$ & $-0.0381$ & $+0.0110\,[-0.0196,+0.0406]$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Only the Bank-F composed frame-delta interval excludes zero: evidence
-of coordinate sensitivity for that known-bank cell, although the
-effect itself remains imprecise in each frame. Bank-S direct is
-negative in both frames. The Bank-S composition contrast is positive
-in both frames: own $+0.1183\,[+0.0517,+0.1876]$, common
-$+0.1166\,[+0.0279,+0.2080]$; paired delta
-$-0.0017\,[-0.0551,+0.0504]$. Item/family correlations are .7679/.8386
-and mean absolute item shift is .1133 nats. All 42 bootstrap and 6
-exact sign-flip distributions reproduce exactly.
-\eid{p4-lens-frame-analysis-olmo31-think-dev-v1}
-
-\section{OLMo-3.1 Instruct capability and own frame}
-
-The exact pinned 3.1 Instruct revision
-\texttt{ac0587e4\ldots bc940dae} produced 972 G5 rows.
-Boundary-safe prefix capability was .6245 overall (Bank F .4673; Bank
-S .8917), with direct .6667, composed .4383, and bridge-supplied
-.7685. Requiring both direct and composed capability fixed 32 Bank-F
-and 86 Bank-S facts, or 118 facts / 236 items. All 972 generations
-match Phase~3 byte-for-byte and every flag matches its later
-boundary-safe audit.
-\eid{p4-g5-bank-olmo31-instruct-dev-v1}
-
-The own grid has maximum G5 replay drift
-$7.75\times10^{-7}$ nats, zero span-safe overlap, 100\% rank agreement
-over 528 matched summaries, and maximum energy error 0.000228.
-\eid{p4-lineage-grid-olmo31-instruct-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.82\textwidth]{../figures/p4f06_olmo31_instruct_development.png}
-\end{center}
-
-\begin{center}\small
-\begin{tabular}{lrr}
-\toprule
-cell & J-specific estimate (nats) & family-bootstrap 95\% interval\\
-\midrule
-Bank F direct & $+0.0432$ & $[-0.0259,+0.1181]$\\
-Bank F composed & $-0.0662$ & $[-0.4037,+0.1921]$\\
-Bank S direct & $-0.0224$ & $[-0.0656,+0.0179]$\\
-Bank S composed & $-0.0177$ & $[-0.0755,+0.0325]$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Bank-S composed-minus-direct is
-$+0.0047\,[-0.0411,+0.0501]$. All four primary intervals include
-zero, unlike the 3.1 Think Bank-S cells. All 22 bootstrap and 6 exact
-sign-flip distributions reproduce exactly.
-\eid{p4-lineage-analysis-olmo31-instruct-dev-v1}
-
-\section{OLMo-3.1 Instruct paired coordinate comparison}
-
-The own/common grids have identical 236-item manifests, condition
-orders, and scientific RNG namespaces. Between-frame baseline drift
-is zero; each frame replays G5 within $7.75\times10^{-7}$ nats.
-Span-safe overlap is zero and rank agreement is 100\%. Maximum energy
-error is 0.000228 own and 0.000212 common. Mechanics-random and
-logit-protected outcomes are bit-identical.
-\eid{p4-lineage-grid-olmo31-instruct-common-base-lens-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.82\textwidth]{../figures/p4f07_olmo31_instruct_lens_frame_comparison.png}
-\end{center}
-
-\begin{center}\scriptsize
-\begin{tabular}{lrrr}
-\toprule
-cell & own lens & common lens & common $-$ own (95\% interval)\\
-\midrule
-F direct & $+0.0432$ & $-0.0111$ & $-0.0542\,[-0.0970,-0.0194]$\\
-F composed & $-0.0662$ & $+0.0271$ & $+0.0934\,[-0.0312,+0.2488]$\\
-S direct & $-0.0224$ & $-0.0379$ & $-0.0155\,[-0.0603,+0.0258]$\\
-S composed & $-0.0177$ & $-0.0045$ & $+0.0131\,[-0.0240,+0.0558]$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Bank-F direct has a negative frame delta with interval below zero
-(descriptive exact sign-flip $p=.0057$). Bank-F composition changes
-from own $-0.1094\,[-0.4439,+0.1404]$ to common
-$+0.0382\,[-0.1652,+0.2172]$; paired delta
-$+0.1476\,[+0.0257,+0.2978]$ ($p=.0363$). All Bank-S effects,
-composition contrasts, and frame deltas include zero. Item/family
-correlations are .7523/.8521 and mean absolute item shift is .0819
-nats. All 42 bootstrap and 6 exact sign-flip distributions reproduce
-exactly.
-\eid{p4-lens-frame-analysis-olmo31-instruct-dev-v1}
-
-\section{Registered four-checkpoint trajectory}
-
-The synthesis reads all immutable own/common grids under one stable
-family-bootstrap schedule. It requires live evidence, a shared
-bank/scoring contract, exact own/common item pairing, and identical
-scientific RNG namespaces and condition orders. All 48 table summaries
-and all 42 unique bootstrap distributions reconstruct exactly.
-\eid{p4-lineage-trajectory-analysis-olmo-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.98\textwidth]{../figures/p4f08_olmo_lineage_trajectory.png}
-\end{center}
-
-\begin{center}\scriptsize
-\begin{tabular}{lrrrr}
-\toprule
-checkpoint & S direct own & S direct common &
-S composition own & S composition common\\
-\midrule
-Base & $+0.0005$ & $+0.0005$ & $+0.0016$ & $+0.0016$\\
-3.0 Think & $-0.1277$ & $-0.0974$ & $+0.0724$ & $+0.0556$\\
-3.1 Think & $-0.1674$ & $-0.1547$ & $+0.1183$ & $+0.1166$\\
-3.1 Instruct sibling & $-0.0224$ & $-0.0379$ &
-$+0.0047$ & $+0.0333$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-The figure connects only Base $\rightarrow$ 3.0 Think
-$\rightarrow$ 3.1 Think; squares mark the sibling Instruct endpoint,
-not a temporal continuation. In both frames, Bank-S direct becomes
-negative by 3.0 and more negative by 3.1, while Bank-S composition
-rises from near zero at base to about $+0.117$ at 3.1 Think. Both
-patterns collapse toward zero at sibling Instruct. Checkpoint-specific
-capability cohorts make this an unpaired development localization, not
-a causal training or mode contrast.
-
-\section{CPU-first common-support closure}
-
-Membership was frozen from fact ID, family, bank, and complete
-direct/composed presence before outcomes. The all-four intersection has
-79 facts / 25 families; adjacent-pair intersections have 92 / 29
-(Base--3.0), 119 / 34 (3.0--3.1), and 97 / 29 (3.1
-Think--Instruct). This removes changing fact composition as one
-explanation, but does not randomize training.
-\eid{p4-lineage-common-cohort-analysis-olmo-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.96\textwidth]{../figures/p4f11_olmo_lineage_common_cohort.png}
-\end{center}
-
-\begin{center}\scriptsize
-\begin{tabular}{lrrrr}
-\toprule
-Bank-S pair & own direct & common direct & own composition & common composition\\
-\midrule
-Base $\rightarrow$ 3.0 & $-.1101\,[-.2306,-.0045]$ &
-$-.1048\,[-.2002,-.0186]$ & $+.0811\,[-.0249,+.1895]$ &
-$+.0867\,[+.0053,+.1748]$\\
-3.0 $\rightarrow$ 3.1 & $-.0058\,[-.0602,+.0539]$ &
-$-.0265\,[-.0812,+.0335]$ & $+.0028\,[-.0742,+.0694]$ &
-$+.0248\,[-.0439,+.0839]$\\
-3.1 Think $\rightarrow$ Instruct & $+.1349\,[+.0763,+.1992]$ &
-$+.1078\,[+.0387,+.1860]$ & $-.1129\,[-.1795,-.0478]$ &
-$-.1051\,[-.1921,-.0188]$\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-These 100{,}000-draw equal-family intervals preserve the paired
-base-to-Think direct decrease in both frames, resolve no further
-3.0-to-3.1 increment, and show a sibling Instruct reversal in both
-direct and composition quantities. Every one-family-out estimate keeps
-the signs of the first and last contrasts. Baseline-LP adjustment keeps
-the common-frame base-to-Think direct delta below zero; other adjusted
-base-to-Think intervals cross zero. Bank-F pairs are mostly imprecise.
-These are post-hoc development sensitivities, not causal effects.
-
-\section{Qwen fit-size gate: nested $n=120$ and $n=250$ lenses}
-
-The leakage-safe draw-A corpus has exact nested prefixes at
-$n=120/250/500/1000$. Its first 120 records reproduce the historical
-fit prefix byte-for-byte; all 80 historical evaluation spares are
-excluded. Independent draw B is disjoint and also excludes every
-spare.
-\eid{p4-qwen-lens-corpora-dev-v1}
-
-The first all-layer lens fits L0--L62 to target L63 at width 5120,
-using 128 tokens and a fixed 16-token skip. Every model operation ran
-on the RTX PRO 6000 under pinned fused FLA kernels; all 48
-linear-attention blocks passed the binding gate. Forty three-prompt
-checkpoints were hashed and mirrored to Drive. The 6.606\,GB final
-checkpoint has SHA-256 \texttt{061574f9\ldots cdb673}; the registered
-3.303\,GB fp16 lens is \texttt{82af4cc7\ldots c32b1b}. Full runtime
-was 21,622.7 seconds with 62.83\,GB peak allocated VRAM.
-\eid{p4-qwen-lens-fit-drawA-n120-dev-v1}
-
-Prompt 112 was a pronounced but finite Jacobian-norm outlier
-(159.952). It remains in the frozen estimator; no post-hoc trimming is
-permitted.
-
-Under the same frozen contract, draw A reached $n=250$. The final
-6.606\,GB fp32 checkpoint is \texttt{72384411\ldots 166d6}; the
-registered 3.303\,GB fp16 lens is \texttt{b78427c8\ldots f79006}.
-The final invocation added 70 prompts in 12,660.4 seconds
-(180.86 seconds/prompt) at the same 62.83\,GB peak VRAM.
-\eid{p4-qwen-lens-fit-drawA-n250-dev-v1}
-
-\section{Qwen structural stability is depth-dependent}
-
-The first diagnostic compares draw-A $n=120$ with the published
-$n=1000$ lens. It is a recipe/corpus-transfer comparison, not the
-pending same-corpus convergence test; this is an external published
-reference, partially specified recipe. It uses all 63 maps and all 5,120
-Jacobian rows, 4,096 fixed token directions, centered linear CKA on a
-fixed 1,024-token subset, and 256 fixed transport probes.
-\eid{p4-qwen-lens-structural-stability-drawA-n120-vs-published-n1000-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.70\textwidth]{../figures/p4f09_qwen_lens_structural_stability.png}
-\par\vspace{-0.35em}
-\scriptsize
-\begin{tabular}{lrrrrr}
-\toprule
-layer view & matrix cosine & token median & token q05 & CKA &
-relative $\|\Delta\|_F$\\
-\midrule
-L0 & .5411 & .5297 & .2760 & .4518 & 1.1086\\
-L24 & .8855 & .8947 & .8145 & .8667 & .4711\\
-L32 & .9043 & .9220 & .8263 & .8409 & .4269\\
-L40 & .9605 & .9677 & .9312 & .9433 & .2800\\
-L62 & .9997 & .9997 & .9994 & .9997 & .0234\\
-layer median & .8969 & .9138 & .8187 & .8652 & .4422\\
-\bottomrule
-\end{tabular}
-\end{center}
-
-Token median first remains at least .90 from L26, matrix cosine from
-L32, CKA from L33, and token q05 from L35. Thus $n=120$ nearly matches
-the published lens late but is not uniformly stable in the
-lower/middle assay layers. That result motivated, but does not substitute
-for, the completed same-corpus comparison.
-
-\section{Same-corpus structural convergence is strong in the assay band}
-
-\begin{center}
-\includegraphics[width=0.96\textwidth]{../figures/p4f10_qwen_lens_convergence.png}
-\end{center}
-
-Across L20--L44, the median A120--A250 raw matrix cosine is .99585;
-minus-identity and minus-scaled-identity medians are .99872 and .99551.
-Median task-row cosines are .99535 (answer), .99522 (bridge), and .99631
-(shared); their token-q05 medians are .99326/.99308/.99407. The raw
-symmetric Frobenius delta has median .09114, falling to .05069 after
-identity subtraction.
-\eid{p4-qwen-lens-convergence-drawA-n120-n250-dev-v1}
-
-Sensitivity remains concentrated early. Raw and residual cosines are,
-respectively, .85042 and .85011 at L0; .98989 and .98952 at L24;
-.99585 and .99551 at L32; .99819 and .99777 at L40; and above .99986
-at L62. The prompts 121--250
-block mean is appropriately less similar to A120 (assay raw median
-.98470; task-row medians .98240--.98654) than the combined A250
-estimator. Selected-ID, span, occupancy, capacity, G4, and causal/bridge
-equivalence remain reserved for the functional gate.
-
-\section{Prompt 112 is retained but not assay-band load-bearing}
-
-The clean-runtime prompt-112 norm sentinel is 160.071, 0.119 above the
-historical three-decimal fit log and inside the frozen 0.5 absolute
-tolerance. Prompt 112 remains in A120; the leave-one-out lens is a
-sensitivity and never a trimming rule.
-
-The fused-runtime replay diagnostic is disclosed rather than hidden.
-Only 1/63 layers is elementwise-allclose for recomputed prompts 196--198;
-their block-relative Frobenius error has median .00705 and maximum .01881.
-Relative to the full $n=198$ running estimator the same discrepancy has
-median .000139 and maximum .001601, so all layers pass the unchanged .005
-ceiling. Tiny-model tests exactly reconstruct the equal-prompt mean and a
-direct leave-one-out refit.
-
-\begin{center}
-\includegraphics[width=0.96\textwidth]{../figures/p4f12_qwen_prompt112_influence.png}
-\end{center}
-
-Across L20--L44, raw/residual matrix-cosine medians are .99938/.99932,
-task-row medians are .99969--.99976, and token-q05 medians are
-.99795--.99838. Frozen disagreement summaries are .000675 versus .03
-(residual matrix), .000311 versus .02 (task median), and .002047 versus
-.05 (task q05). Structural materiality is false; selected-ID and
-capacity consequences remain in the functional gate.
-\eid{p4-qwen-lens-influence-prompt112-dev-v1}
-
-\section{Functional selection instability forces Branch B}
-
-The frozen runner evaluated published $n=1000$, draw-A $n=120$, and
-draw-A $n=250$ in fixed order on identical caches, items, aliases, and
-matched seeds. It used 60 primary items, 40 prose items, 20 bridge facts,
-50 measured G4 controls, and a fixed 16-prompt capacity set. The published
-lens remains an external reference with a partially specified recipe.
-
-\begin{center}
-\includegraphics[width=0.96\textwidth]{../figures/p4f13_qwen_multilens_functional_gate.png}
-\end{center}
-
-Structural gates pass: conservative assay task-row median cosine is
-.99522 (floor .95) and token-q05 is .99308 (floor .90). Selection gates
-fail. A120--A250 median normalized projector overlap is .67479 (floor
-.85) and selected-ID Jaccard is .53846 (floor .75) over 17,381 positions;
-median principal angle is 7.87 degrees and the maximum reaches 90 degrees.
-
-The other frozen point-estimate gates pass. Occupancy differences are zero;
-centered-excess differences at L24, L32, and L40 are respectively
-$-.000711$, $-.000239$, and $-.000173$. The span-safe-specific difference is .09596 nat against .15,
-although its 95\% interval $[-.0734,.2993]$ does not establish TOST
-equivalence. Tail difference is $-.0333$; A120/A250 G4 rates are both
-.78 J versus .12 random; bridge-rescue/preference differences are
-$-.2147/-.0553$ nat with matched signs.
-
-The precommitted rule emits \textbf{Branch B: continue draw A to $n=500$}.
-The two selection failures are load-bearing despite seven other functional
-and both structural gates passing. Draw B waits, and $n=250$ cannot yet be
-nominated canonical.
-\eid{p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1}
-
-\section{Qwen draw-A $n=500$ and the successor decision}
-
-The exact registered A250 estimator continued on the unchanged nested corpus
-and fit contract to 500 prompts. The final lens SHA-256 is
-\nolinkurl{84404956fb71a84f5af7fa22c34a8f07761777d048b3db314b1330037e4168a8};
-all continuation diagnostics were finite and no prompt was trimmed.
-\eid{p4-qwen-lens-fit-drawA-n500-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.96\textwidth]{../figures/p4f19_qwen_lens_convergence_a250_a500.png}
-\end{center}
-
-Across L20--L44, A250--A500 median matrix cosines are .99791 (raw),
-.99936 (minus identity), and .99774 (minus scaled identity). Conservative task-row
-median/q05 values are .997715/.996838, so both structural gates pass.
-\eid{p4-qwen-lens-convergence-drawA-n250-n500-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.96\textwidth]{../figures/p4f20_qwen_multilens_functional_gate_a250_a500.png}
-\end{center}
-
-Selection remains unstable. Median normalized projector overlap is .70302
-(floor .85), selected-ID Jaccard is .53846 (floor .75), and bridge-rescue
-difference is .55891 nat (bound .25). Occupancy, centered excess,
-span-safe-specific point estimate, tail rate, G4, and bridge preference pass.
-The frozen rule therefore emits \textbf{Branch B: continue draw A to
-$n=1000$}; neither A250 nor A500 is nominated canonical.
-\eid{p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.94\textwidth]{../figures/p4f21_qwen_mode_model_gate_v2.png}
-\end{center}
-
-The prospectively amended mode-v2 baseline passes every development gate.
-Thinking-on/off accuracy is .90/.85; all 40 completions parse with zero
-truncation, and 17/20 families are correct in both modes. Median generated
-tokens are 323.5 on and 4 off. This is baseline capability evidence only;
-no P4-P2 intervention was run.
-\eid{p4-qwen-mode-gate-dev-v2}
-
-\section{Outcome-blind primary protocols}
-
-These methods gates contain no Phase~4 confirmatory or replication
-intervention outcome and do not authorize a freeze.
-
-\subsection{Bank B: bridge-specific endpoint}
-
-The registered candidate has 40 relation families and 160 facts, four
-per family. Each fact has one unique true bridge, two counterfactual
-bridges, and two second-hop relations. Exact Qwen token IDs are stored;
-the 20/10/10 family split has zero prior-contract or cross-partition
-entity overlap.
-\eid{p4-bank-b-candidate-v2}
-
-Candidate v2 prospectively corrects the nine root metadata discrepancies
-from the immutable v1 audit and explicitly covers co-valid native-name
-aliases. Full independent reverification passes all 160 facts: 140 exact
-and unambiguous, 20 explicitly reviewed, zero mismatches, and zero unresolved
-manual flags.
-\eid{p4-bank-b-restcountries-verification-dev-v2}
-
-The amended primary is an intersection-union test:
-\[
-p_{P4P1}=\max\{p_{\rm semantic},p_{\rm bridge\ specific}\},
-\]
-where counterfactual-bridge movement must beat both a geometry-matched
-unrelated injection and a counterfactual-answer-direction injection.
-
-\begin{center}
-\includegraphics[width=0.94\textwidth]{../figures/p4f18_bank_b_power.png}
-\end{center}
-
-The outcome-blind power audit uses a conservative 6.0-nat family SD and
-controls the composite-null type-I rate. At the candidate 0.25-nat joint
-SESOI, power is only 0.038 for the frozen 10-family confirmatory side and
-0.061 even at 60 families. Bank B therefore remains blocked on a prospective
-design/estimand revision, not on source verification.
-\eid{p4-bank-b-power-dev-v1}
-
-\begin{center}
-\includegraphics[width=0.94\textwidth]{../figures/p4f22_bank_b_design_feasibility.png}
-\end{center}
-
-An optimistic successor bound assumes known 6-nat SD, Gaussian sampling, and
-only one one-sided component. Even that lower bound needs 3,562 families for
-the .25-nat SESOI and 124 for the consumed Phase~3 bridge-specific mean of
-1.342 nats. All 40 existing families have a best-case 80\%-power MDE of
-2.359 nats, versus 3 nats under the registered heavy-tail IUT. Reallocation
-cannot repair the design. Review must choose an estimation-only P4-P1, a new
-answer-direction-orthogonal estimand and ruler, or a genuinely adequate new
-bank; inflating the SESOI merely to obtain power is not licensed.
-\eid{p4-bank-b-design-feasibility-dev-v1}
-
-\subsection{Bank W: factorial and max-T calibration}
-
-Candidate v2 has 72 template families, eight seeds each, and 4,608 rows
-crossing load 2/6, supplied/derived state, and once/redundant
-presentation. Every cell has 576 rows; the family split is 24/24/24.
-Exact Qwen prompt lengths match within seed, answer leakage is zero,
-positions are balanced, and three shortcut heuristics equal chance.
-\eid{p4-bank-w-candidate-v2}
-
-For the internally derived, stated-once primary cell,
-\[
-D_m=-[\operatorname{specific}_m(\mathrm{high})-
-      \operatorname{specific}_m(\mathrm{low})],\qquad
-T=\max_m D_m/SE_{\rm family}(D_m).
-\]
-One shared family sign is applied across eligible models; the primary
-uses 100,000 deterministic draws with a plus-one p-value.
-
-\begin{center}
-\includegraphics[width=0.94\textwidth]{../figures/p4f14_bank_w_power.png}
-\end{center}
-
-The SESOI is 0.10 nat/doubling, or 0.15849625 nat from load 2 to 6.
-Using a conservative 0.23-nat family SD, four null scenarios gave type-I
-rates .040--.050. Minimum heavy-tailed independent-model power was
-.703/.806/.858 at 16/20/24 common families. Thus the underpowered
-16-family floor is superseded by 20; the planned confirmatory side
-clears the .80 target.
-\eid{p4-bank-w-power-dev-v1}
-
-The prospective capability protocol scores all eight answer sequences on
-the 24 development families in the derived, stated-once low/high cells.
-Each model must clear .70 candidate-set accuracy at both loads and a 90\%
-family-bootstrap equivalence interval inside $[-.08,+.08]$. Every
-independently passing model enters the primary set, whose capable-family
-intersection must contain at least 20 families. Short support blocks P4-P3;
-it cannot be repaired by dropping an otherwise eligible model. Qwen completed
-all 384 rows and independently passes: accuracy is .83333 at both loads,
-high-minus-low is zero with 90\% interval $[-.02083,.02083]$, and 20/24
-families are capable at both loads. Both OLMo gates, joint support, and review
-remain pending. No intervention was run.
-\eid{p4-bank-w-capability-protocol-dev-v1}
-\eid{p4-bank-w-capability-qwen36-27b-dev-v1}
-
-\subsection{Official Qwen mode/parser gate}
-
-The pinned official template opens \texttt{<think>} in the thinking-on
-\emph{prefill}; thinking-off pre-closes an empty think block. Parser v1
-searched only generated tokens and would have mislabeled genuine
-reasoning. Parser v2 initializes decode state from prefill delimiters.
-Complete, EOS-inside-reasoning, truncation, answer-boundary, and
-11-token rationale-control goldens all pass.
-\eid{p4-qwen-mode-parser-gate-dev-v1}
-
-The official toggle makes thinking-off $\times$ generated-reasoning
-structurally absent. The identified primary uses phases common to both:
-\[
-[d(\mathrm{on,final})-d(\mathrm{on,prefill})]-
-[d(\mathrm{off,final})-d(\mathrm{off,prefill})],
-\]
-with $d=Q(\mathrm{matched})-Q(J)$ and normalized final-answer accuracy
-as $Q$. The alternative is positive; thinking-on reasoning-only is
-secondary.
-
-The model-backed baseline used 20 paired consumed Phase~3 families and no
-P4-P2 intervention outcome.
-
-\begin{center}
-\includegraphics[width=0.94\textwidth]{../figures/p4f15_qwen_mode_model_gate.png}
-\end{center}
-
-Thinking-off accuracy was .85 with zero parse failures, truncations, or
-reasoning content and a four-token median completion. Thinking-on accuracy
-was .60; all completions contained reasoning, but parse-failure and
-truncation rates were both .35, final-answer nonempty rate was .65, and
-median generated/reasoning lengths were 287/280 tokens. Thirteen families
-were parse-valid in both modes and 11 were correct in both, below the frozen
-floor of 12. Thinking-on minus thinking-off accuracy was $-.25$ with a
-family-bootstrap 90\% interval $[-.45,-.05]$.
-
-The gate fails and is not freeze-ready. A prospective mode-protocol
-amendment and fresh baseline must precede any intervention; the family
-split, SESOI/power, independent review, and PI sign-off remain open.
-\eid{p4-qwen-mode-gate-dev-v1}
-
-Methods successor \texttt{p4-qwen-mode-parser-gate-dev-v2} keeps the official
-template, parser, tolerances, and deterministic decode, while raising only
-the length-failure sentinel from 512 to 2,048 tokens. Its golden gate passes.
-A fresh v2 baseline with one shared at-most-128-reasoning-token instruction
-then passed: thinking-on/off accuracy is .90/.85, parse/truncation failures are
-zero, and 17/20 families are correct in both modes. It supersedes the v1
-failure for baseline methods but does not license P4-P2 intervention work.
-
-An outcome-blind successor bounds the unresolved design without selecting a
-SESOI, bank size, or split. The eight-cell family accuracy interaction has
-support $[-4,4]$ and hence distribution-free SD bound 4. Under a known-SD
-one-sided Gaussian planning envelope at conservative Holm
-$\alpha=.05/3$ and 80\% power, a .20-point interaction needs 56 families at
-SD .5, 221 at SD 1, and 3,528 at the support bound. A .10-point interaction
-needs 221, 882, and 14,111, respectively.
-
-{\centering
-\includegraphics[width=0.92\textwidth]{../figures/p4f24_qwen_mode_design_feasibility.png}\par}
-
-Six tie-free families suffice only for exact one-sided sign-flip
-\emph{resolution}; they do not establish power. The next licensed step is a
-consumed-development phase-intervention variance pilot after the canonical
-lens is fixed, followed by substantive SESOI review, an untouched bank, and
-exact power simulation.
-\eid{p4-qwen-mode-design-feasibility-dev-v1}
-
-The prospective pilot fixes the consumed 20-family/eight-cell grid, parse
-failures as incorrect, zero wrong-phase fires or selected/protected overlap,
-exact rank, and at most 1\% energy error. Planning uses the larger of sample
-SD and its 90\% bootstrap upper bound; the mean cannot set the SESOI.
-Mode v2 now passes; execution remains blocked on the canonical lens/hash and
-GPU-producer review. No intervention outcome was opened.
-\eid{p4-qwen-mode-variance-pilot-protocol-dev-v1}
-
-\section{Interpretation and next boundary}
-
-\begin{enumerate}
-\item The base checkpoint is near zero in all four primary cells.
-Bank-S direct and composed specificity is negative by 3.0 Think and is
-negative with intervals below zero in both seed-paired frames. The
-paired frame deltas include zero: development evidence of two-frame
-robustness, not a confirmatory invariance claim.
-\item The original capability cohorts are checkpoint-specific. Exact
-common-support pairing preserves the base-to-Think direct decrease in
-both frames, but neither design makes training assignment causal.
-\item At 3.1 Think, Bank-S direct remains negative in both frames.
-Bank-S composed is negative in the own frame but imprecise in the
-common frame. The positive composition contrast is precise in both
-frames and stable under the lens change.
-\item At sibling 3.1 Instruct, every Bank-S specificity and composition
-interval includes zero in both frames. The Think pattern does not
-transfer under those checkpoint-specific cohorts. On common support,
-paired direct and composition changes reverse in both frames; differing
-post-training objectives still preclude a causal mode claim.
-\item Coordinate choice affects Bank-F localization: 3.1 Think has a
-negative composed frame delta; 3.1 Instruct has a negative direct
-delta and positive composition delta with intervals excluding zero.
-\item The 3.1 composition result is a development finding, not a
-mechanism. Bank W is now outcome-blind, audited, and powered, but its
-Qwen capability gate alone has passed; both OLMo gates, joint support, and
-all interventions remain open.
-\item Qwen A250--A500 structural agreement is strong in the assay band,
-but both frozen selection thresholds and bridge rescue fail, forcing Branch B
-to draw-A $n=1000$; neither A250 nor A500 is canonical.
-\item Bank B v2 passes source verification but its .25-nat joint SESOI is
-unusably underpowered, and no allocation of its 40 families repairs it. The
-amended Qwen mode-v2 baseline passes; its pilot/SESOI/power/split and review
-remain methods blockers, not intervention findings.
-\item None of these known-bank estimates licenses ``lineage present''
-or ``lineage absent.''
-\end{enumerate}
-
-\enlargethispage{2\baselineskip}
-A5/common support, Qwen A500/successor gates, Bank B audits, Qwen Bank-W
-capability, and mode-v2 are banked. Branch B continues draw A to $n=1000$.
-A1000 is intentionally paused for VM handoff at exact recovery boundary
-$n=554$ (SHA-256 prefix \texttt{bf992067d6901231}); all rows through 554 are
-finite, about 22.1 compute hours remain, and this is neither evidence nor a
-canonical-lens decision. Next: resume through the frozen router, finish
-A1000/successor decision, run both OLMo Bank-W gates and joint support, review
-P4-P2 and Bank B, and obtain independent review/PI sign-off.
+The second audit is a same-mount repeat, not an independent Drive
+rematerialization. The pre-freeze inventory therefore remains honestly
+\texttt{NOT\_REVIEW\_READY} for freeze despite passing ancestry, policy, path,
+native-ID, and temporary-leak checks.
+
+\section{Terminal interpretation}
+
+\enlargethispage{1.5\baselineskip}
+
+Phase 4 ends at Terminal C and paper path B/C: a development/methods instrument
+study with no confirmatory primary. Its central useful result is negative but
+specific: averaged transport can converge while sparse selection and a
+load-bearing causal endpoint remain fit-sensitive. Negligible retained-prompt
+influence does not rescue the instrument.
+
+The next actions are external: fresh Drive rematerialization, independent
+review of the Q-L4/runtime/untouched-data and archival boundaries, and PI
+disposition. No freeze commit or tag is authorized by this handout.
 
 \end{document}

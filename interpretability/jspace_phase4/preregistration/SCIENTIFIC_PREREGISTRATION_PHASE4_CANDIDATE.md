@@ -2,99 +2,57 @@
 
 **CANDIDATE — NOT FROZEN — CONFIRMATORY AND REPLICATION OUTCOMES FORBIDDEN**
 
-Version: candidate 0.11, 2026-08-02.
-Governing plan: `jspace_lab_nextsteps_4_3.md` plus its accepted addendum.
+Version: candidate 0.12, Phase-4.4 terminal update, 2026-08-03.
+Governing plan: `jspace_lab_nextsteps_4_4.md` plus its accepted addendum.
 Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
 
-Candidate 0.11 is the prospective review candidate produced before any Phase
-4 confirmatory or replication intervention outcome. It retains the
-shared-family P4-P2 interaction and P4-P3 max-T endpoint, but resolves the
-registered Bank B infeasibility result: `BANK_B_PHASE4_DECISION.md` removes
-P4-P1 from the Phase 4 confirmatory family and preserves Bank B as an
-estimation-only future instrument-development resource. Its untouched
-confirmatory and replication partitions remain sealed. Independent review
-and PI approval of that reclassification remain pending.
+Candidate 0.12 records the result of the already prospective candidate 0.11
+contracts; it does not retroactively alter them. No Phase 4 confirmatory or
+replication intervention outcome was opened. The registered A1000 structural,
+functional, selection-margin, retained-prompt, and mechanical canonical events
+resolve to **Q-L4**, so no single sparse Qwen lens is nominated. The
+prompt-323 influence result is negligible under every frozen materiality
+criterion but is licensed only as a current-runtime sensitivity shape because
+historical distribution-content and compiled-kernel identities were not
+preserved. No A2000 branch exists.
 
-The official Qwen v2 baseline is live and passing. The prospective P4-P2
-variance protocol fixes the consumed 20-family subset, eight-cell grid,
-mechanical tolerances, and upper-SD rule. Before any pilot outcome, the
-golden-tested exact-profile GPU producer, independent-review packet, 0.20
-accuracy-point SESOI memo, and exact/Monte-Carlo family-sign-flip power ruler
-were implemented. The power ruler centers away the signed pilot mean and uses
-the registered conservative planning SD; it cannot authorize a bank or split.
-No P4-P2 intervention has run. Canonical-lens binding, independent producer
-review, variance calibration, power execution, untouched bank/split review,
-and PI approval remain open.
+The Q-L4 route keeps P4-P1 estimation-only and makes its orthogonal feasibility
+shot not applicable; it removes P4-P2 before its pilot or intervention; and it
+leaves P4-P3 blocked after registered OLMo admission and a fresh 16/20
+common-support replay. Thus the final Phase 4 Holm family contains zero opened
+tests. The frozen paper route is the no-primary development/methods path B/C.
+All untouched partitions remain sealed.
 
-Candidate 0.11 also preserves the registered Qwen draw-A n=500 fit and
-A250--A500 Branch-B decision. Draw A has completed under the exact frozen fit
-contract at n=1000, and the prospectively fixed A500--A1000 structural gate
-passes at conservative q50/q05 0.998702/0.998122; no canonical lens is yet
-nominated. Before the A1000 result,
-the A500--A1000 structural/functional and selection-margin contracts, the
-retained prompt-323 influence contract, and a conditional Q-L2 span-level
-estimand draft were committed prospectively with an unbound A1000 hash. None
-of those placeholders was evidence or a license to reinterpret the result.
-The registered A1000 hash is now bound without changing a threshold. The
-functional, selection-margin, influence, and canonical results remain unrun.
-
-Qwen and both OLMo models pass their independent Bank-W capability gates, but
-the frozen three-model capable-family intersection is only 16 against the
-required 20. The hash-pinned OLMo early bundle therefore reports
-`olmo_phase4_service_ready=false`; P4-P3 is blocked and no Bank-W intervention
-is authorized. The source bundle has been normalized and validated on the
-preparation branch, but its mainline import event remains queued after the
-A1000 branch resolves. `SIDE_TRACK_IMPORT_BUNDLE_CONTRACT.md` remains the only
-admission path; side jobs never write the Phase 4 registry.
-
-`DRIVEFS_DURABILITY_PLAN.md` requires two independent clean whole-registry
-passes. An exact-hash-gated A120 capacity recovery is prepared from unchanged
-registered inputs and algorithms, but cannot use the GPU while A1000 runs.
-The missing historical `state.json` contains irrecoverable timing fields and
-may not be synthesized; exact backup recovery or an externally approved
-append-only archival correction remains required. This document remains a
-candidate; no methods or development artifact is PI sign-off or authorization
-to open untouched outcomes.
+Gemma and OLMo releases are now admitted only at their source
+methods/development boundaries. Exact A120 capacity bytes were recovered. The
+historical A120--A250 operational state remains one append-only known deficit
+whose decision role is superseded by later live gates. Two same-mounted audits
+agree on 418/419 live references, one known and zero unexpected deficits; a
+fresh independent Drive rematerialization, real review, and PI approval remain
+release requirements. No methods or development artifact is PI sign-off.
 
 ## 1. Question and claim boundary
 
-Phase 4 asks what computation occupies the verbalizable channel, how
-post-training reroutes it, when controlled working-set load engages it, and
-when the fitted J transport is valid.
+Phase 4 asked what computation occupies the verbalizable channel, how
+post-training changes its organization, when controlled load engages it, and
+when fitted J transport is a stable causal instrument. The mechanical answer
+at this boundary is a methods result: averaged-operator convergence did not
+yield stable sparse selections and causal endpoints, so Q-L4 blocks a single
+Qwen instrument.
 
-The candidate confirmatory family is now conditional:
-
-- **P4-P2 — Qwen mode by phase.** The span-safe bridge/J damage on
-  deterministic normalized final-answer quality has a larger final-minus-
-  prefill contrast under official thinking-on than thinking-off. The primary
-  uses only prefill and final-answer phases, which exist in both modes;
-  thinking-on reasoning is a named secondary because the official
-  thinking-off template has no generated-reasoning cell.
-- **P4-P3 — controlled load engagement, currently blocked.** For the
-  capability-eligible subset
-  of the frozen OLMo-3.1 Think, OLMo-3.1 Instruct, and Qwen 3.6-27B model
-  set, the maximum studentized high-load dependence rejects under one joint
-  shared-family sign-flip distribution. Eligibility is fixed from baseline
-  capability before intervention outcomes are opened; no model is selected
-  from the intervention pattern. Named model slopes and the OLMo-pair/Qwen
-  interaction are secondary. The frozen three-model common-support gate fails
-  at 16/20, so this design cannot open an intervention under candidate 0.11.
-
-The former P4-P1 Qwen bridge-specific substitution endpoint is retained as a
-fully specified estimation-only future design. It contributes no Phase 4
-confirmatory p-value, and its untouched Bank B partitions stay sealed.
-If P4-P2 is infeasible after its consumed-family pilot, Phase 4 closes as a
-development/methods instrument result with no confirmatory primary rather
-than opening a blocked endpoint.
+P4-P1 remains a fully specified estimation-only future design. P4-P2 remains
+a prospective design artifact but is removed from this Phase 4 family before
+pilot execution. P4-P3 remains a prospective cross-model design but cannot
+open at 16/20 common support. None contributes a Phase 4 p-value.
 
 OLMo lineage is estimation-first. No adjacent-checkpoint contrast enters the
 primary family unless a pre-outcome development transition, a new untouched
 holdout, and a preregistration amendment are all present before outcomes.
 Phase 4 is not a rescue attempt for P3-P1.
 
-No primary result licenses “selective global workspace.” The default noun
-remains “knowledge-access channel.” Working-memory language requires P4-P3
-and its capability guard.
+No Phase 4 result licenses “selective global workspace,” external-state
+substitution, or a working-memory mechanism. The default noun remains
+“knowledge-access channel.”
 
 ## 2. Immutable imports and development data
 
@@ -457,11 +415,10 @@ so no version-3 Bank-W intervention is authorized.
 - Report equal-family and item-weighted estimates.
 - Confidence intervals are family-resampling percentile intervals unless
   explicitly labeled otherwise.
-- P4-P1 is removed and P4-P3 is capability-blocked. P4-P2 is the only
-  remaining conditional candidate primary. Its planning retains the more
-  conservative precommitted alpha `0.05/3`; no retired or blocked
-  multiplicity budget is reassigned to make power easier. The final Holm
-  family is reconciled before freeze and never after an untouched outcome.
+- P4-P1 is estimation-only, P4-P2 is removed by Q-L4, and P4-P3 is
+  capability-blocked. Zero primary tests opened and the realized Holm family
+  is empty. The precommitted planning alpha `0.05/3` was never relaxed or
+  reassigned to rescue another endpoint.
 - Family leave-one-out and first/canonical alias views are sensitivities, not
   alternative decision rulers.
 - The P4-P3 SESOI/power ruler is fixed by `p4-bank-w-power-dev-v1`.
@@ -499,43 +456,29 @@ transport gate, and regenerates final figures.
 
 ## 10. Items that must be fixed before PI sign-off
 
-- [x] Bank B family count, split hash, corrected metadata, independent
-      reverification, candidate power/SESOI ruler, feasibility envelope, and
-      prospective estimation-only reclassification, and complete one-shot
-      orthogonal-rescue protocol/producer; [ ] canonical-lens-bound geometry,
-      any independently reviewed consumed-development shot licensed by that
-      geometry, and PI approval of the final disposition. Untouched sides
-      remain sealed.
-- [x] P4-P1 is removed from the Phase 4 primary family; the mandated one-shot
-      consumed-development orthogonal feasibility assay cannot itself restore
-      the primary and can license only a separately powered future design.
-- [x] P4-P2 official templates, parser tolerance, primary quality metric,
-      common-support interaction statistic, prospective v2 token budget, and
-      outcome-blind design-feasibility envelope and conditional variance-pilot
-      protocol, fresh passing v2 model-backed correctness gate, pre-pilot
-      0.20-point SESOI candidate, executable review-gated GPU producer,
-      and exact/Monte-Carlo sign-flip power implementation; [ ] canonical-lens
-      decision, independent producer review, CUDA smoke and pilot execution,
-      independent SESOI review, power result, families, and split.
-- [x] Bank W task/load ladder, shortcut thresholds, exact capability protocol,
-      Holm-aware power, SESOI, v3 split, all three baseline capability gates,
-      and failed 16/20 joint-support decision; [ ] register the normalized
-      source bundle on mainline. P4-P3 is blocked and no intervention is
+- [x] A1000 integrity plus structural, functional, margin, retained-prompt,
+      and canonical transactions registered in prospective order.
+- [x] Canonical Q-L4 recorded; no lens nominated; P4-P2 and the Bank-B
+      orthogonal shot closed without pilot or intervention.
+- [x] OLMo capability, Bank-W joint replay, Gemma transport, and terminal OLMo
+      lineage admitted at their strict methods/development boundaries.
+- [x] P4-P3 mainline common support reproduced at 16/20; no intervention
       authorized.
-- [x] Exact directional decision wording for P4-P1, P4-P2, and P4-P3.
-- [x] Side-track import validation, whole-registry two-pass durability
-      contracts, exact-hash A120 capacity recovery tool, and state-correction
-      review packet; [ ] import the OLMo service bundle, exact-recover A120
-      capacity, obtain an external state-resolution decision, and obtain two
-      clean durability passes.
-- [ ] Development gates all pass without untouched-family outcomes.
-- [ ] Environment lock and model/lens/tokenizer manifests are complete.
-- [ ] Independent reviewer verifies no Phase 4 outcome leakage.
+- [x] Exact A120 capacity recovered; missing historical state classified by an
+      append-only permanent-deficit event without fabricating bytes.
+- [x] Environment and model/lens/tokenizer identities captured; full Phase 4
+      suite passes 284/284.
+- [x] No confirmatory or replication intervention outcome opened.
+- [ ] Fresh independent Drive rematerialization verifies all releasable live
+      outputs or independently accepts the one known permanent deficit.
+- [ ] Independent reviewer verifies protocol, untouched-data boundary, runtime
+      limitation, and archival disposition.
+- [ ] PI approves the no-primary methods/development disposition and freeze.
 
 ## 11. PI sign-off and freeze
 
 PI approval: **PENDING**
-Independent protocol review: **PENDING**
+Independent protocol review: **EXTERNAL SIGNATURE REQUIRED**
 Freeze commit: **NOT CREATED**
 Freeze tag: **NOT CREATED**
 

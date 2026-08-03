@@ -1,57 +1,51 @@
 # Paper conclusion skeleton
 
-Status: falsifiable targets for Phase 4 development; not publication claims.
-Each numbered entry contains one candidate conclusion sentence, followed by
-its present license and the experiment that can upgrade, narrow, or kill it.
+Status: falsifiable Phase 4 development conclusions, not publication claims.
 
-1. **Verbalizable causal channels exist in open approximately 30B-parameter models, and direction content—not dose—carries the effect.**
-   License: Phase 3 confirmatory plus held-out replication; span-safe causal
-   tail with lens-specific exact controls near zero. Pending falsifier or
-   upgrade: none currently identified; the completed seed-ensemble audit
-   bounds control-realization sensitivity.
+1. **Verbalizable causal channels exist in open approximately 30B-parameter
+   models, and direction content—not dose—carries the effect.** License: Phase
+   3 confirmatory plus held-out replication, with span-safe exact controls.
 
-2. **What occupies the channel is set by training, not architecture alone.**
-   License: Phase 4 development trajectory, robust to own/common lens frame;
-   the all-four and pairwise common-cohort recompute now survives fact pairing.
-   Pending falsifier or upgrade: Bank W and any documented intermediate
-   checkpoint can distinguish training-stage organization from residual
-   accessibility or cohort effects.
+2. **What occupies the channel is shaped by training, not architecture
+   alone.** License: Phase 4 OLMo development trajectory in own/common lens
+   frames and on common cohorts. This remains a development statement rather
+   than a cross-model causal primary.
 
-3. **On Qwen the channel carries composed parametric knowledge through a bridge-consumable route.**
-   License: Phase 3 confirmatory P3-P3 protection rescue (+0.431 nats), with
-   Phase 3 development semantic-swap support. Candidate 0.11 keeps the stronger
-   bridge-versus-answer-direction claim estimation-only because the verified
-   Bank B design is underpowered. Pending falsifier or upgrade: the single
-   consumed-development orthogonal feasibility shot can license only a newly
-   authored, powered future design; it cannot restore P4-P1 to the current
-   confirmatory family. Held-out replication remains owed either way.
+3. **On Qwen the channel carries composed parametric knowledge through a
+   bridge-consumable route.** License: Phase 3 confirmatory protection rescue
+   (+0.431 nat) and development semantic-swap support. The stronger
+   bridge-versus-answer-direction contrast remains estimation-only because
+   Bank B is underpowered; Q-L4 makes the orthogonal feasibility shot not
+   applicable in this block.
 
-4. **Reasoning post-training installs external-state substitution: composed in-context state reduces reliance on the internal channel, and only on the tested Think checkpoints.**
-   License: Phase 4 development Bank-S common-cohort trajectory; the direct
-   and composition components are CI-clean on the 3.1 Think-to-Instruct edge
-   while the 3.0-to-3.1 Think edge remains unresolved. Pending falsifier or
-   upgrade: Bank W's load-by-derivation-by-redundancy factorial decides the
-   noun and can reduce this to an external-state redundancy pattern.
+4. **The tested OLMo trajectory is consistent with a change in how training
+   organizes capacity recruitment and accessible state, but it does not yet
+   identify external-state substitution.** License: imported OLMo
+   methods/development O2 and O3 records. The direct and composition components
+   are clean on the tested 3.1 Think-to-Instruct edge, while the earlier edge
+   and load interpretation remain unresolved. Bank W's load intervention is
+   not lawfully runnable as a cross-model Phase 4 primary at current capability
+   support; it routes to Phase 5B as per-model estimation.
 
-5. **The lens's linear-transport premise is model-dependent and must be gated separately at every checkpoint.**
-   License: pilot/methods-tier Gemma battery with an OLMo positive control.
-   Pending falsifier or upgrade: the later exact-JVP ladder with the
-   intercept-plus-slope-in-epsilon fit closes the transport claim.
+5. **Linear transport must be gated separately at every checkpoint and
+   backend.** License: Gemma side-development-import methods blocker plus OLMo
+   positive control. Gemma selected-slot tangents are bit-identical, but the
+   frozen all-slot relative-error gate fails (0.002458 versus 1e-5), so the
+   import licenses no Gemma mechanism, nondifferentiability, or intervention
+   conclusion. OLMo imports license only their recorded development/methods
+   trajectory statements.
 
-6. **Structural convergence of the averaged transport operator does not guarantee stability of sparse selections or of all causal endpoints; instrument invariance must be tested at the level of the scientific conclusion.**
-   License: Phase 4 development A250-to-A500 structural and functional gates,
-   plus the registered A500-to-A1000 structural, functional, and
-   selection-margin successors. Conservative structural task q50/q05 rise to
-   0.998702/0.998122, yet selected-ID Jaccard (0.538462), normalized projector
-   overlap (0.709818), and bridge rescue (-0.294028-nat A500-minus-A1000
-   difference) fail. The all-position audit places 15,536/17,381 positions in
-   the near-tie stratum, but even its stable core has median ID Jaccard only
-   0.666667. This strengthens the warning beyond literal tied-row identity and
-   emits provisional Q-L4. Pending falsifier or upgrade: the required
-   retained-prompt stage is blocked by a reproducible backward-runtime
-   identity failure, so no canonical decision currently licenses a stronger
-   instrument claim.
+6. **Structural convergence of an averaged transport operator does not
+   guarantee sparse-selection or causal-endpoint invariance.** License: the
+   registered A500--A1000 structural, functional, margin, retained-prompt, and
+   canonical events. Structural task q50/q05 are 0.998702/0.998122, while ID
+   Jaccard 0.538462, projector overlap 0.709818, and bridge-rescue difference
+   -0.294028 nat fail. Prompt-323 influence is negligible under every frozen
+   materiality criterion and therefore does not rescue the instrument. The
+   mechanical result is Q-L4: no single canonical sparse Qwen lens and no
+   Qwen Phase 4 primary. The retained-prompt shape is explicitly limited to
+   the exact-pinned current runtime; historical-runtime reproducibility was
+   not established.
 
-Rule: a failed upgrading experiment replaces its candidate with the exact
-downgrade already frozen in the Phase 4 branch tables; it is never silently
-reworded after outcomes.
+Rule: a failed upgrading experiment takes the exact frozen downgrade; it is
+never silently reworded after outcomes.

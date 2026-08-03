@@ -1,49 +1,53 @@
-# IN PROGRESS — Phase 4.4 decision block, VM14
+# IN PROGRESS — Phase 4.4 closeout, VM14
 
-Updated: 2026-08-03 15:58 UTC. Phase 4 remains development-only and is not frozen.
+Updated: 2026-08-03 16:55 UTC. Phase 4 remains development-only and is not
+frozen.
 
 ## Recoverable boundary
 
-- Source parent: `901fb4fc7578a913088c7947a2e6240f7fc45aeb` from clean `interp_jspace_part2`.
-- Working branch: `interp_jspace_phase4_4`; every scientific registry commit through `0ce3519b3abfc67ccfb3335e6e371b8a689a0fb5` and the runtime-identity boundary commit `22f6801a750374fa6735420029b57c35471fa3f8` are pushed.
-- Terminal-B pre-commitment: pushed at `6f23a29896e61cc367ed884a2d840f0e08857f40`, before functional execution.
-- M0 tests: 279/279 passed under the frozen package path before execution; after the tied-top-k instrumentation repair the expanded full suite passed 282/282.
-- M0 A1000 tensor audit: pass; lens `6e48c773...f6bd6`, checkpoint `fd5a4ae...bf20`, header `b0cf4c8d...6d2a`, 63 exact finite layers.
-- M0 Qwen snapshot/runtime: pass; exact revision `6a9e13bd...`, 23 files, 48 fused bindings. The model was downloaded directly from Hugging Face rather than copied from Drive.
-- External published lens: exact hash `1718c8c...11e1`.
-- M0 fresh-VM durability: 230/232 verified, with exactly two known historical deficits and zero unexpected failure.
-- Fresh local registered-output backups cover the A1000 fit (3 outputs), A500–A1000 structural event (6), functional event (18), and selection-margin event (34).
+- Working branch: `interp_jspace_phase4_4`, pushed through durability commit
+  `411b3cbf10dc3ed6b97a9baed61ede65d9cd1fe1` before paper closeout.
+- Parent: clean `interp_jspace_part2` commit `901fb4fc7578a913088c7947a2e6240f7fc45aeb`.
+- Terminal-B precommit: `6f23a298...`, before functional execution.
+- Full Phase 4 suite: 284/284 after the prospective runtime amendment.
+- GPU work is complete; no model process is active.
 
-## Completed sealed stages
+## Completed scientific queue
 
-Functional evidence `p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1` is registered, locally backed up, committed at `603bbcec271c8a5a0b7ce6f519a4845988e959b3`, and pushed. Its 18-output backup is 303,287,915 bytes with manifest SHA-256 `988844d3...35e7`. A500–A1000 selected-ID Jaccard is 0.538462 and normalized projector overlap is 0.709818, so both selection gates fail. Bridge-rescue difference is -0.294028 nat and also fails; occupancy, centered excess, span-safe specificity, tail rate, G4, and bridge preference pass. The event emits provisional branch candidate Q-L4 and explicitly nominates no canonical lens.
+- Functional A500--A1000: registered `603bbcec...`; provisional Q-L4.
+- Selection margin: registered `0ce3519b...`; 17,381/17,381 positions retained.
+- Prospective prompt-323 runtime amendment: `92831d3...`; historical mismatch
+  retained as a non-gating reproducibility limitation.
+- Prompt-323 influence: registered `01236a3...`; current-runtime repeat gate
+  passes and all A500/A1000 materiality metrics are negligible.
+- Canonical decision: registered `28e25fe...`; **Q-L4, no canonical sparse
+  lens**. P4-P2 and the Bank-B orthogonal shot are not applicable; M3/M4 did
+  not open.
+- M2 imports/replay: OLMo early `bcf537e...`, Bank W joint replay
+  `fddab68...`, Gemma `6ac62d2...`, OLMo final `a8e218c...`. P4-P3 remains
+  blocked at 16/20 common-capable families.
+- Optional M5 did not run because no retained-extremes producer/configuration
+  was prospectively frozen before Q-L4.
 
-Selection-margin evidence `p4-qwen-selection-margin-a500-a1000-dev-v1` is registered, locally backed up, committed at `0ce3519b3abfc67ccfb3335e6e371b8a689a0fb5`, and pushed. Its 34-output backup is 14,411,038 bytes with manifest SHA-256 `12e76809...f451`. All 17,381 positions and all strata remain in the functional decision: 15,536 are `near_tie`, 1,845 `stable_core`, and zero rank-deficient. The audit exactly reconstructs the registered selection geometry and retains Q-L4 as the functional branch candidate. Its 52,261 behavior-blind lexical rows marked for manual review were not manually adjudicated because that sheet is nondecisional.
+## Durability boundary
 
-The registered figures `p4f26` and `p4f27` and their PDFs are durable on Drive and copied byte-for-byte into `reports/figures/`; both were visually checked. The living Markdown synthesis is updated. The compiled handout TeX/PDF remains at its governed pre-canonical boundary and must not be regenerated while the canonical event is absent.
+- Exact A120 capacity artifact recovered at registered SHA-256
+  `6b0399df...c651b6f` and backed up.
+- Missing historical A120--A250 state classified append-only at
+  `e282879...` as a permanent known deficit; external signatures remain
+  required.
+- Two same-mounted passes agree: 78 rows, 61 live events, 419 references, 418
+  verified, one known deficit, zero unexpected deficits, zero pin conflicts.
+- Pre-freeze inventory payload `0fbd2d4d...` is mechanically
+  `NOT_REVIEW_READY` solely because the independent fresh-remount proof cannot
+  be supplied by this mounted VM.
 
-## Prompt-323 runtime-identity hard stop
+## Remaining closeout only
 
-The next queue stage stopped before writing any contribution or layer result. The frozen prompt-323 norm is 173.345 with absolute tolerance 0.5; two clean current processes returned 181.826310 and 181.785516. Replaying prompt 322 first returned 59.545969 versus historical 52.150 and left prompt 323 at 181.854247.
+Update the paper/TeX and review packet, run tests and document checks, commit
+and push, mirror the closeout documents to Drive, then acquire the serialized
+Drive integration lock and merge `interp_jspace_phase4_4` into the current
+remote `interp_jspace_part2` with `--no-ff`. Do not freeze/tag or self-sign.
 
-The registered prompt-112 control proves this is a broader backward-semantics mismatch. Its fit log is 159.952 and its registered clean recompute is 160.070954, whereas two clean current processes returned 55.544060 and 55.587600. The current repeats agree within 0.044, all results are finite, and every maximum is at layer 0. Nominal GPU, driver, CUDA, Torch, Transformers, Triton, FLA, model, corpus, binding, and `jlens` identities match the historical manifests; historical distribution-content and compiled-kernel/cache identities were not preserved.
-
-No influence event exists, no prompt contribution exists, no canonical event exists, and Q-L4 is not canonical. The two identical null states have `contribution: null`, zero completed layers, 1,146 bytes, and SHA-256 `4eef3124...239eb3`. They are preserved under distinct blocked Drive and local backup directories. Exact values, content inventories, hashes, paths, and the inference boundary are in `PHASE4_PART4_PROMPT323_RUNTIME_BLOCK.md` and `.json`; all scripts and logs are mirrored under Drive `diagnostics/prompt323_runtime_identity_20260803/`.
-
-## Authorized prospective continuation
-
-At 2026-08-03 15:51 UTC the PI direction authorized amending the runtime and proceeding when the mismatch is noncritical to the result, while retaining historical-runtime restoration if it is critical. The frozen canonical producer makes the criticality answer mechanical: Q-L1--Q-L5 is recomputed solely from the structural/functional gates; the prompt-323 label is range-checked and recorded but cannot change the branch or action. The already registered gates mechanically determine Q-L4. Historical-runtime restoration is therefore optional tightening for a stronger reproducibility claim, not a Phase 4 branch blocker.
-
-The prospective amendment is written at `preregistration/PROMPT323_RUNTIME_CONTRACT_AMENDMENT.md` (SHA-256 `bac298d5...dac2b`) before any contribution or influence outcome. It preserves the historical 173.345 mismatch as a non-gating limitation; exact-locks current Torch/Transformers/Triton/FLA distribution contents; preselects computation 1 as the sole estimator; discards computation 2 after a same-prompt repeatability check; and retains the unchanged 0.5 norm tolerance only as a technical within-current-runtime gate. Banks, model, endpoints, lenses, samples, materiality thresholds, SESOIs, wording, and retention are unchanged. There is no A2000.
-
-The amended producer refuses content drift, nonfinite tensors, sequence/valid-token drift, shape drift, or a maximum per-layer normalized-norm repeat difference above 0.5. A failure leaves the contribution null and routes to historical-runtime reconstruction. A pass permits only a `current-runtime-sensitivity-shape` event and must prominently disclaim historical-runtime reproducibility. The exact inventory implementation reproduces all five recorded current hashes. The expanded full Phase 4 suite passes 284/284.
-
-Next transaction: commit and push this pre-outcome amendment, mirror it to Drive, start from the fresh absent canonical output directory, and run the sealed queue only through prompt-323 influence. Inspect and report the shape, then bank/back up/commit/push the influence event before opening the unchanged canonical producer. The queue lock is free and no model process is active.
-
-## Hard boundaries
-
-- Queue order remains functional → selection margin → prompt-323 influence → canonical Q-L decision. The first two are complete; the third is prospectively amended and ready but has not run; the fourth has never opened.
-- M2 side admission requires the registered canonical event and is not authorized. M3/M4 remain closed.
-- P4-P1 stays estimation-only; P4-P3 stays blocked at 16/20.
-- P4-P2 is the sole conditional primary and cannot run without a Q-L1/Q-L2 canonical event and actual independent producer review.
-- Do not self-sign review or PI fields, do not open confirmatory/replication outcomes, do not fit A2000, and do not add a bank, model, endpoint, or SESOI change.
+No confirmatory or replication intervention outcome exists. No A2000, new
+bank, model, endpoint, or SESOI change exists.

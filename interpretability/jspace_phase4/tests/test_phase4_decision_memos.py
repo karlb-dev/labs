@@ -31,23 +31,24 @@ def test_bank_b_decision_keeps_untouched_partitions_sealed():
     assert "3,562 independent families" in text
 
 
-def test_candidate_011_integrates_decisions_without_claiming_a_freeze():
+def test_candidate_012_records_terminal_branch_without_claiming_a_freeze():
     text = (
         ROOT / "preregistration"
         / "SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md"
     ).read_text()
     normalized = " ".join(text.split())
-    assert "Version: candidate 0.11" in normalized
+    assert "Version: candidate 0.12" in normalized
     assert "CANDIDATE — NOT FROZEN" in normalized
-    assert "P4-P1 is removed from the Phase 4 primary family" in normalized
-    assert "confirmatory and replication sides remain sealed" in normalized
-    assert "P4-P1 is removed and P4-P3 is capability-blocked" in normalized
-    assert "precommitted alpha `0.05/3`" in normalized
-    assert "No branch may be selected while" in normalized
-    assert "the A1000 hash is a placeholder" in normalized
-    assert "P4-P3 is blocked" in normalized
-    assert "only remaining conditional candidate primary" in normalized
-    assert "one-shot consumed-development orthogonal" in normalized
+    assert "Q-L4" in normalized
+    assert "no single sparse Qwen lens is nominated" in normalized
+    assert "P4-P1 estimation-only" in normalized
+    assert "removes P4-P2" in normalized
+    assert "P4-P3 blocked" in normalized
+    assert "zero opened tests" in normalized
+    assert "untouched partitions remain sealed" in normalized
+    assert "planning alpha `0.05/3`" in normalized
+    assert "No A2000 branch exists" in normalized
+    assert "fresh independent Drive rematerialization" in normalized
 
 
 def test_freeze_ledger_is_explicitly_unfrozen_and_routes_all_primaries():
@@ -56,19 +57,15 @@ def test_freeze_ledger_is_explicitly_unfrozen_and_routes_all_primaries():
     ).read_text()
     normalized = " ".join(text.split())
     assert "CANDIDATE LEDGER — NOT FROZEN" in normalized
-    assert "P4-P1" in text and "REMOVED FROM PRIMARY" in text
-    assert "P4-P2" in text and "ONLY CONDITIONAL CANDIDATE PRIMARY" in text
+    assert "P4-P1" in text and "ESTIMATION-ONLY" in text
+    assert "P4-P2" in text and "REMOVED / BLOCKED BY Q-L4" in text
     assert "P4-P3" in text and "BLOCKED" in text
-    accounting = re.search(
-        r"Live-output accounting.*?RED:\s*(\d+)/(\d+)",
-        normalized,
-    )
-    assert accounting is not None
-    verified, referenced = map(int, accounting.groups())
-    assert referenced - verified == 2
-    assert "A120 capacity reconstruction" in normalized
-    assert "Historical `state.json`" in normalized
-    assert "The implementation agent has not and will not self-sign" in text
+    assert "418/419" in normalized
+    assert "one known deficit" in normalized
+    assert "zero unexpected deficits" in normalized
+    assert "Exact A120 capacity" in normalized and "RECOVERED" in normalized
+    assert "Historical A120--A250 `state.json`" in normalized
+    assert "The implementation agent has not self-signed" in text
     assert "Freeze commit / tag" in text and "NOT CREATED" in text
 
 
@@ -78,25 +75,25 @@ def test_methods_record_and_paper_skeleton_include_invariance_boundary():
     ).read_text()
     skeleton = (ROOT / "paper" / "PAPER_CONCLUSION_SKELETON.md").read_text()
     assert "Operator convergence is not instrument invariance" in record
-    assert "A1000 is the last automatic fit-size escalation" in record
+    assert "A1000 is the terminal automatic fit size" in record
     assert "P4-P3 is capability-blocked" in record
-    assert "6. **Structural convergence of the averaged transport operator" \
+    assert "6. **Structural convergence of an averaged transport operator" \
         in skeleton
-    assert "instrument invariance must be tested" in skeleton
+    assert "mechanical result is Q-L4" in skeleton
 
 
-def test_parallel_import_inventory_keeps_validation_distinct_from_admission():
+def test_parallel_import_inventory_records_admission_without_tier_upgrade():
     text = (ROOT / "manifests" / "parallel_import_inventory.md").read_text()
     normalized = " ".join(text.split())
     assert "p4-import-olmo-bank-w-capability-v1" in text
     assert "p4-import-gemma-transport-v1" in text
     assert "p4-import-olmo-lineage-final-v1" in text
-    assert "VALIDATED / NOT REGISTERED" in text
-    assert "The terminal source event is methods-only" in normalized
-    assert "no-identifiable-O5-estimand disposition" in text
-    assert "DriveFS uploads are still rate-limited" in text
-    assert "methods blocker" in text
-    assert "never a license" in text
+    assert "Registered" in text
+    assert "side-development-import" in normalized
+    assert "O5 has no identifiable estimand" in text
+    assert "contains no native `ol-*` or `gm-*` evidence IDs" in text
+    assert "Methods blocker" in text
+    assert "do not" in text and "upgrade tiers" in text
 
 
 def test_a120_state_search_records_negative_evidence_without_synthesis():

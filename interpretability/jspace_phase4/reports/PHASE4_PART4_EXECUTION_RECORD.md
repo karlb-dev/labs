@@ -2,99 +2,140 @@
 
 **DEVELOPMENT-ONLY DECISION BLOCK — NOT A FREEZE RECORD**
 
-## Launch and pre-commitment
+State date: 2026-08-03. This record stops at the assembled freeze-review
+packet. No independent reviewer or PI field is self-signed, and no freeze
+commit or tag is created.
 
-The isolated `interp_jspace_phase4_4` branch was created at 2026-08-03 02:17:30 UTC from clean, freshly pulled `interp_jspace_part2` commit `901fb4fc7578a913088c7947a2e6240f7fc45aeb`. The required two-paragraph Terminal-B success-state commitment was committed and pushed at `6f23a29896e61cc367ed884a2d840f0e08857f40` before any A1000 functional outcome was opened.
+## Launch and Terminal-B commitment
 
-## M0 boundary
+The isolated `interp_jspace_phase4_4` branch was created from clean, freshly
+pulled `interp_jspace_part2` commit
+`901fb4fc7578a913088c7947a2e6240f7fc45aeb`. The required two-paragraph
+Terminal-B success-state commitment was committed and pushed at
+`6f23a29896e61cc367ed884a2d840f0e08857f40`, before the A1000 functional
+outcome was opened.
 
-Two bootstrap test invocations failed collection: the literal subdirectory command did not expose the sibling Phase 3 and part2 packages, and the first attempted `PYTHONPATH` correction was rooted one directory too high. The corrected invocation used the frozen wrapper's three explicit package roots and passed 279/279 tests; no source was changed to obtain that result. Exact FLA 0.5.2 distributions and `jlens` 0.1.0 at commit `581d398613e5602a5af361e1c34d3a92ea82ba8e` were installed without upgrading the already matching Torch, Transformers, or Triton versions.
+## M0 and sealed A1000 queue
 
-The pinned Qwen snapshot was downloaded directly from Hugging Face at revision `6a9e13bd6fc8f0983b9b99948120bc37f49c13e9`. All 23 files, 55,563,006,400 weight bytes, inventory hash `c799b1249667b815a6f78aa85963f30f16d7146a9e04ea7aa0c8f69ef25e8644`, and 48 fused linear-attention module bindings passed. The external published lens was materialized at revision `a4114d7752d11eb546e6cf372213d7e75526d3a1` and matched SHA-256 `1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1`.
+The corrected frozen-package invocation passed 279/279 tests before
+execution. The pinned Qwen snapshot at revision `6a9e13bd...25e8644`, all 23
+files and 55,563,006,400 weight bytes, all 48 fused linear-attention bindings,
+the external published lens at `a4114d7...`, and the registered A1000 lens,
+checkpoint, and header passed exact identity and tensor audits. The model was
+downloaded directly from Hugging Face rather than copied from Drive.
 
-The fresh-VM tensor pass verified the registered A1000 lens, checkpoint, and header hashes; all 63 source layers; target layer 63; 5,120-by-5,120 fp32/fp16 tensors; full finiteness; and bit-exact quantized checkpoint-mean equality. The whole-registry pass verified 230 of 232 live output references with no unexpected failure or path-pin conflict. The missing historical `state.json` and `capacity_reconstructions_a120.pt` are the only failures and remain explicitly red.
+The functional observer initially stopped before evidence because a diagnostic
+`topk(32)[:10]` did not reproduce the inherited `topk(10)` at an exact score
+tie. The repair retained an exact separate top-10 replay and allowed prefix-ID
+difference only at the tied boundary. The full suite then passed 282/282; the
+partial incompatible state was retained only as an unregistered incident
+artifact.
 
-The sealed wrapper was then stopped at the already registered structural boundary without opening the functional gate. It freshly reverified the A1000 binding and structural event and recreated exact local backups for all three fit outputs and all six structural outputs. Their backup-manifest hashes are `cdaae0129c6f2ff55650481bf74713ccfb0af61039ceb4bf8d0dcc0a6ab5397c` and `5bff1706c7684c38d8f103a2d725059a9a1bca8f0b8aaad3a528047390c57e09`, respectively. The repository remained clean and the functional event remained the first incomplete queue stage.
+The repaired functional transaction registered
+`p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1` at
+`603bbcec...`. Structural q50/q05 are 0.998702/0.998122, but selected-ID
+Jaccard 0.538462, normalized projector overlap 0.709818, and bridge-rescue
+difference -0.294028 nat fail their frozen gates. The subsequent registered
+selection-margin audit at `0ce3519b...` retained all 17,381 positions: 15,536
+near-tie, 1,845 stable-core, and zero rank-deficient. It exactly reconstructed
+the intervention and did not rescue sparse-selection stability.
 
-## Functional observer hard stop and repair
+## Prospective runtime amendment and retained-prompt result
 
-The functional stage subsequently hard-stopped before its first A500 row because the selection-margin observer used `topk(32)[:10]` as an assumed replay of the inherited `topk(10)`. The real boundary contained an exact score tie, so Torch returned different but equally scoring IDs for the two requested k values. A diagnostic replay proved that a separate observer-side `topk(10)` exactly matched the unchanged parent intervention. No functional evidence event was registered.
+The first prompt-323 attempt stopped before writing evidence because current
+runtime Jacobian norms disagreed with the historical fit-log control. Two
+current prompt-323 evaluations were mutually stable but differed from 173.345;
+the registered prompt-112 control independently showed a larger historical
+versus current mismatch. Nominal software versions, model, corpus, bindings,
+and lens revision matched, while the historical record lacked distribution-
+content and compiled-kernel identities. No cause beyond that provenance limit
+is asserted.
 
-The repair separates top-32 diagnostics from the exact top-10 replay and retains hard ID-and-score equality against the parent. The successor validator admits different top-32-prefix IDs only at an exact k/k+1 score tie and otherwise retains all original checks. The incompatible 57 MB partial state was preserved on Drive and locally under the paths and hashes recorded in `PHASE4_PART4_FUNCTIONAL_INSTRUMENTATION_INCIDENT.md`; it was not migrated across code commits. The focused suite passed 27/27 and the full Phase 4 suite passed 282/282 after the repair.
+PI direction authorized a prospective amendment because retained-prompt
+influence cannot change Q-L1--Q-L5. Before any new influence output, the exact
+current distribution contents, primary computation, repeatability gate, and
+historical-runtime limitation were fixed in
+`PROMPT323_RUNTIME_CONTRACT_AMENDMENT.md`, committed and pushed at
+`92831d31e37e76a50b573a99c9f19bf55005531c`. Banks, model, endpoints,
+lenses, samples, thresholds, SESOIs, wording, and retention were unchanged.
 
-## Registered functional and margin transactions
+The amended transaction registered
+`p4-qwen-lens-influence-prompt323-dev-v1` at
+`01236a3f9246847ea9c58d06adaf7479c846661e`. Its 71 outputs and
+6,610,029,624-byte local backup verify. Primary and discarded-repeat maxima
+are 181.776618 and 181.777423; worst per-layer normalized-norm repeat
+difference is 0.004572 against the unchanged 0.5 current-runtime ceiling. All
+tensors are finite with sequence length 128 and 111 valid tokens. Every frozen
+materiality metric is negligible: the closest is more than 3,800-fold below
+its threshold. Influence is largest early and essentially zero through assay
+layers 20--44. Figure `p4f29` was copied byte-for-byte into the report and
+visually checked. This is a current-runtime sensitivity-shape result; it does
+not establish historical-runtime reproducibility.
 
-The repaired functional stage restarted from scratch and registered
-`p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1`. Its event was
-banked and pushed at `603bbcec271c8a5a0b7ce6f519a4845988e959b3`; all 18 registered
-outputs were copied into a 303,287,915-byte local backup whose manifest has
-SHA-256 `988844d347c456919864bdffd0d72c35eb71622fbab653674db0e065aeba35e7`.
-The structural q50/q05 gates reverified at 0.998702/0.998122. A500–A1000
-median selected-ID Jaccard (0.538462), normalized projector overlap
-(0.709818), and bridge-rescue difference (-0.294028 nat) fail their frozen
-gates. Occupancy, corrected capacity, span-safe specificity, tail rate, G4,
-and bridge preference pass. The functional producer therefore emits
-provisional branch candidate Q-L4 but explicitly leaves the branch pending
-the separate margin and influence inputs and nominates no lens.
+## Mechanical Q-L branch
 
-The next transaction registered
-`p4-qwen-selection-margin-a500-a1000-dev-v1` and was banked and pushed at
-`0ce3519b3abfc67ccfb3335e6e371b8a689a0fb5`. All 34 outputs are present in a
-14,411,038-byte local backup whose manifest has SHA-256
-`12e76809602688529a8fd461ee3f3d3fe4f3050bf8cef46600568114c4b1f451`.
-The audit retained all 17,381 functional positions: 15,536 near-tie, 1,845
-stable-core, and zero rank-deficient. It exactly reconstructs the captured
-top-k intervention and registered geometry. The blinded lexical sheet marks
-52,261 rows for optional behavior-blind manual review; no review was performed
-because that sheet is nondecisional. Q-L4 remains a candidate, not a canonical
-event.
+The unchanged canonical producer registered
+`p4-qwen-canonical-lens-decision-a1000-dev-v1` at
+`28e25feb6acff1d247881ed9cc231060b12dd496`. It binds the structural result
+`eaf8a63e...`, functional result `7625ae1f...`, functional manifest
+`cddb0502...`, selection-margin result `8a85a715...`, and prompt-323 result
+`a5359b02...`. The canonical result is Q-L4: no single sparse Qwen lens is
+nominated. P4-P2 is therefore blocked by decision-sensitive causal endpoints.
+The Bank-B orthogonal shot is also not applicable. No P4-P2 pilot,
+confirmatory intervention, replication intervention, M3, or M4 ran.
 
-The registered `p4f26` and `p4f27` PNG/PDF pairs were copied byte-for-byte
-from Drive into the report figure tree and visually checked. Their registered
-hashes remain unchanged.
+## M2 admit-then-cite queue
 
-## Prompt-323 runtime-identity hard stop
+The post-canonical queue ran in the frozen transactional order:
 
-The queue then opened the frozen prompt-323 influence stage from clean commit
-`0ce3519b3abfc67ccfb3335e6e371b8a689a0fb5`. Its first full backward pass
-returned `max ||J|| / sqrt(d) = 181.826310` against the frozen fit-log value
-173.345 and prospective absolute tolerance 0.5. The producer stopped before
-writing a contribution, layer metric, figure, result envelope, or registry
-event. Consequently the canonical producer never opened.
+1. OLMo early Bank-W capability import
+   `p4-import-olmo-bank-w-capability-v1` (`bcf537e...`).
+2. Fresh registered mainline replay
+   `p4-bank-w-capability-joint-imported-dev-v1` (`fddab68...`, producer
+   materialized at `922ef98...`). Exact common-capable support is 16/20, so
+   P4-P3 remains blocked.
+3. Gemma terminal transport import `p4-import-gemma-transport-v1`
+   (`6ac62d2...`), source `b0425a4...`, at side-development-import tier. It is
+   a methods blocker: selected-slot tangents are bit-identical, but the frozen
+   all-slot relative-error criterion fails (0.002458 versus 1e-5). It licenses
+   no mechanism or intervention claim.
+4. OLMo terminal lineage import `p4-import-olmo-lineage-final-v1`
+   (`a8e218c...`), source `a28cdd5...`, at side-development-import tier. It
+   preserves the 16/20 service block, descriptive O2/O3 development patterns,
+   and the no-identifiable-O5-estimand disposition; it opens no intervention.
 
-A second clean prompt-323 process returned 181.785516. A replay that evaluated
-prompt 322 immediately before prompt 323 returned 59.545969 versus historical
-52.150 and left prompt 323 at 181.854247. Two independent current-runtime
-evaluations of the already registered prompt-112 control returned 55.544060
-and 55.587600, whereas its fit-log value is 159.952 and its registered clean
-recompute is 160.070954. Each current pair agrees within 0.044, all values are
-finite, and all maxima are at layer 0. The mismatch is therefore stable on the
-current VM and broader than prompt 323 or log rounding.
+Bank W's load intervention is not lawfully runnable as a cross-model Phase 4
+primary at current capability support; it routes to Phase 5B as per-model
+estimation.
 
-The historical and current records match nominal GPU, driver, CUDA, Torch,
-Transformers, Triton, FLA, fused bindings, exact model/corpus, and `jlens`
-revision. The historical record did not preserve installed-distribution
-content, wheel/build, or compiled Triton/FLA cache hashes. The current
-distribution contents are now fully inventoried. No single unrecorded surface
-is asserted as the cause.
+No native side-study event was created in the Phase 4 registry. M5 was not run:
+the optional retained-extremes producer/configuration had not been frozen
+prospectively before Q-L4 and may not be authored after the branch result.
 
-Both failed states have `contribution: null`, zero completed layers, and the
-same 1,146-byte SHA-256 `4eef3124...239eb3`. Each is preserved under a distinct
-Drive and local unregistered-backup name. The queue lock is free, the fresh
-canonical output path is absent, and no GPU process remains. The exact record
-is `PHASE4_PART4_PROMPT323_RUNTIME_BLOCK.md` plus its machine-readable JSON.
+## Durability and pre-freeze boundary
 
-## Blocked transactional order
+Exact A120 capacity recovery reproduced registered SHA-256
+`6b0399df...c651b6f` and was backed up locally. The historical A120--A250
+operational `state.json` remains irrecoverable. The append-only methods event
+`p4-qwen-a120-a250-state-permanent-deficit-v1` at `e282879...` classifies the
+source as partially durable with its gate role superseded by the later live
+A250--A500 and A500--A1000 functional events. Its external-review and PI
+fields remain explicitly unsigned.
 
-1. Obtain independent scientific/governance review; do not rerun blindly or
-   alter the frozen tolerance.
-2. Either reconstruct a historically content-pinned backward runtime or
-   approve a prospective runtime-contract amendment before any fresh attempt.
-3. Only a passing fresh influence transaction may be registered, backed up,
-   committed, and pushed.
-4. Only after that live event exists may the unchanged mechanical canonical
-   producer open.
-5. M2 side admission, M3, and M4 remain closed until the registered canonical
-   branch actually licenses them.
+Two same-mounted durability passes agree exactly: 78 registry rows, 61 live
+events, 419 live output references, 418 verified, one known historical state
+deficit, zero unexpected deficits, and zero pin conflicts. Pass 1 is
+`38759c9d...`; pass 2 is `7643abae...`; the registry hash is
+`fbb84008...`. The second pass is a same-mount repeat, not an independent
+Drive rematerialization.
 
-No confirmatory or replication intervention outcome exists. No A2000, new bank, new model, new endpoint, or SESOI change is authorized.
+The required pre-freeze inventory payload is
+`0fbd2d4dd4a61adffb721f2959d8fee138be9f03ea4c5856bb91c4b980a00736`.
+It finds all commits reachable, exact policy, no native side IDs, no path
+violations, no temporary/recovery leakage, and no pin conflict. Its honest
+mechanical status is `NOT_REVIEW_READY` solely because 418/419 is not a clean
+whole-registry rematerialization. The assembled review packet therefore stops
+with the release gate red pending a fresh independent remount plus real
+reviewer and PI signatures.
+
+There is no A2000, new bank, model, endpoint, or SESOI change in this block.
