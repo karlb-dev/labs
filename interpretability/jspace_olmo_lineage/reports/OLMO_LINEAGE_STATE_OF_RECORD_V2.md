@@ -8,7 +8,10 @@ stage wedge is capability-gated and does not localize an intervention effect;
 H6 finds no licensed in-band regime on the frozen tested ladder. A Think-only
 late-anchor regime is measured. Intervention-dose coverage is unavailable
 because the registered source archive lacks the exact site records required by
-the frozen mapping.
+the frozen mapping. The required CPU-only OLMo Think/Instruct Bank-W pair
+power audit also closes: the 16-family shared capable set has 0.7788 power at
+the frozen SESOI, below the 0.80 target, so no future pair intervention is
+authorized from this design.
 
 ## 1. Authority, sequence, and isolation
 
@@ -131,7 +134,26 @@ whether epsilon 0.10 exceeds typical causal dose remain null. This is an
 archive-schema finding, not 0% coverage and not authorization to reinstrument
 the causal assay after seeing H6.
 
-## 6. Claim disposition
+## 6. OLMo-pair Bank-W planning closure
+
+`ol2-bank-w-olmo-pair-power-v1` reads only the two registered baseline
+capability results and the registered Bank-S development variance ruler. It
+does not read any Bank-W intervention outcome. Both endpoints are individually
+eligible with 17 capable families, but their exact intersection contains 16.
+
+The precommitted two-model shared-family max-T simulation uses the existing
+0.10-nat-per-doubling SESOI (0.15849625 nat from load 2 to 6), the registered
+conservative 0.23-nat family SD, Student-t(5) heavy tails, 5,000 simulations,
+and 2,048 sign-flip draws per simulation. All four frozen type-I scenarios
+pass. Conservative power at 16 families is 0.7788; the first simulated count
+meeting the 0.80 target is 18. The mechanical route is
+`not-powered-at-current-support`.
+
+This is a planning result, not a negative externalization result. It does not
+authorize a Bank-W intervention, subset repair, SESOI change, or evidence-tier
+upgrade.
+
+## 7. Claim disposition
 
 Study-1 sentence 2 remains a bounded architecture-matched association between
 the first released Think transition and coordinate/selection reorganization
@@ -141,19 +163,22 @@ capability cohorts are empty. H6 additionally forbids describing the tested
 L24/L32/L40 coordinates as a licensed finite-dose transport regime.
 
 Study-1 sentence 4 remains explicitly pending after the Bank-W service gate.
-Neither the gated stage wedge nor H6 creates an externalization result.
+Neither the gated stage wedge, H6, nor the underpowered pair redesign creates
+an externalization result.
 
 The authoritative Study-2 sentence ledger is
 `reports/OLMO_LINEAGE_CLAIMS_TABLE_V2.md`.
 
-## 7. Remaining and prohibited work
+## 8. Remaining and prohibited work
 
 The required Study-2 GPU work is complete. No conditional Tier-2 refit, Bank-W
 intervention, O5 grid, broad receiver map, additional model, or post-hoc
 epsilon/prompt repair is licensed. A future study may prospectively collect
 the missing exact site-dose stream or use an independently justified
 capability-compatible stage assay, but it must be a new protocol and cannot
-rewrite these null/gated outcomes.
+rewrite these null/gated outcomes. A future Bank-W pair design would also need
+at least 18 genuinely common capable families under the frozen ruler (or a new,
+independently justified protocol); the current 16-family subset stays closed.
 
 The Study-2 release terminates in `release/IMPORT_BUNDLE_SIDELINES2.json` and
 its Markdown companion. Heavy raw vectors remain in the isolated Drive root;

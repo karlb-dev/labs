@@ -1,13 +1,14 @@
 # OLMo lineage study 2 — live handoff
 
-Status: all mandatory scientific stages are complete and registered. Release
-assembly, verification, and parent-branch integration remain.
+Status: all mandatory scientific stages and the required CPU pair-power
+closure are complete and registered. Release assembly, verification, and
+parent-branch integration remain.
 
 - Parent: `901fb4fc7578a913088c7947a2e6240f7fc45aeb`.
 - Branch: `interp_jspace_olmo_lineage_2`.
 - Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803`.
-- Registry before the release event: 36 origins, 35 live events, 142 live
+- Registry before the release event: 37 origins, 36 live events, 145 live
   outputs; all Study-2 measurements are backed by Drive and pushed to GitHub.
 - Frozen order completed: registered Gemma G2.1 import, SFT/DPO wedge, Base H6,
   OLMo-3.1 Think H6, then joint/dose audit.
@@ -49,10 +50,23 @@ assembly, verification, and parent-branch integration remain.
 - `ol2-transport-validation-figure-v1` is the visually checked paper-facing
   PNG/PDF derivative; it changes no scientific result.
 
+## Bank-W pair planning
+
+- `ol2-bank-w-olmo-pair-power-v1` is outcome-blind methods evidence. It uses
+  the registered 0.23-nat Bank-S variance ruler and the unchanged
+  0.10-nat-per-doubling SESOI.
+- Think and Instruct each have 17 capable families; their exact shared set has
+  16. All four max-T type-I scenarios pass.
+- Conservative power is 0.7788 at the available support versus the frozen
+  0.80 target; 18 common families are required. The route is
+  `not-powered-at-current-support`.
+- No Bank-W intervention outcome was read. This does not authorize an
+  intervention or provide an externalization result.
+
 ## Recovery
 
 No model cache is retained. Exact snapshots were downloaded directly from
 Hugging Face, verified, used, registered, and deleted only after Drive/GitHub
-banking. Resume with CPU-only release work: build the V2 state/claims paper,
-emit and verify `IMPORT_BUNDLE_SIDELINES2`, commit/push, then reconcile the
-updated parent and merge Gemma before OLMo with ancestry preserved.
+banking. Resume with CPU-only release work: emit and verify
+`IMPORT_BUNDLE_SIDELINES2`, commit/push, then reconcile the updated parent and
+merge Gemma before OLMo with ancestry preserved.

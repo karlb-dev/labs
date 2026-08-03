@@ -16,9 +16,9 @@ def test_isolated_paper_source_and_pdf_are_complete():
     assert pdf.read_bytes().startswith(b"%PDF")
     assert pdf.stat().st_size > 300_000
     assert _sha256(tex) == (
-        "28cda94943bcdc4d451e652fd16482b169d1bad256a727c72fa1663a2d238591")
+        "5783560a9938061efce9f47df85cde7bb021584a1bcef406598fda0763a8cc51")
     assert _sha256(pdf) == (
-        "843daa9c6e51a4f138736aaef649e0162a9b89f50be7622332b288fed4eaded5")
+        "7809b76ab4cec90a5878c3542167eadb83399c6a9f3567fe28bc93db47e2f809")
 
 
 def test_paper_uses_registered_geometry_figures():
@@ -46,6 +46,8 @@ def test_paper_uses_registered_study2_figures():
             "add4b84aa436779d9a4b491a726d6116783b4c76c5e74107c9537ded33a9273d",
         "ol2_transport_validation_joint_paper.png":
             "03564b351088aac7bda3dc9a4c00fa02f07456543349766e5afdd4e39e8ca7b1",
+        "ol2_bank_w_olmo_pair_power.png":
+            "476ea88627f1d710b03e1bb8a310f54c46683af337980b90890b0ab57128364d",
     }
     for name, digest in expected.items():
         assert _sha256(PAPER / "figures" / name) == digest
@@ -62,6 +64,8 @@ def test_paper_preserves_claim_and_namespace_boundaries():
     assert r"h6\_fail\_in\_band\_with\_checkpoint\_specific\_late\_anchor" in tex
     assert "Causal-dose coverage therefore" in tex
     assert "remains unavailable, not zero" in tex
+    assert "not-powered-at-current-support" in tex
+    assert "power 0.7788" in tex
     assert "shared Phase 4 or Gemma papers" in tex
     assert "SOURCE_DATE_EPOCH=1785648410" in script
     assert "interpretability/jspace_paper" not in script

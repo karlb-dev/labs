@@ -28,6 +28,7 @@ claims table.
 | OL2-C07 | OLMo-3.1 Think is late-anchor-only under H6. | `ol2-transport-validation-olmo31-think-v1`: 336 rows; L56/0.10 is 12/12 and the only passing layer-dose cell; no L24/L32/L40 pass. | methods | Licensed only as a checkpoint-specific L56 result. Do not call the assay band transport-valid. |
 | OL2-C08 | Across both checkpoints, no tested in-band regime passes; intervention-dose coverage remains unavailable rather than zero. | `ol2-transport-validation-joint-v1`: 672 rows; route `h6_fail_in_band_with_checkpoint_specific_late_anchor`. Six registered source tables audited, zero contain the exact total site dose plus residual-norm terms. | methods | Use the tested-ladder fail sentence and explicit archive limitation. Do not infer scale-limited, relevant-dose pass/fail, or 0% coverage. |
 | OL2-C09 | The Study-2 H6 plot is a registered derivative of joint evidence. | `ol2-transport-validation-figure-v1`: visually checked PNG/PDF; `scientific_result_changed=false`. | methods | Presentation only; no tier or claim upgrade. |
+| OL2-C10 | The existing Think/Instruct capable-family intersection does not power the planned two-model Bank-W primary at the frozen target. | `ol2-bank-w-olmo-pair-power-v1`: 17 capable families per endpoint, 16 shared; all four type-I scenarios pass; power 0.7788 versus target 0.80; 18 common families required. | methods | Planning route `not-powered-at-current-support`. No intervention outcome was read and no intervention, subset repair, or SESOI change is authorized. |
 
 ## Required distinctions
 
@@ -39,6 +40,7 @@ claims table.
 - H6 narrows transport interpretation; it does not validate or invalidate the
   previously registered paired ablation effects.
 - Natural checkpoint differences do not identify SFT or DPO objective effects.
+- A power near-miss is not a powered design and is not a scientific null.
 
 ## Prohibited formulations
 
@@ -51,6 +53,8 @@ claims table.
 - “Transport failure invalidates the paired ablation result.”
 - Any confirmatory, replication, O5, Bank-W, or receiver result absent from the
   append-only `ol2-` registry.
+- “The OLMo pair rules out externalization.” The pair result is an outcome-blind
+  power calculation, not an intervention result.
 
 ## Handoff rule
 
