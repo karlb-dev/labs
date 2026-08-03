@@ -10,6 +10,7 @@ from jspace_olmo_lineage.experiments.stage_wedge import (
     capability_summary,
     exact_grade_alias,
     freeze_cohort,
+    tokenizer_contract_checks,
 )
 from jspace_olmo_lineage.manifests import InputManifest, object_sha256
 from jspace_phase4.scoring4 import DEFAULT_SPEC
@@ -24,6 +25,25 @@ def test_exact_capability_rejects_explanatory_suffix() -> None:
     assert exact_grade_alias(session, "Merrid", [" Merrid"]) == " Merrid"
     assert exact_grade_alias(session, "Merrid.", [" Merrid"]) == " Merrid"
     assert exact_grade_alias(session, "Merrid because", [" Merrid"]) is None
+
+
+def test_tokenizer_audit_uses_frozen_config_field_name() -> None:
+    semantics = {
+        "semantic_fingerprint_sha256": "a",
+        "token_id_map_sha256": "b",
+        "normalized_model_sha256": "c",
+        "processing_components_sha256": "d",
+        "audit_encoding_sha256": "e",
+    }
+    expected = {
+        **{
+            key: value
+            for key, value in semantics.items()
+            if key != "audit_encoding_sha256"
+        },
+        "frozen_audit_encoding_sha256": "e",
+    }
+    assert all(tokenizer_contract_checks(semantics, expected).values())
 
 
 def _manifest() -> InputManifest:

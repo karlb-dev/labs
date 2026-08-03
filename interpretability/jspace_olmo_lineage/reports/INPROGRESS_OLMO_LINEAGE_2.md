@@ -13,5 +13,6 @@ Status: ancestry and foundation are registered; the frozen Study-2 producer is i
 - Watchdog entrypoint: `interpretability/jspace_olmo_lineage/run_stage_wedge_model.sh think_sft all`; logs and atomic heartbeats are written below the Study-2 Drive root.
 - Validation before first load: 77 OLMo/Phase-3 intervention tests pass; Ruff and bytecode checks pass.
 - Local SFT snapshot: `/content/hf_local/models--allenai--Olmo-3-32B-Think-SFT/snapshots/9770a0bacc8536a6b5870da62b75e5ba3681930d` (61 GiB cache; downloaded directly from Hugging Face at the frozen revision).
+- Pre-model correction: the first CPU-only SFT preflight passed exact shard streaming through the tokenizer-contract step, then stopped because the producer expected `audit_encoding_sha256` in YAML rather than the frozen key `frozen_audit_encoding_sha256`. No tokenizer/model was constructed and no outcome was opened. The explicit field mapping and a regression test were added before retry.
 
 Recovery: use the watchdog entrypoint from a clean `interp_jspace_olmo_lineage_2` branch. The runner verifies every local shard against `ol2-checkpoint-ancestry-v1` before loading weights, then resumes capability or Tier-1 from Drive without reopening completed items. Do not import the Gemma ceiling until both wedge cells and the joint router are banked.

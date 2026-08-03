@@ -83,7 +83,6 @@ TOKENIZER_FIELDS = (
     "token_id_map_sha256",
     "normalized_model_sha256",
     "processing_components_sha256",
-    "audit_encoding_sha256",
 )
 ENERGY_RELATIVE_FLOOR = 1e-3
 ENERGY_RELATIVE_TOLERANCE = 5e-3
@@ -195,6 +194,21 @@ def _weight_rows(snapshot: Path, expected: Mapping) -> list[dict]:
     return rows
 
 
+def tokenizer_contract_checks(
+    semantics: Mapping,
+    expected_tokenizer: Mapping,
+) -> dict[str, bool]:
+    checks = {
+        field: semantics[field] == expected_tokenizer[field]
+        for field in TOKENIZER_FIELDS
+    }
+    checks["audit_encoding_sha256"] = (
+        semantics["audit_encoding_sha256"]
+        == expected_tokenizer["frozen_audit_encoding_sha256"]
+    )
+    return checks
+
+
 def snapshot_preflight(
     config: Mapping,
     checkpoint_key: str,
@@ -261,10 +275,7 @@ def snapshot_preflight(
         audit_texts,
     )
     expected_tokenizer = config["tokenizer_contract"]
-    tokenizer_checks = {
-        field: semantics[field] == expected_tokenizer[field]
-        for field in TOKENIZER_FIELDS
-    }
+    tokenizer_checks = tokenizer_contract_checks(semantics, expected_tokenizer)
     tokenizer_checks["audit_text_count"] = semantics["audit_text_count"] == int(
         audit_source["audit_texts"]
     )
