@@ -79,6 +79,11 @@ def _bos_correction_path() -> Path:
     return manifests_dir() / "ol2_transport_predata_bos_correction.json"
 
 
+def _shape_correction_path() -> Path:
+    return manifests_dir() / (
+        "ol2_transport_predata_prompt_tensor_shape_correction.json")
+
+
 def _utc() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -318,6 +323,114 @@ def verified_bos_correction() -> dict:
         "sha256": artifact["sha256"],
         "bytes": int(path.stat().st_size),
         "correction_event_utc": row["event_utc"],
+    }
+
+
+def register_shape_correction() -> dict:
+    """Register a second pre-model correction for `[1,T]` token tensors."""
+    git = require_clean_tree(expected_branch=BRANCH)
+    config = _config()
+    origins = {
+        row["evidence_id"] for row in read_events()
+        if row["event"] in {"evidence_created", "evidence_imported"}
+    }
+    target_events = {
+        config["models"][key]["evidence_id"]
+        for key in config["models"]["mandatory_models"]
+    }
+    if origins & target_events:
+        raise TransportValidationError("shape correction is no longer pre-model")
+    for model_key in config["models"]["mandatory_models"]:
+        paths = _paths(config, model_key)
+        if paths["state"].exists() or any(paths["cells"].iterdir()) or any(
+                paths["raw"].iterdir()):
+            raise TransportValidationError(
+                "H6 model outcome exists; shape correction is forbidden")
+    event = resolve(EXECUTION_FREEZE)
+    if any(
+        row["event"] == "evidence_corrected"
+        and row.get("correction_kind") == "predata_prompt_tensor_shape"
+        for row in event["status_events"]
+    ):
+        raise TransportValidationError("prompt tensor correction already registered")
+    correction = _shape_correction_path()
+    payload = {
+        "schema_version": 1,
+        "evidence_id": EXECUTION_FREEZE,
+        "correction_kind": "predata_prompt_tensor_shape",
+        "status": "corrected_before_h6_model_or_transport_outcome",
+        "old_execution_code_commit": event["effective_metadata"].get(
+            "execution_code_commit", event["code_commit"]),
+        "corrected_execution_code_commit": git["code_commit"],
+        "reason": (
+            "The corrected standalone preflight represented token IDs as a "
+            "rank-2 [1,T] tensor for the historical numpy-byte hash, but the "
+            "human-readable ID extraction iterated its batch row as a scalar. "
+            "The preflight stopped with ValueError before causal-model load or "
+            "any transport cell; flattening the sole batch row changes no "
+            "encoding, threshold, prediction, or outcome."),
+        "corrected_contract": {
+            "encoded_input_shape": "[1,T]",
+            "human_readable_token_ids": "encoded_input_ids[0].tolist()",
+            "historical_numpy_byte_hash_input": (
+                "unchanged contiguous [1,T] int64 tensor"),
+        },
+        "failed_preflight_log": str(
+            run_root() / "logs/base_transport_preflight_producer.log"),
+        "model_weights_loaded": False,
+        "model_outcome_opened": False,
+        "transport_cell_opened": False,
+        "thresholds_changed": False,
+        "predictions_changed": False,
+    }
+    payload["payload_sha256"] = object_sha256(payload)
+    if correction.exists():
+        raise FileExistsError(f"refusing to overwrite correction: {correction}")
+    atomic_json(correction, payload)
+    append_event({
+        "event": "evidence_corrected",
+        "evidence_id": EXECUTION_FREEZE,
+        "reason": payload["reason"],
+        "correction_kind": "predata_prompt_tensor_shape",
+        "corrected_fields": {
+            "prompt_tensor_shape_gate": payload["corrected_contract"],
+            "execution_code_commit": git["code_commit"],
+            "model_outcome_opened": False,
+        },
+        "correction_artifact": {
+            "path": str(correction),
+            "sha256": file_sha256(correction),
+            "bytes": int(correction.stat().st_size),
+        },
+        "model_weights_loaded": False,
+        "transport_cell_opened": False,
+        "thresholds_changed": False,
+        "predictions_changed": False,
+    })
+    return {"artifact": str(correction), "sha256": file_sha256(correction)}
+
+
+def verified_shape_correction() -> dict:
+    event = resolve(EXECUTION_FREEZE)
+    rows = [
+        row for row in event["status_events"]
+        if row["event"] == "evidence_corrected"
+        and row.get("correction_kind") == "predata_prompt_tensor_shape"
+    ]
+    if len(rows) != 1:
+        raise TransportValidationError(
+            "expected one registered pre-data prompt tensor correction")
+    artifact = rows[0]["correction_artifact"]
+    path = Path(artifact["path"])
+    if path != _shape_correction_path():
+        raise TransportValidationError("prompt tensor correction path drift")
+    if not path.is_file() or file_sha256(path) != artifact["sha256"]:
+        raise TransportValidationError("prompt tensor correction hash drift")
+    return {
+        "path": str(path),
+        "sha256": artifact["sha256"],
+        "bytes": int(path.stat().st_size),
+        "correction_event_utc": rows[0]["event_utc"],
     }
 
 
@@ -663,11 +776,12 @@ def preflight(config: Mapping, model_key: str, snapshot: Path,
     bos_checks = {}
     historical_hashes = historical_prompt_encoding_hashes()
     correction = verified_bos_correction()
+    shape_correction = verified_shape_correction()
     for prompt in _prompts(config):
         encoded = tokenizer(
             prompt["text"], return_tensors="pt", add_special_tokens=True,
             truncation=False)
-        ids = [int(value) for value in encoded["input_ids"]]
+        ids = [int(value) for value in encoded["input_ids"][0].tolist()]
         bos = tokenizer.bos_token_id
         leading_bos_count = 0
         if bos is not None:
@@ -739,6 +853,10 @@ def preflight(config: Mapping, model_key: str, snapshot: Path,
             "path": correction["path"],
             "sha256": correction["sha256"],
         },
+        "predata_prompt_tensor_shape_correction": {
+            "path": shape_correction["path"],
+            "sha256": shape_correction["sha256"],
+        },
         "all_hard_gates_passed": True,
         "model_outcome_opened": False,
     }
@@ -759,6 +877,7 @@ def _input_manifest(config: Mapping, model_key: str, preflight_payload: Mapping,
     ancestry = _event_output(ANCESTRY)
     foundation = _event_output(FOUNDATION)
     correction = verified_bos_correction()
+    shape_correction = verified_shape_correction()
     payload = {
         "schema_version": 1,
         "evidence_id": spec["evidence_id"],
@@ -779,6 +898,10 @@ def _input_manifest(config: Mapping, model_key: str, preflight_payload: Mapping,
         "predata_bos_interface_correction": {
             "path": correction["path"],
             "sha256": correction["sha256"],
+        },
+        "predata_prompt_tensor_shape_correction": {
+            "path": shape_correction["path"],
+            "sha256": shape_correction["sha256"],
         },
         "calibration_import_output": license_payload["event_output"],
         "ancestry_output": ancestry["outputs"][0],
@@ -1525,8 +1648,8 @@ def main() -> None:
     parser.add_argument(
         "--phase", required=True,
         choices=(
-            "freeze", "correct-bos", "stage", "preflight", "run",
-            "finalize", "register",
+            "freeze", "correct-bos", "correct-shape", "stage", "preflight",
+            "run", "finalize", "register",
         ))
     parser.add_argument("--model", choices=("base", "olmo31_think"))
     parser.add_argument("--max-cells", type=int)
@@ -1539,6 +1662,10 @@ def main() -> None:
         if arguments.model is not None:
             parser.error("--model is forbidden for correct-bos")
         result = register_bos_correction()
+    elif arguments.phase == "correct-shape":
+        if arguments.model is not None:
+            parser.error("--model is forbidden for correct-shape")
+        result = register_shape_correction()
     else:
         if arguments.model is None:
             parser.error("--model is required outside freeze")
