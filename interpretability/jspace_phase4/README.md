@@ -112,15 +112,21 @@ conditional Q-L2 estimand were committed before A1000 existed. The exact
 registered A1000 hash is now bound in the three authorized slots without
 changing thresholds.
 
-The structural-only queue invocation is complete and passed at conservative
-task q50/q05 0.998702/0.998122. On Phase 4.4, rerun
-`run_qwen_a1000_postfit_queue.sh`; it verifies the registered structural event
-and resumes at the functional gate through the canonical decision. A
-reclaim-aware invocation may set
-`JSPACE4_STOP_AFTER` to `structural`, `functional`, `margin`, or `influence`;
-the selected stage is registered, pushed, and locally backed up before the
-queue exits successfully. A later default invocation verifies already
-registered stages and resumes in the same frozen order.
+The structural event passes at conservative task q50/q05
+0.998702/0.998122. Phase 4.4 has also registered and backed up the functional
+and selection-margin stages. They emit provisional Q-L4: A500--A1000
+selected-ID Jaccard, selected-projector overlap, and bridge rescue fail their
+frozen gates. The required prompt-323 influence stage then hard-stopped before
+writing a contribution because repeated current-runtime Jacobian norms fail
+the frozen fit-log control; repeated prompt-112 controls prove a broader
+backward-runtime mismatch. No influence or canonical event exists.
+
+Do **not** rerun `run_qwen_a1000_postfit_queue.sh` blindly. Continuation
+requires independent review and either a historically content-pinned runtime
+or a prospective runtime-contract amendment before a fresh influence attempt.
+The 0.5 tolerance remains frozen, neither null state may be resumed, and Q-L4
+may not be registered directly. See
+`reports/PHASE4_PART4_PROMPT323_RUNTIME_BLOCK.md` and its machine-readable JSON.
 
 Gemma and OLMo completed on isolated branches and registries, and their full
 ancestry is merged without copying native `gm-*` or `ol-*` events into Phase
@@ -145,21 +151,23 @@ required JSON/Markdown manifests; a known deficit remains a failed gate.
   `preregistration/FREEZE_GATE_LEDGER_PHASE4.md`
 - Methods decision record: `paper/PHASE4_METHODS_DECISION_RECORD.md`
 - Falsifiable conclusion skeleton: `paper/PAPER_CONCLUSION_SKELETON.md`
-- Compiled handout through the pre-A1000 boundary (regenerate only after the
+- Compiled handout through the pre-canonical boundary (regenerate only after the
   canonical decision): `reports/handout/jspace_phase4_development.{tex,pdf}`
 - Phase 4.3 closeout and exact Phase 4.4 handoff:
   `reports/phase4_part3_summary.md`
 - Open A1000 raw-diagnostic archival review:
   `reviews/QWEN_A1000_RAW_DIAGNOSTIC_ARCHIVE_REVIEW_20260802.md`
 - Current durable restart snapshot:
-  `reports/INPROGRESS_VM13_20260802.md`
+  `reports/INPROGRESS_VM14_20260803.md`
+- Prompt-323 runtime-identity execution block:
+  `reports/PHASE4_PART4_PROMPT323_RUNTIME_BLOCK.md`
 - Historical VM12 restart ledger:
   `reports/INPROGRESS_VM12_20260801.md`
 - Compact restart handoff:
   `reports/RESUME_PHASE4_2.md`
 - Governing development block:
-  `reviews/jspace_lab_nextsteps_4_3.md` plus
-  `reviews/jspace_lab_nextsteps_4_3_addendum.md`
+  `reviews/jspace_lab_nextsteps_4_4.md` plus
+  `reviews/jspace_lab_nextsteps_4_4_addendum.md`
 
 These documents now cover the base, 3.0 Think, and sibling 3.1
 Think/Instruct capability and intervention points, seed-paired
@@ -168,9 +176,10 @@ synthesis. Phase 4.2 adds the Qwen same-corpus convergence and functional
 invariance gates, CPU-first common-cohort closure, Bank B/W authoring and
 power, Bank W capability rules, official-mode gates, and P4-P2 design/pilot
 methods. Phase 4.3 closes the A1000 fit and structural boundary and merges the
-side-track ancestry; Phase 4.4 completes the functional/canonical decision,
-side-track admission, and remaining freeze blockers. They remain development
-summaries, not frozen claims.
+side-track ancestry. Phase 4.4 has completed the registered functional and
+margin stages but is blocked at the required prompt-influence runtime identity;
+the canonical decision, side-track admission, and later freeze blockers remain
+closed. These remain development summaries, not frozen claims.
 
 ## Tiers
 

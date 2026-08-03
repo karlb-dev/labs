@@ -40,14 +40,17 @@ its present license and the experiment that can upgrade, narrow, or kill it.
 
 6. **Structural convergence of the averaged transport operator does not guarantee stability of sparse selections or of all causal endpoints; instrument invariance must be tested at the level of the scientific conclusion.**
    License: Phase 4 development A250-to-A500 structural and functional gates,
-   plus the registered A500-to-A1000 structural successor. The earlier
-   selected-ID Jaccard, selected-projector overlap, and bridge-rescue gates
-   fail despite strong structure; at A1000, conservative structural task
-   q50/q05 rise to 0.998702/0.998122. This licenses only an operator-level
-   convergence statement. Pending falsifier or upgrade: the still-sealed
-   A500-to-A1000 functional, selection-margin, and retained-prompt stages
-   determine whether the warning narrows to row redundancy or strengthens
-   into broader instrument sensitivity.
+   plus the registered A500-to-A1000 structural, functional, and
+   selection-margin successors. Conservative structural task q50/q05 rise to
+   0.998702/0.998122, yet selected-ID Jaccard (0.538462), normalized projector
+   overlap (0.709818), and bridge rescue (-0.294028-nat A500-minus-A1000
+   difference) fail. The all-position audit places 15,536/17,381 positions in
+   the near-tie stratum, but even its stable core has median ID Jaccard only
+   0.666667. This strengthens the warning beyond literal tied-row identity and
+   emits provisional Q-L4. Pending falsifier or upgrade: the required
+   retained-prompt stage is blocked by a reproducible backward-runtime
+   identity failure, so no canonical decision currently licenses a stronger
+   instrument claim.
 
 Rule: a failed upgrading experiment replaces its candidate with the exact
 downgrade already frozen in the Phase 4 branch tables; it is never silently

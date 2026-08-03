@@ -276,6 +276,24 @@ def test_margin_candidate_capture_observes_protection_and_exact_gaps():
     assert abs(row["margins"]["2"] - 1 / 7) < 1e-7
 
 
+def test_margin_candidate_capture_replays_tied_intervention_topk_exactly():
+    from jspace_phase4.experiments.p4_qwen_multilens_functional_gate import (
+        selection_margin_candidates,
+    )
+    scores = torch.ones((1, 8))
+    exact_ids = scores.topk(2, dim=1).indices[0].tolist()
+    diagnostic_prefix = scores.topk(5, dim=1).indices[0, :2].tolist()
+    # Frozen torch currently demonstrates why top-N[:k] is not a valid
+    # replay of top-k at an exact tie boundary.
+    assert exact_ids != diagnostic_prefix
+    row = selection_margin_candidates(
+        scores, None, intervention_k=2, top_n=5,
+        margin_ks=[1, 2], epsilon=1e-12)[0]
+    assert row["intervention_selected_ids"] == exact_ids
+    assert row["eligible_top_ids"][:2] == diagnostic_prefix
+    assert row["intervention_selected_scores"] == [1.0, 1.0]
+
+
 def test_margin_observer_is_bitwise_intervention_identical_to_phase3_parent():
     from jspace_phase3.ablator3 import Phase3JAblator
     from jspace_phase4.experiments.p4_qwen_multilens_functional_gate import (
@@ -313,6 +331,35 @@ def test_margin_observer_is_bitwise_intervention_identical_to_phase3_parent():
         assert capture.intervention_selected_ids == intervention.selected_ids
         assert capture.effective_rank == intervention.effective_rank
         assert capture.removed_energy_frac == intervention.removed_energy_frac
+
+
+def test_margin_observer_is_exact_at_a_tied_topk_boundary():
+    from jspace_phase3.ablator3 import Phase3JAblator
+    from jspace_phase4.experiments.p4_qwen_multilens_functional_gate import (
+        Phase4MarginCaptureAblator,
+    )
+    hidden = torch.ones((1, 1, 2))
+    dictionary = torch.ones((8, 2))
+    mode = {
+        "dicts": {0: dictionary}, "k": 2, "nonneg": True,
+        "protect_sets": None, "active_phases": {"prefill"},
+        "span_safe": True, "record_overlap": True,
+        "record_ids": True, "answer_id": None,
+    }
+    parent = Phase3JAblator([], [0])
+    parent.phase, parent.forward_index, parent.mode = "prefill", 0, dict(mode)
+    observed = Phase4MarginCaptureAblator([], [0])
+    observed.phase, observed.forward_index = "prefill", 0
+    observed.mode = {
+        **mode,
+        "selection_margin_capture": {
+            "top_n": 5, "margin_ks": [1, 2], "epsilon": 1e-12},
+    }
+    expected_hidden = parent._apply(hidden.clone(), 0)
+    actual_hidden = observed._apply(hidden.clone(), 0)
+    torch.testing.assert_close(actual_hidden, expected_hidden, rtol=0, atol=0)
+    assert observed.log.selection_margin[0].intervention_selected_ids == (
+        parent.log.positions[0].selected_ids)
 
 
 def test_capacity_bootstrap_is_deterministic_and_prompt_paired():

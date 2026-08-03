@@ -420,6 +420,16 @@ def selection_margin_candidates(
 
     raw_ids, raw_scores, raw_available = ranked(positive)
     eligible_ids, eligible_scores, eligible_available = ranked(eligible)
+
+    # The inherited intervention calls ``topk(intervention_k)``.  Capture
+    # that exact operation separately from the requested top-N diagnostic.
+    # A top-N prefix is not an exact surrogate when the selection boundary
+    # is tied: torch.topk may choose a different, equally scoring ID ordering
+    # for different values of k (on CPU and CUDA alike).
+    intervention_take = min(int(intervention_k), n_rows)
+    intervention_values, intervention_ids = eligible.topk(
+        intervention_take, dim=1)
+    intervention_finite = torch.isfinite(intervention_values)
     rows = []
     for position in range(n_positions):
         margins = {}
@@ -443,10 +453,12 @@ def selection_margin_candidates(
             "protected_scores": [
                 float(value) for value in protected_scores[position]],
             "margins": margins,
-            "intervention_selected_ids": eligible_ids[position][
-                :intervention_k],
-            "intervention_selected_scores": eligible_scores[position][
-                :intervention_k],
+            "intervention_selected_ids": [
+                int(value) for value in intervention_ids[position][
+                    intervention_finite[position]].tolist()],
+            "intervention_selected_scores": [
+                float(value) for value in intervention_values[position][
+                    intervention_finite[position]].tolist()],
         })
     return rows
 
@@ -491,6 +503,11 @@ class Phase4MarginCaptureAblator(Phase3JAblator):
             if captured_ids != (intervention.selected_ids or []):
                 raise RuntimeError(
                     "selection-margin observer changed top-k intervention")
+            captured_scores = snapshot["intervention_selected_scores"]
+            if [round(float(value), 5) for value in captured_scores] != (
+                    intervention.selected_scores or []):
+                raise RuntimeError(
+                    "selection-margin observer changed top-k scores")
             self.log.selection_margin.append(SelectionMarginRecord(
                 layer=int(layer_idx), phase=self.phase,
                 forward_index=int(self.forward_index), position=position,
@@ -505,8 +522,7 @@ class Phase4MarginCaptureAblator(Phase3JAblator):
                 protected_scores=snapshot["protected_scores"],
                 margins=snapshot["margins"],
                 intervention_selected_ids=captured_ids,
-                intervention_selected_scores=snapshot[
-                    "intervention_selected_scores"],
+                intervention_selected_scores=captured_scores,
                 effective_rank=int(intervention.effective_rank),
                 removed_energy_frac=float(intervention.removed_energy_frac),
             ))

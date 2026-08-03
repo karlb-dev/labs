@@ -1,4 +1,5 @@
 import torch
+import pandas as pd
 
 
 def _record(*, rank=10, margin=0.02):
@@ -18,6 +19,39 @@ def test_margin_strata_are_geometry_only_and_exhaustive():
     assert margin_stratum(
         _record(rank=9), _record(), k=10,
         threshold=0.01) == "rank_deficient"
+
+
+def test_capture_validation_accepts_only_boundary_tie_id_substitution():
+    from jspace_phase4.experiments.p4_qwen_selection_margin import (
+        _validate_capture,
+    )
+
+    def frame(next_score=5.0, selected_ids=None):
+        rows = []
+        for lens in ("a500", "a1000"):
+            rows.append({
+                "lens": lens, "item_id": "item", "fact_id": "fact",
+                "variant": "original", "bank": "F",
+                "canonical_family": "family", "layer": 20, "position": 0,
+                "eligible_available_positive": 4,
+                "eligible_top_ids": [10, 11, 12, 13],
+                "eligible_top_scores": [9.0, 5.0, next_score, 1.0],
+                "protected_ids": [99], "protected_scores": [2.0],
+                "margins": {"2": (5.0 - next_score) / 5.0},
+                "intervention_selected_ids": selected_ids or [10, 12],
+                "intervention_selected_scores": [9.0, 5.0],
+                "effective_rank": 2, "removed_energy_frac": 0.1,
+            })
+        return pd.DataFrame(rows)
+
+    config = {"contract": {
+        "intervention_k": 2, "margin_ks": [2],
+        "relative_margin_epsilon": 1e-12}}
+    assert len(_validate_capture(frame(), config)) == 2
+    with __import__("pytest").raises(
+            RuntimeError, match="without boundary tie"):
+        _validate_capture(
+            frame(next_score=4.0, selected_ids=[10, 77]), config)
 
 
 def test_relative_margin_and_stable_core_ignore_unstable_fringe():
