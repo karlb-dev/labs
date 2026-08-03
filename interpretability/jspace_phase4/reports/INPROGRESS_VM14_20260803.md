@@ -1,11 +1,11 @@
 # IN PROGRESS — Phase 4.4 decision block, VM14
 
-Updated: 2026-08-03 05:01 UTC. Phase 4 remains development-only and is not frozen.
+Updated: 2026-08-03 15:58 UTC. Phase 4 remains development-only and is not frozen.
 
 ## Recoverable boundary
 
 - Source parent: `901fb4fc7578a913088c7947a2e6240f7fc45aeb` from clean `interp_jspace_part2`.
-- Working branch: `interp_jspace_phase4_4`; every scientific registry commit through `0ce3519b3abfc67ccfb3335e6e371b8a689a0fb5` is pushed.
+- Working branch: `interp_jspace_phase4_4`; every scientific registry commit through `0ce3519b3abfc67ccfb3335e6e371b8a689a0fb5` and the runtime-identity boundary commit `22f6801a750374fa6735420029b57c35471fa3f8` are pushed.
 - Terminal-B pre-commitment: pushed at `6f23a29896e61cc367ed884a2d840f0e08857f40`, before functional execution.
 - M0 tests: 279/279 passed under the frozen package path before execution; after the tied-top-k instrumentation repair the expanded full suite passed 282/282.
 - M0 A1000 tensor audit: pass; lens `6e48c773...f6bd6`, checkpoint `fd5a4ae...bf20`, header `b0cf4c8d...6d2a`, 63 exact finite layers.
@@ -30,18 +30,19 @@ The registered prompt-112 control proves this is a broader backward-semantics mi
 
 No influence event exists, no prompt contribution exists, no canonical event exists, and Q-L4 is not canonical. The two identical null states have `contribution: null`, zero completed layers, 1,146 bytes, and SHA-256 `4eef3124...239eb3`. They are preserved under distinct blocked Drive and local backup directories. Exact values, content inventories, hashes, paths, and the inference boundary are in `PHASE4_PART4_PROMPT323_RUNTIME_BLOCK.md` and `.json`; all scripts and logs are mirrored under Drive `diagnostics/prompt323_runtime_identity_20260803/`.
 
-## No authorized next command
+## Authorized prospective continuation
 
-Do not rerun the queue blindly, widen the 0.5 tolerance, reuse either null state, synthesize a contribution, or open the canonical producer. Continuation requires independent scientific/governance review and one of two prospective resolutions:
+At 2026-08-03 15:51 UTC the PI direction authorized amending the runtime and proceeding when the mismatch is noncritical to the result, while retaining historical-runtime restoration if it is critical. The frozen canonical producer makes the criticality answer mechanical: Q-L1--Q-L5 is recomputed solely from the structural/functional gates; the prompt-323 label is range-checked and recorded but cannot change the branch or action. The already registered gates mechanically determine Q-L4. Historical-runtime restoration is therefore optional tightening for a stronger reproducibility claim, not a Phase 4 branch blocker.
 
-1. reconstruct a historically content-pinned backward runtime, then rerun the unchanged influence stage from a fresh canonical output directory; or
-2. approve a prospective runtime-contract amendment before a fresh attempt.
+The prospective amendment is written at `preregistration/PROMPT323_RUNTIME_CONTRACT_AMENDMENT.md` (SHA-256 `bac298d5...dac2b`) before any contribution or influence outcome. It preserves the historical 173.345 mismatch as a non-gating limitation; exact-locks current Torch/Transformers/Triton/FLA distribution contents; preselects computation 1 as the sole estimator; discards computation 2 after a same-prompt repeatability check; and retains the unchanged 0.5 norm tolerance only as a technical within-current-runtime gate. Banks, model, endpoints, lenses, samples, materiality thresholds, SESOIs, wording, and retention are unchanged. There is no A2000.
 
-If and only if a fresh prompt-323 attempt passes its reviewed contract, bank, back up, commit, and push that influence event before opening the unchanged mechanical canonical producer. The queue lock is free, the canonical output directory is absent, no model process remains, and the GPU is released.
+The amended producer refuses content drift, nonfinite tensors, sequence/valid-token drift, shape drift, or a maximum per-layer normalized-norm repeat difference above 0.5. A failure leaves the contribution null and routes to historical-runtime reconstruction. A pass permits only a `current-runtime-sensitivity-shape` event and must prominently disclaim historical-runtime reproducibility. The exact inventory implementation reproduces all five recorded current hashes. The expanded full Phase 4 suite passes 284/284.
+
+Next transaction: commit and push this pre-outcome amendment, mirror it to Drive, start from the fresh absent canonical output directory, and run the sealed queue only through prompt-323 influence. Inspect and report the shape, then bank/back up/commit/push the influence event before opening the unchanged canonical producer. The queue lock is free and no model process is active.
 
 ## Hard boundaries
 
-- Queue order remains functional → selection margin → prompt-323 influence → canonical Q-L decision. The first two are complete; the third is blocked; the fourth has never opened.
+- Queue order remains functional → selection margin → prompt-323 influence → canonical Q-L decision. The first two are complete; the third is prospectively amended and ready but has not run; the fourth has never opened.
 - M2 side admission requires the registered canonical event and is not authorized. M3/M4 remain closed.
 - P4-P1 stays estimation-only; P4-P3 stays blocked at 16/20.
 - P4-P2 is the sole conditional primary and cannot run without a Q-L1/Q-L2 canonical event and actual independent producer review.

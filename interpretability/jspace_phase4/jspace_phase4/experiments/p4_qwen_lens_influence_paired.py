@@ -20,7 +20,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 from ..gpu import assert_model_on_cuda, require_cuda_gpu
-from ..manifests import atomic_json, file_sha256, object_sha256, require_clean_tree
+from ..manifests import (
+    atomic_json,
+    file_sha256,
+    object_sha256,
+    require_clean_tree,
+    verify_distribution_content_inventories,
+)
 from ..paths4 import (
     figures_dir,
     local_work,
@@ -85,6 +91,30 @@ def validate_paired_config(config: Mapping) -> None:
         raise RuntimeError("prompt index conventions disagree")
     if prompt.get("retained_unconditionally") is not True:
         raise RuntimeError("prompt 323 must be retained unconditionally")
+    historical_tolerance = float(
+        prompt["historical_reference_absolute_tolerance"])
+    repeat_tolerance = float(
+        prompt["current_runtime_repeat_absolute_tolerance"])
+    if historical_tolerance != 0.5 or repeat_tolerance != 0.5:
+        raise RuntimeError("prompt-323 runtime-control tolerance drift")
+    amendment = config["runtime_amendment"]
+    if amendment.get("contract_version") != "current-runtime-shape-v1":
+        raise RuntimeError("prompt-323 runtime amendment version drift")
+    if amendment.get("phase_branch_decision_critical") is not False \
+            or amendment.get("historical_runtime_reproduction_claimed") \
+            is not False:
+        raise RuntimeError("prompt-323 runtime claim exceeds its scope")
+    if int(amendment.get("primary_computation_ordinal", -1)) != 1 \
+            or int(amendment.get("repeat_computation_ordinal", -1)) != 2 \
+            or amendment.get("repeat_computation_role") \
+            != "diagnostic-only-discarded":
+        raise RuntimeError("prompt-323 computation selection drift")
+    distributions = amendment.get("exact_distribution_content_inventories")
+    if not isinstance(distributions, list) or {
+            row.get("distribution") for row in distributions} != {
+                "fla-core", "flash-linear-attention", "transformers",
+                "triton", "torch"}:
+        raise RuntimeError("prompt-323 distribution-content lock drift")
     if set(config["lenses"]) != set(PAIR):
         raise RuntimeError("paired influence requires exactly A500/A1000")
     for lens in PAIR:
@@ -260,6 +290,62 @@ def _load_contribution(path: Path, *, d_model: int,
     return value
 
 
+def contribution_repeatability(
+        primary: Mapping[int, torch.Tensor],
+        repeat: Mapping[int, torch.Tensor], *,
+        primary_seq_len: int, repeat_seq_len: int,
+        primary_n_valid: int, repeat_n_valid: int,
+        d_model: int, source_layers: list[int],
+        absolute_tolerance: float) -> dict:
+    """Check a discarded repeat without selecting or averaging estimates."""
+    primary_norms = {}
+    repeat_norms = {}
+    layer_differences = {}
+    all_finite = True
+    for layer in source_layers:
+        first = primary[layer]
+        second = repeat[layer]
+        if first.shape != (d_model, d_model) \
+                or second.shape != (d_model, d_model):
+            raise RuntimeError(f"prompt-323 repeat shape drift L{layer}")
+        first_finite = bool(torch.isfinite(first).all().item())
+        second_finite = bool(torch.isfinite(second).all().item())
+        all_finite = all_finite and first_finite and second_finite
+        first_norm = float(torch.linalg.vector_norm(first).item()) \
+            / math.sqrt(d_model)
+        second_norm = float(torch.linalg.vector_norm(second).item()) \
+            / math.sqrt(d_model)
+        primary_norms[layer] = first_norm
+        repeat_norms[layer] = second_norm
+        layer_differences[layer] = abs(first_norm - second_norm)
+    maximum_difference = max(layer_differences.values())
+    metadata_match = (
+        int(primary_seq_len) == int(repeat_seq_len)
+        and int(primary_n_valid) == int(repeat_n_valid))
+    passed = bool(
+        all_finite and metadata_match
+        and maximum_difference <= float(absolute_tolerance))
+    return {
+        "pass": passed,
+        "primary_computation_ordinal": 1,
+        "repeat_computation_ordinal": 2,
+        "repeat_computation_role": "diagnostic-only-discarded",
+        "same_seq_len_and_n_valid": metadata_match,
+        "all_tensors_finite": all_finite,
+        "absolute_tolerance": float(absolute_tolerance),
+        "maximum_layer_norm_over_sqrt_d_absolute_difference":
+            maximum_difference,
+        "primary_max_jacobian_norm_over_sqrt_d": max(
+            primary_norms.values()),
+        "repeat_max_jacobian_norm_over_sqrt_d": max(
+            repeat_norms.values()),
+        "primary_layer_norms_sha256": object_sha256(primary_norms),
+        "repeat_layer_norms_sha256": object_sha256(repeat_norms),
+        "layer_norm_absolute_differences_sha256": object_sha256(
+            layer_differences),
+    }
+
+
 def _plot(rows: pd.DataFrame, *, config: Mapping,
           png_path: Path, pdf_path: Path) -> None:
     figure, axes = plt.subplots(2, 2, figsize=(10.8, 7.2), sharex=True)
@@ -388,6 +474,25 @@ def main() -> None:  # noqa: C901, PLR0915
         "packages": verify_package_versions(fit_config["runtime"]["packages"]),
         "qwen_kernels": qwen_fused_kernel_contract(fit_config["runtime"]),
     }
+    amendment = config["runtime_amendment"]
+    amendment_sources = {}
+    for name in ("precommit", "incident_report", "incident_identity"):
+        path = resolve_uri(amendment[f"{name}_uri"])
+        expected_sha256 = amendment[f"{name}_sha256"]
+        if file_sha256(path) != expected_sha256:
+            raise RuntimeError(
+                f"prompt-323 runtime-amendment source drift: {name}")
+        amendment_sources[name] = {
+            "path": str(path), "sha256": expected_sha256}
+    distribution_lock = verify_distribution_content_inventories(
+        amendment["exact_distribution_content_inventories"])
+    runtime["distribution_content_lock"] = distribution_lock
+    runtime["prompt323_amendment"] = {
+        "contract_version": amendment["contract_version"],
+        "historical_runtime_reproduction_claimed": False,
+        "phase_branch_decision_critical": False,
+        "sources": amendment_sources,
+    }
     model_path = resolve_uri(config["model_uri"])
     snapshot_manifest_path = resolve_uri(config["model_snapshot_manifest_uri"])
     snapshot_manifest = json.loads(snapshot_manifest_path.read_text())
@@ -456,6 +561,7 @@ def main() -> None:  # noqa: C901, PLR0915
         binding_contract = verify_model_fused_bindings(
             hf_model, fit_config["runtime"])
         lens_model = jlens.from_hf(hf_model, tokenizer)
+        log("computing preselected prompt-323 primary contribution")
         contribution, seq_len, n_valid = jacobian_for_prompt(
             lens_model, prompt_text, source_layers,
             target_layer=int(recipe["target_layer"]),
@@ -463,17 +569,42 @@ def main() -> None:  # noqa: C901, PLR0915
             max_seq_len=int(recipe["max_seq_len"]),
             skip_first=int(recipe["skip_first"]),
         )
-        norms = {layer: float(torch.linalg.vector_norm(
-            contribution[layer]).item()) for layer in source_layers}
-        observed = max(norms.values()) / math.sqrt(d_model)
+        torch.manual_seed(0)
+        log("computing diagnostic-only discarded prompt-323 repeat")
+        repeat_contribution, repeat_seq_len, repeat_n_valid = (
+            jacobian_for_prompt(
+                lens_model, prompt_text, source_layers,
+                target_layer=int(recipe["target_layer"]),
+                dim_batch=int(recipe["dim_batch"]),
+                max_seq_len=int(recipe["max_seq_len"]),
+                skip_first=int(recipe["skip_first"]),
+            ))
+        repeatability = contribution_repeatability(
+            contribution, repeat_contribution,
+            primary_seq_len=seq_len, repeat_seq_len=repeat_seq_len,
+            primary_n_valid=n_valid, repeat_n_valid=repeat_n_valid,
+            d_model=d_model, source_layers=source_layers,
+            absolute_tolerance=float(config["prompt"][
+                "current_runtime_repeat_absolute_tolerance"]),
+        )
+        del repeat_contribution
+        gc.collect()
+        if not repeatability["pass"]:
+            raise RuntimeError(
+                "current-runtime prompt-323 repeatability gate failed: "
+                + json.dumps(repeatability, sort_keys=True))
+        maximum_repeat_difference = repeatability[
+            "maximum_layer_norm_over_sqrt_d_absolute_difference"]
+        log(
+            "prompt-323 current-runtime repeatability passed; maximum "
+            f"layer-norm difference {maximum_repeat_difference:.6f}")
+        observed = repeatability[
+            "primary_max_jacobian_norm_over_sqrt_d"]
         logged = float(config["prompt"][
             "logged_max_jacobian_norm_over_sqrt_d"])
         difference = abs(observed - logged)
-        tolerance = float(config["prompt"][
-            "recomputed_norm_absolute_tolerance"])
-        if difference > tolerance:
-            raise RuntimeError(
-                "recomputed prompt-323 norm exceeds frozen tolerance")
+        historical_tolerance = float(config["prompt"][
+            "historical_reference_absolute_tolerance"])
         _atomic_contribution(
             local_contribution, contribution,
             d_model=d_model, source_layers=source_layers)
@@ -486,9 +617,14 @@ def main() -> None:  # noqa: C901, PLR0915
             "seq_len": int(seq_len), "n_valid": int(n_valid),
             "max_jacobian_norm_over_sqrt_d": observed,
             "historical_logged_max_jacobian_norm_over_sqrt_d": logged,
-            "norm_absolute_difference": difference,
-            "norm_absolute_tolerance": tolerance,
-            "layer_norms_sha256": object_sha256(norms),
+            "historical_norm_absolute_difference": difference,
+            "historical_reference_absolute_tolerance":
+                historical_tolerance,
+            "historical_reference_pass": bool(
+                difference <= historical_tolerance),
+            "historical_reference_role": "reported-non-gating",
+            "runtime_claim": "current-runtime-sensitivity-shape-only",
+            "repeatability": repeatability,
         }
         state["contribution"] = {
             "local_path": str(local_contribution),
@@ -649,6 +785,10 @@ def main() -> None:  # noqa: C901, PLR0915
         "sensitivity": (
             "paired registered A500/A1000 versus exact algebraic "
             "leave-prompt-323-out means"),
+        "runtime_scope": "current-runtime-sensitivity-shape-only",
+        "historical_runtime_reproduction_claimed": False,
+        "runtime_amendment_precommit_sha256": amendment[
+            "precommit_sha256"],
         "prompt_contribution": {
             **prompt_metadata,
             "stored_float32_sha256": contribution_sha,
@@ -676,6 +816,10 @@ def main() -> None:  # noqa: C901, PLR0915
             "Selected-row, selected-span, capacity, and causal stability are "
             "decided by the separately registered all-position functional "
             "and margin gates.",
+            "The historical prompt-323 Jacobian norm did not reproduce. This "
+            "event is explicitly limited to the exact-pinned current-runtime "
+            "sensitivity shape and does not establish historical-runtime "
+            "reproducibility.",
         ],
         "gpu": gpu,
     }
@@ -695,6 +839,17 @@ def main() -> None:  # noqa: C901, PLR0915
         "model_snapshot": model_snapshot,
         "jlens": jlens_contract,
         "runtime": runtime,
+        "runtime_amendment_contract": {
+            "contract_version": amendment["contract_version"],
+            "prior_config_sha256": amendment["prior_config_sha256"],
+            "primary_computation_ordinal": amendment[
+                "primary_computation_ordinal"],
+            "repeat_computation_ordinal": amendment[
+                "repeat_computation_ordinal"],
+            "repeat_computation_role": amendment[
+                "repeat_computation_role"],
+            "sources": amendment_sources,
+        },
         "model_fused_kernel_bindings": binding_contract,
         "gpu": gpu,
         "fixed_sampling": sampling_contract,
@@ -720,6 +875,9 @@ def main() -> None:  # noqa: C901, PLR0915
         "equal_weight_source_table": adjacent["source_table_sha256"],
         "fixed_token_ids": sampling["token_ids_sha256"],
         "fixed_rademacher_probes": sampling["packed_probes_sha256"],
+        "runtime_amendment_precommit": amendment["precommit_sha256"],
+        "runtime_incident_report": amendment["incident_report_sha256"],
+        "runtime_incident_identity": amendment["incident_identity_sha256"],
         "input_manifest": manifest["payload_sha256"],
     }
     write_result4(
@@ -732,7 +890,8 @@ def main() -> None:  # noqa: C901, PLR0915
             seed_contract=(
                 "exact frozen prompt 323; equal-prompt algebra; registered "
                 "tiny/direct and adjacent-checkpoint assertions; fixed token "
-                "and probe samples"),
+                "and probe samples; preselected current-runtime computation 1 "
+                "with computation 2 discarded after repeatability QA"),
         ))
     outputs = [
         drive_contribution, result_path, manifest_path, structural_path,
