@@ -149,3 +149,74 @@ def test_live_known_deficits_bind_recovery_and_search_records():
         relative = uri.removeprefix(
             "repo://interpretability/jspace_phase4/")
         assert (root / relative).is_file()
+
+
+def test_worktree_absolute_path_resolves_to_identical_tracked_file(tmp_path):
+    # A reference registered under another VM's worktree resolves only to a
+    # repository file with the exact pinned bytes.
+    repo = tmp_path / "repo"
+    tracked = repo / "interpretability/pkg/reports/result.json"
+    tracked.parent.mkdir(parents=True)
+    tracked.write_text('{"result": 1}\n')
+    registered = "/gone-vm/interpretability/pkg/reports/result.json"
+    events = tmp_path / "events.jsonl"
+    _create(events, "worktree-v1", Path(registered), file_sha256(tracked))
+    result = verify_registry_durability(
+        events_path=events, pass_label="worktree", repo_root=repo)
+    assert result["ok"] is True
+    assert result["n_verified_by_resolution"] == {
+        "repository-materialization": 1}
+    row = result["references"][0]
+    assert row["resolution"] == "repository-materialization"
+    assert row["resolved_path"] == str(tracked)
+
+    tracked.write_text('{"result": "tampered"}\n')
+    tampered = verify_registry_durability(
+        events_path=events, pass_label="worktree-tampered", repo_root=repo)
+    assert tampered["ok"] is False
+    assert tampered["references"][0]["status"] == "missing"
+
+
+def test_append_only_registry_reference_resolves_to_exact_prefix(tmp_path):
+    repo = tmp_path / "repo"
+    registry = repo / "interpretability/pkg/reports/evidence_events.jsonl"
+    registry.parent.mkdir(parents=True)
+    historical = b'{"event":"evidence_created","evidence_id":"x-v1"}\n'
+    registry.write_bytes(historical)
+    pinned = file_sha256(registry)
+    with registry.open("ab") as handle:
+        handle.write(b'{"event":"evidence_created","evidence_id":"x-v2"}\n')
+
+    events = tmp_path / "events.jsonl"
+    source_registry = tmp_path / "source.jsonl"
+    source_registry.write_text("{}\n")
+    append_event({
+        "event": "evidence_imported",
+        "evidence_id": "import-prefix-v1",
+        "tier": "side-development-import",
+        "what": "test import",
+        "source_study": "side",
+        "source_evidence_id": "side-v1",
+        "source_commit": "d" * 40,
+        "import_code_commit": "e" * 40,
+        "source_registry_sha256": file_sha256(source_registry),
+        "source_outputs": [{
+            "path": str(registry), "sha256": pinned}],
+    }, path=events)
+
+    result = verify_registry_durability(
+        events_path=events, pass_label="prefix", repo_root=repo,
+        git_show=lambda commit, relative: historical)
+    assert result["ok"] is True
+    assert result["n_verified_by_resolution"] == {
+        "append-only-registry-prefix": 1}
+    assert result["references"][0]["resolution"] == (
+        "append-only-registry-prefix@" + "e" * 40)
+
+    # A mutated (non-prefix) live registry must stay a hash mismatch.
+    registry.write_bytes(b'{"mutated": true}\n' + historical)
+    mutated = verify_registry_durability(
+        events_path=events, pass_label="prefix-mutated", repo_root=repo,
+        git_show=lambda commit, relative: historical)
+    assert mutated["ok"] is False
+    assert mutated["references"][0]["status"] == "hash_mismatch"

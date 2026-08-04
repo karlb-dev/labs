@@ -9,8 +9,10 @@ criterion.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
+import subprocess
 import time
 from typing import Callable, Iterable, Mapping
 
@@ -19,6 +21,133 @@ from .registry4 import EVENTS, read_events, resolve_all
 
 
 HashFile = Callable[[Path], str]
+GitShow = Callable[[str, str], bytes]
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _git_show(commit: str, relative: str) -> bytes:
+    return subprocess.check_output(
+        ["git", "-C", str(REPO_ROOT), "show", f"{commit}:{relative}"],
+        stderr=subprocess.DEVNULL)
+
+
+def _repository_relative(path: Path) -> Path | None:
+    """Map a producer-worktree absolute path onto this repository.
+
+    Only a suffix beginning at the literal ``interpretability`` directory is
+    eligible; Drive and other external paths never remap.
+    """
+    if not path.is_absolute():
+        return path
+    try:
+        marker = path.parts.index("interpretability")
+    except ValueError:
+        return None
+    return Path(*path.parts[marker:])
+
+
+def resolve_output_reference(
+        path_str: str, expected_sha256: str | None, *,
+        event: Mapping, expected_bytes: int | None = None,
+        repo_root: Path = REPO_ROOT,
+        hash_file: HashFile = file_sha256,
+        git_show: GitShow = _git_show) -> dict:
+    """Strictly resolve one registered output reference.
+
+    Hashing is never weakened: a reference resolves only to bytes whose
+    SHA-256 equals the registered pin. Three lawful materializations exist:
+
+    1. the literal registered path;
+    2. the identical tracked file in the current repository, when the
+       registered absolute path came from another VM's worktree; and
+    3. for append-only registry files, the exact historical bytes at the
+       registering commit, provided the live file is a byte-prefix
+       extension of those bytes.
+    """
+    row = {
+        "exists": False,
+        "actual_sha256": None,
+        "actual_bytes": None,
+        "status": "missing",
+        "resolution": None,
+        "resolved_path": None,
+        "error": None,
+    }
+    path = Path(path_str)
+    try:
+        if path.is_file():
+            row["exists"] = True
+            row["actual_bytes"] = int(path.stat().st_size)
+            row["actual_sha256"] = hash_file(path)
+            if (
+                expected_bytes is not None
+                and row["actual_bytes"] != expected_bytes
+            ):
+                row["status"] = "byte_count_mismatch"
+            elif row["actual_sha256"] != expected_sha256:
+                row["status"] = "hash_mismatch"
+            else:
+                row["status"] = "verified"
+                row["resolution"] = "literal-path"
+                return row
+    except (OSError, RuntimeError) as error:
+        row["status"] = "read_error"
+        row["error"] = f"{type(error).__name__}: {error}"
+        return row
+
+    relative = _repository_relative(path)
+    if relative is None:
+        return row
+    candidate = repo_root / relative
+
+    if not row["exists"] and candidate.is_file():
+        try:
+            actual_bytes = int(candidate.stat().st_size)
+            actual = hash_file(candidate)
+        except (OSError, RuntimeError) as error:
+            row["status"] = "read_error"
+            row["error"] = f"{type(error).__name__}: {error}"
+            return row
+        if actual == expected_sha256 and (
+                expected_bytes is None or actual_bytes == expected_bytes):
+            row.update({
+                "exists": True,
+                "actual_bytes": actual_bytes,
+                "actual_sha256": actual,
+                "status": "verified",
+                "resolution": "repository-materialization",
+                "resolved_path": str(candidate),
+            })
+        return row
+
+    if (
+        row["status"] == "hash_mismatch"
+        and path.name == "evidence_events.jsonl"
+        and candidate.is_file()
+    ):
+        commit = str(
+            event.get("import_code_commit")
+            or event.get("code_commit") or "")
+        if len(commit) == 40:
+            try:
+                historical = git_show(commit, relative.as_posix())
+            except (OSError, subprocess.CalledProcessError):
+                return row
+            if (
+                hashlib.sha256(historical).hexdigest() == expected_sha256
+                and candidate.read_bytes().startswith(historical)
+                and (expected_bytes is None
+                     or len(historical) == expected_bytes)
+            ):
+                row.update({
+                    "actual_bytes": len(historical),
+                    "actual_sha256": expected_sha256,
+                    "status": "verified",
+                    "resolution":
+                        f"append-only-registry-prefix@{commit}",
+                    "resolved_path": str(candidate),
+                })
+    return row
 
 
 def _output_field(event: Mapping) -> str:
@@ -69,11 +198,14 @@ def verify_registry_durability(
         *, events_path: str | Path = EVENTS,
         known_deficits: Iterable[Mapping] = (),
         hash_file: HashFile = file_sha256,
-        pass_label: str = "manual") -> dict:
+        pass_label: str = "manual",
+        repo_root: Path = REPO_ROOT,
+        git_show: GitShow = _git_show) -> dict:
     """Hash every live registry output and return a durable plain-JSON rowset."""
     source = Path(events_path)
     started = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     events = resolve_all(path=source)
+    events_by_id = {event["evidence_id"]: event for event in events}
     live = [event for event in events if event["live"]]
     references = []
     for event in live:
@@ -104,31 +236,11 @@ def verify_registry_durability(
     deficits = list(known_deficits)
     for reference in references:
         row = dict(reference)
-        path = Path(reference["path"])
-        row.update({
-            "exists": False,
-            "actual_sha256": None,
-            "actual_bytes": None,
-            "status": "missing",
-            "error": None,
-        })
-        try:
-            if path.is_file():
-                row["exists"] = True
-                row["actual_bytes"] = int(path.stat().st_size)
-                row["actual_sha256"] = hash_file(path)
-                if (
-                    reference["expected_bytes"] is not None
-                    and row["actual_bytes"] != reference["expected_bytes"]
-                ):
-                    row["status"] = "byte_count_mismatch"
-                elif row["actual_sha256"] != reference["expected_sha256"]:
-                    row["status"] = "hash_mismatch"
-                else:
-                    row["status"] = "verified"
-        except (OSError, RuntimeError) as error:
-            row["status"] = "read_error"
-            row["error"] = f"{type(error).__name__}: {error}"
+        row.update(resolve_output_reference(
+            reference["path"], reference["expected_sha256"],
+            event=events_by_id[reference["evidence_id"]],
+            expected_bytes=reference["expected_bytes"],
+            repo_root=repo_root, hash_file=hash_file, git_show=git_show))
         row["known_deficit"] = bool(
             row["status"] != "verified"
             and _known_deficit(reference, deficits))
@@ -151,6 +263,14 @@ def verify_registry_durability(
         if matching[0]["status"] == "verified":
             resolved_known.append(dict(deficit))
 
+    resolution_counts: dict[str, int] = {}
+    for row in rows:
+        if row["status"] == "verified":
+            mode = str(row.get("resolution") or "literal-path")
+            if mode.startswith("append-only-registry-prefix"):
+                mode = "append-only-registry-prefix"
+            resolution_counts[mode] = resolution_counts.get(mode, 0) + 1
+
     completed = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
     return {
         "schema_version": 1,
@@ -166,6 +286,7 @@ def verify_registry_durability(
         "n_output_references": len(rows),
         "n_unique_output_paths": len(pins_by_path),
         "n_verified": len(rows) - len(failures),
+        "n_verified_by_resolution": resolution_counts,
         "n_failures": len(failures),
         "n_known_deficits": sum(row["known_deficit"] for row in failures),
         "n_unexpected_failures": len(unexpected),
