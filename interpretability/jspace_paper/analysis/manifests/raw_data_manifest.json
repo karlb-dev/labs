@@ -1,0 +1,405 @@
+{
+  "generated_at_commit": "8fec45e16929a96d6408831bbb93a8355286812d",
+  "hashing_policy": "Drive roots inventoried by structure; artifact-level hashes remain pinned by the frozen release/import manifests hashed here. No raw artifact re-hashed over DriveFS.",
+  "roots": {
+    "gemma_study1": {
+      "drive_root": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802",
+      "hashed_manifest_files": [
+        {
+          "bytes": 3995,
+          "rel_path": "manifests/gemma4_31b_architecture_runtime_v1.json",
+          "sha256": "c21667b456052f96730bccd3b68134ab70681cbfc4c2d2308cc890ed3ebaa491"
+        },
+        {
+          "bytes": 6219,
+          "rel_path": "manifests/gemma_target_local_snapshot_v1.json",
+          "sha256": "5b8d26a91b5cdc74e7fbc982d89bbf6d661233ee3da81705d165ef31cf6e308a"
+        },
+        {
+          "bytes": 1167,
+          "rel_path": "manifests/gemma_transport_environment_lock_v1.json",
+          "sha256": "c955c78af1c41b2fe03da1106d6906e6eb93bae777b9147f8e153444b1eeac7a"
+        },
+        {
+          "bytes": 2300,
+          "rel_path": "manifests/gm_band_convention_v1.json",
+          "sha256": "04e56c9bffc02d9a9d2580a1982f520c1069e87e0898fe52a80b911b210e5c8f"
+        },
+        {
+          "bytes": 1985,
+          "rel_path": "manifests/gm_foundation_diagnostic_v1.json",
+          "sha256": "eb72a440a6599d3673538240ce501c45caf2927e2328f2c378f936f37487e8bb"
+        },
+        {
+          "bytes": 59963,
+          "rel_path": "manifests/gm_foundation_v1.json",
+          "sha256": "df9e85cc2f3afcb05a4881db18c5a4e17cc83323906577a99b7fae6fdcc06304"
+        },
+        {
+          "bytes": 42003,
+          "rel_path": "manifests/gm_olmo_calibration_finalize_diagnostic_v1.json",
+          "sha256": "78d53fca50b2a8ac2e114f71a7900a3581214e5367b0892dadf624ec736e8e25"
+        },
+        {
+          "bytes": 19354,
+          "rel_path": "manifests/historical_imports_v1.json",
+          "sha256": "8f3d67b199b83d8a88ac37cdc9dcb0c9feca3d58aa049b87068f0000093c2ab6"
+        },
+        {
+          "bytes": 23050,
+          "rel_path": "manifests/model_remote_and_staging_inventory_v1.json",
+          "sha256": "9369ae393c8ee62c1815a7a5d8ee852f39a2de82048ed4298743f9f56dcdeaf9"
+        },
+        {
+          "bytes": 11341,
+          "rel_path": "manifests/olmo_control_local_snapshot_v1.json",
+          "sha256": "fa620d543b8cc80d3545aee177343036b04a5a0de84b8e65c8dcfa15dec1776c"
+        },
+        {
+          "bytes": 4108,
+          "rel_path": "release/gemma_transport_release_manifest.json",
+          "sha256": "1f896c7029a2f4cee10378a95c71463d1346e2a500529101af80de7063c1e483"
+        }
+      ],
+      "n_files": 243,
+      "total_bytes": 711645139
+    },
+    "gemma_study2": {
+      "drive_root": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803",
+      "hashed_manifest_files": [
+        {
+          "bytes": 4318,
+          "rel_path": "manifests/gm2_backend_calibration_registration.json",
+          "sha256": "2f8c99905f6547e748ab6460623bb635b4f13592ce0ba1d89088468a8d08c65c"
+        },
+        {
+          "bytes": 18002,
+          "rel_path": "manifests/gm2_foundation_v1.json",
+          "sha256": "7676e8ef4c81e2589068abf6488cb24e4c9673515bc3061b4955fa476e606ade"
+        },
+        {
+          "bytes": 2310,
+          "rel_path": "manifests/gm2_predata_architecture_correction.json",
+          "sha256": "567659fd6fb0fc7b0f7418d102e6fa85dee5680efc38ac38c67462e11f062d90"
+        },
+        {
+          "bytes": 5417,
+          "rel_path": "manifests/gm2_snapshot_gemma4_31b.json",
+          "sha256": "6cf8a77549d2429eda484db26c0d7a38ab8e5c171b644971a0eeeb0cacf1afc4"
+        },
+        {
+          "bytes": 11435,
+          "rel_path": "manifests/gm2_snapshot_olmo3_32b_control.json",
+          "sha256": "5ffed1e1803e57c003c9d6c1ec698c375000212fe4fd5c9fbebd4bfc3c0a0134"
+        },
+        {
+          "bytes": 36279,
+          "rel_path": "release/evidence_events_prefix_sidelines2.jsonl",
+          "sha256": "2a144bcf0e7be0ac4307f7e2a2984c1879340b9a7e9278d10143d122a14fd30a"
+        }
+      ],
+      "n_files": 45,
+      "total_bytes": 3250741
+    },
+    "olmo_study1": {
+      "drive_root": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801",
+      "hashed_manifest_files": [
+        {
+          "bytes": 6762,
+          "rel_path": "manifests/ol_bank_w_capability_protocol_v1.json",
+          "sha256": "95db44f86f7da35f066375cc38c70504dfbe4af52d9a30983a778c7dbda8dedc"
+        },
+        {
+          "bytes": 12124,
+          "rel_path": "manifests/ol_capacity_protocol_v1.json",
+          "sha256": "909c07d32af9c7a94239c431344d18fd1088c10dba640f76119bf7152b78c9a0"
+        },
+        {
+          "bytes": 40988,
+          "rel_path": "manifests/ol_environment_lock.json",
+          "sha256": "728996e6760d44a54b5aa0653c823b0573b42b1d0613eb11dd570deea79e9f54"
+        },
+        {
+          "bytes": 7198,
+          "rel_path": "manifests/ol_foundation_conformance.json",
+          "sha256": "58e4ce7828ff5664452e4d7c53340df5b089c4fd485fc5694738388ee7bf9285"
+        },
+        {
+          "bytes": 4673,
+          "rel_path": "manifests/ol_foundation_manifest.json",
+          "sha256": "0bd46f0c915e40c3c6eb9fbb61ac4b128bb0fc55b4fd10bf999a844d770a064e"
+        },
+        {
+          "bytes": 5011,
+          "rel_path": "manifests/ol_geometry_figures_v1.json",
+          "sha256": "1bb734323272a38a1c3256534462ea0196e722ac325b76636a3b3ac6768e1d9c"
+        },
+        {
+          "bytes": 179585,
+          "rel_path": "manifests/ol_geometry_protocol_v1.json",
+          "sha256": "91410471bf9f7ed4becaa91fe972cbe778df1bd8ec41a1a80b4c590d7809697d"
+        },
+        {
+          "bytes": 684667,
+          "rel_path": "manifests/ol_geometry_row_manifest_v1.json",
+          "sha256": "86222e65d35037b2e8b9d22f3d71200810e465734d3bb47915d59079868ed92c"
+        },
+        {
+          "bytes": 80594,
+          "rel_path": "manifests/ol_import_manifest.json",
+          "sha256": "0988f5fd8db4cb9297d892a36f9b439d5e1d4704ac3d06330b28cae6ce1a4dec"
+        }
+      ],
+      "n_files": 116,
+      "total_bytes": 646090122
+    },
+    "olmo_study2": {
+      "drive_root": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803",
+      "hashed_manifest_files": [
+        {
+          "bytes": 15119,
+          "rel_path": "manifests/ol2_checkpoint_ancestry_v1.json",
+          "sha256": "18d1870ba5fafa010c534a3f843bd6b8bd2f01be032318d0bc67ee52a44b9a45"
+        },
+        {
+          "bytes": 1149,
+          "rel_path": "manifests/ol2_checkpoint_ancestry_v1.md",
+          "sha256": "3e7329ba4d6e802bab34c5dcf8457bac5cec690a64384375e76592cdff1dc0f9"
+        },
+        {
+          "bytes": 72441,
+          "rel_path": "manifests/ol2_foundation_v1.json",
+          "sha256": "0ebe0dfc91317ecdaa61f6b4bf1674b9c21a45db0afc4b9dc8eb1d7dae2ec346"
+        },
+        {
+          "bytes": 3326,
+          "rel_path": "manifests/ol2_gemma_backend_calibration_import_v1.json",
+          "sha256": "b915424d4036064a7885d5bdcf2fd07462a499c47676945f1c3d5ddf5314ba29"
+        },
+        {
+          "bytes": 3809,
+          "rel_path": "manifests/ol2_transport_execution_freeze_v1.json",
+          "sha256": "72f5cced3c3969ff6b25ffd4cc434a56566a58fdddec39dd2e7bc8e2f0da81b9"
+        },
+        {
+          "bytes": 2297,
+          "rel_path": "manifests/ol2_transport_predata_bos_correction.json",
+          "sha256": "2e5a6f3731b01ecf14a609b2f6cf9aec523f7ed18945b084d56262cf19c0d37d"
+        },
+        {
+          "bytes": 1314,
+          "rel_path": "manifests/ol2_transport_predata_prompt_tensor_shape_correction.json",
+          "sha256": "e72a1a5ade22932e0770068c383f11ad2b03fb158c43f1482a3e2645b9b33e56"
+        },
+        {
+          "bytes": 11123,
+          "rel_path": "manifests/ol2_transport_snapshot_base.json",
+          "sha256": "970742d8c0ef2fce60eeccadfb86dd13a713a075a3c172d8d8802a79f12fe297"
+        },
+        {
+          "bytes": 11480,
+          "rel_path": "manifests/ol2_transport_snapshot_olmo31_think.json",
+          "sha256": "623a0c9a99b31a51a5495164e19a5cffe64f61a67a06d68e4a05d21579b11bcd"
+        },
+        {
+          "bytes": 86627,
+          "rel_path": "release/evidence_events_prefix_sidelines2.jsonl",
+          "sha256": "0a8973e01d562a82fa88da650ab8597c140050f6caf46c8bbd72e2b58acffb58"
+        }
+      ],
+      "n_files": 161,
+      "total_bytes": 270321919
+    },
+    "phase2": {
+      "drive_root": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727",
+      "hashed_manifest_files": [
+        {
+          "bytes": 31231,
+          "rel_path": "manifests/PILOT_SNAPSHOT_VM7.json",
+          "sha256": "618048909c7b4084797edd07a0d939aff602bfb15b4c1238db22f3c3c4d57f26"
+        },
+        {
+          "bytes": 185754,
+          "rel_path": "manifests/artifact_inventory.jsonl",
+          "sha256": "ded2da6d75a31c87fc00c145c1cca8e8bd959378c53572d50cfc7d1029424d0f"
+        },
+        {
+          "bytes": 614,
+          "rel_path": "manifests/environment_audit.json",
+          "sha256": "a704a70c4042ec9fad330ab2c6258eff45aac014dc1aa0eeaf288c16ca34b985"
+        },
+        {
+          "bytes": 126074,
+          "rel_path": "manifests/evidence_events.jsonl",
+          "sha256": "6a880d0f092ed4bcbb6447adeb92fd13a1c07f31d091d611616cc19ee4d300ff"
+        },
+        {
+          "bytes": 114098,
+          "rel_path": "manifests/evidence_registry.jsonl",
+          "sha256": "6a5a89d63d5014ae44da795e067a20f34168e4f11af986b2d97659d86fc666ad"
+        },
+        {
+          "bytes": 578,
+          "rel_path": "manifests/inventory_summary.json",
+          "sha256": "f9f7df4aeba5929bf5d10309966b96804d7e4b7b1eab425a64f2bf82e35d46f0"
+        },
+        {
+          "bytes": 14255,
+          "rel_path": "manifests/pip_freeze_18972f6c0d8d.txt",
+          "sha256": "18972f6c0d8d34b40c5a2a157826e77bfc5eea42295b02a0c56da965966ec718"
+        },
+        {
+          "bytes": 14255,
+          "rel_path": "manifests/pip_freeze_44569df611b1.txt",
+          "sha256": "44569df611b1ea9ca97757cd6d6cdadf2b1a142e107eb08f53d97e0cee22c652"
+        },
+        {
+          "bytes": 14255,
+          "rel_path": "manifests/pip_freeze_46f552f47714.txt",
+          "sha256": "46f552f477147913db2df5f1e811a68c1262b280f3483a7fc3fc78998a861f96"
+        },
+        {
+          "bytes": 14255,
+          "rel_path": "manifests/pip_freeze_4b82770be660.txt",
+          "sha256": "4b82770be6600f6c0f5ac065e50bf3f8ba23ed3cca5d6919b1f5b3887f64cff5"
+        },
+        {
+          "bytes": 14255,
+          "rel_path": "manifests/pip_freeze_72c74d3fc25d.txt",
+          "sha256": "72c74d3fc25d892edbfaa59b28938b1b669931accd82cac2da1c8c400a52f40b"
+        },
+        {
+          "bytes": 14255,
+          "rel_path": "manifests/pip_freeze_d7b94b779f6f.txt",
+          "sha256": "d7b94b779f6f2c49782b237142d1976f682a9341c0a7aa7a25f70dad75376f27"
+        }
+      ],
+      "n_files": 375,
+      "total_bytes": 63294560548
+    },
+    "phase3": {
+      "drive_root": "/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729",
+      "hashed_manifest_files": [
+        {
+          "bytes": 40711,
+          "rel_path": "manifests/phase3_environment_lock.json",
+          "sha256": "3719cd58935ec0162aed1c4189cf1f612aaa05d25b1f4a633deaeccb84b1ebe4"
+        },
+        {
+          "bytes": 76120,
+          "rel_path": "manifests/phase3_live_evidence_inventory.json",
+          "sha256": "cbfcac458ea634214830cf54bc11c82eaa66ed4c3ca768fbb00edb0d0ddf324a"
+        },
+        {
+          "bytes": 86010,
+          "rel_path": "manifests/phase3_pre_audit_live_evidence.json",
+          "sha256": "74ed3c480b53026855f70945cd14f62a74670a40d1dd8ea3a39a356f427ab95b"
+        },
+        {
+          "bytes": 6702,
+          "rel_path": "manifests/phase3_pre_audit_snapshot.json",
+          "sha256": "02b5b596926dc09ba196fb89a55486e852da537b3d286faa149ee034e1a1b756"
+        },
+        {
+          "bytes": 412309,
+          "rel_path": "manifests/phase3_prompt_alias_manifest.json",
+          "sha256": "3df960b02937c348aafe9f1080264598d26dc76d6a68a323b6b4ea10fabf4ead"
+        },
+        {
+          "bytes": 22037,
+          "rel_path": "manifests/phase3_release_manifest.json",
+          "sha256": "05f48a7679b8b5e5fda4943a83f8797489fefcbb7b75736849d32ce919cbdbce"
+        },
+        {
+          "bytes": 580,
+          "rel_path": "manifests/phase3_release_manifest.md",
+          "sha256": "166f9617074a6ba32b767c9fcc4ddcc226b578f4bef9c365b283e91293b7c303"
+        }
+      ],
+      "n_files": 693,
+      "total_bytes": 14549412243
+    },
+    "phase4": {
+      "drive_root": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731",
+      "hashed_manifest_files": [
+        {
+          "bytes": 2723,
+          "rel_path": "closeout/phase4_4_20260803_0f3380d/interpretability/jspace_phase4/manifests/parallel_import_inventory.md",
+          "sha256": "e2357e5871fc09b4d21051933cc358791639c1b540d45589de28d40b06083642"
+        },
+        {
+          "bytes": 329261,
+          "rel_path": "closeout/phase4_4_20260803_0f3380d/interpretability/jspace_phase4/manifests/phase4_pre_freeze_inventory_v4_4.json",
+          "sha256": "cedc3d253b1238acc37ddd85299d6dc688e4c2dc6289a9a95658128fdc36b162"
+        },
+        {
+          "bytes": 1169,
+          "rel_path": "closeout/phase4_4_20260803_0f3380d/interpretability/jspace_phase4/manifests/phase4_pre_freeze_inventory_v4_4.md",
+          "sha256": "0fca59930265db6156243557df88f08992c7ce9426149d7df18f83587aad3d47"
+        },
+        {
+          "bytes": 6855,
+          "rel_path": "closeout/phase4_5_20260804_ea63522/PHASE4_RELEASE_MANIFEST.json",
+          "sha256": "80d607baec1aedbbc0718b100e00433e6a46ea5ba0f56133a9846d7f1e28206f"
+        },
+        {
+          "bytes": 2371,
+          "rel_path": "closeout/phase4_5_20260804_ea63522/PHASE4_RELEASE_MANIFEST.md",
+          "sha256": "291c4ebd2b0e5b1cc61e8724f1ce8a1d32d891115f3149c0b7631d8f223cce9f"
+        },
+        {
+          "bytes": 4108,
+          "rel_path": "closeout/phase4_5_imports/p4-import-gemma-transport-study2-v1/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_release_manifest.json",
+          "sha256": "1f896c7029a2f4cee10378a95c71463d1346e2a500529101af80de7063c1e483"
+        },
+        {
+          "bytes": 18002,
+          "rel_path": "closeout/phase4_5_imports/p4-import-gemma-transport-study2-v1/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/manifests/gm2_foundation_v1.json",
+          "sha256": "7676e8ef4c81e2589068abf6488cb24e4c9673515bc3061b4955fa476e606ade"
+        },
+        {
+          "bytes": 15119,
+          "rel_path": "closeout/phase4_5_imports/p4-import-olmo-lineage-study2-v1/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/manifests/ol2_checkpoint_ancestry_v1.json",
+          "sha256": "18d1870ba5fafa010c534a3f843bd6b8bd2f01be032318d0bc67ee52a44b9a45"
+        },
+        {
+          "bytes": 1149,
+          "rel_path": "closeout/phase4_5_imports/p4-import-olmo-lineage-study2-v1/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/manifests/ol2_checkpoint_ancestry_v1.md",
+          "sha256": "3e7329ba4d6e802bab34c5dcf8457bac5cec690a64384375e76592cdff1dc0f9"
+        },
+        {
+          "bytes": 72441,
+          "rel_path": "closeout/phase4_5_imports/p4-import-olmo-lineage-study2-v1/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/manifests/ol2_foundation_v1.json",
+          "sha256": "0ebe0dfc91317ecdaa61f6b4bf1674b9c21a45db0afc4b9dc8eb1d7dae2ec346"
+        },
+        {
+          "bytes": 3326,
+          "rel_path": "closeout/phase4_5_imports/p4-import-olmo-lineage-study2-v1/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/manifests/ol2_gemma_backend_calibration_import_v1.json",
+          "sha256": "b915424d4036064a7885d5bdcf2fd07462a499c47676945f1c3d5ddf5314ba29"
+        },
+        {
+          "bytes": 3809,
+          "rel_path": "closeout/phase4_5_imports/p4-import-olmo-lineage-study2-v1/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/manifests/ol2_transport_execution_freeze_v1.json",
+          "sha256": "72f5cced3c3969ff6b25ffd4cc434a56566a58fdddec39dd2e7bc8e2f0da81b9"
+        },
+        {
+          "bytes": 41721,
+          "rel_path": "manifests/p4_environment_lock.json",
+          "sha256": "f30741afc53e08f42a8184d6284876edec5f690c5cf00dff9fe6267b37fa5220"
+        },
+        {
+          "bytes": 349,
+          "rel_path": "manifests/p4_foundation_conformance.json",
+          "sha256": "f5af11cec1b87a90fe88959870504737b584db95768b67e9bc932091efd80e15"
+        },
+        {
+          "bytes": 7362,
+          "rel_path": "manifests/p4_foundation_manifest.json",
+          "sha256": "88b972f3b1c09d9ea05c67b91d655bb3227c3a18e9fc4417ec0a5726343c50d3"
+        }
+      ],
+      "n_files": 652,
+      "total_bytes": 47254485159
+    }
+  }
+}
