@@ -66,8 +66,13 @@ def test_freeze_ledger_is_explicitly_unfrozen_and_routes_all_primaries():
     assert "zero unexpected deficits" in normalized
     assert "Exact A120 capacity" in normalized and "RECOVERED" in normalized
     assert "Historical A120--A250 `state.json`" in normalized
-    assert "The implementation agent has not self-signed" in text
-    assert "Freeze commit / tag" in text and "NOT CREATED" in text
+    # External gates were discharged on 2026-08-04 by the narrative-blind
+    # review and the recorded PI disposition; the ledger must cite both and
+    # must still not claim a tag that precedes verification.
+    assert "PHASE4_INDEPENDENT_REVIEW_20260804.md" in text
+    assert "PHASE4_PI_DISPOSITION_20260804.md" in text
+    assert "Fresh independent remount | **PASS**" in text
+    assert "AUTHORIZED PENDING VERIFICATION" in text
 
 
 def test_methods_record_and_paper_skeleton_include_invariance_boundary():

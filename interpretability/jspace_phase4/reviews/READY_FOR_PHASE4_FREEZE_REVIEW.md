@@ -1,6 +1,7 @@
 # Phase 4 freeze-review handoff
 
-**PACKET ASSEMBLY COMPLETE — FREEZE GATE REMAINS RED**
+**PACKET ASSEMBLY COMPLETE — EXTERNAL GATES DISCHARGED 2026-08-04 — FREEZE
+PROCEEDS AFTER FULL VERIFICATION**
 
 State date: 2026-08-03; updated 2026-08-04 with the Phase 4.5 Study-2
 admissions and strict fresh-materialization reference resolution. This is
@@ -41,10 +42,10 @@ agent has filled an external-review or PI field.
 | Pre-freeze inventory policy/path/ancestry checks | **PASS** | v4_5 payload `71ae6031...` (v4_4 was `0fbd2d4d...`); all commits reachable; no path/native-ID/temp leak conflict. |
 | Pre-freeze all-live-output verification | **FAIL** | `all_live_outputs_verified=false` because of the one known state deficit. |
 | No confirmatory/replication intervention outcome | **PASS** | Registry/inventory and execution record show none opened. |
-| Independent protocol and untouched-data review | **EXTERNAL SIGNATURE REQUIRED** | Implementation agent cannot self-sign. |
-| Permanent-deficit acceptance | **EXTERNAL SIGNATURE REQUIRED** | Independent reviewer and PI must decide. |
-| PI no-primary/freeze disposition | **EXTERNAL SIGNATURE REQUIRED** | Silence is not approval. |
-| Freeze commit/tag | **BLOCKED** | Must not be created until external gates close. |
+| Independent protocol and untouched-data review | **SIGNED** | Narrative-blind fresh-session review `PHASE4_INDEPENDENT_REVIEW_20260804.md` (SHA-256 `1ca0f1aa...`): 13/14 PASS, 1 PASS WITH EXPLICIT LIMITATION (documentation errata, fixed); `PHASE4_UNTOUCHED_DATA_AUDIT.md` PASS. |
+| Permanent-deficit acceptance | **ACCEPTED WITH EXPLICIT LIMITATION** | Reviewer recommendation + PI disposition item 8 (`PHASE4_PI_DISPOSITION_20260804.md`); deficit carried verbatim in manifest and known-limitations. |
+| PI no-primary/freeze disposition | **RECORDED** | `PHASE4_PI_DISPOSITION_20260804.md`: all 13 items accepted per the PI-authored nextsteps_4_5 addendum §3 resolutions + PI session directive of 2026-08-04. |
+| Freeze commit/tag | **AUTHORIZED PENDING VERIFICATION** | PI disposition item 13; tag follows full pre/post-merge verification, never precedes it. |
 
 ## Mechanical disposition
 
@@ -58,9 +59,10 @@ new confirmatory findings.
 ## External completion actions
 
 1. ~~Freshly rematerialize Drive and re-run the whole-registry audit.~~ Done: Part-5 fresh pass, 2026-08-04.
-2. Review the runtime limitation, Q-L4 derivation, untouched-data boundary,
-   and permanent-deficit disposition.
-3. If acceptable, supply real reviewer and PI signatures and only then create
-   a freeze commit/tag under a separate authorized action.
+2. ~~Review the runtime limitation, Q-L4 derivation, untouched-data
+   boundary, and permanent-deficit disposition.~~ Done: narrative-blind
+   review, 2026-08-04.
+3. ~~Supply reviewer and PI records.~~ Done; the freeze commit/tag proceeds
+   under `PHASE4_PI_DISPOSITION_20260804.md` after full verification.
 
 No A2000, new bank, model, endpoint, or SESOI change exists.
