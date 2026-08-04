@@ -12,10 +12,10 @@ request to select a more favorable lens.
 |---|---|---|
 | A1000 cumulative fit | `p4-qwen-lens-fit-drawA-n1000-dev-v1` | Lens `6e48c773...f6bd6`; checkpoint `fd5a4ae...bf20`; exact 1,000-prompt cumulative draw A. |
 | Structural A500--A1000 | `p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1` | Result `eaf8a63e...`; task q50/q05 0.998702/0.998122, both pass. |
-| Functional A500--A1000 | `p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1`, `603bbcec...` | Result `7625ae1f...`, manifest `cddb0502...`; ID Jaccard 0.538462, projector overlap 0.709818, bridge-rescue difference -0.294028 nat fail. |
-| All-position margin audit | `p4-qwen-selection-margin-a500-a1000-dev-v1`, `0ce3519b...` | Result `8a85a715...`; 17,381 positions, 15,536 near-tie, 1,845 stable-core, zero rank-deficient; stable-core Jaccard 0.666667. |
-| Prompt-323 retained influence | `p4-qwen-lens-influence-prompt323-dev-v1`, `01236a3...` | Result `a5359b02...`; all A500/A1000 materiality metrics negligible; current-runtime repeat difference 0.004572 <= 0.5. |
-| Canonical decision | `p4-qwen-canonical-lens-decision-a1000-dev-v1`, `28e25fe...` | Result `549a3f42...`; **Q-L4; no canonical sparse lens**. |
+| Functional A500--A1000 | `p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1`, code commit `dbd54a36...` | Result `7625ae1f...`, manifest `cddb0502...`; ID Jaccard 0.538462, projector overlap 0.709818, bridge-rescue difference -0.294028 nat fail. |
+| All-position margin audit | `p4-qwen-selection-margin-a500-a1000-dev-v1`, code commit `603bbcec...` | Result `8a85a715...`; 17,381 positions, 15,536 near-tie, 1,845 stable-core, zero rank-deficient; stable-core Jaccard 0.666667. |
+| Prompt-323 retained influence | `p4-qwen-lens-influence-prompt323-dev-v1`, code commit `92831d31...` | Result `a5359b02...`; all A500/A1000 materiality metrics negligible; current-runtime repeat difference 0.004572 <= 0.5. |
+| Canonical decision | `p4-qwen-canonical-lens-decision-a1000-dev-v1`, code commit `01236a3f...` | Result `549a3f42...`; **Q-L4; no canonical sparse lens**. |
 
 The prompt-323 transaction follows the prospective amendment committed at
 `92831d31...`. Its current-runtime primary maximum is 181.776618 and its

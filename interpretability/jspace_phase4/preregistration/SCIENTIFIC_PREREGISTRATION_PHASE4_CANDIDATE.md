@@ -484,8 +484,8 @@ transport gate, and regenerates final figures.
 - [x] Exact A120 capacity recovered; missing historical state classified by an
       append-only permanent-deficit event without fabricating bytes.
 - [x] Environment and model/lens/tokenizer identities captured; full Phase 4
-      suite passes 284/284 at the 4.4 boundary (300/300 after the Phase 4.5
-      Study-2 importer and strict reference-resolution tests).
+      suite passes 284/284 at the 4.4 boundary (302/302 after the Phase 4.5
+      Study-2 importer, strict reference-resolution, and narrative tests).
 - [x] No confirmatory or replication intervention outcome opened.
 - [ ] Fresh independent Drive rematerialization verifies all releasable live
       outputs or independently accepts the one known permanent deficit.

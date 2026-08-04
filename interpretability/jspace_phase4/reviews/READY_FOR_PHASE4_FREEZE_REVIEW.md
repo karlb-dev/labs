@@ -37,8 +37,8 @@ agent has filled an external-review or PI field.
 | Historical A120--A250 operational state | **FAIL** | One permanent known missing output; never synthesized. |
 | Append-only archival disposition | **PASS** | `p4-qwen-a120-a250-state-permanent-deficit-v1`; later gates supersede its decision role. |
 | Same-mounted durability agreement | **PASS** | 418/419, one known, zero unexpected, zero pin conflicts in both passes. |
-| Fresh independent rematerialization | **BLOCKED** | Current two passes share the same mounted Drive materialization. |
-| Pre-freeze inventory policy/path/ancestry checks | **PASS** | Payload `0fbd2d4d...`; all commits reachable; no path/native-ID/temp leak conflict. |
+| Fresh independent rematerialization | **PASS** | Part-5 pass `phase4-part5-fresh-materialization` (fresh VM/mount/clone, 2026-08-04): 520/521 verified, only the known deficit, zero unexpected, zero pin conflicts. |
+| Pre-freeze inventory policy/path/ancestry checks | **PASS** | v4_5 payload `71ae6031...` (v4_4 was `0fbd2d4d...`); all commits reachable; no path/native-ID/temp leak conflict. |
 | Pre-freeze all-live-output verification | **FAIL** | `all_live_outputs_verified=false` because of the one known state deficit. |
 | No confirmatory/replication intervention outcome | **PASS** | Registry/inventory and execution record show none opened. |
 | Independent protocol and untouched-data review | **EXTERNAL SIGNATURE REQUIRED** | Implementation agent cannot self-sign. |
@@ -57,7 +57,7 @@ new confirmatory findings.
 
 ## External completion actions
 
-1. Freshly rematerialize Drive and re-run the whole-registry audit.
+1. ~~Freshly rematerialize Drive and re-run the whole-registry audit.~~ Done: Part-5 fresh pass, 2026-08-04.
 2. Review the runtime limitation, Q-L4 derivation, untouched-data boundary,
    and permanent-deficit disposition.
 3. If acceptable, supply real reviewer and PI signatures and only then create
