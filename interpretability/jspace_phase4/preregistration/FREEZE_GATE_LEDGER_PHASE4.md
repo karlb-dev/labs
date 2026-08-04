@@ -2,10 +2,11 @@
 
 **CANDIDATE LEDGER — NOT FROZEN — INDEPENDENT REVIEW AND PI APPROVAL PENDING**
 
-State date: 2026-08-03. Governing plan:
-`jspace_lab_nextsteps_4_4.md` plus its accepted addendum. Scientific candidate:
-`SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md`, candidate 0.12 terminal
-update.
+State date: 2026-08-04. Governing plans:
+`jspace_lab_nextsteps_4_4.md` plus its accepted addendum, and the Phase 4.5
+closeout block `jspace_lab_nextsteps_4_5.md` plus its addendum. Scientific
+candidate: `SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md`, candidate 0.13
+Study-2 admission update.
 
 This ledger records the mechanical pre-freeze state. A development artifact
 does not authorize confirmatory or replication intervention. Only real
@@ -43,8 +44,11 @@ A retired or blocked endpoint does not donate multiplicity budget.
 | Bank-W mainline replay | **REGISTERED** as `p4-bank-w-capability-joint-imported-dev-v1` | 16/20 service block; no cross-model primary. |
 | Gemma transport | **REGISTERED** as `p4-import-gemma-transport-v1` | Methods blocker only; all-slot parity fails; no mechanism or intervention claim. |
 | OLMo final lineage | **REGISTERED** as `p4-import-olmo-lineage-final-v1` | Methods/development O1--O5 boundaries preserved; no new scientific cell or intervention. |
+| Gemma Study 2 (calibrated relicense) | **REGISTERED** as `p4-import-gemma-transport-study2-v1` | Methods tier. Target-blind pooled ceiling 0.07870368901355948 frozen before target read; preserved all-slot error 0.0024581113830208778 in-envelope; selected slot bit-identical; five-layer classifier now a closed finite-scale methods result. Historical Study-1 blocker preserved, not rewritten. No mechanism/workspace/intervention license. |
+| OLMo Study 2 (wedge, H6, pair power) | **REGISTERED** as `p4-import-olmo-lineage-study2-v1` | Methods tier. SFT/DPO wedge capability-gated with empty Bank-S cohorts (effects missing, not zero; no localization); H6 licenses no in-band regime at L24/L32/L40, Think L56 epsilon-0.10 late anchor only; registered-dose coverage unavailable, not zero; Bank-W pair power 0.7788 at 16 families (first passing count 18) — planning closure, not a null. No intervention authorized. |
 
-Native `ol-*` and `gm-*` events remain absent from the Phase 4 registry.
+Native `ol-*`, `ol2-*`, `gm-*`, and `gm2-*` events remain absent from the
+Phase 4 registry.
 
 ## Durability and governance
 

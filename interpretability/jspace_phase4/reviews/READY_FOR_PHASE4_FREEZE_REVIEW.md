@@ -2,8 +2,10 @@
 
 **PACKET ASSEMBLY COMPLETE — FREEZE GATE REMAINS RED**
 
-State date: 2026-08-03. This is the required terminal handoff, not a freeze
-approval. No implementation agent has filled an external-review or PI field.
+State date: 2026-08-03; updated 2026-08-04 with the Phase 4.5 Study-2
+admissions and strict fresh-materialization reference resolution. This is
+the required terminal handoff, not a freeze approval. No implementation
+agent has filled an external-review or PI field.
 
 | Gate | Status | Evidence / reason |
 |---|---|---|
@@ -28,7 +30,9 @@ approval. No implementation agent has filled an external-review or PI field.
 | Bank-W mainline replay | **PASS** | `p4-bank-w-capability-joint-imported-dev-v1`; 16/20 preserved. |
 | Gemma methods import | **PASS** | `p4-import-gemma-transport-v1`; methods blocker boundary preserved. |
 | OLMo terminal methods import | **PASS** | `p4-import-olmo-lineage-final-v1`; O1--O5 boundaries preserved. |
-| Native side IDs excluded | **PASS** | Inventory finds no `ol-*` or `gm-*` event in Phase 4. |
+| Gemma Study-2 methods admission | **PASS** | `p4-import-gemma-transport-study2-v1`; exact bundle `9ef48b8a...` and frozen prefix `2a144bcf...` rehash; calibrated finite-scale license only; historical blocker preserved. |
+| OLMo Study-2 methods admission | **PASS** | `p4-import-olmo-lineage-study2-v1`; exact bundle `c213dc74...` and frozen prefix `0a8973e0...` rehash; capability-gated wedge, in-band H6 failure, underpowered pair boundary; effects missing-not-zero. |
+| Native side IDs excluded | **PASS** | Inventory finds no `ol-*`, `ol2-*`, `gm-*`, or `gm2-*` event in Phase 4. |
 | Exact A120 capacity recovery | **PASS** | Rebuilt SHA-256 exactly matches `6b0399df...c651b6f`. |
 | Historical A120--A250 operational state | **FAIL** | One permanent known missing output; never synthesized. |
 | Append-only archival disposition | **PASS** | `p4-qwen-a120-a250-state-permanent-deficit-v1`; later gates supersede its decision role. |

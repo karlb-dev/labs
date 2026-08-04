@@ -465,3 +465,36 @@ def test_phase4_registry_has_no_native_side_origins():
         and row["evidence_id"].startswith(("gm-", "gm2-", "ol-", "ol2-"))
     ]
     assert leaked == []
+
+
+NARRATIVE_DOCUMENTS = [
+    "interpretability/jspace_phase4/paper/PAPER_CONCLUSION_SKELETON.md",
+    "interpretability/jspace_phase4/paper/PHASE4_METHODS_DECISION_RECORD.md",
+    "interpretability/jspace_phase4/reports/PHASE4_DEVELOPMENT_REPORT.md",
+    "interpretability/jspace_phase4/preregistration/"
+    "FREEZE_GATE_LEDGER_PHASE4.md",
+    "interpretability/jspace_phase4/preregistration/"
+    "SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md",
+    "interpretability/jspace_phase4/manifests/parallel_import_inventory.md",
+    "interpretability/jspace_phase4/reviews/"
+    "READY_FOR_PHASE4_FREEZE_REVIEW.md",
+]
+
+
+def test_closeout_narratives_cite_study2_admissions_not_native_ids():
+    for relative in NARRATIVE_DOCUMENTS:
+        text = (REPO_ROOT / relative).read_text()
+        assert "p4-import-gemma-transport-study2-v1" in text, relative
+        assert "p4-import-olmo-lineage-study2-v1" in text, relative
+        # Native side event IDs may be discussed as source provenance but
+        # must never be presented as registered Phase 4 evidence IDs.
+        assert "`gm2-sidelines2-import-bundle-v1` is registered" not in text
+        assert "`ol2-sidelines2-import-bundle-v1` is registered" not in text
+
+
+def test_pre_freeze_policy_forbids_all_native_side_prefixes():
+    policy = json.loads((
+        REPO_ROOT / "interpretability/jspace_phase4/protocol/"
+        "PRE_FREEZE_INVENTORY_POLICY_PHASE4.json").read_text())
+    assert set(policy["native_side_event_prefixes"]) == {
+        "ol-", "ol2-", "gm-", "gm2-"}

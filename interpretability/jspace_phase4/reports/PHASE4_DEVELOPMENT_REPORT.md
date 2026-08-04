@@ -3,7 +3,9 @@
 Status: terminal Phase-4.4 development synthesis through the OLMo trajectory,
 Qwen draw-A n=1000 queue and canonical Q-L4 decision, strict Gemma/OLMo
 methods imports, Bank-W 16/20 mainline replay, and durability handoff,
-2026-08-03.
+2026-08-03; updated 2026-08-04 with the Phase 4.5 terminal Study-2
+admissions (`p4-import-gemma-transport-study2-v1`,
+`p4-import-olmo-lineage-study2-v1`).
 
 This document is a living report, not a frozen claim record. Every
 result here uses known Phase 3 banks and a development cohort. It can
@@ -1178,6 +1180,41 @@ sibling Instruct comparison reverses both the direct and composition
 quantities. These are development localizations, not lineage or causal mode
 claims.
 
+## Phase 4.5 terminal Study-2 admissions
+
+The already-merged Gemma and OLMo Study-2 terminal bundles are admitted into
+the Phase 4 closeout record at their native methods/development tiers, as a
+dedicated second import layer that neither rewrites the Study-1 imports nor
+copies any native `gm2-*`/`ol2-*` event into the Phase 4 registry.
+
+`p4-import-gemma-transport-study2-v1` preserves the dependency chain from
+blocker to license: Study 1 correctly failed its own precommitted 1e-5
+all-slot parity gate and remains immutable live evidence; Study 2's
+target-blind G2.1 calibration (216 full exact-backend pairs, 232 pair
+summaries, 1,008 rows) froze a pooled mixed-precision ceiling of
+0.07870368901355948 before the Study-1 target was read, and the preserved
+all-slot error 0.0024581113830208778 lies within it with a bit-identical
+selected slot. The unchanged five-layer `local_tangent_mismatch` classifier
+(L22/L30/L37/L44/L52) is therefore a closed exact-JVP finite-scale methods
+result over its tested scope. No nondifferentiability, named-mechanism,
+missing-information, workspace, or intervention claim is licensed.
+
+`p4-import-olmo-lineage-study2-v1` closes the remaining OLMo side boundaries
+at methods tier. The official Think-SFT/DPO wedge is technically valid but
+capability-gated: both prospective Bank-S cohorts are empty (0 Bank-S facts
+capable on direct plus composed variants at either checkpoint), so the stage
+effects are missing, not zero, SFT versus DPO is unresolved, and no Tier-2
+lens refit is licensed. The H6 finite-dose ladder licenses no in-band
+transport regime at L24/L32/L40 on Base or OLMo-3.1 Think; Think passes only
+the L56 late anchor at epsilon 0.10. The exact site-dose coverage needed to
+map registered causal interventions onto the H6 ladder is unavailable in the
+historical archive (an archive-schema finding, not 0% coverage). The OLMo
+Think/Instruct Bank-W pair design has 0.7788 power at the existing 16 common
+capable families against the 0.80 target, with 18 the first simulated
+passing count: a planning closure, not an externalization null. None of this
+invalidates the registered paired projection-ablation effects, and no
+intervention is authorized.
+
 ## Terminal boundary and next external action
 
 All Phase-4.4 scientific and methods transactions are registered, locally
@@ -1186,9 +1223,11 @@ B/C: an informative instrument-instability result with no confirmatory
 primary. P4-P1 is estimation-only, P4-P2 is removed, P4-P3 is blocked at
 16/20, and no M3/M4 or optional post-Q-L4 M5 job opened.
 
-The strict side queue is complete. Gemma remains a transport methods blocker;
-the OLMo terminal release contributes only its bounded development/methods
-trajectory; and Bank W routes to Phase 5B per-model estimation rather than a
+The strict side queue is complete, including the Phase 4.5 Study-2
+admissions above. The historical Gemma Study-1 blocker is preserved and now
+carries its Study-2 calibrated finite-scale license; the OLMo releases
+contribute only their bounded development/methods trajectory and boundary
+records; and Bank W routes to Phase 5B per-model estimation rather than a
 cross-model Phase 4 primary.
 
 The repository review packet reports 418/419 live output references with one
