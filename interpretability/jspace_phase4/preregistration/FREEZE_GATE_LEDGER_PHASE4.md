@@ -2,10 +2,11 @@
 
 **CANDIDATE LEDGER — NOT FROZEN — INDEPENDENT REVIEW AND PI APPROVAL PENDING**
 
-State date: 2026-08-03. Governing plan:
-`jspace_lab_nextsteps_4_4.md` plus its accepted addendum. Scientific candidate:
-`SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md`, candidate 0.12 terminal
-update.
+State date: 2026-08-04. Governing plans:
+`jspace_lab_nextsteps_4_4.md` plus its accepted addendum, and the Phase 4.5
+closeout block `jspace_lab_nextsteps_4_5.md` plus its addendum. Scientific
+candidate: `SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md`, candidate 0.13
+Study-2 admission update.
 
 This ledger records the mechanical pre-freeze state. A development artifact
 does not authorize confirmatory or replication intervention. Only real
@@ -43,8 +44,11 @@ A retired or blocked endpoint does not donate multiplicity budget.
 | Bank-W mainline replay | **REGISTERED** as `p4-bank-w-capability-joint-imported-dev-v1` | 16/20 service block; no cross-model primary. |
 | Gemma transport | **REGISTERED** as `p4-import-gemma-transport-v1` | Methods blocker only; all-slot parity fails; no mechanism or intervention claim. |
 | OLMo final lineage | **REGISTERED** as `p4-import-olmo-lineage-final-v1` | Methods/development O1--O5 boundaries preserved; no new scientific cell or intervention. |
+| Gemma Study 2 (calibrated relicense) | **REGISTERED** as `p4-import-gemma-transport-study2-v1` | Methods tier. Target-blind pooled ceiling 0.07870368901355948 frozen before target read; preserved all-slot error 0.0024581113830208778 in-envelope; selected slot bit-identical; five-layer classifier now a closed finite-scale methods result. Historical Study-1 blocker preserved, not rewritten. No mechanism/workspace/intervention license. |
+| OLMo Study 2 (wedge, H6, pair power) | **REGISTERED** as `p4-import-olmo-lineage-study2-v1` | Methods tier. SFT/DPO wedge capability-gated with empty Bank-S cohorts (effects missing, not zero; no localization); H6 licenses no in-band regime at L24/L32/L40, Think L56 epsilon-0.10 late anchor only; registered-dose coverage unavailable, not zero; Bank-W pair power 0.7788 at 16 families (first passing count 18) — planning closure, not a null. No intervention authorized. |
 
-Native `ol-*` and `gm-*` events remain absent from the Phase 4 registry.
+Native `ol-*`, `ol2-*`, `gm-*`, and `gm2-*` events remain absent from the
+Phase 4 registry.
 
 ## Durability and governance
 
@@ -53,12 +57,12 @@ Native `ol-*` and `gm-*` events remain absent from the Phase 4 registry.
 | Exact A120 capacity | **RECOVERED / HASH PASS** | Rebuilt bytes equal registered SHA-256 `6b0399df...c651b6f`; local backup exists. |
 | Historical A120--A250 `state.json` | **PERMANENT KNOWN DEFICIT / ROLE SUPERSEDED** | Append-only methods event `p4-qwen-a120-a250-state-permanent-deficit-v1`; source remains partially durable and unedited. External signatures required. |
 | Same-mounted durability | **CONSISTENT: 418/419** | Two passes agree on one known deficit, zero unexpected deficits, zero pin conflicts. This is not independent rematerialization. |
-| Pre-freeze inventory | **NOT_REVIEW_READY** | Payload `0fbd2d4d...`; all commits reachable and policy/path/native-ID checks pass, but `all_live_outputs_verified=false` because of the known state deficit. |
-| Fresh independent remount | **PENDING** | Reverify the identical registry/reference set from a genuinely fresh Drive materialization. |
-| Untouched-data audit | **PENDING INDEPENDENT REVIEW** | Confirm no confirmatory/replication intervention result exists and all splits remain sealed. |
-| Independent protocol review | **EXTERNAL SIGNATURE REQUIRED** | The implementation agent has not self-signed. |
-| PI sign-off | **EXTERNAL SIGNATURE REQUIRED** | Silence is not approval. |
-| Freeze commit / tag | **NOT CREATED** | May follow only the external decisions and clean release proof. |
+| Pre-freeze inventory | **NOT_REVIEW_READY (mechanically) / POLICY-AWARE CLEAN** | v4_5 payload `71ae6031...`; every gate passes except `all_live_outputs_verified`, false solely from the accepted known deficit. |
+| Fresh independent remount | **PASS** | `phase4-part5-fresh-materialization` (fresh VM/mount/clone, 2026-08-04): 520/521, only the known deficit, zero unexpected, zero pin conflicts. |
+| Untouched-data audit | **PASS** | `PHASE4_UNTOUCHED_DATA_AUDIT.md` (narrative-blind session, 2026-08-04): zero forbidden-tier events, all run-root bytes accounted for, partitions sealed. |
+| Independent protocol review | **SIGNED** | `PHASE4_INDEPENDENT_REVIEW_20260804.md` (SHA-256 `1ca0f1aa...`), narrative-blind fresh session: 13/14 PASS + 1 PASS WITH EXPLICIT LIMITATION; Q-L4 reconstructed from the frozen table. |
+| PI sign-off | **RECORDED** | `PHASE4_PI_DISPOSITION_20260804.md`: 13/13 items accepted per the PI-authored plan-addendum §3 resolutions + PI session directive; freeze authorized at `07f92038...`. |
+| Freeze commit / tag | **AUTHORIZED PENDING VERIFICATION** | Follows the recorded decisions and the full pre/post-merge verification suites. |
 
 ## Mechanical update rule
 

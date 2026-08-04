@@ -1,0 +1,43 @@
+schema_version: 1
+evidence_id: p4-import-gemma-transport-study2-v1
+expected_payload_study_id: jspace-gemma-transport-study2
+expected_bundle_id: jspace-gemma-transport-sidelines2-v1
+expected_terminal_event: gm2-sidelines2-import-bundle-v1
+expected_source_branch: interp_jspace_gemma_transport_2
+expected_source_commit: aba2e01460dde32e5c2ca1478a5502950e2448ec
+allowed_admitted_prefixes: ["gm-", "gm2-"]
+required_partial_statuses:
+  confirmatory_or_replication_cell: not-opened
+  intervention: not-opened
+  study1_blocker_record: preserved-immutable-historical
+  g2_2_stage1_license: complete-relicensed-without-recompute
+bundle:
+  repo_path: interpretability/jspace_gemma/release/IMPORT_BUNDLE_SIDELINES2.json
+  sha256: 9ef48b8ab1d99d52a756ddea1e285a9d61e781fd054cbf92702bfe81be56f5b0
+bundle_markdown:
+  repo_path: interpretability/jspace_gemma/release/IMPORT_BUNDLE_SIDELINES2.md
+  sha256: 547da552fee0057fa304b1dffe657eb269315007073b0a5c3cbb29c96577b315
+frozen_prefix:
+  repo_path: interpretability/jspace_gemma/release/evidence_events_prefix_sidelines2.jsonl
+  sha256: 2a144bcf0e7be0ac4307f7e2a2984c1879340b9a7e9278d10143d122a14fd30a
+live_registry_repo_path: interpretability/jspace_gemma/reports/evidence_events.jsonl
+required_dependency_imports:
+  - p4-import-gemma-transport-v1
+phase4_use: methods-development-boundary-update
+imported_meaning: >-
+  The prior 1e-5 parity blocker remains historically correct under its own
+  contract. A later target-blind calibration froze an all-batches
+  mixed-precision ceiling of 0.07870368901355948; the preserved all-slot
+  error 0.0024581113830208778 lies below it and the selected slot is
+  bit-identical. The unchanged five-layer local_tangent_mismatch classifier
+  is therefore a closed exact-JVP finite-scale methods result over the
+  tested scope. No named mechanism, nondifferentiability,
+  missing-information, workspace, or intervention conclusion is licensed.
+forbidden_phase4_uses:
+  - not confirmatory
+  - not replication
+  - not a Gemma workspace result
+  - not a late-layer intervention license
+  - not proof of curvature as the unique cause
+  - not permission to reopen G2-G5 inside Phase 4
+validation_output: interpretability/jspace_phase4/reports/gemma_transport_study2_import_validation_v1.json

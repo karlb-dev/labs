@@ -2,12 +2,15 @@
 
 **CANDIDATE — NOT FROZEN — CONFIRMATORY AND REPLICATION OUTCOMES FORBIDDEN**
 
-Version: candidate 0.12, Phase-4.4 terminal update, 2026-08-03.
-Governing plan: `jspace_lab_nextsteps_4_4.md` plus its accepted addendum.
-Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
+Version: candidate 0.13, Phase-4.5 Study-2 admission update, 2026-08-04
+(supersedes candidate 0.12, Phase-4.4 terminal update, 2026-08-03).
+Governing plans: `jspace_lab_nextsteps_4_4.md` plus its accepted addendum,
+and the Phase 4.5 closeout block `jspace_lab_nextsteps_4_5.md` plus its
+addendum. Phase 3 input boundary: `jspace-phase3-complete-v1` at `9e0672b`.
 
-Candidate 0.12 records the result of the already prospective candidate 0.11
-contracts; it does not retroactively alter them. No Phase 4 confirmatory or
+Candidate 0.13 records the result of the already prospective candidate 0.11
+contracts plus the methods-only Study-2 admissions; it does not
+retroactively alter them. No Phase 4 confirmatory or
 replication intervention outcome was opened. The registered A1000 structural,
 functional, selection-margin, retained-prompt, and mechanical canonical events
 resolve to **Q-L4**, so no single sparse Qwen lens is nominated. The
@@ -24,7 +27,16 @@ tests. The frozen paper route is the no-primary development/methods path B/C.
 All untouched partitions remain sealed.
 
 Gemma and OLMo releases are now admitted only at their source
-methods/development boundaries. Exact A120 capacity bytes were recovered. The
+methods/development boundaries, including the terminal Study-2 bundles
+(`p4-import-gemma-transport-study2-v1`: the calibrated finite-scale license
+for the unchanged five-layer classifier under the target-blind
+0.07870368901355948 ceiling; `p4-import-olmo-lineage-study2-v1`: the
+capability-gated SFT/DPO wedge with effects missing-not-zero, the in-band H6
+failure with a Think-only L56 late anchor, unavailable registered-dose
+coverage, and the underpowered 0.7788/16-family Bank-W pair closure). These
+admissions update only the terminal methods boundary; they do not alter
+Q-L4, restore a primary, or open any intervention.
+Exact A120 capacity bytes were recovered. The
 historical A120--A250 operational state remains one append-only known deficit
 whose decision role is superseded by later live gates. Two same-mounted audits
 agree on 418/419 live references, one known and zero unexpected deficits; a
@@ -462,12 +474,18 @@ transport gate, and regenerates final figures.
       orthogonal shot closed without pilot or intervention.
 - [x] OLMo capability, Bank-W joint replay, Gemma transport, and terminal OLMo
       lineage admitted at their strict methods/development boundaries.
+- [x] Terminal Study-2 sidelines bundles admitted methods-only with exact
+      bundle and frozen-prefix rehash
+      (`p4-import-gemma-transport-study2-v1`,
+      `p4-import-olmo-lineage-study2-v1`); native tiers and forbidden uses
+      preserved; Q-L4 unchanged.
 - [x] P4-P3 mainline common support reproduced at 16/20; no intervention
       authorized.
 - [x] Exact A120 capacity recovered; missing historical state classified by an
       append-only permanent-deficit event without fabricating bytes.
 - [x] Environment and model/lens/tokenizer identities captured; full Phase 4
-      suite passes 284/284.
+      suite passes 284/284 at the 4.4 boundary (302/302 after the Phase 4.5
+      Study-2 importer, strict reference-resolution, and narrative tests).
 - [x] No confirmatory or replication intervention outcome opened.
 - [ ] Fresh independent Drive rematerialization verifies all releasable live
       outputs or independently accepts the one known permanent deficit.

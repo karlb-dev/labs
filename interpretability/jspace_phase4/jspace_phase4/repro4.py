@@ -23,8 +23,11 @@ def verify_json_envelope(path: str | Path) -> dict:
 
 
 def verify_live_evidence() -> dict:
+    from .durability import resolve_output_reference
+
     failures = []
     checked = 0
+    resolutions: dict[str, int] = {}
     for event in resolve_all():
         if not event["live"]:
             continue
@@ -32,20 +35,27 @@ def verify_live_evidence() -> dict:
             "source_outputs"
             if event["event"] == "evidence_imported" else "outputs")
         for output in event.get(output_field, []) or []:
-            path = Path(output["path"])
-            actual = file_sha256(path) if path.exists() else None
             checked += 1
-            if actual != output.get("sha256"):
+            resolved = resolve_output_reference(
+                str(output["path"]), output.get("sha256"), event=event)
+            if resolved["status"] != "verified":
                 failures.append({
                     "evidence_id": event["evidence_id"],
-                    "path": str(path),
+                    "path": str(output["path"]),
                     "expected": output.get("sha256"),
-                    "actual": actual,
+                    "actual": resolved["actual_sha256"],
+                    "status": resolved["status"],
                 })
+            else:
+                mode = str(resolved.get("resolution") or "literal-path")
+                if mode.startswith("append-only-registry-prefix"):
+                    mode = "append-only-registry-prefix"
+                resolutions[mode] = resolutions.get(mode, 0) + 1
     return {
         "ok": not failures,
         "n_live_events": sum(
             event["live"] for event in resolve_all()),
         "n_checked_outputs": checked,
+        "n_verified_by_resolution": resolutions,
         "failures": failures,
     }

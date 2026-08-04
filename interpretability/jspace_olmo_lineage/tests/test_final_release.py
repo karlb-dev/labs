@@ -127,3 +127,48 @@ def test_phase4_release_config_preserves_historical_paper_pins_and_names():
     assert config["paper_source_date_epoch"] == 1785648410
     assert _canonical_claim_text("external-state- substitution") == (
         "external-state-substitution")
+
+
+def test_release_boundary_state_survives_append_only_study2_rows(tmp_path):
+    from jspace_olmo_lineage.experiments.final_release import (
+        _release_boundary_state,
+    )
+    import json
+
+    config = _config()
+    # The live registry legitimately contains Study-2 rows after the
+    # released boundary; the boundary counts must still match the release
+    # contract exactly.
+    prefix_record = None
+    bundle_path = Path(
+        "/content/drive/MyDrive/interpret/special-lab-1/"
+        "olmo_lineage_20260801/release/IMPORT_BUNDLE_PHASE4.json")
+    if bundle_path.is_file():
+        payload = json.loads(bundle_path.read_text())["payload"]
+        prefix_record = payload["registry_prefix"]
+    else:  # fall back to reconstructing the immutable prefix from bytes
+        pytest.skip("campaign Drive is not mounted")
+    state = _release_boundary_state(prefix_record, config["evidence_id"])
+    expected = config["expected_registry_before_release"]
+    assert state["n_live_events"] == int(expected["live_events"]) + 1
+    assert state["n_live_outputs"] == int(expected["live_outputs"]) + 13
+    assert state["post_boundary_restatements"] == []
+
+    # A post-boundary restatement of boundary-era evidence must be reported.
+    copy = tmp_path / "events.jsonl"
+    copy.write_bytes(EVENTS.read_bytes())
+    with copy.open("a") as handle:
+        handle.write(json.dumps({
+            "schema_version": 1,
+            "study_id": "jspace-olmo-lineage",
+            "event": "evidence_superseded",
+            "evidence_id": config["evidence_id"],
+            "superseded_by": "ol2-sidelines2-import-bundle-v1",
+            "reason": "unlawful post-release restatement",
+        }, sort_keys=True) + "\n")
+    tampered = _release_boundary_state(
+        prefix_record, config["evidence_id"], path=copy)
+    assert tampered["post_boundary_restatements"] == [{
+        "event": "evidence_superseded",
+        "evidence_id": config["evidence_id"],
+    }]

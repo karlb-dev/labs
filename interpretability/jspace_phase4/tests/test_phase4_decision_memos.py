@@ -31,13 +31,14 @@ def test_bank_b_decision_keeps_untouched_partitions_sealed():
     assert "3,562 independent families" in text
 
 
-def test_candidate_012_records_terminal_branch_without_claiming_a_freeze():
+def test_candidate_013_records_terminal_branch_without_claiming_a_freeze():
     text = (
         ROOT / "preregistration"
         / "SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md"
     ).read_text()
     normalized = " ".join(text.split())
-    assert "Version: candidate 0.12" in normalized
+    assert "Version: candidate 0.13" in normalized
+    assert "supersedes candidate 0.12" in normalized
     assert "CANDIDATE — NOT FROZEN" in normalized
     assert "Q-L4" in normalized
     assert "no single sparse Qwen lens is nominated" in normalized
@@ -65,8 +66,13 @@ def test_freeze_ledger_is_explicitly_unfrozen_and_routes_all_primaries():
     assert "zero unexpected deficits" in normalized
     assert "Exact A120 capacity" in normalized and "RECOVERED" in normalized
     assert "Historical A120--A250 `state.json`" in normalized
-    assert "The implementation agent has not self-signed" in text
-    assert "Freeze commit / tag" in text and "NOT CREATED" in text
+    # External gates were discharged on 2026-08-04 by the narrative-blind
+    # review and the recorded PI disposition; the ledger must cite both and
+    # must still not claim a tag that precedes verification.
+    assert "PHASE4_INDEPENDENT_REVIEW_20260804.md" in text
+    assert "PHASE4_PI_DISPOSITION_20260804.md" in text
+    assert "Fresh independent remount | **PASS**" in text
+    assert "AUTHORIZED PENDING VERIFICATION" in text
 
 
 def test_methods_record_and_paper_skeleton_include_invariance_boundary():
@@ -91,7 +97,8 @@ def test_parallel_import_inventory_records_admission_without_tier_upgrade():
     assert "Registered" in text
     assert "side-development-import" in normalized
     assert "O5 has no identifiable estimand" in text
-    assert "contains no native `ol-*` or `gm-*` evidence IDs" in text
+    assert ("contains no native `ol-*`, `ol2-*`, `gm-*`, or `gm2-*` "
+            "evidence IDs" in " ".join(text.split()))
     assert "Methods blocker" in text
     assert "do not" in text and "upgrade tiers" in text
 

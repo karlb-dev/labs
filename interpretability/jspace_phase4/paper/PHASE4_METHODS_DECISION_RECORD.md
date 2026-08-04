@@ -2,8 +2,8 @@
 
 **DEVELOPMENT CANDIDATE — NOT A FREEZE RECORD**
 
-Decision state: candidate 0.12, Phase-4.4 terminal update, 2026-08-03. No
-confirmatory or replication intervention outcome was opened.
+Decision state: candidate 0.13, Phase-4.5 Study-2 admission update,
+2026-08-04. No confirmatory or replication intervention outcome was opened.
 
 ## M1. Operator convergence is not instrument invariance
 
@@ -59,13 +59,35 @@ support; it routes to Phase 5B as per-model estimation.
 
 ## M6. Side releases retain their source tiers
 
-Gemma enters only as a side-development-import methods blocker. Selected-slot
-backend tangents are bit-identical, but its frozen all-slot relative-error
-criterion fails at 0.002458 versus 1e-5; it licenses no mechanism or
-intervention claim. The OLMo terminal import is also methods/development only:
-O2 is consistent with broadly conserved capacity recruitment, O3 records a
-dictionary-formation pattern, O1 remains blocked at 16/20, and O5 has no
-identifiable estimand. These imports do not upgrade a Phase 4 primary.
+Gemma entered first as a side-development-import methods blocker
+(`p4-import-gemma-transport-v1`): selected-slot backend tangents are
+bit-identical, but its frozen all-slot relative-error criterion fails at
+0.002458 versus 1e-5. The Study-2 admission
+(`p4-import-gemma-transport-study2-v1`) preserves that historical event and
+adds the later target-blind calibration: a pooled mixed-precision
+exact-backend ceiling of 0.07870368901355948 was frozen before the Study-1
+target was read; the preserved all-slot error 0.0024581113830208778 lies
+within it, so the unchanged five-layer `local_tangent_mismatch` classifier is
+now a closed exact-JVP finite-scale methods result over its tested scope. It
+licenses no mechanism, nondifferentiability, missing-information, workspace,
+or intervention claim.
+
+The OLMo terminal import (`p4-import-olmo-lineage-final-v1`) is also
+methods/development only: O2 is consistent with broadly conserved capacity
+recruitment, O3 records a dictionary-formation pattern, O1 remains blocked at
+16/20, and O5 has no identifiable estimand. The Study-2 admission
+(`p4-import-olmo-lineage-study2-v1`) closes the remaining side boundaries at
+methods tier: the official Think-SFT/DPO wedge is technically valid but
+capability-gated (empty prospective Bank-S cohorts at both checkpoints), so
+stage effects are missing, not zero, and no localization or Tier-2 refit is
+licensed; the H6 finite-dose ladder licenses no in-band transport regime at
+L24/L32/L40, with only a Think L56 epsilon-0.10 late anchor; the exact
+site-dose coverage needed to map registered causal interventions onto the H6
+ladder is unavailable in the historical archive; and the OLMo Think/Instruct
+Bank-W pair design is not powered at current support (0.7788 at 16 shared
+capable families; first passing count 18). These imports do not upgrade a
+Phase 4 primary, do not invalidate the registered paired ablation effects,
+and do not authorize any intervention.
 
 ## M7. Durability is a release gate
 
@@ -82,7 +104,15 @@ review/PI signatures and a fresh-remount release proof remain open.
 Phase 4 reaches Terminal C as a development/methods instrument study with no
 confirmatory primary. P4-P1 is estimation-only, P4-P2 is removed by canonical
 Q-L4, and P4-P3 is blocked at 16/20. The Holm family therefore contains zero
-opened tests. The paper route is the frozen no-primary methods/development
-path (B/C), emphasizing that averaged-operator convergence did not yield one
-stable sparse causal instrument. This candidate is ready for external packet
+opened tests. Q-L4's honest shape is asymmetric: aggregate causal conclusions
+are fit-stable (structural task q50/q05 0.998702/0.998122; occupancy,
+centered excess, span-safe specificity, tail rate, G4, and bridge preference
+all stable across fits), while sparse selection identity and one load-bearing
+mechanism endpoint are not (ID Jaccard 0.538462, projector overlap 0.709818,
+bridge-rescue difference -0.294028 nat), so no single sparse lens is
+nominated. The completed Gemma and OLMo Study-2 side records are admitted at
+their native methods/development tiers and sharpen the checkpoint-specific
+validity boundary of linear transport and stage attribution without
+reopening any primary. The paper route is the frozen no-primary
+methods/development path (B/C). This candidate is ready for external packet
 review, not for freeze or publication claims.

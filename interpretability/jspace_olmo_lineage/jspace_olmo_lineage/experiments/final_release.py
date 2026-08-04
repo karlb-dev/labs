@@ -130,6 +130,68 @@ def _verify_registry_prefix(
     }
 
 
+def _release_boundary_state(
+    record: Mapping, release_evidence_id: str, path: str | Path = EVENTS,
+) -> dict:
+    """Recompute the release-boundary registry state after append-only merges.
+
+    The release contract fixed the live-event and live-output counts at the
+    moment the final-release event landed.  A later ancestry-preserving merge
+    may legitimately append new native events after that boundary, so the
+    counts are recomputed over the hash-verified immutable prefix plus the
+    release event row itself, never over the growing tail.  Rows after the
+    boundary may only add new evidence; any supersession, withdrawal, or
+    correction that restates boundary-era evidence is reported and fails the
+    caller's gate.
+    """
+    raw = Path(path).read_bytes()
+    length = int(record["prefix_bytes"])
+    prefix = raw[:length]
+    if hashlib.sha256(prefix).hexdigest() != record["prefix_sha256"]:
+        raise ValueError("released registry prefix hash drift")
+    rows = [
+        json.loads(line)
+        for line in raw.decode("utf-8").splitlines() if line.strip()
+    ]
+    boundary_lines = [
+        json.loads(line)
+        for line in prefix.decode("utf-8").splitlines() if line.strip()
+    ]
+    release_row = rows[len(boundary_lines)]
+    if (release_row.get("evidence_id") != release_evidence_id
+            or release_row.get("event") != "evidence_created"):
+        raise ValueError(
+            "row after the released prefix is not the release event")
+    boundary_rows = boundary_lines + [release_row]
+    origin_ids = {
+        row["evidence_id"] for row in boundary_rows
+        if row.get("event") in {"evidence_created", "evidence_imported"}
+    }
+    dead = set()
+    for row in boundary_rows:
+        if row.get("event") in {"evidence_superseded", "evidence_withdrawn"}:
+            dead.add(row["evidence_id"])
+    live_outputs = 0
+    for row in boundary_rows:
+        if (row.get("event") in {"evidence_created", "evidence_imported"}
+                and row["evidence_id"] not in dead):
+            field = (
+                "source_outputs" if row["event"] == "evidence_imported"
+                else "outputs")
+            live_outputs += len(row.get(field, []) or [])
+    restatements = [
+        {"event": row.get("event"), "evidence_id": row.get("evidence_id")}
+        for row in rows[len(boundary_rows):]
+        if row.get("event") not in {"evidence_created", "evidence_imported"}
+        and row.get("evidence_id") in origin_ids
+    ]
+    return {
+        "n_live_events": len(origin_ids - dead),
+        "n_live_outputs": live_outputs,
+        "post_boundary_restatements": restatements,
+    }
+
+
 def _validate_partition(
     categories: Mapping[str, Sequence[str]], live_evidence_ids: Sequence[str],
 ) -> dict:
@@ -889,11 +951,14 @@ def verify(config_path: str | Path) -> dict:
         raise ValueError("release paper-figure directory drift")
     live_verification = verify_live_evidence()
     expected = config["expected_registry_before_release"]
+    boundary = _release_boundary_state(
+        payload["registry_prefix"], config["evidence_id"])
     if (not live_verification["ok"]
-            or live_verification["n_live_events"] != int(
+            or boundary["n_live_events"] != int(
                 expected["live_events"]) + 1
-            or live_verification["n_checked_outputs"] != int(
-                expected["live_outputs"]) + 13):
+            or boundary["n_live_outputs"] != int(
+                expected["live_outputs"]) + 13
+            or boundary["post_boundary_restatements"]):
         raise ValueError("post-release live-evidence verification drift")
     return {
         "ok": True,
