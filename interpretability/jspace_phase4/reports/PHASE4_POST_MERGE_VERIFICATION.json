@@ -1,0 +1,71 @@
+{
+ "payload": {
+  "claim_boundary": "Mechanical freeze verification only; approval lives in the signed review and PI records.",
+  "durability": {
+   "n_failures": 1,
+   "n_known_deficits": 1,
+   "n_live_events": 65,
+   "n_output_references": 522,
+   "n_unexpected_failures": 0,
+   "n_verified": 521,
+   "n_verified_by_resolution": {
+    "append-only-registry-prefix": 2,
+    "literal-path": 516,
+    "repository-materialization": 3
+   },
+   "pass_label": "phase4-freeze-verification",
+   "registry_sha256": "58fd81b6af1956e89a352f195cee546e8f0bd61d27d3e10949b7b1a846694f54"
+  },
+  "generated_utc": "2026-08-04T19:16:47Z",
+  "handout_policy": "Per the accepted Phase 4.5 addendum, the governed pre-canonical handout boundary lifts at the tag; handout regeneration belongs to the paper-analysis phase. Registered TeX/PDF/figure bytes are hash-verified by the durability pass rather than rebuilt here.",
+  "live_evidence_verifiers": {
+   "gemma": {
+    "n_checked_outputs": 71,
+    "n_live_events": 23,
+    "ok": true
+   },
+   "olmo_lineage": {
+    "n_checked_outputs": 163,
+    "n_live_events": 37,
+    "ok": true
+   },
+   "phase4": {
+    "n_checked_outputs": 522,
+    "n_live_events": 65,
+    "n_verified_by_resolution": {
+     "append-only-registry-prefix": 2,
+     "literal-path": 516,
+     "repository-materialization": 3
+    },
+    "ok": false,
+    "only_failure_is_known_deficit": true,
+    "raw_all_live_outputs_verified": false
+   }
+  },
+  "repository": {
+   "branch": "interp_jspace_part2",
+   "dirty_tree": false,
+   "git_diff_check": "clean",
+   "head": "9a4d43eb60eb0af30d15cade538c95e18af3b744",
+   "large_untracked_artifacts": []
+  },
+  "schema_version": 1,
+  "stage": "post-merge",
+  "suites": {
+   "gemma": {
+    "returncode": 0,
+    "summary": "71 passed, 1 warning in 19.90s"
+   },
+   "olmo_lineage": {
+    "returncode": 0,
+    "summary": "90 passed in 2.71s"
+   },
+   "phase4": {
+    "returncode": 0,
+    "summary": "302 passed in 9.54s"
+   }
+  }
+ },
+ "payload_sha256": "fc0df331f680289a31fdf30a90b555b9750c7f851a2471a0bbfa27c978cdb7b1",
+ "schema_version": 1
+}
