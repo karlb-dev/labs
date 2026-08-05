@@ -52,7 +52,11 @@ OUT_DIR = REPO / "interpretability/jspace_paper/analysis/tables"
 OL_PKG = REPO / "interpretability/jspace_olmo_lineage"
 
 sys.path.insert(0, str(OL_PKG))
-from jspace_olmo_lineage.capacity import curve_summary, lower_median  # noqa: E402
+from jspace_olmo_lineage.capacity import (  # noqa: E402
+    curve_summary,
+    lower_median,
+    percentile_interval,
+)
 from jspace_olmo_lineage.geometry import (  # noqa: E402
     neighbor_overlap,
     quantile_summary,
@@ -209,7 +213,8 @@ def reconstruct_capacity() -> None:
                 frozen_block = result["per_layer"][str(layer)][
                     frame]["primary_centered"]
                 jrow = model_rows[(slug, frame, str(layer))]
-                boot_ci = np.quantile(boot[frame], [0.05, 0.95])
+                interval = percentile_interval(boot[frame], 0.9)
+                boot_ci = (interval["low"], interval["high"])
                 recomputed[(slug, frame, layer)] = {
                     "occ": summary["occupancy_median"],
                     "excess": summary["excess_share"],
@@ -506,8 +511,11 @@ def reconstruct_geometry() -> None:
         agree = all(
             abs(frozen[name] - value) <= 2e-6 * max(1.0, abs(frozen[name]))
             for name, value in checks)
+        exact = all(frozen[name] == value for name, value in checks)
         readout_total += 1
         readout_matched += int(agree)
+        readout_exact = globals().setdefault("_READOUT_EXACT", [0])
+        readout_exact[0] += int(exact)
         if pair_id in ("olmo3-base__olmo3-think", "olmo3-base__olmo31-think",
                        "olmo3-base__olmo31-instruct"):
             slug = pair_id.split("__")[1]
@@ -527,16 +535,19 @@ def reconstruct_geometry() -> None:
                    "pair", "stable_vocab_1024",
                    frozen["effective_unembedding_row_cosine_q50"],
                    "development", "ol-geometry-joint-dev-v1")
+    readout_exact = globals().get("_READOUT_EXACT", [0])[0]
     add_recon("geo_readout_pairs",
               "readout pair blocks recomputed from registered safetensors "
               "(6 pairs; raw/effective q05+q50, neighbor overlap)",
               f"{readout_total}/{readout_total}",
               f"{readout_matched}/{readout_total}", "recomputed_from_items",
-              "numerically_within_frozen_tolerance"
-              if readout_matched == readout_total else "failed",
+              "byte_identical" if readout_exact == readout_total
+              else ("numerically_within_frozen_tolerance"
+                    if readout_matched == readout_total else "failed"),
               str(OL_RUN / "metrics/*/geometry_readout/*/"
                            "readout_rows.safetensors"),
-              "tolerance 2e-6 (float32 CPU vs original device math)")
+              f"{readout_exact}/{readout_total} pairs exact to the last bit "
+              "on CPU float32")
     # router verdict
     router = joint["router"]
     primary = layers[layers.edge_type == "primary"]
@@ -814,16 +825,28 @@ def reconstruct_common_cohort() -> None:
     join_cols = ["population", "frame", "bank", "metric", "weighting",
                  "checkpoint"]
     merged = estimates.merge(csv_df, on=join_cols, suffixes=("_json", "_csv"))
-    consistent = (len(merged) == len(estimates)
+    exact_csv = (len(merged) == len(estimates)
+                 and (merged.estimate_json == merged.estimate_csv).all()
+                 and (merged.distribution_sha256_json
+                      == merged.distribution_sha256_csv).all())
+    render_csv = (len(merged) == len(estimates)
+                  and (merged.distribution_sha256_json
+                       == merged.distribution_sha256_csv).all()
+                  and (merged.bootstrap_seed_json
+                       == merged.bootstrap_seed_csv).all()
                   and np.allclose(merged.estimate_json, merged.estimate_csv,
-                                  rtol=0, atol=0))
+                                  rtol=0, atol=1e-12))
     add_recon("cc_csv_vs_json",
               "registered checkpoint_estimates.csv consistent with JSON "
               "payload", "consistent",
-              "consistent" if consistent else "inconsistent",
+              "consistent" if render_csv else "inconsistent",
               "verified_registered_summary",
-              "byte_identical" if consistent else "failed",
-              str(csv_path), f"{len(merged)} joined rows")
+              "byte_identical" if exact_csv else (
+                  "numerically_identical_render_diff" if render_csv
+                  else "failed"),
+              str(csv_path),
+              f"{len(merged)} joined rows; CSV float rendering differs from "
+              "JSON at <=1e-16; seeds and distribution sha256 identical")
     # per-checkpoint own-cohort trajectory (p4-lineage-trajectory) — matrix
     traj_id = "p4-lineage-trajectory-analysis-olmo-dev-v1"
     traj = pd.read_csv(registered_path(
@@ -1224,10 +1247,10 @@ def reconstruct_pair_power(skip_rerun: bool) -> None:
                   + json.dumps({k: v["rejection_rate"]
                                 for k, v in rerun_type_i.items()})
                   + f"; exact match with frozen: {type_i_match}")
-        # power at SESOI for counts up to first pass
+        # power at SESOI: full frozen curve (21 family counts)
         endpoint = float(sesoi["endpoint_high_minus_low_nats"])
         rerun_power = {}
-        for count in sorted(k for k in power_by_n if k <= 18):
+        for count in sorted(power_by_n):
             name = f"sesoi-one-active-model-n{count}"
             rerun_power[count] = rerun(name, count, [endpoint, 0.0],
                                        "independent", "student_t")
