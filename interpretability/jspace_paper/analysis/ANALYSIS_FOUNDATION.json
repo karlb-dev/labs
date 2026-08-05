@@ -1,0 +1,68 @@
+{
+  "branch": "interp_jspace_paper_analysis",
+  "compute_contract": "CPU only; no model load, no forward/backward pass; analysis-first rule absolute",
+  "created_utc": "2026-08-04T20:00:00Z",
+  "drive_roots": {
+    "gemma_study1": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/",
+    "gemma_study2": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/",
+    "olmo_study1": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801/",
+    "olmo_study2": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/",
+    "phase2": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727/",
+    "phase3": "/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729/",
+    "phase4": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/"
+  },
+  "known_accepted_deficit": "A120-A250 state.json permanent historical deficit (see release/PHASE4_KNOWN_LIMITATIONS.md)",
+  "phase3_import_tag": {
+    "commit": "9e0672b8748b8c53f0bd853dfadda9bc795fd524",
+    "name": "jspace-phase3-complete-v1"
+  },
+  "purpose": "Foundation record for the offline paper-analysis phase (paper_analysis.md + paper_analysis_addendum.md). All campaign registries, registered outputs, and the frozen tag are read-only inputs to this branch.",
+  "release_manifest": {
+    "file_sha256": "80d607baec1aedbbc0718b100e00433e6a46ea5ba0f56133a9846d7f1e28206f",
+    "path": "interpretability/jspace_phase4/release/PHASE4_RELEASE_MANIFEST.json",
+    "payload_sha256": "be481dcfca634136d09c648379fddbcb9fd81989217e653abacac3705ac0be73",
+    "payload_sha256_recomputed": true
+  },
+  "schema_version": 1,
+  "source_registries": {
+    "gemma": {
+      "matches_freeze_handoff": true,
+      "path": "interpretability/jspace_gemma/reports/evidence_events.jsonl",
+      "sha256": "c7e76cac59bbfcf30f5d29edfa5c747bdae9aea46523fad9a8bd49db9cca124b"
+    },
+    "olmo_lineage": {
+      "matches_freeze_handoff": true,
+      "path": "interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
+      "sha256": "d15391ac733d785f583c62e812688efc56268c70ad9aff430b50bb49741196a6"
+    },
+    "part2_events": {
+      "matches_freeze_handoff": null,
+      "path": "interpretability/jspace_part2/reports/evidence_events.jsonl",
+      "sha256": "79e74f89c8ccaeaaaa0f6184f9ce68ecdb47aec829a541a38c09979caf25a435"
+    },
+    "part2_registry": {
+      "matches_freeze_handoff": null,
+      "path": "interpretability/jspace_part2/reports/evidence_registry.jsonl",
+      "sha256": "c0289077a972f95d6fd05ee5411de4dd21c2d76f3aaa4d1790711f25f1607099"
+    },
+    "phase3": {
+      "matches_freeze_handoff": null,
+      "path": "interpretability/jspace_phase3/reports/evidence_events.jsonl",
+      "sha256": "2223e73093463efc55d6f8d2995bdd5e0c016b34e1dbf77bc064499c1a071be2"
+    },
+    "phase4": {
+      "matches_freeze_handoff": true,
+      "path": "interpretability/jspace_phase4/reports/evidence_events.jsonl",
+      "sha256": "58fd81b6af1956e89a352f195cee546e8f0bd61d27d3e10949b7b1a846694f54"
+    }
+  },
+  "source_tag": {
+    "commit": "ea635220b5c5a2c55a78ca1005f452f3aba2680b",
+    "name": "jspace-phase4-frozen-v1",
+    "tag_object": "14193be6ce7090a05b79235f1c745f8bb18d640c"
+  },
+  "study2_bundles": {
+    "gemma": "9ef48b8ab1d99d52a756ddea1e285a9d61e781fd054cbf92702bfe81be56f5b0",
+    "olmo": "c213dc74aa78dcd6613c8bd1562dd07d2e2a0345409ee6da585001693d8e6b1c"
+  }
+}
