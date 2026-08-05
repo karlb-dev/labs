@@ -164,7 +164,7 @@
 \begin{tabular}{@{}ll@{}}
 Prepared for: & Karl Burtram \quad (graduate computer science course example)\\
 Source case study: & J-space Part 2 pilot and accompanying technical exchange\\
-Version: & July 2026\\
+Version: & August 2026 (Study-2 calibrated terminal state; evidence \texttt{gm2-backend-parity-calibration-v1}, \texttt{gm2-stage1-relicense-v1})\\
 \end{tabular}
 
 \vspace{0.25in}
@@ -216,11 +216,26 @@ The strongest current interpretation is a combination of two possible failures:
   \item \textbf{between-context heterogeneity}: prompt-specific tangents may be valid locally but do not average to a useful fixed map.
 \end{enumerate}
 The gold-standard closing experiment is an exact autograd Jacobian-vector product (JVP) compared with finite differences over a carefully delivered $\eps$ ladder in fp32.
-\emph{Update (2026-08-02): that experiment has now run in the isolated
-\texttt{jspace\_gemma} track and terminated at its own precommitted
-cross-backend consistency gate --- see \cref{sec:autopsy-ran}. The track's
-terminal classification is a \textbf{methods blocker}, not a mechanism
-result.}
+\emph{Update (2026-08-02): that experiment ran in the isolated
+\texttt{jspace\_gemma} track and stopped at its own precommitted
+cross-backend consistency gate --- see \cref{sec:autopsy-ran}. At that
+date the track's classification was a \textbf{methods blocker}.}
+\emph{Update (2026-08-03, Study 2): a separately preregistered,
+target-blind backend calibration (G2.1) froze a pooled mixed-precision
+exact-backend ceiling of $0.07870368901355948$
+($=\max(3\cdot q99_{\mathrm{disagreement}}, q99_{\mathrm{ten\ quanta}})$,
+route \texttt{benign\_scheduling\_floor}); the preserved Study-1
+all-slot discrepancy ($0.002458111383020878$) lies within it and the
+selected scientific slot is bit-identical, so G2.2 mechanically
+relicensed the unchanged five-layer \texttt{local\_tangent\_mismatch}
+classifier (L22/L30/L37/L44/L52) as a \textbf{closed exact-JVP
+finite-scale methods result} over the tested prompts, layers,
+directions, target map, and doses
+[\texttt{gm2-backend-parity-calibration-v1},
+\texttt{gm2-stage1-relicense-v1}]. Study 1's failed $10^{-5}$ gate
+remains immutable history; it is not retroactively passed. The result
+still licenses no nondifferentiability, named-mechanism,
+missing-information, or workspace conclusion.}
 \end{statusbox}
 
 \subsection{What the result does not establish}
@@ -785,7 +800,7 @@ Exact autograd JVP: ran, then hard-stopped (\cref{sec:autopsy-ran}) & Stage 1 re
 \end{table}
 
 \begin{resultbox}
-A careful present-tense statement is: \emph{Gemma 4 31B appears to violate the fixed, finite-dose linear-transport premise of the middle-band J-lens under the tested setup.} The result is already much more likely to be real than a harness artifact, but the exact JVP ladder is the experiment that should elevate it from a strong pilot to a closed methodological result. \emph{As of 2026-08-02 that ladder has run and did not close the question --- it stopped at a failed cross-backend parity gate (\cref{sec:autopsy-ran}), so the licensed classification is a methods blocker.}
+A careful present-tense statement is: \emph{Gemma 4 31B appears to violate the fixed, finite-dose linear-transport premise of the middle-band J-lens under the tested setup.} The result is already much more likely to be real than a harness artifact, but the exact JVP ladder is the experiment that should elevate it from a strong pilot to a closed methodological result. \emph{As of 2026-08-02 that ladder had run and did not close the question --- it stopped at a failed cross-backend parity gate (\cref{sec:autopsy-ran}), so the classification at that date was a methods blocker.} \emph{As of 2026-08-03 (Study 2), the target-blind calibrated backend envelope (frozen ceiling $0.07870368901355948$; historical all-slot disagreement $0.002458111383020878$ within it; selected slot bit-identical) closed the question at tested scope: the five-layer \texttt{local\_tangent\_mismatch} classifier is now a closed exact-JVP finite-scale methods result. The measured mismatch (per-layer tangent relative errors $1.36$--$5.36$ at $\eps=0.10$) is 12--52$\times$ the calibrated backend scales; its cause is not identified. For a checkpoint contrast: on the frozen OLMo-3 H6 ladder no in-band cell (L24/L32/L40) is licensed at any tested dose on either mandatory checkpoint, and OLMo-3.1 Think passes only the L56 late anchor at $\eps=0.10$ (12/12; Base 9/12) [\texttt{ol2-transport-validation-joint-v1}]. Transport licensing is model-, checkpoint-, layer-, and dose-specific.}
 \end{resultbox}
 
 \section{The autopsy ran: an exact-JVP gate that stopped itself}\label{sec:autopsy-ran}

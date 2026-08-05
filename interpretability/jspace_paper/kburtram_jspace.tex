@@ -6,7 +6,9 @@
 %  evidence. Every quantitative claim carries its evidence id in a trailing
 %  \eid{...} bracket (the registry is interpretability/jspace_phase3/reports/
 %  evidence_events.jsonl); numbers were independently re-derived from the
-%  item-level parquets by interpretability/jspace_runs/analysis/run_analysis.py.
+%  item-level parquets by interpretability/jspace_paper/scripts/run_analysis.py
+%  and re-verified by the paper-analysis reconstruction audit
+%  (interpretability/jspace_paper/analysis/reports/RECONSTRUCTION_AUDIT.md).
 %
 %  Template: adapted from kburtram_report.tex (CSEP 590A Sp26 report).
 %----------------------------------------------------------------------------------------
@@ -99,13 +101,15 @@ construction, a J-specific heavy tail of per-item damage survives at
 confirmatory tier on Qwen (tail-rate excess $+0.096$ over an exactly
 rank-and-energy-matched control, $p\approx10^{-5}$; independent
 replication $+0.102$) at roughly one third of its label-protected size.
-A preregistered bridge-protection test confirms mediation on Qwen:
+A preregistered bridge-protection test rejects its null on Qwen
+(confirmatory, unreplicated by protocol):
 protecting the true intermediate (``bridge'') entity's directions
-rescues composed-item damage by $+0.43$ nats relative to a matched
-counterfactual bridge, and substituting the counterfactual bridge's
-content at matched dose is catastrophically worse than deletion
-($-4.05$ nats) --- the model demonstrably reads what sits in the
-channel.  OLMo shows none of this: its damage is organized by answer
+rescues composed-item damage by $+0.43$ nats relative to protecting a
+frozen chosen counterfactual (distractor) bridge, and substituting the
+counterfactual bridge's content at matched dose is catastrophically
+worse than deletion ($-4.05$ nats, development tier) --- the model
+demonstrably reads what sits in the channel, though this route is not
+yet separated from a direct answer-direction route.  OLMo shows none of this: its damage is organized by answer
 accessibility rather than task shape, and its rescue contrast is mildly
 negative.  The workspace-word test fails on both clusters --- the
 composed-vs-direct contrast does not appear on in-context task banks
@@ -260,11 +264,14 @@ consistent with the leakage/content decomposition
 %----------------------------------------------------------------------------------------
 \section{Controlled Composition}\label{sec:composition}
 
-\todo{P3-P1 on the thick paired bank: contrast $-0.261$ nats,
-wild-cluster CI $[-0.52, -0.01]$, $p=0.062$ at 17 intersection
-families --- directional under the disclosed MDE, an honest near-miss
-carried by the estimation targets \eid{p3-locked-analysis-v1}.
-Replication side $-0.197$, $p=0.218$, same sign.  Think-vs-Instruct
+\todo{P3-P1 on the thick paired bank: contrast $-0.261$ nats
+(historical control realization; state-of-record \texttt{sha256-v1}
+realization $-0.271$), exact $p=0.062$ at 17 intersection families;
+the wild-cluster percentile-t interval $[-0.537, +0.015]$ crosses
+zero --- descriptive and inferentially negative, seed-sensitive across
+the five frozen control realizations, under the disclosed MDE
+\eid{p3-locked-analysis-v1} \eid{p3-control-seed-contract-audit-v2}.
+Replication side $-0.197$, $p=0.219$, same sign.  Think-vs-Instruct
 on the thick bank indistinguishable ($+0.01$ $[-0.45,+0.39]$).
 The workspace-word test: Qwen's contrast does NOT appear on the
 in-context bank S ($+0.02$ $[-0.33,+0.42]$) --- per the pre-stated
@@ -276,8 +283,10 @@ decision rule the supportable noun is ``knowledge-access channel.''}
 The preregistered mediation primary (P3-P3, model chosen
 magnitude-blind) rejects on Qwen: protecting the true bridge's token
 directions rescues composed-item damage by $+0.431$ nats over
-protecting a matched counterfactual bridge ($94$ composed items,
-$p_{\mathrm{holm}}=0.018$) \eid{p3-locked-analysis-v1}
+protecting the frozen chosen counterfactual (distractor) bridge ($94$
+composed items, $p_{\mathrm{holm}}=0.018$; the distractor was chosen,
+not randomized, and no held-out-family replication exists by protocol)
+\eid{p3-locked-analysis-v1}
 \tier{phase3-confirmatory}.  The seven-arm factorial
 (Fig.~\ref{fig:mediation}) gives the mechanism-level picture:
 
@@ -333,8 +342,9 @@ Fig.~\ref{fig:access}.}
 prose.  Prose cost is J-content everywhere, never dose (exact control
 $+0.002$--$+0.021$/token vs label arm $+0.175$--$+0.945$); the
 prose-cost ordering inverts the task ordering and tracks projector
-overlap; span-safe removes $72$--$78\%$ of the label cost.  No model
-earns ``selective'' wording at this tier
+overlap; span-safety removes $49.3\%$/$71.6\%$/$77.8\%$ of the label
+prose cost on Think/Instruct/Qwen respectively.  No model earns
+``selective'' wording at this tier
 \eid{p3-prose-grid-figure-v1} \tier{phase3-development}.}
 
 %----------------------------------------------------------------------------------------
