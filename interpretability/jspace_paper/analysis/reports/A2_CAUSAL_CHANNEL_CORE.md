@@ -22,10 +22,11 @@ Both rows reproduced bit-for-bit from raw item parquets this phase.
 ## SQ2 answers
 
 **1. Tail, not shifted bulk.** The span-safe J arm's tail rates are
-0.13–0.32 across models while every matched-control arm sits at
-0.00–0.02 (registered cross-model span audit); mean shifts are small
-relative to tail mass. The claim object is "a minority of items lose
->1 nat", not "all items degrade".
+0.15/0.20/0.3167 (Qwen/Think/Instruct) while the **primary** exact
+rank+energy-matched control sits at 0.000–0.017 on the same items
+(registered cross-model span audit); mean shifts are small relative to
+tail mass. The claim object is "a minority of items lose >1 nat", not
+"all items degrade".
 
 **2. Tail membership is stable where measured.** Across partitions the
 *rate* replicates (above). Across lenses, the independent-lens clause
@@ -34,14 +35,21 @@ gives per-item damage correlation r = 0.988/0.990 and tail-Jaccard
 `n6-repl-lens-independence-v2`). Phase 4's Q-L4 caveat applies to newly
 fitted sparse Qwen lenses, not to these frozen instruments.
 
-**3. Ruled-out control families** (each ≈ 0 on the same items):
-exact instant rank+energy matched (primary); overlap-matched;
-protected-energy-matched; persistent-matched; span-safe own control;
-mechanics random. Output-stream deletion is excluded by construction
-(label protection + span-safety); the label-vs-span decomposition shows
-the Phase 2 label-protected effect was ~3× the span-safe effect on the
-OLMo pair (r = 0.195/0.292 — damage *reallocates*) but mostly content on
-Qwen (r = 0.745).
+**3. Ruled-out control families.** The **primary** exact instant
+rank+energy-matched control is ≈ 0 (estimates −0.089…+0.044; tails
+0.000–0.017). The named secondary arms are small but not uniformly nil
+and are quoted per-model where used: overlap-matched (−0.099…+0.027,
+tails ≤0.017), span-safe own control (−0.082…+0.013, tails ≤0.033),
+persistent-matched (−0.121…−0.037, tails ≤0.05), and
+protected-energy-matched — which on Think reaches −0.428 with tail
+0.183, itself evidence that protected-span energy carries content.
+Output-stream deletion is excluded by construction (label protection +
+span-safety). Two distinct label-vs-span ratios exist and must not be
+conflated: the *specificity-estimand* ratio across eras on Qwen is
+≈2.9× (HP3 0.2788 → P3-P2 0.0958 — the draft's "one third"), while the
+*mean-damage* ratios on the 60-item span audit are 17.2×/5.5×/3.4×
+(Qwen/Think/Instruct), with damage also *reallocating* across items on
+the pair (r = 0.195/0.292) versus mostly rescaling on Qwen (r = 0.745).
 
 **4. Still-open alternatives:** protection-geometry scope (one
 protection convention tested); the named secondary arms

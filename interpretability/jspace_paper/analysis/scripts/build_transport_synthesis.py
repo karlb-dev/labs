@@ -102,7 +102,7 @@ def main():
     ax.set_xticklabels(gl.layer, fontsize=8.6)
     ax.set_ylabel("declared-dose tangent relative error (log)", fontsize=8.2)
     ax.set_title("Gemma ε=0.10 mismatch by depth\n(0/12 pass per layer; "
-                 "12–52× above backend scales)")
+                 "17–68× above the frozen ceiling)")
 
     # (b)(c) OLMo H6 cell maps
     eps = sorted(h6.desired_relative_epsilon.unique())

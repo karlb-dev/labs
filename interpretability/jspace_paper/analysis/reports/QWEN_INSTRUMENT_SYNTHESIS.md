@@ -14,7 +14,7 @@ including the 3.3 GB A1000 lens). Figure:
 | Level | Verdict across A120→A250→A500→A1000 |
 |---|---|
 | Averaged operator (task rows) | **Converges, monotonically**: q50 0.99522 → 0.99771 → 0.99870; q05 0.99308 → 0.99684 → 0.99812; every gate passes. Raw/minus-identity operator medians ≥ 0.9955 throughout. |
-| Aggregate scientific endpoints | **Fit-stable at every boundary** (15/15 gates): occupancy diff 0, centered-excess ≤ 0.071 pp, span-safe specific ≤ 0.096 nat (gate 0.15), tail-rate ≤ 0.033 (gate 0.05), G4 flip diff 0. Bridge *preference* also stable (−0.055 / −0.002 / +0.016). |
+| Aggregate scientific endpoints | **Fit-stable at every boundary** (15/15 gates): max |Δ|: occupancy 0, centered excess 0.0711 pp, span-safe specific 0.0960 nat (gate 0.15), tail rate 0.0333 (gate 0.05), G4 flip 0. Bridge *preference* also stable (−0.055 / −0.002 / +0.016). |
 | Sparse selection identity | **Never passes**: selected-ID Jaccard median is exactly 7/13 = 0.538462 at *all three* boundaries (a quantized median, not a trend) against a 0.75 floor; normalized projector overlap creeps 0.6748 → 0.7030 → 0.7098 against a 0.85 floor — direction favorable, deficit large. |
 | Causal mechanism endpoint | **Oscillates**: bridge-rescue difference −0.2147 (PASS) → +0.5589 (FAIL, sign flip) → −0.2940 (FAIL). Per-lens equal-family rescue means run +0.251 (A120), +0.466 (A250), −0.129/−0.093 (A500), +0.165 (A1000). |
 

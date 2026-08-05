@@ -15,9 +15,9 @@ unqualified.
 1. **Gemma-4-31B** (L22/L30/L37/L44/L52, ε=0.10 declared dose, frozen
    prompts/directions): 0/12 rows pass at every layer; bootstrap median
    tangent relative error runs 1.357 → 1.573 → 3.525 → 5.365 → 4.386
-   with depth — 12–52× the calibrated backend scales (ceiling 0.0787,
-   q99 0.0262, historical all-slot 0.00246) and ~12× the OLMo control's
-   late-anchor 0.111. The mismatch is **directional, not a scale
+   with depth — 17.2–68.2× the frozen calibrated backend ceiling
+   (0.0787), 51.7–204.5× the pooled backend q99 (0.0262), and
+   12.2–48.3× the OLMo control's late-anchor 0.111. The mismatch is **directional, not a scale
    error** (declared-dose median tangent cosine 0.0389 at L22, −0.0622
    at L37, gains ≈ 1–5.5). Closed finite-scale methods result; cause
    not localized; no nondifferentiability/workspace claim.

@@ -4,8 +4,9 @@
 %  Fresh paper start (2026-07-30). NOT derived from the run handouts — those are
 %  frozen run-era artifacts. Prose here is written new against the registered
 %  evidence. Every quantitative claim carries its evidence id in a trailing
-%  \eid{...} bracket (the registry is interpretability/jspace_phase3/reports/
-%  evidence_events.jsonl); numbers were independently re-derived from the
+%  \eid{...} bracket (registries: interpretability/jspace_phase3/reports/
+%  evidence_events.jsonl and interpretability/jspace_part2/reports/
+%  evidence_registry.jsonl); numbers were independently re-derived from the
 %  item-level parquets by interpretability/jspace_paper/scripts/run_analysis.py
 %  and re-verified by the paper-analysis reconstruction audit
 %  (interpretability/jspace_paper/analysis/reports/RECONSTRUCTION_AUDIT.md).
@@ -171,8 +172,8 @@ instrument fault produced, or would have produced, a false claim.}
   content is the only difference between arms.
   \item \textbf{One unit system.}  Two tokenizer-convention faults
   (BOS units; concatenation) caught by the preregistered stop rule
-  before any confirmatory outcome was viewed
-  \eid{AMENDMENT\_1\_BOS\_UNITS}.
+  before any confirmatory outcome was viewed (preregistration
+  amendment \texttt{AMENDMENT\_1\_BOS\_UNITS}, not a registry event).
   \item \textbf{Audited families.}  Hand-audited item families replace
   a string-split accident; every clustered statistic runs on the
   audited map.
@@ -190,8 +191,9 @@ $[-0.720, -0.295]$, $p_{\mathrm{holm}}=5\times10^{-4}$; HP3 J-specific
 tail excess $+0.279$ $[+0.205, +0.361]$ (Qwen)
 \eid{n6-confirmatory-analysis-v2}.  Held-out replication: HP3
 replicates ($+0.297$); HP1 inconclusive on the 9-item two-hop leg.
-Corrected capacity: Qwen at $5$--$6\%$ centered excess (lower edge of
-the reported Claude band), the OLMo 3.1 pair flat at $\sim$$1.2\%$
+Corrected capacity: Qwen at $5$--$6\%$ centered excess, the OLMo 3.1
+pair at $0.4$--$1.2\%$ across L24--L40; the cross-paper occupancy
+comparison to the reported Claude band remains open (errata W5)
 \eid{r2-occupancy-*-v2}.}
 
 %----------------------------------------------------------------------------------------
@@ -350,11 +352,14 @@ prose cost on Think/Instruct/Qwen respectively.  No model earns
 %----------------------------------------------------------------------------------------
 \section{Reproducibility}\label{sec:repro}
 
-\todo{The N8 ladder as a release gate: Level 1 narrative-blind
-analysis reproduction ($\le5\times10^{-4}$ on all four primaries)
-\eid{p3-n8-level1-repro-v1}; Level 2 sentinel cells bit-exact on all
-three models \eid{p3-n8-level2-*-v1}; Level 3 one full 188-item Qwen
-GPU cell bit-exact \eid{p3-n8-level3-qwen36-27b-v1} \tier{methods}.
+\todo{The N8 ladder as a release gate.  Phase 2: narrative-blind
+analysis reproduction to $\le5\times10^{-4}$ worst absolute difference
+\eid{p3-n8-level1-repro-v1}.  Phase 3 ladder: Level 1 reproduced all
+61/61 quantities exactly \eid{p3-n8-p3-level1-v1}; Level 2 stratified
+cells reproduced the deterministic arms on all three models
+\eid{p3-n8-p3-level2-*}; Level 3 reproduced one full 188-item Qwen GPU
+cell exactly, including the stable control
+\eid{p3-n8-p3-level3-qwen36-27b-v1} \tier{methods}.
 Also: single-command repro, append-only evidence registry, frozen
 partitions, preregistration with disclosed deviations.}
 

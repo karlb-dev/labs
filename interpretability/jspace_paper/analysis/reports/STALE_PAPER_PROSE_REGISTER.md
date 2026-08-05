@@ -32,6 +32,19 @@ phrases as negations/prohibitions; not stale).
 | `jspace_olmo_lineage/reports/OLMO_LINEAGE_{CLAIMS_TABLE,STATE_OF_RECORD,DEVELOPMENT_REPORT}.md` | wedge/H6/O5 queued; Bank-W closed-v1 | Study-1 records; V2 state + claims table are the live versions; Study-1 files carry their own "queued is not an outcome" guard |
 | `jspace_paper/Mapping_Neural_Curvature.pdf` | (not sweepable — binary) | No tracked TeX source exists in the repo; recorded as `source_absent` in the paper-source manifest; inventory/overlap disposition due at P6 (plan §0.2) |
 
+## Disposition update (P8/P9)
+
+U1–U8 are discharged as follows: U5/U6 (Gemma handout) and U7 (Phase 4
+handout) edited in place with chronology preserved; U8 fixed; **U1–U4
+(`olmo_lineage.tex`) are superseded by the P6 retirement** — the
+document carries a corrective RETIRED banner with the terminal facts
+and pointers instead of in-body edits (per
+`paper_routes/olmo_lineage/DISPOSITION.md`); its body remains a
+historical draft and is not claim-bearing. Two additional Gemma handout
+stale sites found by the P9 audit (current-state table row; FAQ
+present-tense answer) were date-qualified and resolved in the same
+pass.
+
 ## CURRENT — governance text; hits are negations or prohibitions
 
 `FREEZE_HANDOFF.md`, `PHASE4_STATE_OF_RECORD.md`,

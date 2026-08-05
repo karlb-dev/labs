@@ -24,18 +24,21 @@ per-checkpoint, per-dose, per-backend preflight.
    7/13 at every boundary; projector under floor; bridge-rescue sign
    oscillation; Q-L4 forced by the rescue row. Figure M2 (bottom).
 6. **Falsifiers.** Selection-margin strata (near-tie vs stable-core;
-   stable-core fails too); prompt-323 influence (all materiality
-   ≥3,857× under threshold — current runtime). Figure M3.
+   stable-core fails too); prompt-323 influence (closest materiality
+   ratio 3,856.8× under threshold — current runtime). Figure M3.
 7. **Runtime identity (named section).** The incident, the prospective
    catch, the diagnostic boundary, the amendment; consequence for any
-   fit-then-audit pipeline. [C7]
+   fit-then-audit pipeline. [C7] Where the two registered prompt-323
+   maxima co-occur, distinguish them explicitly: 181.826310 is the
+   blocked runtime-control era value; 181.776618 is the amended
+   influence recompute.
 8. **Mixed-precision exact-backend calibration.** G2.1 target-blind
    design; ceiling = max(3·q99, ten-quantum q99) = 0.0787…; route
    benign_scheduling_floor; the relicense logic (Study 1's failed 1e-5
    gate preserved, never retro-passed). [TB3]
-9. **Gemma finite-scale mismatch.** Five layers, 0/12 passes, 12–52×
-   above backend scales, directional; closed at tested scope; cause
-   not localized. Figure M4.
+9. **Gemma finite-scale mismatch.** Five layers, 0/12 passes, 17–68×
+   above the frozen calibrated backend ceiling, directional; closed at
+   tested scope; cause not localized. Figure M4.
 10. **The OLMo H6 boundary.** One licensed cell in the campaign grid;
     eligibility as a data state; the dose-archive schema gap; the
     estimand reconciliation (why none of this bounds the paired

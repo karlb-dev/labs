@@ -8,15 +8,15 @@
 > strong operator convergence does not license the instrument built
 > from it: task-row cosines pass every gate (q50 0.9987) and all six
 > aggregate scientific endpoints are fit-stable, while the selected
-> sparse coordinates never exceed Jaccard 0.538 (exactly 7/13 at every
-> boundary), the projector overlap stays below its floor, and a bridge-
+> sparse coordinates sit at Jaccard exactly 7/13 = 0.538462 at every
+> boundary, the projector overlap stays below its floor, and a bridge-
 > rescue mechanism endpoint oscillates in sign — so no canonical sparse
 > lens is nominated. Selection-margin and single-prompt-influence
 > falsifiers do not rescue the instrument, and a runtime-identity
 > incident shows that version-level pinning does not pin backward
 > semantics. On the applicability side, a target-blind mixed-precision
 > calibration (frozen ceiling 0.0787) closes a five-layer Gemma-4-31B
-> finite-scale tangent mismatch 12–52× above backend scales, and a
+> finite-scale tangent mismatch 17–68× above the frozen backend ceiling, and a
 > two-checkpoint OLMo-3 finite-dose ladder licenses exactly one
 > layer-dose cell (L56, ε=0.10, Think only). None of this bounds paired
 > removal contrasts with exact dose-matched controls — an estimand
@@ -36,7 +36,7 @@
 > discrepancy before any outcome was written); exact-JVP finite-dose
 > prediction is checkpoint-, layer-, and dose-specific (one licensed
 > cell across two OLMo checkpoints; a closed five-layer Gemma mismatch
-> far above a calibrated backend envelope); and missing dose archives
+> 17–68× above a calibrated backend envelope); and missing dose archives
 > are a data state, not a verdict. The resulting preflight — backend
 > calibration, delivery/SNR, tangent gate, fit invariance, selection
 > invariance, endpoint invariance — would have caught every failure
