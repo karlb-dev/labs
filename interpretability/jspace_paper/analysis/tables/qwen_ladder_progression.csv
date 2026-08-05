@@ -1,0 +1,51 @@
+fit_boundary,metric_class,metric,value,gate,pass,source_event,method
+A120->A250,functional_aggregate,centered_excess_difference_max_abs_pp,0.07110238075256348,abs<=1.0 pp,True,p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1,hash_verified_artifact_field
+A120->A250,functional_aggregate,g4_flip_rate_difference,0.0,abs<=0.10 & both lenses pass positive control,True,p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,functional_aggregate,occupancy_difference_max_abs,0.0,abs<=1.0,True,p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1,hash_verified_artifact_field
+A120->A250,functional_aggregate,span_safe_specific_equal_family_mean_difference_nats,0.09595705442130566,abs<=0.15,True,p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,functional_aggregate,tail_rate_difference,-0.033333333333333326,abs<=0.05,True,p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,functional_causal_bridge,bridge_preference_difference,-0.055314002092927694,abs<=0.25 & same preference sign,True,p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,functional_causal_bridge,bridge_rescue_difference_nats,-0.21467417515814302,abs<=0.25 & same rescue sign,True,p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,functional_sparse_geometry,n_positions,17381,completeness 17381,True,p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,functional_sparse_geometry,normalized_projector_overlap_median,0.6747885942459106,>=0.85,False,p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,functional_sparse_geometry,selected_id_jaccard_median,0.5384615384615384,>=0.75,False,p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,structural,task_direction_cosine_q05_conservative,0.9930787086486816,>=0.9,True,p4-qwen-lens-convergence-drawA-n120-n250-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,structural,task_direction_cosine_q50_conservative,0.9952232241630554,>=0.95,True,p4-qwen-lens-convergence-drawA-n120-n250-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,structural_operator,minus_alpha_identity_matrix_cosine_assay_median,0.9955102205276489,,,p4-qwen-lens-convergence-drawA-n120-n250-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,structural_operator,minus_identity_matrix_cosine_assay_median,0.9987157583236694,,,p4-qwen-lens-convergence-drawA-n120-n250-dev-v1,recomputed_from_registered_rows_independent
+A120->A250,structural_operator,raw_matrix_cosine_assay_median,0.9958543181419373,,,p4-qwen-lens-convergence-drawA-n120-n250-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,functional_aggregate,centered_excess_difference_max_abs_pp,0.05055665969848633,abs<=1.0 pp,True,p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1,recomputed_from_registered_state_summaries
+A250->A500,functional_aggregate,g4_flip_rate_difference,0.0,abs<=0.10 & both lenses pass positive control,True,p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,functional_aggregate,occupancy_difference_max_abs,0.0,abs<=1.0,True,p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1,recomputed_from_registered_state_summaries
+A250->A500,functional_aggregate,span_safe_specific_equal_family_mean_difference_nats,-0.024323012568056582,abs<=0.15,True,p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,functional_aggregate,tail_rate_difference,0.016666666666666663,abs<=0.05,True,p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,functional_causal_bridge,bridge_preference_difference,-0.001906820852309643,abs<=0.25 & same preference sign,True,p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,functional_causal_bridge,bridge_rescue_difference_nats,0.558908699080348,abs<=0.25 & same rescue sign,False,p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,functional_sparse_geometry,n_positions,17381,completeness 17381,True,p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,functional_sparse_geometry,normalized_projector_overlap_median,0.7030187845230103,>=0.85,False,p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,functional_sparse_geometry,selected_id_jaccard_median,0.5384615384615384,>=0.75,False,p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,structural,task_direction_cosine_q05_conservative,0.9968382120132446,>=0.9,True,p4-qwen-lens-convergence-drawA-n250-n500-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,structural,task_direction_cosine_q50_conservative,0.9977147579193115,>=0.95,True,p4-qwen-lens-convergence-drawA-n250-n500-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,structural_operator,minus_alpha_identity_matrix_cosine_assay_median,0.997738778591156,,,p4-qwen-lens-convergence-drawA-n250-n500-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,structural_operator,minus_identity_matrix_cosine_assay_median,0.9993554353713989,,,p4-qwen-lens-convergence-drawA-n250-n500-dev-v1,recomputed_from_registered_rows_independent
+A250->A500,structural_operator,raw_matrix_cosine_assay_median,0.9979121088981628,,,p4-qwen-lens-convergence-drawA-n250-n500-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,decision,ql_branch,Q-L4,frozen Q-L1..Q-L5 table,True,p4-qwen-canonical-lens-decision-a1000-dev-v1,recomputed_frozen_truth_table
+A500->A1000,functional_aggregate,centered_excess_difference_max_abs_pp,0.02339482307434082,abs<=1.0 pp,True,p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1,recomputed_from_registered_state_summaries
+A500->A1000,functional_aggregate,g4_flip_rate_difference,0.0,abs<=0.10 & both lenses pass positive control,True,p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,functional_aggregate,occupancy_difference_max_abs,0.0,abs<=1.0,True,p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1,recomputed_from_registered_state_summaries
+A500->A1000,functional_aggregate,span_safe_specific_equal_family_mean_difference_nats,0.07220984548330307,abs<=0.15,True,p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,functional_aggregate,tail_rate_difference,-0.033333333333333326,abs<=0.05,True,p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,functional_causal_bridge,bridge_preference_difference,0.015804814919828658,abs<=0.25 & same preference sign,True,p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,functional_causal_bridge,bridge_rescue_difference_nats,-0.2940282352268696,abs<=0.25 & same rescue sign,False,p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,functional_sparse_geometry,n_positions,17381,completeness 17381,True,p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,functional_sparse_geometry,normalized_projector_overlap_median,0.7098178863525391,>=0.85,False,p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,functional_sparse_geometry,selected_id_jaccard_median,0.5384615384615384,>=0.75,False,p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,selection_margin,near_tie,15536,completeness,True,p4-qwen-selection-margin-a500-a1000-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,selection_margin,rank_deficient,0,completeness,True,p4-qwen-selection-margin-a500-a1000-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,selection_margin,retained_positions,17381,completeness,True,p4-qwen-selection-margin-a500-a1000-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,selection_margin,stable_core,1845,completeness,True,p4-qwen-selection-margin-a500-a1000-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,structural,task_direction_cosine_q05_conservative,0.9981223940849304,>=0.9,True,p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,structural,task_direction_cosine_q50_conservative,0.9987020492553711,>=0.95,True,p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,structural_operator,minus_alpha_identity_matrix_cosine_assay_median,0.9986323118209839,,,p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,structural_operator,minus_identity_matrix_cosine_assay_median,0.9996100664138794,,,p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1,recomputed_from_registered_rows_independent
+A500->A1000,structural_operator,raw_matrix_cosine_assay_median,0.9987391829490662,,,p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1,recomputed_from_registered_rows_independent

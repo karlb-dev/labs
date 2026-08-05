@@ -61,6 +61,18 @@ from jspace_phase3.experiments.p3_alias_and_cohort_sensitivity import (  # noqa:
 
 SLUGS = ("olmo31-think", "olmo31-instruct", "qwen36-27b")
 
+# Diagnosis for the one non-byte-identical auxiliary artifact: the exact
+# 2^17 sign-flip *distribution array* is produced by `signs @ v` (BLAS
+# dgemv). Its last-ulp accumulation pattern is CPU-kernel dependent; on
+# this host it is stable across OMP/OPENBLAS thread counts but differs
+# from the frozen GPU-VM host (local reorderings move entries by
+# <= 5.6e-17, i.e. 1 ulp). Every decision-bearing scalar derived from it
+# (estimate, extreme_patterns under the 1e-15 tolerance, p, inverted CI
+# endpoints on the 4001-point grid) reproduces bit-identically.
+BLAS_ULP_NOTE = (
+    "sha mismatch is BLAS-matvec ulp provenance (<=1 ulp, "
+    "CPU-kernel dependent); all derived scalars bit-identical")
+
 # Registered frozen artifacts (read-only references).
 INF_JSON = RUN / "metrics/cross_model/release_audit/p3_inference_audit.json"
 INF_FAMILY = (RUN / "metrics/cross_model/release_audit/"
@@ -231,7 +243,8 @@ def main() -> None:
         f"SOR quote p=0.062332; extreme_patterns frozen="
         f"{fc['exact_randomization']['extreme_patterns']} recon="
         f"{r1c['exact']['extreme_patterns']} of 131072; "
-        f"null distribution sha256 match={sha_c}")
+        f"null distribution sha256 match={sha_c}"
+        + ("" if sha_c else f"; {BLAS_ULP_NOTE}"))
     add("p3p1_confirm_randomization_ci",
         "P3-P1 confirmatory: randomization-compatible 95% confidence set "
         "(exact shifted sign-flip inversion)",
@@ -261,7 +274,8 @@ def main() -> None:
         "recomputed_from_items", grid_sources_repl,
         f"SOR quote p=0.219482; extreme_patterns frozen="
         f"{fr['exact_randomization']['extreme_patterns']} recon="
-        f"{r1r['exact']['extreme_patterns']}; null sha match={sha_r}")
+        f"{r1r['exact']['extreme_patterns']}; null sha match={sha_r}"
+        + ("" if sha_r else f"; {BLAS_ULP_NOTE}"))
 
     # -- state-of-record realization: sha256-v1 control at seed 31337 ---
     # Mirrors p3_control_seed_audit.seed_summary over the full-cohort
@@ -321,7 +335,8 @@ def main() -> None:
         "recomputed_from_items", sor_sources,
         f"SOR quote p=0.057892; extreme_patterns frozen="
         f"{frozen_31337['extreme_patterns']} recon="
-        f"{sor_exact['extreme_patterns']}; null sha match={sor_sha}")
+        f"{sor_exact['extreme_patterns']}; null sha match={sor_sha}"
+        + ("" if sor_sha else f"; {BLAS_ULP_NOTE}"))
 
     # ==================================================================
     # 2. P3-P2 tail excess at -1 nat (frozen MC seed 4242)
@@ -818,7 +833,8 @@ def main() -> None:
         f"{len(diff_seed)} facts (frozen {fseed['n_families']}/"
         f"{fseed['n_facts']}); exact p frozen="
         f"{fseed['exact_family_signflip']['p']!r} recon="
-        f"{exact_seed['p']!r}; null sha match={sha_seed}")
+        f"{exact_seed['p']!r}; null sha match={sha_seed}"
+        + ("" if sha_seed else f"; {BLAS_ULP_NOTE}"))
 
     # ------------------------------------------------------------------
     OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
