@@ -54,7 +54,7 @@ full-target-sequence logprobs (bf16 batched kernels differ by up to
 0.25 nats on \emph{both} models --- an instrument finding of record).
 Graduation to any mechanism work required ten preregistered conjunctive
 criteria including an NC-derived empirical false-positive floor.
-\eid{pref1-freeze-v1 · registry evidence\_events.jsonl}
+\eid{pref1-freeze-v1 -- registry evidence\_events.jsonl}
 
 \section{Frozen 7B adjudications}
 
@@ -82,7 +82,7 @@ NC scenario effects & exactly 0.000 & no alarm \pass \\
 graduates'': the behavioral record below \emph{is} the Phase 1 primary
 result; no direction was fit, the mechanism block stayed sealed, and no
 causal or coupling claim exists at any tier.
-\eid{pref1-graduation-manifest-v1 · frozen\_7b/tables/graduation\_decisions.csv}
+\eid{pref1-graduation-manifest-v1 -- frozen\_7b/tables/graduation\_decisions.csv}
 
 \begin{center}
 \includegraphics[width=0.88\textwidth]{../frozen_7b/figures/f01_scenario_effect_forest.png}
@@ -163,7 +163,7 @@ affordance installed, \texttt{DISENGAGE:} was used immediately; one
 free-form prefer-stop regex flag is routed to human review and licenses
 nothing. Narrow reading: the forced-exit menu is stall-sensitive on this
 battery. Forbidden: welfare, aversion, distress, consent.
-\eid{pref1-dg-smoke-v1 · reports/dg\_smoke/dg\_forced\_exit.csv}
+\eid{pref1-dg-smoke-v1 -- reports/dg\_smoke/dg\_forced\_exit.csv}
 
 \section{32B replication \tierlabel{frozen\_behavioral}}
 
@@ -196,11 +196,44 @@ while enacted choice is asymmetric; at 32B report-only often leans
 \emph{further} toward pole\_0 than enacted choice (component: AR 0.275
 vs RO 0.050) while the graduated scenario shows the reverse (docsection:
 AR 0.000 vs RO 0.300). Behavioral comparisons only, both directions.
-\eid{pref1-frozen-behavioral-32b-v1 · frozen\_32b/tables/}
+\eid{pref1-frozen-behavioral-32b-v1 -- frozen\_32b/tables/}
 
 \section{Mechanistic case study \tierlabel{conditional, Stop C}}
 
-32B-MECH-PENDING
+Run on the 32B per the frozen preregistration (one declared, recorded
+design simplification: the token-count nuisance column is exactly
+additive in incidental$+$frame within a scenario and was dropped for
+rank).
+
+\textbf{Mechanistic positive control: \pass.} On
+\texttt{pc\_quality\_config} at stream depth 26/64 (relative 0.406), the
+nuisance-residualized margin-covariance direction is identifiable
+(validation $r=0.699$ vs random band $0.270$); single-position dose
+guardrails are surgical (mean KL $4\times10^{-4}$ nats on unrelated
+prompts); on held-out cells, $\pm\beta$ addition moves the content
+margin by $+0.787$ nats (paired exact sign-flip, Holm-adjusted
+$p=9.2\times10^{-5}$) and \textbf{transfers to the disjoint-alphabet
+report-only channel} ($+0.93$ nats, $p_{\text{holm}}=0.016$), while the
+direct-output code control moves the report channel the \emph{opposite}
+way ($-0.39$) and random/nuisance controls stay small. Projection
+removal ($\alpha=1$) is honestly null ($-0.112$, $p=0.38$): removing one
+linear component does not dent a $\sim$15-nat margin. Ceiling: for the
+positive-control scenario, the fitted choice-margin direction is a
+manipulable handle whose addition moves both the enacted margin and the
+matched report-only margin, and output-code controls do not reproduce
+the transfer --- the coupling machinery of this lab demonstrably works.
+
+\textbf{The graduated scenario: \texttt{DIRECTION\_NOT\_IDENTIFIABLE}.}
+With the identical estimator, splits, and gates,
+\texttt{ar\_docsection\_readme}'s validation correlation is 0.09--0.13
+against random-direction bands of 0.40--0.57 at every frozen depth; per
+the preregistered gate, no intervention ran and no causal claim exists.
+Verdict of record: behavioral graduation does not imply an identifiable
+linear margin direction at the frozen decision position --- and because
+the same stack finds and causally validates the PC handle, this is a
+property of the scenario under this battery, not an instrument failure.
+Case-study language only.
+\eid{pref1-mechanism-case-study-v1 -- frozen\_32b/mechanism/}
 
 \section{What Phase 1 licenses}
 

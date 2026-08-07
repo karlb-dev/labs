@@ -65,3 +65,13 @@ order-0-only pilot run is retained as development evidence of the
 tie-break behavior. **Authority:** plan left the subset to the
 implementer; dev exists precisely to catch this. **Risk:** none; label
 stability still adjudicates only on the frozen full grid.
+
+## D8 — Mechanism nuisance-design declared simplification
+Within-scenario, the prompt-token-count column is exactly additive in
+(incidental, frame) — labels, codes, and order swaps are length-neutral
+by construction — so it is fully absorbed by the FE+frame columns
+(measured rank 7/8 with it). It was dropped for rank. **Authority:** the
+frozen preregistration itself anticipates "nuisance design full rank
+after declared simplification" (plan §10.2); recorded here and in the
+mechanism module docstring. **Risk:** none — the information content of
+the column is retained via the columns that absorb it.

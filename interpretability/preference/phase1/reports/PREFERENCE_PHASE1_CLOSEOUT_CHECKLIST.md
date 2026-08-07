@@ -46,9 +46,13 @@
 - [x] graduation manifest frozen (zero graduations → Stop B)
 - [x] behavioral state-of-record report written
 
-## Conditional mechanism
-- [x] run only on graduated scenarios — **zero graduated; NOT run** (preregistered module + sealed captures retained for a future phase)
-- [-] remaining §16 mechanism boxes not applicable under Stop B
+## Conditional mechanism (32B Stop C case study)
+- [x] run only on graduated scenarios (7B: none → not run; 32B: ar_docsection_readme → case study)
+- [x] mechanism PC passes (pc_quality_config: identifiable, addition p_holm 9e-5, RO transfer p_holm 0.016, controls separated)
+- [x] directions fit on train incidentals; layer selected on validation only; holdout opened once (PC block)
+- [x] random, nuisance, wrong-scenario, and direct-output controls run
+- [x] AR-fit direction: DIRECTION_NOT_IDENTIFIABLE recorded per gate — no intervention, no causal claim for the graduated scenario
+- [x] no universal preference vector claimed
 
 ## Secondary track
 - [x] DG schema bug repaired (explicit primary_dv; v2 generator)

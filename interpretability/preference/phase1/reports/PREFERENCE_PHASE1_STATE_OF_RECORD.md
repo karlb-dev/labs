@@ -70,7 +70,40 @@ Both directions stay behavioral comparisons only.
 
 ### Mechanism case study addendum (Stop C, 32B, `ar_docsection_readme`)
 
-32B-MECH-PENDING
+Run per the frozen preregistration §4 (one declared design simplification,
+recorded: the prompt-token-count nuisance column is exactly additive in
+incidental+frame within a scenario and is absorbed by those columns —
+dropped for rank; everything else verbatim).
+
+**Mechanistic positive control (pc_quality_config): PASS.** At stream
+depth 26/64 (relative 0.406), the nuisance-residualized margin-covariance
+direction is identifiable (train r 0.766; validation r 0.699 vs random
+band 0.270); dose guardrails are far under threshold (mean KL 0.0004
+nats); on held-out cells, ±β addition moves the content margin by
+**+0.787 nats** (paired sign-flip p_holm 9.2e-5) and **transfers to the
+disjoint-alphabet report-only channel (+0.93 nats, p_holm 0.016)** while
+the direct-output code control moves RO the *opposite* way (−0.39) and
+every random/nuisance control stays small and sign-inconsistent
+(d_code −0.157, d_pos −0.271, randoms −0.167/−0.036 on AR). Projection
+removal (α=1) is honestly null (−0.112, p 0.38) — one linear component
+does not dent an ~15-nat margin. Ceiling language: *for the
+positive-control scenario, the fitted choice-margin direction is a
+manipulable handle whose addition moves both the enacted-choice margin
+and the matched report-only margin on held-out cells, and output-code
+controls do not reproduce the transfer.* This validates the instrument
+stack end to end.
+
+**The graduated scenario: `DIRECTION_NOT_IDENTIFIABLE`.** With the same
+estimator, splits, and gates, `ar_docsection_readme`'s validation
+correlation is 0.09–0.13 against random-direction bands of 0.40–0.57 at
+every frozen depth — the preregistered identifiability gate fails, and
+per the frozen rules no intervention was run and no causal claim exists.
+Verdict of record: **behavioral graduation does not imply an
+identifiable linear margin direction at the frozen decision position**;
+the instrument demonstrably finds and causally validates such a handle
+when one exists (the PC), so this is a genuine property of the scenario
+under this battery, not an instrument failure. Case-study language only;
+no generic preference-channel claim.
 
 ## DG secondary smoke (development tier)
 
