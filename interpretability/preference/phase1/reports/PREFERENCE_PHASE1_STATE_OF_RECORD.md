@@ -43,7 +43,34 @@ follow-through 92.5% (exploratory). Full analysis:
 
 ## 32B replication (`…-20260807_211808-5f68cb`)
 
-32B-PENDING
+2,320/2,320 rows on `Olmo-3.1-32B-Instruct@ac0587e4` (identical
+tokenizer/codebook, audited): strict parse **1.0000** (the 7B's `PK4`
+blend specimen vanished at scale); PC gate PASS (aggregate 0.979 — one
+softening: pc_safety_cleanup 0.875, still over the 0.75 floor; PC
+position criterion 0.021); NC exactly 0.000 again. **One scenario
+graduates all ten criteria: `ar_docsection_readme` at −0.438
+[90% CI −0.488, −0.375] toward Usage-section-first, with position and
+code nuisances both 0.062** → preregistered **Stop C**: a one-scenario
+mechanistic case study is licensed (no generic preference-channel
+claim); results in `frozen_32b/mechanism/` and the addendum below.
+
+Cross-model behavioral comparison (both frozen, same battery): the 7B's
+strongest asymmetries shrink at 32B (install-first −0.388 → −0.150;
+batch-ingest −0.363 → −0.025) while different scenarios strengthen
+(docsection 0.000 → −0.438; component-library −0.025 → −0.225;
+naming-serializer 0.000 → −0.125): content asymmetries are
+model-specific, not battery artifacts (NC pins the floor at 0.000 on
+both). The first-position policy weakens with scale (0.500 → 0.275–0.438
+on content-indifferent scenarios). The stated/revealed relation changes
+shape: at 7B, RO sits near indifference while AR is asymmetric; at 32B,
+RO often leans *further* toward pole_0 than enacted choice on the
+asymmetric scenarios (component: AR 0.275 vs RO 0.050) while the
+graduated scenario shows the reverse (docsection: AR 0.000 vs RO 0.300).
+Both directions stay behavioral comparisons only.
+
+### Mechanism case study addendum (Stop C, 32B, `ar_docsection_readme`)
+
+32B-MECH-PENDING
 
 ## DG secondary smoke (development tier)
 

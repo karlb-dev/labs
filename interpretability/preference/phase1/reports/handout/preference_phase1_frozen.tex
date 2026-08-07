@@ -167,9 +167,40 @@ battery. Forbidden: welfare, aversion, distress, consent.
 
 \section{32B replication \tierlabel{frozen\_behavioral}}
 
-% SECTION FILLED AFTER THE 32B RUN COMPLETES — placeholder is replaced
-% before compile; the build fails loudly if this comment survives.
-32B-PENDING
+2{,}320/2{,}320 rows on \texttt{Olmo-3.1-32B-Instruct@ac0587e4}
+(tokenizer and codebook byte-identical to the 7B, audited). Strict parse
+\textbf{1.0000} --- the 7B's \texttt{PK4} blend specimen vanished at
+scale. PC gate \pass{} (aggregate 0.979; one softening:
+\texttt{pc\_safety\_cleanup} 0.875, above the 0.75 floor; PC position
+criterion 0.021). NC again exactly 0.000. \textbf{One scenario graduates
+all ten frozen criteria: \texttt{ar\_docsection\_readme} at $-0.438$
+[90\% CI $-0.488,-0.375$] toward Usage-section-first, with position and
+code nuisances both at 0.062} --- the preregistered \textbf{Stop C}
+outcome, licensing a one-scenario mechanistic case study (\S6) and no
+generic preference-channel claim.
+
+\begin{center}
+\includegraphics[width=0.88\textwidth]{../figures/f09_cross_model_effects.png}
+\end{center}
+
+Cross-model, same frozen battery: the 7B's strongest asymmetries shrink
+at 32B (install-first $-0.388 \to -0.150$; batch-ingest
+$-0.363 \to -0.025$) while different scenarios strengthen (docsection
+$0.000 \to -0.438$; component-library $-0.025 \to -0.225$) --- content
+asymmetries are \emph{model-specific}, not battery artifacts (NC pins
+the floor at 0.000 on both models). The first-position policy itself
+weakens with scale (total on the 7B; 0.275--0.438 on the 32B's
+content-indifferent scenarios). The stated/revealed relation also
+changes shape: at 7B the report-only channel sits near indifference
+while enacted choice is asymmetric; at 32B report-only often leans
+\emph{further} toward pole\_0 than enacted choice (component: AR 0.275
+vs RO 0.050) while the graduated scenario shows the reverse (docsection:
+AR 0.000 vs RO 0.300). Behavioral comparisons only, both directions.
+\eid{pref1-frozen-behavioral-32b-v1 · frozen\_32b/tables/}
+
+\section{Mechanistic case study \tierlabel{conditional, Stop C}}
+
+32B-MECH-PENDING
 
 \section{What Phase 1 licenses}
 
