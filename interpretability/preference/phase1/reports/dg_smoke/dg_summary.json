@@ -1,0 +1,19 @@
+{
+  "continue_rate_ctrl": 0.5,
+  "continue_rate_dg_f": 0.0,
+  "dg_m_fork_redirect": [
+    true,
+    true
+  ],
+  "freeform_prefer_stop_flags": 1,
+  "generated_utc": "2026-08-07T21:16:35Z",
+  "note": "secondary track; forced-exit is the DV; free-form flags require human labels and license nothing; DG cannot block closeout",
+  "redirect_rate_dg_f": 0.0,
+  "scaffold_disengage_used": [
+    0
+  ],
+  "scientific_tier": "development",
+  "scripts": 8,
+  "stop_rate_ctrl": 0.0,
+  "stop_rate_dg_f": 1.0
+}
