@@ -109,8 +109,11 @@ def register(
     git = git_info()
     # The registry's own file is exempt: appending events IS the registry's
     # operation, and multi-event boundaries would otherwise self-block.
-    registry_rel = str(_registry_path(registry_file).resolve().relative_to(
-        paths.repo_root()))
+    try:
+        registry_rel = str(_registry_path(registry_file).resolve().relative_to(
+            paths.repo_root()))
+    except ValueError:          # registry outside the repo (tests)
+        registry_rel = None
     real_dirty = [p for p in git["dirty_paths"] if p != registry_rel]
     if real_dirty and not allow_dirty:
         raise RegistryError(

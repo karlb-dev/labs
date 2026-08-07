@@ -100,14 +100,21 @@ def _is_camel(ident: str) -> bool:
             and any(c.isupper() for c in ident[1:]))
 
 
+def _style_informative(ident: str) -> bool:
+    """Single lowercase words (strip, clean) cannot show snake vs camel;
+    only identifiers with an underscore or an uppercase letter are judged."""
+    return "_" in ident or any(c.isupper() for c in ident)
+
+
 def v_naming_style(item: Mapping[str, Any], pole: int, output: str) -> dict[str, Any]:
-    idents = _identifiers(output)
-    if len(idents) < 2:
-        return {"passed": False, "detail": f"too few identifiers: {idents}"}
+    idents = [i for i in _identifiers(output) if _style_informative(i)]
+    if not idents:
+        return {"passed": False,
+                "detail": "no style-informative identifiers in output"}
     pred = _is_snake if pole == 0 else _is_camel
     bad = [i for i in idents if not pred(i)]
     return {"passed": not bad,
-            "detail": f"identifiers={idents}; nonconforming={bad}"}
+            "detail": f"informative={idents}; nonconforming={bad}"}
 
 
 def v_seed_command(item: Mapping[str, Any], pole: int, output: str) -> dict[str, Any]:
