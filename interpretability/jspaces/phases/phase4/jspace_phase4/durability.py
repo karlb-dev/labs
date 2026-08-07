@@ -132,10 +132,16 @@ def resolve_output_reference(
                 "resolution": "repository-materialization",
                 "resolved_path": str(candidate),
             })
-        return row
+            return row
+        # A mismatched materialization may still be an append-only
+        # extension of registry bytes pinned at the registering commit;
+        # for every other file the reference simply stays unresolved.
+        candidate_mismatch = True
+    else:
+        candidate_mismatch = False
 
     if (
-        row["status"] == "hash_mismatch"
+        (row["status"] == "hash_mismatch" or candidate_mismatch)
         and path.name == "evidence_events.jsonl"
         and candidate.is_file()
     ):
