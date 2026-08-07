@@ -36,6 +36,8 @@ def test_registry_prefix_survives_append_and_rejects_mutation(tmp_path):
 
 
 def test_release_config_pins_every_source_artifact():
+    from jspace_olmo_lineage.paths import REPO_ROOT, _rewrite_repo_relative
+
     config = _config()
     records = source_artifact_records(config)
     assert len(records) == 12
@@ -43,7 +45,7 @@ def test_release_config_pins_every_source_artifact():
         row["role"] for row in config["source_artifacts"]
     }
     for row in records:
-        path = ROOT.parents[1] / row["repo_path"]
+        path = REPO_ROOT / _rewrite_repo_relative(row["repo_path"])
         assert hashlib.sha256(path.read_bytes()).hexdigest() == row["sha256"]
 
 

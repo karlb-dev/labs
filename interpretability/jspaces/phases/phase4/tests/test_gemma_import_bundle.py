@@ -7,8 +7,10 @@ from jspace_phase4.import_bundle import validate_import_bundle
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "reports/GEMMA_TRANSPORT_IMPORT_V1.json"
 VALIDATION = ROOT / "reports/gemma_transport_import_validation_v1.json"
+# The frozen validation snapshot records the pre-reorg bundle path; the
+# alias table maps it onto the current tree.
 BUNDLE_RELATIVE = (
-    "interpretability/jspaces/phases/phase4/reports/GEMMA_TRANSPORT_IMPORT_V1.json")
+    "interpretability/jspace_phase4/reports/GEMMA_TRANSPORT_IMPORT_V1.json")
 
 
 def test_gemma_terminal_bundle_is_methods_only_and_mechanism_blocked():

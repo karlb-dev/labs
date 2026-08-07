@@ -8,8 +8,10 @@ from jspace_phase4.manifests import file_sha256
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "reports/OLMO_LINEAGE_IMPORT_V1.json"
 VALIDATION = ROOT / "reports/olmo_lineage_import_validation_v1.json"
+# The frozen validation snapshot records the pre-reorg bundle path; the
+# alias table maps it onto the current tree.
 BUNDLE_RELATIVE = (
-    "interpretability/jspaces/phases/phase4/reports/OLMO_LINEAGE_IMPORT_V1.json")
+    "interpretability/jspace_phase4/reports/OLMO_LINEAGE_IMPORT_V1.json")
 NATIVE_RELEASE = Path(
     "/content/drive/MyDrive/interpret/special-lab-1/"
     "olmo_lineage_20260801/release/IMPORT_BUNDLE_PHASE4.json")

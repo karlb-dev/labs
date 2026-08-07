@@ -32,9 +32,11 @@ def test_historical_capacity_recovery_pins_exact_registered_bytes():
 
 
 def test_historical_capacity_algorithm_asts_match_frozen_contract():
+    from jspace_phase4.paths4 import REPO_ROOT, _rewrite_repo_relative
+
     config = yaml.safe_load(CONFIG.read_text())
     contract = config["algorithm_contract"]
-    module = ROOT.parents[1] / contract["functional_module"]
+    module = REPO_ROOT / _rewrite_repo_relative(contract["functional_module"])
     for name, expected in contract["function_ast_sha256"].items():
         assert _ast_hash(module, name) == expected
 

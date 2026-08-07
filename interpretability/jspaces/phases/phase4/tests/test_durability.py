@@ -7,6 +7,7 @@ from jspace_phase4.durability import (
     verify_registry_durability,
 )
 from jspace_phase4.manifests import file_sha256
+from jspace_phase4.paths4 import _rewrite_repo_relative
 from jspace_phase4.registry4 import append_event
 
 
@@ -145,9 +146,11 @@ def test_live_known_deficits_bind_recovery_and_search_records():
                      ("recovery_config", capacity),
                      ("recovery_record", capacity)):
         uri = row[key]
-        assert uri.startswith("repo://interpretability/jspaces/phases/phase4/")
-        relative = uri.removeprefix(
-            "repo://interpretability/jspaces/phases/phase4/")
+        assert uri.startswith("repo://")
+        rewritten = _rewrite_repo_relative(uri.removeprefix("repo://"))
+        assert rewritten.startswith("interpretability/jspaces/phases/phase4/")
+        relative = rewritten.removeprefix(
+            "interpretability/jspaces/phases/phase4/")
         assert (root / relative).is_file()
 
 
