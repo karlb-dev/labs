@@ -25,7 +25,7 @@ jspace_part2/         the package
                       protected selection, phase-controlled ablator,
                       mergeable moments, full-sequence scoring, paired
                       cluster bootstrap, equivalence, nested bases, hashing)
-                      — 27 CPU self-tests: `jspace-part2 selftest`
+                      — CPU self-tests (156 checks): `jspace-part2 selftest`
   provenance.py       git/model/lens pinning, provenance blocks, evidence registry
   inventory.py        R0: SHA-256 inventory of all run-dir artifacts (resumable)
   audit_env.py        environment audit + pip-freeze lock

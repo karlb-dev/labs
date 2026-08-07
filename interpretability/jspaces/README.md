@@ -7,6 +7,45 @@ Phase 4, sidelines, and paper analysis).
 Install: `pip install -e interpretability/jspaces/phases/phase4`  
 CLI: `jspace-phase4`
 
+**Layout validated end-to-end on a fresh VM (2026-08-07):** see
+[`VALIDATION_REPORT_20260807.md`](VALIDATION_REPORT_20260807.md) — installs,
+all conformance suites, registry hash verification, regeneration, paper
+builds, and a GPU lens smoke. `pre-jspaces-reorg-v1` (the last old-layout
+commit) is a required provenance tag; keep it pushed.
+
+## Quickstart (fresh machine)
+
+```bash
+git clone git@github.com:karlb-dev/labs.git && cd labs
+pip install -e interpretability/jspaces/phases/phase2
+pip install -e interpretability/jspaces/phases/phase3
+pip install -e interpretability/jspaces/phases/phase4
+pip install -e interpretability/jspaces/sidelines/gemma
+pip install -e interpretability/jspaces/sidelines/olmo
+jspace-part2 selftest                                     # 156 CPU checks
+python -m pytest interpretability/jspaces/phases/phase3/tests -q   # run each
+python -m pytest interpretability/jspaces/phases/phase4/tests -q   # suite
+python -m pytest interpretability/jspaces/sidelines/gemma/tests -q # separately
+python -m pytest interpretability/jspaces/sidelines/olmo/tests -q  # (same-named modules)
+jspace-phase4 registry-list                               # what evidence exists
+jspace-phase4 verify        # rehash every registered output (needs Drive for
+                            # Drive-resident rows; one permanent known-red:
+                            # the a120–a250 state.json — see the report §6)
+```
+
+The jlens engine (model-backed work only): clone
+`anthropics/jacobian-lens` at pinned `581d3986` and `pip install -e` it;
+byte-verify against `special-lab-1/2026-07-25_1726/code/jacobian-lens-pkg/`.
+
+Figure/report regeneration without Drive: unpack
+`MyDrive/interpret/jspace_runs.tar.gz` locally, `export
+JSPACE_RUNS_ROOT=<unpack>/jspace_runs`, then run
+`phases/paper_analysis/scripts/run_analysis.py` (figA–E),
+`python -m jspace_part2.figures`, `python -m jspace_phase3.figures3`.
+Papers: `latexmk -pdf` on the three TeX sources in `phases/paper_analysis/`
+(plus the two sideline TeX papers) — zero-error builds are the validated
+baseline.
+
 Run artifacts are **not** in git. Point env vars at your local or Drive run
 root (see Env vars below). Local unpacks historically live at
 `interpretability/jspace_runs/` (gitignored).

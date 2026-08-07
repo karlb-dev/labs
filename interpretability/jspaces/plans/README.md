@@ -23,6 +23,8 @@ by that phase's registry); everything else is a real file here.
 | 14 | OLMo lineage side study 2 (proposal) | `jspace_lab_olmo_lineage_2.md` | here |
 | 15 | Phase 4 · block 4 (decision block) | `jspace_lab_nextsteps_4_4.md` (+ addendum) | here |
 | 16 | Sidelines block 2 (one-VM dual track) | `jspace_lab_sidelines_2.md` (+ addendum) | here |
+| 17 | Phase 4 · block 5 (closeout + freeze) | `jspace_lab_nextsteps_4_5.md` (+ addendum) | here |
+| 18 | Layout reorg validation (2026-08-06) | `jspace_lab_reorg_validation.md` — executed record: [`../VALIDATION_REPORT_20260807.md`](../VALIDATION_REPORT_20260807.md) | here |
 
 Operational state snapshots (`inprogress.md`, resume files, closeout
 summaries) are not plans; they live with their phases (e.g.

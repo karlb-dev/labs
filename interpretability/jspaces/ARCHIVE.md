@@ -30,7 +30,10 @@ change historical command strings or absolute Drive output paths. Artifact
 `repo://interpretability/jspace_*` prefixes via an alias table so tools can
 still locate files after the move.
 
-## Optional pre-reorg tag
+## Pre-reorg boundary tag (required)
 
-If present, `pre-jspaces-reorg-v1` is the last commit with the old layout
-for trivial checkout of frozen-era paths.
+`pre-jspaces-reorg-v1` is the last commit with the old layout: use it for
+trivial checkout of frozen-era paths. It is **load-bearing**, not optional —
+the study-2 release verifiers compare their renderer/config against it for
+pre-reorg bundles, and the reorg validation restored frozen artifacts from
+it. Keep it pushed wherever the branch goes.
