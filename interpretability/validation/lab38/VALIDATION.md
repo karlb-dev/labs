@@ -32,7 +32,7 @@ Olmo-3-7B-Instruct `6e5971d9`, Olmo-3.1-32B-Instruct `ac0587e4`.
 | Codebook | `cb_final_41eec2d774` on Olmo-3-7B tokenizer: AR KP4/PK7 gap **0.0031 nats**, RO VM2/GS2 gap **0.0275 nats** (< 0.7 threshold); no prefix relations; 4 distinct first tokens; leading-space policy `none` |
 | Parser adversarial matrix | 12/12 expected outcomes (exact code only; lowercase, punctuation, two-codes, label, option-name, lookalike, empty all rejected; no guessing) |
 | Chat-template parity | string-render ids == direct template ids on OLMo + SmolLM2 samples; generation prompt preserves prefix; boundary = final prompt token |
-| Target scoring | full-sequence summed logprobs finite on all smoke rows; batched == single within 1e-3 nats (checked again per behavioral run) |
+| Target scoring | full-sequence summed logprobs finite on all smoke rows. **7B bf16 finding:** batched-vs-single margins differed up to 0.25 nats (kernel/shape numerics; generations identical) → margins are scored **single-row** (exact, resume-invariant, the primary instrument); per-run gates = single-row replay determinism + batched==single generations; the batched delta is recorded as informational |
 | Binding | invalid parse never executes; hypothetical frame never executes (E10); RO never executes; wrong-branch count 0; forced microtask plumbing probe OK (continuation renders, generation runs, validator executes) |
 | Resume | interrupted (6 rows) + same-command resume **byte-matches** uninterrupted run on all 15 smoke rows (generations, margins, parse) |
 | Tier-A caveat | SmolLM2 strict-parse valid rate 0.0 — a 135M capability fact, expected; smoke gates on instrument checks only and is never preference evidence |

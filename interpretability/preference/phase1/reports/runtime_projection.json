@@ -1,0 +1,9 @@
+{
+  "benchmark_128_rows_per_s": 10.7,
+  "benchmark_32_rows_per_s": 6.9,
+  "dev_subset_rows": 348,
+  "full_bank_rows": 2320,
+  "note": "rows/s includes margins (single-row) + strict generation + microtask follow-throughs amortized; projection padded for load + capture overhead",
+  "projected_dev_minutes": 2.5,
+  "projected_full_minutes": 8.6
+}
