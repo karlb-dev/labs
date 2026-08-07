@@ -1,0 +1,63 @@
+evidence_id: p4-qwen-mode-exact-power-dev-v1
+tier: phase4-development
+
+source_pilot:
+  evidence_id: p4-qwen-mode-variance-pilot-dev-v1
+  result_uri: artifact://phase4/metrics/qwen36-27b-mode-variance-pilot/mode_variance_pilot/p4-qwen-mode-variance-pilot-dev-v1/mode_variance_pilot_result.json
+  result_sha256: BIND_REGISTERED_P4P2_PILOT_SHA256
+  expected_families: 20
+  require_valid_mechanical_gates: true
+  forbid_confirmatory_or_replication_rows: true
+
+prospective_sesoi:
+  endpoint: family-level eight-cell accuracy interaction
+  accuracy_points: 0.20
+  alternative: greater
+  memo_uri: repo://interpretability/jspaces/phases/phase4/preregistration/P4_P2_SESOI_MEMO_DRAFT.md
+  memo_sha256: d961b09308baa7b395ea8e439959aa1fcdc8dfbe60fe24adb9c9c87082915f5c
+  fixed_before_pilot: true
+  pilot_mean_may_not_select_or_revise_sesoi: true
+
+primary_randomization:
+  unit: canonical_family
+  statistic: equal-family mean accuracy interaction
+  test: one-sided family sign flip
+  familywise_alpha: 0.05
+  conservative_holm_primary_count: 3
+  alpha: 0.016666666666666666
+  exact_max_families: 20
+  eventual_outcome_monte_carlo_sign_draws: 100000
+  plus_one_pvalue_for_monte_carlo: true
+  sign_seed: 27011987
+  sign_chunk_size: 512
+
+simulation:
+  calibration_law: planning-SD-scaled symmetrized empirical centered residuals
+  center_before_any_simulation: true
+  never_report_or_use_signed_pilot_mean: true
+  resample_centered_residual_magnitudes_with_replacement: true
+  independent_random_residual_signs: true
+  n_simulations: 2000
+  power_pvalue_sign_draws: 2048
+  simulation_seed: 2026080201
+  simulation_batch_size: 50
+  family_counts: [12, 16, 20, 24, 32, 40, 48, 56, 64, 72, 80, 96, 120, 160, 240, 360, 500, 750, 1000]
+  power_target: 0.80
+  require_wilson_lower_bound_at_target: true
+  type_i_acceptance_interval: [0.006, 0.030]
+
+continuous_answer_lp_sensitivity:
+  report_variance_only: true
+  no_sesoi_selected: true
+  no_power_or_primary_authorization: true
+
+outputs:
+  result: interpretability/jspaces/phases/phase4/reports/qwen_mode_exact_power_dev_v1.json
+  figure_png: interpretability/jspaces/phases/phase4/reports/figures/p4f32_qwen_mode_exact_power.png
+  figure_pdf: interpretability/jspaces/phases/phase4/reports/figures/p4f32_qwen_mode_exact_power.pdf
+
+claim_boundary: >-
+  Consumed-development design calibration only. The signed pilot mean is
+  centered away before simulation and is neither reported nor used. A passing
+  power grid does not authorize a family bank, split, primary, freeze, or any
+  confirmatory/replication outcome.

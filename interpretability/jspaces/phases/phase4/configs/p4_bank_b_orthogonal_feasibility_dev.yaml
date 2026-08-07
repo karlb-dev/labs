@@ -1,0 +1,184 @@
+geometry_evidence_id: p4-bank-b-orthogonal-geometry-dev-v1
+geometry_tier: methods
+evidence_id: p4-bank-b-orthogonal-feasibility-dev-v1
+tier: phase4-development
+slug: bank-b-orthogonal-feasibility
+
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+model_snapshot_manifest_uri: repo://interpretability/jspaces/phases/phase4/configs/qwen36-27b_snapshot_manifest.json
+model_snapshot_manifest_sha256: 2ae12ad8e69b6ede7f4e8b3a2df619b48c1d4b2bc9faf06ca93068c1af32a818
+
+# The one-shot rescue uses the canonical Phase-4 Qwen instrument only on a
+# licensed Q-L1/Q-L2 branch. These are the only permitted post-A1000 bindings.
+canonical_lens:
+  decision_evidence_id: p4-qwen-canonical-lens-decision-a1000-dev-v1
+  decision_result_sha256: BIND_REGISTERED_CANONICAL_DECISION_SHA256
+  permitted_branches: [Q-L1, Q-L2]
+  required_canonical_lens: a1000
+  lens_evidence_id: p4-qwen-lens-fit-drawA-n1000-dev-v1
+  lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n1000.pt
+  lens_sha256: BIND_REGISTERED_A1000_SHA256
+  n_prompts: 1000
+
+consumed_cohort:
+  source_study: jspace-phase3
+  source_registry: repo://interpretability/jspaces/phases/phase3/reports/evidence_events.jsonl
+  source_registry_sha256: 2223e73093463efc55d6f8d2995bdd5e0c016b34e1dbf77bc064499c1a071be2
+  source_evidence_id: p3-bridge-swap-endpoint-qwen36-27b-v1
+  paired_uri: drive://phase3_20260729/metrics/qwen36-27b/release_audit/bridge_swap_endpoint/p3_bridge_swap_endpoint_paired_qwen36-27b.parquet
+  paired_sha256: 3832243c56f172ad5352e65d72d122ede6e1c0d31410852df4c5188602e44a37
+  fact_ids_sha256: 45a272cf63a007e4e50c27e9f683b9ce455510fffd39e556a9d60642a0ea1712
+  family_ids_sha256: 2964d25de981079f02169ec1eda56ab1af97e0ad7f5d6bdfcb1afc9a2e436d3b
+  expected_items: 40
+  expected_families: 13
+  consumed_phase3_development_only: true
+  bank_b_candidate_rows_forbidden: true
+  confirmatory_or_replication_rows_forbidden: true
+
+task_banks:
+  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+    sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
+  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+    sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
+
+runtime:
+  packages:
+    torch: 2.11.0+cu128
+    transformers: 5.13.1
+    triton: 3.6.0
+    fla-core: 0.5.2
+    flash-linear-attention: 0.5.2
+  qwen_kernel_modules:
+    chunk_gated_delta_rule: fla.ops.gated_delta_rule.
+    fused_recurrent_gated_delta_rule: fla.ops.gated_delta_rule.
+    FusedRMSNormGated: fla.modules.
+  expected_linear_attention_modules: 48
+  causal_conv1d_required: false
+  expected_source_layers: 63
+  expected_d_model: 5120
+  expected_vocab_size: 248320
+  compute_dtype: bfloat16
+  dictionary_dtype: float16
+  require_cuda: true
+
+intervention:
+  phase: prefill
+  prompt_variant: composed
+  band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+  k: 10
+  clean_protect_top_k: 10
+  remove_direction: true_bridge_piece_rows
+  selection_sign_rule: all_rows_regardless_of_activation_sign
+  remove_span_safe: true
+  active_position_rule: rendered_prompt_only
+  injection_dose: per-position norm removed by the shared true-bridge lesion
+  injection_rank: 1
+  counterfactual_answer_direction: mean of every counterfactual accepted-alias token-piece row
+  maximum_injection_direction_norm_error: 1.0e-6
+  maximum_injection_dose_relative_error: 1.0e-6
+  maximum_injection_dose_absolute_error: 1.0e-6
+  require_exact_selected_and_effective_rank_match_across_arms: true
+  require_every_active_position_mechanically_logged: true
+  arm_order:
+    - counterfactual_bridge_answer_orthogonal
+    - unrelated_bridge_answer_orthogonal
+    - counterfactual_answer_direction
+    - counterfactual_bridge_full
+    - random_answer_and_bridge_orthogonal
+    - no_injection
+  arm_order_seed_namespace: p4-bank-b-orthogonal-arm-order-v1
+  arm_order_seed: 61391
+  random_direction_seed_namespace: p4-bank-b-orthogonal-random-v1
+  random_direction_seed: 61392
+  max_new_tokens: 16
+  checkpoint_every_facts: 1
+
+answer_span:
+  definition: union of every token piece in every frozen original and counterfactual accepted alias
+  relative_rank_tolerance: 1.0e-5
+  absolute_rank_tolerance: 1.0e-7
+
+geometry_gate:
+  minimum_retained_fraction: 0.20
+  maximum_answer_span_cosine: 5.0e-4
+  minimum_self_readout_cosine_mean: 0.15
+  maximum_random_anchor_cosine: 5.0e-4
+  maximum_piece_count_difference: 2
+  maximum_retained_fraction_rmse: 0.20
+  maximum_raw_mean_norm_relative_rmse: 0.35
+  maximum_raw_answer_span_cosine_rmse: 0.30
+  maximum_self_readout_cosine_mean_rmse: 0.25
+  require_every_item_layer_direction_pass: true
+  require_every_unrelated_match_pass: true
+  no_item_or_family_dropping: true
+  selection_uses_outcomes: false
+  replay_relative_tolerance: 1.0e-4
+  replay_absolute_tolerance: 1.0e-6
+
+endpoints:
+  primary_margin: lp(counterfactual canonical alias) - lp(original canonical alias)
+  semantic_component: counterfactual_bridge_answer_orthogonal - unrelated_bridge_answer_orthogonal
+  bridge_specific_component: counterfactual_bridge_answer_orthogonal - counterfactual_answer_direction
+  full_bridge_retention: counterfactual_bridge_answer_orthogonal - no_injection, compared descriptively with counterfactual_bridge_full - no_injection
+  alias_sensitivity: max accepted-alias LP; never logsumexp
+  generation_categories: [original, counterfactual, ambiguous, other]
+  parse_or_generation_failure_category: other
+  alternative: positive
+
+variance_gate:
+  family_aggregation: equal canonical-family means
+  sample_sd_ddof: 1
+  bootstrap_draws: 20000
+  bootstrap_seed: 20260802
+  bootstrap_upper_quantile: 0.90
+  planning_sd_rule: maximum of sample SD and bootstrap 90% upper bound
+  registered_predecessor_conservative_sd_nats: 6.0
+  maximum_planning_sd_nats_each_component: 3.0
+  minimum_equal_family_mean_nats_each_component: 0.25
+  maximum_absolute_family_value_to_iqr_ratio: 10.0
+  minimum_iqr_floor_nats: 0.25
+  semantic_effect_must_not_collapse: true
+  observed_mean_cannot_increase_sesoi: true
+
+power_gate:
+  substantive_joint_sesoi_nats: 0.25
+  final_primary_family_count_if_admitted: 3
+  holm_planning_alpha: 0.016666666666666666
+  target_power: 0.80
+  confirmatory_families_available: 10
+  replication_families_available: 10
+  family_count_grid: [10, 13, 20, 30, 40, 60, 80, 100, 120, 160, 200, 300, 500]
+  monte_carlo_draws: 100000
+  monte_carlo_seed: 20260803
+  observed_development_test: exact_one_sided_family_signflip
+  exact_observed_max_families: 22
+  planning_method: conservative_normal_iut_envelope
+  planning_type_i_contract: intersection-union maximum component p-value
+  intersection_union_components: [semantic_component, bridge_specific_component]
+  admit_only_if_both_components_powered: true
+  do_not_inflate_sesoi_to_obtain_power: true
+
+review_contract:
+  independent_review_evidence_id: p4-review-bank-b-orthogonal-producer-v1
+  independent_review_output_basename: P4_BANK_B_ORTHOGONAL_INDEPENDENT_REVIEW.json
+  required_verdict: APPROVE_CONSUMED_DEVELOPMENT_SHOT
+  reviewer_must_be_independent: true
+  required_boolean_findings:
+    - consumed_cohort_and_outcome_firewall_approved
+    - answer_span_and_geometry_approved
+    - unrelated_match_approved
+    - lesion_rank_and_dose_approved
+    - prompt_only_phase_approved
+    - scorer_and_generation_grader_approved
+    - immutable_resume_contract_approved
+    - variance_and_power_decision_rule_approved
+
+claim_boundary: >-
+  Exactly one consumed-Phase-3 development shot for an answer-direction-
+  orthogonal bridge estimand. No Bank-B candidate, confirmatory, or replication
+  intervention outcome is opened. Failure routes P4-P1 to P4-E1 estimation-
+  only; success only licenses a separately powered prospective design.
+
+outputs:
+  geometry_figure_stem: p4f32_bank_b_orthogonal_geometry
+  outcome_figure_stem: p4f33_bank_b_orthogonal_feasibility

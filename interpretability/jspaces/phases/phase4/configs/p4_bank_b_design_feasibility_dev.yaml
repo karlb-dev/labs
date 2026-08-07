@@ -1,0 +1,20 @@
+evidence_id: p4-bank-b-design-feasibility-dev-v1
+tier: methods
+
+source_power:
+  evidence_id: p4-bank-b-power-dev-v1
+  result: interpretability/jspaces/phases/phase4/reports/bank_b_power_dev_v1.json
+  result_sha256: 71b647c1f13918f84b8004d49fd82d875f52efd670e0dc6a1c48e2b270b87d13
+
+optimistic_bound:
+  alternative: greater
+  alpha: 0.05
+  power_target: 0.80
+  effects_nats: [0.25, 0.5, 1.0, 1.3422544704415857, 1.5, 2.0, 3.0, 4.0]
+  available_family_counts: [10, 20, 40]
+  interpretation: known-SD Gaussian single-component lower bound
+
+outputs:
+  result: interpretability/jspaces/phases/phase4/reports/bank_b_design_feasibility_dev_v1.json
+  figure_png: interpretability/jspaces/phases/phase4/reports/figures/p4f22_bank_b_design_feasibility.png
+  figure_pdf: interpretability/jspaces/phases/phase4/reports/figures/p4f22_bank_b_design_feasibility.pdf

@@ -1,0 +1,171 @@
+evidence_id: p4-qwen-lens-influence-prompt323-dev-v1
+tier: phase4-development
+slug: qwen36-27b-lens-influence-prompt323
+canonical_lens_unchanged: true
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+model_snapshot_manifest_uri: repo://interpretability/jspaces/phases/phase4/configs/qwen36-27b_snapshot_manifest.json
+fit_config_uri: repo://interpretability/jspaces/phases/phase4/configs/p4_qwen_nested_lens_fit_dev.yaml
+fit_config_sha256: 6df3f79e7c904a915e2d302a8c2908bd8b9d504bcff9f8454d4ae5c414e882db
+fit_producer_sha256: 50be234a750b3d7c6428dfb793ad71e5a41ca56bceef5b89bfe356a190a398fa
+
+runtime_amendment:
+  contract_version: current-runtime-shape-v1
+  precommit_uri: repo://interpretability/jspaces/phases/phase4/preregistration/PROMPT323_RUNTIME_CONTRACT_AMENDMENT.md
+  precommit_sha256: bac298d527f364b302f74a5e6ccf526a369e522b0658ce59bbd660a8c43dac2b
+  prior_config_sha256: 251bfbb697391bc1545df45094029bfd44e5576b00ff020403ca9bf28c2775c9
+  incident_report_uri: repo://interpretability/jspaces/phases/phase4/reports/PHASE4_PART4_PROMPT323_RUNTIME_BLOCK.md
+  incident_report_sha256: 70c0d6bbb71c0dde81c9a457a8f239b38f819b2aa61bbd15246f68bff840174a
+  incident_identity_uri: repo://interpretability/jspaces/phases/phase4/reports/PHASE4_PART4_PROMPT323_RUNTIME_IDENTITY.json
+  incident_identity_sha256: 38e2af945f241444cd3469c8c1091b5994894a61e590716eb995f0050d104192
+  phase_branch_decision_critical: false
+  historical_runtime_reproduction_claimed: false
+  primary_computation_ordinal: 1
+  repeat_computation_ordinal: 2
+  repeat_computation_role: diagnostic-only-discarded
+  exact_distribution_content_inventories:
+    - distribution: fla-core
+      version: 0.5.2
+      non_pyc_file_count: 321
+      non_pyc_bytes: 3276300
+      content_inventory_sha256: 6f813dc26c1a3633b70817928cb3621a8e59cbd8db07e5a2eb8aece49268a95e
+      metadata_sha256: 8e641db5f26a58c254dd7c6977984d380aa9e36b4b46a82882f75954ca50c6c4
+      record_sha256: 60d4796dc76dfddc8519b5a94266d79726f02458cb23d3944508c9fa6a26cbee
+      missing_file_count: 0
+    - distribution: flash-linear-attention
+      version: 0.5.2
+      non_pyc_file_count: 156
+      non_pyc_bytes: 1475375
+      content_inventory_sha256: 1e89767e6bc19ce9c19f462320244bf98e335949a6cc21f0f5f5c42b2800db52
+      metadata_sha256: 5ba189db45ddd61415bba9e71469bf396cec9b739192619b2fb95ee9bd1d892e
+      record_sha256: 794321c0ae78c65e6e5c30d549bfe3682ebd06677942c06afad00fa2970855a6
+      missing_file_count: 0
+    - distribution: transformers
+      version: 5.13.1
+      non_pyc_file_count: 2543
+      non_pyc_bytes: 46649387
+      content_inventory_sha256: 62efb166f345418d70c0a1f65ddb0d8be27bc6318132d56a823156daf162a467
+      metadata_sha256: c3c8d11e913b70d1c2b591fa2962978680ee93e9cd21e3ee4f529dabfae43c0b
+      record_sha256: 01605125de6e7af54a6380494860dfd2971271392fca44438df50f8104b0839f
+      missing_file_count: 0
+    - distribution: triton
+      version: 3.6.0
+      non_pyc_file_count: 359
+      non_pyc_bytes: 669051279
+      content_inventory_sha256: d29f29567d0e04bdb494a68cacf29ea4360251463558b3e624fc72a440f3edcd
+      metadata_sha256: 5c9071db9b057bec89cd6d7f76f61e5f28a5e8d3717ff6c85420cf8015ee0321
+      record_sha256: 6096e92fb41f4ab973d3092b757bb83dccf256486b3af75ee8220cf2eab935eb
+      missing_file_count: 0
+    - distribution: torch
+      version: 2.11.0+cu128
+      non_pyc_file_count: 11846
+      non_pyc_bytes: 1625894923
+      content_inventory_sha256: 61b5a10c1be66fc769844c7bc7875a88bee31a0c4862fa2b22cffca519e66d4f
+      metadata_sha256: de881a744ff66b27fffc338c1624660cf7c87d3019574ad71e3dda886b2a172b
+      record_sha256: 5b22d723c53bcefc515c6f30f0892ff632cc4df48d9275d71e4e6de3a698cdd6
+      missing_file_count: 0
+
+# The A500 leave-one-out is exact under the equal-prompt running mean. The
+# A1000 sensitivity uses the same one-prompt contribution and is bound after
+# the registered A1000 hash exists. Neither registered lens is replaced.
+lenses:
+  a500:
+    evidence_id: p4-qwen-lens-fit-drawA-n500-dev-v1
+    lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n0500.pt
+    lens_sha256: 84404956fb71a84f5af7fa22c34a8f07761777d048b3db314b1330037e4168a8
+    n_prompts: 500
+  a1000:
+    evidence_id: p4-qwen-lens-fit-drawA-n1000-dev-v1
+    lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n1000.pt
+    lens_sha256: 6e48c7731501d0fc6030f1d60eff6f19b211756f40ef0cd6e499e414f08f6bd6
+    n_prompts: 1000
+
+prompt:
+  one_based_index: 323
+  zero_based_index: 322
+  logged_max_jacobian_norm_over_sqrt_d: 173.345
+  historical_reference_absolute_tolerance: 0.5
+  current_runtime_repeat_absolute_tolerance: 0.5
+  retained_unconditionally: true
+
+equal_weight_contract:
+  tiny_model_direct_refit_required: true
+  adjacent_atomic_checkpoint_required: true
+  registered_assertion_source:
+    evidence_id: p4-qwen-lens-influence-prompt112-dev-v1
+    result_sha256: 79a856b0e10c0e27c5ee7434edd51eecbbc3ddc562e21d09f086197341b7e6d2
+    table_sha256: b8b3cd66b2d2e257b7a98d803baec0d4ce70a1e4fbe8564ea7be65bd6f51fb9b
+  earlier_checkpoint:
+    n: 195
+    uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/recovery/fit_n0195_contract_check.ckpt
+    sha256: 1ab1fa55298f94a79ef3638a9e25818c5e9443e5138b7ec872b6cb75e22348cc
+    local_preferred_path: /content/sl4_work/qwen_nested_lens_fit/qwen36-27b/draw_a/bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00/fit_n0195_contract_check.ckpt
+  later_checkpoint:
+    n: 198
+    uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/recovery/fit_n0198_contract_check.ckpt
+    sha256: 20bbec61f245860b8ed61ee8b99c9b0209864b53a25ed75a301384601b63f676
+    local_preferred_path: /content/sl4_work/qwen_nested_lens_fit/qwen36-27b/draw_a/bf4caff4ff7c389d29f235a91062ae86e3a37dfc526c42bbd9af7c5d7e1f3b00/fit_n0198_contract_check.ckpt
+  prompt_indices_one_based: [196, 197, 198]
+  allclose_atol: 2.0e-5
+  allclose_rtol: 2.0e-4
+  running_mean_relative_frobenius_error_max: 0.005
+
+fixed_sampling:
+  source_manifest_uri: artifact://phase4/metrics/qwen36-27b-lens-structural/lens_structural_stability/p4-qwen-lens-structural-stability-drawA-n120-vs-published-n1000-dev-v1/input_manifest.json
+  source_manifest_sha256: 863bbd3c0728251418c38580ea3c847b76d10acbefebfe37bf8a812d1365187e
+  token_ids_n: 4096
+  token_ids_sha256: 55b81bf163ad483da72161c7f7d978930442d7fdfd032a39c3330d82d4cf8a5d
+  probe_shape: [256, 5120]
+  packed_probes_sha256: bed1537f9668132d3c701e0bc0303987fa085e90d9bb3992003776c81d90770c
+
+task_banks:
+  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+    sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
+  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+    sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
+
+model_tensors:
+  unembedding: lm_head.weight
+  final_norm: model.language_model.norm.weight
+  rms_norm_eps: 1.0e-6
+
+analysis:
+  expected_source_layers: 63
+  expected_d_model: 5120
+  expected_vocab_size: 248320
+  quantiles: [0.05, 0.5, 0.95]
+  cka_max_n: 1024
+  assay_band: [20, 44]
+  landmark_layers: [24, 32, 40]
+  leave_one_out_formulas:
+    a500: (500 * J_a500 - J_prompt323) / 499
+    a1000: (1000 * J_a1000 - J_prompt323) / 999
+  material_thresholds:
+    assay_task_token_median_disagreement: 0.02
+    assay_task_token_q05_disagreement: 0.05
+    assay_identity_adjusted_matrix_disagreement: 0.03
+    selected_id_jaccard_change: 0.05
+    centered_excess_capacity_percentage_points: 0.5
+  decision_load_bearing_metrics:
+    - assay_task_token_median_disagreement
+    - assay_task_token_q05_disagreement
+    - assay_identity_adjusted_matrix_disagreement
+  downstream_nondecision_diagnostics:
+    - selected_id_jaccard_change
+    - centered_excess_capacity_percentage_points
+  downstream_note: >-
+    Selected-row and capacity stability are decided by the registered
+    all-position functional and margin gates, not by constructing an
+    unregistered leave-one-out intervention instrument. Prompt-323 influence
+    is classified from the same structural metrics as prompt-112 and never
+    licenses trimming or refitting.
+  decision_wording:
+    negligible: retained but non-load-bearing heavy-tail prompt
+    material_small_fit_only: retained prompt materially affects A500 but dilution closes by A1000
+    material_at_a1000: retained prompt remains load-bearing; report sensitivity and do not trim or refit
+
+figure:
+  stem: p4f29_qwen_prompt323_influence
+  title: Qwen draw-A prompt-323 retained-influence audit
+  footer: Exact equal-prompt algebra on A500 and A1000; prompt 323 is never removed from a registered lens.
+
+registry_what: Paired retained-prompt current-runtime sensitivity shape for draw-A prompt 323, with exact-pinned distribution contents, a preselected primary plus discarded repeatability computation, exact A500/A1000 leave-one-out running-mean identities, and independent tiny-model plus adjacent-atomic-checkpoint contract checks; historical-runtime reproducibility is not claimed.

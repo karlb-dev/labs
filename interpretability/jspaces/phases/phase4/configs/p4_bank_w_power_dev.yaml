@@ -1,0 +1,55 @@
+evidence_id: p4-bank-w-power-dev-v1
+tier: methods
+
+bank_w_audit: interpretability/jspaces/phases/phase4/data/bank_w_audit_v1.json
+target_model_slugs: [olmo31-think, olmo31-instruct, qwen36-27b]
+
+development_calibration:
+  bank: S
+  variants: [direct, composed]
+  estimand: "(J - exact matched control)_composed - (J - exact matched control)_direct"
+  conservative_sd_rounding_nats: 0.01
+  sources:
+    - label: olmo3-think
+      evidence_id: p4-lineage-grid-olmo3-think-dev-v1
+      path: /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/olmo3-think/lineage_grid/p4-lineage-grid-olmo3-think-dev-v1/lineage_grid_olmo3-think.parquet
+      sha256: 20e698d8a78db6d07e715f15b2eab767c28a70f6241a9a9b1633241e4b89dbad
+    - label: olmo31-think
+      evidence_id: p4-lineage-grid-olmo31-think-dev-v1
+      path: /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/olmo31-think/lineage_grid/p4-lineage-grid-olmo31-think-dev-v1/lineage_grid_olmo31-think.parquet
+      sha256: cc8e2d57f4c3e9f1becd28c2553d488dc279113bda75420ba8bdab90cfa76937
+    - label: olmo31-instruct
+      evidence_id: p4-lineage-grid-olmo31-instruct-dev-v1
+      path: /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/olmo31-instruct/lineage_grid/p4-lineage-grid-olmo31-instruct-dev-v1/lineage_grid_olmo31-instruct.parquet
+      sha256: dada28f3a39262958f79add83244e4794f98903af611384092f57282609f2bdb
+
+primary_randomization:
+  alternative: greater
+  alpha: 0.05
+  monte_carlo_draws: 100000
+  exact_max_families: 20
+  seed: 48151623
+  chunk_size: 8192
+  shared_family_signs_across_models: true
+  plus_one_pvalue_for_monte_carlo: true
+
+simulation:
+  seed: 8675309
+  n_simulations: 1000
+  permutation_draws: 2048
+  simulation_batch_size: 50
+  permutation_chunk_size: 512
+  family_counts: [16, 20, 24]
+  confirmatory_families: 24
+  power_target: 0.80
+  type_i_acceptance_interval: [0.025, 0.075]
+  heavy_tail_df: 5
+  sesoi_slope_nats_per_doubling: 0.10
+  low_load: 2
+  high_load: 6
+  effect_grid_nats: [0.08, 0.10, 0.12, 0.14, 0.18, 0.20]
+
+outputs:
+  result: interpretability/jspaces/phases/phase4/reports/bank_w_power_dev_v1.json
+  figure_png: interpretability/jspaces/phases/phase4/reports/figures/p4f14_bank_w_power.png
+  figure_pdf: interpretability/jspaces/phases/phase4/reports/figures/p4f14_bank_w_power.pdf

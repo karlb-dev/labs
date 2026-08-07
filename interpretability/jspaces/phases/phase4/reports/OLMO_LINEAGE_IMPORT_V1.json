@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "payload": {
+    "schema_version": 1,
+    "bundle_id": "jspace-olmo-lineage-phase4-final-v1",
+    "source_study": "jspace-olmo-lineage",
+    "source_branch": "interp_jspace_olmo_lineage",
+    "source_commit": "a28cdd54dda335daf55f468e5be8cc65b2fc5253",
+    "evidence_id_prefix": "ol-",
+    "source_registry": {
+      "path": "interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl",
+      "sha256": "7cb7ece414092722e925c4fadecdc3f7aade00190848e6a13f74ff77f69d4307"
+    },
+    "selected_events": [
+      {
+        "evidence_id": "ol-phase4-final-import-bundle-v1",
+        "role": "terminal-self-verifying-methods-release",
+        "contains_untouched_intervention_outcome": false
+      }
+    ],
+    "target": {
+      "study_id": "jspace-phase4",
+      "import_evidence_id": "p4-import-olmo-lineage-final-v1"
+    },
+    "governance": {
+      "development_or_methods_only": true,
+      "contains_confirmatory_intervention_outcomes": false,
+      "contains_replication_intervention_outcomes": false,
+      "mainline_registry_was_not_written_by_side_track": true
+    },
+    "native_release": {
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801/release/IMPORT_BUNDLE_PHASE4.json",
+      "sha256": "a2486ec5a4759a1f5b21643e7c60766824c48f13ff43240d458ba72147165a2a",
+      "payload_sha256": "ef2957927577b060a728baf7cce1f8792866db2f49de2917b5f54c38e0590c15",
+      "source_registry_prefix_sha256": "db3fe202026e5cad019ca90a3dceb74efce3b248c02710cfd849dcdbf843e80a",
+      "source_registry_full_sha256": "7cb7ece414092722e925c4fadecdc3f7aade00190848e6a13f74ff77f69d4307",
+      "normalization_note": "Strict Phase 4 envelope over the terminal self-verifying methods release. The complete source registry, the sole selected terminal event, and all thirteen release outputs are independently revalidated; no native OLMo event is copied into the Phase 4 registry."
+    },
+    "methods_result": {
+      "o1_service_status": "blocked-at-16-of-20-common-families",
+      "o2_status": "broadly-conserved-capacity-recruitment-consistent",
+      "o3_status": "dictionary-formation-pattern",
+      "o5_status": "resolved-no-identifiable-estimand-no-proxy-substitution",
+      "independent_reconstruction": "pass",
+      "sentence_2_status": "narrowed-release-resolved",
+      "sentence_4_status": "explicitly-pending-gate-blocked",
+      "phase4_service_ready": false,
+      "intervention_authorized": false
+    }
+  },
+  "payload_sha256": "a22710f4a76b9586413316aeee1a76c2e632b519081e1e501c3360e05a2461a4"
+}

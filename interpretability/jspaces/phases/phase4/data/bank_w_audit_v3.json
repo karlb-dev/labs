@@ -1,0 +1,143 @@
+{
+ "all_axes_fully_crossed": true,
+ "answer_in_query_count": 0,
+ "bank_rows_sha256": "736f1ca2baa94a62ead3af004c54fb00233ef08c94cf81733eabd7947d4fefd6",
+ "capability_guard": {
+  "baseline_accuracy_floor": 0.7,
+  "failed_guard_status": "descriptive-only",
+  "fallback_covariates": [
+   "baseline_answer_margin",
+   "prompt_token_count",
+   "answer_token_count"
+  ],
+  "low_high_accuracy_difference_sesoi": 0.08,
+  "minimum_common_families_per_model": 20
+ },
+ "condition_counts": {
+  "high:derived:once": 576,
+  "high:derived:redundant": 576,
+  "high:supplied:once": 576,
+  "high:supplied:redundant": 576,
+  "low:derived:once": 576,
+  "low:derived:redundant": 576,
+  "low:supplied:once": 576,
+  "low:supplied:redundant": 576
+ },
+ "config_sha256": "73aa683cd5b231dd50ce7cfcce72bbe8dbc18c43d3b3d90b3fafb386853c3dd7",
+ "development_rows_reference": {
+  "byte_identical_payload": true,
+  "development_rows_sha256": "b7951276d83c2ba21d438c0e195f19c6c77b53b38f70db4347b76fdcbea7a62e",
+  "file_sha256": "c43ef76cbc4db755f6f2bb3e91b8feecb65ef2106fb5199c5759dc1b95578ab4",
+  "n_development_rows": 1536,
+  "path": "interpretability/jspaces/phases/phase4/data/bank_w_candidate_v1.jsonl"
+ },
+ "evidence_id": "p4-bank-w-candidate-v3",
+ "family_id_is_template_not_seed": true,
+ "freeze_blocker": "Model-specific baseline capability gates, cross-model common-support binding, independent protocol review, and PI sign-off remain pending. The 28-family confirmatory allocation and unchanged 20-family replication side are power-licensed by p4-bank-w-power-holm2-dev-v1. No intervention outcome has been opened.",
+ "freeze_ready": false,
+ "generation_code_commit": "968a328e051db756611aed9eac85926d0b5d5178",
+ "length_match_pass": true,
+ "maximum_within_seed_prompt_token_span": 0,
+ "n_families": 72,
+ "n_item_seeds": 576,
+ "n_rows": 4608,
+ "n_superfamilies": 6,
+ "partition_counts": {
+  "confirmatory": 28,
+  "development": 24,
+  "replication": 20
+ },
+ "partition_family_disjoint": true,
+ "partition_row_payload_sha256": {
+  "confirmatory": "b172df3c8b683de7f6d1fa6a3f3c3a4f233d8ba881683c7741d465f0845e5b05",
+  "development": "b7951276d83c2ba21d438c0e195f19c6c77b53b38f70db4347b76fdcbea7a62e",
+  "replication": "8a44589fa7532c18a2c61e8917b94b6d370b40bf2e5b272d807ff4fad66d4ab8"
+ },
+ "partition_sha256": "cc76e2adb4ad94fe0cfe609ab57e6b8d77bccc0b4e662111d473b53d1518ee1b",
+ "power_binding": {
+  "conservative_alpha": 0.025,
+  "evidence_id": "p4-bank-w-power-holm2-dev-v1",
+  "licensed_minimum_common_families": 28,
+  "minimum_power_at_licensed_count": 0.863,
+  "path": "interpretability/jspaces/phases/phase4/reports/bank_w_power_holm2_dev_v1.json",
+  "power_target": 0.8,
+  "sha256": "11c4dd0751efffac56e37abeac6cd40aea3113177744c6c17f94f202ae27bf16"
+ },
+ "power_evidence_id": "p4-bank-w-power-holm2-dev-v1",
+ "primary": {
+  "alternative": "positive-high-load-dependence",
+  "cell": "derived_once",
+  "conservative_planning_alpha": 0.025,
+  "familywise_alpha": 0.05,
+  "high": "high",
+  "holm_primary_count": 2,
+  "joint_test": "shared-family-sign-flip-max-t",
+  "low": "low",
+  "model_slugs": [
+   "olmo31-think",
+   "olmo31-instruct",
+   "qwen36-27b"
+  ],
+  "monte_carlo_draws": 100000,
+  "seed": 48151623
+ },
+ "programmatic_solution_trace_present": true,
+ "schema_version": 1,
+ "shortcut_audit": {
+  "all_pass": true,
+  "by_load": {
+   "high": {
+    "chance": 0.16666666666666666,
+    "first": {
+     "accuracy": 0.16666666666666666,
+     "excess_over_load_chance": 0.0,
+     "passes": true
+    },
+    "last": {
+     "accuracy": 0.16666666666666666,
+     "excess_over_load_chance": 0.0,
+     "passes": true
+    },
+    "lexical_frequency": {
+     "accuracy": 0.16666666666666666,
+     "excess_over_load_chance": 0.0,
+     "passes": true
+    }
+   },
+   "low": {
+    "chance": 0.5,
+    "first": {
+     "accuracy": 0.5,
+     "excess_over_load_chance": 0.0,
+     "passes": true
+    },
+    "last": {
+     "accuracy": 0.5,
+     "excess_over_load_chance": 0.0,
+     "passes": true
+    },
+    "lexical_frequency": {
+     "accuracy": 0.5,
+     "excess_over_load_chance": 0.0,
+     "passes": true
+    }
+   }
+  }
+ },
+ "target_position_counts": {
+  "high": {
+   "0": 384,
+   "1": 384,
+   "2": 384,
+   "3": 384,
+   "4": 384,
+   "5": 384
+  },
+  "low": {
+   "0": 1152,
+   "1": 1152
+  }
+ },
+ "target_positions_balanced": true,
+ "tokenizer_name_or_path": "/content/hf_local/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9"
+}

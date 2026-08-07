@@ -1,0 +1,14 @@
+evidence_id: p3-alias-endpoint-olmo31-instruct-v1
+tier: methods
+slug: olmo31-instruct
+model_uri: model://allenai/Olmo-3.1-32B-Instruct@ac0587e4a7744a551c059d8cd17ba220bc940dae
+lens_uri: drive://lens/olmo31instruct_lens.pt
+banks: [bank_f_v7.jsonl, bank_s_v3.jsonl]
+selection_path: interpretability/jspaces/phases/phase3/preregistration/p3_alias_sensitivity_selection_v1.json
+band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+k: 10
+protect_top_k: 10
+control_seed: 31337
+control_seed_namespace: p3-control-seed-audit
+replay_tolerance: 0.002
+output_subdir: alias_endpoint

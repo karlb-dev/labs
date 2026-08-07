@@ -1,0 +1,192 @@
+evidence_id: ol-foundation-v1
+tier: methods
+branch: interp_jspace_olmo_lineage
+scientific_import_boundary: 3b041735d8b842de46a9c0a474fccd0c44e0841a
+package_parent_commit: 4ea7a9ba7a534daa61e0d8c9960763b921a1b80b
+run_root: /content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801
+
+source_registries:
+  - study: jspace-part2
+    path: repo://interpretability/jspaces/phases/phase2/reports/evidence_events.jsonl
+    sha256: 79e74f89c8ccaeaaaa0f6184f9ce68ecdb47aec829a541a38c09979caf25a435
+    allowed_tiers: [exploratory, pilot, methods]
+    event_ids:
+      - a0-transfer-gate-olmo31instruct-v1
+      - a1-fit-olmo31think-v1
+      - r2-occupancy-think-v2
+      - r2-occupancy-olmo31think-v2
+      - r2-occupancy-olmo31instruct-v2
+  - study: jspace-phase3
+    path: repo://interpretability/jspaces/phases/phase3/reports/evidence_events.jsonl
+    sha256: 2223e73093463efc55d6f8d2995bdd5e0c016b34e1dbf77bc064499c1a071be2
+    allowed_tiers: [methods, phase3-development]
+    event_ids:
+      - p3-lens-olmo3-base-v1
+      - p3-release-manifest-v1
+      - p3-state-of-record-release-v1
+  - study: jspace-phase4
+    path: repo://interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl
+    sha256: bb6a2721c94e78c42a1b5f9be73284dfd1b7c9c1c2c6f7c3f6cfd64486dab826
+    allowed_tiers: [methods, phase4-development]
+    event_ids:
+      - p4-foundation-scaffold-v1
+      - p4-g5-bank-olmo3-base-dev-v1
+      - p4-g5-bank-olmo3-think-dev-v2
+      - p4-g5-bank-olmo31-think-dev-v1
+      - p4-g5-bank-olmo31-instruct-dev-v1
+      - p4-lineage-grid-olmo3-base-dev-v1
+      - p4-lineage-grid-olmo3-think-dev-v1
+      - p4-lineage-grid-olmo3-think-common-base-lens-dev-v4
+      - p4-lineage-grid-olmo31-think-dev-v1
+      - p4-lineage-grid-olmo31-think-common-base-lens-dev-v1
+      - p4-lineage-grid-olmo31-instruct-dev-v1
+      - p4-lineage-grid-olmo31-instruct-common-base-lens-dev-v1
+      - p4-lineage-analysis-olmo3-base-dev-v1
+      - p4-lineage-analysis-olmo3-think-dev-v1
+      - p4-lineage-analysis-olmo31-think-dev-v2
+      - p4-lineage-analysis-olmo31-instruct-dev-v1
+      - p4-lens-frame-analysis-olmo3-think-dev-v2
+      - p4-lens-frame-analysis-olmo31-think-dev-v1
+      - p4-lens-frame-analysis-olmo31-instruct-dev-v1
+      - p4-lineage-trajectory-analysis-olmo-dev-v1
+      - p4-lineage-common-cohort-analysis-olmo-dev-v1
+      - p4-bank-w-candidate-v2
+      - p4-bank-w-power-dev-v1
+      - p4-bank-w-capability-protocol-dev-v1
+      - p4-bank-w-capability-qwen36-27b-dev-v1
+
+direct_artifacts:
+  - id: bank-f-v7
+    uri: repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+    sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
+    role: known-development-bank
+  - id: bank-s-v3
+    uri: repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+    sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
+    role: known-development-bank
+  - id: bank-w-candidate-v2-rows
+    uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_candidate_v1.jsonl
+    sha256: c43ef76cbc4db755f6f2bb3e91b8feecb65ef2106fb5199c5759dc1b95578ab4
+    role: development-partition-capability-and-mechanism-bank
+  - id: bank-w-candidate-v2-audit
+    uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_audit_v2.json
+    sha256: 08ffe320cb9fa4091de0a51b6f86bcada34d39f0cda7f9e8baeef7dbb8d8ae7f
+    role: bank-structure-and-shortcut-audit
+  - id: bank-w-partition-v1
+    uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_partition_candidate_v1.json
+    sha256: 33a0677cac1357ca74a4b38d5e2d4fcfd5bb75734163356b71b26232ca1bf288
+    role: development-confirmatory-replication-boundary
+  - id: olmo-capacity-source-corpus
+    uri: drive://part1/config/prompts/descriptive_prompts.jsonl
+    sha256: 22dc5b533933771037287b34040e8fec1d6d86899043ba97769c1bbd2509c990
+    role: known-activation-corpus-source
+  - id: olmo3-base-lens
+    uri: drive://phase3/lens/olmo3-base_lens.pt
+    sha256: 92f32e38dc4dffc45dda4e0c34a75f5433238f2046ae00046a4fe3fe1226b696
+    role: own-base-and-common-coordinate-lens
+  - id: olmo3-think-lens
+    uri: drive://part1/lens/olmo32bthink_lens.pt
+    sha256: 05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053
+    role: own-lens
+  - id: olmo31-think-lens
+    uri: drive://part2/lens/olmo31think_lens.pt
+    sha256: 1fe5355f4cb964f2508cfa9c05f6183f704922e4b752bfef626cd58d9965d8b8
+    role: own-lens
+  - id: olmo31-instruct-lens
+    uri: drive://part2/lens/olmo31instruct_lens.pt
+    sha256: e0f8b972a9f1f884101f94ff52a1938d5cfa7a5f49e987e6768826f2337c6dfb
+    role: own-lens
+  - id: capacity-olmo3-think-v2
+    uri: drive://part2/metrics/olmo3-think/r2_occupancy/r2_occupancy_v2.json
+    sha256: e4685ed08f9ad92a598ce4229fac9f3968b7571c66665d1234b8b485e839c88d
+    role: prior-development-capacity
+  - id: capacity-olmo31-think-v2
+    uri: drive://part2/metrics/olmo31-think/r2_occupancy/r2_occupancy_v2.json
+    sha256: 8aa9c9247c996ac0416f422a4a9b166212ab40e11cf0d254bc2be60931dbc5d0
+    role: prior-development-capacity
+  - id: capacity-olmo31-instruct-v2
+    uri: drive://part2/metrics/olmo31-instruct/r2_occupancy/r2_occupancy_v2.json
+    sha256: 4b9251aba846675a0c0eec969ed3588e28a03636a65388e1c8ef8ad9d5100b20
+    role: prior-development-capacity
+
+code_dependencies:
+  - id: phase4-scoring-contract-source
+    uri: repo://interpretability/jspaces/phases/phase4/jspace_phase4/scoring4.py
+    sha256: 152a8560bede52d4571633cfe29dbc5d51f2c04abaacf08691bcc1db81099c60
+    role: read-only-compatible-source
+  - id: phase4-bank-w-capability-source
+    uri: repo://interpretability/jspaces/phases/phase4/jspace_phase4/experiments/p4_bank_w_capability.py
+    sha256: 77c963990dd980e94664ed6b9ead2e6e60c574ce40372186f638c3b7640fbe51
+    role: read-only-conformance-source
+  - id: phase4-state-source
+    uri: repo://interpretability/jspaces/phases/phase4/jspace_phase4/state.py
+    sha256: 11c8f3ae1d574cf8a64f3d0b9ee6a1b9723ebcc1ccc9caf6869cef40b499d080
+    role: read-only-compatible-source
+
+governance_documents:
+  - id: static-resume
+    uri: /content/drive/MyDrive/interpret/special_lab_resume.md
+    sha256: 88992259dec1411a54213a7ee1a490886de01db0b57cd27f09f67174e1e26f26
+    role: campaign-bootstrap
+  - id: olmo-operative-plan
+    uri: /content/drive/MyDrive/interpret/special-lab-1/jspace_lab_olmo_lineage_1.md
+    sha256: 28e04ce6070514ac246d730714f306410a5680cb833e31a7a7af976cd4c48325
+    role: operative-plan
+  - id: olmo-accepted-addendum
+    uri: /content/drive/MyDrive/interpret/special-lab-1/jspace_lab_olmo_lineage_1_addendum.md
+    sha256: 36f01bbb0a3924bb0175d00802589cc9a93074aa341925e49a9baf580478b727
+    role: governing-addendum
+  - id: phase4-parallel-contract
+    uri: /content/drive/MyDrive/interpret/special-lab-1/jspace_lab_nextsteps_4_3.md
+    sha256: 1edc4f13201ea2fc9d866fbb5ebe6588194b1b8496e6a6872c7044228d2afc16
+    role: parallel-namespace-contract
+  - id: phase4-parallel-contract-addendum
+    uri: /content/drive/MyDrive/interpret/special-lab-1/jspace_lab_nextsteps_4_3_addendum.md
+    sha256: 79816a5ee5fb9cda72be1bbc510aa4937c685717191318334ca579fd21cd96c7
+    role: parallel-namespace-addendum
+  - id: side-preregistration
+    uri: repo://interpretability/jspaces/sidelines/olmo/preregistration/OLMO_LINEAGE_DEVELOPMENT_PREREGISTRATION.md
+    sha256: c9224abef821281943c144cbf7ab07b7b38a25987fb446b619365adb9e77be13
+    role: prospective-predictions-and-margins
+
+models:
+  - slug: olmo3-base
+    role: pretrained_anchor
+    model_id: allenai/Olmo-3-1125-32B
+    revision: c2b61dae89a1ad10e4ad5653d0e46b590902607b
+    lens_id: olmo3-base-lens
+  - slug: olmo3-think
+    role: think_endpoint_3_0
+    model_id: allenai/Olmo-3-32B-Think
+    revision: ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
+    lens_id: olmo3-think-lens
+  - slug: olmo31-think
+    role: think_endpoint_3_1
+    model_id: allenai/Olmo-3.1-32B-Think
+    revision: 832c3f543499af8fe68b88359501de9cb7840544
+    lens_id: olmo31-think-lens
+  - slug: olmo31-instruct
+    role: sibling_endpoint
+    model_id: allenai/Olmo-3.1-32B-Instruct
+    revision: ac0587e4a7744a551c059d8cd17ba220bc940dae
+    lens_id: olmo31-instruct-lens
+
+prohibitions:
+  - no Phase 3 or Phase 4 native registry writes
+  - no Phase 3 or Phase 4 run-root writes
+  - no untouched Phase 4 confirmatory or replication intervention outcomes
+  - no Gemma namespace or run-root writes
+  - no self-signed independent review or PI fields
+  - no CPU model fallback
+
+runtime_packages:
+  - huggingface_hub
+  - matplotlib
+  - numpy
+  - pandas
+  - pyarrow
+  - pyyaml
+  - scipy
+  - tokenizers
+  - torch
+  - transformers

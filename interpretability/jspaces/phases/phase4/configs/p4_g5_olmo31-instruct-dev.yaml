@@ -1,0 +1,10 @@
+evidence_id: p4-g5-bank-olmo31-instruct-dev-v1
+tier: phase4-development
+slug: olmo31-instruct
+model_uri: model://allenai/Olmo-3.1-32B-Instruct@ac0587e4a7744a551c059d8cd17ba220bc940dae
+banks:
+  - repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+  - repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+max_new_tokens: 8
+checkpoint_every: 10
+base_seed: 31337

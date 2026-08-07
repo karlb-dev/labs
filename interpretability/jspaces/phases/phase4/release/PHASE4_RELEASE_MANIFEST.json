@@ -1,0 +1,168 @@
+{
+ "payload": {
+  "bound_by_tag": "jspace-phase4-frozen-v1",
+  "forbidden_claims": [
+   "a canonical sparse Qwen A1000 lens exists",
+   "Qwen has no J-space",
+   "Gemma is nondifferentiable or lacks a workspace",
+   "SFT/DPO show no effect (effects are missing, not zero)",
+   "OLMo transport fails (H6 bounds the lens-as-predictor only)",
+   "Bank W is negative (planning closure only)",
+   "Phase 4 found no effect / Phase 4 was confirmatory",
+   "the historical A120-A250 state was recovered",
+   "all artifacts verify (one permanent deficit is accepted)",
+   "Phase 5 is approved"
+  ],
+  "freeze_verification": {
+   "artifact": "interpretability/jspaces/phases/phase4/reports/PHASE4_FREEZE_VERIFICATION.json",
+   "sha256": "9d07d19a145ad0662dad89f046208df36ea62fa50340ea9c0f41bdb6ceb42101"
+  },
+  "fresh_materialization": {
+   "artifact": "interpretability/jspaces/phases/phase4/reports/PHASE4_PART5_DURABILITY_FRESH.json",
+   "sha256": "7cf71215cecf04cb2b60c9ffc8574addf35e9f25f5757be2f270e6c3eb48ab6b"
+  },
+  "governance": {
+   "independent_review": {
+    "bytes": 28156,
+    "path": "interpretability/jspaces/phases/phase4/reviews/PHASE4_INDEPENDENT_REVIEW_20260804.md",
+    "sha256": "1ca0f1aaad3b2b72bb0f14a8e5d0d50631ea935a3fc2af440a7129f77c7816f9"
+   },
+   "permanent_deficit_packet": {
+    "bytes": 5337,
+    "path": "interpretability/jspaces/phases/phase4/reviews/PHASE4_PERMANENT_DEFICIT_REVIEW_PACKET.md",
+    "sha256": "fe45b7179b2b0564a43cd4283b6f97c5c1bec83f2f0e3effa90d3b56ea31e950"
+   },
+   "pi_disposition": {
+    "bytes": 4325,
+    "path": "interpretability/jspaces/phases/phase4/reviews/PHASE4_PI_DISPOSITION_20260804.md",
+    "sha256": "7a969b393bc525b1d3121891c9089b062c498527d0fb6ff10d02e3eb3de82d95"
+   },
+   "untouched_data_audit": {
+    "bytes": 8635,
+    "path": "interpretability/jspaces/phases/phase4/reviews/PHASE4_UNTOUCHED_DATA_AUDIT.md",
+    "sha256": "e0b97d5e7a652294299027c09757ad64fed7f0fbf4d9d6db39843bd65e5ec63d"
+   }
+  },
+  "imports": [
+   {
+    "bundle_sha256": null,
+    "evidence_id": "p4-import-phase3-release-v1",
+    "source_commit": "9e0672b8748b8c53f0bd853dfadda9bc795fd524",
+    "source_registry_sha256": "2223e73093463efc55d6f8d2995bdd5e0c016b34e1dbf77bc064499c1a071be2",
+    "source_study": "jspace-phase3",
+    "tier": "phase3-confirmatory-import"
+   },
+   {
+    "bundle_sha256": "d3c2f94e23251c64edcdd643e1ab13a94ad9263a7ccb6fe36c2c2e1a367b0536",
+    "evidence_id": "p4-import-olmo-bank-w-capability-v1",
+    "source_commit": "d76e937d2e6294b92d3d599581bd0fb029f5735c",
+    "source_registry_sha256": "1e66b35068dc6489de10cccad206899a726d522872bec3f5fe3586aa0a20cbca",
+    "source_study": "jspace-olmo-lineage",
+    "tier": "side-development-import"
+   },
+   {
+    "bundle_sha256": "e946a59ba25aa02ec0415625ee9863d2a3f9f6226f02842266d720760431ad56",
+    "evidence_id": "p4-import-gemma-transport-v1",
+    "source_commit": "b0425a441f1b87c33d9bb0b4d08d221942f11923",
+    "source_registry_sha256": "acd78247f3e367a1fb81693b7c7b811f98b7a7d166cd3d8a5e46a1deff409173",
+    "source_study": "jspace-gemma-transport",
+    "tier": "side-development-import"
+   },
+   {
+    "bundle_sha256": "be1870d0b4a562a314809171313957d12e8b176a97189429355b576915a8ba09",
+    "evidence_id": "p4-import-olmo-lineage-final-v1",
+    "source_commit": "a28cdd54dda335daf55f468e5be8cc65b2fc5253",
+    "source_registry_sha256": "7cb7ece414092722e925c4fadecdc3f7aade00190848e6a13f74ff77f69d4307",
+    "source_study": "jspace-olmo-lineage",
+    "tier": "side-development-import"
+   },
+   {
+    "bundle_sha256": "9ef48b8ab1d99d52a756ddea1e285a9d61e781fd054cbf92702bfe81be56f5b0",
+    "evidence_id": "p4-import-gemma-transport-study2-v1",
+    "source_commit": "aba2e01460dde32e5c2ca1478a5502950e2448ec",
+    "source_registry_sha256": "2a144bcf0e7be0ac4307f7e2a2984c1879340b9a7e9278d10143d122a14fd30a",
+    "source_study": "jspace-gemma-transport-study2",
+    "tier": "side-development-import"
+   },
+   {
+    "bundle_sha256": "c213dc74aa78dcd6613c8bd1562dd07d2e2a0345409ee6da585001693d8e6b1c",
+    "evidence_id": "p4-import-olmo-lineage-study2-v1",
+    "source_commit": "80213290125a56ad75bd9a23a638211a0dc1c618",
+    "source_registry_sha256": "0a8973e01d562a82fa88da650ab8597c140050f6caf46c8bbd72e2b58acffb58",
+    "source_study": "jspace-olmo-lineage",
+    "tier": "side-development-import"
+   }
+  ],
+  "live_outputs": {
+   "expected": 522,
+   "known_deficits": 1,
+   "unexpected_failures": 0,
+   "verified": 521,
+   "verified_by_resolution": {
+    "append-only-registry-prefix": 2,
+    "literal-path": 516,
+    "repository-materialization": 3
+   }
+  },
+  "papers": {
+   "conclusion_skeleton": {
+    "bytes": 4719,
+    "path": "interpretability/jspaces/phases/phase4/paper/PAPER_CONCLUSION_SKELETON.md",
+    "sha256": "ad95ae8f6ad867ba451ad31b3071b3e3727905189e6b3eea893801fd4e141a9f"
+   },
+   "methods_decision_record": {
+    "bytes": 6508,
+    "path": "interpretability/jspaces/phases/phase4/paper/PHASE4_METHODS_DECISION_RECORD.md",
+    "sha256": "d9c5fffb31e852f27d9edf417e18963bef3efbda1d54664c9dba67682deb0fb0"
+   },
+   "runtime_identity_synthesis": {
+    "bytes": 6140,
+    "path": "interpretability/jspaces/phases/phase4/reports/PHASE4_RUNTIME_IDENTITY_SYNTHESIS.md",
+    "sha256": "68740722900a6aadaafd7ad1f028a2a1fc9db20604ebe0f84cbae7c03a08dffa"
+   }
+  },
+  "phase3_import_tag": "jspace-phase3-complete-v1",
+  "phase5_authorized": false,
+  "registry": {
+   "live_events": 65,
+   "origin_events": 72,
+   "path": "interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl",
+   "rows": 82,
+   "sha256": "58fd81b6af1956e89a352f195cee546e8f0bd61d27d3e10949b7b1a846694f54"
+  },
+  "release_documents": {
+   "claim_ledger": {
+    "bytes": 3632,
+    "path": "interpretability/jspaces/phases/phase4/release/PHASE4_CLAIM_LEDGER.md",
+    "sha256": "b799e73f608b9598d017e30ab21c5f84387d606cec3b7b16ef55b14e71332f0d"
+   },
+   "known_limitations": {
+    "bytes": 3287,
+    "path": "interpretability/jspaces/phases/phase4/release/PHASE4_KNOWN_LIMITATIONS.md",
+    "sha256": "5b02384d3b641c32e38ea88a37adb6b85c58f3828ef9d3e97b5f05ab2311a192"
+   },
+   "reproduction_guide": {
+    "bytes": 4055,
+    "path": "interpretability/jspaces/phases/phase4/release/PHASE4_REPRODUCTION_GUIDE.md",
+    "sha256": "8f5b123c2eba58a51caaf461f43fb211a103ddad212f39faf2ed0a003ef326fa"
+   },
+   "state_of_record": {
+    "bytes": 5885,
+    "path": "interpretability/jspaces/phases/phase4/reports/PHASE4_STATE_OF_RECORD.md",
+    "sha256": "a1024bed10db0ec9d3e17f3d357756ef7c635d605bcbb8aa68cedef159aca196"
+   }
+  },
+  "schema_version": 1,
+  "source_commit_at_manifest": "d5dda54202dc0a6f2e41579f1631be6635e41ae5",
+  "study": "jspace-phase4",
+  "terminal": "Q-L4-Terminal-C",
+  "tests": {
+   "gemma": "71 passed, 1 warning in 27.64s",
+   "olmo_lineage": "90 passed in 17.83s",
+   "phase4": "302 passed in 22.42s"
+  },
+  "tier": "development-methods"
+ },
+ "payload_sha256": "be481dcfca634136d09c648379fddbcb9fd81989217e653abacac3705ac0be73",
+ "schema_version": 1
+}

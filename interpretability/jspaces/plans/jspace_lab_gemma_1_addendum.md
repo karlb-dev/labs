@@ -1,0 +1,30 @@
+# jspace_lab_gemma_1_addendum.md — Gemma Transport Track (branch `interp_jspace_gemma_transport`)
+
+**Governs with:** `jspace_lab_gemma_1.md` (operative plan). On conflict, §2–§3 here win. The 4_3 §2 parallel contract is binding: branch from `3b04173`, package `interpretability/jspace_gemma/` only, Drive root `.../gemma_transport_<date>/` only, own registry with `gm-` prefixes, no edits to any other package or registry. The two-block hard cap from the 4.1/4.2 governance carries forward: this track gets two 24 h GPU blocks; at the cap it ships its state-of-record and import bundle regardless of which G-stage it reached.
+
+> **Paste-line for the Gemma agent**
+> Read `jspace_lab_gemma_1.md` in full, then this file. G0→G1 first; G1 is never optional and everything downstream is conditioned on its branch. The OLMo positive control is part of G1 itself, not decoration — no Gemma defect number is interpretable until the identical harness returns linear behavior on OLMo in the same session. Evidence is development/methods tier throughout; the campaign governance boundary applies unchanged.
+
+## 1. Endorsements
+
+Adopted whole: the §0.2 "what the result must not be allowed to mean" list (carve it above the door); the five closing questions GQ1–GQ5; the G0–G9 priority ladder with G1 as the unconditional gate; the exact-JVP backend ladder with the functional-suffix design and mixed-precision contract; the estimator suite in §2 — tangent accuracy, **vector** homogeneity defect, odd-symmetry defect (the cleanest curvature estimator, since odd orders cancel), additivity defect, and the a+b·ε curvature-versus-floor fit that turns GQ2 into a two-parameter identification; the routing autopsy's R0–R5 variants — with special approval for R1 freezing the clean attention *probabilities* rather than Q/K weights, which is exactly the correction the V=K weight-sharing in Gemma's global layers requires; the RMSNorm/QKNorm/gated-MLP factorial; and G8's readout-only fence on nonlinear probes.
+
+## 2. Amendments
+
+**2.1 Pre-commit every G1 threshold against the positive control.** The pass/fail lines for tangent-vs-secant agreement, the fidelity floor, and the a+b·ε partition must be written into the G1 config *before* the first Gemma number is produced, calibrated on the OLMo control plus random-direction baselines in the same session. A threshold chosen after seeing Gemma's numbers is the one methodological sin this track cannot survive, because the track's entire output is a verdict about thresholds.
+
+**2.2 The band-convention stakes for G6.** Record in the G6 design that under the original paper's 38–92 % depth convention, Gemma's readable late window (≈L44–52) is *inside* the paper's band (≈L23–55 on 60 layers), while the 37–62 % convention used in earlier Gemma materials places the whole band in the opaque zone. Resolve the convention once against the paper's methods text, register the resolution as `gm-band-convention-v1`, and state G6's consequence explicitly: a passing late-band transport gate licenses a scoped, *in-band* Gemma workspace-readout assay — which converts this track from pure boundary-drawing into the doorway for a Phase 5 Gemma capacity/causal cell. That is the difference between "Gemma is unmeasurable" and "Gemma is measurable late," and it changes what Phase 5 can claim about architecture-generality.
+
+**2.3 One cheap descriptive figure: the identity-fraction profile.** From the already-registered lenses, plot per-layer `alpha = trace(J)/d` and the identity Frobenius fraction for Gemma vs. OLMo. It costs minutes, explains mechanically why late layers "self-rescue" (transport approaches identity near the target), and is the natural companion panel to the mainline's identity-adjusted convergence metrics — same estimator family, two models, one story.
+
+**2.4 Localization order under the cap.** If the two blocks cannot cover G2–G5 fully after G1: priority is G2 (layer/sublayer surface) → G3 R0/R1/R3 only (the routing verdict needs just live vs. frozen-pattern vs. frozen-values) → G5 (prompt-specific vs. mean, because it adjudicates GQ2 and feeds the mainline's Q-L3/Q-L4 interpretation) → G4 → G6. G7/G8 run only on residual time; G9 is mandatory and reserved (≈2 h) off the top of block 2.
+
+**2.5 Staging.** Gemma-4-31B plus the OLMo control cannot both stay resident with fp32 working buffers; stage OLMo in only for the G1 control session, verify manifests on rehydration, and never borrow the mainline's Qwen cache space. All perturbation/JVP work runs in fp32 per the mixed-precision contract; bf16 appears only where the contract's delivered-fidelity gate proves it harmless.
+
+## 3. Success criteria and the Phase 5 hand-off
+
+Done means: (1) a G1 verdict with the OLMo control passing in-session — artifact / curvature / heterogeneity, per the branch rules; (2) if defect-real: the a+b·ε partition per layer, the G2 localization surface, and at least the R0/R1/R3 routing verdict; (3) the G6 late-band gate with the band-convention resolution; (4) the licensed sentence for the paper's methods section, in the plan's own instrument-specific form, at its earned tier; (5) the import bundle plus a short `TRANSPORT_GATE_PROTOCOL.md` — the polished 20-minute preflight with pre-committed thresholds — which is this track's principal export and the spine of the Phase 5D methods release. Conclusion-skeleton sentence 5 takes its upgrade (JVP-closed) or its downgrade from this track alone.
+
+## 4. Risks
+
+(i) The known failure mode is producing another secant plot when the JVP backend fights the architecture — the backend ladder exists precisely so that a blocked JVP ends the track with a registered methods blocker, not a substitute. (ii) fp32 memory pressure on 31B at long prompts: keep the prompt set short and the position masks tight; the estimand needs faithful perturbations, not long contexts. (iii) The two-block cap will feel wrong mid-localization; it is not — the mainline and OLMo tracks carry the paper, and this track's export is the gate, the verdict, and the doorway, all of which fit in two blocks.

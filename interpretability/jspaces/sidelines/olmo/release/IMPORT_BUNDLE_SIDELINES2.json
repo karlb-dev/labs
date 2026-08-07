@@ -1,0 +1,600 @@
+{
+ "payload": {
+  "admitted_evidence": [
+   {
+    "category": "foundation_and_ancestry",
+    "code_commit": "e14d16994e8b9d419a851f39058482923611b672",
+    "decisions": {},
+    "event_utc": "2026-08-03T02:35:41Z",
+    "evidence_id": "ol2-checkpoint-ancestry-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 15119,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/manifests/ol2_checkpoint_ancestry_v1.json",
+      "sha256": "18d1870ba5fafa010c534a3f843bd6b8bd2f01be032318d0bc67ee52a44b9a45"
+     },
+     {
+      "bytes": 1149,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/manifests/ol2_checkpoint_ancestry_v1.md",
+      "sha256": "3e7329ba4d6e802bab34c5dcf8457bac5cec690a64384375e76592cdff1dc0f9"
+     }
+    ],
+    "tier": "methods",
+    "what": "Exact official SFT/DPO config, tokenizer, architecture, weight, and model-card ancestry qualification before model load."
+   },
+   {
+    "category": "foundation_and_ancestry",
+    "code_commit": "d8980777b9ef258499438720cb6a7caab7118e3a",
+    "decisions": {},
+    "event_utc": "2026-08-03T02:38:33Z",
+    "evidence_id": "ol2-foundation-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 72441,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/manifests/ol2_foundation_v1.json",
+      "sha256": "0ebe0dfc91317ecdaa61f6b4bf1674b9c21a45db0afc4b9dc8eb1d7dae2ec346"
+     }
+    ],
+    "tier": "methods",
+    "what": "Frozen OLMo study-2 imports, two-frame SFT/DPO predictions, capability/router thresholds, transport gates, and isolation."
+   },
+   {
+    "category": "stage_wedge",
+    "code_commit": "7f12bd2f3e95299e4cefc0ef375ab6400ff07ff9",
+    "decisions": {},
+    "event_utc": "2026-08-03T04:13:57Z",
+    "evidence_id": "ol2-stage-wedge-think-sft-tier1-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 3748,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-sft/ol2-stage-wedge-think-sft-tier1-v1/stage_result.json",
+      "sha256": "a381e77c84ea91c4ea7dc1ddc46ed39f36b23ef9289df65a097f06af54842449"
+     },
+     {
+      "bytes": 5507,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-sft/ol2-stage-wedge-think-sft-tier1-v1/snapshot_conformance.json",
+      "sha256": "cca73119c5caf6ca0c0f6f5526e8d227e017f0a172f2839d472e388288c7c3fc"
+     },
+     {
+      "bytes": 1797,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-sft/ol2-stage-wedge-think-sft-tier1-v1/input_manifest.json",
+      "sha256": "3eb7e52b0fb3f629b9ad61574afe62e2e05eaac579818e4fbd921b9ccaac3c98"
+     },
+     {
+      "bytes": 2053,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-sft/ol2-stage-wedge-think-sft-tier1-v1/g5_capability.json",
+      "sha256": "c007cfe77df730bbdd80ba36e8f40cf9ad21b0884300e4de341e2d6b9d98a498"
+     },
+     {
+      "bytes": 162428,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-sft/ol2-stage-wedge-think-sft-tier1-v1/g5_capability.parquet",
+      "sha256": "2a934af2e74c8f70d816a43a9a38ee3bb99e671b0c277d16021f4e22396a5cfe"
+     },
+     {
+      "bytes": 758,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-sft/ol2-stage-wedge-think-sft-tier1-v1/cohort_manifest.json",
+      "sha256": "f239219f1cf1eee3e578e30b39b963486cbc35d0b522d1bfa5440b517677a85b"
+     }
+    ],
+    "tier": "development",
+    "what": "OLMo Study-2 SFT stage wedge: capability gate failed before intervention outcomes."
+   },
+   {
+    "category": "stage_wedge",
+    "code_commit": "ebaadb0e6b537febee13b8991b45492d5df73c5e",
+    "decisions": {},
+    "event_utc": "2026-08-03T04:32:26Z",
+    "evidence_id": "ol2-stage-wedge-think-dpo-tier1-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 3766,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-dpo/ol2-stage-wedge-think-dpo-tier1-v1/stage_result.json",
+      "sha256": "8017f56b05f588ba3f223ade8dd709a17c7c4d83f49e468db04d8ac572b381df"
+     },
+     {
+      "bytes": 5446,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-dpo/ol2-stage-wedge-think-dpo-tier1-v1/snapshot_conformance.json",
+      "sha256": "ff07338db394b4f18db59ac8f8b115d0b79bbac67924d3371f22f2131859c1db"
+     },
+     {
+      "bytes": 1797,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-dpo/ol2-stage-wedge-think-dpo-tier1-v1/input_manifest.json",
+      "sha256": "b375bae734ff6f865f0fce2743ee07ae1c15c4d16cf0f5a90cd253bf9f900cb3"
+     },
+     {
+      "bytes": 2071,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-dpo/ol2-stage-wedge-think-dpo-tier1-v1/g5_capability.json",
+      "sha256": "2f87f4103fafca905928496001305e619bc6d5ae2ccd3536bc4d4c0934224a90"
+     },
+     {
+      "bytes": 162623,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-dpo/ol2-stage-wedge-think-dpo-tier1-v1/g5_capability.parquet",
+      "sha256": "2a3ec7bdec297d5afbcd530afff10649c11e769c9482136a2f41aef3a5340328"
+     },
+     {
+      "bytes": 758,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge/olmo3-think-dpo/ol2-stage-wedge-think-dpo-tier1-v1/cohort_manifest.json",
+      "sha256": "85df03019cf92b9c0653ed33cb5a2951c3af8f674a60b73f61c4439548ce219d"
+     }
+    ],
+    "tier": "development",
+    "what": "OLMo Study-2 DPO stage wedge: capability gate failed before intervention outcomes."
+   },
+   {
+    "category": "stage_wedge",
+    "code_commit": "eec11aef3d8cfbd82ae0692b3af08fe240c22fd6",
+    "decisions": {
+     "route": "null_or_unresolved"
+    },
+    "event_utc": "2026-08-03T04:37:25Z",
+    "evidence_id": "ol2-stage-wedge-joint-analysis-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 7639,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge-joint/ol2-stage-wedge-joint-analysis-v1/stage_wedge_joint_analysis.json",
+      "sha256": "44882a8d96affdfa5706b55c256efb0ba342629451b70d428aa3d0e934f79357"
+     },
+     {
+      "bytes": 83211,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge-joint/ol2-stage-wedge-joint-analysis-v1/capability_transition.parquet",
+      "sha256": "f1e9f7c4328b5013fc73af6ff3d90be5fec97a6602492d724c217fbcd6fb83b4"
+     },
+     {
+      "bytes": 3818,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/stage-wedge-joint/ol2-stage-wedge-joint-analysis-v1/input_manifest.json",
+      "sha256": "362ec3f4913ef874c9c0cdc9a61a4e23ea3a1e749a21f7104ec2a1e6a063d75c"
+     },
+     {
+      "bytes": 245491,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/figures/ol2_stage_wedge_capability_route.png",
+      "sha256": "add4b84aa436779d9a4b491a726d6116783b4c76c5e74107c9537ded33a9273d"
+     }
+    ],
+    "tier": "development",
+    "what": "Registered OLMo SFT/DPO joint stage router: null_or_unresolved; capability-gated effects remain missing, not zero."
+   },
+   {
+    "category": "transport_license_and_freeze",
+    "code_commit": null,
+    "decisions": {
+     "route": "benign_scheduling_floor"
+    },
+    "event_utc": "2026-08-03T04:52:19Z",
+    "evidence_id": "ol2-gemma-backend-calibration-import-v1",
+    "origin_event": "evidence_imported",
+    "outputs": [
+     {
+      "bytes": 3326,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/manifests/ol2_gemma_backend_calibration_import_v1.json",
+      "sha256": "b915424d4036064a7885d5bdcf2fd07462a499c47676945f1c3d5ddf5314ba29"
+     }
+    ],
+    "tier": "methods",
+    "what": "Exact registered Gemma G2.1 backend-calibration import exposing only the OLMo-specific exact-JVP relative-error ceiling for H6."
+   },
+   {
+    "category": "transport_license_and_freeze",
+    "code_commit": "c3debf3b4e2bfffb0d4699376b32ac4d0ae0551b",
+    "decisions": {},
+    "event_utc": "2026-08-03T05:10:51Z",
+    "evidence_id": "ol2-transport-execution-freeze-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 3809,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/manifests/ol2_transport_execution_freeze_v1.json",
+      "sha256": "72f5cced3c3969ff6b25ffd4cc434a56566a58fdddec39dd2e7bc8e2f0da81b9"
+     }
+    ],
+    "tier": "methods",
+    "what": "Pre-data H6 execution semantics binding identical-batch dual exact-JVP comparison, row/layer gates, and no aggregate-to-site dose substitution."
+   },
+   {
+    "category": "transport_validation",
+    "code_commit": "a7daa475d76a3319d42729626e67893ae91f9e58",
+    "decisions": {
+     "route": "no_common_licensed_regime_measured"
+    },
+    "event_utc": "2026-08-03T05:27:24Z",
+    "evidence_id": "ol2-transport-validation-base-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 60215,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/base/ol2-transport-validation-base-v1/transport_result.json",
+      "sha256": "401737b921162530a805d20825df54ac7c99d83014884a5b0869a47fc57e69d0"
+     },
+     {
+      "bytes": 199414,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/base/ol2-transport-validation-base-v1/transport_rows.parquet",
+      "sha256": "9db1cb298ea5e475f32aec1f947af3959661c196b20f9ab652cc5fec2284531e"
+     },
+     {
+      "bytes": 9774,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/base/ol2-transport-validation-base-v1/raw_inventory.json",
+      "sha256": "4c6a8a410619979b193861c7ffef117776eb6610e17df5f2c321ed5d8b11b0c7"
+     },
+     {
+      "bytes": 10742,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/base/ol2-transport-validation-base-v1/snapshot_conformance.json",
+      "sha256": "67c63c49717a19e2c352924ad8158c33c5f46a4ef796ce48d7119fb77cca8616"
+     },
+     {
+      "bytes": 2525,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/base/ol2-transport-validation-base-v1/input_manifest.json",
+      "sha256": "89894970b23e05e7bb076469ceaec0dfef3464387a89a30df92e081d32ba06b3"
+     },
+     {
+      "bytes": 39526,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/base/ol2-transport-validation-base-v1/state.json",
+      "sha256": "415eb521828061eedf9d33e3b175af1cd2811f86d885f7e4f2064c45f44a79b4"
+     }
+    ],
+    "tier": "methods",
+    "what": "Frozen H6 finite-dose dual-exact-JVP transport validation for base; relevant-dose routing remains a separate exact registered-site join."
+   },
+   {
+    "category": "transport_validation",
+    "code_commit": "2b0e90ba6f5dac935ff04fca7900493496fe6ab2",
+    "decisions": {
+     "route": "late_only_regime_measured"
+    },
+    "event_utc": "2026-08-03T05:36:50Z",
+    "evidence_id": "ol2-transport-validation-olmo31-think-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 60700,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/olmo31-think/ol2-transport-validation-olmo31-think-v1/transport_result.json",
+      "sha256": "747483bf5dfcc795e8e56caba7980ecc0b555af99bce345d626dcbebe87f4e73"
+     },
+     {
+      "bytes": 199593,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/olmo31-think/ol2-transport-validation-olmo31-think-v1/transport_rows.parquet",
+      "sha256": "319055bad5c8fad3d501d18c6a92688c9e6f47eb604c157112061b6fe5af488a"
+     },
+     {
+      "bytes": 10294,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/olmo31-think/ol2-transport-validation-olmo31-think-v1/raw_inventory.json",
+      "sha256": "335b3564f3bb0540726b2422ac6bb1ee039f2210834d0993b3e51015662809c1"
+     },
+     {
+      "bytes": 11052,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/olmo31-think/ol2-transport-validation-olmo31-think-v1/snapshot_conformance.json",
+      "sha256": "e9c58564ae862c92ab7118c57c5b7c96a5a41bbaca69089f38c972739bb84456"
+     },
+     {
+      "bytes": 2544,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/olmo31-think/ol2-transport-validation-olmo31-think-v1/input_manifest.json",
+      "sha256": "647da5c791d2f13ab278bbfbfe4b378b2a3a5fd941ac6870fb2833c2b501517d"
+     },
+     {
+      "bytes": 40053,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation/olmo31-think/ol2-transport-validation-olmo31-think-v1/state.json",
+      "sha256": "bf55c5c819e5444749740c08ae5a3d9932bebc46dcc6cb0bf334df256f61a547"
+     }
+    ],
+    "tier": "methods",
+    "what": "Frozen H6 finite-dose dual-exact-JVP transport validation for olmo31_think; relevant-dose routing remains a separate exact registered-site join."
+   },
+   {
+    "category": "transport_validation",
+    "code_commit": "cfdc5cf72d2491756a3f5b42a22a63b3b32f48db",
+    "decisions": {
+     "route": "h6_fail_in_band_with_checkpoint_specific_late_anchor"
+    },
+    "event_utc": "2026-08-03T05:44:48Z",
+    "evidence_id": "ol2-transport-validation-joint-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 63024,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation-joint/ol2-transport-validation-joint-v1/transport_joint_result.json",
+      "sha256": "e563dfbe191f55f4a99ce9e34cb858b59e188c84300eb0068ec7e33391b88a33"
+     },
+     {
+      "bytes": 264755,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation-joint/ol2-transport-validation-joint-v1/transport_joint_rows.parquet",
+      "sha256": "2de15280d02ba6006f98334858d06cf1f4c4367fb6eaf230ef2eb8b4fa4581b9"
+     },
+     {
+      "bytes": 14008,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation-joint/ol2-transport-validation-joint-v1/registered_dose_source_audit.json",
+      "sha256": "acc4dc1697b56952d00e03c26fff6d4a46398c7e7554ef1e16305df597e391c1"
+     },
+     {
+      "bytes": 2414,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/transport-validation-joint/ol2-transport-validation-joint-v1/input_manifest.json",
+      "sha256": "407f4b3e15fea9dde574c763554cd3d522f3e43ff9f422b4b80b100033f44249"
+     },
+     {
+      "bytes": 197362,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/figures/ol2_transport_validation_joint.png",
+      "sha256": "2a0290c4c53f0bece1146e451a1f0d58c8a535c83f6fada8a08b99e7a0cd1a43"
+     },
+     {
+      "bytes": 22762,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/figures/ol2_transport_validation_joint.pdf",
+      "sha256": "047c4b2107b9da858f58f9da3fe93faa07e5a2a39336a377d8bc4b715057593d"
+     }
+    ],
+    "tier": "methods",
+    "what": "Joint frozen H6 analysis: Base fails the tested ladder; Think is late-anchor-only; exact registered intervention-dose coverage is unresolved rather than zero."
+   },
+   {
+    "category": "transport_validation",
+    "code_commit": "a1e398e22aeb89808bfef06c53171136ddd3fb0d",
+    "decisions": {},
+    "event_utc": "2026-08-03T05:46:42Z",
+    "evidence_id": "ol2-transport-validation-figure-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 194381,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/figures/ol2_transport_validation_joint_paper.png",
+      "sha256": "03564b351088aac7bda3dc9a4c00fa02f07456543349766e5afdd4e39e8ca7b1"
+     },
+     {
+      "bytes": 22767,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/figures/ol2_transport_validation_joint_paper.pdf",
+      "sha256": "b2745d9eb58ddc1f5fb6633003618b2e1e8bb88718164a875dce9343944dd610"
+     }
+    ],
+    "tier": "methods",
+    "what": "Paper-facing PNG/PDF rendering of the registered joint H6 passage table; no new scientific analysis."
+   },
+   {
+    "category": "outcome_blind_planning",
+    "code_commit": "015945104664794278abe68456e88129d44a76ca",
+    "decisions": {
+     "bank_w_outcomes_opened": false,
+     "future_pair_worthwhile_at_current_support": false,
+     "interventions_opened": false,
+     "route": "not-powered-at-current-support"
+    },
+    "event_utc": "2026-08-03T06:35:48Z",
+    "evidence_id": "ol2-bank-w-olmo-pair-power-v1",
+    "origin_event": "evidence_created",
+    "outputs": [
+     {
+      "bytes": 24451,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/metrics/bank-w-olmo-pair-power/ol2_bank_w_olmo_pair_power_v1.json",
+      "sha256": "4385af4b14a664dda16da0e9d6e570c354a71bbde6257041ac64f7b748b4200b"
+     },
+     {
+      "bytes": 110977,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/figures/ol2_bank_w_olmo_pair_power.png",
+      "sha256": "476ea88627f1d710b03e1bb8a310f54c46683af337980b90890b0ab57128364d"
+     },
+     {
+      "bytes": 20228,
+      "path": "/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803/figures/ol2_bank_w_olmo_pair_power.pdf",
+      "sha256": "12faad509669ad273a316feeb74d74727645773e35cb7369bf5406ae6e1beca0"
+     }
+    ],
+    "tier": "methods",
+    "what": "Outcome-blind OLMo Think/Instruct Bank-W pair planning: 16 shared capable families, power 0.7788 at the frozen SESOI, route not-powered-at-current-support; no intervention authority."
+   }
+  ],
+  "admitted_evidence_categories": {
+   "foundation_and_ancestry": [
+    "ol2-checkpoint-ancestry-v1",
+    "ol2-foundation-v1"
+   ],
+   "outcome_blind_planning": [
+    "ol2-bank-w-olmo-pair-power-v1"
+   ],
+   "stage_wedge": [
+    "ol2-stage-wedge-think-sft-tier1-v1",
+    "ol2-stage-wedge-think-dpo-tier1-v1",
+    "ol2-stage-wedge-joint-analysis-v1"
+   ],
+   "transport_license_and_freeze": [
+    "ol2-gemma-backend-calibration-import-v1",
+    "ol2-transport-execution-freeze-v1"
+   ],
+   "transport_validation": [
+    "ol2-transport-validation-base-v1",
+    "ol2-transport-validation-olmo31-think-v1",
+    "ol2-transport-validation-joint-v1",
+    "ol2-transport-validation-figure-v1"
+   ]
+  },
+  "bundle_id": "jspace-olmo-lineage-sidelines2-v1",
+  "claim_boundary": "Self-verifying partial-safe Study-2 handoff. Mandatory Gemma-calibrated stage-wedge and H6 execution are complete, while capability-gated effects, registered-dose coverage, conditional Tier 2, receiver/O5 work, and the underpowered pair redesign remain explicitly partial or unopened. The bundle preserves development/methods tiers and opens no intervention.",
+  "evidence_id": "ol2-sidelines2-import-bundle-v1",
+  "forbidden_uses": [
+   "treating capability-gated intervention effects as zero",
+   "claiming an SFT or DPO causal boundary",
+   "calling L24/L32/L40 transport-valid on the tested ladder",
+   "treating unavailable registered-dose coverage as zero coverage",
+   "treating the Think L56 late anchor as an in-band pass",
+   "treating the pair power near-miss as an intervention result or scientific null",
+   "opening Bank-W, O5, receiver, own-lens, or additional-model work from this bundle",
+   "confirmatory or replication tier import"
+  ],
+  "generated_utc": "2026-08-03T06:56:44Z",
+  "importer_checks": [
+   "source commit is reachable",
+   "registry snapshot and current registry share the exact released prefix",
+   "all admitted events remain live at their native tier",
+   "all admitted output paths, sizes, and SHA-256 values verify",
+   "all V2 reports, paper bytes, figures, preregistration, and configs verify",
+   "capability-gated effects remain missing rather than zero",
+   "registered-dose coverage remains unavailable rather than zero",
+   "Tier 2, Bank-W, receiver, O5, and additional models remain unopened",
+   "no confirmatory or replication tier is inferred"
+  ],
+  "native_tiers": [
+   "development",
+   "methods"
+  ],
+  "partial_statuses": {
+   "bank_w_intervention": "not-opened",
+   "bank_w_pair_planning": "not-powered-at-current-support",
+   "dpo_tier1": "complete-capability-gated-effects-missing",
+   "gemma_backend_license": "complete-imported-olmo-specific-ceiling",
+   "h6_base": "complete-no-licensed-regime",
+   "h6_joint": "fail-in-band-with-checkpoint-specific-late-anchor",
+   "h6_olmo31_think": "complete-late-anchor-only",
+   "o5_crossed_grid": "not-executed-not-identifiable",
+   "receiver_demonstration": "not-executed-conditional",
+   "registered_dose_coverage": "unavailable-missing-exact-site-records",
+   "sft_tier1": "complete-capability-gated-effects-missing",
+   "stage_wedge_joint": "null-or-unresolved",
+   "tier2_own_lens": "not-executed-trigger-false"
+  },
+  "pre_release_live_verification": {
+   "n_checked_outputs": 145,
+   "n_live_events": 36,
+   "ok": true
+  },
+  "registry_prefix": {
+   "line_count": 40,
+   "live_events": 36,
+   "live_outputs": 145,
+   "note": "The prefix excludes the Study-2 release event itself.",
+   "origin_events": 37,
+   "path": "interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl",
+   "prefix_bytes": 86627,
+   "prefix_sha256": "0a8973e01d562a82fa88da650ab8597c140050f6caf46c8bbd72e2b58acffb58",
+   "through_event": "evidence_created",
+   "through_evidence_id": "ol2-bank-w-olmo-pair-power-v1"
+  },
+  "registry_snapshot": {
+   "bytes": 86627,
+   "repo_path": "interpretability/jspaces/sidelines/olmo/release/evidence_events_prefix_sidelines2.jsonl",
+   "sha256": "0a8973e01d562a82fa88da650ab8597c140050f6caf46c8bbd72e2b58acffb58",
+   "target_uri": "olmo-artifact://release/evidence_events_prefix_sidelines2.jsonl"
+  },
+  "release_artifacts": [
+   {
+    "bytes": 9484,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md",
+    "role": "state-of-record-v2",
+    "sha256": "5923f79475e3bc15c0c679033f3c637b4b9514b066843a164b4caf2c74bdb942",
+    "target_uri": "olmo-artifact://release/OLMO_LINEAGE_STATE_OF_RECORD_V2.md"
+   },
+   {
+    "bytes": 6804,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_CLAIMS_TABLE_V2.md",
+    "role": "claims-table-v2",
+    "sha256": "65f6ae5f94ab3d7cb42e04a37f585e9ad50975e161e885b1e58de8dcbba5be4f",
+    "target_uri": "olmo-artifact://release/OLMO_LINEAGE_CLAIMS_TABLE_V2.md"
+   },
+   {
+    "bytes": 8162,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_STUDY2_REPORT.md",
+    "role": "study2-report",
+    "sha256": "564f606a15bdfcfeebcf81c8dd8d2e53b5a5cbc8d7d435e5369344d2e90ed057",
+    "target_uri": "olmo-artifact://release/OLMO_LINEAGE_STUDY2_REPORT.md"
+   },
+   {
+    "bytes": 36653,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/paper/olmo_lineage_parallel_phase.tex",
+    "role": "paper-tex",
+    "sha256": "5783560a9938061efce9f47df85cde7bb021584a1bcef406598fda0763a8cc51",
+    "target_uri": "olmo-artifact://release/OLMO_LINEAGE_STUDY2_PAPER.tex"
+   },
+   {
+    "bytes": 805002,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/paper/olmo_lineage_parallel_phase.pdf",
+    "role": "paper-pdf",
+    "sha256": "7809b76ab4cec90a5878c3542167eadb83399c6a9f3567fe28bc93db47e2f809",
+    "target_uri": "olmo-artifact://release/OLMO_LINEAGE_STUDY2_PAPER.pdf"
+   },
+   {
+    "bytes": 245491,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/paper/figures/ol2_stage_wedge_capability_route.png",
+    "role": "stage-wedge-figure",
+    "sha256": "add4b84aa436779d9a4b491a726d6116783b4c76c5e74107c9537ded33a9273d",
+    "target_uri": "olmo-artifact://release/figures/ol2_stage_wedge_capability_route.png"
+   },
+   {
+    "bytes": 194381,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/paper/figures/ol2_transport_validation_joint_paper.png",
+    "role": "h6-figure",
+    "sha256": "03564b351088aac7bda3dc9a4c00fa02f07456543349766e5afdd4e39e8ca7b1",
+    "target_uri": "olmo-artifact://release/figures/ol2_transport_validation_joint_paper.png"
+   },
+   {
+    "bytes": 110977,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/paper/figures/ol2_bank_w_olmo_pair_power.png",
+    "role": "pair-power-figure",
+    "sha256": "476ea88627f1d710b03e1bb8a310f54c46683af337980b90890b0ab57128364d",
+    "target_uri": "olmo-artifact://release/figures/ol2_bank_w_olmo_pair_power.png"
+   },
+   {
+    "bytes": 3474,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/preregistration/OLMO_LINEAGE_STUDY2_PREREGISTRATION.md",
+    "role": "preregistration",
+    "sha256": "2e5e277c104641b24d85fc451eb00b501520787271bc0f4d0114676e4858dacb",
+    "target_uri": "olmo-artifact://release/protocol/OLMO_LINEAGE_STUDY2_PREREGISTRATION.md"
+   },
+   {
+    "bytes": 8205,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/configs/ol2_stage_wedge.yaml",
+    "role": "stage-wedge-config",
+    "sha256": "78d2a59d7db20f006686a10a85082793e87da7a4aace0191b819b3501f1f44be",
+    "target_uri": "olmo-artifact://release/protocol/ol2_stage_wedge.yaml"
+   },
+   {
+    "bytes": 3429,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/configs/ol2_transport_validation.yaml",
+    "role": "transport-config",
+    "sha256": "d26569c7dfcd33b4da7600b8f36b8b86896c3c0448dd291be7b49c230b08817f",
+    "target_uri": "olmo-artifact://release/protocol/ol2_transport_validation.yaml"
+   },
+   {
+    "bytes": 3161,
+    "repo_path": "interpretability/jspaces/sidelines/olmo/configs/ol2_bank_w_olmo_pair_power.yaml",
+    "role": "pair-power-config",
+    "sha256": "07aa055401ef87221fcc7843aabb50d63c05e25022715152a9d3956d4d3e1170",
+    "target_uri": "olmo-artifact://release/protocol/ol2_bank_w_olmo_pair_power.yaml"
+   }
+  ],
+  "result_summary": {
+   "base_late_anchor": {
+    "epsilon": 0.1,
+    "layer": 56,
+    "passing_rows": 9,
+    "total_rows": 12
+   },
+   "dose_coverage_fraction": null,
+   "h6_in_band_layers": [
+    24,
+    32,
+    40
+   ],
+   "h6_in_band_passes": 0,
+   "h6_route": "h6_fail_in_band_with_checkpoint_specific_late_anchor",
+   "pair_minimum_powered_families": 18,
+   "pair_power_at_frozen_sesoi": 0.7788,
+   "pair_power_target": 0.8,
+   "pair_shared_capable_families": 16,
+   "stage_effects_missing_not_zero": true,
+   "stage_route": "null_or_unresolved",
+   "think_late_anchor": {
+    "epsilon": 0.1,
+    "layer": 56,
+    "passing_rows": 12,
+    "total_rows": 12
+   }
+  },
+  "schema_version": 1,
+  "shared_parent": "901fb4fc7578a913088c7947a2e6240f7fc45aeb",
+  "source_git": {
+   "branch": "interp_jspace_olmo_lineage_2",
+   "code_commit": "80213290125a56ad75bd9a23a638211a0dc1c618",
+   "dirty_tree": false
+  },
+  "study_id": "jspace-olmo-lineage"
+ },
+ "payload_sha256": "b5cfdf92ffc309cb15d2f9fadfc87a0b86fc52f646a3fe891d56b4cedba05be3",
+ "schema_version": 1
+}

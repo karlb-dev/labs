@@ -1,0 +1,40 @@
+schema_version: 1
+evidence_id: gm-band-convention-v1
+tier: methods
+status: RESOLVED_BEFORE_GEMMA_EXECUTION
+
+primary_source:
+  url: https://transformer-circuits.pub/2026/workspace/index.html
+  methods_anchor: methods-technical-details
+  structure_anchor: struct-layers
+  expected_html_sha256: 339843f5e8d29cb5276c6d57cce64cc005523261d98b9d0b01393876e77d8599
+  expected_size_bytes: 417920
+  expected_etag: '"0db83fcfdf6fe4675c3e4506b9f2ab90"'
+  expected_last_modified: Fri, 10 Jul 2026 18:05:35 GMT
+  required_facts:
+    layer_axis_reindexed_zero_to_one_hundred: true
+    workspace_start_reindexed_layer: 38
+    workspace_end_reindexed_layer: 92
+
+governing_addendum:
+  path: /content/drive/MyDrive/interpret/special-lab-1/jspace_lab_gemma_1_addendum.md
+  sha256: c898437abd0ff8849f2a41bce12a5e239632192f4967bd2d89fc2f40a734d5ec
+
+conflicting_later_material:
+  source_commit: 4ea7a9ba7a534daa61e0d8c9960763b921a1b80b
+  path: interpretability/jspaces/phases/paper_analysis/gemma4_nonlinear_jacobian_handout.tex
+  git_blob_id: e0d4c5fec9e2753a650b98719fce25e6cdd44765
+  sha256: a8b9ff9aa7bdcfa325b8311e1381468e2f2985bd01cb6c7f7c03bc5f32956102
+  later_range_percent: [37, 62]
+  authority: superseded_for_band_mapping_by_primary_methods
+
+resolution:
+  transferable_workspace_depth_fraction: [0.38, 0.92]
+  gemma_decoder_blocks: 60
+  mapping_rule: round_half_up_fraction_times_decoder_blocks
+  expected_gemma_zero_indexed_approx_range: [23, 55]
+  g6_candidate_layers_zero_indexed: [44, 48, 52]
+  consequence: >-
+    A passing late-band transport gate licenses a scoped in-paper-band Gemma
+    workspace-readout assay; readability alone remains insufficient evidence
+    for a workspace or causal channel.

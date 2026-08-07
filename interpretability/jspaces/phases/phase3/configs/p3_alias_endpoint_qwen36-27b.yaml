@@ -1,0 +1,14 @@
+evidence_id: p3-alias-endpoint-qwen36-27b-v1
+tier: methods
+slug: qwen36-27b
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+lens_uri: model://local/models--neuronpedia--jacobian-lens/snapshots/a4114d7752d11eb546e6cf372213d7e75526d3a1/qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt
+banks: [bank_f_v7.jsonl, bank_s_v3.jsonl]
+selection_path: interpretability/jspaces/phases/phase3/preregistration/p3_alias_sensitivity_selection_v1.json
+band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+k: 10
+protect_top_k: 10
+control_seed: 31337
+control_seed_namespace: p3-control-seed-audit
+replay_tolerance: 0.002
+output_subdir: alias_endpoint

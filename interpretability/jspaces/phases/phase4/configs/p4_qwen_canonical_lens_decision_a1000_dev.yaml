@@ -1,0 +1,56 @@
+evidence_id: p4-qwen-canonical-lens-decision-a1000-dev-v1
+tier: phase4-development
+slug: qwen36-27b-canonical-lens-decision-a1000
+
+sources:
+  fit_evidence_id: p4-qwen-lens-fit-drawA-n1000-dev-v1
+  structural_evidence_id: p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1
+  functional_evidence_id: p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1
+  selection_margin_evidence_id: p4-qwen-selection-margin-a500-a1000-dev-v1
+  retained_prompt_influence_evidence_id: p4-qwen-lens-influence-prompt323-dev-v1
+
+contract:
+  functional_must_be_pending_selection_margin_audit: true
+  recompute_ql_branch_from_registered_gates: true
+  selection_margin_required_verdicts:
+    capture_formula_recomputed_exactly: true
+    captured_top_k_matches_intervention: true
+    registered_selection_geometry_reconstructed: true
+    all_positions_retained: true
+    all_strata_retained_in_functional_gate: true
+    behavioral_columns_used: false
+    audit_complete_for_canonical_branch_router: true
+  influence_allowed_decisions:
+    - negligible
+    - material_small_fit_only
+    - material_at_a1000
+  influence_never_licenses_prompt_removal_or_refit: true
+  ql2_amendment:
+    path: interpretability/jspaces/phases/phase4/preregistration/QL2_ESTIMAND_AMENDMENT_DRAFT.md
+    sha256: 57c48f5a527cc36ef28a24f704eab785d522cc948cca55761a330db635ab2d67
+    prospective_commit: 3a92492f09cf5311949311ca6273acc190ec636d
+    activation_branch: Q-L2
+
+actions:
+  Q-L1:
+    canonical_lens: a1000
+    p4_p2_status: canonical-lens-precondition-passes
+    estimand: literal-selected-rows-and-protected-selected-span
+  Q-L2:
+    canonical_lens: a1000
+    p4_p2_status: canonical-lens-precondition-passes-under-prospective-span-amendment
+    estimand: protected-selected-span-and-causal-consequences
+  Q-L3:
+    canonical_lens: null
+    p4_p2_status: blocked-pending-independent-review-of-consensus-or-cross-fit-instrument
+    estimand: no-single-sparse-dictionary-licensed
+  Q-L4:
+    canonical_lens: null
+    p4_p2_status: blocked-by-decision-sensitive-causal-endpoints
+    estimand: published-lens-or-redefined-primary-requires-independent-review
+  Q-L5:
+    canonical_lens: null
+    p4_p2_status: blocked-by-unconverged-operator-and-sparse-geometry
+    estimand: no-new-qwen-causal-primary
+
+registry_what: Mechanical canonical-lens decision combining the registered A500-A1000 structural, functional, all-position selection-margin, and retained-prompt influence audits under the prospectively frozen Q-L1 through Q-L5 table; no untouched outcome is opened.

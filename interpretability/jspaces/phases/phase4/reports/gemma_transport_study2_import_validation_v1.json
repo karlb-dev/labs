@@ -1,0 +1,469 @@
+{
+ "admitted_events": [
+  {
+   "category": "study1_methods_chain",
+   "code_commit": "2bb7428c931323d5d377ad04bd7e19a17958c491",
+   "evidence_id": "gm-jvp-goldens-v1",
+   "n_status_events": 0,
+   "origin_event": "evidence_created",
+   "tier": "methods"
+  },
+  {
+   "category": "study1_methods_chain",
+   "code_commit": "7f6a36e19417b618cbdf3c81a6da6d9171a3739a",
+   "evidence_id": "gm-jvp-olmo-positive-control-v1",
+   "n_status_events": 0,
+   "origin_event": "evidence_created",
+   "tier": "methods"
+  },
+  {
+   "category": "study1_methods_chain",
+   "code_commit": "036e55233babcabacae061ab41d1410a35715aea",
+   "evidence_id": "gm-jvp-gemma-stage1-v1",
+   "n_status_events": 0,
+   "origin_event": "evidence_created",
+   "tier": "methods"
+  },
+  {
+   "category": "study1_methods_chain",
+   "code_commit": "af21c2068508a28871f541c82b8dd1ff0f59916b",
+   "evidence_id": "gm-jvp-gemma-backend-parity-v1",
+   "n_status_events": 0,
+   "origin_event": "evidence_created",
+   "tier": "methods"
+  },
+  {
+   "category": "study1_methods_chain",
+   "code_commit": "b80004843a5bbe57536e4da18297f7c52cf201a3",
+   "evidence_id": "gm-state-of-record-v1",
+   "n_status_events": 0,
+   "origin_event": "evidence_created",
+   "tier": "methods"
+  },
+  {
+   "category": "study2_foundation",
+   "code_commit": "325baec7a1662e936e62f400cc794ec5aa9e7667",
+   "evidence_id": "gm2-foundation-v1",
+   "n_status_events": 1,
+   "origin_event": "evidence_created",
+   "tier": "methods"
+  },
+  {
+   "category": "target_blind_calibration",
+   "code_commit": "064a3cabb4e139b7aff89f3fe62b164250c34b77",
+   "evidence_id": "gm2-backend-parity-calibration-v1",
+   "n_status_events": 0,
+   "origin_event": "evidence_created",
+   "tier": "methods"
+  },
+  {
+   "category": "mechanical_license",
+   "code_commit": "efa80541087b38ac54c1e4a6a1b22711ef60b66e",
+   "evidence_id": "gm2-stage1-relicense-v1",
+   "n_status_events": 0,
+   "origin_event": "evidence_created",
+   "tier": "methods"
+  }
+ ],
+ "bundle": {
+  "bundle_id": "jspace-gemma-transport-sidelines2-v1",
+  "bytes": 22485,
+  "markdown": {
+   "bytes": 7089,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/release/IMPORT_BUNDLE_SIDELINES2.md",
+   "sha256": "547da552fee0057fa304b1dffe657eb269315007073b0a5c3cbb29c96577b315"
+  },
+  "payload_sha256": "1751d22a171bc2e372f0065d1fc015e9d90bc8c0583b97ef9c76394f348c731a",
+  "repo_path": "interpretability/jspaces/sidelines/gemma/release/IMPORT_BUNDLE_SIDELINES2.json",
+  "sha256": "9ef48b8ab1d99d52a756ddea1e285a9d61e781fd054cbf92702bfe81be56f5b0",
+  "study_id": "jspace-gemma-transport-study2",
+  "terminal_event": "gm2-sidelines2-import-bundle-v1"
+ },
+ "bundle_forbidden_uses": [
+  "editing or retroactively passing the immutable Study-1 failed-gate event",
+  "claiming nondifferentiability or Jacobian absence",
+  "attributing the finite-scale mismatch to a named mechanism",
+  "inferring missing information or workspace absence",
+  "generalizing outside the tested prompts, layers, directions, target map, and doses",
+  "opening an intervention or confirmatory model cell from this bundle",
+  "confirmatory, replication, independent-review, or PI-sign-off import"
+ ],
+ "claim_boundary": "Self-verifying partial-safe Study-2 handoff. The mandatory target-blind G2.1 calibration and mechanical G2.2 license are complete. The unchanged five-layer classifier is a closed exact-JVP finite-scale methods result over the tested scope; mechanism, workspace, intervention, and confirmatory claims remain unopened. Native development/methods tiers are preserved.",
+ "dependency_imports": [
+  {
+   "evidence_id": "p4-import-gemma-transport-v1",
+   "import_code_commit": "fddab685ca656d81f6de086fa10f10e8dae6fcf6",
+   "tier": "side-development-import"
+  }
+ ],
+ "forbidden_phase4_uses": [
+  "not confirmatory",
+  "not replication",
+  "not a Gemma workspace result",
+  "not a late-layer intervention license",
+  "not proof of curvature as the unique cause",
+  "not permission to reopen G2-G5 inside Phase 4"
+ ],
+ "frozen_prefix": {
+  "bytes": 36279,
+  "line_count": 23,
+  "repo_path": "interpretability/jspaces/sidelines/gemma/release/evidence_events_prefix_sidelines2.jsonl",
+  "sha256": "2a144bcf0e7be0ac4307f7e2a2984c1879340b9a7e9278d10143d122a14fd30a",
+  "through_evidence_id": "gm2-stage1-relicense-v1"
+ },
+ "import_evidence_id": "p4-import-gemma-transport-study2-v1",
+ "imported_meaning": "The prior 1e-5 parity blocker remains historically correct under its own contract. A later target-blind calibration froze an all-batches mixed-precision ceiling of 0.07870368901355948; the preserved all-slot error 0.0024581113830208778 lies below it and the selected slot is bit-identical. The unchanged five-layer local_tangent_mismatch classifier is therefore a closed exact-JVP finite-scale methods result over the tested scope. No named mechanism, nondifferentiability, missing-information, workspace, or intervention conclusion is licensed.",
+ "live_registry": {
+  "frozen_prefix_intact": true,
+  "n_rows": 24,
+  "repo_path": "interpretability/jspaces/sidelines/gemma/reports/evidence_events.jsonl",
+  "sha256": "c7e76cac59bbfcf30f5d29edfa5c747bdae9aea46523fad9a8bd49db9cca124b"
+ },
+ "n_source_outputs": 43,
+ "native_tier_preserved": true,
+ "no_confirmatory_or_replication_intervention_outcome": true,
+ "ok": true,
+ "phase4_use": "methods-development-boundary-update",
+ "release_artifacts": [
+  {
+   "bytes": 6391,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md",
+   "role": "state-of-record-v2",
+   "sha256": "9c8c3b9be027a5659347bde3a26ab02fd12ed7f7903c3e9a2d785b809e12de67"
+  },
+  {
+   "bytes": 4293,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/release/gemma_transport_claim_ledger_v2.md",
+   "role": "claim-ledger-v2",
+   "sha256": "bc10e3ae5f9339d08328780766326f53e94af63dab3a22f40a535cc59f139591"
+  },
+  {
+   "bytes": 7660,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/reports/GEMMA_TRANSPORT_STUDY2_REPORT.md",
+   "role": "study2-report",
+   "sha256": "6ba43c1fa75aa7b8892dc07d29f89354b2a953e28b03c4b3cf34f637bf502180"
+  },
+  {
+   "bytes": 6051,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/release/TRANSPORT_GATE_PROTOCOL_V2.md",
+   "role": "transport-gate-protocol-v2",
+   "sha256": "ec75a631770a251b0558f52b5faf22b5c1991365cef3520b59ebab85f945a43c"
+  },
+  {
+   "bytes": 8054,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/reports/handout/gemma_transport_development.tex",
+   "role": "handout-tex",
+   "sha256": "afaf90af4f3b96f5e1b267607e52839725a38cbf25b4713e343863d0383187e2"
+  },
+  {
+   "bytes": 216734,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/reports/handout/gemma_transport_development.pdf",
+   "role": "handout-pdf",
+   "sha256": "518b1fac1997469e364ebe641fcc40b99b513c0a57144a47668793a3882fd5c9"
+  },
+  {
+   "bytes": 99091,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/reports/handout/figures/gm2_backend_disagreement_by_model_batch.png",
+   "role": "calibration-figure",
+   "sha256": "9c21f13c90a8b9d3d0325a699e025f1267dde8548bc3e74eb6f592ff0bb773ff"
+  },
+  {
+   "bytes": 2495,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/preregistration/G2_STUDY2_FROZEN_DESIGN.md",
+   "role": "frozen-design",
+   "sha256": "3276e20b6943c1ca91da18d0d258ca030e85accf0a9d5aef867e85dcf338fbb9"
+  },
+  {
+   "bytes": 4905,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/configs/gm2_backend_parity_calibration.yaml",
+   "role": "calibration-config",
+   "sha256": "42b003729d4a3a7632db672b81980cf0b92ba79208a78b7b40225f2dcb917a0c"
+  },
+  {
+   "bytes": 2950,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/configs/gm2_stage1_relicense.yaml",
+   "role": "license-config",
+   "sha256": "e31b9d1c27438da0bb15e1a0c8495a7cd6a1119e4fd3b47521dacc750e7e8f05"
+  },
+  {
+   "bytes": 2339,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/protocol/G2_STAGE1_CANDIDATE_SENTENCES.md",
+   "role": "candidate-sentences",
+   "sha256": "cd22943e90b5156eee0ae5d0038f0c826b9876054660711944209185fd800dab"
+  },
+  {
+   "bytes": 1379,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/protocol/G2_PRE_DATA_ARCHITECTURE_CORRECTION.md",
+   "role": "predata-correction",
+   "sha256": "97e1f9fbeff95a0adbf522b898ecd3c22a397792cc1ff2619ed586a845fd774b"
+  },
+  {
+   "bytes": 1709,
+   "repo_path": "interpretability/jspaces/sidelines/gemma/protocol/G2_POSTDATA_RECONSTRUCTION_AUDIT_CORRECTION.md",
+   "role": "reconstruction-audit-correction",
+   "sha256": "3a000f4e7f826a1933786aee79ab963af46c695402b1d809bea47bcf94ef729a"
+  }
+ ],
+ "result_summary": {
+  "calibration_route": "benign_scheduling_floor",
+  "classifier": "local_tangent_mismatch",
+  "full_backend_pairs": 216,
+  "g2_2_model_compute_performed": false,
+  "historical_all_slot_relative_error": 0.002458111383020878,
+  "historical_all_slot_relative_error_exact": "0.0024581113830208778",
+  "interventions_opened": false,
+  "license_branch": "branch_1_relicense_without_recompute",
+  "licensed_layers": [
+   22,
+   30,
+   37,
+   44,
+   52
+  ],
+  "pair_summaries": 232,
+  "pooled_ceiling": 0.07870368901355948,
+  "pooled_disagreement_q99": 0.026234563004519824,
+  "prompt_bootstrap_90pct": [
+   0.07489779624371865,
+   0.10392247147209241
+  ],
+  "raw_rows": 1008,
+  "selected_slot_bit_identical": true
+ },
+ "schema_version": 1,
+ "selected_event_ids": [
+  "gm-jvp-goldens-v1",
+  "gm-jvp-olmo-positive-control-v1",
+  "gm-jvp-gemma-stage1-v1",
+  "gm-jvp-gemma-backend-parity-v1",
+  "gm-state-of-record-v1",
+  "gm2-foundation-v1",
+  "gm2-backend-parity-calibration-v1",
+  "gm2-stage1-relicense-v1"
+ ],
+ "selected_event_ids_sha256": "f4aa3562d01ed574624c0836caa0823ba5858e1e300359936e2d33c77ead60a4",
+ "shared_parent": "901fb4fc7578a913088c7947a2e6240f7fc45aeb",
+ "source_git": {
+  "branch": "interp_jspace_gemma_transport_2",
+  "code_commit": "aba2e01460dde32e5c2ca1478a5502950e2448ec",
+  "dirty_tree": false
+ },
+ "source_output_inventory_sha256": "be4d0e315c7e3bd4038009448de41b3c9d5486ee21d50ad3d680cc5b59fad862",
+ "source_outputs": [
+  {
+   "bytes": 2663,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/jvp_goldens/gm_jvp_goldens_v1.json",
+   "sha256": "ca02c95c022741970468ea91bd80327e4c2d95c46fda1be2f225d9a83f4f8234"
+  },
+  {
+   "bytes": 4851,
+   "path": "interpretability/jspaces/sidelines/gemma/configs/gm_g1_thresholds_frozen.yaml",
+   "sha256": "3cb1e68c548bce1dc350c8b60a52e5bc6594a4fadb7abec1c4e00f931d855630"
+  },
+  {
+   "bytes": 11862,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/olmo_control/gm-jvp-olmo-positive-control-v1.json",
+   "sha256": "fc957c9a6f6f397cbaf3274193713ebec332bb81dbb99b61cf9f56d058cd1942"
+  },
+  {
+   "bytes": 2781,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/input_manifest.json",
+   "sha256": "7b5f6fd353523189a5bf5d3d1627f2966fd37b7c613cfc4b536d9c9b1928c51f"
+  },
+  {
+   "bytes": 28116,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/loaded_model_audit.json",
+   "sha256": "01b6d518aeffb82a07eb32e32768e3fc5bb9e8bff4fd849253a57d89488f000a"
+  },
+  {
+   "bytes": 29069,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/state.json",
+   "sha256": "5d902ae4b7b2dd6a5d2073ca1238041e321dcee537457a22ab6847d9c5d2df65"
+  },
+  {
+   "bytes": 63277,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_summary.json",
+   "sha256": "0f28372591bc1ece4472b103d74d645416b1ddba59a08ae0688c19fccb56e384"
+  },
+  {
+   "bytes": 352352,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_rows.parquet",
+   "sha256": "3b74f1e983f47c1f917fd8c407a6ea1f8abf42854adc0b9d6c3d3cf18d921550"
+  },
+  {
+   "bytes": 123399,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_smallest_evaluable.parquet",
+   "sha256": "fa18f51b4e30adb5e9ebbb2bf78548604c42855842313cfd030e4f89c0652e57"
+  },
+  {
+   "bytes": 11401,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/gemma_stage1_curvature_fits.parquet",
+   "sha256": "d8da3f931e2a4034eec31741516059ef4d4af3104bd7e5e6cc6fdfe7ee4fc0d2"
+  },
+  {
+   "bytes": 27842,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-stage1-v1/raw_inventory.json",
+   "sha256": "750e8ee14e651c07cca04679a3ac45c51eddfe50187531b5eda3f78c1a7133cd"
+  },
+  {
+   "bytes": 11193,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-backend-parity-v1.json",
+   "sha256": "22c327764034f77496971f6c555af0ec6f8e99a0ceb80cea1677db24ca404b7c"
+  },
+  {
+   "bytes": 1036217,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/metrics/gemma_target/gm-jvp-gemma-backend-parity-v1.pt",
+   "sha256": "ac5ba50dbba6d3ed149cf5b7b6951b80bee5502d11ac90e4f93dc45d515c9e89"
+  },
+  {
+   "bytes": 7384,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/GEMMA_TRANSPORT_STATE_OF_RECORD.md",
+   "sha256": "0eeab02938c32839a8ca19e2446bfc3b69bfcb18769428afb6904133363fa344"
+  },
+  {
+   "bytes": 9655,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/IMPORT_BUNDLE_PHASE4.json",
+   "sha256": "005532754166644e42a369358565b9ce72235151e64559a9f12254d987ff7729"
+  },
+  {
+   "bytes": 1097,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/IMPORT_BUNDLE_PHASE4.md",
+   "sha256": "91bc1f1528a03c0c5c842c95bd5ab597d1bd5e6a577eec1b0662c0ed10daf74c"
+  },
+  {
+   "bytes": 14000,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_inventory.json",
+   "sha256": "0744e32348f7c859475b4482fd9b38f83ef13925710dca8b0c0316cb9b372449"
+  },
+  {
+   "bytes": 1167,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_environment_lock.json",
+   "sha256": "7eceeaa500001aa78cba9cac5ce181233414d2529a76267bf6ac94de74a0203d"
+  },
+  {
+   "bytes": 2746,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_claim_ledger.md",
+   "sha256": "812a45a5044069baf41d8db276b1d59f0c89dd76acb790e9e0e6506c5cccd779"
+  },
+  {
+   "bytes": 5057,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/TRANSPORT_GATE_PROTOCOL.md",
+   "sha256": "f1d83baa36a41623ba4a5990cd83f09bf8e9e09690c1b95c5d5ce7e716e8b768"
+  },
+  {
+   "bytes": 4108,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_20260802/release/gemma_transport_release_manifest.json",
+   "sha256": "1f896c7029a2f4cee10378a95c71463d1346e2a500529101af80de7063c1e483"
+  },
+  {
+   "bytes": 18002,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/manifests/gm2_foundation_v1.json",
+   "sha256": "7676e8ef4c81e2589068abf6488cb24e4c9673515bc3061b4955fa476e606ade"
+  },
+  {
+   "bytes": 2178870,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/raw/gm2-backend-parity-calibration-v1/raw_rows_state.json",
+   "sha256": "8e5e5efc6cbb9891fabae25eec2bec150559e89bed62bb3d7de7b561ca4bbda5"
+  },
+  {
+   "bytes": 224941,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/raw/gm2-backend-parity-calibration-v1/backend_rows.parquet",
+   "sha256": "e3f406067e88ebac20b94c678b4c6fd522e06cf95b67c0ee96136622fea0ddb5"
+  },
+  {
+   "bytes": 217289,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/raw/gm2-backend-parity-calibration-v1/pair_summaries.json",
+   "sha256": "0ac336fe741049de517efad51727591f86e4e0d4ef3c975182289efe3576174d"
+  },
+  {
+   "bytes": 7958,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/derived/gm2-backend-parity-calibration-v1/calibration_summary.json",
+   "sha256": "b87cd3767c377920c171d991511ca5ac7712d2110a787b0b039fc6030bc085d3"
+  },
+  {
+   "bytes": 4052,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/derived/gm2-backend-parity-calibration-v1/backend_ceiling_frozen.json",
+   "sha256": "a6dc1e2a963c21a16f477f23af7260359b2337ebab47f2d5b1ff35112e0c9515"
+  },
+  {
+   "bytes": 99091,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/figures/gm2-backend-parity-calibration-v1/backend_disagreement_by_model_batch.png",
+   "sha256": "9c21f13c90a8b9d3d0325a699e025f1267dde8548bc3e74eb6f592ff0bb773ff"
+  },
+  {
+   "bytes": 5639,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/derived/gm2-stage1-relicense-v1/stage1_license_decision.json",
+   "sha256": "22b090e02909ad4dfbfb44707463bf021c0a02e7629024f015f053a72849d58c"
+  },
+  {
+   "bytes": 1018,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/gemma_transport_2_20260803/derived/gm2-stage1-relicense-v1/licensed_sentence.md",
+   "sha256": "ab156eb661fe303378c3eeecfecb24eda4e0dc738e79b61e689f2053cb2f31e9"
+  },
+  {
+   "bytes": 6391,
+   "path": "interpretability/jspaces/sidelines/gemma/release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md",
+   "sha256": "9c8c3b9be027a5659347bde3a26ab02fd12ed7f7903c3e9a2d785b809e12de67"
+  },
+  {
+   "bytes": 4293,
+   "path": "interpretability/jspaces/sidelines/gemma/release/gemma_transport_claim_ledger_v2.md",
+   "sha256": "bc10e3ae5f9339d08328780766326f53e94af63dab3a22f40a535cc59f139591"
+  },
+  {
+   "bytes": 7660,
+   "path": "interpretability/jspaces/sidelines/gemma/reports/GEMMA_TRANSPORT_STUDY2_REPORT.md",
+   "sha256": "6ba43c1fa75aa7b8892dc07d29f89354b2a953e28b03c4b3cf34f637bf502180"
+  },
+  {
+   "bytes": 6051,
+   "path": "interpretability/jspaces/sidelines/gemma/release/TRANSPORT_GATE_PROTOCOL_V2.md",
+   "sha256": "ec75a631770a251b0558f52b5faf22b5c1991365cef3520b59ebab85f945a43c"
+  },
+  {
+   "bytes": 8054,
+   "path": "interpretability/jspaces/sidelines/gemma/reports/handout/gemma_transport_development.tex",
+   "sha256": "afaf90af4f3b96f5e1b267607e52839725a38cbf25b4713e343863d0383187e2"
+  },
+  {
+   "bytes": 216734,
+   "path": "interpretability/jspaces/sidelines/gemma/reports/handout/gemma_transport_development.pdf",
+   "sha256": "518b1fac1997469e364ebe641fcc40b99b513c0a57144a47668793a3882fd5c9"
+  },
+  {
+   "bytes": 99091,
+   "path": "interpretability/jspaces/sidelines/gemma/reports/handout/figures/gm2_backend_disagreement_by_model_batch.png",
+   "sha256": "9c21f13c90a8b9d3d0325a699e025f1267dde8548bc3e74eb6f592ff0bb773ff"
+  },
+  {
+   "bytes": 2495,
+   "path": "interpretability/jspaces/sidelines/gemma/preregistration/G2_STUDY2_FROZEN_DESIGN.md",
+   "sha256": "3276e20b6943c1ca91da18d0d258ca030e85accf0a9d5aef867e85dcf338fbb9"
+  },
+  {
+   "bytes": 4905,
+   "path": "interpretability/jspaces/sidelines/gemma/configs/gm2_backend_parity_calibration.yaml",
+   "sha256": "42b003729d4a3a7632db672b81980cf0b92ba79208a78b7b40225f2dcb917a0c"
+  },
+  {
+   "bytes": 2950,
+   "path": "interpretability/jspaces/sidelines/gemma/configs/gm2_stage1_relicense.yaml",
+   "sha256": "e31b9d1c27438da0bb15e1a0c8495a7cd6a1119e4fd3b47521dacc750e7e8f05"
+  },
+  {
+   "bytes": 2339,
+   "path": "interpretability/jspaces/sidelines/gemma/protocol/G2_STAGE1_CANDIDATE_SENTENCES.md",
+   "sha256": "cd22943e90b5156eee0ae5d0038f0c826b9876054660711944209185fd800dab"
+  },
+  {
+   "bytes": 1379,
+   "path": "interpretability/jspaces/sidelines/gemma/protocol/G2_PRE_DATA_ARCHITECTURE_CORRECTION.md",
+   "sha256": "97e1f9fbeff95a0adbf522b898ecd3c22a397792cc1ff2619ed586a845fd774b"
+  },
+  {
+   "bytes": 1709,
+   "path": "interpretability/jspaces/sidelines/gemma/protocol/G2_POSTDATA_RECONSTRUCTION_AUDIT_CORRECTION.md",
+   "sha256": "3a000f4e7f826a1933786aee79ab963af46c695402b1d809bea47bcf94ef729a"
+  }
+ ]
+}

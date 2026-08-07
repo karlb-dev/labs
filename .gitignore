@@ -269,3 +269,7 @@ target/
 
 .venv
 .claude/worktrees/
+
+# unpacked Drive run archives (originals in ~/Downloads)
+interpretability/jspace_runs/
+interpretability/jspaces/runs/

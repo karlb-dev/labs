@@ -1,0 +1,130 @@
+evidence_id: p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1
+tier: phase4-development
+slug: qwen36-27b-multilens-functional-gate-a250-a500
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+model_snapshot_manifest_uri: repo://interpretability/jspaces/phases/phase4/configs/qwen36-27b_snapshot_manifest.json
+
+subset:
+  evidence_id: p4-qwen-multilens-functional-subset-dev-v1
+  uri: artifact://phase4/config/qwen_multilens_functional_subset/p4-qwen-multilens-functional-subset-dev-v1/subset_manifest.json
+  sha256: bae4b0c0013513067da8b5ac2d1a6c37e1f0a0e6b1cf3c4c8129789075443d3e
+  payload_sha256: fb227be17dcad06eafd93fc75bddba05cb63c1134f30c99b31da8dcf3d531564
+
+# This order and every threshold below are frozen before A500 exists.
+lens_order: [published, a250, a500]
+lenses:
+  published:
+    kind: external_published
+    label: published-n1000
+    lens_path: /content/hf_local/models--neuronpedia--jacobian-lens/snapshots/a4114d7752d11eb546e6cf372213d7e75526d3a1/qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt
+    lens_sha256: 1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1
+    n_prompts: 1000
+    provenance_classification: external published reference, partially specified recipe
+  a250:
+    kind: registered
+    label: drawA-n250
+    evidence_id: p4-qwen-lens-fit-drawA-n250-dev-v1
+    lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n0250.pt
+    lens_sha256: b78427c84ddd3b9f7f4361b952b5169cf49335e77fe364e584b6abd799f79006
+    n_prompts: 250
+  a500:
+    kind: registered
+    label: drawA-n500
+    evidence_id: p4-qwen-lens-fit-drawA-n500-dev-v1
+    lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n0500.pt
+    # Replace only with the hash from the registered n=500 evidence event.
+    lens_sha256: 84404956fb71a84f5af7fa22c34a8f07761777d048b3db314b1330037e4168a8
+    n_prompts: 500
+
+task_banks:
+  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+    sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
+  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+    sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
+
+runtime:
+  expected_source_layers: 63
+  expected_d_model: 5120
+  expected_vocab_size: 248320
+  compute_dtype: bfloat16
+  dictionary_dtype: float16
+  require_cuda: true
+
+protocol:
+  band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+  k: 10
+  protect_top_k: 10
+  condition_order: [span_safe, exact_matched, true_bridge, distractor_bridge, counterfactual_swap]
+  matched_seed_namespace: p4-functional-instant-rank-energy-v1
+  matched_seed: 73491
+  tail_threshold_nats: -1.0
+  answer_alias_rule: first_phase3_accepted_alias
+  checkpoint_every_items: 5
+
+g4:
+  alpha: 0.1
+  random_seed: 777
+  condition_order: [baseline, swap_j, swap_random]
+  calibration_n: 10
+  measured_n: 50
+  pass_min_flip_rate: 0.5
+  pass_min_margin_over_random: 0.25
+
+bridge_endpoint:
+  arms: [baseline, counterfactual_swap]
+  max_new_tokens: 16
+  category_contract: [original, counterfactual, other-invalid]
+
+capacity:
+  layers: [24, 32, 40]
+  positions: [32, 64, 96, 120]
+  max_seq_len: 128
+  k_max: 20
+  persistence: 2
+  persistence_sensitivity: [1, 2, 3]
+  random_seeds: [11, 12, 13]
+  bootstrap_draws: 2000
+  bootstrap_seed: 4242
+
+analysis:
+  primary_pair: [a250, a500]
+  pair_order:
+    - [a250, a500]
+    - [a500, published]
+    - [a250, published]
+  family_bootstrap_draws: 20000
+  family_bootstrap_seed: 420042
+  structural_evidence_id: p4-qwen-lens-convergence-drawA-n250-n500-dev-v1
+  structural_comparison_id: a250_vs_a500
+  structural_assay_key: assay_L20_L44
+  branch_interpretations:
+    A: same-corpus A250-A500 functional and structural stability; fit independent draw B before any smaller-lens nomination
+    B: functional instability persists at A250-A500; continue draw A to n=1000 before the canonical decision
+    C: coordinate structure remains fit-sensitive while tested endpoints are stable; retain larger A500 as the same-corpus candidate and fit independent draw B
+    PENDING_STRUCTURAL: functional gate complete; the registered A250-A500 structural event is pending
+  thresholds:
+    assay_task_token_median_cosine_min: 0.95
+    task_token_q05_min: 0.90
+    normalized_selected_span_overlap_min: 0.85
+    selected_id_jaccard_min: 0.75
+    occupancy_difference_max: 1.0
+    centered_excess_difference_percentage_points_max: 1.0
+    span_safe_specific_mean_difference_nats_max: 0.15
+    tail_rate_difference_max: 0.05
+    g4_flip_rate_difference_max: 0.10
+    bridge_rescue_preference_difference_nats_max: 0.25
+
+figure:
+  stem: p4f20_qwen_multilens_functional_gate_a250_a500
+  title: "Qwen A250-A500 functional gate (Phase 4 development)\nPublished comparator: external published reference, partially specified recipe"
+  lens_labels:
+    published: "published\nn=1000"
+    a250: "draw A\nn=250"
+    a500: "draw A\nn=500"
+  comparison_labels:
+    a250_vs_a500: A250–A500
+    a500_vs_published: A500–pub.
+    a250_vs_published: A250–pub.
+  published_caption: external published reference, partially specified recipe
+
+registry_what: Fixed Qwen multi-lens functional gate over published n=1000, draw-A n=250, and draw-A n=500 using the outcome-blind Phase 3 subset, frozen selection/capacity/causal equivalence thresholds, and the post-A500 continuation rule.

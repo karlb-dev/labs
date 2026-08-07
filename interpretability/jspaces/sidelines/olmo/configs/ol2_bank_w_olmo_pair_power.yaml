@@ -1,0 +1,70 @@
+evidence_id: ol2-bank-w-olmo-pair-power-v1
+tier: methods
+branch: interp_jspace_olmo_lineage_2
+
+target_models:
+  - slug: olmo31-think
+    source_label: olmo31-think
+    evidence_id: ol-bank-w-capability-olmo31-think-dev-v1
+    result_path: /content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801/metrics/olmo31-think/bank_w_capability/ol-bank-w-capability-olmo31-think-dev-v1/bank_w_capability_result.json
+    result_sha256: 944c739191a0587eb81a7fa766ca8810d4f0dcffc9461b9d42481324f2ad5907
+  - slug: olmo31-instruct
+    source_label: olmo31-instruct
+    evidence_id: ol-bank-w-capability-olmo31-instruct-dev-v1
+    result_path: /content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801/metrics/olmo31-instruct/bank_w_capability/ol-bank-w-capability-olmo31-instruct-dev-v1/bank_w_capability_result.json
+    result_sha256: 44f6399aadd7f5507f1477b05d9dc99409829848149a1d3b81d5f5de3b1636aa
+
+registered_variance_ruler:
+  evidence_id: p4-bank-w-power-holm2-dev-v1
+  registry_path: interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl
+  result_path: interpretability/jspaces/phases/phase4/reports/bank_w_power_holm2_dev_v1.json
+  result_sha256: 11c4dd0751efffac56e37abeac6cd40aea3113177744c6c17f94f202ae27bf16
+  config_path: interpretability/jspaces/phases/phase4/configs/p4_bank_w_power_holm2_dev.yaml
+  config_sha256: 829d4ff8fb97ac32fe584354e0710fce510c1c3a91109889782eb4ff879bdb14
+  conservative_common_sd_nats: 0.23
+  conservative_rule: largest common-family SD across registered development sources, rounded upward to 0.01 nat
+
+primary_randomization:
+  statistic: max_m mean(D_m)/(sd(D_m)/sqrt(n_families))
+  alternative: greater
+  alpha: 0.05
+  shared_family_signs_across_models: true
+  model_selection_from_intervention_outcomes: false
+  exact_max_families: 20
+  monte_carlo_draws: 100000
+  seed: 48151623
+
+simulation:
+  seed: 8675309
+  n_simulations: 5000
+  permutation_draws: 2048
+  simulation_batch_size: 50
+  permutation_chunk_size: 512
+  family_counts: [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
+  power_target: 0.80
+  type_i_acceptance_interval: [0.025, 0.075]
+  heavy_tail_df: 5
+  sesoi_slope_nats_per_doubling: 0.10
+  low_load: 2
+  high_load: 6
+  effect_grid_nats: [0.08, 0.10, 0.12, 0.14, 0.18, 0.20]
+
+route:
+  future_pair_worthwhile_if:
+    - both checkpoints are independently capability eligible
+    - all four frozen type-I scenarios pass
+    - shared capable-family support reaches the first simulated count with power at least 0.80
+  otherwise: not-powered-at-current-support
+  no_intervention_authorization: true
+
+outputs:
+  result: olmo-artifact://metrics/bank-w-olmo-pair-power/ol2_bank_w_olmo_pair_power_v1.json
+  figure_png: olmo-artifact://figures/ol2_bank_w_olmo_pair_power.png
+  figure_pdf: olmo-artifact://figures/ol2_bank_w_olmo_pair_power.pdf
+
+claim_boundary: >-
+  Outcome-blind planning analysis for a possible future OLMo Think/Instruct
+  Bank-W redesign. It reads registered baseline capability and registered
+  Bank-S variability only. It does not read a Bank-W intervention outcome,
+  authorize an intervention, modify the frozen SESOI, or upgrade any scientific
+  claim.

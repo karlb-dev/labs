@@ -1,0 +1,20 @@
+# LINEAGE DEV POINT — OLMo 3.0 Think under its Part-1 pilot lens, on the
+# frozen confirmatory cohort (its own G5-capable facts). Development
+# tier: the lens predates the Phase 3 freeze and the model is not a
+# preregistered primary; this cell adds the third lineage point
+# (3.0-Think vs 3.1-Think vs 3.1-Instruct) per R5.
+evidence_id: p3-lineage-grid-olmo3-think-v1
+tier: phase3-development
+slug: olmo3-think
+model_uri: model://allenai/Olmo-3-32B-Think@ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
+lens_uri: drive://part1/lens/olmo32bthink_lens.pt
+banks: [bank_f_v7.jsonl, bank_s_v3.jsonl]
+partition_uri: interpretability/jspaces/phases/phase3/preregistration/partition_phase3.json
+partition_side: confirmatory
+band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+k: 10
+protect_top_k: 10
+rand_seed: 31337
+stop_check_n: 25
+stop_tol: 0.05
+bridge_arms: false

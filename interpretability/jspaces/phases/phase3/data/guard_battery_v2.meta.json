@@ -1,0 +1,45 @@
+{
+ "payload": {
+  "battery_sha256": "5c25d4bb2a884671a2f8a51106bc22df64d5aa324d5bdf151d6fb5e0745d702c",
+  "by_domain": {
+   "code": 12,
+   "dialogue": 12,
+   "factual_enc": 12,
+   "grammar_pairs": 20,
+   "long_context": 12,
+   "prose_pretrain": 12,
+   "sql": 12,
+   "technical_docs": 12
+  },
+  "n_items": 104,
+  "notes": {
+   "code_stride": 7,
+   "multilingual": "skipped: only 20231101.en wikipedia snapshot available offline; \u00a77.2 clause is conditional; revisit before the Phase 3 freeze",
+   "sql_stride": 5,
+   "technical_docs_stride": 1,
+   "ultrachat_stride": 89,
+   "wikipedia_rows_scanned_stride": 997,
+   "wikitext_test_articles": 60
+  },
+  "path": "/content/labs/interpretability/jspaces/phases/phase3/data/guard_battery_v2.jsonl"
+ },
+ "payload_sha256": "8a9d78e7de9c1016b33392afd61734f0678f6aa034bd47c7a75ead02630a3456",
+ "provenance": {
+  "branch": "interp_jspace_part2",
+  "code_commit": "e218512379f73ec8c041d2db9f29a76cfe583230",
+  "command": "python -m jspace_phase3.experiments.build_guard_battery",
+  "config_path": null,
+  "config_sha256": null,
+  "created_utc": "2026-07-29T23:30:38Z",
+  "dirty_tree": true,
+  "evidence_id": "p3-guard-battery-v2",
+  "inputs": {},
+  "jlens_commit": null,
+  "model": null,
+  "package_version": "jspace_phase3 0.1.0",
+  "seed": 0,
+  "study_id": "jspace-phase3",
+  "tier": "phase3-development"
+ },
+ "schema_version": 2
+}

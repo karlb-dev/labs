@@ -1,0 +1,33 @@
+evidence_id: p4-qwen-multilens-functional-subset-dev-v1
+tier: methods
+slug: qwen36-27b-functional-subset
+
+phase3_grid:
+  evidence_id: p3-primary-grid-qwen36-27b-v1
+  uri: artifact://phase3/metrics/qwen36-27b/p3_grid/p3_grid_qwen36-27b.parquet
+  sha256: 992ed2f6a9d6d470ed9e9b4af1d3eadc9d3df7941e24d178a830fc3c97691687
+
+guard_battery:
+  uri: repo://interpretability/jspaces/phases/phase3/data/guard_battery_v2.jsonl
+  sha256: 5c25d4bb2a884671a2f8a51106bc22df64d5aa324d5bdf151d6fb5e0745d702c
+
+g4_probe_swap:
+  path: /tmp/jacobian-lens/data/experiments/probe-swap.json
+  sha256: a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796
+  source_repository: anthropics/jacobian-lens
+  source_revision: 581d398613e5602a5af361e1c34d3a92ea82ba8e
+  calibration_n: 10
+  total_n: 60
+
+selection:
+  namespace: p4-qwen-multilens-functional-subset-v1
+  primary_facts_per_bank: 15
+  bridge_facts_per_bank: 10
+  prose_items_n: 40
+  capacity_items_n: 16
+  capacity_positions: [32, 64, 96, 120]
+  max_seq_len: 128
+  required_primary_families: 12
+  required_bridge_families: 8
+  consumed_phase3_only: true
+  outcome_columns_allowed: false
