@@ -19,6 +19,7 @@ import subprocess
 from typing import Callable, Mapping, Sequence
 
 from .manifests import atomic_json, file_sha256, object_sha256
+from .paths4 import _rewrite_repo_relative
 from .registry4 import EVENTS, read_events
 
 
@@ -95,14 +96,21 @@ def _repository_materialization(path: Path, repository: Path) -> Path:
     ``interpretability`` directory is eligible; Drive and arbitrary external
     paths are never remapped.
     """
-    if not path.is_absolute():
-        return path
-    try:
-        marker = path.parts.index("interpretability")
-    except ValueError:
-        return path
-    candidate = repository / Path(*path.parts[marker:])
-    return candidate if candidate.is_file() else path
+    if path.is_absolute():
+        try:
+            marker = path.parts.index("interpretability")
+        except ValueError:
+            return path
+        relative = Path(*path.parts[marker:])
+    else:
+        relative = path
+    for spec in dict.fromkeys(
+            (_rewrite_repo_relative(relative.as_posix()),
+             relative.as_posix())):
+        candidate = repository / spec
+        if candidate.is_file():
+            return candidate
+    return path
 
 
 def materialize_import_output(
@@ -162,7 +170,8 @@ def _validate_governance(value: Mapping) -> None:
 
 def _source_registry_events(
         registry_path: Path, expected_sha256: str, source_commit: str,
-        *, repository: Path = REPOSITORY) -> list[dict]:
+        *, repository: Path = REPOSITORY,
+        recorded_path: Path | None = None) -> list[dict]:
     """Read the exact registry bytes bound by an import bundle.
 
     A side registry is append-only, so a later ancestry-preserving merge may
@@ -184,13 +193,26 @@ def _source_registry_events(
                 relative = registry_path
             if relative.is_absolute() or ".." in relative.parts:
                 raise ValueError("unsafe repository-relative registry path")
-            raw = subprocess.check_output(
-                [
-                    "git", "-C", str(repository), "show",
-                    f"{source_commit}:{relative.as_posix()}",
-                ],
-                stderr=subprocess.DEVNULL,
-            )
+            specs = [relative.as_posix()]
+            if recorded_path is not None and not recorded_path.is_absolute() \
+                    and ".." not in recorded_path.parts:
+                specs.insert(0, recorded_path.as_posix())
+            raw = None
+            error = None
+            for spec in dict.fromkeys(specs):
+                try:
+                    raw = subprocess.check_output(
+                        [
+                            "git", "-C", str(repository), "show",
+                            f"{source_commit}:{spec}",
+                        ],
+                        stderr=subprocess.DEVNULL,
+                    )
+                    break
+                except (OSError, subprocess.CalledProcessError) as exc:
+                    error = exc
+            if raw is None:
+                raise error or ValueError("no registry snapshot spec")
         except (OSError, subprocess.CalledProcessError, ValueError) as error:
             raise ImportBundleError(
                 "source registry hash does not match the bundle and its "
@@ -217,7 +239,8 @@ def validate_import_bundle(
         allow_existing_target: bool = False) -> dict:
     """Validate a bundle and every selected live source output."""
     path = Path(bundle_path)
-    envelope = json.loads(path.read_text())
+    bundle_file = _repository_materialization(path, REPOSITORY)
+    envelope = json.loads(bundle_file.read_text())
     if envelope.get("schema_version") != 1 or "payload" not in envelope:
         raise ImportBundleError("invalid side-bundle envelope")
     payload = envelope["payload"]
@@ -241,11 +264,13 @@ def validate_import_bundle(
 
     registry_spec = payload.get("source_registry", {})
     registry_path = Path(str(registry_spec.get("path", "")))
+    registry_file = _repository_materialization(registry_path, REPOSITORY)
     expected_registry_sha = str(registry_spec.get("sha256", ""))
-    if not registry_path.is_file():
+    if not registry_file.is_file():
         raise ImportBundleError(f"source registry is absent: {registry_path}")
     source_events = _source_registry_events(
-        registry_path, expected_registry_sha, source_commit)
+        registry_file, expected_registry_sha, source_commit,
+        recorded_path=registry_path)
     actual_registry_sha = expected_registry_sha
     if any(row.get("study_id") != source_study for row in source_events):
         raise ImportBundleError("source registry contains a foreign study ID")
@@ -326,7 +351,7 @@ def validate_import_bundle(
         "schema_version": 1,
         "ok": True,
         "bundle_path": str(path),
-        "bundle_sha256": file_sha256(path),
+        "bundle_sha256": file_sha256(bundle_file),
         "bundle_payload_sha256": actual_payload_sha,
         "bundle_id": payload.get("bundle_id"),
         "source_study": source_study,

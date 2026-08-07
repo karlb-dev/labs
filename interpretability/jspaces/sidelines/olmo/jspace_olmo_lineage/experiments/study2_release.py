@@ -32,9 +32,9 @@ from ..manifests import (
     object_sha256,
     require_clean_tree,
 )
-from ..paths import resolve_uri, run_root
+from ..paths import _REPO_PATH_ALIASES, resolve_uri, run_root
 from ..registry import EVENTS, create, read_events, resolve, resolve_all
-from ..repro import verify_live_evidence
+from ..repro import _repository_materialization, verify_live_evidence
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = _find_repo_root()
@@ -79,7 +79,9 @@ def _load_envelope(path: str | Path) -> dict:
 
 def _repo_path(path: str | Path) -> Path:
     value = Path(path)
-    return value if value.is_absolute() else REPO_ROOT / value
+    if value.is_absolute():
+        return value
+    return _repository_materialization(value)
 
 
 def registry_prefix_record(path: str | Path = EVENTS) -> dict:
@@ -331,6 +333,18 @@ def _repo_outputs(config: Mapping) -> dict[str, Path]:
     }
 
 
+REORG_BOUNDARY_TAG = "pre-jspaces-reorg-v1"
+
+
+def _pre_reorg_relative(relative: Path) -> Path:
+    """Map a current repo-relative path back to its pre-reorg location."""
+    text = relative.as_posix()
+    for old, new in _REPO_PATH_ALIASES:
+        if old.startswith("interpretability/") and text.startswith(new):
+            return Path(old + text[len(new):])
+    return relative
+
+
 def _generation_protocol_unchanged(
     generation_commit: str,
     config_path: Path,
@@ -352,7 +366,48 @@ def _generation_protocol_unchanged(
         ).returncode
         == 0
     )
-    unchanged = (
+    generation_is_post_reorg = (
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(REPO_ROOT),
+                "merge-base",
+                "--is-ancestor",
+                REORG_BOUNDARY_TAG,
+                generation_commit,
+            ],
+            check=False,
+        ).returncode
+        == 0
+    )
+    if generation_is_post_reorg:
+        unchanged = (
+            subprocess.run(
+                [
+                    "git",
+                    "-C",
+                    str(REPO_ROOT),
+                    "diff",
+                    "--quiet",
+                    generation_commit,
+                    "HEAD",
+                    "--",
+                    str(module_path),
+                    str(config_relative),
+                ],
+                check=False,
+            ).returncode
+            == 0
+        )
+        return ancestor and unchanged
+    # Pre-reorg bundle: the protocol files moved (and the renderer gained
+    # historical-path resolution) at the reorg boundary. Require them
+    # untouched from generation to the boundary tag at their old paths, and
+    # the frozen config byte-identical on the current tree.
+    old_module = _pre_reorg_relative(module_path)
+    old_config = _pre_reorg_relative(config_relative)
+    unchanged_to_boundary = (
         subprocess.run(
             [
                 "git",
@@ -361,16 +416,30 @@ def _generation_protocol_unchanged(
                 "diff",
                 "--quiet",
                 generation_commit,
-                "HEAD",
+                REORG_BOUNDARY_TAG,
                 "--",
-                str(module_path),
-                str(config_relative),
+                str(old_module),
+                str(old_config),
             ],
             check=False,
         ).returncode
         == 0
     )
-    return ancestor and unchanged
+    try:
+        frozen_config = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(REPO_ROOT),
+                "show",
+                f"{generation_commit}:{old_config.as_posix()}",
+            ],
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return False
+    config_exact = frozen_config == config_path.read_bytes()
+    return ancestor and unchanged_to_boundary and config_exact
 
 
 def render(config_path: str | Path) -> dict:

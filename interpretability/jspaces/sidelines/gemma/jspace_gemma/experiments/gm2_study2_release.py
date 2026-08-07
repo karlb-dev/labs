@@ -32,9 +32,9 @@ from jspace_gemma.manifests import (
     object_sha256,
     require_clean_tree,
 )
-from jspace_gemma.paths import resolve_uri, run_root
+from jspace_gemma.paths import _REPO_PATH_ALIASES, resolve_uri, run_root
 from jspace_gemma.registry import EVENTS, create, read_events, resolve, resolve_all
-from jspace_gemma.repro import verify_live_evidence
+from jspace_gemma.repro import _repository_materialization, verify_live_evidence
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = _find_repo_root()
@@ -78,21 +78,26 @@ def _load_envelope(path: str | Path) -> dict:
 
 def _repo_path(path: str | Path) -> Path:
     value = Path(path)
-    return value if value.is_absolute() else REPO_ROOT / value
+    if value.is_absolute():
+        return value
+    return _repository_materialization(value)
 
 
 def _output_rows(record: Mapping) -> list[dict]:
     field = "source_outputs" if record["event"] == "evidence_imported" else "outputs"
     rows = []
     for output in record.get(field, []) or []:
-        path = Path(output["path"])
-        if not path.is_file() or file_sha256(path) != output["sha256"]:
-            raise ValueError(f"live output hash drift: {record['evidence_id']}: {path}")
+        materialized = _repository_materialization(Path(output["path"]))
+        if not materialized.is_file() \
+                or file_sha256(materialized) != output["sha256"]:
+            raise ValueError(
+                f"live output hash drift: {record['evidence_id']}: "
+                f"{output['path']}")
         rows.append(
             {
-                "path": str(path),
+                "path": str(output["path"]),
                 "sha256": output["sha256"],
-                "bytes": path.stat().st_size,
+                "bytes": materialized.stat().st_size,
             }
         )
     return rows
@@ -326,6 +331,18 @@ def _repo_outputs(config: Mapping) -> dict[str, Path]:
     }
 
 
+REORG_BOUNDARY_TAG = "pre-jspaces-reorg-v1"
+
+
+def _pre_reorg_relative(relative: Path) -> Path:
+    """Map a current repo-relative path back to its pre-reorg location."""
+    text = relative.as_posix()
+    for old, new in _REPO_PATH_ALIASES:
+        if old.startswith("interpretability/") and text.startswith(new):
+            return Path(old + text[len(new):])
+    return relative
+
+
 def _generation_protocol_unchanged(generation_commit: str, config_path: Path) -> bool:
     module = Path(__file__).resolve().relative_to(REPO_ROOT)
     config = config_path.resolve().relative_to(REPO_ROOT)
@@ -333,14 +350,42 @@ def _generation_protocol_unchanged(generation_commit: str, config_path: Path) ->
         ["git", "-C", str(REPO_ROOT), "merge-base", "--is-ancestor", generation_commit, "HEAD"],
         check=False,
     ).returncode == 0
-    unchanged = subprocess.run(
+    generation_is_post_reorg = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "merge-base", "--is-ancestor",
+         REORG_BOUNDARY_TAG, generation_commit],
+        check=False,
+    ).returncode == 0
+    if generation_is_post_reorg:
+        unchanged = subprocess.run(
+            [
+                "git", "-C", str(REPO_ROOT), "diff", "--quiet", generation_commit,
+                "HEAD", "--", str(module), str(config),
+            ],
+            check=False,
+        ).returncode == 0
+        return ancestor and unchanged
+    # Pre-reorg bundle: the protocol files moved (and the renderer gained
+    # historical-path resolution) at the reorg boundary. Require them
+    # untouched from generation to the boundary tag at their old paths, and
+    # the frozen config byte-identical on the current tree.
+    old_module = _pre_reorg_relative(module)
+    old_config = _pre_reorg_relative(config)
+    unchanged_to_boundary = subprocess.run(
         [
             "git", "-C", str(REPO_ROOT), "diff", "--quiet", generation_commit,
-            "HEAD", "--", str(module), str(config),
+            REORG_BOUNDARY_TAG, "--", str(old_module), str(old_config),
         ],
         check=False,
     ).returncode == 0
-    return ancestor and unchanged
+    try:
+        frozen_config = subprocess.check_output(
+            ["git", "-C", str(REPO_ROOT), "show",
+             f"{generation_commit}:{old_config.as_posix()}"],
+            stderr=subprocess.DEVNULL)
+    except (OSError, subprocess.CalledProcessError):
+        return False
+    config_exact = frozen_config == config_path.read_bytes()
+    return ancestor and unchanged_to_boundary and config_exact
 
 
 def render(config_path: str | Path) -> dict:

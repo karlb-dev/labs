@@ -5,7 +5,9 @@ import json
 from pathlib import Path
 
 from .manifests import file_sha256, object_sha256
-from .paths import DEFAULT_RUN_ROOT, REPO_ROOT, STUDY2_RUN_ROOT
+from .paths import (
+    DEFAULT_RUN_ROOT, REPO_ROOT, STUDY2_RUN_ROOT, _rewrite_repo_relative,
+)
 from .registry import EVENTS, resolve_all
 
 
@@ -25,14 +27,21 @@ def verify_json_envelope(path: str | Path) -> dict:
 
 def _repository_materialization(path: Path) -> Path:
     """Map a producer-worktree package output into the merged repository."""
-    if not path.is_absolute():
-        return path
-    try:
-        marker = path.parts.index("interpretability")
-    except ValueError:
-        return path
-    candidate = REPO_ROOT / Path(*path.parts[marker:])
-    return candidate if candidate.is_file() else path
+    if path.is_absolute():
+        try:
+            marker = path.parts.index("interpretability")
+        except ValueError:
+            return path
+        relative = Path(*path.parts[marker:])
+    else:
+        relative = path
+    for spec in dict.fromkeys(
+            (_rewrite_repo_relative(relative.as_posix()),
+             relative.as_posix())):
+        candidate = REPO_ROOT / spec
+        if candidate.is_file():
+            return candidate
+    return path
 
 
 def _within(path: Path, root: Path) -> bool:

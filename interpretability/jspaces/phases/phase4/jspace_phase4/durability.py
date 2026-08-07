@@ -27,6 +27,7 @@ import time
 from typing import Callable, Iterable, Mapping
 
 from .manifests import atomic_json, file_sha256
+from .paths4 import _rewrite_repo_relative
 from .registry4 import EVENTS, read_events, resolve_all
 
 
@@ -108,7 +109,10 @@ def resolve_output_reference(
     relative = _repository_relative(path)
     if relative is None:
         return row
-    candidate = repo_root / relative
+    rewritten = Path(_rewrite_repo_relative(relative.as_posix()))
+    candidate = repo_root / rewritten
+    if not candidate.is_file():
+        candidate = repo_root / relative
 
     if not row["exists"] and candidate.is_file():
         try:
@@ -139,9 +143,15 @@ def resolve_output_reference(
             event.get("import_code_commit")
             or event.get("code_commit") or "")
         if len(commit) == 40:
-            try:
-                historical = git_show(commit, relative.as_posix())
-            except (OSError, subprocess.CalledProcessError):
+            historical = None
+            for spec in dict.fromkeys(
+                    (relative.as_posix(), rewritten.as_posix())):
+                try:
+                    historical = git_show(commit, spec)
+                    break
+                except (OSError, subprocess.CalledProcessError):
+                    continue
+            if historical is None:
                 return row
             if (
                 hashlib.sha256(historical).hexdigest() == expected_sha256

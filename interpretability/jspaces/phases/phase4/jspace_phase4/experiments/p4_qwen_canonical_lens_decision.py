@@ -8,6 +8,7 @@ from typing import Mapping
 
 import yaml
 
+from ..import_bundle import REPOSITORY, _repository_materialization
 from ..manifests import atomic_json, file_sha256, object_sha256, require_clean_tree
 from ..paths4 import metrics_dir
 from ..provenance4 import Provenance4, write_result4
@@ -27,7 +28,7 @@ def _output(event: Mapping, name: str) -> Path:
     if len(rows) != 1:
         raise RuntimeError(
             f"evidence {event['evidence_id']} lacks exactly one {name}")
-    path = Path(rows[0]["path"])
+    path = _repository_materialization(Path(rows[0]["path"]), REPOSITORY)
     if file_sha256(path) != rows[0]["sha256"]:
         raise RuntimeError(f"registered output hash mismatch: {name}")
     return path
@@ -67,7 +68,8 @@ def decide(*, functional: Mapping, margin: Mapping, influence: Mapping,
         raise RuntimeError("prompt-323 influence attempted trimming/refit")
     action = dict(config["actions"][recomputed])
     amendment = config["contract"]["ql2_amendment"]
-    amendment_path = Path(amendment["path"])
+    amendment_path = _repository_materialization(
+        Path(amendment["path"]), REPOSITORY)
     if file_sha256(amendment_path) != amendment["sha256"]:
         raise RuntimeError("prospective Q-L2 amendment hash mismatch")
     return {
