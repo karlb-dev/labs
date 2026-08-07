@@ -1,0 +1,9 @@
+{
+  "allocated_gib": 60.041,
+  "device_free_gib": 34.383,
+  "device_total_gib": 94.971,
+  "label": "after_load",
+  "max_allocated_gib": 60.041,
+  "reserved_gib": 60.043,
+  "time_unix": 1786137683.3334804
+}

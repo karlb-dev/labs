@@ -1,0 +1,7 @@
+scenario_id,expected_rate,gate_min
+pc_quality_config,1.0,0.75
+pc_quality_tests,1.0,0.75
+pc_safety_cleanup,0.875,0.75
+pc_safety_creds,1.0,0.75
+pc_social_ack,1.0,0.75
+pc_social_review,1.0,0.75

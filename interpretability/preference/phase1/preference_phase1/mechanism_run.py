@@ -108,31 +108,72 @@ def analyze_scenario_directions(rows_ar: list[dict[str, Any]],
             "per_depth": per_depth, "margins": margins}
 
 
+def capture_for_scenarios(bundle: Any, rows: list[dict[str, Any]],
+                          scenario_ids: list[str], depths: Sequence[int],
+                          run_dir: pathlib.Path) -> dict[str, dict[int, Any]]:
+    """Fresh decision-position captures for the needed scenarios (single-
+    row exact forwards; deterministic, so identical to run-time capture).
+    Cached to state/decision_residuals.pt for resume."""
+    import torch
+
+    from .chat import render_item_prompt
+    from .modeling import capture_decision_residuals
+    from .runner import load_bank_records
+
+    path = run_dir / "state" / "decision_residuals.pt"
+    caps: dict[str, dict[int, Any]] = {}
+    if path.exists():
+        caps = torch.load(path, map_location="cpu", weights_only=False)
+    bank = {b["item_id"]: b for b in load_bank_records("full")}
+    wanted = [r for r in rows if r["scenario_id"] in scenario_ids
+              and r["item_id"] not in caps]
+    for i, r in enumerate(wanted):
+        rp = render_item_prompt(bundle.tokenizer, bank[r["item_id"]])
+        caps[r["item_id"]] = capture_decision_residuals(
+            bundle, rp.input_ids, depths)
+        if (i + 1) % 40 == 0:
+            torch.save(caps, path)
+            print(f"[mech-capture] {i + 1}/{len(wanted)}")
+    torch.save(caps, path)
+    return caps
+
+
 def run_mechanism(run_dir: pathlib.Path, scenario_ids: list[str], *,
                   case_study: bool = False,
-                  out_root: pathlib.Path | None = None) -> dict[str, Any]:
+                  out_root: pathlib.Path | None = None,
+                  model_tier: str = "b",
+                  wrong_source: str | None = None) -> dict[str, Any]:
     rows = load_frozen_rows(run_dir)
-    caps = load_captures(run_dir)
-    pin = PINS["b"]
+    pin = PINS[model_tier]
     mech_dir = out_root or (run_dir / "mechanism")
     mech_dir.mkdir(parents=True, exist_ok=True)
     ctx, bundle = load_bundle(pin, run_dir, require_gpu=True)
     depths = depth_indices(bundle.anatomy.n_layers)
     tokenizer = bundle.tokenizer
+    wrong_source = wrong_source or (scenario_ids[0] if scenario_ids else None)
+    needed = sorted(set(scenario_ids + ["pc_quality_config"]
+                        + ([wrong_source] if wrong_source else [])))
+    try:
+        caps = load_captures(run_dir)
+    except FileNotFoundError:
+        caps = {}
+    have = {r["item_id"] for r in rows if r["scenario_id"] in needed}
+    if not have <= set(caps):
+        caps = capture_for_scenarios(bundle, rows, needed, depths, run_dir)
 
     # ---- mechanistic positive control first (plan §10.8) ---------------
     pc_result = _scenario_block(
         "pc_quality_config", rows, caps, depths, bundle, tokenizer,
-        wrong_scenario_source=scenario_ids[0] if scenario_ids else None,
-        is_pc=True)
+        wrong_scenario_source=wrong_source, is_pc=True)
     artifacts.atomic_write_json(mech_dir / "mech_pc_control.json",
                                 _jsonable(pc_result))
     pc_pass = pc_result.get("pc_mech_pass", False)
 
     results = {"pc_quality_config": pc_result}
     for scn in scenario_ids:
-        wrong_src = next((s for s in scenario_ids + ["pc_quality_config"]
-                          if s != scn), "pc_quality_config")
+        wrong_src = wrong_source if wrong_source and wrong_source != scn else \
+            next((s for s in scenario_ids + ["pc_quality_config"]
+                  if s != scn), "pc_quality_config")
         block = _scenario_block(scn, rows, caps, depths, bundle, tokenizer,
                                 wrong_scenario_source=wrong_src, is_pc=False)
         block["causal_claims_licensed"] = bool(pc_pass)
