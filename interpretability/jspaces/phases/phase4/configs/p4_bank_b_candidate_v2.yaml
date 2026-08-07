@@ -4,17 +4,17 @@ model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
 
 base_candidate:
   evidence_id: p4-bank-b-candidate-v1
-  bank_uri: repo://interpretability/jspaces/phases/phase4/data/bank_b_candidate_v1.jsonl
+  bank_uri: repo://interpretability/jspace_phase4/data/bank_b_candidate_v1.jsonl
   bank_sha256: de0d718baf9a509ad76b6f8afd9cce112228f2221df28aecdb04dd9dd84852c6
-  sources_uri: repo://interpretability/jspaces/phases/phase4/data/bank_b_source_verification_v1.jsonl
+  sources_uri: repo://interpretability/jspace_phase4/data/bank_b_source_verification_v1.jsonl
   sources_sha256: 4f8f5269f2ef6f6f8f98876af1c41e47b7b51c690bfce8d6300d42cf9e2b3a56
-  partition_uri: repo://interpretability/jspaces/phases/phase4/data/bank_b_partition_candidate_v1.json
+  partition_uri: repo://interpretability/jspace_phase4/data/bank_b_partition_candidate_v1.json
   partition_sha256: 05baa850820397bd3cea88866ba5f07da44c974c6972d501eddbdb08f20c851a
-  audit_uri: repo://interpretability/jspaces/phases/phase4/data/bank_b_audit_v1.json
+  audit_uri: repo://interpretability/jspace_phase4/data/bank_b_audit_v1.json
   audit_sha256: d018d47a72ac1bb3cfec6c03e249a6a48b92ebd5da53948c425aaa54cc0c423e
 
 base_author_config:
-  uri: repo://interpretability/jspaces/phases/phase4/configs/p4_bank_b_candidate.yaml
+  uri: repo://interpretability/jspace_phase4/configs/p4_bank_b_candidate.yaml
   sha256: 5874d0d816660272f6a27ac652f2fdcff70c7bdc7dd0ed98a1c97e8513663709
 
 base_verification:
@@ -116,8 +116,8 @@ corrections:
         accepted: [Sri Jayawardenepura Kotte]
 
 outputs:
-  bank: interpretability/jspaces/phases/phase4/data/bank_b_candidate_v2.jsonl
-  sources: interpretability/jspaces/phases/phase4/data/bank_b_source_verification_v2.jsonl
-  partition: interpretability/jspaces/phases/phase4/data/bank_b_partition_candidate_v2.json
-  audit: interpretability/jspaces/phases/phase4/data/bank_b_audit_v2.json
-  schema: interpretability/jspaces/phases/phase4/data/bank_b_source_schema_v2.json
+  bank: interpretability/jspace_phase4/data/bank_b_candidate_v2.jsonl
+  sources: interpretability/jspace_phase4/data/bank_b_source_verification_v2.jsonl
+  partition: interpretability/jspace_phase4/data/bank_b_partition_candidate_v2.json
+  audit: interpretability/jspace_phase4/data/bank_b_audit_v2.json
+  schema: interpretability/jspace_phase4/data/bank_b_source_schema_v2.json

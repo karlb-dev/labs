@@ -15,16 +15,6 @@ import sys
 import time
 from pathlib import Path
 
-def _find_repo_root(start: Path | None = None) -> Path:
-    cur = (start or Path(__file__)).resolve()
-    if cur.is_file():
-        cur = cur.parent
-    for p in [cur, *cur.parents]:
-        if (p / ".git").exists():
-            return p
-    raise RuntimeError("cannot locate git repository root")
-
-
 from ..manifests import (
     atomic_json,
     environment_payload,
@@ -37,7 +27,7 @@ from ..registry4 import create, read_events, resolve_all
 
 EVIDENCE_ID = "p4-phase4-part5-foundation-v1"
 PACKAGE_ROOT = Path(__file__).resolve().parents[2]
-REPO_ROOT = _find_repo_root()
+REPO_ROOT = PACKAGE_ROOT.parents[1]
 REPORTS = PACKAGE_ROOT / "reports"
 MANIFESTS = PACKAGE_ROOT / "manifests"
 
@@ -78,14 +68,14 @@ EXPECTED_LIVE_EVIDENCE = [
 
 EXPECTED_BUNDLES = {
     "gemma_study2": {
-        "bundle": "interpretability/jspaces/sidelines/gemma/release/"
+        "bundle": "interpretability/jspace_gemma/release/"
                   "IMPORT_BUNDLE_SIDELINES2.json",
         "bundle_sha256": (
             "9ef48b8ab1d99d52a756ddea1e285a9d61e781fd054cbf92702bfe81be56"
             "f5b0"),
-        "markdown": "interpretability/jspaces/sidelines/gemma/release/"
+        "markdown": "interpretability/jspace_gemma/release/"
                     "IMPORT_BUNDLE_SIDELINES2.md",
-        "prefix": "interpretability/jspaces/sidelines/gemma/release/"
+        "prefix": "interpretability/jspace_gemma/release/"
                   "evidence_events_prefix_sidelines2.jsonl",
         "prefix_sha256": (
             "2a144bcf0e7be0ac4307f7e2a2984c1879340b9a7e9278d10143d122a14f"
@@ -93,14 +83,14 @@ EXPECTED_BUNDLES = {
         "terminal_event": "gm2-sidelines2-import-bundle-v1",
     },
     "olmo_study2": {
-        "bundle": "interpretability/jspaces/sidelines/olmo/release/"
+        "bundle": "interpretability/jspace_olmo_lineage/release/"
                   "IMPORT_BUNDLE_SIDELINES2.json",
         "bundle_sha256": (
             "c213dc74aa78dcd6613c8bd1562dd07d2e2a0345409ee6da585001693d8e"
             "6b1c"),
-        "markdown": "interpretability/jspaces/sidelines/olmo/release/"
+        "markdown": "interpretability/jspace_olmo_lineage/release/"
                     "IMPORT_BUNDLE_SIDELINES2.md",
-        "prefix": "interpretability/jspaces/sidelines/olmo/release/"
+        "prefix": "interpretability/jspace_olmo_lineage/release/"
                   "evidence_events_prefix_sidelines2.jsonl",
         "prefix_sha256": (
             "0a8973e01d562a82fa88da650ab8597c140050f6caf46c8bbd72e2b58acf"
@@ -110,28 +100,28 @@ EXPECTED_BUNDLES = {
 }
 
 STATE_OF_RECORD_DOCS = [
-    "interpretability/jspaces/sidelines/gemma/release/"
+    "interpretability/jspace_gemma/release/"
     "GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md",
-    "interpretability/jspaces/sidelines/gemma/release/gemma_transport_claim_ledger_v2.md",
-    "interpretability/jspaces/sidelines/gemma/release/TRANSPORT_GATE_PROTOCOL_V2.md",
-    "interpretability/jspaces/sidelines/olmo/reports/"
+    "interpretability/jspace_gemma/release/gemma_transport_claim_ledger_v2.md",
+    "interpretability/jspace_gemma/release/TRANSPORT_GATE_PROTOCOL_V2.md",
+    "interpretability/jspace_olmo_lineage/reports/"
     "OLMO_LINEAGE_STATE_OF_RECORD_V2.md",
-    "interpretability/jspaces/sidelines/olmo/reports/"
+    "interpretability/jspace_olmo_lineage/reports/"
     "OLMO_LINEAGE_CLAIMS_TABLE_V2.md",
     "interpretability/reviews/JSPACE_SIDELINES_2_INTEGRATION_RECORD.md",
 ]
 
 REGISTRIES = {
-    "phase4": "interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl",
-    "gemma": "interpretability/jspaces/sidelines/gemma/reports/evidence_events.jsonl",
+    "phase4": "interpretability/jspace_phase4/reports/evidence_events.jsonl",
+    "gemma": "interpretability/jspace_gemma/reports/evidence_events.jsonl",
     "olmo_lineage":
-        "interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl",
+        "interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
 }
 
 TEST_SUITES = {
-    "phase4": "interpretability/jspaces/phases/phase4/tests",
-    "gemma": "interpretability/jspaces/sidelines/gemma/tests",
-    "olmo_lineage": "interpretability/jspaces/sidelines/olmo/tests",
+    "phase4": "interpretability/jspace_phase4/tests",
+    "gemma": "interpretability/jspace_gemma/tests",
+    "olmo_lineage": "interpretability/jspace_olmo_lineage/tests",
 }
 
 

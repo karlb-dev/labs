@@ -32,10 +32,10 @@ partition:
 
 prior_sources:
   - kind: phase3-bank
-    path: interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+    path: interpretability/jspace_phase3/data/bank_f_v7.jsonl
     sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
   - kind: phase3-bank
-    path: interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+    path: interpretability/jspace_phase3/data/bank_s_v3.jsonl
     sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
   - kind: released-probe-swap
     path: /tmp/jacobian-lens/data/experiments/probe-swap.json
@@ -65,8 +65,8 @@ source_verification:
   independent_sources_required_per_fact: 1
 
 outputs:
-  bank: interpretability/jspaces/phases/phase4/data/bank_b_candidate_v1.jsonl
-  sources: interpretability/jspaces/phases/phase4/data/bank_b_source_verification_v1.jsonl
-  partition: interpretability/jspaces/phases/phase4/data/bank_b_partition_candidate_v1.json
-  audit: interpretability/jspaces/phases/phase4/data/bank_b_audit_v1.json
-  schema: interpretability/jspaces/phases/phase4/data/bank_b_source_schema_v1.json
+  bank: interpretability/jspace_phase4/data/bank_b_candidate_v1.jsonl
+  sources: interpretability/jspace_phase4/data/bank_b_source_verification_v1.jsonl
+  partition: interpretability/jspace_phase4/data/bank_b_partition_candidate_v1.json
+  audit: interpretability/jspace_phase4/data/bank_b_audit_v1.json
+  schema: interpretability/jspace_phase4/data/bank_b_source_schema_v1.json

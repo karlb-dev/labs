@@ -27,7 +27,7 @@ intervention outcomes, and never self-sign independent-review or PI fields.
   gates. The structural-only queue stopped restart-safely. Functional,
   selection margin, prompt-323 influence, and canonical decision were not run.
 - Phase 4.4 begins from a clean pull and the default command
-  `bash interpretability/jspaces/phases/phase4/run_qwen_a1000_postfit_queue.sh`.
+  `bash interpretability/jspace_phase4/run_qwen_a1000_postfit_queue.sh`.
   It verifies the existing fit/structural events and starts at functional.
   Then run side-track admission, exact A120 capacity recovery, durability and
   inventory, and external review exactly as specified in
@@ -441,7 +441,7 @@ The frozen router verified registered result SHA-256
 resolved Branch B without reinterpretation, and launched:
 
 ```bash
-bash interpretability/jspaces/phases/phase4/run_qwen_continuation_fit.sh draw_a_n1000
+bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n1000
 ```
 
 The run started from clean commit `3b04173`, recovered exact n=500, and
@@ -494,7 +494,7 @@ paths remain on Drive as normal `flock` targets; no process holds them.
 4. From the clean repository run:
 
 ```bash
-bash interpretability/jspaces/phases/phase4/run_qwen_frozen_branch_followup.sh
+bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
 ```
 
 The router must reverify the registered functional-result hash, resolve

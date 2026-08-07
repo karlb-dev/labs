@@ -15,16 +15,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-
-def _find_repo_root(start: Path | None = None) -> Path:
-    cur = (start or Path(__file__)).resolve()
-    if cur.is_file():
-        cur = cur.parent
-    for p in [cur, *cur.parents]:
-        if (p / ".git").exists():
-            return p
-    raise RuntimeError("cannot locate git repository root")
-
 from types import SimpleNamespace
 from typing import Mapping
 
@@ -42,7 +32,7 @@ from .p4_qwen_lens_structural_stability import load_lens_checkpoint
 from .p4_qwen_multilens_functional_gate import _capacity_layer
 
 
-REPO_ROOT = _find_repo_root()
+REPO_ROOT = Path(__file__).resolve().parents[4]
 
 
 def parse_args() -> argparse.Namespace:

@@ -36,7 +36,7 @@ models:
     expected_model_type: olmo3
     expected_decoder_layers: 64
 
-prompt_bank: repo://interpretability/jspaces/sidelines/gemma/data/g1_prompts_v1.jsonl
+prompt_bank: repo://interpretability/jspace_gemma/data/g1_prompts_v1.jsonl
 prompt_ids: [gm-p001, gm-p002, gm-p003, gm-p004]
 source_position: -1
 target:

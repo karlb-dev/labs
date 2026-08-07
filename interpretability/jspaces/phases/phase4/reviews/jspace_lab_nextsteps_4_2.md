@@ -453,7 +453,7 @@ The schedule is written for one 96 GB-class GPU and concurrent CPU authoring. It
 ## 4.1 Boundary 0: bootstrap and recovery, 0 to 30 minutes
 
 1. Pull branch `interp_jspace_part2` and verify the reviewed head or a descendant.
-2. Run `bash interpretability/jspaces/phases/phase4/repro.sh`.
+2. Run `bash interpretability/jspace_phase4/repro.sh`.
 3. Verify all Phase 4 tests are green.
 4. Verify the exact Qwen model snapshot, published lens, nested corpora, `jlens` revision, runtime packages, and FLA bindings.
 5. Read both local and Drive recovery headers and choose the highest valid boundary.
@@ -467,7 +467,7 @@ The schedule is written for one 96 GB-class GPU and concurrent CPU authoring. It
 Resume:
 
 ```bash
-cd /content/labs/interpretability/jspaces/phases/phase4
+cd /content/labs/interpretability/jspace_phase4
 python -m jspace_phase4.experiments.p4_qwen_nested_lens_fit \
   --config configs/p4_qwen_nested_lens_fit_dev.yaml \
   --draw draw_a \
@@ -1238,7 +1238,7 @@ The Phase 4 candidate may be signed only when every item below is complete.
 ## 11.1 New files for the immediate block
 
 ```text
-interpretability/jspaces/phases/phase4/
+interpretability/jspace_phase4/
   configs/
     p4_qwen_lens_convergence_drawA_dev.yaml
     p4_qwen_multilens_functional_gate_dev.yaml

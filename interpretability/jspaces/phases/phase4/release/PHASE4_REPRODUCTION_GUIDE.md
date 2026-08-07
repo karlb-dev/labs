@@ -16,7 +16,7 @@ require a new prospective protocol.
 ## Environment
 
 Python 3.12; `pip install -e` each package. Pinned versions:
-`interpretability/jspaces/phases/phase4/constraints.txt` (torch 2.11.0+cu128 CPU
+`interpretability/jspace_phase4/constraints.txt` (torch 2.11.0+cu128 CPU
 build acceptable for verification; CUDA is not required). The campaign
 Drive must be mounted at `/content/drive/MyDrive` (or set
 `JSPACE4_RUN_ROOT`, `JSPACE_DRIVE_ROOT` accordingly); Drive-resident
@@ -30,13 +30,13 @@ git fetch origin --tags
 git switch --detach jspace-phase4-frozen-v1
 
 # 1. Package suites (also installs editable packages)
-bash interpretability/jspaces/sidelines/gemma/repro.sh
-bash interpretability/jspaces/sidelines/olmo/repro.sh
-bash interpretability/jspaces/phases/phase4/repro.sh   # exits 1: one known deficit
+bash interpretability/jspace_gemma/repro.sh
+bash interpretability/jspace_olmo_lineage/repro.sh
+bash interpretability/jspace_phase4/repro.sh   # exits 1: one known deficit
 
 # 2. Whole-registry durability with the known-deficit policy
 python -m jspace_phase4.durability \
-  --known-deficits interpretability/jspaces/phases/phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json \
+  --known-deficits interpretability/jspace_phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json \
   --pass-label reproduction \
   --output /tmp/phase4_durability_reproduction.json
 
@@ -67,7 +67,7 @@ The canonical route recomputes from registered gates alone:
 ```bash
 python - <<'PY'
 import json, pathlib
-root = pathlib.Path('interpretability/jspaces/phases/phase4')
+root = pathlib.Path('interpretability/jspace_phase4')
 # The registered canonical decision output (hash-pinned in the registry):
 # .../canonical_lens_decision/p4-qwen-canonical-lens-decision-a1000-dev-v1/
 # canonical_lens_decision.json  -> payload.canonical_branch == "Q-L4"
@@ -84,7 +84,7 @@ records a from-scratch reconstruction.
 
 ```bash
 python -m jspace_phase4.experiments.p4_import_sidelines_study2 \
-  --config interpretability/jspaces/phases/phase4/configs/p4_import_gemma_transport_study2.yaml \
+  --config interpretability/jspace_phase4/configs/p4_import_gemma_transport_study2.yaml \
   --validate --output /tmp/gemma_study2_revalidation.json
 ```
 

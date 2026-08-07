@@ -14,16 +14,6 @@ import hashlib
 import json
 import math
 from pathlib import Path
-
-def _find_repo_root(start: Path | None = None) -> Path:
-    cur = (start or Path(__file__)).resolve()
-    if cur.is_file():
-        cur = cur.parent
-    for p in [cur, *cur.parents]:
-        if (p / ".git").exists():
-            return p
-    raise RuntimeError("cannot locate git repository root")
-
 import subprocess
 from typing import Mapping, Sequence
 
@@ -487,7 +477,7 @@ def make_figure(result: Mapping, *, png: Path, pdf: Path) -> None:
 
 def _generation_protocol_unchanged(
         generation_commit: str, config_path: Path) -> bool:
-    repository = _find_repo_root()
+    repository = Path(__file__).resolve().parents[3]
     module_path = Path(__file__).resolve().relative_to(repository)
     config_relative = config_path.resolve().relative_to(repository)
     ancestor = subprocess.run(

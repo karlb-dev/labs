@@ -13,7 +13,7 @@ prospective_sesoi:
   endpoint: family-level eight-cell accuracy interaction
   accuracy_points: 0.20
   alternative: greater
-  memo_uri: repo://interpretability/jspaces/phases/phase4/preregistration/P4_P2_SESOI_MEMO_DRAFT.md
+  memo_uri: repo://interpretability/jspace_phase4/preregistration/P4_P2_SESOI_MEMO_DRAFT.md
   memo_sha256: d961b09308baa7b395ea8e439959aa1fcdc8dfbe60fe24adb9c9c87082915f5c
   fixed_before_pilot: true
   pilot_mean_may_not_select_or_revise_sesoi: true
@@ -52,9 +52,9 @@ continuous_answer_lp_sensitivity:
   no_power_or_primary_authorization: true
 
 outputs:
-  result: interpretability/jspaces/phases/phase4/reports/qwen_mode_exact_power_dev_v1.json
-  figure_png: interpretability/jspaces/phases/phase4/reports/figures/p4f32_qwen_mode_exact_power.png
-  figure_pdf: interpretability/jspaces/phases/phase4/reports/figures/p4f32_qwen_mode_exact_power.pdf
+  result: interpretability/jspace_phase4/reports/qwen_mode_exact_power_dev_v1.json
+  figure_png: interpretability/jspace_phase4/reports/figures/p4f32_qwen_mode_exact_power.png
+  figure_pdf: interpretability/jspace_phase4/reports/figures/p4f32_qwen_mode_exact_power.pdf
 
 claim_boundary: >-
   Consumed-development design calibration only. The signed pilot mean is

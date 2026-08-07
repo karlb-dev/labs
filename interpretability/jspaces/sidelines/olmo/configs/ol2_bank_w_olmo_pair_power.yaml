@@ -16,10 +16,10 @@ target_models:
 
 registered_variance_ruler:
   evidence_id: p4-bank-w-power-holm2-dev-v1
-  registry_path: interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl
-  result_path: interpretability/jspaces/phases/phase4/reports/bank_w_power_holm2_dev_v1.json
+  registry_path: interpretability/jspace_phase4/reports/evidence_events.jsonl
+  result_path: interpretability/jspace_phase4/reports/bank_w_power_holm2_dev_v1.json
   result_sha256: 11c4dd0751efffac56e37abeac6cd40aea3113177744c6c17f94f202ae27bf16
-  config_path: interpretability/jspaces/phases/phase4/configs/p4_bank_w_power_holm2_dev.yaml
+  config_path: interpretability/jspace_phase4/configs/p4_bank_w_power_holm2_dev.yaml
   config_sha256: 829d4ff8fb97ac32fe584354e0710fce510c1c3a91109889782eb4ff879bdb14
   conservative_common_sd_nats: 0.23
   conservative_rule: largest common-family SD across registered development sources, rounded upward to 0.01 nat

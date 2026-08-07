@@ -13,7 +13,7 @@
   "state_sha256": "b0cf4c8d7e6debc20d78a9ed49ba97025b27a2cee9a18ce517d67396801d6d2a"
  },
  "config": {
-  "path": "/content/labs_phase4_4/interpretability/jspaces/phases/phase4/configs/p4_qwen_nested_lens_fit_dev.yaml",
+  "path": "/content/labs_phase4_4/interpretability/jspace_phase4/configs/p4_qwen_nested_lens_fit_dev.yaml",
   "sha256": "6df3f79e7c904a915e2d302a8c2908bd8b9d504bcff9f8454d4ae5c414e882db"
  },
  "d_model": 5120,

@@ -3,8 +3,8 @@ tier: phase4-development
 slug: olmo3-base
 model_uri: model://allenai/Olmo-3-1125-32B@c2b61dae89a1ad10e4ad5653d0e46b590902607b
 banks:
-  - repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
-  - repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+  - repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
+  - repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
 max_new_tokens: 8
 checkpoint_every: 10
 base_seed: 31337

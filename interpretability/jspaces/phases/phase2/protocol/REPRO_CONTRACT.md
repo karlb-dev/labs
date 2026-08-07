@@ -49,7 +49,7 @@ From a fresh VM:
 
 ```bash
 git clone git@github.com:karlb-dev/labs.git && cd labs
-bash interpretability/jspaces/phases/phase2/repro.sh <evidence-id>
+bash interpretability/jspace_part2/repro.sh <evidence-id>
 ```
 
 `repro.sh` = pip-install the package (pinned deps) → environment audit →
@@ -86,7 +86,7 @@ registry row. Reports cite the superseding item; errata stay visible.
 ## Directory contract
 
 ```
-interpretability/jspaces/phases/phase2/        # in git — the package
+interpretability/jspace_part2/        # in git — the package
   jspace_part2/                       # code (lib, provenance, adapters, experiments, analysis)
   configs/                            # typed YAML configs (paths, pins, phases)
   tests/                              # unit + golden tests (CPU)

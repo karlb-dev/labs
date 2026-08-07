@@ -1,7 +1,7 @@
 evidence_id: p4-qwen-selection-margin-a500-a1000-dev-v1
 tier: phase4-development
 slug: qwen36-27b-selection-margin-a500-a1000
-source_functional_config_uri: repo://interpretability/jspaces/phases/phase4/configs/p4_qwen_multilens_functional_gate_a500_a1000_dev.yaml
+source_functional_config_uri: repo://interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_a500_a1000_dev.yaml
 source_functional_evidence_id: p4-qwen-multilens-functional-gate-a500-a1000-published-dev-v1
 source_capture_artifact: selection_margin_capture_rows.parquet
 source_selection_artifact: selection_rows.parquet
@@ -47,7 +47,7 @@ analysis:
   report_by_layer: true
   report_margin_threshold_curve: true
   no_position_exclusion: true
-  ql2_amendment_uri: repo://interpretability/jspaces/phases/phase4/preregistration/QL2_ESTIMAND_AMENDMENT_DRAFT.md
+  ql2_amendment_uri: repo://interpretability/jspace_phase4/preregistration/QL2_ESTIMAND_AMENDMENT_DRAFT.md
 
 figure:
   stem: p4f27_qwen_selection_margin_a500_a1000

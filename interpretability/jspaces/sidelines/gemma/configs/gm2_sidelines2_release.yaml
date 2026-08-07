@@ -28,55 +28,55 @@ admitted_evidence:
 
 source_artifacts:
   - role: state-of-record-v2
-    repo_path: interpretability/jspaces/sidelines/gemma/release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md
+    repo_path: interpretability/jspace_gemma/release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md
     sha256: 9c8c3b9be027a5659347bde3a26ab02fd12ed7f7903c3e9a2d785b809e12de67
     target_uri: gemma-run://release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md
   - role: claim-ledger-v2
-    repo_path: interpretability/jspaces/sidelines/gemma/release/gemma_transport_claim_ledger_v2.md
+    repo_path: interpretability/jspace_gemma/release/gemma_transport_claim_ledger_v2.md
     sha256: bc10e3ae5f9339d08328780766326f53e94af63dab3a22f40a535cc59f139591
     target_uri: gemma-run://release/gemma_transport_claim_ledger_v2.md
   - role: study2-report
-    repo_path: interpretability/jspaces/sidelines/gemma/reports/GEMMA_TRANSPORT_STUDY2_REPORT.md
+    repo_path: interpretability/jspace_gemma/reports/GEMMA_TRANSPORT_STUDY2_REPORT.md
     sha256: 6ba43c1fa75aa7b8892dc07d29f89354b2a953e28b03c4b3cf34f637bf502180
     target_uri: gemma-run://release/GEMMA_TRANSPORT_STUDY2_REPORT.md
   - role: transport-gate-protocol-v2
-    repo_path: interpretability/jspaces/sidelines/gemma/release/TRANSPORT_GATE_PROTOCOL_V2.md
+    repo_path: interpretability/jspace_gemma/release/TRANSPORT_GATE_PROTOCOL_V2.md
     sha256: ec75a631770a251b0558f52b5faf22b5c1991365cef3520b59ebab85f945a43c
     target_uri: gemma-run://release/TRANSPORT_GATE_PROTOCOL_V2.md
   - role: handout-tex
-    repo_path: interpretability/jspaces/sidelines/gemma/reports/handout/gemma_transport_development.tex
+    repo_path: interpretability/jspace_gemma/reports/handout/gemma_transport_development.tex
     sha256: afaf90af4f3b96f5e1b267607e52839725a38cbf25b4713e343863d0383187e2
     target_uri: gemma-run://release/GEMMA_TRANSPORT_STUDY2_HANDOUT.tex
   - role: handout-pdf
-    repo_path: interpretability/jspaces/sidelines/gemma/reports/handout/gemma_transport_development.pdf
+    repo_path: interpretability/jspace_gemma/reports/handout/gemma_transport_development.pdf
     sha256: 518b1fac1997469e364ebe641fcc40b99b513c0a57144a47668793a3882fd5c9
     target_uri: gemma-run://release/GEMMA_TRANSPORT_STUDY2_HANDOUT.pdf
   - role: calibration-figure
-    repo_path: interpretability/jspaces/sidelines/gemma/reports/handout/figures/gm2_backend_disagreement_by_model_batch.png
+    repo_path: interpretability/jspace_gemma/reports/handout/figures/gm2_backend_disagreement_by_model_batch.png
     sha256: 9c21f13c90a8b9d3d0325a699e025f1267dde8548bc3e74eb6f592ff0bb773ff
     target_uri: gemma-run://release/figures/gm2_backend_disagreement_by_model_batch.png
   - role: frozen-design
-    repo_path: interpretability/jspaces/sidelines/gemma/preregistration/G2_STUDY2_FROZEN_DESIGN.md
+    repo_path: interpretability/jspace_gemma/preregistration/G2_STUDY2_FROZEN_DESIGN.md
     sha256: 3276e20b6943c1ca91da18d0d258ca030e85accf0a9d5aef867e85dcf338fbb9
     target_uri: gemma-run://release/protocol/G2_STUDY2_FROZEN_DESIGN.md
   - role: calibration-config
-    repo_path: interpretability/jspaces/sidelines/gemma/configs/gm2_backend_parity_calibration.yaml
+    repo_path: interpretability/jspace_gemma/configs/gm2_backend_parity_calibration.yaml
     sha256: 42b003729d4a3a7632db672b81980cf0b92ba79208a78b7b40225f2dcb917a0c
     target_uri: gemma-run://release/protocol/gm2_backend_parity_calibration.yaml
   - role: license-config
-    repo_path: interpretability/jspaces/sidelines/gemma/configs/gm2_stage1_relicense.yaml
+    repo_path: interpretability/jspace_gemma/configs/gm2_stage1_relicense.yaml
     sha256: e31b9d1c27438da0bb15e1a0c8495a7cd6a1119e4fd3b47521dacc750e7e8f05
     target_uri: gemma-run://release/protocol/gm2_stage1_relicense.yaml
   - role: candidate-sentences
-    repo_path: interpretability/jspaces/sidelines/gemma/protocol/G2_STAGE1_CANDIDATE_SENTENCES.md
+    repo_path: interpretability/jspace_gemma/protocol/G2_STAGE1_CANDIDATE_SENTENCES.md
     sha256: cd22943e90b5156eee0ae5d0038f0c826b9876054660711944209185fd800dab
     target_uri: gemma-run://release/protocol/G2_STAGE1_CANDIDATE_SENTENCES.md
   - role: predata-correction
-    repo_path: interpretability/jspaces/sidelines/gemma/protocol/G2_PRE_DATA_ARCHITECTURE_CORRECTION.md
+    repo_path: interpretability/jspace_gemma/protocol/G2_PRE_DATA_ARCHITECTURE_CORRECTION.md
     sha256: 97e1f9fbeff95a0adbf522b898ecd3c22a397792cc1ff2619ed586a845fd774b
     target_uri: gemma-run://release/protocol/G2_PRE_DATA_ARCHITECTURE_CORRECTION.md
   - role: reconstruction-audit-correction
-    repo_path: interpretability/jspaces/sidelines/gemma/protocol/G2_POSTDATA_RECONSTRUCTION_AUDIT_CORRECTION.md
+    repo_path: interpretability/jspace_gemma/protocol/G2_POSTDATA_RECONSTRUCTION_AUDIT_CORRECTION.md
     sha256: 3a000f4e7f826a1933786aee79ab963af46c695402b1d809bea47bcf94ef729a
     target_uri: gemma-run://release/protocol/G2_POSTDATA_RECONSTRUCTION_AUDIT_CORRECTION.md
 
@@ -108,9 +108,9 @@ result_summary:
   interventions_opened: false
 
 outputs:
-  repo_bundle_json: interpretability/jspaces/sidelines/gemma/release/IMPORT_BUNDLE_SIDELINES2.json
-  repo_bundle_markdown: interpretability/jspaces/sidelines/gemma/release/IMPORT_BUNDLE_SIDELINES2.md
-  repo_registry_prefix: interpretability/jspaces/sidelines/gemma/release/evidence_events_prefix_sidelines2.jsonl
+  repo_bundle_json: interpretability/jspace_gemma/release/IMPORT_BUNDLE_SIDELINES2.json
+  repo_bundle_markdown: interpretability/jspace_gemma/release/IMPORT_BUNDLE_SIDELINES2.md
+  repo_registry_prefix: interpretability/jspace_gemma/release/evidence_events_prefix_sidelines2.jsonl
   drive_bundle_json: gemma-run://release/IMPORT_BUNDLE_SIDELINES2.json
   drive_bundle_markdown: gemma-run://release/IMPORT_BUNDLE_SIDELINES2.md
   drive_registry_prefix: gemma-run://release/evidence_events_prefix_sidelines2.jsonl

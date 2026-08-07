@@ -510,7 +510,7 @@ def run_model(config_path: Path, config: Mapping, slug: str) -> None:
             config["evidence_id"]: protocol_sha,
             config["bank_evidence_id"]: config["audit_file_sha256"],
             config["power_evidence_id"]: file_sha256(resolve_uri(
-                "repo://interpretability/jspaces/phases/phase4/reports/"
+                "repo://interpretability/jspace_phase4/reports/"
                 "bank_w_power_dev_v1.json")),
         },
         code_commit=clean["code_commit"],

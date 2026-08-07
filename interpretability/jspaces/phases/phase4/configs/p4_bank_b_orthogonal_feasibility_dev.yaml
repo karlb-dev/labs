@@ -5,7 +5,7 @@ tier: phase4-development
 slug: bank-b-orthogonal-feasibility
 
 model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
-model_snapshot_manifest_uri: repo://interpretability/jspaces/phases/phase4/configs/qwen36-27b_snapshot_manifest.json
+model_snapshot_manifest_uri: repo://interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
 model_snapshot_manifest_sha256: 2ae12ad8e69b6ede7f4e8b3a2df619b48c1d4b2bc9faf06ca93068c1af32a818
 
 # The one-shot rescue uses the canonical Phase-4 Qwen instrument only on a
@@ -22,7 +22,7 @@ canonical_lens:
 
 consumed_cohort:
   source_study: jspace-phase3
-  source_registry: repo://interpretability/jspaces/phases/phase3/reports/evidence_events.jsonl
+  source_registry: repo://interpretability/jspace_phase3/reports/evidence_events.jsonl
   source_registry_sha256: 2223e73093463efc55d6f8d2995bdd5e0c016b34e1dbf77bc064499c1a071be2
   source_evidence_id: p3-bridge-swap-endpoint-qwen36-27b-v1
   paired_uri: drive://phase3_20260729/metrics/qwen36-27b/release_audit/bridge_swap_endpoint/p3_bridge_swap_endpoint_paired_qwen36-27b.parquet
@@ -36,9 +36,9 @@ consumed_cohort:
   confirmatory_or_replication_rows_forbidden: true
 
 task_banks:
-  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+  - uri: repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
     sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
-  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+  - uri: repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
     sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
 
 runtime:

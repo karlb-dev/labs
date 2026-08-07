@@ -27,4 +27,4 @@ G2.2 is a mechanical router over the frozen calibration event and exact study-1 
 
 ## Isolation and stops
 
-This branch writes only `interpretability/jspaces/sidelines/gemma/`, the allowed Gemma paper paths, and its dedicated Drive root. It never writes Phase 4 or OLMo registries. Any target leakage during ceiling derivation, model/hash mismatch, material primal failure, nonfinite exact backend, unreconstructable raw row, or post-unblinding threshold change stops downstream Gemma science and is registered as an incident rather than repaired in place.
+This branch writes only `interpretability/jspace_gemma/`, the allowed Gemma paper paths, and its dedicated Drive root. It never writes Phase 4 or OLMo registries. Any target leakage during ceiling derivation, model/hash mismatch, material primal failure, nonfinite exact backend, unreconstructable raw row, or post-unblinding threshold change stops downstream Gemma science and is registered as an incident rather than repaired in place.

@@ -7,7 +7,7 @@
    "path_suffix": "metrics/qwen36-27b-multilens-functional-gate/functional_gate/p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1/state.json",
    "expected_sha256": "361bda08e9ffbe1d333fd3cfaf3c7b9545e6a3504246a16dd8b0c07ad26f45e8",
    "status": "exact-bytes-not-found-current-vm-external-resolution-required",
-   "search_record": "repo://interpretability/jspaces/phases/phase4/reviews/A120_STATE_EXACT_COPY_SEARCH_20260802.md"
+   "search_record": "repo://interpretability/jspace_phase4/reviews/A120_STATE_EXACT_COPY_SEARCH_20260802.md"
   },
   {
    "evidence_id": "p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1",
@@ -15,8 +15,8 @@
    "expected_sha256": "6b0399df2c57158e7fdad24274e50f8c1058021d233412afdcc5177f6c651b6f",
    "status": "exact-bytes-restored-and-verified",
    "restored_utc": "2026-08-03T16:15:51Z",
-   "recovery_config": "repo://interpretability/jspaces/phases/phase4/configs/p4_qwen_historical_capacity_recovery.yaml",
-   "recovery_record": "repo://interpretability/jspaces/phases/phase4/reports/PHASE4_PART4_A120_CAPACITY_RECOVERY.json"
+   "recovery_config": "repo://interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml",
+   "recovery_record": "repo://interpretability/jspace_phase4/reports/PHASE4_PART4_A120_CAPACITY_RECOVERY.json"
   }
  ]
 }

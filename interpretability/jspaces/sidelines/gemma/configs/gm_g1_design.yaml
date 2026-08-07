@@ -18,7 +18,7 @@ models:
     revision: 842da3794eaa0b77d5f08bae87a17459d91ff475
     layers_zero_indexed: [22, 30, 37, 44, 52]
 
-prompt_bank: repo://interpretability/jspaces/sidelines/gemma/data/g1_prompts_v1.jsonl
+prompt_bank: repo://interpretability/jspace_gemma/data/g1_prompts_v1.jsonl
 stage1_prompt_ids: [gm-p001, gm-p002, gm-p003, gm-p004]
 stage2_prompt_ids:
   - gm-p001
@@ -91,7 +91,7 @@ threshold_calibration:
     - wrong_hook_sentinel
     - smallest_faithful_epsilon
     - late_identity_anchor
-  frozen_threshold_file: repo://interpretability/jspaces/sidelines/gemma/configs/gm_g1_thresholds_frozen.yaml
+  frozen_threshold_file: repo://interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml
   threshold_evidence_id: gm-jvp-olmo-positive-control-v1
   positive_control_artifact_sha256: fc957c9a6f6f397cbaf3274193713ebec332bb81dbb99b61cf9f56d058cd1942
   gemma_execution_allowed: true

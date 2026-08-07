@@ -33,5 +33,5 @@ candidate.
 The one-command foundation gate is:
 
 ```bash
-bash interpretability/jspaces/phases/phase4/repro.sh
+bash interpretability/jspace_phase4/repro.sh
 ```

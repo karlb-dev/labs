@@ -2,14 +2,14 @@ evidence_id: p4-qwen-mode-gate-dev-v2
 tier: phase4-development
 slug: qwen36-27b-mode-gate-v2
 model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
-model_snapshot_manifest_uri: repo://interpretability/jspaces/phases/phase4/configs/qwen36-27b_snapshot_manifest.json
+model_snapshot_manifest_uri: repo://interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
 model_snapshot_manifest_sha256: 2ae12ad8e69b6ede7f4e8b3a2df619b48c1d4b2bc9faf06ca93068c1af32a818
 
 methods_gate:
   evidence_id: p4-qwen-mode-parser-gate-dev-v2
-  config_uri: repo://interpretability/jspaces/phases/phase4/configs/p4_qwen_mode_parser_gate_v2_dev.yaml
+  config_uri: repo://interpretability/jspace_phase4/configs/p4_qwen_mode_parser_gate_v2_dev.yaml
   config_sha256: f1413348cece558f6b722f66dd975a286055f26d59a73a07f18847bf7188f817
-  result_uri: repo://interpretability/jspaces/phases/phase4/reports/qwen_mode_parser_gate_dev_v2.json
+  result_uri: repo://interpretability/jspace_phase4/reports/qwen_mode_parser_gate_dev_v2.json
   result_sha256: 54b60c2daf380c9e67db7d7eeb8a9b250ba6728400c90afaed6ea6eb6f5bfb5b
 
 selection:
@@ -25,9 +25,9 @@ selection:
   outcome_columns_allowed: false
 
 task_banks:
-  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+  - uri: repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
     sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
-  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+  - uri: repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
     sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
 
 runtime:

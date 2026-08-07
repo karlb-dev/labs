@@ -1959,7 +1959,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/bank_w_power_dev_v1.json",
+   "path": "interpretability/jspace_phase4/reports/bank_w_power_dev_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -1977,7 +1977,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f14_bank_w_power.png",
+   "path": "interpretability/jspace_phase4/reports/figures/p4f14_bank_w_power.png",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -1995,7 +1995,7 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f14_bank_w_power.pdf",
+   "path": "interpretability/jspace_phase4/reports/figures/p4f14_bank_w_power.pdf",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -2013,7 +2013,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/qwen_mode_parser_gate_dev_v1.json",
+   "path": "interpretability/jspace_phase4/reports/qwen_mode_parser_gate_dev_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -2895,7 +2895,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/data/bank_b_candidate_v2.jsonl",
+   "path": "interpretability/jspace_phase4/data/bank_b_candidate_v2.jsonl",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -2913,7 +2913,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/data/bank_b_source_verification_v2.jsonl",
+   "path": "interpretability/jspace_phase4/data/bank_b_source_verification_v2.jsonl",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -2931,7 +2931,7 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/data/bank_b_partition_candidate_v2.json",
+   "path": "interpretability/jspace_phase4/data/bank_b_partition_candidate_v2.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -2949,7 +2949,7 @@
    "known_deficit": false,
    "ordinal": 3,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/data/bank_b_audit_v2.json",
+   "path": "interpretability/jspace_phase4/data/bank_b_audit_v2.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -2967,7 +2967,7 @@
    "known_deficit": false,
    "ordinal": 4,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/data/bank_b_source_schema_v2.json",
+   "path": "interpretability/jspace_phase4/data/bank_b_source_schema_v2.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3093,7 +3093,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/bank_b_power_dev_v1.json",
+   "path": "interpretability/jspace_phase4/reports/bank_b_power_dev_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3111,7 +3111,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f18_bank_b_power.png",
+   "path": "interpretability/jspace_phase4/reports/figures/p4f18_bank_b_power.png",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3129,7 +3129,7 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f18_bank_b_power.pdf",
+   "path": "interpretability/jspace_phase4/reports/figures/p4f18_bank_b_power.pdf",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3147,7 +3147,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/qwen_mode_parser_gate_dev_v2.json",
+   "path": "interpretability/jspace_phase4/reports/qwen_mode_parser_gate_dev_v2.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3165,7 +3165,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/bank_b_design_feasibility_dev_v1.json",
+   "path": "interpretability/jspace_phase4/reports/bank_b_design_feasibility_dev_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3183,7 +3183,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f22_bank_b_design_feasibility.png",
+   "path": "interpretability/jspace_phase4/reports/figures/p4f22_bank_b_design_feasibility.png",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3201,7 +3201,7 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f22_bank_b_design_feasibility.pdf",
+   "path": "interpretability/jspace_phase4/reports/figures/p4f22_bank_b_design_feasibility.pdf",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3219,7 +3219,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/bank_w_capability_protocol_dev_v1.json",
+   "path": "interpretability/jspace_phase4/reports/bank_w_capability_protocol_dev_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3237,7 +3237,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/qwen_mode_design_feasibility_dev_v1.json",
+   "path": "interpretability/jspace_phase4/reports/qwen_mode_design_feasibility_dev_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3255,7 +3255,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f24_qwen_mode_design_feasibility.png",
+   "path": "interpretability/jspace_phase4/reports/figures/p4f24_qwen_mode_design_feasibility.png",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3273,7 +3273,7 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f24_qwen_mode_design_feasibility.pdf",
+   "path": "interpretability/jspace_phase4/reports/figures/p4f24_qwen_mode_design_feasibility.pdf",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3291,7 +3291,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/qwen_mode_variance_pilot_protocol_dev_v1.json",
+   "path": "interpretability/jspace_phase4/reports/qwen_mode_variance_pilot_protocol_dev_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3939,7 +3939,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/bank_w_power_holm2_dev_v1.json",
+   "path": "interpretability/jspace_phase4/reports/bank_w_power_holm2_dev_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3957,7 +3957,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f28_bank_w_power_holm2.png",
+   "path": "interpretability/jspace_phase4/reports/figures/p4f28_bank_w_power_holm2.png",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3975,7 +3975,7 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f28_bank_w_power_holm2.pdf",
+   "path": "interpretability/jspace_phase4/reports/figures/p4f28_bank_w_power_holm2.pdf",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -3993,7 +3993,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/data/bank_w_candidate_v3.jsonl",
+   "path": "interpretability/jspace_phase4/data/bank_w_candidate_v3.jsonl",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -4011,7 +4011,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/data/bank_w_partition_candidate_v3.json",
+   "path": "interpretability/jspace_phase4/data/bank_w_partition_candidate_v3.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -4029,7 +4029,7 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/data/bank_w_audit_v3.json",
+   "path": "interpretability/jspace_phase4/data/bank_w_audit_v3.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -6477,7 +6477,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/OLMO_BANK_W_CAPABILITY_IMPORT_V1.json",
+   "path": "interpretability/jspace_phase4/reports/OLMO_BANK_W_CAPABILITY_IMPORT_V1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -6495,7 +6495,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/olmo_bank_w_capability_import_validation_v1.json",
+   "path": "interpretability/jspace_phase4/reports/olmo_bank_w_capability_import_validation_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -6513,7 +6513,7 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/source_registries/olmo_bank_w_early_d76e937.jsonl",
+   "path": "interpretability/jspace_phase4/reports/source_registries/olmo_bank_w_early_d76e937.jsonl",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -6729,9 +6729,9 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "/content/labs_phase4_4/interpretability/jspaces/phases/phase4/reports/bank_w_capability_joint_imported_dev_v1.json",
+   "path": "/content/labs_phase4_4/interpretability/jspace_phase4/reports/bank_w_capability_joint_imported_dev_v1.json",
    "resolution": "repository-materialization",
-   "resolved_path": "/content/labs/interpretability/jspaces/phases/phase4/reports/bank_w_capability_joint_imported_dev_v1.json",
+   "resolved_path": "/content/labs/interpretability/jspace_phase4/reports/bank_w_capability_joint_imported_dev_v1.json",
    "status": "verified"
   },
   {
@@ -6747,9 +6747,9 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "outputs",
-   "path": "/content/labs_phase4_4/interpretability/jspaces/phases/phase4/reports/figures/p4f30_bank_w_joint_imported.png",
+   "path": "/content/labs_phase4_4/interpretability/jspace_phase4/reports/figures/p4f30_bank_w_joint_imported.png",
    "resolution": "repository-materialization",
-   "resolved_path": "/content/labs/interpretability/jspaces/phases/phase4/reports/figures/p4f30_bank_w_joint_imported.png",
+   "resolved_path": "/content/labs/interpretability/jspace_phase4/reports/figures/p4f30_bank_w_joint_imported.png",
    "status": "verified"
   },
   {
@@ -6765,9 +6765,9 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "outputs",
-   "path": "/content/labs_phase4_4/interpretability/jspaces/phases/phase4/reports/figures/p4f30_bank_w_joint_imported.pdf",
+   "path": "/content/labs_phase4_4/interpretability/jspace_phase4/reports/figures/p4f30_bank_w_joint_imported.pdf",
    "resolution": "repository-materialization",
-   "resolved_path": "/content/labs/interpretability/jspaces/phases/phase4/reports/figures/p4f30_bank_w_joint_imported.pdf",
+   "resolved_path": "/content/labs/interpretability/jspace_phase4/reports/figures/p4f30_bank_w_joint_imported.pdf",
    "status": "verified"
   },
   {
@@ -6783,7 +6783,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/GEMMA_TRANSPORT_IMPORT_V1.json",
+   "path": "interpretability/jspace_phase4/reports/GEMMA_TRANSPORT_IMPORT_V1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -6801,7 +6801,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/gemma_transport_import_validation_v1.json",
+   "path": "interpretability/jspace_phase4/reports/gemma_transport_import_validation_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -6819,9 +6819,9 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/reports/evidence_events.jsonl",
+   "path": "interpretability/jspace_gemma/reports/evidence_events.jsonl",
    "resolution": "append-only-registry-prefix@fddab685ca656d81f6de086fa10f10e8dae6fcf6",
-   "resolved_path": "/content/labs/interpretability/jspaces/sidelines/gemma/reports/evidence_events.jsonl",
+   "resolved_path": "/content/labs/interpretability/jspace_gemma/reports/evidence_events.jsonl",
    "status": "verified"
   },
   {
@@ -6855,7 +6855,7 @@
    "known_deficit": false,
    "ordinal": 4,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/configs/gm_g1_thresholds_frozen.yaml",
+   "path": "interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -7215,7 +7215,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/OLMO_LINEAGE_IMPORT_V1.json",
+   "path": "interpretability/jspace_phase4/reports/OLMO_LINEAGE_IMPORT_V1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -7233,7 +7233,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/olmo_lineage_import_validation_v1.json",
+   "path": "interpretability/jspace_phase4/reports/olmo_lineage_import_validation_v1.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -7251,9 +7251,9 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl",
+   "path": "interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
    "resolution": "append-only-registry-prefix@6ac62d2c0726a9b390a4125211b0aeff95584c96",
-   "resolved_path": "/content/labs/interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl",
+   "resolved_path": "/content/labs/interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
    "status": "verified"
   },
   {
@@ -7503,7 +7503,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reviews/A120_STATE_EXACT_COPY_SEARCH_20260802.md",
+   "path": "interpretability/jspace_phase4/reviews/A120_STATE_EXACT_COPY_SEARCH_20260802.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -7521,7 +7521,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reviews/A120_A250_STATE_ARCHIVAL_DISPOSITION.md",
+   "path": "interpretability/jspace_phase4/reviews/A120_A250_STATE_ARCHIVAL_DISPOSITION.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -7539,7 +7539,7 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/reports/PHASE4_PART4_A120_CAPACITY_RECOVERY.json",
+   "path": "interpretability/jspace_phase4/reports/PHASE4_PART4_A120_CAPACITY_RECOVERY.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -7557,7 +7557,7 @@
    "known_deficit": false,
    "ordinal": 3,
    "output_field": "outputs",
-   "path": "interpretability/jspaces/phases/phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json",
+   "path": "interpretability/jspace_phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -7575,7 +7575,7 @@
    "known_deficit": false,
    "ordinal": 0,
    "output_field": "outputs",
-   "path": "/content/labs/interpretability/jspaces/phases/phase4/reports/PHASE4_PART5_FOUNDATION.json",
+   "path": "/content/labs/interpretability/jspace_phase4/reports/PHASE4_PART5_FOUNDATION.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -7593,7 +7593,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "outputs",
-   "path": "/content/labs/interpretability/jspaces/phases/phase4/reports/PHASE4_PART5_FOUNDATION.md",
+   "path": "/content/labs/interpretability/jspace_phase4/reports/PHASE4_PART5_FOUNDATION.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -7611,7 +7611,7 @@
    "known_deficit": false,
    "ordinal": 2,
    "output_field": "outputs",
-   "path": "/content/labs/interpretability/jspaces/phases/phase4/manifests/phase4_part5_source_inventory.json",
+   "path": "/content/labs/interpretability/jspace_phase4/manifests/phase4_part5_source_inventory.json",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -7647,7 +7647,7 @@
    "known_deficit": false,
    "ordinal": 1,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/configs/gm_g1_thresholds_frozen.yaml",
+   "path": "interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8169,7 +8169,7 @@
    "known_deficit": false,
    "ordinal": 30,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md",
+   "path": "interpretability/jspace_gemma/release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8187,7 +8187,7 @@
    "known_deficit": false,
    "ordinal": 31,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/release/gemma_transport_claim_ledger_v2.md",
+   "path": "interpretability/jspace_gemma/release/gemma_transport_claim_ledger_v2.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8205,7 +8205,7 @@
    "known_deficit": false,
    "ordinal": 32,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/reports/GEMMA_TRANSPORT_STUDY2_REPORT.md",
+   "path": "interpretability/jspace_gemma/reports/GEMMA_TRANSPORT_STUDY2_REPORT.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8223,7 +8223,7 @@
    "known_deficit": false,
    "ordinal": 33,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/release/TRANSPORT_GATE_PROTOCOL_V2.md",
+   "path": "interpretability/jspace_gemma/release/TRANSPORT_GATE_PROTOCOL_V2.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8241,7 +8241,7 @@
    "known_deficit": false,
    "ordinal": 34,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/reports/handout/gemma_transport_development.tex",
+   "path": "interpretability/jspace_gemma/reports/handout/gemma_transport_development.tex",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8259,7 +8259,7 @@
    "known_deficit": false,
    "ordinal": 35,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/reports/handout/gemma_transport_development.pdf",
+   "path": "interpretability/jspace_gemma/reports/handout/gemma_transport_development.pdf",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8277,7 +8277,7 @@
    "known_deficit": false,
    "ordinal": 36,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/reports/handout/figures/gm2_backend_disagreement_by_model_batch.png",
+   "path": "interpretability/jspace_gemma/reports/handout/figures/gm2_backend_disagreement_by_model_batch.png",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8295,7 +8295,7 @@
    "known_deficit": false,
    "ordinal": 37,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/preregistration/G2_STUDY2_FROZEN_DESIGN.md",
+   "path": "interpretability/jspace_gemma/preregistration/G2_STUDY2_FROZEN_DESIGN.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8313,7 +8313,7 @@
    "known_deficit": false,
    "ordinal": 38,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/configs/gm2_backend_parity_calibration.yaml",
+   "path": "interpretability/jspace_gemma/configs/gm2_backend_parity_calibration.yaml",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8331,7 +8331,7 @@
    "known_deficit": false,
    "ordinal": 39,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/configs/gm2_stage1_relicense.yaml",
+   "path": "interpretability/jspace_gemma/configs/gm2_stage1_relicense.yaml",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8349,7 +8349,7 @@
    "known_deficit": false,
    "ordinal": 40,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/protocol/G2_STAGE1_CANDIDATE_SENTENCES.md",
+   "path": "interpretability/jspace_gemma/protocol/G2_STAGE1_CANDIDATE_SENTENCES.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8367,7 +8367,7 @@
    "known_deficit": false,
    "ordinal": 41,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/protocol/G2_PRE_DATA_ARCHITECTURE_CORRECTION.md",
+   "path": "interpretability/jspace_gemma/protocol/G2_PRE_DATA_ARCHITECTURE_CORRECTION.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -8385,7 +8385,7 @@
    "known_deficit": false,
    "ordinal": 42,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/gemma/protocol/G2_POSTDATA_RECONSTRUCTION_AUDIT_CORRECTION.md",
+   "path": "interpretability/jspace_gemma/protocol/G2_POSTDATA_RECONSTRUCTION_AUDIT_CORRECTION.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9195,7 +9195,7 @@
    "known_deficit": false,
    "ordinal": 44,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md",
+   "path": "interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9213,7 +9213,7 @@
    "known_deficit": false,
    "ordinal": 45,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_CLAIMS_TABLE_V2.md",
+   "path": "interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_CLAIMS_TABLE_V2.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9231,7 +9231,7 @@
    "known_deficit": false,
    "ordinal": 46,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_STUDY2_REPORT.md",
+   "path": "interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_STUDY2_REPORT.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9249,7 +9249,7 @@
    "known_deficit": false,
    "ordinal": 47,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/reports/paper/olmo_lineage_parallel_phase.tex",
+   "path": "interpretability/jspace_olmo_lineage/reports/paper/olmo_lineage_parallel_phase.tex",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9267,7 +9267,7 @@
    "known_deficit": false,
    "ordinal": 48,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/reports/paper/olmo_lineage_parallel_phase.pdf",
+   "path": "interpretability/jspace_olmo_lineage/reports/paper/olmo_lineage_parallel_phase.pdf",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9285,7 +9285,7 @@
    "known_deficit": false,
    "ordinal": 49,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/reports/paper/figures/ol2_stage_wedge_capability_route.png",
+   "path": "interpretability/jspace_olmo_lineage/reports/paper/figures/ol2_stage_wedge_capability_route.png",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9303,7 +9303,7 @@
    "known_deficit": false,
    "ordinal": 50,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/reports/paper/figures/ol2_transport_validation_joint_paper.png",
+   "path": "interpretability/jspace_olmo_lineage/reports/paper/figures/ol2_transport_validation_joint_paper.png",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9321,7 +9321,7 @@
    "known_deficit": false,
    "ordinal": 51,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/reports/paper/figures/ol2_bank_w_olmo_pair_power.png",
+   "path": "interpretability/jspace_olmo_lineage/reports/paper/figures/ol2_bank_w_olmo_pair_power.png",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9339,7 +9339,7 @@
    "known_deficit": false,
    "ordinal": 52,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/preregistration/OLMO_LINEAGE_STUDY2_PREREGISTRATION.md",
+   "path": "interpretability/jspace_olmo_lineage/preregistration/OLMO_LINEAGE_STUDY2_PREREGISTRATION.md",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9357,7 +9357,7 @@
    "known_deficit": false,
    "ordinal": 53,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/configs/ol2_stage_wedge.yaml",
+   "path": "interpretability/jspace_olmo_lineage/configs/ol2_stage_wedge.yaml",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9375,7 +9375,7 @@
    "known_deficit": false,
    "ordinal": 54,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/configs/ol2_transport_validation.yaml",
+   "path": "interpretability/jspace_olmo_lineage/configs/ol2_transport_validation.yaml",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
@@ -9393,21 +9393,21 @@
    "known_deficit": false,
    "ordinal": 55,
    "output_field": "source_outputs",
-   "path": "interpretability/jspaces/sidelines/olmo/configs/ol2_bank_w_olmo_pair_power.yaml",
+   "path": "interpretability/jspace_olmo_lineage/configs/ol2_bank_w_olmo_pair_power.yaml",
    "resolution": "literal-path",
    "resolved_path": null,
    "status": "verified"
   }
  ],
- "registry_path": "/content/labs/interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl",
+ "registry_path": "/content/labs/interpretability/jspace_phase4/reports/evidence_events.jsonl",
  "registry_sha256": "20124c4c95c3c179472db86f87144bdeee4aaf252a4302408e96f01266c2a00c",
  "resolved_known_deficits": [
   {
    "evidence_id": "p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1",
    "expected_sha256": "6b0399df2c57158e7fdad24274e50f8c1058021d233412afdcc5177f6c651b6f",
    "path_suffix": "metrics/qwen36-27b-multilens-functional-gate/functional_gate/p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1/capacity_reconstructions_a120.pt",
-   "recovery_config": "repo://interpretability/jspaces/phases/phase4/configs/p4_qwen_historical_capacity_recovery.yaml",
-   "recovery_record": "repo://interpretability/jspaces/phases/phase4/reports/PHASE4_PART4_A120_CAPACITY_RECOVERY.json",
+   "recovery_config": "repo://interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml",
+   "recovery_record": "repo://interpretability/jspace_phase4/reports/PHASE4_PART4_A120_CAPACITY_RECOVERY.json",
    "restored_utc": "2026-08-03T16:15:51Z",
    "status": "exact-bytes-restored-and-verified"
   }

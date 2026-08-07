@@ -15,7 +15,7 @@ are not silently mixed with the new stable matched-control realization.
 Run one resumable CUDA cell per model:
 
     python -m jspace_phase3.experiments.p3_alias_endpoint_audit \
-      --config interpretability/jspaces/phases/phase3/configs/\
+      --config interpretability/jspace_phase3/configs/\
 p3_alias_endpoint_qwen36-27b.yaml
 
 After all three cells are banked:
@@ -34,16 +34,6 @@ import os
 import sys
 import time
 from pathlib import Path
-
-def _find_repo_root(start: Path | None = None) -> Path:
-    cur = (start or Path(__file__)).resolve()
-    if cur.is_file():
-        cur = cur.parent
-    for p in [cur, *cur.parents]:
-        if (p / ".git").exists():
-            return p
-    raise RuntimeError("cannot locate git repository root")
-
 
 import numpy as np
 import pandas as pd
@@ -80,7 +70,7 @@ BOOTSTRAP_DRAWS = 100_000
 TIER = "methods"
 CROSS_EVIDENCE_ID = "p3-alias-endpoint-cross-model-v1"
 PACKAGE_ROOT = Path(__file__).resolve().parents[2]
-REPO_ROOT = _find_repo_root()
+REPO_ROOT = Path(__file__).resolve().parents[4]
 DATA_ROOT = PACKAGE_ROOT / "data"
 DEFAULT_SELECTION = (
     PACKAGE_ROOT / "preregistration"

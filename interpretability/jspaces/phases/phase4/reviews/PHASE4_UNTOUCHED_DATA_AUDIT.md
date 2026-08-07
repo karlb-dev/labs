@@ -18,9 +18,9 @@ events or written incident records?
 ## 1. Registry tier scan (all three registries)
 
 Method: parsed every JSONL row of
-`interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl` (82 rows),
-`interpretability/jspaces/sidelines/gemma/reports/evidence_events.jsonl` (24 rows),
-`interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl`
+`interpretability/jspace_phase4/reports/evidence_events.jsonl` (82 rows),
+`interpretability/jspace_gemma/reports/evidence_events.jsonl` (24 rows),
+`interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl`
 (41 rows); counted `tier` values and searched every tier string for
 "confirmatory"/"replication" (case-insensitive); additionally counted raw
 substring occurrences in the phase4 file.
@@ -127,7 +127,7 @@ present.**
 Set-difference of `<run root>/figures/` against registered paths: 52 files,
 2 non-registered — `p4f14_bank_w_power.{png,pdf}` — both **byte-identical**
 (SHA-256 equal) to the registered repo outputs of `p4-bank-w-power-dev-v1`
-at `interpretability/jspaces/phases/phase4/reports/figures/`; they are convenience
+at `interpretability/jspace_phase4/reports/figures/`; they are convenience
 duplicates of registered methods artifacts, not outcomes.
 `diagnostics/` contains only the named incident archives
 (`prompt323_runtime_identity_20260803`, `qwen_a1000_fit`); `closeout/`
@@ -147,7 +147,7 @@ directory for one.
 
 ## 8. Execution checks
 
-- `python -m pytest interpretability/jspaces/phases/phase4/tests -q` →
+- `python -m pytest interpretability/jspace_phase4/tests -q` →
   **302 passed, 0 failed** (9.4 s).
 - `python -m jspace_phase4 verify` → **exit code 1**; JSON reports 65 live
   events, 522 checked output references, resolutions 516 literal-path + 3

@@ -34,8 +34,8 @@
     }
   },
   "commands": [
-    "python -m jspace_phase4.experiments.p4_qwen_historical_capacity_recovery --config interpretability/jspaces/phases/phase4/configs/p4_qwen_historical_capacity_recovery.yaml --preflight",
-    "python -m jspace_phase4.experiments.p4_qwen_historical_capacity_recovery --config interpretability/jspaces/phases/phase4/configs/p4_qwen_historical_capacity_recovery.yaml --recover"
+    "python -m jspace_phase4.experiments.p4_qwen_historical_capacity_recovery --config interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml --preflight",
+    "python -m jspace_phase4.experiments.p4_qwen_historical_capacity_recovery --config interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml --recover"
   ],
   "scientific_result_created": false,
   "registry_changed": false,

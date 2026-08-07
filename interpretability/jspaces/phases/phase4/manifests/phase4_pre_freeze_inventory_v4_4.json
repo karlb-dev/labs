@@ -1743,7 +1743,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/bank_w_power_dev_v1.json",
+     "path": "interpretability/jspace_phase4/reports/bank_w_power_dev_v1.json",
      "status": "verified"
     },
     {
@@ -1759,7 +1759,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f14_bank_w_power.png",
+     "path": "interpretability/jspace_phase4/reports/figures/p4f14_bank_w_power.png",
      "status": "verified"
     },
     {
@@ -1775,7 +1775,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f14_bank_w_power.pdf",
+     "path": "interpretability/jspace_phase4/reports/figures/p4f14_bank_w_power.pdf",
      "status": "verified"
     },
     {
@@ -1791,7 +1791,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/qwen_mode_parser_gate_dev_v1.json",
+     "path": "interpretability/jspace_phase4/reports/qwen_mode_parser_gate_dev_v1.json",
      "status": "verified"
     },
     {
@@ -2575,7 +2575,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/data/bank_b_candidate_v2.jsonl",
+     "path": "interpretability/jspace_phase4/data/bank_b_candidate_v2.jsonl",
      "status": "verified"
     },
     {
@@ -2591,7 +2591,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/data/bank_b_source_verification_v2.jsonl",
+     "path": "interpretability/jspace_phase4/data/bank_b_source_verification_v2.jsonl",
      "status": "verified"
     },
     {
@@ -2607,7 +2607,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/data/bank_b_partition_candidate_v2.json",
+     "path": "interpretability/jspace_phase4/data/bank_b_partition_candidate_v2.json",
      "status": "verified"
     },
     {
@@ -2623,7 +2623,7 @@
      "known_deficit": false,
      "ordinal": 3,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/data/bank_b_audit_v2.json",
+     "path": "interpretability/jspace_phase4/data/bank_b_audit_v2.json",
      "status": "verified"
     },
     {
@@ -2639,7 +2639,7 @@
      "known_deficit": false,
      "ordinal": 4,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/data/bank_b_source_schema_v2.json",
+     "path": "interpretability/jspace_phase4/data/bank_b_source_schema_v2.json",
      "status": "verified"
     },
     {
@@ -2751,7 +2751,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/bank_b_power_dev_v1.json",
+     "path": "interpretability/jspace_phase4/reports/bank_b_power_dev_v1.json",
      "status": "verified"
     },
     {
@@ -2767,7 +2767,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f18_bank_b_power.png",
+     "path": "interpretability/jspace_phase4/reports/figures/p4f18_bank_b_power.png",
      "status": "verified"
     },
     {
@@ -2783,7 +2783,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f18_bank_b_power.pdf",
+     "path": "interpretability/jspace_phase4/reports/figures/p4f18_bank_b_power.pdf",
      "status": "verified"
     },
     {
@@ -2799,7 +2799,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/qwen_mode_parser_gate_dev_v2.json",
+     "path": "interpretability/jspace_phase4/reports/qwen_mode_parser_gate_dev_v2.json",
      "status": "verified"
     },
     {
@@ -2815,7 +2815,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/bank_b_design_feasibility_dev_v1.json",
+     "path": "interpretability/jspace_phase4/reports/bank_b_design_feasibility_dev_v1.json",
      "status": "verified"
     },
     {
@@ -2831,7 +2831,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f22_bank_b_design_feasibility.png",
+     "path": "interpretability/jspace_phase4/reports/figures/p4f22_bank_b_design_feasibility.png",
      "status": "verified"
     },
     {
@@ -2847,7 +2847,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f22_bank_b_design_feasibility.pdf",
+     "path": "interpretability/jspace_phase4/reports/figures/p4f22_bank_b_design_feasibility.pdf",
      "status": "verified"
     },
     {
@@ -2863,7 +2863,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/bank_w_capability_protocol_dev_v1.json",
+     "path": "interpretability/jspace_phase4/reports/bank_w_capability_protocol_dev_v1.json",
      "status": "verified"
     },
     {
@@ -2879,7 +2879,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/qwen_mode_design_feasibility_dev_v1.json",
+     "path": "interpretability/jspace_phase4/reports/qwen_mode_design_feasibility_dev_v1.json",
      "status": "verified"
     },
     {
@@ -2895,7 +2895,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f24_qwen_mode_design_feasibility.png",
+     "path": "interpretability/jspace_phase4/reports/figures/p4f24_qwen_mode_design_feasibility.png",
      "status": "verified"
     },
     {
@@ -2911,7 +2911,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f24_qwen_mode_design_feasibility.pdf",
+     "path": "interpretability/jspace_phase4/reports/figures/p4f24_qwen_mode_design_feasibility.pdf",
      "status": "verified"
     },
     {
@@ -2927,7 +2927,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/qwen_mode_variance_pilot_protocol_dev_v1.json",
+     "path": "interpretability/jspace_phase4/reports/qwen_mode_variance_pilot_protocol_dev_v1.json",
      "status": "verified"
     },
     {
@@ -3503,7 +3503,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/bank_w_power_holm2_dev_v1.json",
+     "path": "interpretability/jspace_phase4/reports/bank_w_power_holm2_dev_v1.json",
      "status": "verified"
     },
     {
@@ -3519,7 +3519,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f28_bank_w_power_holm2.png",
+     "path": "interpretability/jspace_phase4/reports/figures/p4f28_bank_w_power_holm2.png",
      "status": "verified"
     },
     {
@@ -3535,7 +3535,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/figures/p4f28_bank_w_power_holm2.pdf",
+     "path": "interpretability/jspace_phase4/reports/figures/p4f28_bank_w_power_holm2.pdf",
      "status": "verified"
     },
     {
@@ -3551,7 +3551,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/data/bank_w_candidate_v3.jsonl",
+     "path": "interpretability/jspace_phase4/data/bank_w_candidate_v3.jsonl",
      "status": "verified"
     },
     {
@@ -3567,7 +3567,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/data/bank_w_partition_candidate_v3.json",
+     "path": "interpretability/jspace_phase4/data/bank_w_partition_candidate_v3.json",
      "status": "verified"
     },
     {
@@ -3583,7 +3583,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/data/bank_w_audit_v3.json",
+     "path": "interpretability/jspace_phase4/data/bank_w_audit_v3.json",
      "status": "verified"
     },
     {
@@ -5759,7 +5759,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "source_outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/OLMO_BANK_W_CAPABILITY_IMPORT_V1.json",
+     "path": "interpretability/jspace_phase4/reports/OLMO_BANK_W_CAPABILITY_IMPORT_V1.json",
      "status": "verified"
     },
     {
@@ -5775,7 +5775,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "source_outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/olmo_bank_w_capability_import_validation_v1.json",
+     "path": "interpretability/jspace_phase4/reports/olmo_bank_w_capability_import_validation_v1.json",
      "status": "verified"
     },
     {
@@ -5791,7 +5791,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "source_outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/source_registries/olmo_bank_w_early_d76e937.jsonl",
+     "path": "interpretability/jspace_phase4/reports/source_registries/olmo_bank_w_early_d76e937.jsonl",
      "status": "verified"
     },
     {
@@ -5983,7 +5983,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "/content/labs_phase4_4/interpretability/jspaces/phases/phase4/reports/bank_w_capability_joint_imported_dev_v1.json",
+     "path": "/content/labs_phase4_4/interpretability/jspace_phase4/reports/bank_w_capability_joint_imported_dev_v1.json",
      "status": "verified"
     },
     {
@@ -5999,7 +5999,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "outputs",
-     "path": "/content/labs_phase4_4/interpretability/jspaces/phases/phase4/reports/figures/p4f30_bank_w_joint_imported.png",
+     "path": "/content/labs_phase4_4/interpretability/jspace_phase4/reports/figures/p4f30_bank_w_joint_imported.png",
      "status": "verified"
     },
     {
@@ -6015,7 +6015,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "outputs",
-     "path": "/content/labs_phase4_4/interpretability/jspaces/phases/phase4/reports/figures/p4f30_bank_w_joint_imported.pdf",
+     "path": "/content/labs_phase4_4/interpretability/jspace_phase4/reports/figures/p4f30_bank_w_joint_imported.pdf",
      "status": "verified"
     },
     {
@@ -6031,7 +6031,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "source_outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/GEMMA_TRANSPORT_IMPORT_V1.json",
+     "path": "interpretability/jspace_phase4/reports/GEMMA_TRANSPORT_IMPORT_V1.json",
      "status": "verified"
     },
     {
@@ -6047,7 +6047,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "source_outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/gemma_transport_import_validation_v1.json",
+     "path": "interpretability/jspace_phase4/reports/gemma_transport_import_validation_v1.json",
      "status": "verified"
     },
     {
@@ -6063,7 +6063,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "source_outputs",
-     "path": "interpretability/jspaces/sidelines/gemma/reports/evidence_events.jsonl",
+     "path": "interpretability/jspace_gemma/reports/evidence_events.jsonl",
      "status": "verified"
     },
     {
@@ -6095,7 +6095,7 @@
      "known_deficit": false,
      "ordinal": 4,
      "output_field": "source_outputs",
-     "path": "interpretability/jspaces/sidelines/gemma/configs/gm_g1_thresholds_frozen.yaml",
+     "path": "interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml",
      "status": "verified"
     },
     {
@@ -6415,7 +6415,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "source_outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/OLMO_LINEAGE_IMPORT_V1.json",
+     "path": "interpretability/jspace_phase4/reports/OLMO_LINEAGE_IMPORT_V1.json",
      "status": "verified"
     },
     {
@@ -6431,7 +6431,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "source_outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/olmo_lineage_import_validation_v1.json",
+     "path": "interpretability/jspace_phase4/reports/olmo_lineage_import_validation_v1.json",
      "status": "verified"
     },
     {
@@ -6447,7 +6447,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "source_outputs",
-     "path": "interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl",
+     "path": "interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
      "status": "verified"
     },
     {
@@ -6671,7 +6671,7 @@
      "known_deficit": false,
      "ordinal": 0,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reviews/A120_STATE_EXACT_COPY_SEARCH_20260802.md",
+     "path": "interpretability/jspace_phase4/reviews/A120_STATE_EXACT_COPY_SEARCH_20260802.md",
      "status": "verified"
     },
     {
@@ -6687,7 +6687,7 @@
      "known_deficit": false,
      "ordinal": 1,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reviews/A120_A250_STATE_ARCHIVAL_DISPOSITION.md",
+     "path": "interpretability/jspace_phase4/reviews/A120_A250_STATE_ARCHIVAL_DISPOSITION.md",
      "status": "verified"
     },
     {
@@ -6703,7 +6703,7 @@
      "known_deficit": false,
      "ordinal": 2,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/reports/PHASE4_PART4_A120_CAPACITY_RECOVERY.json",
+     "path": "interpretability/jspace_phase4/reports/PHASE4_PART4_A120_CAPACITY_RECOVERY.json",
      "status": "verified"
     },
     {
@@ -6719,19 +6719,19 @@
      "known_deficit": false,
      "ordinal": 3,
      "output_field": "outputs",
-     "path": "interpretability/jspaces/phases/phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json",
+     "path": "interpretability/jspace_phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json",
      "status": "verified"
     }
    ],
-   "registry_path": "/content/labs_phase4_4/interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl",
+   "registry_path": "/content/labs_phase4_4/interpretability/jspace_phase4/reports/evidence_events.jsonl",
    "registry_sha256": "fbb8400878e6db8648b8ef324c14c5e3a4e3effbb5323ef453e1812f1493c070",
    "resolved_known_deficits": [
     {
      "evidence_id": "p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1",
      "expected_sha256": "6b0399df2c57158e7fdad24274e50f8c1058021d233412afdcc5177f6c651b6f",
      "path_suffix": "metrics/qwen36-27b-multilens-functional-gate/functional_gate/p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1/capacity_reconstructions_a120.pt",
-     "recovery_config": "repo://interpretability/jspaces/phases/phase4/configs/p4_qwen_historical_capacity_recovery.yaml",
-     "recovery_record": "repo://interpretability/jspaces/phases/phase4/reports/PHASE4_PART4_A120_CAPACITY_RECOVERY.json",
+     "recovery_config": "repo://interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml",
+     "recovery_record": "repo://interpretability/jspace_phase4/reports/PHASE4_PART4_A120_CAPACITY_RECOVERY.json",
      "restored_utc": "2026-08-03T16:15:51Z",
      "status": "exact-bytes-restored-and-verified"
     }
@@ -7453,7 +7453,7 @@
    "n_live_events": 61,
    "n_origin_events": 68,
    "n_rows": 78,
-   "path": "/content/labs_phase4_4/interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl",
+   "path": "/content/labs_phase4_4/interpretability/jspace_phase4/reports/evidence_events.jsonl",
    "sha256": "fbb8400878e6db8648b8ef324c14c5e3a4e3effbb5323ef453e1812f1493c070"
   },
   "repository": {

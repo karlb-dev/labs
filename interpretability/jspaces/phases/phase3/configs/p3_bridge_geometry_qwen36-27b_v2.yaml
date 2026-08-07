@@ -8,7 +8,7 @@ output_subdir: bridge_geometry_v2
 slug: qwen36-27b
 model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
 lens_uri: model://local/models--neuronpedia--jacobian-lens/snapshots/a4114d7752d11eb546e6cf372213d7e75526d3a1/qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt
-partition_uri: repo://interpretability/jspaces/phases/phase3/preregistration/partition_phase3.json
+partition_uri: repo://interpretability/jspace_phase3/preregistration/partition_phase3.json
 primary_parquet_uri: drive://phase3_20260729/metrics/qwen36-27b/p3_grid/p3_grid_qwen36-27b.parquet
 banks: [bank_f_v7.jsonl, bank_s_v3.jsonl]
 band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]

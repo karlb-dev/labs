@@ -14,7 +14,7 @@ synthesis remains reserved for an explicit Phase 5 or later router.
 - Branch: `interp_jspace_olmo_lineage`.
 - Scientific import boundary:
   `3b041735d8b842de46a9c0a474fccd0c44e0841a`.
-- Repository namespace: `interpretability/jspaces/sidelines/olmo/`.
+- Repository namespace: `interpretability/jspace_olmo_lineage/`.
 - Drive root:
   `/content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_20260801`.
 - Native evidence prefix: `ol-`.

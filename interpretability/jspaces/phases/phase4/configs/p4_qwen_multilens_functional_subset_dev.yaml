@@ -8,7 +8,7 @@ phase3_grid:
   sha256: 992ed2f6a9d6d470ed9e9b4af1d3eadc9d3df7941e24d178a830fc3c97691687
 
 guard_battery:
-  uri: repo://interpretability/jspaces/phases/phase3/data/guard_battery_v2.jsonl
+  uri: repo://interpretability/jspace_phase3/data/guard_battery_v2.jsonl
   sha256: 5c25d4bb2a884671a2f8a51106bc22df64d5aa324d5bdf151d6fb5e0745d702c
 
 g4_probe_swap:

@@ -188,9 +188,9 @@ The side branches should be created from `3b041735d8b842de46a9c0a474fccd0c44e084
 ## 2.2 Repository namespaces
 
 ```text
-interpretability/jspaces/phases/phase4/           # main Phase 4 only
-interpretability/jspaces/sidelines/olmo/      # OLMo side track only
-interpretability/jspaces/sidelines/gemma/             # Gemma side track only
+interpretability/jspace_phase4/           # main Phase 4 only
+interpretability/jspace_olmo_lineage/      # OLMo side track only
+interpretability/jspace_gemma/             # Gemma side track only
 ```
 
 The OLMo and Gemma agents may import code from `jspace_phase4`, `jspace_phase3`, or `jspace_part2`, but must not edit those packages while working in parallel. If a reusable bug fix is necessary:
@@ -344,7 +344,7 @@ git checkout interp_jspace_part2
 git pull --ff-only
 
 git status --short  # must be empty
-cd interpretability/jspaces/phases/phase4
+cd interpretability/jspace_phase4
 python -m pytest -q
 ```
 
@@ -1089,14 +1089,14 @@ The strongest next phase is the branch that converts one current descriptive or 
 The coding agent should leave the branch with:
 
 ```text
-interpretability/jspaces/phases/phase4/reviews/jspace_lab_nextsteps_4_3.md
-interpretability/jspaces/phases/phase4/reports/INPROGRESS_VM13_<date>.md
-interpretability/jspaces/phases/phase4/reports/PHASE4_DEVELOPMENT_REPORT.md
-interpretability/jspaces/phases/phase4/preregistration/SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md
-interpretability/jspaces/phases/phase4/preregistration/FREEZE_GATE_LEDGER_PHASE4.md
-interpretability/jspaces/phases/phase4/manifests/phase4_pre_freeze_inventory.json
-interpretability/jspaces/phases/phase4/manifests/phase4_pre_freeze_inventory.md
-interpretability/jspaces/phases/phase4/paper/PHASE4_METHODS_DECISION_RECORD.md
+interpretability/jspace_phase4/reviews/jspace_lab_nextsteps_4_3.md
+interpretability/jspace_phase4/reports/INPROGRESS_VM13_<date>.md
+interpretability/jspace_phase4/reports/PHASE4_DEVELOPMENT_REPORT.md
+interpretability/jspace_phase4/preregistration/SCIENTIFIC_PREREGISTRATION_PHASE4_CANDIDATE.md
+interpretability/jspace_phase4/preregistration/FREEZE_GATE_LEDGER_PHASE4.md
+interpretability/jspace_phase4/manifests/phase4_pre_freeze_inventory.json
+interpretability/jspace_phase4/manifests/phase4_pre_freeze_inventory.md
+interpretability/jspace_phase4/paper/PHASE4_METHODS_DECISION_RECORD.md
 ```
 
 New code, conditional on execution:

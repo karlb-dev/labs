@@ -72,10 +72,10 @@ This distinction matters because the commit history no longer separates the chro
 
 The review is grounded in:
 
-- the target commit and every committed script under [`interpretability/jspaces/phases/phase1/code`](https://github.com/karlb-dev/labs/tree/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code);
-- [`REPORT_v2.md`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/report/REPORT_v2.md);
+- the target commit and every committed script under [`interpretability/jspace/code`](https://github.com/karlb-dev/labs/tree/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code);
+- [`REPORT_v2.md`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/report/REPORT_v2.md);
 - [`lab37_jspace_workspace.md`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/labs/lab37_jspace_workspace.md);
-- committed result summaries under [`interpretability/jspaces/phases/phase1/results`](https://github.com/karlb-dev/labs/tree/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/results);
+- committed result summaries under [`interpretability/jspace/results`](https://github.com/karlb-dev/labs/tree/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/results);
 - the original prompt, v2 delta prompt, three-hour execution plan, Part 2 plan, and planning chat supplied with this review;
 - the paper, its released prompt descriptions, and the reference `anthropics/jacobian-lens` implementation;
 - Neel Nanda's independent Qwen replication and methodological discussion;
@@ -186,9 +186,9 @@ The static-span null, lack of a clean broadcast distinction under the current fa
 
 Relevant files:
 
-- [`sl1_common.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/sl1_common.py)
-- [`s0_env_audit.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s0_env_audit.py)
-- [`s2_corpus.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s2_corpus.py)
+- [`sl1_common.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/sl1_common.py)
+- [`s0_env_audit.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s0_env_audit.py)
+- [`s2_corpus.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s2_corpus.py)
 
 #### Good
 
@@ -248,8 +248,8 @@ Recommended fields:
 
 Relevant files:
 
-- [`s3_fit_32b.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s3_fit_32b.py)
-- [`s14_lateband_fit.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s14_lateband_fit.py)
+- [`s3_fit_32b.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s3_fit_32b.py)
+- [`s14_lateband_fit.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s14_lateband_fit.py)
 - reference [`jlens/fitting.py`](https://github.com/anthropics/jacobian-lens/blob/581d3986/jlens/fitting.py)
 
 #### Good
@@ -290,7 +290,7 @@ Do not choose the canonical `n` solely by whether the headline effect increases.
 
 ### 5.3 Lens sanity checks
 
-Relevant file: [`s4_lens_sanity.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s4_lens_sanity.py)
+Relevant file: [`s4_lens_sanity.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s4_lens_sanity.py)
 
 #### Good
 
@@ -320,9 +320,9 @@ A lens passes only if it meets all of the following on a hidden validation set:
 
 Relevant files:
 
-- [`s5_descriptive.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s5_descriptive.py)
-- [`s15_lateband_readouts.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s15_lateband_readouts.py)
-- Qwen implementation in [`s18_qwen_instruments.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s18_qwen_instruments.py)
+- [`s5_descriptive.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s5_descriptive.py)
+- [`s15_lateband_readouts.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s15_lateband_readouts.py)
+- Qwen implementation in [`s18_qwen_instruments.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s18_qwen_instruments.py)
 
 #### Critical numerical issues
 
@@ -361,8 +361,8 @@ Acceptance criteria should cover support recovery, reconstruction error, monoton
 
 Relevant files:
 
-- [`s6_broadcast.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s6_broadcast.py)
-- final fan-out block in [`s24_final_falsifiers.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s24_final_falsifiers.py)
+- [`s6_broadcast.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s6_broadcast.py)
+- final fan-out block in [`s24_final_falsifiers.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s24_final_falsifiers.py)
 
 The current metric asks how many later weight matrices have projection norms more than three random-direction standard deviations above a baseline. This is a useful exploratory weight-alignment score. It is not the paper's broadcast assay.
 
@@ -400,8 +400,8 @@ If broadcast heads can be identified, conduct a preregistered causal follow-up w
 
 Relevant files:
 
-- [`s7_ablation.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s7_ablation.py)
-- [`s11_energy_match.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s11_energy_match.py)
+- [`s7_ablation.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s7_ablation.py)
+- [`s11_energy_match.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s11_energy_match.py)
 
 #### What the current static result means
 
@@ -443,8 +443,8 @@ For teacher-forced log-probability outcomes, define precisely whether interventi
 
 Relevant files:
 
-- [`s12_frozen_ablation.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s12_frozen_ablation.py)
-- pool-size falsifier in [`s24_final_falsifiers.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s24_final_falsifiers.py)
+- [`s12_frozen_ablation.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s12_frozen_ablation.py)
+- pool-size falsifier in [`s24_final_falsifiers.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s24_final_falsifiers.py)
 
 This is the most promising novel instrument in the lab, but the report's “control-clean” label is premature.
 
@@ -488,10 +488,10 @@ Every projector must record:
 
 Relevant files:
 
-- [`s8_cot.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s8_cot.py)
-- [`s8b_cot_lead.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s8b_cot_lead.py)
-- [`s13_cot_foils.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s13_cot_foils.py)
-- late trace phase in [`s15_lateband_readouts.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s15_lateband_readouts.py)
+- [`s8_cot.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s8_cot.py)
+- [`s8b_cot_lead.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s8b_cot_lead.py)
+- [`s13_cot_foils.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s13_cot_foils.py)
+- late trace phase in [`s15_lateband_readouts.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s15_lateband_readouts.py)
 
 #### Lead-time result
 
@@ -531,8 +531,8 @@ A hidden Markov or change-point model can be useful, but a simple preregistered 
 
 Relevant files:
 
-- [`s16_cot_rescue.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s16_cot_rescue.py)
-- filler falsifier in [`s24_final_falsifiers.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s24_final_falsifiers.py)
+- [`s16_cot_rescue.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s16_cot_rescue.py)
+- filler falsifier in [`s24_final_falsifiers.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s24_final_falsifiers.py)
 
 The current `0.23 -> 0.80` comparison should not be described as final-answer rescue:
 
@@ -570,7 +570,7 @@ This separates a general benefit of longer generation from a selective ability o
 
 ### 5.10 Eval-awareness
 
-Relevant file: [`s10_evalaware.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s10_evalaware.py)
+Relevant file: [`s10_evalaware.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s10_evalaware.py)
 
 The current explicit prefix changes lexical content, pragmatic framing, expected response style, and likely output distribution. A dense vocabulary-space delta norm over twenty pairs can detect any consistent framing change. It is not a specific test of latent evaluation awareness.
 
@@ -588,7 +588,7 @@ A serious version requires:
 
 ### 5.11 Qwen cross-model leg
 
-Relevant file: [`s18_qwen_instruments.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code/scripts/s18_qwen_instruments.py)
+Relevant file: [`s18_qwen_instruments.py`](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code/scripts/s18_qwen_instruments.py)
 
 The Qwen run is valuable as an engineering and exploratory extension. It is not a one-variable “same harness” test because it changes:
 
@@ -1009,7 +1009,7 @@ Predefine the primary decision criterion for each hypothesis and cap the number 
 #### 0.1 Create immutable study roots
 
 ```text
-interpretability/jspaces/phases/phase2/
+interpretability/jspace_part2/
   protocol/
   adapters/
   metrics/
@@ -2690,10 +2690,10 @@ Any of those outcomes would be worthwhile. The common requirement is that Part 2
 ### Target lab
 
 - [Target merge commit](https://github.com/karlb-dev/labs/commit/4097c44713d0084d4da3d3c084e79aed2068c740)
-- [Lab 37 report](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/report/REPORT_v2.md)
+- [Lab 37 report](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/report/REPORT_v2.md)
 - [Lab 37 specification and claim ledger](https://github.com/karlb-dev/labs/blob/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/labs/lab37_jspace_workspace.md)
-- [Lab 37 code](https://github.com/karlb-dev/labs/tree/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/code)
-- [Lab 37 result summaries](https://github.com/karlb-dev/labs/tree/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspaces/phases/phase1/results)
+- [Lab 37 code](https://github.com/karlb-dev/labs/tree/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/code)
+- [Lab 37 result summaries](https://github.com/karlb-dev/labs/tree/4097c44713d0084d4da3d3c084e79aed2068c740/interpretability/jspace/results)
 
 ### Paper and reference implementation
 

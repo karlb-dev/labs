@@ -3,8 +3,8 @@ tier: phase4-development
 slug: qwen36-27b-lens-influence
 canonical_lens_unchanged: true
 model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
-model_snapshot_manifest_uri: repo://interpretability/jspaces/phases/phase4/configs/qwen36-27b_snapshot_manifest.json
-fit_config_uri: repo://interpretability/jspaces/phases/phase4/configs/p4_qwen_nested_lens_fit_dev.yaml
+model_snapshot_manifest_uri: repo://interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
+fit_config_uri: repo://interpretability/jspace_phase4/configs/p4_qwen_nested_lens_fit_dev.yaml
 fit_config_sha256: 6df3f79e7c904a915e2d302a8c2908bd8b9d504bcff9f8454d4ae5c414e882db
 fit_producer_sha256: 50be234a750b3d7c6428dfb793ad71e5a41ca56bceef5b89bfe356a190a398fa
 
@@ -54,9 +54,9 @@ fixed_sampling:
   packed_probes_sha256: bed1537f9668132d3c701e0bc0303987fa085e90d9bb3992003776c81d90770c
 
 task_banks:
-  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+  - uri: repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
     sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
-  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+  - uri: repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
     sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
 
 model_tensors:

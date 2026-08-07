@@ -2,7 +2,7 @@ evidence_id: p4-qwen-multilens-functional-gate-a250-a500-published-dev-v1
 tier: phase4-development
 slug: qwen36-27b-multilens-functional-gate-a250-a500
 model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
-model_snapshot_manifest_uri: repo://interpretability/jspaces/phases/phase4/configs/qwen36-27b_snapshot_manifest.json
+model_snapshot_manifest_uri: repo://interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
 
 subset:
   evidence_id: p4-qwen-multilens-functional-subset-dev-v1
@@ -37,9 +37,9 @@ lenses:
     n_prompts: 500
 
 task_banks:
-  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+  - uri: repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
     sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
-  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+  - uri: repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
     sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
 
 runtime:

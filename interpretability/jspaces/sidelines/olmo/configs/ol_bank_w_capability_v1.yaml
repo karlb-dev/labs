@@ -3,12 +3,12 @@ tier: development
 branch: interp_jspace_olmo_lineage
 
 source_phase4:
-  registry_uri: repo://interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl
+  registry_uri: repo://interpretability/jspace_phase4/reports/evidence_events.jsonl
   registry_sha256: bb6a2721c94e78c42a1b5f9be73284dfd1b7c9c1c2c6f7c3f6cfd64486dab826
-  config_uri: repo://interpretability/jspaces/phases/phase4/configs/p4_bank_w_capability_protocol_dev.yaml
+  config_uri: repo://interpretability/jspace_phase4/configs/p4_bank_w_capability_protocol_dev.yaml
   config_sha256: fe0c43bee61a354c5803158a64a904f09b77fd715d6345b56c5dba8c06c9042e
   protocol_evidence_id: p4-bank-w-capability-protocol-dev-v1
-  protocol_uri: repo://interpretability/jspaces/phases/phase4/reports/bank_w_capability_protocol_dev_v1.json
+  protocol_uri: repo://interpretability/jspace_phase4/reports/bank_w_capability_protocol_dev_v1.json
   protocol_sha256: 98409a8229545a6fe5e324b5105de02577a6b723de366664e8e1369f6667593b
   qwen_evidence_id: p4-bank-w-capability-qwen36-27b-dev-v1
   qwen_result_uri: drive://phase4/metrics/bank-w-capability/qwen36-27b/p4-bank-w-capability-qwen36-27b-dev-v1/bank_w_capability_result.json
@@ -16,23 +16,23 @@ source_phase4:
 
 compatibility_sources:
   scoring4:
-    uri: repo://interpretability/jspaces/phases/phase4/jspace_phase4/scoring4.py
+    uri: repo://interpretability/jspace_phase4/jspace_phase4/scoring4.py
     sha256: 152a8560bede52d4571633cfe29dbc5d51f2c04abaacf08691bcc1db81099c60
   bank_w_capability:
-    uri: repo://interpretability/jspaces/phases/phase4/jspace_phase4/experiments/p4_bank_w_capability.py
+    uri: repo://interpretability/jspace_phase4/jspace_phase4/experiments/p4_bank_w_capability.py
     sha256: 77c963990dd980e94664ed6b9ead2e6e60c574ce40372186f638c3b7640fbe51
   state:
-    uri: repo://interpretability/jspaces/phases/phase4/jspace_phase4/state.py
+    uri: repo://interpretability/jspace_phase4/jspace_phase4/state.py
     sha256: 11c8f3ae1d574cf8a64f3d0b9ee6a1b9723ebcc1ccc9caf6869cef40b499d080
 
 bank_evidence_id: p4-bank-w-candidate-v2
 power_evidence_id: p4-bank-w-power-dev-v1
-bank_uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_candidate_v1.jsonl
+bank_uri: repo://interpretability/jspace_phase4/data/bank_w_candidate_v1.jsonl
 bank_file_sha256: c43ef76cbc4db755f6f2bb3e91b8feecb65ef2106fb5199c5759dc1b95578ab4
 bank_rows_sha256: 078e7726027ea61a09040b9030344c2c28868593695e650b66df527fefa8ab49
-audit_uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_audit_v2.json
+audit_uri: repo://interpretability/jspace_phase4/data/bank_w_audit_v2.json
 audit_file_sha256: 08ffe320cb9fa4091de0a51b6f86bcada34d39f0cda7f9e8baeef7dbb8d8ae7f
-partition_uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_partition_candidate_v1.json
+partition_uri: repo://interpretability/jspace_phase4/data/bank_w_partition_candidate_v1.json
 partition_file_sha256: 33a0677cac1357ca74a4b38d5e2d4fcfd5bb75734163356b71b26232ca1bf288
 partition_payload_sha256: 361acad0f38f0662d8f7cb2648689915dcefdce5f2f778f4067fcf348a784238
 

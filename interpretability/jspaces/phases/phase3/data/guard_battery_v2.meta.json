@@ -21,7 +21,7 @@
    "wikipedia_rows_scanned_stride": 997,
    "wikitext_test_articles": 60
   },
-  "path": "/content/labs/interpretability/jspaces/phases/phase3/data/guard_battery_v2.jsonl"
+  "path": "/content/labs/interpretability/jspace_phase3/data/guard_battery_v2.jsonl"
  },
  "payload_sha256": "8a9d78e7de9c1016b33392afd61734f0678f6aa034bd47c7a75ead02630a3456",
  "provenance": {

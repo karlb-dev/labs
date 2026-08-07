@@ -3,17 +3,17 @@ tier: methods
 
 source_methods:
   evidence_id: p4-qwen-mode-parser-gate-dev-v2
-  result: interpretability/jspaces/phases/phase4/reports/qwen_mode_parser_gate_dev_v2.json
+  result: interpretability/jspace_phase4/reports/qwen_mode_parser_gate_dev_v2.json
   result_sha256: 54b60c2daf380c9e67db7d7eeb8a9b250ba6728400c90afaed6ea6eb6f5bfb5b
 
 source_model_baseline_contract:
-  config: interpretability/jspaces/phases/phase4/configs/p4_qwen_mode_model_gate_v2_dev.yaml
+  config: interpretability/jspace_phase4/configs/p4_qwen_mode_model_gate_v2_dev.yaml
   config_sha256: 7a99fd7e7000fcd0c895ab5e02375b37820e631db6e1c4ca44acc7d69bfebf24
   required_passing_evidence_id: p4-qwen-mode-gate-dev-v2
 
 source_feasibility:
   evidence_id: p4-qwen-mode-design-feasibility-dev-v1
-  result: interpretability/jspaces/phases/phase4/reports/qwen_mode_design_feasibility_dev_v1.json
+  result: interpretability/jspace_phase4/reports/qwen_mode_design_feasibility_dev_v1.json
   result_sha256: c6f53d85ac3a89a195b20004811fb05b9972288b460987dfacce2d240f048483
 
 selection:
@@ -70,4 +70,4 @@ variance_summary:
   no_sesoi_or_power_selection: true
 
 outputs:
-  protocol_result: interpretability/jspaces/phases/phase4/reports/qwen_mode_variance_pilot_protocol_dev_v1.json
+  protocol_result: interpretability/jspace_phase4/reports/qwen_mode_variance_pilot_protocol_dev_v1.json

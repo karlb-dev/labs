@@ -102,8 +102,8 @@
     "dirty_tree": false,
     "branch": "interp_jspace_part2",
     "package_version": "jspace_part2 0.1.0",
-    "command": "python -m jspace_part2.experiments.r7_selected_ids --config interpretability/jspaces/phases/phase2/configs/r7_selected_ids_think.yaml",
-    "config_path": "interpretability/jspaces/phases/phase2/configs/r7_selected_ids_think.yaml",
+    "command": "python -m jspace_part2.experiments.r7_selected_ids --config interpretability/jspace_part2/configs/r7_selected_ids_think.yaml",
+    "config_path": "interpretability/jspace_part2/configs/r7_selected_ids_think.yaml",
     "config_sha256": "bda1760183007112f0c866ecf1216864665d008307fc1cbac5b8bd2b8a917082",
     "inputs": {
       "lens": "05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053",

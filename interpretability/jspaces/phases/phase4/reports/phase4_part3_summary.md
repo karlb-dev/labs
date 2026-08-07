@@ -257,7 +257,7 @@ On the next VM, first read this file plus `inprogress.md`,
    structural event, then continues in frozen order. Default:
 
    ```bash
-   bash interpretability/jspaces/phases/phase4/run_qwen_a1000_postfit_queue.sh
+   bash interpretability/jspace_phase4/run_qwen_a1000_postfit_queue.sh
    ```
 
    The normalized 820-row diagnostic archive, its QA figure, and the passing
@@ -277,7 +277,7 @@ On the next VM, first read this file plus `inprogress.md`,
    events exist:
 
    ```bash
-   bash interpretability/jspaces/phases/phase4/run_phase4_post_a1000_import_queue.sh
+   bash interpretability/jspace_phase4/run_phase4_post_a1000_import_queue.sh
    ```
 
    It admits early OLMo capability, recomputes the 16/20 joint result, then
@@ -287,10 +287,10 @@ On the next VM, first read this file plus `inprogress.md`,
 
    ```bash
    python -m jspace_phase4.experiments.p4_qwen_historical_capacity_recovery \
-     --config interpretability/jspaces/phases/phase4/configs/p4_qwen_historical_capacity_recovery.yaml \
+     --config interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml \
      --preflight
    python -m jspace_phase4.experiments.p4_qwen_historical_capacity_recovery \
-     --config interpretability/jspaces/phases/phase4/configs/p4_qwen_historical_capacity_recovery.yaml \
+     --config interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml \
      --recover
    ```
 
@@ -364,7 +364,7 @@ result, not a reason to edit the old registry.
 ```bash
 export JSPACE4_RUN_ROOT=/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731
 python -m jspace_phase4.durability \
-  --known-deficits interpretability/jspaces/phases/phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json \
+  --known-deficits interpretability/jspace_phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json \
   --pass-label local-plus-mounted-drive \
   --output /content/phase4_durability_pass1.json
 python -m jspace_phase4.pre_freeze_inventory \
@@ -375,7 +375,7 @@ Only after a remount or new VM may the independent second pass run:
 
 ```bash
 python -m jspace_phase4.durability \
-  --known-deficits interpretability/jspaces/phases/phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json \
+  --known-deficits interpretability/jspace_phase4/protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json \
   --pass-label fresh-drive-materialization \
   --previous /content/phase4_durability_pass1.json \
   --output /content/phase4_durability_pass2.json

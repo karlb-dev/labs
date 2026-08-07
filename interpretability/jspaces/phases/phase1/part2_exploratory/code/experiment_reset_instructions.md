@@ -24,7 +24,7 @@ then come back to this order:
    and the stop rules (§15.2). Then `REPAIR_PREREGISTRATION.md` +
    `PLAN_PART2.md` (REVISION-1 header) in the live dir.
 4. Part-1 background when needed: `2026-07-26_v2/report/REPORT_v2.md`
-   **together with `interpretability/jspaces/phases/phase1/REPORT_v2_ERRATA.md`** —
+   **together with `interpretability/jspace/REPORT_v2_ERRATA.md`** —
    REPORT_v2's headline wording is downgraded there; do not inherit it.
 
 ## Durable state map
@@ -36,11 +36,11 @@ then come back to this order:
 | Part-1 run dirs (frozen) | `.../special-lab-1/{2026-07-25_1726, 2026-07-26_v2}/` |
 | repo + branch | `github.com/karlb-dev/labs`, branch `interp_jspace_part2` (part 1 merged via PR #9 on `main`) |
 | live working dir (gitignored) | `/content/labs/interpretability/special_lab2/` (part-1 code vendored at `part1/`) |
-| published mirror (in git) | `interpretability/jspaces/phases/phase1/part2_exploratory/` via `push_lab2.sh` |
+| published mirror (in git) | `interpretability/jspace/part2/` via `push_lab2.sh` |
 | Drive HF cache (persistent) | `MyDrive/hf_cache/hub` — OLMo-3-32B-Think, OLMo 7Bs, gemma-4-31B-it, WikiText |
 | local HF cache (per-VM) | `/content/hf_local` — new big models; delete between sets |
 | jlens engine | `anthropics/jacobian-lens @ 581d3986`, editable install; byte-checked vs Drive mirror |
-| claim ledger (Part 2) | `interpretability/jspaces/phases/phase1/part2_exploratory/README.md` (SL2-C*) |
+| claim ledger (Part 2) | `interpretability/jspace/part2/README.md` (SL2-C*) |
 | master results dataset | `part2_20260727/report/matrix_master.{csv,json}` |
 
 ## Fresh-VM restore recipe
@@ -146,11 +146,11 @@ cache makes reloads cheap.
 10. **pipefail + tee on every long run** (a tee-masked exit code cost VM4 an
     evening). Long GPU runs launch detached with logs in the run dir.
 11. **REPRO CONTRACT (user directive 2026-07-27, binding for all new
-    work)** — `interpretability/jspaces/phases/phase2/protocol/REPRO_CONTRACT.md`:
+    work)** — `interpretability/jspace_part2/protocol/REPRO_CONTRACT.md`:
     every claim-bearing artifact has an evidence_id in
     `jspace_part2/reports/evidence_registry.jsonl`, a provenance block
     (code commit, config hash, input hashes, model revisions), and a
-    single-command repro path (`bash interpretability/jspaces/phases/phase2/repro.sh
+    single-command repro path (`bash interpretability/jspace_part2/repro.sh
     <evidence-id>` from a clean clone). Producers refuse dirty git trees.
     Confirmatory work runs from the `jspace_part2` package (in git), not
     from the gitignored exploratory dir. Superseding is by NEW evidence

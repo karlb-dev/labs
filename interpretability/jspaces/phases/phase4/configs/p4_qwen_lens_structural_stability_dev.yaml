@@ -3,7 +3,7 @@ tier: phase4-development
 slug: qwen36-27b-lens-structural
 comparison_scope: recipe-corpus-transfer
 model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
-model_snapshot_manifest_uri: repo://interpretability/jspaces/phases/phase4/configs/qwen36-27b_snapshot_manifest.json
+model_snapshot_manifest_uri: repo://interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
 runtime_packages:
   torch: 2.11.0+cu128
   transformers: 5.13.1

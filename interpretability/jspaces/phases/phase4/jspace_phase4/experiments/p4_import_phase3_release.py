@@ -5,16 +5,6 @@ import json
 import subprocess
 from pathlib import Path
 
-def _find_repo_root(start: Path | None = None) -> Path:
-    cur = (start or Path(__file__)).resolve()
-    if cur.is_file():
-        cur = cur.parent
-    for p in [cur, *cur.parents]:
-        if (p / ".git").exists():
-            return p
-    raise RuntimeError("cannot locate git repository root")
-
-
 from jspace_phase3.provenance3 import EVENTS as PHASE3_EVENTS
 from jspace_phase3.provenance3 import resolve as resolve_phase3
 
@@ -28,7 +18,7 @@ EVIDENCE_ID = "p4-import-phase3-release-v1"
 
 
 def main() -> None:
-    repository = _find_repo_root()
+    repository = Path(__file__).resolve().parents[4]
     tag_commit = subprocess.check_output(
         [
             "git", "-C", str(repository), "rev-list", "-n", "1",

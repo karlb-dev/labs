@@ -20,7 +20,7 @@
 > R below). Cross-model conclusions begin only after it passes. Existing
 > results remain valuable exploratory priors and engineering baselines,
 > not confirmatory evidence. Part-1 claim corrections:
-> `interpretability/jspaces/phases/phase1/REPORT_v2_ERRATA.md`.
+> `interpretability/jspace/REPORT_v2_ERRATA.md`.
 >
 > **Workstream R — Assay Repair and Publication Conformance (runs FIRST):**
 > R0 provenance freeze (manifests, hashes, artifact inventory) ·
@@ -51,7 +51,7 @@
 # jspace_interp_part2_plan1.md — From Lab Result to Publishable Finding [ORIGINAL, AMENDED]
 
 Paste-line for Claude Code:
-> The J-space lab (Lab 37) is merged to main: read `interpretability/labs/lab37_jspace_workspace.md`, `interpretability/jspaces/phases/phase1/report/REPORT_v2.md`, and the final handout before anything else. All runs, lenses, metrics, and traces live under `/content/drive/MyDrive/interpret/special-lab-1/` (v1: `2026-07-25_1726/`, v2: `2026-07-26_v2/`). This file is the Part 2 campaign plan. Work in a new run dir `part2_<date>/` per workstream, same conventions as before: incremental Drive checkpointing, resumable scripts, `refresh_handout.sh` + push at phase boundaries, claim-ledger discipline, honest nulls welcome. Execute workstreams in the priority order of §8 within whatever GPU budget the user states at launch.
+> The J-space lab (Lab 37) is merged to main: read `interpretability/labs/lab37_jspace_workspace.md`, `interpretability/jspace/report/REPORT_v2.md`, and the final handout before anything else. All runs, lenses, metrics, and traces live under `/content/drive/MyDrive/interpret/special-lab-1/` (v1: `2026-07-25_1726/`, v2: `2026-07-26_v2/`). This file is the Part 2 campaign plan. Work in a new run dir `part2_<date>/` per workstream, same conventions as before: incremental Drive checkpointing, resumable scripts, `refresh_handout.sh` + push at phase boundaries, claim-ledger discipline, honest nulls welcome. Execute workstreams in the priority order of §8 within whatever GPU budget the user states at launch.
 
 ## 0 · Where we are and what "publishable" means here
 

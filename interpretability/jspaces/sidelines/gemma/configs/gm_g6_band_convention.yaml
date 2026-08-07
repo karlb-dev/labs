@@ -22,7 +22,7 @@ governing_addendum:
 
 conflicting_later_material:
   source_commit: 4ea7a9ba7a534daa61e0d8c9960763b921a1b80b
-  path: interpretability/jspaces/phases/paper_analysis/gemma4_nonlinear_jacobian_handout.tex
+  path: interpretability/jspace_paper/gemma4_nonlinear_jacobian_handout.tex
   git_blob_id: e0d4c5fec9e2753a650b98719fce25e6cdd44765
   sha256: a8b9ff9aa7bdcfa325b8311e1381468e2f2985bd01cb6c7f7c03bc5f32956102
   later_range_percent: [37, 62]

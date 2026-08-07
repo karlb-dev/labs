@@ -2,7 +2,7 @@ evidence_id: p4-qwen-nested-lens-fit-dev-series-v1
 slug: qwen36-27b
 tier: phase4-development
 model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
-model_snapshot_manifest_uri: repo://interpretability/jspaces/phases/phase4/configs/qwen36-27b_snapshot_manifest.json
+model_snapshot_manifest_uri: repo://interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
 corpus_evidence_id: p4-qwen-lens-corpora-dev-v1
 runtime:
   packages:

@@ -68,12 +68,12 @@
    "n_rows": 90,
    "sha256": "a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796"
   },
-  "interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl": {
+  "interpretability/jspace_phase3/data/bank_f_v7.jsonl": {
    "kind": "phase3-bank",
    "n_rows": 204,
    "sha256": "a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544"
   },
-  "interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl": {
+  "interpretability/jspace_phase3/data/bank_s_v3.jsonl": {
    "kind": "phase3-bank",
    "n_rows": 120,
    "sha256": "e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f"

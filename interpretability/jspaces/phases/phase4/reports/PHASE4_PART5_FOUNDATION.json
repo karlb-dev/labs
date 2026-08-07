@@ -193,41 +193,41 @@
    "gemma": {
     "n_origin_events": 23,
     "n_rows": 24,
-    "path": "interpretability/jspaces/sidelines/gemma/reports/evidence_events.jsonl",
+    "path": "interpretability/jspace_gemma/reports/evidence_events.jsonl",
     "sha256": "c7e76cac59bbfcf30f5d29edfa5c747bdae9aea46523fad9a8bd49db9cca124b"
    },
    "olmo_lineage": {
     "n_origin_events": 38,
     "n_rows": 41,
-    "path": "interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl",
+    "path": "interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
     "sha256": "d15391ac733d785f583c62e812688efc56268c70ad9aff430b50bb49741196a6"
    },
    "phase4": {
     "n_origin_events": 68,
     "n_rows": 78,
-    "path": "interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl",
+    "path": "interpretability/jspace_phase4/reports/evidence_events.jsonl",
     "sha256": "fbb8400878e6db8648b8ef324c14c5e3a4e3effbb5323ef453e1812f1493c070"
    }
   },
   "schema_version": 1,
   "state_of_record_documents": {
-   "interpretability/jspaces/sidelines/gemma/release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md": {
+   "interpretability/jspace_gemma/release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md": {
     "bytes": 6391,
     "sha256": "9c8c3b9be027a5659347bde3a26ab02fd12ed7f7903c3e9a2d785b809e12de67"
    },
-   "interpretability/jspaces/sidelines/gemma/release/TRANSPORT_GATE_PROTOCOL_V2.md": {
+   "interpretability/jspace_gemma/release/TRANSPORT_GATE_PROTOCOL_V2.md": {
     "bytes": 6051,
     "sha256": "ec75a631770a251b0558f52b5faf22b5c1991365cef3520b59ebab85f945a43c"
    },
-   "interpretability/jspaces/sidelines/gemma/release/gemma_transport_claim_ledger_v2.md": {
+   "interpretability/jspace_gemma/release/gemma_transport_claim_ledger_v2.md": {
     "bytes": 4293,
     "sha256": "bc10e3ae5f9339d08328780766326f53e94af63dab3a22f40a535cc59f139591"
    },
-   "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_CLAIMS_TABLE_V2.md": {
+   "interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_CLAIMS_TABLE_V2.md": {
     "bytes": 6804,
     "sha256": "65f6ae5f94ab3d7cb42e04a37f585e9ad50975e161e885b1e58de8dcbba5be4f"
    },
-   "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md": {
+   "interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md": {
     "bytes": 9484,
     "sha256": "5923f79475e3bc15c0c679033f3c637b4b9514b066843a164b4caf2c74bdb942"
    },
@@ -238,12 +238,12 @@
   },
   "study2_bundles": {
    "gemma_study2": {
-    "bundle_markdown_path": "interpretability/jspaces/sidelines/gemma/release/IMPORT_BUNDLE_SIDELINES2.md",
+    "bundle_markdown_path": "interpretability/jspace_gemma/release/IMPORT_BUNDLE_SIDELINES2.md",
     "bundle_markdown_sha256": "547da552fee0057fa304b1dffe657eb269315007073b0a5c3cbb29c96577b315",
-    "bundle_path": "interpretability/jspaces/sidelines/gemma/release/IMPORT_BUNDLE_SIDELINES2.json",
+    "bundle_path": "interpretability/jspace_gemma/release/IMPORT_BUNDLE_SIDELINES2.json",
     "bundle_sha256": "9ef48b8ab1d99d52a756ddea1e285a9d61e781fd054cbf92702bfe81be56f5b0",
     "frozen_prefix_intact_in_live_registry": true,
-    "frozen_prefix_path": "interpretability/jspaces/sidelines/gemma/release/evidence_events_prefix_sidelines2.jsonl",
+    "frozen_prefix_path": "interpretability/jspace_gemma/release/evidence_events_prefix_sidelines2.jsonl",
     "frozen_prefix_sha256": "2a144bcf0e7be0ac4307f7e2a2984c1879340b9a7e9278d10143d122a14fd30a",
     "payload_sha256": "1751d22a171bc2e372f0065d1fc015e9d90bc8c0583b97ef9c76394f348c731a",
     "source_branch": "interp_jspace_gemma_transport_2",
@@ -251,12 +251,12 @@
     "terminal_event": "gm2-sidelines2-import-bundle-v1"
    },
    "olmo_study2": {
-    "bundle_markdown_path": "interpretability/jspaces/sidelines/olmo/release/IMPORT_BUNDLE_SIDELINES2.md",
+    "bundle_markdown_path": "interpretability/jspace_olmo_lineage/release/IMPORT_BUNDLE_SIDELINES2.md",
     "bundle_markdown_sha256": "9e1d756c7b167e0cef356083e99f667182de3fa50cc5b81c9fd98a8845a1e989",
-    "bundle_path": "interpretability/jspaces/sidelines/olmo/release/IMPORT_BUNDLE_SIDELINES2.json",
+    "bundle_path": "interpretability/jspace_olmo_lineage/release/IMPORT_BUNDLE_SIDELINES2.json",
     "bundle_sha256": "c213dc74aa78dcd6613c8bd1562dd07d2e2a0345409ee6da585001693d8e6b1c",
     "frozen_prefix_intact_in_live_registry": true,
-    "frozen_prefix_path": "interpretability/jspaces/sidelines/olmo/release/evidence_events_prefix_sidelines2.jsonl",
+    "frozen_prefix_path": "interpretability/jspace_olmo_lineage/release/evidence_events_prefix_sidelines2.jsonl",
     "frozen_prefix_sha256": "0a8973e01d562a82fa88da650ab8597c140050f6caf46c8bbd72e2b58acffb58",
     "payload_sha256": "b5cfdf92ffc309cb15d2f9fadfc87a0b86fc52f646a3fe891d56b4cedba05be3",
     "source_branch": "interp_jspace_olmo_lineage_2",
@@ -266,17 +266,17 @@
   },
   "tests": {
    "gemma": {
-    "command": "python -m pytest interpretability/jspaces/sidelines/gemma/tests -q  # cwd=repo root",
+    "command": "python -m pytest interpretability/jspace_gemma/tests -q  # cwd=repo root",
     "returncode": 0,
     "summary": "71 passed, 1 warning in 24.14s"
    },
    "olmo_lineage": {
-    "command": "python -m pytest interpretability/jspaces/sidelines/olmo/tests -q  # cwd=repo root",
+    "command": "python -m pytest interpretability/jspace_olmo_lineage/tests -q  # cwd=repo root",
     "returncode": 0,
     "summary": "90 passed in 18.82s"
    },
    "phase4": {
-    "command": "python -m pytest interpretability/jspaces/phases/phase4/tests -q  # cwd=repo root",
+    "command": "python -m pytest interpretability/jspace_phase4/tests -q  # cwd=repo root",
     "returncode": 0,
     "summary": "287 passed in 9.37s"
    }

@@ -169,10 +169,10 @@ common_lens:
 
 method_sources:
   part2_corrected_estimator:
-    uri: repo://interpretability/jspaces/phases/phase2/jspace_part2/occupancy_v2.py
+    uri: repo://interpretability/jspace_part2/jspace_part2/occupancy_v2.py
     sha256: cc46e7a1dec05b929138b7a962802e8c526980f067f8914bb3db7add4057145c
   part2_dictionary_builder:
-    uri: repo://interpretability/jspaces/phases/phase2/jspace_part2/dictionaries.py
+    uri: repo://interpretability/jspace_part2/jspace_part2/dictionaries.py
     sha256: 2c9a8ff51eb653a5c67b63b621d6dae8a645e2532011be4d573592a73af33aa0
   jlens_hooks:
     uri: drive://part1/code/jacobian-lens-pkg/jlens/hooks.py

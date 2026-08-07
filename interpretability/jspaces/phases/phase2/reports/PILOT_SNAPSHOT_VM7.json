@@ -178,7 +178,7 @@
  "purpose": "N0 freeze of the end-of-VM7 pilot state (nextsteps_2_2 stage N0)",
  "registry": {
   "bytes": 58662,
-  "path": "interpretability/jspaces/phases/phase2/reports/evidence_registry.jsonl",
+  "path": "interpretability/jspace_part2/reports/evidence_registry.jsonl",
   "rows": 63,
   "sha256": "fd903318b31cd584a69ab0f9a39f478df498cf0b62de542bdd918a163c9c6916"
  },

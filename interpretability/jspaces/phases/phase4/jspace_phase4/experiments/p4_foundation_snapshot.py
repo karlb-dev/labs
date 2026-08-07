@@ -87,7 +87,7 @@ def main() -> None:
     atomic_json(environment_path, environment)
     conformance = {
         "schema_version": 1,
-        "command": "bash interpretability/jspaces/phases/phase4/repro.sh",
+        "command": "bash interpretability/jspace_phase4/repro.sh",
         "producer_test_command": (
             f"{sys.executable} -m pytest tests -q"),
         "returncode": test.returncode,

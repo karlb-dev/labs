@@ -61,7 +61,7 @@ branch_3_remains_blocked:
   mechanism_compute_forbidden: true
   olmo_h6_ceiling_export: forbidden_unless_an_olmo_specific_ceiling_is_separately_licensed
 
-sentence_source: repo://interpretability/jspaces/sidelines/gemma/protocol/G2_STAGE1_CANDIDATE_SENTENCES.md
+sentence_source: repo://interpretability/jspace_gemma/protocol/G2_STAGE1_CANDIDATE_SENTENCES.md
 stronger_claims_forbidden:
   - Gemma is nondifferentiable
   - no Jacobian can model Gemma

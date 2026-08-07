@@ -29,7 +29,7 @@
   "development_rows_sha256": "b7951276d83c2ba21d438c0e195f19c6c77b53b38f70db4347b76fdcbea7a62e",
   "file_sha256": "c43ef76cbc4db755f6f2bb3e91b8feecb65ef2106fb5199c5759dc1b95578ab4",
   "n_development_rows": 1536,
-  "path": "interpretability/jspaces/phases/phase4/data/bank_w_candidate_v1.jsonl"
+  "path": "interpretability/jspace_phase4/data/bank_w_candidate_v1.jsonl"
  },
  "evidence_id": "p4-bank-w-candidate-v3",
  "family_id_is_template_not_seed": true,
@@ -59,7 +59,7 @@
   "evidence_id": "p4-bank-w-power-holm2-dev-v1",
   "licensed_minimum_common_families": 28,
   "minimum_power_at_licensed_count": 0.863,
-  "path": "interpretability/jspaces/phases/phase4/reports/bank_w_power_holm2_dev_v1.json",
+  "path": "interpretability/jspace_phase4/reports/bank_w_power_holm2_dev_v1.json",
   "power_target": 0.8,
   "sha256": "11c4dd0751efffac56e37abeac6cd40aea3113177744c6c17f94f202ae27bf16"
  },

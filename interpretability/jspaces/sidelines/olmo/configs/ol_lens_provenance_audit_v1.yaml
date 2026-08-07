@@ -65,11 +65,11 @@ source_inputs:
 git_blob_inputs:
   - id: olmo31-think-primary-fit-source
     commit: b11923a55eae18f041de3109c1f05f716ca59c9f
-    path: interpretability/jspaces/phases/phase2/jspace_part2/experiments/a1_fit_olmo31think.py
+    path: interpretability/jspace_part2/jspace_part2/experiments/a1_fit_olmo31think.py
     sha256: 7f43196df806004ee2097d31370979e5f96b926ee6ddbf57134bd4f785828fd7
   - id: olmo3-base-fit-source
     commit: 185a35346074b81a81d98a1af82a3eb9e6f46a09
-    path: interpretability/jspaces/phases/phase3/jspace_phase3/experiments/lens_fit.py
+    path: interpretability/jspace_phase3/jspace_phase3/experiments/lens_fit.py
     sha256: 48c7a3e4115562843da740f367cd1761bba11c446891fe96cd6542ee85d6b509
 
 models:

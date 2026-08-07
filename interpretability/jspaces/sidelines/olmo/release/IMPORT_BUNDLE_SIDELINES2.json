@@ -460,7 +460,7 @@
    "live_outputs": 145,
    "note": "The prefix excludes the Study-2 release event itself.",
    "origin_events": 37,
-   "path": "interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl",
+   "path": "interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
    "prefix_bytes": 86627,
    "prefix_sha256": "0a8973e01d562a82fa88da650ab8597c140050f6caf46c8bbd72e2b58acffb58",
    "through_event": "evidence_created",
@@ -468,91 +468,91 @@
   },
   "registry_snapshot": {
    "bytes": 86627,
-   "repo_path": "interpretability/jspaces/sidelines/olmo/release/evidence_events_prefix_sidelines2.jsonl",
+   "repo_path": "interpretability/jspace_olmo_lineage/release/evidence_events_prefix_sidelines2.jsonl",
    "sha256": "0a8973e01d562a82fa88da650ab8597c140050f6caf46c8bbd72e2b58acffb58",
    "target_uri": "olmo-artifact://release/evidence_events_prefix_sidelines2.jsonl"
   },
   "release_artifacts": [
    {
     "bytes": 9484,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md",
+    "repo_path": "interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md",
     "role": "state-of-record-v2",
     "sha256": "5923f79475e3bc15c0c679033f3c637b4b9514b066843a164b4caf2c74bdb942",
     "target_uri": "olmo-artifact://release/OLMO_LINEAGE_STATE_OF_RECORD_V2.md"
    },
    {
     "bytes": 6804,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_CLAIMS_TABLE_V2.md",
+    "repo_path": "interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_CLAIMS_TABLE_V2.md",
     "role": "claims-table-v2",
     "sha256": "65f6ae5f94ab3d7cb42e04a37f585e9ad50975e161e885b1e58de8dcbba5be4f",
     "target_uri": "olmo-artifact://release/OLMO_LINEAGE_CLAIMS_TABLE_V2.md"
    },
    {
     "bytes": 8162,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_STUDY2_REPORT.md",
+    "repo_path": "interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_STUDY2_REPORT.md",
     "role": "study2-report",
     "sha256": "564f606a15bdfcfeebcf81c8dd8d2e53b5a5cbc8d7d435e5369344d2e90ed057",
     "target_uri": "olmo-artifact://release/OLMO_LINEAGE_STUDY2_REPORT.md"
    },
    {
     "bytes": 36653,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/paper/olmo_lineage_parallel_phase.tex",
+    "repo_path": "interpretability/jspace_olmo_lineage/reports/paper/olmo_lineage_parallel_phase.tex",
     "role": "paper-tex",
     "sha256": "5783560a9938061efce9f47df85cde7bb021584a1bcef406598fda0763a8cc51",
     "target_uri": "olmo-artifact://release/OLMO_LINEAGE_STUDY2_PAPER.tex"
    },
    {
     "bytes": 805002,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/paper/olmo_lineage_parallel_phase.pdf",
+    "repo_path": "interpretability/jspace_olmo_lineage/reports/paper/olmo_lineage_parallel_phase.pdf",
     "role": "paper-pdf",
     "sha256": "7809b76ab4cec90a5878c3542167eadb83399c6a9f3567fe28bc93db47e2f809",
     "target_uri": "olmo-artifact://release/OLMO_LINEAGE_STUDY2_PAPER.pdf"
    },
    {
     "bytes": 245491,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/paper/figures/ol2_stage_wedge_capability_route.png",
+    "repo_path": "interpretability/jspace_olmo_lineage/reports/paper/figures/ol2_stage_wedge_capability_route.png",
     "role": "stage-wedge-figure",
     "sha256": "add4b84aa436779d9a4b491a726d6116783b4c76c5e74107c9537ded33a9273d",
     "target_uri": "olmo-artifact://release/figures/ol2_stage_wedge_capability_route.png"
    },
    {
     "bytes": 194381,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/paper/figures/ol2_transport_validation_joint_paper.png",
+    "repo_path": "interpretability/jspace_olmo_lineage/reports/paper/figures/ol2_transport_validation_joint_paper.png",
     "role": "h6-figure",
     "sha256": "03564b351088aac7bda3dc9a4c00fa02f07456543349766e5afdd4e39e8ca7b1",
     "target_uri": "olmo-artifact://release/figures/ol2_transport_validation_joint_paper.png"
    },
    {
     "bytes": 110977,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/reports/paper/figures/ol2_bank_w_olmo_pair_power.png",
+    "repo_path": "interpretability/jspace_olmo_lineage/reports/paper/figures/ol2_bank_w_olmo_pair_power.png",
     "role": "pair-power-figure",
     "sha256": "476ea88627f1d710b03e1bb8a310f54c46683af337980b90890b0ab57128364d",
     "target_uri": "olmo-artifact://release/figures/ol2_bank_w_olmo_pair_power.png"
    },
    {
     "bytes": 3474,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/preregistration/OLMO_LINEAGE_STUDY2_PREREGISTRATION.md",
+    "repo_path": "interpretability/jspace_olmo_lineage/preregistration/OLMO_LINEAGE_STUDY2_PREREGISTRATION.md",
     "role": "preregistration",
     "sha256": "2e5e277c104641b24d85fc451eb00b501520787271bc0f4d0114676e4858dacb",
     "target_uri": "olmo-artifact://release/protocol/OLMO_LINEAGE_STUDY2_PREREGISTRATION.md"
    },
    {
     "bytes": 8205,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/configs/ol2_stage_wedge.yaml",
+    "repo_path": "interpretability/jspace_olmo_lineage/configs/ol2_stage_wedge.yaml",
     "role": "stage-wedge-config",
     "sha256": "78d2a59d7db20f006686a10a85082793e87da7a4aace0191b819b3501f1f44be",
     "target_uri": "olmo-artifact://release/protocol/ol2_stage_wedge.yaml"
    },
    {
     "bytes": 3429,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/configs/ol2_transport_validation.yaml",
+    "repo_path": "interpretability/jspace_olmo_lineage/configs/ol2_transport_validation.yaml",
     "role": "transport-config",
     "sha256": "d26569c7dfcd33b4da7600b8f36b8b86896c3c0448dd291be7b49c230b08817f",
     "target_uri": "olmo-artifact://release/protocol/ol2_transport_validation.yaml"
    },
    {
     "bytes": 3161,
-    "repo_path": "interpretability/jspaces/sidelines/olmo/configs/ol2_bank_w_olmo_pair_power.yaml",
+    "repo_path": "interpretability/jspace_olmo_lineage/configs/ol2_bank_w_olmo_pair_power.yaml",
     "role": "pair-power-config",
     "sha256": "07aa055401ef87221fcc7843aabb50d63c05e25022715152a9d3956d4d3e1170",
     "target_uri": "olmo-artifact://release/protocol/ol2_bank_w_olmo_pair_power.yaml"

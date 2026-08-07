@@ -8,7 +8,7 @@
     "source_commit": "b0425a441f1b87c33d9bb0b4d08d221942f11923",
     "evidence_id_prefix": "gm-",
     "source_registry": {
-      "path": "interpretability/jspaces/sidelines/gemma/reports/evidence_events.jsonl",
+      "path": "interpretability/jspace_gemma/reports/evidence_events.jsonl",
       "sha256": "acd78247f3e367a1fb81693b7c7b811f98b7a7d166cd3d8a5e46a1deff409173"
     },
     "selected_events": [

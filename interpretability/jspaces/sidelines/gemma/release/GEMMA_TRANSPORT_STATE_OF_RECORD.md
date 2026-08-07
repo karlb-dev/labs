@@ -28,8 +28,8 @@ The methods-only sentence earned by this track is:
 | Study | `jspace-gemma-transport` |
 | Branch | `interp_jspace_gemma_transport` |
 | Fork | `3b041735d8b842de46a9c0a474fccd0c44e0841a` |
-| Package | `interpretability/jspaces/sidelines/gemma/` |
-| Registry | `interpretability/jspaces/sidelines/gemma/reports/evidence_events.jsonl` |
+| Package | `interpretability/jspace_gemma/` |
+| Registry | `interpretability/jspace_gemma/reports/evidence_events.jsonl` |
 | Evidence prefix | `gm-` |
 | Drive root | `gemma_transport_20260802/` |
 | Native tiers | development and methods only |
@@ -136,8 +136,8 @@ engine, so no PDF is claimed as a release artifact.
 Run:
 
 ```bash
-bash interpretability/jspaces/sidelines/gemma/repro.sh
-cd interpretability/jspaces/sidelines/gemma
+bash interpretability/jspace_gemma/repro.sh
+cd interpretability/jspace_gemma
 python -m jspace_gemma verify
 ```
 

@@ -1,10 +1,10 @@
 evidence_id: p4-bank-b-power-dev-v1
 tier: methods
-bank_b_audit: interpretability/jspaces/phases/phase4/data/bank_b_audit_v2.json
+bank_b_audit: interpretability/jspace_phase4/data/bank_b_audit_v2.json
 
 development_calibration:
   evidence_id: p3-bridge-swap-endpoint-qwen36-27b-v1
-  source_registry: interpretability/jspaces/phases/phase3/reports/evidence_events.jsonl
+  source_registry: interpretability/jspace_phase3/reports/evidence_events.jsonl
   source_registry_sha256: 2223e73093463efc55d6f8d2995bdd5e0c016b34e1dbf77bc064499c1a071be2
   paired_rows: /content/drive/MyDrive/interpret/special-lab-1/phase3_20260729/metrics/qwen36-27b/release_audit/bridge_swap_endpoint/p3_bridge_swap_endpoint_paired_qwen36-27b.parquet
   paired_rows_sha256: 3832243c56f172ad5352e65d72d122ede6e1c0d31410852df4c5188602e44a37
@@ -34,6 +34,6 @@ simulation:
   effect_grid_nats: [0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0]
 
 outputs:
-  result: interpretability/jspaces/phases/phase4/reports/bank_b_power_dev_v1.json
-  figure_png: interpretability/jspaces/phases/phase4/reports/figures/p4f18_bank_b_power.png
-  figure_pdf: interpretability/jspaces/phases/phase4/reports/figures/p4f18_bank_b_power.pdf
+  result: interpretability/jspace_phase4/reports/bank_b_power_dev_v1.json
+  figure_png: interpretability/jspace_phase4/reports/figures/p4f18_bank_b_power.png
+  figure_pdf: interpretability/jspace_phase4/reports/figures/p4f18_bank_b_power.pdf

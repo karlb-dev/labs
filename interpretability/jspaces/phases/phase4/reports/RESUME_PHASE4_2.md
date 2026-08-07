@@ -15,7 +15,7 @@ Read the fuller live ledger at:
 
 ```text
 /content/drive/MyDrive/interpret/inprogress.md
-/content/labs/interpretability/jspaces/phases/phase4/reports/INPROGRESS_VM12_20260801.md
+/content/labs/interpretability/jspace_phase4/reports/INPROGRESS_VM12_20260801.md
 ```
 
 ## VM13 final closeout — 2026-08-02 23:00 UTC
@@ -34,7 +34,7 @@ deviation for 1--180. Structural conservative q50/q05 are
 The next exact command after a clean `git pull --ff-only` is:
 
 ```bash
-bash interpretability/jspaces/phases/phase4/run_qwen_a1000_postfit_queue.sh
+bash interpretability/jspace_phase4/run_qwen_a1000_postfit_queue.sh
 ```
 
 It verifies the registered fit and structural stages and resumes at the
@@ -256,7 +256,7 @@ The report/PDF integration is pushed at
 registered functional-result hash, resolved Branch B, and launched:
 
 ```bash
-bash interpretability/jspaces/phases/phase4/run_qwen_continuation_fit.sh draw_a_n1000
+bash interpretability/jspace_phase4/run_qwen_continuation_fit.sh draw_a_n1000
 ```
 
 The producer recovered exact n=500 and banked atomic three-prompt
@@ -309,7 +309,7 @@ paths remain on Drive as normal `flock` targets; no process holds them.
 5. From the clean repository run:
 
 ```bash
-bash interpretability/jspaces/phases/phase4/run_qwen_frozen_branch_followup.sh
+bash interpretability/jspace_phase4/run_qwen_frozen_branch_followup.sh
 ```
 
 The router must reverify the registered functional-result hash, resolve

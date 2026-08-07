@@ -8,7 +8,7 @@
     "source_commit": "a28cdd54dda335daf55f468e5be8cc65b2fc5253",
     "evidence_id_prefix": "ol-",
     "source_registry": {
-      "path": "interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl",
+      "path": "interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
       "sha256": "7cb7ece414092722e925c4fadecdc3f7aade00190848e6a13f74ff77f69d4307"
     },
     "selected_events": [

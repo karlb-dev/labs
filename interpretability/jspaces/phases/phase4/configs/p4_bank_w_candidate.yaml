@@ -56,6 +56,6 @@ primary:
   seed: 48151623
 
 outputs:
-  bank: interpretability/jspaces/phases/phase4/data/bank_w_candidate_v1.jsonl
-  partition: interpretability/jspaces/phases/phase4/data/bank_w_partition_candidate_v1.json
-  audit: interpretability/jspaces/phases/phase4/data/bank_w_audit_v1.json
+  bank: interpretability/jspace_phase4/data/bank_w_candidate_v1.jsonl
+  partition: interpretability/jspace_phase4/data/bank_w_partition_candidate_v1.json
+  audit: interpretability/jspace_phase4/data/bank_w_audit_v1.json

@@ -26,7 +26,7 @@ contract:
     - material_at_a1000
   influence_never_licenses_prompt_removal_or_refit: true
   ql2_amendment:
-    path: interpretability/jspaces/phases/phase4/preregistration/QL2_ESTIMAND_AMENDMENT_DRAFT.md
+    path: interpretability/jspace_phase4/preregistration/QL2_ESTIMAND_AMENDMENT_DRAFT.md
     sha256: 57c48f5a527cc36ef28a24f704eab785d522cc948cca55761a330db635ab2d67
     prospective_commit: 3a92492f09cf5311949311ca6273acc190ec636d
     activation_branch: Q-L2

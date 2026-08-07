@@ -7,7 +7,7 @@ SRC="$(cd "$(dirname "$0")" && pwd)"
 RUN="${SL2_RUN_DIR:-/content/drive/MyDrive/interpret/special-lab-1/part2_20260727}"
 cd "$SRC"
 [ -f scripts/p2fig.py ] && python scripts/p2fig.py
-TEX=handout/phase2_handout.tex
+TEX=handout/jspace_part2_handout.tex
 if [ -f "$TEX" ]; then
   cp -f "$RUN"/figures/p2f*.png handout/figures/ 2>/dev/null || true
   cd handout

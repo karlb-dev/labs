@@ -12,7 +12,7 @@ review date: 2026-08-04
 source commit reviewed: 8762a9a57cd67044b6520ee9b7a17c57aec50792
   (branch interp_jspace_phase4_5; clean tree at review start)
 materials supplied:
-  - interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl (82 rows,
+  - interpretability/jspace_phase4/reports/evidence_events.jsonl (82 rows,
     resolved via `python -m jspace_phase4 registry-list` and raw parsing)
   - frozen producer/analysis code under jspace_phase4/ and configs under
     configs/ (notably p4_qwen_branch_router.py,
@@ -48,7 +48,7 @@ materials supplied:
     A120_A250_STATE_ARCHIVAL_DISPOSITION.md,
     A120_STATE_EXACT_COPY_SEARCH_20260802.md
 narrative-blind declaration: I did NOT open
-  interpretability/jspaces/phases/phase4/paper/ (any file),
+  interpretability/jspace_phase4/paper/ (any file),
   reports/PHASE4_DEVELOPMENT_REPORT.md, reports/INPROGRESS_*.md,
   reports/RESUME_*.md, reports/PHASE4_PART4_EXECUTION_RECORD.md,
   reviews/jspace_lab_nextsteps_*.md, or any plan/addendum/inprogress/
@@ -459,7 +459,7 @@ signature or cryptographic/session provenance:
   Live phase4 registry at review: 82 rows; first-81-row SHA-256
     20124c4c95c3c179472db86f87144bdeee4aaf252a4302408e96f01266c2a00c
     (equals the durability snapshot pin).
-  Executed: python -m pytest interpretability/jspaces/phases/phase4/tests -q
+  Executed: python -m pytest interpretability/jspace_phase4/tests -q
     → 302 passed; python -m jspace_phase4 verify → exit 1, sole failure =
     the known A120–A250 state.json (expected 361bda08e9ffbe1d…d26f45e8).
   Companion audit: reviews/PHASE4_UNTOUCHED_DATA_AUDIT.md (same session).

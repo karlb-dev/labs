@@ -66,4 +66,4 @@ primary:
   reasoning_only_status: thinking-on-secondary
 
 outputs:
-  protocol: interpretability/jspaces/phases/phase4/reports/qwen_mode_parser_gate_dev_v2.json
+  protocol: interpretability/jspace_phase4/reports/qwen_mode_parser_gate_dev_v2.json

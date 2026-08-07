@@ -8,8 +8,8 @@ g5_parquet_uri: artifact://phase4/metrics/olmo3-think/g5_bank/p4-g5-bank-olmo3-t
 g5_result_uri: artifact://phase4/metrics/olmo3-think/g5_bank/p4-g5-bank-olmo3-think-dev-v2/g5_bank_olmo3-think.json
 g5_evidence_id: p4-g5-bank-olmo3-think-dev-v2
 banks:
-  - repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
-  - repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+  - repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
+  - repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
 band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
 k: 10
 protect_top_k: 10

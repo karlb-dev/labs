@@ -1,6 +1,6 @@
 {
  "bundle_id": "jspace-gemma-transport-phase4-v1",
- "bundle_path": "interpretability/jspaces/phases/phase4/reports/GEMMA_TRANSPORT_IMPORT_V1.json",
+ "bundle_path": "interpretability/jspace_phase4/reports/GEMMA_TRANSPORT_IMPORT_V1.json",
  "bundle_payload_sha256": "587cae2c01a4db4c2820fce2af727168f15d7dcde78305b621b7b527ae201f55",
  "bundle_sha256": "e946a59ba25aa02ec0415625ee9863d2a3f9f6226f02842266d720760431ad56",
  "governance": {
@@ -19,7 +19,7 @@
   },
   {
    "bytes": 4851,
-   "path": "/content/labs/interpretability/jspaces/sidelines/gemma/configs/gm_g1_thresholds_frozen.yaml",
+   "path": "/content/labs/interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml",
    "sha256": "3cb1e68c548bce1dc350c8b60a52e5bc6594a4fadb7abec1c4e00f931d855630"
   },
   {
@@ -144,7 +144,7 @@
    "outputs": [
     {
      "bytes": 4851,
-     "path": "/content/labs/interpretability/jspaces/sidelines/gemma/configs/gm_g1_thresholds_frozen.yaml",
+     "path": "/content/labs/interpretability/jspace_gemma/configs/gm_g1_thresholds_frozen.yaml",
      "sha256": "3cb1e68c548bce1dc350c8b60a52e5bc6594a4fadb7abec1c4e00f931d855630"
     },
     {
@@ -280,7 +280,7 @@
  "source_branch": "interp_jspace_gemma_transport",
  "source_commit": "b0425a441f1b87c33d9bb0b4d08d221942f11923",
  "source_registry": {
-  "path": "interpretability/jspaces/sidelines/gemma/reports/evidence_events.jsonl",
+  "path": "interpretability/jspace_gemma/reports/evidence_events.jsonl",
   "sha256": "acd78247f3e367a1fb81693b7c7b811f98b7a7d166cd3d8a5e46a1deff409173"
  },
  "source_study": "jspace-gemma-transport",

@@ -4,13 +4,13 @@ slug: bank-b-restcountries-verification
 
 bank_candidate:
   evidence_id: p4-bank-b-candidate-v2
-  bank_uri: repo://interpretability/jspaces/phases/phase4/data/bank_b_candidate_v2.jsonl
+  bank_uri: repo://interpretability/jspace_phase4/data/bank_b_candidate_v2.jsonl
   bank_sha256: 45a162c73d77442161fef16dc7d450620b3c6f728d52387a2e722bb3f7dc2f81
-  source_rows_uri: repo://interpretability/jspaces/phases/phase4/data/bank_b_source_verification_v2.jsonl
+  source_rows_uri: repo://interpretability/jspace_phase4/data/bank_b_source_verification_v2.jsonl
   source_rows_sha256: db2781dbbb420720e93cad31e13089dbd0c1fbfe30e5b3a5aed8487b4d241d13
-  partition_uri: repo://interpretability/jspaces/phases/phase4/data/bank_b_partition_candidate_v2.json
+  partition_uri: repo://interpretability/jspace_phase4/data/bank_b_partition_candidate_v2.json
   partition_sha256: e0c27b9f5b470b6254e25609e3a73e8f1e10df93c82b51ad2a91998920226ff2
-  audit_uri: repo://interpretability/jspaces/phases/phase4/data/bank_b_audit_v2.json
+  audit_uri: repo://interpretability/jspace_phase4/data/bank_b_audit_v2.json
   audit_sha256: 4f87886ae7e7962e7eeeb4506bfd34c0f9d353832aabbe8e5ae0e95105c53aad
   expected_facts: 160
   expected_families: 40

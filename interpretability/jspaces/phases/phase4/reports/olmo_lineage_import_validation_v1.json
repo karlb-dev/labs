@@ -1,6 +1,6 @@
 {
  "bundle_id": "jspace-olmo-lineage-phase4-final-v1",
- "bundle_path": "interpretability/jspaces/phases/phase4/reports/OLMO_LINEAGE_IMPORT_V1.json",
+ "bundle_path": "interpretability/jspace_phase4/reports/OLMO_LINEAGE_IMPORT_V1.json",
  "bundle_payload_sha256": "a22710f4a76b9586413316aeee1a76c2e632b519081e1e501c3360e05a2461a4",
  "bundle_sha256": "be1870d0b4a562a314809171313957d12e8b176a97189429355b576915a8ba09",
  "governance": {
@@ -160,7 +160,7 @@
  "source_branch": "interp_jspace_olmo_lineage",
  "source_commit": "a28cdd54dda335daf55f468e5be8cc65b2fc5253",
  "source_registry": {
-  "path": "interpretability/jspaces/sidelines/olmo/reports/evidence_events.jsonl",
+  "path": "interpretability/jspace_olmo_lineage/reports/evidence_events.jsonl",
   "sha256": "7cb7ece414092722e925c4fadecdc3f7aade00190848e6a13f74ff77f69d4307"
  },
  "source_study": "jspace-olmo-lineage",

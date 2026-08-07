@@ -2,19 +2,19 @@ evidence_id: p4-qwen-mode-variance-pilot-dev-v1
 tier: phase4-development
 slug: qwen36-27b-mode-variance-pilot
 model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
-model_snapshot_manifest_uri: repo://interpretability/jspaces/phases/phase4/configs/qwen36-27b_snapshot_manifest.json
+model_snapshot_manifest_uri: repo://interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
 model_snapshot_manifest_sha256: 2ae12ad8e69b6ede7f4e8b3a2df619b48c1d4b2bc9faf06ca93068c1af32a818
 
 registered_protocol:
   evidence_id: p4-qwen-mode-variance-pilot-protocol-dev-v1
-  config_uri: repo://interpretability/jspaces/phases/phase4/configs/p4_qwen_mode_variance_pilot_protocol_dev.yaml
+  config_uri: repo://interpretability/jspace_phase4/configs/p4_qwen_mode_variance_pilot_protocol_dev.yaml
   config_sha256: 7be4994b89a1d28c6ec8ce094185b19883ce3c4588f36aae6b4715d6181e0720
-  result_uri: repo://interpretability/jspaces/phases/phase4/reports/qwen_mode_variance_pilot_protocol_dev_v1.json
+  result_uri: repo://interpretability/jspace_phase4/reports/qwen_mode_variance_pilot_protocol_dev_v1.json
   result_sha256: 1dd9a9f149ba6fa1b4a5c7389d2afc85aa70c17081050106373f8a8b2f2cc067
 
 passing_mode_baseline:
   evidence_id: p4-qwen-mode-gate-dev-v2
-  config_uri: repo://interpretability/jspaces/phases/phase4/configs/p4_qwen_mode_model_gate_v2_dev.yaml
+  config_uri: repo://interpretability/jspace_phase4/configs/p4_qwen_mode_model_gate_v2_dev.yaml
   config_sha256: 7a99fd7e7000fcd0c895ab5e02375b37820e631db6e1c4ca44acc7d69bfebf24
   result_path: /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-mode-gate-v2/mode_gate/p4-qwen-mode-gate-dev-v2/mode_gate_result.json
   result_sha256: ca65fbc206dcae102d0cfe88720f01019b5bbbaf904dbd1d6587067305e8a69c
@@ -40,9 +40,9 @@ selection:
   consumed_phase3_development_only: true
 
 task_banks:
-  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+  - uri: repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
     sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
-  - uri: repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+  - uri: repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
     sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
 
 runtime:
@@ -126,12 +126,12 @@ variance_summary:
   bootstrap_upper_quantile: 0.90
   planning_sd_rule: maximum of sample SD and bootstrap 90% upper bound
   substantive_sesoi_accuracy_points: 0.20
-  sesoi_source_uri: repo://interpretability/jspaces/phases/phase4/preregistration/P4_P2_SESOI_MEMO_DRAFT.md
+  sesoi_source_uri: repo://interpretability/jspace_phase4/preregistration/P4_P2_SESOI_MEMO_DRAFT.md
   sesoi_source_sha256: d961b09308baa7b395ea8e439959aa1fcdc8dfbe60fe24adb9c9c87082915f5c
   forbid_pilot_mean_for_sesoi_selection: true
 
 review_contract:
-  engineering_review_uri: repo://interpretability/jspaces/phases/phase4/reviews/P4_P2_GPU_PRODUCER_REVIEW.md
+  engineering_review_uri: repo://interpretability/jspace_phase4/reviews/P4_P2_GPU_PRODUCER_REVIEW.md
   independent_review_evidence_id: p4-review-qwen-mode-variance-gpu-v1
   independent_review_output_basename: P4_P2_GPU_INDEPENDENT_REVIEW.json
   required_verdict: APPROVE_DEVELOPMENT_PILOT

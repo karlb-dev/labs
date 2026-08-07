@@ -60,10 +60,10 @@ tokenizer_contract:
 
 inputs:
   bank_f:
-    uri: repo://interpretability/jspaces/phases/phase3/data/bank_f_v7.jsonl
+    uri: repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
     sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
   bank_s:
-    uri: repo://interpretability/jspaces/phases/phase3/data/bank_s_v3.jsonl
+    uri: repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
     sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
   frozen_base_lens:
     uri: drive://phase3/lens/olmo3-base_lens.pt

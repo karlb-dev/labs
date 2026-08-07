@@ -1,7 +1,7 @@
 evidence_id: p4-bank-w-power-holm2-dev-v1
 tier: methods
 
-bank_w_audit: interpretability/jspaces/phases/phase4/data/bank_w_audit_v2.json
+bank_w_audit: interpretability/jspace_phase4/data/bank_w_audit_v2.json
 target_model_slugs: [olmo31-think, olmo31-instruct, qwen36-27b]
 
 development_calibration:
@@ -57,6 +57,6 @@ simulation:
   effect_grid_nats: [0.08, 0.10, 0.12, 0.14, 0.18, 0.20]
 
 outputs:
-  result: interpretability/jspaces/phases/phase4/reports/bank_w_power_holm2_dev_v1.json
-  figure_png: interpretability/jspaces/phases/phase4/reports/figures/p4f28_bank_w_power_holm2.png
-  figure_pdf: interpretability/jspaces/phases/phase4/reports/figures/p4f28_bank_w_power_holm2.pdf
+  result: interpretability/jspace_phase4/reports/bank_w_power_holm2_dev_v1.json
+  figure_png: interpretability/jspace_phase4/reports/figures/p4f28_bank_w_power_holm2.png
+  figure_pdf: interpretability/jspace_phase4/reports/figures/p4f28_bank_w_power_holm2.pdf

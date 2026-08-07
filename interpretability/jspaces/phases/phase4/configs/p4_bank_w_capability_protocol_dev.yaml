@@ -2,12 +2,12 @@ evidence_id: p4-bank-w-capability-protocol-dev-v1
 tier: methods
 bank_evidence_id: p4-bank-w-candidate-v2
 power_evidence_id: p4-bank-w-power-dev-v1
-bank_uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_candidate_v1.jsonl
+bank_uri: repo://interpretability/jspace_phase4/data/bank_w_candidate_v1.jsonl
 bank_file_sha256: c43ef76cbc4db755f6f2bb3e91b8feecb65ef2106fb5199c5759dc1b95578ab4
 bank_rows_sha256: 078e7726027ea61a09040b9030344c2c28868593695e650b66df527fefa8ab49
-audit_uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_audit_v2.json
+audit_uri: repo://interpretability/jspace_phase4/data/bank_w_audit_v2.json
 audit_file_sha256: 08ffe320cb9fa4091de0a51b6f86bcada34d39f0cda7f9e8baeef7dbb8d8ae7f
-partition_uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_partition_candidate_v1.json
+partition_uri: repo://interpretability/jspace_phase4/data/bank_w_partition_candidate_v1.json
 partition_file_sha256: 33a0677cac1357ca74a4b38d5e2d4fcfd5bb75734163356b71b26232ca1bf288
 partition_payload_sha256: 361acad0f38f0662d8f7cb2648689915dcefdce5f2f778f4067fcf348a784238
 
@@ -98,8 +98,8 @@ joint_evidence_id: p4-bank-w-capability-joint-dev-v1
 checkpoint_every_rows: 8
 
 outputs:
-  protocol: interpretability/jspaces/phases/phase4/reports/bank_w_capability_protocol_dev_v1.json
-  joint_report: interpretability/jspaces/phases/phase4/reports/bank_w_capability_joint_dev_v1.json
+  protocol: interpretability/jspace_phase4/reports/bank_w_capability_protocol_dev_v1.json
+  joint_report: interpretability/jspace_phase4/reports/bank_w_capability_joint_dev_v1.json
   joint_figure_stem: p4f23_bank_w_capability
 
 claim_boundary: >-

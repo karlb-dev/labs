@@ -9,7 +9,7 @@ Created 2026-08-04 after the `jspace-phase4-frozen-v1` tag.
 - Tag: `jspace-phase4-frozen-v1` at commit resolved via `git rev-list -n1 jspace-phase4-frozen-v1` (the freeze-record head of `interp_jspace_part2`)
   (equals `origin/interp_jspace_part2`).
 - Release manifest:
-  `interpretability/jspaces/phases/phase4/release/PHASE4_RELEASE_MANIFEST.json`,
+  `interpretability/jspace_phase4/release/PHASE4_RELEASE_MANIFEST.json`,
   payload SHA-256 `be481dcfca634136d09c648379fddbcb9fd81989217e653abacac3705ac0be73`.
 - Phase 4 registry SHA-256: `58fd81b6af1956e89a352f195cee546e8f0bd61d27d3e10949b7b1a846694f54`
   (84+ rows; see manifest for exact counts).
@@ -45,15 +45,15 @@ Resolution code: `jspace_phase4/paths4.py` (env overrides
 
 ## Claim ledgers and states of record
 
-- `interpretability/jspaces/phases/phase4/reports/PHASE4_STATE_OF_RECORD.md`
-- `interpretability/jspaces/phases/phase4/release/PHASE4_CLAIM_LEDGER.md`
-- `interpretability/jspaces/phases/phase4/release/PHASE4_KNOWN_LIMITATIONS.md`
-- `interpretability/jspaces/sidelines/gemma/release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md`
+- `interpretability/jspace_phase4/reports/PHASE4_STATE_OF_RECORD.md`
+- `interpretability/jspace_phase4/release/PHASE4_CLAIM_LEDGER.md`
+- `interpretability/jspace_phase4/release/PHASE4_KNOWN_LIMITATIONS.md`
+- `interpretability/jspace_gemma/release/GEMMA_TRANSPORT_STATE_OF_RECORD_V2.md`
   + `gemma_transport_claim_ledger_v2.md`
-- `interpretability/jspaces/sidelines/olmo/reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md`
+- `interpretability/jspace_olmo_lineage/reports/OLMO_LINEAGE_STATE_OF_RECORD_V2.md`
   + `OLMO_LINEAGE_CLAIMS_TABLE_V2.md`
 - Runtime-identity methods object:
-  `interpretability/jspaces/phases/phase4/reports/PHASE4_RUNTIME_IDENTITY_SYNTHESIS.md`
+  `interpretability/jspace_phase4/reports/PHASE4_RUNTIME_IDENTITY_SYNTHESIS.md`
   (`p4-runtime-identity-synthesis-v1`) — joins Paper B's spine per the
   analysis addendum.
 
@@ -76,14 +76,14 @@ Resolution code: `jspace_phase4/paths4.py` (env overrides
 
 ## Existing paper/handout sources
 
-- `interpretability/jspaces/phases/phase4/paper/PAPER_CONCLUSION_SKELETON.md`
-- `interpretability/jspaces/phases/phase4/paper/PHASE4_METHODS_DECISION_RECORD.md`
-- `interpretability/jspaces/phases/phase4/paper/PHASE5_HORIZON.md`
-- `interpretability/jspaces/phases/phase4/reports/handout/` (governed boundary
+- `interpretability/jspace_phase4/paper/PAPER_CONCLUSION_SKELETON.md`
+- `interpretability/jspace_phase4/paper/PHASE4_METHODS_DECISION_RECORD.md`
+- `interpretability/jspace_phase4/paper/PHASE5_HORIZON.md`
+- `interpretability/jspace_phase4/reports/handout/` (governed boundary
   lifted at the tag; regeneration belongs to the analysis phase)
-- `interpretability/jspaces/sidelines/gemma/reports/handout/`
+- `interpretability/jspace_gemma/reports/handout/`
   (`gemma_transport_development.tex/.pdf`)
-- `interpretability/jspaces/sidelines/olmo/reports/paper/`
+- `interpretability/jspace_olmo_lineage/reports/paper/`
   (`olmo_lineage_parallel_phase.tex/.pdf`)
 - Course materials referencing the campaign under `interpretability/`
   (COURSE.md, ADVANCED_COURSE.MD, labs/) — course-facing, not
@@ -123,7 +123,7 @@ campaign registry or registered output path.
 
 ## Phase 5 reopen router
 
-`interpretability/jspaces/phases/phase4/paper/PHASE5_HORIZON.md` holds the candidate
+`interpretability/jspace_phase4/paper/PHASE5_HORIZON.md` holds the candidate
 branches (Qwen consensus/cross-fit successor; Bank-W ≥18-family redesign;
 capability-compatible stage assay; Gemma mechanism separation; prospective
 site-dose transport archive). A Phase 5 study may open only from a written

@@ -6,9 +6,9 @@ import_contract:
   source_study: jspace-olmo-lineage
   source_commit: d76e937d2e6294b92d3d599581bd0fb029f5735c
   source_registry_sha256: 1e66b35068dc6489de10cccad206899a726d522872bec3f5fe3586aa0a20cbca
-  bundle_uri: repo://interpretability/jspaces/phases/phase4/reports/OLMO_BANK_W_CAPABILITY_IMPORT_V1.json
+  bundle_uri: repo://interpretability/jspace_phase4/reports/OLMO_BANK_W_CAPABILITY_IMPORT_V1.json
   bundle_sha256: d3c2f94e23251c64edcdd643e1ab13a94ad9263a7ccb6fe36c2c2e1a367b0536
-  validation_uri: repo://interpretability/jspaces/phases/phase4/reports/olmo_bank_w_capability_import_validation_v1.json
+  validation_uri: repo://interpretability/jspace_phase4/reports/olmo_bank_w_capability_import_validation_v1.json
   validation_sha256: 57d4ac60aeef972a26a19a4d2b159e93d62a53822b40a836fa27401c36ebccf2
   required_source_evidence_ids:
     - ol-bank-w-capability-protocol-v1
@@ -26,9 +26,9 @@ bank_contract:
   scoring_spec_sha256: fa6d7aa58d877f560c5c8f81b663d68fe9f67f96d0993b19ce8718f1e39916e8
   phase4_function_source_sha256: 77c963990dd980e94664ed6b9ead2e6e60c574ce40372186f638c3b7640fbe51
   current_bank_evidence_id: p4-bank-w-candidate-v3
-  current_bank_uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_candidate_v3.jsonl
+  current_bank_uri: repo://interpretability/jspace_phase4/data/bank_w_candidate_v3.jsonl
   current_bank_sha256: 05f4b9f957878ab95ad3f84753963ddbeab373ba99e8f3702c99994d2cb4cf87
-  current_audit_uri: repo://interpretability/jspaces/phases/phase4/data/bank_w_audit_v3.json
+  current_audit_uri: repo://interpretability/jspace_phase4/data/bank_w_audit_v3.json
   current_audit_sha256: b989cbeedbaf7c4cd439b8ffd93c823b4f94671eca676d725ac4c61bca94df01
 
 selection:
@@ -87,9 +87,9 @@ models:
     result_sha256: 463e1b4b6c7a4fc40d990051346dcb9e50d37ea80253516c9844cec3cd919beb
 
 outputs:
-  report: repo://interpretability/jspaces/phases/phase4/reports/bank_w_capability_joint_imported_dev_v1.json
-  figure_png: repo://interpretability/jspaces/phases/phase4/reports/figures/p4f30_bank_w_joint_imported.png
-  figure_pdf: repo://interpretability/jspaces/phases/phase4/reports/figures/p4f30_bank_w_joint_imported.pdf
+  report: repo://interpretability/jspace_phase4/reports/bank_w_capability_joint_imported_dev_v1.json
+  figure_png: repo://interpretability/jspace_phase4/reports/figures/p4f30_bank_w_joint_imported.png
+  figure_pdf: repo://interpretability/jspace_phase4/reports/figures/p4f30_bank_w_joint_imported.pdf
 
 claim_boundary: >-
   Imported and independently recomputed development-only Bank-W baseline
