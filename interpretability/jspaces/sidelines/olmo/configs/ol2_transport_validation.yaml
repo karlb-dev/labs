@@ -1,0 +1,96 @@
+schema_version: 1
+study_id: jspace-olmo-lineage-study2
+tier: methods
+status: FROZEN_PRE_TRANSPORT_DATA
+branch: interp_jspace_olmo_lineage_2
+shared_parent_commit: 901fb4fc7578a913088c7947a2e6240f7fc45aeb
+run_root: /content/drive/MyDrive/interpret/special-lab-1/olmo_lineage_2_20260803
+
+license_dependency:
+  source_study: jspace-gemma-transport-study2
+  evidence_id: gm2-backend-parity-calibration-v1
+  exact_output_hash_required_at_runtime: true
+  import_envelope_must_be_registered_before_verdict: true
+  path_ambiguity_route: measurements_allowed_but_license_held
+  architecture_dependent_route: use_olmo_specific_ceiling_only
+  pooled_gemma_ceiling_as_convenience: forbidden
+
+models:
+  base:
+    model_id: allenai/Olmo-3-1125-32B
+    revision: c2b61dae89a1ad10e4ad5653d0e46b590902607b
+    evidence_id: ol2-transport-validation-base-v1
+  olmo31_think:
+    model_id: allenai/Olmo-3.1-32B-Think
+    revision: 832c3f543499af8fe68b88359501de9cb7840544
+    evidence_id: ol2-transport-validation-olmo31-think-v1
+  mandatory_models: [base, olmo31_think]
+  optional_already_loaded_stages: [think_sft, think_dpo]
+  optional_stage_may_run_only_if_primary_complete_and_marginal_minutes_lte: 90
+
+layers_zero_indexed: [24, 32, 40, 56]
+assay_band_layers: [24, 32, 40]
+late_anchor_layer: 56
+prompt_ids: [gm-p001, gm-p002, gm-p003, gm-p004]
+directions:
+  base_seed: 24080361
+  families: [rademacher, gaussian, sphere_tangent]
+  draws_per_family: 1
+source_mode: single_position
+source_position: -1
+target: final_residual_last_position
+
+relative_epsilon_ladder: [0.001, 0.0025, 0.005, 0.01, 0.02, 0.05, 0.10]
+minimum_required_epsilon: 0.005
+epsilon_0_10_role: continuity_only
+smaller_values_may_be_reported_only_if_delivery_and_snr_pass: true
+
+delivery:
+  cosine_floor: 0.999
+  relative_norm_error_ceiling: 0.01
+  use_realized_vector: true
+response_snr:
+  measurement_floor: 12.0
+  decision_floor: 20.0
+transport_gate:
+  tangent_cosine_floor: 0.98
+  forward_relative_error_ceiling: 0.20
+  central_relative_error_ceiling: 0.10
+  row_passage_floor: 0.90
+  require_exact_jvp: true
+  exact_backends: [torch.func.jvp, torch.autograd.functional.jvp]
+  record: [gain, homogeneity, odd_symmetry, additivity, intercept_slope_fit]
+
+dose_matching:
+  reuse_registered_position_records_only: true
+  no_causal_assay_reinstrumentation: true
+  source_families: [registered_study1_lineage_grids, registered_phase3_phase4_span_safe_position_records]
+  join_key: [model, item_id, layer, position]
+  effective_relative_epsilon: sqrt_removed_energy_fraction_times_local_residual_norm_ratio
+  coverage_floor_for_in_band_pass: 0.90
+
+router:
+  order: [license_held, pass_in_band_relevant_doses, late_only, scale_limited, fail]
+  pass_in_band_relevant_doses:
+    all_assay_layers_pass: true
+    intervention_distribution_coverage_gte: 0.90
+  late_only:
+    late_anchor_passes: true
+    any_assay_layer_fails: true
+  scale_limited:
+    small_epsilon_regime_exists: true
+    intervention_distribution_coverage_lt: 0.90
+  fail:
+    no_licensed_regime_meets_frozen_gate: true
+
+allowed_exclusions:
+  - exact_snapshot_hash_failure
+  - frozen_prompt_encoding_failure
+  - delivery_failure_reported_as_unmeasurable
+  - response_snr_failure_reported_as_unmeasurable
+forbidden:
+  - posthoc_epsilon_change
+  - threshold_change_after_transport_data
+  - gemma_ceiling_recalibration_from_olmo
+  - automatic_o5_opening
+  - claim_that_paired_ablation_is_invalidated_by_transport_failure

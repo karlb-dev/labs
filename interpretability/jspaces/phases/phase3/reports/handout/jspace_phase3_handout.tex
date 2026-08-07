@@ -1,0 +1,286 @@
+\documentclass[10pt]{article}
+\usepackage[margin=2.1cm]{geometry}
+\usepackage{graphicx,booktabs,xcolor,titlesec,enumitem,amsmath}
+\usepackage[hidelinks]{hyperref}
+\definecolor{ink}{HTML}{1F2430}
+\definecolor{muted}{HTML}{8A90A0}
+\definecolor{jblue}{HTML}{2A78D6}
+\definecolor{teal}{HTML}{0F9D8F}
+\definecolor{warn}{HTML}{C23B6F}
+\titleformat{\section}{\large\bfseries\color{ink}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{ink}}{\thesubsection}{0.6em}{}
+\setlist{nosep,leftmargin=1.2em}
+\graphicspath{{/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729/figures/}}
+\newcommand{\tier}[1]{\textcolor{muted}{\footnotesize\textsc{#1}}}
+\newcommand{\eid}[1]{\textcolor{muted}{\footnotesize\texttt{#1}}}
+
+\title{\vspace{-1.2em}J-space Phase 3 --- mechanism, generalization, paper hardening\\
+\large working handout \\[2pt]
+\normalsize\textcolor{muted}{branch \texttt{interp\_jspace\_part2} · run root \texttt{phase3\_20260729} · 2026-07-30, VM10 late block (pre-freeze refresh)}}
+\author{}\date{}
+
+\begin{document}
+\maketitle
+\vspace{-2.8em}
+
+\noindent\textbf{Tier legend.} Every number carries its evidence tier:
+\tier{phase2-confirmatory} results are frozen and immutable;
+\tier{phase3-development} results guide design and are NOT confirmatory
+claims; \tier{methods} results validate instruments. Nothing here exists
+outside \texttt{reports/evidence\_events.jsonl}.
+
+\section{Where Phase 3 stands}
+
+Phase 2 closed with both preregistered primaries rejecting
+(HP1 task-shape contrast $-0.504\,[-0.720,-0.295]$; HP3 Qwen J-specific
+tail $+0.279\,[+0.205,+0.361]$, replicating held-out at $+0.297$)
+\tier{phase2-confirmatory}. Phase 3 attacks the four gaps that block the
+strong manuscript sentence: the thin two-hop leg, the label-vs-span
+protection asymmetry, the missing prose exact control, and full
+clean-room reproduction.
+
+\begin{itemize}
+\item \textbf{\S4.1a overlap mining} \eid{p3-overlap-mining-v1} --- done.
+\item \textbf{N8 Level 1 clean room} \eid{p3-n8-level1-repro-v1} --- done, all four primaries reproduce to $\le$5e-4.
+\item \textbf{\S4.1b span audits} --- done on ALL THREE primaries + cross-model synthesis \eid{p3-span-audit-cross-model-v1}.
+\item \textbf{Workstream C prose exact control} --- COMPLETE on all three primaries (\texttt{p3f04}).
+\item \textbf{Banks F/S} --- 72/72 families authored, validated, source-verified; G5-scored $\times$3.
+\item \textbf{FROZEN + BLOCK B COMPLETE}: tag \texttt{jspace-phase3-freeze-v1}; primary cells $\times$3, locked analysis, replication side, N8 Levels 1--3 all banked.
+\end{itemize}
+
+\section{THE PHASE 3 PRIMARY RESULTS \hfill \tier{phase3-confirmatory}}
+
+Locked analysis \eid{p3-locked-analysis-v1} (run once, raw parquets,
+after the last cell; span-safe primary arm; frozen partition seed
+85670; Holm family):
+
+\begin{center}\small
+\begin{tabular}{llll}
+\toprule
+primary & estimate & $p_{\mathrm{Holm}}$ & verdict \\
+\midrule
+\textbf{P3-P2} span-safe tail, Qwen & $+0.096$ tail excess (188 items / 26 fam) & $\sim$1e-5 & \textbf{REJECTS} \\
+\textbf{P3-P3} bridge rescue, Qwen & $+0.431$ nats (94 composed items) & 0.018 & \textbf{REJECTS} \\
+P3-P1 thick contrast, Qwen$-$OLMo & $-0.261$ nats [$-0.52,-0.01$] (17 fam) & 0.062 & directional, under disclosed MDE \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{(1)} The J-specific heavy tail \emph{survives full span-safe
+protection} at confirmatory tier — and \textbf{REPLICATES on held-out
+families} ($+0.102$, $p\approx$1e-5, 28 fam)
+\eid{p3-replication-analysis-v1}. The campaign's central specificity
+claim now rests on the leak-proof arm, at $\sim$1/3 of the
+label-protected size, exactly as the dev decomposition predicted.
+\textbf{(2) Bridge mediation is confirmed} on the magnitude-blind-chosen
+model. \textbf{(3)} P3-P1 is paper-shaped in direction with agreeing
+sensitivities, under the preregistered power disclosure — the
+estimation targets carry the story: Think$\approx$Instruct on the thick
+bank ($+0.01\,[-0.45,+0.39]$); and the \S4.3 workspace-word test says
+Qwen's contrast does NOT appear on Bank S ($+0.02$, wide CI) — by the
+pre-stated rule, the honest noun is \textbf{``knowledge-access
+channel''}, not working-memory workspace. (Think's Bank-S term is
+CI-clean \emph{positive}, $+0.15\,[+0.04,+0.26]$ — flagged for
+mechanism.)
+
+\textbf{Reproduction ladder discharged}: N8 L2 sentinels bit-exact
+$\times$3 (worst dev 0.0); \textbf{L3 full 184-item Qwen cell
+bit-exact} \eid{p3-n8-level3-qwen36-27b-v1}.
+
+\begin{center}
+\includegraphics[width=0.99\textwidth]{p3f05_primary_results.png}
+\end{center}
+
+\section{\S4.1a --- Selection pressure is a model property, not a damage predictor \hfill \tier{phase3-development}}
+
+Protected-row selection pressure (clean top-$k$ rows the J selection
+would have taken) does not predict per-item damage in any model
+($\rho$ 0.00--0.11, CIs cross 0), \emph{but} it is a 12$\times$ model
+property: median blocked rows/position Think 1.33, Instruct 1.22,
+Qwen \textbf{0.10}. Accessibility signs flip between clusters:
+$\rho(\text{clean rank},\Delta)$ $-0.30/-0.31$ on the OLMo pair
+(CI-clean) vs \textbf{$+0.24$} on Qwen. \eid{p3-overlap-mining-v1},
+fig.~\texttt{p3f01}.
+
+\begin{center}
+\includegraphics[width=0.99\textwidth]{p3f02_span_decomposition.png}
+\end{center}
+
+\section{\S4.1b --- Label protection is not span protection \hfill \tier{phase3-development}}
+
+The paper-faithful label-protected arm \emph{leaks into the very span it
+declares protected}, on every model (fig.~above: OLMo 3.1 Think own
+lens, 60 frozen Phase 2 items). Span-safe protection zeroes the overlap
+exactly (its own positive control) and the effect decomposes:
+
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+family-weighted $\Delta$ (nats) · tail@$-1$ & Think & Instruct & Qwen \\
+\midrule
+label-protected & $-1.40\,[-2.24,-0.67]$ · 45\% & $-1.81\,[-2.81,-0.97]$ · 47\% & $-0.27\,[-1.01,+0.42]$ · 30\% \\
+span-safe & $-0.25\,[-0.71,+0.23]$ · 20\% & $\mathbf{-0.53\,[-0.93,-0.15]}$ · 32\% & $-0.02\,[-0.41,+0.40]$ · 15\% \\
+prot-energy-matched & $\mathbf{-0.43\,[-0.80,-0.08]}$ · 18\% & $-0.15\,[-0.45,+0.16]$ · 15\% & $-0.02\,[-0.25,+0.20]$ · 7\% \\
+span-safe own control & $-0.005$ · 2\% & $+0.01$ · 3\% & $-0.08$ · 2\% \\
+\midrule
+specific span-safe tail & $+18$pp & $+28$pp & $+13$pp \\
+$r$(label, span-safe) per item & 0.20 & 0.29 & \textbf{0.75} \\
+removed energy inside protected span & 37\% & 42\% & 28\% \\
+answer-direction norm lost & 18\% & 21\% & 26\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Reading.} (1) The leak \emph{geometry} is universal --- every
+model deletes protected-span energy under label protection.
+(2) The \emph{behavioral} leakage component is essentially a Think
+phenomenon (prot-energy control reproduces $\sim$1/3 of its label mean,
+nil on Qwen). (3) The content residual is largest and CI-clean on
+Instruct. (4) A J-specific tail survives full span protection on all
+three (own controls $\le$3\%). (5) On Qwen, span-safe \emph{rescales}
+the same items ($r=0.75$); on OLMo it \emph{reallocates} --- so the
+decomposition must be carried as two components, never one number.
+Phase 2's HP3 transfers nearly intact on Qwen, as \S4.1a's
+selection-pressure contrast predicted.
+\eid{p3-span-audit-\{olmo31-think-v2,olmo31-instruct-v1,qwen36-27b-v1\}}
+fig.~\texttt{p3f03}.
+
+\begin{center}
+\includegraphics[width=0.99\textwidth]{p3f03_span_cross_model.png}
+\end{center}
+
+$\Rightarrow$ \texttt{meanJ\_span\_safe} is the P3-P2 primary arm;
+\texttt{prot\_energy\_matched} its preregistered comparator. Scope:
+development tier; the sharp control was designed after seeing the Think
+overlap numbers (fine for arm selection, disqualifying for confirmatory
+claims); confirmatory versions run on the thick bank post-freeze.
+
+\section{Instrument notes \hfill \tier{methods}}
+
+\begin{itemize}
+\item \textbf{N8 Level 1 passes}: a narrative-blind agent regenerated
+the full Phase 2 primary table from frozen parquets in a clean output
+root; all four quantities match to $\le$5e-4. Levels 2--3 (sentinel
+subsets, one full GPU cell) remain open as release gates.
+\eid{p3-n8-level1-repro-v1}
+\item \textbf{BOS units on Qwen}: \texttt{ScoringSession} demanded a
+\texttt{bos\_token\_id}; Qwen has none, and
+\texttt{jlens.from\_hf(force\_bos=True)} is a no-op there --- every
+frozen Phase 2 Qwen artifact is in \emph{native} units. The session now
+scores native exactly when no BOS exists and records the applied
+convention (commit \texttt{70d8eae}).
+\item \textbf{Units verified bit-exactly}: all three span audits
+reproduce frozen N6 per-alias baselines exactly (60/60 items per
+model). Where an audit baseline differs from N6's
+\texttt{lp\_canonical}, the audit's alias choice named a different case
+variant --- same machinery, same units.
+\item \textbf{Report CI correction}: the Think \S4.1b section's first
+published label/span-safe/prot-energy CIs matched no registered
+artifact (transcribed from a mid-audit dev render). REPORT\_PHASE3 now
+quotes the registered \eid{p3-span-audit-figure-olmo31-think-v2} values
+(as does the table above); point estimates, tails, and conclusions
+unchanged.
+\end{itemize}
+
+\section{Workstream C --- the exact control on prose: COMPLETE \hfill \tier{phase3-development}}
+
+Phase 2's prose guard skipped the primary matched control; \S7.1 made
+it mandatory before any ``selective'' wording (R4). Guard battery v2
+\eid{p3-guard-battery-v2} (104 items / 8 source-pinned domains,
+wikitext TEST held out from every lens-fit corpus), six arms per item
+including the profile-consuming exact instant rank+energy control.
+\eid{p3-prose-grid-\{olmo31-think,olmo31-instruct,qwen36-27b\}-v1},
+figure \texttt{p3f04} + \eid{p3-prose-grid-figure-v1}.
+
+\begin{center}\small
+\begin{tabular}{lccc}
+\toprule
+mean $\Delta$ NLL / token & Think & Instruct & Qwen \\
+\midrule
+label-protected J & +0.175 & +0.530 & \textbf{+0.945} \\
+span-safe J & +0.089 & +0.150 & +0.209 \\
+exact instant matched & \textbf{+0.003} & \textbf{+0.002} & \textbf{+0.021} \\
+prot-energy matched & +0.076 & +0.123 & +0.052 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{(1) The prose cost is J-content everywhere, never dose} (exact
+control $\approx$0 on all three). \textbf{(2) The prose ladder INVERTS
+the task ladder and tracks the \S4.1b projector-overlap ladder}
+(Qwen $>$ Instruct $>$ Think $\;\leftrightarrow\;$ 1.37 $>$ 0.94 $>$
+0.89): on prose every position leaks, and span-safe removes 72--78\%
+of the label cost on every model. \textbf{(3) No model earns
+``selective'' wording at this tier}: the \S7.4 standardized index is
++1.25 to +1.57 --- prose damage exceeds task damage in standardized
+units on ALL three, so the R4 sentence stands for every primary
+(``nonspecific J-channel vulnerability cannot be excluded''), sharpened:
+the vulnerability is content-specific and predominantly output-span
+leakage. Grammar preference survives every arm (85--100\%).
+
+\begin{center}
+\includegraphics[width=0.99\textwidth]{p3f04_prose_exact_control.png}
+\end{center}
+
+\section{Banks F and S --- 54 of 72 families \hfill \tier{phase3-development}}
+
+\begin{itemize}
+\item \textbf{Bank F v5} \eid{p3-bank-f-v5}: \textbf{164 bundles / 38
+families}, every bundle direct/composed/bridge-supplied + rotated
+counterfactual, functional first hops with per-family ambiguity notes,
+cross-phase dedup against every Phase 2 (bridge, answer) pair AND bare
+answer (858 burned answers), one (bridge, answer) pair per bank,
+distinct templates per family. \textbf{164/164 verified} against a
+pinned reference.
+\item \textbf{Bank S v2} \eid{p3-bank-s-v2}: \textbf{80 bundles / 16
+synthetic template families} (lookup, binding, path, distractor,
+reversible-mapping types per \S5.2) --- the working-memory bank whose
+composed$-$direct contrast is preregistered as Family B's first member
+(addendum \S4.3).
+\item \textbf{Verification pivot} \eid{p3-wiki-reference-v4}: the Drive
+\texttt{wikimedia/wikipedia 20231101.en} snapshot is hub-authentic
+(shard sha256 verified) yet \emph{missing the plain articles of major
+entities} --- `Thailand' is absent from all 6{,}407{,}814 rows while
+``Thailand at the 1992 Summer Olympics'' exists; the release evidently
+drops its largest pages. Bank verification therefore runs against
+freshly fetched wikitext pinned by \emph{per-page revision ids}
+(strictly stronger provenance than a dump date). 248/248 pages fetched;
+every hop of every shipped bundle is stated on its source page.
+\item \textbf{Complete}: 48 F + 24 S = 72 families / 324 bundles; G5
+$\times$3 (972 items each). Two grading-instrument catches from reading
+failed generations: \texttt{normalize} deleted whitespace runs
+(``the\textbackslash nBaht''$\to$``thebaht'', regression-tested fix),
+and the inclusion predicate moved to \emph{answer contained in the
+8-token greedy continuation} (endpoints are teacher-forced lp; prefix
+rate kept as a reported column). Cohorts: 73.5/74.2/77.9\% capable;
+three-model intersection \textbf{104 facts / 34 families}. The R2
+$\ge$25/side intersection floor is infeasible with this bank (the
+Phase 2 burn list forces less-famous instances exactly where
+three-model capability is scarce) --- floor amended to measured
+feasibility ($\ge$16/side), \emph{disclosed} in prereg \S5. Split
+preview \eid{p3-family-split-preview-v1}: 36/36 families, F 24/24,
+intersection 16/18, imbalances $\le$0.35.
+\item \textbf{P3-P3 = Qwen} by the pinned tie-break (both gates
+identifiable at 0.85 coverage; ties$\to$Qwen, rule pinned before the
+Qwen gate ran). \textbf{Power} \eid{p3-power-sim-v3}: P3-P2 MDE
+$\approx$0.2 tail-points at 30--36 families (anchor +0.279); P3-P1
+powered only for $\ge$0.3--0.5-nat effects (disclosed scenario table);
+SESOI 0.15 nats.
+\end{itemize}
+
+\section{Paper tree}
+
+Sections 1--3 (problem, assay repair, Phase 2 matrix) are drafted from
+frozen material only, with evidence ids inline and the \S0.2 calibrated
+sentence verbatim (\texttt{paper/01--03*.md}). Writing them surfaced no
+overclaims to withdraw; the assay-repair section doubles as the
+methods-contribution narrative.
+
+\vspace{0.6em}
+\noindent\textcolor{muted}{\footnotesize Standing rules: Phase 2 frozen
+and immutable · producers refuse dirty trees · supersede, never edit ·
+tier watermarks everywhere · the contradiction heuristic (it caught the
+BOS guard and the wikipedia-release defect this block) · prohibited
+claims per nextsteps \S4.5.}
+
+\end{document}

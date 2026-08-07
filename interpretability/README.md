@@ -668,3 +668,7 @@ checklist in [how_to_design_labs.md](how_to_design_labs.md) §7 — most
 importantly: `--tier a` completes on CPU, the self-checks pass, every claim
 in `ledger_suggestions.md` cites an artifact that exists, and the handout's
 questions are answerable from the artifacts alone.
+
+## J-spaces
+
+The J-space campaign lives under [jspaces/](jspaces/).

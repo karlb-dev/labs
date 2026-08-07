@@ -1,0 +1,10 @@
+evidence_id: r2-occupancy-qwen36-v1
+tier: pilot
+model_path: /content/hf_local/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+lens_path: /content/hf_local/models--neuronpedia--jacobian-lens/snapshots/a4114d7752d11eb546e6cf372213d7e75526d3a1/qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt
+prompt_set: /content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/descriptive_prompts.jsonl
+out_dir: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/qwen36-27b/r2_occupancy
+layers: [24, 32, 40]
+k_max: 50
+n_prompts: 60
+rand_seeds: [11, 12, 13]

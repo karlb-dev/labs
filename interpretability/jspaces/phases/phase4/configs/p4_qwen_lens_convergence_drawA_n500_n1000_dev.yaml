@@ -1,0 +1,135 @@
+evidence_id: p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1
+tier: phase4-development
+slug: qwen36-27b-lens-convergence-a500-a1000
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+model_snapshot_manifest_uri: repo://interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
+runtime_packages:
+  torch: 2.11.0+cu128
+  transformers: 5.13.1
+  safetensors: 0.8.0
+
+# This config is frozen while A1000 is still in flight. The sole permitted
+# post-registration edit is binding the exact registered A1000 SHA-256 below.
+lenses:
+  a500:
+    kind: registered
+    label: drawA-n500
+    evidence_id: p4-qwen-lens-fit-drawA-n500-dev-v1
+    lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n0500.pt
+    lens_sha256: 84404956fb71a84f5af7fa22c34a8f07761777d048b3db314b1330037e4168a8
+    n_prompts: 500
+  a1000:
+    kind: registered
+    label: drawA-n1000
+    evidence_id: p4-qwen-lens-fit-drawA-n1000-dev-v1
+    lens_uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n1000.pt
+    lens_sha256: 6e48c7731501d0fc6030f1d60eff6f19b211756f40ef0cd6e499e414f08f6bd6
+    n_prompts: 1000
+  published:
+    kind: external_published
+    label: published-n1000
+    lens_path: /content/hf_local/models--neuronpedia--jacobian-lens/snapshots/a4114d7752d11eb546e6cf372213d7e75526d3a1/qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt
+    lens_sha256: 1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1
+    n_prompts: 1000
+
+comparisons:
+  - id: a500_vs_a1000
+    left: a500
+    right: a1000
+    scope: same-corpus-nested-sample-size
+  - id: a1000_vs_published
+    left: a1000
+    right: published
+    scope: external-reference-recipe-corpus-transfer
+  - id: a500_vs_published_historical
+    left: a500
+    right: published
+    scope: historical-continuity-external-reference
+  - id: a500_vs_increment501_1000
+    left: a500
+    right: increment501_1000
+    scope: same-corpus-prefix-vs-incremental-block
+  - id: a1000_vs_increment501_1000
+    left: a1000
+    right: increment501_1000
+    scope: same-corpus-full-vs-incremental-block
+
+incremental_block:
+  name: increment501_1000
+  prefix: a500
+  extended: a1000
+  prefix_n: 500
+  extended_n: 1000
+  formula: (1000 * J_a1000 - 500 * J_a500) / 500
+
+published_reference:
+  classification: external published reference, partially specified recipe
+  verified_fields:
+    model: Qwen/Qwen3.6-27B
+    broad_dataset_family: Salesforce/wikitext
+    n_prompts_from_artifact: 1000
+    source_layers_from_artifact: 0-62
+    target_layer_inferred_from_artifact_shape: 63
+    saved_dtype: float16
+  unknown_recipe_fields:
+    - exact prompt records and ordering
+    - exact sequence length and truncation convention
+    - skipped-position and valid-position mask
+    - BOS/native tokenization convention
+    - exact fitting-time jlens revision
+    - exact merge and accumulation history
+
+fixed_sampling:
+  source_manifest_uri: artifact://phase4/metrics/qwen36-27b-lens-structural/lens_structural_stability/p4-qwen-lens-structural-stability-drawA-n120-vs-published-n1000-dev-v1/input_manifest.json
+  source_manifest_sha256: 863bbd3c0728251418c38580ea3c847b76d10acbefebfe37bf8a812d1365187e
+  token_ids_n: 4096
+  token_ids_sha256: 55b81bf163ad483da72161c7f7d978930442d7fdfd032a39c3330d82d4cf8a5d
+  probe_shape: [256, 5120]
+  packed_probes_sha256: bed1537f9668132d3c701e0bc0303987fa085e90d9bb3992003776c81d90770c
+
+task_banks:
+  - uri: repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
+    sha256: a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544
+  - uri: repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
+    sha256: e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f
+
+frequency_corpus:
+  uri: hf-cache://datasets--Salesforce--wikitext/snapshots/b08601e04326c79dfdd32d625aee71d232d685c3/wikitext-103-raw-v1/validation-00000-of-00001.parquet
+  sha256: 204929b7ff9d6184953f867dedb860e40aa69c078fc1e54b3baaa8fb28511c4c
+  split: validation
+  max_ids_per_decile: 256
+  selection_namespace: p4-qwen-lens-convergence-frequency-v1
+
+model_tensors:
+  unembedding: lm_head.weight
+  final_norm: model.language_model.norm.weight
+  rms_norm_eps: 1.0e-6
+
+subspace:
+  method: fixed-probe-randomized-left-svd
+  rank: 16
+  oversample: 8
+  power_iterations: 1
+  seed: 47392017
+
+recipe:
+  compute_dtype: float32
+  expected_source_layers: 63
+  expected_d_model: 5120
+  expected_vocab_size: 248320
+  quantiles: [0.05, 0.5, 0.95]
+  cka_max_n: 1024
+  assay_band: [20, 44]
+  landmark_layers: [24, 32, 40]
+
+figure:
+  stem: p4f25_qwen_lens_convergence_a500_a1000
+  primary_comparison_id: a500_vs_a1000
+  incremental_comparison_id: a500_vs_increment501_1000
+  primary_label: A500 vs A1000
+  incremental_label: A500 vs prompts 501-1000 block mean
+  title: "Qwen3.6-27B draw-A lens convergence: n=500 to n=1000"
+  footer: Development structural sensitivity. Published comparisons in the registered table use an external published reference, partially specified recipe.
+  published_limitation: The published lens is an external published reference, partially specified recipe; only A500 versus A1000 is a pure same-corpus sample-size contrast here.
+
+registry_what: Task-led Qwen draw-A n=500 versus n=1000 structural convergence with raw/identity-adjusted, incremental-block, frequency, layer-type, and labeled external-reference diagnostics.

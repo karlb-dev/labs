@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "selection_id": "p3-alias-sensitivity-selection-v1",
+  "frozen_before_outcomes": true,
+  "side": "confirmatory",
+  "seed": 4242,
+  "seed_contract": "sha256-v1",
+  "selection_algorithm": "Intersect facts having complete direct/composed frozen primary rows in all three Phase 3 models. Include every fact with more than one accepted alias. Add one deterministic sha256-seeded fact from every remaining shared family, then deterministic sha256-seeded extras to 20 facts.",
+  "selection_namespaces": {
+    "family": "p3-alias-sensitivity-family",
+    "extra": "p3-alias-sensitivity-extra"
+  },
+  "required_multi_alias_facts": [
+    "capital_to_currency:abuja",
+    "capital_to_language:dhaka",
+    "flag_carrier_to_currency:qantas",
+    "landmark_city_to_river:big-ben"
+  ],
+  "fact_ids": [
+    "capital_to_currency:abuja",
+    "capital_to_language:dhaka",
+    "flag_carrier_to_currency:qantas",
+    "invention_inventor_to_nationality:the-first-polio-vaccine",
+    "landmark_city_to_country:hagia-sophia",
+    "landmark_city_to_river:big-ben",
+    "landmark_city_to_river:louvre",
+    "national_animal_to_capital:okapi",
+    "newspaper_city_to_country:the-hindu",
+    "ore_metal_to_symbol:galena",
+    "s_alias_distractor:everhart",
+    "s_dial_valve:m40",
+    "s_ledger_alias:quillfeather",
+    "s_lens_bench:l-172",
+    "s_lens_bench:l-455",
+    "s_parcel_kiosk:p169",
+    "s_route_terminal:t5",
+    "s_signal_relay:dawnmere",
+    "s_two_codes:dratchet",
+    "s_two_codes:umbrix"
+  ],
+  "expected_facts": 20,
+  "expected_items": 40,
+  "expected_families": 17,
+  "frozen_input_sha256": {
+    "bank_f_v7.jsonl": "a5900908330ac16ca621e986d5d9fcaebef5fb57380ef2ca6ce26671949d9544",
+    "bank_s_v3.jsonl": "e0428e762acdee7bb39594cf315c6b031f6ab9f7ccbba2589f48aac33dd0c55f",
+    "partition_phase3.json": "27a177ffa28085b32916b63ffab35286debfc391fec7fb6d7de07459a8a8769d",
+    "p3_grid_olmo31-think.parquet": "9e961af4c76032a012e570d54693174e237f28dc2a6775374202feddb3b9ded1",
+    "p3_grid_olmo31-instruct.parquet": "166d6cc8668a74245415497d18bbbfb207e6330989179c28604bcc4b50c7a29e",
+    "p3_grid_qwen36-27b.parquet": "992ed2f6a9d6d470ed9e9b4af1d3eadc9d3df7941e24d178a830fc3c97691687"
+  }
+}

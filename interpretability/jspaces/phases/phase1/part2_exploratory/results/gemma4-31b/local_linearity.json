@@ -1,0 +1,756 @@
+{
+  "summary": {
+    "model": "gemma4-31b",
+    "eps_relative": 0.02,
+    "n_directions": 3,
+    "criterion": {
+      "scale_cos_min": 0.95,
+      "scale_ratio_target": 2.0,
+      "scale_ratio_tol": 0.25,
+      "additivity_cos_min": 0.95
+    },
+    "by_layer": {
+      "22": {
+        "scale_cos": 0.6363,
+        "scale_ratio": 1.4019,
+        "additivity_cos": 0.7474,
+        "additivity_rel_err": 0.958,
+        "locally_linear": false
+      },
+      "30": {
+        "scale_cos": 0.8379,
+        "scale_ratio": 2.3523,
+        "additivity_cos": 0.8964,
+        "additivity_rel_err": 0.4644,
+        "locally_linear": false
+      },
+      "37": {
+        "scale_cos": 0.646,
+        "scale_ratio": 1.3388,
+        "additivity_cos": 0.7646,
+        "additivity_rel_err": 0.9863,
+        "locally_linear": false
+      },
+      "40": {
+        "scale_cos": 0.7735,
+        "scale_ratio": 1.7108,
+        "additivity_cos": 0.8332,
+        "additivity_rel_err": 0.747,
+        "locally_linear": false
+      },
+      "42": {
+        "scale_cos": 0.8823,
+        "scale_ratio": 1.0215,
+        "additivity_cos": 0.903,
+        "additivity_rel_err": 1.0065,
+        "locally_linear": false
+      },
+      "44": {
+        "scale_cos": 0.8602,
+        "scale_ratio": 0.8699,
+        "additivity_cos": 0.9057,
+        "additivity_rel_err": 0.9036,
+        "locally_linear": false
+      },
+      "48": {
+        "scale_cos": 0.7706,
+        "scale_ratio": 0.7147,
+        "additivity_cos": 0.8569,
+        "additivity_rel_err": 1.4822,
+        "locally_linear": false
+      },
+      "52": {
+        "scale_cos": 0.8451,
+        "scale_ratio": 0.8111,
+        "additivity_cos": 0.8842,
+        "additivity_rel_err": 1.2577,
+        "locally_linear": false
+      }
+    },
+    "locally_linear_layers": [],
+    "nonlinear_layers": [
+      22,
+      30,
+      37,
+      40,
+      42,
+      44,
+      48,
+      52
+    ],
+    "reading": "gemma4-31b: superposition test with NO reference to any fitted J. Locally linear at []; nonlinear at [22, 30, 37, 40, 42, 44, 48, 52]. Where the map is NONLINEAR, no Jacobian models it however well estimated, and the method's premise is limited at that depth.",
+    "seconds": 27
+  },
+  "records": [
+    {
+      "prompt": 0,
+      "layer": 22,
+      "dir": 0,
+      "scale_cos": 0.16738742589950562,
+      "scale_ratio": 3.7107611935896054,
+      "add_cos": 0.8990479111671448,
+      "add_rel_err": 0.4674110412597656
+    },
+    {
+      "prompt": 0,
+      "layer": 22,
+      "dir": 1,
+      "scale_cos": 0.19788572192192078,
+      "scale_ratio": 1.4019251279096614,
+      "add_cos": 0.027438953518867493,
+      "add_rel_err": 1.6682589054107666
+    },
+    {
+      "prompt": 0,
+      "layer": 22,
+      "dir": 2,
+      "scale_cos": 0.739287257194519,
+      "scale_ratio": 1.277017765244834,
+      "add_cos": 0.8698406219482422,
+      "add_rel_err": 0.5348086953163147
+    },
+    {
+      "prompt": 0,
+      "layer": 30,
+      "dir": 0,
+      "scale_cos": 0.8276094198226929,
+      "scale_ratio": 2.2799665861330625,
+      "add_cos": 0.9369741678237915,
+      "add_rel_err": 0.3882158398628235
+    },
+    {
+      "prompt": 0,
+      "layer": 30,
+      "dir": 1,
+      "scale_cos": 0.8378915786743164,
+      "scale_ratio": 2.9007196679686027,
+      "add_cos": 0.9107009172439575,
+      "add_rel_err": 0.4227983057498932
+    },
+    {
+      "prompt": 0,
+      "layer": 30,
+      "dir": 2,
+      "scale_cos": 0.8804553747177124,
+      "scale_ratio": 1.7987230339663425,
+      "add_cos": 0.8740506172180176,
+      "add_rel_err": 0.5767080187797546
+    },
+    {
+      "prompt": 0,
+      "layer": 37,
+      "dir": 0,
+      "scale_cos": 0.38504093885421753,
+      "scale_ratio": 1.4433592816575933,
+      "add_cos": 0.764619767665863,
+      "add_rel_err": 0.9863453507423401
+    },
+    {
+      "prompt": 0,
+      "layer": 37,
+      "dir": 1,
+      "scale_cos": 0.6165226101875305,
+      "scale_ratio": 0.9688422359466417,
+      "add_cos": 0.6762473583221436,
+      "add_rel_err": 1.4312738180160522
+    },
+    {
+      "prompt": 0,
+      "layer": 37,
+      "dir": 2,
+      "scale_cos": 0.722294270992279,
+      "scale_ratio": 1.5999868261188417,
+      "add_cos": 0.8127949237823486,
+      "add_rel_err": 0.7276757955551147
+    },
+    {
+      "prompt": 0,
+      "layer": 40,
+      "dir": 0,
+      "scale_cos": 0.6177651286125183,
+      "scale_ratio": 2.4403633071318,
+      "add_cos": 0.8331748843193054,
+      "add_rel_err": 0.6494289040565491
+    },
+    {
+      "prompt": 0,
+      "layer": 40,
+      "dir": 1,
+      "scale_cos": 0.7983267307281494,
+      "scale_ratio": 1.4082423800606947,
+      "add_cos": 0.7755980491638184,
+      "add_rel_err": 0.7969872951507568
+    },
+    {
+      "prompt": 0,
+      "layer": 40,
+      "dir": 2,
+      "scale_cos": 0.41560098528862,
+      "scale_ratio": 2.394383050890727,
+      "add_cos": 0.5353899598121643,
+      "add_rel_err": 0.9536741971969604
+    },
+    {
+      "prompt": 0,
+      "layer": 42,
+      "dir": 0,
+      "scale_cos": 0.8758102059364319,
+      "scale_ratio": 0.9374138552983291,
+      "add_cos": 0.8997479677200317,
+      "add_rel_err": 1.1945366859436035
+    },
+    {
+      "prompt": 0,
+      "layer": 42,
+      "dir": 1,
+      "scale_cos": 0.9117358326911926,
+      "scale_ratio": 1.0215040405993658,
+      "add_cos": 0.9513263702392578,
+      "add_rel_err": 1.0064606666564941
+    },
+    {
+      "prompt": 0,
+      "layer": 42,
+      "dir": 2,
+      "scale_cos": 0.7715001702308655,
+      "scale_ratio": 1.715165342900269,
+      "add_cos": 0.8713608980178833,
+      "add_rel_err": 0.718466579914093
+    },
+    {
+      "prompt": 0,
+      "layer": 44,
+      "dir": 0,
+      "scale_cos": 0.860218346118927,
+      "scale_ratio": 0.8986203415327302,
+      "add_cos": 0.9051252007484436,
+      "add_rel_err": 0.7728203535079956
+    },
+    {
+      "prompt": 0,
+      "layer": 44,
+      "dir": 1,
+      "scale_cos": 0.9221411347389221,
+      "scale_ratio": 0.8215729654156276,
+      "add_cos": 0.909428596496582,
+      "add_rel_err": 0.932022750377655
+    },
+    {
+      "prompt": 0,
+      "layer": 44,
+      "dir": 2,
+      "scale_cos": 0.8578604459762573,
+      "scale_ratio": 0.723864475448543,
+      "add_cos": 0.9057165384292603,
+      "add_rel_err": 0.9036357998847961
+    },
+    {
+      "prompt": 0,
+      "layer": 48,
+      "dir": 0,
+      "scale_cos": 0.5051413178443909,
+      "scale_ratio": 0.669312708590677,
+      "add_cos": 0.8362452983856201,
+      "add_rel_err": 1.4853707551956177
+    },
+    {
+      "prompt": 0,
+      "layer": 48,
+      "dir": 1,
+      "scale_cos": 0.6006364822387695,
+      "scale_ratio": 0.8177955121855651,
+      "add_cos": 0.6091616749763489,
+      "add_rel_err": 1.613584041595459
+    },
+    {
+      "prompt": 0,
+      "layer": 48,
+      "dir": 2,
+      "scale_cos": 0.7706104516983032,
+      "scale_ratio": 0.5767933915833153,
+      "add_cos": 0.8733288049697876,
+      "add_rel_err": 1.418997883796692
+    },
+    {
+      "prompt": 0,
+      "layer": 52,
+      "dir": 0,
+      "scale_cos": 0.84508216381073,
+      "scale_ratio": 0.6530870011790998,
+      "add_cos": 0.926815390586853,
+      "add_rel_err": 0.9941398501396179
+    },
+    {
+      "prompt": 0,
+      "layer": 52,
+      "dir": 1,
+      "scale_cos": 0.6979141235351562,
+      "scale_ratio": 0.7722929801882072,
+      "add_cos": 0.9170650243759155,
+      "add_rel_err": 1.0334352254867554
+    },
+    {
+      "prompt": 0,
+      "layer": 52,
+      "dir": 2,
+      "scale_cos": 0.7236747741699219,
+      "scale_ratio": 0.7416369365566712,
+      "add_cos": 0.7993369698524475,
+      "add_rel_err": 1.9049630165100098
+    },
+    {
+      "prompt": 1,
+      "layer": 22,
+      "dir": 0,
+      "scale_cos": 0.5745033025741577,
+      "scale_ratio": 2.745405799740735,
+      "add_cos": 0.6796945333480835,
+      "add_rel_err": 0.8940203189849854
+    },
+    {
+      "prompt": 1,
+      "layer": 22,
+      "dir": 1,
+      "scale_cos": 0.6363060474395752,
+      "scale_ratio": 2.176408136092083,
+      "add_cos": 0.45200830698013306,
+      "add_rel_err": 1.0974493026733398
+    },
+    {
+      "prompt": 1,
+      "layer": 22,
+      "dir": 2,
+      "scale_cos": 0.14960558712482452,
+      "scale_ratio": 4.165797051882009,
+      "add_cos": 0.7474147081375122,
+      "add_rel_err": 0.8915061354637146
+    },
+    {
+      "prompt": 1,
+      "layer": 30,
+      "dir": 0,
+      "scale_cos": 0.7823503017425537,
+      "scale_ratio": 2.36950911284957,
+      "add_cos": 0.8490767478942871,
+      "add_rel_err": 0.5373043417930603
+    },
+    {
+      "prompt": 1,
+      "layer": 30,
+      "dir": 1,
+      "scale_cos": 0.5867317318916321,
+      "scale_ratio": 2.0416052420126833,
+      "add_cos": 0.8630226254463196,
+      "add_rel_err": 0.5069330334663391
+    },
+    {
+      "prompt": 1,
+      "layer": 30,
+      "dir": 2,
+      "scale_cos": 0.9004278779029846,
+      "scale_ratio": 2.3093113907312546,
+      "add_cos": 0.8624356985092163,
+      "add_rel_err": 0.5144395232200623
+    },
+    {
+      "prompt": 1,
+      "layer": 37,
+      "dir": 0,
+      "scale_cos": 0.2329314798116684,
+      "scale_ratio": 2.2365342364965892,
+      "add_cos": 0.7361558675765991,
+      "add_rel_err": 1.0724025964736938
+    },
+    {
+      "prompt": 1,
+      "layer": 37,
+      "dir": 1,
+      "scale_cos": 0.9365619421005249,
+      "scale_ratio": 0.9514323224454773,
+      "add_cos": 0.9123912453651428,
+      "add_rel_err": 0.4222860038280487
+    },
+    {
+      "prompt": 1,
+      "layer": 37,
+      "dir": 2,
+      "scale_cos": 0.4832911789417267,
+      "scale_ratio": 1.3388022052562698,
+      "add_cos": 0.4017508327960968,
+      "add_rel_err": 1.3006044626235962
+    },
+    {
+      "prompt": 1,
+      "layer": 40,
+      "dir": 0,
+      "scale_cos": 0.7734997272491455,
+      "scale_ratio": 1.7108134797751529,
+      "add_cos": 0.7933799624443054,
+      "add_rel_err": 0.7236005663871765
+    },
+    {
+      "prompt": 1,
+      "layer": 40,
+      "dir": 1,
+      "scale_cos": 0.7086623907089233,
+      "scale_ratio": 2.126531164302334,
+      "add_cos": 0.7884999513626099,
+      "add_rel_err": 0.7470131516456604
+    },
+    {
+      "prompt": 1,
+      "layer": 40,
+      "dir": 2,
+      "scale_cos": 0.8034842014312744,
+      "scale_ratio": 1.4358697655464576,
+      "add_cos": 0.8625457286834717,
+      "add_rel_err": 0.8863204121589661
+    },
+    {
+      "prompt": 1,
+      "layer": 42,
+      "dir": 0,
+      "scale_cos": 0.8823000192642212,
+      "scale_ratio": 0.892590226764612,
+      "add_cos": 0.9122195839881897,
+      "add_rel_err": 1.017724633216858
+    },
+    {
+      "prompt": 1,
+      "layer": 42,
+      "dir": 1,
+      "scale_cos": 0.8974993824958801,
+      "scale_ratio": 0.8936490453516059,
+      "add_cos": 0.9246314764022827,
+      "add_rel_err": 0.8083197474479675
+    },
+    {
+      "prompt": 1,
+      "layer": 42,
+      "dir": 2,
+      "scale_cos": 0.860276997089386,
+      "scale_ratio": 0.8685523399801173,
+      "add_cos": 0.7540969848632812,
+      "add_rel_err": 2.1288022994995117
+    },
+    {
+      "prompt": 1,
+      "layer": 44,
+      "dir": 0,
+      "scale_cos": 0.9151570796966553,
+      "scale_ratio": 0.9808781564354031,
+      "add_cos": 0.9445660710334778,
+      "add_rel_err": 0.767613410949707
+    },
+    {
+      "prompt": 1,
+      "layer": 44,
+      "dir": 1,
+      "scale_cos": 0.9104194641113281,
+      "scale_ratio": 0.8699469503470804,
+      "add_cos": 0.9347462058067322,
+      "add_rel_err": 0.8311432600021362
+    },
+    {
+      "prompt": 1,
+      "layer": 44,
+      "dir": 2,
+      "scale_cos": 0.8608691096305847,
+      "scale_ratio": 0.9644860596189071,
+      "add_cos": 0.898162305355072,
+      "add_rel_err": 1.0674315690994263
+    },
+    {
+      "prompt": 1,
+      "layer": 48,
+      "dir": 0,
+      "scale_cos": 0.7139635682106018,
+      "scale_ratio": 0.47783925685665707,
+      "add_cos": 0.8286186456680298,
+      "add_rel_err": 2.090157985687256
+    },
+    {
+      "prompt": 1,
+      "layer": 48,
+      "dir": 1,
+      "scale_cos": 0.8237117528915405,
+      "scale_ratio": 0.834294339980051,
+      "add_cos": 0.8692062497138977,
+      "add_rel_err": 1.54023015499115
+    },
+    {
+      "prompt": 1,
+      "layer": 48,
+      "dir": 2,
+      "scale_cos": 0.8994842767715454,
+      "scale_ratio": 0.9663936531535672,
+      "add_cos": 0.8568624258041382,
+      "add_rel_err": 1.324844241142273
+    },
+    {
+      "prompt": 1,
+      "layer": 52,
+      "dir": 0,
+      "scale_cos": 0.7712379693984985,
+      "scale_ratio": 0.8110838051665232,
+      "add_cos": 0.8667032718658447,
+      "add_rel_err": 1.2834339141845703
+    },
+    {
+      "prompt": 1,
+      "layer": 52,
+      "dir": 1,
+      "scale_cos": 0.8279696702957153,
+      "scale_ratio": 0.724756465156837,
+      "add_cos": 0.884752631187439,
+      "add_rel_err": 1.2577251195907593
+    },
+    {
+      "prompt": 1,
+      "layer": 52,
+      "dir": 2,
+      "scale_cos": 0.8995368480682373,
+      "scale_ratio": 0.8772368610416856,
+      "add_cos": 0.8688812255859375,
+      "add_rel_err": 1.4663505554199219
+    },
+    {
+      "prompt": 2,
+      "layer": 22,
+      "dir": 0,
+      "scale_cos": 0.6878481507301331,
+      "scale_ratio": 1.2067870305443649,
+      "add_cos": 0.7876168489456177,
+      "add_rel_err": 1.0850380659103394
+    },
+    {
+      "prompt": 2,
+      "layer": 22,
+      "dir": 1,
+      "scale_cos": 0.6364668607711792,
+      "scale_ratio": 1.3386559736082206,
+      "add_cos": 0.3594282865524292,
+      "add_rel_err": 1.6002601385116577
+    },
+    {
+      "prompt": 2,
+      "layer": 22,
+      "dir": 2,
+      "scale_cos": 0.859389066696167,
+      "scale_ratio": 1.232048354052399,
+      "add_cos": 0.9487124085426331,
+      "add_rel_err": 0.9579952955245972
+    },
+    {
+      "prompt": 2,
+      "layer": 30,
+      "dir": 0,
+      "scale_cos": 0.7346967458724976,
+      "scale_ratio": 2.5303986927603166,
+      "add_cos": 0.8964061141014099,
+      "add_rel_err": 0.46435052156448364
+    },
+    {
+      "prompt": 2,
+      "layer": 30,
+      "dir": 1,
+      "scale_cos": 0.9160362482070923,
+      "scale_ratio": 3.30081731583435,
+      "add_cos": 0.9447301626205444,
+      "add_rel_err": 0.3988931179046631
+    },
+    {
+      "prompt": 2,
+      "layer": 30,
+      "dir": 2,
+      "scale_cos": 0.9003200531005859,
+      "scale_ratio": 2.3522633171382883,
+      "add_cos": 0.9484717845916748,
+      "add_rel_err": 0.33595389127731323
+    },
+    {
+      "prompt": 2,
+      "layer": 37,
+      "dir": 0,
+      "scale_cos": 0.6937621831893921,
+      "scale_ratio": 1.5918730023281558,
+      "add_cos": 0.796714186668396,
+      "add_rel_err": 0.7374252676963806
+    },
+    {
+      "prompt": 2,
+      "layer": 37,
+      "dir": 1,
+      "scale_cos": 0.6460443139076233,
+      "scale_ratio": 0.7611502480624396,
+      "add_cos": 0.5842899084091187,
+      "add_rel_err": 1.4723308086395264
+    },
+    {
+      "prompt": 2,
+      "layer": 37,
+      "dir": 2,
+      "scale_cos": 0.7817917466163635,
+      "scale_ratio": 0.8759849248360123,
+      "add_cos": 0.7999479174613953,
+      "add_rel_err": 0.8187346458435059
+    },
+    {
+      "prompt": 2,
+      "layer": 40,
+      "dir": 0,
+      "scale_cos": 0.8823925256729126,
+      "scale_ratio": 1.4344630826488174,
+      "add_cos": 0.9130488038063049,
+      "add_rel_err": 0.7888827919960022
+    },
+    {
+      "prompt": 2,
+      "layer": 40,
+      "dir": 1,
+      "scale_cos": 0.6670055985450745,
+      "scale_ratio": 2.7556665183556652,
+      "add_cos": 0.8419889211654663,
+      "add_rel_err": 0.7444503903388977
+    },
+    {
+      "prompt": 2,
+      "layer": 40,
+      "dir": 2,
+      "scale_cos": 0.8766547441482544,
+      "scale_ratio": 1.0080296450264747,
+      "add_cos": 0.8806890249252319,
+      "add_rel_err": 0.5007378458976746
+    },
+    {
+      "prompt": 2,
+      "layer": 42,
+      "dir": 0,
+      "scale_cos": 0.3965298533439636,
+      "scale_ratio": 1.6869974716116627,
+      "add_cos": 0.6308817863464355,
+      "add_rel_err": 1.1449931859970093
+    },
+    {
+      "prompt": 2,
+      "layer": 42,
+      "dir": 1,
+      "scale_cos": 0.9002554416656494,
+      "scale_ratio": 1.0317421113449128,
+      "add_cos": 0.9030217528343201,
+      "add_rel_err": 0.5860131978988647
+    },
+    {
+      "prompt": 2,
+      "layer": 42,
+      "dir": 2,
+      "scale_cos": 0.9212999939918518,
+      "scale_ratio": 1.2930609559158042,
+      "add_cos": 0.9523651599884033,
+      "add_rel_err": 0.6528520584106445
+    },
+    {
+      "prompt": 2,
+      "layer": 44,
+      "dir": 0,
+      "scale_cos": 0.845827579498291,
+      "scale_ratio": 0.6824511516728679,
+      "add_cos": 0.8659828305244446,
+      "add_rel_err": 1.2170014381408691
+    },
+    {
+      "prompt": 2,
+      "layer": 44,
+      "dir": 1,
+      "scale_cos": 0.6068975925445557,
+      "scale_ratio": 0.5926058353530933,
+      "add_cos": 0.9009778499603271,
+      "add_rel_err": 1.2121977806091309
+    },
+    {
+      "prompt": 2,
+      "layer": 44,
+      "dir": 2,
+      "scale_cos": 0.8354474306106567,
+      "scale_ratio": 0.947563899083599,
+      "add_cos": 0.9263516068458557,
+      "add_rel_err": 0.6111934781074524
+    },
+    {
+      "prompt": 2,
+      "layer": 48,
+      "dir": 0,
+      "scale_cos": 0.6104943156242371,
+      "scale_ratio": 0.6424962621677298,
+      "add_cos": 0.8488910794258118,
+      "add_rel_err": 1.2424341440200806
+    },
+    {
+      "prompt": 2,
+      "layer": 48,
+      "dir": 1,
+      "scale_cos": 0.8608478903770447,
+      "scale_ratio": 0.7146609897036406,
+      "add_cos": 0.8865810632705688,
+      "add_rel_err": 1.4138001203536987
+    },
+    {
+      "prompt": 2,
+      "layer": 48,
+      "dir": 2,
+      "scale_cos": 0.9119616150856018,
+      "scale_ratio": 0.7147052910541726,
+      "add_cos": 0.9033893942832947,
+      "add_rel_err": 1.482223629951477
+    },
+    {
+      "prompt": 2,
+      "layer": 52,
+      "dir": 0,
+      "scale_cos": 0.8737264275550842,
+      "scale_ratio": 0.8554871945640306,
+      "add_cos": 0.8841745853424072,
+      "add_rel_err": 1.3852440118789673
+    },
+    {
+      "prompt": 2,
+      "layer": 52,
+      "dir": 1,
+      "scale_cos": 0.9336466193199158,
+      "scale_ratio": 0.8290376906916275,
+      "add_cos": 0.8708133697509766,
+      "add_rel_err": 0.9298495650291443
+    },
+    {
+      "prompt": 2,
+      "layer": 52,
+      "dir": 2,
+      "scale_cos": 0.9091733694076538,
+      "scale_ratio": 0.8343411956337289,
+      "add_cos": 0.9121425747871399,
+      "add_rel_err": 0.7777127623558044
+    }
+  ],
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "local-linearity-gemma4-31b-v1",
+    "tier": "pilot",
+    "code_commit": "a35b2b4d52fe7bbec0feacebcf916c55e8380128",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.local_linearity --model gemma4-31b",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {},
+    "model": {
+      "id": "/content/models/gemma4-31b-it",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T20:30:41Z"
+  }
+}

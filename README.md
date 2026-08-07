@@ -11,3 +11,4 @@ own directory with its own code, notes, and run instructions.
 | --- | --- |
 | [collective_communication](collective_communication/) | Collective Communications for TPU |
 | [interpretability](interpretability/) | Mechanistic Interpretability Labs |
+| [jspaces](interpretability/jspaces/) | J-space campaign (phases, sidelines, paper analysis) |

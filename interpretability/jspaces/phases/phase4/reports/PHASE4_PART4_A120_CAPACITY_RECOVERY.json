@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-08-03T16:15:51Z",
+  "recovery_id": "p4-qwen-a120-capacity-exact-byte-recovery-v1",
+  "scope": "engineering-durability-recovery",
+  "code_commit": "a8e218ccb572db40b9152c9b2624f7847f1fb3a0",
+  "source_evidence_id": "p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1",
+  "source_code_commit": "30b121dfd14ef58fa1ba8c2fe44e1f33d7086572",
+  "preflight": {
+    "target_status": "missing",
+    "recovery_ready": true,
+    "free_gpu_bytes": 101258756096,
+    "minimum_free_gpu_bytes": 75000000000,
+    "gpu": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "compute_capability": [12, 0],
+    "torch": "2.11.0+cu128",
+    "transformers": "5.13.1",
+    "source_event_live": true,
+    "algorithm_contract_pass": true,
+    "model_file_contract_pass": true,
+    "registry_pin_pass": true
+  },
+  "result": {
+    "status": "exact-registered-bytes-restored",
+    "target": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-multilens-functional-gate/functional_gate/p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1/capacity_reconstructions_a120.pt",
+    "bytes": 9837059,
+    "sha256": "6b0399df2c57158e7fdad24274e50f8c1058021d233412afdcc5177f6c651b6f",
+    "expected_sha256": "6b0399df2c57158e7fdad24274e50f8c1058021d233412afdcc5177f6c651b6f",
+    "exact_hash_match": true,
+    "metric_hashes_not_registered": {
+      "24": "a933a8d4dbfac937c51e21489cd71c74f1bfce31353695bdce567054ed1442db",
+      "32": "2446a8e70226201acb227ba1aaf30beb2f1c677dec9a523b95a5b2f7535fa565",
+      "40": "c0a1d4c155b4cd8d767598ef7a66e807977a6202a76e16fb956e2fde4728dd11"
+    }
+  },
+  "commands": [
+    "python -m jspace_phase4.experiments.p4_qwen_historical_capacity_recovery --config interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml --preflight",
+    "python -m jspace_phase4.experiments.p4_qwen_historical_capacity_recovery --config interpretability/jspace_phase4/configs/p4_qwen_historical_capacity_recovery.yaml --recover"
+  ],
+  "scientific_result_created": false,
+  "registry_changed": false,
+  "state_json_reconstructed": false,
+  "claim_boundary": "One absent registered byte string was restored only after an exact full-file SHA-256 match. No outcome was rerun, no registry history was edited, and the missing operational state.json remains a permanent deficit."
+}

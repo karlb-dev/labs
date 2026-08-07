@@ -1,0 +1,92 @@
+evidence_id: p4-bank-w-candidate-v3
+tier: methods
+supersedes: p4-bank-w-candidate-v2
+supersession_reason: >-
+  The registered two-primary Holm audit p4-bank-w-power-holm2-dev-v1 found
+  that the existing 24-family confirmatory side has minimum conservative
+  power 0.7996 and therefore fails the precommitted >=0.80 rule. The first
+  prospectively tested passing count is 28 (power 0.8630), so v3 moves exactly
+  four still-sealed replication families to the still-sealed confirmatory
+  side. Development rows, prompts, answers, and family order are unchanged.
+power_evidence_id: p4-bank-w-power-holm2-dev-v1
+nominal_power_evidence_id: p4-bank-w-power-dev-v1
+power_result:
+  evidence_id: p4-bank-w-power-holm2-dev-v1
+  path: interpretability/jspace_phase4/reports/bank_w_power_holm2_dev_v1.json
+  sha256: 11c4dd0751efffac56e37abeac6cd40aea3113177744c6c17f94f202ae27bf16
+  licensed_minimum_common_families: 28
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+# Preserve the authored prompts and stable family order exactly.
+namespace: p4-bank-w-candidate-v1
+
+superfamilies:
+  - key_value
+  - state_updates
+  - graph_path
+  - stack_queue
+  - deferred_recall
+  - relational_table
+families_per_superfamily: 12
+seeds_per_family: 8
+loads:
+  low: 2
+  high: 6
+derivations: [supplied, derived]
+redundancies: [once, redundant]
+answer_alphabet: [amber, blue, coral, green, ivory, lilac, ochre, silver]
+
+length_matching:
+  maximum_pair_difference_tokens: 4
+  filler_sentence: " Neutral marker; ignore it."
+  maximum_padding_iterations: 256
+
+shortcut_audit:
+  maximum_excess_over_load_chance: 0.08
+  answer_in_query_allowed: false
+  require_balanced_target_positions: true
+
+partition:
+  development_families: 24
+  confirmatory_families: 28
+  replication_families: 20
+  namespace: p4-bank-w-family-partition-v1
+
+development_rows_reference:
+  path: interpretability/jspace_phase4/data/bank_w_candidate_v1.jsonl
+  file_sha256: c43ef76cbc4db755f6f2bb3e91b8feecb65ef2106fb5199c5759dc1b95578ab4
+  development_rows_sha256: b7951276d83c2ba21d438c0e195f19c6c77b53b38f70db4347b76fdcbea7a62e
+
+capability_guard:
+  baseline_accuracy_floor: 0.70
+  low_high_accuracy_difference_sesoi: 0.08
+  minimum_common_families_per_model: 20
+  fallback_covariates:
+    - baseline_answer_margin
+    - prompt_token_count
+    - answer_token_count
+  failed_guard_status: descriptive-only
+
+primary:
+  cell: derived_once
+  low: low
+  high: high
+  model_slugs: [olmo31-think, olmo31-instruct, qwen36-27b]
+  joint_test: shared-family-sign-flip-max-t
+  alternative: positive-high-load-dependence
+  familywise_alpha: 0.05
+  holm_primary_count: 2
+  conservative_planning_alpha: 0.025
+  monte_carlo_draws: 100000
+  seed: 48151623
+
+freeze_blocker: >-
+  Model-specific baseline capability gates, cross-model common-support
+  binding, independent protocol review, and PI sign-off remain pending. The
+  28-family confirmatory allocation and unchanged 20-family replication side
+  are power-licensed by p4-bank-w-power-holm2-dev-v1. No intervention outcome
+  has been opened.
+
+outputs:
+  bank: interpretability/jspace_phase4/data/bank_w_candidate_v3.jsonl
+  partition: interpretability/jspace_phase4/data/bank_w_partition_candidate_v3.json
+  audit: interpretability/jspace_phase4/data/bank_w_audit_v3.json

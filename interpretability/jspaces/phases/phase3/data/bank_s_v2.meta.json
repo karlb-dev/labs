@@ -1,0 +1,78 @@
+{
+ "payload": {
+  "family_counts": {
+   "s_alias_distractor": 5,
+   "s_badge_gate": 5,
+   "s_box_owner": 5,
+   "s_choir_hall": 5,
+   "s_graph_hop": 5,
+   "s_ledger_alias": 5,
+   "s_parcel_floor": 5,
+   "s_parcel_kiosk": 5,
+   "s_recipe_station": 5,
+   "s_route_terminal": 5,
+   "s_rule_operator": 5,
+   "s_same_specimen": 5,
+   "s_signal_relay": 5,
+   "s_tonic_label": 5,
+   "s_two_codes": 5,
+   "s_warehouse_camera": 5
+  },
+  "n_bundles": 80,
+  "n_families": 16,
+  "validation": {
+   "alias_prefix_issues": {},
+   "duplicate_fact_ids": [],
+   "duplicate_triples": [],
+   "family_counts": {
+    "s_alias_distractor": 5,
+    "s_badge_gate": 5,
+    "s_box_owner": 5,
+    "s_choir_hall": 5,
+    "s_graph_hop": 5,
+    "s_ledger_alias": 5,
+    "s_parcel_floor": 5,
+    "s_parcel_kiosk": 5,
+    "s_recipe_station": 5,
+    "s_route_terminal": 5,
+    "s_rule_operator": 5,
+    "s_same_specimen": 5,
+    "s_signal_relay": 5,
+    "s_tonic_label": 5,
+    "s_two_codes": 5,
+    "s_warehouse_camera": 5
+   },
+   "n_bundles": 80,
+   "n_families": 16,
+   "n_with_counterfactual": 80,
+   "ok": true,
+   "phase2_triple_collisions": [],
+   "relation_group_counts": {
+    "synthetic_binding": 30,
+    "synthetic_lookup": 20,
+    "synthetic_path": 30
+   },
+   "template_reuse": {},
+   "violations": {}
+  }
+ },
+ "payload_sha256": "41745c3619c775e3b5cb41468d108a48dbbb818fa56277b1d3642c97c9781932",
+ "provenance": {
+  "branch": "interp_jspace_part2",
+  "code_commit": "8b9e8a4ba63cc3c725f45444815442ea509163ba",
+  "command": "python -m jspace_phase3.experiments.author_bank_s",
+  "config_path": null,
+  "config_sha256": null,
+  "created_utc": "2026-07-30T00:32:01Z",
+  "dirty_tree": true,
+  "evidence_id": "p3-bank-s-v2",
+  "inputs": {},
+  "jlens_commit": null,
+  "model": null,
+  "package_version": "jspace_phase3 0.1.0",
+  "seed": 0,
+  "study_id": "jspace-phase3",
+  "tier": "phase3-development"
+ },
+ "schema_version": 2
+}

@@ -1,0 +1,265 @@
+{
+  "frozen_threshold_nats": -1.0,
+  "endpoint": "per-item tail rate (protected dyn-J minus matched protected-random), paired, family-clustered bootstrap",
+  "by_model": {
+    "olmo3-base": {
+      "label": "OLMo-3 base (1125-32B)",
+      "by_task": {
+        "twohop": {
+          "rate_J": 0.1333,
+          "rate_random": 0.0667,
+          "paired_difference": {
+            "estimate": 0.0667,
+            "ci_low": 0.0,
+            "ci_high": 0.1724,
+            "n_items": 60,
+            "n_families": 22
+          },
+          "excludes_zero": false
+        },
+        "onehop": {
+          "rate_J": 0.2667,
+          "rate_random": 0.0,
+          "paired_difference": {
+            "estimate": 0.2667,
+            "ci_low": 0.1333,
+            "ci_high": 0.4333,
+            "n_items": 30,
+            "n_families": 30
+          },
+          "excludes_zero": true
+        }
+      }
+    },
+    "olmo3-think": {
+      "label": "OLMo-3-32B-Think",
+      "by_task": {
+        "twohop": {
+          "rate_J": 0.2667,
+          "rate_random": 0.1333,
+          "paired_difference": {
+            "estimate": 0.1333,
+            "ci_low": -0.0926,
+            "ci_high": 0.2907,
+            "n_items": 60,
+            "n_families": 22
+          },
+          "excludes_zero": false
+        },
+        "onehop": {
+          "rate_J": 0.2667,
+          "rate_random": 0.0333,
+          "paired_difference": {
+            "estimate": 0.2333,
+            "ci_low": 0.0667,
+            "ci_high": 0.4,
+            "n_items": 30,
+            "n_families": 30
+          },
+          "excludes_zero": true
+        }
+      }
+    },
+    "olmo31-instruct": {
+      "label": "Olmo-3.1-32B-Instruct",
+      "by_task": {
+        "twohop": {
+          "rate_J": 0.2833,
+          "rate_random": 0.1833,
+          "paired_difference": {
+            "estimate": 0.1,
+            "ci_low": -0.0312,
+            "ci_high": 0.2162,
+            "n_items": 60,
+            "n_families": 22
+          },
+          "excludes_zero": false
+        },
+        "onehop": {
+          "rate_J": 0.2333,
+          "rate_random": 0.0667,
+          "paired_difference": {
+            "estimate": 0.1667,
+            "ci_low": 0.0,
+            "ci_high": 0.3667,
+            "n_items": 30,
+            "n_families": 30
+          },
+          "excludes_zero": false
+        }
+      }
+    },
+    "qwen36-27b": {
+      "label": "Qwen3.6-27B",
+      "by_task": {
+        "twohop": {
+          "rate_J": 0.3333,
+          "rate_random": 0.0667,
+          "paired_difference": {
+            "estimate": 0.2667,
+            "ci_low": 0.1395,
+            "ci_high": 0.4889,
+            "n_items": 60,
+            "n_families": 22
+          },
+          "excludes_zero": true
+        },
+        "onehop": {
+          "rate_J": 0.1333,
+          "rate_random": 0.0,
+          "paired_difference": {
+            "estimate": 0.1333,
+            "ci_low": 0.0333,
+            "ci_high": 0.2667,
+            "n_items": 30,
+            "n_families": 30
+          },
+          "excludes_zero": true
+        }
+      }
+    }
+  },
+  "threshold_sensitivity_twohop": {
+    "olmo3-base": {
+      "-0.5": {
+        "rate_J": 0.25,
+        "rate_random": 0.1,
+        "difference": 0.15
+      },
+      "-1.0": {
+        "rate_J": 0.1333,
+        "rate_random": 0.0667,
+        "difference": 0.0667
+      },
+      "-1.5": {
+        "rate_J": 0.0667,
+        "rate_random": 0.0333,
+        "difference": 0.0333
+      },
+      "-2.0": {
+        "rate_J": 0.0333,
+        "rate_random": 0.0,
+        "difference": 0.0333
+      }
+    },
+    "olmo3-think": {
+      "-0.5": {
+        "rate_J": 0.3333,
+        "rate_random": 0.1833,
+        "difference": 0.15
+      },
+      "-1.0": {
+        "rate_J": 0.2667,
+        "rate_random": 0.1333,
+        "difference": 0.1333
+      },
+      "-1.5": {
+        "rate_J": 0.1667,
+        "rate_random": 0.0833,
+        "difference": 0.0833
+      },
+      "-2.0": {
+        "rate_J": 0.1167,
+        "rate_random": 0.0667,
+        "difference": 0.05
+      }
+    },
+    "olmo31-instruct": {
+      "-0.5": {
+        "rate_J": 0.3667,
+        "rate_random": 0.25,
+        "difference": 0.1167
+      },
+      "-1.0": {
+        "rate_J": 0.2833,
+        "rate_random": 0.1833,
+        "difference": 0.1
+      },
+      "-1.5": {
+        "rate_J": 0.2333,
+        "rate_random": 0.1167,
+        "difference": 0.1167
+      },
+      "-2.0": {
+        "rate_J": 0.15,
+        "rate_random": 0.0833,
+        "difference": 0.0667
+      }
+    },
+    "qwen36-27b": {
+      "-0.5": {
+        "rate_J": 0.4667,
+        "rate_random": 0.2167,
+        "difference": 0.25
+      },
+      "-1.0": {
+        "rate_J": 0.3333,
+        "rate_random": 0.0667,
+        "difference": 0.2667
+      },
+      "-1.5": {
+        "rate_J": 0.25,
+        "rate_random": 0.0333,
+        "difference": 0.2167
+      },
+      "-2.0": {
+        "rate_J": 0.1833,
+        "rate_random": 0.0,
+        "difference": 0.1833
+      }
+    }
+  },
+  "twohop_rate_difference_by_model": {
+    "olmo3-base": 0.0667,
+    "olmo3-think": 0.1333,
+    "olmo31-instruct": 0.1,
+    "qwen36-27b": 0.2667
+  },
+  "models_with_ci_excluding_zero": [
+    "qwen36-27b"
+  ],
+  "mean_endpoint_twohop_by_model": {
+    "olmo3-base": -0.1427,
+    "olmo3-think": -0.518,
+    "olmo31-instruct": -0.7949,
+    "qwen36-27b": -0.905
+  },
+  "ladder_order_rate_endpoint": [
+    "olmo3-base",
+    "olmo31-instruct",
+    "olmo3-think",
+    "qwen36-27b"
+  ],
+  "ladder_order_mean_endpoint": [
+    "olmo3-base",
+    "olmo3-think",
+    "olmo31-instruct",
+    "qwen36-27b"
+  ],
+  "ladder_order_matches": false,
+  "reading": "At the pilot n=60 the rate endpoint's J-vs-random difference excludes zero on only 1/4 models (qwen36-27b) \u2014 consistent with G6, which put the n needed for a 10pp margin well above the pilot size. Effect ORDERING under the two endpoints is NOT identical: rate ['olmo3-base', 'olmo31-instruct', 'olmo3-think', 'qwen36-27b'] vs mean ['olmo3-base', 'olmo3-think', 'olmo31-instruct', 'qwen36-27b'] \u2014 Think and Instruct exchange places, so the rate endpoint is not a free relabeling of the mean ladder and HP1's ordering claim must be restated for whichever endpoint the freeze adopts. Threshold sensitivity is reported so the freeze picks a value with its arbitrariness visible; the pilot-frozen -1.0 nat is used throughout and any change is a deviation to log.",
+  "caveat": "pilot items only (dev tier, excluded from confirmatory statistics by prereg); one-hop cells inherit the batteries' ceiling limitation for base/Think \u2014 the hard one-hop set is the confirmatory replacement",
+  "seconds": 0,
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "tailrate-endpoint-crossmodel-v2",
+    "tier": "pilot",
+    "code_commit": "a3761acec727e70faa809c27b4eef6081cf1eb65",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.tailrate_crossmodel",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "olmo3-base": "d75e0cfc517554fd2f7a9e81795330167fb725deebcef920cafa3f6997cafe62",
+      "olmo3-think": "3ad43bec07f2a600b9e02a85e5be5bd84a0e96b50ce2c01aa225968b9ca68218",
+      "olmo31-instruct": "7112060293d2d63db3344f9779d13529f8a28fc0b721ba87dd5021e9ee5ef07f",
+      "qwen36-27b": "87a6930958275796f2dd60390b7e5e89d0cbea9d0a42e46d72b1ca83f5f9f57e"
+    },
+    "model": null,
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T15:59:17Z"
+  }
+}

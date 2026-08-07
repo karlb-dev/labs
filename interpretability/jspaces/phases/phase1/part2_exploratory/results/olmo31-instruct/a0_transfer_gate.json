@@ -1,0 +1,1675 @@
+{
+  "model_slug": "olmo31-instruct",
+  "model_id": "allenai/Olmo-3.1-32B-Instruct",
+  "donor_lens": "olmo32bthink_lens.pt",
+  "n_lens_prompts": 120,
+  "timestamp": "2026-07-27 17:53:36",
+  "mid_band": [
+    20,
+    22,
+    24,
+    26,
+    28,
+    30,
+    32,
+    34,
+    36,
+    38,
+    40,
+    42,
+    44
+  ],
+  "gate": {
+    "probe_threshold": 15,
+    "pass1_threshold": 0.2408,
+    "donor_probe_hits": 17,
+    "donor_jlens_pass1": 0.2833333333333333,
+    "donor_logit_pass1": 0.2
+  },
+  "probe_jlens_hits_at_20": 17,
+  "probe_logit_hits_at_20": 17,
+  "n_probes": 21,
+  "probes": [
+    {
+      "prompt": "Fact: The currency used in the country shaped like a boot is the",
+      "answer": " lira",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 80444,
+        "8": 95641,
+        "12": 66759,
+        "16": 2232,
+        "20": 31384,
+        "22": 8535,
+        "24": 7929,
+        "26": 5991,
+        "28": 18813,
+        "30": 6229,
+        "32": 2111,
+        "34": 3378,
+        "36": 5327,
+        "38": 2212,
+        "40": 1867,
+        "42": 1356,
+        "44": 1683,
+        "48": 841,
+        "52": 71,
+        "56": 45,
+        "60": 10
+      },
+      "logit_rank_by_layer": {
+        "4": 5025,
+        "8": 28861,
+        "12": 65863,
+        "16": 10365,
+        "20": 16568,
+        "22": 4930,
+        "24": 19825,
+        "26": 43955,
+        "28": 43122,
+        "30": 50434,
+        "32": 33244,
+        "34": 36013,
+        "36": 9541,
+        "38": 9925,
+        "40": 4255,
+        "42": 2240,
+        "44": 1308,
+        "48": 75,
+        "52": 11,
+        "56": 7,
+        "60": 3
+      },
+      "jlens_mid_min": 1356,
+      "logit_mid_min": 1308
+    },
+    {
+      "prompt": "Fact: The capital of the country famous for the Eiffel Tower is",
+      "answer": " Paris",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 14379,
+        "8": 17750,
+        "12": 3741,
+        "16": 1318,
+        "20": 158,
+        "22": 116,
+        "24": 52,
+        "26": 2,
+        "28": 2,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 57556,
+        "8": 33504,
+        "12": 21671,
+        "16": 7298,
+        "20": 548,
+        "22": 858,
+        "24": 1172,
+        "26": 9,
+        "28": 5,
+        "30": 1,
+        "32": 3,
+        "34": 2,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The largest planet in our solar system is named",
+      "answer": " Jupiter",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 5793,
+        "8": 15949,
+        "12": 515,
+        "16": 398,
+        "20": 48,
+        "22": 73,
+        "24": 9,
+        "26": 40,
+        "28": 14,
+        "30": 2,
+        "32": 1,
+        "34": 1,
+        "36": 2,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 26896,
+        "8": 24805,
+        "12": 58127,
+        "16": 7191,
+        "20": 321,
+        "22": 414,
+        "24": 18,
+        "26": 71,
+        "28": 15,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The chemical symbol for the metal used in pennies is",
+      "answer": " Cu",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 60525,
+        "8": 56001,
+        "12": 12789,
+        "16": 2752,
+        "20": 1237,
+        "22": 1701,
+        "24": 849,
+        "26": 356,
+        "28": 1107,
+        "30": 79,
+        "32": 93,
+        "34": 33,
+        "36": 25,
+        "38": 18,
+        "40": 8,
+        "42": 8,
+        "44": 4,
+        "48": 3,
+        "52": 2,
+        "56": 2,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 110,
+        "8": 155,
+        "12": 78,
+        "16": 368,
+        "20": 4299,
+        "22": 20590,
+        "24": 7503,
+        "26": 648,
+        "28": 966,
+        "30": 35,
+        "32": 57,
+        "34": 22,
+        "36": 18,
+        "38": 11,
+        "40": 4,
+        "42": 7,
+        "44": 2,
+        "48": 2,
+        "52": 2,
+        "56": 2,
+        "60": 1
+      },
+      "jlens_mid_min": 4,
+      "logit_mid_min": 2
+    },
+    {
+      "prompt": "Fact: The author of Romeo and Juliet is William",
+      "answer": " Shakespeare",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 8930,
+        "8": 225,
+        "12": 25,
+        "16": 49,
+        "20": 14,
+        "22": 16,
+        "24": 1,
+        "26": 1,
+        "28": 1,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 59,
+        "8": 7,
+        "12": 4,
+        "16": 1,
+        "20": 1,
+        "22": 1,
+        "24": 1,
+        "26": 1,
+        "28": 1,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The language spoken in Brazil is",
+      "answer": " Portuguese",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 21033,
+        "8": 11630,
+        "12": 6228,
+        "16": 1490,
+        "20": 267,
+        "22": 175,
+        "24": 142,
+        "26": 14,
+        "28": 15,
+        "30": 12,
+        "32": 6,
+        "34": 2,
+        "36": 2,
+        "38": 2,
+        "40": 1,
+        "42": 2,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 6590,
+        "8": 731,
+        "12": 3772,
+        "16": 24101,
+        "20": 3598,
+        "22": 1209,
+        "24": 1189,
+        "26": 71,
+        "28": 30,
+        "30": 25,
+        "32": 11,
+        "34": 3,
+        "36": 4,
+        "38": 2,
+        "40": 1,
+        "42": 2,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The number of legs on a spider is",
+      "answer": " eight",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 66927,
+        "8": 82106,
+        "12": 37804,
+        "16": 3550,
+        "20": 3387,
+        "22": 595,
+        "24": 642,
+        "26": 161,
+        "28": 270,
+        "30": 172,
+        "32": 112,
+        "34": 67,
+        "36": 51,
+        "38": 74,
+        "40": 30,
+        "42": 14,
+        "44": 11,
+        "48": 8,
+        "52": 7,
+        "56": 3,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 1648,
+        "8": 47116,
+        "12": 11090,
+        "16": 14227,
+        "20": 10369,
+        "22": 5912,
+        "24": 5301,
+        "26": 862,
+        "28": 578,
+        "30": 1192,
+        "32": 166,
+        "34": 43,
+        "36": 28,
+        "38": 30,
+        "40": 18,
+        "42": 14,
+        "44": 11,
+        "48": 10,
+        "52": 11,
+        "56": 2,
+        "60": 1
+      },
+      "jlens_mid_min": 11,
+      "logit_mid_min": 11
+    },
+    {
+      "prompt": "Fact: The ocean between America and Europe is the",
+      "answer": " Atlantic",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 90967,
+        "8": 81066,
+        "12": 69920,
+        "16": 81030,
+        "20": 90333,
+        "22": 86434,
+        "24": 77611,
+        "26": 74810,
+        "28": 62666,
+        "30": 68791,
+        "32": 81324,
+        "34": 82209,
+        "36": 83659,
+        "38": 78304,
+        "40": 80027,
+        "42": 64778,
+        "44": 50427,
+        "48": 13669,
+        "52": 19986,
+        "56": 790,
+        "60": 69
+      },
+      "logit_rank_by_layer": {
+        "4": 62138,
+        "8": 47268,
+        "12": 49006,
+        "16": 52823,
+        "20": 16216,
+        "22": 19507,
+        "24": 26747,
+        "26": 43019,
+        "28": 59845,
+        "30": 54420,
+        "32": 64035,
+        "34": 60377,
+        "36": 63241,
+        "38": 66672,
+        "40": 61971,
+        "42": 48574,
+        "44": 20838,
+        "48": 3161,
+        "52": 2979,
+        "56": 1707,
+        "60": 587
+      },
+      "jlens_mid_min": 50427,
+      "logit_mid_min": 16216
+    },
+    {
+      "prompt": "Fact: The metal that is liquid at room temperature is",
+      "answer": " mercury",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 54742,
+        "8": 52209,
+        "12": 27344,
+        "16": 10398,
+        "20": 2435,
+        "22": 1472,
+        "24": 177,
+        "26": 45,
+        "28": 25,
+        "30": 5,
+        "32": 2,
+        "34": 2,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 97063,
+        "8": 40576,
+        "12": 4083,
+        "16": 24852,
+        "20": 5342,
+        "22": 277,
+        "24": 71,
+        "26": 28,
+        "28": 13,
+        "30": 5,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The planet known as the Red Planet is",
+      "answer": " Mars",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 60795,
+        "8": 48543,
+        "12": 3545,
+        "16": 1755,
+        "20": 1112,
+        "22": 1690,
+        "24": 133,
+        "26": 7,
+        "28": 6,
+        "30": 2,
+        "32": 2,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 31096,
+        "8": 20880,
+        "12": 3181,
+        "16": 1846,
+        "20": 2392,
+        "22": 12849,
+        "24": 298,
+        "26": 17,
+        "28": 12,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 2,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 2,
+        "60": 2
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The capital of Japan is",
+      "answer": " Tokyo",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 9884,
+        "8": 2329,
+        "12": 1002,
+        "16": 3385,
+        "20": 82,
+        "22": 150,
+        "24": 52,
+        "26": 2,
+        "28": 1,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 4367,
+        "8": 23088,
+        "12": 16372,
+        "16": 21739,
+        "20": 424,
+        "22": 2609,
+        "24": 536,
+        "26": 2,
+        "28": 1,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The chemical symbol for gold is",
+      "answer": " Au",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 50960,
+        "8": 56430,
+        "12": 25894,
+        "16": 9488,
+        "20": 2269,
+        "22": 5353,
+        "24": 3435,
+        "26": 467,
+        "28": 292,
+        "30": 25,
+        "32": 24,
+        "34": 15,
+        "36": 18,
+        "38": 16,
+        "40": 9,
+        "42": 7,
+        "44": 7,
+        "48": 4,
+        "52": 2,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 9955,
+        "8": 4858,
+        "12": 14023,
+        "16": 37128,
+        "20": 29113,
+        "22": 55097,
+        "24": 9956,
+        "26": 1324,
+        "28": 179,
+        "30": 9,
+        "32": 12,
+        "34": 13,
+        "36": 17,
+        "38": 16,
+        "40": 7,
+        "42": 6,
+        "44": 5,
+        "48": 3,
+        "52": 2,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 7,
+      "logit_mid_min": 5
+    },
+    {
+      "prompt": "Fact: The number of continents on Earth is",
+      "answer": " seven",
+      "final_rank": 2,
+      "jlens_rank_by_layer": {
+        "4": 44871,
+        "8": 30495,
+        "12": 2699,
+        "16": 557,
+        "20": 653,
+        "22": 77,
+        "24": 63,
+        "26": 12,
+        "28": 8,
+        "30": 21,
+        "32": 37,
+        "34": 21,
+        "36": 26,
+        "38": 29,
+        "40": 18,
+        "42": 17,
+        "44": 12,
+        "48": 11,
+        "52": 3,
+        "56": 2,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 25805,
+        "8": 1588,
+        "12": 4960,
+        "16": 24625,
+        "20": 2870,
+        "22": 670,
+        "24": 458,
+        "26": 4,
+        "28": 5,
+        "30": 73,
+        "32": 194,
+        "34": 28,
+        "36": 17,
+        "38": 14,
+        "40": 14,
+        "42": 14,
+        "44": 8,
+        "48": 10,
+        "52": 2,
+        "56": 2,
+        "60": 1
+      },
+      "jlens_mid_min": 8,
+      "logit_mid_min": 4
+    },
+    {
+      "prompt": "Fact: The city known as the Big Apple is New",
+      "answer": " York",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 1992,
+        "8": 2165,
+        "12": 1546,
+        "16": 989,
+        "20": 3388,
+        "22": 3587,
+        "24": 1890,
+        "26": 77,
+        "28": 17,
+        "30": 13,
+        "32": 10,
+        "34": 6,
+        "36": 6,
+        "38": 3,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 16,
+        "8": 169,
+        "12": 12667,
+        "16": 6509,
+        "20": 8973,
+        "22": 8356,
+        "24": 9695,
+        "26": 16,
+        "28": 9,
+        "30": 8,
+        "32": 4,
+        "34": 3,
+        "36": 3,
+        "38": 2,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The gas plants absorb from the air is carbon",
+      "answer": " dioxide",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 10,
+        "8": 8,
+        "12": 7,
+        "16": 86,
+        "20": 99,
+        "22": 40,
+        "24": 72,
+        "26": 12,
+        "28": 2,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 1,
+        "8": 1,
+        "12": 3,
+        "16": 1,
+        "20": 1,
+        "22": 1,
+        "24": 1,
+        "26": 1,
+        "28": 1,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The longest river in Egypt is the",
+      "answer": " Nile",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 9419,
+        "8": 13248,
+        "12": 19869,
+        "16": 31531,
+        "20": 53426,
+        "22": 49245,
+        "24": 29221,
+        "26": 48187,
+        "28": 45595,
+        "30": 44019,
+        "32": 45980,
+        "34": 41342,
+        "36": 45368,
+        "38": 29445,
+        "40": 25846,
+        "42": 4494,
+        "44": 13,
+        "48": 2,
+        "52": 2,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 16768,
+        "8": 12802,
+        "12": 6311,
+        "16": 14736,
+        "20": 32897,
+        "22": 28969,
+        "24": 4739,
+        "26": 17996,
+        "28": 69082,
+        "30": 60049,
+        "32": 80758,
+        "34": 71079,
+        "36": 64620,
+        "38": 54601,
+        "40": 42393,
+        "42": 8119,
+        "44": 13,
+        "48": 3,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 13,
+      "logit_mid_min": 13
+    },
+    {
+      "prompt": "Fact: The instrument with 88 keys is the",
+      "answer": " piano",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 2421,
+        "8": 4889,
+        "12": 547,
+        "16": 5720,
+        "20": 127,
+        "22": 239,
+        "24": 67,
+        "26": 1,
+        "28": 1,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 35441,
+        "8": 40087,
+        "12": 1952,
+        "16": 5181,
+        "20": 168,
+        "22": 615,
+        "24": 29,
+        "26": 1,
+        "28": 1,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The fastest land animal is the",
+      "answer": " cheetah",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 18182,
+        "8": 23599,
+        "12": 13003,
+        "16": 8930,
+        "20": 4141,
+        "22": 6752,
+        "24": 5436,
+        "26": 2662,
+        "28": 3446,
+        "30": 7037,
+        "32": 14685,
+        "34": 22051,
+        "36": 29773,
+        "38": 32217,
+        "40": 48525,
+        "42": 26755,
+        "44": 6776,
+        "48": 4158,
+        "52": 2590,
+        "56": 215,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 32686,
+        "8": 8792,
+        "12": 12325,
+        "16": 20436,
+        "20": 20682,
+        "22": 43557,
+        "24": 38360,
+        "26": 47991,
+        "28": 58861,
+        "30": 58240,
+        "32": 65019,
+        "34": 39667,
+        "36": 54512,
+        "38": 50035,
+        "40": 33916,
+        "42": 23848,
+        "44": 13729,
+        "48": 7289,
+        "52": 7407,
+        "56": 1562,
+        "60": 2
+      },
+      "jlens_mid_min": 2662,
+      "logit_mid_min": 13729
+    },
+    {
+      "prompt": "Fact: The smallest prime number is",
+      "answer": " two",
+      "final_rank": 4,
+      "jlens_rank_by_layer": {
+        "4": 90032,
+        "8": 58329,
+        "12": 27008,
+        "16": 1015,
+        "20": 1212,
+        "22": 1781,
+        "24": 712,
+        "26": 465,
+        "28": 303,
+        "30": 338,
+        "32": 505,
+        "34": 212,
+        "36": 216,
+        "38": 409,
+        "40": 407,
+        "42": 615,
+        "44": 202,
+        "48": 173,
+        "52": 98,
+        "56": 47,
+        "60": 3
+      },
+      "logit_rank_by_layer": {
+        "4": 21579,
+        "8": 214,
+        "12": 2444,
+        "16": 502,
+        "20": 988,
+        "22": 3954,
+        "24": 8219,
+        "26": 5515,
+        "28": 6514,
+        "30": 13766,
+        "32": 20181,
+        "34": 8843,
+        "36": 3060,
+        "38": 1820,
+        "40": 1653,
+        "42": 1207,
+        "44": 259,
+        "48": 340,
+        "52": 21,
+        "56": 6,
+        "60": 3
+      },
+      "jlens_mid_min": 202,
+      "logit_mid_min": 259
+    },
+    {
+      "prompt": "Fact: The opposite of hot is",
+      "answer": " cold",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 1687,
+        "8": 11990,
+        "12": 11561,
+        "16": 580,
+        "20": 590,
+        "22": 196,
+        "24": 115,
+        "26": 68,
+        "28": 1,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 6887,
+        "8": 3174,
+        "12": 915,
+        "16": 1723,
+        "20": 122,
+        "22": 85,
+        "24": 21,
+        "26": 4,
+        "28": 1,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    },
+    {
+      "prompt": "Fact: The color of an emerald is",
+      "answer": " green",
+      "final_rank": 1,
+      "jlens_rank_by_layer": {
+        "4": 10780,
+        "8": 14478,
+        "12": 4550,
+        "16": 2390,
+        "20": 212,
+        "22": 138,
+        "24": 16,
+        "26": 15,
+        "28": 10,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "logit_rank_by_layer": {
+        "4": 23177,
+        "8": 29618,
+        "12": 716,
+        "16": 12366,
+        "20": 373,
+        "22": 195,
+        "24": 11,
+        "26": 9,
+        "28": 14,
+        "30": 1,
+        "32": 1,
+        "34": 1,
+        "36": 1,
+        "38": 1,
+        "40": 1,
+        "42": 1,
+        "44": 1,
+        "48": 1,
+        "52": 1,
+        "56": 1,
+        "60": 1
+      },
+      "jlens_mid_min": 1,
+      "logit_mid_min": 1
+    }
+  ],
+  "multihop": {
+    "jlens_pass@1": 0.21666666666666667,
+    "jlens_pass@5": 0.4166666666666667,
+    "jlens_pass@20": 0.5222222222222223,
+    "logit_pass@1": 0.2,
+    "logit_pass@5": 0.40555555555555556,
+    "logit_pass@20": 0.5555555555555555,
+    "n_scored": 60
+  },
+  "multihop_items": [
+    {
+      "prompt": "Fact: The ocean on the coast of the country where Carnival is most famously cele",
+      "intermediates": [
+        "Brazil"
+      ],
+      "jlens_best_rank_Brazil": 95,
+      "logit_best_rank_Brazil": 480
+    },
+    {
+      "prompt": "Fact: The language spoken in the country where the Amazon River ends is ",
+      "intermediates": [
+        "Brazil"
+      ],
+      "jlens_best_rank_Brazil": 7,
+      "logit_best_rank_Brazil": 10
+    },
+    {
+      "prompt": "Fact: The color of the planet fourth from the Sun is ",
+      "intermediates": [
+        "Mars"
+      ],
+      "jlens_best_rank_Mars": 4,
+      "logit_best_rank_Mars": 6
+    },
+    {
+      "prompt": "Fact: The number of legs on the animal that spins webs is ",
+      "intermediates": [
+        "spider"
+      ],
+      "jlens_best_rank_spider": 1,
+      "logit_best_rank_spider": 2
+    },
+    {
+      "prompt": "Fact: The number of players per side in the sport invented in Springfield, Massa",
+      "intermediates": [
+        "basketball"
+      ],
+      "jlens_best_rank_basketball": 2,
+      "logit_best_rank_basketball": 6
+    },
+    {
+      "prompt": "Fact: The continent where the country that invented paper is located is ",
+      "intermediates": [
+        "China"
+      ],
+      "jlens_best_rank_China": 2,
+      "logit_best_rank_China": 2
+    },
+    {
+      "prompt": "Fact: The season when the holiday with a decorated tree occurs is ",
+      "intermediates": [
+        "Christmas"
+      ],
+      "jlens_best_rank_Christmas": 1,
+      "logit_best_rank_Christmas": 1
+    },
+    {
+      "prompt": "Fact: The mascot of the college football rival of Ohio State is a ",
+      "intermediates": [
+        "Michigan"
+      ],
+      "jlens_best_rank_Michigan": 49,
+      "logit_best_rank_Michigan": 64
+    },
+    {
+      "prompt": "Fact: The state west of the state with Topeka as its capital is ",
+      "intermediates": [
+        "Kansas"
+      ],
+      "jlens_best_rank_Kansas": 1,
+      "logit_best_rank_Kansas": 1
+    },
+    {
+      "prompt": "Fact: The chemical symbol for the element with atomic number 79 is ",
+      "intermediates": [
+        "gold"
+      ],
+      "jlens_best_rank_gold": 1,
+      "logit_best_rank_gold": 1
+    },
+    {
+      "prompt": "Fact: The chemical symbol for the element with atomic number 26 is ",
+      "intermediates": [
+        "iron"
+      ],
+      "jlens_best_rank_iron": 1,
+      "logit_best_rank_iron": 1
+    },
+    {
+      "prompt": "Fact: The chemical symbol for the element with atomic number 29 is ",
+      "intermediates": [
+        "copper"
+      ],
+      "jlens_best_rank_copper": 3,
+      "logit_best_rank_copper": 3
+    },
+    {
+      "prompt": "Fact: The state of matter at room temperature of the element with atomic number ",
+      "intermediates": [
+        "mercury"
+      ],
+      "jlens_best_rank_mercury": 2,
+      "logit_best_rank_mercury": 3
+    },
+    {
+      "prompt": "Fact: The flame color produced by burning the element with atomic number 29 is ",
+      "intermediates": [
+        "copper"
+      ],
+      "jlens_best_rank_copper": 258,
+      "logit_best_rank_copper": 75
+    },
+    {
+      "prompt": "Fact: The number of natural moons orbiting the planet third from the Sun is ",
+      "intermediates": [
+        "Earth"
+      ],
+      "jlens_best_rank_Earth": 19,
+      "logit_best_rank_Earth": 34
+    },
+    {
+      "prompt": "Fact: The third month of the year is named after the Roman god of ",
+      "intermediates": [
+        "March"
+      ],
+      "jlens_best_rank_March": 26,
+      "logit_best_rank_March": 20
+    },
+    {
+      "prompt": "Fact: The US state where the Space Needle is located shares its northern border ",
+      "intermediates": [
+        "Seattle"
+      ],
+      "jlens_best_rank_Seattle": 3,
+      "logit_best_rank_Seattle": 5
+    },
+    {
+      "prompt": "Fact: The European country whose name rhymes with 'rain' shares its western bord",
+      "intermediates": [
+        "Spain"
+      ],
+      "jlens_best_rank_Spain": 33,
+      "logit_best_rank_Spain": 358
+    },
+    {
+      "prompt": "Fact: Take the number whose name rhymes with the word door. Doubling it gives th",
+      "intermediates": [
+        "four"
+      ],
+      "jlens_best_rank_four": 57,
+      "logit_best_rank_four": 26
+    },
+    {
+      "prompt": "Fact: The large mammal whose name rhymes with 'chair' appears on the state flag ",
+      "intermediates": [
+        "bear"
+      ],
+      "jlens_best_rank_bear": 44,
+      "logit_best_rank_bear": 31
+    },
+    {
+      "prompt": "Fact: The celestial body whose name rhymes with 'spoon' orbits the planet called",
+      "intermediates": [
+        "moon"
+      ],
+      "jlens_best_rank_moon": 8,
+      "logit_best_rank_moon": 15
+    },
+    {
+      "prompt": "Fact: The month named after the Roman god of war is month number ",
+      "intermediates": [
+        "March"
+      ],
+      "jlens_best_rank_March": 3,
+      "logit_best_rank_March": 5
+    },
+    {
+      "prompt": "Fact: Counting Monday as day 1, the day of the week named after the Norse goddes",
+      "intermediates": [
+        "Friday"
+      ],
+      "jlens_best_rank_Friday": 1,
+      "logit_best_rank_Friday": 1
+    },
+    {
+      "prompt": "Fact: The planet named after the Roman god of agriculture and time is planet num",
+      "intermediates": [
+        "Saturn"
+      ],
+      "jlens_best_rank_Saturn": 2,
+      "logit_best_rank_Saturn": 3
+    },
+    {
+      "prompt": "Fact: The atomic number of the gas that plants release during photosynthesis is ",
+      "intermediates": [
+        "oxygen"
+      ],
+      "jlens_best_rank_oxygen": 2,
+      "logit_best_rank_oxygen": 2
+    },
+    {
+      "prompt": "Fact: The atomic number of the gas that makes up about 78 percent of the atmosph",
+      "intermediates": [
+        "nitrogen"
+      ],
+      "jlens_best_rank_nitrogen": 1,
+      "logit_best_rank_nitrogen": 1
+    },
+    {
+      "prompt": "Fact: The atomic number of the element present in all organic compounds by defin",
+      "intermediates": [
+        "carbon"
+      ],
+      "jlens_best_rank_carbon": 1,
+      "logit_best_rank_carbon": 1
+    },
+    {
+      "prompt": "Fact: The atomic number of the metal most abundant in human bones is ",
+      "intermediates": [
+        "calcium"
+      ],
+      "jlens_best_rank_calcium": 1,
+      "logit_best_rank_calcium": 1
+    },
+    {
+      "prompt": "Fact: In humans, the organ that pumps blood through the body has this many chamb",
+      "intermediates": [
+        "heart"
+      ],
+      "jlens_best_rank_heart": 1,
+      "logit_best_rank_heart": 1
+    },
+    {
+      "prompt": "Fact: In humans, the number of organs that filter blood to make urine is ",
+      "intermediates": [
+        "kidney"
+      ],
+      "jlens_best_rank_kidney": 2,
+      "logit_best_rank_kidney": 2
+    },
+    {
+      "prompt": "Fact: Emerald is the birthstone for month number ",
+      "intermediates": [
+        "May"
+      ],
+      "jlens_best_rank_May": 1,
+      "logit_best_rank_May": 1
+    },
+    {
+      "prompt": "Fact: The number of strings on the instrument that fiddlers play is ",
+      "intermediates": [
+        "violin"
+      ],
+      "jlens_best_rank_violin": 1,
+      "logit_best_rank_violin": 1
+    },
+    {
+      "prompt": "Count the legs on a spider. The planet at that position from the Sun is Neptune.",
+      "intermediates": [
+        "3",
+        "three",
+        "third"
+      ],
+      "jlens_best_rank_3": 98,
+      "jlens_best_rank_three": 140,
+      "jlens_best_rank_third": 8,
+      "logit_best_rank_3": 4,
+      "logit_best_rank_three": 25,
+      "logit_best_rank_third": 28
+    },
+    {
+      "prompt": "Count the legs on a spider. The planet at that position from the Sun is Neptune.",
+      "intermediates": [
+        "5",
+        "five"
+      ],
+      "jlens_best_rank_5": 387,
+      "jlens_best_rank_five": 789,
+      "logit_best_rank_5": 27,
+      "logit_best_rank_five": 14
+    },
+    {
+      "prompt": "Count the legs on a spider. The planet at that position from the Sun is Neptune.",
+      "intermediates": [
+        "6",
+        "six"
+      ],
+      "jlens_best_rank_6": 683,
+      "jlens_best_rank_six": 998,
+      "logit_best_rank_6": 38,
+      "logit_best_rank_six": 961
+    },
+    {
+      "prompt": "Count the legs on a spider. The planet at that position from the Sun is Neptune.",
+      "intermediates": [
+        "4",
+        "four"
+      ],
+      "jlens_best_rank_4": 394,
+      "jlens_best_rank_four": 829,
+      "logit_best_rank_4": 35,
+      "logit_best_rank_four": 37
+    },
+    {
+      "prompt": "Count the legs on a spider. The planet at that position from the Sun is Neptune.",
+      "intermediates": [
+        "6",
+        "six"
+      ],
+      "jlens_best_rank_6": 98,
+      "jlens_best_rank_six": 1087,
+      "logit_best_rank_6": 7,
+      "logit_best_rank_six": 789
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "26"
+      ],
+      "jlens_best_rank_26": 1299,
+      "logit_best_rank_26": 154
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "14"
+      ],
+      "jlens_best_rank_14": 349,
+      "logit_best_rank_14": 50
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "6",
+        "six"
+      ],
+      "jlens_best_rank_6": 4131,
+      "jlens_best_rank_six": 1561,
+      "logit_best_rank_6": 497,
+      "logit_best_rank_six": 464
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "7"
+      ],
+      "jlens_best_rank_7": 624,
+      "logit_best_rank_7": 40
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "8"
+      ],
+      "jlens_best_rank_8": 626,
+      "logit_best_rank_8": 487
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "6",
+        "six"
+      ],
+      "jlens_best_rank_6": 4764,
+      "jlens_best_rank_six": 4132,
+      "logit_best_rank_6": 826,
+      "logit_best_rank_six": 515
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "7"
+      ],
+      "jlens_best_rank_7": 265,
+      "logit_best_rank_7": 15
+    },
+    {
+      "prompt": "Fact: The capital city of the largest country by area is ",
+      "intermediates": [
+        "Russia"
+      ],
+      "jlens_best_rank_Russia": 3,
+      "logit_best_rank_Russia": 3
+    },
+    {
+      "prompt": "Fact: The smallest country in the world is located on the continent of ",
+      "intermediates": [
+        "Vatican"
+      ],
+      "jlens_best_rank_Vatican": 11,
+      "logit_best_rank_Vatican": 8
+    },
+    {
+      "prompt": "Fact: The capital city of the most populous country in the world is ",
+      "intermediates": [
+        "China"
+      ],
+      "jlens_best_rank_China": 2,
+      "logit_best_rank_China": 2
+    },
+    {
+      "prompt": "Fact: The country that is the largest island nation by area has its capital at ",
+      "intermediates": [
+        "Indonesia"
+      ],
+      "jlens_best_rank_Indonesia": 443,
+      "logit_best_rank_Indonesia": 2400
+    },
+    {
+      "prompt": "Fact: The currency used in the country where the Colosseum stands is the ",
+      "intermediates": [
+        "Italy"
+      ],
+      "jlens_best_rank_Italy": 6,
+      "logit_best_rank_Italy": 5
+    },
+    {
+      "prompt": "Fact: The ocean east of the country that built the Great Wall is the ",
+      "intermediates": [
+        "China"
+      ],
+      "jlens_best_rank_China": 12,
+      "logit_best_rank_China": 35
+    },
+    {
+      "prompt": "Fact: The US Independence Day holiday is celebrated in month number ",
+      "intermediates": [
+        "July"
+      ],
+      "jlens_best_rank_July": 150,
+      "logit_best_rank_July": 3591
+    },
+    {
+      "prompt": "Fact: Christmas Day is celebrated in month number ",
+      "intermediates": [
+        "December"
+      ],
+      "jlens_best_rank_December": 5020,
+      "logit_best_rank_December": 4535
+    },
+    {
+      "prompt": "Fact: Halloween is celebrated in month number ",
+      "intermediates": [
+        "October"
+      ],
+      "jlens_best_rank_October": 1295,
+      "logit_best_rank_October": 1291
+    },
+    {
+      "prompt": "Fact: Valentine's Day is celebrated in month number ",
+      "intermediates": [
+        "February"
+      ],
+      "jlens_best_rank_February": 2256,
+      "logit_best_rank_February": 4656
+    },
+    {
+      "prompt": "Fact: The first month of the year is named after the Roman god of ",
+      "intermediates": [
+        "January"
+      ],
+      "jlens_best_rank_January": 36,
+      "logit_best_rank_January": 9
+    },
+    {
+      "prompt": "Fact: The month named after the two-faced Roman god of doorways is month number ",
+      "intermediates": [
+        "January"
+      ],
+      "jlens_best_rank_January": 1,
+      "logit_best_rank_January": 1
+    },
+    {
+      "prompt": "Fact: The seventh month of the year is named after the Roman leader Julius ",
+      "intermediates": [
+        "July"
+      ],
+      "jlens_best_rank_July": 67,
+      "logit_best_rank_July": 30
+    },
+    {
+      "prompt": "Fact: The month named after Julius Caesar is month number ",
+      "intermediates": [
+        "July"
+      ],
+      "jlens_best_rank_July": 2022,
+      "logit_best_rank_July": 5364
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "11"
+      ],
+      "jlens_best_rank_11": 2885,
+      "logit_best_rank_11": 228
+    },
+    {
+      "prompt": "Count the items in a dozen. The element at that position on the periodic table i",
+      "intermediates": [
+        "16"
+      ],
+      "jlens_best_rank_16": 2565,
+      "logit_best_rank_16": 250
+    }
+  ],
+  "unembed_drift": {
+    "head_key": "lm_head.weight",
+    "n_rows_sampled": 4000,
+    "head_row_cos": {
+      "median": 0.9984,
+      "q05": 0.9971,
+      "q95": 0.999,
+      "min": 0.9838
+    },
+    "final_norm_gain_cos": 0.999996
+  },
+  "jlens_minus_logit_pass1": 0.0167,
+  "verdict": "TRANSFER_FAIL"
+}

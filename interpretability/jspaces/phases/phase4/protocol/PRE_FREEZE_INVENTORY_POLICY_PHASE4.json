@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "allowed_registered_recovery_outputs": [
+    {
+      "evidence_id": "p4-qwen-lens-influence-prompt112-dev-v1",
+      "path_suffix": "/lens/qwen36-27b/nested_fit/draw_a/recovery/fit_n0195_contract_check.ckpt",
+      "expected_sha256": "1ab1fa55298f94a79ef3638a9e25818c5e9443e5138b7ec872b6cb75e22348cc",
+      "reason": "Immutable adjacent cumulative checkpoint deliberately retained and registered as the prompt-112 equal-weight estimator contract; it is not the mutable fit.ckpt recovery target."
+    },
+    {
+      "evidence_id": "p4-qwen-lens-influence-prompt112-dev-v1",
+      "path_suffix": "/lens/qwen36-27b/nested_fit/draw_a/recovery/fit_n0198_contract_check.ckpt",
+      "expected_sha256": "20bbec61f245860b8ed61ee8b99c9b0209864b53a25ed75a301384601b63f676",
+      "reason": "Immutable adjacent cumulative checkpoint deliberately retained and registered as the prompt-112 equal-weight estimator contract; it is not the mutable fit.ckpt recovery target."
+    }
+  ],
+  "forbidden_path_fragments": [
+    "/tmp/",
+    ".tmp",
+    "/recovery/fit.ckpt",
+    "/recovery/checkpoint_state.json"
+  ],
+  "native_side_event_prefixes": ["ol-", "ol2-", "gm-", "gm2-"]
+}

@@ -1,0 +1,1393 @@
+{
+  "summary": {
+    "pool": {
+      "version": "v3",
+      "n_candidates": 132,
+      "n_families": 30,
+      "items_per_family": {
+        "algorithm_complexity": 4,
+        "animal_class": 5,
+        "art_movement_order": 4,
+        "border_specific": 4,
+        "cartography_time": 4,
+        "compound_class": 4,
+        "economics_measure": 4,
+        "geological_order": 4,
+        "government_system": 4,
+        "instrument_family_2": 4,
+        "language_family_2": 5,
+        "linguistics_term": 5,
+        "material_composition": 4,
+        "measure_numeric": 4,
+        "medicine_drug_class": 4,
+        "mission_2": 4,
+        "moons_2": 4,
+        "music_theory": 5,
+        "network_computing": 5,
+        "philosophy_school": 4,
+        "physiology_process": 5,
+        "plant_family": 4,
+        "river_third_order": 5,
+        "rock_classification": 5,
+        "script_2": 4,
+        "second_city": 5,
+        "si_prefix": 4,
+        "sports_numeric_2": 5,
+        "stellar_classification": 5,
+        "unit_non_si": 5
+      }
+    },
+    "n_scored": 132,
+    "n_in_window": 60,
+    "window": [
+      -9.0,
+      -1.0
+    ],
+    "n_families_with_ge2_in_window": 19,
+    "n_ceiling_above_hi": 67,
+    "n_unknown_below_lo": 5,
+    "lp_quartiles": [
+      -3.31,
+      -0.92,
+      -0.13
+    ],
+    "by_family": {
+      "river_third_order": {
+        "n": 5,
+        "n_window": 2
+      },
+      "second_city": {
+        "n": 5,
+        "n_window": 3
+      },
+      "animal_class": {
+        "n": 5,
+        "n_window": 4
+      },
+      "plant_family": {
+        "n": 4,
+        "n_window": 3
+      },
+      "language_family_2": {
+        "n": 5,
+        "n_window": 5
+      },
+      "script_2": {
+        "n": 4,
+        "n_window": 1
+      },
+      "stellar_classification": {
+        "n": 5,
+        "n_window": 0
+      },
+      "moons_2": {
+        "n": 4,
+        "n_window": 2
+      },
+      "mission_2": {
+        "n": 4,
+        "n_window": 3
+      },
+      "unit_non_si": {
+        "n": 5,
+        "n_window": 1
+      },
+      "si_prefix": {
+        "n": 4,
+        "n_window": 1
+      },
+      "compound_class": {
+        "n": 4,
+        "n_window": 2
+      },
+      "rock_classification": {
+        "n": 5,
+        "n_window": 2
+      },
+      "geological_order": {
+        "n": 4,
+        "n_window": 0
+      },
+      "music_theory": {
+        "n": 5,
+        "n_window": 2
+      },
+      "art_movement_order": {
+        "n": 4,
+        "n_window": 2
+      },
+      "philosophy_school": {
+        "n": 4,
+        "n_window": 4
+      },
+      "government_system": {
+        "n": 4,
+        "n_window": 1
+      },
+      "economics_measure": {
+        "n": 4,
+        "n_window": 1
+      },
+      "network_computing": {
+        "n": 5,
+        "n_window": 2
+      },
+      "algorithm_complexity": {
+        "n": 4,
+        "n_window": 1
+      },
+      "medicine_drug_class": {
+        "n": 4,
+        "n_window": 2
+      },
+      "physiology_process": {
+        "n": 5,
+        "n_window": 4
+      },
+      "border_specific": {
+        "n": 4,
+        "n_window": 2
+      },
+      "sports_numeric_2": {
+        "n": 5,
+        "n_window": 3
+      },
+      "measure_numeric": {
+        "n": 4,
+        "n_window": 0
+      },
+      "material_composition": {
+        "n": 4,
+        "n_window": 3
+      },
+      "instrument_family_2": {
+        "n": 4,
+        "n_window": 1
+      },
+      "linguistics_term": {
+        "n": 5,
+        "n_window": 2
+      },
+      "cartography_time": {
+        "n": 4,
+        "n_window": 1
+      }
+    },
+    "meets_prereg_floor_n90_fams30": false,
+    "seconds": 40
+  },
+  "rows": [
+    {
+      "prompt": "Fact: The third-longest river in Africa is the",
+      "answer": " Niger",
+      "family": "river_third_order",
+      "pool": "v3",
+      "lp": -3.836,
+      "first_tok_lp": -3.836,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The longest river in Germany is the",
+      "answer": " Rhine",
+      "family": "river_third_order",
+      "pool": "v3",
+      "lp": -0.3658,
+      "first_tok_lp": -0.3653,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The longest river in Poland is the",
+      "answer": " Vistula",
+      "family": "river_third_order",
+      "pool": "v3",
+      "lp": -0.0472,
+      "first_tok_lp": -0.0464,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The longest river in Portugal is the",
+      "answer": " Tagus",
+      "family": "river_third_order",
+      "pool": "v3",
+      "lp": -0.0867,
+      "first_tok_lp": -0.0866,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The longest river in Myanmar is the",
+      "answer": " Irrawaddy",
+      "family": "river_third_order",
+      "pool": "v3",
+      "lp": -1.2428,
+      "first_tok_lp": -1.2349,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The second-largest city in Australia by population is",
+      "answer": " Melbourne",
+      "family": "second_city",
+      "pool": "v3",
+      "lp": -3.2954,
+      "first_tok_lp": -3.2954,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The second-largest city in Canada by population is",
+      "answer": " Montreal",
+      "family": "second_city",
+      "pool": "v3",
+      "lp": -0.0827,
+      "first_tok_lp": -0.0827,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The second-largest city in Spain by population is",
+      "answer": " Barcelona",
+      "family": "second_city",
+      "pool": "v3",
+      "lp": -0.6168,
+      "first_tok_lp": -0.6168,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The second-largest city in Turkey by population is",
+      "answer": " Ankara",
+      "family": "second_city",
+      "pool": "v3",
+      "lp": -3.2593,
+      "first_tok_lp": -3.2593,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The second-largest city in Vietnam by population is",
+      "answer": " Hanoi",
+      "family": "second_city",
+      "pool": "v3",
+      "lp": -4.7311,
+      "first_tok_lp": -3.9402,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The taxonomic class to which a newt belongs is",
+      "answer": " Amphibia",
+      "family": "animal_class",
+      "pool": "v3",
+      "lp": -2.1754,
+      "first_tok_lp": -2.1712,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The taxonomic class to which a starfish belongs is",
+      "answer": " Asteroidea",
+      "family": "animal_class",
+      "pool": "v3",
+      "lp": -2.8365,
+      "first_tok_lp": -2.8357,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The taxonomic class to which an octopus belongs is",
+      "answer": " Cephalopoda",
+      "family": "animal_class",
+      "pool": "v3",
+      "lp": -1.4041,
+      "first_tok_lp": -1.402,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The taxonomic class to which a centipede belongs is",
+      "answer": " Chilopoda",
+      "family": "animal_class",
+      "pool": "v3",
+      "lp": -1.1728,
+      "first_tok_lp": -1.1712,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The taxonomic order to which bats belong is",
+      "answer": " Chiroptera",
+      "family": "animal_class",
+      "pool": "v3",
+      "lp": -0.9102,
+      "first_tok_lp": -0.9094,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The plant family to which the tomato belongs is the",
+      "answer": " Solanaceae",
+      "family": "plant_family",
+      "pool": "v3",
+      "lp": -1.8603,
+      "first_tok_lp": -1.8481,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The plant family to which wheat belongs is the",
+      "answer": " Poaceae",
+      "family": "plant_family",
+      "pool": "v3",
+      "lp": -3.3091,
+      "first_tok_lp": -3.3073,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The plant family to which the pea belongs is the",
+      "answer": " Fabaceae",
+      "family": "plant_family",
+      "pool": "v3",
+      "lp": -0.9211,
+      "first_tok_lp": -0.912,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The plant family to which the sunflower belongs is the",
+      "answer": " Asteraceae",
+      "family": "plant_family",
+      "pool": "v3",
+      "lp": -1.318,
+      "first_tok_lp": -1.3109,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The language family to which Georgian belongs is",
+      "answer": " Kartvelian",
+      "family": "language_family_2",
+      "pool": "v3",
+      "lp": -4.7367,
+      "first_tok_lp": -4.7238,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The language family to which Turkish belongs is",
+      "answer": " Turkic",
+      "family": "language_family_2",
+      "pool": "v3",
+      "lp": -4.3408,
+      "first_tok_lp": -4.3396,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The language family to which Mongolian belongs is",
+      "answer": " Mongolic",
+      "family": "language_family_2",
+      "pool": "v3",
+      "lp": -8.9802,
+      "first_tok_lp": -8.9159,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The language family to which Vietnamese belongs is",
+      "answer": " Austroasiatic",
+      "family": "language_family_2",
+      "pool": "v3",
+      "lp": -2.0645,
+      "first_tok_lp": -1.9863,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The language family to which Malagasy belongs is",
+      "answer": " Austronesian",
+      "family": "language_family_2",
+      "pool": "v3",
+      "lp": -6.4143,
+      "first_tok_lp": -6.4125,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The script used to write the Georgian language is",
+      "answer": " Mkhedruli",
+      "family": "script_2",
+      "pool": "v3",
+      "lp": -14.1544,
+      "first_tok_lp": -14.1442,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The script used to write the Thai language derives from",
+      "answer": " Khmer",
+      "family": "script_2",
+      "pool": "v3",
+      "lp": -9.7353,
+      "first_tok_lp": -9.7315,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The script used to write Old Norse inscriptions is",
+      "answer": " runic",
+      "family": "script_2",
+      "pool": "v3",
+      "lp": -5.9984,
+      "first_tok_lp": -5.9915,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The script used to write the Cherokee language is a",
+      "answer": " syllabary",
+      "family": "script_2",
+      "pool": "v3",
+      "lp": -0.0531,
+      "first_tok_lp": -0.0181,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The spectral class of the hottest main-sequence stars is",
+      "answer": " O",
+      "family": "stellar_classification",
+      "pool": "v3",
+      "lp": -0.009,
+      "first_tok_lp": -0.009,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The spectral class of the Sun is",
+      "answer": " G",
+      "family": "stellar_classification",
+      "pool": "v3",
+      "lp": -0.0304,
+      "first_tok_lp": -0.0304,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The stellar remnant left by a low-mass star is a white",
+      "answer": " dwarf",
+      "family": "stellar_classification",
+      "pool": "v3",
+      "lp": -0.004,
+      "first_tok_lp": -0.004,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The class of variable star used as a distance indicator is the Cepheid",
+      "answer": " variable",
+      "family": "stellar_classification",
+      "pool": "v3",
+      "lp": -0.1536,
+      "first_tok_lp": -0.1536,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The stage a star enters after leaving the main sequence is the red",
+      "answer": " giant",
+      "family": "stellar_classification",
+      "pool": "v3",
+      "lp": -0.0617,
+      "first_tok_lp": -0.0617,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The largest moon of Pluto is",
+      "answer": " Charon",
+      "family": "moons_2",
+      "pool": "v3",
+      "lp": -1.4283,
+      "first_tok_lp": -1.4282,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The two moons of Mars are Phobos and",
+      "answer": " Deimos",
+      "family": "moons_2",
+      "pool": "v3",
+      "lp": -0.003,
+      "first_tok_lp": -0.0023,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Galilean moon with the most volcanic activity is",
+      "answer": " Io",
+      "family": "moons_2",
+      "pool": "v3",
+      "lp": -0.1399,
+      "first_tok_lp": -0.1399,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The Galilean moon with the thickest ice shell and a suspected ocean is",
+      "answer": " Europa",
+      "family": "moons_2",
+      "pool": "v3",
+      "lp": -1.6764,
+      "first_tok_lp": -1.6764,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The mission that returned samples from the asteroid Ryugu was Hayabusa",
+      "answer": " 2",
+      "family": "mission_2",
+      "pool": "v3",
+      "lp": -1.7441,
+      "first_tok_lp": -1.7366,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The mission that first soft-landed on the far side of the Moon was Chang'e",
+      "answer": " 4",
+      "family": "mission_2",
+      "pool": "v3",
+      "lp": -1.1425,
+      "first_tok_lp": -1.142,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The telescope launched in 2021 to observe in the infrared is the James Webb Space",
+      "answer": " Telescope",
+      "family": "mission_2",
+      "pool": "v3",
+      "lp": -0.0072,
+      "first_tok_lp": -0.0072,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The probe that entered Jupiter's atmosphere in 1995 was carried by",
+      "answer": " Galileo",
+      "family": "mission_2",
+      "pool": "v3",
+      "lp": -7.7491,
+      "first_tok_lp": -7.7491,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The unit of pressure equal to 100 kilopascals is the",
+      "answer": " bar",
+      "family": "unit_non_si",
+      "pool": "v3",
+      "lp": -0.1317,
+      "first_tok_lp": -0.1317,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The unit of energy used in atomic physics is the electron",
+      "answer": " volt",
+      "family": "unit_non_si",
+      "pool": "v3",
+      "lp": -0.151,
+      "first_tok_lp": -0.151,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The unit of distance equal to about 3.26 light years is the",
+      "answer": " parsec",
+      "family": "unit_non_si",
+      "pool": "v3",
+      "lp": -0.6658,
+      "first_tok_lp": -0.6655,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The unit of sound intensity level is the",
+      "answer": " decibel",
+      "family": "unit_non_si",
+      "pool": "v3",
+      "lp": -1.5499,
+      "first_tok_lp": -1.5229,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The unit of viscosity in the CGS system is the",
+      "answer": " poise",
+      "family": "unit_non_si",
+      "pool": "v3",
+      "lp": -0.6566,
+      "first_tok_lp": -0.6557,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The SI prefix denoting ten to the power of minus twelve is",
+      "answer": " pico",
+      "family": "si_prefix",
+      "pool": "v3",
+      "lp": -1.4325,
+      "first_tok_lp": -1.4319,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The SI prefix denoting ten to the power of fifteen is",
+      "answer": " peta",
+      "family": "si_prefix",
+      "pool": "v3",
+      "lp": -0.2046,
+      "first_tok_lp": -0.1972,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The SI prefix denoting ten to the power of minus fifteen is",
+      "answer": " femto",
+      "family": "si_prefix",
+      "pool": "v3",
+      "lp": -0.1205,
+      "first_tok_lp": -0.1028,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The SI prefix denoting ten to the power of eighteen is",
+      "answer": " exa",
+      "family": "si_prefix",
+      "pool": "v3",
+      "lp": -0.7438,
+      "first_tok_lp": -0.7351,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The class of organic compound containing a carboxyl group is the carboxylic",
+      "answer": " acids",
+      "family": "compound_class",
+      "pool": "v3",
+      "lp": -1.6058,
+      "first_tok_lp": -1.6058,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The class of organic compound with the general formula CnH2n is the",
+      "answer": " alkenes",
+      "family": "compound_class",
+      "pool": "v3",
+      "lp": -4.1248,
+      "first_tok_lp": -3.1451,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The class of compound formed from an acid and an alcohol is an",
+      "answer": " ester",
+      "family": "compound_class",
+      "pool": "v3",
+      "lp": -0.0593,
+      "first_tok_lp": -0.0584,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The class of organic compound containing a nitrogen atom bonded to carbon chains is an",
+      "answer": " amine",
+      "family": "compound_class",
+      "pool": "v3",
+      "lp": -0.09,
+      "first_tok_lp": -0.0788,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The rock type formed by cooling magma is",
+      "answer": " igneous",
+      "family": "rock_classification",
+      "pool": "v3",
+      "lp": -1.4746,
+      "first_tok_lp": -1.4737,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The rock type formed by heat and pressure on existing rock is",
+      "answer": " metamorphic",
+      "family": "rock_classification",
+      "pool": "v3",
+      "lp": -2.1165,
+      "first_tok_lp": -2.1148,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The metamorphic equivalent of limestone is",
+      "answer": " marble",
+      "family": "rock_classification",
+      "pool": "v3",
+      "lp": -0.0102,
+      "first_tok_lp": -0.0102,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The metamorphic equivalent of shale is",
+      "answer": " slate",
+      "family": "rock_classification",
+      "pool": "v3",
+      "lp": -0.2346,
+      "first_tok_lp": -0.2346,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The igneous rock that forms most of the ocean floor is",
+      "answer": " basalt",
+      "family": "rock_classification",
+      "pool": "v3",
+      "lp": -0.9072,
+      "first_tok_lp": -0.9069,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The geological period immediately following the Jurassic is the",
+      "answer": " Cretaceous",
+      "family": "geological_order",
+      "pool": "v3",
+      "lp": -0.0678,
+      "first_tok_lp": -0.067,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The geological period immediately preceding the Devonian is the",
+      "answer": " Silurian",
+      "family": "geological_order",
+      "pool": "v3",
+      "lp": -0.2217,
+      "first_tok_lp": -0.2126,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The geological epoch immediately preceding the Holocene is the",
+      "answer": " Pleistocene",
+      "family": "geological_order",
+      "pool": "v3",
+      "lp": -0.1333,
+      "first_tok_lp": -0.133,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The geological era immediately preceding the Mesozoic is the",
+      "answer": " Paleozoic",
+      "family": "geological_order",
+      "pool": "v3",
+      "lp": -0.1779,
+      "first_tok_lp": -0.1735,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The musical interval spanning seven semitones is a perfect",
+      "answer": " fifth",
+      "family": "music_theory",
+      "pool": "v3",
+      "lp": -0.0104,
+      "first_tok_lp": -0.0104,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The key signature with four sharps is the key of",
+      "answer": " E",
+      "family": "music_theory",
+      "pool": "v3",
+      "lp": -0.0438,
+      "first_tok_lp": -0.0438,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The relative minor of C major is",
+      "answer": " A",
+      "family": "music_theory",
+      "pool": "v3",
+      "lp": -0.0084,
+      "first_tok_lp": -0.0084,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The tempo marking meaning 'walking pace' is",
+      "answer": " andante",
+      "family": "music_theory",
+      "pool": "v3",
+      "lp": -2.6275,
+      "first_tok_lp": -2.5984,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The musical form built on a repeating bass line is the",
+      "answer": " passacaglia",
+      "family": "music_theory",
+      "pool": "v3",
+      "lp": -7.7922,
+      "first_tok_lp": -7.7594,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The art movement that immediately followed Impressionism is",
+      "answer": " Post",
+      "family": "art_movement_order",
+      "pool": "v3",
+      "lp": -3.9402,
+      "first_tok_lp": -3.9402,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The art movement founded by Andre Breton in 1924 is",
+      "answer": " Surrealism",
+      "family": "art_movement_order",
+      "pool": "v3",
+      "lp": -4.6352,
+      "first_tok_lp": -4.6321,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The art movement of Malevich's geometric abstraction is",
+      "answer": " Suprematism",
+      "family": "art_movement_order",
+      "pool": "v3",
+      "lp": -10.81,
+      "first_tok_lp": -10.6932,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The architectural style preceding Gothic in medieval Europe is",
+      "answer": " Romanesque",
+      "family": "art_movement_order",
+      "pool": "v3",
+      "lp": -0.8098,
+      "first_tok_lp": -0.8096,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The philosophical school founded by Zeno of Citium is",
+      "answer": " Stoicism",
+      "family": "philosophy_school",
+      "pool": "v3",
+      "lp": -3.6527,
+      "first_tok_lp": -3.6491,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The philosophical school holding that truth is what works is",
+      "answer": " pragmatism",
+      "family": "philosophy_school",
+      "pool": "v3",
+      "lp": -2.537,
+      "first_tok_lp": -2.5304,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The school of thought associated with Ockham's razor is",
+      "answer": " nominalism",
+      "family": "philosophy_school",
+      "pool": "v3",
+      "lp": -3.3001,
+      "first_tok_lp": -3.2992,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The ethical theory judging acts by their consequences is",
+      "answer": " consequentialism",
+      "family": "philosophy_school",
+      "pool": "v3",
+      "lp": -1.9561,
+      "first_tok_lp": -1.9501,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The system of government in which power is divided between national and regional levels is",
+      "answer": " federalism",
+      "family": "government_system",
+      "pool": "v3",
+      "lp": -5.3896,
+      "first_tok_lp": -5.3159,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The parliamentary system's head of government in Germany is called the",
+      "answer": " Chancellor",
+      "family": "government_system",
+      "pool": "v3",
+      "lp": -0.122,
+      "first_tok_lp": -0.122,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The voting system in which candidates are ranked and votes transferred is the single transferable",
+      "answer": " vote",
+      "family": "government_system",
+      "pool": "v3",
+      "lp": -0.0073,
+      "first_tok_lp": -0.0073,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The doctrine that courts may invalidate legislation is judicial",
+      "answer": " review",
+      "family": "government_system",
+      "pool": "v3",
+      "lp": -0.007,
+      "first_tok_lp": -0.007,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The index measuring price changes for a basket of consumer goods is the consumer price",
+      "answer": " index",
+      "family": "economics_measure",
+      "pool": "v3",
+      "lp": -0.0078,
+      "first_tok_lp": -0.0078,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The measure of an economy's output per person is GDP per",
+      "answer": " capita",
+      "family": "economics_measure",
+      "pool": "v3",
+      "lp": -0.212,
+      "first_tok_lp": -0.212,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The unemployment that persists due to skill mismatch is called",
+      "answer": " structural",
+      "family": "economics_measure",
+      "pool": "v3",
+      "lp": -0.3663,
+      "first_tok_lp": -0.3663,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The curve relating unemployment to inflation is the",
+      "answer": " Phillips",
+      "family": "economics_measure",
+      "pool": "v3",
+      "lp": -4.4973,
+      "first_tok_lp": -4.4973,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The default network port for HTTPS traffic is",
+      "answer": " 443",
+      "family": "network_computing",
+      "pool": "v3",
+      "lp": -0.3518,
+      "first_tok_lp": -0.3504,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The protocol that resolves domain names to addresses is",
+      "answer": " DNS",
+      "family": "network_computing",
+      "pool": "v3",
+      "lp": -2.9174,
+      "first_tok_lp": -2.9174,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The layer of the OSI model that handles routing is the",
+      "answer": " network",
+      "family": "network_computing",
+      "pool": "v3",
+      "lp": -0.6315,
+      "first_tok_lp": -0.6315,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The algorithm most used for public-key exchange over insecure channels is Diffie",
+      "answer": " Hellman",
+      "family": "network_computing",
+      "pool": "v3",
+      "lp": -1.903,
+      "first_tok_lp": -1.9025,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The data structure with amortized constant lookup by key is the hash",
+      "answer": " table",
+      "family": "network_computing",
+      "pool": "v3",
+      "lp": -0.083,
+      "first_tok_lp": -0.083,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The average time complexity of quicksort is O(n log",
+      "answer": " n",
+      "family": "algorithm_complexity",
+      "pool": "v3",
+      "lp": -0.0102,
+      "first_tok_lp": -0.0102,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The sorting algorithm that guarantees O(n log n) worst case by merging is",
+      "answer": " merge",
+      "family": "algorithm_complexity",
+      "pool": "v3",
+      "lp": -0.7045,
+      "first_tok_lp": -0.7045,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The graph algorithm finding shortest paths from one source with non-negative weights is",
+      "answer": " Dijkstra",
+      "family": "algorithm_complexity",
+      "pool": "v3",
+      "lp": -0.6718,
+      "first_tok_lp": -0.6659,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The technique of storing subproblem results to avoid recompute is",
+      "answer": " memoization",
+      "family": "algorithm_complexity",
+      "pool": "v3",
+      "lp": -3.4166,
+      "first_tok_lp": -3.4145,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The drug class that lowers cholesterol by inhibiting HMG-CoA reductase is the",
+      "answer": " statins",
+      "family": "medicine_drug_class",
+      "pool": "v3",
+      "lp": -0.2038,
+      "first_tok_lp": -0.1843,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The drug class used to treat depression by blocking serotonin reuptake is the",
+      "answer": " SSRIs",
+      "family": "medicine_drug_class",
+      "pool": "v3",
+      "lp": -3.1309,
+      "first_tok_lp": -3.1285,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The drug class that reduces blood pressure by blocking angiotensin conversion is the ACE",
+      "answer": " inhibitors",
+      "family": "medicine_drug_class",
+      "pool": "v3",
+      "lp": -0.4662,
+      "first_tok_lp": -0.4662,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The class of drug that reduces inflammation without steroids is the",
+      "answer": " NSAIDs",
+      "family": "medicine_drug_class",
+      "pool": "v3",
+      "lp": -2.572,
+      "first_tok_lp": -1.5139,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The process by which the kidney returns useful solutes to the blood is",
+      "answer": " reabsorption",
+      "family": "physiology_process",
+      "pool": "v3",
+      "lp": -7.7986,
+      "first_tok_lp": -7.788,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The process by which cells engulf large particles is",
+      "answer": " phagocytosis",
+      "family": "physiology_process",
+      "pool": "v3",
+      "lp": -4.8581,
+      "first_tok_lp": -4.8565,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The process by which mRNA is made from DNA is",
+      "answer": " transcription",
+      "family": "physiology_process",
+      "pool": "v3",
+      "lp": -4.8832,
+      "first_tok_lp": -4.8832,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The process of programmed cell death is",
+      "answer": " apoptosis",
+      "family": "physiology_process",
+      "pool": "v3",
+      "lp": -6.3506,
+      "first_tok_lp": -6.3506,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The process by which muscle produces energy without oxygen is anaerobic",
+      "answer": " respiration",
+      "family": "physiology_process",
+      "pool": "v3",
+      "lp": -0.3292,
+      "first_tok_lp": -0.3292,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The only country bordering both Portugal and France is",
+      "answer": " Spain",
+      "family": "border_specific",
+      "pool": "v3",
+      "lp": -0.0266,
+      "first_tok_lp": -0.0266,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The country that borders both Poland and Hungary is",
+      "answer": " Slovakia",
+      "family": "border_specific",
+      "pool": "v3",
+      "lp": -0.248,
+      "first_tok_lp": -0.248,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The country that borders both Iran and China is",
+      "answer": " Afghanistan",
+      "family": "border_specific",
+      "pool": "v3",
+      "lp": -2.2337,
+      "first_tok_lp": -2.2337,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The two countries bordering Lesotho number exactly",
+      "answer": " one",
+      "family": "border_specific",
+      "pool": "v3",
+      "lp": -6.833,
+      "first_tok_lp": -6.833,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The number of points awarded for a try in rugby union is",
+      "answer": " five",
+      "family": "sports_numeric_2",
+      "pool": "v3",
+      "lp": -3.138,
+      "first_tok_lp": -3.138,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The number of players on a volleyball team on court is",
+      "answer": " six",
+      "family": "sports_numeric_2",
+      "pool": "v3",
+      "lp": -0.9193,
+      "first_tok_lp": -0.9193,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The maximum break in snooker without fouls is",
+      "answer": " 147",
+      "family": "sports_numeric_2",
+      "pool": "v3",
+      "lp": -5.328,
+      "first_tok_lp": -0.0055,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The number of rounds in a championship boxing bout is",
+      "answer": " twelve",
+      "family": "sports_numeric_2",
+      "pool": "v3",
+      "lp": -9.8127,
+      "first_tok_lp": -9.8127,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The distance in metres of an Olympic steeplechase is",
+      "answer": " 3000",
+      "family": "sports_numeric_2",
+      "pool": "v3",
+      "lp": -8.5832,
+      "first_tok_lp": -0.3335,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The number of degrees in each interior angle of a regular hexagon is",
+      "answer": " 120",
+      "family": "measure_numeric",
+      "pool": "v3",
+      "lp": -0.3662,
+      "first_tok_lp": -0.3543,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The number of bones in the adult human body is",
+      "answer": " 206",
+      "family": "measure_numeric",
+      "pool": "v3",
+      "lp": -0.2063,
+      "first_tok_lp": -0.2007,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The number of chromosomes in a human somatic cell is",
+      "answer": " forty",
+      "family": "measure_numeric",
+      "pool": "v3",
+      "lp": -9.06,
+      "first_tok_lp": -9.06,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The number of elements in the seventh period of the periodic table is",
+      "answer": " 32",
+      "family": "measure_numeric",
+      "pool": "v3",
+      "lp": -0.0911,
+      "first_tok_lp": -0.0813,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The alloy of copper and tin is",
+      "answer": " bronze",
+      "family": "material_composition",
+      "pool": "v3",
+      "lp": -4.736,
+      "first_tok_lp": -4.736,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The alloy of copper and zinc is",
+      "answer": " brass",
+      "family": "material_composition",
+      "pool": "v3",
+      "lp": -3.8015,
+      "first_tok_lp": -3.8015,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The alloy of iron with chromium that resists corrosion is stainless",
+      "answer": " steel",
+      "family": "material_composition",
+      "pool": "v3",
+      "lp": -0.0812,
+      "first_tok_lp": -0.0812,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The ceramic material used in spacecraft heat shields is often silica",
+      "answer": " aerogel",
+      "family": "material_composition",
+      "pool": "v3",
+      "lp": -7.0348,
+      "first_tok_lp": -7.0292,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The instrument family to which the celesta belongs is the",
+      "answer": " percussion",
+      "family": "instrument_family_2",
+      "pool": "v3",
+      "lp": -1.9621,
+      "first_tok_lp": -1.9621,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The highest-pitched member of the standard brass section is the",
+      "answer": " trumpet",
+      "family": "instrument_family_2",
+      "pool": "v3",
+      "lp": -0.1397,
+      "first_tok_lp": -0.1397,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The double-reed instrument pitched below the oboe is the",
+      "answer": " bassoon",
+      "family": "instrument_family_2",
+      "pool": "v3",
+      "lp": -0.4479,
+      "first_tok_lp": -0.4194,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The string instrument played with a bow and held between the knees historically is the viola da",
+      "answer": " gamba",
+      "family": "instrument_family_2",
+      "pool": "v3",
+      "lp": -0.0455,
+      "first_tok_lp": -0.0453,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The smallest unit of sound that distinguishes meaning is the",
+      "answer": " phoneme",
+      "family": "linguistics_term",
+      "pool": "v3",
+      "lp": -0.0565,
+      "first_tok_lp": -0.0528,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The smallest unit of meaning in a word is the",
+      "answer": " morpheme",
+      "family": "linguistics_term",
+      "pool": "v3",
+      "lp": -3.1462,
+      "first_tok_lp": -3.1265,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The study of meaning in language is",
+      "answer": " semantics",
+      "family": "linguistics_term",
+      "pool": "v3",
+      "lp": -5.1837,
+      "first_tok_lp": -5.1837,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The word order typical of Japanese sentences is subject object",
+      "answer": " verb",
+      "family": "linguistics_term",
+      "pool": "v3",
+      "lp": -0.027,
+      "first_tok_lp": -0.027,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The consonant produced by stopping airflow completely is a",
+      "answer": " plosive",
+      "family": "linguistics_term",
+      "pool": "v3",
+      "lp": -0.5457,
+      "first_tok_lp": -0.4124,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The line of longitude at zero degrees is the prime",
+      "answer": " meridian",
+      "family": "cartography_time",
+      "pool": "v3",
+      "lp": -0.0454,
+      "first_tok_lp": -0.0435,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The map projection preserving angles but distorting area is the",
+      "answer": " Mercator",
+      "family": "cartography_time",
+      "pool": "v3",
+      "lp": -3.9308,
+      "first_tok_lp": -3.9307,
+      "in_window": true
+    },
+    {
+      "prompt": "Fact: The latitude of the Tropic of Cancer is about 23.5 degrees",
+      "answer": " north",
+      "family": "cartography_time",
+      "pool": "v3",
+      "lp": -0.509,
+      "first_tok_lp": -0.509,
+      "in_window": false
+    },
+    {
+      "prompt": "Fact: The number of standard time zones spanning the globe is",
+      "answer": " 24",
+      "family": "cartography_time",
+      "pool": "v3",
+      "lp": -0.1672,
+      "first_tok_lp": -0.1639,
+      "in_window": false
+    }
+  ],
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "c3-pool-v3-scored-think-v1",
+    "tier": "dev",
+    "code_commit": "80e48d71b56e3625e47dba59e42bb972b96b09f6",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.c3_pool_score --pool v3",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "pool_module": "00199d03fc68cdca0c740e3296cac3f0a110936cfb36a23cf1b103330bbc259d"
+    },
+    "model": {
+      "id": "/content/models/olmo3-think",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95"
+    },
+    "jlens_commit": null,
+    "seed": null,
+    "created_utc": "2026-07-28T19:56:19Z"
+  }
+}

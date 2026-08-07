@@ -1,0 +1,49 @@
+model,dimension,status,status_label,annotation,evidence_ids
+Qwen 3.6 27B,Lens / readout validity,D,Development tier,G4 flip 0.78 vs 0.06 rand; published lens; Q-L4: no canonical sparse refit,r5-swap-positive-control-qwen36-27b-v2;p4-qwen-canonical-lens-decision-a1000-dev-v1
+Qwen 3.6 27B,Paper-defined capacity,D,Development tier,occ_med 3-4; centered excess 0.050-0.060 (L24-L40),r2-occupancy-qwen36-v2
+Qwen 3.6 27B,Span-safe causal specificity,C,Confirmatory,P-HP3 +0.2788; P3-P2 +0.0958 vs exact matched control,n6-confirmatory-analysis-v2;p3-inference-audit-v1
+Qwen 3.6 27B,Held-out replication,R,Held-out replicated,P-HP3 +0.2966; P3-P2 +0.1021 on disjoint families,n6-replication-analysis-v2;p3-inference-audit-v1
+Qwen 3.6 27B,Bridge mechanism,C,Confirmatory,"rescue +0.431 (conf, unreplicated); substitution dev: swap -4.05 vs deletion -0.89; answer-direction not separated",p3-bridge-geometry-qwen36-27b-v2;p3-bridge-swap-endpoint-qwen36-27b-v1
+Qwen 3.6 27B,Externalization / load,G,Gated / blocked,Bank-W cross-model blocked 16/20 capable families,p4-bank-w-capability-joint-imported-dev-v1
+Qwen 3.6 27B,Fit invariance,S,Split result (see note),"Q-L4 split: aggregates fit-stable; selected IDs (J 0.538), projector (0.710), bridge endpoint (-0.294) not",p4-qwen-canonical-lens-decision-a1000-dev-v1
+Qwen 3.6 27B,Finite-dose transport gate,U,Untested,never run on Qwen; no licensed or unlicensed verdict exists,
+OLMo-3 Base,Lens / readout validity,D,Development tier,own-frame lens + readout (lineage grids),p4-lineage-grid-olmo3-base-dev-v1;ol-geometry-readout-olmo3-base-v1
+OLMo-3 Base,Paper-defined capacity,D,Development tier,conserved with lineage (ol-capacity joint),ol-capacity-olmo3-base-dev-v1;ol-capacity-joint-dev-v1
+OLMo-3 Base,Span-safe causal specificity,D,Development tier,Bank-S causal use near zero pre-Think (development trajectory),p4-lineage-trajectory-analysis-olmo-dev-v1
+OLMo-3 Base,Held-out replication,U,Untested,no replication cell exists,
+OLMo-3 Base,Bridge mechanism,U,Untested,not tested,
+OLMo-3 Base,Externalization / load,G,Gated / blocked,no capable cohort; thread gated at lineage level,ol2-bank-w-olmo-pair-power-v1
+OLMo-3 Base,Fit invariance,U,Untested,single fit per frame; no ladder,
+OLMo-3 Base,Finite-dose transport gate,M,Methods tier,H6 fail in-band; L56@0.10 reaches 9/12 < 0.90 floor - no licensed cell,ol2-transport-validation-base-v1
+OLMo-3.0 Think,Lens / readout validity,D,Development tier,own + common-Base lens frames (v3/v4 grids),p4-lineage-grid-olmo3-think-common-base-lens-dev-v4
+OLMo-3.0 Think,Paper-defined capacity,D,Development tier,no material sparse-capacity growth at first Think transition,ol-capacity-olmo3-think-dev-v1;ol-capacity-joint-dev-v1
+OLMo-3.0 Think,Span-safe causal specificity,D,Development tier,Bank-S causal use appears on observed Think path (development),p4-lineage-trajectory-analysis-olmo-dev-v1
+OLMo-3.0 Think,Held-out replication,U,Untested,no replication cell exists,
+OLMo-3.0 Think,Bridge mechanism,U,Untested,not tested,
+OLMo-3.0 Think,Externalization / load,G,Gated / blocked,stage wedge capability-gated (SFT/DPO cohorts empty),ol2-stage-wedge-joint-analysis-v1
+OLMo-3.0 Think,Fit invariance,U,Untested,single fit per frame,
+OLMo-3.0 Think,Finite-dose transport gate,U,Untested,not on the mandatory H6 grid,
+OLMo-3.1 Think,Lens / readout validity,D,Development tier,G4 flip 0.76 vs 0.18 rand; independent-lens clause r=0.988 tail-J 0.878,r5-swap-positive-control-olmo31-think-v2;n6-repl-lens-independence-v2
+OLMo-3.1 Think,Paper-defined capacity,D,Development tier,occ_med 2; centered excess ~0.004-0.012 (L24-L40),r2-occupancy-think-v2
+OLMo-3.1 Think,Span-safe causal specificity,D,Development tier,prespecified estimates; span-safe tail 0.20 vs control 0.017; HP1 interaction conf-not-replicated,p3-span-audit-cross-model-v1;n6-confirmatory-analysis-v2
+OLMo-3.1 Think,Held-out replication,S,Split result (see note),"HP3 estimate replicates; HP1 interaction does not (+0.1036, p=0.71)",n6-replication-analysis-v2
+OLMo-3.1 Think,Bridge mechanism,D,Development tier,rescue contrast mildly negative (-0.202); swap inert (-0.089),p3-bridge-mediation-olmo31-think-v1
+OLMo-3.1 Think,Externalization / load,G,Gated / blocked,pair design unpowered: 0.7788 at 16 shared capable families (first pass 18),ol2-bank-w-olmo-pair-power-v1
+OLMo-3.1 Think,Fit invariance,U,Untested,no fit ladder on OLMo,
+OLMo-3.1 Think,Finite-dose transport gate,M,Methods tier,H6 fail in-band; late-anchor-only L56@0.10 12/12,ol2-transport-validation-olmo31-think-v1
+OLMo-3.1 Instruct,Lens / readout validity,D,Development tier,G4 flip 0.76 vs 0.24 rand; independent-lens r=0.99 tail-J 0.883,r5-swap-positive-control-olmo31-instruct-v2;n6-repl-lens-independence-v2
+OLMo-3.1 Instruct,Paper-defined capacity,D,Development tier,occ_med 2; centered excess ~0.004-0.012 - pair-flat,r2-occupancy-olmo31instruct-v2
+OLMo-3.1 Instruct,Span-safe causal specificity,D,Development tier,span-safe tail 0.32 vs control 0.0; Bank-S use absent/near-zero at sibling (dev assay),p3-span-audit-cross-model-v1;p4-lineage-trajectory-analysis-olmo-dev-v1
+OLMo-3.1 Instruct,Held-out replication,S,Split result (see note),HP3 estimate replicates; HP1 interaction does not,n6-replication-analysis-v2
+OLMo-3.1 Instruct,Bridge mechanism,U,Untested,not tested (no mediation cohort),
+OLMo-3.1 Instruct,Externalization / load,G,Gated / blocked,pair design unpowered (see Think row),ol2-bank-w-olmo-pair-power-v1
+OLMo-3.1 Instruct,Fit invariance,U,Untested,no fit ladder on OLMo,
+OLMo-3.1 Instruct,Finite-dose transport gate,U,Untested,"not on the mandatory H6 grid (sibling, not successor)",
+Gemma-4 31B,Lens / readout validity,X,Not applicable (premise/branch),excluded by J-lens validity premise failure (PI amendment) - not a below-boundary data point,gm-state-of-record-v1
+Gemma-4 31B,Paper-defined capacity,X,Not applicable (premise/branch),HP4 cell not-applicable after premise exclusion,gm-state-of-record-v1
+Gemma-4 31B,Span-safe causal specificity,X,Not applicable (premise/branch),no causal assay licensed,
+Gemma-4 31B,Held-out replication,X,Not applicable (premise/branch),n/a,
+Gemma-4 31B,Bridge mechanism,X,Not applicable (premise/branch),n/a,
+Gemma-4 31B,Externalization / load,X,Not applicable (premise/branch),n/a,
+Gemma-4 31B,Fit invariance,U,Untested,no fit ladder,
+Gemma-4 31B,Finite-dose transport gate,M,Methods tier,closed five-layer finite-scale mismatch under calibrated envelope (L22-L52); cause not localized,gm-jvp-gemma-stage1-v1;gm2-stage1-relicense-v1

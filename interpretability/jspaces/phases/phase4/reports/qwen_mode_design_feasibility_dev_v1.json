@@ -1,0 +1,596 @@
+{
+ "calculation_boundary": "Known-SD one-sided Gaussian approximation. It is a scenario envelope, not exact sign-flip power and not a selected SESOI.",
+ "design_conclusion": "No P4-P2 SESOI, family count, or split is selected. Family requirements vary quadratically with the unmeasured family-interaction SD; therefore a consumed-development intervention variance pilot plus substantive review is required before an untouched bank can be sized and split.",
+ "evidence_id": "p4-qwen-mode-design-feasibility-dev-v1",
+ "freeze_ready": false,
+ "mde_by_family_count_and_sd": [
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.21431721682042848,
+   "n_families": 12
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.42863443364085696,
+   "n_families": 12
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.8572688672817139,
+   "n_families": 12
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 1.2123612587100208,
+   "n_families": 12
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 1.7145377345634278,
+   "n_families": 12
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 3.4290754691268557,
+   "n_families": 12
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.1660094023102087,
+   "n_families": 20
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.3320188046204174,
+   "n_families": 20
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.6640376092408348,
+   "n_families": 20
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.9390909929141943,
+   "n_families": 20
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 1.3280752184816695,
+   "n_families": 20
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 2.656150436963339,
+   "n_families": 20
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.1515451573387526,
+   "n_families": 24
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.3030903146775052,
+   "n_families": 24
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.6061806293550104,
+   "n_families": 24
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.857268867281714,
+   "n_families": 24
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 1.2123612587100208,
+   "n_families": 24
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 2.4247225174200415,
+   "n_families": 24
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.11738637411427427,
+   "n_families": 40
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.23477274822854854,
+   "n_families": 40
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.4695454964570971,
+   "n_families": 40
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.6640376092408349,
+   "n_families": 40
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 0.9390909929141942,
+   "n_families": 40
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 1.8781819858283884,
+   "n_families": 40
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.09584557311180787,
+   "n_families": 60
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.19169114622361574,
+   "n_families": 60
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.3833822924472315,
+   "n_families": 60
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.5421844375525631,
+   "n_families": 60
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 0.766764584894463,
+   "n_families": 60
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 1.533529169788926,
+   "n_families": 60
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.08300470115510435,
+   "n_families": 80
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.1660094023102087,
+   "n_families": 80
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.3320188046204174,
+   "n_families": 80
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.46954549645709714,
+   "n_families": 80
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 0.6640376092408348,
+   "n_families": 80
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 1.3280752184816695,
+   "n_families": 80
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.06777305469407037,
+   "n_families": 120
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.13554610938814074,
+   "n_families": 120
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.2710922187762815,
+   "n_families": 120
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.38338229244723154,
+   "n_families": 120
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 0.542184437552563,
+   "n_families": 120
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 1.084368875105126,
+   "n_families": 120
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.058693187057137136,
+   "n_families": 160
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.11738637411427427,
+   "n_families": 160
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.23477274822854854,
+   "n_families": 160
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.33201880462041744,
+   "n_families": 160
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 0.4695454964570971,
+   "n_families": 160
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 0.9390909929141942,
+   "n_families": 160
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.047922786555903936,
+   "n_families": 240
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.09584557311180787,
+   "n_families": 240
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.19169114622361574,
+   "n_families": 240
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.27109221877628153,
+   "n_families": 240
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 0.3833822924472315,
+   "n_families": 240
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 0.766764584894463,
+   "n_families": 240
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.03912879137142476,
+   "n_families": 360
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.07825758274284952,
+   "n_families": 360
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.15651516548569905,
+   "n_families": 360
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.22134586974694495,
+   "n_families": 360
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 0.3130303309713981,
+   "n_families": 360
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 0.6260606619427962,
+   "n_families": 360
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.03320188046204174,
+   "n_families": 500
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.06640376092408348,
+   "n_families": 500
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.13280752184816697,
+   "n_families": 500
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.18781819858283888,
+   "n_families": 500
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 0.26561504369633393,
+   "n_families": 500
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 0.5312300873926679,
+   "n_families": 500
+  },
+  {
+   "family_interaction_sd": 0.25,
+   "gaussian_mde_accuracy_points": 0.023477274822854857,
+   "n_families": 1000
+  },
+  {
+   "family_interaction_sd": 0.5,
+   "gaussian_mde_accuracy_points": 0.04695454964570971,
+   "n_families": 1000
+  },
+  {
+   "family_interaction_sd": 1.0,
+   "gaussian_mde_accuracy_points": 0.09390909929141943,
+   "n_families": 1000
+  },
+  {
+   "family_interaction_sd": 1.4142135623730951,
+   "gaussian_mde_accuracy_points": 0.132807521848167,
+   "n_families": 1000
+  },
+  {
+   "family_interaction_sd": 2.0,
+   "gaussian_mde_accuracy_points": 0.18781819858283885,
+   "n_families": 1000
+  },
+  {
+   "family_interaction_sd": 4.0,
+   "gaussian_mde_accuracy_points": 0.3756363971656777,
+   "n_families": 1000
+  }
+ ],
+ "minimum_families_by_sesoi_and_sd": [
+  {
+   "candidate_sesoi_accuracy_points": 0.05,
+   "family_interaction_sd": 0.25,
+   "minimum_families": 221
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.05,
+   "family_interaction_sd": 0.5,
+   "minimum_families": 882
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.05,
+   "family_interaction_sd": 1.0,
+   "minimum_families": 3528
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.05,
+   "family_interaction_sd": 1.4142135623730951,
+   "minimum_families": 7056
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.05,
+   "family_interaction_sd": 2.0,
+   "minimum_families": 14111
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.05,
+   "family_interaction_sd": 4.0,
+   "minimum_families": 56442
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.1,
+   "family_interaction_sd": 0.25,
+   "minimum_families": 56
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.1,
+   "family_interaction_sd": 0.5,
+   "minimum_families": 221
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.1,
+   "family_interaction_sd": 1.0,
+   "minimum_families": 882
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.1,
+   "family_interaction_sd": 1.4142135623730951,
+   "minimum_families": 1764
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.1,
+   "family_interaction_sd": 2.0,
+   "minimum_families": 3528
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.1,
+   "family_interaction_sd": 4.0,
+   "minimum_families": 14111
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.15,
+   "family_interaction_sd": 0.25,
+   "minimum_families": 25
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.15,
+   "family_interaction_sd": 0.5,
+   "minimum_families": 98
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.15,
+   "family_interaction_sd": 1.0,
+   "minimum_families": 392
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.15,
+   "family_interaction_sd": 1.4142135623730951,
+   "minimum_families": 784
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.15,
+   "family_interaction_sd": 2.0,
+   "minimum_families": 1568
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.15,
+   "family_interaction_sd": 4.0,
+   "minimum_families": 6272
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.2,
+   "family_interaction_sd": 0.25,
+   "minimum_families": 14
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.2,
+   "family_interaction_sd": 0.5,
+   "minimum_families": 56
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.2,
+   "family_interaction_sd": 1.0,
+   "minimum_families": 221
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.2,
+   "family_interaction_sd": 1.4142135623730951,
+   "minimum_families": 441
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.2,
+   "family_interaction_sd": 2.0,
+   "minimum_families": 882
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.2,
+   "family_interaction_sd": 4.0,
+   "minimum_families": 3528
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.25,
+   "family_interaction_sd": 0.25,
+   "minimum_families": 9
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.25,
+   "family_interaction_sd": 0.5,
+   "minimum_families": 36
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.25,
+   "family_interaction_sd": 1.0,
+   "minimum_families": 142
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.25,
+   "family_interaction_sd": 1.4142135623730951,
+   "minimum_families": 283
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.25,
+   "family_interaction_sd": 2.0,
+   "minimum_families": 565
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.25,
+   "family_interaction_sd": 4.0,
+   "minimum_families": 2258
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.3,
+   "family_interaction_sd": 0.25,
+   "minimum_families": 7
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.3,
+   "family_interaction_sd": 0.5,
+   "minimum_families": 25
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.3,
+   "family_interaction_sd": 1.0,
+   "minimum_families": 98
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.3,
+   "family_interaction_sd": 1.4142135623730951,
+   "minimum_families": 196
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.3,
+   "family_interaction_sd": 2.0,
+   "minimum_families": 392
+  },
+  {
+   "candidate_sesoi_accuracy_points": 0.3,
+   "family_interaction_sd": 4.0,
+   "minimum_families": 1568
+  }
+ ],
+ "minimum_families_for_exact_sign_flip_resolution": 6,
+ "multiplicity_planning": {
+  "conservative_endpoint_alpha": 0.016666666666666666,
+  "familywise_alpha": 0.05,
+  "primary_hypotheses": 3,
+  "rule": "Uses alpha/3 so P4-P2 is powered even at the most conservative Holm rank; this does not replace the frozen Holm analysis."
+ },
+ "next_required_methods": [
+  "Pass the prospectively frozen v2 model-backed baseline gate.",
+  "Run a development-only phase-intervention variance pilot on already consumed families after the canonical lens is fixed.",
+  "Have independent review select a substantive accuracy SESOI, then author and hash a sufficiently large untouched family bank.",
+  "Simulate the exact frozen family sign-flip analysis under the selected bank and variance ruler before freeze."
+ ],
+ "outcome_blinding": "Uses only registered parser/template methods and mathematical bounds. It reads no v1/v2 model baseline row and no P4-P2 intervention, confirmatory, or replication outcome.",
+ "power_target": 0.8,
+ "primary_family_statistic": {
+  "cell_order": [
+   "thinking_on_final_control",
+   "thinking_on_final_j",
+   "thinking_on_prefill_control",
+   "thinking_on_prefill_j",
+   "thinking_off_final_control",
+   "thinking_off_final_j",
+   "thinking_off_prefill_control",
+   "thinking_off_prefill_j"
+  ],
+  "coefficients": [
+   1,
+   -1,
+   -1,
+   1,
+   -1,
+   1,
+   1,
+   -1
+  ],
+  "distribution_free_family_sd_upper_bound": 4.0,
+  "quality_endpoint": "normalized exact accepted-alias accuracy",
+  "support": [
+   -4.0,
+   4.0
+  ]
+ },
+ "schema_version": 1,
+ "source_methods_evidence_id": "p4-qwen-mode-parser-gate-dev-v2",
+ "source_methods_parser_version": "p4-phase-parser-v2"
+}

@@ -1,0 +1,1934 @@
+{
+  "summary": {
+    "model": "olmo3-think",
+    "tail_threshold_nats": -1.0,
+    "n_items_scored": 90,
+    "n_tail": 24,
+    "n_nontail": 66,
+    "bridge_hit_rate_twohop": {
+      "tail": 0.9375,
+      "nontail": 0.9545,
+      "tail_ci95_clustered": [
+        0.7692,
+        1.0
+      ]
+    },
+    "bridge_permutation_control": {
+      "all_twohop": {
+        "observed": 0.95,
+        "permuted_mean": 0.0226,
+        "permuted_p95": 0.05,
+        "p_value": 0.0,
+        "n_items": 60
+      },
+      "tail_only": {
+        "observed": 0.9375,
+        "permuted_mean": 0.0811,
+        "permuted_p95": 0.1875,
+        "p_value": 0.0,
+        "n_items": 16
+      },
+      "note": "observed vs bridge-sets-reassigned-to-other-items; a gap is item-specific bridge selection, no gap means the selected set is simply large"
+    },
+    "protect_miss_rate": {
+      "tail": 0.2083,
+      "nontail": 0.0
+    },
+    "clean_rank_median": {
+      "tail": 3.0,
+      "nontail": 1.0
+    },
+    "mean_pairwise_selection_jaccard": {
+      "tail": 0.0938,
+      "nontail": 0.1061
+    },
+    "n_selected_promptfinal_mean": {
+      "tail": 77.875,
+      "nontail": 77.9848
+    },
+    "reading": "BRIDGE DELETION IS REAL AND ITEM-SPECIFIC (selected on 95% of two-hop items vs 2% under bridge-reassignment permutation, p=0.000) \u2014 the deflated J-directions do carry the two-hop bridge entity; but it does NOT separate the damaged tail from the undamaged items (0.94 vs 0.95), so bridge deletion alone is not sufficient for damage; protection failure explains only part of the tail (unprotectable answers: 21% of tail vs 0% of non-tail); among items whose answer WAS protected, the tail is the lower-confidence cohort (median clean rank 2 vs 1) \u2014 consistent with the pilot's 'conditional on the answer not yet being imminent' reading",
+    "seconds": 1,
+    "among_protectable_items": {
+      "n_tail": 19,
+      "n_nontail": 66,
+      "clean_rank_median": {
+        "tail": 2.0,
+        "nontail": 1.0
+      },
+      "bridge_hit_rate": {
+        "tail": 0.9231,
+        "nontail": 0.9545
+      },
+      "note": "these items had their answer inside the protected set and STILL lost >1 nat \u2014 protection failure cannot explain them"
+    }
+  },
+  "rows": [
+    {
+      "item_id": "hardonehop:0",
+      "task": "hardonehop",
+      "family": "arts",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 79,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:1",
+      "task": "hardonehop",
+      "family": "literature",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 96,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:2",
+      "task": "hardonehop",
+      "family": "currency",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 129,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:3",
+      "task": "hardonehop",
+      "family": "history",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 81,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:4",
+      "task": "hardonehop",
+      "family": "sports",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 88,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:5",
+      "task": "hardonehop",
+      "family": "misc",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 116,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:6",
+      "task": "hardonehop",
+      "family": "currency",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 122,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:7",
+      "task": "hardonehop",
+      "family": "currency",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 126,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:8",
+      "task": "hardonehop",
+      "family": "science",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 123,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:9",
+      "task": "hardonehop",
+      "family": "history",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 120,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:10",
+      "task": "hardonehop",
+      "family": "literature",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 80,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:11",
+      "task": "hardonehop",
+      "family": "sports",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 63,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:12",
+      "task": "hardonehop",
+      "family": "geography",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 114,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:13",
+      "task": "hardonehop",
+      "family": "mythology",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 60,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:14",
+      "task": "hardonehop",
+      "family": "currency",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 126,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:15",
+      "task": "hardonehop",
+      "family": "mythology",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 66,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:16",
+      "task": "hardonehop",
+      "family": "geography",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 54,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:17",
+      "task": "hardonehop",
+      "family": "arts",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 79,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:18",
+      "task": "hardonehop",
+      "family": "currency",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 114,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:19",
+      "task": "hardonehop",
+      "family": "geography",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 69,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:20",
+      "task": "hardonehop",
+      "family": "currency",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 115,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:21",
+      "task": "hardonehop",
+      "family": "sports",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 73,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:22",
+      "task": "hardonehop",
+      "family": "mythology",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 62,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:23",
+      "task": "hardonehop",
+      "family": "currency",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 125,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:24",
+      "task": "hardonehop",
+      "family": "currency",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 127,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:25",
+      "task": "hardonehop",
+      "family": "geography",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 115,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:26",
+      "task": "hardonehop",
+      "family": "arts",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 69,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:27",
+      "task": "hardonehop",
+      "family": "mythology",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 75,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:28",
+      "task": "hardonehop",
+      "family": "arts",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 82,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:29",
+      "task": "hardonehop",
+      "family": "currency",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 128,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:30",
+      "task": "hardonehop",
+      "family": "arts",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 57,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:31",
+      "task": "hardonehop",
+      "family": "mythology",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 66,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:32",
+      "task": "hardonehop",
+      "family": "geography",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 78,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:33",
+      "task": "hardonehop",
+      "family": "science",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 117,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:34",
+      "task": "hardonehop",
+      "family": "currency",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 129,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:35",
+      "task": "hardonehop",
+      "family": "science",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 85,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:36",
+      "task": "hardonehop",
+      "family": "geography",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 69,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:37",
+      "task": "hardonehop",
+      "family": "language",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 72,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:38",
+      "task": "hardonehop",
+      "family": "geography",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 83,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:39",
+      "task": "hardonehop",
+      "family": "history",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 69,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "hardonehop:40",
+      "task": "hardonehop",
+      "family": "mythology",
+      "delta": NaN,
+      "is_tail": null,
+      "n_selected_pf": 71,
+      "bridge_hit": null,
+      "clean_rank": NaN,
+      "protect_miss": null,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:0",
+      "task": "onehop",
+      "family": "onehop0",
+      "delta": -0.02230769395828247,
+      "is_tail": false,
+      "n_selected_pf": 59,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:1",
+      "task": "onehop",
+      "family": "onehop1",
+      "delta": -0.051410794258117676,
+      "is_tail": false,
+      "n_selected_pf": 64,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:2",
+      "task": "onehop",
+      "family": "onehop2",
+      "delta": -2.349311590194702,
+      "is_tail": true,
+      "n_selected_pf": 61,
+      "bridge_hit": null,
+      "clean_rank": 2.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:3",
+      "task": "onehop",
+      "family": "onehop3",
+      "delta": 0.19520056247711182,
+      "is_tail": false,
+      "n_selected_pf": 69,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:4",
+      "task": "onehop",
+      "family": "onehop4",
+      "delta": -0.22057771682739258,
+      "is_tail": false,
+      "n_selected_pf": 56,
+      "bridge_hit": null,
+      "clean_rank": 3.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:5",
+      "task": "onehop",
+      "family": "onehop5",
+      "delta": 0.04731759428977966,
+      "is_tail": false,
+      "n_selected_pf": 62,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:6",
+      "task": "onehop",
+      "family": "onehop6",
+      "delta": -2.352402925491333,
+      "is_tail": true,
+      "n_selected_pf": 69,
+      "bridge_hit": null,
+      "clean_rank": 2.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:7",
+      "task": "onehop",
+      "family": "onehop7",
+      "delta": 0.19378048181533813,
+      "is_tail": false,
+      "n_selected_pf": 56,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:8",
+      "task": "onehop",
+      "family": "onehop8",
+      "delta": 0.9064602851867676,
+      "is_tail": false,
+      "n_selected_pf": 61,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:9",
+      "task": "onehop",
+      "family": "onehop9",
+      "delta": 0.010111391544342041,
+      "is_tail": false,
+      "n_selected_pf": 58,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:10",
+      "task": "onehop",
+      "family": "onehop10",
+      "delta": 0.5935472249984741,
+      "is_tail": false,
+      "n_selected_pf": 61,
+      "bridge_hit": null,
+      "clean_rank": 2.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:11",
+      "task": "onehop",
+      "family": "onehop11",
+      "delta": 0.5590057298541069,
+      "is_tail": false,
+      "n_selected_pf": 67,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:12",
+      "task": "onehop",
+      "family": "onehop12",
+      "delta": 0.014372172066941857,
+      "is_tail": false,
+      "n_selected_pf": 66,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:13",
+      "task": "onehop",
+      "family": "onehop13",
+      "delta": -0.04186606407165527,
+      "is_tail": false,
+      "n_selected_pf": 63,
+      "bridge_hit": null,
+      "clean_rank": 6.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:14",
+      "task": "onehop",
+      "family": "onehop14",
+      "delta": 0.3888467960059643,
+      "is_tail": false,
+      "n_selected_pf": 57,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:15",
+      "task": "onehop",
+      "family": "onehop15",
+      "delta": 0.13403554260730743,
+      "is_tail": false,
+      "n_selected_pf": 57,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:16",
+      "task": "onehop",
+      "family": "onehop16",
+      "delta": -0.0007061509822960943,
+      "is_tail": false,
+      "n_selected_pf": 74,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:17",
+      "task": "onehop",
+      "family": "onehop17",
+      "delta": -3.999500274658203,
+      "is_tail": true,
+      "n_selected_pf": 64,
+      "bridge_hit": null,
+      "clean_rank": 13.0,
+      "protect_miss": true,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:18",
+      "task": "onehop",
+      "family": "onehop18",
+      "delta": 0.6826870441436768,
+      "is_tail": false,
+      "n_selected_pf": 70,
+      "bridge_hit": null,
+      "clean_rank": 2.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:19",
+      "task": "onehop",
+      "family": "onehop19",
+      "delta": -1.9142932891845703,
+      "is_tail": true,
+      "n_selected_pf": 96,
+      "bridge_hit": null,
+      "clean_rank": 4.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:20",
+      "task": "onehop",
+      "family": "onehop20",
+      "delta": -0.6494109630584717,
+      "is_tail": false,
+      "n_selected_pf": 66,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:21",
+      "task": "onehop",
+      "family": "onehop21",
+      "delta": 0.020601868629455566,
+      "is_tail": false,
+      "n_selected_pf": 122,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:22",
+      "task": "onehop",
+      "family": "onehop22",
+      "delta": -1.769261360168457,
+      "is_tail": true,
+      "n_selected_pf": 73,
+      "bridge_hit": null,
+      "clean_rank": 4.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:23",
+      "task": "onehop",
+      "family": "onehop23",
+      "delta": 0.002803576469887048,
+      "is_tail": false,
+      "n_selected_pf": 118,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:24",
+      "task": "onehop",
+      "family": "onehop24",
+      "delta": -1.0655051469802856,
+      "is_tail": true,
+      "n_selected_pf": 57,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:25",
+      "task": "onehop",
+      "family": "onehop25",
+      "delta": 0.23226749897003174,
+      "is_tail": false,
+      "n_selected_pf": 109,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:26",
+      "task": "onehop",
+      "family": "onehop26",
+      "delta": -5.497954845428467,
+      "is_tail": true,
+      "n_selected_pf": 70,
+      "bridge_hit": null,
+      "clean_rank": 16.0,
+      "protect_miss": true,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:27",
+      "task": "onehop",
+      "family": "onehop27",
+      "delta": 0.039595723152160645,
+      "is_tail": false,
+      "n_selected_pf": 127,
+      "bridge_hit": null,
+      "clean_rank": 2.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:28",
+      "task": "onehop",
+      "family": "onehop28",
+      "delta": 0.06843770667910576,
+      "is_tail": false,
+      "n_selected_pf": 63,
+      "bridge_hit": null,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "onehop:29",
+      "task": "onehop",
+      "family": "onehop29",
+      "delta": -1.7455909252166748,
+      "is_tail": true,
+      "n_selected_pf": 87,
+      "bridge_hit": null,
+      "clean_rank": 3.0,
+      "protect_miss": false,
+      "_bridge_ids": []
+    },
+    {
+      "item_id": "twohop:amazon-language",
+      "task": "twohop",
+      "family": "amazon",
+      "delta": 0.75395667552948,
+      "is_tail": false,
+      "n_selected_pf": 82,
+      "bridge_hit": true,
+      "clean_rank": 4.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        16327,
+        68299,
+        97746
+      ]
+    },
+    {
+      "item_id": "twohop:animal-cover-turtle",
+      "task": "twohop",
+      "family": "animal",
+      "delta": 0.02501097321510315,
+      "is_tail": false,
+      "n_selected_pf": 70,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        37189,
+        67906,
+        82209
+      ]
+    },
+    {
+      "item_id": "twohop:animal-legs-buffalo2",
+      "task": "twohop",
+      "family": "animal",
+      "delta": 1.6943879127502441,
+      "is_tail": false,
+      "n_selected_pf": 72,
+      "bridge_hit": true,
+      "clean_rank": 8.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        12812,
+        27066,
+        32489,
+        82455
+      ]
+    },
+    {
+      "item_id": "twohop:animal-nose-elephant",
+      "task": "twohop",
+      "family": "animal",
+      "delta": 0.29245123267173767,
+      "is_tail": false,
+      "n_selected_pf": 90,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        10274,
+        28022,
+        46840,
+        79189
+      ]
+    },
+    {
+      "item_id": "twohop:atomic-80-state",
+      "task": "twohop",
+      "family": "atomic",
+      "delta": -4.494053840637207,
+      "is_tail": true,
+      "n_selected_pf": 99,
+      "bridge_hit": true,
+      "clean_rank": 3.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        1195,
+        26533,
+        44662,
+        51852
+      ]
+    },
+    {
+      "item_id": "twohop:basketball-players",
+      "task": "twohop",
+      "family": "basketball",
+      "delta": -2.5778627395629883,
+      "is_tail": true,
+      "n_selected_pf": 91,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        4047,
+        19794,
+        47589,
+        60864
+      ]
+    },
+    {
+      "item_id": "twohop:beverage-source-wine",
+      "task": "twohop",
+      "family": "beverage",
+      "delta": -0.6573572158813477,
+      "is_tail": false,
+      "n_selected_pf": 75,
+      "bridge_hit": true,
+      "clean_rank": 6.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        13378,
+        32926,
+        72537
+      ]
+    },
+    {
+      "item_id": "twohop:bird-color-swan",
+      "task": "twohop",
+      "family": "bird",
+      "delta": 0.727891206741333,
+      "is_tail": false,
+      "n_selected_pf": 74,
+      "bridge_hit": true,
+      "clean_rank": 5.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        276,
+        2064,
+        2332,
+        44501
+      ]
+    },
+    {
+      "item_id": "twohop:bird-country-eagle",
+      "task": "twohop",
+      "family": "bird",
+      "delta": -3.874508857727051,
+      "is_tail": true,
+      "n_selected_pf": 89,
+      "bridge_hit": true,
+      "clean_rank": 71.0,
+      "protect_miss": true,
+      "_bridge_ids": [
+        68,
+        33774,
+        36895,
+        60989
+      ]
+    },
+    {
+      "item_id": "twohop:bird-time-owl",
+      "task": "twohop",
+      "family": "bird",
+      "delta": -1.9769983291625977,
+      "is_tail": true,
+      "n_selected_pf": 76,
+      "bridge_hit": false,
+      "clean_rank": 5.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        9802,
+        53369,
+        74795
+      ]
+    },
+    {
+      "item_id": "twohop:birthstone-emerald-month",
+      "task": "twohop",
+      "family": "birthstone",
+      "delta": -0.0006786435842514038,
+      "is_tail": false,
+      "n_selected_pf": 86,
+      "bridge_hit": false,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        1253,
+        3297,
+        11356
+      ]
+    },
+    {
+      "item_id": "twohop:chem-atmosphere-Z",
+      "task": "twohop",
+      "family": "chem",
+      "delta": -0.11811000108718872,
+      "is_tail": false,
+      "n_selected_pf": 78,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        26252,
+        45168,
+        47503,
+        50616
+      ]
+    },
+    {
+      "item_id": "twohop:chem-bones-Z",
+      "task": "twohop",
+      "family": "chem",
+      "delta": -1.2628703117370605,
+      "is_tail": true,
+      "n_selected_pf": 85,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        2411,
+        27684,
+        35719,
+        96104
+      ]
+    },
+    {
+      "item_id": "twohop:chem-organic-Z",
+      "task": "twohop",
+      "family": "chem",
+      "delta": 0.213481355458498,
+      "is_tail": false,
+      "n_selected_pf": 88,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        12782,
+        22208,
+        74441
+      ]
+    },
+    {
+      "item_id": "twohop:chem-photosynthesis-Z",
+      "task": "twohop",
+      "family": "chem",
+      "delta": 0.2252793312072754,
+      "is_tail": false,
+      "n_selected_pf": 82,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        78,
+        19472,
+        24463,
+        87669
+      ]
+    },
+    {
+      "item_id": "twohop:christmas-season",
+      "task": "twohop",
+      "family": "christmas",
+      "delta": -2.375967502593994,
+      "is_tail": true,
+      "n_selected_pf": 79,
+      "bridge_hit": true,
+      "clean_rank": 7.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        10280,
+        54302,
+        59703
+      ]
+    },
+    {
+      "item_id": "twohop:city-state-Philadelphia",
+      "task": "twohop",
+      "family": "city",
+      "delta": 0.16740593314170837,
+      "is_tail": false,
+      "n_selected_pf": 81,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        10891,
+        18281,
+        19895,
+        90524
+      ]
+    },
+    {
+      "item_id": "twohop:colosseum-currency",
+      "task": "twohop",
+      "family": "colosseum",
+      "delta": 0.15854041278362274,
+      "is_tail": false,
+      "n_selected_pf": 83,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        433,
+        5893,
+        15704,
+        71603
+      ]
+    },
+    {
+      "item_id": "twohop:element-color-gold2",
+      "task": "twohop",
+      "family": "element",
+      "delta": 0.15654778480529785,
+      "is_tail": false,
+      "n_selected_pf": 76,
+      "bridge_hit": true,
+      "clean_rank": 3.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        6761,
+        7573,
+        35637
+      ]
+    },
+    {
+      "item_id": "twohop:etym-frigg-position",
+      "task": "twohop",
+      "family": "etym",
+      "delta": 0.15192028880119324,
+      "is_tail": false,
+      "n_selected_pf": 77,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        6740,
+        35720,
+        80413
+      ]
+    },
+    {
+      "item_id": "twohop:etym-saturn-position",
+      "task": "twohop",
+      "family": "etym",
+      "delta": -1.1626670360565186,
+      "is_tail": true,
+      "n_selected_pf": 51,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        399,
+        35982,
+        50253,
+        85789
+      ]
+    },
+    {
+      "item_id": "twohop:etym-wargod-month",
+      "task": "twohop",
+      "family": "etym",
+      "delta": -0.43765997886657715,
+      "is_tail": false,
+      "n_selected_pf": 91,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        5587,
+        15572,
+        28623
+      ]
+    },
+    {
+      "item_id": "twohop:ex-city-capital-Barcelona-Toronto",
+      "task": "twohop",
+      "family": "ex",
+      "delta": 0.15198982879519463,
+      "is_tail": false,
+      "n_selected_pf": 80,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        467,
+        993,
+        18157,
+        75420
+      ]
+    },
+    {
+      "item_id": "twohop:ex-city-capital-Lyon-Naples",
+      "task": "twohop",
+      "family": "ex",
+      "delta": -1.1521800756454468,
+      "is_tail": true,
+      "n_selected_pf": 91,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        9822,
+        48687,
+        50100
+      ]
+    },
+    {
+      "item_id": "twohop:ex-city-capital-Naples-Barcelona",
+      "task": "twohop",
+      "family": "ex",
+      "delta": 0.020125531707890332,
+      "is_tail": false,
+      "n_selected_pf": 71,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        433,
+        5893,
+        15704,
+        71603
+      ]
+    },
+    {
+      "item_id": "twohop:ex-city-capital-Toronto-Lyon",
+      "task": "twohop",
+      "family": "ex",
+      "delta": 0.03613819056772627,
+      "is_tail": false,
+      "n_selected_pf": 70,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        7008,
+        32863,
+        37031
+      ]
+    },
+    {
+      "item_id": "twohop:ex-city-continent-Toronto-Lyon",
+      "task": "twohop",
+      "family": "ex",
+      "delta": -1.9671716690063477,
+      "is_tail": true,
+      "n_selected_pf": 57,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        7008,
+        32863,
+        37031
+      ]
+    },
+    {
+      "item_id": "twohop:ex-city-currency-Toronto-Beijing",
+      "task": "twohop",
+      "family": "ex",
+      "delta": 0.010948111943434924,
+      "is_tail": false,
+      "n_selected_pf": 59,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        7008,
+        32863,
+        37031
+      ]
+    },
+    {
+      "item_id": "twohop:ex-city-currency-Toronto-Mumbai",
+      "task": "twohop",
+      "family": "ex",
+      "delta": 0.010948111943434924,
+      "is_tail": false,
+      "n_selected_pf": 59,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        7008,
+        32863,
+        37031
+      ]
+    },
+    {
+      "item_id": "twohop:ex-city-language-Lyon-Naples",
+      "task": "twohop",
+      "family": "ex",
+      "delta": 0.21983563899993896,
+      "is_tail": false,
+      "n_selected_pf": 85,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        9822,
+        48687,
+        50100
+      ]
+    },
+    {
+      "item_id": "twohop:ex-element-state-26-8",
+      "task": "twohop",
+      "family": "ex",
+      "delta": -1.1046247482299805,
+      "is_tail": true,
+      "n_selected_pf": 93,
+      "bridge_hit": true,
+      "clean_rank": 3.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        2534,
+        11245,
+        16979
+      ]
+    },
+    {
+      "item_id": "twohop:ex-element-state-26-80",
+      "task": "twohop",
+      "family": "ex",
+      "delta": -1.1046247482299805,
+      "is_tail": true,
+      "n_selected_pf": 93,
+      "bridge_hit": true,
+      "clean_rank": 3.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        2534,
+        11245,
+        16979
+      ]
+    },
+    {
+      "item_id": "twohop:ex-element-state-8-26",
+      "task": "twohop",
+      "family": "ex",
+      "delta": -0.43172770738601685,
+      "is_tail": false,
+      "n_selected_pf": 91,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        78,
+        19472,
+        24463,
+        87669
+      ]
+    },
+    {
+      "item_id": "twohop:ex-element-state-8-80",
+      "task": "twohop",
+      "family": "ex",
+      "delta": -0.43172770738601685,
+      "is_tail": false,
+      "n_selected_pf": 91,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        78,
+        19472,
+        24463,
+        87669
+      ]
+    },
+    {
+      "item_id": "twohop:ex-element-state-80-8",
+      "task": "twohop",
+      "family": "ex",
+      "delta": -4.494053840637207,
+      "is_tail": true,
+      "n_selected_pf": 99,
+      "bridge_hit": true,
+      "clean_rank": 3.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        1195,
+        26533,
+        44662,
+        51852
+      ]
+    },
+    {
+      "item_id": "twohop:ex-element-symbol-11-26",
+      "task": "twohop",
+      "family": "ex",
+      "delta": -1.9326050281524658,
+      "is_tail": true,
+      "n_selected_pf": 85,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        82,
+        39695,
+        47876,
+        83541
+      ]
+    },
+    {
+      "item_id": "twohop:ex-element-symbol-26-79",
+      "task": "twohop",
+      "family": "ex",
+      "delta": 0.14969642460346222,
+      "is_tail": false,
+      "n_selected_pf": 93,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        2534,
+        11245,
+        16979
+      ]
+    },
+    {
+      "item_id": "twohop:ex-planet-color-third-fourth",
+      "task": "twohop",
+      "family": "ex",
+      "delta": -0.6752283573150635,
+      "is_tail": false,
+      "n_selected_pf": 79,
+      "bridge_hit": true,
+      "clean_rank": 4.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        9420,
+        9578,
+        44924
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-city-capital-Munich",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": 0.021695673931390047,
+      "is_tail": false,
+      "n_selected_pf": 85,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        10057,
+        51270,
+        83924
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-city-capital-Osaka",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": 0.13319296389818192,
+      "is_tail": false,
+      "n_selected_pf": 93,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        6457,
+        49852,
+        55229
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-city-continent-Lima",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": -1.1155147552490234,
+      "is_tail": true,
+      "n_selected_pf": 64,
+      "bridge_hit": true,
+      "clean_rank": 62.0,
+      "protect_miss": true,
+      "_bridge_ids": [
+        84,
+        3976,
+        48847,
+        92959
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-city-continent-Sydney",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": -4.246811389923096,
+      "is_tail": true,
+      "n_selected_pf": 68,
+      "bridge_hit": true,
+      "clean_rank": 2.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        8494,
+        44332,
+        49137
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-city-language-Cairo",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": 0.12800387921743095,
+      "is_tail": false,
+      "n_selected_pf": 76,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        384,
+        13849,
+        15212,
+        86767
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-city-language-Moscow",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": 0.20586776733398438,
+      "is_tail": false,
+      "n_selected_pf": 89,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        436,
+        8524,
+        29578,
+        45606
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-language-capital-Greek",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": 0.39582459628582,
+      "is_tail": false,
+      "n_selected_pf": 89,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        38,
+        342,
+        25431,
+        90131
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-language-capital-Hungarian",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": 0.11763441190123558,
+      "is_tail": false,
+      "n_selected_pf": 95,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        661,
+        18799,
+        43876,
+        90475
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-language-capital-Polish",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": 0.4319860003888607,
+      "is_tail": false,
+      "n_selected_pf": 98,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        438,
+        1499,
+        15000,
+        28702
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-language-capital-Swedish",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": 0.05689726956188679,
+      "is_tail": false,
+      "n_selected_pf": 91,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        2064,
+        14466,
+        24067,
+        97971
+      ]
+    },
+    {
+      "item_id": "twohop:ex2-river-capital-Thames",
+      "task": "twohop",
+      "family": "ex2",
+      "delta": 0.19708558451384306,
+      "is_tail": false,
+      "n_selected_pf": 74,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        1974,
+        2995,
+        9635,
+        67308
+      ]
+    },
+    {
+      "item_id": "twohop:food-animal-butter",
+      "task": "twohop",
+      "family": "food",
+      "delta": 0.2773299366235733,
+      "is_tail": false,
+      "n_selected_pf": 64,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        65,
+        6339,
+        14432,
+        31457
+      ]
+    },
+    {
+      "item_id": "twohop:food-animal-honey",
+      "task": "twohop",
+      "family": "food",
+      "delta": -0.5173237323760986,
+      "is_tail": false,
+      "n_selected_pf": 63,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        71,
+        2596,
+        26828,
+        40715
+      ]
+    },
+    {
+      "item_id": "twohop:fruit-grows-grape",
+      "task": "twohop",
+      "family": "fruit",
+      "delta": -0.5993947982788086,
+      "is_tail": false,
+      "n_selected_pf": 66,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        911,
+        2070,
+        52252,
+        80629
+      ]
+    },
+    {
+      "item_id": "twohop:func-filters-count",
+      "task": "twohop",
+      "family": "func",
+      "delta": 0.1877075880765915,
+      "is_tail": false,
+      "n_selected_pf": 76,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        3520,
+        32666,
+        39042,
+        64381
+      ]
+    },
+    {
+      "item_id": "twohop:func-pumps-chambers",
+      "task": "twohop",
+      "family": "func",
+      "delta": 0.7385132908821106,
+      "is_tail": false,
+      "n_selected_pf": 93,
+      "bridge_hit": true,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        4851,
+        18207,
+        18449
+      ]
+    },
+    {
+      "item_id": "twohop:gem-color-ruby",
+      "task": "twohop",
+      "family": "gem",
+      "delta": 2.791630446910858,
+      "is_tail": false,
+      "n_selected_pf": 97,
+      "bridge_hit": true,
+      "clean_rank": 7.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        24658,
+        46307,
+        47375
+      ]
+    },
+    {
+      "item_id": "twohop:gem-source-pearl",
+      "task": "twohop",
+      "family": "gem",
+      "delta": -0.221771240234375,
+      "is_tail": false,
+      "n_selected_pf": 96,
+      "bridge_hit": true,
+      "clean_rank": 4.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        75,
+        8174,
+        37343,
+        70723
+      ]
+    },
+    {
+      "item_id": "twohop:greatwall-ocean",
+      "task": "twohop",
+      "family": "greatwall",
+      "delta": -3.03743314743042,
+      "is_tail": true,
+      "n_selected_pf": 72,
+      "bridge_hit": true,
+      "clean_rank": 11.0,
+      "protect_miss": true,
+      "_bridge_ids": [
+        5734,
+        23078,
+        33625
+      ]
+    },
+    {
+      "item_id": "twohop:holiday-month-christmas2",
+      "task": "twohop",
+      "family": "holiday",
+      "delta": 0.5058114528656006,
+      "is_tail": false,
+      "n_selected_pf": 69,
+      "bridge_hit": true,
+      "clean_rank": 5.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        10280,
+        54302,
+        59703
+      ]
+    },
+    {
+      "item_id": "twohop:instr-body-trumpet",
+      "task": "twohop",
+      "family": "instr",
+      "delta": -0.21577227115631104,
+      "is_tail": false,
+      "n_selected_pf": 82,
+      "bridge_hit": false,
+      "clean_rank": 1.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        295,
+        376,
+        1538,
+        3420,
+        92359
+      ]
+    },
+    {
+      "item_id": "twohop:instr-hit-drums",
+      "task": "twohop",
+      "family": "instr",
+      "delta": -0.2426910400390625,
+      "is_tail": false,
+      "n_selected_pf": 63,
+      "bridge_hit": true,
+      "clean_rank": 5.0,
+      "protect_miss": false,
+      "_bridge_ids": [
+        2999,
+        3696,
+        6370,
+        47389
+      ]
+    }
+  ],
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "r7-tail-mechanism-olmo3-think-v2",
+    "tier": "pilot",
+    "code_commit": "2e02f1a2e09afafecc7c8b26be9207a598aaa2e7",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.r7_tail_mechanism --model olmo3-think",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "selected": "d61824bfc3ffff3a16fd1267bf5d1ed7380ef8499366ecdcb21ab06795fe737f",
+      "items": "72ef212e3a87e1f02e12d0350cc85f62c2385ec2c17b6818a38c6c7929c67c96",
+      "per_item": "3ad43bec07f2a600b9e02a85e5be5bd84a0e96b50ce2c01aa225968b9ca68218"
+    },
+    "model": null,
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T15:51:12Z"
+  }
+}

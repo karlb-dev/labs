@@ -1,0 +1,263 @@
+{
+  "config": {
+    "evidence_id": "r7-protected-dynamic-pilot-think-v1",
+    "tier": "pilot",
+    "model_path": "/content/models/olmo3-think",
+    "lens_path": "/content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/lens/olmo32bthink_lens.pt",
+    "prose_corpus": "/content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/fitting_corpus.jsonl",
+    "out_dir": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/olmo3-think/r7_pilot",
+    "band": [
+      20,
+      22,
+      24,
+      26,
+      28,
+      30,
+      32,
+      34,
+      36,
+      38,
+      40,
+      42,
+      44
+    ],
+    "k": 10,
+    "protect_top_k": 10,
+    "rand_seed": 4242,
+    "n_twohop": 60
+  },
+  "summary": {
+    "dynJ_protected/twohop": {
+      "n": 60,
+      "mean_delta": -0.5179,
+      "median_delta": 0.0155
+    },
+    "dynJ_unprotected/twohop": {
+      "n": 60,
+      "mean_delta": -1.1309,
+      "median_delta": -0.5454
+    },
+    "dynR_protected/twohop": {
+      "n": 60,
+      "mean_delta": -0.1553,
+      "median_delta": -0.0077
+    },
+    "dynJ_protected/onehop": {
+      "n": 30,
+      "mean_delta": -0.5864,
+      "median_delta": 0.0065
+    },
+    "dynJ_unprotected/onehop": {
+      "n": 30,
+      "mean_delta": -1.707,
+      "median_delta": -1.5636
+    },
+    "dynR_protected/onehop": {
+      "n": 30,
+      "mean_delta": 0.0901,
+      "median_delta": 0.1366
+    },
+    "dynJ_protected/prose": {
+      "n": 20,
+      "mean_delta": 0.2358,
+      "median_delta": 0.2082
+    },
+    "dynJ_unprotected/prose": {
+      "n": 20,
+      "mean_delta": 0.2872,
+      "median_delta": 0.2663
+    },
+    "dynR_protected/prose": {
+      "n": 20,
+      "mean_delta": 0.1358,
+      "median_delta": 0.0746
+    }
+  },
+  "cells": {
+    "none/twohop": {
+      "seconds": 11,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": " Spanish.\nQuestion: The Amazon River ends in a country where what is spoken?\nOptions:\n- (A) Spanish\n- (B) French\n- ("
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " shell.\nQuestion: The hard covering on the back of the slow reptile that can pull its head inside its body is called a what?\nAnswer: shell\n\n"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " double the number of legs of the largest bird that could be found in the same region.\nQuestion: How many legs did the large horned animal that roamed"
+        }
+      ],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "none/onehop": {
+      "seconds": 2,
+      "audit": [],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "none/prose": {
+      "seconds": 2,
+      "audit": [],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "dynJ_protected/twohop": {
+      "seconds": 33,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": "1 of over 200 languages in that country.\nQuestion: Is the following statement true?\n\"The Amazon rainforest spans across Brazil, Peru, Colombia, and other"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " shell.\nQuestion: The hard covering on the back of the slow reptile that can pull its head inside its body is called a what?\nAnswer: shell\n\n"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " four.\nQuestion: The large horned animal that roamed the American plains in huge herds had how many legs?\nOptions:\n- (A) four\n"
+        }
+      ],
+      "hook_log": {
+        "steps": 2264,
+        "blocked": 66721,
+        "mean_removed_energy": 0.00122
+      }
+    },
+    "dynJ_protected/onehop": {
+      "seconds": 7,
+      "audit": [],
+      "hook_log": {
+        "steps": 493,
+        "blocked": 16952,
+        "mean_removed_energy": 0.00167
+      }
+    },
+    "dynJ_protected/prose": {
+      "seconds": 16,
+      "audit": [],
+      "hook_log": {
+        "steps": 222,
+        "blocked": 145747,
+        "mean_removed_energy": 0.00122
+      }
+    },
+    "dynJ_unprotected/twohop": {
+      "seconds": 32,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": "1 of over 200 languages in that country.\nQuestion: The Amazon River ends at a body of water. What body of water does it end at?\nAnswer"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " carapace.\nQuestion: The hard covering on the back of the slow reptile that can pull its head inside its body is called a what?\nAnswer:"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " one more than the number of legs on the small horned animal that is known for its speed and agility. \n\nQuestion: How many legs does the large horn"
+        }
+      ],
+      "hook_log": {
+        "steps": 2267,
+        "blocked": 0,
+        "mean_removed_energy": 0.00128
+      }
+    },
+    "dynJ_unprotected/onehop": {
+      "seconds": 7,
+      "audit": [],
+      "hook_log": {
+        "steps": 492,
+        "blocked": 0,
+        "mean_removed_energy": 0.00177
+      }
+    },
+    "dynJ_unprotected/prose": {
+      "seconds": 16,
+      "audit": [],
+      "hook_log": {
+        "steps": 219,
+        "blocked": 0,
+        "mean_removed_energy": 0.0013
+      }
+    },
+    "dynR_protected/twohop": {
+      "seconds": 34,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": "1 of the official languages of Brazil.\nQuestion: The Amazon River ends in a country whose official language is what?\nWhat's the answer? Let's think carefully"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " carapace.\nQuestion: The hard covering on the back of the slow reptile that can pull its head inside its body is called a what?\nAnswer:"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " an even number.  \nValue: The number of legs on this animal is two more than an odd number.  \nQuestion: How many legs does this animal have"
+        }
+      ],
+      "hook_log": {
+        "steps": 2353,
+        "blocked": 109617,
+        "mean_removed_energy": 0.02633
+      }
+    },
+    "dynR_protected/onehop": {
+      "seconds": 7,
+      "audit": [],
+      "hook_log": {
+        "steps": 533,
+        "blocked": 22435,
+        "mean_removed_energy": 0.02597
+      }
+    },
+    "dynR_protected/prose": {
+      "seconds": 25,
+      "audit": [],
+      "hook_log": {
+        "steps": 260,
+        "blocked": 245896,
+        "mean_removed_energy": 0.02631
+      }
+    }
+  },
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "r7-protected-dynamic-pilot-think-v1",
+    "tier": "pilot",
+    "code_commit": "eeed9adf300e4428eafb52a2435441a5a3726acd",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.r7_protected_pilot --config configs/r7_protected_pilot.yaml",
+    "config_path": "configs/r7_protected_pilot.yaml",
+    "config_sha256": "b61c99f8333186459c298dd7e94e6ffe9d69d7999f1c26aba1ecc28c50c6b04e",
+    "inputs": {
+      "lens": "05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053",
+      "probe_swap": "a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796"
+    },
+    "model": {
+      "id": "/content/models/olmo3-think",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95"
+    },
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T00:17:03Z"
+  }
+}

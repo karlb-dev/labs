@@ -1,0 +1,16 @@
+evidence_id: p4-lens-frame-analysis-olmo31-instruct-dev-v1
+tier: phase4-development
+slug: olmo31-instruct-lens-frame
+display_name: OLMo-3.1 32B Instruct
+own_grid_evidence_id: p4-lineage-grid-olmo31-instruct-dev-v1
+own_grid_parquet_uri: artifact://phase4/metrics/olmo31-instruct/lineage_grid/p4-lineage-grid-olmo31-instruct-dev-v1/lineage_grid_olmo31-instruct.parquet
+own_grid_result_uri: artifact://phase4/metrics/olmo31-instruct/lineage_grid/p4-lineage-grid-olmo31-instruct-dev-v1/lineage_grid_olmo31-instruct.json
+own_grid_manifest_uri: artifact://phase4/metrics/olmo31-instruct/lineage_grid/p4-lineage-grid-olmo31-instruct-dev-v1/input_manifest.json
+common_grid_evidence_id: p4-lineage-grid-olmo31-instruct-common-base-lens-dev-v1
+common_grid_parquet_uri: artifact://phase4/metrics/olmo31-instruct-common-base-lens/lineage_grid/p4-lineage-grid-olmo31-instruct-common-base-lens-dev-v1/lineage_grid_olmo31-instruct-common-base-lens.parquet
+common_grid_result_uri: artifact://phase4/metrics/olmo31-instruct-common-base-lens/lineage_grid/p4-lineage-grid-olmo31-instruct-common-base-lens-dev-v1/lineage_grid_olmo31-instruct-common-base-lens.json
+common_grid_manifest_uri: artifact://phase4/metrics/olmo31-instruct-common-base-lens/lineage_grid/p4-lineage-grid-olmo31-instruct-common-base-lens-dev-v1/input_manifest.json
+bootstrap_draws: 100000
+bootstrap_seed: 31337
+baseline_tolerance: 0.000001
+figure_stem: p4f07_olmo31_instruct_lens_frame_comparison

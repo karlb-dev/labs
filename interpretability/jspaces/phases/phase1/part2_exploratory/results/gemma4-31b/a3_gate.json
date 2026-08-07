@@ -1,0 +1,76 @@
+{
+  "verdict": "GEMMA_BLOCKED_micro-lens readout sane (jlens rank<=100 mid-band on 2-prompt fit)",
+  "checks": [
+    {
+      "check": "from_hf wraps Gemma4ForConditionalGeneration",
+      "pass": true,
+      "detail": "n_layers=60 d_model=5376"
+    },
+    {
+      "check": "softcap detected by jlens",
+      "pass": true,
+      "detail": "cap=30.0"
+    },
+    {
+      "check": "hooks fire on sliding AND full attention layers",
+      "pass": true,
+      "detail": "{28: (1, 8, 5376), 29: (1, 8, 5376)}"
+    },
+    {
+      "check": "micro-fit completes",
+      "pass": true,
+      "detail": "peak VRAM 72.7GB"
+    },
+    {
+      "check": "jacobians finite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "check": "model knows the probe (final rank<=3)",
+      "pass": true,
+      "detail": "1"
+    },
+    {
+      "check": "micro-lens readout sane (jlens rank<=100 mid-band on 2-prompt fit)",
+      "pass": false,
+      "detail": "{'jlens': 52514, 'logit': 69063}"
+    }
+  ],
+  "config_findings": {
+    "softcapping": 30.0,
+    "wrapper": "Gemma4ForConditionalGeneration (language_model layout)",
+    "tied_embeddings": true,
+    "vocab": 262144,
+    "d_model": 5376,
+    "n_layers": 60,
+    "attention": "5:1 sliding(1024)/full"
+  },
+  "caveats": [
+    "Jacobian fits target CAPPED logits (reference-faithful; pre-cap variant = recorded follow-up)",
+    "dictionary memory: 262k x 5376 fp16 = 2.8GB/layer -> band grids need chunked build + layer batching"
+  ],
+  "seconds": 235,
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "a3-gemma-gate-v1",
+    "tier": "pilot",
+    "code_commit": "78398b234746e173cf3b35a4eb0e6c33246f8320",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.a3_gemma_gate",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {},
+    "model": {
+      "id": "/content/hf_local/models--google--gemma-4-31B-it/snapshots/842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "jlens_commit": null,
+    "seed": null,
+    "created_utc": "2026-07-28T09:01:53Z"
+  }
+}

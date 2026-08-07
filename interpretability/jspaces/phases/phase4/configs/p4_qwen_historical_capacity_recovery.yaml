@@ -1,0 +1,69 @@
+evidence_id: p4-qwen-a120-capacity-exact-byte-recovery-v1
+recovery_id: p4-qwen-a120-capacity-exact-byte-recovery-v1
+scope: engineering-durability-recovery
+
+source_event:
+  evidence_id: p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1
+  code_commit: 30b121dfd14ef58fa1ba8c2fe44e1f33d7086572
+  config: interpretability/jspace_phase4/configs/p4_qwen_multilens_functional_gate_dev.yaml
+  config_sha256: 8b245d887cf9e76c4f4ea04c79cfbc382b9a023a52b49db09566d003b5614e7b
+  input_manifest: /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-multilens-functional-gate/functional_gate/p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1/input_manifest.json
+  input_manifest_sha256: e33799ebfb5e5440db0668ca4c865c9c5d371ddab8a8a54ac0b9b04e1e20c4a2
+
+fixed_capacity_input:
+  path: /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-multilens-functional-gate/functional_gate/p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1/fixed_capacity_activations.pt
+  sha256: fbb84c37ad09b412f350d15c39b1c1e2d7e02e465b6896ba1a9fb85699c4ade9
+
+lens:
+  name: a120
+  evidence_id: p4-qwen-lens-fit-drawA-n120-dev-v1
+  uri: artifact://phase4/lens/qwen36-27b/nested_fit/draw_a/qwen36-27b_jlens_drawA_n0120.pt
+  sha256: 82af4cc7f637af33e166606b15993bd6c67d2ea764c9788b96aa5a2120c32b1b
+  n_prompts: 120
+
+target:
+  path: /content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-multilens-functional-gate/functional_gate/p4-qwen-multilens-functional-gate-a120-a250-published-dev-v1/capacity_reconstructions_a120.pt
+  expected_sha256: 6b0399df2c57158e7fdad24274e50f8c1058021d233412afdcc5177f6c651b6f
+  replace_only_on_exact_hash_match: true
+  never_register_a_partial_or_near_match: true
+
+model:
+  uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+  snapshot_manifest: interpretability/jspace_phase4/configs/qwen36-27b_snapshot_manifest.json
+  snapshot_manifest_sha256: 2ae12ad8e69b6ede7f4e8b3a2df619b48c1d4b2bc9faf06ca93068c1af32a818
+  index_sha256: a8ad2c26fb707ff8c245806315b03e3b4b74595528492423af5dae0ce39b4d9b
+  lm_head_tensor: lm_head.weight
+  lm_head_shard: model-00008-of-00015.safetensors
+  lm_head_shard_sha256: 584a0ed8018d3b19ce8e533d08a460454650027901be6323b50b591da143dca6
+  final_norm_tensor: model.language_model.norm.weight
+  final_norm_shard: model-00015-of-00015.safetensors
+  final_norm_shard_sha256: b84b5b1315e865c9a19a444045d422a73e3e2e31ce3766797cffd3507c68c9c9
+
+algorithm_contract:
+  exact_files:
+    interpretability/jspace_part2/jspace_part2/dictionaries.py: 2c9a8ff51eb653a5c67b63b621d6dae8a645e2532011be4d573592a73af33aa0
+    interpretability/jspace_part2/jspace_part2/occupancy.py: 918b68991b7fdd5f56d101c2717338c2355d9d94f8d59c912724aa895e053eed
+    interpretability/jspace_part2/jspace_part2/occupancy_v2.py: cc46e7a1dec05b929138b7a962802e8c526980f067f8914bb3db7add4057145c
+  functional_module: interpretability/jspace_phase4/jspace_phase4/experiments/p4_qwen_multilens_functional_gate.py
+  function_ast_sha256:
+    _centered_r2_numpy: 1311553cfa2a76fb83b7f694058900e1a275d5329fa6eb0ab96d6f900b976128
+    _capacity_bootstrap: cd08224175f8fed2b6595d0a761e54a4d532612197862e33f5e41bc42503bcbe
+    _capacity_layer: 3f643a7c009a2ae52b828ffffb8d90ceedcd53d3c4c4571770977a6bb0cad398
+  capacity_payload_key_order: [schema_version, lens, layers]
+  layer_order: [24, 32, 40]
+
+runtime:
+  torch: 2.11.0+cu128
+  transformers: 5.13.1
+  expected_gpu_name: NVIDIA RTX PRO 6000 Blackwell Server Edition
+  expected_cuda_capability: [12, 0]
+  minimum_free_gpu_bytes: 75000000000
+  dictionary_dtype: float16
+  require_clean_tree: true
+
+claim_boundary: >-
+  This utility restores one absent byte string only. A candidate is moved into
+  the registered path iff its SHA-256 exactly equals the immutable historical
+  output pin. A mismatch is quarantined locally and cannot become evidence.
+  The tool does not reconstruct state.json, change registry history, rerun an
+  outcome, or create a new scientific result.

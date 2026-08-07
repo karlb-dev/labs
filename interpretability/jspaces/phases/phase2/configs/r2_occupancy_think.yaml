@@ -1,0 +1,10 @@
+evidence_id: r2-occupancy-think-v1
+tier: pilot
+model_path: /content/models/olmo3-think
+lens_path: /content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/lens/olmo32bthink_lens.pt
+prompt_set: /content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/descriptive_prompts.jsonl
+out_dir: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/olmo3-think/r2_occupancy
+layers: [24, 32, 40]
+k_max: 50
+n_prompts: 60
+rand_seeds: [11, 12, 13]

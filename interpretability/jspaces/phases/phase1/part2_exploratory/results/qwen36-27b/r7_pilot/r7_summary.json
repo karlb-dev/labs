@@ -1,0 +1,263 @@
+{
+  "config": {
+    "evidence_id": "r7-protected-dynamic-pilot-qwen-v1",
+    "tier": "pilot",
+    "model_path": "/content/hf_local/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+    "lens_path": "/content/hf_local/models--neuronpedia--jacobian-lens/snapshots/a4114d7752d11eb546e6cf372213d7e75526d3a1/qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt",
+    "prose_corpus": "/content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/fitting_corpus.jsonl",
+    "out_dir": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/qwen36-27b/r7_pilot",
+    "band": [
+      20,
+      22,
+      24,
+      26,
+      28,
+      30,
+      32,
+      34,
+      36,
+      38,
+      40,
+      42,
+      44
+    ],
+    "k": 10,
+    "protect_top_k": 10,
+    "rand_seed": 4242,
+    "n_twohop": 60
+  },
+  "summary": {
+    "dynJ_protected/twohop": {
+      "n": 60,
+      "mean_delta": -0.9049,
+      "median_delta": -0.4035
+    },
+    "dynJ_unprotected/twohop": {
+      "n": 60,
+      "mean_delta": -1.2416,
+      "median_delta": -0.7962
+    },
+    "dynR_protected/twohop": {
+      "n": 60,
+      "mean_delta": -0.2288,
+      "median_delta": -0.2095
+    },
+    "dynJ_protected/onehop": {
+      "n": 30,
+      "mean_delta": -0.057,
+      "median_delta": 0.0327
+    },
+    "dynJ_unprotected/onehop": {
+      "n": 30,
+      "mean_delta": -0.048,
+      "median_delta": -0.0026
+    },
+    "dynR_protected/onehop": {
+      "n": 30,
+      "mean_delta": 0.0194,
+      "median_delta": 0.005
+    },
+    "dynJ_protected/prose": {
+      "n": 20,
+      "mean_delta": 0.3459,
+      "median_delta": 0.367
+    },
+    "dynJ_unprotected/prose": {
+      "n": 20,
+      "mean_delta": 0.3539,
+      "median_delta": 0.3793
+    },
+    "dynR_protected/prose": {
+      "n": 20,
+      "mean_delta": 0.1138,
+      "median_delta": 0.1143
+    }
+  },
+  "cells": {
+    "none/twohop": {
+      "seconds": 18,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": " Portuguese.\nQuestion: What language is spoken in the country where the Amazon River ends?\nAnswer:\n\n<think>\n\n</think>\n\nPortuguese"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " shell.\nQuestion: Which of the following has a shell?\n\nWhat's the answer?\n\n<think>\nHere's a thinking process:\n\n1. "
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " 4.\nQuestion: The number of legs on the large horned animal that roamed the American plains in huge herds is 4.\nAnswer"
+        }
+      ],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "none/onehop": {
+      "seconds": 6,
+      "audit": [],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "none/prose": {
+      "seconds": 5,
+      "audit": [],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "dynJ_protected/twohop": {
+      "seconds": 50,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": "\tQuestion: The language spoken in the country where the Amazon River ends is\nSubtask: The language spoken in the country where the Amazon River ends is\n"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " carapace.\nQuestion: Is the following statement correct?\nThe hard covering on the back of the slow reptile that can pull its head inside its"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " 4.\nClaim: The American bison has four legs.\nDoes the fact support the claim?\n\n<think>\nHere's a thinking process:\n\n"
+        }
+      ],
+      "hook_log": {
+        "steps": 2353,
+        "blocked": 129756,
+        "mean_removed_energy": 0.0045
+      }
+    },
+    "dynJ_protected/onehop": {
+      "seconds": 15,
+      "audit": [],
+      "hook_log": {
+        "steps": 533,
+        "blocked": 26017,
+        "mean_removed_energy": 0.00392
+      }
+    },
+    "dynJ_protected/prose": {
+      "seconds": 31,
+      "audit": [],
+      "hook_log": {
+        "steps": 260,
+        "blocked": 311848,
+        "mean_removed_energy": 0.00493
+      }
+    },
+    "dynJ_unprotected/twohop": {
+      "seconds": 50,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": "\tQuestion: The language spoken in the country where the Amazon River ends is\nOptions:\n- Portuguese\n- Spanish\n- French\n- Italian\nAnswer"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " carapace.\nQuestion: The hard covering on the back of the slow reptile that can pull its head inside its body is called a carapace"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " 4.\nClaim: The American bison has four legs.\nDoes the fact support the claim?\n\n<think>\n\n</think>\n\nThe \"large horned"
+        }
+      ],
+      "hook_log": {
+        "steps": 2353,
+        "blocked": 0,
+        "mean_removed_energy": 0.0046
+      }
+    },
+    "dynJ_unprotected/onehop": {
+      "seconds": 15,
+      "audit": [],
+      "hook_log": {
+        "steps": 533,
+        "blocked": 0,
+        "mean_removed_energy": 0.00392
+      }
+    },
+    "dynJ_unprotected/prose": {
+      "seconds": 31,
+      "audit": [],
+      "hook_log": {
+        "steps": 260,
+        "blocked": 0,
+        "mean_removed_energy": 0.00493
+      }
+    },
+    "dynR_protected/twohop": {
+      "seconds": 50,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": " Portuguese.\nQuestion: What is the language spoken in the country where the Amazon River ends?\n\n<think>\n\n</think>\n\nThe language spoken in the country where the"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " shell.\n\n<think>\n\n</think>\n\nBased on the fact provided, the hard covering on the back of the slow reptile that can pull its head inside its body"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " 4.\nQuestion: What is the name of the large horned animal that roamed the American plains in huge herds?\n\n<think>\nHere's"
+        }
+      ],
+      "hook_log": {
+        "steps": 2353,
+        "blocked": 101600,
+        "mean_removed_energy": 0.02897
+      }
+    },
+    "dynR_protected/onehop": {
+      "seconds": 15,
+      "audit": [],
+      "hook_log": {
+        "steps": 533,
+        "blocked": 19665,
+        "mean_removed_energy": 0.02776
+      }
+    },
+    "dynR_protected/prose": {
+      "seconds": 31,
+      "audit": [],
+      "hook_log": {
+        "steps": 260,
+        "blocked": 257128,
+        "mean_removed_energy": 0.02918
+      }
+    }
+  },
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "r7-protected-dynamic-pilot-qwen-v1",
+    "tier": "pilot",
+    "code_commit": "53cf3874417c09fb11121c66fca6ae424dccf058",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.r7_protected_pilot --config configs/r7_protected_pilot_qwen.yaml",
+    "config_path": "configs/r7_protected_pilot_qwen.yaml",
+    "config_sha256": "e57688961822e2b4b2c4775dc47b32c79dad0693c274f7ae3e1a82c601d01e49",
+    "inputs": {
+      "lens": "1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1",
+      "probe_swap": "a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796"
+    },
+    "model": {
+      "id": "/content/hf_local/models--Qwen--Qwen3.6-27B/snapshots/6a9e13bd6fc8f0983b9b99948120bc37f49c13e9",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "69db4eb7196bc8190813231b3018ca05d8c2e3abc7b1af19d55c157af44a9d9c"
+    },
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T06:00:36Z"
+  }
+}

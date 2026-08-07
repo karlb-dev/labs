@@ -1,0 +1,225 @@
+import json
+from pathlib import Path
+
+from jspace_phase4.durability import (
+    compare_durability_passes,
+    load_known_deficits,
+    verify_registry_durability,
+)
+from jspace_phase4.manifests import file_sha256
+from jspace_phase4.paths4 import _rewrite_repo_relative
+from jspace_phase4.registry4 import append_event
+
+
+def _create(events: Path, evidence_id: str, output: Path, digest: str):
+    append_event({
+        "event": "evidence_created",
+        "evidence_id": evidence_id,
+        "tier": "phase4-development",
+        "what": "test output",
+        "command": "test",
+        "code_commit": "a" * 40,
+        "outputs": [{"path": str(output), "sha256": digest}],
+    }, path=events)
+
+
+def test_whole_registry_snapshot_distinguishes_known_missing(tmp_path):
+    events = tmp_path / "events.jsonl"
+    good = tmp_path / "good.bin"
+    good.write_bytes(b"good")
+    missing = tmp_path / "missing.bin"
+    _create(events, "good-v1", good, file_sha256(good))
+    _create(events, "missing-v1", missing, "b" * 64)
+    deficits = [{
+        "evidence_id": "missing-v1",
+        "path_suffix": "missing.bin",
+        "expected_sha256": "b" * 64,
+    }]
+    result = verify_registry_durability(
+        events_path=events, known_deficits=deficits, pass_label="first")
+    assert result["n_live_events"] == 2
+    assert result["n_output_references"] == 2
+    assert result["n_verified"] == 1
+    assert result["n_known_deficits"] == 1
+    assert result["n_unexpected_failures"] == 0
+    assert result["only_known_deficits"] is True
+    assert result["ok"] is False
+
+
+def test_snapshot_ignores_nonlive_origin_and_checks_import_outputs(tmp_path):
+    events = tmp_path / "events.jsonl"
+    old = tmp_path / "old.bin"
+    replacement = tmp_path / "replacement.bin"
+    imported = tmp_path / "imported.bin"
+    replacement.write_bytes(b"replacement")
+    imported.write_bytes(b"imported")
+    _create(events, "old-v1", old, "c" * 64)
+    _create(events, "replacement-v1", replacement, file_sha256(replacement))
+    append_event({
+        "event": "evidence_superseded",
+        "evidence_id": "old-v1",
+        "superseded_by": "replacement-v1",
+        "reason": "test replacement",
+    }, path=events)
+    source_registry = tmp_path / "source.jsonl"
+    source_registry.write_text("{}\n")
+    append_event({
+        "event": "evidence_imported",
+        "evidence_id": "import-v1",
+        "tier": "phase3-confirmatory-import",
+        "what": "test import",
+        "source_study": "source",
+        "source_evidence_id": "source-v1",
+        "source_commit": "d" * 40,
+        "source_registry_sha256": file_sha256(source_registry),
+        "source_outputs": [{
+            "path": str(imported), "sha256": file_sha256(imported)}],
+    }, path=events)
+    result = verify_registry_durability(
+        events_path=events, pass_label="import")
+    assert result["ok"] is True
+    assert result["n_origin_events"] == 3
+    assert result["n_live_events"] == 2
+    assert {row["evidence_id"] for row in result["references"]} == {
+        "replacement-v1", "import-v1"}
+
+
+def test_snapshot_detects_hash_drift_and_conflicting_live_pins(tmp_path):
+    events = tmp_path / "events.jsonl"
+    shared = tmp_path / "shared.bin"
+    shared.write_bytes(b"one")
+    _create(events, "one-v1", shared, file_sha256(shared))
+    _create(events, "two-v1", shared, "e" * 64)
+    result = verify_registry_durability(
+        events_path=events, pass_label="conflict")
+    assert result["ok"] is False
+    assert result["n_unexpected_failures"] == 1
+    assert len(result["path_pin_conflicts"]) == 1
+
+
+def test_two_pass_comparison_requires_same_registry_and_rows(tmp_path):
+    events = tmp_path / "events.jsonl"
+    output = tmp_path / "value.bin"
+    output.write_bytes(b"stable")
+    _create(events, "stable-v1", output, file_sha256(output))
+    first = verify_registry_durability(
+        events_path=events, pass_label="first")
+    second = verify_registry_durability(
+        events_path=events, pass_label="second")
+    comparison = compare_durability_passes(first, second)
+    assert comparison["consistent"] is True
+    assert comparison["clean_both"] is True
+    second["references"][0]["actual_bytes"] += 1
+    comparison = compare_durability_passes(first, second)
+    assert comparison["consistent"] is False
+    assert comparison["drifts"]
+
+
+def test_known_deficit_manifest_rejects_duplicates(tmp_path):
+    path = tmp_path / "deficits.json"
+    row = {
+        "evidence_id": "x", "path_suffix": "x.bin",
+        "expected_sha256": "f" * 64,
+    }
+    path.write_text(json.dumps({
+        "schema_version": 1, "deficits": [row, row]}))
+    try:
+        load_known_deficits(path)
+    except RuntimeError as error:
+        assert "duplicate" in str(error)
+    else:
+        raise AssertionError("duplicate known deficit was accepted")
+
+
+def test_live_known_deficits_bind_recovery_and_search_records():
+    root = Path(__file__).resolve().parents[1]
+    manifest = json.loads(
+        (root / "protocol/KNOWN_DURABILITY_DEFICITS_PHASE4.json").read_text())
+    by_name = {
+        Path(row["path_suffix"]).name: row for row in manifest["deficits"]}
+    state = by_name["state.json"]
+    capacity = by_name["capacity_reconstructions_a120.pt"]
+    assert state["status"] == (
+        "exact-bytes-not-found-current-vm-external-resolution-required")
+    assert capacity["status"] == "exact-bytes-restored-and-verified"
+    for key, row in (("search_record", state),
+                     ("recovery_config", capacity),
+                     ("recovery_record", capacity)):
+        uri = row[key]
+        assert uri.startswith("repo://")
+        rewritten = _rewrite_repo_relative(uri.removeprefix("repo://"))
+        assert rewritten.startswith("interpretability/jspaces/phases/phase4/")
+        relative = rewritten.removeprefix(
+            "interpretability/jspaces/phases/phase4/")
+        assert (root / relative).is_file()
+
+
+def test_worktree_absolute_path_resolves_to_identical_tracked_file(tmp_path):
+    # A reference registered under another VM's worktree resolves only to a
+    # repository file with the exact pinned bytes.
+    repo = tmp_path / "repo"
+    tracked = repo / "interpretability/pkg/reports/result.json"
+    tracked.parent.mkdir(parents=True)
+    tracked.write_text('{"result": 1}\n')
+    registered = "/gone-vm/interpretability/pkg/reports/result.json"
+    events = tmp_path / "events.jsonl"
+    _create(events, "worktree-v1", Path(registered), file_sha256(tracked))
+    result = verify_registry_durability(
+        events_path=events, pass_label="worktree", repo_root=repo)
+    assert result["ok"] is True
+    assert result["n_verified_by_resolution"] == {
+        "repository-materialization": 1}
+    row = result["references"][0]
+    assert row["resolution"] == "repository-materialization"
+    assert row["resolved_path"] == str(tracked)
+
+    tracked.write_text('{"result": "tampered"}\n')
+    tampered = verify_registry_durability(
+        events_path=events, pass_label="worktree-tampered", repo_root=repo)
+    assert tampered["ok"] is False
+    assert tampered["references"][0]["status"] == "missing"
+
+
+def test_append_only_registry_reference_resolves_to_exact_prefix(tmp_path):
+    repo = tmp_path / "repo"
+    registry = repo / "interpretability/pkg/reports/evidence_events.jsonl"
+    registry.parent.mkdir(parents=True)
+    historical = b'{"event":"evidence_created","evidence_id":"x-v1"}\n'
+    registry.write_bytes(historical)
+    pinned = file_sha256(registry)
+    with registry.open("ab") as handle:
+        handle.write(b'{"event":"evidence_created","evidence_id":"x-v2"}\n')
+
+    events = tmp_path / "events.jsonl"
+    source_registry = tmp_path / "source.jsonl"
+    source_registry.write_text("{}\n")
+    append_event({
+        "event": "evidence_imported",
+        "evidence_id": "import-prefix-v1",
+        "tier": "side-development-import",
+        "what": "test import",
+        "source_study": "side",
+        "source_evidence_id": "side-v1",
+        "source_commit": "d" * 40,
+        "import_code_commit": "e" * 40,
+        "source_registry_sha256": file_sha256(source_registry),
+        "source_outputs": [{
+            "path": str(registry), "sha256": pinned}],
+    }, path=events)
+
+    result = verify_registry_durability(
+        events_path=events, pass_label="prefix", repo_root=repo,
+        git_show=lambda commit, relative: historical)
+    assert result["ok"] is True
+    assert result["n_verified_by_resolution"] == {
+        "append-only-registry-prefix": 1}
+    assert result["references"][0]["resolution"] == (
+        "append-only-registry-prefix@" + "e" * 40)
+
+    # A mutated (non-prefix) live registry must stay a hash mismatch.
+    registry.write_bytes(b'{"mutated": true}\n' + historical)
+    mutated = verify_registry_durability(
+        events_path=events, pass_label="prefix-mutated", repo_root=repo,
+        git_show=lambda commit, relative: historical)
+    assert mutated["ok"] is False
+    assert mutated["references"][0]["status"] == "hash_mismatch"

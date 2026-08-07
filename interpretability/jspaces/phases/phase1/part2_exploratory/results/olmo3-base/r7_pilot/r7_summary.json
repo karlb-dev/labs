@@ -1,0 +1,263 @@
+{
+  "config": {
+    "evidence_id": "r7-protected-dynamic-pilot-olmo3base-v1",
+    "tier": "pilot",
+    "model_path": "/content/hf_local/models--allenai--Olmo-3-1125-32B/snapshots/c2b61dae89a1ad10e4ad5653d0e46b590902607b",
+    "lens_path": "/content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/lens/olmo32bthink_lens.pt",
+    "prose_corpus": "/content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/fitting_corpus.jsonl",
+    "out_dir": "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/olmo3-base/r7_pilot",
+    "band": [
+      20,
+      22,
+      24,
+      26,
+      28,
+      30,
+      32,
+      34,
+      36,
+      38,
+      40,
+      42,
+      44
+    ],
+    "k": 10,
+    "protect_top_k": 10,
+    "rand_seed": 4242,
+    "n_twohop": 60
+  },
+  "summary": {
+    "dynJ_protected/twohop": {
+      "n": 60,
+      "mean_delta": -0.1427,
+      "median_delta": 0.1325
+    },
+    "dynJ_unprotected/twohop": {
+      "n": 60,
+      "mean_delta": -0.7586,
+      "median_delta": -0.3331
+    },
+    "dynR_protected/twohop": {
+      "n": 60,
+      "mean_delta": -0.0232,
+      "median_delta": 0.0314
+    },
+    "dynJ_protected/onehop": {
+      "n": 30,
+      "mean_delta": -0.8101,
+      "median_delta": -0.3169
+    },
+    "dynJ_unprotected/onehop": {
+      "n": 30,
+      "mean_delta": -1.6301,
+      "median_delta": -1.2504
+    },
+    "dynR_protected/onehop": {
+      "n": 30,
+      "mean_delta": 0.3414,
+      "median_delta": 0.2661
+    },
+    "dynJ_protected/prose": {
+      "n": 20,
+      "mean_delta": 0.1012,
+      "median_delta": 0.1073
+    },
+    "dynJ_unprotected/prose": {
+      "n": 20,
+      "mean_delta": 0.1598,
+      "median_delta": 0.1532
+    },
+    "dynR_protected/prose": {
+      "n": 20,
+      "mean_delta": 0.1375,
+      "median_delta": 0.0818
+    }
+  },
+  "cells": {
+    "none/twohop": {
+      "seconds": 11,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": " Portuguese. The Amazon River ends in Brazil. Brazil is a country in South America. The language spoken in Brazil is Portuguese.\nQuestion: The language spoken in the"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " carapace.\nQuestion: What is the hard covering on the back of a turtle called?\n\nWhat's the answer? Choose from:\n (a). a shell"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " the same as the number of legs on the small horned animal that roamed the American plains in huge herds.\nQuestion: How many legs does a buffalo"
+        }
+      ],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "none/onehop": {
+      "seconds": 2,
+      "audit": [],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "none/prose": {
+      "seconds": 2,
+      "audit": [],
+      "hook_log": {
+        "steps": 0,
+        "blocked": 0,
+        "mean_removed_energy": null
+      }
+    },
+    "dynJ_protected/twohop": {
+      "seconds": 33,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": " Portuguese.\nQuestion: The language spoken in the country where the Amazon River ends is what?\n\nWhat's the answer?\n\n\n(1). Portuguese;\n(2). Spanish"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " carapace.\nQuestion: What is the hard covering on the back of a tortoise called?\n\nWhat's the answer? carapace"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " the same as the number of legs on the small horned animal that roamed the American plains in huge herds. The only difference is that one is much"
+        }
+      ],
+      "hook_log": {
+        "steps": 2299,
+        "blocked": 86450,
+        "mean_removed_energy": 0.00172
+      }
+    },
+    "dynJ_protected/onehop": {
+      "seconds": 7,
+      "audit": [],
+      "hook_log": {
+        "steps": 533,
+        "blocked": 19556,
+        "mean_removed_energy": 0.00216
+      }
+    },
+    "dynJ_protected/prose": {
+      "seconds": 18,
+      "audit": [],
+      "hook_log": {
+        "steps": 234,
+        "blocked": 172906,
+        "mean_removed_energy": 0.00149
+      }
+    },
+    "dynJ_unprotected/twohop": {
+      "seconds": 33,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": " A. portugese  B. spanish  C. dutch  D. english  E. swahili  The best answer is\nA:\n\n"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " carapace.\nQuestion: What is the hard covering on the back of a slow reptile that can pull its head inside its body called?\n\nWhat's the"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " the same as the number of legs on the small horned animal that roamed the American plains in huge herds. The large horned animal is the pr"
+        }
+      ],
+      "hook_log": {
+        "steps": 2352,
+        "blocked": 0,
+        "mean_removed_energy": 0.00176
+      }
+    },
+    "dynJ_unprotected/onehop": {
+      "seconds": 7,
+      "audit": [],
+      "hook_log": {
+        "steps": 523,
+        "blocked": 0,
+        "mean_removed_energy": 0.00231
+      }
+    },
+    "dynJ_unprotected/prose": {
+      "seconds": 19,
+      "audit": [],
+      "hook_log": {
+        "steps": 240,
+        "blocked": 0,
+        "mean_removed_energy": 0.00153
+      }
+    },
+    "dynR_protected/twohop": {
+      "seconds": 33,
+      "audit": [
+        {
+          "prompt": "Fact: The language spoken in the country where the Amazon Ri",
+          "gen": "100% Portuguese. The Amazon River ends in the Atlantic Ocean, and the country where it ends is Brazil. Brazil is the only country in South America where Portuguese"
+        },
+        {
+          "prompt": "Fact: The hard covering on the back of the slow reptile that",
+          "gen": " shell.\nQuestion: What is the hard covering on the back of a turtle called?\n\nWhat is the fact?\n\nOkay, let's see. The user provided a"
+        },
+        {
+          "prompt": "Fact: The number of legs on the large horned animal that roa",
+          "gen": " the same as that of all mammals. A horse has four legs, a human has two legs, and a kangaroo has two legs. True or false?\n\n"
+        }
+      ],
+      "hook_log": {
+        "steps": 2353,
+        "blocked": 112708,
+        "mean_removed_energy": 0.02595
+      }
+    },
+    "dynR_protected/onehop": {
+      "seconds": 7,
+      "audit": [],
+      "hook_log": {
+        "steps": 533,
+        "blocked": 20310,
+        "mean_removed_energy": 0.02567
+      }
+    },
+    "dynR_protected/prose": {
+      "seconds": 25,
+      "audit": [],
+      "hook_log": {
+        "steps": 260,
+        "blocked": 243577,
+        "mean_removed_energy": 0.02614
+      }
+    }
+  },
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "r7-protected-dynamic-pilot-olmo3base-v1",
+    "tier": "pilot",
+    "code_commit": "fcfa93f13fb5ee5d77f58e9e6e20daf873688a12",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.r7_protected_pilot --config configs/r7_protected_pilot_base.yaml",
+    "config_path": "configs/r7_protected_pilot_base.yaml",
+    "config_sha256": "c6e9c9902b67d4e1a380594b51514e6782be16463e2b14f2db81bf3d3b6f889c",
+    "inputs": {
+      "lens": "05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053",
+      "probe_swap": "a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796"
+    },
+    "model": {
+      "id": "/content/hf_local/models--allenai--Olmo-3-1125-32B/snapshots/c2b61dae89a1ad10e4ad5653d0e46b590902607b",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "72efc1f0ed1161e4205a54d94110f61d21c4c4315fde9ef17163bbc33c9a6149"
+    },
+    "jlens_commit": null,
+    "seed": 4242,
+    "created_utc": "2026-07-28T09:33:09Z"
+  }
+}

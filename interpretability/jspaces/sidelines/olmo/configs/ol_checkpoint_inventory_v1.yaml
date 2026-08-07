@@ -1,0 +1,116 @@
+evidence_id: ol-checkpoint-inventory-v1
+tier: methods
+branch: interp_jspace_olmo_lineage
+scientific_import_boundary: 3b041735d8b842de46a9c0a474fccd0c44e0841a
+
+inventory_policy:
+  official_organization: allenai
+  api_origin: https://huggingface.co
+  required_metadata_files:
+    - README.md
+    - config.json
+    - tokenizer.json
+    - tokenizer_config.json
+    - model.safetensors.index.json
+  expected_model_contract:
+    hidden_size: 5120
+    vocab_size: 100278
+    rms_norm_eps: 0.000001
+    tie_word_embeddings: false
+    architecture: Olmo3ForCausalLM
+  no_substitution_rule: >-
+    A genuine intermediate must be an official, weight-available 32B artifact
+    on the declared Olmo-3-1125-32B ancestry chain with compatible
+    architecture/tokenizer. A smaller model, adapter, unrelated release, or
+    undocumented stage cannot be placed on the 32B temporal graph.
+
+targets:
+  - slug: olmo3-base
+    role: pretrained_anchor
+    stage: base
+    repository: allenai/Olmo-3-1125-32B
+    revision: c2b61dae89a1ad10e4ad5653d0e46b590902607b
+    expected_base_models: []
+    tokenizer_group: think_path
+    record_posttraining_refs: false
+    eligible_intermediate: false
+  - slug: olmo3-think-sft
+    role: genuine_intermediate
+    stage: SFT
+    repository: allenai/Olmo-3-32B-Think-SFT
+    revision: 9770a0bacc8536a6b5870da62b75e5ba3681930d
+    expected_base_models: [allenai/Olmo-3-1125-32B]
+    tokenizer_group: think_path
+    record_posttraining_refs: true
+    eligible_intermediate: true
+  - slug: olmo3-think-dpo
+    role: genuine_intermediate
+    stage: DPO
+    repository: allenai/Olmo-3-32B-Think-DPO
+    revision: a38eddf84054b578970f53f31217df1556e69571
+    expected_base_models: [allenai/Olmo-3-32B-Think-SFT]
+    tokenizer_group: think_path
+    record_posttraining_refs: true
+    eligible_intermediate: true
+  - slug: olmo3-think
+    role: observed_endpoint
+    stage: RLVR_3_0
+    repository: allenai/Olmo-3-32B-Think
+    revision: ebd033e4f0b284d5973b82c0ccb62ad0dbe877d7
+    expected_base_models: [allenai/Olmo-3-32B-Think-DPO]
+    tokenizer_group: think_path
+    record_posttraining_refs: true
+    eligible_intermediate: false
+  - slug: olmo31-think
+    role: observed_endpoint
+    stage: RLVR_3_1
+    repository: allenai/Olmo-3.1-32B-Think
+    revision: 832c3f543499af8fe68b88359501de9cb7840544
+    expected_base_models: [allenai/Olmo-3-32B-Think-DPO]
+    tokenizer_group: think_path
+    record_posttraining_refs: true
+    eligible_intermediate: false
+  - slug: olmo31-instruct-sft
+    role: sibling_intermediate
+    stage: SFT
+    repository: allenai/Olmo-3.1-32B-Instruct-SFT
+    revision: 152782ecc41a86c5cbe3fb6afa68bd90934de48a
+    expected_base_models: [allenai/Olmo-3-1125-32B]
+    tokenizer_group: instruct_path
+    record_posttraining_refs: true
+    eligible_intermediate: false
+  - slug: olmo31-instruct-dpo
+    role: sibling_intermediate
+    stage: DPO
+    repository: allenai/Olmo-3.1-32B-Instruct-DPO
+    revision: fc84a4f699916fcf585aa54371f47897fa934d5c
+    expected_base_models: [allenai/Olmo-3.1-32B-Instruct-SFT]
+    tokenizer_group: instruct_path
+    record_posttraining_refs: true
+    eligible_intermediate: false
+  - slug: olmo31-instruct
+    role: sibling_endpoint
+    stage: RLVR_INSTRUCT
+    repository: allenai/Olmo-3.1-32B-Instruct
+    revision: ac0587e4a7744a551c059d8cd17ba220bc940dae
+    expected_base_models: [allenai/Olmo-3.1-32B-Instruct-DPO]
+    tokenizer_group: instruct_path
+    record_posttraining_refs: true
+    eligible_intermediate: false
+
+route:
+  required_think_intermediate_stages: [SFT, DPO]
+  minimal_wedge_cells: [olmo3-think-sft, olmo3-think-dpo]
+  existing_anchors: [olmo3-base, olmo3-think, olmo31-think]
+  queue_position: after-o4-version1-gate-resolution
+  scope: >-
+    Two stage cells only. Freeze transport/capability first, then run the
+    reduced Bank-S onset assay; do not expand to all released step refs.
+  current_execution: inventory-only-no-model-outcome
+
+claim_boundary: >-
+  Official-artifact availability and compatibility inventory only. It opens
+  no model behavior, activation, geometry, intervention, training-attribution,
+  Phase 4, Gemma, confirmatory, or replication outcome. Base-model fields in
+  model cards name repositories rather than immutable parent revisions; this
+  qualification must remain attached to the stage graph.

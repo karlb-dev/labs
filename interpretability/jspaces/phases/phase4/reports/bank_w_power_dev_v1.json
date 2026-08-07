@@ -1,0 +1,1084 @@
+{
+ "bank_w_audit_sha256": "1391bb296446c9ebbd5e432af1208049a8bd5877bf4c573298b45e2e6eb0df82",
+ "calibration": {
+  "conservative_common_sd_nats": 0.23,
+  "conservative_rule": "largest common-family SD across registered development sources, rounded upward to 0.01 nat",
+  "estimand": "(J - exact matched control)_composed - (J - exact matched control)_direct",
+  "family_correlation_by_source": {
+   "olmo3-think": {
+    "olmo3-think": 1.0,
+    "olmo31-instruct": 0.2858440437836513,
+    "olmo31-think": 0.6820832164071166
+   },
+   "olmo31-instruct": {
+    "olmo3-think": 0.2858440437836513,
+    "olmo31-instruct": 1.0,
+    "olmo31-think": 0.3677152146555733
+   },
+   "olmo31-think": {
+    "olmo3-think": 0.6820832164071166,
+    "olmo31-instruct": 0.3677152146555733,
+    "olmo31-think": 1.0
+   }
+  },
+  "family_sd_nats_by_source": {
+   "olmo3-think": 0.22665677935198558,
+   "olmo31-instruct": 0.10576655088537057,
+   "olmo31-think": 0.14844304021464064
+  },
+  "n_common_families": 18,
+  "n_common_items": 71,
+  "source_role": "known-bank development variability proxy; no Bank W outcome is read",
+  "sources": [
+   {
+    "evidence_id": "p4-lineage-grid-olmo3-think-dev-v1",
+    "label": "olmo3-think",
+    "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/olmo3-think/lineage_grid/p4-lineage-grid-olmo3-think-dev-v1/lineage_grid_olmo3-think.parquet",
+    "sha256": "20e698d8a78db6d07e715f15b2eab767c28a70f6241a9a9b1633241e4b89dbad"
+   },
+   {
+    "evidence_id": "p4-lineage-grid-olmo31-think-dev-v1",
+    "label": "olmo31-think",
+    "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/olmo31-think/lineage_grid/p4-lineage-grid-olmo31-think-dev-v1/lineage_grid_olmo31-think.parquet",
+    "sha256": "cc8e2d57f4c3e9f1becd28c2553d488dc279113bda75420ba8bdab90cfa76937"
+   },
+   {
+    "evidence_id": "p4-lineage-grid-olmo31-instruct-dev-v1",
+    "label": "olmo31-instruct",
+    "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/olmo31-instruct/lineage_grid/p4-lineage-grid-olmo31-instruct-dev-v1/lineage_grid_olmo31-instruct.parquet",
+    "sha256": "dada28f3a39262958f79add83244e4794f98903af611384092f57282609f2bdb"
+   }
+  ]
+ },
+ "config_sha256": "1b434b84f5493d66d45c6f2062a8661a52b3ee3fc9ce4305675694729dab63ae",
+ "decision": {
+  "all_type_i_scenarios_pass": true,
+  "candidate_freeze_ready": false,
+  "confirmatory_count_meets_power_target": true,
+  "confirmatory_family_count": 24,
+  "grid_bounded_mde80_nats": 0.15849625007211562,
+  "minimum_common_families_for_power_target": 20,
+  "minimum_power_at_sesoi_by_common_family_count": {
+   "16": 0.703,
+   "20": 0.806,
+   "24": 0.858
+  },
+  "remaining_freeze_blockers": [
+   "model-specific Bank W baseline capability gates",
+   "independent protocol review and PI sign-off"
+  ]
+ },
+ "evidence_id": "p4-bank-w-power-dev-v1",
+ "generation_code_commit": "fff4e651da78318758f1b1956594cb7c1a27e3e7",
+ "outcome_blinding": "No Bank W intervention, capability, confirmatory, or replication outcome was read.",
+ "power_at_sesoi": [
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.15849625007211562,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.014392741226048637,
+   "n_families": 16,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.707,
+   "rejections": 707,
+   "scenario": "sesoi-single-model-0-n16",
+   "wilson_ci95": [
+    0.6780409471946616,
+    0.7343747167905728
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.0,
+    0.15849625007211562,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.014449602070645405,
+   "n_families": 16,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.703,
+   "rejections": 703,
+   "scenario": "sesoi-single-model-1-n16",
+   "wilson_ci95": [
+    0.6739454894927203,
+    0.7305007896812051
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.0,
+    0.0,
+    0.15849625007211562
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.014135911714495106,
+   "n_families": 16,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.724,
+   "rejections": 724,
+   "scenario": "sesoi-single-model-2-n16",
+   "wilson_ci95": [
+    0.6954761699680836,
+    0.7508093794652135
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.15849625007211562,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.011933817494833748,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.828,
+   "rejections": 828,
+   "scenario": "sesoi-single-model-0-n20",
+   "wilson_ci95": [
+    0.8033655734021719,
+    0.850123981125156
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.0,
+    0.15849625007211562,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.012227469075814505,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.817,
+   "rejections": 817,
+   "scenario": "sesoi-single-model-1-n20",
+   "wilson_ci95": [
+    0.7918361923371519,
+    0.8397375539590765
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.0,
+    0.0,
+    0.15849625007211562
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.012504559168559281,
+   "n_families": 20,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.806,
+   "rejections": 806,
+   "scenario": "sesoi-single-model-2-n20",
+   "wilson_ci95": [
+    0.7803389611908129,
+    0.8293189768743163
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.15849625007211562,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.010458250331675944,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.875,
+   "rejections": 875,
+   "scenario": "sesoi-single-model-0-n24",
+   "wilson_ci95": [
+    0.8530557319763017,
+    0.8940740940839056
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.0,
+    0.15849625007211562,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.011037934589405756,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.858,
+   "rejections": 858,
+   "scenario": "sesoi-single-model-1-n24",
+   "wilson_ci95": [
+    0.8349936351835585,
+    0.878266305428586
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.0,
+    0.0,
+    0.15849625007211562
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.010939789760319894,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.861,
+   "rejections": 861,
+   "scenario": "sesoi-single-model-2-n24",
+   "wilson_ci95": [
+    0.8381730246613444,
+    0.8810639545592818
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "normal",
+   "effects_nats": [
+    0.15849625007211562,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": null,
+   "monte_carlo_se": 0.010669536072388528,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.869,
+   "rejections": 869,
+   "scenario": "sesoi-normal-single-model-0-n24",
+   "wilson_ci95": [
+    0.8466679220596967,
+    0.8885078267835471
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "normal",
+   "effects_nats": [
+    0.0,
+    0.15849625007211562,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": null,
+   "monte_carlo_se": 0.011197812286335219,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.853,
+   "rejections": 853,
+   "scenario": "sesoi-normal-single-model-1-n24",
+   "wilson_ci95": [
+    0.8297018143400393,
+    0.873596395257969
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "normal",
+   "effects_nats": [
+    0.0,
+    0.0,
+    0.15849625007211562
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": null,
+   "monte_carlo_se": 0.011037934589405756,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.858,
+   "rejections": 858,
+   "scenario": "sesoi-normal-single-model-2-n24",
+   "wilson_ci95": [
+    0.8349936351835585,
+    0.878266305428586
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.15849625007211562,
+    0.15849625007211562,
+    0.15849625007211562
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.002636474919281427,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.993,
+   "rejections": 993,
+   "scenario": "sesoi-all-models-n24",
+   "wilson_ci95": [
+    0.9856215030730511,
+    0.996605174920768
+   ]
+  }
+ ],
+ "power_curve_single_model_conservative": [
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.08,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.01536476488593301,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.382,
+   "rejections": 382,
+   "scenario": "grid-single-model-0-effect-0.080000",
+   "wilson_ci95": [
+    0.3523909215155227,
+    0.41251222655086556
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.1,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.015807561481771943,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.511,
+   "rejections": 511,
+   "scenario": "grid-single-model-0-effect-0.100000",
+   "wilson_ci95": [
+    0.4800343958421962,
+    0.5418814123889033
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.12,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.015022117027902558,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.656,
+   "rejections": 656,
+   "scenario": "grid-single-model-0-effect-0.120000",
+   "wilson_ci95": [
+    0.6260099834408898,
+    0.6847960242001564
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.14,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.01309961831505025,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.78,
+   "rejections": 780,
+   "scenario": "grid-single-model-0-effect-0.140000",
+   "wilson_ci95": [
+    0.7532799990963888,
+    0.8045769376952328
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.15849625007211562,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.011197812286335219,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.853,
+   "rejections": 853,
+   "scenario": "grid-single-model-0-effect-0.158496",
+   "wilson_ci95": [
+    0.8297018143400393,
+    0.873596395257969
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.18,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.007906389820898028,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.933,
+   "rejections": 933,
+   "scenario": "grid-single-model-0-effect-0.180000",
+   "wilson_ci95": [
+    0.9157875981239373,
+    0.9468983077002487
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.2,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.007021111023192843,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.948,
+   "rejections": 948,
+   "scenario": "grid-single-model-0-effect-0.200000",
+   "wilson_ci95": [
+    0.9324439406590116,
+    0.9601271582075824
+   ]
+  }
+ ],
+ "primary": {
+  "alpha": 0.05,
+  "alternative": "greater",
+  "chunk_size": 8192,
+  "exact_max_families": 20,
+  "family_pairing": "one shared sign per canonical family across all models",
+  "model_selection_from_intervention_outcomes": false,
+  "model_slugs_in_frozen_order": [
+   "olmo31-think",
+   "olmo31-instruct",
+   "qwen36-27b"
+  ],
+  "monte_carlo_draws": 100000,
+  "plus_one_pvalue_for_monte_carlo": true,
+  "seed": 48151623,
+  "shared_family_signs_across_models": true,
+  "statistic": "max_m mean(D_m)/(sd(D_m)/sqrt(n_families))"
+ },
+ "schema_version": 1,
+ "sesoi": {
+  "endpoint_high_minus_low_nats": 0.15849625007211562,
+  "high_load": 6.0,
+  "low_load": 2.0,
+  "slope_nats_per_doubling": 0.1
+ },
+ "simulation": {
+  "heavy_tail_df": 5,
+  "n_simulations_per_scenario": 1000,
+  "permutation_draws_per_simulation": 2048,
+  "power_target": 0.8,
+  "seed": 8675309,
+  "type_i_acceptance_interval": [
+   0.025,
+   0.075
+  ]
+ },
+ "type_i_calibration": [
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "normal",
+   "effects_nats": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": null,
+   "monte_carlo_se": 0.006692607862410586,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "nominal_alpha_in_wilson_ci95": true,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.047,
+   "rejections": 47,
+   "scenario": "null-independent-normal",
+   "type_i_pass": true,
+   "wilson_ci95": [
+    0.03552692265984565,
+    0.06194024745942417
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "independent",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.006826346021115542,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "nominal_alpha_in_wilson_ci95": true,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.049,
+   "rejections": 49,
+   "scenario": "null-independent-student_t",
+   "type_i_pass": true,
+   "wilson_ci95": [
+    0.03726084730617148,
+    0.06419101521875278
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "empirical",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.6820832164071166,
+     0.2858440437836513
+    ],
+    [
+     0.6820832164071166,
+     1.0,
+     0.3677152146555733
+    ],
+    [
+     0.2858440437836513,
+     0.3677152146555733,
+     1.0
+    ]
+   ],
+   "distribution": "normal",
+   "effects_nats": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": null,
+   "monte_carlo_se": 0.006892024376045111,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "nominal_alpha_in_wilson_ci95": true,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.05,
+   "rejections": 50,
+   "scenario": "null-empirical-normal",
+   "type_i_pass": true,
+   "wilson_ci95": [
+    0.03813007264328189,
+    0.0653141360844696
+   ]
+  },
+  {
+   "alpha": 0.05,
+   "correlation": "empirical",
+   "correlation_matrix": [
+    [
+     1.0,
+     0.6820832164071166,
+     0.2858440437836513
+    ],
+    [
+     0.6820832164071166,
+     1.0,
+     0.3677152146555733
+    ],
+    [
+     0.2858440437836513,
+     0.3677152146555733,
+     1.0
+    ]
+   ],
+   "distribution": "student_t",
+   "effects_nats": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "family_sd_nats": 0.23,
+   "heavy_tail_df": 5,
+   "monte_carlo_se": 0.0061967733539318665,
+   "n_families": 24,
+   "n_simulations": 1000,
+   "nominal_alpha_in_wilson_ci95": true,
+   "permutation_draws": 2048,
+   "rejection_rate": 0.04,
+   "rejections": 40,
+   "scenario": "null-empirical-student_t",
+   "type_i_pass": true,
+   "wilson_ci95": [
+    0.02951080927390945,
+    0.05400993742556984
+   ]
+  }
+ ]
+}

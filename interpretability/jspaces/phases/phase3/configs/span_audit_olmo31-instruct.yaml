@@ -1,0 +1,17 @@
+# §4.1b protected-span geometry audit — OLMo 3.1 Instruct (the other
+# primary; §4.1a pressure 1.22 blocked rows/position, and the model whose
+# large prose cost Workstream C must explain).
+evidence_id: p3-span-audit-olmo31-instruct-v1
+tier: phase3-development
+slug: olmo31-instruct
+model_uri: model://allenai/Olmo-3.1-32B-Instruct@ac0587e4a7744a551c059d8cd17ba220bc940dae
+lens_uri: drive://lens/olmo31instruct_lens.pt
+manifest_uri: drive://metrics/cross_model/g5_item_manifest_v5.json
+partition_uri: drive://metrics/cross_model/partition_manifest.json
+partition_side: confirmatory
+band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+k: 10
+protect_top_k: 10
+rand_seed: 4242
+n_items: 60                 # same stratified dev subsample rule as Think
+overlap_detail_layers: [24, 32, 40]

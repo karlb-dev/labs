@@ -1,0 +1,86 @@
+{
+  "metrics": {
+    "slices": {
+      "0": {
+        "prompts_done": 30,
+        "peak_vram_gb": 76.5,
+        "elapsed_s": 3529,
+        "lens_file": "gemma431_slice0.pt",
+        "n_prompts": 30
+      },
+      "1": {
+        "prompts_done": 30,
+        "peak_vram_gb": 76.5,
+        "elapsed_s": 3528,
+        "lens_file": "gemma431_slice1.pt",
+        "n_prompts": 30
+      },
+      "2": {
+        "prompts_done": 30,
+        "peak_vram_gb": 76.5,
+        "elapsed_s": 3529,
+        "lens_file": "gemma431_slice2.pt",
+        "n_prompts": 30
+      },
+      "3": {
+        "prompts_done": 30,
+        "peak_vram_gb": 76.5,
+        "elapsed_s": 3522,
+        "lens_file": "gemma431_slice3.pt",
+        "n_prompts": 30
+      }
+    },
+    "model": "/content/models/gemma4-31b-it",
+    "corpus": "/content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/config/prompts/fitting_corpus.jsonl",
+    "corpus_sha256": "15db1db213e6227e2078c10b399056867547c123817f24a5b528d50e0dfbe633",
+    "source_layers": [
+      22,
+      30,
+      37,
+      40,
+      42,
+      44,
+      48,
+      52
+    ],
+    "target_layer": 59,
+    "dim_batch": 8,
+    "max_seq_len": 128,
+    "skip_first": 16,
+    "band_rationale": "a3-gemma-deepband-logit-v1",
+    "merged": {
+      "n_prompts": 120,
+      "file": "gemma431_lens.pt",
+      "from": [
+        "gemma431_slice0.pt",
+        "gemma431_slice1.pt",
+        "gemma431_slice2.pt",
+        "gemma431_slice3.pt"
+      ]
+    }
+  },
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "a3-gemma-fullfit-v1",
+    "tier": "pilot",
+    "code_commit": "cc6153681ecba8305a9099a9bfe9e6659809b433",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.a3_gemma_fit",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "corpus": "15db1db213e6227e2078c10b399056867547c123817f24a5b528d50e0dfbe633"
+    },
+    "model": {
+      "id": "/content/models/gemma4-31b-it",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "jlens_commit": null,
+    "seed": 0,
+    "created_utc": "2026-07-28T19:50:23Z"
+  }
+}

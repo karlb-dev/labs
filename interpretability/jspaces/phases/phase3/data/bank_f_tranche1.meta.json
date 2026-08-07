@@ -1,0 +1,383 @@
+{
+ "payload": {
+  "family_counts": {
+   "capital_to_currency": 1,
+   "capital_to_language": 3,
+   "car_model_maker_to_hq_city": 2,
+   "club_stadium_to_city": 2,
+   "company_hq_to_country": 1,
+   "currency_to_capital": 2,
+   "film_director_to_birth_country": 1,
+   "invention_inventor_to_nationality": 1,
+   "landmark_city_to_country": 2,
+   "language_creator_to_nationality": 1,
+   "novel_author_to_birth_country": 3,
+   "ore_metal_to_symbol": 2,
+   "product_company_to_hq_city": 2,
+   "theory_scientist_to_birth_city": 1
+  },
+  "n_authored": 90,
+  "n_families": 14,
+  "n_shipped": 24,
+  "validation": {
+   "alias_prefix_issues": {
+    "river_mouth_to_capital:magdalena": [
+     [
+      " Bogot\u00e1",
+      " Bogota"
+     ]
+    ]
+   },
+   "duplicate_fact_ids": [],
+   "duplicate_triples": [],
+   "family_counts": {
+    "capital_to_currency": 6,
+    "capital_to_language": 6,
+    "car_model_maker_to_hq_city": 4,
+    "club_stadium_to_city": 4,
+    "company_hq_to_country": 5,
+    "currency_to_capital": 4,
+    "dish_country_to_language": 4,
+    "film_director_to_birth_country": 4,
+    "invention_inventor_to_nationality": 4,
+    "island_to_capital": 4,
+    "landmark_city_to_country": 5,
+    "language_creator_to_nationality": 4,
+    "novel_author_to_birth_country": 5,
+    "opera_composer_to_nationality": 5,
+    "ore_metal_to_symbol": 4,
+    "painting_painter_to_movement": 4,
+    "poem_poet_to_nationality": 4,
+    "product_company_to_hq_city": 4,
+    "river_mouth_to_capital": 5,
+    "theory_scientist_to_birth_city": 5
+   },
+   "n_bundles": 90,
+   "n_families": 20,
+   "n_with_counterfactual": 90,
+   "ok": false,
+   "phase2_triple_collisions": [],
+   "relation_group_counts": {
+    "geo_culture": 4,
+    "geo_political": 30,
+    "org": 9,
+    "person_culture": 22,
+    "person_science": 9,
+    "science": 4,
+    "sport": 4,
+    "tech": 8
+   },
+   "template_reuse": {},
+   "violations": {}
+  },
+  "wikipedia_verification": {
+   "hop_failures": {
+    "capital_to_currency:abuja": [
+     "bridge page missing: Nigeria"
+    ],
+    "capital_to_currency:accra": [
+     "bridge page missing: Ghana"
+    ],
+    "capital_to_currency:bangkok": [
+     "bridge page missing: Thailand"
+    ],
+    "capital_to_currency:budapest": [
+     "source page missing: Budapest",
+     "bridge page missing: Hungary"
+    ],
+    "capital_to_currency:warsaw": [
+     "source page missing: Warsaw",
+     "bridge page missing: Poland"
+    ],
+    "capital_to_language:kathmandu": [
+     "source page missing: Kathmandu"
+    ],
+    "capital_to_language:manila": [
+     "bridge page missing: Philippines"
+    ],
+    "capital_to_language:ulaanbaatar": [
+     "bridge page missing: Mongolia"
+    ],
+    "car_model_maker_to_hq_city:corolla": [
+     "source page missing: Toyota Corolla",
+     "bridge page missing: Toyota"
+    ],
+    "car_model_maker_to_hq_city:golf": [
+     "bridge page missing: Volkswagen"
+    ],
+    "club_stadium_to_city:boca-juniors": [
+     "bridge page missing: La Bombonera"
+    ],
+    "club_stadium_to_city:real-betis": [
+     "source page missing: Real Betis"
+    ],
+    "company_hq_to_country:lego": [
+     "source page missing: Lego"
+    ],
+    "company_hq_to_country:nokia": [
+     "source page missing: Nokia"
+    ],
+    "company_hq_to_country:philips": [
+     "source page missing: Philips"
+    ],
+    "company_hq_to_country:spotify": [
+     "bridge page missing: Stockholm"
+    ],
+    "currency_to_capital:birr": [
+     "source page missing: Ethiopian birr"
+    ],
+    "currency_to_capital:won": [
+     "bridge page missing: South Korea"
+    ],
+    "dish_country_to_language:goulash": [
+     "bridge page missing: Hungary"
+    ],
+    "dish_country_to_language:kimchi": [
+     "bridge page missing: South Korea"
+    ],
+    "dish_country_to_language:lasagna": [
+     "bridge page missing: Italy"
+    ],
+    "dish_country_to_language:pierogi": [
+     "bridge page missing: Poland"
+    ],
+    "film_director_to_birth_country:8": [
+     "bridge page missing: Federico Fellini"
+    ],
+    "film_director_to_birth_country:oldboy": [
+     "source page missing: Oldboy (2003 film)",
+     "bridge page missing: Park Chan-wook"
+    ],
+    "film_director_to_birth_country:persona": [
+     "source page missing: Persona (1966 film)",
+     "bridge page missing: Ingmar Bergman"
+    ],
+    "invention_inventor_to_nationality:dynamite": [
+     "source page missing: Dynamite"
+    ],
+    "invention_inventor_to_nationality:the-single-wire-telegraph": [
+     "source page missing: Samuel Morse",
+     "bridge page missing: Samuel Morse"
+    ],
+    "invention_inventor_to_nationality:the-world-wide-web": [
+     "source page missing: World Wide Web",
+     "bridge page missing: Tim Berners-Lee"
+    ],
+    "island_to_capital:bali": [
+     "bridge page missing: Indonesia"
+    ],
+    "island_to_capital:luzon": [
+     "bridge page missing: Philippines"
+    ],
+    "island_to_capital:tasmania": [
+     "source page missing: Tasmania"
+    ],
+    "island_to_capital:zanzibar": [
+     "source page missing: Zanzibar",
+     "bridge page missing: Tanzania"
+    ],
+    "landmark_city_to_country:burj-khalifa": [
+     "source page missing: Burj Khalifa"
+    ],
+    "landmark_city_to_country:petronas-towers": [
+     "bridge page missing: Kuala Lumpur"
+    ],
+    "landmark_city_to_country:table-mountain": [
+     "bridge page missing: Cape Town"
+    ],
+    "language_creator_to_nationality:javascript": [
+     "source page missing: JavaScript"
+    ],
+    "language_creator_to_nationality:pascal": [
+     "source page missing: Pascal (programming language)",
+     "bridge page missing: Niklaus Wirth"
+    ],
+    "language_creator_to_nationality:python": [
+     "source page missing: Python (programming language)"
+    ],
+    "novel_author_to_birth_country:midnight-s-children": [
+     "bridge page missing: Salman Rushdie"
+    ],
+    "novel_author_to_birth_country:wide-sargasso-sea": [
+     "source page missing: Wide Sargasso Sea"
+    ],
+    "opera_composer_to_nationality:aida": [
+     "source page missing: Aida",
+     "bridge page missing: Giuseppe Verdi"
+    ],
+    "opera_composer_to_nationality:bluebeard-s-castle": [
+     "source page missing: Bluebeard's Castle"
+    ],
+    "opera_composer_to_nationality:madama-butterfly": [
+     "source page missing: Madama Butterfly",
+     "bridge page missing: Giacomo Puccini"
+    ],
+    "opera_composer_to_nationality:rusalka": [
+     "source page missing: Rusalka (opera)"
+    ],
+    "opera_composer_to_nationality:the-bartered-bride": [
+     "source page missing: The Bartered Bride"
+    ],
+    "ore_metal_to_symbol:galena": [
+     "bridge page missing: Lead"
+    ],
+    "ore_metal_to_symbol:sphalerite": [
+     "bridge page missing: Zinc"
+    ],
+    "painting_painter_to_movement:impression-sunrise": [
+     "bridge page missing: Claude Monet"
+    ],
+    "painting_painter_to_movement:les-demoiselles-d-avignon": [
+     "bridge page missing: Pablo Picasso"
+    ],
+    "painting_painter_to_movement:the-kiss": [
+     "bridge page missing: Gustav Klimt"
+    ],
+    "painting_painter_to_movement:the-starry-night": [
+     "bridge page missing: Vincent van Gogh"
+    ],
+    "poem_poet_to_nationality:do-not-go-gentle-into-that-good-night": [
+     "bridge page missing: Dylan Thomas"
+    ],
+    "poem_poet_to_nationality:gunga-din": [
+     "bridge page missing: Rudyard Kipling"
+    ],
+    "poem_poet_to_nationality:ozymandias": [
+     "source page missing: Ozymandias"
+    ],
+    "poem_poet_to_nationality:the-raven": [
+     "bridge page missing: Edgar Allan Poe"
+    ],
+    "product_company_to_hq_city:photoshop": [
+     "source page missing: Adobe Photoshop"
+    ],
+    "product_company_to_hq_city:the-windows-operating-system": [
+     "source page missing: Microsoft Windows",
+     "bridge page missing: Microsoft"
+    ],
+    "river_mouth_to_capital:chao-phraya": [
+     "bridge page missing: Thailand"
+    ],
+    "river_mouth_to_capital:irrawaddy": [
+     "bridge page missing: Myanmar"
+    ],
+    "river_mouth_to_capital:magdalena": [
+     "source page missing: Magdalena River"
+    ],
+    "river_mouth_to_capital:tagus": [
+     "bridge page missing: Portugal"
+    ],
+    "river_mouth_to_capital:volta": [
+     "bridge page missing: Ghana"
+    ],
+    "theory_scientist_to_birth_city:the-movable-type-printing-press": [
+     "source page missing: Printing press",
+     "bridge page missing: Johannes Gutenberg"
+    ],
+    "theory_scientist_to_birth_city:the-periodic-law": [
+     "source page missing: Periodic table"
+    ],
+    "theory_scientist_to_birth_city:the-theory-of-evolution-by-natural-selec": [
+     "source page missing: Natural selection"
+    ],
+    "theory_scientist_to_birth_city:the-theory-of-general-relativity": [
+     "source page missing: General relativity"
+    ]
+   },
+   "missing_pages": [
+    "Adobe Photoshop",
+    "Aida",
+    "Bluebeard's Castle",
+    "Budapest",
+    "Burj Khalifa",
+    "Cape Town",
+    "Claude Monet",
+    "Dylan Thomas",
+    "Dynamite",
+    "Edgar Allan Poe",
+    "Ethiopian birr",
+    "Federico Fellini",
+    "General relativity",
+    "Ghana",
+    "Giacomo Puccini",
+    "Giuseppe Verdi",
+    "Gustav Klimt",
+    "Hungary",
+    "Indonesia",
+    "Ingmar Bergman",
+    "Italy",
+    "JavaScript",
+    "Johannes Gutenberg",
+    "Kathmandu",
+    "Kuala Lumpur",
+    "La Bombonera",
+    "Lead",
+    "Lego",
+    "Madama Butterfly",
+    "Magdalena River",
+    "Microsoft",
+    "Microsoft Windows",
+    "Mongolia",
+    "Myanmar",
+    "Natural selection",
+    "Nigeria",
+    "Niklaus Wirth",
+    "Nokia",
+    "Oldboy (2003 film)",
+    "Ozymandias",
+    "Pablo Picasso",
+    "Park Chan-wook",
+    "Pascal (programming language)",
+    "Periodic table",
+    "Persona (1966 film)",
+    "Philippines",
+    "Philips",
+    "Poland",
+    "Portugal",
+    "Printing press",
+    "Python (programming language)",
+    "Real Betis",
+    "Rudyard Kipling",
+    "Rusalka (opera)",
+    "Salman Rushdie",
+    "Samuel Morse",
+    "South Korea",
+    "Stockholm",
+    "Tanzania",
+    "Tasmania",
+    "Thailand",
+    "The Bartered Bride",
+    "Tim Berners-Lee",
+    "Toyota",
+    "Toyota Corolla",
+    "Vincent van Gogh",
+    "Volkswagen",
+    "Warsaw",
+    "Wide Sargasso Sea",
+    "World Wide Web",
+    "Zanzibar",
+    "Zinc"
+   ],
+   "n_verified": 24
+  }
+ },
+ "payload_sha256": "e6ae98e7868f6bae817b9b36c3cdff21d8014afacaf57055ccd6cebbe819ed87",
+ "provenance": {
+  "branch": "interp_jspace_part2",
+  "code_commit": "1f9d7f069e0bab1e4196989adbb6c2101c323e55",
+  "command": "python -m jspace_phase3.experiments.author_bank_f",
+  "config_path": null,
+  "config_sha256": null,
+  "created_utc": "2026-07-30T00:10:06Z",
+  "dirty_tree": true,
+  "evidence_id": "p3-bank-f-tranche1-v2",
+  "inputs": {},
+  "jlens_commit": null,
+  "model": null,
+  "package_version": "jspace_phase3 0.1.0",
+  "seed": 0,
+  "study_id": "jspace-phase3",
+  "tier": "phase3-development"
+ },
+ "schema_version": 2
+}

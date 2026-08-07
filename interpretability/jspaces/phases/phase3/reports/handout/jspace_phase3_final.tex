@@ -1,0 +1,259 @@
+\documentclass[10pt]{article}
+\usepackage[margin=1.9cm]{geometry}
+\usepackage{graphicx,booktabs,xcolor,titlesec,enumitem,amsmath,array}
+\usepackage[hidelinks]{hyperref}
+\definecolor{ink}{HTML}{1F2430}
+\definecolor{muted}{HTML}{667085}
+\definecolor{blue}{HTML}{355C7D}
+\definecolor{teal}{HTML}{2A9D8F}
+\definecolor{coral}{HTML}{E76F51}
+\titleformat{\section}{\large\bfseries\color{ink}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{ink}}{\thesubsection}{0.6em}{}
+\setlist{nosep,leftmargin=1.25em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.45em}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\eid}[1]{\newline\textcolor{muted}{\footnotesize
+Evidence: \nolinkurl{#1}}}
+\newcommand{\tier}[1]{\textcolor{muted}{\footnotesize\textsc{#1}}}
+\newcommand{\good}[1]{\textcolor{teal}{\textbf{#1}}}
+\newcommand{\warn}[1]{\textcolor{coral}{\textbf{#1}}}
+
+\title{\vspace{-1.3em}J-space Phase 3 --- final state of record\\
+\large Output protection, content specificity, and bridge routing\\[3pt]
+\normalsize\textcolor{muted}{Frozen design
+\texttt{jspace-phase3-freeze-v1} · release audit 2026-07-31}}
+\author{}\date{}
+
+\begin{document}
+\maketitle
+\vspace{-2.8em}
+
+\noindent\textbf{Scope.} This handout is the release state, not the
+chronological lab notebook. Frozen outcomes were never rewritten.
+Corrections and sensitivities are event-sourced in
+\texttt{reports/evidence\_events.jsonl}; exact paths and hashes are in
+\texttt{phase3\_release\_manifest.json}.
+
+\section{Executive result}
+
+Phase 3's strongest result is narrow and reproducible:
+\good{on Qwen, span-safe J-space ablation produces a content-specific
+heavy tail beyond an exact rank-and-energy matched control}. It survives
+clean-answer protection, five Qwen control seeds, boundary-safe cohort
+grading, accepted-alias aggregation, and a held-out family replication.
+
+\begin{center}\small
+\renewcommand{\arraystretch}{1.16}
+\begin{tabular}{L{2.15cm}L{4.0cm}L{4.0cm}L{3.1cm}}
+\toprule
+result & confirmatory state of record & held-out replication & licensed status\\
+\midrule
+P3-P1 &
+$-0.271183$, exact $p=0.057892$,
+17 families &
+$-0.197020$, exact $p=0.219482$,
+17 families &
+descriptive; negative and seed-sensitive\\
+P3-P2 &
+$+0.095833$, $p=1/100001$,
+188 items / 26 families &
+$+0.102083$, $p=1/100001$,
+190 items / 28 families &
+\good{confirmatory and replicated}\\
+P3-P3 &
+$+0.431367$ nats, $p=0.009180$,
+94 items / 26 families &
+not collected &
+confirmatory chosen-distractor contrast; not replicated\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The state reconstruction replaces Qwen's unrecorded historical
+\texttt{hash(item\_id)} control realization with explicit
+\texttt{sha256-v1} seed 31337. OLMo rows remain the immutable historical
+controls. This leaves P3-P2 unchanged but makes P3-P1 explicitly
+descriptive. \eid{p3-control-seed-contract-audit-v2}
+\eid{p3-n8-p3-level3-qwen36-27b-v1}
+
+\begin{center}
+\includegraphics[width=0.98\textwidth]{/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729/figures/p3f06_phase3_release_audit.png}
+\end{center}
+
+\section{What the release audit corrected \hfill \tier{methods}}
+
+\begin{enumerate}
+\item \textbf{Protected-answer stratum.} The preregistered clean-rank
+filter was absent from the frozen analysis. Recomputed baseline-only
+ranks show the P3-P2 estimate is still $+0.095833$ for the exact scored
+alias (183/188 items) and any accepted alias (185/188), each
+$p=1/100001$. \eid{p3-protocol-audit-protected-answer-qwen-v1}
+\item \textbf{Control realization.} The historical Python hash salt is
+unrecoverable. Five full Qwen seeds leave P3-P2 identical but move
+P3-P1 across the .05 threshold; no ``near-miss'' inference is licensed.
+\item \textbf{Inference objects.} P3-P1 now uses all $2^{17}=131{,}072$
+family sign patterns. At the historical control, its
+randomization-compatible 95\% set is
+$[-0.535135,+0.014565]$. The percentile-$t$ interval is
+$[-0.537109,+0.015201]$; the old
+estimate$\pm1.96\,SE$ interval is labeled a normal approximation.
+\eid{p3-inference-audit-v1}
+\item \textbf{Actual Phase 3 reproduction.} N8-P3-L1 reproduced 61/61
+quantities exactly. Stratified L2 GPU cells pass on all three models.
+L3 reproduces all 188 Qwen rows, all deterministic arms, and the stable
+control exactly.
+\item \textbf{Metadata and registry.} The held-out analysis tier was
+corrected event-wise to \texttt{phase3-replication}. Historical N8 jobs
+were relabeled N8-P2. One obsolete N8-P2 output whose filename was later
+overwritten is withdrawn; the actual N8-P3 artifacts are intact.
+\end{enumerate}
+
+\section{Boundary, cohort, and accepted aliases \hfill \tier{methods}}
+
+\subsection{Generation boundary and cohort}
+
+Boundary-safe grading rejects four substring false positives and recovers
+four Unicode-accent matches among 2,916 G5 rows. A deterministic,
+model/family/alias-length-stratified review of 100 positives and 100
+negatives has zero disagreements. At state seed 31337:
+
+\begin{center}\small
+\begin{tabular}{lcc}
+\toprule
+view & historical cohort & boundary-safe cohort\\
+\midrule
+P3-P1 & $-0.271183$ & $-0.270160$\\
+P3-P2 & $+0.095833$ (188) & $+0.095833$ (186)\\
+P3-P3 & $+0.431367$ (94) & $+0.428230$ (93)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Superset population views report missing eligible outcomes rather than
+pretending they are identified.
+\eid{p3-boundary-cohort-sensitivity-v2}
+
+\subsection{Accepted-alias endpoint}
+
+The alias subset was frozen before outcomes: 20 common facts, all 17
+shared families, and all four multi-alias facts. Each model scored 52
+alias cells on the RTX PRO 6000. Token-prefix collisions are zero and
+first-alias replay errors are below 0.000214 nats.
+
+\begin{center}\small
+\begin{tabular}{lrr}
+\toprule
+endpoint & P3-P1 subset & change vs stable first\\
+\midrule
+stable first alias & $-0.267301$ & reference\\
+canonical alias & $-0.383906$ & $-0.116605$\\
+prefix-disjoint logsumexp & $-0.246098$ & $+0.021203$\\
+max alias (diagnostic) & $-0.267357$ & $-0.000056$\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Canonical sensitivity is confined to the two facts whose canonical form
+differs from alias zero. Qwen's P3-P2 subset tail is identical under all
+views. Phase 4 uses frozen prefix-disjoint logsumexp prospectively.
+\eid{p3-alias-endpoint-cross-model-v1}
+
+\begin{center}
+\includegraphics[width=0.88\textwidth]{/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729/metrics/cross_model/release_audit/alias_endpoint/p3_alias_endpoint_cross_model.png}
+\end{center}
+
+\section{Bridge mechanism closeout}
+
+\subsection{Chosen-distractor rescue \hfill \tier{phase3-confirmatory / methods}}
+
+The corrected geometry audit replays baseline, span-safe, true-bridge,
+and distractor-bridge arms exactly across 94 facts and 67,834
+layer-position rows. Rank-accounting failures and final
+selected/protected overlap are zero.
+
+Raw rescue is $+0.431367$ nats
+$[+0.132018,+0.763437]$. A nested leave-one-family-out geometry model
+has cross-fit $R^2=-0.0947$; residual rescue is
+$+0.403816\,[+0.105071,+0.734497]$, $p=0.01854$. The all-site exact
+geometry-matched subset has only 10 facts / 5 families
+($+0.450282$, exact $p=0.1875$) and is underpowered.
+\eid{p3-bridge-geometry-qwen36-27b-v2}
+
+\begin{center}
+\includegraphics[width=0.94\textwidth]{/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729/metrics/qwen36-27b/release_audit/bridge_geometry_v2/p3_bridge_geometry_qwen36-27b.png}
+\end{center}
+
+The measured geometry does not explain away P3-P3. But the distractor
+was chosen semantically rather than randomized, and no untouched-family
+P3-P3 replication exists.
+
+\subsection{Counterfactual semantic movement \hfill \tier{phase3-development}}
+
+On the existing 40-fact / 13-family mediation cohort,
+counterfactual-bridge injection shifts
+$LP(\mathrm{counterfactual})-LP(\mathrm{original})$ by
+$+8.582031$ nats $[+5.077661,+12.122991]$, exact
+$p=0.000488$. Greedy output moves from 32 original / 0 counterfactual
+hits at baseline to 7 original / 15 counterfactual hits under the swap.
+
+The key limitation is equally strong: direct counterfactual-answer
+direction injection shifts preference by $+7.240$ nats. Bridge minus
+answer-direction movement is only
+$+1.342254\,[-1.593275,+4.482051]$, $p=0.419$. The result proves intended
+semantic movement but does not isolate an abstract bridge channel.
+\eid{p3-bridge-swap-endpoint-qwen36-27b-v1}
+
+\begin{center}
+\includegraphics[width=0.94\textwidth]{/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729/metrics/qwen36-27b/release_audit/bridge_swap_endpoint/p3_bridge_swap_endpoint_qwen36-27b.png}
+\end{center}
+
+\section{Claim ladder and stopping boundary}
+
+\begin{enumerate}
+\item \good{Confirmatory and replicated:} Qwen has a span-safe,
+content-specific J tail beyond matched dose.
+\item \textbf{Confirmatory, not replicated:} true-bridge protection
+rescues more than frozen distractor protection; measured geometry does
+not account for it.
+\item \textbf{Development:} counterfactual bridge injection moves
+answer probability and generation toward the intended target, but is
+not separable from answer-direction injection.
+\item \textbf{Descriptive:} Qwen's direct-to-composed specificity shift
+is more negative than the OLMo pair's; P3-P1 is underpowered and
+control-seed-sensitive.
+\item \warn{Not licensed:} ``selective global workspace'' or broad
+working-memory claims. Prose damage exceeds task damage in standardized
+units, and Qwen's Bank-S composition term is null. The strongest noun is
+\textbf{knowledge-access channel}.
+\end{enumerate}
+
+\section{Limitations and next decisive experiment}
+
+\begin{itemize}
+\item P3-P1 has 17 intersection families and unrecoverable historical
+control salts.
+\item P3-P3 lacks held-out-family replication and a randomized semantic
+distractor.
+\item The semantic endpoint is post-freeze development evidence on an
+existing cohort.
+\item Alias sensitivity has only four shared multi-alias facts.
+\item Capability filtering conditions on pre-intervention model
+behavior; missing superset outcomes remain unidentified.
+\item The intervention fails a behavioral selectivity guard on prose.
+\end{itemize}
+
+The next decisive experiment is a frozen untouched-family bridge bank
+that compares counterfactual bridge injection directly with a matched
+counterfactual-answer direction, alongside true, unrelated, and
+orthogonal controls. Phase 4 confirmatory work starts only after its own
+preregistration and freeze.
+
+\vfill
+\noindent\textcolor{muted}{\footnotesize
+Binding Markdown: \texttt{reports/PHASE3\_STATE\_OF\_RECORD.md}. Live
+evidence, raw parquet hashes, model/tokenizer/lens revisions, environment,
+seeds, and figure sources: \texttt{p3-release-manifest-v1}. Supersede,
+never edit.}
+
+\end{document}

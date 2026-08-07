@@ -1,0 +1,40 @@
+evidence_id: p4-qwen-lens-corpora-dev-v1
+tier: methods
+dataset:
+  id: Salesforce/wikitext
+  config: wikitext-103-raw-v1
+  revision: b08601e04326c79dfdd32d625aee71d232d685c3
+  split: train
+  expected_rows: 1801350
+  expected_eligible_rows: 410472
+  shards:
+    - uri: hf-cache://datasets--Salesforce--wikitext/snapshots/b08601e04326c79dfdd32d625aee71d232d685c3/wikitext-103-raw-v1/train-00000-of-00002.parquet
+      sha256: 74da360f23826045b3e6ac6375411fdb15f003030aa74f2596ed08b857cb9212
+    - uri: hf-cache://datasets--Salesforce--wikitext/snapshots/b08601e04326c79dfdd32d625aee71d232d685c3/wikitext-103-raw-v1/train-00001-of-00002.parquet
+      sha256: ba090ac30dbf5461e8dcbdd1a1b8e6f3cf9c2c756d64f0c1220450acd514f720
+legacy_draw_a:
+  uri: drive://part1/config/prompts/fitting_corpus.jsonl
+  sha256: 15db1db213e6227e2078c10b399056867547c123817f24a5b528d50e0dfbe633
+  n_rows: 200
+legacy_draw_b:
+  uri: drive://part2/config/prompts/fitting_corpus_drawB.jsonl
+  sha256: ff5092e3fff27f3a69d24688fb7fff63e896f50035b9ca4b975c9e23954d2d65
+  n_rows: 120
+selection:
+  min_chars: 600
+  draw_a_prefix_n: 120
+  draw_a_total_n: 1000
+  draw_a_milestones: [120, 250, 500, 1000]
+  draw_a_extension_namespace: jspace-phase4:qwen-lens:draw-a-extension:v1
+  draw_b_prefix_n: 120
+  draw_b_total_n: 500
+  draw_b_milestones: [120, 500]
+  draw_b_extension_namespace: jspace-phase4:qwen-lens:draw-b-extension:v1
+published_helper_reference:
+  n: 1000
+  method: first eligible records in dataset order
+  upstream_repo: anthropics/jacobian-lens
+  upstream_revision: 581d398613e5602a5af361e1c34d3a92ea82ba8e
+  helper: jlens.examples.load_wikitext_prompts
+  helper_source_uri: drive://part1/code/jacobian-lens-pkg/jlens/examples.py
+  helper_source_sha256: 17270d800ffa169b72c1ab50940ae9a22cadf8a7a2449d897fa2a74b56569d6d

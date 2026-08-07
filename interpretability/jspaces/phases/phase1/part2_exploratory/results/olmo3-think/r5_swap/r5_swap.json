@@ -1,0 +1,962 @@
+{
+  "summary": {
+    "alpha_star": 0.2,
+    "calibration": {
+      "0.05": {
+        "flip_rate": 0.3,
+        "mean_dlp_swap": 0.93
+      },
+      "0.1": {
+        "flip_rate": 0.5,
+        "mean_dlp_swap": -4.134
+      },
+      "0.2": {
+        "flip_rate": 0.7,
+        "mean_dlp_swap": -42.195
+      }
+    },
+    "n": 50,
+    "none": {
+      "flip_rate": 0.04,
+      "mean_lp_swapans": -9.098,
+      "mean_lp_origans": -1.477
+    },
+    "swap_j": {
+      "flip_rate": 0.76,
+      "mean_lp_swapans": -38.067,
+      "mean_lp_origans": -48.24
+    },
+    "swap_rand": {
+      "flip_rate": 0.18,
+      "mean_lp_swapans": -13.129,
+      "mean_lp_origans": -12.369
+    }
+  },
+  "rows": [
+    {
+      "item": "birthstone-emerald-month",
+      "none": {
+        "orig": -0.11629115045070648,
+        "swap": -9.241291046142578,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -18.853580474853516,
+        "swap": -14.166082382202148,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -15.50462532043457,
+        "swap": -13.22728157043457,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "chem-atmosphere-Z",
+      "none": {
+        "orig": -0.21775713562965393,
+        "swap": -3.655256986618042,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -59.37510681152344,
+        "swap": -57.87510681152344,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -18.478099822998047,
+        "swap": -21.235912322998047,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "chem-bones-Z",
+      "none": {
+        "orig": -4.872330665588379,
+        "swap": -3.622330665588379,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -90.46875,
+        "swap": -87.375,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -20.406906127929688,
+        "swap": -19.158859252929688,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "chem-organic-Z",
+      "none": {
+        "orig": -0.26085323095321655,
+        "swap": -9.573352813720703,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -70.62515258789062,
+        "swap": -71.81265258789062,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -18.058433532714844,
+        "swap": -21.601402282714844,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "chem-photosynthesis-Z",
+      "none": {
+        "orig": -5.694694519042969,
+        "swap": -5.757194519042969,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -75.75,
+        "swap": -74.5,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -21.34675407409668,
+        "swap": -18.74519157409668,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "christmas-season",
+      "none": {
+        "orig": -3.212165355682373,
+        "swap": -6.962165355682373,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -61.3125,
+        "swap": -51.65625,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -10.714998245239258,
+        "swap": -9.711091995239258,
+        "pick_swap": 1.0
+      }
+    },
+    {
+      "item": "city-state-Philadelphia",
+      "none": {
+        "orig": -0.34214475750923157,
+        "swap": -12.779644966125488,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -52.875003814697266,
+        "swap": -35.875003814697266,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -8.214468002319336,
+        "swap": -11.909780502319336,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "colosseum-currency",
+      "none": {
+        "orig": -0.17478977143764496,
+        "swap": -13.456039428710938,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -34.6562614440918,
+        "swap": -27.93751335144043,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -11.282127380371094,
+        "swap": -8.816307067871094,
+        "pick_swap": 1.0
+      }
+    },
+    {
+      "item": "element-color-gold2",
+      "none": {
+        "orig": -2.501837968826294,
+        "swap": -11.470587730407715,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -53.2187614440918,
+        "swap": -48.3750114440918,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -7.077997207641602,
+        "swap": -10.101434707641602,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "etym-frigg-position",
+      "none": {
+        "orig": -0.5673741102218628,
+        "swap": -3.8798742294311523,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -9.606958389282227,
+        "swap": -10.356958389282227,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -20.88550567626953,
+        "swap": -22.08081817626953,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "etym-saturn-position",
+      "none": {
+        "orig": -1.273777723312378,
+        "swap": -2.023777723312378,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -71.5625,
+        "swap": -70.3125,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -16.06079864501953,
+        "swap": -19.25611114501953,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "etym-wargod-month",
+      "none": {
+        "orig": -3.1978912353515625,
+        "swap": -2.8853912353515625,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -23.692276000976562,
+        "swap": -18.379776000976562,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -17.85709571838379,
+        "swap": -14.523599624633789,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-city-capital-Barcelona-Toronto",
+      "none": {
+        "orig": -0.16552580893039703,
+        "swap": -12.040525436401367,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -45.03127670288086,
+        "swap": -27.187528610229492,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -12.224418640136719,
+        "swap": -12.771293640136719,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-city-capital-Lyon-Naples",
+      "none": {
+        "orig": -0.31022417545318604,
+        "swap": -7.0602240562438965,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -31.547035217285156,
+        "swap": -18.187660217285156,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -11.994876861572266,
+        "swap": -11.994876861572266,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-city-capital-Naples-Barcelona",
+      "none": {
+        "orig": -0.021950509399175644,
+        "swap": -11.396950721740723,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -25.93755531311035,
+        "swap": -16.43755531311035,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -11.17605209350586,
+        "swap": -12.06667709350586,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-city-capital-Toronto-Lyon",
+      "none": {
+        "orig": -0.0366002582013607,
+        "swap": -15.169412612915039,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -33.09432601928711,
+        "swap": -17.68807601928711,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -10.740224838256836,
+        "swap": -13.638662338256836,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-city-continent-Toronto-Lyon",
+      "none": {
+        "orig": -1.5628163814544678,
+        "swap": -11.500316619873047,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -26.406822204589844,
+        "swap": -18.563072204589844,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -10.780768394470215,
+        "swap": -11.858893394470215,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-city-currency-Toronto-Beijing",
+      "none": {
+        "orig": -0.011922292411327362,
+        "swap": -16.53536033630371,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -43.000770568847656,
+        "swap": -20.68827247619629,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -12.782249450683594,
+        "swap": -11.782249450683594,
+        "pick_swap": 1.0
+      }
+    },
+    {
+      "item": "ex-city-currency-Toronto-Mumbai",
+      "none": {
+        "orig": -0.011922292411327362,
+        "swap": -19.732133865356445,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -36.56354522705078,
+        "swap": -36.034645080566406,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -12.782249450683594,
+        "swap": -17.800893783569336,
+        "pick_swap": 1.0
+      }
+    },
+    {
+      "item": "ex-city-language-Lyon-Naples",
+      "none": {
+        "orig": -0.29849258065223694,
+        "swap": -8.360992431640625,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -38.53159713745117,
+        "swap": -11.750346183776855,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -11.806068420410156,
+        "swap": -11.915443420410156,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-element-state-26-8",
+      "none": {
+        "orig": -3.177511215209961,
+        "swap": -5.615011215209961,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -40.96879577636719,
+        "swap": -38.18754577636719,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -10.43913459777832,
+        "swap": -11.47038459777832,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-element-state-26-80",
+      "none": {
+        "orig": -3.177511215209961,
+        "swap": -0.6775112152099609,
+        "pick_swap": 1.0
+      },
+      "swap_j": {
+        "orig": -56.78125,
+        "swap": -52.6875,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -10.43913459777832,
+        "swap": -11.30632209777832,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-element-state-8-26",
+      "none": {
+        "orig": -0.9711598753929138,
+        "swap": -7.096159934997559,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -51.15625,
+        "swap": -47.90625,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -10.24675178527832,
+        "swap": -9.91008186340332,
+        "pick_swap": 1.0
+      }
+    },
+    {
+      "item": "ex-element-state-8-80",
+      "none": {
+        "orig": -0.9711598753929138,
+        "swap": -7.221159934997559,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -57.15625,
+        "swap": -51.875,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -10.24675178527832,
+        "swap": -10.86979866027832,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-element-state-80-8",
+      "none": {
+        "orig": -2.7836174964904785,
+        "swap": -3.2836174964904785,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -37.87503433227539,
+        "swap": -39.25003433227539,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -11.278312683105469,
+        "swap": -11.653312683105469,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-element-symbol-11-26",
+      "none": {
+        "orig": -0.8616940975189209,
+        "swap": -7.1741943359375,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -56.875,
+        "swap": -33.25,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -13.596014976501465,
+        "swap": -9.912421226501465,
+        "pick_swap": 1.0
+      }
+    },
+    {
+      "item": "ex-element-symbol-26-79",
+      "none": {
+        "orig": -0.2526772916316986,
+        "swap": -14.877676963806152,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -47.296875,
+        "swap": -34.25,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -9.905489921569824,
+        "swap": -15.046114921569824,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex-planet-color-third-fourth",
+      "none": {
+        "orig": -2.9191861152648926,
+        "swap": -0.9816862344741821,
+        "pick_swap": 1.0
+      },
+      "swap_j": {
+        "orig": -51.375,
+        "swap": -47.1875,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -7.126736164093018,
+        "swap": -11.05642318725586,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex2-city-capital-Munich",
+      "none": {
+        "orig": -0.025833439081907272,
+        "swap": -13.307083129882812,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -30.32520294189453,
+        "swap": -14.500983238220215,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -11.850770950317383,
+        "swap": -13.397645950317383,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex2-city-capital-Osaka",
+      "none": {
+        "orig": -0.20606975257396698,
+        "swap": -11.487319946289062,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -30.641489028930664,
+        "swap": -16.375864028930664,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -12.379639625549316,
+        "swap": -13.551514625549316,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex2-city-continent-Lima",
+      "none": {
+        "orig": -7.326666831970215,
+        "swap": -7.951666831970215,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -41.03125,
+        "swap": -32.0,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -10.613590240478516,
+        "swap": -11.863590240478516,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex2-city-continent-Sydney",
+      "none": {
+        "orig": -2.1223607063293457,
+        "swap": -13.450485229492188,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -58.75,
+        "swap": -38.75,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -11.677497863769531,
+        "swap": -11.896247863769531,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex2-city-language-Cairo",
+      "none": {
+        "orig": -0.13033147156238556,
+        "swap": -9.880331039428711,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -24.125328063964844,
+        "swap": -13.562828063964844,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -9.85108757019043,
+        "swap": -11.62452507019043,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex2-city-language-Moscow",
+      "none": {
+        "orig": -0.36793237924575806,
+        "swap": -11.055432319641113,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -56.1875,
+        "swap": -35.78125,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -11.392268180847168,
+        "swap": -12.439143180847168,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex2-language-capital-Greek",
+      "none": {
+        "orig": -0.5713949799537659,
+        "swap": -11.837019920349121,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -38.81250762939453,
+        "swap": -21.1875057220459,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -10.453725814819336,
+        "swap": -16.477163314819336,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex2-language-capital-Hungarian",
+      "none": {
+        "orig": -0.13012844324111938,
+        "swap": -7.223878383636475,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -41.796875,
+        "swap": -24.6875,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -7.842122554779053,
+        "swap": -10.498373031616211,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex2-language-capital-Polish",
+      "none": {
+        "orig": -0.48428696393966675,
+        "swap": -12.33584976196289,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -41.1875,
+        "swap": -22.3125,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -9.723498344421387,
+        "swap": -13.024279594421387,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "ex2-language-capital-Swedish",
+      "none": {
+        "orig": -0.0769994929432869,
+        "swap": -12.15512466430664,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -50.421875,
+        "swap": -21.625,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -14.42689323425293,
+        "swap": -9.74720573425293,
+        "pick_swap": 1.0
+      }
+    },
+    {
+      "item": "ex2-river-capital-Thames",
+      "none": {
+        "orig": -0.21027809381484985,
+        "swap": -12.288403511047363,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -25.984983444213867,
+        "swap": -16.250608444213867,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -11.299236297607422,
+        "swap": -13.478923797607422,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "food-animal-butter",
+      "none": {
+        "orig": -0.39563703536987305,
+        "swap": -11.536262512207031,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -55.96875,
+        "swap": -50.5625,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -8.5081787109375,
+        "swap": -9.1761474609375,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "food-animal-honey",
+      "none": {
+        "orig": -1.1035833358764648,
+        "swap": -8.603583335876465,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -63.5078125,
+        "swap": -53.1875,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -6.138683319091797,
+        "swap": -9.904308319091797,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "fruit-grows-grape",
+      "none": {
+        "orig": -0.8090894222259521,
+        "swap": -8.277839660644531,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -35.75002670288086,
+        "swap": -24.000028610229492,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -7.507455348968506,
+        "swap": -8.886362075805664,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "func-filters-count",
+      "none": {
+        "orig": -0.25373974442481995,
+        "swap": -5.628739356994629,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -71.25001525878906,
+        "swap": -72.62501525878906,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -19.851337432861328,
+        "swap": -21.316181182861328,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "func-pumps-chambers",
+      "none": {
+        "orig": -1.0188071727752686,
+        "swap": -2.2688071727752686,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -75.9375,
+        "swap": -73.8125,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -21.229427337646484,
+        "swap": -19.562679290771484,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "gem-color-ruby",
+      "none": {
+        "orig": -3.4445552825927734,
+        "swap": -9.507055282592773,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -71.234375,
+        "swap": -66.125,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -12.067225456237793,
+        "swap": -10.106287956237793,
+        "pick_swap": 1.0
+      }
+    },
+    {
+      "item": "gem-source-pearl",
+      "none": {
+        "orig": -2.9791462421417236,
+        "swap": -10.807012557983398,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -91.328125,
+        "swap": -50.671875,
+        "pick_swap": 0.0
+      },
+      "swap_rand": {
+        "orig": -16.821760177612305,
+        "swap": -8.712791442871094,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "greatwall-ocean",
+      "none": {
+        "orig": -4.574787139892578,
+        "swap": -7.824787139892578,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -36.34375,
+        "swap": -28.500001907348633,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -11.728609085083008,
+        "swap": -8.853609085083008,
+        "pick_swap": 1.0
+      }
+    },
+    {
+      "item": "holiday-month-christmas2",
+      "none": {
+        "orig": -2.6276795864105225,
+        "swap": -10.065179824829102,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -61.34375,
+        "swap": -45.3125,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -12.331077575683594,
+        "swap": -13.377952575683594,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "instr-body-trumpet",
+      "none": {
+        "orig": -1.0701454877853394,
+        "swap": -11.226395606994629,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -55.1875,
+        "swap": -54.40625,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -9.050487518310547,
+        "swap": -10.788768768310547,
+        "pick_swap": 0.0
+      }
+    },
+    {
+      "item": "instr-hit-drums",
+      "none": {
+        "orig": -3.972090244293213,
+        "swap": -12.159590721130371,
+        "pick_swap": 0.0
+      },
+      "swap_j": {
+        "orig": -53.3125,
+        "swap": -47.375,
+        "pick_swap": 1.0
+      },
+      "swap_rand": {
+        "orig": -8.243064880371094,
+        "swap": -12.336814880371094,
+        "pick_swap": 0.0
+      }
+    }
+  ],
+  "provenance": {
+    "study_id": "jspace-part2",
+    "evidence_id": "r5-swap-positive-control-think-v1",
+    "tier": "pilot",
+    "code_commit": "8f7bc42bf19fd731d4679bc604d67a652cb49c2e",
+    "dirty_tree": false,
+    "branch": "interp_jspace_part2",
+    "package_version": "jspace_part2 0.1.0",
+    "command": "python -m jspace_part2.experiments.r5_swap_control",
+    "config_path": null,
+    "config_sha256": null,
+    "inputs": {
+      "lens": "05b9290a34bb50bc5c68e65dfb05d6b84222fb0dd736fa2f6748c261140ef053",
+      "probe_swap": "a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796"
+    },
+    "model": {
+      "id": "/content/models/olmo3-think",
+      "revision": null,
+      "source": "local-dir",
+      "config_sha256": "d47a120cb2669cd46482d5c2da9488903b67759ca167cd85c1127b2e05755f95"
+    },
+    "jlens_commit": null,
+    "seed": 777,
+    "created_utc": "2026-07-28T08:12:24Z"
+  }
+}

@@ -1,0 +1,78 @@
+{
+ "alpha": 0.05,
+ "bound": "Optimistic known-SD Gaussian one-sided single-component test. It ignores SD estimation, heavy tails, and the second required IUT component, so it is a necessary lower bound, not a new power claim.",
+ "candidate_joint_sesoi_nats": 0.25,
+ "candidate_sesoi_optimistic_minimum_families": 3562,
+ "consumed_phase3_bridge_specific_mean_nats": 1.3422544704415857,
+ "decision_options_requiring_review": [
+  "Retain Bank B sealed and move P4-P1 to estimation-only future work, removing it prospectively from the Phase 4 primary family.",
+  "Design an answer-direction-orthogonal bridge intervention and obtain a new outcome-blind variability/power ruler before use.",
+  "Expand to a genuinely adequate number of independent families; the lower bound rules out a split-only repair."
+ ],
+ "evidence_id": "p4-bank-b-design-feasibility-dev-v1",
+ "existing_bank_total_families": 40,
+ "existing_split": {
+  "confirmatory": 10,
+  "development": 20,
+  "replication": 10
+ },
+ "family_sd_nats": 6.0,
+ "feasibility_verdict": "Reallocating or using all 40 existing families cannot power the 0.25-nat SESOI. The design needs a substantively new estimand or must leave P4-P1 outside the Phase 4 confirmatory family; raising the SESOI solely to obtain power is not licensed.",
+ "freeze_ready": false,
+ "mde_by_available_family_count": [
+  {
+   "n_families": 10,
+   "optimistic_single_component_mde_nats": 4.717754342403931,
+   "registered_heavy_tail_iut_mde_nats": null
+  },
+  {
+   "n_families": 20,
+   "optimistic_single_component_mde_nats": 3.335956087486101,
+   "registered_heavy_tail_iut_mde_nats": 4.0
+  },
+  {
+   "n_families": 40,
+   "optimistic_single_component_mde_nats": 2.3588771712019656,
+   "registered_heavy_tail_iut_mde_nats": 3.0
+  }
+ ],
+ "minimum_families_by_effect": [
+  {
+   "effect_nats": 0.25,
+   "minimum_families": 3562
+  },
+  {
+   "effect_nats": 0.5,
+   "minimum_families": 891
+  },
+  {
+   "effect_nats": 1.0,
+   "minimum_families": 223
+  },
+  {
+   "effect_nats": 1.3422544704415857,
+   "minimum_families": 124
+  },
+  {
+   "effect_nats": 1.5,
+   "minimum_families": 99
+  },
+  {
+   "effect_nats": 2.0,
+   "minimum_families": 56
+  },
+  {
+   "effect_nats": 3.0,
+   "minimum_families": 25
+  },
+  {
+   "effect_nats": 4.0,
+   "minimum_families": 14
+  }
+ ],
+ "outcome_blinding": "Uses only the registered consumed Phase 3 variability summary; no Bank B outcome is opened.",
+ "phase3_mean_optimistic_minimum_families": 124,
+ "power_target": 0.8,
+ "schema_version": 1,
+ "source_power_evidence_id": "p4-bank-b-power-dev-v1"
+}

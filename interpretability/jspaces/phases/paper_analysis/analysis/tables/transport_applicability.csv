@@ -1,0 +1,62 @@
+model,checkpoint,layer,epsilon,gate,n_pass,n_rows,metric,value,ci_low,ci_high,route,source_evidence_id
+Gemma-4-31B,gemma4-31b,L22,0.1,declared-dose tangent gate,0,12,bootstrap_tre,1.3569144747808446,1.0132873480989342,3.3355853856392974,local_tangent_mismatch,gm-jvp-gemma-stage1-v1;gm2-stage1-relicense-v1
+Gemma-4-31B,gemma4-31b,L30,0.1,declared-dose tangent gate,0,12,bootstrap_tre,1.572969058591358,1.4457852496973689,1.8705856100689189,local_tangent_mismatch,gm-jvp-gemma-stage1-v1;gm2-stage1-relicense-v1
+Gemma-4-31B,gemma4-31b,L37,0.1,declared-dose tangent gate,0,12,bootstrap_tre,3.5249945517148014,3.1314209956894814,4.158700986575693,local_tangent_mismatch,gm-jvp-gemma-stage1-v1;gm2-stage1-relicense-v1
+Gemma-4-31B,gemma4-31b,L44,0.1,declared-dose tangent gate,0,12,bootstrap_tre,5.364652422353116,5.173569741121466,6.29218961902985,local_tangent_mismatch,gm-jvp-gemma-stage1-v1;gm2-stage1-relicense-v1
+Gemma-4-31B,gemma4-31b,L52,0.1,declared-dose tangent gate,0,12,bootstrap_tre,4.385608721499301,4.010356274283009,5.033870017291542,local_tangent_mismatch,gm-jvp-gemma-stage1-v1;gm2-stage1-relicense-v1
+OLMo-3 Base,base,L24,0.001,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L24,0.0025,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L24,0.005,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L24,0.01,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L24,0.02,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L24,0.05,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L24,0.1,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L32,0.001,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L32,0.0025,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L32,0.005,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L32,0.01,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L32,0.02,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L32,0.05,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L32,0.1,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L40,0.001,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L40,0.0025,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L40,0.005,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L40,0.01,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L40,0.02,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L40,0.05,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L40,0.1,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L56,0.001,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L56,0.0025,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L56,0.005,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L56,0.01,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L56,0.02,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L56,0.05,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3 Base,base,L56,0.1,H6 cell floor 0.90,9,12,cell_pass_fraction,0.75,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L24,0.001,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L24,0.0025,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L24,0.005,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L24,0.01,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L24,0.02,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L24,0.05,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L24,0.1,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L32,0.001,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L32,0.0025,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L32,0.005,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L32,0.01,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L32,0.02,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L32,0.05,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L32,0.1,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L40,0.001,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L40,0.0025,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L40,0.005,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L40,0.01,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L40,0.02,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L40,0.05,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L40,0.1,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L56,0.001,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L56,0.0025,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L56,0.005,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L56,0.01,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L56,0.02,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L56,0.05,H6 cell floor 0.90,0,12,cell_pass_fraction,0.0,,,fail,ol2-transport-validation-joint-v1
+OLMo-3.1 Think,olmo31_think,L56,0.1,H6 cell floor 0.90,12,12,cell_pass_fraction,1.0,,,pass,ol2-transport-validation-joint-v1

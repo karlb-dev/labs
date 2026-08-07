@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# Durable GPU queue for the registered Qwen n=250 follow-up gates.
+#
+# The n=250 evidence must already be registered and its SHA-256 must replace
+# the PENDING_REGISTERED_N250_LENS_SHA256 sentinels in both downstream YAMLs.
+# Every producer is independently resumable and registry-idempotent.
+set -euo pipefail
+
+PHASE4_ROOT="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+RUN_ROOT="${JSPACE4_RUN_ROOT:-/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731}"
+LOCAL_WORK="${JSPACE4_LOCAL_WORK:-/content/sl4_work}"
+HF_CACHE="${HF_HUB_CACHE:-/content/hf_local}"
+MPL_CACHE="${MPLCONFIGDIR:-/tmp/matplotlib-phase4}"
+QUEUE_LOG="$RUN_ROOT/qwen_postfit_queue_20260801.log"
+HEARTBEAT_LOG="$RUN_ROOT/QWEN_POSTFIT_QUEUE_WATCHDOG.log"
+EXPECTED_BRANCH="${JSPACE4_EXPECTED_BRANCH:-interp_jspace_part2}"
+REGISTRY_PATH="interpretability/jspaces/phases/phase4/reports/evidence_events.jsonl"
+
+if [[ "${1:-}" == "--approval-probe" ]]; then
+  printf '%s\n' "qwen post-fit queue entrypoint is installed; no GPU work started"
+  exit 0
+fi
+
+export JSPACE4_RUN_ROOT="$RUN_ROOT"
+export JSPACE4_LOCAL_WORK="$LOCAL_WORK"
+export HF_HUB_CACHE="$HF_CACHE"
+export MPLCONFIGDIR="$MPL_CACHE"
+export CUDA_VISIBLE_DEVICES=0
+export PYTHONUNBUFFERED=1
+
+mkdir -p "$RUN_ROOT" "$LOCAL_WORK" "$MPL_CACHE"
+cd "$REPO_ROOT"
+
+if rg -n "PENDING_REGISTERED_N250_LENS_SHA256" \
+    interpretability/jspaces/phases/phase4/configs/p4_qwen_lens_convergence_drawA_dev.yaml \
+    interpretability/jspaces/phases/phase4/configs/p4_qwen_multilens_functional_gate_dev.yaml; then
+  printf '%s\n' "post-fit queue refused: registered n=250 lens SHA is not bound" >&2
+  exit 2
+fi
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  printf '%s\n' "post-fit queue refused: repository is not clean" >&2
+  git status --short >&2
+  exit 3
+fi
+if [[ "$(git branch --show-current)" != "$EXPECTED_BRANCH" ]]; then
+  printf '%s\n' "post-fit queue refused: unexpected Git branch" >&2
+  git branch --show-current >&2
+  exit 4
+fi
+
+heartbeat() {
+  while true; do
+    gpu_status=$(nvidia-smi \
+      --query-gpu=utilization.gpu,memory.used,memory.total \
+      --format=csv,noheader 2>/dev/null || printf '%s' unavailable)
+    printf '%s queue_pid=%s gpu=[%s]\n' \
+      "$(date -u +%FT%TZ)" "$$" "$gpu_status" >> "$HEARTBEAT_LOG"
+    sleep 300
+  done
+}
+
+heartbeat &
+HEARTBEAT_PID=$!
+trap 'kill "$HEARTBEAT_PID" 2>/dev/null || true' EXIT
+
+run_stage() {
+  local stage=$1
+  shift
+  printf '%s START %s commit=%s\n' \
+    "$(date -u +%FT%TZ)" "$stage" "$(git rev-parse HEAD)" | tee -a "$QUEUE_LOG"
+  "$@" 2>&1 | tee -a "$QUEUE_LOG"
+  printf '%s COMPLETE %s\n' "$(date -u +%FT%TZ)" "$stage" | tee -a "$QUEUE_LOG"
+}
+
+bank_registry_event() {
+  local stage=$1
+  mapfile -t changes < <(git status --porcelain)
+  if (( ${#changes[@]} == 0 )); then
+    printf '%s REGISTRY_ALREADY_CLEAN %s\n' \
+      "$(date -u +%FT%TZ)" "$stage" | tee -a "$QUEUE_LOG"
+    return
+  fi
+  if (( ${#changes[@]} != 1 )) || \
+      [[ "${changes[0]:3}" != "$REGISTRY_PATH" ]]; then
+    printf '%s\n' \
+      "post-fit queue refused to auto-bank unexpected repository changes" >&2
+    git status --short >&2
+    exit 5
+  fi
+  git add "$REGISTRY_PATH"
+  git commit -m "data: register $stage"
+  git push origin "$EXPECTED_BRANCH"
+  printf '%s REGISTRY_BANKED %s commit=%s\n' \
+    "$(date -u +%FT%TZ)" "$stage" "$(git rev-parse HEAD)" | tee -a "$QUEUE_LOG"
+}
+
+run_stage qwen_lens_convergence \
+  python -m jspace_phase4.experiments.p4_qwen_lens_convergence \
+  --config interpretability/jspaces/phases/phase4/configs/p4_qwen_lens_convergence_drawA_dev.yaml
+bank_registry_event qwen_lens_convergence
+
+run_stage qwen_lens_influence_prompt112 \
+  python -m jspace_phase4.experiments.p4_qwen_lens_influence \
+  --config interpretability/jspaces/phases/phase4/configs/p4_qwen_lens_influence_prompt112_dev.yaml
+bank_registry_event qwen_lens_influence_prompt112
+
+run_stage qwen_multilens_functional_gate \
+  python -m jspace_phase4.experiments.p4_qwen_multilens_functional_gate \
+  --config interpretability/jspaces/phases/phase4/configs/p4_qwen_multilens_functional_gate_dev.yaml
+bank_registry_event qwen_multilens_functional_gate
+
+run_stage qwen_mode_model_gate \
+  python -m jspace_phase4.experiments.p4_qwen_mode_model_gate \
+  --config interpretability/jspaces/phases/phase4/configs/p4_qwen_mode_model_gate_dev.yaml
+bank_registry_event qwen_mode_model_gate
+
+printf '%s QUEUE_COMPLETE\n' "$(date -u +%FT%TZ)" | tee -a "$QUEUE_LOG"

@@ -1,0 +1,12 @@
+evidence_id: p4-lineage-analysis-olmo3-base-dev-v1
+tier: phase4-development
+slug: olmo3-base
+display_name: OLMo-3 32B base
+figure_stem: p4f03_olmo3_base_development
+grid_evidence_id: p4-lineage-grid-olmo3-base-dev-v1
+grid_parquet_uri: artifact://phase4/metrics/olmo3-base/lineage_grid/p4-lineage-grid-olmo3-base-dev-v1/lineage_grid_olmo3-base.parquet
+grid_result_uri: artifact://phase4/metrics/olmo3-base/lineage_grid/p4-lineage-grid-olmo3-base-dev-v1/lineage_grid_olmo3-base.json
+grid_manifest_uri: artifact://phase4/metrics/olmo3-base/lineage_grid/p4-lineage-grid-olmo3-base-dev-v1/input_manifest.json
+g5_parquet_uri: artifact://phase4/metrics/olmo3-base/g5_bank/p4-g5-bank-olmo3-base-dev-v1/g5_bank_olmo3-base.parquet
+bootstrap_draws: 100000
+bootstrap_seed: 31337

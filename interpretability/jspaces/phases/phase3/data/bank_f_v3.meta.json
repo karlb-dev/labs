@@ -1,0 +1,137 @@
+{
+ "payload": {
+  "family_counts": {
+   "bridge_city_to_country": 4,
+   "capital_to_currency": 5,
+   "capital_to_language": 6,
+   "car_model_maker_to_hq_city": 4,
+   "character_creator_to_birth_city": 4,
+   "cheese_origin_to_capital": 4,
+   "club_stadium_to_city": 3,
+   "company_hq_to_country": 5,
+   "currency_to_capital": 4,
+   "dish_country_to_language": 4,
+   "film_director_to_birth_country": 4,
+   "flag_carrier_to_currency": 4,
+   "game_studio_to_hq_city": 4,
+   "highest_peak_to_currency": 4,
+   "invention_inventor_to_nationality": 4,
+   "island_to_capital": 4,
+   "landmark_city_to_country": 5,
+   "landmark_city_to_river": 5,
+   "language_creator_to_nationality": 4,
+   "museum_city_to_country": 2,
+   "national_park_to_capital": 4,
+   "novel_author_to_birth_country": 5,
+   "opera_composer_to_nationality": 5,
+   "ore_metal_to_symbol": 4,
+   "painting_painter_to_movement": 4,
+   "poem_poet_to_nationality": 4,
+   "product_company_to_hq_city": 4,
+   "river_mouth_to_capital": 5,
+   "space_mission_agency_to_country": 4,
+   "subunit_currency_to_country": 4,
+   "theory_scientist_to_birth_city": 5
+  },
+  "n_authored": 135,
+  "n_families": 31,
+  "n_shipped": 131,
+  "reference_verification": {
+   "hop_failures": {
+    "capital_to_currency:warsaw": [
+     "answer not stated on bridge page"
+    ],
+    "club_stadium_to_city:real-betis": [
+     "bridge not stated on source page"
+    ]
+   },
+   "missing_pages": [],
+   "n_verified": 133,
+   "reference": "/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729/bank_reference/wiki_reference_v1.jsonl"
+  },
+  "validation": {
+   "alias_prefix_issues": {},
+   "duplicate_fact_ids": [],
+   "duplicate_triples": [],
+   "family_counts": {
+    "bridge_city_to_country": 4,
+    "capital_to_currency": 6,
+    "capital_to_language": 6,
+    "car_model_maker_to_hq_city": 4,
+    "character_creator_to_birth_city": 4,
+    "cheese_origin_to_capital": 4,
+    "club_stadium_to_city": 4,
+    "company_hq_to_country": 5,
+    "currency_to_capital": 4,
+    "dish_country_to_language": 4,
+    "film_director_to_birth_country": 4,
+    "flag_carrier_to_currency": 4,
+    "game_studio_to_hq_city": 4,
+    "highest_peak_to_currency": 4,
+    "invention_inventor_to_nationality": 4,
+    "island_to_capital": 4,
+    "landmark_city_to_country": 5,
+    "landmark_city_to_river": 5,
+    "language_creator_to_nationality": 4,
+    "museum_city_to_country": 4,
+    "national_park_to_capital": 4,
+    "novel_author_to_birth_country": 5,
+    "opera_composer_to_nationality": 5,
+    "ore_metal_to_symbol": 4,
+    "painting_painter_to_movement": 4,
+    "poem_poet_to_nationality": 4,
+    "product_company_to_hq_city": 4,
+    "river_mouth_to_capital": 5,
+    "space_mission_agency_to_country": 4,
+    "subunit_currency_to_country": 4,
+    "theory_scientist_to_birth_city": 5
+   },
+   "n_bundles": 135,
+   "n_families": 31,
+   "n_with_counterfactual": 135,
+   "ok": false,
+   "phase2_triple_collisions": [],
+   "relation_group_counts": {
+    "geo_culture": 12,
+    "geo_physical": 13,
+    "geo_political": 38,
+    "org": 13,
+    "org_science": 4,
+    "person_culture": 26,
+    "person_science": 9,
+    "science": 4,
+    "sport": 4,
+    "tech": 12
+   },
+   "template_reuse": {},
+   "violations": {
+    "museum_city_to_country:the-egyptian-museum": [
+     "composed: ANSWER leaks into the prompt",
+     "bridge_supplied: ANSWER leaks into the prompt"
+    ],
+    "museum_city_to_country:the-louvre-abu-dhabi": [
+     "composed: BRIDGE leaks into the primary prompt"
+    ]
+   }
+  }
+ },
+ "payload_sha256": "53fc63a90014cf5a34fae956e5e551021135c9e776d5a1db4d25e4088adb3a9f",
+ "provenance": {
+  "branch": "interp_jspace_part2",
+  "code_commit": "f5de0525217147c48ae88c44e7ec58845e744041",
+  "command": "python -m jspace_phase3.experiments.author_bank_f",
+  "config_path": null,
+  "config_sha256": null,
+  "created_utc": "2026-07-30T00:27:25Z",
+  "dirty_tree": true,
+  "evidence_id": "p3-bank-f-v3",
+  "inputs": {},
+  "jlens_commit": null,
+  "model": null,
+  "package_version": "jspace_phase3 0.1.0",
+  "seed": 0,
+  "study_id": "jspace-phase3",
+  "tier": "phase3-development"
+ },
+ "schema_version": 2
+}

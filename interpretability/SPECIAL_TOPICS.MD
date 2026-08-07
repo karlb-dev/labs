@@ -1280,5 +1280,5 @@ open model with the deflationary twin of each instrument built in
 (energy-matched controls, foil-calibrated detectors, matched-live ablation
 controls), and add a thinking-model extension the original could not run.
 Spec: `labs/lab37_jspace_workspace.md`. Code, results, figures, and the
-living LaTeX handout: `jspace/`. Status: v1 complete, v2 instrument audit in
+living LaTeX handout: `interpretability/jspaces/phases/phase1/`. Status: v1 complete, v2 instrument audit in
 progress; **not yet canon** — promotion criteria in the spec.

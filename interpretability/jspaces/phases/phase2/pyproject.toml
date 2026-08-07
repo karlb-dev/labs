@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jspace-part2"
+version = "0.1.0"
+description = "J-space Part 2: publication-conformance replication harness (repair era)"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.4",
+  "transformers>=4.44",
+  "huggingface_hub>=0.24",
+  "numpy>=1.26",
+  "pandas>=2.0",
+  "pyarrow>=14",
+  "matplotlib>=3.8",
+  "pyyaml>=6.0",
+  "scipy>=1.11",        # stats.py: TOST, mixed-model fallbacks
+  "accelerate>=0.30",   # device_map model loading in every GPU runner
+  "safetensors>=0.4",
+]
+# jlens is NOT a PyPI package: install the pinned source, exactly
+#   pip install -e git+https://github.com/anthropics/jacobian-lens@581d3986#egg=jlens
+# Exact environment for reproduction: constraints.txt (pip install -c).
+
+[project.scripts]
+jspace-part2 = "jspace_part2.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["jspace_part2*"]

@@ -1,0 +1,10 @@
+evidence_id: p4-g5-bank-olmo31-think-dev-v1
+tier: phase4-development
+slug: olmo31-think
+model_uri: model://allenai/Olmo-3.1-32B-Think@832c3f543499af8fe68b88359501de9cb7840544
+banks:
+  - repo://interpretability/jspace_phase3/data/bank_f_v7.jsonl
+  - repo://interpretability/jspace_phase3/data/bank_s_v3.jsonl
+max_new_tokens: 8
+checkpoint_every: 10
+base_seed: 31337

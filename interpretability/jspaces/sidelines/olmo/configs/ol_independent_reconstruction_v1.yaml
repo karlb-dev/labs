@@ -1,0 +1,65 @@
+evidence_id: ol-independent-reconstruction-v1
+tier: methods
+branch: interp_jspace_olmo_lineage
+scientific_import_boundary: 3b041735d8b842de46a9c0a474fccd0c44e0841a
+
+inputs:
+  bank_w:
+    config: configs/ol_bank_w_capability_v1.yaml
+    think_evidence_id: ol-bank-w-capability-olmo31-think-dev-v1
+    think_rows_sha256: badde2c5508cf954503062a57b99310a84bb0f539ac5313966c05f7227ad91c5
+    think_result_sha256: 944c739191a0587eb81a7fa766ca8810d4f0dcffc9461b9d42481324f2ad5907
+    instruct_evidence_id: ol-bank-w-capability-olmo31-instruct-dev-v1
+    instruct_rows_sha256: 73223060bbcf1580648715dff72497448f55b9d85167f5a9d52149f1f94ce467
+    instruct_result_sha256: 44f6399aadd7f5507f1477b05d9dc99409829848149a1d3b81d5f5de3b1636aa
+    joint_evidence_id: ol-bank-w-capability-joint-dev-v1
+    joint_json_sha256: 1f93c53444943c354109bd43195001d9537d238b6a1f0d580d679187ff35ce3d
+  capacity:
+    config: configs/ol_capacity_v1.yaml
+    model_evidence_ids:
+      - ol-capacity-olmo3-base-dev-v1
+      - ol-capacity-olmo3-think-dev-v1
+      - ol-capacity-olmo31-think-dev-v1
+      - ol-capacity-olmo31-instruct-dev-v1
+    joint_evidence_id: ol-capacity-joint-dev-v1
+    joint_json_sha256: cb35a22a0176f568fc7368285af65b148f342d834d3ca9457d78f3bb1dcd1492
+    joint_table_sha256: b3ad02e9d66340b33748a2b74d3e69cc9b8f6a366ba6ce4d256c641d1dae247e
+    joint_bootstrap_sha256: c13cebed02b985b93fa1220bd1a811bdad9a334d2f52f4579929df33cf7810fa
+  geometry:
+    config: configs/ol_geometry_v1.yaml
+    joint_evidence_id: ol-geometry-joint-dev-v1
+    result_sha256: c09d8e7387075c2b6d8b5a05bf41d439f2095d55d2491eb5f44c4438a30d0f4c
+    layer_table_sha256: 8692836d47eeac989523e4b4c891bfd151863be7fa6bb79bf3527cc52ad39097
+    selection_table_sha256: c2826b14cd9890d1d6c3447c4c7dd7e9cc736291bf0e87e9357b0a6b4f1673bd
+    readout_table_sha256: 93fd21086f84426f902b4432e51197c440eae0555d8627e60f329a9a87b00bd9
+    figure_evidence_id: ol-geometry-figures-dev-v1
+    figure_manifest_sha256: 1bb734323272a38a1c3256534462ea0196e722ac325b76636a3b3ac6768e1d9c
+  checkpoint_inventory:
+    evidence_id: ol-checkpoint-inventory-v2
+    json_sha256: e5931c3fb646f7fd3ca189187d4ad76bc577f36de17d84a16aba61f51b22ad9a
+
+sentinel:
+  model_slug: olmo31-think
+  model_id: allenai/Olmo-3.1-32B-Think
+  revision: 832c3f543499af8fe68b88359501de9cb7840544
+  item_id: bank-w:deferred_recall:template-01:seed-00:high:derived:once
+  candidate_log_probability_atol: 0.00001
+  candidate_batch_size: 8
+  require_prediction_match: true
+  require_margin_match: true
+  require_all_weight_shard_hashes: true
+
+figure_reconstruction:
+  require_exact_png_bytes: true
+  require_all_pdf_outputs: true
+
+outputs:
+  json: olmo-artifact://metrics/reconstruction/ol-independent-reconstruction-v1.json
+  markdown: olmo-artifact://metrics/reconstruction/ol-independent-reconstruction-v1.md
+  figure_directory: olmo-artifact://metrics/reconstruction/figures
+
+claim_boundary: >-
+  Methods-only independent reconstruction of already registered development
+  evidence. The clean-process sentinel repeats one frozen Bank-W baseline row;
+  it does not open a new item, model comparison, intervention, confirmatory,
+  replication, Phase 4, Gemma, receiver, O5, or intermediate-stage outcome.

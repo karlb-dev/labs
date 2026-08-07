@@ -1,0 +1,17 @@
+# Block B primary confirmatory grid — olmo31-think. Runs ONLY post-freeze.
+evidence_id: p3-replication-grid-olmo31-think-v1
+tier: phase3-replication
+slug: olmo31-think
+model_uri: model://allenai/Olmo-3.1-32B-Think@832c3f543499af8fe68b88359501de9cb7840544
+lens_uri: drive://lens/olmo31think_lens.pt
+banks: [bank_f_v7.jsonl, bank_s_v3.jsonl]
+partition_uri: interpretability/jspaces/phases/phase3/preregistration/partition_phase3.json
+partition_side: replication
+band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+k: 10
+protect_top_k: 10
+rand_seed: 31337
+stop_check_n: 25
+stop_tol: 0.05
+bridge_arms: false
+reduced_arms: true

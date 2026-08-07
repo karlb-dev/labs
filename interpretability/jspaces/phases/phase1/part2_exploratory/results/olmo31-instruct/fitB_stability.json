@@ -1,0 +1,90 @@
+{
+  "median_cos_vecJ": 0.99605,
+  "per_layer": {
+    "4": {
+      "cos_vecJ": 0.94056,
+      "norm_ratio": 1.0065
+    },
+    "8": {
+      "cos_vecJ": 0.95958,
+      "norm_ratio": 1.0032
+    },
+    "12": {
+      "cos_vecJ": 0.96951,
+      "norm_ratio": 1.0046
+    },
+    "16": {
+      "cos_vecJ": 0.97733,
+      "norm_ratio": 1.001
+    },
+    "20": {
+      "cos_vecJ": 0.98604,
+      "norm_ratio": 1.001
+    },
+    "22": {
+      "cos_vecJ": 0.98911,
+      "norm_ratio": 0.9996
+    },
+    "24": {
+      "cos_vecJ": 0.99178,
+      "norm_ratio": 0.9969
+    },
+    "26": {
+      "cos_vecJ": 0.9935,
+      "norm_ratio": 0.9941
+    },
+    "28": {
+      "cos_vecJ": 0.99461,
+      "norm_ratio": 0.9925
+    },
+    "30": {
+      "cos_vecJ": 0.99545,
+      "norm_ratio": 0.9929
+    },
+    "32": {
+      "cos_vecJ": 0.99605,
+      "norm_ratio": 0.9931
+    },
+    "34": {
+      "cos_vecJ": 0.99651,
+      "norm_ratio": 0.9931
+    },
+    "36": {
+      "cos_vecJ": 0.99692,
+      "norm_ratio": 0.9926
+    },
+    "38": {
+      "cos_vecJ": 0.99726,
+      "norm_ratio": 0.9922
+    },
+    "40": {
+      "cos_vecJ": 0.99756,
+      "norm_ratio": 0.9924
+    },
+    "42": {
+      "cos_vecJ": 0.9979,
+      "norm_ratio": 0.9929
+    },
+    "44": {
+      "cos_vecJ": 0.99818,
+      "norm_ratio": 0.9937
+    },
+    "48": {
+      "cos_vecJ": 0.99873,
+      "norm_ratio": 0.9955
+    },
+    "52": {
+      "cos_vecJ": 0.99919,
+      "norm_ratio": 0.997
+    },
+    "56": {
+      "cos_vecJ": 0.99957,
+      "norm_ratio": 0.9995
+    },
+    "60": {
+      "cos_vecJ": 0.99986,
+      "norm_ratio": 1.0
+    }
+  },
+  "note": "independent corpus draws (disjoint rows, seeds 0/1); dictionary-level + frozen-selection Jaccard = GPU pass, queued"
+}

@@ -1,0 +1,51 @@
+{
+ "audit_tier": "engineering-diagnostic-not-registered-evidence",
+ "interpretation": "All three same-corpus increments pass; agreement increases monotonically over the observed nested-fit increments. This descriptive progression does not establish a convergence rate, sparse-selection invariance, causal invariance, or external published-recipe interchangeability.",
+ "metric_definition": "Frozen assay L20\u2013L44; task q50/q05 are conservative minima across answer-only, bridge-only, and shared task strata, computed by structural_metrics; operator values are assay-band medians.",
+ "rows": [
+  {
+   "assay_key": "assay_L20_L44",
+   "comparison_id": "a120_vs_a250",
+   "event": "p4-qwen-lens-convergence-drawA-n120-n250-dev-v1",
+   "label": "A120\u2013A250",
+   "minus_alpha_identity_operator_cosine": 0.9955102205276489,
+   "minus_identity_operator_cosine": 0.9987157583236694,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-lens-convergence/lens_convergence/p4-qwen-lens-convergence-drawA-n120-n250-dev-v1/convergence_result.json",
+   "raw_operator_cosine": 0.9958543181419373,
+   "sha256": "c3765a216bb072d9feff3ac147874cc96146aab324069b53968379d62861fa9d",
+   "task_q05_conservative": 0.9930787086486816,
+   "task_q50_conservative": 0.9952232241630554
+  },
+  {
+   "assay_key": "assay_L20_L44",
+   "comparison_id": "a250_vs_a500",
+   "event": "p4-qwen-lens-convergence-drawA-n250-n500-dev-v1",
+   "label": "A250\u2013A500",
+   "minus_alpha_identity_operator_cosine": 0.997738778591156,
+   "minus_identity_operator_cosine": 0.9993554353713989,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-lens-convergence-a250-a500/lens_convergence/p4-qwen-lens-convergence-drawA-n250-n500-dev-v1/convergence_result.json",
+   "raw_operator_cosine": 0.9979121088981628,
+   "sha256": "80def8faa3fb411390263ac92740edf88bb5a7bcaaff8c80712554cb872f3ea7",
+   "task_q05_conservative": 0.9968382120132446,
+   "task_q50_conservative": 0.9977147579193115
+  },
+  {
+   "assay_key": "assay_L20_L44",
+   "comparison_id": "a500_vs_a1000",
+   "event": "p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1",
+   "label": "A500\u2013A1000",
+   "minus_alpha_identity_operator_cosine": 0.9986323118209839,
+   "minus_identity_operator_cosine": 0.9996100664138794,
+   "path": "/content/drive/MyDrive/interpret/special-lab-1/phase4_20260731/metrics/qwen36-27b-lens-convergence-a500-a1000/lens_convergence/p4-qwen-lens-convergence-drawA-n500-n1000-dev-v1/convergence_result.json",
+   "raw_operator_cosine": 0.9987391829490662,
+   "sha256": "eaf8a63ed038eedaabbbd037be26984a454cddd4182bb42c3e37270a91ec193d",
+   "task_q05_conservative": 0.9981223940849304,
+   "task_q50_conservative": 0.9987020492553711
+  }
+ ],
+ "schema_version": 1,
+ "thresholds": {
+  "task_q05_min": 0.9,
+  "task_q50_min": 0.95
+ }
+}

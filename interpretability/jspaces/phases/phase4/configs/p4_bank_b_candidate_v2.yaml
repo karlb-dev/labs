@@ -1,0 +1,123 @@
+evidence_id: p4-bank-b-candidate-v2
+tier: methods
+model_uri: model://Qwen/Qwen3.6-27B@6a9e13bd6fc8f0983b9b99948120bc37f49c13e9
+
+base_candidate:
+  evidence_id: p4-bank-b-candidate-v1
+  bank_uri: repo://interpretability/jspace_phase4/data/bank_b_candidate_v1.jsonl
+  bank_sha256: de0d718baf9a509ad76b6f8afd9cce112228f2221df28aecdb04dd9dd84852c6
+  sources_uri: repo://interpretability/jspace_phase4/data/bank_b_source_verification_v1.jsonl
+  sources_sha256: 4f8f5269f2ef6f6f8f98876af1c41e47b7b51c690bfce8d6300d42cf9e2b3a56
+  partition_uri: repo://interpretability/jspace_phase4/data/bank_b_partition_candidate_v1.json
+  partition_sha256: 05baa850820397bd3cea88866ba5f07da44c974c6972d501eddbdb08f20c851a
+  audit_uri: repo://interpretability/jspace_phase4/data/bank_b_audit_v1.json
+  audit_sha256: d018d47a72ac1bb3cfec6c03e249a6a48b92ebd5da53948c425aaa54cc0c423e
+
+base_author_config:
+  uri: repo://interpretability/jspace_phase4/configs/p4_bank_b_candidate.yaml
+  sha256: 5874d0d816660272f6a27ac652f2fdcff70c7bdc7dd0ed98a1c97e8513663709
+
+base_verification:
+  evidence_id: p4-bank-b-restcountries-verification-dev-v1
+  rows_uri: artifact://phase4/metrics/bank-b-restcountries-verification/p4-bank-b-restcountries-verification-dev-v1/verification_rows.jsonl
+  rows_sha256: 95e46ea7288d4f281579897297c98e04d14cd64931ad6f962e686116965d87b5
+  result_uri: artifact://phase4/metrics/bank-b-restcountries-verification/p4-bank-b-restcountries-verification-dev-v1/verification_result.json
+  result_sha256: 0978b0079c1ce02856b387a7ab8115d71e4a54cd59f1a4eb3493d90933be8230
+
+# This finite list is frozen from the registered v1 audit, before v2 is
+# regenerated or reverified. "accepted" lists are genuine co-valid answers;
+# the first canonical value remains the deterministic primary alias.
+corrections:
+  Burundi:
+    relations:
+      capital:
+        canonical: Gitega
+        accepted: [Gitega]
+  Cape Verde:
+    relations:
+      french_name:
+        canonical: Îles du Cap-Vert
+        accepted: [Îles du Cap-Vert]
+  Democratic Republic of the Congo:
+    relations:
+      nativeName:
+        canonical: République démocratique du Congo
+        accepted:
+          - Ditunga dia Kongu wa Mungalaata
+          - Jamhuri ya Kidemokrasia ya Kongo
+          - RD Congo
+          - Repubilika ya Kongo Demokratiki
+          - Republiki ya Kongó Demokratiki
+  Falkland Islands:
+    geopolitical_review: metadata-only retention; source names and relation values match exactly without adjudicating sovereignty
+  Hong Kong:
+    relations:
+      demonym:
+        canonical: Hong Konger
+        accepted: [Hong Konger]
+  Iran:
+    relations:
+      nativeName:
+        canonical: ایران
+        accepted: [ایران]
+  Ireland:
+    relations:
+      nativeName:
+        canonical: Éire
+        accepted: [Ireland, Éire]
+  Kazakhstan:
+    relations:
+      nativeName:
+        canonical: Қазақстан
+        accepted: [Казахстан, Қазақстан]
+  Madagascar:
+    relations:
+      nativeName:
+        canonical: Madagasikara
+        accepted: [Madagascar, Madagasikara]
+  Morocco:
+    relations:
+      nativeName:
+        canonical: المغرب
+        accepted: [المغرب, ⵍⵎⴰⵖⵔⵉⴱ]
+  Norfolk Island:
+    relations:
+      french_name:
+        canonical: Île Norfolk
+        accepted: [Île Norfolk]
+  Republic of Macedonia:
+    canonical_name: North Macedonia
+    relations:
+      spanish_name:
+        canonical: Macedonia del Norte
+        accepted: [Macedonia del Norte]
+  Republic of the Congo:
+    relations:
+      nativeName:
+        canonical: République du Congo
+        accepted:
+          - Repubilika ya Kongo
+          - Republíki ya Kongó
+          - République du Congo
+  Saint Helena:
+    relations:
+      spanish_name:
+        canonical: Santa Elena, Ascensión y Tristán de Acuña
+        accepted: [Santa Elena, Ascensión y Tristán de Acuña]
+  Saint Lucia:
+    relations:
+      french_name:
+        canonical: Sainte-Lucie
+        accepted: [Sainte-Lucie]
+  Sri Lanka:
+    relations:
+      capital:
+        canonical: Sri Jayawardenepura Kotte
+        accepted: [Sri Jayawardenepura Kotte]
+
+outputs:
+  bank: interpretability/jspace_phase4/data/bank_b_candidate_v2.jsonl
+  sources: interpretability/jspace_phase4/data/bank_b_source_verification_v2.jsonl
+  partition: interpretability/jspace_phase4/data/bank_b_partition_candidate_v2.json
+  audit: interpretability/jspace_phase4/data/bank_b_audit_v2.json
+  schema: interpretability/jspace_phase4/data/bank_b_source_schema_v2.json

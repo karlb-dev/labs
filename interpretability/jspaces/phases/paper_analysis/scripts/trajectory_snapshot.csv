@@ -1,0 +1,17 @@
+checkpoint_key,checkpoint_label,checkpoint_index,lineage_role,frame,metric_key,bank,variant,estimate,ci95_low,ci95_high
+olmo3-base,Base,0,base,own,S:direct,S,direct,0.0005,-0.0490,0.0483
+olmo3-base,Base,0,base,common,S:direct,S,direct,0.0005,-0.0490,0.0483
+olmo3-base,Base,0,base,own,S:composition,S,composition,0.0016,-0.0420,0.0399
+olmo3-base,Base,0,base,common,S:composition,S,composition,0.0016,-0.0420,0.0399
+olmo3-think,3.0 Think,1,think_path,own,S:direct,S,direct,-0.1277,-0.2078,-0.0488
+olmo3-think,3.0 Think,1,think_path,common,S:direct,S,direct,-0.0974,-0.1551,-0.0448
+olmo3-think,3.0 Think,1,think_path,own,S:composition,S,composition,0.0724,-0.0110,0.1585
+olmo3-think,3.0 Think,1,think_path,common,S:composition,S,composition,0.0556,-0.0129,0.1280
+olmo31-think,3.1 Think,2,think_path,own,S:direct,S,direct,-0.1674,-0.2476,-0.0950
+olmo31-think,3.1 Think,2,think_path,common,S:direct,S,direct,-0.1547,-0.2356,-0.0866
+olmo31-think,3.1 Think,2,think_path,own,S:composition,S,composition,0.1183,0.0520,0.1882
+olmo31-think,3.1 Think,2,think_path,common,S:composition,S,composition,0.1166,0.0281,0.2090
+olmo31-instruct,3.1 Instruct,3,sibling_endpoint,own,S:direct,S,direct,-0.0224,-0.0656,0.0176
+olmo31-instruct,3.1 Instruct,3,sibling_endpoint,common,S:direct,S,direct,-0.0379,-0.0895,0.0166
+olmo31-instruct,3.1 Instruct,3,sibling_endpoint,own,S:composition,S,composition,0.0047,-0.0410,0.0501
+olmo31-instruct,3.1 Instruct,3,sibling_endpoint,common,S:composition,S,composition,0.0333,-0.0431,0.1105

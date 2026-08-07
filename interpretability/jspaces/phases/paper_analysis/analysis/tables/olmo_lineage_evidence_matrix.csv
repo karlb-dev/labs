@@ -1,0 +1,73 @@
+checkpoint,column,value,state
+olmo3-base,Capability,common-support cohorts pass,dev
+olmo3-base,Occupancy (med),2,dev
+olmo3-base,Centered excess (med L24-40),+0.00315,dev
+olmo3-base,Operator vs Base (q50),— (self),na
+olmo3-base,Mapped rows vs Base (q50),— (self),na
+olmo3-base,Selected-ID overlap vs Base,— (self),na
+olmo3-base,Projector overlap vs Base,— (self),na
+olmo3-base,Bank-S direct (own frame),"+0.0107 [-0.026,+0.053]",state
+olmo3-base,Bank-S composition (own frame),"-0.0009 [-0.037,+0.030]",state
+olmo3-base,H6 transport,no licensed regime 9/336; L56 0.75,methods
+olmo3-base,Stage wedge,n/a (not a wedge artifact),na
+olmo3-base,Bank-W,x-model blocked 16/20 families,gated
+olmo3-think,Capability,common-support cohorts pass,dev
+olmo3-think,Occupancy (med),2,dev
+olmo3-think,Centered excess (med L24-40),+0.00339,dev
+olmo3-think,Operator vs Base (q50),0.9614,dev
+olmo3-think,Mapped rows vs Base (q50),0.6744,dev
+olmo3-think,Selected-ID overlap vs Base,0.3333,dev
+olmo3-think,Projector overlap vs Base,0.3336,dev
+olmo3-think,Bank-S direct (own frame),"-0.1287 [-0.234,-0.041]",dev
+olmo3-think,Bank-S composition (own frame),"+0.0979 [-0.000,+0.212]",state
+olmo3-think,H6 transport,not on frozen grid,na
+olmo3-think,Stage wedge,n/a (not a wedge artifact),na
+olmo3-think,Bank-W,x-model blocked 16/20 families,gated
+olmo31-think,Capability,common-support cohorts pass,dev
+olmo31-think,Occupancy (med),2,dev
+olmo31-think,Centered excess (med L24-40),+0.00327,dev
+olmo31-think,Operator vs Base (q50),0.9548,dev
+olmo31-think,Mapped rows vs Base (q50),0.6575,dev
+olmo31-think,Selected-ID overlap vs Base,0.3333,dev
+olmo31-think,Projector overlap vs Base,0.3222,dev
+olmo31-think,Bank-S direct (own frame),"-0.1364 [-0.227,-0.054]",dev
+olmo31-think,Bank-S composition (own frame),"+0.1160 [+0.046,+0.192]",dev
+olmo31-think,H6 transport,late-anchor only 12/336; L56 1.00,methods
+olmo31-think,Stage wedge,n/a (not a wedge artifact),na
+olmo31-think,Bank-W,"pair unpowered 0.7788 @16, need 18",gated
+olmo31-instruct,Capability,common-support cohorts pass,dev
+olmo31-instruct,Occupancy (med),2,dev
+olmo31-instruct,Centered excess (med L24-40),+0.00262,dev
+olmo31-instruct,Operator vs Base (q50),0.9523,dev
+olmo31-instruct,Mapped rows vs Base (q50),0.5445,dev
+olmo31-instruct,Selected-ID overlap vs Base,0.3333,dev
+olmo31-instruct,Projector overlap vs Base,0.2653,dev
+olmo31-instruct,Bank-S direct (own frame),"-0.0155 [-0.058,+0.025]",state
+olmo31-instruct,Bank-S composition (own frame),"+0.0345 [-0.006,+0.076]",state
+olmo31-instruct,H6 transport,not on frozen grid,na
+olmo31-instruct,Stage wedge,n/a (not a wedge artifact),na
+olmo31-instruct,Bank-W,"pair unpowered 0.7788 @16, need 18",gated
+olmo3-think-sft,Capability,0.617% overall 0.833% Bank-S 0 S-facts d+c,gated
+olmo3-think-sft,Occupancy (med),not measured,na
+olmo3-think-sft,Centered excess (med L24-40),not measured,na
+olmo3-think-sft,Operator vs Base (q50),not measured,na
+olmo3-think-sft,Mapped rows vs Base (q50),not measured,na
+olmo3-think-sft,Selected-ID overlap vs Base,not measured,na
+olmo3-think-sft,Projector overlap vs Base,not measured,na
+olmo3-think-sft,Bank-S direct (own frame),capability_gated _missing,gated
+olmo3-think-sft,Bank-S composition (own frame),capability_gated _missing,gated
+olmo3-think-sft,H6 transport,not on frozen grid,na
+olmo3-think-sft,Stage wedge,cohorts empty → null_or_unresolved,gated
+olmo3-think-sft,Bank-W,n/a,na
+olmo3-think-dpo,Capability,0.309% overall 0.278% Bank-S 0 S-facts d+c,gated
+olmo3-think-dpo,Occupancy (med),not measured,na
+olmo3-think-dpo,Centered excess (med L24-40),not measured,na
+olmo3-think-dpo,Operator vs Base (q50),not measured,na
+olmo3-think-dpo,Mapped rows vs Base (q50),not measured,na
+olmo3-think-dpo,Selected-ID overlap vs Base,not measured,na
+olmo3-think-dpo,Projector overlap vs Base,not measured,na
+olmo3-think-dpo,Bank-S direct (own frame),capability_gated _missing,gated
+olmo3-think-dpo,Bank-S composition (own frame),capability_gated _missing,gated
+olmo3-think-dpo,H6 transport,not on frozen grid,na
+olmo3-think-dpo,Stage wedge,cohorts empty → null_or_unresolved,gated
+olmo3-think-dpo,Bank-W,n/a,na

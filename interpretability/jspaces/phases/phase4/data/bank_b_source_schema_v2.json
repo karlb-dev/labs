@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "jspace-phase4-bank-b-source-v2",
+  "title": "Phase 4 Bank B corrected-candidate source row",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "fact_id",
+    "supersedes_fact_id",
+    "source_package",
+    "source_package_version",
+    "source_record",
+    "source_record_sha256",
+    "source_url",
+    "fields_used",
+    "ambiguity_notes",
+    "verification_status",
+    "independent_sources",
+    "correction_audit"
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "fact_id": {"type": "string", "pattern": "^bank-b-v2:"},
+    "supersedes_fact_id": {"type": "string", "pattern": "^bank-b:"},
+    "verification_status": {"const": "candidate-corrected-pending-independent-reverification"},
+    "correction_audit": {
+      "type": "object",
+      "required": ["evidence_id", "rows_sha256", "result_sha256"]
+    }
+  }
+}

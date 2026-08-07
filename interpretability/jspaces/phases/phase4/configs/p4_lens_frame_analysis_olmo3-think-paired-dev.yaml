@@ -1,0 +1,16 @@
+evidence_id: p4-lens-frame-analysis-olmo3-think-dev-v2
+tier: phase4-development
+slug: olmo3-think-lens-frame
+display_name: OLMo-3 32B Think
+own_grid_evidence_id: p4-lineage-grid-olmo3-think-dev-v1
+own_grid_parquet_uri: artifact://phase4/metrics/olmo3-think/lineage_grid/p4-lineage-grid-olmo3-think-dev-v1/lineage_grid_olmo3-think.parquet
+own_grid_result_uri: artifact://phase4/metrics/olmo3-think/lineage_grid/p4-lineage-grid-olmo3-think-dev-v1/lineage_grid_olmo3-think.json
+own_grid_manifest_uri: artifact://phase4/metrics/olmo3-think/lineage_grid/p4-lineage-grid-olmo3-think-dev-v1/input_manifest.json
+common_grid_evidence_id: p4-lineage-grid-olmo3-think-common-base-lens-dev-v4
+common_grid_parquet_uri: artifact://phase4/metrics/olmo3-think-common-base-lens/lineage_grid/p4-lineage-grid-olmo3-think-common-base-lens-dev-v4/lineage_grid_olmo3-think-common-base-lens.parquet
+common_grid_result_uri: artifact://phase4/metrics/olmo3-think-common-base-lens/lineage_grid/p4-lineage-grid-olmo3-think-common-base-lens-dev-v4/lineage_grid_olmo3-think-common-base-lens.json
+common_grid_manifest_uri: artifact://phase4/metrics/olmo3-think-common-base-lens/lineage_grid/p4-lineage-grid-olmo3-think-common-base-lens-dev-v4/input_manifest.json
+bootstrap_draws: 100000
+bootstrap_seed: 31337
+baseline_tolerance: 0.000001
+figure_stem: p4f02_olmo3_think_lens_frame_comparison_v2

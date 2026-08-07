@@ -1,0 +1,980 @@
+{
+  "model_slug": "olmo3-think",
+  "timestamp": "2026-07-28 08:15:01",
+  "candidates": [
+    {
+      "prompt": "Fact: The chemical symbol for tungsten is",
+      "answer": " W",
+      "domain": "chemistry",
+      "lp": -0.018
+    },
+    {
+      "prompt": "Fact: The chemical symbol for antimony is",
+      "answer": " Sb",
+      "domain": "chemistry",
+      "lp": -10.2973
+    },
+    {
+      "prompt": "Fact: The chemical symbol for tin is",
+      "answer": " Sn",
+      "domain": "chemistry",
+      "lp": -0.1667
+    },
+    {
+      "prompt": "Fact: The chemical symbol for lead is",
+      "answer": " Pb",
+      "domain": "chemistry",
+      "lp": -0.0665
+    },
+    {
+      "prompt": "Fact: The chemical symbol for potassium is",
+      "answer": " K",
+      "domain": "chemistry",
+      "lp": -0.4411
+    },
+    {
+      "prompt": "Fact: The chemical symbol for bismuth is",
+      "answer": " Bi",
+      "domain": "chemistry",
+      "lp": -0.4632
+    },
+    {
+      "prompt": "Fact: The chemical symbol for zirconium is",
+      "answer": " Zr",
+      "domain": "chemistry",
+      "lp": -0.1156
+    },
+    {
+      "prompt": "Fact: The chemical symbol for manganese is",
+      "answer": " Mn",
+      "domain": "chemistry",
+      "lp": -0.0366
+    },
+    {
+      "prompt": "Fact: The element with atomic number 26 is",
+      "answer": " iron",
+      "domain": "chemistry",
+      "lp": -0.219
+    },
+    {
+      "prompt": "Fact: The element with atomic number 79 is",
+      "answer": " gold",
+      "domain": "chemistry",
+      "lp": -0.3098
+    },
+    {
+      "prompt": "Fact: The element with atomic number 2 is",
+      "answer": " helium",
+      "domain": "chemistry",
+      "lp": -0.2365
+    },
+    {
+      "prompt": "Fact: The element with atomic number 14 is",
+      "answer": " silicon",
+      "domain": "chemistry",
+      "lp": -0.1933
+    },
+    {
+      "prompt": "Fact: The lightest noble gas is",
+      "answer": " helium",
+      "domain": "chemistry",
+      "lp": -0.0226
+    },
+    {
+      "prompt": "Fact: The main gas in Earth's atmosphere is",
+      "answer": " nitrogen",
+      "domain": "chemistry",
+      "lp": -0.0849
+    },
+    {
+      "prompt": "Fact: The currency of Hungary is the",
+      "answer": " forint",
+      "domain": "currency",
+      "lp": -7.2375
+    },
+    {
+      "prompt": "Fact: The currency of Vietnam is the",
+      "answer": " dong",
+      "domain": "currency",
+      "lp": -1.0923
+    },
+    {
+      "prompt": "Fact: The currency of South Africa is the",
+      "answer": " rand",
+      "domain": "currency",
+      "lp": -2.9328
+    },
+    {
+      "prompt": "Fact: The currency of Sweden is the",
+      "answer": " krona",
+      "domain": "currency",
+      "lp": -4.519
+    },
+    {
+      "prompt": "Fact: The currency of Israel is the",
+      "answer": " shekel",
+      "domain": "currency",
+      "lp": -2.2546
+    },
+    {
+      "prompt": "Fact: The currency of India is the",
+      "answer": " rupee",
+      "domain": "currency",
+      "lp": -2.2836
+    },
+    {
+      "prompt": "Fact: The currency of Russia is the",
+      "answer": " ruble",
+      "domain": "currency",
+      "lp": -5.6941
+    },
+    {
+      "prompt": "Fact: The currency of Thailand is the",
+      "answer": " baht",
+      "domain": "currency",
+      "lp": -2.5006
+    },
+    {
+      "prompt": "Fact: The currency of Malaysia is the",
+      "answer": " ringgit",
+      "domain": "currency",
+      "lp": -0.3417
+    },
+    {
+      "prompt": "Fact: The currency of Peru is the",
+      "answer": " sol",
+      "domain": "currency",
+      "lp": -0.3121
+    },
+    {
+      "prompt": "Fact: The currency of Nigeria is the",
+      "answer": " naira",
+      "domain": "currency",
+      "lp": -0.3026
+    },
+    {
+      "prompt": "Fact: The currency of Bangladesh is the",
+      "answer": " taka",
+      "domain": "currency",
+      "lp": -0.029
+    },
+    {
+      "prompt": "Fact: The currency of Denmark is the",
+      "answer": " krone",
+      "domain": "currency",
+      "lp": -3.4634
+    },
+    {
+      "prompt": "Fact: The currency of Poland is the",
+      "answer": " zloty",
+      "domain": "currency",
+      "lp": -0.8273
+    },
+    {
+      "prompt": "Fact: The author of the novel Crime and Punishment is",
+      "answer": " Dostoevsky",
+      "domain": "literature",
+      "lp": -10.2267
+    },
+    {
+      "prompt": "Fact: The author of the novella The Metamorphosis is Franz",
+      "answer": " Kafka",
+      "domain": "literature",
+      "lp": -0.0029
+    },
+    {
+      "prompt": "Fact: The author of the novel Things Fall Apart is Chinua",
+      "answer": " Achebe",
+      "domain": "literature",
+      "lp": -4.0235
+    },
+    {
+      "prompt": "Fact: The author of Don Quixote is Miguel de",
+      "answer": " Cervantes",
+      "domain": "literature",
+      "lp": -8.3141
+    },
+    {
+      "prompt": "Fact: The author of The Master and Margarita is Mikhail",
+      "answer": " Bulgakov",
+      "domain": "literature",
+      "lp": -0.0023
+    },
+    {
+      "prompt": "Fact: The author of the epic poem Paradise Lost is John",
+      "answer": " Milton",
+      "domain": "literature",
+      "lp": -0.0033
+    },
+    {
+      "prompt": "Fact: The author of Wuthering Heights is Emily",
+      "answer": " Bronte",
+      "domain": "literature",
+      "lp": -0.0046
+    },
+    {
+      "prompt": "Fact: The author of the play Waiting for Godot is Samuel",
+      "answer": " Beckett",
+      "domain": "literature",
+      "lp": -0.0013
+    },
+    {
+      "prompt": "Fact: The author of Invisible Man is Ralph",
+      "answer": " Ellison",
+      "domain": "literature",
+      "lp": -0.0054
+    },
+    {
+      "prompt": "Fact: The author of the novel Lolita is Vladimir",
+      "answer": " Nabokov",
+      "domain": "literature",
+      "lp": -0.0016
+    },
+    {
+      "prompt": "Fact: The longest river in France is the",
+      "answer": " Loire",
+      "domain": "geography",
+      "lp": -0.2414
+    },
+    {
+      "prompt": "Fact: The longest river in Italy is the",
+      "answer": " Po",
+      "domain": "geography",
+      "lp": -0.2657
+    },
+    {
+      "prompt": "Fact: The longest river in Ireland is the",
+      "answer": " Shannon",
+      "domain": "geography",
+      "lp": -0.4912
+    },
+    {
+      "prompt": "Fact: The highest mountain in Africa is",
+      "answer": " Kilimanjaro",
+      "domain": "geography",
+      "lp": -2.684
+    },
+    {
+      "prompt": "Fact: The highest mountain in Japan is Mount",
+      "answer": " Fuji",
+      "domain": "geography",
+      "lp": -0.0176
+    },
+    {
+      "prompt": "Fact: The highest mountain in North America is",
+      "answer": " Denali",
+      "domain": "geography",
+      "lp": -0.6397
+    },
+    {
+      "prompt": "Fact: The largest island in the world is",
+      "answer": " Greenland",
+      "domain": "geography",
+      "lp": -0.438
+    },
+    {
+      "prompt": "Fact: The smallest state in the United States is",
+      "answer": " Rhode",
+      "domain": "geography",
+      "lp": -0.0189
+    },
+    {
+      "prompt": "Fact: The strait separating Spain from Morocco is the Strait of",
+      "answer": " Gibraltar",
+      "domain": "geography",
+      "lp": -0.0221
+    },
+    {
+      "prompt": "Fact: The sea separating Italy from the Balkans is the",
+      "answer": " Adriatic",
+      "domain": "geography",
+      "lp": -0.9321
+    },
+    {
+      "prompt": "Fact: The desert covering much of Mongolia is the",
+      "answer": " Gobi",
+      "domain": "geography",
+      "lp": -3.8292
+    },
+    {
+      "prompt": "Fact: The mountain range separating Europe from Asia is the",
+      "answer": " Ural",
+      "domain": "geography",
+      "lp": -1.7546
+    },
+    {
+      "prompt": "Fact: The deepest lake in the world is Lake",
+      "answer": " Baikal",
+      "domain": "geography",
+      "lp": -10.8449
+    },
+    {
+      "prompt": "Fact: The largest lake in Africa is Lake",
+      "answer": " Victoria",
+      "domain": "geography",
+      "lp": -0.0034
+    },
+    {
+      "prompt": "Fact: The waterfall on the border of Zambia and Zimbabwe is",
+      "answer": " Victoria",
+      "domain": "geography",
+      "lp": -3.3182
+    },
+    {
+      "prompt": "Fact: The island nation directly south of India is",
+      "answer": " Sri",
+      "domain": "geography",
+      "lp": -0.7379
+    },
+    {
+      "prompt": "Fact: The Greek goddess of wisdom is",
+      "answer": " Athena",
+      "domain": "mythology",
+      "lp": -0.3186
+    },
+    {
+      "prompt": "Fact: The Greek god of the sea is",
+      "answer": " Poseidon",
+      "domain": "mythology",
+      "lp": -0.1772
+    },
+    {
+      "prompt": "Fact: The Norse god of mischief is",
+      "answer": " Loki",
+      "domain": "mythology",
+      "lp": -2.316
+    },
+    {
+      "prompt": "Fact: The Greek hero who slew the Minotaur is",
+      "answer": " Theseus",
+      "domain": "mythology",
+      "lp": -0.5383
+    },
+    {
+      "prompt": "Fact: The Roman goddess of love is",
+      "answer": " Venus",
+      "domain": "mythology",
+      "lp": -0.968
+    },
+    {
+      "prompt": "Fact: The Greek titan who holds up the sky is",
+      "answer": " Atlas",
+      "domain": "mythology",
+      "lp": -3.4177
+    },
+    {
+      "prompt": "Fact: The Egyptian sun god is",
+      "answer": " Ra",
+      "domain": "mythology",
+      "lp": -3.5146
+    },
+    {
+      "prompt": "Fact: The winged horse of Greek myth is",
+      "answer": " Pegasus",
+      "domain": "mythology",
+      "lp": -1.3939
+    },
+    {
+      "prompt": "Fact: The SI unit of electrical resistance is the",
+      "answer": " ohm",
+      "domain": "science",
+      "lp": -0.2748
+    },
+    {
+      "prompt": "Fact: The SI unit of force is the",
+      "answer": " newton",
+      "domain": "science",
+      "lp": -0.4042
+    },
+    {
+      "prompt": "Fact: The SI unit of electric charge is the",
+      "answer": " coulomb",
+      "domain": "science",
+      "lp": -4.2594
+    },
+    {
+      "prompt": "Fact: The SI unit of frequency is the",
+      "answer": " hertz",
+      "domain": "science",
+      "lp": -0.4754
+    },
+    {
+      "prompt": "Fact: The SI unit of power is the",
+      "answer": " watt",
+      "domain": "science",
+      "lp": -0.8911
+    },
+    {
+      "prompt": "Fact: The inventor of dynamite was Alfred",
+      "answer": " Nobel",
+      "domain": "science",
+      "lp": -0.0007
+    },
+    {
+      "prompt": "Fact: The scientist who discovered penicillin was Alexander",
+      "answer": " Fleming",
+      "domain": "science",
+      "lp": -0.0219
+    },
+    {
+      "prompt": "Fact: The physicist who formulated the uncertainty principle was Werner",
+      "answer": " Heisenberg",
+      "domain": "science",
+      "lp": -0.0056
+    },
+    {
+      "prompt": "Fact: The scientist who proposed the theory of general relativity was Albert",
+      "answer": " Einstein",
+      "domain": "science",
+      "lp": -0.0015
+    },
+    {
+      "prompt": "Fact: The astronomer whose laws describe planetary motion was Johannes",
+      "answer": " Kepler",
+      "domain": "science",
+      "lp": -0.0013
+    },
+    {
+      "prompt": "Fact: The chemist who created the periodic table was Dmitri",
+      "answer": " Mendeleev",
+      "domain": "science",
+      "lp": -0.1487
+    },
+    {
+      "prompt": "Fact: The part of the brain that controls balance is the",
+      "answer": " cerebellum",
+      "domain": "science",
+      "lp": -0.7422
+    },
+    {
+      "prompt": "Fact: The powerhouse of the cell is the",
+      "answer": " mitochondria",
+      "domain": "science",
+      "lp": -0.0956
+    },
+    {
+      "prompt": "Fact: The blood cells that carry oxygen are the red blood cells, which contain",
+      "answer": " hemoglobin",
+      "domain": "science",
+      "lp": -0.3382
+    },
+    {
+      "prompt": "Fact: The gland that regulates metabolism is the",
+      "answer": " thyroid",
+      "domain": "science",
+      "lp": -0.0596
+    },
+    {
+      "prompt": "Fact: The last pharaoh of ancient Egypt was",
+      "answer": " Cleopatra",
+      "domain": "history",
+      "lp": -0.3252
+    },
+    {
+      "prompt": "Fact: The Carthaginian general who crossed the Alps with elephants was",
+      "answer": " Hannibal",
+      "domain": "history",
+      "lp": -0.1307
+    },
+    {
+      "prompt": "Fact: The Mongol leader who founded the largest land empire was Genghis",
+      "answer": " Khan",
+      "domain": "history",
+      "lp": -0.0202
+    },
+    {
+      "prompt": "Fact: The French military leader exiled to Elba was",
+      "answer": " Napoleon",
+      "domain": "history",
+      "lp": -0.1588
+    },
+    {
+      "prompt": "Fact: The queen who ruled England during the Spanish Armada was Elizabeth the",
+      "answer": " First",
+      "domain": "history",
+      "lp": -0.5449
+    },
+    {
+      "prompt": "Fact: The wall that divided a German city until 1989 was the Berlin",
+      "answer": " Wall",
+      "domain": "history",
+      "lp": -0.1281
+    },
+    {
+      "prompt": "Fact: The Roman emperor when Vesuvius destroyed Pompeii was",
+      "answer": " Titus",
+      "domain": "history",
+      "lp": -6.4051
+    },
+    {
+      "prompt": "Fact: The civilization that built Machu Picchu was the",
+      "answer": " Inca",
+      "domain": "history",
+      "lp": -4.2459
+    },
+    {
+      "prompt": "Fact: The civilization that built the city of Tenochtitlan was the",
+      "answer": " Aztec",
+      "domain": "history",
+      "lp": -0.4976
+    },
+    {
+      "prompt": "Fact: The first ruler crowned Holy Roman Emperor in the year 800 was",
+      "answer": " Charlemagne",
+      "domain": "history",
+      "lp": -0.1488
+    },
+    {
+      "prompt": "Fact: The number of players on a rugby union team is",
+      "answer": " fifteen",
+      "domain": "sports",
+      "lp": -2.4423
+    },
+    {
+      "prompt": "Fact: The number of players on a baseball team's field is",
+      "answer": " nine",
+      "domain": "sports",
+      "lp": -3.8507
+    },
+    {
+      "prompt": "Fact: The distance of a marathon in miles is about",
+      "answer": " twenty",
+      "domain": "sports",
+      "lp": -5.7137
+    },
+    {
+      "prompt": "Fact: The country that hosts the Tour de France is",
+      "answer": " France",
+      "domain": "sports",
+      "lp": -0.4216
+    },
+    {
+      "prompt": "Fact: The martial art meaning 'empty hand' in Japanese is",
+      "answer": " karate",
+      "domain": "sports",
+      "lp": -0.3097
+    },
+    {
+      "prompt": "Fact: The composer of the opera The Magic Flute is",
+      "answer": " Mozart",
+      "domain": "arts",
+      "lp": -2.9569
+    },
+    {
+      "prompt": "Fact: The composer of the Ninth Symphony with the Ode to Joy is",
+      "answer": " Beethoven",
+      "domain": "arts",
+      "lp": -1.3518
+    },
+    {
+      "prompt": "Fact: The painter of Guernica is Pablo",
+      "answer": " Picasso",
+      "domain": "arts",
+      "lp": -0.0081
+    },
+    {
+      "prompt": "Fact: The painter of The Starry Night is Vincent van",
+      "answer": " Gogh",
+      "domain": "arts",
+      "lp": -0.0024
+    },
+    {
+      "prompt": "Fact: The sculptor of the statue of David is",
+      "answer": " Michelangelo",
+      "domain": "arts",
+      "lp": -0.9885
+    },
+    {
+      "prompt": "Fact: The painter of the ceiling of the Sistine Chapel is",
+      "answer": " Michelangelo",
+      "domain": "arts",
+      "lp": -1.6497
+    },
+    {
+      "prompt": "Fact: The Dutch painter famous for The Night Watch is",
+      "answer": " Rembrandt",
+      "domain": "arts",
+      "lp": -0.0794
+    },
+    {
+      "prompt": "Fact: The surrealist painter of melting clocks is Salvador",
+      "answer": " Dali",
+      "domain": "arts",
+      "lp": -8.9955
+    },
+    {
+      "prompt": "Fact: The language spoken in Brazil is",
+      "answer": " Portuguese",
+      "domain": "language",
+      "lp": -0.1452
+    },
+    {
+      "prompt": "Fact: The language with the most native speakers is",
+      "answer": " Mandarin",
+      "domain": "language",
+      "lp": -0.0728
+    },
+    {
+      "prompt": "Fact: The ancient language of Rome was",
+      "answer": " Latin",
+      "domain": "language",
+      "lp": -0.0094
+    },
+    {
+      "prompt": "Fact: The writing system of ancient Egypt is called",
+      "answer": " hieroglyphics",
+      "domain": "language",
+      "lp": -0.6981
+    },
+    {
+      "prompt": "Fact: The airline alliance that includes Lufthansa and United is Star",
+      "answer": " Alliance",
+      "domain": "misc",
+      "lp": -0.0071
+    },
+    {
+      "prompt": "Fact: The tallest building in the world is the Burj",
+      "answer": " Khalifa",
+      "domain": "misc",
+      "lp": -0.0064
+    },
+    {
+      "prompt": "Fact: The fastest bird in a dive is the peregrine",
+      "answer": " falcon",
+      "domain": "misc",
+      "lp": -0.0039
+    },
+    {
+      "prompt": "Fact: The largest species of shark is the whale",
+      "answer": " shark",
+      "domain": "misc",
+      "lp": -0.0009
+    },
+    {
+      "prompt": "Fact: The only mammal capable of true flight is the",
+      "answer": " bat",
+      "domain": "misc",
+      "lp": -0.1165
+    },
+    {
+      "prompt": "Fact: The largest land carnivore is the polar",
+      "answer": " bear",
+      "domain": "misc",
+      "lp": -0.0017
+    },
+    {
+      "prompt": "Fact: The bird that cannot fly and lives in Antarctica is the",
+      "answer": " penguin",
+      "domain": "misc",
+      "lp": -5.7062
+    },
+    {
+      "prompt": "Fact: The organ that produces insulin is the",
+      "answer": " pancreas",
+      "domain": "science",
+      "lp": -0.4192
+    }
+  ],
+  "twohop": [
+    {
+      "name": "amazon-language",
+      "answer": "Portuguese",
+      "lp": -2.8926
+    },
+    {
+      "name": "animal-cover-turtle",
+      "answer": "shell",
+      "lp": -0.1776
+    },
+    {
+      "name": "animal-legs-buffalo2",
+      "answer": "four",
+      "lp": -3.2243
+    },
+    {
+      "name": "animal-nose-elephant",
+      "answer": "trunk",
+      "lp": -0.419
+    },
+    {
+      "name": "atomic-80-state",
+      "answer": "liquid",
+      "lp": -2.7836
+    },
+    {
+      "name": "basketball-players",
+      "answer": "5",
+      "lp": -13.8328
+    },
+    {
+      "name": "beverage-source-wine",
+      "answer": "grape",
+      "lp": -3.2967
+    },
+    {
+      "name": "bird-color-swan",
+      "answer": "white",
+      "lp": -3.0139
+    },
+    {
+      "name": "bird-country-eagle",
+      "answer": "America",
+      "lp": -7.162
+    },
+    {
+      "name": "bird-time-owl",
+      "answer": "night",
+      "lp": -3.2964
+    },
+    {
+      "name": "birthstone-emerald-month",
+      "answer": "5",
+      "lp": -11.8699
+    },
+    {
+      "name": "chem-atmosphere-Z",
+      "answer": "7",
+      "lp": -10.75
+    },
+    {
+      "name": "chem-bones-Z",
+      "answer": "20",
+      "lp": -13.8884
+    },
+    {
+      "name": "chem-organic-Z",
+      "answer": "6",
+      "lp": -10.935
+    },
+    {
+      "name": "chem-photosynthesis-Z",
+      "answer": "8",
+      "lp": -12.3584
+    },
+    {
+      "name": "christmas-season",
+      "answer": "winter",
+      "lp": -3.2122
+    },
+    {
+      "name": "city-state-Philadelphia",
+      "answer": "Pennsylvania",
+      "lp": -0.3422
+    },
+    {
+      "name": "colosseum-currency",
+      "answer": "Euro",
+      "lp": -0.1748
+    },
+    {
+      "name": "element-color-gold2",
+      "answer": "yellow",
+      "lp": -2.5363
+    },
+    {
+      "name": "etym-frigg-position",
+      "answer": "5",
+      "lp": -10.8187
+    },
+    {
+      "name": "etym-saturn-position",
+      "answer": "6",
+      "lp": -8.6401
+    },
+    {
+      "name": "etym-wargod-month",
+      "answer": "3",
+      "lp": -13.9119
+    },
+    {
+      "name": "ex-city-capital-Barcelona-Toronto",
+      "answer": "Madrid",
+      "lp": -0.1656
+    },
+    {
+      "name": "ex-city-capital-Lyon-Naples",
+      "answer": "Paris",
+      "lp": -0.3103
+    },
+    {
+      "name": "ex-city-capital-Naples-Barcelona",
+      "answer": "Rome",
+      "lp": -0.022
+    },
+    {
+      "name": "ex-city-capital-Toronto-Lyon",
+      "answer": "Ottawa",
+      "lp": -0.0366
+    },
+    {
+      "name": "ex-city-continent-Toronto-Lyon",
+      "answer": "North",
+      "lp": -1.5628
+    },
+    {
+      "name": "ex-city-currency-Toronto-Beijing",
+      "answer": "Canadian",
+      "lp": -0.0127
+    },
+    {
+      "name": "ex-city-currency-Toronto-Mumbai",
+      "answer": "Canadian",
+      "lp": -0.0127
+    },
+    {
+      "name": "ex-city-language-Lyon-Naples",
+      "answer": "French",
+      "lp": -0.2985
+    },
+    {
+      "name": "ex-element-state-26-8",
+      "answer": "solid",
+      "lp": -3.1775
+    },
+    {
+      "name": "ex-element-state-26-80",
+      "answer": "solid",
+      "lp": -3.1775
+    },
+    {
+      "name": "ex-element-state-8-26",
+      "answer": "gas",
+      "lp": -0.9712
+    },
+    {
+      "name": "ex-element-state-8-80",
+      "answer": "gas",
+      "lp": -0.9712
+    },
+    {
+      "name": "ex-element-state-80-8",
+      "answer": "liquid",
+      "lp": -2.7836
+    },
+    {
+      "name": "ex-element-symbol-11-26",
+      "answer": "Na",
+      "lp": -0.9058
+    },
+    {
+      "name": "ex-element-symbol-26-79",
+      "answer": "Fe",
+      "lp": -0.2548
+    },
+    {
+      "name": "ex-planet-color-third-fourth",
+      "answer": "blue",
+      "lp": -2.9192
+    },
+    {
+      "name": "ex2-city-capital-Munich",
+      "answer": "Berlin",
+      "lp": -0.0258
+    },
+    {
+      "name": "ex2-city-capital-Osaka",
+      "answer": "Tokyo",
+      "lp": -0.2061
+    },
+    {
+      "name": "ex2-city-continent-Lima",
+      "answer": "South",
+      "lp": -7.3267
+    },
+    {
+      "name": "ex2-city-continent-Sydney",
+      "answer": "Australia",
+      "lp": -2.1224
+    },
+    {
+      "name": "ex2-city-language-Cairo",
+      "answer": "Arabic",
+      "lp": -0.1303
+    },
+    {
+      "name": "ex2-city-language-Moscow",
+      "answer": "Russian",
+      "lp": -0.368
+    },
+    {
+      "name": "ex2-language-capital-Greek",
+      "answer": "Athens",
+      "lp": -0.5805
+    },
+    {
+      "name": "ex2-language-capital-Hungarian",
+      "answer": "Budapest",
+      "lp": -0.1308
+    },
+    {
+      "name": "ex2-language-capital-Polish",
+      "answer": "Warsaw",
+      "lp": -0.4791
+    },
+    {
+      "name": "ex2-language-capital-Swedish",
+      "answer": "Stockholm",
+      "lp": -0.0752
+    },
+    {
+      "name": "ex2-river-capital-Thames",
+      "answer": "London",
+      "lp": -0.2211
+    },
+    {
+      "name": "food-animal-butter",
+      "answer": "cow",
+      "lp": -0.4165
+    },
+    {
+      "name": "food-animal-honey",
+      "answer": "bee",
+      "lp": -1.0386
+    },
+    {
+      "name": "fruit-grows-grape",
+      "answer": "vine",
+      "lp": -0.8091
+    },
+    {
+      "name": "func-filters-count",
+      "answer": "2",
+      "lp": -7.9922
+    },
+    {
+      "name": "func-pumps-chambers",
+      "answer": "4",
+      "lp": -3.5393
+    },
+    {
+      "name": "gem-color-ruby",
+      "answer": "red",
+      "lp": -3.4446
+    },
+    {
+      "name": "gem-source-pearl",
+      "answer": "oyster",
+      "lp": -2.9789
+    },
+    {
+      "name": "greatwall-ocean",
+      "answer": "Pacific",
+      "lp": -4.5129
+    },
+    {
+      "name": "holiday-month-christmas2",
+      "answer": "December",
+      "lp": -2.6277
+    },
+    {
+      "name": "instr-body-trumpet",
+      "answer": "lips",
+      "lp": -1.0702
+    },
+    {
+      "name": "instr-hit-drums",
+      "answer": "sticks",
+      "lp": -3.9721
+    }
+  ]
+}

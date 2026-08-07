@@ -1,0 +1,12 @@
+# Selected-id logging grid on Olmo-3-32B-Think (tail mechanization input).
+evidence_id: r7-selected-ids-think-v1
+tier: pilot
+model_path: /content/models/olmo3-think
+lens_path: /content/drive/MyDrive/interpret/special-lab-1/2026-07-25_1726/lens/olmo32bthink_lens.pt
+hard_onehop_items: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/config/prompts/hard_onehop_dev.jsonl
+out_dir: /content/drive/MyDrive/interpret/special-lab-1/part2_20260727/metrics/olmo3-think/r7_selected_ids
+work_dir: /content/sl1_work/r7sel_chunks
+band: [20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+k: 10
+protect_top_k: 10
+n_twohop: 60

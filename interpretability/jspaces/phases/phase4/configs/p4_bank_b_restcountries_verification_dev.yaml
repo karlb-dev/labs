@@ -1,0 +1,71 @@
+evidence_id: p4-bank-b-restcountries-verification-dev-v1
+tier: methods
+slug: bank-b-restcountries-verification
+
+bank_candidate:
+  evidence_id: p4-bank-b-candidate-v1
+  bank_uri: repo://interpretability/jspace_phase4/data/bank_b_candidate_v1.jsonl
+  bank_sha256: de0d718baf9a509ad76b6f8afd9cce112228f2221df28aecdb04dd9dd84852c6
+  source_rows_uri: repo://interpretability/jspace_phase4/data/bank_b_source_verification_v1.jsonl
+  source_rows_sha256: 4f8f5269f2ef6f6f8f98876af1c41e47b7b51c690bfce8d6300d42cf9e2b3a56
+  partition_uri: repo://interpretability/jspace_phase4/data/bank_b_partition_candidate_v1.json
+  partition_sha256: 05baa850820397bd3cea88866ba5f07da44c974c6972d501eddbdb08f20c851a
+  audit_uri: repo://interpretability/jspace_phase4/data/bank_b_audit_v1.json
+  audit_sha256: d018d47a72ac1bb3cfec6c03e249a6a48b92ebd5da53948c425aaa54cc0c423e
+  expected_facts: 160
+  expected_families: 40
+
+independent_source:
+  name: REST Countries
+  repository: https://gitlab.com/restcountries/restcountries
+  revision: 43f6260db10c54df9972e6e554ee14c2e7c85ef5
+  revision_date: "2026-06-17T01:15:29Z"
+  source_path: src/main/resources/countriesV3.1.json
+  snapshot_uri: artifact://phase4/config/restcountries_v3_1_43f6260.json
+  snapshot_sha256: 8209daa9fd26e842e84992739dfbfb272566b60357a6ee760955bb4e9f2cc18e
+  license: MPL-2.0
+  license_sha256: 1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5
+  upstream_data_sources: https://restcountries.com/docs/countries/data-sources
+
+relation_fields:
+  alpha2: cca2
+  alpha3: cca3
+  capital: capital
+  demonym: demonyms.eng
+  french_name: translations.fra
+  spanish_name: translations.spa
+  nativeName: name.nativeName
+  tld: tld
+
+verification:
+  normalization: unicode-nfkd-casefold-alnum-space-with-ascii-fallback
+  require_unique_country_resolution: true
+  require_true_source_match: true
+  require_true_answer_match: true
+  require_alternate_answer_match: true
+  require_every_counterfactual_answer_match: true
+  require_every_counterfactual_alternate_answer_match: true
+  require_unrelated_bridge_resolution: true
+  manual_review_multi_valued_answer_relations: true
+  geopolitical_manual_review_names:
+    - Falkland Islands
+    - Kosovo
+    - Palestine
+    - Taiwan
+  country_name_resolution_aliases:
+    The Bahamas:
+      cca3: BHS
+      manual_review: false
+      reason: leading-article variant of independent common name Bahamas
+    The Gambia:
+      cca3: GMB
+      manual_review: false
+      reason: leading-article variant of independent common name Gambia
+    Republic of Macedonia:
+      cca3: MKD
+      manual_review: true
+      reason: outdated pre-2019 country name; independent record is North Macedonia
+  outcome_columns_used: false
+
+figure:
+  stem: p4f16_bank_b_independent_verification

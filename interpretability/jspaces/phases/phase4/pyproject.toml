@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jspace_phase4"
+version = "0.1.0"
+description = "J-space Phase 4: routing, lineage, load, and transport validity"
+requires-python = ">=3.10"
+dependencies = [
+  "torch",
+  "numpy",
+  "pandas",
+  "pyarrow",
+  "pyyaml",
+  "matplotlib",
+  "transformers",
+  "huggingface_hub",
+  "scipy",
+  "countryinfo==0.1.2",
+]
+
+[project.scripts]
+jspace-phase4 = "jspace_phase4.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["jspace_phase4*"]
