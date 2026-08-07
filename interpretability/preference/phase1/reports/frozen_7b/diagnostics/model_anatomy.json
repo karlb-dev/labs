@@ -1,0 +1,16 @@
+{
+  "architecture": "Olmo3ForCausalLM",
+  "blocks_path": "model.layers",
+  "d_model": 4096,
+  "final_norm_class": "Olmo3RMSNorm",
+  "final_norm_path": "model.norm",
+  "lm_head_class": "Linear",
+  "logit_softcap": null,
+  "model_id": "allenai/Olmo-3-7B-Instruct",
+  "n_layers": 32,
+  "notes": [],
+  "param_count": 7298011136,
+  "revision": "6e5971d9eba42665f5bd5a0fcf047f299ce1dccc",
+  "tied_embeddings": false,
+  "vocab_size": 100278
+}

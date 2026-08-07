@@ -1,0 +1,5 @@
+{
+  "decisions_table": "frozen_7b/tables/graduation_decisions.csv",
+  "graduated": [],
+  "stop_rule": "Stop_B"
+}

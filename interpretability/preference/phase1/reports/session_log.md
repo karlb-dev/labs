@@ -5,3 +5,4 @@
 - 2026-08-07T18:40:07Z · behavioral_dev run complete: lab38_revealed_preference_report_channel-20260807_183923-750256
 - 2026-08-07T18:43:45Z · behavioral_dev run complete: lab38_revealed_preference_report_channel-20260807_184225-542af0
 - 2026-08-07T18:49:02Z · P1-0..P1-7 complete in one session; freeze packet handed to PI; VM alive awaiting approval
+- 2026-08-07T21:09:30Z · behavioral_frozen run complete: lab38_revealed_preference_report_channel-20260807_210537-9df027

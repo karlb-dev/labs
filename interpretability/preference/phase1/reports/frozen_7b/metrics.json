@@ -1,0 +1,17 @@
+{
+  "followthrough_pass_rate": 0.925,
+  "generated_utc": "2026-08-07T21:10:16Z",
+  "mean_ar_ro_agreement_enacted": 0.6779163779163778,
+  "n_ar_scenarios_ge_sesoi": 4,
+  "n_graduated_dev_label_only": 0,
+  "nc_alarm": false,
+  "nc_p95_floor": 0.11249999999999999,
+  "pc_expected_rate": 1.0,
+  "pc_gate_pass": true,
+  "pc_parse_rate": 1.0,
+  "rows": 2320,
+  "scientific_tier": "frozen_behavioral",
+  "stage": "behavioral_frozen",
+  "valid_rate": 0.9952586206896552,
+  "wrong_branch_count": 0
+}
