@@ -28,8 +28,8 @@ def _find_repo_root(start: Path | None = None) -> Path:
 
 
 REPO = _find_repo_root()
-PKG = REPO / "interpretability" / "jspace_part2"
-MIRROR = REPO / "interpretability" / "jspace" / "part2"
+PKG = REPO / "interpretability/jspaces/phases/phase2"
+MIRROR = REPO / "interpretability/jspaces/phases/phase1/part2_exploratory"
 RUNDIR = Path("/content/drive/MyDrive/interpret/special-lab-1/part2_20260727")
 OUT = PKG / "reports" / "PILOT_SNAPSHOT_VM7.json"
 OUT_LENSES = PKG / "reports" / "PILOT_SNAPSHOT_VM7_lenses.jsonl"

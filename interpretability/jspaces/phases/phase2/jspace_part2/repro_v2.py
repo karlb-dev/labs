@@ -39,7 +39,8 @@ from .lib import sha256_file
 from .paths import UnresolvedArtifact, resolve
 from .provenance import REPO_ROOT, verify_result_v2
 
-CONSTRAINTS = REPO_ROOT / "interpretability" / "jspace_part2" / "constraints.txt"
+CONSTRAINTS = (
+    REPO_ROOT / "interpretability/jspaces/phases/phase2/constraints.txt")
 
 
 def _run(cmd, cwd=None, env=None, capture=True):
@@ -161,7 +162,11 @@ def reproduce(evidence_id: str, *, workspace: str | None = None,
         # refuse to run at an old commit. Build artifacts are not source
         # changes, so they are excluded locally; anything TRACKED that
         # changes still trips the guard (asserted below).
-        pkg = wt / "interpretability" / "jspace_part2"
+        # The worktree is checked out at the evidence commit: pre-reorg
+        # commits carry the old layout, later ones the jspaces tree.
+        pkg = wt / "interpretability/jspaces/phases/phase2"
+        if not pkg.is_dir():
+            pkg = wt / "interpretability" / "jspace_part2"
         if wt != REPO_ROOT:
             gitdir = _run(["git", "-C", str(wt), "rev-parse",
                            "--git-dir"]).stdout.strip()

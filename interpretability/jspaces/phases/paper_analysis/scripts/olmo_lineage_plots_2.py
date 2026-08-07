@@ -35,7 +35,7 @@ import matplotlib.pyplot as plt
 
 RUNS = _find_runs_cache()
 P4M = RUNS / "phase4" / "metrics"
-OUT = RUNS.parent / "jspace_paper" / "figures"
+OUT = pathlib.Path(__file__).resolve().parents[1] / "figures"
 OUT.mkdir(parents=True, exist_ok=True)
 
 TRAJ = (P4M / "olmo-lineage-trajectory" / "trajectory_analysis" /

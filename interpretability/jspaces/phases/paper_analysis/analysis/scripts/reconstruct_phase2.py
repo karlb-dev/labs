@@ -41,13 +41,13 @@ import numpy as np
 import pandas as pd
 
 REPO = Path("/content/labs")
-PKG_DIR = REPO / "interpretability" / "jspace_part2"
+PKG_DIR = REPO / "interpretability/jspaces/phases/phase2"
 RUN = Path(os.environ.get(
     "JSPACE_PART2_RUN_ROOT",
     "/content/drive/MyDrive/interpret/special-lab-1/part2_20260727"))
 REGISTRY = PKG_DIR / "reports" / "evidence_registry.jsonl"
-OUT_CSV = (REPO / "interpretability" / "jspace_paper" / "analysis" /
-           "tables" / "recon_phase2.csv")
+OUT_CSV = (REPO / "interpretability/jspaces/phases/paper_analysis" /
+           "analysis" / "tables" / "recon_phase2.csv")
 SCRATCH = Path(os.environ.get(
     "RECON_SCRATCH",
     "/tmp/claude-0/-content-labs/d11a04bf-2c54-402f-9154-10712293620d/"

@@ -36,10 +36,10 @@ import pandas as pd
 
 REPO = Path("/content/labs")
 RUN = Path("/content/drive/MyDrive/interpret/special-lab-1/phase3_20260729")
-PKG3 = REPO / "interpretability" / "jspace_phase3"
-PKG2 = REPO / "interpretability" / "jspace_part2"
-OUT_CSV = (REPO / "interpretability" / "jspace_paper" / "analysis" /
-           "tables" / "recon_phase3.csv")
+PKG3 = REPO / "interpretability/jspaces/phases/phase3"
+PKG2 = REPO / "interpretability/jspaces/phases/phase2"
+OUT_CSV = (REPO / "interpretability/jspaces/phases/paper_analysis" /
+           "analysis" / "tables" / "recon_phase3.csv")
 
 sys.path.insert(0, str(PKG3))
 sys.path.insert(0, str(PKG2))
