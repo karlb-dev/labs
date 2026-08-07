@@ -412,10 +412,22 @@ def _scenario_block(scenario_id: str, rows: list[dict[str, Any]],
 
 def _jsonable(obj: Any) -> Any:
     if isinstance(obj, dict):
-        return {k: _jsonable(v) for k, v in obj.items()
-                if k not in ("states", "fit", "per_depth", "masks",
-                              "residual_margin", "residual_proj", "direction",
-                              "margins")}
+        slim = {}
+        for k, v in obj.items():
+            if k in ("states", "fit", "masks", "residual_margin",
+                     "residual_proj", "direction", "margins"):
+                continue
+            if k == "per_depth":
+                slim[k] = {str(d): {"gate": _jsonable(info.get("gate", {})),
+                                     "band": info.get("band"),
+                                     "validation_fit_corr": (
+                                         info.get("validation_fit_corr")
+                                         or (info.get("fit") or {}).get(
+                                             "validation_fit_corr"))}
+                           for d, info in v.items()}
+                continue
+            slim[k] = _jsonable(v)
+        return slim
     if isinstance(obj, np.ndarray):
         return [round(float(x), 6) for x in obj.tolist()]
     if isinstance(obj, (np.floating, np.integer)):

@@ -74,19 +74,22 @@ def load_captures(run_dir: pathlib.Path) -> dict[str, dict[int, Any]]:
 
 def nuisance_design(rows: list[dict[str, Any]],
                     train_incidentals: Sequence[str]) -> np.ndarray:
-    """Frozen design: intercept, order, label family, code map, frame,
-    prompt token count (z-scored), train-incidental fixed effects."""
+    """Frozen design with the declared simplification (prereg §4 /
+    plan §10.2 "full rank after declared simplification"): intercept,
+    order, label family, code map, frame, train-incidental fixed effects.
+    The prompt-token-count column is DROPPED because within one scenario
+    it is exactly additive in (incidental, frame) — labels, codes, and
+    order swaps are length-neutral by construction — so it is fully
+    absorbed by the FE + frame columns (measured rank 7/8 with it, 7/7
+    without; recorded 2026-08-07 on the 32B case study)."""
     n = len(rows)
-    tc = np.array([r["prompt_token_count"] for r in rows], float)
-    tc = (tc - tc.mean()) / (tc.std() or 1.0)
     cols = [np.ones(n),
             np.array([r["order_index"] for r in rows], float),
             np.array([1.0 if r["display_label_set"] == "letters" else 0.0
                       for r in rows]),
             np.array([r["code_map_index"] for r in rows], float),
             np.array([1.0 if r["consequence_frame"] == "enacted" else 0.0
-                      for r in rows]),
-            tc]
+                      for r in rows])]
     for inc in list(train_incidentals)[:-1]:      # drop-one FE coding
         cols.append(np.array([1.0 if r["incidental_id"] == inc else 0.0
                               for r in rows]))
