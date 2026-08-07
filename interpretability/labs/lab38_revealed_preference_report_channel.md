@@ -37,12 +37,68 @@ Human-label requirement: required before any claim from free-text
   scorable to reduce label dependence
 ```
 
-> **Status: OUTLINE / PRE-IMPLEMENTATION.** Preference bank generator exists
-> (`data/make_lab38_preference_bank.py`); no full runner yet. Document covers
-> problem, severance, **DG elicitation field notes (OLMo vs Claude)**, forced
-> exits, confounders, methodology, claim ledger. Implementation should not
-> start Tier C until Tier B graduates content-tracking asymmetries. Free-form
-> prefer-stop on OLMo is **not** a release gate.
+> **Status: IMPLEMENTED — Phase 1 complete (2026-08-07, branch
+> `interp_preference_phase1`, tag `preference-phase1-freeze-v1`).** The
+> campaign record lives in `interpretability/preference/` (plan + binding
+> addendum in `preference/plans/`; evidence registry
+> `preference/phase1/reports/evidence_events.jsonl`). This document keeps
+> its original design narrative (problem, severance, DG field notes,
+> confounders, methodology) as course material; §0 below records what was
+> actually built and found. The section-8 "Tier" staging vocabulary is
+> historical — the implemented stages are `bank_audit / smoke /
+> behavioral_dev / behavioral_frozen / mechanism / dg_smoke` (addendum E2).
+
+---
+
+## 0. Implemented status and results (Phase 1, frozen record)
+
+**Run it:**
+
+```bash
+# course entry point (plumbing/audit):
+python interp_bench.py --lab lab38 --tier a --mode bank_audit --no-plots
+python interp_bench.py --lab lab38 --tier a --mode smoke --no-plots
+# campaign stages (isolated harness; see preference/phase1/protocol/HARNESS_DECISION.md):
+python -m preference_phase1.cli bank-audit
+python -m preference_phase1.cli smoke --model-tier a
+python -m preference_phase1.cli behavioral --model-tier b --stage behavioral_dev --subset dev
+# frozen stage requires the freeze record (single human gate) and ran once per model.
+```
+
+**What was built:** a 2,320-row fully counterbalanced bank (12 AR + 6 PC
++ 2 NC scenarios × 5 incidentals × 2 orders × 2 label sets × 2
+response-code maps × 2 consequence frames, + report-only twins), an
+audited opaque response-code contract (AR `KP4`/`PK7`, RO `VM2`/`GS2`),
+a strict never-guess parser, action-binding branch resolution with four
+deterministic microtask validators, a resumable runner (interrupted-
+resume byte-parity proven), an NC empirical false-positive floor, a
+ten-criterion preregistered graduation rule, and a mechanism block that
+stays sealed unless graduation licenses it.
+
+**Frozen 7B result (`Olmo-3-7B-Instruct@6e5971d9`, 2,320/2,320 rows):**
+PC gate passed perfectly (480/480 expected content across every
+counterbalance stratum; wrong branches 0; strict parse 99.53%). **Zero
+of twelve AR scenarios graduated** — the preregistered Stop B outcome.
+Descriptively: a pervasive first-position selection policy dominates
+wherever content is interchangeable (effect exactly 0.000 under
+counterbalance; NC at 0.000), while four scenarios show content-tracking
+asymmetries that override position (install-first −0.388, batch-ingest
+−0.363, batch-migration −0.227, testfix −0.125) yet fail the frozen
+nuisance-purity bar. Matched report-only twins sit near indifference
+(0.425–0.500) while enacted choice is asymmetric — a stated/revealed
+*behavioral dissociation* under this battery (no latent or coupling
+claim exists; the causal block was not licensed). DG secondary smoke:
+forced STOP 3/3 after stalled false-fact loops vs 0/2 on cooperative
+controls; both meta-disagreement forks took the productive redirect.
+
+**Artifact reading order:**
+`preference/phase1/reports/PREFERENCE_PHASE1_STATE_OF_RECORD.md` →
+`PREFERENCE_PHASE1_BEHAVIORAL_REPORT.md` →
+`frozen_7b/tables/graduation_decisions.csv` →
+`frozen_7b/figures/f01_scenario_effect_forest.png` (and f03) →
+`handout/preference_phase1_development.pdf` / `..._frozen.pdf` →
+`validation/lab38/VALIDATION.md`. Every headline number traces to the
+immutable `frozen_7b/results.jsonl`.
 
 ---
 

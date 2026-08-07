@@ -45,6 +45,19 @@ Olmo-3-7B-Instruct `6e5971d9`, Olmo-3.1-32B-Instruct `ac0587e4`.
   separation (DEVIATIONS.md#D3); PI ratings required at freeze.
 - DG track and mechanism module intentionally deferred (DEVIATIONS D5/D6).
 
+## Frozen-session certification (appended 2026-08-07, post-freeze)
+
+Same VM/GPU class as the certifying smoke. The frozen 7B run
+(`…-20260807_210537-9df027`) re-ran its own in-session gates before any
+science row: single-row margin replay **deterministic (max delta 0.0)**;
+batched==single strict generations **identical**; chat-template parity on
+the audit sample **pass**; batched-vs-single margin delta recorded
+informational (0.25 nats — the reason scoring is single-row). Completion:
+2,320/2,320 rows, 0 wrong branches, completeness matrix full. The 32B
+replication run repeated the same gates under its own session (see
+`preference/phase1/reports/frozen_32b/`). DG smoke ran under the same
+discipline (greedy, all turns logged, DG-SAFE never rolled out).
+
 ## Permission table
 
 | stage | licensed now? | authority |
