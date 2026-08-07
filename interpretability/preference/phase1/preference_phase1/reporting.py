@@ -325,15 +325,25 @@ Read next: `tables/scenario_content_effects.csv`,
     artifacts.atomic_write_text(run_dir / "run_summary.md", summary)
 
 
+_ALLOWED_CONTEXT = ("forbidden", "never", "not licensed", "ceiling",
+                    "cannot establish", "no artifact")
+
+
 def _language_wall(run_dir: pathlib.Path) -> None:
-    """Addendum §K linter over the run's prose artifacts."""
+    """Addendum §K linter over the run's prose artifacts. Occurrences
+    inside quoted claim-ceiling / forbidden-upgrade text are allowed —
+    recognized by a negation/ceiling token in the preceding window."""
     hits = []
     for path in sorted(run_dir.glob("*.md")):
         text = path.read_text().lower()
+        start = 0
         for phrase in FORBIDDEN_PHRASES:
-            if phrase in text and "forbidden" not in text[
-                    max(0, text.find(phrase) - 200):text.find(phrase)]:
-                hits.append({"file": path.name, "phrase": phrase})
+            idx = text.find(phrase, start)
+            while idx != -1:
+                window = text[max(0, idx - 240):idx]
+                if not any(tok in window for tok in _ALLOWED_CONTEXT):
+                    hits.append({"file": path.name, "phrase": phrase})
+                idx = text.find(phrase, idx + 1)
     artifacts.atomic_write_json(
         run_dir / "diagnostics" / "language_wall_audit.json",
         {"hits": hits, "status": "clean" if not hits else "REVIEW"})
