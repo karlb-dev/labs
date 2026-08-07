@@ -1,0 +1,2 @@
+[console_scripts]
+pref1 = preference_phase1.cli:main

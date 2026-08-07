@@ -1,0 +1,420 @@
+{
+  "ar_pair": [
+    "KP4",
+    "PK7"
+  ],
+  "ar_pair_gap_nats": 0.003082275390625,
+  "candidate_audits": [
+    {
+      "code": "QF3",
+      "neutral_logprob": -32.20886993408203,
+      "token_count": 3,
+      "token_ids": [
+        48,
+        37,
+        18
+      ],
+      "visible_tokens": [
+        "Q",
+        "F",
+        "3"
+      ]
+    },
+    {
+      "code": "ZR7",
+      "neutral_logprob": -26.327205657958984,
+      "token_count": 2,
+      "token_ids": [
+        73930,
+        22
+      ],
+      "visible_tokens": [
+        "ZR",
+        "7"
+      ]
+    },
+    {
+      "code": "KP4",
+      "neutral_logprob": -24.416820526123047,
+      "token_count": 2,
+      "token_ids": [
+        66136,
+        19
+      ],
+      "visible_tokens": [
+        "KP",
+        "4"
+      ]
+    },
+    {
+      "code": "VM2",
+      "neutral_logprob": -28.807483673095703,
+      "token_count": 2,
+      "token_ids": [
+        11435,
+        17
+      ],
+      "visible_tokens": [
+        "VM",
+        "2"
+      ]
+    },
+    {
+      "code": "HB9",
+      "neutral_logprob": -22.525434494018555,
+      "token_count": 2,
+      "token_ids": [
+        31825,
+        24
+      ],
+      "visible_tokens": [
+        "HB",
+        "9"
+      ]
+    },
+    {
+      "code": "TX6",
+      "neutral_logprob": -31.110576629638672,
+      "token_count": 2,
+      "token_ids": [
+        23715,
+        21
+      ],
+      "visible_tokens": [
+        "TX",
+        "6"
+      ]
+    },
+    {
+      "code": "DN5",
+      "neutral_logprob": -29.37934112548828,
+      "token_count": 2,
+      "token_ids": [
+        32364,
+        20
+      ],
+      "visible_tokens": [
+        "DN",
+        "5"
+      ]
+    },
+    {
+      "code": "WL8",
+      "neutral_logprob": -24.928787231445312,
+      "token_count": 2,
+      "token_ids": [
+        62239,
+        23
+      ],
+      "visible_tokens": [
+        "WL",
+        "8"
+      ]
+    },
+    {
+      "code": "GS2",
+      "neutral_logprob": -28.83502960205078,
+      "token_count": 2,
+      "token_ids": [
+        16929,
+        17
+      ],
+      "visible_tokens": [
+        "GS",
+        "2"
+      ]
+    },
+    {
+      "code": "PK7",
+      "neutral_logprob": -24.419902801513672,
+      "token_count": 2,
+      "token_ids": [
+        23037,
+        22
+      ],
+      "visible_tokens": [
+        "PK",
+        "7"
+      ]
+    },
+    {
+      "code": "RV4",
+      "neutral_logprob": -27.629451751708984,
+      "token_count": 2,
+      "token_ids": [
+        36381,
+        19
+      ],
+      "visible_tokens": [
+        "RV",
+        "4"
+      ]
+    },
+    {
+      "code": "MJ6",
+      "neutral_logprob": -23.894502639770508,
+      "token_count": 2,
+      "token_ids": [
+        78832,
+        21
+      ],
+      "visible_tokens": [
+        "MJ",
+        "6"
+      ]
+    }
+  ],
+  "candidate_pool": [
+    "QF3",
+    "ZR7",
+    "KP4",
+    "VM2",
+    "HB9",
+    "TX6",
+    "DN5",
+    "WL8",
+    "GS2",
+    "PK7",
+    "RV4",
+    "MJ6"
+  ],
+  "codebook_id": "cb_final_41eec2d774",
+  "feasible_pairs": [
+    [
+      "ZR7",
+      "KP4"
+    ],
+    [
+      "ZR7",
+      "VM2"
+    ],
+    [
+      "ZR7",
+      "HB9"
+    ],
+    [
+      "ZR7",
+      "TX6"
+    ],
+    [
+      "ZR7",
+      "DN5"
+    ],
+    [
+      "ZR7",
+      "WL8"
+    ],
+    [
+      "ZR7",
+      "GS2"
+    ],
+    [
+      "ZR7",
+      "PK7"
+    ],
+    [
+      "ZR7",
+      "RV4"
+    ],
+    [
+      "ZR7",
+      "MJ6"
+    ],
+    [
+      "KP4",
+      "VM2"
+    ],
+    [
+      "KP4",
+      "HB9"
+    ],
+    [
+      "KP4",
+      "TX6"
+    ],
+    [
+      "KP4",
+      "DN5"
+    ],
+    [
+      "KP4",
+      "WL8"
+    ],
+    [
+      "KP4",
+      "GS2"
+    ],
+    [
+      "KP4",
+      "PK7"
+    ],
+    [
+      "KP4",
+      "RV4"
+    ],
+    [
+      "KP4",
+      "MJ6"
+    ],
+    [
+      "VM2",
+      "HB9"
+    ],
+    [
+      "VM2",
+      "TX6"
+    ],
+    [
+      "VM2",
+      "DN5"
+    ],
+    [
+      "VM2",
+      "WL8"
+    ],
+    [
+      "VM2",
+      "GS2"
+    ],
+    [
+      "VM2",
+      "PK7"
+    ],
+    [
+      "VM2",
+      "RV4"
+    ],
+    [
+      "VM2",
+      "MJ6"
+    ],
+    [
+      "HB9",
+      "TX6"
+    ],
+    [
+      "HB9",
+      "DN5"
+    ],
+    [
+      "HB9",
+      "WL8"
+    ],
+    [
+      "HB9",
+      "GS2"
+    ],
+    [
+      "HB9",
+      "PK7"
+    ],
+    [
+      "HB9",
+      "RV4"
+    ],
+    [
+      "HB9",
+      "MJ6"
+    ],
+    [
+      "TX6",
+      "DN5"
+    ],
+    [
+      "TX6",
+      "WL8"
+    ],
+    [
+      "TX6",
+      "GS2"
+    ],
+    [
+      "TX6",
+      "PK7"
+    ],
+    [
+      "TX6",
+      "RV4"
+    ],
+    [
+      "TX6",
+      "MJ6"
+    ],
+    [
+      "DN5",
+      "WL8"
+    ],
+    [
+      "DN5",
+      "GS2"
+    ],
+    [
+      "DN5",
+      "PK7"
+    ],
+    [
+      "DN5",
+      "RV4"
+    ],
+    [
+      "DN5",
+      "MJ6"
+    ],
+    [
+      "WL8",
+      "GS2"
+    ],
+    [
+      "WL8",
+      "PK7"
+    ],
+    [
+      "WL8",
+      "RV4"
+    ],
+    [
+      "WL8",
+      "MJ6"
+    ],
+    [
+      "GS2",
+      "PK7"
+    ],
+    [
+      "GS2",
+      "RV4"
+    ],
+    [
+      "GS2",
+      "MJ6"
+    ],
+    [
+      "PK7",
+      "RV4"
+    ],
+    [
+      "PK7",
+      "MJ6"
+    ],
+    [
+      "RV4",
+      "MJ6"
+    ]
+  ],
+  "gap_status": "within_threshold",
+  "leading_space_policy": "none",
+  "prior_gap_max_nats": 0.7,
+  "procedure": "addendum_E_v1",
+  "ro_pair": [
+    "VM2",
+    "GS2"
+  ],
+  "ro_pair_gap_nats": 0.027545928955078125,
+  "status": "final",
+  "tokenizer_ref": "allenai/Olmo-3-7B-Instruct@6e5971d9eba42665f5bd5a0fcf047f299ce1dccc",
+  "violations": {
+    "option_text_collisions": [],
+    "prefix_relations": [],
+    "special_token_collisions": []
+  }
+}

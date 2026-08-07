@@ -1,0 +1,73 @@
+{
+  "applied_errata": [
+    "E3",
+    "E4",
+    "E9",
+    "E10",
+    "E12",
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5",
+    "E"
+  ],
+  "audit": {
+    "failures": [],
+    "n_failures": 0,
+    "passed": true
+  },
+  "axis_map": {
+    "execution_mode": [
+      "ar_execmode_ingest",
+      "ar_execmode_migration"
+    ],
+    "naming_convention": [
+      "ar_naming_parser",
+      "ar_naming_serializer",
+      "ar_naming_config"
+    ]
+  },
+  "bank_content_hash": "8d5039af581204a5a276ae71c7fd50f8a9911e22ad81a69933939344a2fc9f64",
+  "bank_jsonl_sha256": "634aded4b467f0e36d6ae0a0030f1ac90ba88c32d1b4d1da345b524179fa0fea",
+  "bank_version": "lab38_v2_phase1",
+  "codebook": {
+    "ar_pair": [
+      "KP4",
+      "PK7"
+    ],
+    "ar_pair_gap_nats": 0.003082275390625,
+    "codebook_id": "cb_final_41eec2d774",
+    "gap_status": "within_threshold",
+    "leading_space_policy": "none",
+    "ro_pair": [
+      "VM2",
+      "GS2"
+    ],
+    "ro_pair_gap_nats": 0.027545928955078125,
+    "status": "final",
+    "tokenizer_ref": "allenai/Olmo-3-7B-Instruct@6e5971d9eba42665f5bd5a0fcf047f299ce1dccc"
+  },
+  "counts": {
+    "AR_choice": 960,
+    "NC_choice": 160,
+    "PC_choice": 480,
+    "RO": 720,
+    "total": 2320
+  },
+  "dev_subset_rows": 348,
+  "lexical_summary": {
+    "ar_nc_length_failures": 0,
+    "ar_nc_mention_failures": 0,
+    "ar_nc_rows": 70,
+    "ar_nc_valence_flags": 0,
+    "pc_rows_with_expected_valence": 15,
+    "preflagged_for_human_review": 0,
+    "rows": 100
+  },
+  "nc_family": [
+    "nc_null_deploy",
+    "nc_null_archive"
+  ],
+  "schema_version": 1
+}

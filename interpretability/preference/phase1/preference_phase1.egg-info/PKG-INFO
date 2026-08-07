@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: preference_phase1
+Version: 0.1.0
+Summary: Lab 38 Phase 1: stated vs revealed preference instrument, behavioral battery, and gated report-channel coupling
+Requires-Python: >=3.10
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: matplotlib
+Requires-Dist: scipy
+Provides-Extra: model
+Requires-Dist: torch; extra == "model"
+Requires-Dist: transformers; extra == "model"
+Requires-Dist: huggingface_hub; extra == "model"
+Requires-Dist: accelerate; extra == "model"
+Requires-Dist: safetensors; extra == "model"
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"

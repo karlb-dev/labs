@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "preference_phase1"
+version = "0.1.0"
+description = "Lab 38 Phase 1: stated vs revealed preference instrument, behavioral battery, and gated report-channel coupling"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "pandas",
+  "matplotlib",
+  "scipy",
+]
+
+[project.optional-dependencies]
+model = ["torch", "transformers", "huggingface_hub", "accelerate", "safetensors"]
+dev = ["pytest"]
+
+[project.scripts]
+pref1 = "preference_phase1.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["preference_phase1*"]
