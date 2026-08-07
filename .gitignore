@@ -273,3 +273,7 @@ target/
 # unpacked Drive run archives (originals in ~/Downloads)
 interpretability/jspace_runs/
 interpretability/jspaces/runs/
+
+# preference campaign: local weight caches and activation captures never in git
+hf_local/
+**/activations/
