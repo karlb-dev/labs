@@ -2,7 +2,7 @@
 
 Deterministic v2 bank (v1 draft generators lost at intake; see
 `../phase1/SOURCE_INTAKE.md`). Counts: {'AR_choice': 960, 'RO': 720, 'PC_choice': 480, 'NC_choice': 160, 'total': 2320}. Development subset:
-348 rows (train incidentals, order 0, letter labels).
+696 rows (train incidentals, order 0, letter labels).
 
 ## Families and channels
 

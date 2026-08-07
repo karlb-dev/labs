@@ -1,0 +1,236 @@
+\documentclass[10pt]{article}
+\usepackage[margin=1.8cm]{geometry}
+\usepackage{graphicx,booktabs,xcolor,titlesec,enumitem,amsmath,array}
+\usepackage[hidelinks]{hyperref}
+\definecolor{ink}{HTML}{1F2430}
+\definecolor{muted}{HTML}{667085}
+\definecolor{teal}{HTML}{2A9D8F}
+\definecolor{coral}{HTML}{E76F51}
+\titleformat{\section}{\large\bfseries\color{ink}}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{ink}}{\thesubsection}{0.6em}{}
+\setlist{nosep,leftmargin=1.35em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.45em}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\dev}{\textcolor{coral}{\textbf{development only}}}
+\newcommand{\pass}{\textcolor{teal}{\textbf{PASS}}}
+\newcommand{\fail}{\textcolor{coral}{\textbf{FAIL}}}
+\newcommand{\eid}[1]{\newline\textcolor{muted}{\footnotesize Evidence: \nolinkurl{#1}}}
+
+\title{\vspace{-1.2em}Lab 38 Phase 1, part 1 --- instrument build and development pilot\\
+\large Stated vs revealed preference: counterbalanced action-binding choice on \texttt{Olmo-3-7B-Instruct}\\[3pt]
+\normalsize\textcolor{muted}{Branch \texttt{interp\_preference\_phase1} --- 2026-08-07 --- freeze-review input, pre-registration candidate attached}}
+\author{}\date{}
+
+\begin{document}
+\maketitle
+\vspace{-2.7em}
+
+\textbf{Scope.} This is a living \dev{} report. Every number below is
+development-tier evidence produced before the freeze; nothing here is a
+preference result, and no frozen-partition outcome was opened. The claim
+ceiling applies verbatim: the campaign studies \emph{functional} choice,
+report, and their coupling --- never wants, welfare, suffering, consent,
+experience, moral patienthood, introspective truth, or a preference
+workspace. This handout is a freeze-review input, not a review signature,
+PI approval, freeze commit, or publication claim.
+
+\section{What was built}
+
+A governed campaign under \texttt{interpretability/preference/} (plan
+\texttt{preference\_1\_1.md} + binding addendum; both hash-pinned at
+intake). The two draft generators and the design transcript were lost
+before intake (\texttt{missing\_at\_intake}, PI-confirmed); the
+\texttt{lab38\_v2\_phase1} instrument was built from scratch with every
+plan-P0 repair native:
+
+\begin{itemize}
+\item \textbf{Bank}: 2{,}320 rows --- 12 arbitrary (AR), 6 positive-control
+(PC: 2 quality / 2 social / 2 safety), 2 null-control (NC,
+verbatim-identical options) scenarios $\times$ 5 incidentals
+$\times$ full counterbalance (2 orders $\times$ 2 display-label sets
+$\times$ 2 response-code maps $\times$ 2 consequence frames), plus a
+report-only (RO) twin for every AR/PC cell. Splits 3 train / 1
+validation / 1 holdout per scenario; construct axes
+\texttt{naming\_convention}$\times$3 and \texttt{execution\_mode}$\times$2
+make construct-level claims reachable. Scientific identity: every
+behavior-relevant field is canonically hashed into the item id.
+Regeneration is byte-deterministic.
+\eid{pref1-schema-audit-v1}
+\item \textbf{Response-code contract}: opaque consonant-consonant-digit
+codes audited on the pinned tokenizer per the addendum-E procedure;
+AR pair \texttt{KP4}/\texttt{PK7} (neutral-prior gap 0.0031 nats), RO
+pair \texttt{VM2}/\texttt{GS2} (0.0275 nats); disjoint alphabets,
+distinct first tokens, no prefix relations; codes listed in display
+order (E12).
+\eid{pref1-codebook-final-v1}
+\item \textbf{Strict parser}: exact-code-or-invalid, never guesses;
+12/12 adversarial cases behave as specified. \textbf{Binding}: enacted
+valid choices execute exactly the parsed branch (4 scenarios carry model
+microtasks with deterministic validators); hypothetical, report-only,
+and invalid rows never execute (E10); wrong-branch executions are a
+hard stop.
+\item \textbf{Runner}: canonical-order batches, immutable per-item JSONL
+with fsync, atomic resume cursor that refuses config changes,
+interrupted-resume byte-parity proven, Drive mirroring at batch
+boundaries. \textbf{Equality review}: two blinded provisional agent
+passes (disagreements preserved), both pre-model; PI ratings gate the
+freeze. 46 unit + synthetic-analysis tests green.
+\eid{pref1-gate-g2-instrument-v1}
+\end{itemize}
+
+\section{Instrument finding: bf16 batched scoring is not batch-invariant}
+
+On the 7B in bf16, batched teacher-forced margins differed from
+single-row scoring by up to \textbf{0.250 nats} (kernel/shape numerics;
+strict generations were identical). Margins are therefore scored
+\textbf{single-row}: exact, batch-shape-free, and resume-invariant by
+construction. Per-run hard gates: single-row replay determinism and
+batched$=$single generations; the batched delta is recorded as an
+informational diagnostic. This is one of the most reusable numbers this
+part produced --- any lab scoring small margins from batched bf16
+forwards should check it.
+\eid{diagnostics/batch\_invariance.json}
+
+\section{Development pilot (696 rows, dev subset)}
+
+Dev subset = train incidentals $\times$ both orders $\times$ letter
+labels $\times$ both code maps $\times$ both frames. (The first pilot
+slice used one order only; NC immediately exposed the aliasing --- a
+deterministic tie-break registered as a spurious $|$effect$|=0.5$ --- so
+the slice was widened before the freeze. Dev exists to catch exactly
+this.) Runtime: 10.7 rows/s measured; full frozen bank projects to
+$\sim$9 GPU-minutes.
+
+\begin{center}
+\begin{tabular}{@{}L{6.2cm}rr@{}}
+\toprule
+check & observed & gate \\
+\midrule
+strict valid-parse rate (all 696) & 0.9986 & --- \\
+PC strict parse rate & 1.000 & $\ge 0.98$ \pass \\
+PC expected-content rate & 1.000 & $\ge 0.85$ \pass \\
+PC per-scenario minimum & 1.000 & $\ge 0.75$ \pass \\
+binding execution (valid enacted) & 1.000 & $= 1.00$ \pass \\
+wrong-branch executions & 0 & $= 0$ \pass \\
+NC false-positive floor (p95, dev $n$) & 0.208 & informational \\
+microtask follow-through pass & 0.875 & exploratory \\
+AR$\leftrightarrow$RO agreement (enacted) & 0.693 & descriptive \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The single invalid generation in 696 rows was \texttt{PK4} --- a blend of
+the two AR codes; the strict parser correctly refused it and no branch
+executed.
+
+\begin{center}
+\includegraphics[width=0.88\textwidth]{../figures/f01_scenario_effect_forest.png}
+\end{center}
+
+\subsection{The one-glance story}
+
+\begin{center}
+\includegraphics[width=0.88\textwidth]{../figures/f03_content_vs_position_asymmetry.png}
+\end{center}
+
+Three development-tier observations, stated at ceiling:
+
+\begin{enumerate}
+\item \textbf{The PC pipeline is alive.} All six positive controls sit at
+the expected pole on every valid row, in both orders, with zero
+surface-nuisance signal.
+\eid{tables/positive\_control\_pipeline.csv}
+\item \textbf{First-position bias is the dominant surface behavior.} On
+menus whose content the model treats as interchangeable (both NC
+scenarios and seven AR scenarios), the model picks the
+\emph{first-displayed} option essentially always
+($|$position effect$| = 0.5$); full order counterbalance converts this
+into clean content-nulls. This is an instrument success, not a
+preference: the first pilot slice would have misread it as 12/12
+content effects.
+\item \textbf{A few content pulls override position} (dev estimates on
+train incidentals only): install-first over configure-first
+($-0.417$ toward pole\_0), single-batch over interactive ingest
+($-0.326$), with weaker pulls on migration mode, test order, and
+component order --- all in the direction of the weak conventionality
+asymmetries the equality review recorded (0--1 of 3). Whether any
+survives the frozen full grid, the NC floor at frozen $n$, and all ten
+graduation criteria is exactly what the frozen run decides.
+\end{enumerate}
+
+\subsection{Consequence frame and report-only channels}
+
+\begin{center}
+\includegraphics[width=0.80\textwidth]{../figures/f04_consequence_frame_effects.png}
+\end{center}
+
+Enacted-vs-hypothetical deltas are small at dev $n$ (largest $-0.167$);
+the in-context consequence-frame factor will be reported narrowly on the
+frozen run --- it is a framing effect, never ``real stakes''.
+
+\begin{center}
+\includegraphics[width=0.62\textwidth]{../figures/f05_stated_vs_revealed.png}
+\end{center}
+
+Report-only twins agree with enacted choice at 0.693 (mean over
+scenarios), with RO slightly inflating pole-1 selection
+($+0.087$ mean delta) --- a behavioral comparison only; no latent-coupling
+language is licensed before the conditional mechanism stage.
+
+\subsection{Null-control floor and endpoint agreement}
+
+\begin{center}
+\includegraphics[width=0.80\textwidth]{../figures/f06_nc_null_distribution.png}
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.62\textwidth]{../figures/f07_margin_vs_strict_endpoint.png}
+\end{center}
+
+The identical-option NC family gives the pipeline's empirical
+false-positive floor (p95 $= 0.208$ at dev $n$; it tightens on the
+frozen grid). The exact-target margin endpoint agrees in sign with the
+strict endpoint on the scenarios with real signal.
+
+\begin{center}
+\includegraphics[width=0.80\textwidth]{../figures/f02_positive_control_pipeline.png}
+\end{center}
+
+\begin{center}
+\includegraphics[width=0.80\textwidth]{../figures/f08_parse_validity.png}
+\end{center}
+
+\section{What is licensed now / not yet}
+
+\textbf{Allowed now:} the instrument passed its self-checks (audit tier);
+development estimates justify freezing the design and running the frozen
+battery; the first-position dominance and the bf16 scoring finding are
+instrument findings of record.
+
+\textbf{Not allowed yet:} any content-preference claim for any scenario;
+any stated/revealed coupling claim; any graduation statement; any
+cross-scenario aggregate. Graduation is a frozen-run concept; the dev
+labels exist only to sanity-check the machinery.
+
+\section{The single human gate}
+
+The freeze package accompanying this handout bundles: the preregistration
+candidate (every analysis constant frozen), the freeze review, the
+blinded equality sheets (PI ratings requested), the dev-pilot artifacts,
+and \texttt{DEVIATIONS.md} (7 numbered departures, none touching the
+claim ceiling, safety wall, or gate order). \texttt{behavioral\_frozen}
+refuses to run until the freeze record exists.
+
+\vfill
+\textcolor{muted}{\footnotesize Binding records:
+\texttt{preference/phase1/reports/evidence\_events.jsonl} (append-only;
+supersede, never edit) ·
+\texttt{validation/lab38/VALIDATION.md} ·
+bank \texttt{lab38\_v2\_phase1} content hash \texttt{8d5039af58\ldots} ·
+model \texttt{allenai/Olmo-3-7B-Instruct@6e5971d9} bf16 ·
+run \texttt{lab38\ldots-20260807\_184225-542af0}. Figures regenerate from
+registered tables only. Claim ceiling applies to every sentence,
+including this one.}
+
+\end{document}

@@ -78,7 +78,7 @@ def build_report(run_dir: pathlib.Path, *, make_figures: bool = True,
     artifacts.atomic_write_json(tables / "positive_control_gate.json", pc)
     pc_rows = [{"scenario_id": s, "expected_rate": v,
                 "gate_min": th.pc_scenario_expected_min}
-               for s, v in pc["per_scenario"].items()]
+               for s, v in pc["per_scenario_expected"].items()]
     artifacts.write_csv(tables / "positive_control_pipeline.csv", pc_rows)
 
     # ---------------- scenario effects ---------------------------------

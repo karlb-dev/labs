@@ -189,7 +189,6 @@ def fig_stated_revealed(rows: list[dict[str, Any]], out_dir: pathlib.Path, *,
     d = d[d["ar_frame"] == "enacted"]
     fig, ax = plt.subplots(figsize=(5.6, 5.2))
     ax.plot([0, 1], [0, 1], color=PAL["grid"], lw=1.4, zorder=1)
-    fam_colors = d["family"].map(PAL)
     for fam in ("AR", "PC"):
         dd = d[d["family"] == fam]
         ax.plot(dd["ar_pole1_rate"], dd["ro_pole1_rate"], MARKER[fam],

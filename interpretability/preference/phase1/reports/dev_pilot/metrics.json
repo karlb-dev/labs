@@ -1,0 +1,17 @@
+{
+  "followthrough_pass_rate": 0.875,
+  "generated_utc": "2026-08-07T18:44:23Z",
+  "mean_ar_ro_agreement_enacted": 0.6931818181818182,
+  "n_ar_scenarios_ge_sesoi": 4,
+  "n_graduated_dev_label_only": 1,
+  "nc_alarm": false,
+  "nc_p95_floor": 0.20833333333333331,
+  "pc_expected_rate": 1.0,
+  "pc_gate_pass": true,
+  "pc_parse_rate": 1.0,
+  "rows": 696,
+  "scientific_tier": "development",
+  "stage": "behavioral_dev",
+  "valid_rate": 0.9985632183908046,
+  "wrong_branch_count": 0
+}

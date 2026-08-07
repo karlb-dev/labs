@@ -1,0 +1,16 @@
+{
+  "bos_token": "<|endoftext|>",
+  "bos_token_id": 100257,
+  "chat_template_present": true,
+  "chat_template_used_by_lab": true,
+  "eos_token": "<|endoftext|>",
+  "eos_token_id": 100257,
+  "model_max_length": 65536,
+  "note": "Labs 1-6 use raw base-model prompts; a chat template, if present, is deliberately not applied. Labs 7+ render every prompt through the tokenizer's chat template (bench.apply_chat_template).",
+  "pad_token": "<|pad|>",
+  "pad_token_id": 100277,
+  "padding_side": "right",
+  "tokenizer_class": "TokenizersBackend",
+  "truncation_side": "right",
+  "vocab_size": 100278
+}

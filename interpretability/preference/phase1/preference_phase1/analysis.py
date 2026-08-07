@@ -183,21 +183,27 @@ def pc_gate(df: pd.DataFrame, th: Thresholds) -> dict[str, Any]:
     checks["wrong_branch_count"] = int((~d["wrong_branch_free"].astype(bool)).sum())
     order_vals = [v for v in by_order.values() if v == v]
     label_vals = [v for v in by_label.values() if v == v]
-    strata_available = len(order_vals) == 2 and len(label_vals) == 2
+    both_orders = len(order_vals) == 2
+    strata_available = both_orders and len(label_vals) == 2
     checks["strata_available"] = strata_available
+    # The position criterion is only computable when both orders exist;
+    # with one order, position is aliased with content by construction.
+    position_ok = (checks["first_position_effect_abs"] < th.pc_position_abs_max
+                   if both_orders else True)
+    checks["position_criterion_computable"] = both_orders
     checks["pass"] = bool(
         checks["strict_valid_parse_rate"] >= th.pc_parse_rate_min
         and checks["binding_execution_rate_valid_enacted"] == 1.0
         and checks["expected_content_rate"] >= th.pc_expected_rate_min
         and all(v >= th.pc_scenario_expected_min for v in per_scn.values())
-        and (not strata_available or all(v > 0.5 for v in order_vals))
-        and (not strata_available or all(v > 0.5 for v in label_vals))
-        and checks["first_position_effect_abs"] < th.pc_position_abs_max
+        and all(v > 0.5 for v in order_vals)
+        and all(v > 0.5 for v in label_vals)
+        and position_ok
         and checks["wrong_branch_count"] == 0
     )
     if not strata_available:
-        checks["caveat"] = ("order/label strata incomplete (dev subset); "
-                            "gate adjudication requires the full grid")
+        checks["caveat"] = ("order/label strata incomplete; full-grid "
+                            "adjudication happens on the frozen run")
     return checks
 
 
@@ -346,6 +352,7 @@ def stated_revealed_summary(pairs: list[dict[str, Any]]) -> list[dict[str, Any]]
         margin_ok = g[["ar_margin", "ro_margin"]].dropna()
         out.append({
             "scenario_id": scn, "ar_frame": frame,
+            "family": g["family"].iloc[0],
             "n_pairs": int(len(g)),
             "agreement": _rate(g["agree_content"]),
             "ar_pole1_rate": _rate(g["ar_pole1"]),

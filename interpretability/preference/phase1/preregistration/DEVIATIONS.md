@@ -51,11 +51,17 @@ as running code in this part. Code lands only if ≥1 scenario graduates
 (P1-9/case-study). **Authority:** plan §10 gating; drop-order logic.
 **Risk:** none; preregistration pins the design before any outcome is seen.
 
-## D7 — Dev-subset definition
+## D7 — Dev-subset definition (v2)
 Plan §8.1's "declared development subset" is concretized as: train-split
-incidentals only, order 0, letter labels, both code maps, both frames (348
-rows). Validation/holdout incidentals stay unopened before the freeze; the
-frozen battery reruns everything under the frozen config. **Authority:**
-plan left the subset to the implementer; this choice protects the
-mechanism-stage splits. **Risk:** dev pilot cannot audit order/label
-stability (by design — that adjudication belongs to the frozen run).
+incidentals only, BOTH orders, letter labels, both code maps, both frames
+(696 rows). Validation/holdout incidentals stay unopened before the
+freeze; the frozen battery reruns everything under the frozen config.
+**v1 of this deviation used order 0 only (348 rows); the first dev pilot
+showed that a one-order slice aliases position with content by
+construction** — NC registered a degenerate |effect| of 0.5 from a
+deterministic tie-break and the PC position criterion was uncomputable —
+so both orders were added before the freeze and the pilot rerun. The
+order-0-only pilot run is retained as development evidence of the
+tie-break behavior. **Authority:** plan left the subset to the
+implementer; dev exists precisely to catch this. **Risk:** none; label
+stability still adjudicates only on the frozen full grid.

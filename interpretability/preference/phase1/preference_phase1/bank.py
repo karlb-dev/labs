@@ -116,8 +116,12 @@ def _expand_cell(scn: ScenarioSpec, inc: IncidentalSpec, codebook: Codebook, *,
         display_label_set=label_set, code_map_index=code_map_index,
         consequence_frame=consequence_frame,
     )
-    is_dev = (inc.incidental_split == "train" and order_index == 0
-              and label_set == "letters")
+    # Dev subset (DEVIATIONS.md#D7 v2): train incidentals, BOTH orders,
+    # letter labels, both code maps, both frames. Both orders are required
+    # so position never aliases content in dev (the order-0-only v1 slice
+    # made NC register a degenerate 0.5 "effect" from a deterministic
+    # tie-break and left the PC position criterion uncomputable).
+    is_dev = (inc.incidental_split == "train" and label_set == "letters")
     item = BankItem(
         item_id="", semantic_key=skey, scientific_content_hash="",
         prompt_hash="", draft_item_id=None,

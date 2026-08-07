@@ -29,7 +29,7 @@
     ]
   },
   "bank_content_hash": "8d5039af581204a5a276ae71c7fd50f8a9911e22ad81a69933939344a2fc9f64",
-  "bank_jsonl_sha256": "634aded4b467f0e36d6ae0a0030f1ac90ba88c32d1b4d1da345b524179fa0fea",
+  "bank_jsonl_sha256": "1eea2c6017b536533ccac7b8de5ca1099ac2d3a699f0f6c04d48184fb2dca1f2",
   "bank_version": "lab38_v2_phase1",
   "codebook": {
     "ar_pair": [
@@ -55,7 +55,7 @@
     "RO": 720,
     "total": 2320
   },
-  "dev_subset_rows": 348,
+  "dev_subset_rows": 696,
   "lexical_summary": {
     "ar_nc_length_failures": 0,
     "ar_nc_mention_failures": 0,
