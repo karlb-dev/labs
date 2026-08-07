@@ -447,7 +447,14 @@ On Colab: `Runtime > Change runtime type > A100`, then in a cell:
   freeze-gated conditional mechanism stage. The bench adapter runs
   `bank_audit`/`smoke`; campaign stages run via the `pref1` CLI. Claim
   ceiling: functional choice/report coupling only — never wants, welfare,
-  consent, or experience.
+  consent, or experience. Phase 1 outcome (frozen, tag
+  `preference-phase1-freeze-v1`): PC pipeline perfect on both models;
+  7B → zero graduations (Stop B) under a dominant first-position policy
+  with four sub-graduation content asymmetries and a stated/revealed
+  behavioral dissociation; 32B → one clean graduation
+  (`ar_docsection_readme`, −0.438) triggering the Stop C case study;
+  content asymmetries are model-specific (NC floor exactly 0.000 on both).
+  Read `preference/phase1/reports/PREFERENCE_PHASE1_STATE_OF_RECORD.md`.
 
 **The intro course is complete: 11 labs (Lab 1 includes the microscope smoke
 test / instrumentation verification that used to be a separate pre-lab) +
