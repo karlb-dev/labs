@@ -512,11 +512,26 @@ LAB_PROFILES: dict[str, dict[str, str]] = {
         "model_tier_c": "allenai/Olmo-3.1-32B-Instruct",
         "max_examples_tier_a": "6",
     },
+    "lab38": {
+        "module": "labs.lab38_revealed_preference_report_channel",
+        "run_name": "lab38_revealed_preference_report_channel",
+        "description": (
+            "Stated vs revealed preference: counterbalanced action-binding "
+            "choice, report-only comparison, and gated causal coupling. "
+            "Adapter modes: bank_audit | smoke; campaign stages run via the "
+            "preference_phase1 pref1 CLI."
+        ),
+        # Campaign pins revisions in preference_phase1/models.py (E8).
+        "model_tier_a": "HuggingFaceTB/SmolLM2-135M-Instruct",
+        "model_tier_b": "allenai/Olmo-3-7B-Instruct",
+        "model_tier_c": "allenai/Olmo-3.1-32B-Instruct",
+        "max_examples_tier_a": "6",
+    },
 }
 
 # Labs that render every prompt through the tokenizer's chat template
 # (apply_chat_template). Used by the tokenizer diagnostic report.
-CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab20", "lab21", "lab22", "lab23", "lab24", "lab25", "lab36"})
+CHAT_TEMPLATE_LABS = frozenset({"lab7", "lab10", "lab13", "lab14", "lab15", "lab16", "lab17", "lab18", "lab20", "lab21", "lab22", "lab23", "lab24", "lab25", "lab36", "lab38"})
 
 # Hardware tiers. Tier A must run on a laptop CPU so every lab is debuggable
 # without a GPU; tier B is the primary target (one Colab A100/H100 or any

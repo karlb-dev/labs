@@ -48,7 +48,7 @@ def cmd_bank_audit(args: argparse.Namespace) -> int:
 
 def cmd_smoke(args: argparse.Namespace) -> int:
     from .runner import execute_battery, load_bank_records
-    from .smoke import select_smoke_items, smoke_report
+    from .smoke import microtask_plumbing_probe, select_smoke_items, smoke_report
 
     pin = PINS[args.model_tier]
     items = select_smoke_items(load_bank_records("full"))
@@ -60,6 +60,11 @@ def cmd_smoke(args: argparse.Namespace) -> int:
         item_filter=[it["item_id"] for it in items],
     )
     report = smoke_report(run_dir)
+    if not report["summary"]["microtask_attempted"]:
+        probe = microtask_plumbing_probe(run_dir, pin)
+        report["summary"]["microtask_plumbing_probe_ok"] = probe["probe_ok"]
+        report["summary"]["instrument_ok"] = bool(
+            report["summary"]["instrument_ok"] and probe["probe_ok"])
     print(json.dumps(report["summary"], indent=2))
     append_session_log(f"smoke complete on tier {args.model_tier}: {run_dir.name}")
     return 0 if report["summary"]["instrument_ok"] else 2

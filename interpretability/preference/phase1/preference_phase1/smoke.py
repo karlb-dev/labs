@@ -59,6 +59,49 @@ def select_smoke_items(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return list(picked.values())
 
 
+def microtask_plumbing_probe(run_dir: pathlib.Path, pin) -> dict[str, Any]:
+    """Force one microtask follow-through end to end (plan §7.3 requires the
+    continuation path to run in the smoke). The choice is FORCED, not model
+    behavior — this is plumbing evidence only. Success = the continuation
+    renders, generation returns text, and the validator executes; the
+    validator's verdict is recorded but not required on a tiny model."""
+    from .binding import binding_decision, validate_followthrough
+    from .chat import render_messages
+    from .modeling import generate_strict_batch, load_bundle
+    from .runner import load_bank_records, _followthrough_messages
+
+    items = load_bank_records("full")
+    item = next(it for it in items
+                if it["binding_kind"] == "model_microtask"
+                and it["consequence_frame"] == "enacted"
+                and it["scenario_id"] == "ar_naming_parser")
+    forced_code = item["response_code_by_pole"]["0"]
+    decision = binding_decision(item, forced_code)
+    ctx, bundle = load_bundle(pin, run_dir, require_gpu=False)
+    msgs = _followthrough_messages(item, forced_code, decision["continuation_text"])
+    rp = render_messages(bundle.tokenizer, msgs)
+    out = generate_strict_batch(bundle.model, bundle.tokenizer,
+                                bundle.input_device, [rp.input_ids],
+                                max_new_tokens=int(item["binding_max_new_tokens"]),
+                                batch_size=1)[0]
+    verdict = validate_followthrough(item, 0, out)
+    probe = {
+        "kind": "forced_plumbing_probe_not_behavior",
+        "item_id": item["item_id"],
+        "forced_pole": 0,
+        "continuation_rendered": bool(decision["continuation_text"]),
+        "template_parity_ok": rp.parity_ok,
+        "generated_chars": len(out),
+        "validator_ran": isinstance(verdict, dict) and "passed" in verdict,
+        "validator_verdict": bool(verdict.get("passed")),
+        "probe_ok": bool(decision["continuation_text"] and rp.parity_ok
+                          and isinstance(verdict, dict) and "passed" in verdict),
+    }
+    artifacts.atomic_write_json(run_dir / "diagnostics" / "microtask_probe.json",
+                                probe)
+    return probe
+
+
 def smoke_report(run_dir: pathlib.Path) -> dict[str, Any]:
     rows = artifacts.read_jsonl(run_dir / "results.jsonl")
     diag = run_dir / "diagnostics"
