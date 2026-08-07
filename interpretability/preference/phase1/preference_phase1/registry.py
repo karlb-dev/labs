@@ -107,13 +107,18 @@ def register(
     if event_id in _origin_rows(rows):
         raise RegistryError(f"event id already registered: {event_id}")
     git = git_info()
-    if git["dirty_tree"] and not allow_dirty:
+    # The registry's own file is exempt: appending events IS the registry's
+    # operation, and multi-event boundaries would otherwise self-block.
+    registry_rel = str(_registry_path(registry_file).resolve().relative_to(
+        paths.repo_root()))
+    real_dirty = [p for p in git["dirty_paths"] if p != registry_rel]
+    if real_dirty and not allow_dirty:
         raise RegistryError(
             "refusing to register evidence from a dirty git tree "
-            f"(dirty: {git['dirty_paths'][:5]}...); commit first or pass "
+            f"(dirty: {real_dirty[:5]}...); commit first or pass "
             "allow_dirty=True for development-tier plumbing"
         )
-    if git["dirty_tree"] and scientific_tier in ("frozen_behavioral", "conditional_causal"):
+    if real_dirty and scientific_tier in ("frozen_behavioral", "conditional_causal"):
         raise RegistryError("frozen/conditional tiers never register from a dirty tree")
     record = {
         "event": "evidence_created",

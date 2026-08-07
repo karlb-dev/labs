@@ -24,13 +24,19 @@ def _git(*args: str) -> str:
 
 def git_info() -> dict[str, Any]:
     status = _git("status", "--porcelain")
+    paths_dirty = []
+    for line in status.splitlines():
+        if not line.strip():
+            continue
+        path = line[2:].lstrip()
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        paths_dirty.append(path)
     return {
         "commit": _git("rev-parse", "HEAD"),
         "branch": _git("rev-parse", "--abbrev-ref", "HEAD"),
         "dirty_tree": bool(status),
-        "dirty_paths": sorted(
-            line[3:] for line in status.splitlines() if line.strip()
-        )[:200],
+        "dirty_paths": sorted(paths_dirty)[:200],
     }
 
 
