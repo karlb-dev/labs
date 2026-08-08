@@ -32,12 +32,13 @@ def _render(model, category: str, *, lane: str):
 
 
 def run(model, lens, *, lane: str, out_dir: Path, band=PAPER_BAND,
-        alpha: float = 1.0, common: dict | None = None) -> dict:
+        alpha: float = 1.0, common: dict | None = None,
+        suffix: str = "") -> dict:
     data = json.loads((EXPERIMENTS_DIR / "verbal-report.json").read_text())
     tokenizer = model.tokenizer
     start = time.time()
     categories = []
-    raw_path = out_dir / f"verbal_report_{lane}_raw.jsonl"
+    raw_path = out_dir / f"verbal_report_{lane}{suffix}_raw.jsonl"
     with RawRecordWriter(raw_path, common={
         **(common or {}), "experiment": "verbal-report", "lane": lane,
         "band": list(band), "alpha": alpha,
@@ -126,6 +127,7 @@ def run(model, lens, *, lane: str, out_dir: Path, band=PAPER_BAND,
     rates = [c["top1_rate"] for c in categories if c["top1_rate"] is not None]
     summary = {
         "experiment": "verbal-report", "lane": lane, "alpha": alpha,
+        "scoring_version": SCORING_VERSION,
         "band": list(band), "n_categories": n_categories,
         "category_equal_top1": sum(rates) / len(rates) if rates else None,
         "trial_weighted_top1": (
@@ -139,7 +141,7 @@ def run(model, lens, *, lane: str, out_dir: Path, band=PAPER_BAND,
         "categories": categories,
         "raw_records": str(raw_path),
     }
-    result_path = out_dir / f"verbal_report_{lane}.json"
+    result_path = out_dir / f"verbal_report_{lane}{suffix}.json"
     if result_path.exists():
         raise FileExistsError(result_path)
     result_path.write_text(json.dumps(summary))
