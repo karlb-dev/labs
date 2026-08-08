@@ -33,11 +33,35 @@ from collections import Counter, defaultdict
 
 import numpy as np
 
-REPO = pathlib.Path("/Users/karl/repos/labs/interpretability")
+import argparse
+import os
+
+
+def _interp_root() -> pathlib.Path:
+    """Portable root discovery (plan §6.3): --repo-root arg, else
+    $PREF2_REPO_ROOT, else walk up from this file to `.git`."""
+    ap = argparse.ArgumentParser(add_help=False)
+    ap.add_argument("--repo-root", default=None)
+    ap.add_argument("--out", default=None)
+    ns, _ = ap.parse_known_args()
+    if ns.out:
+        globals()["_OUT_OVERRIDE"] = pathlib.Path(ns.out).resolve()
+    root = ns.repo_root or os.environ.get("PREF2_REPO_ROOT")
+    if root:
+        return pathlib.Path(root).resolve() / "interpretability"
+    here = pathlib.Path(__file__).resolve()
+    for parent in [here, *here.parents]:
+        if (parent / ".git").exists():
+            return parent / "interpretability"
+    raise RuntimeError("repo root not found; pass --repo-root or set PREF2_REPO_ROOT")
+
+
+_OUT_OVERRIDE = None
+REPO = _interp_root()
 PREF = REPO / "preference"
 P1 = PREF / "phase1" / "reports"
 BANK = PREF / "data" / "lab38_preference_bank.jsonl"
-OUT = pathlib.Path(__file__).resolve().parent
+OUT = _OUT_OVERRIDE or pathlib.Path(__file__).resolve().parent
 
 T90_DF4 = 2.131846786  # two-sided 90% critical t, df=4 (5 incidentals)
 
@@ -354,10 +378,13 @@ def cross_structure(f7: dict, f32: dict, families: dict[str, str]) -> dict:
 def main() -> None:
     bank = load_bank()
     fams = family_map(bank)
+    # Repo-relative identities only (plan §6.3: no machine paths in
+    # scientific artifacts).
+    _repo = REPO.parent
     result = {"inputs": {
-        "frozen_7b": str(P1 / "frozen_7b" / "results.jsonl"),
-        "frozen_32b": str(P1 / "frozen_32b" / "results.jsonl"),
-        "bank": str(BANK), "n_bank_rows": len(bank)}}
+        "frozen_7b": str((P1 / "frozen_7b" / "results.jsonl").relative_to(_repo)),
+        "frozen_32b": str((P1 / "frozen_32b" / "results.jsonl").relative_to(_repo)),
+        "bank": str(BANK.relative_to(_repo)), "n_bank_rows": len(bank)}}
 
     folds = {}
     for model in ("7b", "32b"):

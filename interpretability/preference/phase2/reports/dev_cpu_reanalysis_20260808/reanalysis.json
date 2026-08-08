@@ -866,7 +866,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.3468998997250816,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.20603204927475455
+    "residual_margin_sd": 0.20603204927475452
    },
    "AR:ar_docsection_readme": {
     "channel": "AR",
@@ -892,7 +892,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.611465051375989,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.4928359441185128
+    "residual_margin_sd": 0.4928359441185127
    },
    "AR:ar_execmode_migration": {
     "channel": "AR",
@@ -918,7 +918,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.515432139028139,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.6400292509798614
+    "residual_margin_sd": 0.6400292509798613
    },
    "AR:ar_naming_config": {
     "channel": "AR",
@@ -970,7 +970,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.856899664784589,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.25939526661000756
+    "residual_margin_sd": 0.2593952666100076
    },
    "AR:ar_taskorder_setup": {
     "channel": "AR",
@@ -1022,7 +1022,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 4.668534424510834,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.39430226977853583
+    "residual_margin_sd": 0.3943022697785357
    },
    "AR:nc_null_deploy": {
     "channel": "AR",
@@ -1043,12 +1043,12 @@
     "design_rank": 7,
     "family": "PC",
     "n_train": 48,
-    "nuisance_R2": 0.23193680647755588,
+    "nuisance_R2": 0.23193680647755577,
     "rank_deficient": false,
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.145723975357371,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 2.7568877854008775
+    "residual_margin_sd": 2.756887785400878
    },
    "AR:pc_quality_tests": {
     "channel": "AR",
@@ -1074,7 +1074,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.32017080814,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.5185929710045094
+    "residual_margin_sd": 0.5185929710045095
    },
    "AR:pc_safety_creds": {
     "channel": "AR",
@@ -1087,7 +1087,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.2050508927630132,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.7108110277825311
+    "residual_margin_sd": 0.7108110277825314
    },
    "AR:pc_social_ack": {
     "channel": "AR",
@@ -1095,12 +1095,12 @@
     "design_rank": 7,
     "family": "PC",
     "n_train": 48,
-    "nuisance_R2": 0.24513156403795033,
+    "nuisance_R2": 0.24513156403795067,
     "rank_deficient": false,
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.4281211565455194,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 1.240796860775872
+    "residual_margin_sd": 1.2407968607758717
    },
    "AR:pc_social_review": {
     "channel": "AR",
@@ -1108,12 +1108,12 @@
     "design_rank": 7,
     "family": "PC",
     "n_train": 48,
-    "nuisance_R2": 0.8142414387924926,
+    "nuisance_R2": 0.8142414387924928,
     "rank_deficient": false,
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.7618834038088518,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 1.6213611037897409
+    "residual_margin_sd": 1.6213611037897404
    },
    "RO:ar_component_library": {
     "channel": "RO",
@@ -1134,12 +1134,12 @@
     "design_rank": 6,
     "family": "AR",
     "n_train": 24,
-    "nuisance_R2": 0.979375884342482,
+    "nuisance_R2": 0.9793758843424821,
     "rank_deficient": true,
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.375236651792752,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.19749909325962997
+    "residual_margin_sd": 0.19749909325962994
    },
    "RO:ar_execmode_ingest": {
     "channel": "RO",
@@ -1152,7 +1152,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.7646176761912908,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.3902398098020672
+    "residual_margin_sd": 0.39023980980206713
    },
    "RO:ar_execmode_migration": {
     "channel": "RO",
@@ -1178,7 +1178,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.604163627695749,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.34733394251071503
+    "residual_margin_sd": 0.3473339425107151
    },
    "RO:ar_naming_config": {
     "channel": "RO",
@@ -1191,7 +1191,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.1872429449091877,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.8787769379058293
+    "residual_margin_sd": 0.8787769379058292
    },
    "RO:ar_naming_parser": {
     "channel": "RO",
@@ -1204,7 +1204,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 4.033484793853839,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.7541028627746269
+    "residual_margin_sd": 0.754102862774627
    },
    "RO:ar_naming_serializer": {
     "channel": "RO",
@@ -1217,7 +1217,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.582285968727349,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.7448117044418882
+    "residual_margin_sd": 0.744811704441888
    },
    "RO:ar_seed_benchmark": {
     "channel": "RO",
@@ -1230,7 +1230,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 0.968713685712066,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.18689516774876988
+    "residual_margin_sd": 0.18689516774876985
    },
    "RO:ar_taskorder_setup": {
     "channel": "RO",
@@ -1269,7 +1269,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.5680516093708363,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.16638334225688034
+    "residual_margin_sd": 0.16638334225688037
    },
    "RO:pc_quality_config": {
     "channel": "RO",
@@ -1282,7 +1282,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.6065690012722946,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 1.389308413668446
+    "residual_margin_sd": 1.3893084136684462
    },
    "RO:pc_quality_tests": {
     "channel": "RO",
@@ -1290,12 +1290,12 @@
     "design_rank": 6,
     "family": "PC",
     "n_train": 24,
-    "nuisance_R2": 0.8833166450199639,
+    "nuisance_R2": 0.883316645019964,
     "rank_deficient": true,
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.330344364711659,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.7960210588191466
+    "residual_margin_sd": 0.7960210588191464
    },
    "RO:pc_safety_cleanup": {
     "channel": "RO",
@@ -1308,7 +1308,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.8261682028588189,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.9155029665655341
+    "residual_margin_sd": 0.9155029665655342
    },
    "RO:pc_safety_creds": {
     "channel": "RO",
@@ -1334,7 +1334,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.781055698207117,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.8636121302086837
+    "residual_margin_sd": 0.8636121302086835
    },
    "RO:pc_social_review": {
     "channel": "RO",
@@ -1347,7 +1347,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.46198117513047,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.4250000184664019
+    "residual_margin_sd": 0.4250000184664022
    }
   },
   "f5_concordance": {
@@ -2463,7 +2463,7 @@
     "design_rank": 7,
     "family": "AR",
     "n_train": 48,
-    "nuisance_R2": 0.9101394980673337,
+    "nuisance_R2": 0.9101394980673339,
     "rank_deficient": false,
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.0871100179907547,
@@ -2494,7 +2494,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.0238392173218585,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.561458880476511
+    "residual_margin_sd": 0.5614588804765109
    },
    "AR:ar_naming_config": {
     "channel": "AR",
@@ -2533,7 +2533,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 5.871366270458836,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 1.3965541437256943
+    "residual_margin_sd": 1.396554143725694
    },
    "AR:ar_seed_benchmark": {
     "channel": "AR",
@@ -2546,7 +2546,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.4305957078428224,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.6861130967629804
+    "residual_margin_sd": 0.6861130967629805
    },
    "AR:ar_taskorder_setup": {
     "channel": "AR",
@@ -2598,7 +2598,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 6.808333580914938,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.5487487422799131
+    "residual_margin_sd": 0.5487487422799132
    },
    "AR:nc_null_deploy": {
     "channel": "AR",
@@ -2611,7 +2611,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 6.37022778750581,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.4421769173145065
+    "residual_margin_sd": 0.4421769173145063
    },
    "AR:pc_quality_config": {
     "channel": "AR",
@@ -2624,7 +2624,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 6.326915471173941,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 1.0696966519283788
+    "residual_margin_sd": 1.0696966519283784
    },
    "AR:pc_quality_tests": {
     "channel": "AR",
@@ -2637,7 +2637,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.3912136039393606,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 1.1058603340443423
+    "residual_margin_sd": 1.1058603340443425
    },
    "AR:pc_safety_cleanup": {
     "channel": "AR",
@@ -2645,12 +2645,12 @@
     "design_rank": 7,
     "family": "PC",
     "n_train": 48,
-    "nuisance_R2": 0.4370727523719349,
+    "nuisance_R2": 0.437072752371935,
     "rank_deficient": false,
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 1.9347485068229398,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 1.4516123533209169
+    "residual_margin_sd": 1.451612353320917
    },
    "AR:pc_safety_creds": {
     "channel": "AR",
@@ -2676,7 +2676,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.365165178092786,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 1.3079113183224496
+    "residual_margin_sd": 1.3079113183224498
    },
    "AR:pc_social_review": {
     "channel": "AR",
@@ -2702,7 +2702,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.391217057880832,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.3796514308234459
+    "residual_margin_sd": 0.379651430823446
    },
    "RO:ar_docsection_readme": {
     "channel": "RO",
@@ -2715,7 +2715,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.04041554501679,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.3414157406111927
+    "residual_margin_sd": 0.34141574061119273
    },
    "RO:ar_execmode_ingest": {
     "channel": "RO",
@@ -2723,12 +2723,12 @@
     "design_rank": 6,
     "family": "AR",
     "n_train": 24,
-    "nuisance_R2": 0.9956921507303951,
+    "nuisance_R2": 0.9956921507303952,
     "rank_deficient": true,
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.124776660589643,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.20509224152838912
+    "residual_margin_sd": 0.20509224152838904
    },
    "RO:ar_execmode_migration": {
     "channel": "RO",
@@ -2741,7 +2741,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.8185609808774537,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.19064382788586076
+    "residual_margin_sd": 0.19064382788586082
    },
    "RO:ar_logformat_service": {
     "channel": "RO",
@@ -2754,7 +2754,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.2566644915481677,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.41218112884523683
+    "residual_margin_sd": 0.4121811288452369
    },
    "RO:ar_naming_config": {
     "channel": "RO",
@@ -2780,7 +2780,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.4779960223399278,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.2305630235963464
+    "residual_margin_sd": 0.23056302359634645
    },
    "RO:ar_naming_serializer": {
     "channel": "RO",
@@ -2793,7 +2793,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.4496553874885145,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.1865918630290258
+    "residual_margin_sd": 0.18659186302902592
    },
    "RO:ar_seed_benchmark": {
     "channel": "RO",
@@ -2806,7 +2806,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.826862086823767,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.30775421124198066
+    "residual_margin_sd": 0.3077542112419807
    },
    "RO:ar_taskorder_setup": {
     "channel": "RO",
@@ -2845,7 +2845,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 2.881365676136161,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.1631203860789896
+    "residual_margin_sd": 0.16312038607898965
    },
    "RO:pc_quality_config": {
     "channel": "RO",
@@ -2853,7 +2853,7 @@
     "design_rank": 6,
     "family": "PC",
     "n_train": 24,
-    "nuisance_R2": 0.9585088191912424,
+    "nuisance_R2": 0.9585088191912425,
     "rank_deficient": true,
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 4.988847984537372,
@@ -2871,7 +2871,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 4.516947460591582,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.8780746202532379
+    "residual_margin_sd": 0.8780746202532382
    },
    "RO:pc_safety_cleanup": {
     "channel": "RO",
@@ -2897,7 +2897,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 3.606865653327906,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.3758300781864596
+    "residual_margin_sd": 0.3758300781864597
    },
    "RO:pc_social_ack": {
     "channel": "RO",
@@ -2910,7 +2910,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 4.4945531931835445,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.8327151516264699
+    "residual_margin_sd": 0.83271515162647
    },
    "RO:pc_social_review": {
     "channel": "RO",
@@ -2923,7 +2923,7 @@
     "raw_gate_would_exclude": false,
     "raw_margin_sd": 5.253329369132323,
     "residual_gate_would_exclude": false,
-    "residual_margin_sd": 0.5152917524205683
+    "residual_margin_sd": 0.5152917524205682
    }
   },
   "f5_concordance": {
@@ -3152,7 +3152,7 @@
   }
  },
  "cross_structure": {
-  "ar_7b_vs_32b_r": 0.42203497236994464,
+  "ar_7b_vs_32b_r": 0.4220349723699447,
   "ar_7b_vs_32b_signmatch": 11,
   "ar_folded_32b": {
    "ar_component_library": -1.0094129114579036,
@@ -3205,9 +3205,9 @@
   "reply_order_aliased_rate": 1.0
  },
  "inputs": {
-  "bank": "/Users/karl/repos/labs/interpretability/preference/data/lab38_preference_bank.jsonl",
-  "frozen_32b": "/Users/karl/repos/labs/interpretability/preference/phase1/reports/frozen_32b/results.jsonl",
-  "frozen_7b": "/Users/karl/repos/labs/interpretability/preference/phase1/reports/frozen_7b/results.jsonl",
+  "bank": "interpretability/preference/data/lab38_preference_bank.jsonl",
+  "frozen_32b": "interpretability/preference/phase1/reports/frozen_32b/results.jsonl",
+  "frozen_7b": "interpretability/preference/phase1/reports/frozen_7b/results.jsonl",
   "n_bank_rows": 2320
  }
 }

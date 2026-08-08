@@ -26,9 +26,33 @@ import numpy as np
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-REPO = pathlib.Path("/Users/karl/repos/labs/interpretability")
+import argparse
+import os
+
+
+def _interp_root() -> pathlib.Path:
+    """Portable root discovery (plan §6.3): --repo-root arg, else
+    $PREF2_REPO_ROOT, else walk up from this file to `.git`."""
+    ap = argparse.ArgumentParser(add_help=False)
+    ap.add_argument("--repo-root", default=None)
+    ap.add_argument("--out", default=None)
+    ns, _ = ap.parse_known_args()
+    if ns.out:
+        globals()["_OUT_OVERRIDE"] = pathlib.Path(ns.out).resolve()
+    root = ns.repo_root or os.environ.get("PREF2_REPO_ROOT")
+    if root:
+        return pathlib.Path(root).resolve() / "interpretability"
+    here = pathlib.Path(__file__).resolve()
+    for parent in [here, *here.parents]:
+        if (parent / ".git").exists():
+            return parent / "interpretability"
+    raise RuntimeError("repo root not found; pass --repo-root or set PREF2_REPO_ROOT")
+
+
+_OUT_OVERRIDE = None
+REPO = _interp_root()
 BANK = REPO / "preference" / "data" / "lab38_preference_bank.jsonl"
-OUT = pathlib.Path(__file__).resolve().parent
+OUT = _OUT_OVERRIDE or pathlib.Path(__file__).resolve().parent
 
 
 def collect_pairs() -> dict:
