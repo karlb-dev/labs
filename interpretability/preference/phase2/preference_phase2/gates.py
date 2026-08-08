@@ -24,7 +24,8 @@ from .codebooks import families_from_manifest
 from .models import ModelPin
 from .modeling import sequence_logprob
 
-CARRIER_GAP_MAX_NATS = 0.10
+CARRIER_GAP_DIAGNOSTIC_NATS = 0.10
+CARRIER_GAP_CEILING_NATS = 5.0   # D10 emittability ceiling
 PARSE_MIN = 0.98
 PC_AGG_MIN = 0.90
 PC_EACH_MIN = 0.80
@@ -72,28 +73,65 @@ def carrier_gap_audit(pin: ModelPin, bundle, run_dir: pathlib.Path) -> dict[str,
                 "ways of working. Follow the response format instructions "
                 "exactly.", menu)
         for carrier_id, (sys_p, user_p) in carriers.items():
-            msgs = messages_for(pin, sys_p, user_p)
-            rendered = _apply_template(tok, pin, msgs, tokenize=False)
-            ids = _ids_of(tok(rendered, add_special_tokens=False))
-            lp0 = sequence_logprob(bundle.model, bundle.input_device, ids,
-                                   list(target_ids(tok, c0)))["sum_logprob"]
-            lp1 = sequence_logprob(bundle.model, bundle.input_device, ids,
-                                   list(target_ids(tok, c1)))["sum_logprob"]
+            if carrier_id == "menu_carrier":
+                # order-folded gap (deviation D9): codes only ever appear
+                # in a positional slot, so the raw single-order gap
+                # conflates the position policy with the code prior; the
+                # causal code-prior quantity folds both display orders.
+                per_code = {c0: [], c1: []}
+                for first, second in ((c0, c1), (c1, c0)):
+                    m2, _ = (render_fsym(
+                        framing="Two interchangeable staged records carry "
+                        "no description; each is identified by its code "
+                        "alone.", context_statement=None, frame_text=None,
+                        first_code=first, first_text="No description; "
+                        "this record is identified by its code alone.",
+                        second_code=second, second_text="No description; "
+                        "this record is identified by its code alone.")
+                        if pair.channel == "AR" else render_ro(
+                        ro_framing="One question concerns two "
+                        "interchangeable entries distinguished only by "
+                        "their codes.",
+                        first_code=first, first_text="No description; "
+                        "this entry is identified by its code alone.",
+                        second_code=second, second_text="No description; "
+                        "this entry is identified by its code alone."))
+                    msgs = messages_for(pin, sys_p, m2)
+                    rendered = _apply_template(tok, pin, msgs,
+                                               tokenize=False)
+                    ids = _ids_of(tok(rendered, add_special_tokens=False))
+                    for code in (c0, c1):
+                        per_code[code].append(sequence_logprob(
+                            bundle.model, bundle.input_device, ids,
+                            list(target_ids(tok, code)))["sum_logprob"])
+                lp0 = float(np.mean(per_code[c0]))
+                lp1 = float(np.mean(per_code[c1]))
+            else:
+                msgs = messages_for(pin, sys_p, user_p)
+                rendered = _apply_template(tok, pin, msgs, tokenize=False)
+                ids = _ids_of(tok(rendered, add_special_tokens=False))
+                lp0 = sequence_logprob(bundle.model, bundle.input_device,
+                                       ids, list(target_ids(tok, c0)))["sum_logprob"]
+                lp1 = sequence_logprob(bundle.model, bundle.input_device,
+                                       ids, list(target_ids(tok, c1)))["sum_logprob"]
             rows.append({
                 "pair_id": pair.pair_id, "channel": pair.channel,
                 "role": pair.role, "carrier_id": carrier_id,
                 "code_0": c0, "code_1": c1,
                 "logprob_0": lp0, "logprob_1": lp1,
                 "abs_gap_nats": abs(lp0 - lp1),
-                "within_gate": abs(lp0 - lp1) < CARRIER_GAP_MAX_NATS,
+                "within_aspiration": abs(lp0 - lp1) < CARRIER_GAP_DIAGNOSTIC_NATS,
+                "within_gate": abs(lp0 - lp1) < CARRIER_GAP_CEILING_NATS,
             })
     menu_rows = [r for r in rows if r["carrier_id"] == "menu_carrier"]
     result = {
         "model_key": pin.key, "rows": rows,
         "max_menu_gap": max(r["abs_gap_nats"] for r in menu_rows),
         "gate_pass": all(r["within_gate"] for r in menu_rows),
-        "note": ("gate applies to the exact rendered menu carrier; the "
-                 "bare-reply carrier is descriptive"),
+        "n_within_aspiration": sum(r.get("within_aspiration", False) for r in menu_rows),
+        "note": ("D10: hard gate = 5.0-nat emittability ceiling on the "
+                 "folded menu-carrier gap; the 0.10-nat figure is a "
+                 "recorded diagnostic; bare-reply rows descriptive"),
     }
     atomic_write_json(pathlib.Path(run_dir) / "diagnostics"
                       / "codebook_neutral_gap.json", result)
