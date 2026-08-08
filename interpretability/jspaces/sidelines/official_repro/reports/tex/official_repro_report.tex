@@ -12,6 +12,7 @@
 \captionsetup{font=small,labelfont=bf}
 \graphicspath{{../figures/}}
 \input{numbers.tex}
+\input{examples.tex}
 
 \definecolor{jblue}{HTML}{2A78D6}
 \definecolor{jorange}{HTML}{EB6834}
@@ -182,6 +183,46 @@ Population: 90 released items, \qwpsntokgated{} tokenization-gated,
 predicted swapped answer (left) and capable top-1 by category group
 (right).}
 \end{figure}
+
+\section{Worked examples: what the swaps actually do}
+
+The aggregate rates hide a bimodal reality worth seeing item by item.
+When the paper-literal swap works on Qwen, it works emphatically — the
+predicted counterfactual answer jumps hundreds of ranks to top-1:
+
+\begin{table}[h]\centering\small
+\qwpswinstable
+\caption{The \qwpsnwins{} probe-swap successes (of 63 baseline-capable
+items), largest baseline distance first. \texttt{ex2-city-capital-Munich}:
+swapping the J-lens vector Munich$\to$(released target) at every prompt
+position moves the predicted capital from rank 122 to the model's
+literal output. One success (\texttt{rhyme-rain-neighbor}) was already
+rank 1 before the swap (\qwpsnwinstrivial{} such trivial cell in the
+count); \qwpsnnear{} further items land in the top-5 without reaching
+top-1 — the modal failure is \emph{under-strength}, not wrong-direction.}
+\end{table}
+
+\begin{table}[h]\centering\small
+\qwfgwinstable
+\caption{The \qwfgnwins{} flexible-generalization $\alpha{=}1$ successes
+concentrate in the \emph{countries} category (capable top-1 23.3\%
+there): \texttt{capital Egypt$\to$Canada} drives \texttt{Ottawa} from
+rank 480 to the output. Months and numbers show none — the four
+released categories differ enormously, exactly the per-category
+variance the paper's own appendix warns about.}
+\end{table}
+
+Two structural observations. First, successes cluster where the
+swapped-in argument has a strong, single-token, high-frequency identity
+(cities, countries, elements); the sparse-identity categories (months
+as time-words, small numbers) never flip. Second, the near-miss mass
+(top-5 but not top-1) plus the incident-or1-001 form effect mean the
+honest Qwen picture is ``the mechanism visibly engages but rarely
+completes the flip at $\alpha{=}1$'' — which makes the $\alpha{=}2$
+\emph{reversal} (0\% capable) the more interesting anomaly: on Qwen the
+doubled patch overshoots into off-distribution territory rather than
+completing near-misses, unlike the paper's Sonnet where $\alpha{=}2$
+lifted 76/192 to 101/192.
 
 \section{Interpretation under the wording router}
 
