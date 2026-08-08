@@ -289,34 +289,52 @@ def execute_battery(*, pin: ModelPin, stage: str, banks: Sequence[str],
                               [rp.input_ids for rp in rendered],
                               max_new_tokens=gen_budget,
                               batch_size=batch_size)
-        out_rows = []
+        # batched follow-through generation (invariance-gated): collect
+        # enacted+valid microtask rows in this chunk, run one left-padded
+        # batch, validate per row
+        ft_jobs = []
+        ft_parsed = []
         for r, rp, raw in zip(chunk, rendered, raws):
             codes = list(r["valid_codes_in_display_order"])
             to_parse = raw
             if r["format_id"] == "F-COMMIT":
-                lines = [l for l in raw.strip().splitlines() if l.strip()]
-                to_parse = lines[-1] if lines else ""
+                lines_ = [l for l in raw.strip().splitlines() if l.strip()]
+                to_parse = lines_[-1] if lines_ else ""
             parsed = parse_strict(to_parse, codes)
             dec = binding_decision(r, parsed.parsed_response_code)
+            ft_parsed.append((parsed, dec))
+            if (dec["binding_executed"]
+                    and r.get("binding_kind") == "model_microtask"):
+                from .chat import _apply_template, _ids_of, messages_for
+                msgs = messages_for(pin, r["system_prompt"],
+                                    r["user_prompt"])
+                msgs.append({"role": "assistant", "content": raw.strip()})
+                msgs.append({"role": "user",
+                             "content": dec["continuation_text"]})
+                f_rendered = _apply_template(tok, pin, msgs,
+                                             tokenize=False)
+                f_ids = _ids_of(tok(f_rendered, add_special_tokens=False))
+                ft_jobs.append((len(ft_parsed) - 1, f_ids,
+                                int(r["binding_max_new_tokens"])))
+        ft_outputs: dict[int, str] = {}
+        if ft_jobs:
+            budget = max(j[2] for j in ft_jobs)
+            outs = generate_batch(bundle.model, tok, bundle.input_device,
+                                  [j[1] for j in ft_jobs],
+                                  max_new_tokens=budget,
+                                  batch_size=batch_size)
+            for (idx, _, _), out in zip(ft_jobs, outs):
+                ft_outputs[idx] = out
+        out_rows = []
+        for i, (r, rp, raw) in enumerate(zip(chunk, rendered, raws)):
+            parsed, dec = ft_parsed[i]
             ids_a = target_ids(tok, r["response_code_by_sem"]["a"])
             ids_b = target_ids(tok, r["response_code_by_sem"]["b"])
             margins = pair_margins(bundle.model, bundle.input_device,
                                    rp.input_ids, ids_a, ids_b)
             followthrough = None
-            if (dec["binding_executed"]
-                    and r.get("binding_kind") == "model_microtask"):
-                from .chat import messages_for
-                msgs = messages_for(pin, r["system_prompt"], r["user_prompt"])
-                msgs.append({"role": "assistant", "content": raw.strip()})
-                msgs.append({"role": "user",
-                             "content": dec["continuation_text"]})
-                from .chat import _apply_template, _ids_of
-                f_rendered = _apply_template(tok, pin, msgs, tokenize=False)
-                f_ids = _ids_of(tok(f_rendered, add_special_tokens=False))
-                f_out = generate_batch(
-                    bundle.model, tok, bundle.input_device, [f_ids],
-                    max_new_tokens=int(r["binding_max_new_tokens"]),
-                    batch_size=1)[0]
+            if i in ft_outputs:
+                f_out = ft_outputs[i]
                 followthrough = validate_followthrough(
                     r, dec["parsed_sem"], f_out)
                 followthrough["output"] = f_out[:400]
