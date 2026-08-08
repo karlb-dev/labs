@@ -14,13 +14,23 @@ later reorg.
 
 Claim ceiling: functional choice, report, and their coupling only. Never
 wants, welfare, suffering, consent, experience, moral patienthood, or a
-global workspace. See `plans/preference_1_1.md` §2.3 (binding). Phase 1 is **complete**
-(freeze `preference-phase1-freeze-v1`); the operative Phase 2 plan is
-`plans/preference_2_2.md` (pre-VM CPU re-analysis DONE — see
-`phase2/reports/dev_cpu_reanalysis_20260808/` — then one frozen VM
-campaign: v3 banks under authoring-slot counterbalance, folded-margin
-co-primary, repaired mechanism, cross-model cells). `preference_2_1.md`
-is its superseded same-day draft.
+global workspace. See `plans/preference_1_1.md` §2.3 (binding).
+
+Phase 1 is **complete** (freeze `preference-phase1-freeze-v1`). Phase 2 is
+governed by `plans/preference_2_2.md` **as amended by**
+`plans/preference_2_2_addendum.md` (the addendum's Section B errata take
+precedence). The program: decompose the Phase 1 surface policy (B-SURF),
+measure semantic margins and enacted choice under the symmetric F-SYM
+format, create randomized contextual advantage (B-MECH context ladders),
+and only then test scenario-local handles and disjoint-surface report
+coupling; OLMo-7B/Qwen/Gemma behavioral cells are scheduled, with
+completeness defined by the OLMo-32B spine (addendum E17). The Phase 1
+CPU re-analysis (`phase2/reports/dev_cpu_reanalysis_20260808/`,
+development tier) supports the diagnosis. The campaign is **not** frozen
+and not GPU-ready until banks, preregistration, and
+`preference-phase2-freeze-v1` exist. `preference_2_1.md` and the earlier
+opener version of `preference_2_2.md` are superseded drafts (Git
+history).
 
 ## Layout
 
@@ -30,8 +40,9 @@ preference/
 ├── plans/                     <- governing plan documents (hash-pinned at intake)
 │   ├── preference_1_1.md              Phase 1 plan
 │   ├── preference_1_1_addendum.md     Colab execution addendum
-│   ├── preference_2_1.md              Phase 2 draft (superseded same-day)
-│   └── preference_2_2.md              Phase 2 operative plan (CPU results in)
+│   ├── preference_2_1.md              Phase 2 draft (superseded)
+│   ├── preference_2_2.md              Phase 2 governing plan
+│   └── preference_2_2_addendum.md     Phase 2 execution addendum (§B supersedes plan)
 ├── data/                      <- campaign-owned generators + frozen banks (lab38_*)
 └── phase1/                    <- Phase 1 COMPLETE: instrument + batteries + PC mechanism
     ├── README.md                      phase map & status
@@ -65,15 +76,17 @@ interpretability/runs/lab38_*                                       live run dir
 | Static VM bootstrap | `MyDrive/preference/preference_resume.md` |
 | Evidence registry | `phase1/reports/evidence_events.jsonl` |
 | Drive mirror of run dirs & reports | `MyDrive/preference/phase1/part1/` |
-| Branch | `interp_preference_phase1` |
+| Phase 1 branch (closed) | `interp_preference_phase1` |
+| Phase 2 branch | `interp_preference_phase2` |
 
 ## Phases
 
 | phase | scope | status |
 |---|---|---|
-| phase1 | instrument build → frozen 7B behavioral battery → conditional per-scenario mechanism & report coupling | ACTIVE (part 1, started 2026-08-07) |
+| phase1 | instrument build → frozen 7B/32B behavioral batteries → Stop C mechanism case study | **COMPLETE** (2026-08-07; freeze `preference-phase1-freeze-v1`) |
+| phase2 | surface decomposition → semantic defaults + context ladders → conditional mechanism & disjoint-RO coupling → cross-model map | PLANNED (governing plan + addendum committed; not frozen, no GPU work yet) |
 
-Precedence of governing text: handout < plan < addendum (addendum §B lists
-every deviation as a numbered erratum). The addendum's Stop-and-ask list
-(§M) is binding; the freeze gate (plan §8.3) is the single human approval
-gate in Phase 1.
+Precedence of governing text, per phase: handout < plan < that phase's
+addendum (addendum §B lists every deviation as a numbered erratum). Each
+addendum's stop-and-ask list is binding; the freeze gate is the single
+human approval gate (Phase 1 plan §8.3; Phase 2 addendum §I).
