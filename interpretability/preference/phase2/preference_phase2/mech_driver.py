@@ -144,8 +144,10 @@ def run_mech_scenario(bundle, pin, results, bank_rows_by_id, reader,
             (raw / n).astype(np.float32) if n > 0 else None)
     g_code = code_gradient_direction(
         bundle,
-        codes_a=[r["response_code_by_sem"]["a"] for r in train[:8]],
-        codes_b=[r["response_code_by_sem"]["b"] for r in train[:8]])
+        codes_a=[bank_rows_by_id[r["item_id"]]["response_code_by_sem"]["a"]
+                 for r in train[:8]],
+        codes_b=[bank_rows_by_id[r["item_id"]]["response_code_by_sem"]["b"]
+                 for r in train[:8]])
     randoms = random_directions(len(d), N_RANDOM_CONTROLS,
                                 f"{scenario_id}|{site}|{depth}")
 
