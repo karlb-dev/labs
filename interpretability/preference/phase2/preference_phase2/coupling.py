@@ -95,15 +95,15 @@ def natural_readout(reader: CaptureReader, results, *, scenario_id: str,
     }
 
 
-def _prep(bundle, pin, row) -> dict:
-    rp = render_item_prompt(bundle.tokenizer, pin, row)
+def _prep(bundle, pin, bank_row, baseline: float) -> dict:
+    rp = render_item_prompt(bundle.tokenizer, pin, bank_row)
     return {"ids": rp.input_ids, "sites": dict(rp.site_token_index),
             "ids_a": list(target_ids(bundle.tokenizer,
-                                     row["response_code_by_sem"]["a"])),
+                                     bank_row["response_code_by_sem"]["a"])),
             "ids_b": list(target_ids(bundle.tokenizer,
-                                     row["response_code_by_sem"]["b"])),
-            "codes": list(row["valid_codes_in_display_order"]),
-            "baseline": float(row["margin_full_a_minus_b"])}
+                                     bank_row["response_code_by_sem"]["b"])),
+            "codes": list(bank_row["valid_codes_in_display_order"]),
+            "baseline": float(baseline)}
 
 
 def ro_intervention(bundle, pin, results, bank_rows_by_id, reader,
@@ -116,7 +116,9 @@ def ro_intervention(bundle, pin, results, bank_rows_by_id, reader,
                  if r["incidental_split"] == "holdout"]
     reserved = [r for r in _ro_rows(results, scenario_id, reserved=True)
                 if r["incidental_split"] == "holdout"]
-    preps = {r["item_id"]: _prep(bundle, pin, bank_rows_by_id[r["item_id"]])
+    preps = {r["item_id"]: _prep(bundle, pin,
+                                 bank_rows_by_id[r["item_id"]],
+                                 r["margin_full_a_minus_b"])
              for r in receivers + reserved}
 
     def pm(r, vector, site_key) -> float:

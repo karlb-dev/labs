@@ -85,17 +85,17 @@ def _donors(results, scenario_id, receiver, *, bank,
     return plus, minus
 
 
-def _prep(bundle, pin, row) -> dict:
-    rp = render_item_prompt(bundle.tokenizer, pin, row)
+def _prep(bundle, pin, bank_row, baseline: float) -> dict:
+    rp = render_item_prompt(bundle.tokenizer, pin, bank_row)
     return {
         "ids": rp.input_ids,
         "sites": dict(rp.site_token_index),
         "ids_a": list(target_ids(bundle.tokenizer,
-                                 row["response_code_by_sem"]["a"])),
+                                 bank_row["response_code_by_sem"]["a"])),
         "ids_b": list(target_ids(bundle.tokenizer,
-                                 row["response_code_by_sem"]["b"])),
-        "codes": list(row["valid_codes_in_display_order"]),
-        "baseline": float(row["margin_full_a_minus_b"]),
+                                 bank_row["response_code_by_sem"]["b"])),
+        "codes": list(bank_row["valid_codes_in_display_order"]),
+        "baseline": float(baseline),
     }
 
 
@@ -154,7 +154,9 @@ def run_mech_scenario(bundle, pin, results, bank_rows_by_id, reader,
     # ---- dose selection on validation (frozen before holdout) ------------
     val_neutral = [r for r in rows if r["incidental_split"] == "validation"
                    and int(r["context_strength"]) == 0][:12]
-    preps_val = {r["item_id"]: _prep(bundle, pin, bank_rows_by_id[r["item_id"]])
+    preps_val = {r["item_id"]: _prep(bundle, pin,
+                                     bank_rows_by_id[r["item_id"]],
+                                     r["margin_full_a_minus_b"])
                  for r in val_neutral}
     dose_rows = []
     for beta in DOSE_GRID:
@@ -196,7 +198,9 @@ def run_mech_scenario(bundle, pin, results, bank_rows_by_id, reader,
     receivers = _receivers(results, scenario_id, bank=bank, reserved=False)
     reserved_receivers = _receivers(results, scenario_id, bank=bank,
                                     reserved=True)
-    preps = {r["item_id"]: _prep(bundle, pin, bank_rows_by_id[r["item_id"]])
+    preps = {r["item_id"]: _prep(bundle, pin,
+                                 bank_rows_by_id[r["item_id"]],
+                                 r["margin_full_a_minus_b"])
              for r in receivers + reserved_receivers}
 
     def margin_delta(r, vector, mode, scale, *, site_key=site) -> float:
