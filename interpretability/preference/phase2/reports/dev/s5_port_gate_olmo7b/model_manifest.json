@@ -1,0 +1,13 @@
+{
+  "architecture": "Olmo3ForCausalLM",
+  "chat_template_sha256": "f5186d42d99c8a0445d37fd8a6c7ccf07fe3e24a29ce622d8bd245da9507b12b",
+  "d_model": 4096,
+  "dtype": "bfloat16",
+  "family": "olmo",
+  "model_id": "allenai/Olmo-3-7B-Instruct",
+  "model_key": "olmo7b",
+  "n_layers": 32,
+  "revision": "6e5971d9eba42665f5bd5a0fcf047f299ce1dccc",
+  "tokenizer_class": "TokenizersBackend",
+  "vocab_size": 100278
+}
