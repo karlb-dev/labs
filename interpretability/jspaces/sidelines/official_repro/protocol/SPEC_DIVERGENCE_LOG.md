@@ -75,6 +75,21 @@ under the plan §14 drop order (first candidates to drop), not a second
 primary. The smoke admission (scratch, unregistered) surfaced this;
 the registered admission carries the same audit values.
 
+## D10 — selectivity-linecount assembly and hit-k (pre-data)
+
+The README fixes content and order ("question before the wrapped passage,
+ends with the matching prefill") but not separators or the tracked-set k.
+Frozen: ``question + "\n\n" + wrapped + "\n\n" + prefill`` (no leading
+separator when the question is empty; `continue` = ``explicit_q + "\n\n"
++ wrapped``); hit at rank 1 primary (the conventions' default), rank ≤5
+recorded sensitivity. R1.
+
+## D11 — introspection steering normalization scope (pre-data)
+
+"Scaled by the layer's mean residual norm" — corpus- vs prompt-level is
+unspecified. Frozen: per (prompt, layer) mean over the steered-turn
+positions from the clean forward. R1.
+
 ## D8 — order-ops synonym expansion table (pre-data)
 
 The README states the rule ("numbers → digit and word forms; operations →
