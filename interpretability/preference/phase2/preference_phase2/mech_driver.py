@@ -23,7 +23,6 @@ from .capture import CaptureReader
 from .chat import render_item_prompt, target_ids
 from .mechanism import (fit_direction, identifiability_precheck,
                         select_site_depth)
-from .mech_run_support import scenario_rows  # noqa: F401  (helper module)
 from .mechanism_run import (DOSE_GRID, N_RANDOM_CONTROLS, PRIMARY_SITES,
                             code_gradient_direction, dose_guardrail,
                             fit_factor_direction, intervened_generation,
