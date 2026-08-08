@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "preference_phase2"
+version = "0.1.0"
+description = "Lab 38 Phase 2: surface policy, semantic defaults, contextual choice value, enacted choice, and report coupling"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "pandas",
+  "matplotlib",
+  "scipy",
+]
+
+[project.optional-dependencies]
+model = ["torch", "transformers", "huggingface_hub", "accelerate", "safetensors"]
+dev = ["pytest"]
+
+[project.scripts]
+pref2 = "preference_phase2.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["preference_phase2*"]
