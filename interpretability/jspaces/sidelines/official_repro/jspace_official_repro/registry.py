@@ -109,6 +109,21 @@ def append_event(event: dict, *, path: str | Path = EVENTS) -> dict:
     return stamped
 
 
+def _dirty_beyond_registry() -> bool:
+    """Dirty-tree check that ignores the registry file itself — appending
+    events is the one sanctioned in-flight mutation; everything else must
+    be committed before evidence creation."""
+    import subprocess
+
+    from .paths import REPO_ROOT
+
+    status = subprocess.check_output(
+        ["git", "-C", str(REPO_ROOT), "status", "--porcelain"], text=True
+    ).splitlines()
+    registry_relative = str(EVENTS.relative_to(REPO_ROOT))
+    return any(line[3:] != registry_relative for line in status if line.strip())
+
+
 def create(
     evidence_id: str,
     *,
@@ -121,7 +136,7 @@ def create(
     **extra,
 ) -> dict:
     information = git_info()
-    if information["dirty_tree"]:
+    if _dirty_beyond_registry():
         raise RegistryError("refusing evidence creation from dirty tree")
     output_rows = [
         {"path": str(path), "sha256": file_sha256(path)} for path in outputs
