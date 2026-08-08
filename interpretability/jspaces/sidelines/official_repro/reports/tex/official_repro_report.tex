@@ -1,0 +1,205 @@
+% OFFICIAL_REPRO_DEVELOPMENT_REPORT — built by latexmk; numbers from
+% numbers.tex (auto-generated); figures from reports/figures (regenerable
+% from registered JSON without model weights).
+\documentclass[10pt]{article}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+\graphicspath{{../figures/}}
+\input{numbers.tex}
+
+\definecolor{jblue}{HTML}{2A78D6}
+\definecolor{jorange}{HTML}{EB6834}
+\definecolor{ink2}{HTML}{52514E}
+
+\title{\textbf{Released-Materials Reproduction, Study 1 (\texttt{or1-})}\\
+\large Running the Anthropic Jacobian-lens battery on Qwen 3.6 27B and
+OLMo 3.1 32B Instruct\\
+\normalsize development/methods tier --- prompt-exact where released,
+method-reconstructed where specified, gated where not identified}
+\author{J-space campaign --- official-repro sideline\\
+\small branch \texttt{interp\_jspace\_official\_repro\_1} ---
+upstream \texttt{anthropics/jacobian-lens @ 581d3986}}
+\date{2026-08-08 (OR1-A Qwen block)}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent We run the released Jacobian-lens evaluations (6 sets) and
+experiment prompt sets (11 sets) from the public companion release of
+``Verbalizable Representations Form a Global Workspace in Language
+Models'' under one audited harness on two open-weight models, and
+separate prompt, lens, intervention, capability, and model effects.
+This report covers the Qwen lane: the campaign-pinned checkpoint with
+the published $n{=}1000$ lens --- the study's mechanical instrument
+anchor (OR-Q1) and its first generalization surface (OR-Q2). Fidelity
+classes and gate states are carried on every cell; gated cells are
+missing, never zero; no confirmatory language is licensed anywhere in
+Study 1.
+\end{abstract}
+
+\section{Provenance and instrument identity}
+
+\begin{table}[h]\centering\small
+\begin{tabular}{ll}
+\toprule
+Upstream release & \texttt{anthropics/jacobian-lens} @ \texttt{581d3986} (11 experiments + 6 evals, hash-pinned)\\
+Qwen checkpoint & \texttt{Qwen/Qwen3.6-27B} @ \texttt{6a9e13bd} (64 layers, $d{=}5120$, 48 GDN blocks verified)\\
+Published lens & \texttt{neuronpedia/jacobian-lens} @ \texttt{a4114d7}, $n{=}1000$, sha256 \texttt{1718c8c5\ldots} byte-verified\\
+Readout parity & max abs.\ diff \qwparity{} (hard stop threshold $10^{-4}$; exact top-20 order agreement)\\
+$\alpha{=}0$ no-op & exact (0.0 logit difference across a full-position band session)\\
+g-folding audit & min cosine \qwgfold{} over 26 battery tokens $\times$ 14 band layers --- \textbf{material}; D9: paper-literal unfolded $v_t$ stays primary\\
+Bands & paper grid 25 layers; workspace band $[24,58]$; campaign band sensitivity $[20\ldots44]$\\
+\bottomrule
+\end{tabular}
+\caption{Lane admission. The boot-probe sentinel (Fig.~\ref{fig:slice})
+reads the latent country mid-band and the currency near the output ---
+the instrument behaves as the paper describes before any experiment
+runs.}
+\end{table}
+
+\section{The paper's own example, on Qwen}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f06_slice_boot_qwen.pdf}
+\caption{\label{fig:slice}The upstream README walkthrough probe
+(``The currency used in the country shaped like a boot is'') under the
+published lens on Qwen 3.6 27B. Left: J-lens top-1 token per (layer,
+position); colored cells are tracked words. Right: tracked-word best
+rank by layer (shaded: workspace band). \textcolor{jblue}{Italy} appears
+as latent content mid-band and hands off to
+\textcolor{jorange}{euro}/lira toward the output --- the paper's
+slice-visualisation phenomenology, reproduced from released materials.}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f07_slice_amazon_qwen.pdf}
+\caption{Released probe-swap item 0 (``the language spoken in the
+country where the Amazon River ends'') --- the two-hop structure is
+visible: \textcolor{jblue}{Brazil} (bridge entity) carried in-band while
+the output side resolves toward \textcolor{jorange}{Portuguese}.}
+\end{figure}
+
+\section{Six released lens evaluations (OR-Q1)}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f01_evals_qwen.pdf}
+\caption{pass@$k$ per released set, token-valid denominators,
+min-over-24-paper-grid-layers at the released readout position.}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f02_layer_profiles_qwen.pdf}
+\caption{\label{fig:profiles}Median intermediate rank by layer. On the
+latent-content sets (multihop, multilingual) the J-lens reaches useful
+ranks by the band onset while the logit lens remains near rank $10^4$
+until $\sim$L45 --- the paper's central methods-comparison claim,
+visible on an open model. On typo the logit lens is stronger (the
+correction is surface-adjacent); order-ops numbers sit in the prompt, so
+the logit lens copies them early.}
+\end{figure}
+
+\begin{table}[h]\centering\small
+\begin{tabular}{lrrrrrr}
+\toprule
+& \multicolumn{3}{c}{Jacobian lens} & \multicolumn{3}{c}{logit lens}\\
+Set & @1 & @5 & @20 & @1 & @5 & @20\\
+\midrule
+multihop ($n{=}\qwmultihopn$) & \qwmultihopjlensp1 & \qwmultihopjlensp5 & \qwmultihopjlensp20 & \qwmultihoplogitp1 & \qwmultihoplogitp5 & \qwmultihoplogitp20\\
+multilingual ($n{=}\qwmultilingualn$) & \qwmultilingualjlensp1 & \qwmultilingualjlensp5 & \qwmultilingualjlensp20 & \qwmultilinguallogitp1 & \qwmultilinguallogitp5 & \qwmultilinguallogitp20\\
+poetry ($n{=}\qwpoetryn$) & \qwpoetryjlensp1 & \qwpoetryjlensp5 & \qwpoetryjlensp20 & \qwpoetrylogitp1 & \qwpoetrylogitp5 & \qwpoetrylogitp20\\
+typo ($n{=}\qwtypon$) & \qwtypojlensp1 & \qwtypojlensp5 & \qwtypojlensp20 & \qwtypologitp1 & \qwtypologitp5 & \qwtypologitp20\\
+order-ops ($n{=}\qworderopsn$) & \qworderopsjlensp1 & \qworderopsjlensp5 & \qworderopsjlensp20 & \qworderopslogitp1 & \qworderopslogitp5 & \qworderopslogitp20\\
+association ($n{=}\qwassociationn$) & \qwassociationjlensp1 & \qwassociationjlensp5 & \qwassociationjlensp20 & \qwassociationlogitp1 & \qwassociationlogitp5 & \qwassociationlogitp20\\
+\bottomrule
+\end{tabular}
+\caption{pass@$k$, token-valid primary. All-source-layer sensitivity and
+released-denominator sensitivity live in the registered JSON.}
+\end{table}
+
+\section{Qwen causal core (OR-Q2)}
+
+\subsection{Verbal report}
+Release-literal rule (first ten listed candidates, skip the answer),
+swap-out = greedy token at the generation boundary (D1), $\alpha{=}1$
+across the band at every prompt position. Category-equal top-1
+\qwvrcattopone{} and top-5 \qwvrcattopfive{} over \qwvrncat{} categories
+(\qwvrnexec{} executed trials; \qwvrimproved{} trials improved the
+candidate's rank, \qwvrworsened{} worsened). Paper context (Claude):
+88\% top-5. The effect on Qwen under the paper-literal operation is
+\emph{directionally present in rank movement but far below the paper's
+report-rate}: Fig.~\ref{fig:vr}.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f03_verbal_report_qwen.pdf}
+\caption{\label{fig:vr}Verbal report on Qwen: per-category success rates
+(left) and per-trial rank shifts (right; below the diagonal = swap moved
+the candidate toward the output).}
+\end{figure}
+
+\subsection{Flexible generalization}
+All 192 ordered off-diagonal swaps; capability-conditioned primary
+(source and target baselines correct; baseline accuracy
+\qwfgbaseline{}); $\alpha{=}2$ full sensitivity. Category-equal
+capable top-1: \qwfgcapaone{} ($\alpha{=}1$) $\to$ \qwfgcapatwo{}
+($\alpha{=}2$); diagnostic all-executable: \qwfgdiagaone{}. Paper
+context: $76/192 \to 101/192$ (Sonnet 4.5). Per-category grids in
+Fig.~\ref{fig:fg}.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f04_flexgen_qwen.pdf}
+\caption{\label{fig:fg}Function $\times$ ordered-argument-swap outcomes,
+$\alpha{=}1$ (filled = target answer reached rank 1).}
+\end{figure}
+
+\subsection{Probe-swap, raw J-lens token arm}
+Fidelity \texttt{prompt\_exact\_representation\_adapted\_raw\_jlens}
+(the paper's own \S3.3 headline arm; the official linear-probe arm is
+NOT-IDENTIFIED --- its training corpus is absent from the release).
+Population: 90 released items, \qwpsntokgated{} tokenization-gated,
+\qwpsnexec{} executed, \qwpsncap{} baseline-capable. Capable top-1
+\qwpscaptopone{} (diagnostic \qwpsdiagtopone{}); multihop
+\qwpsmulti{} vs non-multihop \qwpsnonmulti{}. Paper context: 60\%
+(Claude, $n{=}90$).
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f05_probe_swap_qwen.pdf}
+\caption{Probe-swap raw arm on Qwen: per-item rank movement of the
+predicted swapped answer (left) and capable top-1 by category group
+(right).}
+\end{figure}
+
+\section{Interpretation under the wording router}
+
+Conformance and admission passed mechanically (exact parity, exact
+no-ops, verified pins), so every result above is a scientific
+observation about this model/instrument cell, not a harness state. The
+lens-eval layer profiles reproduce the paper's methods-comparison
+direction on the latent-content distributions; the paper-literal
+$\alpha{=}1$ coordinate-swap core is \emph{directionally present but
+substantially weaker on Qwen 3.6 27B than the paper's Claude values},
+with rank movement concentrated below top-1. Maximum licensed sentence
+(plan \S7.6 routing, pre-OLMo): \emph{``conformance passes; the Qwen
+core is a valid generalization result''} --- the released functional
+properties do not transfer at paper magnitude to this cell under
+prompt-exact, method-reconstructed conditions. No workspace-existence
+or -absence claim is licensed; OLMo, the extended battery, and the
+instrument cross-over (which will separate intervention semantics from
+prompt population) follow in OR1-B/C/D.
+
+\section{Population accounting}
+
+Every released row carries source-present / tokenization-valid /
+geometry-valid / baseline-capable / executed states in the registered
+raw records (\texttt{*\_raw.jsonl}, plan \S12 schema); the attrition
+waterfall figure ships with the OLMo lane so both lanes share one
+accounting frame. Nothing gated was encoded as zero anywhere in this
+report.
+
+\end{document}
