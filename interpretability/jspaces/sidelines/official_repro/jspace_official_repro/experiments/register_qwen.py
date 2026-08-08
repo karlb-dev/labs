@@ -24,13 +24,19 @@ def _require(path: Path) -> Path:
 
 def main() -> None:
     transcript = REPORTS / "conformance_pytest_transcript.txt"
-    result = subprocess.run(
-        ["python", "-m", "pytest", str(STUDY_ROOT / "tests"), "-q"],
-        capture_output=True, text=True,
-    )
-    transcript.write_text(result.stdout[-4000:] + result.stderr[-1000:])
-    if result.returncode != 0:
-        raise RuntimeError("conformance pytest failed at registration time")
+    if not transcript.exists():
+        # Write-then-commit before registering (the registry refuses dirty
+        # trees, including this transcript itself).
+        result = subprocess.run(
+            ["python", "-m", "pytest", str(STUDY_ROOT / "tests"), "-q"],
+            capture_output=True, text=True,
+        )
+        transcript.write_text(result.stdout[-4000:] + result.stderr[-1000:])
+        if result.returncode != 0:
+            raise RuntimeError("conformance pytest failed at registration time")
+        raise SystemExit(
+            "transcript written; commit it, then rerun this module to register"
+        )
 
     admission = _require(LANE / "qwen_admission.json")
     admission_data = json.loads(admission.read_text())
