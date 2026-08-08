@@ -75,6 +75,24 @@ under the plan §14 drop order (first candidates to drop), not a second
 primary. The smoke admission (scratch, unregistered) surfaced this;
 the registered admission carries the same audit values.
 
+## D12 — modulation/ignition pairing dimensions (pre-data)
+
+The release fixes the item sets but not the trial-pairing counts.
+Frozen deterministic rules: directed-modulation pairs phrasing i ×
+target j with carrier ``(i+j) mod 20`` (all 24 phrasings × all 46
+targets, one carrier each); ignition runs the complete released pair ×
+α grid (α ∈ {0.0,0.1,…,1.0}) with carrier rotation ``pair_index mod
+len(carriers)`` plus a 5-carrier variability subset on the 12-country
+pairs. R1 (content exact, pairing reconstructed).
+
+## D13 — carrier-task instruction templates (pre-data)
+
+Single-task templates are taken verbatim from the released
+``jlens/examples.py`` (``Write "{carrier}" {instruction} Don't write
+anything else.`` with assistant prefill = carrier). Dual-task combined
+clauses ("X and Y while you write the sentence") are a reconstruction —
+the release ships conditions and pair keys but no combined phrasing. R1.
+
 ## D10 — selectivity-linecount assembly and hit-k (pre-data)
 
 The README fixes content and order ("question before the wrapped passage,
