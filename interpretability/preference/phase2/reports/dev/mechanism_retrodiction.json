@@ -1,0 +1,111 @@
+{
+  "docsection": {
+    "passed": true,
+    "per_depth": [
+      {
+        "band": null,
+        "depth": 16,
+        "old_gate_would_pass": false,
+        "recorded_identifiable": false,
+        "validation_corr": 0.1334710149573243
+      },
+      {
+        "band": null,
+        "depth": 26,
+        "old_gate_would_pass": false,
+        "recorded_identifiable": false,
+        "validation_corr": 0.12974383016090696
+      },
+      {
+        "band": null,
+        "depth": 35,
+        "old_gate_would_pass": false,
+        "recorded_identifiable": false,
+        "validation_corr": 0.08927259117334164
+      },
+      {
+        "band": null,
+        "depth": 45,
+        "old_gate_would_pass": false,
+        "recorded_identifiable": false,
+        "validation_corr": 0.09086712526971301
+      },
+      {
+        "band": null,
+        "depth": 54,
+        "old_gate_would_pass": false,
+        "recorded_identifiable": false,
+        "validation_corr": 0.09897145631695223
+      }
+    ],
+    "predicted_nonidentifiable": true,
+    "recorded_status": "DIRECTION_NOT_IDENTIFIABLE"
+  },
+  "old_pc_classification": {
+    "classification": "MARGIN_HANDLE",
+    "passed": true,
+    "risk_flags": [
+      "DIRECT_OUTPUT_RISK:final_prompt_token_site",
+      "DIRECT_OUTPUT_RISK:wrong_scenario_0.62_of_primary",
+      "no_strict_flips"
+    ],
+    "strict_flips": 0,
+    "wrong_scenario_ratio": 0.6152557932684332
+  },
+  "passed": true,
+  "pc_numbers": {
+    "add_pm_mean": 0.787268125,
+    "checks": {
+      "add_pm_mean_matches": true,
+      "code_control_opposite_on_ro": true,
+      "p_holm_addition_matches": true,
+      "p_holm_transfer_matches": true,
+      "removal_null_matches": true,
+      "ro_transfer_mean_matches": true
+    },
+    "passed": true,
+    "recomputed_holm": {
+      "ar_addition_pm": {
+        "p": 3.0517578125e-05,
+        "p_holm": 9.1552734375e-05,
+        "reject_at_05": true
+      },
+      "ar_removal": {
+        "p": 0.375701904296875,
+        "p_holm": 0.375701904296875,
+        "reject_at_05": false
+      },
+      "ar_to_ro_transfer": {
+        "p": 0.0078125,
+        "p_holm": 0.015625,
+        "reject_at_05": true
+      }
+    },
+    "recorded_holm": {
+      "ar_addition_pm": {
+        "p": 3.0517578125e-05,
+        "p_holm": 9.1552734375e-05,
+        "reject_at_05": true
+      },
+      "ar_removal": {
+        "p": 0.375579833984375,
+        "p_holm": 0.375579833984375,
+        "reject_at_05": false
+      },
+      "ar_to_ro_transfer": {
+        "p": 0.0078125,
+        "p_holm": 0.015625,
+        "reject_at_05": true
+      }
+    },
+    "ro_transfer_mean": 0.929687625
+  },
+  "retrodiction_scope": "analysis_level",
+  "synthetic_intercept_blindness": {
+    "new_estimator_true_cosine": 0.936068407157841,
+    "new_estimator_validation_corr": 0.9424018809931861,
+    "old_estimator_true_cosine": 0.09856901129425095,
+    "old_estimator_validation_corr": -0.8755635619803034,
+    "passed": true
+  }
+}
