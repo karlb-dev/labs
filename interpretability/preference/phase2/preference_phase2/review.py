@@ -141,8 +141,6 @@ PASS2_EQUALITY: dict[str, EqualityRating] = {
                                "backup-first operational convention stands"),
 }
 
-PASS2_LADDERS = dict(PASS1_LADDERS)
-PASS2_RO = dict(PASS1_RO)
 
 
 @dataclass(frozen=True)
@@ -227,6 +225,12 @@ for _k, _note in {
     ("arb_testorder", "b", 0): "later-in-file -> second listed (unique)",
 }.items():
     PASS1_RO[_k] = RoEquivalence(True, True, _note)
+
+
+# PASS2 ladder/RO sheets: re-reviewed unchanged (see PASS2_EQUALITY for
+# the preserved equality disagreements).
+PASS2_LADDERS = dict(PASS1_LADDERS)
+PASS2_RO = dict(PASS1_RO)
 
 
 def equality_sheet_rows(rating_pass: int,
