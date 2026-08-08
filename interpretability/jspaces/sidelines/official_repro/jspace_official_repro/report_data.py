@@ -10,6 +10,8 @@ from pathlib import Path
 
 from .paths import DRIVE_ROOT, REPORTS
 
+_K_WORDS = {1: "one", 5: "five", 20: "twenty"}
+
 EVAL_SHORT = {"lens-eval-multihop": "multihop",
               "lens-eval-multilingual": "multilingual",
               "lens-eval-poetry": "poetry",
@@ -41,7 +43,7 @@ def qwen_macros(lane_dir: Path) -> dict[str, str]:
             for which in ("jlens", "logit"):
                 agg = data[f"aggregate_{which}"]["token_valid"]
                 for k in (1, 5, 20):
-                    macros[f"qw{tag}{short}{which}p{k}"] = _fmt(agg[f"pass@{k}"])
+                    macros[f"qw{tag}{short}{which}p{_K_WORDS[k]}"] = _fmt(agg[f"pass@{k}"])
             macros[f"qw{tag}{short}n"] = str(data["n_items"])
             att = data["aggregate_jlens"]["attrition"]
             macros[f"qw{tag}{short}gated"] = str(att["gated_intermediates"])
