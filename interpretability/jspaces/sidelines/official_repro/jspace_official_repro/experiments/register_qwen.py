@@ -22,6 +22,16 @@ def _require(path: Path) -> Path:
     return path
 
 
+def _create_once(evidence_id: str, **kwargs) -> None:
+    existing = {row["evidence_id"] for row in registry.read_events()
+                if row["event"] in {"evidence_created", "release_created"}}
+    if evidence_id in existing:
+        print(f"skip (already registered): {evidence_id}")
+        return
+    registry.create(evidence_id, **kwargs)
+    print(f"registered: {evidence_id}")
+
+
 def main() -> None:
     transcript = REPORTS / "conformance_pytest_transcript.txt"
     if not transcript.exists():
@@ -43,7 +53,7 @@ def main() -> None:
     assert admission_data["readout_parity"]["ok"]
     assert admission_data["noop"]["ok"]
 
-    registry.create(
+    _create_once(
         "or1-conformance-v1", tier="methods",
         what=("OR1.1 conformance: 31-test CPU suite (swap algebra, fit "
               "identity vs upstream, resume, render goldens) plus Qwen "
@@ -54,7 +64,7 @@ def main() -> None:
         outputs=[transcript, admission],
         inputs={"g_folding_min_cosine": admission_data["g_folding"]["min_cosine"]},
     )
-    registry.create(
+    _create_once(
         "or1-qwen-lens-admission-v1", tier="methods",
         what=("Qwen lane admission: pinned model+lens identity, 48 GDN "
               "blocks, ten readout sentinels (boot probe reads Italy@39 -> "
@@ -66,7 +76,7 @@ def main() -> None:
     for prefix in ("eval_", "eval_alllayers_"):
         for set_name in EVAL_SETS:
             eval_outputs.append(_require(LANE / f"{prefix}{set_name}.json"))
-    registry.create(
+    _create_once(
         "or1-qwen-lens-evals-v1", tier="development",
         what=("Six released lens evaluations on Qwen, paper-grid primary "
               "(24 source layers) + all-source-layer sensitivity; J-lens vs "
@@ -74,7 +84,7 @@ def main() -> None:
         command="python -m jspace_official_repro.experiments.qwen_lane",
         outputs=eval_outputs,
     )
-    registry.create(
+    _create_once(
         "or1-qwen-verbal-report-v1", tier="development",
         what=("Verbal report on Qwen: release-literal candidate rule, D1 "
               "generation-boundary scoring, alpha=1 paper band, "
@@ -83,7 +93,7 @@ def main() -> None:
         outputs=[_require(LANE / "verbal_report_qwen.json"),
                  _require(LANE / "verbal_report_qwen_raw.jsonl")],
     )
-    registry.create(
+    _create_once(
         "or1-qwen-flexible-generalization-v1", tier="development",
         what=("Flexible generalization on Qwen: 192 ordered swaps, alpha 1 "
               "primary + alpha 2 full sensitivity, capability-conditioned "
@@ -92,7 +102,7 @@ def main() -> None:
         outputs=[_require(LANE / "flexible_generalization_qwen.json"),
                  _require(LANE / "flexible_generalization_qwen_raw.jsonl")],
     )
-    registry.create(
+    _create_once(
         "or1-qwen-probe-swap-v1", tier="development",
         what=("Probe-swap raw J-lens token arm on Qwen "
               "(prompt_exact_representation_adapted_raw_jlens); official "
