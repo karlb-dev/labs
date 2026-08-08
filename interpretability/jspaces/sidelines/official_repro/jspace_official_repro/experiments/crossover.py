@@ -28,7 +28,7 @@ from jspace_part2.dictionaries import build_j_dictionaries
 from jspace_part2.matched_control import teacher_forced_matched_pair_v2
 
 from ..layers import CAMPAIGN_BAND, PAPER_BAND
-from ..paths import CONFIGS, DRIVE_ROOT, EXPERIMENTS_DIR
+from ..paths import CONFIGS, DRIVE_ROOT, EVALUATIONS_DIR, EXPERIMENTS_DIR
 from ..rendering import preferred_token, render_raw
 from ..scoring import rank_of
 from .core import baseline_answer, swap_trial
@@ -145,6 +145,58 @@ def run_lane(model, hf_model, lens, *, lane: str, extra_lenses: dict | None = No
             handle.write(json.dumps({"item": item_index,
                                      "utc": time.strftime("%H:%M:%SZ",
                                                           time.gmtime())}) + "\n")
+    # ------------------------------------------------ FG countries+months
+    fg_data = json.loads(
+        (EXPERIMENTS_DIR / "flexible-generalization.json").read_text())
+    fg_categories = {c["name"]: c for c in fg_data["categories"]}
+    fg_rows = []
+    for category_name, function_name, source_arg, target_arg in subsets["fg_cells"]:
+        category = fg_categories[category_name]
+        func = next(f for f in category["funcs"] if f["name"] == function_name)
+        source_token = preferred_token(tokenizer, source_arg)
+        target_token = preferred_token(tokenizer, target_arg)
+        answer_token = preferred_token(tokenizer, func["answers"][target_arg])
+        if None in (source_token, target_token, answer_token):
+            fg_rows.append({"cell": [category_name, function_name, source_arg,
+                                     target_arg], "state": "TOKENIZATION_GATED"})
+            continue
+        rendered = render_raw(model, func["template"].format(arg=source_arg))
+        swap = swap_trial(model, lens, rendered, band=list(PAPER_BAND),
+                          source_token_id=source_token,
+                          target_token_id=target_token,
+                          score_token_ids=[answer_token], alpha=1.0)
+        pair = _campaign_pair(hf_model, model, dictionaries["primary"],
+                              func["template"].format(arg=source_arg),
+                              [answer_token],
+                              seed_base=9000 + len(fg_rows))
+        fg_rows.append({
+            "cell": [category_name, function_name, source_arg, target_arg],
+            "paper_swap_rank_after": swap["best_rank"],
+            "paper_swap_top1": swap["top1_success"],
+            "campaign_pair": pair,
+            "state": "EXECUTED",
+        })
+
+    # ------------------------------------- multihop readout concordance
+    multihop = json.loads(
+        (EVALUATIONS_DIR / "lens-eval-multihop.json").read_text())
+    mh_rows = []
+    for item_index in subsets["multihop_items"]:
+        item = multihop["items"][item_index]
+        token_ids = [t for key in item["intermediates"]
+                     if (t := preferred_token(tokenizer, key)) is not None]
+        if not token_ids:
+            mh_rows.append({"item_index": item_index,
+                            "state": "TOKENIZATION_GATED"})
+            continue
+        rendered = render_raw(model, item["prompt"])
+        base = baseline_answer(model, rendered)
+        pair = _campaign_pair(hf_model, model, dictionaries["primary"],
+                              item["prompt"], token_ids,
+                              seed_base=7000 + item_index)
+        mh_rows.append({"item_index": item_index, "state": "EXECUTED",
+                        "campaign_pair": pair})
+
     executed = [r for r in rows if r.get("state") == "EXECUTED"]
 
     def _answer_degradation(arm_key, lens_name):
@@ -178,8 +230,14 @@ def run_lane(model, hf_model, lens, *, lane: str, extra_lenses: dict | None = No
             "protected_ranks", "primary"),
         "matched_answer_degradation_median": _answer_degradation(
             "matched_ranks", "primary"),
+        "fg_paper_swap_top1": (
+            (lambda done: sum(1 for r in done if r["paper_swap_top1"])
+             / len(done) if done else None)(
+                [r for r in fg_rows if r.get("state") == "EXECUTED"])),
         "wall_seconds": time.time() - start,
         "rows": rows,
+        "fg_rows": fg_rows,
+        "multihop_rows": mh_rows,
     }
     result_path.write_text(json.dumps(summary))
     return summary
