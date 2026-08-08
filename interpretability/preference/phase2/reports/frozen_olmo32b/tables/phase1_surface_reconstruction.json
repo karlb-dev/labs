@@ -1,0 +1,208 @@
+{
+  "cells": [
+    {
+      "abs_err": 0.059374999999999956,
+      "chose_first": 0.8,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_component_library"
+    },
+    {
+      "abs_err": 0.140625,
+      "chose_first": 0.75,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_component_library"
+    },
+    {
+      "abs_err": 0.28437500000000004,
+      "chose_first": 0.575,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_docsection_readme"
+    },
+    {
+      "abs_err": 0.34062499999999996,
+      "chose_first": 0.55,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_docsection_readme"
+    },
+    {
+      "abs_err": 0.140625,
+      "chose_first": 1.0,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_execmode_ingest"
+    },
+    {
+      "abs_err": 0.059374999999999956,
+      "chose_first": 0.95,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_execmode_ingest"
+    },
+    {
+      "abs_err": 0.140625,
+      "chose_first": 1.0,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_execmode_migration"
+    },
+    {
+      "abs_err": 0.109375,
+      "chose_first": 1.0,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_execmode_migration"
+    },
+    {
+      "abs_err": 0.11562499999999998,
+      "chose_first": 0.975,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_logformat_service"
+    },
+    {
+      "abs_err": 0.009375000000000022,
+      "chose_first": 0.9,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_logformat_service"
+    },
+    {
+      "abs_err": 0.11562499999999998,
+      "chose_first": 0.975,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_naming_config"
+    },
+    {
+      "abs_err": 0.059374999999999956,
+      "chose_first": 0.95,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_naming_config"
+    },
+    {
+      "abs_err": 0.09062499999999996,
+      "chose_first": 0.95,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_naming_parser"
+    },
+    {
+      "abs_err": 0.08437499999999998,
+      "chose_first": 0.975,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_naming_parser"
+    },
+    {
+      "abs_err": 0.09062499999999996,
+      "chose_first": 0.95,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_naming_serializer"
+    },
+    {
+      "abs_err": 0.09062499999999996,
+      "chose_first": 0.8,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_naming_serializer"
+    },
+    {
+      "abs_err": 0.140625,
+      "chose_first": 1.0,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_seed_benchmark"
+    },
+    {
+      "abs_err": 0.109375,
+      "chose_first": 1.0,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_seed_benchmark"
+    },
+    {
+      "abs_err": 0.015625,
+      "chose_first": 0.875,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_taskorder_setup"
+    },
+    {
+      "abs_err": 0.06562500000000004,
+      "chose_first": 0.825,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_taskorder_setup"
+    },
+    {
+      "abs_err": 0.015625,
+      "chose_first": 0.875,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_testfix_suite"
+    },
+    {
+      "abs_err": 0.109375,
+      "chose_first": 1.0,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_testfix_suite"
+    },
+    {
+      "abs_err": 0.140625,
+      "chose_first": 1.0,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "ar_traversal_indexer"
+    },
+    {
+      "abs_err": 0.109375,
+      "chose_first": 1.0,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "ar_traversal_indexer"
+    },
+    {
+      "abs_err": 0.140625,
+      "chose_first": 1.0,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "nc_null_archive"
+    },
+    {
+      "abs_err": 0.109375,
+      "chose_first": 1.0,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "nc_null_archive"
+    },
+    {
+      "abs_err": 0.140625,
+      "chose_first": 1.0,
+      "display_label_set": "letters",
+      "predicted": 0.859375,
+      "scenario_id": "nc_null_deploy"
+    },
+    {
+      "abs_err": 0.109375,
+      "chose_first": 1.0,
+      "display_label_set": "numbers",
+      "predicted": 0.890625,
+      "scenario_id": "nc_null_deploy"
+    }
+  ],
+  "mae_all": 0.11205357142857142,
+  "mae_nc_only": 0.125,
+  "n_phase1_cells": 28,
+  "note": "content-indifferent Phase 1 cells (NC) are the clean reconstruction targets; content-pulled AR cells deviate by their semantic pull, which is the point of the decomposition",
+  "prediction_by_label_family": {
+    "letters": 0.859375,
+    "numbers": 0.890625
+  }
+}

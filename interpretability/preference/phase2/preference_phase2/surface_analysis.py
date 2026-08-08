@@ -18,8 +18,20 @@ import pandas as pd
 from .stats import bootstrap_ci, exact_sign_flip_p, hierarchical_bootstrap
 
 
-def surf_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
-    df = pd.DataFrame([r for r in rows if r.get("bank") == "B-SURF"])
+def surf_frame(rows: list[dict[str, Any]],
+               bank_by_id: dict[str, dict] | None = None) -> pd.DataFrame:
+    rows = [r for r in rows if r.get("bank") == "B-SURF"]
+    if bank_by_id is not None:
+        merged = []
+        for r in rows:
+            b = bank_by_id.get(r["item_id"], {})
+            m = dict(r)
+            for k in ("display_label_set", "label_assignment",
+                      "inline_code_assignment", "reply_list_order"):
+                m.setdefault(k, b.get(k))
+            merged.append(m)
+        rows = merged
+    df = pd.DataFrame(rows)
     df["valid"] = df["parse_status"] == "valid"
     sem = df["parsed_sem"].where(df["valid"], None)
     first_sem = np.where(df["display_order"] == 0, "a", "b")

@@ -1,0 +1,27 @@
+{
+  "F-P1": {
+    "coefficients": {
+      "inline_code": 0.01171875000000037,
+      "intercept": 0.7792968749999991,
+      "label_assignment": -0.21484374999999967,
+      "label_family_letters": 0.011718749999999953,
+      "reply_list": -0.4609375000000001,
+      "twin_x_first": 0.06640625000000018
+    },
+    "design_cols": 6,
+    "design_rank": 6,
+    "full_rank": true,
+    "n": 1024
+  },
+  "F-SYM": {
+    "coefficients": {
+      "code_map": -0.07812500000000007,
+      "intercept": 0.5546875,
+      "twin_x_first": 0.20312500000000003
+    },
+    "design_cols": 3,
+    "design_rank": 3,
+    "full_rank": true,
+    "n": 128
+  }
+}
