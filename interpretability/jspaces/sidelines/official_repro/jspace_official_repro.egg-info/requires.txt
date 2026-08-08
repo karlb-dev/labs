@@ -1,0 +1,11 @@
+torch
+transformers
+tokenizers
+safetensors
+huggingface-hub
+datasets
+numpy
+pyyaml
+pandas
+pyarrow
+matplotlib
