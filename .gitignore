@@ -280,3 +280,4 @@ hf_local/
 
 # preference campaign local run unpacks (Drive-mirrored; never in git)
 interpretability/preference_runs/
+*.egg-info/
