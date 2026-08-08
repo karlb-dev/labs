@@ -1,0 +1,6 @@
+{
+  "capture_replay_parity_ok": true,
+  "hook_noop_ok": true,
+  "parser_adversarial_ok": true,
+  "render_parity_sample_ok": true
+}
