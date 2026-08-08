@@ -3,6 +3,7 @@ pyproject.toml
 jspace_official_repro/__init__.py
 jspace_official_repro/__main__.py
 jspace_official_repro/cli.py
+jspace_official_repro/fit_population.py
 jspace_official_repro/layers.py
 jspace_official_repro/manifests.py
 jspace_official_repro/paths.py

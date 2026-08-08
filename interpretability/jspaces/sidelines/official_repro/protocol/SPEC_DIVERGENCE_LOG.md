@@ -36,9 +36,11 @@ identity — Hub commit `a4114d7…` + sha256 + byte length — is primary. At
 lens download the study additionally attempts to resolve `qwen-n1000`
 and records the commit it points to or the exact resolution error here:
 
-> RESOLVED at launch (2026-08-08): see
-> `configs/qwen_lens_manifest.json` → `qwen_n1000_ref_resolution`.
-> Outcome recorded there verbatim; science never branches on it.
+> RESOLVED at launch (2026-08-08): `qwen-n1000` resolves to Hub commit
+> `16a01f309fcec900fdcec3f4cd5b64f3d00e4d5a`, whose lens file has LFS
+> sha256 `1718c8c5…11e1` and size 3,303,032,772 — **byte-identical to the
+> frozen pin** (equivalence per addendum §2.3). Recorded verbatim in
+> `configs/qwen_lens_manifest.json`; science never branches on it.
 
 ## D5 — capacity `targets_per_family` carries unused families (pre-data)
 
