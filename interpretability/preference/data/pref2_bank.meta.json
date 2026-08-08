@@ -3,8 +3,8 @@
     "n_failures": 0,
     "passed": true
   },
-  "bank_content_hash": "0ab071e7f99302860627cd98c1e785618a64069b0f57bff6a4009383eccf471d",
-  "bank_jsonl_sha256": "1fe922fd0e68a6cfe4ef4b2c79ce8fd7774a9e208fa9c3bec41ab927435f8da5",
+  "bank_content_hash": "4a3a5047b2bbaa1778f9907ca82be1ea9ddf874ffe5bf49aed19b4014c3f348b",
+  "bank_jsonl_sha256": "119af21538daf6ec69b59efffa9c23d91b58f45b3f4fe688bfc4d49a5947662e",
   "bank_version": "pref2_v3",
   "codebook": {
     "ar_pairs": [
@@ -80,7 +80,7 @@
     "tokenizer_ref": "allenai/Olmo-3.1-32B-Instruct@ac0587e4"
   },
   "counts": {
-    "B-ARB3": 3072,
+    "B-ARB3": 4608,
     "B-CANON": 576,
     "B-DEV": 432,
     "B-MECH": 4800,
@@ -89,9 +89,9 @@
     "B-PC-MECH": 2560,
     "B-SURF": 1152,
     "F-P1-CONT": 384,
-    "RO-DISJOINT": 1920
+    "RO-DISJOINT": 2688
   },
   "primary_tokenizer": "allenai/Olmo-3.1-32B-Instruct@ac0587e4a7744a551c059d8cd17ba220bc940dae",
   "schema_version": 2,
-  "total": 16016
+  "total": 18320
 }

@@ -4,19 +4,23 @@ No RNG anywhere: every row is a pure function of authored content and
 the codebook manifest. Reruns are byte-identical. Counts of record:
 
     B-SURF      4 x 8 x (32 F-P1 + 4 F-SYM)                 = 1,152
-    B-ARB3      12 x 16 x (2 order x 2 cmap x 2 frame x 2 para) = 3,072
+    B-ARB3      12 x 24 x (2 order x 2 cmap x 2 frame x 2 para) = 4,608
     B-MECH      3 x (32 x 40 + 8 x 40 reserved)             = 4,800
     B-CANON     6 x 8 x (3 ctx x 2 x 2)                     =   576
     B-PC        6 x 5 x 16                                  =   480
     B-PC-MECH   4 difficulty x 32 x (5 s x 2 x 2)           = 2,560
     B-NC        2x6x16 + 2x6x16 + 1x6x16 + 1x8x20           =   640
-    RO-DISJOINT 12x16x(2x2x2) + 3 anchors x (64 + 64 rsv)   = 1,920
+    RO-DISJOINT 12x24x(2x2x2) + 3 anchors x (64 + 64 rsv)   = 2,688
     F-P1-CONT   4 x 6 x (2 order x 2 cmap x 2 frame x 2 fam) =  384
     B-DEV       6 x 4 x (8 F-SYM + 8 F-P1 + 2 F-COMMIT)     =   432
 
-RO-DISJOINT pins 1,920 rather than the addendum-D "~1,728": the D table's
-anchor line undercounts the Section-G coupling receivers (64 primary + 64
-reserved per anchor); pinning the union raises, never lowers, per D.
+Two pinned departures from the addendum-D table, both raises (permitted
+pre-freeze; never lower): (1) RO-DISJOINT includes the Section-G coupling
+receivers explicitly (64 primary + 64 reserved per anchor), which the D
+arithmetic undercounted; (2) B-ARB3 runs 24 incidentals (12/6/6), raised
+from 16 by the power simulation (plan §32: strict-choice power at the
+0.10 SESOI was 0.45 at 16 incidentals, 0.87 at 24, under the E16 exact
+sign-flip + Holm-12 primary). RO twins follow at 24.
 """
 
 from __future__ import annotations
@@ -38,8 +42,8 @@ from .scenarios import (ALL_NC_SCENARIOS, ARB3_SCENARIOS, CANON_SCENARIOS,
                         PCMECH_SCENARIOS, PC_SCENARIOS, SURF_SCENARIOS)
 
 EXPECTED_COUNTS = {
-    "B-SURF": 1152, "B-ARB3": 3072, "B-MECH": 4800, "B-CANON": 576,
-    "B-PC": 480, "B-PC-MECH": 2560, "B-NC": 640, "RO-DISJOINT": 1920,
+    "B-SURF": 1152, "B-ARB3": 4608, "B-MECH": 4800, "B-CANON": 576,
+    "B-PC": 480, "B-PC-MECH": 2560, "B-NC": 640, "RO-DISJOINT": 2688,
     "F-P1-CONT": 384, "B-DEV": 432,
 }
 EXPECTED_TOTAL = sum(EXPECTED_COUNTS.values())
@@ -647,7 +651,7 @@ def audit_bank(items: list[BankItem], families: CodebookFamilies) -> dict[str, A
                 break
 
     # split counts
-    split_expect = {"B-ARB3": (8, 4, 4), "B-MECH": (16, 8, 8),
+    split_expect = {"B-ARB3": (12, 6, 6), "B-MECH": (16, 8, 8),
                     "B-PC-MECH": (16, 8, 8)}
     for bank, (tr, va, ho) in split_expect.items():
         for scn_id in {it.scenario_id for it in items if it.bank == bank}:

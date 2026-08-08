@@ -188,7 +188,7 @@ def run_power_simulation(n_sims: int = N_SIMS) -> dict[str, Any]:
         "n_sims": n_sims,
         "phase1_variance_components": comp,
         "design": {
-            "arb3_incidentals": 16, "arb3_cells_per_incidental": 16,
+            "arb3_incidentals": 24, "arb3_cells_per_incidental": 16,
             "mech_incidentals": 32, "mech_rows_per_incidental": 40,
             "coupling_receivers": 64, "coupling_clusters": 8,
         },
@@ -199,13 +199,13 @@ def run_power_simulation(n_sims: int = N_SIMS) -> dict[str, Any]:
         sb, sw = sigma_b * stress, sigma_w * stress
         result["margin_power"][tag] = {
             str(mu): _simulate_margin_family(
-                mu=mu, sigma_b=sb, sigma_w=sw, n_inc=16, n_cells=16,
+                mu=mu, sigma_b=sb, sigma_w=sw, n_inc=24, n_cells=16,
                 n_scenarios=12, n_sims=n_sims,
                 seed_key=f"pw-margin-{tag}-{mu}")
             for mu in MARGIN_GRID}
         result["strict_power"][tag] = {
             str(e): _simulate_strict_family(
-                effect=e, icc_sd=0.05 * stress, n_inc=16, n_cells=16,
+                effect=e, icc_sd=0.05 * stress, n_inc=24, n_cells=16,
                 n_scenarios=12, n_sims=n_sims,
                 seed_key=f"pw-strict-{tag}-{e}")
             for e in STRICT_GRID}

@@ -198,7 +198,11 @@ def incidentals(n: int, *, splits: tuple[int, int, int]) -> tuple[IncidentalSpec
     return tuple(out)
 
 
-ARB3_INCIDENTALS = incidentals(16, splits=(8, 4, 4))
+# 24 incidentals (12/6/6): raised from the plan's 16 by the power
+# simulation (strict-choice power at the 0.10 SESOI was 0.45 at 16 and
+# 0.87 at 24 under the E16 exact sign-flip + Holm-12 primary; plan §32
+# commands the raise before freeze; addendum D permits raise-never-lower).
+ARB3_INCIDENTALS = incidentals(24, splits=(12, 6, 6))
 MECH_INCIDENTALS = incidentals(32, splits=(16, 8, 8))
 CANON_INCIDENTALS = incidentals(8, splits=(8, 0, 0))
 PC_INCIDENTALS = incidentals(5, splits=(5, 0, 0))
