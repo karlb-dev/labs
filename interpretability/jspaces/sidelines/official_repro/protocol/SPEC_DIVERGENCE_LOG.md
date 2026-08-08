@@ -59,6 +59,22 @@ therefore = the **final prompt token**. Frozen positions: multihop /
 multilingual / order-ops / typo / association → final token; poetry →
 last newline token. RENDER_AND_POSITION_CONTRACT §4 corrected pre-data.
 
+## D9 — g-folding audit is MATERIAL on Qwen; paper-literal unfolded v_t
+stays primary (decided before any scientific intervention outcome)
+
+The contract §5 audit on the Qwen lane returned min cosine **0.3821**
+(worst cell: layer 29, token 57867) over 26 battery tokens × 14 band
+layers — far below the 0.99 immateriality bar. Decision, logged before
+any registered intervention outcome: the **paper-literal unfolded**
+``v_t = J_ℓᵀ u_t`` (paper §2.1 defines v_t from W_U rows; the RMSNorm
+gain belongs to final_norm, not W_U) remains the one primary
+intervention basis, exactly as the contract froze it. Folding materiality
+is recorded as a lane fact and explains part of any probe-vs-readout
+divergence; a folded-v_t variant is a permissible after-core sensitivity
+under the plan §14 drop order (first candidates to drop), not a second
+primary. The smoke admission (scratch, unregistered) surfaced this;
+the registered admission carries the same audit values.
+
 ## D8 — order-ops synonym expansion table (pre-data)
 
 The README states the rule ("numbers → digit and word forms; operations →
