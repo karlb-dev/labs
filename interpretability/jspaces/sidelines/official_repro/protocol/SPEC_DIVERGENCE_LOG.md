@@ -49,6 +49,16 @@ The released file lists 8 families in `targets_per_family` but only 4 in
 pools). Frozen reading: the 4 pooled `block_families` are the experiment;
 the extra keys are vestigial release metadata. Recorded, not "fixed".
 
+## D7 — lens-eval `target` marks the continuation, not a substring (pre-data)
+
+Verified against the pinned bytes: in the three targeted eval sets the
+`target` is the expected next word — prompts end immediately before it
+(93/107/55 items; incidental substring collisions only, e.g. "15" inside
+an arithmetic expression). "The token immediately preceding `target`"
+therefore = the **final prompt token**. Frozen positions: multihop /
+multilingual / order-ops / typo / association → final token; poetry →
+last newline token. RENDER_AND_POSITION_CONTRACT §4 corrected pre-data.
+
 ## D6 — modulation `group` → `group_kind` collapse (pre-data)
 
 `phrasings[*].group` ∈ {focus, mention, dismissal, negated-think};

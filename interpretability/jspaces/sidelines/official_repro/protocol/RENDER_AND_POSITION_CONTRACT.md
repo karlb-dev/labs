@@ -52,7 +52,7 @@ Let `ids` be the rendered token IDs; "final position" = `len(ids) - 1`.
 
 | Set | Scored / intervention positions |
 |---|---|
-| lens evals with `target` (multihop, multilingual, order-ops) | readout at the token immediately preceding the first token of the `target` substring's first occurrence, located by **token subsequence** after locating the character span; assert the decoded prefix ends exactly at the target boundary |
+| lens evals with `target` (multihop, multilingual, order-ops) | readout at the **final prompt token** — the pinned bytes show `target` is the expected continuation, so the prompt's last token *is* "the token immediately preceding target" (D7) |
 | lens-eval-poetry | readout at the last newline token in `ids` |
 | lens-eval-typo / association | readout at the final position |
 | probe-swap | baseline + swap answer scored at the final position (prompt "ends just before the answer"); swap applied at **every prompt position** |
