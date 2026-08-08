@@ -209,8 +209,12 @@ def _batch_probe(bundle, pin, items, run_dir, batch_size) -> None:
     probe = batch_invariance_probe(bundle.model, tok, bundle.input_device,
                                    prompts, pairs, batch_size=batch_size)
     atomic_write_json(marker, probe)
-    if not probe["replay_deterministic"] or not probe["generation_batch_equal"]:
-        raise RuntimeError(f"batch invariance hard gate failed: {probe}")
+    if not probe["replay_deterministic"]:
+        raise RuntimeError(f"single-row replay nondeterministic: {probe}")
+    if not probe["generation_batch_equal"]:
+        print(f"[gate] batched generation differs from single-row on "
+              f"{pin.key}: generation falls back to batch_size=1 "
+              f"(margins were always single-row)", flush=True)
 
 
 def execute_battery(*, pin: ModelPin, stage: str, banks: Sequence[str],
@@ -261,6 +265,12 @@ def execute_battery(*, pin: ModelPin, stage: str, banks: Sequence[str],
     if stage.startswith(("behavioral", "surface", "format", "calibration")):
         _batch_probe(bundle, pin, items, run_dir, batch_size)
 
+    gen_bs = batch_size
+    probe_file = run_dir / "diagnostics" / "batch_invariance.json"
+    if probe_file.exists():
+        probe = json.loads(probe_file.read_text())
+        if not probe.get("generation_batch_equal", True):
+            gen_bs = 1
     done_ids = resume.completed_ids()
     todo = [r for r in items if r["item_id"] not in done_ids]
     capture_want = set(capture_banks or []) if capture_banks else (
@@ -288,7 +298,7 @@ def execute_battery(*, pin: ModelPin, stage: str, banks: Sequence[str],
         raws = generate_batch(bundle.model, tok, bundle.input_device,
                               [rp.input_ids for rp in rendered],
                               max_new_tokens=gen_budget,
-                              batch_size=batch_size)
+                              batch_size=gen_bs)
         # batched follow-through generation (invariance-gated): collect
         # enacted+valid microtask rows in this chunk, run one left-padded
         # batch, validate per row
@@ -322,7 +332,7 @@ def execute_battery(*, pin: ModelPin, stage: str, banks: Sequence[str],
             outs = generate_batch(bundle.model, tok, bundle.input_device,
                                   [j[1] for j in ft_jobs],
                                   max_new_tokens=budget,
-                                  batch_size=batch_size)
+                                  batch_size=gen_bs)
             for (idx, _, _), out in zip(ft_jobs, outs):
                 ft_outputs[idx] = out
         out_rows = []
