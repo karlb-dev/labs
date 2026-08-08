@@ -1,0 +1,42 @@
+{
+  "band": [
+    0.5,
+    3.0
+  ],
+  "in_band": [
+    "d2",
+    "d3"
+  ],
+  "rule": "closest |val neutral margin| to the 1.75-nat band midpoint",
+  "selected": "d3",
+  "variants": {
+    "d1": {
+      "in_band": false,
+      "n_val_neutral": 32,
+      "run_dir": "/content/labs/interpretability/runs/pref2_olmo32b_calibration_dev-20260808_213932-47df4b",
+      "val_neutral_margin_abs": 3.8281266754327303,
+      "val_neutral_margin_mean": 3.8281266754327303
+    },
+    "d2": {
+      "in_band": true,
+      "n_val_neutral": 32,
+      "run_dir": "/content/labs/interpretability/runs/pref2_olmo32b_calibration_dev-20260808_214123-e7a8fb",
+      "val_neutral_margin_abs": 1.507813674520056,
+      "val_neutral_margin_mean": 1.507813674520056
+    },
+    "d3": {
+      "in_band": true,
+      "n_val_neutral": 32,
+      "run_dir": "/content/labs/interpretability/runs/pref2_olmo32b_calibration_dev-20260808_214303-03cbf6",
+      "val_neutral_margin_abs": 1.7929697155834803,
+      "val_neutral_margin_mean": 1.7929697155834803
+    },
+    "d4": {
+      "in_band": false,
+      "n_val_neutral": 32,
+      "run_dir": "/content/labs/interpretability/runs/pref2_olmo32b_calibration_dev-20260808_214444-23c84a",
+      "val_neutral_margin_abs": 0.011719181434687975,
+      "val_neutral_margin_mean": 0.011719181434687975
+    }
+  }
+}
