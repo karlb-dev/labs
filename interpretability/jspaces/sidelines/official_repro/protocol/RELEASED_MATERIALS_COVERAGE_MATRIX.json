@@ -1,0 +1,164 @@
+{
+  "n_evaluation_sets": 6,
+  "n_experiment_sets": 11,
+  "paper_broad_top10_ablation": {
+    "class": "R3",
+    "note": "no released experiment JSON; OR1.6 cross-over is non-official"
+  },
+  "sets": [
+    {
+      "bytes": 24228,
+      "fidelity_class": "R1",
+      "kind": "evaluation",
+      "path": "data/evaluations/lens-eval-association.json",
+      "primary_count": 102,
+      "set": "lens-eval-association",
+      "sha256": "d1a98cd4911b594282e74168091c77d849dae18ffe2acb5761074853f327d71c"
+    },
+    {
+      "bytes": 21869,
+      "fidelity_class": "R1",
+      "kind": "evaluation",
+      "path": "data/evaluations/lens-eval-multihop.json",
+      "primary_count": 93,
+      "set": "lens-eval-multihop",
+      "sha256": "50b7e4c9255291c0ca2a8e94615be9f44531fa57bb1a844e4f9616056d987416"
+    },
+    {
+      "bytes": 24284,
+      "fidelity_class": "R1",
+      "kind": "evaluation",
+      "path": "data/evaluations/lens-eval-multilingual.json",
+      "primary_count": 107,
+      "set": "lens-eval-multilingual",
+      "sha256": "fa70b9bd89416a6d8d985a80dc628b109ae6fd3b25b9275c0fc5065d7ff4a0ef"
+    },
+    {
+      "bytes": 9589,
+      "fidelity_class": "R1",
+      "kind": "evaluation",
+      "path": "data/evaluations/lens-eval-order-ops.json",
+      "primary_count": 55,
+      "set": "lens-eval-order-ops",
+      "sha256": "b203206d16ff628152cc86f3838604e06cb54776f3e14fa1c34f150db8bc7560"
+    },
+    {
+      "bytes": 21533,
+      "fidelity_class": "R1",
+      "kind": "evaluation",
+      "path": "data/evaluations/lens-eval-poetry.json",
+      "primary_count": 98,
+      "set": "lens-eval-poetry",
+      "sha256": "6aeb3415c5a5c3f3827c9efe63f006de02f5ef39a816bbac68e15e733aba60cc"
+    },
+    {
+      "bytes": 14646,
+      "fidelity_class": "R1",
+      "kind": "evaluation",
+      "path": "data/evaluations/lens-eval-typo.json",
+      "primary_count": 96,
+      "set": "lens-eval-typo",
+      "sha256": "9d05e16b7234a57d0773d120a4e1c4e94fd3bc2235a8125d4200a70e60ab17aa"
+    },
+    {
+      "bytes": 27564,
+      "fidelity_class": "R1",
+      "kind": "experiment",
+      "path": "data/experiments/capacity.json",
+      "primary_count": null,
+      "set": "capacity",
+      "sha256": "6dd4dcd7adef79585dbdad9d09766afe750da721d6b14ffd31a30523ba72f22e"
+    },
+    {
+      "bytes": 10602,
+      "fidelity_class": "R1 (math,topic); R2 (line-break)",
+      "kind": "experiment",
+      "path": "data/experiments/directed-modulation.json",
+      "primary_count": null,
+      "set": "directed-modulation",
+      "sha256": "f3478bb7f3b9e19423f0c056a289fdaf1759942daf67e5304e4f55d9ad555b92"
+    },
+    {
+      "bytes": 7286,
+      "fidelity_class": "R1",
+      "kind": "experiment",
+      "path": "data/experiments/dual-task.json",
+      "primary_count": 21,
+      "set": "dual-task",
+      "sha256": "48519e75a6104a04a32573126b55977347e76e62834f7fd3a99b794072c07c70"
+    },
+    {
+      "bytes": 4946,
+      "fidelity_class": "R1",
+      "kind": "experiment",
+      "path": "data/experiments/flexible-generalization.json",
+      "primary_count": 4,
+      "set": "flexible-generalization",
+      "sha256": "f48d8e877c7422e14fa60794984fde07bbd11acbda4030c0149ec0a593773fdd"
+    },
+    {
+      "bytes": 4438,
+      "fidelity_class": "R1",
+      "kind": "experiment",
+      "path": "data/experiments/ignition.json",
+      "primary_count": null,
+      "set": "ignition",
+      "sha256": "4cb961861174f466a6c37c9a5ff39cbb5a477721a89ffa4bc319b3b6d40cc1b1"
+    },
+    {
+      "bytes": 26567,
+      "fidelity_class": "R0 prompts; R2 raw-jlens arm (primary); R3 official probe arm",
+      "kind": "experiment",
+      "path": "data/experiments/probe-swap.json",
+      "primary_count": 90,
+      "set": "probe-swap",
+      "sha256": "a0edd27ca23f7b4d0fbe90448c2ddcc7457a3d812121bf024ed12a032ff86796"
+    },
+    {
+      "bytes": 2963,
+      "fidelity_class": "R0/R1",
+      "kind": "experiment",
+      "path": "data/experiments/selectivity-language.json",
+      "primary_count": 8,
+      "set": "selectivity-language",
+      "sha256": "be35ac37e304b28dbe1aa65a6491b102bbe9bf84a9e896886307e8218bcfd2b2"
+    },
+    {
+      "bytes": 3547,
+      "fidelity_class": "R1",
+      "kind": "experiment",
+      "path": "data/experiments/selectivity-linecount.json",
+      "primary_count": 11,
+      "set": "selectivity-linecount",
+      "sha256": "ae562a8cceadcf2293813d6255437b165a520e7928f941fc531f72332de394de"
+    },
+    {
+      "bytes": 4841,
+      "fidelity_class": "R1",
+      "kind": "experiment",
+      "path": "data/experiments/top-down-summoning.json",
+      "primary_count": 7,
+      "set": "top-down-summoning",
+      "sha256": "0c33be04bf1aa35ad1066d3999ec4e7b66f6112a91e68b5aadcfdd20c7abb02c"
+    },
+    {
+      "bytes": 7061,
+      "fidelity_class": "R1",
+      "kind": "experiment",
+      "path": "data/experiments/verbal-introspection.json",
+      "primary_count": 101,
+      "set": "verbal-introspection",
+      "sha256": "c16e92d32b43e50027863d939445bb839301457f494363c00e2d00e5c6e73560"
+    },
+    {
+      "bytes": 3321,
+      "fidelity_class": "R1",
+      "kind": "experiment",
+      "path": "data/experiments/verbal-report.json",
+      "primary_count": 14,
+      "set": "verbal-report",
+      "sha256": "9a33b48074c4565413247bace11d37537a963774936740287f0fb7dff460652c"
+    }
+  ],
+  "upstream_commit": "581d398613e5602a5af361e1c34d3a92ea82ba8e"
+}
