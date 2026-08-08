@@ -25,11 +25,7 @@ from pathlib import Path
 import torch
 
 from jspace_part2.dictionaries import build_j_dictionaries
-from jspace_part2.matched_control import MatchedControlAblatorV2
-from jspace_part2.protected_dynamic_v2 import (
-    ProtectedDynamicAblatorV2,
-    protected_teacher_forced_v2,
-)
+from jspace_part2.matched_control import teacher_forced_matched_pair_v2
 
 from ..layers import CAMPAIGN_BAND, PAPER_BAND
 from ..paths import CONFIGS, DRIVE_ROOT, EXPERIMENTS_DIR
@@ -45,21 +41,29 @@ def _subsets() -> dict:
     return json.loads((CONFIGS / "crossover_subset_manifest.json").read_text())
 
 
-def _campaign_conditions(hf_model, model, band_dicts, ablator_cls, text,
-                         score_ids):
-    """One campaign-machinery pass; returns rank of each score id in
-    ablated logits at the final position plus the clean rank."""
-    ab = ablator_cls(model.layers, list(CAMPAIGN_BAND))
-    with ab:
-        ids, ablated, clean = protected_teacher_forced_v2(
-            hf_model, lambda t, max_length=512: model.encode(t, max_length=max_length),
-            ab, band_dicts, text, k=CAMPAIGN_K, protect=CAMPAIGN_PROTECT,
+def _campaign_pair(hf_model, model, band_dicts, text, score_ids, *,
+                   seed_base: int):
+    """Campaign J arm + exact rank/energy matched control on one item
+    (the campaign's own paired v2 producer). Returns per-arm ranks of
+    each score id at the final position."""
+    ids, clean, ablated_j, ablated_c, j_log, c_log = (
+        teacher_forced_matched_pair_v2(
+            hf_model,
+            lambda t, max_length=512: model.encode(t, max_length=max_length),
+            model.layers, list(CAMPAIGN_BAND), band_dicts, text,
+            k=CAMPAIGN_K, protect=CAMPAIGN_PROTECT, seed_base=seed_base,
         )
+    )
     position = ids.shape[1] - 1
     return {
-        "clean_ranks": {str(t): rank_of(clean[position], t) for t in score_ids},
-        "ablated_ranks": {str(t): rank_of(ablated[position], t) for t in score_ids},
-        "log_summary": ab.log.summary(),
+        "clean_ranks": {str(t): rank_of(clean[position], t)
+                        for t in score_ids},
+        "protected_ranks": {str(t): rank_of(ablated_j[position], t)
+                            for t in score_ids},
+        "matched_ranks": {str(t): rank_of(ablated_c[position], t)
+                          for t in score_ids},
+        "j_log": j_log.summary(),
+        "c_log": c_log.summary(),
     }
 
 
@@ -132,12 +136,9 @@ def run_lane(model, hf_model, lens, *, lane: str, extra_lenses: dict | None = No
                     "swap_answer_rank_after": swap_campaign_band["best_rank"],
                     "top1_success": swap_campaign_band["top1_success"],
                 }
-            row[f"protected_ablation_{lens_name}"] = _campaign_conditions(
-                hf_model, model, dictionaries[lens_name],
-                ProtectedDynamicAblatorV2, item["prompt"], score_ids)
-            row[f"matched_control_{lens_name}"] = _campaign_conditions(
-                hf_model, model, dictionaries[lens_name],
-                MatchedControlAblatorV2, item["prompt"], score_ids)
+            row[f"campaign_pair_{lens_name}"] = _campaign_pair(
+                hf_model, model, dictionaries[lens_name], item["prompt"],
+                score_ids, seed_base=4242 + item_index)
         row["state"] = "EXECUTED"
         rows.append(row)
         with (out_dir / "progress.jsonl").open("a") as handle:
@@ -146,18 +147,16 @@ def run_lane(model, hf_model, lens, *, lane: str, extra_lenses: dict | None = No
                                                           time.gmtime())}) + "\n")
     executed = [r for r in rows if r.get("state") == "EXECUTED"]
 
-    def _answer_degradation(condition_key, lens_name):
-        """Median rank change of the released answer under broad ablation."""
+    def _answer_degradation(arm_key, lens_name):
+        """Median rank change of the released answer (first score id)
+        under an arm of the campaign pair."""
         deltas = []
         for r in executed:
-            cell = r.get(f"{condition_key}_{lens_name}")
+            cell = r.get(f"campaign_pair_{lens_name}")
             if not cell:
                 continue
-            answer_id = None  # ranks keyed by token id string
-            clean = cell["clean_ranks"]
-            ablated = cell["ablated_ranks"]
-            key = next(iter(clean))
-            deltas.append(ablated[key] - clean[key])
+            key = next(iter(cell["clean_ranks"]))  # answer id (insertion order)
+            deltas.append(cell[arm_key][key] - cell["clean_ranks"][key])
         deltas.sort()
         return deltas[len(deltas) // 2] if deltas else None
 
@@ -176,9 +175,9 @@ def run_lane(model, hf_model, lens, *, lane: str, extra_lenses: dict | None = No
                 if r["paper_swap_primary_campaign_band"]["top1_success"])
             / len(executed) if executed else None),
         "protected_answer_degradation_median": _answer_degradation(
-            "protected_ablation", "primary"),
+            "protected_ranks", "primary"),
         "matched_answer_degradation_median": _answer_degradation(
-            "matched_control", "primary"),
+            "matched_ranks", "primary"),
         "wall_seconds": time.time() - start,
         "rows": rows,
     }
