@@ -38,21 +38,30 @@ def token_vectors(
     ``v_t = J_l^T u_t`` (paper §2.1: row *t* of ``W_U J_l``), fp32 CPU,
     shape ``[n_tokens, d_model]``. ``fold_gain=True`` uses ``g ⊙ u_t``
     instead of ``u_t`` (the g-folding audit's alternative; the
-    paper-literal default is unfolded).
+    paper-literal default is unfolded). Computes on whatever device the
+    lens layer lives on (see :func:`lens_to_device`).
     """
-    U = unembedding_rows(model, token_ids)  # [n, d]
+    U = unembedding_rows(model, token_ids)  # [n, d] fp32 CPU
     if fold_gain:
         gain = final_norm_gain(model)
         if gain is not None:
             U = U * gain
     J = lens.jacobians[layer].float()  # [d, d]; transported = J @ h
-    return U @ J  # rows: u_t^T J  -> [n, d]
+    return (U.to(J.device) @ J).cpu()  # rows: u_t^T J  -> [n, d]
+
+
+def lens_to_device(lens, device, *, layers: list[int] | None = None) -> None:
+    """Move lens Jacobians to ``device`` in place (transport then runs
+    device-resident instead of re-uploading 100MB per call)."""
+    for layer in layers if layers is not None else list(lens.jacobians):
+        lens.jacobians[layer] = lens.jacobians[layer].to(device)
 
 
 def recompute_readout(model, lens, layer: int, residual: torch.Tensor) -> torch.Tensor:
     """Independent recomputation of the lens readout at ``layer``:
     ``unembed(J_l @ h)`` including final norm and softcap, fp32 CPU."""
-    transported = lens.transport(residual.float().cpu(), layer)
+    J_device = lens.jacobians[layer].device
+    transported = lens.transport(residual.float().to(J_device), layer)
     return model.unembed(transported).float().cpu()
 
 

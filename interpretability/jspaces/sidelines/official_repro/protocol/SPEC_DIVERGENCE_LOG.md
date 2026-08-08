@@ -59,6 +59,16 @@ therefore = the **final prompt token**. Frozen positions: multihop /
 multilingual / order-ops / typo / association → final token; poetry →
 last newline token. RENDER_AND_POSITION_CONTRACT §4 corrected pre-data.
 
+## D8 — order-ops synonym expansion table (pre-data)
+
+The README states the rule ("numbers → digit and word forms; operations →
+symbol and word forms") but not the table. Frozen in
+`jspace_official_repro/targets.py`: digits 0–25 ↔ English words;
+addition {addition, plus, +} · subtraction {subtraction, minus, -} ·
+multiplication {multiplication, times, *, ×} · division {division,
+divided, /, ÷} · mod {mod, modulo, %} · squared {squared, square, ²}.
+Rank = min over single-token members (space + bare variants). R1.
+
 ## D6 — modulation `group` → `group_kind` collapse (pre-data)
 
 `phrasings[*].group` ∈ {focus, mention, dismissal, negated-think};
