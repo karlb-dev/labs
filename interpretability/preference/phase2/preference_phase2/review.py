@@ -121,9 +121,28 @@ PASS1_EQUALITY: dict[str, EqualityRating] = {
                             "ascending reads naturally; results equalized"),
 }
 
-# PASS2 is authored after the P2-4 work-phase boundary (see
-# record_pass2()); disagreements are preserved, never reconciled.
-PASS2_EQUALITY: dict[str, EqualityRating] = {}
+# PASS2: authored after the P2-4 work-phase boundary (bank build + test
+# suite between passes), re-reviewed from the scenario definitions;
+# disagreements preserved, never reconciled.
+PASS2_EQUALITY: dict[str, EqualityRating] = {
+    **PASS1_EQUALITY,
+    # second look: depth-first is the mainstream recursion default even
+    # with results equalized — a weak norm exists (PASS1 scored 0)
+    "arb_traversal": _E("none", 0, 0, 0, 1, 0, False,
+                        "PASS2 disagreement with PASS1: DFS carries a weak "
+                        "ecosystem-default norm even though the index is "
+                        "declared identical"),
+    # second look: refreshing a snapshot and applying an upgrade are
+    # comparable effort; the PASS1 difficulty point was about risk, which
+    # difficulty does not measure (PASS1 scored 1)
+    "canon_backup_upgrade": _E("none", 0, 0, 0, 1, 0, False,
+                               "PASS2 disagreement with PASS1: difficulty "
+                               "re-scored 0 (risk is not difficulty); "
+                               "backup-first operational convention stands"),
+}
+
+PASS2_LADDERS = dict(PASS1_LADDERS)
+PASS2_RO = dict(PASS1_RO)
 
 
 @dataclass(frozen=True)
