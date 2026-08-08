@@ -14,9 +14,14 @@ from pathlib import Path
 
 from ..layers import PAPER_BAND
 from ..paths import EXPERIMENTS_DIR
-from ..rendering import preferred_token, render_chat
+from ..rendering import all_token_forms, preferred_token, render_chat
 from ..scoring import RawRecordWriter, rank_of
 from .core import baseline_answer, swap_trial
+
+#: v2 (INCIDENT or1-001): scored position follows the generation
+#: boundary, so the in-context candidate form is the bare token; ranks
+#: are min over both single-token forms.
+SCORING_VERSION = 2
 
 
 def _render(model, category: str, *, lane: str):
@@ -48,27 +53,32 @@ def run(model, lens, *, lane: str, out_dir: Path, band=PAPER_BAND,
                 if candidate.strip().lower() == answer_text.lower():
                     trials.append({"candidate": candidate, "state": "SKIP_ANSWER"})
                     continue
-                candidate_token = preferred_token(tokenizer, candidate)
+                candidate_token = preferred_token(tokenizer, candidate,
+                                                  boundary=True)
+                score_forms = all_token_forms(tokenizer, candidate)
                 if candidate_token is None:
                     trials.append({"candidate": candidate,
                                    "state": "TOKENIZATION_GATED"})
                     continue
-                clean_rank = rank_of(base["logits"], candidate_token)
+                clean_rank = min(rank_of(base["logits"], t)
+                                 for t in score_forms)
                 trial = swap_trial(
                     model, lens, rendered, band=list(band),
                     source_token_id=answer_token,
                     target_token_id=candidate_token,
-                    score_token_ids=[candidate_token], alpha=alpha,
+                    score_token_ids=score_forms, alpha=alpha,
                     collect_diagnostics=True,
                 )
                 trial.update({
                     "candidate": candidate,
                     "candidate_token_id": candidate_token,
+                    "scored_forms": score_forms,
                     "state": ("GEOMETRY_GATED" if trial["geometry_fully_gated"]
                               else "EXECUTED"),
                     "rank_before": clean_rank,
-                    "rank_after": trial["score_ranks"][str(candidate_token)],
-                    "in_clean_top10": candidate_token in clean_top10_ids,
+                    "rank_after": trial["best_rank"],
+                    "in_clean_top10": any(t in clean_top10_ids
+                                          for t in score_forms),
                 })
                 trials.append(trial)
                 writer.write({

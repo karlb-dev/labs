@@ -126,6 +126,14 @@ released-denominator sensitivity live in the registered JSON.}
 \section{Qwen causal core (OR-Q2)}
 
 \subsection{Verbal report}
+\textbf{Incident note (or1-001):} the v1 numbers below score the
+leading-space token form at a boundary whose in-context form is bare;
+they \emph{understate} the effect (e.g.\ the \texttt{color:Red} swap
+made the model's top-1 literally \texttt{Red} while the scored
+\texttt{\textvisiblespace Red} form sat at rank 5). A v2 rerun with
+min-over-forms scoring supersedes these at the next Qwen GPU slot; see
+\texttt{reports/INCIDENT\_or1-001\_vr\_token\_form.md}.
+
 Release-literal rule (first ten listed candidates, skip the answer),
 swap-out = greedy token at the generation boundary (D1), $\alpha{=}1$
 across the band at every prompt position. Category-equal top-1

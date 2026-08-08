@@ -16,7 +16,12 @@ from ..interventions import HookPlan, InterventionSession
 from ..layers import PAPER_BAND
 from ..paths import EXPERIMENTS_DIR
 from ..readout import token_vectors
-from ..rendering import find_token_span, preferred_token, render_chat
+from ..rendering import (
+    all_token_forms,
+    find_token_span,
+    preferred_token,
+    render_chat,
+)
 from ..scoring import forward_logits, rank_of
 
 STRENGTHS = (0.0, 1.0, 2.0, 4.0, 8.0, 16.0)
@@ -51,7 +56,8 @@ def run(model, lens, *, lane: str, out_dir: Path, band=PAPER_BAND,
             }
         for concept in concepts:
             surface = concept["surface"]
-            token = preferred_token(tokenizer, surface)
+            # Open-quote boundary: bare form in-context (INCIDENT or1-001).
+            token = preferred_token(tokenizer, surface, boundary=True)
             row = {"concept": concept["name"], "surface": surface,
                    "prefill": prefill_name,
                    "tokenization_valid": token is not None}
@@ -75,7 +81,8 @@ def run(model, lens, *, lane: str, out_dir: Path, band=PAPER_BAND,
                         logits, _ = forward_logits(model, rendered.input_ids,
                                                    positions=[scored])
                         session.assert_fires(1)
-                rank = rank_of(logits[0], token)
+                rank = min(rank_of(logits[0], t)
+                           for t in all_token_forms(tokenizer, surface))
                 ladder[f"s{strength:g}"] = {
                     "rank": rank, "reciprocal_rank": 1.0 / rank,
                     "top1": tokenizer.decode([int(logits[0].argmax())]),

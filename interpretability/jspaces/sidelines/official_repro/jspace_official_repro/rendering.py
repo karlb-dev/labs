@@ -187,12 +187,24 @@ def single_token_forms(tokenizer, target: str) -> dict:
     return forms
 
 
-def preferred_token(tokenizer, target: str) -> int | None:
-    """The intervention/scoring token for ``target``: in-context (leading
-    space) preferred, bare fallback; None => TOKENIZATION_GATED."""
+def preferred_token(tokenizer, target: str, *, boundary: bool = False) -> int | None:
+    """The intervention/scoring token for ``target``.
+
+    ``boundary=False`` (raw mid-text): leading-space form preferred —
+    the continuation token carries the space. ``boundary=True`` (chat
+    generation boundary / after an open quote): bare form preferred —
+    the template ends with a newline or quote, so the in-context form
+    has no leading space (INCIDENT or1-001). None => TOKENIZATION_GATED.
+    """
     forms = single_token_forms(tokenizer, target)
-    if "space" in forms:
-        return forms["space"]
-    if "bare" in forms:
-        return forms["bare"]
+    order = ("bare", "space") if boundary else ("space", "bare")
+    for key in order:
+        if key in forms:
+            return forms[key]
     return None
+
+
+def all_token_forms(tokenizer, target: str) -> list[int]:
+    """Both single-token realizations (deduped) for min-over-forms
+    scoring."""
+    return list(dict.fromkeys(single_token_forms(tokenizer, target).values()))
