@@ -14,7 +14,13 @@ later reorg.
 
 Claim ceiling: functional choice, report, and their coupling only. Never
 wants, welfare, suffering, consent, experience, moral patienthood, or a
-global workspace. See `plans/preference_1_1.md` §2.3 (binding).
+global workspace. See `plans/preference_1_1.md` §2.3 (binding). Phase 1 is **complete**
+(freeze `preference-phase1-freeze-v1`); the operative Phase 2 plan is
+`plans/preference_2_2.md` (pre-VM CPU re-analysis DONE — see
+`phase2/reports/dev_cpu_reanalysis_20260808/` — then one frozen VM
+campaign: v3 banks under authoring-slot counterbalance, folded-margin
+co-primary, repaired mechanism, cross-model cells). `preference_2_1.md`
+is its superseded same-day draft.
 
 ## Layout
 
@@ -22,10 +28,12 @@ global workspace. See `plans/preference_1_1.md` §2.3 (binding).
 preference/
 ├── README.md                  <- you are here
 ├── plans/                     <- governing plan documents (hash-pinned at intake)
-│   ├── preference_1_1.md              Phase 1 plan (authoritative)
-│   └── preference_1_1_addendum.md     Colab execution addendum (supersedes plan where listed)
+│   ├── preference_1_1.md              Phase 1 plan
+│   ├── preference_1_1_addendum.md     Colab execution addendum
+│   ├── preference_2_1.md              Phase 2 draft (superseded same-day)
+│   └── preference_2_2.md              Phase 2 operative plan (CPU results in)
 ├── data/                      <- campaign-owned generators + frozen banks (lab38_*)
-└── phase1/                    <- Phase 1: instrument + behavioral battery (+ conditional mechanism)
+└── phase1/                    <- Phase 1 COMPLETE: instrument + batteries + PC mechanism
     ├── README.md                      phase map & status
     ├── SOURCE_INTAKE.md               forensic intake record (hashes, missing inputs, departures)
     ├── configs/                       frozen run configs

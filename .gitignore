@@ -277,3 +277,6 @@ interpretability/jspaces/runs/
 # preference campaign: local weight caches and activation captures never in git
 hf_local/
 **/activations/
+
+# preference campaign local run unpacks (Drive-mirrored; never in git)
+interpretability/preference_runs/

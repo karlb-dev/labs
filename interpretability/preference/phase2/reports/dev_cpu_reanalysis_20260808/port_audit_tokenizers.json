@@ -1,0 +1,281 @@
+{
+ "gemma": {
+  "model_id": "google/gemma-4-31B-it",
+  "pairs": {
+   "ar_pair": {
+    "bare": {
+     "KP4": {
+      "first": 69470,
+      "ids": [
+       69470,
+       236812
+      ],
+      "token_count": 2
+     },
+     "PK7": {
+      "first": 32436,
+      "ids": [
+       32436,
+       236832
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    },
+    "space": {
+     "KP4": {
+      "first": 74821,
+      "ids": [
+       74821,
+       236812
+      ],
+      "token_count": 2
+     },
+     "PK7": {
+      "first": 32743,
+      "ids": [
+       32743,
+       236832
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    }
+   },
+   "ro_pair": {
+    "bare": {
+     "GS2": {
+      "first": 15683,
+      "ids": [
+       15683,
+       236778
+      ],
+      "token_count": 2
+     },
+     "VM2": {
+      "first": 19137,
+      "ids": [
+       19137,
+       236778
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    },
+    "space": {
+     "GS2": {
+      "first": 43080,
+      "ids": [
+       43080,
+       236778
+      ],
+      "token_count": 2
+     },
+     "VM2": {
+      "first": 37231,
+      "ids": [
+       37231,
+       236778
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    }
+   }
+  }
+ },
+ "olmo7b": {
+  "model_id": "allenai/Olmo-3-7B-Instruct",
+  "pairs": {
+   "ar_pair": {
+    "bare": {
+     "KP4": {
+      "first": 66136,
+      "ids": [
+       66136,
+       19
+      ],
+      "token_count": 2
+     },
+     "PK7": {
+      "first": 23037,
+      "ids": [
+       23037,
+       22
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    },
+    "space": {
+     "KP4": {
+      "first": 78624,
+      "ids": [
+       78624,
+       19
+      ],
+      "token_count": 2
+     },
+     "PK7": {
+      "first": 25864,
+      "ids": [
+       25864,
+       22
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    }
+   },
+   "ro_pair": {
+    "bare": {
+     "GS2": {
+      "first": 16929,
+      "ids": [
+       16929,
+       17
+      ],
+      "token_count": 2
+     },
+     "VM2": {
+      "first": 11435,
+      "ids": [
+       11435,
+       17
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    },
+    "space": {
+     "GS2": {
+      "first": 36370,
+      "ids": [
+       36370,
+       17
+      ],
+      "token_count": 2
+     },
+     "VM2": {
+      "first": 18270,
+      "ids": [
+       18270,
+       17
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    }
+   }
+  }
+ },
+ "qwen": {
+  "model_id": "Qwen/Qwen3.6-27B",
+  "pairs": {
+   "ar_pair": {
+    "bare": {
+     "KP4": {
+      "first": 62839,
+      "ids": [
+       62839,
+       19
+      ],
+      "token_count": 2
+     },
+     "PK7": {
+      "first": 21553,
+      "ids": [
+       21553,
+       22
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    },
+    "space": {
+     "KP4": {
+      "first": 74874,
+      "ids": [
+       74874,
+       19
+      ],
+      "token_count": 2
+     },
+     "PK7": {
+      "first": 24040,
+      "ids": [
+       24040,
+       22
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    }
+   },
+   "ro_pair": {
+    "bare": {
+     "GS2": {
+      "first": 16035,
+      "ids": [
+       16035,
+       17
+      ],
+      "token_count": 2
+     },
+     "VM2": {
+      "first": 10862,
+      "ids": [
+       10862,
+       17
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    },
+    "space": {
+     "GS2": {
+      "first": 34100,
+      "ids": [
+       34100,
+       17
+      ],
+      "token_count": 2
+     },
+     "VM2": {
+      "first": 17261,
+      "ids": [
+       17261,
+       17
+      ],
+      "token_count": 2
+     },
+     "distinct_first": true,
+     "equal_token_count": true,
+     "survives": true
+    }
+   }
+  }
+ }
+}
