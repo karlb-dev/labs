@@ -81,3 +81,16 @@ priors empirically), the same-battery NC f1/f3 floors and alarms (the
 designed falsifier — a fold leak surfaces there), mechanism pairing
 within code map, and reserved-family heldout-codebook transfer (M4).
 Cross-model cells inherit the same rule with their own diagnostics.
+
+D11 — **Mechanism-arm implementation notes of record.** (i) The M7
+propagation metric as implemented recaptured downstream sites at the
+SAME depth as the intervention, which is zero by construction for
+upstream edits (a position's same-depth state cannot see another
+position's same-depth edit); M7 was therefore uninformative and the
+PC-MECH failure is carried by M1 (matched donor patch ~0.00 nats) and
+M2 (+/-6.5-magnitude addition ~0.01 nats), both verified live by a
+hook microtest (the same hook moves final logits 1.16 at the last
+position and 4.7 at scale 50). (ii) B-PC-MECH has no reserved-codebook
+rows by bank design, so M4 is N/A for the PC (nan recorded). Neither
+note reopens holdout: no rerun was performed; the recorded assay
+numbers stand.

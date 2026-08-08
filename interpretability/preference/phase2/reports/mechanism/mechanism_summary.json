@@ -1,0 +1,12 @@
+{
+  "coupling_routers": {
+    "mech_component": "NO_AR_HANDLE",
+    "mech_docsection": "NO_AR_HANDLE",
+    "mech_execmode": "NO_AR_HANDLE"
+  },
+  "pc_mech_pass": false,
+  "pc_scenario": "pcmech_summary_d3",
+  "statuses": {
+    "pcmech_summary_d3": "PC_MECH_FAIL"
+  }
+}
