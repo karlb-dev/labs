@@ -367,7 +367,16 @@ def _generation_protocol_unchanged(generation_commit: str, config_path: Path) ->
     # Pre-reorg bundle: the protocol files moved (and the renderer gained
     # historical-path resolution) at the reorg boundary. Require them
     # untouched from generation to the boundary tag at their old paths, and
-    # the frozen config byte-identical on the current tree.
+    # the frozen config byte-identical on the current tree. Ancestry is
+    # checked against the boundary tag, not HEAD: the campaign line was
+    # squash-merged to main, so pre-reorg generation commits can never be
+    # HEAD ancestors again, while tag ancestry pins them to the exact
+    # frozen history the tag designates.
+    ancestor_of_boundary = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "merge-base", "--is-ancestor",
+         generation_commit, REORG_BOUNDARY_TAG],
+        check=False,
+    ).returncode == 0
     old_module = _pre_reorg_relative(module)
     old_config = _pre_reorg_relative(config)
     unchanged_to_boundary = subprocess.run(
@@ -385,7 +394,7 @@ def _generation_protocol_unchanged(generation_commit: str, config_path: Path) ->
     except (OSError, subprocess.CalledProcessError):
         return False
     config_exact = frozen_config == config_path.read_bytes()
-    return ancestor and unchanged_to_boundary and config_exact
+    return ancestor_of_boundary and unchanged_to_boundary and config_exact
 
 
 def render(config_path: str | Path) -> dict:

@@ -1,0 +1,14 @@
+{
+  "bytes": 3303032772,
+  "filename": "qwen3.6-27b/jlens/Salesforce-wikitext/Qwen3.6-27B_jacobian_lens_n1000.pt",
+  "post_load_checks": "deferred to admission (d_model/n_prompts/source_layers/finite/shapes)",
+  "qwen_n1000_ref_resolution": {
+    "byte_identical_to_pin": true,
+    "commit": "16a01f309fcec900fdcec3f4cd5b64f3d00e4d5a",
+    "lens_file_lfs_sha256": "1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1",
+    "resolves": true
+  },
+  "repo_id": "neuronpedia/jacobian-lens",
+  "revision": "a4114d7752d11eb546e6cf372213d7e75526d3a1",
+  "sha256": "1718c8c52dd8a9dad03738d4d625937c1fbba10be325b872ed446c7290fc11e1"
+}

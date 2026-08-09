@@ -1,0 +1,25 @@
+{
+  "accelerate": "1.14.0",
+  "cuda_available": true,
+  "datasets": "4.0.0",
+  "driver": "580.82.07",
+  "fla": "0.5.2",
+  "gpu": {
+    "capability": [
+      12,
+      0
+    ],
+    "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+    "total_memory_bytes": 101974081536,
+    "uuid": "bde48f14-28cc-4bb2-baca-5bb2c9da4d1f"
+  },
+  "numpy": "2.0.2",
+  "platform": "Linux-6.6.122+-x86_64-with-glibc2.35",
+  "python": "3.12.13 (main, Mar  4 2026, 09:23:07) [GCC 11.4.0]",
+  "safetensors": "0.8.0",
+  "tokenizers": "0.22.2",
+  "torch": "2.11.0+cu128",
+  "torch_cuda_build": "12.8",
+  "transformers": "5.13.1",
+  "triton": "3.6.0"
+}

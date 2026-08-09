@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: jspace-official-repro
+Version: 0.1.0
+Summary: J-space official released-materials reproduction, Study 1 (or1-)
+Requires-Python: >=3.11
+Requires-Dist: torch
+Requires-Dist: transformers
+Requires-Dist: tokenizers
+Requires-Dist: safetensors
+Requires-Dist: huggingface-hub
+Requires-Dist: datasets
+Requires-Dist: numpy
+Requires-Dist: pyyaml
+Requires-Dist: pandas
+Requires-Dist: pyarrow
+Requires-Dist: matplotlib
