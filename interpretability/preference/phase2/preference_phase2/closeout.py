@@ -40,22 +40,30 @@ def _num(rows, key):
     return out
 
 
+def _nums(rows, keys):
+    for k in keys:
+        rows = _num(rows, k)
+    return rows
+
+
 def collect(model_key: str) -> dict[str, Any]:
     d = paths.reports_root() / f"frozen_{model_key}"
     return {
         "adjudication": _read_json(d / "behavioral_adjudication.json"),
-        "margins": _num(_num(_num(_read_csv(
+        "margins": _nums(_read_csv(
             d / "tables" / "semantic_margin_by_scenario.csv"),
-            "estimate"), "ci_lo"), "ci_hi"),
-        "choices": _num(_num(_num(_read_csv(
+            ("estimate", "ci_lo", "ci_hi", "p", "p_holm",
+             "first_token_estimate", "floor")),
+        "choices": _nums(_read_csv(
             d / "tables" / "strict_choice_by_scenario.csv"),
-            "estimate"), "ci_lo"), "ci_hi"),
-        "ladders": _num(_num(_num(_read_csv(
+            ("estimate", "ci_lo", "ci_hi", "p", "valid_rate")),
+        "ladders": _nums(_read_csv(
             d / "tables" / "context_ladder_curves.csv"),
-            "slope"), "ci_lo"), "ci_hi"),
-        "surface": _num(_num(_num(_read_csv(
+            ("slope", "ci_lo", "ci_hi", "p", "holdout_rank_corr",
+             "neutral_intercept", "crossing")),
+        "surface": _nums(_read_csv(
             d / "tables" / "surface_policy_coefficients.csv"),
-            "effect"), "ci_lo"), "ci_hi"),
+            ("effect", "ci_lo", "ci_hi", "p_exact_signflip")),
         "recon": _read_json(d / "tables"
                             / "phase1_surface_reconstruction.json"),
         "present": (d / "behavioral_adjudication.json").exists(),
