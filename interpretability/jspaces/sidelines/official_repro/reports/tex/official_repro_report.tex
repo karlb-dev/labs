@@ -26,7 +26,7 @@ method-reconstructed where specified, gated where not identified}
 \author{J-space campaign --- official-repro sideline\\
 \small branch \texttt{interp\_jspace\_official\_repro\_1} ---
 upstream \texttt{anthropics/jacobian-lens @ 581d3986}}
-\date{2026-08-08 (OR1-A Qwen block)}
+\date{2026-08-08/09 (OR1-A Qwen block · OR1-B OLMo fit · OR1-C OLMo lane)}
 
 \begin{document}
 \maketitle
@@ -224,23 +224,121 @@ doubled patch overshoots into off-distribution territory rather than
 completing near-misses, unlike the paper's Sonnet where $\alpha{=}2$
 lifted 76/192 to 101/192.
 
-\section{Interpretation under the wording router}
+\section{OR1-B: the OLMo official-estimator fit}
 
-Conformance and admission passed mechanically (exact parity, exact
-no-ops, verified pins), so every result above is a scientific
-observation about this model/instrument cell, not a harness state. The
-lens-eval layer profiles reproduce the paper's methods-comparison
-direction on the latent-content distributions; the paper-literal
-$\alpha{=}1$ coordinate-swap core is \emph{directionally present but
-substantially weaker on Qwen 3.6 27B than the paper's Claude values},
-with rank movement concentrated below top-1. Maximum licensed sentence
-(plan \S7.6 routing, pre-OLMo): \emph{``conformance passes; the Qwen
-core is a valid generalization result''} --- the released functional
-properties do not transfer at paper magnitude to this cell under
-prompt-exact, method-reconstructed conditions. No workspace-existence
-or -absence claim is licensed; OLMo, the extended battery, and the
-instrument cross-over (which will separate intervention semantics from
-prompt population) follow in OR1-B/C/D.
+Timing gate (frozen before any outcome): dim\_batch ladder
+161/164/181/232/386\,s per prompt for 16/8/4/2/1 $\Rightarrow$
+dim\_batch=\olfitdimbatch{} at \olfitsperprompt{}\,s/prompt; only the
+2$\times$125 tier fits the 18\,GPU-hour ceiling $\Rightarrow$ merged
+$n{=}\olfitmerged$ (the addendum's honest-prior tier). Both halves
+completed 125/125 with zero skips. Split-half operator audit: median
+symmetric relative Frobenius \olshmedfrob{} across the 32 fitted layers
+(\olshbandfrob{} in-band); minus-identity cosines $\approx$1.0
+(fp32-accumulation readings marginally above 1 are numerical); late
+layers are near-identity (identity fraction 0.93--0.97), so their
+low top-64 subspace overlaps reflect noise-dominated residuals, not
+disagreement. Readout stability: half-A/half-B eval pass@20 gaps
+$\le$0.015 on every set --- far inside the 0.10 margin. \textbf{No
+FIT-SENSITIVE classification; the merged lens is the OLMo primary.}
+
+\section{OR1-C: the OLMo lane}
+
+Admission: readout parity \olparity{} (exact), $\alpha{=}0$ no-op exact,
+g-folding min cosine \olgfold{} --- \emph{essentially immaterial}, in
+sharp contrast to Qwen's \qwgfold{} (D9 addendum): the campaign's
+g-folded dictionaries and the paper's unfolded basis are nearly the same
+object on OLMo but materially different objects on Qwen.
+
+\begin{table}[h]\centering\small
+\begin{tabular}{lrrrrrrr}
+\toprule
+pass@20 & merged & half A & half B & campaign & merged$_9$ & campaign$_9$ & logit\\
+\midrule
+multihop & \olmultihopjlensptwenty & \olhalfamultihopjlensptwenty & \olhalfbmultihopjlensptwenty & \olcampmultihopjlensptwenty & \olmninemultihopjlensptwenty & \olcninemultihopjlensptwenty & \olmultihoplogitptwenty\\
+multilingual & \olmultilingualjlensptwenty & \olhalfamultilingualjlensptwenty & \olhalfbmultilingualjlensptwenty & \olcampmultilingualjlensptwenty & \olmninemultilingualjlensptwenty & \olcninemultilingualjlensptwenty & \olmultilinguallogitptwenty\\
+poetry & \olpoetryjlensptwenty & \olhalfapoetryjlensptwenty & \olhalfbpoetryjlensptwenty & \olcamppoetryjlensptwenty & \olmninepoetryjlensptwenty & \olcninepoetryjlensptwenty & \olpoetrylogitptwenty\\
+typo & \oltypojlensptwenty & \olhalfatypojlensptwenty & \olhalfbtypojlensptwenty & \olcamptypojlensptwenty & \olmninetypojlensptwenty & \olcninetypojlensptwenty & \oltypologitptwenty\\
+order-ops & \olorderopsjlensptwenty & \olhalfaorderopsjlensptwenty & \olhalfborderopsjlensptwenty & \olcamporderopsjlensptwenty & \olmnineorderopsjlensptwenty & \olcnineorderopsjlensptwenty & \olorderopslogitptwenty\\
+association & \olassociationjlensptwenty & \olhalfaassociationjlensptwenty & \olhalfbassociationjlensptwenty & \olcampassociationjlensptwenty & \olmnineassociationjlensptwenty & \olcnineassociationjlensptwenty & \olassociationlogitptwenty\\
+\bottomrule
+\end{tabular}
+\caption{OLMo six-view eval grid (token-valid pass@20). The merged OR1
+lens ($n{=}250$, official recipe) and the frozen campaign lens
+($n{=}120$, campaign recipe) are concordant on the fair nine-layer
+intersection; halves bracket the merged lens tightly. \textbf{The
+logit lens matches or beats the J-lens on OLMo} --- the reverse of
+Qwen.}
+\end{table}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f02_layer_profiles_olmo.pdf}
+\caption{OLMo per-layer profiles: the two lenses nearly coincide
+through the band (vs.\ Qwen's 1--2 order-of-magnitude J-lens
+advantage on latent-content sets). Consistent with the operator audit:
+OLMo's in-band/late $J_\ell$ are close to identity, so transport adds
+little where the residual stream is already output-aligned. The
+J-lens \emph{advantage} is itself model-dependent.}
+\end{figure}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f06_slice_boot_olmo.pdf}
+\caption{The boot-currency probe on OLMo with the freshly fitted
+$n{=}250$ lens: the latent country and currency handoff appear here
+too.}
+\end{figure}
+
+\subsection{OLMo causal core (v2 scoring throughout)}
+
+\textbf{Verbal report}: category-equal top-1 \olvrcattopone{}, top-5
+\olvrcattopfive{} (\olvrnexec{} executed; \olvrimproved{} improved /
+\olvrworsened{} worsened). This is an order of magnitude above Qwen's
+v1 numbers (v2 rerun pending) though far below the paper's 88\%
+(Claude). \textbf{Flexible generalization}: capable top-1
+\olfgcapaone{} ($\alpha{=}1$) $\to$ \olfgcapatwo{} ($\alpha{=}2$) ---
+numerically indistinguishable from Qwen (5.8\%/0.0\%), \emph{including
+the $\alpha{=}2$ reversal}: the over-strength overshoot is a
+cross-model regularity of the paper-literal swap on open models,
+whereas Sonnet 4.5 improved 76/192$\to$101/192. \textbf{Probe-swap raw
+arm}: capable top-1 \olpscaptopone{} (diagnostic \olpsdiagtopone{};
+\olpsncap{} capable of 90; paper 60\%).
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f03_verbal_report_olmo.pdf}
+\caption{OLMo verbal report: per-category rates and rank shifts. The
+25.5\% top-5 rate is the strongest core effect either open lane has
+shown.}
+\end{figure}
+
+\section{Interpretation under the wording router (two lanes)}
+
+Conformance and admission passed mechanically on both lanes (exact
+parity, exact no-ops, verified pins; fit stability inside every
+margin), so all results above are scientific observations about
+model/instrument cells, not harness states.
+
+The two lanes \textbf{dissociate the readout and intervention
+properties}. On Qwen the J-lens readout advantage reproduces exactly as
+the paper describes (multihop/multilingual profiles), yet paper-literal
+swaps barely move behavior. On OLMo the readout advantage largely
+\emph{disappears} (logit lens already strong in-band; near-identity
+$J_\ell$), yet verbal report shows the strongest open-model swap effect
+so far (25.5\% top-5). Meanwhile flexible generalization behaves
+identically on both lanes ($\approx$5\% capable at $\alpha{=}1$, 0\% at
+$\alpha{=}2$) --- the $\alpha{=}2$ reversal is a shared open-model
+regularity that inverts the paper's Sonnet finding. The g-folding
+asymmetry (material on Qwen, immaterial on OLMo) marks a concrete
+basis-choice difference between the campaign's instruments and the
+paper's, live on exactly the lane where interventions are weakest.
+
+Maximum licensed sentences at this boundary: for Qwen, the plan \S7.6
+route \emph{``conformance passes, core null/mixed --- a valid Qwen
+generalization result''}; for OLMo, a property-specific version of
+Route~A's weaker half: verbal report is directionally present at
+development tier, flexible generalization is not, and no
+workspace-existence or -absence claim is licensed for either model.
+The extended battery and the instrument cross-over (separating prompt,
+lens, and intervention semantics --- OR-Q4) complete the picture in
+OR1-D.
 
 \section{Population accounting}
 
