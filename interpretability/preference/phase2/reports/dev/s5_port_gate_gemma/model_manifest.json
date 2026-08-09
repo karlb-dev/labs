@@ -1,0 +1,13 @@
+{
+  "architecture": "Gemma4ForConditionalGeneration",
+  "chat_template_sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4",
+  "d_model": 5376,
+  "dtype": "bfloat16",
+  "family": "gemma",
+  "model_id": "google/gemma-4-31B-it",
+  "model_key": "gemma",
+  "n_layers": 60,
+  "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+  "tokenizer_class": "GemmaTokenizer",
+  "vocab_size": 262144
+}

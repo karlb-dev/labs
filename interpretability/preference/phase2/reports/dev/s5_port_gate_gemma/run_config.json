@@ -1,0 +1,31 @@
+{
+  "bank_content_hash": "4a3a5047b2bbaa1778f9907ca82be1ea9ddf874ffe5bf49aed19b4014c3f348b",
+  "bank_jsonl_sha256": "119af21538daf6ec69b59efffa9c23d91b58f45b3f4fe688bfc4d49a5947662e",
+  "bank_version": "pref2_v3",
+  "banks": [
+    "B-DEV"
+  ],
+  "batch_size": 16,
+  "capture_sites": [],
+  "codebook_id": "cbv3_932b4918f8",
+  "config_hash": "9982664d921ead2f17ffdd404b55bc7bcc94c270020167775c66d70b0c49b14a",
+  "generation": {
+    "choice_max_new_tokens": 8,
+    "do_sample": false,
+    "num_beams": 1,
+    "padding_side_generation": "left",
+    "scoring": "single_row_float32_logsoftmax_full_target"
+  },
+  "model": {
+    "dtype": "bfloat16",
+    "family": "gemma",
+    "model_id": "google/gemma-4-31B-it",
+    "model_key": "gemma",
+    "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475"
+  },
+  "parser_policy": "strict_exact_code_v1",
+  "pcmech_variant": null,
+  "run_dir": "pref2_gemma_behavioral_dev-20260809_014113-eb3de6",
+  "stage": "behavioral_dev",
+  "study": "preference-phase2"
+}

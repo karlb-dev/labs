@@ -1,0 +1,10 @@
+{
+  "carrier_pass": true,
+  "format_gate": {
+    "fp1_pass": false,
+    "fsym_pass": false,
+    "primary_format": "STOP_F"
+  },
+  "model_key": "gemma",
+  "reason": "port gate failed"
+}

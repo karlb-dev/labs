@@ -1,0 +1,46 @@
+{
+  "by_format": {
+    "F-COMMIT": {
+      "nc_position_rate": 1.0,
+      "nc_semantic_effect": 0.0,
+      "parse_rate": 0.5208333333333334,
+      "pass": false,
+      "pc_aggregate": 1.0,
+      "pc_each": {
+        "dev_pc_note": 1.0,
+        "dev_pc_reply": 1.0
+      },
+      "rows": 48,
+      "wrong_branches": 0
+    },
+    "F-P1": {
+      "nc_position_rate": 1.0,
+      "nc_semantic_effect": 0.0,
+      "parse_rate": 0.46875,
+      "pass": false,
+      "pc_aggregate": 1.0,
+      "pc_each": {
+        "dev_pc_note": 1.0,
+        "dev_pc_reply": 1.0
+      },
+      "rows": 192,
+      "wrong_branches": 0
+    },
+    "F-SYM": {
+      "nc_position_rate": 1.0,
+      "nc_semantic_effect": 0.0,
+      "parse_rate": 0.078125,
+      "pass": false,
+      "pc_aggregate": NaN,
+      "pc_each": {},
+      "rows": 192,
+      "wrong_branches": 0
+    }
+  },
+  "format_gate": {
+    "fp1_pass": false,
+    "fsym_pass": false,
+    "primary_format": "STOP_F"
+  },
+  "pass": false
+}
