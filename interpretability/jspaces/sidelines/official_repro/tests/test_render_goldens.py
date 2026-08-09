@@ -154,3 +154,27 @@ def test_verbal_report_prompt_final_position_is_generation_boundary(qwen_tok):
     # the render must end exactly at the generation boundary.
     assert rendered.text.endswith("<think>\n\n</think>\n\n")
     assert rendered.final_position == rendered.seq_len - 1
+
+
+def test_span_finders_survive_bos_prefix(olmo_tok):
+    # INCIDENT or1-002: OLMo raw renders carry BOS whose decoded text
+    # shifted char offsets. Finders must locate spans correctly with the
+    # special-token prefix present.
+    import torch
+
+    from jspace_official_repro.rendering import (
+        find_token_span,
+        position_before_substring,
+    )
+
+    text = "My sister has always wanted to visit France"
+    ids = olmo_tok(text, add_special_tokens=False).input_ids
+    with_bos = [olmo_tok.bos_token_id] + ids
+    rendered = Rendered(text=text, input_ids=torch.tensor([with_bos]),
+                        form="raw", template_kwargs={})
+    start, end = find_token_span(rendered, olmo_tok, "France")
+    decoded = olmo_tok.decode(with_bos[start:end + 1])
+    assert "France" in decoded
+    position = position_before_substring(rendered, olmo_tok, "France")
+    after = olmo_tok.decode(with_bos[position + 1:position + 3])
+    assert "France" in after

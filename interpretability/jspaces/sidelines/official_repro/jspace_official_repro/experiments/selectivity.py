@@ -71,9 +71,15 @@ def run_language(model, lens, *, lane: str, out_dir: Path,
             template = data["task"][condition]
             text = template.format(text=passage["text"])
             rendered = render_raw(model, text)
-            # Question span: tokens after the passage text.
-            passage_end_char = text.find(passage["text"]) + len(passage["text"])
+            # Question span: tokens after the passage text. Offsets live
+            # in the DECODED stream (BOS text shifts raw offsets on OLMo
+            # — INCIDENT or1-002).
             ids = rendered.input_ids[0].tolist()
+            decoded_full = tokenizer.decode(ids)
+            passage_end_char = (decoded_full.find(passage["text"])
+                                + len(passage["text"]))
+            if passage_end_char < len(passage["text"]):
+                raise ValueError("passage not found in decoded render")
             running = ""
             question_start = None
             for index in range(len(ids)):

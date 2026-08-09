@@ -89,14 +89,16 @@ def position_before_substring(
 ) -> int:
     """Token position immediately preceding ``target``'s occurrence.
 
-    Located by character offset in the rendered text, then converted to the
-    token whose decoded prefix ends exactly at (or last strictly before)
-    the target start; asserted by decode round-trip.
+    Character offsets are located in the DECODED token stream (which
+    includes any BOS/special text — INCIDENT or1-002: on OLMo raw
+    renders the BOS text shifts decoded prefixes vs. the raw prompt),
+    then mapped to the token whose decoded prefix ends at (or last
+    strictly before) the target start; asserted by decode round-trip.
     """
-    text = rendered.text
+    text = _decode(tokenizer, rendered.input_ids[0].tolist())
     start = text.find(target) if occurrence == "first" else text.rfind(target)
     if start < 0:
-        raise ValueError(f"target {target!r} not in rendered text")
+        raise ValueError(f"target {target!r} not in decoded render")
     ids = rendered.input_ids[0].tolist()
     # Walk the token boundary map.
     prefix_lengths = []
@@ -133,13 +135,13 @@ def find_token_span(
     rendered: Rendered, tokenizer, span_text: str, *, from_end: bool = True
 ) -> tuple[int, int]:
     """Inclusive token span [start, end] whose decode reproduces
-    ``span_text`` (modulo surrounding whitespace), located by rendering
-    boundaries — the span is matched at the character level then mapped to
-    token indices, asserted by decode."""
-    text = rendered.text
+    ``span_text`` (modulo surrounding whitespace). Char offsets are
+    located in the DECODED token stream so BOS/special text cannot shift
+    the mapping (INCIDENT or1-002); asserted by decode."""
+    text = _decode(tokenizer, rendered.input_ids[0].tolist())
     start_char = text.rfind(span_text) if from_end else text.find(span_text)
     if start_char < 0:
-        raise ValueError(f"span {span_text[:40]!r} not in rendered text")
+        raise ValueError(f"span {span_text[:40]!r} not in decoded render")
     end_char = start_char + len(span_text)
     ids = rendered.input_ids[0].tolist()
     token_start = token_end = None
