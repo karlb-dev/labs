@@ -73,14 +73,14 @@
 ## ignition
 - fidelity: R1 (D12 carriers)
 - gates: descriptive nonlinearity result (plan wording)
-- evidence: qwen=DIRECTION-REPRODUCED (width narrows with depth; concept pairs sharper than idioms) · olmo=PENDING
+- evidence: qwen=DIRECTION-REPRODUCED (width narrows with depth; concept pairs sharper than idioms) · olmo=see data
 - paper reference: sharp switching from workspace onset
 - max licensed sentence: Sharp, depth-dependent winner-take-most transitions for real concept pairs.
 
 ## top-down summoning
 - fidelity: R1 (D16 render)
 - gates: n=7 items
-- evidence: qwen=OPPOSITE/NULL (Q2-Q1 = 0.0) · olmo=PENDING
+- evidence: qwen=OPPOSITE/NULL (Q2-Q1 = 0.0) · olmo=see data
 - paper reference: Q2 > Q1 expected-label readout
 - max licensed sentence: No question-driven summoning signal at rank<=5 on Qwen (7 items).
 

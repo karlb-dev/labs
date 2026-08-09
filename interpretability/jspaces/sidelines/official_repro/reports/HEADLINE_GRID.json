@@ -282,11 +282,16 @@
         "idiom": 0.20909090909090908,
         "scrambled": 0.0818181818181818
       },
-      "olmo": null,
+      "olmo": {
+        "country": 0.039999999999999994,
+        "alt": 0.07333333333333332,
+        "idiom": 0.1,
+        "scrambled": 0.027272727272727268
+      },
       "gate": "descriptive nonlinearity result (plan wording)",
       "evidence_code": {
         "qwen": "DIRECTION-REPRODUCED (width narrows with depth; concept pairs sharper than idioms)",
-        "olmo": "PENDING"
+        "olmo": "see data"
       },
       "paper_reference": "sharp switching from workspace onset",
       "max_sentence": "Sharp, depth-dependent winner-take-most transitions for real concept pairs."
@@ -298,12 +303,12 @@
         "q2_minus_q1": 0.0
       },
       "olmo": {
-        "q2_minus_q1": null
+        "q2_minus_q1": 0.0
       },
       "gate": "n=7 items",
       "evidence_code": {
         "qwen": "OPPOSITE/NULL (Q2-Q1 = 0.0)",
-        "olmo": "PENDING"
+        "olmo": "see data"
       },
       "paper_reference": "Q2 > Q1 expected-label readout",
       "max_sentence": "No question-driven summoning signal at rank<=5 on Qwen (7 items)."

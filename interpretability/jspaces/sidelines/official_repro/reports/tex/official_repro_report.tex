@@ -26,7 +26,7 @@ method-reconstructed where specified, gated where not identified}
 \author{J-space campaign --- official-repro sideline\\
 \small branch \texttt{interp\_jspace\_official\_repro\_1} ---
 upstream \texttt{anthropics/jacobian-lens @ 581d3986}}
-\date{2026-08-08/09 (OR1-A Qwen block · OR1-B OLMo fit · OR1-C OLMo lane)}
+\date{2026-08-08/09 --- terminal (OR1-A..D complete; 32 registered or1- events)}
 
 \begin{document}
 \maketitle
@@ -37,12 +37,20 @@ experiment prompt sets (11 sets) from the public companion release of
 ``Verbalizable Representations Form a Global Workspace in Language
 Models'' under one audited harness on two open-weight models, and
 separate prompt, lens, intervention, capability, and model effects.
-This report covers the Qwen lane: the campaign-pinned checkpoint with
-the published $n{=}1000$ lens --- the study's mechanical instrument
-anchor (OR-Q1) and its first generalization surface (OR-Q2). Fidelity
-classes and gate states are carried on every cell; gated cells are
-missing, never zero; no confirmatory language is licensed anywhere in
-Study 1.
+Both lanes are complete: Qwen 3.6 27B under the campaign-validated
+published $n{=}1000$ lens (OR-Q1/Q2), and OLMo 3.1 32B Instruct under
+one prospectively fitted, fit-stable $n{=}250$ official-estimator lens
+(OR-Q3), closed by a bounded instrument cross-over (OR-Q4). Headline:
+released \emph{readout} contrasts reproduce directionally on both
+models (selectivity exactly); the paper-literal \emph{coordinate
+interventions} transfer weakly and concordantly ($\sim$5--30\% vs the
+paper's 40--88\%, with the $\alpha{=}2$ remedy inverting); and the
+campaign's broad protected J-suppression is selectively destructive on
+the official prompts of both lanes while matched controls are not ---
+the two intervention families estimate different causal questions.
+Fidelity classes and gate states are carried on every cell; gated
+cells are missing, never zero; no confirmatory language is licensed
+anywhere in Study 1.
 \end{abstract}
 
 \section{Provenance and instrument identity}
@@ -127,23 +135,23 @@ released-denominator sensitivity live in the registered JSON.}
 \section{Qwen causal core (OR-Q2)}
 
 \subsection{Verbal report}
-\textbf{Incident note (or1-001):} the v1 numbers below score the
-leading-space token form at a boundary whose in-context form is bare;
-they \emph{understate} the effect (e.g.\ the \texttt{color:Red} swap
-made the model's top-1 literally \texttt{Red} while the scored
-\texttt{\textvisiblespace Red} form sat at rank 5). A v2 rerun with
-min-over-forms scoring supersedes these at the next Qwen GPU slot; see
-\texttt{reports/INCIDENT\_or1-001\_vr\_token\_form.md}.
-
 Release-literal rule (first ten listed candidates, skip the answer),
 swap-out = greedy token at the generation boundary (D1), $\alpha{=}1$
-across the band at every prompt position. Category-equal top-1
-\qwvrcattopone{} and top-5 \qwvrcattopfive{} over \qwvrncat{} categories
-(\qwvrnexec{} executed trials; \qwvrimproved{} trials improved the
-candidate's rank, \qwvrworsened{} worsened). Paper context (Claude):
-88\% top-5. The effect on Qwen under the paper-literal operation is
-\emph{directionally present in rank movement but far below the paper's
-report-rate}: Fig.~\ref{fig:vr}.
+across the band at every prompt position. \textbf{Primary numbers are
+the v2 rerun} (\texttt{or1-qwen-verbal-report-v2}): category-equal
+top-1 \qwvrvtwocattopone{} and top-5 \qwvrvtwocattopfive{}
+(\qwvrvtwonexec{} executed trials; \qwvrvtwoimproved{} improved /
+\qwvrvtwoworsened{} worsened). Paper context (Claude): 88\% top-5.
+
+\textbf{Incident or1-001 (resolved):} the superseded v1 run scored the
+leading-space token form at a boundary whose in-context form is bare
+and reported top-5 \qwvrcattopfive{} --- i.e.\ \emph{three quarters of
+the apparent Qwen verbal-report deficit was a scoring-form artifact}
+(the model's top-1 literally became \texttt{Red} while the scored
+\texttt{\textvisiblespace Red} form sat at rank 5). v2 scores min over
+both single-token forms with the boundary in-context swap vector; OLMo
+ran v2 semantics from its first execution. See
+\texttt{reports/INCIDENT\_or1-001\_vr\_token\_form.md}.
 
 \begin{figure}[h]\centering
 \includegraphics[width=\textwidth]{or1f03_verbal_report_qwen.pdf}
@@ -309,6 +317,69 @@ arm}: capable top-1 \olpscaptopone{} (diagnostic \olpsdiagtopone{};
 shown.}
 \end{figure}
 
+\section{Extended battery (Groups A--C, both lanes)}
+
+\begin{figure}[h]\centering
+\includegraphics[width=\textwidth]{or1f08_battery_qwen.pdf}\\[2pt]
+\includegraphics[width=\textwidth]{or1f08_battery_olmo.pdf}
+\caption{\label{fig:battery}Battery overview, Qwen (top) and OLMo
+(bottom): modulation contrast, dual-task reachability, ignition
+transition width by pair family, introspection dose-response.}
+\end{figure}
+
+\textbf{Reproduced on both lanes.} Selectivity-language: the released
+readout contrast is \emph{perfect on both models} (explicit 1.00 vs
+automatic 0.00). Directed modulation: focus $>$ suppress $>0$ with the
+white-bear residue (Qwen .72/.26; OLMo .44/.06; ``mention'' controls
+pattern with focus, as expected when the instruction itself names the
+target). Ignition: real concept pairs switch far more sharply than
+idiom controls (Qwen .035 vs .209; OLMo .040 vs .100); the
+depth-profile differs (Qwen narrows monotonically into the output;
+OLMo is sharpest mid-band).
+
+\textbf{Qwen-only.} Dual-task interference is present and asymmetric
+(math 31\% $\gg$ concept 7\%). On OLMo the math cell is
+\emph{capability-gated} --- single-task math reachability is 4.8\%, so
+the interference estimand is missing, not zero; concept interference is
+minimal (2.4\%).
+
+\textbf{Null on both lanes.} Verbal introspection shows no
+dose-response anywhere on the reconstructed ladder $\{0,1,2,4,8,16\}$
+(OLMo's steered median RR is exactly 0); top-down summoning's
+Q2$-$Q1 readout contrast is 0.0 on both lanes (7 items). Capacity
+(descriptive): $\sim$2.9 (Qwen) / 1.6 (OLMo) list words at band-rank
+$\le$5 at the end of 80-word lists ($\sim$8.2 / 4.6 at $\le$20).
+Line-break family: R2 corpus-empty under the pinned filter (recorded
+gap). Selectivity-linecount: rare rank-1 canon presence with weak
+condition ordering in the paper direction on both lanes.
+
+\section{Instrument cross-over (OR-Q4)}
+
+\begin{figure}[h]\centering
+\includegraphics[width=0.98\textwidth]{or1f09_crossover.pdf}
+\caption{\label{fig:xo}The frozen 30-item official probe-swap subset
+under both intervention families. Broad protected top-10 J-ablation
+(campaign machinery, campaign band, g-folded dictionaries) knocks the
+released answer out of top-1 on 14/30 (Qwen) and 5/19 (OLMo)
+top-1-capable items versus $\le$1/30 and 1/19 for exact rank/energy
+matched controls; paper-literal coordinate swaps complete the flip on
+only 10--27\%.}
+\end{figure}
+
+Three OR-Q4 facts. (1) \emph{Intervention semantics dominate}: on the
+same released prompts, broad J-space suppression is selectively
+destructive while two-coordinate substitution rarely completes ---
+Route~E's sentence is licensed: \textbf{the two interventions estimate
+different causal questions}. (2) \emph{Population moderates}: the
+campaign's C1-style ablation selectivity, established on campaign
+banks, reappears on the official prompt population on both lanes ---
+Route~F's moderator sentence is licensed. (3) \emph{The lens is not
+the explanation}: the freshly fitted OR1 lens and the frozen campaign
+lens agree under both families on OLMo (swap 10.0\% vs 10.0\%;
+ablation 5/19 vs 6/19), and on Qwen the swap is if anything
+\emph{stronger} on the campaign band (26.7\% vs 16.7\%) --- band and
+fit choices do not rescue the paper-literal operation.
+
 \section{Interpretation under the wording router (two lanes)}
 
 Conformance and admission passed mechanically on both lanes (exact
@@ -330,15 +401,39 @@ asymmetry (material on Qwen, immaterial on OLMo) marks a concrete
 basis-choice difference between the campaign's instruments and the
 paper's, live on exactly the lane where interventions are weakest.
 
-Maximum licensed sentences at this boundary: for Qwen, the plan \S7.6
-route \emph{``conformance passes, core null/mixed --- a valid Qwen
-generalization result''}; for OLMo, a property-specific version of
-Route~A's weaker half: verbal report is directionally present at
-development tier, flexible generalization is not, and no
-workspace-existence or -absence claim is licensed for either model.
-The extended battery and the instrument cross-over (separating prompt,
-lens, and intervention semantics --- OR-Q4) complete the picture in
-OR1-D.
+\textbf{Terminal routed sentences} (plan \S16.2; the complete
+per-property accounting is the \S16.1 grid,
+\texttt{reports/HEADLINE\_GRID.md}):
+
+\begin{itemize}\itemsep2pt
+\item \textbf{Readout properties} (lens quality, selectivity,
+modulation, ignition, dual-task): a property-specific Route~A ---
+multiple released readout contrasts reproduce directionally on both
+open models at development tier, with selectivity-language exact on
+both.
+\item \textbf{Coordinate-intervention core} (verbal report, flexible
+generalization, probe-swap): Route~D --- the released battery does not
+reproduce the paper's core directional effects cleanly on the tested
+open-model cells despite mechanically validated readout and
+intervention implementations; effects are concordant across lanes but
+sit at 5--30\% where the paper reports 40--88\%, and the paper's
+$\alpha{=}2$ remedy inverts. This is a model/generalization result
+bounded to the public release and reconstructed methods, not a
+refutation of the Claude findings.
+\item \textbf{Cross-over}: Routes E$+$F --- targeted substitution and
+broad protected suppression estimate different causal questions, and
+task population is a major moderator; the campaign's suppression
+selectivity extends to the official prompts on both lanes while
+lens-fit differences explain nothing.
+\item \textbf{Report channel} (introspection, top-down): the
+reconstructed protocols yield nulls on both lanes; because the
+strength ladder is reconstructed rather than released (R1),
+instrument-limitation is not excluded.
+\end{itemize}
+
+No workspace-existence or -absence claim is licensed for either model;
+no frozen campaign claim is regraded; Claude magnitudes remain
+descriptive context throughout.
 
 \section{Population accounting}
 
